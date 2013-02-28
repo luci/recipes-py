@@ -55,23 +55,24 @@ def main():
   print('@@@BUILD_STEP setup-build@@@')
   assert 'recipe' in opts.factory_properties
   factory_properties = opts.factory_properties
-  script_dirs = [os.path.join(SCRIPT_PATH, '..', '..', '..', 'build_internal',
-                              'scripts', 'slave-internal'),
-                 os.path.join(SCRIPT_PATH, '..', '..', '..', 'build_internal',
-                              'scripts', 'slave'),
-                 SCRIPT_PATH]
-  script_dirs = [os.path.abspath(p) for p in script_dirs]
-  sys.path = script_dirs + sys.path
-  try:
-    # TODO(agable): use ilevy's scripts/common.ParsePythonCfg
-    recipe = __import__('recipes.%s' % factory_properties['recipe'],
-                        fromlist=['recipes'])
-  except ImportError:
+  recipe = factory_properties['recipe'] + '.py'
+  recipe_dirs = (os.path.abspath(p) for p in (
+      os.path.join(SCRIPT_PATH, '..', '..', '..', 'build_internal', 'scripts',
+                   'slave-internal', 'recipes'),
+      os.path.join(SCRIPT_PATH, '..', '..', '..', 'build_internal', 'scripts',
+                   'slave', 'recipes'),
+      os.path.join(SCRIPT_PATH, 'recipes'),
+  ))
+  recipe_dirs = [os.path.abspath(p) for p in recipe_dirs]
+  for path in recipe_dirs:
+    recipe_dict = chromium_utils.ParsePythonCfg(os.path.join(path, recipe))
+    if recipe_dict:
+      break
+  else:
     print('@@@STEP_TEXT@recipe not found@@@')
     print('@@@STEP_FAILURE@@@')
     return
-  for key in recipe.factory_properties:
-    factory_properties[key] = recipe.factory_properties[key]
+  factory_properties.update(recipe_dict['factory_properties'])
   # Now do the heavy lifting: handle elements of factory properties with various
   # other slave scripts.
   if 'checkout' in factory_properties:
