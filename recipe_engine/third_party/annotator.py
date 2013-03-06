@@ -325,36 +325,22 @@ def main():
       print 'step \'%s\' is invalid' % json.dumps(step)
       return 1
 
-  # Make sure these steps always run, even if there is a build failure.
-  always_run = {}
-  for step in steps:
-    if step.get('always_run'):
-      always_run[step['name']] = step
-
-  stepnames = [s['name'] for s in steps]
-
-  stream = StructuredAnnotationStream(seed_steps=stepnames)
+  stream = StructuredAnnotationStream(seed_steps=[s['name'] for s in steps])
   build_failure = False
   for step in steps:
-    if step['name'] in always_run:
-      del always_run[step['name']]
-    try:
-      with stream.step(step['name']) as s:
-        ret = chromium_utils.RunCommand(step['cmd'])
-        if ret != 0:
-          s.step_failure()
-          build_failure = True
-          break
-    except OSError:
-      # File wasn't found, error has been already reported to stream.
-      build_failure = True
-      break
-
-  for step_name in always_run:
-    with stream.step(step_name) as s:
-      ret = chromium_utils.RunCommand(always_run[step_name]['cmd'])
-      if ret != 0:
-        s.step_failure()
+    if step.get('skip'):
+      continue
+    if not build_failure or step.get('always_run'):
+      try:
+        with stream.step(step['name']) as s:
+          ret = chromium_utils.RunCommand(step['cmd'])
+          if ret != 0:
+            print 'step returned non-zero exit code: %d' % ret
+            print 'step was: %s' % json.dumps(step)
+            s.step_failure()
+            build_failure = True
+      except OSError:
+        # File wasn't found, error has been already reported to stream.
         build_failure = True
 
   if build_failure:
