@@ -17,6 +17,7 @@ import os
 import subprocess
 import sys
 
+from common import annotator
 from common import chromium_utils
 
 
@@ -63,9 +64,10 @@ def svn_checkout(spec):
 
 def main():
   opts, _ = get_args()
+
+  s = annotator.AdvancedAnnotationStep()
   # Supplement the master-supplied factory_properties dictionary with the values
   # found in the slave-side recipe.
-  print('@@@BUILD_STEP checkout@@@')
   if opts.type == 'gclient':
     ret = gclient_checkout(opts.spec)
   elif opts.type == 'git':
@@ -73,11 +75,11 @@ def main():
   elif opts.type == 'svn':
     ret = svn_checkout(opts.spec)
   else:
-    print('@@@STEP_TEXT@unrecognized repo type@@@')
-    print('@@@STEP_FAILURE@@@')
+    s.step_text('unrecognized repo type')
+    s.step_failure()
     return 1
   if ret != 0:
-    print ('@@@STEP_FAILURE@@@')
+    s.step_failure()
     return ret
 
 
