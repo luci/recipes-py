@@ -333,6 +333,7 @@ def main():
     if not build_failure or step.get('always_run'):
       try:
         with stream.step(step['name']) as s:
+          step['cmd'] = map(str, step['cmd'])
           ret = chromium_utils.RunCommand(step['cmd'])
           if ret != 0:
             print 'step returned non-zero exit code: %d' % ret

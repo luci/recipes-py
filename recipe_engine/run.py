@@ -12,19 +12,61 @@ AddAnnotatedScript step. That step (found in annotator_commands.py) calls
 this script with the build- and factory-properties passed on the command
 line. In general, the factory properties will include one or more other
 scripts for this script to delegate to.
+
+The main mode of operation is for factory_properties to contain a single
+property 'recipe' whose value is the basename (without extension) of a python
+script in one of the following locations (looked up in this order):
+  * build_internal/scripts/slave-internal/recipes
+  * build_internal/scripts/slave/recipes
+  * build/scripts/slave/recipes
+
+For example, these factory_properties would run the 'run_presubmit' recipe
+located in build/scripts/slave/recipes:
+    { 'recipe': 'run_presubmit' }
+
+Annotated_run.py will then import the recipe and expect to call a function whose
+signature is GetFactoryProperties(build_properties) -> factory_properties. The
+returned factory_properties will then be used to execute the following actions:
+  * optional 'checkout'
+    * This checks out a gclient/git/svn spec into the slave build dir.
+    * The value of checkout is expected to be in ('gclient', 'git', 'svn')
+    * If checkout is specified, annotated_run will also expect to find a value
+      for ('%s_spec' % checkout), e.g. 'gclient_spec'. The value of this spec
+      is defined by build/scripts/slave/annotated_checkout.py.
+  * 'script' or 'steps'
+    * 'script' allows you to specify a single script which will be invoked with
+      build-properties and factory-properties.
+    * 'steps' serves as input for build/scripts/common/annotator.py
+      * You can have annotated_run pass build/factory properties to a step by
+        using the recipe_util.step() function.
 """
 
+import contextlib
 import json
 import optparse
 import os
 import subprocess
 import sys
+import tempfile
 
 from common import annotator
 from common import chromium_utils
-
+from slave import recipe_util
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
+
+
+@contextlib.contextmanager
+def temp_import_path(path):
+  added = False
+  if path not in sys.path:
+    sys.path.insert(0, path)
+    added = True
+  try:
+    yield
+  finally:
+    if added and path in sys.path:
+      sys.path.remove(path)
 
 
 def get_args():
@@ -52,17 +94,13 @@ def get_args():
 def main():
   opts, _ = get_args()
 
-  seed_steps = ['setup_build']
-  if 'checkout' in opts.factory_properties:
-    seed_steps.append('checkout')
-  stream = annotator.StructuredAnnotationStream(seed_steps=seed_steps)
-
   # Supplement the master-supplied factory_properties dictionary with the values
   # found in the slave-side recipe.
+  stream = annotator.StructuredAnnotationStream(seed_steps=['setup_build'])
   with stream.step('setup_build') as s:
     assert 'recipe' in opts.factory_properties
     factory_properties = opts.factory_properties
-    recipe = factory_properties['recipe'] + '.py'
+    recipe = factory_properties['recipe']
     recipe_dirs = (os.path.abspath(p) for p in (
         os.path.join(SCRIPT_PATH, '..', '..', '..', 'build_internal', 'scripts',
                      'slave-internal', 'recipes'),
@@ -71,40 +109,75 @@ def main():
         os.path.join(SCRIPT_PATH, 'recipes'),
     ))
     recipe_dirs = [os.path.abspath(p) for p in recipe_dirs]
+
     for path in recipe_dirs:
-      recipe_dict = chromium_utils.ParsePythonCfg(os.path.join(path, recipe))
-      if recipe_dict:
-        break
+      recipe_module = None
+      with temp_import_path(path):
+        try:
+          recipe_module = __import__(recipe, globals(), locals())
+        except ImportError:
+          continue
+      recipe_dict = recipe_module.GetFactoryProperties(
+          opts.build_properties.copy())
+      break
     else:
       s.step_text('recipe not found')
       s.step_failure()
-      return
+      return 1
 
-    factory_properties.update(recipe_dict['factory_properties'])
+    factory_properties.update(recipe_dict)
 
   # Now do the heavy lifting: handle elements of factory properties with various
   # other slave scripts.
   if 'checkout' in factory_properties:
-    with stream.step('checkout'):
-      checkout_type = factory_properties['checkout']
-      checkout_spec = factory_properties['%s_spec' % checkout_type]
-      ret = subprocess.call([sys.executable,
-                             '%s/annotated_checkout.py' % SCRIPT_PATH,
-                             '--type', checkout_type,
-                             '--spec', json.dumps(checkout_spec)])
-      if ret != 0:
-        return ret
+    checkout_type = factory_properties['checkout']
+    checkout_spec = factory_properties['%s_spec' % checkout_type]
+    ret = subprocess.call([sys.executable,
+                           '%s/annotated_checkout.py' % SCRIPT_PATH,
+                           '--type', checkout_type,
+                           '--spec', json.dumps(checkout_spec)])
+    if ret != 0:
+      return ret
+
+  assert ('script' in factory_properties) or ('steps' in factory_properties)
+  ret = 0
 
   # Execute a script if specified.
   if 'script' in factory_properties:
     script = factory_properties['script']
     cmd = [sys.executable, script,
-           '--factory_properties', json.dumps(factory_properties),
-           '--build_properties', json.dumps(opts.build_properties)]
+           '--factory-properties', json.dumps(factory_properties),
+           '--build-properties', json.dumps(opts.build_properties)]
     print 'in %s executing: %s' % (os.getcwd(), ' '.join(cmd))
     ret = subprocess.call(cmd)
-    if ret != 0:
-      return ret
+
+  # Execute annotator.py with steps if specified.
+  if 'steps' in factory_properties:
+    steps = factory_properties.pop('steps')
+    factory_properties_str = json.dumps(factory_properties)
+    build_properties_str = json.dumps(opts.build_properties)
+    for step in steps:
+      if recipe_util.PropertyPlaceholder in step['cmd']:
+        idx = step['cmd'].index(recipe_util.PropertyPlaceholder)
+        step['cmd'][idx:idx+1] = [
+            '--factory-properties', factory_properties_str,
+            '--build-properties', build_properties_str]
+    annotator_path = os.path.join(
+      os.path.dirname(SCRIPT_PATH), 'common', 'annotator.py')
+    tmpfile, tmpname = tempfile.mkstemp()
+    try:
+      cmd = [sys.executable, annotator_path, tmpname]
+      step_doc = json.dumps(steps)
+      with os.fdopen(tmpfile, 'wb') as f:
+        f.write(step_doc)
+      with stream.step('annotator_preamble') as s:
+        print 'in %s executing: %s' % (os.getcwd(), ' '.join(cmd))
+        print 'with: %s' % step_doc
+      ret = subprocess.call(cmd)
+    finally:
+      os.unlink(tmpname)
+
+  return ret
 
 
 def UpdateScripts():
@@ -128,4 +201,4 @@ def UpdateScripts():
 if __name__ == '__main__':
   if UpdateScripts():
     os.execv(sys.executable, [sys.executable] + sys.argv)
-  main()
+  sys.exit(main())
