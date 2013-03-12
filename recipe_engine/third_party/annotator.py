@@ -22,13 +22,21 @@ import traceback
 from common import chromium_utils
 
 
+def emit(line, stream, flush_before=None):
+  if flush_before:
+    flush_before.flush()
+  print >> stream, line
+  stream.flush()
+
+
 class StepCommands(object):
   """Class holding step commands. Intended to be subclassed."""
-  def __init__(self, stream):
+  def __init__(self, stream, flush_before):
     self.stream = stream
+    self.flush_before = flush_before
 
   def emit(self, line):
-    print >> self.stream, line
+    emit(line, self.stream, self.flush_before)
 
   def step_warnings(self):
     self.emit('@@@STEP_WARNINGS@@@')
@@ -79,11 +87,12 @@ class StepControlCommands(object):
   This is subclassed out so callers in StructuredAnnotationStep can't call
   step_started() or step_closed().
   """
-  def __init__(self, stream):
+  def __init__(self, stream, flush_before):
     self.stream = stream
+    self.flush_before = flush_before
 
   def emit(self, line):
-    print >> self.stream, line
+    emit(line, self.stream, self.flush_before)
 
   def step_started(self):
     self.emit('@@@STEP_STARTED@@@')
@@ -98,11 +107,8 @@ class StructuredAnnotationStep(StepCommands):
   def __init__(self, annotation_stream, *args, **kwargs):
     self.annotation_stream = annotation_stream
     super(StructuredAnnotationStep, self).__init__(*args, **kwargs)
-    self.control = StepControlCommands(self.stream)
+    self.control = StepControlCommands(self.stream, self.flush_before)
     self.emitted_logs = set()
-
-  def emit(self, line):
-    print >> self.stream, line
 
   def __enter__(self):
     self.control.step_started()
@@ -139,11 +145,12 @@ class AdvancedAnnotationStream(object):
   here.
   """
 
-  def __init__(self, stream=sys.stdout):
+  def __init__(self, stream=sys.stdout, flush_before=sys.stderr):
     self.stream = stream
+    self.flush_before = flush_before
 
   def emit(self, line):
-    print >> self.stream, line
+    emit(line, self.stream, self.flush_before)
 
   def seed_step(self, step):
     self.emit('@@@SEED_STEP %s@@@' % step)
@@ -179,7 +186,8 @@ class StructuredAnnotationStream(AdvancedAnnotationStream):
       s.step_warnings()
   """
 
-  def __init__(self, seed_steps=None, stream=sys.stdout):
+  def __init__(self, seed_steps=None, stream=sys.stdout,
+               flush_before=sys.stderr):
     super(StructuredAnnotationStream, self).__init__(stream=stream)
     seed_steps = seed_steps or []
     self.seed_steps = seed_steps
@@ -205,7 +213,8 @@ class StructuredAnnotationStream(AdvancedAnnotationStream):
 
     self.step_cursor(name)
     self.current_step = name
-    return StructuredAnnotationStep(self, stream=self.stream)
+    return StructuredAnnotationStep(self, stream=self.stream,
+                                    flush_before=self.flush_before)
 
 
 class Match:
