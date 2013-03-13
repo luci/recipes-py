@@ -192,7 +192,7 @@ def UpdateScripts():
     gclient_path = os.path.join(SCRIPT_PATH, '..', '..', '..',
                                 'depot_tools', gclient_name)
     if subprocess.call([gclient_path, 'sync', '--force']) != 0:
-      s.text('gclient sync failed!')
+      s.step_text('gclient sync failed!')
       s.step_warnings()
     os.environ['RUN_SLAVE_UPDATED_SCRIPTS'] = '1'
     return True
