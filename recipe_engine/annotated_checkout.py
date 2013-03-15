@@ -39,7 +39,39 @@ def get_args():
   return parser.parse_args()
 
 
+class _CheckoutMetaclass(type):
+  """Automatically register Checkout subclasses for factory discoverability."""
+  checkout_registry = {}
+
+  def __new__(mcs, name, bases, attrs):
+    checkout_type = attrs['CHECKOUT_TYPE']
+
+    if checkout_type in mcs.checkout_registry:
+      raise ValueError('Duplicate checkout identifier "%s" found in: %s' %
+                       (checkout_type, name))
+
+    # Only the base class is allowed to have no CHECKOUT_TYPE. The base class
+    # should be the only one to specify this metaclass.
+    if not checkout_type and attrs.get('__metaclass__') != mcs:
+      raise ValueError('"%s" CHECKOUT_TYPE cannot be empty or None.' % name)
+
+    newcls = super(_CheckoutMetaclass, mcs).__new__(mcs, name, bases, attrs)
+    # Don't register the base class.
+    if checkout_type:
+      mcs.checkout_registry[checkout_type] = newcls
+    return newcls
+
+
 class Checkout(object):
+  """Base class for implementing different types of checkouts.
+
+  Attributes:
+    CHECKOUT_TYPE: String identifier used when selecting the type of checkout to
+        perform. All subclasses must specify a unique CHECKOUT_TYPE value.
+  """
+  __metaclass__ = _CheckoutMetaclass
+  CHECKOUT_TYPE = None
+
   def __init__(self, spec):
     self.spec = spec
 
@@ -50,7 +82,16 @@ class Checkout(object):
     pass
 
 
+def CheckoutFactory(type_name, spec):
+  """Factory to build Checkout class instances."""
+  class_ = _CheckoutMetaclass.checkout_registry.get(type_name)
+  if not class_ or not issubclass(class_, Checkout):
+    raise KeyError('unrecognized checkout type: %s' % type_name)
+  return class_(spec)
+
+
 class GclientCheckout(Checkout):
+  CHECKOUT_TYPE = 'gclient'
 
   gclient_path = os.path.abspath(
     os.path.join(SCRIPT_PATH, '..', '..', '..', 'depot_tools', 'gclient'))
@@ -81,11 +122,11 @@ class GclientCheckout(Checkout):
 
 
 class GitCheckout(Checkout):
-  pass
+  CHECKOUT_TYPE = 'git'
 
 
 class SvnCheckout(Checkout):
-  pass
+  CHECKOUT_TYPE = 'svn'
 
 
 def main():
@@ -94,12 +135,12 @@ def main():
   stream = annotator.StructuredAnnotationStream(
       seed_steps=['checkout_setup', 'clean', 'checkout'])
   with stream.step('checkout_setup') as s:
-    class_ = globals().get('%sCheckout' % opts.type.capitalize())
-    if not class_ or not issubclass(class_, Checkout):
-      s.step_text('unrecognized repo type')
+    try:
+      checkout = CheckoutFactory(opts.type, opts.spec)
+    except KeyError as e:
+      s.step_text(e)
       s.step_failure()
       return 1
-    checkout = class_(opts.spec)
   with stream.step('clean') as s:
     checkout.clean()
   with stream.step('checkout') as s:
