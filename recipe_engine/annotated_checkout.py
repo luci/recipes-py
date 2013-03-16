@@ -129,14 +129,20 @@ class SvnCheckout(Checkout):
   CHECKOUT_TYPE = 'svn'
 
 
-def main():
-  opts, _ = get_args()
+def run(checkout_type, checkout_spec):
+  """Perform a checkout with the given type and configuration.
 
+    Args:
+      checkout_type: Type of checkout to perform (matching a Checkout subclass
+          CHECKOUT_TYPE attribute).
+      checkout_spec: Configuration values needed for the type of checkout
+          (repository url, etc.).
+  """
   stream = annotator.StructuredAnnotationStream(
       seed_steps=['checkout_setup', 'clean', 'checkout'])
   with stream.step('checkout_setup') as s:
     try:
-      checkout = CheckoutFactory(opts.type, opts.spec)
+      checkout = CheckoutFactory(checkout_type, checkout_spec)
     except KeyError as e:
       s.step_text(e)
       s.step_failure()
@@ -147,5 +153,10 @@ def main():
     checkout.checkout()
 
 
+def main():
+  opts, _ = get_args()
+  return run(opts.type, opts.spec)
+
+
 if __name__ == '__main__':
-  main()
+  sys.exit(main())
