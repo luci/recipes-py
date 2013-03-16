@@ -20,28 +20,6 @@ BUILD_ROOT = _os.path.join(ROOT, 'build')
 DEPOT_TOOLS_ROOT = _os.path.join(ROOT, 'depot_tools')
 
 
-def path_func(name, base):
-  """Returns a shortcut function which functions like os.path.join with a
-  fixed first component |base|."""
-  def path_func_inner(*pieces):
-    """This function returns a path to a file in '%s'."""
-    return _os.path.join(base, *pieces)
-  path_func_inner.__name__ = name
-  path_func_inner.__doc__ = path_func_inner.__doc__ % base
-  return path_func_inner
-
-
-depot_tools_path = path_func('depot_tools_path', DEPOT_TOOLS_ROOT)
-build_internal_path = path_func('build_internal_path', BUILD_INTERNAL_ROOT)
-build_path = path_func('build_path', BUILD_ROOT)
-slave_build_path = path_func('slave_build_path', SLAVE_BUILD_ROOT)
-
-
-# e.g. /b/build/slave/<slave-name>/build/src
-def checkout(build_properties, *pieces):
-  return slave_build_path(build_properties['root'], *pieces)
-
-
 class PropertyPlaceholder(object):
   """PropertyPlaceholder is meant to be a singleton object which, when added
   to a step's cmd list, will be replaced by annotator_run with
@@ -58,48 +36,74 @@ class PropertyPlaceholder(object):
 PropertyPlaceholder = PropertyPlaceholder()
 
 
-def step(name, cmd, add_properties=True, **kwargs):
-  """Returns a step dictionary which is compatible with annotator.py. Uses
-  PropertyPlaceholder as a stand-in for build-properties and factory-properties
-  so that annotator_run can fill them in after the recipe completes."""
-  assert isinstance(cmd, list)
-  if add_properties:
-    cmd += [PropertyPlaceholder]
-  ret = kwargs
-  ret.update({'name': name, 'cmd': cmd})
-  return ret
+def _path_method(name, base):
+  """Returns a shortcut static method which functions like os.path.join with a
+  fixed first component |base|."""
+  def path_func_inner(*pieces):
+    """This function returns a path to a file in '%s'."""
+    return _os.path.join(base, *pieces)
+  path_func_inner.__name__ = name
+  path_func_inner.__doc__ = path_func_inner.__doc__ % base
+  return staticmethod(path_func_inner)
 
 
-def apply_patch_step(build_properties):
-  return {
-    'name': 'apply_issue',
-    'cmd': [
-        'apply_issue',
-        '-r', build_properties['root'],
-        '-i', build_properties['issue'],
-        '-p', build_properties['patchset'],
-        '-s', build_properties['rietveld'],
-        '-e', 'commit-bot@chromium.org'] }
+class Steps(object):
+  """Provides methods to build steps that annotator.py understands."""
 
+  # Method could be a function
+  # pylint: disable=R0201
 
-def git_step(build_properties, cmd):
-  root_path = checkout(build_properties)
-  name = 'git '+cmd[0]
-  # Distinguish 'git config' commands by the variable they are setting.
-  if cmd[0] == 'config' and not cmd[1].startswith('-'):
-    name += " "+cmd[1]
-  return {
-      'name': name,
-      'cmd': ['git', '--work-tree', root_path,
-              '--git-dir', _os.path.join(root_path, '.git')]+cmd }
+  depot_tools_path = _path_method('depot_tools_path', DEPOT_TOOLS_ROOT)
+  build_internal_path = _path_method('build_internal_path', BUILD_INTERNAL_ROOT)
+  build_path = _path_method('build_path', BUILD_ROOT)
+  slave_build_path = _path_method('slave_build_path', SLAVE_BUILD_ROOT)
 
+  def __init__(self, build_properties):
+    self.build_properties = build_properties
 
-def gclient_spec(build_properties):
-  return {'solutions': [{
-      'name' : build_properties['root'],
-      'url' : build_properties['root_repo_url'],
-      'deps_file' : build_properties.get('root_repo_deps_file', ''),
-      'managed' : True,
-      'custom_deps' : {},
-      'safesync_url': '',
-  }]}
+  # e.g. /b/build/slave/<slave-name>/build/src
+  def checkout_path(self, *pieces):
+    """This function returns a path to a file in gclient checkout."""
+    return self.slave_build_path(self.build_properties['root'], *pieces)
+
+  def gclient_spec(self):
+    """Returns default gclient spec. Constructs it from build_properties."""
+    return {'solutions': [{
+        'name' : self.build_properties['root'],
+        'url' : self.build_properties['root_repo_url'],
+        'deps_file' : self.build_properties.get('root_repo_deps_file', ''),
+        'managed' : True,
+        'custom_deps' : {},
+        'safesync_url': '',
+    }]}
+
+  def step(self, name, cmd, add_properties=False, **kwargs):
+    """Returns a step dictionary which is compatible with annotator.py. Uses
+    PropertyPlaceholder as a stand-in for build-properties and
+    factory-properties so that annotator_run can fill them in after the recipe
+    completes."""
+    assert isinstance(cmd, list)
+    if add_properties:
+      cmd += [PropertyPlaceholder]
+    ret = kwargs
+    ret.update({'name': name, 'cmd': cmd})
+    return ret
+
+  def apply_patch_step(self):
+    return self.step('apply_issue', [
+        self.depot_tools_path('apply_issue'),
+        '-r', self.build_properties['root'],
+        '-i', self.build_properties['issue'],
+        '-p', self.build_properties['patchset'],
+        '-s', self.build_properties['rietveld'],
+        '-e', 'commit-bot@chromium.org'])
+
+  def git_step(self, *args):
+    root_path = self.checkout_path()
+    name = 'git '+args[0]
+    # Distinguish 'git config' commands by the variable they are setting.
+    if args[0] == 'config' and not args[1].startswith('-'):
+      name += " "+args[1]
+    return self.step(name, [
+        'git', '--work-tree', root_path,
+               '--git-dir', _os.path.join(root_path, '.git')]+args)

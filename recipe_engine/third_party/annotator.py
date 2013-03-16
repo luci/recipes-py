@@ -15,6 +15,7 @@ executes those lines while annotating the output. The input is json:
 
 import json
 import optparse
+import os
 import re
 import sys
 import traceback
@@ -25,7 +26,7 @@ from common import chromium_utils
 def emit(line, stream, flush_before=None):
   if flush_before:
     flush_before.flush()
-  print >> stream, line
+  print >> stream, '\n' + line
   stream.flush()
 
 
@@ -188,7 +189,8 @@ class StructuredAnnotationStream(AdvancedAnnotationStream):
 
   def __init__(self, seed_steps=None, stream=sys.stdout,
                flush_before=sys.stderr):
-    super(StructuredAnnotationStream, self).__init__(stream=stream)
+    super(StructuredAnnotationStream, self).__init__(stream=stream,
+                                                     flush_before=flush_before)
     seed_steps = seed_steps or []
     self.seed_steps = seed_steps
 
@@ -311,6 +313,86 @@ class Match:
     return Match._parse_line('^@@@BUILD_STEP (.*)@@@', line)
 
 
+def _merge_envs(original, override):
+  result = original.copy()
+  if not override:
+    return result
+  for k, v in override.items():
+    if v is None:
+      if k in result:
+        del result[k]
+    else:
+      result[k] = v
+  return result
+
+
+def _validate_step(step):
+  """Validates parameters of the step.
+  Returns None if it's OK, error message if not.
+  """
+  for req in ['cmd', 'name']:
+    if req not in step:
+      return 'missing \'%s\' parameter' % (req,)
+  if 'cwd' in step and not os.path.isabs(step['cwd']):
+    return '\'cwd\' should be an absolute path'
+  return None
+
+
+def _run_step(stream, build_failure,
+              name, cmd, cwd=None, env=None,
+              skip=False, always_run=False,
+              ignore_annotations=False,
+              **kwargs):
+  """Runs a single step.
+
+  Context:
+    stream: StructuredAnnotationStream to use to emit step
+    build_failure: True if some previous step has failed
+
+  Step parameters:
+    name: name of the step, will appear in buildbots waterfall
+    cmd: command to run, list of one or more strings
+    cwd: absolute path to working directory for the command
+    env: dict with overrides for environment variables
+    skip: True to skip this step
+    always_run: True to run the step even if some previous step failed
+    ignore_annotations: if True will ignore annotations emitted by the step
+
+  Returns new value for build_failure.
+  """
+  if skip or (build_failure and not always_run):
+    return build_failure
+
+  # For error reporting.
+  step_dict = locals().copy()
+  step_dict.pop('stream')
+  step_dict.update(kwargs)
+
+  filter_obj = None
+  if ignore_annotations:
+    class AnnotationFilter(chromium_utils.RunCommandFilter):
+      def FilterLine(self, line):
+        return line.replace('@@@', '###')
+    filter_obj = AnnotationFilter()
+
+  try:
+    with stream.step(name) as s:
+      ret = chromium_utils.RunCommand(command=map(str, cmd),
+                                      cwd=cwd,
+                                      env=_merge_envs(os.environ, env),
+                                      filter_obj=filter_obj)
+      if ret != 0:
+        print 'step returned non-zero exit code: %d' % ret
+        print 'step was: %s' % json.dumps(step_dict)
+        s.step_failure()
+        build_failure = True
+  except OSError:
+    # File wasn't found, error has been already reported to stream.
+    build_failure = True
+
+  return build_failure
+
+
 def main():
   usage = '%s <command list file or - for stdin>' % sys.argv[0]
   parser = optparse.OptionParser(usage=usage)
@@ -329,33 +411,16 @@ def main():
       steps.extend(json.load(f))
 
   for step in steps:
-    if ('cmd' not in step or
-        'name' not in step):
-      print 'step \'%s\' is invalid' % json.dumps(step)
+    error = _validate_step(step)
+    if error:
+      print 'Invalid step - %s\n%s' % (error, json.dumps(step, indent=2))
       return 1
 
   stream = StructuredAnnotationStream(seed_steps=[s['name'] for s in steps])
   build_failure = False
   for step in steps:
-    if step.get('skip'):
-      continue
-    if not build_failure or step.get('always_run'):
-      try:
-        with stream.step(step['name']) as s:
-          step['cmd'] = map(str, step['cmd'])
-          ret = chromium_utils.RunCommand(step['cmd'])
-          if ret != 0:
-            print 'step returned non-zero exit code: %d' % ret
-            print 'step was: %s' % json.dumps(step)
-            s.step_failure()
-            build_failure = True
-      except OSError:
-        # File wasn't found, error has been already reported to stream.
-        build_failure = True
-
-  if build_failure:
-    return 1
-  return 0
+    build_failure = _run_step(stream, build_failure, **step)
+  return 1 if build_failure else 0
 
 
 if __name__ == '__main__':

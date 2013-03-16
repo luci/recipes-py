@@ -151,6 +151,7 @@ def run(checkout_type, checkout_spec):
     checkout.clean()
   with stream.step('checkout') as s:
     checkout.checkout()
+  return 0
 
 
 def main():

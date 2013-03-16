@@ -181,11 +181,11 @@ def main():
 
 
 def UpdateScripts():
+  if os.environ.get('RUN_SLAVE_UPDATED_SCRIPTS'):
+    os.environ.pop('RUN_SLAVE_UPDATED_SCRIPTS')
+    return False
   stream = annotator.StructuredAnnotationStream(seed_steps=['update_scripts'])
   with stream.step('update_scripts') as s:
-    if os.environ.get('RUN_SLAVE_UPDATED_SCRIPTS'):
-      os.environ.pop('RUN_SLAVE_UPDATED_SCRIPTS')
-      return False
     gclient_name = 'gclient'
     if sys.platform.startswith('win'):
       gclient_name += '.bat'
