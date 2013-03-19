@@ -121,6 +121,29 @@ class GclientCheckout(Checkout):
     self.run_gclient('sync', '--nohooks')
 
 
+class GclientGitCheckout(GclientCheckout):
+  """A gclient checkout tuned for purely git-based DEPS."""
+  CHECKOUT_TYPE = 'gclient_git'
+  def clean(self):
+    # clean() isn't used because the gclient sync flags passed in checkout() do
+    # much the same thing, and they're more correct than doing a separate
+    # 'gclient revert' because it makes sure the other args are correct when a
+    # repo was deleted and needs to be re-cloned (notably --with_branch_heads),
+    # whereas 'revert' uses default args for clone operations.
+    #
+    # TODO(mmoss): To be like current official builders, this step could just
+    # delete the whole <slave_name>/build/ directory and start each build from
+    # scratch. That might be the least bad solution, at least until we have a
+    # reliable gclient method to produce a pristine working dir for git-based
+    # builds (e.g. maybe some combination of 'git reset/clean -fx' and removing
+    # the 'out' directory).
+    pass
+
+  def checkout(self):
+    self.run_gclient('sync', '--verbose', '--with_branch_heads', '--nohooks',
+                     '--reset', '--delete_unversioned_trees', '--force')
+
+
 class GitCheckout(Checkout):
   CHECKOUT_TYPE = 'git'
 
