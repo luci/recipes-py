@@ -104,6 +104,6 @@ class Steps(object):
     # Distinguish 'git config' commands by the variable they are setting.
     if args[0] == 'config' and not args[1].startswith('-'):
       name += " "+args[1]
-    return self.step(name, [
+    return self.step(name, list((
         'git', '--work-tree', root_path,
-               '--git-dir', _os.path.join(root_path, '.git')]+args)
+               '--git-dir', _os.path.join(root_path, '.git'))+args))

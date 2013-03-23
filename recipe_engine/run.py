@@ -57,16 +57,13 @@ SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 @contextlib.contextmanager
-def temp_import_path(path):
-  added = False
-  if path not in sys.path:
-    sys.path.insert(0, path)
-    added = True
+def temp_purge_path(path):
+  saved = sys.path
+  sys.path = [path]
   try:
     yield
   finally:
-    if added and path in sys.path:
-      sys.path.remove(path)
+    sys.path = saved
 
 
 def get_args():
@@ -112,13 +109,13 @@ def main():
 
     for path in recipe_dirs:
       recipe_module = None
-      with temp_import_path(path):
+      with temp_purge_path(path):
         try:
           recipe_module = __import__(recipe, globals(), locals())
         except ImportError:
           continue
       recipe_dict = recipe_module.GetFactoryProperties(
-          opts.build_properties.copy())
+          recipe_util, opts.build_properties.copy())
       break
     else:
       s.step_text('recipe not found')
@@ -127,8 +124,9 @@ def main():
 
     factory_properties.update(recipe_dict)
 
-  # Now do the heavy lifting: handle elements of factory properties with various
-  # other slave scripts.
+  # If a checkout is specified, get its type and spec and pass them
+  # off to annotated_checkout.py to actually fetch the repo.
+  # annotated_checkout.py handles its own StructuredAnnotationStream.
   if 'checkout' in factory_properties:
     checkout_type = factory_properties['checkout']
     checkout_spec = factory_properties['%s_spec' % checkout_type]
@@ -139,19 +137,29 @@ def main():
     if ret != 0:
       return ret
 
-  assert ('script' in factory_properties) or ('steps' in factory_properties)
+  assert ('script' in factory_properties) ^ ('steps' in factory_properties)
   ret = 0
 
-  # Execute a script if specified.
+  # If a script is specified, import it, execute it's GetSteps method,
+  # and pass those steps forward so they get executed by annotator.py.
   if 'script' in factory_properties:
-    script = factory_properties['script']
-    cmd = [sys.executable, script,
-           '--factory-properties', json.dumps(factory_properties),
-           '--build-properties', json.dumps(opts.build_properties)]
-    print 'in %s executing: %s' % (os.getcwd(), ' '.join(cmd))
-    ret = subprocess.call(cmd)
+    with stream.step('get_steps') as s:
+      script_path = factory_properties['script']
+      script = script_path[-1]
+      helper = recipe_util.Steps(opts.build_properties)
+      path = helper.slave_build_path(script_path)
+      with temp_purge_path(path):
+        try:
+          script_module = __import__(script, globals(), locals())
+        except ImportError:
+          s.step_text('script not found')
+          s.step_failure()
+          return 1
+        steps_dict = script_module.GetSteps(opts.build_properties.copy())
+      factory_properties['steps'] = steps_dict
 
   # Execute annotator.py with steps if specified.
+  # annotator.py handles the seeding, execution, and annotation of each step.
   if 'steps' in factory_properties:
     steps = factory_properties.pop('steps')
     factory_properties_str = json.dumps(factory_properties)
