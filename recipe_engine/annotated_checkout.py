@@ -111,7 +111,7 @@ class GclientCheckout(Checkout):
 
   @classmethod
   def run_gclient(cls, *cmd):
-    print 'Running: gclient %s' % " ".join(pipes.quote(x) for x in cmd)
+    print 'Running: gclient %s' % ' '.join(pipes.quote(x) for x in cmd)
     subprocess.check_call((cls.gclient_path,)+cmd)
 
   def clean(self):
@@ -145,7 +145,45 @@ class GclientGitCheckout(GclientCheckout):
 
 
 class GitCheckout(Checkout):
+  """Git specs are a dictionary with up to four keys: |url|, |branch|,
+  |recursive|, and |directory|. Only |url| is required. The others default
+  to empty, which results in using the git-default values of HEAD, False,
+  and the 'humanish' interpretation of the url, respectively. Note that |url|
+  is the full git url of the repo, including username and port number if
+  necessary."""
   CHECKOUT_TYPE = 'git'
+
+  def __init__(self, *args, **kwargs):
+    super(GitCheckout, self).__init__(*args, **kwargs)
+    assert 'url' in self.spec
+    try:
+      self.run_git('branch')
+      exists = True
+    except subprocess.CalledProcessError:
+      exists = False
+    if exists:
+      self.run_git('remote', 'remove', 'origin')
+    else:
+      self.run_git('init')
+    self.run_git('remote', 'add', 'origin', self.spec['url'])
+    # TODO(agable): add support for git crup.
+    if self.spec.get('recursive'):
+      self.run_git('fetch', 'origin', '--recurse-submodules')
+    else:
+      self.run_git('fetch', 'origin')
+    branch = self.spec.get('branch', 'master')
+    self.run_git('update-ref', 'refs/heads/%s' % branch, 'origin/%s' % branch)
+
+  @staticmethod
+  def run_git(cmd, *args):
+    print 'Running: git %s %s' % (cmd, ' '.join(pipes.quote(x) for x in args))
+    subprocess.check_call(['git', cmd] + list(args))
+
+  def clean(self):
+    self.run_git('clean', '-f', '-d', '-x')
+
+  def checkout(self):
+    self.run_git('checkout', '-f', self.spec.get('branch', 'master'))
 
 
 class SvnCheckout(Checkout):
