@@ -85,6 +85,8 @@ def get_args():
   parser.add_option('--output-factory-properties', action='store_true',
                     help='output JSON-encoded factory properties extracted from'
                     'the build factory')
+  parser.add_option('--keep-stdin', action='store_true', default=False,
+                    help='don\'t close stdin when running recipe steps')
   return parser.parse_args()
 
 
@@ -182,7 +184,12 @@ def main():
       with stream.step('annotator_preamble') as s:
         print 'in %s executing: %s' % (os.getcwd(), ' '.join(cmd))
         print 'with: %s' % step_doc
-      ret = subprocess.call(cmd)
+      if opts.keep_stdin:
+        ret = subprocess.call(cmd)
+      else:
+        proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+        proc.communicate('')
+        ret = proc.returncode
     finally:
       os.unlink(tmpname)
 
