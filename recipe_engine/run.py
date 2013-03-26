@@ -202,12 +202,12 @@ def UpdateScripts():
     return False
   stream = annotator.StructuredAnnotationStream(seed_steps=['update_scripts'])
   with stream.step('update_scripts') as s:
+    build_root = os.path.join(SCRIPT_PATH, '..', '..')
     gclient_name = 'gclient'
     if sys.platform.startswith('win'):
       gclient_name += '.bat'
-    gclient_path = os.path.join(SCRIPT_PATH, '..', '..', '..',
-                                'depot_tools', gclient_name)
-    if subprocess.call([gclient_path, 'sync', '--force']) != 0:
+    gclient_path = os.path.join(build_root, '..', 'depot_tools', gclient_name)
+    if subprocess.call([gclient_path, 'sync', '--force'], cwd=build_root) != 0:
       s.step_text('gclient sync failed!')
       s.step_warnings()
     os.environ['RUN_SLAVE_UPDATED_SCRIPTS'] = '1'
