@@ -144,10 +144,11 @@ def main():
   # and pass those steps forward so they get executed by annotator.py.
   if 'script' in factory_properties:
     with stream.step('get_steps') as s:
-      script_path = factory_properties['script']
-      script = script_path[-1]
+      script_path = factory_properties['script'][:-1]
+      script = factory_properties['script'][-1]
+      assert os.pardir not in script_path
       helper = recipe_util.Steps(opts.build_properties)
-      path = helper.slave_build_path(script_path)
+      path = helper.slave_build_path(*script_path)
       with temp_purge_path(path):
         try:
           script_module = __import__(script, globals(), locals())
