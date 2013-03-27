@@ -132,7 +132,9 @@ def main():
         except ImportError:
           continue
       recipe_dict = recipe_module.GetFactoryProperties(
-          recipe_util, opts.build_properties.copy())
+          recipe_util,
+          opts.factory_properties.copy(),
+          opts.build_properties.copy())
       break
     else:
       s.step_text('recipe not found')
