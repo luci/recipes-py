@@ -52,6 +52,7 @@ import tempfile
 from common import annotator
 from common import chromium_utils
 from slave import recipe_util
+from slave import annotated_checkout
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -64,6 +65,21 @@ def temp_purge_path(path):
     yield
   finally:
     sys.path = saved
+
+
+def expand_root_placeholder(root, lst):
+  """This expands CheckoutRootPlaceholder in paths to a real path.
+  See recipe_util.checkout_path() for usage."""
+  ret = []
+  replacements = {'CheckoutRootPlaceholder': root}
+  for item in lst:
+    if isinstance(item, str):
+      if '%(CheckoutRootPlaceholder)s' in item:
+        assert root, 'Must use "checkout" key to use checkout_path().'
+        ret.append(item % replacements)
+        continue
+    ret.append(item)
+  return ret
 
 
 def get_args():
@@ -107,7 +123,6 @@ def main():
                      'slave', 'recipes'),
         os.path.join(SCRIPT_PATH, 'recipes'),
     ))
-    recipe_dirs = [os.path.abspath(p) for p in recipe_dirs]
 
     for path in recipe_dirs:
       recipe_module = None
@@ -129,13 +144,11 @@ def main():
   # If a checkout is specified, get its type and spec and pass them
   # off to annotated_checkout.py to actually fetch the repo.
   # annotated_checkout.py handles its own StructuredAnnotationStream.
+  root = None
   if 'checkout' in factory_properties:
     checkout_type = factory_properties['checkout']
     checkout_spec = factory_properties['%s_spec' % checkout_type]
-    ret = subprocess.call([sys.executable,
-                           '%s/annotated_checkout.py' % SCRIPT_PATH,
-                           '--type', checkout_type,
-                           '--spec', json.dumps(checkout_spec)])
+    ret, root = annotated_checkout.run(checkout_type, checkout_spec)
     if ret != 0:
       return ret
 
@@ -146,14 +159,13 @@ def main():
   # and pass those steps forward so they get executed by annotator.py.
   if 'script' in factory_properties:
     with stream.step('get_steps') as s:
-      script_path = factory_properties['script'][:-1]
-      script = factory_properties['script'][-1]
-      assert os.pardir not in script_path
-      helper = recipe_util.Steps(opts.build_properties)
-      path = helper.slave_build_path(*script_path)
-      with temp_purge_path(path):
+      assert isinstance(factory_properties['script'], str)
+      script = expand_root_placeholder(root, [factory_properties['script']])
+      assert os.path.abspath(script) == script
+      with temp_purge_path(os.path.dirname(script)):
         try:
-          script_module = __import__(script, globals(), locals())
+          script_name = os.path.splitext(os.path.basename(script))[0]
+          script_module = __import__(script_name, globals(), locals())
         except ImportError:
           s.step_text('script not found')
           s.step_failure()
@@ -167,12 +179,17 @@ def main():
     steps = factory_properties.pop('steps')
     factory_properties_str = json.dumps(factory_properties)
     build_properties_str = json.dumps(opts.build_properties)
+    property_placeholder_lst = [
+        '--factory-properties', factory_properties_str,
+        '--build-properties', build_properties_str]
     for step in steps:
-      if recipe_util.PropertyPlaceholder in step['cmd']:
-        idx = step['cmd'].index(recipe_util.PropertyPlaceholder)
-        step['cmd'][idx:idx+1] = [
-            '--factory-properties', factory_properties_str,
-            '--build-properties', build_properties_str]
+      new_cmd = []
+      for item in step['cmd']:
+        if item == recipe_util.PropertyPlaceholder:
+          new_cmd.extend(property_placeholder_lst)
+        else:
+          new_cmd.append(expand_root_placeholder(root, item))
+      step['cmd'] = new_cmd
     annotator_path = os.path.join(
       os.path.dirname(SCRIPT_PATH), 'common', 'annotator.py')
     tmpfile, tmpname = tempfile.mkstemp()

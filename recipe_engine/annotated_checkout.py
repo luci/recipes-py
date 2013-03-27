@@ -81,6 +81,9 @@ class Checkout(object):
   def checkout(self):
     pass
 
+  def root(self):
+    pass
+
 
 def CheckoutFactory(type_name, spec):
   """Factory to build Checkout class instances."""
@@ -120,6 +123,9 @@ class GclientCheckout(Checkout):
   def checkout(self):
     self.run_gclient('sync', '--nohooks')
 
+  def root(self):
+    return os.path.abspath(self.spec['solutions'][0]['name'])
+
 
 class GclientGitCheckout(GclientCheckout):
   """A gclient checkout tuned for purely git-based DEPS."""
@@ -156,6 +162,19 @@ class GitCheckout(Checkout):
   def __init__(self, *args, **kwargs):
     super(GitCheckout, self).__init__(*args, **kwargs)
     assert 'url' in self.spec
+    assert os.pardir not in self.spec.get('directory', '')
+
+    dir_path = self.spec('directory')
+    if not dir_path:
+      dir_path = self.spec['url'].rsplit('/', 1)[-1]
+      if dir_path.endswith('.git'):  # ex: https://host/foobar.git
+        dir_path = dir_path[:-len('.git')]
+      if not dir_path:  # ex: ssh://host:repo/foobar/.git
+        dir_path = dir_path.rsplit('/', 1)[-1]
+    self.cwd = os.path.abspath(os.path.join(os.curdir, dir_path))
+    if not os.path.exists(self.cwd):
+      os.makedirs(self.cwd)
+
     try:
       self.run_git('branch')
       exists = True
@@ -174,16 +193,19 @@ class GitCheckout(Checkout):
     branch = self.spec.get('branch', 'master')
     self.run_git('update-ref', 'refs/heads/%s' % branch, 'origin/%s' % branch)
 
-  @staticmethod
-  def run_git(cmd, *args):
+  def run_git(self, cmd, *args):
+    cmd = (os.path.join(self.cwd, '.git'), '--work-tree', self.cwd) + cmd
     print 'Running: git %s %s' % (cmd, ' '.join(pipes.quote(x) for x in args))
-    subprocess.check_call(['git', cmd] + list(args))
+    subprocess.check_call(['git', '--git-dir', cmd] + list(args))
 
   def clean(self):
     self.run_git('clean', '-f', '-d', '-x')
 
   def checkout(self):
     self.run_git('checkout', '-f', self.spec.get('branch', 'master'))
+
+  def root(self):
+    return os.path.basename(self.cwd)
 
 
 class SvnCheckout(Checkout):
@@ -198,6 +220,10 @@ def run(checkout_type, checkout_spec):
           CHECKOUT_TYPE attribute).
       checkout_spec: Configuration values needed for the type of checkout
           (repository url, etc.).
+
+    Returns:
+      Tuple of (<retcode>, <root_path>) where root_path is the absolute path
+          to the 'root' of the checkout (as defined by |checkout_type|).
   """
   stream = annotator.StructuredAnnotationStream(
       seed_steps=['checkout_setup', 'clean', 'checkout'])
@@ -207,17 +233,17 @@ def run(checkout_type, checkout_spec):
     except KeyError as e:
       s.step_text(e)
       s.step_failure()
-      return 1
+      return (1, None)
   with stream.step('clean') as s:
     checkout.clean()
   with stream.step('checkout') as s:
     checkout.checkout()
-  return 0
+  return (0, checkout.root())
 
 
 def main():
   opts, _ = get_args()
-  return run(opts.type, opts.spec)
+  return run(opts.type, opts.spec)[0]
 
 
 if __name__ == '__main__':
