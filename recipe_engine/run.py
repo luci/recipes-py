@@ -186,11 +186,11 @@ def main():
         '--build-properties', build_properties_str]
     for step in steps:
       new_cmd = []
-      for item in step['cmd']:
+      for item in expand_root_placeholder(root, step['cmd']):
         if item == recipe_util.PropertyPlaceholder:
           new_cmd.extend(property_placeholder_lst)
         else:
-          new_cmd.append(expand_root_placeholder(root, item))
+          new_cmd.append(item)
       step['cmd'] = new_cmd
     annotator_path = os.path.join(
       os.path.dirname(SCRIPT_PATH), 'common', 'annotator.py')
