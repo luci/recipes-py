@@ -164,7 +164,7 @@ class GitCheckout(Checkout):
     assert 'url' in self.spec
     assert os.pardir not in self.spec.get('directory', '')
 
-    dir_path = self.spec('directory')
+    dir_path = self.spec.get('directory')
     if not dir_path:
       dir_path = self.spec['url'].rsplit('/', 1)[-1]
       if dir_path.endswith('.git'):  # ex: https://host/foobar.git
