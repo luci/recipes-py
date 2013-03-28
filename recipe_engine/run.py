@@ -157,7 +157,7 @@ def main():
   assert ('script' in factory_properties) ^ ('steps' in factory_properties)
   ret = 0
 
-  # If a script is specified, import it, execute it's GetSteps method,
+  # If a script is specified, import it, execute its GetSteps method,
   # and pass those steps forward so they get executed by annotator.py.
   if 'script' in factory_properties:
     with stream.step('get_steps') as s:
@@ -172,7 +172,9 @@ def main():
           s.step_text('script not found')
           s.step_failure()
           return 1
-        steps_dict = script_module.GetSteps(opts.build_properties.copy())
+        steps_dict = script_module.GetSteps(recipe_util,
+                                            opts.factory_properties.copy(),
+                                            opts.build_properties.copy())
       factory_properties['steps'] = steps_dict
 
   # Execute annotator.py with steps if specified.
