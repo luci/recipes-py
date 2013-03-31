@@ -58,6 +58,48 @@ def checkout_path(*pieces):
   return _os.path.join("%(CheckoutRootPlaceholder)s", *pieces)
 
 
+# This dict is used by _url_method. It contains a list of common base source
+# control urls and their mirror urls. The format of the dict is:
+#   { 'NamedUrl': ('<real url>', '<mirror url>'),
+#     'OtherNamedUrl': ('<real url>',) }
+SOURCE_URLS = {
+  'ChromiumSvnUrl': ('https://src.chromium.org/chrome/',
+                     'svn://svn-mirror.golo.chromium.org/chrome/'),
+  'ChromiumGitURL': ('https://chromium.googlesource.com/',)
+}
+
+# This dict is used by Steps.gclient_common_solution. It contains standard
+# configurations for commonly-needed gclient configurations. The format is:
+#   { 'configname': lambda self: { ... gclient solution object ... } }
+# self will be a Steps() instance.
+GCLIENT_COMMON_SOLUTIONS = {
+
+  'chromium': lambda self: {
+    'name' : 'src',
+    'url' : self.ChromiumSvnURL("trunk", "src"),
+    'deps_file' : 'DEPS',
+    'managed' : True,
+    'custom_deps': {
+      'src/third_party/WebKit/LayoutTests': None,
+      'src/webkit/data/layout_tests/LayoutTests': None},
+    'custom_vars': self.mirror_only({
+      'googlecode_url': 'svn://svn-mirror.golo.chromium.org/%s',
+      'nacl_trunk': 'http://src.chromium.org/native_client/trunk',
+      'sourceforge_url': 'svn://svn-mirror.golo.chromium.org/%(repo)s',
+      'webkit_trunk':
+        'svn://svn-mirror.golo.chromium.org/webkit-readonly/trunk'}),
+    'safesync_url': '',
+  },
+
+  'tools_build': lambda self: {
+    'name': 'build',
+    'url': self.ChromiumGitURL('chromium', 'tools', 'build.git'),
+    'managed' : True,
+    'deps_file' : '.DEPS.git',
+  }
+}
+
+
 class PropertyPlaceholder(object):
   """PropertyPlaceholder is meant to be a singleton object which, when added
   to a step's cmd list, will be replaced by annotated_run with the command
@@ -75,13 +117,53 @@ class PropertyPlaceholder(object):
 PropertyPlaceholder = PropertyPlaceholder()
 
 
+def _url_method(name):
+  """Returns a shortcut static method which functions like os.path.join and uses
+  a fixed first url component which is chosen from the urls defined in
+  SOURCE_URLS based on |name|.
+  """
+  # note that we do the __name__ munging for each function separately because
+  # staticmethod hides these attributes.
+  bases = SOURCE_URLS[name]
+  if len(bases) == 1:
+    def url_func_inner_single(*pieces):
+      """This function returns a url under '%s'."""
+      return "/".join((bases[0],)+pieces)
+    url_func_inner_single.__name__ = name
+    url_func_inner_single.__doc__ = url_func_inner_single.__doc__ % bases
+    url_func_inner_single = staticmethod(url_func_inner_single)
+    return url_func_inner_single
+  else:
+    def url_func_inner_mirror(self, *pieces):
+      """This function returns a url under '%s' or (mirror) '%s'.
+      The mirror setting is extracted as self.use_mirror"""
+      return "/".join((bases[self.use_mirror],)+pieces)
+    url_func_inner_mirror.__name__ = name
+    url_func_inner_mirror.__doc__ = url_func_inner_mirror.__doc__ % bases
+    return url_func_inner_mirror
+
+
 class Steps(object):
   """Provides methods to build steps that annotator.py understands."""
 
+  ChromiumSvnUrl = _url_method('ChromiumSvnUrl')
+  ChromiumGitURL = _url_method('ChromiumGitURL')
+
   def __init__(self, build_properties):
     self.build_properties = build_properties
+    self.use_mirror = self.build_properties.get('use_mirror', True)
 
-  def gclient_spec(self):
+  def mirror_only(self, obj):
+    """Returns obj if we're using mirrors. Otherwise returns the 'empty'
+    version of obj."""
+    return obj if self.use_mirror else obj.__class__()
+
+  def gclient_common_solution(self, solution_name):
+    """Returns a single gclient solution object (python dict) for common
+    solutions."""
+    return GCLIENT_COMMON_SOLUTIONS[solution_name](self)
+
+  def gclient_simple_spec(self):
     """Returns default gclient spec. Constructs it from build_properties."""
     return {'solutions': [{
         'name' : self.build_properties['root'],
