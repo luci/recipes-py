@@ -24,6 +24,7 @@ def _path_method(name, base):
   fixed first component |base|."""
   def path_func_inner(*pieces):
     """This function returns a path to a file in '%s'."""
+    assert _os.pardir not in pieces
     return _os.path.join(base, *pieces)
   path_func_inner.__name__ = name
   path_func_inner.__doc__ = path_func_inner.__doc__ % base
@@ -36,26 +37,25 @@ build_internal_path = _path_method('build_internal_path', BUILD_INTERNAL_ROOT)
 build_path = _path_method('build_path', BUILD_ROOT)
 slave_build_path = _path_method('slave_build_path', SLAVE_BUILD_ROOT)
 
-def checkout_path(*pieces):
-  """This function returns the equivalent of a path to a file in checkout root.
-  It is not a 'real' path because it contains a string token which must be
-  filled in by annotator_run.
+"""This function returns the equivalent of a path to a file in checkout root.
+It is not a 'real' path because it contains a string token which must be
+filled in by annotator_run.
 
-  Example (assuming that the checkout is a standard chromium checkout in 'src'):
-    checkout_path('foobar')
-      returns:
-    "%(CheckoutRootPlaceholder)s/foobar"
-      which, when run under annotator_run.py becomes:
-    "/b/build/slave/win_rel/build/src/foobar"
+Example (assuming that the checkout is a standard chromium checkout in 'src'):
+  checkout_path('foobar')
+    returns:
+  "%(CheckoutRootPlaceholder)s/foobar"
+    which, when run under annotator_run.py becomes:
+  "/b/build/slave/win_rel/build/src/foobar"
 
-  The actual checkout root is filled in by annotated_run after the recipe
-  completes, and is dependent on the implementation of 'root()' in
-  annotated_checkout for the checkout type that you've selected.
+The actual checkout root is filled in by annotated_run after the recipe
+completes, and is dependent on the implementation of 'root()' in
+annotated_checkout for the checkout type that you've selected.
 
-  NOTE: In order for this function to work, your recipe MUST use the 'checkout'
-  functionality provided by annotated_run.
-  """
-  return _os.path.join("%(CheckoutRootPlaceholder)s", *pieces)
+NOTE: In order for this function to work, your recipe MUST use the 'checkout'
+functionality provided by annotated_run.
+"""  # pylint: disable=W0105
+checkout_path = _path_method('checkout_path', "%(CheckoutRootPlaceholder)s")
 
 
 # This dict is used by _url_method. It contains a list of common base source
@@ -63,9 +63,9 @@ def checkout_path(*pieces):
 #   { 'NamedUrl': ('<real url>', '<mirror url>'),
 #     'OtherNamedUrl': ('<real url>',) }
 SOURCE_URLS = {
-  'ChromiumSvnUrl': ('https://src.chromium.org/chrome/',
-                     'svn://svn-mirror.golo.chromium.org/chrome/'),
-  'ChromiumGitURL': ('https://chromium.googlesource.com/',)
+  'ChromiumSvnURL': ('https://src.chromium.org/chrome',
+                     'svn://svn-mirror.golo.chromium.org/chrome'),
+  'ChromiumGitURL': ('https://chromium.googlesource.com',)
 }
 
 # This dict is used by Steps.gclient_common_solution. It contains standard
@@ -146,7 +146,7 @@ def _url_method(name):
 class Steps(object):
   """Provides methods to build steps that annotator.py understands."""
 
-  ChromiumSvnUrl = _url_method('ChromiumSvnUrl')
+  ChromiumSvnURL = _url_method('ChromiumSvnURL')
   ChromiumGitURL = _url_method('ChromiumGitURL')
 
   def __init__(self, build_properties):
@@ -163,23 +163,13 @@ class Steps(object):
     solutions."""
     return GCLIENT_COMMON_SOLUTIONS[solution_name](self)
 
-  def gclient_simple_spec(self):
-    """Returns default gclient spec. Constructs it from build_properties."""
-    return {'solutions': [{
-        'name' : self.build_properties['root'],
-        'url' : self.build_properties['root_repo_url'],
-        'deps_file' : self.build_properties.get('root_repo_deps_file', ''),
-        'managed' : True,
-        'custom_deps' : {},
-        'safesync_url': '',
-    }]}
-
   @staticmethod
   def step(name, cmd, add_properties=False, **kwargs):
     """Returns a step dictionary which is compatible with annotator.py. Uses
     PropertyPlaceholder as a stand-in for build-properties and
     factory-properties so that annotated_run can fill them in after the recipe
     completes."""
+    assert 'shell' not in kwargs
     assert isinstance(cmd, list)
     if add_properties:
       cmd += [PropertyPlaceholder]
@@ -187,7 +177,7 @@ class Steps(object):
     ret.update({'name': name, 'cmd': cmd})
     return ret
 
-  def apply_patch_step(self):
+  def apply_issue_step(self):
     return self.step('apply_issue', [
         depot_tools_path('apply_issue'),
         '-r', checkout_path(),
