@@ -162,7 +162,7 @@ def main():
   if 'script' in factory_properties:
     with stream.step('get_steps') as s:
       assert isinstance(factory_properties['script'], str)
-      script = expand_root_placeholder(root, [factory_properties['script']])
+      [script] = expand_root_placeholder(root, [factory_properties['script']])
       assert os.path.abspath(script) == script
       with temp_purge_path(os.path.dirname(script)):
         try:
@@ -194,6 +194,9 @@ def main():
         else:
           new_cmd.append(item)
       step['cmd'] = new_cmd
+      if 'cwd' in step:
+        [new_cwd] = expand_root_placeholder(root, [step['cwd']])
+        step['cwd'] = new_cwd
     annotator_path = os.path.join(
       os.path.dirname(SCRIPT_PATH), 'common', 'annotator.py')
     tmpfile, tmpname = tempfile.mkstemp()

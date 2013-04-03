@@ -193,10 +193,11 @@ class GitCheckout(Checkout):
     branch = self.spec.get('branch', 'master')
     self.run_git('update-ref', 'refs/heads/%s' % branch, 'origin/%s' % branch)
 
-  def run_git(self, cmd, *args):
-    cmd = (os.path.join(self.cwd, '.git'), '--work-tree', self.cwd) + cmd
-    print 'Running: git %s %s' % (cmd, ' '.join(pipes.quote(x) for x in args))
-    subprocess.check_call(['git', '--git-dir', cmd] + list(args))
+  def run_git(self, *cmd):
+    cmd = ('--git-dir', os.path.join(self.cwd, '.git'),
+           '--work-tree', self.cwd, 'git') + cmd
+    print 'Running: %s' % (' '.join(pipes.quote(x) for x in cmd))
+    subprocess.check_call(cmd)
 
   def clean(self):
     self.run_git('clean', '-f', '-d', '-x')
@@ -205,7 +206,7 @@ class GitCheckout(Checkout):
     self.run_git('checkout', '-f', self.spec.get('branch', 'master'))
 
   def root(self):
-    return os.path.basename(self.cwd)
+    return self.cwd
 
 
 class SvnCheckout(Checkout):
@@ -226,7 +227,7 @@ def run(checkout_type, checkout_spec):
           to the 'root' of the checkout (as defined by |checkout_type|).
   """
   stream = annotator.StructuredAnnotationStream(
-      seed_steps=['checkout_setup', 'clean', 'checkout'])
+      seed_steps=['checkout_setup', 'checkout_clean', 'checkout'])
   with stream.step('checkout_setup') as s:
     try:
       checkout = CheckoutFactory(checkout_type, checkout_spec)
@@ -234,7 +235,7 @@ def run(checkout_type, checkout_spec):
       s.step_text(e)
       s.step_failure()
       return (1, None)
-  with stream.step('clean') as s:
+  with stream.step('checkout_clean') as s:
     checkout.clean()
   with stream.step('checkout') as s:
     checkout.checkout()
