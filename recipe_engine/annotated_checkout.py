@@ -181,7 +181,7 @@ class GitCheckout(Checkout):
     except subprocess.CalledProcessError:
       exists = False
     if exists:
-      self.run_git('remote', 'remove', 'origin')
+      self.run_git('remote', 'rm', 'origin')
     else:
       self.run_git('init')
     self.run_git('remote', 'add', 'origin', self.spec['url'])
