@@ -204,6 +204,7 @@ class GitCheckout(Checkout):
 
   def checkout(self):
     self.run_git('checkout', '-f', self.spec.get('branch', 'master'))
+    self.run_git('submodule', 'update', '--init', '--recursive')
 
   def root(self):
     return self.cwd
