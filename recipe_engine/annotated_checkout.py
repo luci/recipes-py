@@ -194,8 +194,8 @@ class GitCheckout(Checkout):
     self.run_git('update-ref', 'refs/heads/%s' % branch, 'origin/%s' % branch)
 
   def run_git(self, *cmd):
-    cmd = ('--git-dir', os.path.join(self.cwd, '.git'),
-           '--work-tree', self.cwd, 'git') + cmd
+    cmd = ('git', '--git-dir', os.path.join(self.cwd, '.git'),
+           '--work-tree', self.cwd) + cmd
     print 'Running: %s' % (' '.join(pipes.quote(x) for x in cmd))
     subprocess.check_call(cmd)
 
