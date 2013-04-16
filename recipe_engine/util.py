@@ -6,7 +6,6 @@
 
 import os as _os
 
-
 # e.g. /b/build/slave/<slave-name>/build
 SLAVE_BUILD_ROOT = _os.path.abspath(_os.getcwd())
 # e.g. /b
@@ -58,45 +57,115 @@ functionality provided by annotated_run.
 checkout_path = _path_method('checkout_path', "%(CheckoutRootPlaceholder)s")
 
 
+def deep_set(obj, key_vals):
+  """Take an object (a dict or list), and a list of key/value pairs to set,
+  and transform it by replacing items in obj at the key locations with the
+  respective values.
+
+  keys are strings in the form of: (str|int)[.(str|int)]*
+
+  Example:
+    obj = {'some': {'deep': {'list': [1, 2, 3, 4, 5, 6]}}}
+    key_vals = [("some.deep.list.3", 'foobar')]
+    result = {'some': {'deep': {'list': [1, 2, 3, 'foobar', 5, 6]}}}
+  """
+  def try_int(x):
+    try:
+      x = int(x)
+    except ValueError:
+      pass
+    return x
+
+  for key, val in key_vals:
+    cur_obj = obj
+    components = key.split('.')
+    for item in components[:-1]:
+      cur_obj = cur_obj[try_int(item)]
+    cur_obj[try_int(components[-1])] = val
+  return obj
+
+
 # This dict is used by _url_method. It contains a list of common base source
 # control urls and their mirror urls. The format of the dict is:
 #   { 'NamedUrl': ('<real url>', '<mirror url>'),
 #     'OtherNamedUrl': ('<real url>',) }
 SOURCE_URLS = {
-  'ChromiumSvnURL': ('https://src.chromium.org/chrome',
-                     'svn://svn-mirror.golo.chromium.org/chrome'),
+  'ChromiumSvnURL': ('https://src.chromium.org',
+                     'svn://svn-mirror.golo.chromium.org'),
   'ChromiumGitURL': ('https://chromium.googlesource.com',)
 }
 
-# This dict is used by Steps.gclient_common_solution. It contains standard
+# This dict is used by Steps.gclient_common_spec. It contains standard
 # configurations for commonly-needed gclient configurations. The format is:
-#   { 'configname': lambda self: { ... gclient solution object ... } }
+#   { 'configname': lambda self: { ... gclient spec object ... } }
 # self will be a Steps() instance.
-GCLIENT_COMMON_SOLUTIONS = {
+GCLIENT_COMMON_SPECS = {
+  'blink': lambda self: deep_set(
+    GCLIENT_COMMON_SPECS['chromium'](self), [
+      ('solutions.0.custom_deps.src/third_party/WebKit',
+        self.ChromiumSvnURL('blink', 'trunk'))
+    ]+[('solutions.0.custom_deps.'+x, None) for x in [
+        "src/third_party/WebKit/LayoutTests",
+        "src/third_party/WebKit/Source",
+        "src/third_party/WebKit/Tools/DumpRenderTree",
+        "src/third_party/WebKit/Tools/Scripts",
+        "src/third_party/WebKit/Tools/gdb",
+        "src/third_party/WebKit/Tools/TestWebKitAPI",
+        "src/third_party/WebKit/WebKitLibraries",
+    ]]),
 
-  'chromium': lambda self: {
-    'name' : 'src',
-    'url' : self.ChromiumSvnURL("trunk", "src"),
-    'deps_file' : 'DEPS',
-    'managed' : True,
-    'custom_deps': {
-      'src/third_party/WebKit/LayoutTests': None,
-      'src/webkit/data/layout_tests/LayoutTests': None},
-    'custom_vars': self.mirror_only({
-      'googlecode_url': 'svn://svn-mirror.golo.chromium.org/%s',
-      'nacl_trunk': 'http://src.chromium.org/native_client/trunk',
-      'sourceforge_url': 'svn://svn-mirror.golo.chromium.org/%(repo)s',
-      'webkit_trunk':
-        'svn://svn-mirror.golo.chromium.org/webkit-readonly/trunk'}),
-    'safesync_url': '',
-  },
+  'blink_bare': lambda self: {'solutions': [
+    {
+      'name': 'blink',
+      'url': self.ChromiumSvnURL('blink', 'trunk'),
+      'deps_file': '',
+      'managed': True,
+      'safesync_url': '',
+    }]},
 
-  'tools_build': lambda self: {
-    'name': 'build',
-    'url': self.ChromiumGitURL('chromium', 'tools', 'build.git'),
-    'managed' : True,
-    'deps_file' : '.DEPS.git',
-  }
+  'chromium': lambda self: {'solutions': [
+    {
+      'name' : 'src',
+      'url' : self.ChromiumSvnURL('chrome', 'trunk', 'src'),
+      'deps_file' : 'DEPS',
+      'managed' : True,
+      'custom_deps': {
+        'src/third_party/WebKit/LayoutTests': None,
+        'src/webkit/data/layout_tests/LayoutTests': None},
+      'custom_vars': self.mirror_only({
+        'googlecode_url': 'svn://svn-mirror.golo.chromium.org/%s',
+        'nacl_trunk': 'http://src.chromium.org/native_client/trunk',
+        'sourceforge_url': 'svn://svn-mirror.golo.chromium.org/%(repo)s',
+        'webkit_trunk': 'svn://svn-mirror.golo.chromium.org/blink/trunk'}),
+      'safesync_url': '',
+    }]},
+
+  'nacl': lambda self: {'solutions': [
+    {
+      "name":"native_client",
+      "url": self.ChromiumSvnURL(
+        'native_client', 'trunk', 'src', 'native_client'),
+      "custom_deps":{},
+      "custom_vars": self.mirror_only({
+        "webkit_trunk":"svn://svn-mirror.golo.chromium.org/blink/trunk",
+        "googlecode_url":"svn://svn-mirror.golo.chromium.org/%s",
+        "sourceforge_url":"svn://svn-mirror.golo.chromium.org/%(repo)s"}),
+    },
+    {
+      "name":"supplement.DEPS",
+      "url": self.ChromiumSvnURL(
+        'native_client', 'trunk', 'deps', 'supplement.DEPS'),
+      "custom_deps":{},
+      "custom_vars":{},
+    }]},
+
+  'tools_build': lambda self: {'solutions': [
+    {
+      'name': 'build',
+      'url': self.ChromiumGitURL('chromium', 'tools', 'build.git'),
+      'managed' : True,
+      'deps_file' : '.DEPS.git',
+    }]},
 }
 
 
@@ -158,10 +227,10 @@ class Steps(object):
     version of obj."""
     return obj if self.use_mirror else obj.__class__()
 
-  def gclient_common_solution(self, solution_name):
+  def gclient_common_spec(self, solution_name):
     """Returns a single gclient solution object (python dict) for common
     solutions."""
-    return GCLIENT_COMMON_SOLUTIONS[solution_name](self)
+    return GCLIENT_COMMON_SPECS[solution_name](self)
 
   @staticmethod
   def step(name, cmd, add_properties=False, **kwargs):
@@ -177,10 +246,10 @@ class Steps(object):
     ret.update({'name': name, 'cmd': cmd})
     return ret
 
-  def apply_issue_step(self):
+  def apply_issue_step(self, root_pieces=None):
     return self.step('apply_issue', [
         depot_tools_path('apply_issue'),
-        '-r', checkout_path(),
+        '-r', checkout_path(*(root_pieces or [])),
         '-i', self.build_properties['issue'],
         '-p', self.build_properties['patchset'],
         '-s', self.build_properties['rietveld'],

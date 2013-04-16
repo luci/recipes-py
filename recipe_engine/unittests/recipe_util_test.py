@@ -54,9 +54,9 @@ class RecipeUtilMirrorStepsTest(unittest.TestCase):
     self.s   = self.ru.Steps({'use_mirror': False})
 
   def test_mirrorURLs(self):
-    self.assertEqual(self.s_m.ChromiumSvnURL('trunk', 'src'),
+    self.assertEqual(self.s_m.ChromiumSvnURL('chrome', 'trunk', 'src'),
                      'svn://svn-mirror.golo.chromium.org/chrome/trunk/src')
-    self.assertEqual(self.s.ChromiumSvnURL('trunk', 'src'),
+    self.assertEqual(self.s.ChromiumSvnURL('chrome', 'trunk', 'src'),
                      'https://src.chromium.org/chrome/trunk/src')
 
   def test_nonMirrorURLs(self):
@@ -70,9 +70,9 @@ class RecipeUtilMirrorStepsTest(unittest.TestCase):
                      ['foobar', 'item'])
     self.assertEqual(self.s.mirror_only(['foobar', 'item']), [])
 
-  def test_chromium_common_solution(self):
+  def test_chromium_common_spec(self):
     self.assertEqual(
-      self.s_m.gclient_common_solution('chromium'),
+      self.s_m.gclient_common_spec('chromium'), {'solutions': [
       {
         'name' : 'src',
         'url' : 'svn://svn-mirror.golo.chromium.org/chrome/trunk/src',
@@ -86,11 +86,11 @@ class RecipeUtilMirrorStepsTest(unittest.TestCase):
           'nacl_trunk': 'http://src.chromium.org/native_client/trunk',
           'sourceforge_url': 'svn://svn-mirror.golo.chromium.org/%(repo)s',
           'webkit_trunk':
-          'svn://svn-mirror.golo.chromium.org/webkit-readonly/trunk'},
+          'svn://svn-mirror.golo.chromium.org/blink/trunk'},
         'safesync_url': '',
-      })
+      }]})
     self.assertEqual(
-      self.s.gclient_common_solution('chromium'),
+      self.s.gclient_common_spec('chromium'), {'solutions': [
       {
         'name' : 'src',
         'url' : 'https://src.chromium.org/chrome/trunk/src',
@@ -101,18 +101,19 @@ class RecipeUtilMirrorStepsTest(unittest.TestCase):
           'src/webkit/data/layout_tests/LayoutTests': None},
         'custom_vars': {},
         'safesync_url': '',
-      })
+      }]})
 
   def test_chromium_tools_build(self):
-    tools_build = {
-      'name': 'build',
-      'url': 'https://chromium.googlesource.com/chromium/tools/build.git',
-      'managed' : True,
-      'deps_file' : '.DEPS.git',
-    }
-    self.assertEqual(self.s_m.gclient_common_solution('tools_build'),
+    tools_build = {'solutions': [
+      {
+        'name': 'build',
+        'url': 'https://chromium.googlesource.com/chromium/tools/build.git',
+        'managed' : True,
+        'deps_file' : '.DEPS.git',
+      }]}
+    self.assertEqual(self.s_m.gclient_common_spec('tools_build'),
                      tools_build)
-    self.assertEqual(self.s.gclient_common_solution('tools_build'),
+    self.assertEqual(self.s.gclient_common_spec('tools_build'),
                      tools_build)
 
 
@@ -141,6 +142,16 @@ class RecipeUtilStepsTest(unittest.TestCase):
        'cmd': [
          '/b/depot_tools/apply_issue',
          '-r', '%(CheckoutRootPlaceholder)s',
+         '-i', '12345',
+         '-p', '1',
+         '-s', 'https://rietveld.org',
+         '-e', 'commit-bot@chromium.org']})
+    self.assertEquals(
+      self.s.apply_issue_step(['foobar', 'other']),
+      {'name': 'apply_issue',
+       'cmd': [
+         '/b/depot_tools/apply_issue',
+         '-r', '%(CheckoutRootPlaceholder)s/foobar/other',
          '-i', '12345',
          '-p', '1',
          '-s', 'https://rietveld.org',
