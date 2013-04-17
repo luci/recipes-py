@@ -109,6 +109,12 @@ def get_args():
 def main():
   opts, _ = get_args()
 
+  # TODO(iannucci): Stop this when blamelist becomes sane data.
+  if ('blamelist_real' in opts.build_properties and
+      'blamelist' in opts.build_properties):
+    opts.build_properties['blamelist'] = opts.build_properties['blamelist_real']
+    del opts.build_properties['blamelist_real']
+
   # Supplement the master-supplied factory_properties dictionary with the values
   # found in the slave-side recipe.
   stream = annotator.StructuredAnnotationStream(seed_steps=['setup_build'])
