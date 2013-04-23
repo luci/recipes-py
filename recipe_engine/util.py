@@ -5,6 +5,7 @@
 """This module holds utilities which make writing recipes easier."""
 
 import os as _os
+import sys as _sys
 
 # e.g. /b/build/slave/<slave-name>/build
 SLAVE_BUILD_ROOT = _os.path.abspath(_os.getcwd())
@@ -17,6 +18,9 @@ BUILD_INTERNAL_ROOT = _os.path.join(ROOT, 'build_internal')
 BUILD_ROOT = _os.path.join(ROOT, 'build')
 # e.g. /b/depot_tools
 DEPOT_TOOLS_ROOT = _os.path.join(ROOT, 'depot_tools')
+
+def python():
+  return _sys.executable
 
 def _path_method(name, base):
   """Returns a shortcut static method which functions like os.path.join with a
