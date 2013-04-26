@@ -121,7 +121,7 @@ class GclientCheckout(Checkout):
     self.run_gclient('revert', '--nohooks')
 
   def checkout(self):
-    self.run_gclient('sync', '--nohooks', '--delete_unversioned_trees')
+    self.run_gclient('sync', '--nohooks')
 
   def root(self):
     return os.path.abspath(self.spec['solutions'][0]['name'])
