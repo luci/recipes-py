@@ -101,18 +101,10 @@ SOURCE_URLS = {
 # self will be a Steps() instance.
 GCLIENT_COMMON_SPECS = {
   'blink': lambda self: deep_set(
-    GCLIENT_COMMON_SPECS['chromium'](self), [
-      ('solutions.0.custom_deps.src/third_party/WebKit',
-        self.ChromiumSvnURL('blink', 'trunk'))
-    ]+[('solutions.0.custom_deps.'+x, None) for x in [
-        "src/third_party/WebKit/LayoutTests",
-        "src/third_party/WebKit/Source",
-        "src/third_party/WebKit/Tools/DumpRenderTree",
-        "src/third_party/WebKit/Tools/Scripts",
-        "src/third_party/WebKit/Tools/gdb",
-        "src/third_party/WebKit/Tools/TestWebKitAPI",
-        "src/third_party/WebKit/WebKitLibraries",
-    ]]),
+    GCLIENT_COMMON_SPECS['chromium'](self), [(
+      'solutions.0.custom_deps',
+      {'src/third_party/WebKit': self.ChromiumSvnURL('blink', 'trunk')}
+    )]),
 
   'blink_bare': lambda self: {'solutions': [
     {
