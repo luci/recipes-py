@@ -19,9 +19,11 @@ BUILD_ROOT = _os.path.join(ROOT, 'build')
 # e.g. /b/depot_tools
 DEPOT_TOOLS_ROOT = _os.path.join(ROOT, 'depot_tools')
 
+
 def _path_method(name, base):
   """Returns a shortcut static method which functions like os.path.join with a
-  fixed first component |base|."""
+  fixed first component |base|.
+  """
   def path_func_inner(*pieces):
     """This function returns a path to a file in '%s'."""
     assert _os.pardir not in pieces
@@ -55,7 +57,7 @@ annotated_checkout for the checkout type that you've selected.
 NOTE: In order for this function to work, your recipe MUST use the 'checkout'
 functionality provided by annotated_run.
 """  # pylint: disable=W0105
-checkout_path = _path_method('checkout_path', "%(CheckoutRootPlaceholder)s")
+checkout_path = _path_method('checkout_path', '%(CheckoutRootPlaceholder)s')
 
 
 @_contextlib.contextmanager
@@ -74,9 +76,9 @@ def mock_paths():
   path_funcs = {}
   try:
     for name in path_base_names:
-      token_name = (name+"_root").upper()
+      token_name = (name + '_root').upper()
       token_val = '[%s]' % token_name
-      path_func_name = (name+"_path")
+      path_func_name = (name + '_path')
 
       if token_name in g:
         tokens[token_name] = g[token_name]
@@ -151,10 +153,10 @@ GCLIENT_COMMON_SPECS = {
 
   'chromium': lambda self: {'solutions': [
     {
-      'name' : 'src',
-      'url' : self.ChromiumSvnURL('chrome', 'trunk', 'src'),
-      'deps_file' : 'DEPS',
-      'managed' : True,
+      'name': 'src',
+      'url': self.ChromiumSvnURL('chrome', 'trunk', 'src'),
+      'deps_file': 'DEPS',
+      'managed': True,
       'custom_deps': {
         'src/third_party/WebKit/LayoutTests': None,
         'src/webkit/data/layout_tests/LayoutTests': None},
@@ -168,29 +170,29 @@ GCLIENT_COMMON_SPECS = {
 
   'nacl': lambda self: {'solutions': [
     {
-      "name":"native_client",
-      "url": self.ChromiumSvnURL(
+      'name': 'native_client',
+      'url': self.ChromiumSvnURL(
         'native_client', 'trunk', 'src', 'native_client'),
-      "custom_deps":{},
-      "custom_vars": self.mirror_only({
-        "webkit_trunk":"svn://svn-mirror.golo.chromium.org/blink/trunk",
-        "googlecode_url":"svn://svn-mirror.golo.chromium.org/%s",
-        "sourceforge_url":"svn://svn-mirror.golo.chromium.org/%(repo)s"}),
+      'custom_deps': {},
+      'custom_vars': self.mirror_only({
+        'webkit_trunk': 'svn://svn-mirror.golo.chromium.org/blink/trunk',
+        'googlecode_url': 'svn://svn-mirror.golo.chromium.org/%s',
+        'sourceforge_url': 'svn://svn-mirror.golo.chromium.org/%(repo)s'}),
     },
     {
-      "name":"supplement.DEPS",
-      "url": self.ChromiumSvnURL(
+      'name': 'supplement.DEPS',
+      'url': self.ChromiumSvnURL(
         'native_client', 'trunk', 'deps', 'supplement.DEPS'),
-      "custom_deps":{},
-      "custom_vars":{},
+      'custom_deps': {},
+      'custom_vars': {},
     }]},
 
   'tools_build': lambda self: {'solutions': [
     {
       'name': 'build',
       'url': self.ChromiumGitURL('chromium', 'tools', 'build.git'),
-      'managed' : True,
-      'deps_file' : '.DEPS.git',
+      'managed': True,
+      'deps_file': '.DEPS.git',
     }]},
 }
 
@@ -223,7 +225,7 @@ def _url_method(name):
   if len(bases) == 1:
     def url_func_inner_single(*pieces):
       """This function returns a url under '%s'."""
-      return "/".join((bases[0],)+pieces)
+      return '/'.join((bases[0],) + pieces)
     url_func_inner_single.__name__ = name
     url_func_inner_single.__doc__ = url_func_inner_single.__doc__ % bases
     url_func_inner_single = staticmethod(url_func_inner_single)
@@ -231,8 +233,9 @@ def _url_method(name):
   else:
     def url_func_inner_mirror(self, *pieces):
       """This function returns a url under '%s' or (mirror) '%s'.
-      The mirror setting is extracted as self.use_mirror"""
-      return "/".join((bases[self.use_mirror],)+pieces)
+      The mirror setting is extracted as self.use_mirror
+      """
+      return '/'.join((bases[self.use_mirror],) + pieces)
     url_func_inner_mirror.__name__ = name
     url_func_inner_mirror.__doc__ = url_func_inner_mirror.__doc__ % bases
     return url_func_inner_mirror
@@ -250,20 +253,33 @@ class Steps(object):
 
   def mirror_only(self, obj):
     """Returns obj if we're using mirrors. Otherwise returns the 'empty'
-    version of obj."""
+    version of obj.
+    """
     return obj if self.use_mirror else obj.__class__()
 
   def gclient_common_spec(self, solution_name):
     """Returns a single gclient solution object (python dict) for common
-    solutions."""
+    solutions.
+    """
     return GCLIENT_COMMON_SPECS[solution_name](self)
 
   @staticmethod
   def step(name, cmd, add_properties=False, **kwargs):
-    """Returns a step dictionary which is compatible with annotator.py. Uses
-    PropertyPlaceholder as a stand-in for build-properties and
+    """Returns a step dictionary which is compatible with annotator.py.
+
+    Uses PropertyPlaceholder as a stand-in for build-properties and
     factory-properties so that annotated_run can fill them in after the recipe
-    completes."""
+    completes.
+
+    Args:
+      name: The name of this step.
+      cmd: A list of strings in the style of subprocess.Popen.
+      add_properties: Add PropertyPlaceholder iff True
+      **kwargs: Additional entries to add to the annotator.py step dictionary.
+
+    Returns:
+      A step dictionary which is compatible with annotator.py.
+    """
     assert 'shell' not in kwargs
     assert isinstance(cmd, list)
     if add_properties:
@@ -285,7 +301,7 @@ class Steps(object):
     name = 'git '+args[0]
     # Distinguish 'git config' commands by the variable they are setting.
     if args[0] == 'config' and not args[1].startswith('-'):
-      name += " "+args[1]
+      name += ' ' + args[1]
     return self.step(name, [
         'git', '--work-tree', checkout_path(),
-               '--git-dir', checkout_path('.git')]+list(args))
+        '--git-dir', checkout_path('.git')] + list(args))
