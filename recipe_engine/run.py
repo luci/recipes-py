@@ -49,12 +49,15 @@ import subprocess
 import sys
 import tempfile
 
+from collections import namedtuple
+
 from common import annotator
 from common import chromium_utils
 from slave import recipe_util
 from slave import annotated_checkout
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
+BUILD_ROOT = os.path.dirname(os.path.dirname(SCRIPT_PATH))
 
 
 @contextlib.contextmanager
@@ -82,7 +85,7 @@ def expand_root_placeholder(root, lst):
   return ret
 
 
-def get_args():
+def get_args(argv):
   """Process command-line arguments."""
 
   parser = optparse.OptionParser(
@@ -95,32 +98,42 @@ def get_args():
                     action='callback', callback=chromium_utils.convert_json,
                     type='string', default={},
                     help='factory properties in JSON format')
-  parser.add_option('--output-build-properties', action='store_true',
-                    help='output JSON-encoded build properties extracted from'
-                    ' the build')
-  parser.add_option('--output-factory-properties', action='store_true',
-                    help='output JSON-encoded factory properties extracted from'
-                    'the build factory')
   parser.add_option('--keep-stdin', action='store_true', default=False,
                     help='don\'t close stdin when running recipe steps')
-  return parser.parse_args()
+  return parser.parse_args(argv)
 
 
-def main():
-  opts, _ = get_args()
+def main(argv=None):
+  opts, _ = get_args(argv)
+
+  stream = annotator.StructuredAnnotationStream(seed_steps=['setup_build'])
+
+  ret = make_steps(stream, opts.build_properties, opts.factory_properties)
+  assert ret.script is None, "Unexpectedly got script from make_steps?"
+
+  if ret.status_code:
+    return ret
+  else:
+    return run_annotator(stream, ret.steps, opts.keep_stdin)
+
+def make_steps(stream, build_properties, factory_properties,
+               test_mode=False):
+  """Returns a namedtuple of (status_code, script, steps).
+
+  Only one of these values will be set at a time. This is mainly to support the
+  testing interface used by unittests/recipes_test.py. In particular, unless
+  test_mode is set, this function should never return a value for script.
+  """
+  MakeStepsRetval = namedtuple('MakeStepsRetval', 'status_code script steps')
 
   # TODO(iannucci): Stop this when blamelist becomes sane data.
-  if ('blamelist_real' in opts.build_properties and
-      'blamelist' in opts.build_properties):
-    opts.build_properties['blamelist'] = opts.build_properties['blamelist_real']
-    del opts.build_properties['blamelist_real']
+  if ('blamelist_real' in build_properties and
+      'blamelist' in build_properties):
+    build_properties['blamelist'] = build_properties['blamelist_real']
+    del build_properties['blamelist_real']
 
-  # Supplement the master-supplied factory_properties dictionary with the values
-  # found in the slave-side recipe.
-  stream = annotator.StructuredAnnotationStream(seed_steps=['setup_build'])
   with stream.step('setup_build') as s:
-    assert 'recipe' in opts.factory_properties
-    factory_properties = opts.factory_properties
+    assert 'recipe' in factory_properties
     recipe = factory_properties['recipe']
     recipe_dirs = (os.path.abspath(p) for p in (
         os.path.join(SCRIPT_PATH, '..', '..', '..', 'build_internal', 'scripts',
@@ -139,13 +152,13 @@ def main():
           continue
       recipe_dict = recipe_module.GetFactoryProperties(
           recipe_util,
-          opts.factory_properties.copy(),
-          opts.build_properties.copy())
+          factory_properties.copy(),
+          build_properties.copy())
       break
     else:
       s.step_text('recipe not found')
       s.step_failure()
-      return 1
+      return MakeStepsRetval(1, None, None)
 
     factory_properties.update(recipe_dict)
 
@@ -156,20 +169,27 @@ def main():
   if 'checkout' in factory_properties:
     checkout_type = factory_properties['checkout']
     checkout_spec = factory_properties['%s_spec' % checkout_type]
-    ret, root = annotated_checkout.run(checkout_type, checkout_spec)
+    ret, root = annotated_checkout.run(checkout_type, checkout_spec,
+                                       test_mode)
     if ret != 0:
-      return ret
+      return MakeStepsRetval(ret, None, None)
+    if test_mode:
+      root = '[BUILD_ROOT]'+root[len(BUILD_ROOT):]
 
   assert ('script' in factory_properties) ^ ('steps' in factory_properties)
   ret = 0
 
   # If a script is specified, import it, execute its GetSteps method,
   # and pass those steps forward so they get executed by annotator.py.
+  # If we're in test_mode mode, just return the script.
   if 'script' in factory_properties:
     with stream.step('get_steps') as s:
       assert isinstance(factory_properties['script'], str)
       [script] = expand_root_placeholder(root, [factory_properties['script']])
+      if test_mode:
+        return MakeStepsRetval(None, script, None)
       assert os.path.abspath(script) == script
+
       with temp_purge_path(os.path.dirname(script)):
         try:
           script_name = os.path.splitext(os.path.basename(script))[0]
@@ -177,10 +197,10 @@ def main():
         except ImportError:
           s.step_text('script not found')
           s.step_failure()
-          return 1
+          return MakeStepsRetval(1, None, None)
         steps_dict = script_module.GetSteps(recipe_util,
-                                            opts.factory_properties.copy(),
-                                            opts.build_properties.copy())
+                                            factory_properties.copy(),
+                                            build_properties.copy())
       factory_properties['steps'] = steps_dict
 
   # Execute annotator.py with steps if specified.
@@ -188,7 +208,7 @@ def main():
   if 'steps' in factory_properties:
     steps = factory_properties.pop('steps')
     factory_properties_str = json.dumps(factory_properties)
-    build_properties_str = json.dumps(opts.build_properties)
+    build_properties_str = json.dumps(build_properties)
     property_placeholder_lst = [
         '--factory-properties', factory_properties_str,
         '--build-properties', build_properties_str]
@@ -203,25 +223,30 @@ def main():
       if 'cwd' in step:
         [new_cwd] = expand_root_placeholder(root, [step['cwd']])
         step['cwd'] = new_cwd
-    annotator_path = os.path.join(
-      os.path.dirname(SCRIPT_PATH), 'common', 'annotator.py')
-    tmpfile, tmpname = tempfile.mkstemp()
-    try:
-      cmd = [sys.executable, annotator_path, tmpname]
-      step_doc = json.dumps(steps)
-      with os.fdopen(tmpfile, 'wb') as f:
-        f.write(step_doc)
-      with stream.step('annotator_preamble') as s:
-        print 'in %s executing: %s' % (os.getcwd(), ' '.join(cmd))
-        print 'with: %s' % step_doc
-      if opts.keep_stdin:
-        ret = subprocess.call(cmd)
-      else:
-        proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-        proc.communicate('')
-        ret = proc.returncode
-    finally:
-      os.unlink(tmpname)
+
+  return MakeStepsRetval(None, None, steps)
+
+def run_annotator(stream, steps, keep_stdin):
+  ret = 0
+  annotator_path = os.path.join(
+    os.path.dirname(SCRIPT_PATH), 'common', 'annotator.py')
+  tmpfile, tmpname = tempfile.mkstemp()
+  try:
+    cmd = [sys.executable, annotator_path, tmpname]
+    step_doc = json.dumps(steps)
+    with os.fdopen(tmpfile, 'wb') as f:
+      f.write(step_doc)
+    with stream.step('annotator_preamble'):
+      print 'in %s executing: %s' % (os.getcwd(), ' '.join(cmd))
+      print 'with: %s' % step_doc
+    if keep_stdin:
+      ret = subprocess.call(cmd)
+    else:
+      proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+      proc.communicate('')
+      ret = proc.returncode
+  finally:
+    os.unlink(tmpname)
 
   return ret
 
@@ -247,4 +272,4 @@ def UpdateScripts():
 if __name__ == '__main__':
   if UpdateScripts():
     os.execv(sys.executable, [sys.executable] + sys.argv)
-  sys.exit(main())
+  sys.exit(main(sys.argv))

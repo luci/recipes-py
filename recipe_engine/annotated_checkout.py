@@ -12,11 +12,12 @@ point. If that builder's factory_properties include a spec for a checkout, then
 the work of actually performing that checkout is done here.
 """
 
+import cStringIO as StringIO
 import optparse
 import os
+import pipes
 import subprocess
 import sys
-import pipes
 
 from common import annotator
 from common import chromium_utils
@@ -75,6 +76,9 @@ class Checkout(object):
   def __init__(self, spec):
     self.spec = spec
 
+  def setup(self):
+    pass
+
   def clean(self):
     pass
 
@@ -104,6 +108,13 @@ class GclientCheckout(Checkout):
   def __init__(self, *args, **kwargs):
     super(GclientCheckout, self).__init__(*args, **kwargs)
     assert 'solutions' in self.spec
+
+  @classmethod
+  def run_gclient(cls, *cmd):
+    print 'Running: gclient %s' % ' '.join(pipes.quote(x) for x in cmd)
+    subprocess.check_call((cls.gclient_path,)+cmd)
+
+  def setup(self):
     spec_string = ''
     for key in self.spec:
       # We should be using json.dumps here, but gclient directly execs the dict
@@ -111,11 +122,6 @@ class GclientCheckout(Checkout):
       # False, and None instead of JSON's true, false, and null.
       spec_string += '%s = %s\n' % (key, str(self.spec[key]))
     self.run_gclient('config', '--spec', spec_string)
-
-  @classmethod
-  def run_gclient(cls, *cmd):
-    print 'Running: gclient %s' % ' '.join(pipes.quote(x) for x in cmd)
-    subprocess.check_call((cls.gclient_path,)+cmd)
 
   def clean(self):
     self.run_gclient('revert', '--nohooks')
@@ -172,6 +178,8 @@ class GitCheckout(Checkout):
       if not dir_path:  # ex: ssh://host:repo/foobar/.git
         dir_path = dir_path.rsplit('/', 1)[-1]
     self.cwd = os.path.abspath(os.path.join(os.curdir, dir_path))
+
+  def setup(self):
     if not os.path.exists(self.cwd):
       os.makedirs(self.cwd)
 
@@ -213,7 +221,7 @@ class SvnCheckout(Checkout):
   CHECKOUT_TYPE = 'svn'
 
 
-def run(checkout_type, checkout_spec):
+def run(checkout_type, checkout_spec, test_mode=False):
   """Perform a checkout with the given type and configuration.
 
     Args:
@@ -221,13 +229,20 @@ def run(checkout_type, checkout_spec):
           CHECKOUT_TYPE attribute).
       checkout_spec: Configuration values needed for the type of checkout
           (repository url, etc.).
+      test_mode: If we're in test_mode, just return error code and root without
+          actually doing anything.
 
     Returns:
       Tuple of (<retcode>, <root_path>) where root_path is the absolute path
           to the 'root' of the checkout (as defined by |checkout_type|).
   """
+  stream = sys.stdout
+  if test_mode:
+    stream = StringIO.StringIO()
   stream = annotator.StructuredAnnotationStream(
-      seed_steps=['checkout_setup', 'checkout_clean', 'checkout'])
+      seed_steps=['checkout_setup', 'checkout_clean', 'checkout'],
+      stream=stream)
+
   with stream.step('checkout_setup') as s:
     try:
       checkout = CheckoutFactory(checkout_type, checkout_spec)
@@ -235,6 +250,9 @@ def run(checkout_type, checkout_spec):
       s.step_text(e)
       s.step_failure()
       return (1, None)
+    if test_mode:
+      return (0, checkout.root())
+    checkout.setup()
   with stream.step('checkout_clean') as s:
     checkout.clean()
   with stream.step('checkout') as s:

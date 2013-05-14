@@ -21,5 +21,6 @@ sys.path.insert(0, os.path.join(BASE_DIR, 'third_party'))
 sys.path.insert(0, os.path.join(BASE_DIR, 'third_party', 'buildbot_8_4p1'))
 sys.path.insert(0, os.path.join(BASE_DIR, 'third_party', 'twisted_10_2'))
 sys.path.insert(0, os.path.join(BASE_DIR, 'third_party', 'mock-1.0.1'))
+sys.path.insert(0, os.path.join(BASE_DIR, 'third_party', 'coverage-3.6'))
 
 from common import find_depot_tools  # pylint: disable=W0611
