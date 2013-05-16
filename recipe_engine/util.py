@@ -288,10 +288,10 @@ class Steps(object):
     ret.update({'name': name, 'cmd': cmd})
     return ret
 
-  def apply_issue_step(self, root_pieces=None):
+  def apply_issue_step(self, *root_pieces):
     return self.step('apply_issue', [
         depot_tools_path('apply_issue'),
-        '-r', checkout_path(*(root_pieces or [])),
+        '-r', checkout_path(*root_pieces),
         '-i', self.build_properties['issue'],
         '-p', self.build_properties['patchset'],
         '-s', self.build_properties['rietveld'],

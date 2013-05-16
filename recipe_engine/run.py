@@ -76,7 +76,7 @@ def expand_root_placeholder(root, lst):
   ret = []
   replacements = {'CheckoutRootPlaceholder': root}
   for item in lst:
-    if isinstance(item, str):
+    if isinstance(item, basestring):
       if '%(CheckoutRootPlaceholder)s' in item:
         assert root, 'Must use "checkout" key to use checkout_path().'
         ret.append(item % replacements)

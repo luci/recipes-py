@@ -124,15 +124,17 @@ def load_tests(loader, _standard_tests, _pattern):
       def add_test_methods(cls):
         for name, test_fn in exec_test_file(recipe_path).iteritems():
           expected_path = expected_for(recipe_path, name)
-          def test_(self):
-            steps = execute_test_case(test_fn, recipe_path)
-            # Roundtrip json to get same string encoding as load
-            steps = json.loads(json.dumps(steps))
-            with open(expected_path, 'r') as f:
-              expected = json.load(f)
-            self.assertEqual(steps, expected)
-          test_.__name__ += name
-          setattr(cls, test_.__name__, test_)
+          def add_test(test_fn, expected_path):
+            def test_(self):
+              steps = execute_test_case(test_fn, recipe_path)
+              # Roundtrip json to get same string encoding as load
+              steps = json.loads(json.dumps(steps))
+              with open(expected_path, 'r') as f:
+                expected = json.load(f)
+              self.assertEqual(steps, expected)
+            test_.__name__ += name
+            setattr(cls, test_.__name__, test_)
+          add_test(test_fn, expected_path)
 
     if has_test(recipe_path):
       RecipeTest.add_test_methods()

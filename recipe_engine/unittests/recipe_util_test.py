@@ -147,7 +147,7 @@ class RecipeUtilStepsTest(unittest.TestCase):
          '-s', 'https://rietveld.org',
          '-e', 'commit-bot@chromium.org']})
     self.assertEquals(
-      self.s.apply_issue_step(['foobar', 'other']),
+      self.s.apply_issue_step('foobar', 'other'),
       {'name': 'apply_issue',
        'cmd': [
          '/b/depot_tools/apply_issue',
