@@ -322,12 +322,11 @@ class Steps(object):
         'git', '--work-tree', checkout_path(),
         '--git-dir', checkout_path('.git')] + list(args), **kwargs)
 
-  def generator_script(self, path_to_script):
+  def generator_script(self, path_to_script, *args):
     def step_generator(step_history, _failure):
       yield self.step(
         'gen step(%s)' % _os.path.basename(path_to_script),
-        [path_to_script],
-        add_properties=True,
+        [path_to_script,] + list(args),
         add_json_output=True,
         cwd=checkout_path())
       new_steps = step_history.last_step().json_data
