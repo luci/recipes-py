@@ -4,6 +4,7 @@
 # found in the LICENSE file.
 
 import test_env  # pylint: disable=W0611
+import coverage
 import unittest
 import mock  # pylint: disable=F0401
 with mock.patch('os.getcwd') as mock_getcwd:
@@ -72,7 +73,7 @@ class RecipeUtilMirrorStepsTest(unittest.TestCase):
 
   def test_chromium_common_spec(self):
     self.assertEqual(
-      self.s_m.gclient_common_spec('chromium'), {'solutions': [
+      self.ru.GCLIENT_COMMON_SPECS['chromium'](self.s_m), {'solutions': [
       {
         'name' : 'src',
         'url' : 'svn://svn-mirror.golo.chromium.org/chrome/trunk/src',
@@ -90,7 +91,7 @@ class RecipeUtilMirrorStepsTest(unittest.TestCase):
         'safesync_url': '',
       }]})
     self.assertEqual(
-      self.s.gclient_common_spec('chromium'), {'solutions': [
+      self.ru.GCLIENT_COMMON_SPECS['chromium'](self.s), {'solutions': [
       {
         'name' : 'src',
         'url' : 'https://src.chromium.org/chrome/trunk/src',
@@ -111,9 +112,9 @@ class RecipeUtilMirrorStepsTest(unittest.TestCase):
         'managed' : True,
         'deps_file' : '.DEPS.git',
       }]}
-    self.assertEqual(self.s_m.gclient_common_spec('tools_build'),
+    self.assertEqual(self.ru.GCLIENT_COMMON_SPECS['tools_build'](self.s_m),
                      tools_build)
-    self.assertEqual(self.s.gclient_common_spec('tools_build'),
+    self.assertEqual(self.ru.GCLIENT_COMMON_SPECS['tools_build'](self.s),
                      tools_build)
 
 
@@ -137,7 +138,7 @@ class RecipeUtilStepsTest(unittest.TestCase):
 
   def test_apply_issue_step(self):
     self.assertEquals(
-      self.s.apply_issue_step(),
+      self.s.apply_issue(),
       {'name': 'apply_issue',
        'cmd': [
          '/b/depot_tools/apply_issue',
@@ -147,7 +148,7 @@ class RecipeUtilStepsTest(unittest.TestCase):
          '-s', 'https://rietveld.org',
          '-e', 'commit-bot@chromium.org']})
     self.assertEquals(
-      self.s.apply_issue_step('foobar', 'other'),
+      self.s.apply_issue('foobar', 'other'),
       {'name': 'apply_issue',
        'cmd': [
          '/b/depot_tools/apply_issue',
@@ -157,9 +158,9 @@ class RecipeUtilStepsTest(unittest.TestCase):
          '-s', 'https://rietveld.org',
          '-e', 'commit-bot@chromium.org']})
 
-  def test_git_step(self):
+  def test_git(self):
     self.assertEquals(
-      self.s.git_step('rebase', '--onto', 'master'),
+      self.s.git('rebase', '--onto', 'master'),
       {
         'name': 'git rebase',
         'cmd': [
@@ -169,7 +170,7 @@ class RecipeUtilStepsTest(unittest.TestCase):
 
     # git config gets special treatment for the name
     self.assertEquals(
-      self.s.git_step('config', 'user.name', 'dudeface'),
+      self.s.git('config', 'user.name', 'dudeface'),
       {
         'name': 'git config user.name',
         'cmd': [
@@ -179,4 +180,13 @@ class RecipeUtilStepsTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  unittest.main()
+  recipe_util_file = recipe_util.__file__
+  if recipe_util_file[-1] == 'c':
+    recipe_util_file = recipe_util_file[:-1]
+  cov = coverage.coverage(include=recipe_util_file)
+  cov.start()
+  try:
+    unittest.main()
+  finally:
+    cov.stop()
+    cov.report()

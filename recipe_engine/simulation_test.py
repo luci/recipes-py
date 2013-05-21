@@ -3,6 +3,39 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""Provides test coverage for individual recipes.
+
+Recipe tests are located in ../recipes_test/*.py.
+
+Each py file's splitext'd name is expected to match a recipe in ../recipes/*.py.
+
+Each test py file contains one or more test functions:
+  * A test function's name ends with '_test' and takes an instance of TestAPI
+    as its only parameter.
+  * The test should return a dictionary with any of the following keys:
+    * factory_properties
+    * build_properties
+    * test_data
+      * test_data's value should be a dictionary in the form of
+        {stepname -> (retcode, json_data)}
+      * Since the test doesn't run any steps, test_data allows you to simulate
+        return values for particular steps.
+
+Once your test methods are set up, run `recipes_test.py --train`. This will
+take your tests and simulate what steps would have run, given the test inputs,
+and will record them as JSON into files of the form:
+  ../recipes_test/<recipe_name>.<test_name>.expected
+
+If those files look right, make sure they get checked in with your changes.
+
+When this file runs as a test (i.e. as `recipes_test.py`), it will re-evaluate
+the recipes using the test function input data and compare the result to the
+values recorded in the .expected files.
+
+Additionally, this test cannot pass unless every recipe in ../recipes has 100%
+code coverage when executed via the tests in ../recipes_test.
+"""
+
 import contextlib
 import json
 import os
@@ -85,14 +118,14 @@ def execute_test_case(test_fn, recipe_path):
   test_data = test_fn(TestAPI())
   bp = test_data.get('build_properties', {})
   fp = test_data.get('factory_properties', {})
+  td = test_data.get('test_data', {})
   fp['recipe'] = os.path.basename(os.path.splitext(recipe_path)[0])
 
   stream = annotator.StructuredAnnotationStream(stream=open(os.devnull, 'w'))
   with cover():
     with recipe_util.mock_paths():
-      retval = annotated_run.make_steps(stream, bp, fp, True)
-      assert retval.status_code is None
-      return retval.script or retval.steps
+      step_data = annotated_run.run_steps(stream, bp, fp, td).steps_ran.values()
+      return [s.step for s in step_data]
 
 
 def train_from_tests(recipe_path):
@@ -108,7 +141,18 @@ def train_from_tests(recipe_path):
     expected_path = expected_for(recipe_path, name)
     print 'Writing', expected_path
     with open(expected_path, 'w') as f:
-      json.dump(steps, f, indent=2, sort_keys=True)
+      f.write('[')
+      first = True
+      for step in steps:
+        f.write(('' if first else '\n  },')+'\n  {')
+        first_dict_item = True
+        for key, value in sorted(step.items(), key=lambda x: x[0]):
+          f.write(('' if first_dict_item else ',')+'\n   ')
+          f.write('"%s": ' % key)
+          json.dump(value, f, sort_keys=True)
+          first_dict_item = False
+        first = False
+      f.write('\n  }\n]')
 
   return True
 
@@ -139,7 +183,8 @@ def load_tests(loader, _standard_tests, _pattern):
     if has_test(recipe_path):
       RecipeTest.add_test_methods()
 
-    RecipeTest.__name__ += 'for_%s' % os.path.basename(recipe_path)
+    RecipeTest.__name__ += '_for_%s' % (
+      os.path.splitext(os.path.basename(recipe_path))[0])
     return RecipeTest
 
   suite = unittest.TestSuite()

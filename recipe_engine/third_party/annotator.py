@@ -361,7 +361,7 @@ def _run_step(stream, build_failure,
   Returns new value for build_failure.
   """
   if skip or (build_failure and not always_run):
-    return build_failure
+    return build_failure, None
 
   # For error reporting.
   step_dict = locals().copy()
@@ -375,6 +375,7 @@ def _run_step(stream, build_failure,
         return line.replace('@@@', '###')
     filter_obj = AnnotationFilter()
 
+  ret = None
   try:
     with stream.step(name) as s:
       ret = chromium_utils.RunCommand(command=map(str, cmd),
@@ -390,7 +391,27 @@ def _run_step(stream, build_failure,
     # File wasn't found, error has been already reported to stream.
     build_failure = True
 
-  return build_failure
+  return build_failure, ret
+
+
+def run_steps(steps, build_failure):
+  for step in steps:
+    error = _validate_step(step)
+    if error:
+      print 'Invalid step - %s\n%s' % (error, json.dumps(step, indent=2))
+      sys.exit(1)
+
+  seed_steps = []
+  for step in steps:
+    seed_steps.append(step['name'])
+    seed_steps.extend(step.get('seed_steps', []))
+
+  stream = StructuredAnnotationStream(seed_steps=seed_steps)
+  ret_codes = []
+  for step in steps:
+    build_failure, ret = _run_step(stream, build_failure, **step)
+    ret_codes.append(ret)
+  return build_failure, ret_codes
 
 
 def main():
@@ -410,17 +431,7 @@ def main():
     with open(args[0], 'rb') as f:
       steps.extend(json.load(f))
 
-  for step in steps:
-    error = _validate_step(step)
-    if error:
-      print 'Invalid step - %s\n%s' % (error, json.dumps(step, indent=2))
-      return 1
-
-  stream = StructuredAnnotationStream(seed_steps=[s['name'] for s in steps])
-  build_failure = False
-  for step in steps:
-    build_failure = _run_step(stream, build_failure, **step)
-  return 1 if build_failure else 0
+  return 1 if run_steps(steps, False)[0] else 0
 
 
 if __name__ == '__main__':

@@ -10,8 +10,7 @@ systems. Any builder configured to use the AnnotatorFactory.BaseFactory()
 found in scripts/master/factory/annotator_factory.py executes a single
 AddAnnotatedScript step. That step (found in annotator_commands.py) calls
 this script with the build- and factory-properties passed on the command
-line. In general, the factory properties will include one or more other
-scripts for this script to delegate to.
+line.
 
 The main mode of operation is for factory_properties to contain a single
 property 'recipe' whose value is the basename (without extension) of a python
@@ -25,22 +24,41 @@ located in build/scripts/slave/recipes:
     { 'recipe': 'run_presubmit' }
 
 Annotated_run.py will then import the recipe and expect to call a function whose
-signature is GetFactoryProperties(build_properties) -> factory_properties. The
-returned factory_properties will then be used to execute the following actions:
-  * optional 'checkout'
-    * This checks out a gclient/git/svn spec into the slave build dir.
-    * The value of checkout is expected to be in ('gclient', 'git', 'svn')
-    * If checkout is specified, annotated_run will also expect to find a value
-      for ('%s_spec' % checkout), e.g. 'gclient_spec'. The value of this spec
-      is defined by build/scripts/slave/annotated_checkout.py.
-  * 'script' or 'steps'
-    * 'script' allows you to specify a single script which will be invoked with
-      build-properties and factory-properties.
-    * 'steps' serves as input for build/scripts/common/annotator.py
-      * You can have annotated_run pass build/factory properties to a step by
-        using the recipe_util.step() function.
+signature is:
+  GetSteps(api, factory_properties, build_properties) -> iterable_of_things.
+
+Items in iterable_of_things must be one of:
+  * A step dictionary (as accepted by annotator.py)
+  * A sequence of step dictionaries
+  * A step generator
+
+A step generator is called with the following protocol:
+  * The generator is initialized with 'step_history' and 'failed'.
+  * Each iteration of the generator is passed the current value of 'failed'.
+
+On each iteration, a step generator may yield:
+  * A single step dictionary
+  * A sequence of step dictionaries
+    * If a sequence of dictionaries is yielded, and the first step dictionary
+      does not have a 'seed_steps' key, the first step will be augmented with
+      a 'seed_steps' key containing the names of all the steps in the sequence.
+
+For steps yielded by the generator, if annotated_run enters the failed state,
+it will only continue to call the generator if the generator sets the
+'keep_going' key on the steps which it has produced. Otherwise annoated_run will
+cease calling the generator and move on to the next item in iterable_of_things.
+
+'step_history' is an OrderedDict of {stepname -> StepData}, always representing
+    the current history of what steps have run, what they returned, and any
+    json data they emitted. Additionally, the OrderedDict has the following
+    convenience functions defined:
+      * last_step   - Returns the last step that ran or None
+      * nth_step(n) - Returns the N'th step that ran or None
+
+'failed' is a boolean representing if the build is in a 'failed' state.
 """
 
+import collections
 import contextlib
 import json
 import optparse
@@ -49,12 +67,12 @@ import subprocess
 import sys
 import tempfile
 
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
+from itertools import islice
 
 from common import annotator
 from common import chromium_utils
 from slave import recipe_util
-from slave import annotated_checkout
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 BUILD_ROOT = os.path.dirname(os.path.dirname(SCRIPT_PATH))
@@ -70,6 +88,14 @@ def temp_purge_path(path):
     sys.path = saved
 
 
+class StepData(object):
+  __slots__ = ['step', 'retcode', 'json_data']
+  def __init__(self, step=None, retcode=None, json_data=None):
+    self.step      = step
+    self.retcode   = retcode
+    self.json_data = json_data
+
+
 def expand_root_placeholder(root, lst):
   """This expands CheckoutRootPlaceholder in paths to a real path.
   See recipe_util.checkout_path() for usage."""
@@ -83,6 +109,75 @@ def expand_root_placeholder(root, lst):
         continue
     ret.append(item)
   return ret
+
+
+def fixup_seed_steps(sequence):
+  """Takes a sequence of step dict's and adds seed_steps to the first entry
+  if appropriate."""
+  if sequence and 'seed_steps' not in sequence[0]:
+    sequence[0]['seed_steps'] = [x['name'] for x in sequence]
+
+
+def ensure_sequence_of_steps(step_or_steps):
+  """Generates one or more fixed steps, given a step or a sequence of steps."""
+  if isinstance(step_or_steps, collections.Sequence):
+    step_seq = step_or_steps
+    fixup_seed_steps(step_seq)
+    for s in step_seq:
+      yield s
+  else:
+    yield step_or_steps
+
+
+def step_generator_wrapper(steps, step_history, is_failed):
+  """Generates single steps from the non-homogeneous sequence 'steps'.
+
+  Each item in steps may be:
+    * A step (dict)
+    * A sequence of steps
+    * A generator of:
+      * A step
+      * A sequence of steps
+  """
+  for thing in steps:
+    if isinstance(thing, (collections.Sequence, dict)):
+      for step in ensure_sequence_of_steps(thing):
+        yield step
+    else:
+      # step generator
+      step_iter = thing(step_history, is_failed())
+      first = True
+      try:
+        while True:
+          # Cannot pass non-None to first generator call.
+          step_or_steps = step_iter.send(is_failed() if not first else None)
+          first = False
+
+          for step in ensure_sequence_of_steps(step_or_steps):
+            keep_going = step.pop('keep_going', False)
+            yield step
+            if is_failed() and not keep_going:
+              raise StopIteration
+      except StopIteration:
+        pass
+
+
+def create_state_history():
+  """Returns an OrderedDict with some helper functions attached."""
+  step_history = OrderedDict()
+
+  # Add in some helpers.
+  def last_step():
+    """Returns the last item from step_history, or None."""
+    key = next(reversed(step_history), None)
+    return step_history[key] if key else None
+  step_history.last_step = last_step
+
+  def nth_step(n):
+    """Returns the N'th step from step_history, or None."""
+    return next(islice(step_history.iteritems(), n, None), None)
+  step_history.nth_step = nth_step
+  return step_history
 
 
 def get_args(argv):
@@ -108,23 +203,19 @@ def main(argv=None):
 
   stream = annotator.StructuredAnnotationStream(seed_steps=['setup_build'])
 
-  ret = make_steps(stream, opts.build_properties, opts.factory_properties)
-  assert ret.script is None, "Unexpectedly got script from make_steps?"
+  ret = run_steps(stream, opts.build_properties, opts.factory_properties)
+  return ret.status_code
 
-  if ret.status_code:
-    return ret
-  else:
-    return run_annotator(stream, ret.steps, opts.keep_stdin)
 
-def make_steps(stream, build_properties, factory_properties,
-               test_mode=False):
-  """Returns a namedtuple of (status_code, script, steps).
+def run_steps(stream, build_properties, factory_properties, test_data=None):
+  """Returns a tuple of (status_code, steps_ran).
 
   Only one of these values will be set at a time. This is mainly to support the
-  testing interface used by unittests/recipes_test.py. In particular, unless
-  test_mode is set, this function should never return a value for script.
+  testing interface used by unittests/recipes_test.py.
+
+  test_data should be a dictionary of step_name -> (retcode, json_data)
   """
-  MakeStepsRetval = namedtuple('MakeStepsRetval', 'status_code script steps')
+  MakeStepsRetval = namedtuple('MakeStepsRetval', 'status_code steps_ran')
 
   # TODO(iannucci): Stop this when blamelist becomes sane data.
   if ('blamelist_real' in build_properties and
@@ -150,105 +241,76 @@ def make_steps(stream, build_properties, factory_properties,
           recipe_module = __import__(recipe, globals(), locals())
         except ImportError:
           continue
-      recipe_dict = recipe_module.GetFactoryProperties(
+      steps = recipe_module.GetSteps(
           recipe_util,
           factory_properties.copy(),
           build_properties.copy())
+      assert isinstance(steps, (list, tuple))
       break
     else:
       s.step_text('recipe not found')
       s.step_failure()
-      return MakeStepsRetval(1, None, None)
-
-    factory_properties.update(recipe_dict)
-
-  # If a checkout is specified, get its type and spec and pass them
-  # off to annotated_checkout.py to actually fetch the repo.
-  # annotated_checkout.py handles its own StructuredAnnotationStream.
-  root = None
-  if 'checkout' in factory_properties:
-    checkout_type = factory_properties['checkout']
-    checkout_spec = factory_properties['%s_spec' % checkout_type]
-    ret, root = annotated_checkout.run(checkout_type, checkout_spec,
-                                       test_mode)
-    if ret != 0:
-      return MakeStepsRetval(ret, None, None)
-    if test_mode:
-      root = '[BUILD_ROOT]'+root[len(BUILD_ROOT):]
-
-  assert ('script' in factory_properties) ^ ('steps' in factory_properties)
-  ret = 0
-
-  # If a script is specified, import it, execute its GetSteps method,
-  # and pass those steps forward so they get executed by annotator.py.
-  # If we're in test_mode mode, just return the script.
-  if 'script' in factory_properties:
-    with stream.step('get_steps') as s:
-      assert isinstance(factory_properties['script'], str)
-      [script] = expand_root_placeholder(root, [factory_properties['script']])
-      if test_mode:
-        return MakeStepsRetval(None, script, None)
-      assert os.path.abspath(script) == script
-
-      with temp_purge_path(os.path.dirname(script)):
-        try:
-          script_name = os.path.splitext(os.path.basename(script))[0]
-          script_module = __import__(script_name, globals(), locals())
-        except ImportError:
-          s.step_text('script not found')
-          s.step_failure()
-          return MakeStepsRetval(1, None, None)
-        steps_dict = script_module.GetSteps(recipe_util,
-                                            factory_properties.copy(),
-                                            build_properties.copy())
-      factory_properties['steps'] = steps_dict
+      return MakeStepsRetval(1, None)
 
   # Execute annotator.py with steps if specified.
   # annotator.py handles the seeding, execution, and annotation of each step.
-  if 'steps' in factory_properties:
-    steps = factory_properties.pop('steps')
-    factory_properties_str = json.dumps(factory_properties)
-    build_properties_str = json.dumps(build_properties)
-    property_placeholder_lst = [
-        '--factory-properties', factory_properties_str,
-        '--build-properties', build_properties_str]
-    for step in steps:
-      new_cmd = []
-      for item in expand_root_placeholder(root, step['cmd']):
-        if item == recipe_util.PropertyPlaceholder:
-          new_cmd.extend(property_placeholder_lst)
+  factory_properties_str = json.dumps(factory_properties)
+  build_properties_str = json.dumps(build_properties)
+  property_placeholder_lst = [
+      '--factory-properties', factory_properties_str,
+      '--build-properties', build_properties_str]
+
+  failed = False
+  step_history = create_state_history()
+
+  root = None
+  for step in step_generator_wrapper(steps, step_history, lambda: failed):
+    json_output_fd = json_output_name = None
+    new_cmd = []
+    for item in expand_root_placeholder(root, step['cmd']):
+      if item == recipe_util.PropertyPlaceholder:
+        new_cmd.extend(property_placeholder_lst)
+      elif item == recipe_util.JsonOutputPlaceholder:
+        new_cmd.append('--output-json')
+        if test_data:
+          new_cmd.append('/path/to/tmp/json')
         else:
-          new_cmd.append(item)
-      step['cmd'] = new_cmd
-      if 'cwd' in step:
-        [new_cwd] = expand_root_placeholder(root, [step['cwd']])
-        step['cwd'] = new_cwd
+          assert not json_output_name, (
+            'Can only use json_output_file once per step' % step)
+          json_output_fd, json_output_name = tempfile.mkstemp()
+          new_cmd.append(json_output_name)
+      else:
+        new_cmd.append(item)
+    step['cmd'] = new_cmd
+    if 'cwd' in step:
+      [new_cwd] = expand_root_placeholder(root, [step['cwd']])
+      step['cwd'] = new_cwd
 
-  return MakeStepsRetval(None, None, steps)
-
-def run_annotator(stream, steps, keep_stdin):
-  ret = 0
-  annotator_path = os.path.join(
-    os.path.dirname(SCRIPT_PATH), 'common', 'annotator.py')
-  tmpfile, tmpname = tempfile.mkstemp()
-  try:
-    cmd = [sys.executable, annotator_path, tmpname]
-    step_doc = json.dumps(steps)
-    with os.fdopen(tmpfile, 'wb') as f:
-      f.write(step_doc)
-    with stream.step('annotator_preamble'):
-      print 'in %s executing: %s' % (os.getcwd(), ' '.join(cmd))
-      print 'with: %s' % step_doc
-    if keep_stdin:
-      ret = subprocess.call(cmd)
+    json_data = step.pop('static_json_data', {})
+    assert not(json_data and json_output_name), (
+      "Cannot have both static_json_data as well as dynamic json_data")
+    if test_data is None:
+      failed, [retcode] = annotator.run_steps([step], failed)
+      if json_output_name:
+        try:
+          json_data = json.load(os.fdopen(json_output_fd, 'r'))
+        except ValueError:
+          pass
     else:
-      proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-      proc.communicate('')
-      ret = proc.returncode
-  finally:
-    os.unlink(tmpname)
+      retcode, potential_json_data = test_data.pop(step['name'], (0, {}))
+      json_data = json_data or potential_json_data
+      failed = failed or retcode != 0
 
-  return ret
+    # Support CheckoutRootPlaceholder.
+    root = root or json_data.get('CheckoutRoot', None)
+
+    assert step['name'] not in step_history
+    step_history[step['name']] = StepData(step, retcode, json_data)
+
+  assert test_data is None or test_data == {}, (
+    "Unconsumed test data! %s" % (test_data,))
+
+  return MakeStepsRetval(retcode, step_history)
 
 
 def UpdateScripts():
