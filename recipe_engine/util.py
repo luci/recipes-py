@@ -334,7 +334,8 @@ class Steps(object):
       yield new_steps
     return step_generator
 
-  def git_checkout(self, url, dir_path=None, branch='master', recursive=False):
+  def git_checkout(self, url, dir_path=None, branch='master', recursive=False,
+                   clean=True):
     if not dir_path:
       dir_path = url.rsplit('/', 1)[-1]
       if dir_path.endswith('.git'):  # ex: https://host/foobar.git
@@ -344,6 +345,7 @@ class Steps(object):
       dir_path = slave_build_path(dir_path)
     assert _os.pardir not in dir_path
     recursive_args = ['--recurse-submodules'] if recursive else []
+    clean_args = '-f' if clean else '-n'
     return [
       self.step(
         'git setup', [
@@ -361,7 +363,7 @@ class Steps(object):
         }),
       self.git('fetch', 'origin', *recursive_args),
       self.git('update-ref', 'refs/heads/'+branch, 'origin/'+branch),
-      self.git('clean', '-f', '-d', '-X'),
+      self.git('clean', clean_args, '-d', '-X'),
       self.git('checkout', '-f', branch),
       self.git('submodule', 'update', '--init', '--recursive'),
     ]
