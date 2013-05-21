@@ -116,8 +116,6 @@ def fixup_seed_steps(sequence):
   if appropriate."""
   if sequence and 'seed_steps' not in sequence[0]:
     sequence[0]['seed_steps'] = [x['name'] for x in sequence]
-    for other in sequence[1:]:
-      other['seed_steps'] = []
 
 
 def ensure_sequence_of_steps(step_or_steps):
@@ -292,10 +290,7 @@ def run_steps(stream, build_properties, factory_properties, test_data=None):
     assert not(json_data and json_output_name), (
       "Cannot have both static_json_data as well as dynamic json_data")
     if test_data is None:
-      # Manually mangae seed_steps because annotator.py doesn't have enough
-      # context
-      seed_steps = step.pop('seed_steps')
-      failed, [retcode] = annotator.run_steps([step], failed, seed_steps)
+      failed, [retcode] = annotator.run_steps([step], failed)
       if json_output_name:
         try:
           json_data = json.load(os.fdopen(json_output_fd, 'r'))
