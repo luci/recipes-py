@@ -162,7 +162,7 @@ def step_generator_wrapper(steps, step_history, is_failed):
         pass
 
 
-def create_state_history():
+def create_step_history():
   """Returns an OrderedDict with some helper functions attached."""
   step_history = OrderedDict()
 
@@ -261,7 +261,7 @@ def run_steps(stream, build_properties, factory_properties, test_data=None):
       '--build-properties', build_properties_str]
 
   failed = False
-  step_history = create_state_history()
+  step_history = create_step_history()
 
   root = None
   for step in step_generator_wrapper(steps, step_history, lambda: failed):
@@ -275,7 +275,7 @@ def run_steps(stream, build_properties, factory_properties, test_data=None):
         if test_data:
           new_cmd.append('/path/to/tmp/json')
         else:
-          assert not json_output_name, (
+          assert json_output_fd is None, (
             'Can only use json_output_file once per step' % step)
           json_output_fd, json_output_name = tempfile.mkstemp()
           new_cmd.append(json_output_name)
@@ -287,13 +287,14 @@ def run_steps(stream, build_properties, factory_properties, test_data=None):
       step['cwd'] = new_cwd
 
     json_data = step.pop('static_json_data', {})
-    assert not(json_data and json_output_name), (
+    assert not(json_data and json_output_fd), (
       "Cannot have both static_json_data as well as dynamic json_data")
     if test_data is None:
-      failed, [retcode] = annotator.run_steps([step], failed)
-      if json_output_name:
+      failed, retcode = annotator.run_step(stream, failed, **step)
+      if json_output_fd is not None:
         try:
           json_data = json.load(os.fdopen(json_output_fd, 'r'))
+          print 'step returned json data: %s' % json_data
         except ValueError:
           pass
     else:

@@ -338,11 +338,11 @@ def _validate_step(step):
   return None
 
 
-def _run_step(stream, build_failure,
-              name, cmd, cwd=None, env=None,
-              skip=False, always_run=False,
-              ignore_annotations=False,
-              **kwargs):
+def run_step(stream, build_failure,
+             name, cmd, cwd=None, env=None,
+             skip=False, always_run=False,
+             ignore_annotations=False,
+             seed_steps=None, **kwargs):
   """Runs a single step.
 
   Context:
@@ -357,6 +357,7 @@ def _run_step(stream, build_failure,
     skip: True to skip this step
     always_run: True to run the step even if some previous step failed
     ignore_annotations: if True will ignore annotations emitted by the step
+    seed_steps: A list of step names to seed before running this step
 
   Returns new value for build_failure.
   """
@@ -365,8 +366,12 @@ def _run_step(stream, build_failure,
 
   # For error reporting.
   step_dict = locals().copy()
+  step_dict.pop('kwargs')
   step_dict.pop('stream')
   step_dict.update(kwargs)
+
+  for step_name in (seed_steps or []):
+    stream.seed_step(step_name)
 
   filter_obj = None
   if ignore_annotations:
@@ -401,15 +406,10 @@ def run_steps(steps, build_failure):
       print 'Invalid step - %s\n%s' % (error, json.dumps(step, indent=2))
       sys.exit(1)
 
-  seed_steps = []
-  for step in steps:
-    seed_steps.append(step['name'])
-    seed_steps.extend(step.get('seed_steps', []))
-
-  stream = StructuredAnnotationStream(seed_steps=seed_steps)
+  stream = StructuredAnnotationStream(seed_steps=[s['name'] for s in steps])
   ret_codes = []
   for step in steps:
-    build_failure, ret = _run_step(stream, build_failure, **step)
+    build_failure, ret = run_step(stream, build_failure, **step)
     ret_codes.append(ret)
   return build_failure, ret_codes
 
