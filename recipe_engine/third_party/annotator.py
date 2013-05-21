@@ -394,17 +394,15 @@ def _run_step(stream, build_failure,
   return build_failure, ret
 
 
-def run_steps(steps, build_failure):
+def run_steps(steps, build_failure, seed_steps=None):
   for step in steps:
     error = _validate_step(step)
     if error:
       print 'Invalid step - %s\n%s' % (error, json.dumps(step, indent=2))
       sys.exit(1)
 
-  seed_steps = []
-  for step in steps:
-    seed_steps.append(step['name'])
-    seed_steps.extend(step.get('seed_steps', []))
+  if seed_steps is None:
+    seed_steps = [s['name'] for s in steps]
 
   stream = StructuredAnnotationStream(seed_steps=seed_steps)
   ret_codes = []
