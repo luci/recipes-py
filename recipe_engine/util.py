@@ -365,7 +365,7 @@ class Steps(object):
       self.git('update-ref', 'refs/heads/'+branch, 'origin/'+branch),
       self.git('clean', clean_args, '-d', '-X'),
       self.git('checkout', '-f', branch),
-      self.git('submodule', 'update', '--init', '--recursive'),
+      self.git('submodule', 'update', '--init', '--recursive', cwd=dir_path),
     ]
 
   def gclient_checkout(self, common_repo_name, git_mode=False):
