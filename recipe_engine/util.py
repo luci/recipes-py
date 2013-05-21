@@ -5,6 +5,7 @@
 """This module holds utilities which make writing recipes easier."""
 
 import contextlib as _contextlib
+import itertools as _itertools
 import os as _os
 
 # These imports are intended to be passed through to recipes
@@ -335,7 +336,16 @@ class Steps(object):
     return step_generator
 
   def git_checkout(self, url, dir_path=None, branch='master', recursive=False,
-                   clean=True):
+                   keep_paths=None):
+    """Returns an iterable of steps to perform a full git checkout.
+    Args:
+      url (string): url of remote repo to use as upstream
+      dir_path (string): optional directory to clone into
+      branch (string): branch to check out after fetching
+      recursive (bool): whether to recursively fetch submodules or not
+      keep_paths (iterable of strings): paths to ignore during git-clean;
+          paths are gitignore-style patterns relative to checkout_path.
+    """
     if not dir_path:
       dir_path = url.rsplit('/', 1)[-1]
       if dir_path.endswith('.git'):  # ex: https://host/foobar.git
@@ -345,7 +355,8 @@ class Steps(object):
       dir_path = slave_build_path(dir_path)
     assert _os.pardir not in dir_path
     recursive_args = ['--recurse-submodules'] if recursive else []
-    clean_args = '-f' if clean else '-n'
+    clean_args = list(_itertools.chain(
+        *[('-e', path) for path in keep_paths or []]))
     return [
       self.step(
         'git setup', [
@@ -363,7 +374,7 @@ class Steps(object):
         }),
       self.git('fetch', 'origin', *recursive_args),
       self.git('update-ref', 'refs/heads/'+branch, 'origin/'+branch),
-      self.git('clean', clean_args, '-d', '-X'),
+      self.git('clean', '-f', '-d', '-x', *clean_args),
       self.git('checkout', '-f', branch),
       self.git('submodule', 'update', '--init', '--recursive', cwd=dir_path),
     ]
