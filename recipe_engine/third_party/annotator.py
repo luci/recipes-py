@@ -218,6 +218,11 @@ class StructuredAnnotationStream(AdvancedAnnotationStream):
     return StructuredAnnotationStep(self, stream=self.stream,
                                     flush_before=self.flush_before)
 
+  def seed_step(self, name):
+    super(StructuredAnnotationStream, self).seed_step(name)
+    if name not in self.seed_steps:
+      self.seed_steps.append(name)
+
 
 class Match:
   """Holds annotator line parsing functions."""
