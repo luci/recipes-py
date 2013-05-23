@@ -164,9 +164,8 @@ class RecipeUtilStepsTest(unittest.TestCase):
       {
         'name': 'git rebase',
         'cmd': [
-          'git', '--work-tree', '%(CheckoutRootPlaceholder)s',
-                 '--git-dir', '%(CheckoutRootPlaceholder)s/.git',
-                 'rebase', '--onto', 'master']})
+          'git', 'rebase', '--onto', 'master'],
+        'cwd': '%(CheckoutRootPlaceholder)s'})
 
     # git config gets special treatment for the name
     self.assertEquals(
@@ -174,9 +173,8 @@ class RecipeUtilStepsTest(unittest.TestCase):
       {
         'name': 'git config user.name',
         'cmd': [
-          'git', '--work-tree', '%(CheckoutRootPlaceholder)s',
-                 '--git-dir', '%(CheckoutRootPlaceholder)s/.git',
-                 'config', 'user.name', 'dudeface']})
+          'git', 'config', 'user.name', 'dudeface'],
+        'cwd': '%(CheckoutRootPlaceholder)s'})
 
 
 if __name__ == '__main__':

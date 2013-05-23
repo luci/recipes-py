@@ -318,9 +318,9 @@ class Steps(object):
     # Distinguish 'git config' commands by the variable they are setting.
     if args[0] == 'config' and not args[1].startswith('-'):
       name += ' ' + args[1]
-    return self.step(name, [
-        'git', '--work-tree', checkout_path(),
-        '--git-dir', checkout_path('.git')] + list(args), **kwargs)
+    if 'cwd' not in kwargs:
+      kwargs.setdefault('cwd', checkout_path())
+    return self.step(name, ['git'] + list(args), **kwargs)
 
   def generator_script(self, path_to_script, *args):
     def step_generator(step_history, _failure):
