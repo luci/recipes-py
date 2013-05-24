@@ -116,6 +116,7 @@ class StructuredAnnotationStep(StepCommands):
     return self
 
   def __exit__(self, exc_type, exc_value, tb):
+    self.annotation_stream.step_cursor(self.annotation_stream.current_step)
     if exc_type:
       trace = traceback.format_exception(exc_type, exc_value, tb)
       trace_lines = ''.join(trace).split('\n')
@@ -346,7 +347,7 @@ def _validate_step(step):
 def run_step(stream, build_failure,
              name, cmd, cwd=None, env=None,
              skip=False, always_run=False,
-             ignore_annotations=False,
+             ignore_subannotations=True,
              seed_steps=None, **kwargs):
   """Runs a single step.
 
@@ -361,7 +362,7 @@ def run_step(stream, build_failure,
     env: dict with overrides for environment variables
     skip: True to skip this step
     always_run: True to run the step even if some previous step failed
-    ignore_annotations: if True will ignore annotations emitted by the step
+    ignore_subannotations: if False, lets the step emit its own annotations
     seed_steps: A list of step names to seed before running this step
 
   Returns new value for build_failure.
@@ -379,7 +380,7 @@ def run_step(stream, build_failure,
     stream.seed_step(step_name)
 
   filter_obj = None
-  if ignore_annotations:
+  if ignore_subannotations:
     class AnnotationFilter(chromium_utils.RunCommandFilter):
       def FilterLine(self, line):
         return line.replace('@@@', '###')
@@ -395,6 +396,7 @@ def run_step(stream, build_failure,
       if ret != 0:
         print 'step returned non-zero exit code: %d' % ret
         print 'step was: %s' % json.dumps(step_dict)
+        stream.step_cursor(stream.current_step)
         s.step_failure()
         build_failure = True
   except OSError:
