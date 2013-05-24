@@ -384,6 +384,10 @@ def run_step(stream, build_failure,
   if skip or (build_failure and not always_run):
     return build_failure, None
 
+  if isinstance(cmd, basestring):
+    cmd = (cmd,)
+  cmd = map(str, cmd)
+
   # For error reporting.
   step_dict = locals().copy()
   step_dict.pop('kwargs')
@@ -403,10 +407,8 @@ def run_step(stream, build_failure,
   ret = None
   try:
     with stream.step(name) as s:
-      if isinstance(cmd, basestring):
-        cmd = (cmd,)
       print_step(step_dict)
-      ret = chromium_utils.RunCommand(command=map(str, cmd),
+      ret = chromium_utils.RunCommand(command=cmd,
                                       cwd=cwd,
                                       env=_merge_envs(os.environ, env),
                                       filter_obj=filter_obj,
