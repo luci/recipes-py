@@ -344,6 +344,20 @@ def _validate_step(step):
   return None
 
 
+def print_step(step):
+  """Prints the step command and relevant metadata.
+
+  Intended to be similar to the information that Buildbot prints at the
+  beginning of each non-annotator step.
+  """
+  print ' '.join(step['cmd'])
+  if step['cwd']:
+    print ' in dir ' + step['cwd']
+  for key in sorted(step):
+    print '  %s: %s' % (key, step[key])
+  print ''
+
+
 def run_step(stream, build_failure,
              name, cmd, cwd=None, env=None,
              skip=False, always_run=False,
@@ -391,14 +405,15 @@ def run_step(stream, build_failure,
     with stream.step(name) as s:
       if isinstance(cmd, basestring):
         cmd = (cmd,)
+      print_step(step_dict)
       ret = chromium_utils.RunCommand(command=map(str, cmd),
                                       cwd=cwd,
                                       env=_merge_envs(os.environ, env),
-                                      filter_obj=filter_obj)
+                                      filter_obj=filter_obj,
+                                      print_cmd=False)
       if ret != 0:
-        print 'step returned non-zero exit code: %d' % ret
-        print 'step was: %s' % json.dumps(step_dict)
         stream.step_cursor(stream.current_step)
+        print 'step returned non-zero exit code: %d' % ret
         s.step_failure()
         build_failure = True
   except OSError:
