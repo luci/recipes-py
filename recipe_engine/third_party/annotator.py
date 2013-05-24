@@ -389,6 +389,8 @@ def run_step(stream, build_failure,
   ret = None
   try:
     with stream.step(name) as s:
+      if isinstance(cmd, basestring):
+        cmd = (cmd,)
       ret = chromium_utils.RunCommand(command=map(str, cmd),
                                       cwd=cwd,
                                       env=_merge_envs(os.environ, env),
