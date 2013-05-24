@@ -361,7 +361,7 @@ def print_step(step):
 def run_step(stream, build_failure,
              name, cmd, cwd=None, env=None,
              skip=False, always_run=False,
-             ignore_subannotations=True,
+             allow_subannotations=False,
              seed_steps=None, **kwargs):
   """Runs a single step.
 
@@ -376,7 +376,7 @@ def run_step(stream, build_failure,
     env: dict with overrides for environment variables
     skip: True to skip this step
     always_run: True to run the step even if some previous step failed
-    ignore_subannotations: if False, lets the step emit its own annotations
+    allow_subannotations: if True, lets the step emit its own annotations
     seed_steps: A list of step names to seed before running this step
 
   Returns new value for build_failure.
@@ -398,7 +398,7 @@ def run_step(stream, build_failure,
     stream.seed_step(step_name)
 
   filter_obj = None
-  if ignore_subannotations:
+  if not allow_subannotations:
     class AnnotationFilter(chromium_utils.RunCommandFilter):
       def FilterLine(self, line):
         return line.replace('@@@', '###')
