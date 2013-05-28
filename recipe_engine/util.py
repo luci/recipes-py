@@ -174,7 +174,7 @@ GCLIENT_COMMON_SPECS = {
         'src/webkit/data/layout_tests/LayoutTests': None},
       'custom_vars': self.mirror_only({
         'googlecode_url': 'svn://svn-mirror.golo.chromium.org/%s',
-        'nacl_trunk': 'http://src.chromium.org/native_client/trunk',
+        'nacl_trunk': 'svn://svn-mirror.golo.chromium.org/native_client/trunk',
         'sourceforge_url': 'svn://svn-mirror.golo.chromium.org/%(repo)s',
         'webkit_trunk': 'svn://svn-mirror.golo.chromium.org/blink/trunk'}),
       'safesync_url': '',
