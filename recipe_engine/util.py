@@ -385,6 +385,31 @@ class Steps(object):
       self.git('submodule', 'update', '--init', '--recursive', cwd=dir_path),
     ]
 
+  def repo_checkout(self, url, root_path):
+    """Returns an iterable of steps to perform a full repo checkout.
+    Args:
+      url (string): url of the manifest for repo to read
+      root_path (string): the directory that will be pulled by repo that should
+        be treated as the checkout_root.
+    """
+    init_step = None
+    if not _os.path.exists(slave_build_path('.repo', 'manifest.xml')):
+      init_step = self.step('repo init', ['repo', 'init', '-u', url])
+    sync_step = self.step(
+        'repo sync', ['repo', 'sync'],
+         static_json_data={
+             'CheckoutRoot': root_path,
+             'CheckoutSCM': 'repo',
+             'CheckoutSpec': {
+                 'manifest_url': url,
+             },
+         })
+    steps = []
+    if init_step:
+      steps.append(init_step)
+    steps.append(sync_step)
+    return steps
+
   def gclient_checkout(self, common_repo_name_or_spec, git_mode=False,
                        spec_name=None):
     """Returns a step generator function for gclient checkouts."""
