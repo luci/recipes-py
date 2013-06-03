@@ -56,8 +56,10 @@ SCRIPT_PATH = os.path.abspath(os.path.dirname(__file__))
 ROOT_PATH = os.path.abspath(os.path.join(SCRIPT_PATH, os.pardir, os.pardir,
                                          os.pardir))
 SLAVE_DIR = os.path.join(ROOT_PATH, 'slave', 'fake_slave', 'build')
+INTERNAL_DIR = os.path.join(ROOT_PATH, os.pardir, 'build_internal')
 BASE_DIRS = {
-    'Public': os.path.dirname(SCRIPT_PATH)
+    'Public': os.path.dirname(SCRIPT_PATH),
+    'Internal': os.path.join(INTERNAL_DIR, 'scripts', 'slave'),
 }
 # TODO(iannucci): Check for duplicate recipe names when we have more than one
 # base_dir
