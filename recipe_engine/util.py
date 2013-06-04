@@ -303,6 +303,7 @@ class Steps(object):
     """
     assert 'shell' not in kwargs
     assert isinstance(cmd, list)
+    cmd = list(cmd)  # Create a copy in order to not alter the input argument.
     if add_properties:
       cmd += [PropertyPlaceholder]
     if add_json_output:
@@ -411,7 +412,7 @@ class Steps(object):
     return steps
 
   def gclient_checkout(self, common_repo_name_or_spec, git_mode=False,
-                       spec_name=None):
+                       spec_name=None, svn_revision=None):
     """Returns a step generator function for gclient checkouts."""
     if isinstance(common_repo_name_or_spec, basestring):
       spec = GCLIENT_COMMON_SPECS[common_repo_name_or_spec](self)
@@ -429,10 +430,15 @@ class Steps(object):
       spec_string += '%s = %s\n' % (key, str(spec[key]))
     gclient = depot_tools_path('gclient') + ('.bat' if IsWindows() else '')
 
+    gclient_sync_extra_args = []
+    if svn_revision:
+      gclient_sync_extra_args = ['--revision', svn_revision]
+
     if not git_mode:
       clean_step = self.step(step_name('clean'),
                              [gclient, 'revert', '--nohooks'])
-      sync_step = self.step(step_name('sync'), [gclient, 'sync', '--nohooks'])
+      sync_step = self.step(step_name('sync'), [gclient, 'sync', '--nohooks'] +
+                            gclient_sync_extra_args)
     else:
       # clean() isn't used because the gclient sync flags passed in checkout()
       # do much the same thing, and they're more correct than doing a separate
