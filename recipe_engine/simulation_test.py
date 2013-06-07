@@ -120,15 +120,16 @@ def execute_test_case(test_fn, recipe_path):
   test_data = test_fn(TestAPI())
   bp = test_data.get('build_properties', {})
   fp = test_data.get('factory_properties', {})
-  td = test_data.get('test_data', {})
+  td = test_data.get('test_data', {}).copy()
   pm = test_data.get('paths_to_mock', [])
   fp['recipe'] = os.path.basename(os.path.splitext(recipe_path)[0])
 
   stream = annotator.StructuredAnnotationStream(stream=open(os.devnull, 'w'))
+  api = lambda props: recipe_util.RecipeApi(props, pm)
   with cover():
-    with recipe_util.mock_paths(paths_to_mock=pm):
-      step_data = annotated_run.run_steps(stream, bp, fp, td).steps_ran.values()
-      return [s.step for s in step_data]
+    step_data = annotated_run.run_steps(
+      stream, bp, fp, api, td).steps_ran.values()
+    return [s.step for s in step_data]
 
 
 def train_from_tests(recipe_path):

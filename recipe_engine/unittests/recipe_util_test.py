@@ -4,130 +4,49 @@
 # found in the LICENSE file.
 
 import test_env  # pylint: disable=W0611
+
 import coverage
+import os
 import unittest
-import mock  # pylint: disable=F0401
-with mock.patch('os.getcwd') as mock_getcwd:
-  mock_getcwd.return_value = '/b/build/slave/fake_slave/build'
-  from slave import recipe_util  # pylint: disable=F0401
 
-class RecipeUtilGlobalTest(unittest.TestCase):
 
+class RecipeUtilApiTest(unittest.TestCase):
   def setUp(self):
-    self.ru = recipe_util
-
-  def test_depot_tools_path(self):
-    self.assertEqual(self.ru.depot_tools_path(), '/b/depot_tools')
-    self.assertEqual(self.ru.depot_tools_path('thingy', 'thingy.py'),
-                     '/b/depot_tools/thingy/thingy.py')
-
-    self.assertRaises(AssertionError,
-        lambda: self.ru.depot_tools_path('some', '..', 'dumb', 'path'))
-
-  def test_build_internal_path(self):
-    self.assertEqual(self.ru.build_internal_path(), '/b/build_internal')
-    self.assertEqual(self.ru.build_internal_path('thingy', 'thingy.py'),
-                     '/b/build_internal/thingy/thingy.py')
-
-  def test_build_path(self):
-    self.assertEqual(self.ru.build_path(), '/b/build')
-    self.assertEqual(self.ru.build_path('thingy', 'thingy.py'),
-                     '/b/build/thingy/thingy.py')
-
-  def test_slave_build_path(self):
-    self.assertEqual(self.ru.slave_build_path(),
-                     '/b/build/slave/fake_slave/build')
-    self.assertEqual(self.ru.slave_build_path('thingy', 'thingy.py'),
-                     '/b/build/slave/fake_slave/build/thingy/thingy.py')
-
-  def test_checkout_path_raw(self):
-    self.assertEqual(self.ru.checkout_path(), '%(CheckoutRootPlaceholder)s')
-    self.assertEqual(self.ru.checkout_path('thingy', 'thingy.py'),
-                     '%(CheckoutRootPlaceholder)s/thingy/thingy.py')
-
-
-class RecipeUtilMirrorStepsTest(unittest.TestCase):
-
-  def setUp(self):
-    self.ru = recipe_util
-    # Mirrored is default
-    self.s_m = self.ru.Steps({})
-    self.s   = self.ru.Steps({'use_mirror': False})
-
-  def test_mirrorURLs(self):
-    self.assertEqual(self.s_m.ChromiumSvnURL('chrome', 'trunk', 'src'),
-                     'svn://svn-mirror.golo.chromium.org/chrome/trunk/src')
-    self.assertEqual(self.s.ChromiumSvnURL('chrome', 'trunk', 'src'),
-                     'https://src.chromium.org/chrome/trunk/src')
-
-  def test_nonMirrorURLs(self):
-    self.assertEqual(self.s_m.ChromiumGitURL('chromium', 'src'),
-                     'https://chromium.googlesource.com/chromium/src')
-    self.assertEqual(self.s.ChromiumGitURL('chromium', 'src'),
-                     'https://chromium.googlesource.com/chromium/src')
-
-  def test_mirror_only(self):
-    self.assertEqual(self.s_m.mirror_only(['foobar', 'item']),
-                     ['foobar', 'item'])
-    self.assertEqual(self.s.mirror_only(['foobar', 'item']), [])
-
-  def test_chromium_common_spec(self):
-    self.assertEqual(
-      self.ru.GCLIENT_COMMON_SPECS['chromium'](self.s_m), {'solutions': [
-      {
-        'name' : 'src',
-        'url' : 'svn://svn-mirror.golo.chromium.org/chrome/trunk/src',
-        'deps_file' : 'DEPS',
-        'managed' : True,
-        'custom_deps': {
-          'src/third_party/WebKit/LayoutTests': None,
-          'src/webkit/data/layout_tests/LayoutTests': None},
-        'custom_vars': {
-          'googlecode_url': 'svn://svn-mirror.golo.chromium.org/%s',
-          'nacl_trunk':
-            'svn://svn-mirror.golo.chromium.org/native_client/trunk',
-          'sourceforge_url': 'svn://svn-mirror.golo.chromium.org/%(repo)s',
-          'webkit_trunk':
-          'svn://svn-mirror.golo.chromium.org/blink/trunk'},
-        'safesync_url': '',
-      }]})
-    self.assertEqual(
-      self.ru.GCLIENT_COMMON_SPECS['chromium'](self.s), {'solutions': [
-      {
-        'name' : 'src',
-        'url' : 'https://src.chromium.org/chrome/trunk/src',
-        'deps_file' : 'DEPS',
-        'managed' : True,
-        'custom_deps': {
-          'src/third_party/WebKit/LayoutTests': None,
-          'src/webkit/data/layout_tests/LayoutTests': None},
-        'custom_vars': {},
-        'safesync_url': '',
-      }]})
-
-  def test_chromium_tools_build(self):
-    tools_build = {'solutions': [
-      {
-        'name': 'build',
-        'url': 'https://chromium.googlesource.com/chromium/tools/build.git',
-        'managed' : True,
-        'deps_file' : '.DEPS.git',
-      }]}
-    self.assertEqual(self.ru.GCLIENT_COMMON_SPECS['tools_build'](self.s_m),
-                     tools_build)
-    self.assertEqual(self.ru.GCLIENT_COMMON_SPECS['tools_build'](self.s),
-                     tools_build)
-
-
-class RecipeUtilStepsTest(unittest.TestCase):
-
-  def setUp(self):
-    self.ru = recipe_util
-    self.s = self.ru.Steps({
+    from slave import recipe_util  # pylint: disable=F0401
+    self.s = recipe_util.RecipeApi({
       'issue': '12345',
       'patchset': '1',
       'rietveld': 'https://rietveld.org'
-    })
+    }, mock_paths=[])
+
+  def test_depot_tools_path(self):
+    self.assertEqual(self.s.depot_tools_path(), '[DEPOT_TOOLS_ROOT]')
+    self.assertEqual(self.s.depot_tools_path('thingy', 'thingy.py'),
+                     '[DEPOT_TOOLS_ROOT]/thingy/thingy.py')
+
+    self.assertRaises(AssertionError,
+        lambda: self.s.depot_tools_path('some', '..', 'dumb', 'path'))
+
+  def test_build_internal_path(self):
+    self.assertEqual(self.s.build_internal_path(), '[BUILD_INTERNAL_ROOT]')
+    self.assertEqual(self.s.build_internal_path('thingy', 'thingy.py'),
+                     '[BUILD_INTERNAL_ROOT]/thingy/thingy.py')
+
+  def test_build_path(self):
+    self.assertEqual(self.s.build_path(), '[BUILD_ROOT]')
+    self.assertEqual(self.s.build_path('thingy', 'thingy.py'),
+                     '[BUILD_ROOT]/thingy/thingy.py')
+
+  def test_slave_build_path(self):
+    self.assertEqual(self.s.slave_build_path(),
+                     '[SLAVE_BUILD_ROOT]')
+    self.assertEqual(self.s.slave_build_path('thingy', 'thingy.py'),
+                     '[SLAVE_BUILD_ROOT]/thingy/thingy.py')
+
+  def test_checkout_path_raw(self):
+    self.assertEqual(self.s.checkout_path(), '%(CheckoutRootPlaceholder)s')
+    self.assertEqual(self.s.checkout_path('thingy', 'thingy.py'),
+                     '%(CheckoutRootPlaceholder)s/thingy/thingy.py')
 
   def test_step(self):
     self.assertEqual(
@@ -142,7 +61,7 @@ class RecipeUtilStepsTest(unittest.TestCase):
       self.s.apply_issue(),
       {'name': 'apply_issue',
        'cmd': [
-         '/b/depot_tools/apply_issue',
+         '[DEPOT_TOOLS_ROOT]/apply_issue',
          '-r', '%(CheckoutRootPlaceholder)s',
          '-i', '12345',
          '-p', '1',
@@ -152,7 +71,7 @@ class RecipeUtilStepsTest(unittest.TestCase):
       self.s.apply_issue('foobar', 'other'),
       {'name': 'apply_issue',
        'cmd': [
-         '/b/depot_tools/apply_issue',
+         '[DEPOT_TOOLS_ROOT]/apply_issue',
          '-r', '%(CheckoutRootPlaceholder)s/foobar/other',
          '-i', '12345',
          '-p', '1',
@@ -179,10 +98,8 @@ class RecipeUtilStepsTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  recipe_util_file = recipe_util.__file__
-  if recipe_util_file[-1] == 'c':
-    recipe_util_file = recipe_util_file[:-1]
-  cov = coverage.coverage(include=recipe_util_file)
+  cov = coverage.coverage(include=os.path.join(
+    os.path.dirname(__file__), os.pardir, 'recipe_util.py'))
   cov.start()
   try:
     unittest.main()

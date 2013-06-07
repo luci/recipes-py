@@ -379,10 +379,17 @@ def run_step(stream, build_failure,
     allow_subannotations: if True, lets the step emit its own annotations
     seed_steps: A list of step names to seed before running this step
 
-  Returns new value for build_failure.
+  Known kwargs:
+    can_fail_build: A boolean indicating that a bad retcode for this step
+                    should be intepreted as a build failure. This variable
+                    is read by update_build_failure().
+
+  Returns the return code for the step if it ran.
+  If the step did not run, it returns None.
+  If the command did not exist, it returns -1.
   """
   if skip or (build_failure and not always_run):
-    return build_failure, None
+    return None
 
   if isinstance(cmd, basestring):
     cmd = (cmd,)
@@ -400,6 +407,9 @@ def run_step(stream, build_failure,
   filter_obj = None
   if not allow_subannotations:
     class AnnotationFilter(chromium_utils.RunCommandFilter):
+      # Missing __init__
+      # Method could be a function (but not really since it's an override)
+      # pylint: disable=W0232,R0201
       def FilterLine(self, line):
         return line.replace('@@@', '###')
     filter_obj = AnnotationFilter()
@@ -417,12 +427,26 @@ def run_step(stream, build_failure,
         stream.step_cursor(stream.current_step)
         print 'step returned non-zero exit code: %d' % ret
         s.step_failure()
-        build_failure = True
   except OSError:
     # File wasn't found, error has been already reported to stream.
-    build_failure = True
+    ret = -1
 
-  return build_failure, ret
+  return ret
+
+
+def update_build_failure(failure, retcode, can_fail_build=True, **_kwargs):
+  """Potentially moves failure from False to True, depending on returncode of
+  the run step and the step's configuration.
+
+  can_fail_build: A boolean indicating that a bad retcode for this step should
+                  be intepreted as a build failure.
+
+  Returns new value for failure.
+
+  Called externally from annotated_run, which is why it's a separate function.
+  """
+  # TODO(iannucci): Allow step to specify "OK" return values besides 0?
+  return bool(failure or (can_fail_build and retcode))
 
 
 def run_steps(steps, build_failure):
@@ -435,7 +459,8 @@ def run_steps(steps, build_failure):
   stream = StructuredAnnotationStream(seed_steps=[s['name'] for s in steps])
   ret_codes = []
   for step in steps:
-    build_failure, ret = run_step(stream, build_failure, **step)
+    ret = run_step(stream, build_failure, **step)
+    build_failure = update_build_failure(build_failure, ret, **step)
     ret_codes.append(ret)
   return build_failure, ret_codes
 
