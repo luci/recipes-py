@@ -78,18 +78,46 @@ def cover():
 
 
 class TestAPI(object):
+  @staticmethod
+  def build_properties_scheduled(**kwargs):
+    ret = TestAPI.build_properties_generic(
+        branch='TestBranch',
+        project='',
+        repository='svn://svn-mirror.golo.chromium.org/chrome/trunk',
+        revision='204787',
+    )
+    ret.update(kwargs)
+    return ret
 
   @staticmethod
-  def tryserver_build_properties(**kwargs):
+  def build_properties_generic(**kwargs):
     ret = {
-        'issue': 12853011,
-        'patchset': 1,
-        'blamelist': ['cool_dev1337@chromium.org'],
-        'rietveld': 'https://chromiumcodereview.appspot.com',
+        'blamelist': 'cool_dev1337@chromium.org,hax@chromium.org',
+        'blamelist_real': ['cool_dev1337@chromium.org', 'hax@chromium.org'],
+        'buildername': 'TestBuilder',
+        'buildnumber': 571,
+        'mastername': 'chromium.testing.master',
+        'slavename': 'TestSlavename',
+        'workdir': '/path/to/workdir/TestSlavename',
     }
     ret.update(kwargs)
     return ret
 
+  @staticmethod
+  def build_properties_tryserver(**kwargs):
+    ret = TestAPI.build_properties_generic(
+        branch='',
+        issue=12853011,
+        patchset=1,
+        project='chrome',
+        repository='',
+        requester='commit-bot@chromium.org',
+        revision='HEAD',
+        rietveld='https://chromiumcodereview.appspot.com',
+        root='src',
+    )
+    ret.update(kwargs)
+    return ret
 
 def test_path_for_recipe(recipe_path):
   root = os.path.dirname(os.path.dirname(recipe_path))
