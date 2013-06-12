@@ -155,9 +155,13 @@ def execute_test_case(test_fn, recipe_path):
   stream = annotator.StructuredAnnotationStream(stream=open(os.devnull, 'w'))
   api = lambda props: recipe_util.RecipeApi(props, pm)
   with cover():
-    step_data = annotated_run.run_steps(
-      stream, bp, fp, api, td).steps_ran.values()
-    return [s.step for s in step_data]
+    try:
+      step_data = annotated_run.run_steps(
+        stream, bp, fp, api, td).steps_ran.values()
+      return [s.step for s in step_data]
+    except:
+      print 'Exception while processing "%s"!' % recipe_path
+      raise
 
 
 def train_from_tests(recipe_path):

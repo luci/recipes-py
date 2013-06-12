@@ -361,8 +361,7 @@ class RecipeApi(object):
       gclient_sync_extra_args = ['--revision', svn_revision]
 
     if not git_mode:
-      clean_step = self.step(step_name('clean'),
-                             [gclient, 'revert', '--nohooks'])
+      clean_step = self.gclient_revert(step_name)
       sync_step = self.step(step_name('sync'), [gclient, 'sync', '--nohooks'] +
                             gclient_sync_extra_args)
     else:
@@ -408,9 +407,9 @@ class RecipeApi(object):
       env=self.c.gyp_env.as_jsonish(),
     )
 
-  def gclient_revert(self):
+  def gclient_revert(self, step_name_fn=lambda x: 'gclient '+x):
     return self.step(
-      'gclient revert',
+      step_name_fn('revert'),
       ['python', self.build_path('scripts', 'slave', 'gclient_safe_revert.py'),
        '.', self.depot_tools_path('gclient', wrapper=True)],
     )

@@ -362,7 +362,7 @@ def run_step(stream, build_failure,
              name, cmd, cwd=None, env=None,
              skip=False, always_run=False,
              allow_subannotations=False,
-             seed_steps=None, **kwargs):
+             seed_steps=None, followup_fn=None, **kwargs):
   """Runs a single step.
 
   Context:
@@ -378,6 +378,8 @@ def run_step(stream, build_failure,
     always_run: True to run the step even if some previous step failed
     allow_subannotations: if True, lets the step emit its own annotations
     seed_steps: A list of step names to seed before running this step
+    followup_fn: A callback function to run within the annotation context of
+                 the step, after the step has completed.
 
   Known kwargs:
     can_fail_build: A boolean indicating that a bad retcode for this step
@@ -415,21 +417,25 @@ def run_step(stream, build_failure,
     filter_obj = AnnotationFilter()
 
   ret = None
-  try:
-    with stream.step(name) as s:
-      print_step(step_dict)
+  with stream.step(name) as s:
+    print_step(step_dict)
+    try:
       ret = chromium_utils.RunCommand(command=cmd,
                                       cwd=cwd,
                                       env=_merge_envs(os.environ, env),
                                       filter_obj=filter_obj,
                                       print_cmd=False)
-      if ret != 0:
-        stream.step_cursor(stream.current_step)
-        print 'step returned non-zero exit code: %d' % ret
-        s.step_failure()
-  except OSError:
-    # File wasn't found, error has been already reported to stream.
-    ret = -1
+    except OSError:
+      # File wasn't found, error will be reported to stream when the exception
+      # crosses the context manager.
+      ret = -1
+      raise
+    if ret > 0:
+      stream.step_cursor(stream.current_step)
+      print 'step returned non-zero exit code: %d' % ret
+      s.step_failure()
+    if followup_fn:
+      followup_fn()
 
   return ret
 

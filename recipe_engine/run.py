@@ -329,28 +329,37 @@ def run_steps(stream, build_properties, factory_properties,
       json_output_file, extra_files = render_step(step, root, test_mode)
       tmp_files.extend(extra_files)
 
-      json_data = step.pop('static_json_data', {})
+      # HACK: Use list() as reference container so handle_json_data can update
+      #       json_data.
+      json_data_ref = [step.pop('static_json_data', {})]
       if not test_mode:
-        retcode = annotator.run_step(stream, failed, **step)
-        if json_output_file is not None:
-          try:
+        def handle_json_data():
+          if json_output_file is not None:
             with open(json_output_file, 'r') as f:
-              json_data = json.load(f)
-            print 'step returned json data: %s' % json_data
-          except ValueError:
-            pass
+              raw_data = f.read()
+            try:
+              json_data_ref[0] = json.loads(raw_data)
+            except ValueError:
+              stream.emit('step had invalid json data: """\n%s\n"""' %
+                          raw_data)
+          if json_data_ref[0]:
+            stream.emit('step returned json data: """\n%s\n"""' %
+                        (json_data_ref[0],))
+
+        retcode = annotator.run_step(stream, failed,
+                                     followup_fn=handle_json_data, **step)
       else:
         retcode, potential_json_data = test_data.pop(step['name'], (0, {}))
-        json_data = json_data or potential_json_data
+        json_data_ref[0] = json_data_ref[0] or potential_json_data
 
       failed = annotator.update_build_failure(failed, retcode, **step)
 
       # Support CheckoutRootPlaceholder.
-      root = root or json_data.get('CheckoutRoot', None)
+      root = root or json_data_ref[0].get('CheckoutRoot', None)
 
       assert step['name'] not in step_history, (
         'Step "%s" is already in step_history!' % step['name'])
-      step_history[step['name']] = StepData(step, retcode, json_data)
+      step_history[step['name']] = StepData(step, retcode, json_data_ref[0])
 
   assert not test_mode or test_data == {}, (
     "Unconsumed test data! %s" % (test_data,))
