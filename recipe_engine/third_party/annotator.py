@@ -157,6 +157,9 @@ class AdvancedAnnotationStream(object):
   def seed_step(self, step):
     self.emit('@@@SEED_STEP %s@@@' % step)
 
+  def seed_step_text(self, step, text):
+    self.emit('@@@SEED_STEP_TEXT@%s@%s@@@' % (step, text))
+
   def step_cursor(self, step):
     self.emit('@@@STEP_CURSOR %s@@@' % step)
 
@@ -309,6 +312,10 @@ class Match:
   @staticmethod
   def seed_step(line):
     return Match._parse_line('^@@@SEED_STEP (.*)@@@', line)
+
+  @staticmethod
+  def seed_step_text(line):
+    return Match._parse_line('^@@@SEED_STEP_TEXT@(.*)@(.*)@@@', line)
 
   @staticmethod
   def step_cursor(line):
