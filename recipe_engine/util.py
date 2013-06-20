@@ -430,22 +430,23 @@ class RecipeApi(object):
     args.extend(targets)
     return self.step('compile', args)
 
-  def runtests(self, test, args=None, xvfb=False):
+  def runtests(self, test, args=None, xvfb=False, name=None, **kwargs):
     args = args or []
     assert isinstance(args, list)
     test_args = [test] + args
 
     python_arg = []
-    name, ext = os.path.splitext(os.path.basename(test))
+    t_name, ext = os.path.splitext(os.path.basename(test))
     if ext == '.py':
       python_arg = ['--run-python-script']
 
-    return self.step(name, [
+    return self.step(name or t_name, [
       'python', self.build_path('scripts', 'slave', 'runtest.py'),
       '--target', self.c.BUILD_CONFIG,
       '--build-dir', self.checkout_path(self.c.build_dir),
       ('--xvfb' if xvfb else '--no-xvfb')]
       + self.property_json_args()
       + python_arg
-      + test_args
+      + test_args,
+      **kwargs
     )
