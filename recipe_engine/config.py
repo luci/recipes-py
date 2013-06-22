@@ -181,7 +181,7 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
     def decorator(f):
       name = f.__name__
       @functools.wraps(f)
-      def inner(config=None, final=True, **kwargs):
+      def inner(config=None, final=True, optional=False, **kwargs):
         """This is the function which is returned from the config_item
         decorator.
 
@@ -224,6 +224,8 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
           config_item.ROOT_CONFIG_ITEM(config)
 
         if name in inclusions:
+          if optional:
+            return config
           raise BadConf('config_item "%s" is already in this config "%s"' %
                         (name, config.as_jsonish(include_hidden=True)))
         if final:
@@ -280,8 +282,8 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
   config_item.VAR_TEST_MAP = VAR_TEST_MAP
   config_item.TEST_NAME_FORMAT = TEST_NAME_FORMAT
   config_item.TEST_FILE_FORMAT = TEST_FILE_FORMAT or TEST_NAME_FORMAT
-  if not config_item.TEST_FILE_FORMAT.endswith('.expected'):
-    config_item.TEST_FILE_FORMAT += '.expected'
+  if not config_item.TEST_FILE_FORMAT.endswith('.json'):
+    config_item.TEST_FILE_FORMAT += '.json'
   return config_item
 
 
@@ -499,7 +501,8 @@ class DictConfig(ConfigBase, collections.MutableMapping):
     self.data = val
 
   def as_jsonish(self, _include_hidden=None):
-    return self.jsonish_fn(map(self.item_fn, self.data.iteritems()))
+    return self.jsonish_fn(map(
+      self.item_fn, sorted(self.data.iteritems(), key=lambda x: x[0])))
 
   def reset(self):
     self.data.clear()
@@ -537,6 +540,11 @@ class ListConfig(ConfigBase, collections.MutableSequence):
 
   def __len__(self):
     return len(self.data)
+
+  def __radd__(self, other):
+    if not isinstance(other, list):
+      other = list(other)
+    return other + self.data
 
   def insert(self, index, value):
     assert isinstance(value, self.inner_type)
@@ -594,7 +602,7 @@ class SetConfig(ConfigBase, collections.MutableSet):
     self.data = set(val)
 
   def as_jsonish(self, _include_hidden=None):
-    return self.jsonish_fn(self.data)
+    return self.jsonish_fn(sorted(self.data))
 
   def reset(self):
     self.data = set()
@@ -633,7 +641,7 @@ class SimpleConfig(ConfigBase):
   def set_val(self, val):
     if isinstance(val, SimpleConfig):
       val = val.data
-    assert isinstance(val, self.inner_type)
+    assert val is self.empty_val or isinstance(val, self.inner_type)
     self.data = val
 
   def as_jsonish(self, _include_hidden=None):

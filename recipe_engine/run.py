@@ -62,57 +62,30 @@ cease calling the generator and move on to the next item in iterable_of_things.
 """
 
 import collections
-import contextlib
 import inspect
-import json
 import optparse
 import os
 import subprocess
 import sys
 
-from collections import namedtuple, OrderedDict
-from itertools import islice
-
 from common import annotator
 from common import chromium_utils
-from slave import recipe_util, slave_utils
+from slave import recipe_api
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 BUILD_ROOT = os.path.dirname(os.path.dirname(SCRIPT_PATH))
-
-
-@contextlib.contextmanager
-def clean_up_files():
-  """A context manager which yields a list() and which guarantees to clean up
-  all file paths in that list when the context manager exits. Example:
-
-  with clean_up_files() as tmp_files_to_cleanup:
-    # do stuff
-    tmp_files_to_cleanup.append('some/temp/file/path')
-    # do more stuff
-    tmp_files_to_cleanup.append('some/other/temp/file/path')
-    raise ValueError('badness!')
-  # <- both files will be deleted here
-
-  """
-  kill_list = []
-  try:
-    yield kill_list
-  finally:
-    for fname in kill_list:
-      try:
-        os.remove(fname)
-      except Exception, e:
-        print >> sys.stderr, (
-          'Error while attempting to clean "%s": %s' % (fname, e))
+ROOT_PATH = os.path.abspath(os.path.join(
+  SCRIPT_PATH, os.pardir, os.pardir, os.pardir))
+MODULE_DIRS = [os.path.join(x, 'recipe_modules') for x in [
+  SCRIPT_PATH,
+  os.path.join(ROOT_PATH, 'build_internal', 'scripts', 'slave')
+]]
 
 
 class StepData(object):
-  __slots__ = ['step', 'retcode', 'json_data']
-  def __init__(self, step=None, retcode=None, json_data=None):
-    self.step      = step
-    self.retcode   = retcode
-    self.json_data = json_data
+  def __init__(self):
+    self.step      = None
+    self.retcode   = None
 
 
 def flattened(sequence):
@@ -131,7 +104,7 @@ def fixup_seed_steps(sequence):
   Returns the sequence for convenience.
   """
   seed_steps = None
-  for step in flattened(sequence):
+  for step in sequence:
     if not seed_steps:
       if 'seed_steps' in step:
         break
@@ -142,106 +115,54 @@ def fixup_seed_steps(sequence):
 
 def ensure_sequence_of_steps(step_or_steps):
   """Generates one or more fixed steps, given a step or a sequence of steps."""
-  if isinstance(step_or_steps, collections.Sequence):
-    for s in flattened(fixup_seed_steps(step_or_steps)):
-      yield s
-  else:
+  if isinstance(step_or_steps, dict):
     yield step_or_steps
+  elif isinstance(step_or_steps, collections.Sequence):
+    for s in fixup_seed_steps(list(flattened(step_or_steps))):
+      yield s
+  elif inspect.isgenerator(step_or_steps):
+    for i in step_or_steps:
+      for s in ensure_sequence_of_steps(i):
+        yield s
+  else:
+    assert False, 'Item is not a sequence or a step: %s' % (step_or_steps,)
 
 
-def step_generator_wrapper(steps, step_history, is_failed):
-  """Generates single steps from the non-homogeneous sequence 'steps'.
-
-  Each item in steps may be:
-    * A step (dict)
-    * A sequence of steps
-    * A generator of:
-      * A step
-      * A sequence of steps
-  """
-  for thing in steps:
-    if isinstance(thing, (collections.Sequence, dict)):
-      for step in ensure_sequence_of_steps(thing):
-        yield step
-    else:
-      # step generator
-      step_iter = thing(step_history, is_failed())
-      first = True
-      try:
-        while True:
-          # Cannot pass non-None to first generator call.
-          step_or_steps = step_iter.send(is_failed() if not first else None)
-          first = False
-
-          for step in ensure_sequence_of_steps(step_or_steps):
-            keep_going = step.pop('keep_going', False)
-            yield step
-            if is_failed() and not keep_going:
-              raise StopIteration
-      except StopIteration:
-        pass
-
-
-def create_step_history():
-  """Returns an OrderedDict with some helper functions attached."""
-  step_history = OrderedDict()
-
-  # Add in some helpers.
-  def last_step():
-    """Returns the last item from step_history, or None."""
-    key = next(reversed(step_history), None)
-    return step_history[key] if key else None
-  step_history.last_step = last_step
-
-  def nth_step(n):
-    """Returns the N'th step from step_history, or None."""
-    return next(islice(step_history.iteritems(), n, None), None)
-  step_history.nth_step = nth_step
-  return step_history
-
-
-def render_step(step, root, test_mode):
+def render_step(step, test_data):
   """Renders a step so that it can be fed to annotator.py.
 
-  In particular, this fills out all placeholders from recipe_util:
-    * _JsonPlaceholder derivatives
-    * CheckoutRootPlaceholder
+  Args:
+    test_data: The test data json dictionary for this step, if any.
+               Passed through unaltered to each placeholder.
 
-  Returns the json_output file for the step, if any, and a list of extra files
-  to clean up.
+  Returns any placeholder instances that were found while rendering the step.
   """
-  replacements = {'CheckoutRootPlaceholder': root}
-  def expand_root_placeholder(item):
-    if isinstance(item, basestring):
-      if '%(CheckoutRootPlaceholder)s' in item:
-        assert root, 'Must use "checkout" key to use checkout_path().'
-        item = item % replacements
-    return item
-
-  json_output_file = None
-  tmp_files_to_cleanup = []
+  placeholders = collections.defaultdict(list)
   new_cmd = []
-  for item in map(expand_root_placeholder, step['cmd']):
-    # need to interact with _JsonPlaceholder
-    # pylint: disable=W0212
-    if isinstance(item, recipe_util._JsonPlaceholder):
-      items, cleanup_files, output_file = item.render(test_mode)
-      if output_file:
-        assert not json_output_file, (
-          'Can only use json_output_file once per step: %s' % step)
-        assert 'static_json_data' not in step, (
-          'Cannot have both static and dynamic json_data: %s' % step)
-        json_output_file = output_file
-      new_cmd.extend(items)
-      tmp_files_to_cleanup.extend(cleanup_files)
+  for item in step['cmd']:
+    if isinstance(item, recipe_api.Placeholder):
+      # __module__ is in the form of ...recipe_modules.<api_name>.*
+      api_name = item.__module__.split('.')[-2]
+      tdata = None if test_data is None else test_data.get(api_name, {})
+      new_cmd.extend(item.render(tdata))
+      placeholders[api_name].append(item)
     else:
       new_cmd.append(item)
   step['cmd'] = new_cmd
+  return placeholders
 
-  if 'cwd' in step:
-    step['cwd'] = expand_root_placeholder(step['cwd'])
 
-  return json_output_file, tmp_files_to_cleanup
+def call_placeholders(stream, step_result, placeholders, test_data):
+  class BlankObject(object):
+    pass
+  additions = {}
+  for api, items in placeholders.iteritems():
+    additions[api] = BlankObject()
+    test_datum = None if test_data is None else test_data.get(api, {})
+    for placeholder in items:
+      placeholder.step_finished(stream, additions[api], test_datum)
+  for api, obj in additions.iteritems():
+    setattr(step_result, api, obj)
 
 
 def get_args(argv):
@@ -272,7 +193,7 @@ def main(argv=None):
 
 
 def run_steps(stream, build_properties, factory_properties,
-              recipe_api=recipe_util.RecipeApi, test_data=None):
+              api=recipe_api.CreateRecipeApi, test_data=None):
   """Returns a tuple of (status_code, steps_ran).
 
   Only one of these values will be set at a time. This is mainly to support the
@@ -280,7 +201,8 @@ def run_steps(stream, build_properties, factory_properties,
 
   test_data should be a dictionary of step_name -> (retcode, json_data)
   """
-  MakeStepsRetval = namedtuple('MakeStepsRetval', 'status_code steps_ran')
+  MakeStepsRetval = collections.namedtuple('MakeStepsRetval',
+                                           'status_code steps_ran')
 
   # TODO(iannucci): Stop this when blamelist becomes sane data.
   if ('blamelist_real' in build_properties and
@@ -288,6 +210,7 @@ def run_steps(stream, build_properties, factory_properties,
     build_properties['blamelist'] = build_properties['blamelist_real']
     del build_properties['blamelist_real']
 
+  step_history = collections.OrderedDict()
   with stream.step('setup_build') as s:
     assert 'recipe' in factory_properties
     recipe = factory_properties['recipe']
@@ -300,71 +223,55 @@ def run_steps(stream, build_properties, factory_properties,
     ))
 
     for recipe_path in (os.path.join(p, recipe) for p in recipe_dirs):
-      recipe_module = slave_utils.IsolatedImportFromPath(recipe_path)
+      recipe_module = chromium_utils.IsolatedImportFromPath(recipe_path)
       if not recipe_module:
         continue
 
       properties = factory_properties.copy()
       properties.update(build_properties)
       stream.emit('Running recipe with %s' % (properties,))
-      steps = recipe_module.GetSteps(recipe_api(properties))
-      if inspect.isgeneratorfunction(steps):
-        steps = (steps,)
-      assert isinstance(steps, (list, tuple))
+      steps = recipe_module.GenSteps(api(recipe_module.DEPS,
+                                         mod_dirs=MODULE_DIRS,
+                                         properties=properties,
+                                         step_history=step_history))
+      assert inspect.isgenerator(steps)
       break
     else:
       s.step_text('recipe not found')
       s.step_failure()
-      return MakeStepsRetval(1, None)
+      return MakeStepsRetval(2, None)
 
   # Execute annotator.py with steps if specified.
   # annotator.py handles the seeding, execution, and annotation of each step.
   failed = False
-  step_history = create_step_history()
 
   test_mode = test_data is not None
-  root = None
-  for step in step_generator_wrapper(steps, step_history, lambda: failed):
-    with clean_up_files() as tmp_files:
-      json_output_file, extra_files = render_step(step, root, test_mode)
-      tmp_files.extend(extra_files)
 
-      # HACK: Use list() as reference container so handle_json_data can update
-      #       json_data.
-      json_data_ref = [step.pop('static_json_data', {})]
-      if not test_mode:
-        def handle_json_data():
-          if json_output_file is not None:
-            with open(json_output_file, 'r') as f:
-              raw_data = f.read()
-            try:
-              json_data_ref[0] = json.loads(raw_data)
-            except ValueError:
-              stream.emit('step had invalid json data: """\n%s\n"""' %
-                          raw_data)
-          if json_data_ref[0]:
-            stream.emit('step returned json data: """\n%s\n"""' %
-                        (json_data_ref[0],))
+  for step in ensure_sequence_of_steps(steps):
+    test_data_item = test_data.pop(step['name'], {}) if test_mode else None
+    placeholders = render_step(step, test_data_item)
 
-        retcode = annotator.run_step(stream, failed,
-                                     followup_fn=handle_json_data, **step)
-      else:
-        retcode, potential_json_data = test_data.pop(step['name'], (0, {}))
-        json_data_ref[0] = json_data_ref[0] or potential_json_data
+    assert step['name'] not in step_history, (
+      'Step "%s" is already in step_history!' % step['name'])
+    step_result = StepData()
+    step_history[step['name']] = step_result
 
-      failed = annotator.update_build_failure(failed, retcode, **step)
+    followup = lambda: call_placeholders(
+      stream, step_result, placeholders, test_data_item)
+    if not test_mode:
+      step_result.retcode = annotator.run_step(
+        stream, failed, followup_fn=followup, **step)
+    else:
+      followup()
+      step_result.retcode = test_data_item.pop('$R', 0)
+    step_result.step = step
 
-      # Support CheckoutRootPlaceholder.
-      root = root or json_data_ref[0].get('CheckoutRoot', None)
-
-      assert step['name'] not in step_history, (
-        'Step "%s" is already in step_history!' % step['name'])
-      step_history[step['name']] = StepData(step, retcode, json_data_ref[0])
+    failed = annotator.update_build_failure(failed, step_result.retcode, **step)
 
   assert not test_mode or test_data == {}, (
     "Unconsumed test data! %s" % (test_data,))
 
-  return MakeStepsRetval(retcode, step_history)
+  return MakeStepsRetval(0 if not failed else 1, step_history)
 
 
 def UpdateScripts():

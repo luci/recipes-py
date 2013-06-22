@@ -23,24 +23,18 @@ from itertools import product, imap
 
 import test_env  # pylint: disable=W0611,F0401
 
+from slave import recipe_api
+from slave import annotated_run
+
 import coverage
 
 SCRIPT_PATH = os.path.abspath(os.path.dirname(__file__))
 SLAVE_DIR = os.path.abspath(os.path.join(SCRIPT_PATH, os.pardir))
 
-
-# [(expected_dir_path, config_module_path)*]
-CONFIG_PATHS = (lambda: [(path, os.path.splitext(path)[0]+'_test') for path in (
-  os.path.join(SLAVE_DIR, 'recipe_configs.py'),
-  os.path.join(SLAVE_DIR, 'gclient_configs.py'),
-  ## ADD NEW CONFIG MODULES HERE
-)])()
-
-
 COVERAGE = (lambda: coverage.coverage(
-    include=[x[0] for x in CONFIG_PATHS],
+    include=[os.path.join(x, '*', '*config.py')
+             for x in annotated_run.MODULE_DIRS],
     data_suffix=True))()
-
 
 def covered(fn, *args, **kwargs):
   COVERAGE.start()
@@ -49,23 +43,23 @@ def covered(fn, *args, **kwargs):
   finally:
     COVERAGE.stop()
 
+RECIPE_MODULES = None
+def init_recipe_modules():
+  global RECIPE_MODULES
+  RECIPE_MODULES = covered(recipe_api.load_recipe_modules,
+                           annotated_run.MODULE_DIRS)
 
-from slave import recipe_configs_util, slave_utils  # pylint: disable=F0401
+from slave import recipe_configs_util  # pylint: disable=F0401
 
-GLOBAL_CONTEXT_MAP = {}
-def initialize_global_context_map():
-  config_modules = [
-    (slave_utils.IsolatedImportFromPath(path, sys.path), expected)
-    for path, expected in CONFIG_PATHS]
-  for module, expect_dir in config_modules:
-    for name, ctx in module.__dict__.iteritems():
-      if hasattr(ctx, 'I_AM_A_CONFIG_ITEM'):
-        GLOBAL_CONTEXT_MAP[(module, name)] = (expect_dir, ctx)
+def get_expect_dir(mod):
+  return os.path.join(mod.__path__[0], 'config.expectations')
 
 
 def evaluate_configurations(args):
-  (module, ctx_name), var_assignments = args
-  expect_dir, ctx = GLOBAL_CONTEXT_MAP[(module, ctx_name)]
+  mod_id, var_assignments = args
+  mod = getattr(RECIPE_MODULES, mod_id)
+  expect_dir = get_expect_dir(mod)
+  ctx = mod.CONFIG_CTX
 
   config_name = None
   try:
@@ -159,10 +153,10 @@ def load_tests(loader, _standard_tests, _pattern):
 
 
 def multiprocessing_init():
-  initialize_global_context_map()
   # HACK: multiprocessing doesn't work with atexit, so shim os._exit instead.
   # This allows us to save exactly one coverage file per subprocess
   # pylint: disable=W0212
+  init_recipe_modules()
   real_os_exit = os._exit
   def exitfn(code):
     COVERAGE.save()
@@ -172,11 +166,12 @@ def multiprocessing_init():
 
 def coverage_parallel_map(fn):
   combination_generator = (
-    (ctx_id, var_assignments)
-    for ctx_id, (_, ctx) in GLOBAL_CONTEXT_MAP.iteritems()
+    (mod_id, var_assignments)
+    for mod_id, mod in RECIPE_MODULES.__dict__.iteritems()
+      if mod_id[0] != '_' and mod.CONFIG_CTX
     for var_assignments in imap(dict, product(*[
       [(key_name, val) for val in vals]
-      for key_name, vals in ctx.VAR_TEST_MAP.iteritems()
+      for key_name, vals in mod.CONFIG_CTX.VAR_TEST_MAP.iteritems()
     ]))
   )
 
@@ -192,9 +187,12 @@ def coverage_parallel_map(fn):
 
 def main(argv):
   COVERAGE.erase()
-  covered(initialize_global_context_map)
+  init_recipe_modules()
 
-  for expect_dir, _ in GLOBAL_CONTEXT_MAP.itervalues():
+  for k, m in RECIPE_MODULES.__dict__.iteritems():
+    if k[0] == '_':
+      continue
+    expect_dir = get_expect_dir(m)
     if not os.path.exists(expect_dir):
       os.makedirs(expect_dir)
 

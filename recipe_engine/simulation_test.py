@@ -36,6 +36,7 @@ Additionally, this test cannot pass unless every recipe in ../recipes has 100%
 code coverage when executed via the tests in ../recipes_test.
 """
 
+import collections
 import contextlib
 import json
 import os
@@ -49,8 +50,6 @@ import test_env  # pylint: disable=W0611
 import coverage
 
 from common import annotator
-from slave import annotated_run
-from slave import recipe_util
 
 SCRIPT_PATH = os.path.abspath(os.path.dirname(__file__))
 ROOT_PATH = os.path.abspath(os.path.join(SCRIPT_PATH, os.pardir, os.pardir,
@@ -65,7 +64,10 @@ BASE_DIRS = {
 # base_dir
 
 COVERAGE = coverage.coverage(
-    include=[os.path.join(x, 'recipes', '*') for x in BASE_DIRS.values()])
+    include=([os.path.join(x, 'recipes', '*') for x in BASE_DIRS.values()]+
+             [os.path.join(SCRIPT_PATH, os.pardir, 'recipe_modules',
+                           '*', 'api.py')])
+)
 
 
 @contextlib.contextmanager
@@ -76,6 +78,9 @@ def cover():
   finally:
     COVERAGE.stop()
 
+with cover():
+  from slave import annotated_run
+  from slave import recipe_api
 
 class TestAPI(object):
   @staticmethod
@@ -119,41 +124,49 @@ class TestAPI(object):
     ret.update(kwargs)
     return ret
 
-def test_path_for_recipe(recipe_path):
-  root = os.path.dirname(os.path.dirname(recipe_path))
-  return os.path.join(root, 'recipes_test', os.path.basename(recipe_path))
-
-
-def has_test(recipe_path):
-  return os.path.exists(test_path_for_recipe(recipe_path))
-
 
 def expected_for(recipe_path, test_name):
-  test_base = os.path.splitext(test_path_for_recipe(recipe_path))[0]
-  return '%s.%s.expected' % (test_base, test_name)
+  root, name = os.path.split(recipe_path)
+  name = os.path.splitext(name)[0]
+  expect_path = os.path.join(root, '%s.expected' % name)
+  if not os.path.isdir(expect_path):
+    os.makedirs(expect_path)
+  return os.path.join(expect_path, test_name+'.json')
 
 
 def exec_test_file(recipe_path):
-  test_path = test_path_for_recipe(recipe_path)
   gvars = {}
-  execfile(test_path, gvars)
-  ret = {}
-  for name, value in gvars.iteritems():
-    if name.endswith('_test'):
-      ret[name[:-len('_test')]] = value
-  return ret
+  with cover():
+    execfile(recipe_path, gvars)
+    try:
+      gen = gvars['GenTests'](TestAPI())
+    except Exception, e:
+      print "Caught exception while processing %s: %s" % (recipe_path, e)
+      raise
+  try:
+    while True:
+      with cover():
+        name, test_data = next(gen)
+      yield name, test_data
+  except StopIteration:
+    pass
 
 
-def execute_test_case(test_fn, recipe_path):
-  test_data = test_fn(TestAPI())
+def execute_test_case(test_data, recipe_path):
   bp = test_data.get('build_properties', {})
   fp = test_data.get('factory_properties', {})
-  td = test_data.get('test_data', {}).copy()
-  pm = test_data.get('paths_to_mock', [])
+  td = test_data.get('placeholder_data', {}).copy()
   fp['recipe'] = os.path.basename(os.path.splitext(recipe_path)[0])
 
+  mock_data = test_data.get('mock', {})
+  mock_data = collections.defaultdict(lambda: collections.defaultdict(dict),
+                                      mock_data)
+
   stream = annotator.StructuredAnnotationStream(stream=open(os.devnull, 'w'))
-  api = lambda props: recipe_util.RecipeApi(props, pm)
+
+  def api(*args, **kwargs):
+    return recipe_api.CreateRecipeApi(mocks=mock_data, *args, **kwargs)
+
   with cover():
     try:
       step_data = annotated_run.run_steps(
@@ -165,15 +178,11 @@ def execute_test_case(test_fn, recipe_path):
 
 
 def train_from_tests(recipe_path):
-  if not has_test(recipe_path):
-    print 'FATAL: Recipe %s has NO tests!' % recipe_path
-    return False
-
   for path in glob(expected_for(recipe_path, '*')):
     os.unlink(path)
 
-  for name, test_fn in exec_test_file(recipe_path).iteritems():
-    steps = execute_test_case(test_fn, recipe_path)
+  for name, test_data in exec_test_file(recipe_path):
+    steps = execute_test_case(test_data, recipe_path)
     expected_path = expected_for(recipe_path, name)
     print 'Writing', expected_path
     with open(expected_path, 'w') as f:
@@ -197,16 +206,13 @@ def load_tests(loader, _standard_tests, _pattern):
   """This method is invoked by unittest.main's automatic testloader."""
   def create_test_class(recipe_path):
     class RecipeTest(unittest.TestCase):
-      def testExists(self):
-        self.assertTrue(has_test(recipe_path))
-
       @classmethod
       def add_test_methods(cls):
-        for name, test_fn in exec_test_file(recipe_path).iteritems():
+        for name, test_data in exec_test_file(recipe_path):
           expected_path = expected_for(recipe_path, name)
-          def add_test(test_fn, expected_path):
+          def add_test(test_data, expected_path):
             def test_(self):
-              steps = execute_test_case(test_fn, recipe_path)
+              steps = execute_test_case(test_data, recipe_path)
               # Roundtrip json to get same string encoding as load
               steps = json.loads(json.dumps(steps))
               with open(expected_path, 'r') as f:
@@ -214,10 +220,9 @@ def load_tests(loader, _standard_tests, _pattern):
               self.assertEqual(steps, expected)
             test_.__name__ += name
             setattr(cls, test_.__name__, test_)
-          add_test(test_fn, expected_path)
+          add_test(test_data, expected_path)
 
-    if has_test(recipe_path):
-      RecipeTest.add_test_methods()
+    RecipeTest.add_test_methods()
 
     RecipeTest.__name__ += '_for_%s' % (
       os.path.splitext(os.path.basename(recipe_path))[0])
