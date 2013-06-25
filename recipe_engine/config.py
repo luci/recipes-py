@@ -373,9 +373,9 @@ class ConfigGroup(ConfigBase):
     assert not val, "Got extra keys while setting ConfigGroup: %s" % val
 
   def as_jsonish(self, include_hidden=False):
-    return {
-      n: v.as_jsonish(include_hidden) for n, v in self._type_map.iteritems()
-        if (include_hidden or not v._hidden)}  # pylint: disable=W0212
+    return dict(
+      (n, v.as_jsonish(include_hidden)) for n, v in self._type_map.iteritems()
+        if (include_hidden or not v._hidden))  # pylint: disable=W0212
 
   def reset(self):
     for v in self._type_map.values():

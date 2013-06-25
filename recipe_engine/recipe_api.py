@@ -6,6 +6,7 @@ import imp
 import inspect
 import os
 import sys
+import tempfile
 
 
 class Placeholder(object):
@@ -17,6 +18,30 @@ class Placeholder(object):
   def step_finished(self, stream, step_result, test_data):  # pragma: no cover
     """Called after step completion. Intended to modify step_result."""
     pass
+
+
+class InputDataPlaceholder(Placeholder):
+  def __init__(self, data, suffix):
+    assert isinstance(data, basestring)
+    self.data = data
+    self.suffix = suffix
+    self.input_file = None
+    super(InputDataPlaceholder, self).__init__()
+
+  def render(self, test_data):
+    if test_data is not None:
+      # cheat and pretend like we're going to pass the data on the
+      # cmdline for test expectation purposes.
+      return [self.data]
+    else:  # pragma: no cover
+      input_fd, self.input_file = tempfile.mkstemp(suffix=self.suffix)
+      os.write(input_fd, self.data)
+      os.close(input_fd)
+      return [self.input_file]
+
+  def step_finished(self, stream, step_result, test_data):
+    if test_data is None:  # pragma: no cover
+      os.unlink(self.input_file)
 
 
 class ModuleInjectionSite(object):

@@ -41,13 +41,15 @@ import contextlib
 import json
 import os
 import sys
-import unittest
 
 from glob import glob
 
 import test_env  # pylint: disable=W0611
 
 import coverage
+
+import common.python26_polyfill  # pylint: disable=W0611
+import unittest
 
 from common import annotator
 
@@ -198,7 +200,7 @@ def train_from_tests(recipe_path):
     steps = execute_test_case(test_data, recipe_path)
     expected_path = expected_for(recipe_path, name)
     print 'Writing', expected_path
-    with open(expected_path, 'w') as f:
+    with open(expected_path, 'wb') as f:
       f.write('[')
       first = True
       for step in steps:
@@ -228,7 +230,7 @@ def load_tests(loader, _standard_tests, _pattern):
               steps = execute_test_case(test_data, recipe_path)
               # Roundtrip json to get same string encoding as load
               steps = json.loads(json.dumps(steps))
-              with open(expected_path, 'r') as f:
+              with open(expected_path, 'rb') as f:
                 expected = json.load(f)
               self.assertEqual(steps, expected)
             test_.__name__ += name

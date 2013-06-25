@@ -17,16 +17,24 @@ import json
 import optparse
 import os
 import re
+import subprocess
 import sys
+import threading
 import traceback
-
-from common import chromium_utils
 
 
 def emit(line, stream, flush_before=None):
   if flush_before:
     flush_before.flush()
-  print >> stream, '\n' + line
+  print >> stream
+  # WinDOS can only handle 64kb of output to the console at a time, per process.
+  if sys.platform.startswith('win'):
+    lim = 2**15
+    while line:
+      to_print, line = line[:lim], line[lim:]
+      stream.write(to_print)
+  else:
+    print >> stream, line
   stream.flush()
 
 
@@ -413,25 +421,44 @@ def run_step(stream, build_failure,
   for step_name in (seed_steps or []):
     stream.seed_step(step_name)
 
-  filter_obj = None
-  if not allow_subannotations:
-    class AnnotationFilter(chromium_utils.RunCommandFilter):
-      # Missing __init__
-      # Method could be a function (but not really since it's an override)
-      # pylint: disable=W0232,R0201
-      def FilterLine(self, line):
-        return line.replace('@@@', '###')
-    filter_obj = AnnotationFilter()
-
   ret = None
   with stream.step(name) as s:
     print_step(step_dict)
     try:
-      ret = chromium_utils.RunCommand(command=cmd,
-                                      cwd=cwd,
-                                      env=_merge_envs(os.environ, env),
-                                      filter_obj=filter_obj,
-                                      print_cmd=False)
+      proc = subprocess.Popen(
+          cmd,
+          env=_merge_envs(os.environ, env),
+          cwd=cwd,
+          stdout=subprocess.PIPE,
+          stderr=subprocess.PIPE)
+
+      outlock = threading.Lock()
+      def filter_lines(lock, allow_subannotations, inhandle, outhandle):
+        while True:
+          line = inhandle.readline()
+          if not line:
+            break
+          lock.acquire()
+          try:
+            if not allow_subannotations and line.startswith('@@@'):
+              outhandle.write('!')
+            outhandle.write(line)
+            outhandle.flush()
+          finally:
+            lock.release()
+
+      outthread = threading.Thread(
+          target=filter_lines,
+          args=(outlock, allow_subannotations, proc.stdout, sys.stdout))
+      errthread = threading.Thread(
+          target=filter_lines,
+          args=(outlock, allow_subannotations, proc.stderr, sys.stderr))
+      outthread.start()
+      errthread.start()
+      proc.wait()
+      outthread.join()
+      errthread.join()
+      ret = proc.returncode
     except OSError:
       # File wasn't found, error will be reported to stream when the exception
       # crosses the context manager.
@@ -489,11 +516,35 @@ def main():
 
   steps = []
 
+  def force_list_str(lst):
+    ret = []
+    for v in lst:
+      if isinstance(v, basestring):
+        v = str(v)
+      elif isinstance(v, list):
+        v = force_list_str(v)
+      elif isinstance(v, dict):
+        v = force_dict_strs(v)
+      ret.append(v)
+    return ret
+
+  def force_dict_strs(obj):
+    ret = {}
+    for k, v in obj.iteritems():
+      if isinstance(v, basestring):
+        v = str(v)
+      elif isinstance(v, list):
+        v = force_list_str(v)
+      elif isinstance(v, dict):
+        v = force_dict_strs(v)
+      ret[str(k)] = v
+    return ret
+
   if args[0] == '-':
-    steps.extend(json.load(sys.stdin))
+    steps.extend(json.load(sys.stdin, object_hook=force_dict_strs))
   else:
     with open(args[0], 'rb') as f:
-      steps.extend(json.load(f))
+      steps.extend(json.load(f, object_hook=force_dict_strs))
 
   return 1 if run_steps(steps, False)[0] else 0
 

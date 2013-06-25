@@ -88,7 +88,7 @@ def evaluate_configurations(args):
         if result.complete():
           ret[config_name] = result.as_jsonish()
       except recipe_configs_util.BadConf, e:
-        ret[config_name] = e.message
+        ret[config_name] = str(e)
     return file_name, (ctx.TEST_NAME_FORMAT % var_assignments), ret
   except Exception, e:
     print 'Caught exception [%s] with args %s: %s' % (e, args, config_name)
@@ -99,7 +99,7 @@ def train_from_tests(args):
   if configuration_results is not None:
     if configuration_results:
       print 'Writing', file_name
-      with open(file_name, 'w') as f:
+      with open(file_name, 'wb') as f:
         json.dump(configuration_results, f, sort_keys=True, indent=2)
     else:
       print 'Empty', file_name
@@ -119,7 +119,7 @@ def load_tests(loader, _standard_tests, _pattern):
 
     json_expectation = {}
     if os.path.exists(file_name):
-      with open(file_name, 'r') as f:
+      with open(file_name, 'rb') as f:
         json_expectation = json.load(f)
 
     class RecipeConfigsTest(unittest.TestCase):
@@ -153,15 +153,22 @@ def load_tests(loader, _standard_tests, _pattern):
 
 
 def multiprocessing_init():
-  # HACK: multiprocessing doesn't work with atexit, so shim os._exit instead.
-  # This allows us to save exactly one coverage file per subprocess
-  # pylint: disable=W0212
   init_recipe_modules()
-  real_os_exit = os._exit
+
+  # HACK: multiprocessing doesn't work with atexit, so shim the exit functions
+  # instead. This allows us to save exactly one coverage file per subprocess.
+  # pylint: disable=W0212
+  real_os_exit = multiprocessing.forking.exit
   def exitfn(code):
     COVERAGE.save()
     real_os_exit(code)
-  os._exit = exitfn
+  multiprocessing.forking.exit = exitfn
+
+  # This check mirrors the logic in multiprocessing.forking.exit
+  if sys.platform != 'win32':
+    # Even though multiprocessing.forking.exit is defined, it's not used in the
+    # non-win32 version multiprocessing.forking.Popen... *loss for words*
+    os._exit = exitfn
 
 
 def coverage_parallel_map(fn):

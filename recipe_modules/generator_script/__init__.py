@@ -1,1 +1,6 @@
-DEPS = ['step', 'step_history', 'path', 'json']
+DEPS = [
+  'json',
+  'path',
+  'step',
+  'step_history',
+]

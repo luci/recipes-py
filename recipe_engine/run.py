@@ -61,12 +61,14 @@ cease calling the generator and move on to the next item in iterable_of_things.
 'failed' is a boolean representing if the build is in a 'failed' state.
 """
 
-import collections
 import inspect
 import optparse
 import os
 import subprocess
 import sys
+
+import common.python26_polyfill  # pylint: disable=W0611
+import collections  # Import after polyfill to get OrderedDict on 2.6
 
 from common import annotator
 from common import chromium_utils

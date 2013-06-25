@@ -55,41 +55,6 @@ class JsonOutputPlaceholder(recipe_api.Placeholder):
       os.unlink(self.output_file)
 
 
-class JsonInputPlaceholder(recipe_api.Placeholder):
-  """JsonInputPlaceholder is meant to be a non-singleton object which, when
-  added to a step's cmd list, will be replaced by annotated_run with a
-  /path/to/json file during the evaluation of your recipe generator.
-
-  The file will have the json-string passed to __init__, and is guaranteed to
-  exist solely for the duration of the step.
-
-  Multiple instances of thif placeholder can occur in a step's command, and
-  each will be serialized to a different input file.
-  """
-  __slots__ = ['json_string']
-
-  def __init__(self, json_string):
-    assert isinstance(json_string, basestring)
-    self.json_string = json_string
-    self.input_file = None
-    super(JsonInputPlaceholder, self).__init__()
-
-  def render(self, test_data):
-    if test_data is not None:
-      # cheat and pretend like we're going to pass the data on the
-      # cmdline for test expectation purposes.
-      return [self.json_string]
-    else:  # pragma: no cover
-      json_input_fd, self.input_file = tempfile.mkstemp()
-      os.write(json_input_fd, self.json_string)
-      os.close(json_input_fd)
-      return [self.input_file]
-
-  def step_finished(self, stream, step_result, test_data):
-    if test_data is None:  # pragma: no cover
-      os.unlink(self.input_file)
-
-
 class JsonApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
     super(JsonApi, self).__init__(**kwargs)
@@ -102,7 +67,7 @@ class JsonApi(recipe_api.RecipeApi):
 
   def input(self, data):
     """A placeholder which will expand to a file path containing <data>."""
-    return JsonInputPlaceholder(self.dumps(data))
+    return recipe_api.InputDataPlaceholder(self.dumps(data), '.json')
 
   @staticmethod
   def output():
