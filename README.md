@@ -312,6 +312,41 @@ def GenTests(api):
 > test SOMEWHERE to cover each line.
 
 
+So how do I really write those tests?
+-------------------------------------
+**Tests are yielded as a (name, test data) tuple.**
+
+The basic form of tests is:
+```python
+def GenTests(api):
+  yield 'testname', {
+    # Test data
+  }
+```
+
+Test data can contain any of the following keys:
+  * *properties*: This represents the merged factory properties and build
+    properties which will show up as api.properties for the duration of the
+    test. This dictionary is in simple `{<prop name>: <prop value>}` form.
+  * *mock*: Some modules need to have their behavior altered before the recipe
+    starts. For example, you could mock which platform is being tested, or mock
+    which paths exist. This dictionary is in the form of `{<mod name>: <mod
+    data>}`. See module docstrings to see what they accept for mocks.
+  * *step_mocks*: This is a dictionary which defines the mock data for
+    various `recipe_api.Placeholder` objects. These are explained more in
+    a later section.  This dictionary is in the form of `{<step name>: {<mod
+    name>: <mod data>}}`
+    * There is one 'special' mod name, which is '$R'. This module refers to the
+      return code of the step, and takes an integer. If it is missing, it is
+      assumed that the step succeeded with a retcode of 0.
+
+The `api` passed to GenTests is confusingly **NOT** the same as the recipe api.
+It's actually an instance of `unittests/recipes_test.py:TestApi()`. This is
+adimittedly pretty weak, and it would be great to have the test api
+automatically created via modules. On the flip side, the test api is much less
+necessary than the recipe api, so this transformation has not been designed yet.
+
+
 What is that config business?
 -----------------------------
 **Configs are a way for a module to expose it's "global" state in a reusable
@@ -493,6 +528,80 @@ stack across all the relevent contexts.
 `recipe_api.RecipeApi` also provides `make_config` and `apply_config`, which
 allow recipes more-direct access to the config items. However, `set_config()` is
 the most-preferred way to apply configurations.
+
+
+What about getting data back from a step?
+-----------------------------------------
+**If you need you recipe to be conditional on something that a step does, you'll
+need to make use of the `step_history` api.**
+
+Consider this recipe:
+```python
+DEPS = ['step', 'path', 'step_history']
+
+def GenSteps(api):
+  yield api.step('Determine blue moon', [api.path.build('is_blue_moon.sh')])
+  if api.step_history.last_step().retcode == 0:
+    yield api.step('HARLEM SHAKE!', [api.path.build('do_the_harlem_shake.sh')])
+  else:
+    yield api.step('Boring', [api.path.build('its_a_small_world.sh')])
+
+def GenTests(api):
+  yield 'harlem', {
+    'step_mocks': {'Determine blue moon': {'$R': 0}}
+  }
+  yield 'boring', {
+    'step_mocks': {'Determine blue moon': {'$R': 1}}
+  }
+```
+
+See how we use `step_history` to get the result of the last step? The item we
+get back is an `annotated_run.RecipeData` instance (really, just a basic object
+with member data). The members of this object which are guaranteed to exist are:
+  * retcode: Pretty much what you think
+  * step: The actual step json which was sent to `annotator.py`. Not usually
+    useful for recipes, but it is used internally for the recipe tests
+    framework.
+
+This is pretty neat... However, it turns out that returncodes suck bigtime for
+communicating actual information. `api.json.output()` to the rescue!
+
+```python
+DEPS = ['step', 'path', 'step_history', 'json']
+
+def GenSteps(api):
+  yield api.step('run tests', [
+    api.path.build('do_test_things.sh') + api.json.output()])
+  num_passed = api.step_history.last_step().json.output['num_passed']
+  if num_passed > 500:
+    yield api.step('victory', [api.path.build('do_a_dance.sh')])
+  elif num_passed > 200:
+    yield api.step('not defeated', [api.path.build('woohoo.sh')])
+  else:
+    yield api.step('deads!', [api.path.build('you_r_deads.sh')])
+
+def GenTests(api):
+  yield 'winning', {
+    'step_mocks': {'run tests': {'json': {'output': {'num_passed': 791}}}}
+  }
+  yield 'not_dead_yet', {
+    'step_mocks': {'run tests': {'json': {'output': {'num_passed': 302}}}}
+  }
+  yield 'nooooo', {
+    'step_mocks': {'run tests': {'json': {'output': {'num_passed': 10}}}}
+  }
+```
+
+How does THAT work!?
+
+`api.json.output()` returns a `recipe_api.Placeholder` which is meant to be
+added into a step command list. When the step runs, the placeholder gets
+rendered into some strings (in this case, like `['--output-json',
+'/tmp/some392ra8'`]). When the step finishes, the Placeholder is allowed to add
+data to the step history for the step which just ran, namespaced by the module
+name (in this case, the 'json' module decided to add an 'output' attribute to
+the `step_history` item). I'd encourage you to take a peek at the implementation
+of the json module to see how this is implemented.
 
 
 How do I know what modules to use?

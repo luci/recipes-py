@@ -7,9 +7,20 @@ import sys
 from slave import recipe_api
 
 class PlatformApi(recipe_api.RecipeApi):
+  """
+  Provides host-platform-detection properties.
+
+  Mocks:
+    name (str): A value equivalent to something that might be returned by
+      sys.platform.
+  """
+
   def __init__(self, **kwargs):
     super(PlatformApi, self).__init__(**kwargs)
-    self._platform = kwargs.get('_mock_platform', sys.platform)
+    if self._mock is None:  # pragma: no cover
+      self._platform = sys.platform
+    else:
+      self._platform = self._mock.get('name', sys.platform)
 
   @property
   def is_win(self):

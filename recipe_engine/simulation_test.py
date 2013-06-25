@@ -84,18 +84,10 @@ with cover():
 
 class TestAPI(object):
   @staticmethod
-  def build_properties_scheduled(**kwargs):
-    ret = TestAPI.build_properties_generic(
-        branch='TestBranch',
-        project='',
-        repository='svn://svn-mirror.golo.chromium.org/chrome/trunk',
-        revision='204787',
-    )
-    ret.update(kwargs)
-    return ret
-
-  @staticmethod
-  def build_properties_generic(**kwargs):
+  def properties_generic(**kwargs):
+    """
+    Merge kwargs into a typical buildbot properties blob, and return the blob.
+    """
     ret = {
         'blamelist': 'cool_dev1337@chromium.org,hax@chromium.org',
         'blamelist_real': ['cool_dev1337@chromium.org', 'hax@chromium.org'],
@@ -109,8 +101,27 @@ class TestAPI(object):
     return ret
 
   @staticmethod
-  def build_properties_tryserver(**kwargs):
-    ret = TestAPI.build_properties_generic(
+  def properties_scheduled(**kwargs):
+    """
+    Merge kwargs into a typical buildbot properties blob for a job fired off
+    by a chrome/trunk svn scheduler, and return the blob.
+    """
+    ret = TestAPI.properties_generic(
+        branch='TestBranch',
+        project='',
+        repository='svn://svn-mirror.golo.chromium.org/chrome/trunk',
+        revision='204787',
+    )
+    ret.update(kwargs)
+    return ret
+
+  @staticmethod
+  def properties_tryserver(**kwargs):
+    """
+    Merge kwargs into a typical buildbot properties blob for a job fired off
+    by a rietveld tryjob on the tryserver, and return the blob.
+    """
+    ret = TestAPI.properties_generic(
         branch='',
         issue=12853011,
         patchset=1,
@@ -153,10 +164,9 @@ def exec_test_file(recipe_path):
 
 
 def execute_test_case(test_data, recipe_path):
-  bp = test_data.get('build_properties', {})
-  fp = test_data.get('factory_properties', {})
-  td = test_data.get('placeholder_data', {}).copy()
-  fp['recipe'] = os.path.basename(os.path.splitext(recipe_path)[0])
+  props = test_data.get('properties', {}).copy()
+  td = test_data.get('step_mocks', {}).copy()
+  props['recipe'] = os.path.basename(os.path.splitext(recipe_path)[0])
 
   mock_data = test_data.get('mock', {})
   mock_data = collections.defaultdict(lambda: collections.defaultdict(dict),
@@ -170,7 +180,7 @@ def execute_test_case(test_data, recipe_path):
   with cover():
     try:
       step_data = annotated_run.run_steps(
-        stream, bp, fp, api, td).steps_ran.values()
+        stream, props, props, api, td).steps_ran.values()
       return [s.step for s in step_data]
     except:
       print 'Exception while processing "%s"!' % recipe_path

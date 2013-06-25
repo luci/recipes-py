@@ -2,8 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import os
+import functools
 import json
+import os
 import tempfile
 
 from slave import recipe_api
@@ -59,16 +60,17 @@ class JsonInputPlaceholder(recipe_api.Placeholder):
   added to a step's cmd list, will be replaced by annotated_run with a
   /path/to/json file during the evaluation of your recipe generator.
 
-  The file will have the json-serialized contents of the object passed to
-  __init__, and is guaranteed to exist solely for the duration of the step.
+  The file will have the json-string passed to __init__, and is guaranteed to
+  exist solely for the duration of the step.
 
   Multiple instances of thif placeholder can occur in a step's command, and
   each will be serialized to a different input file.
   """
   __slots__ = ['json_string']
 
-  def __init__(self, data):
-    self.json_string = json.dumps(data)
+  def __init__(self, json_string):
+    assert isinstance(json_string, basestring)
+    self.json_string = json_string
     self.input_file = None
     super(JsonInputPlaceholder, self).__init__()
 
@@ -91,13 +93,16 @@ class JsonInputPlaceholder(recipe_api.Placeholder):
 class JsonApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
     super(JsonApi, self).__init__(**kwargs)
-    for name in ('dumps', 'loads'):
-      setattr(self, name, getattr(json, name))
+    self.loads = json.loads
+    @functools.wraps(json.dumps)
+    def dumps(*args, **kwargs):
+      kwargs['sort_keys'] = True
+      return json.dumps(*args, **kwargs)
+    self.dumps = dumps
 
-  @staticmethod
-  def input(data):
+  def input(self, data):
     """A placeholder which will expand to a file path containing <data>."""
-    return JsonInputPlaceholder(data)
+    return JsonInputPlaceholder(self.dumps(data))
 
   @staticmethod
   def output():
@@ -114,8 +119,9 @@ class JsonApi(recipe_api.RecipeApi):
     of arguments to steps. Passing property objects obscures the data that
     the script actually consumes from the property object.
     """
+    prop_str = self.dumps(dict(self.m.properties))
     return [
-      '--factory-properties', self.dumps(dict(self.m.properties)),
-      '--build-properties', self.dumps(dict(self.m.properties))
+      '--factory-properties', prop_str,
+      '--build-properties', prop_str
     ]
 

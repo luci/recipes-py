@@ -35,7 +35,7 @@ class PropertiesApi(recipe_api.RecipeApi, collections.Mapping):
   The value of this api is equivalent to this transformation of the legacy
   build values:
     val = factory_properties
-    val.updat(build_properties)
+    val.update(build_properties)
   """
   def __init__(self, properties, **kwargs):
     super(PropertiesApi, self).__init__(**kwargs)

@@ -45,6 +45,15 @@ class mock_path(object):
 
 
 class PathApi(recipe_api.RecipeApi):
+  """
+  PathApi provides common os.path functions as well as convenience functions
+  for generating absolute paths to things in a testable way.
+
+  Mocks:
+    exists (list): Paths which should exist in the test case. Thes must be paths
+      using the [*_ROOT] placeholders. ex. '[BUILD_ROOT]/scripts'.
+  """
+
   OK_METHODS = ('basename', 'abspath', 'join', 'pardir', 'exists', 'splitext')
 
   def __init__(self, **kwargs):

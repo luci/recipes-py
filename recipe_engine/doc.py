@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import collections
 import inspect
+import os
 import sys
 
 from slave import annotated_run
@@ -41,15 +42,15 @@ def member_iter(obj):
   for name in sorted(dir(obj)):
     if name[0] == '_' and name != '__call__':
       continue
-    val = getattr(obj, name)
-    if(not callable(val) and
-       not inspect.ismodule(val)):
-      if hasattr(obj.__class__, name):
-        realobj = getattr(obj.__class__, name)
-        if isinstance(realobj, property):
-          yield name, realobj
-      continue
-    yield name, val
+    # Check class first to avoid calling property functions.
+    if hasattr(obj.__class__, name):
+      val = getattr(obj.__class__, name)
+      if callable(val) or isinstance(val, property):
+        yield name, val
+    else:
+      val = getattr(obj, name)
+      if callable(val) or inspect.ismodule(val):
+        yield name, val
 
 def map_to_cool_name(typ):
   if typ is collections.Mapping:
@@ -63,6 +64,8 @@ def p(indent_lvl, *args, **kwargs):
 def pmethod(indent_lvl, name, obj):
   if isinstance(obj, property):
     name = '@'+name
+    if obj.fset:
+      name += '(r/w)'
   p(indent_lvl, name, '', end='')
   if obj.__doc__:
     lines = trim_doc(obj.__doc__)
@@ -72,14 +75,14 @@ def pmethod(indent_lvl, name, obj):
 
 def main():
   common_methods = set(k for k, v in member_iter(recipe_api.RecipeApi))
-  p(0, 'Common Methods:')
+  p(0, 'Common Methods -- %s' % os.path.splitext(recipe_api.__file__)[0])
   for method in sorted(common_methods):
     pmethod(1, method, getattr(recipe_api.RecipeApi, method))
-  RECIPE_MODULES = recipe_api.load_recipe_modules(annotated_run.MOD_DIRS)
+  RECIPE_MODULES = recipe_api.load_recipe_modules(annotated_run.MODULE_DIRS)
   for mod_name, mod in member_iter(RECIPE_MODULES):
     p(0)
     p(0, "(%s) -- %s" % (mod_name, mod.__path__[0]))
-    inst = recipe_api.CreateRecipeApi([mod_name], annotated_run.MOD_DIRS,
+    inst = recipe_api.CreateRecipeApi([mod_name], annotated_run.MODULE_DIRS,
                                       mocks={'path': {}}, properties={},
                                       step_history={})
     if mod.DEPS:
