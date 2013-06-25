@@ -164,13 +164,16 @@ def exec_test_file(recipe_path):
 
 
 def execute_test_case(test_data, recipe_path):
-  props = test_data.get('properties', {}).copy()
-  td = test_data.get('step_mocks', {}).copy()
+  test_data = test_data.copy()
+  props = test_data.pop('properties', {}).copy()
+  td = test_data.pop('step_mocks', {}).copy()
   props['recipe'] = os.path.basename(os.path.splitext(recipe_path)[0])
 
-  mock_data = test_data.get('mock', {})
+  mock_data = test_data.pop('mock', {})
   mock_data = collections.defaultdict(lambda: collections.defaultdict(dict),
                                       mock_data)
+
+  assert not test_data, 'Got leftover test data: %s' % test_data
 
   stream = annotator.StructuredAnnotationStream(stream=open(os.devnull, 'w'))
 
