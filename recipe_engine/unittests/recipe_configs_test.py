@@ -167,7 +167,7 @@ def multiprocessing_init():
   # This check mirrors the logic in multiprocessing.forking.exit
   if sys.platform != 'win32':
     # Even though multiprocessing.forking.exit is defined, it's not used in the
-    # non-win32 version multiprocessing.forking.Popen... *loss for words*
+    # non-win32 version of multiprocessing.forking.Popen... *loss for words*
     os._exit = exitfn
 
 
