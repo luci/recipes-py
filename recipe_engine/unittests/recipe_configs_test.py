@@ -52,7 +52,7 @@ def init_recipe_modules():
 from slave import recipe_configs_util  # pylint: disable=F0401
 
 def get_expect_dir(mod):
-  return os.path.join(mod.__path__[0], 'config.expectations')
+  return os.path.join(mod.__path__[0], 'config.expected')
 
 
 def evaluate_configurations(args):

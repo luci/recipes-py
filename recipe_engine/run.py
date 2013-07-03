@@ -217,32 +217,47 @@ def run_steps(stream, build_properties, factory_properties,
   with stream.step('setup_build') as s:
     assert 'recipe' in factory_properties
     recipe = factory_properties['recipe']
-    recipe_dirs = (os.path.abspath(p) for p in (
-        os.path.join(SCRIPT_PATH, '..', '..', '..', 'build_internal', 'scripts',
-                     'slave-internal', 'recipes'),
-        os.path.join(SCRIPT_PATH, '..', '..', '..', 'build_internal', 'scripts',
-                     'slave', 'recipes'),
-        os.path.join(SCRIPT_PATH, 'recipes'),
-    ))
 
-    for recipe_path in (os.path.join(p, recipe) for p in recipe_dirs):
-      recipe_module = chromium_utils.IsolatedImportFromPath(recipe_path)
-      if not recipe_module:
-        continue
+    # If the recipe is specified as "module:recipe", then it is an recipe
+    # contained in a recipe_module as an example. Look for it in the modules
+    # imported by load_recipe_modules instead of the normal search paths.
+    if ':' in recipe:
+      module_name, recipe = recipe.split(':')
+      assert recipe.endswith('example')
+      RECIPE_MODULES = recipe_api.load_recipe_modules(MODULE_DIRS)
+      try:
+        recipe_module = getattr(getattr(RECIPE_MODULES, module_name), recipe)
+      except AttributeError:
+        s.step_text('recipe not found')
+        s.step_failure()
+        return MakeStepsRetval(2, None)
 
-      properties = factory_properties.copy()
-      properties.update(build_properties)
-      stream.emit('Running recipe with %s' % (properties,))
-      steps = recipe_module.GenSteps(api(recipe_module.DEPS,
-                                         mod_dirs=MODULE_DIRS,
-                                         properties=properties,
-                                         step_history=step_history))
-      assert inspect.isgenerator(steps)
-      break
     else:
-      s.step_text('recipe not found')
-      s.step_failure()
-      return MakeStepsRetval(2, None)
+      recipe_dirs = (os.path.abspath(p) for p in (
+          os.path.join(SCRIPT_PATH, '..', '..', '..', 'build_internal',
+                       'scripts', 'slave-internal', 'recipes'),
+          os.path.join(SCRIPT_PATH, '..', '..', '..', 'build_internal',
+                       'scripts', 'slave', 'recipes'),
+          os.path.join(SCRIPT_PATH, 'recipes'),
+      ))
+
+      for recipe_path in (os.path.join(p, recipe) for p in recipe_dirs):
+        recipe_module = chromium_utils.IsolatedImportFromPath(recipe_path)
+        if recipe_module:
+          break
+      else:
+        s.step_text('recipe not found')
+        s.step_failure()
+        return MakeStepsRetval(2, None)
+
+    properties = factory_properties.copy()
+    properties.update(build_properties)
+    stream.emit('Running recipe with %s' % (properties,))
+    steps = recipe_module.GenSteps(api(recipe_module.DEPS,
+                                       mod_dirs=MODULE_DIRS,
+                                       properties=properties,
+                                       step_history=step_history))
+    assert inspect.isgenerator(steps)
 
   # Execute annotator.py with steps if specified.
   # annotator.py handles the seeding, execution, and annotation of each step.

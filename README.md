@@ -622,6 +622,9 @@ Where's the docs on `*.py`?
 --------------------------------------------
 Check the docstrings in `*.py`. `<trollface text="Problem?"/>`
 
+In addition, most recipe modules have an `example.py` file which exercises most
+of the code in the module for both test coverage and example purposes.
+
 If you want to know what keys a step dictionary can take, take a look at
 `common/annotator.py`.
 

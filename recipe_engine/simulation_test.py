@@ -169,7 +169,12 @@ def execute_test_case(test_data, recipe_path):
   test_data = test_data.copy()
   props = test_data.pop('properties', {}).copy()
   td = test_data.pop('step_mocks', {}).copy()
-  props['recipe'] = os.path.basename(os.path.splitext(recipe_path)[0])
+  if 'recipe_modules' in recipe_path:
+    recipe = '%s:%s' % (os.path.basename(os.path.dirname(recipe_path)),
+                        os.path.splitext(os.path.basename(recipe_path))[0])
+  else:
+    recipe = os.path.splitext(os.path.basename(recipe_path))[0]
+  props['recipe'] = recipe
 
   mock_data = test_data.pop('mock', {})
   mock_data = collections.defaultdict(lambda: collections.defaultdict(dict),
@@ -249,16 +254,23 @@ def load_tests(loader, _standard_tests, _pattern):
   return suite
 
 
+def find_recipes(path, predicate):
+  for root, _dirs, files in os.walk(path):
+    for recipe in (f for f in files if predicate(f)):
+      recipe_path = os.path.join(root, recipe)
+      yield recipe_path
+
+
 def loop_over_recipes():
   for _name, path in BASE_DIRS.iteritems():
     recipe_dir = os.path.join(path, 'recipes')
-    for root, _dirs, files in os.walk(recipe_dir):
-      for recipe in (f for f in files if f.endswith('.py') and f[0] != '_'):
-        recipe_path = os.path.join(root, recipe)
-        with cover():
-          # Force this file into coverage, even if there's no test for it.
-          execfile(recipe_path, {})
-        yield recipe_path
+    for recipe in find_recipes(
+        recipe_dir, lambda f: f.endswith('.py') and f[0] != '_'):
+      yield recipe
+    module_dir = os.path.join(path, 'recipe_modules')
+    for recipe in find_recipes(
+        module_dir, lambda f: f.endswith('example.py')):
+      yield recipe
 
 
 def main(argv):
