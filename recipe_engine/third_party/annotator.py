@@ -13,6 +13,7 @@ executes those lines while annotating the output. The input is json:
 
 """
 
+import contextlib
 import json
 import optparse
 import os
@@ -335,6 +336,14 @@ class Match:
 
 
 def _merge_envs(original, override):
+  """Merges two environments.
+
+  Returns a new environment dict with entries from |override| overwriting
+  corresponding entries in |original|. Keys whose value is None will completely
+  remove the environment variable. Values can contain %(KEY)s strings, which
+  will be substituted with the values from the original (useful for amending, as
+  opposed to overwriting, variables like PATH).
+  """
   result = original.copy()
   if not override:
     return result
@@ -343,9 +352,7 @@ def _merge_envs(original, override):
       if k in result:
         del result[k]
     else:
-      if '%(' + k + ')s' in v:
-        v = v % {k: original.get(k, '')}
-      result[k] = v
+      result[k] = v % original
   return result
 
 
@@ -361,18 +368,39 @@ def _validate_step(step):
   return None
 
 
-def print_step(step):
+def print_step(step, env):
   """Prints the step command and relevant metadata.
 
   Intended to be similar to the information that Buildbot prints at the
   beginning of each non-annotator step.
   """
+  print
   print ' '.join(step['cmd'])
-  if step['cwd']:
-    print ' in dir ' + step['cwd']
-  for key in sorted(step):
-    print '  %s: %s' % (key, step[key])
-  print ''
+  print 'in dir %s:' % (step['cwd'] or os.getcwd())
+  for key, value in sorted(step.items()):
+    if value is not None:
+      print ' %s: %s' % (key, value)
+  print 'full environment:'
+  for key, value in sorted(env.items()):
+    print ' %s: %s' % (key, value)
+  print
+
+
+@contextlib.contextmanager
+def modify_lookup_path(path):
+  """Places the specified path into os.environ.
+
+  Necessary because subprocess.Popen uses os.environ to perform lookup on the
+  supplied command, and only uses the |env| kwarg for modifying the environment
+  of the child process.
+  """
+  saved_path = os.environ['PATH']
+  try:
+    if path is not None:
+      os.environ['PATH'] = path
+    yield
+  finally:
+    os.environ['PATH'] = saved_path
 
 
 def run_step(stream, build_failure,
@@ -419,20 +447,22 @@ def run_step(stream, build_failure,
   step_dict.pop('kwargs')
   step_dict.pop('stream')
   step_dict.update(kwargs)
+  step_env = _merge_envs(os.environ, env)
 
   for step_name in (seed_steps or []):
     stream.seed_step(step_name)
 
   ret = None
   with stream.step(name) as s:
-    print_step(step_dict)
+    print_step(step_dict, step_env)
     try:
-      proc = subprocess.Popen(
-          cmd,
-          env=_merge_envs(os.environ, env),
-          cwd=cwd,
-          stdout=subprocess.PIPE,
-          stderr=subprocess.PIPE)
+      with modify_lookup_path(step_env.get('PATH')):
+        proc = subprocess.Popen(
+            cmd,
+            env=step_env,
+            cwd=cwd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
 
       outlock = threading.Lock()
       def filter_lines(lock, allow_subannotations, inhandle, outhandle):
