@@ -119,7 +119,7 @@ def load_recipe_modules(mod_dirs):
 
     if hasattr(submod, 'config'):
       for v in submod.config.__dict__.itervalues():
-        if hasattr(v, 'I_AM_A_CONFIG_ITEM'):
+        if hasattr(v, 'I_AM_A_CONFIG_CTX'):
           assert not submod.CONFIG_CTX, (
             'More than one configuration context: %s' % (submod.config))
           submod.CONFIG_CTX = v

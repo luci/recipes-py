@@ -59,24 +59,26 @@ class PathApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
     super(PathApi, self).__init__(**kwargs)
 
-    pm = path_method
     if self._mock is None:  # pragma: no cover
       self._path_mod = os.path
       # e.g. /b/build/slave/<slavename>/build
-      self.slave_build = pm(self, 'slave_build', self.abspath(os.getcwd()))
+      self.slave_build = path_method(
+        self, 'slave_build', self.abspath(os.getcwd()))
 
       # e.g. /b
       r = self.abspath(self.join(self.slave_build(), *([self.pardir]*4)))
       for token in ('build_internal', 'build', 'depot_tools'):
         # e.g. /b/{token}
-        setattr(self, token, pm(self, token, self.join(r, token)))
+        setattr(self, token, path_method(self, token, self.join(r, token)))
+      self.root = path_method(self, 'root', r)
     else:
       self._path_mod = mock_path(self.m, self._mock.get('exists', []))
-      self.slave_build = pm(self, 'slave_build', '[SLAVE_BUILD_ROOT]')
-      self.build_internal = pm(self, 'build_internal',
-                               '[BUILD_INTERNAL_ROOT]')
-      self.build = pm(self, 'build', '[BUILD_ROOT]')
-      self.depot_tools = pm(self, 'depot_tools', '[DEPOT_TOOLS_ROOT]')
+      self.slave_build = path_method(self, 'slave_build', '[SLAVE_BUILD_ROOT]')
+      self.build_internal = path_method(
+        self, 'build_internal', '[BUILD_INTERNAL_ROOT]')
+      self.build = path_method(self, 'build', '[BUILD_ROOT]')
+      self.depot_tools = path_method(self, 'depot_tools', '[DEPOT_TOOLS_ROOT]')
+      self.root = path_method(self, 'root', '[ROOT]')
 
     # Because it only makes sense to call self.checkout() after
     # self.set_checkout() has been called, make calls to self.checkout()

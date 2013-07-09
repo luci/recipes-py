@@ -41,28 +41,29 @@ schema with, and what values those parameters should take. The test harness will
 generate all possible permutations of input parameters, and will save them to
 disk.
 
-The test format is a string format which will be used to name the test files
+The test format is a string format (or a function taking a dictionary of
+variable assignments) which will be used to name the test files
 and test cases for this configuration.
 
 Once you have all that, you can create a configuration context:
 
-  config_item = config_item_context(FakeSchema, TEST_MAP, TEST_NAME_FORMAT)
+  config_ctx = config_item_context(FakeSchema, TEST_MAP, TEST_NAME_FORMAT)
 
-config_item is a python decorator which you can use to create composable
+config_ctx is a python decorator which you can use to create composable
 configuration functions. For example:
 
-  @config_item()
+  @config_ctx()
   def cool(c):
     if c.CONFIG_MODE == 'Happy':
       c.config_group.item_a = 100
     else:
       c.config_group.item_a = -100
 
-  @config_item
+  @config_ctx()
   def gnarly(c):
     c.extra_setting = 'gnarly!'
 
-  @config_item(includes=('cool', 'gnarly'))
+  @config_ctx(includes=('cool', 'gnarly'))
   def combo(c):
     if c.MAIN_DETERMINANT:
       c.config_group.item_b['nickname'] = 'purple'
@@ -103,17 +104,17 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
                   provides the test harness with sufficient information to
                   generate all possible permutations of inputs for the
                   CONFIG_SCHEMA function.
-    TEST_NAME_FORMAT: A string format for naming tests and test expectation
-                      files. It will be formatted with a dictionary of arg_name
-                      to value (using arg_names and values generated from
-                      VAR_TEST_MAP)
+    TEST_NAME_FORMAT: A string format (or function) for naming tests and test
+                      expectation files. It will be formatted/called with a
+                      dictionary of arg_name to value (using arg_names and
+                      values generated from VAR_TEST_MAP)
     TEST_FILE_FORMAT: Similar to TEST_NAME_FORMAT, but for test files. Defaults
                       to TEST_NAME_FORMAT.
 
-  Returns a config_item decorator for this context.
+  Returns a config_ctx decorator for this context.
   """
 
-  def config_item(group=None, includes=None, deps=None, no_test=False,
+  def config_ctx(group=None, includes=None, deps=None, no_test=False,
                   is_root=False):
     """
     A decorator for functions which modify a given schema of configs.
@@ -128,7 +129,7 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
         parameter 'final'. See the documentation for final on inner().
       * Provides various convenience and error checking facilities.
         * In particular, this decorator will prevent you from calling the same
-          config_item on a given config blob more than once (with the exception
+          config_ctx on a given config blob more than once (with the exception
           of setting final=False. See inner())
 
     Args:
@@ -136,11 +137,11 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
         decorated function to be a member of that group. Members of a group are
         mutually exclusive on the same configuration blob. For example, only
         one of these two functions could be applied to the config blob c:
-          @config_item(group='a')
+          @config_ctx(group='a')
           def bob(c):
             c.extra_setting = "bob mode"
 
-          @config_item(group='a')
+          @config_ctx(group='a')
           def bill(c):
             c.extra_setting = "bill mode"
 
@@ -148,23 +149,23 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
         be run against the config blob before the decorated function can modify
         it. If an inclusion is already applied to the config blob, it's skipped
         without applying/raising BadConf. Example:
-          @config_item(includes=('bob', 'cool'))
+          @config_ctx(includes=('bob', 'cool'))
           def charlie(c):
             c.config_group.item_b = 25
-        The result of this config_item (assuming default values for the schema)
+        The result of this config_ctx (assuming default values for the schema)
         would be:
           {'config_group': { 'item_a': 100, 'item_b': 25 },
            'extra_setting': 'gnarly!'}
 
       deps(iterable(str)) - One or more groups which must be satisfied before
-        this config_item can be applied to a config_blob. If you invoke
-        a config_item on a blob without having all of its deps satisfied,
+        this config_ctx can be applied to a config_blob. If you invoke
+        a config_ctx on a blob without having all of its deps satisfied,
         you'll get a BadConf exception.
 
-      no_test(bool) - If set to True, then this config_item will be skipped by
+      no_test(bool) - If set to True, then this config_ctx will be skipped by
         the test harness. This defaults to (False or bool(deps)), since
         config_items with deps will never be satisfiable as the first
-        config_item applied to a blob.
+        config_ctx applied to a blob.
 
       is_root(bool) - If set to True on an item, this item will become the
         'basis' item for all other configurations in this group. That means that
@@ -182,10 +183,10 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
       name = f.__name__
       @functools.wraps(f)
       def inner(config=None, final=True, optional=False, **kwargs):
-        """This is the function which is returned from the config_item
+        """This is the function which is returned from the config_ctx
         decorator.
 
-        It applies all of the logic mentioned in the config_item docstring
+        It applies all of the logic mentioned in the config_ctx docstring
         above, and alters the function signature slightly.
 
         Args:
@@ -194,16 +195,16 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
             After the function manipulates it, it is automatically returned.
 
           final(bool) - Set to True by default, this will record the application
-            of this config_item to `config', which will prevent the config_item
+            of this config_ctx to `config', which will prevent the config_ctx
             from being applied to `config' again. It also is used to see if the
-            config blob satisfies deps for subsequent config_item applications
-            (i.e. in order for a config_item to satisfy a dependency, it must
+            config blob satisfies deps for subsequent config_ctx applications
+            (i.e. in order for a config_ctx to satisfy a dependency, it must
             be applied with final=True).
 
             This is useful to apply default values while allowing the config to
             later override those values.
 
-            However, it's best if each config_item is final, because then you
+            However, it's best if each config_ctx is final, because then you
             can implement the config items with less error checking, since you
             know that the item may only be applied once. For example, if your
             item appends something to a list, but is called with final=False,
@@ -214,19 +215,19 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
         Returns config and ignores the return value of the decorated function.
         """
         if config is None:
-          config = config_item.CONFIG_SCHEMA()
+          config = config_ctx.CONFIG_SCHEMA()
         assert isinstance(config, ConfigGroup)
         inclusions = config._inclusions  # pylint: disable=W0212
 
         # inner.IS_ROOT will be True or False at the time of invocation.
-        if (config_item.ROOT_CONFIG_ITEM and not inner.IS_ROOT and
-            config_item.ROOT_CONFIG_ITEM.__name__ not in inclusions):
-          config_item.ROOT_CONFIG_ITEM(config)
+        if (config_ctx.ROOT_CONFIG_ITEM and not inner.IS_ROOT and
+            config_ctx.ROOT_CONFIG_ITEM.__name__ not in inclusions):
+          config_ctx.ROOT_CONFIG_ITEM(config)
 
         if name in inclusions:
           if optional:
             return config
-          raise BadConf('config_item "%s" is already in this config "%s"' %
+          raise BadConf('config_ctx "%s" is already in this config "%s"' %
                         (name, config.as_jsonish(include_hidden=True)))
         if final:
           inclusions.add(name)
@@ -235,7 +236,7 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
           if include in inclusions:
             continue
           try:
-            config_item.CONFIG_ITEMS[include](config)
+            config_ctx.CONFIG_ITEMS[include](config)
           except BadConf, e:
             raise BadConf('config "%s" includes "%s", but [%s]' %
                           (name, include, e))
@@ -243,12 +244,12 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
         # deps are a list of group names. All groups must be represented
         # in config already.
         for dep_group in (deps or []):
-          if not (inclusions & config_item.MUTEX_GROUPS[dep_group]):
+          if not (inclusions & config_ctx.MUTEX_GROUPS[dep_group]):
             raise BadConf('dep group "%s" is unfulfilled for "%s"' %
                           (dep_group, name))
 
         if group:
-          overlap = inclusions & config_item.MUTEX_GROUPS[group]
+          overlap = inclusions & config_ctx.MUTEX_GROUPS[group]
           overlap.discard(name)
           if overlap:
             raise BadConf('"%s" is a member of group "%s", but %s already ran' %
@@ -259,32 +260,54 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
 
         return config
 
-      assert name not in config_item.CONFIG_ITEMS
-      config_item.CONFIG_ITEMS[name] = inner
+      assert name not in config_ctx.CONFIG_ITEMS
+      config_ctx.CONFIG_ITEMS[name] = inner
       if group:
-        config_item.MUTEX_GROUPS.setdefault(group, set()).add(name)
+        config_ctx.MUTEX_GROUPS.setdefault(group, set()).add(name)
       inner.IS_ROOT = is_root
       if is_root:
-        assert not config_item.ROOT_CONFIG_ITEM, (
-          'may only have one root config_item!')
-        config_item.ROOT_CONFIG_ITEM = inner
+        assert not config_ctx.ROOT_CONFIG_ITEM, (
+          'may only have one root config_ctx!')
+        config_ctx.ROOT_CONFIG_ITEM = inner
         inner.IS_ROOT = True
       inner.NO_TEST = no_test or bool(deps)
       return inner
     return decorator
 
   # Internal state and testing data
-  config_item.I_AM_A_CONFIG_ITEM = True
-  config_item.CONFIG_ITEMS = {}
-  config_item.MUTEX_GROUPS = {}
-  config_item.CONFIG_SCHEMA = CONFIG_SCHEMA
-  config_item.ROOT_CONFIG_ITEM = None
-  config_item.VAR_TEST_MAP = VAR_TEST_MAP
-  config_item.TEST_NAME_FORMAT = TEST_NAME_FORMAT
-  config_item.TEST_FILE_FORMAT = TEST_FILE_FORMAT or TEST_NAME_FORMAT
-  if not config_item.TEST_FILE_FORMAT.endswith('.json'):
-    config_item.TEST_FILE_FORMAT += '.json'
-  return config_item
+  config_ctx.I_AM_A_CONFIG_CTX = True
+  config_ctx.CONFIG_ITEMS = {}
+  config_ctx.MUTEX_GROUPS = {}
+  config_ctx.CONFIG_SCHEMA = CONFIG_SCHEMA
+  config_ctx.ROOT_CONFIG_ITEM = None
+  config_ctx.VAR_TEST_MAP = VAR_TEST_MAP
+
+  def formatter(obj, ext=None):
+    '''Converts format obj to a function taking var assignments.
+
+    Args:
+      obj (str or fn(assignments)): If obj is a str, it will be % formatted
+        with assignments (which is a dict of variables from VAR_TEST_MAP).
+        Otherwise obj will be invoked with assignments, and expected to return
+        a fully-rendered string.
+      ext (None or str): Optionally specify an extension to enforce on the
+        format. This enforcement occurs after obj is finalized to a string. If
+        the string doesn't end with ext, it will be appended.
+    '''
+    def inner(var_assignments):
+      ret = ''
+      if isinstance(obj, basestring):
+        ret = obj % var_assignments
+      else:
+        ret = obj(var_assignments)
+      if ext and not ret.endswith(ext):
+        ret += ext
+      return ret
+    return inner
+  config_ctx.TEST_NAME_FORMAT = formatter(TEST_NAME_FORMAT)
+  config_ctx.TEST_FILE_FORMAT = formatter(
+    (TEST_FILE_FORMAT or TEST_NAME_FORMAT), ext='.json')
+  return config_ctx
 
 
 class ConfigBase(object):
@@ -295,7 +318,7 @@ class ConfigBase(object):
     Args:
       hidden - If set to True, this object will be excluded from printing when
         the config blob is rendered with ConfigGroup.as_jsonish(). You still
-        have full read/write access to this blob otherwiset though.
+        have full read/write access to this blob otherwise though.
     """
     # work around subclasses which override __setattr__
     object.__setattr__(self, '_hidden', hidden)
@@ -661,8 +684,8 @@ class StaticConfig(ConfigBase):
   which are in your VAR_TEST_MAP).
   """
 
-  def __init__(self, value):
-    super(StaticConfig, self).__init__(hidden=True)
+  def __init__(self, value, hidden=True):
+    super(StaticConfig, self).__init__(hidden=hidden)
     # Attempt to hash the value, which will ensure that it's immutable all the
     # way down :).
     hash(value)
@@ -675,7 +698,7 @@ class StaticConfig(ConfigBase):
     assert False
 
   def as_jsonish(self, _include_hidden=None):
-    assert False
+    return self.data
 
   def reset(self):
     assert False

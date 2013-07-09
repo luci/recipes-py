@@ -63,7 +63,7 @@ def evaluate_configurations(args):
 
   config_name = None
   try:
-    file_name = os.path.join(expect_dir, ctx.TEST_FILE_FORMAT % var_assignments)
+    file_name = os.path.join(expect_dir, ctx.TEST_FILE_FORMAT(var_assignments))
     ret = {}
 
     make_item = lambda: covered(ctx.CONFIG_SCHEMA, **var_assignments)
@@ -89,7 +89,7 @@ def evaluate_configurations(args):
           ret[config_name] = result.as_jsonish()
       except recipe_configs_util.BadConf, e:
         ret[config_name] = str(e)
-    return file_name, (ctx.TEST_NAME_FORMAT % var_assignments), ret
+    return file_name, ctx.TEST_NAME_FORMAT(var_assignments), ret
   except Exception, e:
     print 'Caught exception [%s] with args %s: %s' % (e, args, config_name)
 
