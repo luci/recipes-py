@@ -343,6 +343,8 @@ def _merge_envs(original, override):
       if k in result:
         del result[k]
     else:
+      if '%(' + k + ')s' in v:
+        v = v % {k: original.get(k, '')}
       result[k] = v
   return result
 
