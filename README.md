@@ -252,7 +252,7 @@ this, you need to add a module directory.
 recipe_modules/
   step/
   properties/
-  step/
+  path/
   hello/
     __init__.py  # (Required) Contains optional `DEPS = list([other modules])`
     api.py       # (Required) Contains single required RecipeApi-derived class
@@ -571,7 +571,7 @@ DEPS = ['step', 'path', 'step_history', 'json']
 
 def GenSteps(api):
   yield api.step('run tests', [
-    api.path.build('do_test_things.sh') + api.json.output()])
+    api.path.build('do_test_things.sh'), api.json.output()])
   num_passed = api.step_history.last_step().json.output['num_passed']
   if num_passed > 500:
     yield api.step('victory', [api.path.build('do_a_dance.sh')])
