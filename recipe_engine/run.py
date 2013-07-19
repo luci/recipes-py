@@ -204,6 +204,7 @@ def run_steps(stream, build_properties, factory_properties,
 
   test_data should be a dictionary of step_name -> (retcode, json_data)
   """
+  stream.honor_zero_return_code()
   MakeStepsRetval = collections.namedtuple('MakeStepsRetval',
                                            'status_code steps_ran')
 
