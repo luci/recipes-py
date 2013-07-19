@@ -64,7 +64,6 @@ cease calling the generator and move on to the next item in iterable_of_things.
 import inspect
 import optparse
 import os
-import re
 import subprocess
 import sys
 
@@ -311,21 +310,9 @@ def UpdateScripts():
     return True
 
 
-def dumbquotes(args):
-  """http://msdn.microsoft.com/en-us/library/a1y7w461.aspx"""
-  quote_re = re.compile(r'[ "]')
-  for a in args:
-    if quote_re.search(a):
-      # r'this "sucks\"' -> r'"this \"sucks\\\""'
-      a = '"%s"' % a.replace(r'\"', r'\\"').replace('"', r'\"')
-    yield a
-
-
 def shell_main(argv):
   if UpdateScripts():
-    if sys.platform.startswith('win'):
-      argv = list(dumbquotes(argv))
-    os.execv(sys.executable, [sys.executable] + argv)
+    return subprocess.call([sys.executable] + argv)
   else:
     return main(argv)
 
