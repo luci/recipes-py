@@ -462,7 +462,8 @@ def run_step(stream, build_failure,
             env=step_env,
             cwd=cwd,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
+            stderr=subprocess.PIPE,
+            universal_newlines=True)
 
       outlock = threading.Lock()
       def filter_lines(lock, allow_subannotations, inhandle, outhandle):
