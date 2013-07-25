@@ -7,11 +7,12 @@ from slave import recipe_api
 class StepApi(recipe_api.RecipeApi):
   def __init__(self, *args, **kwargs):
     self._auto_resolve_conflicts = False
+    self._name_function = None
     self._step_names = {}
     super(StepApi, self).__init__(*args, **kwargs)
 
-  # Making auto_resolve_conflicts makes it show up in show_me_the_modules, and
-  # also makes it clear that this property is intended to be mutated.
+  # Making these properties makes them show up in show_me_the_modules,
+  # and also makes it clear that they are intended to be mutated.
   @property
   def auto_resolve_conflicts(self):
     """Automatically resolve step name conflicts."""
@@ -34,6 +35,7 @@ class StepApi(recipe_api.RecipeApi):
     """
     assert 'shell' not in kwargs
     assert isinstance(cmd, list)
+
     cmd = list(cmd)  # Create a copy in order to not alter the input argument.
     if self.auto_resolve_conflicts:
       step_count = self._step_names.setdefault(name, 0) + 1
