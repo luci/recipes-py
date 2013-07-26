@@ -98,11 +98,6 @@ class PathApi(recipe_api.RecipeApi):
     This defaults to the special root of the first checkout.
     """
 
-  def set_checkout(self, checkout, *pieces): # pragma: no cover, deprecated
-    checkout = self.join(checkout, *pieces)
-    self.checkout = path_method(self, 'checkout', checkout)
-    self._checkouts.append(checkout)
-   
   def add_checkout(self, checkout, *pieces):
     """Assert that we have a source directory with this name. """
     checkout = self.join(checkout, *pieces)
