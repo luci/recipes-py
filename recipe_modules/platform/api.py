@@ -36,7 +36,11 @@ class PlatformApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
     super(PlatformApi, self).__init__(**kwargs)
     self._name = norm_plat(sys.platform)
-    self._bits = norm_bits(platform.machine())
+
+    # Sometimes machine() lies, sometimes process() lies, so take their max.
+    machine_bits = norm_bits(platform.machine())
+    processor_bits = norm_bits(platform.processor())
+    self._bits = max(machine_bits, processor_bits)
     self._arch = 'intel'
 
     if self._mock is not None:
