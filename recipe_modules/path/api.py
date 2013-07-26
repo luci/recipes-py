@@ -7,7 +7,7 @@ from slave import recipe_api
 
 
 def path_method(api, name, base):
-  """Returns aa shortcut static method which functions like os.path.join but
+  """Returns a shortcut static method which functions like os.path.join but
   with a fixed first component |base|.
   """
   def path_func_inner(*pieces, **kwargs):
@@ -81,22 +81,42 @@ class PathApi(recipe_api.RecipeApi):
       self.root = path_method(self, 'root', '[ROOT]')
 
     # Because it only makes sense to call self.checkout() after
-    # self.set_checkout() has been called, make calls to self.checkout()
+    # a checkout has been defined, make calls to self.checkout()
     # explode with a helpful message until that point.
-    def exploding_checkout_fn(*_pieces):  # pragma: no cover
-      """Return a path to a file in '[SLAVE_BUILD_ROOT]/<checkout_dir>.'"""
-      assert False, ('Cannot call path.checkout() '
-                     'without calling path.set_checkout() first!')
-    self.checkout = exploding_checkout_fn
-    self.checkout_set = False
+    def _boom(*_args, **_kwargs): # pragma: no cover
+      assert False, ('Cannot call path.checkout() without calling '
+                     'path.add_checkout()')
 
-  def set_checkout(self, checkout_value):
-    """Set <checkout_dir> for path.checkout()."""
-    # TODO(iannucci): Make a better story than silently ignoring
-    if not self.checkout_set:
-      self.checkout = path_method(self, 'checkout', checkout_value)
-      self.checkout_set = True
+    self._checkouts = []
+    self.checkout = _boom
+    """
+    Build a path into the checked out source.
 
+    The checked out source is often a forest of trees possibly inside other
+    trees.  One of these trees' root is designated as special/primary and
+    this method builds paths inside of it.  For Chrome, that would be 'src'.
+    This defaults to the special root of the first checkout.
+    """
+
+  def set_checkout(self, checkout, *pieces): # pragma: no cover, deprecated
+    checkout = self.join(checkout, *pieces)
+    self.checkout = path_method(self, 'checkout', checkout)
+    self._checkouts.append(checkout)
+   
+  def add_checkout(self, checkout, *pieces):
+    """Assert that we have a source directory with this name. """
+    checkout = self.join(checkout, *pieces)
+    # assert self.abspath(checkout) == checkout, '%s is not absolute' % checkout
+    if not self._checkouts:
+      self.checkout = path_method(self, 'checkout', checkout)
+    self._checkouts.append(checkout)
+
+  def choose_checkout(self, checkout, *pieces): # pragma: no cover
+    assert checkout in self._checkouts, 'No such checkout'
+    checkout = self.join(checkout, *pieces)
+    # assert self.abspath(checkout) == checkout, '%s is not absolute' % checkout
+    self.checkout = path_method(self, checkout)
+ 
   def __getattr__(self, name):
     if name in self.OK_METHODS:
       return getattr(self._path_mod, name)
