@@ -253,21 +253,22 @@ class Match:
 
   @staticmethod
   def log_line(line):
-    return Match._parse_line('^@@@STEP_LOG_LINE@(.*)@(.*)@@@', line)
+    return Match._parse_line('^@@@STEP_LOG_LINE@([^@]*)@([^@]*)@@@', line)
 
   @staticmethod
   def log_end(line):
-    return Match._parse_line('^@@@STEP_LOG_END@(.*)@@@', line)
+    return Match._parse_line('^@@@STEP_LOG_END@([^@]*)@@@', line)
 
   @staticmethod
   def log_end_perf(line):
-    return Match._parse_line('^@@@STEP_LOG_END_PERF@(.*)@(.*)@@@', line)
+    return Match._parse_line('^@@@STEP_LOG_END_PERF@([^@]*)@([^@]*)@@@', line)
 
   @staticmethod
   def step_link(line):
-    m = Match._parse_line('^@@@STEP_LINK@(.*)@(.*)@@@', line)
+    m = Match._parse_line('^@@@STEP_LINK@([^@]*)@([^@]*)@@@', line)
     if not m:
-      return Match._parse_line('^@@@link@(.*)@(.*)@@@', line)  # Deprecated.
+      # Deprecated.
+      return Match._parse_line('^@@@link@([^@]*)@([^@]*)@@@', line)
     else:
       return m
 
@@ -312,27 +313,27 @@ class Match:
 
   @staticmethod
   def step_text(line):
-    return Match._parse_line('^@@@STEP_TEXT@(.*)@@@', line)
+    return Match._parse_line('^@@@STEP_TEXT@([^@]*)@@@', line)
 
   @staticmethod
   def step_summary_text(line):
-    return Match._parse_line('^@@@STEP_SUMMARY_TEXT@(.*)@@@', line)
+    return Match._parse_line('^@@@STEP_SUMMARY_TEXT@([^@]*)@@@', line)
 
   @staticmethod
   def seed_step(line):
-    return Match._parse_line('^@@@SEED_STEP (.*)@@@', line)
+    return Match._parse_line('^@@@SEED_STEP ([^@]*)@@@', line)
 
   @staticmethod
   def seed_step_text(line):
-    return Match._parse_line('^@@@SEED_STEP_TEXT@(.*)@(.*)@@@', line)
+    return Match._parse_line('^@@@SEED_STEP_TEXT@([^@]*)@([^@]*)@@@', line)
 
   @staticmethod
   def step_cursor(line):
-    return Match._parse_line('^@@@STEP_CURSOR (.*)@@@', line)
+    return Match._parse_line('^@@@STEP_CURSOR ([^@]*)@@@', line)
 
   @staticmethod
   def build_step(line):
-    return Match._parse_line('^@@@BUILD_STEP (.*)@@@', line)
+    return Match._parse_line('^@@@BUILD_STEP ([^@]*)@@@', line)
 
 
 def _merge_envs(original, override):
