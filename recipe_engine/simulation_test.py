@@ -206,18 +206,7 @@ def train_from_tests(recipe_path):
     expected_path = expected_for(recipe_path, name)
     print 'Writing', expected_path
     with open(expected_path, 'wb') as f:
-      f.write('[')
-      first = True
-      for step in steps:
-        f.write(('' if first else '\n  },')+'\n  {')
-        first_dict_item = True
-        for key, value in sorted(step.items(), key=lambda x: x[0]):
-          f.write(('' if first_dict_item else ',')+'\n   ')
-          f.write('"%s": ' % key)
-          json.dump(value, f, sort_keys=True)
-          first_dict_item = False
-        first = False
-      f.write('\n  }\n]')
+      json.dump(steps, f, sort_keys=True, indent=2)
 
   return True
 
