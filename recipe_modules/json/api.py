@@ -45,13 +45,14 @@ class JsonOutputPlaceholder(recipe_api.Placeholder):
       assert self.output_file is not None
       with open(self.output_file, 'r') as f:
         raw_data = f.read()
+      valid = False
       try:
         result_data.output = json.loads(raw_data)
-        stream.emit('step returned json data: """\n%s\n"""' %
-                    (result_data.output,))
+        valid = True
       except ValueError:
-        stream.emit('step had invalid json data: """\n%s\n"""' %
-                    raw_data)
+        pass
+      stream.emit('step returned %sjson data: """\n%s\n"""' %
+                  ('' if valid else 'invalid ', raw_data,))
       os.unlink(self.output_file)
 
 
