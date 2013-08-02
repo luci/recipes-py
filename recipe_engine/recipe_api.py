@@ -15,7 +15,7 @@ class Placeholder(object):
     """Return [cmd items]*"""
     raise NotImplementedError
 
-  def step_finished(self, presentation, step_result, test_data):
+  def step_finished(self, stream, step_result, test_data):  # pragma: no cover
     """Called after step completion. Intended to modify step_result."""
     pass
 
@@ -39,7 +39,7 @@ class InputDataPlaceholder(Placeholder):
       os.close(input_fd)
       return [self.input_file]
 
-  def step_finished(self, presentation, step_result, test_data):
+  def step_finished(self, stream, step_result, test_data):
     if test_data is None:  # pragma: no cover
       os.unlink(self.input_file)
 

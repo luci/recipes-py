@@ -61,14 +61,11 @@ cease calling the generator and move on to the next item in iterable_of_things.
 'failed' is a boolean representing if the build is in a 'failed' state.
 """
 
-import copy
 import inspect
 import optparse
 import os
 import subprocess
 import sys
-
-import cStringIO
 
 import common.python26_polyfill  # pylint: disable=W0611
 import collections  # Import after polyfill to get OrderedDict on 2.6
@@ -87,97 +84,10 @@ MODULE_DIRS = [os.path.join(x, 'recipe_modules') for x in [
 ]]
 
 
-class StepPresentation(object):
-  STATUSES = set(('SUCCESS', 'FAILURE', 'WARNING', 'EXCEPTION'))
-
-  def __init__(self):
-    self._finalized = False
-
-    self._logs = collections.OrderedDict()
-    self._perf_logs = collections.OrderedDict()
-    self._status = None
-    self._step_summary_text = None
-    self._step_text = None
-
-  # (E0202) pylint bug: http://www.logilab.org/ticket/89092
-  @property
-  def status(self):  # pylint: disable=E0202
-    return self._status
-
-  @status.setter
-  def status(self, val):  # pylint: disable=E0202
-    assert not self._finalized
-    assert val in self.STATUSES
-    self._status = val
-
-  @property
-  def step_text(self):
-    return self._step_text
-
-  @step_text.setter
-  def step_text(self, val):
-    assert not self._finalized
-    self._step_text = val
-
-  @property
-  def step_summary_text(self):
-    return self._step_summary_text
-
-  @step_summary_text.setter
-  def step_summary_text(self, val):
-    assert not self._finalized
-    self._step_summary_text = val
-
-  @property
-  def logs(self):
-    if not self._finalized:
-      return self._logs
-    else:
-      return copy.deepcopy(self._logs)
-
-  @property
-  def perf_logs(self):
-    if not self._finalized:
-      return self._perf_logs
-    else:
-      return copy.deepcopy(self._perf_logs)
-
-  def finalize(self, annotator_step):
-    self._finalized = True
-    if self.step_text:
-      annotator_step.step_text(self.step_text)
-    if self.step_summary_text:
-      annotator_step.step_summary_text(self.step_summary_text)
-    for name, lines in self.logs.iteritems():
-      annotator_step.write_log_lines(name, lines)
-    for name, lines in self.perf_logs.iteritems():
-      annotator_step.write_log_lines(name, lines, perf=True)
-    status_mapping = {
-      'WARNING': annotator_step.step_warnings,
-      'FAILURE': annotator_step.step_failure,
-      'EXCEPTION': annotator_step.step_exception,
-    }
-    status_mapping.get(self.status, lambda: None)()
-
-
 class StepData(object):
-  def __init__(self, step, retcode):
-    self._retcode = retcode
-    self._step = step
-
-    self._presentation = StepPresentation()
-
-  @property
-  def step(self):
-    return copy.deepcopy(self._step)
-
-  @property
-  def retcode(self):
-    return self._retcode
-
-  @property
-  def presentation(self):
-    return self._presentation
+  def __init__(self):
+    self.step      = None
+    self.retcode   = None
 
 
 def flattened(sequence):
@@ -244,7 +154,7 @@ def render_step(step, test_data):
   return placeholders
 
 
-def call_placeholders(step_result, placeholders, test_data):
+def call_placeholders(stream, step_result, placeholders, test_data):
   class BlankObject(object):
     pass
   additions = {}
@@ -252,36 +162,9 @@ def call_placeholders(step_result, placeholders, test_data):
     additions[api] = BlankObject()
     test_datum = None if test_data is None else test_data.get(api, {})
     for placeholder in items:
-      placeholder.step_finished(step_result.presentation, additions[api],
-                                test_datum)
+      placeholder.step_finished(stream, additions[api], test_datum)
   for api, obj in additions.iteritems():
     setattr(step_result, api, obj)
-
-
-def step_callback(step, step_history, placeholders, test_data_item):
-  followup_fn = step.pop('followup_fn', None)
-
-  def _inner(annotator_step, retcode):
-    step_result = StepData(step, retcode)
-    if retcode > 0:
-      step_result.presentation.status = 'FAILURE'
-
-    step_history[step['name']] = step_result
-    annotator_step.annotation_stream.step_cursor(step['name'])
-    if test_data_item is None:
-      # To avoid cluttering the expectations, don't emit this in testmode.
-      annotator_step.emit('step returned non-zero exit code: %d' %
-                          step_result.retcode)
-
-    call_placeholders(step_result, placeholders, test_data_item)
-
-    if followup_fn:
-      followup_fn(step_result)
-
-    step_result.presentation.finalize(annotator_step)
-    return step_result
-
-  return _inner
 
 
 def get_args(argv):
@@ -388,24 +271,19 @@ def run_steps(stream, build_properties, factory_properties,
 
     assert step['name'] not in step_history, (
       'Step "%s" is already in step_history!' % step['name'])
+    step_result = StepData()
+    step_history[step['name']] = step_result
 
-    callback = step_callback(step, step_history, placeholders, test_data_item)
-
+    followup = lambda: call_placeholders(
+      stream, step_result, placeholders, test_data_item)
     if not test_mode:
-      step_result = annotator.run_step(
-        stream, failed, followup_fn=callback, **step)
+      step_result.retcode = annotator.run_step(
+        stream, failed, followup_fn=followup, **step)
     else:
-      with stream.step(step['name']) as s:
-        s.stream = cStringIO.StringIO()
-        step_result = callback(s, test_data_item.pop('$R', 0))
-        lines = filter(None, s.stream.getvalue().splitlines())
-        if lines:
-          # Note that '~' sorts after 'z' so that this will be last on each
-          # step. Also use _step to get access to the mutable step dictionary.
-          # pylint: disable=W0212
-          step_result._step['~followup_annotations'] = lines
+      followup()
+      step_result.retcode = test_data_item.pop('$R', 0)
+    step_result.step = step
 
-    # TODO(iannucci): Pull this failure calculation into callback.
     failed = annotator.update_build_failure(failed, step_result.retcode, **step)
 
   assert not test_mode or test_data == {}, (
