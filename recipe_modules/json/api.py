@@ -37,23 +37,25 @@ class JsonOutputPlaceholder(recipe_api.Placeholder):
       items.append(self.output_file)
     return items
 
-  def step_finished(self, stream, result_data, test_data):
+  def step_finished(self, presentation, result_data, test_data):
     assert not hasattr(result_data, 'output')
     if test_data is not None:
-      result_data.output = test_data.pop('output', None)
+      raw_data = json.dumps(test_data.pop('output', None))
     else:  # pragma: no cover
       assert self.output_file is not None
       with open(self.output_file, 'r') as f:
         raw_data = f.read()
-      valid = False
-      try:
-        result_data.output = json.loads(raw_data)
-        valid = True
-      except ValueError:
-        pass
-      stream.emit('step returned %sjson data: """\n%s\n"""' %
-                  ('' if valid else 'invalid ', raw_data,))
       os.unlink(self.output_file)
+
+    valid = False
+    try:
+      result_data.output = json.loads(raw_data)
+      valid = True
+    except ValueError:  # pragma: no cover
+      pass
+
+    key = 'json.output' + ('' if valid else ' (invalid)')
+    presentation.logs[key] = raw_data.splitlines()
 
 
 class JsonApi(recipe_api.RecipeApi):

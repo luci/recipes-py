@@ -380,6 +380,11 @@ def print_step(step, env):
   print 'in dir %s:' % (step['cwd'] or os.getcwd())
   for key, value in sorted(step.items()):
     if value is not None:
+      if callable(value):
+        # This prevents functions from showing up as:
+        #   '<function foo at 0x7f523ec7a410>'
+        # which is tricky to test.
+        value = value.__name__+'(...)'
       print ' %s: %s' % (key, value)
   print 'full environment:'
   for key, value in sorted(env.items()):
@@ -425,19 +430,19 @@ def run_step(stream, build_failure,
     allow_subannotations: if True, lets the step emit its own annotations
     seed_steps: A list of step names to seed before running this step
     followup_fn: A callback function to run within the annotation context of
-                 the step, after the step has completed.
+                 the step, after the step has completed. The function will be
+                 called as f(step, ret).
 
   Known kwargs:
     can_fail_build: A boolean indicating that a bad retcode for this step
                     should be intepreted as a build failure. This variable
                     is read by update_build_failure().
 
-  Returns the return code for the step if it ran.
-  If the step did not run, it returns None.
-  If the command did not exist, it returns -1.
+  Returns the return value of followup_fn or the returncode of the step if
+    followup_fn is None.
   """
   if skip or (build_failure and not always_run):
-    return None
+    return
 
   if isinstance(cmd, basestring):
     cmd = (cmd,)
@@ -453,7 +458,6 @@ def run_step(stream, build_failure,
   for step_name in (seed_steps or []):
     stream.seed_step(step_name)
 
-  ret = None
   with stream.step(name) as s:
     print_step(step_dict, step_env)
     try:
@@ -492,20 +496,14 @@ def run_step(stream, build_failure,
       proc.wait()
       outthread.join()
       errthread.join()
-      ret = proc.returncode
+      if followup_fn:
+        return followup_fn(s, proc.returncode)
+      else:
+        return proc.returncode
     except OSError:
       # File wasn't found, error will be reported to stream when the exception
       # crosses the context manager.
-      ret = -1
       raise
-    if ret > 0:
-      stream.step_cursor(stream.current_step)
-      print 'step returned non-zero exit code: %d' % ret
-      s.step_failure()
-    if followup_fn:
-      followup_fn()
-
-  return ret
 
 
 def update_build_failure(failure, retcode, can_fail_build=True, **_kwargs):
@@ -523,6 +521,16 @@ def update_build_failure(failure, retcode, can_fail_build=True, **_kwargs):
   return bool(failure or (can_fail_build and retcode))
 
 
+def default_followup(step, ret):
+  """A default/sample callback function for run_step."""
+  stream = step.annotation_stream
+  if ret > 0:
+    stream.step_cursor(stream.current_step)
+    stream.emit('step returned non-zero exit code: %d' % ret)
+    step.step_failure()
+  return ret
+
+
 def run_steps(steps, build_failure):
   for step in steps:
     error = _validate_step(step)
@@ -533,7 +541,7 @@ def run_steps(steps, build_failure):
   stream = StructuredAnnotationStream(seed_steps=[s['name'] for s in steps])
   ret_codes = []
   for step in steps:
-    ret = run_step(stream, build_failure, **step)
+    ret = run_step(stream, build_failure, followup_fn=default_followup, **step)
     build_failure = update_build_failure(build_failure, ret, **step)
     ret_codes.append(ret)
   return build_failure, ret_codes
