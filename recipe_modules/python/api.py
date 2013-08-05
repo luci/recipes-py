@@ -4,6 +4,8 @@
 
 from slave import recipe_api
 
+import textwrap
+
 class PythonApi(recipe_api.RecipeApi):
   def __call__(self, name, script, args=None, unbuffered=True, **kwargs):
     """Return a step to run a python script with arguments."""
@@ -18,4 +20,12 @@ class PythonApi(recipe_api.RecipeApi):
 
     Program is output to a temp file and run when this step executes.
     """
-    return self(name, recipe_api.InputDataPlaceholder(program, '.py'), **kwargs)
+    program = textwrap.dedent(program)
+    compile(program, '<string>', 'exec', dont_inherit=1)
+
+    @recipe_api.wrap_followup(kwargs)
+    def inline_followup(step_result):
+      step_result.presentation.logs['python.inline'] = program.splitlines()
+
+    return self(name, recipe_api.InputDataPlaceholder(program, '.py'),
+                followup_fn=inline_followup, **kwargs)
