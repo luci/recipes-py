@@ -268,7 +268,7 @@ def step_callback(step, step_history, placeholders, test_data_item):
 
     step_history[step['name']] = step_result
     annotator_step.annotation_stream.step_cursor(step['name'])
-    if test_data_item is None:
+    if step_result.retcode != 0 and test_data_item is None:
       # To avoid cluttering the expectations, don't emit this in testmode.
       annotator_step.emit('step returned non-zero exit code: %d' %
                           step_result.retcode)
