@@ -1,1 +1,4 @@
-DEPS = ['platform']
+DEPS = [
+  'platform',
+  'python'
+]

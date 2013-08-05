@@ -28,20 +28,60 @@ def path_method(api, name, base):
 
 
 class mock_path(object):
+  """Standin for os.path when we're in test mode.
+
+  This class simulates the os.path interface exposed by PathApi, respecting the
+  current platform according to the `platform` module. This allows us to
+  simulate path functions according to the platform being tested, rather than
+  the platform which is currently running.
+  """
+
   def __init__(self, api, _mock_path_exists):
     self._api = api
     self._mock_path_exists = set(_mock_path_exists)
-
-  def exists(self, path):
-    """Return True if path refers to an existing path."""
-    return path in self._mock_path_exists
+    self._pth = None
 
   def __getattr__(self, name):
-    if self._api.platform.is_win:  # pragma: no cover
-      import ntpath as pth
-    elif self._api.platform.is_mac or self._api.platform.is_linux:
-      import posixpath as pth
-    return getattr(pth, name)
+    if not self._pth:
+      if self._api.platform.is_win:
+        import ntpath as pth
+      elif self._api.platform.is_mac or self._api.platform.is_linux:
+        import posixpath as pth
+      self._pth = pth
+    return getattr(self._pth, name)
+
+  def _initialize_exists(self):  # pylint: disable=E0202
+    """
+    Calculates all the parent paths of the mock'd paths and makes exists()
+    read from this new set().
+    """
+    self._initialize_exists = lambda: None
+    for path in list(self._mock_path_exists):
+      self.mock_add_paths(path)
+    self.exists = lambda path: path in self._mock_path_exists
+
+  def mock_add_paths(self, path):
+    """
+    Adds a path and all of its parents to the set of existing paths.
+    """
+    self._initialize_exists()
+    while path:
+      self._mock_path_exists.add(path)
+      path = self.dirname(path)
+
+  def exists(self, path):  # pylint: disable=E0202
+    """Return True if path refers to an existing path."""
+    self._initialize_exists()
+    return self.exists(path)
+
+  def abspath(self, path):
+    """Returns the absolute version of path."""
+    path = self.normpath(path)
+    if path[0] != '[':  # pragma: no cover
+      # We should never really hit this, but simulate the effect.
+      return self.slave_build(path)
+    else:
+      return path
 
 
 class PathApi(recipe_api.RecipeApi):
@@ -54,7 +94,8 @@ class PathApi(recipe_api.RecipeApi):
       using the [*_ROOT] placeholders. ex. '[BUILD_ROOT]/scripts'.
   """
 
-  OK_METHODS = ('basename', 'abspath', 'join', 'pardir', 'exists', 'splitext')
+  OK_METHODS = ('basename', 'abspath', 'join', 'pardir', 'exists', 'splitext',
+                'split')
 
   def __init__(self, **kwargs):
     super(PathApi, self).__init__(**kwargs)
@@ -88,7 +129,9 @@ class PathApi(recipe_api.RecipeApi):
                      'path.add_checkout()')
 
     self._checkouts = []
-    self.checkout = _boom
+    self._checkout = _boom
+
+  def checkout(self, *args, **kwargs):
     """
     Build a path into the checked out source.
 
@@ -97,21 +140,52 @@ class PathApi(recipe_api.RecipeApi):
     this method builds paths inside of it.  For Chrome, that would be 'src'.
     This defaults to the special root of the first checkout.
     """
+    return self._checkout(*args, **kwargs)
+
+  def mock_add_paths(self, path):
+    """For testing purposes, assert that |path| exists."""
+    if self._mock is not None:
+      self._path_mod.mock_add_paths(path)
 
   def add_checkout(self, checkout, *pieces):
     """Assert that we have a source directory with this name. """
     checkout = self.join(checkout, *pieces)
-    # assert self.abspath(checkout) == checkout, '%s is not absolute' % checkout
+    self.assert_absolute(checkout)
     if not self._checkouts:
-      self.checkout = path_method(self, 'checkout', checkout)
+      self._checkout = path_method(self, 'checkout', checkout)
     self._checkouts.append(checkout)
 
   def choose_checkout(self, checkout, *pieces): # pragma: no cover
     assert checkout in self._checkouts, 'No such checkout'
     checkout = self.join(checkout, *pieces)
-    # assert self.abspath(checkout) == checkout, '%s is not absolute' % checkout
-    self.checkout = path_method(self, checkout)
- 
+    self.assert_absolute(checkout)
+    self._checkout = path_method(self, 'checkout', checkout)
+
+  def assert_absolute(self, path):
+    assert self.abspath(path) == path, '%s is not absolute' % path
+
+  def makedirs(self, name, path, mode=0777):
+    """
+    Like os.makedirs, except that if the directory exists, then there is no
+    error.
+    """
+    self.assert_absolute(path)
+    yield self.m.python.inline(
+      'makedirs ' + name,
+      """
+      import sys, os
+      path = sys.argv[1]
+      mode = int(sys.argv[2])
+      if not os.path.isdir(path):
+        if os.path.exists(path):
+          print "%s exists but is not a dir" % path
+          sys.exit(1)
+        os.makedirs(path, mode)
+      """,
+      args=[path, str(mode)],
+    )
+    self.mock_add_paths(path)
+
   def __getattr__(self, name):
     if name in self.OK_METHODS:
       return getattr(self._path_mod, name)
