@@ -47,7 +47,7 @@ def convert_trie_to_flat_paths(trie, prefix=None):
   return result
 
 
-class Results(object):
+class TestResults(object):
   def __init__(self, jsonish):
     self.raw = jsonish
 
@@ -135,15 +135,15 @@ class JsonOutputPlaceholder(recipe_api.Placeholder):
     presentation.logs[key] = listio.lines
 
 
-class ResultsOutputPlaceholder(JsonOutputPlaceholder):
+class TestResultsOutputPlaceholder(JsonOutputPlaceholder):
   def __init__(self):
-    super(ResultsOutputPlaceholder, self).__init__(name='results',
-                                                   flag='--json-results')
+    super(TestResultsOutputPlaceholder, self).__init__(
+      name='test_results', flag='--json-test-results')
 
   def step_finished(self, presentation, result_data, test_data):
-    super(ResultsOutputPlaceholder, self).step_finished(
+    super(TestResultsOutputPlaceholder, self).step_finished(
       presentation, result_data, test_data)
-    result_data.results = Results(result_data.results)
+    result_data.test_results = TestResults(result_data.test_results)
 
 
 class JsonApi(recipe_api.RecipeApi):
@@ -166,12 +166,12 @@ class JsonApi(recipe_api.RecipeApi):
     return JsonOutputPlaceholder()
 
   @staticmethod
-  def results():
-    """A placeholder which will expand to '--json-results /tmp/file'.
+  def test_results():
+    """A placeholder which will expand to '--json-test-results /tmp/file'.
 
-    The results will be an instance of the Results class.
+    The test_results will be an instance of the TestResults class.
     """
-    return ResultsOutputPlaceholder()
+    return TestResultsOutputPlaceholder()
 
   def property_args(self):
     """Return --build-properties and --factory-properties arguments. LEGACY!
