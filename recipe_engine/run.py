@@ -96,8 +96,8 @@ class StepPresentation(object):
     self._logs = collections.OrderedDict()
     self._perf_logs = collections.OrderedDict()
     self._status = None
-    self._step_summary_text = None
-    self._step_text = None
+    self._step_summary_text = ''
+    self._step_text = ''
 
   # (E0202) pylint bug: http://www.logilab.org/ticket/89092
   @property
