@@ -94,6 +94,7 @@ class StepPresentation(object):
     self._finalized = False
 
     self._logs = collections.OrderedDict()
+    self._links = collections.OrderedDict()
     self._perf_logs = collections.OrderedDict()
     self._status = None
     self._step_summary_text = ''
@@ -136,6 +137,13 @@ class StepPresentation(object):
       return copy.deepcopy(self._logs)
 
   @property
+  def links(self):
+    if not self._finalized:
+      return self._links
+    else:
+      return copy.deepcopy(self._links)
+
+  @property
   def perf_logs(self):
     if not self._finalized:
       return self._perf_logs
@@ -152,6 +160,8 @@ class StepPresentation(object):
       annotator_step.write_log_lines(name, lines)
     for name, lines in self.perf_logs.iteritems():
       annotator_step.write_log_lines(name, lines, perf=True)
+    for label, url in self.links.iteritems():
+      annotator_step.step_link(label, url)
     status_mapping = {
       'WARNING': annotator_step.step_warnings,
       'FAILURE': annotator_step.step_failure,
