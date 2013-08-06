@@ -280,6 +280,8 @@ def step_callback(step, step_history, placeholders, test_data_item):
 
     step_result.presentation.finalize(annotator_step)
     return step_result
+  if followup_fn:
+    _inner.__name__ = followup_fn.__name__
 
   return _inner
 
