@@ -78,9 +78,6 @@ class StepCommands(object):
   def step_log_end_perf(self, logname, perf):
     self.emit('@@@STEP_LOG_END_PERF@%s@%s@@@' % (logname, perf))
 
-  def step_link(self, label, url):
-    self.emit('@@@STEP_LINK@%s@%s@@@' % (label, url))
-
   def write_log_lines(self, logname, lines, perf=None):
     if logname in self.emitted_logs:
       raise ValueError('Log %s has been emitted multiple times.' % logname)
