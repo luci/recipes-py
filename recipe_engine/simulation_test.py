@@ -206,7 +206,7 @@ def train_from_tests(recipe_path):
     expected_path = expected_for(recipe_path, name)
     print 'Writing', expected_path
     with open(expected_path, 'wb') as f:
-      json.dump(steps, f, sort_keys=True, indent=2)
+      json.dump(steps, f, sort_keys=True, indent=2, separators=(',', ': '))
 
   return True
 

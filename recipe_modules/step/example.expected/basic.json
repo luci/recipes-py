@@ -1,27 +1,27 @@
 [
   {
     "cmd": [
-      "echo", 
+      "echo",
       "Hello World"
-    ], 
+    ],
     "name": "hello"
-  }, 
+  },
   {
     "cmd": [
-      "echo", 
+      "echo",
       "Why hello, there."
-    ], 
+    ],
     "name": "hello (2)"
-  }, 
+  },
   {
     "cmd": [
-      "bash", 
-      "-c", 
+      "bash",
+      "-c",
       "echo Good bye, $friend."
-    ], 
+    ],
     "env": {
       "friend": "Darth Vader"
-    }, 
+    },
     "name": "goodbye"
   }
 ]
