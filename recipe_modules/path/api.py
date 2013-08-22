@@ -94,8 +94,8 @@ class PathApi(recipe_api.RecipeApi):
       using the [*_ROOT] placeholders. ex. '[BUILD_ROOT]/scripts'.
   """
 
-  OK_METHODS = ('basename', 'abspath', 'join', 'pardir', 'exists', 'splitext',
-                'split')
+  OK_METHODS = ('abspath', 'basename', 'exists', 'join', 'pardir',
+                'sep', 'split', 'splitext')
 
   def __init__(self, **kwargs):
     super(PathApi, self).__init__(**kwargs)
