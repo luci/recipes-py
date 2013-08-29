@@ -412,8 +412,8 @@ def modify_lookup_path(path):
     os.environ['PATH'] = saved_path
 
 
-def run_step(stream, build_failure,
-             name, cmd, cwd=None, env=None,
+def run_step(stream, name, cmd,
+             cwd=None, env=None,
              skip=False, always_run=False,
              allow_subannotations=False,
              seed_steps=None, followup_fn=None, **kwargs):
@@ -421,7 +421,6 @@ def run_step(stream, build_failure,
 
   Context:
     stream: StructuredAnnotationStream to use to emit step
-    build_failure: True if some previous step has failed
 
   Step parameters:
     name: name of the step, will appear in buildbots waterfall
@@ -444,9 +443,6 @@ def run_step(stream, build_failure,
   Returns the return value of followup_fn or the returncode of the step if
     followup_fn is None.
   """
-  if skip or (build_failure and not always_run):
-    return
-
   if isinstance(cmd, basestring):
     cmd = (cmd,)
   cmd = map(str, cmd)
@@ -462,6 +458,12 @@ def run_step(stream, build_failure,
     stream.seed_step(step_name)
 
   with stream.step(name) as s:
+    if skip:
+      if followup_fn:
+        return followup_fn(s, None)
+      else:
+        return None
+
     print_step(step_dict, step_env)
     try:
       with modify_lookup_path(step_env.get('PATH')):
@@ -543,8 +545,12 @@ def run_steps(steps, build_failure):
 
   stream = StructuredAnnotationStream(seed_steps=[s['name'] for s in steps])
   ret_codes = []
+  build_failure = False
   for step in steps:
-    ret = run_step(stream, build_failure, followup_fn=default_followup, **step)
+    if build_failure and not step.get('always_run', False):
+      ret = None
+    else:
+      ret = run_step(stream, followup_fn=default_followup, **step)
     build_failure = update_build_failure(build_failure, ret, **step)
     ret_codes.append(ret)
   return build_failure, ret_codes

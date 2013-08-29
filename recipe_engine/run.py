@@ -395,6 +395,11 @@ def run_steps(stream, build_properties, factory_properties,
   test_mode = test_data is not None
 
   for step in ensure_sequence_of_steps(steps):
+    if failed and not step.get('always_run', False):
+      step_result = StepData(step, None)
+      step_history[step['name']] = step_result
+      continue
+
     test_data_item = test_data.pop(step['name'], {}) if test_mode else None
     placeholders = render_step(step, test_data_item)
 
@@ -405,7 +410,7 @@ def run_steps(stream, build_properties, factory_properties,
 
     if not test_mode:
       step_result = annotator.run_step(
-        stream, failed, followup_fn=callback, **step)
+        stream, followup_fn=callback, **step)
     else:
       with stream.step(step['name']) as s:
         s.stream = cStringIO.StringIO()
