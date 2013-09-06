@@ -21,7 +21,7 @@ def path_method(api, name, base):
     use_wrapper = kwargs.get('wrapper') and api.m.platform.is_win
     WRAPPER_EXTENSION = '.bat' if use_wrapper else ''
     assert api.pardir not in pieces
-    return api.join(base, *pieces) + WRAPPER_EXTENSION
+    return api.join(base, *filter(bool, pieces)) + WRAPPER_EXTENSION
   path_func_inner.__name__ = name
   path_func_inner.__doc__ = path_func_inner.__doc__ % base
   return path_func_inner
