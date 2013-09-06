@@ -69,6 +69,11 @@ class RecipeApi(object):
     # Otherwise inject into 'self.m'
     self.m = self if module is None else ModuleInjectionSite()
 
+  def _sanitize_config_vars(self, config_name, CONFIG_VARS):
+    params = self.get_config_defaults(config_name)
+    params.update(CONFIG_VARS)
+    return params
+
   def get_config_defaults(self, _config_name):  # pylint: disable=R0201
     """
     Allows your api to dynamically determine static default values for configs.
@@ -82,8 +87,7 @@ class RecipeApi(object):
       return
 
     assert ctx, '%s has no config context' % self
-    params = self.get_config_defaults(config_name)
-    params.update(CONFIG_VARS)
+    params = self._sanitize_config_vars(config_name, CONFIG_VARS)
     try:
       base = ctx.CONFIG_SCHEMA(**params)
       if config_name is None:
@@ -99,13 +103,14 @@ class RecipeApi(object):
   def set_config(self, config_name, optional=False, **CONFIG_VARS):
     """Sets the modules and its dependencies to the named configuration."""
     assert self._module
-    config = self.make_config(config_name, optional, **CONFIG_VARS)
+    params = self._sanitize_config_vars(config_name, CONFIG_VARS)
+    config = self.make_config(config_name, optional, **params)
     if config:
       self.c = config
     # TODO(iannucci): This is 'inefficient', since if a dep comes up multiple
     # times in this recursion, it will get set_config()'d multiple times
     for dep in self._module.DEPS:
-      getattr(self.m, dep).set_config(config_name, optional=True, **CONFIG_VARS)
+      getattr(self.m, dep).set_config(config_name, optional=True, **params)
 
   def apply_config(self, config_name, config_object=None):
     """Apply a named configuration to the provided config object or self."""
