@@ -165,16 +165,11 @@ def exec_test_file(recipe_path):
     pass
 
 
-def execute_test_case(test_data, recipe_path):
+def execute_test_case(test_data, recipe_path, recipe_name):
   test_data = test_data.copy()
   props = test_data.pop('properties', {}).copy()
   td = test_data.pop('step_mocks', {}).copy()
-  if 'recipe_modules' in recipe_path:
-    recipe = '%s:%s' % (os.path.basename(os.path.dirname(recipe_path)),
-                        os.path.splitext(os.path.basename(recipe_path))[0])
-  else:
-    recipe = os.path.splitext(os.path.basename(recipe_path))[0]
-  props['recipe'] = recipe
+  props['recipe'] = recipe_name
 
   mock_data = test_data.pop('mock', {})
   mock_data = collections.defaultdict(lambda: collections.defaultdict(dict),
@@ -197,12 +192,12 @@ def execute_test_case(test_data, recipe_path):
       raise
 
 
-def train_from_tests(recipe_path):
+def train_from_tests((recipe_path, recipe_name)):
   for path in glob(expected_for(recipe_path, '*')):
     os.unlink(path)
 
   for name, test_data in exec_test_file(recipe_path):
-    steps = execute_test_case(test_data, recipe_path)
+    steps = execute_test_case(test_data, recipe_path, recipe_name)
     expected_path = expected_for(recipe_path, name)
     print 'Writing', expected_path
     with open(expected_path, 'wb') as f:
@@ -213,15 +208,15 @@ def train_from_tests(recipe_path):
 
 def load_tests(loader, _standard_tests, _pattern):
   """This method is invoked by unittest.main's automatic testloader."""
-  def create_test_class(recipe_path):
+  def create_test_class((recipe_path, recipe_name)):
     class RecipeTest(unittest.TestCase):
       @classmethod
       def add_test_methods(cls):
         for name, test_data in exec_test_file(recipe_path):
           expected_path = expected_for(recipe_path, name)
-          def add_test(test_data, expected_path):
+          def add_test(test_data, expected_path, recipe_name):
             def test_(self):
-              steps = execute_test_case(test_data, recipe_path)
+              steps = execute_test_case(test_data, recipe_path, recipe_name)
               # Roundtrip json to get same string encoding as load
               steps = json.loads(json.dumps(steps))
               with open(expected_path, 'rb') as f:
@@ -229,7 +224,7 @@ def load_tests(loader, _standard_tests, _pattern):
               self.assertEqual(steps, expected)
             test_.__name__ += name
             setattr(cls, test_.__name__, test_)
-          add_test(test_data, expected_path)
+          add_test(test_data, expected_path, recipe_name)
 
     RecipeTest.add_test_methods()
 
@@ -255,11 +250,12 @@ def loop_over_recipes():
     recipe_dir = os.path.join(path, 'recipes')
     for recipe in find_recipes(
         recipe_dir, lambda f: f.endswith('.py') and f[0] != '_'):
-      yield recipe
+      yield recipe, recipe[len(recipe_dir)+1:-len('.py')]
     module_dir = os.path.join(path, 'recipe_modules')
     for recipe in find_recipes(
         module_dir, lambda f: f.endswith('example.py')):
-      yield recipe
+      module_name = os.path.dirname(recipe)[len(module_dir)+1:]
+      yield recipe, '%s:example' % module_name
 
 
 def main(argv):
