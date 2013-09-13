@@ -17,60 +17,11 @@ import contextlib
 import json
 import optparse
 import os
+import re
 import subprocess
 import sys
 import threading
 import traceback
-
-
-# These are maps of annotation key -> number of expected arguments.
-STEP_ANNOTATIONS = {
-    'SET_BUILD_PROPERTY': 2,
-    'STEP_CLEAR': 0,
-    'STEP_EXCEPTION': 0,
-    'STEP_FAILURE': 0,
-    'STEP_LINK': 2,
-    'STEP_LOG_END': 1,
-    'STEP_LOG_END_PERF': 2,
-    'STEP_LOG_LINE': 2,
-    'STEP_SUMMARY_CLEAR': 0,
-    'STEP_SUMMARY_TEXT': 1,
-    'STEP_TEXT': 1,
-    'STEP_WARNINGS': 0,
-}
-
-CONTROL_ANNOTATIONS = {
-    'STEP_CLOSED': 0,
-    'STEP_STARTED': 0,
-}
-
-STREAM_ANNOTATIONS = {
-    'HALT_ON_FAILURE': 0,
-    'HONOR_ZERO_RETURN_CODE': 0,
-    'SEED_STEP': 1,
-    'SEED_STEP_TEXT': 2,
-    'STEP_CURSOR': 1,
-}
-
-DEPRECATED_ANNOTATIONS = {
-    'BUILD_STEP': 1,
-}
-
-ALL_ANNOTATIONS = {}
-ALL_ANNOTATIONS.update(STEP_ANNOTATIONS)
-ALL_ANNOTATIONS.update(CONTROL_ANNOTATIONS)
-ALL_ANNOTATIONS.update(STREAM_ANNOTATIONS)
-ALL_ANNOTATIONS.update(DEPRECATED_ANNOTATIONS)
-
-# This is a mapping of old_annotation_name -> new_annotation_name.
-# Theoretically all annotator scripts should use the new names, but it's hard
-# to tell due to the decentralized nature of the annotator.
-DEPRECATED_ALIASES = {
-    'BUILD_FAILED': 'STEP_FAILURE',
-    'BUILD_WARNINGS': 'STEP_WARNINGS',
-    'BUILD_EXCEPTION': 'STEP_EXCEPTION',
-    'link': 'STEP_LINK',
-}
 
 
 def emit(line, stream, flush_before=None):
@@ -88,62 +39,8 @@ def emit(line, stream, flush_before=None):
   stream.flush()
 
 
-class MetaAnnotationPrinter(type):
-  def __new__(mcs, name, bases, dct):
-    annotation_map = dct.get('ANNOTATIONS')
-    if annotation_map:
-      for key, v in annotation_map.iteritems():
-        key = key.lower()
-        dct[key] = mcs.make_printer_fn(key, v)
-    return type.__new__(mcs, name, bases, dct)
-
-  @staticmethod
-  def make_printer_fn(name, n_args):
-    """Generates a method which emits an annotation to the log stream."""
-    fmt = '@@@%s%s@@@' % (name.upper(), '@%s' * n_args)
-
-    inner_args = n_args + 1  # self counts
-    infix = '1 argument' if inner_args == 1 else ('%d arguments' % inner_args)
-    err = '%s() takes %s (%%d given)' % (name, infix)
-
-    def printer(self, *args):
-      if len(args) != n_args:
-        raise TypeError(err % (len(args) + 1))
-      self.emit(fmt % args)
-    printer.__name__ = name
-    printer.__doc__ = """Emits an annotation for %s.""" % name.upper()
-
-    return printer
-
-
-class AnnotationPrinter(object):
-  """A derivable class which will inject annotation-printing methods into the
-  subclass.
-
-  Your sublcass should define a class variable ANNOTATIONS equal to a
-  dictionary of the form { '<ANNOTATION_NAME>': <# args> }. This class will
-  then inject methods whose names are the undercased version of your
-  annotation names, and which take the number of arguments specified in the
-  dictionary.
-
-  Example:
-    >>> my_annotations = { 'STEP_LOG_LINE': 2 }
-    >>> class MyObj(AnnotationPrinter):
-    ...   ANNOTATIONS = my_annotations
-    ...
-    >>> o = MyObj()
-    >>> o.step_log_line('logname', 'here is a line to put in the log')
-    @@@STEP_LOG_LINE@logname@here is a line to put in the log@@@
-    >>> o.step_log_line()
-    Traceback (most recent call last):
-      File "<stdin>", line 1, in <module>
-    TypeError: step_log_line() takes exactly 3 arguments (1 given)
-    >>> o.setp_log_line.__doc__
-    "Emits an annotation for STEP_LOG_LINE."
-    >>>
-  """
-  __metaclass__ = MetaAnnotationPrinter
-
+class StepCommands(object):
+  """Class holding step commands. Intended to be subclassed."""
   def __init__(self, stream, flush_before):
     self.stream = stream
     self.flush_before = flush_before
@@ -151,14 +48,38 @@ class AnnotationPrinter(object):
   def emit(self, line):
     emit(line, self.stream, self.flush_before)
 
+  def step_warnings(self):
+    self.emit('@@@STEP_WARNINGS@@@')
 
-class StepCommands(AnnotationPrinter):
-  """Class holding step commands. Intended to be subclassed."""
-  ANNOTATIONS = STEP_ANNOTATIONS
+  def step_failure(self):
+    self.emit('@@@STEP_FAILURE@@@')
 
-  def __init__(self, stream, flush_before):
-    super(StepCommands, self).__init__(stream, flush_before)
-    self.emitted_logs = set()
+  def step_exception(self):
+    self.emit('@@@STEP_EXCEPTION@@@')
+
+  def step_clear(self):
+    self.emit('@@@STEP_CLEAR@@@')
+
+  def step_summary_clear(self):
+    self.emit('@@@STEP_SUMMARY_CLEAR@@@')
+
+  def step_text(self, text):
+    self.emit('@@@STEP_TEXT@%s@@@' % text)
+
+  def step_summary_text(self, text):
+    self.emit('@@@STEP_SUMMARY_TEXT@%s@@@' % text)
+
+  def step_log_line(self, logname, line):
+    self.emit('@@@STEP_LOG_LINE@%s@%s@@@' % (logname, line.rstrip('\n')))
+
+  def step_log_end(self, logname):
+    self.emit('@@@STEP_LOG_END@%s@@@' % logname)
+
+  def step_log_end_perf(self, logname, perf):
+    self.emit('@@@STEP_LOG_END_PERF@%s@%s@@@' % (logname, perf))
+
+  def step_link(self, label, url):
+    self.emit('@@@STEP_LINK@%s@%s@@@' % (label, url))
 
   def write_log_lines(self, logname, lines, perf=None):
     if logname in self.emitted_logs:
@@ -172,13 +93,25 @@ class StepCommands(AnnotationPrinter):
     else:
       self.step_log_end(logname)
 
-class StepControlCommands(AnnotationPrinter):
+
+class StepControlCommands(object):
   """Subclass holding step control commands. Intended to be subclassed.
 
   This is subclassed out so callers in StructuredAnnotationStep can't call
   step_started() or step_closed().
   """
-  ANNOTATIONS = CONTROL_ANNOTATIONS
+  def __init__(self, stream, flush_before):
+    self.stream = stream
+    self.flush_before = flush_before
+
+  def emit(self, line):
+    emit(line, self.stream, self.flush_before)
+
+  def step_started(self):
+    self.emit('@@@STEP_STARTED@@@')
+
+  def step_closed(self):
+    self.emit('@@@STEP_CLOSED@@@')
 
 
 class StructuredAnnotationStep(StepCommands):
@@ -217,7 +150,7 @@ class AdvancedAnnotationStep(StepCommands, StepControlCommands):
     super(AdvancedAnnotationStep, self).__init__(*args, **kwargs)
 
 
-class AdvancedAnnotationStream(AnnotationPrinter):
+class AdvancedAnnotationStream(object):
   """Holds individual annotation generating functions for streams.
 
   Most callers should use StructuredAnnotationStream to simplify coding and
@@ -225,7 +158,28 @@ class AdvancedAnnotationStream(AnnotationPrinter):
   insufficient (parallel step execution), the indidividual functions are exposed
   here.
   """
-  ANNOTATIONS = STREAM_ANNOTATIONS
+
+  def __init__(self, stream=sys.stdout, flush_before=sys.stderr):
+    self.stream = stream
+    self.flush_before = flush_before
+
+  def emit(self, line):
+    emit(line, self.stream, self.flush_before)
+
+  def seed_step(self, step):
+    self.emit('@@@SEED_STEP %s@@@' % step)
+
+  def seed_step_text(self, step, text):
+    self.emit('@@@SEED_STEP_TEXT@%s@%s@@@' % (step, text))
+
+  def step_cursor(self, step):
+    self.emit('@@@STEP_CURSOR %s@@@' % step)
+
+  def halt_on_failure(self):
+    self.emit('@@@HALT_ON_FAILURE@@@')
+
+  def honor_zero_return_code(self):
+    self.emit('@@@HONOR_ZERO_RETURN_CODE@@@')
 
 
 class StructuredAnnotationStream(AdvancedAnnotationStream):
@@ -286,57 +240,103 @@ class StructuredAnnotationStream(AdvancedAnnotationStream):
       self.seed_steps.append(name)
 
 
-def MatchAnnotation(line, callback_implementor):
-  """Call back into |callback_implementor| if line contains an annotation.
+class Match:
+  """Holds annotator line parsing functions."""
 
-  Args:
-    line (str) - The line to analyze
-    callback_implementor (object) - An object which contains methods
-      corresponding to all of the annotations in the |ALL_ANNOTATIONS|
-      dictionary. For example, it should contain a method STEP_SUMMARY_TEXT
-      taking a single argument.
+  def __init__(self):
+    raise Exception('Don\'t instantiate the Match class!')
 
-  Parsing method:
-    * if line doesn't match /^@@@.*@@@$/, return without calling back
-    * Look for the first '@' or ' '
-  """
-  if not (line.startswith('@@@') and line.endswith('@@@')):
-    return
-  line = line[3:-3]
+  @staticmethod
+  def _parse_line(regex, line):
+    m = re.match(regex, line)
+    if m:
+      return list(m.groups())
+    else:
+      return []
 
-  # look until the first @ or ' '
-  idx = min((x for x in (line.find('@'), line.find(' '), len(line)) if x > 0))
-  cmd_text = line[:idx]
-  cmd = DEPRECATED_ALIASES.get(cmd_text, cmd_text)
+  @staticmethod
+  def log_line(line):
+    return Match._parse_line('^@@@STEP_LOG_LINE@([^@]*)@([^@]*)@@@', line)
 
-  field_count = ALL_ANNOTATIONS.get(cmd)
-  if field_count is None:
-    raise Exception('Unrecognized annotator command "%s"' % cmd_text)
+  @staticmethod
+  def log_end(line):
+    return Match._parse_line('^@@@STEP_LOG_END@([^@]*)@@@', line)
 
-  if field_count:
-    if idx == len(line):
-      raise Exception('Annotator command "%s" expects %d args, got 0.'
-                      % (cmd_text, field_count))
+  @staticmethod
+  def log_end_perf(line):
+    return Match._parse_line('^@@@STEP_LOG_END_PERF@([^@]*)@([^@]*)@@@', line)
 
-    line = line[idx+1:]
+  @staticmethod
+  def step_link(line):
+    m = Match._parse_line('^@@@STEP_LINK@([^@]*)@([^@]*)@@@', line)
+    if not m:
+      # Deprecated.
+      return Match._parse_line('^@@@link@([^@]*)@([^@]*)@@@', line)
+    else:
+      return m
 
-    args = line.split('@', field_count-1)
-    if len(args) != field_count:
-      raise Exception('Annotator command "%s" expects %d args, got %d.'
-                      % (cmd_text, field_count, len(args)))
-  else:
-    line = line[len(cmd_text):]
-    if line:
-      raise Exception('Annotator command "%s" expects no args, got cruft "%s".'
-                      % (cmd_text, line))
-    args = []
+  @staticmethod
+  def step_started(line):
+    return line.startswith('@@@STEP_STARTED@@@')
 
-  fn = getattr(callback_implementor, cmd, None)
-  if fn is None:
-    raise Exception('"%s" does not implement "%s"'
-                    % (callback_implementor, cmd))
+  @staticmethod
+  def step_closed(line):
+    return line.startswith('@@@STEP_CLOSED@@@')
 
-  fn(*args)
+  @staticmethod
+  def step_warnings(line):
+    return (line.startswith('@@@STEP_WARNINGS@@@') or
+            line.startswith('@@@BUILD_WARNINGS@@@'))  # Deprecated.
+
+  @staticmethod
+  def step_failure(line):
+    return (line.startswith('@@@STEP_FAILURE@@@') or
+            line.startswith('@@@BUILD_FAILED@@@'))  # Deprecated.
+
+  @staticmethod
+  def step_exception(line):
+    return (line.startswith('@@@STEP_EXCEPTION@@@') or
+            line.startswith('@@@BUILD_EXCEPTION@@@'))  # Deprecated.
+
+  @staticmethod
+  def halt_on_failure(line):
+    return line.startswith('@@@HALT_ON_FAILURE@@@')
+
+  @staticmethod
+  def honor_zero_return_code(line):
+    return line.startswith('@@@HONOR_ZERO_RETURN_CODE@@@')
+
+  @staticmethod
+  def step_clear(line):
+    return line.startswith('@@@STEP_CLEAR@@@')
+
+  @staticmethod
+  def step_summary_clear(line):
+    return line.startswith('@@@STEP_SUMMARY_CLEAR@@@')
+
+  @staticmethod
+  def step_text(line):
+    return Match._parse_line('^@@@STEP_TEXT@([^@]*)@@@', line)
+
+  @staticmethod
+  def step_summary_text(line):
+    return Match._parse_line('^@@@STEP_SUMMARY_TEXT@([^@]*)@@@', line)
+
+  @staticmethod
+  def seed_step(line):
+    return Match._parse_line('^@@@SEED_STEP ([^@]*)@@@', line)
+
+  @staticmethod
+  def seed_step_text(line):
+    return Match._parse_line('^@@@SEED_STEP_TEXT@([^@]*)@([^@]*)@@@', line)
+
+  @staticmethod
+  def step_cursor(line):
+    return Match._parse_line('^@@@STEP_CURSOR ([^@]*)@@@', line)
+
+  @staticmethod
+  def build_step(line):
+    return Match._parse_line('^@@@BUILD_STEP ([^@]*)@@@', line)
 
 
 def _merge_envs(original, override):
@@ -414,7 +414,7 @@ def modify_lookup_path(path):
 
 def run_step(stream, name, cmd,
              cwd=None, env=None,
-             skip=False,
+             skip=False, always_run=False,
              allow_subannotations=False,
              seed_steps=None, followup_fn=None, **kwargs):
   """Runs a single step.
@@ -428,6 +428,7 @@ def run_step(stream, name, cmd,
     cwd: absolute path to working directory for the command
     env: dict with overrides for environment variables
     skip: True to skip this step
+    always_run: True to run the step even if some previous step failed
     allow_subannotations: if True, lets the step emit its own annotations
     seed_steps: A list of step names to seed before running this step
     followup_fn: A callback function to run within the annotation context of
