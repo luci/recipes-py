@@ -25,6 +25,7 @@ import traceback
 
 # These are maps of annotation key -> number of expected arguments.
 STEP_ANNOTATIONS = {
+    'SET_BUILD_PROPERTY': 2,
     'STEP_CLEAR': 0,
     'STEP_EXCEPTION': 0,
     'STEP_FAILURE': 0,
