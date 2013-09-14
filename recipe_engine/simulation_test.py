@@ -295,6 +295,9 @@ def main(argv):
       print 'FATAL: Recipes are not at 100% coverage.'
       retcode = retcode or 2
 
+  if training:
+    test_env.print_coverage_warning()
+
   return retcode
 
 
