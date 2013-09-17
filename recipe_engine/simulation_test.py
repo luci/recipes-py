@@ -273,6 +273,9 @@ def main(argv):
   if '--train' in argv:
     argv.remove('--train')
     training = True
+  if '--external' in argv:
+    argv.remove('--external')
+    del BASE_DIRS['Internal']
 
   had_errors = False
   if training and not is_help:
