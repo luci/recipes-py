@@ -79,7 +79,7 @@ class mock_path(object):
     path = self.normpath(path)
     if path[0] != '[':  # pragma: no cover
       # We should never really hit this, but simulate the effect.
-      return self.slave_build(path)
+      return self.api.slave_build(path)
     else:
       return path
 
