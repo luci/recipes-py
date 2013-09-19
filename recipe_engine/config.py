@@ -115,7 +115,7 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
   """
 
   def config_ctx(group=None, includes=None, deps=None, no_test=False,
-                  is_root=False):
+                 is_root=False, config_vars=None):
     """
     A decorator for functions which modify a given schema of configs.
     Examples continue using the schema and config_items defined in the module
@@ -176,6 +176,9 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
         configuration combinations by running the root item first (if there is
         one), and skipping the configuration combination if the root config
         item throws BadConf.
+
+      config_vars(dict) - A dictionary mapping of { CONFIG_VAR: <value> }. This
+        sets the input contidions for the CONFIG_SCHEMA.
 
       Returns a new decorated version of this function (see inner()).
     """
@@ -259,6 +262,16 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
         assert ret is None, 'Got return value (%s) from "%s"?' % (ret, name)
 
         return config
+
+      def default_config_vars():
+        ret = {}
+        for include in (includes or []):
+          item = config_ctx.CONFIG_ITEMS[include]
+          ret.update(item.DEFAULT_CONFIG_VARS())
+        if config_vars:
+          ret.update(config_vars)
+        return ret
+      inner.DEFAULT_CONFIG_VARS = default_config_vars
 
       assert name not in config_ctx.CONFIG_ITEMS
       config_ctx.CONFIG_ITEMS[name] = inner

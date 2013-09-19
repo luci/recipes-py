@@ -69,12 +69,7 @@ class RecipeApi(object):
     # Otherwise inject into 'self.m'
     self.m = self if module is None else ModuleInjectionSite()
 
-  def _sanitize_config_vars(self, config_name, CONFIG_VARS):
-    params = self.get_config_defaults(config_name)
-    params.update(CONFIG_VARS)
-    return params
-
-  def get_config_defaults(self, _config_name):  # pylint: disable=R0201
+  def get_config_defaults(self):  # pylint: disable=R0201
     """
     Allows your api to dynamically determine static default values for configs.
     """
@@ -82,29 +77,54 @@ class RecipeApi(object):
 
   def make_config(self, config_name=None, optional=False, **CONFIG_VARS):
     """Returns a 'config blob' for the current API."""
+    return self.make_config_params(config_name, optional, **CONFIG_VARS)[0]
+
+  def make_config_params(self, config_name=None, optional=False, **CONFIG_VARS):
+    """Returns a 'config blob' for the current API, and the computed params
+    for all dependent configurations.
+
+    The params have the following order of precendence. Each subsequent param
+    is dict.update'd into the final parameters, so the order is from lowest to
+    higest precedence on a per-key basis:
+      * if config_name in CONFIG_CTX
+        * get_config_defaults()
+        * CONFIG_CTX[config_name].DEFAULT_CONFIG_VARS()
+        * CONFIG_VARS
+      * else
+        * get_config_defaults()
+        * CONFIG_VARS
+    """
+    generic_params = self.get_config_defaults()  # generic defaults
+    generic_params.update(CONFIG_VARS)           # per-invocation values
+
     ctx = self._module.CONFIG_CTX
     if optional and not ctx:
-      return
+      return None, generic_params
 
     assert ctx, '%s has no config context' % self
-    params = self._sanitize_config_vars(config_name, CONFIG_VARS)
     try:
+      params = self.get_config_defaults()         # generic defaults
+      itm = ctx.CONFIG_ITEMS[config_name] if config_name else None
+      if itm:
+        params.update(itm.DEFAULT_CONFIG_VARS())  # per-item defaults
+      params.update(CONFIG_VARS)                  # per-invocation values
+
       base = ctx.CONFIG_SCHEMA(**params)
       if config_name is None:
-        return base
+        return base, params
       else:
-        return ctx.CONFIG_ITEMS[config_name](base)
+        return itm(base), params
     except KeyError:
       if optional:
-        return
+        return None, generic_params
       else:
         raise  # TODO(iannucci): raise a better exception.
 
   def set_config(self, config_name, optional=False, **CONFIG_VARS):
     """Sets the modules and its dependencies to the named configuration."""
     assert self._module
-    params = self._sanitize_config_vars(config_name, CONFIG_VARS)
-    config = self.make_config(config_name, optional, **params)
+    config, params = self.make_config_params(config_name, optional,
+                                             **CONFIG_VARS)
     if config:
       self.c = config
     # TODO(iannucci): This is 'inefficient', since if a dep comes up multiple
