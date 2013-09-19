@@ -323,18 +323,26 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
   return config_ctx
 
 
+class AutoHide(object):
+  pass
+AutoHide = AutoHide()
+
 class ConfigBase(object):
   """This is the root interface for all config schema types."""
 
-  def __init__(self, hidden=False):
+  def __init__(self, hidden=AutoHide):
     """
     Args:
-      hidden - If set to True, this object will be excluded from printing when
-        the config blob is rendered with ConfigGroup.as_jsonish(). You still
-        have full read/write access to this blob otherwise though.
+      hidden -
+        True: This object will be excluded from printing when the config blob
+              is rendered with ConfigGroup.as_jsonish(). You still have full
+              read/write access to this blob otherwise though.
+        False: This will be printed as part of ConfigGroup.as_jsonish()
+        AutoHide: This will be printed as part of ConfigGroup.as_jsonish() only
+              if self._is_default() is false.
     """
     # work around subclasses which override __setattr__
-    object.__setattr__(self, '_hidden', hidden)
+    object.__setattr__(self, '_hidden_mode', hidden)
     object.__setattr__(self, '_inclusions', set())
 
   def get_val(self):
@@ -357,6 +365,17 @@ class ConfigBase(object):
     """Returns True iff this configuraton blob is fully viable."""
     raise NotImplementedError
 
+  def _is_default(self):
+    """Returns True iff this configuraton blob is the default value."""
+    raise NotImplementedError
+
+  @property
+  def _hidden(self):
+    """Returns True iff this configuraton blob is hidden."""
+    if self._hidden_mode is AutoHide:
+      return self._is_default()
+    return self._hidden_mode
+
 
 class ConfigGroup(ConfigBase):
   """Allows you to provide hierarchy to a configuration schema.
@@ -372,7 +391,7 @@ class ConfigGroup(ConfigBase):
     config_blob.group.numbahs.update(range(10))
   """
 
-  def __init__(self, hidden=False, **type_map):
+  def __init__(self, hidden=AutoHide, **type_map):
     """Expects type_map to be {python_name -> ConfigBase} instance."""
     super(ConfigGroup, self).__init__(hidden)
     assert type_map, 'A ConfigGroup with no type_map is meaningless.'
@@ -420,6 +439,10 @@ class ConfigGroup(ConfigBase):
   def complete(self):
     return all(v.complete() for v in self._type_map.values())
 
+  def _is_default(self):
+    # pylint: disable=W0212
+    return all(v._is_default() for v in self._type_map.values())
+
 
 class ConfigList(ConfigBase, collections.MutableSequence):
   """Allows you to provide an ordered repetition to a configuration schema.
@@ -437,7 +460,7 @@ class ConfigList(ConfigBase, collections.MutableSequence):
     config_blob.some_items[0].derp = 'bob'
   """
 
-  def __init__(self, item_schema, hidden=False):
+  def __init__(self, item_schema, hidden=AutoHide):
     """
     Args:
       item_schema: The schema of each object. Should be a function which returns
@@ -490,12 +513,16 @@ class ConfigList(ConfigBase, collections.MutableSequence):
     return [i.as_jsonish(include_hidden) for i in self.data
             if (include_hidden or not i._hidden)]  # pylint: disable=W0212
 
+  def _is_default(self):
+    # pylint: disable=W0212
+    return all(v._is_default() for v in self.data)
+
 
 class Dict(ConfigBase, collections.MutableMapping):
   """Provides a semi-homogenous dict()-like configuration object."""
 
   def __init__(self, item_fn=lambda i: i, jsonish_fn=dict, value_type=None,
-               hidden=False):
+               hidden=AutoHide):
     """
     Args:
       item_fn - A function which renders (k, v) pairs to input items for
@@ -546,11 +573,14 @@ class Dict(ConfigBase, collections.MutableMapping):
   def complete(self):
     return True
 
+  def _is_default(self):
+    return not self.data
+
 
 class List(ConfigBase, collections.MutableSequence):
   """Provides a semi-homogenous list()-like configuration object."""
 
-  def __init__(self, inner_type, jsonish_fn=list, hidden=False):
+  def __init__(self, inner_type, jsonish_fn=list, hidden=AutoHide):
     """
     Args:
       inner_type - The type of data contained in this set, e.g. str, int, ...
@@ -599,11 +629,14 @@ class List(ConfigBase, collections.MutableSequence):
   def complete(self):
     return True
 
+  def _is_default(self):
+    return not self.data
+
 
 class Set(ConfigBase, collections.MutableSet):
   """Provides a semi-homogenous set()-like configuration object."""
 
-  def __init__(self, inner_type, jsonish_fn=list, hidden=False):
+  def __init__(self, inner_type, jsonish_fn=list, hidden=AutoHide):
     """
     Args:
       inner_type - The type of data contained in this set, e.g. str, int, ...
@@ -646,12 +679,15 @@ class Set(ConfigBase, collections.MutableSet):
   def complete(self):
     return True
 
+  def _is_default(self):
+    return not self.data
+
 
 class Single(ConfigBase):
   """Provides a configuration object which holds a single 'simple' type."""
 
   def __init__(self, inner_type, jsonish_fn=lambda x: x, empty_val=None,
-               required=True, hidden=False):
+               required=True, hidden=AutoHide):
     """
     Args:
       inner_type - The type of data contained in this object, e.g. str, int, ...
@@ -689,6 +725,9 @@ class Single(ConfigBase):
   def complete(self):
     return not self.required or self.data is not self.empty_val
 
+  def _is_default(self):
+    return self.data is self.empty_val
+
 
 class Static(ConfigBase):
   """Holds a single, hidden, immutible data object.
@@ -697,7 +736,7 @@ class Static(ConfigBase):
   which are in your VAR_TEST_MAP).
   """
 
-  def __init__(self, value, hidden=True):
+  def __init__(self, value, hidden=AutoHide):
     super(Static, self).__init__(hidden=hidden)
     # Attempt to hash the value, which will ensure that it's immutable all the
     # way down :).
@@ -717,4 +756,7 @@ class Static(ConfigBase):
     assert False
 
   def complete(self):
+    return True
+
+  def _is_default(self):
     return True
