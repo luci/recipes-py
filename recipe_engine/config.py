@@ -478,7 +478,7 @@ class ConfigList(ConfigBase, collections.MutableSequence):
             if (include_hidden or not i._hidden)]  # pylint: disable=W0212
 
 
-class DictConfig(ConfigBase, collections.MutableMapping):
+class Dict(ConfigBase, collections.MutableMapping):
   """Provides a semi-homogenous dict()-like configuration object."""
 
   def __init__(self, item_fn=lambda i: i, jsonish_fn=dict, value_type=None,
@@ -493,7 +493,7 @@ class DictConfig(ConfigBase, collections.MutableMapping):
         assigned to this dictionary.
       hidden - See ConfigBase.
     """
-    super(DictConfig, self).__init__(hidden)
+    super(Dict, self).__init__(hidden)
     self.value_type = value_type
     self.item_fn = item_fn
     self.jsonish_fn = jsonish_fn
@@ -517,7 +517,7 @@ class DictConfig(ConfigBase, collections.MutableMapping):
     return len(self.data)
 
   def set_val(self, val):
-    if isinstance(val, DictConfig):
+    if isinstance(val, Dict):
       val = val.data
     assert isinstance(val, dict)
     assert all(isinstance(v, self.value_type) for v in val.itervalues())
@@ -534,7 +534,7 @@ class DictConfig(ConfigBase, collections.MutableMapping):
     return True
 
 
-class ListConfig(ConfigBase, collections.MutableSequence):
+class List(ConfigBase, collections.MutableSequence):
   """Provides a semi-homogenous list()-like configuration object."""
 
   def __init__(self, inner_type, jsonish_fn=list, hidden=False):
@@ -546,7 +546,7 @@ class ListConfig(ConfigBase, collections.MutableSequence):
         python datatype. Defaults to list().
       hidden - See ConfigBase.
     """
-    super(ListConfig, self).__init__(hidden)
+    super(List, self).__init__(hidden)
     self.inner_type = inner_type
     self.jsonish_fn = jsonish_fn
     self.data = []
@@ -587,7 +587,7 @@ class ListConfig(ConfigBase, collections.MutableSequence):
     return True
 
 
-class SetConfig(ConfigBase, collections.MutableSet):
+class Set(ConfigBase, collections.MutableSet):
   """Provides a semi-homogenous set()-like configuration object."""
 
   def __init__(self, inner_type, jsonish_fn=list, hidden=False):
@@ -599,7 +599,7 @@ class SetConfig(ConfigBase, collections.MutableSet):
         python datatype. Defaults to list().
       hidden - See ConfigBase.
     """
-    super(SetConfig, self).__init__(hidden)
+    super(Set, self).__init__(hidden)
     self.inner_type = inner_type
     self.jsonish_fn = jsonish_fn
     self.data = set()
@@ -634,7 +634,7 @@ class SetConfig(ConfigBase, collections.MutableSet):
     return True
 
 
-class SimpleConfig(ConfigBase):
+class Single(ConfigBase):
   """Provides a configuration object which holds a single 'simple' type."""
 
   def __init__(self, inner_type, jsonish_fn=lambda x: x, empty_val=None,
@@ -651,7 +651,7 @@ class SimpleConfig(ConfigBase):
         non-empty_val in order for it to be considered complete().
       hidden - See ConfigBase.
     """
-    super(SimpleConfig, self).__init__(hidden)
+    super(Single, self).__init__(hidden)
     self.inner_type = inner_type
     self.jsonish_fn = jsonish_fn
     self.empty_val = empty_val
@@ -662,7 +662,7 @@ class SimpleConfig(ConfigBase):
     return self.data
 
   def set_val(self, val):
-    if isinstance(val, SimpleConfig):
+    if isinstance(val, Single):
       val = val.data
     assert val is self.empty_val or isinstance(val, self.inner_type)
     self.data = val
@@ -677,7 +677,7 @@ class SimpleConfig(ConfigBase):
     return not self.required or self.data is not self.empty_val
 
 
-class StaticConfig(ConfigBase):
+class Static(ConfigBase):
   """Holds a single, hidden, immutible data object.
 
   This is very useful for holding the 'input' configuration values (i.e. those
@@ -685,7 +685,7 @@ class StaticConfig(ConfigBase):
   """
 
   def __init__(self, value, hidden=True):
-    super(StaticConfig, self).__init__(hidden=hidden)
+    super(Static, self).__init__(hidden=hidden)
     # Attempt to hash the value, which will ensure that it's immutable all the
     # way down :).
     hash(value)
