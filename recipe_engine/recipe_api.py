@@ -10,6 +10,10 @@ import sys
 import tempfile
 
 
+class RecipeAbort(Exception):
+  pass
+
+
 class Placeholder(object):
   """Base class for json placeholders. Do not use directly."""
   def render(self, test_data):  # pragma: no cover

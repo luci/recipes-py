@@ -176,6 +176,7 @@ class StepData(object):
     self._step = step
 
     self._presentation = StepPresentation()
+    self.abort_reason = None
 
   @property
   def step(self):
@@ -285,8 +286,11 @@ def step_callback(step, step_history, placeholders, test_data_item):
 
     call_placeholders(step_result, placeholders, test_data_item)
 
-    if followup_fn:
-      followup_fn(step_result)
+    try:
+      if followup_fn:
+        followup_fn(step_result)
+    except recipe_api.RecipeAbort as e:
+      step_result.abort_reason = str(e)
 
     step_result.presentation.finalize(annotator_step)
     return step_result
@@ -421,6 +425,11 @@ def run_steps(stream, build_properties, factory_properties,
           # step. Also use _step to get access to the mutable step dictionary.
           # pylint: disable=W0212
           step_result._step['~followup_annotations'] = lines
+
+    if step_result.abort_reason:
+      stream.emit('Aborted: %s' % step_result.abort_reason)
+      test_data = {}  # Dump the rest of the test data
+      break
 
     # TODO(iannucci): Pull this failure calculation into callback.
     failed = annotator.update_build_failure(failed, step_result.retcode, **step)

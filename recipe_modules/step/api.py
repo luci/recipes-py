@@ -36,6 +36,14 @@ class StepApi(recipe_api.RecipeApi):
     assert 'shell' not in kwargs
     assert isinstance(cmd, list)
 
+    if kwargs.get('abort_on_failure', False):
+      @recipe_api.wrap_followup(kwargs)
+      def assert_success(step_result):
+        if step_result.presentation.status == 'FAILURE':
+          raise recipe_api.RecipeAbort(
+            "Step(%s) failed and was marked as abort_on_failure" % name)
+      kwargs['followup_fn'] = assert_success
+
     cmd = list(cmd)  # Create a copy in order to not alter the input argument.
     if self.auto_resolve_conflicts:
       step_count = self._step_names.setdefault(name, 0) + 1
