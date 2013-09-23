@@ -1,0 +1,66 @@
+[
+  {
+    "cmd": [
+      "bogus",
+      "--output-json",
+      "/path/to/tmp/json"
+    ],
+    "cwd": "[SLAVE_BUILD_ROOT]",
+    "name": "gen step(bogus)",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@[@@@",
+      "@@@STEP_LOG_LINE@json.output@  {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"cmd\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"echo\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"mock step binary\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    ], @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"name\": \"mock.step.binary\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@]@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "mock step binary"
+    ],
+    "name": "mock.step.binary",
+    "seed_steps": [
+      "mock.step.binary"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "bogus.py",
+      "--output-json",
+      "/path/to/tmp/json"
+    ],
+    "cwd": "[SLAVE_BUILD_ROOT]",
+    "name": "gen step(bogus.py)",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@[@@@",
+      "@@@STEP_LOG_LINE@json.output@  {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"cmd\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"echo\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"mock step python\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    ], @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"name\": \"mock.step.python\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@]@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "mock step python"
+    ],
+    "name": "mock.step.python",
+    "seed_steps": [
+      "mock.step.python"
+    ]
+  }
+]
