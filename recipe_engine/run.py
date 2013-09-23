@@ -429,6 +429,7 @@ def run_steps(stream, build_properties, factory_properties,
     if step_result.abort_reason:
       stream.emit('Aborted: %s' % step_result.abort_reason)
       test_data = {}  # Dump the rest of the test data
+      failed = True
       break
 
     # TODO(iannucci): Pull this failure calculation into callback.
