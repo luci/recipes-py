@@ -63,6 +63,7 @@ cease calling the generator and move on to the next item in iterable_of_things.
 
 import copy
 import inspect
+import json
 import optparse
 import os
 import subprocess
@@ -96,6 +97,7 @@ class StepPresentation(object):
     self._status = None
     self._step_summary_text = ''
     self._step_text = ''
+    self._properties = {}
 
   # (E0202) pylint bug: http://www.logilab.org/ticket/89092
   @property
@@ -147,6 +149,19 @@ class StepPresentation(object):
     else:
       return copy.deepcopy(self._perf_logs)
 
+  @property
+  def properties(self):  # pylint: disable=E0202
+    if not self._finalized:
+      return self._properties
+    else:
+      return copy.deepcopy(self._properties)
+
+  @properties.setter
+  def properties(self, val):  # pylint: disable=E0202
+    assert not self._finalized
+    assert isinstance(val, dict)
+    self._properties = val
+
   def finalize(self, annotator_step):
     self._finalized = True
     if self.step_text:
@@ -165,6 +180,8 @@ class StepPresentation(object):
       'EXCEPTION': annotator_step.step_exception,
     }
     status_mapping.get(self.status, lambda: None)()
+    for key, value in self._properties.iteritems():
+      annotator_step.set_build_property(key, json.dumps(value))
 
 
 class StepData(object):
