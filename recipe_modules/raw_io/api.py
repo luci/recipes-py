@@ -48,7 +48,7 @@ class OutputDataPlaceholder(recipe_util.Placeholder):
     else:  # pragma: no cover
       assert self.output_file is not None
       try:
-        with open(self.output_file.read(), 'rb') as f:
+        with open(self.output_file, 'rb') as f:
           return f.read()
       finally:
         os.unlink(self.output_file)
