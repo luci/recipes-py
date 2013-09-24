@@ -56,7 +56,11 @@ class Placeholder(object):
 def static_wraps(func):
   wrapped_fn = func
   if isinstance(func, staticmethod):
-    wrapped_fn = func.__func__
+    # __get__(obj) is the way to get the function contained in the staticmethod.
+    # python 2.7+ has a __func__ member, but previous to this the attribute
+    # doesn't exist. It doesn't matter what the obj is, as long as it's not
+    # None.
+    wrapped_fn = func.__get__(object)
   return functools.wraps(wrapped_fn)
 
 
