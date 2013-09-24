@@ -131,7 +131,7 @@ class TestAPI(object):
         repository='',
         requester='commit-bot@chromium.org',
         revision='HEAD',
-        rietveld='https://chromiumcodereview.appspot.com',
+        rietveld='https://codereview.chromium.org',
         root='src',
     )
     ret.update(kwargs)
