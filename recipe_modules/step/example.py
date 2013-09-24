@@ -22,5 +22,5 @@ def GenSteps(api):
                  env={'friend': 'Darth Vader'})
 
 
-def GenTests(_api):
-  yield 'basic', {}
+def GenTests(api):
+  yield api.test('basic')

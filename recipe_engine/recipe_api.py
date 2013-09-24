@@ -3,54 +3,10 @@
 # found in the LICENSE file.
 
 import functools
-import imp
-import inspect
-import os
-import sys
-import tempfile
 
+from .recipe_test_api import DisabledTestData, ModuleTestData, StepTestData
 
-class RecipeAbort(Exception):
-  pass
-
-
-class Placeholder(object):
-  """Base class for json placeholders. Do not use directly."""
-  def render(self, test_data):  # pragma: no cover
-    """Return [cmd items]*"""
-    raise NotImplementedError
-
-  def step_finished(self, presentation, step_result, test_data):
-    """Called after step completion. Intended to modify step_result."""
-    pass
-
-
-class InputDataPlaceholder(Placeholder):
-  def __init__(self, data, suffix):
-    assert isinstance(data, basestring)
-    self.data = data
-    self.suffix = suffix
-    self.input_file = None
-    super(InputDataPlaceholder, self).__init__()
-
-  def render(self, test_data):
-    if test_data is not None:
-      # cheat and pretend like we're going to pass the data on the
-      # cmdline for test expectation purposes.
-      return [self.data]
-    else:  # pragma: no cover
-      input_fd, self.input_file = tempfile.mkstemp(suffix=self.suffix)
-      os.write(input_fd, self.data)
-      os.close(input_fd)
-      return [self.input_file]
-
-  def step_finished(self, presentation, step_result, test_data):
-    if test_data is None:  # pragma: no cover
-      os.unlink(self.input_file)
-
-
-class ModuleInjectionSite(object):
-  pass
+from .recipe_util import ModuleInjectionSite
 
 
 class RecipeApi(object):
@@ -63,15 +19,53 @@ class RecipeApi(object):
 
   Dependency injection takes place in load_recipe_modules() below.
   """
-  def __init__(self, module=None, mock=None, **_kwargs):
+  def __init__(self, module=None, test_data=DisabledTestData(), **_kwargs):
     """Note: Injected dependencies are NOT available in __init__()."""
     self.c = None
     self._module = module
-    self._mock = mock
+
+    assert isinstance(test_data, (ModuleTestData, DisabledTestData))
+    self._test_data = test_data
 
     # If we're the 'root' api, inject directly into 'self'.
     # Otherwise inject into 'self.m'
     self.m = self if module is None else ModuleInjectionSite()
+
+    # If our module has a test api, it gets injected here.
+    self.test_api = None
+
+  @staticmethod
+  def inject_test_data(func):
+    """
+    Decorator which injects mock data from this module's test_api method into
+    the return value of the decorated function.
+
+    The return value of func MUST be a single step dictionary (specifically,
+    |func| must not be a generator, nor must it return a list of steps, etc.)
+
+    When the decorated function is called, |func| is called normally. If we are
+    in test mode, we will then also call self.test_api.<func.__name__>, whose
+    return value will be assigned into the step dictionary retuned by |func|.
+
+    It is an error for the function to not exist in the test_api.
+    It is an error for the return value of |func| to already contain test data.
+    """
+    @functools.wraps(func)
+    def inner(self, *args, **kwargs):
+      ret = func(self, *args, **kwargs)
+      if self._mock is not None:  # pylint: disable=W0212
+        test_fn = getattr(self.test_api, func.__name__, None)
+        assert test_fn, (
+          "Method %(meth)s in module %(mod)s is @inject_test_data, but test_api"
+          " does not contain %(meth)s."
+          % {
+            'meth': func.__name__,
+            'mod': self._module,  # pylint: disable=W0212
+          })
+        assert 'default_test_data' not in ret
+        ret['default_test_data'] = test_fn(*args, **kwargs)
+      return ret
+    return inner
 
   def get_config_defaults(self):  # pylint: disable=R0201
     """
@@ -140,181 +134,42 @@ class RecipeApi(object):
     """Apply a named configuration to the provided config object or self."""
     self._module.CONFIG_CTX.CONFIG_ITEMS[config_name](config_object or self.c)
 
-
-def load_recipe_modules(mod_dirs):
-  def patchup_module(submod):
-    submod.CONFIG_CTX = getattr(submod, 'CONFIG_CTX', None)
-    submod.API = getattr(submod, 'API', None)
-    submod.DEPS = frozenset(getattr(submod, 'DEPS', ()))
-
-    if hasattr(submod, 'config'):
-      for v in submod.config.__dict__.itervalues():
-        if hasattr(v, 'I_AM_A_CONFIG_CTX'):
-          assert not submod.CONFIG_CTX, (
-            'More than one configuration context: %s' % (submod.config))
-          submod.CONFIG_CTX = v
-      assert submod.CONFIG_CTX, 'Config file, but no config context?'
-
-    for v in submod.api.__dict__.itervalues():
-      if inspect.isclass(v) and issubclass(v, RecipeApi):
-        assert not submod.API, (
-          'More than one Api subclass: %s' % submod.api)
-        submod.API = v
-
-    assert submod.API, 'Submodule has no api? %s' % (submod)
-
-  RM = 'RECIPE_MODULES'
-  def find_and_load(fullname, modname, path):
-    if fullname not in sys.modules or fullname == RM:
-      try:
-        fil, pathname, descr = imp.find_module(modname,
-                                               [os.path.dirname(path)])
-        imp.load_module(fullname, fil, pathname, descr)
-      finally:
-        if fil:
-          fil.close()
-    return sys.modules[fullname]
-
-  def recursive_import(path, prefix=None, skip_fn=lambda name: False):
-    modname = os.path.splitext(os.path.basename(path))[0]
-    if prefix:
-      fullname = '%s.%s' % (prefix, modname)
-    else:
-      fullname = RM
-    m = find_and_load(fullname, modname, path)
-    if not os.path.isdir(path):
-      return m
-
-    for subitem in os.listdir(path):
-      subpath = os.path.join(path, subitem)
-      subname = os.path.splitext(subitem)[0]
-      if skip_fn(subname):
-        continue
-      if os.path.isdir(subpath):
-        if not os.path.exists(os.path.join(subpath, '__init__.py')):
-          continue
-      elif not subpath.endswith('.py') or subitem.startswith('__init__.py'):
-        continue
-
-      submod = recursive_import(subpath, fullname, skip_fn=skip_fn)
-
-      if not hasattr(m, subname):
-        setattr(m, subname, submod)
-      else:
-        prev = getattr(m, subname)
-        assert submod is prev, (
-          'Conflicting modules: %s and %s' % (prev, m))
-
-    return m
-
-  imp.acquire_lock()
-  try:
-    if RM not in sys.modules:
-      sys.modules[RM] = imp.new_module(RM)
-      # First import all the APIs and configs
-      for root in mod_dirs:
-        if os.path.isdir(root):
-          recursive_import(root, skip_fn=lambda name: name.endswith('_config'))
-
-      # Then fixup all the modules
-      for name, submod in sys.modules[RM].__dict__.iteritems():
-        if name[0] == '_':
-          continue
-        patchup_module(submod)
-
-      # Then import all the config extenders.
-      for root in mod_dirs:
-        if os.path.isdir(root):
-          recursive_import(root)
-    return sys.modules[RM]
-  finally:
-    imp.release_lock()
+  @property
+  def name(self):
+    return self._module.NAME
 
 
-def CreateRecipeApi(names, mod_dirs, mocks=None, **kwargs):
+def inject_test_data(func):
   """
-  Given a list of module names, return an instance of RecipeApi which contains
-  those modules as direct members.
+  Decorator which injects mock data from this module's test_api method into
+  the return value of the decorated function.
 
-  So, if you pass ['foobar'], you'll get an instance back which contains a
-  'foobar' attribute which itself is a RecipeApi instance from the 'foobar'
-  module.
+  The return value of func MUST be a single step dictionary (specifically,
+  |func| must not be a generator, nor must it return a list of steps, etc.)
 
-  Args:
-    names (list): A list of module names to include in the returned RecipeApi.
-    mod_dirs (list): A list of paths to directories which contain modules.
-    mocks (dict): An optional dict of {<modname>: <mock data>}. Each module
-        expects its own mock data.
-    **kwargs: Data passed to each module api. Usually this will contain:
-        properties (dict): the properties dictionary (used by the properties
-            module)
-        step_history (OrderedDict): the step history object (used by the
-            step_history module!)
+  When the decorated function is called, |func| is called normally. If we are
+  in test mode, we will then also call self.test_api.<func.__name__>, whose
+  return value will be assigned into the step dictionary retuned by |func|.
+
+  It is an error for the function to not exist in the test_api.
+  It is an error for the return value of |func| to already contain test data.
   """
-
-  recipe_modules = load_recipe_modules(mod_dirs)
-
-  inst_map = {None: RecipeApi()}
-  dep_map = {None: set(names)}
-  def create_maps(name):
-    if name not in dep_map:
-      module = getattr(recipe_modules, name)
-
-      dep_map[name] = set(module.DEPS)
-      map(create_maps, dep_map[name])
-
-      mock = None if mocks is None else mocks.get(name, {})
-      inst_map[name] = module.API(module=module, mock=mock, **kwargs)
-  map(create_maps, names)
-
-  # NOTE: this is 'inefficient', but correct and compact.
-  did_something = True
-  while dep_map:
-    did_something = False
-    to_pop = []
-    for api_name, deps in dep_map.iteritems():
-      to_remove = []
-      for dep in [d for d in deps if d not in dep_map]:
-        # Grab the injection site
-        obj = inst_map[api_name].m
-        assert not hasattr(obj, dep)
-        setattr(obj, dep, inst_map[dep])
-        to_remove.append(dep)
-        did_something = True
-      map(deps.remove, to_remove)
-      if not deps:
-        to_pop.append(api_name)
-        did_something = True
-    map(dep_map.pop, to_pop)
-    assert did_something, 'Did nothing on this loop. %s' % dep_map
-
-  return inst_map[None]
-
-
-def wrap_followup(kwargs, pre=False):
-  """
-  Decorator for a new followup_fn.
-
-  Will pop the existing fn out of kwargs (if any), and return a decorator for
-  the new folloup_fn.
-
-  Args:
-    kwargs - dictionary possibly containing folloup_fn
-    pre - If true, the old folloup_fn is called before the wrapped function.
-          Otherwise, the old followup_fn is called after the wrapped function.
-  """
-  null_fn = lambda _: None
-  old_followup = kwargs.pop('followup_fn', null_fn)
-  def decorator(f):
-    @functools.wraps(f)
-    def _inner(step_result):
-      if pre:
-        old_followup(step_result)
-        f(step_result)
-      else:
-        f(step_result)
-        old_followup(step_result)
-    if old_followup is not null_fn:
-      _inner.__name__ += '[%s]' % old_followup.__name__
-    return _inner
-  return decorator
+  @functools.wraps(func)
+  def inner(self, *args, **kwargs):
+    assert isinstance(self, RecipeApi)
+    ret = func(self, *args, **kwargs)
+    if self._test_data.enabled:  # pylint: disable=W0212
+      test_fn = getattr(self.test_api, func.__name__, None)
+      assert test_fn, (
+        "Method %(meth)s in module %(mod)s is @inject_test_data, but test_api"
+        " does not contain %(meth)s."
+        % {
+          'meth': func.__name__,
+          'mod': self._module,  # pylint: disable=W0212
+        })
+      assert 'default_step_data' not in ret
+      data = test_fn(*args, **kwargs)
+      assert isinstance(data, StepTestData)
+      ret['default_step_data'] = data
+    return ret
+  return inner

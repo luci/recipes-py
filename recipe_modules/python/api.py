@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 from slave import recipe_api
+from slave import recipe_util
 
 import textwrap
 
@@ -23,9 +24,9 @@ class PythonApi(recipe_api.RecipeApi):
     program = textwrap.dedent(program)
     compile(program, '<string>', 'exec', dont_inherit=1)
 
-    @recipe_api.wrap_followup(kwargs)
+    @recipe_util.wrap_followup(kwargs)
     def inline_followup(step_result):
       step_result.presentation.logs['python.inline'] = program.splitlines()
 
-    return self(name, recipe_api.InputDataPlaceholder(program, '.py'),
+    return self(name, self.m.raw_io.input(program, '.py'),
                 followup_fn=inline_followup, **kwargs)

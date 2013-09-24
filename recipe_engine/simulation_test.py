@@ -36,7 +36,6 @@ Additionally, this test cannot pass unless every recipe in ../recipes has 100%
 code coverage when executed via the tests in ../recipes_test.
 """
 
-import collections
 import contextlib
 import json
 import os
@@ -44,7 +43,7 @@ import sys
 
 from glob import glob
 
-import test_env  # pylint: disable=W0611
+import test_env  # pylint: disable=F0401,W0611
 
 import coverage
 
@@ -52,24 +51,17 @@ import common.python26_polyfill  # pylint: disable=W0611
 import unittest
 
 from common import annotator
+from slave import recipe_util
+from slave import annotated_run
+from slave import recipe_loader
 
 SCRIPT_PATH = os.path.abspath(os.path.dirname(__file__))
 ROOT_PATH = os.path.abspath(os.path.join(SCRIPT_PATH, os.pardir, os.pardir,
                                          os.pardir))
 SLAVE_DIR = os.path.join(ROOT_PATH, 'slave', 'fake_slave', 'build')
-INTERNAL_DIR = os.path.join(ROOT_PATH, os.pardir, 'build_internal')
-BASE_DIRS = {
-    'Public': os.path.dirname(SCRIPT_PATH),
-    'Internal': os.path.join(INTERNAL_DIR, 'scripts', 'slave'),
-}
-# TODO(iannucci): Check for duplicate recipe names when we have more than one
-# base_dir
 
-COVERAGE = coverage.coverage(
-    include=([os.path.join(x, 'recipes', '*') for x in BASE_DIRS.values()]+
-             [os.path.join(SCRIPT_PATH, os.pardir, 'recipe_modules',
-                           '*', 'api.py')])
-)
+BASE_DIRS = recipe_util.BASE_DIRS
+COVERAGE = None
 
 
 @contextlib.contextmanager
@@ -79,64 +71,6 @@ def cover():
     yield
   finally:
     COVERAGE.stop()
-
-with cover():
-  from slave import annotated_run
-  from slave import recipe_api
-
-class TestAPI(object):
-  @staticmethod
-  def properties_generic(**kwargs):
-    """
-    Merge kwargs into a typical buildbot properties blob, and return the blob.
-    """
-    ret = {
-        'blamelist': 'cool_dev1337@chromium.org,hax@chromium.org',
-        'blamelist_real': ['cool_dev1337@chromium.org', 'hax@chromium.org'],
-        'buildername': 'TestBuilder',
-        'buildnumber': 571,
-        'mastername': 'chromium.testing.master',
-        'slavename': 'TestSlavename',
-        'workdir': '/path/to/workdir/TestSlavename',
-    }
-    ret.update(kwargs)
-    return ret
-
-  @staticmethod
-  def properties_scheduled(**kwargs):
-    """
-    Merge kwargs into a typical buildbot properties blob for a job fired off
-    by a chrome/trunk svn scheduler, and return the blob.
-    """
-    ret = TestAPI.properties_generic(
-        branch='TestBranch',
-        project='',
-        repository='svn://svn-mirror.golo.chromium.org/chrome/trunk',
-        revision='204787',
-    )
-    ret.update(kwargs)
-    return ret
-
-  @staticmethod
-  def properties_tryserver(**kwargs):
-    """
-    Merge kwargs into a typical buildbot properties blob for a job fired off
-    by a rietveld tryjob on the tryserver, and return the blob.
-    """
-    ret = TestAPI.properties_generic(
-        branch='',
-        issue=12853011,
-        patchset=1,
-        project='chrome',
-        repository='',
-        requester='commit-bot@chromium.org',
-        revision='HEAD',
-        rietveld='https://codereview.chromium.org',
-        root='src',
-    )
-    ret.update(kwargs)
-    return ret
-
 
 def expected_for(recipe_path, test_name):
   root, name = os.path.split(recipe_path)
@@ -152,53 +86,49 @@ def exec_test_file(recipe_path):
   with cover():
     execfile(recipe_path, gvars)
     try:
-      gen = gvars['GenTests'](TestAPI())
+      test_api = recipe_loader.CreateTestApi(gvars['DEPS'])
+      gen = gvars['GenTests'](test_api)
     except Exception, e:
       print "Caught exception while processing %s: %s" % (recipe_path, e)
       raise
   try:
     while True:
       with cover():
-        name, test_data = next(gen)
-      yield name, test_data
+        test_data = next(gen)
+      yield test_data
   except StopIteration:
     pass
+  except:
+    print 'Exception while processing "%s"!' % recipe_path
+    raise
 
 
 def execute_test_case(test_data, recipe_path, recipe_name):
-  test_data = test_data.copy()
-  props = test_data.pop('properties', {}).copy()
-  td = test_data.pop('step_mocks', {}).copy()
-  props['recipe'] = recipe_name
+  try:
+    props = test_data.properties
+    props['recipe'] = recipe_name
 
-  mock_data = test_data.pop('mock', {})
-  mock_data = collections.defaultdict(lambda: collections.defaultdict(dict),
-                                      mock_data)
+    stream = annotator.StructuredAnnotationStream(stream=open(os.devnull, 'w'))
 
-  assert not test_data, 'Got leftover test data: %s' % test_data
+    def api(*args, **kwargs):
+      return recipe_loader.CreateRecipeApi(test_data=test_data, *args, **kwargs)
 
-  stream = annotator.StructuredAnnotationStream(stream=open(os.devnull, 'w'))
-
-  def api(*args, **kwargs):
-    return recipe_api.CreateRecipeApi(mocks=mock_data, *args, **kwargs)
-
-  with cover():
-    try:
+    with cover():
       step_data = annotated_run.run_steps(
-        stream, props, props, api, td).steps_ran.values()
+        stream, props, props, api, test_data).steps_ran.values()
       return [s.step for s in step_data]
-    except:
-      print 'Exception while processing "%s"!' % recipe_path
-      raise
+  except:
+    print 'Exception while processing "%s"!' % recipe_path
+    raise
 
 
 def train_from_tests((recipe_path, recipe_name)):
   for path in glob(expected_for(recipe_path, '*')):
     os.unlink(path)
 
-  for name, test_data in exec_test_file(recipe_path):
+  for test_data in exec_test_file(recipe_path):
     steps = execute_test_case(test_data, recipe_path, recipe_name)
-    expected_path = expected_for(recipe_path, name)
+    expected_path = expected_for(recipe_path, test_data.name)
     print 'Writing', expected_path
     with open(expected_path, 'wb') as f:
       json.dump(steps, f, sort_keys=True, indent=2, separators=(',', ': '))
@@ -212,8 +142,8 @@ def load_tests(loader, _standard_tests, _pattern):
     class RecipeTest(unittest.TestCase):
       @classmethod
       def add_test_methods(cls):
-        for name, test_data in exec_test_file(recipe_path):
-          expected_path = expected_for(recipe_path, name)
+        for test_data in exec_test_file(recipe_path):
+          expected_path = expected_for(recipe_path, test_data.name)
           def add_test(test_data, expected_path, recipe_name):
             def test_(self):
               steps = execute_test_case(test_data, recipe_path, recipe_name)
@@ -222,7 +152,7 @@ def load_tests(loader, _standard_tests, _pattern):
               with open(expected_path, 'rb') as f:
                 expected = json.load(f)
               self.assertEqual(steps, expected)
-            test_.__name__ += name
+            test_.__name__ += test_data.name
             setattr(cls, test_.__name__, test_)
           add_test(test_data, expected_path, recipe_name)
 
@@ -233,29 +163,9 @@ def load_tests(loader, _standard_tests, _pattern):
     return RecipeTest
 
   suite = unittest.TestSuite()
-  for test_class in map(create_test_class, loop_over_recipes()):
+  for test_class in map(create_test_class, recipe_loader.loop_over_recipes()):
     suite.addTest(loader.loadTestsFromTestCase(test_class))
   return suite
-
-
-def find_recipes(path, predicate):
-  for root, _dirs, files in os.walk(path):
-    for recipe in (f for f in files if predicate(f)):
-      recipe_path = os.path.join(root, recipe)
-      yield recipe_path
-
-
-def loop_over_recipes():
-  for _name, path in BASE_DIRS.iteritems():
-    recipe_dir = os.path.join(path, 'recipes')
-    for recipe in find_recipes(
-        recipe_dir, lambda f: f.endswith('.py') and f[0] != '_'):
-      yield recipe, recipe[len(recipe_dir)+1:-len('.py')]
-    module_dir = os.path.join(path, 'recipe_modules')
-    for recipe in find_recipes(
-        module_dir, lambda f: f.endswith('example.py')):
-      module_name = os.path.dirname(recipe)[len(module_dir)+1:]
-      yield recipe, '%s:example' % module_name
 
 
 def main(argv):
@@ -275,11 +185,18 @@ def main(argv):
     training = True
   if '--external' in argv:
     argv.remove('--external')
-    del BASE_DIRS['Internal']
+    BASE_DIRS[:] = [d for d in BASE_DIRS if 'internal' not in d]
+  global COVERAGE
+  COVERAGE = coverage.coverage(
+    include=(
+      [os.path.join(x, '*') for x in recipe_util.RECIPE_DIRS()] +
+      [os.path.join(x, '*', '*api.py') for x in recipe_util.MODULE_DIRS()]
+    )
+  )
 
   had_errors = False
   if training and not is_help:
-    for result in map(train_from_tests, loop_over_recipes()):
+    for result in map(train_from_tests, recipe_loader.loop_over_recipes()):
       had_errors = had_errors or result
       if had_errors:
         break

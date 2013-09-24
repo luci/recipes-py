@@ -100,7 +100,7 @@ class PathApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
     super(PathApi, self).__init__(**kwargs)
 
-    if self._mock is None:  # pragma: no cover
+    if not self._test_data.enabled:  # pragma: no cover
       self._path_mod = os.path
       # e.g. /b/build/slave/<slavename>/build
       self.slave_build = path_method(
@@ -113,7 +113,7 @@ class PathApi(recipe_api.RecipeApi):
         setattr(self, token, path_method(self, token, self.join(r, token)))
       self.root = path_method(self, 'root', r)
     else:
-      self._path_mod = mock_path(self.m, self._mock.get('exists', []))
+      self._path_mod = mock_path(self.m, self._test_data.get('exists', []))
       self.slave_build = path_method(self, 'slave_build', '[SLAVE_BUILD_ROOT]')
       self.build_internal = path_method(
         self, 'build_internal', '[BUILD_INTERNAL_ROOT]')
@@ -144,7 +144,7 @@ class PathApi(recipe_api.RecipeApi):
 
   def mock_add_paths(self, path):
     """For testing purposes, assert that |path| exists."""
-    if self._mock is not None:
+    if self._test_data.enabled:
       self._path_mod.mock_add_paths(path)
 
   def add_checkout(self, checkout, *pieces):

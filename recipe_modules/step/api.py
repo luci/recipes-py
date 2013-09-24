@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 from slave import recipe_api
+from slave import recipe_util
 
 class StepApi(recipe_api.RecipeApi):
   def __init__(self, *args, **kwargs):
@@ -37,10 +38,10 @@ class StepApi(recipe_api.RecipeApi):
     assert isinstance(cmd, list)
 
     if kwargs.get('abort_on_failure', False):
-      @recipe_api.wrap_followup(kwargs)
+      @recipe_util.wrap_followup(kwargs)
       def assert_success(step_result):
         if step_result.presentation.status == 'FAILURE':
-          raise recipe_api.RecipeAbort(
+          raise recipe_util.RecipeAbort(
             "Step(%s) failed and was marked as abort_on_failure" % name)
       kwargs['followup_fn'] = assert_success
 

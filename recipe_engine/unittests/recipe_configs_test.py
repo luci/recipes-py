@@ -23,8 +23,8 @@ from itertools import product, imap
 
 import test_env  # pylint: disable=W0611,F0401
 
-from slave import recipe_api
-from slave import annotated_run
+from slave import recipe_loader
+from slave import recipe_util
 
 import coverage
 
@@ -33,7 +33,7 @@ SLAVE_DIR = os.path.abspath(os.path.join(SCRIPT_PATH, os.pardir))
 
 COVERAGE = (lambda: coverage.coverage(
     include=[os.path.join(x, '*', '*config.py')
-             for x in annotated_run.MODULE_DIRS],
+             for x in recipe_util.MODULE_DIRS()],
     data_suffix=True))()
 
 def covered(fn, *args, **kwargs):
@@ -46,10 +46,10 @@ def covered(fn, *args, **kwargs):
 RECIPE_MODULES = None
 def init_recipe_modules():
   global RECIPE_MODULES
-  RECIPE_MODULES = covered(recipe_api.load_recipe_modules,
-                           annotated_run.MODULE_DIRS)
+  RECIPE_MODULES = covered(recipe_loader.load_recipe_modules,
+                           recipe_util.MODULE_DIRS())
 
-from slave import recipe_configs_util  # pylint: disable=F0401
+from slave import recipe_config  # pylint: disable=F0401
 
 def get_expect_dir(mod):
   return os.path.join(mod.__path__[0], 'config.expected')
@@ -77,7 +77,7 @@ def evaluate_configurations(args):
         result = covered(root_item, make_item())
         if result.complete():
           ret[config_name] = result.as_jsonish()
-      except recipe_configs_util.BadConf, e:
+      except recipe_config.BadConf, e:
         return file_name, None, None
 
     for config_name, fn in ctx.CONFIG_ITEMS.iteritems():
@@ -87,7 +87,7 @@ def evaluate_configurations(args):
         result = covered(fn, make_item())
         if result.complete():
           ret[config_name] = result.as_jsonish()
-      except recipe_configs_util.BadConf, e:
+      except recipe_config.BadConf, e:
         ret[config_name] = str(e)
     return file_name, covered(ctx.TEST_NAME_FORMAT, var_assignments), ret
   except Exception, e:

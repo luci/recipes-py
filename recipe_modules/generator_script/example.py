@@ -14,20 +14,15 @@ def GenSteps(api):
   yield api.generator_script('bogus.py')
 
 
-def GenTests(_api):
-  yield 'basic', {
-    'step_mocks': {
-      'gen step(bogus)': {
-        'json': {
-          'output': [{'name': 'mock.step.binary',
-                      'cmd': ['echo', 'mock step binary']}]
-        }
-      },
-      'gen step(bogus.py)': {
-        'json': {
-          'output': [{'name': 'mock.step.python',
-                      'cmd': ['echo', 'mock step python']}]
-        }
-      }
-    }
-  }
+def GenTests(api):
+  yield (
+    api.test('basic') +
+    api.generator_script(
+      'bogus',
+      {'name': 'mock.step.binary', 'cmd': ['echo', 'mock step binary']}
+    ) +
+    api.generator_script(
+      'bogus.py',
+      {'name': 'mock.step.python', 'cmd': ['echo', 'mock step python']}
+    )
+  )

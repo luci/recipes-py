@@ -76,15 +76,12 @@ import collections  # Import after polyfill to get OrderedDict on 2.6
 from common import annotator
 from common import chromium_utils
 from slave import recipe_api
+from slave import recipe_loader
+from slave import recipe_test_api
+from slave import recipe_util
+
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
-BUILD_ROOT = os.path.dirname(os.path.dirname(SCRIPT_PATH))
-ROOT_PATH = os.path.abspath(os.path.join(
-  SCRIPT_PATH, os.pardir, os.pardir, os.pardir))
-MODULE_DIRS = [os.path.join(x, 'recipe_modules') for x in [
-  SCRIPT_PATH,
-  os.path.join(ROOT_PATH, 'build_internal', 'scripts', 'slave')
-]]
 
 
 class StepPresentation(object):
@@ -231,65 +228,68 @@ def ensure_sequence_of_steps(step_or_steps):
     assert False, 'Item is not a sequence or a step: %s' % (step_or_steps,)
 
 
-def render_step(step, test_data):
+def render_step(step, step_test):
   """Renders a step so that it can be fed to annotator.py.
 
   Args:
-    test_data: The test data json dictionary for this step, if any.
+    step_test: The test data json dictionary for this step, if any.
                Passed through unaltered to each placeholder.
 
   Returns any placeholder instances that were found while rendering the step.
   """
-  placeholders = collections.defaultdict(list)
+  placeholders = collections.defaultdict(lambda: collections.defaultdict(list))
   new_cmd = []
   for item in step['cmd']:
-    if isinstance(item, recipe_api.Placeholder):
-      # __module__ is in the form of ...recipe_modules.<api_name>.*
-      api_name = item.__module__.split('.')[-2]
-      tdata = None if test_data is None else test_data.get(api_name, {})
+    if isinstance(item, recipe_util.Placeholder):
+      module_name, placeholder_name = item.name_pieces
+      tdata = step_test.pop_placeholder(item.name_pieces)
       new_cmd.extend(item.render(tdata))
-      placeholders[api_name].append(item)
+      placeholders[module_name][placeholder_name].append((item, tdata))
     else:
       new_cmd.append(item)
   step['cmd'] = new_cmd
   return placeholders
 
 
-def call_placeholders(step_result, placeholders, test_data):
+def get_placeholder_results(step_result, placeholders):
   class BlankObject(object):
     pass
-  additions = {}
-  for api, items in placeholders.iteritems():
-    additions[api] = BlankObject()
-    test_datum = None if test_data is None else test_data.get(api, {})
-    for placeholder in items:
-      placeholder.step_finished(step_result.presentation, additions[api],
-                                test_datum)
-  for api, obj in additions.iteritems():
-    setattr(step_result, api, obj)
+  for module_name, pholders in placeholders.iteritems():
+    assert not hasattr(step_result, module_name)
+    o = BlankObject()
+    setattr(step_result, module_name, o)
+
+    for placeholder_name, items in pholders.iteritems():
+      lst = [ph.result(step_result.presentation, td) for ph, td in items]
+      setattr(o, placeholder_name+"_all", lst)
+      setattr(o, placeholder_name, lst[0])
 
 
-def step_callback(step, step_history, placeholders, test_data_item):
+def step_callback(step, step_history, placeholders, step_test):
+  assert step['name'] not in step_history, (
+    'Step "%s" is already in step_history!' % step['name'])
+  step_result = StepData(step, None)
+  step_history[step['name']] = step_result
+
   followup_fn = step.pop('followup_fn', None)
 
   def _inner(annotator_step, retcode):
-    step_result = StepData(step, retcode)
+    step_result._retcode = retcode  # pylint: disable=W0212
     if retcode > 0:
       step_result.presentation.status = 'FAILURE'
 
-    step_history[step['name']] = step_result
     annotator_step.annotation_stream.step_cursor(step['name'])
-    if step_result.retcode != 0 and test_data_item is None:
+    if step_result.retcode != 0 and step_test.enabled:
       # To avoid cluttering the expectations, don't emit this in testmode.
       annotator_step.emit('step returned non-zero exit code: %d' %
                           step_result.retcode)
 
-    call_placeholders(step_result, placeholders, test_data_item)
+    get_placeholder_results(step_result, placeholders)
 
     try:
       if followup_fn:
         followup_fn(step_result)
-    except recipe_api.RecipeAbort as e:
+    except recipe_util.RecipeAbort as e:
       step_result.abort_reason = str(e)
 
     step_result.presentation.finalize(annotator_step)
@@ -328,13 +328,12 @@ def main(argv=None):
 
 
 def run_steps(stream, build_properties, factory_properties,
-              api=recipe_api.CreateRecipeApi, test_data=None):
+              api=recipe_loader.CreateRecipeApi,
+              test=recipe_test_api.DisabledTestData()):
   """Returns a tuple of (status_code, steps_ran).
 
   Only one of these values will be set at a time. This is mainly to support the
   testing interface used by unittests/recipes_test.py.
-
-  test_data should be a dictionary of step_name -> (retcode, json_data)
   """
   stream.honor_zero_return_code()
   MakeStepsRetval = collections.namedtuple('MakeStepsRetval',
@@ -350,53 +349,24 @@ def run_steps(stream, build_properties, factory_properties,
   with stream.step('setup_build') as s:
     assert 'recipe' in factory_properties
     recipe = factory_properties['recipe']
-
-    # If the recipe is specified as "module:recipe", then it is an recipe
-    # contained in a recipe_module as an example. Look for it in the modules
-    # imported by load_recipe_modules instead of the normal search paths.
-    if ':' in recipe:
-      module_name, recipe = recipe.split(':')
-      assert recipe.endswith('example')
-      RECIPE_MODULES = recipe_api.load_recipe_modules(MODULE_DIRS)
-      try:
-        recipe_module = getattr(getattr(RECIPE_MODULES, module_name), recipe)
-      except AttributeError:
-        s.step_text('recipe not found')
-        s.step_failure()
-        return MakeStepsRetval(2, None)
-
-    else:
-      recipe_dirs = (os.path.abspath(p) for p in (
-          os.path.join(SCRIPT_PATH, '..', '..', '..', 'build_internal',
-                       'scripts', 'slave-internal', 'recipes'),
-          os.path.join(SCRIPT_PATH, '..', '..', '..', 'build_internal',
-                       'scripts', 'slave', 'recipes'),
-          os.path.join(SCRIPT_PATH, 'recipes'),
-      ))
-
-      for recipe_path in (os.path.join(p, recipe) for p in recipe_dirs):
-        recipe_module = chromium_utils.IsolatedImportFromPath(recipe_path)
-        if recipe_module:
-          break
-      else:
-        s.step_text('recipe not found')
-        s.step_failure()
-        return MakeStepsRetval(2, None)
-
     properties = factory_properties.copy()
     properties.update(build_properties)
-    stream.emit('Running recipe with %s' % (properties,))
-    steps = recipe_module.GenSteps(api(recipe_module.DEPS,
-                                       mod_dirs=MODULE_DIRS,
-                                       properties=properties,
-                                       step_history=step_history))
-    assert inspect.isgenerator(steps)
+    try:
+      recipe_module = recipe_loader.LoadRecipe(recipe)
+      stream.emit('Running recipe with %s' % (properties,))
+      steps = recipe_module.GenSteps(api(recipe_module.DEPS,
+                                         properties=properties,
+                                         step_history=step_history))
+      assert inspect.isgenerator(steps)
+    except recipe_loader.NoSuchRecipe as e:
+      s.step_text('recipe not found: %s' % e)
+      s.step_failure()
+      return MakeStepsRetval(2, None)
+
 
   # Execute annotator.py with steps if specified.
   # annotator.py handles the seeding, execution, and annotation of each step.
   failed = False
-
-  test_mode = test_data is not None
 
   for step in ensure_sequence_of_steps(steps):
     if failed and not step.get('always_run', False):
@@ -404,21 +374,25 @@ def run_steps(stream, build_properties, factory_properties,
       step_history[step['name']] = step_result
       continue
 
-    test_data_item = test_data.pop(step['name'], {}) if test_mode else None
-    placeholders = render_step(step, test_data_item)
+    if test.enabled:
+      step_test = step.pop('default_step_data', recipe_api.StepTestData())
+      if step['name'] in test.step_data:
+        step_test = test.step_data.pop(step['name'])
+    else:
+      step_test = recipe_api.DisabledTestData()
+      step.pop('default_step_data', None)
 
-    assert step['name'] not in step_history, (
-      'Step "%s" is already in step_history!' % step['name'])
+    placeholders = render_step(step, step_test)
 
-    callback = step_callback(step, step_history, placeholders, test_data_item)
+    callback = step_callback(step, step_history, placeholders, step_test)
 
-    if not test_mode:
+    if not test.enabled:
       step_result = annotator.run_step(
         stream, followup_fn=callback, **step)
     else:
       with stream.step(step['name']) as s:
         s.stream = cStringIO.StringIO()
-        step_result = callback(s, test_data_item.pop('$R', 0))
+        step_result = callback(s, step_test.retcode)
         lines = filter(None, s.stream.getvalue().splitlines())
         if lines:
           # Note that '~' sorts after 'z' so that this will be last on each
@@ -428,15 +402,15 @@ def run_steps(stream, build_properties, factory_properties,
 
     if step_result.abort_reason:
       stream.emit('Aborted: %s' % step_result.abort_reason)
-      test_data = {}  # Dump the rest of the test data
+      test.step_data.clear()  # Dump the rest of the test data
       failed = True
       break
 
     # TODO(iannucci): Pull this failure calculation into callback.
     failed = annotator.update_build_failure(failed, step_result.retcode, **step)
 
-  assert not test_mode or test_data == {}, (
-    "Unconsumed test data! %s" % (test_data,))
+  assert not test.enabled or not test.step_data, (
+    "Unconsumed test data! %s" % (test.step_data,))
 
   return MakeStepsRetval(0 if not failed else 1, step_history)
 

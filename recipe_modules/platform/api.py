@@ -43,10 +43,10 @@ class PlatformApi(recipe_api.RecipeApi):
     self._bits = max(machine_bits, processor_bits)
     self._arch = 'intel'
 
-    if self._mock is not None:
+    if self._test_data.enabled:
       # Default to linux/64, unless test case says otherwise.
-      self._name = norm_plat(self._mock.get('name', 'linux'))
-      self._bits = norm_bits(self._mock.get('bits', 64))
+      self._name = norm_plat(self._test_data.get('name', 'linux'))
+      self._bits = norm_bits(self._test_data.get('bits', 64))
 
   @property
   def is_win(self):

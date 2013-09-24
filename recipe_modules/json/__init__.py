@@ -1,1 +1,4 @@
-DEPS = ['properties']
+DEPS = [
+  'properties',
+  'raw_io'
+]

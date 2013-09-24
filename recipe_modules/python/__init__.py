@@ -1,1 +1,4 @@
-DEPS = ['step']
+DEPS = [
+  'step',
+  'raw_io'
+]
