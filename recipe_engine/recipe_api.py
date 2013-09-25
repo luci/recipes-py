@@ -34,39 +34,6 @@ class RecipeApi(object):
     # If our module has a test api, it gets injected here.
     self.test_api = None
 
-  @staticmethod
-  def inject_test_data(func):
-    """
-    Decorator which injects mock data from this module's test_api method into
-    the return value of the decorated function.
-
-    The return value of func MUST be a single step dictionary (specifically,
-    |func| must not be a generator, nor must it return a list of steps, etc.)
-
-    When the decorated function is called, |func| is called normally. If we are
-    in test mode, we will then also call self.test_api.<func.__name__>, whose
-    return value will be assigned into the step dictionary retuned by |func|.
-
-    It is an error for the function to not exist in the test_api.
-    It is an error for the return value of |func| to already contain test data.
-    """
-    @functools.wraps(func)
-    def inner(self, *args, **kwargs):
-      ret = func(self, *args, **kwargs)
-      if self._mock is not None:  # pylint: disable=W0212
-        test_fn = getattr(self.test_api, func.__name__, None)
-        assert test_fn, (
-          "Method %(meth)s in module %(mod)s is @inject_test_data, but test_api"
-          " does not contain %(meth)s."
-          % {
-            'meth': func.__name__,
-            'mod': self._module,  # pylint: disable=W0212
-          })
-        assert 'default_test_data' not in ret
-        ret['default_test_data'] = test_fn(*args, **kwargs)
-      return ret
-    return inner
-
   def get_config_defaults(self):  # pylint: disable=R0201
     """
     Allows your api to dynamically determine static default values for configs.
