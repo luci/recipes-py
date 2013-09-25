@@ -424,7 +424,7 @@ class ConfigGroup(ConfigBase):
     assert isinstance(val, dict)
     for name, config_obj in self._type_map.iteritems():
       if name in val:
-        config_obj.set_val(val.pop())
+        config_obj.set_val(val.pop(name))
     assert not val, "Got extra keys while setting ConfigGroup: %s" % val
 
   def as_jsonish(self, include_hidden=False):
