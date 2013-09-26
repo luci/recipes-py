@@ -263,7 +263,7 @@ def render_step(step, step_test):
       new_cmd.extend(item.render(tdata))
       placeholders[module_name][placeholder_name].append((item, tdata))
     else:
-      new_cmd.append(item)
+      new_cmd.append(str(item))
   step['cmd'] = new_cmd
   return placeholders
 
