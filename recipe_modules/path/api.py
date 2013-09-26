@@ -95,7 +95,7 @@ class PathApi(recipe_api.RecipeApi):
   """
 
   OK_METHODS = ('abspath', 'basename', 'exists', 'join', 'pardir',
-                'sep', 'split', 'splitext')
+                'pathsep', 'sep', 'split', 'splitext')
 
   def __init__(self, **kwargs):
     super(PathApi, self).__init__(**kwargs)
