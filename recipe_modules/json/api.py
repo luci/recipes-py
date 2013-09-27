@@ -10,7 +10,6 @@ from cStringIO import StringIO
 
 from slave import recipe_api
 from slave import recipe_util
-from slave import recipe_config_types
 
 from .util import TestResults
 
@@ -86,7 +85,6 @@ class JsonApi(recipe_api.RecipeApi):
     @functools.wraps(json.dumps)
     def dumps(*args, **kwargs):
       kwargs['sort_keys'] = True
-      kwargs.setdefault('default', recipe_config_types.json_fixup)
       return json.dumps(*args, **kwargs)
     self.dumps = dumps
 

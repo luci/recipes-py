@@ -3,41 +3,31 @@
 # found in the LICENSE file.
 
 import os
-import functools
-
 from slave import recipe_api
-from slave import recipe_config_types
 
 
-def PathTostring(api, test):
-  def PathTostring_inner(path):
-    assert isinstance(path, recipe_config_types.Path)
-    base_path = None
-    suffix = path.platform_ext.get(api.m.platform.name, '')
-    if path.base in api.c.dynamic_paths:
-      base_path = api.c.dynamic_paths[path.base]
-    elif path.base in api.c.base_paths:
-      if test.enabled:
-        # TODO(iannucci): Remove special case in followup cl
-        if path.base == 'root':
-          base_path = '[ROOT]'
-        else:
-          base_path = '[%s_ROOT]' % path.base.upper()
-      else:  # pragma: no cover
-        base_path = api.join(*api.c.base_paths[path.base])
-    assert base_path, 'Could not get base %r for path' % path.base
-    return api.join(base_path, *path.pieces) + suffix
-  return PathTostring_inner
+def path_method(api, name, base):
+  """Returns a shortcut static method which functions like os.path.join but
+  with a fixed first component |base|.
+  """
+  def path_func_inner(*pieces, **kwargs):
+    """Return a path to a file in '%s'.
+
+    It supports the following kwargs:
+      wrapper (bool): If true, the path should be considered to be a wrapper
+                      script, and will gain the appropriate '.bat' extension
+                      on windows.
+    """
+    use_wrapper = kwargs.get('wrapper') and api.m.platform.is_win
+    WRAPPER_EXTENSION = '.bat' if use_wrapper else ''
+    assert api.pardir not in pieces
+    return api.join(base, *filter(bool, pieces)) + WRAPPER_EXTENSION
+  path_func_inner.__name__ = name
+  path_func_inner.__doc__ = path_func_inner.__doc__ % base
+  return path_func_inner
 
 
-def string_filter(func):
-  @functools.wraps(func)
-  def inner(*args, **kwargs):
-    return func(*map(str, args), **kwargs)
-  return inner
-
-
-class fake_path(object):
+class mock_path(object):
   """Standin for os.path when we're in test mode.
 
   This class simulates the os.path interface exposed by PathApi, respecting the
@@ -53,9 +43,9 @@ class fake_path(object):
 
   def __getattr__(self, name):
     if not self._pth:
-      if self._api.m.platform.is_win:
+      if self._api.platform.is_win:
         import ntpath as pth
-      elif self._api.m.platform.is_mac or self._api.m.platform.is_linux:
+      elif self._api.platform.is_mac or self._api.platform.is_linux:
         import posixpath as pth
       self._pth = pth
     return getattr(self._pth, name)
@@ -75,7 +65,6 @@ class fake_path(object):
     Adds a path and all of its parents to the set of existing paths.
     """
     self._initialize_exists()
-    path = str(path)
     while path:
       self._mock_path_exists.add(path)
       path = self.dirname(path)
@@ -105,48 +94,75 @@ class PathApi(recipe_api.RecipeApi):
       using the [*_ROOT] placeholders. ex. '[BUILD_ROOT]/scripts'.
   """
 
-  OK_ATTRS = ('pardir', 'sep', 'pathsep')
-
-  # Because the native 'path' type in python is a str, we filter the *args
-  # of these methods to stringify them first (otherwise they would be getting
-  # recipe_util_types.Path instances).
-  FILTER_METHODS = ('abspath', 'basename', 'exists', 'join', 'split',
-                    'splitext')
-
-  def get_config_defaults(self):
-    return { 'CURRENT_WORKING_DIR': self._startup_cwd }
+  OK_METHODS = ('abspath', 'basename', 'exists', 'join', 'pardir',
+                'pathsep', 'sep', 'split', 'splitext')
 
   def __init__(self, **kwargs):
     super(PathApi, self).__init__(**kwargs)
-    recipe_config_types.Path.set_tostring_fn(
-      PathTostring(self, self._test_data))
 
     if not self._test_data.enabled:  # pragma: no cover
       self._path_mod = os.path
-      # Capture the cwd on process start to avoid shenanigans.
-      startup_cwd = os.path.abspath(os.getcwd()).split(os.path.sep)
-      # Guarantee that the firt element is an absolute drive or the posix root.
-      if startup_cwd[0].endswith(':'):
-        startup_cwd[0] += '\\'
-      elif startup_cwd[0] == '':
-        startup_cwd[0] = '/'
-      else:
-        assert False, 'Got unexpected startup_cwd format: %r' % startup_cwd
-      self._startup_cwd = startup_cwd
-    else:
-      self._path_mod = fake_path(self, self._test_data.get('exists', []))
-      self._startup_cwd = ['/', 'FakeTestingCWD']
+      # e.g. /b/build/slave/<slavename>/build
+      self.slave_build = path_method(
+        self, 'slave_build', self.abspath(os.getcwd()))
 
-    # For now everything works on buildbot, so set it 'automatically' here.
-    self.set_config('buildbot', include_deps=False)
+      # e.g. /b
+      r = self.abspath(self.join(self.slave_build(), *([self.pardir]*4)))
+      for token in ('build_internal', 'build', 'depot_tools'):
+        # e.g. /b/{token}
+        setattr(self, token, path_method(self, token, self.join(r, token)))
+      self.root = path_method(self, 'root', r)
+    else:
+      self._path_mod = mock_path(self.m, self._test_data.get('exists', []))
+      self.slave_build = path_method(self, 'slave_build', '[SLAVE_BUILD_ROOT]')
+      self.build_internal = path_method(
+        self, 'build_internal', '[BUILD_INTERNAL_ROOT]')
+      self.build = path_method(self, 'build', '[BUILD_ROOT]')
+      self.depot_tools = path_method(self, 'depot_tools', '[DEPOT_TOOLS_ROOT]')
+      self.root = path_method(self, 'root', '[ROOT]')
+
+    # Because it only makes sense to call self.checkout() after
+    # a checkout has been defined, make calls to self.checkout()
+    # explode with a helpful message until that point.
+    def _boom(*_args, **_kwargs): # pragma: no cover
+      assert False, ('Cannot call path.checkout() without calling '
+                     'path.add_checkout()')
+
+    self._checkouts = []
+    self._checkout = _boom
+
+  def checkout(self, *args, **kwargs):
+    """
+    Build a path into the checked out source.
+
+    The checked out source is often a forest of trees possibly inside other
+    trees.  One of these trees' root is designated as special/primary and
+    this method builds paths inside of it.  For Chrome, that would be 'src'.
+    This defaults to the special root of the first checkout.
+    """
+    return self._checkout(*args, **kwargs)
 
   def mock_add_paths(self, path):
     """For testing purposes, assert that |path| exists."""
     if self._test_data.enabled:
       self._path_mod.mock_add_paths(path)
 
+  def add_checkout(self, checkout, *pieces):
+    """Assert that we have a source directory with this name. """
+    checkout = self.join(checkout, *pieces)
+    self.assert_absolute(checkout)
+    if not self._checkouts:
+      self._checkout = path_method(self, 'checkout', checkout)
+    self._checkouts.append(checkout)
+
+  def choose_checkout(self, checkout, *pieces): # pragma: no cover
+    assert checkout in self._checkouts, 'No such checkout'
+    checkout = self.join(checkout, *pieces)
+    self.assert_absolute(checkout)
+    self._checkout = path_method(self, 'checkout', checkout)
+
   def assert_absolute(self, path):
-    assert self.abspath(path) == str(path), '%s is not absolute' % path
+    assert self.abspath(path) == path, '%s is not absolute' % path
 
   def makedirs(self, name, path, mode=0777):
     """
@@ -170,39 +186,14 @@ class PathApi(recipe_api.RecipeApi):
     )
     self.mock_add_paths(path)
 
-  def set_dynamic_path(self, pathname, path, overwrite=True):
-    """Set a named dynamic path to a concrete value.
-      * path must be based on a real base_path (not another dynamic path)
-      * if overwrite is False and the path is already set, do nothing.
-    """
-    assert isinstance(path, recipe_config_types.Path), (
-      'Setting dynamic path to something other than a Path: %r' % path)
-    assert pathname in self.c.dynamic_paths, (
-      'Must declare dynamic path (%r) in config before setting it.' % path)
-    assert path.base in self.c.base_paths, (
-      'Dynamic path values must be based on a base_path.')
-    if not overwrite and self.c.dynamic_paths.get(pathname):
-      return
-    self.c.dynamic_paths[pathname] = path
-
   def __getattr__(self, name):
-    if name in self.c.dynamic_paths:
-      r = self.c.dynamic_paths[name]
-      if r is None:
-        # Pass back a Path referring to this dynamic path in order to late-bind
-        # it. Attempting to evaluate this path as a string before it's set is
-        # an error.
-        r = recipe_config_types.Path(name, _bypass=True)
-      return r
-    if name in self.c.base_paths:
-      return recipe_config_types.Path(name, _bypass=True)
-    if name in self.OK_ATTRS:
+    if name in self.OK_METHODS:
       return getattr(self._path_mod, name)
-    if name in self.FILTER_METHODS:
-      return string_filter(getattr(self._path_mod, name))
     raise AttributeError("'%s' object has no attribute '%s'" %
                          (self._path_mod, name))  # pragma: no cover
 
   def __dir__(self):  # pragma: no cover
     # Used for helping out show_me_the_modules.py
     return self.__dict__.keys() + list(self.OK_METHODS)
+
+  # TODO(iannucci): Custom paths?

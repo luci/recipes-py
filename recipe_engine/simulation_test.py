@@ -52,7 +52,6 @@ import unittest
 
 from common import annotator
 from slave import recipe_util
-from slave import recipe_config_types
 from slave import annotated_run
 from slave import recipe_loader
 
@@ -115,7 +114,6 @@ def execute_test_case(test_data, recipe_path, recipe_name):
       return recipe_loader.CreateRecipeApi(test_data=test_data, *args, **kwargs)
 
     with cover():
-      recipe_config_types.ResetTostringFns()
       step_data = annotated_run.run_steps(
         stream, props, props, api, test_data).steps_ran.values()
       return [s.step for s in step_data]
@@ -133,8 +131,7 @@ def train_from_tests((recipe_path, recipe_name)):
     expected_path = expected_for(recipe_path, test_data.name)
     print 'Writing', expected_path
     with open(expected_path, 'wb') as f:
-      json.dump(steps, f, sort_keys=True, indent=2, separators=(',', ': '),
-                default=recipe_config_types.json_fixup)
+      json.dump(steps, f, sort_keys=True, indent=2, separators=(',', ': '))
 
   return True
 
@@ -151,8 +148,7 @@ def load_tests(loader, _standard_tests, _pattern):
             def test_(self):
               steps = execute_test_case(test_data, recipe_path, recipe_name)
               # Roundtrip json to get same string encoding as load
-              steps = json.loads(
-                json.dumps(steps, default=recipe_config_types.json_fixup))
+              steps = json.loads(json.dumps(steps))
               with open(expected_path, 'rb') as f:
                 expected = json.load(f)
               self.assertEqual(steps, expected)

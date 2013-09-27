@@ -25,7 +25,6 @@ import test_env  # pylint: disable=W0611,F0401
 
 from slave import recipe_loader
 from slave import recipe_util
-from slave import recipe_config_types
 
 import coverage
 
@@ -101,8 +100,7 @@ def train_from_tests(args):
     if configuration_results:
       print 'Writing', file_name
       with open(file_name, 'wb') as f:
-        json.dump(configuration_results, f, sort_keys=True, indent=2,
-                  default=recipe_config_types.json_fixup)
+        json.dump(configuration_results, f, sort_keys=True, indent=2)
     else:
       print 'Empty', file_name
 
@@ -133,9 +131,6 @@ def load_tests(loader, _standard_tests, _pattern):
       def add_test_methods(cls):
         for name, result in configuration_results.iteritems():
           def add_test(name, result, expected_result):
-            # Roundtrip json to get same string encoding as load
-            result = json.loads(
-              json.dumps(result, default=recipe_config_types.json_fixup))
             def test_(self):
               self.assertEqual(result, expected_result)
             test_.__name__ += name
