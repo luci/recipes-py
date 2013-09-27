@@ -1,0 +1,56 @@
+{
+  "BASE": {
+    "base_paths": {
+      "cwd": [
+        "/", 
+        "b", 
+        "build", 
+        "slave", 
+        "fake_slave", 
+        "build"
+      ]
+    }
+  }, 
+  "buildbot": {
+    "base_paths": {
+      "build": [
+        "/", 
+        "b", 
+        "build"
+      ], 
+      "build_internal": [
+        "/", 
+        "b", 
+        "build_internal"
+      ], 
+      "cwd": [
+        "/", 
+        "b", 
+        "build", 
+        "slave", 
+        "fake_slave", 
+        "build"
+      ], 
+      "depot_tools": [
+        "/", 
+        "b", 
+        "depot_tools"
+      ], 
+      "root": [
+        "/", 
+        "b"
+      ], 
+      "slave_build": [
+        "/", 
+        "b", 
+        "build", 
+        "slave", 
+        "fake_slave", 
+        "build"
+      ]
+    }, 
+    "dynamic_paths": {
+      "checkout": null
+    }
+  }
+}

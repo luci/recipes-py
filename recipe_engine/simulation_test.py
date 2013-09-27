@@ -52,6 +52,7 @@ import unittest
 
 from common import annotator
 from slave import recipe_util
+from slave import recipe_config_types
 from slave import annotated_run
 from slave import recipe_loader
 
@@ -114,6 +115,7 @@ def execute_test_case(test_data, recipe_path, recipe_name):
       return recipe_loader.CreateRecipeApi(test_data=test_data, *args, **kwargs)
 
     with cover():
+      recipe_config_types.ResetTostringFns()
       step_data = annotated_run.run_steps(
         stream, props, props, api, test_data).steps_ran.values()
       return [s.step for s in step_data]

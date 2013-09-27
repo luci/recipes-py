@@ -1,0 +1,8 @@
+{
+  "test": {
+    "cmd": [
+      "Path('[CHECKOUT]', 'build', 'tools', 'cool_script.py')"
+    ], 
+    "name": "test"
+  }
+}

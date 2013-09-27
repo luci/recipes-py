@@ -51,6 +51,9 @@ class StepApi(recipe_api.RecipeApi):
       self._step_names[name] = step_count
       if step_count > 1:
         name = "%s (%d)" % (name, step_count)
-    ret = kwargs
-    ret.update({'name': name, 'cmd': cmd})
-    return ret
+    kwargs.update({'name': name, 'cmd': cmd})
+
+    schema = self.make_config()
+    schema.set_val(kwargs)
+
+    return schema.as_jsonish()

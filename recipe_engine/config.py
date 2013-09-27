@@ -424,7 +424,10 @@ class ConfigGroup(ConfigBase):
     assert isinstance(val, dict)
     for name, config_obj in self._type_map.iteritems():
       if name in val:
-        config_obj.set_val(val.pop(name))
+        try:
+          config_obj.set_val(val.pop(name))
+        except Exception as e:
+          raise Exception('While assigning key %r: %s' % (name, e))
     assert not val, "Got extra keys while setting ConfigGroup: %s" % val
 
   def as_jsonish(self, include_hidden=False):
@@ -560,7 +563,9 @@ class Dict(ConfigBase, collections.MutableMapping):
     if isinstance(val, Dict):
       val = val.data
     assert isinstance(val, dict)
-    assert all(isinstance(v, self.value_type) for v in val.itervalues())
+    for v in val.itervalues():
+      assert isinstance(v, self.value_type), (
+        'Expected %r to be of type %r' % (v, self.value_type))
     self.data = val
 
   def as_jsonish(self, _include_hidden=None):
@@ -617,7 +622,9 @@ class List(ConfigBase, collections.MutableSequence):
     self.data.insert(index, value)
 
   def set_val(self, val):
-    assert all(isinstance(v, self.inner_type) for v in val)
+    for v in val:
+      assert isinstance(v, self.inner_type), (
+        'Expected %r to be of type %r' % (v, self.inner_type))
     self.data = list(val)
 
   def as_jsonish(self, _include_hidden=None):
@@ -667,7 +674,9 @@ class Set(ConfigBase, collections.MutableSet):
     self.data.discard(value)
 
   def set_val(self, val):
-    assert all(isinstance(v, self.inner_type) for v in val)
+    for v in val:
+      assert isinstance(v, self.inner_type), (
+        'Expected %r to be of type %r' % (v, self.inner_type))
     self.data = set(val)
 
   def as_jsonish(self, _include_hidden=None):
@@ -713,7 +722,9 @@ class Single(ConfigBase):
   def set_val(self, val):
     if isinstance(val, Single):
       val = val.data
-    assert val is self.empty_val or isinstance(val, self.inner_type)
+    if val is not self.empty_val:
+      assert isinstance(val, self.inner_type), (
+        'Expected %r to be of type %r' % (val, self.inner_type))
     self.data = val
 
   def as_jsonish(self, _include_hidden=None):
