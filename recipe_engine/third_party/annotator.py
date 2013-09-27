@@ -370,7 +370,7 @@ def _merge_envs(original, override):
       if k in result:
         del result[k]
     else:
-      result[k] = v % original
+      result[k] = str(v) % original
   return result
 
 
