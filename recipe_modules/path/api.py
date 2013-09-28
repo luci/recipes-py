@@ -18,11 +18,7 @@ def PathTostring(api, test):
       base_path = api.c.dynamic_paths[path.base]
     elif path.base in api.c.base_paths:
       if test.enabled:
-        # TODO(iannucci): Remove special case in followup cl
-        if path.base == 'root':
-          base_path = '[ROOT]'
-        else:
-          base_path = '[%s_ROOT]' % path.base.upper()
+        base_path = '[%s]' % path.base.upper()
       else:  # pragma: no cover
         base_path = api.join(*api.c.base_paths[path.base])
     assert base_path, 'Could not get base %r for path' % path.base

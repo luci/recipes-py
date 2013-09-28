@@ -5,7 +5,7 @@
       "--output-json",
       "/path/to/tmp/json"
     ],
-    "cwd": "[SLAVE_BUILD_ROOT]",
+    "cwd": "[SLAVE_BUILD]",
     "name": "gen step(bogus)",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@[@@@",
@@ -38,7 +38,7 @@
       "--output-json",
       "/path/to/tmp/json"
     ],
-    "cwd": "[SLAVE_BUILD_ROOT]",
+    "cwd": "[SLAVE_BUILD]",
     "name": "gen step(bogus.py)",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@[@@@",
