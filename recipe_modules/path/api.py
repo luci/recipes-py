@@ -184,11 +184,8 @@ class PathApi(recipe_api.RecipeApi):
   def __getattr__(self, name):
     if name in self.c.dynamic_paths:
       r = self.c.dynamic_paths[name]
-      if r is None:
-        # Pass back a Path referring to this dynamic path in order to late-bind
-        # it. Attempting to evaluate this path as a string before it's set is
-        # an error.
-        r = recipe_config_types.Path(name, _bypass=True)
+      assert r is not None, ('Tried to get dynamic path %s but it has not been '
+                             'set yet.' % name)
       return r
     if name in self.c.base_paths:
       return recipe_config_types.Path(name, _bypass=True)
