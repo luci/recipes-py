@@ -57,7 +57,7 @@ class OutputDataPlaceholder(recipe_util.Placeholder):
 class RawIOApi(recipe_api.RecipeApi):
   @recipe_util.returns_placeholder
   @staticmethod
-  def input(data, suffix):
+  def input(data, suffix=None):
     return InputDataPlaceholder(data, suffix)
 
   @recipe_util.returns_placeholder
