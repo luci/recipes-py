@@ -386,45 +386,55 @@ def run_steps(stream, build_properties, factory_properties,
   failed = False
 
   for step in ensure_sequence_of_steps(steps):
-    if failed and not step.get('always_run', False):
-      step_result = StepData(step, None)
-      step_history[step['name']] = step_result
-      continue
+    try:
+      if failed and not step.get('always_run', False):
+        step_result = StepData(step, None)
+        step_history[step['name']] = step_result
+        continue
 
-    if test.enabled:
-      step_test = step.pop('default_step_data', recipe_api.StepTestData())
-      if step['name'] in test.step_data:
-        step_test = test.step_data.pop(step['name'])
-    else:
-      step_test = recipe_api.DisabledTestData()
-      step.pop('default_step_data', None)
+      if test.enabled:
+        step_test = step.pop('default_step_data', recipe_api.StepTestData())
+        if step['name'] in test.step_data:
+          step_test = test.step_data.pop(step['name'])
+      else:
+        step_test = recipe_api.DisabledTestData()
+        step.pop('default_step_data', None)
 
-    placeholders = render_step(step, step_test)
+      placeholders = render_step(step, step_test)
 
-    callback = step_callback(step, step_history, placeholders, step_test)
+      callback = step_callback(step, step_history, placeholders, step_test)
 
-    if not test.enabled:
-      step_result = annotator.run_step(
-        stream, followup_fn=callback, **step)
-    else:
-      with stream.step(step['name']) as s:
-        s.stream = cStringIO.StringIO()
-        step_result = callback(s, step_test.retcode)
-        lines = filter(None, s.stream.getvalue().splitlines())
-        if lines:
-          # Note that '~' sorts after 'z' so that this will be last on each
-          # step. Also use _step to get access to the mutable step dictionary.
-          # pylint: disable=W0212
-          step_result._step['~followup_annotations'] = lines
+      if not test.enabled:
+        step_result = annotator.run_step(
+          stream, followup_fn=callback, **step)
+      else:
+        with stream.step(step['name']) as s:
+          s.stream = cStringIO.StringIO()
+          step_result = callback(s, step_test.retcode)
+          lines = filter(None, s.stream.getvalue().splitlines())
+          if lines:
+            # Note that '~' sorts after 'z' so that this will be last on each
+            # step. Also use _step to get access to the mutable step dictionary.
+            # pylint: disable=W0212
+            step_result._step['~followup_annotations'] = lines
 
-    if step_result.abort_reason:
-      stream.emit('Aborted: %s' % step_result.abort_reason)
-      test.step_data.clear()  # Dump the rest of the test data
-      failed = True
-      break
+      if step_result.abort_reason:
+        stream.emit('Aborted: %s' % step_result.abort_reason)
+        test.step_data.clear()  # Dump the rest of the test data
+        failed = True
+        break
 
-    # TODO(iannucci): Pull this failure calculation into callback.
-    failed = annotator.update_build_failure(failed, step_result.retcode, **step)
+      # TODO(iannucci): Pull this failure calculation into callback.
+      failed = annotator.update_build_failure(failed, step_result.retcode,
+                                              **step)
+    except Exception as e:
+      new_message = (
+        '%s\n'
+        '  while processing step `%s`:\n'
+        '  %s'
+      ) % (e.message, step['name'], json.dumps(step, indent=2, sort_keys=True,
+                                               default=str))
+      raise type(e), type(e)(new_message), sys.exc_info()[2]
 
   assert not test.enabled or not test.step_data, (
     "Unconsumed test data! %s" % (test.step_data,))
