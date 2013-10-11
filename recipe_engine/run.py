@@ -387,11 +387,6 @@ def run_steps(stream, build_properties, factory_properties,
 
   for step in ensure_sequence_of_steps(steps):
     try:
-      if failed and not step.get('always_run', False):
-        step_result = StepData(step, None)
-        step_history[step['name']] = step_result
-        continue
-
       if test.enabled:
         step_test = step.pop('default_step_data', recipe_api.StepTestData())
         if step['name'] in test.step_data:
@@ -401,6 +396,13 @@ def run_steps(stream, build_properties, factory_properties,
         step.pop('default_step_data', None)
 
       placeholders = render_step(step, step_test)
+
+      if failed and not step.get('always_run', False):
+        step['skip'] = True
+        step.pop('followup_fn', None)
+        step_result = StepData(step, None)
+        step_history[step['name']] = step_result
+        continue
 
       callback = step_callback(step, step_history, placeholders, step_test)
 
