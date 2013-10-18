@@ -386,15 +386,15 @@ def _validate_step(step):
   return None
 
 
-def print_step(step, env):
+def print_step(step, env, stream):
   """Prints the step command and relevant metadata.
 
   Intended to be similar to the information that Buildbot prints at the
   beginning of each non-annotator step.
   """
-  print
-  print ' '.join(step['cmd'])
-  print 'in dir %s:' % (step['cwd'] or os.getcwd())
+  step_info_lines = []
+  step_info_lines.append(' '.join(step['cmd']))
+  step_info_lines.append('in dir %s:' % (step['cwd'] or os.getcwd()))
   for key, value in sorted(step.items()):
     if value is not None:
       if callable(value):
@@ -402,11 +402,12 @@ def print_step(step, env):
         #   '<function foo at 0x7f523ec7a410>'
         # which is tricky to test.
         value = value.__name__+'(...)'
-      print ' %s: %s' % (key, value)
-  print 'full environment:'
+      step_info_lines.append(' %s: %s' % (key, value))
+  step_info_lines.append('full environment:')
   for key, value in sorted(env.items()):
-    print ' %s: %s' % (key, value)
-  print
+    step_info_lines.append(' %s: %s' % (key, value))
+  step_info_lines.append('')
+  stream.emit('\n'.join(step_info_lines))
 
 
 @contextlib.contextmanager
@@ -477,7 +478,7 @@ def run_step(stream, name, cmd,
       else:
         return None
 
-    print_step(step_dict, step_env)
+    print_step(step_dict, step_env, stream)
     try:
       with modify_lookup_path(step_env.get('PATH')):
         proc = subprocess.Popen(
