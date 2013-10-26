@@ -36,6 +36,20 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
     ret.properties.update(kwargs)
     return ret
 
+  def git_scheduled(self, **kwargs):
+    """
+    Merge kwargs into a typical buildbot properties blob for a job fired off
+    by a gitpoller/scheduler, and return the blob.
+    """
+    ret = self.generic(
+        branch='master',
+        project='',
+        repository='https://chromium.googlesource.com/chromium/src.git',
+        revision='c14d891d44f0afff64e56ed7c9702df1d807b1ee',
+    )
+    ret.properties.update(kwargs)
+    return ret
+
   def tryserver(self, **kwargs):
     """
     Merge kwargs into a typical buildbot properties blob for a job fired off
