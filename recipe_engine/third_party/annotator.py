@@ -451,7 +451,7 @@ def run_step(stream, name, cmd,
 
   Known kwargs:
     can_fail_build: A boolean indicating that a bad retcode for this step
-                    should be intepreted as a build failure. This variable
+                    should be interpreted as a build failure. This variable
                     is read by update_build_failure().
 
   Returns the return value of followup_fn or the returncode of the step if
