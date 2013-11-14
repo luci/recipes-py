@@ -14,6 +14,7 @@ def convert_trie_to_flat_paths(trie, prefix=None):
   return result
 
 
+# TODO(phajdan.jr): Rename to LayoutTestResults.
 class TestResults(object):
   def __init__(self, jsonish=None):
     self.raw = jsonish or {}
@@ -69,3 +70,34 @@ class TestResults(object):
     ret.setdefault('tests', {}).update(self.tests)
     return ret
 
+
+class GTestResults(object):
+  def __init__(self, jsonish=None):
+    self.raw = jsonish or {}
+
+    if not jsonish:
+      self.valid = False
+      return
+
+    self.valid = True
+
+    self.passes = set()
+    self.failures = set()
+    for cur_iteration_data in self.raw.get('per_iteration_data', []):
+      for test_fullname, results in cur_iteration_data.iteritems():
+        # Results is a list with one entry per test try. Last one is the final
+        # result, the only we care about here.
+        last_result = results[-1]
+
+        if last_result['status'] == 'SUCCESS':
+          self.passes.add(test_fullname)
+        else:
+          self.failures.add(test_fullname)
+
+    # With multiple iterations a test could have passed in one but failed
+    # in another. Remove tests that ever failed from the passing set.
+    self.passes -= self.failures
+
+  def as_jsonish(self):
+    ret = self.raw.copy()
+    return ret

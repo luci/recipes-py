@@ -12,7 +12,7 @@ from slave import recipe_api
 from slave import recipe_util
 from slave import recipe_config_types
 
-from .util import TestResults
+from .util import GTestResults, TestResults
 
 class StringListIO(object):
   def __init__(self):
@@ -73,10 +73,23 @@ class JsonOutputPlaceholder(recipe_util.Placeholder):
     return ret
 
 
+# TODO(phajdan.jr): Rename to LayoutTestResultsOutputPlaceholder.
 class TestResultsOutputPlaceholder(JsonOutputPlaceholder):
   def result(self, presentation, test):
     ret = super(TestResultsOutputPlaceholder, self).result(presentation, test)
     return TestResults(ret)
+
+
+class GTestResultsOutputPlaceholder(JsonOutputPlaceholder):
+  def render(self, test):
+    result = super(GTestResultsOutputPlaceholder, self).render(test)
+    if not test.enabled:  # pragma: no cover
+      result[0] = '--test-launcher-summary-output=%s' % result[0]
+    return result
+
+  def result(self, presentation, test):
+    ret = super(GTestResultsOutputPlaceholder, self).result(presentation, test)
+    return GTestResults(ret)
 
 
 class JsonApi(recipe_api.RecipeApi):
@@ -100,6 +113,7 @@ class JsonApi(recipe_api.RecipeApi):
     """A placeholder which will expand to '--output-json /tmp/file'."""
     return JsonOutputPlaceholder(self)
 
+  # TODO(phajdan.jr): Rename to layout_test_results.
   @recipe_util.returns_placeholder
   def test_results(self):
     """A placeholder which will expand to '--json-test-results /tmp/file'.
@@ -107,6 +121,14 @@ class JsonApi(recipe_api.RecipeApi):
     The test_results will be an instance of the TestResults class.
     """
     return TestResultsOutputPlaceholder(self)
+
+  @recipe_util.returns_placeholder
+  def gtest_results(self):
+    """A placeholder which will expand to '--test-launcher-summary-output /tmp/file'.
+
+    The test_results will be an instance of the GTestResults class.
+    """
+    return GTestResultsOutputPlaceholder(self)
 
   def property_args(self):
     """Return --build-properties and --factory-properties arguments. LEGACY!
