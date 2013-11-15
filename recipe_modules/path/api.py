@@ -33,33 +33,6 @@ def string_filter(func):
   return inner
 
 
-class path_set(object):
-  """ implements a set which contains all the parents folders of added folders.
-  """
-  def __init__(self, path_mod, initial_paths):
-    self._path_mod = path_mod
-    self._initial_paths = set(initial_paths)
-    self._paths = set()
-
-  def _initialize(self):
-    self._initialize = lambda: None
-    for path in self._initial_paths:
-      self.add(path)
-    self._initial_paths = None
-    self.contains = lambda path: path in self._paths
-
-  def add(self, path):
-    path = str(path)
-    self._initialize()
-    while path:
-      self._paths.add(path)
-      path = self._path_mod.dirname(path)
-
-  def contains(self, path):
-    self._initialize()
-    return self.contains(path)
-
-
 class fake_path(object):
   """Standin for os.path when we're in test mode.
 
@@ -71,7 +44,7 @@ class fake_path(object):
 
   def __init__(self, api, _mock_path_exists):
     self._api = api
-    self._mock_path_exists = path_set(self, _mock_path_exists)
+    self._mock_path_exists = set(_mock_path_exists)
     self._pth = None
 
   def __getattr__(self, name):
@@ -83,15 +56,30 @@ class fake_path(object):
       self._pth = pth
     return getattr(self._pth, name)
 
+  def _initialize_exists(self):  # pylint: disable=E0202
+    """
+    Calculates all the parent paths of the mock'd paths and makes exists()
+    read from this new set().
+    """
+    self._initialize_exists = lambda: None
+    for path in list(self._mock_path_exists):
+      self.mock_add_paths(path)
+    self.exists = lambda path: path in self._mock_path_exists
+
   def mock_add_paths(self, path):
     """
     Adds a path and all of its parents to the set of existing paths.
     """
-    self._mock_path_exists.add(path)
+    self._initialize_exists()
+    path = str(path)
+    while path:
+      self._mock_path_exists.add(path)
+      path = self.dirname(path)
 
   def exists(self, path):  # pylint: disable=E0202
     """Return True if path refers to an existing path."""
-    return self._mock_path_exists.contains(path)
+    self._initialize_exists()
+    return self.exists(path)
 
   def abspath(self, path):
     """Returns the absolute version of path."""
