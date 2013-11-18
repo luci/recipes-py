@@ -383,7 +383,7 @@ def run_steps(stream, build_properties, factory_properties,
 
   # Execute annotator.py with steps if specified.
   # annotator.py handles the seeding, execution, and annotation of each step.
-  failed = False
+  step_history.failed = False
 
   for step in ensure_sequence_of_steps(steps):
     try:
@@ -397,7 +397,7 @@ def run_steps(stream, build_properties, factory_properties,
 
       placeholders = render_step(step, step_test)
 
-      if failed and not step.get('always_run', False):
+      if step_history.failed and not step.get('always_run', False):
         step['skip'] = True
         step.pop('followup_fn', None)
         step_result = StepData(step, None)
@@ -423,12 +423,14 @@ def run_steps(stream, build_properties, factory_properties,
       if step_result.abort_reason:
         stream.emit('Aborted: %s' % step_result.abort_reason)
         test.step_data.clear()  # Dump the rest of the test data
-        failed = True
+        step_history.failed = True
         break
 
       # TODO(iannucci): Pull this failure calculation into callback.
-      failed = annotator.update_build_failure(failed, step_result.retcode,
-                                              **step)
+      step_history.failed = annotator.update_build_failure(
+          step_history.failed,
+          step_result.retcode,
+          **step)
     except Exception as e:
       new_message = (
         '%s\n'
@@ -441,7 +443,7 @@ def run_steps(stream, build_properties, factory_properties,
   assert not test.enabled or not test.step_data, (
     "Unconsumed test data! %s" % (test.step_data,))
 
-  return MakeStepsRetval(0 if not failed else 1, step_history)
+  return MakeStepsRetval(0 if not step_history.failed else 1, step_history)
 
 
 def UpdateScripts():

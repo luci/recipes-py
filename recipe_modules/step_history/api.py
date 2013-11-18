@@ -32,6 +32,11 @@ class StepHistoryApi(recipe_api.RecipeApi, collections.Mapping):
   def __len__(self):  # pragma: no cover
     return len(self._step_history)
 
+  @property
+  def failed(self):
+    """Return status of the build so far, as a bool."""
+    return self._step_history.failed
+
   def last_step(self):
     """Return the last StepData object, or None if no steps have run."""
     key = next(reversed(self._step_history), None)
