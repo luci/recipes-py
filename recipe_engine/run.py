@@ -375,9 +375,9 @@ def run_steps(stream, build_properties, factory_properties,
                                          properties=properties,
                                          step_history=step_history))
       assert inspect.isgenerator(steps)
-      s.step_text('running recipe: %r' % recipe)
+      s.step_text('<br/>running recipe: %r' % recipe)
     except recipe_loader.NoSuchRecipe as e:
-      s.step_text('recipe not found: %s' % e)
+      s.step_text('<br/>recipe not found: %s' % e)
       s.step_failure()
       return MakeStepsRetval(2, None)
 
