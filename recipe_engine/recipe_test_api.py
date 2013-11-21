@@ -54,10 +54,15 @@ class StepTestData(BaseTestData):
     super(StepTestData, self).__init__()
     # { (module, placeholder) -> [data] }
     self.placeholder_data = collections.defaultdict(list)
+    self.override = False
     self._retcode = None
 
   def __add__(self, other):
     assert isinstance(other, StepTestData)
+
+    if other.override:
+      return other
+
     ret = StepTestData()
 
     combineify('placeholder_data', ret, self, other)
@@ -88,6 +93,7 @@ class StepTestData(BaseTestData):
     return "StepTestData(%r)" % ({
       'placeholder_data': dict(self.placeholder_data.iteritems()),
       'retcode': self._retcode,
+      'override': self.override,
     },)
 
 
@@ -308,8 +314,10 @@ class RecipeTestApi(object):
     return TestData(name)
 
   @staticmethod
-  def step_data(name, *data, **kwargs):
+  def _step_data(name, *data, **kwargs):
     """Returns a new TestData with the mock data filled in for a single step.
+
+    Used by step_data and override_step_data.
 
     Args:
       name - The name of the step we're providing data for
@@ -318,14 +326,32 @@ class RecipeTestApi(object):
              retcode for this step.
       retcode=(int or None) - Override the retcode for this step, even if it
              was set by |data|. This must be set as a keyword arg.
+      override=(bool) - This step data completely replaces any previously
+             generated step data, instead of adding on to it.
 
     Use in GenTests:
+      # Hypothetically, suppose that your recipe has default test data for two
+      # steps 'init' and 'sync' (probably via recipe_api.inject_test_data()).
+      # For this example, lets say that the default test data looks like:
+      #   api.step_data('init', api.json.output({'some': ["cool", "json"]}))
+      # AND
+      #   api.step_data('sync', api.json.output({'src': {'rev': 100}}))
+      # Then, your GenTests code may augment or replace this data like:
+
       def GenTests(api):
         yield (
           api.test('more') +
-          api.step_data(
+          api.step_data(  # Adds step data for a step with no default test data
+            'mystep',
+            api.json.output({'legend': ['...', 'DARY!']})
+          ) +
+          api.step_data(  # Adds retcode to default step_data for this step
             'init',
-            api.json.output({'some': ["cool", "json"]})
+            retcode=1
+          ) +
+          api.override_step_data(  # Removes json output and overrides retcode
+            'sync',
+            retcode=100
           )
         )
     """
@@ -335,4 +361,17 @@ class RecipeTestApi(object):
       ret.step_data[name] = reduce(sum, data)
     if 'retcode' in kwargs:
       ret.step_data[name].retcode = kwargs['retcode']
+    if 'override' in kwargs:
+      ret.step_data[name].override = kwargs['override']
     return ret
+
+  def step_data(self, name, *data, **kwargs):
+    """See step_data()"""
+    return self._step_data(name, *data, **kwargs)
+  step_data.__doc__ = _step_data.__doc__
+
+  def override_step_data(self, name, *data, **kwargs):
+    """See step_data()"""
+    kwargs['override'] = True
+    return self._step_data(name, *data, **kwargs)
+  override_step_data.__doc__ = _step_data.__doc__

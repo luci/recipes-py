@@ -391,7 +391,7 @@ def run_steps(stream, build_properties, factory_properties,
       if test.enabled:
         step_test = step.pop('default_step_data', recipe_api.StepTestData())
         if step['name'] in test.step_data:
-          step_test = test.step_data.pop(step['name'])
+          step_test += test.step_data.pop(step['name'])
       else:
         step_test = recipe_api.DisabledTestData()
         step.pop('default_step_data', None)
