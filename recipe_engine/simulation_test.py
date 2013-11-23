@@ -120,7 +120,7 @@ def execute_test_case(test_data, recipe_path, recipe_name):
         stream, props, props, api, test_data).steps_ran.values()
       return [s.step for s in step_data]
   except:
-    print 'Exception while processing "%s"!' % recipe_path
+    print 'Exception while processing test case: "%s"!' % test_data.name
     raise
 
 
