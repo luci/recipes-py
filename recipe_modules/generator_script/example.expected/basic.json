@@ -62,5 +62,44 @@
     "seed_steps": [
       "mock.step.python"
     ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "presentation.py",
+      "--output-json",
+      "/path/to/tmp/json"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "gen step(presentation.py)",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@[@@@",
+      "@@@STEP_LOG_LINE@json.output@  {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"cmd\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"echo\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"mock step presentation\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    ], @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"name\": \"mock.step.presentation\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"outputs_presentation_json\": true@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@]@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "mock step presentation",
+      "--presentation-json",
+      "/path/to/tmp/json"
+    ],
+    "name": "mock.step.presentation",
+    "seed_steps": [
+      "mock.step.presentation"
+    ],
+    "~followup_annotations": [
+      "@@@STEP_TEXT@mock step text@@@"
+    ]
   }
 ]

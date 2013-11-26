@@ -4,7 +4,10 @@
 
 DEPS = [
   'generator_script',
-  'path'
+  'json',
+  'path',
+  'step',
+  'step_history',
 ]
 
 
@@ -12,9 +15,13 @@ def GenSteps(api):
   api.path.set_dynamic_path('checkout', api.path.slave_build)
   yield api.generator_script('bogus')
   yield api.generator_script('bogus.py')
+  yield api.generator_script('presentation.py')
 
 
 def GenTests(api):
+  mock_json = {
+    'mock': 'data',
+  }
   yield (
     api.test('basic') +
     api.generator_script(
@@ -24,5 +31,16 @@ def GenTests(api):
     api.generator_script(
       'bogus.py',
       {'name': 'mock.step.python', 'cmd': ['echo', 'mock step python']}
+    ) +
+    api.generator_script(
+      'presentation.py', {
+        'name': 'mock.step.presentation',
+        'cmd': ['echo', 'mock step presentation'],
+        'outputs_presentation_json': True
+      }
+    ) +
+    api.step_data(
+      'mock.step.presentation',
+      api.json.output({'step_text': 'mock step text'})
     )
   )

@@ -47,8 +47,9 @@ class JsonOutputPlaceholder(recipe_util.Placeholder):
   JSON document, which will be set as the json_output for that step in the
   step_history OrderedDict passed to your recipe generator.
   """
-  def __init__(self, api):
+  def __init__(self, api, add_json_log):
     self.raw = api.m.raw_io.output('.json')
+    self.add_json_log = add_json_log
     super(JsonOutputPlaceholder, self).__init__()
 
   def render(self, test):
@@ -65,10 +66,11 @@ class JsonOutputPlaceholder(recipe_util.Placeholder):
     except ValueError:  # pragma: no cover
       pass
 
-    key = self.name + ('' if valid else ' (invalid)')
-    with contextlib.closing(StringListIO()) as listio:
-      json.dump(ret, listio, indent=2, sort_keys=True)
-    presentation.logs[key] = listio.lines
+    if self.add_json_log:
+      key = self.name + ('' if valid else ' (invalid)')
+      with contextlib.closing(StringListIO()) as listio:
+        json.dump(ret, listio, indent=2, sort_keys=True)
+      presentation.logs[key] = listio.lines
 
     return ret
 
@@ -109,9 +111,9 @@ class JsonApi(recipe_api.RecipeApi):
     return self.m.raw_io.input(self.dumps(data), '.json')
 
   @recipe_util.returns_placeholder
-  def output(self):
+  def output(self, add_json_log=True):
     """A placeholder which will expand to '--output-json /tmp/file'."""
-    return JsonOutputPlaceholder(self)
+    return JsonOutputPlaceholder(self, add_json_log)
 
   # TODO(phajdan.jr): Rename to layout_test_results.
   @recipe_util.returns_placeholder
@@ -120,7 +122,7 @@ class JsonApi(recipe_api.RecipeApi):
 
     The test_results will be an instance of the TestResults class.
     """
-    return TestResultsOutputPlaceholder(self)
+    return TestResultsOutputPlaceholder(self, True)
 
   @recipe_util.returns_placeholder
   def gtest_results(self):
@@ -128,7 +130,7 @@ class JsonApi(recipe_api.RecipeApi):
 
     The test_results will be an instance of the GTestResults class.
     """
-    return GTestResultsOutputPlaceholder(self)
+    return GTestResultsOutputPlaceholder(self, True)
 
   def property_args(self):
     """Return --build-properties and --factory-properties arguments. LEGACY!
