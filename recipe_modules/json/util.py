@@ -18,6 +18,7 @@ def convert_trie_to_flat_paths(trie, prefix=None):
 class TestResults(object):
   def __init__(self, jsonish=None):
     self.raw = jsonish or {}
+    self.valid = (jsonish is not None)
 
     self.tests = convert_trie_to_flat_paths(self.raw.get('tests', {}))
     self.passes = {}
