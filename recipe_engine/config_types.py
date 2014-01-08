@@ -45,7 +45,7 @@ class RecipeConfigType(object):
   @classmethod
   def set_tostring_fn(cls, new_tostring_fn):
     assert cls.__name__ not in cls._TOSTRING_MAP, (
-      'tostring_fn already installed for %s' % cls)
+        'tostring_fn already installed for %s' % cls)
     cls._TOSTRING_MAP[cls.__name__] = new_tostring_fn
 
   def default_tostring_fn(self):

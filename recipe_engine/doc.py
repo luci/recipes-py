@@ -10,8 +10,11 @@ import inspect
 import os
 import sys
 
-from slave import annotated_run
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
 from slave import recipe_api
+from slave import recipe_loader
+from slave import recipe_util
 
 def trim_doc(docstring):
   """From PEP 257"""
@@ -78,13 +81,15 @@ def main():
   p(0, 'Common Methods -- %s' % os.path.splitext(recipe_api.__file__)[0])
   for method in sorted(common_methods):
     pmethod(1, method, getattr(recipe_api.RecipeApi, method))
-  RECIPE_MODULES = recipe_api.load_recipe_modules(annotated_run.MODULE_DIRS)
+  RECIPE_MODULES = recipe_loader.load_recipe_modules(recipe_util.MODULE_DIRS())
+
+  inst = recipe_loader.CreateRecipeApi(
+      [ mod_name for mod_name, mod in member_iter(RECIPE_MODULES) ],
+      mocks={'path': {}}, properties={}, step_history={})
+
   for mod_name, mod in member_iter(RECIPE_MODULES):
     p(0)
     p(0, "(%s) -- %s" % (mod_name, mod.__path__[0]))
-    inst = recipe_api.CreateRecipeApi([mod_name], annotated_run.MODULE_DIRS,
-                                      mocks={'path': {}}, properties={},
-                                      step_history={})
     if mod.DEPS:
       p(1, 'DEPS:', list(mod.DEPS))
 

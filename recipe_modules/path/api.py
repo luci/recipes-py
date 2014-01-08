@@ -210,4 +210,4 @@ class PathApi(recipe_api.RecipeApi):
 
   def __dir__(self):  # pragma: no cover
     # Used for helping out show_me_the_modules.py
-    return self.__dict__.keys() + list(self.OK_METHODS)
+    return self.__dict__.keys() + list(self.OK_ATTRS + self.FILTER_METHODS)
