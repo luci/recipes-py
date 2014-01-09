@@ -5,21 +5,25 @@
 from slave import recipe_api
 import collections
 
-class ImmutibleMapping(dict):
+class ImmutableMapping(dict):
   def __init__(self, data):
-    super(ImmutibleMapping, self).__init__(data)
+    super(ImmutableMapping, self).__init__(data)
     assert all(isinstance(v, collections.Hashable) for v in self.itervalues())
+    self._hash_value = hash(tuple(sorted(self.iteritems())))
 
   def __setitem__(self, key, value):  # pragma: no cover
-    raise TypeError("May not modify an ImmutibleMapping")
+    raise TypeError("May not modify an ImmutableMapping")
 
   def __delitem__(self, key):  # pragma: no cover
-    raise TypeError("May not modify an ImmutibleMapping")
+    raise TypeError("May not modify an ImmutableMapping")
+
+  def __hash__(self):
+    return self._hash_value
 
 
 def freeze(obj):
   if isinstance(obj, dict):
-    return ImmutibleMapping((k, freeze(v)) for k, v in obj.iteritems())
+    return ImmutableMapping((k, freeze(v)) for k, v in obj.iteritems())
   elif isinstance(obj, list):
     return tuple(freeze(x) for x in obj)
   elif isinstance(obj, collections.Hashable):
