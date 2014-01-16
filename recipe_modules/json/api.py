@@ -117,20 +117,20 @@ class JsonApi(recipe_api.RecipeApi):
 
   # TODO(phajdan.jr): Rename to layout_test_results.
   @recipe_util.returns_placeholder
-  def test_results(self):
+  def test_results(self, add_json_log=True):
     """A placeholder which will expand to '--json-test-results /tmp/file'.
 
     The test_results will be an instance of the TestResults class.
     """
-    return TestResultsOutputPlaceholder(self, True)
+    return TestResultsOutputPlaceholder(self, add_json_log)
 
   @recipe_util.returns_placeholder
-  def gtest_results(self):
+  def gtest_results(self, add_json_log=True):
     """A placeholder which will expand to '--test-launcher-summary-output /tmp/file'.
 
     The test_results will be an instance of the GTestResults class.
     """
-    return GTestResultsOutputPlaceholder(self, True)
+    return GTestResultsOutputPlaceholder(self, add_json_log)
 
   def property_args(self):
     """Return --build-properties and --factory-properties arguments. LEGACY!
