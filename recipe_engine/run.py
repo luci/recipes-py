@@ -448,8 +448,8 @@ def run_steps(stream, build_properties, factory_properties,
 
 
 def UpdateScripts():
-  if os.environ.get('RUN_SLAVE_UPDATED_SCRIPTS'):
-    os.environ.pop('RUN_SLAVE_UPDATED_SCRIPTS')
+  if os.environ.get('SKIP_SLAVE_UPDATE_SCRIPTS') == '1':
+    os.environ.pop('SKIP_SLAVE_UPDATE_SCRIPTS')
     return False
   stream = annotator.StructuredAnnotationStream(seed_steps=['update_scripts'])
   with stream.step('update_scripts') as s:
@@ -461,7 +461,7 @@ def UpdateScripts():
     if subprocess.call([gclient_path, 'sync', '--force'], cwd=build_root) != 0:
       s.step_text('gclient sync failed!')
       s.step_warnings()
-    os.environ['RUN_SLAVE_UPDATED_SCRIPTS'] = '1'
+    os.environ['SKIP_SLAVE_UPDATE_SCRIPTS'] = '1'
     return True
 
 
