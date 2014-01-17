@@ -82,15 +82,14 @@ def expected_for(recipe_path, test_name):
   return os.path.join(expect_path, test_name+'.json')
 
 
-def exec_test_file(recipe_path):
-  gvars = {}
+def exec_test_file(recipe_name):
   with cover():
-    execfile(recipe_path, gvars)
+    recipe = recipe_loader.LoadRecipe(recipe_name)
     try:
-      test_api = recipe_loader.CreateTestApi(gvars['DEPS'])
-      gen = gvars['GenTests'](test_api)
+      test_api = recipe_loader.CreateTestApi(recipe.DEPS)
+      gen = recipe.GenTests(test_api)
     except Exception, e:
-      print "Caught exception while processing %s: %s" % (recipe_path, e)
+      print "Caught exception while processing %s: %s" % (recipe_name, e)
       raise
   try:
     while True:
@@ -100,7 +99,7 @@ def exec_test_file(recipe_path):
   except StopIteration:
     pass
   except:
-    print 'Exception while processing "%s"!' % recipe_path
+    print 'Exception while processing "%s"!' % recipe_name
     raise
 
 
@@ -128,7 +127,7 @@ def train_from_tests((recipe_path, recipe_name)):
   for path in glob(expected_for(recipe_path, '*')):
     os.unlink(path)
 
-  for test_data in exec_test_file(recipe_path):
+  for test_data in exec_test_file(recipe_name):
     steps = execute_test_case(test_data, recipe_path, recipe_name)
     expected_path = expected_for(recipe_path, test_data.name)
     print 'Writing', expected_path
@@ -144,7 +143,7 @@ def load_tests(loader, _standard_tests, _pattern):
     class RecipeTest(unittest.TestCase):
       @classmethod
       def add_test_methods(cls):
-        for test_data in exec_test_file(recipe_path):
+        for test_data in exec_test_file(recipe_name):
           expected_path = expected_for(recipe_path, test_data.name)
           def add_test(test_data, expected_path, recipe_name):
             def test_(self):

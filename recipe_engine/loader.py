@@ -6,8 +6,7 @@ import imp
 import inspect
 import os
 import sys
-
-from common import chromium_utils
+from functools import wraps
 
 from .recipe_util import RECIPE_DIRS, MODULE_DIRS
 from .recipe_api import RecipeApi
@@ -212,10 +211,35 @@ def CreateRecipeApi(names, test_data=DisabledTestData(), **kwargs):
                    optional=('TEST_API', RecipeTestApi))
 
 
+def Cached(f):
+  """Caches/memoizes a unary function.
+
+    If the function throws an exception, the cache table will not be updated.
+  """
+  cache = {}
+  empty = object()
+
+  @wraps(f)
+  def cached_f(inp):
+    cache_entry = cache.get(inp, empty)
+    if cache_entry is empty:
+      cache_entry = f(inp)
+      cache[inp] = cache_entry
+    return cache_entry
+  return cached_f
+
+
 class NoSuchRecipe(Exception):
   pass
 
 
+class ModuleObject(object):
+  def __init__(self, d):
+    for k, v in d.iteritems():
+      setattr(self, k, v)
+
+
+@Cached
 def LoadRecipe(recipe):
   # If the recipe is specified as "module:recipe", then it is an recipe
   # contained in a recipe_module as an example. Look for it in the modules
@@ -227,13 +251,18 @@ def LoadRecipe(recipe):
     try:
       return getattr(getattr(RECIPE_MODULES, module_name), example)
     except AttributeError:
-      pass
+      raise NoSuchRecipe(recipe,
+                         'Recipe module %s does not have example %s defined' %
+                         (module_name, example))
   else:
     for recipe_path in (os.path.join(p, recipe) for p in RECIPE_DIRS()):
-      recipe_module = chromium_utils.IsolatedImportFromPath(recipe_path)
-      if recipe_module:
-        return recipe_module
-  raise NoSuchRecipe(recipe)
+      script_vars = {}
+      script_name = recipe_path + '.py'
+      if os.path.exists(script_name):
+        execfile(script_name, script_vars)
+        loaded_recipe = ModuleObject(script_vars)
+        return loaded_recipe
+    raise NoSuchRecipe(recipe)
 
 
 def find_recipes(path, predicate):
