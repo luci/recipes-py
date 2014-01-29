@@ -31,6 +31,9 @@ def BaseConfig(**_kwargs):
 
     seed_steps = List(basestring),
     followup_fn = Single(types.FunctionType, required=False),
+
+    step_test_data = Single((types.FunctionType, types.MethodType),
+                            required=False),
   )
 
 

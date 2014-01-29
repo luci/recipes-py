@@ -388,13 +388,13 @@ def run_steps(stream, build_properties, factory_properties,
 
   for step in ensure_sequence_of_steps(steps):
     try:
+      test_data_fn = step.pop('step_test_data', recipe_test_api.StepTestData)
       if test.enabled:
-        step_test = step.pop('default_step_data', recipe_api.StepTestData())
+        step_test = test_data_fn()
         if step['name'] in test.step_data:
           step_test += test.step_data.pop(step['name'])
       else:
         step_test = recipe_api.DisabledTestData()
-        step.pop('default_step_data', None)
 
       placeholders = render_step(step, step_test)
 
@@ -423,7 +423,8 @@ def run_steps(stream, build_properties, factory_properties,
 
       if step_result.abort_reason:
         stream.emit('Aborted: %s' % step_result.abort_reason)
-        test.step_data.clear()  # Dump the rest of the test data
+        if test.enabled:
+          test.step_data.clear()  # Dump the rest of the test data
         step_history.failed = True
         break
 

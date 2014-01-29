@@ -2,9 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import functools
-
-from .recipe_test_api import DisabledTestData, ModuleTestData, StepTestData
+from .recipe_test_api import DisabledTestData, ModuleTestData
 
 from .recipe_util import ModuleInjectionSite
 
@@ -107,39 +105,3 @@ class RecipeApi(object):
   @property
   def name(self):
     return self._module.NAME
-
-
-def inject_test_data(func):
-  """
-  Decorator which injects mock data from this module's test_api method into
-  the return value of the decorated function.
-
-  The return value of func MUST be a single step dictionary (specifically,
-  |func| must not be a generator, nor must it return a list of steps, etc.)
-
-  When the decorated function is called, |func| is called normally. If we are
-  in test mode, we will then also call self.test_api.<func.__name__>, whose
-  return value will be assigned into the step dictionary retuned by |func|.
-
-  It is an error for the function to not exist in the test_api.
-  It is an error for the return value of |func| to already contain test data.
-  """
-  @functools.wraps(func)
-  def inner(self, *args, **kwargs):
-    assert isinstance(self, RecipeApi)
-    ret = func(self, *args, **kwargs)
-    if self._test_data.enabled:  # pylint: disable=W0212
-      test_fn = getattr(self.test_api, func.__name__, None)
-      assert test_fn, (
-        "Method %(meth)s in module %(mod)s is @inject_test_data, but test_api"
-        " does not contain %(meth)s."
-        % {
-          'meth': func.__name__,
-          'mod': self._module,  # pylint: disable=W0212
-        })
-      assert 'default_step_data' not in ret
-      data = test_fn(*args, **kwargs)
-      assert isinstance(data, StepTestData)
-      ret['default_step_data'] = data
-    return ret
-  return inner
