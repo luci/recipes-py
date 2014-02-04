@@ -37,16 +37,22 @@ class PlatformApi(recipe_api.RecipeApi):
     super(PlatformApi, self).__init__(**kwargs)
     self._name = norm_plat(sys.platform)
 
-    # Sometimes machine() lies, sometimes process() lies, so take their max.
-    machine_bits = norm_bits(platform.machine())
-    processor_bits = norm_bits(platform.processor())
-    self._bits = max(machine_bits, processor_bits)
     self._arch = 'intel'
+    self._bits = norm_bits(platform.machine())
 
     if self._test_data.enabled:
       # Default to linux/64, unless test case says otherwise.
       self._name = norm_plat(self._test_data.get('name', 'linux'))
       self._bits = norm_bits(self._test_data.get('bits', 64))
+    else:  # pragma: no cover
+      # platform.machine is based on running kernel. It's possible to use 64-bit
+      # kernel with 32-bit userland, e.g. to give linker slightly more memory.
+      # Distinguish between different userland bitness by querying
+      # the python binary.
+      if (self._name == 'linux' and
+          self._bits == 64 and
+          platform.architecture()[0] == '32bit'):
+        self._bits = 32
 
   @property
   def is_win(self):
@@ -66,6 +72,8 @@ class PlatformApi(recipe_api.RecipeApi):
 
   @property
   def bits(self):
+    # The returned bitness corresponds to the userland. If anyone ever wants
+    # to query for bitness of the kernel, another accessor should be added.
     return self._bits
 
   @property
