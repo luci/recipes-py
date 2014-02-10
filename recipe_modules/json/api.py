@@ -36,9 +36,10 @@ class StringListIO(object):
 
 class JsonOutputPlaceholder(recipe_util.Placeholder):
   """JsonOutputPlaceholder is meant to be a placeholder object which, when added
-  to a step's cmd list, will be replaced by annotated_run with the command
-  parameters --output-json /path/to/file during the evaluation of your recipe
-  generator.
+  to a step's cmd list, will be replaced by annotated_run with the path to a
+  temporary file (e.g. /tmp/tmp4lp1qM) which will exist only for the duration of
+  the step. If the script requires a flag (e.g. --output-json /path/to/file),
+  you must supply that flag yourself in the cmd list.
 
   This placeholder can be optionally added when you use the Steps.step()
   method in this module.
@@ -112,13 +113,15 @@ class JsonApi(recipe_api.RecipeApi):
 
   @recipe_util.returns_placeholder
   def output(self, add_json_log=True):
-    """A placeholder which will expand to '--output-json /tmp/file'."""
+    """A placeholder which will expand to '/tmp/file'."""
     return JsonOutputPlaceholder(self, add_json_log)
 
   # TODO(phajdan.jr): Rename to layout_test_results.
   @recipe_util.returns_placeholder
   def test_results(self, add_json_log=True):
-    """A placeholder which will expand to '--json-test-results /tmp/file'.
+    """A placeholder which will expand to '/tmp/file'.
+
+    The recipe must provide the expected --json-test-results flag.
 
     The test_results will be an instance of the TestResults class.
     """
@@ -126,7 +129,11 @@ class JsonApi(recipe_api.RecipeApi):
 
   @recipe_util.returns_placeholder
   def gtest_results(self, add_json_log=True):
-    """A placeholder which will expand to '--test-launcher-summary-output /tmp/file'.
+    """A placeholder which will expand to
+    '--test-launcher-summary-output=/tmp/file'.
+
+    Provides the --test-launcher-summary-output flag since --flag=value
+    (i.e. a single token in the command line) is the required format.
 
     The test_results will be an instance of the GTestResults class.
     """
