@@ -14,18 +14,16 @@ crossed with every platform, and spit out the as_json() representation to
 You must have 100% coverage of ../recipe_configs.py for this test to pass.
 """
 
-import json
+import argparse
 import multiprocessing
 import os
 import sys
-import unittest
 from itertools import product, imap
 
-import test_env  # pylint: disable=W0611,F0401
+import test_env
 
 from slave import recipe_loader
 from slave import recipe_util
-from slave import recipe_config_types
 
 import coverage
 
@@ -52,21 +50,14 @@ def init_recipe_modules():
 
 from slave import recipe_config  # pylint: disable=F0401
 
-def get_expect_dir(mod):
-  return os.path.join(mod.__path__[0], 'config.expected')
-
 
 def evaluate_configurations(args):
   mod_id, var_assignments = args
   mod = getattr(RECIPE_MODULES, mod_id)
-  expect_dir = get_expect_dir(mod)
   ctx = mod.CONFIG_CTX
 
   config_name = None
   try:
-    file_name = os.path.join(expect_dir, ctx.TEST_FILE_FORMAT(var_assignments))
-    ret = {}
-
     make_item = lambda: covered(ctx.CONFIG_SCHEMA, **var_assignments)
 
     # Try ROOT_CONFIG_ITEM first. If it raises BadConf, then we can skip
@@ -77,9 +68,9 @@ def evaluate_configurations(args):
       try:
         result = covered(root_item, make_item())
         if result.complete():
-          ret[config_name] = covered(result.as_jsonish)
+          covered(result.as_jsonish)
       except recipe_config.BadConf, e:
-        return file_name, None, None
+        pass # This is a possibly expected failure mode.
 
     for config_name, fn in ctx.CONFIG_ITEMS.iteritems():
       if fn.NO_TEST or fn.IS_ROOT:
@@ -87,74 +78,14 @@ def evaluate_configurations(args):
       try:
         result = covered(fn, make_item())
         if result.complete():
-          ret[config_name] = covered(result.as_jsonish)
-      except recipe_config.BadConf, e:
-        ret[config_name] = str(e)
-    return file_name, covered(ctx.TEST_NAME_FORMAT, var_assignments), ret
+          covered(result.as_jsonish)
+      except recipe_config.BadConf:
+        pass  # This is a possibly expected failure mode.
+    test_name = os.path.join(mod.__path__[0],
+                             covered(ctx.TEST_NAME_FORMAT, var_assignments))
+    print 'Evaluated', test_name
   except Exception, e:
     print 'Caught exception [%s] with args %s: %s' % (e, args, config_name)
-
-
-def train_from_tests(args):
-  file_name, _, configuration_results = evaluate_configurations(args)
-  if configuration_results is not None:
-    if configuration_results:
-      print 'Writing', file_name
-      with open(file_name, 'wb') as f:
-        json.dump(configuration_results, f, sort_keys=True, indent=2,
-                  default=recipe_config_types.json_fixup)
-    else:
-      print 'Empty', file_name
-
-  if not configuration_results:  # None or {}
-    if os.path.exists(file_name):
-      os.unlink(file_name)
-  return True
-
-
-def load_tests(loader, _standard_tests, _pattern):
-  """This method is invoked by unittest.main's automatic testloader."""
-  def create_test_class(args):
-    file_name, test_name_suffix, configuration_results = args
-    if configuration_results is None:
-      return
-
-    json_expectation = {}
-    if os.path.exists(file_name):
-      with open(file_name, 'rb') as f:
-        json_expectation = json.load(f)
-
-    class RecipeConfigsTest(unittest.TestCase):
-      def testNoLeftovers(self):
-        """add_test_methods() should completely drain json_expectation."""
-        self.assertEqual(json_expectation, {})
-
-      @classmethod
-      def add_test_methods(cls):
-        for name, result in configuration_results.iteritems():
-          def add_test(name, result, expected_result):
-            # Roundtrip json to get same string encoding as load
-            result = json.loads(
-              json.dumps(result, default=recipe_config_types.json_fixup))
-            def test_(self):
-              self.assertEqual(result, expected_result)
-            test_.__name__ += name
-            setattr(cls, test_.__name__, test_)
-          add_test(name, result, json_expectation.pop(name, {}))
-
-    RecipeConfigsTest.add_test_methods()
-
-    RecipeConfigsTest.__name__ += test_name_suffix
-    return RecipeConfigsTest
-
-  data = coverage_parallel_map(evaluate_configurations)
-
-  suite = unittest.TestSuite()
-  for test_class in map(create_test_class, data):
-    if test_class is None:
-      continue
-    suite.addTest(loader.loadTestsFromTestCase(test_class))
-  return suite
 
 
 def multiprocessing_init():
@@ -201,44 +132,21 @@ def main(argv):
   COVERAGE.erase()
   init_recipe_modules()
 
-  for k, m in RECIPE_MODULES.__dict__.iteritems():
-    if k[0] == '_':
-      continue
-    expect_dir = get_expect_dir(m)
-    if not os.path.exists(expect_dir):
-      os.makedirs(expect_dir)
+  p = argparse.ArgumentParser()
+  p.add_argument('--train', action='store_true', help='deprecated')
+  p.parse_args()
 
-  training = False
-  is_help = False
-  if '--help' in argv or '-h' in argv:
-    print 'Pass --train to enter training mode.'
-    print
-    is_help = True
-  if '--train' in argv:
-    argv.remove('--train')
-    training = True
+  coverage_parallel_map(evaluate_configurations)
 
-  had_errors = False
-  if training and not is_help:
-    coverage_parallel_map(train_from_tests)
+  retcode = 0
 
-  retcode = 1 if had_errors else 0
+  COVERAGE.combine()
+  total_covered = COVERAGE.report()
+  if total_covered != 100.0:
+    print 'FATAL: Recipes configs are not at 100% coverage.'
+    retcode = 2
 
-  if not training:
-    try:
-      unittest.main()
-    except SystemExit as e:
-      retcode = e.code or retcode
-
-  if not is_help:
-    COVERAGE.combine()
-    total_covered = COVERAGE.report()
-    if total_covered != 100.0:
-      print 'FATAL: Recipes configs are not at 100% coverage.'
-      retcode = retcode or 2
-
-  if training:
-    test_env.print_coverage_warning()
+  test_env.print_coverage_warning()
 
   return retcode
 

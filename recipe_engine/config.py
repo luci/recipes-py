@@ -318,8 +318,6 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
       return ret
     return inner
   config_ctx.TEST_NAME_FORMAT = formatter(TEST_NAME_FORMAT)
-  config_ctx.TEST_FILE_FORMAT = formatter(
-    (TEST_FILE_FORMAT or TEST_NAME_FORMAT), ext='.json')
   return config_ctx
 
 
