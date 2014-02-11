@@ -178,6 +178,18 @@ class PathApi(recipe_api.RecipeApi):
     )
     self.mock_add_paths(path)
 
+  def rmtree(self, name, path):
+    """Wrapper for shutil.rmtree."""
+    self.assert_absolute(path)
+    return self.m.python.inline(
+      'rmtree ' + name,
+      """
+      import shutil, sys
+      shutil.rmtree(sys.argv[1])
+      """,
+      args=[path],
+    )
+
   def set_dynamic_path(self, pathname, path, overwrite=True):
     """Set a named dynamic path to a concrete value.
       * path must be based on a real base_path (not another dynamic path)
