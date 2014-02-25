@@ -16,7 +16,7 @@ class PythonApi(recipe_api.RecipeApi):
     cmd.append(script)
     return self.m.step(name, cmd + list(args or []), **kwargs)
 
-  def inline(self, name, program, **kwargs):
+  def inline(self, name, program, add_python_log=True, **kwargs):
     """Run an inline python program as a step.
 
     Program is output to a temp file and run when this step executes.
@@ -24,9 +24,11 @@ class PythonApi(recipe_api.RecipeApi):
     program = textwrap.dedent(program)
     compile(program, '<string>', 'exec', dont_inherit=1)
 
-    @recipe_util.wrap_followup(kwargs)
-    def inline_followup(step_result):
-      step_result.presentation.logs['python.inline'] = program.splitlines()
+    if add_python_log:
+      @recipe_util.wrap_followup(kwargs)
+      def inline_followup(step_result):
+        step_result.presentation.logs['python.inline'] = program.splitlines()
 
-    return self(name, self.m.raw_io.input(program, '.py'),
-                followup_fn=inline_followup, **kwargs)
+      kwargs['followup_fn'] = inline_followup
+
+    return self(name, self.m.raw_io.input(program, '.py'), **kwargs)

@@ -139,6 +139,20 @@ class JsonApi(recipe_api.RecipeApi):
     """
     return GTestResultsOutputPlaceholder(self, add_json_log)
 
+  def read(self, name, path, **kwargs):
+    """Returns a step that reads a JSON file."""
+    return self.m.python.inline(
+        name,
+        """
+        import shutil
+        import sys
+        shutil.copy(sys.argv[1], sys.argv[2])
+        """,
+        args=[path, self.output()],
+        add_python_log=False,
+        **kwargs
+    )
+
   def property_args(self):
     """Return --build-properties and --factory-properties arguments. LEGACY!
 
