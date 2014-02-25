@@ -756,7 +756,7 @@ class Static(ConfigBase):
     return self.data
 
   def set_val(self, val):
-    assert False
+    assert False, "Cannot assign to a Static config member"
 
   def as_jsonish(self, _include_hidden=None):
     return self.data

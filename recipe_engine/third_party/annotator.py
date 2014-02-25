@@ -519,10 +519,10 @@ def run_step(stream, name, cmd,
         return followup_fn(s, proc.returncode)
       else:
         return proc.returncode
-    except OSError:
+    except OSError as e:
       # File wasn't found, error will be reported to stream when the exception
       # crosses the context manager.
-      raise
+      raise type(e)(str(e) + ' when executing %s' % cmd)
 
 
 def update_build_failure(failure, retcode, can_fail_build=True, **_kwargs):

@@ -366,12 +366,12 @@ class RecipeTestApi(object):
     return ret
 
   def step_data(self, name, *data, **kwargs):
-    """See step_data()"""
+    """See _step_data()"""
     return self._step_data(name, *data, **kwargs)
   step_data.__doc__ = _step_data.__doc__
 
   def override_step_data(self, name, *data, **kwargs):
-    """See step_data()"""
+    """See _step_data()"""
     kwargs['override'] = True
     return self._step_data(name, *data, **kwargs)
   override_step_data.__doc__ = _step_data.__doc__
