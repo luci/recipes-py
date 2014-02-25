@@ -21,8 +21,22 @@ class RecipeAbort(Exception):
   pass
 
 
-class ModuleInjectionSite(object):
+class ModuleInjectionError(AttributeError):
   pass
+
+
+class ModuleInjectionSite(object):
+  def __init__(self, owner_module=None):
+    self.owner_module = owner_module
+
+  def __getattr__(self, key):
+    if self.owner_module is None:
+      raise ModuleInjectionError(
+        "RecipeApi has no dependency %r. (Add it to DEPS?)" % (key,))
+    else:
+      raise ModuleInjectionError(
+        "Recipe Module %r has no dependency %r. (Add it to __init__.py:DEPS?)"
+        % (self.owner_module.name, key))
 
 
 class Placeholder(object):

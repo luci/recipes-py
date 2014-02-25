@@ -7,7 +7,7 @@ from .recipe_test_api import DisabledTestData, ModuleTestData
 from .recipe_util import ModuleInjectionSite
 
 
-class RecipeApi(object):
+class RecipeApi(ModuleInjectionSite):
   """
   Framework class for handling recipe_modules.
 
@@ -19,6 +19,8 @@ class RecipeApi(object):
   """
   def __init__(self, module=None, test_data=DisabledTestData(), **_kwargs):
     """Note: Injected dependencies are NOT available in __init__()."""
+    super(RecipeApi, self).__init__()
+
     self.c = None
     self._module = module
 
@@ -27,7 +29,7 @@ class RecipeApi(object):
 
     # If we're the 'root' api, inject directly into 'self'.
     # Otherwise inject into 'self.m'
-    self.m = self if module is None else ModuleInjectionSite()
+    self.m = self if module is None else ModuleInjectionSite(self)
 
     # If our module has a test api, it gets injected here.
     self.test_api = None
