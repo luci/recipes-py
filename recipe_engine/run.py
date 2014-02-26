@@ -362,12 +362,21 @@ def run_steps(stream, build_properties, factory_properties,
     build_properties['blamelist'] = build_properties['blamelist_real']
     del build_properties['blamelist_real']
 
+  properties = factory_properties.copy()
+  properties.update(build_properties)
+
+  # TODO(iannucci): A much better way to do this would be to dynamically
+  #   detect if the mirrors are actually available during the execution of the
+  #   recipe.
+  if ('use_mirror' not in properties and (
+    'TESTING_MASTERNAME' in os.environ or
+    'TESTING_SLAVENAME' in os.environ)):
+    properties['use_mirror'] = False
+
   step_history = collections.OrderedDict()
   with stream.step('setup_build') as s:
     assert 'recipe' in factory_properties
     recipe = factory_properties['recipe']
-    properties = factory_properties.copy()
-    properties.update(build_properties)
     try:
       recipe_module = recipe_loader.LoadRecipe(recipe)
       stream.emit('Running recipe with %s' % (properties,))

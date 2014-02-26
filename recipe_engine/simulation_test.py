@@ -170,6 +170,12 @@ def load_tests(loader, _standard_tests, _pattern):
 
 
 def main(argv):
+  # Pop these out so that we always generate consistent expectations, even
+  # if we're running the tests under a testing slave configuration (or if
+  # someone just has these set in their shell)
+  os.environ.pop('TESTING_MASTERNAME', None)
+  os.environ.pop('TESTING_SLAVENAME', None)
+
   if not os.path.exists(SLAVE_DIR):
     os.makedirs(SLAVE_DIR)
 
