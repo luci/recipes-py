@@ -453,6 +453,11 @@ def run_step(stream, name, cmd,
     can_fail_build: A boolean indicating that a bad retcode for this step
                     should be interpreted as a build failure. This variable
                     is read by update_build_failure().
+    stdout: Path to a file to put step stdout into. If used, stdout won't appear
+            in annotator's stdout (and |allow_subannotations| is ignored).
+    stderr: Path to a file to put step stderr into. If used, stderr won't appear
+            in annotator's stderr.
+    stdin: Path to a file to read step stdin from.
 
   Returns the return value of followup_fn or the returncode of the step if
     followup_fn is None.
@@ -480,14 +485,28 @@ def run_step(stream, name, cmd,
 
     print_step(step_dict, step_env, stream)
     try:
+      # Open file handles for IO redirection based on file names in step_dict.
+      fhandles = {
+        'stdout': subprocess.PIPE,
+        'stderr': subprocess.PIPE,
+        'stdin': None,
+      }
+      for key in fhandles:
+        if key in step_dict:
+          fhandles[key] = open(step_dict[key], 'rb' if key == 'stdin' else 'wb')
+
       with modify_lookup_path(step_env.get('PATH')):
         proc = subprocess.Popen(
             cmd,
             env=step_env,
             cwd=cwd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True)
+            universal_newlines=True,
+            **fhandles)
+
+      # Safe to close file handles now that subprocess has inherited them.
+      for handle in fhandles.itervalues():
+        if isinstance(handle, file):
+          handle.close()
 
       outlock = threading.Lock()
       def filter_lines(lock, allow_subannotations, inhandle, outhandle):
@@ -504,17 +523,23 @@ def run_step(stream, name, cmd,
           finally:
             lock.release()
 
-      outthread = threading.Thread(
-          target=filter_lines,
-          args=(outlock, allow_subannotations, proc.stdout, sys.stdout))
-      errthread = threading.Thread(
-          target=filter_lines,
-          args=(outlock, allow_subannotations, proc.stderr, sys.stderr))
-      outthread.start()
-      errthread.start()
+      # Pump piped stdio through filter_lines. IO going to files on disk is
+      # not filtered.
+      threads = []
+      for key in ('stdout', 'stderr'):
+        if fhandles[key] == subprocess.PIPE:
+          inhandle = getattr(proc, key)
+          outhandle = getattr(sys, key)
+          threads.append(threading.Thread(
+              target=filter_lines,
+              args=(outlock, allow_subannotations, inhandle, outhandle)))
+
+      for th in threads:
+        th.start()
       proc.wait()
-      outthread.join()
-      errthread.join()
+      for th in threads:
+        th.join()
+
       if followup_fn:
         return followup_fn(s, proc.returncode)
       else:

@@ -1,0 +1,18 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "[1, 2, 3]"
+    ],
+    "name": "echo",
+    "stdout": "/path/to/tmp/json",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@[@@@",
+      "@@@STEP_LOG_LINE@json.output@  1, @@@",
+      "@@@STEP_LOG_LINE@json.output@  2, @@@",
+      "@@@STEP_LOG_LINE@json.output@  3@@@",
+      "@@@STEP_LOG_LINE@json.output@]@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  }
+]

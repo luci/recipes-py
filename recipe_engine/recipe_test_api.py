@@ -1,6 +1,7 @@
 # Copyright 2013 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 import collections
 
 from .recipe_util import ModuleInjectionSite, static_call, static_wraps
@@ -55,6 +56,8 @@ class StepTestData(BaseTestData):
     # { (module, placeholder) -> [data] }
     self.placeholder_data = collections.defaultdict(list)
     self.override = False
+    self._stdout = None
+    self._stderr = None
     self._retcode = None
 
   def __add__(self, other):
@@ -68,11 +71,21 @@ class StepTestData(BaseTestData):
     combineify('placeholder_data', ret, self, other)
 
     # pylint: disable=W0212
+    ret._stdout = other._stdout or self._stdout
+    ret._stderr = other._stderr or self._stderr
     ret._retcode = self._retcode
     if other._retcode is not None:
       assert ret._retcode is None
       ret._retcode = other._retcode
+
     return ret
+
+  def unwrap_placeholder(self):
+    # {(module, placeholder): [data]} => data.
+    assert len(self.placeholder_data) == 1
+    data_list = self.placeholder_data.items()[0][1]
+    assert len(data_list) == 1
+    return data_list[0]
 
   def pop_placeholder(self, name_pieces):
     l = self.placeholder_data[name_pieces]
@@ -89,9 +102,33 @@ class StepTestData(BaseTestData):
   def retcode(self, value):  # pylint: disable=E0202
     self._retcode = value
 
+  @property
+  def stdout(self):
+    return self._stdout or PlaceholderTestData(None)
+
+  @stdout.setter
+  def stdout(self, value):
+    assert isinstance(value, PlaceholderTestData)
+    self._stdout = value
+
+  @property
+  def stderr(self):
+    return self._stderr or PlaceholderTestData(None)
+
+  @stderr.setter
+  def stderr(self, value):
+    assert isinstance(value, PlaceholderTestData)
+    self._stderr = value
+
+  @property
+  def stdin(self):  # pylint: disable=R0201
+    return PlaceholderTestData(None)
+
   def __repr__(self):
     return "StepTestData(%r)" % ({
       'placeholder_data': dict(self.placeholder_data.iteritems()),
+      'stdout': self._stdout,
+      'stderr': self._stderr,
       'retcode': self._retcode,
       'override': self.override,
     },)
@@ -265,6 +302,7 @@ class RecipeTestApi(object):
         placeholder_data - A mapping from placeholder name to the a list of
                            PlaceholderTestData objects, one for each instance
                            of that kind of Placeholder in the step.
+        stdout, stderr   - PlaceholderTestData objects for stdout and stderr.
 
   TestData objects are concatenatable, so it's convienent to phrase test cases
   as a series of added TestData objects. For example:
@@ -326,6 +364,8 @@ class RecipeTestApi(object):
              retcode for this step.
       retcode=(int or None) - Override the retcode for this step, even if it
              was set by |data|. This must be set as a keyword arg.
+      stdout - StepTestData object with placeholder data for a step's stdout.
+      stderr - StepTestData object with placeholder data for a step's stderr.
       override=(bool) - This step data completely replaces any previously
              generated step data, instead of adding on to it.
 
@@ -363,6 +403,11 @@ class RecipeTestApi(object):
       ret.step_data[name].retcode = kwargs['retcode']
     if 'override' in kwargs:
       ret.step_data[name].override = kwargs['override']
+    for key in ('stdout', 'stderr'):
+      if key in kwargs:
+        stdio_test_data = kwargs[key]
+        assert isinstance(stdio_test_data, StepTestData)
+        setattr(ret.step_data[name], key, stdio_test_data.unwrap_placeholder())
     return ret
 
   def step_data(self, name, *data, **kwargs):

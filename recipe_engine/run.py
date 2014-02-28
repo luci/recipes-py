@@ -245,6 +245,11 @@ def ensure_sequence_of_steps(step_or_steps):
     assert False, 'Item is not a sequence or a step: %s' % (step_or_steps,)
 
 
+# Result of 'render_step', fed into 'step_callback'.
+Placeholders = collections.namedtuple(
+    'Placeholders', ['cmd', 'stdout', 'stderr', 'stdin'])
+
+
 def render_step(step, step_test):
   """Renders a step so that it can be fed to annotator.py.
 
@@ -254,6 +259,7 @@ def render_step(step, step_test):
 
   Returns any placeholder instances that were found while rendering the step.
   """
+  # Process 'cmd', rendering placeholders there.
   placeholders = collections.defaultdict(lambda: collections.defaultdict(list))
   new_cmd = []
   for item in step['cmd']:
@@ -265,13 +271,29 @@ def render_step(step, step_test):
     else:
       new_cmd.append(item)
   step['cmd'] = new_cmd
-  return placeholders
+
+  # Process 'stdout', 'stderr' and 'stdin' placeholders, if given.
+  stdio_placeholders = {}
+  for key in ('stdout', 'stderr', 'stdin'):
+    placeholder = step.get(key)
+    tdata = None
+    if placeholder:
+      assert isinstance(placeholder, recipe_util.Placeholder), key
+      tdata = getattr(step_test, key)
+      placeholder.render(tdata)
+      assert placeholder.backing_file
+      step[key] = placeholder.backing_file
+    stdio_placeholders[key] = (placeholder, tdata)
+
+  return Placeholders(cmd=placeholders, **stdio_placeholders)
 
 
 def get_placeholder_results(step_result, placeholders):
   class BlankObject(object):
     pass
-  for module_name, pholders in placeholders.iteritems():
+
+  # Placeholders inside step |cmd|.
+  for module_name, pholders in placeholders.cmd.iteritems():
     assert not hasattr(step_result, module_name)
     o = BlankObject()
     setattr(step_result, module_name, o)
@@ -280,6 +302,13 @@ def get_placeholder_results(step_result, placeholders):
       lst = [ph.result(step_result.presentation, td) for ph, td in items]
       setattr(o, placeholder_name+"_all", lst)
       setattr(o, placeholder_name, lst[0])
+
+  # Placeholders that are used with IO redirection.
+  for key in ('stdout', 'stderr', 'stdin'):
+    assert not hasattr(step_result, key)
+    ph, td = getattr(placeholders, key)
+    result = ph.result(step_result.presentation, td) if ph else None
+    setattr(step_result, key, result)
 
 
 def step_callback(step, step_history, placeholders, step_test):

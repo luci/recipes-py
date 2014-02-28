@@ -44,6 +44,14 @@ class Placeholder(object):
   def __init__(self):
     self.name_pieces = None
 
+  @property
+  def backing_file(self):  # pragma: no cover
+    """Return path to a temp file that holds or receives the data.
+
+    Valid only after 'render' has been called.
+    """
+    raise NotImplementedError
+
   def render(self, test):  # pragma: no cover
     """Return [cmd items]*"""
     raise NotImplementedError

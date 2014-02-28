@@ -53,6 +53,10 @@ class JsonOutputPlaceholder(recipe_util.Placeholder):
     self.add_json_log = add_json_log
     super(JsonOutputPlaceholder, self).__init__()
 
+  @property
+  def backing_file(self):
+    return self.raw.backing_file
+
   def render(self, test):
     return self.raw.render(test)
 

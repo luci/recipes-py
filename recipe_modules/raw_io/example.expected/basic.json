@@ -1,0 +1,19 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "Hello World"
+    ],
+    "name": "echo",
+    "stderr": "/path/to/tmp/",
+    "stdout": "/path/to/tmp/"
+  },
+  {
+    "cmd": [
+      "cat"
+    ],
+    "name": "cat",
+    "stdin": "hello",
+    "stdout": "/path/to/tmp/out"
+  }
+]

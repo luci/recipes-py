@@ -23,6 +23,10 @@ def BaseConfig(**_kwargs):
                value_type=(basestring,int,Path,type(None))),
     cwd = Single(Path, jsonish_fn=str, required=False),
 
+    stdout = Single(Placeholder, required=False),
+    stderr = Single(Placeholder, required=False),
+    stdin = Single(Placeholder, required=False),
+
     abort_on_failure = Single(bool, required=False),
     allow_subannotations = Single(bool, required=False),
     always_run = Single(bool, required=False),
