@@ -5,5 +5,12 @@
       "{'key': ('value', ('value',))}"
     ],
     "name": "echo"
+  },
+  {
+    "cmd": [
+      "echo",
+      "{'recipe': 'properties:example', 'test_prop': {'key': ('value', ('value',))}}"
+    ],
+    "name": "echo all"
   }
 ]
