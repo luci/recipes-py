@@ -207,7 +207,7 @@ class StepData(object):
 
 def flattened(sequence):
   for item in sequence:
-    if isinstance(item, collections.Sequence):
+    if isinstance(item, collections.Sequence) or inspect.isgenerator(item):
       for sub_item in flattened(item):
         yield sub_item
     else:
