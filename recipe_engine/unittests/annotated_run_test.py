@@ -134,6 +134,14 @@ class AnnotatedRunTest(unittest.TestCase):
     C = c.consume
     C(T(I([I(S(1)), S(2)], [S(3)], [I(S(4), S(5)), S(6)])))
 
+  def testFixupSeedStepsTypeErrors(self):
+    def Raise():
+      yield S(1)
+      raise TypeError
+
+    self.assertRaises(TypeError,
+                      lambda: list(annotated_run.fixup_seed_steps(Raise())))
+
 
 if __name__ == '__main__':
   unittest.main()

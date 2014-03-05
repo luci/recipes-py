@@ -216,15 +216,16 @@ def ensure_sequence_of_steps(step_or_steps):
   if isinstance(step_or_steps, dict):
     yield step_or_steps
   else:
-    try:
-      should_execute = inspect.isgenerator(step_or_steps)
-      for i in step_or_steps:
-        for s in ensure_sequence_of_steps(i):
-          yield s
-        if should_execute:
-          yield EXECUTE_NOW_SENTINEL
-    except TypeError:
-      assert False, 'Item is not a sequence or a step: %s' % (step_or_steps,)
+    should_execute = inspect.isgenerator(step_or_steps)
+    correct_type = (should_execute
+                    or isinstance(step_or_steps, collections.Sequence))
+    assert correct_type, ('Item is not a sequence or a step: %s'
+                          % (step_or_steps,))
+    for i in step_or_steps:
+      for s in ensure_sequence_of_steps(i):
+        yield s
+      if should_execute:
+        yield EXECUTE_NOW_SENTINEL
 
 
 def seed_step_buffer(step_buffer):
