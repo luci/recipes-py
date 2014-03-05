@@ -31,7 +31,7 @@ except ImportError:
   import coverage
 
 def print_coverage_warning():
-  if not coverage.collector.CTracer:
+  if not hasattr(coverage.collector, 'CTracer'):
     print "WARNING: Using the pure-python coverage module."
     print "         Install the native python coverage module to speed recipe"
     print "         training up by an order of magnitude."
