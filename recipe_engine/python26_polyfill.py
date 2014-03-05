@@ -37,11 +37,11 @@ if not hasattr(collections, 'OrderedDict'):
     # Each link is stored as a list of length three:  [PREV, NEXT, KEY].
 
     def __init__(self, *args, **kwds):
-      '''Initialize an ordered dictionary.  Signature is the same as for
-      regular dictionaries, but keyword arguments are not recommended
-      because their insertion order is arbitrary.
+      """Initialize an ordered dictionary.
 
-      '''
+      Signature is the same as for regular dictionaries, but keyword arguments
+      are not recommended because their insertion order is arbitrary.
+      """
       # pylint: disable=W0231
       if len(args) > 1:
         raise TypeError('expected at most 1 arguments, got %d' % len(args))
@@ -103,10 +103,11 @@ if not hasattr(collections, 'OrderedDict'):
       dict.clear(self)
 
     def popitem(self, last=True):
-      '''od.popitem() -> (k, v), return and remove a (key, value) pair.
-      Pairs are returned in LIFO order if last is true or FIFO order if false.
+      """Return and remove a (key, value) pair.
 
-      '''
+      od.popitem() -> (k, v),
+      Pairs are returned in LIFO order if last is true or FIFO order if false.
+      """
       if not self:
         raise KeyError('dictionary is empty')
       root = self.__root
@@ -154,14 +155,13 @@ if not hasattr(collections, 'OrderedDict'):
         yield (k, self[k])
 
     def update(*args, **kwds):  # pylint: disable=E0211
-      '''od.update(E, **F) -> None.  Update od from dict/iterable E and F.
+      """od.update(E, **F) -> None.  Update od from dict/iterable E and F.
 
       If E is a dict instance, does:           for k in E: od[k] = E[k]
       If E has a .keys() method, does:         for k in E.keys(): od[k] = E[k]
       Or if E is an iterable of items, does:   for k, v in E: od[k] = v
       In either case, this is followed by:     for k, v in F.items(): od[k] = v
-
-      '''
+      """
       if len(args) > 2:
         raise TypeError('update() takes at most 2 positional '
                         'arguments (%d given)' % (len(args),))
@@ -190,10 +190,11 @@ if not hasattr(collections, 'OrderedDict'):
     __marker = object()
 
     def pop(self, key, default=__marker):
-      '''od.pop(k[,d]) -> v, remove specified key and return the corresponding
-      value. If key is not found, d is returned if given, otherwise KeyError is
-      raised.
-      '''
+      """Remove specified key and return the corresponding value.
+
+      If the key is not found, then default is returned if given.
+      Otherwise KeyError is raised.
+      """
       if key in self:
         result = self[key]
         del self[key]
@@ -237,21 +238,23 @@ if not hasattr(collections, 'OrderedDict'):
       return self.__class__(self)
 
     @classmethod
-    def fromkeys(cls, iterable, value=None):
-      '''OD.fromkeys(S[, v]) -> New ordered dictionary with keys from S
-      and values equal to v (which defaults to None).
+    def fromkeys(cls, keys, value=None):
+      """Returns a new ordered dictionary
 
-      '''
+      Keys are taken from first argument (iterable) and all values equal
+      to keyword argument value.
+      """
       d = cls()
-      for key in iterable:
+      for key in keys:
         d[key] = value
       return d
 
     def __eq__(self, other):
-      '''od.__eq__(y) <==> od==y.  Comparison to another OD is order-sensitive
-      while comparison to a regular mapping is order-insensitive.
+      """Compare with a dict or OrderedDict.
 
-      '''
+      Comparison to another OrderedDict is order-sensitive, while
+      comparison to a regular mapping is order-insensitive.
+      """
       if isinstance(other, OrderedDict):
         return len(self)==len(other) and self.items() == other.items()
       return dict.__eq__(self, other)

@@ -296,7 +296,7 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
   config_ctx.VAR_TEST_MAP = VAR_TEST_MAP
 
   def formatter(obj, ext=None):
-    '''Converts format obj to a function taking var assignments.
+    """Converts format obj to a function taking var assignments.
 
     Args:
       obj (str or fn(assignments)): If obj is a str, it will be % formatted
@@ -306,7 +306,7 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
       ext (None or str): Optionally specify an extension to enforce on the
         format. This enforcement occurs after obj is finalized to a string. If
         the string doesn't end with ext, it will be appended.
-    '''
+    """
     def inner(var_assignments):
       ret = ''
       if isinstance(obj, basestring):
