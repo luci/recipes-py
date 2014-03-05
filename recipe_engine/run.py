@@ -205,44 +205,49 @@ class StepData(object):
     return self._presentation
 
 
-def flattened(sequence):
-  for item in sequence:
-    if isinstance(item, collections.Sequence) or inspect.isgenerator(item):
-      for sub_item in flattened(item):
-        yield sub_item
-    else:
-      yield item
-
-
-def fixup_seed_steps(sequence):
-  """Takes a sequence of step dicts and adds seed_steps to the first entry
-  if appropriate.
-
-  Returns the sequence for convenience.
-  """
-  seed_steps = None
-  for step in sequence:
-    if not seed_steps:
-      if 'seed_steps' in step:
-        break
-      seed_steps = step['seed_steps'] = []
-    seed_steps.append(step['name'])
-  return sequence
+# Sentinel for marking all steps before for execution.
+EXECUTE_NOW_SENTINEL = object()
 
 
 def ensure_sequence_of_steps(step_or_steps):
-  """Generates one or more fixed steps, given a step or a sequence of steps."""
+  """Generates one or more fixed steps, given a step or a sequence of steps.
+  Productions from generators are always followed by an EXECUTE_NOW_SENTINEL,
+  so that the following steps are not seeded."""
   if isinstance(step_or_steps, dict):
     yield step_or_steps
-  elif isinstance(step_or_steps, collections.Sequence):
-    for s in fixup_seed_steps(list(flattened(step_or_steps))):
-      yield s
-  elif inspect.isgenerator(step_or_steps):
-    for i in step_or_steps:
-      for s in ensure_sequence_of_steps(i):
-        yield s
   else:
-    assert False, 'Item is not a sequence or a step: %s' % (step_or_steps,)
+    try:
+      should_execute = inspect.isgenerator(step_or_steps)
+      for i in step_or_steps:
+        for s in ensure_sequence_of_steps(i):
+          yield s
+        if should_execute:
+          yield EXECUTE_NOW_SENTINEL
+    except TypeError:
+      assert False, 'Item is not a sequence or a step: %s' % (step_or_steps,)
+
+
+def seed_step_buffer(step_buffer):
+  # Seed steps only if there is at least one more step after the current.
+  if len(step_buffer) > 1:
+    step_buffer[0]['seed_steps'] = [s['name'] for s in step_buffer]
+
+
+def fixup_seed_steps(step_or_steps):
+  step_buffer = []
+  for step in ensure_sequence_of_steps(step_or_steps):
+    if isinstance(step, dict):
+      step_buffer.append(step)
+    elif step is EXECUTE_NOW_SENTINEL:
+      seed_step_buffer(step_buffer)
+      for s in step_buffer:
+        yield s
+      step_buffer = []
+    else:
+      assert False, 'Item is not a step or sentinel: %s' % (step_or_steps,)
+  seed_step_buffer(step_buffer)
+  for s in step_buffer:
+    yield s
 
 
 # Result of 'render_step', fed into 'step_callback'.
@@ -424,7 +429,7 @@ def run_steps(stream, build_properties, factory_properties,
   # annotator.py handles the seeding, execution, and annotation of each step.
   step_history.failed = False
 
-  for step in ensure_sequence_of_steps(steps):
+  for step in fixup_seed_steps(steps):
     try:
       test_data_fn = step.pop('step_test_data', recipe_test_api.StepTestData)
       if test.enabled:
