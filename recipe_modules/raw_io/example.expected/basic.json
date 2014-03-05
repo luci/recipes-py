@@ -15,5 +15,22 @@
     "name": "cat",
     "stdin": "hello",
     "stdout": "/path/to/tmp/out"
+  },
+  {
+    "cmd": [
+      "echo",
+      "hello"
+    ],
+    "name": "automock",
+    "stdout": "/path/to/tmp/out"
+  },
+  {
+    "cmd": [
+      "echo",
+      "hello"
+    ],
+    "name": "automock (fail)",
+    "stderr": "/path/to/tmp/err",
+    "stdout": "/path/to/tmp/out"
   }
 ]

@@ -21,7 +21,29 @@ def GenSteps(api):
   yield api.step('cat', ['cat'],
       stdin=api.raw_io.input(data='hello'),
       stdout=api.raw_io.output('out'))
-  assert api.step_history.last_step().stdout == 'hello'
+  output = api.step_history.last_step().stdout
+  assert output == 'hello'
+
+  # Example of auto-mocking stdout
+  yield api.step('automock', ['echo', output],
+                 stdout=api.raw_io.output('out'),
+                 step_test_data=(
+                   lambda: api.raw_io.test_api.stream_output(output)))
+  assert api.step_history.last_step().stdout == output
+
+  # Example of auto-mocking stdout + stderr
+  yield api.step(
+    'automock (fail)', ['echo', output],
+    stdout=api.raw_io.output('out'),
+    stderr=api.raw_io.output('err'),
+    step_test_data=(
+      lambda: (
+        api.raw_io.test_api.stream_output(output) +
+        api.raw_io.test_api.stream_output('fail', 'stderr')
+      ))
+  )
+  assert api.step_history.last_step().stdout == output
+  assert api.step_history.last_step().stderr == 'fail'
 
 
 def GenTests(api):
