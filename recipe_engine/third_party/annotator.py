@@ -319,10 +319,7 @@ def MatchAnnotation(line, callback_implementor):
   line = line[3:-3]
 
   # look until the first @ or ' '
-  idx_seq = [x for x in (line.find('@'), line.find(' '), len(line)) if x > 0]
-  if not idx_seq:
-    raise Exception('Unexpected condition in annotator. Line is "%s"' % line)
-  idx = min(idx_seq)
+  idx = min((x for x in (line.find('@'), line.find(' '), len(line)) if x > 0))
   cmd_text = line[:idx]
   cmd = DEPRECATED_ALIASES.get(cmd_text, cmd_text)
 
