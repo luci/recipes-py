@@ -6,11 +6,11 @@ from slave import recipe_api
 from slave import recipe_util
 
 class StepApi(recipe_api.RecipeApi):
-  def __init__(self, *args, **kwargs):
+  def __init__(self, **kwargs):
+    super(StepApi, self).__init__(**kwargs)
     self._auto_resolve_conflicts = False
     self._name_function = None
     self._step_names = {}
-    super(StepApi, self).__init__(*args, **kwargs)
 
   # Making these properties makes them show up in show_me_the_modules,
   # and also makes it clear that they are intended to be mutated.

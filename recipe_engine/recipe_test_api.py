@@ -138,7 +138,7 @@ class ModuleTestData(BaseTestData, dict):
   """
   Mutable container for test data for a specific module.
 
-  This test data is consumed at module load time (i.e. when CreateRecipeApi
+  This test data is consumed at module load time (i.e. when create_recipe_api
   runs).
   """
   def __add__(self, other):

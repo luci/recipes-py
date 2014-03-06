@@ -18,6 +18,9 @@ class StepHistoryApi(recipe_api.RecipeApi, collections.Mapping):
 
   def __init__(self, step_history, **kwargs):
     super(StepHistoryApi, self).__init__(**kwargs)
+    # step_history is instantiated in annontated_run.py. Recipe engine is
+    # responsible for updating it.
+    assert isinstance(step_history, collections.OrderedDict)
     self._step_history = step_history
 
   def __getitem__(self, key):

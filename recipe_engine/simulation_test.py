@@ -84,9 +84,9 @@ def expected_for(recipe_path, test_name):
 
 def exec_test_file(recipe_name):
   with cover():
-    recipe = recipe_loader.LoadRecipe(recipe_name)
+    recipe = recipe_loader.load_recipe(recipe_name)
     try:
-      test_api = recipe_loader.CreateTestApi(recipe.DEPS)
+      test_api = recipe_loader.create_test_api(recipe.DEPS)
       gen = recipe.GenTests(test_api)
     except Exception, e:
       print "Caught exception while processing %s: %s" % (recipe_name, e)
@@ -111,7 +111,8 @@ def execute_test_case(test_data, recipe_path, recipe_name):
     stream = annotator.StructuredAnnotationStream(stream=open(os.devnull, 'w'))
 
     def api(*args, **kwargs):
-      return recipe_loader.CreateRecipeApi(test_data=test_data, *args, **kwargs)
+      return recipe_loader.create_recipe_api(
+        test_data=test_data, *args, **kwargs)
 
     with cover():
       recipe_config_types.ResetTostringFns()

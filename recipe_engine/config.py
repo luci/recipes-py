@@ -88,34 +88,28 @@ import collections
 import functools
 import types
 
+
 class BadConf(Exception):
   pass
 
-def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
-                        TEST_FILE_FORMAT=None):
-  """Create a configuration context.
 
-  Args:
-    CONFIG_SCHEMA: This is a function which can take a minimum of zero arguments
-                   and returns an instance of BaseConfig. This BaseConfig
-                   defines the schema for all configuration objects manipulated
-                   in this context.
-    VAR_TEST_MAP: A dict mapping arg_name to an iterable of values. This
-                  provides the test harness with sufficient information to
-                  generate all possible permutations of inputs for the
-                  CONFIG_SCHEMA function.
-    TEST_NAME_FORMAT: A string format (or function) for naming tests and test
-                      expectation files. It will be formatted/called with a
-                      dictionary of arg_name to value (using arg_names and
-                      values generated from VAR_TEST_MAP)
-    TEST_FILE_FORMAT: Similar to TEST_NAME_FORMAT, but for test files. Defaults
-                      to TEST_NAME_FORMAT.
+class ConfigContext(object):
+  """A configuration context for a recipe module.
 
-  Returns a config_ctx decorator for this context.
+  Holds configuration schema and also acts as a config_ctx decorator.
+  A recipe module can define at most one such context.
   """
 
-  def config_ctx(group=None, includes=None, deps=None, no_test=False,
-                 is_root=False, config_vars=None):
+  def __init__(self, CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT):
+    self.CONFIG_ITEMS = {}
+    self.MUTEX_GROUPS = {}
+    self.CONFIG_SCHEMA = CONFIG_SCHEMA
+    self.ROOT_CONFIG_ITEM = None
+    self.VAR_TEST_MAP = VAR_TEST_MAP
+    self.TEST_NAME_FORMAT = create_formatter(TEST_NAME_FORMAT)
+
+  def __call__(self, group=None, includes=None, deps=None, no_test=False,
+               is_root=False, config_vars=None):
     """
     A decorator for functions which modify a given schema of configs.
     Examples continue using the schema and config_items defined in the module
@@ -180,7 +174,7 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
       config_vars(dict) - A dictionary mapping of { CONFIG_VAR: <value> }. This
         sets the input contidions for the CONFIG_SCHEMA.
 
-      Returns a new decorated version of this function (see inner()).
+    Returns a new decorated version of this function (see inner()).
     """
     def decorator(f):
       name = f.__name__
@@ -218,14 +212,14 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
         Returns config and ignores the return value of the decorated function.
         """
         if config is None:
-          config = config_ctx.CONFIG_SCHEMA()
+          config = self.CONFIG_SCHEMA()
         assert isinstance(config, ConfigGroup)
         inclusions = config._inclusions  # pylint: disable=W0212
 
         # inner.IS_ROOT will be True or False at the time of invocation.
-        if (config_ctx.ROOT_CONFIG_ITEM and not inner.IS_ROOT and
-            config_ctx.ROOT_CONFIG_ITEM.__name__ not in inclusions):
-          config_ctx.ROOT_CONFIG_ITEM(config)
+        if (self.ROOT_CONFIG_ITEM and not inner.IS_ROOT and
+            self.ROOT_CONFIG_ITEM.__name__ not in inclusions):
+          self.ROOT_CONFIG_ITEM(config)
 
         if name in inclusions:
           if optional:
@@ -239,20 +233,20 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
           if include in inclusions:
             continue
           try:
-            config_ctx.CONFIG_ITEMS[include](config)
-          except BadConf, e:
+            self.CONFIG_ITEMS[include](config)
+          except BadConf as e:
             raise BadConf('config "%s" includes "%s", but [%s]' %
                           (name, include, e))
 
         # deps are a list of group names. All groups must be represented
         # in config already.
         for dep_group in (deps or []):
-          if not (inclusions & config_ctx.MUTEX_GROUPS[dep_group]):
+          if not (inclusions & self.MUTEX_GROUPS[dep_group]):
             raise BadConf('dep group "%s" is unfulfilled for "%s"' %
                           (dep_group, name))
 
         if group:
-          overlap = inclusions & config_ctx.MUTEX_GROUPS[group]
+          overlap = inclusions & self.MUTEX_GROUPS[group]
           overlap.discard(name)
           if overlap:
             raise BadConf('"%s" is a member of group "%s", but %s already ran' %
@@ -266,64 +260,78 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT,
       def default_config_vars():
         ret = {}
         for include in (includes or []):
-          item = config_ctx.CONFIG_ITEMS[include]
+          item = self.CONFIG_ITEMS[include]
           ret.update(item.DEFAULT_CONFIG_VARS())
         if config_vars:
           ret.update(config_vars)
         return ret
       inner.DEFAULT_CONFIG_VARS = default_config_vars
 
-      assert name not in config_ctx.CONFIG_ITEMS
-      config_ctx.CONFIG_ITEMS[name] = inner
+      assert name not in self.CONFIG_ITEMS
+      self.CONFIG_ITEMS[name] = inner
       if group:
-        config_ctx.MUTEX_GROUPS.setdefault(group, set()).add(name)
+        self.MUTEX_GROUPS.setdefault(group, set()).add(name)
       inner.IS_ROOT = is_root
       if is_root:
-        assert not config_ctx.ROOT_CONFIG_ITEM, (
+        assert not self.ROOT_CONFIG_ITEM, (
           'may only have one root config_ctx!')
-        config_ctx.ROOT_CONFIG_ITEM = inner
+        self.ROOT_CONFIG_ITEM = inner
         inner.IS_ROOT = True
       inner.NO_TEST = no_test or bool(deps)
       return inner
     return decorator
 
-  # Internal state and testing data
-  config_ctx.I_AM_A_CONFIG_CTX = True
-  config_ctx.CONFIG_ITEMS = {}
-  config_ctx.MUTEX_GROUPS = {}
-  config_ctx.CONFIG_SCHEMA = CONFIG_SCHEMA
-  config_ctx.ROOT_CONFIG_ITEM = None
-  config_ctx.VAR_TEST_MAP = VAR_TEST_MAP
 
-  def formatter(obj, ext=None):
-    """Converts format obj to a function taking var assignments.
+def create_formatter(obj, ext=None):
+  """Converts format obj to a function taking var assignments.
 
-    Args:
-      obj (str or fn(assignments)): If obj is a str, it will be % formatted
-        with assignments (which is a dict of variables from VAR_TEST_MAP).
-        Otherwise obj will be invoked with assignments, and expected to return
-        a fully-rendered string.
-      ext (None or str): Optionally specify an extension to enforce on the
-        format. This enforcement occurs after obj is finalized to a string. If
-        the string doesn't end with ext, it will be appended.
-    """
-    def inner(var_assignments):
-      ret = ''
-      if isinstance(obj, basestring):
-        ret = obj % var_assignments
-      else:
-        ret = obj(var_assignments)
-      if ext and not ret.endswith(ext):
-        ret += ext
-      return ret
-    return inner
-  config_ctx.TEST_NAME_FORMAT = formatter(TEST_NAME_FORMAT)
-  return config_ctx
+  Args:
+    obj (str or fn(assignments)): If obj is a str, it will be % formatted
+      with assignments (which is a dict of variables from VAR_TEST_MAP).
+      Otherwise obj will be invoked with assignments, and expected to return
+      a fully-rendered string.
+    ext (None or str): Optionally specify an extension to enforce on the
+      format. This enforcement occurs after obj is finalized to a string. If
+      the string doesn't end with ext, it will be appended.
+  """
+  def inner(var_assignments):
+    ret = ''
+    if isinstance(obj, basestring):
+      ret = obj % var_assignments
+    else:
+      ret = obj(var_assignments)
+    if ext and not ret.endswith(ext):
+      ret += ext
+    return ret
+  return inner
+
+
+def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT):
+  """Create a configuration context.
+
+  Args:
+    CONFIG_SCHEMA: This is a function which can take a minimum of zero arguments
+                   and returns an instance of BaseConfig. This BaseConfig
+                   defines the schema for all configuration objects manipulated
+                   in this context.
+    VAR_TEST_MAP: A dict mapping arg_name to an iterable of values. This
+                  provides the test harness with sufficient information to
+                  generate all possible permutations of inputs for the
+                  CONFIG_SCHEMA function.
+    TEST_NAME_FORMAT: A string format (or function) for naming tests and test
+                      expectation files. It will be formatted/called with a
+                      dictionary of arg_name to value (using arg_names and
+                      values generated from VAR_TEST_MAP).
+
+  Returns a config_ctx decorator for this context.
+  """
+  return ConfigContext(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT)
 
 
 class AutoHide(object):
   pass
 AutoHide = AutoHide()
+
 
 class ConfigBase(object):
   """This is the root interface for all config schema types."""

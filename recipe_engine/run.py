@@ -380,7 +380,7 @@ def main(argv=None):
 
 
 def run_steps(stream, build_properties, factory_properties,
-              api=recipe_loader.CreateRecipeApi,
+              api=recipe_loader.create_recipe_api,
               test=recipe_test_api.DisabledTestData()):
   """Returns a tuple of (status_code, steps_ran).
 
@@ -413,7 +413,7 @@ def run_steps(stream, build_properties, factory_properties,
     assert 'recipe' in factory_properties
     recipe = factory_properties['recipe']
     try:
-      recipe_module = recipe_loader.LoadRecipe(recipe)
+      recipe_module = recipe_loader.load_recipe(recipe)
       stream.emit('Running recipe with %s' % (properties,))
       steps = recipe_module.GenSteps(api(recipe_module.DEPS,
                                          properties=properties,

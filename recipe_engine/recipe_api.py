@@ -15,7 +15,7 @@ class RecipeApi(ModuleInjectionSite):
   wiring for your config context (in self.c and methods, and for dependency
   injection (in self.m).
 
-  Dependency injection takes place in load_recipe_modules() below.
+  Dependency injection takes place in load_recipe_modules() in recipe_loader.py.
   """
   def __init__(self, module=None, test_data=DisabledTestData(), **_kwargs):
     """Note: Injected dependencies are NOT available in __init__()."""

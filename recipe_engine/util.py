@@ -1,6 +1,7 @@
 # Copyright 2013 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 import functools
 import os
 
@@ -16,6 +17,7 @@ BASE_DIRS = [
 ]
 MODULE_DIRS = lambda: [os.path.join(x, 'recipe_modules') for x in BASE_DIRS]
 RECIPE_DIRS = lambda: [os.path.join(x, 'recipes') for x in BASE_DIRS]
+
 
 class RecipeAbort(Exception):
   pass
@@ -111,8 +113,7 @@ def returns_placeholder(func):
 
 
 def wrap_followup(kwargs, pre=False):
-  """
-  Decorator for a new followup_fn.
+  """Decorator for a new followup_fn.
 
   Will pop the existing fn out of kwargs (if any), and return a decorator for
   the new folloup_fn.
@@ -139,3 +140,27 @@ def wrap_followup(kwargs, pre=False):
   return decorator
 
 
+def cached_unary(f):
+  """Decorator that caches/memoizes an unary function result.
+
+  If the function throws an exception, the cache table will not be updated.
+  """
+  cache = {}
+  empty = object()
+
+  @functools.wraps(f)
+  def cached_f(inp):
+    cache_entry = cache.get(inp, empty)
+    if cache_entry is empty:
+      cache_entry = f(inp)
+      cache[inp] = cache_entry
+    return cache_entry
+  return cached_f
+
+
+def scan_directory(path, predicate):
+  """Recursively scans a directory and yields paths that match predicate."""
+  for root, _dirs, files in os.walk(path):
+    for file_name in (f for f in files if predicate(f)):
+      file_path = os.path.join(root, file_name)
+      yield file_path

@@ -1,27 +1,65 @@
 # Copyright 2013 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 import copy
 import imp
 import inspect
 import os
 import sys
-from functools import wraps
 
-from .recipe_util import RECIPE_DIRS, MODULE_DIRS
+from .recipe_util import RECIPE_DIRS, MODULE_DIRS, cached_unary, scan_directory
 from .recipe_api import RecipeApi
+from .recipe_config import ConfigContext
 from .recipe_test_api import RecipeTestApi, DisabledTestData, ModuleTestData
 
 
+class NoSuchRecipe(Exception):
+  """Raised by load_recipe is recipe is not found."""
+
+
+class RecipeScript(object):
+  """Holds dict of an evaluated recipe script."""
+
+  def __init__(self, recipe_dict):
+    for k, v in recipe_dict.iteritems():
+      setattr(self, k, v)
+
+  @classmethod
+  def from_script_path(cls, script_path):
+    """Evaluates a script and returns RecipeScript instance."""
+    script_vars = {}
+    execfile(script_path, script_vars)
+    return cls(script_vars)
+
+  @classmethod
+  def from_module_object(cls, module_obj):
+    """Converts python module object into RecipeScript instance."""
+    return cls(module_obj.__dict__)
+
+
 def load_recipe_modules(mod_dirs):
+  """Makes a python module object that have all recipe modules in its dict.
+
+  Args:
+    mod_dirs (list of str): list of module search paths.
+  """
   def patchup_module(name, submod):
+    """Finds framework related classes and functions in a |submod| and adds
+    them to |submod| as top level constants with well known names such as
+    API, CONFIG_CTX and TEST_API.
+
+    |submod| is a recipe module (akin to python package) with submodules such as
+    'api', 'config', 'test_api'. This function scans through dicts of that
+    submodules to find subclasses of RecipeApi, RecipeTestApi, etc.
+    """
     submod.NAME = name
     submod.CONFIG_CTX = getattr(submod, 'CONFIG_CTX', None)
     submod.DEPS = frozenset(getattr(submod, 'DEPS', ()))
 
     if hasattr(submod, 'config'):
       for v in submod.config.__dict__.itervalues():
-        if hasattr(v, 'I_AM_A_CONFIG_CTX'):
+        if isinstance(v, ConfigContext):
           assert not submod.CONFIG_CTX, (
             'More than one configuration context: %s' % (submod.config))
           submod.CONFIG_CTX = v
@@ -115,20 +153,21 @@ def load_recipe_modules(mod_dirs):
     imp.release_lock()
 
 
-def CreateApi(mod_dirs, names, test_data=DisabledTestData(), required=None,
-              optional=None, kwargs=None):
-  """
-  Given a list of module names, return an instance of RecipeApi which contains
-  those modules as direct members.
+def create_api(mod_dirs, names, test_data=DisabledTestData(), required=None,
+               optional=None, kwargs=None):
+  """Given a list of module names, return an instance of RecipeApi which
+  contains those modules as direct members.
 
   So, if you pass ['foobar'], you'll get an instance back which contains a
   'foobar' attribute which itself is a RecipeApi instance from the 'foobar'
   module.
 
   Args:
-    names (list): A list of module names to include in the returned RecipeApi.
     mod_dirs (list): A list of paths to directories which contain modules.
+    names (list): A list of module names to include in the returned RecipeApi.
     test_data (TestData): ...
+    required: a pair such as ('API', RecipeApi).
+    optional: a pair such as ('TEST_API', RecipeTestApi).
     kwargs: Data passed to each module api. Usually this will contain:
         properties (dict): the properties dictionary (used by the properties
             module)
@@ -162,15 +201,18 @@ def CreateApi(mod_dirs, names, test_data=DisabledTestData(), required=None,
                                            test_data=mod_test, **kwargs)
       if optional:
         api = getattr(module, optional[0], None) or optional[1]
+        # TODO(vadimsh): Why not pass **kwargs here as well? There's
+        # an assumption here that optional[1] is always RecipeTestApi subclass
+        # (that doesn't need kwargs).
         inst_maps[optional[0]][name] = api(module=module,
                                            test_data=mod_test)
 
   map(create_maps, names)
 
   if required:
-    MapDependencies(dep_map, inst_maps[required[0]])
+    map_dependencies(dep_map, inst_maps[required[0]])
   if optional:
-    MapDependencies(dep_map, inst_maps[optional[0]])
+    map_dependencies(dep_map, inst_maps[optional[0]])
     if required:
       for name, module in inst_maps[required[0]].iteritems():
         module.test_api = inst_maps[optional[0]][name]
@@ -178,7 +220,7 @@ def CreateApi(mod_dirs, names, test_data=DisabledTestData(), required=None,
   return inst_maps[(required or optional)[0]][None]
 
 
-def MapDependencies(dep_map, inst_map):
+def map_dependencies(dep_map, inst_map):
   # NOTE: this is 'inefficient', but correct and compact.
   dep_map = copy.deepcopy(dep_map)
   while dep_map:
@@ -201,46 +243,29 @@ def MapDependencies(dep_map, inst_map):
     assert did_something, 'Did nothing on this loop. %s' % dep_map
 
 
-def CreateTestApi(names):
-  return CreateApi(MODULE_DIRS(), names, optional=('TEST_API', RecipeTestApi))
+def create_test_api(names):
+  return create_api(MODULE_DIRS(), names, optional=('TEST_API', RecipeTestApi))
 
 
-def CreateRecipeApi(names, test_data=DisabledTestData(), **kwargs):
-  return CreateApi(MODULE_DIRS(), names, test_data=test_data, kwargs=kwargs,
-                   required=('API', RecipeApi),
-                   optional=('TEST_API', RecipeTestApi))
+def create_recipe_api(names, test_data=DisabledTestData(), **kwargs):
+  return create_api(MODULE_DIRS(), names, test_data=test_data, kwargs=kwargs,
+                    required=('API', RecipeApi),
+                    optional=('TEST_API', RecipeTestApi))
 
 
-def Cached(f):
-  """Caches/memoizes a unary function.
+@cached_unary
+def load_recipe(recipe):
+  """Given name of a recipe, loads and returns it as RecipeScript instance.
 
-    If the function throws an exception, the cache table will not be updated.
+  Args:
+    recipe (str): name of a recipe, can be in form '<module>:<recipe>'.
+
+  Returns:
+    RecipeScript instance.
+
+  Raises:
+    NoSuchRecipe: recipe is not found.
   """
-  cache = {}
-  empty = object()
-
-  @wraps(f)
-  def cached_f(inp):
-    cache_entry = cache.get(inp, empty)
-    if cache_entry is empty:
-      cache_entry = f(inp)
-      cache[inp] = cache_entry
-    return cache_entry
-  return cached_f
-
-
-class NoSuchRecipe(Exception):
-  pass
-
-
-class ModuleObject(object):
-  def __init__(self, d):
-    for k, v in d.iteritems():
-      setattr(self, k, v)
-
-
-@Cached
-def LoadRecipe(recipe):
   # If the recipe is specified as "module:recipe", then it is an recipe
   # contained in a recipe_module as an example. Look for it in the modules
   # imported by load_recipe_modules instead of the normal search paths.
@@ -249,36 +274,30 @@ def LoadRecipe(recipe):
     assert example.endswith('example')
     RECIPE_MODULES = load_recipe_modules(MODULE_DIRS())
     try:
-      return getattr(getattr(RECIPE_MODULES, module_name), example)
+      script_module = getattr(getattr(RECIPE_MODULES, module_name), example)
+      return RecipeScript.from_module_object(script_module)
     except AttributeError:
       raise NoSuchRecipe(recipe,
                          'Recipe module %s does not have example %s defined' %
                          (module_name, example))
   else:
     for recipe_path in (os.path.join(p, recipe) for p in RECIPE_DIRS()):
-      script_vars = {}
-      script_name = recipe_path + '.py'
-      if os.path.exists(script_name):
-        execfile(script_name, script_vars)
-        loaded_recipe = ModuleObject(script_vars)
-        return loaded_recipe
+      if os.path.exists(recipe_path + '.py'):
+        return RecipeScript.from_script_path(recipe_path + '.py')
     raise NoSuchRecipe(recipe)
 
 
-def find_recipes(path, predicate):
-  for root, _dirs, files in os.walk(path):
-    for recipe in (f for f in files if predicate(f)):
-      recipe_path = os.path.join(root, recipe)
-      yield recipe_path
-
-
 def loop_over_recipes():
+  """Yields pairs (path to recipe, recipe name).
+
+  Enumerates real recipes in recipes/* as well as examples in recipe_modules/*.
+  """
   for path in RECIPE_DIRS():
-    for recipe in find_recipes(
+    for recipe in scan_directory(
         path, lambda f: f.endswith('.py') and f[0] != '_'):
       yield recipe, recipe[len(path)+1:-len('.py')]
   for path in MODULE_DIRS():
-    for recipe in find_recipes(
+    for recipe in scan_directory(
         path, lambda f: f.endswith('example.py')):
       module_name = os.path.dirname(recipe)[len(path)+1:]
       yield recipe, '%s:example' % module_name

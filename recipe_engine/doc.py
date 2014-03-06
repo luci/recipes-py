@@ -83,9 +83,9 @@ def main():
     pmethod(1, method, getattr(recipe_api.RecipeApi, method))
   RECIPE_MODULES = recipe_loader.load_recipe_modules(recipe_util.MODULE_DIRS())
 
-  inst = recipe_loader.CreateRecipeApi(
+  inst = recipe_loader.create_recipe_api(
       [ mod_name for mod_name, mod in member_iter(RECIPE_MODULES) ],
-      mocks={'path': {}}, properties={}, step_history={})
+      mocks={'path': {}}, properties={}, step_history=collections.OrderedDict())
 
   for mod_name, mod in member_iter(RECIPE_MODULES):
     p(0)
