@@ -8,6 +8,9 @@ class PathTestApi(recipe_test_api.RecipeTestApi):
     assert all(isinstance(p, Path) for p in paths)
     return paths
 
+  def __getitem__(self, name):
+    return Path(name, _bypass=True)
+
   def __getattr__(self, name):
     return Path(name, _bypass=True)
 

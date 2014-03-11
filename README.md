@@ -212,7 +212,8 @@ def GenSteps(api):
   target = api.properties['target_of_admiration']
   if target == 'DarthVader':
     verb = 'Die in a fire, %s!'
-  yield api.step('Hello World', [api.path.build('echo.sh'), verb % target])
+  yield api.step('Hello World', [api.path['build'].join('echo.sh'),
+                 verb % target])
 
 def GenTests(api):
   yield 'basic', {
@@ -540,11 +541,11 @@ Consider this recipe:
 DEPS = ['step', 'path', 'step_history']
 
 def GenSteps(api):
-  yield api.step('Determine blue moon', [api.path.build('is_blue_moon.sh')])
+  yield api.step('Determine blue moon', [api.path['build'].join('is_blue_moon.sh')])
   if api.step_history.last_step().retcode == 0:
-    yield api.step('HARLEM SHAKE!', [api.path.build('do_the_harlem_shake.sh')])
+    yield api.step('HARLEM SHAKE!', [api.path['build'].join('do_the_harlem_shake.sh')])
   else:
-    yield api.step('Boring', [api.path.build('its_a_small_world.sh')])
+    yield api.step('Boring', [api.path['build'].join('its_a_small_world.sh')])
 
 def GenTests(api):
   yield 'harlem', {
@@ -571,14 +572,14 @@ DEPS = ['step', 'path', 'step_history', 'json']
 
 def GenSteps(api):
   yield api.step('run tests', [
-    api.path.build('do_test_things.sh'), api.json.output()])
+    api.path['build'].join('do_test_things.sh'), api.json.output()])
   num_passed = api.step_history.last_step().json.output['num_passed']
   if num_passed > 500:
-    yield api.step('victory', [api.path.build('do_a_dance.sh')])
+    yield api.step('victory', [api.path['build'].join('do_a_dance.sh')])
   elif num_passed > 200:
-    yield api.step('not defeated', [api.path.build('woohoo.sh')])
+    yield api.step('not defeated', [api.path['build'].join('woohoo.sh')])
   else:
-    yield api.step('deads!', [api.path.build('you_r_deads.sh')])
+    yield api.step('deads!', [api.path['build'].join('you_r_deads.sh')])
 
 def GenTests(api):
   yield 'winning', {

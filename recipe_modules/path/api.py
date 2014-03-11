@@ -205,7 +205,7 @@ class PathApi(recipe_api.RecipeApi):
       return
     self.c.dynamic_paths[pathname] = path
 
-  def __getattr__(self, name):
+  def __getitem__(self, name):
     if name in self.c.dynamic_paths:
       r = self.c.dynamic_paths[name]
       assert r is not None, ('Tried to get dynamic path %s but it has not been '
@@ -213,6 +213,18 @@ class PathApi(recipe_api.RecipeApi):
       return r
     if name in self.c.base_paths:
       return recipe_config_types.Path(name, _bypass=True)
+
+  def __getattr__(self, name):
+    # retrieve path functions (deprecated)
+    if name in self.c.dynamic_paths:
+      r = self.c.dynamic_paths[name]
+      assert r is not None, ('Tried to get dynamic path %s but it has not been '
+                             'set yet.' % name)
+      return r
+    if name in self.c.base_paths:
+      return recipe_config_types.Path(name, _bypass=True)
+
+    # retrieve os.path attributes
     if name in self.OK_ATTRS:
       return getattr(self._path_mod, name)
     if name in self.FILTER_METHODS:

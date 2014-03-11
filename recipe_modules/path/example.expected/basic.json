@@ -1,0 +1,16 @@
+[
+  {
+    "cmd": [
+      "/bin/echo",
+      "[SLAVE_BUILD]/foo"
+    ],
+    "name": "step1"
+  },
+  {
+    "cmd": [
+      "/bin/echo",
+      "[SLAVE_BUILD]/foo"
+    ],
+    "name": "step2"
+  }
+]
