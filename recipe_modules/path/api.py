@@ -2,8 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import os
 import functools
+import os
+import tempfile
 
 from slave import recipe_api
 from slave import recipe_config_types
@@ -103,6 +104,19 @@ class fake_path(object):
       return path
 
 
+def _split_path(path):  # pragma: no cover
+  """Relative or absolute path -> tuple of components."""
+  abs_path = os.path.abspath(path).split(os.path.sep)
+  # Guarantee that the first element is an absolute drive or the posix root.
+  if abs_path[0].endswith(':'):
+    abs_path[0] += '\\'
+  elif abs_path[0] == '':
+    abs_path[0] = '/'
+  else:
+    assert False, 'Got unexpected path format: %r' % abs_path
+  return abs_path
+
+
 class PathApi(recipe_api.RecipeApi):
   """
   PathApi provides common os.path functions as well as convenience functions
@@ -122,28 +136,30 @@ class PathApi(recipe_api.RecipeApi):
                     'splitext')
 
   def get_config_defaults(self):
-    return { 'CURRENT_WORKING_DIR': self._startup_cwd }
+    return {
+      'CURRENT_WORKING_DIR': self._startup_cwd,
+      'TEMP_DIR': self._temp_dir,
+    }
 
   def __init__(self, **kwargs):
     super(PathApi, self).__init__(**kwargs)
     recipe_config_types.Path.set_tostring_fn(
       PathTostring(self, self._test_data))
 
+    # Used in mkdtemp when generating and checking expectations.
+    self._test_counter = 0
+
     if not self._test_data.enabled:  # pragma: no cover
       self._path_mod = os.path
       # Capture the cwd on process start to avoid shenanigans.
-      startup_cwd = os.path.abspath(os.getcwd()).split(os.path.sep)
-      # Guarantee that the firt element is an absolute drive or the posix root.
-      if startup_cwd[0].endswith(':'):
-        startup_cwd[0] += '\\'
-      elif startup_cwd[0] == '':
-        startup_cwd[0] = '/'
-      else:
-        assert False, 'Got unexpected startup_cwd format: %r' % startup_cwd
-      self._startup_cwd = startup_cwd
+      self._startup_cwd = _split_path(os.getcwd())
+      # Use default system wide temp dir as a root temp dir.
+      self._temp_dir = _split_path(tempfile.gettempdir())
     else:
       self._path_mod = fake_path(self, self._test_data.get('exists', []))
       self._startup_cwd = ['/', 'FakeTestingCWD']
+      # Appended to placeholder '[TMP]' to get fake path in test.
+      self._temp_dir = ['/']
 
     # For now everything works on buildbot, so set it 'automatically' here.
     self.set_config('buildbot', include_deps=False)
@@ -189,6 +205,22 @@ class PathApi(recipe_api.RecipeApi):
       """,
       args=[path],
     )
+
+  def mkdtemp(self, prefix):
+    """Makes a new temp directory, returns path to it."""
+    if not self._test_data.enabled:  # pragma: no cover
+      # New path as str.
+      new_path = tempfile.mkdtemp(prefix=prefix, dir=str(self['tmp_base']))
+      # Ensure it's under self._temp_dir, convert to Path.
+      new_path = _split_path(new_path)
+      assert new_path[:len(self._temp_dir)] == self._temp_dir
+      temp_dir = self['tmp_base'].join(*new_path[len(self._temp_dir):])
+    else:
+      self._test_counter += 1
+      temp_dir = self['tmp_base'].join(
+          '%s_tmp_%d' % (prefix, self._test_counter))
+    self.mock_add_paths(temp_dir)
+    return temp_dir
 
   def set_dynamic_path(self, pathname, path, overwrite=True):
     """Set a named dynamic path to a concrete value.

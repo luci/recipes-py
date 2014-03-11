@@ -5,8 +5,9 @@
 from slave.recipe_config import config_item_context, ConfigGroup, Dict, Static
 from slave.recipe_config_types import Path
 
-def BaseConfig(CURRENT_WORKING_DIR, **_kwargs):
+def BaseConfig(CURRENT_WORKING_DIR, TEMP_DIR, **_kwargs):
   assert CURRENT_WORKING_DIR[0].endswith(('\\', '/'))
+  assert TEMP_DIR[0].endswith(('\\', '/'))
   return ConfigGroup(
     # base path name -> [tokenized absolute path]
     base_paths    = Dict(value_type=tuple),
@@ -15,12 +16,17 @@ def BaseConfig(CURRENT_WORKING_DIR, **_kwargs):
     dynamic_paths = Dict(value_type=(Path, type(None))),
 
     CURRENT_WORKING_DIR = Static(tuple(CURRENT_WORKING_DIR)),
+    TEMP_DIR = Static(tuple(TEMP_DIR)),
   )
 
 VAR_TEST_MAP = {
   'CURRENT_WORKING_DIR': (
     ['/', 'b', 'build', 'slave', 'fake_slave', 'build'],
     ['E:\\', 'build', 'slave', 'fake_slave', 'build'],
+  ),
+  'TEMP_DIR': (
+    ['/', 'fake_tmp'],
+    ['C:\\', 'fake_temp'],
   ),
 }
 
@@ -35,6 +41,7 @@ config_ctx = config_item_context(BaseConfig, VAR_TEST_MAP, test_name)
 @config_ctx(is_root=True)
 def BASE(c):
   c.base_paths['cwd'] = c.CURRENT_WORKING_DIR
+  c.base_paths['tmp_base'] = c.TEMP_DIR
 
 @config_ctx()
 def buildbot(c):

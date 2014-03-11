@@ -1,0 +1,30 @@
+[
+  {
+    "cmd": [
+      "/bin/echo",
+      "[SLAVE_BUILD]/foo"
+    ],
+    "name": "step1"
+  },
+  {
+    "cmd": [
+      "/bin/echo",
+      "[SLAVE_BUILD]/foo"
+    ],
+    "name": "step2"
+  },
+  {
+    "cmd": [
+      "echo",
+      "[TMP_BASE]/prefix_a_tmp_1"
+    ],
+    "name": "print prefix_a"
+  },
+  {
+    "cmd": [
+      "echo",
+      "[TMP_BASE]/prefix_b_tmp_2"
+    ],
+    "name": "print prefix_b"
+  }
+]
