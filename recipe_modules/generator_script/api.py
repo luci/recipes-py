@@ -43,12 +43,12 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
       yield self.m.python(
         step_name,
         path_to_script, list(args) + [f, self.m.json.output()],
-        cwd=self.m.path.checkout, step_test_data=step_test_data)
+        cwd=self.m.path['checkout'], step_test_data=step_test_data)
     else:
       yield self.m.step(
         step_name,
         [path_to_script,] + list(args) + [f, self.m.json.output()],
-        cwd=self.m.path.checkout, step_test_data=step_test_data)
+        cwd=self.m.path['checkout'], step_test_data=step_test_data)
     new_steps = self.m.step_history.last_step().json.output
     assert isinstance(new_steps, list)
     env = kwargs.get('env')
