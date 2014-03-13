@@ -19,15 +19,16 @@
   {
     "cmd": [
       "echo",
-      "hello"
+      "huh"
     ],
     "name": "automock",
     "stdout": "/path/to/tmp/out"
   },
   {
     "cmd": [
-      "echo",
-      "hello"
+      "bash",
+      "-c",
+      "echo blah && echo fail 1>&2"
     ],
     "name": "automock (fail)",
     "stderr": "/path/to/tmp/err",

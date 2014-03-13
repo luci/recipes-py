@@ -32,7 +32,7 @@ class StepApi(recipe_api.RecipeApi):
       **kwargs: Additional entries to add to the annotator.py step dictionary.
 
     Returns:
-      A step dictionary which is compatible with annotator.py.
+      Opaque step object produced and understood by recipe engine.
     """
     assert 'shell' not in kwargs
     assert isinstance(cmd, list)
@@ -55,5 +55,4 @@ class StepApi(recipe_api.RecipeApi):
 
     schema = self.make_config()
     schema.set_val(kwargs)
-
-    return schema.as_jsonish()
+    return self._engine.create_step(schema)

@@ -175,6 +175,15 @@ class TestData(BaseTestData):
   def empty(self):
     return not self.step_data
 
+  def pop_step_test_data(self, step_name, step_test_data_fn):
+    step_test_data = step_test_data_fn()
+    if step_name in self.step_data:
+      step_test_data += self.step_data.pop(step_name)
+    return step_test_data
+
+  def get_module_test_data(self, module_name):
+    return self.mod_data.get(module_name, ModuleTestData())
+
   def __repr__(self):
     return "TestData(%r)" % ({
       'name': self.name,
@@ -192,6 +201,12 @@ class DisabledTestData(BaseTestData):
     return self
 
   def pop_placeholder(self, _name_pieces):
+    return self
+
+  def pop_step_test_data(self, _step_name, _step_test_data_fn):
+    return self
+
+  def get_module_test_data(self, _module_name):
     return self
 
 
@@ -331,15 +346,12 @@ class RecipeTestApi(object):
   The platform() call is documented in the 'platform' module's test_api.
   The json.output() call is documented in the 'json' module's test_api.
   """
-  def __init__(self, module=None, test_data=DisabledTestData()):
+  def __init__(self, module=None):
     """Note: Injected dependencies are NOT available in __init__()."""
     # If we're the 'root' api, inject directly into 'self'.
     # Otherwise inject into 'self.m'
     self.m = self if module is None else ModuleInjectionSite()
     self._module = module
-
-    assert isinstance(test_data, (ModuleTestData, DisabledTestData))
-    self._test_data = test_data
 
   @staticmethod
   def test(name):

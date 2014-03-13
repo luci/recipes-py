@@ -12,6 +12,7 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
+from slave import annotated_run
 from slave import recipe_api
 from slave import recipe_loader
 from slave import recipe_util
@@ -85,7 +86,7 @@ def main():
 
   inst = recipe_loader.create_recipe_api(
       [ mod_name for mod_name, mod in member_iter(RECIPE_MODULES) ],
-      mocks={'path': {}}, properties={}, step_history=collections.OrderedDict())
+      annotated_run.SequentialRecipeEngine(None, {}, None))
 
   for mod_name, mod in member_iter(RECIPE_MODULES):
     p(0)

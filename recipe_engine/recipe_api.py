@@ -17,11 +17,14 @@ class RecipeApi(ModuleInjectionSite):
 
   Dependency injection takes place in load_recipe_modules() in recipe_loader.py.
   """
-  def __init__(self, module=None, test_data=DisabledTestData(), **_kwargs):
+  def __init__(self, module=None, engine=None,
+               test_data=DisabledTestData(), **_kwargs):
     """Note: Injected dependencies are NOT available in __init__()."""
     super(RecipeApi, self).__init__()
 
-    self.c = None
+    # |engine| is an instance of annotated_run.RecipeEngine. Modules should not
+    # generally use it unless they're low-level framework level modules.
+    self._engine = engine
     self._module = module
 
     assert isinstance(test_data, (ModuleTestData, DisabledTestData))
@@ -33,6 +36,9 @@ class RecipeApi(ModuleInjectionSite):
 
     # If our module has a test api, it gets injected here.
     self.test_api = None
+
+    # Config goes here.
+    self.c = None
 
   def get_config_defaults(self):  # pylint: disable=R0201
     """

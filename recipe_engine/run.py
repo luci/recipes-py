@@ -23,6 +23,8 @@ For example, these factory_properties would run the 'run_presubmit' recipe
 located in build/scripts/slave/recipes:
     { 'recipe': 'run_presubmit' }
 
+TODO(vadimsh, iannucci): The following docs are very outdated.
+
 Annotated_run.py will then import the recipe and expect to call a function whose
 signature is:
   GetSteps(api, properties) -> iterable_of_things.
@@ -76,7 +78,7 @@ import collections  # Import after polyfill to get OrderedDict on 2.6
 
 from common import annotator
 from common import chromium_utils
-from slave import recipe_api
+
 from slave import recipe_loader
 from slave import recipe_test_api
 from slave import recipe_util
@@ -379,17 +381,19 @@ def main(argv=None):
   return ret.status_code
 
 
+# Return value of run_steps and RecipeEngine.run.
+RecipeExecutionResult = collections.namedtuple(
+    'RecipeExecutionResult', 'status_code steps_ran')
+
+
 def run_steps(stream, build_properties, factory_properties,
-              api=recipe_loader.create_recipe_api,
-              test=recipe_test_api.DisabledTestData()):
+              test_data=recipe_test_api.DisabledTestData()):
   """Returns a tuple of (status_code, steps_ran).
 
   Only one of these values will be set at a time. This is mainly to support the
   testing interface used by unittests/recipes_test.py.
   """
   stream.honor_zero_return_code()
-  MakeStepsRetval = collections.namedtuple('MakeStepsRetval',
-                                           'status_code steps_ran')
 
   # TODO(iannucci): Stop this when blamelist becomes sane data.
   if ('blamelist_real' in build_properties and
@@ -408,91 +412,212 @@ def run_steps(stream, build_properties, factory_properties,
     'TESTING_SLAVENAME' in os.environ)):
     properties['use_mirror'] = False
 
-  step_history = collections.OrderedDict()
+  # It's an integration point with a new recipe engine that can run steps
+  # in parallel (that is not implemented yet). Use new engine only if explicitly
+  # asked by setting 'engine' property to 'ParallelRecipeEngine'.
+  engine = RecipeEngine.create(stream, properties, test_data)
+
+  # Create all API modules and an instance of top level GenSteps generator.
+  # It doesn't launch any recipe code yet (generator needs to be iterated upon
+  # to start executing code).
   with stream.step('setup_build') as s:
     assert 'recipe' in factory_properties
     recipe = factory_properties['recipe']
     try:
       recipe_module = recipe_loader.load_recipe(recipe)
       stream.emit('Running recipe with %s' % (properties,))
-      steps = recipe_module.GenSteps(api(recipe_module.DEPS,
-                                         properties=properties,
-                                         step_history=step_history))
+      api = recipe_loader.create_recipe_api(recipe_module.DEPS,
+                                            engine,
+                                            test_data)
+      steps = recipe_module.GenSteps(api)
       assert inspect.isgenerator(steps)
       s.step_text('<br/>running recipe: "%s"' % recipe)
     except recipe_loader.NoSuchRecipe as e:
       s.step_text('<br/>recipe not found: %s' % e)
       s.step_failure()
-      return MakeStepsRetval(2, None)
+      return RecipeExecutionResult(2, None)
+
+  # Run the steps emitted by a recipe via the engine, emitting annotations into
+  # |stream| along the way.
+  return engine.run(steps)
 
 
-  # Execute annotator.py with steps if specified.
-  # annotator.py handles the seeding, execution, and annotation of each step.
-  step_history.failed = False
+class RecipeEngine(object):
+  """Knows how to execute steps emitted by a recipe, holds global state such as
+  step history and build properties. Each recipe module API has a reference to
+  this object.
 
-  for step in fixup_seed_steps(steps):
-    try:
-      test_data_fn = step.pop('step_test_data', recipe_test_api.StepTestData)
-      if test.enabled:
-        step_test = test_data_fn()
-        if step['name'] in test.step_data:
-          step_test += test.step_data.pop(step['name'])
-      else:
-        step_test = recipe_api.DisabledTestData()
+  Recipe modules that are aware of the engine:
+    * properties - uses engine.properties.
+    * step_history - uses engine.step_history.
+    * step - uses engine.create_step(...).
 
-      placeholders = render_step(step, step_test)
+  This class acts mostly as a documentation of expected public engine interface.
+  """
 
-      if step_history.failed and not step.get('always_run', False):
-        step['skip'] = True
-        step.pop('followup_fn', None)
-        step_result = StepData(step, None)
-        step_history[step['name']] = step_result
-        continue
+  @staticmethod
+  def create(stream, properties, test_data):
+    """Create a new instance of RecipeEngine based on 'engine' property."""
+    engine_cls_name = properties.get('engine', 'SequentialRecipeEngine')
+    for cls in RecipeEngine.__subclasses__():
+      if cls.__name__ == engine_cls_name:
+        return cls(stream, properties, test_data)
+    raise ValueError('Invalid engine class: %s' % (engine_cls_name,))
 
-      callback = step_callback(step, step_history, placeholders, step_test)
+  @property
+  def properties(self):
+    """Global properties, merged --build_properties and --factory_properties."""
+    raise NotImplementedError
 
-      if not test.enabled:
-        step_result = annotator.run_step(
-          stream, followup_fn=callback, **step)
-      else:
-        with stream.step(step['name']) as s:
-          s.stream = cStringIO.StringIO()
-          step_result = callback(s, step_test.retcode)
-          lines = filter(None, s.stream.getvalue().splitlines())
-          if lines:
-            # Note that '~' sorts after 'z' so that this will be last on each
-            # step. Also use _step to get access to the mutable step dictionary.
-            # pylint: disable=W0212
-            step_result._step['~followup_annotations'] = lines
+  @property
+  def step_history(self):
+    """OrderedDict objects with results of finished steps.
 
-      if step_result.abort_reason:
-        stream.emit('Aborted: %s' % step_result.abort_reason)
-        if test.enabled:
-          test.step_data.clear()  # Dump the rest of the test data
-        step_history.failed = True
-        break
+    Deprecated. New engine will provide future-like objects to wait for step
+    results.
+    """
+    raise NotImplementedError
 
-      # TODO(iannucci): Pull this failure calculation into callback.
-      step_history.failed = annotator.update_build_failure(
-          step_history.failed,
-          step_result.retcode,
-          **step)
-    except Exception as e:
-      new_message = (
-        '%s\n'
-        '  while processing step `%s`:\n'
-        '  %s'
-      ) % (e.message, step['name'], json.dumps(step, indent=2, sort_keys=True,
-                                               default=str))
-      raise type(e), type(e)(new_message), sys.exc_info()[2]
+  def run(self, generator):
+    """Run a recipe represented by top level GenSteps generator.
 
-  assert not test.enabled or not test.step_data, (
-    "Unconsumed test data! %s" % (test.step_data,))
+    This function blocks until recipe finishes.
 
-  return MakeStepsRetval(0 if not step_history.failed else 1, step_history)
+    Args:
+      generator: instance of GenSteps generator.
+
+    Returns:
+      RecipeExecutionResult with status code and list of steps ran.
+    """
+    raise NotImplementedError
+
+  def create_step(self, step):
+    """Called by step module to instantiate a new step. Return value of this
+    function eventually surfaces as object yielded by GenSteps generator.
+
+    Args:
+      step: ConfigGroup object with information about the step, see
+        recipe_modules/step/config.py.
+
+    Returns:
+      Opaque engine specific object that is understood by 'run_steps' method.
+    """
+    raise NotImplementedError
 
 
-def UpdateScripts():
+class SequentialRecipeEngine(RecipeEngine):
+  """Always runs step sequentially. Currently the engine used by default."""
+
+  def __init__(self, stream, properties, test_data):
+    super(SequentialRecipeEngine, self).__init__()
+    self._stream = stream
+    self._properties = properties
+    self._test_data = test_data
+    self._step_history = collections.OrderedDict()
+    self._step_history.failed = False
+
+  @property
+  def step_history(self):
+    return self._step_history
+
+  @property
+  def properties(self):
+    return self._properties
+
+  def run(self, generator):
+    for step in fixup_seed_steps(generator):
+      try:
+        test_data_fn = step.pop('step_test_data', recipe_test_api.StepTestData)
+        step_test = self._test_data.pop_step_test_data(step['name'],
+                                                       test_data_fn)
+        placeholders = render_step(step, step_test)
+
+        if self._step_history.failed and not step.get('always_run', False):
+          step['skip'] = True
+          step.pop('followup_fn', None)
+          step_result = StepData(step, None)
+          self._step_history[step['name']] = step_result
+          continue
+
+        callback = step_callback(step, self._step_history,
+                                 placeholders, step_test)
+
+        if not self._test_data.enabled:
+          step_result = annotator.run_step(
+            self._stream, followup_fn=callback, **step)
+        else:
+          with self._stream.step(step['name']) as s:
+            s.stream = cStringIO.StringIO()
+            step_result = callback(s, step_test.retcode)
+            lines = filter(None, s.stream.getvalue().splitlines())
+            if lines:
+              # Note that '~' sorts after 'z' so that this will be last on each
+              # step. Also use _step to get access to the mutable step
+              # dictionary.
+              # pylint: disable=W0212
+              step_result._step['~followup_annotations'] = lines
+
+        if step_result.abort_reason:
+          self._stream.emit('Aborted: %s' % step_result.abort_reason)
+          if self._test_data.enabled:
+            self._test_data.step_data.clear()  # Dump the rest of the test data
+          self._step_history.failed = True
+          break
+
+        # TODO(iannucci): Pull this failure calculation into callback.
+        self._step_history.failed = annotator.update_build_failure(
+            self._step_history.failed,
+            step_result.retcode,
+            **step)
+      except Exception as e:
+        new_message = (
+          '%s\n'
+          '  while processing step `%s`:\n'
+          '  %s'
+        ) % (e.message, step['name'], json.dumps(step, indent=2, sort_keys=True,
+                                                 default=str))
+        raise type(e), type(e)(new_message), sys.exc_info()[2]
+
+    assert not self._test_data.enabled or not self._test_data.step_data, (
+      "Unconsumed test data! %s" % (self._test_data.step_data,))
+
+    return RecipeExecutionResult(0 if not self._step_history.failed else 1,
+                                 self._step_history)
+
+  def create_step(self, step):  # pylint: disable=R0201
+    # This version of engine doesn't do anything, just converts step to dict
+    # (that is consumed by annotator engine).
+    return step.as_jsonish()
+
+
+class ParallelRecipeEngine(RecipeEngine):
+  """New engine that knows how to run steps in parallel.
+
+  TODO(vadimsh): Implement it.
+  """
+
+  def __init__(self, stream, properties, test_data):
+    super(ParallelRecipeEngine, self).__init__()
+    self._stream = stream
+    self._properties = properties
+    self._test_data = test_data
+
+  @property
+  def properties(self):
+    return self._properties
+
+  @property
+  def step_history(self):
+    raise NotImplementedError
+
+  def run(self, generator):
+    raise NotImplementedError
+
+  def create_step(self, step):
+    raise NotImplementedError
+
+
+def update_scripts():
   if os.environ.get('RUN_SLAVE_UPDATED_SCRIPTS'):
     os.environ.pop('RUN_SLAVE_UPDATED_SCRIPTS')
     return False
@@ -511,7 +636,7 @@ def UpdateScripts():
 
 
 def shell_main(argv):
-  if UpdateScripts():
+  if update_scripts():
     return subprocess.call([sys.executable] + argv)
   else:
     return main(argv)

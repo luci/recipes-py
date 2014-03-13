@@ -11,7 +11,7 @@ import sys
 from .recipe_util import RECIPE_DIRS, MODULE_DIRS, cached_unary, scan_directory
 from .recipe_api import RecipeApi
 from .recipe_config import ConfigContext
-from .recipe_test_api import RecipeTestApi, DisabledTestData, ModuleTestData
+from .recipe_test_api import RecipeTestApi, DisabledTestData
 
 
 class NoSuchRecipe(Exception):
@@ -153,10 +153,9 @@ def load_recipe_modules(mod_dirs):
     imp.release_lock()
 
 
-def create_api(mod_dirs, names, test_data=DisabledTestData(), required=None,
-               optional=None, kwargs=None):
-  """Given a list of module names, return an instance of RecipeApi which
-  contains those modules as direct members.
+def create_apis(mod_dirs, names, only_test_api, engine, test_data):
+  """Given a list of module names, return linked instances of RecipeApi
+  and RecipeTestApi (in a pair) which contains those modules as direct members.
 
   So, if you pass ['foobar'], you'll get an instance back which contains a
   'foobar' attribute which itself is a RecipeApi instance from the 'foobar'
@@ -165,23 +164,32 @@ def create_api(mod_dirs, names, test_data=DisabledTestData(), required=None,
   Args:
     mod_dirs (list): A list of paths to directories which contain modules.
     names (list): A list of module names to include in the returned RecipeApi.
-    test_data (TestData): ...
-    required: a pair such as ('API', RecipeApi).
-    optional: a pair such as ('TEST_API', RecipeTestApi).
-    kwargs: Data passed to each module api. Usually this will contain:
+    only_test_api (bool): If True, do not create RecipeApi, only RecipeTestApi.
+    engine (object): A recipe engine instance that gets passed to each API.
+      Among other things it provides:
         properties (dict): the properties dictionary (used by the properties
             module)
         step_history (OrderedDict): the step history object (used by the
             step_history module!)
+      See annotated_run.py for definition.
+    test_data (TestData): ...
+
+  Returns:
+    Pair (RecipeApi instance or None, RecipeTestApi instance).
   """
-  kwargs = kwargs or {}
   recipe_modules = load_recipe_modules(mod_dirs)
 
-  inst_maps = {}
-  if required:
-    inst_maps[required[0]] = { None: required[1]() }
-  if optional:
-    inst_maps[optional[0]] = { None: optional[1]() }
+  # Recipe module name (or None for top level API) -> RecipeTestApi instance.
+  test_apis = {}
+  # Recipe module name (or None for top level API) -> RecipeApi instance.
+  apis = {}
+
+  # 'None' keys represent top level API objects returned by this function.
+  test_apis[None] = RecipeTestApi(module=None)
+  if not only_test_api:
+    apis[None] = RecipeApi(module=None,
+                           engine=engine,
+                           test_data=test_data.get_module_test_data(None))
 
   dep_map = {None: set(names)}
   def create_maps(name):
@@ -191,33 +199,24 @@ def create_api(mod_dirs, names, test_data=DisabledTestData(), required=None,
       dep_map[name] = set(module.DEPS)
       map(create_maps, dep_map[name])
 
-      mod_test = DisabledTestData()
-      if test_data.enabled:
-        mod_test = test_data.mod_data.get(name, ModuleTestData())
+      test_api_cls = getattr(module, 'TEST_API', None) or RecipeTestApi
+      test_apis[name] = test_api_cls(module=module)
 
-      if required:
-        api = getattr(module, required[0])
-        inst_maps[required[0]][name] = api(module=module,
-                                           test_data=mod_test, **kwargs)
-      if optional:
-        api = getattr(module, optional[0], None) or optional[1]
-        # TODO(vadimsh): Why not pass **kwargs here as well? There's
-        # an assumption here that optional[1] is always RecipeTestApi subclass
-        # (that doesn't need kwargs).
-        inst_maps[optional[0]][name] = api(module=module,
-                                           test_data=mod_test)
+      if not only_test_api:
+        api_cls = getattr(module, 'API')
+        apis[name] = api_cls(module=module,
+                             engine=engine,
+                             test_data=test_data.get_module_test_data(name))
 
   map(create_maps, names)
 
-  if required:
-    map_dependencies(dep_map, inst_maps[required[0]])
-  if optional:
-    map_dependencies(dep_map, inst_maps[optional[0]])
-    if required:
-      for name, module in inst_maps[required[0]].iteritems():
-        module.test_api = inst_maps[optional[0]][name]
+  map_dependencies(dep_map, test_apis)
+  if not only_test_api:
+    map_dependencies(dep_map, apis)
+    for name, module in apis.iteritems():
+      module.test_api = test_apis[name]
 
-  return inst_maps[(required or optional)[0]][None]
+  return apis.get(None), test_apis.get(None)
 
 
 def map_dependencies(dep_map, inst_map):
@@ -243,14 +242,13 @@ def map_dependencies(dep_map, inst_map):
     assert did_something, 'Did nothing on this loop. %s' % dep_map
 
 
+def create_recipe_api(names, engine, test_data=DisabledTestData()):
+  return create_apis(MODULE_DIRS(), names, False, engine, test_data)[0]
+
+
 def create_test_api(names):
-  return create_api(MODULE_DIRS(), names, optional=('TEST_API', RecipeTestApi))
-
-
-def create_recipe_api(names, test_data=DisabledTestData(), **kwargs):
-  return create_api(MODULE_DIRS(), names, test_data=test_data, kwargs=kwargs,
-                    required=('API', RecipeApi),
-                    optional=('TEST_API', RecipeTestApi))
+  # Test API should not use runtime engine or test_data, do not pass it.
+  return create_apis(MODULE_DIRS(), names, True, None, DisabledTestData())[1]
 
 
 @cached_unary

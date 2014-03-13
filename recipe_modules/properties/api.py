@@ -41,9 +41,9 @@ class PropertiesApi(recipe_api.RecipeApi, collections.Mapping):
     val = factory_properties
     val.update(build_properties)
   """
-  def __init__(self, properties, **kwargs):
+  def __init__(self, **kwargs):
     super(PropertiesApi, self).__init__(**kwargs)
-    self._properties = freeze(properties)
+    self._properties = freeze(self._engine.properties)
 
   def __getitem__(self, key):
     return self._properties[key]

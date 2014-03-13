@@ -21,29 +21,28 @@ def GenSteps(api):
   yield api.step('cat', ['cat'],
       stdin=api.raw_io.input(data='hello'),
       stdout=api.raw_io.output('out'))
-  output = api.step_history.last_step().stdout
-  assert output == 'hello'
+  assert api.step_history.last_step().stdout == 'hello'
 
-  # Example of auto-mocking stdout
-  yield api.step('automock', ['echo', output],
+  # Example of auto-mocking stdout. '\n' appended to mock 'echo' behavior.
+  yield api.step('automock', ['echo', 'huh'],
                  stdout=api.raw_io.output('out'),
                  step_test_data=(
-                   lambda: api.raw_io.test_api.stream_output(output)))
-  assert api.step_history.last_step().stdout == output
+                   lambda: api.raw_io.test_api.stream_output('huh\n')))
+  assert api.step_history.last_step().stdout == 'huh\n'
 
-  # Example of auto-mocking stdout + stderr
+  # Example of auto-mocking stdout + stderr.
   yield api.step(
-    'automock (fail)', ['echo', output],
+    'automock (fail)', ['bash', '-c', 'echo blah && echo fail 1>&2'],
     stdout=api.raw_io.output('out'),
     stderr=api.raw_io.output('err'),
     step_test_data=(
       lambda: (
-        api.raw_io.test_api.stream_output(output) +
-        api.raw_io.test_api.stream_output('fail', 'stderr')
+        api.raw_io.test_api.stream_output('blah\n') +
+        api.raw_io.test_api.stream_output('fail\n', 'stderr')
       ))
   )
-  assert api.step_history.last_step().stdout == output
-  assert api.step_history.last_step().stderr == 'fail'
+  assert api.step_history.last_step().stdout == 'blah\n'
+  assert api.step_history.last_step().stderr == 'fail\n'
 
 
 def GenTests(api):
