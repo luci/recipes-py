@@ -26,6 +26,10 @@ def GenSteps(api):
     # Make |temp_dir| surface in expectation files.
     yield api.step('print %s' % prefix, ['echo', temp_dir])
 
+  # module.resource(...) demo.
+  yield api.step('print resource',
+                 ['echo', api.path.resource('dir', 'file.py')])
+
 
 def GenTests(api):
   # These two lines are for code coverage.

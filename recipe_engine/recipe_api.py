@@ -110,6 +110,16 @@ class RecipeApi(ModuleInjectionSite):
     """Apply a named configuration to the provided config object or self."""
     self._module.CONFIG_CTX.CONFIG_ITEMS[config_name](config_object or self.c)
 
+  def resource(self, *path):
+    """Returns path to a file under <recipe module>/resources/ directory.
+
+    Args:
+      path: path relative to module's resources/ directory.
+    """
+    # TODO(vadimsh): Verify that file exists. Including a case like:
+    #  module.resource('dir').join('subdir', 'file.py')
+    return self._module.MODULE_DIRECTORY.join('resources', *path)
+
   @property
   def name(self):
     return self._module.NAME

@@ -26,5 +26,12 @@
       "[TMP_BASE]/prefix_b_tmp_2"
     ],
     "name": "print prefix_b"
+  },
+  {
+    "cmd": [
+      "echo",
+      "[BUILD]/scripts/slave/recipe_modules/path/resources/dir/file.py"
+    ],
+    "name": "print resource"
   }
 ]

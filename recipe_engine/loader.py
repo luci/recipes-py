@@ -8,10 +8,19 @@ import inspect
 import os
 import sys
 
-from .recipe_util import RECIPE_DIRS, MODULE_DIRS, cached_unary, scan_directory
+from .recipe_util import (ROOT_PATH, RECIPE_DIRS, MODULE_DIRS,
+                          cached_unary, scan_directory)
 from .recipe_api import RecipeApi
 from .recipe_config import ConfigContext
+from .recipe_config_types import Path
 from .recipe_test_api import RecipeTestApi, DisabledTestData
+
+
+# Keys MUST match base paths defined in recipe_modules/path/config.py.
+MODULES_BASE_PATHS = {
+  'build': os.path.join(ROOT_PATH, 'build'),
+  'build_internal': os.path.join(ROOT_PATH, 'build_internal'),
+}
 
 
 class NoSuchRecipe(Exception):
@@ -44,6 +53,15 @@ def load_recipe_modules(mod_dirs):
   Args:
     mod_dirs (list of str): list of module search paths.
   """
+  def get_module_directory(path):
+    """Path to a module as a string -> recipe_config_types.Path object."""
+    dir_path = os.path.dirname(os.path.abspath(path))
+    for key, base_path in MODULES_BASE_PATHS.iteritems():
+      if dir_path.startswith(base_path + os.path.sep):
+        suffix = dir_path[len(base_path)+1:].split(os.path.sep)
+        return Path(key, *suffix, _bypass=True)
+    raise AssertionError('Unexpected module path: %s' % (dir_path,))
+
   def patchup_module(name, submod):
     """Finds framework related classes and functions in a |submod| and adds
     them to |submod| as top level constants with well known names such as
@@ -54,6 +72,7 @@ def load_recipe_modules(mod_dirs):
     submodules to find subclasses of RecipeApi, RecipeTestApi, etc.
     """
     submod.NAME = name
+    submod.MODULE_DIRECTORY = get_module_directory(submod.__file__)
     submod.CONFIG_CTX = getattr(submod, 'CONFIG_CTX', None)
     submod.DEPS = frozenset(getattr(submod, 'DEPS', ()))
 
