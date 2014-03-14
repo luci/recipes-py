@@ -102,9 +102,6 @@ class Path(RecipeConfigType):
     kwargs['_bypass'] = True
     return Path(self.base, *filter(bool, self.pieces + pieces), **kwargs)
 
-  def __call__(self, *pieces, **kwargs):
-    return self.join(*pieces, **kwargs)
-
   def default_tostring_fn(self):
     suffix = ''
     if self.platform_ext:

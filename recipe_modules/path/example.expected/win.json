@@ -8,13 +8,6 @@
   },
   {
     "cmd": [
-      "/bin/echo",
-      "[SLAVE_BUILD]\\foo"
-    ],
-    "name": "step2"
-  },
-  {
-    "cmd": [
       "echo",
       "[TMP_BASE]\\prefix_a_tmp_1"
     ],

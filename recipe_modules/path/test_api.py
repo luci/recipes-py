@@ -11,6 +11,3 @@ class PathTestApi(recipe_test_api.RecipeTestApi):
   def __getitem__(self, name):
     return Path(name, _bypass=True)
 
-  def __getattr__(self, name):
-    return Path(name, _bypass=True)
-
