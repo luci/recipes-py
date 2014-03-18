@@ -28,6 +28,11 @@ class TestResults(object):
     self.flakes = {}
     self.unexpected_flakes = {}
 
+    # run-webkit-tests returns the number of failures as the return
+    # code, but caps the return code at 101 to avoid overflow or colliding
+    # with reserved values from the shell.
+    self.MAX_FAILURES_EXIT_STATUS = 101
+
     for (test, result) in self.tests.iteritems():
       key = 'unexpected_' if result.get('is_unexpected') else ''
       actual_result = result['actual']
@@ -65,6 +70,7 @@ class TestResults(object):
     entry['actual'] = actual
     if expected != actual:
       entry['is_unexpected'] = True
+      self.raw['num_regressions'] += 1
 
   def as_jsonish(self):
     ret = self.raw.copy()
