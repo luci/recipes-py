@@ -64,6 +64,7 @@ cease calling the generator and move on to the next item in iterable_of_things.
 """
 
 import copy
+import functools
 import inspect
 import json
 import optparse
@@ -319,6 +320,14 @@ def get_placeholder_results(step_result, placeholders):
     setattr(step_result, key, result)
 
 
+def get_callable_name(func):
+  """Returns __name__ of a callable, handling functools.partial types."""
+  if isinstance(func, functools.partial):
+    return get_callable_name(func.func)
+  else:
+    return func.__name__
+
+
 def step_callback(step, step_history, placeholders, step_test):
   assert step['name'] not in step_history, (
     'Step "%s" is already in step_history!' % step['name'])
@@ -348,9 +357,9 @@ def step_callback(step, step_history, placeholders, step_test):
 
     step_result.presentation.finalize(annotator_step)
     return step_result
-  if followup_fn:
-    _inner.__name__ = followup_fn.__name__
 
+  if followup_fn:
+    _inner.__name__ = get_callable_name(followup_fn)
   return _inner
 
 

@@ -2,12 +2,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import collections
+
 from slave.recipe_config import List
 from slave.recipe_config import config_item_context, ConfigGroup, Dict, Single
 from slave.recipe_config_types import Path
 from slave.recipe_util import Placeholder
 
-import types
 
 def BaseConfig(**_kwargs):
   def render_cmd(lst):
@@ -34,10 +35,9 @@ def BaseConfig(**_kwargs):
     skip = Single(bool, required=False),
 
     seed_steps = List(basestring),
-    followup_fn = Single(types.FunctionType, required=False),
+    followup_fn = Single(collections.Callable, required=False),
 
-    step_test_data = Single((types.FunctionType, types.MethodType),
-                            required=False),
+    step_test_data = Single(collections.Callable, required=False),
   )
 
 
