@@ -97,10 +97,29 @@ class Path(RecipeConfigType):
 
     self.platform_ext = kwargs.get('platform_ext', {})
 
+  def __eq__(self, other):
+    return (self.base == other.base and
+            self.pieces == other.pieces and
+            self.platform_ext == other.platform_ext)
+
+  def __ne__(self, other):
+    return not self.base == other
+
   def join(self, *pieces, **kwargs):
     kwargs.setdefault('platform_ext', self.platform_ext)
     kwargs['_bypass'] = True
     return Path(self.base, *filter(bool, self.pieces + pieces), **kwargs)
+
+  def is_parent_of(self, child):
+    """True if |child| is in a subdirectory of this path."""
+    # Assumes base paths are not nested.
+    # TODO(vadimsh): We should not rely on this assumption.
+    if self.base != child.base:
+      return False
+    # A path is not a parent to itself.
+    if len(self.pieces) >= len(child.pieces):
+      return False
+    return child.pieces[:len(self.pieces)] == self.pieces
 
   def default_tostring_fn(self):
     suffix = ''
