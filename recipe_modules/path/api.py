@@ -206,6 +206,29 @@ class PathApi(recipe_api.RecipeApi):
       args=[path],
     )
 
+  def rmcontents(self, name, path):
+    """
+    Similar to rmtree, but removes only contents not the directory.
+
+    This is useful e.g. when removing contents of current working directory.
+    Deleting current working directory makes all further getcwd calls fail
+    until chdir is called. chdir would be tricky in recipes, so we provide
+    a call that doesn't delete the directory itself.
+    """
+    self.assert_absolute(path)
+    return self.m.python.inline(
+      'rmcontents ' + name,
+      """
+      import os, shutil, sys
+      for p in [os.path.join(sys.argv[1], x) for x in os.listdir(sys.argv[1])]:
+        if os.path.isdir(p):
+          shutil.rmtree(p)
+        else:
+          os.unlink(p)
+      """,
+      args=[path],
+    )
+
   def mkdtemp(self, prefix):
     """Makes a new temp directory, returns path to it."""
     if not self._test_data.enabled:  # pragma: no cover
