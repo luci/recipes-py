@@ -10,7 +10,6 @@ DEPS = [
 
 
 def GenSteps(api):
-  # New way of doing things
   yield (api.step('step1',
                   ['/bin/echo', str(api.path['slave_build'].join('foo'))]))
 
@@ -28,7 +27,7 @@ def GenSteps(api):
 
 
 def GenTests(api):
-  # These two lines are for code coverage.
+  # This line is for code coverage.
   api.path['slave_build'].join('foo')
 
   for platform in ('linux', 'win', 'mac'):
