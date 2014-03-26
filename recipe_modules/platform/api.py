@@ -79,3 +79,8 @@ class PlatformApi(recipe_api.RecipeApi):
   @property
   def arch(self):
     return self._arch
+
+  @staticmethod
+  def normalize_platform_name(platform):
+    """One of python's sys.platform values -> 'win', 'linux' or 'mac'."""
+    return norm_plat(platform)  # pragma: no cover
