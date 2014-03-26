@@ -12,9 +12,7 @@ DEPS = [
 
 
 def GenSteps(api):
-  # TODO(pgervais,crbug.com/323280):
-  #   replace by api.path['checkout'] = api.path['slave_build']
-  api.path.set_dynamic_path('checkout', api.path['slave_build'])
+  api.path['checkout'] = api.path['slave_build']
   yield api.generator_script('bogus')
   yield api.generator_script('bogus.py')
   yield api.generator_script('presentation.py')

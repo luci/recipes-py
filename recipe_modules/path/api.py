@@ -245,13 +245,6 @@ class PathApi(recipe_api.RecipeApi):
     self.mock_add_paths(temp_dir)
     return temp_dir
 
-  def set_dynamic_path(self, pathname, path):
-    """Set a named dynamic path to a concrete value.
-      * path must be based on a real base_path (not another dynamic path)
-      * if overwrite is False and the path is already set, do nothing.
-    """
-    self.__setitem__(pathname, path)
-
   def __contains__(self, pathname):
     return bool(self.c.dynamic_paths.get(pathname))
 
