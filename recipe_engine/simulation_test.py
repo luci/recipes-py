@@ -43,7 +43,7 @@ import sys
 
 from glob import glob
 
-import test_env  # pylint: disable=F0401,W0611
+import test_env  # pylint: disable=F0401,W0403,W0611
 
 import coverage
 

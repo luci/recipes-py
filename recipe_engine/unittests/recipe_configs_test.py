@@ -20,7 +20,7 @@ import os
 import sys
 from itertools import product, imap
 
-import test_env
+import test_env  # "relative import" pylint: disable=W0403
 
 from slave import recipe_loader
 from slave import recipe_util
