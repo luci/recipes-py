@@ -28,6 +28,9 @@ class TestResults(object):
     self.flakes = {}
     self.unexpected_flakes = {}
 
+    # TODO(dpranke): crbug.com/357866 - we should simplify the handling of
+    # both the return code and parsing the actual results, below.
+
     # run-webkit-tests returns the number of failures as the return
     # code, but caps the return code at 101 to avoid overflow or colliding
     # with reserved values from the shell.
@@ -36,11 +39,15 @@ class TestResults(object):
     for (test, result) in self.tests.iteritems():
       key = 'unexpected_' if result.get('is_unexpected') else ''
       actual_result = result['actual']
+      split_results = actual_result.split()
       data = actual_result
-      if ' PASS' in actual_result:
+      if len(split_results) > 1 and split_results[1] in ('PASS', 'SLOW'):
         key += 'flakes'
-      elif actual_result == 'PASS':
+      elif split_results == ['PASS']:
         key += 'passes'
+        # TODO(dpranke): crbug.com/357867 ...  Why are we assigning result
+        # instead of actual_result here. Do we even need these things to be
+        # hashes, or just lists?
         data = result
       else:
         key += 'failures'
@@ -70,6 +77,9 @@ class TestResults(object):
     entry['actual'] = actual
     if expected != actual:
       entry['is_unexpected'] = True
+      # TODO(dpranke): crbug.com/357866 - this test logic is overly-simplified
+      # and is counting unexpected passes and flakes as regressions when it
+      # shouldn't be.
       self.raw['num_regressions'] += 1
 
   def as_jsonish(self):
