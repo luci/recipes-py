@@ -17,7 +17,8 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
 
   # TODO(phajdan.jr): Rename to canned_layout_test_output.
   def canned_test_output(self, passing, minimal=False, passes=9001,
-                         num_additional_failures=0):
+                         num_additional_failures=0,
+                         retcode=None):
     """Produces a 'json test results' compatible object with some canned tests.
     Args:
       passing - Determines if this test result is passing or not.
@@ -44,7 +45,10 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
     for i in xrange(num_additional_failures):
         t.add_result('bad/failing%d.html' %i, 'PASS', 'FAIL')
     ret = self.test_results(t)
-    ret.retcode = min(t.raw['num_regressions'], t.MAX_FAILURES_EXIT_STATUS)
+    if retcode is not None:
+        ret.retcode = retcode
+    else:
+        ret.retcode = min(t.raw['num_regressions'], t.MAX_FAILURES_EXIT_STATUS)
     return ret
 
   @recipe_test_api.placeholder_step_data
