@@ -314,7 +314,7 @@ def MatchAnnotation(line, callback_implementor):
     * if line doesn't match /^@@@.*@@@$/, return without calling back
     * Look for the first '@' or ' '
   """
-  if not (line.startswith('@@@') and line.endswith('@@@')):
+  if not (line.startswith('@@@') and line.endswith('@@@') and len(line) > 6):
     return
   line = line[3:-3]
 
