@@ -88,12 +88,6 @@ class TestResultsOutputPlaceholder(JsonOutputPlaceholder):
 
 
 class GTestResultsOutputPlaceholder(JsonOutputPlaceholder):
-  def render(self, test):
-    result = super(GTestResultsOutputPlaceholder, self).render(test)
-    if not test.enabled:  # pragma: no cover
-      result[0] = '--test-launcher-summary-output=%s' % result[0]
-    return result
-
   def result(self, presentation, test):
     ret = super(GTestResultsOutputPlaceholder, self).result(presentation, test)
     return GTestResults(ret)
