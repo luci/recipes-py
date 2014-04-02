@@ -200,8 +200,9 @@ class PathApi(recipe_api.RecipeApi):
     return self.m.python.inline(
       'rmtree ' + name,
       """
-      import shutil, sys
-      shutil.rmtree(sys.argv[1])
+      import os, shutil, sys
+      if os.path.exists(sys.argv[1]):
+        shutil.rmtree(sys.argv[1])
       """,
       args=[path],
     )
