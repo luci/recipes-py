@@ -33,7 +33,7 @@ SLAVE_DIR = os.path.abspath(os.path.join(SCRIPT_PATH, os.pardir))
 COVERAGE = (lambda: coverage.coverage(
     include=[os.path.join(x, '*', '*config.py')
              for x in recipe_util.MODULE_DIRS()],
-    data_suffix=True))()
+    data_file='.recipe_configs_test_coverage', data_suffix=True))()
 
 def covered(fn, *args, **kwargs):
   COVERAGE.start()

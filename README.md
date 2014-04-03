@@ -342,7 +342,7 @@ Test data can contain any of the following keys:
       assumed that the step succeeded with a retcode of 0.
 
 The `api` passed to GenTests is confusingly **NOT** the same as the recipe api.
-It's actually an instance of `unittests/recipes_test.py:TestApi()`. This is
+It's actually an instance of `recipe_test_api.py:RecipeTestApi()`. This is
 adimittedly pretty weak, and it would be great to have the test api
 automatically created via modules. On the flip side, the test api is much less
 necessary than the recipe api, so this transformation has not been designed yet.
@@ -612,11 +612,9 @@ Use `tools/show_me_the_modules.py`. It's super effective!
 
 How do I run those tests you were talking about?
 ------------------------------------------------
-To test all the recipes/apis, use `slave/unittests/recipes_test.py`. To set new
-expectations `slave/unittests/recipes_test.py --train`.
+To test all the recipes/apis, use `slave/unittests/recipe_simulation_test.py`.
+To set new expectations `slave/unittests/recipe_simulation_test.py train`.
 
-To test all the configs, use `slave/unittests/recipe_configs_test.py`. To set
-new expectations `slave/unittests/recipe_configs_test.py --train`.
 
 
 Where's the docs on `*.py`?
