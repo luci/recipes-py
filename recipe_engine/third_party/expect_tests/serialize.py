@@ -59,7 +59,7 @@ def GetCurrentData(test):
   """
   for ext in sorted(SUPPORTED_SERIALIZERS, key=lambda s: s != test.ext):
     path = test.expect_path(ext)
-    if ext not in SERIALIZERS:
+    if ext not in SERIALIZERS and ext == test.ext:
       raise Exception('The package to support %s is not installed.' % ext)
     if os.path.exists(path):
       with open(path, 'rb') as f:
