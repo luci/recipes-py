@@ -641,6 +641,11 @@ def update_scripts():
       s.step_text('gclient sync failed!')
       s.step_warnings()
     os.environ['RUN_SLAVE_UPDATED_SCRIPTS'] = '1'
+
+    # After running update scripts, set PYTHONIOENCODING=UTF-8 for the real
+    # annotated_run.
+    os.environ['PYTHONIOENCODING'] = 'UTF-8'
+
     return True
 
 
