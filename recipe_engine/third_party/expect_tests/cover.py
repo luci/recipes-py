@@ -4,23 +4,9 @@
 
 from cStringIO import StringIO
 
-try:
-  import coverage
-  coverage_version = coverage.__version__
-except ImportError:
-  coverage = None
-  coverage_version = None
+import test_env  # pylint: disable=W0611
 
-from distutils.version import StrictVersion
-
-if (not coverage or
-    not hasattr(coverage.collector, 'CTracer') or
-    not coverage.collector.CTracer or
-    StrictVersion(coverage_version) < StrictVersion('3.7')):
-  raise ImportError(
-      'This test requires natively-installed python-coverage (>=3.7). '
-      'Current is %s.' % coverage_version)
-
+import coverage
 
 # This is instead of a contextmanager because it causes old pylints to crash :(
 class _Cover(object):

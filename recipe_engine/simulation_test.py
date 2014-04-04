@@ -8,7 +8,7 @@
 import os
 
 # Importing for side effects on sys.path? Yes... yes we are :(
-import test_env  # pylint: disable=W0611
+import test_env  # pylint: disable=W0611,W0403
 
 from common import annotator
 from slave import annotated_run
@@ -16,7 +16,7 @@ from slave import recipe_config_types
 from slave import recipe_loader
 from slave import recipe_util
 
-import expect_tests
+import expect_tests  # pylint: disable=W0403
 
 
 def RunRecipe(test_data):

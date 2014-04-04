@@ -20,7 +20,7 @@ import os
 import sys
 from itertools import product, imap
 
-import test_env  # "relative import" pylint: disable=W0403
+import test_env  # "relative import" pylint: disable=W0403,W0611
 
 from slave import recipe_loader
 from slave import recipe_util
@@ -145,8 +145,6 @@ def main(argv):
   if total_covered != 100.0:
     print 'FATAL: Recipes configs are not at 100% coverage.'
     retcode = 2
-
-  test_env.print_coverage_warning()
 
   return retcode
 
