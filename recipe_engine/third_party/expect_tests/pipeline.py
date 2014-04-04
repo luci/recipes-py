@@ -38,6 +38,7 @@ def gen_loop_process(gen, test_queue, result_queue, opts, kill_switch,
                         for g in opts.test_glob if g[0] == '-'))
 
   def generate_tests():
+    paths_seen = set()
     try:
       for test in gen():
         if kill_switch.is_set():
@@ -49,8 +50,14 @@ def gen_loop_process(gen, test_queue, result_queue, opts, kill_switch,
                   'Got non-Test isinstance from generator: %r' % test))
           continue
 
-        if not neg_matcher.match(test.name) and matcher.match(test.name):
-          yield test
+        test_path = test.expect_path()
+        if test_path in paths_seen:
+          result_queue.put_nowait(
+              TestError(test, 'Duplicate expectation path!'))
+        else:
+          paths_seen.add(test_path)
+          if not neg_matcher.match(test.name) and matcher.match(test.name):
+            yield test
     except KeyboardInterrupt:
       pass
     finally:
