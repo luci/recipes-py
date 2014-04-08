@@ -7,6 +7,7 @@ import glob
 import multiprocessing
 import re
 import signal
+import traceback
 
 from .type_definitions import (
     Test, UnknownError, TestError, Result, ResultStageAbort)
@@ -101,9 +102,8 @@ def run_loop_process(test_queue, result_queue, opts, kill_switch, cover_ctx):
             continue
 
           yield test, result
-        except Exception as e:
-          # TODO(iannucci): include stacktrace
-          result_queue.put_nowait(TestError(test, str(e)))
+        except Exception:
+          result_queue.put_nowait(TestError(test, traceback.format_exc()))
     except KeyboardInterrupt:
       pass
 

@@ -104,7 +104,14 @@ class TrainHandler(Handler):
     def handle_MissingWriteAction(self, result):
       self._record_write(result.test, 'M', 'missing')
 
+    def handle_TestError(self, result):
+      self._record_expected(result.test, 'E')
+      self.normal_actions.append('%s failed: %s' %
+                                 (result.test.name, result.message))
+
     def finalize(self, aborted):
+      super(TrainHandler.ResultStageHandler, self).finalize(aborted)
+
       if not aborted and not self.opts.test_glob:
         for d in self.dirs_seen:
           expected = self.files_expected[d]
