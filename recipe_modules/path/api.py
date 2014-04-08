@@ -195,14 +195,16 @@ class PathApi(recipe_api.RecipeApi):
     self.mock_add_paths(path)
 
   def rmtree(self, name, path):
-    """Wrapper for shutil.rmtree."""
+    """Wrapper for chromium_utils.RemoveDirectory."""
     self.assert_absolute(path)
     return self.m.python.inline(
       'rmtree ' + name,
       """
-      import os, shutil, sys
+      import os, sys
+      from common import chromium_utils
+
       if os.path.exists(sys.argv[1]):
-        shutil.rmtree(sys.argv[1])
+        chromium_utils.RemoveDirectory(sys.argv[1])
       """,
       args=[path],
     )
@@ -220,10 +222,12 @@ class PathApi(recipe_api.RecipeApi):
     return self.m.python.inline(
       'rmcontents ' + name,
       """
-      import os, shutil, sys
+      import os, sys
+      from common import chromium_utils
+
       for p in [os.path.join(sys.argv[1], x) for x in os.listdir(sys.argv[1])]:
         if os.path.isdir(p):
-          shutil.rmtree(p)
+          chromium_utils.RemoveDirectory(p)
         else:
           os.unlink(p)
       """,
