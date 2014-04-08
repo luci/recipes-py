@@ -48,7 +48,7 @@ class TrainHandler(Handler):
       if opts.force:
         WriteNewData(test, result.data)
         put_next_stage(ForcedWriteAction(test))
-        return
+        continue
 
       current, same_schema = GetCurrentData(test)
       diff = DiffData(current, result.data)
