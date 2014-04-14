@@ -116,7 +116,8 @@ class TrainHandler(Handler):
         for d in self.dirs_seen:
           expected = self.files_expected[d]
           for f in os.listdir(d):
-            if f == 'OWNERS':
+            # Skip OWNERS files and files beginning with a '.' (like '.svn')
+            if f == 'OWNERS' or f[0] == '.':
               continue
             if f not in expected:
               path = os.path.join(d, f)
