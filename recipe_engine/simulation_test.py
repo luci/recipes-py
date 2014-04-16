@@ -39,7 +39,7 @@ def GenerateTests():
       name = os.path.splitext(name)[0]
       expect_path = os.path.join(root, '%s.expected' % name)
 
-      test_data.properties['recipe'] = recipe_name
+      test_data.properties['recipe'] = recipe_name.replace('\\', '/')
       yield expect_tests.Test(
           '%s.%s' % (recipe_name, test_data.name),
           RunRecipe, args=(test_data,),

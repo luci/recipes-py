@@ -15,6 +15,7 @@ import textwrap
 RUNTESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(RUNTESTS_DIR, 'data')
 BASE_DIR = os.path.abspath(os.path.join(RUNTESTS_DIR, '..', '..', '..'))
+DEPOT_TOOLS_DIR = os.path.join(BASE_DIR, os.pardir, 'depot_tools')
 
 sys.path.insert(0, os.path.join(BASE_DIR, 'scripts'))
 sys.path.insert(0, os.path.join(BASE_DIR, 'site_config'))
@@ -35,11 +36,26 @@ def ensure_coverage_importable():
       return
   except ImportError:
     if sys.platform.startswith('win'):
-      print textwrap.dedent("""
-      Please install coverage by running the appropriate installer from:
-        https://pypi.python.org/pypi/coverage/3.7.1
-      """)
-      sys.exit(1)
+      # In order to compile the coverage module on Windows we need to set the
+      # 'VS90COMNTOOLS' environment variable. This usually point to the
+      # installation folder of VS2008 but we can fake it to make it point to the
+      # version of the toolchain checked in depot_tools.
+      #
+      # This variable usually point to the $(VsInstallDir)\Common7\Tools but is
+      # only used to access %VS90COMNTOOLS%/../../VC/vcvarsall.bat and therefore
+      # any valid directory respecting this structure can be used.
+      vc_path = os.path.join(DEPOT_TOOLS_DIR, 'win_toolchain', 'vs2013_files',
+          'VC', 'bin')
+      # If the toolchain isn't available then ask the user to fetch chromium in
+      # order to install it.
+      if not os.path.isdir(vc_path):
+        print textwrap.dedent("""
+        You probably don't have the Windows toolchain in your depot_tools
+        checkout. Install it by running:
+          fetch chromium
+        """)
+        sys.exit(1)
+      os.environ['VS90COMNTOOLS'] = vc_path
 
   try:
     import setuptools  # pylint: disable=W0612
