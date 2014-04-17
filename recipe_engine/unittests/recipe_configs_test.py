@@ -18,6 +18,7 @@ import argparse
 import multiprocessing
 import os
 import sys
+import traceback
 from itertools import product, imap
 
 import test_env  # "relative import" pylint: disable=W0403,W0611
@@ -52,7 +53,7 @@ from slave import recipe_config  # pylint: disable=F0401
 
 
 def evaluate_configurations(args):
-  mod_id, var_assignments = args
+  mod_id, var_assignments, verbose = args
   mod = getattr(RECIPE_MODULES, mod_id)
   ctx = mod.CONFIG_CTX
 
@@ -84,8 +85,13 @@ def evaluate_configurations(args):
     test_name = os.path.join(mod.__path__[0],
                              covered(ctx.TEST_NAME_FORMAT, var_assignments))
     print 'Evaluated', test_name
-  except Exception, e:
-    print 'Caught exception [%s] with args %s: %s' % (e, args, config_name)
+    return True
+  except Exception as e:
+    print 'Caught exception [%s] with args (%s, %s): %s' % (
+        e, mod_id, var_assignments, config_name)
+    if verbose:
+      traceback.print_exc()
+    return False
 
 
 def multiprocessing_init():
@@ -107,9 +113,9 @@ def multiprocessing_init():
     os._exit = exitfn
 
 
-def coverage_parallel_map(fn):
+def coverage_parallel_map(fn, verbose):
   combination_generator = (
-    (mod_id, var_assignments)
+    (mod_id, var_assignments, verbose)
     for mod_id, mod in RECIPE_MODULES.__dict__.iteritems()
       if mod_id[0] != '_' and mod.CONFIG_CTX
     for var_assignments in imap(dict, product(*[
@@ -134,19 +140,21 @@ def main(argv):
 
   p = argparse.ArgumentParser()
   p.add_argument('--train', action='store_true', help='deprecated')
-  p.parse_args()
+  p.add_argument('--verbose', action='store_true', help='more output')
+  options = p.parse_args()
 
-  coverage_parallel_map(evaluate_configurations)
-
-  retcode = 0
+  success = all(coverage_parallel_map(evaluate_configurations, options.verbose))
 
   COVERAGE.combine()
   total_covered = COVERAGE.report()
-  if total_covered != 100.0:
-    print 'FATAL: Recipes configs are not at 100% coverage.'
-    retcode = 2
+  all_covered = total_covered == 100.0
 
-  return retcode
+  if not success:
+    print 'FATAL: Some recipe configuration(s) failed'
+  if not all_covered:
+    print 'FATAL: Recipes configs are not at 100% coverage.'
+
+  return 1 if (not success or not all_covered) else 0
 
 
 if __name__ == '__main__':
