@@ -29,8 +29,6 @@ def RunRecipe(test_data):
 
 
 def GenerateTests():
-  mods = recipe_loader.load_recipe_modules(recipe_loader.MODULE_DIRS())
-
   for recipe_path, recipe_name in recipe_loader.loop_over_recipes():
     recipe = recipe_loader.load_recipe(recipe_name)
     test_api = recipe_loader.create_test_api(recipe.DEPS)
@@ -45,7 +43,7 @@ def GenerateTests():
           RunRecipe, args=(test_data,),
           expect_dir=expect_path,
           expect_base=test_data.name,
-          break_funcs=(mods.step.API.__call__, recipe.GenSteps)
+          break_funcs=(recipe.GenSteps,)
       )
 
 

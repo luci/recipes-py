@@ -10,7 +10,8 @@ import signal
 import traceback
 
 from .type_definitions import (
-    Test, UnknownError, TestError, Result, ResultStageAbort)
+    Test, UnknownError, TestError, NoMatchingTestsError,
+    Result, ResultStageAbort)
 
 
 def gen_loop_process(gen, test_queue, result_queue, opts, kill_switch,
@@ -28,18 +29,22 @@ def gen_loop_process(gen, test_queue, result_queue, opts, kill_switch,
   @type kill_switch: multiprocessing.Event()
   @type cover_ctx: cover.CoverageContext().create_subprocess_context()
   """
+  # Implicitly append '*'' to globs that don't specify it.
+  globs = ['%s%s' % (g, '*' if '*' not in g else '') for g in opts.test_glob]
+
   matcher = re.compile(
       '^%s$' % '|'.join('(?:%s)' % glob.fnmatch.translate(g)
-                        for g in opts.test_glob if g[0] != '-'))
+                        for g in globs if g[0] != '-'))
   if matcher.pattern == '^$':
     matcher = re.compile('^.*$')
 
   neg_matcher = re.compile(
       '^%s$' % '|'.join('(?:%s)' % glob.fnmatch.translate(g[1:])
-                        for g in opts.test_glob if g[0] == '-'))
+                        for g in globs if g[0] == '-'))
 
   def generate_tests():
     paths_seen = set()
+    seen_tests = False
     try:
       for test in gen():
         if kill_switch.is_set():
@@ -58,7 +63,10 @@ def gen_loop_process(gen, test_queue, result_queue, opts, kill_switch,
         else:
           paths_seen.add(test_path)
           if not neg_matcher.match(test.name) and matcher.match(test.name):
+            seen_tests = True
             yield test
+      if not seen_tests:
+        result_queue.put_nowait(NoMatchingTestsError())
     except KeyboardInterrupt:
       pass
     finally:

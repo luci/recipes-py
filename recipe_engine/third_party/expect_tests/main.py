@@ -62,7 +62,8 @@ def _parse_args(args):
         'test_glob', nargs='*', help=(
             'glob to filter the tests acted on. If the glob begins with "-" '
             'then it acts as a negation glob and anything which matches it '
-            'will be skipped.'))
+            'will be skipped. If a glob doesn\'t have "*" in it, "*" will be '
+            'implicitly appended to the end'))
 
   opts = parser.parse_args(args)
 

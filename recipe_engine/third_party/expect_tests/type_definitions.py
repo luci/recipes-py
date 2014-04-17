@@ -8,6 +8,7 @@ from collections import namedtuple
 
 UnknownError = namedtuple('UnknownError', 'message')
 TestError = namedtuple('TestError', 'test message')
+NoMatchingTestsError = namedtuple('NoMatchingTestsError', '')
 Result = namedtuple('Result', 'data')
 
 class ResultStageAbort(Exception):
@@ -168,6 +169,11 @@ class Handler(object):
                cause the entire test run to ultimately return an error code.
       """
       return getattr(self, 'handle_' + type(obj).__name__, self.__unknown)(obj)
+
+    def handle_NoMatchingTestsError(self, _error):
+      print 'No tests found that match the glob: %s' % (
+          ' '.join(self.opts.test_glob),)
+      return Failure()
 
     def __unknown(self, obj):
       if self.opts.verbose:
