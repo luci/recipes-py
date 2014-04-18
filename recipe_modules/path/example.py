@@ -6,12 +6,18 @@ DEPS = [
   'path',
   'platform',
   'step',
+  'step_history',
 ]
 
 
 def GenSteps(api):
   yield (api.step('step1',
                   ['/bin/echo', str(api.path['slave_build'].join('foo'))]))
+
+  # listdir demo.
+  yield api.path.listdir('fake dir', '/fake/dir')
+  for element in api.step_history.last_step().json.output:
+    yield api.step('manipulate %s' % str(element), ['some', 'command'])
 
   # mkdtemp demo.
   for prefix in ('prefix_a', 'prefix_b'):

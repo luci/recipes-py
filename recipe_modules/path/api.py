@@ -172,6 +172,19 @@ class PathApi(recipe_api.RecipeApi):
   def assert_absolute(self, path):
     assert self.abspath(path) == str(path), '%s is not absolute' % path
 
+  def listdir(self, name, path, step_test_data=None):
+    """Wrapper for os.listdir."""
+    yield self.m.python.inline('listdir %s' % name,
+      """
+      import json, os, sys
+      if os.path.exists(sys.argv[1]) and os.path.isdir(sys.argv[1]):
+        json.dump(os.listdir(sys.argv[1]), sys.argv[2])
+      """,
+      args=[path, self.m.json.output()],
+      step_test_data=(step_test_data or 
+                      self.test_api.listdir(['file 1', 'file 2'])),
+    )
+
   def makedirs(self, name, path, mode=0777):
     """
     Like os.makedirs, except that if the directory exists, then there is no
