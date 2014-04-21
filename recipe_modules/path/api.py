@@ -178,7 +178,8 @@ class PathApi(recipe_api.RecipeApi):
       """
       import json, os, sys
       if os.path.exists(sys.argv[1]) and os.path.isdir(sys.argv[1]):
-        json.dump(os.listdir(sys.argv[1]), sys.argv[2])
+        with open(sys.argv[2], 'w') as f:
+          json.dump(os.listdir(sys.argv[1]), f)
       """,
       args=[path, self.m.json.output()],
       step_test_data=(step_test_data or 
