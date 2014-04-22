@@ -28,12 +28,13 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
       p = step_result.presentation
       j = step_result.json.output
 
-      p.logs.update(j.get('logs', {}))
-      p.links.update(j.get('links', {}))
-      p.perf_logs.update(j.get('perf_logs', {}))
-      p.step_summary_text = j.get('step_summary_text', '')
-      p.step_text = j.get('step_text', '')
-      p.properties.update(j.get('properties', {}))
+      if j:
+        p.logs.update(j.get('logs', {}))
+        p.links.update(j.get('links', {}))
+        p.perf_logs.update(j.get('perf_logs', {}))
+        p.step_summary_text = j.get('step_summary_text', '')
+        p.step_text = j.get('step_text', '')
+        p.properties.update(j.get('properties', {}))
 
     f = '--output-json'
     step_name = 'gen step(%s)' % self.m.path.basename(path_to_script)
