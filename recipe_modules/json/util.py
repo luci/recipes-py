@@ -41,9 +41,11 @@ class TestResults(object):
       actual_result = result['actual']
       split_results = actual_result.split()
       data = actual_result
-      if len(split_results) > 1 and split_results[1] in ('PASS', 'SLOW'):
+      passing_statuses = ('PASS', 'SLOW', 'NEEDSREBASELINE',
+                          'NEEDSMANUALREBASELINE')
+      if len(split_results) > 1 and split_results[1] in passing_statuses:
         key += 'flakes'
-      elif split_results == ['PASS']:
+      elif split_results[0] in passing_statuses:
         key += 'passes'
         # TODO(dpranke): crbug.com/357867 ...  Why are we assigning result
         # instead of actual_result here. Do we even need these things to be
