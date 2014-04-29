@@ -15,7 +15,7 @@ def BaseConfig(**_kwargs):
     return [(x if isinstance(x, Placeholder) else str(x)) for x in lst]
 
   return ConfigGroup(
-    name = Single(str),
+    name = Single(basestring),
     cmd = List(inner_type=(int,basestring,Path,Placeholder),
                jsonish_fn=render_cmd),
 
