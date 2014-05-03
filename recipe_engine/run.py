@@ -71,7 +71,6 @@ import optparse
 import os
 import subprocess
 import sys
-import traceback
 
 import cStringIO
 
@@ -447,12 +446,9 @@ def run_steps(stream, build_properties, factory_properties,
       s.step_failure()
       return RecipeExecutionResult(2, None)
 
-  try:
-    # Run the steps emitted by a recipe via the engine, emitting annotations
-    # into |stream| along the way.
-    return engine.run(steps)
-  except BaseException:
-    return engine.unhandled_exception()
+  # Run the steps emitted by a recipe via the engine, emitting annotations into
+  # |stream| along the way.
+  return engine.run(steps)
 
 
 class RecipeEngine(object):
@@ -503,17 +499,6 @@ class RecipeEngine(object):
       RecipeExecutionResult with status code and list of steps ran.
     """
     raise NotImplementedError
-
-  def unhandled_exception(self): # pylint: disable=R0201
-    """Callback to handle unhandled exceptions.
-
-    Must be called from an exceptional context. No arguments, but you can use
-    sys.exc_info() to get information about the exception.
-
-    Returns:
-      RecipeExecutionResult with status code (recommended 4) and list of steps.
-    """
-    raise
 
   def create_step(self, step):
     """Called by step module to instantiate a new step. Return value of this
@@ -607,14 +592,6 @@ class SequentialRecipeEngine(RecipeEngine):
 
     return RecipeExecutionResult(0 if not self._step_history.failed else 1,
                                  self._step_history)
-
-  def unhandled_exception(self):
-    (exc_type, exc_message) = sys.exc_info()[0:2]
-    with self._stream.step('%s: %s' % (exc_type.__name__, exc_message)) as s:
-      self._stream.emit('Exception: %s\nBacktrace:\n%s' %
-                       (exc_message, traceback.format_exc(sys.exc_info()[2])))
-      s.step_exception()
-    return RecipeExecutionResult(4, self._step_history)
 
   def create_step(self, step):  # pylint: disable=R0201
     # This version of engine doesn't do anything, just converts step to dict
