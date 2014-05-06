@@ -62,8 +62,11 @@ def GetCurrentData(test):
     if ext not in SERIALIZERS and ext == test.ext:
       raise Exception('The package to support %s is not installed.' % ext)
     if os.path.exists(path):
-      with open(path, 'rb') as f:
-        data = SERIALIZERS[ext][0](f)
+      try:
+        with open(path, 'rb') as f:
+          data = SERIALIZERS[ext][0](f)
+      except ValueError as err:
+        raise ValueError('Bad format of %s: %s' % (path, err))
       return data, ext == test.ext
   return NonExistant, True
 
