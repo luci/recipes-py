@@ -248,6 +248,22 @@ class PathApi(recipe_api.RecipeApi):
       args=[path],
     )
 
+  def rmwildcard(self, pattern, path, **kwargs):
+    """
+    Removes all files in the subtree of path matching the glob pattern.
+    """
+    self.assert_absolute(path)
+    return self.m.python.inline(
+      'rmwildcard %s in %s' % (pattern, path),
+      """
+      import sys
+      from common import chromium_utils
+
+      chromium_utils.RemoveFilesWildcards(sys.argv[1], root=sys.argv[2])
+      """,
+      args=[pattern,path],
+      **kwargs)
+
   def mkdtemp(self, prefix):
     """Makes a new temp directory, returns path to it."""
     if not self._test_data.enabled:  # pragma: no cover
