@@ -92,6 +92,7 @@ def emit(line, stream, flush_before=None):
     while line:
       to_print, line = line[:lim], line[lim:]
       stream.write(to_print)
+    stream.write('\n')
   else:
     print >> stream, line
   stream.flush()
