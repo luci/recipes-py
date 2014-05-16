@@ -39,6 +39,7 @@ class RecipeScript(object):
     """Evaluates a script and returns RecipeScript instance."""
     script_vars = {}
     execfile(script_path, script_vars)
+    script_vars['__file__'] = script_path
     return cls(script_vars)
 
   @classmethod
