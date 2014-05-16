@@ -50,7 +50,11 @@ class TrainHandler(Handler):
         put_next_stage(ForcedWriteAction(test))
         continue
 
-      current, same_schema = GetCurrentData(test)
+      try:
+        current, same_schema = GetCurrentData(test)
+      except ValueError:
+        current = NonExistant
+        same_schema = False
       diff = DiffData(current, result.data)
       if diff is not None or not same_schema:
         WriteNewData(test, result.data)
