@@ -31,9 +31,6 @@ def GenSteps(api):
   yield api.step('print resource',
                  ['echo', api.path.resource('dir', 'file.py')])
 
-  # rmwildcard demo
-  yield api.path.rmwildcard('*.o', api.path['slave_build'])
-
 
 def GenTests(api):
   # This line is for code coverage.
