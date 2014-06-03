@@ -50,8 +50,9 @@ On each iteration, a step generator may yield:
 
 For steps yielded by the generator, if annotated_run enters the failed state,
 it will only continue to call the generator if the generator sets the
-'keep_going' key on the steps which it has produced. Otherwise annoated_run will
-cease calling the generator and move on to the next item in iterable_of_things.
+'keep_going' key on the steps which it has produced. Otherwise annotated_run
+will cease calling the generator and move on to the next item in
+iterable_of_things.
 
 'step_history' is an OrderedDict of {stepname -> StepData}, always representing
     the current history of what steps have run, what they returned, and any
@@ -331,7 +332,7 @@ def get_callable_name(func):
 
 def step_callback(step, step_history, placeholders, step_test):
   assert step['name'] not in step_history, (
-    'Step "%s" is already in step_history!' % step['name'])
+    'Step "%s" is already in step_history.' % step['name'])
   step_result = StepData(step, None)
   step_history[step['name']] = step_result
 
@@ -653,7 +654,9 @@ def update_scripts():
   if os.environ.get('RUN_SLAVE_UPDATED_SCRIPTS'):
     os.environ.pop('RUN_SLAVE_UPDATED_SCRIPTS')
     return False
+
   stream = annotator.StructuredAnnotationStream(seed_steps=['update_scripts'])
+
   with stream.step('update_scripts') as s:
     build_root = os.path.join(SCRIPT_PATH, '..', '..')
     gclient_name = 'gclient'

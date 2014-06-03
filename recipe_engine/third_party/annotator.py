@@ -135,7 +135,7 @@ class AnnotationPrinter(object):
   """A derivable class which will inject annotation-printing methods into the
   subclass.
 
-  Your sublcass should define a class variable ANNOTATIONS equal to a
+  A subclass should define a class variable ANNOTATIONS equal to a
   dictionary of the form { '<ANNOTATION_NAME>': <# args> }. This class will
   then inject methods whose names are the undercased version of your
   annotation names, and which take the number of arguments specified in the
@@ -237,7 +237,7 @@ class AdvancedAnnotationStream(AnnotationPrinter):
 
   Most callers should use StructuredAnnotationStream to simplify coding and
   avoid errors. For the rare cases where StructuredAnnotationStream is
-  insufficient (parallel step execution), the indidividual functions are exposed
+  insufficient (parallel step execution), the individual functions are exposed
   here.
   """
   ANNOTATIONS = STREAM_ANNOTATIONS
