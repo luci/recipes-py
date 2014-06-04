@@ -5,6 +5,7 @@
 
 """Provides simulator test coverage for individual recipes."""
 
+import logging
 import os
 
 # Importing for side effects on sys.path? Yes... yes we are :(
@@ -48,6 +49,15 @@ def GenerateTests():
 
 
 if __name__ == '__main__':
+  # annotated_run.py has different behavior when these environment variables
+  # are set, so unset to make simulation tests environment-invariant.
+  for env_var in ['TESTING_MASTER_HOST',
+                  'TESTING_MASTER',
+                  'TESTING_SLAVENAME']:
+    if env_var in os.environ:
+      logging.warn("Ignoring %s environment variable." % env_var)
+      os.environ.pop(env_var)
+
   expect_tests.main('recipe_simulation_test', GenerateTests, (
       [os.path.join(x, '*') for x in recipe_util.RECIPE_DIRS()] +
       [os.path.join(x, '*', '*api.py') for x in recipe_util.MODULE_DIRS()]
