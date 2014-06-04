@@ -485,71 +485,74 @@ def run_step(stream, name, cmd,
         return None
 
     print_step(step_dict, step_env, stream)
-    try:
-      # Open file handles for IO redirection based on file names in step_dict.
-      fhandles = {
-        'stdout': subprocess.PIPE,
-        'stderr': subprocess.PIPE,
-        'stdin': None,
-      }
-      for key in fhandles:
-        if key in step_dict:
-          fhandles[key] = open(step_dict[key], 'rb' if key == 'stdin' else 'wb')
+    returncode = 0
+    if cmd:
+      try:
+        # Open file handles for IO redirection based on file names in step_dict.
+        fhandles = {
+          'stdout': subprocess.PIPE,
+          'stderr': subprocess.PIPE,
+          'stdin': None,
+        }
+        for key in fhandles:
+          if key in step_dict:
+            fhandles[key] = open(step_dict[key],
+                                 'rb' if key == 'stdin' else 'wb')
 
-      with modify_lookup_path(step_env.get('PATH')):
-        proc = subprocess.Popen(
-            cmd,
-            env=step_env,
-            cwd=cwd,
-            universal_newlines=True,
-            **fhandles)
+        with modify_lookup_path(step_env.get('PATH')):
+          proc = subprocess.Popen(
+              cmd,
+              env=step_env,
+              cwd=cwd,
+              universal_newlines=True,
+              **fhandles)
 
-      # Safe to close file handles now that subprocess has inherited them.
-      for handle in fhandles.itervalues():
-        if isinstance(handle, file):
-          handle.close()
+        # Safe to close file handles now that subprocess has inherited them.
+        for handle in fhandles.itervalues():
+          if isinstance(handle, file):
+            handle.close()
 
-      outlock = threading.Lock()
-      def filter_lines(lock, allow_subannotations, inhandle, outhandle):
-        while True:
-          line = inhandle.readline()
-          if not line:
-            break
-          lock.acquire()
-          try:
-            if not allow_subannotations and line.startswith('@@@'):
-              outhandle.write('!')
-            outhandle.write(line)
-            outhandle.flush()
-          finally:
-            lock.release()
+        outlock = threading.Lock()
+        def filter_lines(lock, allow_subannotations, inhandle, outhandle):
+          while True:
+            line = inhandle.readline()
+            if not line:
+              break
+            lock.acquire()
+            try:
+              if not allow_subannotations and line.startswith('@@@'):
+                outhandle.write('!')
+              outhandle.write(line)
+              outhandle.flush()
+            finally:
+              lock.release()
 
-      # Pump piped stdio through filter_lines. IO going to files on disk is
-      # not filtered.
-      threads = []
-      for key in ('stdout', 'stderr'):
-        if fhandles[key] == subprocess.PIPE:
-          inhandle = getattr(proc, key)
-          outhandle = getattr(sys, key)
-          threads.append(threading.Thread(
-              target=filter_lines,
-              args=(outlock, allow_subannotations, inhandle, outhandle)))
+        # Pump piped stdio through filter_lines. IO going to files on disk is
+        # not filtered.
+        threads = []
+        for key in ('stdout', 'stderr'):
+          if fhandles[key] == subprocess.PIPE:
+            inhandle = getattr(proc, key)
+            outhandle = getattr(sys, key)
+            threads.append(threading.Thread(
+                target=filter_lines,
+                args=(outlock, allow_subannotations, inhandle, outhandle)))
 
-      for th in threads:
-        th.start()
-      proc.wait()
-      for th in threads:
-        th.join()
+        for th in threads:
+          th.start()
+        proc.wait()
+        for th in threads:
+          th.join()
+      except OSError as e:
+        # File wasn't found, error will be reported to stream when the exception
+        # crosses the context manager.
+        raise type(e)(str(e) + ' when executing %s' % cmd)
+      returncode = proc.returncode
 
-      if followup_fn:
-        return followup_fn(s, proc.returncode)
-      else:
-        return proc.returncode
-    except OSError as e:
-      # File wasn't found, error will be reported to stream when the exception
-      # crosses the context manager.
-      raise type(e)(str(e) + ' when executing %s' % cmd)
-
+    if followup_fn:
+      return followup_fn(s, returncode)
+    else:
+      return returncode
 
 def update_build_failure(failure, retcode, can_fail_build=True, **_kwargs):
   """Potentially moves failure from False to True, depending on returncode of

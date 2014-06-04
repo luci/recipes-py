@@ -273,7 +273,7 @@ def render_step(step, step_test):
   # Process 'cmd', rendering placeholders there.
   placeholders = collections.defaultdict(lambda: collections.defaultdict(list))
   new_cmd = []
-  for item in step['cmd']:
+  for item in step.get('cmd', []):
     if isinstance(item, recipe_util.Placeholder):
       module_name, placeholder_name = item.name_pieces
       tdata = step_test.pop_placeholder(item.name_pieces)
