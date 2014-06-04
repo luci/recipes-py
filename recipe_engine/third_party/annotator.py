@@ -468,10 +468,17 @@ def run_step(stream, name, cmd,
   cmd = map(str, cmd)
 
   # For error reporting.
-  step_dict = locals().copy()
-  step_dict.pop('kwargs')
-  step_dict.pop('stream')
-  step_dict.update(kwargs)
+  step_dict = kwargs.copy()
+  step_dict.update({
+      'name': name,
+      'cmd': cmd,
+      'cwd': cwd,
+      'env': env,
+      'skip': skip,
+      'allow_subannotations': allow_subannotations,
+      'seed_steps': seed_steps,
+      'followup_fn': followup_fn,
+      })
   step_env = _merge_envs(os.environ, env)
 
   for step_name in (seed_steps or []):
