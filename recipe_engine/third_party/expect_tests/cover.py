@@ -28,17 +28,22 @@ class _Cover(object):
 
 
 class CoverageContext(object):
-  def __init__(self, name, includes, omits, enabled=True):
+  def __init__(self, name, includes, omits, cover_branches, html_report,
+               extra_coverage_data, enabled=True):
     self.opts = None
     self.cov = None
     self.enabled = enabled
+
+    self.html_report = html_report
+    self.extra_data = extra_coverage_data or ()
 
     if enabled:
       self.opts = {
         'include': includes,
         'omit': omits,
         'data_file': '.%s_coverage' % name,
-        'data_suffix': True
+        'data_suffix': True,
+        'branch': cover_branches,
       }
       self.cov = coverage.coverage(**self.opts)
       self.cov.erase()
@@ -51,6 +56,21 @@ class CoverageContext(object):
     fail = False
 
     if self.enabled:
+      include_files = set()
+      for datafile in self.extra_data:
+        # pylint: disable=W0212
+        lines, arcs = self.cov.data._read_file(datafile)
+        self.cov.data.add_line_data(lines)
+        self.cov.data.add_arc_data(arcs)
+        include_files.update(lines)
+        include_files.update(arcs)
+
+      self.cov.config.include = list(
+          set(self.cov.config.include) | include_files)
+
+      if self.html_report:
+        self.cov.html_report(directory=self.html_report)
+
       outf = StringIO()
       fail = self.cov.report(file=outf) != 100.0
       summary = outf.getvalue().replace('%- 15s' % 'Name', 'Coverage Report', 1)

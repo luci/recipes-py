@@ -4,6 +4,7 @@
 
 import argparse
 import multiprocessing
+import os
 import sys
 
 from .cover import CoverageContext
@@ -59,6 +60,14 @@ def _parse_args(args):
         help='take the list of test globs from the FILE (use "-" for stdin)')
 
     sp.add_argument(
+        '--html_report', metavar='DIR',
+        help='directory to write html report (default: disabled)')
+
+    sp.add_argument(
+        '--extra_coverage_data', metavar='FILE', nargs='*',
+        help='additional coverage data files to incorporate')
+
+    sp.add_argument(
         'test_glob', nargs='*', help=(
             'glob to filter the tests acted on. If the glob begins with "-" '
             'then it acts as a negation glob and anything which matches it '
@@ -71,6 +80,11 @@ def _parse_args(args):
     opts.jobs = 0
   elif opts.jobs < 1:
     parser.error('--jobs was less than 1')
+
+  if opts.extra_coverage_data:
+    for fname in opts.extra_coverage_data:
+      if not os.path.exists(fname):
+        parser.error('--extra_coverage_data %r does not exist' % fname)
 
   if opts.test_list:
     fh = sys.stdin if opts.test_list == '-' else open(opts.test_list, 'rb')
@@ -86,7 +100,7 @@ def _parse_args(args):
 
 
 def main(name, test_gen, coverage_includes=None, coverage_omits=None,
-         args=None):
+         cover_branches=False, args=None):
   """Entry point for tests using expect_tests.
 
   Example:
@@ -107,12 +121,16 @@ def main(name, test_gen, coverage_includes=None, coverage_omits=None,
   @param test_gen: A Generator which yields Test objects.
   @param coverage_includes: A list of path globs to include under coverage.
   @param coverage_omits: A list of path globs to exclude under coverage.
+  @param cover_branches: Include branch coverage data (rather than just line
+                         coverage)
   @param args: Commandline args (starting at argv[1])
   """
   try:
     opts = _parse_args(args)
 
     cover_ctx = CoverageContext(name, coverage_includes, coverage_omits,
+                                cover_branches, opts.html_report,
+                                opts.extra_coverage_data,
                                 not opts.handler.SKIP_RUNLOOP)
 
     error, killed = result_loop(test_gen, cover_ctx.create_subprocess_context(),
