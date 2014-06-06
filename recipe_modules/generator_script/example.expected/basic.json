@@ -58,6 +58,9 @@
       "echo",
       "mock step python"
     ],
+    "env": {
+      "FOO": "bar"
+    },
     "name": "mock.step.python",
     "seed_steps": [
       "mock.step.python"

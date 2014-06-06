@@ -14,7 +14,7 @@ DEPS = [
 def GenSteps(api):
   api.path['checkout'] = api.path['slave_build']
   yield api.generator_script('bogus')
-  yield api.generator_script('bogus.py')
+  yield api.generator_script('bogus.py', env={'FOO': 'bar'})
   yield api.generator_script('presentation.py')
 
 
