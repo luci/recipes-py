@@ -7,6 +7,8 @@ import json
 import os
 import pprint
 
+from collections import OrderedDict
+
 try:
   import yaml  # pylint: disable=F0401
 except ImportError:
@@ -42,10 +44,27 @@ SERIALIZERS['json'] = (
 if yaml:
   _YAMLSafeLoader = getattr(yaml, 'CSafeLoader', yaml.SafeLoader)
   _YAMLSafeDumper = getattr(yaml, 'CSafeDumper', yaml.SafeDumper)
+
+  MAPPING_TAG = yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG
+
+  class OrderedLoader(_YAMLSafeLoader):
+    def __init__(self, *args, **kwargs):  # pylint: disable=E1002
+      super(OrderedLoader, self).__init__(*args, **kwargs)
+      self.add_constructor(
+          MAPPING_TAG,
+          lambda loader, node: OrderedDict(loader.construct_pairs(node)))
+
+  class OrderedDumper(_YAMLSafeDumper):
+    def __init__(self, *args, **kwargs):  # pylint: disable=E1002
+      super(OrderedDumper, self).__init__(*args, **kwargs)
+      def _dict_representer(dumper, data):
+        return dumper.represent_mapping(MAPPING_TAG, data.items())
+      self.add_representer(OrderedDict, _dict_representer)
+
   SERIALIZERS['yaml'] = (
-      lambda stream: yaml.load(stream, _YAMLSafeLoader),
+      lambda stream: yaml.load(stream, OrderedLoader),
       lambda data, stream: yaml.dump(
-          data, stream, _YAMLSafeDumper, default_flow_style=False,
+          data, stream, OrderedDumper, default_flow_style=False,
           encoding='utf-8'))
 
 
