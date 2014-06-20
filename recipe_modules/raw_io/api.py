@@ -40,8 +40,9 @@ class InputDataPlaceholder(recipe_util.Placeholder):
 
 
 class OutputDataPlaceholder(recipe_util.Placeholder):
-  def __init__(self, suffix):
+  def __init__(self, suffix, leak_to):
     self.suffix = suffix
+    self.leak_to = leak_to
     self._backing_file = None
     super(OutputDataPlaceholder, self).__init__()
 
@@ -51,6 +52,9 @@ class OutputDataPlaceholder(recipe_util.Placeholder):
 
   def render(self, test):
     assert not self._backing_file, 'Placeholder can be used only once'
+    if self.leak_to:
+      self._backing_file = str(self.leak_to)
+      return [self._backing_file]
     if test.enabled:
       self._backing_file = '/path/to/tmp/' + self.suffix.lstrip('.')
     else:  # pragma: no cover
@@ -68,7 +72,8 @@ class OutputDataPlaceholder(recipe_util.Placeholder):
         with open(self._backing_file, 'rb') as f:
           return f.read()
       finally:
-        os.unlink(self._backing_file)
+        if not self.leak_to:
+          os.unlink(self._backing_file)
         self._backing_file = None
 
 
@@ -80,5 +85,14 @@ class RawIOApi(recipe_api.RecipeApi):
 
   @recipe_util.returns_placeholder
   @staticmethod
-  def output(suffix=''):
-    return OutputDataPlaceholder(suffix)
+  def output(suffix='', leak_to=None):
+    """Returns a Placeholder for use as a step argument, or for std{out,err}.
+
+    If 'leak_to' is None, the placeholder is backed by a temporary file with
+    a suffix 'suffix'. The file is deleted when the step finishes.
+
+    If 'leak_to' is not None, then it should be a Path and placeholder
+    redirects IO to a file at that path. Once step finishes, the file is
+    NOT deleted (i.e. it's 'leaking'). 'suffix' is ignored in that case.
+    """
+    return OutputDataPlaceholder(suffix, leak_to)

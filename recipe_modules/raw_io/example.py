@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 DEPS = [
+  'path',
   'raw_io',
   'step',
   'step_history',
@@ -43,6 +44,14 @@ def GenSteps(api):
   )
   assert api.step_history.last_step().stdout == 'blah\n'
   assert api.step_history.last_step().stderr == 'fail\n'
+
+  # leak_to coverage.
+  yield api.step(
+      'leak stdout', ['echo', 'leaking'],
+      stdout=api.raw_io.output(leak_to=api.path['slave_build'].join('out.txt')),
+      step_test_data=(
+        lambda: api.raw_io.test_api.stream_output('leaking\n')))
+  assert api.step_history.last_step().stdout == 'leaking\n'
 
 
 def GenTests(api):

@@ -33,5 +33,13 @@
     "name": "automock (fail)",
     "stderr": "/path/to/tmp/err",
     "stdout": "/path/to/tmp/out"
+  },
+  {
+    "cmd": [
+      "echo",
+      "leaking"
+    ],
+    "name": "leak stdout",
+    "stdout": "[SLAVE_BUILD]/out.txt"
   }
 ]
