@@ -26,7 +26,33 @@ def RunRecipe(test_data):
   # TODO(iannucci): Only pass test_data once.
   result = annotated_run.run_steps(stream, test_data.properties,
                                    test_data.properties, test_data)
-  return expect_tests.Result([s.step for s in result.steps_ran.itervalues()])
+
+  ret = []
+  last_result = None
+  for step_result in result.steps_ran.itervalues():
+    last_result = step_result
+    s = step_result.step
+    if not s.get('skip'):
+      s.pop('can_fail_build', None)
+      s.pop('abort_on_failure', None)
+      s.pop('always_run', None)
+      s.pop('seed_steps', None)
+      ret.append(s)
+
+  if result.status_code != 0:
+    reason = last_result.abort_reason or 'UNKNOWN'
+    for name, step_result in reversed(result.steps_ran.items()):
+      retcode = step_result.retcode
+      if retcode and step_result.step.get('can_fail_build', True):
+        reason = 'Step(%r) failed with return_code %d' % (name, retcode)
+        break
+    ret.append({
+        'name': '$final_result',
+        'status_code': result.status_code,
+        'reason': reason
+    })
+
+  return expect_tests.Result(ret)
 
 
 def GenerateTests():

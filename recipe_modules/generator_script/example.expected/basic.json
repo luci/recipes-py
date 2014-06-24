@@ -25,10 +25,7 @@
       "echo",
       "mock step binary"
     ],
-    "name": "mock.step.binary",
-    "seed_steps": [
-      "mock.step.binary"
-    ]
+    "name": "mock.step.binary"
   },
   {
     "cmd": [
@@ -61,10 +58,7 @@
     "env": {
       "FOO": "bar"
     },
-    "name": "mock.step.python",
-    "seed_steps": [
-      "mock.step.python"
-    ]
+    "name": "mock.step.python"
   },
   {
     "cmd": [
@@ -98,9 +92,6 @@
       "/path/to/tmp/json"
     ],
     "name": "mock.step.presentation",
-    "seed_steps": [
-      "mock.step.presentation"
-    ],
     "~followup_annotations": [
       "@@@STEP_TEXT@mock step text@@@"
     ]
