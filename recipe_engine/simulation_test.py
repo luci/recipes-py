@@ -41,7 +41,7 @@ def GenerateTests():
       test_data.properties['recipe'] = recipe_name.replace('\\', '/')
       yield expect_tests.Test(
           '%s.%s' % (recipe_name, test_data.name),
-          RunRecipe, args=(test_data,),
+          expect_tests.FuncCall(RunRecipe, test_data),
           expect_dir=expect_path,
           expect_base=test_data.name,
           break_funcs=(recipe.GenSteps,)

@@ -14,5 +14,11 @@ class ListHandler(Handler):
     def handle_Test(test):
       print test.name
 
+    @staticmethod
+    def handle_MultiTest(multi_test):
+      print 'MultiTest(%r, atomic=%r)' % (multi_test.name, multi_test.atomic)
+      for test in multi_test.tests:
+        print '|', test.name
+
     # TODO(iannucci): group tests by dir?
     # TODO(iannucci): print more data about the test in verbose mode?

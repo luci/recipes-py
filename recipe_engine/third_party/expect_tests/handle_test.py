@@ -12,8 +12,8 @@ from .type_definitions import Handler, Failure
 from .serialize import GetCurrentData, DiffData, NonExistant
 
 
-Missing = collections.namedtuple('Missing', 'test')
-Fail = collections.namedtuple('Fail', 'test diff')
+Missing = collections.namedtuple('Missing', 'test log_lines')
+Fail = collections.namedtuple('Fail', 'test diff log_lines')
 Pass = collections.namedtuple('Pass', 'test')
 
 
@@ -21,16 +21,16 @@ class TestHandler(Handler):
   """Run the tests."""
   @classmethod
   def run_stage_loop(cls, _opts, results, put_next_stage):
-    for test, result in results:
+    for test, result, log_lines in results:
       current, _ = GetCurrentData(test)
       if current is NonExistant:
-        put_next_stage(Missing(test))
+        put_next_stage(Missing(test, log_lines))
       else:
         diff = DiffData(current, result.data)
         if not diff:
           put_next_stage(Pass(test))
         else:
-          put_next_stage(Fail(test, diff))
+          put_next_stage(Fail(test, diff, log_lines))
 
   class ResultStageHandler(Handler.ResultStageHandler):
     def __init__(self, *args):
@@ -48,15 +48,18 @@ class TestHandler(Handler):
         sys.stdout.write(short)
         sys.stdout.flush()
 
-    def _add_result(self, msg_lines, test, header, category):
+    def _add_result(self, msg, test, header, category, log_lines=()):
       print >> self.err_out
       print >> self.err_out, '=' * 70
       if test is not None:
         print >> self.err_out, '%s: %s (%s)' % (
             header, test.name, test.expect_path())
       print >> self.err_out, '-' * 70
-      if msg_lines:
-        print >> self.err_out, '\n'.join(msg_lines)
+      if msg:
+        print >> self.err_out, msg
+      if log_lines:
+        print >> self.err_out, '==== captured logging output ===='
+        print >> self.err_out, '\n'.join(log_lines)
       self.errors[category] += 1
       self.num_tests += 1
 
@@ -67,22 +70,25 @@ class TestHandler(Handler):
 
     def handle_Fail(self, fail):
       self._emit('F', fail.test, 'FAIL')
-      self._add_result(fail.diff, fail.test, 'FAIL', 'failures')
+      self._add_result('\n'.join(fail.diff), fail.test, 'FAIL', 'failures',
+                       fail.log_lines)
       return Failure()
 
     def handle_TestError(self, test_error):
       self._emit('E', test_error.test, 'ERROR')
-      self._add_result([test_error.message], test_error.test, 'ERROR', 'errors')
+      self._add_result(test_error.message, test_error.test, 'ERROR', 'errors',
+                       test_error.log_lines)
       return Failure()
 
     def handle_UnknownError(self, error):
       self._emit('U', None, 'UNKNOWN ERROR')
-      self._add_result([error.message], None, 'UNKNOWN ERROR', 'unknown_errors')
+      self._add_result(error.message, None, 'UNKNOWN ERROR', 'unknown_errors')
       return Failure()
 
     def handle_Missing(self, missing):
       self._emit('M', missing.test, 'MISSING')
-      self._add_result([], missing.test, 'MISSING', 'missing')
+      self._add_result('', missing.test, 'MISSING', 'missing',
+                       missing.log_lines)
       return Failure()
 
     def finalize(self, aborted):

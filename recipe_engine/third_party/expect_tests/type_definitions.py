@@ -6,10 +6,16 @@ import os
 
 from collections import namedtuple
 
+# These have to do with deriving classes from namedtuple return values.
+# Pylint can't tell that namedtuple returns a new-style type() object.
+#
+# "no __init__ method" pylint: disable=W0232
+# "use of super on an old style class" pylint: disable=E1002
+
 UnknownError = namedtuple('UnknownError', 'message')
-TestError = namedtuple('TestError', 'test message')
 NoMatchingTestsError = namedtuple('NoMatchingTestsError', '')
 Result = namedtuple('Result', 'data')
+MultiResult = namedtuple('MultiResult', 'results')
 
 class ResultStageAbort(Exception):
   pass
@@ -19,19 +25,138 @@ class Failure(object):
   pass
 
 
-_Test = namedtuple(
-    'Test', 'name func args kwargs expect_dir expect_base ext breakpoints')
+class TestError(namedtuple('TestError', 'test message log_lines')):
+  def __new__(cls, test, message, log_lines=()):
+    return super(TestError, cls).__new__(cls, test, message, log_lines)
 
-class Test(_Test):  # pylint: disable=W0232
-  def __new__(cls, name, func, args=(), kwargs=None, expect_dir=None,
+
+class Bind(namedtuple('_Bind', 'loc name')):
+  """A placeholder argument for a FuncCall.
+
+  A Bind instance either indicates a 0-based index into the args argument,
+  or a name in kwargs when calling .bind().
+  """
+
+  def __new__(cls, loc=None, name=None):
+    """Either loc or name must be defined."""
+    assert ((loc is None and isinstance(name, str)) or
+            (name is None and 0 <= loc))
+    return super(Bind, cls).__new__(cls, loc, name)
+
+  def bind(self, args=(), kwargs=None):
+    """Return the appropriate value for this Bind when binding against args and
+    kwargs.
+
+    >>> b = Bind(2)
+    >>> # A bind will return itself if a matching arg value isn't present
+    >>> b.bind(['cat'], {'arg': 100}) is b
+    True
+    >>> # Otherwise the matching value is returned
+    >>> v = 'money'
+    >>> b.bind(['happy', 'cool', v]) is v
+    True
+    >>> b2 = Bind(name='cat')
+    >>> b2.bind((), {'cat': 'cool'})
+    'cool'
+    """
+    kwargs = kwargs or {}
+    if self.loc is not None:
+      v = args[self.loc:self.loc+1]
+      return self if not v else v[0]
+    else:
+      return kwargs.get(self.name, self)
+
+  @staticmethod
+  def maybe_bind(value, args, kwargs):
+    """Helper which binds value with (args, kwargs) if value is a Bind."""
+    return value.bind(args, kwargs) if isinstance(value, Bind) else value
+
+
+class FuncCall(object):
+  def __init__(self, func, *args, **kwargs):
+    """FuncCall is a trivial single-function closure which is pickleable.
+
+    This assumes that func, args and kwargs are all pickleable.
+
+    When constructing the FuncCall, you may also set any positional or named
+    argument to a Bind instance. A FuncCall can then be bound with the
+    .bind(*args, **kwargs) method, and finally called by invoking func_call().
+
+    A FuncCall may also be directly invoked with func_call(*args, **kwargs),
+    which is equivalent to func_call.bind(*args, **kwargs)().
+
+    Invoking a FuncCall with an unbound Bind instance is an error.
+
+    >>> def func(alpha, beta=None, gamma=None):
+    ...   return '%s-%s-%s' % (alpha, beta, gamma)
+    >>> f = FuncCall(func, Bind(2), beta=Bind(name='context'), gamma=Bind(2))
+    >>> # the first arg and the named arg 'gamma' are bound to index 2 of args.
+    >>> # the named arg 'beta' is bound to the named kwarg 'context'.
+    >>> #
+    >>> # The FuncCall is equivalent to (py3 pattern syntax):
+    >>> #   UNSET = object()
+    >>> #   def f(_, _, arg1, *_, context=UNSET, **_):
+    >>> #      assert pickle is not UNSET
+    >>> #      return func(arg1, beta=context, gamma=arg1)
+    >>> bound = f.bind('foo', 'bar', 'baz', context=100, extra=None)
+    >>> # At this point, bound is a FuncCall with no Bind arguments, and can be
+    >>> # invoked. This would be equivalent to:
+    >>> #   func('baz', beta=100, gamma='baz')
+    >>> bound()
+    baz-100-baz
+
+    Unused arguments in the .bind() call are ignored, which allows you to build
+    value-agnostic invocations to FuncCall.bind().
+    """
+    self._func = func
+    self._args = args
+    self._kwargs = kwargs
+    self._fully_bound = None
+
+  # "access to a protected member" pylint: disable=W0212
+  func = property(lambda self: self._func)
+  args = property(lambda self: self._args)
+  kwargs = property(lambda self: self._kwargs)
+
+  @property
+  def fully_bound(self):
+    if self._fully_bound is None:
+      self._fully_bound = not (
+          any(isinstance(v, Bind) for v in self._args) or
+          any(isinstance(v, Bind) for v in self._kwargs.itervalues())
+      )
+    return self._fully_bound
+
+  def bind(self, *args, **kwargs):
+    if self.fully_bound or not (args or kwargs):
+      return self
+
+    new = FuncCall(self._func)
+    new._args = [Bind.maybe_bind(a, args, kwargs) for a in self.args]
+    new._kwargs = {k: Bind.maybe_bind(v, args, kwargs)
+                   for k, v in self.kwargs.iteritems()}
+    return new
+
+  def __call__(self, *args, **kwargs):
+    f = self.bind(args, kwargs)
+    assert f.fully_bound
+    return f.func(*f.args, **f.kwargs)
+
+  def __repr__(self):
+    return 'FuncCall(%r, *%r, **%r)' % (self.func, self.args, self.kwargs)
+
+
+_Test = namedtuple(
+    'Test', 'name func_call expect_dir expect_base ext breakpoints')
+
+class Test(_Test):
+  def __new__(cls, name, func_call, expect_dir=None,
               expect_base=None, ext='json', breakpoints=None, break_funcs=()):
     """Create a new test.
 
     @param name: The name of the test. Will be used as the default expect_base
 
-    @param func: The function to execute to run this test. Must be pickleable.
-    @param args: *args for |func|
-    @param kwargs: **kwargs for |func|
+    @param func_call: A FuncCall object
 
     @param expect_dir: The directory which holds the expectation file for this
                        Test.
@@ -46,28 +171,110 @@ class Test(_Test):  # pylint: disable=W0232
                         mode. See |break_funcs| for an easier way to set this.
     @param break_funcs: A list of functions for which to set breakpoints.
     """
-    # pylint: disable=E1002
-    kwargs = kwargs or {}
-
     breakpoints = breakpoints or []
     if not breakpoints or break_funcs:
-      for f in (break_funcs or (func,)):
+      for f in (break_funcs or (func_call.func,)):
         if hasattr(f, 'im_func'):
           f = f.im_func
         breakpoints.append((f.func_code.co_filename,
                             f.func_code.co_firstlineno,
                             f.func_code.co_name))
 
-    return super(Test, cls).__new__(cls, name, func, args, kwargs, expect_dir,
+    return super(Test, cls).__new__(cls, name, func_call, expect_dir,
                                     expect_base, ext, breakpoints)
 
   def expect_path(self, ext=None):
+    if not self.expect_dir:
+      return None
     name = self.expect_base or self.name
     name = ''.join('_' if c in '<>:"\\/|?*\0' else c for c in name)
     return os.path.join(self.expect_dir, name + ('.%s' % (ext or self.ext)))
 
-  def run(self):
-    return self.func(*self.args, **self.kwargs)
+  def run(self, context=None):
+    return self.func_call(context=context)
+
+  def process(self, func=lambda test: test.run()):
+    """Applies |func| to the test, and yields (self, func(self)).
+
+    For duck-typing compatibility with MultiTest.
+
+    Bind(name='context') if used by your test function, is bound to None.
+
+    Used interally by expect_tests, you're not expected to call this yourself.
+    """
+    yield self, func(self.bind(context=None))
+
+  def bind(self, *args, **kwargs):
+    return self._replace(func_call=self.func_call.bind(*args, **kwargs))
+
+  def restrict(self, tests):
+    assert tests[0] is self
+    return self
+
+
+_MultiTest = namedtuple(
+    'MultiTest', 'name make_ctx_call destroy_ctx_call tests atomic')
+
+class MultiTest(_MultiTest):
+  """A wrapper around one or more Test instances.
+
+  Allows the entire group to have common pre- and post- actions and an optional
+  shared context between the Test methods (represented by Bind(name='context')).
+
+  Args:
+    name - The name of the MultiTest. Each Test's name should be prefixed with
+        this name, though this is not enforced.
+    make_ctx_call - A FuncCall which will be called once before any test in this
+        MultiTest runs. The return value of this FuncCall will become bound
+        to the name 'context' for both the |destroy_ctx_call| as well as every
+        test in |tests|.
+    destroy_ctx_call - A FuncCall which will be called once after all tests in
+        this MultiTest runs. The context object produced by |make_ctx_call| is
+        bound to the name 'context'.
+    tests - A list of Test instances. The context object produced by
+        |make_ctx_call| is bound to the name 'context'.
+    atomic - A boolean which indicates that this MultiTest must be executed
+        either all at once, or not at all (i.e., subtests may not be filtered).
+  """
+
+  def restrict(self, tests):
+    """A helper method to re-cast the MultiTest with fewer subtests.
+
+    All fields will be identical except for tests. If this MultiTest is atomic,
+    then this method returns |self|.
+
+    Used interally by expect_tests, you're not expected to call this yourself.
+    """
+    if self.atomic:
+      return self
+    assert all(t in self.tests for t in tests)
+    return self._replace(tests=tests)
+
+  def process(self, func=lambda test: test.run()):
+    """Applies |func| to each sub-test, with properly bound context.
+
+    make_ctx_call will be called before any test, and its return value becomes
+    bound to the name 'context'. All sub-tests will be bound with this value
+    as well as destroy_ctx_call, which will be invoked after all tests have
+    been yielded.
+
+    Optionally, you may specify a different function to apply to each test
+    (by default it is `lambda test: test.run()`). The context will be bound
+    to the test before your function recieves it.
+
+    Used interally by expect_tests, you're not expected to call this yourself.
+    """
+    # TODO(iannucci): pass list of test names?
+    ctx_object = self.make_ctx_call()
+    try:
+      for test in self.tests:
+        yield test, func(test.bind(context=ctx_object))
+    finally:
+      self.destroy_ctx_call.bind(context=ctx_object)()
+
+  @staticmethod
+  def expect_path(_ext=None):
+    return None
 
 
 class Handler(object):
@@ -105,11 +312,15 @@ class Handler(object):
     """Called in the GenStage portion of the pipeline.
 
     @param opts: Parsed CLI options
-    @param tests: Iteraterable of type_definitions.Test objects
-    @param put_next_stage: Function to push an object to the next stage of the
-                           pipeline (RunStage).
-    @param put_result_stage: Function to push an object to the result stage of
-                             the pipeline.
+    @param tests:
+        Iteraterable of type_definitions.Test or type_definitions.MultiTest
+        objects.
+    @param put_next_stage:
+        Function to push an object to the next stage of the pipeline (RunStage).
+        Note that you should push the item you got from |tests|, not the
+        subtests, in the case that the item is a MultiTest.
+    @param put_result_stage:
+        Function to push an object to the result stage of the pipeline.
     """
     for test in tests:
       put_next_stage(test)

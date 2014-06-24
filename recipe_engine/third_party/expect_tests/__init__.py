@@ -3,4 +3,5 @@
 # found in the LICENSE file.
 
 from .main import main
-from .type_definitions import Test, Result
+from .type_definitions import Test, Result, FuncCall, Bind
+from .unittest_helper import UnitTestModule, UnittestTestCase

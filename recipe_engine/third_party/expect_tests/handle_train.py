@@ -7,7 +7,7 @@ import os
 import sys
 import time
 
-from .type_definitions import Handler
+from .type_definitions import Handler, MultiTest
 from .serialize import WriteNewData, DiffData, NonExistant, GetCurrentData
 
 
@@ -31,20 +31,25 @@ class TrainHandler(Handler):
 
   @classmethod
   def gen_stage_loop(cls, _opts, tests, put_next_stage, put_result_stage):
-    dirs_seen = set()
+    dirs_seen = {None}
     for test in tests:
-      if test.expect_dir not in dirs_seen:
-        try:
-          os.makedirs(test.expect_dir)
-        except OSError:
-          pass
-        put_result_stage(DirSeen(test.expect_dir))
-        dirs_seen.add(test.expect_dir)
+      if isinstance(test, MultiTest):
+        subtests = test.tests
+      else:
+        subtests = [test]
+      for subtest in subtests:
+        if subtest.expect_dir not in dirs_seen:
+          try:
+            os.makedirs(subtest.expect_dir)
+          except OSError:
+            pass
+          put_result_stage(DirSeen(subtest.expect_dir))
+          dirs_seen.add(subtest.expect_dir)
       put_next_stage(test)
 
   @classmethod
   def run_stage_loop(cls, opts, tests_results, put_next_stage):
-    for test, result in tests_results:
+    for test, result, _ in tests_results:
       if opts.force:
         WriteNewData(test, result.data)
         put_next_stage(ForcedWriteAction(test))
@@ -78,16 +83,19 @@ class TrainHandler(Handler):
       self.normal_actions = []
 
     def _record_expected(self, test, indicator):
+      self.num_tests += 1
       if not self.opts.quiet:
         sys.stdout.write(indicator)
         sys.stdout.flush()
-      head, tail = os.path.split(test.expect_path())
-      self.files_expected[head].add(tail)
+      if test.expect_path() is not None:
+        head, tail = os.path.split(test.expect_path())
+        self.files_expected[head].add(tail)
 
     def _record_write(self, test, indicator, why):
       self._record_expected(test, indicator)
-      name = test.expect_path() if self.opts.verbose else test.name
-      self.normal_actions.append('Wrote %s: %s' % (name, why))
+      if test.expect_path() is not None:
+        name = test.expect_path() if self.opts.verbose else test.name
+        self.normal_actions.append('Wrote %s: %s' % (name, why))
 
     def handle_DirSeen(self, dirseen):
       self.dirs_seen.add(dirseen.dir)
@@ -138,10 +146,7 @@ class TrainHandler(Handler):
           if self.verbose_actions:
             print '\n'.join(self.verbose_actions)
 
-        num_tests = sum(len(x) for x in self.files_expected.itervalues())
+        trained = sum(len(x) for x in self.files_expected.itervalues())
         print '-' * 70
-        print 'Trained %d tests in %0.3fs' % (
-            num_tests, time.time() - self.start)
-
-
-
+        print 'Trained %d tests in %0.3fs (ran %d tests)' % (
+            trained, time.time() - self.start, self.num_tests)

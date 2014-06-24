@@ -78,6 +78,9 @@ def GetCurrentData(test):
   """
   for ext in sorted(SUPPORTED_SERIALIZERS, key=lambda s: s != test.ext):
     path = test.expect_path(ext)
+    if path is None:
+      return None, True
+
     if ext not in SERIALIZERS and ext == test.ext:
       raise Exception('The package to support %s is not installed.' % ext)
     if os.path.exists(path):
@@ -94,6 +97,8 @@ def WriteNewData(test, data):
   """
   @type test: Test()
   """
+  if data is None:
+    return
   if test.ext not in SUPPORTED_SERIALIZERS:
     raise Exception('%s is not a supported serializer.' % test.ext)
   if test.ext not in SERIALIZERS:

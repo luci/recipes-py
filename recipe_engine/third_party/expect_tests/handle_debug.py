@@ -14,6 +14,11 @@ class DebugHandler(Handler):
 
   class ResultStageHandler(Handler.ResultStageHandler):
     @staticmethod
+    def handle_MultiTest(mtest):
+      for _ in mtest.process(DebugHandler.ResultStageHandler.handle_Test):
+        pass
+
+    @staticmethod
     def handle_Test(test):
       dbg = pdb.Pdb()
       for path, line, funcname in test.breakpoints:
