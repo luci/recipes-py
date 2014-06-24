@@ -22,7 +22,36 @@ HANDLERS = {
 }
 
 
-def _parse_args(args):
+class _test_completer(object):
+  """Implements the argcomplete completer interface for the test_glob command
+  line argument.
+
+  See: https://pypi.python.org/pypi/argcomplete
+
+  This is automatically wired up if you have enabled bash completion in the
+  infra repo: https://chromium.googlesource.com/infra/infra
+  """
+  class FakeOptions(object):
+    def __init__(self, **kwargs):
+      for k, v in kwargs.iteritems():
+        setattr(self, k, v)
+
+  def __init__(self, gen):
+    self._gen = gen
+
+  def __call__(self, prefix, **_):
+    handle_list.ListHandler.COMPLETION_LIST = []
+    options = self.FakeOptions(
+        handler=handle_list.ListHandler,
+        test_glob=[prefix],
+        jobs=1,
+    )
+    ctx = CoverageContext('', [], [], False, None, None, False)
+    result_loop(self._gen, ctx.create_subprocess_context(), options)
+    return handle_list.ListHandler.COMPLETION_LIST
+
+
+def _parse_args(args, test_gen):
   args = args or sys.argv[1:]
 
   # Set the default mode if not specified and not passing --help
@@ -57,22 +86,26 @@ def _parse_args(args):
 
     sp.add_argument(
         '--test_list', metavar='FILE',
-        help='take the list of test globs from the FILE (use "-" for stdin)')
+        help='take the list of test globs from the FILE (use "-" for stdin)'
+    ).completer = lambda **_: []
 
     sp.add_argument(
         '--html_report', metavar='DIR',
-        help='directory to write html report (default: disabled)')
+        help='directory to write html report (default: disabled)'
+    ).completer = lambda **_: []
 
     sp.add_argument(
         '--extra_coverage_data', metavar='FILE', nargs='*',
-        help='additional coverage data files to incorporate')
+        help='additional coverage data files to incorporate'
+    ).completer = lambda **_: []
 
     sp.add_argument(
         'test_glob', nargs='*', help=(
             'glob to filter the tests acted on. If the glob begins with "-" '
             'then it acts as a negation glob and anything which matches it '
             'will be skipped. If a glob doesn\'t have "*" in it, "*" will be '
-            'implicitly appended to the end'))
+            'implicitly appended to the end')
+    ).completer = _test_completer(test_gen)
 
   opts = parser.parse_args(args)
 
@@ -126,7 +159,7 @@ def main(name, test_gen, coverage_includes=None, coverage_omits=None,
   @param args: Commandline args (starting at argv[1])
   """
   try:
-    opts = _parse_args(args)
+    opts = _parse_args(args, test_gen)
 
     cover_ctx = CoverageContext(name, coverage_includes, coverage_omits,
                                 cover_branches, opts.html_report,
