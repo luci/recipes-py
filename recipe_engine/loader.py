@@ -108,6 +108,7 @@ def load_recipe_modules(mod_dirs):
   RM = 'RECIPE_MODULES'
   def find_and_load(fullname, modname, path):
     if fullname not in sys.modules or fullname == RM:
+      fil = None
       try:
         fil, pathname, descr = imp.find_module(modname,
                                                [os.path.dirname(path)])
