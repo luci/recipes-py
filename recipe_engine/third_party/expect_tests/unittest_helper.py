@@ -29,7 +29,7 @@ def _RunTestCaseSingle(test_case, test_name, test_instance=None):
     test_instance.tearDown()
 
 
-def UnittestTestCase(test_case, expect_dir, name_prefix='', ext='json'):
+def UnittestTestCase(test_case, name_prefix='', ext='json'):
   """Yield a MultiTest or multiple Test instances for the unittest.TestCase
   derived |test_case|.
 
@@ -54,7 +54,6 @@ def UnittestTestCase(test_case, expect_dir, name_prefix='', ext='json'):
           name_prefix + '.' + test_name,
           FuncCall(_RunTestCaseSingle, cls, test_name, *args, **kwargs),
           ext=ext, break_funcs=[getattr(cls, test_name)],
-          expect_dir=expect_dir,
       )
 
   if hasattr(test_case, '__expect_tests_serial__'):
@@ -80,17 +79,16 @@ def UnittestTestCase(test_case, expect_dir, name_prefix='', ext='json'):
       yield test
 
 
-def UnitTestModule(test_module, expect_dir=None, name_prefix='', ext='json'):
+def UnitTestModule(test_module, name_prefix='', ext='json'):
   """Yield MultiTest's and/or Test's for the python module |test_module| which
   contains zero or more unittest.TestCase implementations.
 
   @type test_module: types.ModuleType
-  @type expect_dir: str
   """
   name_prefix = name_prefix + test_module.__name__ + '.'
   for name in dir(test_module):
     obj = getattr(test_module, name)
     if isinstance(obj, type) and issubclass(obj, unittest.TestCase):
-      for test in UnittestTestCase(obj, expect_dir, name_prefix, ext):
+      for test in UnittestTestCase(obj, name_prefix, ext):
         yield test
     # TODO(iannucci): Make this compatible with the awful load_tests hack?

@@ -4,7 +4,6 @@
 
 import argparse
 import multiprocessing
-import os
 import sys
 
 from .cover import CoverageContext
@@ -95,11 +94,6 @@ def _parse_args(args, test_gen):
     ).completer = lambda **_: []
 
     sp.add_argument(
-        '--extra_coverage_data', metavar='FILE', nargs='*',
-        help='additional coverage data files to incorporate'
-    ).completer = lambda **_: []
-
-    sp.add_argument(
         'test_glob', nargs='*', help=(
             'glob to filter the tests acted on. If the glob begins with "-" '
             'then it acts as a negation glob and anything which matches it '
@@ -114,11 +108,6 @@ def _parse_args(args, test_gen):
   elif opts.jobs < 1:
     parser.error('--jobs was less than 1')
 
-  if opts.extra_coverage_data:
-    for fname in opts.extra_coverage_data:
-      if not os.path.exists(fname):
-        parser.error('--extra_coverage_data %r does not exist' % fname)
-
   if opts.test_list:
     fh = sys.stdin if opts.test_list == '-' else open(opts.test_list, 'rb')
     with fh as tl:
@@ -132,8 +121,7 @@ def _parse_args(args, test_gen):
   return opts
 
 
-def main(name, test_gen, coverage_includes=None, coverage_omits=None,
-         cover_branches=False, args=None):
+def main(name, test_gen, cover_branches=False, args=None):
   """Entry point for tests using expect_tests.
 
   Example:
@@ -152,8 +140,6 @@ def main(name, test_gen, coverage_includes=None, coverage_omits=None,
 
   @param name: Name of the test suite.
   @param test_gen: A Generator which yields Test objects.
-  @param coverage_includes: A list of path globs to include under coverage.
-  @param coverage_omits: A list of path globs to exclude under coverage.
   @param cover_branches: Include branch coverage data (rather than just line
                          coverage)
   @param args: Commandline args (starting at argv[1])
@@ -161,13 +147,11 @@ def main(name, test_gen, coverage_includes=None, coverage_omits=None,
   try:
     opts = _parse_args(args, test_gen)
 
-    cover_ctx = CoverageContext(name, coverage_includes, coverage_omits,
-                                cover_branches, opts.html_report,
-                                opts.extra_coverage_data,
+    cover_ctx = CoverageContext(name, cover_branches, opts.html_report,
                                 not opts.handler.SKIP_RUNLOOP)
 
-    error, killed = result_loop(test_gen, cover_ctx.create_subprocess_context(),
-                                opts)
+    error, killed = result_loop(
+        test_gen, cover_ctx.create_subprocess_context(), opts)
 
     cover_ctx.cleanup()
     if not killed and not opts.test_glob:

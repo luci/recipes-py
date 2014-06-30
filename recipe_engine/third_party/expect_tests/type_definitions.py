@@ -2,7 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import inspect
 import os
+import re
 
 from collections import namedtuple
 
@@ -147,11 +149,13 @@ class FuncCall(object):
 
 
 _Test = namedtuple(
-    'Test', 'name func_call expect_dir expect_base ext breakpoints')
+    'Test', 'name func_call expect_dir expect_base ext covers breakpoints')
 
 class Test(_Test):
-  def __new__(cls, name, func_call, expect_dir=None,
-              expect_base=None, ext='json', breakpoints=None, break_funcs=()):
+  TEST_COVERS_MATCH = re.compile('.*/test/([^/]*)_test\.py$')
+
+  def __new__(cls, name, func_call, expect_dir=None, expect_base=None,
+              ext='json', covers=None, breakpoints=None, break_funcs=()):
     """Create a new test.
 
     @param name: The name of the test. Will be used as the default expect_base
@@ -165,6 +169,10 @@ class Test(_Test):
     @param ext: The extension of the expectation file. Affects the serializer
                 used to write the expectations to disk. Valid values are
                 'json' and 'yaml' (Keys in SERIALIZERS).
+    @param covers: A list of coverage file patterns to include for this Test.
+                   By default, a Test covers the file in which its function
+                   was defined, as well as the source file matching the test
+                   according to TEST_COVERS_MATCH.
 
     @param breakpoints: A list of (path, lineno, func_name) tuples. These will
                         turn into breakpoints when the tests are run in 'debug'
@@ -181,11 +189,28 @@ class Test(_Test):
                             f.func_code.co_name))
 
     return super(Test, cls).__new__(cls, name, func_call, expect_dir,
-                                    expect_base, ext, breakpoints)
+                                    expect_base, ext, covers, breakpoints)
+
+  def coverage_includes(self):
+    if self.covers is not None:
+      return self.covers
+
+    test_file = inspect.getabsfile(self.func_call.func)
+    covers = [test_file]
+    match = Test.TEST_COVERS_MATCH.match(test_file)
+    if match:
+      covers.append(os.path.join(
+          os.path.dirname(os.path.dirname(test_file)),
+          match.group(1) + '.py'
+      ))
+
+    return covers
 
   def expect_path(self, ext=None):
-    if not self.expect_dir:
-      return None
+    expect_dir = self.expect_dir
+    if expect_dir is None:
+      test_file = inspect.getabsfile(self.func_call.func)
+      expect_dir = os.path.splitext(test_file)[0] + '.expected'
     name = self.expect_base or self.name
     name = ''.join('_' if c in '<>:"\\/|?*\0' else c for c in name)
     return os.path.join(self.expect_dir, name + ('.%s' % (ext or self.ext)))

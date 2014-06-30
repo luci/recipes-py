@@ -15,10 +15,18 @@ class _Cover(object):
     self.kwargs = maybe_kwargs or {}
     self.c = None
 
+  def __call__(self, **kwargs):
+    new_kwargs = self.kwargs
+    if self.enabled:
+      new_kwargs = new_kwargs.copy()
+      new_kwargs.update(kwargs)
+    return _Cover(self.enabled, new_kwargs)
+
   def __enter__(self):
     if self.enabled:
-      self.c = coverage.coverage(**self.kwargs)
-      self.c._warn_no_data = False
+      if self.c is None:
+        self.c = coverage.coverage(**self.kwargs)
+        self.c._warn_no_data = False
       self.c.start()
 
   def __exit__(self, *_):
@@ -28,19 +36,15 @@ class _Cover(object):
 
 
 class CoverageContext(object):
-  def __init__(self, name, includes, omits, cover_branches, html_report,
-               extra_coverage_data, enabled=True):
+  def __init__(self, name, cover_branches, html_report, enabled=True):
     self.opts = None
     self.cov = None
     self.enabled = enabled
 
     self.html_report = html_report
-    self.extra_data = extra_coverage_data or ()
 
     if enabled:
       self.opts = {
-        'include': includes,
-        'omit': omits,
         'data_file': '.%s_coverage' % name,
         'data_suffix': True,
         'branch': cover_branches,
@@ -56,18 +60,6 @@ class CoverageContext(object):
     fail = False
 
     if self.enabled:
-      include_files = set()
-      for datafile in self.extra_data:
-        # pylint: disable=W0212
-        lines, arcs = self.cov.data._read_file(datafile)
-        self.cov.data.add_line_data(lines)
-        self.cov.data.add_arc_data(arcs)
-        include_files.update(lines)
-        include_files.update(arcs)
-
-      self.cov.config.include = list(
-          set(self.cov.config.include) | include_files)
-
       if self.html_report:
         self.cov.html_report(directory=self.html_report)
 

@@ -16,6 +16,8 @@ from .type_definitions import (
     Test, UnknownError, TestError, NoMatchingTestsError, MultiTest,
     Result, ResultStageAbort)
 
+from . import util
+
 
 class ResetableStringIO(object):
   def __init__(self):
@@ -60,7 +62,13 @@ def gen_loop_process(gen, test_queue, result_queue, opts, kill_switch,
     paths_seen = set()
     seen_tests = False
     try:
-      for root_test in gen():
+      with cover_ctx:
+        gen_inst = gen()
+
+      while not kill_switch.is_set():
+        with cover_ctx:
+          root_test = next(gen_inst)
+
         if kill_switch.is_set():
           break
 
@@ -95,6 +103,8 @@ def gen_loop_process(gen, test_queue, result_queue, opts, kill_switch,
 
       if not seen_tests:
         result_queue.put_nowait(NoMatchingTestsError())
+    except StopIteration:
+      pass
     except KeyboardInterrupt:
       pass
     finally:
@@ -103,9 +113,8 @@ def gen_loop_process(gen, test_queue, result_queue, opts, kill_switch,
 
 
   next_stage = (result_queue if opts.handler.SKIP_RUNLOOP else test_queue)
-  with cover_ctx:
-    opts.handler.gen_stage_loop(opts, generate_tests(), next_stage.put_nowait,
-                                result_queue.put_nowait)
+  opts.handler.gen_stage_loop(opts, generate_tests(), next_stage.put_nowait,
+                              result_queue.put_nowait)
 
 
 def run_loop_process(test_queue, result_queue, opts, kill_switch, cover_ctx):
@@ -113,6 +122,7 @@ def run_loop_process(test_queue, result_queue, opts, kill_switch, cover_ctx):
   into opts.run_stage_loop().
 
   Generates coverage data as a side-effect.
+
   @type test_queue: multiprocessing.Queue()
   @type result_queue: multiprocessing.Queue()
   @type opts: argparse.Namespace
@@ -130,7 +140,8 @@ def run_loop_process(test_queue, result_queue, opts, kill_switch, cover_ctx):
   SKIP = object()
   def process_test(subtest):
     logstream.reset()
-    subresult = subtest.run()
+    with cover_ctx(include=subtest.coverage_includes()):
+      subresult = subtest.run()
     if isinstance(subresult, TestError):
       result_queue.put_nowait(subresult)
       return SKIP
@@ -163,9 +174,8 @@ def run_loop_process(test_queue, result_queue, opts, kill_switch, cover_ctx):
     except KeyboardInterrupt:
       pass
 
-  with cover_ctx:
-    opts.handler.run_stage_loop(opts, generate_tests_results(),
-                                result_queue.put_nowait)
+  opts.handler.run_stage_loop(opts, generate_tests_results(),
+                              result_queue.put_nowait)
 
 
 def result_loop(test_gen, cover_ctx, opts):
@@ -181,8 +191,12 @@ def result_loop(test_gen, cover_ctx, opts):
   test_queue = multiprocessing.Queue()
   result_queue = multiprocessing.Queue()
 
+  gen_cover_ctx = cover_ctx
+  if cover_ctx.enabled:
+    gen_cover_ctx = cover_ctx(include=util.get_cover_list(test_gen))
+
   test_gen_args = (
-      test_gen, test_queue, result_queue, opts, kill_switch, cover_ctx)
+      test_gen, test_queue, result_queue, opts, kill_switch, gen_cover_ctx)
 
   procs = []
   if opts.handler.SKIP_RUNLOOP:

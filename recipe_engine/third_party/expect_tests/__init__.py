@@ -5,3 +5,5 @@
 from .main import main
 from .type_definitions import Test, Result, FuncCall, Bind
 from .unittest_helper import UnitTestModule, UnittestTestCase
+
+from .util import covers
