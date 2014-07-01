@@ -5,7 +5,8 @@
 import collections
 
 from slave.recipe_config import List
-from slave.recipe_config import config_item_context, ConfigGroup, Dict, Single
+from slave.recipe_config import (config_item_context, ConfigGroup, ConfigList,
+                                 Dict, Single)
 from slave.recipe_config_types import Path
 from slave.recipe_util import Placeholder
 
@@ -38,6 +39,11 @@ def BaseConfig(**_kwargs):
 
     seed_steps = List(basestring),
     followup_fn = Single(collections.Callable, required=False),
+    trigger_specs = ConfigList(
+        lambda: ConfigGroup(
+            properties=Dict(value_type=object),
+        ),
+    ),
 
     step_test_data = Single(collections.Callable, required=False),
   )

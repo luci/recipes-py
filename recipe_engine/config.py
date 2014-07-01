@@ -459,7 +459,7 @@ class ConfigList(ConfigBase, collections.MutableSequence):
   Example usage:
     config_blob = ConfigGroup(
       some_items = ConfigList(
-        ConfigGroup(
+        lambda: ConfigGroup(
           herp = SimpleConfig(int),
           derp = SimpleConfig(str)
         )

@@ -429,11 +429,30 @@ def modify_lookup_path(path):
     os.environ['PATH'] = saved_path
 
 
+def triggerBuilds(step, trigger_specs):
+  assert trigger_specs is not None
+  for trig in trigger_specs:
+    props = trig.get('properties')
+    if not props:
+      raise ValueError('Trigger spec: properties are missing')
+    builder_name = props.pop('buildername', None)
+    if not builder_name:
+      raise ValueError('Trigger spec: buildername property is missing')
+    step.step_trigger(json.dumps({
+        'builderNames': [builder_name],
+        # Handle case where trig['properties'] is Falsy
+        'properties': props,
+    }))
+
+
 def run_step(stream, name, cmd,
              cwd=None, env=None,
              skip=False,
              allow_subannotations=False,
-             seed_steps=None, followup_fn=None, **kwargs):
+             seed_steps=None,
+             followup_fn=None,
+             trigger_specs=None,
+             **kwargs):
   """Runs a single step.
 
   Context:
@@ -450,6 +469,9 @@ def run_step(stream, name, cmd,
     followup_fn: A callback function to run within the annotation context of
                  the step, after the step has completed. The function will be
                  called as f(step, ret).
+    trigger_specs: a list of trigger specifications, which are dict with keys:
+        properties: a dict of properties.
+            Buildbot requires buildername property.
 
   Known kwargs:
     can_fail_build: A boolean indicating that a bad retcode for this step
@@ -478,6 +500,7 @@ def run_step(stream, name, cmd,
       'skip': skip,
       'allow_subannotations': allow_subannotations,
       'seed_steps': seed_steps,
+      'trigger_specs': trigger_specs,
       'followup_fn': followup_fn,
       })
   step_env = _merge_envs(os.environ, env)
@@ -556,6 +579,9 @@ def run_step(stream, name, cmd,
         # crosses the context manager.
         raise type(e)(str(e) + ' when executing %s' % cmd)
       returncode = proc.returncode
+
+    if trigger_specs:
+      triggerBuilds(s, trigger_specs)
 
     if followup_fn:
       return followup_fn(s, returncode)
