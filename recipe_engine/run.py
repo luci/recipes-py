@@ -27,7 +27,7 @@ TODO(vadimsh, iannucci): The following docs are very outdated.
 
 Annotated_run.py will then import the recipe and expect to call a function whose
 signature is:
-  GetSteps(api, properties) -> iterable_of_things.
+  GenSteps(api, properties) -> iterable_of_things.
 
 properties is a merged view of factory_properties with build_properties.
 

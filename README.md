@@ -343,7 +343,7 @@ Test data can contain any of the following keys:
 
 The `api` passed to GenTests is confusingly **NOT** the same as the recipe api.
 It's actually an instance of `recipe_test_api.py:RecipeTestApi()`. This is
-adimittedly pretty weak, and it would be great to have the test api
+admittedly pretty weak, and it would be great to have the test api
 automatically created via modules. On the flip side, the test api is much less
 necessary than the recipe api, so this transformation has not been designed yet.
 
