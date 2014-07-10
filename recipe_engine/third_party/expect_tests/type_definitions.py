@@ -213,7 +213,7 @@ class Test(_Test):
       expect_dir = os.path.splitext(test_file)[0] + '.expected'
     name = self.expect_base or self.name
     name = ''.join('_' if c in '<>:"\\/|?*\0' else c for c in name)
-    return os.path.join(self.expect_dir, name + ('.%s' % (ext or self.ext)))
+    return os.path.join(expect_dir, name + ('.%s' % (ext or self.ext)))
 
   def run(self, context=None):
     return self.func_call(context=context)
