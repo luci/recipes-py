@@ -434,6 +434,21 @@ def run_steps(stream, build_properties, factory_properties,
   with stream.step('setup_build') as s:
     assert 'recipe' in factory_properties
     recipe = factory_properties['recipe']
+
+    run_recipe_line = (
+        ['./scripts/tools/run_recipe.py', recipe] +
+        ['%s=%r' % (prop, value) for prop, value in properties.iteritems()
+         if prop not in ('recipe', 'use_mirror')]
+    )
+    lines = [
+        'To repro this locally, run the following line from a build checkout:',
+        '',
+        subprocess.list2cmdline(run_recipe_line)
+    ]
+    for line in lines:
+      s.step_log_line('run_recipe', line)
+    s.step_log_end('run_recipe')
+
     try:
       recipe_module = recipe_loader.load_recipe(recipe)
       stream.emit('Running recipe with %s' % (properties,))
