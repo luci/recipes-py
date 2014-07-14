@@ -40,7 +40,7 @@ class StepApi(recipe_api.RecipeApi):
     if kwargs.get('abort_on_failure', False):
       @recipe_util.wrap_followup(kwargs)
       def assert_success(step_result):
-        if step_result.presentation.status == 'FAILURE':
+        if step_result.presentation.status not in ('SUCCESS', 'WARNING'):
           raise recipe_util.RecipeAbort(
             "Step(%s) failed and was marked as abort_on_failure" % name)
       kwargs['followup_fn'] = assert_success

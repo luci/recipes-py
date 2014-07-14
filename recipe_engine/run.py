@@ -340,7 +340,9 @@ def step_callback(step, step_history, placeholders, step_test):
 
   def _inner(annotator_step, retcode):
     step_result._retcode = retcode  # pylint: disable=W0212
-    if retcode > 0:
+    if retcode == 0:
+      step_result.presentation.status = 'SUCCESS'
+    else:
       step_result.presentation.status = 'FAILURE'
 
     annotator_step.annotation_stream.step_cursor(step['name'])

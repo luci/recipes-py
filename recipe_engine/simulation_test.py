@@ -40,12 +40,15 @@ def RunRecipe(test_data):
       ret.append(s)
 
   if result.status_code != 0:
-    reason = last_result.abort_reason or 'UNKNOWN'
-    for name, step_result in reversed(result.steps_ran.items()):
-      retcode = step_result.retcode
-      if retcode and step_result.step.get('can_fail_build', True):
-        reason = 'Step(%r) failed with return_code %d' % (name, retcode)
-        break
+    reason = last_result.abort_reason
+    if not reason:
+      for name, step_result in reversed(result.steps_ran.items()):
+        retcode = step_result.retcode
+        if retcode and step_result.step.get('can_fail_build', True):
+          reason = 'Step(%r) failed with return_code %d' % (name, retcode)
+          break
+    if not reason:
+      reason = 'UNKNOWN'
     ret.append({
         'name': '$final_result',
         'status_code': result.status_code,
