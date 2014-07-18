@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import functools
+import collections
 import contextlib
 import json
 
@@ -66,7 +67,7 @@ class JsonOutputPlaceholder(recipe_util.Placeholder):
     valid = False
     ret = None
     try:
-      ret = json.loads(raw_data)
+      ret = json.loads(raw_data, object_pairs_hook=collections.OrderedDict)
       valid = True
     except ValueError:  # pragma: no cover
       pass
