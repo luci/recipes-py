@@ -327,7 +327,7 @@ def get_args(argv):
 def main(argv=None):
   opts, _ = get_args(argv)
 
-  stream = annotator.StructuredAnnotationStream(seed_steps=['setup_build'])
+  stream = annotator.StructuredAnnotationStream()
 
   ret = run_steps(stream, opts.build_properties, opts.factory_properties)
   return ret.status_code
@@ -613,7 +613,7 @@ def update_scripts():
     os.environ.pop('RUN_SLAVE_UPDATED_SCRIPTS')
     return False
 
-  stream = annotator.StructuredAnnotationStream(seed_steps=['update_scripts'])
+  stream = annotator.StructuredAnnotationStream()
 
   with stream.step('update_scripts') as s:
     build_root = os.path.join(SCRIPT_PATH, '..', '..')
