@@ -281,7 +281,8 @@ class StructuredAnnotationStream(AdvancedAnnotationStream):
   """
 
   def __init__(self, stream=sys.stdout,
-               flush_before=sys.stderr):
+               flush_before=sys.stderr,
+               seed_steps=None):  # pylint: disable=W0613
     super(StructuredAnnotationStream, self).__init__(stream=stream,
                                                      flush_before=flush_before)
     self.current_step = ''
