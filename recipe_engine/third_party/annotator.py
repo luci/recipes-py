@@ -292,6 +292,7 @@ class StructuredAnnotationStream(AdvancedAnnotationStream):
       raise Exception('Can\'t start step %s while in step %s.' % (
           name, self.current_step))
 
+    self.seed_step(name)
     self.step_cursor(name)
     self.current_step = name
     return StructuredAnnotationStep(self, stream=self.stream,
