@@ -112,34 +112,6 @@ def returns_placeholder(func):
   return inner
 
 
-def wrap_followup(kwargs, pre=False):
-  """Decorator for a new followup_fn.
-
-  Will pop the existing fn out of kwargs (if any), and return a decorator for
-  the new folloup_fn.
-
-  Args:
-    kwargs - dictionary possibly containing folloup_fn
-    pre - If true, the old folloup_fn is called before the wrapped function.
-          Otherwise, the old followup_fn is called after the wrapped function.
-  """
-  null_fn = lambda _: None
-  old_followup = kwargs.pop('followup_fn', null_fn)
-  def decorator(f):
-    @functools.wraps(f)
-    def _inner(step_result):
-      if pre:
-        old_followup(step_result)
-        f(step_result)
-      else:
-        f(step_result)
-        old_followup(step_result)
-    if old_followup is not null_fn:
-      _inner.__name__ += '[%s]' % old_followup.__name__
-    return _inner
-  return decorator
-
-
 def cached_unary(f):
   """Decorator that caches/memoizes an unary function result.
 

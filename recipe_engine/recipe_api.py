@@ -17,6 +17,29 @@ class RecipeApi(ModuleInjectionSite):
 
   Dependency injection takes place in load_recipe_modules() in recipe_loader.py.
   """
+  class StepFailure(Exception):
+    def __init__(self, name_or_reason, result=None):
+      if result:
+        self.name = name_or_reason
+        self.result = result
+        self.reason = "Step('{}') failed with return_code {}".format(
+            self.name, self.result.retcode)
+      else:
+        self.name = None
+        self.result = None
+        self.reason = name_or_reason
+
+      # Can't use StepFailure... It NameErrors if I do. Very strange.
+      super(RecipeApi.StepFailure, self).__init__(self.reason)
+
+    def __str__(self):
+      return "Step Failure in %s" % self.name
+
+    @property
+    def retcode(self):
+      return self.result.retcode
+
+
   def __init__(self, module=None, engine=None,
                test_data=DisabledTestData(), **_kwargs):
     """Note: Injected dependencies are NOT available in __init__()."""

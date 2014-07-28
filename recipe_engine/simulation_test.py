@@ -27,35 +27,10 @@ def RunRecipe(test_data):
   result = annotated_run.run_steps(stream, test_data.properties,
                                    test_data.properties, test_data)
 
-  ret = []
-  last_result = None
-  for step_result in result.steps_ran.itervalues():
-    last_result = step_result
-    s = step_result.step
-    if not s.get('skip'):
-      s.pop('can_fail_build', None)
-      s.pop('abort_on_failure', None)
-      s.pop('always_run', None)
-      s.pop('seed_steps', None)
-      ret.append(s)
-
-  if result.status_code != 0:
-    reason = last_result.abort_reason
-    if not reason:
-      for name, step_result in reversed(result.steps_ran.items()):
-        retcode = step_result.retcode
-        if retcode and step_result.step.get('can_fail_build', True):
-          reason = 'Step(%r) failed with return_code %d' % (name, retcode)
-          break
-    if not reason:
-      reason = 'UNKNOWN'
-    ret.append({
-        'name': '$final_result',
-        'status_code': result.status_code,
-        'reason': reason
-    })
-
-  return expect_tests.Result(ret)
+  steps_ran = list(result.steps_ran.values())
+  if result.status_code:
+    steps_ran.append(result.status_code)
+  return expect_tests.Result(steps_ran)
 
 
 def test_gen_coverage():

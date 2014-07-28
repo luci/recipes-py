@@ -7,16 +7,14 @@ DEPS = [
   'json',
   'path',
   'step',
-  'step_history',
 ]
 
 
 def GenSteps(api):
   api.path['checkout'] = api.path['slave_build']
-  yield api.generator_script('bogus')
-  yield api.generator_script('bogus.py', env={'FOO': 'bar'})
-  yield api.generator_script('presentation.py')
-
+  api.generator_script('bogus')
+  api.generator_script('bogus.py', env={'FOO': 'bar'})
+  api.generator_script('presentation.py')
 
 def GenTests(api):
   mock_json = {

@@ -5,8 +5,8 @@
 DEPS = ['properties', 'step']
 
 def GenSteps(api):
-  yield api.step('echo', ['echo'] + [repr(api.properties['test_prop'])])
-  yield api.step('echo all', ['echo'] + [repr(dict(api.properties))])
+  api.step('echo', ['echo'] + [repr(api.properties['test_prop'])])
+  api.step('echo all', ['echo'] + [repr(dict(api.properties))])
 
 def GenTests(api):
   yield api.test('basic') + api.properties(

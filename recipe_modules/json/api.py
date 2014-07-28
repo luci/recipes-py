@@ -45,6 +45,7 @@ class JsonOutputPlaceholder(recipe_util.Placeholder):
   This placeholder can be optionally added when you use the Steps.step()
   method in this module.
 
+  FIXME
   After the termination of the step, this file is expected to contain a valid
   JSON document, which will be set as the json_output for that step in the
   step_history OrderedDict passed to your recipe generator.

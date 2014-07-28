@@ -174,7 +174,7 @@ class PathApi(recipe_api.RecipeApi):
 
   def listdir(self, name, path, step_test_data=None):
     """Wrapper for os.listdir."""
-    yield self.m.python.inline('listdir %s' % name,
+    return self.m.python.inline('listdir %s' % name,
       """
       import json, os, sys
       if os.path.exists(sys.argv[1]) and os.path.isdir(sys.argv[1]):
@@ -182,9 +182,9 @@ class PathApi(recipe_api.RecipeApi):
           json.dump(os.listdir(sys.argv[1]), f)
       """,
       args=[path, self.m.json.output()],
-      step_test_data=(step_test_data or 
+      step_test_data=(step_test_data or
                       self.test_api.listdir(['file 1', 'file 2'])),
-    )
+    ).json.output
 
   def makedirs(self, name, path, mode=0777):
     """
@@ -192,7 +192,7 @@ class PathApi(recipe_api.RecipeApi):
     error.
     """
     self.assert_absolute(path)
-    yield self.m.python.inline(
+    self.m.python.inline(
       'makedirs ' + name,
       """
       import sys, os
@@ -211,7 +211,7 @@ class PathApi(recipe_api.RecipeApi):
   def rmtree(self, name, path):
     """Wrapper for chromium_utils.RemoveDirectory."""
     self.assert_absolute(path)
-    return self.m.python.inline(
+    self.m.python.inline(
       'rmtree ' + name,
       """
       import os, sys
@@ -233,7 +233,7 @@ class PathApi(recipe_api.RecipeApi):
     a call that doesn't delete the directory itself.
     """
     self.assert_absolute(path)
-    return self.m.python.inline(
+    self.m.python.inline(
       'rmcontents ' + name,
       """
       import os, sys
@@ -253,7 +253,7 @@ class PathApi(recipe_api.RecipeApi):
     Removes all files in the subtree of path matching the glob pattern.
     """
     self.assert_absolute(path)
-    return self.m.python.inline(
+    self.m.python.inline(
       'rmwildcard %s in %s' % (pattern, path),
       """
       import sys

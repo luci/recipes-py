@@ -66,7 +66,6 @@ iterable_of_things.
 
 import copy
 import functools
-import inspect
 import json
 import optparse
 import os
@@ -209,53 +208,6 @@ class StepData(object):
   def presentation(self):
     return self._presentation
 
-
-# Sentinel for marking all steps before for execution.
-EXECUTE_NOW_SENTINEL = object()
-
-
-def ensure_sequence_of_steps(step_or_steps):
-  """Generates one or more fixed steps, given a step or a sequence of steps.
-  Productions from generators are always followed by an EXECUTE_NOW_SENTINEL,
-  so that the following steps are not seeded."""
-  if isinstance(step_or_steps, dict):
-    yield step_or_steps
-  else:
-    should_execute = inspect.isgenerator(step_or_steps)
-    correct_type = (should_execute
-                    or isinstance(step_or_steps, collections.Sequence))
-    assert correct_type, ('Item is not a sequence or a step: %s'
-                          % (step_or_steps,))
-    for i in step_or_steps:
-      for s in ensure_sequence_of_steps(i):
-        yield s
-      if should_execute:
-        yield EXECUTE_NOW_SENTINEL
-
-
-def seed_step_buffer(step_buffer):
-  # Seed steps only if there is at least one more step after the current.
-  if len(step_buffer) > 1:
-    step_buffer[0]['seed_steps'] = [s['name'] for s in step_buffer]
-
-
-def fixup_seed_steps(step_or_steps):
-  step_buffer = []
-  for step in ensure_sequence_of_steps(step_or_steps):
-    if isinstance(step, dict):
-      step_buffer.append(step)
-    elif step is EXECUTE_NOW_SENTINEL:
-      seed_step_buffer(step_buffer)
-      for s in step_buffer:
-        yield s
-      step_buffer = []
-    else:
-      assert False, 'Item is not a step or sentinel: %s' % (step_or_steps,)
-  seed_step_buffer(step_buffer)
-  for s in step_buffer:
-    yield s
-
-
 # Result of 'render_step', fed into 'step_callback'.
 Placeholders = collections.namedtuple(
     'Placeholders', ['cmd', 'stdout', 'stderr', 'stdin'])
@@ -334,9 +286,6 @@ def step_callback(step, step_history, placeholders, step_test):
   assert step['name'] not in step_history, (
     'Step "%s" is already in step_history.' % step['name'])
   step_result = StepData(step, None)
-  step_history[step['name']] = step_result
-
-  followup_fn = step.pop('followup_fn', None)
 
   def _inner(annotator_step, retcode):
     step_result._retcode = retcode  # pylint: disable=W0212
@@ -353,19 +302,9 @@ def step_callback(step, step_history, placeholders, step_test):
 
     get_placeholder_results(step_result, placeholders)
 
-    try:
-      if followup_fn:
-        followup_fn(step_result)
-    except recipe_util.RecipeAbort as e:
-      step_result.abort_reason = str(e)
-
-    step_result.presentation.finalize(annotator_step)
     return step_result
 
-  if followup_fn:
-    _inner.__name__ = get_callable_name(followup_fn)
   return _inner
-
 
 def get_args(argv):
   """Process command-line arguments."""
@@ -433,6 +372,7 @@ def run_steps(stream, build_properties, factory_properties,
   # Create all API modules and an instance of top level GenSteps generator.
   # It doesn't launch any recipe code yet (generator needs to be iterated upon
   # to start executing code).
+  api = None
   with stream.step('setup_build') as s:
     assert 'recipe' in factory_properties
     recipe = factory_properties['recipe']
@@ -457,20 +397,16 @@ def run_steps(stream, build_properties, factory_properties,
       api = recipe_loader.create_recipe_api(recipe_module.DEPS,
                                             engine,
                                             test_data)
-      steps = recipe_module.GenSteps(api)
-      assert inspect.isgenerator(steps)
+      steps = recipe_module.GenSteps
       s.step_text('<br/>running recipe: "%s"' % recipe)
     except recipe_loader.NoSuchRecipe as e:
       s.step_text('<br/>recipe not found: %s' % e)
       s.step_failure()
       return RecipeExecutionResult(2, None)
 
-  try:
-    # Run the steps emitted by a recipe via the engine, emitting annotations
-    # into |stream| along the way.
-    return engine.run(steps)
-  except BaseException:
-    return engine.unhandled_exception()
+  # Run the steps emitted by a recipe via the engine, emitting annotations
+  # into |stream| along the way.
+  return engine.run(steps, api)
 
 
 class RecipeEngine(object):
@@ -500,16 +436,8 @@ class RecipeEngine(object):
     """Global properties, merged --build_properties and --factory_properties."""
     raise NotImplementedError
 
-  @property
-  def step_history(self):
-    """OrderedDict objects with results of finished steps.
-
-    Deprecated. New engine will provide future-like objects to wait for step
-    results.
-    """
-    raise NotImplementedError
-
-  def run(self, generator):
+  # TODO(martiniss) update documentation for this class
+  def run(self, steps_function, api):
     """Run a recipe represented by top level GenSteps generator.
 
     This function blocks until recipe finishes.
@@ -549,82 +477,99 @@ class RecipeEngine(object):
 
 class SequentialRecipeEngine(RecipeEngine):
   """Always runs step sequentially. Currently the engine used by default."""
-
   def __init__(self, stream, properties, test_data):
     super(SequentialRecipeEngine, self).__init__()
     self._stream = stream
     self._properties = properties
     self._test_data = test_data
     self._step_history = collections.OrderedDict()
-    self._step_history.failed = False
 
-  @property
-  def step_history(self):
-    return self._step_history
+    self._previous_step_annotation = None
+    self._previous_step_result = None
+    self._api = None
 
   @property
   def properties(self):
     return self._properties
 
-  def run(self, generator):
-    for step in fixup_seed_steps(generator):
+  def _emit_results(self):
+    annotation = self._previous_step_annotation
+    step_result = self._previous_step_result
+    if not annotation or not step_result:
+      return
+
+    annotation.step_ended()
+    step_result.presentation.finalize(annotation)
+    if self._test_data.enabled:
+      val = annotation.stream.getvalue()
+      lines = filter(None, val.splitlines())
+      if lines:
+        # note that '~' sorts after 'z' so that this will be last on each
+        # step. also use _step to get access to the mutable step
+        # dictionary.
+        # pylint: disable=w0212
+        step_result._step['~followup_annotations'] = lines
+
+  def run_step(self, step, ok_ret=None):
+    test_data_fn = step.pop('step_test_data', recipe_test_api.StepTestData)
+    step_test = self._test_data.pop_step_test_data(step['name'],
+                                                   test_data_fn)
+    placeholders = render_step(step, step_test)
+
+    callback = step_callback(step, self._step_history,
+                             placeholders, step_test)
+
+    self._step_history[step['name']] = step
+    self._emit_results()
+
+    step_result = None
+
+    if not self._test_data.enabled:
+      self._previous_step_annotation, step_result = annotator.run_step(
+        self._stream, **step)
+      step_result = StepData(step, step_result)
+    else:
+      self._previous_step_annotation = annotation = self._stream.step(
+              step['name'])
+      annotation.step_started()
       try:
-        test_data_fn = step.pop('step_test_data', recipe_test_api.StepTestData)
-        step_test = self._test_data.pop_step_test_data(step['name'],
-                                                       test_data_fn)
-        placeholders = render_step(step, step_test)
+        annotation.stream = cStringIO.StringIO()
+        step_result = callback(annotation, step_test.retcode)
+      except OSError:
+        exc_type, exc_value, exc_tb = sys.exc_info()
+        trace = traceback.format_exception(exc_type, exc_value, exc_tb)
+        trace_lines = ''.join(trace).split('\n')
+        annotation.write_log_lines('exception', filter(None, trace_lines))
+        annotation.step_exception()
 
-        if self._step_history.failed and not step.get('always_run', False):
-          step['skip'] = True
-          step.pop('followup_fn', None)
-          step_result = StepData(step, None)
-          self._step_history[step['name']] = step_result
-          continue
+    self._previous_step_result = step_result
+    if step_result.retcode != 0:
+      raise self._api.StepFailure(step['name'], step_result)
 
-        callback = step_callback(step, self._step_history,
-                                 placeholders, step_test)
+    return step_result
 
-        if not self._test_data.enabled:
-          step_result = annotator.run_step(
-            self._stream, followup_fn=callback, **step)
-        else:
-          with self._stream.step(step['name']) as s:
-            s.stream = cStringIO.StringIO()
-            step_result = callback(s, step_test.retcode)
-            lines = filter(None, s.stream.getvalue().splitlines())
-            if lines:
-              # Note that '~' sorts after 'z' so that this will be last on each
-              # step. Also use _step to get access to the mutable step
-              # dictionary.
-              # pylint: disable=W0212
-              step_result._step['~followup_annotations'] = lines
+  def run(self, steps_function, api):
+    self._api = api
+    try:
+      build_result = steps_function(api)
+      assert build_result is None, (
+      "Non-None return from GenSteps is not supported yet")
 
-        if step_result.abort_reason:
-          self._stream.emit('Aborted: %s' % step_result.abort_reason)
-          if self._test_data.enabled:
-            self._test_data.step_data.clear()  # Dump the rest of the test data
-          self._step_history.failed = True
-          break
-
-        # TODO(iannucci): Pull this failure calculation into callback.
-        self._step_history.failed = annotator.update_build_failure(
-            self._step_history.failed,
-            step_result.retcode,
-            **step)
-      except Exception as e:
-        new_message = (
-          '%s\n'
-          '  while processing step `%s`:\n'
-          '  %s'
-        ) % (e.message, step['name'], json.dumps(step, indent=2, sort_keys=True,
-                                                 default=str))
-        raise type(e), type(e)(new_message), sys.exc_info()[2]
-
-    assert not self._test_data.enabled or not self._test_data.step_data, (
+      assert not self._test_data.enabled or not self._test_data.step_data, (
       "Unconsumed test data! %s" % (self._test_data.step_data,))
+    except api.StepFailure as f:
+      build_result = {
+        "name": "$final_result",
+        "reason": f.reason,
+        "status_code": 1
+      }
+    except Exception:
+      raise # TODO(martiniss) make this purple the build
+    finally:
+      self._emit_results()
 
-    return RecipeExecutionResult(0 if not self._step_history.failed else 1,
-                                 self._step_history)
+    # TODO(martinis) clean up RecipeExecutionResult
+    return RecipeExecutionResult(build_result, self._step_history)
 
   def unhandled_exception(self):
     (exc_type, exc_message) = sys.exc_info()[0:2]
@@ -656,11 +601,7 @@ class ParallelRecipeEngine(RecipeEngine):
   def properties(self):
     return self._properties
 
-  @property
-  def step_history(self):
-    raise NotImplementedError
-
-  def run(self, generator):
+  def run(self, steps_function, api):
     raise NotImplementedError
 
   def create_step(self, step):

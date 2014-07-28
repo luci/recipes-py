@@ -190,8 +190,6 @@ def create_apis(mod_dirs, names, only_test_api, engine, test_data):
       Among other things it provides:
         properties (dict): the properties dictionary (used by the properties
             module)
-        step_history (OrderedDict): the step history object (used by the
-            step_history module!)
       See annotated_run.py for definition.
     test_data (TestData): ...
 

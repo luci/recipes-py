@@ -36,14 +36,7 @@ class StepApi(recipe_api.RecipeApi):
     """
     assert 'shell' not in kwargs
     assert isinstance(cmd, list)
-
-    if kwargs.get('abort_on_failure', False):
-      @recipe_util.wrap_followup(kwargs)
-      def assert_success(step_result):
-        if step_result.presentation.status not in ('SUCCESS', 'WARNING'):
-          raise recipe_util.RecipeAbort(
-            "Step(%s) failed and was marked as abort_on_failure" % name)
-      kwargs['followup_fn'] = assert_success
+    abort_on_failure = kwargs.pop('abort_on_failure', None)
 
     cmd = list(cmd)  # Create a copy in order to not alter the input argument.
     if self.auto_resolve_conflicts:
@@ -55,4 +48,18 @@ class StepApi(recipe_api.RecipeApi):
 
     schema = self.make_config()
     schema.set_val(kwargs)
-    return self._engine.create_step(schema)
+    return self.run_from_dict(self._engine.create_step(schema),
+                              abort_on_failure=abort_on_failure)
+
+  # TODO(martiniss) delete, and make generator_script use **kwargs on step()
+  def run_from_dict(self, dct, abort_on_failure=True):
+    try:
+      return self._engine.run_step(dct)
+    except self.StepFailure as f:
+      if abort_on_failure and f.name:
+        f.reason = (
+            'Step({}) failed and was marked as abort_on_failure'.format(
+                f.name))
+        raise f
+      else:
+        raise

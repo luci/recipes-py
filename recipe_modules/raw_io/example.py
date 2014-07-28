@@ -6,33 +6,32 @@ DEPS = [
   'path',
   'raw_io',
   'step',
-  'step_history',
 ]
 
 
 def GenSteps(api):
   # Read command's stdout and stderr.
-  yield api.step('echo', ['echo', 'Hello World'],
+  step_result = api.step('echo', ['echo', 'Hello World'],
       stdout=api.raw_io.output(),
       stderr=api.raw_io.output())
-  assert api.step_history.last_step().stdout == 'Hello World\n'
-  assert api.step_history.last_step().stderr == ''
+  assert step_result.stdout == 'Hello World\n'
+  assert step_result.stderr == ''
 
   # Pass stuff to command's stdin, read it from stdout.
-  yield api.step('cat', ['cat'],
+  step_result = api.step('cat', ['cat'],
       stdin=api.raw_io.input(data='hello'),
       stdout=api.raw_io.output('out'))
-  assert api.step_history.last_step().stdout == 'hello'
+  assert step_result.stdout == 'hello'
 
   # Example of auto-mocking stdout. '\n' appended to mock 'echo' behavior.
-  yield api.step('automock', ['echo', 'huh'],
+  step_result = api.step('automock', ['echo', 'huh'],
                  stdout=api.raw_io.output('out'),
                  step_test_data=(
                    lambda: api.raw_io.test_api.stream_output('huh\n')))
-  assert api.step_history.last_step().stdout == 'huh\n'
+  assert step_result.stdout == 'huh\n'
 
   # Example of auto-mocking stdout + stderr.
-  yield api.step(
+  step_result = api.step(
     'automock (fail)', ['bash', '-c', 'echo blah && echo fail 1>&2'],
     stdout=api.raw_io.output('out'),
     stderr=api.raw_io.output('err'),
@@ -42,16 +41,16 @@ def GenSteps(api):
         api.raw_io.test_api.stream_output('fail\n', 'stderr')
       ))
   )
-  assert api.step_history.last_step().stdout == 'blah\n'
-  assert api.step_history.last_step().stderr == 'fail\n'
+  assert step_result.stdout == 'blah\n'
+  assert step_result.stderr == 'fail\n'
 
   # leak_to coverage.
-  yield api.step(
+  step_result = api.step(
       'leak stdout', ['echo', 'leaking'],
       stdout=api.raw_io.output(leak_to=api.path['slave_build'].join('out.txt')),
       step_test_data=(
         lambda: api.raw_io.test_api.stream_output('leaking\n')))
-  assert api.step_history.last_step().stdout == 'leaking\n'
+  assert step_result.stdout == 'leaking\n'
 
 
 def GenTests(api):

@@ -24,11 +24,8 @@ class PythonApi(recipe_api.RecipeApi):
     program = textwrap.dedent(program)
     compile(program, '<string>', 'exec', dont_inherit=1)
 
+    result = self(name, self.m.raw_io.input(program, '.py'), **kwargs)
     if add_python_log:
-      @recipe_util.wrap_followup(kwargs)
-      def inline_followup(step_result):
-        step_result.presentation.logs['python.inline'] = program.splitlines()
+      result.presentation.logs['python.inline'] = program.splitlines()
 
-      kwargs['followup_fn'] = inline_followup
-
-    return self(name, self.m.raw_io.input(program, '.py'), **kwargs)
+    return result

@@ -5,14 +5,13 @@
 DEPS = [
   'json',
   'step',
-  'step_history',
 ]
 
 
 def GenSteps(api):
-  yield api.step('echo', ['echo', '[1, 2, 3]'],
+  step_result = api.step('echo', ['echo', '[1, 2, 3]'],
       stdout=api.json.output())
-  assert api.step_history.last_step().stdout == [1, 2, 3]
+  assert step_result.stdout == [1, 2, 3]
 
 
 def GenTests(api):

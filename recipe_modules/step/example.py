@@ -11,15 +11,16 @@ def GenSteps(api):
   # We are going to have steps with the same name, so fix it automagically.
   api.step.auto_resolve_conflicts = True
 
+  # TODO(martinis) change this
   # The api.step object is directly callable.
-  yield api.step('hello', ['echo', 'Hello World'])
-  yield api.step('hello', ['echo', 'Why hello, there.'])
+  api.step('hello', ['echo', 'Hello World'])
+  api.step('hello', ['echo', 'Why hello, there.'])
 
   # You can also manipulate various aspects of the step, such as env.
   # These are passed straight through to subprocess.Popen.
   # Also, abusing bash -c in this way is a TERRIBLE IDEA DON'T DO IT.
-  yield api.step('goodbye', ['bash', '-c', 'echo Good bye, $friend.'],
-                 env={'friend': 'Darth Vader'})
+  api.step('goodbye', ['bash', '-c', 'echo Good bye, $friend.'],
+           env={'friend': 'Darth Vader'})
 
 
 def GenTests(api):

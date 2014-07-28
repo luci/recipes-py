@@ -206,21 +206,36 @@ class StructuredAnnotationStep(StepCommands):
     self.control = StepControlCommands(self.stream, self.flush_before)
     self.emitted_logs = set()
 
+
   def __enter__(self):
+    return self.step_started()
+
+  def step_started(self):
     self.control.step_started()
     return self
 
   def __exit__(self, exc_type, exc_value, tb):
     self.annotation_stream.step_cursor(self.annotation_stream.current_step)
+    #TODO(martinis) combine this and step_ended
     if exc_type:
-      trace = traceback.format_exception(exc_type, exc_value, tb)
-      trace_lines = ''.join(trace).split('\n')
-      self.write_log_lines('exception', filter(None, trace_lines))
-      self.step_exception()
+      self.step_exception_occured(exc_type, exc_value, tb)
 
     self.control.step_closed()
     self.annotation_stream.current_step = ''
     return not exc_type
+
+  def step_exception_occured(self, exc_type, exc_value, tb):
+    trace = traceback.format_exception(exc_type, exc_value, tb)
+    trace_lines = ''.join(trace).split('\n')
+    self.write_log_lines('exception', filter(None, trace_lines))
+    self.step_exception()
+
+  def step_ended(self):
+    self.annotation_stream.step_cursor(self.annotation_stream.current_step)
+    self.control.step_closed()
+    self.annotation_stream.current_step = ''
+
+    return True
 
 class AdvancedAnnotationStep(StepCommands, StepControlCommands):
   """Holds additional step functions for finer step control.
@@ -265,16 +280,10 @@ class StructuredAnnotationStream(AdvancedAnnotationStream):
       s.step_warnings()
   """
 
-  def __init__(self, seed_steps=None, stream=sys.stdout,
+  def __init__(self, stream=sys.stdout,
                flush_before=sys.stderr):
     super(StructuredAnnotationStream, self).__init__(stream=stream,
                                                      flush_before=flush_before)
-    seed_steps = seed_steps or []
-    self.seed_steps = seed_steps
-
-    for step in seed_steps:
-      self.seed_step(step)
-
     self.current_step = ''
 
   def step(self, name):
@@ -282,24 +291,11 @@ class StructuredAnnotationStream(AdvancedAnnotationStream):
     if self.current_step:
       raise Exception('Can\'t start step %s while in step %s.' % (
           name, self.current_step))
-    if name in self.seed_steps:
-      # Seek ahead linearly, skipping steps that weren't emitted in order.
-      # chromium_step.AnnotatedCommands uses the last in case of duplicated
-      # step names, so we do the same here.
-      idx = len(self.seed_steps) - self.seed_steps[::-1].index(name)
-      self.seed_steps = self.seed_steps[idx:]
-    else:
-      self.seed_step(name)
 
     self.step_cursor(name)
     self.current_step = name
     return StructuredAnnotationStep(self, stream=self.stream,
                                     flush_before=self.flush_before)
-
-  def seed_step(self, name):
-    super(StructuredAnnotationStream, self).seed_step(name)
-    if name not in self.seed_steps:
-      self.seed_steps.append(name)
 
 
 def MatchAnnotation(line, callback_implementor):
@@ -447,10 +443,7 @@ def triggerBuilds(step, trigger_specs):
 
 def run_step(stream, name, cmd,
              cwd=None, env=None,
-             skip=False,
              allow_subannotations=False,
-             seed_steps=None,
-             followup_fn=None,
              trigger_specs=None,
              **kwargs):
   """Runs a single step.
@@ -463,28 +456,19 @@ def run_step(stream, name, cmd,
     cmd: command to run, list of one or more strings
     cwd: absolute path to working directory for the command
     env: dict with overrides for environment variables
-    skip: True to skip this step
     allow_subannotations: if True, lets the step emit its own annotations
-    seed_steps: A list of step names to seed before running this step
-    followup_fn: A callback function to run within the annotation context of
-                 the step, after the step has completed. The function will be
-                 called as f(step, ret).
     trigger_specs: a list of trigger specifications, which are dict with keys:
         properties: a dict of properties.
             Buildbot requires buildername property.
 
   Known kwargs:
-    can_fail_build: A boolean indicating that a bad retcode for this step
-                    should be interpreted as a build failure. This variable
-                    is read by update_build_failure().
     stdout: Path to a file to put step stdout into. If used, stdout won't appear
             in annotator's stdout (and |allow_subannotations| is ignored).
     stderr: Path to a file to put step stderr into. If used, stderr won't appear
             in annotator's stderr.
     stdin: Path to a file to read step stdin from.
 
-  Returns the return value of followup_fn or the returncode of the step if
-    followup_fn is None.
+  Returns the returncode of the step.
   """
   if isinstance(cmd, basestring):
     cmd = (cmd,)
@@ -497,98 +481,86 @@ def run_step(stream, name, cmd,
       'cmd': cmd,
       'cwd': cwd,
       'env': env,
-      'skip': skip,
       'allow_subannotations': allow_subannotations,
-      'seed_steps': seed_steps,
-      'trigger_specs': trigger_specs,
-      'followup_fn': followup_fn,
       })
   step_env = _merge_envs(os.environ, env)
 
-  for step_name in (seed_steps or []):
-    stream.seed_step(step_name)
+  step_annotation = stream.step(name)
+  step_annotation.step_started()
 
-  with stream.step(name) as s:
-    if skip:
-      if followup_fn:
-        return followup_fn(s, None)
-      else:
-        return None
+  print_step(step_dict, step_env, stream)
+  returncode = 0
+  if cmd:
+    try:
+      # Open file handles for IO redirection based on file names in step_dict.
+      fhandles = {
+        'stdout': subprocess.PIPE,
+        'stderr': subprocess.PIPE,
+        'stdin': None,
+      }
+      for key in fhandles:
+        if key in step_dict:
+          fhandles[key] = open(step_dict[key],
+                               'rb' if key == 'stdin' else 'wb')
 
-    print_step(step_dict, step_env, stream)
-    returncode = 0
-    if cmd:
-      try:
-        # Open file handles for IO redirection based on file names in step_dict.
-        fhandles = {
-          'stdout': subprocess.PIPE,
-          'stderr': subprocess.PIPE,
-          'stdin': None,
-        }
-        for key in fhandles:
-          if key in step_dict:
-            fhandles[key] = open(step_dict[key],
-                                 'rb' if key == 'stdin' else 'wb')
+      with modify_lookup_path(step_env.get('PATH')):
+        proc = subprocess.Popen(
+            cmd,
+            env=step_env,
+            cwd=cwd,
+            universal_newlines=True,
+            **fhandles)
 
-        with modify_lookup_path(step_env.get('PATH')):
-          proc = subprocess.Popen(
-              cmd,
-              env=step_env,
-              cwd=cwd,
-              universal_newlines=True,
-              **fhandles)
+      # Safe to close file handles now that subprocess has inherited them.
+      for handle in fhandles.itervalues():
+        if isinstance(handle, file):
+          handle.close()
 
-        # Safe to close file handles now that subprocess has inherited them.
-        for handle in fhandles.itervalues():
-          if isinstance(handle, file):
-            handle.close()
+      outlock = threading.Lock()
+      def filter_lines(lock, allow_subannotations, inhandle, outhandle):
+        while True:
+          line = inhandle.readline()
+          if not line:
+            break
+          lock.acquire()
+          try:
+            if not allow_subannotations and line.startswith('@@@'):
+              outhandle.write('!')
+            outhandle.write(line)
+            outhandle.flush()
+          finally:
+            lock.release()
 
-        outlock = threading.Lock()
-        def filter_lines(lock, allow_subannotations, inhandle, outhandle):
-          while True:
-            line = inhandle.readline()
-            if not line:
-              break
-            lock.acquire()
-            try:
-              if not allow_subannotations and line.startswith('@@@'):
-                outhandle.write('!')
-              outhandle.write(line)
-              outhandle.flush()
-            finally:
-              lock.release()
+      # Pump piped stdio through filter_lines. IO going to files on disk is
+      # not filtered.
+      threads = []
+      for key in ('stdout', 'stderr'):
+        if fhandles[key] == subprocess.PIPE:
+          inhandle = getattr(proc, key)
+          outhandle = getattr(sys, key)
+          threads.append(threading.Thread(
+              target=filter_lines,
+              args=(outlock, allow_subannotations, inhandle, outhandle)))
 
-        # Pump piped stdio through filter_lines. IO going to files on disk is
-        # not filtered.
-        threads = []
-        for key in ('stdout', 'stderr'):
-          if fhandles[key] == subprocess.PIPE:
-            inhandle = getattr(proc, key)
-            outhandle = getattr(sys, key)
-            threads.append(threading.Thread(
-                target=filter_lines,
-                args=(outlock, allow_subannotations, inhandle, outhandle)))
-
-        for th in threads:
-          th.start()
-        proc.wait()
-        for th in threads:
-          th.join()
-      except OSError as e:
-        # File wasn't found, error will be reported to stream when the exception
-        # crosses the context manager.
-        raise type(e)(str(e) + ' when executing %s' % cmd)
+      for th in threads:
+        th.start()
+      proc.wait()
+      for th in threads:
+        th.join()
       returncode = proc.returncode
+    except OSError:
+      # File wasn't found, error will be reported to stream when the exception
+      # crosses the context manager.
+      step_annotation.step_exception_occured(*sys.exc_info())
+      raise
 
-    if trigger_specs:
-      triggerBuilds(s, trigger_specs)
+  # TODO(martiniss) move logic into own module?
+  if trigger_specs:
+    triggerBuilds(step_annotation, trigger_specs)
 
-    if followup_fn:
-      return followup_fn(s, returncode)
-    else:
-      return returncode
+  return step_annotation, returncode
 
-def update_build_failure(failure, retcode, can_fail_build=True, **_kwargs):
+def update_build_failure(failure, retcode, **_kwargs):
   """Potentially moves failure from False to True, depending on returncode of
   the run step and the step's configuration.
 
@@ -600,18 +572,7 @@ def update_build_failure(failure, retcode, can_fail_build=True, **_kwargs):
   Called externally from annotated_run, which is why it's a separate function.
   """
   # TODO(iannucci): Allow step to specify "OK" return values besides 0?
-  return bool(failure or (can_fail_build and retcode))
-
-
-def default_followup(step, ret):
-  """A default/sample callback function for run_step."""
-  stream = step.annotation_stream
-  if ret > 0:
-    stream.step_cursor(stream.current_step)
-    stream.emit('step returned non-zero exit code: %d' % ret)
-    step.step_failure()
-  return ret
-
+  return failure or retcode
 
 def run_steps(steps, build_failure):
   for step in steps:
@@ -620,16 +581,26 @@ def run_steps(steps, build_failure):
       print 'Invalid step - %s\n%s' % (error, json.dumps(step, indent=2))
       sys.exit(1)
 
-  stream = StructuredAnnotationStream(seed_steps=[s['name'] for s in steps])
+  stream = StructuredAnnotationStream()
   ret_codes = []
   build_failure = False
+  prev_annotation = None
   for step in steps:
     if build_failure and not step.get('always_run', False):
       ret = None
     else:
-      ret = run_step(stream, followup_fn=default_followup, **step)
-    build_failure = update_build_failure(build_failure, ret, **step)
+      prev_annotation, ret = run_step(stream, **step)
+      stream = prev_annotation.annotation_stream
+      if ret > 0:
+        stream.step_cursor(stream.current_step)
+        stream.emit('step returned non-zero exit code: %d' % ret)
+        prev_annotation.step_failure()
+
+      prev_annotation.step_ended()
+    build_failure = update_build_failure(build_failure, ret)
     ret_codes.append(ret)
+  if prev_annotation:
+    prev_annotation.step_ended()
   return build_failure, ret_codes
 
 

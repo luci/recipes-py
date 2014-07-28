@@ -10,7 +10,7 @@ DEPS = [
 
 def GenSteps(api):
   now = api.time.time()
-  yield api.step('echo', ['echo', str(now)])
+  api.step('echo', ['echo', str(now)])
 
 
 def GenTests(api):

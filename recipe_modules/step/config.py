@@ -33,12 +33,7 @@ def BaseConfig(**_kwargs):
 
     abort_on_failure = Single(bool, required=False),
     allow_subannotations = Single(bool, required=False),
-    always_run = Single(bool, required=False),
-    can_fail_build = Single(bool, required=False),
-    skip = Single(bool, required=False),
 
-    seed_steps = List(basestring),
-    followup_fn = Single(collections.Callable, required=False),
     trigger_specs = ConfigList(
         lambda: ConfigGroup(
             properties=Dict(value_type=object),
