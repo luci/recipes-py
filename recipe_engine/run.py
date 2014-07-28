@@ -498,7 +498,6 @@ class SequentialRecipeEngine(RecipeEngine):
     if not annotation or not step_result:
       return
 
-    annotation.step_ended()
     step_result.presentation.finalize(annotation)
     if self._test_data.enabled:
       val = annotation.stream.getvalue()
@@ -509,6 +508,7 @@ class SequentialRecipeEngine(RecipeEngine):
         # dictionary.
         # pylint: disable=w0212
         step_result._step['~followup_annotations'] = lines
+    annotation.step_ended()
 
   def run_step(self, step, ok_ret=None):
     test_data_fn = step.pop('step_test_data', recipe_test_api.StepTestData)
