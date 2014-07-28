@@ -525,9 +525,9 @@ class SequentialRecipeEngine(RecipeEngine):
     step_result = None
 
     if not self._test_data.enabled:
-      self._previous_step_annotation, step_result = annotator.run_step(
+      self._previous_step_annotation, retcode = annotator.run_step(
         self._stream, **step)
-      step_result = StepData(step, step_result)
+      step_result = callback(self._previous_step_annotation, retcode)
     else:
       self._previous_step_annotation = annotation = self._stream.step(
               step['name'])
