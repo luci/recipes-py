@@ -188,6 +188,7 @@ class Test(_Test):
                             f.func_code.co_firstlineno,
                             f.func_code.co_name))
 
+    expect_dir = expect_dir.rstrip('/')
     return super(Test, cls).__new__(cls, name, func_call, expect_dir,
                                     expect_base, ext, covers, breakpoints)
 
