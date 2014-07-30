@@ -23,5 +23,13 @@
       "friend": "Darth Vader"
     },
     "name": "goodbye"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "exit 3"
+    ],
+    "name": "anything is cool"
   }
 ]

@@ -22,6 +22,13 @@ def GenSteps(api):
   api.step('goodbye', ['bash', '-c', 'echo Good bye, $friend.'],
            env={'friend': 'Darth Vader'})
 
+  # Finally, you can make your step accept any 
+  api.step('anything is cool', ['bash', '-c', 'exit 3'],
+           ok_ret=any)
+
 
 def GenTests(api):
-  yield api.test('basic')
+  yield (
+      api.test('basic') +
+      api.step_data('anything is cool', retcode=3)
+    )

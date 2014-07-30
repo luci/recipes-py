@@ -6,7 +6,7 @@ import collections
 
 from slave.recipe_config import List
 from slave.recipe_config import (config_item_context, ConfigGroup, ConfigList,
-                                 Dict, Single)
+                                 Dict, Single, Set)
 from slave.recipe_config_types import Path
 from slave.recipe_util import Placeholder
 
@@ -31,7 +31,6 @@ def BaseConfig(**_kwargs):
     stderr = Single(Placeholder, required=False),
     stdin = Single(Placeholder, required=False),
 
-    abort_on_failure = Single(bool, required=False),
     allow_subannotations = Single(bool, required=False),
 
     trigger_specs = ConfigList(
@@ -41,6 +40,8 @@ def BaseConfig(**_kwargs):
     ),
 
     step_test_data = Single(collections.Callable, required=False),
+
+    ok_ret = Set(int)
   )
 
 

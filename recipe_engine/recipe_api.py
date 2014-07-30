@@ -37,6 +37,12 @@ class RecipeApi(ModuleInjectionSite):
 
     @property
     def retcode(self):
+      """
+      Returns the retcode of the step which failed. If this was a manual
+      failure, returns None
+      """
+      if not self.result:
+        return None
       return self.result.retcode
 
 

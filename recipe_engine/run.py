@@ -208,6 +208,7 @@ class StepData(object):
   def presentation(self):
     return self._presentation
 
+# TODO(martiniss) update comment
 # Result of 'render_step', fed into 'step_callback'.
 Placeholders = collections.namedtuple(
     'Placeholders', ['cmd', 'stdout', 'stderr', 'stdin'])
@@ -281,30 +282,6 @@ def get_callable_name(func):
   else:
     return func.__name__
 
-
-def step_callback(step, step_history, placeholders, step_test):
-  assert step['name'] not in step_history, (
-    'Step "%s" is already in step_history.' % step['name'])
-  step_result = StepData(step, None)
-
-  def _inner(annotator_step, retcode):
-    step_result._retcode = retcode  # pylint: disable=W0212
-    if retcode == 0:
-      step_result.presentation.status = 'SUCCESS'
-    else:
-      step_result.presentation.status = 'FAILURE'
-
-    annotator_step.annotation_stream.step_cursor(step['name'])
-    if step_result.retcode != 0 and step_test.enabled:
-      # To avoid cluttering the expectations, don't emit this in testmode.
-      annotator_step.emit('step returned non-zero exit code: %d' %
-                          step_result.retcode)
-
-    get_placeholder_results(step_result, placeholders)
-
-    return step_result
-
-  return _inner
 
 def get_args(argv):
   """Process command-line arguments."""
@@ -510,14 +487,13 @@ class SequentialRecipeEngine(RecipeEngine):
         step_result._step['~followup_annotations'] = lines
     annotation.step_ended()
 
-  def run_step(self, step, ok_ret=None):
+  def run_step(self, step):
+    ok_ret = step.pop('ok_ret')
+
     test_data_fn = step.pop('step_test_data', recipe_test_api.StepTestData)
     step_test = self._test_data.pop_step_test_data(step['name'],
                                                    test_data_fn)
     placeholders = render_step(step, step_test)
-
-    callback = step_callback(step, self._step_history,
-                             placeholders, step_test)
 
     self._step_history[step['name']] = step
     self._emit_results()
@@ -527,14 +503,17 @@ class SequentialRecipeEngine(RecipeEngine):
     if not self._test_data.enabled:
       self._previous_step_annotation, retcode = annotator.run_step(
         self._stream, **step)
-      step_result = callback(self._previous_step_annotation, retcode)
+
+      step_result = StepData(step, retcode)
+      self._previous_step_annotation.annotation_stream.step_cursor(step['name'])
     else:
       self._previous_step_annotation = annotation = self._stream.step(
               step['name'])
       annotation.step_started()
       try:
         annotation.stream = cStringIO.StringIO()
-        step_result = callback(annotation, step_test.retcode)
+
+        step_result = StepData(step, step_test.retcode)
       except OSError:
         exc_type, exc_value, exc_tb = sys.exc_info()
         trace = traceback.format_exception(exc_type, exc_value, exc_tb)
@@ -542,11 +521,21 @@ class SequentialRecipeEngine(RecipeEngine):
         annotation.write_log_lines('exception', filter(None, trace_lines))
         annotation.step_exception()
 
+    get_placeholder_results(step_result, placeholders)
     self._previous_step_result = step_result
-    if step_result.retcode != 0:
+
+    if step_result.retcode in ok_ret:
+      step_result.presentation.status = 'SUCCESS'
+      return step_result
+    else:
+      step_result.presentation.status = 'FAILURE'
+      if step_test.enabled:
+        # To avoid cluttering the expectations, don't emit this in testmode.
+        self._previous_step_annotation.emit(
+            'step returned non-zero exit code: %d' % step_result.retcode)
+
       raise self._api.StepFailure(step['name'], step_result)
 
-    return step_result
 
   def run(self, steps_function, api):
     self._api = api
@@ -561,8 +550,9 @@ class SequentialRecipeEngine(RecipeEngine):
       build_result = {
         "name": "$final_result",
         "reason": f.reason,
-        "status_code": 1
       }
+      if f.retcode:
+        build_result['status_code'] = f.retcode
     except Exception:
       raise # TODO(martiniss) make this purple the build
     finally:
