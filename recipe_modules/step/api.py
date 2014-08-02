@@ -12,6 +12,10 @@ class StepApi(recipe_api.RecipeApi):
     self._name_function = None
     self._step_names = {}
 
+  FAILURE = 'FAILURE'
+  SUCCESS = 'SUCCESS'
+  WARNING = 'WARNING'
+
   # Making these properties makes them show up in show_me_the_modules,
   # and also makes it clear that they are intended to be mutated.
   @property

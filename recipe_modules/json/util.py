@@ -108,6 +108,7 @@ class GTestResults(object):
         # result, the only we care about here.
         last_result = results[-1]
 
+        # martiniss: this will go away once aggregate steps lands (I think)
         if last_result['status'] == 'SUCCESS':
           self.passes.add(test_fullname)
         else:
