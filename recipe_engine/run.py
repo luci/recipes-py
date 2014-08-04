@@ -427,17 +427,6 @@ class RecipeEngine(object):
     """
     raise NotImplementedError
 
-  def unhandled_exception(self): # pylint: disable=R0201
-    """Callback to handle unhandled exceptions.
-
-    Must be called from an exceptional context. No arguments, but you can use
-    sys.exc_info() to get information about the exception.
-
-    Returns:
-      RecipeExecutionResult with status code (recommended 4) and list of steps.
-    """
-    raise
-
   def create_step(self, step):
     """Called by step module to instantiate a new step. Return value of this
     function eventually surfaces as object yielded by GenSteps generator.
@@ -539,35 +528,41 @@ class SequentialRecipeEngine(RecipeEngine):
 
   def run(self, steps_function, api):
     self._api = api
-    try:
-      build_result = steps_function(api)
-      assert build_result is None, (
-      "Non-None return from GenSteps is not supported yet")
+    retcode = None
+    final_result = None
 
-      assert not self._test_data.enabled or not self._test_data.step_data, (
-      "Unconsumed test data! %s" % (self._test_data.step_data,))
+    try:
+      try:
+        retcode = steps_function(api)
+        assert retcode is None, (
+        "Non-None return from GenSteps is not supported yet")
+
+        assert not self._test_data.enabled or not self._test_data.step_data, (
+        "Unconsumed test data! %s" % (self._test_data.step_data,))
+      finally:
+        self._emit_results()
     except api.StepFailure as f:
-      build_result = {
+      retcode = f.retcode if f.retcode else 1
+      final_result = {
         "name": "$final_result",
         "reason": f.reason,
+        "status_code": retcode
       }
-      if f.retcode:
-        build_result['status_code'] = f.retcode
-    except Exception:
-      raise # TODO(martiniss) make this purple the build
-    finally:
-      self._emit_results()
+    except Exception as ex:
+      retcode = -1
+      final_result = {
+        "name": "$final_result",
+        "reason": "Uncaught exception: %r" % ex,
+        "status_code": retcode
+      }
+      with self._stream.step('Uncaught Exception') as s:
+        s.step_exception()
+        s.write_log_lines('exception', traceback.format_exc().splitlines())
 
-    # TODO(martinis) clean up RecipeExecutionResult
-    return RecipeExecutionResult(build_result, self._step_history)
+    if final_result is not None:
+      self._step_history[final_result['name']] = final_result
 
-  def unhandled_exception(self):
-    (exc_type, exc_message) = sys.exc_info()[0:2]
-    with self._stream.step('%s: %s' % (exc_type.__name__, exc_message)) as s:
-      self._stream.emit('Exception: %s\nBacktrace:\n%s' %
-                       (exc_message, traceback.format_exc(sys.exc_info()[2])))
-      s.step_exception()
-    raise
+    return RecipeExecutionResult(retcode, self._step_history)
 
   def create_step(self, step):  # pylint: disable=R0201
     # This version of engine doesn't do anything, just converts step to dict

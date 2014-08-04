@@ -22,7 +22,7 @@ def GenSteps(api):
   api.step('goodbye', ['bash', '-c', 'echo Good bye, $friend.'],
            env={'friend': 'Darth Vader'})
 
-  # Finally, you can make your step accept any 
+  # Finally, you can make your step accept any
   api.step('anything is cool', ['bash', '-c', 'exit 3'],
            ok_ret=any)
 
@@ -31,12 +31,20 @@ def GenSteps(api):
   step_result = api.step('hello', ['echo', 'hello'])
   step_result.presentation.status = api.step.EXCEPTION
 
-  api.step('goodbye', ['echo', 'goodbye'])
-  # Modifying step_result now would raise an AssertionError.
+  try:
+    api.step('goodbye', ['echo', 'goodbye'])
+    # Modifying step_result now would raise an AssertionError.
+  except api.StepFailure:
+    # Raising anything besides StepFailure causes the build to go purple.
+    raise ValueError('goodbye must exit 0!')
 
 
 def GenTests(api):
   yield (
       api.test('basic') +
       api.step_data('anything is cool', retcode=3)
+    )
+  yield (
+      api.test('exceptional') +
+      api.step_data('goodbye (2)', retcode=1)
     )

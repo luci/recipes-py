@@ -1,0 +1,61 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "Hello World"
+    ],
+    "name": "hello"
+  },
+  {
+    "cmd": [
+      "echo",
+      "Why hello, there."
+    ],
+    "name": "hello (2)"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo Good bye, $friend."
+    ],
+    "env": {
+      "friend": "Darth Vader"
+    },
+    "name": "goodbye"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "exit 3"
+    ],
+    "name": "anything is cool"
+  },
+  {
+    "cmd": [
+      "echo",
+      "hello"
+    ],
+    "name": "hello (3)",
+    "~followup_annotations": [
+      "@@@STEP_EXCEPTION@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "goodbye"
+    ],
+    "name": "goodbye (2)",
+    "~followup_annotations": [
+      "step returned non-zero exit code: 1",
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "name": "$final_result",
+    "reason": "Uncaught exception: ValueError('goodbye must exit 0!',)",
+    "status_code": -1
+  }
+]
