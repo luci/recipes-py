@@ -12,6 +12,7 @@ class StepApi(recipe_api.RecipeApi):
     self._name_function = None
     self._step_names = {}
 
+  EXCEPTION = 'EXCEPTION'
   FAILURE = 'FAILURE'
   SUCCESS = 'SUCCESS'
   WARNING = 'WARNING'

@@ -26,6 +26,14 @@ def GenSteps(api):
   api.step('anything is cool', ['bash', '-c', 'exit 3'],
            ok_ret=any)
 
+  # We can manipulate the step presentation arbitrarily until we run
+  # the next step.
+  step_result = api.step('hello', ['echo', 'hello'])
+  step_result.presentation.status = api.step.EXCEPTION
+
+  api.step('goodbye', ['echo', 'goodbye'])
+  # Modifying step_result now would raise an AssertionError.
+
 
 def GenTests(api):
   yield (
