@@ -34,9 +34,13 @@ def GenSteps(api):
   try:
     api.step('goodbye', ['echo', 'goodbye'])
     # Modifying step_result now would raise an AssertionError.
-  except api.StepFailure:
+  except api.step.StepFailure:
     # Raising anything besides StepFailure causes the build to go purple.
     raise ValueError('goodbye must exit 0!')
+
+  # You can also raise a warning, which will act like a step failure, but
+  # will not make the build red. It will stop the build though.
+  raise api.Step.StepWarning("Warning, robots approaching!")
 
 
 def GenTests(api):

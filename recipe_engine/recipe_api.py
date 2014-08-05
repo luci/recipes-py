@@ -6,6 +6,43 @@ from .recipe_test_api import DisabledTestData, ModuleTestData
 
 from .recipe_util import ModuleInjectionSite
 
+class StepFailure(Exception):
+  def __init__(self, name_or_reason, result=None):
+    if result:
+      self.name = name_or_reason
+      self.result = result
+      self.reason = self.reason_message()
+    else:
+      self.name = None
+      self.result = None
+      self.reason = name_or_reason
+
+    super(StepFailure, self).__init__(self.reason)
+
+  def reason_message(self):
+    return "Step({!r}) failed with return_code {}".format(
+        self.name, self.result.retcode)
+
+  def __str__(self):
+    return "Step Failure in %s" % self.name
+
+  @property
+  def retcode(self):
+    """
+    Returns the retcode of the step which failed. If this was a manual
+    failure, returns None
+    """
+    if not self.result:
+      return None
+    return self.result.retcode
+
+class StepWarning(StepFailure):
+  def reason_message(self):
+    return "Warning: Step({!r}) returned {}".format(
+          self.name, self.result.retcode)
+
+  def __str__(self):
+    return "Step Warning in %s" % self.name
 
 class RecipeApi(ModuleInjectionSite):
   """
@@ -17,34 +54,6 @@ class RecipeApi(ModuleInjectionSite):
 
   Dependency injection takes place in load_recipe_modules() in recipe_loader.py.
   """
-  class StepFailure(Exception):
-    def __init__(self, name_or_reason, result=None):
-      if result:
-        self.name = name_or_reason
-        self.result = result
-        self.reason = "Step('{}') failed with return_code {}".format(
-            self.name, self.result.retcode)
-      else:
-        self.name = None
-        self.result = None
-        self.reason = name_or_reason
-
-      # Can't use StepFailure... It NameErrors if I do. Very strange.
-      super(RecipeApi.StepFailure, self).__init__(self.reason)
-
-    def __str__(self):
-      return "Step Failure in %s" % self.name
-
-    @property
-    def retcode(self):
-      """
-      Returns the retcode of the step which failed. If this was a manual
-      failure, returns None
-      """
-      if not self.result:
-        return None
-      return self.result.retcode
-
 
   def __init__(self, module=None, engine=None,
                test_data=DisabledTestData(), **_kwargs):

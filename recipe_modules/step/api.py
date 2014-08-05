@@ -17,6 +17,14 @@ class StepApi(recipe_api.RecipeApi):
   SUCCESS = 'SUCCESS'
   WARNING = 'WARNING'
 
+  @property
+  def StepFailure(self):
+    return recipe_api.StepFailure
+
+  @property
+  def StepWarning(self):
+    return recipe_api.StepWarning #pragma: no cover
+
   # Making these properties makes them show up in show_me_the_modules,
   # and also makes it clear that they are intended to be mutated.
   @property

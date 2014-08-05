@@ -84,6 +84,7 @@ from common import chromium_utils
 from slave import recipe_loader
 from slave import recipe_test_api
 from slave import recipe_util
+from slave import recipe_api
 
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -523,7 +524,7 @@ class SequentialRecipeEngine(RecipeEngine):
         self._previous_step_annotation.emit(
             'step returned non-zero exit code: %d' % step_result.retcode)
 
-      raise self._api.StepFailure(step['name'], step_result)
+      raise recipe_api.StepFailure(step['name'], step_result)
 
 
   def run(self, steps_function, api):
@@ -541,7 +542,7 @@ class SequentialRecipeEngine(RecipeEngine):
         "Unconsumed test data! %s" % (self._test_data.step_data,))
       finally:
         self._emit_results()
-    except api.StepFailure as f:
+    except recipe_api.StepFailure as f:
       retcode = f.retcode if f.retcode else 1
       final_result = {
         "name": "$final_result",
