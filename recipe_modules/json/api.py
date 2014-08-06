@@ -47,7 +47,7 @@ class JsonOutputPlaceholder(recipe_util.Placeholder):
 
   FIXME
   After the termination of the step, this file is expected to contain a valid
-  JSON document, which will be set as the json_output for that step in the
+  JSON document, which will be set as the json.output for that step in the
   step_history OrderedDict passed to your recipe generator.
   """
   def __init__(self, api, add_json_log):
