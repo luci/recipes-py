@@ -34,6 +34,8 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
     t.raw['num_regressions'] = 0
     t.add_result('flake/totally-flakey.html', 'PASS',
                  if_failing('TIMEOUT PASS'))
+    t.add_result('flake/timeout-then-crash.html', 'CRASH',
+                 if_failing('TIMEOUT CRASH'))
     t.add_result('flake/slow.html', 'SLOW',
                  if_failing('TIMEOUT SLOW'))
     t.add_result('tricky/totally-maybe-not-awesome.html', 'PASS',

@@ -36,16 +36,20 @@ class TestResults(object):
     # with reserved values from the shell.
     self.MAX_FAILURES_EXIT_STATUS = 101
 
+    passing_statuses = ('PASS', 'SLOW', 'NEEDSREBASELINE',
+                        'NEEDSMANUALREBASELINE')
+
     for (test, result) in self.tests.iteritems():
       key = 'unexpected_' if result.get('is_unexpected') else ''
-      actual_result = result['actual']
-      split_results = actual_result.split()
-      data = actual_result
-      passing_statuses = ('PASS', 'SLOW', 'NEEDSREBASELINE',
-                          'NEEDSMANUALREBASELINE')
-      if len(split_results) > 1 and split_results[1] in passing_statuses:
+      data = result['actual']
+      actual_results = data.split()
+      last_result = actual_results[-1]
+      expected_results = result['expected'].split()
+
+      if (len(actual_results) > 1 and
+          (last_result in expected_results or last_result in passing_statuses)):
         key += 'flakes'
-      elif split_results[0] in passing_statuses:
+      elif last_result in passing_statuses:
         key += 'passes'
         # TODO(dpranke): crbug.com/357867 ...  Why are we assigning result
         # instead of actual_result here. Do we even need these things to be
