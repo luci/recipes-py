@@ -159,6 +159,7 @@ class TestData(BaseTestData):
     self.properties = {}  # key -> val
     self.mod_data = collections.defaultdict(ModuleTestData)
     self.step_data = collections.defaultdict(StepTestData)
+    self.expected_exception = None
 
   def __add__(self, other):
     assert isinstance(other, TestData)
@@ -169,6 +170,9 @@ class TestData(BaseTestData):
 
     combineify('mod_data', ret, self, other)
     combineify('step_data', ret, self, other)
+    ret.expected_exception = self.expected_exception
+    if other.expected_exception:
+      ret.expected_exception = other.expected_exception
 
     return ret
 
@@ -184,12 +188,21 @@ class TestData(BaseTestData):
   def get_module_test_data(self, module_name):
     return self.mod_data.get(module_name, ModuleTestData())
 
+  def expect_exception(self, exception):
+    assert not self.expected_exception
+    self.expected_exception = exception
+
+  def is_unexpected_exception(self, exception):
+    name = exception.__class__.__name__
+    return not (self.enabled and name == self.expected_exception)
+
   def __repr__(self):
     return "TestData(%r)" % ({
       'name': self.name,
       'properties': self.properties,
       'mod_data': dict(self.mod_data.iteritems()),
       'step_data': dict(self.step_data.iteritems()),
+      'expected_exception': self.expected_exception,
     },)
 
 
@@ -209,6 +222,8 @@ class DisabledTestData(BaseTestData):
   def get_module_test_data(self, _module_name):
     return self
 
+  def is_unexpected_exception(self, exception): #pylint: disable=R0201
+    return False
 
 def mod_test_data(func):
   @static_wraps(func)
@@ -432,3 +447,8 @@ class RecipeTestApi(object):
     kwargs['override'] = True
     return self._step_data(name, *data, **kwargs)
   override_step_data.__doc__ = _step_data.__doc__
+
+  def expect_exception(self, exc_type): #pylint: disable=R0201
+    ret = TestData(None)
+    ret.expect_exception(exc_type)
+    return ret

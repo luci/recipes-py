@@ -549,16 +549,23 @@ class SequentialRecipeEngine(RecipeEngine):
         "reason": f.reason,
         "status_code": retcode
       }
+
     except Exception as ex:
+      unexpected_exception = self._test_data.is_unexpected_exception(ex)
+
       retcode = -1
       final_result = {
         "name": "$final_result",
-        "reason": "Uncaught exception: %r" % ex,
+        "reason": "Uncaught Exception: %r" % ex,
         "status_code": retcode
       }
+
       with self._stream.step('Uncaught Exception') as s:
         s.step_exception()
         s.write_log_lines('exception', traceback.format_exc().splitlines())
+
+      if unexpected_exception:
+        raise
 
     if final_result is not None:
       self._step_history[final_result['name']] = final_result

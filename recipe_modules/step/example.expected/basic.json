@@ -51,7 +51,7 @@
   },
   {
     "name": "$final_result",
-    "reason": "Uncaught exception: ModuleInjectionError(\"RecipeApi has no dependency 'Step'. (Add it to DEPS?)\",)",
-    "status_code": -1
+    "reason": "Warning, robots approaching!",
+    "status_code": 1
   }
 ]

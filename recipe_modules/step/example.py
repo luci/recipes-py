@@ -40,7 +40,8 @@ def GenSteps(api):
 
   # You can also raise a warning, which will act like a step failure, but
   # will not make the build red. It will stop the build though.
-  raise api.Step.StepWarning("Warning, robots approaching!")
+  raise api.step.StepWarning("Warning, robots approaching!")
+
 
 
 def GenTests(api):
@@ -48,7 +49,22 @@ def GenTests(api):
       api.test('basic') +
       api.step_data('anything is cool', retcode=3)
     )
+
+  # If you don't have the expect_exception in this test, you will get something
+  # like this output.
+  # ======================================================================
+  # ERROR: step:example.exceptional (..../exceptional.json)
+  # ----------------------------------------------------------------------
+  # Traceback (most recent call last):
+  #   <full stack trace ommitted>
+  #   File "annotated_run.py", line 537, in run
+  #     retcode = steps_function(api)
+  #   File "recipe_modules/step/example.py", line 39, in GenSteps
+  #     raise ValueError('goodbye must exit 0!')
+  # ValueError: goodbye must exit 0!
+
   yield (
       api.test('exceptional') +
-      api.step_data('goodbye (2)', retcode=1)
+      api.step_data('goodbye (2)', retcode=1) +
+      api.expect_exception('ValueError')
     )

@@ -55,7 +55,7 @@
   },
   {
     "name": "$final_result",
-    "reason": "Uncaught exception: ValueError('goodbye must exit 0!',)",
+    "reason": "Uncaught Exception: ValueError('goodbye must exit 0!',)",
     "status_code": -1
   }
 ]
