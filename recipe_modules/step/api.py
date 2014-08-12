@@ -25,6 +25,34 @@ class StepApi(recipe_api.RecipeApi):
   def StepWarning(self):
     return recipe_api.StepWarning #pragma: no cover
 
+  @property
+  def active_result(self):
+    """The currently active (open) result from the last step that was run.
+
+    Allows you to do things like:
+      try:
+        api.step('run test', [..., api.json.output()])
+      finally:
+        result = api.step.active_result
+        if result.json.output:
+          new_step_text = result.json.output['step_text']
+          api.step.active_result.presentation.step_text = new_step_text
+
+    This will update the step_text of the test, even if the test fails. Without
+    this api, the above code would look like:
+
+      try:
+        result = api.step('run test', [..., api.json.output()])
+      except api.StepFailure as f:
+        result = f.result
+        raise
+      finally:
+        if result.json.output:
+          new_step_text = result.json.output['step_text']
+          api.step.active_result.presentation.step_text = new_step_text
+    """
+    return self._engine.previous_step_result
+
   # Making these properties makes them show up in show_me_the_modules,
   # and also makes it clear that they are intended to be mutated.
   @property

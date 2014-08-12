@@ -459,9 +459,18 @@ class SequentialRecipeEngine(RecipeEngine):
   def properties(self):
     return self._properties
 
+  @property
+  def previous_step_result(self):
+    """Allows api.step to get the active result from any context."""
+    return self._previous_step_result
+
   def _emit_results(self):
     annotation = self._previous_step_annotation
     step_result = self._previous_step_result
+
+    self._previous_step_annotation = None
+    self._previous_step_result = None
+
     if not annotation or not step_result:
       return
 
