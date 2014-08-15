@@ -19,10 +19,12 @@ class StepApi(recipe_api.RecipeApi):
 
   @property
   def StepFailure(self):
+    """ See recipe_api.py for docs. """
     return recipe_api.StepFailure
 
   @property
   def StepWarning(self):
+    """ See recipe_api.py for docs. """
     return recipe_api.StepWarning #pragma: no cover
 
   @property
@@ -53,6 +55,11 @@ class StepApi(recipe_api.RecipeApi):
     """
     return self._engine.previous_step_result
 
+  @property
+  def defer_results(self):
+    """ See recipe_api.py for docs. """
+    return recipe_api.defer_results
+
   # Making these properties makes them show up in show_me_the_modules,
   # and also makes it clear that they are intended to be mutated.
   @property
@@ -64,6 +71,7 @@ class StepApi(recipe_api.RecipeApi):
   def auto_resolve_conflicts(self, val):
     self._auto_resolve_conflicts = val
 
+  @recipe_api.composite_step
   def __call__(self, name, cmd, ok_ret=None, **kwargs):
     """Returns a step dictionary which is compatible with annotator.py.
 

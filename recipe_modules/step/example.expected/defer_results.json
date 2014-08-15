@@ -54,7 +54,11 @@
       "echo",
       "testa"
     ],
-    "name": "testa"
+    "name": "testa",
+    "~followup_annotations": [
+      "step returned non-zero exit code: 1",
+      "@@@STEP_FAILURE@@@"
+    ]
   },
   {
     "cmd": [
@@ -65,7 +69,7 @@
   },
   {
     "name": "$final_result",
-    "reason": "Warning, robots approaching!",
+    "reason": "You can catch step failures.",
     "status_code": 1
   }
 ]

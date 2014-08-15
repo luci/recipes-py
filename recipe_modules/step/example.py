@@ -6,6 +6,7 @@ DEPS = [
   'step',
 ]
 
+from slave import recipe_api
 
 def GenSteps(api):
   # We are going to have steps with the same name, so fix it automagically.
@@ -22,7 +23,7 @@ def GenSteps(api):
   api.step('goodbye', ['bash', '-c', 'echo Good bye, $friend.'],
            env={'friend': 'Darth Vader'})
 
-  # Finally, you can make your step accept any
+  # Finally, you can make your step accept any return code
   api.step('anything is cool', ['bash', '-c', 'exit 3'],
            ok_ret=any)
 
@@ -38,10 +39,17 @@ def GenSteps(api):
     # Raising anything besides StepFailure causes the build to go purple.
     raise ValueError('goodbye must exit 0!')
 
-  # You can also raise a warning, which will act like a step failure, but
-  # will not make the build red. It will stop the build though.
-  raise api.step.StepWarning("Warning, robots approaching!")
+  # Aggregate failures from tests!
+  try:
+    with recipe_api.defer_results():
+      api.step('testa', ['echo', 'testa'])
+      api.step('testb', ['echo', 'testb'])
+  except recipe_api.AggregatedStepFailure as f:
+    raise api.step.StepFailure("You can catch step failures.")
 
+  # You can also raise a warning, which will act like a step failure, but
+  # will turn the build yellow, and stop the build.
+  raise api.step.StepWarning("Warning, robots approaching!")
 
 
 def GenTests(api):
@@ -67,4 +75,9 @@ def GenTests(api):
       api.test('exceptional') +
       api.step_data('goodbye (2)', retcode=1) +
       api.expect_exception('ValueError')
+    )
+
+  yield (
+      api.test('defer_results') +
+      api.step_data('testa', retcode=1)
     )

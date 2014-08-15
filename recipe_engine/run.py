@@ -552,7 +552,7 @@ class SequentialRecipeEngine(RecipeEngine):
       finally:
         self._emit_results()
     except recipe_api.StepFailure as f:
-      retcode = f.retcode if f.retcode else 1
+      retcode = f.retcode or 1
       final_result = {
         "name": "$final_result",
         "reason": f.reason,
