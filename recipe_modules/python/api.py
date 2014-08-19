@@ -24,8 +24,11 @@ class PythonApi(recipe_api.RecipeApi):
     program = textwrap.dedent(program)
     compile(program, '<string>', 'exec', dont_inherit=1)
 
-    result = self(name, self.m.raw_io.input(program, '.py'), **kwargs)
-    if add_python_log:
-      result.presentation.logs['python.inline'] = program.splitlines()
+    try:
+      self(name, self.m.raw_io.input(program, '.py'), **kwargs)
+    finally:
+      result = self.m.step.active_result
+      if add_python_log:
+        result.presentation.logs['python.inline'] = program.splitlines()
 
     return result
