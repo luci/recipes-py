@@ -55,6 +55,7 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
 
       #TODO(martiniss) change this to use a regular step call
       step['ok_ret'] = set(step.pop('ok_ret', {0}))
+      step['infra_step'] = bool(step.pop('infra_step', False))
       step_result = self.m.step.run_from_dict(step)
 
       if outputs_json:

@@ -47,15 +47,38 @@
       "echo",
       "goodbye"
     ],
-    "name": "goodbye (2)",
+    "name": "goodbye (2)"
+  },
+  {
+    "cmd": [
+      "echo",
+      "testa"
+    ],
+    "name": "testa"
+  },
+  {
+    "cmd": [
+      "echo",
+      "testb"
+    ],
+    "name": "testb"
+  },
+  {
+    "cmd": [
+      "echo",
+      "cleaning",
+      "up",
+      "build"
+    ],
+    "name": "cleanup",
     "~followup_annotations": [
       "step returned non-zero exit code: 1",
-      "@@@STEP_FAILURE@@@"
+      "@@@STEP_EXCEPTION@@@"
     ]
   },
   {
     "name": "$final_result",
-    "reason": "Uncaught Exception: ValueError('goodbye must exit 0!',)",
-    "status_code": -1
+    "reason": "Warning, robots approaching!",
+    "status_code": 1
   }
 ]

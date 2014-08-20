@@ -64,6 +64,15 @@
     "name": "testb"
   },
   {
+    "cmd": [
+      "echo",
+      "cleaning",
+      "up",
+      "build"
+    ],
+    "name": "cleanup"
+  },
+  {
     "name": "$final_result",
     "reason": "Warning, robots approaching!",
     "status_code": 1

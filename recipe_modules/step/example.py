@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 DEPS = [
+  'properties',
   'step',
 ]
 
@@ -47,6 +48,14 @@ def GenSteps(api):
   except recipe_api.AggregatedStepFailure as f:
     raise api.step.StepFailure("You can catch step failures.")
 
+  # Some steps are needed from an infrastructure point of view. If these
+  # steps fail, the build stops, but doesn't get turned red because it's
+  # not the developers' fault.
+  try:
+    api.step('cleanup', ['echo', 'cleaning', 'up', 'build'], infra_step=True)
+  except api.step.InfraFailure as f:
+    assert f.result.presentation.status == api.step.EXCEPTION
+
   # You can also raise a warning, which will act like a step failure, but
   # will turn the build yellow, and stop the build.
   raise api.step.StepWarning("Warning, robots approaching!")
@@ -80,4 +89,10 @@ def GenTests(api):
   yield (
       api.test('defer_results') +
       api.step_data('testa', retcode=1)
+    )
+
+  yield (
+      api.test('infra_failure') +
+      api.properties(raise_infra_failure=True) +
+      api.step_data('cleanup', retcode=1)
     )

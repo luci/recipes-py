@@ -28,6 +28,11 @@ class StepApi(recipe_api.RecipeApi):
     return recipe_api.StepWarning #pragma: no cover
 
   @property
+  def InfraFailure(self):
+    """ See recipe_api.py for docs. """
+    return recipe_api.InfraFailure
+
+  @property
   def active_result(self):
     """The currently active (open) result from the last step that was run.
 
@@ -72,7 +77,7 @@ class StepApi(recipe_api.RecipeApi):
     self._auto_resolve_conflicts = val
 
   @recipe_api.composite_step
-  def __call__(self, name, cmd, ok_ret=None, **kwargs):
+  def __call__(self, name, cmd, ok_ret=None, infra_step=False, **kwargs):
     """Returns a step dictionary which is compatible with annotator.py.
 
     Args:
@@ -82,6 +87,8 @@ class StepApi(recipe_api.RecipeApi):
         codes will cause an exception to be thrown. If you pass in the value
         |any| or |all|, the engine will allow any return code to be returned.
         Defaults to {0}
+      infra_step: Whether or not this is an infrastructure step. Infrastructure
+        steps will place the step in an EXCEPTION state and raise InfraFailure.
       **kwargs: Additional entries to add to the annotator.py step dictionary.
 
     Returns:
@@ -102,6 +109,7 @@ class StepApi(recipe_api.RecipeApi):
         name = "%s (%d)" % (name, step_count)
     kwargs.update({'name': name, 'cmd': cmd})
     kwargs['ok_ret'] = ok_ret
+    kwargs['infra_step'] = bool(infra_step)
 
     schema = self.make_config()
     schema.set_val(kwargs)

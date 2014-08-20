@@ -488,6 +488,7 @@ class SequentialRecipeEngine(RecipeEngine):
 
   def run_step(self, step):
     ok_ret = step.pop('ok_ret')
+    infra_step = step.pop('infra_step')
 
     test_data_fn = step.pop('step_test_data', recipe_test_api.StepTestData)
     step_test = self._test_data.pop_step_test_data(step['name'],
@@ -527,13 +528,20 @@ class SequentialRecipeEngine(RecipeEngine):
       step_result.presentation.status = 'SUCCESS'
       return step_result
     else:
-      step_result.presentation.status = 'FAILURE'
+      if not infra_step:
+        state = 'FAILURE'
+        exc = recipe_api.StepFailure
+      else:
+        state = 'EXCEPTION'
+        exc = recipe_api.InfraFailure
+
+      step_result.presentation.status = state
       if step_test.enabled:
         # To avoid cluttering the expectations, don't emit this in testmode.
         self._previous_step_annotation.emit(
             'step returned non-zero exit code: %d' % step_result.retcode)
 
-      raise recipe_api.StepFailure(step['name'], step_result)
+      raise exc(step['name'], step_result)
 
 
   def run(self, steps_function, api):

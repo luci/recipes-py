@@ -54,6 +54,18 @@ class StepWarning(StepFailure):
   def __str__(self):
     return "Step Warning in %s" % self.name
 
+class InfraFailure(StepFailure):
+  """
+  A subclass of StepFailure, which fails the build due to problems with the
+  infrastructure.
+  """
+  def reason_message(self):
+    return "Infra Failure: Step({!r}) returned {}".format(
+          self.name, self.result.retcode)
+
+  def __str__(self):
+    return "Infra Failure in %s" % self.name
+
 
 class AggregatedStepFailure(StepFailure):
   def __init__(self, result):

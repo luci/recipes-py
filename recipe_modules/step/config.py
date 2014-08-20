@@ -41,7 +41,8 @@ def BaseConfig(**_kwargs):
 
     step_test_data = Single(collections.Callable, required=False),
 
-    ok_ret = Set(int)
+    ok_ret = Set(int),
+    infra_step = Single(bool, required=False)
   )
 
 
