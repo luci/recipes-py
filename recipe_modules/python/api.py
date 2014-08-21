@@ -32,3 +32,14 @@ class PythonApi(recipe_api.RecipeApi):
         result.presentation.logs['python.inline'] = program.splitlines()
 
     return result
+
+  def failing_step(self, name, text):
+    """Return a failng step (correctly recognized in expectations)."""
+    try:
+      self.inline(name,
+                  'import sys; sys.exit(1)',
+                  add_python_log=False,
+                  step_test_data=lambda: self.m.raw_io.test_api.output(
+                      text, retcode=1))
+    finally:
+      self.m.step.active_result.presentation.step_text = text
