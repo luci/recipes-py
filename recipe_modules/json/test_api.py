@@ -97,5 +97,5 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
 
     t = GTestResults(canned_jsonish)
     ret = self.gtest_results(t)
-    ret.retcode = 0 if passing else 1
+    ret.retcode = None if passing else 1
     return ret
