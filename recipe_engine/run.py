@@ -355,17 +355,22 @@ def run_steps(stream, build_properties, factory_properties,
     assert 'recipe' in factory_properties
     recipe = factory_properties['recipe']
 
-    run_recipe_line = (
-        ['./scripts/tools/run_recipe.py', recipe] +
-        ['%s=%r' % (prop, value) for prop, value in properties.iteritems()
-         if prop not in ('recipe', 'use_mirror')]
-    )
-    lines = [
+    properties_to_print = properties.copy()
+    if 'use_mirror' in properties:
+      del properties_to_print['use_mirror']
+
+    run_recipe_help_lines = [
         'To repro this locally, run the following line from a build checkout:',
         '',
-        subprocess.list2cmdline(run_recipe_line)
+        './scripts/tools/run_recipe.py %s --properties_file - <<EOF' % recipe,
+        repr(properties_to_print),
+        'EOF',
+        '',
+        'To run on Windows, you can put the JSON in a file and redirect the',
+        'contents of the file into run_recipe.py, with the < operator.',
     ]
-    for line in lines:
+
+    for line in run_recipe_help_lines:
       s.step_log_line('run_recipe', line)
     s.step_log_end('run_recipe')
 
