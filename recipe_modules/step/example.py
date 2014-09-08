@@ -56,6 +56,10 @@ def GenSteps(api):
   except api.step.InfraFailure as f:
     assert f.result.presentation.status == api.step.EXCEPTION
 
+  # Run a step through a made-up wrapper program.
+  api.step('application', ['echo', 'main', 'application'],
+           wrapper=['python', 'test-wrapper.py', '-v', '--'])
+
   # You can also raise a warning, which will act like a step failure, but
   # will turn the build yellow, and stop the build.
   raise api.step.StepWarning("Warning, robots approaching!")

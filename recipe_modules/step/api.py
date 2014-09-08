@@ -77,7 +77,8 @@ class StepApi(recipe_api.RecipeApi):
     self._auto_resolve_conflicts = val
 
   @recipe_api.composite_step
-  def __call__(self, name, cmd, ok_ret=None, infra_step=False, **kwargs):
+  def __call__(self, name, cmd, ok_ret=None, infra_step=False, wrapper=(),
+               **kwargs):
     """Returns a step dictionary which is compatible with annotator.py.
 
     Args:
@@ -89,6 +90,8 @@ class StepApi(recipe_api.RecipeApi):
         Defaults to {0}
       infra_step: Whether or not this is an infrastructure step. Infrastructure
         steps will place the step in an EXCEPTION state and raise InfraFailure.
+      wrapper: If supplied, a command to prepend to the executed step as a
+          command wrapper.
       **kwargs: Additional entries to add to the annotator.py step dictionary.
 
     Returns:
@@ -101,13 +104,14 @@ class StepApi(recipe_api.RecipeApi):
     if ok_ret in (any, all):
       ok_ret = set(range(-256, 256))
 
-    cmd = list(cmd)  # Create a copy in order to not alter the input argument.
+    command = list(wrapper)
+    command += cmd
     if self.auto_resolve_conflicts:
       step_count = self._step_names.setdefault(name, 0) + 1
       self._step_names[name] = step_count
       if step_count > 1:
         name = "%s (%d)" % (name, step_count)
-    kwargs.update({'name': name, 'cmd': cmd})
+    kwargs.update({'name': name, 'cmd': command})
     kwargs['ok_ret'] = ok_ret
     kwargs['infra_step'] = bool(infra_step)
 

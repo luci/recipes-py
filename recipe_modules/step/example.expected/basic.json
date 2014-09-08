@@ -73,6 +73,18 @@
     "name": "cleanup"
   },
   {
+    "cmd": [
+      "python",
+      "test-wrapper.py",
+      "-v",
+      "--",
+      "echo",
+      "main",
+      "application"
+    ],
+    "name": "application"
+  },
+  {
     "name": "$final_result",
     "reason": "Warning, robots approaching!",
     "status_code": 1
