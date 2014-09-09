@@ -362,7 +362,7 @@ def run_steps(stream, build_properties, factory_properties,
     run_recipe_help_lines = [
         'To repro this locally, run the following line from a build checkout:',
         '',
-        './scripts/tools/run_recipe.py %s --properties_file - <<EOF' % recipe,
+        './scripts/tools/run_recipe.py %s --properties-file - <<EOF' % recipe,
         repr(properties_to_print),
         'EOF',
         '',
