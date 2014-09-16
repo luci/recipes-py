@@ -186,7 +186,7 @@ class StepPresentation(object):
     }
     status_mapping.get(self.status, lambda: None)()
     for key, value in self._properties.iteritems():
-      annotator_step.set_build_property(key, json.dumps(value))
+      annotator_step.set_build_property(key, json.dumps(value, sort_keys=True))
 
 
 class StepData(object):
