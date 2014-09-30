@@ -334,7 +334,7 @@ class RecipeTestApi(object):
                            of that kind of Placeholder in the step.
         stdout, stderr   - PlaceholderTestData objects for stdout and stderr.
 
-  TestData objects are concatenatable, so it's convienent to phrase test cases
+  TestData objects are concatenatable, so it's convenient to phrase test cases
   as a series of added TestData objects. For example:
     DEPS = ['properties', 'platform', 'json']
     def GenTests(api):
