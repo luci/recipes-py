@@ -57,13 +57,15 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
   def gtest_results(self, test_results, retcode=None):
     return self.output(test_results.as_jsonish(), retcode)
 
-  def canned_gtest_output(self, passing, minimal=False, passes=9001):
+  def canned_gtest_output(self, passing, minimal=False, passes=9001,
+                          extra_json=None):
     """Produces a 'json test results' compatible object with some canned tests.
     Args:
       passing - Determines if this test result is passing or not.
       passes - The number of (theoretically) passing tests.
       minimal - If True, the canned output will omit one test to emulate the
                 effect of running fewer than the total number of tests.
+      extra_json - dict with additional keys to add to gtest JSON.
     """
     cur_iteration_data = {
       'Test.One': [
@@ -94,6 +96,7 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
     canned_jsonish = {
       'per_iteration_data': [cur_iteration_data]
     }
+    canned_jsonish.update(extra_json or {})
 
     t = GTestResults(canned_jsonish)
     ret = self.gtest_results(t)
