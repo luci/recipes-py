@@ -55,32 +55,39 @@ class PlatformApi(recipe_api.RecipeApi):
         self._bits = 32
 
   @property
+  @recipe_api.non_step
   def is_win(self):
     return self.name == 'win'
 
   @property
+  @recipe_api.non_step
   def is_mac(self):
     return self.name == 'mac'
 
   @property
+  @recipe_api.non_step
   def is_linux(self):
     return self.name == 'linux'
 
   @property
+  @recipe_api.non_step
   def name(self):
     return self._name
 
   @property
+  @recipe_api.non_step
   def bits(self):
     # The returned bitness corresponds to the userland. If anyone ever wants
     # to query for bitness of the kernel, another accessor should be added.
     return self._bits
 
   @property
+  @recipe_api.non_step
   def arch(self):
     return self._arch
 
   @staticmethod
+  @recipe_api.non_step
   def normalize_platform_name(platform):
     """One of python's sys.platform values -> 'win', 'linux' or 'mac'."""
     return norm_plat(platform)  # pragma: no cover

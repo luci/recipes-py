@@ -10,7 +10,7 @@ import sys
 
 from .recipe_util import (ROOT_PATH, RECIPE_DIRS, MODULE_DIRS,
                           cached_unary, scan_directory)
-from .recipe_api import RecipeApi
+from .recipe_api import RecipeApi, RecipeApiPlain
 from .recipe_config import ConfigContext
 from .recipe_config_types import Path
 from .recipe_test_api import RecipeTestApi, DisabledTestData
@@ -87,7 +87,7 @@ def load_recipe_modules(mod_dirs):
 
     submod.API = getattr(submod, 'API', None)
     for v in submod.api.__dict__.itervalues():
-      if inspect.isclass(v) and issubclass(v, RecipeApi):
+      if inspect.isclass(v) and issubclass(v, RecipeApiPlain):
         assert not submod.API, (
           'More than one Api subclass: %s' % submod.api)
         submod.API = v

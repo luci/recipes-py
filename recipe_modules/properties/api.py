@@ -32,7 +32,10 @@ def freeze(obj):
     raise TypeError('Unsupported value: %s' % (obj,))
 
 
-class PropertiesApi(recipe_api.RecipeApi, collections.Mapping):
+# Use RecipeApiPlain because collections.Mapping has its own metaclass.
+# Additionally, nothing in this class is a composite_step (nothing in this class
+# is any sort of step :).
+class PropertiesApi(recipe_api.RecipeApiPlain, collections.Mapping):
   """
   Provide an immutable mapping view into the 'properties' for the current run.
 

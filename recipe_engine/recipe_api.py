@@ -3,6 +3,8 @@
 # found in the LICENSE file.
 
 import contextlib
+import types
+
 from functools import wraps
 
 from .recipe_test_api import DisabledTestData, ModuleTestData
@@ -83,8 +85,13 @@ class AggregatedStepFailure(StepFailure):
 
 
 class AggregatedResult(object):
-  """
-  Holds the result of an aggregated run of steps.
+  """Holds the result of an aggregated run of steps.
+
+  Currently this is only used internally by defer_results, but it may be exposed
+  to the consumer of defer_results at some point in the future. For now it's
+  expected to be easier for defer_results consumers to do their own result
+  aggregation, as they may need to pick and chose (or label) which results they
+  really care about.
   """
   def __init__(self):
     self.successes = []
@@ -137,34 +144,63 @@ class DeferredResult(object):
 
 _AGGREGATOR = None
 
+
+def non_step(func):
+  """A decorator which prevents a method from automatically being wrapped as
+  a composite_step by RecipeApiMeta.
+
+  This is needed for utility methods which don't run any steps, but which are
+  invoked within the context of a defer_results().
+
+  @see composite_step, defer_results, RecipeApiMeta
+  """
+  func._non_step = True
+  return func
+
+
 def composite_step(func):
+  """A decorator which makes this step act as a single step, for the purposes of
+  the defer_results function.
+
+  This means that this function will not quit during the middle of its execution
+  because of a StepFailure, if there is an aggregator active.
+
+  There is NO penalty to adding this decorator to a function. Please do it.
+
+  RecipeApiMeta (the metaclass for RecipeApi) automatically applies this
+  decorator to all methods of the Api (unless func was already wrapped with
+  non_step).
   """
-  A decorator which makes this step act as a single step, for the
-  purposes of the aggregate_failures function. This means that this
-  function will no quit during the middle of its execution because
-  of a StepFailure, if there is an aggregator active.
-  """
+  if getattr(func, "_non_step", False):
+    return func
   @wraps(func)
   def _inner(*a, **kw):
     global _AGGREGATOR
-    if not _AGGREGATOR:
+    if _AGGREGATOR is None:
       return func(*a, **kw)
-    else:
-      agg = _AGGREGATOR
-      _AGGREGATOR = None
-      try:
-        ret = func(*a, **kw)
-        agg.add_success(ret)
-        return DeferredResult(ret, None)
-      except StepFailure as ex:
-        agg.add_failure(ex)
-        return DeferredResult(None, ex)
-      finally:
-        _AGGREGATOR = agg
+
+    # We pull the current aggregator off here and restore it in the finally
+    # block at the end.  This allows us to use the call stack to maintain the
+    # state of the global _AGGREGATOR without a separate global stack.
+    agg = _AGGREGATOR
+
+    # Setting the _AGGREGATOR to None allows the contents of func to be
+    # written in the same style (e.g. with exceptions) no matter how func is
+    # being called.
+    _AGGREGATOR = None
+    try:
+      ret = func(*a, **kw)
+      agg.add_success(ret)
+      return DeferredResult(ret, None)
+    except StepFailure as ex:
+      agg.add_failure(ex)
+      return DeferredResult(None, ex)
+    finally:
+      _AGGREGATOR = agg
   return _inner
 
 @contextlib.contextmanager
-def defer_results(should_raise=True):
+def defer_results():
   """
   Use this to defer step results in your code. All steps which would previously
     return a result or throw an exception will instead return a DeferredResult.
@@ -172,7 +208,6 @@ def defer_results(should_raise=True):
   Any exceptions which were thrown during execution will be thrown when either:
     a. You call get_result() on the step's result.
     b. You exit the suite inside of the with statement
-      (if |should_raise| is True).
 
   Example:
     with defer_results():
@@ -187,29 +222,50 @@ def defer_results(should_raise=True):
   If you don't try to use the result (don't call get_result()), an aggregate
     failure will still be raised once you exit the suite inside
     the with statement.
-
-  |should_raise| determines whether or not this will raise a
-    step failure after the suite executes.
   """
   global _AGGREGATOR
-  orig = _AGGREGATOR
+
+  # It doesn't make sense to nest defer_results context without traversing
+  # a composite_step function first. If you really need this, then you could
+  # also create an intermediate composite_step to contain the second
+  # defer_results clause
+  assert _AGGREGATOR is None, (
+    "may not call defer_results while in an active defer_results context"
+  )
+
   try:
     _AGGREGATOR = AggregatedResult()
     yield
     if _AGGREGATOR.failures:
-      failure = AggregatedStepFailure(_AGGREGATOR)
-      if orig:
-        orig.add_failure(failure)
-      elif should_raise:
-        raise failure
-      # else swallow the failure silently
-    else:
-      if orig:
-        orig.add_success(_AGGREGATOR)
+      raise AggregatedStepFailure(_AGGREGATOR)
   finally:
-    _AGGREGATOR = orig
+    # Since we assert that _AGGREGATOR is None, we're assigning it back to
+    # None here, thus completing the loop. If we ever remove the assert above,
+    # we'll need to change this as well.
+    _AGGREGATOR = None
 
-class RecipeApi(ModuleInjectionSite):
+
+class RecipeApiMeta(type):
+  def __new__(mcs, name, bases, attrs):
+    """Automatically wraps all methods of subclasses of RecipeApi with
+    @composite_step. This allows defer_results to work as intended at all
+    times.
+    """
+    wrap = lambda f: composite_step(f) if f else f
+    for attr in attrs:
+      val = attrs[attr]
+      if isinstance(val, types.FunctionType):
+        attrs[attr] = wrap(val)
+      elif isinstance(val, property):
+        attrs[attr] = property(
+          wrap(val.fget),
+          wrap(val.fset),
+          wrap(val.fdel),
+          val.__doc__)
+    return super(RecipeApiMeta, mcs).__new__(mcs, name, bases, attrs)
+
+
+class RecipeApiPlain(ModuleInjectionSite):
   """
   Framework class for handling recipe_modules.
 
@@ -218,12 +274,17 @@ class RecipeApi(ModuleInjectionSite):
   injection (in self.m).
 
   Dependency injection takes place in load_recipe_modules() in recipe_loader.py.
+
+  USE RecipeApi INSTEAD, UNLESS your RecipeApi subclass derives from something
+  which defines its own __metaclass__. Deriving from RecipeApi instead of
+  RecipeApiPlain allows your RecipeApi subclass to automatically work with
+  defer_results without needing to decorate your methods with @composite_step.
   """
 
   def __init__(self, module=None, engine=None,
                test_data=DisabledTestData(), **_kwargs):
     """Note: Injected dependencies are NOT available in __init__()."""
-    super(RecipeApi, self).__init__()
+    super(RecipeApiPlain, self).__init__()
 
     # |engine| is an instance of annotated_run.RecipeEngine. Modules should not
     # generally use it unless they're low-level framework level modules.
@@ -326,3 +387,7 @@ class RecipeApi(ModuleInjectionSite):
   @property
   def name(self):
     return self._module.NAME
+
+
+class RecipeApi(RecipeApiPlain):
+  __metaclass__ = RecipeApiMeta
