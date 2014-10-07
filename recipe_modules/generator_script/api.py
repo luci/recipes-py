@@ -42,6 +42,7 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
     assert isinstance(new_steps, list)
     env = kwargs.get('env')
 
+    failed_steps = []
     for step in new_steps:
       if env:
         new_env = env.copy()
@@ -56,16 +57,27 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
       #TODO(martiniss) change this to use a regular step call
       step['ok_ret'] = set(step.pop('ok_ret', {0}))
       step['infra_step'] = bool(step.pop('infra_step', False))
-      step_result = self.m.step.run_from_dict(step)
 
-      if outputs_json:
-        p = step_result.presentation
-        j = step_result.json.output
+      if step.pop('always_run', False) or not failed_steps:
+        try:
+          self.m.step.run_from_dict(step)
+        except self.m.step.StepFailure:
+          failed_steps.append(step['name'])
+        finally:
+          step_result = self.m.step.active_result
+          if outputs_json:
+            p = step_result.presentation
+            j = step_result.json.output
 
-        if j:
-          p.logs.update(j.get('logs', {}))
-          p.links.update(j.get('links', {}))
-          p.perf_logs.update(j.get('perf_logs', {}))
-          p.step_summary_text = j.get('step_summary_text', '')
-          p.step_text = j.get('step_text', '')
-          p.properties.update(j.get('properties', {}))
+            if j:
+              p.logs.update(j.get('logs', {}))
+              p.links.update(j.get('links', {}))
+              p.perf_logs.update(j.get('perf_logs', {}))
+              p.step_summary_text = j.get('step_summary_text', '')
+              p.step_text = j.get('step_text', '')
+              p.properties.update(j.get('properties', {}))
+
+    if failed_steps:
+      raise self.m.step.StepFailure(
+        "the following steps in %s failed: %s" %
+        (step_name, failed_steps))

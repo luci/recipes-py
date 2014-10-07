@@ -199,6 +199,7 @@ def composite_step(func):
       _AGGREGATOR = agg
   return _inner
 
+
 @contextlib.contextmanager
 def defer_results():
   """

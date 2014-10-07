@@ -5,7 +5,9 @@
 from slave import recipe_api
 from slave import recipe_util
 
-class StepApi(recipe_api.RecipeApi):
+# Inherit from RecipeApiPlain because the only thing which is a step is
+# run_from_dict()
+class StepApi(recipe_api.RecipeApiPlain):
   def __init__(self, **kwargs):
     super(StepApi, self).__init__(**kwargs)
     self._auto_resolve_conflicts = False
@@ -76,7 +78,6 @@ class StepApi(recipe_api.RecipeApi):
   def auto_resolve_conflicts(self, val):
     self._auto_resolve_conflicts = val
 
-  @recipe_api.composite_step
   def __call__(self, name, cmd, ok_ret=None, infra_step=False, wrapper=(),
                **kwargs):
     """Returns a step dictionary which is compatible with annotator.py.
@@ -120,5 +121,6 @@ class StepApi(recipe_api.RecipeApi):
     return self.run_from_dict(self._engine.create_step(schema))
 
   # TODO(martiniss) delete, and make generator_script use **kwargs on step()
+  @recipe_api.composite_step
   def run_from_dict(self, dct):
     return self._engine.run_step(dct)
