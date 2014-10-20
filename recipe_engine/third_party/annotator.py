@@ -181,6 +181,8 @@ class StepCommands(AnnotationPrinter):
       raise ValueError('Log %s has been emitted multiple times.' % logname)
     self.emitted_logs.add(logname)
 
+    logname = logname.replace('/', '&#x2f;')
+
     for line in lines:
       self.step_log_line(logname, line)
     if perf:
