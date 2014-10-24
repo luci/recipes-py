@@ -1,26 +1,28 @@
-def convert_trie_to_flat_paths(trie, prefix=None):
+def convert_trie_to_flat_paths(trie, prefix, sep):
   # Cloned from webkitpy.layout_tests.layout_package.json_results_generator
   # so that this code can stand alone.
   result = {}
   for name, data in trie.iteritems():
     if prefix:
-      name = prefix + "/" + name
+      name = prefix + sep + name
 
     if len(data) and not "actual" in data and not "expected" in data:
-      result.update(convert_trie_to_flat_paths(data, name))
+      result.update(convert_trie_to_flat_paths(data, name, sep))
     else:
       result[name] = data
 
   return result
 
 
-# TODO(phajdan.jr): Rename to LayoutTestResults.
 class TestResults(object):
   def __init__(self, jsonish=None):
     self.raw = jsonish or {}
     self.valid = (jsonish is not None)
 
-    self.tests = convert_trie_to_flat_paths(self.raw.get('tests', {}))
+    tests = self.raw.get('tests', {})
+    sep = self.raw.get('path_delimiter', '/')
+    self.tests = convert_trie_to_flat_paths(tests, prefix=None, sep=sep)
+
     self.passes = {}
     self.unexpected_passes = {}
     self.failures = {}

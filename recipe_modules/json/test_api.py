@@ -10,14 +10,13 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
   def output(data, retcode=None):
     return json.dumps(data), retcode
 
-  # TODO(phajdan.jr): Rename to layout_test_results.
   @recipe_test_api.placeholder_step_data
   def test_results(self, test_results, retcode=None):
     return self.output(test_results.as_jsonish(), retcode)
 
-  # TODO(phajdan.jr): Rename to canned_layout_test_output.
   def canned_test_output(self, passing, minimal=False, passes=9001,
                          num_additional_failures=0,
+                         path_separator=None,
                          retcode=None):
     """Produces a 'json test results' compatible object with some canned tests.
     Args:
@@ -30,22 +29,25 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
     """
     if_failing = lambda fail_val: None if passing else fail_val
     t = TestResults()
+    sep = path_separator or '/'
+    if path_separator:
+      t.raw['path_separator'] = path_separator
     t.raw['num_passes'] = passes
     t.raw['num_regressions'] = 0
-    t.add_result('flake/totally-flakey.html', 'PASS',
+    t.add_result('flake%stotally-flakey.html' % sep, 'PASS',
                  if_failing('TIMEOUT PASS'))
-    t.add_result('flake/timeout-then-crash.html', 'CRASH',
+    t.add_result('flake%stimeout-then-crash.html' % sep, 'CRASH',
                  if_failing('TIMEOUT CRASH'))
-    t.add_result('flake/slow.html', 'SLOW',
+    t.add_result('flake%sslow.html' % sep, 'SLOW',
                  if_failing('TIMEOUT SLOW'))
-    t.add_result('tricky/totally-maybe-not-awesome.html', 'PASS',
+    t.add_result('tricky%stotally-maybe-not-awesome.html' % sep, 'PASS',
                  if_failing('FAIL'))
-    t.add_result('bad/totally-bad-probably.html', 'PASS',
+    t.add_result('bad%stotally-bad-probably.html' % sep, 'PASS',
                  if_failing('FAIL'))
     if not minimal:
-      t.add_result('good/totally-awesome.html', 'PASS')
+      t.add_result('good%stotally-awesome.html' % sep, 'PASS')
     for i in xrange(num_additional_failures):
-        t.add_result('bad/failing%d.html' %i, 'PASS', 'FAIL')
+        t.add_result('bad%sfailing%d.html' % (sep, i), 'PASS', 'FAIL')
     ret = self.test_results(t)
     if retcode is not None:
         ret.retcode = retcode

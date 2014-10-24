@@ -82,7 +82,6 @@ class JsonOutputPlaceholder(recipe_util.Placeholder):
     return ret
 
 
-# TODO(phajdan.jr): Rename to LayoutTestResultsOutputPlaceholder.
 class TestResultsOutputPlaceholder(JsonOutputPlaceholder):
   def result(self, presentation, test):
     ret = super(TestResultsOutputPlaceholder, self).result(presentation, test)
@@ -118,7 +117,6 @@ class JsonApi(recipe_api.RecipeApi):
     """A placeholder which will expand to '/tmp/file'."""
     return JsonOutputPlaceholder(self, add_json_log)
 
-  # TODO(phajdan.jr): Rename to layout_test_results.
   @recipe_util.returns_placeholder
   def test_results(self, add_json_log=True):
     """A placeholder which will expand to '/tmp/file'.
