@@ -34,7 +34,8 @@ class InputDataPlaceholder(recipe_util.Placeholder):
 
   def result(self, presentation, test):
     assert self._backing_file
-    if not test.enabled:  # pragma: no cover
+    exists = os.path.exists(self._backing_file)
+    if not test.enabled and exists:  # pragma: no cover
       os.unlink(self._backing_file)
     self._backing_file = None
 

@@ -30,8 +30,7 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
     if_failing = lambda fail_val: None if passing else fail_val
     t = TestResults()
     sep = path_separator or '/'
-    if path_separator:
-      t.raw['path_separator'] = path_separator
+    t.raw['path_separator'] = sep
     t.raw['num_passes'] = passes
     t.raw['num_regressions'] = 0
     t.add_result('flake%stotally-flakey.html' % sep, 'PASS',
