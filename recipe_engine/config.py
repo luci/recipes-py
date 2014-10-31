@@ -256,6 +256,8 @@ class ConfigContext(object):
         assert ret is None, 'Got return value (%s) from "%s"?' % (ret, name)
 
         return config
+      inner.WRAPPED = f
+      inner.INCLUDES = includes or []
 
       def default_config_vars():
         ret = {}
