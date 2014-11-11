@@ -52,6 +52,10 @@ def GenSteps(api):
         lambda: api.raw_io.test_api.stream_output('leaking\n')))
   assert step_result.stdout == 'leaking\n'
 
+  api.step('list temp dir', ['ls', api.raw_io.output_dir()])
+  api.step('leak dir', ['ls', api.raw_io.output_dir(
+      leak_to=api.path['slave_build'].join('out'))])
+
 
 def GenTests(api):
   yield (api.test('basic') +

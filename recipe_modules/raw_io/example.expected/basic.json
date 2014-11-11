@@ -41,5 +41,19 @@
     ],
     "name": "leak stdout",
     "stdout": "[SLAVE_BUILD]/out.txt"
+  },
+  {
+    "cmd": [
+      "ls",
+      "/path/to/tmp/"
+    ],
+    "name": "list temp dir"
+  },
+  {
+    "cmd": [
+      "ls",
+      "[SLAVE_BUILD]/out"
+    ],
+    "name": "leak dir"
   }
 ]
