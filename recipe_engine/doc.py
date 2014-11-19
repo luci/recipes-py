@@ -85,7 +85,7 @@ def main():
   RECIPE_MODULES = recipe_loader.load_recipe_modules(recipe_util.MODULE_DIRS())
 
   inst = recipe_loader.create_recipe_api(
-      [ mod_name for mod_name, mod in member_iter(RECIPE_MODULES) ],
+      [mod_name for mod_name, mod in member_iter(RECIPE_MODULES)],
       annotated_run.SequentialRecipeEngine(None, {}, None))
 
   for mod_name, mod in member_iter(RECIPE_MODULES):

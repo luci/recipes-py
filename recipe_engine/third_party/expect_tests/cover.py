@@ -26,7 +26,7 @@ class _Cover(object):
     if self.enabled:
       if self.c is None:
         self.c = coverage.coverage(**self.kwargs)
-        self.c._warn_no_data = False
+        self.c._warn_no_data = False # pylint: disable=protected-access
       self.c.start()
 
   def __exit__(self, *_):

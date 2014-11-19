@@ -229,7 +229,7 @@ class ConfigContext(object):
         if final:
           inclusions.add(name)
 
-        for include in (includes or []):
+        for include in includes or []:
           if include in inclusions:
             continue
           try:
@@ -240,8 +240,8 @@ class ConfigContext(object):
 
         # deps are a list of group names. All groups must be represented
         # in config already.
-        for dep_group in (deps or []):
-          if not (inclusions & self.MUTEX_GROUPS[dep_group]):
+        for dep_group in deps or []:
+          if not inclusions & self.MUTEX_GROUPS[dep_group]:
             raise BadConf('dep group "%s" is unfulfilled for "%s"' %
                           (dep_group, name))
 
@@ -261,7 +261,7 @@ class ConfigContext(object):
 
       def default_config_vars():
         ret = {}
-        for include in (includes or []):
+        for include in includes or []:
           item = self.CONFIG_ITEMS[include]
           ret.update(item.DEFAULT_CONFIG_VARS())
         if config_vars:
@@ -441,7 +441,7 @@ class ConfigGroup(ConfigBase):
   def as_jsonish(self, include_hidden=False):
     return dict(
       (n, v.as_jsonish(include_hidden)) for n, v in self._type_map.iteritems()
-        if (include_hidden or not v._hidden))  # pylint: disable=W0212
+        if include_hidden or not v._hidden)  # pylint: disable=W0212
 
   def reset(self):
     for v in self._type_map.values():
@@ -522,7 +522,7 @@ class ConfigList(ConfigBase, collections.MutableSequence):
 
   def as_jsonish(self, include_hidden=False):
     return [i.as_jsonish(include_hidden) for i in self.data
-            if (include_hidden or not i._hidden)]  # pylint: disable=W0212
+            if include_hidden or not i._hidden]  # pylint: disable=W0212
 
   def _is_default(self):
     # pylint: disable=W0212

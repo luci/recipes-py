@@ -154,7 +154,7 @@ def non_step(func):
 
   @see composite_step, defer_results, RecipeApiMeta
   """
-  func._non_step = True
+  func._non_step = True # pylint: disable=protected-access
   return func
 
 

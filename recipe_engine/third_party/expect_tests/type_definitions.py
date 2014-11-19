@@ -152,7 +152,7 @@ _Test = namedtuple(
     'Test', 'name func_call expect_dir expect_base ext covers breakpoints')
 
 class Test(_Test):
-  TEST_COVERS_MATCH = re.compile('.*/test/([^/]*)_test\.py$')
+  TEST_COVERS_MATCH = re.compile(r'.*/test/([^/]*)_test\.py$')
 
   def __new__(cls, name, func_call, expect_dir=None, expect_base=None,
               ext='json', covers=None, breakpoints=None, break_funcs=()):
@@ -181,7 +181,7 @@ class Test(_Test):
     """
     breakpoints = breakpoints or []
     if not breakpoints or break_funcs:
-      for f in (break_funcs or (func_call.func,)):
+      for f in break_funcs or (func_call.func,):
         if hasattr(f, 'im_func'):
           f = f.im_func
         breakpoints.append((f.func_code.co_filename,

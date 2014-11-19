@@ -52,7 +52,7 @@ class RecipeConfigType(object):
     raise NotImplementedError
 
   def __str__(self):
-    return self.tostring_fn(self)
+    return self.tostring_fn(self) # pylint: disable=not-callable
 
 
 class Path(RecipeConfigType):
@@ -66,7 +66,7 @@ class Path(RecipeConfigType):
   # Restrict basenames to '[ALL_CAPS]'. This will help catch
   # errors if someone attempts to provide an actual string path '/some/example'
   # as the 'base'.
-  BASE_RE = re.compile('\[([A-Z][A-Z_]*)\]')
+  BASE_RE = re.compile(r'\[([A-Z][A-Z_]*)\]')
 
   def __init__(self, base, *pieces, **kwargs):
     """Creates a Path

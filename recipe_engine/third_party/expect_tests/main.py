@@ -45,7 +45,7 @@ class _test_completer(object):
         test_glob=[prefix],
         jobs=1,
     )
-    ctx = CoverageContext('', [], [], False, None, None, False)
+    ctx = CoverageContext('', [], False, False)
     result_loop(self._gen, ctx.create_subprocess_context(), options)
     return handle_list.ListHandler.COMPLETION_LIST
 
