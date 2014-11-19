@@ -106,7 +106,7 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
 
   def canned_telemetry_gpu_output(self, passing):
     """Produces a 'json test results' compatible object for telemetry tests."""
-    return {
+    jsonish_results = {
       'per_page_values': [{'type': 'success' if passing else 'failure',
                            'page_id': 0},
                           {'type': 'success',
@@ -114,3 +114,6 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
       'pages': {'0': {'name': 'Test.Test1'},
                 '1': {'name': 'Test.Test2'}},
     }
+
+    files_dict = {'results.json': json.dumps(jsonish_results)}
+    return self.m.raw_io.output_dir(files_dict)
