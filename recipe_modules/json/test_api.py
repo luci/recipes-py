@@ -103,3 +103,14 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
     ret = self.gtest_results(t)
     ret.retcode = None if passing else 1
     return ret
+
+  def canned_telemetry_gpu_output(self, passing):
+    """Produces a 'json test results' compatible object for telemetry tests."""
+    return {
+      'per_page_values': [{'type': 'success' if passing else 'failure',
+                           'page_id': 0},
+                          {'type': 'success',
+                           'page_id': 1}],
+      'pages': {'0': {'name': 'Test.Test1'},
+                '1': {'name': 'Test.Test2'}},
+    }
