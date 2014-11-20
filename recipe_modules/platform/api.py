@@ -53,6 +53,12 @@ class PlatformApi(recipe_api.RecipeApi):
           self._bits == 64 and
           platform.architecture()[0] == '32bit'):
         self._bits = 32
+      # On Mac, the inverse of the above is true: the kernel is 32-bit but the
+      # CPU and userspace both are capable of running 64-bit programs.
+      elif (self._name == 'mac' and
+            self._bits == 32 and
+            platform.architecture()[0] == '64bit'):
+        self._bits = 64
 
   @property
   @recipe_api.non_step
