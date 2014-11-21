@@ -104,7 +104,7 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
     ret.retcode = None if passing else 1
     return ret
 
-  def canned_telemetry_gpu_output(self, passing):
+  def canned_telemetry_gpu_output(self, passing, swarming=False):
     """Produces a 'json test results' compatible object for telemetry tests."""
     jsonish_results = {
       'per_page_values': [{'type': 'success' if passing else 'failure',
@@ -115,5 +115,6 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
                 '1': {'name': 'Test.Test2'}},
     }
 
-    files_dict = {'results.json': json.dumps(jsonish_results)}
+    results_path = '0/results.json' if swarming else 'results.json'
+    files_dict = {results_path: json.dumps(jsonish_results)}
     return self.m.raw_io.output_dir(files_dict)
