@@ -678,11 +678,6 @@ class Set(ConfigBase, collections.MutableSet):
     assert isinstance(value, self.inner_type)
     self.data.add(value)
 
-  def update(self, values):
-    for value in values:
-      if value not in self:
-        self.add(value)
-
   def discard(self, value):
     self.data.discard(value)
 
