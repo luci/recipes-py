@@ -64,7 +64,7 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
         requester='commit-bot@chromium.org',
         revision='HEAD',
         rietveld='https://codereview.chromium.org',
-        patch_project='chromium',
+        root='src',
     )
     ret.properties.update(kwargs)
     return ret

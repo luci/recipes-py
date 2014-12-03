@@ -331,12 +331,6 @@ def run_steps(stream, build_properties, factory_properties,
     build_properties['blamelist'] = build_properties['blamelist_real']
     del build_properties['blamelist_real']
 
-  # NOTE(iannucci): 'root' was a terribly bad idea and has been replaced by
-  # 'patch_project'. 'root' had Rietveld knowing about the implementation of
-  # the builders. 'patch_project' lets the builder (recipe) decide its own
-  # destiny.
-  build_properties.pop('root', None)
-
   properties = factory_properties.copy()
   properties.update(build_properties)
 
