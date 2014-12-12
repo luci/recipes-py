@@ -99,9 +99,13 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
     }
     canned_jsonish.update(extra_json or {})
 
-    t = GTestResults(canned_jsonish)
+    retcode = None if passing else 1
+    return self.raw_gtest_output(canned_jsonish, retcode)
+
+  def raw_gtest_output(self, jsonish, retcode):
+    t = GTestResults(jsonish)
     ret = self.gtest_results(t)
-    ret.retcode = None if passing else 1
+    ret.retcode = retcode
     return ret
 
   def canned_telemetry_gpu_output(self, passing, swarming=False):
