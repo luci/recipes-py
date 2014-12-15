@@ -13,7 +13,9 @@ executes those lines while annotating the output. The input is json:
 
 """
 
+import calendar
 import contextlib
+import datetime
 import json
 import optparse
 import os
@@ -429,6 +431,19 @@ def modify_lookup_path(path):
     os.environ['PATH'] = saved_path
 
 
+def normalizeChange(change):
+  assert isinstance(change, dict), 'Change is not a dict'
+  change = change.copy()
+
+  # Convert when_timestamp to UNIX timestamp.
+  when = change.get('when_timestamp')
+  if isinstance(when, datetime.datetime):
+    when = calendar.timegm(when.utctimetuple())
+    change['when_timestamp'] = when
+
+  return change
+
+
 def triggerBuilds(step, trigger_specs):
   assert trigger_specs is not None
   for trig in trigger_specs:
@@ -438,11 +453,16 @@ def triggerBuilds(step, trigger_specs):
     builder_name = props.pop('buildername', None)
     if not builder_name:
       raise ValueError('Trigger spec: buildername property is missing')
+
+    changes = props.pop('buildbot.changes', [])
+    assert isinstance(changes, list), 'buildbot.changes must be a list'
+    changes = map(normalizeChange, changes)
+
     step.step_trigger(json.dumps({
         'builderNames': [builder_name],
-        # Handle case where trig['properties'] is Falsy
+        'changes': changes,
         'properties': props,
-    }))
+    }, sort_keys=True))
 
 
 def run_step(stream, name, cmd,
