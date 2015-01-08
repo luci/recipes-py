@@ -430,6 +430,7 @@ class ConfigGroup(ConfigBase):
     if isinstance(val, ConfigBase):
       val = val.as_jsonish(include_hidden=True)
     assert isinstance(val, dict)
+    val = dict(val)  # because we pop later.
     for name, config_obj in self._type_map.iteritems():
       if name in val:
         try:
