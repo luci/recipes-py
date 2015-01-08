@@ -454,7 +454,7 @@ def triggerBuilds(step, trigger_specs):
     if not builder_name:
       raise ValueError('Trigger spec: buildername property is missing')
 
-    changes = props.pop('buildbot.changes', [])
+    changes = props.get('buildbot.changes', [])
     assert isinstance(changes, list), 'buildbot.changes must be a list'
     changes = map(normalizeChange, changes)
 
