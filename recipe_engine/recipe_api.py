@@ -132,8 +132,8 @@ class DeferredResult(object):
   def is_ok(self):
     return self._failure is None
 
-  def get_result(self, should_raise=True):
-    if not self.is_ok and should_raise:
+  def get_result(self):
+    if not self.is_ok:
       raise self.get_error()
     return self._result
 
