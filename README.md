@@ -287,8 +287,8 @@ the valid states while still retaining our sanity?
 
 ```python
 # recipe_modules/hello/config.py
-from slave.recipe_configs_util import config_item_context, ConfigGroup
-from slave.recipe_configs_util import SimpleConfig, StaticConfig, BadConf
+from slave.recipe_config import config_item_context, ConfigGroup
+from slave.recipe_config import SimpleConfig, StaticConfig, BadConf
 
 def BaseConfig(TARGET='Bob'):
   # This is a schema for the 'config blobs' that the hello module deals with.
@@ -359,7 +359,7 @@ useful for making the test names more obvious in more complex cases.
 Finally we get to the config items themselves. A config item is a function
 decorated with the `config_ctx`, and takes a config blob as 'c'. The config item
 updates the config blob, perhaps conditionally. There are many features to
-`slave/recipe_configs_util.py`. I would recommend reading the docstrings there
+`slave/recipe_config.py`. I would recommend reading the docstrings there
 for all the details.
 
 Now that we have our config, let's use it.
