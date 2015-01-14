@@ -143,7 +143,7 @@ Notice the `DEPS` line in the recipe. Any modules named by string in DEPS are
 of DEPS, you'll get an AttributeError when you try to access them. The modules
 are located primarily in `recipe_modules/`, and their name is their folder name.
 
-> The full list of module locations which get added are in `annotated_run.py` in
+> The full list of module locations which get added are in `recipe_util.py` in
 > the `MODULE_DIRS` variable.
 
 There are a whole bunch of modules which provide really helpful tools. You
