@@ -4,97 +4,15 @@ Recipes are a flexible way to specify How to Do Things, without knowing too much
 about those Things.
 
 
-Anecdote
---------
-In the before-times, circa 2003, there was a quaint build system called BuildBot.
-BuildBot had many, many features, and was written to encapsulate every aspect of
-*Building Things*. This included fetching things from source control, scheduling
-what needed to be built, how to build those things, what to do with the
-build products, how to shuttle the build products to testing machines, when to
-schedule testing machines to run, how those testers would run, what they would
-test, how they would display the output of the tests, and everything else.
+Background
+----------
 
-Some time later, a small team of engineers was tasked with building Chromium.
-After much Due Diligence, and searching of The Internets for The Right Way, they
-discovered BuildBot. The BuildBot was ready and eager to work for Chromium, and
-made overtures of everlasting friendship, stable code, and well designed
-mechanisms to the engineers. It could only be the best of relationships, and
-surely would last many, many years.
+Chromium uses BuildBot for its builds.  It requires master restarts to change
+bot configs, which slows bot changes down.
 
-So, they set to work to support Chromium with the help of the BuildBot. The Team
-deployed, reinforced, improved and added to the functionality of BuildBot in the
-hope that they were building an Iron Fortress of Impenetrable Build
-Infrastructure.  "BuildBot will let us iterate quickly, and will provide us with
-support and future-proof-ness! This is a marvelous accomplishment!".
-
-And Chromium shipped. So there was great rejoicing in those days.
-
-> ... and the bastion of stone which they built would become a granite crypt. It
-> was meant to be their salvation, but in the last days it would be their bane.
-> "It's a trap!", they screamed at the aether. There was no time left to
-> rebuild...<br/>
-> <small class="author">*Chronicles of BuildBot, c. 2, v. 71*</small>
-
-Soon, the engineers found themselves supporting dozens of Masters with hundreds
-of Slaves, which BuildBot kept in line. There was an air of familiarity, and
-even though the Team and the BuildBot had some occasional disagreements, they
-compromised for the good of Chromium and forged onwards. After all, what
-relationship is without any quarrels?
-
-At some point---no one remembers exactly when---the Team began to grow
-apprehensive towards the BuildBot. Changes which used to be so effortless and
-quick were now a chore... Small requests for the BuildBot to change its
-Procedures would result in a tantrum characterized by the Revolt of all of the
-Slaves in the fleet: All builds would be terminated, innocent tests slaughtered,
-and Chromium would need to wait for the BuildBot to calm down and resume its
-role as the watchful guardian over everything before development could return to
-normalcy.
-
-The engineers began to look for ways to... circumvent... BuildBot. They weren't
-cheating, you see, just looking outside the walls of the castle they had built.
-However, they found, to their dismay, that almost all avenues of recourse left
-open to them were fundamentally contrary to the BuildBot's carefully formed
-philosophies.  Any improvement in the engineers' living situation would involve
-serious overhaul of their meticulously-wrought systems. Their Iron Fortress was
-a Steel Cage, and there was no apparent escape.
-
-Then, one day, an engineer had an Idea of how to evade the deadly grip of the
-BuildBot, while still allowing it to maintain a semblance of control. The others
-said he was mad, but he insisted that this would be a means to severance from
-the shackles they had unwittingly put on themselves. The engineer slaved away,
-carefully augmenting and preforming subtle surgeries on the BuildBot in between
-its tantrums. And lo! Annotator was created!
-
-> They did not know what they had built: they didn't realize the Annotator's
-> true power.<br/>
-> <small class="author">*Annals of the Annotator, c. 3, v. 14*</small>
-
-`@@@START_PARAGRAPH@@@`<br/>
-Now Annotator was a bit of a cantankerous contraption. Those used to the look
-and feel of the BuildBot were skeptical. While it allowed them to persuade some
-of the Slaves to change their Procedures without requiring the BuildBot to worry
-itself with the alterations, it felt *wrong*. The engineers glumly altered
-portions of the Procedures, but were unable to shake the sense that it was like
-going behind the BuildBot's back, and that the new Annotator would let them down
-in all the same ways that BuildBot already had. It was a nice toy, but it
-did not seriously threaten the spread of BuildBot, and so the Annotator went
-largely unused in the day-to-day events of Chromium (except for one valiant Tribe
-of CrOS, which escaped into the wilderness with the Annotator, to forge their own
-way against the burning sun of Infrastructure. They have not been seen since.).
-
-Although the engineers now had the parts to build the vehicle of their
-transcendence, they lacked the tools and the framework to construct it. On one
-hand, they had the BuildBot, which, although it was the castle they had built,
-was becoming less like Authur's keep, and more like Calcifer's hearth. On the
-other hand, they had the homely and unruly Annotator. They knew the way forward
-was to build a new structure over top of both in such a way that one day they
-could stand on their own without either of them.
-
-Out of necessity, they hammered steel, bronze and gold for weeks and months. Then
-in a moment of clarity, they realized that they could accomplish the design they
-required. They called them Recipes, as they hoped that they would bring them
-Success and a fresh start...
-
+With Recipes, most build-related things happen in scripts that run on the
+slave, which reduces the number of master restarts needed when changing build
+configuration.
 
 Intro
 -----
@@ -125,8 +43,6 @@ def GenSteps(api):
   }
 ```
 
-Not too bad, huh?
-
 The GenSteps function is expected to take a single argument `api` (we'll get to
 that in more detail later), and yield a series of 'stepish' items. A stepish
 item can be:
@@ -140,10 +56,7 @@ We should probably test as we go...
 -----------------------------------
 **All recipes MUST have corresponding tests, which achieve 100% code coverage.**
 
-So, we have our recipe. Let's add a test to it. This is obviously not too useful
-right now, but the test framework will protect our recipes against undesired
-changes from other developers, and gives us an immediate preview of what our
-recipe will turn into when it's run "for real".
+So, we have our recipe. Let's add a test to it.
 
 ```python
 def GenSteps(api):
