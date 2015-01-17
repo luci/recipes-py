@@ -88,6 +88,7 @@ import collections
 import functools
 import types
 
+from infra.libs import infra_types
 
 class BadConf(Exception):
   pass
@@ -429,6 +430,8 @@ class ConfigGroup(ConfigBase):
   def set_val(self, val):
     if isinstance(val, ConfigBase):
       val = val.as_jsonish(include_hidden=True)
+    if isinstance(val, infra_types.FrozenDict):
+      val = infra_types.thaw(val)
     assert isinstance(val, dict)
     val = dict(val)  # because we pop later.
     for name, config_obj in self._type_map.iteritems():
@@ -571,6 +574,8 @@ class Dict(ConfigBase, collections.MutableMapping):
   def set_val(self, val):
     if isinstance(val, Dict):
       val = val.data
+    if isinstance(val, infra_types.FrozenDict):
+      val = dict(val)
     assert isinstance(val, dict)
     for v in val.itervalues():
       assert isinstance(v, self.value_type), (

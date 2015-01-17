@@ -45,7 +45,7 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
     failed_steps = []
     for step in new_steps:
       if env:
-        new_env = env.copy()
+        new_env = dict(env)
         new_env.update(step.get('env', {}))
         step['env'] = new_env
       outputs_json = step.pop('outputs_presentation_json', False)

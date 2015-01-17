@@ -4,6 +4,8 @@
 
 import re
 
+from infra.libs import infra_types
+
 def ResetTostringFns():
   RecipeConfigType._TOSTRING_MAP.clear()  # pylint: disable=W0212
 
@@ -11,6 +13,9 @@ def ResetTostringFns():
 def json_fixup(obj):
   if isinstance(obj, RecipeConfigType):
     return str(obj)
+  thawed = infra_types.thaw(obj)
+  if thawed is not obj:  # i.e. it was a frozen type
+    return thawed
   raise TypeError("%r is not JSON serializable" % obj)
 
 

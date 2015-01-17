@@ -2,35 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from infra.libs.infra_types import freeze, thaw
 from slave import recipe_api
 import collections
-
-class ImmutableMapping(dict):
-  def __init__(self, data):
-    super(ImmutableMapping, self).__init__(data)
-    assert all(isinstance(v, collections.Hashable) for v in self.itervalues())
-    self._hash_value = hash(tuple(sorted(self.iteritems())))
-
-  def __setitem__(self, key, value):  # pragma: no cover
-    raise TypeError("May not modify an ImmutableMapping")
-
-  def __delitem__(self, key):  # pragma: no cover
-    raise TypeError("May not modify an ImmutableMapping")
-
-  def __hash__(self):
-    return self._hash_value
-
-
-def freeze(obj):
-  if isinstance(obj, dict):
-    return ImmutableMapping((k, freeze(v)) for k, v in obj.iteritems())
-  elif isinstance(obj, list):
-    return tuple(freeze(x) for x in obj)
-  elif isinstance(obj, collections.Hashable):
-    return obj
-  else:  # pragma: no cover
-    raise TypeError('Unsupported value: %s' % (obj,))
-
 
 # Use RecipeApiPlain because collections.Mapping has its own metaclass.
 # Additionally, nothing in this class is a composite_step (nothing in this class
@@ -57,3 +31,7 @@ class PropertiesApi(recipe_api.RecipeApiPlain, collections.Mapping):
   def __iter__(self):
     return iter(self._properties)
 
+  def thaw(self):
+    """Returns a vanilla python jsonish dictionary of properties."""
+
+    return thaw(self._engine.properties)

@@ -2,11 +2,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from infra.libs.infra_types import thaw
+
 DEPS = ['properties', 'step']
 
 def GenSteps(api):
-  api.step('echo', ['echo'] + [repr(api.properties['test_prop'])])
-  api.step('echo all', ['echo'] + [repr(dict(api.properties))])
+  api.step('echo', ['echo'] + [repr(api.properties.thaw()['test_prop'])])
+  api.step('echo all', ['echo'] + [repr(api.properties.thaw())])
 
 def GenTests(api):
   yield api.test('basic') + api.properties(
