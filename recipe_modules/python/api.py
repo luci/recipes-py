@@ -28,7 +28,7 @@ class PythonApi(recipe_api.RecipeApi):
       self(name, self.m.raw_io.input(program, '.py'), **kwargs)
     finally:
       result = self.m.step.active_result
-      if add_python_log:
+      if result and add_python_log:
         result.presentation.logs['python.inline'] = program.splitlines()
 
     return result

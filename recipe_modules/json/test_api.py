@@ -10,6 +10,12 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
   def output(data, retcode=None):
     return json.dumps(data), retcode
 
+  def output_stream(self, data, stream='stdout', retcode=None):
+    assert stream in ('stdout', 'stderr')
+    ret = recipe_test_api.StepTestData()
+    setattr(ret, stream, self.output(data, retcode).unwrap_placeholder())
+    return ret
+
   @recipe_test_api.placeholder_step_data
   def test_results(self, test_results, retcode=None):
     return self.output(test_results.as_jsonish(), retcode)
