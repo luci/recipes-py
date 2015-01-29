@@ -13,6 +13,9 @@ def GenSteps(api):
       stdout=api.json.output())
   assert step_result.stdout == [1, 2, 3]
 
+  assert api.json.is_serializable('foo')
+  assert not api.json.is_serializable(set(['foo', 'bar', 'baz']))
+
 
 def GenTests(api):
   yield (api.test('basic') +

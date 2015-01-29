@@ -107,6 +107,14 @@ class JsonApi(recipe_api.RecipeApi):
       return json.dumps(*args, **kwargs)
     self.dumps = dumps
 
+  def is_serializable(self, obj):
+    """Returns True if the object is JSON-serializable."""
+    try:
+      self.dumps(obj)
+      return True
+    except Exception:
+      return False
+
   @recipe_util.returns_placeholder
   def input(self, data):
     """A placeholder which will expand to a file path containing <data>."""
