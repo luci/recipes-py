@@ -316,6 +316,39 @@ RecipeExecutionResult = collections.namedtuple(
     'RecipeExecutionResult', 'status_code steps_ran')
 
 
+def get_recipe_properties(factory_properties, build_properties):
+  """Constructs the recipe's properties from buildbot's properties.
+
+  This merges factory_properties and build_properties.  Furthermore, it
+  tries to reconstruct the 'recipe' property from builders.pyl if it isn't
+  already there, and in that case merges in properties form builders.pyl.
+  """
+  properties = factory_properties.copy()
+  properties.update(build_properties)
+
+  # Try to reconstruct the recipe from builders.pyl if not given.
+  if 'recipe' not in properties:
+    mastername = properties['mastername']
+    buildername = properties['buildername']
+
+    master_path = chromium_utils.MasterPath(mastername)
+    builders_file = os.path.join(master_path, 'builders.pyl')
+    if os.path.isfile(builders_file):
+      builders = chromium_utils.ReadBuildersFile(builders_file)
+      assert buildername in builders['builders'], (
+        'buildername %s is not listed in %s' % (buildername, builders_file))
+      builder = builders['builders'][buildername]
+
+      # Update properties with builders.pyl data.
+      properties['recipe'] = builder['recipe']
+      properties.update(builder['properties'])
+    else:
+      raise LookupError('Cannot find recipe for %s on %s' %
+                        (build_properties['buildername'],
+                        build_properties['mastername']))
+  return properties
+
+
 def run_steps(stream, build_properties, factory_properties,
               test_data=recipe_test_api.DisabledTestData()):
   """Returns a tuple of (status_code, steps_ran).
@@ -337,8 +370,9 @@ def run_steps(stream, build_properties, factory_properties,
   # destiny.
   build_properties.pop('root', None)
 
-  properties = factory_properties.copy()
-  properties.update(build_properties)
+  properties = get_recipe_properties(
+      factory_properties=factory_properties,
+      build_properties=build_properties)
 
   # TODO(iannucci): A much better way to do this would be to dynamically
   #   detect if the mirrors are actually available during the execution of the
@@ -358,8 +392,8 @@ def run_steps(stream, build_properties, factory_properties,
   # to start executing code).
   api = None
   with stream.step('setup_build') as s:
-    assert 'recipe' in factory_properties
-    recipe = factory_properties['recipe']
+    assert 'recipe' in properties # Should be ensured by get_recipe_properties.
+    recipe = properties['recipe']
 
     properties_to_print = properties.copy()
     if 'use_mirror' in properties:
