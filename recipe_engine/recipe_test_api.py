@@ -379,6 +379,14 @@ class RecipeTestApi(object):
     return TestData(name)
 
   @staticmethod
+  def empty_test_data():
+    """Returns a TestData with no information.
+
+    This is the identity of the + operator for combining TestData.
+    """
+    return TestData(None)
+
+  @staticmethod
   def _step_data(name, *data, **kwargs):
     """Returns a new TestData with the mock data filled in for a single step.
 
