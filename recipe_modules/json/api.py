@@ -13,8 +13,6 @@ from slave import recipe_api
 from slave import recipe_util
 from slave import recipe_config_types
 
-from .util import GTestResults, TestResults
-
 class StringListIO(object):
   def __init__(self):
     self.lines = [StringIO()]
@@ -82,20 +80,6 @@ class JsonOutputPlaceholder(recipe_util.Placeholder):
     return ret
 
 
-class TestResultsOutputPlaceholder(JsonOutputPlaceholder):
-  def result(self, presentation, test):
-    ret = super(TestResultsOutputPlaceholder, self).result(presentation, test)
-    return TestResults(ret)
-
-
-# TODO(martiniss) replace this with step.AggregateResults once
-# aggregate steps lands
-class GTestResultsOutputPlaceholder(JsonOutputPlaceholder):
-  def result(self, presentation, test):
-    ret = super(GTestResultsOutputPlaceholder, self).result(presentation, test)
-    return GTestResults(ret)
-
-
 class JsonApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
     super(JsonApi, self).__init__(**kwargs)
@@ -125,28 +109,7 @@ class JsonApi(recipe_api.RecipeApi):
     """A placeholder which will expand to '/tmp/file'."""
     return JsonOutputPlaceholder(self, add_json_log)
 
-  @recipe_util.returns_placeholder
-  def test_results(self, add_json_log=True):
-    """A placeholder which will expand to '/tmp/file'.
-
-    The recipe must provide the expected --json-test-results flag.
-
-    The test_results will be an instance of the TestResults class.
-    """
-    return TestResultsOutputPlaceholder(self, add_json_log)
-
-  @recipe_util.returns_placeholder
-  def gtest_results(self, add_json_log=True):
-    """A placeholder which will expand to
-    '--test-launcher-summary-output=/tmp/file'.
-
-    Provides the --test-launcher-summary-output flag since --flag=value
-    (i.e. a single token in the command line) is the required format.
-
-    The test_results will be an instance of the GTestResults class.
-    """
-    return GTestResultsOutputPlaceholder(self, add_json_log)
-
+  # TODO(you): This method should be in the `file` recipe_module
   def read(self, name, path, **kwargs):
     """Returns a step that reads a JSON file."""
     return self.m.python.inline(
