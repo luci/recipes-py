@@ -23,7 +23,7 @@ def BaseConfig(**_kwargs):
                jsonish_fn=render_cmd),
 
     # optional
-    env = Dict(item_fn=lambda (k, v): (k, str(v)),
+    env = Dict(item_fn=lambda (k, v): (k, v if v is None else str(v)),
                value_type=(basestring,int,Path,type(None))),
     cwd = Single(Path, jsonish_fn=str, required=False),
 
