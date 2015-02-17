@@ -11,7 +11,7 @@ from slave import recipe_api
 class MathUtilsApi(recipe_api.RecipeApi):
 
   @staticmethod
-  def truncated_mean(data_set, truncate_percent):
+  def truncated_mean(data_set, truncate_fraction):
     """Calculates the truncated mean of a set of values.
 
     Note that this isn't just the mean of the set of values with the highest
@@ -20,8 +20,8 @@ class MathUtilsApi(recipe_api.RecipeApi):
 
     Args:
       data_set: Non-empty list of values.
-      truncate_percent: How much of the upper and lower portions of the data set
-          to discard, expressed as a value in [0, 1].
+      truncate_fraction: How much of the upper and lower portions of the data
+          set to discard, expressed as a value in [0, 0.5).
 
     Returns:
       The truncated mean as a float.
@@ -29,10 +29,13 @@ class MathUtilsApi(recipe_api.RecipeApi):
     Raises:
       TypeError: The data set was empty after discarding values.
     """
+    if truncate_fraction >= 0.5:
+      raise ValueError('Trying to truncate %d percent of the list.' %
+                       (200 * truncate_fraction))
     if len(data_set) > 2:
       data_set = sorted(data_set)
 
-      discard_num_float = len(data_set) * truncate_percent
+      discard_num_float = len(data_set) * truncate_fraction
       discard_num_int = int(math.floor(discard_num_float))
       kept_weight = len(data_set) - discard_num_float * 2
 
@@ -51,7 +54,7 @@ class MathUtilsApi(recipe_api.RecipeApi):
       kept_weight = len(data_set)
 
     _truncated_mean = reduce(lambda x, y: float(x) + float(y),
-                            data_set) / kept_weight
+                             data_set) / kept_weight
     return _truncated_mean
 
   @staticmethod
