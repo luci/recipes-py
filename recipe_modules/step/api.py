@@ -83,12 +83,12 @@ class StepApi(recipe_api.RecipeApiPlain):
     """Returns a step dictionary which is compatible with annotator.py.
 
     Args:
-      name: The name of this step.
-      cmd: A list of strings in the style of subprocess.Popen.
-      ok_ret: A tuple or set of allowed return codes. Any unexpected return
-        codes will cause an exception to be thrown. If you pass in the value
-        |any| or |all|, the engine will allow any return code to be returned.
-        Defaults to {0}
+      name (string): The name of this step.
+      cmd (list of strings): in the style of subprocess.Popen.
+      ok_ret (tuple or set of ints, str): allowed return codes. Any unexpected
+        return codes will cause an exception to be thrown. If you pass in the
+        value 'any' or 'all', the engine will allow any return code to be
+        returned. Defaults to {0}
       infra_step: Whether or not this is an infrastructure step. Infrastructure
         steps will place the step in an EXCEPTION state and raise InfraFailure.
       wrapper: If supplied, a command to prepend to the executed step as a
@@ -102,7 +102,7 @@ class StepApi(recipe_api.RecipeApiPlain):
     assert isinstance(cmd, list)
     if not ok_ret:
       ok_ret = {0}
-    if ok_ret in (any, all):
+    if ok_ret in ('any', 'all'):
       ok_ret = set(range(-256, 256))
 
     command = list(wrapper)

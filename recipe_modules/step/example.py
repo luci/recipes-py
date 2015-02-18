@@ -26,7 +26,7 @@ def GenSteps(api):
 
   # Finally, you can make your step accept any return code
   api.step('anything is cool', ['bash', '-c', 'exit 3'],
-           ok_ret=any)
+           ok_ret='any')
 
   # We can manipulate the step presentation arbitrarily until we run
   # the next step.
