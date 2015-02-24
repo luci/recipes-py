@@ -7,30 +7,9 @@ import collections
 import contextlib
 import json
 
-from cStringIO import StringIO
-
 from slave import recipe_api
 from slave import recipe_util
 from slave import recipe_config_types
-
-class StringListIO(object):
-  def __init__(self):
-    self.lines = [StringIO()]
-
-  def write(self, s):
-    while s:
-      i = s.find('\n')
-      if i == -1:
-        self.lines[-1].write(s)
-        break
-      self.lines[-1].write(s[:i])
-      self.lines[-1] = self.lines[-1].getvalue()
-      self.lines.append(StringIO())
-      s = s[i+1:]
-
-  def close(self):
-    if not isinstance(self.lines[-1], basestring):
-      self.lines[-1] = self.lines[-1].getvalue()
 
 
 class JsonOutputPlaceholder(recipe_util.Placeholder):
@@ -73,7 +52,7 @@ class JsonOutputPlaceholder(recipe_util.Placeholder):
 
     if self.add_json_log:
       key = self.name + ('' if valid else ' (invalid)')
-      with contextlib.closing(StringListIO()) as listio:
+      with contextlib.closing(recipe_util.StringListIO()) as listio:
         json.dump(ret, listio, indent=2, sort_keys=True)
       presentation.logs[key] = listio.lines
 

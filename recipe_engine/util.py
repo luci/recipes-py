@@ -5,6 +5,8 @@
 import functools
 import os
 
+from cStringIO import StringIO
+
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 BUILD_ROOT = os.path.dirname(os.path.dirname(SCRIPT_PATH))
@@ -136,3 +138,23 @@ def scan_directory(path, predicate):
     for file_name in (f for f in files if predicate(f)):
       file_path = os.path.join(root, file_name)
       yield file_path
+
+
+class StringListIO(object):
+  def __init__(self):
+    self.lines = [StringIO()]
+
+  def write(self, s):
+    while s:
+      i = s.find('\n')
+      if i == -1:
+        self.lines[-1].write(s)
+        break
+      self.lines[-1].write(s[:i])
+      self.lines[-1] = self.lines[-1].getvalue()
+      self.lines.append(StringIO())
+      s = s[i+1:]
+
+  def close(self):
+    if not isinstance(self.lines[-1], basestring):
+      self.lines[-1] = self.lines[-1].getvalue()
