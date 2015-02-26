@@ -14,15 +14,14 @@ import textwrap
 
 RUNTESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(RUNTESTS_DIR, 'data')
-BASE_DIR = os.path.abspath(os.path.join(RUNTESTS_DIR, '..', '..', '..'))
+BASE_DIR = os.path.abspath(
+    os.path.join(RUNTESTS_DIR, os.pardir, os.pardir, os.pardir))
 DEPOT_TOOLS_DIR = os.path.join(BASE_DIR, os.pardir, 'depot_tools')
 
+# Load our common Infra environment.
 sys.path.insert(0, os.path.join(BASE_DIR, 'scripts'))
-sys.path.insert(0, os.path.join(BASE_DIR, 'site_config'))
-sys.path.insert(0, os.path.join(BASE_DIR, 'third_party'))
-sys.path.insert(0, os.path.join(BASE_DIR, 'third_party', 'buildbot_slave_8_4'))
-sys.path.insert(0, os.path.join(BASE_DIR, 'third_party', 'twisted_10_2'))
-sys.path.insert(0, os.path.join(BASE_DIR, 'third_party', 'mock-1.0.1'))
+import common.env
+common.env.Install(hermetic=False)
 
 def ensure_coverage_importable():
   try:
