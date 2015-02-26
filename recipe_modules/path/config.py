@@ -30,7 +30,7 @@ VAR_TEST_MAP = {
   ),
 }
 
-def test_name(args):
+def test_name(args):  # pragma: no cover
   if args['CURRENT_WORKING_DIR'][0] == '/':
     return 'posix'
   else:

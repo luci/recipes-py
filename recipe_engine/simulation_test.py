@@ -42,7 +42,7 @@ def GenerateTests():
   cover_mods = []
   for mod_dir_base in recipe_util.MODULE_DIRS():
     if os.path.isdir(mod_dir_base):
-      cover_mods.append(os.path.join(mod_dir_base, '*', '*api.py'))
+      cover_mods.append(os.path.join(mod_dir_base, '*', '*.py'))
 
   for recipe_path, recipe_name in recipe_loader.loop_over_recipes():
     recipe = recipe_loader.load_recipe(recipe_name)

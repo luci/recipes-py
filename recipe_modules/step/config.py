@@ -49,6 +49,6 @@ def BaseConfig(**_kwargs):
 config_ctx = config_item_context(BaseConfig, {'_DUMMY': ['val']}, 'example')
 
 @config_ctx()
-def test(c):
+def test(c):  # pragma: no cover
   c.name = 'test'
   c.cmd = [Path('[CHECKOUT]', 'build', 'tools', 'cool_script.py')]
