@@ -447,21 +447,18 @@ def normalizeChange(change):
 def triggerBuilds(step, trigger_specs):
   assert trigger_specs is not None
   for trig in trigger_specs:
-    props = trig.get('properties')
-    if not props:
-      raise ValueError('Trigger spec: properties are missing')
-    builder_name = props.pop('buildername', None)
+    builder_name = trig.get('builder_name')
     if not builder_name:
-      raise ValueError('Trigger spec: buildername property is missing')
+      raise ValueError('Trigger spec: builder_name is not set')
 
-    changes = props.get('buildbot.changes', [])
-    assert isinstance(changes, list), 'buildbot.changes must be a list'
+    changes = trig.get('buildbot_changes', [])
+    assert isinstance(changes, list), 'buildbot_changes must be a list'
     changes = map(normalizeChange, changes)
 
     step.step_trigger(json.dumps({
         'builderNames': [builder_name],
         'changes': changes,
-        'properties': props,
+        'properties': trig.get('properties'),
     }, sort_keys=True))
 
 

@@ -35,7 +35,9 @@ def BaseConfig(**_kwargs):
 
     trigger_specs = ConfigList(
         lambda: ConfigGroup(
+            builder_name=Single(basestring),
             properties=Dict(value_type=object),
+            buildbot_changes=List(dict),
         ),
     ),
 
