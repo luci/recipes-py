@@ -457,6 +457,7 @@ def triggerBuilds(step, trigger_specs):
 
     step.step_trigger(json.dumps({
         'builderNames': [builder_name],
+        'bucket': trig.get('bucket'),
         'changes': changes,
         'properties': trig.get('properties'),
     }, sort_keys=True))
