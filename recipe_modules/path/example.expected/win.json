@@ -60,7 +60,7 @@
   {
     "cmd": [
       "echo",
-      "[BUILD]\\scripts\\slave\\recipe_modules\\path\\resources\\dir\\file.py"
+      "RECIPE_MODULE[path]\\resources\\dir\\file.py"
     ],
     "name": "print resource"
   },

@@ -1,5 +1,5 @@
 from slave import recipe_test_api
-from slave.recipe_config_types import Path
+from slave.recipe_config_types import Path, NamedBasePath
 
 class PathTestApi(recipe_test_api.RecipeTestApi):
   @recipe_test_api.mod_test_data
@@ -9,7 +9,7 @@ class PathTestApi(recipe_test_api.RecipeTestApi):
     return paths
 
   def __getitem__(self, name):
-    return Path(name, _bypass=True)
+    return Path(NamedBasePath(name))
 
   def listdir(self, files):
     def listdir_callback():

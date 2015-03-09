@@ -4,27 +4,38 @@
 
 import functools
 import os
+import sys
 import tempfile
 
 from slave import recipe_api
 from slave import recipe_config_types
 
 
-def PathTostring(api, test):
-  def PathTostring_inner(path):
+def PathToString(api, test):
+  def PathToString_inner(path):
     assert isinstance(path, recipe_config_types.Path)
     base_path = None
     suffix = path.platform_ext.get(api.m.platform.name, '')
-    if path.base in api.c.dynamic_paths:
-      base_path = api.c.dynamic_paths[path.base]
-    elif path.base in api.c.base_paths:
+    if isinstance(path.base, recipe_config_types.NamedBasePath):
+      name = path.base.name
+      if name in api.c.dynamic_paths:
+        base_path = api.c.dynamic_paths[name]
+      elif name in api.c.base_paths:
+        if test.enabled:
+          base_path = repr(path.base)
+        else:  # pragma: no cover
+          base_path = api.join(*api.c.base_paths[name])
+    elif isinstance(path.base, recipe_config_types.ModuleBasePath):
       if test.enabled:
-        base_path = '[%s]' % path.base.upper()
+        base_path = repr(path.base)
       else:  # pragma: no cover
-        base_path = api.join(*api.c.base_paths[path.base])
+        base_path = os.path.dirname(path.base.module.__file__)
+    else:  # pragma: no cover
+      raise NotImplementedError('PathToString not implemented for %s' %
+                                path.base.__class__.__name__)
     assert base_path, 'Could not get base %r for path' % path.base
     return api.join(base_path, *path.pieces) + suffix
-  return PathTostring_inner
+  return PathToString_inner
 
 
 def string_filter(func):
@@ -144,7 +155,7 @@ class PathApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
     super(PathApi, self).__init__(**kwargs)
     recipe_config_types.Path.set_tostring_fn(
-      PathTostring(self, self._test_data))
+      PathToString(self, self._test_data))
 
     # Used in mkdtemp when generating and checking expectations.
     self._test_counter = 0
@@ -293,8 +304,8 @@ class PathApi(recipe_api.RecipeApi):
       'Setting dynamic path to something other than a Path: %r' % path)
     assert pathname in self.c.dynamic_paths, (
       'Must declare dynamic path (%r) in config before setting it.' % path)
-    assert path.base in self.c.base_paths, (
-      'Dynamic path values must be based on a base_path.')
+    assert isinstance(path.base, recipe_config_types.BasePath), (
+      'Dynamic path values must be based on a base_path' % path.base)
     self.c.dynamic_paths[pathname] = path
 
   @recipe_api.non_step
@@ -305,7 +316,7 @@ class PathApi(recipe_api.RecipeApi):
                              'set yet.' % name)
       return r
     if name in self.c.base_paths:
-      return recipe_config_types.Path(name, _bypass=True)
+      return recipe_config_types.Path(recipe_config_types.NamedBasePath(name))
 
   @recipe_api.non_step
   def __getattr__(self, name):

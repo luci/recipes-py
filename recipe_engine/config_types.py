@@ -2,7 +2,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import abc
 import re
+
+from collections import namedtuple
 
 from infra.libs import infra_types
 
@@ -60,6 +63,36 @@ class RecipeConfigType(object):
     return self.tostring_fn(self) # pylint: disable=not-callable
 
 
+class BasePath(object):
+  __metaclass__ = abc.ABCMeta
+
+
+class NamedBasePath(BasePath, namedtuple('NamedBasePath', 'name')):
+  # Restrict basenames to '[ALL_CAPS]'. This will help catch
+  # errors if someone attempts to provide an actual string path '/some/example'
+  # as the 'base'.
+  BASE_RE = re.compile(r'\[([A-Z][A-Z_]*)\]')
+
+  @staticmethod
+  def parse(base):
+    base_match = NamedBasePath.BASE_RE.match(base)
+    assert base_match, 'Base should be [ALL_CAPS], got %r' % base
+    return NamedBasePath(base_match.group(1).lower())
+
+  def __repr__(self):
+    return '[%s]' % self.name.upper()
+
+
+class ModuleBasePath(BasePath, namedtuple('ModuleBasePath', 'module')):
+  # All recipe modules are in a magic RECIPE_MODULES package.  Remove it
+  # before rendering MODULE[_] form.
+  MODULE_PREFIX_RE = r'^RECIPE_MODULES\.'
+
+  def __repr__(self):
+    name = re.sub(self.MODULE_PREFIX_RE, '', self.module.__name__)
+    return 'RECIPE_MODULE[%s]' % name
+
+
 class Path(RecipeConfigType):
   """Represents a path which is relative to a semantically-named base.
 
@@ -68,10 +101,6 @@ class Path(RecipeConfigType):
   absolute path, we only store three context-free attributes in this Path
   object.
   """
-  # Restrict basenames to '[ALL_CAPS]'. This will help catch
-  # errors if someone attempts to provide an actual string path '/some/example'
-  # as the 'base'.
-  BASE_RE = re.compile(r'\[([A-Z][A-Z_]*)\]')
 
   def __init__(self, base, *pieces, **kwargs):
     """Creates a Path
@@ -85,20 +114,18 @@ class Path(RecipeConfigType):
     Kwargs:
       platform_ext (dict(str, str)) - A mapping from platform name (as defined
         by the 'platform' module), to a suffix for the path.
-      _bypass (bool) - Bypass the type checking and use |base| directly. Don't
-        use this outside of the 'path' module or this class.
     """
     super(Path, self).__init__()
     assert all(isinstance(x, basestring) for x in pieces), pieces
     assert not any(x in ('..', '.', '/', '\\') for x in pieces)
     self.pieces = pieces
 
-    if kwargs.get('_bypass'):
+    if isinstance(base, BasePath):
       self.base = base
+    elif isinstance(base, basestring):
+      self.base = NamedBasePath.parse(base)
     else:
-      base_match = self.BASE_RE.match(base)
-      assert base_match, 'Base should be [ALL_CAPS], got %r' % base
-      self.base = base_match.group(1).lower()
+      raise ValueError('%s is not a valid base path' % base)
 
     self.platform_ext = kwargs.get('platform_ext', {})
 
@@ -112,7 +139,6 @@ class Path(RecipeConfigType):
 
   def join(self, *pieces, **kwargs):
     kwargs.setdefault('platform_ext', self.platform_ext)
-    kwargs['_bypass'] = True
     return Path(self.base, *filter(bool, self.pieces + pieces), **kwargs)
 
   def is_parent_of(self, child):
@@ -133,4 +159,4 @@ class Path(RecipeConfigType):
     pieces = ''
     if self.pieces:
       pieces = ', ' + (', '.join(map(repr, self.pieces)))
-    return 'Path(\'[%s]\'%s%s)' % (self.base.upper(), pieces, suffix)
+    return 'Path(\'%s\'%s%s)' % (self.base, pieces, suffix)
