@@ -33,13 +33,24 @@ class PythonApi(recipe_api.RecipeApi):
 
     return result
 
-  def failing_step(self, name, text):
-    """Return a failng step (correctly recognized in expectations)."""
+  def result_step(self, name, text, retcode, as_log=None):
+    """Return a no-op step that exits with a specified return code."""
     try:
       self.inline(name,
-                  'import sys; sys.exit(1)',
+                  'import sys; sys.exit(%d)' % (retcode,),
                   add_python_log=False,
                   step_test_data=lambda: self.m.raw_io.test_api.output(
-                      text, retcode=1))
+                      text, retcode=retcode))
     finally:
-      self.m.step.active_result.presentation.step_text = text
+      if as_log:
+        self.m.step.active_result.presentation.logs[as_log] = text
+      else:
+        self.m.step.active_result.presentation.step_text = text
+
+  def succeeding_step(self, name, text, as_log=None):
+    """Return a succeeding step (correctly recognized in expectations)."""
+    return self.result_step(name, text, 0, as_log=as_log)
+
+  def failing_step(self, name, text, as_log=None):
+    """Return a failing step (correctly recognized in expectations)."""
+    return self.result_step(name, text, 1, as_log=as_log)
