@@ -10,8 +10,6 @@ from slave import recipe_util
 class StepApi(recipe_api.RecipeApiPlain):
   def __init__(self, **kwargs):
     super(StepApi, self).__init__(**kwargs)
-    self._auto_resolve_conflicts = False
-    self._name_function = None
     self._step_names = {}
 
   EXCEPTION = 'EXCEPTION'
@@ -67,17 +65,6 @@ class StepApi(recipe_api.RecipeApiPlain):
     """ See recipe_api.py for docs. """
     return recipe_api.defer_results
 
-  # Making these properties makes them show up in show_me_the_modules,
-  # and also makes it clear that they are intended to be mutated.
-  @property
-  def auto_resolve_conflicts(self):
-    """Automatically resolve step name conflicts."""
-    return self._auto_resolve_conflicts
-
-  @auto_resolve_conflicts.setter
-  def auto_resolve_conflicts(self, val):
-    self._auto_resolve_conflicts = val
-
   def __call__(self, name, cmd, ok_ret=None, infra_step=False, wrapper=(),
                **kwargs):
     """Returns a step dictionary which is compatible with annotator.py.
@@ -107,11 +94,12 @@ class StepApi(recipe_api.RecipeApiPlain):
 
     command = list(wrapper)
     command += cmd
-    if self.auto_resolve_conflicts:
-      step_count = self._step_names.setdefault(name, 0) + 1
-      self._step_names[name] = step_count
-      if step_count > 1:
-        name = "%s (%d)" % (name, step_count)
+
+    step_count = self._step_names.setdefault(name, 0) + 1
+    self._step_names[name] = step_count
+    if step_count > 1:
+      name = "%s (%d)" % (name, step_count)
+
     kwargs.update({'name': name, 'cmd': command})
     kwargs['ok_ret'] = ok_ret
     kwargs['infra_step'] = bool(infra_step)
