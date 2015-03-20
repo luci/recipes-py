@@ -31,6 +31,17 @@ class PropertiesApi(recipe_api.RecipeApiPlain, collections.Mapping):
   def __iter__(self):
     return iter(self._properties)
 
+  def legacy(self):
+    """Returns a reduced set of properties, possibly used by legacy scripts."""
+
+    # Add all properties to this blacklist that are required for testing, but
+    # not used by any lecacy scripts, in order to avoid vast expecation
+    # changes.
+    blacklist = set([
+      'buildbotURL',
+    ])
+    return {k: v for k, v in self.iteritems() if k not in blacklist}
+
   def thaw(self):
     """Returns a vanilla python jsonish dictionary of properties."""
 

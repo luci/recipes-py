@@ -113,7 +113,7 @@ class JsonApi(recipe_api.RecipeApi):
     of arguments to steps. Passing property objects obscures the data that
     the script actually consumes from the property object.
     """
-    prop_str = self.dumps(dict(self.m.properties))
+    prop_str = self.dumps(dict(self.m.properties.legacy()))
     return [
       '--factory-properties', prop_str,
       '--build-properties', prop_str

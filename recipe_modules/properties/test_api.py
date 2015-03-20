@@ -13,6 +13,7 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
     ret = self(
         blamelist='cool_dev1337@chromium.org,hax@chromium.org',
         blamelist_real=['cool_dev1337@chromium.org', 'hax@chromium.org'],
+        buildbotURL='http://c.org/p/cr/',
         buildername='TestBuilder',
         buildnumber=571,
         mastername='chromium.testing.master',
