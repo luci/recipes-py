@@ -525,12 +525,30 @@ def run_step(stream, name, cmd,
           fhandles[key] = open(step_dict[key],
                                'rb' if key == 'stdin' else 'wb')
 
+      if sys.platform.startswith('win'):
+        # Windows has a bad habit of opening a dialog when a console program
+        # crashes, rather than just letting it crash.  Therefore, when a program
+        # crashes on Windows, we don't find out until the build step times out.
+        # This code prevents the dialog from appearing, so that we find out
+        # immediately and don't waste time waiting for a user to close the
+        # dialog.
+        import ctypes
+        # SetErrorMode(SEM_NOGPFAULTERRORBOX). For more information, see:
+        # https://msdn.microsoft.com/en-us/library/windows/desktop/ms680621.aspx
+        ctypes.windll.kernel32.SetErrorMode(0x0002)
+        # CREATE_NO_WINDOW. For more information, see:
+        # https://msdn.microsoft.com/en-us/library/windows/desktop/ms684863.aspx
+        creationflags = 0x8000000
+      else:
+        creationflags = 0
+
       with modify_lookup_path(step_env.get('PATH')):
         proc = subprocess.Popen(
             cmd,
             env=step_env,
             cwd=cwd,
             universal_newlines=True,
+            creationflags=creationflags,
             **fhandles)
 
       # Safe to close file handles now that subprocess has inherited them.
