@@ -297,6 +297,14 @@ def get_args(argv):
                     action='callback', callback=chromium_utils.convert_json,
                     type='string', default={},
                     help='factory properties in JSON format')
+  parser.add_option('--build-properties-gz',
+                    action='callback', callback=chromium_utils.convert_gz_json,
+                    type='string', default={}, dest='build_properties',
+                    help='build properties in b64 gz JSON format')
+  parser.add_option('--factory-properties-gz',
+                    action='callback', callback=chromium_utils.convert_gz_json,
+                    type='string', default={}, dest='factory_properties',
+                    help='factory properties in b64 gz JSON format')
   parser.add_option('--keep-stdin', action='store_true', default=False,
                     help='don\'t close stdin when running recipe steps')
   return parser.parse_args(argv)
