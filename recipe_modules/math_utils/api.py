@@ -8,6 +8,7 @@ import math
 
 from slave import recipe_api
 
+
 class MathUtilsApi(recipe_api.RecipeApi):
 
   @staticmethod
@@ -138,7 +139,7 @@ class MathUtilsApi(recipe_api.RecipeApi):
   #Copied this from BisectResults
   @staticmethod
   def confidence_score(sample1, sample2,
-                      accept_single_bad_or_good=False):
+                       accept_single_bad_or_good=False):
     """Calculates a confidence score.
 
     This score is a percentage which represents our degree of confidence in the
@@ -250,7 +251,6 @@ class MathUtilsApi(recipe_api.RecipeApi):
           ((v1 ** 2) / ((n1 ** 2) * (n1 - 1)) +
            (v2 ** 2) / ((n2 ** 2) * (n2 - 1))))
     return max(1, df)
-
 
   # Below is a hard-coded table for looking up p-values.
   #
