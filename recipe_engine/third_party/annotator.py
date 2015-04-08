@@ -464,25 +464,21 @@ def triggerBuilds(step, trigger_specs):
 
 
 def run_step(stream, name, cmd,
-             step_annotation,
              cwd=None, env=None,
-             subannotator=None,
+             allow_subannotations=False,
              trigger_specs=None,
              **kwargs):
   """Runs a single step.
 
   Context:
     stream: StructuredAnnotationStream to use to emit step
-    step_annotation: optional StructuredAnnotationStep to use instead
-        of creating one
 
   Step parameters:
     name: name of the step, will appear in buildbots waterfall
     cmd: command to run, list of one or more strings
     cwd: absolute path to working directory for the command
     env: dict with overrides for environment variables
-    subannotator: a callback_implementor class used to parse subannotations
-        that the command emits; if None, subannotations will be suppressed.
+    allow_subannotations: if True, lets the step emit its own annotations
     trigger_specs: a list of trigger specifications, which are dict with keys:
         properties: a dict of properties.
             Buildbot requires buildername property.
@@ -507,9 +503,12 @@ def run_step(stream, name, cmd,
       'cmd': cmd,
       'cwd': cwd,
       'env': env,
-      'allow_subannotations': subannotator is not None,
+      'allow_subannotations': allow_subannotations,
       })
   step_env = _merge_envs(os.environ, env)
+
+  step_annotation = stream.step(name)
+  step_annotation.step_started()
 
   print_step(step_dict, step_env, stream)
   returncode = 0
@@ -558,22 +557,19 @@ def run_step(stream, name, cmd,
           handle.close()
 
       outlock = threading.Lock()
-      def filter_lines(inhandle, outhandle):
+      def filter_lines(lock, allow_subannotations, inhandle, outhandle):
         while True:
           line = inhandle.readline()
           if not line:
             break
-          with outlock:
-            if line.startswith('@@@'):
-              if subannotator:
-                # The subannotator might write to the handle, thus the lock.
-                MatchAnnotation(line.strip(), subannotator)
-              else:
-                outhandle.write('!')
-                outhandle.write(line)
-            else:
-              outhandle.write(line)
+          lock.acquire()
+          try:
+            if not allow_subannotations and line.startswith('@@@'):
+              outhandle.write('!')
+            outhandle.write(line)
             outhandle.flush()
+          finally:
+            lock.release()
 
       # Pump piped stdio through filter_lines. IO going to files on disk is
       # not filtered.
@@ -584,7 +580,7 @@ def run_step(stream, name, cmd,
           outhandle = getattr(sys, key)
           threads.append(threading.Thread(
               target=filter_lines,
-              args=(inhandle, outhandle)))
+              args=(outlock, allow_subannotations, inhandle, outhandle)))
 
       for th in threads:
         th.start()
@@ -602,7 +598,7 @@ def run_step(stream, name, cmd,
   if trigger_specs:
     triggerBuilds(step_annotation, trigger_specs)
 
-  return returncode
+  return step_annotation, returncode
 
 def update_build_failure(failure, retcode, **_kwargs):
   """Potentially moves failure from False to True, depending on returncode of
@@ -633,9 +629,7 @@ def run_steps(steps, build_failure):
     if build_failure and not step.get('always_run', False):
       ret = None
     else:
-      prev_annotation = stream.step(step['name'])
-      prev_annotation.step_started()
-      ret = run_step(stream, step_annotation=prev_annotation, **step)
+      prev_annotation, ret = run_step(stream, **step)
       stream = prev_annotation.annotation_stream
       if ret > 0:
         stream.step_cursor(stream.current_step)
