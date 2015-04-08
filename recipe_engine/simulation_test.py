@@ -27,7 +27,7 @@ def RunRecipe(test_data):
   result = annotated_run.run_steps(stream, test_data.properties,
                                    test_data.properties, test_data)
 
-  return expect_tests.Result(list(result.steps_ran.values()))
+  return expect_tests.Result(list(s.step for s in result.steps_ran.values()))
 
 
 def test_gen_coverage():
