@@ -205,6 +205,11 @@ class StepData(object):
   def retcode(self):
     return self._retcode
 
+  @retcode.setter
+  def retcode(self, val):
+    assert self._retcode is None, 'Can\'t override already-defined retcode'
+    self._retcode = val
+
   @property
   def presentation(self):
     return self._presentation
@@ -447,7 +452,6 @@ class RecipeEngine(object):
 
   Recipe modules that are aware of the engine:
     * properties - uses engine.properties.
-    * step_history - uses engine.step_history.
     * step - uses engine.create_step(...).
 
   This class acts mostly as a documentation of expected public engine interface.
@@ -495,6 +499,13 @@ class RecipeEngine(object):
     raise NotImplementedError
 
 
+def _merge(*dicts):
+  result = {}
+  for d in dicts:
+    result.update(d)
+  return result
+
+
 class SequentialRecipeEngine(RecipeEngine):
   """Always runs step sequentially. Currently the engine used by default."""
   def __init__(self, stream, properties, test_data):
@@ -502,10 +513,11 @@ class SequentialRecipeEngine(RecipeEngine):
     self._stream = stream
     self._properties = properties
     self._test_data = test_data
-    self._step_history = collections.OrderedDict()
+    self._step_results = collections.OrderedDict()
+    self._step_disambiguation_index = {}
 
-    self._previous_step_annotation = None
-    self._previous_step_result = None
+    self._annotation = None
+    self._step_result = None
     self._api = None
 
   @property
@@ -515,14 +527,14 @@ class SequentialRecipeEngine(RecipeEngine):
   @property
   def previous_step_result(self):
     """Allows api.step to get the active result from any context."""
-    return self._previous_step_result
+    return self._step_result
 
   def _emit_results(self):
-    annotation = self._previous_step_annotation
-    step_result = self._previous_step_result
+    annotation = self._annotation
+    step_result = self._step_result
 
-    self._previous_step_annotation = None
-    self._previous_step_result = None
+    self._annotation = None
+    self._step_result = None
 
     if not annotation or not step_result:
       return
@@ -539,47 +551,126 @@ class SequentialRecipeEngine(RecipeEngine):
         step_result._step['~followup_annotations'] = lines
     annotation.step_ended()
 
-  def run_step(self, step):
-    ok_ret = step.pop('ok_ret')
-    infra_step = step.pop('infra_step')
-
-    test_data_fn = step.pop('step_test_data', recipe_test_api.StepTestData)
-    step_test = self._test_data.pop_step_test_data(step['name'],
-                                                   test_data_fn)
-    placeholders = render_step(step, step_test)
-
-    self._step_history[step['name']] = step
-    self._emit_results()
-
-    step_result = None
-
-    if not self._test_data.enabled:
-      self._previous_step_annotation, retcode = annotator.run_step(
-        self._stream, **step)
-
-      step_result = StepData(step, retcode)
-      self._previous_step_annotation.annotation_stream.step_cursor(step['name'])
+  def _disambiguate_name(self, step_name):
+    if step_name in self._step_disambiguation_index:
+      self._step_disambiguation_index[step_name] += 1
+      step_name += ' (%s)' % self._step_disambiguation_index[step_name]
     else:
-      self._previous_step_annotation = annotation = self._stream.step(
-              step['name'])
-      annotation.step_started()
-      try:
-        annotation.stream = cStringIO.StringIO()
+      self._step_disambiguation_index[step_name] = 1
+    return step_name
 
-        step_result = StepData(step, step_test.retcode)
+  def _disambiguate_step(self, step):
+    """Disambiguates step (destructively) by adding an index afterward. E.g.
+
+    gclient sync
+    gclient sync (2)
+    ...
+    """
+    step['name'] = self._disambiguate_name(step['name'])
+
+  def _subannotator(self):
+    class Subannotator(object):
+      # We use ann as the self argument because we are closing over the
+      # SequentialRecipeEngine self.
+      # pylint: disable=e0213
+      def BUILD_STEP(ann, name):
+        self._open_step({'name': self._disambiguate_name(name)})
+
+      def STEP_WARNINGS(ann):
+        self._step_result.presentation.status = 'WARNING'
+      def STEP_FAILURE(ann):
+        self._step_result.presentation.status = 'FAILURE'
+      def STEP_EXCEPTION(ann):
+        self._step_result.presentation.status = 'EXCEPTION'
+
+      def STEP_TEXT(ann, msg):
+        self._step_result.presentation.step_text = msg
+
+      def STEP_LINK(ann, link_label, link_url):
+        self._step_result.presentation.links[link_label] = link_url
+
+      def STEP_LOG_LINE(ann, log_label, log_line):
+        logs = self._step_result.presentation.logs
+        logs[log_label] = logs.get(log_label, []) + [log_line]
+
+      def STEP_LOG_END(ann, log_label):
+        # We do step finalization all at once.
+        pass
+
+      def SET_BUILD_PROPERTY(ann, name, value):
+        self._step_result.presentation.properties[name] = json.loads(value)
+
+      def STEP_SUMMARY_TEXT(ann, msg):
+        self._step_result.presentation.step_summary_text = msg
+
+    return Subannotator()
+
+  def _open_step(self, step):
+    self._emit_results()
+    step_result = StepData(step, None)
+    self._step_results[step['name']] = step_result
+    self._step_result = step_result
+    self._annotation = self._stream.step(step['name'])
+    self._annotation.step_started()
+    if self._test_data.enabled:
+      self._annotation.stream = cStringIO.StringIO()
+
+  def _step_kernel(self, step, step_test, subannotator=None):
+    if not self._test_data.enabled:
+      # Warning: run_step can change the current self._annotation and
+      # self._step_result if it uses a subannotator.
+      retcode = annotator.run_step(
+        self._stream,
+        step_annotation=self._annotation,
+        subannotator=subannotator,
+        **step)
+      self._step_result.retcode = retcode
+      # TODO(luqui): What is the purpose of this line?
+      self._annotation.annotation_stream.step_cursor(
+          self._step_result.step['name'])
+    else:
+      try:
+        self._step_result.retcode = step_test.retcode
       except OSError:
         exc_type, exc_value, exc_tb = sys.exc_info()
         trace = traceback.format_exception(exc_type, exc_value, exc_tb)
         trace_lines = ''.join(trace).split('\n')
-        annotation.write_log_lines('exception', filter(None, trace_lines))
-        annotation.step_exception()
+        self._annotation.write_log_lines(
+            'exception', filter(None, trace_lines))
+        self._annotation.step_exception()
 
-    get_placeholder_results(step_result, placeholders)
-    self._previous_step_result = step_result
+    return self._step_result.retcode
 
-    if step_result.retcode in ok_ret:
-      step_result.presentation.status = 'SUCCESS'
-      return step_result
+  def run_step(self, step):
+    self._disambiguate_step(step)
+    ok_ret = step.pop('ok_ret')
+    infra_step = step.pop('infra_step')
+    allow_subannotations = step.get('allow_subannotations', False)
+
+    test_data_fn = step.pop('step_test_data', recipe_test_api.StepTestData)
+    step_test = self._test_data.pop_step_test_data(step['name'], test_data_fn)
+    placeholders = render_step(step, step_test)
+
+    if allow_subannotations:
+      # TODO(luqui) Make this hierarchical.
+      self._open_step(step)
+      start_annotation = self._annotation
+      retcode = self._step_kernel(step, step_test,
+                                  subannotator=self._subannotator())
+
+      # Open a closing step for presentation modifications.
+      if self._annotation != start_annotation:
+        self._open_step({ 'name': step['name'] + ' (end)' })
+        self._step_result.retcode = retcode
+    else:
+      self._open_step(step)
+      self._step_kernel(step, step_test)
+
+    get_placeholder_results(self._step_result, placeholders)
+
+    if self._step_result.retcode in ok_ret:
+      self._step_result.presentation.status = 'SUCCESS'
+      return self._step_result
     else:
       if not infra_step:
         state = 'FAILURE'
@@ -588,13 +679,13 @@ class SequentialRecipeEngine(RecipeEngine):
         state = 'EXCEPTION'
         exc = recipe_api.InfraFailure
 
-      step_result.presentation.status = state
+      self._step_result.presentation.status = state
       if step_test.enabled:
         # To avoid cluttering the expectations, don't emit this in testmode.
-        self._previous_step_annotation.emit(
-            'step returned non-zero exit code: %d' % step_result.retcode)
+        self._annotation.emit(
+            'step returned non-zero exit code: %d' % self._step_result.retcode)
 
-      raise exc(step['name'], step_result)
+      raise exc(step['name'], self._step_result)
 
 
   def run(self, steps_function, api):
@@ -606,18 +697,18 @@ class SequentialRecipeEngine(RecipeEngine):
       try:
         retcode = steps_function(api)
         assert retcode is None, (
-        "Non-None return from GenSteps is not supported yet")
+        'Non-None return from GenSteps is not supported yet')
 
         assert not self._test_data.enabled or not self._test_data.step_data, (
-        "Unconsumed test data! %s" % (self._test_data.step_data,))
+        'Unconsumed test data! %s' % (self._test_data.step_data,))
       finally:
         self._emit_results()
     except recipe_api.StepFailure as f:
       retcode = f.retcode or 1
       final_result = {
-        "name": "$final_result",
-        "reason": f.reason,
-        "status_code": retcode
+        'name': '$final_result',
+        'reason': f.reason,
+        'status_code': retcode
       }
 
     except Exception as ex:
@@ -625,9 +716,9 @@ class SequentialRecipeEngine(RecipeEngine):
 
       retcode = -1
       final_result = {
-        "name": "$final_result",
-        "reason": "Uncaught Exception: %r" % ex,
-        "status_code": retcode
+        'name': '$final_result',
+        'reason': 'Uncaught Exception: %r' % ex,
+        'status_code': retcode
       }
 
       with self._stream.step('Uncaught Exception') as s:
@@ -638,9 +729,10 @@ class SequentialRecipeEngine(RecipeEngine):
         raise
 
     if final_result is not None:
-      self._step_history[final_result['name']] = final_result
+      self._step_results[final_result['name']] = (
+        StepData(final_result, final_result['status_code']))
 
-    return RecipeExecutionResult(retcode, self._step_history)
+    return RecipeExecutionResult(retcode, self._step_results)
 
   def create_step(self, step):  # pylint: disable=R0201
     # This version of engine doesn't do anything, just converts step to dict

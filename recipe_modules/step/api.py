@@ -8,10 +8,6 @@ from slave import recipe_util
 # Inherit from RecipeApiPlain because the only thing which is a step is
 # run_from_dict()
 class StepApi(recipe_api.RecipeApiPlain):
-  def __init__(self, **kwargs):
-    super(StepApi, self).__init__(**kwargs)
-    self._step_names = {}
-
   EXCEPTION = 'EXCEPTION'
   FAILURE = 'FAILURE'
   SUCCESS = 'SUCCESS'
@@ -94,11 +90,6 @@ class StepApi(recipe_api.RecipeApiPlain):
 
     command = list(wrapper)
     command += cmd
-
-    step_count = self._step_names.setdefault(name, 0) + 1
-    self._step_names[name] = step_count
-    if step_count > 1:
-      name = "%s (%d)" % (name, step_count)
 
     kwargs.update({'name': name, 'cmd': command})
     kwargs['ok_ret'] = ok_ret
