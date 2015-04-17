@@ -5,6 +5,7 @@
 from slave import recipe_api
 from slave import recipe_util
 
+
 # Inherit from RecipeApiPlain because the only thing which is a step is
 # run_from_dict()
 class StepApi(recipe_api.RecipeApiPlain):
@@ -61,6 +62,11 @@ class StepApi(recipe_api.RecipeApiPlain):
     return self._engine.previous_step_result
 
   @property
+  def context(self):
+    """ See recipe_api.py for docs. """
+    return recipe_api.context
+
+  @property
   def defer_results(self):
     """ See recipe_api.py for docs. """
     return recipe_api.defer_results
@@ -94,15 +100,19 @@ class StepApi(recipe_api.RecipeApiPlain):
 
     command = list(wrapper)
     command += cmd
-
+    compositor = recipe_api._STEP_CONTEXT
+    kwargs['cmd'] = command
     step_count = self._step_names.setdefault(name, 0) + 1
     self._step_names[name] = step_count
     if step_count > 1:
       name = "%s (%d)" % (name, step_count)
 
-    kwargs.update({'name': name, 'cmd': command})
     kwargs['ok_ret'] = ok_ret
     kwargs['infra_step'] = bool(infra_step)
+
+    # Obtain information from composite step parent.
+    kwargs['name'] = compositor.get_with_context('name', name)
+    kwargs['env'] = compositor.get_with_context('env', kwargs.get('env', {}))
 
     schema = self.make_config()
     schema.set_val(kwargs)

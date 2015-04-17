@@ -11,6 +11,9 @@ from .recipe_test_api import DisabledTestData, ModuleTestData
 
 from .recipe_util import ModuleInjectionSite
 
+from . import field_composer
+
+
 class StepFailure(Exception):
   """
   This is the base class for all step failures.
@@ -44,6 +47,7 @@ class StepFailure(Exception):
       return None
     return self.result.retcode
 
+
 class StepWarning(StepFailure):
   """
   A subclass of StepFailure, which still fails the build, but which is
@@ -55,6 +59,7 @@ class StepWarning(StepFailure):
 
   def __str__(self):
     return "Step Warning in %s" % self.name
+
 
 class InfraFailure(StepFailure):
   """
@@ -82,6 +87,12 @@ class AggregatedStepFailure(StepFailure):
 
   def __str__(self):
     return "Aggregate Step Failure"
+
+
+_FUNCTION_REGISTRY = {
+  'aggregated_result': {'combine': lambda a, b: b},
+  'name': {'combine': lambda a, b: '%s.%s' % (a, b)},
+  'env': {'combine': lambda a, b: dict(a, **b)}}
 
 
 class AggregatedResult(object):
@@ -142,7 +153,7 @@ class DeferredResult(object):
     return self._failure
 
 
-_AGGREGATOR = None
+_STEP_CONTEXT = field_composer.FieldComposer({}, _FUNCTION_REGISTRY)
 
 
 def non_step(func):
@@ -156,6 +167,17 @@ def non_step(func):
   """
   func._non_step = True # pylint: disable=protected-access
   return func
+
+
+@contextlib.contextmanager
+def context(fields):
+  global _STEP_CONTEXT
+  old = _STEP_CONTEXT
+  try:
+    _STEP_CONTEXT = old.compose(fields)
+    yield
+  finally:
+    _STEP_CONTEXT = old
 
 
 def composite_step(func):
@@ -175,28 +197,22 @@ def composite_step(func):
     return func
   @wraps(func)
   def _inner(*a, **kw):
-    global _AGGREGATOR
-    if _AGGREGATOR is None:
+    if _STEP_CONTEXT.get('aggregated_result') is None:
       return func(*a, **kw)
 
-    # We pull the current aggregator off here and restore it in the finally
-    # block at the end.  This allows us to use the call stack to maintain the
-    # state of the global _AGGREGATOR without a separate global stack.
-    agg = _AGGREGATOR
+    agg = _STEP_CONTEXT['aggregated_result']
 
-    # Setting the _AGGREGATOR to None allows the contents of func to be
+    # Setting the aggregated_result to None allows the contents of func to be
     # written in the same style (e.g. with exceptions) no matter how func is
     # being called.
-    _AGGREGATOR = None
-    try:
-      ret = func(*a, **kw)
-      agg.add_success(ret)
-      return DeferredResult(ret, None)
-    except StepFailure as ex:
-      agg.add_failure(ex)
-      return DeferredResult(None, ex)
-    finally:
-      _AGGREGATOR = agg
+    with context({'aggregated_result': None}):
+      try:
+        ret = func(*a, **kw)
+        agg.add_success(ret)
+        return DeferredResult(ret, None)
+      except StepFailure as ex:
+        agg.add_failure(ex)
+        return DeferredResult(None, ex)
   return _inner
 
 
@@ -224,26 +240,13 @@ def defer_results():
     failure will still be raised once you exit the suite inside
     the with statement.
   """
-  global _AGGREGATOR
-
-  # It doesn't make sense to nest defer_results context without traversing
-  # a composite_step function first. If you really need this, then you could
-  # also create an intermediate composite_step to contain the second
-  # defer_results clause
-  assert _AGGREGATOR is None, (
-    "may not call defer_results while in an active defer_results context"
-  )
-
-  try:
-    _AGGREGATOR = AggregatedResult()
+  assert _STEP_CONTEXT.get('aggregated_result') is None, (
+      "may not call defer_results in an active defer_results context")
+  agg = AggregatedResult()
+  with context({'aggregated_result': agg}):
     yield
-    if _AGGREGATOR.failures:
-      raise AggregatedStepFailure(_AGGREGATOR)
-  finally:
-    # Since we assert that _AGGREGATOR is None, we're assigning it back to
-    # None here, thus completing the loop. If we ever remove the assert above,
-    # we'll need to change this as well.
-    _AGGREGATOR = None
+  if agg.failures:
+    raise AggregatedStepFailure(agg)
 
 
 class RecipeApiMeta(type):
