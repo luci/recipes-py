@@ -349,7 +349,7 @@ def get_recipe_properties(factory_properties, build_properties):
 
       # Update properties with builders.pyl data.
       properties['recipe'] = builder['recipe']
-      properties.update(builder['properties'])
+      properties.update(builder.get('properties', {}))
     else:
       raise LookupError('Cannot find recipe for %s on %s' %
                         (build_properties['buildername'],
