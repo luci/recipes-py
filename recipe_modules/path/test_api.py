@@ -10,8 +10,3 @@ class PathTestApi(recipe_test_api.RecipeTestApi):
 
   def __getitem__(self, name):
     return Path(NamedBasePath(name))
-
-  def listdir(self, files):
-    def listdir_callback():
-      return self.m.json.output(files)
-    return listdir_callback

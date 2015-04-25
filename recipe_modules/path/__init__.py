@@ -1,5 +1,3 @@
 DEPS = [
-  'json',
   'platform',
-  'python',
 ]

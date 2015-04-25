@@ -8,78 +8,9 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "\nimport json, os, sys\nif os.path.exists(sys.argv[1]) and os.path.isdir(sys.argv[1]):\n  with open(sys.argv[2], 'w') as f:\n    json.dump(os.listdir(sys.argv[1]), f)\n",
-      "/fake/dir",
-      "/path/to/tmp/json"
-    ],
-    "name": "listdir fake dir",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@json.output@[@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"file 1\", @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"file 2\"@@@",
-      "@@@STEP_LOG_LINE@json.output@]@@@",
-      "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import json, os, sys@@@",
-      "@@@STEP_LOG_LINE@python.inline@if os.path.exists(sys.argv[1]) and os.path.isdir(sys.argv[1]):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  with open(sys.argv[2], 'w') as f:@@@",
-      "@@@STEP_LOG_LINE@python.inline@    json.dump(os.listdir(sys.argv[1]), f)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "some",
-      "command"
-    ],
-    "name": "manipulate file 1"
-  },
-  {
-    "cmd": [
-      "some",
-      "command"
-    ],
-    "name": "manipulate file 2"
-  },
-  {
-    "cmd": [
-      "echo",
-      "[TMP_BASE]\\prefix_a_tmp_1"
-    ],
-    "name": "print prefix_a"
-  },
-  {
-    "cmd": [
-      "echo",
-      "[TMP_BASE]\\prefix_b_tmp_2"
-    ],
-    "name": "print prefix_b"
-  },
-  {
-    "cmd": [
       "echo",
       "RECIPE_MODULE[path]\\resources\\dir\\file.py"
     ],
     "name": "print resource"
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "\nimport sys\nfrom common import chromium_utils\n\nchromium_utils.RemoveFilesWildcards(sys.argv[1], root=sys.argv[2])\n",
-      "*.o",
-      "[SLAVE_BUILD]"
-    ],
-    "name": "rmwildcard *.o in [SLAVE_BUILD]",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import sys@@@",
-      "@@@STEP_LOG_LINE@python.inline@from common import chromium_utils@@@",
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@chromium_utils.RemoveFilesWildcards(sys.argv[1], root=sys.argv[2])@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
   }
 ]
