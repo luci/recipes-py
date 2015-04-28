@@ -18,6 +18,7 @@ UnknownError = namedtuple('UnknownError', 'message')
 NoMatchingTestsError = namedtuple('NoMatchingTestsError', '')
 Result = namedtuple('Result', 'data')
 MultiResult = namedtuple('MultiResult', 'results')
+DirSeen = namedtuple('DirSeen', 'dir')
 
 class ResultStageAbort(Exception):
   pass
@@ -236,6 +237,12 @@ class Test(_Test):
   def restrict(self, tests):
     assert tests[0] is self
     return self
+
+  @property
+  def tests(self):
+    """Returns a list of all one tests in this singleton test. For uniformity
+    with MultiTest."""
+    return [self]
 
 
 _MultiTest = namedtuple(

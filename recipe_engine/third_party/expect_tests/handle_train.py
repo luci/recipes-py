@@ -7,11 +7,10 @@ import os
 import sys
 import time
 
-from .type_definitions import Handler, MultiTest
+from .type_definitions import DirSeen, Handler, MultiTest
 from .serialize import WriteNewData, DiffData, NonExistant, GetCurrentData
 
 
-DirSeen = collections.namedtuple('DirSeen', 'dir')
 ForcedWriteAction = collections.namedtuple('ForcedWriteAction', 'test')
 DiffWriteAction = collections.namedtuple('DiffWriteAction', 'test')
 SchemaDiffWriteAction = collections.namedtuple('SchemaDiffWriteAction', 'test')
@@ -31,12 +30,9 @@ class TrainHandler(Handler):
 
   @classmethod
   def gen_stage_loop(cls, _opts, tests, put_next_stage, put_result_stage):
-    dirs_seen = {None}
+    dirs_seen = set()
     for test in tests:
-      if isinstance(test, MultiTest):
-        subtests = test.tests
-      else:
-        subtests = [test]
+      subtests = test.tests
       for subtest in subtests:
         if subtest.expect_dir not in dirs_seen:
           try:

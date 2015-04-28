@@ -2,13 +2,14 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import collections
+import os
 import sys
 import time
-import collections
 
 from cStringIO import StringIO
 
-from .type_definitions import Handler, Failure
+from .type_definitions import DirSeen, Handler, Failure
 from .serialize import GetCurrentData, DiffData, NonExistant
 
 
@@ -19,6 +20,18 @@ Pass = collections.namedtuple('Pass', 'test')
 
 class TestHandler(Handler):
   """Run the tests."""
+
+  @classmethod
+  def gen_stage_loop(cls, _opts, tests, put_next_stage, put_result_stage):
+    dirs_seen = set()
+    for test in tests:
+      subtests = test.tests
+      for subtest in subtests:
+        if subtest.expect_dir not in dirs_seen:
+          put_result_stage(DirSeen(subtest.expect_dir))
+          dirs_seen.add(subtest.expect_dir)
+      put_next_stage(test)
+
   @classmethod
   def run_stage_loop(cls, _opts, results, put_next_stage):
     for test, result, log_lines in results:
@@ -35,6 +48,8 @@ class TestHandler(Handler):
   class ResultStageHandler(Handler.ResultStageHandler):
     def __init__(self, *args):
       super(TestHandler.ResultStageHandler, self).__init__(*args)
+      self.dirs_seen = set()
+      self.files_expected = collections.defaultdict(set)
       self.err_out = StringIO()
       self.start = time.time()
       self.errors = collections.defaultdict(int)
@@ -63,29 +78,42 @@ class TestHandler(Handler):
       self.errors[category] += 1
       self.num_tests += 1
 
+    def handle_DirSeen(self, dirseen):
+      self.dirs_seen.add(dirseen.dir)
+
+    def _handle_record(self, test):
+      self.num_tests += 1
+      if test.expect_path() is not None:
+        head, tail = os.path.split(test.expect_path())
+        self.files_expected[head].add(tail)
+
     def handle_Pass(self, p):
+      self._handle_record(p.test)
       if not self.opts.quiet:
         self._emit('.', p.test, 'ok')
-      self.num_tests += 1
 
     def handle_Fail(self, fail):
+      self._handle_record(fail.test)
       self._emit('F', fail.test, 'FAIL')
       self._add_result('\n'.join(fail.diff), fail.test, 'FAIL', 'failures',
                        fail.log_lines)
       return Failure()
 
     def handle_TestError(self, test_error):
+      self._handle_record(test_error.test)
       self._emit('E', test_error.test, 'ERROR')
       self._add_result(test_error.message, test_error.test, 'ERROR', 'errors',
                        test_error.log_lines)
       return Failure()
 
     def handle_UnknownError(self, error):
+      self._handle_record(error.test)
       self._emit('U', None, 'UNKNOWN ERROR')
       self._add_result(error.message, None, 'UNKNOWN ERROR', 'unknown_errors')
       return Failure()
 
     def handle_Missing(self, missing):
+      self._handle_record(missing.test)
       self._emit('M', missing.test, 'MISSING')
       self._add_result('', missing.test, 'MISSING', 'missing',
                        missing.log_lines)
@@ -93,6 +121,18 @@ class TestHandler(Handler):
 
     def finalize(self, aborted):
       # TODO(iannucci): print summary stats (and timing info?)
+      if not aborted and not self.opts.test_glob:
+        for d in self.dirs_seen:
+          expected = self.files_expected[d]
+          for f in os.listdir(d):
+            # Skip OWNERS files and files beginning with a '.' (like '.svn')
+            if f == 'OWNERS' or f[0] == '.':
+              continue
+            if f not in expected:
+              path = os.path.join(d, f)
+              self._add_result('Unexpected file %s' % path, None, 'UNEXPECTED',
+                               'unexpected_file')
+
       buf = self.err_out.getvalue()
       if buf:
         print

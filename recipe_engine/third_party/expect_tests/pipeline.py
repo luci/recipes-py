@@ -13,7 +13,7 @@ import traceback
 from cStringIO import StringIO
 
 from .type_definitions import (
-    Test, UnknownError, TestError, NoMatchingTestsError, MultiTest,
+    Test, UnknownError, TestError, NoMatchingTestsError,
     Result, ResultStageAbort)
 
 from . import util
@@ -73,11 +73,7 @@ def gen_loop_process(gen, test_queue, result_queue, opts, kill_switch,
           break
 
         ok_tests = []
-
-        if isinstance(root_test, MultiTest):
-          subtests = root_test.tests
-        else:
-          subtests = [root_test]
+        subtests = root_test.tests
 
         for subtest in subtests:
           if not isinstance(subtest, Test):
