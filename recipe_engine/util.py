@@ -111,6 +111,8 @@ def returns_placeholder(func):
     assert isinstance(ret, Placeholder)
     ret.name_pieces = (self.name, static_name(self, func))
     return ret
+  # prevent this placeholder-returning function from becoming a composite_step.
+  inner._non_step = True # pylint: disable=protected-access
   return inner
 
 
