@@ -4,6 +4,7 @@
       "echo",
       "[1, 2, 3]"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "echo",
     "stdout": "/path/to/tmp/json",
     "~followup_annotations": [

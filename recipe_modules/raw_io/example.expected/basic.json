@@ -4,6 +4,7 @@
       "echo",
       "Hello World"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "echo",
     "stderr": "/path/to/tmp/",
     "stdout": "/path/to/tmp/"
@@ -12,6 +13,7 @@
     "cmd": [
       "cat"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "cat",
     "stdin": "hello",
     "stdout": "/path/to/tmp/out"
@@ -21,6 +23,7 @@
       "echo",
       "huh"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "automock",
     "stdout": "/path/to/tmp/out"
   },
@@ -30,6 +33,7 @@
       "-c",
       "echo blah && echo fail 1>&2"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "automock (fail)",
     "stderr": "/path/to/tmp/err",
     "stdout": "/path/to/tmp/out"
@@ -39,6 +43,7 @@
       "echo",
       "leaking"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "leak stdout",
     "stdout": "[SLAVE_BUILD]/out.txt"
   },
@@ -47,6 +52,7 @@
       "ls",
       "/path/to/tmp/"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "list temp dir"
   },
   {
@@ -54,6 +60,7 @@
       "ls",
       "[SLAVE_BUILD]/out"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "leak dir"
   }
 ]

@@ -114,6 +114,8 @@ class StepApi(recipe_api.RecipeApiPlain):
     kwargs['name'] = compositor.get_with_context('name', name)
     kwargs['env'] = compositor.get_with_context('env', kwargs.get('env', {}))
 
+    kwargs.setdefault('cwd', self.m.path['slave_build'])
+
     schema = self.make_config()
     schema.set_val(kwargs)
     return self.run_from_dict(self._engine.create_step(schema))

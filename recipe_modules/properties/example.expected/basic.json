@@ -4,6 +4,7 @@
       "echo",
       "{'key': 'value'}"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "echo"
   },
   {
@@ -11,6 +12,7 @@
       "echo",
       "{'recipe': 'properties:example', 'test_prop': {'key': 'value'}}"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "echo all"
   }
 ]

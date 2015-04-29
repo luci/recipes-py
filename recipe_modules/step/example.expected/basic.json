@@ -4,6 +4,7 @@
       "echo",
       "Hello World"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "hello"
   },
   {
@@ -11,6 +12,7 @@
       "echo",
       "Why hello, there."
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "hello (2)"
   },
   {
@@ -19,6 +21,7 @@
       "-c",
       "echo Good bye, $friend."
     ],
+    "cwd": "[SLAVE_BUILD]",
     "env": {
       "friend": "Darth Vader"
     },
@@ -30,6 +33,7 @@
       "-c",
       "exit 3"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "anything is cool"
   },
   {
@@ -37,6 +41,7 @@
       "echo",
       "hello"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "hello (3)",
     "~followup_annotations": [
       "@@@STEP_EXCEPTION@@@"
@@ -47,6 +52,7 @@
       "echo",
       "goodbye"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "goodbye (2)"
   },
   {
@@ -54,6 +60,7 @@
       "echo",
       "testa"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "testa"
   },
   {
@@ -61,6 +68,7 @@
       "echo",
       "testb"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "testb"
   },
   {
@@ -70,6 +78,7 @@
       "up",
       "build"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "cleanup"
   },
   {
@@ -82,6 +91,7 @@
       "main",
       "application"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "application"
   },
   {

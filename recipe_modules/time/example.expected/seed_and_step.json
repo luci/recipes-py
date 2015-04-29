@@ -4,6 +4,7 @@
       "echo",
       "125"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "echo"
   }
 ]

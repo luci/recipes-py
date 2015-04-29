@@ -4,6 +4,7 @@
       "/bin/echo",
       "[SLAVE_BUILD]\\foo"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "step1"
   },
   {
@@ -11,6 +12,7 @@
       "echo",
       "RECIPE_MODULE[path]\\resources\\dir\\file.py"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "print resource"
   }
 ]
