@@ -47,7 +47,9 @@ class JsonOutputPlaceholder(recipe_util.Placeholder):
     try:
       ret = json.loads(raw_data, object_pairs_hook=collections.OrderedDict)
       valid = True
-    except ValueError:  # pragma: no cover
+    # TypeError is raised when raw_data is None, which can happen if the json
+    # file was not created. We then correctly handle this as invalid result.
+    except (ValueError, TypeError):  # pragma: no cover
       pass
 
     if self.add_json_log:
