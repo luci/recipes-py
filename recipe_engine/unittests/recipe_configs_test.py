@@ -53,7 +53,7 @@ from slave import recipe_config  # pylint: disable=F0401
 
 
 def evaluate_configurations(args):
-  mod_id, var_assignments, verbose = args
+  mod_id, var_assignments = args
   mod = getattr(RECIPE_MODULES, mod_id)
   ctx = mod.CONFIG_CTX
 
@@ -82,15 +82,11 @@ def evaluate_configurations(args):
           covered(result.as_jsonish)
       except recipe_config.BadConf:
         pass  # This is a possibly expected failure mode.
-    test_name = os.path.join(mod.__path__[0],
-                             covered(ctx.TEST_NAME_FORMAT, var_assignments))
-    print 'Evaluated', test_name
     return True
   except Exception as e:
-    print 'Caught exception [%s] with args (%s, %s): %s' % (
-        e, mod_id, var_assignments, config_name)
-    if verbose:
-      traceback.print_exc()
+    print ('Caught unknown exception [%s] for config name [%s] for module '
+           '[%s] with args %s') % (e, config_name, mod_id, var_assignments)
+    traceback.print_exc()
     return False
 
 
@@ -113,9 +109,9 @@ def multiprocessing_init():
     os._exit = exitfn
 
 
-def coverage_parallel_map(fn, verbose):
+def coverage_parallel_map(fn):
   combination_generator = (
-    (mod_id, var_assignments, verbose)
+    (mod_id, var_assignments)
     for mod_id, mod in RECIPE_MODULES.__dict__.iteritems()
       if mod_id[0] != '_' and mod.CONFIG_CTX
     for var_assignments in imap(dict, product(*[
@@ -134,16 +130,11 @@ def coverage_parallel_map(fn, verbose):
     pool.join()
 
 
-def main(argv):
+def main():
   COVERAGE.erase()
   init_recipe_modules()
 
-  p = argparse.ArgumentParser()
-  p.add_argument('--train', action='store_true', help='deprecated')
-  p.add_argument('--verbose', action='store_true', help='more output')
-  options = p.parse_args()
-
-  success = all(coverage_parallel_map(evaluate_configurations, options.verbose))
+  success = all(coverage_parallel_map(evaluate_configurations))
 
   COVERAGE.combine()
   total_covered = COVERAGE.report()
@@ -158,4 +149,4 @@ def main(argv):
 
 
 if __name__ == '__main__':
-  sys.exit(main(sys.argv))
+  sys.exit(main())
