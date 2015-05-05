@@ -51,3 +51,8 @@ def buildbot(c):
     c.base_paths[token] = c.base_paths['root'] + (token,)
   c.dynamic_paths['checkout'] = None
 
+@config_ctx(includes=['buildbot'])
+def swarming(c):
+  c.base_paths['slave_build'] = (
+      c.CURRENT_WORKING_DIR[:1] +
+      ('b', 'fake_build', 'slave', 'fake_slave', 'build'))

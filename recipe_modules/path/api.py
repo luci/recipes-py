@@ -172,8 +172,11 @@ class PathApi(recipe_api.RecipeApi):
       # Appended to placeholder '[TMP]' to get fake path in test.
       self._temp_dir = ['/']
 
-    # For now everything works on buildbot, so set it 'automatically' here.
-    self.set_config('buildbot', include_deps=False)
+    # We can't depend on another module in the ctor.
+    if self._engine.properties.get('path_config') == 'swarming':
+      self.set_config('swarming', include_deps=False)
+    else:
+      self.set_config('buildbot', include_deps=False)
 
   @recipe_api.composite_step
   def mock_add_paths(self, path):
