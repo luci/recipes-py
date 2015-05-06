@@ -314,8 +314,10 @@ def main(argv=None):
   opts, _ = get_args(argv)
 
   stream = annotator.StructuredAnnotationStream()
+  universe = recipe_loader.RecipeUniverse()
 
-  ret = run_steps(stream, opts.build_properties, opts.factory_properties)
+  ret = run_steps(stream, opts.build_properties, opts.factory_properties,
+                  universe)
   return ret.status_code
 
 
@@ -358,7 +360,7 @@ def get_recipe_properties(factory_properties, build_properties):
 
 
 def run_steps(stream, build_properties, factory_properties,
-              test_data=recipe_test_api.DisabledTestData()):
+              universe, test_data=recipe_test_api.DisabledTestData()):
   """Returns a tuple of (status_code, steps_ran).
 
   Only one of these values will be set at a time. This is mainly to support the
@@ -423,9 +425,9 @@ def run_steps(stream, build_properties, factory_properties,
     s.step_log_end('run_recipe')
 
     try:
-      recipe_module = recipe_loader.load_recipe(recipe)
+      recipe_module = universe.load_recipe(recipe)
       stream.emit('Running recipe with %s' % (properties,))
-      api = recipe_loader.create_recipe_api(recipe_module.DEPS,
+      api = recipe_loader.create_recipe_api(recipe_module.LOADED_DEPS,
                                             engine,
                                             test_data)
       steps = recipe_module.GenSteps

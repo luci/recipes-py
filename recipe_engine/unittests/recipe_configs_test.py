@@ -43,18 +43,29 @@ def covered(fn, *args, **kwargs):
   finally:
     COVERAGE.stop()
 
+UNIVERSE = recipe_loader.RecipeUniverse()
+
+def load_recipe_modules():
+  modules = {}
+  for modpath in recipe_loader.loop_over_recipe_modules():
+    # That's right, we're using the path as the local name! The local
+    # name really could be anything unique, we don't use it.
+    modules[modpath] = UNIVERSE.load(recipe_loader.PathDependency(
+        modpath, local_name=modpath, base_path=os.curdir))
+  return modules
+
+
 RECIPE_MODULES = None
 def init_recipe_modules():
   global RECIPE_MODULES
-  RECIPE_MODULES = covered(recipe_loader.load_recipe_modules,
-                           recipe_util.MODULE_DIRS())
+  RECIPE_MODULES = covered(load_recipe_modules)
 
 from slave import recipe_config  # pylint: disable=F0401
 
 
 def evaluate_configurations(args):
   mod_id, var_assignments = args
-  mod = getattr(RECIPE_MODULES, mod_id)
+  mod = RECIPE_MODULES[mod_id]
   ctx = mod.CONFIG_CTX
 
   config_name = None
@@ -91,8 +102,6 @@ def evaluate_configurations(args):
 
 
 def multiprocessing_init():
-  init_recipe_modules()
-
   # HACK: multiprocessing doesn't work with atexit, so shim the exit functions
   # instead. This allows us to save exactly one coverage file per subprocess.
   # pylint: disable=W0212
@@ -112,8 +121,8 @@ def multiprocessing_init():
 def coverage_parallel_map(fn):
   combination_generator = (
     (mod_id, var_assignments)
-    for mod_id, mod in RECIPE_MODULES.__dict__.iteritems()
-      if mod_id[0] != '_' and mod.CONFIG_CTX
+    for mod_id, mod in RECIPE_MODULES.iteritems()
+    if mod.CONFIG_CTX
     for var_assignments in imap(dict, product(*[
       [(key_name, val) for val in vals]
       for key_name, vals in mod.CONFIG_CTX.VAR_TEST_MAP.iteritems()

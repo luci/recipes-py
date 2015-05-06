@@ -84,17 +84,21 @@ def main():
   p(0, 'Common Methods -- %s' % os.path.splitext(recipe_api.__file__)[0])
   for method in sorted(common_methods):
     pmethod(1, method, getattr(recipe_api.RecipeApi, method))
-  RECIPE_MODULES = recipe_loader.load_recipe_modules(recipe_util.MODULE_DIRS())
+
+  universe = recipe_loader.RecipeUniverse()
+  deps = universe.deps_from_paths(
+      { modpath: modpath
+        for modpath in recipe_loader.loop_over_recipe_modules() },
+      base_path=None)
 
   inst = recipe_loader.create_recipe_api(
-      [mod_name for mod_name, mod in member_iter(RECIPE_MODULES)],
-      annotated_run.SequentialRecipeEngine(None, {}, None))
+      deps, annotated_run.SequentialRecipeEngine(None, {}, None))
 
-  for mod_name, mod in member_iter(RECIPE_MODULES):
+  for mod_name, mod in deps.iteritems():
     p(0)
     p(0, "(%s) -- %s" % (mod_name, mod.__path__[0]))
-    if mod.DEPS:
-      p(1, 'DEPS:', list(mod.DEPS))
+    if mod.LOADED_DEPS:
+      p(1, 'DEPS:', list(mod.LOADED_DEPS))
 
     subinst = getattr(inst, mod_name)
     bases = set(subinst.__class__.__bases__)

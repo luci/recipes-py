@@ -20,12 +20,17 @@ from slave import recipe_util
 import expect_tests  # pylint: disable=W0403
 
 
+UNIVERSE = recipe_loader.RecipeUniverse()
+
+
 def RunRecipe(test_data):
   stream = annotator.StructuredAnnotationStream(stream=open(os.devnull, 'w'))
   recipe_config_types.ResetTostringFns()
   # TODO(iannucci): Only pass test_data once.
   result = annotated_run.run_steps(stream, test_data.properties,
-                                   test_data.properties, test_data)
+                                   test_data.properties,
+                                   UNIVERSE,
+                                   test_data)
 
   return expect_tests.Result(list(result.steps_ran.values()))
 
@@ -37,6 +42,7 @@ def test_gen_coverage():
       [os.path.join(x, '*', 'test_api.py') for x in recipe_util.MODULE_DIRS()]
   )
 
+
 @expect_tests.covers(test_gen_coverage)
 def GenerateTests():
   cover_mods = []
@@ -45,8 +51,8 @@ def GenerateTests():
       cover_mods.append(os.path.join(mod_dir_base, '*', '*.py'))
 
   for recipe_path, recipe_name in recipe_loader.loop_over_recipes():
-    recipe = recipe_loader.load_recipe(recipe_name)
-    test_api = recipe_loader.create_test_api(recipe.DEPS)
+    recipe = UNIVERSE.load_recipe(recipe_name)
+    test_api = recipe_loader.create_test_api(recipe.LOADED_DEPS, UNIVERSE)
 
     covers = cover_mods + [recipe_path]
 

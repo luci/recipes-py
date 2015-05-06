@@ -9,6 +9,10 @@ from collections import namedtuple
 
 from infra.libs import infra_types
 
+
+RECIPE_MODULE_PREFIX = 'RECIPE_MODULES'
+
+
 def ResetTostringFns():
   RecipeConfigType._TOSTRING_MAP.clear()  # pylint: disable=W0212
 
@@ -84,12 +88,10 @@ class NamedBasePath(BasePath, namedtuple('NamedBasePath', 'name')):
 
 
 class ModuleBasePath(BasePath, namedtuple('ModuleBasePath', 'module')):
-  # All recipe modules are in a magic RECIPE_MODULES package.  Remove it
-  # before rendering MODULE[_] form.
-  MODULE_PREFIX_RE = r'^RECIPE_MODULES\.'
-
   def __repr__(self):
-    name = re.sub(self.MODULE_PREFIX_RE, '', self.module.__name__)
+    prefix = '%s.' % RECIPE_MODULE_PREFIX
+    assert self.module.__name__.startswith(prefix)
+    name = self.module.__name__[len(prefix):]
     return 'RECIPE_MODULE[%s]' % name
 
 

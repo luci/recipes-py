@@ -371,7 +371,7 @@ class RecipeApiPlain(ModuleInjectionSite):
     if include_deps:
       # TODO(iannucci): This is 'inefficient', since if a dep comes up multiple
       # times in this recursion, it will get set_config()'d multiple times
-      for dep in self._module.DEPS:
+      for dep in self._module.LOADED_DEPS:
         getattr(self.m, dep).set_config(config_name, optional=True, **params)
 
   def apply_config(self, config_name, config_object=None):

@@ -350,11 +350,18 @@ Next, we get to the `config_ctx`. This is the 'context' for all the config
 items in this file, and will become the `CONFIG_CTX` for the entire module.
 Other modules may add into this config context (for example, they could have
 a `hello_config.py` file, which imports this config context like
-`from RECIPE_MODULES.hello import CONFIG_CTX`. This will be useful for
-separation of concerns with the `set_config()` method.). The string format
-argument that `config_item_context` takes will be used to format the test case
-names and test expectation file names. Not terribly useful here, but it can be
-useful for making the test names more obvious in more complex cases.
+
+```python
+import DEPS
+CONFIG_CTX = DEPS['hello'].CONFIG_CTX
+```
+
+
+This will be useful for separation of concerns with the `set_config()`
+method.). The string format argument that `config_item_context` takes will be
+used to format the test case names and test expectation file names. Not
+terribly useful here, but it can be useful for making the test names more
+obvious in more complex cases.
 
 Finally we get to the config items themselves. A config item is a function
 decorated with the `config_ctx`, and takes a config blob as 'c'. The config item
