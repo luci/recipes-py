@@ -19,15 +19,22 @@ from slave import recipe_loader
 
 
 MODULES_WHITELIST = map(re.compile, [
+  r'base64',
+  r'collections',
   r'datetime',
   r'json',
+  r'math',
   r're',
+  r'urlparse',
 
   r'slave\.recipe_api',
 
-  # Skia does some evil ... :/
+  # TODO(luqui): Move skia modules into recipe resources
   r'common\.skia\..*',
   r'slave\.skia\..*',
+
+  # TODO(luqui): Move cros modules into recipe resources
+  r'common\.cros_chromite',
 ])
 
 
