@@ -178,17 +178,14 @@ class PathApi(recipe_api.RecipeApi):
     else:
       self.set_config('buildbot', include_deps=False)
 
-  @recipe_api.composite_step
   def mock_add_paths(self, path):
     """For testing purposes, assert that |path| exists."""
     if self._test_data.enabled:
       self._path_mod.mock_add_paths(path)
 
-  @recipe_api.composite_step
   def assert_absolute(self, path):
     assert self.abspath(path) == str(path), '%s is not absolute' % path
 
-  @recipe_api.non_step
   def mkdtemp(self, prefix):
     """Makes a new temp directory, returns path to it."""
     if not self._test_data.enabled:  # pragma: no cover
@@ -205,11 +202,9 @@ class PathApi(recipe_api.RecipeApi):
     self.mock_add_paths(temp_dir)
     return temp_dir
 
-  @recipe_api.non_step
   def __contains__(self, pathname):
     return bool(self.c.dynamic_paths.get(pathname))
 
-  @recipe_api.non_step
   def __setitem__(self, pathname, path):
     assert isinstance(path, recipe_config_types.Path), (
       'Setting dynamic path to something other than a Path: %r' % path)
@@ -219,7 +214,6 @@ class PathApi(recipe_api.RecipeApi):
       'Dynamic path values must be based on a base_path' % path.base)
     self.c.dynamic_paths[pathname] = path
 
-  @recipe_api.non_step
   def __getitem__(self, name):
     if name in self.c.dynamic_paths:
       r = self.c.dynamic_paths[name]
@@ -229,7 +223,6 @@ class PathApi(recipe_api.RecipeApi):
     if name in self.c.base_paths:
       return recipe_config_types.Path(recipe_config_types.NamedBasePath(name))
 
-  @recipe_api.non_step
   def __getattr__(self, name):
     # retrieve os.path attributes
     if name in self.OK_ATTRS:
@@ -239,7 +232,6 @@ class PathApi(recipe_api.RecipeApi):
     raise AttributeError("'%s' object has no attribute '%s'" %
                          (self._path_mod, name))  # pragma: no cover
 
-  @recipe_api.non_step
   def __dir__(self):  # pragma: no cover
     # Used for helping out show_me_the_modules.py
     return self.__dict__.keys() + list(self.OK_ATTRS + self.FILTER_METHODS)

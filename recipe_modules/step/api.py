@@ -26,7 +26,7 @@ class StepApi(recipe_api.RecipeApiPlain):
   @property
   def StepWarning(self):
     """ See recipe_api.py for docs. """
-    return recipe_api.StepWarning #pragma: no cover
+    return recipe_api.StepWarning
 
   @property
   def InfraFailure(self):

@@ -17,8 +17,12 @@ from . import field_composer
 class StepFailure(Exception):
   """
   This is the base class for all step failures.
+
+  Raising a StepFailure counts as 'running a step' for the purpose of
+  infer_composite_step's logic.
   """
   def __init__(self, name_or_reason, result=None):
+    _STEP_CONTEXT['ran_step'][0] = True
     if result:
       self.name = name_or_reason
       self.result = result
@@ -34,7 +38,7 @@ class StepFailure(Exception):
     return "Step({!r}) failed with return_code {}".format(
         self.name, self.result.retcode)
 
-  def __str__(self):
+  def __str__(self):  # pragma: no cover
     return "Step Failure in %s" % self.name
 
   @property
@@ -53,11 +57,11 @@ class StepWarning(StepFailure):
   A subclass of StepFailure, which still fails the build, but which is
   a warning. Need to figure out how exactly this will be useful.
   """
-  def reason_message(self):
+  def reason_message(self):  # pragma: no cover
     return "Warning: Step({!r}) returned {}".format(
           self.name, self.result.retcode)
 
-  def __str__(self):
+  def __str__(self):  # pragma: no cover
     return "Step Warning in %s" % self.name
 
 
@@ -85,14 +89,16 @@ class AggregatedStepFailure(StepFailure):
     msg += ', '.join((f.reason or f.name) for f in self.result.failures)
     return msg
 
-  def __str__(self):
+  def __str__(self):  # pragma: no cover
     return "Aggregate Step Failure"
 
 
 _FUNCTION_REGISTRY = {
   'aggregated_result': {'combine': lambda a, b: b},
+  'ran_step': {'combine': lambda a, b: b},
   'name': {'combine': lambda a, b: '%s.%s' % (a, b)},
-  'env': {'combine': lambda a, b: dict(a, **b)}}
+  'env': {'combine': lambda a, b: dict(a, **b)},
+}
 
 
 class AggregatedResult(object):
@@ -128,11 +134,6 @@ class AggregatedResult(object):
   def add_failure(self, exception):
     self.failures.append(exception)
 
-  def get_result(self, should_raise=True):
-    if self.failures and should_raise:
-      raise AggregatedStepFailure(self)
-    return self.all_results
-
 
 class DeferredResult(object):
   def __init__(self, result, failure):
@@ -153,20 +154,25 @@ class DeferredResult(object):
     return self._failure
 
 
-_STEP_CONTEXT = field_composer.FieldComposer({}, _FUNCTION_REGISTRY)
+_STEP_CONTEXT = field_composer.FieldComposer(
+  {'ran_step': [False]}, _FUNCTION_REGISTRY)
 
 
 def non_step(func):
   """A decorator which prevents a method from automatically being wrapped as
-  a composite_step by RecipeApiMeta.
+  a infer_composite_step by RecipeApiMeta.
 
   This is needed for utility methods which don't run any steps, but which are
   invoked within the context of a defer_results().
 
-  @see composite_step, defer_results, RecipeApiMeta
+  @see infer_composite_step, defer_results, RecipeApiMeta
   """
-  func._non_step = True # pylint: disable=protected-access
+  assert not hasattr(func, "_skip_inference"), \
+         "Double-wrapped method %r?" % func
+  func._skip_inference = True # pylint: disable=protected-access
   return func
+
+_skip_inference = non_step
 
 
 @contextlib.contextmanager
@@ -180,6 +186,50 @@ def context(fields):
     _STEP_CONTEXT = old
 
 
+def infer_composite_step(func):
+  """A decorator which possibly makes this step act as a single step, for the
+  purposes of the defer_results function.
+
+  Behaves as if this function were wrapped by composite_step, unless this
+  function:
+    * is already wrapped by non_step
+    * returns a result without calling api.step
+    * raises an exception which is not derived from StepFailure
+
+  In any of these cases, this function will behave like a normal function.
+
+  This decorator is automatically applied by RecipeApiMeta (or by inheriting
+  from RecipeApi). If you want to decalare a method's behavior explicitly, you
+  may decorate it with either composite_step or with non_step.
+  """
+  if getattr(func, "_skip_inference", False):
+    return func
+
+  @_skip_inference # to prevent double-wraps
+  @wraps(func)
+  def _inner(*a, **kw):
+    # We're not in a defer_results context, so just run the function normally.
+    if _STEP_CONTEXT.get('aggregated_result') is None:
+      return func(*a, **kw)
+
+    agg = _STEP_CONTEXT['aggregated_result']
+
+    # Setting the aggregated_result to None allows the contents of func to be
+    # written in the same style (e.g. with exceptions) no matter how func is
+    # being called.
+    with context({'aggregated_result': None, 'ran_step': [False]}):
+      try:
+        ret = func(*a, **kw)
+        if not _STEP_CONTEXT.get('ran_step', [False])[0]:
+          return ret
+        agg.add_success(ret)
+        return DeferredResult(ret, None)
+      except StepFailure as ex:
+        agg.add_failure(ex)
+        return DeferredResult(None, ex)
+  return _inner
+
+
 def composite_step(func):
   """A decorator which makes this step act as a single step, for the purposes of
   the defer_results function.
@@ -187,16 +237,17 @@ def composite_step(func):
   This means that this function will not quit during the middle of its execution
   because of a StepFailure, if there is an aggregator active.
 
-  There is NO penalty to adding this decorator to a function. Please do it.
-
-  RecipeApiMeta (the metaclass for RecipeApi) automatically applies this
-  decorator to all methods of the Api (unless func was already wrapped with
-  non_step).
+  You may use this decorator explicitly if infer_composite_step is detecting
+  the behavior of your method incorrectly to force it to behave as a step. You
+  may also need to use this if your Api class inherits from RecipeApiPlain and
+  so doesn't have its methods automatically wrapped by infer_composite_step.
   """
-  if getattr(func, "_non_step", False):
-    return func
+  @_skip_inference  # to avoid double-wraps
   @wraps(func)
   def _inner(*a, **kw):
+    # always counts as running a step
+    _STEP_CONTEXT['ran_step'][0] = True
+
     if _STEP_CONTEXT.get('aggregated_result') is None:
       return func(*a, **kw)
 
@@ -252,10 +303,10 @@ def defer_results():
 class RecipeApiMeta(type):
   def __new__(mcs, name, bases, attrs):
     """Automatically wraps all methods of subclasses of RecipeApi with
-    @composite_step. This allows defer_results to work as intended at all
-    times.
+    @infer_composite_step. This allows defer_results to work as intended without
+    manually decorating every method.
     """
-    wrap = lambda f: composite_step(f) if f else f
+    wrap = lambda f: infer_composite_step(f) if f else f
     for attr in attrs:
       val = attrs[attr]
       if isinstance(val, types.FunctionType):
@@ -282,7 +333,8 @@ class RecipeApiPlain(ModuleInjectionSite):
   USE RecipeApi INSTEAD, UNLESS your RecipeApi subclass derives from something
   which defines its own __metaclass__. Deriving from RecipeApi instead of
   RecipeApiPlain allows your RecipeApi subclass to automatically work with
-  defer_results without needing to decorate your methods with @composite_step.
+  defer_results without needing to decorate every methods with
+  @infer_composite_step.
   """
 
   def __init__(self, module=None, engine=None,
@@ -356,7 +408,7 @@ class RecipeApiPlain(ModuleInjectionSite):
     except KeyError:
       if optional:
         return None, generic_params
-      else:
+      else:  # pragma: no cover
         raise  # TODO(iannucci): raise a better exception.
 
   def set_config(self, config_name=None, optional=False, include_deps=True,
