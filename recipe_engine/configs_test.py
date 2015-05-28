@@ -1,5 +1,4 @@
-#!/usr/bin/python
-# Copyright 2013 The Chromium Authors. All rights reserved.
+# Copyright 2013-2015 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -21,20 +20,16 @@ import sys
 import traceback
 from itertools import product, imap
 
-import test_env  # "relative import" pylint: disable=W0403,W0611
-
-from slave import recipe_loader
-from slave import recipe_util
+from . import loader
+from . import config
 
 import coverage
 
 SCRIPT_PATH = os.path.abspath(os.path.dirname(__file__))
 SLAVE_DIR = os.path.abspath(os.path.join(SCRIPT_PATH, os.pardir))
 
-COVERAGE = (lambda: coverage.coverage(
-    include=[os.path.join(x, '*', '*config.py')
-             for x in recipe_util.MODULE_DIRS()],
-    data_file='.recipe_configs_test_coverage', data_suffix=True))()
+UNIVERSE = None
+COVERAGE = None
 
 def covered(fn, *args, **kwargs):
   COVERAGE.start()
@@ -43,15 +38,14 @@ def covered(fn, *args, **kwargs):
   finally:
     COVERAGE.stop()
 
-UNIVERSE = recipe_loader.RecipeUniverse()
 
 def load_recipe_modules():
   modules = {}
-  for modpath in recipe_loader.loop_over_recipe_modules():
+  for modpath in UNIVERSE.loop_over_recipe_modules():
     # That's right, we're using the path as the local name! The local
     # name really could be anything unique, we don't use it.
-    modules[modpath] = UNIVERSE.load(recipe_loader.PathDependency(
-        modpath, local_name=modpath, base_path=os.curdir))
+    modules[modpath] = UNIVERSE.load(loader.PathDependency(
+        modpath, local_name=modpath, base_path=os.curdir, universe=UNIVERSE))
   return modules
 
 
@@ -59,8 +53,6 @@ RECIPE_MODULES = None
 def init_recipe_modules():
   global RECIPE_MODULES
   RECIPE_MODULES = covered(load_recipe_modules)
-
-from slave import recipe_config  # pylint: disable=F0401
 
 
 def evaluate_configurations(args):
@@ -81,7 +73,7 @@ def evaluate_configurations(args):
         result = covered(root_item, make_item())
         if result.complete():
           covered(result.as_jsonish)
-      except recipe_config.BadConf, e:
+      except config.BadConf, e:
         pass # This is a possibly expected failure mode.
 
     for config_name, fn in ctx.CONFIG_ITEMS.iteritems():
@@ -91,7 +83,7 @@ def evaluate_configurations(args):
         result = covered(fn, make_item())
         if result.complete():
           covered(result.as_jsonish)
-      except recipe_config.BadConf:
+      except config.BadConf:
         pass  # This is a possibly expected failure mode.
     return True
   except Exception as e:
@@ -139,7 +131,14 @@ def coverage_parallel_map(fn):
     pool.join()
 
 
-def main():
+def main(universe):
+  global UNIVERSE
+  global COVERAGE
+  UNIVERSE = universe
+  COVERAGE = coverage.coverage(
+    include=[os.path.join(x, '*', '*config.py')
+             for x in UNIVERSE.module_dirs],
+    data_file='.recipe_configs_test_coverage', data_suffix=True)
   COVERAGE.erase()
   init_recipe_modules()
 

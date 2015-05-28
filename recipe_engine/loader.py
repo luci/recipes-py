@@ -1,18 +1,18 @@
-# Copyright 2013 The Chromium Authors. All rights reserved.
+# Copyright 2013-2015 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import contextlib
 import imp
 import inspect
 import os
 import sys
 
-from .recipe_util import (ROOT_PATH, RECIPE_DIRS, MODULE_DIRS,
-                          cached_unary, scan_directory)
+from .config import ConfigContext
+from .config_types import Path, ModuleBasePath, RECIPE_MODULE_PREFIX
 from .recipe_api import RecipeApi, RecipeApiPlain
-from .recipe_config import ConfigContext
-from .recipe_config_types import Path, ModuleBasePath, RECIPE_MODULE_PREFIX
 from .recipe_test_api import RecipeTestApi, DisabledTestData
+from .util import scan_directory
 
 
 class NoSuchRecipe(Exception):
@@ -29,9 +29,13 @@ class RecipeScript(object):
   @classmethod
   def from_script_path(cls, script_path, universe):
     """Evaluates a script and returns RecipeScript instance."""
+
     script_vars = {}
-    execfile(script_path, script_vars)
     script_vars['__file__'] = script_path
+
+    with _preserve_path():
+      execfile(script_path, script_vars)
+
     script_vars['LOADED_DEPS'] = universe.deps_from_mixed(
         script_vars.get('DEPS', []), os.path.basename(script_path))
     return cls(script_vars)
@@ -53,16 +57,16 @@ class Dependency(object):
 
 
 class PathDependency(Dependency):
-  def __init__(self, path, local_name, base_path=None):
+  def __init__(self, path, local_name, universe, base_path=None):
     self._path = _normalize_path(base_path, path)
     self._local_name = local_name
 
     # We forbid modules from living outside our main paths to keep clients
     # from going crazy before we have standardized recipe locations.
     mod_dir = os.path.dirname(path)
-    assert mod_dir in MODULE_DIRS(), (
+    assert mod_dir in universe.module_dirs, (
       'Modules living outside of approved directories are forbidden: '
-      '%s is not in %s' % (mod_dir, MODULE_DIRS()))
+      '%s is not in %s' % (mod_dir, universe.module_dirs))
 
   def load(self, universe):
     return _load_recipe_module_module(self._path, universe)
@@ -77,18 +81,28 @@ class PathDependency(Dependency):
 
 
 class NamedDependency(PathDependency):
-  def __init__(self, name):
-    for path in MODULE_DIRS():
+  def __init__(self, name, universe):
+    for path in universe.module_dirs:
       mod_path = os.path.join(path, name)
       if os.path.exists(os.path.join(mod_path, '__init__.py')):
-        super(NamedDependency, self).__init__(mod_path, name)
+        super(NamedDependency, self).__init__(mod_path, name, universe=universe)
         return
     raise NoSuchRecipe('Recipe module named %s does not exist' % name)
 
 
 class RecipeUniverse(object):
-  def __init__(self):
+  def __init__(self, module_dirs, recipe_dirs):
     self._loaded = {}
+    self._module_dirs = module_dirs[:]
+    self._recipe_dirs = recipe_dirs[:]
+
+  @property
+  def module_dirs(self):
+    return self._module_dirs
+
+  @property
+  def recipe_dirs(self):
+    return self._recipe_dirs
 
   def load(self, dep):
     """Load a Dependency."""
@@ -106,12 +120,14 @@ class RecipeUniverse(object):
 
   def deps_from_names(self, deps):
     """Load dependencies given a list simple module names (old style)."""
-    return { dep: self.load(NamedDependency(dep)) for dep in deps }
+    return { dep: self.load(NamedDependency(dep, universe=self))
+             for dep in deps }
 
   def deps_from_paths(self, deps, base_path):
     """Load dependencies given a dictionary of local names to module paths
     (new style)."""
-    return { name: self.load(PathDependency(path, name, base_path))
+    return { name: self.load(PathDependency(path, name,
+                                            universe=self, base_path=base_path))
              for name, path in deps.iteritems() }
 
   def deps_from_mixed(self, deps, base_path):
@@ -141,7 +157,7 @@ class RecipeUniverse(object):
     if ':' in recipe:
       module_name, example = recipe.split(':')
       assert example.endswith('example')
-      for module_dir in MODULE_DIRS():
+      for module_dir in self.module_dirs:
         for subitem in os.listdir(module_dir):
           if module_name == subitem:
             return RecipeScript.from_script_path(
@@ -150,12 +166,49 @@ class RecipeUniverse(object):
                          'Recipe example %s:%s does not exist' %
                          (module_name, example))
     else:
-      for recipe_path in (os.path.join(p, recipe) for p in RECIPE_DIRS()):
+      for recipe_path in (os.path.join(p, recipe) for p in self.recipe_dirs):
         if os.path.exists(recipe_path + '.py'):
           return RecipeScript.from_script_path(recipe_path + '.py', self)
     raise NoSuchRecipe(recipe)
 
+  def loop_over_recipe_modules(self):
+    for path in self.module_dirs:
+      if os.path.isdir(path):
+        for item in os.listdir(path):
+          subpath = os.path.join(path, item)
+          if os.path.isdir(subpath):
+            yield subpath
 
+  def loop_over_recipes(self):
+    """Yields pairs (path to recipe, recipe name).
+
+    Enumerates real recipes in recipes/* as well as examples in recipe_modules/*.
+    """
+    for path in self.recipe_dirs:
+      for recipe in scan_directory(
+          path, lambda f: f.endswith('.py') and f[0] != '_'):
+        yield recipe, recipe[len(path)+1:-len('.py')]
+    for path in self.module_dirs:
+      for recipe in scan_directory(
+          path, lambda f: f.endswith('example.py')):
+        module_name = os.path.dirname(recipe)[len(path)+1:]
+        yield recipe, '%s:example' % module_name
+
+
+@contextlib.contextmanager
+def _preserve_path():
+  old_path = sys.path[:]
+  try:
+    yield
+  finally:
+    sys.path = old_path
+
+
+def _normalize_path(base_path, path):
+  if base_path is None or os.path.isabs(path):
+    return os.path.realpath(path)
+  else:
+    return os.path.realpath(os.path.join(base_path, path))
 
 
 def _find_and_load_module(fullname, modname, path):
@@ -184,10 +237,12 @@ def _load_recipe_module_module(path, universe):
   mod.LOADED_DEPS = universe.deps_from_mixed(
       getattr(mod, 'DEPS', []), os.path.basename(path))
 
-  # TODO(luqui): Remove this hack once configs are cleaned.
-  sys.modules['%s.DEPS' % fullname] = mod.LOADED_DEPS
-  _recursive_import(path, RECIPE_MODULE_PREFIX)
-  _patchup_module(modname, mod)
+  # Prevent any modules that mess with sys.path from leaking.
+  with _preserve_path():
+    # TODO(luqui): Remove this hack once configs are cleaned.
+    sys.modules['%s.DEPS' % fullname] = mod.LOADED_DEPS
+    _recursive_import(path, RECIPE_MODULE_PREFIX)
+    _patchup_module(modname, mod)
 
   return mod
 
@@ -335,34 +390,4 @@ def create_test_api(toplevel_deps, universe):
   return api
 
 
-def loop_over_recipe_modules():
-  for path in MODULE_DIRS():
-    if os.path.isdir(path):
-      for item in os.listdir(path):
-        subpath = os.path.join(path, item)
-        if os.path.isdir(subpath):
-          yield subpath
-
-
-def loop_over_recipes():
-  """Yields pairs (path to recipe, recipe name).
-
-  Enumerates real recipes in recipes/* as well as examples in recipe_modules/*.
-  """
-  for path in RECIPE_DIRS():
-    for recipe in scan_directory(
-        path, lambda f: f.endswith('.py') and f[0] != '_'):
-      yield recipe, recipe[len(path)+1:-len('.py')]
-  for path in MODULE_DIRS():
-    for recipe in scan_directory(
-        path, lambda f: f.endswith('example.py')):
-      module_name = os.path.dirname(recipe)[len(path)+1:]
-      yield recipe, '%s:example' % module_name
-
-
-def _normalize_path(base_path, path):
-  if base_path is None or os.path.isabs(path):
-    return os.path.realpath(path)
-  else:
-    return os.path.realpath(os.path.join(base_path, path))
 

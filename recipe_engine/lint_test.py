@@ -10,15 +10,15 @@ generally not safe in recipes if they depend on the platform, since
 e.g. you can run a recipe simulation for a Windows recipe on Linux.
 """
 
+# TODO(luqui): Implement lint for recipe modules also.
+
 import re
+import os
+import sys
 import types
 
-import test_env  # pylint: disable=W0611,W0403
 
-from slave import recipe_loader
-
-
-MODULES_WHITELIST = map(re.compile, [
+MODULES_WHITELIST = [
   r'base64',
   r'collections',
   r'datetime',
@@ -26,16 +26,7 @@ MODULES_WHITELIST = map(re.compile, [
   r'math',
   r're',
   r'urlparse',
-
-  r'slave\.recipe_api',
-
-  # TODO(luqui): Move skia modules into recipe resources
-  r'common\.skia\..*',
-  r'slave\.skia\..*',
-
-  # TODO(luqui): Move cros modules into recipe resources
-  r'common\.cros_chromite',
-])
+]
 
 
 class ImportViolationError(Exception):
@@ -46,7 +37,7 @@ class TestFailure(Exception):
   pass
 
 
-def ImportsTest(recipe_path, recipe_name, universe):
+def ImportsTest(recipe_path, recipe_name, whitelist, universe):
   """Tests that recipe_name only uses allowed imports.
 
   Returns a list of errors, or an empty list if there are no errors (duh).
@@ -57,7 +48,7 @@ def ImportsTest(recipe_path, recipe_name, universe):
     val = getattr(recipe, attr)
     if isinstance(val, types.ModuleType):
       module_name = val.__name__
-      for pattern in MODULES_WHITELIST:
+      for pattern in whitelist:
         if pattern.match(val.__name__):
           break
       else:
@@ -66,16 +57,13 @@ def ImportsTest(recipe_path, recipe_name, universe):
                (recipe_path, module_name))
 
 
-def MainTest():
-  universe = recipe_loader.RecipeUniverse()
+def main(universe, whitelist=[]):
+  whitelist = map(re.compile, MODULES_WHITELIST + whitelist)
 
   errors = []
-  for recipe_path, recipe_name in recipe_loader.loop_over_recipes():
-    errors.extend(ImportsTest(recipe_path, recipe_name, universe))
+  for recipe_path, recipe_name in universe.loop_over_recipes():
+    errors.extend(ImportsTest(recipe_path, recipe_name, whitelist, universe))
 
   if errors:
     raise TestFailure('\n'.join(map(str, errors)))
 
-
-if __name__ == '__main__':
-  MainTest()

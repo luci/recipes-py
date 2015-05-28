@@ -121,7 +121,7 @@ def _parse_args(args, test_gen):
   return opts
 
 
-def main(name, test_gen, cover_branches=False, args=None):
+def main(name, test_gen, cover_branches=False, cover_omit=None, args=None):
   """Entry point for tests using expect_tests.
 
   Example:
@@ -155,7 +155,7 @@ def main(name, test_gen, cover_branches=False, args=None):
 
     cover_ctx.cleanup()
     if not killed and not opts.test_glob:
-      if not cover_ctx.report(opts.verbose):
+      if not cover_ctx.report(verbose=opts.verbose, omit=cover_omit):
         sys.exit(2)
 
     sys.exit(error or killed)
