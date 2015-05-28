@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 from infra.libs.infra_types import freeze, thaw
-from slave import recipe_api
+from recipe_engine import recipe_api
 import collections
 
 # Use RecipeApiPlain because collections.Mapping has its own metaclass.

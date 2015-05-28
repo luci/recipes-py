@@ -7,7 +7,7 @@ DEPS = [
   'step',
 ]
 
-from slave import recipe_api
+from recipe_engine import recipe_api
 
 def GenSteps(api):
   # TODO(martinis) change this

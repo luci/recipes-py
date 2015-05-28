@@ -1,6 +1,6 @@
 import json
 
-from slave import recipe_test_api
+from recipe_engine import recipe_test_api
 
 class JsonTestApi(recipe_test_api.RecipeTestApi):
   @recipe_test_api.placeholder_step_data

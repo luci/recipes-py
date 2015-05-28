@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-from slave import recipe_test_api
+from recipe_engine import recipe_test_api
 
 class TimeTestApi(recipe_test_api.RecipeTestApi):
   @recipe_test_api.mod_test_data

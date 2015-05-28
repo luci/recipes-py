@@ -1,4 +1,4 @@
-from slave import recipe_test_api
+from recipe_engine import recipe_test_api
 
 class PlatformTestApi(recipe_test_api.RecipeTestApi):
   @recipe_test_api.mod_test_data

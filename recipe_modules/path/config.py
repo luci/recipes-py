@@ -2,8 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-from slave.recipe_config import config_item_context, ConfigGroup, Dict, Static
-from slave.recipe_config_types import Path
+from recipe_engine.config import config_item_context, ConfigGroup, Dict, Static
+from recipe_engine.config_types import Path
 
 def BaseConfig(CURRENT_WORKING_DIR, TEMP_DIR, **_kwargs):
   assert CURRENT_WORKING_DIR[0].endswith(('\\', '/'))

@@ -1,4 +1,4 @@
-# Copyright 2013 The Chromium Authors. All rights reserved.
+# Copyright 2013-2015 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -270,7 +270,8 @@ class ConfigContext(object):
         return ret
       inner.DEFAULT_CONFIG_VARS = default_config_vars
 
-      assert name not in self.CONFIG_ITEMS
+      assert name not in self.CONFIG_ITEMS, (
+          '%s is already in CONFIG_ITEMS' % name)
       self.CONFIG_ITEMS[name] = inner
       if group:
         self.MUTEX_GROUPS.setdefault(group, set()).add(name)

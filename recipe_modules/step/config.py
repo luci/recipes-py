@@ -4,11 +4,11 @@
 
 import collections
 
-from slave.recipe_config import List
-from slave.recipe_config import (config_item_context, ConfigGroup, ConfigList,
-                                 Dict, Single, Set)
-from slave.recipe_config_types import Path
-from slave.recipe_util import Placeholder
+from recipe_engine.config import List
+from recipe_engine.config import (config_item_context, ConfigGroup, ConfigList,
+                          Dict, Single, Set)
+from recipe_engine.config_types import Path
+from recipe_engine.util import Placeholder
 
 
 def BaseConfig(**_kwargs):

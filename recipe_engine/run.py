@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# Copyright (c) 2013 The Chromium Authors. All rights reserved.
+# Copyright (c) 2013-2015 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -64,27 +63,24 @@ iterable_of_things.
 'failed' is a boolean representing if the build is in a 'failed' state.
 """
 
+import collections
+import contextlib
 import copy
 import functools
 import json
-import optparse
 import os
 import subprocess
 import sys
+import threading
 import traceback
 
 import cStringIO
 
-import common.python26_polyfill  # pylint: disable=W0611
-import collections  # Import after polyfill to get OrderedDict on 2.6
 
-from common import annotator
-from common import chromium_utils
-
-from slave import recipe_loader
-from slave import recipe_test_api
-from slave import recipe_util
-from slave import recipe_api
+from . import loader
+from . import recipe_api
+from . import recipe_test_api
+from . import util
 
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -228,7 +224,7 @@ def render_step(step, step_test):
   placeholders = collections.defaultdict(lambda: collections.defaultdict(list))
   new_cmd = []
   for item in step.get('cmd', []):
-    if isinstance(item, recipe_util.Placeholder):
+    if isinstance(item, util.Placeholder):
       module_name, placeholder_name = item.name_pieces
       tdata = step_test.pop_placeholder(item.name_pieces)
       new_cmd.extend(item.render(tdata))
@@ -243,7 +239,7 @@ def render_step(step, step_test):
     placeholder = step.get(key)
     tdata = None
     if placeholder:
-      assert isinstance(placeholder, recipe_util.Placeholder), key
+      assert isinstance(placeholder, util.Placeholder), key
       tdata = getattr(step_test, key)
       placeholder.render(tdata)
       assert placeholder.backing_file
@@ -284,83 +280,15 @@ def get_callable_name(func):
     return func.__name__
 
 
-def get_args(argv):
-  """Process command-line arguments."""
-
-  parser = optparse.OptionParser(
-      description='Entry point for annotated builds.')
-  parser.add_option('--build-properties',
-                    action='callback', callback=chromium_utils.convert_json,
-                    type='string', default={},
-                    help='build properties in JSON format')
-  parser.add_option('--factory-properties',
-                    action='callback', callback=chromium_utils.convert_json,
-                    type='string', default={},
-                    help='factory properties in JSON format')
-  parser.add_option('--build-properties-gz',
-                    action='callback', callback=chromium_utils.convert_gz_json,
-                    type='string', default={}, dest='build_properties',
-                    help='build properties in b64 gz JSON format')
-  parser.add_option('--factory-properties-gz',
-                    action='callback', callback=chromium_utils.convert_gz_json,
-                    type='string', default={}, dest='factory_properties',
-                    help='factory properties in b64 gz JSON format')
-  parser.add_option('--keep-stdin', action='store_true', default=False,
-                    help='don\'t close stdin when running recipe steps')
-  return parser.parse_args(argv)
-
-
-def main(argv=None):
-  opts, _ = get_args(argv)
-
-  stream = annotator.StructuredAnnotationStream()
-  universe = recipe_loader.RecipeUniverse()
-
-  ret = run_steps(stream, opts.build_properties, opts.factory_properties,
-                  universe)
-  return ret.status_code
-
-
 # Return value of run_steps and RecipeEngine.run.
 RecipeExecutionResult = collections.namedtuple(
     'RecipeExecutionResult', 'status_code steps_ran')
 
 
-def get_recipe_properties(factory_properties, build_properties):
-  """Constructs the recipe's properties from buildbot's properties.
-
-  This merges factory_properties and build_properties.  Furthermore, it
-  tries to reconstruct the 'recipe' property from builders.pyl if it isn't
-  already there, and in that case merges in properties form builders.pyl.
-  """
-  properties = factory_properties.copy()
-  properties.update(build_properties)
-
-  # Try to reconstruct the recipe from builders.pyl if not given.
-  if 'recipe' not in properties:
-    mastername = properties['mastername']
-    buildername = properties['buildername']
-
-    master_path = chromium_utils.MasterPath(mastername)
-    builders_file = os.path.join(master_path, 'builders.pyl')
-    if os.path.isfile(builders_file):
-      builders = chromium_utils.ReadBuildersFile(builders_file)
-      assert buildername in builders['builders'], (
-        'buildername %s is not listed in %s' % (buildername, builders_file))
-      builder = builders['builders'][buildername]
-
-      # Update properties with builders.pyl data.
-      properties['recipe'] = builder['recipe']
-      properties.update(builder.get('properties', {}))
-    else:
-      raise LookupError('Cannot find recipe for %s on %s' %
-                        (build_properties['buildername'],
-                        build_properties['mastername']))
-  return properties
-
-
-def run_steps(stream, build_properties, factory_properties,
-              universe, test_data=recipe_test_api.DisabledTestData()):
+def run_steps(properties,
+              stream,
+              universe,
+              test_data=recipe_test_api.DisabledTestData()):
   """Returns a tuple of (status_code, steps_ran).
 
   Only one of these values will be set at a time. This is mainly to support the
@@ -369,20 +297,16 @@ def run_steps(stream, build_properties, factory_properties,
   stream.honor_zero_return_code()
 
   # TODO(iannucci): Stop this when blamelist becomes sane data.
-  if ('blamelist_real' in build_properties and
-      'blamelist' in build_properties):
-    build_properties['blamelist'] = build_properties['blamelist_real']
-    del build_properties['blamelist_real']
+  if ('blamelist_real' in properties and
+      'blamelist' in properties):
+    properties['blamelist'] = properties['blamelist_real']
+    del properties['blamelist_real']
 
   # NOTE(iannucci): 'root' was a terribly bad idea and has been replaced by
   # 'patch_project'. 'root' had Rietveld knowing about the implementation of
   # the builders. 'patch_project' lets the builder (recipe) decide its own
   # destiny.
-  build_properties.pop('root', None)
-
-  properties = get_recipe_properties(
-      factory_properties=factory_properties,
-      build_properties=build_properties)
+  properties.pop('root', None)
 
   # TODO(iannucci): A much better way to do this would be to dynamically
   #   detect if the mirrors are actually available during the execution of the
@@ -427,12 +351,12 @@ def run_steps(stream, build_properties, factory_properties,
     try:
       recipe_module = universe.load_recipe(recipe)
       stream.emit('Running recipe with %s' % (properties,))
-      api = recipe_loader.create_recipe_api(recipe_module.LOADED_DEPS,
+      api = loader.create_recipe_api(recipe_module.LOADED_DEPS,
                                             engine,
                                             test_data)
       steps = recipe_module.GenSteps
       s.step_text('<br/>running recipe: "%s"' % recipe)
-    except recipe_loader.NoSuchRecipe as e:
+    except loader.NoSuchRecipe as e:
       s.step_text('<br/>recipe not found: %s' % e)
       s.step_failure()
       return RecipeExecutionResult(2, None)
@@ -440,6 +364,236 @@ def run_steps(stream, build_properties, factory_properties,
   # Run the steps emitted by a recipe via the engine, emitting annotations
   # into |stream| along the way.
   return engine.run(steps, api)
+
+
+def _merge_envs(original, override):
+  """Merges two environments.
+
+  Returns a new environment dict with entries from |override| overwriting
+  corresponding entries in |original|. Keys whose value is None will completely
+  remove the environment variable. Values can contain %(KEY)s strings, which
+  will be substituted with the values from the original (useful for amending, as
+  opposed to overwriting, variables like PATH).
+  """
+  result = original.copy()
+  if not override:
+    return result
+  for k, v in override.items():
+    if v is None:
+      if k in result:
+        del result[k]
+    else:
+      result[str(k)] = str(v) % original
+  return result
+
+
+def _print_step(step, env, stream):
+  """Prints the step command and relevant metadata.
+
+  Intended to be similar to the information that Buildbot prints at the
+  beginning of each non-annotator step.
+  """
+  step_info_lines = []
+  step_info_lines.append(' '.join(step['cmd']))
+  step_info_lines.append('in dir %s:' % (step['cwd'] or os.getcwd()))
+  for key, value in sorted(step.items()):
+    if value is not None:
+      if callable(value):
+        # This prevents functions from showing up as:
+        #   '<function foo at 0x7f523ec7a410>'
+        # which is tricky to test.
+        value = value.__name__+'(...)'
+      step_info_lines.append(' %s: %s' % (key, value))
+  step_info_lines.append('full environment:')
+  for key, value in sorted(env.items()):
+    step_info_lines.append(' %s: %s' % (key, value))
+  step_info_lines.append('')
+  stream.emit('\n'.join(step_info_lines))
+
+
+@contextlib.contextmanager
+def _modify_lookup_path(path):
+  """Places the specified path into os.environ.
+
+  Necessary because subprocess.Popen uses os.environ to perform lookup on the
+  supplied command, and only uses the |env| kwarg for modifying the environment
+  of the child process.
+  """
+  saved_path = os.environ['PATH']
+  try:
+    if path is not None:
+      os.environ['PATH'] = path
+    yield
+  finally:
+    os.environ['PATH'] = saved_path
+
+
+def _normalize_change(change):
+  assert isinstance(change, dict), 'Change is not a dict'
+  change = change.copy()
+
+  # Convert when_timestamp to UNIX timestamp.
+  when = change.get('when_timestamp')
+  if isinstance(when, datetime.datetime):
+    when = calendar.timegm(when.utctimetuple())
+    change['when_timestamp'] = when
+
+  return change
+
+
+def _trigger_builds(step, trigger_specs):
+  assert trigger_specs is not None
+  for trig in trigger_specs:
+    builder_name = trig.get('builder_name')
+    if not builder_name:
+      raise ValueError('Trigger spec: builder_name is not set')
+
+    changes = trig.get('buildbot_changes', [])
+    assert isinstance(changes, list), 'buildbot_changes must be a list'
+    changes = map(_normalize_change, changes)
+
+    step.step_trigger(json.dumps({
+        'builderNames': [builder_name],
+        'bucket': trig.get('bucket'),
+        'changes': changes,
+        'properties': trig.get('properties'),
+    }, sort_keys=True))
+
+
+def _run_annotated_step(
+    stream, name, cmd, cwd=None, env=None, allow_subannotations=False,
+    trigger_specs=None, **kwargs):
+  """Runs a single step.
+
+  Context:
+    stream: StructuredAnnotationStream to use to emit step
+
+  Step parameters:
+    name: name of the step, will appear in buildbots waterfall
+    cmd: command to run, list of one or more strings
+    cwd: absolute path to working directory for the command
+    env: dict with overrides for environment variables
+    allow_subannotations: if True, lets the step emit its own annotations
+    trigger_specs: a list of trigger specifications, which are dict with keys:
+        properties: a dict of properties.
+            Buildbot requires buildername property.
+
+  Known kwargs:
+    stdout: Path to a file to put step stdout into. If used, stdout won't appear
+            in annotator's stdout (and |allow_subannotations| is ignored).
+    stderr: Path to a file to put step stderr into. If used, stderr won't appear
+            in annotator's stderr.
+    stdin: Path to a file to read step stdin from.
+
+  Returns the returncode of the step.
+  """
+  if isinstance(cmd, basestring):
+    cmd = (cmd,)
+  cmd = map(str, cmd)
+
+  # For error reporting.
+  step_dict = kwargs.copy()
+  step_dict.update({
+      'name': name,
+      'cmd': cmd,
+      'cwd': cwd,
+      'env': env,
+      'allow_subannotations': allow_subannotations,
+      })
+  step_env = _merge_envs(os.environ, env)
+
+  step_annotation = stream.step(name)
+  step_annotation.step_started()
+
+  _print_step(step_dict, step_env, stream)
+  returncode = 0
+  if cmd:
+    try:
+      # Open file handles for IO redirection based on file names in step_dict.
+      fhandles = {
+        'stdout': subprocess.PIPE,
+        'stderr': subprocess.PIPE,
+        'stdin': None,
+      }
+      for key in fhandles:
+        if key in step_dict:
+          fhandles[key] = open(step_dict[key],
+                               'rb' if key == 'stdin' else 'wb')
+
+      if sys.platform.startswith('win'):
+        # Windows has a bad habit of opening a dialog when a console program
+        # crashes, rather than just letting it crash.  Therefore, when a program
+        # crashes on Windows, we don't find out until the build step times out.
+        # This code prevents the dialog from appearing, so that we find out
+        # immediately and don't waste time waiting for a user to close the
+        # dialog.
+        import ctypes
+        # SetErrorMode(SEM_NOGPFAULTERRORBOX). For more information, see:
+        # https://msdn.microsoft.com/en-us/library/windows/desktop/ms680621.aspx
+        ctypes.windll.kernel32.SetErrorMode(0x0002)
+        # CREATE_NO_WINDOW. For more information, see:
+        # https://msdn.microsoft.com/en-us/library/windows/desktop/ms684863.aspx
+        creationflags = 0x8000000
+      else:
+        creationflags = 0
+
+      with _modify_lookup_path(step_env.get('PATH')):
+        proc = subprocess.Popen(
+            cmd,
+            env=step_env,
+            cwd=cwd,
+            universal_newlines=True,
+            creationflags=creationflags,
+            **fhandles)
+
+      # Safe to close file handles now that subprocess has inherited them.
+      for handle in fhandles.itervalues():
+        if isinstance(handle, file):
+          handle.close()
+
+      outlock = threading.Lock()
+      def filter_lines(lock, allow_subannotations, inhandle, outhandle):
+        while True:
+          line = inhandle.readline()
+          if not line:
+            break
+          lock.acquire()
+          try:
+            if not allow_subannotations and line.startswith('@@@'):
+              outhandle.write('!')
+            outhandle.write(line)
+            outhandle.flush()
+          finally:
+            lock.release()
+
+      # Pump piped stdio through filter_lines. IO going to files on disk is
+      # not filtered.
+      threads = []
+      for key in ('stdout', 'stderr'):
+        if fhandles[key] == subprocess.PIPE:
+          inhandle = getattr(proc, key)
+          outhandle = getattr(sys, key)
+          threads.append(threading.Thread(
+              target=filter_lines,
+              args=(outlock, allow_subannotations, inhandle, outhandle)))
+
+      for th in threads:
+        th.start()
+      proc.wait()
+      for th in threads:
+        th.join()
+      returncode = proc.returncode
+    except OSError:
+      # File wasn't found, error will be reported to stream when the exception
+      # crosses the context manager.
+      step_annotation.step_exception_occured(*sys.exc_info())
+      raise
+
+  # TODO(martiniss) move logic into own module?
+  if trigger_specs:
+    _trigger_builds(step_annotation, trigger_specs)
+
+  return step_annotation, returncode
 
 
 class RecipeEngine(object):
@@ -556,7 +710,7 @@ class SequentialRecipeEngine(RecipeEngine):
     step_result = None
 
     if not self._test_data.enabled:
-      self._previous_step_annotation, retcode = annotator.run_step(
+      self._previous_step_annotation, retcode = _run_annotated_step(
         self._stream, **step)
 
       step_result = StepData(step, retcode)
@@ -650,67 +804,3 @@ class SequentialRecipeEngine(RecipeEngine):
     return step.as_jsonish()
 
 
-class ParallelRecipeEngine(RecipeEngine):
-  """New engine that knows how to run steps in parallel.
-
-  TODO(vadimsh): Implement it.
-  """
-
-  def __init__(self, stream, properties, test_data):
-    super(ParallelRecipeEngine, self).__init__()
-    self._stream = stream
-    self._properties = properties
-    self._test_data = test_data
-
-  @property
-  def properties(self):
-    return self._properties
-
-  def run(self, steps_function, api):
-    raise NotImplementedError
-
-  def create_step(self, step):
-    raise NotImplementedError
-
-
-def update_scripts():
-  if os.environ.get('RUN_SLAVE_UPDATED_SCRIPTS'):
-    os.environ.pop('RUN_SLAVE_UPDATED_SCRIPTS')
-    return False
-
-  stream = annotator.StructuredAnnotationStream()
-
-  with stream.step('update_scripts') as s:
-    build_root = os.path.join(SCRIPT_PATH, '..', '..')
-    gclient_name = 'gclient'
-    if sys.platform.startswith('win'):
-      gclient_name += '.bat'
-    gclient_path = os.path.join(build_root, '..', 'depot_tools', gclient_name)
-    gclient_cmd = [gclient_path, 'sync', '--force', '--verbose']
-    cmd_dict = {
-        'name': 'update_scripts',
-        'cmd': gclient_cmd,
-        'cwd': build_root,
-    }
-    annotator.print_step(cmd_dict, os.environ, stream)
-    if subprocess.call(gclient_cmd, cwd=build_root) != 0:
-      s.step_text('gclient sync failed!')
-      s.step_warnings()
-    os.environ['RUN_SLAVE_UPDATED_SCRIPTS'] = '1'
-
-    # After running update scripts, set PYTHONIOENCODING=UTF-8 for the real
-    # annotated_run.
-    os.environ['PYTHONIOENCODING'] = 'UTF-8'
-
-    return True
-
-
-def shell_main(argv):
-  if update_scripts():
-    return subprocess.call([sys.executable] + argv)
-  else:
-    return main(argv)
-
-
-if __name__ == '__main__':
-  sys.exit(shell_main(sys.argv))

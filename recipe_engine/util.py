@@ -1,4 +1,4 @@
-# Copyright 2013 The Chromium Authors. All rights reserved.
+# Copyright 2013-2015 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -6,20 +6,6 @@ import functools
 import os
 
 from cStringIO import StringIO
-
-
-SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
-BUILD_ROOT = os.path.dirname(os.path.dirname(SCRIPT_PATH))
-ROOT_PATH = os.path.abspath(os.path.join(
-  SCRIPT_PATH, os.pardir, os.pardir, os.pardir))
-BASE_DIRS = [
-  SCRIPT_PATH,
-  os.path.join(ROOT_PATH, 'build_internal', 'scripts', 'slave'),
-  os.path.join(ROOT_PATH, 'build_internal', 'scripts', 'slave-internal')
-]
-MODULE_DIRS = lambda: [os.path.join(x, 'recipe_modules') for x in BASE_DIRS]
-RECIPE_DIRS = lambda: [os.path.join(x, 'recipes') for x in BASE_DIRS]
-
 
 class RecipeAbort(Exception):
   pass

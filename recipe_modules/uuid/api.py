@@ -4,7 +4,7 @@
 
 import uuid
 
-from slave import recipe_api
+from recipe_engine import recipe_api
 
 class UuidApi(recipe_api.RecipeApi):
   def random(self):

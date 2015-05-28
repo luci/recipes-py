@@ -1,4 +1,4 @@
-# Copyright 2013 The Chromium Authors. All rights reserved.
+# Copyright 2013-2015 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -9,7 +9,7 @@ from functools import wraps
 
 from .recipe_test_api import DisabledTestData, ModuleTestData
 
-from .recipe_util import ModuleInjectionSite
+from .util import ModuleInjectionSite
 
 from . import field_composer
 

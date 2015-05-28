@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-from slave import recipe_api
+from recipe_engine import recipe_api
 
 class GeneratorScriptApi(recipe_api.RecipeApi):
   def __call__(self, path_to_script, *args, **kwargs):

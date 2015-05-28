@@ -6,7 +6,7 @@
 
 import math
 
-from slave import recipe_api
+from recipe_engine import recipe_api
 
 
 class MathUtilsApi(recipe_api.RecipeApi):

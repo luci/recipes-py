@@ -1,29 +1,12 @@
-#!/usr/bin/env python
-# Copyright (c) 2013 The Chromium Authors. All rights reserved.
+# Copyright (c) 2013-2015 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Contains generating and parsing systems of the Chromium Buildbot Annotator.
+"""Contains the parsing system of the Chromium Buildbot Annotator."""
 
-When executed as a script, this reads step name / command pairs from a file and
-executes those lines while annotating the output. The input is json:
-
-[{"name": "step_name", "cmd": ["command", "arg1", "arg2"]},
- {"name": "step_name2", "cmd": ["command2", "arg1"]}]
-
-"""
-
-import calendar
-import contextlib
-import datetime
-import json
-import optparse
 import os
-import subprocess
 import sys
-import threading
 import traceback
-
 
 # These are maps of annotation key -> number of expected arguments.
 STEP_ANNOTATIONS = {
@@ -192,6 +175,7 @@ class StepCommands(AnnotationPrinter):
     else:
       self.step_log_end(logname)
 
+
 class StepControlCommands(AnnotationPrinter):
   """Subclass holding step control commands. Intended to be subclassed.
 
@@ -201,7 +185,7 @@ class StepControlCommands(AnnotationPrinter):
   ANNOTATIONS = CONTROL_ANNOTATIONS
 
 
-class StructuredAnnotationStep(StepCommands):
+class StructuredAnnotationStep(StepCommands, StepControlCommands):
   """Helper class to provide context for a step."""
 
   def __init__(self, annotation_stream, *args, **kwargs):
@@ -241,29 +225,8 @@ class StructuredAnnotationStep(StepCommands):
 
     return True
 
-class AdvancedAnnotationStep(StepCommands, StepControlCommands):
-  """Holds additional step functions for finer step control.
 
-  Most users will want to use StructuredAnnotationSteps generated from a
-  StructuredAnnotationStream as these handle state automatically.
-  """
-
-  def __init__(self, *args, **kwargs):
-    super(AdvancedAnnotationStep, self).__init__(*args, **kwargs)
-
-
-class AdvancedAnnotationStream(AnnotationPrinter):
-  """Holds individual annotation generating functions for streams.
-
-  Most callers should use StructuredAnnotationStream to simplify coding and
-  avoid errors. For the rare cases where StructuredAnnotationStream is
-  insufficient (parallel step execution), the individual functions are exposed
-  here.
-  """
-  ANNOTATIONS = STREAM_ANNOTATIONS
-
-
-class StructuredAnnotationStream(AdvancedAnnotationStream):
+class StructuredAnnotationStream(AnnotationPrinter):
   """Provides an interface to handle an annotated build.
 
   StructuredAnnotationStream handles most of the step setup and closure calls
@@ -283,6 +246,7 @@ class StructuredAnnotationStream(AdvancedAnnotationStream):
     if warnings:
       s.step_warnings()
   """
+  ANNOTATIONS = STREAM_ANNOTATIONS
 
   def __init__(self, stream=sys.stdout,
                flush_before=sys.stderr,
@@ -357,39 +321,6 @@ def MatchAnnotation(line, callback_implementor):
   fn(*args)
 
 
-def _merge_envs(original, override):
-  """Merges two environments.
-
-  Returns a new environment dict with entries from |override| overwriting
-  corresponding entries in |original|. Keys whose value is None will completely
-  remove the environment variable. Values can contain %(KEY)s strings, which
-  will be substituted with the values from the original (useful for amending, as
-  opposed to overwriting, variables like PATH).
-  """
-  result = original.copy()
-  if not override:
-    return result
-  for k, v in override.items():
-    if v is None:
-      if k in result:
-        del result[k]
-    else:
-      result[str(k)] = str(v) % original
-  return result
-
-
-def _validate_step(step):
-  """Validates parameters of the step.
-  Returns None if it's OK, error message if not.
-  """
-  for req in ['cmd', 'name']:
-    if req not in step:
-      return 'missing \'%s\' parameter' % (req,)
-  if 'cwd' in step and not os.path.isabs(step['cwd']):
-    return '\'cwd\' should be an absolute path'
-  return None
-
-
 def print_step(step, env, stream):
   """Prints the step command and relevant metadata.
 
@@ -412,281 +343,3 @@ def print_step(step, env, stream):
     step_info_lines.append(' %s: %s' % (key, value))
   step_info_lines.append('')
   stream.emit('\n'.join(step_info_lines))
-
-
-@contextlib.contextmanager
-def modify_lookup_path(path):
-  """Places the specified path into os.environ.
-
-  Necessary because subprocess.Popen uses os.environ to perform lookup on the
-  supplied command, and only uses the |env| kwarg for modifying the environment
-  of the child process.
-  """
-  saved_path = os.environ['PATH']
-  try:
-    if path is not None:
-      os.environ['PATH'] = path
-    yield
-  finally:
-    os.environ['PATH'] = saved_path
-
-
-def normalizeChange(change):
-  assert isinstance(change, dict), 'Change is not a dict'
-  change = change.copy()
-
-  # Convert when_timestamp to UNIX timestamp.
-  when = change.get('when_timestamp')
-  if isinstance(when, datetime.datetime):
-    when = calendar.timegm(when.utctimetuple())
-    change['when_timestamp'] = when
-
-  return change
-
-
-def triggerBuilds(step, trigger_specs):
-  assert trigger_specs is not None
-  for trig in trigger_specs:
-    builder_name = trig.get('builder_name')
-    if not builder_name:
-      raise ValueError('Trigger spec: builder_name is not set')
-
-    changes = trig.get('buildbot_changes', [])
-    assert isinstance(changes, list), 'buildbot_changes must be a list'
-    changes = map(normalizeChange, changes)
-
-    step.step_trigger(json.dumps({
-        'builderNames': [builder_name],
-        'bucket': trig.get('bucket'),
-        'changes': changes,
-        'properties': trig.get('properties'),
-    }, sort_keys=True))
-
-
-def run_step(stream, name, cmd,
-             cwd=None, env=None,
-             allow_subannotations=False,
-             trigger_specs=None,
-             **kwargs):
-  """Runs a single step.
-
-  Context:
-    stream: StructuredAnnotationStream to use to emit step
-
-  Step parameters:
-    name: name of the step, will appear in buildbots waterfall
-    cmd: command to run, list of one or more strings
-    cwd: absolute path to working directory for the command
-    env: dict with overrides for environment variables
-    allow_subannotations: if True, lets the step emit its own annotations
-    trigger_specs: a list of trigger specifications, which are dict with keys:
-        properties: a dict of properties.
-            Buildbot requires buildername property.
-
-  Known kwargs:
-    stdout: Path to a file to put step stdout into. If used, stdout won't appear
-            in annotator's stdout (and |allow_subannotations| is ignored).
-    stderr: Path to a file to put step stderr into. If used, stderr won't appear
-            in annotator's stderr.
-    stdin: Path to a file to read step stdin from.
-
-  Returns the returncode of the step.
-  """
-  if isinstance(cmd, basestring):
-    cmd = (cmd,)
-  cmd = map(str, cmd)
-
-  # For error reporting.
-  step_dict = kwargs.copy()
-  step_dict.update({
-      'name': name,
-      'cmd': cmd,
-      'cwd': cwd,
-      'env': env,
-      'allow_subannotations': allow_subannotations,
-      })
-  step_env = _merge_envs(os.environ, env)
-
-  step_annotation = stream.step(name)
-  step_annotation.step_started()
-
-  print_step(step_dict, step_env, stream)
-  returncode = 0
-  if cmd:
-    try:
-      # Open file handles for IO redirection based on file names in step_dict.
-      fhandles = {
-        'stdout': subprocess.PIPE,
-        'stderr': subprocess.PIPE,
-        'stdin': None,
-      }
-      for key in fhandles:
-        if key in step_dict:
-          fhandles[key] = open(step_dict[key],
-                               'rb' if key == 'stdin' else 'wb')
-
-      if sys.platform.startswith('win'):
-        # Windows has a bad habit of opening a dialog when a console program
-        # crashes, rather than just letting it crash.  Therefore, when a program
-        # crashes on Windows, we don't find out until the build step times out.
-        # This code prevents the dialog from appearing, so that we find out
-        # immediately and don't waste time waiting for a user to close the
-        # dialog.
-        import ctypes
-        # SetErrorMode(SEM_NOGPFAULTERRORBOX). For more information, see:
-        # https://msdn.microsoft.com/en-us/library/windows/desktop/ms680621.aspx
-        ctypes.windll.kernel32.SetErrorMode(0x0002)
-        # CREATE_NO_WINDOW. For more information, see:
-        # https://msdn.microsoft.com/en-us/library/windows/desktop/ms684863.aspx
-        creationflags = 0x8000000
-      else:
-        creationflags = 0
-
-      with modify_lookup_path(step_env.get('PATH')):
-        proc = subprocess.Popen(
-            cmd,
-            env=step_env,
-            cwd=cwd,
-            universal_newlines=True,
-            creationflags=creationflags,
-            **fhandles)
-
-      # Safe to close file handles now that subprocess has inherited them.
-      for handle in fhandles.itervalues():
-        if isinstance(handle, file):
-          handle.close()
-
-      outlock = threading.Lock()
-      def filter_lines(lock, allow_subannotations, inhandle, outhandle):
-        while True:
-          line = inhandle.readline()
-          if not line:
-            break
-          lock.acquire()
-          try:
-            if not allow_subannotations and line.startswith('@@@'):
-              outhandle.write('!')
-            outhandle.write(line)
-            outhandle.flush()
-          finally:
-            lock.release()
-
-      # Pump piped stdio through filter_lines. IO going to files on disk is
-      # not filtered.
-      threads = []
-      for key in ('stdout', 'stderr'):
-        if fhandles[key] == subprocess.PIPE:
-          inhandle = getattr(proc, key)
-          outhandle = getattr(sys, key)
-          threads.append(threading.Thread(
-              target=filter_lines,
-              args=(outlock, allow_subannotations, inhandle, outhandle)))
-
-      for th in threads:
-        th.start()
-      proc.wait()
-      for th in threads:
-        th.join()
-      returncode = proc.returncode
-    except OSError:
-      # File wasn't found, error will be reported to stream when the exception
-      # crosses the context manager.
-      step_annotation.step_exception_occured(*sys.exc_info())
-      raise
-
-  # TODO(martiniss) move logic into own module?
-  if trigger_specs:
-    triggerBuilds(step_annotation, trigger_specs)
-
-  return step_annotation, returncode
-
-def update_build_failure(failure, retcode, **_kwargs):
-  """Potentially moves failure from False to True, depending on returncode of
-  the run step and the step's configuration.
-
-  can_fail_build: A boolean indicating that a bad retcode for this step should
-                  be intepreted as a build failure.
-
-  Returns new value for failure.
-
-  Called externally from annotated_run, which is why it's a separate function.
-  """
-  # TODO(iannucci): Allow step to specify "OK" return values besides 0?
-  return failure or retcode
-
-def run_steps(steps, build_failure):
-  for step in steps:
-    error = _validate_step(step)
-    if error:
-      print 'Invalid step - %s\n%s' % (error, json.dumps(step, indent=2))
-      sys.exit(1)
-
-  stream = StructuredAnnotationStream()
-  ret_codes = []
-  build_failure = False
-  prev_annotation = None
-  for step in steps:
-    if build_failure and not step.get('always_run', False):
-      ret = None
-    else:
-      prev_annotation, ret = run_step(stream, **step)
-      stream = prev_annotation.annotation_stream
-      if ret > 0:
-        stream.step_cursor(stream.current_step)
-        stream.emit('step returned non-zero exit code: %d' % ret)
-        prev_annotation.step_failure()
-
-      prev_annotation.step_ended()
-    build_failure = update_build_failure(build_failure, ret)
-    ret_codes.append(ret)
-  if prev_annotation:
-    prev_annotation.step_ended()
-  return build_failure, ret_codes
-
-
-def main():
-  usage = '%s <command list file or - for stdin>' % sys.argv[0]
-  parser = optparse.OptionParser(usage=usage)
-  _, args = parser.parse_args()
-  if not args:
-    parser.error('Must specify an input filename.')
-  if len(args) > 1:
-    parser.error('Too many arguments specified.')
-
-  steps = []
-
-  def force_list_str(lst):
-    ret = []
-    for v in lst:
-      if isinstance(v, basestring):
-        v = str(v)
-      elif isinstance(v, list):
-        v = force_list_str(v)
-      elif isinstance(v, dict):
-        v = force_dict_strs(v)
-      ret.append(v)
-    return ret
-
-  def force_dict_strs(obj):
-    ret = {}
-    for k, v in obj.iteritems():
-      if isinstance(v, basestring):
-        v = str(v)
-      elif isinstance(v, list):
-        v = force_list_str(v)
-      elif isinstance(v, dict):
-        v = force_dict_strs(v)
-      ret[str(k)] = v
-    return ret
-
-  if args[0] == '-':
-    steps.extend(json.load(sys.stdin, object_hook=force_dict_strs))
-  else:
-    with open(args[0], 'rb') as f:
-      steps.extend(json.load(f, object_hook=force_dict_strs))
-
-  return 1 if run_steps(steps, False)[0] else 0
-
-
-if __name__ == '__main__':
-  sys.exit(main())

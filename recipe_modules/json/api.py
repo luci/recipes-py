@@ -7,9 +7,9 @@ import collections
 import contextlib
 import json
 
-from slave import recipe_api
-from slave import recipe_util
-from slave import recipe_config_types
+from recipe_engine import recipe_api
+from recipe_engine import util as recipe_util
+from recipe_engine import config_types
 
 
 class JsonOutputPlaceholder(recipe_util.Placeholder):
@@ -68,7 +68,7 @@ class JsonApi(recipe_api.RecipeApi):
     @functools.wraps(json.dumps)
     def dumps(*args, **kwargs):
       kwargs['sort_keys'] = True
-      kwargs.setdefault('default', recipe_config_types.json_fixup)
+      kwargs.setdefault('default', config_types.json_fixup)
       return json.dumps(*args, **kwargs)
     self.dumps = dumps
 

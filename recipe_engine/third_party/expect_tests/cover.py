@@ -4,8 +4,6 @@
 
 from cStringIO import StringIO
 
-import test_env  # pylint: disable=W0611
-
 import coverage
 
 # This is instead of a contextmanager because it causes old pylints to crash :(
@@ -56,15 +54,15 @@ class CoverageContext(object):
     if self.enabled:
       self.cov.combine()
 
-  def report(self, verbose):
+  def report(self, verbose, omit=None):
     fail = False
 
     if self.enabled:
       if self.html_report:
-        self.cov.html_report(directory=self.html_report)
+        self.cov.html_report(directory=self.html_report, omit=None)
 
       outf = StringIO()
-      fail = self.cov.report(file=outf) != 100.0
+      fail = self.cov.report(file=outf, omit=omit) != 100.0
       summary = outf.getvalue().replace('%- 15s' % 'Name', 'Coverage Report', 1)
       if verbose:
         print

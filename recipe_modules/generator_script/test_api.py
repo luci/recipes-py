@@ -1,4 +1,4 @@
-from slave import recipe_test_api
+from recipe_engine import recipe_test_api
 
 class GeneratorScriptTestApi(recipe_test_api.RecipeTestApi):
   def __call__(self, script_name, *steps):
