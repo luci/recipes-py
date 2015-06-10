@@ -1,0 +1,112 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "Hello World"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "hello"
+  },
+  {
+    "cmd": [
+      "echo",
+      "Why hello, there."
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "hello (2)"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo Good bye, $friend."
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "env": {
+      "friend": "Darth Vader"
+    },
+    "name": "goodbye"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "exit 3"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "anything is cool"
+  },
+  {
+    "cmd": [
+      "echo",
+      "hello"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "hello (3)",
+    "~followup_annotations": [
+      "@@@STEP_EXCEPTION@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "goodbye"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "goodbye (2)"
+  },
+  {
+    "cmd": [
+      "echo",
+      "testa"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "testa"
+  },
+  {
+    "cmd": [
+      "echo",
+      "testb"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "testb"
+  },
+  {
+    "cmd": [
+      "echo",
+      "cleaning",
+      "up",
+      "build"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "cleanup"
+  },
+  {
+    "cmd": [
+      "python",
+      "test-wrapper.py",
+      "-v",
+      "--",
+      "echo",
+      "main",
+      "application"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "application"
+  },
+  {
+    "cmd": [
+      "echo",
+      "I",
+      "do",
+      "nothing"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "no-op"
+  },
+  {
+    "name": "$final_result",
+    "reason": "Invalid Step Data Access: StepDataAttributeError('The recipe attempted to access missing step data \"json\" for step \"no-op\". Please examine that step for errors.',)",
+    "status_code": -1
+  }
+]

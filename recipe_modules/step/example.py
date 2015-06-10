@@ -57,6 +57,11 @@ def GenSteps(api):
   api.step('application', ['echo', 'main', 'application'],
            wrapper=['python', 'test-wrapper.py', '-v', '--'])
 
+  if api.properties.get('access_invalid_data'):
+    result = api.step('no-op', ['echo', 'I', 'do', 'nothing'])
+    # Trying to access non-existent attributes on the result should raise.
+    _ = result.json.output
+
   # You can also raise a warning, which will act like a step failure, but
   # will turn the build yellow, and stop the build.
   raise api.step.StepWarning("Warning, robots approaching!")
@@ -90,6 +95,12 @@ def GenTests(api):
   yield (
       api.test('defer_results') +
       api.step_data('testa', retcode=1)
+    )
+
+  yield (
+      api.test('invalid_access') +
+      api.properties(access_invalid_data=True) +
+      api.expect_exception('StepDataAttributeError')
     )
 
   yield (

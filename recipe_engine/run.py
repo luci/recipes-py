@@ -185,6 +185,16 @@ class StepPresentation(object):
       annotator_step.set_build_property(key, json.dumps(value, sort_keys=True))
 
 
+class StepDataAttributeError(AttributeError):
+  """Raised when a non-existent attributed is accessed on a StepData object."""
+  def __init__(self, step, attr):
+    self.step = step
+    self.attr = attr
+    message = ('The recipe attempted to access missing step data "%s" for step '
+               '"%s". Please examine that step for errors.' % (attr, step))
+    super(StepDataAttributeError, self).__init__(message)
+
+
 class StepData(object):
   def __init__(self, step, retcode):
     self._retcode = retcode
@@ -204,6 +214,10 @@ class StepData(object):
   @property
   def presentation(self):
     return self._presentation
+
+  def __getattr__(self, name):
+    raise StepDataAttributeError(self._step['name'], name)
+
 
 # TODO(martiniss) update comment
 # Result of 'render_step', fed into 'step_callback'.
@@ -775,6 +789,22 @@ class SequentialRecipeEngine(RecipeEngine):
         "reason": f.reason,
         "status_code": retcode
       }
+    except StepDataAttributeError as ex:
+      unexpected_exception = self._test_data.is_unexpected_exception(ex)
+
+      retcode = -1
+      final_result = {
+        "name": "$final_result",
+        "reason": "Invalid Step Data Access: %r" % ex,
+        "status_code": retcode
+      }
+
+      with self._stream.step('Invalid Step Data Access') as s:
+        s.step_exception()
+        s.write_log_lines('exception', traceback.format_exc().splitlines())
+
+      if unexpected_exception:
+        raise
 
     except Exception as ex:
       unexpected_exception = self._test_data.is_unexpected_exception(ex)
