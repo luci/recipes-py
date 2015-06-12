@@ -19,24 +19,13 @@ def BaseConfig(CURRENT_WORKING_DIR, TEMP_DIR, **_kwargs):
     TEMP_DIR = Static(tuple(TEMP_DIR)),
   )
 
-VAR_TEST_MAP = {
-  'CURRENT_WORKING_DIR': (
-    ['/', 'b', 'build', 'slave', 'fake_slave', 'build'],
-    ['E:\\', 'build', 'slave', 'fake_slave', 'build'],
-  ),
-  'TEMP_DIR': (
-    ['/', 'fake_tmp'],
-    ['C:\\', 'fake_temp'],
-  ),
-}
-
 def test_name(args):  # pragma: no cover
   if args['CURRENT_WORKING_DIR'][0] == '/':
     return 'posix'
   else:
     return 'windows'
 
-config_ctx = config_item_context(BaseConfig, VAR_TEST_MAP, test_name)
+config_ctx = config_item_context(BaseConfig)
 
 @config_ctx(is_root=True)
 def BASE(c):

@@ -29,25 +29,9 @@ data type that it stores (so you can manipulate the config objects like normal
 python data), but also provides type checking and type conversion assistence
 (so you can easily render your configurations to JSON).
 
-Once you have your schema, you define some testing data:
-  TEST_MAP = {
-    'MAIN_DETERMINANT': (True, False),
-    'CONFIG_MODE': ('Happy', 'Sad'),
-  }
-  TEST_NAME_FORMAT = '%(MAIN_DETERMINANT)s-%(CONFIG_MODE)s'
+Then you can create a configuration context:
 
-The test map tells the test harness what parameters it should instantiate the
-schema with, and what values those parameters should take. The test harness will
-generate all possible permutations of input parameters, and will save them to
-disk.
-
-The test format is a string format (or a function taking a dictionary of
-variable assignments) which will be used to name the test files
-and test cases for this configuration.
-
-Once you have all that, you can create a configuration context:
-
-  config_ctx = config_item_context(FakeSchema, TEST_MAP, TEST_NAME_FORMAT)
+  config_ctx = config_item_context(FakeSchema)
 
 config_ctx is a python decorator which you can use to create composable
 configuration functions. For example:
@@ -101,15 +85,13 @@ class ConfigContext(object):
   A recipe module can define at most one such context.
   """
 
-  def __init__(self, CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT):
+  def __init__(self, CONFIG_SCHEMA):
     self.CONFIG_ITEMS = {}
     self.MUTEX_GROUPS = {}
     self.CONFIG_SCHEMA = CONFIG_SCHEMA
     self.ROOT_CONFIG_ITEM = None
-    self.VAR_TEST_MAP = VAR_TEST_MAP
-    self.TEST_NAME_FORMAT = create_formatter(TEST_NAME_FORMAT)
 
-  def __call__(self, group=None, includes=None, deps=None, no_test=False,
+  def __call__(self, group=None, includes=None, deps=None,
                is_root=False, config_vars=None):
     """
     A decorator for functions which modify a given schema of configs.
@@ -157,20 +139,10 @@ class ConfigContext(object):
         a config_ctx on a blob without having all of its deps satisfied,
         you'll get a BadConf exception.
 
-      no_test(bool) - If set to True, then this config_ctx will be skipped by
-        the test harness. This defaults to (False or bool(deps)), since
-        config_items with deps will never be satisfiable as the first
-        config_ctx applied to a blob.
-
       is_root(bool) - If set to True on an item, this item will become the
         'basis' item for all other configurations in this group. That means that
         it will be implicitly included in all other config_items. There may only
         ever be one root item.
-
-        Additionally, the test harness uses the root item to probe for invalid
-        configuration combinations by running the root item first (if there is
-        one), and skipping the configuration combination if the root config
-        item throws BadConf.
 
       config_vars(dict) - A dictionary mapping of { CONFIG_VAR: <value> }. This
         sets the input contidions for the CONFIG_SCHEMA.
@@ -281,36 +253,11 @@ class ConfigContext(object):
           'may only have one root config_ctx!')
         self.ROOT_CONFIG_ITEM = inner
         inner.IS_ROOT = True
-      inner.NO_TEST = no_test or bool(deps)
       return inner
     return decorator
 
 
-def create_formatter(obj, ext=None):
-  """Converts format obj to a function taking var assignments.
-
-  Args:
-    obj (str or fn(assignments)): If obj is a str, it will be % formatted
-      with assignments (which is a dict of variables from VAR_TEST_MAP).
-      Otherwise obj will be invoked with assignments, and expected to return
-      a fully-rendered string.
-    ext (None or str): Optionally specify an extension to enforce on the
-      format. This enforcement occurs after obj is finalized to a string. If
-      the string doesn't end with ext, it will be appended.
-  """
-  def inner(var_assignments):
-    ret = ''
-    if isinstance(obj, basestring):
-      ret = obj % var_assignments
-    else:
-      ret = obj(var_assignments)
-    if ext and not ret.endswith(ext):
-      ret += ext
-    return ret
-  return inner
-
-
-def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT):
+def config_item_context(CONFIG_SCHEMA):
   """Create a configuration context.
 
   Args:
@@ -318,18 +265,10 @@ def config_item_context(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT):
                    and returns an instance of BaseConfig. This BaseConfig
                    defines the schema for all configuration objects manipulated
                    in this context.
-    VAR_TEST_MAP: A dict mapping arg_name to an iterable of values. This
-                  provides the test harness with sufficient information to
-                  generate all possible permutations of inputs for the
-                  CONFIG_SCHEMA function.
-    TEST_NAME_FORMAT: A string format (or function) for naming tests and test
-                      expectation files. It will be formatted/called with a
-                      dictionary of arg_name to value (using arg_names and
-                      values generated from VAR_TEST_MAP).
 
   Returns a config_ctx decorator for this context.
   """
-  return ConfigContext(CONFIG_SCHEMA, VAR_TEST_MAP, TEST_NAME_FORMAT)
+  return ConfigContext(CONFIG_SCHEMA)
 
 
 class AutoHide(object):
@@ -763,8 +702,7 @@ class Single(ConfigBase):
 class Static(ConfigBase):
   """Holds a single, hidden, immutible data object.
 
-  This is very useful for holding the 'input' configuration values (i.e. those
-  which are in your VAR_TEST_MAP).
+  This is very useful for holding the 'input' configuration values.
   """
 
   def __init__(self, value, hidden=AutoHide):
