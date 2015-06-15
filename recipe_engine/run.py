@@ -476,7 +476,7 @@ def _trigger_builds(step, trigger_specs):
 
 def _run_annotated_step(
     stream, name, cmd, cwd=None, env=None, allow_subannotations=False,
-    trigger_specs=None, **kwargs):
+    trigger_specs=None, nest_level=0, **kwargs):
   """Runs a single step.
 
   Context:
@@ -518,6 +518,9 @@ def _run_annotated_step(
 
   step_annotation = stream.step(name)
   step_annotation.step_started()
+
+  if nest_level:
+    step_annotation.step_nest_level(nest_level)
 
   _print_step(step_dict, step_env, stream)
   returncode = 0
@@ -712,6 +715,7 @@ class SequentialRecipeEngine(RecipeEngine):
   def run_step(self, step):
     ok_ret = step.pop('ok_ret')
     infra_step = step.pop('infra_step')
+    nest_level = step.pop('step_nest_level')
 
     test_data_fn = step.pop('step_test_data', recipe_test_api.StepTestData)
     step_test = self._test_data.pop_step_test_data(step['name'],
@@ -725,16 +729,18 @@ class SequentialRecipeEngine(RecipeEngine):
 
     if not self._test_data.enabled:
       self._previous_step_annotation, retcode = _run_annotated_step(
-        self._stream, **step)
+        self._stream, nest_level=nest_level, **step)
 
       step_result = StepData(step, retcode)
-      self._previous_step_annotation.annotation_stream.step_cursor(step['name'])
+      self._stream.step_cursor(step['name'])
     else:
       self._previous_step_annotation = annotation = self._stream.step(
               step['name'])
       annotation.step_started()
       try:
         annotation.stream = cStringIO.StringIO()
+        if nest_level:
+          annotation.step_nest_level(nest_level)
 
         step_result = StepData(step, step_test.retcode)
       except OSError:

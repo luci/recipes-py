@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import contextlib
+
 from recipe_engine import recipe_api
 
 
@@ -65,6 +67,24 @@ class StepApi(recipe_api.RecipeApiPlain):
     """ See recipe_api.py for docs. """
     return recipe_api.context
 
+  @contextlib.contextmanager
+  def nest(self, name):
+    """Nest is the high-level interface to annotated hierarchical steps.
+
+    Calling
+
+        with api.step.nest(<name>):
+          ...
+
+    will generate a dummy step and implicitly create a new context (as
+    above); the dummy step will govern annotation emission, while the implicit
+    context will propagate the dummy step's name to subordinate steps.
+    """
+    self(name, [])
+    context_dict = {'name': name, 'nest_level': 1}
+    with self.context(context_dict):
+      yield
+
   @property
   def defer_results(self):
     """ See recipe_api.py for docs. """
@@ -112,7 +132,7 @@ class StepApi(recipe_api.RecipeApiPlain):
     # Obtain information from composite step parent.
     kwargs['name'] = compositor.get_with_context('name', name)
     kwargs['env'] = compositor.get_with_context('env', kwargs.get('env', {}))
-
+    kwargs['step_nest_level'] = compositor.get_with_context('nest_level', 0)
     kwargs.setdefault('cwd', self.m.path['slave_build'])
 
     schema = self.make_config()

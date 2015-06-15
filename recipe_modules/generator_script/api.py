@@ -57,6 +57,7 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
       #TODO(martiniss) change this to use a regular step call
       step['ok_ret'] = set(step.pop('ok_ret', {0}))
       step['infra_step'] = bool(step.pop('infra_step', False))
+      step['step_nest_level'] = int(step.pop('step_nest_level', 0))
 
       if step.pop('always_run', False) or not failed_steps:
         try:
