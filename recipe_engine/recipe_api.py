@@ -95,9 +95,10 @@ class AggregatedStepFailure(StepFailure):
 
 _FUNCTION_REGISTRY = {
   'aggregated_result': {'combine': lambda a, b: b},
-  'ran_step': {'combine': lambda a, b: b},
-  'name': {'combine': lambda a, b: '%s.%s' % (a, b)},
   'env': {'combine': lambda a, b: dict(a, **b)},
+  'name': {'combine': lambda a, b: '%s.%s' % (a, b)},
+  'nest_level': {'combine': lambda a, b: a + b},
+  'ran_step': {'combine': lambda a, b: b},
 }
 
 
