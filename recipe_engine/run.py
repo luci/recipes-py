@@ -22,11 +22,11 @@ For example, these factory_properties would run the 'run_presubmit' recipe
 located in build/scripts/slave/recipes:
     { 'recipe': 'run_presubmit' }
 
-TODO(vadimsh, iannucci): The following docs are very outdated.
+TODO(vadimsh, iannucci, luqui): The following docs are very outdated.
 
 Annotated_run.py will then import the recipe and expect to call a function whose
 signature is:
-  GenSteps(api, properties) -> iterable_of_things.
+  RunSteps(api, properties) -> None.
 
 properties is a merged view of factory_properties with build_properties.
 
@@ -335,9 +335,8 @@ def run_steps(properties,
   # asked by setting 'engine' property to 'ParallelRecipeEngine'.
   engine = RecipeEngine.create(stream, properties, test_data)
 
-  # Create all API modules and an instance of top level GenSteps generator.
-  # It doesn't launch any recipe code yet (generator needs to be iterated upon
-  # to start executing code).
+  # Create all API modules and top level RunSteps function.  It doesn't launch
+  # any recipe code yet; RunSteps needs to be called.
   api = None
   with stream.step('setup_build') as s:
     assert 'recipe' in properties # Should be ensured by get_recipe_properties.
@@ -368,7 +367,7 @@ def run_steps(properties,
       api = loader.create_recipe_api(recipe_module.LOADED_DEPS,
                                             engine,
                                             test_data)
-      steps = recipe_module.GenSteps
+      steps = recipe_module.RunSteps
       s.step_text('<br/>running recipe: "%s"' % recipe)
     except loader.NoSuchRecipe as e:
       s.step_text('<br/>recipe not found: %s' % e)
@@ -642,12 +641,12 @@ class RecipeEngine(object):
 
   # TODO(martiniss) update documentation for this class
   def run(self, steps_function, api):
-    """Run a recipe represented by top level GenSteps generator.
+    """Run a recipe represented by top level RunSteps function.
 
     This function blocks until recipe finishes.
 
     Args:
-      generator: instance of GenSteps generator.
+      steps_function: function that runs the steps.
 
     Returns:
       RecipeExecutionResult with status code and list of steps ran.
@@ -655,8 +654,7 @@ class RecipeEngine(object):
     raise NotImplementedError
 
   def create_step(self, step):
-    """Called by step module to instantiate a new step. Return value of this
-    function eventually surfaces as object yielded by GenSteps generator.
+    """Called by step module to instantiate a new step.
 
     Args:
       step: ConfigGroup object with information about the step, see
@@ -782,7 +780,7 @@ class SequentialRecipeEngine(RecipeEngine):
       try:
         retcode = steps_function(api)
         assert retcode is None, (
-        "Non-None return from GenSteps is not supported yet")
+        "Non-None return from RunSteps is not supported yet")
 
         assert not self._test_data.enabled or not self._test_data.step_data, (
         "Unconsumed test data! %s" % (self._test_data.step_data,))
