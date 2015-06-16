@@ -10,7 +10,7 @@ DEPS = [
 ]
 
 
-def GenSteps(api):
+def RunSteps(api):
   api.python.succeeding_step("success", ["This step is a success"],
                              as_log='success')
 

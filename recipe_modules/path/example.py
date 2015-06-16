@@ -9,7 +9,7 @@ DEPS = [
 ]
 
 
-def GenSteps(api):
+def RunSteps(api):
   api.step('step1',
                   ['/bin/echo', str(api.path['slave_build'].join('foo'))])
 

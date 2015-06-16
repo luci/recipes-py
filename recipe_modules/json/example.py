@@ -8,7 +8,7 @@ DEPS = [
 ]
 
 
-def GenSteps(api):
+def RunSteps(api):
   step_result = api.step('echo1', ['echo', '[1, 2, 3]'],
       stdout=api.json.output())
   assert step_result.stdout == [1, 2, 3]

@@ -9,7 +9,7 @@ DEPS = [
 ]
 
 
-def GenSteps(api):
+def RunSteps(api):
   # Read command's stdout and stderr.
   step_result = api.step('echo', ['echo', 'Hello World'],
       stdout=api.raw_io.output(),

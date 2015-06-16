@@ -6,7 +6,7 @@ from infra.libs.infra_types import thaw
 
 DEPS = ['properties', 'step']
 
-def GenSteps(api):
+def RunSteps(api):
   api.step('echo', ['echo'] + [repr(api.properties.thaw()['test_prop'])])
   api.step('echo all', ['echo'] + [repr(api.properties.thaw())])
 

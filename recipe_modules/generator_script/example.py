@@ -11,7 +11,7 @@ DEPS = [
 ]
 
 
-def GenSteps(api):
+def RunSteps(api):
   api.path['checkout'] = api.path['slave_build']
   script_name = api.properties['script_name']
   script_env = api.properties.get('script_env')

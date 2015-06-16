@@ -8,7 +8,7 @@ DEPS = [
 ]
 
 
-def GenSteps(api):
+def RunSteps(api):
   uuid = api.uuid.random()
   api.step('echo', ['echo', str(uuid)])
 

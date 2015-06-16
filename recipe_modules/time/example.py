@@ -8,7 +8,7 @@ DEPS = [
 ]
 
 
-def GenSteps(api):
+def RunSteps(api):
   now = api.time.time()
   api.step('echo', ['echo', str(now)])
 

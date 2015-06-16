@@ -70,7 +70,7 @@ def GenerateTests():
           expect_dir=expect_path,
           expect_base=test_data.name,
           covers=covers,
-          break_funcs=(recipe.GenSteps,)
+          break_funcs=(recipe.RunSteps,)
       )
 
 

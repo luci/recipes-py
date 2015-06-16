@@ -9,7 +9,7 @@ DEPS = [
 
 from recipe_engine import recipe_api
 
-def GenSteps(api):
+def RunSteps(api):
   # TODO(martinis) change this
   # The api.step object is directly callable.
   api.step('hello', ['echo', 'Hello World'])
@@ -82,7 +82,7 @@ def GenTests(api):
   #   <full stack trace ommitted>
   #   File "annotated_run.py", line 537, in run
   #     retcode = steps_function(api)
-  #   File "recipe_modules/step/example.py", line 39, in GenSteps
+  #   File "recipe_modules/step/example.py", line 39, in RunSteps
   #     raise ValueError('goodbye must exit 0!')
   # ValueError: goodbye must exit 0!
 
