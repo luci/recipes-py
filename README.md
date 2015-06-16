@@ -1,18 +1,21 @@
 Recipes
 =======
-Recipes are a flexible way to specify How to Do Things, without knowing too much
-about those Things.
-
+Recipes are a domain-specific language for specifying sequences of subprocess
+calls robustly.
 
 Background
 ----------
-
 Chromium uses BuildBot for its builds.  It requires master restarts to change
 bot configs, which slows bot changes down.
 
 With Recipes, most build-related things happen in scripts that run on the
-slave, which reduces the number of master restarts needed when changing build
-configuration.
+slave, which means that the master does not need to be restarted in order
+to change something about a build configuration.
+
+Recipes also provide a way to unit test build scripts, by mocking commands and
+recording "expectations" of what will happen when the script runs under various
+conditions.  This makes it easy to verify that the scope of a change is limited.
+
 
 Intro
 -----
@@ -31,26 +34,32 @@ it as a reference.
 
 Small Beginnings
 ----------------
-**Recipes are a means to cause a series of actions to occur on a machine.**
+**Recipes are a means to cause a series of commands to run on a machine.**
 
 All recipes take the form of a python file whose body looks like this:
 
 ```python
-def GenSteps(api):
-  yield {
-      'name': 'Hello World',
-      'cmd': ['/b/build/echo.sh', 'hello', 'world']
-  }
+DEPS = ['step']
+
+def RunSteps(api):
+  api.step('Print Hello World', ['echo', 'hello', 'world'])
 ```
 
-The GenSteps function is expected to take a single argument `api` (we'll get to
-that in more detail later), and yield a series of 'stepish' items. A stepish
-item can be:
+The `RunSteps` function is expected to take a single argument `api` (we'll get
+to that in more detail later), and run a series of steps by calling api
+functions.  All of these functions will eventually make calls to `api.step()`,
+which is the only way to actually get anything done on the machine.
 
-  * A single step (a dictionary as in the example above)
-  * A series (list or tuple) of stepish items
-  * A python-generator of stepish items
+For these examples we will work out of the
+[tools/build](https://chromium.googlesource.com/chromium/tools/build/)
+repository.
 
+Put this in a file under `scripts/slave/recipes/hello.py`. You can then
+run this recipe by calling
+
+```
+$ scripts/tools/run_recipe.py hello
+```
 
 We should probably test as we go...
 -----------------------------------
@@ -59,98 +68,76 @@ We should probably test as we go...
 So, we have our recipe. Let's add a test to it.
 
 ```python
-def GenSteps(api):
-  yield {
-      'name': 'Hello World',
-      'cmd': ['/b/build/echo.sh', 'hello', 'world']
-  }
+DEPS = ['step']
+
+def RunSteps(api):
+  api.step('Print Hello World', ['echo', 'hello', 'world'])
 
 def GenTests(api):
-  yield 'basic', {}
+  yield api.test('basic')
 ```
 
 This causes a single test case to be generated, called 'basic', which has no
 input parameters.  As your recipe becomes more complex, you'll need to add more
 tests to make sure that you maintain 100% code coverage.
 
+In order to run the tests, run
+
+```
+$ scripts/slave/unittests/recipe_simulation_test.py train hello
+```
+
+This will write the file `build/scripts/slave/recipes/hello.expected/basic.json`
+which summarizes the actions of the recipe under the boring conditions
+specified by `api.test('basic')`.
+
 
 Let's do something useful
 -------------------------
-**Properties is the primary input for your recipes.**
+**Properties are the primary input for your recipes.**
 
 In order to do something useful, we need to pull in parameters from the outside
 world. There's one primary source of input for recipes, which is `properties`.
 
-`properties` are a relic from the days of BuildBot, though they have been
+Properties are a relic from the days of BuildBot, though they have been
 dressed up a bit to be more like we'll want them in the future. If you're
 familiar with BuildBot, you'll probably know them as `factory_properties` and
 `build_properties`. The new `properties` object is a merging of these two, and
 is provided by the `properties` api module.
 
 ```python
-DEPS = ['properties']
+DEPS = [
+  'properties',
+  'step',
+]
 
-def GenSteps(api):
+def RunSteps(api):
   verb = 'Hello, %s'
   target = api.properties['target_of_admiration']
   if target == 'DarthVader':
     verb = 'Die in a fire, %s!'
-  yield {'name': 'Hello World', 'cmd': ['/b/build/echo.sh', verb % target]}
+  api.step('Greet Admired Individual', ['echo', verb % target])
 
 def GenTests(api):
-  yield 'basic', {
-    'properties': {'target_of_admiration': 'Bob'}
-  }
-
-  yield 'vader', {
-    'properties': {'target_of_admiration': 'DarthVader'}
-  }
+  yield api.test('basic') + api.properties(target_of_admiration='Bob')
+  yield api.test('vader') + api.properties(target_of_admiration='DarthVader')
 ```
 
-Ok, I lied. It wasn't very useful.
+Yes, elements of a test specification are combined with `+` and it's weird.
 
-
-Let's make it a bit prettier
-----------------------------
-**You can add modules to your recipe by simply adding them to DEPS.**
-
-So there are all sorts of helper modules. I'll add in the 'step' and 'path'
-modules here as an example.
-
-```python
-DEPS = ['properties', 'step', 'path']
-
-def GenSteps(api):
-  verb = 'Hello, %s'
-  target = api.properties['target_of_admiration']
-  if target == 'DarthVader':
-    verb = 'Die in a fire, %s!'
-  yield api.step('Hello World', [api.path['build'].join('echo.sh'),
-                 verb % target])
-
-def GenTests(api):
-  yield 'basic', {
-    'properties': {'target_of_admiration': 'Bob'}
-  }
-
-  yield 'vader', {
-    'properties': {'target_of_admiration': 'DarthVader'}
-  }
-```
+There are all sorts of helper modules.  They are found in the `recipe_modules`
+directory alongside the `recipes` directory where the recipes go.
 
 Notice the `DEPS` line in the recipe. Any modules named by string in DEPS are
 'injected' into the `api` parameter that your recipe gets. If you leave them out
 of DEPS, you'll get an AttributeError when you try to access them. The modules
 are located primarily in `recipe_modules/`, and their name is their folder name.
 
-> The full list of module locations which get added are in `recipe_util.py` in
-> the `MODULE_DIRS` variable.
-
 There are a whole bunch of modules which provide really helpful tools. You
-should go take a look at them. `show_me_the_modules.py` is a pretty helpful
-tool. If you want to know more about properties, step and path, I would suggest
-starting with `show_me_the_modules.py`, and then delving into the docstrings in
-those modules.
+should go take a look at them. `scripts/tools/show_me_the_modules.py` is a
+pretty helpful tool. If you want to know more about properties, step and path, I
+would suggest starting with `show_me_the_modules.py`, and then delving into the
+docstrings in those modules.
 
 
 Making Modules
@@ -179,7 +166,7 @@ First add an `__init__.py` with DEPS:
 
 ```python
 # recipe_modules/hello/__init__.py
-DEPS = ['properties', 'path', 'step']
+DEPS = ['properties', 'step']
 ```
 
 And your api.py should look something like:
@@ -193,66 +180,50 @@ class HelloApi(recipe_api.RecipeApi):
     target = target or self.m.properties['target_of_admiration']
     if target == 'DarthVader':
       verb = 'Die in a fire %s!'
-    yield self.m.step('Hello World',
-                      [self.m.path.build('echo.sh'), verb % target])
+    self.m.step('Hello World',
+                ['echo', verb % target])
 ```
 
 See that all the DEPS get injected into `self.m`. This logic is handled outside
-of the object (i.e. not in `__init__`) in the loading function creatively named
-`load_recipe_modules()`, which resides in `recipe_api.py`.
+of the object (i.e. not in `__init__`).
 
-> Because dependencies are injected after module initialization, *you do not have
-> access to injected modules in your APIs `__init__` method*!
+> Because dependencies are injected after module initialization, *you do not
+> have access to injected modules in your APIs `__init__` method*!
 
 And now, our refactored recipe:
 
 ```python
 DEPS = ['hello']
 
-def GenSteps(api):
-  yield api.hello.greet()
+def RunSteps(api):
+  api.hello.greet()
 
 def GenTests(api):
-  yield 'basic', {
-    'properties': {'target_of_admiration': 'Bob'}
-  }
-
-  yield 'vader', {
-    'properties': {'target_of_admiration': 'DarthVader'}
-  }
+  yield api.test('basic') + api.properties(target_of_admiration='Bob')
+  yield api.test('vader') + api.properties(target_of_admiration='DarthVader')
 ```
 
-> NOTE: all of the modules are also under code coverage, but you only need some
-> test SOMEWHERE to cover each line.
+> NOTE: all of the modules are also require 100% code coverage, but you only
+> need some test SOMEWHERE to cover each line.
 
 
 So how do I really write those tests?
 -------------------------------------
-**Tests are yielded as a (name, test data) tuple.**
-
 The basic form of tests is:
+
 ```python
 def GenTests(api):
-  yield 'testname', {
-    # Test data
-  }
+  yield api.test('testname') + # other stuff
 ```
 
-Test data can contain any of the following keys:
-  * *properties*: This represents the merged factory properties and build
-    properties which will show up as api.properties for the duration of the
-    test. This dictionary is in simple `{<prop name>: <prop value>}` form.
-  * *mock*: Some modules need to have their behavior altered before the recipe
-    starts. For example, you could mock which platform is being tested, or mock
-    which paths exist. This dictionary is in the form of `{<mod name>: <mod
-    data>}`. See module docstrings to see what they accept for mocks.
-  * *step_mocks*: This is a dictionary which defines the mock data for
-    various `recipe_api.Placeholder` objects. These are explained more in
-    a later section.  This dictionary is in the form of `{<step name>: {<mod
-    name>: <mod data>}}`
-    * There is one 'special' mod name, which is '$R'. This module refers to the
-      return code of the step, and takes an integer. If it is missing, it is
-      assumed that the step succeeded with a retcode of 0.
+Some modules define interfaces for specifying necessary step data; these are
+injected into `api` from `DEPS` similarly to how it works for `RunSteps`.  There
+are a few other methods available to `GenTests`'s `api`. Common ones include:
+
+  * `api.properties(buildername='foo_builder')` sets properties as we have seen.
+  * `api.platform('linux', 64)` sets the mock platform to 64-bit linux.
+  * `api.step_data('Hello World', retcode=1)` mocks the `'Hello World'` step
+  to have failed with exit code 1.
 
 The `api` passed to GenTests is confusingly **NOT** the same as the recipe api.
 It's actually an instance of `recipe_test_api.py:RecipeTestApi()`. This is
@@ -285,6 +256,10 @@ Obviously there are a lot of combinations of those things, but only a relatively
 small number of *valid* combinations of those things. How can we represent all
 the valid states while still retaining our sanity?
 
+We begin by specifying a schema that configurations of the `hello` module
+will follow, and the config context based on it that we will add configuration
+items to.
+
 ```python
 # recipe_modules/hello/config.py
 from slave.recipe_config import config_item_context, ConfigGroup
@@ -301,11 +276,26 @@ def BaseConfig(TARGET='Bob'):
     TARGET = StaticConfig(str(TARGET)),
   )
 
-VAR_TEST_MAP = {
-  'TARGET':   ('Bob', 'DarthVader', 'Charlie'),
-}
-config_ctx = config_item_context(BaseConfig, VAR_TEST_MAP, '%(TARGET)s')
+config_ctx = config_item_context(BaseConfig)
+```
 
+The `BaseConfig` schema is expected to return a `ConfigGroup` instance of some
+sort. All the configs that you get out of this file will be a modified version
+of something returned by the schema method. The arguments should have sane
+defaults, and should be named in `ALL_CAPS` (this is to avoid argument name
+conflicts as we'll see later).
+
+`config_ctx` is the 'context' for all the config items in this file, and will
+magically become the `CONFIG_CTX` for the entire module.  Other modules may
+extend this context, which we will get to later.
+
+Finally let's define some config items themselves. A config item is a function
+decorated with the `config_ctx`, and takes a config blob as 'c'. The config item
+updates the config blob, perhaps conditionally. There are many features to
+`slave/recipe_config.py`. I would recommend reading the docstrings there
+for all the details.
+
+```python
 # Each of these functions is a 'config item' in the context of config_ctx.
 
 # is_root means that every config item will apply this item first.
@@ -324,50 +314,8 @@ def super_tool(c):
 
 @config_ctx(group='tool'):
 def default_tool(c):
-  c.tool = 'echo.sh'
+  c.tool = 'echo'
 ```
-
-Ok, this config file looks a bit intimidating. Let's decompose it. The first
-portion is the schema `BaseConfig`. This is expected to return a ConfigGroup
-instance of some sort. All the configs that you get out of this file will be
-a modified version something returned by the schema method. The arguments should
-have sane defaults, and should be named in `ALL_CAPS` (this is to avoid argument
-name conflicts as we'll see later).
-
-The `VAR_TEST_MAP` is a mapping of argument name for the schema (in this case,
-just 'TARGET'), to a sequence of values to test. The test harness will
-automatically generate the product of all arguments in this map, and will run
-through each config function in the file to generate the expected config blob
-for each. In this config, it would essentially be:
-
-```python
-for TARGET in ('Bob', 'DarthVader', 'Charlie'):
-  for test_function in (super_tool, default_tool):
-    yield TestCase(test_function(BasicSchema(TARGET)))
-```
-
-Next, we get to the `config_ctx`. This is the 'context' for all the config
-items in this file, and will become the `CONFIG_CTX` for the entire module.
-Other modules may add into this config context (for example, they could have
-a `hello_config.py` file, which imports this config context like
-
-```python
-import DEPS
-CONFIG_CTX = DEPS['hello'].CONFIG_CTX
-```
-
-
-This will be useful for separation of concerns with the `set_config()`
-method.). The string format argument that `config_item_context` takes will be
-used to format the test case names and test expectation file names. Not
-terribly useful here, but it can be useful for making the test names more
-obvious in more complex cases.
-
-Finally we get to the config items themselves. A config item is a function
-decorated with the `config_ctx`, and takes a config blob as 'c'. The config item
-updates the config blob, perhaps conditionally. There are many features to
-`slave/recipe_config.py`. I would recommend reading the docstrings there
-for all the details.
 
 Now that we have our config, let's use it.
 
@@ -380,7 +328,7 @@ class HelloApi(recipe_api.RecipeApi):
     return {'TARGET': self.m.properties['target_of_admiration']}
 
   def greet(self):
-    yield self.m.step('Hello World', [
+    self.m.step('Hello World', [
         self.m.path.build(self.c.tool), self.c.verb % self.c.TARGET])
 ```
 
@@ -393,13 +341,13 @@ recipes have direct access to the configuration state by `api.<modname>.c`.
 ```python
 # recipes/hello.py
 DEPS = ['hello']
-def GenSteps(api):
+def RunSteps(api):
   api.hello.set_config('default_tool')
-  yield api.hello.greet()  # Greets 'target_of_admiration' or 'Bob' with echo.sh.
+  api.hello.greet()  # Greets 'target_of_admiration' or 'Bob' with echo.
 
 def GenTests(api):
-  yield 'bob', {}
-  yield 'anya', {'properties': {'target_of_admiration': 'anya'}}
+  yield api.test('bob')
+  yield api.test('anya') + api.properties(target_of_admiration='anya')
 ```
 
 Note the call to `set_config`. This method takes the configuration name
@@ -407,80 +355,71 @@ specifed, finds it in the given module (`'hello'` in this case), and sets
 `api.hello.c` equal to the result of invoking the named config item
 (`'default_tool'`) with the default configuration (the result of calling
 `get_config_defaults`), merged over the static defaults specified by the schema.
-In this case, the schema will be initialized by essentially the following calls:
-
-```python
-raw = BaseConfig(**api.hello.get_config_defaults())
-api.hello.c = default_tool(BASE(raw))
-```
 
 We can also call `set_config` differently to get different results:
 
 ```python
 # recipes/rainbow_hello.py
 DEPS = ['hello']
-def GenSteps(api):
+def RunSteps(api):
   api.hello.set_config('super_tool', TARGET='Charlie')
-  yield api.hello.greet()  # Greets 'Charlie' with unicorn.py.
+  api.hello.greet()  # Greets 'Charlie' with unicorn.py.
 
 def GenTests(api):
-  yield 'charlie', {}
+  yield api.test('charlie')
 ```
 
 ```python
 # recipes/evil_hello.py
 DEPS = ['hello']
-def GenSteps(api):
+def RunSteps(api):
   api.hello.set_config('default_tool', TARGET='DarthVader')
-  yield api.hello.greet()  # Causes 'DarthVader' to despair with echo.sh
+  api.hello.greet()  # Causes 'DarthVader' to despair with echo
 
 def GenTests(api):
-  yield 'darth', {}
+  yield api.test('darth')
 ```
 
 `set_config()` also has one additional bit of magic. If a module (say,
-chromium), depends on some other modules (say, gclient), if you do
-`api.chromium.set_config('blink')`, it will apply the 'blink' config item from
-the chromium module, but it will also attempt to apply the 'blink' config for
+`chromium`), depends on some other modules (say, `gclient`), if you do
+`api.chromium.set_config('blink')`, it will apply the `'blink'` config item from
+the chromium module, but it will also attempt to apply the `'blink'` config for
 all the dependencies, too. This way, you can have the chromium module extend the
-gclient config context with a 'blink' config item, and then set_configs will
-stack across all the relevent contexts.
+gclient config context with a 'blink' config item, and then `set_configs` will
+stack across all the relevent contexts.  (This has since been recognized as a
+design mistake)
 
 `recipe_api.RecipeApi` also provides `make_config` and `apply_config`, which
 allow recipes more-direct access to the config items. However, `set_config()` is
-the most-preferred way to apply configurations.
+the most-preferred way to apply configurations. 
 
 
 What about getting data back from a step?
 -----------------------------------------
-**If you need you recipe to be conditional on something that a step does, you'll
-need to make use of the `step_history` api.**
-
 Consider this recipe:
-```python
-DEPS = ['step', 'path', 'step_history']
 
-def GenSteps(api):
-  yield api.step('Determine blue moon', [api.path['build'].join('is_blue_moon.sh')])
-  if api.step_history.last_step().retcode == 0:
-    yield api.step('HARLEM SHAKE!', [api.path['build'].join('do_the_harlem_shake.sh')])
+```python
+DEPS = ['step', 'path']
+
+def RunSteps(api):
+  step_result = api.step('Determine blue moon',
+      [api.path['build'].join('is_blue_moon.sh')])
+
+  if step_result.retcode == 0:
+    api.step('HARLEM SHAKE!', [api.path['build'].join('do_the_harlem_shake.sh')])
   else:
-    yield api.step('Boring', [api.path['build'].join('its_a_small_world.sh')])
+    api.step('Boring', [api.path['build'].join('its_a_small_world.sh')])
 
 def GenTests(api):
-  yield 'harlem', {
-    'step_mocks': {'Determine blue moon': {'$R': 0}}
-  }
-  yield 'boring', {
-    'step_mocks': {'Determine blue moon': {'$R': 1}}
-  }
+  yield api.test('harlem') + api.step_data('Determine blue moon', retcode=0)
+  yield api.test('boring') + api.step_data('Determine blue moon', retcode=1)
 ```
 
-See how we use `step_history` to get the result of the last step? The item we
-get back is an `annotated_run.RecipeData` instance (really, just a basic object
+See how we use `step_result` to get the result of the last step? The item we get
+back is a `recipe_engine.main.StepData` instance (really, just a basic object
 with member data). The members of this object which are guaranteed to exist are:
-  * retcode: Pretty much what you think
-  * step: The actual step json which was sent to `annotator.py`. Not usually
+  * `retcode`: Pretty much what you think
+  * `step`: The actual step json which was sent to `annotator.py`. Not usually
     useful for recipes, but it is used internally for the recipe tests
     framework.
 
@@ -490,27 +429,25 @@ communicating actual information. `api.json.output()` to the rescue!
 ```python
 DEPS = ['step', 'path', 'step_history', 'json']
 
-def GenSteps(api):
-  yield api.step('run tests', [
-    api.path['build'].join('do_test_things.sh'), api.json.output()])
-  num_passed = api.step_history.last_step().json.output['num_passed']
+def RunSteps(api):
+  step_result = api.step(
+      'run tests',
+      [api.path['build'].join('do_test_things.sh'), api.json.output()])
+  num_passed = step_result.json.output['num_passed']
   if num_passed > 500:
-    yield api.step('victory', [api.path['build'].join('do_a_dance.sh')])
+    api.step('victory', [api.path['build'].join('do_a_dance.sh')])
   elif num_passed > 200:
-    yield api.step('not defeated', [api.path['build'].join('woohoo.sh')])
+    api.step('not defeated', [api.path['build'].join('woohoo.sh')])
   else:
-    yield api.step('deads!', [api.path['build'].join('you_r_deads.sh')])
+    api.step('deads!', [api.path['build'].join('you_r_deads.sh')])
 
 def GenTests(api):
-  yield 'winning', {
-    'step_mocks': {'run tests': {'json': {'output': {'num_passed': 791}}}}
-  }
-  yield 'not_dead_yet', {
-    'step_mocks': {'run tests': {'json': {'output': {'num_passed': 302}}}}
-  }
-  yield 'nooooo', {
-    'step_mocks': {'run tests': {'json': {'output': {'num_passed': 10}}}}
-  }
+  yield (api.test('winning') +
+         api.step_data('run tests', api.json.output({'num_passed': 791}))
+  yield (api.test('not_dead_yet') +
+         api.step_data('run tests', api.json.output({'num_passed': 302}))
+  yield (api.test('noooooo') +
+         api.step_data('run tests', api.json.output({'num_passed': 10})))
 ```
 
 How does THAT work!?
@@ -518,22 +455,23 @@ How does THAT work!?
 `api.json.output()` returns a `recipe_api.Placeholder` which is meant to be
 added into a step command list. When the step runs, the placeholder gets
 rendered into some strings (in this case, like `['--output-json',
-'/tmp/some392ra8'`]). When the step finishes, the Placeholder is allowed to add
-data to the step history for the step which just ran, namespaced by the module
-name (in this case, the 'json' module decided to add an 'output' attribute to
-the `step_history` item). I'd encourage you to take a peek at the implementation
-of the json module to see how this is implemented.
+'/tmp/some392ra8'`]). When the step finishes, the Placeholder adds data to the
+`StepData` object for the step which just ran, namespaced by the module name (in
+this case, the 'json' module decided to add an 'output' attribute to the
+`step_history` item). I'd encourage you to take a peek at the implementation of
+the json module to see how this is implemented.
 
 
 How do I know what modules to use?
 ----------------------------------
-Use `tools/show_me_the_modules.py`. It's super effective!
+Use `scripts/tools/show_me_the_modules.py`. It's super effective!
 
 
 How do I run those tests you were talking about?
 ------------------------------------------------
-To test all the recipes/apis, use `slave/unittests/recipe_simulation_test.py`.
-To set new expectations `slave/unittests/recipe_simulation_test.py train`.
+To test all the recipes/apis, use
+`scripts/slave/unittests/recipe_simulation_test.py`.  To set new expectations
+`scripts/slave/unittests/recipe_simulation_test.py train`.
 
 
 
@@ -545,5 +483,5 @@ In addition, most recipe modules have an `example.py` file which exercises most
 of the code in the module for both test coverage and example purposes.
 
 If you want to know what keys a step dictionary can take, take a look at
-`common/annotator.py`.
+`third_party/recipe_engine/main.py`.
 
