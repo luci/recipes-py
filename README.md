@@ -1,7 +1,7 @@
 Recipes
 =======
-Recipes are a domain-specific language for specifying sequences of subprocess
-calls robustly.
+Recipes are a domain-specific language (embedded in python) for specifying
+sequences of subprocess calls in a cross-platform and testable way.
 
 Background
 ----------
@@ -48,7 +48,8 @@ def RunSteps(api):
 The `RunSteps` function is expected to take a single argument `api` (we'll get
 to that in more detail later), and run a series of steps by calling api
 functions.  All of these functions will eventually make calls to `api.step()`,
-which is the only way to actually get anything done on the machine.
+which is the only way to actually get anything done on the machine.  Using
+python libraries with OS side-effects is prohibited to enable testing.
 
 For these examples we will work out of the
 [tools/build](https://chromium.googlesource.com/chromium/tools/build/)
@@ -88,9 +89,20 @@ $ scripts/slave/unittests/recipe_simulation_test.py train hello
 ```
 
 This will write the file `build/scripts/slave/recipes/hello.expected/basic.json`
-which summarizes the actions of the recipe under the boring conditions
-specified by `api.test('basic')`.
+summarizing the actions of the recipe under the boring conditions
+specified by `api.test('basic')`.  
 
+[
+  {
+    "cmd": [
+      "echo",
+      "hello",
+      "world"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "Print Hello World"
+  }
+]
 
 Let's do something useful
 -------------------------
@@ -137,7 +149,7 @@ There are a whole bunch of modules which provide really helpful tools. You
 should go take a look at them. `scripts/tools/show_me_the_modules.py` is a
 pretty helpful tool. If you want to know more about properties, step and path, I
 would suggest starting with `show_me_the_modules.py`, and then delving into the
-docstrings in those modules.
+helpful docstrings in those helpful modules.
 
 
 Making Modules
@@ -184,7 +196,7 @@ class HelloApi(recipe_api.RecipeApi):
                 ['echo', verb % target])
 ```
 
-See that all the DEPS get injected into `self.m`. This logic is handled outside
+Note that all the DEPS get injected into `self.m`. This logic is handled outside
 of the object (i.e. not in `__init__`).
 
 > Because dependencies are injected after module initialization, *you do not
@@ -204,7 +216,7 @@ def GenTests(api):
 ```
 
 > NOTE: all of the modules are also require 100% code coverage, but you only
-> need some test SOMEWHERE to cover each line.
+> need coverage from SOME recipe.
 
 
 So how do I really write those tests?
@@ -221,9 +233,13 @@ injected into `api` from `DEPS` similarly to how it works for `RunSteps`.  There
 are a few other methods available to `GenTests`'s `api`. Common ones include:
 
   * `api.properties(buildername='foo_builder')` sets properties as we have seen.
-  * `api.platform('linux', 64)` sets the mock platform to 64-bit linux.
+  * `api.platform('linux', 32)` sets the mock platform to 32-bit linux.
   * `api.step_data('Hello World', retcode=1)` mocks the `'Hello World'` step
   to have failed with exit code 1.
+
+By default all simulated steps succeed, the platform is 64-bit linux, and
+there are no properties.  The `api.properties.generic()` method populates some
+common properties for Chromium recipes.
 
 The `api` passed to GenTests is confusingly **NOT** the same as the recipe api.
 It's actually an instance of `recipe_test_api.py:RecipeTestApi()`. This is
@@ -422,6 +438,9 @@ with member data). The members of this object which are guaranteed to exist are:
   * `step`: The actual step json which was sent to `annotator.py`. Not usually
     useful for recipes, but it is used internally for the recipe tests
     framework.
+  * `presentation`: An object representing how the step will show up on the
+    build page, including its exit status, links, and extra log text.  This is a
+    `recipe_engine.main.StepPresentation` object.
 
 This is pretty neat... However, it turns out that returncodes suck bigtime for
 communicating actual information. `api.json.output()` to the rescue!
@@ -454,12 +473,12 @@ How does THAT work!?
 
 `api.json.output()` returns a `recipe_api.Placeholder` which is meant to be
 added into a step command list. When the step runs, the placeholder gets
-rendered into some strings (in this case, like `['--output-json',
-'/tmp/some392ra8'`]). When the step finishes, the Placeholder adds data to the
-`StepData` object for the step which just ran, namespaced by the module name (in
-this case, the 'json' module decided to add an 'output' attribute to the
-`step_history` item). I'd encourage you to take a peek at the implementation of
-the json module to see how this is implemented.
+rendered into some strings (in this case, like '/tmp/some392ra8'). When the step
+finishes, the Placeholder adds data to the `StepData` object for the step which
+just ran, namespaced by the module name (in this case, the 'json' module decided
+to add an 'output' attribute to the `step_history` item). I'd encourage you to
+take a peek at the implementation of the json module to see how this is
+implemented.
 
 
 How do I know what modules to use?
