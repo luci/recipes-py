@@ -21,6 +21,7 @@ import types
 MODULES_WHITELIST = [
   r'base64',
   r'collections',
+  r'contextlib',
   r'datetime',
   r'json',
   r'math',
