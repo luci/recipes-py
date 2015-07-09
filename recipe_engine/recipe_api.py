@@ -427,9 +427,10 @@ class RecipeApiPlain(ModuleInjectionSite):
       for dep in self._module.LOADED_DEPS:
         getattr(self.m, dep).set_config(config_name, optional=True, **params)
 
-  def apply_config(self, config_name, config_object=None):
+  def apply_config(self, config_name, config_object=None, optional=False):
     """Apply a named configuration to the provided config object or self."""
-    self._module.CONFIG_CTX.CONFIG_ITEMS[config_name](config_object or self.c)
+    self._module.CONFIG_CTX.CONFIG_ITEMS[config_name](
+        config_object or self.c, optional=optional)
 
   def resource(self, *path):
     """Returns path to a file under <recipe module>/resources/ directory.
