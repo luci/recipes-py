@@ -197,6 +197,7 @@ class PathApi(recipe_api.RecipeApi):
       temp_dir = self['tmp_base'].join(*new_path[len(self._temp_dir):])
     else:
       self._test_counter += 1
+      assert isinstance(prefix, basestring)
       temp_dir = self['tmp_base'].join(
           '%s_tmp_%d' % (prefix, self._test_counter))
     self.mock_add_paths(temp_dir)
