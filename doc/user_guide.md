@@ -1,14 +1,12 @@
-Recipes
-=======
+# Recipes
+
 Recipes are a domain-specific language (embedded in python) for specifying
 sequences of subprocess calls in a cross-platform and testable way.
 
-For users, see [user_guide.md](doc/user_guide.md).
-
 [TOC]
 
-Background
-----------
+## Background
+
 Chromium uses BuildBot for its builds.  It requires master restarts to change
 bot configs, which slows bot changes down.
 
@@ -20,9 +18,8 @@ Recipes also provide a way to unit test build scripts, by mocking commands and
 recording "expectations" of what will happen when the script runs under various
 conditions.  This makes it easy to verify that the scope of a change is limited.
 
+## Intro
 
-Intro
------
 This README will seek to teach the ways of Recipes, so that you may do one or
 more of the following:
 
@@ -35,9 +32,8 @@ The document will build knowledge up in small steps using examples, and so it's
 probably best to read the whole doc through from top to bottom once before using
 it as a reference.
 
+## Small Beginnings
 
-Small Beginnings
-----------------
 **Recipes are a means to cause a series of commands to run on a machine.**
 
 All recipes take the form of a python file whose body looks like this:
@@ -72,8 +68,8 @@ recipe invocation. This is useful to locally repro a failing build without
 having to guess at the parameters to `run_recipe.py`.
 ***
 
-We should probably test as we go...
------------------------------------
+## We should probably test as we go...
+
 **All recipes MUST have corresponding tests, which achieve 100% code coverage.**
 
 So, we have our recipe. Let's add a test to it.
@@ -112,8 +108,7 @@ specified by `api.test('basic')`.
       }
     ]
 
-Let's do something useful
--------------------------
+## Let's do something useful
 
 ### Properties are the primary input for your recipes
 
@@ -173,9 +168,8 @@ pretty helpful tool. If you want to know more about properties, step and path, I
 would suggest starting with `show_me_the_modules.py`, and then delving into the
 helpful docstrings in those helpful modules.
 
+## Making Modules
 
-Making Modules
---------------
 **Modules are for grouping functionality together and exposing it across
 recipes.**
 
@@ -240,9 +234,8 @@ def GenTests(api):
 > NOTE: all of the modules are also require 100% code coverage, but you only
 > need coverage from SOME recipe.
 
+## So how do I really write those tests?
 
-So how do I really write those tests?
--------------------------------------
 The basic form of tests is:
 
 ```python
@@ -269,9 +262,8 @@ admittedly pretty weak, and it would be great to have the test api
 automatically created via modules. On the flip side, the test api is much less
 necessary than the recipe api, so this transformation has not been designed yet.
 
+## What is that config business?
 
-What is that config business?
------------------------------
 **Configs are a way for a module to expose it's "global" state in a reusable
 way.**
 
@@ -431,9 +423,8 @@ design mistake)
 allow recipes more-direct access to the config items. However, `set_config()` is
 the most-preferred way to apply configurations.
 
+## What about getting data back from a step?
 
-What about getting data back from a step?
------------------------------------------
 Consider this recipe:
 
 ```python
@@ -555,8 +546,7 @@ yield (
         output=api.raw_io.output('test data')))
 ```
 
-How to change step presentation?
---------------------------------
+## How to change step presentation?
 
 `step_result.presentation` allows modifying the appearance of a step:
 
@@ -596,23 +586,18 @@ step_result.presentation.step_text = 'Dynamic step result text'
   step_result.presentation.properties['newprop'] = 1
   ```
 
+## How do I know what modules to use?
 
-
-How do I know what modules to use?
-----------------------------------
 Use `scripts/tools/show_me_the_modules.py`. It's super effective!
 
+## How do I run those tests you were talking about?
 
-How do I run those tests you were talking about?
-------------------------------------------------
 To test all the recipes/apis, use
 `scripts/slave/unittests/recipe_simulation_test.py`.  To set new expectations
 `scripts/slave/unittests/recipe_simulation_test.py train`.
 
+## Where's the docs on `*.py`?
 
-
-Where's the docs on `*.py`?
---------------------------------------------
 Check the docstrings in `*.py`. `<trollface text="Problem?"/>`
 
 In addition, most recipe modules have an `example.py` file which exercises most
