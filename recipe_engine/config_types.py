@@ -39,7 +39,7 @@ class RecipeConfigType(object):
 
   External entities (usually recipe modules), can override the default
   tostring_fn method by calling <RecipeConfigType
-  subclass>.set_tostring_fn(<new method>). This new method will recieve an
+  subclass>.set_tostring_fn(<new method>). This new method will receive an
   instance of the RecipeConfigType subclass as its single argument, and is
   expected to return a string. There is no restriction on the data that the
   override tostring_fn may use. For example, the Path class in this module has

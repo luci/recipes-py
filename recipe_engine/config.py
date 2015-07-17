@@ -102,7 +102,7 @@ class ConfigContext(object):
       * Any function decorated with this will be registered into this config
         context by __name__. This enables some of the other following features
         to work.
-      * Alters the signature of the function so that it can recieve an extra
+      * Alters the signature of the function so that it can receive an extra
         parameter 'final'. See the documentation for final on inner().
       * Provides various convenience and error checking facilities.
         * In particular, this decorator will prevent you from calling the same
@@ -662,7 +662,7 @@ class Single(ConfigBase):
         Can also be a tuple of types to allow more than one type.
       jsonish_fn - A function used to reduce the data to a JSON-compatible
         python datatype. Default is the identity function.
-      emtpy_val - The value to use when initializing this object or when calling
+      empty_val - The value to use when initializing this object or when calling
         reset().
       required(bool) - True iff this config item is required to have a
         non-empty_val in order for it to be considered complete().

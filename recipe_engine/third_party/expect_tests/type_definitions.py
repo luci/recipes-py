@@ -293,7 +293,7 @@ class MultiTest(_MultiTest):
 
     Optionally, you may specify a different function to apply to each test
     (by default it is `lambda test: test.run()`). The context will be bound
-    to the test before your function recieves it.
+    to the test before your function receives it.
 
     Used interally by expect_tests, you're not expected to call this yourself.
     """
