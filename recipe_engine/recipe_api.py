@@ -412,20 +412,13 @@ class RecipeApiPlain(ModuleInjectionSite):
       else:  # pragma: no cover
         raise  # TODO(iannucci): raise a better exception.
 
-  def set_config(self, config_name=None, optional=False, include_deps=True,
-                 **CONFIG_VARS):
+  def set_config(self, config_name=None, optional=False, **CONFIG_VARS):
     """Sets the modules and its dependencies to the named configuration."""
     assert self._module
     config, params = self.make_config_params(config_name, optional,
                                              **CONFIG_VARS)
     if config:
       self.c = config
-
-    if include_deps:
-      # TODO(iannucci): This is 'inefficient', since if a dep comes up multiple
-      # times in this recursion, it will get set_config()'d multiple times
-      for dep in self._module.LOADED_DEPS:
-        getattr(self.m, dep).set_config(config_name, optional=True, **params)
 
   def apply_config(self, config_name, config_object=None, optional=False):
     """Apply a named configuration to the provided config object or self."""

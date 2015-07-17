@@ -174,9 +174,9 @@ class PathApi(recipe_api.RecipeApi):
 
     # We can't depend on another module in the ctor.
     if self._engine.properties.get('path_config') == 'swarming':
-      self.set_config('swarming', include_deps=False)
+      self.set_config('swarming')
     else:
-      self.set_config('buildbot', include_deps=False)
+      self.set_config('buildbot')
 
   def mock_add_paths(self, path):
     """For testing purposes, assert that |path| exists."""
