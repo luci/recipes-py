@@ -32,5 +32,32 @@
       "@@@STEP_LOG_LINE@json.output@]@@@",
       "@@@STEP_LOG_END@json.output@@@"
     ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "\nimport json\nimport sys\nwith open(sys.argv[1], 'w') as f:\n  f.write(json.dumps([1, 2, 3]))\nwith open(sys.argv[2], 'w') as f:\n  f.write(json.dumps([2, 3, 4]))\n",
+      "/path/to/tmp/json",
+      "/path/to/tmp/json"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "foo",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@[@@@",
+      "@@@STEP_LOG_LINE@json.output@  2, @@@",
+      "@@@STEP_LOG_LINE@json.output@  3, @@@",
+      "@@@STEP_LOG_LINE@json.output@  4@@@",
+      "@@@STEP_LOG_LINE@json.output@]@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LOG_LINE@python.inline@@@@",
+      "@@@STEP_LOG_LINE@python.inline@import json@@@",
+      "@@@STEP_LOG_LINE@python.inline@import sys@@@",
+      "@@@STEP_LOG_LINE@python.inline@with open(sys.argv[1], 'w') as f:@@@",
+      "@@@STEP_LOG_LINE@python.inline@  f.write(json.dumps([1, 2, 3]))@@@",
+      "@@@STEP_LOG_LINE@python.inline@with open(sys.argv[2], 'w') as f:@@@",
+      "@@@STEP_LOG_LINE@python.inline@  f.write(json.dumps([2, 3, 4]))@@@",
+      "@@@STEP_LOG_END@python.inline@@@"
+    ]
   }
 ]
