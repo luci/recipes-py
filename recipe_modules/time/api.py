@@ -4,6 +4,7 @@
 
 from recipe_engine import recipe_api
 
+import datetime
 import time
 
 class TimeApi(recipe_api.RecipeApi):
@@ -22,3 +23,11 @@ class TimeApi(recipe_api.RecipeApi):
       return self._fake_time
     else:  # pragma: no cover
       return time.time()
+
+  def utcnow(self):
+    """Return current UTC time as a datetime.datetime."""
+    if self._test_data.enabled:
+      self._fake_time += self._fake_step
+      return datetime.datetime.utcfromtimestamp(self._fake_time)
+    else:  # pragma: no cover
+      return datetime.datetime.utcnow()
