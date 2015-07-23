@@ -85,6 +85,99 @@ from . import util
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 
+ENV_WHITELIST_WIN = set([
+    'APPDATA',
+    'BUILDBOT_ARCHIVE_FORCE_SSH',
+    'CHROME_HEADLESS',
+    'CHROMIUM_BUILD',
+    'COMMONPROGRAMFILES',
+    'COMMONPROGRAMFILES(X86)',
+    'COMMONPROGRAMW6432',
+    'COMSPEC',
+    'COMPUTERNAME',
+    'DBUS_SESSION_BUS_ADDRESS',
+    'DEPOT_TOOLS_GIT_BLEEDING',
+    # TODO(maruel): Remove once everyone is on 2.7.5.
+    'DEPOT_TOOLS_PYTHON_275',
+    'DXSDK_DIR',
+    'GIT_USER_AGENT',
+    'HOME',
+    'HOMEDRIVE',
+    'HOMEPATH',
+    'LOCALAPPDATA',
+    'NUMBER_OF_PROCESSORS',
+    'OS',
+    'PATH',
+    'PATHEXT',
+    'PROCESSOR_ARCHITECTURE',
+    'PROCESSOR_ARCHITEW6432',
+    'PROCESSOR_IDENTIFIER',
+    'PROGRAMFILES',
+    'PROGRAMW6432',
+    'PYTHONPATH',
+    'SYSTEMDRIVE',
+    'SYSTEMROOT',
+    'TEMP',
+    'TESTING_MASTER',
+    'TESTING_MASTER_HOST',
+    'TESTING_SLAVENAME',
+    'TMP',
+    'USERNAME',
+    'USERDOMAIN',
+    'USERPROFILE',
+    'VS100COMNTOOLS',
+    'VS110COMNTOOLS',
+    'WINDIR',
+])
+
+ENV_WHITELIST_POSIX = set([
+    'CCACHE_DIR',
+    'CHROME_ALLOCATOR',
+    'CHROME_HEADLESS',
+    'CHROME_VALGRIND_NUMCPUS',
+    'DISPLAY',
+    'DISTCC_DIR',
+    'GIT_USER_AGENT',
+    'HOME',
+    'HOSTNAME',
+    'HTTP_PROXY',
+    'http_proxy',
+    'HTTPS_PROXY',
+    'LANG',
+    'LOGNAME',
+    'PAGER',
+    'PATH',
+    'PWD',
+    'PYTHONPATH',
+    'SHELL',
+    'SSH_AGENT_PID',
+    'SSH_AUTH_SOCK',
+    'SSH_CLIENT',
+    'SSH_CONNECTION',
+    'SSH_TTY',
+    'TESTING_MASTER',
+    'TESTING_MASTER_HOST',
+    'TESTING_SLAVENAME',
+    'USER',
+    'USERNAME',
+])
+
+
+def _isolate_environment():
+  """Isolate the environment to a known subset set."""
+  if sys.platform.startswith('win'):
+    whitelist = ENV_WHITELIST_WIN
+  elif sys.platform in ('darwin', 'posix', 'linux2'):
+    whitelist = ENV_WHITELIST_POSIX
+  else:
+    print ('WARNING: unknown platform %s, not isolating environment.' %
+           sys.platform)
+    return
+
+  for k in os.environ.keys():
+    if k not in whitelist:
+      del os.environ[k]
+
 
 class StepPresentation(object):
   STATUSES = set(('SUCCESS', 'FAILURE', 'WARNING', 'EXCEPTION'))
@@ -361,6 +454,9 @@ def run_steps(properties,
       s.step_log_line('run_recipe', line)
     s.step_log_end('run_recipe')
 
+    _isolate_environment()
+
+    # Find and load the recipe to run.
     try:
       recipe_module = universe.load_recipe(recipe)
       stream.emit('Running recipe with %s' % (properties,))
