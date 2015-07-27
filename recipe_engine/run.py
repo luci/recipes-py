@@ -442,10 +442,7 @@ def run_steps(properties,
     'TESTING_SLAVENAME' in os.environ)):
     properties['use_mirror'] = False
 
-  # It's an integration point with a new recipe engine that can run steps
-  # in parallel (that is not implemented yet). Use new engine only if explicitly
-  # asked by setting 'engine' property to 'ParallelRecipeEngine'.
-  engine = RecipeEngine.create(stream, properties, test_data)
+  engine = RecipeEngine(stream, properties, test_data)
 
   # Create all API modules and top level RunSteps function.  It doesn't launch
   # any recipe code yet; RunSteps needs to be called.
@@ -726,9 +723,9 @@ def _run_annotated_step(
 
   return step_annotation, returncode
 
-
 class RecipeEngine(object):
-  """Knows how to execute steps emitted by a recipe, holds global state such as
+  """
+  Knows how to execute steps emitted by a recipe, holds global state such as
   step history and build properties. Each recipe module API has a reference to
   this object.
 
@@ -737,54 +734,8 @@ class RecipeEngine(object):
     * step_history - uses engine.step_history.
     * step - uses engine.create_step(...).
 
-  This class acts mostly as a documentation of expected public engine interface.
   """
-
-  @staticmethod
-  def create(stream, properties, test_data):
-    """Create a new instance of RecipeEngine based on 'engine' property."""
-    engine_cls_name = properties.get('engine', 'SequentialRecipeEngine')
-    for cls in RecipeEngine.__subclasses__():
-      if cls.__name__ == engine_cls_name:
-        return cls(stream, properties, test_data)
-    raise ValueError('Invalid engine class: %s' % (engine_cls_name,))
-
-  @property
-  def properties(self):
-    """Global properties, merged --build_properties and --factory_properties."""
-    raise NotImplementedError
-
-  # TODO(martiniss) update documentation for this class
-  def run(self, steps_function, api):
-    """Run a recipe represented by top level RunSteps function.
-
-    This function blocks until recipe finishes.
-
-    Args:
-      steps_function: function that runs the steps.
-
-    Returns:
-      RecipeExecutionResult with status code and list of steps ran.
-    """
-    raise NotImplementedError
-
-  def create_step(self, step):
-    """Called by step module to instantiate a new step.
-
-    Args:
-      step: ConfigGroup object with information about the step, see
-        recipe_modules/step/config.py.
-
-    Returns:
-      Opaque engine specific object that is understood by 'run_steps' method.
-    """
-    raise NotImplementedError
-
-
-class SequentialRecipeEngine(RecipeEngine):
-  """Always runs step sequentially. Currently the engine used by default."""
   def __init__(self, stream, properties, test_data):
-    super(SequentialRecipeEngine, self).__init__()
     self._stream = stream
     self._properties = properties
     self._test_data = test_data
@@ -804,6 +755,7 @@ class SequentialRecipeEngine(RecipeEngine):
     return self._previous_step_result
 
   def _emit_results(self):
+    """Internal helper used to emit results."""
     annotation = self._previous_step_annotation
     step_result = self._previous_step_result
 
@@ -826,6 +778,15 @@ class SequentialRecipeEngine(RecipeEngine):
     annotation.step_ended()
 
   def run_step(self, step):
+    """
+    Runs a step.
+
+    Args:
+      step: The step to run.
+
+    Returns:
+      A StepData object containing the result of running the step.
+    """
     ok_ret = step.pop('ok_ret')
     infra_step = step.pop('infra_step')
     nest_level = step.pop('step_nest_level')
@@ -887,6 +848,18 @@ class SequentialRecipeEngine(RecipeEngine):
 
 
   def run(self, steps_function, api):
+    """Run a recipe represented by top level RunSteps function.
+
+    This function blocks until recipe finishes.
+
+    Args:
+      steps_function: function that runs the steps.
+      api: The api, with loaded module dependencies.
+           Used by the some special modules.
+
+    Returns:
+      RecipeExecutionResult with status code and list of steps ran.
+    """
     self._api = api
     retcode = None
     final_result = None
@@ -948,8 +921,15 @@ class SequentialRecipeEngine(RecipeEngine):
     return RecipeExecutionResult(retcode, self._step_history)
 
   def create_step(self, step):  # pylint: disable=R0201
-    # This version of engine doesn't do anything, just converts step to dict
-    # (that is consumed by annotator engine).
+    """Called by step module to instantiate a new step.
+
+    Args:
+      step: ConfigGroup object with information about the step, see
+        recipe_modules/step/config.py.
+
+    Returns:
+      Opaque engine specific object that is understood by 'run_steps' method.
+    """
     return step.as_jsonish()
 
 
