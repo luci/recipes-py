@@ -302,6 +302,7 @@ def defer_results():
 
 
 class RecipeApiMeta(type):
+  WHITELIST = ('__init__',)
   def __new__(mcs, name, bases, attrs):
     """Automatically wraps all methods of subclasses of RecipeApi with
     @infer_composite_step. This allows defer_results to work as intended without
@@ -309,6 +310,8 @@ class RecipeApiMeta(type):
     """
     wrap = lambda f: infer_composite_step(f) if f else f
     for attr in attrs:
+      if attr in RecipeApiMeta.WHITELIST:
+        continue
       val = attrs[attr]
       if isinstance(val, types.FunctionType):
         attrs[attr] = wrap(val)
