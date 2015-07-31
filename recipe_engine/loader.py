@@ -84,7 +84,7 @@ class NamedDependency(PathDependency):
   def __init__(self, name, universe):
     for path in universe.module_dirs:
       mod_path = os.path.join(path, name)
-      if os.path.exists(os.path.join(mod_path, '__init__.py')):
+      if _is_recipe_module_dir(mod_path):
         super(NamedDependency, self).__init__(mod_path, name, universe=universe)
         return
     raise NoSuchRecipe('Recipe module named %s does not exist' % name)
@@ -176,7 +176,7 @@ class RecipeUniverse(object):
       if os.path.isdir(path):
         for item in os.listdir(path):
           subpath = os.path.join(path, item)
-          if os.path.isdir(subpath):
+          if _is_recipe_module_dir(subpath):
             yield subpath
 
   def loop_over_recipes(self):
@@ -193,6 +193,11 @@ class RecipeUniverse(object):
           path, lambda f: f.endswith('example.py')):
         module_name = os.path.dirname(recipe)[len(path)+1:]
         yield recipe, '%s:example' % module_name
+
+
+def _is_recipe_module_dir(path):
+  return (os.path.isdir(path) and
+          os.path.isfile(os.path.join(path, '__init__.py')))
 
 
 @contextlib.contextmanager
