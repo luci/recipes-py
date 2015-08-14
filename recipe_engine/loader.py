@@ -10,7 +10,7 @@ import sys
 
 from .config import ConfigContext
 from .config_types import Path, ModuleBasePath, RECIPE_MODULE_PREFIX
-from .recipe_api import RecipeApi, RecipeApiPlain
+from .recipe_api import RecipeApi, RecipeApiPlain, Property, UndefinedPropertyException
 from .recipe_test_api import RecipeTestApi, DisabledTestData
 from .util import scan_directory
 
@@ -23,6 +23,11 @@ class RecipeScript(object):
   """Holds dict of an evaluated recipe script."""
 
   def __init__(self, recipe_dict):
+    recipe_dict.setdefault('PROPERTIES', {})
+    # Let each property object know about the property name.
+    for name, value in recipe_dict['PROPERTIES'].items():
+      value.name = name
+
     for k, v in recipe_dict.iteritems():
       setattr(self, k, v)
 
@@ -283,7 +288,7 @@ def _recursive_import(path, prefix):
 def _patchup_module(name, submod):
   """Finds framework related classes and functions in a |submod| and adds
   them to |submod| as top level constants with well known names such as
-  API, CONFIG_CTX and TEST_API.
+  API, CONFIG_CTX, TEST_API, and PROPERTIES.
 
   |submod| is a recipe module (akin to python package) with submodules such as
   'api', 'config', 'test_api'. This function scans through dicts of that
@@ -323,6 +328,11 @@ def _patchup_module(name, submod):
       % (submod)
     )
 
+  submod.PROPERTIES = getattr(submod, 'PROPERTIES', {})
+  # Let each property object know about the property name.
+  for name, value in submod.PROPERTIES.items():
+    value.name = name
+
 
 class DependencyMapper(object):
   """DependencyMapper topologically traverses the dependency DAG beginning at
@@ -360,12 +370,64 @@ class DependencyMapper(object):
     self._instances[mod] = self._instantiator(mod, deps_dict)
     return self._instances[mod]
 
+def invoke_with_properties(callable_obj, all_props, prop_defs,
+                           **additional_args):
+  """
+  Invokes callable with filtered, type-checked properties.
+
+  Args:
+    callable_obj: The function to call, or class to instantiate.
+                  This supports passing in either RunSteps, or a recipe module,
+                  which is a class.
+    all_props: A dictionary containing all the properties
+               currently defined in the system.
+    prop_defs: A dictionary of name to property definitions for this callable.
+    additional_args: kwargs to pass through to the callable.
+                     Note that the names of the arguments can correspond to
+                     positional arguments as well.
+
+  Returns:
+    The result of calling callable with the filtered properties
+    and additional arguments.
+  """
+  # To detect when they didn't specify a property that they have as a
+  # function argument, list the arguments, through inspection,
+  # and then comparing this list to the provided properties. We use a list
+  # instead of a dict because getargspec returns a list which we would have to
+  # convert to a dictionary, and the benefit of the dictionary is pretty small.
+  props = []
+  if inspect.isclass(callable_obj):
+    arg_names = inspect.getargspec(callable_obj.__init__).args
+
+    arg_names.pop(0)
+  else:
+    arg_names = inspect.getargspec(callable_obj).args
+
+  for arg in arg_names:
+    if arg in additional_args:
+      props.append(additional_args.pop(arg))
+      continue
+
+    if arg not in prop_defs:
+      raise UndefinedPropertyException(
+        "Missing property definition for '{}'.".format(arg))
+
+    props.append(prop_defs[arg].interpret(all_props.get(
+      arg, Property.sentinel)))
+
+  return callable_obj(*props, **additional_args)
 
 def create_recipe_api(toplevel_deps, engine, test_data=DisabledTestData()):
   def instantiator(mod, deps):
-    # TODO(luqui): test_data will need to use canonical unique names.
-    mod_api = mod.API(module=mod, engine=engine,
-                     test_data=test_data.get_module_test_data(mod.NAME))
+    kwargs = {
+      'module': mod,
+      'engine': engine,
+      # TODO(luqui): test_data will need to use canonical unique names.
+      'test_data': test_data.get_module_test_data(mod.NAME)
+    }
+    prop_defs = mod.PROPERTIES
+    mod_api = invoke_with_properties(
+      mod.API, engine.properties, prop_defs, **kwargs)
     mod_api.test_api = (getattr(mod, 'TEST_API', None)
                         or RecipeTestApi)(module=mod)
     for k, v in deps.iteritems():

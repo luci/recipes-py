@@ -77,6 +77,10 @@ from infra.libs import infra_types
 class BadConf(Exception):
   pass
 
+def typeAssert(obj, typearg):
+  if not isinstance(obj, typearg):
+    raise TypeError("Expected %r to be of type %r" % (obj, typearg))
+
 
 class ConfigContext(object):
   """A configuration context for a recipe module.
@@ -347,7 +351,7 @@ class ConfigGroup(ConfigBase):
 
     object.__setattr__(self, '_type_map', type_map)
     for name, typeval in self._type_map.iteritems():
-      assert isinstance(typeval, ConfigBase)
+      typeAssert(typeval, ConfigBase)
       object.__setattr__(self, name, typeval)
 
   def __getattribute__(self, name):
@@ -359,12 +363,12 @@ class ConfigGroup(ConfigBase):
 
   def __setattr__(self, name, val):
     obj = object.__getattribute__(self, name)
-    assert isinstance(obj, ConfigBase)
+    typeAssert(obj, ConfigBase)
     obj.set_val(val)
 
   def __delattr__(self, name):
     obj = object.__getattribute__(self, name)
-    assert isinstance(obj, ConfigBase)
+    typeAssert(obj, ConfigBase)
     obj.reset()
 
   def set_val(self, val):
@@ -372,7 +376,8 @@ class ConfigGroup(ConfigBase):
       val = val.as_jsonish(include_hidden=True)
     if isinstance(val, infra_types.FrozenDict):
       val = infra_types.thaw(val)
-    assert isinstance(val, dict)
+    typeAssert(val, dict)
+
     val = dict(val)  # because we pop later.
     for name, config_obj in self._type_map.iteritems():
       if name in val:
@@ -380,7 +385,9 @@ class ConfigGroup(ConfigBase):
           config_obj.set_val(val.pop(name))
         except Exception as e:
           raise Exception('While assigning key %r: %s' % (name, e))
-    assert not val, "Got extra keys while setting ConfigGroup: %s" % val
+
+    if val:
+      raise TypeError("Got extra keys while setting ConfigGroup: %s" % val)
 
   def as_jsonish(self, include_hidden=False):
     return dict(
@@ -422,8 +429,8 @@ class ConfigList(ConfigBase, collections.MutableSequence):
                    an instance of ConfigGroup.
     """
     super(ConfigList, self).__init__(hidden=hidden)
-    assert isinstance(item_schema, types.FunctionType)
-    assert isinstance(item_schema(), ConfigGroup)
+    typeAssert(item_schema, types.FunctionType)
+    typeAssert(item_schema(), ConfigGroup)
     self.item_schema = item_schema
     self.data = []
 
@@ -459,7 +466,8 @@ class ConfigList(ConfigBase, collections.MutableSequence):
   def set_val(self, data):
     if isinstance(data, ConfigList):
       data = data.as_jsonish(include_hidden=True)
-    assert isinstance(data, list)
+
+    typeAssert(data, list)
     self.reset()
     for item in data:
       self.append(item)
@@ -499,7 +507,7 @@ class Dict(ConfigBase, collections.MutableMapping):
 
   def __setitem__(self, k, v):
     if self.value_type:
-      assert isinstance(v, self.value_type)
+      typeAssert(v, self.value_type)
     return self.data.__setitem__(k, v)
 
   def __delitem__(self, k):
@@ -516,10 +524,10 @@ class Dict(ConfigBase, collections.MutableMapping):
       val = val.data
     if isinstance(val, infra_types.FrozenDict):
       val = dict(val)
-    assert isinstance(val, dict)
+
+    typeAssert(val, dict)
     for v in val.itervalues():
-      assert isinstance(v, self.value_type), (
-        'Expected %r to be of type %r' % (v, self.value_type))
+      typeAssert(v, self.value_type)
     self.data = val
 
   def as_jsonish(self, _include_hidden=None):
@@ -557,7 +565,7 @@ class List(ConfigBase, collections.MutableSequence):
     return self.data[index]
 
   def __setitem__(self, index, value):
-    assert isinstance(value, self.inner_type)
+    typeAssert(value, self.inner_type)
     self.data[index] = value
 
   def __delitem__(self, index):
@@ -572,13 +580,12 @@ class List(ConfigBase, collections.MutableSequence):
     return other + self.data
 
   def insert(self, index, value):
-    assert isinstance(value, self.inner_type)
+    typeAssert(value, self.inner_type)
     self.data.insert(index, value)
 
   def set_val(self, val):
     for v in val:
-      assert isinstance(v, self.inner_type), (
-        'Expected %r to be of type %r' % (v, self.inner_type))
+      typeAssert(v, self.inner_type)
     self.data = list(val)
 
   def as_jsonish(self, _include_hidden=None):
@@ -621,7 +628,7 @@ class Set(ConfigBase, collections.MutableSet):
     return len(self.data)
 
   def add(self, value):
-    assert isinstance(value, self.inner_type)
+    typeAssert(value, self.inner_type)
     self.data.add(value)
 
   def update(self, values):
@@ -634,8 +641,7 @@ class Set(ConfigBase, collections.MutableSet):
 
   def set_val(self, val):
     for v in val:
-      assert isinstance(v, self.inner_type), (
-        'Expected %r to be of type %r' % (v, self.inner_type))
+      typeAssert(v, self.inner_type)
     self.data = set(val)
 
   def as_jsonish(self, _include_hidden=None):
@@ -682,8 +688,7 @@ class Single(ConfigBase):
     if isinstance(val, Single):
       val = val.data
     if val is not self.empty_val:
-      assert isinstance(val, self.inner_type), (
-        'Expected %r to be of type %r' % (val, self.inner_type))
+      typeAssert(val, self.inner_type)
     self.data = val
 
   def as_jsonish(self, _include_hidden=None):
@@ -716,7 +721,7 @@ class Static(ConfigBase):
     return self.data
 
   def set_val(self, val):
-    assert False, "Cannot assign to a Static config member"
+    raise TypeError("Cannot assign to a Static config member")
 
   def as_jsonish(self, _include_hidden=None):
     return self.data
