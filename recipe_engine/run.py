@@ -476,10 +476,12 @@ def run_steps(properties,
     try:
       recipe_module = universe.load_recipe(recipe)
       stream.emit('Running recipe with %s' % (properties,))
+      prop_defs = recipe_module.PROPERTIES
+
       api = loader.create_recipe_api(recipe_module.LOADED_DEPS,
                                             engine,
                                             test_data)
-      steps = recipe_module.RunSteps
+
       s.step_text('<br/>running recipe: "%s"' % recipe)
     except loader.NoSuchRecipe as e:
       s.step_text('<br/>recipe not found: %s' % e)
@@ -488,7 +490,7 @@ def run_steps(properties,
 
   # Run the steps emitted by a recipe via the engine, emitting annotations
   # into |stream| along the way.
-  return engine.run(steps, api)
+  return engine.run(recipe_module.RunSteps, api, prop_defs)
 
 
 def _merge_envs(original, override):
@@ -847,7 +849,7 @@ class RecipeEngine(object):
       raise exc(step['name'], step_result)
 
 
-  def run(self, steps_function, api):
+  def run(self, steps_function, api, prop_defs):
     """Run a recipe represented by top level RunSteps function.
 
     This function blocks until recipe finishes.
@@ -856,6 +858,7 @@ class RecipeEngine(object):
       steps_function: function that runs the steps.
       api: The api, with loaded module dependencies.
            Used by the some special modules.
+      prop_defs: Property definitions for this recipe.
 
     Returns:
       RecipeExecutionResult with status code and list of steps ran.
@@ -866,7 +869,8 @@ class RecipeEngine(object):
 
     try:
       try:
-        retcode = steps_function(api)
+        retcode = loader.invoke_with_properties(
+          steps_function, api._engine.properties, prop_defs, api=api)
         assert retcode is None, (
         "Non-None return from RunSteps is not supported yet")
 

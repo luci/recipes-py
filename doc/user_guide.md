@@ -45,11 +45,12 @@ def RunSteps(api):
   api.step('Print Hello World', ['echo', 'hello', 'world'])
 ```
 
-The `RunSteps` function is expected to take a single argument `api` (we'll get
-to that in more detail later), and run a series of steps by calling api
-functions.  All of these functions will eventually make calls to `api.step()`,
-which is the only way to actually get anything done on the machine.  Using
-python libraries with OS side-effects is prohibited to enable testing.
+The `RunSteps` function is expected to take at least a single argument `api`
+(we'll get to that in more detail later), and run a series of steps by calling
+api functions.  All of these functions will eventually make calls to
+`api.step()`, which is the only way to actually get anything done on the
+machine.  Using python libraries with OS side-effects is prohibited to enable
+testing.
 
 For these examples we will work out of the
 [tools/build](https://chromium.googlesource.com/chromium/tools/build/)
@@ -122,21 +123,27 @@ familiar with BuildBot, you'll probably know them as `factory_properties` and
 is provided by the `properties` api module.
 
 ```python
+from recipe_engine.recipe_api import Property
+
 DEPS = [
-  'properties',
   'step',
 ]
 
-def RunSteps(api):
+PROPERTIES = {
+  'target_of_admiration': Property(
+    _type=str, help="Who you love and adore.", default="Chrome Infra"),
+}
+
+def RunSteps(api, target_of_admiration):
   verb = 'Hello, %s'
-  target = api.properties['target_of_admiration']
-  if target == 'DarthVader':
+  if target_of_admiration == 'DarthVader':
     verb = 'Die in a fire, %s!'
-  api.step('Greet Admired Individual', ['echo', verb % target])
+  api.step('Greet Admired Individual', ['echo', verb % target_of_admiration])
 
 def GenTests(api):
   yield api.test('basic') + api.properties(target_of_admiration='Bob')
   yield api.test('vader') + api.properties(target_of_admiration='DarthVader')
+  yield api.test('infra rocks')
 ```
 
 Yes, elements of a test specification are combined with `+` and it's weird.
@@ -194,7 +201,12 @@ First add an `__init__.py` with DEPS:
 
 ```python
 # recipe_modules/hello/__init__.py
+from recipe_api import Property
+
 DEPS = ['properties', 'step']
+PROPERTIES = {
+  'target_of_admiration': Property(default=None),
+}
 ```
 
 And your api.py should look something like:
@@ -203,13 +215,15 @@ And your api.py should look something like:
 from slave import recipe_api
 
 class HelloApi(recipe_api.RecipeApi):
-  def greet(self, default_verb=None, target=None):
+  def __init__(self, target_of_admiration):
+    self._target = target_of_admiration
+
+  def greet(self, default_verb=None):
     verb = default_verb or 'Hello %s'
-    target = target or self.m.properties['target_of_admiration']
-    if target == 'DarthVader':
+    if self._target == 'DarthVader':
       verb = 'Die in a fire %s!'
     self.m.step('Hello World',
-                ['echo', verb % target])
+                ['echo', verb % self._target])
 ```
 
 Note that all the DEPS get injected into `self.m`. This logic is handled outside
@@ -354,8 +368,11 @@ Now that we have our config, let's use it.
 from slave import recipe_api
 
 class HelloApi(recipe_api.RecipeApi):
+  def __init__(self, target_of_admiration):
+    self._target = target_of_admiration
+
   def get_config_defaults(self, _config_name):
-    return {'TARGET': self.m.properties['target_of_admiration']}
+    return {'TARGET': self._target}
 
   def greet(self):
     self.m.step('Hello World', [

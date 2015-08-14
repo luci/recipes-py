@@ -3,11 +3,13 @@
 # found in the LICENSE file.
 
 import contextlib
+import keyword
 import types
 
 from functools import wraps
 
 from .recipe_test_api import DisabledTestData, ModuleTestData
+from .config import Single
 
 from .util import ModuleInjectionSite
 
@@ -445,3 +447,79 @@ class RecipeApiPlain(ModuleInjectionSite):
 
 class RecipeApi(RecipeApiPlain):
   __metaclass__ = RecipeApiMeta
+
+
+class Property(object):
+  sentinel = object()
+
+  @staticmethod
+  def legal_name(name):
+    if name.startswith('_'):
+      return False
+
+    if name in ('self',):
+      return False
+
+    if keyword.iskeyword(name):
+      return False
+
+    return True
+
+  @property
+  def name(self):
+    return self._name
+
+  @name.setter
+  def name(self, name):
+    if not Property.legal_name(name):
+      raise ValueError("Illegal name '{}'".format(name))
+
+    self._name = name
+
+  def __init__(self, default=sentinel, help="", kind=None):
+    """
+    Constructor for Property.
+
+    Args:
+      default: The default value for this Property. Note: A default
+               value of None is allowed. To have no default value, omit
+               this argument.
+      help: The help text for this Property.
+      type: The type of this Property. You can either pass in a raw python
+            type, or a Config Type, using the recipe engine config system.
+    """
+    self._default = default
+    self.help = help
+    self._name = None
+
+    if isinstance(kind, type):
+      kind = Single(kind)
+    self.kind = kind
+
+  def interpret(self, value):
+    """
+    Interprets the value for this Property.
+
+    Args:
+      value: The value to interpret. May be None, which
+             means no value provided.
+
+    Returns:
+      The value to use for this property. Raises an error if
+      this property has no valid interpretation.
+    """
+    if value is not Property.sentinel:
+      if self.kind is not None:
+        # The config system handles type checking for us here.
+        self.kind.set_val(value)
+      return value
+
+    if self._default is not Property.sentinel:
+      return self._default
+
+    raise ValueError(
+      "No default specified and no value provided for '{}'".format(
+        self.name))
+
+class UndefinedPropertyException(TypeError):
+  pass
