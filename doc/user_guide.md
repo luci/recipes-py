@@ -131,7 +131,7 @@ DEPS = [
 
 PROPERTIES = {
   'target_of_admiration': Property(
-    _type=str, help="Who you love and adore.", default="Chrome Infra"),
+    kind=str, help="Who you love and adore.", default="Chrome Infra"),
 }
 
 def RunSteps(api, target_of_admiration):
