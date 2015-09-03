@@ -44,6 +44,9 @@
     "cwd": "[SLAVE_BUILD]",
     "name": "hello (3)",
     "~followup_annotations": [
+      "@@@STEP_LOG_LINE@the reason@The reason@@@",
+      "@@@STEP_LOG_LINE@the reason@it failed@@@",
+      "@@@STEP_LOG_END@the reason@@@",
       "@@@STEP_EXCEPTION@@@"
     ]
   },

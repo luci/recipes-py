@@ -170,7 +170,9 @@ class StepCommands(AnnotationPrinter):
     logname = logname.replace('/', '&#x2f;')
 
     for line in lines:
-      self.step_log_line(logname, line)
+      for actual_line in line.split('\n'):
+        self.step_log_line(logname, actual_line)
+
     if perf:
       self.step_log_end_perf(logname, perf)
     else:

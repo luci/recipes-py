@@ -29,6 +29,7 @@ def RunSteps(api):
   # the next step.
   step_result = api.step('hello', ['echo', 'hello'])
   step_result.presentation.status = api.step.EXCEPTION
+  step_result.presentation.logs['the reason'] = ['The reason\nit failed']
 
   try:
     api.step('goodbye', ['echo', 'goodbye'])
