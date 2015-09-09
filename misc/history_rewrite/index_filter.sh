@@ -1,0 +1,1 @@
+git rm --cached --ignore-unmatch -r tests masters scripts/master site_config "third_party/build*" "third_party/pytz" "third_party/coverage*" "third_party/jinja*" "third_party/sqlalchemy*" "third_party/twisted*" "third_party/requests*" "scripts/slave/recipes" slave > /dev/null
