@@ -51,6 +51,15 @@
     ]
   },
   {
+    "cmd": [],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "Just print stuff",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@more@More stuff@@@",
+      "@@@STEP_LOG_END@more@@@"
+    ]
+  },
+  {
     "cmd": [
       "echo",
       "goodbye"

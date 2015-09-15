@@ -96,7 +96,8 @@ class StepApi(recipe_api.RecipeApiPlain):
 
     Args:
       name (string): The name of this step.
-      cmd (list of strings): in the style of subprocess.Popen.
+      cmd (list of strings): in the style of subprocess.Popen or None to create
+        a no-op fake step.
       ok_ret (tuple or set of ints, str): allowed return codes. Any unexpected
         return codes will cause an exception to be thrown. If you pass in the
         value 'any' or 'all', the engine will allow any return code to be
@@ -111,21 +112,22 @@ class StepApi(recipe_api.RecipeApiPlain):
       Opaque step object produced and understood by recipe engine.
     """
     assert 'shell' not in kwargs
-    assert isinstance(cmd, list)
+    assert cmd is None or isinstance(cmd, list)
     if not ok_ret:
       ok_ret = {0}
     if ok_ret in ('any', 'all'):
       ok_ret = set(range(-256, 256))
 
-    command = list(wrapper)
-    command += cmd
-    compositor = recipe_api._STEP_CONTEXT
-    kwargs['cmd'] = command
+    if cmd is not None:
+      command = list(wrapper)
+      command += cmd
+      kwargs['cmd'] = command
 
     kwargs['ok_ret'] = ok_ret
     kwargs['infra_step'] = bool(infra_step)
 
     # Obtain information from composite step parent.
+    compositor = recipe_api._STEP_CONTEXT
     name = compositor.get_with_context('name', name)
     kwargs['env'] = compositor.get_with_context('env', kwargs.get('env', {}))
     kwargs['step_nest_level'] = compositor.get_with_context('nest_level', 0)

@@ -31,6 +31,10 @@ def RunSteps(api):
   step_result.presentation.status = api.step.EXCEPTION
   step_result.presentation.logs['the reason'] = ['The reason\nit failed']
 
+  # Without a command, a step can be used to present some data from the recipe.
+  step_result = api.step('Just print stuff', cmd=None)
+  step_result.presentation.logs['more'] = ['More stuff']
+
   try:
     api.step('goodbye', ['echo', 'goodbye'])
     # Modifying step_result now would raise an AssertionError.
