@@ -69,6 +69,7 @@ def _parse_args(args, test_gen):
     if doc:
       doc = doc[0].lower() + doc[1:]
     sp = subparsers.add_parser(k, help=doc)
+
     h.add_options(sp)
 
     mg = sp.add_mutually_exclusive_group()
@@ -83,6 +84,11 @@ def _parse_args(args, test_gen):
           '--jobs', metavar='N', type=int,
           default=multiprocessing.cpu_count(),
           help='run N jobs in parallel (default %(default)s)')
+
+    sp.add_argument(
+        '--threshold', metavar='PERCENT', default=100, type=float,
+        help='coverage threshold: coverage must be at least this high'
+    ).completer = lambda **_: []
 
     sp.add_argument(
         '--test_list', metavar='FILE',
@@ -122,7 +128,8 @@ def _parse_args(args, test_gen):
   return opts
 
 
-def main(name, test_gen, cover_branches=False, cover_omit=None, args=None):
+def main(name, test_gen, cover_branches=False, cover_omit=None, 
+         cover_threshold=100.0, args=None):
   """Entry point for tests using expect_tests.
 
   Example:
@@ -156,7 +163,8 @@ def main(name, test_gen, cover_branches=False, cover_omit=None, args=None):
 
     cover_ctx.cleanup()
     if not killed and not opts.test_glob:
-      if not cover_ctx.report(verbose=opts.verbose, omit=cover_omit):
+      if not cover_ctx.report(verbose=opts.verbose, omit=cover_omit, 
+                              threshold=opts.threshold):
         sys.exit(2)
 
     sys.exit(error or killed)

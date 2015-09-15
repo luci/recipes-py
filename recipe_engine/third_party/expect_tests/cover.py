@@ -54,15 +54,16 @@ class CoverageContext(object):
     if self.enabled:
       self.cov.combine()
 
-  def report(self, verbose, omit=None):
+  def report(self, verbose, threshold, omit=None):
     fail = False
 
     if self.enabled:
       if self.html_report:
-        self.cov.html_report(directory=self.html_report, omit=None)
+        self.cov.html_report(directory=self.html_report, omit=omit)
 
       outf = StringIO()
-      fail = self.cov.report(file=outf, omit=omit) != 100.0
+      coverage_percent = self.cov.report(file=outf, omit=omit)
+      fail = coverage_percent < threshold
       summary = outf.getvalue().replace('%- 15s' % 'Name', 'Coverage Report', 1)
       if verbose:
         print
@@ -74,7 +75,8 @@ class CoverageContext(object):
                        if not l.strip().endswith('100%')]
         print '\n'.join(lines)
         print
-        print 'FATAL: Test coverage is not at 100%.'
+        print 'FATAL: Test coverage %.f%% is less than %.f%% threshold' % (
+            coverage_percent, threshold)
 
     return not fail
 
