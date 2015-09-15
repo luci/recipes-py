@@ -60,8 +60,8 @@ def run(package_deps, args):
     properties = ast.literal_eval(properties_file.read())
     assert isinstance(properties, dict)
 
-  def get_properties_from_json(args):
-    return ast.literal_eval(args.properties)
+  def get_properties_from_json(props):
+    return ast.literal_eval(props)
 
   arg_properties = get_properties_from_args(args.props)
   assert len(filter(bool,
