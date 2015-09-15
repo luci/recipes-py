@@ -121,19 +121,22 @@ class StepApi(recipe_api.RecipeApiPlain):
     command += cmd
     compositor = recipe_api._STEP_CONTEXT
     kwargs['cmd'] = command
-    step_count = self._step_names.setdefault(name, 0) + 1
-    self._step_names[name] = step_count
-    if step_count > 1:
-      name = "%s (%d)" % (name, step_count)
 
     kwargs['ok_ret'] = ok_ret
     kwargs['infra_step'] = bool(infra_step)
 
     # Obtain information from composite step parent.
-    kwargs['name'] = compositor.get_with_context('name', name)
+    name = compositor.get_with_context('name', name)
     kwargs['env'] = compositor.get_with_context('env', kwargs.get('env', {}))
     kwargs['step_nest_level'] = compositor.get_with_context('nest_level', 0)
     kwargs.setdefault('cwd', self.m.path['slave_build'])
+
+    # Disambiguate repeated names
+    step_count = self._step_names.setdefault(name, 0) + 1
+    self._step_names[name] = step_count
+    if step_count > 1:
+      name = "%s (%d)" % (name, step_count)
+    kwargs['name'] = name
 
     schema = self.make_config()
     schema.set_val(kwargs)
