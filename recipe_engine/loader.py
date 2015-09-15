@@ -41,8 +41,8 @@ class RecipeScript(object):
     with _preserve_path():
       execfile(script_path, script_vars)
 
-    script_vars['LOADED_DEPS'] = universe.deps_from_mixed(
-        script_vars.get('DEPS', []), os.path.basename(script_path))
+    script_vars['LOADED_DEPS'] = universe.deps_from_spec(
+        script_vars.get('DEPS', []))
     return cls(script_vars)
 
 
@@ -62,8 +62,10 @@ class Dependency(object):
 
 
 class PathDependency(Dependency):
-  def __init__(self, path, local_name, universe, base_path=None):
-    self._path = _normalize_path(base_path, path)
+  def __init__(self, path, local_name, universe):
+    assert os.path.isabs(path), (
+        'Path dependencies must be absolute, but %s is not' % path)
+    self._path = path
     self._local_name = local_name
 
     # We forbid modules from living outside our main paths to keep clients
@@ -95,19 +97,32 @@ class NamedDependency(PathDependency):
     raise NoSuchRecipe('Recipe module named %s does not exist' % name)
 
 
+class PackageDependency(PathDependency):
+  # TODO(luqui): Forbid depending on a module from a (locally) undeclared
+  # dependency.
+  def __init__(self, package, module, local_name, universe):
+    mod_path = (
+        universe.package_deps.get_package(package).module_path(module))
+    super(PackageDependency, self).__init__(
+        mod_path, local_name, universe=universe)
+
+
 class RecipeUniverse(object):
-  def __init__(self, module_dirs, recipe_dirs):
+  def __init__(self, package_deps):
     self._loaded = {}
-    self._module_dirs = module_dirs[:]
-    self._recipe_dirs = recipe_dirs[:]
+    self._package_deps = package_deps
 
   @property
   def module_dirs(self):
-    return self._module_dirs
+    return self._package_deps.all_module_dirs
 
   @property
   def recipe_dirs(self):
-    return self._recipe_dirs
+    return self._package_deps.all_recipe_dirs
+
+  @property
+  def package_deps(self):
+    return self._package_deps
 
   def load(self, dep):
     """Load a Dependency."""
@@ -123,26 +138,31 @@ class RecipeUniverse(object):
       self._loaded[name] = mod
       return mod
 
-  def deps_from_names(self, deps):
-    """Load dependencies given a list simple module names (old style)."""
-    return { dep: self.load(NamedDependency(dep, universe=self))
-             for dep in deps }
-
-  def deps_from_paths(self, deps, base_path):
-    """Load dependencies given a dictionary of local names to module paths
-    (new style)."""
-    return { name: self.load(PathDependency(path, name,
-                                            universe=self, base_path=base_path))
-             for name, path in deps.iteritems() }
-
-  def deps_from_mixed(self, deps, base_path):
-    """Load dependencies given either a new style or old style deps spec."""
-    if isinstance(deps, (list, tuple)):
-      return self.deps_from_names(deps)
-    elif isinstance(deps, dict):
-      return self.deps_from_paths(deps, base_path)
+  def _dep_from_name(self, name):
+    if '/' in name:
+      [package,module] = name.split('/')
+      dep = PackageDependency(package, module, module, universe=self)
     else:
-      raise ValueError('%s is not a valid or known deps structure' % deps)
+      # Old style: bare module name, search paths to find it.
+      module = name
+      dep = NamedDependency(name, universe=self)
+
+    return module, dep
+
+  def deps_from_spec(self, spec):
+    # Automatic local names.
+    if isinstance(spec, (list, tuple)):
+      deps = {}
+      for item in spec:
+        name, dep = self._dep_from_name(item)
+        deps[name] = self.load(dep)
+    # Explicit local names.
+    elif isinstance(spec, dict):
+      deps = {}
+      for name, item in spec.iteritems():
+        _, dep = self._dep_from_name(item)
+        deps[name] = self.load(dep)
+    return deps
 
   def load_recipe(self, recipe):
     """Given name of a recipe, loads and returns it as RecipeScript instance.
@@ -163,10 +183,11 @@ class RecipeUniverse(object):
       module_name, example = recipe.split(':')
       assert example.endswith('example')
       for module_dir in self.module_dirs:
-        for subitem in os.listdir(module_dir):
-          if module_name == subitem:
-            return RecipeScript.from_script_path(
-                os.path.join(module_dir, subitem, 'example.py'), self)
+        if os.path.isdir(module_dir):
+          for subitem in os.listdir(module_dir):
+            if module_name == subitem:
+              return RecipeScript.from_script_path(
+                  os.path.join(module_dir, subitem, 'example.py'), self)
       raise NoSuchRecipe(recipe,
                          'Recipe example %s:%s does not exist' %
                          (module_name, example))
@@ -214,13 +235,6 @@ def _preserve_path():
     sys.path = old_path
 
 
-def _normalize_path(base_path, path):
-  if base_path is None or os.path.isabs(path):
-    return os.path.realpath(path)
-  else:
-    return os.path.realpath(os.path.join(base_path, path))
-
-
 def _find_and_load_module(fullname, modname, path):
   imp.acquire_lock()
   try:
@@ -244,8 +258,7 @@ def _load_recipe_module_module(path, universe):
   mod = _find_and_load_module(fullname, modname, path)
 
   # This actually loads the dependencies.
-  mod.LOADED_DEPS = universe.deps_from_mixed(
-      getattr(mod, 'DEPS', []), os.path.basename(path))
+  mod.LOADED_DEPS = universe.deps_from_spec(getattr(mod, 'DEPS', []))
 
   # Prevent any modules that mess with sys.path from leaking.
   with _preserve_path():

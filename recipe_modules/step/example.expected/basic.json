@@ -61,6 +61,14 @@
   {
     "cmd": [
       "echo",
+      "warning"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "warning"
+  },
+  {
+    "cmd": [
+      "echo",
       "testa"
     ],
     "cwd": "[SLAVE_BUILD]",
@@ -87,19 +95,13 @@
   {
     "cmd": [
       "python",
-      "test-wrapper.py",
-      "-v",
-      "--",
+      "-c",
+      "import sys; print sys.argv",
       "echo",
       "main",
       "application"
     ],
     "cwd": "[SLAVE_BUILD]",
     "name": "application"
-  },
-  {
-    "name": "$final_result",
-    "reason": "Warning, robots approaching!",
-    "status_code": 1
   }
 ]

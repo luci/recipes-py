@@ -68,11 +68,10 @@ modular configurations. See the documentation on config_item_context and the
 BaseConfig derivatives for more info.
 """
 
+from __future__ import absolute_import
 import collections
 import functools
 import types
-
-from infra.libs import infra_types
 
 class BadConf(Exception):
   pass
@@ -374,9 +373,7 @@ class ConfigGroup(ConfigBase):
   def set_val(self, val):
     if isinstance(val, ConfigBase):
       val = val.as_jsonish(include_hidden=True)
-    if isinstance(val, infra_types.FrozenDict):
-      val = infra_types.thaw(val)
-    typeAssert(val, dict)
+    typeAssert(val, collections.Mapping)
 
     val = dict(val)  # because we pop later.
     for name, config_obj in self._type_map.iteritems():
@@ -522,10 +519,7 @@ class Dict(ConfigBase, collections.MutableMapping):
   def set_val(self, val):
     if isinstance(val, Dict):
       val = val.data
-    if isinstance(val, infra_types.FrozenDict):
-      val = dict(val)
-
-    typeAssert(val, dict)
+    typeAssert(val, collections.Mapping)
     for v in val.itervalues():
       typeAssert(v, self.value_type)
     self.data = val

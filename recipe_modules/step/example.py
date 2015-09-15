@@ -3,8 +3,8 @@
 # found in the LICENSE file.
 
 DEPS = [
-  'properties',
-  'step',
+  'recipe_engine/properties',
+  'recipe_engine/step',
 ]
 
 from recipe_engine import recipe_api
@@ -35,8 +35,16 @@ def RunSteps(api):
     api.step('goodbye', ['echo', 'goodbye'])
     # Modifying step_result now would raise an AssertionError.
   except api.step.StepFailure:
-    # Raising anything besides StepFailure causes the build to go purple.
+    # Raising anything besides StepFailure or StepWarning causes the build to go 
+    # purple.
     raise ValueError('goodbye must exit 0!')
+
+  try:
+    api.step('warning', ['echo', 'warning'])
+  except api.step.StepFailure as e:
+    e.result.presentation.status = api.step.WARNING
+    raise api.step.StepWarning(e.message)
+
 
   # Aggregate failures from tests!
   try:
@@ -56,16 +64,12 @@ def RunSteps(api):
 
   # Run a step through a made-up wrapper program.
   api.step('application', ['echo', 'main', 'application'],
-           wrapper=['python', 'test-wrapper.py', '-v', '--'])
+           wrapper=['python', '-c', 'import sys; print sys.argv'])
 
   if api.properties.get('access_invalid_data'):
     result = api.step('no-op', ['echo', 'I', 'do', 'nothing'])
     # Trying to access non-existent attributes on the result should raise.
     _ = result.json.output
-
-  # You can also raise a warning, which will act like a step failure, but
-  # will turn the build yellow, and stop the build.
-  raise api.step.StepWarning("Warning, robots approaching!")
 
 
 def GenTests(api):
@@ -91,6 +95,12 @@ def GenTests(api):
       api.test('exceptional') +
       api.step_data('goodbye (2)', retcode=1) +
       api.expect_exception('ValueError')
+    )
+
+  yield (
+      api.test('warning') +
+      api.step_data('warning', retcode=1) +
+      api.expect_exception('StepWarning')
     )
 
   yield (

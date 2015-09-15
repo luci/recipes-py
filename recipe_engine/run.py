@@ -448,7 +448,7 @@ def run_steps(properties,
   # any recipe code yet; RunSteps needs to be called.
   api = None
   with stream.step('setup_build') as s:
-    assert 'recipe' in properties # Should be ensured by get_recipe_properties.
+    assert 'recipe' in properties
     recipe = properties['recipe']
 
     properties_to_print = properties.copy()

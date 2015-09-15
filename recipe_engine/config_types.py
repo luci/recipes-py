@@ -7,8 +7,7 @@ import re
 
 from collections import namedtuple
 
-from infra.libs import infra_types
-
+from . import types
 
 RECIPE_MODULE_PREFIX = 'RECIPE_MODULES'
 
@@ -20,9 +19,8 @@ def ResetTostringFns():
 def json_fixup(obj):
   if isinstance(obj, RecipeConfigType):
     return str(obj)
-  thawed = infra_types.thaw(obj)
-  if thawed is not obj:  # i.e. it was a frozen type
-    return thawed
+  if isinstance(obj, types.FrozenDict):
+    return dict(obj)
   raise TypeError("%r is not JSON serializable" % obj)
 
 

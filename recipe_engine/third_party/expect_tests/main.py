@@ -51,7 +51,8 @@ class _test_completer(object):
 
 
 def _parse_args(args, test_gen):
-  args = args or sys.argv[1:]
+  if args is None:
+    args = sys.argv[1:]
 
   # Set the default mode if not specified and not passing --help
   search_names = set(HANDLERS.keys() + ['-h', '--help'])

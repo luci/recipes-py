@@ -2,10 +2,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-from infra.libs.infra_types import thaw
 from recipe_engine.recipe_api import Property
 
-DEPS = ['properties', 'step']
+DEPS = [
+  'recipe_engine/properties',
+  'recipe_engine/step',
+]
 
 PROPERTIES = {
   'test_prop': Property(),
@@ -27,4 +29,3 @@ def GenTests(api):
       api.test('exception') +
       api.expect_exception('ValueError')
   )
-

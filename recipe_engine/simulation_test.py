@@ -9,7 +9,7 @@ import re
 import os
 import sys
 
-from . import expect_tests
+from .third_party import expect_tests
 
 # This variable must be set in the dynamic scope of the functions in this file.
 # We do this instead of passing because the threading system of expect tests
@@ -18,12 +18,12 @@ _UNIVERSE = None
 
 def RunRecipe(test_data):
   from .third_party import annotator
-  from . import main
+  from . import run
   from . import config_types
 
   stream = annotator.StructuredAnnotationStream(stream=open(os.devnull, 'w'))
   config_types.ResetTostringFns()
-  result = main.run_steps(
+  result = run.run_steps(
       test_data.properties, stream, _UNIVERSE, test_data)
 
   return expect_tests.Result(list(result.steps_ran.values()))
@@ -74,14 +74,17 @@ def GenerateTests():
       )
 
 
-def main(universe):
+def main(package_deps, args=None):
   """Runs simulation tests on a given repo of recipes.
 
   Args:
-    universe: a RecipeUniverse to operate on.
+    package_deps: a PackageDeps object to operate on
+    args: command line arguments to expect_tests
   Returns:
     Doesn't -- exits with a status code
   """
+  from . import loader
+  from . import package
 
   # annotated_run has different behavior when these environment variables
   # are set, so unset to make simulation tests environment-invariant.
@@ -93,6 +96,7 @@ def main(universe):
       os.environ.pop(env_var)
 
   global _UNIVERSE
-  _UNIVERSE = universe
+  _UNIVERSE = loader.RecipeUniverse(package_deps)
+
   expect_tests.main('recipe_simulation_test', GenerateTests,
-                    cover_omit=cover_omit())
+                    cover_omit=cover_omit(), args=args)

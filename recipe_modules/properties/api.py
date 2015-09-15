@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-from infra.libs.infra_types import freeze, thaw
+from recipe_engine.types import freeze
 from recipe_engine import recipe_api
 import collections
 
@@ -45,4 +45,4 @@ class PropertiesApi(recipe_api.RecipeApiPlain, collections.Mapping):
   def thaw(self):
     """Returns a vanilla python jsonish dictionary of properties."""
 
-    return thaw(self._engine.properties)
+    return dict(self._engine.properties)

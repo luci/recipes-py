@@ -12,6 +12,7 @@ e.g. you can run a recipe simulation for a Windows recipe on Linux.
 
 # TODO(luqui): Implement lint for recipe modules also.
 
+from __future__ import absolute_import
 import re
 import os
 import sys
@@ -23,6 +24,7 @@ MODULES_WHITELIST = [
   r'collections',
   r'contextlib',
   r'datetime',
+  r'itertools',
   r'json',
   r'math',
   r're',
@@ -58,8 +60,12 @@ def ImportsTest(recipe_path, recipe_name, whitelist, universe):
                (recipe_path, module_name))
 
 
-def main(universe, whitelist=[]):
+def main(package_deps, whitelist=[]):
+  from . import loader
+  from . import package
+
   whitelist = map(re.compile, MODULES_WHITELIST + whitelist)
+  universe = loader.RecipeUniverse(package_deps)
 
   errors = []
   for recipe_path, recipe_name in universe.loop_over_recipes():

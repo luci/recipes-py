@@ -1,3 +1,3 @@
 DEPS = [
-  "step"
+  'recipe_engine/step',
 ]
