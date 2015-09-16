@@ -7,7 +7,6 @@ infra/config/recipes.cfg.
 """
 
 import argparse
-import ast
 import json
 import logging
 import os
@@ -50,19 +49,19 @@ def run(package_deps, args):
     properties = dict(x.split('=', 1) for x in args)
     for key, val in properties.iteritems():
       try:
-        properties[key] = ast.literal_eval(val)
+        properties[key] = json.loads(val)
       except (ValueError, SyntaxError):
         pass  # If a value couldn't be evaluated, keep the string version
     return properties
 
   def get_properties_from_file(filename):
     properties_file = sys.stdin if filename == '-' else open(filename)
-    properties = ast.literal_eval(properties_file.read())
+    properties = json.load(properties_file)
     assert isinstance(properties, dict)
     return properties
 
   def get_properties_from_json(props):
-    return ast.literal_eval(props)
+    return json.loads(props)
 
   arg_properties = get_properties_from_args(args.props)
   assert len(filter(bool,
