@@ -13,6 +13,7 @@ import tempfile
 from .third_party.google.protobuf import text_format
 from . import package_pb2
 
+
 class UncleanFilesystemError(Exception):
   pass
 
@@ -160,16 +161,16 @@ class GitRepoSpec(RepoSpec):
     logging.info('Freshening repository %s' % dep_dir)
 
     if not os.path.isdir(dep_dir):
-      _run_cmd(['git', 'clone', self.repo, dep_dir])
+      _run_cmd([self._git, 'clone', self.repo, dep_dir])
     elif not os.path.isdir(os.path.join(dep_dir, '.git')):
       raise UncleanFilesystemError('%s exists but is not a git repo' % dep_dir)
 
     try:
-      subprocess.check_output(['git', 'rev-parse', '-q', '--verify',
+      subprocess.check_output([self._git, 'rev-parse', '-q', '--verify',
                                '%s^{commit}' % self.revision], cwd=dep_dir)
     except subprocess.CalledProcessError:
-      _run_cmd(['git', 'fetch'], cwd=dep_dir)
-    _run_cmd(['git', 'reset', '-q', '--hard', self.revision], cwd=dep_dir)
+      _run_cmd([self._git, 'fetch'], cwd=dep_dir)
+    _run_cmd([self._git, 'reset', '-q', '--hard', self.revision], cwd=dep_dir)
 
   def check_checkout(self, context):
     dep_dir = os.path.join(context.package_dir, self.id)
@@ -180,7 +181,7 @@ class GitRepoSpec(RepoSpec):
       raise UncleanFilesystemError('Dependency %s is not a git repo' %
                                    dep_dir)
 
-    git_status_command = ['git', 'status', '--porcelain']
+    git_status_command = [self._git, 'status', '--porcelain']
     logging.info('%s', git_status_command)
     output = subprocess.check_output(git_status_command, cwd=dep_dir)
     if output:
@@ -217,7 +218,7 @@ class GitRepoSpec(RepoSpec):
     self.checkout(context)
     # XXX(luqui): Should this just focus on the recipes subtree rather than
     # the whole repo?
-    git = subprocess.Popen(['git', 'log',
+    git = subprocess.Popen([self._git, 'log',
                             '%s..origin/%s' % (self.revision, self.branch),
                             '--pretty=%H',
                             '--reverse'],
@@ -225,6 +226,13 @@ class GitRepoSpec(RepoSpec):
                            cwd=os.path.join(context.package_dir, self.id))
     (stdout, _) = git.communicate()
     return stdout
+
+  @property
+  def _git(self):
+    if sys.platform.startswith(('win', 'cygwin')):
+      return 'git.bat'
+    else:
+      return 'git'
 
   def _components(self):
     return (self.id, self.repo, self.revision, self.path)
