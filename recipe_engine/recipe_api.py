@@ -486,7 +486,7 @@ class Property(object):
                value of None is allowed. To have no default value, omit
                this argument.
       help: The help text for this Property.
-      type: The type of this Property. You can either pass in a raw python
+      kind: The type of this Property. You can either pass in a raw python
             type, or a Config Type, using the recipe engine config system.
     """
     self._default = default
@@ -494,6 +494,8 @@ class Property(object):
     self._name = None
 
     if isinstance(kind, type):
+      if kind in (str, unicode):
+        kind = basestring
       kind = Single(kind)
     self.kind = kind
 
