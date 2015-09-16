@@ -59,6 +59,7 @@ def run(package_deps, args):
     properties_file = sys.stdin if filename == '-' else open(filename)
     properties = ast.literal_eval(properties_file.read())
     assert isinstance(properties, dict)
+    return properties
 
   def get_properties_from_json(props):
     return ast.literal_eval(props)
