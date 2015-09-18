@@ -91,7 +91,7 @@ class JsonApi(recipe_api.RecipeApi):
     return JsonOutputPlaceholder(self, add_json_log)
 
   # TODO(you): This method should be in the `file` recipe_module
-  def read(self, name, path, **kwargs):
+  def read(self, name, path, add_json_log=True, **kwargs):
     """Returns a step that reads a JSON file."""
     return self.m.python.inline(
         name,
@@ -100,7 +100,7 @@ class JsonApi(recipe_api.RecipeApi):
         import sys
         shutil.copy(sys.argv[1], sys.argv[2])
         """,
-        args=[path, self.output()],
+        args=[path, self.output(add_json_log=add_json_log)],
         add_python_log=False,
         **kwargs
     )
