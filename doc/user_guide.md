@@ -127,6 +127,7 @@ from recipe_engine.recipe_api import Property
 
 DEPS = [
   'step',
+  'properties',
 ]
 
 PROPERTIES = {
@@ -158,6 +159,11 @@ Or, more explicitly::
 
 Where `<path/to/json>` is a file containing a valid json `object` (i.e.
 key:value pairs).
+
+Note that we need to put a dependency on the 'properties' module in the DEPS
+because we use it to generate our tests, even though we don't actually call
+the module in our code.
+See this [crbug.com/532275](bug) for more info.
 
 ### Modules
 
