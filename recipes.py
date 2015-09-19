@@ -228,6 +228,8 @@ def main():
   elif args.command == 'run':
     return run(package_deps, args)
   elif args.command == 'roll':
+    assert not args.no_fetch, (
+        'Rolling without fetching is not supported yet.')
     return roll(args)
   elif args.command == 'doc':
     return doc(package_deps, args)

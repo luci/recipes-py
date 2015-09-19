@@ -156,8 +156,7 @@ class GitRepoSpec(RepoSpec):
     self.path = path
 
   def checkout(self, context):
-    package_dir = context.package_dir
-    dep_dir = os.path.join(package_dir, self.id)
+    dep_dir = self._dep_dir(context)
     logging.info('Freshening repository %s' % dep_dir)
 
     if not os.path.isdir(dep_dir):
@@ -173,7 +172,7 @@ class GitRepoSpec(RepoSpec):
     _run_cmd([self._git, 'reset', '-q', '--hard', self.revision], cwd=dep_dir)
 
   def check_checkout(self, context):
-    dep_dir = os.path.join(context.package_dir, self.id)
+    dep_dir = self._dep_dir(context)
     if not os.path.isdir(dep_dir):
       raise UncleanFilesystemError('Dependency %s does not exist' %
                                    dep_dir)
@@ -189,7 +188,7 @@ class GitRepoSpec(RepoSpec):
                                    (dep_dir, output))
 
   def repo_root(self, context):
-    return os.path.join(context.package_dir, self.id, self.path)
+    return os.path.join(self._dep_dir(context), self.path)
 
   def dump(self):
     buf = package_pb2.DepSpec(
@@ -216,6 +215,7 @@ class GitRepoSpec(RepoSpec):
 
   def _raw_updates(self, context):
     self.checkout(context)
+    _run_cmd([self._git, 'fetch'], cwd=self._dep_dir(context))
     # XXX(luqui): Should this just focus on the recipes subtree rather than
     # the whole repo?
     git = subprocess.Popen([self._git, 'log',
@@ -226,6 +226,9 @@ class GitRepoSpec(RepoSpec):
                            cwd=os.path.join(context.package_dir, self.id))
     (stdout, _) = git.communicate()
     return stdout
+
+  def _dep_dir(self, context):
+    return os.path.join(context.package_dir, self.id)
 
   @property
   def _git(self):
