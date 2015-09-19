@@ -235,7 +235,7 @@ class MathUtilsApi(recipe_api.RecipeApi):
     Args:
       v1: Variance of sample 1.
       v2: Variance of sample 2.
-      n1: Size of sample 2.
+      n1: Size of sample 1.
       n2: Size of sample 2.
 
     Returns:
@@ -245,7 +245,7 @@ class MathUtilsApi(recipe_api.RecipeApi):
     if v1 == 0 and v2 == 0:
       return 1
     # If the sample size is too small, also return the minimum (1).
-    if n1 <= 1 or n2 <= 2:
+    if n1 <= 1 or n2 <= 1:
       return 1
     df = (((v1 / n1 + v2 / n2) ** 2) /
           ((v1 ** 2) / ((n1 ** 2) * (n1 - 1)) +
