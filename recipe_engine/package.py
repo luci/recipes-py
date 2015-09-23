@@ -97,13 +97,31 @@ class PackageContext(object):
                repo_root)
 
 
+class CommitInfo(object):
+  """Holds the stuff we need to know about a commit."""
+  def __init__(self, author, message, repo_id, revision):
+    self.author = author
+    self.message = message
+    self.repo_id = repo_id
+    self.revision = revision
+
+  def dump(self):
+    return {
+      'author': self.author,
+      'message': self.message,
+      'repo_id': self.repo_id,
+      'revision': self.revision,
+    }
+
+
 @functools.total_ordering
 class RepoUpdate(object):
   """Wrapper class that specifies the sort order of roll updates when merging.
   """
 
-  def __init__(self, spec):
+  def __init__(self, spec, commit_infos=()):
     self.spec = spec
+    self.commit_infos = commit_infos
 
   @property
   def id(self):
@@ -209,9 +227,13 @@ class GitRepoSpec(RepoSpec):
     have to approximate global coherence.
     """
     lines = filter(bool, self._raw_updates(context).strip().split('\n'))
-    return [ RepoUpdate(
-                 GitRepoSpec(self.id, self.repo, self.branch, rev, self.path))
-             for rev in lines ]
+    updates = []
+    for rev in lines:
+      info = self._get_commit_info(rev, context)
+      updates.append(RepoUpdate(
+                 GitRepoSpec(self.id, self.repo, self.branch, rev, self.path),
+                 commit_infos=(info,)))
+    return updates
 
   def _raw_updates(self, context):
     self.checkout(context)
@@ -223,9 +245,18 @@ class GitRepoSpec(RepoSpec):
                             '--pretty=%H',
                             '--reverse'],
                            stdout=subprocess.PIPE,
-                           cwd=os.path.join(context.package_dir, self.id))
+                           cwd=self._dep_dir(context))
     (stdout, _) = git.communicate()
     return stdout
+
+  def _get_commit_info(self, rev, context):
+    author = subprocess.check_output(
+        [self._git, 'show', '-s', '--pretty=%aE', rev],
+        cwd=self._dep_dir(context)).strip()
+    message = subprocess.check_output(
+        [self._git, 'show', '-s', '--pretty=%B', rev],
+        cwd=self._dep_dir(context)).strip()
+    return CommitInfo(author, message, self.id, rev)
 
   def _dep_dir(self, context):
     return os.path.join(context.package_dir, self.id)
@@ -347,7 +378,8 @@ class PackageSpec(object):
     for update in dep_updates:
       deps_so_far = _updated(deps_so_far, { update.id: update.spec })
       ret_updates.append(RepoUpdate(PackageSpec(
-          self._project_id, self._recipes_path, deps_so_far)))
+          self._project_id, self._recipes_path, deps_so_far),
+          commit_infos=update.commit_infos))
     return ret_updates
 
   def iterate_consistent_updates(self, proto_file, context):
@@ -416,13 +448,20 @@ class PackageSpec(object):
     """
 
     root_spec = RootRepoSpec(proto_file)
+
+    # We keep track of accumulated commit infos, so that we correctly attribute
+    # authors even when we skip a state due to inconsistent dependencies.
+    commit_infos_accum = []
     for update in self.updates(context):
+      commit_infos_accum.extend(update.commit_infos)
       try:
         package_deps = PackageDeps(context)
         # Inconsistent graphs will throw an exception here, thus skipping the
         # yield.
         package_deps._create_from_spec(root_spec, update.spec, allow_fetch=True)
-        yield update
+        new_update = RepoUpdate(update.spec, tuple(commit_infos_accum))
+        commit_infos_accum = []
+        yield new_update
       except InconsistentDependencyGraphError:
         pass
 

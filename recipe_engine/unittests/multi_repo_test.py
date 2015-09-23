@@ -75,6 +75,10 @@ class RecipeRollError(Exception):
     self.stdout = stdout
     self.stderr = stderr
 
+  def __str__(self):
+    return '%s:\nSTDOUT:\n%s\nSTDERR:\n%s\n' % (
+        self.__class__, self.stdout, self.stderr)
+
 
 class MultiRepoTest(unittest.TestCase):
   def _run_cmd(self, cmd, env=None):
@@ -97,9 +101,14 @@ class MultiRepoTest(unittest.TestCase):
         'spec': spec,
     }
 
-  def _commit_in_repo(self, repo, message='Empty commit'):
+  def _commit_in_repo(self, repo, message='Empty commit',
+                      author_name=None, author_email=None):
     with _in_directory(repo['root']):
       env = dict(os.environ)
+      if author_name:
+        env['GIT_AUTHOR_NAME'] = author_name
+      if author_email:
+        env['GIT_AUTHOR_EMAIL'] = author_email
       self._run_cmd(['git', 'commit', '-a', '--allow-empty', '-m', message],
                     env=env)
       rev = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()
@@ -142,10 +151,14 @@ class MultiRepoTest(unittest.TestCase):
 
   def _run_roll(self, repo, expect_updates, commit=False):
     with _in_directory(repo['root']):
+      fh, json_file = tempfile.mkstemp('.json')
+      os.close(fh)
+
       popen = subprocess.Popen([
-          'python', self._recipe_tool, 
+          'python', self._recipe_tool,
           '--package', os.path.join(repo['root'], 'infra', 'config', 'recipes.cfg'), 
-          'roll'], 
+          'roll',
+          '--output-json', json_file],
           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
       stdout, stderr = popen.communicate()
 
@@ -170,6 +183,8 @@ class MultiRepoTest(unittest.TestCase):
             'spec': repo['spec'],
         }
 
+      with open(json_file, 'r') as fh:
+        return json.load(fh)
 
   def _get_spec(self, repo):
     proto_file = package.ProtoFile(
@@ -272,6 +287,72 @@ class MultiRepoTest(unittest.TestCase):
     with self.assertRaises(RecipeRollError) as raises:
       self._run_roll(repos['b'], expect_updates=True)
     self.assertRegexpMatches(raises.exception.stderr, 'CyclicDependencyError')
+
+  def test_output_json_simple(self):
+    repos = self._repo_setup({
+        'a': [],
+        'b': ['a'],
+    })
+    new_a = self._commit_in_repo(
+        repos['a'], message='Did I do good', author_name='P Diddy',
+        author_email='diddyp@facebook.google')
+
+    output = self._run_roll(repos['b'], expect_updates=True)
+    self.assertEqual(output, {
+        'updates': [
+            {
+                'author': 'diddyp@facebook.google',
+                'revision': new_a['revision'],
+                'repo_id': 'a',
+                'message': 'Did I do good',
+            }
+        ]
+    })
+
+  def test_output_json_skipped(self):
+    """Tests that commit infos are accumulated when multiple rolls happen at
+    once due to inconsistent dependencies."""
+    repos = self._repo_setup({
+        'a': [],
+        'b': ['a'],
+        'c': ['a'],
+        'd': ['b','c'],
+    })
+
+    self._commit_in_repo(repos['a'], message='A commit',
+                         author_email='scrapdaddy@serious.music')
+    self._run_roll(repos['b'], expect_updates=True)
+    b_roll = self._commit_in_repo(repos['b'], message='B roll',
+                         author_email='barkdoggy@serious.music')
+    c_commit = self._commit_in_repo(repos['c'], message='C commit',
+                         author_email='swimfishy@serious.music')
+    self._run_roll(repos['c'], expect_updates=True,)
+    c_roll = self._commit_in_repo(repos['c'], message='C roll',
+                         author_email='herpderply@slurp.flurpy')
+
+    output = self._run_roll(repos['d'], expect_updates=True)
+    self.assertEqual(output, {
+        'updates': [
+            {
+                'message': 'B roll',
+                'author': 'barkdoggy@serious.music',
+                'revision': b_roll['revision'],
+                'repo_id': 'b',
+            }, {
+                'message': 'C commit',
+                'author': 'swimfishy@serious.music',
+                'revision': c_commit['revision'],
+                'repo_id': 'c',
+            }, {
+                'message': 'C roll',
+                'author': 'herpderply@slurp.flurpy',
+                'revision': c_roll['revision'],
+                'repo_id': 'c',
+            }
+        ]
+    })
+    self._run_roll(repos['d'], expect_updates=False)
+
 
 if __name__ == '__main__':
   unittest.main()

@@ -108,10 +108,15 @@ def roll(args):
     print 'Wrote %s' % config_file.path
 
     updated_deps = {
-        dep_id: dep.revision
-        for dep_id, dep in update.spec.deps.iteritems()
-        if dep.revision != package_spec.deps[dep_id].revision
+        info.repo_id: info.revision
+        for info in update.commit_infos
     }
+    if args.output_json:
+      with open(args.output_json, 'w') as fh:
+        json.dump({
+            'updates': [ i.dump() for i in update.commit_infos ],
+        }, fh)
+
     print 'To commit this roll, run:'
     print ' '.join([
         'git commit -a -m "Roll dependencies"',
@@ -121,6 +126,9 @@ def roll(args):
 
     break
   else:
+    if args.output_json:
+      with open(args.output_json, 'w') as fh:
+        json.dump({ 'updates': [] }, fh)
     print 'No consistent rolls found'
 
 
@@ -201,6 +209,9 @@ def main():
       'roll',
       help='Roll dependencies of a recipe package forward (implies fetch)')
   roll_p.set_defaults(command='roll')
+  roll_p.add_argument(
+      '--output-json',
+      help='A json file to output information about the roll to.')
 
   show_me_the_modules_p = subp.add_parser(
       'doc',
