@@ -29,6 +29,7 @@ MODULES_WHITELIST = [
   r'math',
   r're',
   r'urlparse',
+  r'zlib',
 ]
 
 
