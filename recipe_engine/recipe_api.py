@@ -478,9 +478,12 @@ class BoundProperty(object):
   """
 
   @staticmethod
-  def legal_name(name):
+  def legal_name(name, is_param_name=False):
     """
     If this name is a legal property name.
+
+    is_param_name determines if this name in the name of a property, or a
+      param_name. See the constructor documentation for more information.
 
     The rules are as follows:
       * Cannot start with an underscore.
@@ -499,9 +502,10 @@ class BoundProperty(object):
     if keyword.iskeyword(name):
       return False
 
-    return bool(re.match('[a-zA-Z]\w*', name))
+    regex = r'^[a-zA-Z][a-zA-Z0-9_]*$' if is_param_name else r'^[a-zA-Z][.\w]*$'
+    return bool(re.match(regex, name))
 
-  def __init__(self, default, help, kind, name):
+  def __init__(self, default, help, kind, name, param_name=None):
     """
     Constructor for BoundProperty.
 
@@ -513,19 +517,34 @@ class BoundProperty(object):
       kind: The type of this Property. You can either pass in a raw python
             type, or a Config Type, using the recipe engine config system.
       name: The name of this Property.
+      param_name: The name of the python function parameter this property
+                  should be stored in. Can be used to allow for dotted property
+                  names, e.g.
+        PROPERTIES = {
+          'foo.bar.bam': Property(param_name="bizbaz")
+        }
       module: The module this Property is a part of.
     """
     if not BoundProperty.legal_name(name):
-      raise ValueError("Illegal name '{}'".format(name))
+      raise ValueError("Illegal name '{}'.".format(param_name))
+
+    param_name = param_name or name
+    if not BoundProperty.legal_name(param_name, is_param_name=True):
+      raise ValueError("Illegal param_name '{}'.".format(param_name))
 
     self.__default = default
     self.__help = help
     self.__name = name
     self.__kind = kind
+    self.__param_name = param_name
 
   @property
   def name(self):
     return self.__name
+
+  @property
+  def param_name(self):
+    return self.__param_name
 
   @property
   def default(self):
@@ -565,7 +584,8 @@ class BoundProperty(object):
         self.name))
 
 class Property(object):
-  def __init__(self, default=PROPERTY_SENTINEL, help="", kind=None):
+  def __init__(self, default=PROPERTY_SENTINEL, help="", kind=None,
+               param_name=None):
     """
     Constructor for Property.
 
@@ -579,6 +599,7 @@ class Property(object):
     """
     self._default = default
     self.help = help
+    self.param_name = param_name
 
     if isinstance(kind, type):
       if kind in (str, unicode):
@@ -590,7 +611,8 @@ class Property(object):
     """
     Gets the BoundProperty version of this Property. Requires a name.
     """
-    return BoundProperty(self._default, self.help, self.kind, name)
+    return BoundProperty(
+        self._default, self.help, self.kind, name, self.param_name)
 
 class UndefinedPropertyException(TypeError):
   pass

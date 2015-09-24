@@ -50,13 +50,33 @@ class TestProperties(unittest.TestCase):
   def testValidTypes(self):
     check = recipe_api.BoundProperty.legal_name
 
-    for test, result in (
-        ('', False),
-        ('.', False),
-        ('foo', True),
-        ('event.patchSet.ref', True),
-        ('rietveld_url', True),):
-      self.assertEqual(check(test), result)
+    for test, result, is_param_name in (
+        ('', False, False),
+        ('.', False, False),
+        ('foo', True, False),
+        ('event.patchSet.ref', True, False),
+        ('event.patchSet.ref', False, True),
+        ('rietveld_url', True, False),):
+      self.assertEqual(
+          check(test, is_param_name=is_param_name), result,
+          "name {} should be {}. is_param_name={}".format(
+              test, result, is_param_name))
+
+  def testParamName(self):
+    """Tests the default param name is the regular name."""
+    prop = recipe_api.Property()
+    bound = prop.bind('a')
+
+    self.assertEqual('a', prop.param_name)
+
+  def testParamName(self):
+    """
+    Tests setting a param name correctly carries through to a bound property.
+    """
+    prop = recipe_api.Property(param_name='b')
+    bound = prop.bind('a')
+
+    self.assertEqual('b', prop.param_name)
 
 
 class TestInvoke(unittest.TestCase):
@@ -73,7 +93,7 @@ class TestInvoke(unittest.TestCase):
 
   def testInvokeFuncComplex(self):
     """Tests invoke with two different properties."""
-    def func(a, b):
+    def func(a, b): # pylint: disable=unused-argument
       return a
 
     prop_defs = {
@@ -87,10 +107,24 @@ class TestInvoke(unittest.TestCase):
     }
     self.assertEqual(1, self.invoke(func, props, prop_defs))
 
+  def testInvokeParamName(self):
+    """Tests invoke with two different properties."""
+    def func(a):
+      return a
+
+    prop_defs = {
+      'a': make_prop(name='b'),
+    }
+
+    props = {
+      'b': 2,
+    }
+    self.assertEqual(2, self.invoke(func, props, prop_defs))
+
   def testInvokeClass(self):
     """Tests invoking a class."""
     class test(object):
-      def __init__(self, a, b):
+      def __init__(self, a, b): # pylint: disable=unused-argument
         self.answer = a
 
     prop_defs = {

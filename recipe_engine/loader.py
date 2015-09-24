@@ -435,7 +435,8 @@ def invoke_with_properties(callable_obj, all_props, prop_defs,
         "Missing property definition for '{}'.".format(arg))
 
     prop = prop_defs[arg]
-    props.append(prop.interpret(all_props.get(prop.name, PROPERTY_SENTINEL)))
+    props.append(prop.interpret(all_props.get(
+      prop.param_name, PROPERTY_SENTINEL)))
 
   return callable_obj(*props, **additional_args)
 
