@@ -5,6 +5,7 @@
 from __future__ import absolute_import
 import contextlib
 import keyword
+import re
 import types
 
 from functools import wraps
@@ -449,12 +450,46 @@ class RecipeApiPlain(ModuleInjectionSite):
 class RecipeApi(RecipeApiPlain):
   __metaclass__ = RecipeApiMeta
 
+# This is a sentinel object for the Property system. This allows users to
+# specify a default of None that will actually be respected.
+PROPERTY_SENTINEL = object()
 
-class Property(object):
-  sentinel = object()
+class BoundProperty(object):
+  """
+  A bound, named version of a Property.
+
+  A BoundProperty is different than a Property, in that it requires a name,
+  as well as all of the arguments to be provided. It's intended to be
+  the declaration of the Property, with no mutation, so the logic about
+  what a property does is very clear.
+
+  The reason there is a distinction between this and a Property is because
+  we want the user interface for defining properties to be
+    PROPERTIES = {
+      'prop_name': Property(),
+    }
+
+  We don't want to have to duplicate the name in both the key of the dictionary
+  and then Property contstructor call, so we need to modify this dictionary
+  before we actually use it, and inject knowledge into it about its name. We
+  don't want to actually mutate this though, since we're striving for immutable,
+  declarative code, so instead we generate a new BoundProperty object from the
+  defined Property object.
+  """
 
   @staticmethod
   def legal_name(name):
+    """
+    If this name is a legal property name.
+
+    The rules are as follows:
+      * Cannot start with an underscore.
+        This is for internal arguments, namely _engine (for the step module).
+      * Cannot be 'self'
+        This is to avoid conflict with recipe modules, which use the name self.
+      * Cannot be a python keyword
+    """
+
     if name.startswith('_'):
       return False
 
@@ -464,22 +499,11 @@ class Property(object):
     if keyword.iskeyword(name):
       return False
 
-    return True
+    return bool(re.match('[a-zA-Z]\w*', name))
 
-  @property
-  def name(self):
-    return self._name
-
-  @name.setter
-  def name(self, name):
-    if not Property.legal_name(name):
-      raise ValueError("Illegal name '{}'".format(name))
-
-    self._name = name
-
-  def __init__(self, default=sentinel, help="", kind=None):
+  def __init__(self, default, help, kind, name):
     """
-    Constructor for Property.
+    Constructor for BoundProperty.
 
     Args:
       default: The default value for this Property. Note: A default
@@ -488,16 +512,32 @@ class Property(object):
       help: The help text for this Property.
       kind: The type of this Property. You can either pass in a raw python
             type, or a Config Type, using the recipe engine config system.
+      name: The name of this Property.
+      module: The module this Property is a part of.
     """
-    self._default = default
-    self.help = help
-    self._name = None
+    if not BoundProperty.legal_name(name):
+      raise ValueError("Illegal name '{}'".format(name))
 
-    if isinstance(kind, type):
-      if kind in (str, unicode):
-        kind = basestring
-      kind = Single(kind)
-    self.kind = kind
+    self.__default = default
+    self.__help = help
+    self.__name = name
+    self.__kind = kind
+
+  @property
+  def name(self):
+    return self.__name
+
+  @property
+  def default(self):
+    return self.__default
+
+  @property
+  def kind(self):
+    return self.__kind
+
+  @property
+  def help(self):
+    return self.__help
 
   def interpret(self, value):
     """
@@ -511,18 +551,46 @@ class Property(object):
       The value to use for this property. Raises an error if
       this property has no valid interpretation.
     """
-    if value is not Property.sentinel:
+    if value is not PROPERTY_SENTINEL:
       if self.kind is not None:
         # The config system handles type checking for us here.
         self.kind.set_val(value)
       return value
 
-    if self._default is not Property.sentinel:
-      return self._default
+    if self.default is not PROPERTY_SENTINEL:
+      return self.default
 
     raise ValueError(
       "No default specified and no value provided for '{}'".format(
         self.name))
+
+class Property(object):
+  def __init__(self, default=PROPERTY_SENTINEL, help="", kind=None):
+    """
+    Constructor for Property.
+
+    Args:
+      default: The default value for this Property. Note: A default
+               value of None is allowed. To have no default value, omit
+               this argument.
+      help: The help text for this Property.
+      kind: The type of this Property. You can either pass in a raw python
+            type, or a Config Type, using the recipe engine config system.
+    """
+    self._default = default
+    self.help = help
+
+    if isinstance(kind, type):
+      if kind in (str, unicode):
+        kind = basestring
+      kind = Single(kind)
+    self.kind = kind
+
+  def bind(self, name):
+    """
+    Gets the BoundProperty version of this Property. Requires a name.
+    """
+    return BoundProperty(self._default, self.help, self.kind, name)
 
 class UndefinedPropertyException(TypeError):
   pass

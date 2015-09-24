@@ -10,7 +10,8 @@ import sys
 
 from .config import ConfigContext
 from .config_types import Path, ModuleBasePath, RECIPE_MODULE_PREFIX
-from .recipe_api import RecipeApi, RecipeApiPlain, Property, UndefinedPropertyException
+from .recipe_api import RecipeApi, RecipeApiPlain, Property, BoundProperty
+from .recipe_api import UndefinedPropertyException, PROPERTY_SENTINEL
 from .recipe_test_api import RecipeTestApi, DisabledTestData
 from .util import scan_directory
 
@@ -23,10 +24,10 @@ class RecipeScript(object):
   """Holds dict of an evaluated recipe script."""
 
   def __init__(self, recipe_dict):
-    recipe_dict.setdefault('PROPERTIES', {})
     # Let each property object know about the property name.
-    for name, value in recipe_dict['PROPERTIES'].items():
-      value.name = name
+    recipe_dict['PROPERTIES'] = {
+        name: value.bind(name) for name, value
+          in recipe_dict.get('PROPERTIES', {}).items()}
 
     for k, v in recipe_dict.iteritems():
       setattr(self, k, v)
@@ -341,10 +342,10 @@ def _patchup_module(name, submod):
       % (submod)
     )
 
-  submod.PROPERTIES = getattr(submod, 'PROPERTIES', {})
   # Let each property object know about the property name.
-  for name, value in submod.PROPERTIES.items():
-    value.name = name
+  submod.PROPERTIES = {
+      prop_name: value.bind(prop_name) for prop_name, value
+        in getattr(submod, 'PROPERTIES', {}).items()}
 
 
 class DependencyMapper(object):
@@ -392,7 +393,7 @@ def invoke_with_properties(callable_obj, all_props, prop_defs,
     callable_obj: The function to call, or class to instantiate.
                   This supports passing in either RunSteps, or a recipe module,
                   which is a class.
-    all_props: A dictionary containing all the properties
+    all_props: A dictionary containing all the properties (instances of BoundProperty)
                currently defined in the system.
     prop_defs: A dictionary of name to property definitions for this callable.
     additional_args: kwargs to pass through to the callable.
@@ -403,6 +404,14 @@ def invoke_with_properties(callable_obj, all_props, prop_defs,
     The result of calling callable with the filtered properties
     and additional arguments.
   """
+  # Check that we got passed BoundProperties, and not Properties
+
+  for name, prop in prop_defs.items():
+    if not isinstance(prop, BoundProperty):
+      raise ValueError(
+          "You tried to invoke {} with an unbound Property {} named {}".format(
+              callable, prop, name))
+
   # To detect when they didn't specify a property that they have as a
   # function argument, list the arguments, through inspection,
   # and then comparing this list to the provided properties. We use a list
@@ -425,8 +434,8 @@ def invoke_with_properties(callable_obj, all_props, prop_defs,
       raise UndefinedPropertyException(
         "Missing property definition for '{}'.".format(arg))
 
-    props.append(prop_defs[arg].interpret(all_props.get(
-      arg, Property.sentinel)))
+    prop = prop_defs[arg]
+    props.append(prop.interpret(all_props.get(prop.name, PROPERTY_SENTINEL)))
 
   return callable_obj(*props, **additional_args)
 
