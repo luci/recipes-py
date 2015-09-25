@@ -14,7 +14,7 @@ from recipe_engine import loader, recipe_api, config
 
 def make_prop(**kwargs):
   name = kwargs.pop('name', "dumb_name")
-  return recipe_api.Property(**kwargs).bind(name)
+  return recipe_api.Property(**kwargs).bind(name, 'test', 'properties_test')
 
 class TestProperties(unittest.TestCase):
 
@@ -74,7 +74,7 @@ class TestProperties(unittest.TestCase):
     Tests setting a param name correctly carries through to a bound property.
     """
     prop = recipe_api.Property(param_name='b')
-    bound = prop.bind('a')
+    bound = prop.bind('a', 'test', 'test_me')
 
     self.assertEqual('b', prop.param_name)
 

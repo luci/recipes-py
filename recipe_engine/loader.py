@@ -26,8 +26,8 @@ class RecipeScript(object):
   def __init__(self, recipe_dict):
     # Let each property object know about the property name.
     recipe_dict['PROPERTIES'] = {
-        name: value.bind(name) for name, value
-          in recipe_dict.get('PROPERTIES', {}).items()}
+        name: value.bind(name, BoundProperty.RECIPE_PROPERTY, name)
+        for name, value in recipe_dict.get('PROPERTIES', {}).items()}
 
     for k, v in recipe_dict.iteritems():
       setattr(self, k, v)
@@ -344,8 +344,8 @@ def _patchup_module(name, submod):
 
   # Let each property object know about the property name.
   submod.PROPERTIES = {
-      prop_name: value.bind(prop_name) for prop_name, value
-        in getattr(submod, 'PROPERTIES', {}).items()}
+      prop_name: value.bind(prop_name, BoundProperty.MODULE_PROPERTY, name)
+      for prop_name, value in getattr(submod, 'PROPERTIES', {}).items()}
 
 
 class DependencyMapper(object):

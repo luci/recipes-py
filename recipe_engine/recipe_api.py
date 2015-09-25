@@ -477,6 +477,9 @@ class BoundProperty(object):
   defined Property object.
   """
 
+  MODULE_PROPERTY = 'module'
+  RECIPE_PROPERTY = 'recipe'
+
   @staticmethod
   def legal_name(name, is_param_name=False):
     """
@@ -505,7 +508,8 @@ class BoundProperty(object):
     regex = r'^[a-zA-Z][a-zA-Z0-9_]*$' if is_param_name else r'^[a-zA-Z][.\w]*$'
     return bool(re.match(regex, name))
 
-  def __init__(self, default, help, kind, name, param_name=None):
+  def __init__(self, default, help, kind, name, property_type, module,
+               param_name=None):
     """
     Constructor for BoundProperty.
 
@@ -534,9 +538,11 @@ class BoundProperty(object):
 
     self.__default = default
     self.__help = help
-    self.__name = name
     self.__kind = kind
+    self.__name = name
+    self.__property_type = property_type
     self.__param_name = param_name
+    self.__module = module
 
   @property
   def name(self):
@@ -557,6 +563,10 @@ class BoundProperty(object):
   @property
   def help(self):
     return self.__help
+
+  @property
+  def module(self):
+    return self.__module
 
   def interpret(self, value):
     """
@@ -580,8 +590,8 @@ class BoundProperty(object):
       return self.default
 
     raise ValueError(
-      "No default specified and no value provided for '{}'".format(
-        self.name))
+      "No default specified and no value provided for '{}' from {} '{}'".format(
+        self.name, self.__property_type, self.module))
 
 class Property(object):
   def __init__(self, default=PROPERTY_SENTINEL, help="", kind=None,
@@ -607,12 +617,13 @@ class Property(object):
       kind = Single(kind)
     self.kind = kind
 
-  def bind(self, name):
+  def bind(self, name, property_type, module):
     """
     Gets the BoundProperty version of this Property. Requires a name.
     """
     return BoundProperty(
-        self._default, self.help, self.kind, name, self.param_name)
+        self._default, self.help, self.kind, name, property_type, module,
+        self.param_name)
 
 class UndefinedPropertyException(TypeError):
   pass
