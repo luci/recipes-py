@@ -19,6 +19,14 @@ class DocTest(unittest.TestCase):
         'doc'])
     self.assertEqual(0, exit_code)
 
+  def test_info(self):
+    script_path = os.path.join(BASE_DIR, 'recipes.py')
+    exit_code = subprocess.call([
+        'python', script_path,
+        '--package', os.path.join(BASE_DIR, 'infra', 'config', 'recipes.cfg'),
+        'info', '--recipes-dir'])
+    self.assertEqual(0, exit_code)
+
 if __name__ == '__main__':
   unittest.TestCase.maxDiff = None
   unittest.main()

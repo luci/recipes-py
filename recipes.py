@@ -137,6 +137,15 @@ def doc(package_deps, args):
   doc.main(package_deps)
 
 
+def info(args):
+  from recipe_engine import package
+  repo_root, config_file = get_package_config(args)
+  package_spec = package.PackageSpec.load_proto(config_file)
+
+  if args.recipes_dir:
+    print package_spec.recipes_path
+
+
 def main():
   from recipe_engine import package
 
@@ -213,11 +222,19 @@ def main():
       '--output-json',
       help='A json file to output information about the roll to.')
 
-  show_me_the_modules_p = subp.add_parser(
+  doc_p = subp.add_parser(
       'doc',
       help='List all known modules reachable from the current package with '
            'various info about each')
-  show_me_the_modules_p.set_defaults(command='doc')
+  doc_p.set_defaults(command='doc')
+
+  info_p = subp.add_parser(
+      'info',
+      help='Query information about the current recipe package')
+  info_p.set_defaults(command='info')
+  info_p.add_argument(
+      '--recipes-dir', action='store_true',
+      help='Get the subpath where the recipes live relative to repository root')
 
   args = parser.parse_args()
 
@@ -244,6 +261,8 @@ def main():
     return roll(args)
   elif args.command == 'doc':
     return doc(package_deps, args)
+  elif args.command == 'info':
+    return info(args)
   else:
     print """Dear sir or madam,
         It has come to my attention that a quite impossible condition has come
