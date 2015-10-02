@@ -353,6 +353,39 @@ class MultiRepoTest(unittest.TestCase):
     })
     self._run_roll(repos['d'], expect_updates=False)
 
+  def test_roll_recipe_dir_only(self):
+    """Tests that changes that do not affect the recipes subdir of a repo
+    are not rolled."""
+
+    repos = {}
+    repos['a'] = self._create_repo('a', package_pb2.Package(
+        api_version=1,
+        project_id='a',
+        recipes_path='foorecipes',
+        deps=[],
+    ))
+    repos['b'] = self._create_repo('b', package_pb2.Package(
+        api_version=1,
+        project_id='b',
+        recipes_path='',
+        deps=[
+            package_pb2.DepSpec(
+                project_id='a',
+                url=repos['a']['root'],
+                branch='master',
+                revision=repos['a']['revision'],
+            )
+        ],
+    ))
+
+    with open(os.path.join(repos['a']['root'], 'some_file'), 'w') as fh:
+      fh.write('Some irrelevant things')
+    with _in_directory(repos['a']['root']):
+      self._run_cmd(['git', 'add', 'some_file'])
+      self._run_cmd(['git', 'commit', '-m', 'Irrelevant commit'])
+
+    self._run_roll(repos['b'], expect_updates=False)
+
 
 if __name__ == '__main__':
   unittest.main()

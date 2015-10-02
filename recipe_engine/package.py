@@ -220,13 +220,11 @@ class GitRepoSpec(RepoSpec):
 
   def updates(self, context):
     """Returns a list of all updates to the branch since the revision this
-    repo spec refers to, paired with their commit timestamps; i.e.
-    (timestamp, GitRepoSpec).
-
-    Although timestamps are not completely reliable, they are the best tool we
-    have to approximate global coherence.
+    repo spec refers to.
     """
-    lines = filter(bool, self._raw_updates(context).strip().split('\n'))
+    subdir = self.proto_file(context).read().recipes_path
+
+    lines = filter(bool, self._raw_updates(context, subdir).strip().split('\n'))
     updates = []
     for rev in lines:
       info = self._get_commit_info(rev, context)
@@ -235,17 +233,15 @@ class GitRepoSpec(RepoSpec):
                  commit_infos=(info,)))
     return updates
 
-  def _raw_updates(self, context):
+  def _raw_updates(self, context, subdir):
     self.checkout(context)
     _run_cmd([self._git, 'fetch'], cwd=self._dep_dir(context))
-    # XXX(luqui): Should this just focus on the recipes subtree rather than
-    # the whole repo?
-    git = subprocess.Popen([self._git, 'log',
-                            '%s..origin/%s' % (self.revision, self.branch),
-                            '--pretty=%H',
-                            '--reverse'],
-                           stdout=subprocess.PIPE,
-                           cwd=self._dep_dir(context))
+    args = [self._git, 'rev-list', '--reverse',
+            '%s..origin/%s' % (self.revision, self.branch)]
+    if subdir:
+      args.extend(['--', subdir + os.path.sep])
+    git = subprocess.Popen(
+        args, stdout=subprocess.PIPE, cwd=self._dep_dir(context))
     (stdout, _) = git.communicate()
     return stdout
 

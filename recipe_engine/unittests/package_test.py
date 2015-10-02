@@ -119,13 +119,22 @@ deps {
     """Tests that updates are monotone in each dependency's history and
     that dep rolls stay in their proper dependency."""
 
+    def trivial_proto(project_id):
+      return lambda context: MockProtoFile('infra/config/recipes.cfg', """
+api_version: 1
+project_id: "%s"
+recipes_path: ""
+""".lstrip() % project_id)
+
     package_spec = package.PackageSpec.load_proto(self.proto_file)
     foo_revs = [ "aaaaaa", "123456", "cdabfe" ]
     bar_revs = [ "0156ff", "ffaaff", "aa0000" ]
     package_spec.deps['bar']._raw_updates = mock.Mock(
         return_value='\n'.join(bar_revs))
+    package_spec.deps['bar'].proto_file = trivial_proto('bar')
     package_spec.deps['foo']._raw_updates = mock.Mock(
         return_value='\n'.join(foo_revs))
+    package_spec.deps['foo'].proto_file = trivial_proto('foo')
 
     updates = package_spec.updates(self.context)
     foo_update_ixs = [
