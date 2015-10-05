@@ -53,31 +53,19 @@ which are not covered here, but look at `recipes.py --help`.
 
 ## Local development
 
-It is sometimes desirable to develop locally across repositories, for example,
-to make a change in `build` and see what its effect on `build_internal` recipes
-is.  Currently the way to do this is to manually update the `recipes.cfg` file
-to point to your local repository.  So, for example, if you kept your `build`
-repository in `/home/sally/chromium/build/` and were developing on the
-branch `standpoor`, you could change your `build_internal` `recipes.cfg` to look
-like this:
-  
-    api_version: 1
-    project_id: "build_internal"
-    recipes_path: ""
-    deps {
-      project_id: "build"
-      url: "/home/sally/chromium/build/"
-      branch: "standpoor"
-      revision: "standpoor"
-    }
-    deps {
-      project_id: "recipe_engine"
-      url: "https://chromium.googlesource.com/external/github.com/luci/recipes-py.git"
-      branch: "master"
-      revision: "fe88a668a6cea70d2233c4e61be352fc1551d1ce"
-    }
+When locally developing recipes, it is oftentimes desirable to observe the
+effect that your local changes will have on other repositories. This can be done
+by using recipe engine *local project overrides* command-line flags (`-O`).
 
-Note that `standpoor` for both the branch *and* the revision, so that the latest
-commit on `build` is always used. (Only use this for development -- `revision`
-should be a real revision hash)  It may be necessary to clobber `.recipe_deps`
-when you change this, since detecting changed remotes is not supported.
+Local project overrides allow the user to redirect a project's checkout to a
+local path during execution. A developer would run the downstream project,
+overriding the one or more upstream projects under development.
+
+For example, to make a change in `build` and see what its effect on
+`build_internal` recipes, one would execute `build_internal`'s recipe,
+overriding its `build` project to point to the local path.
+
+    $ ./recipes.py -O build=~/path/to/build simulation_test train
+
+This would simulate and train `build_internal` recipes, using the local `build`
+checkout instead of the one configured in `build_internal`'s `recipes.cfg`.

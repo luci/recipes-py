@@ -132,6 +132,27 @@ def roll(args):
     print 'No consistent rolls found'
 
 
+class ProjectOverrideAction(argparse.Action):
+  def __call__(self, parser, namespace, values, option_string=None):
+    p = values.split('=', 2)
+    if len(p) != 2:
+      raise ValueError("Override must have the form: repo=path")
+    project_id, path = p
+
+    v = getattr(namespace, self.dest, None)
+    if v is None:
+      v = {}
+      setattr(namespace, self.dest, v)
+
+    if v.get(project_id):
+      raise ValueError("An override is already defined for [%s] (%s)" % (
+                       project_id, v[project_id]))
+    path = os.path.abspath(os.path.expanduser(path))
+    if not os.path.isdir(path):
+      raise ValueError("Override path [%s] is not a directory" % (path,)) 
+    v[project_id] = path
+
+
 def doc(package_deps, args):
   from recipe_engine import doc
   doc.main(package_deps)
@@ -170,6 +191,9 @@ def main():
   parser.add_argument(
       '--bootstrap-script',
       help='Path to the script used to bootstrap this tool (internal use only)')
+  parser.add_argument('-O', '--project-override', metavar='ID=PATH',
+      action=ProjectOverrideAction,
+      help='Override a project repository path with a local one.')
 
   subp = parser.add_subparsers()
 
@@ -243,7 +267,8 @@ def main():
 
   repo_root, config_file = get_package_config(args)
   package_deps = package.PackageDeps.create(
-      repo_root, config_file, allow_fetch=not args.no_fetch)
+      repo_root, config_file, allow_fetch=not args.no_fetch,
+      overrides=args.project_override)
 
   if args.command == 'fetch':
     # We already did everything in the create() call above.

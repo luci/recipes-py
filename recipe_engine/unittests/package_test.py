@@ -148,21 +148,65 @@ recipes_path: ""
     self.assertEqual(bar_update_ixs, sorted(bar_update_ixs))
 
   def test_no_version(self):
-    with self.assertRaises(Exception):
-      package.PackageSpec.load({
-          'id': 'foo',
-          'deps': {},
-      })
+    proto_text = """\
+project_id: "foo"
+recipes_path: "path/to/recipes"
+"""
+    proto_file = MockProtoFile('repo/root/infra/config/recipes.cfg', proto_text)
+
+    with self.assertRaises(AssertionError):
+      package.PackageSpec.load_proto(proto_file)
 
   def test_unsupported_version(self):
-    with self.assertRaises(Exception):
-      package.PackageSpec.load({
-          'api_version': 1,
-          'id': 'fizzbar',
-          'deps': {},
-      })
+    proto_text = """\
+api_version: 99999999
+project_id: "fizzbar"
+recipes_path: "path/to/recipes"
+"""
+    proto_file = MockProtoFile('repo/root/infra/config/recipes.cfg', proto_text)
 
-def load_tests(loader, tests, ignore):
+    with self.assertRaises(AssertionError):
+      package.PackageSpec.load_proto(proto_file)
+
+
+class TestPackageDeps(MockIOThings, unittest.TestCase):
+
+  def test_create_with_overrides(self):
+    base_proto_text = """
+api_version: 1
+project_id: "base_package"
+recipes_path: "path/to/recipes"
+deps {
+  project_id: "foo"
+  url: "https://repo.com/foo.git"
+  branch: "foobranch"
+  revision: "deadd00d"
+}
+"""
+    base_proto_file = MockProtoFile('base/infra/config/recipes.cfg',
+                                    base_proto_text)
+
+    foo_proto_text = """
+api_version: 1
+project_id: "foo"
+recipes_path: "path/to/recipes"
+"""
+    foo_proto_file = MockProtoFile('foo/infra/config/recipes.cfg',
+                                   foo_proto_text)
+
+    with mock.patch.object(package.GitRepoSpec, 'proto_file',
+                           return_value=foo_proto_file):
+      with mock.patch.object(package.GitRepoSpec, 'check_checkout'):
+        deps = package.PackageDeps.create('base', base_proto_file, overrides={
+          'foo': '/path/to/local/foo',
+        })
+
+    foo_deps = deps.get_package('foo')
+    self.assertIsInstance(foo_deps.repo_spec, package.PathRepoSpec)
+    self.assertEqual(foo_deps.repo_spec.path, '/path/to/local/foo')
+
+
+def load_tests(_loader, tests, _ignore):
   tests.addTests(doctest.DocTestSuite(package))
   return tests
 

@@ -87,7 +87,6 @@ class PackageContext(object):
 
   @classmethod
   def from_proto_file(cls, repo_root, proto_file):
-    proto_path = proto_file.path
     buf = proto_file.read()
 
     recipes_path = buf.recipes_path.replace('/', os.sep)
@@ -159,6 +158,12 @@ class RepoSpec(object):
     """Returns the root of this repository."""
     raise NotImplementedError()
 
+  def __eq__(self, other):
+    raise NotImplementedError()
+
+  def __ne__(self, other):
+    return not (self == other)
+
   def proto_file(self, context):
     """Returns the ProtoFile of the recipes config file in this repository. 
     Requires a good checkout."""
@@ -166,12 +171,16 @@ class RepoSpec(object):
 
 
 class GitRepoSpec(RepoSpec):
-  def __init__(self, id, repo, branch, revision, path):
-    self.id = id
+  def __init__(self, project_id, repo, branch, revision, path):
+    self.id = project_id
     self.repo = repo
     self.branch = branch
     self.revision = revision
     self.path = path
+
+  def __str__(self):
+    return ('GitRepoSpec{id="%(id)s", repo="%(repo)s", branch="%(branch)s", '
+            'revision="%(revision)s", path="%(path)s"}' % self.__dict__)
 
   def checkout(self, context):
     dep_dir = self._dep_dir(context)
@@ -268,10 +277,40 @@ class GitRepoSpec(RepoSpec):
     return (self.id, self.repo, self.revision, self.path)
 
   def __eq__(self, other):
+    if not isinstance(other, type(self)):
+      return False
     return self._components() == other._components()
 
-  def __ne__(self, other):
-    return not self.__eq__(other)
+
+class PathRepoSpec(RepoSpec):
+  """A RepoSpec implementation that uses a local filesystem path."""
+
+  def __init__(self, path):
+    self.path = path
+
+  def __str__(self):
+    return 'PathRepoSpec{path="%(path)s"}' % self.__dict__
+
+  def checkout(self, context):
+    pass
+
+  def check_checkout(self, context):
+    if not os.path.isdir(self.path):
+      raise ValueError("Non-existent repository path [%s]" % (self.path,))
+    return None
+
+  def repo_root(self, _context):
+    return self.path
+
+  def proto_file(self, context):
+    """Returns the ProtoFile of the recipes config file in this repository. 
+    Requires a good checkout."""
+    return ProtoFile(InfraRepoConfig().to_recipes_cfg(self.path))
+
+  def __eq__(self, other):
+    if not isinstance(other, type(self)):
+      return False
+    return self.path == other.path
 
 
 class RootRepoSpec(RepoSpec):
@@ -291,7 +330,10 @@ class RootRepoSpec(RepoSpec):
   def proto_file(self, context):
     return self._proto_file
 
-
+  def __eq__(self, other):
+    if not isinstance(other, type(self)):
+      return False
+    return self._proto_file == other._proto_file
 
 
 class Package(object):
@@ -333,13 +375,21 @@ class PackageSpec(object):
     buf = proto_file.read()
     assert buf.api_version == cls.API_VERSION
 
-    deps = { dep.project_id: GitRepoSpec(dep.project_id,
-                                         dep.url,
-                                         dep.branch,
-                                         dep.revision,
-                                         dep.path_override)
+    deps = { dep.project_id: cls.spec_for_dep(dep)
              for dep in buf.deps }
     return cls(buf.project_id, buf.recipes_path, deps)
+
+  @classmethod
+  def spec_for_dep(cls, dep):
+    """Returns a RepoSpec for the given dependency protobuf.
+
+    This assumes all dependencies are Git dependencies.
+    """
+    return GitRepoSpec(dep.project_id,
+                       dep.url,
+                       dep.branch,
+                       dep.revision,
+                       dep.path_override)
 
   @property
   def project_id(self):
@@ -474,12 +524,13 @@ class PackageSpec(object):
 class PackageDeps(object):
   """An object containing all the transitive dependencies of the root package.
   """
-  def __init__(self, context):
+  def __init__(self, context, overrides=None):
     self._context = context
     self._repos = {}
+    self._overrides = overrides or {}
 
   @classmethod
-  def create(cls, repo_root, proto_file, allow_fetch=False):
+  def create(cls, repo_root, proto_file, allow_fetch=False, overrides=None):
     """Creates a PackageDeps object.
 
     Arguments:
@@ -487,12 +538,17 @@ class PackageDeps(object):
       proto_file: a ProtoFile object corresponding to the repos recipes.cfg
       allow_fetch: whether to fetch dependencies rather than just checking for
                    them.
+      overrides: if not None, a dictionary of project overrides. Dictionary keys
+                 are the `project_id` field to override, and dictionary values
+                 are the override path.
     """
     context = PackageContext.from_proto_file(repo_root, proto_file)
-    package_deps = cls(context)
+    if overrides:
+      overrides = {project_id: PathRepoSpec(path)
+                   for project_id, path in overrides.iteritems()}
+    package_deps = cls(context, overrides=overrides)
 
-    root_package = package_deps._create_package(
-        RootRepoSpec(proto_file), allow_fetch)
+    package_deps._create_package(RootRepoSpec(proto_file), allow_fetch)
     return package_deps
 
   def _create_package(self, repo_spec, allow_fetch):
@@ -512,6 +568,7 @@ class PackageDeps(object):
 
   def _create_from_spec(self, repo_spec, package_spec, allow_fetch):
     project_id = package_spec.project_id
+    repo_spec = self._overrides.get(project_id, repo_spec)
     if project_id in self._repos:
       if self._repos[project_id] is None:
         raise CyclicDependencyError(
@@ -597,10 +654,14 @@ def _merge2(xs, ys, compare=lambda x, y: x <= y):
         y = nothing
         y = ys.next()
   except StopIteration:
-    if x is not nothing: yield x
-    for x in xs: yield x
-    if y is not nothing: yield y
-    for y in ys: yield y
+    if x is not nothing:
+      yield x
+    for x in xs:
+      yield x
+    if y is not nothing:
+      yield y
+    for y in ys:
+      yield y
 
 
 def _merge(xss, compare=lambda x, y: x <= y):

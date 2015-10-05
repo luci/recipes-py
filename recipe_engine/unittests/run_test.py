@@ -7,7 +7,8 @@ import os
 import subprocess
 import unittest
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
+                           os.path.abspath(__file__))))
 
 class RunTest(unittest.TestCase):
   def test_run(self):
