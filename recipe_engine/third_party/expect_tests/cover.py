@@ -63,7 +63,7 @@ class CoverageContext(object):
 
       outf = StringIO()
       coverage_percent = self.cov.report(file=outf, omit=omit)
-      fail = coverage_percent < threshold
+      fail = int(coverage_percent) != int(threshold)
       summary = outf.getvalue().replace('%- 15s' % 'Name', 'Coverage Report', 1)
       if verbose:
         print
@@ -75,8 +75,8 @@ class CoverageContext(object):
                        if not l.strip().endswith('100%')]
         print '\n'.join(lines)
         print
-        print 'FATAL: Test coverage %.f%% is less than %.f%% threshold' % (
-            coverage_percent, threshold)
+        print ('FATAL: Test coverage %.f%% is not the required %.f%% threshold'
+               % (int(coverage_percent), int(threshold)))
 
     return not fail
 
