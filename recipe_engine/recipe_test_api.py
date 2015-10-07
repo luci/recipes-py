@@ -190,6 +190,8 @@ class TestData(BaseTestData):
 
   def expect_exception(self, exception):
     assert not self.expected_exception
+    assert isinstance(exception, basestring), (
+        'expect_exception expects a string containing the exception class name')
     self.expected_exception = exception
 
   def is_unexpected_exception(self, exception):

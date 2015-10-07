@@ -926,7 +926,6 @@ class RecipeEngine(object):
 
     except Exception as ex:
       unexpected_exception = self._test_data.is_unexpected_exception(ex)
-
       retcode = -1
       final_result = {
         "name": "$final_result",

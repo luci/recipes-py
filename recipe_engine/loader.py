@@ -10,7 +10,8 @@ import sys
 
 from .config import ConfigContext
 from .config_types import Path, ModuleBasePath, RECIPE_MODULE_PREFIX
-from .recipe_api import RecipeApi, RecipeApiPlain, Property, BoundProperty
+from .recipe_api import RecipeApi, RecipeApiPlain, RecipeScriptApi
+from .recipe_api import Property, BoundProperty
 from .recipe_api import UndefinedPropertyException, PROPERTY_SENTINEL
 from .recipe_test_api import RecipeTestApi, DisabledTestData
 from .util import scan_directory
@@ -459,7 +460,7 @@ def create_recipe_api(toplevel_deps, engine, test_data=DisabledTestData()):
     return mod_api
 
   mapper = DependencyMapper(instantiator)
-  api = RecipeApi(module=None, engine=engine,
+  api = RecipeScriptApi(module=None, engine=engine,
                   test_data=test_data.get_module_test_data(None))
   for k, v in toplevel_deps.iteritems():
     setattr(api, k, mapper.instantiate(v))

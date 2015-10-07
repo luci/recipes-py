@@ -328,7 +328,7 @@ class RecipeApiMeta(type):
     return super(RecipeApiMeta, mcs).__new__(mcs, name, bases, attrs)
 
 
-class RecipeApiPlain(ModuleInjectionSite):
+class RecipeApiPlain(object):
   """
   Framework class for handling recipe_modules.
 
@@ -336,7 +336,7 @@ class RecipeApiPlain(ModuleInjectionSite):
   wiring for your config context (in self.c and methods, and for dependency
   injection (in self.m).
 
-  Dependency injection takes place in load_recipe_modules() in recipe_loader.py.
+  Dependency injection takes place in load_recipe_modules() in loader.py.
 
   USE RecipeApi INSTEAD, UNLESS your RecipeApi subclass derives from something
   which defines its own __metaclass__. Deriving from RecipeApi instead of
@@ -449,6 +449,11 @@ class RecipeApiPlain(ModuleInjectionSite):
 
 class RecipeApi(RecipeApiPlain):
   __metaclass__ = RecipeApiMeta
+
+
+class RecipeScriptApi(RecipeApiPlain, ModuleInjectionSite):
+  pass
+
 
 # This is a sentinel object for the Property system. This allows users to
 # specify a default of None that will actually be respected.
