@@ -69,6 +69,7 @@ import copy
 import functools
 import json
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -514,6 +515,27 @@ def _merge_envs(original, override):
   return result
 
 
+def _shell_quote(arg):
+  """Shell-quotes a string with minimal noise.
+
+  Such that it is still reproduced exactly in a bash/zsh shell.
+  """
+
+  arg = arg.encode('utf-8')
+
+  if arg == '':
+    return "''"
+  # Normal shell-printable string without quotes
+  if re.match(r'[-+,./0-9:@A-Z_a-z]+$', arg):
+    return arg
+  # Printable within regular single quotes.
+  if re.match('[\040-\176]+$', arg):
+    return "'%s'" % arg.replace("'", "'\\''")
+  # Something complicated, printable within special escaping quotes.
+  return "$'%s'" % arg.encode('string_escape')
+
+
+
 def _print_step(step, env, stream):
   """Prints the step command and relevant metadata.
 
@@ -521,7 +543,7 @@ def _print_step(step, env, stream):
   beginning of each non-annotator step.
   """
   step_info_lines = []
-  step_info_lines.append(' '.join(step['cmd']))
+  step_info_lines.append(' '.join(map(_shell_quote, step['cmd'])))
   step_info_lines.append('in dir %s:' % (step['cwd'] or os.getcwd()))
   for key, value in sorted(step.items()):
     if value is not None:
