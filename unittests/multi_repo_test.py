@@ -13,8 +13,7 @@ import tempfile
 import time
 import unittest
 
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT_DIR, 'recipe_engine', 'third_party'))
 sys.path.insert(0, ROOT_DIR)
 
@@ -82,7 +81,8 @@ class RecipeRollError(Exception):
 
 class MultiRepoTest(unittest.TestCase):
   def _run_cmd(self, cmd, env=None):
-    subprocess.call(cmd, env=env)
+    subprocess.call(
+        cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
   def _create_repo(self, name, spec):
     repo_dir = os.path.join(self._root_dir, name)
@@ -175,7 +175,8 @@ class MultiRepoTest(unittest.TestCase):
         git_match = re.search(r'^git commit .*', stdout, re.MULTILINE)
         self.assertTrue(git_match)
         git_command = git_match.group(0)
-        subprocess.call(git_command, shell=True)
+        subprocess.call(git_command, shell=True,
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         rev = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()
         return {
             'root': repo['root'],

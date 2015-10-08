@@ -5,8 +5,7 @@ import os
 import sys
 import unittest
 
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 THIRD_PARTY = os.path.join(ROOT_DIR, 'recipe_engine', 'third_party')
 sys.path.insert(0, os.path.join(THIRD_PARTY, 'mock-1.0.1'))
 sys.path.insert(0, THIRD_PARTY)

@@ -7,8 +7,7 @@ import os
 import subprocess
 import unittest
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 class DocTest(unittest.TestCase):
   def test_doc(self):
@@ -16,7 +15,7 @@ class DocTest(unittest.TestCase):
     exit_code = subprocess.call([
         'python', script_path,
         '--package', os.path.join(BASE_DIR, 'infra', 'config', 'recipes.cfg'),
-        'doc'])
+        'doc'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     self.assertEqual(0, exit_code)
 
   def test_info(self):
@@ -25,6 +24,7 @@ class DocTest(unittest.TestCase):
         'python', script_path,
         '--package', os.path.join(BASE_DIR, 'infra', 'config', 'recipes.cfg'),
         'info', '--recipes-dir'])
+      #stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     self.assertEqual(0, exit_code)
 
 if __name__ == '__main__':
