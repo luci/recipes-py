@@ -124,7 +124,7 @@
     "name": "no-op"
   },
   {
-    "name": "$final_result",
+    "name": "$result",
     "reason": "Invalid Step Data Access: StepDataAttributeError('The recipe attempted to access missing step data \"json\" for step \"no-op\". Please examine that step for errors.',)",
     "status_code": -1
   }

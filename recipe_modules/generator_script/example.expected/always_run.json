@@ -70,7 +70,7 @@
     "name": "always_runs"
   },
   {
-    "name": "$final_result",
+    "name": "$result",
     "reason": "the following steps in gen step(always_run.py) failed: [u'fails']",
     "status_code": 1
   }

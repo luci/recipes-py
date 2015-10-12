@@ -409,7 +409,7 @@ def get_callable_name(func):
 
 # Return value of run_steps and RecipeEngine.run.
 RecipeExecutionResult = collections.namedtuple(
-    'RecipeExecutionResult', 'status_code steps_ran')
+    'RecipeExecutionResult', 'result steps_ran')
 
 
 def run_steps(properties,
@@ -475,23 +475,24 @@ def run_steps(properties,
 
     # Find and load the recipe to run.
     try:
-      recipe_module = universe.load_recipe(recipe)
+      recipe_script = universe.load_recipe(recipe)
       stream.emit('Running recipe with %s' % (properties,))
-      prop_defs = recipe_module.PROPERTIES
 
-      api = loader.create_recipe_api(recipe_module.LOADED_DEPS,
+      api = loader.create_recipe_api(recipe_script.LOADED_DEPS,
                                             engine,
                                             test_data)
 
       s.step_text('<br/>running recipe: "%s"' % recipe)
     except loader.NoSuchRecipe as e:
-      s.step_text('<br/>recipe not found: %s' % e)
       s.step_failure()
-      return RecipeExecutionResult(2, None)
+      return RecipeExecutionResult({
+          'status_code': 2,
+          'reason': "Recipe not found: %s" % e,
+      }, None)
 
   # Run the steps emitted by a recipe via the engine, emitting annotations
   # into |stream| along the way.
-  return engine.run(recipe_module.RunSteps, api, prop_defs)
+  return engine.run(recipe_script, api)
 
 
 def _merge_envs(original, override):
@@ -871,50 +872,46 @@ class RecipeEngine(object):
       raise exc(step['name'], step_result)
 
 
-  def run(self, steps_function, api, prop_defs):
-    """Run a recipe represented by top level RunSteps function.
+  def run(self, recipe_script, api):
+    """Run a recipe represented by a recipe_script object.
 
     This function blocks until recipe finishes.
 
     Args:
-      steps_function: function that runs the steps.
+      recipe_script: The recipe to run, as represented by a RecipeScript object.
       api: The api, with loaded module dependencies.
            Used by the some special modules.
-      prop_defs: Property definitions for this recipe.
 
     Returns:
-      RecipeExecutionResult with status code and list of steps ran.
+      RecipeExecutionResult which has status code, list of steps ran,
+        and return value.
     """
     self._api = api
-    retcode = None
-    final_result = None
+    result = None
 
     try:
       try:
-        retcode = loader.invoke_with_properties(
-          steps_function, api._engine.properties, prop_defs, api=api)
-        assert retcode is None, (
-        "Non-None return from RunSteps is not supported yet")
+        recipe_result = recipe_script.run(api, api._engine.properties)
+        result = {
+          "recipe_result": recipe_result,
+          "status_code": 0
+        }
 
         assert not self._test_data.enabled or not self._test_data.step_data, (
         "Unconsumed test data! %s" % (self._test_data.step_data,))
       finally:
         self._emit_results()
     except recipe_api.StepFailure as f:
-      retcode = f.retcode or 1
-      final_result = {
-        "name": "$final_result",
+      result = {
         "reason": f.reason,
-        "status_code": retcode
+        "status_code": f.retcode or 1
       }
     except StepDataAttributeError as ex:
       unexpected_exception = self._test_data.is_unexpected_exception(ex)
 
-      retcode = -1
-      final_result = {
-        "name": "$final_result",
+      result = {
         "reason": "Invalid Step Data Access: %r" % ex,
-        "status_code": retcode
+        "status_code": -1
       }
 
       with self._stream.step('Invalid Step Data Access') as s:
@@ -926,11 +923,9 @@ class RecipeEngine(object):
 
     except Exception as ex:
       unexpected_exception = self._test_data.is_unexpected_exception(ex)
-      retcode = -1
-      final_result = {
-        "name": "$final_result",
+      result = {
         "reason": "Uncaught Exception: %r" % ex,
-        "status_code": retcode
+        "status_code": -1
       }
 
       with self._stream.step('Uncaught Exception') as s:
@@ -940,10 +935,8 @@ class RecipeEngine(object):
       if unexpected_exception:
         raise
 
-    if final_result is not None:
-      self._step_history[final_result['name']] = final_result
-
-    return RecipeExecutionResult(retcode, self._step_history)
+    result['name'] = '$result'
+    return RecipeExecutionResult(result, self._step_history)
 
   def create_step(self, step):  # pylint: disable=R0201
     """Called by step module to instantiate a new step.

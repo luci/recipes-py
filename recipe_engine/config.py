@@ -318,7 +318,7 @@ class ConfigBase(object):
     raise NotImplementedError
 
   def _is_default(self):
-    """Returns True iff this configuraton blob is the default value."""
+    """Returns True iff this configuration blob is the default value."""
     raise NotImplementedError
 
   @property
@@ -327,6 +327,23 @@ class ConfigBase(object):
     if self._hidden_mode is AutoHide:
       return self._is_default()
     return self._hidden_mode
+
+
+class ConfigSchemaBase(object):
+  """
+  A ConfigSchema is an immutable object whose only purpose is to define a
+  particular schema which can be re-used many times with no re-use issues.
+  It generates a mutable, bound version of the schema it represents, using the
+  mutable config objects such as ConfigGroup.
+  """
+  def bind(self, value):
+    """
+    Type check the value, and generate a resulting mutable object representation
+    of this value.
+    """
+    raise NotImplementedError
+
+
 
 
 class ConfigGroup(ConfigBase):
@@ -381,7 +398,7 @@ class ConfigGroup(ConfigBase):
         try:
           config_obj.set_val(val.pop(name))
         except Exception as e:
-          raise Exception('While assigning key %r: %s' % (name, e))
+          raise type(e)('While assigning key %r: %s' % (name, e))
 
     if val:
       raise TypeError("Got extra keys while setting ConfigGroup: %s" % val)
@@ -401,6 +418,37 @@ class ConfigGroup(ConfigBase):
   def _is_default(self):
     # pylint: disable=W0212
     return all(v._is_default() for v in self._type_map.values())
+
+
+class ConfigGroupSchema(ConfigSchemaBase):
+  """
+  A small class which provides an immutable schema which generates ConfigGroups
+  from the schema, given some values. Used for return values in the recipe
+  engine system, because if a script gets loaded more than once, we don't want
+  any leftover values in the return ConfigGroup.
+  """
+
+  def __init__(self, **type_map):
+    """Expects type_map to be {python_name -> ConfigBase} instance."""
+    super(ConfigGroupSchema, self).__init__()
+    if not type_map:
+      raise ValueError('A ConfigGroup with no type_map is meaningless.')
+
+    object.__setattr__(self, '_type_map', type_map)
+    for name, typeval in self._type_map.iteritems():
+      typeAssert(typeval, ConfigBase)
+
+  def __call__(self, *args, **kwargs):
+    return self.new(*args, **kwargs)
+
+  def new(self, **kwargs):
+    """Generates a ConfigGroup with my type map and the given values."""
+    cfg = ConfigGroup(**self._type_map)
+    cfg.set_val(kwargs)
+    return cfg
+
+
+ReturnSchema = ConfigGroupSchema
 
 
 class ConfigList(ConfigBase, collections.MutableSequence):

@@ -14,5 +14,10 @@
     ],
     "cwd": "[SLAVE_BUILD]",
     "name": "print resource"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
   }
 ]

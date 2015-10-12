@@ -59,5 +59,10 @@
       "@@@STEP_LOG_LINE@python.inline@  f.write(json.dumps([2, 3, 4]))@@@",
       "@@@STEP_LOG_END@python.inline@@@"
     ]
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
   }
 ]

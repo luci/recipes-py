@@ -26,5 +26,10 @@
       "mock step binary"
     ],
     "name": "mock.step.binary"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
   }
 ]

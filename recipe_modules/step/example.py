@@ -2,14 +2,30 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from recipe_engine import recipe_api, config
+
 DEPS = [
   'recipe_engine/properties',
   'recipe_engine/step',
 ]
 
-from recipe_engine import recipe_api
 
-def RunSteps(api):
+RETURN_SCHEMA = config.ReturnSchema(
+  test_me=config.Single(int)
+)
+
+
+PROPERTIES = {
+  'bad_return': recipe_api.Property(default=False),
+  'raise_infra_failure': recipe_api.Property(default=False),
+  'access_invalid_data': recipe_api.Property(default=False),
+}
+
+
+def RunSteps(api, bad_return, raise_infra_failure, access_invalid_data):
+  if bad_return:
+    return RETURN_SCHEMA.new(test_me='this should fail')
+
   # TODO(martinis) change this
   # The api.step object is directly callable.
   api.step('hello', ['echo', 'Hello World'])
@@ -70,10 +86,12 @@ def RunSteps(api):
   api.step('application', ['echo', 'main', 'application'],
            wrapper=['python', '-c', 'import sys; print sys.argv'])
 
-  if api.properties.get('access_invalid_data'):
+  if access_invalid_data:
     result = api.step('no-op', ['echo', 'I', 'do', 'nothing'])
     # Trying to access non-existent attributes on the result should raise.
     _ = result.json.output
+
+  return RETURN_SCHEMA(test_me=3)
 
 
 def GenTests(api):
@@ -122,4 +140,10 @@ def GenTests(api):
       api.test('infra_failure') +
       api.properties(raise_infra_failure=True) +
       api.step_data('cleanup', retcode=1)
+    )
+
+  yield (
+      api.test('bad_return') +
+      api.properties(bad_return=True) +
+      api.expect_exception('TypeError')
     )

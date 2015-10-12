@@ -96,7 +96,7 @@
     "name": "testb"
   },
   {
-    "name": "$final_result",
+    "name": "$result",
     "reason": "You can catch step failures.",
     "status_code": 1
   }

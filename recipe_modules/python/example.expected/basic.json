@@ -25,5 +25,10 @@
       "@@@STEP_TEXT@This step is a failure :(@@@",
       "@@@STEP_FAILURE@@@"
     ]
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
   }
 ]

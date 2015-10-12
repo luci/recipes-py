@@ -2,13 +2,14 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import collections
 import contextlib
 import imp
 import inspect
 import os
 import sys
 
-from .config import ConfigContext
+from .config import ConfigContext, ConfigGroupSchema
 from .config_types import Path, ModuleBasePath, RECIPE_MODULE_PREFIX
 from .recipe_api import RecipeApi, RecipeApiPlain, RecipeScriptApi
 from .recipe_api import Property, BoundProperty
@@ -30,8 +31,28 @@ class RecipeScript(object):
         name: value.bind(name, BoundProperty.RECIPE_PROPERTY, name)
         for name, value in recipe_dict.get('PROPERTIES', {}).items()}
 
+    return_schema = recipe_dict.get('RETURN_SCHEMA')
+    if return_schema and not isinstance(return_schema, ConfigGroupSchema):
+      raise ValueError("Invalid RETURN_SCHEMA; must be an instance of \
+                       ConfigGroupSchema")
+
     for k, v in recipe_dict.iteritems():
       setattr(self, k, v)
+
+  def run(self, api, properties):
+    """
+    Run this recipe, with the given api and property arguments.
+    Check the return value, if we have a RETURN_SCHEMA.
+    """
+    recipe_result = invoke_with_properties(
+      self.RunSteps, properties, self.PROPERTIES, api=api)
+
+    return_schema = getattr(self, 'RETURN_SCHEMA', None)
+
+    if return_schema:
+      return recipe_result.as_jsonish(True)
+    else:
+      return None
 
   @classmethod
   def from_script_path(cls, script_path, universe):

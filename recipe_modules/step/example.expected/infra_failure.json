@@ -116,5 +116,12 @@
     ],
     "cwd": "[SLAVE_BUILD]",
     "name": "application"
+  },
+  {
+    "name": "$result",
+    "recipe_result": {
+      "test_me": 3
+    },
+    "status_code": 0
   }
 ]

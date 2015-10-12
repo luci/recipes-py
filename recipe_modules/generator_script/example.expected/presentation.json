@@ -34,5 +34,10 @@
     "~followup_annotations": [
       "@@@STEP_TEXT@mock step text@@@"
     ]
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
   }
 ]

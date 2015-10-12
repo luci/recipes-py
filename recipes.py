@@ -39,6 +39,28 @@ def lint(package_deps, args):
   lint_test.main(package_deps, args.whitelist or [])
 
 
+def handle_recipe_return(recipe_result, result_filename, stream):
+    if 'recipe_result' in recipe_result.result:
+      result_string = json.dumps(
+          recipe_result.result['recipe_result'], indent=2)
+      if result_filename:
+        with open(result_filename, 'w') as f:
+          f.write(result_string)
+      else:
+        with stream.step('recipe result') as s:
+          s.write_log_lines('result', [result_string])
+
+    if 'reason' in recipe_result.result:
+      with stream.step('recipe failure reason') as s:
+        s.write_log_lines(
+            'failure reason',
+            [recipe_result.result['reason']])
+      return 1
+    elif 'status_code' in recipe_result.result:
+      return recipe_result.result['status_code']
+    else:
+      return 0
+
 def run(package_deps, args):
   from recipe_engine import run as recipe_run
   from recipe_engine import loader
@@ -89,12 +111,15 @@ def run(package_deps, args):
 
   old_cwd = os.getcwd()
   os.chdir(workdir)
+  stream = annotator.StructuredAnnotationStream()
+
   try:
-    ret = recipe_run.run_steps(
-        properties, annotator.StructuredAnnotationStream(), universe=universe)
-    return ret.status_code
+    ret = recipe_run.run_steps(properties, stream, universe=universe)
+
   finally:
     os.chdir(old_cwd)
+
+  return handle_recipe_return(ret, args.result_file, stream)
 
 
 def roll(args):
@@ -230,6 +255,10 @@ def main():
   run_p.add_argument(
       '--workdir',
       help='The working directory of recipe execution')
+  run_p.add_argument(
+      '--result-file',
+      help='The file to write the JSON serialized returned value \
+            of the recipe to')
   run_p.add_argument(
       'recipe',
       help='The recipe to execute')
