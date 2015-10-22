@@ -1,0 +1,16 @@
+[
+  {
+    "cmd": [
+      "doge"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "doge",
+    "stderr": "/path/to/tmp/",
+    "stdout": "/path/to/tmp/"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

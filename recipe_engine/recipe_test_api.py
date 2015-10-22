@@ -435,7 +435,7 @@ class RecipeTestApi(object):
     assert all(isinstance(d, StepTestData) for d in data)
     ret = TestData(None)
     if data:
-      ret.step_data[name] = reduce(sum, data)
+      ret.step_data[name] = reduce(lambda x,y: x + y, data)
     if 'retcode' in kwargs:
       ret.step_data[name].retcode = kwargs['retcode']
     if 'override' in kwargs:
