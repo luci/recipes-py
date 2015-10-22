@@ -123,14 +123,19 @@ class RepoUpdate(object):
     self.commit_infos = commit_infos
 
   @property
-  def id(self):
-    return self.spec.id
+  def project_id(self):
+    return self.spec.project_id
 
   def __eq__(self, other):
-    return (self.id, self.spec.revision) == (other.id, other.spec.revision)
+    return ((self.project_id, self.spec.revision) ==
+            (other.project_id, other.spec.revision))
 
   def __le__(self, other):
-    return (self.id, self.spec.revision) <= (other.id, other.spec.revision)
+    return ((self.project_id, self.spec.revision) <=
+            (other.project_id, other.spec.revision))
+
+  def __str__(self):
+    return '%s@%s' % (self.project_id, getattr(self.spec, 'revision', None))
 
 
 class RepoSpec(object):
@@ -172,15 +177,16 @@ class RepoSpec(object):
 
 class GitRepoSpec(RepoSpec):
   def __init__(self, project_id, repo, branch, revision, path):
-    self.id = project_id
+    self.project_id = project_id
     self.repo = repo
     self.branch = branch
     self.revision = revision
     self.path = path
 
   def __str__(self):
-    return ('GitRepoSpec{id="%(id)s", repo="%(repo)s", branch="%(branch)s", '
-            'revision="%(revision)s", path="%(path)s"}' % self.__dict__)
+    return ('GitRepoSpec{project_id="%(project_id)s", repo="%(repo)s", '
+            'branch="%(branch)s", revision="%(revision)s", '
+            'path="%(path)s"}' % self.__dict__)
 
   def checkout(self, context):
     dep_dir = self._dep_dir(context)
@@ -219,7 +225,7 @@ class GitRepoSpec(RepoSpec):
 
   def dump(self):
     buf = package_pb2.DepSpec(
-        project_id=self.id,
+        project_id=self.project_id,
         url=self.repo,
         branch=self.branch,
         revision=self.revision)
@@ -238,7 +244,8 @@ class GitRepoSpec(RepoSpec):
     for rev in lines:
       info = self._get_commit_info(rev, context)
       updates.append(RepoUpdate(
-                 GitRepoSpec(self.id, self.repo, self.branch, rev, self.path),
+                 GitRepoSpec(self.project_id, self.repo, self.branch, rev,
+                             self.path),
                  commit_infos=(info,)))
     return updates
 
@@ -248,7 +255,9 @@ class GitRepoSpec(RepoSpec):
     args = [self._git, 'rev-list', '--reverse',
             '%s..origin/%s' % (self.revision, self.branch)]
     if subdir:
-      args.extend(['--', subdir + os.path.sep])
+      # We add proto_file to the list of paths to check because it might contain
+      # other upstream rolls, which we want.
+      args.extend(['--', subdir + os.path.sep, self.proto_file(context).path])
     git = subprocess.Popen(
         args, stdout=subprocess.PIPE, cwd=self._dep_dir(context))
     (stdout, _) = git.communicate()
@@ -261,10 +270,10 @@ class GitRepoSpec(RepoSpec):
     message = subprocess.check_output(
         [self._git, 'show', '-s', '--pretty=%B', rev],
         cwd=self._dep_dir(context)).strip()
-    return CommitInfo(author, message, self.id, rev)
+    return CommitInfo(author, message, self.project_id, rev)
 
   def _dep_dir(self, context):
-    return os.path.join(context.package_dir, self.id)
+    return os.path.join(context.package_dir, self.project_id)
 
   @property
   def _git(self):
@@ -274,7 +283,7 @@ class GitRepoSpec(RepoSpec):
       return 'git'
 
   def _components(self):
-    return (self.id, self.repo, self.revision, self.path)
+    return (self.project_id, self.repo, self.revision, self.path)
 
   def __eq__(self, other):
     if not isinstance(other, type(self)):
@@ -422,7 +431,7 @@ class PackageSpec(object):
     deps_so_far = self._deps
     ret_updates = []
     for update in dep_updates:
-      deps_so_far = _updated(deps_so_far, { update.id: update.spec })
+      deps_so_far = _updated(deps_so_far, { update.project_id: update.spec })
       ret_updates.append(RepoUpdate(PackageSpec(
           self._project_id, self._recipes_path, deps_so_far),
           commit_infos=update.commit_infos))
