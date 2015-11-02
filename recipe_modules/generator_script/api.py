@@ -16,7 +16,6 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
     Presentation keys are:
       logs: A map of log names to log text.
       links: A map of link text to URIs.
-      perf_logs: A map of log names to text.
       step_summary_text: A string to set as the step summary.
       step_text: A string to set as the step text.
       properties: A map of build_property names to JSON-encoded values.
@@ -73,7 +72,6 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
             if j:
               p.logs.update(j.get('logs', {}))
               p.links.update(j.get('links', {}))
-              p.perf_logs.update(j.get('perf_logs', {}))
               p.step_summary_text = j.get('step_summary_text', '')
               p.step_text = j.get('step_text', '')
               p.properties.update(j.get('properties', {}))

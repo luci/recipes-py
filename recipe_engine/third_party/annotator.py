@@ -16,7 +16,6 @@ STEP_ANNOTATIONS = {
     'STEP_FAILURE': 0,
     'STEP_LINK': 2,
     'STEP_LOG_END': 1,
-    'STEP_LOG_END_PERF': 2,
     'STEP_LOG_LINE': 2,
     'STEP_SUMMARY_CLEAR': 0,
     'STEP_SUMMARY_TEXT': 1,
@@ -162,7 +161,7 @@ class StepCommands(AnnotationPrinter):
     super(StepCommands, self).__init__(stream, flush_before)
     self.emitted_logs = set()
 
-  def write_log_lines(self, logname, lines, perf=None):
+  def write_log_lines(self, logname, lines):
     if logname in self.emitted_logs:
       raise ValueError('Log %s has been emitted multiple times.' % logname)
     self.emitted_logs.add(logname)
@@ -173,10 +172,7 @@ class StepCommands(AnnotationPrinter):
       for actual_line in line.split('\n'):
         self.step_log_line(logname, actual_line)
 
-    if perf:
-      self.step_log_end_perf(logname, perf)
-    else:
-      self.step_log_end(logname)
+    self.step_log_end(logname)
 
 
 class StepControlCommands(AnnotationPrinter):
