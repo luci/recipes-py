@@ -55,6 +55,13 @@ def handle_recipe_return(recipe_result, result_filename, stream):
         s.write_log_lines(
             'failure reason',
             [recipe_result.result['reason']])
+
+        code = recipe_result.result.get('status_code', 1)
+        if code == -1:
+          s.step_exception()
+        else:
+          s.step_failure()
+
       return 1
     elif 'status_code' in recipe_result.result:
       return recipe_result.result['status_code']
