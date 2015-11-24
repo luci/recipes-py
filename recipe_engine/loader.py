@@ -25,7 +25,9 @@ class NoSuchRecipe(Exception):
 class RecipeScript(object):
   """Holds dict of an evaluated recipe script."""
 
-  def __init__(self, recipe_dict):
+  def __init__(self, recipe_dict, name):
+    self.name = name
+
     # Let each property object know about the property name.
     recipe_dict['PROPERTIES'] = {
         name: value.bind(name, BoundProperty.RECIPE_PROPERTY, name)
@@ -50,6 +52,8 @@ class RecipeScript(object):
     return_schema = getattr(self, 'RETURN_SCHEMA', None)
 
     if return_schema:
+      if not recipe_result:
+        raise ValueError("Recipe %s did not return a value." % self.name)
       return recipe_result.as_jsonish(True)
     else:
       return None
@@ -66,7 +70,10 @@ class RecipeScript(object):
 
     script_vars['LOADED_DEPS'] = universe.deps_from_spec(
         script_vars.get('DEPS', []))
-    return cls(script_vars)
+
+    # 'a/b/c/my_name.py' -> my_name
+    name = os.path.basename(script_path).split('.')[0]
+    return cls(script_vars, name)
 
 
 class Dependency(object):
@@ -131,9 +138,14 @@ class PackageDependency(PathDependency):
 
 
 class RecipeUniverse(object):
-  def __init__(self, package_deps):
+  def __init__(self, package_deps, config_file):
     self._loaded = {}
     self._package_deps = package_deps
+    self._config_file = config_file
+
+  @property
+  def config_file(self):
+    return self._config_file
 
   @property
   def module_dirs(self):
@@ -406,6 +418,36 @@ class DependencyMapper(object):
     self._instances[mod] = self._instantiator(mod, deps_dict)
     return self._instances[mod]
 
+def _invoke_with_properties(callable_obj, all_props, prop_defs, arg_names,
+                            **additional_args):
+  """Internal version of invoke_with_properties.
+
+  The main difference is it gets passed the argument names as `arg_names`.
+  This allows us to reuse this logic elsewhere, without defining a fake function
+  which has arbitrary argument names.
+  """
+  for name, prop in prop_defs.items():
+    if not isinstance(prop, BoundProperty):
+      raise ValueError(
+          "You tried to invoke {} with an unbound Property {} named {}".format(
+              callable, prop, name))
+
+  props = []
+  for arg in arg_names:
+    if arg in additional_args:
+      props.append(additional_args.pop(arg))
+      continue
+
+    if arg not in prop_defs:
+      raise UndefinedPropertyException(
+        "Missing property definition for '{}'.".format(arg))
+
+    prop = prop_defs[arg]
+    props.append(prop.interpret(all_props.get(
+      prop.param_name, PROPERTY_SENTINEL)))
+
+  return callable_obj(*props, **additional_args)
+
 def invoke_with_properties(callable_obj, all_props, prop_defs,
                            **additional_args):
   """
@@ -428,39 +470,21 @@ def invoke_with_properties(callable_obj, all_props, prop_defs,
   """
   # Check that we got passed BoundProperties, and not Properties
 
-  for name, prop in prop_defs.items():
-    if not isinstance(prop, BoundProperty):
-      raise ValueError(
-          "You tried to invoke {} with an unbound Property {} named {}".format(
-              callable, prop, name))
 
   # To detect when they didn't specify a property that they have as a
   # function argument, list the arguments, through inspection,
   # and then comparing this list to the provided properties. We use a list
   # instead of a dict because getargspec returns a list which we would have to
   # convert to a dictionary, and the benefit of the dictionary is pretty small.
-  props = []
   if inspect.isclass(callable_obj):
     arg_names = inspect.getargspec(callable_obj.__init__).args
 
     arg_names.pop(0)
   else:
     arg_names = inspect.getargspec(callable_obj).args
+  return _invoke_with_properties(callable_obj, all_props, prop_defs, arg_names,
+                                 **additional_args)
 
-  for arg in arg_names:
-    if arg in additional_args:
-      props.append(additional_args.pop(arg))
-      continue
-
-    if arg not in prop_defs:
-      raise UndefinedPropertyException(
-        "Missing property definition for '{}'.".format(arg))
-
-    prop = prop_defs[arg]
-    props.append(prop.interpret(all_props.get(
-      prop.param_name, PROPERTY_SENTINEL)))
-
-  return callable_obj(*props, **additional_args)
 
 def create_recipe_api(toplevel_deps, engine, test_data=DisabledTestData()):
   def instantiator(mod, deps):

@@ -454,8 +454,8 @@ class RecipeApi(RecipeApiPlain):
 
 
 class RecipeScriptApi(RecipeApiPlain, ModuleInjectionSite):
-  pass
-
+  def depend_on(self, recipe, properties, **kwargs):
+    return self._engine.depend_on(recipe, properties, **kwargs)
 
 # This is a sentinel object for the Property system. This allows users to
 # specify a default of None that will actually be respected.

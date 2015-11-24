@@ -1,0 +1,14 @@
+[
+  {
+    "cmd": [
+      "bingo"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "bam"
+  },
+  {
+    "name": "$result",
+    "reason": "Uncaught Exception: ValueError('Recipe no_return did not return a value.',)",
+    "status_code": -1
+  }
+]

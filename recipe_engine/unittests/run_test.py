@@ -71,7 +71,7 @@ class RunTest(unittest.TestCase):
     api._engine = mock.Mock()
     api._engine.properties = properties
 
-    engine = recipe_engine.run.RecipeEngine(stream, properties, test_data)
+    engine = recipe_engine.run.RecipeEngine(stream, properties, test_data, None)
 
     class FakeScript(object):
       def run(self, _, __):
@@ -80,7 +80,6 @@ class RunTest(unittest.TestCase):
     with mock.patch('recipe_engine.run.RecipeEngine._emit_results'):
       with self.assertRaises(AssertionError):
         engine.run(FakeScript(), api)
-
 
 
 if __name__ == '__main__':

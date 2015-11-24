@@ -1,0 +1,18 @@
+[
+  {
+    "cmd": [
+      "bc"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "calc it",
+    "stdin": "3*2\n",
+    "stdout": "/path/to/tmp/out"
+  },
+  {
+    "name": "$result",
+    "recipe_result": {
+      "number_times_two": 6
+    },
+    "status_code": 0
+  }
+]

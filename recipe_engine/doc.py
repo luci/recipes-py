@@ -75,13 +75,12 @@ def pmethod(indent_lvl, name, obj):
   else:
     p(0)
 
-def main(package_deps):
+def main(universe):
   common_methods = set(k for k, v in member_iter(recipe_api.RecipeApi))
   p(0, 'Common Methods -- %s' % os.path.splitext(recipe_api.__file__)[0])
   for method in sorted(common_methods):
     pmethod(1, method, getattr(recipe_api.RecipeApi, method))
 
-  universe = loader.RecipeUniverse(package_deps)
   deps = universe.deps_from_spec(
       # TODO(luqui): This doesn't handle name scoping correctly (e.g. same-named
       # modules in different packages).
@@ -89,7 +88,7 @@ def main(package_deps):
         for modpath in universe.loop_over_recipe_modules() })
 
   inst = loader.create_recipe_api(
-      deps, recipe_run.RecipeEngine(None, {}, None))
+      deps, recipe_run.RecipeEngine(None, {}, None, universe))
 
   for mod_name, mod in deps.iteritems():
     p(0)

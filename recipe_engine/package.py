@@ -617,6 +617,10 @@ class PackageDeps(object):
       for subdir in repo.module_dirs:
         yield str(subdir)
 
+  @property
+  def engine_recipes_py(self):
+    return os.path.join(self._context.repo_root, 'recipes.py')
+
 
 def _run_cmd(cmd, cwd=None):
   cwd_str = ' (in %s)' % cwd if cwd else ''

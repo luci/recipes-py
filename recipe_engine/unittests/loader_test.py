@@ -7,20 +7,24 @@ import os
 import sys
 import unittest
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__)))))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__))))
+THIRD_PARTY = os.path.join(BASE_DIR, 'recipe_engine', 'third_party')
+sys.path.insert(0, os.path.join(THIRD_PARTY, 'mock-1.0.1'))
+sys.path.insert(0, BASE_DIR)
 
 from recipe_engine import loader, recipe_api, config
+import mock
 
 
 class TestRecipeScript(unittest.TestCase):
   def testReturnSchemaHasValidClass(self):
     with self.assertRaises(ValueError):
-      script = loader.RecipeScript({'RETURN_SCHEMA': 3})
+      script = loader.RecipeScript({'RETURN_SCHEMA': 3}, 'test_script')
 
   def testSetsAttributes(self):
     sentinel = object()
-    script = loader.RecipeScript({'imarandomnamelala': sentinel})
+    script = loader.RecipeScript({'imarandomnamelala': sentinel}, 'test_script')
     self.assertEqual(sentinel, script.imarandomnamelala)
 
   def testRunChecksReturnType(self):
@@ -35,7 +39,7 @@ class TestRecipeScript(unittest.TestCase):
     script = loader.RecipeScript({
         'RETURN_SCHEMA': config.ConfigGroupSchema(a=config.Single(int)),
         'RunSteps': None,
-    })
+    }, 'test_script')
     loader.invoke_with_properties = lambda *args, **kwargs: FakeReturn()
 
     self.assertEqual(mocked_return, script.run(None, None))
@@ -46,16 +50,16 @@ def make_prop(**kwargs):
 
 
 class TestInvoke(unittest.TestCase):
-  def invoke(self, callable, all_properties, prop_defs, **kwargs):
-    return loader.invoke_with_properties(
-        callable, all_properties, prop_defs, **kwargs)
+  def invoke(self, callable, all_properties, prop_defs, arg_names, **kwargs):
+    return loader._invoke_with_properties(
+        callable, all_properties, prop_defs, arg_names, **kwargs)
 
   def testInvokeFuncSimple(self):
     """Simple test of invoke."""
     def func():
       pass
 
-    self.assertEqual(self.invoke(func, {}, {}), None)
+    self.assertEqual(self.invoke(func, {}, {}, []), None)
 
   def testInvokeFuncComplex(self):
     """Tests invoke with two different properties."""
@@ -71,7 +75,7 @@ class TestInvoke(unittest.TestCase):
       'a': 1,
       'b': 2,
     }
-    self.assertEqual(1, self.invoke(func, props, prop_defs))
+    self.assertEqual(1, self.invoke(func, props, prop_defs, ['a', 'b']))
 
   def testInvokeParamName(self):
     """Tests invoke with two different properties."""
@@ -85,7 +89,7 @@ class TestInvoke(unittest.TestCase):
     props = {
       'b': 2,
     }
-    self.assertEqual(2, self.invoke(func, props, prop_defs))
+    self.assertEqual(2, self.invoke(func, props, prop_defs, ['a']))
 
   def testInvokeClass(self):
     """Tests invoking a class."""
@@ -102,7 +106,7 @@ class TestInvoke(unittest.TestCase):
       'a': 1,
       'b': 2,
     }
-    self.assertEqual(1, self.invoke(test, props, prop_defs).answer)
+    self.assertEqual(1, self.invoke(test, props, prop_defs, ['a', 'b']).answer)
 
   def testMissingProperty(self):
     """Tests that invoke raises an error when missing a property."""
@@ -110,7 +114,7 @@ class TestInvoke(unittest.TestCase):
       return a
 
     with self.assertRaises(recipe_api.UndefinedPropertyException):
-      self.invoke(func, {}, {})
+      self.invoke(func, {}, {}, ['a'])
 
   def testMustBeBound(self):
     """Tests that calling invoke with a non BoundProperty fails."""
@@ -119,7 +123,28 @@ class TestInvoke(unittest.TestCase):
     }
 
     with self.assertRaises(ValueError):
-      self.invoke(None, None, prop_defs)
+      self.invoke(None, None, prop_defs, ['a'])
+
+  def testInvokeArgNamesFunc(self):
+    def test_function(a, b):
+      return a
+
+    with mock.patch(
+        'recipe_engine.loader._invoke_with_properties') as mocked_invoke:
+      loader.invoke_with_properties(test_function, None, None)
+      args, _ = mocked_invoke.call_args
+      self.assertTrue(['a', 'b'] in args)
+
+  def testInvokeArgNamesClass(self):
+    class TestClass(object):
+      def __init__(self, api, foo, bar):
+        pass
+
+    with mock.patch(
+        'recipe_engine.loader._invoke_with_properties') as mocked_invoke:
+      loader.invoke_with_properties(TestClass, None, None)
+      args, _ = mocked_invoke.call_args
+      self.assertTrue(['api', 'foo', 'bar'] in args)
 
 if __name__ == '__main__':
   unittest.main()

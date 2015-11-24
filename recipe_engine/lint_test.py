@@ -61,12 +61,11 @@ def ImportsTest(recipe_path, recipe_name, whitelist, universe):
                (recipe_path, module_name))
 
 
-def main(package_deps, whitelist=[]):
+def main(universe, whitelist=[]):
   from . import loader
   from . import package
 
   whitelist = map(re.compile, MODULES_WHITELIST + whitelist)
-  universe = loader.RecipeUniverse(package_deps)
 
   errors = []
   for recipe_path, recipe_name in universe.loop_over_recipes():

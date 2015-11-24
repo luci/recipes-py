@@ -31,12 +31,22 @@ def get_package_config(args):
 
 def simulation_test(package_deps, args):
   from recipe_engine import simulation_test
-  simulation_test.main(package_deps, args=json.loads(args.args))
+  from recipe_engine import loader
+
+  _, config_file = get_package_config(args)
+  universe = loader.RecipeUniverse(package_deps, config_file.path)
+
+  simulation_test.main(universe, args=json.loads(args.args))
 
 
 def lint(package_deps, args):
   from recipe_engine import lint_test
-  lint_test.main(package_deps, args.whitelist or [])
+  from recipe_engine import loader
+
+  _, config_file = get_package_config(args)
+  universe = loader.RecipeUniverse(package_deps, config_file.path)
+
+  lint_test.main(universe, args.whitelist or [])
 
 
 def handle_recipe_return(recipe_result, result_filename, stream):
@@ -46,9 +56,8 @@ def handle_recipe_return(recipe_result, result_filename, stream):
       if result_filename:
         with open(result_filename, 'w') as f:
           f.write(result_string)
-      else:
-        with stream.step('recipe result') as s:
-          s.write_log_lines('result', [result_string])
+      with stream.step('recipe result') as s:
+        s.write_log_lines('result', [result_string])
 
     if 'reason' in recipe_result.result:
       with stream.step('recipe failure reason') as s:
@@ -108,7 +117,8 @@ def run(package_deps, args):
   os.environ['PYTHONUNBUFFERED'] = '1'
   os.environ['PYTHONIOENCODING'] = 'UTF-8'
 
-  universe = loader.RecipeUniverse(package_deps)
+  _, config_file = get_package_config(args)
+  universe = loader.RecipeUniverse(package_deps, config_file.path)
 
   workdir = (args.workdir or
       os.path.join(os.path.dirname(os.path.realpath(__file__)), 'workdir'))
@@ -126,7 +136,7 @@ def run(package_deps, args):
   finally:
     os.chdir(old_cwd)
 
-  return handle_recipe_return(ret, args.result_file, stream)
+  return handle_recipe_return(ret, args.output_result_json, stream)
 
 
 def roll(args):
@@ -187,7 +197,12 @@ class ProjectOverrideAction(argparse.Action):
 
 def doc(package_deps, args):
   from recipe_engine import doc
-  doc.main(package_deps)
+  from recipe_engine import loader
+
+  _, config_file = get_package_config(args)
+  universe = loader.RecipeUniverse(package_deps, config_file)
+
+  doc.main(universe)
 
 
 def info(args):
@@ -263,7 +278,7 @@ def main():
       '--workdir',
       help='The working directory of recipe execution')
   run_p.add_argument(
-      '--result-file',
+      '--output-result-json',
       help='The file to write the JSON serialized returned value \
             of the recipe to')
   run_p.add_argument(

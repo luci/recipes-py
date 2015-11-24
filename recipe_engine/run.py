@@ -72,6 +72,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import threading
 import traceback
 
@@ -81,6 +82,7 @@ import cStringIO
 from . import loader
 from . import recipe_api
 from . import recipe_test_api
+from . import types
 from . import util
 
 
@@ -433,7 +435,7 @@ def run_steps(properties,
     'TESTING_SLAVENAME' in os.environ)):
     properties['use_mirror'] = False
 
-  engine = RecipeEngine(stream, properties, test_data)
+  engine = RecipeEngine(stream, properties, test_data, universe)
 
   # Create all API modules and top level RunSteps function.  It doesn't launch
   # any recipe code yet; RunSteps needs to be called.
@@ -750,11 +752,12 @@ class RecipeEngine(object):
     * step - uses engine.create_step(...).
 
   """
-  def __init__(self, stream, properties, test_data):
+  def __init__(self, stream, properties, test_data, universe):
     self._stream = stream
     self._properties = properties
     self._test_data = test_data
     self._step_history = collections.OrderedDict()
+    self._universe = universe
 
     self._previous_step_annotation = None
     self._previous_step_result = None
@@ -861,11 +864,12 @@ class RecipeEngine(object):
 
       raise exc(step['name'], step_result)
 
-
   def run(self, recipe_script, api):
     """Run a recipe represented by a recipe_script object.
 
     This function blocks until recipe finishes.
+    It mainly executes the recipe, and has some exception handling logic, and
+    adds the step history to the result.
 
     Args:
       recipe_script: The recipe to run, as represented by a RecipeScript object.
@@ -939,5 +943,64 @@ class RecipeEngine(object):
       Opaque engine specific object that is understood by 'run_steps' method.
     """
     return step.as_jsonish()
+
+  def depend_on(self, recipe, properties, distributor=None):
+    return self.depend_on_multi(
+        ((recipe, properties),), distributor=distributor)[0]
+
+  def depend_on_multi(self, dependencies, distributor=None):
+    results = []
+    for recipe, properties in dependencies:
+      recipe_script = self._universe.load_recipe(recipe)
+
+      return_schema = getattr(recipe_script, 'RETURN_SCHEMA', None)
+      if not return_schema:
+        raise ValueError(
+            "Invalid recipe %s. Recipe must have a return schema." % recipe)
+
+      # run_recipe is a function which will be called once the properties have
+      # been validated by the recipe engine. The arguments being passed in are
+      # simply the values being passed to the recipe, which we already know, so
+      # we ignore them. We're only using this for its properties validation
+      # functionality.
+      run_recipe = lambda *args, **kwargs: None
+
+      if self._test_data.enabled:
+        run_recipe = lambda *args, **kwargs: (
+            self._test_data.depend_on_data[types.freeze((recipe, properties),)])
+      else:
+        # TODO(martiniss) Add DM integration
+        assert distributor is None, "Only local recipe execution supported."
+
+        def run_recipe(*args, **kwargs):
+          with tempfile.NamedTemporaryFile() as f:
+            cmd = [sys.executable,
+                   self._universe.package_deps.engine_recipes_py,
+                   '--package=%s' % self._universe.config_file, 'run',
+                   '--output-result-json=%s' % f.name, recipe]
+            cmd.extend(['%s=%s' % (k, v) for k, v in properties.iteritems()])
+
+            retcode = subprocess.call(cmd)
+            result = json.load(f)
+            if retcode != 0:
+              raise recipe_api.StepFailure(
+                'depend on %s with properties %r failed with %d.'
+                'Recipe result: %r' % (
+                    recipe, properties, retcode, result))
+            return result
+
+      try:
+        # This does type checking for properties
+        results.append(
+          loader._invoke_with_properties(
+            run_recipe, properties, recipe_script.PROPERTIES,
+            properties.keys()))
+      except TypeError as e:
+        raise TypeError(
+            "Got %r while trying to call recipe %s with properties %r" % (
+              e, recipe, properties))
+
+    return results
+
 
 

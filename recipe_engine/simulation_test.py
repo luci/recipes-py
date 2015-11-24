@@ -74,11 +74,11 @@ def GenerateTests():
       )
 
 
-def main(package_deps, args=None):
+def main(universe, args=None):
   """Runs simulation tests on a given repo of recipes.
 
   Args:
-    package_deps: a PackageDeps object to operate on
+    universe: a RecipeUniverse object to operate on
     args: command line arguments to expect_tests
   Returns:
     Doesn't -- exits with a status code
@@ -96,7 +96,7 @@ def main(package_deps, args=None):
       os.environ.pop(env_var)
 
   global _UNIVERSE
-  _UNIVERSE = loader.RecipeUniverse(package_deps)
+  _UNIVERSE = universe
 
   expect_tests.main('recipe_simulation_test', GenerateTests,
                     cover_omit=cover_omit(), args=args)
