@@ -7,7 +7,7 @@ import os
 import sys
 import time
 
-from .type_definitions import DirSeen, Handler, MultiTest
+from .type_definitions import DirSeen, Handler, MultiTest, Failure
 from .serialize import WriteNewData, DiffData, NonExistant, GetCurrentData
 
 
@@ -116,6 +116,8 @@ class TrainHandler(Handler):
       self._record_expected(result.test, 'E')
       self.normal_actions.append('%s failed: %s' %
                                  (result.test.name, result.message))
+      return Failure()
+
 
     def finalize(self, aborted):
       super(TrainHandler.ResultStageHandler, self).finalize(aborted)
