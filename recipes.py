@@ -50,32 +50,19 @@ def lint(package_deps, args):
 
 
 def handle_recipe_return(recipe_result, result_filename, stream):
-    if 'recipe_result' in recipe_result.result:
-      result_string = json.dumps(
-          recipe_result.result['recipe_result'], indent=2)
-      if result_filename:
-        with open(result_filename, 'w') as f:
-          f.write(result_string)
-      with stream.step('recipe result') as s:
-        s.write_log_lines('result', [result_string])
+  if 'recipe_result' in recipe_result.result:
+    result_string = json.dumps(
+        recipe_result.result['recipe_result'], indent=2)
+    if result_filename:
+      with open(result_filename, 'w') as f:
+        f.write(result_string)
+    with stream.step('recipe result') as s:
+      s.write_log_lines('result', [result_string])
 
-    if 'reason' in recipe_result.result:
-      with stream.step('recipe failure reason') as s:
-        s.write_log_lines(
-            'failure reason',
-            [recipe_result.result['reason']])
-
-        code = recipe_result.result.get('status_code', 1)
-        if code == -1:
-          s.step_exception()
-        else:
-          s.step_failure()
-
-      return 1
-    elif 'status_code' in recipe_result.result:
-      return recipe_result.result['status_code']
-    else:
-      return 0
+  if 'status_code' in recipe_result.result:
+    return recipe_result.result['status_code']
+  else:
+    return 0
 
 def run(package_deps, args):
   from recipe_engine import run as recipe_run
