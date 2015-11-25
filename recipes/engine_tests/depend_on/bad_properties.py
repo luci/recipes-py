@@ -13,7 +13,6 @@ RETURN_SCHEMA = config.ReturnSchema(
 
 def RunSteps(api):
   res = api.depend_on('engine_tests/depend_on/bottom', {'number': 'lalala'})
-  return RETURN_SCHEMA(result=res['number_times_two'])
 
 def GenTests(api):
   yield (
