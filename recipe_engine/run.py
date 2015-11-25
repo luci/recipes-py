@@ -891,6 +891,8 @@ class RecipeEngine(object):
           "status_code": 0
         }
 
+        assert not self._test_data.enabled or not self._test_data.step_data, (
+        "Unconsumed test data! %s" % (self._test_data.step_data,))
       finally:
         self._emit_results()
     except recipe_api.StepFailure as f:
@@ -899,35 +901,33 @@ class RecipeEngine(object):
         "status_code": f.retcode or 1
       }
     except StepDataAttributeError as ex:
-      with self._test_data.should_raise_exception(ex) as should_raise:
-        result = {
-          "reason": "Invalid Step Data Access: %r" % ex,
-          "status_code": -1
-        }
+      unexpected_exception = self._test_data.is_unexpected_exception(ex)
 
-        with self._stream.step('Invalid Step Data Access') as s:
-          s.step_exception()
-          s.write_log_lines('exception', traceback.format_exc().splitlines())
+      result = {
+        "reason": "Invalid Step Data Access: %r" % ex,
+        "status_code": -1
+      }
 
-        if should_raise:
-          raise
+      with self._stream.step('Invalid Step Data Access') as s:
+        s.step_exception()
+        s.write_log_lines('exception', traceback.format_exc().splitlines())
+
+      if unexpected_exception:
+        raise
 
     except Exception as ex:
-      with self._test_data.should_raise_exception(ex) as should_raise:
-        result = {
-          "reason": "Uncaught Exception: %r" % ex,
-          "status_code": -1
-        }
+      unexpected_exception = self._test_data.is_unexpected_exception(ex)
+      result = {
+        "reason": "Uncaught Exception: %r" % ex,
+        "status_code": -1
+      }
 
-        with self._stream.step('Uncaught Exception') as s:
-          s.step_exception()
-          s.write_log_lines('exception', traceback.format_exc().splitlines())
+      with self._stream.step('Uncaught Exception') as s:
+        s.step_exception()
+        s.write_log_lines('exception', traceback.format_exc().splitlines())
 
-        if should_raise:
-          raise
-
-    assert (not self._test_data.enabled) or self._test_data.consumed, (
-      "Unconsumed test data! %s" % self._test_data)
+      if unexpected_exception:
+        raise
 
     result['name'] = '$result'
     return RecipeExecutionResult(result, self._step_history)

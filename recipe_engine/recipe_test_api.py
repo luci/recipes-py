@@ -3,7 +3,6 @@
 # found in the LICENSE file.
 
 import collections
-import contextlib
 
 from .util import ModuleInjectionSite, static_call, static_wraps
 from .types import freeze
@@ -180,9 +179,8 @@ class TestData(BaseTestData):
 
     return ret
 
-  @property
-  def consumed(self):
-    return not (self.step_data or self.expected_exception)
+  def empty(self):
+    return not self.step_data
 
   def pop_step_test_data(self, step_name, step_test_data_fn):
     step_test_data = step_test_data_fn()
@@ -199,39 +197,9 @@ class TestData(BaseTestData):
         'expect_exception expects a string containing the exception class name')
     self.expected_exception = exception
 
-  @contextlib.contextmanager
-  def should_raise_exception(self, exception):
-    """
-    Context manager which tells the caller if it should re-raise the exception.
-
-    Should be called by something handling an exception caused by executing the
-    test. The caller can handle the exception, taking any actions it wants with
-    the exception. Once it is done, the caller should check the value given by
-    this context manager. If it is true, it should re-raise the exception.
-
-    The caller should reraise the exception, rather than this function, because
-    that preserves the previous stack trace, which immensely helps with
-    debugging.
-
-    Usage:
-
-      try:
-        foo.bar()
-        boom.baz()
-      except Something as exc:
-        with test_data.should_raise_exception(exc) as should_raise:
-          print 'exception occured: %s' % exc
-
-          if test_data.should_raise_exception(exc):
-            raise
-    """
+  def is_unexpected_exception(self, exception):
     name = exception.__class__.__name__
-    should_raise = not (self.enabled and name == self.expected_exception)
-
-    yield should_raise
-
-    if not should_raise:
-      self.expected_exception = None
+    return not (self.enabled and name == self.expected_exception)
 
   def depend_on(self, recipe, properties, result):
     tup = freeze((recipe, properties))
