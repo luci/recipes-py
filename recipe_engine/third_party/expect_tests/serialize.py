@@ -119,7 +119,7 @@ def DiffData(old, new):
   if old == new:
     return None
   else:
-    return list(difflib.context_diff(
+    return list(difflib.unified_diff(
         pprint.pformat(old).splitlines(),
         pprint.pformat(new).splitlines(),
         fromfile='expected', tofile='current',
