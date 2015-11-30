@@ -121,8 +121,7 @@ def GenTests(api):
 
   yield (
       api.test('warning') +
-      api.step_data('warning', retcode=1) +
-      api.expect_exception('StepWarning')
+      api.step_data('warning', retcode=1)
     )
 
   yield (
