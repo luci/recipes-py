@@ -55,9 +55,10 @@ class RunTest(unittest.TestCase):
           'bash', '-c', '/bin/echo %s' % quoted])
       self.assertEqual(bash_output.decode('utf-8'), s + '\n')
 
-      zsh_output = subprocess.check_output([
-          'zsh', '-c', '/bin/echo %s' % quoted])
-      self.assertEqual(zsh_output.decode('utf-8'), s + '\n')
+      # zsh is untested because zsh isn't provisioned on our bots. (luqui)
+      # zsh_output = subprocess.check_output([
+      #     'zsh', '-c', '/bin/echo %s' % quoted])
+      # self.assertEqual(zsh_output.decode('utf-8'), s + '\n')
 
   def test_run_unconsumed(self):
     stream = mock.Mock()
