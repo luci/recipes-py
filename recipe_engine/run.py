@@ -599,6 +599,7 @@ def _trigger_builds(step, trigger_specs):
         'bucket': trig.get('bucket'),
         'changes': changes,
         'properties': trig.get('properties'),
+        'tags': trig.get('tags'),
     }, sort_keys=True))
 
 

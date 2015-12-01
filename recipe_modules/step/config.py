@@ -39,6 +39,7 @@ def BaseConfig(**_kwargs):
             builder_name=Single(basestring),
             properties=Dict(value_type=object),
             buildbot_changes=List(dict),
+            tags=List(basestring),
         ),
     ),
 
