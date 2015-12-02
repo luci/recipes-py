@@ -266,8 +266,9 @@ class DisabledTestData(BaseTestData):
   def get_module_test_data(self, _module_name):
     return self
 
-  def is_unexpected_exception(self, exception): #pylint: disable=R0201
-    return False
+  @contextlib.contextmanager
+  def should_raise_exception(self, exception): # pylint: disable=unused-argument
+    yield True
 
 def mod_test_data(func):
   @static_wraps(func)
