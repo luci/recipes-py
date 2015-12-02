@@ -104,19 +104,3 @@ class JsonApi(recipe_api.RecipeApi):
         add_python_log=False,
         **kwargs
     )
-
-  def property_args(self):
-    """Return --build-properties and --factory-properties arguments. LEGACY!
-
-    Since properties is the merge of build_properties and factory_properties,
-    pass the merged dict as both arguments.
-
-    It's vastly preferable to have your recipe only pass the bare minimum
-    of arguments to steps. Passing property objects obscures the data that
-    the script actually consumes from the property object.
-    """
-    prop_str = self.dumps(dict(self.m.properties.legacy()))
-    return [
-      '--factory-properties', prop_str,
-      '--build-properties', prop_str
-    ]
