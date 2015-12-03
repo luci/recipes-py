@@ -2,7 +2,7 @@ from recipe_engine.recipe_api import Property
 from recipe_engine import config
 
 DEPS = [
-    'recipe_engine/properties',
+    'properties',
 ]
 
 def RunSteps(api):

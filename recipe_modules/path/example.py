@@ -17,6 +17,10 @@ def RunSteps(api):
   api.step('print resource',
            ['echo', api.path.resource('dir', 'file.py')])
 
+  # module.package_dir() demo.
+  api.step('print package dir',
+           ['echo', api.path.package_resource('dir', 'file.py')])
+
 
 def GenTests(api):
   # This line is for code coverage.

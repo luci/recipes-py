@@ -5,8 +5,8 @@
 from recipe_engine.recipe_api import Property
 
 DEPS = [
-  'recipe_engine/properties',
-  'recipe_engine/step',
+  'properties',
+  'step',
 ]
 
 PROPERTIES = {

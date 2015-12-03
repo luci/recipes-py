@@ -3,7 +3,7 @@ from recipe_engine import config
 
 DEPS = [
     'raw_io',
-    'recipe_engine/properties',
+    'properties',
     'step',
 ]
 

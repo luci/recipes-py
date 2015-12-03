@@ -5,8 +5,8 @@
 """Launches the repo bundler."""
 
 DEPS = [
-    'python',
-    'step',
+  'python',
+  'step',
 ]
 
 

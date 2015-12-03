@@ -81,11 +81,10 @@ def main(universe):
   for method in sorted(common_methods):
     pmethod(1, method, getattr(recipe_api.RecipeApi, method))
 
-  deps = universe.deps_from_spec(
-      # TODO(luqui): This doesn't handle name scoping correctly (e.g. same-named
-      # modules in different packages).
-      { modpath: modpath.split('/')[-1]
-        for modpath in universe.loop_over_recipe_modules() })
+  deps = {}
+  for package, modpath in universe.loop_over_recipe_modules():
+    deps[modpath] = universe.load(loader.PathDependency(
+        modpath, modpath, package, universe))
 
   inst = loader.create_recipe_api(
       deps, recipe_run.RecipeEngine(None, {}, None, universe))

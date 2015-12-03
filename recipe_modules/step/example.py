@@ -5,8 +5,8 @@
 from recipe_engine import recipe_api, config
 
 DEPS = [
-  'recipe_engine/properties',
-  'recipe_engine/step',
+  'properties',
+  'step',
 ]
 
 

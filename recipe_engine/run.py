@@ -769,6 +769,10 @@ class RecipeEngine(object):
     return self._properties
 
   @property
+  def universe(self):
+    return self._universe
+
+  @property
   def previous_step_result(self):
     """Allows api.step to get the active result from any context."""
     return self._previous_step_result

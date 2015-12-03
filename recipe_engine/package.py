@@ -351,7 +351,8 @@ class Package(object):
 
   This is accessed by loader.py through RecipeDeps.get_package.
   """
-  def __init__(self, repo_spec, deps, recipes_dir):
+  def __init__(self, name, repo_spec, deps, recipes_dir):
+    self.name = name
     self.repo_spec = repo_spec
     self.deps = deps
     self.recipes_dir = recipes_dir
@@ -365,10 +366,21 @@ class Package(object):
     return [os.path.join(self.recipes_dir, 'recipe_modules')]
 
   def find_dep(self, dep_name):
+    assert dep_name in self.deps, (
+        '%s does not exist or is not declared as a dependency of %s' % (
+            dep_name, self.name))
     return self.deps[dep_name]
 
   def module_path(self, module_name):
     return os.path.join(self.recipes_dir, 'recipe_modules', module_name)
+
+  def loop_over_recipe_modules():
+    for path in self.module_dirs:
+      if os.path.isdir(path):
+        for item in os.listdir(path):
+          subpath = os.path.join(path, item)
+          if _is_recipe_module_dir(subpath):
+            yield subpath
 
 
 class PackageSpec(object):
@@ -384,9 +396,9 @@ class PackageSpec(object):
     buf = proto_file.read()
     assert buf.api_version == cls.API_VERSION
 
-    deps = { dep.project_id: cls.spec_for_dep(dep)
+    deps = { str(dep.project_id): cls.spec_for_dep(dep)
              for dep in buf.deps }
-    return cls(buf.project_id, buf.recipes_path, deps)
+    return cls(str(buf.project_id), str(buf.recipes_path), deps)
 
   @classmethod
   def spec_for_dep(cls, dep):
@@ -394,11 +406,11 @@ class PackageSpec(object):
 
     This assumes all dependencies are Git dependencies.
     """
-    return GitRepoSpec(dep.project_id,
-                       dep.url,
-                       dep.branch,
-                       dep.revision,
-                       dep.path_override)
+    return GitRepoSpec(str(dep.project_id),
+                       str(dep.url),
+                       str(dep.branch),
+                       str(dep.revision),
+                       str(dep.path_override))
 
   @property
   def project_id(self):
@@ -535,7 +547,7 @@ class PackageDeps(object):
   """
   def __init__(self, context, overrides=None):
     self._context = context
-    self._repos = {}
+    self._packages = {}
     self._overrides = overrides or {}
 
   @classmethod
@@ -578,44 +590,37 @@ class PackageDeps(object):
   def _create_from_spec(self, repo_spec, package_spec, allow_fetch):
     project_id = package_spec.project_id
     repo_spec = self._overrides.get(project_id, repo_spec)
-    if project_id in self._repos:
-      if self._repos[project_id] is None:
+    if project_id in self._packages:
+      if self._packages[project_id] is None:
         raise CyclicDependencyError(
             'Package %s depends on itself' % project_id)
-      if repo_spec != self._repos[project_id].repo_spec:
+      if repo_spec != self._packages[project_id].repo_spec:
         raise InconsistentDependencyGraphError(
             'Package specs do not match: %s vs %s' %
-            (repo_spec, self._repos[project_id].repo_spec))
-    self._repos[project_id] = None
+            (repo_spec, self._packages[project_id].repo_spec))
+    self._packages[project_id] = None
 
     deps = {}
     for dep, dep_repo in sorted(package_spec.deps.items()):
       deps[dep] = self._create_package(dep_repo, allow_fetch)
 
     package = Package(
-        repo_spec, deps,
+        project_id, repo_spec, deps,
         os.path.join(repo_spec.repo_root(self._context),
                      package_spec.recipes_path))
 
-    self._repos[project_id] = package
+    self._packages[project_id] = package
     return package
 
   # TODO(luqui): Remove this, so all accesses to packages are done
   # via other packages with properly scoped deps.
   def get_package(self, package_id):
-    return self._repos[package_id]
+    return self._packages[package_id]
 
   @property
-  def all_recipe_dirs(self):
-    for repo in self._repos.values():
-      for subdir in repo.recipe_dirs:
-        yield str(subdir)
-
-  @property
-  def all_module_dirs(self):
-    for repo in self._repos.values():
-      for subdir in repo.module_dirs:
-        yield str(subdir)
+  def packages(self):
+    for p in self._packages.values():
+      yield p
 
   @property
   def engine_recipes_py(self):

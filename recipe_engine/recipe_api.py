@@ -444,6 +444,12 @@ class RecipeApiPlain(object):
     #  module.resource('dir').join('subdir', 'file.py')
     return self._module.MODULE_DIRECTORY.join('resources', *path)
 
+  def package_resource(self, *path):
+    """Returns a resource path, where path is relative to the root of
+    the package where this module is defined.
+    """
+    return self._module.PACKAGE_DIRECTORY.join(*path)
+
   @property
   def name(self):
     return self._module.NAME

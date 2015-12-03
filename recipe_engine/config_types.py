@@ -93,6 +93,11 @@ class ModuleBasePath(BasePath, namedtuple('ModuleBasePath', 'module')):
     return 'RECIPE_MODULE[%s]' % name
 
 
+class PackageBasePath(BasePath, namedtuple('PackageBasePath', 'package')):
+  def __repr__(self):
+    return 'RECIPE_PACKAGE[%s]' % self.package.name
+
+
 class Path(RecipeConfigType):
   """Represents a path which is relative to a semantically-named base.
 

@@ -30,6 +30,11 @@ def PathToString(api, test):
         base_path = repr(path.base)
       else:  # pragma: no cover
         base_path = os.path.dirname(path.base.module.__file__)
+    elif isinstance(path.base, config_types.PackageBasePath):
+      if test.enabled:
+        base_path = repr(path.base)
+      else:  # pragma: no cover
+        base_path = path.base.package.recipes_dir
     else:  # pragma: no cover
       raise NotImplementedError('PathToString not implemented for %s' %
                                 path.base.__class__.__name__)

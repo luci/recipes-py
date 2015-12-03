@@ -1,4 +1,4 @@
 DEPS = [
-  'recipe_engine/step',
-  'recipe_engine/raw_io'
+  'step',
+  'raw_io'
 ]

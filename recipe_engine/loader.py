@@ -10,7 +10,8 @@ import os
 import sys
 
 from .config import ConfigContext, ConfigGroupSchema
-from .config_types import Path, ModuleBasePath, RECIPE_MODULE_PREFIX
+from .config_types import Path, ModuleBasePath, PackageBasePath
+from .config_types import RECIPE_MODULE_PREFIX
 from .recipe_api import RecipeApi, RecipeApiPlain, RecipeScriptApi
 from .recipe_api import Property, BoundProperty
 from .recipe_api import UndefinedPropertyException, PROPERTY_SENTINEL
@@ -59,7 +60,7 @@ class RecipeScript(object):
       return None
 
   @classmethod
-  def from_script_path(cls, script_path, universe):
+  def from_script_path(cls, script_path, universe_view):
     """Evaluates a script and returns RecipeScript instance."""
 
     script_vars = {}
@@ -68,7 +69,7 @@ class RecipeScript(object):
     with _preserve_path():
       execfile(script_path, script_vars)
 
-    script_vars['LOADED_DEPS'] = universe.deps_from_spec(
+    script_vars['LOADED_DEPS'] = universe_view.deps_from_spec(
         script_vars.get('DEPS', []))
 
     # 'a/b/c/my_name.py' -> my_name
@@ -92,11 +93,12 @@ class Dependency(object):
 
 
 class PathDependency(Dependency):
-  def __init__(self, path, local_name, universe):
+  def __init__(self, path, local_name, load_from_package, universe):
     assert os.path.isabs(path), (
         'Path dependencies must be absolute, but %s is not' % path)
     self._path = path
     self._local_name = local_name
+    self._load_from_package = load_from_package
 
     # We forbid modules from living outside our main paths to keep clients
     # from going crazy before we have standardized recipe locations.
@@ -106,7 +108,8 @@ class PathDependency(Dependency):
       '%s is not in %s' % (mod_dir, universe.module_dirs))
 
   def load(self, universe):
-    return _load_recipe_module_module(self._path, universe)
+    return _load_recipe_module_module(
+        self._path, UniverseView(universe, self._load_from_package))
 
   @property
   def local_name(self):
@@ -118,23 +121,24 @@ class PathDependency(Dependency):
 
 
 class NamedDependency(PathDependency):
-  def __init__(self, name, universe):
-    for path in universe.module_dirs:
+  def __init__(self, name, universe_view):
+    for path in universe_view.package.module_dirs:
       mod_path = os.path.join(path, name)
       if _is_recipe_module_dir(mod_path):
-        super(NamedDependency, self).__init__(mod_path, name, universe=universe)
+        super(NamedDependency, self).__init__(
+            mod_path, name, universe=universe_view.universe,
+            load_from_package=universe_view.package)
         return
     raise NoSuchRecipe('Recipe module named %s does not exist' % name)
 
 
 class PackageDependency(PathDependency):
-  # TODO(luqui): Forbid depending on a module from a (locally) undeclared
-  # dependency.
-  def __init__(self, package, module, local_name, universe):
-    mod_path = (
-        universe.package_deps.get_package(package).module_path(module))
+  def __init__(self, package_name, module_name, local_name, universe_view):
+    load_from_package = universe_view.package.find_dep(package_name)
+    mod_path = load_from_package.module_path(module_name)
     super(PackageDependency, self).__init__(
-        mod_path, local_name, universe=universe)
+        mod_path, local_name, universe=universe_view.universe,
+        load_from_package=load_from_package)
 
 
 class RecipeUniverse(object):
@@ -149,11 +153,15 @@ class RecipeUniverse(object):
 
   @property
   def module_dirs(self):
-    return self._package_deps.all_module_dirs
+    for package in self._package_deps.packages:
+      for module_dir in package.module_dirs:
+        yield module_dir
 
   @property
   def recipe_dirs(self):
-    return self._package_deps.all_recipe_dirs
+    for package in self._package_deps.packages:
+      for recipe_dir in package.recipe_dirs:
+        yield recipe_dir
 
   @property
   def package_deps(self):
@@ -173,32 +181,6 @@ class RecipeUniverse(object):
       self._loaded[name] = mod
       return mod
 
-  def _dep_from_name(self, name):
-    if '/' in name:
-      [package,module] = name.split('/')
-      dep = PackageDependency(package, module, module, universe=self)
-    else:
-      # Old style: bare module name, search paths to find it.
-      module = name
-      dep = NamedDependency(name, universe=self)
-
-    return module, dep
-
-  def deps_from_spec(self, spec):
-    # Automatic local names.
-    if isinstance(spec, (list, tuple)):
-      deps = {}
-      for item in spec:
-        name, dep = self._dep_from_name(item)
-        deps[name] = self.load(dep)
-    # Explicit local names.
-    elif isinstance(spec, dict):
-      deps = {}
-      for name, item in spec.iteritems():
-        _, dep = self._dep_from_name(item)
-        deps[name] = self.load(dep)
-    return deps
-
   def load_recipe(self, recipe):
     """Given name of a recipe, loads and returns it as RecipeScript instance.
 
@@ -217,28 +199,35 @@ class RecipeUniverse(object):
     if ':' in recipe:
       module_name, example = recipe.split(':')
       assert example.endswith('example')
-      for module_dir in self.module_dirs:
-        if os.path.isdir(module_dir):
-          for subitem in os.listdir(module_dir):
-            if module_name == subitem:
-              return RecipeScript.from_script_path(
-                  os.path.join(module_dir, subitem, 'example.py'), self)
+      for package in self.package_deps.packages:
+        for module_dir in package.module_dirs:
+          if os.path.isdir(module_dir):
+            for subitem in os.listdir(module_dir):
+              if module_name == subitem:
+                return RecipeScript.from_script_path(
+                    os.path.join(module_dir, subitem, 'example.py'),
+                    UniverseView(self, package))
       raise NoSuchRecipe(recipe,
                          'Recipe example %s:%s does not exist' %
                          (module_name, example))
     else:
-      for recipe_path in (os.path.join(p, recipe) for p in self.recipe_dirs):
-        if os.path.exists(recipe_path + '.py'):
-          return RecipeScript.from_script_path(recipe_path + '.py', self)
+      for package in self.package_deps.packages:
+        for recipe_dir in package.recipe_dirs:
+          recipe_path = os.path.join(recipe_dir, recipe)
+          if os.path.exists(recipe_path + '.py'):
+            return RecipeScript.from_script_path(recipe_path + '.py',
+                                                 UniverseView(self, package))
     raise NoSuchRecipe(recipe)
 
   def loop_over_recipe_modules(self):
-    for path in self.module_dirs:
-      if os.path.isdir(path):
-        for item in os.listdir(path):
-          subpath = os.path.join(path, item)
-          if _is_recipe_module_dir(subpath):
-            yield subpath
+    """Yields pairs (package, module path)."""
+    for package in self.package_deps.packages:
+      for path in package.module_dirs:
+        if os.path.isdir(path):
+          for item in os.listdir(path):
+            subpath = os.path.join(path, item)
+            if _is_recipe_module_dir(subpath):
+              yield package, subpath
 
   def loop_over_recipes(self):
     """Yields pairs (path to recipe, recipe name).
@@ -254,6 +243,54 @@ class RecipeUniverse(object):
           path, lambda f: f.endswith('example.py')):
         module_name = os.path.dirname(recipe)[len(path)+1:]
         yield recipe, '%s:example' % module_name
+
+
+class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
+  """A UniverseView is a way of viewing a RecipeUniverse, as seen by a package.
+
+  This is used mainly for dependency loading -- a package can only see modules
+  in itself and packages that it directly depends on.
+  """
+  def _dep_from_name(self, name):
+    if '/' in name:
+      [package,module] = name.split('/')
+      dep = PackageDependency(package, module, module, universe_view=self)
+    else:
+      # In current package
+      module = name
+      dep = NamedDependency(name, universe_view=self)
+
+    return module, dep
+
+  def deps_from_spec(self, spec):
+    """Load dependencies from a dependency spec.
+
+    A dependency spec can either be a list of dependencies, such as:
+
+    [ 'chromium', 'recipe_engine/step' ]
+
+    Or a dictionary of dependencies with local names:
+
+    {
+      'chromium': 'build/chromium',
+      'chromiuminternal': 'build_internal/chromium',
+    }
+    """
+
+
+    # Automatic local names.
+    if isinstance(spec, (list, tuple)):
+      deps = {}
+      for item in spec:
+        name, dep = self._dep_from_name(item)
+        deps[name] = self.universe.load(dep)
+    # Explicit local names.
+    elif isinstance(spec, dict):
+      deps = {}
+      for name, item in spec.iteritems():
+        _, dep = self._dep_from_name(item)
+        deps[name] = self.universe.load(dep)
+    return deps
 
 
 def _is_recipe_module_dir(path):
@@ -287,20 +324,20 @@ def _find_and_load_module(fullname, modname, path):
     imp.release_lock()
 
 
-def _load_recipe_module_module(path, universe):
+def _load_recipe_module_module(path, universe_view):
   modname = os.path.splitext(os.path.basename(path))[0]
   fullname = '%s.%s' % (RECIPE_MODULE_PREFIX, modname)
   mod = _find_and_load_module(fullname, modname, path)
 
   # This actually loads the dependencies.
-  mod.LOADED_DEPS = universe.deps_from_spec(getattr(mod, 'DEPS', []))
+  mod.LOADED_DEPS = universe_view.deps_from_spec(getattr(mod, 'DEPS', []))
 
   # Prevent any modules that mess with sys.path from leaking.
   with _preserve_path():
     # TODO(luqui): Remove this hack once configs are cleaned.
     sys.modules['%s.DEPS' % fullname] = mod.LOADED_DEPS
     _recursive_import(path, RECIPE_MODULE_PREFIX)
-    _patchup_module(modname, mod)
+    _patchup_module(modname, mod, universe_view)
 
   return mod
 
@@ -333,7 +370,7 @@ def _recursive_import(path, prefix):
   return mod
 
 
-def _patchup_module(name, submod):
+def _patchup_module(name, submod, universe_view):
   """Finds framework related classes and functions in a |submod| and adds
   them to |submod| as top level constants with well known names such as
   API, CONFIG_CTX, TEST_API, and PROPERTIES.
@@ -345,6 +382,7 @@ def _patchup_module(name, submod):
   submod.NAME = name
   submod.UNIQUE_NAME = name  # TODO(luqui): use a luci-config unique name
   submod.MODULE_DIRECTORY = Path(ModuleBasePath(submod))
+  submod.PACKAGE_DIRECTORY = Path(PackageBasePath(universe_view.package))
   submod.CONFIG_CTX = getattr(submod, 'CONFIG_CTX', None)
 
   if hasattr(submod, 'config'):
@@ -524,6 +562,3 @@ def create_test_api(toplevel_deps, universe):
   for k,v in toplevel_deps.iteritems():
     setattr(api, k, mapper.instantiate(v))
   return api
-
-
-
