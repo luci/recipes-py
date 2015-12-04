@@ -108,8 +108,12 @@ class PathDependency(Dependency):
       '%s is not in %s' % (mod_dir, universe.module_dirs))
 
   def load(self, universe):
-    return _load_recipe_module_module(
-        self._path, UniverseView(universe, self._load_from_package))
+    try:
+      return _load_recipe_module_module(
+          self._path, UniverseView(universe, self._load_from_package))
+    except Exception as e:
+      _amend_exception(e, 'while loading recipe module %s' % self._path)
+
 
   @property
   def local_name(self):
@@ -196,27 +200,31 @@ class RecipeUniverse(object):
     # If the recipe is specified as "module:recipe", then it is an recipe
     # contained in a recipe_module as an example. Look for it in the modules
     # imported by load_recipe_modules instead of the normal search paths.
-    if ':' in recipe:
-      module_name, example = recipe.split(':')
-      assert example.endswith('example')
-      for package in self.package_deps.packages:
-        for module_dir in package.module_dirs:
-          if os.path.isdir(module_dir):
-            for subitem in os.listdir(module_dir):
-              if module_name == subitem:
-                return RecipeScript.from_script_path(
-                    os.path.join(module_dir, subitem, 'example.py'),
-                    UniverseView(self, package))
-      raise NoSuchRecipe(recipe,
-                         'Recipe example %s:%s does not exist' %
-                         (module_name, example))
-    else:
-      for package in self.package_deps.packages:
-        for recipe_dir in package.recipe_dirs:
-          recipe_path = os.path.join(recipe_dir, recipe)
-          if os.path.exists(recipe_path + '.py'):
-            return RecipeScript.from_script_path(recipe_path + '.py',
-                                                 UniverseView(self, package))
+    try:
+      if ':' in recipe:
+        module_name, example = recipe.split(':')
+        assert example.endswith('example')
+        for package in self.package_deps.packages:
+          for module_dir in package.module_dirs:
+            if os.path.isdir(module_dir):
+              for subitem in os.listdir(module_dir):
+                if module_name == subitem:
+                  return RecipeScript.from_script_path(
+                      os.path.join(module_dir, subitem, 'example.py'),
+                      UniverseView(self, package))
+        raise NoSuchRecipe(recipe,
+                           'Recipe example %s:%s does not exist' %
+                           (module_name, example))
+      else:
+        for package in self.package_deps.packages:
+          for recipe_dir in package.recipe_dirs:
+            recipe_path = os.path.join(recipe_dir, recipe)
+            if os.path.exists(recipe_path + '.py'):
+              return RecipeScript.from_script_path(recipe_path + '.py',
+                                                   UniverseView(self, package))
+    except Exception as e:
+      _amend_exception(e, 'while loading recipe %s' % recipe)
+
     raise NoSuchRecipe(recipe)
 
   def loop_over_recipe_modules(self):
@@ -291,6 +299,11 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
         _, dep = self._dep_from_name(item)
         deps[name] = self.universe.load(dep)
     return deps
+
+
+def _amend_exception(e, amendment):
+  """Re-raise an exception e, appending amendment to the end of the message."""
+  raise type(e), type(e)(e.message + '\n' + amendment), sys.exc_info()[2]
 
 
 def _is_recipe_module_dir(path):
