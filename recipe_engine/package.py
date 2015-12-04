@@ -89,7 +89,7 @@ class PackageContext(object):
   def from_proto_file(cls, repo_root, proto_file):
     buf = proto_file.read()
 
-    recipes_path = buf.recipes_path.replace('/', os.sep)
+    recipes_path = str(buf.recipes_path).replace('/', os.sep)
 
     return cls(os.path.join(repo_root, recipes_path),
                os.path.join(repo_root, recipes_path, '.recipe_deps'),
