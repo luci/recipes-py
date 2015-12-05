@@ -1,0 +1,27 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "testa"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "testa",
+    "~followup_annotations": [
+      "step returned non-zero exit code: 1",
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "testb"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "testb"
+  },
+  {
+    "name": "$result",
+    "reason": "1 out of 2 aggregated steps failed. Failures: Step('testa') failed with return_code 1",
+    "status_code": 1
+  }
+]

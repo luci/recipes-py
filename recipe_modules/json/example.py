@@ -4,7 +4,9 @@
 
 DEPS = [
   'json',
+  'path',
   'python',
+  'raw_io',
   'step',
 ]
 
@@ -37,6 +39,25 @@ def RunSteps(api):
       args=[api.json.output(), api.json.output()],
   )
   assert result.json.output_all == [[1, 2, 3], [2, 3, 4]]
+
+  example_dict = {'x': 1, 'y': 2}
+
+  # json.input(json_data) expands to a path containing that rendered json
+  step_result = api.step('json through',
+    ['cat', api.json.input(example_dict)],
+    stdout=api.json.output(),
+    step_test_data=lambda: api.json.test_api.output_stream(example_dict))
+  assert step_result.stdout == example_dict
+
+  # json.read reads a file containing json data.
+  leak_path = api.path['slave_build'].join('temp.json')
+  api.step('write json to file',
+    ['cat', api.json.input(example_dict)],
+    stdout=api.raw_io.output(leak_to=leak_path))
+  step_result = api.json.read(
+      'read json from file we just wrote', leak_path,
+      step_test_data=lambda: api.json.test_api.output(example_dict))
+  assert step_result.json.output == example_dict
 
 
 def GenTests(api):

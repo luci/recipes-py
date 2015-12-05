@@ -24,6 +24,22 @@
     "name": "print package dir"
   },
   {
+    "cmd": [
+      "/bin/echo",
+      "[SLAVE_BUILD]\\borts\\jerky"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "borts path"
+  },
+  {
+    "cmd": [
+      "touch",
+      "[SLAVE_BUILD]\\new_file"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "touch me"
+  },
+  {
     "name": "$result",
     "recipe_result": null,
     "status_code": 0

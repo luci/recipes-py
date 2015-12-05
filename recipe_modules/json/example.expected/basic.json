@@ -61,6 +61,49 @@
     ]
   },
   {
+    "cmd": [
+      "cat",
+      "{\"x\": 1, \"y\": 2}"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "json through",
+    "stdout": "/path/to/tmp/json",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"x\": 1, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"y\": 2@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cat",
+      "{\"x\": 1, \"y\": 2}"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "write json to file",
+    "stdout": "[SLAVE_BUILD]/temp.json"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
+      "[SLAVE_BUILD]/temp.json",
+      "/path/to/tmp/json"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "read json from file we just wrote",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"x\": 1, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"y\": 2@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
     "name": "$result",
     "recipe_result": null,
     "status_code": 0

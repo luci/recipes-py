@@ -1,0 +1,23 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "None"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "echo"
+  },
+  {
+    "cmd": [
+      "echo",
+      "{'workdir': '/path/to/workdir/TestSlavename', 'buildername': 'TestBuilder', 'recipe': 'properties:example', 'mastername': 'chromium.testing.master', 'buildnumber': 571, 'slavename': 'TestSlavename', 'blamelist': ['cool_dev1337@chromium.org', 'hax@chromium.org'], 'buildbotURL': 'http://c.org/p/cr/', 'test_prop': None}"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "echo all"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

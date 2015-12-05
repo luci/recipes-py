@@ -1,0 +1,20 @@
+[
+  {
+    "cmd": [],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "platform things",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@name@win@@@",
+      "@@@STEP_LOG_END@name@@@",
+      "@@@STEP_LOG_LINE@bits@32@@@",
+      "@@@STEP_LOG_END@bits@@@",
+      "@@@STEP_LOG_LINE@arch@intel@@@",
+      "@@@STEP_LOG_END@arch@@@"
+    ]
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

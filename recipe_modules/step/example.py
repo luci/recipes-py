@@ -5,6 +5,7 @@
 from recipe_engine import recipe_api, config
 
 DEPS = [
+  'path',
   'properties',
   'step',
 ]
@@ -36,6 +37,14 @@ def RunSteps(api, bad_return, raise_infra_failure, access_invalid_data):
   # Also, abusing bash -c in this way is a TERRIBLE IDEA DON'T DO IT.
   api.step('goodbye', ['bash', '-c', 'echo Good bye, $friend.'],
            env={'friend': 'Darth Vader'})
+
+  # You can modify environment in terms of old environment.
+  api.step('recipes help',
+      ['recipes.py', '--help'],
+      env={
+        'PATH': api.path.pathsep.join(
+            [str(api.step.package_resource()), '%(PATH)s']),
+      })
 
   # Finally, you can make your step accept any return code
   api.step('anything is cool', ['bash', '-c', 'exit 3'],

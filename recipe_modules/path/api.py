@@ -112,12 +112,7 @@ class fake_path(object):
 
   def abspath(self, path):
     """Returns the absolute version of path."""
-    path = self.normpath(path)
-    if path[0] != '[':  # pragma: no cover
-      # We should never really hit this, but simulate the effect.
-      return self.api.slave_build(path)
-    else:
-      return path
+    return self.normpath(path)
 
 
 def _split_path(path):  # pragma: no cover

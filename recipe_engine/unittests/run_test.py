@@ -19,13 +19,21 @@ from recipe_engine import recipe_test_api
 import mock
 
 class RunTest(unittest.TestCase):
-  def test_run(self):
+  def _test_recipe(self, recipe):
     script_path = os.path.join(BASE_DIR, 'recipes.py')
     exit_code = subprocess.call([
         'python', script_path,
         '--package', os.path.join(BASE_DIR, 'infra', 'config', 'recipes.cfg'),
-        'run', 'step:example'])
+        'run', recipe])
     self.assertEqual(0, exit_code)
+
+  def test_examples(self):
+    self._test_recipe('step:example')
+    self._test_recipe('path:example')
+    self._test_recipe('raw_io:example')
+    self._test_recipe('python:example')
+    self._test_recipe('json:example')
+    self._test_recipe('uuid:example')
 
   def test_shell_quote(self):
     # For regular-looking commands we shouldn't need any specialness.

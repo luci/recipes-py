@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import datetime
+
 DEPS = [
   'step',
   'time',
@@ -11,6 +13,7 @@ DEPS = [
 def RunSteps(api):
   now = api.time.time()
   api.step('echo', ['echo', str(now)])
+  assert isinstance(api.time.utcnow(), datetime.datetime)
 
 
 def GenTests(api):

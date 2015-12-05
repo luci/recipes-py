@@ -1,0 +1,23 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "None"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "echo"
+  },
+  {
+    "cmd": [
+      "echo",
+      "{'workdir': '/path/to/workdir/TestSlavename', 'repository': '', 'buildername': 'TestBuilder', 'recipe': 'properties:example', 'mastername': 'chromium.testing.master', 'requester': 'commit-bot@chromium.org', 'buildbotURL': 'http://c.org/p/cr/', 'patch_project': 'chromium', 'buildnumber': 571, 'rietveld': 'https://codereview.chromium.org', 'test_prop': None, 'project': 'chrome', 'slavename': 'TestSlavename', 'blamelist': ['cool_dev1337@chromium.org', 'hax@chromium.org'], 'branch': '', 'patchset': 1, 'issue': 12853011, 'revision': 'HEAD'}"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "echo all"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

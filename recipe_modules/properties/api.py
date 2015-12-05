@@ -31,7 +31,7 @@ class PropertiesApi(recipe_api.RecipeApiPlain, collections.Mapping):
   def __iter__(self):
     return iter(self._properties)
 
-  def legacy(self):
+  def legacy(self):  # pragma: no cover
     """Returns a reduced set of properties, possibly used by legacy scripts."""
 
     # Add all properties to this blacklist that are required for testing, but

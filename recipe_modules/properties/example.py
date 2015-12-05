@@ -15,7 +15,16 @@ PROPERTIES = {
 
 def RunSteps(api, test_prop):
   api.step('echo', ['echo'] + [repr(test_prop)])
+
+  properties = api.properties.thaw()
   api.step('echo all', ['echo'] + [repr(api.properties.thaw())])
+
+  # It should behave like a real dictionary.
+  assert len(properties) == len(api.properties)
+  for k in api.properties:
+    assert k in properties
+    # We would assert that v is there too, but sometimes it's frozen...
+
 
 def GenTests(api):
   yield api.test('basic') + api.properties(
@@ -29,3 +38,12 @@ def GenTests(api):
       api.test('exception') +
       api.expect_exception('ValueError')
   )
+
+  # Some default buildbot configurations.
+  yield api.test('buildbot_generic') + api.properties.generic(test_prop=None)
+  yield (api.test('buildbot_scheduled') +
+         api.properties.scheduled(test_prop=None))
+  yield (api.test('buildbot_git_scheduled') +
+         api.properties.git_scheduled(test_prop=None))
+  yield (api.test('buildbot_tryserver') +
+         api.properties.tryserver(test_prop=None))

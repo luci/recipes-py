@@ -96,11 +96,15 @@ class OutputDataDirPlaceholder(recipe_util.Placeholder):
     assert not self._backing_dir, 'Placeholder can be used only once'
     if self.leak_to:
       self._backing_dir = str(self.leak_to)
-      return [self._backing_dir]
-    if test.enabled:
-      self._backing_dir = '/path/to/tmp/' + self.suffix
-    else:  # pragma: no cover
-      self._backing_dir = tempfile.mkdtemp(suffix=self.suffix)
+      if not test.enabled: # pragma: no cover
+        if not os.path.exists(self._backing_dir):
+          os.mkdir(self._backing_dir)
+    else:
+      if not test.enabled: # pragma: no cover
+        self._backing_dir = tempfile.mkdtemp(suffix=self.suffix)
+      else:
+        self._backing_dir = '/path/to/tmp/' + self.suffix
+
     return [self._backing_dir]
 
   def result(self, presentation, test):

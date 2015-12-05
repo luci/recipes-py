@@ -13,5 +13,5 @@ def recipes_py(*args):
       '--package', os.path.join(ROOT_DIR, 'infra', 'config', 'recipes.cfg')] +
       list(args))
 
-recipes_py('simulation_test', '--threshold=91')
+recipes_py('simulation_test')
 recipes_py('lint')
