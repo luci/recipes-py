@@ -35,11 +35,12 @@ class PythonApi(recipe_api.RecipeApi):
   def result_step(self, name, text, retcode, as_log=None):
     """Return a no-op step that exits with a specified return code."""
     try:
-      self.inline(name,
-                  'import sys; sys.exit(%d)' % (retcode,),
-                  add_python_log=False,
-                  step_test_data=lambda: self.m.raw_io.test_api.output(
-                      text, retcode=retcode))
+      return self.inline(
+          name,
+          'import sys; sys.exit(%d)' % (retcode,),
+          add_python_log=False,
+          step_test_data=lambda: self.m.raw_io.test_api.output(
+              text, retcode=retcode))
     finally:
       if as_log:
         self.m.step.active_result.presentation.logs[as_log] = text
