@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/golang/go/src/path/filepath"
 	"github.com/luci/luci-go/common/ctxcmd"
 	"golang.org/x/net/context"
 )
@@ -73,6 +74,14 @@ func checkoutRepository(c context.Context, workdir, repository, revision string)
 
 	if revision == "" {
 		revision = "FETCH_HEAD"
+	}
+	if revision == "FETCH_HEAD" {
+		// FETCH_HEAD may not exist if repo was just cloned.
+		ref_path := filepath.Join(workdir, ".git", revision)
+		if _, err := os.Stat(ref_path); os.IsNotExist(err) {
+			// Skip checkout.
+			return nil
+		}
 	}
 	return runGit(c, workdir, "checkout", revision)
 }
