@@ -11,16 +11,11 @@ from .type_definitions import DirSeen, Handler, MultiTest, Failure
 from .serialize import WriteNewData, DiffData, NonExistant, GetCurrentData
 
 
-ForcedWriteAction = collections.namedtuple(
-  'ForcedWriteAction', 'test other_errors')
-DiffWriteAction = collections.namedtuple(
-  'DiffWriteAction', 'test other_errors')
-SchemaDiffWriteAction = collections.namedtuple(
-  'SchemaDiffWriteAction', 'test other_errors')
-MissingWriteAction = collections.namedtuple(
-  'MissingWriteAction', 'test other_errors')
-NoAction = collections.namedtuple(
-  'NoAction', 'test other_errors')
+ForcedWriteAction = collections.namedtuple('ForcedWriteAction', 'test')
+DiffWriteAction = collections.namedtuple('DiffWriteAction', 'test')
+SchemaDiffWriteAction = collections.namedtuple('SchemaDiffWriteAction', 'test')
+MissingWriteAction = collections.namedtuple('MissingWriteAction', 'test')
+NoAction = collections.namedtuple('NoAction', 'test')
 
 
 class TrainHandler(Handler):
@@ -53,7 +48,7 @@ class TrainHandler(Handler):
     for test, result, _ in tests_results:
       if opts.force:
         WriteNewData(test, result.data)
-        put_next_stage(ForcedWriteAction(test, result.other_errors))
+        put_next_stage(ForcedWriteAction(test))
         continue
 
       try:
@@ -65,13 +60,13 @@ class TrainHandler(Handler):
       if diff is not None or not same_schema:
         WriteNewData(test, result.data)
         if current is NonExistant:
-          put_next_stage(MissingWriteAction(test, result.other_errors))
+          put_next_stage(MissingWriteAction(test))
         elif diff:
-          put_next_stage(DiffWriteAction(test, result.other_errors))
+          put_next_stage(DiffWriteAction(test))
         else:
-          put_next_stage(SchemaDiffWriteAction(test, result.other_errors))
+          put_next_stage(SchemaDiffWriteAction(test))
       else:
-        put_next_stage(NoAction(test, result.other_errors))
+        put_next_stage(NoAction(test))
 
   class ResultStageHandler(Handler.ResultStageHandler):
     def __init__(self, opts):
@@ -82,7 +77,6 @@ class TrainHandler(Handler):
       self.num_tests = 0
       self.verbose_actions = []
       self.normal_actions = []
-      self.other_errors = {}
 
     def _record_expected(self, test, indicator):
       self.num_tests += 1
@@ -124,9 +118,6 @@ class TrainHandler(Handler):
                                  (result.test.name, result.message))
       return Failure()
 
-    def post_handle_callback(self, _handler_retval, result):
-      if hasattr(result, "other_errors"):
-        self.other_errors[result.test.name] = result.other_errors
 
     def finalize(self, aborted):
       super(TrainHandler.ResultStageHandler, self).finalize(aborted)
@@ -149,20 +140,6 @@ class TrainHandler(Handler):
 
         if self.normal_actions:
           print '\n'.join(self.normal_actions)
-
-        if self.other_errors:
-          for testname, errors in self.other_errors.iteritems():
-            print (
-              "WARNING: In test %r, the following errors were encountered:"
-              % testname
-            )
-            for err in errors:
-              print "  "+"\n  ".join(err.splitlines())
-
-          print (
-            "ERROR: You must fix the above warnings before the tests will pass!"
-          )
-
         if self.opts.verbose:
           if self.verbose_actions:
             print '\n'.join(self.verbose_actions)
