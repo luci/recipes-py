@@ -100,7 +100,11 @@ func git(workDir string, args ...string) *ctxcmd.CtxCmd {
 func runGit(c context.Context, workDir string, args ...string) error {
 	cmd := git(workDir, args...)
 	if workDir != "" {
-		fmt.Print(workDir)
+		absWorkDir, err := filepath.Abs(workDir)
+		if err != nil {
+			return err
+		}
+		fmt.Print(absWorkDir)
 	}
 	fmt.Printf("$ %s\n", strings.Join(cmd.Args, " "))
 	cmd.Stdout = os.Stdout

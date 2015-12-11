@@ -45,12 +45,12 @@ def parse_args():
   parser = argparse.ArgumentParser()
   parser.add_argument(
     '--isolate-server', '-I',
-    required=True,
+    default='https://isolateserver.appspot.com',
     help=(
       'Isolate server to use; use special value "fake" to use a fake server'))
   parser.add_argument(
     '--isolated', '-s',
-    required=True,
+    default='kitchen.isolated',
     help='.isolated file to generate',
   )
   return parser.parse_args()

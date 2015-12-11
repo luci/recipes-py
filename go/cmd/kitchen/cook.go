@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 	"syscall"
 
 	"github.com/golang/go/src/io/ioutil"
@@ -17,6 +18,8 @@ import (
 	"github.com/maruel/subcommands"
 	"golang.org/x/net/context"
 )
+
+const BOOTSTRAP_STEP_NAME = "recipe bootstrap"
 
 // cmdCook checks out a repository at a revision and runs a recipe.
 var cmdCook = &subcommands.Command{
@@ -157,12 +160,21 @@ func (c *cookRun) Run(a subcommands.Application, args []string) (exitCode int) {
 		return 1
 	}
 
+	annotate("SEED_STEP", BOOTSTRAP_STEP_NAME)
+	annotate("STEP_CURSOR", BOOTSTRAP_STEP_NAME)
+	annotate("STEP_STARTED")
 	recipeExitCode, err := c.run(app.Context)
+	annotate("STEP_CURSOR", BOOTSTRAP_STEP_NAME)
 	if err != nil {
 		if err != context.Canceled {
 			fmt.Fprintln(os.Stderr, err)
 		}
 		return -1
 	}
+	annotate("STEP_CLOSED")
 	return recipeExitCode
+}
+
+func annotate(args ...string) {
+	fmt.Printf("@@@%s@@@\n", strings.Join(args, "@"))
 }
