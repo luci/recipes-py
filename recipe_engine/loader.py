@@ -111,7 +111,7 @@ class PathDependency(Dependency):
     try:
       return _load_recipe_module_module(
           self._path, UniverseView(universe, self._load_from_package))
-    except Exception as e:
+    except NoSuchRecipe as e:
       _amend_exception(e, 'while loading recipe module %s' % self._path)
 
 
