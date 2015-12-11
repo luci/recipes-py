@@ -401,7 +401,7 @@ def get_callable_name(func):
 
 # Return value of run_steps and RecipeEngine.run.
 RecipeExecutionResult = collections.namedtuple(
-    'RecipeExecutionResult', 'result steps_ran')
+    'RecipeExecutionResult', 'result steps_ran errors')
 
 
 def run_steps(properties,
@@ -477,10 +477,11 @@ def run_steps(properties,
       s.step_text('<br/>running recipe: "%s"' % recipe)
     except loader.NoSuchRecipe as e:
       s.step_failure()
+      msg = "Recipe not found: %s" % e
       return RecipeExecutionResult({
           'status_code': 2,
-          'reason': "Recipe not found: %s" % e,
-      }, None)
+          'reason': msg,
+      }, None, (msg,))
 
   # Run the steps emitted by a recipe via the engine, emitting annotations
   # into |stream| along the way.
@@ -931,11 +932,21 @@ class RecipeEngine(object):
         if should_raise:
           raise
 
-    assert (not self._test_data.enabled) or self._test_data.consumed, (
-      "Unconsumed test data! %s" % self._test_data)
+    errors = []
+    if self._test_data.enabled and not self._test_data.consumed:
+      if self._test_data.step_data:
+        errors.append(
+          "unconsumed test data for the following steps:\n  " +
+          "\n  ".join(map(repr, sorted(self._test_data.step_data.keys())))
+        )
+      if self._test_data.expected_exception:
+        errors.append(
+          "expected exception not raised: %r" %
+          self._test_data.expected_exception
+        )
 
     result['name'] = '$result'
-    return RecipeExecutionResult(result, self._step_history)
+    return RecipeExecutionResult(result, self._step_history, errors)
 
   def create_step(self, step):  # pylint: disable=R0201
     """Called by step module to instantiate a new step.

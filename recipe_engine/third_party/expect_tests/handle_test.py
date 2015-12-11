@@ -14,7 +14,8 @@ from .serialize import GetCurrentData, DiffData, NonExistant
 
 
 Missing = collections.namedtuple('Missing', 'test log_lines')
-Fail = collections.namedtuple('Fail', 'test diff log_lines')
+FailDiff = collections.namedtuple('FailDiff', 'test diff log_lines')
+FailErrors = collections.namedtuple('FailErrors', 'test errors')
 Pass = collections.namedtuple('Pass', 'test')
 
 
@@ -41,9 +42,12 @@ class TestHandler(Handler):
       else:
         diff = DiffData(current, result.data)
         if not diff:
-          put_next_stage(Pass(test))
+          if result.other_errors:
+            put_next_stage(FailErrors(test, result.other_errors))
+          else:
+            put_next_stage(Pass(test))
         else:
-          put_next_stage(Fail(test, diff, log_lines))
+          put_next_stage(FailDiff(test, diff, log_lines))
 
   class ResultStageHandler(Handler.ResultStageHandler):
     def __init__(self, *args):
@@ -92,11 +96,18 @@ class TestHandler(Handler):
       if not self.opts.quiet:
         self._emit('.', p.test, 'ok')
 
-    def handle_Fail(self, fail):
+    def handle_FailDiff(self, fail):
       self._handle_record(fail.test)
-      self._emit('F', fail.test, 'FAIL')
-      self._add_result('\n'.join(fail.diff), fail.test, 'FAIL', 'failures',
+      self._emit('F', fail.test, 'FAIL (diff)')
+      self._add_result('\n'.join(fail.diff), fail.test, 'FAIL', 'fail_diff',
                        fail.log_lines)
+      return Failure()
+
+    def handle_FailErrors(self, fail):
+      self._handle_record(fail.test)
+      self._emit('F', fail.test, 'FAIL (errors)')
+      self._add_result('\n'.join(fail.errors), fail.test, 'FAIL',
+                       'fail_errors', None)
       return Failure()
 
     def handle_TestError(self, test_error):

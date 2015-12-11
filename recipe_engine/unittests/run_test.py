@@ -72,9 +72,13 @@ class RunTest(unittest.TestCase):
     stream = mock.Mock()
     properties = {}
 
-    test_data = mock.Mock()
-    test_data.enabled = True
-    test_data.consumed = False
+    test_api = recipe_test_api.RecipeTestApi()
+
+    test_data = (
+      test_api.test("name")
+      + test_api.step_data("nope", retcode=2)
+      + test_api.step_data("yep", retcode=2)
+    )
 
     api = mock.Mock()
     api._engine = mock.Mock()
@@ -87,8 +91,37 @@ class RunTest(unittest.TestCase):
         return None
 
     with mock.patch('recipe_engine.run.RecipeEngine._emit_results'):
-      with self.assertRaises(AssertionError):
-        engine.run(FakeScript(), api)
+      rslt = engine.run(FakeScript(), api)
+      self.assertEqual(rslt.errors, [
+        "unconsumed test data for the following steps:\n  'nope'\n  'yep'"
+      ])
+
+  def test_run_unraised_exception(self):
+    stream = mock.Mock()
+    properties = {}
+
+    test_api = recipe_test_api.RecipeTestApi()
+
+    test_data = (
+      test_api.test("name")
+      + test_api.expect_exception("CrazyException")
+    )
+
+    api = mock.Mock()
+    api._engine = mock.Mock()
+    api._engine.properties = properties
+
+    engine = recipe_engine.run.RecipeEngine(stream, properties, test_data, None)
+
+    class FakeScript(object):
+      def run(self, _, __):
+        return None
+
+    with mock.patch('recipe_engine.run.RecipeEngine._emit_results'):
+      rslt = engine.run(FakeScript(), api)
+      self.assertEqual(rslt.errors, [
+        "expected exception not raised: 'CrazyException'"
+      ])
 
 
 if __name__ == '__main__':

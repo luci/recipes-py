@@ -16,7 +16,7 @@ from collections import namedtuple
 
 UnknownError = namedtuple('UnknownError', 'message')
 NoMatchingTestsError = namedtuple('NoMatchingTestsError', '')
-Result = namedtuple('Result', 'data')
+Result = namedtuple('Result', 'data other_errors')
 MultiResult = namedtuple('MultiResult', 'results')
 DirSeen = namedtuple('DirSeen', 'dir')
 
@@ -407,17 +407,42 @@ class Handler(object):
     def __call__(self, obj):
       """Called to handle each object in the ResultStage
 
+      Before calling through to the handle_TYPE function, it will filter obj
+      through self.pre_handle_callback. If pre_handle_callback returns None,
+      this object is skipped.
+
+      After calling handle_TYPE on the filtered obj, this will call
+      self.post_handle_callback, and will return anything that that function
+      returns.
+
       @type obj: Anything passed to put_result in GenStage or RunStage.
 
       @return: If the handler method returns Failure(), then it will
                cause the entire test run to ultimately return an error code.
       """
-      return getattr(self, 'handle_' + type(obj).__name__, self.__unknown)(obj)
+      obj = self.pre_handle_callback(obj)
+      if obj is not None:
+        ret = getattr(self, 'handle_' + type(obj).__name__, self.__unknown)(obj)
+        return self.post_handle_callback(ret, obj)
+      return None
 
     def handle_NoMatchingTestsError(self, _error):
       print 'No tests found that match the glob: %s' % (
           ' '.join(self.opts.test_glob),)
       return Failure()
+
+    def pre_handle_callback(self, obj):
+      """pre_handle_callback is used by __call__ to filter obj before handling
+      it with the handle_TYPE method. If this method returns None, then obj will
+      be skipped. By default this just passes through obj."""
+      return obj
+
+    def post_handle_callback(self, handler_retval, _obj):
+      """post_handle_callback is used by __call__ after `obj` has been handled
+      by the handle_TYPE function. It has the ability to change the return value
+      of handler_TYPE (say, to Failure()). By default this just passes through
+      handler_retval."""
+      return handler_retval
 
     def __unknown(self, obj):
       if self.opts.verbose:

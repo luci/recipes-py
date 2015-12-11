@@ -26,7 +26,10 @@ def RunRecipe(test_data):
   result = run.run_steps(
       test_data.properties, stream, _UNIVERSE, test_data)
 
-  return expect_tests.Result(list(result.steps_ran.values()) + [result.result])
+  return expect_tests.Result(
+    list(result.steps_ran.values()) + [result.result],
+    result.errors,
+  )
 
 
 def test_gen_coverage():
