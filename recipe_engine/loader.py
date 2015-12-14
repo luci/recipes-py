@@ -19,8 +19,14 @@ from .recipe_test_api import RecipeTestApi, DisabledTestData
 from .util import scan_directory
 
 
-class NoSuchRecipe(Exception):
+class LoaderError(Exception):
+  """Raised when something goes wrong loading recipes or modules."""
+
+
+class NoSuchRecipe(LoaderError):
   """Raised by load_recipe is recipe is not found."""
+  def __init__(self, recipe):
+    super(NoSuchRecipe, self).__init__('No such recipe: %s' % recipe)
 
 
 class RecipeScript(object):
@@ -111,7 +117,7 @@ class PathDependency(Dependency):
     try:
       return _load_recipe_module_module(
           self._path, UniverseView(universe, self._load_from_package))
-    except NoSuchRecipe as e:
+    except LoaderError as e:
       _amend_exception(e, 'while loading recipe module %s' % self._path)
 
 
@@ -133,7 +139,7 @@ class NamedDependency(PathDependency):
             mod_path, name, universe=universe_view.universe,
             load_from_package=universe_view.package)
         return
-    raise NoSuchRecipe('Recipe module named %s does not exist' % name)
+    raise LoaderError('Recipe module named %s does not exist' % name)
 
 
 class PackageDependency(PathDependency):
@@ -212,9 +218,7 @@ class RecipeUniverse(object):
                   return RecipeScript.from_script_path(
                       os.path.join(module_dir, subitem, 'example.py'),
                       UniverseView(self, package))
-        raise NoSuchRecipe(recipe,
-                           'Recipe example %s:%s does not exist' %
-                           (module_name, example))
+        raise NoSuchRecipe(recipe)
       else:
         for package in self.package_deps.packages:
           for recipe_dir in package.recipe_dirs:
@@ -222,7 +226,7 @@ class RecipeUniverse(object):
             if os.path.exists(recipe_path + '.py'):
               return RecipeScript.from_script_path(recipe_path + '.py',
                                                    UniverseView(self, package))
-    except Exception as e:
+    except LoaderError as e:
       _amend_exception(e, 'while loading recipe %s' % recipe)
 
     raise NoSuchRecipe(recipe)

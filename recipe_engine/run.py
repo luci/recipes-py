@@ -475,11 +475,12 @@ def run_steps(properties,
                                             test_data)
 
       s.step_text('<br/>running recipe: "%s"' % recipe)
-    except loader.NoSuchRecipe as e:
+    except loader.LoaderError as e:
+      s.step_text('<br/>%s' % '<br/>'.join(str(e).splitlines()))
       s.step_failure()
       return RecipeExecutionResult({
           'status_code': 2,
-          'reason': "Recipe not found: %s" % e,
+          'reason': str(e),
       }, None)
 
   # Run the steps emitted by a recipe via the engine, emitting annotations
