@@ -95,5 +95,23 @@ DEPS = ['aint_no_thang']
       self.assertRegexpMatches(stdout, r'No such recipe: nooope')
       self.assertEqual(subp.returncode, 2)
 
+  def test_syntax_error(self):
+    with RecipeRepo() as repo:
+      repo.make_recipe('foo', """
+DEPS = [ (sic)
+""")
+
+      def test_cmd(cmd):
+        subp = subprocess.Popen(
+            repo.recipes_cmd + cmd,
+            stdout=subprocess.PIPE)
+        stdout, _ = subp.communicate()
+        self.assertRegexpMatches(stdout, r'SyntaxError')
+        self.assertEqual(subp.returncode, 1)
+
+      test_cmd(['simulation_test', 'foo'])
+      test_cmd(['simulation_test', 'train', 'foo'])
+      test_cmd(['run', 'foo'])
+
 if __name__ == '__main__':
   unittest.main()

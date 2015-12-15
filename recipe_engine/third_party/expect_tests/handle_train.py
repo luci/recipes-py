@@ -118,7 +118,6 @@ class TrainHandler(Handler):
                                  (result.test.name, result.message))
       return Failure()
 
-
     def finalize(self, aborted):
       super(TrainHandler.ResultStageHandler, self).finalize(aborted)
 

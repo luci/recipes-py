@@ -14,7 +14,7 @@ from cStringIO import StringIO
 
 from .type_definitions import (
     Test, UnknownError, TestError, NoMatchingTestsError,
-    Result, ResultStageAbort)
+    Result, ResultStageAbort, GenStageError)
 
 from . import util
 
@@ -109,8 +109,11 @@ def gen_loop_process(gen, test_queue, result_queue, opts, kill_switch,
 
 
   next_stage = (result_queue if opts.handler.SKIP_RUNLOOP else test_queue)
-  opts.handler.gen_stage_loop(opts, generate_tests(), next_stage.put_nowait,
-                              result_queue.put_nowait)
+  try:
+    opts.handler.gen_stage_loop(opts, generate_tests(), next_stage.put_nowait,
+                                result_queue.put_nowait)
+  except Exception as e:
+    result_queue.put_nowait(GenStageError(traceback.format_exc()))
 
 
 def run_loop_process(test_queue, result_queue, opts, kill_switch, cover_ctx):

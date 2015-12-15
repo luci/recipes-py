@@ -17,6 +17,7 @@ from collections import namedtuple
 UnknownError = namedtuple('UnknownError', 'message')
 NoMatchingTestsError = namedtuple('NoMatchingTestsError', '')
 Result = namedtuple('Result', 'data')
+GenStageError = namedtuple('GenStageError', 'error')
 MultiResult = namedtuple('MultiResult', 'results')
 DirSeen = namedtuple('DirSeen', 'dir')
 
@@ -417,6 +418,10 @@ class Handler(object):
     def handle_NoMatchingTestsError(self, _error):
       print 'No tests found that match the glob: %s' % (
           ' '.join(self.opts.test_glob),)
+      return Failure()
+
+    def handle_GenStageError(self, _error):
+      print _error.error
       return Failure()
 
     def __unknown(self, obj):
