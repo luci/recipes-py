@@ -10,11 +10,12 @@ DEPS = [
   'step',
 ]
 
+FULLWIDTH_Z = u'\ufeff\uff5a'
 
 def RunSteps(api):
   step_result = api.step('echo1', ['echo', '[1, 2, 3]'],
       stdout=api.json.output())
-  assert step_result.stdout == [1, 2, 3]
+  assert step_result.stdout == [1, 2, 3], step_result.stdout
 
   # Example demonstrating the usage of step_test_data for json stdout.
   step_result = api.step('echo2', ['echo', '[2, 3, 4]'],
@@ -34,11 +35,11 @@ def RunSteps(api):
       with open(sys.argv[1], 'w') as f:
         f.write(json.dumps([1, 2, 3]))
       with open(sys.argv[2], 'w') as f:
-        f.write(json.dumps([2, 3, 4]))
-      """,
+        f.write(json.dumps(['x', 'y', %s]))
+      """ % repr(FULLWIDTH_Z),
       args=[api.json.output(), api.json.output()],
   )
-  assert result.json.output_all == [[1, 2, 3], [2, 3, 4]]
+  assert result.json.output_all == [[1, 2, 3], ['x', 'y', FULLWIDTH_Z]]
 
   example_dict = {'x': 1, 'y': 2}
 
@@ -66,5 +67,5 @@ def GenTests(api):
       api.step_data(
           'foo',
           api.json.output([1, 2, 3]) +
-          api.json.output([2, 3, 4]),
+          api.json.output(['x', 'y', FULLWIDTH_Z]),
       ))

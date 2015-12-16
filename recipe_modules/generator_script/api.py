@@ -38,7 +38,7 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
         [path_to_script,] + list(args) + [f, self.m.json.output()],
         cwd=self.m.path['checkout'], step_test_data=step_test_data)
     new_steps = step_result.json.output
-    assert isinstance(new_steps, list)
+    assert isinstance(new_steps, list), new_steps
     env = kwargs.get('env')
 
     failed_steps = []

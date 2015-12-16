@@ -45,7 +45,8 @@ class JsonOutputPlaceholder(recipe_util.Placeholder):
     valid = False
     ret = None
     try:
-      ret = json.loads(raw_data, object_pairs_hook=collections.OrderedDict)
+      ret = JsonApi.loads(
+          raw_data, object_pairs_hook=collections.OrderedDict)
       valid = True
     # TypeError is raised when raw_data is None, which can happen if the json
     # file was not created. We then correctly handle this as invalid result.
@@ -64,13 +65,33 @@ class JsonOutputPlaceholder(recipe_util.Placeholder):
 class JsonApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
     super(JsonApi, self).__init__(**kwargs)
-    self.loads = json.loads
     @functools.wraps(json.dumps)
     def dumps(*args, **kwargs):
       kwargs['sort_keys'] = True
       kwargs.setdefault('default', config_types.json_fixup)
       return json.dumps(*args, **kwargs)
     self.dumps = dumps
+
+  @classmethod
+  def loads(self, data, **kwargs):
+    def strip_unicode(obj):
+      if isinstance(obj, unicode):
+        try:
+          return obj.encode('ascii')
+        except UnicodeEncodeError:
+          return obj
+
+      if isinstance(obj, list):
+        return map(strip_unicode, obj)
+
+      if isinstance(obj, dict):
+        new_obj = type(obj)(
+            (strip_unicode(k), strip_unicode(v)) for k, v in obj.iteritems() )
+        return new_obj
+
+      return obj
+
+    return strip_unicode(json.loads(data, **kwargs))
 
   def is_serializable(self, obj):
     """Returns True if the object is JSON-serializable."""
