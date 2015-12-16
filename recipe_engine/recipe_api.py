@@ -431,6 +431,8 @@ class RecipeApiPlain(object):
 
   def apply_config(self, config_name, config_object=None, optional=False):
     """Apply a named configuration to the provided config object or self."""
+    assert config_name in self._module.CONFIG_CTX.CONFIG_ITEMS, (
+        config_name, self._module.CONFIG_CTX.CONFIG_ITEMS)
     self._module.CONFIG_CTX.CONFIG_ITEMS[config_name](
         config_object or self.c, optional=optional)
 
