@@ -1,0 +1,14 @@
+[
+  {
+    "cmd": [
+      "missing_command"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "Run missing command"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

@@ -17,16 +17,26 @@ from .third_party import expect_tests
 _UNIVERSE = None
 
 def RunRecipe(test_data):
-  from .third_party import annotator
-  from . import run
   from . import config_types
+  from . import loader
+  from . import run
+  from . import step_runner
+  from . import stream
 
-  stream = annotator.StructuredAnnotationStream(stream=open(os.devnull, 'w'))
   config_types.ResetTostringFns()
-  result = run.run_steps(
-      test_data.properties, stream, _UNIVERSE, test_data)
+  stream_engine = stream.StreamEngineInvariants()
+  step_runner = step_runner.SimulationStepRunner(stream_engine, test_data)
 
-  return expect_tests.Result(list(result.steps_ran.values()) + [result.result])
+  engine = run.RecipeEngine(step_runner, test_data.properties, _UNIVERSE)
+  recipe_script = _UNIVERSE.load_recipe(test_data.properties['recipe'])
+  api = loader.create_recipe_api(recipe_script.LOADED_DEPS, engine, test_data)
+  result = engine.run(recipe_script, api)
+
+  # Don't include tracebacks in expectations because they are too sensitive to
+  # change.
+  result.result.pop('traceback', None)
+
+  return expect_tests.Result(step_runner.steps_ran + [result.result])
 
 
 def test_gen_coverage():

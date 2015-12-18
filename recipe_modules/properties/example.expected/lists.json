@@ -10,7 +10,7 @@
   {
     "cmd": [
       "echo",
-      "{'recipe': 'properties:example', 'test_prop': {'key': ['value', ['value']]}}"
+      "[('recipe', 'properties:example'), ('test_prop', {'key': ['value', ['value']]})]"
     ],
     "cwd": "[SLAVE_BUILD]",
     "name": "echo all"

@@ -104,9 +104,10 @@ DEPS = [ (sic)
       def test_cmd(cmd):
         subp = subprocess.Popen(
             repo.recipes_cmd + cmd,
-            stdout=subprocess.PIPE)
-        stdout, _ = subp.communicate()
-        self.assertRegexpMatches(stdout, r'SyntaxError')
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+        stdout, stderr = subp.communicate()
+        self.assertRegexpMatches(stdout + stderr, r'SyntaxError')
         self.assertEqual(subp.returncode, 1)
 
       test_cmd(['simulation_test', 'foo'])

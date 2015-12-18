@@ -10,7 +10,7 @@
   {
     "cmd": [
       "echo",
-      "{'workdir': '/path/to/workdir/TestSlavename', 'buildername': 'TestBuilder', 'recipe': 'properties:example', 'mastername': 'chromium.testing.master', 'buildnumber': 571, 'slavename': 'TestSlavename', 'blamelist': ['cool_dev1337@chromium.org', 'hax@chromium.org'], 'buildbotURL': 'http://c.org/p/cr/', 'test_prop': None}"
+      "[('blamelist', ['cool_dev1337@chromium.org', 'hax@chromium.org']), ('buildbotURL', 'http://c.org/p/cr/'), ('buildername', 'TestBuilder'), ('buildnumber', 571), ('mastername', 'chromium.testing.master'), ('recipe', 'properties:example'), ('slavename', 'TestSlavename'), ('test_prop', None), ('workdir', '/path/to/workdir/TestSlavename')]"
     ],
     "cwd": "[SLAVE_BUILD]",
     "name": "echo all"

@@ -64,26 +64,14 @@ iterable_of_things.
 """
 
 import collections
-import contextlib
-import copy
-import functools
-import json
 import os
-import re
-import subprocess
 import sys
-import tempfile
-import threading
 import traceback
-
-import cStringIO
-
 
 from . import loader
 from . import recipe_api
 from . import recipe_test_api
 from . import types
-from . import util
 
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -185,242 +173,23 @@ ENV_WHITELIST_POSIX = BUILDBOT_MAGIC_ENV | set([
 ])
 
 
-def _isolate_environment():
-  """Isolate the environment to a known subset set."""
-  if sys.platform.startswith('win'):
-    whitelist = ENV_WHITELIST_WIN
-  elif sys.platform in ('darwin', 'posix', 'linux2'):
-    whitelist = ENV_WHITELIST_POSIX
-  else:
-    print ('WARNING: unknown platform %s, not isolating environment.' %
-           sys.platform)
-    return
-
-  for k in os.environ.keys():
-    if k not in whitelist:
-      del os.environ[k]
+# Return value of run_steps and RecipeEngine.run.  Just a container for the
+# literal return value of the recipe.
+RecipeResult = collections.namedtuple('RecipeResult', 'result')
 
 
-class StepPresentation(object):
-  STATUSES = set(('SUCCESS', 'FAILURE', 'WARNING', 'EXCEPTION'))
-
-  def __init__(self):
-    self._finalized = False
-
-    self._logs = collections.OrderedDict()
-    self._links = collections.OrderedDict()
-    self._status = None
-    self._step_summary_text = ''
-    self._step_text = ''
-    self._properties = {}
-
-  # (E0202) pylint bug: http://www.logilab.org/ticket/89092
-  @property
-  def status(self):  # pylint: disable=E0202
-    return self._status
-
-  @status.setter
-  def status(self, val):  # pylint: disable=E0202
-    assert not self._finalized
-    assert val in self.STATUSES
-    self._status = val
-
-  @property
-  def step_text(self):
-    return self._step_text
-
-  @step_text.setter
-  def step_text(self, val):
-    assert not self._finalized
-    self._step_text = val
-
-  @property
-  def step_summary_text(self):
-    return self._step_summary_text
-
-  @step_summary_text.setter
-  def step_summary_text(self, val):
-    assert not self._finalized
-    self._step_summary_text = val
-
-  @property
-  def logs(self):
-    if not self._finalized:
-      return self._logs
-    else:
-      return copy.deepcopy(self._logs)
-
-  @property
-  def links(self):
-    if not self._finalized:
-      return self._links
-    else:
-      return copy.deepcopy(self._links)
-
-  @property
-  def properties(self):  # pylint: disable=E0202
-    if not self._finalized:
-      return self._properties
-    else:
-      return copy.deepcopy(self._properties)
-
-  @properties.setter
-  def properties(self, val):  # pylint: disable=E0202
-    assert not self._finalized
-    assert isinstance(val, dict)
-    self._properties = val
-
-  def finalize(self, annotator_step):
-    self._finalized = True
-    if self.step_text:
-      annotator_step.step_text(self.step_text)
-    if self.step_summary_text:
-      annotator_step.step_summary_text(self.step_summary_text)
-    for name, lines in self.logs.iteritems():
-      annotator_step.write_log_lines(name, lines)
-    for label, url in self.links.iteritems():
-      annotator_step.step_link(label, url)
-    status_mapping = {
-      'WARNING': annotator_step.step_warnings,
-      'FAILURE': annotator_step.step_failure,
-      'EXCEPTION': annotator_step.step_exception,
-    }
-    status_mapping.get(self.status, lambda: None)()
-    for key, value in self._properties.iteritems():
-      annotator_step.set_build_property(key, json.dumps(value, sort_keys=True))
-
-
-class StepDataAttributeError(AttributeError):
-  """Raised when a non-existent attributed is accessed on a StepData object."""
-  def __init__(self, step, attr):
-    self.step = step
-    self.attr = attr
-    message = ('The recipe attempted to access missing step data "%s" for step '
-               '"%s". Please examine that step for errors.' % (attr, step))
-    super(StepDataAttributeError, self).__init__(message)
-
-
-class StepData(object):
-  def __init__(self, step, retcode):
-    self._retcode = retcode
-    self._step = step
-
-    self._presentation = StepPresentation()
-    self.abort_reason = None
-
-  @property
-  def step(self):
-    return copy.deepcopy(self._step)
-
-  @property
-  def retcode(self):
-    return self._retcode
-
-  @property
-  def presentation(self):
-    return self._presentation
-
-  def __getattr__(self, name):
-    raise StepDataAttributeError(self._step['name'], name)
-
-
-# TODO(martiniss) update comment
-# Result of 'render_step', fed into 'step_callback'.
-Placeholders = collections.namedtuple(
-    'Placeholders', ['cmd', 'stdout', 'stderr', 'stdin'])
-
-
-def render_step(step, step_test):
-  """Renders a step so that it can be fed to annotator.py.
+def run_steps(properties, stream_engine, step_runner, universe):
+  """Runs a recipe (given by the 'recipe' property).
 
   Args:
-    step_test: The test data json dictionary for this step, if any.
-               Passed through unaltered to each placeholder.
+    properties: a dictionary of properties to pass to the recipe.  The
+      'recipe' property defines which recipe to actually run.
+    stream_engine: the StreamEngine to use to create individual step streams.
+    step_runner: The StepRunner to use to 'actually run' the steps.
+    universe: The RecipeUniverse to use to load the recipes & modules.
 
-  Returns any placeholder instances that were found while rendering the step.
+  Returns: RecipeResult
   """
-  # Process 'cmd', rendering placeholders there.
-  placeholders = collections.defaultdict(lambda: collections.defaultdict(list))
-  new_cmd = []
-  for item in step.get('cmd', []):
-    if isinstance(item, util.Placeholder):
-      module_name, placeholder_name = item.name_pieces
-      tdata = step_test.pop_placeholder(item.name_pieces)
-      new_cmd.extend(item.render(tdata))
-      placeholders[module_name][placeholder_name].append((item, tdata))
-    else:
-      new_cmd.append(item)
-  step['cmd'] = new_cmd
-
-  # Process 'stdout', 'stderr' and 'stdin' placeholders, if given.
-  stdio_placeholders = {}
-  for key in ('stdout', 'stderr', 'stdin'):
-    placeholder = step.get(key)
-    tdata = None
-    if placeholder:
-      assert isinstance(placeholder, util.Placeholder), key
-      tdata = getattr(step_test, key)
-      placeholder.render(tdata)
-      assert placeholder.backing_file
-      step[key] = placeholder.backing_file
-    stdio_placeholders[key] = (placeholder, tdata)
-
-  return Placeholders(cmd=placeholders, **stdio_placeholders)
-
-
-def get_placeholder_results(step_result, placeholders):
-  class BlankObject(object):
-    pass
-
-  # Placeholders inside step |cmd|.
-  for module_name, pholders in placeholders.cmd.iteritems():
-    assert not hasattr(step_result, module_name)
-    o = BlankObject()
-    setattr(step_result, module_name, o)
-
-    for placeholder_name, items in pholders.iteritems():
-      lst = [ph.result(step_result.presentation, td) for ph, td in items]
-      setattr(o, placeholder_name+"_all", lst)
-      setattr(o, placeholder_name, lst[0])
-
-  # Placeholders that are used with IO redirection.
-  for key in ('stdout', 'stderr', 'stdin'):
-    assert not hasattr(step_result, key)
-    ph, td = getattr(placeholders, key)
-    result = ph.result(step_result.presentation, td) if ph else None
-    setattr(step_result, key, result)
-
-
-def get_callable_name(func):
-  """Returns __name__ of a callable, handling functools.partial types."""
-  if isinstance(func, functools.partial):
-    return get_callable_name(func.func)
-  else:
-    return func.__name__
-
-
-# Return value of run_steps and RecipeEngine.run.
-RecipeExecutionResult = collections.namedtuple(
-    'RecipeExecutionResult', 'result steps_ran')
-
-
-def run_steps(properties,
-              stream,
-              universe,
-              test_data=recipe_test_api.DisabledTestData()):
-  """Returns a tuple of (status_code, steps_ran).
-
-  Only one of these values will be set at a time. This is mainly to support the
-  testing interface used by unittests/recipes_test.py.
-  """
-  stream.honor_zero_return_code()
-
-  # TODO(iannucci): Stop this when blamelist becomes sane data.
-  if ('blamelist_real' in properties and
-      'blamelist' in properties):
-    properties['blamelist'] = properties['blamelist_real']
-    del properties['blamelist_real']
-
   # NOTE(iannucci): 'root' was a terribly bad idea and has been replaced by
   # 'patch_project'. 'root' had Rietveld knowing about the implementation of
   # the builders. 'patch_project' lets the builder (recipe) decide its own
@@ -435,12 +204,12 @@ def run_steps(properties,
     'TESTING_SLAVENAME' in os.environ)):
     properties['use_mirror'] = False
 
-  engine = RecipeEngine(stream, properties, test_data, universe)
+  engine = RecipeEngine(step_runner, properties, universe)
 
   # Create all API modules and top level RunSteps function.  It doesn't launch
   # any recipe code yet; RunSteps needs to be called.
   api = None
-  with stream.step('setup_build') as s:
+  with stream_engine.new_step_stream('setup_build') as s:
     assert 'recipe' in properties
     recipe = properties['recipe']
 
@@ -459,288 +228,50 @@ def run_steps(properties,
         'contents of the file into run_recipe.py, with the < operator.',
     ]
 
-    for line in run_recipe_help_lines:
-      s.step_log_line('run_recipe', line)
-    s.step_log_end('run_recipe')
+    with s.new_log_stream('run_recipe') as l:
+      for line in run_recipe_help_lines:
+        l.write_line(line)
 
     _isolate_environment()
 
     # Find and load the recipe to run.
     try:
       recipe_script = universe.load_recipe(recipe)
-      stream.emit('Running recipe with %s' % (properties,))
+      s.write_line('Running recipe with %s' % (properties,))
 
       api = loader.create_recipe_api(recipe_script.LOADED_DEPS,
-                                            engine,
-                                            test_data)
+                                     engine,
+                                     recipe_test_api.DisabledTestData())
 
-      s.step_text('<br/>running recipe: "%s"' % recipe)
+      s.add_step_text('<br/>running recipe: "%s"' % recipe)
     except loader.LoaderError as e:
-      s.step_text('<br/>%s' % '<br/>'.join(str(e).splitlines()))
-      s.step_failure()
-      return RecipeExecutionResult({
+      s.add_step_text('<br/>%s' % '<br/>'.join(str(e).splitlines()))
+      s.set_step_status('EXCEPTION')
+      return RecipeResult({
           'status_code': 2,
           'reason': str(e),
-      }, None)
+      })
 
   # Run the steps emitted by a recipe via the engine, emitting annotations
   # into |stream| along the way.
   return engine.run(recipe_script, api)
 
 
-def _merge_envs(original, override):
-  """Merges two environments.
+def _isolate_environment():
+  """Isolate the environment to a known subset set."""
+  if sys.platform.startswith('win'):
+    whitelist = ENV_WHITELIST_WIN
+  elif sys.platform in ('darwin', 'posix', 'linux2'):
+    whitelist = ENV_WHITELIST_POSIX
+  else:
+    print ('WARNING: unknown platform %s, not isolating environment.' %
+           sys.platform)
+    return
 
-  Returns a new environment dict with entries from |override| overwriting
-  corresponding entries in |original|. Keys whose value is None will completely
-  remove the environment variable. Values can contain %(KEY)s strings, which
-  will be substituted with the values from the original (useful for amending, as
-  opposed to overwriting, variables like PATH).
-  """
-  result = original.copy()
-  if not override:
-    return result
-  for k, v in override.items():
-    if v is None:
-      if k in result:
-        del result[k]
-    else:
-      result[str(k)] = str(v) % original
-  return result
+  for k in os.environ.keys():
+    if k not in whitelist:
+      del os.environ[k]
 
-
-def _shell_quote(arg):
-  """Shell-quotes a string with minimal noise.
-
-  Such that it is still reproduced exactly in a bash/zsh shell.
-  """
-
-  arg = arg.encode('utf-8')
-
-  if arg == '':
-    return "''"
-  # Normal shell-printable string without quotes
-  if re.match(r'[-+,./0-9:@A-Z_a-z]+$', arg):
-    return arg
-  # Printable within regular single quotes.
-  if re.match('[\040-\176]+$', arg):
-    return "'%s'" % arg.replace("'", "'\\''")
-  # Something complicated, printable within special escaping quotes.
-  return "$'%s'" % arg.encode('string_escape')
-
-
-
-def _print_step(step, env, stream):
-  """Prints the step command and relevant metadata.
-
-  Intended to be similar to the information that Buildbot prints at the
-  beginning of each non-annotator step.
-  """
-  step_info_lines = []
-  step_info_lines.append(' '.join(map(_shell_quote, step['cmd'])))
-  step_info_lines.append('in dir %s:' % (step['cwd'] or os.getcwd()))
-  for key, value in sorted(step.items()):
-    if value is not None:
-      if callable(value):
-        # This prevents functions from showing up as:
-        #   '<function foo at 0x7f523ec7a410>'
-        # which is tricky to test.
-        value = value.__name__+'(...)'
-      step_info_lines.append(' %s: %s' % (key, value))
-  step_info_lines.append('full environment:')
-  for key, value in sorted(env.items()):
-    step_info_lines.append(' %s: %s' % (key, value))
-  step_info_lines.append('')
-  stream.emit('\n'.join(step_info_lines))
-
-
-@contextlib.contextmanager
-def _modify_lookup_path(path):
-  """Places the specified path into os.environ.
-
-  Necessary because subprocess.Popen uses os.environ to perform lookup on the
-  supplied command, and only uses the |env| kwarg for modifying the environment
-  of the child process.
-  """
-  saved_path = os.environ['PATH']
-  try:
-    if path is not None:
-      os.environ['PATH'] = path
-    yield
-  finally:
-    os.environ['PATH'] = saved_path
-
-
-def _normalize_change(change):
-  assert isinstance(change, dict), 'Change is not a dict'
-  change = change.copy()
-
-  # Convert when_timestamp to UNIX timestamp.
-  when = change.get('when_timestamp')
-  if isinstance(when, datetime.datetime):
-    when = calendar.timegm(when.utctimetuple())
-    change['when_timestamp'] = when
-
-  return change
-
-
-def _trigger_builds(step, trigger_specs):
-  assert trigger_specs is not None
-  for trig in trigger_specs:
-    builder_name = trig.get('builder_name')
-    if not builder_name:
-      raise ValueError('Trigger spec: builder_name is not set')
-
-    changes = trig.get('buildbot_changes', [])
-    assert isinstance(changes, list), 'buildbot_changes must be a list'
-    changes = map(_normalize_change, changes)
-
-    step.step_trigger(json.dumps({
-        'builderNames': [builder_name],
-        'bucket': trig.get('bucket'),
-        'changes': changes,
-        'properties': trig.get('properties'),
-        'tags': trig.get('tags'),
-    }, sort_keys=True))
-
-
-def _run_annotated_step(
-    stream, name, cmd, cwd=None, env=None, allow_subannotations=False,
-    trigger_specs=None, nest_level=0, **kwargs):
-  """Runs a single step.
-
-  Context:
-    stream: StructuredAnnotationStream to use to emit step
-
-  Step parameters:
-    name: name of the step, will appear in buildbots waterfall
-    cmd: command to run, list of one or more strings
-    cwd: absolute path to working directory for the command
-    env: dict with overrides for environment variables
-    allow_subannotations: if True, lets the step emit its own annotations
-    trigger_specs: a list of trigger specifications, which are dict with keys:
-        properties: a dict of properties.
-            Buildbot requires buildername property.
-
-  Known kwargs:
-    stdout: Path to a file to put step stdout into. If used, stdout won't appear
-            in annotator's stdout (and |allow_subannotations| is ignored).
-    stderr: Path to a file to put step stderr into. If used, stderr won't appear
-            in annotator's stderr.
-    stdin: Path to a file to read step stdin from.
-
-  Returns the returncode of the step.
-  """
-  if isinstance(cmd, basestring):
-    cmd = (cmd,)
-  cmd = map(str, cmd)
-
-  # For error reporting.
-  step_dict = kwargs.copy()
-  step_dict.update({
-      'name': name,
-      'cmd': cmd,
-      'cwd': cwd,
-      'env': env,
-      'allow_subannotations': allow_subannotations,
-      })
-  step_env = _merge_envs(os.environ, env)
-
-  step_annotation = stream.step(name)
-  step_annotation.step_started()
-
-  if nest_level:
-    step_annotation.step_nest_level(nest_level)
-
-  _print_step(step_dict, step_env, stream)
-  returncode = 0
-  if cmd:
-    try:
-      # Open file handles for IO redirection based on file names in step_dict.
-      fhandles = {
-        'stdout': subprocess.PIPE,
-        'stderr': subprocess.PIPE,
-        'stdin': None,
-      }
-      for key in fhandles:
-        if key in step_dict:
-          fhandles[key] = open(step_dict[key],
-                               'rb' if key == 'stdin' else 'wb')
-
-      if sys.platform.startswith('win'):
-        # Windows has a bad habit of opening a dialog when a console program
-        # crashes, rather than just letting it crash.  Therefore, when a program
-        # crashes on Windows, we don't find out until the build step times out.
-        # This code prevents the dialog from appearing, so that we find out
-        # immediately and don't waste time waiting for a user to close the
-        # dialog.
-        import ctypes
-        # SetErrorMode(SEM_NOGPFAULTERRORBOX). For more information, see:
-        # https://msdn.microsoft.com/en-us/library/windows/desktop/ms680621.aspx
-        ctypes.windll.kernel32.SetErrorMode(0x0002)
-        # CREATE_NO_WINDOW. For more information, see:
-        # https://msdn.microsoft.com/en-us/library/windows/desktop/ms684863.aspx
-        creationflags = 0x8000000
-      else:
-        creationflags = 0
-
-      with _modify_lookup_path(step_env.get('PATH')):
-        proc = subprocess.Popen(
-            cmd,
-            env=step_env,
-            cwd=cwd,
-            universal_newlines=True,
-            creationflags=creationflags,
-            **fhandles)
-
-      # Safe to close file handles now that subprocess has inherited them.
-      for handle in fhandles.itervalues():
-        if isinstance(handle, file):
-          handle.close()
-
-      outlock = threading.Lock()
-      def filter_lines(lock, allow_subannotations, inhandle, outhandle):
-        while True:
-          line = inhandle.readline()
-          if not line:
-            break
-          lock.acquire()
-          try:
-            if not allow_subannotations and line.startswith('@@@'):
-              outhandle.write('!')
-            outhandle.write(line)
-            outhandle.flush()
-          finally:
-            lock.release()
-
-      # Pump piped stdio through filter_lines. IO going to files on disk is
-      # not filtered.
-      threads = []
-      for key in ('stdout', 'stderr'):
-        if fhandles[key] == subprocess.PIPE:
-          inhandle = getattr(proc, key)
-          outhandle = getattr(sys, key)
-          threads.append(threading.Thread(
-              target=filter_lines,
-              args=(outlock, allow_subannotations, inhandle, outhandle)))
-
-      for th in threads:
-        th.start()
-      proc.wait()
-      for th in threads:
-        th.join()
-      returncode = proc.returncode
-    except OSError:
-      # File wasn't found, error will be reported to stream when the exception
-      # crosses the context manager.
-      step_annotation.step_exception_occured(*sys.exc_info())
-      raise
-
-  # TODO(martiniss) move logic into own module?
-  if trigger_specs:
-    _trigger_builds(step_annotation, trigger_specs)
-
-  return step_annotation, returncode
 
 class RecipeEngine(object):
   """
@@ -750,20 +281,22 @@ class RecipeEngine(object):
 
   Recipe modules that are aware of the engine:
     * properties - uses engine.properties.
-    * step_history - uses engine.step_history.
-    * step - uses engine.create_step(...).
-
+    * step - uses engine.create_step(...), and previous_step_result.
   """
-  def __init__(self, stream, properties, test_data, universe):
-    self._stream = stream
+
+  ActiveStep = collections.namedtuple('ActiveStep',
+                                      'step step_result open_step nest_level')
+
+  def __init__(self, step_runner, properties, universe):
+    """See run_steps() for parameter meanings."""
+    self._step_runner = step_runner
     self._properties = properties
-    self._test_data = test_data
-    self._step_history = collections.OrderedDict()
     self._universe = universe
 
-    self._previous_step_annotation = None
-    self._previous_step_result = None
-    self._api = None
+    # A stack of ActiveStep objects, holding the most recently executed step at
+    # each nest level (objects deeper in the stack have lower nest levels).
+    # When we pop from this stack, we close the corresponding step stream.
+    self._step_stack = []
 
   @property
   def properties(self):
@@ -775,31 +308,19 @@ class RecipeEngine(object):
 
   @property
   def previous_step_result(self):
-    """Allows api.step to get the active result from any context."""
-    return self._previous_step_result
+    """Allows api.step to get the active result from any context.
 
-  def _emit_results(self):
-    """Internal helper used to emit results."""
-    annotation = self._previous_step_annotation
-    step_result = self._previous_step_result
+    This always returns the innermost nested step that is still open --
+    presumably the one that just failed if we are in an exception handler."""
+    return self._step_stack[-1].step_result
 
-    self._previous_step_annotation = None
-    self._previous_step_result = None
-
-    if not annotation or not step_result:
-      return
-
-    step_result.presentation.finalize(annotation)
-    if self._test_data.enabled:
-      val = annotation.stream.getvalue()
-      lines = filter(None, val.splitlines())
-      if lines:
-        # note that '~' sorts after 'z' so that this will be last on each
-        # step. also use _step to get access to the mutable step
-        # dictionary.
-        # pylint: disable=w0212
-        step_result._step['~followup_annotations'] = lines
-    annotation.step_ended()
+  def _close_to_level(self, level):
+    """Close all open steps that are at least as deep as level."""
+    while self._step_stack and level <= self._step_stack[-1].nest_level:
+      cur = self._step_stack.pop()
+      if cur.step_result:
+        cur.step_result.presentation.finalize(cur.open_step.stream)
+      cur.open_step.finalize()
 
   def run_step(self, step):
     """
@@ -813,43 +334,24 @@ class RecipeEngine(object):
     """
     ok_ret = step.pop('ok_ret')
     infra_step = step.pop('infra_step')
-    nest_level = step.pop('step_nest_level')
-
-    test_data_fn = step.pop('step_test_data', recipe_test_api.StepTestData)
-    step_test = self._test_data.pop_step_test_data(step['name'],
-                                                   test_data_fn)
-    placeholders = render_step(step, step_test)
-
-    self._step_history[step['name']] = step
-    self._emit_results()
 
     step_result = None
 
-    if not self._test_data.enabled:
-      self._previous_step_annotation, retcode = _run_annotated_step(
-        self._stream, nest_level=nest_level, **step)
+    nest_level = step.pop('step_nest_level', 0)
+    self._close_to_level(nest_level)
 
-      step_result = StepData(step, retcode)
-      self._stream.step_cursor(step['name'])
-    else:
-      self._previous_step_annotation = annotation = self._stream.step(
-              step['name'])
-      annotation.step_started()
-      try:
-        annotation.stream = cStringIO.StringIO()
-        if nest_level:
-          annotation.step_nest_level(nest_level)
+    open_step = self._step_runner.open_step(step)
+    self._step_stack.append(self.ActiveStep(
+        step=step,
+        step_result=None,
+        open_step=open_step,
+        nest_level=nest_level))
+    if nest_level:
+      open_step.stream.set_nest_level(nest_level)
 
-        step_result = StepData(step, step_test.retcode)
-      except OSError:
-        exc_type, exc_value, exc_tb = sys.exc_info()
-        trace = traceback.format_exception(exc_type, exc_value, exc_tb)
-        trace_lines = ''.join(trace).split('\n')
-        annotation.write_log_lines('exception', filter(None, trace_lines))
-        annotation.step_exception()
-
-    get_placeholder_results(step_result, placeholders)
-    self._previous_step_result = step_result
+    step_result = open_step.run()
+    self._step_stack[-1] = (
+        self._step_stack[-1]._replace(step_result=step_result))
 
     if step_result.retcode in ok_ret:
       step_result.presentation.status = 'SUCCESS'
@@ -863,10 +365,9 @@ class RecipeEngine(object):
         exc = recipe_api.InfraFailure
 
       step_result.presentation.status = state
-      if step_test.enabled:
-        # To avoid cluttering the expectations, don't emit this in testmode.
-        self._previous_step_annotation.emit(
-            'step returned non-zero exit code: %d' % step_result.retcode)
+
+      self._step_stack[-1].open_step.stream.write_line(
+          'step returned non-zero exit code: %d' % step_result.retcode)
 
       raise exc(step['name'], step_result)
 
@@ -883,60 +384,44 @@ class RecipeEngine(object):
            Used by the some special modules.
 
     Returns:
-      RecipeExecutionResult which has status code, list of steps ran,
-        and return value.
+      RecipeResult which has return value or status code and exception.
     """
-    self._api = api
     result = None
 
-    try:
+    with self._step_runner.run_context():
       try:
-        recipe_result = recipe_script.run(api, api._engine.properties)
+        try:
+          recipe_result = recipe_script.run(api, api._engine.properties)
+          result = {
+            "recipe_result": recipe_result,
+            "status_code": 0
+          }
+        finally:
+          self._close_to_level(0)
+      except recipe_api.StepFailure as f:
         result = {
-          "recipe_result": recipe_result,
-          "status_code": 0
+          "reason": f.reason,
+          "status_code": f.retcode or 1
         }
-
-      finally:
-        self._emit_results()
-    except recipe_api.StepFailure as f:
-      result = {
-        "reason": f.reason,
-        "status_code": f.retcode or 1
-      }
-    except StepDataAttributeError as ex:
-      with self._test_data.should_raise_exception(ex) as should_raise:
+      except types.StepDataAttributeError as ex:
         result = {
           "reason": "Invalid Step Data Access: %r" % ex,
+          "traceback": traceback.format_exc().splitlines(),
           "status_code": -1
         }
 
-        with self._stream.step('Invalid Step Data Access') as s:
-          s.step_exception()
-          s.write_log_lines('exception', traceback.format_exc().splitlines())
-
-        if should_raise:
-          raise
-
-    except Exception as ex:
-      with self._test_data.should_raise_exception(ex) as should_raise:
+        raise
+      except Exception as ex:
         result = {
           "reason": "Uncaught Exception: %r" % ex,
+          "traceback": traceback.format_exc().splitlines(),
           "status_code": -1
         }
 
-        with self._stream.step('Uncaught Exception') as s:
-          s.step_exception()
-          s.write_log_lines('exception', traceback.format_exc().splitlines())
-
-        if should_raise:
-          raise
-
-    assert (not self._test_data.enabled) or self._test_data.consumed, (
-      "Unconsumed test data! %s" % self._test_data)
+        raise
 
     result['name'] = '$result'
-    return RecipeExecutionResult(result, self._step_history)
+    return RecipeResult(result)
 
   def create_step(self, step):  # pylint: disable=R0201
     """Called by step module to instantiate a new step.
@@ -969,31 +454,8 @@ class RecipeEngine(object):
       # simply the values being passed to the recipe, which we already know, so
       # we ignore them. We're only using this for its properties validation
       # functionality.
-      run_recipe = lambda *args, **kwargs: None
-
-      if self._test_data.enabled:
-        run_recipe = lambda *args, **kwargs: (
-            self._test_data.depend_on_data[types.freeze((recipe, properties),)])
-      else:
-        # TODO(martiniss) Add DM integration
-        assert distributor is None, "Only local recipe execution supported."
-
-        def run_recipe(*args, **kwargs):
-          with tempfile.NamedTemporaryFile() as f:
-            cmd = [sys.executable,
-                   self._universe.package_deps.engine_recipes_py,
-                   '--package=%s' % self._universe.config_file, 'run',
-                   '--output-result-json=%s' % f.name, recipe]
-            cmd.extend(['%s=%s' % (k, v) for k, v in properties.iteritems()])
-
-            retcode = subprocess.call(cmd)
-            result = json.load(f)
-            if retcode != 0:
-              raise recipe_api.StepFailure(
-                'depend on %s with properties %r failed with %d.'
-                'Recipe result: %r' % (
-                    recipe, properties, retcode, result))
-            return result
+      run_recipe = lambda *args, **kwargs: (
+        self._step_runner.run_recipe(self._universe, recipe, properties))
 
       try:
         # This does type checking for properties
@@ -1007,6 +469,3 @@ class RecipeEngine(object):
               e, recipe, properties))
 
     return results
-
-
-

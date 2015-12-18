@@ -2,18 +2,19 @@
   {
     "cmd": [
       "echo",
-      "{'key': 'value'}"
+      "@@@BUILD_STEP@steppy@@@"
     ],
     "cwd": "[SLAVE_BUILD]",
-    "name": "echo"
+    "name": "Dont subannotate me"
   },
   {
+    "allow_subannotations": true,
     "cmd": [
       "echo",
-      "[('recipe', 'properties:example'), ('test_prop', {'key': 'value'})]"
+      "@@@BUILD_STEP@pippy@@@"
     ],
     "cwd": "[SLAVE_BUILD]",
-    "name": "echo all"
+    "name": "Subannotate me"
   },
   {
     "name": "$result",

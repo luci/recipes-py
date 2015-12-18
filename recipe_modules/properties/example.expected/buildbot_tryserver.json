@@ -10,7 +10,7 @@
   {
     "cmd": [
       "echo",
-      "{'workdir': '/path/to/workdir/TestSlavename', 'repository': '', 'buildername': 'TestBuilder', 'recipe': 'properties:example', 'mastername': 'chromium.testing.master', 'requester': 'commit-bot@chromium.org', 'buildbotURL': 'http://c.org/p/cr/', 'patch_project': 'chromium', 'buildnumber': 571, 'rietveld': 'https://codereview.chromium.org', 'test_prop': None, 'project': 'chrome', 'slavename': 'TestSlavename', 'blamelist': ['cool_dev1337@chromium.org', 'hax@chromium.org'], 'branch': '', 'patchset': 1, 'issue': 12853011, 'revision': 'HEAD'}"
+      "[('blamelist', ['cool_dev1337@chromium.org', 'hax@chromium.org']), ('branch', ''), ('buildbotURL', 'http://c.org/p/cr/'), ('buildername', 'TestBuilder'), ('buildnumber', 571), ('issue', 12853011), ('mastername', 'chromium.testing.master'), ('patch_project', 'chromium'), ('patchset', 1), ('project', 'chrome'), ('recipe', 'properties:example'), ('repository', ''), ('requester', 'commit-bot@chromium.org'), ('revision', 'HEAD'), ('rietveld', 'https://codereview.chromium.org'), ('slavename', 'TestSlavename'), ('test_prop', None), ('workdir', '/path/to/workdir/TestSlavename')]"
     ],
     "cwd": "[SLAVE_BUILD]",
     "name": "echo all"

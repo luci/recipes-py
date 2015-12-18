@@ -87,7 +87,7 @@ def main(universe):
         modpath, modpath, package, universe))
 
   inst = loader.create_recipe_api(
-      deps, recipe_run.RecipeEngine(None, {}, None, universe))
+      deps, recipe_run.RecipeEngine(None, {}, universe))
 
   for mod_name, mod in deps.iteritems():
     p(0)

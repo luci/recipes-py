@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# Copyright 2015 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
 
 """Tool to interact with recipe repositories.
 
@@ -49,26 +52,35 @@ def lint(package_deps, args):
   lint_test.main(universe, args.whitelist or [])
 
 
-def handle_recipe_return(recipe_result, result_filename, stream):
+def handle_recipe_return(recipe_result, result_filename, stream_engine):
   if 'recipe_result' in recipe_result.result:
     result_string = json.dumps(
         recipe_result.result['recipe_result'], indent=2)
     if result_filename:
       with open(result_filename, 'w') as f:
         f.write(result_string)
-    with stream.step('recipe result') as s:
-      s.write_log_lines('result', [result_string])
+    with stream_engine.new_step_stream('recipe result') as s:
+      with s.new_log_stream('result') as l:
+        l.write_split(result_string)
+
+  if 'traceback' in recipe_result.result:
+    with stream_engine.new_step_stream('Uncaught Exception') as s:
+      with s.new_log_stream('exception') as l:
+        for line in recipe_result.result['traceback']:
+          l.write_line(line)
 
   if 'status_code' in recipe_result.result:
     return recipe_result.result['status_code']
   else:
     return 0
 
+
 def run(package_deps, args):
   from recipe_engine import run as recipe_run
   from recipe_engine import loader
   from recipe_engine import package
-  from recipe_engine.third_party import annotator
+  from recipe_engine import step_runner
+  from recipe_engine import stream
 
   def get_properties_from_args(args):
     properties = dict(x.split('=', 1) for x in args)
@@ -115,15 +127,20 @@ def run(package_deps, args):
 
   old_cwd = os.getcwd()
   os.chdir(workdir)
-  stream = annotator.StructuredAnnotationStream()
+  stream_engine = stream.ProductStreamEngine(
+      stream.StreamEngineInvariants(),
+      stream.AnnotatorStreamEngine(sys.stdout))
 
   try:
-    ret = recipe_run.run_steps(properties, stream, universe=universe)
+    ret = recipe_run.run_steps(
+        properties, stream_engine,
+        step_runner.SubprocessStepRunner(stream_engine),
+        universe=universe)
 
   finally:
     os.chdir(old_cwd)
 
-  return handle_recipe_return(ret, args.output_result_json, stream)
+  return handle_recipe_return(ret, args.output_result_json, stream_engine)
 
 
 def roll(args):

@@ -17,7 +17,8 @@ def RunSteps(api, test_prop):
   api.step('echo', ['echo'] + [repr(test_prop)])
 
   properties = api.properties.thaw()
-  api.step('echo all', ['echo'] + [repr(api.properties.thaw())])
+  api.step('echo all', ['echo'] +
+      [repr(list(sorted(api.properties.thaw().iteritems())))])
 
   # It should behave like a real dictionary.
   assert len(properties) == len(api.properties)

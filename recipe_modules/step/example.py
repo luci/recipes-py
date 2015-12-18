@@ -38,7 +38,8 @@ def RunSteps(api, bad_return, raise_infra_failure, access_invalid_data):
   api.step('goodbye', ['bash', '-c', 'echo Good bye, $friend.'],
            env={'friend': 'Darth Vader'})
 
-  # You can modify environment in terms of old environment.
+  # You can modify environment in terms of old environment. Environment
+  # variables are substituted in for expressions of the form %(VARNAME)s.
   api.step('recipes help',
       ['recipes.py', '--help'],
       env={

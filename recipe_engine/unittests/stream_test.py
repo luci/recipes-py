@@ -1,0 +1,146 @@
+#!/usr/bin/env python
+# Copyright 2015 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import cStringIO
+import os
+import sys
+import unittest
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__)))))
+
+from recipe_engine import stream
+
+class StreamTest(unittest.TestCase):
+  def _example(self, engine):
+    foo = engine.new_step_stream('foo')
+    foo.write_line('foo says hello to xyrself')
+
+    bar = engine.new_step_stream('bar')
+    foo.write_split('foo says hello to bar:\n  hi bar')
+    bar.write_line('bar says hi, shyly')
+
+    foo.write_line('foo begins to read a poem')
+    with foo.new_log_stream('poem/proposition') as poem:
+      poem.write_line('bar, thoust art soest beautiful')
+      bar.add_step_text('*blushing*')
+      poem.write_line('thoust makest mine heartst goest thumpitypump..est')
+
+    foo.add_step_link('read it online!', 'https://foospoemtobar.com/')
+    foo.add_step_summary_text('read a killer poem and took a bow')
+    foo.trigger('{"builderName":["bar\'s fantasies"]}')
+    foo.close()
+
+    bars_baby = engine.new_step_stream('bar\'s baby', allow_subannotations=True)
+    bars_baby.set_nest_level(1)
+    bars_baby.write_line('I\'m in bar\'s imagination!!')
+    bar.set_build_property('is_babycrazy', 'true')
+    bars_baby.write_line('@@@STEP_WARNINGS@@@')
+    bars_baby.close()
+
+    bar.write_line('bar tries to kiss foo, but foo already left')
+    bar.write_line('@@@KISS@foo@@@')
+    bar.set_step_status('EXCEPTION')
+    bar.close()
+
+  def _example_annotations(self):
+    return """@@@HONOR_ZERO_RETURN_CODE@@@
+@@@SEED_STEP@foo@@@
+@@@STEP_CURSOR@foo@@@
+@@@STEP_STARTED@@@
+foo says hello to xyrself
+@@@SEED_STEP@bar@@@
+foo says hello to bar:
+  hi bar
+@@@STEP_CURSOR@bar@@@
+@@@STEP_STARTED@@@
+bar says hi, shyly
+@@@STEP_CURSOR@foo@@@
+foo begins to read a poem
+@@@STEP_LOG_LINE@poem&#x2f;proposition@bar, thoust art soest beautiful@@@
+@@@STEP_CURSOR@bar@@@
+@@@STEP_TEXT@*blushing*@@@
+@@@STEP_CURSOR@foo@@@
+@@@STEP_LOG_LINE@poem&#x2f;proposition@thoust makest mine heartst goest thumpitypump..est@@@
+@@@STEP_LOG_END@poem&#x2f;proposition@@@
+@@@STEP_LINK@read it online!@https://foospoemtobar.com/@@@
+@@@STEP_SUMMARY_TEXT@read a killer poem and took a bow@@@
+@@@STEP_TRIGGER@{"builderName":["bar's fantasies"]}@@@
+@@@STEP_CLOSED@@@
+@@@SEED_STEP@bar's baby@@@
+@@@STEP_CURSOR@bar's baby@@@
+@@@STEP_STARTED@@@
+@@@STEP_NEST_LEVEL@1@@@
+I'm in bar's imagination!!
+@@@STEP_CURSOR@bar@@@
+@@@SET_BUILD_PROPERTY@is_babycrazy@true@@@
+@@@STEP_CURSOR@bar's baby@@@
+@@@STEP_WARNINGS@@@
+@@@STEP_CLOSED@@@
+@@@STEP_CURSOR@bar@@@
+bar tries to kiss foo, but foo already left
+!@@@KISS@foo@@@
+@@@STEP_EXCEPTION@@@
+@@@STEP_CLOSED@@@
+"""
+
+  def test_example(self):
+    stringio = cStringIO.StringIO()
+    engine = stream.AnnotatorStreamEngine(stringio)
+    self._example(engine)
+    # Split lines for good diffs.
+    self.assertEqual(
+        stringio.getvalue().splitlines(),
+        self._example_annotations().splitlines())
+
+  def test_example_wellformed(self):
+    self._example(stream.StreamEngineInvariants())
+
+  def test_product_with_invariants_on_example(self):
+    stringio = cStringIO.StringIO()
+    engine = stream.ProductStreamEngine(
+        stream.StreamEngineInvariants(),
+        stream.AnnotatorStreamEngine(stringio))
+    self._example(engine)
+    self.assertEqual(stringio.getvalue(), self._example_annotations())
+
+  def test_noop(self):
+    self._example(stream.NoopStreamEngine())
+
+  def test_write_after_close(self):
+    engine = stream.StreamEngineInvariants()
+    foo = engine.new_step_stream('foo')
+    foo.close()
+    with self.assertRaises(AssertionError):
+      foo.write_line('no')
+
+  def test_log_still_open(self):
+    engine = stream.StreamEngineInvariants()
+    foo = engine.new_step_stream('foo')
+    log = foo.new_log_stream('log')
+    with self.assertRaises(AssertionError):
+      foo.close()
+
+  def test_no_write_multiple_lines(self):
+    engine = stream.StreamEngineInvariants()
+    foo = engine.new_step_stream('foo')
+    with self.assertRaises(AssertionError):
+      foo.write_line('one thing\nand another!')
+
+  def test_invalid_status(self):
+    engine = stream.StreamEngineInvariants()
+    foo = engine.new_step_stream('foo')
+    with self.assertRaises(AssertionError):
+      foo.set_step_status('SINGLE')
+
+  def test_buildbot_status_constraint(self):
+    engine = stream.StreamEngineInvariants()
+    foo = engine.new_step_stream('foo')
+    foo.set_step_status('FAILURE')
+    with self.assertRaises(AssertionError):
+      foo.set_step_status('SUCCESS')
+
+if __name__ == '__main__':
+  unittest.main()

@@ -1,3 +1,7 @@
+# Copyright 2015 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
 from recipe_engine import recipe_test_api
 
 class PropertiesTestApi(recipe_test_api.RecipeTestApi):
@@ -11,8 +15,7 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
     Merge kwargs into a typical buildbot properties blob, and return the blob.
     """
     ret = self(
-        blamelist='cool_dev1337@chromium.org,hax@chromium.org',
-        blamelist_real=['cool_dev1337@chromium.org', 'hax@chromium.org'],
+        blamelist=['cool_dev1337@chromium.org', 'hax@chromium.org'],
         buildbotURL='http://c.org/p/cr/',
         buildername='TestBuilder',
         buildnumber=571,

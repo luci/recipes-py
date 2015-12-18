@@ -1,0 +1,22 @@
+[
+  {
+    "cmd": [],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "trigger some junk",
+    "trigger_specs": [
+      {
+        "buildbot_changes": [
+          {
+            "when_timestamp": 1445412480
+          }
+        ],
+        "builder_name": "triggered"
+      }
+    ]
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

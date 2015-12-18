@@ -80,10 +80,10 @@ class StepApi(recipe_api.RecipeApiPlain):
     above); the dummy step will govern annotation emission, while the implicit
     context will propagate the dummy step's name to subordinate steps.
     """
-    self(name, [])
+    step_result = self(name, [])
     context_dict = {'name': name, 'nest_level': 1}
     with self.context(context_dict):
-      yield
+      yield step_result
 
   @property
   def defer_results(self):

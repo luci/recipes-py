@@ -102,24 +102,6 @@ def returns_placeholder(func):
   return inner
 
 
-def cached_unary(f):
-  """Decorator that caches/memoizes an unary function result.
-
-  If the function throws an exception, the cache table will not be updated.
-  """
-  cache = {}
-  empty = object()
-
-  @functools.wraps(f)
-  def cached_f(inp):
-    cache_entry = cache.get(inp, empty)
-    if cache_entry is empty:
-      cache_entry = f(inp)
-      cache[inp] = cache_entry
-    return cache_entry
-  return cached_f
-
-
 def scan_directory(path, predicate):
   """Recursively scans a directory and yields paths that match predicate."""
   for root, _dirs, files in os.walk(path):

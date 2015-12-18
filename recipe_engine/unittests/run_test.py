@@ -3,7 +3,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import json
 import os
+import re
 import subprocess
 import sys
 import unittest
@@ -15,16 +17,27 @@ sys.path.insert(0, os.path.join(THIRD_PARTY, 'mock-1.0.1'))
 sys.path.insert(0, BASE_DIR)
 
 import recipe_engine.run
+import recipe_engine.step_runner
 from recipe_engine import recipe_test_api
 import mock
 
 class RunTest(unittest.TestCase):
-  def _test_recipe(self, recipe):
+  def _run_cmd(self, recipe, properties=None):
     script_path = os.path.join(BASE_DIR, 'recipes.py')
-    exit_code = subprocess.call([
+
+    if properties:
+      proplist = [ '%s=%s' % (k, json.dumps(v))
+                   for k,v in properties.iteritems() ]
+    else:
+      proplist = []
+
+    return ([
         'python', script_path,
         '--package', os.path.join(BASE_DIR, 'infra', 'config', 'recipes.cfg'),
-        'run', recipe])
+        'run', recipe] + proplist)
+
+  def _test_recipe(self, recipe, properties=None):
+    exit_code = subprocess.call(self._run_cmd(recipe, properties))
     self.assertEqual(0, exit_code)
 
   def test_examples(self):
@@ -35,10 +48,42 @@ class RunTest(unittest.TestCase):
     self._test_recipe('json:example')
     self._test_recipe('uuid:example')
 
+    self._test_recipe('engine_tests/depend_on/top', {'to_pass': 42})
+
+  def test_nonexistent_command(self):
+    subp = subprocess.Popen(
+        self._run_cmd('engine_tests/nonexistent_command'),
+        stdout=subprocess.PIPE)
+    stdout, _ = subp.communicate()
+    self.assertEqual(255, subp.returncode)
+    self.assertRegexpMatches(stdout, '(?m)^@@@STEP_EXCEPTION@@@$')
+    self.assertRegexpMatches(stdout, 'OSError')
+
+  def test_trigger(self):
+    subp = subprocess.Popen(
+        self._run_cmd('engine_tests/trigger'),
+        stdout=subprocess.PIPE)
+    stdout, _ = subp.communicate()
+    self.assertEqual(0, subp.returncode)
+    m = re.compile(r'^@@@STEP_TRIGGER@(.*)@@@$', re.MULTILINE).search(stdout)
+    self.assertTrue(m)
+    blob = m.group(1)
+    json.loads(blob) # Raises an exception if the blob is not valid json.
+
+  def test_trigger_no_such_command(self):
+    """Tests that trigger still happens even if running the command fails."""
+    subp = subprocess.Popen(
+        self._run_cmd(
+            'engine_tests/trigger', properties={'command': ['na-huh']}),
+        stdout=subprocess.PIPE)
+    stdout, _ = subp.communicate()
+    self.assertEqual(255, subp.returncode)
+    self.assertRegexpMatches(stdout, r'(?m)^@@@STEP_TRIGGER@(.*)@@@$')
+
   def test_shell_quote(self):
     # For regular-looking commands we shouldn't need any specialness.
     self.assertEqual(
-        recipe_engine.run._shell_quote('/usr/bin/python-wrapper.bin'),
+        recipe_engine.step_runner._shell_quote('/usr/bin/python-wrapper.bin'),
         '/usr/bin/python-wrapper.bin')
 
     STRINGS = [
@@ -51,7 +96,7 @@ class RunTest(unittest.TestCase):
     ]
 
     for s in STRINGS:
-      quoted = recipe_engine.run._shell_quote(s)
+      quoted = recipe_engine.step_runner._shell_quote(s)
 
       # We shouldn't ever get an actual newline in a command, that's awful
       # for copypasta.
@@ -69,26 +114,37 @@ class RunTest(unittest.TestCase):
       # self.assertEqual(zsh_output.decode('utf-8'), s + '\n')
 
   def test_run_unconsumed(self):
-    stream = mock.Mock()
+    stream_engine = recipe_engine.stream.NoopStreamEngine()
     properties = {}
 
-    test_data = mock.Mock()
-    test_data.enabled = True
-    test_data.consumed = False
+    test_data = recipe_engine.recipe_test_api.TestData()
+    test_data.expect_exception('SomeException')
 
     api = mock.Mock()
     api._engine = mock.Mock()
     api._engine.properties = properties
 
-    engine = recipe_engine.run.RecipeEngine(stream, properties, test_data, None)
+    engine = recipe_engine.run.RecipeEngine(
+        recipe_engine.step_runner.SimulationStepRunner(
+            stream_engine, test_data),
+        properties,
+        None)
 
     class FakeScript(object):
       def run(self, _, __):
         return None
 
-    with mock.patch('recipe_engine.run.RecipeEngine._emit_results'):
-      with self.assertRaises(AssertionError):
-        engine.run(FakeScript(), api)
+    with self.assertRaises(AssertionError):
+      engine.run(FakeScript(), api)
+
+  def test_subannotations(self):
+    proc = subprocess.Popen(
+        self._run_cmd('engine_tests/subannotations'),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    stdout, stderr = proc.communicate()
+    self.assertRegexpMatches(stdout, r'(?m)^!@@@BUILD_STEP@steppy@@@$')
+    self.assertRegexpMatches(stdout, r'(?m)^@@@BUILD_STEP@pippy@@@$')
 
 
 if __name__ == '__main__':
