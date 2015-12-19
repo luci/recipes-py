@@ -193,6 +193,14 @@ class SubprocessStepRunner(StepRunner):
     except Exception:
       pass
 
+  def _render_step_value(self, value):
+    if not callable(value):
+      return value
+
+    while hasattr(value, 'func'):
+      value = value.func
+    return getattr(value, '__name__', 'UNKNOWN_CALLABLE')+'(...)'
+
   def _print_step(self, step_stream, step, env):
     """Prints the step command and relevant metadata.
 
@@ -203,12 +211,8 @@ class SubprocessStepRunner(StepRunner):
     step_stream.write_line('in dir %s:' % (step['cwd'] or os.getcwd()))
     for key, value in sorted(step.items()):
       if value is not None:
-        if callable(value):
-          # This prevents functions from showing up as:
-          #   '<function foo at 0x7f523ec7a410>'
-          # which is tricky to test.
-          value = value.__name__+'(...)'
-        step_stream.write_line(' %s: %s' % (key, value))
+        step_stream.write_line(
+            ' %s: %s' % (key, self._render_step_value(value)))
     step_stream.write_line('full environment:')
     for key, value in sorted(env.items()):
       step_stream.write_line(' %s: %s' % (key, value))

@@ -1,0 +1,17 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "steppity",
+      "doo",
+      "dah"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "Here's a step brah"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

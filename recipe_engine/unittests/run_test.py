@@ -49,6 +49,7 @@ class RunTest(unittest.TestCase):
     self._test_recipe('uuid:example')
 
     self._test_recipe('engine_tests/depend_on/top', {'to_pass': 42})
+    self._test_recipe('engine_tests/functools_partial')
 
   def test_nonexistent_command(self):
     subp = subprocess.Popen(

@@ -24,6 +24,7 @@ MODULES_WHITELIST = [
   r'collections',
   r'contextlib',
   r'datetime',
+  r'functools',
   r'itertools',
   r'json',
   r'math',
