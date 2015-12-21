@@ -59,6 +59,16 @@ deps {
     shutil.rmtree(self._root)
 
 class ErrorsTest(unittest.TestCase):
+  def _test_cmd(self, repo, cmd, asserts, retcode=0):
+    subp = subprocess.Popen(
+        repo.recipes_cmd + cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    stdout, stderr = subp.communicate()
+    if asserts:
+      asserts(stdout, stderr)
+    self.assertEqual(subp.returncode, retcode)
+
   def test_missing_dependency(self):
     with RecipeRepo() as repo:
       repo.make_recipe('foo', """
@@ -101,18 +111,37 @@ DEPS = ['aint_no_thang']
 DEPS = [ (sic)
 """)
 
-      def test_cmd(cmd):
-        subp = subprocess.Popen(
-            repo.recipes_cmd + cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
-        stdout, stderr = subp.communicate()
+      def assert_syntaxerror(stdout, stderr):
         self.assertRegexpMatches(stdout + stderr, r'SyntaxError')
-        self.assertEqual(subp.returncode, 1)
 
-      test_cmd(['simulation_test', 'foo'])
-      test_cmd(['simulation_test', 'train', 'foo'])
-      test_cmd(['run', 'foo'])
+      self._test_cmd(repo, ['simulation_test', 'test', 'foo'],
+          asserts=assert_syntaxerror, retcode=1)
+      self._test_cmd(repo, ['simulation_test', 'train', 'foo'],
+          asserts=assert_syntaxerror, retcode=1)
+      self._test_cmd(repo, ['run', 'foo'],
+          asserts=assert_syntaxerror, retcode=1)
+
+  def test_missing_path(self):
+    with RecipeRepo() as repo:
+      repo.make_recipe('missing_path', """
+DEPS = ['recipe_engine/step', 'recipe_engine/path']
+
+def RunSteps(api):
+  api.step('do it, joe', ['echo', 'JOE'], cwd=api.path['bippityboppityboo'])
+
+def GenTests(api):
+  yield api.test('basic')
+""")
+      def assert_keyerror(stdout, stderr):
+        self.assertRegexpMatches(
+            stdout + stderr, r"KeyError: 'Unknown path: bippityboppityboo'")
+
+      self._test_cmd(repo, ['simulation_test', 'train', 'missing_path'],
+          asserts=assert_keyerror, retcode=1)
+      self._test_cmd(repo, ['simulation_test', 'test', 'missing_path'],
+          asserts=assert_keyerror, retcode=1)
+      self._test_cmd(repo, ['run', 'missing_path'],
+          asserts=assert_keyerror, retcode=255)
 
 if __name__ == '__main__':
   unittest.main()

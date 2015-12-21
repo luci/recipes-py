@@ -223,6 +223,7 @@ class PathApi(recipe_api.RecipeApi):
       return r
     if name in self.c.base_paths:
       return config_types.Path(config_types.NamedBasePath(name))
+    raise KeyError('Unknown path: %s' % name) # pragma: no cover
 
   def __getattr__(self, name):
     # retrieve os.path attributes

@@ -25,7 +25,7 @@ def BaseConfig(**_kwargs):
     # optional
     env = Dict(item_fn=lambda (k, v): (k, v if v is None else str(v)),
                value_type=(basestring,int,Path,type(None))),
-    cwd = Single(Path, jsonish_fn=str, required=False),
+    cwd = Single(Path, jsonish_fn=str, required=True),
 
     stdout = Single(Placeholder, required=False),
     stderr = Single(Placeholder, required=False),
