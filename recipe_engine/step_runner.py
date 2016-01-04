@@ -208,7 +208,7 @@ class SubprocessStepRunner(StepRunner):
     beginning of each non-annotator step.
     """
     step_stream.write_line(' '.join(map(_shell_quote, step['cmd'])))
-    step_stream.write_line('in dir %s:' % (step['cwd'] or os.getcwd()))
+    step_stream.write_line('in dir %s:' % (step.get('cwd') or os.getcwd()))
     for key, value in sorted(step.items()):
       if value is not None:
         step_stream.write_line(
