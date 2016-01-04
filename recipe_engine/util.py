@@ -2,8 +2,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import contextlib
 import functools
 import os
+import sys
+import traceback
+import urllib
 
 from cStringIO import StringIO
 
@@ -108,6 +112,45 @@ def scan_directory(path, predicate):
     for file_name in (f for f in files if predicate(f)):
       file_path = os.path.join(root, file_name)
       yield file_path
+
+
+BUG_LINK = (
+    'https://code.google.com/p/chromium/issues/entry?%s' % urllib.urlencode({
+        'summary': 'Recipe engine bug: unexpected failure',
+        'comment': 'Link to the failing build and paste the exception here',
+        'labels': 'Infra,Infra-Area-Recipes,Pri-0,Restrict-View-Google,Infra-Troopers',
+        'cc': 'luqui@chromium.org,iannucci@chromium.org',
+    }))
+
+
+@contextlib.contextmanager
+def raises(exc_cls, stream_engine=None):
+  """If the body raises an exception not in exc_cls, print and abort the engine.
+
+  This is so that we have something to go on when a function goes wrong, yet the
+  exception is covered up by something else (e.g. an error in a finally block).
+  """
+
+  try:
+    yield
+  except Exception as e:
+    if isinstance(e, exc_cls):
+      raise
+    else:
+      # Print right away in case the bug is in the stream_engine.
+      traceback.print_exc()
+      print '@@@STEP_EXCEPTION@@@'
+
+      if stream_engine:
+        # Now do it a little nicer with annotations.
+        with stream_engine.new_step_stream('Recipe engine bug') as stream:
+          stream.set_step_status('EXCEPTION')
+          with stream.new_log_stream('exception') as log:
+            log.write_split(traceback.format_exc())
+          stream.add_step_link('file a bug', BUG_LINK)
+      sys.stdout.flush()
+      sys.stderr.flush()
+      os._exit(2)
 
 
 class StringListIO(object):

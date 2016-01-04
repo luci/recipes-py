@@ -26,6 +26,14 @@ class StepRunner(object):
   These can actually make subprocess calls (SubprocessStepRunner), or just
   pretend to run the steps with mock output (SimulationStepRunner).
   """
+  @property
+  def stream_engine(self):
+    """Return the stream engine that this StepRunner uses, if meaningful.
+
+    Users of this method must be prepared to handle None.
+    """
+    return None
+
   def open_step(self, step_dict):
     """Constructs an OpenStep object which can be used to actually run a step.
 
@@ -99,6 +107,10 @@ class SubprocessStepRunner(StepRunner):
 
   def __init__(self, stream_engine):
     self._stream_engine = stream_engine
+
+  @property
+  def stream_engine(self):
+    return self._stream_engine
 
   def open_step(self, step_dict):
     step_stream = self._stream_engine.new_step_stream(
@@ -347,6 +359,10 @@ class SimulationStepRunner(StepRunner):
     self._test_data = test_data
     self._stream_engine = stream_engine
     self._step_history = collections.OrderedDict()
+
+  @property
+  def stream_engine(self):
+    return self._stream_engine
 
   def open_step(self, step_dict):
     # We modify step_dict.  In particular, we add ~followup_annotations during

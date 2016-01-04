@@ -56,9 +56,9 @@ class RunTest(unittest.TestCase):
         self._run_cmd('engine_tests/nonexistent_command'),
         stdout=subprocess.PIPE)
     stdout, _ = subp.communicate()
-    self.assertEqual(255, subp.returncode)
     self.assertRegexpMatches(stdout, '(?m)^@@@STEP_EXCEPTION@@@$')
     self.assertRegexpMatches(stdout, 'OSError')
+    self.assertEqual(255, subp.returncode)
 
   def test_trigger(self):
     subp = subprocess.Popen(
@@ -78,8 +78,8 @@ class RunTest(unittest.TestCase):
             'engine_tests/trigger', properties={'command': ['na-huh']}),
         stdout=subprocess.PIPE)
     stdout, _ = subp.communicate()
-    self.assertEqual(255, subp.returncode)
     self.assertRegexpMatches(stdout, r'(?m)^@@@STEP_TRIGGER@(.*)@@@$')
+    self.assertEqual(255, subp.returncode)
 
   def test_shell_quote(self):
     # For regular-looking commands we shouldn't need any specialness.

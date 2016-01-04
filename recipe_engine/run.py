@@ -72,6 +72,7 @@ from . import loader
 from . import recipe_api
 from . import recipe_test_api
 from . import types
+from . import util
 
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -332,44 +333,46 @@ class RecipeEngine(object):
     Returns:
       A StepData object containing the result of running the step.
     """
-    ok_ret = step.pop('ok_ret')
-    infra_step = step.pop('infra_step')
+    with util.raises((recipe_api.StepFailure, OSError),
+                     self._step_runner.stream_engine):
+      ok_ret = step.pop('ok_ret')
+      infra_step = step.pop('infra_step')
 
-    step_result = None
+      step_result = None
 
-    nest_level = step.pop('step_nest_level', 0)
-    self._close_to_level(nest_level)
+      nest_level = step.pop('step_nest_level', 0)
+      self._close_to_level(nest_level)
 
-    open_step = self._step_runner.open_step(step)
-    self._step_stack.append(self.ActiveStep(
-        step=step,
-        step_result=None,
-        open_step=open_step,
-        nest_level=nest_level))
-    if nest_level:
-      open_step.stream.set_nest_level(nest_level)
+      open_step = self._step_runner.open_step(step)
+      self._step_stack.append(self.ActiveStep(
+          step=step,
+          step_result=None,
+          open_step=open_step,
+          nest_level=nest_level))
+      if nest_level:
+        open_step.stream.set_nest_level(nest_level)
 
-    step_result = open_step.run()
-    self._step_stack[-1] = (
-        self._step_stack[-1]._replace(step_result=step_result))
+      step_result = open_step.run()
+      self._step_stack[-1] = (
+          self._step_stack[-1]._replace(step_result=step_result))
 
-    if step_result.retcode in ok_ret:
-      step_result.presentation.status = 'SUCCESS'
-      return step_result
-    else:
-      if not infra_step:
-        state = 'FAILURE'
-        exc = recipe_api.StepFailure
+      if step_result.retcode in ok_ret:
+        step_result.presentation.status = 'SUCCESS'
+        return step_result
       else:
-        state = 'EXCEPTION'
-        exc = recipe_api.InfraFailure
+        if not infra_step:
+          state = 'FAILURE'
+          exc = recipe_api.StepFailure
+        else:
+          state = 'EXCEPTION'
+          exc = recipe_api.InfraFailure
 
-      step_result.presentation.status = state
+        step_result.presentation.status = state
 
-      self._step_stack[-1].open_step.stream.write_line(
-          'step returned non-zero exit code: %d' % step_result.retcode)
+        self._step_stack[-1].open_step.stream.write_line(
+            'step returned non-zero exit code: %d' % step_result.retcode)
 
-      raise exc(step['name'], step_result)
+        raise exc(step['name'], step_result)
 
   def run(self, recipe_script, api):
     """Run a recipe represented by a recipe_script object.

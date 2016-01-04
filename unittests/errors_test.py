@@ -143,5 +143,28 @@ def GenTests(api):
       self._test_cmd(repo, ['run', 'missing_path'],
           asserts=assert_keyerror, retcode=255)
 
+  def test_engine_failure(self):
+    with RecipeRepo() as repo:
+      repo.make_recipe('print_step_error', """
+DEPS = ['recipe_engine/step']
+
+from recipe_engine import step_runner
+
+def bad_print_step(self, step_stream, step, env):
+  raise Exception("Buh buh buh buh bad to the bone")
+
+def RunSteps(api):
+  step_runner.SubprocessStepRunner._print_step = bad_print_step
+  try:
+    api.step('Be good', ['echo', 'Sunshine, lollipops, and rainbows'])
+  finally:
+    api.step.active_result.presentation.status = 'WARNING'
+""")
+      self._test_cmd(repo, ['run', 'print_step_error'],
+        asserts=lambda stdout, stderr: self.assertRegexpMatches(
+            stdout + stderr,
+            r'(?s)Recipe engine bug.*Buh buh buh buh bad to the bone'),
+        retcode=2)
+
 if __name__ == '__main__':
   unittest.main()
