@@ -39,7 +39,7 @@ it as a reference.
 All recipes take the form of a python file whose body looks like this:
 
 ```python
-DEPS = ['step']
+DEPS = ['recipe_engine/step']
 
 def RunSteps(api):
   api.step('Print Hello World', ['echo', 'hello', 'world'])
@@ -59,7 +59,7 @@ repository.
 Put this in a file under `scripts/slave/recipes/hello.py`. You can then
 run this recipe by calling
 
-    $ scripts/tools/run_recipe.py hello
+    $ scripts/slave/recipes.py run hello
 
 *** promo
 Note: every recipe execution (e.g. build on buildbot) emits
@@ -176,10 +176,10 @@ of DEPS, you'll get an AttributeError when you try to access them. The modules
 are located primarily in `recipe_modules/`, and their name is their folder name.
 
 There are a whole bunch of modules which provide really helpful tools. You
-should go take a look at them. `scripts/tools/show_me_the_modules.py` is a
+should go take a look at them. `scripts/slave/recipes.py` is a
 pretty helpful tool. If you want to know more about properties, step and path, I
-would suggest starting with `show_me_the_modules.py`, and then delving into the
-helpful docstrings in those helpful modules.
+would suggest starting with `scripts/slave/recipes.py doc`, and then delving
+into the helpful docstrings in those helpful modules.
 
 ## Making Modules
 
@@ -611,7 +611,7 @@ step_result.presentation.step_text = 'Dynamic step result text'
 
 ## How do I know what modules to use?
 
-Use `scripts/tools/show_me_the_modules.py`. It's super effective!
+Use `scripts/slave/recipes.py doc`. It's super effective!
 
 ## How do I run those tests you were talking about?
 
