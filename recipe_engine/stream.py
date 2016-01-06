@@ -52,6 +52,9 @@ class StreamEngine(object):
     def add_step_link(self, name, url):
       raise NotImplementedError()
 
+    def reset_subannotation_state(self):
+      pass
+
     def set_step_status(self, status):
       raise NotImplementedError()
 
@@ -115,6 +118,7 @@ class ProductStreamEngine(StreamEngine):
     add_step_text = _void_product('add_step_text')
     add_step_summary_text = _void_product('add_step_summary_text')
     add_step_link = _void_product('add_step_link')
+    reset_subannotation_state = _void_product('reset_subannotation_state')
     set_step_status = _void_product('set_step_status')
     set_nest_level = _void_product('set_nest_level')
     set_build_property = _void_product('set_build_property')
@@ -140,6 +144,7 @@ class NoopStreamEngine(StreamEngine):
     add_step_text = _noop
     add_step_summary_text = _noop
     add_step_link = _noop
+    reset_subannotation_state = _noop
     set_step_status = _noop
     set_nest_level = _noop
     set_build_property = _noop
@@ -330,6 +335,13 @@ class AnnotatorStreamEngine(StreamEngine):
   class AllowSubannotationsStepStream(StepStream):
     def write_line(self, line):
       self.basic_write(line + '\n')
+
+    # HACK(luqui): If the subannotator script changes the active step, we need
+    # a way to get back to the real step that spawned the script.  The right
+    # way to do that is to parse the annotation stream and re-emit it.  But for
+    # now we just provide this method.
+    def reset_subannotation_state(self):
+      self._engine._current_step = None
 
   def new_step_stream(self, step_name, allow_subannotations=False):
     self.output_annotation('SEED_STEP', step_name)

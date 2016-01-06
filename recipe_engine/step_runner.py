@@ -113,9 +113,10 @@ class SubprocessStepRunner(StepRunner):
     return self._stream_engine
 
   def open_step(self, step_dict):
+    allow_subannotations = step_dict.get('allow_subannotations', False)
     step_stream = self._stream_engine.new_step_stream(
         step_dict['name'],
-        allow_subannotations=step_dict.get('allow_subannotations', False))
+        allow_subannotations=allow_subannotations)
     if not step_dict.get('cmd'):
       class EmptyOpenStep(OpenStep):
         def run(inner):
@@ -165,6 +166,9 @@ class SubprocessStepRunner(StepRunner):
           step_stream.set_step_status('EXCEPTION')
           raise
         finally:
+          # NOTE(luqui) See the accompanying note in stream.py.
+          step_stream.reset_subannotation_state()
+
           if 'trigger_specs' in step_dict:
             self._trigger_builds(step_stream, step_dict['trigger_specs'])
 
