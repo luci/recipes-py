@@ -414,14 +414,15 @@ class SimulationStepRunner(StepRunner):
   def run_context(self):
     try:
       yield
-
-      assert self._test_data.consumed, (
-          "Unconsumed test data for steps: %s" % (
-              self._test_data.step_data.keys(),))
     except Exception as ex:
       with self._test_data.should_raise_exception(ex) as should_raise:
         if should_raise:
           raise
+
+    assert self._test_data.consumed, (
+        "Unconsumed test data for steps: %s, (exception %s)" % (
+            self._test_data.step_data.keys(),
+            self._test_data.expected_exception))
 
   @property
   def steps_ran(self):

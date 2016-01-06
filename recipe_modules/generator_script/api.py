@@ -43,6 +43,9 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
 
     failed_steps = []
     for step in new_steps:
+      assert all([ isinstance(arg, basestring) for arg in step['cmd']]), (
+        step['cmd'])
+
       if env:
         new_env = dict(env)
         new_env.update(step.get('env', {}))

@@ -1,0 +1,32 @@
+[
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "malformed.py",
+      "--output-json",
+      "/path/to/tmp/json"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "gen step(malformed.py)",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@[@@@",
+      "@@@STEP_LOG_LINE@json.output@  {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"cmd\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"echo\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"there are\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      4, @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"cows\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    ], @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"name\": \"run\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@]@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "name": "$result",
+    "reason": "Uncaught Exception: AssertionError(['echo', 'there are', 4, 'cows'],)",
+    "status_code": -1
+  }
+]

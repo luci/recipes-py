@@ -166,5 +166,24 @@ def RunSteps(api):
             r'(?s)Recipe engine bug.*Buh buh buh buh bad to the bone'),
         retcode=2)
 
+  def test_unconsumed_assertion(self):
+    # There was a regression where unconsumed exceptions would not be detected
+    # if the exception was AssertionError.
+
+    with RecipeRepo() as repo:
+      repo.make_recipe('unconsumed_assertion', """
+DEPS = []
+
+def RunSteps(api):
+  pass
+
+def GenTests(api):
+  yield api.test('basic') + api.expect_exception('AssertionError')
+""")
+      self._test_cmd(repo, ['simulation_test', 'train', 'unconsumed_assertion'],
+        asserts=lambda stdout, stderr: self.assertRegexpMatches(
+            stdout + stderr, 'Unconsumed'),
+        retcode=1)
+
 if __name__ == '__main__':
   unittest.main()

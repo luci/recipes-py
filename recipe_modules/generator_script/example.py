@@ -65,3 +65,12 @@ def GenTests(api):
     ) +
     api.step_data('fails', retcode=1)
   )
+
+  yield (
+    api.test('malformed_command') +
+    api.properties(script_name='malformed.py') +
+    api.generator_script(
+      'malformed.py',
+      {'name': 'run', 'cmd': ['echo', 'there are', 4, 'cows']}) +
+    api.expect_exception('AssertionError')
+  )
