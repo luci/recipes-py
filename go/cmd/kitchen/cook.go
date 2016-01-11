@@ -6,6 +6,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"os"
 	"os/exec"
@@ -13,7 +14,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/golang/go/src/io/ioutil"
 	"github.com/luci/luci-go/common/ctxcmd"
 	"github.com/maruel/subcommands"
 	"golang.org/x/net/context"

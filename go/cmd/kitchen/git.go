@@ -9,8 +9,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"path/filepath"
 
-	"github.com/golang/go/src/path/filepath"
 	"github.com/luci/luci-go/common/ctxcmd"
 	"golang.org/x/net/context"
 )
