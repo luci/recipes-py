@@ -76,7 +76,7 @@ having to guess at the parameters to `run_recipe.py`.
 So, we have our recipe. Let's add a test to it.
 
 ```python
-DEPS = ['step']
+DEPS = ['recipe_engine/step']
 
 def RunSteps(api):
   api.step('Print Hello World', ['echo', 'hello', 'world'])
