@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from recipe_engine.recipe_api import Property
+
 DEPS = [
   'generator_script',
   'json',
@@ -10,8 +12,12 @@ DEPS = [
   'step',
 ]
 
+PROPERTIES = {
+  'script_name': Property(kind=str),
+  'script_env': Property(default=None, kind=dict),
+}
 
-def RunSteps(api):
+def RunSteps(api, script_name, script_env):
   api.path['checkout'] = api.path['slave_build']
   script_name = api.properties['script_name']
   script_env = api.properties.get('script_env')
