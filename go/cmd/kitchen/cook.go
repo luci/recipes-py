@@ -125,6 +125,9 @@ func (c *cookRun) run(ctx context.Context) (recipeExitCode int, err error) {
 		return 0, err
 	}
 
+	fmt.Printf("Running command %q %q in %q\n",
+		recipeCmd.Path, recipeCmd.Args, recipeCmd.Dir)
+
 	recipeCtxCmd := ctxcmd.CtxCmd{Cmd: recipeCmd}
 	switch err := recipeCtxCmd.Run(ctx).(type) {
 	case *exec.ExitError:
