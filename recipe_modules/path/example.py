@@ -63,3 +63,7 @@ def GenTests(api):
   yield (api.test('linux_swarming') +
          api.properties(path_config='swarming') +
          api.path.exists(api.path['slave_build']))
+
+  yield (api.test('linux_kitchen') +
+         api.properties(path_config='kitchen') +
+         api.path.exists(api.path['slave_build']))

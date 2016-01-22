@@ -173,8 +173,9 @@ class PathApi(recipe_api.RecipeApi):
       self._temp_dir = ['/']
 
     # We can't depend on another module in the ctor.
-    if self._engine.properties.get('path_config') == 'swarming':
-      self.set_config('swarming')
+    path_config = self._engine.properties.get('path_config')
+    if path_config in ('kitchen', 'swarming'):
+      self.set_config(path_config)
     else:
       self.set_config('buildbot')
 

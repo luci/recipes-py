@@ -50,3 +50,9 @@ def swarming(c):
   c.base_paths['slave_build'] = (
       c.CURRENT_WORKING_DIR[:1] +
       ('b', 'fake_build', 'slave', 'fake_slave', 'build'))
+
+@config_ctx()
+def kitchen(c):
+  # TODO(phajdan.jr): Fully implement the kitchen config.
+  c.base_paths['root'] = c.CURRENT_WORKING_DIR
+  c.base_paths['slave_build'] = c.CURRENT_WORKING_DIR
