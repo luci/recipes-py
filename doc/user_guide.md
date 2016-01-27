@@ -122,6 +122,13 @@ familiar with BuildBot, you'll probably know them as `factory_properties` and
 `build_properties`. The new `properties` object is a merging of these two, and
 is provided by the `properties` api module.
 
+This is now abstracted into the PROPERTIES top level declaration in your recipe.
+You declare a dictionary of properties that your recipe accepts. The recipe
+engine will extract the properties your recipe cares about from all the
+properties it knows about, and pass them as arguments to your RunSteps function.
+
+Let's see an example!
+
 ```python
 from recipe_engine.recipe_api import Property
 
@@ -146,6 +153,22 @@ def GenTests(api):
   yield api.test('vader') + api.properties(target_of_admiration='DarthVader')
   yield api.test('infra rocks')
 ```
+
+The property list is a whitelist, so if the properties provided as inputs to the
+current recipe run were
+
+```python
+{
+  'target_of_admiration': 'Darth Vader',
+  'some_other_chill_thing': 'so_chill',
+}
+```
+
+then the recipe wouldn't know about the other `some_other_chill_thing` property
+at all.
+
+Note that properties without a default are required. If you don't want a
+property to be required, just add `default=None` to the definition. 
 
 Yes, elements of a test specification are combined with `+` and it's weird.
 
