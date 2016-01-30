@@ -391,6 +391,57 @@ class MultiRepoTest(unittest.TestCase):
 
     self._run_roll(repos['b'], expect_updates=False)
 
+  def test_duplicate_names(self):
+    repos = self._repo_setup({
+        'a': [],
+        'b': ['a'],
+    })
+    fname = lambda repo, *f: os.path.join(repos[repo]['root'], *f)
+
+    for repo in ('a', 'b'):
+      os.makedirs(fname(repo, 'recipe_modules', 'foo'))
+
+      with open(
+          fname(repo, 'recipe_modules', 'foo', '__init__.py'), 'w') as fh:
+        fh.write("DEPS = []")
+
+      with open(
+          fname(repo, 'recipe_modules', 'foo', 'api.py'), 'w') as fh:
+        fh.writelines([
+          'from recipe_engine import recipe_api\n',
+          '\n',
+          'class FakeApi(recipe_api.RecipeApi):\n',
+          '  pass\n',
+        ])
+
+      with _in_directory(fname(repo)):
+        self._run_cmd(['git', 'add', 'recipe_modules'])
+        self._run_cmd(['git', 'commit', '-m', 'Add the files'])
+
+
+    os.makedirs(os.path.join(repos['b']['root'], 'recipes'))
+    with open(
+        os.path.join(
+            repos[repo]['root'], 'recipes', 'test.py'), 'w') as fh:
+      fh.writelines([
+        'DEPS = {\n',
+        '  "foo": "a/foo",\n',
+        '  "otherfoo": "foo"\n',
+        '}\n',
+        '\n',
+        'def RunSteps(api):\n',
+        '  pass\n',
+      ])
+    self._run_roll(repos['b'], expect_updates=True)
+
+    popen = subprocess.Popen([
+        'python', self._recipe_tool,
+        '--package', os.path.join(
+            repos['b']['root'], 'infra', 'config', 'recipes.cfg'),
+        'run', 'test'],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = popen.communicate()
+    self.assertEqual(popen.returncode, 0, stderr)
 
 if __name__ == '__main__':
   unittest.main()
