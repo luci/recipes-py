@@ -34,7 +34,11 @@ def PathToString(api, test):
       if test.enabled:
         base_path = repr(path.base)
       else:  # pragma: no cover
-        base_path = path.base.package.recipes_dir
+        # copied from package.py, InfraRepoConfig.from_recipes_cfg
+        base_path = os.path.dirname(
+                      os.path.dirname(
+                        os.path.dirname(
+                          path.base.package.repo_spec.recipes_cfg_proto.path)))
     else:  # pragma: no cover
       raise NotImplementedError('PathToString not implemented for %s' %
                                 path.base.__class__.__name__)

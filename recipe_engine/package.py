@@ -49,7 +49,7 @@ class ProtoFile(object):
   This is an object so that it can be mocked in the tests.
   """
   def __init__(self, path):
-    self._path = path
+    self._path = os.path.abspath(path)
 
   @property
   def path(self):
@@ -328,7 +328,7 @@ class PathRepoSpec(RepoSpec):
 
 class RootRepoSpec(RepoSpec):
   def __init__(self, proto_file):
-    self._proto_file = proto_file
+    self.recipes_cfg_proto = proto_file
 
   def checkout(self, context):
     # We assume this is already checked out.
@@ -341,7 +341,7 @@ class RootRepoSpec(RepoSpec):
     return context.repo_root
 
   def proto_file(self, context):
-    return self._proto_file
+    return self.recipes_cfg_proto
 
   def __eq__(self, other):
     if not isinstance(other, type(self)):
