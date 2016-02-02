@@ -56,3 +56,4 @@ def kitchen(c):
   # TODO(phajdan.jr): Fully implement the kitchen config.
   c.base_paths['root'] = c.CURRENT_WORKING_DIR
   c.base_paths['slave_build'] = c.CURRENT_WORKING_DIR
+  c.dynamic_paths['checkout'] = None

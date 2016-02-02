@@ -90,7 +90,9 @@ class ModuleBasePath(BasePath, namedtuple('ModuleBasePath', 'module')):
     prefix = '%s.' % RECIPE_MODULE_PREFIX
     assert self.module.__name__.startswith(prefix)
     name = self.module.__name__[len(prefix):]
-    return 'RECIPE_MODULE[%s]' % name
+    # We change python's module delimiter . to ::, since . is already used
+    # by expect tests.
+    return 'RECIPE_MODULE[%s]' % re.sub('\.', '::', name)
 
 
 class PackageBasePath(BasePath, namedtuple('PackageBasePath', 'package')):
