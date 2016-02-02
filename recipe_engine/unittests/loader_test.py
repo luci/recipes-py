@@ -146,6 +146,5 @@ class TestInvoke(unittest.TestCase):
       args, _ = mocked_invoke.call_args
       self.assertTrue(['api', 'foo', 'bar'] in args)
 
-
 if __name__ == '__main__':
   unittest.main()

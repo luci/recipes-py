@@ -295,8 +295,6 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
       deps = {}
       for item in spec:
         name, dep = self._dep_from_name(item)
-        assert name not in deps, (
-            "You specified two dependencies with the name %s" % name)
         deps[name] = self.universe.load(dep)
     # Explicit local names.
     elif isinstance(spec, dict):
@@ -345,8 +343,7 @@ def _find_and_load_module(fullname, modname, path):
 
 def _load_recipe_module_module(path, universe_view):
   modname = os.path.splitext(os.path.basename(path))[0]
-  fullname = '%s.%s.%s' % (
-      RECIPE_MODULE_PREFIX, universe_view.package.name, modname)
+  fullname = '%s.%s' % (RECIPE_MODULE_PREFIX, modname)
   mod = _find_and_load_module(fullname, modname, path)
 
   # This actually loads the dependencies.
@@ -354,9 +351,9 @@ def _load_recipe_module_module(path, universe_view):
 
   # Prevent any modules that mess with sys.path from leaking.
   with _preserve_path():
+    # TODO(luqui): Remove this hack once configs are cleaned.
     sys.modules['%s.DEPS' % fullname] = mod.LOADED_DEPS
-    _recursive_import(
-        path, '%s.%s' % (RECIPE_MODULE_PREFIX, universe_view.package.name))
+    _recursive_import(path, RECIPE_MODULE_PREFIX)
     _patchup_module(modname, mod, universe_view)
 
   return mod
@@ -399,9 +396,8 @@ def _patchup_module(name, submod, universe_view):
   'api', 'config', 'test_api'. This function scans through dicts of that
   submodules to find subclasses of RecipeApi, RecipeTestApi, etc.
   """
-  fullname = '%s/%s' % (universe_view.package.name, name)
   submod.NAME = name
-  submod.UNIQUE_NAME = fullname
+  submod.UNIQUE_NAME = name  # TODO(luqui): use a luci-config unique name
   submod.MODULE_DIRECTORY = Path(ModuleBasePath(submod))
   submod.PACKAGE_DIRECTORY = Path(PackageBasePath(universe_view.package))
   submod.CONFIG_CTX = getattr(submod, 'CONFIG_CTX', None)
@@ -419,7 +415,7 @@ def _patchup_module(name, submod, universe_view):
   for v in submod.api.__dict__.itervalues():
     if inspect.isclass(v) and issubclass(v, RecipeApiPlain):
       assert not submod.API, (
-        '%s has more than one Api subclass: %s, %s' % (name, v, submod.API))
+        '%s has more than one Api subclass: %s, %s' % (name, v, submod.api))
       submod.API = v
   assert submod.API, 'Submodule has no api? %s' % (submod)
 

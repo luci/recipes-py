@@ -10,7 +10,7 @@
   {
     "cmd": [
       "echo",
-      "RECIPE_MODULE[recipe_engine.path]/resources/dir/file.py"
+      "RECIPE_MODULE[path]/resources/dir/file.py"
     ],
     "cwd": "[SLAVE_BUILD]",
     "name": "print resource"
