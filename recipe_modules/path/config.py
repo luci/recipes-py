@@ -36,7 +36,8 @@ def BASE(c):
 def buildbot(c):
   c.base_paths['root'] = c.CURRENT_WORKING_DIR[:-4]
   c.base_paths['slave_build'] = c.CURRENT_WORKING_DIR
-  c.base_paths['git_cache'] = c.base_paths['root'] + ('slave', 'cache_dir')
+  c.base_paths['git_cache'] = c.base_paths['root'] + (
+      'build', 'slave', 'cache_dir')
   for token in ('build_internal', 'build', 'depot_tools'):
     c.base_paths[token] = c.base_paths['root'] + (token,)
   c.dynamic_paths['checkout'] = None
