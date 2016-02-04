@@ -38,7 +38,8 @@ def PathToString(api, test):
     else:  # pragma: no cover
       raise NotImplementedError('PathToString not implemented for %s' %
                                 path.base.__class__.__name__)
-    assert base_path, 'Could not get base %r for path' % path.base
+    assert base_path, 'Could not get base %r for path; pieces: %r' % (
+        path.base, path.pieces)
     return api.join(base_path, *path.pieces) + suffix
   return PathToString_inner
 
