@@ -199,6 +199,17 @@ class ProjectOverrideAction(argparse.Action):
     v[project_id] = path
 
 
+def depgraph(package_deps, args):
+  from recipe_engine import depgraph
+  from recipe_engine import loader
+
+  _, config_file = get_package_config(args)
+  universe = loader.RecipeUniverse(package_deps, config_file)
+
+  depgraph.main(universe, ignore_packages=args.ignore_package,
+                stdout=args.output)
+
+
 def doc(package_deps, args):
   from recipe_engine import doc
   from recipe_engine import loader
@@ -301,6 +312,20 @@ def main():
       '--output-json',
       help='A json file to output information about the roll to.')
 
+  depgraph_p = subp.add_parser(
+      'depgraph',
+      help='Produce graph of recipe and recipe module dependencies. Example: '
+           './recipes.py --package infra/config/recipes.cfg depgraph | tred | '
+           'dot -Tpdf > graph.pdf')
+  depgraph_p.set_defaults(command='depgraph')
+  depgraph_p.add_argument(
+      '--output', type=argparse.FileType('w'), default=sys.stdout,
+      help='The file to write output to')
+  depgraph_p.add_argument(
+      '--ignore-package', action='append', default=[],
+      help='Ignore a recipe package (e.g. recipe_engine). Can be passed '
+           'multiple times')
+
   doc_p = subp.add_parser(
       'doc',
       help='List all known modules reachable from the current package with '
@@ -339,6 +364,8 @@ def main():
     assert not args.no_fetch, (
         'Rolling without fetching is not supported yet.')
     return roll(args)
+  elif args.command == 'depgraph':
+    return depgraph(package_deps, args)
   elif args.command == 'doc':
     return doc(package_deps, args)
   elif args.command == 'info':
