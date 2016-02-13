@@ -144,7 +144,7 @@ class PathApi(recipe_api.RecipeApi):
   # Because the native 'path' type in python is a str, we filter the *args
   # of these methods to stringify them first (otherwise they would be getting
   # recipe_util_types.Path instances).
-  FILTER_METHODS = ('abspath', 'basename', 'exists', 'join', 'split',
+  FILTER_METHODS = ('abspath', 'basename', 'dirname', 'exists', 'join', 'split',
                     'splitext')
 
   def get_config_defaults(self):
