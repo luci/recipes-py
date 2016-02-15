@@ -118,8 +118,8 @@ BUG_LINK = (
     'https://code.google.com/p/chromium/issues/entry?%s' % urllib.urlencode({
         'summary': 'Recipe engine bug: unexpected failure',
         'comment': 'Link to the failing build and paste the exception here',
-        'labels': 'Infra,Infra-Area-Recipes,Pri-0,Restrict-View-Google,Infra-Troopers',
-        'cc': 'luqui@chromium.org,iannucci@chromium.org',
+        'labels': 'Infra,Infra-Area-Recipes,Pri-1,Restrict-View-Google,Infra-Troopers',
+        'cc': 'martiniss@chromium.org,iannucci@chromium.org',
     }))
 
 
