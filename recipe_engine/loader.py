@@ -120,6 +120,10 @@ class PathDependency(Dependency):
     except (LoaderError,AssertionError,ImportError) as e:
       _amend_exception(e, 'while loading recipe module %s' % self._path)
 
+  def __repr__(self):
+    return '<%s(path=%r,local_name=%r,load_from_package=%r)>' % (
+        type(self).__name__, self._path, self._local_name,
+        self._load_from_package)
 
   @property
   def local_name(self):

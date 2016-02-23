@@ -361,6 +361,10 @@ class Package(object):
     self.deps = deps
     self.recipes_dir = recipes_dir
 
+  def __repr__(self):
+    return '<Package(name=%r,repo_spec=%r,deps=%r,recipes_dir=%r)>' % (
+        self.name, self.repo_spec, self.deps, self.recipes_dir)
+
   @property
   def recipe_dirs(self):
     return [os.path.join(self.recipes_dir, 'recipes')]
