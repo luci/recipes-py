@@ -5,6 +5,7 @@
 from __future__ import print_function
 
 import sys
+import os
 
 from . import loader
 
@@ -23,9 +24,9 @@ def main(universe, ignore_packages, stdout):
   packages = {}
   module_to_package = {}
   edges = []
-  for package, modpath in universe.loop_over_recipe_modules():
-    mod = universe.load(loader.PathDependency(
-        modpath, modpath, package, universe))
+  for package, module_name in universe.loop_over_recipe_modules():
+    mod = universe.load(package, module_name)
+
     for dep in mod.LOADED_DEPS:
       edges.append((mod.NAME, dep))
     packages.setdefault(package.name, []).append(mod.NAME)

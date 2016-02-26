@@ -183,11 +183,11 @@ class SubprocessStepRunner(StepRunner):
 
     return ReturnOpenStep()
 
-  def run_recipe(self, universe, recipe, properties):
+  def run_recipe(self, universe_view, recipe, properties):
     with tempfile.NamedTemporaryFile() as f:
       cmd = [sys.executable,
-             universe.package_deps.engine_recipes_py,
-             '--package=%s' % universe.config_file, 'run',
+             universe_view.universe.package_deps.engine_recipes_py,
+             '--package=%s' % universe_view.universe.config_file.path, 'run',
              '--output-result-json=%s' % f.name, recipe]
       cmd.extend(['%s=%s' % (k,repr(v)) for k, v in properties.iteritems()])
 

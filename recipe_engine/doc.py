@@ -82,9 +82,8 @@ def main(universe):
     pmethod(1, method, getattr(recipe_api.RecipeApi, method))
 
   deps = {}
-  for package, modpath in universe.loop_over_recipe_modules():
-    deps[modpath] = universe.load(loader.PathDependency(
-        modpath, modpath, package, universe))
+  for package, module_name in universe.loop_over_recipe_modules():
+    deps[module_name] = universe.load(package, module_name)
 
   inst = loader.create_recipe_api(
       deps, recipe_run.RecipeEngine(None, {}, universe))

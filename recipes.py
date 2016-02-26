@@ -37,9 +37,10 @@ def simulation_test(package_deps, args):
   from recipe_engine import loader
 
   _, config_file = get_package_config(args)
-  universe = loader.RecipeUniverse(package_deps, config_file.path)
+  universe = loader.RecipeUniverse(package_deps, config_file)
+  universe_view = loader.UniverseView(universe, package_deps.root_package)
 
-  simulation_test.main(universe, args=json.loads(args.args))
+  simulation_test.main(universe_view, args=json.loads(args.args))
 
 
 def lint(package_deps, args):
@@ -47,9 +48,10 @@ def lint(package_deps, args):
   from recipe_engine import loader
 
   _, config_file = get_package_config(args)
-  universe = loader.RecipeUniverse(package_deps, config_file.path)
+  universe = loader.RecipeUniverse(package_deps, config_file)
+  universe_view = loader.UniverseView(universe, package_deps.root_package)
 
-  lint_test.main(universe, args.whitelist or [])
+  lint_test.main(universe_view, args.whitelist or [])
 
 
 def handle_recipe_return(recipe_result, result_filename, stream_engine):
@@ -117,7 +119,9 @@ def run(package_deps, args):
   os.environ['PYTHONIOENCODING'] = 'UTF-8'
 
   _, config_file = get_package_config(args)
-  universe = loader.RecipeUniverse(package_deps, config_file.path)
+  universe = loader.UniverseView(
+      loader.RecipeUniverse(
+          package_deps, config_file), package_deps.root_package)
 
   workdir = (args.workdir or
       os.path.join(os.path.dirname(os.path.realpath(__file__)), 'workdir'))

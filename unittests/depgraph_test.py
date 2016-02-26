@@ -12,7 +12,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class DepgraphTest(unittest.TestCase):
-  def test_doc(self):
+  def test_depgraph(self):
     script_path = os.path.join(BASE_DIR, 'recipes.py')
     exit_code = subprocess.call([
         'python', script_path,

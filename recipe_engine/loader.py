@@ -83,87 +83,11 @@ class RecipeScript(object):
     return cls(script_vars, name)
 
 
-class Dependency(object):
-  def load(self, universe):
-    raise NotImplementedError()
-
-  @property
-  def local_name(self):
-    raise NotImplementedError()
-
-  @property
-  def unique_name(self):
-    """A unique identifier for the module that this dependency refers to.
-    This must be generated without loading the module."""
-    raise NotImplementedError()
-
-
-class PathDependency(Dependency):
-  def __init__(self, path, local_name, load_from_package, universe):
-    assert os.path.isabs(path), (
-        'Path dependencies must be absolute, but %s is not' % path)
-    self._path = path
-    self._local_name = local_name
-    self._load_from_package = load_from_package
-
-    # We forbid modules from living outside our main paths to keep clients
-    # from going crazy before we have standardized recipe locations.
-    mod_dir = os.path.dirname(path)
-    assert mod_dir in universe.module_dirs, (
-      'Modules living outside of approved directories are forbidden: '
-      '%s is not in %s' % (mod_dir, universe.module_dirs))
-
-  def load(self, universe):
-    try:
-      return _load_recipe_module_module(
-          self._path, UniverseView(universe, self._load_from_package))
-    except (LoaderError,AssertionError,ImportError) as e:
-      _amend_exception(e, 'while loading recipe module %s' % self._path)
-
-  def __repr__(self):
-    return '<%s(path=%r,local_name=%r,load_from_package=%r)>' % (
-        type(self).__name__, self._path, self._local_name,
-        self._load_from_package)
-
-  @property
-  def local_name(self):
-    return self._local_name
-
-  @property
-  def unique_name(self):
-    return self._path
-
-
-class NamedDependency(PathDependency):
-  def __init__(self, name, universe_view):
-    for path in universe_view.package.module_dirs:
-      mod_path = os.path.join(path, name)
-      if _is_recipe_module_dir(mod_path):
-        super(NamedDependency, self).__init__(
-            mod_path, name, universe=universe_view.universe,
-            load_from_package=universe_view.package)
-        return
-    raise LoaderError('Recipe module named %s does not exist' % name)
-
-
-class PackageDependency(PathDependency):
-  def __init__(self, package_name, module_name, local_name, universe_view):
-    load_from_package = universe_view.package.find_dep(package_name)
-    mod_path = load_from_package.module_path(module_name)
-    super(PackageDependency, self).__init__(
-        mod_path, local_name, universe=universe_view.universe,
-        load_from_package=load_from_package)
-
-
 class RecipeUniverse(object):
   def __init__(self, package_deps, config_file):
     self._loaded = {}
     self._package_deps = package_deps
     self._config_file = config_file
-
-  @property
-  def config_file(self):
-    return self._config_file
 
   @property
   def module_dirs(self):
@@ -178,87 +102,50 @@ class RecipeUniverse(object):
         yield recipe_dir
 
   @property
+  def config_file(self):
+    return self._config_file
+
+  @property
+  def packages(self):
+    return list(self._package_deps.packages)
+
+  @property
   def package_deps(self):
     return self._package_deps
 
-  def load(self, dep):
-    """Load a Dependency."""
-    name = dep.unique_name
-    if name in self._loaded:
-      mod = self._loaded[name]
+  def load(self, package, name):
+    """Load a recipe module, identified by a name inside of a package"""
+    key = (package.name, name)
+    if key in self._loaded:
+      mod = self._loaded[key]
       assert mod is not None, (
-          'Cyclic dependency when trying to load %s' % name)
+          'Cyclic dependency when trying to load %r' % name)
       return mod
     else:
-      self._loaded[name] = None
-      mod = dep.load(self)
-      self._loaded[name] = mod
+      self._loaded[key] = None
+
+      path = package.module_path(name)
+
+      assert os.path.isabs(path), (
+          'Path dependencies must be absolute, but %r is not' % path)
+
+      try:
+        mod = _load_recipe_module_module(path, UniverseView(self, package))
+      except (LoaderError,AssertionError,ImportError) as e:
+        _amend_exception(e, 'while loading recipe module %s' % path)
+
+      self._loaded[key] = mod
       return mod
-
-  def load_recipe(self, recipe):
-    """Given name of a recipe, loads and returns it as RecipeScript instance.
-
-    Args:
-      recipe (str): name of a recipe, can be in form '<module>:<recipe>'.
-
-    Returns:
-      RecipeScript instance.
-
-    Raises:
-      NoSuchRecipe: recipe is not found.
-    """
-    # If the recipe is specified as "module:recipe", then it is an recipe
-    # contained in a recipe_module as an example. Look for it in the modules
-    # imported by load_recipe_modules instead of the normal search paths.
-    try:
-      if ':' in recipe:
-        module_name, example = recipe.split(':')
-        assert example.endswith('example')
-        for package in self.package_deps.packages:
-          for module_dir in package.module_dirs:
-            if os.path.isdir(module_dir):
-              for subitem in os.listdir(module_dir):
-                if module_name == subitem:
-                  return RecipeScript.from_script_path(
-                      os.path.join(module_dir, subitem, 'example.py'),
-                      UniverseView(self, package))
-        raise NoSuchRecipe(recipe)
-      else:
-        for package in self.package_deps.packages:
-          for recipe_dir in package.recipe_dirs:
-            recipe_path = os.path.join(recipe_dir, recipe)
-            if os.path.exists(recipe_path + '.py'):
-              return RecipeScript.from_script_path(recipe_path + '.py',
-                                                   UniverseView(self, package))
-    except (LoaderError,AssertionError,ImportError) as e:
-      _amend_exception(e, 'while loading recipe %s' % recipe)
-
-    raise NoSuchRecipe(recipe)
 
   def loop_over_recipe_modules(self):
     """Yields pairs (package, module path)."""
-    for package in self.package_deps.packages:
+    for package in self.packages:
       for path in package.module_dirs:
         if os.path.isdir(path):
           for item in os.listdir(path):
             subpath = os.path.join(path, item)
             if _is_recipe_module_dir(subpath):
-              yield package, subpath
-
-  def loop_over_recipes(self):
-    """Yields pairs (path to recipe, recipe name).
-
-    Enumerates real recipes in recipes/* as well as examples in recipe_modules/*.
-    """
-    for path in self.recipe_dirs:
-      for recipe in scan_directory(
-          path, lambda f: f.endswith('.py') and f[0] != '_'):
-        yield recipe, recipe[len(path)+1:-len('.py')]
-    for path in self.module_dirs:
-      for recipe in scan_directory(
-          path, lambda f: f.endswith('example.py')):
-        module_name = os.path.dirname(recipe)[len(path)+1:]
-        yield recipe, '%s:example' % module_name
+              yield package, os.path.basename(subpath)
 
 
 class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
@@ -269,14 +156,11 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
   """
   def _dep_from_name(self, name):
     if '/' in name:
-      [package,module] = name.split('/')
-      dep = PackageDependency(package, module, module, universe_view=self)
+      package, module = name.split('/')
+      return self.package.find_dep(package), module
     else:
       # In current package
-      module = name
-      dep = NamedDependency(name, universe_view=self)
-
-    return module, dep
+      return self.package, name
 
   def deps_from_spec(self, spec):
     """Load dependencies from a dependency spec.
@@ -293,22 +177,87 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
     }
     """
 
-
     # Automatic local names.
     if isinstance(spec, (list, tuple)):
       deps = {}
       for item in spec:
-        name, dep = self._dep_from_name(item)
+        package, name = self._dep_from_name(item)
         assert name not in deps, (
             "You specified two dependencies with the name %s" % name)
-        deps[name] = self.universe.load(dep)
+        deps[name] = self.universe.load(package, name)
     # Explicit local names.
     elif isinstance(spec, dict):
       deps = {}
       for name, item in spec.iteritems():
-        _, dep = self._dep_from_name(item)
-        deps[name] = self.universe.load(dep)
+        package, dep_real_name = self._dep_from_name(item)
+        deps[name] = self.universe.load(package, dep_real_name)
     return deps
+
+  def load_recipe(self, recipe):
+    """Given name of a recipe, loads and returns it as RecipeScript instance.
+
+    Args:
+      recipe (str): name of a recipe, can be in form '<module>:<recipe>'.
+
+    Returns:
+      RecipeScript instance.
+
+    Raises:
+      NoSuchRecipe: recipe is not found.
+    """
+    # If the recipe is specified as "module:recipe", then it is an recipe
+    # contained in a recipe_module as an example. Look for it in the modules
+    # imported by load_recipe_modules instead of the normal search paths.
+    # TODO(martiniss) change "infra/example" to ["infra", "example"], and handle
+    # appropriately, because of windows.
+    try:
+      if ':' in recipe:
+        module_name, example = recipe.split(':')
+        #TODO(martinis) change to example == 'example' ? Technically a bug...
+        assert example.endswith('example')
+        for module_dir in self.package.module_dirs:
+          subpath = os.path.join(module_dir, module_name)
+          if not _is_recipe_module_dir(subpath):
+            continue
+
+          return RecipeScript.from_script_path(
+              os.path.join(subpath, 'example.py'), self)
+      else:
+        for recipe_dir in self.package.recipe_dirs:
+          recipe_path = os.path.join(recipe_dir, recipe)
+          if os.path.exists(recipe_path + '.py'):
+            return RecipeScript.from_script_path(recipe_path + '.py', self)
+
+    except (LoaderError,AssertionError,ImportError) as e:
+      _amend_exception(e, 'while loading recipe %s' % recipe)
+
+    raise NoSuchRecipe(recipe)
+
+  @property
+  def module_dirs(self):
+    for module_dir in self.package.module_dirs:
+      yield module_dir
+
+  @property
+  def recipe_dirs(self):
+    for recipe_dir in self.package.recipe_dirs:
+      yield recipe_dir
+
+  def loop_over_recipes(self):
+    """Yields pairs (path to recipe, recipe name).
+
+    Enumerates real recipes in recipes/*, as well as examples in
+    recipe_modules/*.
+    """
+    for path in self.package.recipe_dirs:
+      for recipe in scan_directory(
+          path, lambda f: f.endswith('.py') and f[0] != '_'):
+        yield recipe, recipe[len(path)+1:-len('.py')]
+    for path in self.package.module_dirs:
+      for recipe in scan_directory(
+          path, lambda f: f.endswith('example.py')):
+        module_name = os.path.dirname(recipe)[len(path)+1:]
+        yield recipe, '%s:example' % module_name
 
 
 def _amend_exception(e, amendment):

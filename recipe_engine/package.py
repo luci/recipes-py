@@ -374,6 +374,9 @@ class Package(object):
     return [os.path.join(self.recipes_dir, 'recipe_modules')]
 
   def find_dep(self, dep_name):
+    if dep_name == self.name:
+      return self
+
     assert dep_name in self.deps, (
         '%s does not exist or is not declared as a dependency of %s' % (
             dep_name, self.name))
@@ -389,6 +392,13 @@ class Package(object):
           subpath = os.path.join(path, item)
           if _is_recipe_module_dir(subpath):
             yield subpath
+
+  def __repr__(self):
+    return 'Package(%r, %r, %r, %r)' % (
+        self.name, self.repo_spec, self.deps, self.recipe_dirs)
+
+  def __str__(self):
+    return 'Package %s, with dependencies %s' % (self.name, self.deps.keys())
 
 
 class PackageSpec(object):
@@ -557,6 +567,11 @@ class PackageDeps(object):
     self._context = context
     self._packages = {}
     self._overrides = overrides or {}
+    self._root_package = None
+
+  @property
+  def root_package(self):
+    return self._root_package
 
   @classmethod
   def create(cls, repo_root, proto_file, allow_fetch=False, overrides=None):
@@ -577,7 +592,8 @@ class PackageDeps(object):
                    for project_id, path in overrides.iteritems()}
     package_deps = cls(context, overrides=overrides)
 
-    package_deps._create_package(RootRepoSpec(proto_file), allow_fetch)
+    package_deps._root_package = package_deps._create_package(RootRepoSpec(proto_file), allow_fetch)
+
     return package_deps
 
   def _create_package(self, repo_spec, allow_fetch):

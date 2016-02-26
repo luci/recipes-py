@@ -42,13 +42,13 @@ class TestFailure(Exception):
   pass
 
 
-def ImportsTest(recipe_path, recipe_name, whitelist, universe):
+def ImportsTest(recipe_path, recipe_name, whitelist, universe_view):
   """Tests that recipe_name only uses allowed imports.
 
   Returns a list of errors, or an empty list if there are no errors (duh).
   """
 
-  recipe = universe.load_recipe(recipe_name)
+  recipe = universe_view.load_recipe(recipe_name)
   for attr in dir(recipe):
     val = getattr(recipe, attr)
     if isinstance(val, types.ModuleType):
@@ -62,15 +62,16 @@ def ImportsTest(recipe_path, recipe_name, whitelist, universe):
                (recipe_path, module_name))
 
 
-def main(universe, whitelist=[]):
+def main(universe_view, whitelist=[]):
   from . import loader
   from . import package
 
   whitelist = map(re.compile, MODULES_WHITELIST + whitelist)
 
   errors = []
-  for recipe_path, recipe_name in universe.loop_over_recipes():
-    errors.extend(ImportsTest(recipe_path, recipe_name, whitelist, universe))
+  for recipe_path, recipe_name in universe_view.loop_over_recipes():
+    errors.extend(
+        ImportsTest(recipe_path, recipe_name, whitelist, universe_view))
 
   if errors:
     raise TestFailure('\n'.join(map(str, errors)))

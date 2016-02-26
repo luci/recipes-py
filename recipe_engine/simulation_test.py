@@ -40,17 +40,24 @@ def RunRecipe(test_data):
 
 
 def test_gen_coverage():
-  return (
-      [os.path.join(x, '*') for x in _UNIVERSE.recipe_dirs] +
-      [os.path.join(x, '*', 'example.py') for x in _UNIVERSE.module_dirs] +
-      [os.path.join(x, '*', 'test_api.py') for x in _UNIVERSE.module_dirs]
-  )
+  cover = []
+
+  for path in _UNIVERSE.recipe_dirs:
+    cover.append(os.path.join(path, '*'))
+
+  for path in _UNIVERSE.module_dirs:
+    cover.append(os.path.join(path, '*', 'example.py'))
+    cover.append(os.path.join(path, '*', 'test_api.py'))
+
+  return cover
 
 def cover_omit():
   omit = [ ]
+
   for mod_dir_base in _UNIVERSE.module_dirs:
     if os.path.isdir(mod_dir_base):
-      omit.append(os.path.join(mod_dir_base, '*', 'resources', '*'))
+        omit.append(os.path.join(mod_dir_base, '*', 'resources', '*'))
+
   return omit
 
 @expect_tests.covers(test_gen_coverage)
@@ -60,7 +67,7 @@ def GenerateTests():
   cover_mods = [ ]
   for mod_dir_base in _UNIVERSE.module_dirs:
     if os.path.isdir(mod_dir_base):
-      cover_mods.append(os.path.join(mod_dir_base, '*', '*.py'))
+      cover_mods.append(os.path.join(mod_dir_base, '*.py'))
 
   for recipe_path, recipe_name in _UNIVERSE.loop_over_recipes():
     recipe = _UNIVERSE.load_recipe(recipe_name)

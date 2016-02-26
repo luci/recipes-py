@@ -76,10 +76,10 @@ DEPS = ['aint_no_thang']
 """)
       subp = subprocess.Popen(
           repo.recipes_cmd + ['run', 'foo'],
-          stdout=subprocess.PIPE)
-      stdout, _ = subp.communicate()
-      self.assertRegexpMatches(stdout,
-        r'aint_no_thang does not exist[^\n]*while loading recipe foo')
+          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      stdout, stderr = subp.communicate()
+      self.assertRegexpMatches(stdout + stderr,
+        r'No module named aint_no_thang', stdout + stderr)
       self.assertEqual(subp.returncode, 2)
 
   def test_missing_module_dependency(self):
@@ -88,12 +88,11 @@ DEPS = ['aint_no_thang']
       repo.make_module('le_module', 'DEPS = ["love"]', '')
       subp = subprocess.Popen(
           repo.recipes_cmd + ['run', 'foo'],
-          stdout=subprocess.PIPE)
-      stdout, _ = subp.communicate()
-      self.assertRegexpMatches(stdout,
-        r'love does not exist[^\n]*'
-        r'while loading recipe module \S*le_module[^\n]*'
-        r'while loading recipe foo')
+          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      stdout, stderr = subp.communicate()
+      self.assertRegexpMatches(
+          stdout + stderr,
+          r'No module named love', stdout + stderr)
       self.assertEqual(subp.returncode, 2)
 
   def test_no_such_recipe(self):
@@ -134,7 +133,8 @@ def GenTests(api):
 """)
       def assert_keyerror(stdout, stderr):
         self.assertRegexpMatches(
-            stdout + stderr, r"KeyError: 'Unknown path: bippityboppityboo'")
+            stdout + stderr, r"KeyError: 'Unknown path: bippityboppityboo'",
+            stdout + stderr)
 
       self._test_cmd(repo, ['simulation_test', 'train', 'missing_path'],
           asserts=assert_keyerror, retcode=1)

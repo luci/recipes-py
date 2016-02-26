@@ -245,7 +245,7 @@ def run_steps(properties, stream_engine, step_runner, universe):
                                      recipe_test_api.DisabledTestData())
 
       s.add_step_text('<br/>running recipe: "%s"' % recipe)
-    except loader.LoaderError as e:
+    except (loader.LoaderError, ImportError, AssertionError) as e:
       s.add_step_text('<br/>%s' % '<br/>'.join(str(e).splitlines()))
       s.set_step_status('EXCEPTION')
       return RecipeResult({
@@ -288,11 +288,11 @@ class RecipeEngine(object):
   ActiveStep = collections.namedtuple('ActiveStep',
                                       'step step_result open_step nest_level')
 
-  def __init__(self, step_runner, properties, universe):
+  def __init__(self, step_runner, properties, universe_view):
     """See run_steps() for parameter meanings."""
     self._step_runner = step_runner
     self._properties = properties
-    self._universe = universe
+    self._universe_view = universe_view
 
     # A stack of ActiveStep objects, holding the most recently executed step at
     # each nest level (objects deeper in the stack have lower nest levels).
@@ -305,7 +305,7 @@ class RecipeEngine(object):
 
   @property
   def universe(self):
-    return self._universe
+    return self._universe_view.universe
 
   @property
   def previous_step_result(self):
@@ -445,7 +445,7 @@ class RecipeEngine(object):
   def depend_on_multi(self, dependencies, distributor=None):
     results = []
     for recipe, properties in dependencies:
-      recipe_script = self._universe.load_recipe(recipe)
+      recipe_script = self._universe_view.load_recipe(recipe)
 
       return_schema = getattr(recipe_script, 'RETURN_SCHEMA', None)
       if not return_schema:
@@ -458,7 +458,7 @@ class RecipeEngine(object):
       # we ignore them. We're only using this for its properties validation
       # functionality.
       run_recipe = lambda *args, **kwargs: (
-        self._step_runner.run_recipe(self._universe, recipe, properties))
+        self._step_runner.run_recipe(self._universe_view, recipe, properties))
 
       try:
         # This does type checking for properties
