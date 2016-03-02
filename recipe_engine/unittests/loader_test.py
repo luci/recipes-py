@@ -78,18 +78,18 @@ class TestInvoke(unittest.TestCase):
     self.assertEqual(1, self.invoke(func, props, prop_defs, ['a', 'b']))
 
   def testInvokeParamName(self):
-    """Tests invoke with a param name."""
-    def func(c):
-      return c
+    """Tests invoke with two different properties."""
+    def func(a):
+      return a
 
     prop_defs = {
-      'b.a': make_prop(name="c", param_name="c"),
+      'a': make_prop(name='b'),
     }
 
     props = {
-      'b.a': 2,
+      'b': 2,
     }
-    self.assertEqual(2, self.invoke(func, props, prop_defs, ['c']))
+    self.assertEqual(2, self.invoke(func, props, prop_defs, ['a']))
 
   def testInvokeClass(self):
     """Tests invoking a class."""
