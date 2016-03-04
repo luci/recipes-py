@@ -5,6 +5,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -47,8 +48,10 @@ var cmdCook = &subcommands.Command{
 			"workdir",
 			"",
 			"The working directory for recipe execution. Defaults to a temp dir.")
-		fs.StringVar(&c.Properties, "properties", "", "A json string containing the properties")
-		fs.StringVar(&c.PropertiesFile, "properties-file", "", "A file containing a json blob of properties")
+		fs.StringVar(&c.Properties, "properties", "",
+			"A json string containing the properties. Mutually exclusive with -properties-file.")
+		fs.StringVar(&c.PropertiesFile, "properties-file", "",
+			"A file containing a json string of properties. Mutually exclusive with -properties.")
 		fs.StringVar(
 			&c.OutputResultJsonFile,
 			"output-result-json",
@@ -88,6 +91,10 @@ func (c *cookRun) validateFlags() error {
 	// Validate Recipe.
 	if c.Recipe == "" {
 		return fmt.Errorf("-recipe is required")
+	}
+
+	if c.Properties != "" && c.PropertiesFile != "" {
+		return fmt.Errorf("only one of -properties or -properties-file is allowed")
 	}
 
 	// Fix CheckoutDir.
@@ -166,6 +173,16 @@ func (c *cookRun) Run(a subcommands.Application, args []string) (exitCode int) {
 	annotate("SEED_STEP", BOOTSTRAP_STEP_NAME)
 	annotate("STEP_CURSOR", BOOTSTRAP_STEP_NAME)
 	annotate("STEP_STARTED")
+	props, err := parseProperties(c.Properties, c.PropertiesFile)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	for k, v := range props {
+		// Order is not stable, but that is okay.
+		annotate("SET_BUILD_PROPERTY", k, v)
+	}
+
 	recipeExitCode, err := c.run(app.Context)
 	annotate("STEP_CURSOR", BOOTSTRAP_STEP_NAME)
 	if err != nil {
@@ -176,6 +193,29 @@ func (c *cookRun) Run(a subcommands.Application, args []string) (exitCode int) {
 	}
 	annotate("STEP_CLOSED")
 	return recipeExitCode
+}
+
+func parseProperties(properties, propertiesFile string) (result map[string]string, err error) {
+	if properties != "" {
+		err = json.Unmarshal([]byte(properties), &result)
+		if err != nil {
+			err = fmt.Errorf("could not parse properties %s\n%s", properties, err)
+		}
+		return
+	}
+	if propertiesFile != "" {
+		b, err := ioutil.ReadFile(propertiesFile)
+		if err != nil {
+			err = fmt.Errorf("could not read properties file %s\n%s", propertiesFile, err)
+			return nil, err
+		}
+		err = json.Unmarshal(b, &result)
+		if err != nil {
+			err = fmt.Errorf("could not parse JSON from file %s\n%s\n%s",
+				propertiesFile, b, err)
+		}
+	}
+	return
 }
 
 func annotate(args ...string) {
