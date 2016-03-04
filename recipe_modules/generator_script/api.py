@@ -8,17 +8,48 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
   def __call__(self, path_to_script, *args, **kwargs):
     """Run a script and generate the steps emitted by that script.
 
-    If a step has a key 'outputs_presentation_json' whose value is
-    True, its command is extended with a --presentation-json argument
-    pointing to a file where it is expected to write presentation json
-    which is used to update that step's presentation on the waterfall.
+    The script will be invoked with --output-json /path/to/file.json. The script
+    is expected to exit 0 and write steps into that file. Once the script
+    outputs all of the steps to that file, the recipe will read the steps from
+    that file and execute them in order. Any *args specified will be
+    additionally passed to the script.
 
-    Presentation keys are:
-      logs: A map of log names to log text.
-      links: A map of link text to URIs.
-      step_summary_text: A string to set as the step summary.
-      step_text: A string to set as the step text.
-      properties: A map of build_property names to JSON-encoded values.
+    The step data is formatted as a list of JSON objects. Each object
+    corresponds to one step, and contains the following keys:
+      name: the name of this step.
+
+      cmd: a list of strings that indicate the command to run (e.g. argv)
+
+      env: a {key:value} dictionary of the environment variables to override.
+       every value is formatted with the current environment with the python
+       % operator, so a value of "%(PATH)s:/some/other/path" would resolve to
+       the current PATH value, concatenated with ":/some/other/path"
+
+      ok_ret: a list of non-error return codes. This defaults to [0]
+
+      infra_step: a bool which indicates that failures in this step are 'infra'
+        failures and should abort with a purple coloration instead red.
+
+      step_nest_level: an integer which indicates that this step should appear
+        on the build status page with this indentation level.
+
+      always_run: a bool which indicates that this step should run, even if
+        some previous step failed.
+
+      outputs_presentation_json: a bool which indicates that this step will emit
+        a presentation json file. If this is True, the cmd will be extended with
+        a `--presentation-json /path/to/file.json`. This file will be used to
+        update the step's presentation on the build status page. The file will
+        be expected to contain a single json object, with any of the following
+        keys:
+          logs: {logname: [lines]} specifies one or more auxillary logs.
+          links: {link_name: link_content} to add extra links to the step.
+          step_summary_text: A string to set as the step summary.
+          step_text: A string to set as the step text.
+          properties: {prop: value} build_properties to add to the build status
+            page. Note that these are write-only: The only way to read them is
+            via the status page. There is intentionally no mechanism to read
+            them back from inside of the recipes.
 
     kwargs:
       env - The environment for the generated steps.
