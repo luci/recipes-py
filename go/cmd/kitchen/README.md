@@ -22,6 +22,18 @@ then just install kitchen using `go get`:
 
 The binary will be located in `$GOPATH/bin/kitchen`.
 
+Authenticate into the isolate server using:
+`isolate login https://isolateserver.appspot.com`
+
+If you use go v1.5 or above, ignore the portion about the cross compilation
+toolchain.
+If you use go v1.4 or below, you will need to install the cross compilation
+toolchains by:
+`wget
+https://raw.githubusercontent.com/davecheney/golang-crosscompile/master/crosscompile.bash`
+`source crosscompile.bash`
+`go-crosscompile-build-all`
+
 ## Isolation
 
 `isolate_kitchen.py` compiles kitchen for a variety of operating systems and
