@@ -180,7 +180,7 @@ func (c *cookRun) Run(a subcommands.Application, args []string) (exitCode int) {
 	}
 	for k, v := range props {
 		// Order is not stable, but that is okay.
-		annotate("SET_BUILD_PROPERTY", k, v)
+		annotate("SET_BUILD_PROPERTY", k, fmt.Sprintf("%s", v))
 	}
 
 	recipeExitCode, err := c.run(app.Context)
@@ -195,7 +195,7 @@ func (c *cookRun) Run(a subcommands.Application, args []string) (exitCode int) {
 	return recipeExitCode
 }
 
-func parseProperties(properties, propertiesFile string) (result map[string]string, err error) {
+func parseProperties(properties, propertiesFile string) (result map[string]interface{}, err error) {
 	if properties != "" {
 		err = json.Unmarshal([]byte(properties), &result)
 		if err != nil {
