@@ -180,7 +180,7 @@ func (c *cookRun) Run(a subcommands.Application, args []string) (exitCode int) {
 	}
 	for k, v := range props {
 		// Order is not stable, but that is okay.
-		annotate("SET_BUILD_PROPERTY", k, fmt.Sprintf("%s", v))
+		annotate("SET_BUILD_PROPERTY", k, fmt.Sprintf("%v", v))
 	}
 
 	recipeExitCode, err := c.run(app.Context)
