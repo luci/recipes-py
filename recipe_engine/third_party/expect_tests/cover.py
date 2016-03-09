@@ -3,11 +3,28 @@
 # found in the LICENSE file.
 
 from cStringIO import StringIO
+import os
+import socket
+import threading
 
 import coverage
 
 # This is instead of a contextmanager because it causes old pylints to crash :(
 class _Cover(object):
+
+  # Counter and associated lock for assigning unique IDs for coverage filename
+  # suffixes. The coverage library's automatic suffix generation uses 6 digit
+  # random integer and we were seeing collisions and files getting clobbered.
+  current_id_lock = threading.Lock()
+  current_id = 0
+
+  @classmethod
+  def unique_id(cls):
+    """Returns a unique integer for this process."""
+    with cls.current_id_lock:
+      cls.current_id += 1
+      return cls.current_id
+
   def __init__(self, enabled, maybe_kwargs):
     self.enabled = enabled
     self.kwargs = maybe_kwargs or {}
@@ -23,7 +40,10 @@ class _Cover(object):
   def __enter__(self):
     if self.enabled:
       if self.c is None:
-        self.c = coverage.coverage(**self.kwargs)
+        kwargs = self.kwargs.copy()
+        kwargs['data_suffix'] = "%s.%s.%s" % (
+            socket.gethostname(), os.getpid(), self.unique_id())
+        self.c = coverage.coverage(**kwargs)
         self.c._warn_no_data = False # pylint: disable=protected-access
       self.c.start()
 
