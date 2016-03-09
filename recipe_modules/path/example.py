@@ -20,9 +20,9 @@ def RunSteps(api):
   api.step('print resource',
            ['echo', api.path.resource('dir', 'file.py')])
 
-  # module.package_dir() demo.
+  # module.package_repo_resource() demo.
   api.step('print package dir',
-           ['echo', api.path.package_resource('dir', 'file.py')])
+           ['echo', api.path.package_repo_resource('dir', 'file.py')])
 
   # Global dynamic paths (see config.py example for declaration):
   dynamic_path = Path('[BORTS]', 'jerky')

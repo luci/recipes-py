@@ -10,7 +10,7 @@ import os
 import sys
 
 from .config import ConfigContext, ConfigGroupSchema
-from .config_types import Path, ModuleBasePath, PackageBasePath
+from .config_types import Path, ModuleBasePath, PackageRepoBasePath
 from .config_types import RECIPE_MODULE_PREFIX
 from .recipe_api import RecipeApi, RecipeApiPlain, RecipeScriptApi
 from .recipe_api import Property, BoundProperty
@@ -356,7 +356,7 @@ def _patchup_module(name, submod, universe_view):
   submod.NAME = name
   submod.UNIQUE_NAME = fullname
   submod.MODULE_DIRECTORY = Path(ModuleBasePath(submod))
-  submod.PACKAGE_DIRECTORY = Path(PackageBasePath(universe_view.package))
+  submod.PACKAGE_REPO_ROOT = Path(PackageRepoBasePath(universe_view.package))
   submod.CONFIG_CTX = getattr(submod, 'CONFIG_CTX', None)
 
   if hasattr(submod, 'config'):

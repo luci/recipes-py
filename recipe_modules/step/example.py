@@ -44,7 +44,7 @@ def RunSteps(api, bad_return, raise_infra_failure, access_invalid_data):
       ['recipes.py', '--help'],
       env={
         'PATH': api.path.pathsep.join(
-            [str(api.step.package_resource()), '%(PATH)s']),
+            [str(api.step.package_repo_resource()), '%(PATH)s']),
       })
 
   # Finally, you can make your step accept any return code

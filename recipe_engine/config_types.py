@@ -95,9 +95,10 @@ class ModuleBasePath(BasePath, namedtuple('ModuleBasePath', 'module')):
     return 'RECIPE_MODULE[%s]' % re.sub('\.', '::', name)
 
 
-class PackageBasePath(BasePath, namedtuple('PackageBasePath', 'package')):
+class PackageRepoBasePath(
+    BasePath, namedtuple('PackageRepoBasePath', 'package')):
   def __repr__(self):
-    return 'RECIPE_PACKAGE[%s]' % self.package.name
+    return 'RECIPE_PACKAGE_REPO[%s]' % self.package.name
 
 
 class Path(RecipeConfigType):

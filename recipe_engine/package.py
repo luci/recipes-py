@@ -355,10 +355,11 @@ class Package(object):
 
   This is accessed by loader.py through RecipeDeps.get_package.
   """
-  def __init__(self, name, repo_spec, deps, recipes_dir):
+  def __init__(self, name, repo_spec, deps, repo_root, recipes_dir):
     self.name = name
     self.repo_spec = repo_spec
     self.deps = deps
+    self.repo_root = repo_root
     self.recipes_dir = recipes_dir
 
   def __repr__(self):
@@ -630,6 +631,7 @@ class PackageDeps(object):
 
     package = Package(
         project_id, repo_spec, deps,
+        repo_spec.repo_root(self._context),
         os.path.join(repo_spec.repo_root(self._context),
                      package_spec.recipes_path))
 

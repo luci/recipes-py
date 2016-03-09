@@ -34,7 +34,7 @@
     ],
     "cwd": "[SLAVE_BUILD]",
     "env": {
-      "PATH": "RECIPE_PACKAGE[recipe_engine]:%(PATH)s"
+      "PATH": "RECIPE_PACKAGE_REPO[recipe_engine]:%(PATH)s"
     },
     "name": "recipes help"
   },
