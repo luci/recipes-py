@@ -1,3 +1,5 @@
+// NOTE: this must be kept in sync with
+// https://github.com/luci/luci-go/blob/master/client/cmd/kitchen/proto/package.proto
 syntax = "proto2";
 
 package recipe_engine;
@@ -18,4 +20,3 @@ message Package {
   optional string recipes_path = 3;
   repeated DepSpec deps = 4;
 }
-
