@@ -430,6 +430,7 @@ class DependencyMapper(object):
     self._instances[mod] = self._instantiator(mod, deps_dict)
     return self._instances[mod]
 
+
 def _invoke_with_properties(callable_obj, all_props, prop_defs, arg_names,
                             **additional_args):
   """Internal version of invoke_with_properties.
@@ -444,21 +445,33 @@ def _invoke_with_properties(callable_obj, all_props, prop_defs, arg_names,
           "You tried to invoke {} with an unbound Property {} named {}".format(
               callable, prop, name))
 
+  # Maps parameter names to property names
+  param_name_mapping = {
+              prop.param_name: name for name, prop in prop_defs.iteritems()}
+
   props = []
-  for arg in arg_names:
-    if arg in additional_args:
-      props.append(additional_args.pop(arg))
+
+  for param_name in arg_names:
+    if param_name in additional_args:
+      props.append(additional_args.pop(param_name))
       continue
 
-    if arg not in prop_defs:
+    if param_name not in param_name_mapping:
       raise UndefinedPropertyException(
-        "Missing property definition for '{}'.".format(arg))
+        "Missing property definition for parameter '{}'.".format(param_name))
 
-    prop = prop_defs[arg]
+    prop_name = param_name_mapping[param_name]
+
+    if prop_name not in prop_defs:
+      raise UndefinedPropertyException(
+        "Missing property value for '{}'.".format(prop_name))
+
+    prop = prop_defs[prop_name]
     props.append(prop.interpret(all_props.get(
-      prop.param_name, PROPERTY_SENTINEL)))
+      prop_name, PROPERTY_SENTINEL)))
 
   return callable_obj(*props, **additional_args)
+
 
 def invoke_with_properties(callable_obj, all_props, prop_defs,
                            **additional_args):
@@ -469,9 +482,10 @@ def invoke_with_properties(callable_obj, all_props, prop_defs,
     callable_obj: The function to call, or class to instantiate.
                   This supports passing in either RunSteps, or a recipe module,
                   which is a class.
-    all_props: A dictionary containing all the properties (instances of BoundProperty)
-               currently defined in the system.
-    prop_defs: A dictionary of name to property definitions for this callable.
+    all_props: A dictionary containing all the properties (strings) currently
+               defined in the system.
+    prop_defs: A dictionary of property name to property definitions
+               (BoundProperty) for this callable.
     additional_args: kwargs to pass through to the callable.
                      Note that the names of the arguments can correspond to
                      positional arguments as well.
