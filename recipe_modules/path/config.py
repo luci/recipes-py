@@ -38,6 +38,8 @@ def buildbot(c):
   c.base_paths['slave_build'] = c.CURRENT_WORKING_DIR
   c.base_paths['git_cache'] = c.base_paths['root'] + (
       'build', 'slave', 'cache_dir')
+  c.base_paths['goma_cache'] = c.base_paths['root'] + (
+      'build', 'slave', 'goma_cache')
   for token in ('build_internal', 'build', 'depot_tools'):
     c.base_paths[token] = c.base_paths['root'] + (token,)
   c.dynamic_paths['checkout'] = None
@@ -59,4 +61,5 @@ def kitchen(c):
   c.base_paths['root'] = c.CURRENT_WORKING_DIR
   c.base_paths['slave_build'] = c.CURRENT_WORKING_DIR
   c.base_paths['git_cache'] = c.base_paths['root'] + ('cache_dir',)
+  c.base_paths['goma_cache'] = c.base_paths['root'] + ('goma_cache',)
   c.dynamic_paths['checkout'] = None
