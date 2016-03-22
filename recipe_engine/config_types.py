@@ -168,3 +168,10 @@ class Path(RecipeConfigType):
     if self.pieces:
       pieces = ', ' + (', '.join(map(repr, self.pieces)))
     return 'Path(\'%s\'%s%s)' % (self.base, pieces, suffix)
+
+  def __repr__(self):
+    s = "Path(%r" % self.base
+    if self.pieces:
+      s += ", %s" % ",".join(repr(x) for x in self.pieces)
+
+    return s + ")"
