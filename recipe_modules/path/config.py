@@ -5,7 +5,7 @@
 from recipe_engine.config import config_item_context, ConfigGroup, Dict, Static
 from recipe_engine.config_types import Path
 
-def BaseConfig(CURRENT_WORKING_DIR, TEMP_DIR, **_kwargs):
+def BaseConfig(PLATFORM, CURRENT_WORKING_DIR, TEMP_DIR, **_kwargs):
   assert CURRENT_WORKING_DIR[0].endswith(('\\', '/'))
   assert TEMP_DIR[0].endswith(('\\', '/'))
   return ConfigGroup(
@@ -15,6 +15,7 @@ def BaseConfig(CURRENT_WORKING_DIR, TEMP_DIR, **_kwargs):
     # dynamic path name -> Path object (referencing one of the base_paths)
     dynamic_paths = Dict(value_type=(Path, type(None))),
 
+    PLATFORM = Static(PLATFORM),
     CURRENT_WORKING_DIR = Static(tuple(CURRENT_WORKING_DIR)),
     TEMP_DIR = Static(tuple(TEMP_DIR)),
   )
@@ -44,11 +45,6 @@ def buildbot(c):
     c.base_paths[token] = c.base_paths['root'] + (token,)
   c.dynamic_paths['checkout'] = None
 
-@config_ctx()
-def example(c):
-  c.base_paths['slave_build'] = c.CURRENT_WORKING_DIR
-  c.dynamic_paths['borts'] = None
-
 @config_ctx(includes=['buildbot'])
 def swarming(c):
   c.base_paths['slave_build'] = (
@@ -57,9 +53,14 @@ def swarming(c):
 
 @config_ctx()
 def kitchen(c):
-  # TODO(phajdan.jr): Fully implement the kitchen config.
   c.base_paths['root'] = c.CURRENT_WORKING_DIR
   c.base_paths['slave_build'] = c.CURRENT_WORKING_DIR
-  c.base_paths['git_cache'] = c.base_paths['root'] + ('cache_dir',)
-  c.base_paths['goma_cache'] = c.base_paths['root'] + ('goma_cache',)
+  # TODO(phajdan.jr): have one cache dir, let clients append suffixes.
+  # TODO(phajdan.jr): set persistent cache path for remaining platforms.
+  if c.PLATFORM == 'linux':
+    c.base_paths['git_cache'] = ('b', 'swarm_slave', 'cache', 'git_cache')
+    c.base_paths['goma_cache'] = ('b', 'swarm_slave', 'cache', 'goma_cache')
+  else:
+    c.base_paths['git_cache'] = c.base_paths['root'] + ('cache_dir',)
+    c.base_paths['goma_cache'] = c.base_paths['root'] + ('goma_cache',)
   c.dynamic_paths['checkout'] = None

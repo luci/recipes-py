@@ -26,10 +26,10 @@
   {
     "cmd": [
       "/bin/echo",
-      "[SLAVE_BUILD]/borts/jerky"
+      "[SLAVE_BUILD]/checkout/jerky"
     ],
     "cwd": "[SLAVE_BUILD]",
-    "name": "borts path"
+    "name": "checkout path"
   },
   {
     "cmd": [

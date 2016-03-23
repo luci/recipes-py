@@ -12,8 +12,6 @@ DEPS = [
 from recipe_engine.config_types import Path
 
 def RunSteps(api):
-  api.path.set_config('example')
-
   api.step('step1', ['/bin/echo', str(api.path['slave_build'].join('foo'))])
 
   # module.resource(...) demo.
@@ -25,13 +23,13 @@ def RunSteps(api):
            ['echo', api.path.package_repo_resource('dir', 'file.py')])
 
   # Global dynamic paths (see config.py example for declaration):
-  dynamic_path = Path('[BORTS]', 'jerky')
+  dynamic_path = Path('[CHECKOUT]', 'jerky')
 
-  assert 'borts' not in api.path
-  api.path['borts'] = api.path['slave_build'].join('borts')
-  assert 'borts' in api.path
+  assert 'checkout' not in api.path
+  api.path['checkout'] = api.path['slave_build'].join('checkout')
+  assert 'checkout' in api.path
 
-  api.step('borts path', ['/bin/echo', dynamic_path])
+  api.step('checkout path', ['/bin/echo', dynamic_path])
 
   # Methods from python os.path are available via api.path.
   # For testing, we asserted that this file existed in the test description
@@ -51,19 +49,20 @@ def RunSteps(api):
   assert api.path.exists(file_path)
 
 
-
 def GenTests(api):
   for platform in ('linux', 'win', 'mac'):
     yield (api.test(platform) + api.platform.name(platform) +
            # Test when a file already exists
            api.path.exists(api.path['slave_build']))
 
-  # We have support for chromium swarming built in to the engine for some
-  # reason. TODO(phajdan.jr) remove it.
-  yield (api.test('linux_swarming') +
-         api.properties(path_config='swarming') +
-         api.path.exists(api.path['slave_build']))
+    # We have support for chromium swarming built in to the engine for some
+    # reason. TODO(phajdan.jr) remove it.
+    yield (api.test('%s_swarming' % platform) +
+           api.platform.name(platform) +
+           api.properties(path_config='swarming') +
+           api.path.exists(api.path['slave_build']))
 
-  yield (api.test('linux_kitchen') +
-         api.properties(path_config='kitchen') +
-         api.path.exists(api.path['slave_build']))
+    yield (api.test('%s_kitchen' % platform) +
+           api.platform.name(platform) +
+           api.properties(path_config='kitchen') +
+           api.path.exists(api.path['slave_build']))

@@ -1,3 +1,4 @@
 DEPS = [
   'platform',
+  'properties',
 ]
