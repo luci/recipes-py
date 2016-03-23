@@ -26,7 +26,7 @@ def RunSteps(api):
   assert api.json.is_serializable('foo')
   assert not api.json.is_serializable(set(['foo', 'bar', 'baz']))
 
-  # Example demonstrating multiple json output files.
+  # Example demonstrating multiple named json output files.
   result = api.python.inline(
       'foo',
       """
@@ -37,9 +37,11 @@ def RunSteps(api):
       with open(sys.argv[2], 'w') as f:
         f.write(json.dumps(['x', 'y', %s]))
       """ % repr(FULLWIDTH_Z),
-      args=[api.json.output(), api.json.output()],
+      args=[api.json.output(name='1'), api.json.output(name='2')],
   )
-  assert result.json.output_all == [[1, 2, 3], ['x', 'y', FULLWIDTH_Z]]
+  assert result.json.outputs['1'] == [1, 2, 3]
+  assert result.json.outputs['2'] == ['x', 'y', FULLWIDTH_Z]
+  assert not hasattr(result.json, 'output')
 
   example_dict = {'x': 1, 'y': 2}
 
@@ -66,6 +68,6 @@ def GenTests(api):
       api.step_data('echo1', stdout=api.json.output([1, 2, 3])) +
       api.step_data(
           'foo',
-          api.json.output([1, 2, 3]) +
-          api.json.output(['x', 'y', FULLWIDTH_Z]),
+          api.json.output([1, 2, 3], name='1') +
+          api.json.output(['x', 'y', FULLWIDTH_Z], name='2'),
       ))

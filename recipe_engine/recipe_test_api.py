@@ -8,7 +8,7 @@ import contextlib
 from .util import ModuleInjectionSite, static_call, static_wraps
 from .types import freeze
 
-def combineify(name, dest, a, b):
+def combineify(name, dest, a, b, overwrite=False):
   """
   Combines dictionary members in two objects into a third one using addition.
 
@@ -17,12 +17,17 @@ def combineify(name, dest, a, b):
     dest - the destination object
     a - the first source object
     b - the second source object
+    overwrite - if True, for the same key, overwrite value from a with the one
+        from b; otherwise, use addition to merge them.
   """
   dest_dict = getattr(dest, name)
   dest_dict.update(getattr(a, name))
   for k, v in getattr(b, name).iteritems():
     if k in dest_dict:
-      dest_dict[k] += v
+      if not overwrite:
+        dest_dict[k] += v
+      else:
+        dest_dict[k] = v
     else:
       dest_dict[k] = v
 
@@ -38,12 +43,16 @@ class BaseTestData(object):
 
 
 class PlaceholderTestData(BaseTestData):
-  def __init__(self, data=None):
+  def __init__(self, data=None, name=None):
     super(PlaceholderTestData, self).__init__()
     self.data = data
+    self.name = name
 
   def __repr__(self):
-    return "PlaceholderTestData(%r)" % (self.data,)
+    if self.name is None:
+      return "PlaceholderTestData(DEFAULT, %r)" % (self.data,)
+    else:
+      return "PlaceholderTestData(%r, %r)" % (self.name, self.data,)
 
 
 class StepTestData(BaseTestData):
@@ -55,8 +64,8 @@ class StepTestData(BaseTestData):
   """
   def __init__(self):
     super(StepTestData, self).__init__()
-    # { (module, placeholder) -> [data] }. These are for output placeholders.
-    self.placeholder_data = collections.defaultdict(list)
+    # { (module, placeholder, name) -> data }. Data are for output placeholders.
+    self.placeholder_data = collections.defaultdict(dict)
     self.override = False
     self._stdout = None
     self._stderr = None
@@ -70,7 +79,7 @@ class StepTestData(BaseTestData):
 
     ret = StepTestData()
 
-    combineify('placeholder_data', ret, self, other)
+    combineify('placeholder_data', ret, self, other, overwrite=True)
 
     # pylint: disable=W0212
     ret._stdout = other._stdout or self._stdout
@@ -83,18 +92,13 @@ class StepTestData(BaseTestData):
     return ret
 
   def unwrap_placeholder(self):
-    # {(module, placeholder): [data]} => data.
+    # {(module, placeholder, name): data} => data.
     assert len(self.placeholder_data) == 1
-    data_list = self.placeholder_data.items()[0][1]
-    assert len(data_list) == 1
-    return data_list[0]
+    return self.placeholder_data.values()[0]
 
-  def pop_placeholder(self, name_pieces):
-    l = self.placeholder_data[name_pieces]
-    if l:
-      return l.pop(0)
-    else:
-      return PlaceholderTestData()
+  def pop_placeholder(self, module_name, placeholder_name, name):
+    return self.placeholder_data.pop(
+        (module_name, placeholder_name, name), PlaceholderTestData())
 
   @property
   def retcode(self):  # pylint: disable=E0202
@@ -257,7 +261,7 @@ class DisabledTestData(BaseTestData):
   def __getattr__(self, name):
     return self
 
-  def pop_placeholder(self, _name_pieces):
+  def pop_placeholder(self, _module_name, _placeholder_name, _name):
     return self
 
   def pop_step_test_data(self, _step_name, _step_test_data_fn):
@@ -288,42 +292,40 @@ def placeholder_step_data(func):
   StepTestData() object.
 
   The wrapped function may return either:
-    * <placeholder data>, <retcode or None>
+    * <placeholder data>, <retcode or None>, <name or None>
     * StepTestData containing exactly one PlaceholderTestData and possible a
       retcode. This is useful for returning the result of another method which
       is wrapped with placeholder_step_data.
 
   In either case, the wrapper function will return a StepTestData object with
   the retcode and placeholder datum inserted with a name of:
-    (<Test module name>, <wrapped function name>)
+    (<Test module name>, <wrapped function name>, <name>)
 
   Say you had a 'foo_module' with the following RecipeTestApi:
     class FooTestApi(RecipeTestApi):
       @placeholder_step_data
       @staticmethod
-      def cool_method(data, retcode=None):
-        return ("Test data (%s)" % data), retcode
+      def cool_method(data, retcode=None, name=None):
+        return ("Test data (%s)" % data), retcode, name
 
       @placeholder_step_data
-      def other_method(self, retcode=None):
-        return self.cool_method('hammer time', retcode)
+      def other_method(self, retcode=None, name=None):
+        return self.cool_method('hammer time', retcode=retcode, name=name)
 
-  Code calling cool_method('hello') would get a StepTestData:
+  Code calling cool_method('hello', name='cool1') would get a StepTestData:
     StepTestData(
       placeholder_data = {
-        ('foo_module', 'cool_method'): [
+        ('foo_module', 'cool_method', 'cool1') :
           PlaceholderTestData('Test data (hello)')
-        ]
       },
       retcode = None
     )
 
-  Code calling other_method(50) would get a StepTestData:
+  Code calling other_method(retcode=50, name='other1') would get a StepTestData:
     StepTestData(
       placeholder_data = {
-        ('foo_module', 'other_method'): [
+        ('foo_module', 'other_method', 'other1'):
           PlaceholderTestData('Test data (hammer time)')
-        ]
       },
       retcode = 50
     )
@@ -334,20 +336,19 @@ def placeholder_step_data(func):
     mod_name = self._module.NAME  # pylint: disable=W0212
     data = static_call(self, func, *args, **kwargs)
     if isinstance(data, StepTestData):
-      all_data = [i
-                  for l in data.placeholder_data.values()
-                  for i in l]
+      all_data = data.placeholder_data.values()
       assert len(all_data) == 1, (
         'placeholder_step_data is only expecting a single output placeholder '
         'datum. Got: %r' % data
       )
       placeholder_data, retcode = all_data[0], data.retcode
     else:
-      placeholder_data, retcode = data
-      placeholder_data = PlaceholderTestData(placeholder_data)
+      placeholder_data, retcode, name = data
+      placeholder_data = PlaceholderTestData(data=placeholder_data, name=name)
 
     ret = StepTestData()
-    ret.placeholder_data[(mod_name, inner.__name__)].append(placeholder_data)
+    key = (mod_name, inner.__name__, placeholder_data.name)
+    ret.placeholder_data[key] = placeholder_data
     ret.retcode = retcode
     return ret
   return inner
@@ -374,9 +375,8 @@ class RecipeTestApi(object):
                  the platform module's test_api for a good example of this.
     step_data  - Step-specific data. There are two major components to this.
         retcode          - The return code of the step
-        placeholder_data - A mapping from placeholder name to the a list of
-                           PlaceholderTestData objects, one for each instance
-                           of that kind of Placeholder in the step.
+        placeholder_data - A mapping from placeholder name to the
+                           PlaceholderTestData object in the step.
         stdout, stderr   - PlaceholderTestData objects for stdout and stderr.
 
   TestData objects are concatenatable, so it's convenient to phrase test cases
@@ -389,17 +389,18 @@ class RecipeTestApi(object):
         api.platform('win', 64) +
         api.step_data(
           'some_step',
-          api.json.output("bobface"),
-          api.json.output({'key': 'value'})
+          api.json.output("bobface", name="a"),
+          api.json.output({'key': 'value'}, name="b")
         )
       )
 
   This example would run a single test (named 'try_win64') with the standard
   tryserver properties (plus an extra property 'power_level' whose value was
   over 9000).  The test would run as if it were being run on a 64-bit windows
-  installation, and the step named 'some_step' would have its first json output
-  placeholder be mocked to return '"bobface"', and its second json output
-  placeholder be mocked to return '{"key": "value"}'.
+  installation, and the step named 'some_step' would have the json output of
+  the placeholder with name "a" be mocked to return '"bobface"', and the json
+  output of the placeholder with name "b" be mocked to return
+  '{"key": "value"}'.
 
   The properties.tryserver() call is documented in the 'properties' module's
   test_api.
@@ -439,9 +440,9 @@ class RecipeTestApi(object):
 
     Args:
       name - The name of the step we're providing data for
-      data - Zero or more StepTestData objects. These may fill in placeholder
-             data for zero or more modules, as well as possibly setting the
-             retcode for this step.
+      data - Zero or more StepTestData objects. These may fill in output
+             placeholder data for zero or more modules, as well as possibly
+             setting the retcode for this step.
       retcode=(int or None) - Override the retcode for this step, even if it
              was set by |data|. This must be set as a keyword arg.
       stdout - StepTestData object with a single output placeholder datum for a

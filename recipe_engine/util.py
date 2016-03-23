@@ -35,8 +35,12 @@ class ModuleInjectionSite(object):
 
 class Placeholder(object):
   """Base class for command line argument placeholders. Do not use directly."""
-  def __init__(self):
-    self.name_pieces = None
+  def __init__(self, name=None):
+    if name is not None:
+      assert isinstance(name, basestring), (
+          'Expect a string name for a placeholder, but got %r' % name)
+    self.name = name
+    self.namespaces = None
 
   @property
   def backing_file(self):  # pragma: no cover
@@ -51,9 +55,11 @@ class Placeholder(object):
     raise NotImplementedError
 
   @property
-  def name(self):
-    assert self.name_pieces
-    return "%s.%s" % self.name_pieces
+  def label(self):
+    if self.name is None:
+      return "%s.%s" % self.namespaces
+    else:
+      return "%s.%s[%s]" % (self.namespaces[0], self.namespaces[1], self.name)
 
 
 class InputPlaceholder(Placeholder):
@@ -112,7 +118,7 @@ def returns_placeholder(func):
   def inner(self, *args, **kwargs):
     ret = static_call(self, func, *args, **kwargs)
     assert isinstance(ret, Placeholder)
-    ret.name_pieces = (self.name, static_name(self, func))
+    ret.namespaces = (self.name, static_name(self, func))
     return ret
   # prevent this placeholder-returning function from becoming a composite_step.
   inner._non_step = True # pylint: disable=protected-access

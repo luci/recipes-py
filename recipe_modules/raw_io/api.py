@@ -43,11 +43,11 @@ class InputDataPlaceholder(recipe_util.InputPlaceholder):
 
 
 class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
-  def __init__(self, suffix, leak_to):
+  def __init__(self, suffix, leak_to, name=None):
     self.suffix = suffix
     self.leak_to = leak_to
     self._backing_file = None
-    super(OutputDataPlaceholder, self).__init__()
+    super(OutputDataPlaceholder, self).__init__(name=name)
 
   @property
   def backing_file(self):
@@ -81,11 +81,11 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
 
 
 class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
-  def __init__(self, suffix, leak_to):
+  def __init__(self, suffix, leak_to, name=None):
     self.suffix = suffix
     self.leak_to = leak_to
     self._backing_dir = None
-    super(OutputDataDirPlaceholder, self).__init__()
+    super(OutputDataDirPlaceholder, self).__init__(name=name)
 
   @property
   def backing_file(self):  # pragma: no cover
@@ -136,7 +136,7 @@ class RawIOApi(recipe_api.RecipeApi):
 
   @recipe_util.returns_placeholder
   @staticmethod
-  def output(suffix='', leak_to=None):
+  def output(suffix='', leak_to=None, name=None):
     """Returns a Placeholder for use as a step argument, or for std{out,err}.
 
     If 'leak_to' is None, the placeholder is backed by a temporary file with
@@ -146,11 +146,11 @@ class RawIOApi(recipe_api.RecipeApi):
     redirects IO to a file at that path. Once step finishes, the file is
     NOT deleted (i.e. it's 'leaking'). 'suffix' is ignored in that case.
     """
-    return OutputDataPlaceholder(suffix, leak_to)
+    return OutputDataPlaceholder(suffix, leak_to, name=name)
 
   @recipe_util.returns_placeholder
   @staticmethod
-  def output_dir(suffix='', leak_to=None):
+  def output_dir(suffix='', leak_to=None, name=None):
     """Returns a directory Placeholder for use as a step argument.
 
     If 'leak_to' is None, the placeholder is backed by a temporary dir with
@@ -160,4 +160,4 @@ class RawIOApi(recipe_api.RecipeApi):
     redirects IO to a dir at that path. Once step finishes, the dir is
     NOT deleted (i.e. it's 'leaking'). 'suffix' is ignored in that case.
     """
-    return OutputDataDirPlaceholder(suffix, leak_to)
+    return OutputDataDirPlaceholder(suffix, leak_to, name=name)

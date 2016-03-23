@@ -27,10 +27,10 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
   JSON document, which will be set as the json.output for that step in the
   step_history OrderedDict passed to your recipe generator.
   """
-  def __init__(self, api, add_json_log):
+  def __init__(self, api, add_json_log, name=None):
     self.raw = api.m.raw_io.output('.json')
     self.add_json_log = add_json_log
-    super(JsonOutputPlaceholder, self).__init__()
+    super(JsonOutputPlaceholder, self).__init__(name=name)
 
   @property
   def backing_file(self):
@@ -54,7 +54,7 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
       pass
 
     if self.add_json_log:
-      key = self.name + ('' if valid else ' (invalid)')
+      key = self.label + ('' if valid else ' (invalid)')
       with contextlib.closing(recipe_util.StringListIO()) as listio:
         json.dump(ret, listio, indent=2, sort_keys=True)
       presentation.logs[key] = listio.lines
@@ -107,12 +107,12 @@ class JsonApi(recipe_api.RecipeApi):
     return self.m.raw_io.input(self.dumps(data), '.json')
 
   @recipe_util.returns_placeholder
-  def output(self, add_json_log=True):
+  def output(self, add_json_log=True, name=None):
     """A placeholder which will expand to '/tmp/file'."""
-    return JsonOutputPlaceholder(self, add_json_log)
+    return JsonOutputPlaceholder(self, add_json_log, name=name)
 
   # TODO(you): This method should be in the `file` recipe_module
-  def read(self, name, path, add_json_log=True, **kwargs):
+  def read(self, name, path, add_json_log=True, output_name=None, **kwargs):
     """Returns a step that reads a JSON file."""
     return self.m.python.inline(
         name,
@@ -121,7 +121,8 @@ class JsonApi(recipe_api.RecipeApi):
         import sys
         shutil.copy(sys.argv[1], sys.argv[2])
         """,
-        args=[path, self.output(add_json_log=add_json_log)],
+        args=[path,
+              self.output(add_json_log=add_json_log, name=output_name)],
         add_python_log=False,
         **kwargs
     )

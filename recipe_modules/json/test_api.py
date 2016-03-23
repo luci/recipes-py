@@ -9,11 +9,12 @@ from recipe_engine import recipe_test_api
 class JsonTestApi(recipe_test_api.RecipeTestApi):
   @recipe_test_api.placeholder_step_data
   @staticmethod
-  def output(data, retcode=None):
-    return json.dumps(data), retcode
+  def output(data, retcode=None, name=None):
+    return json.dumps(data), retcode, name
 
-  def output_stream(self, data, stream='stdout', retcode=None):
+  def output_stream(self, data, stream='stdout', retcode=None, name=None):
     assert stream in ('stdout', 'stderr')
     ret = recipe_test_api.StepTestData()
-    setattr(ret, stream, self.output(data, retcode).unwrap_placeholder())
+    step_data = self.output(data, retcode=retcode, name=name)
+    setattr(ret, stream, step_data.unwrap_placeholder())
     return ret

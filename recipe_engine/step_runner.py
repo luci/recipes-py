@@ -434,6 +434,10 @@ Placeholders = collections.namedtuple(
     'Placeholders', ['inputs_cmd', 'outputs_cmd', 'stdout', 'stderr', 'stdin'])
 
 
+# Singleton object to indicate a value is not set.
+UNSET_VALUE = object()
+
+
 def render_step(step, step_test):
   """Renders a step so that it can be fed to annotator.py.
 
@@ -449,19 +453,28 @@ def render_step(step, step_test):
 
   # Process 'cmd', rendering placeholders there.
   input_phs = collections.defaultdict(lambda: collections.defaultdict(list))
-  output_phs = collections.defaultdict(lambda: collections.defaultdict(list))
+  output_phs = collections.defaultdict(
+      lambda: collections.defaultdict(collections.OrderedDict))
   new_cmd = []
   for item in step.get('cmd', []):
     if isinstance(item, util.Placeholder):
-      module_name, placeholder_name = item.name_pieces
-      tdata = step_test.pop_placeholder(item.name_pieces)
+      module_name, placeholder_name = item.namespaces
+      tdata = step_test.pop_placeholder(
+          module_name, placeholder_name, item.name)
       new_cmd.extend(item.render(tdata))
       if isinstance(item, util.InputPlaceholder):
         input_phs[module_name][placeholder_name].append((item, tdata))
       else:
         assert isinstance(item, util.OutputPlaceholder), (
             'Not an OutputPlaceholder: %r' % item)
-        output_phs[module_name][placeholder_name].append((item, tdata))
+        # This assert ensures that:
+        #   no two placeholders have the same name
+        #   at most one placeholder has the default name
+        assert item.name not in output_phs[module_name][placeholder_name], (
+            'Step "%s" has multiple output placeholders of %s.%s. Please '
+            'specify explicit and different names for them.' % (
+              step['name'], module_name, placeholder_name))
+        output_phs[module_name][placeholder_name][item.name] = (item, tdata)
     else:
       new_cmd.append(item)
   rendered_step['cmd'] = new_cmd
@@ -513,10 +526,25 @@ def construct_step_result(step, retcode, placeholders):
     o = BlankObject()
     setattr(step_result, module_name, o)
 
-    for placeholder_name, items in pholders.iteritems():
-      lst = [ph.result(step_result.presentation, td) for ph, td in items]
-      setattr(o, placeholder_name+"_all", lst)
-      setattr(o, placeholder_name, lst[0])
+    for placeholder_name, instances in pholders.iteritems():
+      named_results = {}
+      default_result = UNSET_VALUE
+      for _, (ph, td) in instances.iteritems():
+        result = ph.result(step_result.presentation, td)
+        if ph.name is None:
+          default_result = result
+        else:
+          named_results[ph.name] = result
+      setattr(o, placeholder_name + "s", named_results)
+
+      if default_result is UNSET_VALUE and len(named_results) == 1:
+        # If only 1 output placeholder with an explicit name, we set the default
+        # output.
+        default_result = named_results.values()[0]
+
+      # If 2+ placeholders have explicit names, we don't set the default output.
+      if default_result is not UNSET_VALUE:
+        setattr(o, placeholder_name, default_result)
 
   # Placeholders that are used with IO redirection.
   for key in ('stdout', 'stderr', 'stdin'):
