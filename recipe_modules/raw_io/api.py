@@ -10,7 +10,7 @@ import shutil
 import tempfile
 
 
-class InputDataPlaceholder(recipe_util.Placeholder):
+class InputDataPlaceholder(recipe_util.InputPlaceholder):
   def __init__(self, data, suffix):
     assert isinstance(data, basestring)
     self.data = data
@@ -34,15 +34,15 @@ class InputDataPlaceholder(recipe_util.Placeholder):
       os.close(input_fd)
     return [self._backing_file]
 
-  def result(self, presentation, test):
+  def cleanup(self, test_enabled):
     assert self._backing_file
     exists = os.path.exists(self._backing_file)
-    if not test.enabled and exists:  # pragma: no cover
+    if not test_enabled and exists:  # pragma: no cover
       os.unlink(self._backing_file)
     self._backing_file = None
 
 
-class OutputDataPlaceholder(recipe_util.Placeholder):
+class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
   def __init__(self, suffix, leak_to):
     self.suffix = suffix
     self.leak_to = leak_to
@@ -80,7 +80,7 @@ class OutputDataPlaceholder(recipe_util.Placeholder):
         self._backing_file = None
 
 
-class OutputDataDirPlaceholder(recipe_util.Placeholder):
+class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
   def __init__(self, suffix, leak_to):
     self.suffix = suffix
     self.leak_to = leak_to

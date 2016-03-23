@@ -12,7 +12,7 @@ from recipe_engine import util as recipe_util
 from recipe_engine import config_types
 
 
-class JsonOutputPlaceholder(recipe_util.Placeholder):
+class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
   """JsonOutputPlaceholder is meant to be a placeholder object which, when added
   to a step's cmd list, will be replaced by annotated_run with the path to a
   temporary file (e.g. /tmp/tmp4lp1qM) which will exist only for the duration of

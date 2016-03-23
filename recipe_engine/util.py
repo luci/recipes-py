@@ -34,7 +34,7 @@ class ModuleInjectionSite(object):
 
 
 class Placeholder(object):
-  """Base class for json placeholders. Do not use directly."""
+  """Base class for command line argument placeholders. Do not use directly."""
   def __init__(self):
     self.name_pieces = None
 
@@ -50,6 +50,25 @@ class Placeholder(object):
     """Return [cmd items]*"""
     raise NotImplementedError
 
+  @property
+  def name(self):
+    assert self.name_pieces
+    return "%s.%s" % self.name_pieces
+
+
+class InputPlaceholder(Placeholder):
+  """Base class for json/raw_io input placeholders. Do not use directly."""
+  def cleanup(self, test_enabled):
+    """Called after step completion.
+
+    Args:
+      test_enabled (bool) - indicate whether running in simulation mode.
+    """
+    pass
+
+
+class OutputPlaceholder(Placeholder):
+  """Base class for json/raw_io output placeholders. Do not use directly."""
   def result(self, presentation, test):
     """Called after step completion.
 
@@ -57,16 +76,10 @@ class Placeholder(object):
       presentation (StepPresentation) - for the current step.
       test (PlaceholderTestData) - test data for this placeholder.
 
-    Returns value to add to step result.
-
     May optionally modify presentation as a side-effect.
+    Returned value will be added to the step result.
     """
     pass
-
-  @property
-  def name(self):
-    assert self.name_pieces
-    return "%s.%s" % self.name_pieces
 
 
 def static_wraps(func):

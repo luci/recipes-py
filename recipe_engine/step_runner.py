@@ -431,7 +431,7 @@ class SimulationStepRunner(StepRunner):
 
 # Result of 'render_step'.
 Placeholders = collections.namedtuple(
-    'Placeholders', ['cmd', 'stdout', 'stderr', 'stdin'])
+    'Placeholders', ['inputs_cmd', 'outputs_cmd', 'stdout', 'stderr', 'stdin'])
 
 
 def render_step(step, step_test):
@@ -448,14 +448,20 @@ def render_step(step, step_test):
   rendered_step = dict(step)
 
   # Process 'cmd', rendering placeholders there.
-  placeholders = collections.defaultdict(lambda: collections.defaultdict(list))
+  input_phs = collections.defaultdict(lambda: collections.defaultdict(list))
+  output_phs = collections.defaultdict(lambda: collections.defaultdict(list))
   new_cmd = []
   for item in step.get('cmd', []):
     if isinstance(item, util.Placeholder):
       module_name, placeholder_name = item.name_pieces
       tdata = step_test.pop_placeholder(item.name_pieces)
       new_cmd.extend(item.render(tdata))
-      placeholders[module_name][placeholder_name].append((item, tdata))
+      if isinstance(item, util.InputPlaceholder):
+        input_phs[module_name][placeholder_name].append((item, tdata))
+      else:
+        assert isinstance(item, util.OutputPlaceholder), (
+            'Not an OutputPlaceholder: %r' % item)
+        output_phs[module_name][placeholder_name].append((item, tdata))
     else:
       new_cmd.append(item)
   rendered_step['cmd'] = new_cmd
@@ -466,21 +472,28 @@ def render_step(step, step_test):
     placeholder = step.get(key)
     tdata = None
     if placeholder:
-      assert isinstance(placeholder, util.Placeholder), key
+      if key == 'stdin':
+        assert isinstance(placeholder, util.InputPlaceholder), (
+            '%s(%r) should be an InputPlaceholder.' % (key, placeholder))
+      else:
+        assert isinstance(placeholder, util.OutputPlaceholder), (
+            '%s(%r) should be an OutputPlaceholder.' % (key, placeholder))
       tdata = getattr(step_test, key)
       placeholder.render(tdata)
       assert placeholder.backing_file
       rendered_step[key] = placeholder.backing_file
     stdio_placeholders[key] = (placeholder, tdata)
 
-  return rendered_step, Placeholders(cmd=placeholders, **stdio_placeholders)
+  return rendered_step, Placeholders(
+      inputs_cmd=input_phs, outputs_cmd=output_phs, **stdio_placeholders)
 
 
 def construct_step_result(step, retcode, placeholders):
   """Constructs a StepData step result from step return data.
 
-  The main purpose of this function is to add placeholder results into the
-  step result where placeholders appeared in the input step.
+  The main purpose of this function is to add output placeholder results into
+  the step result where output placeholders appeared in the input step.
+  Also give input placeholders the chance to do the clean-up if needed.
   """
 
   step_result = types.StepData(step, retcode)
@@ -488,8 +501,14 @@ def construct_step_result(step, retcode, placeholders):
   class BlankObject(object):
     pass
 
-  # Placeholders inside step |cmd|.
-  for module_name, pholders in placeholders.cmd.iteritems():
+  # Input placeholders inside step |cmd|.
+  for _, pholders in placeholders.inputs_cmd.iteritems():
+    for _, items in pholders.iteritems():
+      for ph, td in items:
+        ph.cleanup(td.enabled)
+
+  # Output placeholders inside step |cmd|.
+  for module_name, pholders in placeholders.outputs_cmd.iteritems():
     assert not hasattr(step_result, module_name)
     o = BlankObject()
     setattr(step_result, module_name, o)
@@ -503,8 +522,13 @@ def construct_step_result(step, retcode, placeholders):
   for key in ('stdout', 'stderr', 'stdin'):
     assert not hasattr(step_result, key)
     ph, td = getattr(placeholders, key)
-    result = ph.result(step_result.presentation, td) if ph else None
-    setattr(step_result, key, result)
+    if ph:
+      if isinstance(ph, util.OutputPlaceholder):
+        setattr(step_result, key, ph.result(step_result.presentation, td))
+      else:
+        assert isinstance(ph, util.InputPlaceholder), (
+            '%s(%r) should be an InputPlaceholder.' % (key, ph))
+        ph.cleanup(td.enabled)
 
   return step_result
 

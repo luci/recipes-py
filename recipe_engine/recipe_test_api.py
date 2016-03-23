@@ -55,7 +55,7 @@ class StepTestData(BaseTestData):
   """
   def __init__(self):
     super(StepTestData, self).__init__()
-    # { (module, placeholder) -> [data] }
+    # { (module, placeholder) -> [data] }. These are for output placeholders.
     self.placeholder_data = collections.defaultdict(list)
     self.override = False
     self._stdout = None
@@ -284,7 +284,7 @@ def mod_test_data(func):
 
 def placeholder_step_data(func):
   """Decorates RecipeTestApi member functions to allow those functions to
-  return just the placeholder data, instead of the normally required
+  return just the output placeholder data, instead of the normally required
   StepTestData() object.
 
   The wrapped function may return either:
@@ -338,8 +338,8 @@ def placeholder_step_data(func):
                   for l in data.placeholder_data.values()
                   for i in l]
       assert len(all_data) == 1, (
-        'placeholder_step_data is only expecting a single placeholder datum. '
-        'Got: %r' % data
+        'placeholder_step_data is only expecting a single output placeholder '
+        'datum. Got: %r' % data
       )
       placeholder_data, retcode = all_data[0], data.retcode
     else:
@@ -444,8 +444,10 @@ class RecipeTestApi(object):
              retcode for this step.
       retcode=(int or None) - Override the retcode for this step, even if it
              was set by |data|. This must be set as a keyword arg.
-      stdout - StepTestData object with placeholder data for a step's stdout.
-      stderr - StepTestData object with placeholder data for a step's stderr.
+      stdout - StepTestData object with a single output placeholder datum for a
+             step's stdout.
+      stderr - StepTestData object with a single output placeholder datum for a
+             step's stderr.
       override=(bool) - This step data completely replaces any previously
              generated step data, instead of adding on to it.
 
