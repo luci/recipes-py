@@ -58,8 +58,10 @@ def kitchen(c):
   # TODO(phajdan.jr): have one cache dir, let clients append suffixes.
   # TODO(phajdan.jr): set persistent cache path for remaining platforms.
   if c.PLATFORM == 'linux':
-    c.base_paths['git_cache'] = ('b', 'swarm_slave', 'cache', 'git_cache')
-    c.base_paths['goma_cache'] = ('b', 'swarm_slave', 'cache', 'goma_cache')
+    c.base_paths['git_cache'] = (
+        '/', 'b', 'swarm_slave', 'cache', 'git_cache')
+    c.base_paths['goma_cache'] = (
+        '/', 'b', 'swarm_slave', 'cache', 'goma_cache')
   else:
     c.base_paths['git_cache'] = c.base_paths['root'] + ('cache_dir',)
     c.base_paths['goma_cache'] = c.base_paths['root'] + ('goma_cache',)
