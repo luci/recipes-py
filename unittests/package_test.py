@@ -109,7 +109,7 @@ deps {
     self.context = package.PackageContext.from_proto_file(
         'repo/root', self.proto_file)
 
-  # def test_dump_load_inverses(self):
+  def test_dump_load_inverses(self):
     # Doubles as a test for equality reflexivity.
     package_spec = package.PackageSpec.load_proto(self.proto_file)
     self.assertEqual(self.proto_file.to_text(package_spec.dump()),
