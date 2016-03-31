@@ -8,6 +8,7 @@ import re
 import subprocess
 import sys
 
+
 def CommonChecks(input_api, output_api):
   def tests(*path):
     return input_api.canned_checks.GetUnitTestsInDirectory(
@@ -15,9 +16,18 @@ def CommonChecks(input_api, output_api):
         output_api,
         input_api.os_path.join(*path),
         whitelist=[r'.+_test\.py'])
-  return input_api.RunTests(
+
+  results = []
+
+  results.extend(input_api.canned_checks.PanProjectChecks(
+      input_api, output_api))
+
+  results.extend(input_api.RunTests(
       tests('recipe_engine', 'unittests') +
-      tests('unittests'))
+      tests('unittests')))
+
+  return results
+
 
 CheckChangeOnUpload = CommonChecks
 CheckChangeOnCommit = CommonChecks
