@@ -67,7 +67,7 @@ class TestGitRepoSpec(MockIOThings, unittest.TestCase):
          os.path.join(self.context.package_dir, 'funny_recipes')])
     self.mock_subprocess.check_output.assert_any_call(
         ['git',
-         '--git-dir', 'repo/root/recipes/.recipe_deps/funny_recipes/.git',
+         '-C', 'repo/root/recipes/.recipe_deps/funny_recipes',
          'reset', '-q', '--hard', 'deadbeef'])
 
 

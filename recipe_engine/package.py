@@ -199,7 +199,7 @@ class GitRepoSpec(RepoSpec):
   def run_git(self, context, *args):
     cmd = [self._git]
     if context is not None:
-      cmd += ['--git-dir', os.path.join(self._dep_dir(context), '.git')]
+      cmd += ['-C', self._dep_dir(context)]
     cmd += list(args)
 
     logging.info('Running: %s', cmd)
