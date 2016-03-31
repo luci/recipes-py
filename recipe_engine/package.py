@@ -82,22 +82,26 @@ class PackageContext(object):
   - package_dir is where dependency checkouts live, e.g.
     package_dir/recipe_engine/recipes/...
   - repo_root is the root of the repository containing the root package.
+  - allow_fetch controls whether automatic fetching latest repo contents
+    from origin is allowed
   """
 
-  def __init__(self, recipes_dir, package_dir, repo_root):
+  def __init__(self, recipes_dir, package_dir, repo_root, allow_fetch):
     self.recipes_dir = recipes_dir
     self.package_dir = package_dir
     self.repo_root = repo_root
+    self.allow_fetch = allow_fetch
 
   @classmethod
-  def from_proto_file(cls, repo_root, proto_file):
+  def from_proto_file(cls, repo_root, proto_file, allow_fetch):
     buf = proto_file.read()
 
     recipes_path = str(buf.recipes_path).replace('/', os.sep)
 
     return cls(os.path.join(repo_root, recipes_path),
                os.path.join(repo_root, recipes_path, '.recipe_deps'),
-               repo_root)
+               repo_root,
+               allow_fetch)
 
 
 class CommitInfo(object):
@@ -544,7 +548,7 @@ class PackageSpec(object):
         package_deps = PackageDeps(context)
         # Inconsistent graphs will throw an exception here, thus skipping the
         # yield.
-        package_deps._create_from_spec(root_spec, update.spec, allow_fetch=True)
+        package_deps._create_from_spec(root_spec, update.spec)
         new_update = RepoUpdate(update.spec, tuple(commit_infos_accum))
         commit_infos_accum = []
         yield new_update
@@ -587,18 +591,18 @@ class PackageDeps(object):
                  are the `project_id` field to override, and dictionary values
                  are the override path.
     """
-    context = PackageContext.from_proto_file(repo_root, proto_file)
+    context = PackageContext.from_proto_file(repo_root, proto_file, allow_fetch)
     if overrides:
       overrides = {project_id: PathRepoSpec(path)
                    for project_id, path in overrides.iteritems()}
     package_deps = cls(context, overrides=overrides)
 
-    package_deps._root_package = package_deps._create_package(RootRepoSpec(proto_file), allow_fetch)
+    package_deps._root_package = package_deps._create_package(RootRepoSpec(proto_file))
 
     return package_deps
 
-  def _create_package(self, repo_spec, allow_fetch):
-    if allow_fetch:
+  def _create_package(self, repo_spec):
+    if self._context.allow_fetch:
       repo_spec.checkout(self._context)
     else:
       try:
@@ -610,9 +614,9 @@ class PackageDeps(object):
 
     package_spec = PackageSpec.load_proto(repo_spec.proto_file(self._context))
 
-    return self._create_from_spec(repo_spec, package_spec, allow_fetch)
+    return self._create_from_spec(repo_spec, package_spec)
 
-  def _create_from_spec(self, repo_spec, package_spec, allow_fetch):
+  def _create_from_spec(self, repo_spec, package_spec):
     project_id = package_spec.project_id
     repo_spec = self._overrides.get(project_id, repo_spec)
     if project_id in self._packages:
@@ -627,7 +631,7 @@ class PackageDeps(object):
 
     deps = {}
     for dep, dep_repo in sorted(package_spec.deps.items()):
-      deps[dep] = self._create_package(dep_repo, allow_fetch)
+      deps[dep] = self._create_package(dep_repo)
 
     package = Package(
         project_id, repo_spec, deps,

@@ -150,7 +150,8 @@ def run(package_deps, args):
 def roll(args):
   from recipe_engine import package
   repo_root, config_file = get_package_config(args)
-  context = package.PackageContext.from_proto_file(repo_root, config_file)
+  context = package.PackageContext.from_proto_file(
+      repo_root, config_file, allow_fetch=not args.no_fetch)
   package_spec = package.PackageSpec.load_proto(config_file)
 
   for update in package_spec.iterate_consistent_updates(config_file, context):

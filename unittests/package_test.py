@@ -50,6 +50,7 @@ class TestGitRepoSpec(MockIOThings, unittest.TestCase):
       recipes_dir='repo/root/recipes',
       package_dir='repo/root/recipes/.recipe_deps',
       repo_root='repo/root',
+      allow_fetch=False,
     )
 
   def test_checkout_nonexistant_package_dir(self):
@@ -107,7 +108,7 @@ deps {
     self.proto_file = MockProtoFile('repo/root/infra/config/recipes.cfg',
                                     self.proto_text)
     self.context = package.PackageContext.from_proto_file(
-        'repo/root', self.proto_file)
+        'repo/root', self.proto_file, allow_fetch=False)
 
   def test_dump_load_inverses(self):
     # Doubles as a test for equality reflexivity.
