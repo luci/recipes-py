@@ -351,9 +351,15 @@ def main():
     logging.getLogger().setLevel(logging.INFO)
 
   repo_root, config_file = get_package_config(args)
-  package_deps = package.PackageDeps.create(
-      repo_root, config_file, allow_fetch=not args.no_fetch,
-      overrides=args.project_override)
+
+  try:
+    package_deps = package.PackageDeps.create(
+        repo_root, config_file, allow_fetch=not args.no_fetch,
+        overrides=args.project_override)
+  except subprocess.CalledProcessError:
+    # A git checkout failed somewhere. Return 2, which is the sign that this is
+    # an infra failure, rather than a test failure.
+    return 2
 
   if args.command == 'fetch':
     # We already did everything in the create() call above.
