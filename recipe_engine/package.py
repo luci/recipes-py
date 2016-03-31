@@ -196,21 +196,30 @@ class GitRepoSpec(RepoSpec):
             'branch="%(branch)s", revision="%(revision)s", '
             'path="%(path)s"}' % self.__dict__)
 
+  def run_git(self, context, *args):
+    cmd = [self._git]
+    if context is not None:
+      cmd += ['--git-dir', os.path.join(self._dep_dir(context), '.git')]
+    cmd += list(args)
+
+    logging.info('Running: %s', cmd)
+    return subprocess.check_output(cmd)
+
   def checkout(self, context):
     dep_dir = self._dep_dir(context)
-    logging.info('Freshening repository %s' % dep_dir)
+    logging.info('Freshening repository %s', dep_dir)
 
     if not os.path.isdir(dep_dir):
-      _run_cmd([self._git, 'clone', self.repo, dep_dir])
+      self.run_git(None, 'clone', self.repo, dep_dir)
     elif not os.path.isdir(os.path.join(dep_dir, '.git')):
       raise UncleanFilesystemError('%s exists but is not a git repo' % dep_dir)
 
     try:
-      subprocess.check_output([self._git, 'rev-parse', '-q', '--verify',
-                               '%s^{commit}' % self.revision], cwd=dep_dir)
+      self.run_git(context, 'rev-parse', '-q', '--verify',
+                   '%s^{commit}' % self.revision)
     except subprocess.CalledProcessError:
-      _run_cmd([self._git, 'fetch'], cwd=dep_dir)
-    _run_cmd([self._git, 'reset', '-q', '--hard', self.revision], cwd=dep_dir)
+      self.run_git(context, 'fetch')
+    self.run_git(context, 'reset', '-q', '--hard', self.revision)
 
   def check_checkout(self, context):
     dep_dir = self._dep_dir(context)
@@ -221,9 +230,7 @@ class GitRepoSpec(RepoSpec):
       raise UncleanFilesystemError('Dependency %s is not a git repo' %
                                    dep_dir)
 
-    git_status_command = [self._git, 'status', '--porcelain']
-    logging.info('%s', git_status_command)
-    output = subprocess.check_output(git_status_command, cwd=dep_dir)
+    output = self.run_git(context, 'status', '--porcelain')
     if output:
       raise UncleanFilesystemError('Dependency %s is unclean:\n%s' %
                                    (dep_dir, output))
@@ -259,25 +266,18 @@ class GitRepoSpec(RepoSpec):
 
   def _raw_updates(self, context, subdir):
     self.checkout(context)
-    _run_cmd([self._git, 'fetch'], cwd=self._dep_dir(context))
-    args = [self._git, 'rev-list', '--reverse',
+    self.run_git(context, 'fetch')
+    args = ['rev-list', '--reverse',
             '%s..origin/%s' % (self.revision, self.branch)]
     if subdir:
       # We add proto_file to the list of paths to check because it might contain
       # other upstream rolls, which we want.
       args.extend(['--', subdir + os.path.sep, self.proto_file(context).path])
-    git = subprocess.Popen(
-        args, stdout=subprocess.PIPE, cwd=self._dep_dir(context))
-    (stdout, _) = git.communicate()
-    return stdout
+    return self.run_git(context, *args)
 
   def _get_commit_info(self, rev, context):
-    author = subprocess.check_output(
-        [self._git, 'show', '-s', '--pretty=%aE', rev],
-        cwd=self._dep_dir(context)).strip()
-    message = subprocess.check_output(
-        [self._git, 'show', '-s', '--pretty=%B', rev],
-        cwd=self._dep_dir(context)).strip()
+    author = self.run_git(context, 'show', '-s', '--pretty=%aE', rev).strip()
+    message = self.run_git(context, 'show', '-s', '--pretty=%B', rev).strip()
     return CommitInfo(author, message, self.project_id, rev)
 
   def _dep_dir(self, context):
@@ -655,12 +655,6 @@ class PackageDeps(object):
   @property
   def engine_recipes_py(self):
     return os.path.join(self._context.repo_root, 'recipes.py')
-
-
-def _run_cmd(cmd, cwd=None):
-  cwd_str = ' (in %s)' % cwd if cwd else ''
-  logging.info('%s%s', cmd, cwd_str)
-  subprocess.check_call(cmd, cwd=cwd)
 
 
 def _merge2(xs, ys, compare=lambda x, y: x <= y):

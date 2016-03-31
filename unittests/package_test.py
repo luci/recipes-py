@@ -5,6 +5,7 @@
 
 import doctest
 import os
+import subprocess
 import sys
 import unittest
 
@@ -25,9 +26,11 @@ class MockIOThings(object):
     self.mock_os.path.dirname = os.path.dirname
     self.mock_os.sep = os.sep
 
+    self.orig_subprocess = subprocess
     self.mock_subprocess_patcher = mock.patch(
         'recipe_engine.package.subprocess')
     self.mock_subprocess = self.mock_subprocess_patcher.start()
+    self.mock_subprocess.PIPE = self.orig_subprocess.PIPE
 
   def tearDown(self):
     self.mock_subprocess_patcher.stop()
@@ -59,13 +62,13 @@ class TestGitRepoSpec(MockIOThings, unittest.TestCase):
 
     self.repo_spec.checkout(self.context)
 
-    self.mock_subprocess.check_call.assert_any_call(
+    self.mock_subprocess.check_output.assert_any_call(
         ['git', 'clone', self.REPO_URL,
-         os.path.join(self.context.package_dir, 'funny_recipes')],
-         cwd=None)
-    self.mock_subprocess.check_call.assert_any_call(
-        ['git', 'reset', '-q', '--hard', 'deadbeef'],
-        cwd='repo/root/recipes/.recipe_deps/funny_recipes')
+         os.path.join(self.context.package_dir, 'funny_recipes')])
+    self.mock_subprocess.check_output.assert_any_call(
+        ['git',
+         '--git-dir', 'repo/root/recipes/.recipe_deps/funny_recipes/.git',
+         'reset', '-q', '--hard', 'deadbeef'])
 
 
 class MockProtoFile(package.ProtoFile):
