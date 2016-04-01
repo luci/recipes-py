@@ -211,8 +211,8 @@ def depgraph(package_deps, args):
   _, config_file = get_package_config(args)
   universe = loader.RecipeUniverse(package_deps, config_file)
 
-  depgraph.main(universe, ignore_packages=args.ignore_package,
-                stdout=args.output)
+  depgraph.main(universe, package_deps.root_package,
+                args.ignore_package, args.output, args.recipe_filter)
 
 
 def doc(package_deps, args):
@@ -330,6 +330,12 @@ def main():
       '--ignore-package', action='append', default=[],
       help='Ignore a recipe package (e.g. recipe_engine). Can be passed '
            'multiple times')
+  depgraph_p.add_argument(
+      '--recipe-filter', default='',
+      help='A recipe substring to examine. If present, the depgraph will '
+           'include a recipe section containing recipes whose names contain '
+           'this substring. It will also filter all nodes of the graph to only '
+           'include modules touched by the filtered recipes.')
 
   doc_p = subp.add_parser(
       'doc',
