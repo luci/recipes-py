@@ -252,6 +252,7 @@ def main():
   parser.add_argument(
       '--verbose', '-v', action='store_true',
       help='Increase logging verboisty')
+  # TODO(phajdan.jr): Figure out if we need --no-fetch; remove if not.
   parser.add_argument(
       '--no-fetch', action='store_true',
       help='Disable automatic fetching')

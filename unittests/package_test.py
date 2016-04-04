@@ -53,7 +53,7 @@ class TestGitRepoSpec(MockIOThings, unittest.TestCase):
       recipes_dir='repo/root/recipes',
       package_dir='repo/root/recipes/.recipe_deps',
       repo_root='repo/root',
-      allow_fetch=False,
+      allow_fetch=True,
     )
 
   def test_checkout_nonexistant_package_dir(self):
@@ -202,10 +202,9 @@ recipes_path: "path/to/recipes"
 
     with mock.patch.object(package.GitRepoSpec, 'proto_file',
                            return_value=foo_proto_file):
-      with mock.patch.object(package.GitRepoSpec, 'check_checkout'):
-        deps = package.PackageDeps.create('base', base_proto_file, overrides={
-          'foo': '/path/to/local/foo',
-        })
+      deps = package.PackageDeps.create('base', base_proto_file, overrides={
+        'foo': '/path/to/local/foo',
+      })
 
     foo_deps = deps.get_package('foo')
     self.assertIsInstance(foo_deps.repo_spec, package.PathRepoSpec)

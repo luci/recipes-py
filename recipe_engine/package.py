@@ -22,6 +22,10 @@ class UncleanFilesystemError(Exception):
   pass
 
 
+class FetchNotAllowedError(Exception):
+  pass
+
+
 class InconsistentDependencyGraphError(Exception):
   pass
 
@@ -159,14 +163,6 @@ class RepoSpec(object):
     """
     raise NotImplementedError()
 
-  def check_checkout(self, context):
-    """Checks that the package is already fetched and in a good state, without
-    actually changing anything.
-
-    Returns None in normal conditions, otherwise raises some sort of exception.
-    """
-    raise NotImplementedError()
-
   def repo_root(self, context):
     """Returns the root of this repository."""
     raise NotImplementedError()
@@ -210,7 +206,11 @@ class GitRepoSpec(RepoSpec):
     logging.info('Freshening repository %s', dep_dir)
 
     if not os.path.isdir(dep_dir):
-      self.run_git(None, 'clone', self.repo, dep_dir)
+      if context.allow_fetch:
+        self.run_git(None, 'clone', self.repo, dep_dir)
+      else:
+        raise FetchNotAllowedError(
+            'need to clone %s but fetch not allowed' % self.repo)
     elif not os.path.isdir(os.path.join(dep_dir, '.git')):
       raise UncleanFilesystemError('%s exists but is not a git repo' % dep_dir)
 
@@ -218,22 +218,12 @@ class GitRepoSpec(RepoSpec):
       self.run_git(context, 'rev-parse', '-q', '--verify',
                    '%s^{commit}' % self.revision)
     except subprocess.CalledProcessError:
-      self.run_git(context, 'fetch')
+      if context.allow_fetch:
+        self.run_git(context, 'fetch')
+      else:
+        raise FetchNotAllowedError(
+            'need to fetch %s but fetch not allowed' % self.repo)
     self.run_git(context, 'reset', '-q', '--hard', self.revision)
-
-  def check_checkout(self, context):
-    dep_dir = self._dep_dir(context)
-    if not os.path.isdir(dep_dir):
-      raise UncleanFilesystemError('Dependency %s does not exist' %
-                                   dep_dir)
-    elif not os.path.isdir(os.path.join(dep_dir, '.git')):
-      raise UncleanFilesystemError('Dependency %s is not a git repo' %
-                                   dep_dir)
-
-    output = self.run_git(context, 'status', '--porcelain')
-    if output:
-      raise UncleanFilesystemError('Dependency %s is unclean:\n%s' %
-                                   (dep_dir, output))
 
   def repo_root(self, context):
     return os.path.join(self._dep_dir(context), self.path)
@@ -311,11 +301,6 @@ class PathRepoSpec(RepoSpec):
   def checkout(self, context):
     pass
 
-  def check_checkout(self, context):
-    if not os.path.isdir(self.path):
-      raise ValueError("Non-existent repository path [%s]" % (self.path,))
-    return None
-
   def repo_root(self, _context):
     return self.path
 
@@ -336,9 +321,6 @@ class RootRepoSpec(RepoSpec):
 
   def checkout(self, context):
     # We assume this is already checked out.
-    pass
-
-  def check_checkout(self, context):
     pass
 
   def repo_root(self, context):
@@ -602,18 +584,8 @@ class PackageDeps(object):
     return package_deps
 
   def _create_package(self, repo_spec):
-    if self._context.allow_fetch:
-      repo_spec.checkout(self._context)
-    else:
-      try:
-        repo_spec.check_checkout(self._context)
-      except UncleanFilesystemError as e:
-        logging.warn(
-            'Unclean environment. You probably need to run "recipes.py fetch"\n'
-            '%s' % e.message)
-
+    repo_spec.checkout(self._context)
     package_spec = PackageSpec.load_proto(repo_spec.proto_file(self._context))
-
     return self._create_from_spec(repo_spec, package_spec)
 
   def _create_from_spec(self, repo_spec, package_spec):
