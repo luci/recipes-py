@@ -34,6 +34,16 @@ class CyclicDependencyError(Exception):
   pass
 
 
+def cleanup_pyc(path):
+  """Removes any .pyc files from |path|'s directory tree.
+  This ensures we always use the fresh code.
+  """
+  for root, dirs, files in os.walk(path):
+    for f in files:
+      if f.endswith('.pyc'):
+        os.unlink(os.path.join(root, f))
+
+
 class InfraRepoConfig(object):
   def to_recipes_cfg(self, repo_root):
     # TODO(luqui): This is not always correct.  It can be configured in
@@ -224,6 +234,7 @@ class GitRepoSpec(RepoSpec):
         raise FetchNotAllowedError(
             'need to fetch %s but fetch not allowed' % self.repo)
     self.run_git(context, 'reset', '-q', '--hard', self.revision)
+    cleanup_pyc(dep_dir)
 
   def repo_root(self, context):
     return os.path.join(self._dep_dir(context), self.path)
