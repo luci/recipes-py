@@ -243,7 +243,8 @@ def main():
     index = sys.argv.index('simulation_test')
     sys.argv = sys.argv[:index+1] + [json.dumps(sys.argv[index+1:])]
 
-  parser = argparse.ArgumentParser(description='Do things with recipes.')
+  parser = argparse.ArgumentParser(
+      description='Interact with the recipe system.')
 
   parser.add_argument(
       '--package',
@@ -267,17 +268,18 @@ def main():
 
   fetch_p = subp.add_parser(
       'fetch',
-      help='Fetch and update dependencies.')
+      description='Fetch and update dependencies.')
   fetch_p.set_defaults(command='fetch')
 
-  simulation_test_p = subp.add_parser('simulation_test',
-      help='Generate or check expectations by simulating with mock actions')
+  simulation_test_p = subp.add_parser(
+    'simulation_test',
+    description='Generate or check expectations by simulation')
   simulation_test_p.set_defaults(command='simulation_test')
   simulation_test_p.add_argument('args')
 
   lint_p = subp.add_parser(
       'lint',
-      help='Check recipes for stylistic and hygenic issues')
+      description='Check recipes for stylistic and hygenic issues')
   lint_p.set_defaults(command='lint')
 
   lint_p.add_argument(
@@ -287,7 +289,7 @@ def main():
 
   run_p = subp.add_parser(
       'run',
-      help='Run a recipe locally')
+      description='Run a recipe locally')
   run_p.set_defaults(command='run')
   run_p.add_argument(
       '--properties-file',
@@ -312,7 +314,8 @@ def main():
 
   roll_p = subp.add_parser(
       'roll',
-      help='Roll dependencies of a recipe package forward (implies fetch)')
+      description='Roll dependencies of a recipe package forward '
+          '(implies fetch)')
   roll_p.set_defaults(command='roll')
   roll_p.add_argument(
       '--output-json',
@@ -320,9 +323,10 @@ def main():
 
   depgraph_p = subp.add_parser(
       'depgraph',
-      help='Produce graph of recipe and recipe module dependencies. Example: '
-           './recipes.py --package infra/config/recipes.cfg depgraph | tred | '
-           'dot -Tpdf > graph.pdf')
+      description=(
+          'Produce graph of recipe and recipe module dependencies. Example: '
+          './recipes.py --package infra/config/recipes.cfg depgraph | tred | '
+          'dot -Tpdf > graph.pdf'))
   depgraph_p.set_defaults(command='depgraph')
   depgraph_p.add_argument(
       '--output', type=argparse.FileType('w'), default=sys.stdout,
@@ -340,13 +344,13 @@ def main():
 
   doc_p = subp.add_parser(
       'doc',
-      help='List all known modules reachable from the current package with '
-           'various info about each')
+      description='List all known modules reachable from the current package, '
+          'with their documentation')
   doc_p.set_defaults(command='doc')
 
   info_p = subp.add_parser(
       'info',
-      help='Query information about the current recipe package')
+      description='Query information about the current recipe package')
   info_p.set_defaults(command='info')
   info_p.add_argument(
       '--recipes-dir', action='store_true',
