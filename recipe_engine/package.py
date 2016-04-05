@@ -107,13 +107,15 @@ class PackageContext(object):
     self.allow_fetch = allow_fetch
 
   @classmethod
-  def from_proto_file(cls, repo_root, proto_file, allow_fetch):
+  def from_proto_file(cls, repo_root, proto_file, allow_fetch, deps_path=None):
     buf = proto_file.read()
 
     recipes_path = str(buf.recipes_path).replace('/', os.sep)
 
+    if not deps_path:
+      deps_path = os.path.join(repo_root, recipes_path, '.recipe_deps')
     return cls(os.path.join(repo_root, recipes_path),
-               os.path.join(repo_root, recipes_path, '.recipe_deps'),
+               deps_path,
                repo_root,
                allow_fetch)
 
@@ -572,7 +574,8 @@ class PackageDeps(object):
     return self._root_package
 
   @classmethod
-  def create(cls, repo_root, proto_file, allow_fetch=False, overrides=None):
+  def create(cls, repo_root, proto_file, deps_path=None, allow_fetch=False,
+             overrides=None):
     """Creates a PackageDeps object.
 
     Arguments:
@@ -584,7 +587,9 @@ class PackageDeps(object):
                  are the `project_id` field to override, and dictionary values
                  are the override path.
     """
-    context = PackageContext.from_proto_file(repo_root, proto_file, allow_fetch)
+    context = PackageContext.from_proto_file(repo_root, proto_file, allow_fetch,
+                                             deps_path=deps_path)
+
     if overrides:
       overrides = {project_id: PathRepoSpec(path)
                    for project_id, path in overrides.iteritems()}

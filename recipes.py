@@ -151,7 +151,8 @@ def roll(args):
   from recipe_engine import package
   repo_root, config_file = get_package_config(args)
   context = package.PackageContext.from_proto_file(
-      repo_root, config_file, allow_fetch=not args.no_fetch)
+      repo_root, config_file, allow_fetch=not args.no_fetch,
+      deps_path=args.deps_path)
   package_spec = package.PackageSpec.load_proto(config_file)
 
   for update in package_spec.iterate_consistent_updates(config_file, context):
@@ -250,6 +251,9 @@ def main():
       '--package',
       help='Package to operate on (directory containing '
            'infra/config/recipes.cfg)')
+  parser.add_argument(
+      '--deps-path',
+      help='Path where recipe engine dependencies will be extracted.')
   parser.add_argument(
       '--verbose', '-v', action='store_true',
       help='Increase logging verboisty')
@@ -366,7 +370,7 @@ def main():
   try:
     package_deps = package.PackageDeps.create(
         repo_root, config_file, allow_fetch=not args.no_fetch,
-        overrides=args.project_override)
+        deps_path=args.deps_path, overrides=args.project_override)
   except subprocess.CalledProcessError:
     # A git checkout failed somewhere. Return 2, which is the sign that this is
     # an infra failure, rather than a test failure.
