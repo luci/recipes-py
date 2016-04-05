@@ -20,6 +20,8 @@ from recipe_engine import package
 
 class MockIOThings(object):
   def setUp(self):
+    super(MockIOThings, self).setUp()
+
     self.mock_os_patcher = mock.patch('recipe_engine.package.os')
     self.mock_os = self.mock_os_patcher.start()
     self.mock_os.path.join = os.path.join
@@ -35,6 +37,8 @@ class MockIOThings(object):
   def tearDown(self):
     self.mock_subprocess_patcher.stop()
     self.mock_os_patcher.stop()
+
+    super(MockIOThings, self).tearDown()
 
 
 class TestGitRepoSpec(MockIOThings, unittest.TestCase):
