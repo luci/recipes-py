@@ -25,14 +25,7 @@ from google import protobuf
 from recipe_engine import package
 from recipe_engine import package_pb2
 
-@contextlib.contextmanager
-def _in_directory(target_dir):
-  old_dir = os.getcwd()
-  os.chdir(target_dir)
-  try:
-    yield
-  finally:
-    os.chdir(old_dir)
+import repo_test_util
 
 
 def _updated_deps(inp, updates):
@@ -83,78 +76,13 @@ class RecipeRollError(Exception):
         self.__class__, self.stdout, self.stderr)
 
 
-class MultiRepoTest(unittest.TestCase):
-  def _run_cmd(self, cmd, env=None):
-    subprocess.call(
-        cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-  def _create_repo(self, name, spec):
-    repo_dir = os.path.join(self._root_dir, name)
-    os.mkdir(repo_dir)
-    with _in_directory(repo_dir):
-      self._run_cmd(['git', 'init'])
-      config_file = os.path.join('infra', 'config', 'recipes.cfg')
-      os.makedirs(os.path.dirname(config_file))
-      package.ProtoFile(config_file).write(spec)
-      self._run_cmd(['git', 'add', config_file])
-      self._run_cmd(['git', 'commit', '-m', 'New recipe package'])
-      rev = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()
-    return {
-        'root': repo_dir,
-        'revision': rev,
-        'spec': spec,
-    }
-
-  def _commit_in_repo(self, repo, message='Empty commit',
-                      author_name=None, author_email=None):
-    with _in_directory(repo['root']):
-      env = dict(os.environ)
-      if author_name:
-        env['GIT_AUTHOR_NAME'] = author_name
-      if author_email:
-        env['GIT_AUTHOR_EMAIL'] = author_email
-      self._run_cmd(['git', 'commit', '-a', '--allow-empty', '-m', message],
-                    env=env)
-      rev = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()
-    return {
-        'root': repo['root'],
-        'revision': rev,
-        'spec': repo['spec'],
-    }
-
+class MultiRepoTest(repo_test_util.RepoTest):
   def setUp(self):
+    super(MultiRepoTest, self).setUp()
     self.maxDiff = None
 
-    self._root_dir = tempfile.mkdtemp()
-    self._recipe_tool = os.path.join(ROOT_DIR, 'recipes.py')
-
-  def tearDown(self):
-    shutil.rmtree(self._root_dir)
-
-  def _repo_setup(self, repo_deps):
-    # In order to avoid a topsort, we require that repo names are in
-    # alphebetical dependency order -- i.e. later names depend on earlier
-    # ones.
-    repos = {}
-    for k in sorted(repo_deps):
-      repos[k] = self._create_repo(k, package_pb2.Package(
-          api_version=1,
-          project_id=k,
-          recipes_path='',
-          deps=[
-              package_pb2.DepSpec(
-                  project_id=d,
-                  url=repos[d]['root'],
-                  branch='master',
-                  revision=repos[d]['revision'],
-              )
-              for d in repo_deps[k]
-          ],
-      ))
-    return repos
-
   def _run_roll(self, repo, expect_updates, commit=False):
-    with _in_directory(repo['root']):
+    with repo_test_util.in_directory(repo['root']):
       fh, json_file = tempfile.mkstemp('.json')
       os.close(fh)
 
@@ -197,18 +125,18 @@ class MultiRepoTest(unittest.TestCase):
     return proto_file.read()
 
   def test_empty_roll(self):
-    repos = self._repo_setup({
+    repos = self.repo_setup({
       'a': [],
       'b': [ 'a' ],
     })
     self._run_roll(repos['b'], expect_updates=False)
 
   def test_simple_roll(self):
-    repos = self._repo_setup({
+    repos = self.repo_setup({
       'a': [],
       'b': ['a'],
     })
-    new_a = self._commit_in_repo(repos['a'])
+    new_a = self.commit_in_repo(repos['a'])
     self._run_roll(repos['b'], expect_updates=True)
     self.assertEqual(
         _to_text(self._get_spec(repos['b'])),
@@ -218,13 +146,13 @@ class MultiRepoTest(unittest.TestCase):
     self._run_roll(repos['b'], expect_updates=False)
 
   def test_indepdendent_roll(self):
-    repos = self._repo_setup({
+    repos = self.repo_setup({
         'b': [],
         'c': [],
         'd': ['b', 'c'],
     })
-    new_b = self._commit_in_repo(repos['b'])
-    new_c = self._commit_in_repo(repos['c'])
+    new_b = self.commit_in_repo(repos['b'])
+    new_c = self.commit_in_repo(repos['c'])
     self._run_roll(repos['d'], expect_updates=True)
     # There is no guarantee on the order the two updates come in.
     # (Usually we sort by date but these commits are within 1 second)
@@ -244,13 +172,13 @@ class MultiRepoTest(unittest.TestCase):
     self._run_roll(repos['d'], expect_updates=False)
 
   def test_dependent_roll(self):
-    repos = self._repo_setup({
+    repos = self.repo_setup({
         'a': [],
         'b': ['a'],
         'c': ['a'],
         'd': ['b', 'c'],
     })
-    new_a = self._commit_in_repo(repos['a'])
+    new_a = self.commit_in_repo(repos['a'])
     new_b = self._run_roll(repos['b'], expect_updates=True, commit=True)
     new_c = self._run_roll(repos['c'], expect_updates=True, commit=True)
 
@@ -267,7 +195,7 @@ class MultiRepoTest(unittest.TestCase):
     self._run_roll(repos['d'], expect_updates=False)
 
   def test_cyclic_dependency(self):
-    repos = self._repo_setup({
+    repos = self.repo_setup({
         'a': [],
         'b': ['a'],
     })
@@ -288,17 +216,17 @@ class MultiRepoTest(unittest.TestCase):
             ],
         )
     )
-    self._commit_in_repo(repos['a'])
+    self.commit_in_repo(repos['a'])
     with self.assertRaises(RecipeRollError) as raises:
       self._run_roll(repos['b'], expect_updates=True)
     self.assertRegexpMatches(raises.exception.stderr, 'CyclicDependencyError')
 
   def test_output_json_simple(self):
-    repos = self._repo_setup({
+    repos = self.repo_setup({
         'a': [],
         'b': ['a'],
     })
-    new_a = self._commit_in_repo(
+    new_a = self.commit_in_repo(
         repos['a'], message='Did I do good', author_name='P Diddy',
         author_email='diddyp@facebook.google')
 
@@ -317,22 +245,22 @@ class MultiRepoTest(unittest.TestCase):
   def test_output_json_skipped(self):
     """Tests that commit infos are accumulated when multiple rolls happen at
     once due to inconsistent dependencies."""
-    repos = self._repo_setup({
+    repos = self.repo_setup({
         'a': [],
         'b': ['a'],
         'c': ['a'],
         'd': ['b','c'],
     })
 
-    self._commit_in_repo(repos['a'], message='A commit',
+    self.commit_in_repo(repos['a'], message='A commit',
                          author_email='scrapdaddy@serious.music')
     self._run_roll(repos['b'], expect_updates=True)
-    b_roll = self._commit_in_repo(repos['b'], message='B roll',
+    b_roll = self.commit_in_repo(repos['b'], message='B roll',
                          author_email='barkdoggy@serious.music')
-    c_commit = self._commit_in_repo(repos['c'], message='C commit',
+    c_commit = self.commit_in_repo(repos['c'], message='C commit',
                          author_email='swimfishy@serious.music')
     self._run_roll(repos['c'], expect_updates=True,)
-    c_roll = self._commit_in_repo(repos['c'], message='C roll',
+    c_roll = self.commit_in_repo(repos['c'], message='C roll',
                          author_email='herpderply@slurp.flurpy')
 
     output = self._run_roll(repos['d'], expect_updates=True)
@@ -363,13 +291,13 @@ class MultiRepoTest(unittest.TestCase):
     are not rolled."""
 
     repos = {}
-    repos['a'] = self._create_repo('a', package_pb2.Package(
+    repos['a'] = self.create_repo('a', package_pb2.Package(
         api_version=1,
         project_id='a',
         recipes_path='foorecipes',
         deps=[],
     ))
-    repos['b'] = self._create_repo('b', package_pb2.Package(
+    repos['b'] = self.create_repo('b', package_pb2.Package(
         api_version=1,
         project_id='b',
         recipes_path='',
@@ -385,14 +313,14 @@ class MultiRepoTest(unittest.TestCase):
 
     with open(os.path.join(repos['a']['root'], 'some_file'), 'w') as fh:
       fh.write('Some irrelevant things')
-    with _in_directory(repos['a']['root']):
-      self._run_cmd(['git', 'add', 'some_file'])
-      self._run_cmd(['git', 'commit', '-m', 'Irrelevant commit'])
+    with repo_test_util.in_directory(repos['a']['root']):
+      subprocess.check_output(['git', 'add', 'some_file'])
+      subprocess.check_output(['git', 'commit', '-m', 'Irrelevant commit'])
 
     self._run_roll(repos['b'], expect_updates=False)
 
   def test_duplicate_names(self):
-    repos = self._repo_setup({
+    repos = self.repo_setup({
         'a': [],
         'b': ['a'],
     })
@@ -414,9 +342,9 @@ class MultiRepoTest(unittest.TestCase):
           '  pass\n',
         ])
 
-      with _in_directory(fname(repo)):
-        self._run_cmd(['git', 'add', 'recipe_modules'])
-        self._run_cmd(['git', 'commit', '-m', 'Add the files'])
+      with repo_test_util.in_directory(fname(repo)):
+        subprocess.check_output(['git', 'add', 'recipe_modules'])
+        subprocess.check_output(['git', 'commit', '-m', 'Add the files'])
 
 
     os.makedirs(os.path.join(repos['b']['root'], 'recipes'))

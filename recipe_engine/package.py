@@ -6,9 +6,11 @@ import ast
 import collections
 import contextlib
 import copy
+import difflib
 import functools
 import itertools
 import logging
+import operator
 import os
 import subprocess
 import sys
@@ -27,7 +29,13 @@ class FetchNotAllowedError(Exception):
 
 
 class InconsistentDependencyGraphError(Exception):
-  pass
+  def __init__(self, project_id, specs):
+    self.project_id = project_id
+    self.specs = specs
+
+  def __str__(self):
+    return 'Package specs for %s do not match: %s vs %s' % (
+        project_id, self.specs[0], self.specs[1])
 
 
 class CyclicDependencyError(Exception):
@@ -251,15 +259,14 @@ class GitRepoSpec(RepoSpec):
       buf.path_override = self.path
     return buf
 
-  def updates(self, context):
+  def updates(self, context, other_revision=None):
     """Returns a list of all updates to the branch since the revision this
     repo spec refers to.
     """
-    subdir = self.proto_file(context).read().recipes_path
-
-    lines = filter(bool, self._raw_updates(context, subdir).strip().split('\n'))
+    raw_updates = self.raw_updates(
+        context, (other_revision or 'origin/%s' % self.branch))
     updates = []
-    for rev in lines:
+    for rev in raw_updates:
       info = self._get_commit_info(rev, context)
       updates.append(RepoUpdate(
                  GitRepoSpec(self.project_id, self.repo, self.branch, rev,
@@ -267,16 +274,42 @@ class GitRepoSpec(RepoSpec):
                  commit_infos=(info,)))
     return updates
 
-  def _raw_updates(self, context, subdir):
+  def commit_infos(self, context, other_revision):
+    """Returns a list of commit infos on the branch between the pinned revision
+    and |other_revision|.
+    """
+    raw_updates = self.raw_updates(context, other_revision)
+    return [self._get_commit_info(rev, context) for rev in raw_updates]
+
+  def raw_updates(self, context, other_revision):
+    """Returns a list of revisions on the branch between the pinned revision
+    and |other_revision|.
+    """
     self.checkout(context)
-    self.run_git(context, 'fetch')
-    args = ['rev-list', '--reverse',
-            '%s..origin/%s' % (self.revision, self.branch)]
+    if context.allow_fetch:
+      self.run_git(context, 'fetch')
+    subdir = self.proto_file(context).read().recipes_path
+    args = [
+        'rev-list',
+        '--reverse',
+        '%s..%s' % (self.revision, other_revision),
+    ]
     if subdir:
       # We add proto_file to the list of paths to check because it might contain
       # other upstream rolls, which we want.
       args.extend(['--', subdir + os.path.sep, self.proto_file(context).path])
-    return self.run_git(context, *args)
+    return filter(bool, self.run_git(context, *args).strip().split('\n'))
+
+  def get_more_recent_revision(self, context, r1, r2):
+    """Returns the more recent revision."""
+    self.checkout(context)
+    if context.allow_fetch:
+      self.run_git(context, 'fetch')
+    args = [
+        'rev-list',
+        '%s...%s' % (r1, r2),  # Note three dots (...) here.
+    ]
+    return self.run_git(context, *args).strip().split('\n')[0]
 
   def _get_commit_info(self, rev, context):
     author = self.run_git(context, 'show', '-s', '--pretty=%aE', rev).strip()
@@ -401,6 +434,91 @@ class Package(object):
     return 'Package %s, with dependencies %s' % (self.name, self.deps.keys())
 
 
+class RollCandidate(object):
+  """RollCandidate represents a recipe roll candidate, i.e. updates
+  to pinned revisions of recipe dependencies.
+
+  This is mostly used by recipes.py autoroll command.
+  """
+
+  def __init__(self, package_spec, context, update):
+    self._package_spec = package_spec
+    self._context = context
+    self._updates = {
+      update.project_id: update,
+    }
+
+  def __eq__(self, other):
+    if not isinstance(other, type(self)):
+      return False
+    return self.__dict__ == other.__dict__
+
+  def make_consistent(self, root_spec):
+    """Attempts to make the after-roll dependency graph consistent by rolling
+    other package dependencies (changing their revisions). A consistent
+    dependency graph means that all of the repos in the graph are pinned
+    at the same revision.
+
+    Returns True on success.
+    """
+    while True:
+      try:
+        package_deps = PackageDeps(self._context)
+        package_deps._create_from_spec(root_spec, self.get_rolled_spec())
+        return True
+      except InconsistentDependencyGraphError as e:
+        # Don't update the same project twice - that'd mean we have two
+        # conflicting updates anyway.
+        if e.project_id in self._updates:
+          return False
+
+        # Get the spec that is different from the one we already have.
+        # The order in which they're returned is not guaranteed.
+        current_revision = self._package_spec.deps[e.project_id].revision
+        other_spec = e.specs[1]
+        if other_spec.revision == current_revision:
+          other_spec = e.specs[0]
+
+        # Prevent rolling backwards.
+        more_recent_revision = other_spec.get_more_recent_revision(
+            self._context, current_revision, other_spec.revision)
+        if more_recent_revision != other_spec.revision:
+          return False
+
+        self._updates[other_spec.project_id] = RepoUpdate(other_spec)
+
+  def get_rolled_spec(self):
+    """Returns a PackageSpec with all the deps updates from this roll."""
+    # TODO(phajdan.jr): does this preserve comments? should it?
+    new_deps = _updated(
+        self._package_spec.deps,
+        { project_id: update.spec for project_id, update in
+          self._updates.iteritems() })
+    return PackageSpec(
+        self._package_spec.project_id,
+        self._package_spec.recipes_path,
+        new_deps)
+
+  def get_commit_infos(self):
+    """Returns a mapping project_id -> list of commits from that repo
+    that are getting pulled by this roll.
+    """
+    commit_infos = {}
+
+    for project_id, update in self._updates.iteritems():
+      commit_infos[project_id] = self._package_spec.deps[
+          project_id].commit_infos(self._context, update.spec.revision)
+
+    return commit_infos
+
+  def get_diff(self):
+    """Returns a unified diff between original package spec and one after roll.
+    """
+    orig = str(self._package_spec.dump()).splitlines()
+    new = str(self.get_rolled_spec().dump()).splitlines()
+    return '\n'.join(difflib.unified_diff(orig, new, lineterm=''))
+
+
 class PackageSpec(object):
   API_VERSION = 1
 
@@ -448,6 +566,34 @@ class PackageSpec(object):
         project_id=self._project_id,
         recipes_path=self._recipes_path,
         deps=[ self._deps[dep].dump() for dep in sorted(self._deps.keys()) ])
+
+  def roll_candidates(self, root_spec, context):
+    """Returns list of consistent roll candidates, and rejected roll candidates.
+
+    The first one is sorted by score, descending. The more commits are pulled by
+    the roll, the higher score.
+
+    Second list is included to distinguish between a situation where there are
+    no roll candidates from one where there are updates but they're not
+    consistent.
+    """
+    candidates = []
+    rejected_candidates = []
+    for dep in sorted(self._deps.keys()):
+      for update in self._deps[dep].updates(context):
+        candidate = RollCandidate(self, context, update)
+        if not candidate.make_consistent(root_spec):
+          rejected_candidates.append(candidate)
+          continue
+        # Computing the score requires running git commands to get info
+        # about commits. This is potentially expensive, so do it once
+        # and store results.
+        score = sum(len(ci) for ci in candidate.get_commit_infos().values())
+        candidates.append((candidate, score))
+
+    return ([t[0] for t in
+             sorted(candidates, key=operator.itemgetter(1), reverse=True)],
+            rejected_candidates)
 
   def updates(self, context):
     """Returns a list of RepoUpdate<PackageSpec>s, corresponding to the updates
@@ -608,13 +754,16 @@ class PackageDeps(object):
     project_id = package_spec.project_id
     repo_spec = self._overrides.get(project_id, repo_spec)
     if project_id in self._packages:
+      # TODO(phajdan.jr): Are exceptions the best way to report these errors?
+      # The way this is used in practice, especially inconsistent dependency
+      # graph condition, might be considered as using exceptions for control
+      # flow.
       if self._packages[project_id] is None:
         raise CyclicDependencyError(
             'Package %s depends on itself' % project_id)
       if repo_spec != self._packages[project_id].repo_spec:
         raise InconsistentDependencyGraphError(
-            'Package specs do not match: %s vs %s' %
-            (repo_spec, self._packages[project_id].repo_spec))
+            project_id, (repo_spec, self._packages[project_id].repo_spec))
     self._packages[project_id] = None
 
     deps = {}

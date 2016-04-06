@@ -147,6 +147,14 @@ def run(package_deps, args):
   return handle_recipe_return(ret, args.output_result_json, stream_engine)
 
 
+def autoroll(args):
+  from recipe_engine import autoroll
+
+  repo_root, config_file = get_package_config(args)
+
+  return autoroll.main(args, repo_root, config_file)
+
+
 def roll(args):
   from recipe_engine import package
   repo_root, config_file = get_package_config(args)
@@ -316,6 +324,15 @@ def main():
       help='A list of property pairs; e.g. mastername=chromium.linux '
            'issue=12345')
 
+  autoroll_p = subp.add_parser(
+      'autoroll',
+      help='Roll dependencies of a recipe package forward (implies fetch) '
+           'EXPERIMENTAL')
+  autoroll_p.set_defaults(command='autoroll')
+  autoroll_p.add_argument(
+      '--output-json',
+      help='A json file to output information about the roll to.')
+
   roll_p = subp.add_parser(
       'roll',
       description='Roll dependencies of a recipe package forward '
@@ -368,6 +385,11 @@ def main():
   repo_root, config_file = get_package_config(args)
 
   try:
+    # TODO(phajdan.jr): gracefully handle inconsistent deps when rolling.
+    # This fails if the starting point does not have consistent dependency
+    # graph. When performing an automated roll, it'd make sense to attempt
+    # to automatically find a consistent state, rather than bailing out.
+    # Especially that only some subcommands refer to package_deps.
     package_deps = package.PackageDeps.create(
         repo_root, config_file, allow_fetch=not args.no_fetch,
         deps_path=args.deps_path, overrides=args.project_override)
@@ -386,6 +408,8 @@ def main():
     return lint(package_deps, args)
   elif args.command == 'run':
     return run(package_deps, args)
+  elif args.command == 'autoroll':
+    return autoroll(args)
   elif args.command == 'roll':
     assert not args.no_fetch, (
         'Rolling without fetching is not supported yet.')
