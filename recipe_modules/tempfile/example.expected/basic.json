@@ -1,0 +1,23 @@
+[
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "\nimport shutil, sys\nshutil.rmtree(sys.argv[1])\n",
+      "[TMP_BASE]/foo_tmp_1"
+    ],
+    "cwd": "[SLAVE_BUILD]",
+    "name": "rmtree [TMP_BASE]/foo_tmp_1",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@python.inline@@@@",
+      "@@@STEP_LOG_LINE@python.inline@import shutil, sys@@@",
+      "@@@STEP_LOG_LINE@python.inline@shutil.rmtree(sys.argv[1])@@@",
+      "@@@STEP_LOG_END@python.inline@@@"
+    ]
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]
