@@ -3,5 +3,8 @@
 # found in the LICENSE file.
 
 DEPS = [
+  'json',
+  'path',
   'python',
+  'raw_io',
 ]
