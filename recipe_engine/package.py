@@ -122,8 +122,9 @@ class PackageContext(object):
 
     if not deps_path:
       deps_path = os.path.join(repo_root, recipes_path, '.recipe_deps')
+
     return cls(os.path.join(repo_root, recipes_path),
-               deps_path,
+               os.path.abspath(deps_path),
                repo_root,
                allow_fetch)
 
