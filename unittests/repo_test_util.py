@@ -81,6 +81,13 @@ class RepoTest(unittest.TestCase):
     os.mkdir(repo_dir)
     with in_directory(repo_dir):
       subprocess.check_output(['git', 'init'])
+      with open('recipes.py', 'w') as f:
+        f.write('import subprocess, sys\n'
+                'sys.exit(subprocess.call(\n'
+                '    [sys.executable, %r, "--package", %r] + sys.argv[1:]))' % (
+                    self._recipe_tool,
+                    os.path.join(repo_dir, 'infra', 'config', 'recipes.cfg')))
+      subprocess.check_output(['git', 'add', 'recipes.py'])
     rev = self.update_recipes_cfg(name, spec)
     return {
         'name': name,

@@ -23,16 +23,18 @@ def default_json_encode(o):
   return repr(o)
 
 
-def run_simulation_test(package, additional_args=None):
+def run_simulation_test(repo_root, package_spec, additional_args=None):
   """
   Runs recipe simulation test for given package.
 
   Returns a tuple of exit code and output.
   """
+  # Use _local_ recipes.py, so that it checks out the pinned recipe engine,
+  # rather than running recipe engine which may be at a different revision
+  # than the pinned one.
   args = [
     sys.executable,
-    os.path.join(ROOT_DIR, 'recipes.py'),
-    '--package', package,
+    os.path.join(repo_root, package_spec.recipes_path, 'recipes.py'),
     'simulation_test',
   ]
   if additional_args:
@@ -81,7 +83,7 @@ def test_rolls(args, config_file, context, package_spec):
     print('  processing candidate #%d... ' % (i + 1), end='')
 
     config_file.write(candidate.get_rolled_spec().dump())
-    rc, output = run_simulation_test(args.package)
+    rc, output = run_simulation_test(context.repo_root, package_spec)
     roll_details[i]['recipes_simulation_test'] = {
       'output': output,
       'rc': rc,
@@ -107,7 +109,8 @@ def test_rolls(args, config_file, context, package_spec):
 
       config_file.write(candidate.get_rolled_spec().dump())
 
-      rc, output = run_simulation_test(args.package, ['train'])
+      rc, output = run_simulation_test(
+          context.repo_root, package_spec, ['train'])
       roll_details[i]['recipes_simulation_test_train'] = {
         'output': output,
         'rc': rc,
@@ -134,6 +137,7 @@ def test_rolls(args, config_file, context, package_spec):
 def main(args, repo_root, config_file):
   context = package.PackageContext.from_proto_file(
       repo_root, config_file, allow_fetch=not args.no_fetch)
+  root_spec = package.RootRepoSpec(config_file)
   package_spec = package.PackageSpec.load_proto(config_file)
 
   results = {}
@@ -144,7 +148,7 @@ def main(args, repo_root, config_file):
       # Restore initial state. Since we could be running simulation tests
       # on other revisions, re-run them now as well.
       config_file.write(package_spec.dump())
-      run_simulation_test(args.package, ['train'])
+      run_simulation_test(context.repo_root, package_spec, ['train'])
 
   if args.output_json:
     with open(args.output_json, 'w') as f:
