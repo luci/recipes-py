@@ -37,6 +37,8 @@ def BASE(c):
 def buildbot(c):
   c.base_paths['root'] = c.CURRENT_WORKING_DIR[:-4]
   c.base_paths['slave_build'] = c.CURRENT_WORKING_DIR
+  c.base_paths['cache'] = c.base_paths['root'] + (
+      'build', 'slave', 'cache')
   c.base_paths['git_cache'] = c.base_paths['root'] + (
       'build', 'slave', 'cache_dir')
   c.base_paths['goma_cache'] = c.base_paths['root'] + (
@@ -60,11 +62,14 @@ def kitchen(c):
   # NOTE: do not use /b/swarm_slave here - it gets deleted on bot redeploy,
   # and may happen even after a reboot.
   if c.PLATFORM == 'linux':
+    c.base_paths['cache'] = (
+        '/', 'b', 'cache', 'chromium')
     c.base_paths['git_cache'] = (
         '/', 'b', 'cache', 'chromium', 'git_cache')
     c.base_paths['goma_cache'] = (
         '/', 'b', 'cache', 'chromium', 'goma_cache')
   else:
+    c.base_paths['cache'] = c.base_paths['root'] + ('cache',)
     c.base_paths['git_cache'] = c.base_paths['root'] + ('cache_dir',)
     c.base_paths['goma_cache'] = c.base_paths['root'] + ('goma_cache',)
   c.dynamic_paths['checkout'] = None
