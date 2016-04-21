@@ -49,5 +49,6 @@ def GenTests(api):
   yield (api.test('buildbot_tryserver') +
          api.properties.tryserver(test_prop=None))
   yield (api.test('buildbot_tryserver_gerrit') +
-         api.properties.tryserver_gerrit(full_project_name='infra/infra',
-                                         test_prop=None))
+         api.properties.tryserver_gerrit(
+            full_project_name='infra/infra',
+            gerrit_host='pdfium-review.googlesource.com', test_prop=None))
