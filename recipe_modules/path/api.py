@@ -149,7 +149,6 @@ class PathApi(recipe_api.RecipeApi):
 
   def get_config_defaults(self):
     return {
-      'PLATFORM': self.m.platform.name,
       'CURRENT_WORKING_DIR': self._startup_cwd,
       'TEMP_DIR': self._temp_dir,
     }
@@ -180,12 +179,7 @@ class PathApi(recipe_api.RecipeApi):
     if self._config_set:
       return
     self._config_set = True
-
-    path_config = self.m.properties.get('path_config')
-    if path_config in ('kitchen', 'swarming'):
-      self.set_config(path_config)
-    else:
-      self.set_config('buildbot')
+    self.set_config('BASE')
 
   def mock_add_paths(self, path):
     """For testing purposes, assert that |path| exists."""
@@ -200,15 +194,15 @@ class PathApi(recipe_api.RecipeApi):
     self._lazy_set_config()
     if not self._test_data.enabled:  # pragma: no cover
       # New path as str.
-      new_path = tempfile.mkdtemp(prefix=prefix, dir=str(self['tmp_base']))
+      new_path = tempfile.mkdtemp(prefix=prefix, dir=str(self['tmp']))
       # Ensure it's under self._temp_dir, convert to Path.
       new_path = _split_path(new_path)
       assert new_path[:len(self._temp_dir)] == self._temp_dir
-      temp_dir = self['tmp_base'].join(*new_path[len(self._temp_dir):])
+      temp_dir = self['tmp'].join(*new_path[len(self._temp_dir):])
     else:
       self._test_counter += 1
       assert isinstance(prefix, basestring)
-      temp_dir = self['tmp_base'].join(
+      temp_dir = self['tmp'].join(
           '%s_tmp_%d' % (prefix, self._test_counter))
     self.mock_add_paths(temp_dir)
     return temp_dir

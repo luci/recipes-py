@@ -3,7 +3,6 @@
     "cmd": [
       "bc"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "calc it",
     "stdin": "3*2\n",
     "stdout": "/path/to/tmp/out"

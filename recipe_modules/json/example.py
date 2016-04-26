@@ -53,7 +53,7 @@ def RunSteps(api):
   assert step_result.stdout == example_dict
 
   # json.read reads a file containing json data.
-  leak_path = api.path['slave_build'].join('temp.json')
+  leak_path = api.path['tmp'].join('temp.json')
   api.step('write json to file',
     ['cat', api.json.input(example_dict)],
     stdout=api.raw_io.output(leak_to=leak_path))

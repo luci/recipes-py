@@ -2,9 +2,8 @@
   {
     "cmd": [
       "/bin/echo",
-      "[SLAVE_BUILD]/foo"
+      "[TMP]/foo"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "step1"
   },
   {
@@ -12,7 +11,6 @@
       "echo",
       "RECIPE_MODULE[recipe_engine::path]/resources/dir/file.py"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "print resource"
   },
   {
@@ -20,23 +18,20 @@
       "echo",
       "RECIPE_PACKAGE_REPO[recipe_engine]/dir/file.py"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "print package dir"
   },
   {
     "cmd": [
       "/bin/echo",
-      "[SLAVE_BUILD]/checkout/jerky"
+      "[TMP]/checkout/jerky"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "checkout path"
   },
   {
     "cmd": [
       "touch",
-      "[SLAVE_BUILD]/new_file"
+      "[TMP]/new_file"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "touch me"
   },
   {

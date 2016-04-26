@@ -4,7 +4,6 @@
       "echo",
       "testa"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "testa",
     "~followup_annotations": [
       "step returned non-zero exit code: 1",
@@ -16,7 +15,6 @@
       "echo",
       "testb"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "testb"
   },
   {

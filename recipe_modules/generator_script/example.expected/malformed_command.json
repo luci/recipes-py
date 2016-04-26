@@ -7,7 +7,7 @@
       "--output-json",
       "/path/to/tmp/json"
     ],
-    "cwd": "[SLAVE_BUILD]",
+    "cwd": "[TMP]/checkout",
     "name": "gen step(malformed.py)",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@[@@@",

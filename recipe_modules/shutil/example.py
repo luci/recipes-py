@@ -51,11 +51,11 @@ def RunSteps(api):
   try:
     # copytree
     content = 'some file content'
-    tmp_dir = api.path['slave_build'].join('copytree_example_tmp')
+    tmp_dir = api.path['tmp'].join('copytree_example_tmp')
     api.shutil.makedirs('makedirs', tmp_dir)
     path = tmp_dir.join('dummy_file')
     api.shutil.write('write %s' % path, path, content)
-    new_tmp = api.path['slave_build'].join('copytree_example_tmp2')
+    new_tmp = api.path['tmp'].join('copytree_example_tmp2')
     new_path = new_tmp.join('dummy_file')
     api.shutil.copytree('copytree', tmp_dir, new_tmp)
     actual_content = api.shutil.read('read %s' % new_path, new_path,

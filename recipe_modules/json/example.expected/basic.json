@@ -4,7 +4,6 @@
       "echo",
       "[1, 2, 3]"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "echo1",
     "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
@@ -21,7 +20,6 @@
       "echo",
       "[2, 3, 4]"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "echo2",
     "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
@@ -41,7 +39,6 @@
       "/path/to/tmp/json",
       "/path/to/tmp/json"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "foo",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output[1]@[@@@",
@@ -71,7 +68,6 @@
       "cat",
       "{\"x\": 1, \"y\": 2}"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "json through",
     "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
@@ -87,19 +83,17 @@
       "cat",
       "{\"x\": 1, \"y\": 2}"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "write json to file",
-    "stdout": "[SLAVE_BUILD]/temp.json"
+    "stdout": "[TMP]/temp.json"
   },
   {
     "cmd": [
       "python",
       "-u",
       "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
-      "[SLAVE_BUILD]/temp.json",
+      "[TMP]/temp.json",
       "/path/to/tmp/json"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "read json from file we just wrote",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",

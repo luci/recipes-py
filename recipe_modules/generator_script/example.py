@@ -18,7 +18,7 @@ PROPERTIES = {
 }
 
 def RunSteps(api, script_name, script_env):
-  api.path['checkout'] = api.path['slave_build']
+  api.path['checkout'] = api.path['tmp'].join('checkout')
   script_name = api.properties['script_name']
   script_env = api.properties.get('script_env')
   api.generator_script(script_name, env=script_env)

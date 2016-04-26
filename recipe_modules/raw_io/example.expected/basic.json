@@ -4,7 +4,6 @@
       "echo",
       "Hello World"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "echo",
     "stderr": "/path/to/tmp/",
     "stdout": "/path/to/tmp/"
@@ -13,7 +12,6 @@
     "cmd": [
       "cat"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "cat",
     "stdin": "hello",
     "stdout": "/path/to/tmp/out"
@@ -23,7 +21,6 @@
       "echo",
       "huh"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "automock",
     "stdout": "/path/to/tmp/out"
   },
@@ -33,7 +30,6 @@
       "-c",
       "echo blah && echo fail 1>&2"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "automock (fail)",
     "stderr": "/path/to/tmp/err",
     "stdout": "/path/to/tmp/out"
@@ -43,24 +39,21 @@
       "echo",
       "leaking"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "leak stdout",
-    "stdout": "[SLAVE_BUILD]/out.txt"
+    "stdout": "[TMP]/out.txt"
   },
   {
     "cmd": [
       "ls",
       "/path/to/tmp/"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "list temp dir"
   },
   {
     "cmd": [
       "ls",
-      "[SLAVE_BUILD]/out"
+      "[TMP]/out"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "leak dir"
   },
   {
@@ -70,7 +63,6 @@
       "\nimport sys\nwith open(sys.argv[1], 'w') as f:\n  f.write('bad_value')\n",
       "/path/to/tmp/"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "override_default_mock",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
