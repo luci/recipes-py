@@ -4,9 +4,10 @@
       "python",
       "-u",
       "\nimport shutil, sys\nshutil.rmtree(sys.argv[1])\n",
-      "[TMP]/foo_tmp_1"
+      "[TMP_BASE]/foo_tmp_1"
     ],
-    "name": "rmtree [TMP]/foo_tmp_1",
+    "cwd": "[SLAVE_BUILD]",
+    "name": "rmtree [TMP_BASE]/foo_tmp_1",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
       "@@@STEP_LOG_LINE@python.inline@import shutil, sys@@@",

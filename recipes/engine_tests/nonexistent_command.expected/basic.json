@@ -3,6 +3,7 @@
     "cmd": [
       "missing_command"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "Run missing command"
   },
   {

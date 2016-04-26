@@ -1,6 +1,7 @@
 [
   {
     "cmd": [],
+    "cwd": "[SLAVE_BUILD]",
     "name": "platform things",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@name@mac@@@",

@@ -4,6 +4,7 @@
       "echo",
       "@@@BUILD_STEP@steppy@@@"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "Dont subannotate me"
   },
   {
@@ -12,6 +13,7 @@
       "echo",
       "@@@BUILD_STEP@pippy@@@"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "Subannotate me"
   },
   {

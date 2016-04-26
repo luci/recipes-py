@@ -1,6 +1,7 @@
 [
   {
     "cmd": [],
+    "cwd": "[SLAVE_BUILD]",
     "name": "trigger some junk",
     "trigger_specs": [
       {

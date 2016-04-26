@@ -5,7 +5,7 @@
       "--output-json",
       "/path/to/tmp/json"
     ],
-    "cwd": "[TMP]/checkout",
+    "cwd": "[SLAVE_BUILD]",
     "name": "gen step(bogus)",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@[@@@",

@@ -3,6 +3,7 @@
     "cmd": [
       "bingo"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "bam"
   },
   {

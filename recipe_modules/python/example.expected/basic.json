@@ -5,6 +5,7 @@
       "-u",
       "import sys; sys.exit(0)"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "success",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@success@This step is a success@@@",
@@ -17,6 +18,7 @@
       "-u",
       "import sys; sys.exit(1)"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "failure",
     "~followup_annotations": [
       "step returned non-zero exit code: 1",

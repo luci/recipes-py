@@ -1,10 +1,12 @@
 [
   {
     "cmd": [],
+    "cwd": "[SLAVE_BUILD]",
     "name": "complicated thing"
   },
   {
     "cmd": [],
+    "cwd": "[SLAVE_BUILD]",
     "name": "complicated thing.first part",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -15,6 +17,7 @@
       "sleep",
       "10"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "complicated thing.first part.wait a bit",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -25,6 +28,7 @@
       "echo",
       "herpy"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "complicated thing.attempt number.one",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -35,6 +39,7 @@
       "echo",
       "derpy"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "complicated thing.attempt number.two",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -45,6 +50,7 @@
       "sleep",
       "10"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "simple thing"
   },
   {

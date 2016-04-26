@@ -4,6 +4,7 @@
       "echo",
       "testa"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "testa"
   },
   {
@@ -11,6 +12,7 @@
       "echo",
       "testb"
     ],
+    "cwd": "[SLAVE_BUILD]",
     "name": "testb"
   },
   {
