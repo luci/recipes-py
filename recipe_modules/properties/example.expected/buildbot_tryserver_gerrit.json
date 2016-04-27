@@ -4,7 +4,6 @@
       "echo",
       "None"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "echo"
   },
   {
@@ -12,7 +11,6 @@
       "echo",
       "[('blamelist', ['cool_dev1337@chromium.org', 'hax@chromium.org']), ('branch', ''), ('buildbotURL', 'http://c.org/p/cr/'), ('buildername', 'TestBuilder'), ('buildnumber', 571), ('category', 'cq'), ('event.change.id', u'infra%2Finfra~master~Ideadbeaf'), ('event.change.number', 338811), ('event.change.url', u'https://pdfium-review.googlesource.com/#/c/338811'), ('event.patchSet.ref', u'refs/changes/11/338811/3'), ('gerrit', 'https://pdfium-review.googlesource.com'), ('mastername', 'chromium.testing.master'), ('patch_project', 'infra/infra'), ('patch_storage', 'gerrit'), ('project', 'infra/infra'), ('reason', 'CQ'), ('recipe', 'properties:example'), ('repository', 'https://pdfium.googlesource.com/infra/infra'), ('requester', 'commit-bot@chromium.org'), ('revision', 'HEAD'), ('slavename', 'TestSlavename'), ('test_prop', None), ('workdir', '/path/to/workdir/TestSlavename')]"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "echo all"
   },
   {

@@ -6,7 +6,6 @@
       "\nimport shutil, sys\nshutil.rmtree(sys.argv[1])\n",
       "[TMP_BASE]/foo_tmp_1"
     ],
-    "cwd": "[SLAVE_BUILD]",
     "name": "rmtree [TMP_BASE]/foo_tmp_1",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
