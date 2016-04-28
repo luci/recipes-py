@@ -14,32 +14,8 @@ from recipe_engine import config_types
 def PathToString(api, test):
   def PathToString_inner(path):
     assert isinstance(path, config_types.Path)
-    base_path = None
+    base_path = path.base.resolve(api, test.enabled)
     suffix = path.platform_ext.get(api.m.platform.name, '')
-    if isinstance(path.base, config_types.NamedBasePath):
-      name = path.base.name
-      if name in api.c.dynamic_paths:
-        base_path = api.c.dynamic_paths[name]
-      elif name in api.c.base_paths:
-        if test.enabled:
-          base_path = repr(path.base)
-        else:  # pragma: no cover
-          base_path = api.join(*api.c.base_paths[name])
-    elif isinstance(path.base, config_types.ModuleBasePath):
-      if test.enabled:
-        base_path = repr(path.base)
-      else:  # pragma: no cover
-        base_path = os.path.dirname(path.base.module.__file__)
-    elif isinstance(path.base, config_types.PackageRepoBasePath):
-      if test.enabled:
-        base_path = repr(path.base)
-      else:  # pragma: no cover
-        base_path = path.base.package.repo_root
-    else:  # pragma: no cover
-      raise NotImplementedError('PathToString not implemented for %s' %
-                                path.base.__class__.__name__)
-    assert base_path, 'Could not get base %r for path; pieces: %r' % (
-        path.base, path.pieces)
     return api.join(base_path, *path.pieces) + suffix
   return PathToString_inner
 

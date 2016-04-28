@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import abc
+import os
 import re
 
 from collections import namedtuple
@@ -68,6 +69,15 @@ class RecipeConfigType(object):
 class BasePath(object):
   __metaclass__ = abc.ABCMeta
 
+  def resolve(self, api, test_enabled):
+    """Returns a string representation of the path base.
+
+    Args:
+      api (RecipeApi) - instance of path module's RecipeApi
+      test_enabled (bool) - true iff this is only for recipe expectations
+    """
+    raise NotImplementedError()
+
 
 class NamedBasePath(BasePath, namedtuple('NamedBasePath', 'name')):
   # Restrict basenames to '[ALL_CAPS]'. This will help catch
@@ -81,11 +91,26 @@ class NamedBasePath(BasePath, namedtuple('NamedBasePath', 'name')):
     assert base_match, 'Base should be [ALL_CAPS], got %r' % base
     return NamedBasePath(base_match.group(1).lower())
 
+  def resolve(self, api, test_enabled):
+    if self.name in api.c.dynamic_paths:
+      return api.c.dynamic_paths[self.name]
+    if self.name in api.c.base_paths:
+      if test_enabled:
+        return repr(self)
+      return api.join(*api.c.base_paths[self.name])  # pragma: no cover
+    raise KeyError(
+        'Failed to resolve NamedBasePath: %s' % self.name)  # pragma: no cover
+
   def __repr__(self):
     return '[%s]' % self.name.upper()
 
 
 class ModuleBasePath(BasePath, namedtuple('ModuleBasePath', 'module')):
+  def resolve(self, api, test_enabled):
+    if test_enabled:
+      return repr(self)
+    return os.path.dirname(self.module.__file__)  # pragma: no cover
+
   def __repr__(self):
     prefix = '%s.' % RECIPE_MODULE_PREFIX
     assert self.module.__name__.startswith(prefix)
@@ -97,6 +122,11 @@ class ModuleBasePath(BasePath, namedtuple('ModuleBasePath', 'module')):
 
 class PackageRepoBasePath(
     BasePath, namedtuple('PackageRepoBasePath', 'package')):
+  def resolve(self, api, test_enabled):
+    if test_enabled:
+      return repr(self)
+    return self.package.repo_root  # pragma: no cover
+
   def __repr__(self):
     return 'RECIPE_PACKAGE_REPO[%s]' % self.package.name
 
