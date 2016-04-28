@@ -228,7 +228,7 @@ class GitRepoSpec(RepoSpec):
 
     if not os.path.isdir(dep_dir):
       if context.allow_fetch:
-        self.run_git(None, 'clone', self.repo, dep_dir)
+        self.run_git(None, 'clone', '-q', self.repo, dep_dir)
       else:
         raise FetchNotAllowedError(
             'need to clone %s but fetch not allowed' % self.repo)
@@ -769,6 +769,7 @@ class PackageDeps(object):
 
     deps = {}
     for dep, dep_repo in sorted(package_spec.deps.items()):
+      dep_repo = self._overrides.get(dep, dep_repo)
       deps[dep] = self._create_package(dep_repo)
 
     package = Package(

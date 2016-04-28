@@ -501,15 +501,17 @@ recipes_path: "path/to/recipes"
     foo_proto_file = MockProtoFile('foo/infra/config/recipes.cfg',
                                    foo_proto_text)
 
-    with mock.patch.object(package.GitRepoSpec, 'proto_file',
-                           return_value=foo_proto_file):
-      deps = package.PackageDeps.create('base', base_proto_file, overrides={
-        'foo': '/path/to/local/foo',
-      })
+    with mock.patch.object(package.GitRepoSpec, 'checkout') as checkout:
+      with mock.patch.object(package.PathRepoSpec, 'proto_file',
+                             return_value=foo_proto_file):
+        deps = package.PackageDeps.create('base', base_proto_file, overrides={
+          'foo': '/path/to/local/foo',
+        })
 
-    foo_deps = deps.get_package('foo')
-    self.assertIsInstance(foo_deps.repo_spec, package.PathRepoSpec)
-    self.assertEqual(foo_deps.repo_spec.path, '/path/to/local/foo')
+      foo_deps = deps.get_package('foo')
+      self.assertIsInstance(foo_deps.repo_spec, package.PathRepoSpec)
+      self.assertEqual(foo_deps.repo_spec.path, '/path/to/local/foo')
+      self.assertFalse(checkout.called)
 
 
 def load_tests(_loader, tests, _ignore):
