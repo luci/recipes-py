@@ -1,4 +1,4 @@
-# Copyright 2013-2015 The Chromium Authors. All rights reserved.
+# Copyright 2013 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -528,6 +528,7 @@ def create_recipe_api(toplevel_deps, engine, test_data=DisabledTestData()):
     for k, v in deps.iteritems():
       setattr(mod_api.m, k, v)
       setattr(mod_api.test_api.m, k, v.test_api)
+    mod_api.initialize()
     return mod_api
 
   mapper = DependencyMapper(instantiator)

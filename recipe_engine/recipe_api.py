@@ -1,4 +1,4 @@
-# Copyright 2013-2015 The Chromium Authors. All rights reserved.
+# Copyright 2013 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -369,6 +369,13 @@ class RecipeApiPlain(object):
 
     # Config goes here.
     self.c = None
+
+  def initialize(self):
+    """
+    Initializes the recipe module after it has been instantiated with all
+    dependencies injected and available.
+    """
+    pass
 
   def get_config_defaults(self):  # pylint: disable=R0201
     """
