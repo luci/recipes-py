@@ -84,14 +84,14 @@
       "{\"x\": 1, \"y\": 2}"
     ],
     "name": "write json to file",
-    "stdout": "[SLAVE_BUILD]/temp.json"
+    "stdout": "[TMP_BASE]/temp.json"
   },
   {
     "cmd": [
       "python",
       "-u",
       "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
-      "[SLAVE_BUILD]/temp.json",
+      "[TMP_BASE]/temp.json",
       "/path/to/tmp/json"
     ],
     "name": "read json from file we just wrote",

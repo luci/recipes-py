@@ -2,7 +2,7 @@
   {
     "cmd": [
       "/bin/echo",
-      "[SLAVE_BUILD]/foo"
+      "[TMP_BASE]/foo"
     ],
     "name": "step1"
   },
@@ -23,14 +23,14 @@
   {
     "cmd": [
       "/bin/echo",
-      "[SLAVE_BUILD]/checkout/jerky"
+      "[TMP_BASE]/checkout/jerky"
     ],
     "name": "checkout path"
   },
   {
     "cmd": [
       "touch",
-      "[SLAVE_BUILD]/new_file"
+      "[TMP_BASE]/new_file"
     ],
     "name": "touch me"
   },

@@ -150,18 +150,8 @@ class PathApi(recipe_api.RecipeApi):
       # Appended to placeholder '[TMP]' to get fake path in test.
       self._temp_dir = ['/']
 
-    self._config_set = False
-
-  def _lazy_set_config(self):
-    if self._config_set:
-      return
-    self._config_set = True
-
-    path_config = self.m.properties.get('path_config')
-    if path_config in ('kitchen', 'swarming'):
-      self.set_config(path_config)
-    else:
-      self.set_config('buildbot')
+  def initialize(self):
+    self.set_config('BASE')
 
   def mock_add_paths(self, path):
     """For testing purposes, assert that |path| exists."""
@@ -173,7 +163,6 @@ class PathApi(recipe_api.RecipeApi):
 
   def mkdtemp(self, prefix):
     """Makes a new temp directory, returns path to it."""
-    self._lazy_set_config()
     if not self._test_data.enabled:  # pragma: no cover
       # New path as str.
       new_path = tempfile.mkdtemp(prefix=prefix, dir=str(self['tmp_base']))
@@ -190,11 +179,9 @@ class PathApi(recipe_api.RecipeApi):
     return temp_dir
 
   def __contains__(self, pathname):
-    self._lazy_set_config()
     return bool(self.c.dynamic_paths.get(pathname))
 
   def __setitem__(self, pathname, path):
-    self._lazy_set_config()
     assert isinstance(path, config_types.Path), (
       'Setting dynamic path to something other than a Path: %r' % path)
     assert pathname in self.c.dynamic_paths, (
@@ -204,7 +191,6 @@ class PathApi(recipe_api.RecipeApi):
     self.c.dynamic_paths[pathname] = path
 
   def __getitem__(self, name):
-    self._lazy_set_config()
     if name in self.c.dynamic_paths:
       r = self.c.dynamic_paths[name]
       assert r is not None, ('Tried to get dynamic path %s but it has not been '

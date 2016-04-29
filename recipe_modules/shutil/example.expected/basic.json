@@ -151,7 +151,7 @@
       "python",
       "-u",
       "\nimport sys, os\npath = sys.argv[1]\nmode = int(sys.argv[2])\nif not os.path.isdir(path):\n  if os.path.exists(path):\n    print \"%s exists but is not a dir\" % path\n    sys.exit(1)\n  os.makedirs(path, mode)\n",
-      "[SLAVE_BUILD]/copytree_example_tmp",
+      "[TMP_BASE]/copytree_example_tmp",
       "511"
     ],
     "name": "makedirs makedirs",
@@ -174,17 +174,17 @@
       "-u",
       "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
       "some file content",
-      "[SLAVE_BUILD]/copytree_example_tmp/dummy_file"
+      "[TMP_BASE]/copytree_example_tmp/dummy_file"
     ],
-    "name": "write [SLAVE_BUILD]/copytree_example_tmp/dummy_file"
+    "name": "write [TMP_BASE]/copytree_example_tmp/dummy_file"
   },
   {
     "cmd": [
       "python",
       "-u",
       "\nimport shutil\nimport sys\nshutil.copytree(sys.argv[1], sys.argv[2], symlinks=bool(sys.argv[3]))\n",
-      "[SLAVE_BUILD]/copytree_example_tmp",
-      "[SLAVE_BUILD]/copytree_example_tmp2",
+      "[TMP_BASE]/copytree_example_tmp",
+      "[TMP_BASE]/copytree_example_tmp2",
       "0"
     ],
     "name": "copytree"
@@ -194,10 +194,10 @@
       "python",
       "-u",
       "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
-      "[SLAVE_BUILD]/copytree_example_tmp2/dummy_file",
+      "[TMP_BASE]/copytree_example_tmp2/dummy_file",
       "/path/to/tmp/"
     ],
-    "name": "read [SLAVE_BUILD]/copytree_example_tmp2/dummy_file"
+    "name": "read [TMP_BASE]/copytree_example_tmp2/dummy_file"
   },
   {
     "cmd": [
@@ -205,7 +205,7 @@
       "-u",
       "\nimport glob\nimport sys\nwith open(sys.argv[1], 'w') as f:\n  f.write('\\n'.join(glob.glob(sys.argv[2])))\n",
       "/path/to/tmp/",
-      "[SLAVE_BUILD]/copytree_example_tmp/*"
+      "[TMP_BASE]/copytree_example_tmp/*"
     ],
     "name": "glob"
   },
@@ -214,7 +214,7 @@
       "python",
       "-u",
       "\nimport shutil, sys\nshutil.rmtree(sys.argv[1])\n",
-      "[SLAVE_BUILD]/copytree_example_tmp"
+      "[TMP_BASE]/copytree_example_tmp"
     ],
     "name": "cleanup",
     "~followup_annotations": [
@@ -229,7 +229,7 @@
       "python",
       "-u",
       "\nimport shutil, sys\nshutil.rmtree(sys.argv[1])\n",
-      "[SLAVE_BUILD]/copytree_example_tmp2"
+      "[TMP_BASE]/copytree_example_tmp2"
     ],
     "name": "cleanup2",
     "~followup_annotations": [

@@ -40,7 +40,7 @@
       "leaking"
     ],
     "name": "leak stdout",
-    "stdout": "[SLAVE_BUILD]/out.txt"
+    "stdout": "[TMP_BASE]/out.txt"
   },
   {
     "cmd": [
@@ -52,7 +52,7 @@
   {
     "cmd": [
       "ls",
-      "[SLAVE_BUILD]/out"
+      "[TMP_BASE]/out"
     ],
     "name": "leak dir"
   },
