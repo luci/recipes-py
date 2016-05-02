@@ -22,13 +22,12 @@ def RunSteps(api):
   api.step('print package dir',
            ['echo', api.path.package_repo_resource('dir', 'file.py')])
 
-  # Global dynamic paths (see config.py example for declaration):
-  dynamic_path = Path('[CHECKOUT]', 'jerky')
-
   assert 'checkout' not in api.path
   api.path['checkout'] = api.path['tmp_base'].join('checkout')
   assert 'checkout' in api.path
 
+  # Global dynamic paths (see config.py example for declaration):
+  dynamic_path = api.path['checkout'].join('jerky')
   api.step('checkout path', ['/bin/echo', dynamic_path])
 
   # Methods from python os.path are available via api.path.

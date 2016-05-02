@@ -80,17 +80,6 @@ class BasePath(object):
 
 
 class NamedBasePath(BasePath, namedtuple('NamedBasePath', 'name')):
-  # Restrict basenames to '[ALL_CAPS]'. This will help catch
-  # errors if someone attempts to provide an actual string path '/some/example'
-  # as the 'base'.
-  BASE_RE = re.compile(r'\[([A-Z][A-Z_]*)\]')
-
-  @staticmethod
-  def parse(base):
-    base_match = NamedBasePath.BASE_RE.match(base)
-    assert base_match, 'Base should be [ALL_CAPS], got %r' % base
-    return NamedBasePath(base_match.group(1).lower())
-
   def resolve(self, api, test_enabled):
     if self.name in api.c.dynamic_paths:
       return api.c.dynamic_paths[self.name]
@@ -154,17 +143,12 @@ class Path(RecipeConfigType):
         by the 'platform' module), to a suffix for the path.
     """
     super(Path, self).__init__()
+    assert isinstance(base, BasePath), base
     assert all(isinstance(x, basestring) for x in pieces), pieces
     assert not any(x in ('..', '.', '/', '\\') for x in pieces)
+
+    self.base = base
     self.pieces = pieces
-
-    if isinstance(base, BasePath):
-      self.base = base
-    elif isinstance(base, basestring):
-      self.base = NamedBasePath.parse(base)
-    else:
-      raise ValueError('%s is not a valid base path' % (base,))
-
     self.platform_ext = kwargs.get('platform_ext', {})
 
   def __eq__(self, other):

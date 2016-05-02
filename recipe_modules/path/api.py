@@ -191,12 +191,7 @@ class PathApi(recipe_api.RecipeApi):
     self.c.dynamic_paths[pathname] = path
 
   def __getitem__(self, name):
-    if name in self.c.dynamic_paths:
-      r = self.c.dynamic_paths[name]
-      assert r is not None, ('Tried to get dynamic path %s but it has not been '
-                             'set yet.' % name)
-      return r
-    if name in self.c.base_paths:
+    if name in self.c.base_paths or name in self.c.dynamic_paths:
       return config_types.Path(config_types.NamedBasePath(name))
     raise KeyError('Unknown path: %s' % name) # pragma: no cover
 
