@@ -60,7 +60,7 @@ class RecipeConfigType(object):
     cls._TOSTRING_MAP[cls.__name__] = new_tostring_fn
 
   def default_tostring_fn(self):
-    raise NotImplementedError
+    raise NotImplementedError()
 
   def __str__(self):
     return self.tostring_fn(self) # pylint: disable=not-callable
@@ -189,15 +189,6 @@ class Path(RecipeConfigType):
     if len(self.pieces) >= len(child.pieces):
       return False
     return child.pieces[:len(self.pieces)] == self.pieces
-
-  def default_tostring_fn(self):
-    suffix = ''
-    if self.platform_ext:
-      suffix = ', platform_ext=%r' % (self.platform_ext,)
-    pieces = ''
-    if self.pieces:
-      pieces = ', ' + (', '.join(map(repr, self.pieces)))
-    return 'Path(\'%s\'%s%s)' % (self.base, pieces, suffix)
 
   def __repr__(self):
     s = "Path(%r" % self.base
