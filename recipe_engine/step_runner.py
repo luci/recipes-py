@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2015 The Chromium Authors. All rights reserved.
+# Copyright 2016 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -305,7 +305,9 @@ class SubprocessStepRunner(StepRunner):
             outstream.write_line(line)
           finally:
             outlock.release()
-      return threading.Thread(target=body, args=())
+      t = threading.Thread(target=body, args=())
+      t.daemon = True
+      return t
 
     threads = []
     for key in ('stdout', 'stderr'):
