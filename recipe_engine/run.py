@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2015 The Chromium Authors. All rights reserved.
+# Copyright 2016 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -71,6 +71,7 @@ import traceback
 from . import loader
 from . import recipe_api
 from . import recipe_test_api
+from . import step_runner as step_runner_module
 from . import types
 from . import util
 
@@ -205,12 +206,13 @@ def run_steps(properties, stream_engine, step_runner, universe):
     'TESTING_SLAVENAME' in os.environ)):
     properties['use_mirror'] = False
 
-  engine = RecipeEngine(step_runner, properties, universe)
-
-  # Create all API modules and top level RunSteps function.  It doesn't launch
-  # any recipe code yet; RunSteps needs to be called.
-  api = None
   with stream_engine.new_step_stream('setup_build') as s:
+    engine = RecipeEngine(step_runner, properties, universe)
+
+    # Create all API modules and top level RunSteps function.  It doesn't launch
+    # any recipe code yet; RunSteps needs to be called.
+    api = None
+
     assert 'recipe' in properties
     recipe = properties['recipe']
 
@@ -298,6 +300,19 @@ class RecipeEngine(object):
     # each nest level (objects deeper in the stack have lower nest levels).
     # When we pop from this stack, we close the corresponding step stream.
     self._step_stack = []
+
+    # TODO(iannucci): come up with a more structured way to advertise/set mode
+    # flags/options for the engine.
+    if '$recipe_engine' in properties:
+      options = properties['$recipe_engine']
+      try:
+        mode_flags = options.get('mode_flags')
+        if mode_flags:
+          if mode_flags.get('use_subprocess42'):
+            print "Setting MODE_SUBPROCESS42: True"
+            step_runner_module.MODE_SUBPROCESS42 = True
+      except Exception as e:
+        print "Failed to set recipe_engine options, got: %r: %s" % (options, e)
 
   @property
   def properties(self):

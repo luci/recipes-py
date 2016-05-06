@@ -9,6 +9,7 @@ import re
 import subprocess
 import sys
 import unittest
+import time
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
                            os.path.abspath(__file__))))
@@ -20,6 +21,10 @@ import recipe_engine.run
 import recipe_engine.step_runner
 from recipe_engine import recipe_test_api
 import mock
+
+ENABLE_SUBPROCESS42 = {
+  "$recipe_engine": {"mode_flags": {"use_subprocess42": True}}
+}
 
 class RunTest(unittest.TestCase):
   def _run_cmd(self, recipe, properties=None):
@@ -41,19 +46,50 @@ class RunTest(unittest.TestCase):
     self.assertEqual(0, exit_code)
 
   def test_examples(self):
-    self._test_recipe('step:example')
-    self._test_recipe('path:example')
-    self._test_recipe('raw_io:example')
-    self._test_recipe('python:example')
-    self._test_recipe('json:example')
-    self._test_recipe('uuid:example')
+    tests = [
+      ['step:example'],
+      ['path:example'],
+      ['raw_io:example'],
+      ['python:example'],
+      ['json:example'],
+      ['uuid:example'],
 
-    self._test_recipe('engine_tests/depend_on/top', {'to_pass': 42})
-    self._test_recipe('engine_tests/functools_partial')
+      ['engine_tests/depend_on/top', {'to_pass': 42}],
+      ['engine_tests/functools_partial'],
+    ]
+    for test in tests:
+      self._test_recipe(*test)
+
+      recipe = test[0]
+      props = {}
+      if len(test) > 1:
+        props = test[1]
+      props.update(ENABLE_SUBPROCESS42)
+      self._test_recipe(recipe, props)
+
+  def test_bad_subprocess(self):
+    now = time.time()
+    self._test_recipe('engine_tests/bad_subprocess', ENABLE_SUBPROCESS42)
+    after = time.time()
+
+    # Test has a daemon that holds on to stdout for 30s, but the daemon's parent
+    # process (e.g. the one that recipe engine actually runs) quits immediately.
+    # If this takes longer than 5 seconds to run, we consider it failed.
+    self.assertLess(after - now, 5)
+
 
   def test_nonexistent_command(self):
     subp = subprocess.Popen(
         self._run_cmd('engine_tests/nonexistent_command'),
+        stdout=subprocess.PIPE)
+    stdout, _ = subp.communicate()
+    self.assertRegexpMatches(stdout, '(?m)^@@@STEP_EXCEPTION@@@$')
+    self.assertRegexpMatches(stdout, 'OSError')
+    self.assertEqual(255, subp.returncode)
+
+  def test_nonexistent_command_s42(self):
+    subp = subprocess.Popen(
+        self._run_cmd('engine_tests/nonexistent_command', ENABLE_SUBPROCESS42),
         stdout=subprocess.PIPE)
     stdout, _ = subp.communicate()
     self.assertRegexpMatches(stdout, '(?m)^@@@STEP_EXCEPTION@@@$')
@@ -71,6 +107,17 @@ class RunTest(unittest.TestCase):
     blob = m.group(1)
     json.loads(blob) # Raises an exception if the blob is not valid json.
 
+  def test_trigger_s42(self):
+    subp = subprocess.Popen(
+        self._run_cmd('engine_tests/trigger', ENABLE_SUBPROCESS42),
+        stdout=subprocess.PIPE)
+    stdout, _ = subp.communicate()
+    self.assertEqual(0, subp.returncode)
+    m = re.compile(r'^@@@STEP_TRIGGER@(.*)@@@$', re.MULTILINE).search(stdout)
+    self.assertTrue(m)
+    blob = m.group(1)
+    json.loads(blob) # Raises an exception if the blob is not valid json.
+
   def test_trigger_no_such_command(self):
     """Tests that trigger still happens even if running the command fails."""
     subp = subprocess.Popen(
@@ -80,6 +127,18 @@ class RunTest(unittest.TestCase):
     stdout, _ = subp.communicate()
     self.assertRegexpMatches(stdout, r'(?m)^@@@STEP_TRIGGER@(.*)@@@$')
     self.assertEqual(255, subp.returncode)
+
+  def test_trigger_no_such_command_s42(self):
+    """Tests that trigger still happens even if running the command fails."""
+    props = {'command': ['na-huh']}
+    props.update(ENABLE_SUBPROCESS42)
+    subp = subprocess.Popen(
+        self._run_cmd('engine_tests/trigger', props),
+        stdout=subprocess.PIPE)
+    stdout, _ = subp.communicate()
+    self.assertRegexpMatches(stdout, r'(?m)^@@@STEP_TRIGGER@(.*)@@@$')
+    self.assertEqual(255, subp.returncode)
+
 
   def test_shell_quote(self):
     # For regular-looking commands we shouldn't need any specialness.
@@ -143,7 +202,20 @@ class RunTest(unittest.TestCase):
         self._run_cmd('engine_tests/subannotations'),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
-    stdout, stderr = proc.communicate()
+    stdout, _ = proc.communicate()
+    self.assertRegexpMatches(stdout, r'(?m)^!@@@BUILD_STEP@steppy@@@$')
+    self.assertRegexpMatches(stdout, r'(?m)^@@@BUILD_STEP@pippy@@@$')
+    # Before 'Subannotate me' we expect an extra STEP_CURSOR to reset the
+    # state.
+    self.assertRegexpMatches(stdout,
+        r'(?m)^@@@STEP_CURSOR@Subannotate me@@@\n@@@STEP_CLOSED@@@$')
+
+  def test_subannotations_s42(self):
+    proc = subprocess.Popen(
+        self._run_cmd('engine_tests/subannotations', ENABLE_SUBPROCESS42),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    stdout, _ = proc.communicate()
     self.assertRegexpMatches(stdout, r'(?m)^!@@@BUILD_STEP@steppy@@@$')
     self.assertRegexpMatches(stdout, r'(?m)^@@@BUILD_STEP@pippy@@@$')
     # Before 'Subannotate me' we expect an extra STEP_CURSOR to reset the
