@@ -209,7 +209,7 @@ class ProjectOverrideAction(argparse.Action):
                        project_id, v[project_id]))
     path = os.path.abspath(os.path.expanduser(path))
     if not os.path.isdir(path):
-      raise ValueError("Override path [%s] is not a directory" % (path,)) 
+      raise ValueError("Override path [%s] is not a directory" % (path,))
     v[project_id] = path
 
 
@@ -439,4 +439,16 @@ def main():
   return 0
 
 if __name__ == '__main__':
-  sys.exit(main())
+  # Use os._exit instead of sys.exit to prevent the python interpreter from
+  # hanging on threads/processes which may have been spawned and not reaped
+  # (e.g. by a leaky test harness).
+  ret = main()
+  if not isinstance(ret, int):
+    if ret is None:
+      ret = 0
+    else:
+      print >> sys.stderr, ret
+      ret = 1
+  sys.stdout.flush()
+  sys.stderr.flush()
+  os._exit(ret)
