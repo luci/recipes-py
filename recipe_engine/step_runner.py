@@ -9,10 +9,8 @@ import datetime
 import json
 import os
 import re
-import subprocess
 import sys
 import tempfile
-import threading
 import traceback
 
 from . import recipe_test_api
@@ -20,7 +18,6 @@ from . import stream
 from . import types
 from . import util
 
-import subprocess
 from .third_party import subprocess42
 
 
@@ -35,16 +32,6 @@ if sys.platform == "win32":
   # SetErrorMode(SEM_NOGPFAULTERRORBOX). For more information, see:
   # https://msdn.microsoft.com/en-us/library/windows/desktop/ms680621.aspx
   ctypes.windll.kernel32.SetErrorMode(0x0002)
-
-
-# MODE_SUBPROCESS42 uses subprocess42 instead of subprocess. This allows the
-# correct handling of steps which daemonize themselves and hang on to the
-# stdout/stderr handles after the process has exited.
-#
-# This mode flag was introduced as a temporary way to have both the old and new
-# logic present in the engine simultaneously, in order to make a more controlled
-# rollout (5/06/2016).
-MODE_SUBPROCESS42 = False
 
 
 class _streamingLinebuf(object):
@@ -248,10 +235,7 @@ class SubprocessStepRunner(StepRunner):
              '--output-result-json=%s' % f.name, recipe]
       cmd.extend(['%s=%s' % (k,repr(v)) for k, v in properties.iteritems()])
 
-      if MODE_SUBPROCESS42:
-        retcode = subprocess42.call(cmd)
-      else:
-        retcode = subprocess.call(cmd)
+      retcode = subprocess42.call(cmd)
       result = json.load(f)
       if retcode != 0:
         raise recipe_api.StepFailure(
@@ -306,13 +290,6 @@ class SubprocessStepRunner(StepRunner):
         unaltered to subprocess.Popen.
       cwd: the working directory of the command.
     """
-    if MODE_SUBPROCESS42:
-      PIPE = subprocess42.PIPE
-      POPEN = subprocess42.Popen
-    else:
-      PIPE = subprocess.PIPE
-      POPEN = subprocess.Popen
-
     fhandles = {}
 
     # If we are given StreamEngine.Streams, map them to PIPE for subprocess.
@@ -320,29 +297,21 @@ class SubprocessStepRunner(StepRunner):
     for key in ('stdout', 'stderr'):
       handle = handles.get(key)
       if isinstance(handle, stream.StreamEngine.Stream):
-        fhandles[key] = PIPE
+        fhandles[key] = subprocess42.PIPE
       else:
         fhandles[key] = handle
 
     # stdin must be a real handle, if it exists
     fhandles['stdin'] = handles.get('stdin')
 
-    kwargs = fhandles.copy()
-    if MODE_SUBPROCESS42:
-      kwargs['detached'] = True
-    else:
-      if sys.platform == "win32":
-        # CREATE_NO_WINDOW. For more information, see:
-        # https://msdn.microsoft.com/en-us/library/windows/desktop/ms684863.aspx
-        kwargs['creationflags'] = 0x8000000
-
     with _modify_lookup_path(env.get('PATH')):
-      proc = POPEN(
+      proc = subprocess42.Popen(
           cmd,
           env=env,
           cwd=cwd,
+          detached=True,
           universal_newlines=True,
-          **kwargs)
+          **fhandles)
 
     # Safe to close file handles now that subprocess has inherited them.
     for handle in fhandles.itervalues():
@@ -352,56 +321,24 @@ class SubprocessStepRunner(StepRunner):
     outstreams = {}
     linebufs = {}
 
-    # BEGIN[ non-subprocess42
-    outlock = threading.Lock()
-    def make_pipe_thread(inhandle, outstream):
-      def body():
-        while True:
-          line = inhandle.readline()
-          if not line:
-            break
-          line = line[:-1] # Strip newline for write_line's expectations
-                           # (universal_newlines is on, so it's only \n)
-          outlock.acquire()
-          try:
-            outstream.write_line(line)
-          finally:
-            outlock.release()
-      t = threading.Thread(target=body, args=())
-      t.daemon = True
-      return t
-
-    threads = []
-    ## ]END non-subprocess42
-
     for key in ('stdout', 'stderr'):
       handle = handles.get(key)
       if isinstance(handle, stream.StreamEngine.Stream):
-        if MODE_SUBPROCESS42:
-          outstreams[key] = handle
-          linebufs[key] = _streamingLinebuf()
-        else:
-          threads.append(make_pipe_thread(getattr(proc, key), handle))
+        outstreams[key] = handle
+        linebufs[key] = _streamingLinebuf()
 
-    if MODE_SUBPROCESS42:
-      if linebufs:
-        for pipe, data in proc.yield_any(timeout=1):
-          if pipe is None:
-            continue
-          buf = linebufs.get(pipe)
-          if not buf:
-            continue
-          buf.ingest(data)
-          for line in buf.get_buffered():
-            outstreams[pipe].write_line(line)
-      else:
-        proc.wait()
+    if linebufs:
+      for pipe, data in proc.yield_any(timeout=1):
+        if pipe is None:
+          continue
+        buf = linebufs.get(pipe)
+        if not buf:
+          continue
+        buf.ingest(data)
+        for line in buf.get_buffered():
+          outstreams[pipe].write_line(line)
     else:
-      for th in threads:
-        th.start()
       proc.wait()
-      for th in threads:
-        th.join()
 
     return proc.returncode
 

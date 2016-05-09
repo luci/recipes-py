@@ -22,10 +22,6 @@ import recipe_engine.step_runner
 from recipe_engine import recipe_test_api
 import mock
 
-ENABLE_SUBPROCESS42 = {
-  "$recipe_engine": {"mode_flags": {"use_subprocess42": True}}
-}
-
 class RunTest(unittest.TestCase):
   def _run_cmd(self, recipe, properties=None):
     script_path = os.path.join(BASE_DIR, 'recipes.py')
@@ -60,16 +56,9 @@ class RunTest(unittest.TestCase):
     for test in tests:
       self._test_recipe(*test)
 
-      recipe = test[0]
-      props = {}
-      if len(test) > 1:
-        props = test[1]
-      props.update(ENABLE_SUBPROCESS42)
-      self._test_recipe(recipe, props)
-
   def test_bad_subprocess(self):
     now = time.time()
-    self._test_recipe('engine_tests/bad_subprocess', ENABLE_SUBPROCESS42)
+    self._test_recipe('engine_tests/bad_subprocess')
     after = time.time()
 
     # Test has a daemon that holds on to stdout for 30s, but the daemon's parent
@@ -87,29 +76,9 @@ class RunTest(unittest.TestCase):
     self.assertRegexpMatches(stdout, 'OSError')
     self.assertEqual(255, subp.returncode)
 
-  def test_nonexistent_command_s42(self):
-    subp = subprocess.Popen(
-        self._run_cmd('engine_tests/nonexistent_command', ENABLE_SUBPROCESS42),
-        stdout=subprocess.PIPE)
-    stdout, _ = subp.communicate()
-    self.assertRegexpMatches(stdout, '(?m)^@@@STEP_EXCEPTION@@@$')
-    self.assertRegexpMatches(stdout, 'OSError')
-    self.assertEqual(255, subp.returncode)
-
   def test_trigger(self):
     subp = subprocess.Popen(
         self._run_cmd('engine_tests/trigger'),
-        stdout=subprocess.PIPE)
-    stdout, _ = subp.communicate()
-    self.assertEqual(0, subp.returncode)
-    m = re.compile(r'^@@@STEP_TRIGGER@(.*)@@@$', re.MULTILINE).search(stdout)
-    self.assertTrue(m)
-    blob = m.group(1)
-    json.loads(blob) # Raises an exception if the blob is not valid json.
-
-  def test_trigger_s42(self):
-    subp = subprocess.Popen(
-        self._run_cmd('engine_tests/trigger', ENABLE_SUBPROCESS42),
         stdout=subprocess.PIPE)
     stdout, _ = subp.communicate()
     self.assertEqual(0, subp.returncode)
@@ -123,17 +92,6 @@ class RunTest(unittest.TestCase):
     subp = subprocess.Popen(
         self._run_cmd(
             'engine_tests/trigger', properties={'command': ['na-huh']}),
-        stdout=subprocess.PIPE)
-    stdout, _ = subp.communicate()
-    self.assertRegexpMatches(stdout, r'(?m)^@@@STEP_TRIGGER@(.*)@@@$')
-    self.assertEqual(255, subp.returncode)
-
-  def test_trigger_no_such_command_s42(self):
-    """Tests that trigger still happens even if running the command fails."""
-    props = {'command': ['na-huh']}
-    props.update(ENABLE_SUBPROCESS42)
-    subp = subprocess.Popen(
-        self._run_cmd('engine_tests/trigger', props),
         stdout=subprocess.PIPE)
     stdout, _ = subp.communicate()
     self.assertRegexpMatches(stdout, r'(?m)^@@@STEP_TRIGGER@(.*)@@@$')
@@ -210,9 +168,9 @@ class RunTest(unittest.TestCase):
     self.assertRegexpMatches(stdout,
         r'(?m)^@@@STEP_CURSOR@Subannotate me@@@\n@@@STEP_CLOSED@@@$')
 
-  def test_subannotations_s42(self):
+  def test_subannotations(self):
     proc = subprocess.Popen(
-        self._run_cmd('engine_tests/subannotations', ENABLE_SUBPROCESS42),
+        self._run_cmd('engine_tests/subannotations'),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     stdout, _ = proc.communicate()

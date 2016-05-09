@@ -309,8 +309,7 @@ class RecipeEngine(object):
         mode_flags = options.get('mode_flags')
         if mode_flags:
           if mode_flags.get('use_subprocess42'):
-            print "Setting MODE_SUBPROCESS42: True"
-            step_runner_module.MODE_SUBPROCESS42 = True
+            print "IGNORING MODE_SUBPROCESS42"
       except Exception as e:
         print "Failed to set recipe_engine options, got: %r: %s" % (options, e)
 
