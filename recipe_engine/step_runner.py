@@ -87,9 +87,7 @@ class StepRunner(object):
       cwd: absolute path to working directory for the command
       env: dict with overrides for environment variables
       allow_subannotations: if True, lets the step emit its own annotations
-      trigger_specs: a list of trigger specifications, which are dict with keys:
-          properties: a dict of properties.
-              Buildbot requires buildername property.
+      trigger_specs: a list of trigger specifications, see also _trigger_builds.
       stdout: Path to a file to put step stdout into. If used, stdout won't
               appear in annotator's stdout (and |allow_subannotations| is
               ignored).
@@ -357,6 +355,8 @@ class SubprocessStepRunner(StepRunner):
           'builderNames': [builder_name],
           'bucket': trig.get('bucket'),
           'changes': changes,
+          # if True and triggering fails asynchronously, fail entire build.
+          'critical': trig.get('critical', True),
           'properties': trig.get('properties'),
           'tags': trig.get('tags'),
       }, sort_keys=True))
