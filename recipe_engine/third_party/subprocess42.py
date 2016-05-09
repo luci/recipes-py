@@ -481,7 +481,7 @@ class Popen(subprocess.Popen):
             timeout -= (time.time() - start)
           continue
 
-      if self.universal_newlines:
+      if self.universal_newlines and data:
         data = self._translate_newlines(data)
       return names[index], data
 
