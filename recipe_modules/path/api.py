@@ -14,7 +14,7 @@ from recipe_engine import config_types
 def PathToString(api, test):
   def PathToString_inner(path):
     assert isinstance(path, config_types.Path)
-    base_path = path.base.resolve(api, test.enabled)
+    base_path = path.base.resolve(test.enabled)
     suffix = path.platform_ext.get(api.m.platform.name, '')
     return api.join(base_path, *path.pieces) + suffix
   return PathToString_inner
@@ -134,6 +134,7 @@ class PathApi(recipe_api.RecipeApi):
     super(PathApi, self).__init__(**kwargs)
     config_types.Path.set_tostring_fn(
       PathToString(self, self._test_data))
+    config_types.NamedBasePath.set_path_api(self)
 
     # Used in mkdtemp when generating and checking expectations.
     self._test_counter = 0

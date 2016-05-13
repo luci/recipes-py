@@ -15,6 +15,7 @@ RECIPE_MODULE_PREFIX = 'RECIPE_MODULES'
 
 def ResetTostringFns():
   RecipeConfigType._TOSTRING_MAP.clear()  # pylint: disable=W0212
+  NamedBasePath._API = None
 
 
 def json_fixup(obj):
@@ -69,24 +70,30 @@ class RecipeConfigType(object):
 class BasePath(object):
   __metaclass__ = abc.ABCMeta
 
-  def resolve(self, api, test_enabled):
+  def resolve(self, test_enabled):
     """Returns a string representation of the path base.
 
     Args:
-      api (RecipeApi) - instance of path module's RecipeApi
       test_enabled (bool) - true iff this is only for recipe expectations
     """
     raise NotImplementedError()
 
 
 class NamedBasePath(BasePath, namedtuple('NamedBasePath', 'name')):
-  def resolve(self, api, test_enabled):
-    if self.name in api.c.dynamic_paths:
-      return api.c.dynamic_paths[self.name]
-    if self.name in api.c.base_paths:
+  _API = None
+
+  @classmethod
+  def set_path_api(cls, api):
+    cls._API = api
+
+  def resolve(self, test_enabled):
+    if self.name in self._API.c.dynamic_paths:
+      return self._API.c.dynamic_paths[self.name]
+    if self.name in self._API.c.base_paths:
       if test_enabled:
         return repr(self)
-      return api.join(*api.c.base_paths[self.name])  # pragma: no cover
+      return self._API.join(
+          *self._API.c.base_paths[self.name])  # pragma: no cover
     raise KeyError(
         'Failed to resolve NamedBasePath: %s' % self.name)  # pragma: no cover
 
@@ -95,7 +102,7 @@ class NamedBasePath(BasePath, namedtuple('NamedBasePath', 'name')):
 
 
 class ModuleBasePath(BasePath, namedtuple('ModuleBasePath', 'module')):
-  def resolve(self, api, test_enabled):
+  def resolve(self, test_enabled):
     if test_enabled:
       return repr(self)
     return os.path.dirname(self.module.__file__)  # pragma: no cover
@@ -111,7 +118,7 @@ class ModuleBasePath(BasePath, namedtuple('ModuleBasePath', 'module')):
 
 class PackageRepoBasePath(
     BasePath, namedtuple('PackageRepoBasePath', 'package')):
-  def resolve(self, api, test_enabled):
+  def resolve(self, test_enabled):
     if test_enabled:
       return repr(self)
     return self.package.repo_root  # pragma: no cover
