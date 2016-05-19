@@ -424,36 +424,6 @@ deps {
     self.assertEqual(package.PackageSpec.load_proto(self.proto_file),
                      package_spec)
 
-  def test_updates_merged(self):
-    """Tests that updates are monotone in each dependency's history and
-    that dep rolls stay in their proper dependency."""
-
-    def trivial_proto(project_id):
-      return lambda context: MockProtoFile('infra/config/recipes.cfg', """
-api_version: 1
-project_id: "%s"
-recipes_path: ""
-""".lstrip() % project_id)
-
-    package_spec = package.PackageSpec.load_proto(self.proto_file)
-    foo_revs = [ "aaaaaa", "123456", "cdabfe" ]
-    bar_revs = [ "0156ff", "ffaaff", "aa0000" ]
-    package_spec.deps['bar'].raw_updates = mock.Mock(return_value=bar_revs)
-    package_spec.deps['bar'].proto_file = trivial_proto('bar')
-    package_spec.deps['foo'].raw_updates = mock.Mock(return_value=foo_revs)
-    package_spec.deps['foo'].proto_file = trivial_proto('foo')
-
-    updates = package_spec.updates(self.context)
-    foo_update_ixs = [
-        (['cafebeef'] + foo_revs).index(update.spec.deps['foo'].revision)
-        for update in updates ]
-    bar_update_ixs = [
-        (['deadd00d'] + bar_revs).index(update.spec.deps['bar'].revision)
-        for update in updates ]
-    self.assertEqual(len(updates), 6)
-    self.assertEqual(foo_update_ixs, sorted(foo_update_ixs))
-    self.assertEqual(bar_update_ixs, sorted(bar_update_ixs))
-
   def test_no_version(self):
     proto_text = """\
 project_id: "foo"

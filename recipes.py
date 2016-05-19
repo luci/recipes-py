@@ -155,43 +155,6 @@ def autoroll(args):
   return autoroll.main(args, repo_root, config_file)
 
 
-def roll(args):
-  from recipe_engine import package
-  repo_root, config_file = get_package_config(args)
-  context = package.PackageContext.from_proto_file(
-      repo_root, config_file, allow_fetch=not args.no_fetch,
-      deps_path=args.deps_path)
-  package_spec = package.PackageSpec.load_proto(config_file)
-
-  for update in package_spec.iterate_consistent_updates(config_file, context):
-    config_file.write(update.spec.dump())
-    print 'Wrote %s' % config_file.path
-
-    updated_deps = {
-        info.repo_id: info.revision
-        for info in update.commit_infos
-    }
-    if args.output_json:
-      with open(args.output_json, 'w') as fh:
-        json.dump({
-            'updates': [ i.dump() for i in update.commit_infos ],
-        }, fh)
-
-    print 'To commit this roll, run:'
-    print ' '.join([
-        'git commit -a -m "Roll dependencies"',
-        ' '.join([ '-m "Roll %s to %s"' % (dep_id, rev)
-                   for dep_id, rev in sorted(updated_deps.iteritems())]),
-    ])
-
-    break
-  else:
-    if args.output_json:
-      with open(args.output_json, 'w') as fh:
-        json.dump({ 'updates': [] }, fh)
-    print 'No consistent rolls found'
-
-
 class ProjectOverrideAction(argparse.Action):
   def __call__(self, parser, namespace, values, option_string=None):
     p = values.split('=', 2)
@@ -326,19 +289,9 @@ def main():
 
   autoroll_p = subp.add_parser(
       'autoroll',
-      help='Roll dependencies of a recipe package forward (implies fetch) '
-           'EXPERIMENTAL')
+      help='Roll dependencies of a recipe package forward (implies fetch)')
   autoroll_p.set_defaults(command='autoroll')
   autoroll_p.add_argument(
-      '--output-json',
-      help='A json file to output information about the roll to.')
-
-  roll_p = subp.add_parser(
-      'roll',
-      description='Roll dependencies of a recipe package forward '
-          '(implies fetch)')
-  roll_p.set_defaults(command='roll')
-  roll_p.add_argument(
       '--output-json',
       help='A json file to output information about the roll to.')
 
@@ -410,10 +363,6 @@ def main():
     return run(package_deps, args)
   elif args.command == 'autoroll':
     return autoroll(args)
-  elif args.command == 'roll':
-    assert not args.no_fetch, (
-        'Rolling without fetching is not supported yet.')
-    return roll(args)
   elif args.command == 'depgraph':
     return depgraph(package_deps, args)
   elif args.command == 'doc':
