@@ -515,7 +515,7 @@ def render_step(step, step_test):
             '%s(%r) should be an OutputPlaceholder.' % (key, placeholder))
       tdata = getattr(step_test, key)
       placeholder.render(tdata)
-      assert placeholder.backing_file
+      assert placeholder.backing_file is not None
       rendered_step[key] = placeholder.backing_file
     stdio_placeholders[key] = (placeholder, tdata)
 
