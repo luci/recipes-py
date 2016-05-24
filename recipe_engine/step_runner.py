@@ -29,9 +29,15 @@ if sys.platform == "win32":
   # find out immediately and don't waste time waiting for a user to
   # close the dialog.
   import ctypes
-  # SetErrorMode(SEM_NOGPFAULTERRORBOX). For more information, see:
+  # SetErrorMode(
+  #   SEM_FAILCRITICALERRORS|
+  #   SEM_NOGPFAULTERRORBOX|
+  #   SEM_NOOPENFILEERRORBOX
+  # ).
+  #
+  # For more information, see:
   # https://msdn.microsoft.com/en-us/library/windows/desktop/ms680621.aspx
-  ctypes.windll.kernel32.SetErrorMode(0x0002)
+  ctypes.windll.kernel32.SetErrorMode(0x0001|0x0002|0x8000)
 
 
 class _streamingLinebuf(object):
