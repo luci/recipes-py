@@ -18,14 +18,7 @@ import tempfile
 
 from .third_party.google.protobuf import text_format
 from . import package_pb2
-
-
-class UncleanFilesystemError(Exception):
-  pass
-
-
-class FetchNotAllowedError(Exception):
-  pass
+from . import fetch
 
 
 class InconsistentDependencyGraphError(Exception):
@@ -44,6 +37,7 @@ class CyclicDependencyError(Exception):
 
 def cleanup_pyc(path):
   """Removes any .pyc files from |path|'s directory tree.
+
   This ensures we always use the fresh code.
   """
   for root, dirs, files in os.walk(path):
@@ -223,29 +217,10 @@ class GitRepoSpec(RepoSpec):
     return subprocess.check_output(cmd)
 
   def checkout(self, context):
-    dep_dir = self._dep_dir(context)
-    logging.info('Freshening repository %s', dep_dir)
-
-    if not os.path.isdir(dep_dir):
-      if context.allow_fetch:
-        self.run_git(None, 'clone', '-q', self.repo, dep_dir)
-      else:
-        raise FetchNotAllowedError(
-            'need to clone %s but fetch not allowed' % self.repo)
-    elif not os.path.isdir(os.path.join(dep_dir, '.git')):
-      raise UncleanFilesystemError('%s exists but is not a git repo' % dep_dir)
-
-    try:
-      self.run_git(context, 'rev-parse', '-q', '--verify',
-                   '%s^{commit}' % self.revision)
-    except subprocess.CalledProcessError:
-      if context.allow_fetch:
-        self.run_git(context, 'fetch')
-      else:
-        raise FetchNotAllowedError(
-            'need to fetch %s but fetch not allowed' % self.repo)
-    self.run_git(context, 'reset', '-q', '--hard', self.revision)
-    cleanup_pyc(dep_dir)
+    checkout_dir = self._dep_dir(context)
+    fetch.ensure_git_checkout(
+        self.repo, self.revision, checkout_dir, context.allow_fetch)
+    cleanup_pyc(checkout_dir)
 
   def repo_root(self, context):
     return os.path.join(self._dep_dir(context), self.path)

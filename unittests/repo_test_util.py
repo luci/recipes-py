@@ -81,6 +81,7 @@ class RepoTest(unittest.TestCase):
     os.mkdir(repo_dir)
     with in_directory(repo_dir):
       subprocess.check_output(['git', 'init'])
+      subprocess.check_output(['git', 'remote', 'add', 'origin', repo_dir])
       with open('recipes.py', 'w') as f:
         f.write('import subprocess, sys\n'
                 'sys.exit(subprocess.call(\n'

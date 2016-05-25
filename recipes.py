@@ -147,6 +147,12 @@ def run(package_deps, args):
   return handle_recipe_return(ret, args.output_result_json, stream_engine)
 
 
+def remote_run(args):
+  from recipe_engine import remote_run
+
+  return remote_run.main(args)
+
+
 def autoroll(args):
   from recipe_engine import autoroll
 
@@ -287,6 +293,23 @@ def main():
       help='A list of property pairs; e.g. mastername=chromium.linux '
            'issue=12345')
 
+  remote_run_p = subp.add_parser(
+      'remote_run',
+      description='Run a recipe from specified repo and revision')
+  remote_run_p.set_defaults(command='remote_run')
+  remote_run_p.add_argument(
+      '--repository', required=True,
+      help='URL of a git repository to fetch')
+  remote_run_p.add_argument(
+      '--revision', default='FETCH_HEAD',
+      help='Git commit hash to check out')
+  remote_run_p.add_argument(
+      '--workdir',
+      help='The working directory of repo checkout')
+  remote_run_p.add_argument(
+      'run_args', nargs='*',
+      help='Arguments to pass to fetched repo\'s recipes.py run')
+
   autoroll_p = subp.add_parser(
       'autoroll',
       help='Roll dependencies of a recipe package forward (implies fetch)')
@@ -334,6 +357,11 @@ def main():
 
   if args.verbose:
     logging.getLogger().setLevel(logging.INFO)
+
+  # Commands which do not require config_file, package_deps, and other objects
+  # initialized later.
+  if args.command == 'remote_run':
+    return remote_run(args)
 
   repo_root, config_file = get_package_config(args)
 
