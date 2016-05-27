@@ -1,0 +1,9 @@
+package: infra/recipes-py
+description: A testable, cross-platform, workflow description language
+root: ../..
+
+data:
+  - dir: .
+    exclude:
+      - \.git
+      - .*\.pyc
