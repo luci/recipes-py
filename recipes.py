@@ -74,7 +74,7 @@ def handle_recipe_return(recipe_result, result_filename, stream_engine):
   if 'reason' in recipe_result.result:
     with stream_engine.new_step_stream('Failure reason') as s:
       with s.new_log_stream('reason') as l:
-        for line in recipe_result.result['reason'].split('\n'):
+        for line in recipe_result.result['reason'].splitlines():
           l.write_line(line)
 
   if 'status_code' in recipe_result.result:
