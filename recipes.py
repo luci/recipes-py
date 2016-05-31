@@ -71,6 +71,12 @@ def handle_recipe_return(recipe_result, result_filename, stream_engine):
         for line in recipe_result.result['traceback']:
           l.write_line(line)
 
+  if 'reason' in recipe_result.result:
+    with stream_engine.new_step_stream('Failure reason') as s:
+      with s.new_log_stream('reason') as l:
+        for line in recipe_result.result['reason'].split('\n'):
+          l.write_line(line)
+
   if 'status_code' in recipe_result.result:
     return recipe_result.result['status_code']
   else:
@@ -80,7 +86,6 @@ def handle_recipe_return(recipe_result, result_filename, stream_engine):
 def run(package_deps, args):
   from recipe_engine import run as recipe_run
   from recipe_engine import loader
-  from recipe_engine import package
   from recipe_engine import step_runner
   from recipe_engine import stream
 
