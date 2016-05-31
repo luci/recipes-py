@@ -1,4 +1,4 @@
-# Copyright 2013 The LUCI Authors. All rights reserved.
+# Copyright 2016 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
@@ -258,6 +258,15 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
           path, lambda f: f.endswith('example.py')):
         module_name = os.path.dirname(recipe)[len(path)+1:]
         yield recipe, '%s:example' % module_name
+
+  def loop_over_recipe_modules(self):
+    """Yields the paths to all the modules that this view can see."""
+    for path in self.package.module_dirs:
+      if os.path.isdir(path):
+        for item in os.listdir(path):
+          subpath = os.path.join(path, item)
+          if _is_recipe_module_dir(subpath):
+            yield os.path.basename(subpath)
 
 
 def _amend_exception(e, amendment):

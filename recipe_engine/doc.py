@@ -64,31 +64,45 @@ def p(indent_lvl, *args, **kwargs):
   print(*args, **kwargs)
 
 def pmethod(indent_lvl, name, obj):
+  if getattr(obj, '__original', None):
+    obj = obj.__original
+
   if isinstance(obj, property):
     name = '@'+name
     if obj.fset:
       name += '(r/w)'
-  p(indent_lvl, name, '', end='')
+
+  try:
+    arg_spec = inspect.getargspec(obj)
+  except TypeError:
+    arg_spec = None
+
+  meth_name = name
+  if arg_spec:
+    meth_name += inspect.formatargspec(*arg_spec)
+
+  p(indent_lvl, meth_name, '', end='')
   if obj.__doc__:
     lines = trim_doc(obj.__doc__)
     p(0, '--', lines[0])
   else:
     p(0)
 
-def main(universe):
+def main(universe_view):
   common_methods = set(k for k, v in member_iter(recipe_api.RecipeApi))
   p(0, 'Common Methods -- %s' % os.path.splitext(recipe_api.__file__)[0])
   for method in sorted(common_methods):
     pmethod(1, method, getattr(recipe_api.RecipeApi, method))
 
   deps = {}
-  for package, module_name in universe.loop_over_recipe_modules():
-    deps[module_name] = universe.load(package, module_name)
+  universe = universe_view.universe
+  for module_name in universe_view.loop_over_recipe_modules():
+    deps[module_name] = universe.load(universe_view.package, module_name)
 
   inst = loader.create_recipe_api(
       deps, recipe_run.RecipeEngine(None, {}, universe))
 
-  for mod_name, mod in deps.iteritems():
+  for mod_name, mod in sorted(deps.iteritems(), key=lambda it: it[0]):
     p(0)
     p(0, "(%s) -- %s" % (mod_name, mod.__path__[0]))
     if mod.LOADED_DEPS:

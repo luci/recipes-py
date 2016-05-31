@@ -204,8 +204,9 @@ def doc(package_deps, args):
 
   _, config_file = get_package_config(args)
   universe = loader.RecipeUniverse(package_deps, config_file)
+  universe_view = loader.UniverseView(universe, package_deps.root_package)
 
-  doc.main(universe)
+  doc.main(universe_view)
 
 
 def info(args):

@@ -1,4 +1,4 @@
-# Copyright 2013 The LUCI Authors. All rights reserved.
+# Copyright 2016 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
@@ -234,6 +234,7 @@ def infer_composite_step(func):
       except StepFailure as ex:
         agg.add_failure(ex)
         return DeferredResult(None, ex)
+  _inner.__original = func
   return _inner
 
 
@@ -271,6 +272,7 @@ def composite_step(func):
       except StepFailure as ex:
         agg.add_failure(ex)
         return DeferredResult(None, ex)
+  _inner.__original = func
   return _inner
 
 
