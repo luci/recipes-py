@@ -1,6 +1,6 @@
-# Copyright (c) 2013-2015 The Chromium Authors. All rights reserved.
-# Use of this source code is governed by a BSD-style license that can be
-# found in the LICENSE file.
+# Copyright 2013 The LUCI Authors. All rights reserved.
+# Use of this source code is governed under the Apache License, Version 2.0
+# that can be found in the LICENSE file.
 
 import datetime
 from recipe_engine.recipe_api import Property
