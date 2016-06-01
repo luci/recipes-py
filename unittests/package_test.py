@@ -153,8 +153,8 @@ class TestRollCandidate(repo_test_util.RepoTest):
     self.reset_repo(repos['a'], repos['a']['revision'])
     a_updates = a_repo_spec.updates(self._context, a_c1['revision'])
     self.assertEqual(
-        ['a@%s' % a_c1['revision']],
-        [str(u) for u in a_updates])
+        [a_c1['revision']],
+        [u.revision for u in a_updates])
 
     # Create a roll candidate to roll the new A commit into B.
     candidate = package.RollCandidate(
@@ -206,8 +206,8 @@ class TestRollCandidate(repo_test_util.RepoTest):
     self.reset_repo(repos['a'], repos['a']['revision'])
     a_updates = a_repo_spec.updates(self._context, a_c2['revision'])
     self.assertEqual(
-        ['a@%s' % a_c1['revision'], 'a@%s' % a_c2['revision']],
-        [str(u) for u in a_updates])
+        [a_c1['revision'], a_c2['revision']],
+        [u.revision for u in a_updates])
     self.reset_repo(repos['a'], a_c2['revision'])
 
     # Create commits in the B repo that pull different A repo revisions.
@@ -218,8 +218,8 @@ class TestRollCandidate(repo_test_util.RepoTest):
     self.reset_repo(repos['b'], repos['b']['revision'])
     b_updates = b_repo_spec.updates(self._context, b_c2_rev)
     self.assertEqual(
-        ['b@%s' % b_c1_rev, 'b@%s' % b_c2_rev],
-        [str(u) for u in b_updates])
+        [b_c1_rev, b_c2_rev],
+        [u.revision for u in b_updates])
     self.reset_repo(repos['b'], b_c2_rev)
 
     # Create a roll candidate to roll some B commits into C.
@@ -285,12 +285,8 @@ class TestRollCandidate(repo_test_util.RepoTest):
     self.reset_repo(repos['a'], repos['a']['revision'])
     a_updates = a_repo_spec.updates(self._context, a_c3['revision'])
     self.assertEqual(
-        [
-            'a@%s' % a_c1['revision'],
-            'a@%s' % a_c2['revision'],
-            'a@%s' % a_c3['revision']
-        ],
-        [str(u) for u in a_updates])
+        [a_c1['revision'], a_c2['revision'], a_c3['revision']],
+        [u.revision for u in a_updates])
     self.reset_repo(repos['a'], a_c3['revision'])
 
     # Create a commit in the B repo that uses the same revision of A.
@@ -303,8 +299,8 @@ class TestRollCandidate(repo_test_util.RepoTest):
     self.reset_repo(repos['b'], repos['b']['revision'])
     b_updates = b_repo_spec.updates(self._context, b_c3_rev)
     self.assertEqual(
-        ['b@%s' % b_c1_rev, 'b@%s' % b_c2_rev, 'b@%s' % b_c3_rev],
-        [str(u) for u in b_updates])
+        [b_c1_rev, b_c2_rev, b_c3_rev],
+        [u.revision for u in b_updates])
     self.reset_repo(repos['b'], b_c3_rev)
 
     candidate1 = package.RollCandidate(
@@ -364,8 +360,8 @@ class TestRollCandidate(repo_test_util.RepoTest):
     self.reset_repo(repos['b'], repos['b']['revision'])
     b_updates = b_repo_spec.updates(self._context, b_c1['revision'])
     self.assertEqual(
-        ['b@%s' % b_c1['revision']],
-        [str(u) for u in b_updates])
+        [b_c1['revision']],
+        [u.revision for u in b_updates])
     self.reset_repo(repos['b'], b_c1['revision'])
 
     c_package_spec = self.get_package_spec(repos['c'])

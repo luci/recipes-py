@@ -140,31 +140,6 @@ class CommitInfo(object):
     }
 
 
-@functools.total_ordering
-class RepoUpdate(object):
-  """Wrapper class that specifies the sort order of roll updates when merging.
-  """
-
-  def __init__(self, spec, commit_infos=()):
-    self.spec = spec
-    self.commit_infos = commit_infos
-
-  @property
-  def project_id(self):
-    return self.spec.project_id
-
-  def __eq__(self, other):
-    return ((self.project_id, self.spec.revision) ==
-            (other.project_id, other.spec.revision))
-
-  def __le__(self, other):
-    return ((self.project_id, self.spec.revision) <=
-            (other.project_id, other.spec.revision))
-
-  def __str__(self):
-    return '%s@%s' % (self.project_id, getattr(self.spec, 'revision', None))
-
-
 class RepoSpec(object):
   """RepoSpec is the specification of a repository to check out.
 
@@ -244,10 +219,8 @@ class GitRepoSpec(RepoSpec):
     updates = []
     for rev in raw_updates:
       info = self._get_commit_info(rev, context)
-      updates.append(RepoUpdate(
-                 GitRepoSpec(self.project_id, self.repo, self.branch, rev,
-                             self.path),
-                 commit_infos=(info,)))
+      updates.append(GitRepoSpec(
+          self.project_id, self.repo, self.branch, rev, self.path))
     return updates
 
   def commit_infos(self, context, other_revision):
@@ -461,14 +434,14 @@ class RollCandidate(object):
         if more_recent_revision != other_spec.revision:
           return False
 
-        self._updates[other_spec.project_id] = RepoUpdate(other_spec)
+        self._updates[other_spec.project_id] = other_spec
 
   def get_rolled_spec(self):
     """Returns a PackageSpec with all the deps updates from this roll."""
     # TODO(phajdan.jr): does this preserve comments? should it?
     new_deps = _updated(
         self._package_spec.deps,
-        { project_id: update.spec for project_id, update in
+        { project_id: spec for project_id, spec in
           self._updates.iteritems() })
     return PackageSpec(
         self._package_spec.project_id,
@@ -483,7 +456,7 @@ class RollCandidate(object):
 
     for project_id, update in self._updates.iteritems():
       commit_infos[project_id] = self._package_spec.deps[
-          project_id].commit_infos(self._context, update.spec.revision)
+          project_id].commit_infos(self._context, update.revision)
 
     return commit_infos
 
