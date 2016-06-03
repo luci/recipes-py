@@ -34,8 +34,14 @@ def ensure_workdir(args):
 def main(args):
   with ensure_workdir(args):
     checkout_dir = os.path.join(args.workdir, 'checkout')
-    fetch.ensure_git_checkout(
-        args.repository, args.revision, checkout_dir, allow_fetch=True)
+    if args.use_gitiles:
+      args.revision = args.revision or 'HEAD'
+      fetch.ensure_gitiles_checkout(
+          args.repository, args.revision, checkout_dir, allow_fetch=True)
+    else:
+      args.revision = args.revision or 'FETCH_HEAD'
+      fetch.ensure_git_checkout(
+          args.repository, args.revision, checkout_dir, allow_fetch=True)
     recipes_cfg = package.ProtoFile(
         package.InfraRepoConfig().to_recipes_cfg(checkout_dir))
     cmd = [

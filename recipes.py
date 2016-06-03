@@ -307,11 +307,15 @@ def main():
       '--repository', required=True,
       help='URL of a git repository to fetch')
   remote_run_p.add_argument(
-      '--revision', default='FETCH_HEAD',
-      help='Git commit hash to check out')
+      '--revision',
+      help='Git commit hash to check out; defaults to latest revision (HEAD)')
   remote_run_p.add_argument(
       '--workdir',
       help='The working directory of repo checkout')
+  remote_run_p.add_argument(
+      '--use-gitiles', action='store_true',
+      help='Use Gitiles-specific way to fetch repo (potentially cheaper for '
+           'large repos)')
   remote_run_p.add_argument(
       'run_args', nargs='*',
       help='Arguments to pass to fetched repo\'s recipes.py run')

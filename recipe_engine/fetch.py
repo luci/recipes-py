@@ -2,11 +2,18 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import base64
 import logging
 import os
+import shutil
 import sys
+import tarfile
+import urllib
 
 from .third_party import subprocess42
+from .third_party.google.protobuf import text_format
+
+from . import package_pb2
 
 
 class FetchError(Exception):
@@ -66,3 +73,55 @@ def ensure_git_checkout(repo, revision, checkout_dir, allow_fetch):
           'need to fetch %s but fetch not allowed' % repo)
     _run_git(checkout_dir, 'fetch')
   _run_git(checkout_dir, 'reset', '-q', '--hard', revision)
+
+
+def ensure_gitiles_checkout(repo, revision, checkout_dir, allow_fetch):
+  """Fetches given |repo| at |revision| to |checkout_dir| using gitiles.
+
+  Network operations are performed only if |allow_fetch| is True.
+  """
+  logging.info('Freshening repository %s in %s', repo, checkout_dir)
+
+  # TODO(phajdan.jr): implement caching.
+  if not allow_fetch:
+    raise FetchNotAllowedError(
+        'need to download %s from gitiles but fetch not allowed' % repo)
+
+  # TODO(phajdan.jr): ensure |revision| is a git SHA.
+  # Otherwise (e.g. if it's HEAD) we might get inconsistent results as we make
+  # several requests.
+
+  shutil.rmtree(checkout_dir, ignore_errors=True)
+
+  recipes_cfg_url = '%s/+/%s/infra/config/recipes.cfg?format=TEXT' % (
+      repo, urllib.quote(revision))
+  logging.info('fetching %s' % recipes_cfg_url)
+  # TODO(phajdan.jr): replace urllib with requests library.
+  recipes_cfg_raw = urllib.urlopen(recipes_cfg_url)
+  recipes_cfg_text = base64.b64decode(recipes_cfg_raw.read())
+  recipes_cfg_proto = package_pb2.Package()
+  text_format.Merge(recipes_cfg_text, recipes_cfg_proto)
+  recipes_path_rel = recipes_cfg_proto.recipes_path
+
+  # Re-create recipes.cfg in |checkout_dir| so that the repo's recipes.py
+  # can look it up.
+  recipes_cfg_path = os.path.join(
+      checkout_dir, 'infra', 'config', 'recipes.cfg')
+  os.makedirs(os.path.dirname(recipes_cfg_path))
+  with open(recipes_cfg_path, 'w') as f:
+    f.write(recipes_cfg_text)
+
+  recipes_path = os.path.join(checkout_dir, recipes_path_rel)
+  os.makedirs(recipes_path)
+
+  try:
+    archive_url = '%s/+archive/%s/%s.tar.gz' % (
+        repo, urllib.quote(revision), recipes_path_rel)
+    logging.info('fetching %s' % archive_url)
+    # Download the archive to a temporary file so that tarfile
+    # can operate on it.
+    archive_path, _ = urllib.urlretrieve(archive_url)
+    with tarfile.open(archive_path) as archive_tarfile:
+      archive_tarfile.extractall(recipes_path)
+  finally:
+    urllib.urlcleanup()

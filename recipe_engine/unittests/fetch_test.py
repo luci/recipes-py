@@ -3,6 +3,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import base64
+import io
 import os
 import sys
 import unittest
@@ -128,6 +130,37 @@ class TestGit(unittest.TestCase):
       mock.call('dir', 'config', 'remote.origin.url'),
       mock.call('dir', 'rev-parse', '-q', '--verify', 'revision^{commit}'),
     ])
+
+
+class TestGitiles(unittest.TestCase):
+  @mock.patch('__builtin__.open', mock.mock_open())
+  @mock.patch('shutil.rmtree')
+  @mock.patch('os.makedirs')
+  @mock.patch('tarfile.open')
+  @mock.patch('urllib.urlretrieve')
+  @mock.patch('urllib.urlopen')
+  def test_basic(self, urlopen, urlretrieve, tarfile_open, makedirs, rmtree):
+    proto_text = u"""
+api_version: 1
+project_id: "foo"
+recipes_path: "path/to/recipes"
+""".lstrip()
+    urlopen.side_effect = [io.StringIO(unicode(base64.b64encode(proto_text)))]
+    urlretrieve.return_value = ('contents', [])
+
+    fetch.ensure_gitiles_checkout('repo', 'revision', 'dir', allow_fetch=True)
+
+    urlopen.assert_called_once_with(
+        'repo/+/revision/infra/config/recipes.cfg?format=TEXT')
+    urlretrieve.assert_called_once_with(
+        'repo/+archive/revision/path/to/recipes.tar.gz')
+
+    makedirs.assert_has_calls([
+      mock.call('dir/infra/config'),
+      mock.call('dir/path/to/recipes'),
+    ])
+
+    rmtree.assert_called_once_with('dir', ignore_errors=True)
 
 
 if __name__ == '__main__':
