@@ -168,19 +168,6 @@ class RunTest(unittest.TestCase):
     self.assertRegexpMatches(stdout,
         r'(?m)^@@@STEP_CURSOR@Subannotate me@@@\n@@@STEP_CLOSED@@@$')
 
-  def test_subannotations(self):
-    proc = subprocess.Popen(
-        self._run_cmd('engine_tests/subannotations'),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
-    stdout, _ = proc.communicate()
-    self.assertRegexpMatches(stdout, r'(?m)^!@@@BUILD_STEP@steppy@@@$')
-    self.assertRegexpMatches(stdout, r'(?m)^@@@BUILD_STEP@pippy@@@$')
-    # Before 'Subannotate me' we expect an extra STEP_CURSOR to reset the
-    # state.
-    self.assertRegexpMatches(stdout,
-        r'(?m)^@@@STEP_CURSOR@Subannotate me@@@\n@@@STEP_CLOSED@@@$')
-
 
 if __name__ == '__main__':
   unittest.TestCase.maxDiff = None
