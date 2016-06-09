@@ -232,8 +232,8 @@ def main():
 
   parser.add_argument(
       '--package',
-      help='Package to operate on (directory containing '
-           'infra/config/recipes.cfg)')
+      help='Path to recipes.cfg of the recipe package to operate on'
+        ', usually in infra/config/recipes.cfg')
   parser.add_argument(
       '--deps-path',
       help='Path where recipe engine dependencies will be extracted.')
