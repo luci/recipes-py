@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 import base64
+import json
 import logging
 import os
 import shutil
@@ -87,16 +88,22 @@ def ensure_gitiles_checkout(repo, revision, checkout_dir, allow_fetch):
     raise FetchNotAllowedError(
         'need to download %s from gitiles but fetch not allowed' % repo)
 
-  # TODO(phajdan.jr): ensure |revision| is a git SHA.
-  # Otherwise (e.g. if it's HEAD) we might get inconsistent results as we make
-  # several requests.
+  rev_url = '%s/+/%s?format=JSON' % (repo, urllib.quote(revision))
+  logging.info('fetching %s', rev_url)
+  # TODO(phajdan.jr): replace urllib with requests library.
+  rev_raw = urllib.urlopen(rev_url).read()
+  if not rev_raw.startswith(')]}\'\n'):
+    raise FetchError('Unexpected gitiles response: %s' % rev_raw)
+  rev_json = json.loads(rev_raw.split('\n', 1)[1])
+  orig_revision = revision
+  revision = rev_json['commit']
+  logging.info('resolved %s to %s', orig_revision, revision)
 
   shutil.rmtree(checkout_dir, ignore_errors=True)
 
   recipes_cfg_url = '%s/+/%s/infra/config/recipes.cfg?format=TEXT' % (
       repo, urllib.quote(revision))
   logging.info('fetching %s' % recipes_cfg_url)
-  # TODO(phajdan.jr): replace urllib with requests library.
   recipes_cfg_raw = urllib.urlopen(recipes_cfg_url)
   recipes_cfg_text = base64.b64decode(recipes_cfg_raw.read())
   recipes_cfg_proto = package_pb2.Package()

@@ -145,15 +145,20 @@ api_version: 1
 project_id: "foo"
 recipes_path: "path/to/recipes"
 """.lstrip()
-    urlopen.side_effect = [io.StringIO(unicode(base64.b64encode(proto_text)))]
+    urlopen.side_effect = [
+        io.StringIO(u')]}\'\n{ "commit": "abc123" }'),
+        io.StringIO(unicode(base64.b64encode(proto_text)))
+    ]
     urlretrieve.return_value = ('contents', [])
 
     fetch.ensure_gitiles_checkout('repo', 'revision', 'dir', allow_fetch=True)
 
-    urlopen.assert_called_once_with(
-        'repo/+/revision/infra/config/recipes.cfg?format=TEXT')
+    urlopen.assert_has_calls([
+        mock.call('repo/+/revision?format=JSON'),
+        mock.call('repo/+/abc123/infra/config/recipes.cfg?format=TEXT'),
+    ])
     urlretrieve.assert_called_once_with(
-        'repo/+archive/revision/path/to/recipes.tar.gz')
+        'repo/+archive/abc123/path/to/recipes.tar.gz')
 
     makedirs.assert_has_calls([
       mock.call('dir/infra/config'),
