@@ -132,28 +132,28 @@ class RunTest(unittest.TestCase):
       # self.assertEqual(zsh_output.decode('utf-8'), s + '\n')
 
   def test_run_unconsumed(self):
-    stream_engine = recipe_engine.stream.NoopStreamEngine()
-    properties = {}
+    with recipe_engine.stream.NoopStreamEngine() as stream_engine:
+      properties = {}
 
-    test_data = recipe_engine.recipe_test_api.TestData()
-    test_data.expect_exception('SomeException')
+      test_data = recipe_engine.recipe_test_api.TestData()
+      test_data.expect_exception('SomeException')
 
-    api = mock.Mock()
-    api._engine = mock.Mock()
-    api._engine.properties = properties
+      api = mock.Mock()
+      api._engine = mock.Mock()
+      api._engine.properties = properties
 
-    engine = recipe_engine.run.RecipeEngine(
-        recipe_engine.step_runner.SimulationStepRunner(
-            stream_engine, test_data),
-        properties,
-        None)
+      engine = recipe_engine.run.RecipeEngine(
+          recipe_engine.step_runner.SimulationStepRunner(
+              stream_engine, test_data),
+          properties,
+          None)
 
-    class FakeScript(object):
-      def run(self, _, __):
-        return None
+      class FakeScript(object):
+        def run(self, _, __):
+          return None
 
-    with self.assertRaises(AssertionError):
-      engine.run(FakeScript(), api)
+      with self.assertRaises(AssertionError):
+        engine.run(FakeScript(), api)
 
   def test_subannotations(self):
     proc = subprocess.Popen(

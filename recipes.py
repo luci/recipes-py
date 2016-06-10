@@ -138,18 +138,17 @@ def run(package_deps, args):
   os.chdir(workdir)
   stream_engine = stream.ProductStreamEngine(
       stream.StreamEngineInvariants(),
-      stream.AnnotatorStreamEngine(sys.stdout))
+      stream.AnnotatorStreamEngine(sys.stdout, emit_timestamps=args.timestamps))
+  with stream_engine:
+    try:
+      ret = recipe_run.run_steps(
+          properties, stream_engine,
+          step_runner.SubprocessStepRunner(stream_engine),
+          universe=universe)
+    finally:
+      os.chdir(old_cwd)
 
-  try:
-    ret = recipe_run.run_steps(
-        properties, stream_engine,
-        step_runner.SubprocessStepRunner(stream_engine),
-        universe=universe)
-
-  finally:
-    os.chdir(old_cwd)
-
-  return handle_recipe_return(ret, args.output_result_json, stream_engine)
+    return handle_recipe_return(ret, args.output_result_json, stream_engine)
 
 
 def remote_run(args):
@@ -295,9 +294,21 @@ def main():
       'recipe',
       help='The recipe to execute')
   run_p.add_argument(
-      'props', nargs=argparse.REMAINDER,
+      'props',
+      nargs=argparse.REMAINDER,
       help='A list of property pairs; e.g. mastername=chromium.linux '
            'issue=12345')
+  run_p.add_argument(
+      '--timestamps',
+      action='store_true',
+      help='If true, emit CURRENT_TIMESTAMP annotations. '
+           'Default: false. '
+           'CURRENT_TIMESTAMP annotation has one parameter, current time in '
+           'Unix timestamp format. '
+           'CURRENT_TIMESTAMP annotation will be printed at the beginning and '
+           'end of the annotation stream and also immediately before each '
+           'STEP_START and STEP_END annotations.',
+  )
 
   remote_run_p = subp.add_parser(
       'remote_run',

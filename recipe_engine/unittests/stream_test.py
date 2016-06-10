@@ -51,15 +51,18 @@ class StreamTest(unittest.TestCase):
     bar.close()
 
   def _example_annotations(self):
-    return """@@@HONOR_ZERO_RETURN_CODE@@@
+    return """@@@CURRENT_TIMESTAMP@123@@@
+@@@HONOR_ZERO_RETURN_CODE@@@
 @@@SEED_STEP@foo@@@
 @@@STEP_CURSOR@foo@@@
+@@@CURRENT_TIMESTAMP@123@@@
 @@@STEP_STARTED@@@
 foo says hello to xyrself
 @@@SEED_STEP@bar@@@
 foo says hello to bar:
   hi bar
 @@@STEP_CURSOR@bar@@@
+@@@CURRENT_TIMESTAMP@123@@@
 @@@STEP_STARTED@@@
 bar says hi, shyly
 @@@STEP_CURSOR@foo@@@
@@ -73,78 +76,92 @@ foo begins to read a poem
 @@@STEP_LINK@read it online!@https://foospoemtobar.com/@@@
 @@@STEP_SUMMARY_TEXT@read a killer poem and took a bow@@@
 @@@STEP_TRIGGER@{"builderName":["bar's fantasies"]}@@@
+@@@CURRENT_TIMESTAMP@123@@@
 @@@STEP_CLOSED@@@
 @@@SEED_STEP@bar's baby@@@
 @@@STEP_CURSOR@bar's baby@@@
+@@@CURRENT_TIMESTAMP@123@@@
 @@@STEP_STARTED@@@
 @@@STEP_NEST_LEVEL@1@@@
 I'm in bar's imagination!!
 @@@STEP_WARNINGS@@@
 @@@STEP_CURSOR@bar's baby@@@
+@@@CURRENT_TIMESTAMP@123@@@
 @@@STEP_CLOSED@@@
 @@@STEP_CURSOR@bar@@@
 @@@SET_BUILD_PROPERTY@is_babycrazy@true@@@
 bar tries to kiss foo, but foo already left
 !@@@KISS@foo@@@
 @@@STEP_EXCEPTION@@@
+@@@CURRENT_TIMESTAMP@123@@@
 @@@STEP_CLOSED@@@
+@@@CURRENT_TIMESTAMP@123@@@
 """
+
+  def fake_time(self):
+    return 123
 
   def test_example(self):
     stringio = cStringIO.StringIO()
-    engine = stream.AnnotatorStreamEngine(stringio)
-    self._example(engine)
-    # Split lines for good diffs.
+    engine = stream.AnnotatorStreamEngine(
+        stringio, emit_timestamps=True, time_fn=self.fake_time)
+    with engine:
+      self._example(engine)
+      # Split lines for good diffs.
     self.assertEqual(
         stringio.getvalue().splitlines(),
         self._example_annotations().splitlines())
 
   def test_example_wellformed(self):
-    self._example(stream.StreamEngineInvariants())
+    with stream.StreamEngineInvariants() as engine:
+      self._example(engine)
 
   def test_product_with_invariants_on_example(self):
     stringio = cStringIO.StringIO()
     engine = stream.ProductStreamEngine(
         stream.StreamEngineInvariants(),
-        stream.AnnotatorStreamEngine(stringio))
-    self._example(engine)
+        stream.AnnotatorStreamEngine(
+            stringio, emit_timestamps=True, time_fn=self.fake_time))
+    with engine:
+      self._example(engine)
     self.assertEqual(stringio.getvalue(), self._example_annotations())
 
   def test_noop(self):
-    self._example(stream.NoopStreamEngine())
+    with stream.NoopStreamEngine() as engine:
+      self._example(engine)
 
   def test_write_after_close(self):
-    engine = stream.StreamEngineInvariants()
-    foo = engine.new_step_stream('foo')
-    foo.close()
-    with self.assertRaises(AssertionError):
-      foo.write_line('no')
+    with stream.StreamEngineInvariants() as engine:
+      foo = engine.new_step_stream('foo')
+      foo.close()
+      with self.assertRaises(AssertionError):
+        foo.write_line('no')
 
   def test_log_still_open(self):
-    engine = stream.StreamEngineInvariants()
-    foo = engine.new_step_stream('foo')
-    log = foo.new_log_stream('log')
-    with self.assertRaises(AssertionError):
-      foo.close()
+    with stream.StreamEngineInvariants() as engine:
+      foo = engine.new_step_stream('foo')
+      log = foo.new_log_stream('log')
+      with self.assertRaises(AssertionError):
+        foo.close()
 
   def test_no_write_multiple_lines(self):
-    engine = stream.StreamEngineInvariants()
-    foo = engine.new_step_stream('foo')
-    with self.assertRaises(AssertionError):
-      foo.write_line('one thing\nand another!')
+    with stream.StreamEngineInvariants() as engine:
+      foo = engine.new_step_stream('foo')
+      with self.assertRaises(AssertionError):
+        foo.write_line('one thing\nand another!')
 
   def test_invalid_status(self):
-    engine = stream.StreamEngineInvariants()
-    foo = engine.new_step_stream('foo')
-    with self.assertRaises(AssertionError):
-      foo.set_step_status('SINGLE')
+    with stream.StreamEngineInvariants() as engine:
+      foo = engine.new_step_stream('foo')
+      with self.assertRaises(AssertionError):
+        foo.set_step_status('SINGLE')
 
   def test_buildbot_status_constraint(self):
-    engine = stream.StreamEngineInvariants()
-    foo = engine.new_step_stream('foo')
-    foo.set_step_status('FAILURE')
-    with self.assertRaises(AssertionError):
-      foo.set_step_status('SUCCESS')
+    with stream.StreamEngineInvariants() as engine:
+      foo = engine.new_step_stream('foo')
+      foo.set_step_status('FAILURE')
+      with self.assertRaises(AssertionError):
+        foo.set_step_status('SUCCESS')
 
 if __name__ == '__main__':
   unittest.main()

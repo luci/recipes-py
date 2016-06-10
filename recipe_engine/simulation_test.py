@@ -24,19 +24,19 @@ def RunRecipe(test_data):
   from . import stream
 
   config_types.ResetTostringFns()
-  stream_engine = stream.StreamEngineInvariants()
-  step_runner = step_runner.SimulationStepRunner(stream_engine, test_data)
+  with stream.StreamEngineInvariants() as stream_engine:
+    step_runner = step_runner.SimulationStepRunner(stream_engine, test_data)
 
-  engine = run.RecipeEngine(step_runner, test_data.properties, _UNIVERSE)
-  recipe_script = _UNIVERSE.load_recipe(test_data.properties['recipe'])
-  api = loader.create_recipe_api(recipe_script.LOADED_DEPS, engine, test_data)
-  result = engine.run(recipe_script, api)
+    engine = run.RecipeEngine(step_runner, test_data.properties, _UNIVERSE)
+    recipe_script = _UNIVERSE.load_recipe(test_data.properties['recipe'])
+    api = loader.create_recipe_api(recipe_script.LOADED_DEPS, engine, test_data)
+    result = engine.run(recipe_script, api)
 
-  # Don't include tracebacks in expectations because they are too sensitive to
-  # change.
-  result.result.pop('traceback', None)
+    # Don't include tracebacks in expectations because they are too sensitive to
+    # change.
+    result.result.pop('traceback', None)
 
-  return expect_tests.Result(step_runner.steps_ran + [result.result])
+    return expect_tests.Result(step_runner.steps_ran + [result.result])
 
 
 def test_gen_coverage():
