@@ -13,6 +13,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__))))
 THIRD_PARTY = os.path.join(BASE_DIR, 'recipe_engine', 'third_party')
 sys.path.insert(0, os.path.join(THIRD_PARTY, 'mock-1.0.1'))
+sys.path.insert(0, os.path.join(THIRD_PARTY, 'requests'))
 sys.path.insert(0, BASE_DIR)
 sys.path.insert(0, THIRD_PARTY)
 
@@ -137,28 +138,26 @@ class TestGitiles(unittest.TestCase):
   @mock.patch('shutil.rmtree')
   @mock.patch('os.makedirs')
   @mock.patch('tarfile.open')
-  @mock.patch('urllib.urlretrieve')
-  @mock.patch('urllib.urlopen')
-  def test_basic(self, urlopen, urlretrieve, tarfile_open, makedirs, rmtree):
+  @mock.patch('requests.get')
+  def test_basic(self, requests_get, tarfile_open, makedirs, rmtree):
     proto_text = u"""
 api_version: 1
 project_id: "foo"
 recipes_path: "path/to/recipes"
 """.lstrip()
-    urlopen.side_effect = [
-        io.StringIO(u')]}\'\n{ "commit": "abc123" }'),
-        io.StringIO(unicode(base64.b64encode(proto_text)))
+    requests_get.side_effect = [
+        mock.Mock(text=u')]}\'\n{ "commit": "abc123" }'),
+        mock.Mock(text=base64.b64encode(proto_text)),
+        mock.Mock(content=''),
     ]
-    urlretrieve.return_value = ('contents', [])
 
     fetch.ensure_gitiles_checkout('repo', 'revision', 'dir', allow_fetch=True)
 
-    urlopen.assert_has_calls([
+    requests_get.assert_has_calls([
         mock.call('repo/+/revision?format=JSON'),
         mock.call('repo/+/abc123/infra/config/recipes.cfg?format=TEXT'),
+        mock.call('repo/+archive/abc123/path/to/recipes.tar.gz'),
     ])
-    urlretrieve.assert_called_once_with(
-        'repo/+archive/abc123/path/to/recipes.tar.gz')
 
     makedirs.assert_has_calls([
       mock.call('dir/infra/config'),

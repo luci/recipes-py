@@ -9,7 +9,13 @@ import os
 import shutil
 import sys
 import tarfile
-import urllib
+import tempfile
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+THIRD_PARTY = os.path.join(BASE_DIR, 'recipe_engine', 'third_party')
+sys.path.insert(0, os.path.join(THIRD_PARTY, 'requests'))
+
+import requests
 
 from .third_party import subprocess42
 from .third_party.google.protobuf import text_format
@@ -88,10 +94,9 @@ def ensure_gitiles_checkout(repo, revision, checkout_dir, allow_fetch):
     raise FetchNotAllowedError(
         'need to download %s from gitiles but fetch not allowed' % repo)
 
-  rev_url = '%s/+/%s?format=JSON' % (repo, urllib.quote(revision))
+  rev_url = '%s/+/%s?format=JSON' % (repo, requests.utils.quote(revision))
   logging.info('fetching %s', rev_url)
-  # TODO(phajdan.jr): replace urllib with requests library.
-  rev_raw = urllib.urlopen(rev_url).read()
+  rev_raw = requests.get(rev_url).text
   if not rev_raw.startswith(')]}\'\n'):
     raise FetchError('Unexpected gitiles response: %s' % rev_raw)
   rev_json = json.loads(rev_raw.split('\n', 1)[1])
@@ -102,10 +107,10 @@ def ensure_gitiles_checkout(repo, revision, checkout_dir, allow_fetch):
   shutil.rmtree(checkout_dir, ignore_errors=True)
 
   recipes_cfg_url = '%s/+/%s/infra/config/recipes.cfg?format=TEXT' % (
-      repo, urllib.quote(revision))
+      repo, requests.utils.quote(revision))
   logging.info('fetching %s' % recipes_cfg_url)
-  recipes_cfg_raw = urllib.urlopen(recipes_cfg_url)
-  recipes_cfg_text = base64.b64decode(recipes_cfg_raw.read())
+  recipes_cfg_request = requests.get(recipes_cfg_url)
+  recipes_cfg_text = base64.b64decode(recipes_cfg_request.text)
   recipes_cfg_proto = package_pb2.Package()
   text_format.Merge(recipes_cfg_text, recipes_cfg_proto)
   recipes_path_rel = recipes_cfg_proto.recipes_path
@@ -121,14 +126,12 @@ def ensure_gitiles_checkout(repo, revision, checkout_dir, allow_fetch):
   recipes_path = os.path.join(checkout_dir, recipes_path_rel)
   os.makedirs(recipes_path)
 
-  try:
-    archive_url = '%s/+archive/%s/%s.tar.gz' % (
-        repo, urllib.quote(revision), recipes_path_rel)
-    logging.info('fetching %s' % archive_url)
-    # Download the archive to a temporary file so that tarfile
-    # can operate on it.
-    archive_path, _ = urllib.urlretrieve(archive_url)
-    with tarfile.open(archive_path) as archive_tarfile:
+  archive_url = '%s/+archive/%s/%s.tar.gz' % (
+      repo, requests.utils.quote(revision), recipes_path_rel)
+  logging.info('fetching %s' % archive_url)
+  archive_request = requests.get(archive_url)
+  with tempfile.NamedTemporaryFile() as f:
+    f.write(archive_request.content)
+    f.flush()
+    with tarfile.open(f.name) as archive_tarfile:
       archive_tarfile.extractall(recipes_path)
-  finally:
-    urllib.urlcleanup()
