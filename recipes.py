@@ -307,7 +307,7 @@ def main():
            'Unix timestamp format. '
            'CURRENT_TIMESTAMP annotation will be printed at the beginning and '
            'end of the annotation stream and also immediately before each '
-           'STEP_START and STEP_END annotations.',
+           'STEP_STARTED and STEP_CLOSED annotations.',
   )
 
   remote_run_p = subp.add_parser(
