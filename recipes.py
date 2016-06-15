@@ -222,6 +222,8 @@ def main():
 
   # Super-annoyingly, we need to manually parse for simulation_test since
   # argparse is bonkers and doesn't allow us to forward --help to subcommands.
+  # Save old_args for if we're using bootstrap
+  original_sys_argv = sys.argv[:]
   if 'simulation_test' in sys.argv:
     index = sys.argv.index('simulation_test')
     sys.argv = sys.argv[:index+1] + [json.dumps(sys.argv[index+1:])]
@@ -249,6 +251,10 @@ def main():
   parser.add_argument('-O', '--project-override', metavar='ID=PATH',
       action=ProjectOverrideAction,
       help='Override a project repository path with a local one.')
+  parser.add_argument(
+      '--use-bootstrap', action='store_true',
+      help='Use bootstrap/bootstrap.py to create a isolated python virtualenv'
+           ' with required python dependencies.')
 
   subp = parser.add_subparsers()
 
@@ -375,6 +381,18 @@ def main():
       help='Get the subpath where the recipes live relative to repository root')
 
   args = parser.parse_args()
+
+  if args.use_bootstrap and not os.environ.pop('RECIPES_RUN_BOOTSTRAP', None):
+    subprocess.check_call(
+        [sys.executable, 'bootstrap/bootstrap.py', '--deps-file',
+         'bootstrap/deps.pyl', 'ENV'],
+        cwd=os.path.dirname(os.path.realpath(__file__)))
+
+    os.environ['RECIPES_RUN_BOOTSTRAP'] = '1'
+    args = sys.argv
+    return subprocess.call(
+        ['ENV/bin/python'] + original_sys_argv,
+        cwd=os.path.dirname(os.path.realpath(__file__)))
 
   if args.verbose:
     logging.getLogger().setLevel(logging.INFO)

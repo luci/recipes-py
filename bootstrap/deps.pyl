@@ -1,0 +1,10 @@
+# See README.md, there is a section about this file.
+#vim: ft=python:
+{
+  'coverage': {
+    'version': '4.1',
+    'build': '0',
+    'repo': 'external/github.com/nedbat/coveragepy',
+    'rev': '4e2faeead034005cda1bcb096afde921527a748f',
+  },
+}

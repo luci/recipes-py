@@ -1,0 +1,7 @@
+this directory was copied from [infra.git](https://chromium.googlesource.com/infra/infra/),
+and vastly simplified.
+
+it was copied at revision 3f7c62b57144caf645e98573c12466469ed7c5bc
+
+virtualenv was copied from [this](https://chromium.googlesource.com/external/github.com/pypa/virtualenv.git)
+repo, at revision 4243b272823228dde5d18a7400c404ce52fb4cea

@@ -37,7 +37,9 @@ def CommonChecks(input_api, output_api):
   results = []
 
   results.extend(input_api.canned_checks.PanProjectChecks(
-      input_api, output_api, license_header=header(input_api)))
+      input_api, output_api, license_header=header(input_api),
+      excluded_paths=['bootstrap/virtualenv/*']
+  ))
 
   results.extend(input_api.RunTests(
       tests('recipe_engine', 'unittests') +
