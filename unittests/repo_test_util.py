@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.join(ROOT_DIR, 'recipe_engine', 'third_party'))
 sys.path.insert(0, ROOT_DIR)
 
 
+from recipe_engine import fetch
 from recipe_engine import package
 from recipe_engine import package_pb2
 
@@ -63,7 +64,12 @@ class RepoTest(unittest.TestCase):
   def get_git_repo_spec(self, repo):
     """Returns GitRepoSpec corresponding to given repo."""
     return package.GitRepoSpec(
-        repo['name'], repo['root'], 'master', repo['revision'], '')
+        repo['name'],
+        repo['root'],
+        'master',
+        repo['revision'],
+        '',
+        fetch.GitBackend())
 
   def get_root_repo_spec(self, repo):
     """Returns RootRepoSpec corresponding to given repo."""

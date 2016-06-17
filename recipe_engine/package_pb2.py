@@ -13,9 +13,30 @@ from google.protobuf import descriptor_pb2
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='package.proto',
   package='recipe_engine',
-  serialized_pb='\n\rpackage.proto\x12\rrecipe_engine\"c\n\x07\x44\x65pSpec\x12\x12\n\nproject_id\x18\x01 \x01(\t\x12\x0b\n\x03url\x18\x02 \x01(\t\x12\x0e\n\x06\x62ranch\x18\x03 \x01(\t\x12\x10\n\x08revision\x18\x04 \x01(\t\x12\x15\n\rpath_override\x18\x05 \x01(\t\"n\n\x07Package\x12\x13\n\x0b\x61pi_version\x18\x01 \x01(\x05\x12\x12\n\nproject_id\x18\x02 \x01(\t\x12\x14\n\x0crecipes_path\x18\x03 \x01(\t\x12$\n\x04\x64\x65ps\x18\x04 \x03(\x0b\x32\x16.recipe_engine.DepSpec')
+  serialized_pb='\n\rpackage.proto\x12\rrecipe_engine\"\xbe\x01\n\x07\x44\x65pSpec\x12\x12\n\nproject_id\x18\x01 \x01(\t\x12\x0b\n\x03url\x18\x02 \x01(\t\x12\x0e\n\x06\x62ranch\x18\x03 \x01(\t\x12\x10\n\x08revision\x18\x04 \x01(\t\x12\x15\n\rpath_override\x18\x05 \x01(\t\x12\x37\n\trepo_type\x18\x06 \x01(\x0e\x32\x1f.recipe_engine.DepSpec.RepoType:\x03GIT\" \n\x08RepoType\x12\x07\n\x03GIT\x10\x00\x12\x0b\n\x07GITILES\x10\x01\"n\n\x07Package\x12\x13\n\x0b\x61pi_version\x18\x01 \x01(\x05\x12\x12\n\nproject_id\x18\x02 \x01(\t\x12\x14\n\x0crecipes_path\x18\x03 \x01(\t\x12$\n\x04\x64\x65ps\x18\x04 \x03(\x0b\x32\x16.recipe_engine.DepSpec')
 
 
+
+_DEPSPEC_REPOTYPE = _descriptor.EnumDescriptor(
+  name='RepoType',
+  full_name='recipe_engine.DepSpec.RepoType',
+  filename=None,
+  file=DESCRIPTOR,
+  values=[
+    _descriptor.EnumValueDescriptor(
+      name='GIT', index=0, number=0,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='GITILES', index=1, number=1,
+      options=None,
+      type=None),
+  ],
+  containing_type=None,
+  options=None,
+  serialized_start=191,
+  serialized_end=223,
+)
 
 
 _DEPSPEC = _descriptor.Descriptor(
@@ -60,17 +81,25 @@ _DEPSPEC = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='repo_type', full_name='recipe_engine.DepSpec.repo_type', index=5,
+      number=6, type=14, cpp_type=8, label=1,
+      has_default_value=True, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
+    _DEPSPEC_REPOTYPE,
   ],
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=32,
-  serialized_end=131,
+  serialized_start=33,
+  serialized_end=223,
 )
 
 
@@ -118,10 +147,12 @@ _PACKAGE = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=133,
-  serialized_end=243,
+  serialized_start=225,
+  serialized_end=335,
 )
 
+_DEPSPEC.fields_by_name['repo_type'].enum_type = _DEPSPEC_REPOTYPE
+_DEPSPEC_REPOTYPE.containing_type = _DEPSPEC;
 _PACKAGE.fields_by_name['deps'].message_type = _DEPSPEC
 DESCRIPTOR.message_types_by_name['DepSpec'] = _DEPSPEC
 DESCRIPTOR.message_types_by_name['Package'] = _PACKAGE

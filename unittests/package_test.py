@@ -52,8 +52,7 @@ class TestGitRepoSpec(repo_test_util.RepoTest):
   def test_commit_infos(self):
     repos = self.repo_setup({'a': []})
 
-    spec = package.GitRepoSpec(
-        'a', repos['a']['root'], 'master', repos['a']['revision'], '')
+    spec = self.get_git_repo_spec(repos['a'])
     self.assertEqual(
         [],
         [ci.dump() for ci in spec.commit_infos(self._context, 'HEAD')])
@@ -94,8 +93,7 @@ class TestGitRepoSpec(repo_test_util.RepoTest):
   def test_raw_updates(self):
     repos = self.repo_setup({'a': []})
 
-    spec = package.GitRepoSpec(
-        'a', repos['a']['root'], 'master', repos['a']['revision'], '')
+    spec = self.get_git_repo_spec(repos['a'])
     self.assertEqual([], spec.raw_updates(self._context, 'HEAD'))
 
     c1 = self.commit_in_repo(repos['a'], message='c1')
@@ -121,8 +119,7 @@ class TestGitRepoSpec(repo_test_util.RepoTest):
   def test_get_more_recent_revision(self):
     repos = self.repo_setup({'a': []})
 
-    spec = package.GitRepoSpec(
-        'a', repos['a']['root'], 'master', repos['a']['revision'], '')
+    spec = self.get_git_repo_spec(repos['a'])
 
     c1 = self.commit_in_repo(repos['a'], message='c1')
     c2 = self.commit_in_repo(repos['a'], message='c2')

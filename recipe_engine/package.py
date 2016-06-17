@@ -170,12 +170,13 @@ class RepoSpec(object):
 
 
 class GitRepoSpec(RepoSpec):
-  def __init__(self, project_id, repo, branch, revision, path):
+  def __init__(self, project_id, repo, branch, revision, path, backend):
     self.project_id = project_id
     self.repo = repo
     self.branch = branch
     self.revision = revision
     self.path = path
+    self.backend = backend
 
   def __str__(self):
     return ('GitRepoSpec{project_id="%(project_id)s", repo="%(repo)s", '
@@ -193,7 +194,7 @@ class GitRepoSpec(RepoSpec):
 
   def checkout(self, context):
     checkout_dir = self._dep_dir(context)
-    fetch.ensure_git_checkout(
+    self.backend.checkout(
         self.repo, self.revision, checkout_dir, context.allow_fetch)
     cleanup_pyc(checkout_dir)
 
@@ -220,7 +221,12 @@ class GitRepoSpec(RepoSpec):
     for rev in raw_updates:
       info = self._get_commit_info(rev, context)
       updates.append(GitRepoSpec(
-          self.project_id, self.repo, self.branch, rev, self.path))
+          self.project_id,
+          self.repo,
+          self.branch,
+          rev,
+          self.path,
+          self.backend))
     return updates
 
   def commit_infos(self, context, other_revision):
@@ -487,15 +493,21 @@ class PackageSpec(object):
 
   @classmethod
   def spec_for_dep(cls, dep):
-    """Returns a RepoSpec for the given dependency protobuf.
+    """Returns a RepoSpec for the given dependency protobuf."""
 
-    This assumes all dependencies are Git dependencies.
-    """
-    return GitRepoSpec(str(dep.project_id),
-                       str(dep.url),
-                       str(dep.branch),
-                       str(dep.revision),
-                       str(dep.path_override))
+    if dep.repo_type in (package_pb2.DepSpec.GIT, package_pb2.DepSpec.GITILES):
+      if dep.repo_type == package_pb2.DepSpec.GIT:
+        backend = fetch.GitBackend()
+      elif dep.repo_type == package_pb2.DepSpec.GITILES:
+        backend = fetch.GitilesBackend()
+      return GitRepoSpec(str(dep.project_id),
+                         str(dep.url),
+                         str(dep.branch),
+                         str(dep.revision),
+                         str(dep.path_override),
+                         backend)
+
+    assert False, 'Unexpected repo type: %s' % dep
 
   @property
   def project_id(self):

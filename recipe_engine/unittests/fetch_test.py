@@ -32,7 +32,8 @@ class TestGit(unittest.TestCase):
       None,
       None,
     ]
-    fetch.ensure_git_checkout('repo', 'revision', 'dir', allow_fetch=True)
+    fetch.GitBackend().checkout(
+        'repo', 'revision', 'dir', allow_fetch=True)
     run_git.assert_has_calls([
       mock.call(None, 'clone', '-q', 'repo', 'dir'),
       mock.call('dir', 'config', 'remote.origin.url'),
@@ -49,7 +50,8 @@ class TestGit(unittest.TestCase):
       None,
     ]
     isdir.return_value = True
-    fetch.ensure_git_checkout('repo', 'revision', 'dir', allow_fetch=True)
+    fetch.GitBackend().checkout(
+        'repo', 'revision', 'dir', allow_fetch=True)
     isdir.assert_has_calls([
       mock.call('dir'),
       mock.call('dir/.git'),
@@ -63,14 +65,16 @@ class TestGit(unittest.TestCase):
   @mock.patch('recipe_engine.fetch._run_git')
   def test_clone_not_allowed(self, run_git):
     with self.assertRaises(fetch.FetchNotAllowedError):
-      fetch.ensure_git_checkout('repo', 'revision', 'dir', allow_fetch=False)
+      fetch.GitBackend().checkout(
+          'repo', 'revision', 'dir', allow_fetch=False)
 
   @mock.patch('os.path.isdir')
   @mock.patch('recipe_engine.fetch._run_git')
   def test_unclean_filesystem(self, run_git, isdir):
     isdir.side_effect = [True, False]
     with self.assertRaises(fetch.UncleanFilesystemError):
-      fetch.ensure_git_checkout('repo', 'revision', 'dir', allow_fetch=False)
+      fetch.GitBackend().checkout(
+          'repo', 'revision', 'dir', allow_fetch=False)
     isdir.assert_has_calls([
       mock.call('dir'),
       mock.call('dir/.git'),
@@ -82,7 +86,8 @@ class TestGit(unittest.TestCase):
     run_git.return_value = 'not-repo'
     isdir.return_value = True
     with self.assertRaises(fetch.UncleanFilesystemError):
-      fetch.ensure_git_checkout('repo', 'revision', 'dir', allow_fetch=False)
+      fetch.GitBackend().checkout(
+          'repo', 'revision', 'dir', allow_fetch=False)
     isdir.assert_has_calls([
       mock.call('dir'),
       mock.call('dir/.git'),
@@ -101,7 +106,8 @@ class TestGit(unittest.TestCase):
       None,
     ]
     isdir.return_value = True
-    fetch.ensure_git_checkout('repo', 'revision', 'dir', allow_fetch=True)
+    fetch.GitBackend().checkout(
+        'repo', 'revision', 'dir', allow_fetch=True)
     isdir.assert_has_calls([
       mock.call('dir'),
       mock.call('dir/.git'),
@@ -122,7 +128,8 @@ class TestGit(unittest.TestCase):
     ]
     isdir.return_value = True
     with self.assertRaises(fetch.FetchNotAllowedError):
-      fetch.ensure_git_checkout('repo', 'revision', 'dir', allow_fetch=False)
+      fetch.GitBackend().checkout(
+          'repo', 'revision', 'dir', allow_fetch=False)
     isdir.assert_has_calls([
       mock.call('dir'),
       mock.call('dir/.git'),
@@ -151,7 +158,8 @@ recipes_path: "path/to/recipes"
         mock.Mock(content=''),
     ]
 
-    fetch.ensure_gitiles_checkout('repo', 'revision', 'dir', allow_fetch=True)
+    fetch.GitilesBackend().checkout(
+        'repo', 'revision', 'dir', allow_fetch=True)
 
     requests_get.assert_has_calls([
         mock.call('repo/+/revision?format=JSON'),
