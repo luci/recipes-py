@@ -84,6 +84,23 @@ class InfraFailure(StepFailure):
     return "Infra Failure in %s" % self.name
 
 
+class StepTimeout(StepFailure):
+  """
+  A subclass of StepFailure, where a step times out and is killed.
+  """
+  def __init__(self, name, timeout):
+    self.timeout = timeout
+    self.name = name
+    super(StepTimeout, self).__init__(self.reason_message())
+
+  def reason_message(self):
+    return "Step Timeout: Step({!r}) timed out after {}".format(
+        self.name, self.timeout)
+
+  def __str__(self):
+    return "Step Timeout in %s" % self.name
+
+
 class AggregatedStepFailure(StepFailure):
   def __init__(self, result):
     super(AggregatedStepFailure, self).__init__(

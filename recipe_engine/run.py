@@ -74,6 +74,7 @@ from . import recipe_test_api
 from . import step_runner as step_runner_module
 from . import types
 from . import util
+from third_party import subprocess42
 
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -428,6 +429,12 @@ class RecipeEngine(object):
         }
 
         raise
+      except subprocess42.TimeoutExpired as ex:
+        result = {
+          "reason": "Step time out: %r" % ex,
+          "traceback": traceback.format_exc().splitlines(),
+          "status_code": -1
+        }
       except Exception as ex:
         result = {
           "reason": "Uncaught Exception: %r" % ex,

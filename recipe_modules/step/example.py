@@ -20,12 +20,25 @@ PROPERTIES = {
   'bad_return': recipe_api.Property(default=False),
   'raise_infra_failure': recipe_api.Property(default=False),
   'access_invalid_data': recipe_api.Property(default=False),
+  'timeout': recipe_api.Property(default=0, kind=int),
 }
 
 
-def RunSteps(api, bad_return, raise_infra_failure, access_invalid_data):
+def RunSteps(
+    api, bad_return, raise_infra_failure, access_invalid_data, timeout):
   if bad_return:
     return RETURN_SCHEMA.new(test_me='this should fail')
+  elif timeout:
+    # Timeout causes the recipe engine to raise an exception if your step takes
+    # longer to run than you allow. Units are seconds.
+    if timeout == 1:
+      api.step('timeout', ['sleep', '20'], timeout=1)
+    elif timeout == 2:
+      try:
+        api.step('caught timeout', ['sleep', '20'], timeout=1)
+      except api.step.StepTimeout:
+        return RETURN_SCHEMA(test_me=4)
+
 
   # TODO(martinis) change this
   # The api.step object is directly callable.
@@ -155,4 +168,16 @@ def GenTests(api):
       api.test('bad_return') +
       api.properties(bad_return=True) +
       api.expect_exception('TypeError')
+    )
+
+  yield (
+      api.test('timeout') +
+      api.properties(timeout=1) +
+      api.step_data('timeout', times_out_after=20)
+    )
+
+  yield (
+      api.test('catch_timeout') +
+      api.properties(timeout=2) +
+      api.step_data('caught timeout', times_out_after=20)
     )

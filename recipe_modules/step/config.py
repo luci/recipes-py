@@ -21,6 +21,7 @@ def BaseConfig(**_kwargs):
     name = Single(str),
     cmd = List(inner_type=(int,basestring,Path,Placeholder),
                jsonish_fn=render_cmd),
+    timeout = Single(int, required=False),
 
     # optional
     env = Dict(item_fn=lambda (k, v): (k, v if v is None else str(v)),

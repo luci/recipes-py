@@ -70,6 +70,7 @@ class StepTestData(BaseTestData):
     self._stdout = None
     self._stderr = None
     self._retcode = None
+    self._times_out_after = None
 
   def __add__(self, other):
     assert isinstance(other, StepTestData)
@@ -89,6 +90,11 @@ class StepTestData(BaseTestData):
       assert ret._retcode is None
       ret._retcode = other._retcode
 
+    ret._times_out_after = self._times_out_after
+    if other._times_out_after is not None:
+      assert ret._times_out_after is None
+      ret._times_out_after = other._times_out_after
+
     return ret
 
   def unwrap_placeholder(self):
@@ -107,6 +113,14 @@ class StepTestData(BaseTestData):
   @retcode.setter
   def retcode(self, value):  # pylint: disable=E0202
     self._retcode = value
+
+  @property
+  def times_out_after(self):  # pylint: disable=E0202
+    return self._times_out_after or 0
+
+  @times_out_after.setter
+  def times_out_after(self, value):  # pylint: disable=E0202
+    self._times_out_after = value
 
   @property
   def stdout(self):
@@ -131,13 +145,18 @@ class StepTestData(BaseTestData):
     return PlaceholderTestData(None)
 
   def __repr__(self):
-    return "StepTestData(%r)" % ({
+    dct = {
       'placeholder_data': dict(self.placeholder_data.iteritems()),
       'stdout': self._stdout,
       'stderr': self._stderr,
       'retcode': self._retcode,
       'override': self.override,
-    },)
+    }
+
+    if self.times_out_after:
+      dct['times_out_after'] = self.times_out_after
+
+    return "StepTestData(%r)" % dct
 
 
 class ModuleTestData(BaseTestData, dict):
@@ -451,6 +470,8 @@ class RecipeTestApi(object):
              step's stderr.
       override=(bool) - This step data completely replaces any previously
              generated step data, instead of adding on to it.
+      times_out_after=(int) - Causes the step to timeout after the given number
+             of seconds.
 
     Use in GenTests:
       # Hypothetically, suppose that your recipe has default test data for two
@@ -484,6 +505,8 @@ class RecipeTestApi(object):
       ret.step_data[name] = reduce(lambda x,y: x + y, data)
     if 'retcode' in kwargs:
       ret.step_data[name].retcode = kwargs['retcode']
+    if 'times_out_after' in kwargs:
+      ret.step_data[name].times_out_after = kwargs['times_out_after']
     if 'override' in kwargs:
       ret.step_data[name].override = kwargs['override']
     for key in ('stdout', 'stderr'):

@@ -10,9 +10,11 @@ import json
 import os
 import re
 import sys
+import time
 import tempfile
 import traceback
 
+from . import recipe_api
 from . import recipe_test_api
 from . import stream
 from . import types
@@ -205,7 +207,11 @@ class SubprocessStepRunner(StepRunner):
               handles[key] = open(fileName, 'rb' if key == 'stdin' else 'wb')
           # The subprocess will inherit and close these handles.
           retcode = self._run_cmd(
-              cmd=cmd, handles=handles, env=step_env, cwd=step_dict.get('cwd'))
+              cmd=cmd, timeout=step_dict.get('timeout'), handles=handles,
+              env=step_env, cwd=step_dict.get('cwd'))
+        except subprocess42.TimeoutExpired as e:
+          # TODO(martiniss): mark as exception?
+          raise recipe_api.StepTimeout(step_dict['name'], e.timeout)
         except OSError:
           with step_stream.new_log_stream('exception') as l:
             trace = traceback.format_exc().splitlines()
@@ -282,7 +288,7 @@ class SubprocessStepRunner(StepRunner):
       step_stream.write_line(' %s: %s' % (key, value))
     step_stream.write_line('')
 
-  def _run_cmd(self, cmd, handles, env, cwd):
+  def _run_cmd(self, cmd, timeout, handles, env, cwd):
     """Runs cmd (subprocess-style).
 
     Args:
@@ -332,7 +338,13 @@ class SubprocessStepRunner(StepRunner):
         linebufs[key] = _streamingLinebuf()
 
     if linebufs:
+      # manually check the timeout, because we poll
+      start_time = time.time()
       for pipe, data in proc.yield_any(timeout=1):
+        if timeout and time.time() - start_time > timeout:
+          # Don't know the name of the step, so raise this and it'll get caught
+          raise subprocess42.TimeoutExpired(cmd, timeout)
+
         if pipe is None:
           continue
         buf = linebufs.get(pipe)
@@ -342,7 +354,7 @@ class SubprocessStepRunner(StepRunner):
         for line in buf.get_buffered():
           outstreams[pipe].write_line(line)
     else:
-      proc.wait()
+      proc.wait(timeout)
 
     return proc.returncode
 
@@ -416,6 +428,11 @@ class SimulationStepRunner(StepRunner):
 
     class ReturnOpenStep(OpenStep):
       def run(inner):
+        timeout = step_dict.get('timeout')
+        if (timeout and step_test.times_out_after and
+            step_test.times_out_after > timeout):
+          raise recipe_api.StepTimeout(step_dict['name'], timeout)
+
         self._step_history[step_dict['name']] = step_dict
         return construct_step_result(step_dict, step_test.retcode, placeholders)
 

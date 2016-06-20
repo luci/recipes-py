@@ -35,6 +35,11 @@ class StepApi(recipe_api.RecipeApiPlain):
     return recipe_api.InfraFailure
 
   @property
+  def StepTimeout(self):
+    """ See recipe_api.py for docs. """
+    return recipe_api.StepTimeout
+
+  @property
   def active_result(self):
     """The currently active (open) result from the last step that was run.
 
@@ -91,7 +96,7 @@ class StepApi(recipe_api.RecipeApiPlain):
     return recipe_api.defer_results
 
   def __call__(self, name, cmd, ok_ret=None, infra_step=False, wrapper=(),
-               **kwargs):
+               timeout=None, **kwargs):
     """Returns a step dictionary which is compatible with annotator.py.
 
     Args:
@@ -105,7 +110,9 @@ class StepApi(recipe_api.RecipeApiPlain):
       infra_step: Whether or not this is an infrastructure step. Infrastructure
         steps will place the step in an EXCEPTION state and raise InfraFailure.
       wrapper: If supplied, a command to prepend to the executed step as a
-          command wrapper.
+        command wrapper.
+      timeout: If supplied, the recipe engine will kill the step after the
+        specified number of seconds.
       **kwargs: Additional entries to add to the annotator.py step dictionary.
 
     Returns:
@@ -123,6 +130,7 @@ class StepApi(recipe_api.RecipeApiPlain):
       command += cmd
       kwargs['cmd'] = command
 
+    kwargs['timeout'] = timeout
     kwargs['ok_ret'] = ok_ret
     kwargs['infra_step'] = bool(infra_step)
 
