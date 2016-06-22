@@ -57,6 +57,16 @@ class Backend(object):
     """
     raise NotImplementedError()
 
+  def updates(self, repo, revision, checkout_dir, allow_fetch,
+              other_revision, paths):
+    """Returns a list of revisions between |revision| and |other_revision|.
+
+    Network operations are performed only if |allow_fetch| is True.
+
+    If |paths| is a non-empty list, the history is scoped just to these paths.
+    """
+    raise NotImplementedError()
+
 
 class GitBackend(Backend):
   """GitBackend uses a local git checkout."""
@@ -90,6 +100,20 @@ class GitBackend(Backend):
       _run_git(checkout_dir, 'fetch')
     _run_git(checkout_dir, 'reset', '-q', '--hard', revision)
 
+  def updates(self, repo, revision, checkout_dir, allow_fetch,
+              other_revision, paths):
+    self.checkout(repo, revision, checkout_dir, allow_fetch)
+    if allow_fetch:
+      _run_git(checkout_dir, 'fetch')
+    args = [
+        'rev-list',
+        '--reverse',
+        '%s..%s' % (revision, other_revision),
+    ]
+    if paths:
+      args.extend(['--'] + paths)
+    return filter(bool, _run_git(checkout_dir, *args).strip().split('\n'))
+
 
 class GitilesBackend(Backend):
   """GitilesBackend uses a repo served by Gitiles."""
@@ -102,15 +126,7 @@ class GitilesBackend(Backend):
       raise FetchNotAllowedError(
           'need to download %s from gitiles but fetch not allowed' % repo)
 
-    rev_url = '%s/+/%s?format=JSON' % (repo, requests.utils.quote(revision))
-    logging.info('fetching %s', rev_url)
-    rev_raw = requests.get(rev_url).text
-    if not rev_raw.startswith(')]}\'\n'):
-      raise FetchError('Unexpected gitiles response: %s' % rev_raw)
-    rev_json = json.loads(rev_raw.split('\n', 1)[1])
-    orig_revision = revision
-    revision = rev_json['commit']
-    logging.info('resolved %s to %s', orig_revision, revision)
+    revision = self._resolve_revision(repo, revision)
 
     shutil.rmtree(checkout_dir, ignore_errors=True)
 
@@ -143,3 +159,49 @@ class GitilesBackend(Backend):
       f.flush()
       with tarfile.open(f.name) as archive_tarfile:
         archive_tarfile.extractall(recipes_path)
+
+  def updates(self, repo, revision, checkout_dir, allow_fetch,
+              other_revision, paths):
+    if not allow_fetch:
+      raise FetchNotAllowedError(
+          'requested updates for %s from gitiles but fetch not allowed' % repo)
+
+    revision = self._resolve_revision(repo, revision)
+    other_revision = self._resolve_revision(repo, other_revision)
+    # To include info about touched paths (tree_diff), pass name-status=1 below.
+    log_json = self._fetch_gitiles_json(
+        '%s/+log/%s..%s?name-status=1&format=JSON' % (
+            repo, revision, other_revision))
+
+    results = []
+    for entry in log_json['log']:
+      matched = False
+      for path in paths:
+        for diff_entry in entry['tree_diff']:
+          if (diff_entry['old_path'].startswith(path) or
+              diff_entry['new_path'].startswith(path)):
+            matched = True
+            break
+        if matched:
+          break
+      if matched or not paths:
+        results.append(entry['commit'])
+
+    return list(reversed(results))
+
+  def _resolve_revision(self, repo, revision):
+    """Returns a git sha corresponding to given revision.
+
+    Examples of non-sha revision: origin/master, HEAD."""
+    rev_json = self._fetch_gitiles_json(
+        '%s/+/%s?format=JSON' % (repo, requests.utils.quote(revision)))
+    logging.info('resolved %s to %s', revision, rev_json['commit'])
+    return rev_json['commit']
+
+  def _fetch_gitiles_json(self, url):
+    """Fetches JSON from Gitiles and returns parsed result."""
+    logging.info('fetching %s', url)
+    raw = requests.get(url).text
+    if not raw.startswith(')]}\'\n'):
+      raise FetchError('Unexpected gitiles response: %s' % raw)
+    return json.loads(raw.split('\n', 1)[1])

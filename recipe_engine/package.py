@@ -240,20 +240,18 @@ class GitRepoSpec(RepoSpec):
     """Returns a list of revisions on the branch between the pinned revision
     and |other_revision|.
     """
-    self.checkout(context)
-    if context.allow_fetch:
-      self.run_git(context, 'fetch')
+    checkout_dir = self._dep_dir(context)
+
+    paths = []
     subdir = self.proto_file(context).read().recipes_path
-    args = [
-        'rev-list',
-        '--reverse',
-        '%s..%s' % (self.revision, other_revision),
-    ]
     if subdir:
       # We add proto_file to the list of paths to check because it might contain
       # other upstream rolls, which we want.
-      args.extend(['--', subdir + os.path.sep, self.proto_file(context).path])
-    return filter(bool, self.run_git(context, *args).strip().split('\n'))
+      paths.extend([subdir + os.path.sep, self.proto_file(context).path])
+
+    return self.backend.updates(
+        self.repo, self.revision, checkout_dir, context.allow_fetch,
+        other_revision, paths)
 
   def get_more_recent_revision(self, context, r1, r2):
     """Returns the more recent revision."""

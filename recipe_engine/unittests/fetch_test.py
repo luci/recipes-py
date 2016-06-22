@@ -5,6 +5,7 @@
 
 import base64
 import io
+import json
 import os
 import sys
 import unittest
@@ -146,7 +147,7 @@ class TestGitiles(unittest.TestCase):
   @mock.patch('os.makedirs')
   @mock.patch('tarfile.open')
   @mock.patch('requests.get')
-  def test_basic(self, requests_get, tarfile_open, makedirs, rmtree):
+  def test_checkout(self, requests_get, tarfile_open, makedirs, rmtree):
     proto_text = u"""
 api_version: 1
 project_id: "foo"
@@ -173,6 +174,61 @@ recipes_path: "path/to/recipes"
     ])
 
     rmtree.assert_called_once_with('dir', ignore_errors=True)
+
+  @mock.patch('requests.get')
+  def test_updates(self, requests_get):
+    log_json = {
+        'log': [
+            {
+                'commit': 'abc123',
+                'tree_diff': [
+                    {
+                        'old_path': '/dev/null',
+                        'new_path': 'path1/foo',
+                    },
+                ],
+            },
+            {
+                'commit': 'def456',
+                'tree_diff': [
+                    {
+                        'old_path': '/dev/null',
+                        'new_path': 'path8/foo',
+                    },
+                ],
+            },
+            {
+                'commit': 'ghi789',
+                'tree_diff': [
+                    {
+                        'old_path': '/dev/null',
+                        'new_path': 'path8/foo',
+                    },
+                    {
+                        'old_path': 'path2/foo',
+                        'new_path': '/dev/null',
+                    },
+                ],
+            },
+        ],
+    }
+    requests_get.side_effect = [
+        mock.Mock(text=u')]}\'\n{ "commit": "sha_a" }'),
+        mock.Mock(text=u')]}\'\n{ "commit": "sha_b" }'),
+        mock.Mock(text=u')]}\'\n%s' % json.dumps(log_json)),
+    ]
+
+    self.assertEqual(
+        ['ghi789', 'abc123'],
+        fetch.GitilesBackend().updates(
+            'repo', 'reva', 'dir', True, 'revb',
+            ['path1', 'path2']))
+
+    requests_get.assert_has_calls([
+        mock.call('repo/+/reva?format=JSON'),
+        mock.call('repo/+/revb?format=JSON'),
+        mock.call('repo/+log/sha_a..sha_b?name-status=1&format=JSON'),
+    ])
 
 
 if __name__ == '__main__':
