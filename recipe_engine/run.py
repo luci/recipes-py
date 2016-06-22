@@ -247,9 +247,10 @@ def run_steps(properties, stream_engine, step_runner, universe):
                                      engine,
                                      recipe_test_api.DisabledTestData())
 
-      s.add_step_text('<br/>running recipe: "%s"' % recipe)
+      s.add_step_text('running recipe: "%s"' % recipe)
     except (loader.LoaderError, ImportError, AssertionError) as e:
-      s.add_step_text('<br/>%s' % '<br/>'.join(str(e).splitlines()))
+      for line in str(e).splitlines():
+        s.add_step_text(line)
       s.set_step_status('EXCEPTION')
       return RecipeResult({
           'status_code': 2,
