@@ -151,6 +151,12 @@ def run(package_deps, args):
     return handle_recipe_return(ret, args.output_result_json, stream_engine)
 
 
+def remote(args):
+  from recipe_engine import remote
+
+  return remote.main(args)
+
+
 def remote_run(args):
   from recipe_engine import remote_run
 
@@ -316,6 +322,27 @@ def main():
            'STEP_STARTED and STEP_CLOSED annotations.',
   )
 
+  remote_p = subp.add_parser(
+      'remote',
+      description='Invoke a recipe command from specified repo and revision')
+  remote_p.set_defaults(command='remote')
+  remote_p.add_argument(
+      '--repository', required=True,
+      help='URL of a git repository to fetch')
+  remote_p.add_argument(
+      '--revision',
+      help='Git commit hash to check out; defaults to latest revision (HEAD)')
+  remote_p.add_argument(
+      '--workdir',
+      help='The working directory of repo checkout')
+  remote_p.add_argument(
+      '--use-gitiles', action='store_true',
+      help='Use Gitiles-specific way to fetch repo (potentially cheaper for '
+           'large repos)')
+  remote_p.add_argument(
+      'remote_args', nargs='*',
+      help='Arguments to pass to fetched repo\'s recipes.py')
+
   remote_run_p = subp.add_parser(
       'remote_run',
       description='Run a recipe from specified repo and revision')
@@ -399,7 +426,9 @@ def main():
 
   # Commands which do not require config_file, package_deps, and other objects
   # initialized later.
-  if args.command == 'remote_run':
+  if args.command == 'remote':
+    return remote(args)
+  elif args.command == 'remote_run':
     return remote_run(args)
 
   repo_root, config_file = get_package_config(args)
