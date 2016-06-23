@@ -2,4 +2,4 @@
 CODE_REVIEW_SERVER: codereview.chromium.org
 CC_LIST: chromium-reviews@chromium.org, infra-reviews+recipes-py@chromium.org
 VIEW_VC: https://github.com/luci/recipes-py/commit/
-PROJECT: recipes-py
+PROJECT: recipe_engine
