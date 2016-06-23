@@ -157,12 +157,6 @@ def remote(args):
   return remote.main(args)
 
 
-def remote_run(args):
-  from recipe_engine import remote_run
-
-  return remote_run.main(args)
-
-
 def autoroll(args):
   from recipe_engine import autoroll
 
@@ -343,27 +337,6 @@ def main():
       'remote_args', nargs='*',
       help='Arguments to pass to fetched repo\'s recipes.py')
 
-  remote_run_p = subp.add_parser(
-      'remote_run',
-      description='Run a recipe from specified repo and revision')
-  remote_run_p.set_defaults(command='remote_run')
-  remote_run_p.add_argument(
-      '--repository', required=True,
-      help='URL of a git repository to fetch')
-  remote_run_p.add_argument(
-      '--revision',
-      help='Git commit hash to check out; defaults to latest revision (HEAD)')
-  remote_run_p.add_argument(
-      '--workdir',
-      help='The working directory of repo checkout')
-  remote_run_p.add_argument(
-      '--use-gitiles', action='store_true',
-      help='Use Gitiles-specific way to fetch repo (potentially cheaper for '
-           'large repos)')
-  remote_run_p.add_argument(
-      'run_args', nargs='*',
-      help='Arguments to pass to fetched repo\'s recipes.py run')
-
   autoroll_p = subp.add_parser(
       'autoroll',
       help='Roll dependencies of a recipe package forward (implies fetch)')
@@ -428,8 +401,6 @@ def main():
   # initialized later.
   if args.command == 'remote':
     return remote(args)
-  elif args.command == 'remote_run':
-    return remote_run(args)
 
   repo_root, config_file = get_package_config(args)
 
