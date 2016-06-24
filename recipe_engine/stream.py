@@ -271,7 +271,7 @@ class AnnotationStepStream(StreamEngine.StepStream):
     raise NotImplementedError()
 
   def output_annotation(self, *args):
-    self.basic_write('@@@' + '@'.join(map(str, args)) + '@@@\n')
+    self.basic_write('@@@' + '@'.join(map(unicode, args)) + '@@@\n')
 
   def write_line(self, line):
     if line.startswith('@@@'):

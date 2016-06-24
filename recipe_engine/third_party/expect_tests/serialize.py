@@ -28,8 +28,8 @@ def re_encode(obj):
     return {re_encode(k): re_encode(v) for k, v in obj.iteritems()}
   elif isinstance(obj, list):
     return [re_encode(i) for i in obj]
-  elif isinstance(obj, unicode):
-    return obj.encode('utf-8')
+  elif isinstance(obj, str):
+    return obj.decode('utf-8')
   else:
     return obj
 

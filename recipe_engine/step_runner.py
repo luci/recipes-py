@@ -2,7 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import cStringIO
+import StringIO
 import collections
 import contextlib
 import datetime
@@ -45,7 +45,7 @@ if sys.platform == "win32":
 class _streamingLinebuf(object):
   def __init__(self):
     self.buffedlines = []
-    self.extra = cStringIO.StringIO()
+    self.extra = StringIO.StringIO()
 
   def ingest(self, data):
     lines = data.splitlines()
@@ -56,7 +56,7 @@ class _streamingLinebuf(object):
       self.extra.write(lines[0])
       if len(lines) > 1 or endedOnLinebreak:
         lines[0] = self.extra.getvalue()
-        self.extra = cStringIO.StringIO()
+        self.extra = StringIO.StringIO()
       else:
         return
 
@@ -419,7 +419,7 @@ class SimulationStepRunner(StepRunner):
     step_test = self._test_data.pop_step_test_data(
         step_dict['name'], test_data_fn)
     step_dict, placeholders = render_step(step_dict, step_test)
-    outstream = cStringIO.StringIO()
+    outstream = StringIO.StringIO()
 
     # Layer the simulation step on top of the given stream engine.
     step_stream = stream.ProductStreamEngine.StepStream(

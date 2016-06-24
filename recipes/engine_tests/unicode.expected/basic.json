@@ -1,0 +1,26 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "hi"
+    ],
+    "name": "trigger some junk",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@thing@h@@@",
+      "@@@STEP_LOG_LINE@thing@i@@@",
+      "@@@STEP_LOG_LINE@thing@i@@@",
+      "@@@STEP_LOG_LINE@thing@i@@@",
+      "@@@STEP_LOG_LINE@thing@i@@@",
+      "@@@STEP_LOG_LINE@thing@i@@@",
+      "@@@STEP_LOG_LINE@thing@ @@@",
+      "@@@STEP_LOG_LINE@thing@\ud83d\ude00@@@",
+      "@@@STEP_LOG_LINE@thing@\u2026@@@",
+      "@@@STEP_LOG_END@thing@@@"
+    ]
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]
