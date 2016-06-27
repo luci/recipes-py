@@ -147,7 +147,7 @@ class PathApi(recipe_api.RecipeApi):
       self._temp_dir = _split_path(tempfile.gettempdir())
     else:
       self._path_mod = fake_path(self, self._test_data.get('exists', []))
-      self._startup_cwd = ['/', 'FakeTestingCWD']
+      self._startup_cwd = ['/', 'b', 'FakeTestingCWD']
       # Appended to placeholder '[TMP]' to get fake path in test.
       self._temp_dir = ['/']
 
