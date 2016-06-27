@@ -121,7 +121,9 @@ def DiffData(old, new):
   else:
     return list(difflib.unified_diff(
         pprint.pformat(old).splitlines(),
-        pprint.pformat(new).splitlines(),
+        # Re-encode so that both are unicode strings; otherwise the diff looks
+        # very strange.
+        pprint.pformat(re_encode(new)).splitlines(),
         fromfile='expected', tofile='current',
         n=4, lineterm=''
     ))
