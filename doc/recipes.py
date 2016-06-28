@@ -89,7 +89,19 @@ def get_unique(things):
     return things[0]
 
 
+def _subprocess_call(argv, **kwargs):
+  logging.info('Running %r', argv)
+  return subprocess.call(argv, **kwargs)
+
+def _subprocess_check_call(argv, **kwargs):
+  logging.info('Running %r', argv)
+  subprocess.check_call(argv, **kwargs)
+
+
 def main():
+  if '--verbose' in sys.argv:
+    logging.getLogger().setLevel(logging.INFO)
+
   if sys.platform.startswith(('win', 'cygwin')):
     git = 'git.bat'
   else:
@@ -120,14 +132,14 @@ def main():
     if not os.path.exists(deps_path):
       os.makedirs(deps_path)
     if not os.path.exists(engine_path):
-      subprocess.check_call([git, 'clone', engine_url, engine_path])
+      _subprocess_check_call([git, 'clone', engine_url, engine_path])
 
-    needs_fetch = subprocess.call(
+    needs_fetch = _subprocess_call(
         [git, 'rev-parse', '--verify', '%s^{commit}' % engine_revision],
         cwd=engine_path, stdout=open(os.devnull, 'w'))
     if needs_fetch:
-      subprocess.check_call([git, 'fetch'], cwd=engine_path)
-    subprocess.check_call(
+      _subprocess_check_call([git, 'fetch'], cwd=engine_path)
+    _subprocess_check_call(
         [git, 'checkout', '--quiet', engine_revision], cwd=engine_path)
 
   try:
@@ -141,7 +153,7 @@ def main():
 
   args = ['--package', recipes_cfg_path,
           '--bootstrap-script', __file__] + sys.argv[1:]
-  return subprocess.call([
+  return _subprocess_call([
       sys.executable, '-u',
       os.path.join(engine_path, engine_subpath, 'recipes.py')] + args)
 
