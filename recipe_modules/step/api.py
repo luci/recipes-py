@@ -137,6 +137,8 @@ class StepApi(recipe_api.RecipeApiPlain):
     # Obtain information from composite step parent.
     compositor = recipe_api._STEP_CONTEXT
     name = compositor.get_with_context('name', name)
+    if 'cwd' not in kwargs:
+      kwargs['cwd'] = compositor.get('cwd')
     kwargs['env'] = compositor.get_with_context('env', kwargs.get('env', {}))
     kwargs['step_nest_level'] = compositor.get_with_context('nest_level', 0)
 
