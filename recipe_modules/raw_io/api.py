@@ -30,7 +30,7 @@ class InputDataPlaceholder(recipe_util.InputPlaceholder):
       self._backing_file = self.data
     else:  # pragma: no cover
       input_fd, self._backing_file = tempfile.mkstemp(suffix=self.suffix)
-      os.write(input_fd, self.data)
+      os.write(input_fd, self.data.encode('utf-8'))
       os.close(input_fd)
     return [self._backing_file]
 
