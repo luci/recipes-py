@@ -91,6 +91,9 @@ class fake_path(object):
     """Returns the absolute version of path."""
     return self.normpath(path)
 
+  def expanduser(self, path):
+    return path.replace('~', '[HOME]')
+
 
 def _split_path(path):  # pragma: no cover
   """Relative or absolute path -> tuple of components."""
@@ -120,8 +123,8 @@ class PathApi(recipe_api.RecipeApi):
   # Because the native 'path' type in python is a str, we filter the *args
   # of these methods to stringify them first (otherwise they would be getting
   # recipe_util_types.Path instances).
-  FILTER_METHODS = ('abspath', 'basename', 'dirname', 'exists', 'join', 'split',
-                    'splitext')
+  FILTER_METHODS = ('abspath', 'basename', 'dirname', 'exists', 'expanduser',
+                    'join', 'split', 'splitext')
 
   def get_config_defaults(self):
     return {

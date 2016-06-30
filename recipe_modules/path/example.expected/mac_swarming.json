@@ -35,6 +35,13 @@
     "name": "touch me"
   },
   {
+    "cmd": [
+      "touch",
+      "[HOME]/file"
+    ],
+    "name": "touch my home"
+  },
+  {
     "name": "$result",
     "recipe_result": null,
     "status_code": 0

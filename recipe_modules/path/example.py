@@ -47,6 +47,11 @@ def RunSteps(api):
   api.path.mock_add_paths(file_path)
   assert api.path.exists(file_path)
 
+  home_path = api.path.join(api.path.expanduser('~'), 'file')
+  api.step('touch my home', ['touch', home_path])
+  api.path.mock_add_paths(home_path)
+  assert api.path.exists(home_path)
+
 
 def GenTests(api):
   for platform in ('linux', 'win', 'mac'):
