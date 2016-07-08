@@ -52,8 +52,10 @@ def parse_protobuf(fh):
     A recursive dictionary of lists.
   """
   def parse_atom(text):
-    if text == 'true': return True
-    if text == 'false': return False
+    if text == 'true':
+      return True
+    if text == 'false':
+      return False
     return ast.literal_eval(text)
 
   ret = {}
@@ -70,8 +72,10 @@ def parse_protobuf(fh):
       ret.setdefault(m.group(1), []).append(subparse)
       continue
 
-    if line == '}': return ret
-    if line == '': continue
+    if line == '}':
+      return ret
+    if line == '':
+      continue
 
     raise ValueError('Could not understand line: <%s>' % line)
 
