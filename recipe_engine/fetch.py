@@ -3,13 +3,16 @@
 # that can be found in the LICENSE file.
 
 import base64
+import functools
 import json
 import logging
 import os
+import random
 import shutil
 import sys
 import tarfile
 import tempfile
+import time
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 THIRD_PARTY = os.path.join(BASE_DIR, 'recipe_engine', 'third_party')
@@ -49,6 +52,23 @@ def _run_git(checkout_dir, *args):
   return subprocess42.check_output(cmd)
 
 
+def _retry(f):
+  @functools.wraps(f)
+  def wrapper(*args, **kwargs):
+    delay = random.uniform(2, 5)
+    for _ in range(5):
+      try:
+        return f(*args, **kwargs)
+      except (requests.exceptions.RequestException,
+              subprocess42.CalledProcessError):
+        # Only retry specific errors that may be transient.
+        logging.exception('retrying')
+        time.sleep(delay)
+        delay *= 2
+    return f(*args, **kwargs)
+  return wrapper
+
+
 class Backend(object):
   def checkout(self, repo, revision, checkout_dir, allow_fetch):
     """Checks out given |repo| at |revision| to |checkout_dir|.
@@ -71,6 +91,7 @@ class Backend(object):
 class GitBackend(Backend):
   """GitBackend uses a local git checkout."""
 
+  @_retry
   def checkout(self, repo, revision, checkout_dir, allow_fetch):
     logging.info('Freshening repository %s in %s', repo, checkout_dir)
 
@@ -118,6 +139,7 @@ class GitBackend(Backend):
 class GitilesBackend(Backend):
   """GitilesBackend uses a repo served by Gitiles."""
 
+  @_retry
   def checkout(self, repo, revision, checkout_dir, allow_fetch):
     logging.info('Freshening repository %s in %s', repo, checkout_dir)
 
