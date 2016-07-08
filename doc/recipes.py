@@ -144,12 +144,12 @@ def main():
 
   try:
     ensure_engine()
-  except subprocess.CalledProcessError as e:
-    if e.returncode == 128:  # Thrown when git gets a lock error.
-      time.sleep(random.uniform(2,5))
-      ensure_engine()
-    else:
-      raise
+  except subprocess.CalledProcessError:
+    logging.exception('ensure_engine failed')
+
+    # Retry errors.
+    time.sleep(random.uniform(2,5))
+    ensure_engine()
 
   args = ['--package', recipes_cfg_path,
           '--bootstrap-script', __file__] + sys.argv[1:]
