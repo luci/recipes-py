@@ -132,7 +132,6 @@ class StepApi(recipe_api.RecipeApiPlain):
 
     kwargs['timeout'] = timeout
     kwargs['ok_ret'] = ok_ret
-    kwargs['infra_step'] = bool(infra_step)
 
     # Obtain information from composite step parent.
     compositor = recipe_api._STEP_CONTEXT
@@ -140,6 +139,8 @@ class StepApi(recipe_api.RecipeApiPlain):
     if 'cwd' not in kwargs:
       kwargs['cwd'] = compositor.get('cwd')
     kwargs['env'] = compositor.get_with_context('env', kwargs.get('env', {}))
+    kwargs['infra_step'] = compositor.get_with_context(
+        'infra_step', bool(infra_step))
     kwargs['step_nest_level'] = compositor.get_with_context('nest_level', 0)
 
     # Disambiguate repeated names

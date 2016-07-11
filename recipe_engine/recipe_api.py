@@ -120,6 +120,7 @@ _FUNCTION_REGISTRY = {
   'aggregated_result': {'combine': lambda a, b: b},
   'cwd': {'combine': lambda a, b: b},
   'env': {'combine': lambda a, b: dict(a, **b)},
+  'infra_step': {'combine': lambda a, b: a or b},
   'name': {'combine': lambda a, b: '%s.%s' % (a, b)},
   'nest_level': {'combine': lambda a, b: a + b},
   'ran_step': {'combine': lambda a, b: b},
