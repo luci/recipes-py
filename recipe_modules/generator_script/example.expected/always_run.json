@@ -72,6 +72,7 @@
   {
     "name": "$result",
     "reason": "the following steps in gen step(always_run.py) failed: ['fails']",
+    "recipe_result": null,
     "status_code": 1
   }
 ]

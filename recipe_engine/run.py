@@ -419,6 +419,8 @@ class RecipeEngine(object):
           self._close_to_level(0)
       except recipe_api.StepFailure as f:
         result = {
+          # Include "recipe_result" so it doesn't get marked as infra failure.
+          "recipe_result": None,
           "reason": f.reason,
           "status_code": f.retcode or 1
         }

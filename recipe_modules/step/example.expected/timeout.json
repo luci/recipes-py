@@ -2,6 +2,7 @@
   {
     "name": "$result",
     "reason": "Step Timeout: Step('timeout') timed out after 1",
+    "recipe_result": null,
     "status_code": 1
   }
 ]
