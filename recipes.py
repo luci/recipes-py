@@ -391,8 +391,9 @@ def main():
     os.environ['RECIPES_RUN_BOOTSTRAP'] = '1'
     args = sys.argv
     return subprocess.call(
-        ['ENV/bin/python'] + original_sys_argv,
-        cwd=os.path.dirname(os.path.realpath(__file__)))
+        [os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), 'ENV/bin/python'),
+         os.path.join(ROOT_DIR, 'recipes.py')] + original_sys_argv[1:])
 
   if args.verbose:
     logging.getLogger().setLevel(logging.INFO)
