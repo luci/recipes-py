@@ -19,7 +19,7 @@ def BaseConfig(**_kwargs):
     # For compatibility with buildbot, the step name must be ascii, which is why
     # this is a 'str' and not a 'basestring'.
     name = Single(str),
-    cmd = List(inner_type=(int,basestring,Path,Placeholder),
+    cmd = List(inner_type=(int,long,basestring,Path,Placeholder),
                jsonish_fn=render_cmd),
     timeout = Single(int, required=False),
 
