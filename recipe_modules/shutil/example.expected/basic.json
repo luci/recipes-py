@@ -213,19 +213,31 @@
     "cmd": [
       "python",
       "-u",
-      "RECIPE_MODULE[recipe_engine::shutil]/resources/rmtree.py",
+      "\nimport shutil, sys\nshutil.rmtree(sys.argv[1])\n",
       "[TMP_BASE]/copytree_example_tmp"
     ],
-    "name": "cleanup"
+    "name": "cleanup",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@python.inline@@@@",
+      "@@@STEP_LOG_LINE@python.inline@import shutil, sys@@@",
+      "@@@STEP_LOG_LINE@python.inline@shutil.rmtree(sys.argv[1])@@@",
+      "@@@STEP_LOG_END@python.inline@@@"
+    ]
   },
   {
     "cmd": [
       "python",
       "-u",
-      "RECIPE_MODULE[recipe_engine::shutil]/resources/rmtree.py",
+      "\nimport shutil, sys\nshutil.rmtree(sys.argv[1])\n",
       "[TMP_BASE]/copytree_example_tmp2"
     ],
-    "name": "cleanup2"
+    "name": "cleanup2",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@python.inline@@@@",
+      "@@@STEP_LOG_LINE@python.inline@import shutil, sys@@@",
+      "@@@STEP_LOG_LINE@python.inline@shutil.rmtree(sys.argv[1])@@@",
+      "@@@STEP_LOG_END@python.inline@@@"
+    ]
   },
   {
     "name": "$result",
