@@ -70,7 +70,7 @@ def RunSteps(api):
 
   finally:
     api.shutil.rmtree(tmp_dir, name='cleanup')
-    api.shutil.rmtree(new_tmp, name='cleanup2')
+    api.shutil.rmtree(new_tmp, name='cleanup2', flag_smart_rmtree=True)
 
 
 def GenTests(api):
