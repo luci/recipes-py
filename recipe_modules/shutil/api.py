@@ -7,12 +7,9 @@ from recipe_engine import recipe_api
 class ShutilApi(recipe_api.RecipeApi):
   def rmtree(self, path, **kwargs):
     name = kwargs.pop('name', 'rmtree %s' % path)
-    self.m.python.inline(
+    self.m.python(
         name,
-        """
-          import shutil, sys
-          shutil.rmtree(sys.argv[1])
-        """,
+        self.resource('rmtree.py'),
         args=[path],
         **kwargs)
 
