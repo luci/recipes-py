@@ -7,8 +7,6 @@ from recipe_engine import recipe_api
 class ShutilApi(recipe_api.RecipeApi):
   def rmtree(self, path, **kwargs):
     name = kwargs.pop('name', 'rmtree %s' % path)
-    # TODO(tandrii): remove this flag.
-    kwargs.pop('flag_smart_rmtree', False)
     self.m.python(
         name,
         self.resource('rmtree.py'),
