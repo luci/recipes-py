@@ -199,6 +199,16 @@ def depgraph(package_deps, args):
                 args.ignore_package, args.output, args.recipe_filter)
 
 
+def refs(package_deps, args):
+  from recipe_engine import refs
+  from recipe_engine import loader
+
+  _, config_file = get_package_config(args)
+  universe = loader.RecipeUniverse(package_deps, config_file)
+
+  refs.main(universe, package_deps.root_package, args.modules, args.transitive)
+
+
 def doc(package_deps, args):
   from recipe_engine import doc
   from recipe_engine import loader
@@ -368,6 +378,14 @@ def main():
            'this substring. It will also filter all nodes of the graph to only '
            'include modules touched by the filtered recipes.')
 
+  refs_p = subp.add_parser(
+      'refs',
+      description='List places referencing given recipe module(s).')
+  refs_p.set_defaults(command='refs')
+  refs_p.add_argument('modules', nargs='+', help='Module(s) to query for')
+  refs_p.add_argument('--transitive', action='store_true',
+                      help='Compute transitive closure of the references')
+
   doc_p = subp.add_parser(
       'doc',
       description='List all known modules reachable from the current package, '
@@ -435,6 +453,8 @@ def main():
     return autoroll(args)
   elif args.command == 'depgraph':
     return depgraph(package_deps, args)
+  elif args.command == 'refs':
+    return refs(package_deps, args)
   elif args.command == 'doc':
     return doc(package_deps, args)
   elif args.command == 'info':
