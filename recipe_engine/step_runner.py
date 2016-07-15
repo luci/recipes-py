@@ -20,7 +20,7 @@ from . import stream
 from . import types
 from . import util
 
-from .third_party import subprocess42
+import subprocess42
 
 
 if sys.platform == "win32":

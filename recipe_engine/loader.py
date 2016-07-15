@@ -9,6 +9,8 @@ import inspect
 import os
 import sys
 
+from . import env
+
 from .config import ConfigContext, ConfigGroupSchema
 from .config_types import Path, ModuleBasePath, PackageRepoBasePath
 from .config_types import RECIPE_MODULE_PREFIX
@@ -72,7 +74,7 @@ class RecipeScript(object):
     script_vars = {}
     script_vars['__file__'] = script_path
 
-    with _preserve_path():
+    with env.temp_sys_path():
       execfile(script_path, script_vars)
 
     script_vars['LOADED_DEPS'] = universe_view.deps_from_spec(
@@ -279,15 +281,6 @@ def _is_recipe_module_dir(path):
           os.path.isfile(os.path.join(path, '__init__.py')))
 
 
-@contextlib.contextmanager
-def _preserve_path():
-  old_path = sys.path[:]
-  try:
-    yield
-  finally:
-    sys.path = old_path
-
-
 def _find_and_load_module(fullname, modname, path):
   imp.acquire_lock()
   try:
@@ -315,7 +308,7 @@ def _load_recipe_module_module(path, universe_view):
   mod.LOADED_DEPS = universe_view.deps_from_spec(getattr(mod, 'DEPS', []))
 
   # Prevent any modules that mess with sys.path from leaking.
-  with _preserve_path():
+  with env.temp_sys_path():
     sys.modules['%s.DEPS' % fullname] = mod.LOADED_DEPS
     _recursive_import(
         path, '%s.%s' % (RECIPE_MODULE_PREFIX, universe_view.package.name))

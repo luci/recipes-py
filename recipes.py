@@ -17,8 +17,9 @@ import subprocess
 import sys
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(ROOT_DIR, 'recipe_engine', 'third_party'))
 sys.path.insert(0, ROOT_DIR)
+
+from recipe_engine import env
 
 def get_package_config(args):
   from recipe_engine import package

@@ -9,7 +9,8 @@ import re
 import os
 import sys
 
-from .third_party import expect_tests
+from . import env
+import expect_tests
 
 # This variable must be set in the dynamic scope of the functions in this file.
 # We do this instead of passing because the threading system of expect tests

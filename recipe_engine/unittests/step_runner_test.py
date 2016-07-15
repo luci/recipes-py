@@ -9,8 +9,7 @@ import sys
 import tempfile
 import unittest
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__)))))
+import test_env
 
 from recipe_engine import step_runner
 

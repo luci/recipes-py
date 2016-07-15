@@ -68,13 +68,15 @@ import os
 import sys
 import traceback
 
+from . import env
+
 from . import loader
 from . import recipe_api
 from . import recipe_test_api
 from . import step_runner as step_runner_module
 from . import types
 from . import util
-from third_party import subprocess42
+import subprocess42
 
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))

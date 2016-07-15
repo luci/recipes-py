@@ -10,13 +10,7 @@ import os
 import sys
 import unittest
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))
-THIRD_PARTY = os.path.join(BASE_DIR, 'recipe_engine', 'third_party')
-sys.path.insert(0, os.path.join(THIRD_PARTY, 'mock-1.0.1'))
-sys.path.insert(0, os.path.join(THIRD_PARTY, 'requests'))
-sys.path.insert(0, BASE_DIR)
-sys.path.insert(0, THIRD_PARTY)
+import test_env
 
 import mock
 import subprocess42

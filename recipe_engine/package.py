@@ -16,7 +16,9 @@ import subprocess
 import sys
 import tempfile
 
-from .third_party.google.protobuf import text_format
+from . import env
+
+from google.protobuf import text_format
 from . import package_pb2
 from . import fetch
 

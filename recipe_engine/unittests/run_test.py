@@ -11,11 +11,8 @@ import sys
 import unittest
 import time
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
-                           os.path.abspath(__file__))))
-THIRD_PARTY = os.path.join(BASE_DIR, 'recipe_engine', 'third_party')
-sys.path.insert(0, os.path.join(THIRD_PARTY, 'mock-1.0.1'))
-sys.path.insert(0, BASE_DIR)
+import test_env
+from test_env import BASE_DIR
 
 import recipe_engine.run
 import recipe_engine.step_runner

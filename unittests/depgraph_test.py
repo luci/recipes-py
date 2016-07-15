@@ -7,16 +7,16 @@ import os
 import subprocess
 import unittest
 
-
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+import repo_test_util
+from repo_test_util import ROOT_DIR
 
 
 class DepgraphTest(unittest.TestCase):
   def test_depgraph(self):
-    script_path = os.path.join(BASE_DIR, 'recipes.py')
+    script_path = os.path.join(ROOT_DIR, 'recipes.py')
     exit_code = subprocess.call([
         'python', script_path,
-        '--package', os.path.join(BASE_DIR, 'infra', 'config', 'recipes.cfg'),
+        '--package', os.path.join(ROOT_DIR, 'infra', 'config', 'recipes.cfg'),
         'depgraph'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     self.assertEqual(0, exit_code)
 

@@ -14,14 +14,12 @@ import tarfile
 import tempfile
 import time
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-THIRD_PARTY = os.path.join(BASE_DIR, 'recipe_engine', 'third_party')
-sys.path.insert(0, os.path.join(THIRD_PARTY, 'requests'))
-
+# Add third party paths.
+from . import env
 import requests
 
-from .third_party import subprocess42
-from .third_party.google.protobuf import text_format
+import subprocess42
+from google.protobuf import text_format
 
 from . import package_pb2
 

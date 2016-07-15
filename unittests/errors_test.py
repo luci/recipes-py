@@ -9,7 +9,9 @@ import subprocess
 import tempfile
 import unittest
 
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+import repo_test_util
+from repo_test_util import ROOT_DIR
+
 
 class RecipeRepo(object):
   def __init__(self):
