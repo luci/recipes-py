@@ -59,6 +59,11 @@ with temp_sys_path():
 
 # From here on out, we're back to normal imports. Let's assert that the we're
 # using the correct protobuf package, though.
+#
+# We use "realpath" here because the importer may resolve the path differently
+# based on symlinks, and we want to make sure our calculated path matches the
+# impoter's path regardless.
 import google.protobuf
-assert THIRD_PARTY in google.protobuf.__path__[0]
+assert (os.path.realpath(THIRD_PARTY) in
+        os.path.realpath(google.protobuf.__path__[0]))
 
