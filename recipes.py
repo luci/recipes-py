@@ -68,14 +68,12 @@ def handle_recipe_return(recipe_result, result_filename, stream_engine):
 
   if 'traceback' in recipe_result.result:
     with stream_engine.new_step_stream('Uncaught Exception') as s:
-      s.set_step_status('EXCEPTION')
       with s.new_log_stream('exception') as l:
         for line in recipe_result.result['traceback']:
           l.write_line(line)
 
   if 'reason' in recipe_result.result:
     with stream_engine.new_step_stream('Failure reason') as s:
-      s.set_step_status('FAILURE')
       with s.new_log_stream('reason') as l:
         for line in recipe_result.result['reason'].splitlines():
           l.write_line(line)
