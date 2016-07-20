@@ -168,7 +168,8 @@ class GitilesBackend(Backend):
       f.write(recipes_cfg_text)
 
     recipes_path = os.path.join(checkout_dir, recipes_path_rel)
-    os.makedirs(recipes_path)
+    if not os.path.exists(recipes_path):
+      os.makedirs(recipes_path)
 
     archive_url = '%s/+archive/%s/%s.tar.gz' % (
         repo, requests.utils.quote(revision), recipes_path_rel)
