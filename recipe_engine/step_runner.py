@@ -440,7 +440,8 @@ class SimulationStepRunner(StepRunner):
         # note that '~' sorts after 'z' so that this will be last on each
         # step. also use _step to get access to the mutable step
         # dictionary.
-        lines = filter(None, outstream.getvalue().splitlines())
+        lines = filter(None, outstream.getvalue()).splitlines()
+        lines = [stream.encode_str(x) for x in lines]
         if lines:
           # This magically floats into step_history, which we have already
           # added step_dict to.

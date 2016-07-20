@@ -274,7 +274,8 @@ class AnnotationStepStream(StreamEngine.StepStream):
     raise NotImplementedError()
 
   def output_annotation(self, *args):
-    self.basic_write('@@@' + '@'.join(map(unicode, args)) + '@@@\n')
+    self.basic_write(
+        '@@@' + '@'.join(map(encode_str, args)) + '@@@\n')
 
   def write_line(self, line):
     if line.startswith('@@@'):
@@ -359,7 +360,8 @@ class AnnotatorStreamEngine(StreamEngine):
     # Flush the stream before & after engine annotations, because they can
     # change which step we are talking about and this matters to buildbot.
     self._outstream.flush()
-    self._outstream.write('@@@' + '@'.join(map(str, args)) + '@@@\n')
+    self._outstream.write(
+        '@@@' + '@'.join(map(encode_str, args)) + '@@@\n')
     self._outstream.flush()
 
   def _step_cursor(self, name):
@@ -412,4 +414,20 @@ class BareAnnotationStepStream(AnnotationStepStream):
     self._outstream = outstream
 
   def basic_write(self, line):
-    self._outstream.write(line)
+    self._outstream.write(encode_str(line))
+
+
+def encode_str(s):
+  """Tries to encode a string into a python str type.
+
+  Currently buildbot only supports ascii. If we have an error decoding the
+  string (which means it might not be valid ascii), we decode the string with
+  the 'replace' error mode, which replaces invalid characters with a suitable
+  replacement character.
+  """
+  try:
+    return str(s)
+  except UnicodeEncodeError:
+    return s.encode('utf-8', 'replace')
+  except UnicodeDecodeError:
+    return s.decode('utf-8', 'replace')

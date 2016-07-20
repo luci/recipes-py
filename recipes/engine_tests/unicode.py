@@ -13,7 +13,10 @@ def RunSteps(api):
       'trigger some junk',
       cmd=['echo', 'hi'],
   )
-  result.presentation.logs['thing'] = u'hiiiii 😀…'
+  result.presentation.logs['thing'] = [
+      u'hiiiii 😀…' , #This is valid, and should be displayed
+      '\xe2', # This is invalid, and should show up as an invalid character
+  ]
 
 def GenTests(api):
   yield api.test('basic')

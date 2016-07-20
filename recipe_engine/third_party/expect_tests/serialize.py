@@ -28,8 +28,10 @@ def re_encode(obj):
     return {re_encode(k): re_encode(v) for k, v in obj.iteritems()}
   elif isinstance(obj, list):
     return [re_encode(i) for i in obj]
-  elif isinstance(obj, str):
-    return obj.decode('utf-8')
+  elif isinstance(obj, (unicode, str)):
+    if isinstance(obj, str):
+      obj = obj.decode('utf-8', 'replace')
+    return obj.encode('utf-8', 'replace')
   else:
     return obj
 
@@ -37,7 +39,8 @@ def re_encode(obj):
 SERIALIZERS['json'] = (
     lambda s: re_encode(json.load(s)),
     lambda data, stream: json.dump(
-        data, stream, sort_keys=True, indent=2, separators=(',', ': ')))
+        re_encode(data), stream, sort_keys=True, indent=2,
+        separators=(',', ': ')))
 
 
 # YAML support
@@ -88,7 +91,7 @@ def GetCurrentData(test):
         with open(path, 'rb') as f:
           data = SERIALIZERS[ext][0](f)
       except ValueError as err:
-        raise ValueError('Bad format of %s: %s' % (path, err))
+          raise ValueError('Bad format of %s: %s' % (path, err))
       return data, ext == test.ext
   return NonExistant, True
 
@@ -116,6 +119,7 @@ def DiffData(old, new):
   """
   if old is NonExistant:
     return new
+  new = re_encode(new)
   if old == new:
     return None
   else:
@@ -123,7 +127,7 @@ def DiffData(old, new):
         pprint.pformat(old).splitlines(),
         # Re-encode so that both are unicode strings; otherwise the diff looks
         # very strange.
-        pprint.pformat(re_encode(new)).splitlines(),
+        pprint.pformat(new).splitlines(),
         fromfile='expected', tofile='current',
         n=4, lineterm=''
     ))
