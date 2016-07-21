@@ -7,4 +7,49 @@
     'repo': 'external/github.com/nedbat/coveragepy',
     'rev': '4e2faeead034005cda1bcb096afde921527a748f',
   },
+  'cffi': {
+    'version': '0.9.0',
+    'build': '1',
+    'gs': 'cabed2c0ab329dc19ff4f089b26bf9f4faae55e4.tar.gz',
+    'implicit': True,  # Required by cryptography
+  },
+  'cryptography': {
+    'version': '0.7.2',
+    'build': '0',
+    'repo': 'external/github.com/pyca/cryptography',
+    'rev': '9ac7d55150c8410a08ee3b00b89bfeac3dbd8e8f',
+    'implicit': True,  # Required by pyOpenSSL
+  },
+  'enum34': {
+    'version': '1.0.4',
+    'build': '0',
+    'gs': '10b77f1db47e54abbc4ce6f61df542590b9ad972.tar.gz',
+    'implicit': True,  # Required by cryptography
+  },
+  'pyasn1': {
+    'version': '0.1.7',
+    'build': '0',
+    'gs': 'e32b91c5a5d9609fb1d07d8685a884bab22ca6d0.tar.gz',
+    'implicit': True,  # Required by cryptography:
+  },
+  'pycparser': {
+    'version': '2.10',
+    'build': '0',
+    'repo': 'external/github.com/eliben/pycparser',
+    'rev': 'c67c9208d858788f9b24b0631171a6910b2c19cf',
+    'implicit': True, # Required by cffi
+  },
+  'pyOpenSSL': { # Needed to verify certs for HTTPS requests
+    'version': '0.14',
+    'build': '0',
+    'repo': 'external/github.com/pyca/pyopenssl',
+    'rev': '496f40dca9a47c0f1dfe0cd841256485708c8442',
+  },
+  'six': {
+    'version': '1.7.3',
+    'build': '0',
+    'repo': 'external/bitbucket.org/gutworth/six',
+    'rev': 'e0898d97d5951af01ba56e86acaa7530762155c8',
+    'implicit': True,  # Required by pyOpenSSL
+  },
 }

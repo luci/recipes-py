@@ -167,6 +167,7 @@ class _VendoredPipPackage(_ActionBase):
     install_dir = os.path.join(workdir, 'six')
     c.check_call(['pip', 'install', '--verbose', '-t', install_dir,
                   '%s==%s' % (self._name, self._version)])
+
     c.vendor_dir(install_dir, dest)
 
 
@@ -248,6 +249,11 @@ _ACTIONS = (
         'recipe_engine/third_party/six',
         name='six',
         version='1.10.0'),
+
+    _VendoredPipPackage(
+        'recipe_engine/third_party/requests',
+        name='requests',
+        version='2.10.0'),
 
     _VendoredGitRepo(
         'recipe_engine/third_party/client-py/libs',
