@@ -331,6 +331,11 @@ class RecipeEngine(object):
 
     This always returns the innermost nested step that is still open --
     presumably the one that just failed if we are in an exception handler."""
+    if not self._step_stack:
+      raise ValueError(
+          "No steps have been run yet, and you are asking for a previous step"
+          " result. Check to make sure your code isn't doing incorrect logic"
+          " with try-finally blocks.")
     return self._step_stack[-1].step_result
 
   def _close_to_level(self, level):
