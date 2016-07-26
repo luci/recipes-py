@@ -36,9 +36,11 @@ class InputDataPlaceholder(recipe_util.InputPlaceholder):
 
   def cleanup(self, test_enabled):
     assert self._backing_file is not None
-    exists = os.path.exists(self._backing_file)
-    if not test_enabled and exists:  # pragma: no cover
-      os.unlink(self._backing_file)
+    if not test_enabled:  # pragma: no cover
+      try:
+        os.unlink(self._backing_file)
+      except OSError:
+        pass
     self._backing_file = None
 
 
