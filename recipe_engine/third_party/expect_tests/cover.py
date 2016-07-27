@@ -82,7 +82,19 @@ class CoverageContext(object):
         self.cov.html_report(directory=self.html_report, omit=omit)
 
       outf = StringIO()
-      coverage_percent = self.cov.report(file=outf, omit=omit)
+
+      try:
+        coverage_percent = self.cov.report(file=outf, omit=omit)
+      except coverage.CoverageException as ce:
+        if ce.message != 'No data to report.':
+          raise
+        # If we have no data to report, this means that coverage has found no
+        # tests in the module. Earlier version of coverage used to return 100 in
+        # this case, so we simulate it to keep backward compatibility.
+        coverage_percent = 100.0
+        if verbose:
+          print 'No data to report, setting coverage to 100%'
+
       fail = int(coverage_percent) != int(threshold)
       summary = outf.getvalue().replace('%- 15s' % 'Name', 'Coverage Report', 1)
       if verbose:
