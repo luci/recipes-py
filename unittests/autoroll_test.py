@@ -15,7 +15,7 @@ from recipe_engine import package
 
 
 class TestAutoroll(repo_test_util.RepoTest):
-  def run_roll(self, repo):
+  def run_roll(self, repo, *args):
     """Runs the autoroll command and returns JSON.
     Does not commit the resulting roll.
     """
@@ -27,7 +27,7 @@ class TestAutoroll(repo_test_util.RepoTest):
               repo['root'], 'infra', 'config', 'recipes.cfg'),
           'autoroll',
           '--output-json', tempfile_path
-      ], stderr=subprocess.STDOUT)
+      ] + list(args), stderr=subprocess.STDOUT)
       with open(tempfile_path) as f:
         return json.load(f)
 
@@ -478,6 +478,35 @@ class TestAutoroll(repo_test_util.RepoTest):
     self.assertEqual(
         [expected_rejected_candidate],
         roll_result['rejected_candidates_details'])
+
+  def test_inconsistent_errors(self):
+    repos = self.repo_setup({
+        'a': [],
+        'b': ['a'],
+        'c': ['a', 'b'],
+        'd': ['a', 'b', 'c'],
+    })
+
+    # Create a new commit in A repo and roll it to B.
+    a_c1 = self.commit_in_repo(repos['a'], message='c1')
+    self.update_recipes_cfg(
+        'b', self.updated_package_spec_pb(repos['b'], 'a', a_c1['revision']))
+
+    roll_result = self.run_roll(repos['d'])
+    self.assertFalse(roll_result['success'])
+    self.assertFalse(bool(roll_result['roll_details']))
+    # Will cause the autoroller to fail, because we didn't specify which
+    # projects we care about.
+    self.assertTrue(bool(roll_result['rejected_candidates_details']))
+
+    roll_result = self.run_roll(
+        repos['d'],
+        '--project=c',
+        '--project=d',
+    )
+    self.assertFalse(roll_result['success'])
+    self.assertFalse(bool(roll_result['roll_details']))
+    self.assertFalse(bool(roll_result['rejected_candidates_details']))
 
 
 if __name__ == '__main__':

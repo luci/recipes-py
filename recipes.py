@@ -355,6 +355,12 @@ def main():
   autoroll_p.add_argument(
       '--output-json',
       help='A json file to output information about the roll to.')
+  autoroll_p.add_argument(
+      '--projects', action='append', default=None,
+      help='Projects we care about rolling. Any project which has a rejected'
+        'roll which isn\'t part of this set will be ignored, when computing'
+        'rejected candidates.')
+
 
   depgraph_p = subp.add_parser(
       'depgraph',

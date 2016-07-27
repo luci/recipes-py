@@ -408,6 +408,9 @@ class RollCandidate(object):
       return False
     return self.__dict__ == other.__dict__
 
+  def get_affected_projects(self):
+    return self._updates.keys()
+
   def make_consistent(self, root_spec):
     """Attempts to make the after-roll dependency graph consistent by rolling
     other package dependencies (changing their revisions). A consistent
@@ -465,6 +468,12 @@ class RollCandidate(object):
           project_id].commit_infos(self._context, update.revision)
 
     return commit_infos
+
+  def to_dict(self):
+    return {
+        'spec': str(self.get_rolled_spec().dump()),
+        'commit_infos': self.get_commit_infos(),
+    }
 
   def get_diff(self):
     """Returns a unified diff between original package spec and one after roll.

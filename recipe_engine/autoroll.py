@@ -45,36 +45,21 @@ def run_simulation_test(repo_root, package_spec, additional_args=None):
   return rc, output
 
 
-def test_rolls(args, config_file, context, package_spec):
+def process_candidates(candidates, context, config_file, package_spec):
   roll_details = []
-
-  success = False
   trivial = None
   picked_roll_details = None
 
-  print('finding roll candidates...')
-
-  root_spec = package.RootRepoSpec(config_file)
-  candidates, rejected_candidates = package_spec.roll_candidates(
-      root_spec, context)
+  print('looking for a trivial roll...')
 
   # Fill basic information about all the candidates. In later loops
   # we exit early depending on test results.
-  for i, candidate in enumerate(candidates):
+  for candidate in candidates:
     roll_details.append({
       'spec': str(candidate.get_rolled_spec().dump()),
       'diff': candidate.get_diff(),
       'commit_infos': candidate.get_commit_infos(),
     })
-
-  rejected_candidates_details = []
-  for candidate in rejected_candidates:
-    rejected_candidates_details.append({
-        'spec': str(candidate.get_rolled_spec().dump()),
-        'commit_infos': candidate.get_commit_infos(),
-    })
-
-  print('looking for a trivial roll...')
 
   # Process candidates biggest first. If the roll is trivial, we want
   # the maximal one, e.g. to jump over some reverts, or include fixes
@@ -91,14 +76,13 @@ def test_rolls(args, config_file, context, package_spec):
 
     if rc == 0:
       print('SUCCESS!')
-      success = True
       trivial = True
       picked_roll_details = roll_details[i]
       break
     else:
       print('FAILED')
 
-  if not success:
+  if not picked_roll_details:
     print('looking for a nontrivial roll...')
 
     # Process candidates smallest first. If the roll is going to change
@@ -118,15 +102,47 @@ def test_rolls(args, config_file, context, package_spec):
 
       if rc == 0:
         print('SUCCESS!')
-        success = True
         trivial = False
         picked_roll_details = roll_details[i]
         break
       else:
         print('FAILED')
 
+  return trivial, picked_roll_details, roll_details
+
+def process_rejected(rejected_candidates, projects=None):
+  """
+  Gets details of (optionally filtered) rejected rolls.
+
+  If the rejected rolls pertain to projects which we don't care about, then we
+  ignore them.
+
+  TODO(martiniss): guess which projects to use, using luci-config.
+  """
+  projects = set(projects or [])
+  rejected_candidates_details = []
+
+  for candidate in rejected_candidates:
+    if not projects or set(
+        candidate.get_affected_projects()).intersection(projects):
+      rejected_candidates_details.append(candidate.to_dict())
+
+  return rejected_candidates_details
+
+def test_rolls(config_file, context, package_spec, projects=None):
+  print('finding roll candidates...')
+
+  root_spec = package.RootRepoSpec(config_file)
+  candidates, rejected_candidates = package_spec.roll_candidates(
+      root_spec, context)
+
+  trivial, picked_roll_details, roll_details = process_candidates(
+      candidates, context, config_file, package_spec)
+
+  rejected_candidates_details = process_rejected(rejected_candidates, projects)
+
   return {
-    'success': success,
+    'success': bool(picked_roll_details),
     'trivial': trivial,
     'roll_details': roll_details,
     'picked_roll_details': picked_roll_details,
@@ -137,12 +153,12 @@ def test_rolls(args, config_file, context, package_spec):
 def main(args, repo_root, config_file):
   context = package.PackageContext.from_proto_file(
       repo_root, config_file, allow_fetch=not args.no_fetch)
-  root_spec = package.RootRepoSpec(config_file)
   package_spec = package.PackageSpec.load_proto(config_file)
 
   results = {}
   try:
-    results = test_rolls(args, config_file, context, package_spec)
+    results = test_rolls(
+      config_file, context, package_spec, args.projects or [])
   finally:
     if not results.get('success'):
       # Restore initial state. Since we could be running simulation tests
