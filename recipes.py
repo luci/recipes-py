@@ -250,7 +250,7 @@ def main():
       '--deps-path',
       help='Path where recipe engine dependencies will be extracted.')
   parser.add_argument(
-      '--verbose', '-v', action='store_true',
+      '--verbose', '-v', action='count',
       help='Increase logging verboisty')
   # TODO(phajdan.jr): Figure out if we need --no-fetch; remove if not.
   parser.add_argument(
@@ -420,7 +420,9 @@ def main():
             os.path.dirname(os.path.realpath(__file__)), 'ENV/bin/python'),
          os.path.join(ROOT_DIR, 'recipes.py')] + original_sys_argv[1:])
 
-  if args.verbose:
+  if args.verbose > 1:
+    logging.getLogger().setLevel(logging.DEBUG)
+  elif args.verbose > 0:
     logging.getLogger().setLevel(logging.INFO)
 
   # Commands which do not require config_file, package_deps, and other objects
