@@ -211,6 +211,14 @@ class GitRepoSpec(RepoSpec):
         revision=self.revision)
     if self.path:
       buf.path_override = self.path
+
+    # Only dump repo_type if it's different from default. This preserves
+    # compatibility e.g. with recipes.py bootstrap scripts in client repos
+    # which may not handle repo_type correctly.
+    # TODO(phajdan.jr): programmatically extract the default value.
+    if self.backend.repo_type != package_pb2.DepSpec.GIT:
+      buf.repo_type = self.backend.repo_type
+
     return buf
 
   def updates(self, context, other_revision=None):
@@ -218,7 +226,7 @@ class GitRepoSpec(RepoSpec):
     repo spec refers to.
     """
     raw_updates = self.raw_updates(
-        context, (other_revision or 'origin/%s' % self.branch))
+        context, (other_revision or self.backend.branch_spec(self.branch)))
     updates = []
     for rev in raw_updates:
       info = self._get_commit_info(rev, context)

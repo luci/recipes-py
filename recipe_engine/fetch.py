@@ -68,6 +68,15 @@ def _retry(f):
 
 
 class Backend(object):
+  @property
+  def repo_type(self):
+    """Returns repo type (see package_pb2.DepSpec)."""
+    raise NotImplementedError()
+
+  def branch_spec(self, branch):
+    """Returns branch spec for given branch suitable for given git backend."""
+    raise NotImplementedError()
+
   def checkout(self, repo, revision, checkout_dir, allow_fetch):
     """Checks out given |repo| at |revision| to |checkout_dir|.
 
@@ -88,6 +97,14 @@ class Backend(object):
 
 class GitBackend(Backend):
   """GitBackend uses a local git checkout."""
+
+  @property
+  def repo_type(self):
+    return package_pb2.DepSpec.GIT
+
+  @staticmethod
+  def branch_spec(branch):
+    return 'origin/%s' % branch
 
   @_retry
   def checkout(self, repo, revision, checkout_dir, allow_fetch):
@@ -136,6 +153,14 @@ class GitBackend(Backend):
 
 class GitilesBackend(Backend):
   """GitilesBackend uses a repo served by Gitiles."""
+
+  @property
+  def repo_type(self):
+    return package_pb2.DepSpec.GITILES
+
+  @staticmethod
+  def branch_spec(branch):
+    return branch
 
   @_retry
   def checkout(self, repo, revision, checkout_dir, allow_fetch):
