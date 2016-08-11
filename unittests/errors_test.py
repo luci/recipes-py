@@ -14,7 +14,7 @@ from repo_test_util import ROOT_DIR
 
 
 class RecipeRepo(object):
-  def __init__(self):
+  def __init__(self, recipes_path=''):
     self._root = tempfile.mkdtemp()
     os.makedirs(os.path.join(self._root, 'infra', 'config'))
     self._recipes_cfg = os.path.join(
@@ -23,13 +23,14 @@ class RecipeRepo(object):
       fh.write("""
 api_version: 1
 project_id: "testproj"
+recipes_path: "%s"
 deps {
   project_id: "recipe_engine"
   url: "%s"
   branch: "master"
   revision: "HEAD"
 }
-""" % ROOT_DIR)
+""" % (recipes_path, ROOT_DIR))
     self._recipes_dir = os.path.join(self._root, 'recipes')
     os.mkdir(self._recipes_dir)
     self._modules_dir = os.path.join(self._root, 'recipe_modules')
@@ -186,6 +187,26 @@ def GenTests(api):
         asserts=lambda stdout, stderr: self.assertRegexpMatches(
             stdout + stderr, 'Unconsumed'),
         retcode=1)
+
+  def test_run_recipe_help(self):
+    with RecipeRepo(recipes_path='foo/bar') as repo:
+      repo.make_recipe('do_nothing', """
+DEPS = []
+def RunSteps(api):
+ pass
+""")
+      subp = subprocess.Popen(
+                    repo.recipes_cmd + ['run', 'do_nothing'],
+                              stdout=subprocess.PIPE)
+      stdout, _ = subp.communicate()
+      self.assertRegexpMatches(
+          stdout, r'from the root of a \'testproj\' checkout')
+      self.assertRegexpMatches(
+          stdout, r'\./foo/bar/recipes\.py run .* do_nothing')
+
+
+
+
 
 if __name__ == '__main__':
   unittest.main()

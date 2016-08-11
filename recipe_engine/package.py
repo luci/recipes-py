@@ -350,16 +350,20 @@ class Package(object):
 
   This is accessed by loader.py through RecipeDeps.get_package.
   """
-  def __init__(self, name, repo_spec, deps, repo_root, recipes_dir):
+  def __init__(self, name, repo_spec, deps, repo_root, relative_recipes_dir):
     self.name = name
     self.repo_spec = repo_spec
     self.deps = deps
     self.repo_root = repo_root
-    self.recipes_dir = recipes_dir
+    self.relative_recipes_dir = relative_recipes_dir
 
   def __repr__(self):
     return '<Package(name=%r,repo_spec=%r,deps=%r,recipes_dir=%r)>' % (
         self.name, self.repo_spec, self.deps, self.recipes_dir)
+
+  @property
+  def recipes_dir(self):
+    return os.path.join(self.repo_root, self.relative_recipes_dir)
 
   @property
   def recipe_dirs(self):
@@ -380,14 +384,6 @@ class Package(object):
 
   def module_path(self, module_name):
     return os.path.join(self.recipes_dir, 'recipe_modules', module_name)
-
-  def loop_over_recipe_modules():
-    for path in self.module_dirs:
-      if os.path.isdir(path):
-        for item in os.listdir(path):
-          subpath = os.path.join(path, item)
-          if _is_recipe_module_dir(subpath):
-            yield subpath
 
   def __repr__(self):
     return 'Package(%r, %r, %r, %r)' % (
@@ -651,8 +647,7 @@ class PackageDeps(object):
     package = Package(
         project_id, repo_spec, deps,
         repo_spec.repo_root(self._context),
-        os.path.join(repo_spec.repo_root(self._context),
-                     package_spec.recipes_path))
+        package_spec.recipes_path)
 
     self._packages[project_id] = package
     return package

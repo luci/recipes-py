@@ -64,6 +64,7 @@ iterable_of_things.
 """
 
 import collections
+import json
 import os
 import sys
 import traceback
@@ -183,7 +184,7 @@ ENV_WHITELIST_POSIX = BUILDBOT_MAGIC_ENV | set([
 RecipeResult = collections.namedtuple('RecipeResult', 'result')
 
 
-def run_steps(properties, stream_engine, step_runner, universe):
+def run_steps(properties, stream_engine, step_runner, universe_view):
   """Runs a recipe (given by the 'recipe' property).
 
   Args:
@@ -191,7 +192,7 @@ def run_steps(properties, stream_engine, step_runner, universe):
       'recipe' property defines which recipe to actually run.
     stream_engine: the StreamEngine to use to create individual step streams.
     step_runner: The StepRunner to use to 'actually run' the steps.
-    universe: The RecipeUniverse to use to load the recipes & modules.
+    universe_view: The RecipeUniverse to use to load the recipes & modules.
 
   Returns: RecipeResult
   """
@@ -210,7 +211,7 @@ def run_steps(properties, stream_engine, step_runner, universe):
     properties['use_mirror'] = False
 
   with stream_engine.new_step_stream('setup_build') as s:
-    engine = RecipeEngine(step_runner, properties, universe)
+    engine = RecipeEngine(step_runner, properties, universe_view)
 
     # Create all API modules and top level RunSteps function.  It doesn't launch
     # any recipe code yet; RunSteps needs to be called.
@@ -223,11 +224,15 @@ def run_steps(properties, stream_engine, step_runner, universe):
     if 'use_mirror' in properties:
       del properties_to_print['use_mirror']
 
+    root_package = universe_view.universe.package_deps.root_package
     run_recipe_help_lines = [
-        'To repro this locally, run the following line from a build checkout:',
+        'To repro this locally, run the following line from the root of a %r'
+          ' checkout:' % (root_package.name),
         '',
-        './scripts/tools/run_recipe.py %s --properties-file - <<EOF' % recipe,
-        repr(properties_to_print),
+        '%s run --properties-file - %s <<EOF' % (
+            os.path.join( '.', root_package.relative_recipes_dir, 'recipes.py'),
+            recipe),
+        '%s' % json.dumps(properties_to_print),
         'EOF',
         '',
         'To run on Windows, you can put the JSON in a file and redirect the',
@@ -242,7 +247,7 @@ def run_steps(properties, stream_engine, step_runner, universe):
 
     # Find and load the recipe to run.
     try:
-      recipe_script = universe.load_recipe(recipe)
+      recipe_script = universe_view.load_recipe(recipe)
       s.write_line('Running recipe with %s' % (properties,))
 
       api = loader.create_recipe_api(recipe_script.LOADED_DEPS,

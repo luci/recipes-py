@@ -104,6 +104,8 @@ def run(package_deps, args, op_args):
   def get_properties_from_file(filename):
     properties_file = sys.stdin if filename == '-' else open(filename)
     properties = json.load(properties_file)
+    if filename == '-':
+      properties_file.close()
     assert isinstance(properties, dict)
     return properties
 
@@ -137,7 +139,7 @@ def run(package_deps, args, op_args):
   os.environ['PYTHONIOENCODING'] = 'UTF-8'
 
   _, config_file = get_package_config(args)
-  universe = loader.UniverseView(
+  universe_view = loader.UniverseView(
       loader.RecipeUniverse(
           package_deps, config_file), package_deps.root_package)
 
@@ -159,7 +161,7 @@ def run(package_deps, args, op_args):
       ret = recipe_run.run_steps(
           properties, stream_engine,
           step_runner.SubprocessStepRunner(stream_engine),
-          universe=universe)
+          universe_view=universe_view)
     finally:
       os.chdir(old_cwd)
 
