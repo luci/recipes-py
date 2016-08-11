@@ -1,0 +1,63 @@
+// Copyright 2016 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipe_engine;
+
+// Arguments is a protobuf that can be supplied to the recipe engine through its
+// "--operational-args-path" command-line parameter in JSONPB format.
+message Arguments {
+  // A single recipe engine Property value.
+  message Property {
+    // The property value.
+    oneof value {
+      // A string value.
+      string s = 1;
+
+      // An int64 value.
+      int64 int = 2;
+
+      // A uint64 value.
+      uint64 uint = 3;
+
+      // A double value.
+      double d = 4;
+
+      // A boolean value.
+      bool b = 5;
+
+      // Byte value.
+      bytes data = 6;
+
+      // Nested property map.
+      PropertyMap map = 7;
+
+      // An ordered list of Properties.
+      PropertyList list = 8;
+    }
+  }
+
+  // An ordered list of Properties.
+  message PropertyList {
+    repeated Property property = 1;
+  }
+
+  // A map of properties bound to string name keys.
+  message PropertyMap {
+    // A map of property key to value.
+    map<string, Property> property = 1;
+  }
+
+  // Input Properties.
+  PropertyMap properties = 1;
+
+  // Message containing the set of supported annotation control flags.
+  message AnnotationFlags {
+    // If true, emit CURRENT_TIMESTAMP annotations.
+    bool emit_timestamp = 1;
+  }
+  // Annotation control flags.
+  AnnotationFlags annotation_flags = 2;
+}

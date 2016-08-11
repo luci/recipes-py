@@ -20,6 +20,8 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ROOT_DIR)
 
 from recipe_engine import env
+from recipe_engine import arguments_pb2
+from google.protobuf import json_format as jsonpb
 
 def get_package_config(args):
   from recipe_engine import package
@@ -84,7 +86,7 @@ def handle_recipe_return(recipe_result, result_filename, stream_engine):
     return 0
 
 
-def run(package_deps, args):
+def run(package_deps, args, op_args):
   from recipe_engine import run as recipe_run
   from recipe_engine import loader
   from recipe_engine import step_runner
@@ -108,14 +110,24 @@ def run(package_deps, args):
   def get_properties_from_json(props):
     return json.loads(props)
 
+  def get_properties_from_operational_args(op_args):
+    if not op_args.properties.property:
+      return None
+    return _op_properties_to_dict(op_args.properties.property)
+
+
   arg_properties = get_properties_from_args(args.props)
+  op_properties = get_properties_from_operational_args(op_args)
   assert len(filter(bool,
-      [arg_properties, args.properties_file, args.properties])) <= 1, (
+      (arg_properties, args.properties_file, args.properties,
+       op_properties))) <= 1, (
           'Only one source of properties is allowed')
   if args.properties:
     properties = get_properties_from_json(args.properties)
   elif args.properties_file:
     properties = get_properties_from_file(args.properties_file)
+  elif op_properties is not None:
+    properties = op_properties
   else:
     properties = arg_properties
 
@@ -139,7 +151,9 @@ def run(package_deps, args):
   os.chdir(workdir)
   stream_engine = stream.ProductStreamEngine(
       stream.StreamEngineInvariants(),
-      stream.AnnotatorStreamEngine(sys.stdout, emit_timestamps=args.timestamps))
+      stream.AnnotatorStreamEngine(
+        sys.stdout, emit_timestamps=(args.timestamps or
+                                     op_args.annotation_flags.emit_timestamp)))
   with stream_engine:
     try:
       ret = recipe_run.run_steps(
@@ -228,6 +242,47 @@ def info(args):
     print package_spec.recipes_path
 
 
+# Map of arguments_pb2.Property "value" oneof conversion functions.
+#
+# The fields here should be kept in sync with the "value" oneof field names in
+# the arguments_pb2.Arguments.Property protobuf message.
+_OP_PROPERTY_CONV = {
+    's': lambda prop: prop.s,
+    'int': lambda prop: prop.int,
+    'uint': lambda prop: prop.uint,
+    'd': lambda prop: prop.d,
+    'b': lambda prop: prop.b,
+    'data': lambda prop: prop.data,
+    'map': lambda prop: _op_properties_to_dict(prop.map.property),
+    'list': lambda prop: [_op_property_value(v) for v in prop.list.property],
+}
+
+def _op_property_value(prop):
+  """Returns the Python-converted value of an arguments_pb2.Property.
+
+  Args:
+    prop (arguments_pb2.Property): property to convert.
+  Returns: The converted value.
+  Raises:
+    ValueError: If "prop" is incomplete or invalid.
+  """
+  typ = prop.WhichOneof('value')
+  conv = _OP_PROPERTY_CONV.get(typ)
+  if not conv:
+    raise ValueError('Unknown property field [%s]' % (typ,))
+  return conv(prop)
+
+
+def _op_properties_to_dict(pmap):
+  """Creates a properties dictionary from an arguments_pb2.PropertyMap entry.
+
+  Args:
+    pmap (arguments_pb2.PropertyMap): Map to convert to dictionary form.
+  Returns (dict): A dictionary derived from the properties in "pmap".
+  """
+  return dict((k, _op_property_value(pmap[k])) for k in pmap)
+
+
 def main():
   from recipe_engine import package
 
@@ -266,6 +321,11 @@ def main():
       '--use-bootstrap', action='store_true',
       help='Use bootstrap/bootstrap.py to create a isolated python virtualenv'
            ' with required python dependencies.')
+  parser.add_argument(
+      '--operational-args-path', action='store',
+      help='The path to an operational Arguments file. If provided, this file '
+           'must contain a JSONPB-encoded Arguments protobuf message, and will '
+           'be integrated into the runtime parameters.')
 
   subp = parser.add_subparsers()
 
@@ -407,6 +467,13 @@ def main():
 
   args = parser.parse_args()
 
+  # Load/parse operational arguments.
+  op_args = arguments_pb2.Arguments()
+  if args.operational_args_path is not None:
+    with open(args.operational_args_path) as fd:
+      data = fd.read()
+    jsonpb.Parse(data, op_args)
+
   if args.use_bootstrap and not os.environ.pop('RECIPES_RUN_BOOTSTRAP', None):
     subprocess.check_call(
         [sys.executable, 'bootstrap/bootstrap.py', '--deps-file',
@@ -455,7 +522,7 @@ def main():
   elif args.command == 'lint':
     return lint(package_deps, args)
   elif args.command == 'run':
-    return run(package_deps, args)
+    return run(package_deps, args, op_args)
   elif args.command == 'autoroll':
     return autoroll(args)
   elif args.command == 'depgraph':
