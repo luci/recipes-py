@@ -157,6 +157,12 @@ def run(package_deps, args, op_args):
         sys.stdout, emit_timestamps=(args.timestamps or
                                      op_args.annotation_flags.emit_timestamp)))
   with stream_engine:
+    # Emit initial properties if configured to do so.
+    if op_args.annotation_flags.emit_initial_properties:
+      with stream_engine.new_step_stream('Initial Properties') as s:
+        for key in sorted(properties.iterkeys()):
+          s.set_build_property(key, json.dumps(properties[key], sort_keys=True))
+
     try:
       ret = recipe_run.run_steps(
           properties, stream_engine,
