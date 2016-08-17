@@ -23,4 +23,6 @@ class RawIOTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
     assert stream in ('stdout', 'stderr')
     step_data = self.output(data, retcode=retcode, name=name)
     setattr(ret, stream, step_data.unwrap_placeholder())
+    if retcode:
+      ret.retcode = retcode
     return ret
