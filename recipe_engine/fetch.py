@@ -119,13 +119,7 @@ class GitBackend(Backend):
       raise UncleanFilesystemError(
           '%s exists but is not a git repo' % checkout_dir)
 
-    actual_origin = _run_git(
-        checkout_dir, 'config', 'remote.origin.url').strip()
-    if actual_origin != repo:
-      raise UncleanFilesystemError(
-          ('workdir %r exists but uses a different origin url %r '
-           'than requested %r') % (checkout_dir, actual_origin, repo))
-
+    _run_git(checkout_dir, 'config', 'remote.origin.url', repo)
     try:
       _run_git(checkout_dir, 'rev-parse', '-q', '--verify',
                '%s^{commit}' % revision)
