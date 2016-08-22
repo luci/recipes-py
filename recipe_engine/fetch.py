@@ -94,6 +94,13 @@ class Backend(object):
     """
     raise NotImplementedError()
 
+  def commit_metadata(self, repo, revision, checkout_dir, allow_fetch):
+    """Returns a dictionary of metadata about commit |revision|.
+
+    The dictionary contains the following keys: author, message.
+    """
+    raise NotImplementedError()
+
 
 class GitBackend(Backend):
   """GitBackend uses a local git checkout."""
@@ -143,6 +150,14 @@ class GitBackend(Backend):
     if paths:
       args.extend(['--'] + paths)
     return filter(bool, _run_git(checkout_dir, *args).strip().split('\n'))
+
+  def commit_metadata(self, repo, revision, checkout_dir, allow_fetch):
+    return {
+      'author': _run_git(checkout_dir, 'show', '-s', '--pretty=%aE',
+                         revision).strip(),
+      'message': _run_git(checkout_dir, 'show', '-s', '--pretty=%B',
+                          revision).strip(),
+    }
 
 
 class GitilesBackend(Backend):
@@ -229,12 +244,27 @@ class GitilesBackend(Backend):
 
     return list(reversed(results))
 
+  def commit_metadata(self, repo, revision, checkout_dir, allow_fetch):
+    if not allow_fetch:
+      raise FetchNotAllowedError(
+          ('requested commit metadata for %s (%s)from gitiles but fetch not '
+           'allowed') % (repo, revision))
+    rev_json = self._revision_metadata(repo, revision)
+    return {
+      'author': rev_json['author']['email'],
+      'message': rev_json['message'],
+    }
+
+  def _revision_metadata(self, repo, revision):
+    """Returns JSON metadata (in Gitiles format) for given revision."""
+    return self._fetch_gitiles_json(
+        '%s/+/%s?format=JSON' % (repo, requests.utils.quote(revision)))
+
   def _resolve_revision(self, repo, revision):
     """Returns a git sha corresponding to given revision.
 
     Examples of non-sha revision: origin/master, HEAD."""
-    rev_json = self._fetch_gitiles_json(
-        '%s/+/%s?format=JSON' % (repo, requests.utils.quote(revision)))
+    rev_json = self._revision_metadata(repo, revision)
     logging.info('resolved %s to %s', revision, rev_json['commit'])
     return rev_json['commit']
 

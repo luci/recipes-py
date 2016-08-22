@@ -126,6 +126,20 @@ class TestGit(unittest.TestCase):
       mock.call('dir', 'rev-parse', '-q', '--verify', 'revision^{commit}'),
     ])
 
+  @mock.patch('recipe_engine.fetch._run_git')
+  def test_commit_metadata(self, run_git):
+    run_git.side_effect = ['author', 'message']
+    result = fetch.GitBackend().commit_metadata(
+        'repo', 'revision', 'dir', allow_fetch=True)
+    self.assertEqual(result, {
+      'author': 'author',
+      'message': 'message',
+    })
+    run_git.assert_has_calls([
+      mock.call('dir', 'show', '-s', '--pretty=%aE', 'revision'),
+      mock.call('dir', 'show', '-s', '--pretty=%B', 'revision'),
+    ])
+
 
 class TestGitiles(unittest.TestCase):
   @mock.patch('__builtin__.open', mock.mock_open())
@@ -214,6 +228,25 @@ recipes_path: "path/to/recipes"
         mock.call('repo/+/reva?format=JSON'),
         mock.call('repo/+/revb?format=JSON'),
         mock.call('repo/+log/sha_a..sha_b?name-status=1&format=JSON'),
+    ])
+
+  @mock.patch('requests.get')
+  def test_commit_metadata(self, requests_get):
+    revision_json = {
+      'author': {'email': 'author'},
+      'message': 'message',
+    }
+    requests_get.side_effect = [
+        mock.Mock(text=u')]}\'\n%s' % json.dumps(revision_json)),
+    ]
+    result = fetch.GitilesBackend().commit_metadata(
+        'repo', 'revision', 'dir', allow_fetch=True)
+    self.assertEqual(result, {
+      'author': 'author',
+      'message': 'message',
+    })
+    requests_get.assert_has_calls([
+      mock.call('repo/+/revision?format=JSON'),
     ])
 
 

@@ -275,9 +275,11 @@ class GitRepoSpec(RepoSpec):
     return self.run_git(context, *args).strip().split('\n')[0]
 
   def _get_commit_info(self, rev, context):
-    author = self.run_git(context, 'show', '-s', '--pretty=%aE', rev).strip()
-    message = self.run_git(context, 'show', '-s', '--pretty=%B', rev).strip()
-    return CommitInfo(author, message, self.project_id, rev)
+    checkout_dir = self._dep_dir(context)
+    metadata = self.backend.commit_metadata(
+        self.repo, rev, checkout_dir, context.allow_fetch)
+    return CommitInfo(metadata['author'], metadata['message'], self.project_id,
+                      rev)
 
   def _dep_dir(self, context):
     return os.path.join(context.package_dir, self.project_id)
