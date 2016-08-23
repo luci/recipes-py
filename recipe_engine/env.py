@@ -54,6 +54,10 @@ with temp_sys_path():
   # options in "sys.path", "pkg_resources" will not cache or prefer system
   # resources for this namespace or its derivatives.
   sys.path = [THIRD_PARTY]
+
+  # Remove module if there is preloaded 'google' module
+  sys.modules.pop('google', None)
+
   pkg_resources.declare_namespace('google')
   pkg_resources.fixup_namespace_packages(THIRD_PARTY)
 
@@ -66,4 +70,3 @@ with temp_sys_path():
 import google.protobuf
 assert (os.path.realpath(THIRD_PARTY) in
         os.path.realpath(google.protobuf.__path__[0]))
-
