@@ -209,11 +209,15 @@ class GitilesBackend(Backend):
         repo, requests.utils.quote(revision), recipes_path_rel)
     logging.info('fetching %s' % archive_url)
     archive_request = requests.get(archive_url)
-    with tempfile.NamedTemporaryFile() as f:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
       f.write(archive_request.content)
-      f.flush()
-      with tarfile.open(f.name) as archive_tarfile:
-        archive_tarfile.extractall(recipes_path)
+      f.close()
+
+      try:
+        with tarfile.open(f.name) as archive_tarfile:
+          archive_tarfile.extractall(recipes_path)
+      finally:
+        os.unlink(f.name)
 
   def updates(self, repo, revision, checkout_dir, allow_fetch,
               other_revision, paths):
