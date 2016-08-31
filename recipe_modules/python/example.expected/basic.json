@@ -25,6 +25,18 @@
     ]
   },
   {
+    "cmd": [
+      "python",
+      "-m",
+      "json.tool",
+      "{\"something\":[true,true]}"
+    ],
+    "env": {
+      "PYTHONUNBUFFERED": null
+    },
+    "name": "run json.tool"
+  },
+  {
     "name": "$result",
     "recipe_result": null,
     "status_code": 0

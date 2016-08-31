@@ -6,6 +6,7 @@
 
 DEPS = [
   'python',
+  'raw_io',
   'step',
 ]
 
@@ -21,6 +22,11 @@ def RunSteps(api):
   except api.step.StepFailure:
     was_failure = True
   assert was_failure
+
+  # Test that unbufferred actually removes PYTHONUNBUFFERED envvar.
+  api.python('run json.tool', '-m', [
+    'json.tool', api.raw_io.input('{"something":[true,true]}'),
+  ], unbuffered=False)
 
 
 def GenTests(api):
