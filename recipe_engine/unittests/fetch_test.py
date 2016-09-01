@@ -16,6 +16,7 @@ import mock
 import subprocess42
 
 from recipe_engine import fetch
+from recipe_engine import requests_ssl
 
 
 class TestGit(unittest.TestCase):
@@ -142,6 +143,9 @@ class TestGit(unittest.TestCase):
 
 
 class TestGitiles(unittest.TestCase):
+  def setUp(self):
+    requests_ssl.disable_check()
+
   @mock.patch('__builtin__.open', mock.mock_open())
   @mock.patch('shutil.rmtree')
   @mock.patch('os.makedirs')

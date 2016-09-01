@@ -16,6 +16,7 @@ from test_env import BASE_DIR
 
 import recipe_engine.run
 import recipe_engine.step_runner
+from recipe_engine import requests_ssl
 from recipe_engine import recipe_test_api
 import mock
 
@@ -29,10 +30,15 @@ class RunTest(unittest.TestCase):
     else:
       proplist = []
 
-    return ([
+    prev_ignore = os.environ.pop(requests_ssl.ENV_VAR_IGNORE, '0')
+    os.environ[requests_ssl.ENV_VAR_IGNORE] = '1'
+    try:
+      return ([
         'python', script_path,
         '--package', os.path.join(BASE_DIR, 'infra', 'config', 'recipes.cfg'),
         'run', recipe] + proplist)
+    finally:
+      os.environ[requests_ssl.ENV_VAR_IGNORE] = prev_ignore
 
   def _test_recipe(self, recipe, properties=None):
     exit_code = subprocess.call(self._run_cmd(recipe, properties))

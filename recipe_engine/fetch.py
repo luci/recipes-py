@@ -16,7 +16,8 @@ import time
 
 # Add third party paths.
 from . import env
-import requests
+from . import requests_ssl
+from .requests_ssl import requests
 
 import subprocess42
 from google.protobuf import text_format
@@ -173,6 +174,7 @@ class GitilesBackend(Backend):
 
   @_retry
   def checkout(self, repo, revision, checkout_dir, allow_fetch):
+    requests_ssl.check_requests_ssl()
     logging.info('Freshening repository %s in %s', repo, checkout_dir)
 
     # TODO(phajdan.jr): implement caching.
