@@ -87,19 +87,23 @@ class StepTestData(BaseTestData):
     ret._stderr = other._stderr or self._stderr
     ret._retcode = self._retcode
     if other._retcode is not None:
-      assert ret._retcode is None
+      if ret._retcode is not None:
+        raise ValueError('Conflicting retcode values.')
       ret._retcode = other._retcode
 
     ret._times_out_after = self._times_out_after
     if other._times_out_after is not None:
-      assert ret._times_out_after is None
+      if ret._times_out_after is not None:
+        raise ValueError('Conflicting times_out_after values.')
       ret._times_out_after = other._times_out_after
 
     return ret
 
   def unwrap_placeholder(self):
     # {(module, placeholder, name): data} => data.
-    assert len(self.placeholder_data) == 1
+    if len(self.placeholder_data) != 1:
+      raise ValueError('Cannot unwrap placeholder_data with length > 1: len=%d'
+                       % len(self.placeholder_data))
     return self.placeholder_data.values()[0]
 
   def pop_placeholder(self, module_name, placeholder_name, name):
@@ -186,6 +190,7 @@ class TestData(BaseTestData):
     self.step_data = collections.defaultdict(StepTestData)
     self.depend_on_data = {}
     self.expected_exception = None
+    self.whitelist_data = {} # step_name -> fields
 
   def __add__(self, other):
     assert isinstance(other, TestData)
@@ -197,6 +202,7 @@ class TestData(BaseTestData):
     combineify('mod_data', ret, self, other)
     combineify('step_data', ret, self, other)
     combineify('depend_on_data', ret, self, other)
+    combineify('whitelist_data', ret, self, other)
     ret.expected_exception = self.expected_exception
     if other.expected_exception:
       ret.expected_exception = other.expected_exception
@@ -217,9 +223,11 @@ class TestData(BaseTestData):
     return self.mod_data.get(module_name, ModuleTestData())
 
   def expect_exception(self, exception):
-    assert not self.expected_exception
-    assert isinstance(exception, basestring), (
-        'expect_exception expects a string containing the exception class name')
+    if self.expected_exception:
+      raise ValueError('Cannot expect more than one exception')
+    if not isinstance(exception, basestring):
+      raise ValueError('expect_exception expects a string containing the '
+                       'exception class name')
     self.expected_exception = exception
 
   @contextlib.contextmanager
@@ -258,9 +266,13 @@ class TestData(BaseTestData):
 
   def depend_on(self, recipe, properties, result):
     tup = freeze((recipe, properties))
-    assert tup not in self.depend_on_data, (
-        'Already gave test data for recipe %s with properties %r' % tup)
+    if tup in self.depend_on_data:
+      raise ValueError('Already gave test data for recipe %s with properties %r'
+                       % tup)
     self.depend_on_data[tup] = freeze(result)
+
+  def whitelist(self, step_name, fields):
+    self.whitelist_data[step_name] = frozenset(fields)
 
   def __repr__(self):
     return "TestData(%r)" % ({
@@ -356,10 +368,11 @@ def placeholder_step_data(func):
     data = static_call(self, func, *args, **kwargs)
     if isinstance(data, StepTestData):
       all_data = data.placeholder_data.values()
-      assert len(all_data) == 1, (
-        'placeholder_step_data is only expecting a single output placeholder '
-        'datum. Got: %r' % data
-      )
+      if len(all_data) != 1:
+        raise ValueError(
+          'placeholder_step_data is only expecting a single output placeholder '
+          'datum. Got: %r' % data
+        )
       placeholder_data, retcode = all_data[0], data.retcode
     else:
       placeholder_data, retcode, name = data
@@ -535,4 +548,40 @@ class RecipeTestApi(object):
   def depend_on(self, recipe, properties, result):
     ret = TestData()
     ret.depend_on(recipe, properties, result)
+    return ret
+
+  def whitelist(self, step_name, *fields):
+    """Calling this enables step whitelisting for the expectations on this test.
+    You may call it multiple times, once per step_name that you want to have
+    show in the JSON expectations file for this test.
+
+    You may also optionally specify fields that you want to show up in the JSON
+    expectations. By default, all fields of the step will appear, but you may
+    only be interested in e.g. 'cmd' or 'env', for example.
+
+    Keep in mind that the ultimate result of the recipe (the return value from
+    RunSteps) is on a virtual step named '$result'.
+
+    Example:
+      yield api.test('assert entire recipe')
+
+      yield (api.test('assert only thing step')
+        + api.whitelist('thing step')
+      )
+
+      yield (api.test('assert only thing step\'s cmd')
+        + api.whitelist('thing step', 'cmd')
+      )
+
+      yield (api.test('assert thing step and other step')
+        + api.whitelist('thing step')
+        + api.whitelist('other step')
+      )
+
+      yield (api.test('only care about the result')
+        + api.whitelist('$result')
+      )
+    """
+    ret = TestData()
+    ret.whitelist(step_name, fields)
     return ret

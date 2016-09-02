@@ -4,9 +4,10 @@
 
 """Provides simulator test coverage for individual recipes."""
 
+import json
 import logging
-import re
 import os
+import re
 import sys
 
 from . import env
@@ -17,7 +18,45 @@ import expect_tests
 # doesn't know how to serialize it.
 _UNIVERSE = None
 
+
+def RenderExpectation(test_data, raw_expectations):
+  """Applies the step filters (e.g. whitelists, etc.) to the raw_expectations,
+  if the TestData actually contains any filters.
+
+  Returns the final expect_tests.Result."""
+  # map of step_name -> index in raw_expectations
+  index = {}
+  for i, step in enumerate(raw_expectations):
+    index[step['name']] = i
+
+  if test_data.whitelist_data:
+    new_result = []
+    for step_name, fields in test_data.whitelist_data.iteritems():
+      if step_name not in index:
+        raise ValueError(
+          "The step name %r was included in the whitelist, but was never run."
+          % step_name)
+
+      raw_step = raw_expectations[index[step_name]]
+      if not fields:
+        new_result.append(raw_step)
+      else:
+        new_step = {'name': raw_step['name']}
+        for k in fields:
+          if k not in raw_step:
+            raise ValueError(
+              "The whitelist includes field %r in step %r, but that field"
+              " doesn't exist."
+              % (k, step_name))
+          new_step[k] = raw_step[k]
+        new_result.append(new_step)
+    raw_expectations = new_result
+
+  return expect_tests.Result(raw_expectations)
+
+
 def RunRecipe(test_data):
+  """Actually runs the recipe given the GenTests-supplied test_data."""
   from . import config_types
   from . import loader
   from . import run
@@ -36,8 +75,15 @@ def RunRecipe(test_data):
     # Don't include tracebacks in expectations because they are too sensitive to
     # change.
     result.result.pop('traceback', None)
+    raw_expectations = step_runner.steps_ran + [result.result]
 
-    return expect_tests.Result(step_runner.steps_ran + [result.result])
+    try:
+      return RenderExpectation(test_data, raw_expectations)
+    except:
+      print
+      print "The expectations would have been:"
+      json.dump(raw_expectations, sys.stdout, indent=2)
+      raise
 
 
 def test_gen_coverage():
@@ -52,6 +98,7 @@ def test_gen_coverage():
 
   return cover
 
+
 def cover_omit():
   omit = [ ]
 
@@ -60,6 +107,7 @@ def cover_omit():
         omit.append(os.path.join(mod_dir_base, '*', 'resources', '*'))
 
   return omit
+
 
 @expect_tests.covers(test_gen_coverage)
 def GenerateTests():
@@ -71,25 +119,29 @@ def GenerateTests():
       cover_mods.append(os.path.join(mod_dir_base, '*.py'))
 
   for recipe_path, recipe_name in _UNIVERSE.loop_over_recipes():
-    recipe = _UNIVERSE.load_recipe(recipe_name)
-    test_api = loader.create_test_api(recipe.LOADED_DEPS, _UNIVERSE)
+    try:
+      recipe = _UNIVERSE.load_recipe(recipe_name)
+      test_api = loader.create_test_api(recipe.LOADED_DEPS, _UNIVERSE)
 
-    covers = cover_mods + [recipe_path]
+      covers = cover_mods + [recipe_path]
 
-    for test_data in recipe.GenTests(test_api):
-      root, name = os.path.split(recipe_path)
-      name = os.path.splitext(name)[0]
-      expect_path = os.path.join(root, '%s.expected' % name)
+      for test_data in recipe.GenTests(test_api):
+        root, name = os.path.split(recipe_path)
+        name = os.path.splitext(name)[0]
+        expect_path = os.path.join(root, '%s.expected' % name)
 
-      test_data.properties['recipe'] = recipe_name.replace('\\', '/')
-      yield expect_tests.Test(
-          '%s.%s' % (recipe_name, test_data.name),
-          expect_tests.FuncCall(RunRecipe, test_data),
-          expect_dir=expect_path,
-          expect_base=test_data.name,
-          covers=covers,
-          break_funcs=(recipe.RunSteps,)
-      )
+        test_data.properties['recipe'] = recipe_name.replace('\\', '/')
+        yield expect_tests.Test(
+            '%s.%s' % (recipe_name, test_data.name),
+            expect_tests.FuncCall(RunRecipe, test_data),
+            expect_dir=expect_path,
+            expect_base=test_data.name,
+            covers=covers,
+            break_funcs=(recipe.RunSteps,)
+        )
+    except:
+      print 'While generating test cases for %s:%s' % (recipe_path, recipe_name)
+      raise
 
 
 def main(universe, args=None):
@@ -101,9 +153,6 @@ def main(universe, args=None):
   Returns:
     Doesn't -- exits with a status code
   """
-  from . import loader
-  from . import package
-
   # annotated_run has different behavior when these environment variables
   # are set, so unset to make simulation tests environment-invariant.
   for env_var in ['TESTING_MASTER_HOST',

@@ -1,0 +1,19 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "INSANITY"
+    ],
+    "name": "another important"
+  },
+  {
+    "cmd": [
+      "echo",
+      "crazy!"
+    ],
+    "env": {
+      "FLEEM": "VERY YES"
+    },
+    "name": "something important"
+  }
+]

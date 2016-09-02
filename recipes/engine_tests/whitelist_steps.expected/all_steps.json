@@ -1,0 +1,31 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "sup doc"
+    ],
+    "name": "something unimportant"
+  },
+  {
+    "cmd": [
+      "echo",
+      "crazy!"
+    ],
+    "env": {
+      "FLEEM": "VERY YES"
+    },
+    "name": "something important"
+  },
+  {
+    "cmd": [
+      "echo",
+      "INSANITY"
+    ],
+    "name": "another important"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]
