@@ -13,7 +13,7 @@
   {
     "cmd": [
       "sleep",
-      "10"
+      "1"
     ],
     "name": "complicated thing.first part.wait a bit",
     "~followup_annotations": [
@@ -41,9 +41,42 @@
     ]
   },
   {
+    "cmd": [],
+    "name": "inherit status"
+  },
+  {
+    "cmd": [],
+    "name": "inherit status.inner step",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_EXCEPTION@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "versatile status",
+    "~followup_annotations": [
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "versatile status.inner step",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "versatile status.inner step.even deeper",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
     "cmd": [
       "sleep",
-      "10"
+      "1"
     ],
     "name": "simple thing"
   },

@@ -154,8 +154,9 @@ def run(package_deps, args, op_args):
   stream_engine = stream.ProductStreamEngine(
       stream.StreamEngineInvariants(),
       stream.AnnotatorStreamEngine(
-        sys.stdout, emit_timestamps=(args.timestamps or
-                                     op_args.annotation_flags.emit_timestamp)))
+        sys.stdout,
+        emit_timestamps=(args.timestamps or
+                         op_args.annotation_flags.emit_timestamp)))
   with stream_engine:
     # Emit initial properties if configured to do so.
     if op_args.annotation_flags.emit_initial_properties:

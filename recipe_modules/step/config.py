@@ -4,9 +4,8 @@
 
 import collections
 
-from recipe_engine.config import List
 from recipe_engine.config import (config_item_context, ConfigGroup, ConfigList,
-                          Dict, Single, Set)
+                                  Dict, Single, Set, List)
 from recipe_engine.config_types import Path
 from recipe_engine.util import Placeholder
 

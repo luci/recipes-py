@@ -15,6 +15,7 @@ import test_env
 from test_env import BASE_DIR
 
 import recipe_engine.run
+import recipe_engine.simulation_test as simulation_test
 import recipe_engine.step_runner
 from recipe_engine import requests_ssl
 from recipe_engine import recipe_test_api
@@ -145,9 +146,10 @@ class RunTest(unittest.TestCase):
       api._engine = mock.Mock()
       api._engine.properties = properties
 
+      annotator = simulation_test.SimulationAnnotatorStreamEngine()
       engine = recipe_engine.run.RecipeEngine(
           recipe_engine.step_runner.SimulationStepRunner(
-              stream_engine, test_data),
+              stream_engine, test_data, annotator),
           properties,
           None)
 

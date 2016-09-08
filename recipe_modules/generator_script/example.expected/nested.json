@@ -1,0 +1,127 @@
+[
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "nested.py",
+      "--output-json",
+      "/path/to/tmp/json"
+    ],
+    "cwd": "[TMP_BASE]",
+    "name": "gen step(nested.py)",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@[@@@",
+      "@@@STEP_LOG_LINE@json.output@  {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"cmd\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"echo\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"grandparent\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    ], @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"name\": \"grandparent\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"cmd\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"echo\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"parent\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    ], @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"name\": \"parent\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"step_nest_level\": 1@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"cmd\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"echo\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"child\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    ], @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"name\": \"child\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"step_nest_level\": 2@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"cmd\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"echo\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"sibling\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    ], @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"name\": \"sibling\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"step_nest_level\": 2@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"cmd\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"echo\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"uncle\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    ], @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"name\": \"uncle\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"step_nest_level\": 1@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"cmd\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"echo\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"cousin\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    ], @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"name\": \"cousin\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"step_nest_level\": 2@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@]@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "grandparent"
+    ],
+    "name": "grandparent"
+  },
+  {
+    "cmd": [
+      "echo",
+      "parent"
+    ],
+    "name": "parent",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "child"
+    ],
+    "name": "child",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "sibling"
+    ],
+    "name": "sibling",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "uncle"
+    ],
+    "name": "uncle",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "cousin"
+    ],
+    "name": "cousin",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]
