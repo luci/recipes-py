@@ -4,8 +4,6 @@
 
 """Provides simulator test coverage for individual recipes."""
 
-import StringIO
-import contextlib
 import json
 import logging
 import os
@@ -13,7 +11,6 @@ import re
 import sys
 
 from . import env
-from . import stream
 import expect_tests
 
 # This variable must be set in the dynamic scope of the functions in this file.
@@ -58,24 +55,6 @@ def RenderExpectation(test_data, raw_expectations):
   return expect_tests.Result(raw_expectations)
 
 
-class SimulationAnnotatorStreamEngine(stream.AnnotatorStreamEngine):
-
-  def __init__(self):
-    self._step_buffer_map = {}
-    super(SimulationAnnotatorStreamEngine, self).__init__(
-        self.step_buffer(None))
-
-  def step_buffer(self, step_name):
-    return self._step_buffer_map.setdefault(step_name, StringIO.StringIO())
-
-  def _new_step_stream(self, step_name, allow_subannotations, nest_level):
-    return self._create_step_stream(
-        step_name,
-        self.step_buffer(step_name),
-        allow_subannotations,
-        nest_level)
-
-
 def RunRecipe(test_data):
   """Actually runs the recipe given the GenTests-supplied test_data."""
   from . import config_types
@@ -85,14 +64,8 @@ def RunRecipe(test_data):
   from . import stream
 
   config_types.ResetTostringFns()
-
-  annotator = SimulationAnnotatorStreamEngine()
-  stream_engine = stream.ProductStreamEngine(
-      stream.StreamEngineInvariants(),
-      annotator)
-  with stream_engine:
-    step_runner = step_runner.SimulationStepRunner(stream_engine, test_data,
-                                                   annotator)
+  with stream.StreamEngineInvariants() as stream_engine:
+    step_runner = step_runner.SimulationStepRunner(stream_engine, test_data)
 
     engine = run.RecipeEngine(step_runner, test_data.properties, _UNIVERSE)
     recipe_script = _UNIVERSE.load_recipe(test_data.properties['recipe'])

@@ -36,10 +36,8 @@ class StreamTest(unittest.TestCase):
     # subannotations, since the subannotator stream could have changed the
     # active step.  To do this right we would need to parse and re-emit
     # subannotations.
-    bars_baby = engine.new_step_stream(
-        'bar\'s baby',
-        allow_subannotations=True,
-        nest_level=1)
+    bars_baby = engine.new_step_stream('bar\'s baby', allow_subannotations=True)
+    bars_baby.set_nest_level(1)
     bars_baby.write_line('I\'m in bar\'s imagination!!')
     bars_baby.write_line('@@@STEP_WARNINGS@@@')
     bars_baby.reset_subannotation_state()

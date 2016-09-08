@@ -297,8 +297,8 @@ class RecipeEngine(object):
     * step - uses engine.create_step(...), and previous_step_result.
   """
 
-  ActiveStep = collections.namedtuple('ActiveStep', (
-      'step', 'step_result', 'open_step', 'nest_level'))
+  ActiveStep = collections.namedtuple('ActiveStep',
+                                      'step step_result open_step nest_level')
 
   def __init__(self, step_runner, properties, universe_view):
     """See run_steps() for parameter meanings."""
@@ -344,13 +344,9 @@ class RecipeEngine(object):
           " with try-finally blocks.")
     return self._step_stack[-1].step_result
 
-  def _close_through_level(self, level):
-    """Close all open steps whose nest level is >= the supplied level.
-
-    Args:
-      level (int): the nest level to close through.
-    """
-    while self._step_stack and self._step_stack[-1].nest_level >= level:
+  def _close_to_level(self, level):
+    """Close all open steps that are at least as deep as level."""
+    while self._step_stack and level <= self._step_stack[-1].nest_level:
       cur = self._step_stack.pop()
       if cur.step_result:
         cur.step_result.presentation.finalize(cur.open_step.stream)
@@ -373,8 +369,8 @@ class RecipeEngine(object):
 
       step_result = None
 
-      nest_level = step.get('nest_level', 0)
-      self._close_through_level(nest_level)
+      nest_level = step.pop('step_nest_level', 0)
+      self._close_to_level(nest_level)
 
       open_step = self._step_runner.open_step(step)
       self._step_stack.append(self.ActiveStep(
@@ -382,6 +378,8 @@ class RecipeEngine(object):
           step_result=None,
           open_step=open_step,
           nest_level=nest_level))
+      if nest_level:
+        open_step.stream.set_nest_level(nest_level)
 
       step_result = open_step.run()
       self._step_stack[-1] = (
@@ -431,7 +429,7 @@ class RecipeEngine(object):
             "status_code": 0
           }
         finally:
-          self._close_through_level(0)
+          self._close_to_level(0)
       except recipe_api.StepFailure as f:
         result = {
           # Include "recipe_result" so it doesn't get marked as infra failure.

@@ -13,7 +13,6 @@ class StepApi(recipe_api.RecipeApiPlain):
   def __init__(self, **kwargs):
     super(StepApi, self).__init__(**kwargs)
     self._step_names = {}
-    self._seen_steps = set()
 
   EXCEPTION = 'EXCEPTION'
   FAILURE = 'FAILURE'
@@ -136,30 +135,20 @@ class StepApi(recipe_api.RecipeApiPlain):
 
     # Obtain information from composite step parent.
     compositor = recipe_api._STEP_CONTEXT
-
-    # Calculate our full step name. If a step already has that name, add an
-    # index to the end of it.
-    #
-    # Note that another step could exist with that index already added to it
-    # by the user. If this happens, we'll continue appending indexes until we
-    # have a unique step name.
-    while True:
-      full_name = compositor.get_with_context('name', name)
-      if full_name not in self._seen_steps:
-        break
-
-      step_count = self._step_names.setdefault(full_name, 1) + 1
-      self._step_names[full_name] = step_count
-      name = "%s (%d)" % (name, step_count)
-    self._seen_steps.add(full_name)
-
+    name = compositor.get_with_context('name', name)
     if 'cwd' not in kwargs:
       kwargs['cwd'] = compositor.get('cwd')
     kwargs['env'] = compositor.get_with_context('env', kwargs.get('env', {}))
     kwargs['infra_step'] = compositor.get_with_context(
         'infra_step', bool(infra_step))
     kwargs['step_nest_level'] = compositor.get_with_context('nest_level', 0)
-    kwargs['name'] = full_name
+
+    # Disambiguate repeated names
+    step_count = self._step_names.setdefault(name, 0) + 1
+    self._step_names[name] = step_count
+    if step_count > 1:
+      name = "%s (%d)" % (name, step_count)
+    kwargs['name'] = name
 
     schema = self.make_config()
     schema.set_val(kwargs)

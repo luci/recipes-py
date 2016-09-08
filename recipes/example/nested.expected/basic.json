@@ -13,7 +13,7 @@
   {
     "cmd": [
       "sleep",
-      "1"
+      "10"
     ],
     "name": "complicated thing.first part.wait a bit",
     "~followup_annotations": [
@@ -43,7 +43,7 @@
   {
     "cmd": [
       "sleep",
-      "1"
+      "10"
     ],
     "name": "simple thing"
   },

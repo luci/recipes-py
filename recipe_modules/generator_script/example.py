@@ -73,20 +73,6 @@ def GenTests(api):
   )
 
   yield (
-    api.test('nested') +
-    api.properties(script_name='nested.py') +
-    api.generator_script(
-      'nested.py',
-      {'name': 'grandparent', 'cmd': ['echo', 'grandparent']},
-      {'name': 'parent', 'step_nest_level': 1, 'cmd': ['echo', 'parent']},
-      {'name': 'child', 'step_nest_level': 2, 'cmd': ['echo', 'child']},
-      {'name': 'sibling', 'step_nest_level': 2, 'cmd': ['echo', 'sibling']},
-      {'name': 'uncle', 'step_nest_level': 1, 'cmd': ['echo', 'uncle']},
-      {'name': 'cousin', 'step_nest_level': 2, 'cmd': ['echo', 'cousin']},
-    )
-  )
-
-  yield (
     api.test('malformed_command') +
     api.properties(script_name='malformed.py') +
     api.generator_script(

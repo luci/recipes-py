@@ -12,7 +12,7 @@ def RunSteps(api):
   # Nest all steps below this.
   with api.step.nest('complicated thing'):
     with api.step.nest('first part'):
-      api.step('wait a bit', ['sleep', '1'])
+      api.step('wait a bit', ['sleep', '10'])
 
     # Prefix the name without indenting.
     with api.step.context({'name': 'attempt number'}):
@@ -20,7 +20,7 @@ def RunSteps(api):
       assert step_result.step['name'] == 'complicated thing.attempt number.one'
       api.step('two', ['echo', 'derpy'])
 
-  api.step('simple thing', ['sleep', '1'])
+  api.step('simple thing', ['sleep', '10'])
 
 
 def GenTests(api):
