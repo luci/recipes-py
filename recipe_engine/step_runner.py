@@ -97,11 +97,12 @@ class StepRunner(object):
       allow_subannotations: if True, lets the step emit its own annotations
       trigger_specs: a list of trigger specifications, see also _trigger_builds.
       stdout: Path to a file to put step stdout into. If used, stdout won't
-              appear in annotator's stdout (and |allow_subannotations| is
-              ignored).
+          appear in annotator's stdout (and |allow_subannotations| is
+          ignored).
       stderr: Path to a file to put step stderr into. If used, stderr won't
-              appear in annotator's stderr.
+          appear in annotator's stderr.
       stdin: Path to a file to read step stdin from.
+      step_nest_level: the step's nesting level.
 
     Returns an OpenStep object.
     """
@@ -164,9 +165,12 @@ class SubprocessStepRunner(StepRunner):
 
   def open_step(self, step_dict):
     allow_subannotations = step_dict.get('allow_subannotations', False)
+    nest_level = step_dict.pop('step_nest_level', 0)
+
     step_stream = self._stream_engine.new_step_stream(
         step_dict['name'],
-        allow_subannotations=allow_subannotations)
+        allow_subannotations=allow_subannotations,
+        nest_level=nest_level)
     if not step_dict.get('cmd'):
       class EmptyOpenStep(OpenStep):
         def run(inner):
@@ -187,8 +191,6 @@ class SubprocessStepRunner(StepRunner):
         step_dict, recipe_test_api.DisabledTestData())
     cmd = map(str, step_dict['cmd'])
     step_env = _merge_envs(os.environ, step_dict.get('env', {}))
-    if 'nest_level' in step_dict:
-      step_stream.step_nest_level(step_dict['nest_level'])
     self._print_step(step_stream, step_dict, step_env)
 
     class ReturnOpenStep(OpenStep):
@@ -399,9 +401,10 @@ class SimulationStepRunner(StepRunner):
   steps that would have been run in steps_ran.  Uses test_data to mock return
   values.
   """
-  def __init__(self, stream_engine, test_data):
+  def __init__(self, stream_engine, test_data, annotator):
     self._test_data = test_data
     self._stream_engine = stream_engine
+    self._annotator = annotator
     self._step_history = collections.OrderedDict()
 
   @property
@@ -414,17 +417,17 @@ class SimulationStepRunner(StepRunner):
     # added to self._step_history, earlier.  So copy it here so at least we
     # keep the modifications local.
     step_dict = dict(step_dict)
+    nest_level = step_dict.pop('step_nest_level', 0)
 
     test_data_fn = step_dict.pop('step_test_data', recipe_test_api.StepTestData)
     step_test = self._test_data.pop_step_test_data(
         step_dict['name'], test_data_fn)
     step_dict, placeholders = render_step(step_dict, step_test)
-    outstream = StringIO.StringIO()
 
     # Layer the simulation step on top of the given stream engine.
-    step_stream = stream.ProductStreamEngine.StepStream(
-        self._stream_engine.new_step_stream(step_dict['name']),
-        stream.BareAnnotationStepStream(outstream))
+    step_stream = self._stream_engine.new_step_stream(
+        step_dict['name'],
+        nest_level=nest_level)
 
     class ReturnOpenStep(OpenStep):
       def run(inner):
@@ -440,12 +443,14 @@ class SimulationStepRunner(StepRunner):
         # note that '~' sorts after 'z' so that this will be last on each
         # step. also use _step to get access to the mutable step
         # dictionary.
-        lines = filter(None, outstream.getvalue()).splitlines()
+        buf = self._annotator.step_buffer(step_dict['name'])
+        lines = filter(None, buf.getvalue()).splitlines()
         lines = [stream.encode_str(x) for x in lines]
         if lines:
           # This magically floats into step_history, which we have already
           # added step_dict to.
           step_dict['~followup_annotations'] = lines
+        step_stream.close()
 
       @property
       def stream(inner):
