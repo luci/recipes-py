@@ -169,16 +169,16 @@ class StepDataAttributeError(AttributeError):
 
 
 class StepData(object):
-  def __init__(self, step, retcode):
+  def __init__(self, step_config, retcode):
+    self._step_config = step_config
     self._retcode = retcode
-    self._step = step
 
     self._presentation = StepPresentation()
     self.abort_reason = None
 
   @property
   def step(self):
-    return copy.deepcopy(self._step)
+    return dict((k, v) for k, v in self._step_config._asdict().iteritems() if v)
 
   @property
   def retcode(self):
@@ -189,4 +189,4 @@ class StepData(object):
     return self._presentation
 
   def __getattr__(self, name):
-    raise StepDataAttributeError(self._step['name'], name)
+    raise StepDataAttributeError(self._step_config.name, name)

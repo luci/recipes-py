@@ -162,7 +162,7 @@ def raises(exc_cls, stream_engine=None):
 
       if stream_engine:
         # Now do it a little nicer with annotations.
-        with stream_engine.new_step_stream('Recipe engine bug') as stream:
+        with stream_engine.make_step_stream('Recipe engine bug') as stream:
           stream.set_step_status('EXCEPTION')
           with stream.new_log_stream('exception') as log:
             log.write_split(traceback.format_exc())

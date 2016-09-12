@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 import contextlib
+import datetime
 
 from recipe_engine import recipe_api
 
@@ -163,7 +164,7 @@ class StepApi(recipe_api.RecipeApiPlain):
 
     schema = self.make_config()
     schema.set_val(kwargs)
-    return self.run_from_dict(self._engine.create_step(schema))
+    return self.run_from_dict(schema.as_jsonish())
 
   # TODO(martiniss) delete, and make generator_script use **kwargs on step()
   @recipe_api.composite_step

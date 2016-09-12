@@ -21,6 +21,7 @@ import json
 import time
 
 from . import env
+from . import recipe_api
 
 
 class StreamEngine(object):
@@ -68,8 +69,12 @@ class StreamEngine(object):
     def trigger(self, trigger_spec):
       raise NotImplementedError()
 
-  def new_step_stream(self, step_name, allow_subannotations=False,
-                      nest_level=None):
+  def make_step_stream(self, name, **kwargs):
+    """Shorthand for creating a step stream from a step configuration dict."""
+    kwargs['name'] = name
+    return self.new_step_stream(recipe_api._make_step_config(**kwargs))
+
+  def new_step_stream(self, step_config):
     """Creates a new StepStream in this engine.
 
     The step will be considered started at the moment this method is called.
@@ -81,12 +86,8 @@ class StreamEngine(object):
     i.e. parse -> re-emit.
 
     Args:
-      nest_level (int): The nest level of the step. None/0 are top-level.
+      step_config (recipe_api.StepConfig): The step configuration.
     """
-    return self._new_step_stream(step_name, allow_subannotations, nest_level)
-
-  def _new_step_stream(self, step_name, allow_subannotations, nest_level):
-    """ABC overridable function for "new_step_stream" with no defaults."""
     raise NotImplementedError()
 
   def open(self):
@@ -146,12 +147,10 @@ class ProductStreamEngine(StreamEngine):
     set_build_property = _void_product('set_build_property')
     trigger = _void_product('trigger')
 
-  def _new_step_stream(self, step_name, allow_subannotations, nest_level):
+  def new_step_stream(self, step_config):
     return self.StepStream(
-        self._engine_a._new_step_stream(
-            step_name, allow_subannotations, nest_level),
-        self._engine_b._new_step_stream(
-            step_name, allow_subannotations, nest_level))
+        self._engine_a.new_step_stream(step_config),
+        self._engine_b.new_step_stream(step_config))
 
   def open(self):
     self._engine_a.open()
@@ -181,7 +180,7 @@ class NoopStreamEngine(StreamEngine):
     set_build_property = _noop
     trigger = _noop
 
-  def _new_step_stream(self, step_name, allow_subannotations, nest_level):
+  def new_step_stream(self, step_config):
     return self.StepStream()
 
 
@@ -262,10 +261,11 @@ class StreamEngineInvariants(StreamEngine):
       assert self._open
       self._open = False
 
-  def _new_step_stream(self, step_name, allow_subannotations, nest_level):
-    assert step_name not in self._streams, 'Step %s already exists' % step_name
-    self._streams.add(step_name)
-    return self.StepStream(self, step_name)
+  def new_step_stream(self, step_config):
+    assert step_config.name not in self._streams, (
+        'Step %s already exists' % step_config.name)
+    self._streams.add(step_config.name)
+    return self.StepStream(self, step_config.name)
 
 
 class AnnotatorStreamEngine(StreamEngine):
@@ -394,21 +394,20 @@ class AnnotatorStreamEngine(StreamEngine):
       self._engine._current_step = None
 
 
-  def _new_step_stream(self, step_name, allow_subannotations, nest_level):
-    return self._create_step_stream(step_name, self._outstream,
-                                    allow_subannotations, nest_level)
+  def new_step_stream(self, step_config):
+    self.output_root_annotation('SEED_STEP', step_config.name)
+    return self._create_step_stream(step_config, self._outstream)
 
-  def _create_step_stream(self, step_name, outstream, allow_subannotations,
-                          nest_level):
-    self.output_root_annotation('SEED_STEP', step_name)
-    if allow_subannotations:
-      stream = self.AllowSubannotationsStepStream(self, outstream, step_name)
+  def _create_step_stream(self, step_config, outstream):
+    if step_config.allow_subannotations:
+      stream = self.AllowSubannotationsStepStream(self, outstream,
+                                                  step_config.name)
     else:
-      stream = self.StepStream(self, outstream, step_name)
+      stream = self.StepStream(self, outstream, step_config.name)
 
-    if nest_level > 0:
+    if step_config.nest_level > 0:
       # Emit our current nest level, if we are nested.
-      stream.output_annotation('STEP_NEST_LEVEL', str(nest_level))
+      stream.output_annotation('STEP_NEST_LEVEL', str(step_config.nest_level))
     return stream
 
 

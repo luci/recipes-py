@@ -86,25 +86,13 @@ class StepRunner(object):
     """
     return None
 
-  def open_step(self, step_dict):
+  def open_step(self, step_config):
     """Constructs an OpenStep object which can be used to actually run a step.
 
-    step_dict parameters:
-      name: name of the step, will appear in buildbots waterfall
-      cmd: command to run, list of one or more strings
-      cwd: absolute path to working directory for the command
-      env: dict with overrides for environment variables
-      allow_subannotations: if True, lets the step emit its own annotations
-      trigger_specs: a list of trigger specifications, see also _trigger_builds.
-      stdout: Path to a file to put step stdout into. If used, stdout won't
-          appear in annotator's stdout (and |allow_subannotations| is
-          ignored).
-      stderr: Path to a file to put step stderr into. If used, stderr won't
-          appear in annotator's stderr.
-      stdin: Path to a file to read step stdin from.
-      step_nest_level: the step's nesting level.
+    Args:
+      step_config (StepConfig): The step data.
 
-    Returns an OpenStep object.
+    Returns: an OpenStep object.
     """
     raise NotImplementedError()
 
@@ -163,20 +151,14 @@ class SubprocessStepRunner(StepRunner):
   def stream_engine(self):
     return self._stream_engine
 
-  def open_step(self, step_dict):
-    allow_subannotations = step_dict.get('allow_subannotations', False)
-    nest_level = step_dict.pop('step_nest_level', 0)
-
-    step_stream = self._stream_engine.new_step_stream(
-        step_dict['name'],
-        allow_subannotations=allow_subannotations,
-        nest_level=nest_level)
-    if not step_dict.get('cmd'):
+  def open_step(self, step_config):
+    step_stream = self._stream_engine.new_step_stream(step_config)
+    if not step_config.cmd:
       class EmptyOpenStep(OpenStep):
         def run(inner):
-          if 'trigger_specs' in step_dict:
-            self._trigger_builds(step_stream, step_dict['trigger_specs'])
-          return types.StepData(step_dict, 0)
+          if step_config.trigger_specs:
+            self._trigger_builds(step_stream, step_config.trigger_specs)
+          return types.StepData(step_config, 0)
 
         def finalize(inner):
           step_stream.close()
@@ -187,33 +169,42 @@ class SubprocessStepRunner(StepRunner):
 
       return EmptyOpenStep()
 
-    step_dict, placeholders = render_step(
-        step_dict, recipe_test_api.DisabledTestData())
-    cmd = map(str, step_dict['cmd'])
-    step_env = _merge_envs(os.environ, step_dict.get('env', {}))
-    self._print_step(step_stream, step_dict, step_env)
+    rendered_step = render_step(
+        step_config, recipe_test_api.DisabledTestData()
+    )
+    step_config = None # Make sure we use rendered step config.
+
+    rendered_step = rendered_step._replace(
+        config=rendered_step.config._replace(
+            cmd=map(str, rendered_step.config.cmd),
+        ),
+    )
+
+    step_env = _merge_envs(os.environ, (rendered_step.config.env or {}))
+    self._print_step(step_stream, rendered_step, step_env)
 
     class ReturnOpenStep(OpenStep):
       def run(inner):
+        step_config = rendered_step.config
         try:
           # Open file handles for IO redirection based on file names in
-          # step_dict.
+          # step_config.
           handles = {
             'stdout': step_stream,
             'stderr': step_stream,
             'stdin': None,
           }
           for key in handles:
-            fileName = step_dict.get(key)
+            fileName = getattr(step_config, key)
             if fileName:
               handles[key] = open(fileName, 'rb' if key == 'stdin' else 'wb')
           # The subprocess will inherit and close these handles.
           retcode = self._run_cmd(
-              cmd=cmd, timeout=step_dict.get('timeout'), handles=handles,
-              env=step_env, cwd=step_dict.get('cwd'))
+              cmd=step_config.cmd, timeout=step_config.timeout, handles=handles,
+              env=step_env, cwd=step_config.cwd)
         except subprocess42.TimeoutExpired as e:
           # TODO(martiniss): mark as exception?
-          raise recipe_api.StepTimeout(step_dict['name'], e.timeout)
+          raise recipe_api.StepTimeout(step_config.name, e.timeout)
         except OSError:
           with step_stream.new_log_stream('exception') as l:
             trace = traceback.format_exc().splitlines()
@@ -225,10 +216,10 @@ class SubprocessStepRunner(StepRunner):
           # NOTE(luqui) See the accompanying note in stream.py.
           step_stream.reset_subannotation_state()
 
-          if 'trigger_specs' in step_dict:
-            self._trigger_builds(step_stream, step_dict['trigger_specs'])
+          if step_config.trigger_specs:
+            self._trigger_builds(step_stream, step_config.trigger_specs)
 
-        return construct_step_result(step_dict, retcode, placeholders)
+        return construct_step_result(rendered_step, retcode)
 
       def finalize(inner):
         step_stream.close()
@@ -279,9 +270,9 @@ class SubprocessStepRunner(StepRunner):
     Intended to be similar to the information that Buildbot prints at the
     beginning of each non-annotator step.
     """
-    step_stream.write_line(' '.join(map(_shell_quote, step['cmd'])))
-    step_stream.write_line('in dir %s:' % (step.get('cwd') or os.getcwd()))
-    for key, value in sorted(step.items()):
+    step_stream.write_line(' '.join(map(_shell_quote, step.config.cmd)))
+    step_stream.write_line('in dir %s:' % (step.config.cwd or os.getcwd()))
+    for key, value in sorted(step.config._asdict().items()):
       if value is not None:
         step_stream.write_line(
             ' %s: %s' % (key, self._render_step_value(value)))
@@ -401,6 +392,16 @@ class SimulationStepRunner(StepRunner):
   steps that would have been run in steps_ran.  Uses test_data to mock return
   values.
   """
+
+  # List of attributes in a recipe_api.StepConfig to omit when rendering
+  # step history.
+  _STEP_CONFIG_RENDER_BLACKLIST = set((
+      'nest_level',
+      'ok_ret',
+      'infra_step',
+      'step_test_data',
+  ))
+
   def __init__(self, stream_engine, test_data, annotator):
     self._test_data = test_data
     self._stream_engine = stream_engine
@@ -411,46 +412,42 @@ class SimulationStepRunner(StepRunner):
   def stream_engine(self):
     return self._stream_engine
 
-  def open_step(self, step_dict):
-    # We modify step_dict.  In particular, we add ~followup_annotations during
-    # finalize, and depend on that side-effect being carried into what we
-    # added to self._step_history, earlier.  So copy it here so at least we
-    # keep the modifications local.
-    step_dict = dict(step_dict)
-    nest_level = step_dict.pop('step_nest_level', 0)
-
-    test_data_fn = step_dict.pop('step_test_data', recipe_test_api.StepTestData)
-    step_test = self._test_data.pop_step_test_data(
-        step_dict['name'], test_data_fn)
-    step_dict, placeholders = render_step(step_dict, step_test)
+  def open_step(self, step_config):
+    test_data_fn = step_config.step_test_data or recipe_test_api.StepTestData
+    step_test = self._test_data.pop_step_test_data(step_config.name,
+                                                   test_data_fn)
+    rendered_step = render_step(step_config, step_test)
+    step_config = None # Make sure we use rendered step config.
 
     # Layer the simulation step on top of the given stream engine.
-    step_stream = self._stream_engine.new_step_stream(
-        step_dict['name'],
-        nest_level=nest_level)
+    step_stream = self._stream_engine.new_step_stream(rendered_step.config)
 
     class ReturnOpenStep(OpenStep):
       def run(inner):
-        timeout = step_dict.get('timeout')
+        timeout = rendered_step.config.timeout
         if (timeout and step_test.times_out_after and
             step_test.times_out_after > timeout):
-          raise recipe_api.StepTimeout(step_dict['name'], timeout)
+          raise recipe_api.StepTimeout(rendered_step.config.name, timeout)
 
-        self._step_history[step_dict['name']] = step_dict
-        return construct_step_result(step_dict, step_test.retcode, placeholders)
+        # Install a placeholder for order.
+        self._step_history[rendered_step.config.name] = None
+        return construct_step_result(rendered_step, step_test.retcode)
 
       def finalize(inner):
+        rs = rendered_step
+
         # note that '~' sorts after 'z' so that this will be last on each
         # step. also use _step to get access to the mutable step
         # dictionary.
-        buf = self._annotator.step_buffer(step_dict['name'])
+        buf = self._annotator.step_buffer(rendered_step.config.name)
         lines = filter(None, buf.getvalue()).splitlines()
         lines = [stream.encode_str(x) for x in lines]
         if lines:
           # This magically floats into step_history, which we have already
-          # added step_dict to.
-          step_dict['~followup_annotations'] = lines
+          # added step_config to.
+          rs = rs._replace(followup_annotations=lines)
         step_stream.close()
+        self._step_history[rendered_step.config.name] = rs
 
       @property
       def stream(inner):
@@ -475,39 +472,55 @@ class SimulationStepRunner(StepRunner):
             self._test_data.step_data.keys(),
             self._test_data.expected_exception))
 
+  def _rendered_step_to_dict(self, rs):
+    d = dict((k, v) for k, v in rs.config._asdict().iteritems()
+             if v and k not in self._STEP_CONFIG_RENDER_BLACKLIST)
+    if rs.followup_annotations:
+      d['~followup_annotations'] = rs.followup_annotations
+    return d
+
   @property
   def steps_ran(self):
-    return self._step_history.values()
+    return [self._rendered_step_to_dict(rs)
+            for rs in self._step_history.itervalues()]
 
+
+# Placeholders associated with a rendered step.
+Placeholders = collections.namedtuple('Placeholders',
+    ('inputs_cmd', 'outputs_cmd', 'stdout', 'stderr', 'stdin'))
 
 # Result of 'render_step'.
-Placeholders = collections.namedtuple(
-    'Placeholders', ['inputs_cmd', 'outputs_cmd', 'stdout', 'stderr', 'stdin'])
+#
+# Fields:
+#   config (recipe_api.StepConfig): The step configuration.
+#   placeholders (Placeholders): Placeholders for this rendered step.
+#   followup_annotations (list): A list of followup annotation, populated during
+#       simulation test.
+RenderedStep = collections.namedtuple('RenderedStep',
+    ('config', 'placeholders', 'followup_annotations'))
 
 
 # Singleton object to indicate a value is not set.
 UNSET_VALUE = object()
 
 
-def render_step(step, step_test):
+def render_step(step_config, step_test):
   """Renders a step so that it can be fed to annotator.py.
 
   Args:
-    step: The step to render.
+    step_config (StepConfig): The step config to render.
     step_test: The test data json dictionary for this step, if any.
                Passed through unaltered to each placeholder.
 
-  Returns the rendered step and a Placeholders object representing any
-  placeholder instances that were found while rendering.
+  Returns (RenderedStep): the rendered step, including a Placeholders object
+      representing any placeholder instances that were found while rendering.
   """
-  rendered_step = dict(step)
-
   # Process 'cmd', rendering placeholders there.
   input_phs = collections.defaultdict(lambda: collections.defaultdict(list))
   output_phs = collections.defaultdict(
       lambda: collections.defaultdict(collections.OrderedDict))
   new_cmd = []
-  for item in step.get('cmd', []):
+  for item in (step_config.cmd or ()):
     if isinstance(item, util.Placeholder):
       module_name, placeholder_name = item.namespaces
       tdata = step_test.pop_placeholder(
@@ -524,16 +537,16 @@ def render_step(step, step_test):
         assert item.name not in output_phs[module_name][placeholder_name], (
             'Step "%s" has multiple output placeholders of %s.%s. Please '
             'specify explicit and different names for them.' % (
-              step['name'], module_name, placeholder_name))
+              step_config.name, module_name, placeholder_name))
         output_phs[module_name][placeholder_name][item.name] = (item, tdata)
     else:
       new_cmd.append(item)
-  rendered_step['cmd'] = new_cmd
+  step_config = step_config._replace(cmd=new_cmd)
 
   # Process 'stdout', 'stderr' and 'stdin' placeholders, if given.
   stdio_placeholders = {}
   for key in ('stdout', 'stderr', 'stdin'):
-    placeholder = step.get(key)
+    placeholder = getattr(step_config, key)
     tdata = None
     if placeholder:
       if key == 'stdin':
@@ -545,27 +558,33 @@ def render_step(step, step_test):
       tdata = getattr(step_test, key)
       placeholder.render(tdata)
       assert placeholder.backing_file is not None
-      rendered_step[key] = placeholder.backing_file
+      step_config = step_config._replace(**{key:placeholder.backing_file})
     stdio_placeholders[key] = (placeholder, tdata)
 
-  return rendered_step, Placeholders(
-      inputs_cmd=input_phs, outputs_cmd=output_phs, **stdio_placeholders)
+  return RenderedStep(
+      config=step_config,
+      placeholders=Placeholders(
+          inputs_cmd=input_phs,
+          outputs_cmd=output_phs,
+          **stdio_placeholders),
+      followup_annotations=None,
+  )
 
 
-def construct_step_result(step, retcode, placeholders):
+def construct_step_result(rendered_step, retcode):
   """Constructs a StepData step result from step return data.
 
   The main purpose of this function is to add output placeholder results into
   the step result where output placeholders appeared in the input step.
   Also give input placeholders the chance to do the clean-up if needed.
   """
-
-  step_result = types.StepData(step, retcode)
+  step_result = types.StepData(rendered_step.config, retcode)
 
   class BlankObject(object):
     pass
 
   # Input placeholders inside step |cmd|.
+  placeholders = rendered_step.placeholders
   for _, pholders in placeholders.inputs_cmd.iteritems():
     for _, items in pholders.iteritems():
       for ph, td in items:

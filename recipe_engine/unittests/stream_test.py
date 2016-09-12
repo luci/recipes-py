@@ -10,14 +10,15 @@ import unittest
 
 import test_env
 
+from recipe_engine import recipe_api
 from recipe_engine import stream
 
 class StreamTest(unittest.TestCase):
   def _example(self, engine):
-    foo = engine.new_step_stream('foo')
+    foo = engine.make_step_stream('foo')
     foo.write_line('foo says hello to xyrself')
 
-    bar = engine.new_step_stream('bar')
+    bar = engine.make_step_stream('bar')
     foo.write_split('foo says hello to bar:\n  hi bar')
     bar.write_line('bar says hi, shyly')
 
@@ -36,10 +37,10 @@ class StreamTest(unittest.TestCase):
     # subannotations, since the subannotator stream could have changed the
     # active step.  To do this right we would need to parse and re-emit
     # subannotations.
-    bars_baby = engine.new_step_stream(
+    bars_baby = engine.make_step_stream(
         'bar\'s baby',
         allow_subannotations=True,
-        nest_level=1)
+        step_nest_level=1)
     bars_baby.write_line('I\'m in bar\'s imagination!!')
     bars_baby.write_line('@@@STEP_WARNINGS@@@')
     bars_baby.reset_subannotation_state()
@@ -133,33 +134,33 @@ bar tries to kiss foo, but foo already left
 
   def test_write_after_close(self):
     with stream.StreamEngineInvariants() as engine:
-      foo = engine.new_step_stream('foo')
+      foo = engine.make_step_stream('foo')
       foo.close()
       with self.assertRaises(AssertionError):
         foo.write_line('no')
 
   def test_log_still_open(self):
     with stream.StreamEngineInvariants() as engine:
-      foo = engine.new_step_stream('foo')
+      foo = engine.make_step_stream('foo')
       log = foo.new_log_stream('log')
       with self.assertRaises(AssertionError):
         foo.close()
 
   def test_no_write_multiple_lines(self):
     with stream.StreamEngineInvariants() as engine:
-      foo = engine.new_step_stream('foo')
+      foo = engine.make_step_stream('foo')
       with self.assertRaises(AssertionError):
         foo.write_line('one thing\nand another!')
 
   def test_invalid_status(self):
     with stream.StreamEngineInvariants() as engine:
-      foo = engine.new_step_stream('foo')
+      foo = engine.make_step_stream('foo')
       with self.assertRaises(AssertionError):
         foo.set_step_status('SINGLE')
 
   def test_buildbot_status_constraint(self):
     with stream.StreamEngineInvariants() as engine:
-      foo = engine.new_step_stream('foo')
+      foo = engine.make_step_stream('foo')
       foo.set_step_status('FAILURE')
       with self.assertRaises(AssertionError):
         foo.set_step_status('SUCCESS')

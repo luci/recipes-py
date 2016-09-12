@@ -211,7 +211,7 @@ def run_steps(properties, stream_engine, step_runner, universe_view):
     'TESTING_SLAVENAME' in os.environ)):
     properties['use_mirror'] = False
 
-  with stream_engine.new_step_stream('setup_build') as s:
+  with stream_engine.make_step_stream('setup_build') as s:
     engine = RecipeEngine(step_runner, properties, universe_view)
 
     # Create all API modules and top level RunSteps function.  It doesn't launch
@@ -298,7 +298,7 @@ class RecipeEngine(object):
   """
 
   ActiveStep = collections.namedtuple('ActiveStep', (
-      'step', 'step_result', 'open_step', 'nest_level'))
+      'config', 'step_result', 'open_step'))
 
   def __init__(self, step_runner, properties, universe_view):
     """See run_steps() for parameter meanings."""
@@ -350,48 +350,44 @@ class RecipeEngine(object):
     Args:
       level (int): the nest level to close through.
     """
-    while self._step_stack and self._step_stack[-1].nest_level >= level:
+    while self._step_stack and self._step_stack[-1].config.nest_level >= level:
       cur = self._step_stack.pop()
       if cur.step_result:
         cur.step_result.presentation.finalize(cur.open_step.stream)
       cur.open_step.finalize()
 
-  def run_step(self, step):
+  def run_step(self, step_dict):
     """
     Runs a step.
 
     Args:
-      step: The step to run.
+      step_dict (dict): A step dictionary to run.
 
     Returns:
       A StepData object containing the result of running the step.
     """
+    step_config = recipe_api._make_step_config(**step_dict)
     with util.raises((recipe_api.StepFailure, OSError),
                      self._step_runner.stream_engine):
-      ok_ret = step.pop('ok_ret')
-      infra_step = step.pop('infra_step')
-
       step_result = None
 
-      nest_level = step.get('step_nest_level', 0)
-      self._close_through_level(nest_level)
+      self._close_through_level(step_config.nest_level)
 
-      open_step = self._step_runner.open_step(step)
+      open_step = self._step_runner.open_step(step_config)
       self._step_stack.append(self.ActiveStep(
-          step=step,
+          config=step_config,
           step_result=None,
-          open_step=open_step,
-          nest_level=nest_level))
+          open_step=open_step))
 
       step_result = open_step.run()
       self._step_stack[-1] = (
           self._step_stack[-1]._replace(step_result=step_result))
 
-      if step_result.retcode in ok_ret:
+      if step_result.retcode in step_config.ok_ret:
         step_result.presentation.status = 'SUCCESS'
         return step_result
       else:
-        if not infra_step:
+        if not step_config.infra_step:
           state = 'FAILURE'
           exc = recipe_api.StepFailure
         else:
@@ -403,7 +399,7 @@ class RecipeEngine(object):
         self._step_stack[-1].open_step.stream.write_line(
             'step returned non-zero exit code: %d' % step_result.retcode)
 
-        raise exc(step['name'], step_result)
+        raise exc(step_config.name, step_result)
 
   def run(self, recipe_script, api):
     """Run a recipe represented by a recipe_script object.
@@ -464,18 +460,6 @@ class RecipeEngine(object):
 
     result['name'] = '$result'
     return RecipeResult(result)
-
-  def create_step(self, step):  # pylint: disable=R0201
-    """Called by step module to instantiate a new step.
-
-    Args:
-      step: ConfigGroup object with information about the step, see
-        recipe_modules/step/config.py.
-
-    Returns:
-      Opaque engine specific object that is understood by 'run_steps' method.
-    """
-    return step.as_jsonish()
 
   def depend_on(self, recipe, properties, distributor=None):
     return self.depend_on_multi(

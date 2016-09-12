@@ -1,5 +1,13 @@
 [
   {
+    "cmd": [
+      "sleep",
+      "20"
+    ],
+    "name": "caught timeout",
+    "timeout": 1
+  },
+  {
     "name": "$result",
     "recipe_result": {
       "test_me": 4

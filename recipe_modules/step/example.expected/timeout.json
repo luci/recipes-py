@@ -1,5 +1,13 @@
 [
   {
+    "cmd": [
+      "sleep",
+      "20"
+    ],
+    "name": "timeout",
+    "timeout": 1
+  },
+  {
     "name": "$result",
     "reason": "Step Timeout: Step('timeout') timed out after 1",
     "recipe_result": null,

@@ -4,6 +4,7 @@
 
 from __future__ import absolute_import
 import contextlib
+import collections
 import keyword
 import re
 import types
@@ -16,6 +17,59 @@ from .config import Single
 from .util import ModuleInjectionSite
 
 from . import field_composer
+
+
+_StepConfig = collections.namedtuple('StepConfig',
+    ('name', 'cmd', 'cwd', 'env', 'allow_subannotations', 'trigger_specs',
+      'timeout', 'infra_step', 'stdout', 'stderr', 'stdin', 'ok_ret',
+      'step_test_data', 'nest_level'))
+
+class StepConfig(_StepConfig):
+  """
+  StepConfig parameters:
+    name: name of the step, will appear in buildbots waterfall
+    cmd: command to run, list of one or more strings
+    cwd: absolute path to working directory for the command
+    env: dict with overrides for environment variables
+    allow_subannotations: if True, lets the step emit its own annotations
+    trigger_specs: a list of trigger specifications, see also _trigger_builds.
+    timeout: if not None, a datetime.timedelta for the step timeout.
+    infra_step: if True, this is an infrastructure step.
+    stdout: Path to a file to put step stdout into. If used, stdout won't
+        appear in annotator's stdout (and |allow_subannotations| is
+        ignored).
+    stderr: Path to a file to put step stderr into. If used, stderr won't
+        appear in annotator's stderr.
+    stdin: Path to a file to read step stdin from.
+    ok_ret: Allowed return code list.
+    step_test_data: Possible associated step test data.
+    nest_level: the step's nesting level.
+  """
+
+
+def _make_step_config(**step):
+  """Galvanize a step dictionary into a formal StepConfig."""
+  step_config = StepConfig(
+      name=step.pop('name'),
+      cmd=step.pop('cmd', None),
+      cwd=step.pop('cwd', None),
+      env=step.pop('env', None),
+      allow_subannotations=step.pop('allow_subannotations', False),
+      trigger_specs=step.pop('trigger_specs', ()),
+      timeout=step.pop('timeout', None),
+      infra_step=step.pop('infra_step', False),
+      stdout=step.pop('stdout', None),
+      stderr=step.pop('stderr', None),
+      stdin=step.pop('stdin', None),
+      ok_ret=step.pop('ok_ret', {0}),
+      step_test_data=step.pop('step_test_data', None),
+      nest_level=step.pop('step_nest_level', 0),
+  )
+  if step:
+    unknown_keys = sorted(step.iterkeys())
+    raise KeyError('Unknown step dictionary keys: %s' % (
+        ', '.join(unknown_keys)))
+  return step_config
 
 
 class StepFailure(Exception):

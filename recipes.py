@@ -64,18 +64,18 @@ def handle_recipe_return(recipe_result, result_filename, stream_engine):
     if result_filename:
       with open(result_filename, 'w') as f:
         f.write(result_string)
-    with stream_engine.new_step_stream('recipe result') as s:
+    with stream_engine.make_step_stream('recipe result') as s:
       with s.new_log_stream('result') as l:
         l.write_split(result_string)
 
   if 'traceback' in recipe_result.result:
-    with stream_engine.new_step_stream('Uncaught Exception') as s:
+    with stream_engine.make_step_stream('Uncaught Exception') as s:
       with s.new_log_stream('exception') as l:
         for line in recipe_result.result['traceback']:
           l.write_line(line)
 
   if 'reason' in recipe_result.result:
-    with stream_engine.new_step_stream('Failure reason') as s:
+    with stream_engine.make_step_stream('Failure reason') as s:
       with s.new_log_stream('reason') as l:
         for line in recipe_result.result['reason'].splitlines():
           l.write_line(line)

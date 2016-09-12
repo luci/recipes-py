@@ -68,12 +68,9 @@ class SimulationAnnotatorStreamEngine(stream.AnnotatorStreamEngine):
   def step_buffer(self, step_name):
     return self._step_buffer_map.setdefault(step_name, StringIO.StringIO())
 
-  def _new_step_stream(self, step_name, allow_subannotations, nest_level):
-    return self._create_step_stream(
-        step_name,
-        self.step_buffer(step_name),
-        allow_subannotations,
-        nest_level)
+  def new_step_stream(self, step_config):
+    return self._create_step_stream(step_config,
+                                    self.step_buffer(step_config.name))
 
 
 def RunRecipe(test_data):
