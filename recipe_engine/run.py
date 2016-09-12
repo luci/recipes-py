@@ -366,7 +366,7 @@ class RecipeEngine(object):
     Returns:
       A StepData object containing the result of running the step.
     """
-    step_config = recipe_api._make_step_config(**step_dict)
+    step_config = recipe_api.StepConfig.create(**step_dict)
     with util.raises((recipe_api.StepFailure, OSError),
                      self._step_runner.stream_engine):
       step_result = None

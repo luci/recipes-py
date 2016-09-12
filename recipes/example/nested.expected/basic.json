@@ -1,8 +1,10 @@
 [
   {
+    "cmd": [],
     "name": "complicated thing"
   },
   {
+    "cmd": [],
     "name": "complicated thing.first part",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -39,9 +41,11 @@
     ]
   },
   {
+    "cmd": [],
     "name": "inherit status"
   },
   {
+    "cmd": [],
     "name": "inherit status.inner step",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
@@ -49,18 +53,21 @@
     ]
   },
   {
+    "cmd": [],
     "name": "versatile status",
     "~followup_annotations": [
       "@@@STEP_FAILURE@@@"
     ]
   },
   {
+    "cmd": [],
     "name": "versatile status.inner step",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
+    "cmd": [],
     "name": "versatile status.inner step.even deeper",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
