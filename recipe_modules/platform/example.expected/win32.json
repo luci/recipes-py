@@ -1,6 +1,5 @@
 [
   {
-    "cmd": [],
     "name": "platform things",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@name@win@@@",

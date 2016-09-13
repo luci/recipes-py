@@ -56,7 +56,6 @@
     ]
   },
   {
-    "cmd": [],
     "name": "Just print stuff",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@more@More stuff@@@",

@@ -354,22 +354,22 @@ class SubprocessStepRunner(StepRunner):
   def _trigger_builds(self, step, trigger_specs):
     assert trigger_specs is not None
     for trig in trigger_specs:
-      builder_name = trig.builder_name
+      builder_name = trig.get('builder_name')
       if not builder_name:
         raise ValueError('Trigger spec: builder_name is not set')
 
-      changes = trig.buildbot_changes or []
+      changes = trig.get('buildbot_changes', [])
       assert isinstance(changes, list), 'buildbot_changes must be a list'
       changes = map(self._normalize_change, changes)
 
       step.trigger(json.dumps({
           'builderNames': [builder_name],
-          'bucket': trig.bucket,
+          'bucket': trig.get('bucket'),
           'changes': changes,
           # if True and triggering fails asynchronously, fail entire build.
-          'critical': trig.critical,
-          'properties': trig.properties,
-          'tags': trig.tags,
+          'critical': trig.get('critical', True),
+          'properties': trig.get('properties'),
+          'tags': trig.get('tags'),
       }, sort_keys=True))
 
   def _normalize_change(self, change):
@@ -392,6 +392,15 @@ class SimulationStepRunner(StepRunner):
   steps that would have been run in steps_ran.  Uses test_data to mock return
   values.
   """
+
+  # List of attributes in a recipe_api.StepConfig to omit when rendering
+  # step history.
+  _STEP_CONFIG_RENDER_BLACKLIST = set((
+      'nest_level',
+      'ok_ret',
+      'infra_step',
+      'step_test_data',
+  ))
 
   def __init__(self, stream_engine, test_data, annotator):
     self._test_data = test_data
@@ -430,7 +439,7 @@ class SimulationStepRunner(StepRunner):
         # note that '~' sorts after 'z' so that this will be last on each
         # step. also use _step to get access to the mutable step
         # dictionary.
-        buf = self._annotator.step_buffer(rs.config.name)
+        buf = self._annotator.step_buffer(rendered_step.config.name)
         lines = filter(None, buf.getvalue()).splitlines()
         lines = [stream.encode_str(x) for x in lines]
         if lines:
@@ -438,7 +447,7 @@ class SimulationStepRunner(StepRunner):
           # added step_config to.
           rs = rs._replace(followup_annotations=lines)
         step_stream.close()
-        self._step_history[rs.config.name] = rs
+        self._step_history[rendered_step.config.name] = rs
 
       @property
       def stream(inner):
@@ -464,7 +473,8 @@ class SimulationStepRunner(StepRunner):
             self._test_data.expected_exception))
 
   def _rendered_step_to_dict(self, rs):
-    d = rs.config.render_to_dict()
+    d = dict((k, v) for k, v in rs.config._asdict().iteritems()
+             if v and k not in self._STEP_CONFIG_RENDER_BLACKLIST)
     if rs.followup_annotations:
       d['~followup_annotations'] = rs.followup_annotations
     return d
