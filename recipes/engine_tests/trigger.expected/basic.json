@@ -1,5 +1,6 @@
 [
   {
+    "cmd": [],
     "name": "trigger some junk",
     "trigger_specs": [
       {

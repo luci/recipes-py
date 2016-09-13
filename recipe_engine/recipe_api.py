@@ -19,57 +19,146 @@ from .util import ModuleInjectionSite
 from . import field_composer
 
 
-_StepConfig = collections.namedtuple('StepConfig',
+_TriggerSpec = collections.namedtuple('_TriggerSpec',
+    ('bucket', 'builder_name', 'properties', 'buildbot_changes', 'tags',
+     'critical'))
+
+class TriggerSpec(_TriggerSpec):
+  """
+  TriggerSpec is the internal representation of a raw trigger step. You should
+  use the standard 'step' recipe module, which will construct trigger specs
+  via API.
+  """
+
+  @classmethod
+  def _create(cls, builder_name, bucket=None, properties=None,
+              buildbot_changes=None, tags=None, critical=None):
+    """Creates a new TriggerSpec instance from its step API dictionary
+    keys/values.
+
+    Args:
+      builder_name (str): The name of the builder to trigger.
+      bucket (str or None): The name of the trigger bucket.
+      properties (dict or None): Key/value properties dictionary.
+      buildbot_changes (list or None): Optional list of BuildBot change dicts.
+      tags (list or None): Optional list of tag strings.
+      critical (bool or None): If true and triggering fails asynchronously, fail
+          the entire build. If None, the step defaults to being True.
+    """
+    if not isinstance(buildbot_changes, (types.NoneType, list)):
+      raise ValueError('buildbot_changes must be a list')
+
+    return cls(
+        bucket=bucket,
+        builder_name=builder_name,
+        properties=properties,
+        buildbot_changes=buildbot_changes,
+        tags=tags,
+        critical=bool(critical) if critical is not None else (True),
+    )
+
+  def _render_to_dict(self):
+    d = dict((k, v) for k, v in self._asdict().iteritems() if v)
+    if d['critical']:
+      d.pop('critical')
+    return d
+
+
+_StepConfig = collections.namedtuple('_StepConfig',
     ('name', 'cmd', 'cwd', 'env', 'allow_subannotations', 'trigger_specs',
-      'timeout', 'infra_step', 'stdout', 'stderr', 'stdin', 'ok_ret',
-      'step_test_data', 'nest_level'))
+     'timeout', 'infra_step', 'stdout', 'stderr', 'stdin', 'ok_ret',
+     'step_test_data', 'nest_level'))
 
 class StepConfig(_StepConfig):
   """
-  StepConfig parameters:
-    name: name of the step, will appear in buildbots waterfall
-    cmd: command to run, list of one or more strings
-    cwd: absolute path to working directory for the command
-    env: dict with overrides for environment variables
-    allow_subannotations: if True, lets the step emit its own annotations
-    trigger_specs: a list of trigger specifications, see also _trigger_builds.
-    timeout: if not None, a datetime.timedelta for the step timeout.
-    infra_step: if True, this is an infrastructure step.
-    stdout: Path to a file to put step stdout into. If used, stdout won't
-        appear in annotator's stdout (and |allow_subannotations| is
-        ignored).
-    stderr: Path to a file to put step stderr into. If used, stderr won't
-        appear in annotator's stderr.
-    stdin: Path to a file to read step stdin from.
-    ok_ret: Allowed return code list.
-    step_test_data: Possible associated step test data.
-    nest_level: the step's nesting level.
+  StepConfig is the representation of a raw step as the recipe_engine sees it.
+  You should use the standard 'step' recipe module, which will construct and
+  pass this data to the engine for you, instead. The only reason why you would
+  need to worry about this object is if you're modifying the step module itself.
+
+  The optional "env" parameter provides optional overrides for environment
+  variables. Each value is % formatted with the entire existing os.environ. A
+  value of `None` will remove that envvar from the environ. e.g.
+
+    {
+        "envvar": "%(envvar)s;%(envvar2)s;extra",
+        "delete_this": None,
+        "static_value": "something",
+    }
   """
 
+  _RENDER_WHITELIST=frozenset((
+    'cmd',
+  ))
 
-def _make_step_config(**step):
-  """Galvanize a step dictionary into a formal StepConfig."""
-  step_config = StepConfig(
-      name=step.pop('name'),
-      cmd=step.pop('cmd', None),
-      cwd=step.pop('cwd', None),
-      env=step.pop('env', None),
-      allow_subannotations=step.pop('allow_subannotations', False),
-      trigger_specs=step.pop('trigger_specs', ()),
-      timeout=step.pop('timeout', None),
-      infra_step=step.pop('infra_step', False),
-      stdout=step.pop('stdout', None),
-      stderr=step.pop('stderr', None),
-      stdin=step.pop('stdin', None),
-      ok_ret=step.pop('ok_ret', {0}),
-      step_test_data=step.pop('step_test_data', None),
-      nest_level=step.pop('step_nest_level', 0),
-  )
-  if step:
-    unknown_keys = sorted(step.iterkeys())
-    raise KeyError('Unknown step dictionary keys: %s' % (
-        ', '.join(unknown_keys)))
-  return step_config
+  _RENDER_BLACKLIST=frozenset((
+    'nest_level',
+    'ok_ret',
+    'infra_step',
+    'step_test_data',
+  ))
+
+  @classmethod
+  def create(cls, name, cmd=None, cwd=None, env=None,
+             allow_subannotations=None, trigger_specs=None, timeout=None,
+             infra_step=None, stdout=None, stderr=None, stdin=None,
+             ok_ret=None, step_test_data=None, step_nest_level=None):
+    """
+    Initializes a new StepConfig step API dictionary.
+
+    Args:
+      name (str): name of the step, will appear in buildbots waterfall
+      cmd: command to run. Acceptable types: str, Path, Placeholder, or None.
+      cwd (str or None): absolute path to working directory for the command
+      env (dict): overrides for environment variables, described above.
+      allow_subannotations (bool): if True, lets the step emit its own
+          annotations. NOTE: Enabling this can cause some buggy behavior. Please
+          strongly consider using step_result.presentation instead. If you have
+          questions, please contact infra-dev@chromium.org.
+      trigger_specs: a list of trigger specifications, see also _trigger_builds.
+      timeout: if not None, a datetime.timedelta for the step timeout.
+      infra_step: if True, this is an infrastructure step. Failures will raise
+          InfraFailure instead of StepFailure.
+      stdout: Placeholder to put step stdout into. If used, stdout won't appear
+          in annotator's stdout (and |allow_subannotations| is ignored).
+      stderr: Placeholder to put step stderr into. If used, stderr won't appear
+          in annotator's stderr.
+      stdin: Placeholder to read step stdin from.
+      ok_ret (iter): set of return codes allowed. If the step process returns
+          something not on this list, it will raise a StepFailure (or
+          InfraFailure if infra_step is True). If omitted, {0} will be used.
+      step_test_data (func -> recipe_test_api.StepTestData): A factory which
+          returns a StepTestData object that will be used as the default test
+          data for this step. The recipe author can override/augment this object
+          in the GenTests function.
+      step_nest_level (int): the step's nesting level.
+    """
+    return cls(
+        name=name,
+        cmd=cmd,
+        cwd=cwd,
+        env=env,
+        allow_subannotations=bool(allow_subannotations),
+        trigger_specs=[TriggerSpec._create(**trig)
+                       for trig in (trigger_specs or ())],
+        timeout=timeout,
+        infra_step=bool(infra_step),
+        stdout=stdout,
+        stderr=stderr,
+        stdin=stdin,
+        ok_ret=frozenset(ok_ret or (0,)),
+        step_test_data=step_test_data,
+        nest_level=int(step_nest_level or 0),
+    )
+
+  def render_to_dict(self):
+    self = self._replace(
+        trigger_specs=[trig._render_to_dict()
+                       for trig in (self.trigger_specs or ())],
+    )
+    return dict((k, v) for k, v in self._asdict().iteritems()
+                if (v or k in self._RENDER_WHITELIST)
+                and k not in self._RENDER_BLACKLIST)
 
 
 class StepFailure(Exception):
@@ -506,8 +595,7 @@ class RecipeApiPlain(object):
   def set_config(self, config_name=None, optional=False, **CONFIG_VARS):
     """Sets the modules and its dependencies to the named configuration."""
     assert self._module
-    config, params = self.make_config_params(config_name, optional,
-                                             **CONFIG_VARS)
+    config, _ = self.make_config_params(config_name, optional, **CONFIG_VARS)
     if config:
       self.c = config
 
