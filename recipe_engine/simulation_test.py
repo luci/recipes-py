@@ -133,6 +133,9 @@ def cover_omit():
   return omit
 
 
+class InsufficientTestCoverage(Exception): pass
+
+
 @expect_tests.covers(test_gen_coverage)
 def GenerateTests():
   from . import loader
@@ -149,7 +152,10 @@ def GenerateTests():
 
       covers = cover_mods + [recipe_path]
 
+      full_expectation_count = 0
       for test_data in recipe.GenTests(test_api):
+        if not test_data.whitelist_data:
+          full_expectation_count += 1
         root, name = os.path.split(recipe_path)
         name = os.path.splitext(name)[0]
         expect_path = os.path.join(root, '%s.expected' % name)
@@ -163,9 +169,15 @@ def GenerateTests():
             covers=covers,
             break_funcs=(recipe.RunSteps,)
         )
+
+      if full_expectation_count < 1:
+        raise InsufficientTestCoverage(
+          'Must have at least 1 test without a whitelist!')
     except:
-      print 'While generating test cases for %s:%s' % (recipe_path, recipe_name)
-      raise
+      info = sys.exc_info()
+      new_exec = Exception('While generating results for %r: %s: %s' % (
+        recipe_name, info[0].__name__, str(info[1])))
+      raise new_exec.__class__, new_exec, info[2]
 
 
 def main(universe, args=None):
