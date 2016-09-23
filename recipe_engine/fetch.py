@@ -4,10 +4,10 @@
 
 import base64
 import functools
+import httplib
 import json
 import logging
 import os
-import random
 import shutil
 import sys
 import tarfile
@@ -17,6 +17,7 @@ import time
 # Add third party paths.
 from . import env
 from . import requests_ssl
+from . import util
 from .requests_ssl import requests
 
 import subprocess42
@@ -26,10 +27,6 @@ from . import package_pb2
 
 
 class FetchError(Exception):
-  pass
-
-
-class UncleanFilesystemError(FetchError):
   pass
 
 
@@ -51,30 +48,14 @@ def _run_git(checkout_dir, *args):
   return subprocess42.check_output(cmd)
 
 
-def _retry(f):
-  @functools.wraps(f)
-  def wrapper(*args, **kwargs):
-    delay = random.uniform(2, 5)
-    for _ in range(5):
-      try:
-        return f(*args, **kwargs)
-      except (requests.exceptions.RequestException,
-              subprocess42.CalledProcessError):
-        # Only retry specific errors that may be transient.
-        logging.exception('retrying')
-        time.sleep(delay)
-        delay *= 2
-    return f(*args, **kwargs)
-  return wrapper
-
-
 class Backend(object):
   @property
   def repo_type(self):
     """Returns repo type (see package_pb2.DepSpec)."""
     raise NotImplementedError()
 
-  def branch_spec(self, branch):
+  @staticmethod
+  def branch_spec(branch):
     """Returns branch spec for given branch suitable for given git backend."""
     raise NotImplementedError()
 
@@ -103,6 +84,14 @@ class Backend(object):
     raise NotImplementedError()
 
 
+class UncleanFilesystemError(FetchError):
+  pass
+
+
+class GitFetchError(FetchError):
+  pass
+
+
 class GitBackend(Backend):
   """GitBackend uses a local git checkout."""
 
@@ -114,7 +103,7 @@ class GitBackend(Backend):
   def branch_spec(branch):
     return 'origin/%s' % branch
 
-  @_retry
+  @util.exponential_retry(condition=lambda e: isinstance(e, GitFetchError))
   def checkout(self, repo, revision, checkout_dir, allow_fetch):
     logging.info('Freshening repository %s in %s', repo, checkout_dir)
 
@@ -135,7 +124,14 @@ class GitBackend(Backend):
       if not allow_fetch:
         raise FetchNotAllowedError(
             'need to fetch %s but fetch not allowed' % repo)
-      _run_git(checkout_dir, 'fetch')
+
+      # Fetch from the remote Git repository. Wrap this in a GitFetchError
+      # for exponential retry on failure.
+      try:
+        _run_git(checkout_dir, 'fetch')
+      except subprocess42.CalledProcessError as e:
+        raise GitFetchError(e.message)
+
     _run_git(checkout_dir, 'reset', '-q', '--hard', revision)
 
   def updates(self, repo, revision, checkout_dir, allow_fetch,
@@ -161,8 +157,29 @@ class GitBackend(Backend):
     }
 
 
+class GitilesFetchError(FetchError):
+  """An HTTP error that occurred during Gitiles fetching."""
+
+  def __init__(self, status, message):
+    super(GitilesFetchError, self).__init__(
+        'Gitiles error code (%d): %s' % (status, message))
+    self.status = status
+    self.message = message
+
+  @staticmethod
+  def transient(e):
+    """
+    Returns (bool): True if "e" is a GitilesFetchError with transient HTTP code.
+    """
+    return (isinstance(e, GitilesFetchError) and
+            e.status >= httplib.INTERNAL_SERVER_ERROR)
+
+
 class GitilesBackend(Backend):
   """GitilesBackend uses a repo served by Gitiles."""
+
+  # Header at the beginning of Gerrit/Gitiles JSON API responses.
+  _GERRIT_XSRF_HEADER = ')]}\'\n'
 
   @property
   def repo_type(self):
@@ -172,7 +189,6 @@ class GitilesBackend(Backend):
   def branch_spec(branch):
     return branch
 
-  @_retry
   def checkout(self, repo, revision, checkout_dir, allow_fetch):
     requests_ssl.check_requests_ssl()
     logging.info('Freshening repository %s in %s', repo, checkout_dir)
@@ -188,9 +204,8 @@ class GitilesBackend(Backend):
 
     recipes_cfg_url = '%s/+/%s/infra/config/recipes.cfg?format=TEXT' % (
         repo, requests.utils.quote(revision))
-    logging.info('fetching %s' % recipes_cfg_url)
-    recipes_cfg_request = requests.get(recipes_cfg_url)
-    recipes_cfg_text = base64.b64decode(recipes_cfg_request.text)
+    recipes_cfg_text = base64.b64decode(
+        self._fetch_gitiles(recipes_cfg_url).text)
     recipes_cfg_proto = package_pb2.Package()
     text_format.Merge(recipes_cfg_text, recipes_cfg_proto)
     recipes_path_rel = recipes_cfg_proto.recipes_path
@@ -209,10 +224,9 @@ class GitilesBackend(Backend):
 
     archive_url = '%s/+archive/%s/%s.tar.gz' % (
         repo, requests.utils.quote(revision), recipes_path_rel)
-    logging.info('fetching %s' % archive_url)
-    archive_request = requests.get(archive_url)
+    archive_response = self._fetch_gitiles(archive_url)
     with tempfile.NamedTemporaryFile(delete=False) as f:
-      f.write(archive_request.content)
+      f.write(archive_response.content)
       f.close()
 
       try:
@@ -274,10 +288,27 @@ class GitilesBackend(Backend):
     logging.info('resolved %s to %s', revision, rev_json['commit'])
     return rev_json['commit']
 
-  def _fetch_gitiles_json(self, url):
+  @staticmethod
+  @util.exponential_retry(condition=GitilesFetchError.transient)
+  def _fetch_gitiles(url):
+    """Fetches a remote URL and returns the response object on success."""
+    logging.info('fetching %s' % url)
+    resp = requests.get(url)
+    if resp.status_code != httplib.OK:
+      raise GitilesFetchError(resp.status_code, resp.text)
+    return resp
+
+  @classmethod
+  @util.exponential_retry(condition=GitilesFetchError.transient)
+  def _fetch_gitiles_json(cls, url):
     """Fetches JSON from Gitiles and returns parsed result."""
     logging.info('fetching %s', url)
-    raw = requests.get(url).text
-    if not raw.startswith(')]}\'\n'):
-      raise FetchError('Unexpected gitiles response: %s' % raw)
-    return json.loads(raw.split('\n', 1)[1])
+
+    resp = requests.get(url)
+    if resp.status_code != httplib.OK:
+      raise GitilesFetchError(resp.status_code, resp.text)
+
+    if not resp.text.startswith(cls._GERRIT_XSRF_HEADER):
+      raise GitilesFetchError(resp.status_code, 'Missing XSRF header')
+
+    return json.loads(resp.text[len(cls._GERRIT_XSRF_HEADER):])

@@ -9,6 +9,7 @@ import json
 import os
 import sys
 import unittest
+import time
 
 import test_env
 
@@ -158,9 +159,9 @@ project_id: "foo"
 recipes_path: "path/to/recipes"
 """.lstrip()
     requests_get.side_effect = [
-        mock.Mock(text=u')]}\'\n{ "commit": "abc123" }'),
-        mock.Mock(text=base64.b64encode(proto_text)),
-        mock.Mock(content=''),
+        mock.Mock(text=u')]}\'\n{ "commit": "abc123" }', status_code=200),
+        mock.Mock(text=base64.b64encode(proto_text), status_code=200),
+        mock.Mock(content='', status_code=200),
     ]
 
     fetch.GitilesBackend().checkout(
@@ -217,9 +218,9 @@ recipes_path: "path/to/recipes"
         ],
     }
     requests_get.side_effect = [
-        mock.Mock(text=u')]}\'\n{ "commit": "sha_a" }'),
-        mock.Mock(text=u')]}\'\n{ "commit": "sha_b" }'),
-        mock.Mock(text=u')]}\'\n%s' % json.dumps(log_json)),
+        mock.Mock(text=u')]}\'\n{ "commit": "sha_a" }', status_code=200),
+        mock.Mock(text=u')]}\'\n{ "commit": "sha_b" }', status_code=200),
+        mock.Mock(text=u')]}\'\n%s' % json.dumps(log_json), status_code=200),
     ]
 
     self.assertEqual(
@@ -241,7 +242,8 @@ recipes_path: "path/to/recipes"
       'message': 'message',
     }
     requests_get.side_effect = [
-        mock.Mock(text=u')]}\'\n%s' % json.dumps(revision_json)),
+        mock.Mock(text=u')]}\'\n%s' % json.dumps(revision_json),
+                  status_code=200),
     ]
     result = fetch.GitilesBackend().commit_metadata(
         'repo', 'revision', 'dir', allow_fetch=True)
@@ -253,6 +255,56 @@ recipes_path: "path/to/recipes"
       mock.call('repo/+/revision?format=JSON'),
     ])
 
+  @mock.patch('requests.get')
+  def test_non_transient_error(self, requests_get):
+    requests_get.side_effect = [
+        mock.Mock(text='Not permitted.', status_code=403),
+    ]
+    with self.assertRaises(fetch.GitilesFetchError):
+      fetch.GitilesBackend().commit_metadata(
+          'repo', 'revision', 'dir', allow_fetch=True)
+    requests_get.assert_has_calls([
+      mock.call('repo/+/revision?format=JSON'),
+    ])
+
+  @mock.patch('requests.get')
+  @mock.patch('time.sleep')
+  @mock.patch('logging.exception')
+  def test_transient_retry(self, logging_exception, time_sleep, requests_get):
+    counts = {
+        'sleeps': 0,
+        'fails': 0,
+    }
+
+    def count_sleep(delay):
+      counts['sleeps'] += 1
+    time_sleep.side_effect = count_sleep
+
+    revision_json = {
+      'author': {'email': 'author'},
+      'message': 'message',
+    }
+
+    # Fail transiently 4 times, but succeed on the 5th.
+    def transient_side_effect(*args, **kwargs):
+      if counts['fails'] < 4:
+        counts['fails'] += 1
+        return mock.Mock(text=u'Not permitted (%(fails)d).' % counts,
+                         status_code=500)
+      return mock.Mock(text=u')]}\'\n%s' % json.dumps(revision_json),
+                       status_code=200)
+    requests_get.side_effect = transient_side_effect
+
+    result = fetch.GitilesBackend().commit_metadata(
+        'repo', 'revision', 'dir', allow_fetch=True)
+    self.assertEqual(result, {
+      'author': 'author',
+      'message': 'message',
+    })
+    self.assertEqual(counts['sleeps'], 4)
+    requests_get.assert_has_calls([
+      mock.call('repo/+/revision?format=JSON'),
+    ] * 5)
 
 if __name__ == '__main__':
   unittest.main()
