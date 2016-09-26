@@ -21,7 +21,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='annotations.proto',
   package='milo',
   syntax='proto3',
-  serialized_pb=_b('\n\x11\x61nnotations.proto\x12\x04milo\x1a\x1fgoogle/protobuf/timestamp.proto\"\xcb\x01\n\x0e\x46\x61ilureDetails\x12\'\n\x04type\x18\x01 \x01(\x0e\x32\x19.milo.FailureDetails.Type\x12\x0c\n\x04text\x18\x02 \x01(\t\x12*\n\x14\x66\x61iled_dm_dependency\x18\x03 \x03(\x0b\x32\x0c.milo.DMLink\"V\n\x04Type\x12\x0b\n\x07GENERAL\x10\x00\x12\r\n\tEXCEPTION\x10\x01\x12\t\n\x05INFRA\x10\x02\x12\x18\n\x14\x44M_DEPENDENCY_FAILED\x10\x03\x12\r\n\tCANCELLED\x10\x04\"\xbb\x06\n\x04Step\x12\x0c\n\x04name\x18\x01 \x01(\t\x12#\n\x07\x63ommand\x18\x02 \x01(\x0b\x32\x12.milo.Step.Command\x12\x1c\n\x06status\x18\x03 \x01(\x0e\x32\x0c.milo.Status\x12-\n\x0f\x66\x61ilure_details\x18\x04 \x01(\x0b\x32\x14.milo.FailureDetails\x12#\n\x07substep\x18\x05 \x03(\x0b\x32\x12.milo.Step.Substep\x12)\n\rstdout_stream\x18\x06 \x01(\x0b\x32\x12.milo.LogdogStream\x12)\n\rstderr_stream\x18\x07 \x01(\x0b\x32\x12.milo.LogdogStream\x12+\n\x07started\x18\x08 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12)\n\x05\x65nded\x18\t \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x0c\n\x04text\x18\x14 \x03(\t\x12%\n\x08progress\x18\x15 \x01(\x0b\x32\x13.milo.Step.Progress\x12\x18\n\x04link\x18\x16 \x01(\x0b\x32\n.milo.Link\x12\x1f\n\x0bother_links\x18\x17 \x03(\x0b\x32\n.milo.Link\x12%\n\x08property\x18\x18 \x03(\x0b\x32\x13.milo.Step.Property\x1a\x8e\x01\n\x07\x43ommand\x12\x14\n\x0c\x63ommand_line\x18\x01 \x03(\t\x12\x0b\n\x03\x63wd\x18\x02 \x01(\t\x12\x30\n\x07\x65nviron\x18\x03 \x03(\x0b\x32\x1f.milo.Step.Command.EnvironEntry\x1a.\n\x0c\x45nvironEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x61\n\x07Substep\x12\x1a\n\x04step\x18\x01 \x01(\x0b\x32\n.milo.StepH\x00\x12/\n\x11\x61nnotation_stream\x18\x02 \x01(\x0b\x32\x12.milo.LogdogStreamH\x00\x42\t\n\x07substep\x1a,\n\x08Progress\x12\r\n\x05total\x18\x01 \x01(\x05\x12\x11\n\tcompleted\x18\x02 \x01(\x05\x1a\'\n\x08Property\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"\xbf\x01\n\x04Link\x12\r\n\x05label\x18\x01 \x01(\t\x12\x13\n\x0b\x61lias_label\x18\x02 \x01(\t\x12\r\n\x03url\x18\x03 \x01(\tH\x00\x12+\n\rlogdog_stream\x18\x04 \x01(\x0b\x32\x12.milo.LogdogStreamH\x00\x12-\n\x0eisolate_object\x18\x05 \x01(\x0b\x32\x13.milo.IsolateObjectH\x00\x12\x1f\n\x07\x64m_link\x18\x06 \x01(\x0b\x32\x0c.milo.DMLinkH\x00\x42\x07\n\x05value\"<\n\x0cLogdogStream\x12\x0e\n\x06server\x18\x01 \x01(\t\x12\x0e\n\x06prefix\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\"-\n\rIsolateObject\x12\x0e\n\x06server\x18\x01 \x01(\t\x12\x0c\n\x04hash\x18\x02 \x01(\t\"K\n\x06\x44MLink\x12\x0e\n\x06server\x18\x01 \x01(\t\x12\r\n\x05quest\x18\x02 \x01(\t\x12\x0f\n\x07\x61ttempt\x18\x03 \x01(\x03\x12\x11\n\texecution\x18\x04 \x01(\x03*<\n\x06Status\x12\x0b\n\x07RUNNING\x10\x00\x12\x0b\n\x07SUCCESS\x10\x01\x12\x0b\n\x07\x46\x41ILURE\x10\x02\x12\x0b\n\x07PENDING\x10\x03\x62\x06proto3')
+  serialized_pb=_b('\n\x11\x61nnotations.proto\x12\x04milo\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd8\x01\n\x0e\x46\x61ilureDetails\x12\'\n\x04type\x18\x01 \x01(\x0e\x32\x19.milo.FailureDetails.Type\x12\x0c\n\x04text\x18\x02 \x01(\t\x12*\n\x14\x66\x61iled_dm_dependency\x18\x03 \x03(\x0b\x32\x0c.milo.DMLink\"c\n\x04Type\x12\x0b\n\x07GENERAL\x10\x00\x12\r\n\tEXCEPTION\x10\x01\x12\t\n\x05INFRA\x10\x02\x12\x18\n\x14\x44M_DEPENDENCY_FAILED\x10\x03\x12\r\n\tCANCELLED\x10\x04\x12\x0b\n\x07\x45XPIRED\x10\x05\"\xbb\x06\n\x04Step\x12\x0c\n\x04name\x18\x01 \x01(\t\x12#\n\x07\x63ommand\x18\x02 \x01(\x0b\x32\x12.milo.Step.Command\x12\x1c\n\x06status\x18\x03 \x01(\x0e\x32\x0c.milo.Status\x12-\n\x0f\x66\x61ilure_details\x18\x04 \x01(\x0b\x32\x14.milo.FailureDetails\x12#\n\x07substep\x18\x05 \x03(\x0b\x32\x12.milo.Step.Substep\x12)\n\rstdout_stream\x18\x06 \x01(\x0b\x32\x12.milo.LogdogStream\x12)\n\rstderr_stream\x18\x07 \x01(\x0b\x32\x12.milo.LogdogStream\x12+\n\x07started\x18\x08 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12)\n\x05\x65nded\x18\t \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x0c\n\x04text\x18\x14 \x03(\t\x12%\n\x08progress\x18\x15 \x01(\x0b\x32\x13.milo.Step.Progress\x12\x18\n\x04link\x18\x16 \x01(\x0b\x32\n.milo.Link\x12\x1f\n\x0bother_links\x18\x17 \x03(\x0b\x32\n.milo.Link\x12%\n\x08property\x18\x18 \x03(\x0b\x32\x13.milo.Step.Property\x1a\x8e\x01\n\x07\x43ommand\x12\x14\n\x0c\x63ommand_line\x18\x01 \x03(\t\x12\x0b\n\x03\x63wd\x18\x02 \x01(\t\x12\x30\n\x07\x65nviron\x18\x03 \x03(\x0b\x32\x1f.milo.Step.Command.EnvironEntry\x1a.\n\x0c\x45nvironEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x61\n\x07Substep\x12\x1a\n\x04step\x18\x01 \x01(\x0b\x32\n.milo.StepH\x00\x12/\n\x11\x61nnotation_stream\x18\x02 \x01(\x0b\x32\x12.milo.LogdogStreamH\x00\x42\t\n\x07substep\x1a,\n\x08Progress\x12\r\n\x05total\x18\x01 \x01(\x05\x12\x11\n\tcompleted\x18\x02 \x01(\x05\x1a\'\n\x08Property\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"\xbf\x01\n\x04Link\x12\r\n\x05label\x18\x01 \x01(\t\x12\x13\n\x0b\x61lias_label\x18\x02 \x01(\t\x12\r\n\x03url\x18\x03 \x01(\tH\x00\x12+\n\rlogdog_stream\x18\x04 \x01(\x0b\x32\x12.milo.LogdogStreamH\x00\x12-\n\x0eisolate_object\x18\x05 \x01(\x0b\x32\x13.milo.IsolateObjectH\x00\x12\x1f\n\x07\x64m_link\x18\x06 \x01(\x0b\x32\x0c.milo.DMLinkH\x00\x42\x07\n\x05value\"<\n\x0cLogdogStream\x12\x0e\n\x06server\x18\x01 \x01(\t\x12\x0e\n\x06prefix\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\"-\n\rIsolateObject\x12\x0e\n\x06server\x18\x01 \x01(\t\x12\x0c\n\x04hash\x18\x02 \x01(\t\"K\n\x06\x44MLink\x12\x0e\n\x06server\x18\x01 \x01(\t\x12\r\n\x05quest\x18\x02 \x01(\t\x12\x0f\n\x07\x61ttempt\x18\x03 \x01(\x03\x12\x11\n\texecution\x18\x04 \x01(\x03*<\n\x06Status\x12\x0b\n\x07RUNNING\x10\x00\x12\x0b\n\x07SUCCESS\x10\x01\x12\x0b\n\x07\x46\x41ILURE\x10\x02\x12\x0b\n\x07PENDING\x10\x03\x62\x06proto3')
   ,
   dependencies=[google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,])
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
@@ -51,8 +51,8 @@ _STATUS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=1476,
-  serialized_end=1536,
+  serialized_start=1489,
+  serialized_end=1549,
 )
 _sym_db.RegisterEnumDescriptor(_STATUS)
 
@@ -89,11 +89,15 @@ _FAILUREDETAILS_TYPE = _descriptor.EnumDescriptor(
       name='CANCELLED', index=4, number=4,
       options=None,
       type=None),
+    _descriptor.EnumValueDescriptor(
+      name='EXPIRED', index=5, number=5,
+      options=None,
+      type=None),
   ],
   containing_type=None,
   options=None,
   serialized_start=178,
-  serialized_end=264,
+  serialized_end=277,
 )
 _sym_db.RegisterEnumDescriptor(_FAILUREDETAILS_TYPE)
 
@@ -140,7 +144,7 @@ _FAILUREDETAILS = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=61,
-  serialized_end=264,
+  serialized_end=277,
 )
 
 
@@ -177,8 +181,8 @@ _STEP_COMMAND_ENVIRONENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=862,
-  serialized_end=908,
+  serialized_start=875,
+  serialized_end=921,
 )
 
 _STEP_COMMAND = _descriptor.Descriptor(
@@ -221,8 +225,8 @@ _STEP_COMMAND = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=766,
-  serialized_end=908,
+  serialized_start=779,
+  serialized_end=921,
 )
 
 _STEP_SUBSTEP = _descriptor.Descriptor(
@@ -261,8 +265,8 @@ _STEP_SUBSTEP = _descriptor.Descriptor(
       name='substep', full_name='milo.Step.Substep.substep',
       index=0, containing_type=None, fields=[]),
   ],
-  serialized_start=910,
-  serialized_end=1007,
+  serialized_start=923,
+  serialized_end=1020,
 )
 
 _STEP_PROGRESS = _descriptor.Descriptor(
@@ -298,8 +302,8 @@ _STEP_PROGRESS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1009,
-  serialized_end=1053,
+  serialized_start=1022,
+  serialized_end=1066,
 )
 
 _STEP_PROPERTY = _descriptor.Descriptor(
@@ -335,8 +339,8 @@ _STEP_PROPERTY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1055,
-  serialized_end=1094,
+  serialized_start=1068,
+  serialized_end=1107,
 )
 
 _STEP = _descriptor.Descriptor(
@@ -456,8 +460,8 @@ _STEP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=267,
-  serialized_end=1094,
+  serialized_start=280,
+  serialized_end=1107,
 )
 
 
@@ -525,8 +529,8 @@ _LINK = _descriptor.Descriptor(
       name='value', full_name='milo.Link.value',
       index=0, containing_type=None, fields=[]),
   ],
-  serialized_start=1097,
-  serialized_end=1288,
+  serialized_start=1110,
+  serialized_end=1301,
 )
 
 
@@ -570,8 +574,8 @@ _LOGDOGSTREAM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1290,
-  serialized_end=1350,
+  serialized_start=1303,
+  serialized_end=1363,
 )
 
 
@@ -608,8 +612,8 @@ _ISOLATEOBJECT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1352,
-  serialized_end=1397,
+  serialized_start=1365,
+  serialized_end=1410,
 )
 
 
@@ -660,8 +664,8 @@ _DMLINK = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1399,
-  serialized_end=1474,
+  serialized_start=1412,
+  serialized_end=1487,
 )
 
 _FAILUREDETAILS.fields_by_name['type'].enum_type = _FAILUREDETAILS_TYPE

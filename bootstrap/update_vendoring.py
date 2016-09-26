@@ -265,7 +265,7 @@ _ACTIONS = (
     _VendoredPythonProtobuf(
         'recipe_engine/third_party/google',
         repo='https://github.com/google/protobuf',
-        ref='v3.0.0'),
+        ref='v3.1.0'),
 
     _VendoredLuciGoProto(
         'recipe_engine/third_party',
