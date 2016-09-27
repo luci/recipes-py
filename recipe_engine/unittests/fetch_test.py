@@ -21,20 +21,60 @@ from recipe_engine import requests_ssl
 
 
 class TestGit(unittest.TestCase):
-  @mock.patch('recipe_engine.fetch._run_git')
-  def test_fresh_clone(self, run_git):
+
+  def setUp(self):
+    self._patchers = [
+        mock.patch('logging.warning'),
+        mock.patch('logging.exception'),
+        mock.patch('recipe_engine.fetch.GitBackend.Git._resolve_git',
+                   return_value='GIT'),
+    ]
+    for p in self._patchers:
+      p.start()
+
+  def tearDown(self):
+    for p in reversed(self._patchers):
+      p.stop()
+
+  @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
+  def test_fresh_clone(self, git):
     fetch.GitBackend().checkout(
         'repo', 'revision', 'dir', allow_fetch=True)
-    run_git.assert_has_calls([
-      mock.call(None, 'clone', '-q', 'repo', 'dir'),
-      mock.call('dir', 'config', 'remote.origin.url', 'repo'),
-      mock.call('dir', 'rev-parse', '-q', '--verify', 'revision^{commit}'),
-      mock.call('dir', 'reset', '-q', '--hard', 'revision'),
+    git.assert_has_calls([
+      mock.call('GIT', 'clone', '-q', 'repo', 'dir'),
+      mock.call('GIT', '-C', 'dir', 'config', 'remote.origin.url', 'repo'),
+      mock.call('GIT', '-C', 'dir', 'rev-parse', '-q', '--verify',
+                'revision^{commit}'),
+      mock.call('GIT', '-C', 'dir', 'reset', '-q', '--hard', 'revision'),
+    ])
+
+  @mock.patch('time.sleep')
+  @mock.patch('os.path.isdir')
+  @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
+  def test_fresh_clone_retries(self, git, isdir, sleep):
+    isdir.return_value = False
+
+    clone_fails = []
+    def fail_four_clones(*args):
+      if 'clone' in args and len(clone_fails) < 4:
+        clone_fails.append(True)
+        raise subprocess42.CalledProcessError(1, args)
+      return None
+    git.side_effect = fail_four_clones
+
+    fetch.GitBackend().checkout(
+        'repo', 'revision', 'dir', allow_fetch=True)
+    git.assert_has_calls([
+      mock.call('GIT', 'clone', '-q', 'repo', 'dir')] * 5 + [
+      mock.call('GIT', '-C', 'dir', 'config', 'remote.origin.url', 'repo'),
+      mock.call('GIT', '-C', 'dir', 'rev-parse', '-q', '--verify',
+                'revision^{commit}'),
+      mock.call('GIT', '-C', 'dir', 'reset', '-q', '--hard', 'revision'),
     ])
 
   @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch._run_git')
-  def test_existing_checkout(self, run_git, isdir):
+  @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
+  def test_existing_checkout(self, git, isdir):
     isdir.return_value = True
     fetch.GitBackend().checkout(
         'repo', 'revision', 'dir', allow_fetch=True)
@@ -42,21 +82,22 @@ class TestGit(unittest.TestCase):
       mock.call('dir'),
       mock.call('dir/.git'),
     ])
-    run_git.assert_has_calls([
-      mock.call('dir', 'config', 'remote.origin.url', 'repo'),
-      mock.call('dir', 'rev-parse', '-q', '--verify', 'revision^{commit}'),
-      mock.call('dir', 'reset', '-q', '--hard', 'revision'),
+    git.assert_has_calls([
+      mock.call('GIT', '-C', 'dir', 'config', 'remote.origin.url', 'repo'),
+      mock.call('GIT', '-C', 'dir', 'rev-parse', '-q', '--verify',
+                'revision^{commit}'),
+      mock.call('GIT', '-C', 'dir', 'reset', '-q', '--hard', 'revision'),
     ])
 
-  @mock.patch('recipe_engine.fetch._run_git')
-  def test_clone_not_allowed(self, run_git):
+  @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
+  def test_clone_not_allowed(self, git):
     with self.assertRaises(fetch.FetchNotAllowedError):
       fetch.GitBackend().checkout(
           'repo', 'revision', 'dir', allow_fetch=False)
 
   @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch._run_git')
-  def test_unclean_filesystem(self, run_git, isdir):
+  @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
+  def test_unclean_filesystem(self, git, isdir):
     isdir.side_effect = [True, False]
     with self.assertRaises(fetch.UncleanFilesystemError):
       fetch.GitBackend().checkout(
@@ -67,9 +108,9 @@ class TestGit(unittest.TestCase):
     ])
 
   @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch._run_git')
-  def test_origin_mismatch(self, run_git, isdir):
-    run_git.return_value = 'not-repo'
+  @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
+  def test_origin_mismatch(self, git, isdir):
+    git.return_value = 'not-repo'
     isdir.return_value = True
 
     # This should not raise UncleanFilesystemError, but instead
@@ -81,14 +122,14 @@ class TestGit(unittest.TestCase):
       mock.call('dir'),
       mock.call('dir/.git'),
     ])
-    run_git.assert_has_calls([
-      mock.call('dir', 'config', 'remote.origin.url', 'repo'),
+    git.assert_has_calls([
+      mock.call('GIT', '-C', 'dir', 'config', 'remote.origin.url', 'repo'),
     ])
 
   @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch._run_git')
-  def test_rev_parse_fail(self, run_git, isdir):
-    run_git.side_effect = [
+  @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
+  def test_rev_parse_fail(self, git, isdir):
+    git.side_effect = [
       None,
       subprocess42.CalledProcessError(1, ['fakecmd']),
       None,
@@ -101,17 +142,18 @@ class TestGit(unittest.TestCase):
       mock.call('dir'),
       mock.call('dir/.git'),
     ])
-    run_git.assert_has_calls([
-      mock.call('dir', 'config', 'remote.origin.url', 'repo'),
-      mock.call('dir', 'rev-parse', '-q', '--verify', 'revision^{commit}'),
-      mock.call('dir', 'fetch'),
-      mock.call('dir', 'reset', '-q', '--hard', 'revision'),
+    git.assert_has_calls([
+      mock.call('GIT', '-C', 'dir', 'config', 'remote.origin.url', 'repo'),
+      mock.call('GIT', '-C', 'dir', 'rev-parse', '-q', '--verify',
+                'revision^{commit}'),
+      mock.call('GIT', '-C', 'dir', 'fetch'),
+      mock.call('GIT', '-C', 'dir', 'reset', '-q', '--hard', 'revision'),
     ])
 
   @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch._run_git')
-  def test_rev_parse_fetch_not_allowed(self, run_git, isdir):
-    run_git.side_effect = [
+  @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
+  def test_rev_parse_fetch_not_allowed(self, git, isdir):
+    git.side_effect = [
       None,
       subprocess42.CalledProcessError(1, ['fakecmd']),
     ]
@@ -123,23 +165,24 @@ class TestGit(unittest.TestCase):
       mock.call('dir'),
       mock.call('dir/.git'),
     ])
-    run_git.assert_has_calls([
-      mock.call('dir', 'config', 'remote.origin.url', 'repo'),
-      mock.call('dir', 'rev-parse', '-q', '--verify', 'revision^{commit}'),
+    git.assert_has_calls([
+      mock.call('GIT', '-C', 'dir', 'config', 'remote.origin.url', 'repo'),
+      mock.call('GIT', '-C', 'dir', 'rev-parse', '-q', '--verify',
+                'revision^{commit}'),
     ])
 
-  @mock.patch('recipe_engine.fetch._run_git')
-  def test_commit_metadata(self, run_git):
-    run_git.side_effect = ['author', 'message']
+  @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
+  def test_commit_metadata(self, git):
+    git.side_effect = ['author', 'message']
     result = fetch.GitBackend().commit_metadata(
         'repo', 'revision', 'dir', allow_fetch=True)
     self.assertEqual(result, {
       'author': 'author',
       'message': 'message',
     })
-    run_git.assert_has_calls([
-      mock.call('dir', 'show', '-s', '--pretty=%aE', 'revision'),
-      mock.call('dir', 'show', '-s', '--pretty=%B', 'revision'),
+    git.assert_has_calls([
+      mock.call('GIT', '-C', 'dir', 'show', '-s', '--pretty=%aE', 'revision'),
+      mock.call('GIT', '-C', 'dir', 'show', '-s', '--pretty=%B', 'revision'),
     ])
 
 

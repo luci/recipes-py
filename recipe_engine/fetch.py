@@ -34,20 +34,6 @@ class FetchNotAllowedError(FetchError):
   pass
 
 
-def _run_git(checkout_dir, *args):
-  if sys.platform.startswith(('win', 'cygwin')):
-    cmd = ['git.bat']
-  else:
-    cmd = ['git']
-
-  if checkout_dir is not None:
-    cmd += ['-C', checkout_dir]
-  cmd += list(args)
-
-  logging.info('Running: %s', cmd)
-  return subprocess42.check_output(cmd)
-
-
 class Backend(object):
   @property
   def repo_type(self):
@@ -88,12 +74,53 @@ class UncleanFilesystemError(FetchError):
   pass
 
 
-class GitFetchError(FetchError):
-  pass
+class GitError(FetchError):
+
+  def __init__(self, is_remote, message):
+    super(GitError, self).__init__(message)
+    self.is_remote = is_remote
+
+  @staticmethod
+  def is_remote_error(e):
+    return isinstance(e, GitError) and e.is_remote
 
 
 class GitBackend(Backend):
   """GitBackend uses a local git checkout."""
+
+  class Git(object):
+
+    # The set of Git subcommands that are considered network-touching
+    # subcommands and, therefore, subject to flake and retriable.
+    _REMOTE_SUBCOMMANDS = {'clone', 'fetch'}
+
+    def __init__(self, checkout_dir=None):
+      self._checkout_dir = checkout_dir
+
+    @staticmethod
+    def _resolve_git():
+      """Resolves the Git command to run based on current platform."""
+      return 'git.bat' if sys.platform.startswith(('win', 'cygwin')) else 'git'
+
+    def __call__(self, *args):
+      cmd = [self._resolve_git()]
+      if self._checkout_dir is not None:
+        cmd += ['-C', self._checkout_dir]
+      cmd += list(args)
+
+      try:
+        return self._execute(*cmd)
+      except subprocess42.CalledProcessError as e:
+        subcommand = (args[0]) if args else ('')
+        is_remote = subcommand in self._REMOTE_SUBCOMMANDS
+        raise GitError(is_remote, 'Git "%s" failed: %s' % (
+            subcommand, e.message,))
+
+    def _execute(self, *args):
+      """Runs a raw command. Separate so it's easily mockable."""
+      logging.info('Running: %s', args)
+      return subprocess42.check_output(args)
+
 
   @property
   def repo_type(self):
@@ -103,42 +130,44 @@ class GitBackend(Backend):
   def branch_spec(branch):
     return 'origin/%s' % branch
 
-  @util.exponential_retry(condition=lambda e: isinstance(e, GitFetchError))
+  @util.exponential_retry(condition=GitError.is_remote_error)
   def checkout(self, repo, revision, checkout_dir, allow_fetch):
     logging.info('Freshening repository %s in %s', repo, checkout_dir)
 
+    git = self.Git()
     if not os.path.isdir(checkout_dir):
       if not allow_fetch:
         raise FetchNotAllowedError(
             'need to clone %s but fetch not allowed' % repo)
-      _run_git(None, 'clone', '-q', repo, checkout_dir)
+      git('clone', '-q', repo, checkout_dir)
     elif not os.path.isdir(os.path.join(checkout_dir, '.git')):
       raise UncleanFilesystemError(
           '%s exists but is not a git repo' % checkout_dir)
 
-    _run_git(checkout_dir, 'config', 'remote.origin.url', repo)
+    git = self.Git(checkout_dir=checkout_dir)
+    git('config', 'remote.origin.url', repo)
     try:
-      _run_git(checkout_dir, 'rev-parse', '-q', '--verify',
-               '%s^{commit}' % revision)
-    except subprocess42.CalledProcessError:
+      git('rev-parse', '-q', '--verify', '%s^{commit}' % revision)
+    except GitError as e:
+      logging.warning('Revision %s is not available: %s', revision, e)
+
+      # Revision does not exist. If we can't fetch, then we fail here.
       if not allow_fetch:
         raise FetchNotAllowedError(
             'need to fetch %s but fetch not allowed' % repo)
+      git('fetch')
 
-      # Fetch from the remote Git repository. Wrap this in a GitFetchError
-      # for exponential retry on failure.
-      try:
-        _run_git(checkout_dir, 'fetch')
-      except subprocess42.CalledProcessError as e:
-        raise GitFetchError(e.message)
+    git('reset', '-q', '--hard', revision)
 
-    _run_git(checkout_dir, 'reset', '-q', '--hard', revision)
-
+  @util.exponential_retry(condition=GitError.is_remote_error)
   def updates(self, repo, revision, checkout_dir, allow_fetch,
               other_revision, paths):
     self.checkout(repo, revision, checkout_dir, allow_fetch)
+
+    git = self.Git(checkout_dir=checkout_dir)
     if allow_fetch:
-      _run_git(checkout_dir, 'fetch')
+      git('fetch')
+
     args = [
         'rev-list',
         '--reverse',
@@ -146,14 +175,13 @@ class GitBackend(Backend):
     ]
     if paths:
       args.extend(['--'] + paths)
-    return filter(bool, _run_git(checkout_dir, *args).strip().split('\n'))
+    return filter(bool, git(*args).strip().split('\n'))
 
   def commit_metadata(self, repo, revision, checkout_dir, allow_fetch):
+    git = self.Git(checkout_dir=checkout_dir)
     return {
-      'author': _run_git(checkout_dir, 'show', '-s', '--pretty=%aE',
-                         revision).strip(),
-      'message': _run_git(checkout_dir, 'show', '-s', '--pretty=%B',
-                          revision).strip(),
+      'author': git('show', '-s', '--pretty=%aE', revision).strip(),
+      'message': git('show', '-s', '--pretty=%B', revision).strip(),
     }
 
 
