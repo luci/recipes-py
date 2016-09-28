@@ -2,14 +2,18 @@
   {
     "cmd": [
       "echo",
-      "INSANITY"
+      "crazy!"
     ],
-    "name": "another important"
-  },
-  {
     "env": {
       "FLEEM": "VERY YES"
     },
     "name": "something important"
+  },
+  {
+    "cmd": [
+      "echo",
+      "INSANITY"
+    ],
+    "name": "another important"
   }
 ]

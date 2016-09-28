@@ -557,7 +557,8 @@ class RecipeTestApi(object):
 
     You may also optionally specify fields that you want to show up in the JSON
     expectations. By default, all fields of the step will appear, but you may
-    only be interested in e.g. 'cmd' or 'env', for example.
+    only be interested in e.g. 'cmd' or 'env', for example. The 'name' field is
+    always included, regardless.
 
     Keep in mind that the ultimate result of the recipe (the return value from
     RunSteps) is on a virtual step named '$result'.

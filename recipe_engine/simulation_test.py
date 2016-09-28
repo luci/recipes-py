@@ -27,33 +27,30 @@ def RenderExpectation(test_data, raw_expectations):
   if the TestData actually contains any filters.
 
   Returns the final expect_tests.Result."""
-  # map of step_name -> index in raw_expectations
-  index = {}
-  for i, step in enumerate(raw_expectations):
-    index[step['name']] = i
-
   if test_data.whitelist_data:
-    new_result = []
-    for step_name, fields in test_data.whitelist_data.iteritems():
-      if step_name not in index:
-        raise ValueError(
-          "The step name %r was included in the whitelist, but was never run."
-          % step_name)
+    whitelist_data  = dict(test_data.whitelist_data)  # copy so we can mutate it
+    def filter_expectation(step):
+      whitelist = whitelist_data.pop(step['name'], None)
+      if whitelist is None:
+        return
 
-      raw_step = raw_expectations[index[step_name]]
-      if not fields:
-        new_result.append(raw_step)
-      else:
-        new_step = {'name': raw_step['name']}
-        for k in fields:
-          if k not in raw_step:
-            raise ValueError(
-              "The whitelist includes field %r in step %r, but that field"
-              " doesn't exist."
-              % (k, step_name))
-          new_step[k] = raw_step[k]
-        new_result.append(new_step)
-    raw_expectations = new_result
+      whitelist = set(whitelist)  # copy so we can mutate it
+      if len(whitelist) > 0:
+        whitelist.add('name')
+        step = {k: v for k, v in step.iteritems() if k in whitelist}
+        whitelist.difference_update(step.keys())
+        if whitelist:
+          raise ValueError(
+            "The whitelist includes fields %r in step %r, but those fields"
+            " don't exist."
+            % (whitelist, step['name']))
+      return step
+    raw_expectations = filter(filter_expectation, raw_expectations)
+
+    if whitelist_data:
+      raise ValueError(
+        "The step names %r were included in the whitelist, but were never run."
+        % [s['name'] for s in whitelist_data])
 
   return expect_tests.Result(raw_expectations)
 
