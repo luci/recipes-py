@@ -565,7 +565,14 @@ if __name__ == '__main__':
   # Use os._exit instead of sys.exit to prevent the python interpreter from
   # hanging on threads/processes which may have been spawned and not reaped
   # (e.g. by a leaky test harness).
-  ret = main()
+  try:
+    ret = main()
+  except Exception as e:
+    import traceback
+    traceback.print_exc(file=sys.stderr)
+    print >> sys.stderr, 'Uncaught exception (%s): %s' % (type(e).__name__, e)
+    sys.exit(1)
+
   if not isinstance(ret, int):
     if ret is None:
       ret = 0
