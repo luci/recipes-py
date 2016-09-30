@@ -2,14 +2,15 @@
   {
     "cmd": [
       "echo",
-      "{'key': {'other_key': {'key': 'value'}, 'key': 'value'}}"
+      "{'key': {'other_key': {'key': 'value'}, 'key': 'value'}}",
+      "'thing'"
     ],
     "name": "echo"
   },
   {
     "cmd": [
       "echo",
-      "[('recipe', 'properties:example'), ('test_prop', {'key': {'other_key': {'key': 'value'}, 'key': 'value'}})]"
+      "[('foo.bar-bam', 'thing'), ('recipe', 'properties:example'), ('test_prop', {'key': {'other_key': {'key': 'value'}, 'key': 'value'}})]"
     ],
     "name": "echo all"
   },

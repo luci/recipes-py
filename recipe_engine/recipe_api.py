@@ -680,7 +680,6 @@ class BoundProperty(object):
         This is to avoid conflict with recipe modules, which use the name self.
       * Cannot be a python keyword
     """
-
     if name.startswith('_'):
       return False
 
@@ -690,7 +689,8 @@ class BoundProperty(object):
     if keyword.iskeyword(name):
       return False
 
-    regex = r'^[a-zA-Z][a-zA-Z0-9_]*$' if is_param_name else r'^[a-zA-Z][.\w]*$'
+    regex = r'^[a-zA-Z][a-zA-Z0-9_]*$' if is_param_name else (
+        r'^[a-zA-Z][.\w-]*$')
     return bool(re.match(regex, name))
 
   def __init__(self, default, help, kind, name, property_type, module,
@@ -715,7 +715,7 @@ class BoundProperty(object):
       module: The module this Property is a part of.
     """
     if not BoundProperty.legal_name(name):
-      raise ValueError("Illegal name '{}'.".format(param_name))
+      raise ValueError("Illegal name '{}'.".format(name))
 
     param_name = param_name or name
     if not BoundProperty.legal_name(param_name, is_param_name=True):

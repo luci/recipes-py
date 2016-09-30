@@ -16,7 +16,6 @@ def make_prop(**kwargs):
   return recipe_api.Property(**kwargs).bind(name, 'test', 'properties_test')
 
 class TestProperties(unittest.TestCase):
-
   def testDefault(self):
     """Tests the default option of properties."""
     for default in (1, object(), "test", None):
@@ -66,7 +65,7 @@ class TestProperties(unittest.TestCase):
     prop = recipe_api.Property()
     bound = prop.bind('a')
 
-    self.assertEqual('a', prop.param_name)
+    self.assertEqual('a', bound.param_name)
 
   def testParamName(self):
     """
@@ -75,7 +74,16 @@ class TestProperties(unittest.TestCase):
     prop = recipe_api.Property(param_name='b')
     bound = prop.bind('a', 'test', 'test_me')
 
-    self.assertEqual('b', prop.param_name)
+    self.assertEqual('b', bound.param_name)
+
+  def testParamNameDotted(self):
+    """
+    Tests setting a param name correctly carries through to a bound property.
+    """
+    prop = recipe_api.Property(param_name='good_name')
+    bound = prop.bind('bad.name-time', 'test', 'test_me')
+
+    self.assertEqual('good_name', bound.param_name)
 
 
 if __name__ == '__main__':

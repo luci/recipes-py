@@ -2,14 +2,15 @@
   {
     "cmd": [
       "echo",
-      "None"
+      "None",
+      "'thing'"
     ],
     "name": "echo"
   },
   {
     "cmd": [
       "echo",
-      "[('blamelist', ['cool_dev1337@chromium.org', 'hax@chromium.org']), ('branch', 'master'), ('buildbotURL', 'http://c.org/p/cr/'), ('buildername', 'TestBuilder'), ('buildnumber', 571), ('mastername', 'chromium.testing.master'), ('project', ''), ('recipe', 'properties:example'), ('repository', 'https://chromium.googlesource.com/chromium/src.git'), ('revision', 'c14d891d44f0afff64e56ed7c9702df1d807b1ee'), ('slavename', 'TestSlavename'), ('test_prop', None), ('workdir', '/path/to/workdir/TestSlavename')]"
+      "[('blamelist', ['cool_dev1337@chromium.org', 'hax@chromium.org']), ('branch', 'master'), ('buildbotURL', 'http://c.org/p/cr/'), ('buildername', 'TestBuilder'), ('buildnumber', 571), ('foo.bar-bam', 'thing'), ('mastername', 'chromium.testing.master'), ('project', ''), ('recipe', 'properties:example'), ('repository', 'https://chromium.googlesource.com/chromium/src.git'), ('revision', 'c14d891d44f0afff64e56ed7c9702df1d807b1ee'), ('slavename', 'TestSlavename'), ('test_prop', None), ('workdir', '/path/to/workdir/TestSlavename')]"
     ],
     "name": "echo all"
   },

@@ -11,10 +11,11 @@ DEPS = [
 
 PROPERTIES = {
   'test_prop': Property(),
+  'foo.bar-bam': Property(param_name='param_name_test'),
 }
 
-def RunSteps(api, test_prop):
-  api.step('echo', ['echo'] + [repr(test_prop)])
+def RunSteps(api, test_prop, param_name_test):
+  api.step('echo', ['echo'] + [repr(test_prop), repr(param_name_test)])
 
   properties = api.properties.thaw()
   api.step('echo all', ['echo'] +
@@ -28,12 +29,14 @@ def RunSteps(api, test_prop):
 
 
 def GenTests(api):
+  pd = {'foo.bar-bam': 'thing'}
   yield api.test('basic') + api.properties(
-    test_prop={'key': 'value'})
+    test_prop={'key': 'value'}, **pd)
   yield api.test('lists') + api.properties(
-    test_prop={'key': ['value', ['value']]})
+    test_prop={'key': ['value', ['value']]}, **pd)
   yield api.test('dicts') + api.properties(
-    test_prop={'key': {'key': 'value', 'other_key': {'key': 'value'}}})
+    test_prop={'key': {'key': 'value', 'other_key': {'key': 'value'}}},
+    **pd)
 
   yield (
       api.test('exception') +
@@ -41,14 +44,16 @@ def GenTests(api):
   )
 
   # Some default buildbot configurations.
-  yield api.test('buildbot_generic') + api.properties.generic(test_prop=None)
+  yield api.test('buildbot_generic') + api.properties.generic(
+      test_prop=None, **pd)
   yield (api.test('buildbot_scheduled') +
-         api.properties.scheduled(test_prop=None))
+         api.properties.scheduled(test_prop=None, **pd))
   yield (api.test('buildbot_git_scheduled') +
-         api.properties.git_scheduled(test_prop=None))
+         api.properties.git_scheduled(test_prop=None, **pd))
   yield (api.test('buildbot_tryserver') +
-         api.properties.tryserver(test_prop=None))
+         api.properties.tryserver(test_prop=None, **pd))
   yield (api.test('buildbot_tryserver_gerrit') +
          api.properties.tryserver_gerrit(
             full_project_name='infra/infra',
-            gerrit_host='pdfium-review.googlesource.com', test_prop=None))
+            gerrit_host='pdfium-review.googlesource.com', test_prop=None,
+            **pd))
