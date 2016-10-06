@@ -104,7 +104,7 @@ class _ActionBase(object):
   """Simple base class for an action."""
 
   def run(self, c, workdir):
-    raise NotImlpementedError()
+    raise NotImplementedError()
 
 
 class _VendoredPythonProtobuf(_ActionBase):
@@ -260,6 +260,12 @@ _ACTIONS = (
         repo='https://github.com/luci/client-py',
         ref='origin/master',
         subpath='libs'),
+
+    _VendoredGitRepo(
+        'recipe_engine/third_party/astunparse',
+        repo='https://github.com/simonpercivall/astunparse',
+        ref='origin/master',
+        subpath='lib/astunparse'),
 
     # All actions that rely on "protoc" must happen after this one.
     _VendoredPythonProtobuf(
