@@ -37,7 +37,16 @@ def get_package_config(args):
 
 
 def simulation_test(package_deps, args):
-  from recipe_engine import simulation_test
+  try:
+    from recipe_engine import simulation_test
+  except ImportError:
+    logging.error(
+        'Error while importing testing libraries. You may be missing the pip'
+        ' package "coverage". Install it, or use the --use-bootstrap command'
+        ' line argument when calling into the recipe engine, which will install'
+        ' it for you.')
+    raise
+
   from recipe_engine import loader
 
   _, config_file = get_package_config(args)
