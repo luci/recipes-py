@@ -101,6 +101,7 @@ def run(package_deps, args, op_args):
   from recipe_engine import loader
   from recipe_engine import step_runner
   from recipe_engine import stream
+  from recipe_engine import stream_logdog
 
   def get_properties_from_args(args):
     properties = dict(x.split('=', 1) for x in args)
@@ -161,13 +162,35 @@ def run(package_deps, args, op_args):
 
   old_cwd = os.getcwd()
   os.chdir(workdir)
-  stream_engine = stream.ProductStreamEngine(
-      stream.StreamEngineInvariants(),
-      stream.AnnotatorStreamEngine(
+
+  # Construct our stream engines. We may want to share stream events with more
+  # than one StreamEngine implementation, so we will accumulate them in a
+  # "stream_engines" list and compose them into a MultiStreamEngine.
+  def build_annotation_stream_engine():
+    return stream.AnnotatorStreamEngine(
         sys.stdout,
         emit_timestamps=(args.timestamps or
-                         op_args.annotation_flags.emit_timestamp)))
-  with stream_engine:
+                         op_args.annotation_flags.emit_timestamp),
+    )
+
+  stream_engines = []
+  if op_args.logdog.streamserver_uri:
+    logging.debug('Using LogDog with parameters: [%s]', op_args.logdog)
+    stream_engines.append(stream_logdog.StreamEngine(
+        streamserver_uri=op_args.logdog.streamserver_uri,
+        name_base=(op_args.logdog.name_base or None),
+    ))
+
+    # If we're teeing, also fold in a standard annotation stream engine.
+    if op_args.logdog.tee:
+      stream_engines.append(build_annotation_stream_engine())
+  else:
+    # Not using LogDog; use a standard annotation stream engine.
+    stream_engines.append(build_annotation_stream_engine())
+  multi_stream_engine = stream.MultiStreamEngine.create(*stream_engines)
+
+  # Have a top-level set of invariants to enforce StreamEngine expectations.
+  with stream.StreamEngineInvariants.wrap(multi_stream_engine) as stream_engine:
     # Emit initial properties if configured to do so.
     if op_args.annotation_flags.emit_initial_properties:
       with stream_engine.new_step_stream('Initial Properties') as s:

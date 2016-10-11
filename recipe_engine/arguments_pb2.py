@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='arguments.proto',
   package='recipe_engine',
   syntax='proto3',
-  serialized_pb=_b('\n\x0f\x61rguments.proto\x12\rrecipe_engine\"\x9c\x05\n\tArguments\x12\x38\n\nproperties\x18\x01 \x01(\x0b\x32$.recipe_engine.Arguments.PropertyMap\x12\x42\n\x10\x61nnotation_flags\x18\x02 \x01(\x0b\x32(.recipe_engine.Arguments.AnnotationFlags\x1a\xd5\x01\n\x08Property\x12\x0b\n\x01s\x18\x01 \x01(\tH\x00\x12\r\n\x03int\x18\x02 \x01(\x03H\x00\x12\x0e\n\x04uint\x18\x03 \x01(\x04H\x00\x12\x0b\n\x01\x64\x18\x04 \x01(\x01H\x00\x12\x0b\n\x01\x62\x18\x05 \x01(\x08H\x00\x12\x0e\n\x04\x64\x61ta\x18\x06 \x01(\x0cH\x00\x12\x33\n\x03map\x18\x07 \x01(\x0b\x32$.recipe_engine.Arguments.PropertyMapH\x00\x12\x35\n\x04list\x18\x08 \x01(\x0b\x32%.recipe_engine.Arguments.PropertyListH\x00\x42\x07\n\x05value\x1a\x43\n\x0cPropertyList\x12\x33\n\x08property\x18\x01 \x03(\x0b\x32!.recipe_engine.Arguments.Property\x1a\xa7\x01\n\x0bPropertyMap\x12\x44\n\x08property\x18\x01 \x03(\x0b\x32\x32.recipe_engine.Arguments.PropertyMap.PropertyEntry\x1aR\n\rPropertyEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x30\n\x05value\x18\x02 \x01(\x0b\x32!.recipe_engine.Arguments.Property:\x02\x38\x01\x1aJ\n\x0f\x41nnotationFlags\x12\x16\n\x0e\x65mit_timestamp\x18\x01 \x01(\x08\x12\x1f\n\x17\x65mit_initial_properties\x18\x02 \x01(\x08\x62\x06proto3')
+  serialized_pb=_b('\n\x0f\x61rguments.proto\x12\rrecipe_engine\"\x9b\x06\n\tArguments\x12\x38\n\nproperties\x18\x01 \x01(\x0b\x32$.recipe_engine.Arguments.PropertyMap\x12\x42\n\x10\x61nnotation_flags\x18\x02 \x01(\x0b\x32(.recipe_engine.Arguments.AnnotationFlags\x12\x34\n\x06logdog\x18\x03 \x01(\x0b\x32$.recipe_engine.Arguments.LogDogFlags\x1a\xd5\x01\n\x08Property\x12\x0b\n\x01s\x18\x01 \x01(\tH\x00\x12\r\n\x03int\x18\x02 \x01(\x03H\x00\x12\x0e\n\x04uint\x18\x03 \x01(\x04H\x00\x12\x0b\n\x01\x64\x18\x04 \x01(\x01H\x00\x12\x0b\n\x01\x62\x18\x05 \x01(\x08H\x00\x12\x0e\n\x04\x64\x61ta\x18\x06 \x01(\x0cH\x00\x12\x33\n\x03map\x18\x07 \x01(\x0b\x32$.recipe_engine.Arguments.PropertyMapH\x00\x12\x35\n\x04list\x18\x08 \x01(\x0b\x32%.recipe_engine.Arguments.PropertyListH\x00\x42\x07\n\x05value\x1a\x43\n\x0cPropertyList\x12\x33\n\x08property\x18\x01 \x03(\x0b\x32!.recipe_engine.Arguments.Property\x1a\xa7\x01\n\x0bPropertyMap\x12\x44\n\x08property\x18\x01 \x03(\x0b\x32\x32.recipe_engine.Arguments.PropertyMap.PropertyEntry\x1aR\n\rPropertyEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x30\n\x05value\x18\x02 \x01(\x0b\x32!.recipe_engine.Arguments.Property:\x02\x38\x01\x1aJ\n\x0f\x41nnotationFlags\x12\x16\n\x0e\x65mit_timestamp\x18\x01 \x01(\x08\x12\x1f\n\x17\x65mit_initial_properties\x18\x02 \x01(\x08\x1aG\n\x0bLogDogFlags\x12\x18\n\x10streamserver_uri\x18\x01 \x01(\t\x12\x11\n\tname_base\x18\x02 \x01(\t\x12\x0b\n\x03tee\x18\x03 \x01(\x08\x62\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -104,8 +104,8 @@ _ARGUMENTS_PROPERTY = _descriptor.Descriptor(
       name='value', full_name='recipe_engine.Arguments.Property.value',
       index=0, containing_type=None, fields=[]),
   ],
-  serialized_start=175,
-  serialized_end=388,
+  serialized_start=229,
+  serialized_end=442,
 )
 
 _ARGUMENTS_PROPERTYLIST = _descriptor.Descriptor(
@@ -134,8 +134,8 @@ _ARGUMENTS_PROPERTYLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=390,
-  serialized_end=457,
+  serialized_start=444,
+  serialized_end=511,
 )
 
 _ARGUMENTS_PROPERTYMAP_PROPERTYENTRY = _descriptor.Descriptor(
@@ -171,8 +171,8 @@ _ARGUMENTS_PROPERTYMAP_PROPERTYENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=545,
-  serialized_end=627,
+  serialized_start=599,
+  serialized_end=681,
 )
 
 _ARGUMENTS_PROPERTYMAP = _descriptor.Descriptor(
@@ -201,8 +201,8 @@ _ARGUMENTS_PROPERTYMAP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=460,
-  serialized_end=627,
+  serialized_start=514,
+  serialized_end=681,
 )
 
 _ARGUMENTS_ANNOTATIONFLAGS = _descriptor.Descriptor(
@@ -238,8 +238,52 @@ _ARGUMENTS_ANNOTATIONFLAGS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=629,
-  serialized_end=703,
+  serialized_start=683,
+  serialized_end=757,
+)
+
+_ARGUMENTS_LOGDOGFLAGS = _descriptor.Descriptor(
+  name='LogDogFlags',
+  full_name='recipe_engine.Arguments.LogDogFlags',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='streamserver_uri', full_name='recipe_engine.Arguments.LogDogFlags.streamserver_uri', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='name_base', full_name='recipe_engine.Arguments.LogDogFlags.name_base', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='tee', full_name='recipe_engine.Arguments.LogDogFlags.tee', index=2,
+      number=3, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=759,
+  serialized_end=830,
 )
 
 _ARGUMENTS = _descriptor.Descriptor(
@@ -263,10 +307,17 @@ _ARGUMENTS = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='logdog', full_name='recipe_engine.Arguments.logdog', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
-  nested_types=[_ARGUMENTS_PROPERTY, _ARGUMENTS_PROPERTYLIST, _ARGUMENTS_PROPERTYMAP, _ARGUMENTS_ANNOTATIONFLAGS, ],
+  nested_types=[_ARGUMENTS_PROPERTY, _ARGUMENTS_PROPERTYLIST, _ARGUMENTS_PROPERTYMAP, _ARGUMENTS_ANNOTATIONFLAGS, _ARGUMENTS_LOGDOGFLAGS, ],
   enum_types=[
   ],
   options=None,
@@ -276,7 +327,7 @@ _ARGUMENTS = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=35,
-  serialized_end=703,
+  serialized_end=830,
 )
 
 _ARGUMENTS_PROPERTY.fields_by_name['map'].message_type = _ARGUMENTS_PROPERTYMAP
@@ -313,8 +364,10 @@ _ARGUMENTS_PROPERTYMAP_PROPERTYENTRY.containing_type = _ARGUMENTS_PROPERTYMAP
 _ARGUMENTS_PROPERTYMAP.fields_by_name['property'].message_type = _ARGUMENTS_PROPERTYMAP_PROPERTYENTRY
 _ARGUMENTS_PROPERTYMAP.containing_type = _ARGUMENTS
 _ARGUMENTS_ANNOTATIONFLAGS.containing_type = _ARGUMENTS
+_ARGUMENTS_LOGDOGFLAGS.containing_type = _ARGUMENTS
 _ARGUMENTS.fields_by_name['properties'].message_type = _ARGUMENTS_PROPERTYMAP
 _ARGUMENTS.fields_by_name['annotation_flags'].message_type = _ARGUMENTS_ANNOTATIONFLAGS
+_ARGUMENTS.fields_by_name['logdog'].message_type = _ARGUMENTS_LOGDOGFLAGS
 DESCRIPTOR.message_types_by_name['Arguments'] = _ARGUMENTS
 
 Arguments = _reflection.GeneratedProtocolMessageType('Arguments', (_message.Message,), dict(
@@ -353,6 +406,13 @@ Arguments = _reflection.GeneratedProtocolMessageType('Arguments', (_message.Mess
     # @@protoc_insertion_point(class_scope:recipe_engine.Arguments.AnnotationFlags)
     ))
   ,
+
+  LogDogFlags = _reflection.GeneratedProtocolMessageType('LogDogFlags', (_message.Message,), dict(
+    DESCRIPTOR = _ARGUMENTS_LOGDOGFLAGS,
+    __module__ = 'arguments_pb2'
+    # @@protoc_insertion_point(class_scope:recipe_engine.Arguments.LogDogFlags)
+    ))
+  ,
   DESCRIPTOR = _ARGUMENTS,
   __module__ = 'arguments_pb2'
   # @@protoc_insertion_point(class_scope:recipe_engine.Arguments)
@@ -363,6 +423,7 @@ _sym_db.RegisterMessage(Arguments.PropertyList)
 _sym_db.RegisterMessage(Arguments.PropertyMap)
 _sym_db.RegisterMessage(Arguments.PropertyMap.PropertyEntry)
 _sym_db.RegisterMessage(Arguments.AnnotationFlags)
+_sym_db.RegisterMessage(Arguments.LogDogFlags)
 
 
 _ARGUMENTS_PROPERTYMAP_PROPERTYENTRY.has_options = True

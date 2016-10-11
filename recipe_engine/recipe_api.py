@@ -65,9 +65,9 @@ class TriggerSpec(_TriggerSpec):
 
 
 _StepConfig = collections.namedtuple('_StepConfig',
-    ('name', 'cmd', 'cwd', 'env', 'allow_subannotations', 'trigger_specs',
-     'timeout', 'infra_step', 'stdout', 'stderr', 'stdin', 'ok_ret',
-     'step_test_data', 'nest_level'))
+    ('name', 'base_name', 'cmd', 'cwd', 'env', 'allow_subannotations',
+     'trigger_specs', 'timeout', 'infra_step', 'stdout', 'stderr', 'stdin',
+     'ok_ret', 'step_test_data', 'nest_level'))
 
 class StepConfig(_StepConfig):
   """
@@ -92,6 +92,7 @@ class StepConfig(_StepConfig):
   ))
 
   _RENDER_BLACKLIST=frozenset((
+    'base_name',
     'nest_level',
     'ok_ret',
     'infra_step',
@@ -99,7 +100,7 @@ class StepConfig(_StepConfig):
   ))
 
   @classmethod
-  def create(cls, name, cmd=None, cwd=None, env=None,
+  def create(cls, name, base_name=None, cmd=None, cwd=None, env=None,
              allow_subannotations=None, trigger_specs=None, timeout=None,
              infra_step=None, stdout=None, stderr=None, stdin=None,
              ok_ret=None, step_test_data=None, step_nest_level=None):
@@ -108,6 +109,9 @@ class StepConfig(_StepConfig):
 
     Args:
       name (str): name of the step, will appear in buildbots waterfall
+      base_name (str): the base name of the step. If the step has a derived
+          name (e.g., nested may be concatenated with its parent), this is the
+          name component of just this step. If None, this will be set to "name".
       cmd: command to run. Acceptable types: str, Path, Placeholder, or None.
       cwd (str or None): absolute path to working directory for the command
       env (dict): overrides for environment variables, described above.
@@ -135,6 +139,7 @@ class StepConfig(_StepConfig):
     """
     return cls(
         name=name,
+        base_name=(base_name or name),
         cmd=cmd,
         cwd=cwd,
         env=env,

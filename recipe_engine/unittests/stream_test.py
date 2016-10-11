@@ -120,8 +120,7 @@ bar tries to kiss foo, but foo already left
 
   def test_product_with_invariants_on_example(self):
     stringio = cStringIO.StringIO()
-    engine = stream.ProductStreamEngine(
-        stream.StreamEngineInvariants(),
+    engine = stream.StreamEngineInvariants.wrap(
         stream.AnnotatorStreamEngine(
             stringio, emit_timestamps=True, time_fn=self.fake_time))
     with engine:

@@ -140,7 +140,8 @@ BUG_LINK = (
     'https://code.google.com/p/chromium/issues/entry?%s' % urllib.urlencode({
         'summary': 'Recipe engine bug: unexpected failure',
         'comment': 'Link to the failing build and paste the exception here',
-        'labels': 'Infra,Infra-Area-Recipes,Pri-1,Restrict-View-Google,Infra-Troopers',
+        'labels': 'Infra,Infra-Area-Recipes,Pri-1,Restrict-View-Google,'
+                  'Infra-Troopers',
         'cc': 'martiniss@chromium.org,iannucci@chromium.org',
     }))
 
@@ -228,3 +229,91 @@ class exponential_retry(object):
           time.sleep(retry_delay.total_seconds())
           retry_delay *= 2
     return wrapper
+
+
+class MultiException(Exception):
+  """An exception that aggregates multiple exceptions and summarizes them."""
+
+  class Builder(object):
+    """Iteratively constructs a MultiException."""
+
+    def __init__(self):
+      self._exceptions = []
+
+    def append(self, exc):
+      if exc is not None:
+        self._exceptions.append(exc)
+
+    def get(self):
+      """Returns (MultiException or None): The constructed MultiException.
+
+      If no exceptions have been appended, None will be returned.
+      """
+      return MultiException(*self._exceptions) if self._exceptions else (None)
+
+    def raise_if_any(self):
+      mexc = self.get()
+      if mexc is not None:
+        raise mexc
+
+    @contextlib.contextmanager
+    def catch(self, *exc_types):
+      """ContextManager that catches any exception raised during its execution
+      and adds them to the MultiException.
+
+      Args:
+        exc_types (list): A list of exception classes to catch. If empty,
+            Exception will be used.
+      """
+      exc_types = exc_types or (Exception,)
+      try:
+        yield
+      except exc_types as exc:
+        self.append(exc)
+
+
+  def __init__(self, *base):
+    super(MultiException, self).__init__()
+
+    # Determine base Exception text.
+    if len(base) == 0:
+      self.message = 'No exceptions'
+    elif len(base) == 1:
+      self.message = str(base[0])
+    else:
+      self.message = str(base[0]) + ', and %d more...' % (len(base)-1)
+    self._inner = base
+
+  def __nonzero__(self):
+    return bool(self._inner)
+
+  def __len__(self):
+    return len(self._inner)
+
+  def __getitem__(self, key):
+    return self._inner[key]
+
+  def __iter__(self):
+    return iter(self._inner)
+
+  def __str__(self):
+    return '%s(%s)' % (type(self).__name__, self.message)
+
+
+@contextlib.contextmanager
+def map_defer_exceptions(fn, it, *exc_types):
+  """Executes "fn" for each element in "it". Any exceptions thrown by "fn" will
+  be deferred until the end of "it", then raised as a single MultiException.
+
+  Args:
+    fn (callable): A function to call for each element in "it".
+    it (iterable): An iterable to traverse.
+    exc_types (list): An optional list of specific exception types to defer.
+        If empty, Exception will be used. Any Exceptions not referenced by this
+        list will skip deferring and be immediately raised.
+  """
+  mexc_builder = MultiException.Builder()
+  for e in it:
+    with mexc_builder.catch(*exc_types):
+      fn(e)
+  mexc_builder.raise_if_any()

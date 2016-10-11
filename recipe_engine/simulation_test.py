@@ -81,10 +81,7 @@ def RunRecipe(test_data):
   config_types.ResetTostringFns()
 
   annotator = SimulationAnnotatorStreamEngine()
-  stream_engine = stream.ProductStreamEngine(
-      stream.StreamEngineInvariants(),
-      annotator)
-  with stream_engine:
+  with stream.StreamEngineInvariants.wrap(annotator) as stream_engine:
     step_runner = step_runner.SimulationStepRunner(stream_engine, test_data,
                                                    annotator)
 

@@ -161,6 +161,7 @@ class StepApi(recipe_api.RecipeApiPlain):
         'infra_step', bool(infra_step))
     kwargs['step_nest_level'] = compositor.get_with_context('nest_level', 0)
     kwargs['name'] = full_name
+    kwargs['base_name'] = name
 
     schema = self.make_config()
     schema.set_val(kwargs)
