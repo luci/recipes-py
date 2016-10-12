@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='arguments.proto',
   package='recipe_engine',
   syntax='proto3',
-  serialized_pb=_b('\n\x0f\x61rguments.proto\x12\rrecipe_engine\"\x9b\x06\n\tArguments\x12\x38\n\nproperties\x18\x01 \x01(\x0b\x32$.recipe_engine.Arguments.PropertyMap\x12\x42\n\x10\x61nnotation_flags\x18\x02 \x01(\x0b\x32(.recipe_engine.Arguments.AnnotationFlags\x12\x34\n\x06logdog\x18\x03 \x01(\x0b\x32$.recipe_engine.Arguments.LogDogFlags\x1a\xd5\x01\n\x08Property\x12\x0b\n\x01s\x18\x01 \x01(\tH\x00\x12\r\n\x03int\x18\x02 \x01(\x03H\x00\x12\x0e\n\x04uint\x18\x03 \x01(\x04H\x00\x12\x0b\n\x01\x64\x18\x04 \x01(\x01H\x00\x12\x0b\n\x01\x62\x18\x05 \x01(\x08H\x00\x12\x0e\n\x04\x64\x61ta\x18\x06 \x01(\x0cH\x00\x12\x33\n\x03map\x18\x07 \x01(\x0b\x32$.recipe_engine.Arguments.PropertyMapH\x00\x12\x35\n\x04list\x18\x08 \x01(\x0b\x32%.recipe_engine.Arguments.PropertyListH\x00\x42\x07\n\x05value\x1a\x43\n\x0cPropertyList\x12\x33\n\x08property\x18\x01 \x03(\x0b\x32!.recipe_engine.Arguments.Property\x1a\xa7\x01\n\x0bPropertyMap\x12\x44\n\x08property\x18\x01 \x03(\x0b\x32\x32.recipe_engine.Arguments.PropertyMap.PropertyEntry\x1aR\n\rPropertyEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x30\n\x05value\x18\x02 \x01(\x0b\x32!.recipe_engine.Arguments.Property:\x02\x38\x01\x1aJ\n\x0f\x41nnotationFlags\x12\x16\n\x0e\x65mit_timestamp\x18\x01 \x01(\x08\x12\x1f\n\x17\x65mit_initial_properties\x18\x02 \x01(\x08\x1aG\n\x0bLogDogFlags\x12\x18\n\x10streamserver_uri\x18\x01 \x01(\t\x12\x11\n\tname_base\x18\x02 \x01(\t\x12\x0b\n\x03tee\x18\x03 \x01(\x08\x62\x06proto3')
+  serialized_pb=_b('\n\x0f\x61rguments.proto\x12\rrecipe_engine\"\xbf\x06\n\tArguments\x12\x38\n\nproperties\x18\x01 \x01(\x0b\x32$.recipe_engine.Arguments.PropertyMap\x12\x42\n\x10\x61nnotation_flags\x18\x02 \x01(\x0b\x32(.recipe_engine.Arguments.AnnotationFlags\x12\x34\n\x06logdog\x18\x03 \x01(\x0b\x32$.recipe_engine.Arguments.LogDogFlags\x1a\xd5\x01\n\x08Property\x12\x0b\n\x01s\x18\x01 \x01(\tH\x00\x12\r\n\x03int\x18\x02 \x01(\x03H\x00\x12\x0e\n\x04uint\x18\x03 \x01(\x04H\x00\x12\x0b\n\x01\x64\x18\x04 \x01(\x01H\x00\x12\x0b\n\x01\x62\x18\x05 \x01(\x08H\x00\x12\x0e\n\x04\x64\x61ta\x18\x06 \x01(\x0cH\x00\x12\x33\n\x03map\x18\x07 \x01(\x0b\x32$.recipe_engine.Arguments.PropertyMapH\x00\x12\x35\n\x04list\x18\x08 \x01(\x0b\x32%.recipe_engine.Arguments.PropertyListH\x00\x42\x07\n\x05value\x1a\x43\n\x0cPropertyList\x12\x33\n\x08property\x18\x01 \x03(\x0b\x32!.recipe_engine.Arguments.Property\x1a\xa7\x01\n\x0bPropertyMap\x12\x44\n\x08property\x18\x01 \x03(\x0b\x32\x32.recipe_engine.Arguments.PropertyMap.PropertyEntry\x1aR\n\rPropertyEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x30\n\x05value\x18\x02 \x01(\x0b\x32!.recipe_engine.Arguments.Property:\x02\x38\x01\x1aJ\n\x0f\x41nnotationFlags\x12\x16\n\x0e\x65mit_timestamp\x18\x01 \x01(\x08\x12\x1f\n\x17\x65mit_initial_properties\x18\x02 \x01(\x08\x1ak\n\x0bLogDogFlags\x12\x18\n\x10streamserver_uri\x18\x01 \x01(\t\x12\x11\n\tname_base\x18\x02 \x01(\t\x12\x0b\n\x03tee\x18\x03 \x01(\x08\x12\"\n\x1a\x66inal_annotation_dump_path\x18\x04 \x01(\tb\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -270,6 +270,13 @@ _ARGUMENTS_LOGDOGFLAGS = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='final_annotation_dump_path', full_name='recipe_engine.Arguments.LogDogFlags.final_annotation_dump_path', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -283,7 +290,7 @@ _ARGUMENTS_LOGDOGFLAGS = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=759,
-  serialized_end=830,
+  serialized_end=866,
 )
 
 _ARGUMENTS = _descriptor.Descriptor(
@@ -327,7 +334,7 @@ _ARGUMENTS = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=35,
-  serialized_end=830,
+  serialized_end=866,
 )
 
 _ARGUMENTS_PROPERTY.fields_by_name['map'].message_type = _ARGUMENTS_PROPERTYMAP

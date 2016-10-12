@@ -7,6 +7,9 @@ import collections
 import contextlib
 import datetime
 import json
+import os
+import shutil
+import tempfile
 import threading
 import time
 import unittest
@@ -23,6 +26,15 @@ from recipe_engine import stream_logdog
 
 
 import annotations_pb2 as pb
+
+
+@contextlib.contextmanager
+def tempdir():
+  tdir = tempfile.mkdtemp(suffix='stream_logdog_test', dir=test_env.BASE_DIR)
+  try:
+    yield tdir
+  finally:
+    shutil.rmtree(tdir)
 
 
 def _translate_annotation_datagram(dg):
@@ -403,6 +415,45 @@ class StreamEngineTest(unittest.TestCase):
             ],
         },
     })
+
+  def testDumpFinalState(self):
+    self.env.argv = ['fake_program', 'arg0', 'arg1']
+    self.env.environ['foo'] = 'bar'
+    self.env.cwd = 'CWD'
+
+    # Create a StreamEngine with an update interval that will trigger each time
+    # _advance_time is called.
+    with tempdir() as tdir:
+      dump_path = os.path.join(tdir, 'dump.bin')
+      with self._new_stream_engine(
+          update_interval=datetime.timedelta(seconds=1),
+          dump_path=dump_path) as se:
+        # Initial stream state (no steps).
+        self.assertEqual(self.client.all_streams(), {
+            u'annotations': {
+                u'name': u'steps',
+                u'started': u'2106-06-12T01:02:03Z',
+                u'command': {
+                  u'commandLine': [u'fake_program', u'arg0', u'arg1'],
+                  u'cwd': u'CWD',
+                  u'environ': {u'foo': u'bar'},
+                },
+            },
+        })
+
+      with open(dump_path, 'rb') as fd:
+        step = _translate_annotation_datagram(fd.read())
+      self.assertEqual(step, {
+            u'name': u'steps',
+            u'status': u'SUCCESS',
+            u'started': u'2106-06-12T01:02:03Z',
+            u'ended': u'2106-06-12T01:02:04Z',
+            u'command': {
+              u'commandLine': [u'fake_program', u'arg0', u'arg1'],
+              u'cwd': u'CWD',
+              u'environ': {u'foo': u'bar'},
+            },
+        })
 
   def testBasicStream(self):
     self.env.argv = ['fake_program', 'arg0', 'arg1']

@@ -179,6 +179,7 @@ def run(package_deps, args, op_args):
     stream_engines.append(stream_logdog.StreamEngine(
         streamserver_uri=op_args.logdog.streamserver_uri,
         name_base=(op_args.logdog.name_base or None),
+        dump_path=op_args.logdog.final_annotation_dump_path,
     ))
 
     # If we're teeing, also fold in a standard annotation stream engine.

@@ -81,6 +81,10 @@ message Arguments {
     // If true, tee output through STDOUT/STDERR using inline @@@annotation@@@
     // markers in addition to LogDog streaming.
     bool tee = 3;
+
+    // If not empty, this is a path where the final annotation protobuf should
+    // be dumped on completion.
+    string final_annotation_dump_path = 4;
   }
   LogDogFlags logdog = 3;
 }
