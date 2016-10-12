@@ -15,6 +15,7 @@ from .config import ConfigContext, ConfigGroupSchema
 from .config_types import Path, ModuleBasePath, PackageRepoBasePath
 from .config_types import RECIPE_MODULE_PREFIX
 from .recipe_api import RecipeApi, RecipeApiPlain, RecipeScriptApi
+from .recipe_api import _UnresolvedRequirement
 from .recipe_api import Property, BoundProperty
 from .recipe_api import UndefinedPropertyException, PROPERTY_SENTINEL
 from .recipe_test_api import RecipeTestApi, DisabledTestData
@@ -210,11 +211,32 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
         deps[name] = self.universe.load(package, dep_real_name)
     return deps
 
-  def load_recipe(self, recipe):
+  def _find_recipe(self, recipe):
+    if ':' in recipe:
+      module_name, example = recipe.split(':')
+      #TODO(martinis) change to example == 'example' ? Technically a bug...
+      assert example.endswith('example')
+      for module_dir in self.package.module_dirs:
+        subpath = os.path.join(module_dir, module_name)
+        if not _is_recipe_module_dir(subpath):
+          continue
+
+        return os.path.join(subpath, 'example.py')
+    else:
+      for recipe_dir in self.package.recipe_dirs:
+        recipe_path = os.path.join(recipe_dir, recipe)
+        if os.path.exists(recipe_path + '.py'):
+          return recipe_path + '.py'
+
+    raise NoSuchRecipe(recipe)
+
+  def load_recipe(self, recipe, engine=None):
     """Given name of a recipe, loads and returns it as RecipeScript instance.
 
     Args:
       recipe (str): name of a recipe, can be in form '<module>:<recipe>'.
+      engine (RecipeEngine): If not None, resolve requirements with this recipe
+          engine. Otherwise, requirements will be unresolved.
 
     Returns:
       RecipeScript instance.
@@ -227,28 +249,17 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
     # imported by load_recipe_modules instead of the normal search paths.
     # TODO(martiniss) change "infra/example" to ["infra", "example"], and handle
     # appropriately, because of windows.
+    recipe_path = self._find_recipe(recipe)
     try:
-      if ':' in recipe:
-        module_name, example = recipe.split(':')
-        #TODO(martinis) change to example == 'example' ? Technically a bug...
-        assert example.endswith('example')
-        for module_dir in self.package.module_dirs:
-          subpath = os.path.join(module_dir, module_name)
-          if not _is_recipe_module_dir(subpath):
-            continue
-
-          return RecipeScript.from_script_path(
-              os.path.join(subpath, 'example.py'), self)
-      else:
-        for recipe_dir in self.package.recipe_dirs:
-          recipe_path = os.path.join(recipe_dir, recipe)
-          if os.path.exists(recipe_path + '.py'):
-            return RecipeScript.from_script_path(recipe_path + '.py', self)
-
+      script = RecipeScript.from_script_path(recipe_path, self)
     except (LoaderError,AssertionError,ImportError) as e:
       _amend_exception(e, 'while loading recipe %s' % recipe)
 
-    raise NoSuchRecipe(recipe)
+    if engine is not None:
+      script.globals.update({k: _resolve_requirement(v, engine)
+                             for k, v in script.globals.iteritems()
+                             if isinstance(v, _UnresolvedRequirement)})
+    return script
 
   @property
   def module_dirs(self):
@@ -385,14 +396,18 @@ def _patchup_module(name, submod, universe_view):
         submod.CONFIG_CTX = v
     assert submod.CONFIG_CTX, 'Config file, but no config context?'
 
+  # Identify the RecipeApiPlain subclass as this module's API.
   submod.API = getattr(submod, 'API', None)
+  assert hasattr(submod, 'api'), '%s is missing api.py' % (name,)
   for v in submod.api.__dict__.itervalues():
     if inspect.isclass(v) and issubclass(v, RecipeApiPlain):
       assert not submod.API, (
-        '%s has more than one Api subclass: %s, %s' % (name, v, submod.API))
+        '%s has more than one RecipeApi subclass: %s, %s' % (
+            name, v, submod.API))
       submod.API = v
   assert submod.API, 'Submodule has no api? %s' % (submod)
 
+  # Identify the (optional) RecipeTestApi subclass as this module's test API.
   submod.TEST_API = getattr(submod, 'TEST_API', None)
   if hasattr(submod, 'test_api'):
     for v in submod.test_api.__dict__.itervalues():
@@ -412,7 +427,7 @@ def _patchup_module(name, submod, universe_view):
 
 
 class DependencyMapper(object):
-  """DependencyMapper topologically traverses the dependency DAG beginning at
+  r"""DependencyMapper topologically traverses the dependency DAG beginning at
   a module, executing a callback ("instantiator") for each module.
 
   For example, if the dependency DAG looked like this:
@@ -533,18 +548,24 @@ def create_recipe_api(toplevel_deps, engine, test_data=DisabledTestData()):
   def instantiator(mod, deps):
     kwargs = {
       'module': mod,
-      'engine': engine,
       # TODO(luqui): test_data will need to use canonical unique names.
       'test_data': test_data.get_module_test_data(mod.NAME)
     }
     prop_defs = mod.PROPERTIES
     mod_api = invoke_with_properties(
-      mod.API, engine.properties, prop_defs, **kwargs)
+        mod.API, engine.properties, prop_defs, **kwargs)
     mod_api.test_api = (getattr(mod, 'TEST_API', None)
                         or RecipeTestApi)(module=mod)
     for k, v in deps.iteritems():
       setattr(mod_api.m, k, v)
       setattr(mod_api.test_api.m, k, v.test_api)
+
+    # Replace class-level Requirements placeholders in the recipe API with
+    # their instance-level real values.
+    map(lambda (k, v): setattr(mod_api, k, _resolve_requirement(v, engine)),
+        ((k, v) for k, v in type(mod_api).__dict__.iteritems()
+         if isinstance(v, _UnresolvedRequirement)))
+
     mod_api.initialize()
     return mod_api
 
@@ -568,3 +589,10 @@ def create_test_api(toplevel_deps, universe):
   for k,v in toplevel_deps.iteritems():
     setattr(api, k, mapper.instantiate(v))
   return api
+
+
+def _resolve_requirement(req, engine):
+  if req._typ == 'client':
+    return engine._get_client(req._name)
+  else:
+    raise ValueError('Unknown requirement type [%s]' % (req._typ,))

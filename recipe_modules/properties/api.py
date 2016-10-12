@@ -2,8 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from recipe_engine.types import freeze
 from recipe_engine import recipe_api
+from recipe_engine.types import freeze
 import collections
 
 # Use RecipeApiPlain because collections.Mapping has its own metaclass.
@@ -18,9 +18,19 @@ class PropertiesApi(recipe_api.RecipeApiPlain, collections.Mapping):
     val = factory_properties
     val.update(build_properties)
   """
+
+  properties_client = recipe_api.RequireClient('properties')
+
   def __init__(self, **kwargs):
     super(PropertiesApi, self).__init__(**kwargs)
-    self._properties = freeze(self._engine.properties)
+    self._frozen_properties = None
+
+  @property
+  def _properties(self):
+    if self._frozen_properties is None:
+      self._frozen_properties = freeze(
+          self.properties_client.get_properties())
+    return self._frozen_properties
 
   def __getitem__(self, key):
     return self._properties[key]
@@ -44,5 +54,4 @@ class PropertiesApi(recipe_api.RecipeApiPlain, collections.Mapping):
 
   def thaw(self):
     """Returns a vanilla python jsonish dictionary of properties."""
-
-    return dict(self._engine.properties)
+    return self.properties_client.get_properties()

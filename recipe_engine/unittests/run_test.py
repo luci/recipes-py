@@ -158,7 +158,7 @@ class RunTest(unittest.TestCase):
           return None
 
       with self.assertRaises(AssertionError):
-        engine.run(FakeScript(), api)
+        engine.run(FakeScript(), api, properties)
 
   def test_subannotations(self):
     proc = subprocess.Popen(

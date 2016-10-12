@@ -242,11 +242,12 @@ class RepoTest(unittest.TestCase):
           'from recipe_engine import recipe_api',
           '',
           'class MyApi(recipe_api.RecipeApi):',
+          '  step_client = recipe_api.RequireClient(\'step\')',
         ] + [
           '\n'.join([
             '',
             '  def %s(self):' % m_name,
-            '    return self._engine.run_step(%r)' % {
+            '    return self.step_client.run_step(%r)' % {
                 'name': m_name,
                 'cmd': m_cmd,
                 'ok_ret': [0],

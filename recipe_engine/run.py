@@ -185,6 +185,9 @@ ENV_WHITELIST_POSIX = ENV_WHITELIST_INFRA | BUILDBOT_MAGIC_ENV | set([
 RecipeResult = collections.namedtuple('RecipeResult', 'result')
 
 
+# TODO(dnj): Replace "properties" with a generic runtime instance. This instance
+# will be used to seed recipe clients and expanded to include managed runtime
+# entities.
 def run_steps(properties, stream_engine, step_runner, universe_view):
   """Runs a recipe (given by the 'recipe' property).
 
@@ -248,7 +251,7 @@ def run_steps(properties, stream_engine, step_runner, universe_view):
 
     # Find and load the recipe to run.
     try:
-      recipe_script = universe_view.load_recipe(recipe)
+      recipe_script = universe_view.load_recipe(recipe, engine=engine)
       s.write_line('Running recipe with %s' % (properties,))
 
       api = loader.create_recipe_api(recipe_script.LOADED_DEPS,
@@ -267,7 +270,7 @@ def run_steps(properties, stream_engine, step_runner, universe_view):
 
   # Run the steps emitted by a recipe via the engine, emitting annotations
   # into |stream| along the way.
-  return engine.run(recipe_script, api)
+  return engine.run(recipe_script, api, properties)
 
 
 def _isolate_environment():
@@ -305,6 +308,11 @@ class RecipeEngine(object):
     self._step_runner = step_runner
     self._properties = properties
     self._universe_view = universe_view
+    self._clients = {client.IDENT: client for client in (
+        recipe_api.StepClient(self),
+        recipe_api.PropertiesClient(self),
+        recipe_api.DependencyManagerClient(self),
+    )}
 
     # A stack of ActiveStep objects, holding the most recently executed step at
     # each nest level (objects deeper in the stack have lower nest levels).
@@ -331,19 +339,6 @@ class RecipeEngine(object):
   def universe(self):
     return self._universe_view.universe
 
-  @property
-  def previous_step_result(self):
-    """Allows api.step to get the active result from any context.
-
-    This always returns the innermost nested step that is still open --
-    presumably the one that just failed if we are in an exception handler."""
-    if not self._step_stack:
-      raise ValueError(
-          "No steps have been run yet, and you are asking for a previous step"
-          " result. Check to make sure your code isn't doing incorrect logic"
-          " with try-finally blocks.")
-    return self._step_stack[-1].step_result
-
   def _close_through_level(self, level):
     """Close all open steps whose nest level is >= the supplied level.
 
@@ -356,17 +351,24 @@ class RecipeEngine(object):
         cur.step_result.presentation.finalize(cur.open_step.stream)
       cur.open_step.finalize()
 
-  def run_step(self, step_dict):
+  def _get_client(self, name):
+    """Returns: the client instance for name, or None if not such client exists.
+
+    Args:
+      name (str): The name of the client instance to retrieve.
+    """
+    return self._clients.get(name)
+
+  def run_step(self, step_config):
     """
     Runs a step.
 
     Args:
-      step_dict (dict): A step dictionary to run.
+      step_config (recipe_api.StepConfig): The step configuration to run.
 
     Returns:
       A StepData object containing the result of running the step.
     """
-    step_config = recipe_api.StepConfig.create(**step_dict)
     with util.raises((recipe_api.StepFailure, OSError),
                      self._step_runner.stream_engine):
       step_result = None
@@ -401,7 +403,7 @@ class RecipeEngine(object):
 
         raise exc(step_config.name, step_result)
 
-  def run(self, recipe_script, api):
+  def run(self, recipe_script, api, properties):
     """Run a recipe represented by a recipe_script object.
 
     This function blocks until recipe finishes.
@@ -412,6 +414,7 @@ class RecipeEngine(object):
       recipe_script: The recipe to run, as represented by a RecipeScript object.
       api: The api, with loaded module dependencies.
            Used by the some special modules.
+      properties: a dictionary of properties to pass to the recipe.
 
     Returns:
       RecipeResult which has return value or status code and exception.
@@ -421,7 +424,7 @@ class RecipeEngine(object):
     with self._step_runner.run_context():
       try:
         try:
-          recipe_result = recipe_script.run(api, api._engine.properties)
+          recipe_result = recipe_script.run(api, properties)
           result = {
             "recipe_result": recipe_result,
             "status_code": 0
@@ -468,7 +471,7 @@ class RecipeEngine(object):
   def depend_on_multi(self, dependencies, distributor=None):
     results = []
     for recipe, properties in dependencies:
-      recipe_script = self._universe_view.load_recipe(recipe)
+      recipe_script = self._universe_view.load_recipe(recipe, engine=self)
 
       if not recipe_script.RETURN_SCHEMA:
         raise ValueError(

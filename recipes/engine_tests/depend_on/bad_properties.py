@@ -2,7 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from recipe_engine.recipe_api import Property
+from recipe_engine.recipe_api import Property, RequireClient
 from recipe_engine import config
 
 DEPS = [
@@ -15,8 +15,11 @@ RETURN_SCHEMA = config.ReturnSchema(
     result=config.Single(int),
 )
 
+dependency_manager = RequireClient('dependency_manager')
+
 def RunSteps(api):
-  res = api.depend_on('engine_tests/depend_on/bottom', {'number': 'lalala'})
+  res = dependency_manager.depend_on(
+      'engine_tests/depend_on/bottom', {'number': 'lalala'})
 
 def GenTests(api):
   yield (

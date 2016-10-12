@@ -86,9 +86,10 @@ def RunRecipe(test_data):
                                                    annotator)
 
     engine = run.RecipeEngine(step_runner, test_data.properties, _UNIVERSE)
-    recipe_script = _UNIVERSE.load_recipe(test_data.properties['recipe'])
+    recipe_script = _UNIVERSE.load_recipe(test_data.properties['recipe'],
+                                          engine=engine)
     api = loader.create_recipe_api(recipe_script.LOADED_DEPS, engine, test_data)
-    result = engine.run(recipe_script, api)
+    result = engine.run(recipe_script, api, test_data.properties)
 
     # Don't include tracebacks in expectations because they are too sensitive to
     # change.

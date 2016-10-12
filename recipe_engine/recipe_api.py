@@ -5,6 +5,7 @@
 from __future__ import absolute_import
 import contextlib
 import collections
+import copy
 import keyword
 import re
 import types
@@ -17,6 +18,125 @@ from .config import Single
 from .util import ModuleInjectionSite
 
 from . import field_composer
+
+
+class UnknownRequirementError(object):
+  """Raised by a requirement function when the referenced requirement is
+  unknown.
+  """
+
+  def __init__(self, req):
+    super(UnknownRequirementError, self).__init__(
+        'Unknown requirement [%s]' % (req,))
+    self.typ = req._typ
+    self.name = req._name
+
+
+class _UnresolvedRequirement(object):
+  """Internal placeholder type for an unresolved module/recipe requirement."""
+
+  def __init__(self, typ, name):
+    self._typ = typ
+    self._name = name
+
+  def __str__(self):
+    return '%s:%s' % (self._typ, self._name)
+
+  def __getattr__(self, key):
+    raise AttributeError(
+        'Cannot reference [%s] in unresolved requirement [%s]' % (
+            key, str(self,)))
+
+  def __call__(self, *args, **kwargs):
+    raise AttributeError('Cannot call unresolved requirement [%s]' % (
+        str(self,)))
+
+
+def RequireClient(name):
+  """Returns: A dependency injection placeholder for a recipe engine client.
+
+  Recipes and Recipe APIs can call this function to install a placeholder for
+  the dependency injection of a recipe engine client. This dependency will be
+  noted by the recipe engine and resolved prior to recipe execution.
+
+  Clients are intended to be used to interface between the recipe engine and
+  low-level modules (e.g., "step"). As a general rule of thumb, higher-level
+  modules should not use clients and interface with the low-level modules
+  instead.
+
+  Recipe engine clients are referenced by name and resolved directly by the
+  recipe engine. Modules must require them as class member variables in their
+  recipe API subclass, and recipes must require them as top-level variables.
+
+  For example:
+
+  class MyCollRecipeApi(recipe_api.RecipeApi):
+
+    step_client = recipe_api.RequireClient('step')
+
+    def do_something(self):
+      self.step_client.whatever()
+
+  Args:
+    name (str): the name of the recipe engine client to install.
+  """
+  return _UnresolvedRequirement('client', name)
+
+
+class PropertiesClient(object):
+  """A recipe engine client representing the recipe engine properties."""
+
+  IDENT = 'properties'
+
+  def __init__(self, engine):
+    self._engine = engine
+
+  def get_properties(self):
+    return copy.deepcopy(self._engine.properties)
+
+
+class StepClient(object):
+  """A recipe engine client representing step running and introspection."""
+
+  IDENT = 'step'
+
+  def __init__(self, engine):
+    self._engine = engine
+
+  def previous_step_result(self):
+    """Allows api.step to get the active result from any context.
+
+    This always returns the innermost nested step that is still open --
+    presumably the one that just failed if we are in an exception handler."""
+    if not self._engine._step_stack:
+      raise ValueError(
+          'No steps have been run yet, and you are asking for a previous step '
+          'result.')
+    return self._engine._step_stack[-1].step_result
+
+  def run_step(self, step_dict):
+    """
+    Runs a step.
+
+    Args:
+      step_dict (dict): A step dictionary to run.
+
+    Returns:
+      A StepData object containing the result of running the step.
+    """
+    return self._engine.run_step(StepConfig.create(**step_dict))
+
+
+class DependencyManagerClient(object):
+  """A recipe engine client representing the dependency manager."""
+
+  IDENT = 'dependency_manager'
+
+  def __init__(self, engine):
+    self._engine = engine
+
+  def depend_on(self, recipe, properties, **kwargs):
+    return self._engine.depend_on(recipe, properties, **kwargs)
 
 
 _TriggerSpec = collections.namedtuple('_TriggerSpec',
@@ -516,14 +636,10 @@ class RecipeApiPlain(object):
   @infer_composite_step.
   """
 
-  def __init__(self, module=None, engine=None,
-               test_data=DisabledTestData(), **_kwargs):
+  def __init__(self, module=None, test_data=DisabledTestData(), **_kwargs):
     """Note: Injected dependencies are NOT available in __init__()."""
     super(RecipeApiPlain, self).__init__()
 
-    # |engine| is an instance of annotated_run.RecipeEngine. Modules should not
-    # generally use it unless they're low-level framework level modules.
-    self._engine = engine
     self._module = module
 
     assert isinstance(test_data, (ModuleTestData, DisabledTestData))
@@ -637,8 +753,9 @@ class RecipeApi(RecipeApiPlain):
 
 
 class RecipeScriptApi(RecipeApiPlain, ModuleInjectionSite):
-  def depend_on(self, recipe, properties, **kwargs):
-    return self._engine.depend_on(recipe, properties, **kwargs)
+  # TODO(dnj): Delete this and make recipe scripts use standard recipe APIs.
+  pass
+
 
 # This is a sentinel object for the Property system. This allows users to
 # specify a default of None that will actually be respected.

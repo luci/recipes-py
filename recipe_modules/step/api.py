@@ -11,6 +11,9 @@ from recipe_engine import recipe_api
 # Inherit from RecipeApiPlain because the only thing which is a step is
 # run_from_dict()
 class StepApi(recipe_api.RecipeApiPlain):
+
+  step_client = recipe_api.RequireClient('step')
+
   def __init__(self, **kwargs):
     super(StepApi, self).__init__(**kwargs)
     self._step_names = {}
@@ -67,7 +70,7 @@ class StepApi(recipe_api.RecipeApiPlain):
           new_step_text = result.json.output['step_text']
           api.step.active_result.presentation.step_text = new_step_text
     """
-    return self._engine.previous_step_result
+    return self.step_client.previous_step_result()
 
   @property
   def context(self):
@@ -170,4 +173,4 @@ class StepApi(recipe_api.RecipeApiPlain):
   # TODO(martiniss) delete, and make generator_script use **kwargs on step()
   @recipe_api.composite_step
   def run_from_dict(self, dct):
-    return self._engine.run_step(dct)
+    return self.step_client.run_step(dct)
