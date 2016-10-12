@@ -18,11 +18,6 @@ class TestRecipeScript(unittest.TestCase):
     with self.assertRaises(ValueError):
       script = loader.RecipeScript({'RETURN_SCHEMA': 3}, 'test_script')
 
-  def testSetsAttributes(self):
-    sentinel = object()
-    script = loader.RecipeScript({'imarandomnamelala': sentinel}, 'test_script')
-    self.assertEqual(sentinel, script.imarandomnamelala)
-
   def testRunChecksReturnType(self):
     sentinel = object()
     mocked_return = object()

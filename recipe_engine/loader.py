@@ -34,21 +34,38 @@ class NoSuchRecipe(LoaderError):
 class RecipeScript(object):
   """Holds dict of an evaluated recipe script."""
 
-  def __init__(self, recipe_dict, name):
+  def __init__(self, recipe_globals, name):
     self.name = name
+    self._recipe_globals = recipe_globals
+
+    self.run_steps, self.gen_tests = [
+        recipe_globals.get(k) for k in ('RunSteps', 'GenTests')]
 
     # Let each property object know about the property name.
-    recipe_dict['PROPERTIES'] = {
+    recipe_globals['PROPERTIES'] = {
         name: value.bind(name, BoundProperty.RECIPE_PROPERTY, name)
-        for name, value in recipe_dict.get('PROPERTIES', {}).items()}
+        for name, value in recipe_globals.get('PROPERTIES', {}).items()}
 
-    return_schema = recipe_dict.get('RETURN_SCHEMA')
+    return_schema = recipe_globals.get('RETURN_SCHEMA')
     if return_schema and not isinstance(return_schema, ConfigGroupSchema):
-      raise ValueError("Invalid RETURN_SCHEMA; must be an instance of \
-                       ConfigGroupSchema")
+      raise ValueError('Invalid RETURN_SCHEMA; must be an instance of '
+                       'ConfigGroupSchema')
 
-    for k, v in recipe_dict.iteritems():
-      setattr(self, k, v)
+  @property
+  def globals(self):
+    return self._recipe_globals
+
+  @property
+  def PROPERTIES(self):
+    return self._recipe_globals['PROPERTIES']
+
+  @property
+  def LOADED_DEPS(self):
+    return self._recipe_globals['LOADED_DEPS']
+
+  @property
+  def RETURN_SCHEMA(self):
+    return self._recipe_globals.get('RETURN_SCHEMA')
 
   def run(self, api, properties):
     """
@@ -56,11 +73,9 @@ class RecipeScript(object):
     Check the return value, if we have a RETURN_SCHEMA.
     """
     recipe_result = invoke_with_properties(
-      self.RunSteps, properties, self.PROPERTIES, api=api)
+      self.run_steps, properties, self.PROPERTIES, api=api)
 
-    return_schema = getattr(self, 'RETURN_SCHEMA', None)
-
-    if return_schema:
+    if self.RETURN_SCHEMA:
       if not recipe_result:
         raise ValueError("Recipe %s did not return a value." % self.name)
       return recipe_result.as_jsonish(True)
@@ -71,18 +86,18 @@ class RecipeScript(object):
   def from_script_path(cls, script_path, universe_view):
     """Evaluates a script and returns RecipeScript instance."""
 
-    script_vars = {}
-    script_vars['__file__'] = script_path
+    recipe_globals = {}
+    recipe_globals['__file__'] = script_path
 
     with env.temp_sys_path():
-      execfile(script_path, script_vars)
+      execfile(script_path, recipe_globals)
 
-    script_vars['LOADED_DEPS'] = universe_view.deps_from_spec(
-        script_vars.get('DEPS', []))
+    recipe_globals['LOADED_DEPS'] = universe_view.deps_from_spec(
+        recipe_globals.get('DEPS', []))
 
     # 'a/b/c/my_name.py' -> my_name
     name = os.path.basename(script_path).split('.')[0]
-    return cls(script_vars, name)
+    return cls(recipe_globals, name)
 
 
 class RecipeUniverse(object):

@@ -147,7 +147,7 @@ def GenerateTests():
       covers = cover_mods + [recipe_path]
 
       full_expectation_count = 0
-      for test_data in recipe.GenTests(test_api):
+      for test_data in recipe.gen_tests(test_api):
         if not test_data.whitelist_data:
           full_expectation_count += 1
         root, name = os.path.split(recipe_path)
@@ -161,7 +161,7 @@ def GenerateTests():
             expect_dir=expect_path,
             expect_base=test_data.name,
             covers=covers,
-            break_funcs=(recipe.RunSteps,)
+            break_funcs=(recipe.run_steps,)
         )
 
       if full_expectation_count < 1:

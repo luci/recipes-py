@@ -470,8 +470,7 @@ class RecipeEngine(object):
     for recipe, properties in dependencies:
       recipe_script = self._universe_view.load_recipe(recipe)
 
-      return_schema = getattr(recipe_script, 'RETURN_SCHEMA', None)
-      if not return_schema:
+      if not recipe_script.RETURN_SCHEMA:
         raise ValueError(
             "Invalid recipe %s. Recipe must have a return schema." % recipe)
 

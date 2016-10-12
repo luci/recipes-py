@@ -49,8 +49,7 @@ def ImportsTest(recipe_path, recipe_name, whitelist, universe_view):
   """
 
   recipe = universe_view.load_recipe(recipe_name)
-  for attr in dir(recipe):
-    val = getattr(recipe, attr)
+  for _, val in sorted(recipe.globals.iteritems()):
     if isinstance(val, types.ModuleType):
       module_name = val.__name__
       for pattern in whitelist:
