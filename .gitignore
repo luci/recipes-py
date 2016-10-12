@@ -1,3 +1,6 @@
 *.pyc
 /workdir
 ENV/*
+
+# Used by "bootstrap/update_vendoring.py" to cache some vendoring artifacts.
+.update_vendoring_cache

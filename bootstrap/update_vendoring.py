@@ -35,6 +35,8 @@ import tempfile
 REPO_DIR = os.path.abspath(os.path.join(
   os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
+# protoc cache directory.
+CACHE_DIR = os.path.join(REPO_DIR, '.update_vendoring_cache')
 
 # Global logger instance.
 LOGGER = logging.getLogger('recipes-py/regenerate')
@@ -88,9 +90,9 @@ class Context(object):
   def dest(self, relpath):
     return _path(self._dest_root, relpath)
 
-  def check_call(self, args, cwd=None):
+  def check_call(self, args, cwd=None, env=None):
     LOGGER.debug('Running command (cwd=%s): %s', cwd, ' '.join(args))
-    subprocess.check_call(args, cwd=cwd)
+    subprocess.check_call(args, cwd=cwd, env=env)
 
   @staticmethod
   def vendor_dir(src, dest):
@@ -103,7 +105,10 @@ class Context(object):
 class _ActionBase(object):
   """Simple base class for an action."""
 
-  def run(self, c, workdir):
+  def tags(self):
+    return ()
+
+  def run(self, c, workdir, opts):
     raise NotImplementedError()
 
 
@@ -119,38 +124,58 @@ class _VendoredPythonProtobuf(_ActionBase):
     self._repo = repo
     self._ref = ref
 
-  def run(self, c, workdir):
+  def tags(self):
+    return ('protobuf',)
+
+  def run(self, c, workdir, opts):
     dest = c.dest(self._reldest)
 
-    src = os.path.join(workdir, 'repo')
-    c.check_call(['git', 'clone', self._repo, src])
-    c.check_call(['git', '-C', src, 'checkout', self._ref])
+    # Build protoc in the cache directory.
+    prefix = os.path.join(CACHE_DIR, 'protoc', self._ref)
+    protoc_bin = os.path.join(prefix, 'bin')
+    protoc_tool = os.path.join(protoc_bin, 'protoc')
 
-    # Build and install "protoc" to the specified prefix.
-    prefix = os.path.join(workdir, 'prefix')
-    c.check_call([os.path.join(src, 'autogen.sh')], cwd=src)
-    c.check_call([os.path.join(src, 'configure'), '--prefix', prefix],
-                 cwd=src)
-    c.check_call(['make', '-j%d' % (multiprocessing.cpu_count(),),
-                  'install'], cwd=src)
+    # We only need a source checkout if we're doing a full vendoring round, or
+    # if we're not specifically regenerating protobufs.
+    src = None
+    compile_protoc = not os.path.isfile(protoc_tool)
+    if compile_protoc or not opts.protobufs:
+      # Check out the protobuf source.
+      src = os.path.join(workdir, 'repo')
+      c.check_call(['git', 'clone', self._repo, src])
+      c.check_call(['git', '-C', src, 'checkout', self._ref])
+
+    if compile_protoc:
+      # Build and install "protoc" to the specified prefix.
+      c.check_call([os.path.join(src, 'autogen.sh')], cwd=src)
+      c.check_call([os.path.join(src, 'configure'), '--prefix', prefix],
+                   cwd=src)
+      c.check_call(['make', '-j%d' % (multiprocessing.cpu_count(),),
+                    'install'], cwd=src)
 
     # Export our protoc path to the vendor registry.
-    c.add_tool('protoc', os.path.join(prefix, 'bin', 'protoc'))
+    c.add_tool('protoc', protoc_tool)
 
-    # Augment our PATH to include the prefix output.
-    protobuf_python = os.path.join(src, 'python')
-    build = os.path.join(workdir, 'build')
-    pure = os.path.join(build, 'pure')
-    c.check_call([
-        os.path.join(protobuf_python, 'setup.py'),
-        'build',
-        '--build-base', build,
-        '--build-purelib', pure,
-    ], cwd=protobuf_python)
+    # If we're not just regenerating protobufs, vendor the protobuf Python
+    # library.
+    if not opts.protobufs:
+      protobuf_python = os.path.join(src, 'python')
+      build = os.path.join(workdir, 'build')
+      pure = os.path.join(build, 'pure')
 
-    # Replace our vendored directory with the pure build directory.
-    python_proto_lib = os.path.join(pure, 'google')
-    c.vendor_dir(python_proto_lib, dest)
+      # Augment our PATH to include the prefix output.
+      env = os.environ.copy()
+      env['PATH'] = os.pathsep.join((protoc_bin, env['PATH']))
+      c.check_call([
+          os.path.join(protobuf_python, 'setup.py'),
+          'build',
+          '--build-base', build,
+          '--build-purelib', pure,
+      ], cwd=protobuf_python, env=env)
+
+      # Replace our vendored directory with the pure build directory.
+      python_proto_lib = os.path.join(pure, 'google')
+      c.vendor_dir(python_proto_lib, dest)
 
 
 class _VendoredPipPackage(_ActionBase):
@@ -161,7 +186,7 @@ class _VendoredPipPackage(_ActionBase):
     self._name = name
     self._version = version
 
-  def run(self, c, workdir):
+  def run(self, c, workdir, opts):
     dest = c.dest(self._reldest)
 
     install_dir = os.path.join(workdir, 'six')
@@ -184,7 +209,10 @@ class _VendoredLuciGoProto(_ActionBase):
     self._relsrc = relsrc
     self._ref = ref
 
-  def run(self, c, workdir):
+  def tags(self):
+    return ('protobuf',)
+
+  def run(self, c, workdir, opts):
     dest = c.dest(self._reldest)
     if not os.path.isdir(dest):
       os.makedirs(dest)
@@ -208,7 +236,7 @@ class _VendoredGitRepo(_ActionBase):
     self._ref = ref
     self._subpath = subpath
 
-  def run(self, c, workdir):
+  def run(self, c, workdir, opts):
     dest = c.dest(self._reldest)
 
     # Use a separate Git directory so we don't copy it when we clone.
@@ -233,7 +261,10 @@ class _RegenerateLocalProtobufs(_ActionBase):
       'recipe_engine',
   )
 
-  def run(self, c, _workdir):
+  def tags(self):
+    return ('protobuf',)
+
+  def run(self, c, _workdir, opts):
     for d in self._LOCAL_PROTO_DIRS:
       outdir = c.dest(d)
 
@@ -288,16 +319,26 @@ def main(argv):
       help='The destination to vendor into.')
   parser.add_argument('--leak', action='store_true',
       help='Leak temporary working directory.')
+  parser.add_argument('--protobufs', action='store_true',
+      help='Only regenerate protobufs. Will use cached protoc if available.')
   opts = parser.parse_args(argv)
+
+  # Generate our cache directory.
+  if not os.path.isdir(CACHE_DIR):
+    LOGGER.info('Creating cache directory at: %s', CACHE_DIR)
+    os.makedirs(CACHE_DIR)
 
   c = Context(opts.dest)
   with _tempdir(leak=opts.leak) as td:
     for i, act in enumerate(_ACTIONS):
+      if opts.protobufs and not 'protobuf' in act.tags():
+        continue
+
       vdir = os.path.join(td, 'vendor_%d' % (i,))
       os.makedirs(vdir)
 
       # Execute the vendor script.
-      act.run(c, vdir)
+      act.run(c, vdir, opts)
 
 
 if __name__ == '__main__':
