@@ -471,8 +471,9 @@ class SimulationStepRunner(StepRunner):
 
   @property
   def steps_ran(self):
-    return [self._rendered_step_to_dict(rs)
-            for rs in self._step_history.itervalues()]
+    return collections.OrderedDict(
+      (name, self._rendered_step_to_dict(rs))
+      for name, rs in self._step_history.iteritems())
 
 
 # Placeholders associated with a rendered step.

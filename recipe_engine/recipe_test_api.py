@@ -1,9 +1,11 @@
-# Copyright 2013 The LUCI Authors. All rights reserved.
+# Copyright 2016 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import collections
 import contextlib
+import inspect
+
+from collections import namedtuple, defaultdict
 
 from .util import ModuleInjectionSite, static_call, static_wraps
 from .types import freeze
@@ -65,7 +67,7 @@ class StepTestData(BaseTestData):
   def __init__(self):
     super(StepTestData, self).__init__()
     # { (module, placeholder, name) -> data }. Data are for output placeholders.
-    self.placeholder_data = collections.defaultdict(dict)
+    self.placeholder_data = defaultdict(dict)
     self.override = False
     self._stdout = None
     self._stderr = None
@@ -181,16 +183,20 @@ class ModuleTestData(BaseTestData, dict):
     return "ModuleTestData(%r)" % super(ModuleTestData, self).__repr__()
 
 
+PostprocessHook = namedtuple(
+  'PostprocessHook', 'func args kwargs filename lineno')
+
+
 class TestData(BaseTestData):
   def __init__(self, name=None):
     super(TestData, self).__init__()
     self.name = name
     self.properties = {}  # key -> val
-    self.mod_data = collections.defaultdict(ModuleTestData)
-    self.step_data = collections.defaultdict(StepTestData)
+    self.mod_data = defaultdict(ModuleTestData)
+    self.step_data = defaultdict(StepTestData)
     self.depend_on_data = {}
     self.expected_exception = None
-    self.whitelist_data = {} # step_name -> fields
+    self.post_process_hooks = [] # list(PostprocessHook)
 
   def __add__(self, other):
     assert isinstance(other, TestData)
@@ -202,7 +208,10 @@ class TestData(BaseTestData):
     combineify('mod_data', ret, self, other)
     combineify('step_data', ret, self, other)
     combineify('depend_on_data', ret, self, other)
-    combineify('whitelist_data', ret, self, other)
+
+    ret.post_process_hooks.extend(self.post_process_hooks)
+    ret.post_process_hooks.extend(other.post_process_hooks)
+
     ret.expected_exception = self.expected_exception
     if other.expected_exception:
       ret.expected_exception = other.expected_exception
@@ -271,8 +280,9 @@ class TestData(BaseTestData):
                        % tup)
     self.depend_on_data[tup] = freeze(result)
 
-  def whitelist(self, step_name, fields):
-    self.whitelist_data[step_name] = frozenset(fields)
+  def post_process(self, func, args, kwargs, filename, lineno):
+    self.post_process_hooks.append(PostprocessHook(
+      func, args, kwargs, filename, lineno))
 
   def __repr__(self):
     return "TestData(%r)" % ({
@@ -550,39 +560,96 @@ class RecipeTestApi(object):
     ret.depend_on(recipe, properties, result)
     return ret
 
-  def whitelist(self, step_name, *fields):
-    """Calling this enables step whitelisting for the expectations on this test.
-    You may call it multiple times, once per step_name that you want to have
-    show in the JSON expectations file for this test.
+  def post_process(self, func, *args, **kwargs):
+    """Calling this adds a post-processing hook for this test's expectations.
 
-    You may also optionally specify fields that you want to show up in the JSON
-    expectations. By default, all fields of the step will appear, but you may
-    only be interested in e.g. 'cmd' or 'env', for example. The 'name' field is
-    always included, regardless.
+    `func` should be a callable whose signature is in the form of:
+      func(check, step_odict, *args, **kwargs) -> (step_odict or None)
 
-    Keep in mind that the ultimate result of the recipe (the return value from
-    RunSteps) is on a virtual step named '$result'.
+    Where:
+      * `step_odict` is an ordered dictionary of step dictionaries, as would be
+      recorded into the JSON expectation file for this test. The dictionary key
+      is the step's name.
+
+      * `check` is a semi-magical function which you can use to test things.
+      Using `check` will allow you to see all the violated assertions from your
+      post_process functions simultaneously. Always call `check` directly (i.e.
+      with parens) to produce helpful check messages. `check` also has a second
+      form that takes a human hint to print when the `check` fails. Hints should
+      be written as the ___ in the sentence 'check that ___.'. Essentially,
+      check has the function signatures:
+
+        `def check(<bool expression>)`
+        `def check(hint, <bool expression>)`
+
+      If the hint is omitted, then the boolean expression itself becomes the
+      hint when the check failure message is printed.
+
+      Note that check DOES NOT stop your function. It is not an assert. Your
+      function will continue to execute after invoking the check function. If
+      the boolean expression is False, the check will produce a helpful error
+      message and cause the test case to fail.
+
+      * args and kwargs are optional, and completely up to your implementation.
+      They will be passed straight through to your function, and are provided to
+      eliminate an extra `lambda` if your function needs to take additional
+      inputs.
+
+    Raising an exception will print the exception and will halt the
+    postprocessing chain entirely.
+
+    The function must return either `None`, or it may return a filtered subset
+    of step_odict (e.g.  ommitting some steps and/or dictionary keys). This will
+    be the new value of step_odict for the test. Returning an empty dict or
+    OrderedDict will remove the expectations from disk altogether. Returning
+    `None` (Python's implicit default return value) is equivalent to returning
+    the unmodified step_odict. 'name' will always be preserved in every step,
+    even if you remove it.
+
+    Calling post_process multiple times will apply each function in order,
+    chaining the output of one function to the input of the next function. This
+    is intended to be use to compose the effects of multiple re-usable
+    postprocessing functions, some of which are pre-defined in
+    `recipe_engine.post_process` which you can import in your recipe.
 
     Example:
-      yield api.test('assert entire recipe')
+      from recipe_engine.post_process import (Filter, DoesNotRun,
+        DropExpectation)
 
-      yield (api.test('assert only thing step')
-        + api.whitelist('thing step')
-      )
+      def GenTests(api):
+        yield api.test('no post processing')
 
-      yield (api.test('assert only thing step\'s cmd')
-        + api.whitelist('thing step', 'cmd')
-      )
+        yield (api.test('only thing_step')
+          + api.post_process(Filter('thing_step'))
+        )
 
-      yield (api.test('assert thing step and other step')
-        + api.whitelist('thing step')
-        + api.whitelist('other step')
-      )
+        tstepFilt = Filter()
+        tstepFilt = tstepFilt.include('thing_step', 'cmd')
+        yield (api.test('only thing_step\'s cmd')
+          + api.post_process(tstepFilt)
+        )
 
-      yield (api.test('only care about the result')
-        + api.whitelist('$result')
-      )
+        yield (api.test('assert bob_step does not run')
+          + api.post_process(DoesNotRun, 'bob_step')
+        )
+
+        yield (api.test('only care one step and the result')
+          + api.post_process(Filter('one_step', '$result'))
+        )
+
+        def assertStuff(check, step_odict, to_check):
+          check(to_check in step_odict['step_name']['cmd'])
+
+        yield (api.test('assert something and have NO expectation file')
+          + api.post_process(assertStuff, 'to_check_arg')
+          + api.post_process(DropExpectation)
+        )
     """
     ret = TestData()
-    ret.whitelist(step_name, fields)
+    try:
+      stk = inspect.stack()
+      _, filename, lineno, _, _, _ = stk[1]
+    finally:
+      del stk
+    ret.post_process(func, args, kwargs, filename, lineno)
     return ret
