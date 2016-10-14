@@ -24,13 +24,6 @@
     "name": "another important"
   },
   {
-    "cmd": [
-      "echo",
-      "FAAAAKE"
-    ],
-    "name": "fakestep"
-  },
-  {
     "name": "$result",
     "recipe_result": null,
     "status_code": 0

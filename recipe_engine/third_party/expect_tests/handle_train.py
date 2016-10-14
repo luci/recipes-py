@@ -9,7 +9,6 @@ import time
 
 from .type_definitions import DirSeen, Handler, MultiTest, Failure
 from .serialize import WriteNewData, DiffData, NonExistant, GetCurrentData
-from .handle_test import FailChecks
 
 
 ForcedWriteAction = collections.namedtuple('ForcedWriteAction', 'test')
@@ -67,11 +66,7 @@ class TrainHandler(Handler):
         else:
           put_next_stage(SchemaDiffWriteAction(test))
       else:
-        failed_checks = [check for check in result.checks if not check.passed]
-        if failed_checks:
-          put_next_stage(FailChecks(test, failed_checks))
-        else:
-          put_next_stage(NoAction(test))
+        put_next_stage(NoAction(test))
 
   class ResultStageHandler(Handler.ResultStageHandler):
     def __init__(self, opts):
@@ -100,12 +95,6 @@ class TrainHandler(Handler):
 
     def handle_DirSeen(self, dirseen):
       self.dirs_seen.add(dirseen.dir)
-
-    def handle_FailChecks(self, fc):
-      self._record_expected(fc.test, 'C')
-      self.normal_actions.append(
-        ('%r failed checks!\n' % fc.test.name) + fc.format(2))
-      return Failure()
 
     def handle_NoAction(self, result):
       self._record_expected(result.test, '.')
