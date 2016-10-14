@@ -19,6 +19,7 @@ sys.path = [
     os.path.join(THIRD_PARTY, 'six'),
     os.path.join(THIRD_PARTY, 'client-py'),
     os.path.join(THIRD_PARTY, 'mock-1.0.1'),
+    os.path.join(THIRD_PARTY, 'astunparse'),
 ] + sys.path
 
 # Hack up our "pkg_resources" to import our local protobuf instead of the system

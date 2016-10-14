@@ -18,6 +18,11 @@ Fail = collections.namedtuple('Fail', 'test diff log_lines')
 Pass = collections.namedtuple('Pass', 'test')
 
 
+class FailChecks(collections.namedtuple('FailChecks', 'test checks')):
+  def format(self, indent):
+    return (' '*indent+'\n').join([c.format(indent+2) for c in self.checks])
+
+
 class TestHandler(Handler):
   """Run the tests."""
 
@@ -41,7 +46,11 @@ class TestHandler(Handler):
       else:
         diff = DiffData(current, result.data)
         if not diff:
-          put_next_stage(Pass(test))
+          failed_checks = [check for check in result.checks if not check.passed]
+          if failed_checks:
+            put_next_stage(FailChecks(test, failed_checks))
+          else:
+            put_next_stage(Pass(test))
         else:
           put_next_stage(Fail(test, diff, log_lines))
 
@@ -86,6 +95,12 @@ class TestHandler(Handler):
       if test.expect_path() is not None:
         head, tail = os.path.split(test.expect_path())
         self.files_expected[head].add(tail)
+
+    def handle_FailChecks(self, fc):
+      self._handle_record(fc.test)
+      self._emit('C', fc.test, 'FAIL CHECK')
+      self._add_result(fc.format(2), fc.test, 'FAIL CHECK', 'failed checks')
+      return Failure()
 
     def handle_Pass(self, p):
       self._handle_record(p.test)

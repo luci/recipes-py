@@ -16,10 +16,58 @@ from collections import namedtuple
 
 UnknownError = namedtuple('UnknownError', 'message')
 NoMatchingTestsError = namedtuple('NoMatchingTestsError', '')
-Result = namedtuple('Result', 'data')
+Result = namedtuple('Result', 'data checks')
+Result.__new__.__defaults__ = ((),)  # checks defaults to empty sequence
+
 GenStageError = namedtuple('GenStageError', 'error')
 MultiResult = namedtuple('MultiResult', 'results')
 DirSeen = namedtuple('DirSeen', 'dir')
+
+class CheckFrame(namedtuple('CheckFrame', 'fname line function code varmap')):
+  def format(self, indent):
+    lines = [
+      '%s%s:%s - %s()' % ((' '*indent), self.fname, self.line, self.function)
+    ]
+    indent += 2
+    lines.append('%s`%s`' % ((' '*indent), self.code))
+    indent += 2
+    if self.varmap:
+      lines.extend('%s%s: %s' % ((' '*indent), k, v)
+                   for k, v in self.varmap.iteritems())
+    return '\n'.join(lines)
+
+
+class Check(namedtuple('Check', (
+    'name ctx_filename ctx_lineno ctx_func ctx_args ctx_kwargs '
+    'frames passed'))):
+  def format(self, indent):
+    '''Example:
+    CHECK "something was run" (FAIL):
+      added /.../recipes-py/recipes/engine_tests/whitelist_steps.py:28
+        MustRun('fakiestep')
+      /.../recipes-py/recipe_engine/post_process.py:160 - MustRun()
+        `check("something was run", (step_name in step_odict))`
+          step_odict.keys(): ['something important', 'fakestep', '$result']
+          step_name: 'fakiestep'
+    '''
+
+    ret = (' '*indent)+'CHECK%(name)s(%(passed)s):\n' % {
+      'name': ' %r ' % self.name if self.name else '',
+      'passed': 'PASS' if self.passed else 'FAIL',
+    }
+    indent += 2
+    ret += '\n'.join(map(lambda f: f.format(indent), self.frames)) + '\n'
+
+    ret += (' '*indent)+'added %s:%d\n' % (self.ctx_filename, self.ctx_lineno)
+    func = '%s(' % self.ctx_func
+    if self.ctx_args:
+      func += ', '.join(self.ctx_args)
+    if self.ctx_kwargs:
+      func += ', '.join(['%s=%s' % i for i in self.ctx_kwargs.iteritems()])
+    func += ')'
+    ret += (' '*indent)+'  '+func
+    return ret
+
 
 class ResultStageAbort(Exception):
   pass

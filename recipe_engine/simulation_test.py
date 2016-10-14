@@ -5,16 +5,24 @@
 """Provides simulator test coverage for individual recipes."""
 
 import StringIO
+import ast
 import contextlib
+import copy
 import json
 import logging
 import os
 import re
 import sys
+import textwrap
+import traceback
+import inspect
+
+from collections import OrderedDict, namedtuple
 
 from . import env
 from . import stream
 import expect_tests
+from .checker import Checker, VerifySubset
 
 # This variable must be set in the dynamic scope of the functions in this file.
 # We do this instead of passing because the threading system of expect tests
@@ -22,37 +30,41 @@ import expect_tests
 _UNIVERSE = None
 
 
-def RenderExpectation(test_data, raw_expectations):
-  """Applies the step filters (e.g. whitelists, etc.) to the raw_expectations,
-  if the TestData actually contains any filters.
+class PostProcessError(ValueError):
+  pass
+
+
+def _renderExpectation(test_data, step_odict):
+  """Applies the step post_process actions to the step_odict, if the
+  TestData actually contains any.
 
   Returns the final expect_tests.Result."""
-  if test_data.whitelist_data:
-    whitelist_data  = dict(test_data.whitelist_data)  # copy so we can mutate it
-    def filter_expectation(step):
-      whitelist = whitelist_data.pop(step['name'], None)
-      if whitelist is None:
-        return
 
-      whitelist = set(whitelist)  # copy so we can mutate it
-      if len(whitelist) > 0:
-        whitelist.add('name')
-        step = {k: v for k, v in step.iteritems() if k in whitelist}
-        whitelist.difference_update(step.keys())
-        if whitelist:
-          raise ValueError(
-            "The whitelist includes fields %r in step %r, but those fields"
-            " don't exist."
-            % (whitelist, step['name']))
-      return step
-    raw_expectations = filter(filter_expectation, raw_expectations)
+  failed_checks = []
 
-    if whitelist_data:
-      raise ValueError(
-        "The step names %r were included in the whitelist, but were never run."
-        % [s['name'] for s in whitelist_data])
+  for hook, args, kwargs, filename, lineno in test_data.post_process_hooks:
+    input_odict = copy.deepcopy(step_odict)
+    # we ignore the input_odict so that it never gets printed in full. Usually
+    # the check invocation itself will index the input_odict or will use it only
+    # for a key membership comparison, which provides enough debugging context.
+    checker = Checker(filename, lineno, hook, args, kwargs, input_odict)
+    rslt = hook(checker, input_odict, *args, **kwargs)
+    failed_checks += checker.failed_checks
+    if rslt is not None:
+      msg = VerifySubset(rslt, step_odict)
+      if not rslt:
+        print 'ZAP!', hook
+      if msg:
+        raise PostProcessError('post_process: steps'+msg)
+      # restore 'name'
+      for k, v in rslt.iteritems():
+        if 'name' not in v:
+          v['name'] = k
+      step_odict = rslt
 
-  return expect_tests.Result(raw_expectations)
+  # empty means drop expectation
+  result_data = step_odict.values() if step_odict else None
+  return expect_tests.Result(result_data, failed_checks)
 
 
 class SimulationAnnotatorStreamEngine(stream.AnnotatorStreamEngine):
@@ -70,13 +82,24 @@ class SimulationAnnotatorStreamEngine(stream.AnnotatorStreamEngine):
                                     self.step_buffer(step_config.name))
 
 
-def RunRecipe(test_data):
+# This maps from (recipe_name,test_name) -> yielded test_data. It's outside of
+# RunRecipe so that it can persist between RunRecipe calls in the same process.
+_GEN_TEST_CACHE = {}
+
+def RunRecipe(recipe_name, test_name):
   """Actually runs the recipe given the GenTests-supplied test_data."""
   from . import config_types
   from . import loader
   from . import run
   from . import step_runner
-  from . import stream
+
+  if recipe_name not in _GEN_TEST_CACHE:
+    recipe_script = _UNIVERSE.load_recipe(recipe_name)
+    test_api = loader.create_test_api(recipe_script.LOADED_DEPS, _UNIVERSE)
+    for test_data in recipe_script.gen_tests(test_api):
+      _GEN_TEST_CACHE[(recipe_name, test_data.name)] = copy.deepcopy(test_data)
+
+  test_data = _GEN_TEST_CACHE[(recipe_name, test_name)]
 
   config_types.ResetTostringFns()
 
@@ -85,19 +108,21 @@ def RunRecipe(test_data):
     step_runner = step_runner.SimulationStepRunner(stream_engine, test_data,
                                                    annotator)
 
-    engine = run.RecipeEngine(step_runner, test_data.properties, _UNIVERSE)
-    recipe_script = _UNIVERSE.load_recipe(test_data.properties['recipe'],
-                                          engine=engine)
+    props = test_data.properties.copy()
+    props['recipe'] = recipe_name
+    engine = run.RecipeEngine(step_runner, props, _UNIVERSE)
+    recipe_script = _UNIVERSE.load_recipe(recipe_name, engine=engine)
     api = loader.create_recipe_api(recipe_script.LOADED_DEPS, engine, test_data)
     result = engine.run(recipe_script, api, test_data.properties)
 
     # Don't include tracebacks in expectations because they are too sensitive to
     # change.
     result.result.pop('traceback', None)
-    raw_expectations = step_runner.steps_ran + [result.result]
+    raw_expectations = step_runner.steps_ran.copy()
+    raw_expectations[result.result['name']] = result.result
 
     try:
-      return RenderExpectation(test_data, raw_expectations)
+      return _renderExpectation(test_data, raw_expectations)
     except:
       print
       print "The expectations would have been:"
@@ -128,7 +153,8 @@ def cover_omit():
   return omit
 
 
-class InsufficientTestCoverage(Exception): pass
+class InsufficientTestCoverage(Exception):
+  pass
 
 
 @expect_tests.covers(test_gen_coverage)
@@ -147,27 +173,18 @@ def GenerateTests():
 
       covers = cover_mods + [recipe_path]
 
-      full_expectation_count = 0
       for test_data in recipe.gen_tests(test_api):
-        if not test_data.whitelist_data:
-          full_expectation_count += 1
         root, name = os.path.split(recipe_path)
         name = os.path.splitext(name)[0]
         expect_path = os.path.join(root, '%s.expected' % name)
-
-        test_data.properties['recipe'] = recipe_name.replace('\\', '/')
         yield expect_tests.Test(
             '%s.%s' % (recipe_name, test_data.name),
-            expect_tests.FuncCall(RunRecipe, test_data),
+            expect_tests.FuncCall(RunRecipe, recipe_name, test_data.name),
             expect_dir=expect_path,
             expect_base=test_data.name,
             covers=covers,
             break_funcs=(recipe.run_steps,)
         )
-
-      if full_expectation_count < 1:
-        raise InsufficientTestCoverage(
-          'Must have at least 1 test without a whitelist!')
     except:
       info = sys.exc_info()
       new_exec = Exception('While generating results for %r: %s: %s' % (
