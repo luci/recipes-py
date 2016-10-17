@@ -200,20 +200,6 @@ def run_steps(properties, stream_engine, step_runner, universe_view):
 
   Returns: RecipeResult
   """
-  # NOTE(iannucci): 'root' was a terribly bad idea and has been replaced by
-  # 'patch_project'. 'root' had Rietveld knowing about the implementation of
-  # the builders. 'patch_project' lets the builder (recipe) decide its own
-  # destiny.
-  properties.pop('root', None)
-
-  # TODO(iannucci): A much better way to do this would be to dynamically
-  #   detect if the mirrors are actually available during the execution of the
-  #   recipe.
-  if ('use_mirror' not in properties and (
-    'TESTING_MASTERNAME' in os.environ or
-    'TESTING_SLAVENAME' in os.environ)):
-    properties['use_mirror'] = False
-
   with stream_engine.make_step_stream('setup_build') as s:
     engine = RecipeEngine(step_runner, properties, universe_view)
 
@@ -224,10 +210,6 @@ def run_steps(properties, stream_engine, step_runner, universe_view):
     assert 'recipe' in properties
     recipe = properties['recipe']
 
-    properties_to_print = properties.copy()
-    if 'use_mirror' in properties:
-      del properties_to_print['use_mirror']
-
     root_package = universe_view.universe.package_deps.root_package
     run_recipe_help_lines = [
         'To repro this locally, run the following line from the root of a %r'
@@ -236,7 +218,7 @@ def run_steps(properties, stream_engine, step_runner, universe_view):
         '%s run --properties-file - %s <<EOF' % (
             os.path.join( '.', root_package.relative_recipes_dir, 'recipes.py'),
             recipe),
-        '%s' % json.dumps(properties_to_print),
+        '%s' % json.dumps(properties),
         'EOF',
         '',
         'To run on Windows, you can put the JSON in a file and redirect the',
