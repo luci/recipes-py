@@ -396,6 +396,9 @@ def VerifySubset(a, b):
     if len(a) > len(b):
       return ': too long: %d v %d' % (len(a), len(b))
 
+    if not (a or b):
+      return
+
     bi = ai = 0
     while bi < len(b) - 1 and ai < len(a) - 1:
       msg = VerifySubset(a[ai], b[bi])

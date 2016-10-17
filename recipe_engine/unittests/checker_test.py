@@ -212,6 +212,11 @@ class TestVerifySubset(unittest.TestCase):
     self.assertIsNone(self.v({}, self.d))
     self.assertIsNone(self.v(OrderedDict(), self.d))
 
+  def test_empty_cmd(self):
+    self.c['a']['cmd'] = []
+    self.d['a']['cmd'] = []
+    self.assertIsNone(self.v(self.c, self.d))
+
   def test_single_removal(self):
     del self.c['c']
     self.assertIsNone(self.v(self.c, self.d))
