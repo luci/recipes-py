@@ -52,8 +52,6 @@ def _renderExpectation(test_data, step_odict):
     failed_checks += checker.failed_checks
     if rslt is not None:
       msg = VerifySubset(rslt, step_odict)
-      if not rslt:
-        print 'ZAP!', hook
       if msg:
         raise PostProcessError('post_process: steps'+msg)
       # restore 'name'
