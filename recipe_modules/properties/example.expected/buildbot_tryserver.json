@@ -10,7 +10,25 @@
   {
     "cmd": [
       "echo",
-      "[('blamelist', ['cool_dev1337@chromium.org', 'hax@chromium.org']), ('branch', ''), ('buildbotURL', 'http://c.org/p/cr/'), ('buildername', 'TestBuilder'), ('buildnumber', 571), ('foo.bar-bam', 'thing'), ('issue', 12853011), ('mastername', 'chromium.testing.master'), ('patch_project', 'chromium'), ('patchset', 1), ('project', 'chrome'), ('recipe', 'properties:example'), ('repository', ''), ('requester', 'commit-bot@chromium.org'), ('revision', 'HEAD'), ('rietveld', 'https://codereview.chromium.org'), ('slavename', 'TestSlavename'), ('test_prop', None), ('workdir', '/path/to/workdir/TestSlavename')]"
+      "('blamelist', ['cool_dev1337@chromium.org', 'hax@chromium.org'])",
+      "('branch', '')",
+      "('buildbotURL', 'http://c.org/p/cr/')",
+      "('buildername', 'TestBuilder')",
+      "('buildnumber', 571)",
+      "('foo.bar-bam', 'thing')",
+      "('issue', 12853011)",
+      "('mastername', 'chromium.testing.master')",
+      "('patch_project', 'chromium')",
+      "('patchset', 1)",
+      "('project', 'chrome')",
+      "('recipe', 'properties:example')",
+      "('repository', '')",
+      "('requester', 'commit-bot@chromium.org')",
+      "('revision', 'HEAD')",
+      "('rietveld', 'https://codereview.chromium.org')",
+      "('slavename', 'TestSlavename')",
+      "('test_prop', None)",
+      "('workdir', '/path/to/workdir/TestSlavename')"
     ],
     "name": "echo all"
   },

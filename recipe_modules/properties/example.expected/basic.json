@@ -10,7 +10,9 @@
   {
     "cmd": [
       "echo",
-      "[('foo.bar-bam', 'thing'), ('recipe', 'properties:example'), ('test_prop', {'key': 'value'})]"
+      "('foo.bar-bam', 'thing')",
+      "('recipe', 'properties:example')",
+      "('test_prop', {'key': 'value'})"
     ],
     "name": "echo all"
   },
