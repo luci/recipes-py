@@ -43,16 +43,36 @@ def GenTests(api):
   )
 
   # Some default buildbot configurations.
-  yield api.test('buildbot_generic') + api.properties.generic(
-      test_prop=None, **pd)
+  pd['test_prop'] = None
+  yield api.test('buildbot_generic') + api.properties.generic(**pd)
   yield (api.test('buildbot_scheduled') +
-         api.properties.scheduled(test_prop=None, **pd))
+         api.properties.scheduled(**pd))
   yield (api.test('buildbot_git_scheduled') +
-         api.properties.git_scheduled(test_prop=None, **pd))
+         api.properties.git_scheduled(**pd))
   yield (api.test('buildbot_tryserver') +
-         api.properties.tryserver(test_prop=None, **pd))
+         api.properties.tryserver(**pd))
   yield (api.test('buildbot_tryserver_gerrit') +
+         api.properties.tryserver(gerrit_project='infra/infra', **pd))
+  yield (api.test('buildbot_tryserver_gerrit_override_gerrit') +
+         api.properties.tryserver(
+            gerrit_project='infra/internal',
+            gerrit_url='https://chrome-internal-review.googlesource.com',
+            **pd))
+  yield (api.test('buildbot_tryserver_gerrit_override_git') +
+         api.properties.tryserver(
+            gerrit_project='infra/hidden',
+            git_url='https://chrome-internal.googlesource.com/infra/hidden',
+            **pd))
+  yield (api.test('buildbot_tryserver_gerrit_override_both') +
+         api.properties.tryserver(
+            gerrit_project='custom',
+            gerrit_url='https://gerrit.my.host',
+            git_url='https://git.my.host/custom',
+            patch_issue=4455,
+            **pd))
+  # TODO(tandrii): remove this one. Use the above version instead.
+  yield (api.test('buildbot_tryserver_gerrit_deprecated') +
          api.properties.tryserver_gerrit(
             full_project_name='infra/infra',
-            gerrit_host='pdfium-review.googlesource.com', test_prop=None,
+            gerrit_host='pdfium-review.googlesource.com',
             **pd))
