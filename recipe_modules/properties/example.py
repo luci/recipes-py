@@ -68,5 +68,6 @@ def GenTests(api):
             gerrit_project='custom',
             gerrit_url='https://gerrit.my.host',
             git_url='https://git.my.host/custom',
-            patch_issue=4455,
+            patch_issue=989898,
+            patch_set=3,
             **pd))

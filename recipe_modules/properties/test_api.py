@@ -85,9 +85,9 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
     assert project
     assert git_url
     assert gerrit_url
-    # Pop old style values from kwargs.
-    patch_issue = int(kwargs.pop('issue', 456789))
-    patch_set = int(kwargs.pop('patchset', 12))
+    # Support old and new style patch{set,issue} specification.
+    patch_issue = int(kwargs.pop('issue', kwargs.pop('patch_issue', 456789)))
+    patch_set = int(kwargs.pop('patchset', kwargs.pop('patch_set', 12)))
     # Note that new Gerrit patch properties all start with 'patch_' prefix.
     ret = self.generic(
         patch_storage='gerrit',
