@@ -9,6 +9,7 @@ import re
 import subprocess
 import sys
 import unittest
+import tempfile
 import time
 
 import test_env
@@ -22,7 +23,7 @@ from recipe_engine import recipe_test_api
 import mock
 
 class RunTest(unittest.TestCase):
-  def _run_cmd(self, recipe, properties=None):
+  def _run_cmd(self, recipe, properties=None, engine_args=None):
     script_path = os.path.join(BASE_DIR, 'recipes.py')
 
     if properties:
@@ -31,19 +32,24 @@ class RunTest(unittest.TestCase):
     else:
       proplist = []
 
+    eng_args = ['--package', os.path.join(
+        BASE_DIR, 'infra', 'config', 'recipes.cfg')]
+    if engine_args:
+      eng_args.extend(engine_args)
+
     prev_ignore = os.environ.pop(requests_ssl.ENV_VAR_IGNORE, '0')
     os.environ[requests_ssl.ENV_VAR_IGNORE] = '1'
     try:
-      return ([
-        'python', script_path,
-        '--package', os.path.join(BASE_DIR, 'infra', 'config', 'recipes.cfg'),
-        'run', recipe] + proplist)
+      return (
+          ['python', script_path] + eng_args + ['run', recipe] + proplist)
     finally:
       os.environ[requests_ssl.ENV_VAR_IGNORE] = prev_ignore
 
   def _test_recipe(self, recipe, properties=None):
-    exit_code = subprocess.call(self._run_cmd(recipe, properties))
-    self.assertEqual(0, exit_code)
+    exit_code = subprocess.call(
+        self._run_cmd(recipe, properties), stdout=subprocess.PIPE)
+    self.assertEqual(0, exit_code, '%d != %d when testing %s' % (
+        0, exit_code, recipe))
 
   def test_examples(self):
     tests = [
@@ -78,7 +84,31 @@ class RunTest(unittest.TestCase):
     stdout, _ = subp.communicate()
     self.assertRegexpMatches(stdout, '(?m)^@@@STEP_EXCEPTION@@@$')
     self.assertRegexpMatches(stdout, 'OSError')
-    self.assertEqual(255, subp.returncode)
+    self.assertEqual(255, subp.returncode, stdout)
+
+  def test_nonexistent_command_new(self):
+    _, path = tempfile.mkstemp('args_pb')
+    with open(path, 'w') as f:
+      json.dump({
+        'engine_flags': {
+            'use_result_proto': True
+        }
+      }, f)
+
+    try:
+      subp = subprocess.Popen(
+          self._run_cmd(
+              'engine_tests/nonexistent_command',
+              engine_args=['--operational-args-path', path]),
+          stdout=subprocess.PIPE)
+      stdout, _ = subp.communicate()
+
+      self.assertRegexpMatches(stdout, '(?m)^@@@STEP_EXCEPTION@@@$')
+      self.assertRegexpMatches(stdout, 'OSError')
+      self.assertEqual(1, subp.returncode, stdout)
+    finally:
+      if os.path.exists(path):
+        os.unlink(path)
 
   def test_trigger(self):
     subp = subprocess.Popen(
@@ -101,6 +131,29 @@ class RunTest(unittest.TestCase):
     self.assertRegexpMatches(stdout, r'(?m)^@@@STEP_TRIGGER@(.*)@@@$')
     self.assertEqual(255, subp.returncode)
 
+  def test_trigger_no_such_command_new(self):
+    """Tests that trigger still happens even if running the command fails."""
+    _, path = tempfile.mkstemp('args_pb')
+    with open(path, 'w') as f:
+      json.dump({
+        'engine_flags': {
+            'use_result_proto': True
+        }
+      }, f)
+
+    try:
+      subp = subprocess.Popen(
+          self._run_cmd(
+              'engine_tests/trigger', properties={'command': ['na-huh']},
+              engine_args=['--operational-args-path', path]),
+          stdout=subprocess.PIPE)
+      stdout, _ = subp.communicate()
+
+      self.assertRegexpMatches(stdout, r'(?m)^@@@STEP_TRIGGER@(.*)@@@$')
+      self.assertEqual(1, subp.returncode)
+    finally:
+      if os.path.exists(path):
+        os.unlink(path)
 
   def test_shell_quote(self):
     # For regular-looking commands we shouldn't need any specialness.

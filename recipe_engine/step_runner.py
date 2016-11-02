@@ -144,8 +144,9 @@ class SubprocessStepRunner(StepRunner):
   """Responsible for actually running steps as subprocesses, filtering their
   output into a stream."""
 
-  def __init__(self, stream_engine):
+  def __init__(self, stream_engine, engine_flags):
     self._stream_engine = stream_engine
+    self._engine_flags = engine_flags
 
   @property
   def stream_engine(self):
@@ -245,6 +246,10 @@ class SubprocessStepRunner(StepRunner):
           'depend on %s with properties %r failed with %d.\n'
           'Recipe result: %r' % (
               recipe, properties, retcode, result))
+
+      if self._engine_flags and self._engine_flags.use_result_proto:
+        return json.loads(result['jsonResult'])
+
       return result
 
   @contextlib.contextmanager

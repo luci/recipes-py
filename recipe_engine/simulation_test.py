@@ -23,11 +23,13 @@ from . import env
 from . import stream
 import expect_tests
 from .checker import Checker, VerifySubset
+from google.protobuf import json_format as jsonpb
 
-# This variable must be set in the dynamic scope of the functions in this file.
-# We do this instead of passing because the threading system of expect tests
-# doesn't know how to serialize it.
+# These variables must be set in the dynamic scope of the functions in this
+# file.  We do this instead of passing because the threading system of expect
+# tests doesn't know how to serialize it.
 _UNIVERSE = None
+_ENGINE_FLAGS = None
 
 
 class PostProcessError(ValueError):
@@ -108,16 +110,27 @@ def RunRecipe(recipe_name, test_name):
 
     props = test_data.properties.copy()
     props['recipe'] = recipe_name
-    engine = run.RecipeEngine(step_runner, props, _UNIVERSE)
+    engine = run.RecipeEngine(
+        step_runner, props, _UNIVERSE, engine_flags=_ENGINE_FLAGS)
     recipe_script = _UNIVERSE.load_recipe(recipe_name, engine=engine)
+
     api = loader.create_recipe_api(recipe_script.LOADED_DEPS, engine, test_data)
     result = engine.run(recipe_script, api, test_data.properties)
 
+    raw_expectations = step_runner.steps_ran.copy()
     # Don't include tracebacks in expectations because they are too sensitive to
     # change.
-    result.result.pop('traceback', None)
-    raw_expectations = step_runner.steps_ran.copy()
-    raw_expectations[result.result['name']] = result.result
+    if _ENGINE_FLAGS.use_result_proto:
+      if result.HasField('failure'):
+        result.failure.ClearField('traceback')
+      result_json = json.loads(
+          jsonpb.MessageToJson(result, including_default_value_fields=True))
+      result_json['name'] = '$result'
+
+      raw_expectations[result_json['name']] = result_json
+    else:
+      result.result.pop('traceback', None)
+      raw_expectations[result.result['name']] = result.result
 
     try:
       return _renderExpectation(test_data, raw_expectations)
@@ -190,7 +203,7 @@ def GenerateTests():
       raise new_exec.__class__, new_exec, info[2]
 
 
-def main(universe, args=None):
+def main(universe, args=None, engine_flags=None):
   """Runs simulation tests on a given repo of recipes.
 
   Args:
@@ -210,6 +223,8 @@ def main(universe, args=None):
 
   global _UNIVERSE
   _UNIVERSE = universe
+  global _ENGINE_FLAGS
+  _ENGINE_FLAGS = engine_flags
 
   expect_tests.main('recipe_simulation_test', GenerateTests,
                     cover_omit=cover_omit(), args=args)

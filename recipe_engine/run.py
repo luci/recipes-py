@@ -65,6 +65,7 @@ iterable_of_things.
 
 import collections
 import json
+import logging
 import os
 import sys
 import traceback
@@ -77,6 +78,7 @@ from . import recipe_test_api
 from . import step_runner as step_runner_module
 from . import types
 from . import util
+from . import result_pb2
 import subprocess42
 
 
@@ -185,16 +187,14 @@ ENV_WHITELIST_POSIX = ENV_WHITELIST_INFRA | BUILDBOT_MAGIC_ENV | set([
     'USERNAME',
 ])
 
-
-# Return value of run_steps and RecipeEngine.run.  Just a container for the
-# literal return value of the recipe.
+# TODO(martiniss): Remove this
 RecipeResult = collections.namedtuple('RecipeResult', 'result')
-
 
 # TODO(dnj): Replace "properties" with a generic runtime instance. This instance
 # will be used to seed recipe clients and expanded to include managed runtime
 # entities.
-def run_steps(properties, stream_engine, step_runner, universe_view):
+def run_steps(properties, stream_engine, step_runner, universe_view,
+              engine_flags=None):
   """Runs a recipe (given by the 'recipe' property).
 
   Args:
@@ -203,11 +203,12 @@ def run_steps(properties, stream_engine, step_runner, universe_view):
     stream_engine: the StreamEngine to use to create individual step streams.
     step_runner: The StepRunner to use to 'actually run' the steps.
     universe_view: The RecipeUniverse to use to load the recipes & modules.
+    engine_flags: Any flags which modify engine behavior. See arguments.proto.
 
-  Returns: RecipeResult
+  Returns: result_pb2.Result
   """
   with stream_engine.make_step_stream('setup_build') as s:
-    engine = RecipeEngine(step_runner, properties, universe_view)
+    engine = RecipeEngine(step_runner, properties, universe_view, engine_flags)
 
     # Create all API modules and top level RunSteps function.  It doesn't launch
     # any recipe code yet; RunSteps needs to be called.
@@ -251,6 +252,13 @@ def run_steps(properties, stream_engine, step_runner, universe_view):
       for line in str(e).splitlines():
         s.add_step_text(line)
       s.set_step_status('EXCEPTION')
+      if engine_flags and engine_flags.use_result_proto:
+        return result_pb2.Result(
+            failure=result_pb2.Failure(
+                human_reason=str(e),
+                exception=result_pb2.Exception(
+                  traceback=traceback.format_exc().splitlines()
+                )))
       return RecipeResult({
           'status_code': 2,
           'reason': str(e),
@@ -277,6 +285,11 @@ def _isolate_environment():
       del os.environ[k]
 
 
+# Return value of run_steps and RecipeEngine.run.  Just a container for the
+# literal return value of the recipe.
+# TODO(martiniss): remove this
+RecipeResult = collections.namedtuple('RecipeResult', 'result')
+
 class RecipeEngine(object):
   """
   Knows how to execute steps emitted by a recipe, holds global state such as
@@ -291,7 +304,7 @@ class RecipeEngine(object):
   ActiveStep = collections.namedtuple('ActiveStep', (
       'config', 'step_result', 'open_step'))
 
-  def __init__(self, step_runner, properties, universe_view):
+  def __init__(self, step_runner, properties, universe_view, engine_flags=None):
     """See run_steps() for parameter meanings."""
     self._step_runner = step_runner
     self._properties = properties
@@ -301,6 +314,7 @@ class RecipeEngine(object):
         recipe_api.PropertiesClient(self),
         recipe_api.DependencyManagerClient(self),
     )}
+    self._engine_flags = engine_flags
 
     # A stack of ActiveStep objects, holding the most recently executed step at
     # each nest level (objects deeper in the stack have lower nest levels).
@@ -395,8 +409,7 @@ class RecipeEngine(object):
     """Run a recipe represented by a recipe_script object.
 
     This function blocks until recipe finishes.
-    It mainly executes the recipe, and has some exception handling logic, and
-    adds the step history to the result.
+    It mainly executes the recipe, and has some exception handling logic.
 
     Args:
       recipe_script: The recipe to run, as represented by a RecipeScript object.
@@ -405,10 +418,69 @@ class RecipeEngine(object):
       properties: a dictionary of properties to pass to the recipe.
 
     Returns:
+      result_pb2.Result which has return value or status code and exception.
+        or
       RecipeResult which has return value or status code and exception.
+        depending on the value of self._engine_flags.use_result_proto
     """
+    # TODO(martiniss): Remove this once we've transitioned to the new results
+    # format
+    if self._engine_flags and self._engine_flags.use_result_proto:
+      logging.info("Using new result proto logic")
+      return self._new_run(recipe_script, api, properties)
+    return self._old_run(recipe_script, api, properties)
+
+  def _new_run(self, recipe_script, api, properties):
     result = None
 
+    with self._step_runner.run_context():
+      try:
+        try:
+          recipe_result = recipe_script.run(api, properties)
+          result = result_pb2.Result(json_result=json.dumps(recipe_result))
+        finally:
+          self._close_through_level(0)
+      except recipe_api.StepFailure as f:
+        result = result_pb2.Result(
+          failure=result_pb2.Failure(
+              human_reason=f.reason,
+              failure=result_pb2.StepFailure(
+                  step=f.name
+              )))
+
+      except types.StepDataAttributeError as ex:
+        result = result_pb2.Result(
+            failure=result_pb2.Failure(
+                human_reason=ex.message,
+                step_data=result_pb2.StepData(
+                    step=f.name
+                )))
+
+        # Let the step runner run_context decide what to do.
+        raise
+
+      except subprocess42.TimeoutExpired as ex:
+        result = result_pb2.Result(
+          failure=result_pb2.Failure(
+              human_reason="Step time out: %r" % ex,
+              timeout= result_pb2.Timeout(
+                  timeout_s=ex.timeout
+              )))
+
+      except Exception as ex:
+        result = result_pb2.Result(
+          failure=result_pb2.Failure(
+              human_reason="Uncaught Exception: %r" % ex,
+              exception=result_pb2.Exception(
+                  traceback=traceback.format_exc().splitlines()
+              )))
+
+        # Let the step runner run_context decide what to do.
+        raise
+
+    return result
+
+  def _old_run(self, recipe_script, api, properties):
     with self._step_runner.run_context():
       try:
         try:

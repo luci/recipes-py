@@ -23,6 +23,7 @@ sys.path.insert(0, ROOT_DIR)
 from recipe_engine import env
 from recipe_engine import arguments_pb2
 from google.protobuf import json_format as jsonpb
+from google.protobuf import text_format as textpb
 
 def get_package_config(args):
   from recipe_engine import package
@@ -36,7 +37,7 @@ def get_package_config(args):
   )
 
 
-def simulation_test(package_deps, args):
+def simulation_test(package_deps, args, op_args):
   try:
     from recipe_engine import simulation_test
   except ImportError:
@@ -53,7 +54,9 @@ def simulation_test(package_deps, args):
   universe = loader.RecipeUniverse(package_deps, config_file)
   universe_view = loader.UniverseView(universe, package_deps.root_package)
 
-  simulation_test.main(universe_view, args=json.loads(args.args))
+  simulation_test.main(
+      universe_view, args=json.loads(args.args),
+      engine_flags=op_args.engine_flags)
 
 
 def lint(package_deps, args):
@@ -67,7 +70,12 @@ def lint(package_deps, args):
   lint_test.main(universe_view, args.whitelist or [])
 
 
-def handle_recipe_return(recipe_result, result_filename, stream_engine):
+def handle_recipe_return(recipe_result, result_filename, stream_engine,
+                         engine_flags):
+  if engine_flags and engine_flags.use_result_proto:
+    return new_handle_recipe_return(
+        recipe_result, result_filename, stream_engine)
+
   if 'recipe_result' in recipe_result.result:
     result_string = json.dumps(
         recipe_result.result['recipe_result'], indent=2)
@@ -94,6 +102,43 @@ def handle_recipe_return(recipe_result, result_filename, stream_engine):
     return recipe_result.result['status_code']
   else:
     return 0
+
+def new_handle_recipe_return(result, result_filename, stream_engine):
+  if result_filename:
+    with open(result_filename, 'w') as fil:
+      fil.write(jsonpb.MessageToJson(
+          result, including_default_value_fields=True))
+
+  if result.json_result:
+    with stream_engine.make_step_stream('recipe result') as s:
+      with s.new_log_stream('result') as l:
+        l.write_split(result.json_result)
+
+  if result.HasField('failure'):
+    f = result.failure
+    if f.HasField('exception'):
+      with stream_engine.make_step_stream('Uncaught Exception') as s:
+        s.add_step_text(f.human_reason)
+        with s.new_log_stream('exception') as l:
+          for line in f.exception.traceback:
+            l.write_line(line)
+    # TODO(martiniss): Remove this code once calling code handles these states
+    elif f.HasField('timeout'):
+      with stream_engine.make_step_stream('Step Timed Out') as s:
+        with s.new_log_stream('timeout_s') as l:
+          l.write_line(f.timeout.timeout_s)
+    elif f.HasField('step_data'):
+      with stream_engine.make_step_stream('Invalid Step Data Access') as s:
+        with s.new_log_stream('step') as l:
+          l.write_line(f.step_data.step)
+
+    with stream_engine.make_step_stream('Failure reason') as s:
+      with s.new_log_stream('reason') as l:
+        l.write_line(f.human_reason)
+
+    return 1
+
+  return 0
 
 
 def run(package_deps, args, op_args):
@@ -170,8 +215,7 @@ def run(package_deps, args, op_args):
     return stream.AnnotatorStreamEngine(
         sys.stdout,
         emit_timestamps=(args.timestamps or
-                         op_args.annotation_flags.emit_timestamp),
-    )
+                         op_args.annotation_flags.emit_timestamp))
 
   stream_engines = []
   if op_args.logdog.streamserver_uri:
@@ -190,6 +234,8 @@ def run(package_deps, args, op_args):
     stream_engines.append(build_annotation_stream_engine())
   multi_stream_engine = stream.MultiStreamEngine.create(*stream_engines)
 
+  engine_flags = op_args.engine_flags
+
   # Have a top-level set of invariants to enforce StreamEngine expectations.
   with stream.StreamEngineInvariants.wrap(multi_stream_engine) as stream_engine:
     # Emit initial properties if configured to do so.
@@ -201,12 +247,13 @@ def run(package_deps, args, op_args):
     try:
       ret = recipe_run.run_steps(
           properties, stream_engine,
-          step_runner.SubprocessStepRunner(stream_engine),
-          universe_view=universe_view)
+          step_runner.SubprocessStepRunner(stream_engine, engine_flags),
+          universe_view, engine_flags)
     finally:
       os.chdir(old_cwd)
 
-    return handle_recipe_return(ret, args.output_result_json, stream_engine)
+    return handle_recipe_return(
+        ret, args.output_result_json, stream_engine, engine_flags)
 
 
 def remote(args):
@@ -561,7 +608,7 @@ def main():
     assert not args.no_fetch, 'Fetch? No-fetch? Make up your mind!'
     return 0
   if args.command == 'simulation_test':
-    return simulation_test(package_deps, args)
+    return simulation_test(package_deps, args, op_args)
   elif args.command == 'lint':
     return lint(package_deps, args)
   elif args.command == 'run':
