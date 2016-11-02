@@ -70,9 +70,3 @@ def GenTests(api):
             git_url='https://git.my.host/custom',
             patch_issue=4455,
             **pd))
-  # TODO(tandrii): remove this one. Use the above version instead.
-  yield (api.test('buildbot_tryserver_gerrit_deprecated') +
-         api.properties.tryserver_gerrit(
-            full_project_name='infra/infra',
-            gerrit_host='pdfium-review.googlesource.com',
-            **pd))
