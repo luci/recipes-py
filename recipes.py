@@ -401,9 +401,6 @@ def main():
   parser.add_argument(
       '--no-fetch', action='store_true',
       help='Disable automatic fetching')
-  parser.add_argument(
-      '--bootstrap-script',
-      help='Path to the script used to bootstrap this tool (internal use only)')
   parser.add_argument('-O', '--project-override', metavar='ID=PATH',
       action=ProjectOverrideAction,
       help='Override a project repository path with a local one.')
