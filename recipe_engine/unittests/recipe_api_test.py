@@ -52,8 +52,8 @@ class TestProperties(unittest.TestCase):
         ('', False, False),
         ('.', False, False),
         ('foo', True, False),
-        ('weird.param.name', True, False),
-        ('weird.param.name', False, True),
+        ('event.patchSet.ref', True, False),
+        ('event.patchSet.ref', False, True),
         ('rietveld_url', True, False),):
       self.assertEqual(
           check(test, is_param_name=is_param_name), result,
