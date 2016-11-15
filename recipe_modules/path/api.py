@@ -11,6 +11,10 @@ from recipe_engine import recipe_api
 from recipe_engine import config_types
 
 
+class Error(Exception):
+  """Error specific to path recipe module."""
+
+
 def PathToString(api, test):
   def PathToString_inner(path):
     assert isinstance(path, config_types.Path)
@@ -131,6 +135,7 @@ class PathApi(recipe_api.RecipeApi):
       'PLATFORM': self.m.platform.name,
       'CURRENT_WORKING_DIR': self._startup_cwd,
       'TEMP_DIR': self._temp_dir,
+      'CACHE_DIR': self._cache_dir,
     }
 
   def __init__(self, **kwargs):
@@ -142,19 +147,38 @@ class PathApi(recipe_api.RecipeApi):
     # Used in mkdtemp when generating and checking expectations.
     self._test_counter = 0
 
+  def _read_path(self, property_name, default):  # pragma: no cover
+    """Reads a path from a property. If absent, returns the default.
+
+    Validates that the path is absolute.
+    """
+    props = self.m.properties.get('$recipe_engine/path', {})
+    value = props.get(property_name)
+    if not value:
+      assert os.path.isabs(default), default
+      return default
+    if not os.path.isabs(value):
+      raise Error(
+        'Path "%s" specified by module property %s is not absolute' % (
+          value, property_name))
+    return value
+
+  def initialize(self):
     if not self._test_data.enabled:  # pragma: no cover
       self._path_mod = os.path
       # Capture the cwd on process start to avoid shenanigans.
       self._startup_cwd = _split_path(os.getcwd())
-      # Use default system wide temp dir as a root temp dir.
-      self._temp_dir = _split_path(tempfile.gettempdir())
+      self._temp_dir = _split_path(
+        self._read_path('temp_dir', tempfile.gettempdir()))
+      self._cache_dir = _split_path(
+        self._read_path('cache_dir', os.path.join(os.getcwd(), 'cache')))
     else:
       self._path_mod = fake_path(self, self._test_data.get('exists', []))
       self._startup_cwd = ['/', 'b', 'FakeTestingCWD']
       # Appended to placeholder '[TMP]' to get fake path in test.
       self._temp_dir = ['/']
+      self._cache_dir = ['/', 'b', 'c']
 
-  def initialize(self):
     self.set_config('BASE')
 
   def mock_add_paths(self, path):

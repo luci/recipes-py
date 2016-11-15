@@ -70,3 +70,13 @@ def GenTests(api):
            api.platform.name(platform) +
            api.properties(path_config='kitchen') +
            api.path.exists(api.path['tmp_base']))
+
+    yield (api.test('%s_luci' % platform) +
+           api.platform.name(platform) +
+           api.properties(**{
+              '$recipe_engine/path': {
+                'cache_dir': '/c',
+                'tmp_dir': '/t'
+              },
+           }) +
+           api.path.exists(api.path['tmp_base']))

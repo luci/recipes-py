@@ -1,0 +1,49 @@
+[
+  {
+    "cmd": [
+      "/bin/echo",
+      "[TMP_BASE]/foo"
+    ],
+    "name": "step1"
+  },
+  {
+    "cmd": [
+      "echo",
+      "RECIPE_MODULE[recipe_engine::path]/resources/dir/file.py"
+    ],
+    "name": "print resource"
+  },
+  {
+    "cmd": [
+      "echo",
+      "RECIPE_PACKAGE_REPO[recipe_engine]/dir/file.py"
+    ],
+    "name": "print package dir"
+  },
+  {
+    "cmd": [
+      "/bin/echo",
+      "[TMP_BASE]/checkout/jerky"
+    ],
+    "name": "checkout path"
+  },
+  {
+    "cmd": [
+      "touch",
+      "[TMP_BASE]/new_file"
+    ],
+    "name": "touch me"
+  },
+  {
+    "cmd": [
+      "touch",
+      "[HOME]/file"
+    ],
+    "name": "touch my home"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]
