@@ -133,7 +133,7 @@ class PathApi(recipe_api.RecipeApi):
   def get_config_defaults(self):
     return {
       'PLATFORM': self.m.platform.name,
-      'CURRENT_WORKING_DIR': self._startup_cwd,
+      'START_DIR': self._startup_cwd,
       'TEMP_DIR': self._temp_dir,
       'CACHE_DIR': self._cache_dir,
     }
