@@ -14,8 +14,10 @@ import collections
 import json
 import logging
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ROOT_DIR)
@@ -374,8 +376,6 @@ def _op_properties_to_dict(pmap):
 
 
 def main():
-  from recipe_engine import package
-
   # Super-annoyingly, we need to manually parse for simulation_test since
   # argparse is bonkers and doesn't allow us to forward --help to subcommands.
   # Save old_args for if we're using bootstrap
@@ -393,7 +393,9 @@ def main():
         ', usually in infra/config/recipes.cfg')
   parser.add_argument(
       '--deps-path',
-      help='Path where recipe engine dependencies will be extracted.')
+      help='Path where recipe engine dependencies will be extracted. Specify '
+           '"-" to use a temporary directory for deps, which will be cleaned '
+           'up on exit.')
   parser.add_argument(
       '--verbose', '-v', action='count',
       help='Increase logging verboisty')
@@ -561,23 +563,75 @@ def main():
       data = fd.read()
     jsonpb.Parse(data, op_args)
 
-  if args.use_bootstrap and not os.environ.pop('RECIPES_RUN_BOOTSTRAP', None):
-    subprocess.check_call(
-        [sys.executable, 'bootstrap/bootstrap.py', '--deps-file',
-         'bootstrap/deps.pyl', 'ENV'],
-        cwd=os.path.dirname(os.path.realpath(__file__)))
-
-    os.environ['RECIPES_RUN_BOOTSTRAP'] = '1'
-    args = sys.argv
-    return subprocess.call(
-        [os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), 'ENV/bin/python'),
-         os.path.join(ROOT_DIR, 'recipes.py')] + original_sys_argv[1:])
-
   if args.verbose > 1:
     logging.getLogger().setLevel(logging.DEBUG)
   elif args.verbose > 0:
     logging.getLogger().setLevel(logging.INFO)
+
+  # If we're using a temporary deps directory, create it.
+  temp_deps_dir = None
+  try:
+    # When bootstrapping, re-use the calling wrapper's deps directory instead of
+    # creating a new one.
+    args.deps_path = os.environ.pop('RECIPES_RUN_BOOTSTRAP_DEPS_DIR',
+                                    args.deps_path)
+    if args.deps_path == '-':
+      # "-" means use a temporary deps path.
+      temp_deps_dir = tempfile.mkdtemp(dir=ROOT_DIR, suffix='_deps')
+      args.deps_path = temp_deps_dir
+
+    if args.deps_path:
+      logging.warning('(Not Bad) Using custom deps path: %s', args.deps_path)
+
+    # If we're bootstrapping, construct our bootstrap environment. If we're
+    # using a custom deps path, install our enviornment there too.
+    if args.use_bootstrap and not os.environ.pop('RECIPES_RUN_BOOTSTRAP', None):
+      # Propagate our deps path, if specified, so we re-use our temporary
+      # directory.
+      if args.deps_path:
+        env_path = os.path.join(args.deps_path, '.ENV')
+        os.environ['RECIPES_RUN_BOOTSTRAP_DEPS_DIR'] = args.deps_path
+      else:
+        env_path = os.path.join(ROOT_DIR, 'ENV')
+
+      logging.debug('Installing bootstrap environment into: %s', env_path)
+      subprocess.check_call(
+          [
+            sys.executable,
+            os.path.join(ROOT_DIR, 'bootstrap', 'bootstrap.py'),
+            '--deps-file', os.path.join(ROOT_DIR, 'bootstrap', 'deps.pyl'),
+            env_path,
+          ],
+          cwd=ROOT_DIR)
+
+      # Mark that we're bootstrapping, so the next invocation falls through to
+      # standard recipe operation.
+      os.environ['RECIPES_RUN_BOOTSTRAP'] = '1'
+      args = sys.argv
+      return subprocess.call(
+          [
+            os.path.join(env_path, 'bin', 'python'),
+            os.path.join(ROOT_DIR, 'recipes.py'),
+          ] + original_sys_argv[1:])
+
+    # Standard recipe engine operation.
+    return _real_main(args, op_args)
+
+  finally:
+    # If we're using a temporary deps directory, clean it up here.
+    if temp_deps_dir:
+      logging.info('Cleaning up temporary deps path: %s', temp_deps_dir)
+
+      # Remove as much of the temporary directory as we can. If something goes
+      # wrong, log the error, but don't actually raise anything.
+      def on_error(_function, path, excinfo):
+        logging.error('Error cleaning up temporary deps file: %s', path,
+                      exc_info=excinfo)
+      shutil.rmtree(temp_deps_dir, onerror=on_error)
+
+
+def _real_main(args, op_args):
+  from recipe_engine import package
 
   # Commands which do not require config_file, package_deps, and other objects
   # initialized later.
