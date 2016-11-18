@@ -117,6 +117,14 @@ class PathApi(recipe_api.RecipeApi):
   PathApi provides common os.path functions as well as convenience functions
   for generating absolute paths to things in a testable way.
 
+  It defines paths to standard directories:
+  - start_dir: the directory where the recipe execution starts.
+  - cache: a directory where each subdirectory is a cache of a specific format,
+    e.g. for git, isolate, goma, etc. A program that runs the recipe has a right
+    to cleanup individual subdirectories in the cache directory.
+    Typical usage: api.path["cache'].join("mycache")
+  - tmp_base: the base directory for temporary files.
+
   Mocks:
     exists (list): Paths which should exist in the test case. Thes must be paths
       using the [*_ROOT] placeholders. ex. '[BUILD_ROOT]/scripts'.
