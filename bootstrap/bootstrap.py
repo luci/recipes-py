@@ -74,89 +74,46 @@ def sha_for(deps_entry):
     return deps_entry['gs'].split('.')[0]
 
 
-def get_links(deps):
-  import pip.wheel  # pylint: disable=E0611
-  plat_tag = platform_tag()
-
-  links = []
-
-  for name, dep in deps.iteritems():
-    version, source_sha = dep['version'] , sha_for(dep)
-    prefix = 'wheels/{}-{}-{}_{}'.format(name, version, dep['build'],
-                                         source_sha)
-    generic_link = None
-    binary_link = None
-    local_link = None
-
-    for entry in ls(prefix):
-      fname = entry['name'].split('/')[-1]
-      md5hash = entry['md5Hash']
-      wheel_info = pip.wheel.Wheel.wheel_file_re.match(fname)
-      if not wheel_info:
-        LOGGER.warn('Skipping invalid wheel: %r', fname)
-        continue
-
-      if pip.wheel.Wheel(fname).supported():
-        if entry['local']:
-          link = LOCAL_OBJECT_URL.format(entry['name'])
-          local_link = link
-          continue
-        else:
-          link = OBJECT_URL.format(entry['name'], md5hash)
-        if fname.endswith('none-any.whl'):
-          if generic_link:
-            LOGGER.error(
-              'Found more than one generic matching wheel for %r: %r',
-              prefix, dep)
-            continue
-          generic_link = link
-        elif plat_tag in fname:
-          if binary_link:
-            LOGGER.error(
-              'Found more than one binary matching wheel for %r: %r',
-              prefix, dep)
-            continue
-          binary_link = link
-
-    if not binary_link and not generic_link and not local_link:
-      raise NoWheelException(name, version, dep['build'], source_sha)
-
-    links.append(local_link or binary_link or generic_link)
-
-  return links
-
-
-@contextlib.contextmanager
-def html_index(links):
-  tf = tempfile.mktemp('.html')
-  try:
-    with open(tf, 'w') as f:
-      print >> f, '<html><body>'
-      for link in links:
-        print >> f, '<a href="%s">wat</a>' % link
-      print >> f, '</body></html>'
-    yield tf
-  finally:
-    os.unlink(tf)
-
-
-def install(deps):
+def install(deps, cache_root):
   bin_dir = 'Scripts' if sys.platform.startswith('win') else 'bin'
   pip = os.path.join(sys.prefix, bin_dir, 'pip')
 
-  links = get_links(deps)
-  with html_index(links) as ipath:
-    requirements = []
-    # TODO(iannucci): Do this as a requirements.txt
-    for name, deps_entry in deps.iteritems():
-      if not deps_entry.get('implicit'):
-        requirements.append('%s==%s' % (name, deps_entry['version']))
-    subprocess.check_call(
-        [pip, 'install', '--no-index', '--download-cache',
-         os.path.join(ROOT, '.wheelcache'), '-f', ipath] + requirements)
+  requirements = []
+  # TODO(iannucci): Do this as a requirements.txt
+  for name, deps_entry in deps.iteritems():
+    if not deps_entry.get('implicit'):
+      requirements.append('%s==%s' % (name, deps_entry['version']))
+
+  if not cache_root:
+    cache_root = os.path.join(ROOT, '.bootstrap_cache')
+  wheel_cache_dir = os.path.join(cache_root, 'wheels')
+  download_cache_dir = os.path.join(cache_root, 'download_cache')
+
+  for path in (wheel_cache_dir, download_cache_dir):
+    if not os.path.exists(path):
+      os.makedirs(path)
+
+  env = os.environ.copy()
+  env['PIP_CACHE_DIR'] = download_cache_dir
+
+  # Download the package into our cache directory.
+  subprocess.check_call([
+      pip, 'download',
+      '--find-links', 'file://' + wheel_cache_dir,
+      '--dest', wheel_cache_dir,
+      ] + requirements,
+      env=env)
+
+  # Install the downloaded packages.
+  subprocess.check_call([
+      pip, 'install',
+      '--find-links', 'file://' + wheel_cache_dir,
+      '--no-index',
+      ] + requirements,
+      env=env)
 
 
-def activate_env(env, deps, quiet=False):
+def activate_env(env, deps, quiet=False, cache_root=None):
   if hasattr(sys, 'real_prefix'):
     LOGGER.error('Already activated environment!')
     return
@@ -220,7 +177,7 @@ def activate_env(env, deps, quiet=False):
     if not quiet:
       print '  Installing deps'
       print_deps(deps, indent=2, with_implicit=False)
-    install(deps)
+    install(deps, cache_root)
     virtualenv.make_environment_relocatable(env)
     with open(manifest_path, 'wb') as f:
       f.write(repr(deps) + '\n')
@@ -243,6 +200,8 @@ def main(args):
   parser = argparse.ArgumentParser()
   parser.add_argument('--deps-file', '--deps_file', action='append',
                       help='Path to deps.pyl file (may be used multiple times)')
+  parser.add_argument('--cache-root',
+                      help='Store download/wheel caches in this directory.')
   parser.add_argument('-q', '--quiet', action='store_true', default=False,
                       help='Supress all output')
   parser.add_argument('env_path',
@@ -251,7 +210,7 @@ def main(args):
   opts = parser.parse_args(args)
 
   deps = merge_deps(opts.deps_file)
-  activate_env(opts.env_path, deps, opts.quiet)
+  activate_env(opts.env_path, deps, opts.quiet, cache_root=opts.cache_root)
 
 
 if __name__ == '__main__':

@@ -4,3 +4,5 @@ ENV/*
 
 # Used by "bootstrap/update_vendoring.py" to cache some vendoring artifacts.
 .update_vendoring_cache
+# Used by "bootstrap/bootstrap.py" to cache pip downloads and wheels.
+.bootstrap_cache

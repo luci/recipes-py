@@ -277,6 +277,12 @@ class _RegenerateLocalProtobufs(_ActionBase):
 
 _ACTIONS = (
     _VendoredPipPackage(
+        'bootstrap/virtualenv',
+        name='virtualenv',
+        version='15.1.0'),
+    )
+
+    _VendoredPipPackage(
         'recipe_engine/third_party/six',
         name='six',
         version='1.10.0'),

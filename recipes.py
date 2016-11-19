@@ -327,7 +327,7 @@ def doc(package_deps, args):
 
 def info(args):
   from recipe_engine import package
-  repo_root, config_file = get_package_config(args)
+  _, config_file = get_package_config(args)
   package_spec = package.PackageSpec.load_proto(config_file)
 
   if args.recipes_dir:
@@ -589,10 +589,13 @@ def main():
       # Propagate our deps path, if specified, so we re-use our temporary
       # directory.
       if args.deps_path:
-        env_path = os.path.join(args.deps_path, '.ENV')
+        venv_root = os.path.join(args.deps_path, '.virtualenv')
+        env_path = os.path.join(venv_root, 'ENV')
+        bootstrap_cache_path = os.path.join(venv_root, 'bootstrap_cache')
         os.environ['RECIPES_RUN_BOOTSTRAP_DEPS_DIR'] = args.deps_path
       else:
         env_path = os.path.join(ROOT_DIR, 'ENV')
+        bootstrap_cache_path = os.path.join(ROOT_DIR, '.bootstrap_cache')
 
       logging.debug('Installing bootstrap environment into: %s', env_path)
       subprocess.check_call(
@@ -600,6 +603,7 @@ def main():
             sys.executable,
             os.path.join(ROOT_DIR, 'bootstrap', 'bootstrap.py'),
             '--deps-file', os.path.join(ROOT_DIR, 'bootstrap', 'deps.pyl'),
+            '--cache-root', bootstrap_cache_path,
             env_path,
           ],
           cwd=ROOT_DIR)
