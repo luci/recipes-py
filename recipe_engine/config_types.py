@@ -116,6 +116,17 @@ class ModuleBasePath(BasePath, namedtuple('ModuleBasePath', 'module')):
     return 'RECIPE_MODULE[%s]' % re.sub('\.', '::', name)
 
 
+class RecipeScriptBasePath(
+    BasePath, namedtuple('RecipeScriptBasePath', 'recipe_name script_path')):
+  def resolve(self, test_enabled):
+    if test_enabled:
+      return repr(self)
+    return os.path.splitext(self.script_path)[0]+".resources" # pragma: no cover
+
+  def __repr__(self):
+    return 'RECIPE[%s].resources' % self.recipe_name
+
+
 class PackageRepoBasePath(
     BasePath, namedtuple('PackageRepoBasePath', 'package')):
   def resolve(self, test_enabled):

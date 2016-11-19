@@ -128,14 +128,6 @@ def returns_placeholder(func):
   return inner
 
 
-def scan_directory(path, predicate):
-  """Recursively scans a directory and yields paths that match predicate."""
-  for root, _dirs, files in os.walk(path):
-    for file_name in (f for f in files if predicate(f)):
-      file_path = os.path.join(root, file_name)
-      yield file_path
-
-
 BUG_LINK = (
     'https://code.google.com/p/chromium/issues/entry?%s' % urllib.urlencode({
         'summary': 'Recipe engine bug: unexpected failure',

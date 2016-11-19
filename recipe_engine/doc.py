@@ -100,7 +100,8 @@ def main(universe_view):
     deps[module_name] = universe.load(universe_view.package, module_name)
 
   inst = loader.create_recipe_api(
-      deps, recipe_run.RecipeEngine(None, {}, universe))
+      universe.package_deps.root_package,
+      deps, "fake_doc_recipe.py", recipe_run.RecipeEngine(None, {}, universe))
 
   for mod_name, mod in sorted(deps.iteritems(), key=lambda it: it[0]):
     p(0)

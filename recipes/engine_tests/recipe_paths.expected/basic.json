@@ -1,0 +1,29 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "recipe_engine/engine_tests/recipe_paths"
+    ],
+    "name": "recipe_name"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine/engine_tests/recipe_paths].resources/hello.py"
+    ],
+    "name": "some_resource"
+  },
+  {
+    "cmd": [
+      "echo",
+      "RECIPE_PACKAGE_REPO[recipe_engine]/file/path"
+    ],
+    "name": "package_root"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

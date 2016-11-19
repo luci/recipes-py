@@ -13,13 +13,13 @@ from . import env
 
 from .config import ConfigContext, ConfigGroupSchema
 from .config_types import Path, ModuleBasePath, PackageRepoBasePath
+from .config_types import RecipeScriptBasePath
 from .config_types import RECIPE_MODULE_PREFIX
 from .recipe_api import RecipeApi, RecipeApiPlain, RecipeScriptApi
 from .recipe_api import _UnresolvedRequirement
 from .recipe_api import Property, BoundProperty
 from .recipe_api import UndefinedPropertyException, PROPERTY_SENTINEL
 from .recipe_test_api import RecipeTestApi, DisabledTestData
-from .util import scan_directory
 
 
 class LoaderError(Exception):
@@ -35,8 +35,8 @@ class NoSuchRecipe(LoaderError):
 class RecipeScript(object):
   """Holds dict of an evaluated recipe script."""
 
-  def __init__(self, recipe_globals, name):
-    self.name = name
+  def __init__(self, recipe_globals, path):
+    self.path = path
     self._recipe_globals = recipe_globals
 
     self.run_steps, self.gen_tests = [
@@ -51,6 +51,11 @@ class RecipeScript(object):
     if return_schema and not isinstance(return_schema, ConfigGroupSchema):
       raise ValueError('Invalid RETURN_SCHEMA; must be an instance of '
                        'ConfigGroupSchema')
+
+  @property
+  def name(self):
+    # 'a/b/c/my_name.py' -> my_name
+    return os.path.splitext(os.path.basename(self.path))[0]
 
   @property
   def globals(self):
@@ -96,9 +101,7 @@ class RecipeScript(object):
     recipe_globals['LOADED_DEPS'] = universe_view.deps_from_spec(
         recipe_globals.get('DEPS', []))
 
-    # 'a/b/c/my_name.py' -> my_name
-    name = os.path.basename(script_path).split('.')[0]
-    return cls(recipe_globals, name)
+    return cls(recipe_globals, script_path)
 
 
 class RecipeUniverse(object):
@@ -277,6 +280,14 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
     Enumerates real recipes in recipes/*, as well as examples in
     recipe_modules/*.
     """
+    def scan_directory(path, predicate):
+      for root, dirs, files in os.walk(path):
+        dirs[:] = [x for x in dirs
+                   if not x.endswith(('.expected', '.resources'))]
+        for file_name in (f for f in files if predicate(f)):
+          file_path = os.path.join(root, file_name)
+          yield file_path
+
     for path in self.package.recipe_dirs:
       for recipe in scan_directory(
           path, lambda f: f.endswith('.py') and f[0] != '_'):
@@ -384,6 +395,7 @@ def _patchup_module(name, submod, universe_view):
   submod.NAME = name
   submod.UNIQUE_NAME = fullname
   submod.MODULE_DIRECTORY = Path(ModuleBasePath(submod))
+  submod.RESOURCE_DIRECTORY = submod.MODULE_DIRECTORY.join('resources')
   submod.PACKAGE_REPO_ROOT = Path(PackageRepoBasePath(universe_view.package))
   submod.CONFIG_CTX = getattr(submod, 'CONFIG_CTX', None)
 
@@ -544,7 +556,8 @@ def invoke_with_properties(callable_obj, all_props, prop_defs,
                                  **additional_args)
 
 
-def create_recipe_api(toplevel_deps, engine, test_data=DisabledTestData()):
+def create_recipe_api(toplevel_package, toplevel_deps, recipe_script_path,
+                      engine, test_data=DisabledTestData()):
   def instantiator(mod, deps):
     kwargs = {
       'module': mod,
@@ -570,7 +583,25 @@ def create_recipe_api(toplevel_deps, engine, test_data=DisabledTestData()):
     return mod_api
 
   mapper = DependencyMapper(instantiator)
-  api = RecipeScriptApi(module=None, engine=engine,
+  # Provide a fake module to the ScriptApi so that recipes can use:
+  #   * .name
+  #   * .resource
+  #   * .package_repo_resource
+  # This is obviously a hack, however it homogenizes the api and removes the
+  # need for some ugly workarounds in user code. A better way to do this would
+  # be to migrate all recipes to be members of modules.
+  name = os.path.join(
+    toplevel_package.name,
+    os.path.relpath(
+      os.path.splitext(recipe_script_path)[0],
+      toplevel_package.recipe_dirs[0]))
+  fakeModule = collections.namedtuple(
+    "fakeModule", "PACKAGE_REPO_ROOT NAME RESOURCE_DIRECTORY")(
+      Path(PackageRepoBasePath(toplevel_package)),
+      name,
+      Path(RecipeScriptBasePath(
+        name, os.path.splitext(recipe_script_path)[0]+".resources")))
+  api = RecipeScriptApi(module=fakeModule, engine=engine,
                   test_data=test_data.get_module_test_data(None))
   for k, v in toplevel_deps.iteritems():
     setattr(api, k, mapper.instantiate(v))

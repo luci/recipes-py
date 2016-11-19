@@ -251,9 +251,12 @@ def run_steps(properties, stream_engine, step_runner, universe_view,
       recipe_script = universe_view.load_recipe(recipe, engine=engine)
       s.write_line('Running recipe with %s' % (properties,))
 
-      api = loader.create_recipe_api(recipe_script.LOADED_DEPS,
-                                     engine,
-                                     recipe_test_api.DisabledTestData())
+      api = loader.create_recipe_api(
+          universe_view.universe.package_deps.root_package,
+          recipe_script.LOADED_DEPS,
+          recipe_script.path,
+          engine,
+          recipe_test_api.DisabledTestData())
 
       s.add_step_text('running recipe: "%s"' % recipe)
     except (loader.LoaderError, ImportError, AssertionError) as e:

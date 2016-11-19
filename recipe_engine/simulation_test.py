@@ -114,7 +114,9 @@ def RunRecipe(recipe_name, test_name):
         step_runner, props, _UNIVERSE, engine_flags=_ENGINE_FLAGS)
     recipe_script = _UNIVERSE.load_recipe(recipe_name, engine=engine)
 
-    api = loader.create_recipe_api(recipe_script.LOADED_DEPS, engine, test_data)
+    api = loader.create_recipe_api(
+      _UNIVERSE.universe.package_deps.root_package, recipe_script.LOADED_DEPS,
+      recipe_script.path, engine, test_data)
     result = engine.run(recipe_script, api, test_data.properties)
 
     raw_expectations = step_runner.steps_ran.copy()

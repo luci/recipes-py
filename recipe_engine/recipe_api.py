@@ -647,7 +647,10 @@ class RecipeApiPlain(object):
 
     # If we're the 'root' api, inject directly into 'self'.
     # Otherwise inject into 'self.m'
-    self.m = self if module is None else ModuleInjectionSite(self)
+    if not isinstance(module, types.ModuleType):
+      self.m = self
+    else:
+      self.m = ModuleInjectionSite(self)
 
     # If our module has a test api, it gets injected here.
     self.test_api = None
@@ -735,7 +738,7 @@ class RecipeApiPlain(object):
     """
     # TODO(vadimsh): Verify that file exists. Including a case like:
     #  module.resource('dir').join('subdir', 'file.py')
-    return self._module.MODULE_DIRECTORY.join('resources', *path)
+    return self._module.RESOURCE_DIRECTORY.join(*path)
 
   def package_repo_resource(self, *path):
     """Returns a resource path, where path is relative to the root of
