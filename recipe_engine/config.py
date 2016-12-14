@@ -564,6 +564,12 @@ class Dict(ConfigBase, collections.MutableMapping):
   def __len__(self):
     return len(self.data)
 
+  def __repr__(self):
+    return repr(self.data)
+
+  def __str__(self):
+    return str(self.data)
+
   def set_val(self, val):
     if isinstance(val, Dict):
       val = val.data
