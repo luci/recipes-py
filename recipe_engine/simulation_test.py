@@ -93,13 +93,14 @@ def RunRecipe(recipe_name, test_name):
   from . import run
   from . import step_runner
 
-  if recipe_name not in _GEN_TEST_CACHE:
+  cache_key = (recipe_name, test_name)
+  if cache_key not in _GEN_TEST_CACHE:
     recipe_script = _UNIVERSE.load_recipe(recipe_name)
     test_api = loader.create_test_api(recipe_script.LOADED_DEPS, _UNIVERSE)
     for test_data in recipe_script.gen_tests(test_api):
       _GEN_TEST_CACHE[(recipe_name, test_data.name)] = copy.deepcopy(test_data)
 
-  test_data = _GEN_TEST_CACHE[(recipe_name, test_name)]
+  test_data = _GEN_TEST_CACHE[cache_key]
 
   config_types.ResetTostringFns()
 
