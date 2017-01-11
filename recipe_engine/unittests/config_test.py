@@ -32,5 +32,15 @@ class TestProperties(unittest.TestCase):
   def testSimpleReturn(self):
     pass
 
+class TestEnum(unittest.TestCase):
+  def testEnum(self):
+    schema = config.ConfigGroupSchema(test=config.Enum('foo', 'bar'))
+    self.assertIsInstance(schema.new(test='foo'), config.ConfigGroup)
+
+  def testMustBeOneOf(self):
+    schema = config.ConfigGroupSchema(test=config.Enum('foo', 'bar'))
+    with self.assertRaises(ValueError):
+      schema.new(test='baz')
+
 if __name__ == '__main__':
   unittest.main()

@@ -782,3 +782,52 @@ class Static(ConfigBase):
 
   def _is_default(self):
     return True
+
+
+class Enum(ConfigBase):
+  """Provides a configuration object which holds one of acceptable values."""
+
+  def __init__(self, *values, **kwargs):
+    """
+    Args:
+      values - List of acceptable values.
+      inner_type - The type of data contained in this object, e.g. str, int, ...
+        Can also be a tuple of types to allow more than one type.
+      jsonish_fn - A function used to reduce the data to a JSON-compatible
+        python datatype. Default is the identity function.
+      required(bool) - True iff this config item is required to have a
+        value in order for it to be considered complete().
+      hidden - See ConfigBase.
+    """
+    super(Enum, self).__init__(kwargs.get('hidden', AutoHide))
+    if not values:
+      raise ValueError("Enumerations cannot be empty")
+    self.values = values
+    self.inner_type = kwargs.get('inner_type', str)
+    self.jsonish_fn = kwargs.get('jsonish_fn', lambda x: x)
+    self.data = None
+    self.required = kwargs.get('required', True)
+
+  def get_val(self):
+    return self.data
+
+  def set_val(self, val):
+    if isinstance(val, Enum):
+      val = val.data
+    typeAssert(val, self.inner_type)
+    if not val in self.values:
+      raise ValueError("Expected %r to be one of %r" %
+                       (val, ', '.join(self.values)))
+    self.data = val
+
+  def as_jsonish(self, _include_hidden=None):
+    return self.jsonish_fn(self.data)
+
+  def reset(self):
+    self.data = None
+
+  def complete(self):
+    return not self.required or self.data is not None
+
+  def _is_default(self):
+    return self.data is None
