@@ -803,7 +803,7 @@ class Enum(ConfigBase):
     if not values:
       raise ValueError("Enumerations cannot be empty")
     self.values = values
-    self.inner_type = kwargs.get('inner_type', str)
+    self.inner_type = kwargs.get('inner_type', basestring)
     self.jsonish_fn = kwargs.get('jsonish_fn', lambda x: x)
     self.data = None
     self.required = kwargs.get('required', True)
