@@ -36,8 +36,7 @@ def GenTests(api):
   )
 
   f = Filter()
-  f = f.include('another important', ['cmd'])
-  f = f.include('something important', ['env'])
+  f = f.include_re(r'.*\bimportant', ['cmd', 'env'], at_least=2, at_most=2)
   yield (api.test('selection')
     + api.properties(fakeit=False)
     + api.post_process(DoesNotRun, 'fakestep')

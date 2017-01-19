@@ -1,5 +1,9 @@
 [
   {
+    "cmd": [
+      "echo",
+      "crazy!"
+    ],
     "env": {
       "FLEEM": "VERY YES"
     },

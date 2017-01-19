@@ -86,6 +86,9 @@ class SimulationAnnotatorStreamEngine(stream.AnnotatorStreamEngine):
 # RunRecipe so that it can persist between RunRecipe calls in the same process.
 _GEN_TEST_CACHE = {}
 
+# allow regex patterns to be 'deep copied' by using them as-is
+copy._deepcopy_dispatch[re._pattern_type] = copy._deepcopy_atomic
+
 def RunRecipe(recipe_name, test_name):
   """Actually runs the recipe given the GenTests-supplied test_data."""
   from . import config_types
