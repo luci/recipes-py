@@ -40,17 +40,18 @@ class TestHandler(Handler):
   @classmethod
   def run_stage_loop(cls, _opts, results, put_next_stage):
     for test, result, log_lines in results:
+      failed_checks = [check for check in result.checks if not check.passed]
+      if failed_checks:
+        put_next_stage(FailChecks(test, failed_checks))
+        continue
+
       current, _ = GetCurrentData(test)
       if current is NonExistant:
         put_next_stage(Missing(test, log_lines))
       else:
         diff = DiffData(current, result.data)
         if not diff:
-          failed_checks = [check for check in result.checks if not check.passed]
-          if failed_checks:
-            put_next_stage(FailChecks(test, failed_checks))
-          else:
-            put_next_stage(Pass(test))
+          put_next_stage(Pass(test))
         else:
           put_next_stage(Fail(test, diff, log_lines))
 

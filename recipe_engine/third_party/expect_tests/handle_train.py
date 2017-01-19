@@ -47,6 +47,11 @@ class TrainHandler(Handler):
   @classmethod
   def run_stage_loop(cls, opts, tests_results, put_next_stage):
     for test, result, _ in tests_results:
+      failed_checks = [check for check in result.checks if not check.passed]
+      if failed_checks:
+        put_next_stage(FailChecks(test, failed_checks))
+        continue
+
       if opts.force:
         WriteNewData(test, result.data)
         put_next_stage(ForcedWriteAction(test))
@@ -67,11 +72,7 @@ class TrainHandler(Handler):
         else:
           put_next_stage(SchemaDiffWriteAction(test))
       else:
-        failed_checks = [check for check in result.checks if not check.passed]
-        if failed_checks:
-          put_next_stage(FailChecks(test, failed_checks))
-        else:
-          put_next_stage(NoAction(test))
+        put_next_stage(NoAction(test))
 
   class ResultStageHandler(Handler.ResultStageHandler):
     def __init__(self, opts):
