@@ -577,7 +577,7 @@ def main():
                                     args.deps_path)
     if args.deps_path == '-':
       # "-" means use a temporary deps path.
-      temp_deps_dir = tempfile.mkdtemp(dir=ROOT_DIR, suffix='_deps')
+      temp_deps_dir = tempfile.mkdtemp(suffix='_recipe_deps')
       args.deps_path = temp_deps_dir
 
     if args.deps_path:
