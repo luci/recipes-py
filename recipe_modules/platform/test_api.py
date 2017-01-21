@@ -17,6 +17,13 @@ class PlatformTestApi(recipe_test_api.RecipeTestApi):
     assert bits in (32, 64)
     return bits
 
+  @recipe_test_api.mod_test_data
+  @staticmethod
+  def cpu_count(cpu_count):
+    assert isinstance(cpu_count, int)
+    assert cpu_count > 0
+    return cpu_count
+
   def __call__(self, name, bits):
     return self.name(name) + self.bits(bits)
 

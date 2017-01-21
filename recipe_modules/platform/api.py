@@ -4,6 +4,7 @@
 
 import sys
 import platform
+import multiprocessing
 
 from recipe_engine import recipe_api
 
@@ -44,6 +45,7 @@ class PlatformApi(recipe_api.RecipeApi):
       # Default to linux/64, unless test case says otherwise.
       self._name = norm_plat(self._test_data.get('name', 'linux'))
       self._bits = norm_bits(self._test_data.get('bits', 64))
+      self._cpu_count = self._test_data.get('cpu_count', 2)
     else:  # pragma: no cover
       # platform.machine is based on running kernel. It's possible to use 64-bit
       # kernel with 32-bit userland, e.g. to give linker slightly more memory.
@@ -59,6 +61,8 @@ class PlatformApi(recipe_api.RecipeApi):
             self._bits == 32 and
             platform.architecture()[0] == '64bit'):
         self._bits = 64
+
+      self._cpu_count = multiprocessing.cpu_count()
 
   @property
   def is_win(self):
@@ -85,6 +89,11 @@ class PlatformApi(recipe_api.RecipeApi):
   @property
   def arch(self):
     return self._arch
+
+  @property
+  def cpu_count(self):
+    """The number of CPU cores, according to multiprocessing.cpu_count()."""
+    return self._cpu_count
 
   @staticmethod
   def normalize_platform_name(platform):

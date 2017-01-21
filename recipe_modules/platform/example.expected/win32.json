@@ -8,7 +8,9 @@
       "@@@STEP_LOG_LINE@bits@32@@@",
       "@@@STEP_LOG_END@bits@@@",
       "@@@STEP_LOG_LINE@arch@intel@@@",
-      "@@@STEP_LOG_END@arch@@@"
+      "@@@STEP_LOG_END@arch@@@",
+      "@@@STEP_LOG_LINE@cpu_count@2@@@",
+      "@@@STEP_LOG_END@cpu_count@@@"
     ]
   },
   {
