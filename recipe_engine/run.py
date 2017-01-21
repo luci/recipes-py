@@ -70,12 +70,9 @@ import os
 import sys
 import traceback
 
-from . import env
-
 from . import loader
 from . import recipe_api
 from . import recipe_test_api
-from . import step_runner as step_runner_module
 from . import types
 from . import util
 from . import result_pb2
@@ -116,8 +113,12 @@ ENV_WHITELIST_LOGDOG = set([
     'LOGDOG_COORDINATOR_HOST',
 ])
 
+ENV_WHITELIST_CIPD = set([
+    'CIPD_CACHE_DIR',
+])
+
 ENV_WHITELIST_INFRA = (ENV_WHITELIST_PYTHON | ENV_WHITELIST_SWARMING |
-                       ENV_WHITELIST_LOGDOG | set([
+                       ENV_WHITELIST_LOGDOG | ENV_WHITELIST_CIPD | set([
     'AWS_CREDENTIAL_FILE',
     'BOTO_CONFIG',
     'BUILDBOT_ARCHIVE_FORCE_SSH',
