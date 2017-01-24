@@ -297,8 +297,6 @@ class StepFailure(Exception):
     _STEP_CONTEXT['ran_step'][0] = True
     if result:
       self.name = name_or_reason
-      assert result.retcode != 0, "Step Failure on a 0 return code result \
-                                   doesn't make any sense."
       self.result = result
       self.reason = self.reason_message()
     else:
