@@ -171,6 +171,13 @@ class PathApi(recipe_api.RecipeApi):
           value, property_name))
     return value
 
+  def _ensure_dir(self, path):  # pragma: no cover
+    path = str(path)
+    try:
+      os.mkdir(path)
+    except OSError:
+      pass # Perhaps already exists.
+
   def initialize(self):
     if not self._test_data.enabled:  # pragma: no cover
       self._path_mod = os.path
@@ -178,8 +185,10 @@ class PathApi(recipe_api.RecipeApi):
       self._startup_cwd = _split_path(os.getcwd())
       self._temp_dir = _split_path(
         self._read_path('temp_dir', tempfile.gettempdir()))
+      self._ensure_dir(self._temp_dir)
       self._cache_dir = _split_path(
         self._read_path('cache_dir', os.path.join(os.getcwd(), 'cache')))
+      self._ensure_dir(self._cache_dir)
     else:
       self._path_mod = fake_path(self, self._test_data.get('exists', []))
       self._startup_cwd = ['/', 'b', 'FakeTestingCWD']
