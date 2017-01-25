@@ -84,7 +84,8 @@ class CoverageContext(object):
       outf = StringIO()
 
       try:
-        coverage_percent = self.cov.report(file=outf, omit=omit)
+        coverage_percent = self.cov.report(
+          file=outf, omit=omit, show_missing=True)
       except coverage.CoverageException as ce:
         if ce.message != 'No data to report.':
           raise
