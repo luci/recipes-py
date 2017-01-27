@@ -23,6 +23,7 @@ MODULES_WHITELIST = [
   r'base64',
   r'collections',
   r'contextlib',
+  r'copy',
   r'datetime',
   r'functools',
   r'itertools',
