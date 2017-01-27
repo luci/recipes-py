@@ -101,7 +101,9 @@ class StepApi(recipe_api.RecipeApiPlain):
     return recipe_api.defer_results
 
   def __call__(self, name, cmd, ok_ret=None, infra_step=False, wrapper=(),
-               timeout=None, **kwargs):
+               timeout=None, cwd=None, env=None, allow_subannotations=None,
+               trigger_specs=None, stdout=None, stderr=None, stdin=None,
+               step_test_data=None):
     """Returns a step dictionary which is compatible with annotator.py.
 
     Args:
@@ -118,12 +120,43 @@ class StepApi(recipe_api.RecipeApiPlain):
         command wrapper.
       timeout: If supplied, the recipe engine will kill the step after the
         specified number of seconds.
-      **kwargs: Additional entries to add to the annotator.py step dictionary.
+      cwd (str or None): absolute path to working directory for the command
+      env (dict): overrides for environment variables
+      allow_subannotations (bool): if True, lets the step emit its own
+          annotations. NOTE: Enabling this can cause some buggy behavior. Please
+          strongly consider using step_result.presentation instead. If you have
+          questions, please contact infra-dev@chromium.org.
+      trigger_specs: a list of trigger specifications
+      stdout: Placeholder to put step stdout into. If used, stdout won't appear
+          in annotator's stdout (and |allow_subannotations| is ignored).
+      stderr: Placeholder to put step stderr into. If used, stderr won't appear
+          in annotator's stderr.
+      stdin: Placeholder to read step stdin from.
+      step_test_data (func -> recipe_test_api.StepTestData): A factory which
+          returns a StepTestData object that will be used as the default test
+          data for this step. The recipe author can override/augment this object
+          in the GenTests function.
 
     Returns:
       Opaque step object produced and understood by recipe engine.
     """
-    assert 'shell' not in kwargs
+    kwargs = {}
+    if cwd:
+      kwargs['cwd'] = cwd
+    if env:
+      kwargs['env'] = env
+    if allow_subannotations is not None:
+      kwargs['allow_subannotations'] = allow_subannotations
+    if trigger_specs:
+      kwargs['trigger_specs'] = trigger_specs
+    if stdout:
+      kwargs['stdout'] = stdout
+    if stderr:
+      kwargs['stderr'] = stderr
+    if stdin:
+      kwargs['stdin'] = stdin
+    if step_test_data:
+      kwargs['step_test_data'] = step_test_data
     assert cmd is None or isinstance(cmd, list)
     if not ok_ret:
       ok_ret = {0}
