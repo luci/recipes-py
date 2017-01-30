@@ -158,6 +158,12 @@ class RepoSpec(object):
     """Returns the root of this repository."""
     raise NotImplementedError()
 
+  def is_consistent_with(self, other):
+    """Returns True iff |other| can be used in place of |self| while keeping
+    the dependency graph consistent. Most often it means being pinned at the
+    same revision, but some specs (like path-based) are always compatible."""
+    raise NotImplementedError()
+
   def __eq__(self, other):
     raise NotImplementedError()
 
@@ -201,6 +207,9 @@ class GitRepoSpec(RepoSpec):
 
   def repo_root(self, context):
     return os.path.join(self._dep_dir(context), self.path)
+
+  def is_consistent_with(self, other):
+    return (self == other)
 
   def dump(self):
     buf = package_pb2.DepSpec(
@@ -324,6 +333,13 @@ class PathRepoSpec(RepoSpec):
       return False
     return self.path == other.path
 
+  def is_consistent_with(self, other):
+    # PathRepoSpec is always compatible, unless it's PathRepoSpec with a
+    # different path.
+    if isinstance(other, type(self)):
+      return self.path == other.path
+    return True
+
 
 class RootRepoSpec(RepoSpec):
   def __init__(self, proto_file):
@@ -335,6 +351,9 @@ class RootRepoSpec(RepoSpec):
 
   def repo_root(self, context):
     return context.repo_root
+
+  def is_consistent_with(self, other):
+    return (self == other)
 
   def proto_file(self, context):
     return self._proto_file
@@ -654,7 +673,10 @@ class PackageDeps(object):
             'Package %s depends on itself' % project_id)
 
       # Only enforce package consistency within the override boundary.
-      if current.is_override == overriding and repo_spec != current.repo_spec:
+      # It's fine if either spec claims it's consistent with the other.
+      if (current.is_override == overriding and
+          not repo_spec.is_consistent_with(current.repo_spec) and
+          not current.repo_spec.is_consistent_with(repo_spec)):
         raise InconsistentDependencyGraphError(
             project_id, (repo_spec, current.repo_spec))
     self._packages[project_id] = None
