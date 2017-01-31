@@ -10,7 +10,6 @@ infra/config/recipes.cfg.
 """
 
 import argparse
-import collections
 import json
 import logging
 import os
@@ -281,7 +280,7 @@ class ProjectOverrideAction(argparse.Action):
 
     v = getattr(namespace, self.dest, None)
     if v is None:
-      v = collections.OrderedDict()
+      v = {}
       setattr(namespace, self.dest, v)
 
     if v.get(project_id):

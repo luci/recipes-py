@@ -177,6 +177,31 @@ class RepoTest(unittest.TestCase):
         'message': message,
     }
 
+  def train_recipes(self, repo, overrides=None):
+    """Trains recipe simulation tests in given repo.
+
+    Arguments:
+      repo(dict): one of the repos returned by |repo_setup|
+      overrides: iterable((str, str)): optional list of overrides
+          first element of the tuple is the module name, and second
+          is the overriding path
+    """
+    if not overrides:
+      overrides = []
+    with in_directory(repo['root']):
+      args = [
+          sys.executable, self._recipe_tool,
+          '--package', os.path.join(
+              repo['root'], 'infra', 'config', 'recipes.cfg'),
+      ]
+      for repo, path in overrides:
+        args.extend(['-O', '%s=%s' % (repo, path)])
+      args.extend([
+          'simulation_test',
+          'train',
+      ])
+      subprocess.check_output(args, stderr=subprocess.STDOUT)
+
   def update_recipe(self, repo, name, deps, calls):
     """Updates or creates a recipe in given repo.
     Commits the change.
@@ -205,13 +230,7 @@ class RepoTest(unittest.TestCase):
           '  yield api.test("basic")',
         ]))
 
-      subprocess.check_output([
-          sys.executable, self._recipe_tool,
-          '--package', os.path.join(
-              repo['root'], 'infra', 'config', 'recipes.cfg'),
-          'simulation_test',
-          'train',
-      ])
+      self.train_recipes(repo)
 
       subprocess.check_call(
           ['git', 'add', os.path.join(recipes_dir, '%s.py' % name)])

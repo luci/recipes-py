@@ -25,11 +25,12 @@ from . import fetch
 
 class InconsistentDependencyGraphError(Exception):
   def __init__(self, project_id, specs):
-    super(InconsistentDependencyGraphError, self).__init__(
-        'Package specs for %s do not match: %s vs %s' % (
-            project_id, specs[0], specs[1]))
     self.project_id = project_id
     self.specs = specs
+
+  def __str__(self):
+    return 'Package specs for %s do not match: %s vs %s' % (
+        project_id, self.specs[0], self.specs[1])
 
 
 class CyclicDependencyError(Exception):
@@ -158,12 +159,6 @@ class RepoSpec(object):
     """Returns the root of this repository."""
     raise NotImplementedError()
 
-  def is_consistent_with(self, other):
-    """Returns True iff |other| can be used in place of |self| while keeping
-    the dependency graph consistent. Most often it means being pinned at the
-    same revision, but some specs (like path-based) are always compatible."""
-    raise NotImplementedError()
-
   def __eq__(self, other):
     raise NotImplementedError()
 
@@ -207,9 +202,6 @@ class GitRepoSpec(RepoSpec):
 
   def repo_root(self, context):
     return os.path.join(self._dep_dir(context), self.path)
-
-  def is_consistent_with(self, other):
-    return (self == other)
 
   def dump(self):
     buf = package_pb2.DepSpec(
@@ -333,13 +325,6 @@ class PathRepoSpec(RepoSpec):
       return False
     return self.path == other.path
 
-  def is_consistent_with(self, other):
-    # PathRepoSpec is always compatible, unless it's PathRepoSpec with a
-    # different path.
-    if isinstance(other, type(self)):
-      return self.path == other.path
-    return True
-
 
 class RootRepoSpec(RepoSpec):
   def __init__(self, proto_file):
@@ -351,9 +336,6 @@ class RootRepoSpec(RepoSpec):
 
   def repo_root(self, context):
     return context.repo_root
-
-  def is_consistent_with(self, other):
-    return (self == other)
 
   def proto_file(self, context):
     return self._proto_file
@@ -370,19 +352,16 @@ class Package(object):
 
   This is accessed by loader.py through RecipeDeps.get_package.
   """
-  def __init__(self, name, repo_spec, deps, repo_root, relative_recipes_dir,
-               is_override):
+  def __init__(self, name, repo_spec, deps, repo_root, relative_recipes_dir):
     self.name = name
     self.repo_spec = repo_spec
     self.deps = deps
     self.repo_root = repo_root
     self.relative_recipes_dir = relative_recipes_dir
-    self.is_override = is_override
 
   def __repr__(self):
-    return ('<Package(name=%r,repo_spec=%r,deps=%r,recipes_dir=%r,'
-            'override=%r)>' % (self.name, self.repo_spec, self.deps,
-                               self.recipes_dir, self.is_override))
+    return '<Package(name=%r,repo_spec=%r,deps=%r,recipes_dir=%r)>' % (
+        self.name, self.repo_spec, self.deps, self.recipes_dir)
 
   @property
   def recipes_dir(self):
@@ -409,9 +388,8 @@ class Package(object):
     return os.path.join(self.recipes_dir, 'recipe_modules', module_name)
 
   def __repr__(self):
-    return 'Package(%r, %r, %r, %r, %r)' % (
-        self.name, self.repo_spec, self.deps, self.recipe_dirs,
-        self.is_override)
+    return 'Package(%r, %r, %r, %r)' % (
+        self.name, self.repo_spec, self.deps, self.recipe_dirs)
 
   def __str__(self):
     return 'Package %s, with dependencies %s' % (self.name, self.deps.keys())
@@ -450,7 +428,7 @@ class RollCandidate(object):
     while True:
       try:
         package_deps = PackageDeps(self._context)
-        package_deps._create_from_spec(root_spec, self.get_rolled_spec(), False)
+        package_deps._create_from_spec(root_spec, self.get_rolled_spec())
         return True
       except InconsistentDependencyGraphError as e:
         # Don't update the same project twice - that'd mean we have two
@@ -608,8 +586,8 @@ class PackageDeps(object):
   """
   def __init__(self, context, overrides=None):
     self._context = context
-    self._overrides = overrides or {}
     self._packages = {}
+    self._overrides = overrides or {}
     self._root_package = None
 
   @property
@@ -638,61 +616,40 @@ class PackageDeps(object):
                    for project_id, path in overrides.iteritems()}
     package_deps = cls(context, overrides=overrides)
 
-    # Install our overrides and their dependencies first. Each of these will be
-    # marked as overriding, meaning that they will supercede equivalent packages
-    # defined in the root package without error.
-    #
-    # Package resolution is required to be consistent within the overridden
-    # packages, and required to be consistent within the non-overridden
-    # packages, but a conflict between an overridden package and a
-    # non-overridden package will prefer the overridden one.
-    package_deps._register_overrides()
-
-    # Install our root package and its dependencies.
-    package_deps._root_package = package_deps._create_package(
-        RootRepoSpec(proto_file), False)
+    package_deps._root_package = package_deps._create_package(RootRepoSpec(proto_file))
 
     return package_deps
 
-  def _register_overrides(self):
-    for project_id, repo_spec in self._overrides.iteritems():
-      self._create_package(repo_spec, True)
-
-  def _create_package(self, repo_spec, overriding):
+  def _create_package(self, repo_spec):
     repo_spec.checkout(self._context)
     package_spec = PackageSpec.load_proto(repo_spec.proto_file(self._context))
-    return self._create_from_spec(repo_spec, package_spec, overriding)
+    return self._create_from_spec(repo_spec, package_spec)
 
-  def _create_from_spec(self, repo_spec, package_spec, overriding):
+  def _create_from_spec(self, repo_spec, package_spec):
     project_id = package_spec.project_id
-
+    repo_spec = self._overrides.get(project_id, repo_spec)
     if project_id in self._packages:
-      current = self._packages[project_id]
-      if current is None:
+      # TODO(phajdan.jr): Are exceptions the best way to report these errors?
+      # The way this is used in practice, especially inconsistent dependency
+      # graph condition, might be considered as using exceptions for control
+      # flow.
+      if self._packages[project_id] is None:
         raise CyclicDependencyError(
             'Package %s depends on itself' % project_id)
-
-      # Only enforce package consistency within the override boundary.
-      # It's fine if either spec claims it's consistent with the other.
-      if (current.is_override == overriding and
-          not repo_spec.is_consistent_with(current.repo_spec) and
-          not current.repo_spec.is_consistent_with(repo_spec)):
+      if repo_spec != self._packages[project_id].repo_spec:
         raise InconsistentDependencyGraphError(
-            project_id, (repo_spec, current.repo_spec))
+            project_id, (repo_spec, self._packages[project_id].repo_spec))
     self._packages[project_id] = None
 
     deps = {}
     for dep, dep_repo in sorted(package_spec.deps.items()):
-      dep_package = self._packages.get(dep)
-      if not (dep_package and dep_package.is_override):
-        dep_package = self._create_package(dep_repo, overriding)
-      deps[dep] = dep_package
+      dep_repo = self._overrides.get(dep, dep_repo)
+      deps[dep] = self._create_package(dep_repo)
 
     package = Package(
         project_id, repo_spec, deps,
         repo_spec.repo_root(self._context),
-        package_spec.recipes_path,
-        overriding)
+        package_spec.recipes_path)
 
     self._packages[project_id] = package
     return package
