@@ -74,8 +74,32 @@ class StepApi(recipe_api.RecipeApiPlain):
 
   @property
   def context(self):
-    """ See recipe_api.py for docs. """
+    """Returns a context manager which can set values applying to all steps
+    within the block.
+
+    Example usage:
+      with api.step.context({'cwd': api.path['checkout']}):
+        api.step(...)
+
+    Valid keys:
+      cwd (Path object from api.path):  working directory
+      env ({name -> value}): environment variables
+      infra_step (bool): whether the step failure should be marked as infra
+          failure
+      name (str): step name prefix
+
+    See recipe_api.py for more info.
+    """
     return recipe_api.context
+
+  def get_from_context(self, key, default=None):
+    """Returns |key|'s value from context if present, otherwise |default|."""
+    return recipe_api._STEP_CONTEXT.get(key, default)
+
+  def combine_with_context(self, key, value):
+    """Combines |value| with the value for |key| in current context, if any.
+    Returns the combined value."""
+    return recipe_api._STEP_CONTEXT.get_with_context(key, value)
 
   @contextlib.contextmanager
   def nest(self, name):
@@ -171,9 +195,6 @@ class StepApi(recipe_api.RecipeApiPlain):
     kwargs['timeout'] = timeout
     kwargs['ok_ret'] = ok_ret
 
-    # Obtain information from composite step parent.
-    compositor = recipe_api._STEP_CONTEXT
-
     # Calculate our full step name. If a step already has that name, add an
     # index to the end of it.
     #
@@ -181,7 +202,7 @@ class StepApi(recipe_api.RecipeApiPlain):
     # by the user. If this happens, we'll continue appending indexes until we
     # have a unique step name.
     while True:
-      full_name = compositor.get_with_context('name', name)
+      full_name = self.combine_with_context('name', name)
       if full_name not in self._seen_steps:
         break
 
@@ -191,11 +212,11 @@ class StepApi(recipe_api.RecipeApiPlain):
     self._seen_steps.add(full_name)
 
     if 'cwd' not in kwargs:
-      kwargs['cwd'] = compositor.get('cwd')
-    kwargs['env'] = compositor.get_with_context('env', kwargs.get('env', {}))
-    kwargs['infra_step'] = compositor.get_with_context(
+      kwargs['cwd'] = self.get_from_context('cwd')
+    kwargs['env'] = self.combine_with_context('env', kwargs.get('env', {}))
+    kwargs['infra_step'] = self.combine_with_context(
         'infra_step', bool(infra_step))
-    kwargs['step_nest_level'] = compositor.get_with_context('nest_level', 0)
+    kwargs['step_nest_level'] = self.combine_with_context('nest_level', 0)
     kwargs['name'] = full_name
     kwargs['base_name'] = name
 
