@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 import functools
+import itertools
 import os
 import sys
 import tempfile
@@ -223,6 +224,36 @@ class PathApi(recipe_api.RecipeApi):
           '%s_tmp_%d' % (prefix, self._test_counter))
     self.mock_add_paths(temp_dir)
     return temp_dir
+
+  def abs_to_path(self, abs_string_path):
+    """Converts an absolute path string `string_path` to a real Path object,
+    using the most appropriate known base path.
+
+    * abs_string_path MUST be an absolute path
+    * abs_string_path MUST be rooted in one of the configured base paths known
+      to the path module.
+
+    This method will try all dynamic_paths first, followed by all base_paths.
+
+    Example:
+      # assume [START_DIR] == "/basis/dir/for/recipe"
+      api.path.abs_to_path("/basis/dir/for/recipe/some/other/dir") ->
+        Path("[START_DIR]/some/other/dir")
+
+    Raises an ValueError if the preconditions are not met, otherwise returns the
+    Path object.
+    """
+    if self.abspath(abs_string_path) != abs_string_path:
+      raise ValueError("path is not absolute: %r" % abs_string_path)
+
+    for path_name in itertools.chain(self.c.dynamic_paths, self.c.base_paths):
+      path = self[path_name]
+      sPath = str(path)
+      if abs_string_path.startswith(sPath):
+        sub_path = abs_string_path[len(sPath):].strip(self.sep)
+        return path.join(*sub_path.split(self.sep))
+
+    raise ValueError("could not figure out a base path for %r" % abs_string_path)
 
   def __contains__(self, pathname):
     return bool(self.c.dynamic_paths.get(pathname))

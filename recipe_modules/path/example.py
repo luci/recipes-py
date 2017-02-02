@@ -52,6 +52,25 @@ def RunSteps(api):
   api.path.mock_add_paths(home_path)
   assert api.path.exists(home_path)
 
+  # Convert strings to Paths
+  something = api.path['start_dir'].join('some', 'thing')
+  assert api.path.abs_to_path(str(something)) == something, something
+
+  try:
+    api.path.abs_to_path('non/../absolute')
+    assert False, "this should have thrown"  # pragma: no cover
+  except ValueError as ex:
+    assert "is not absolute" in ex.message, ex
+
+  try:
+    if api.platform.is_win:
+      api.path.abs_to_path('C:\some\other\root\non\absolute')
+    else:
+      api.path.abs_to_path('/some/other/root/non/absolute')
+    assert False, "this should have thrown"  # pragma: no cover
+  except ValueError as ex:
+    assert "could not figure out" in ex.message, ex
+
 
 def GenTests(api):
   for platform in ('linux', 'win', 'mac'):
