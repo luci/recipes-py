@@ -322,6 +322,7 @@ class RecipeEngine(object):
     self._properties = properties
     self._universe_view = universe_view
     self._clients = {client.IDENT: client for client in (
+        recipe_api.PathsClient(),
         recipe_api.StepClient(self),
         recipe_api.PropertiesClient(self),
         recipe_api.DependencyManagerClient(self),
@@ -435,6 +436,8 @@ class RecipeEngine(object):
       RecipeResult which has return value or status code and exception.
         depending on the value of self._engine_flags.use_result_proto
     """
+    self._get_client('paths')._initialize_with_recipe_api(api)
+
     # TODO(martiniss): Remove this once we've transitioned to the new results
     # format
     if self._engine_flags and self._engine_flags.use_result_proto:

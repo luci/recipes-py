@@ -131,6 +131,8 @@ class PathApi(recipe_api.RecipeApi):
       using the [*_ROOT] placeholders. ex. '[BUILD_ROOT]/scripts'.
   """
 
+  _paths_client = recipe_api.RequireClient('paths')
+
   OK_ATTRS = ('pardir', 'sep', 'pathsep')
 
   # Because the native 'path' type in python is a str, we filter the *args
@@ -233,7 +235,12 @@ class PathApi(recipe_api.RecipeApi):
     * abs_string_path MUST be rooted in one of the configured base paths known
       to the path module.
 
-    This method will try all dynamic_paths first, followed by all base_paths.
+    This method will find the longest match in all the following:
+      * module resource paths
+      * recipe resource paths
+      * package repo paths
+      * dynamic_paths
+      * base_paths
 
     Example:
       # assume [START_DIR] == "/basis/dir/for/recipe"
@@ -246,14 +253,26 @@ class PathApi(recipe_api.RecipeApi):
     if self.abspath(abs_string_path) != abs_string_path:
       raise ValueError("path is not absolute: %r" % abs_string_path)
 
-    for path_name in itertools.chain(self.c.dynamic_paths, self.c.base_paths):
-      path = self[path_name]
-      sPath = str(path)
-      if abs_string_path.startswith(sPath):
-        sub_path = abs_string_path[len(sPath):].strip(self.sep)
-        return path.join(*sub_path.split(self.sep))
+    # try module/recipe/package resource paths first
+    sPath, path = self._paths_client.find_longest_prefix(
+        abs_string_path, self.sep)
+    if path is None:
+      # try base paths now
+      for path_name in itertools.chain(self.c.dynamic_paths, self.c.base_paths):
+        path = self[path_name]
+        sPath = str(path)
+        if abs_string_path.startswith(sPath):
+          break
+      else:
+        path = None
 
-    raise ValueError("could not figure out a base path for %r" % abs_string_path)
+    if path is None:
+      raise ValueError("could not figure out a base path for %r" %
+                       abs_string_path)
+
+    sub_path = abs_string_path[len(sPath):].strip(self.sep)
+    return path.join(*sub_path.split(self.sep))
+
 
   def __contains__(self, pathname):
     return bool(self.c.dynamic_paths.get(pathname))

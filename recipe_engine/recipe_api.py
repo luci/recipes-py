@@ -3,8 +3,9 @@
 # that can be found in the LICENSE file.
 
 from __future__ import absolute_import
-import contextlib
+import bisect
 import collections
+import contextlib
 import copy
 import keyword
 import re
@@ -81,6 +82,78 @@ def RequireClient(name):
     name (str): the name of the recipe engine client to install.
   """
   return _UnresolvedRequirement('client', name)
+
+
+class PathsClient(object):
+  """A recipe engine client which exposes all known base paths.
+
+  In particular, you can use this client to discover all known:
+    * recipe resource path
+    * loaded module resource paths
+    * loaded package repo paths
+  """
+
+  IDENT = 'paths'
+
+  def __init__(self):
+    self.paths = []
+    self.path_strings = []
+
+  def _initialize_with_recipe_api(self, root_api):
+    """This method is called once before the start of every recipe.
+
+    It is passed the recipe's `api` object. This method crawls the api object
+    and extracts every resource base path it can find."""
+    paths_found = {}
+    def add_found(path):
+      if path is not None:
+        paths_found[str(path)] = path
+
+    search_set = [root_api]
+    found_api_id_set = {id(root_api)}
+    while search_set:
+      api = search_set.pop()
+
+      add_found(api.resource())
+      add_found(api.package_repo_resource())
+
+      for name in dir(api.m):
+        sub_api = getattr(api.m, name)
+        if not isinstance(sub_api, RecipeApiPlain):
+          continue
+        if id(sub_api) not in found_api_id_set:
+          found_api_id_set.add(id(api))
+          search_set.append(sub_api)
+
+    # transpose
+    #   [(path_string, path), ...]
+    #   into
+    #   ([path_string, ...], [path, ...])
+    self.path_strings, self.paths = zip(*sorted(paths_found.items()))
+
+  def find_longest_prefix(self, target, sep):
+    """Identifies a known resource path which would contain the `target` path.
+
+    sep must be the current path separator (can vary from os.path.sep when
+    running under simulation).
+
+    Returns (str(Path), Path) if the prefix path is found, or (None, None) if no
+    such prefix exists.
+    """
+    idx = bisect.bisect_left(self.path_strings, target)
+    if idx == len(self.paths):
+      return (None, None) # off the end
+
+    sPath, path = self.path_strings[idx], self.paths[idx]
+    if target == sPath :
+      return sPath, path
+
+    if idx > 0:
+      sPath, path = self.path_strings[idx-1], self.paths[idx-1]
+      if target.startswith(sPath+sep):
+        return sPath, path
+
+    return (None, None)
 
 
 class PropertiesClient(object):

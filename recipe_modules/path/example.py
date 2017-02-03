@@ -53,8 +53,18 @@ def RunSteps(api):
   assert api.path.exists(home_path)
 
   # Convert strings to Paths
-  something = api.path['start_dir'].join('some', 'thing')
-  assert api.path.abs_to_path(str(something)) == something, something
+  paths_to_convert =  [
+    api.path['start_dir'].join('some', 'thing'),
+    api.path['start_dir'],
+    api.path.resource("module_resource.py"),
+    api.path.resource(),
+    api.resource("recipe_resource.py"),
+    api.resource(),
+  ]
+  for p in paths_to_convert:
+    after = api.path.abs_to_path(str(p))
+    api.step('converted path %s' % p, ['echo', after])
+    assert after == p, p
 
   try:
     api.path.abs_to_path('non/../absolute')

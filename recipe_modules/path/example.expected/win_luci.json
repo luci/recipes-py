@@ -42,6 +42,48 @@
     "name": "touch my home"
   },
   {
+    "cmd": [
+      "echo",
+      "[START_DIR]\\some\\thing"
+    ],
+    "name": "converted path [START_DIR]\\some\\thing"
+  },
+  {
+    "cmd": [
+      "echo",
+      "[START_DIR]"
+    ],
+    "name": "converted path [START_DIR]"
+  },
+  {
+    "cmd": [
+      "echo",
+      "RECIPE_MODULE[recipe_engine::path]\\resources\\module_resource.py"
+    ],
+    "name": "converted path RECIPE_MODULE[recipe_engine::path]\\resources\\module_resource.py"
+  },
+  {
+    "cmd": [
+      "echo",
+      "RECIPE_MODULE[recipe_engine::path]\\resources"
+    ],
+    "name": "converted path RECIPE_MODULE[recipe_engine::path]\\resources"
+  },
+  {
+    "cmd": [
+      "echo",
+      "RECIPE[recipe_engine::path:example].resources\\recipe_resource.py"
+    ],
+    "name": "converted path RECIPE[recipe_engine::path:example].resources\\recipe_resource.py"
+  },
+  {
+    "cmd": [
+      "echo",
+      "RECIPE[recipe_engine::path:example].resources"
+    ],
+    "name": "converted path RECIPE[recipe_engine::path:example].resources"
+  },
+  {
     "name": "$result",
     "recipe_result": null,
     "status_code": 0
