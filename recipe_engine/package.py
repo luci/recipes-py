@@ -382,12 +382,12 @@ class Package(object):
     return os.path.join(self.repo_root, self.relative_recipes_dir)
 
   @property
-  def recipe_dirs(self):
-    return [os.path.join(self.recipes_dir, 'recipes')]
+  def recipe_dir(self):
+    return os.path.join(self.recipes_dir, 'recipes')
 
   @property
-  def module_dirs(self):
-    return [os.path.join(self.recipes_dir, 'recipe_modules')]
+  def module_dir(self):
+    return os.path.join(self.recipes_dir, 'recipe_modules')
 
   def find_dep(self, dep_name):
     if dep_name == self.name:
@@ -403,7 +403,7 @@ class Package(object):
 
   def __repr__(self):
     return 'Package(%r, %r, %r, %r)' % (
-        self.name, self.repo_spec, self.deps, self.recipe_dirs)
+        self.name, self.repo_spec, self.deps, self.recipe_dir)
 
   def __str__(self):
     return 'Package %s, with dependencies %s' % (self.name, self.deps.keys())

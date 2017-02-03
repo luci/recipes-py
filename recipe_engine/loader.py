@@ -113,14 +113,12 @@ class RecipeUniverse(object):
   @property
   def module_dirs(self):
     for package in self._package_deps.packages:
-      for module_dir in package.module_dirs:
-        yield module_dir
+      yield package.module_dir
 
   @property
   def recipe_dirs(self):
     for package in self._package_deps.packages:
-      for recipe_dir in package.recipe_dirs:
-        yield recipe_dir
+      yield package.recipe_dir
 
   @property
   def config_file(self):
@@ -161,12 +159,12 @@ class RecipeUniverse(object):
   def loop_over_recipe_modules(self):
     """Yields pairs (package, module path)."""
     for package in self.packages:
-      for path in package.module_dirs:
-        if os.path.isdir(path):
-          for item in os.listdir(path):
-            subpath = os.path.join(path, item)
-            if _is_recipe_module_dir(subpath):
-              yield package, os.path.basename(subpath)
+      path = package.module_dir
+      if os.path.isdir(path):
+        for item in os.listdir(path):
+          subpath = os.path.join(path, item)
+          if _is_recipe_module_dir(subpath):
+            yield package, os.path.basename(subpath)
 
 
 class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
@@ -219,17 +217,14 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
       module_name, example = recipe.split(':')
       #TODO(martinis) change to example == 'example' ? Technically a bug...
       assert example.endswith('example')
-      for module_dir in self.package.module_dirs:
-        subpath = os.path.join(module_dir, module_name)
-        if not _is_recipe_module_dir(subpath):
-          continue
-
-        return os.path.join(subpath, 'example.py')
+      subpath = os.path.join(self.package.module_dir, module_name)
+      if _is_recipe_module_dir(subpath):
+        recipe_path = os.path.join(subpath, 'example.py')
     else:
-      for recipe_dir in self.package.recipe_dirs:
-        recipe_path = os.path.join(recipe_dir, recipe)
-        if os.path.exists(recipe_path + '.py'):
-          return recipe_path + '.py'
+      recipe_path = os.path.join(self.package.recipe_dir, recipe)+".py"
+
+    if os.path.exists(recipe_path):
+      return recipe_path
 
     raise NoSuchRecipe(recipe)
 
@@ -265,14 +260,12 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
     return script
 
   @property
-  def module_dirs(self):
-    for module_dir in self.package.module_dirs:
-      yield module_dir
+  def module_dir(self):
+    return self.package.module_dir
 
   @property
-  def recipe_dirs(self):
-    for recipe_dir in self.package.recipe_dirs:
-      yield recipe_dir
+  def recipe_dir(self):
+    return self.package.recipe_dir
 
   def loop_over_recipes(self):
     """Yields pairs (path to recipe, recipe name).
@@ -288,24 +281,25 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
           file_path = os.path.join(root, file_name)
           yield file_path
 
-    for path in self.package.recipe_dirs:
-      for recipe in scan_directory(
-          path, lambda f: f.endswith('.py') and f[0] != '_'):
-        yield recipe, recipe[len(path)+1:-len('.py')]
-    for path in self.package.module_dirs:
-      for recipe in scan_directory(
-          path, lambda f: f.endswith('example.py')):
-        module_name = os.path.dirname(recipe)[len(path)+1:]
-        yield recipe, '%s:example' % module_name
+    path = self.package.recipe_dir
+    for recipe in scan_directory(
+        path, lambda f: f.endswith('.py') and f[0] != '_'):
+      yield recipe, recipe[len(path)+1:-len('.py')]
+
+    path = self.package.module_dir
+    for recipe in scan_directory(
+        path, lambda f: f.endswith('example.py')):
+      module_name = os.path.dirname(recipe)[len(path)+1:]
+      yield recipe, '%s:example' % module_name
 
   def loop_over_recipe_modules(self):
     """Yields the paths to all the modules that this view can see."""
-    for path in self.package.module_dirs:
-      if os.path.isdir(path):
-        for item in os.listdir(path):
-          subpath = os.path.join(path, item)
-          if _is_recipe_module_dir(subpath):
-            yield os.path.basename(subpath)
+    path = self.package.module_dir
+    if os.path.isdir(path):
+      for item in os.listdir(path):
+        subpath = os.path.join(path, item)
+        if _is_recipe_module_dir(subpath):
+          yield os.path.basename(subpath)
 
 
 def _amend_exception(e, amendment):
@@ -590,10 +584,10 @@ def create_recipe_api(toplevel_package, toplevel_deps, recipe_script_path,
   # This is obviously a hack, however it homogenizes the api and removes the
   # need for some ugly workarounds in user code. A better way to do this would
   # be to migrate all recipes to be members of modules.
-  is_module = recipe_script_path.startswith(toplevel_package.module_dirs[0])
-  rel_to = toplevel_package.recipe_dirs[0]
+  is_module = recipe_script_path.startswith(toplevel_package.module_dir)
+  rel_to = toplevel_package.recipe_dir
   if is_module:
-    rel_to = toplevel_package.module_dirs[0]
+    rel_to = toplevel_package.module_dir
   rel_path = os.path.relpath(os.path.splitext(recipe_script_path)[0], rel_to)
   if is_module:
     mod_name, recipe = rel_path.split(os.path.sep, 1)
