@@ -87,6 +87,8 @@ class StepApi(recipe_api.RecipeApiPlain):
       infra_step (bool): whether the step failure should be marked as infra
           failure
       name (str): step name prefix
+      nest_level (int): the nesting level of all steps. Use the nest() method
+        instead of directly manipulating this value.
 
     See recipe_api.py for more info.
     """
@@ -103,16 +105,20 @@ class StepApi(recipe_api.RecipeApiPlain):
 
   @contextlib.contextmanager
   def nest(self, name):
-    """Nest is the high-level interface to annotated hierarchical steps.
+    """Nest allows you to nest steps hierarchically on the build UI.
 
     Calling
 
         with api.step.nest(<name>):
           ...
 
-    will generate a dummy step and implicitly create a new context (as
-    above); the dummy step will govern annotation emission, while the implicit
-    context will propagate the dummy step's name to subordinate steps.
+    will generate a dummy step with the provided name. All other steps run
+    within this with statement will be hidden from the UI by default under this
+    dummy step in a collapsible hierarchy. Nested blocks can also nest within
+    each other.
+
+    The nesting is implemented by adjusting the 'name' and 'nest_level' fields
+    of the context (see the context() method above).
     """
     step_result = self(name, [])
     context_dict = {'name': name, 'nest_level': 1}
