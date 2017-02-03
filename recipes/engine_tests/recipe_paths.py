@@ -11,7 +11,7 @@ DEPS = [
 ]
 
 def RunSteps(api):
-  api.step('recipe_name', ['echo', api.name])
+  api.step('recipe_name', ['echo', 'recipe name is', api.name])
   api.python('some_resource', api.resource('hello.py'))
   api.step('package_root', ['echo', api.package_repo_resource('file', 'path')])
 

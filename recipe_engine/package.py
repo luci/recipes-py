@@ -30,7 +30,7 @@ class InconsistentDependencyGraphError(Exception):
 
   def __str__(self):
     return 'Package specs for %s do not match: %s vs %s' % (
-        project_id, self.specs[0], self.specs[1])
+        self.project_id, self.specs[0], self.specs[1])
 
 
 class CyclicDependencyError(Exception):
@@ -166,7 +166,7 @@ class RepoSpec(object):
     return not (self == other)
 
   def proto_file(self, context):
-    """Returns the ProtoFile of the recipes config file in this repository. 
+    """Returns the ProtoFile of the recipes config file in this repository.
     Requires a good checkout."""
     return ProtoFile(InfraRepoConfig().to_recipes_cfg(self.repo_root(context)))
 
@@ -303,11 +303,15 @@ class GitRepoSpec(RepoSpec):
 class PathRepoSpec(RepoSpec):
   """A RepoSpec implementation that uses a local filesystem path."""
 
-  def __init__(self, path):
+  def __init__(self, project_id, path):
+    self.project_id = project_id
     self.path = path
 
   def __str__(self):
-    return 'PathRepoSpec{path="%(path)s"}' % self.__dict__
+    return (
+      'PathRepoSpec{project_id="%(project_id)s", path="%(path)s"}'
+      % self.__dict__
+    )
 
   def checkout(self, context):
     pass
@@ -316,9 +320,19 @@ class PathRepoSpec(RepoSpec):
     return self.path
 
   def proto_file(self, context):
-    """Returns the ProtoFile of the recipes config file in this repository. 
+    """Returns the ProtoFile of the recipes config file in this repository.
     Requires a good checkout."""
     return ProtoFile(InfraRepoConfig().to_recipes_cfg(self.path))
+
+  def updates(self, _context, _other_revision=None):
+    """Returns (empty) list of potential updates for this spec."""
+    return []
+
+  def dump(self):
+    """Returns the package.proto DepSpec form of this RepoSpec."""
+    return package_pb2.DepSpec(
+        project_id=self.project_id,
+        url="file://"+self.path)
 
   def __eq__(self, other):
     if not isinstance(other, type(self)):
@@ -509,6 +523,9 @@ class PackageSpec(object):
   @classmethod
   def spec_for_dep(cls, dep):
     """Returns a RepoSpec for the given dependency protobuf."""
+    url = str(dep.url)
+    if url.startswith("file://"):
+      return PathRepoSpec(str(dep.project_id), url[len("file://"):])
 
     if dep.repo_type in (package_pb2.DepSpec.GIT, package_pb2.DepSpec.GITILES):
       if dep.repo_type == package_pb2.DepSpec.GIT:
@@ -516,7 +533,7 @@ class PackageSpec(object):
       elif dep.repo_type == package_pb2.DepSpec.GITILES:
         backend = fetch.GitilesBackend()
       return GitRepoSpec(str(dep.project_id),
-                         str(dep.url),
+                         url,
                          str(dep.branch),
                          str(dep.revision),
                          str(dep.path_override),
@@ -612,7 +629,7 @@ class PackageDeps(object):
                                              deps_path=deps_path)
 
     if overrides:
-      overrides = {project_id: PathRepoSpec(path)
+      overrides = {project_id: PathRepoSpec(project_id, path)
                    for project_id, path in overrides.iteritems()}
     package_deps = cls(context, overrides=overrides)
 

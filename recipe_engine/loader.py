@@ -590,11 +590,15 @@ def create_recipe_api(toplevel_package, toplevel_deps, recipe_script_path,
   # This is obviously a hack, however it homogenizes the api and removes the
   # need for some ugly workarounds in user code. A better way to do this would
   # be to migrate all recipes to be members of modules.
-  name = os.path.join(
-    toplevel_package.name,
-    os.path.relpath(
-      os.path.splitext(recipe_script_path)[0],
-      toplevel_package.recipe_dirs[0]))
+  is_module = recipe_script_path.startswith(toplevel_package.module_dirs[0])
+  rel_to = toplevel_package.recipe_dirs[0]
+  if is_module:
+    rel_to = toplevel_package.module_dirs[0]
+  rel_path = os.path.relpath(os.path.splitext(recipe_script_path)[0], rel_to)
+  if is_module:
+    mod_name, recipe = rel_path.split(os.path.sep, 1)
+    rel_path = "%s:%s" % (mod_name, recipe)
+  name = "%s::%s" % (toplevel_package.name, rel_path)
   fakeModule = collections.namedtuple(
     "fakeModule", "PACKAGE_REPO_ROOT NAME RESOURCE_DIRECTORY")(
       Path(PackageRepoBasePath(toplevel_package)),
@@ -605,6 +609,16 @@ def create_recipe_api(toplevel_package, toplevel_deps, recipe_script_path,
                   test_data=test_data.get_module_test_data(None))
   for k, v in toplevel_deps.iteritems():
     setattr(api, k, mapper.instantiate(v))
+
+  # Always instantiate the path module at least once so that string functions on
+  # Path objects work. This extra load doesn't actually attach the loaded path
+  # module to the api return, so if recipes want to use the path module, they
+  # still need to import it. If the recipe already loaded the path module
+  # (somewhere, could be transitively), then this extra load is a no-op.
+  # TODO(iannucci): The way paths work need to be reimplemented sanely :/
+  path_spec = engine._universe_view.deps_from_spec(['recipe_engine/path'])
+  mapper.instantiate(path_spec['path'])
+
   return api
 
 

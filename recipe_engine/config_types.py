@@ -178,6 +178,8 @@ class Path(RecipeConfigType):
     return not self.base == other
 
   def join(self, *pieces, **kwargs):
+    if not pieces and not kwargs:
+      return self
     kwargs.setdefault('platform_ext', self.platform_ext)
     return Path(self.base, *filter(bool, self.pieces + pieces), **kwargs)
 
