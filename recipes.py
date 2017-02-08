@@ -135,7 +135,7 @@ def new_handle_recipe_return(result, result_filename, stream_engine):
 
     with stream_engine.make_step_stream('Failure reason') as s:
       with s.new_log_stream('reason') as l:
-        l.write_line(f.human_reason)
+        l.write_split(f.human_reason)
 
     return 1
 
