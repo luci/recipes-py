@@ -27,7 +27,7 @@ class InputDataPlaceholder(recipe_util.InputPlaceholder):
     if test.enabled:
       # cheat and pretend like we're going to pass the data on the
       # cmdline for test expectation purposes.
-      self._backing_file = self.data
+      self._backing_file = self.encode(self.data)
     else:  # pragma: no cover
       input_fd, self._backing_file = tempfile.mkstemp(suffix=self.suffix)
 
@@ -44,9 +44,7 @@ class InputDataPlaceholder(recipe_util.InputPlaceholder):
         pass
     self._backing_file = None
 
-  # Not covered because it's called in a branch in render() which isn't tested
-  # as well.
-  def encode(self, data): # pragma: no cover
+  def encode(self, data):
     """ Encodes data to be written out, when rendering this placeholder.
     """
     return data
@@ -58,15 +56,12 @@ class InputTextPlaceholder(InputDataPlaceholder):
     super(InputTextPlaceholder, self).__init__(data, suffix)
     assert isinstance(data, basestring)
 
-  # Not covered because it's called in a branch in render() which isn't tested
-  # as well.
-  def encode(self, data): # pragma: no cover
+  def encode(self, data):
     # Sometimes users give us invalid utf-8 data. They shouldn't, but it does
     # happen every once and a while. Just ignore it, and replace with �.
     # We're assuming users only want to write text data out.
     decoded = self.data.decode('utf-8', 'replace')
     return decoded.encode('utf-8')
-
 
 
 class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
@@ -96,7 +91,7 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
     assert self._backing_file
     if test.enabled:
       self._backing_file = None
-      return test.data
+      return self.decode(test.data)
     else:  # pragma: no cover
       try:
         with open(self._backing_file, 'rb') as f:
@@ -106,9 +101,7 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
           os.unlink(self._backing_file)
         self._backing_file = None
 
-  # Not covered because it's called in a branch in result() which isn't tested
-  # as well.
-  def decode(self, result): # pragma: no cover
+  def decode(self, result):
     """ Decodes data to be read in, when getting the result of this placeholder.
     """
     return result
@@ -116,10 +109,12 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
 class OutputTextPlaceholder(OutputDataPlaceholder):
   """ A output placeholder which expects to write out text.
   """
-  # Not covered because it's called in a branch in result() which isn't tested
-  # as well.
-  def decode(self, result): # pragma: no cover
-    return result.decode('utf-8', 'replace')
+  def decode(self, result):
+    # This ensures that the raw result bytes we got are, in fact, valid utf-8,
+    # replacing invalid bytes with �. Because python2's unicode support is
+    # wonky, we re-encode the now-valid-utf-8 back into a str object so that
+    # users don't need to deal with `unicode` objects.
+    return result.decode('utf-8', 'replace').encode('utf-8')
 
 class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
   def __init__(self, suffix, leak_to, name=None):
