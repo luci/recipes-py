@@ -18,6 +18,22 @@
   },
   {
     "cmd": [
+      "cat",
+      "hello"
+    ],
+    "name": "cat (2)",
+    "stdout": "/path/to/tmp/out"
+  },
+  {
+    "cmd": [
+      "cat"
+    ],
+    "name": "cat (3)",
+    "stdin": "\ufffdhello",
+    "stdout": "/path/to/tmp/"
+  },
+  {
+    "cmd": [
       "echo",
       "huh"
     ],

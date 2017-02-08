@@ -12,6 +12,11 @@ class RawIOTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
 
   @recipe_test_api.placeholder_step_data
   @staticmethod
+  def output_text(data, retcode=None, name=None):
+    return data, retcode, name
+
+  @recipe_test_api.placeholder_step_data
+  @staticmethod
   def output_dir(files_dict, retcode=None, name=None):
     assert type(files_dict) is dict
     assert all(type(key) is str for key in files_dict.keys())

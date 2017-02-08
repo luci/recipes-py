@@ -46,9 +46,9 @@ class ShutilApi(recipe_api.RecipeApi):
     """Read a file and return its contents."""
     step_test_data = None
     if test_data is not None:
-      step_test_data = lambda: self.m.raw_io.test_api.output(test_data)
-    return self.copy(name, path, self.m.raw_io.output(),
-                     step_test_data=step_test_data, **kwargs).raw_io.output
+      step_test_data = lambda: self.m.raw_io.test_api.output_text(test_data)
+    return self.copy(name, path, self.m.raw_io.output_text(),
+                     step_test_data=step_test_data, **kwargs).raw_io.output_text
 
   def write(self, name, path, data, **kwargs):
     """Write the given data to a file."""
@@ -59,7 +59,7 @@ class ShutilApi(recipe_api.RecipeApi):
         import sys
         shutil.copy(sys.argv[1], sys.argv[2])
         """,
-        args=[self.m.raw_io.input(data), path],
+        args=[self.m.raw_io.input_text(data), path],
         add_python_log=False,
         **kwargs
     )
@@ -72,7 +72,8 @@ class ShutilApi(recipe_api.RecipeApi):
     step_test_data = None
     if test_data is not None:
       step_test_data = (
-          lambda: self.m.raw_io.test_api.output('\n'.join(map(str, test_data))))
+          lambda: self.m.raw_io.test_api.output_text(
+              '\n'.join(map(str, test_data))))
     step_result = self.m.python.inline(
         name,
         r"""
@@ -81,12 +82,12 @@ class ShutilApi(recipe_api.RecipeApi):
         with open(sys.argv[1], 'w') as f:
           f.write('\n'.join(glob.glob(sys.argv[2])))
         """,
-        args=[self.m.raw_io.output(), pattern],
+        args=[self.m.raw_io.output_text(), pattern],
         step_test_data=step_test_data,
         add_python_log=False,
         **kwargs
     )
-    return step_result.raw_io.output.splitlines()
+    return step_result.raw_io.output_text.splitlines()
 
   def remove(self, name, path, **kwargs):
     """Remove the given file."""

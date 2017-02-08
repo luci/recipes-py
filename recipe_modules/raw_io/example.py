@@ -21,9 +21,20 @@ def RunSteps(api):
 
   # Pass stuff to command's stdin, read it from stdout.
   step_result = api.step('cat', ['cat'],
-      stdin=api.raw_io.input(data='hello'),
+      stdin=api.raw_io.input_text(data='hello'),
       stdout=api.raw_io.output('out'))
   assert step_result.stdout == 'hello'
+
+  step_result = api.step('cat', ['cat', api.raw_io.input_text(data='hello')],
+      stdout=api.raw_io.output('out'))
+  assert step_result.stdout == 'hello'
+
+  # \xe2 is not encodable by utf-8 (and has shown up in actual recipe data)
+  # so test that input correctly doesn't try to encode it as utf-8.
+  step_result = api.step('cat', ['cat'],
+      stdin=api.raw_io.input(data='\xe2hello'),
+      stdout=api.raw_io.output())
+  assert step_result.stdout == '\xe2hello'
 
   # Example of auto-mocking stdout. '\n' appended to mock 'echo' behavior.
   step_result = api.step('automock', ['echo', 'huh'],
@@ -66,11 +77,12 @@ def RunSteps(api):
       with open(sys.argv[1], 'w') as f:
         f.write(%r)
       """ % api.properties.get('some_prop', 'good_value'),
-      args=[api.raw_io.output(name='test')],
+      args=[api.raw_io.output_text(name='test')],
       step_test_data=(
-          lambda: api.raw_io.test_api.output('second_bad_value', name='test')))
-  assert step_result.raw_io.outputs['test'] == 'good_value'
-  assert step_result.raw_io.output == 'good_value'
+          lambda: api.raw_io.test_api.output_text(
+              'second_bad_value', name='test')))
+  assert step_result.raw_io.output_texts['test'] == 'good_value'
+  assert step_result.raw_io.output_text == 'good_value'
 
 
 def GenTests(api):
@@ -89,6 +101,10 @@ def GenTests(api):
           stderr=api.raw_io.output('')) +
       api.step_data('cat',
           stdout=api.raw_io.output('hello')) +
+      api.step_data('cat (2)',
+          stdout=api.raw_io.output('hello')) +
+      api.step_data('cat (3)',
+          stdout=api.raw_io.output('\xe2hello')) +
       api.step_data('override_default_mock',
-          api.raw_io.output('good_value', name='test'))
+          api.raw_io.output_text('good_value', name='test'))
   )

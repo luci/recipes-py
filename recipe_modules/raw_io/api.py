@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 # Copyright 2014 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -12,7 +13,6 @@ import tempfile
 
 class InputDataPlaceholder(recipe_util.InputPlaceholder):
   def __init__(self, data, suffix):
-    assert isinstance(data, basestring)
     self.data = data
     self.suffix = suffix
     self._backing_file = None
@@ -30,7 +30,8 @@ class InputDataPlaceholder(recipe_util.InputPlaceholder):
       self._backing_file = self.data
     else:  # pragma: no cover
       input_fd, self._backing_file = tempfile.mkstemp(suffix=self.suffix)
-      os.write(input_fd, self.data.encode('utf-8'))
+
+      os.write(input_fd, self.encode(self.data))
       os.close(input_fd)
     return [self._backing_file]
 
@@ -42,6 +43,30 @@ class InputDataPlaceholder(recipe_util.InputPlaceholder):
       except OSError:
         pass
     self._backing_file = None
+
+  # Not covered because it's called in a branch in render() which isn't tested
+  # as well.
+  def encode(self, data): # pragma: no cover
+    """ Encodes data to be written out, when rendering this placeholder.
+    """
+    return data
+
+class InputTextPlaceholder(InputDataPlaceholder):
+  """ A input placeholder which expects to write out text.
+  """
+  def __init__(self, data, suffix):
+    super(InputTextPlaceholder, self).__init__(data, suffix)
+    assert isinstance(data, basestring)
+
+  # Not covered because it's called in a branch in render() which isn't tested
+  # as well.
+  def encode(self, data): # pragma: no cover
+    # Sometimes users give us invalid utf-8 data. They shouldn't, but it does
+    # happen every once and a while. Just ignore it, and replace with �.
+    # We're assuming users only want to write text data out.
+    decoded = self.data.decode('utf-8', 'replace')
+    return decoded.encode('utf-8')
+
 
 
 class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
@@ -75,12 +100,26 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
     else:  # pragma: no cover
       try:
         with open(self._backing_file, 'rb') as f:
-          return f.read()
+          return self.decode(f.read())
       finally:
         if not self.leak_to:
           os.unlink(self._backing_file)
         self._backing_file = None
 
+  # Not covered because it's called in a branch in result() which isn't tested
+  # as well.
+  def decode(self, result): # pragma: no cover
+    """ Decodes data to be read in, when getting the result of this placeholder.
+    """
+    return result
+
+class OutputTextPlaceholder(OutputDataPlaceholder):
+  """ A output placeholder which expects to write out text.
+  """
+  # Not covered because it's called in a branch in result() which isn't tested
+  # as well.
+  def decode(self, result): # pragma: no cover
+    return result.decode('utf-8', 'replace')
 
 class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
   def __init__(self, suffix, leak_to, name=None):
@@ -134,7 +173,28 @@ class RawIOApi(recipe_api.RecipeApi):
   @recipe_util.returns_placeholder
   @staticmethod
   def input(data, suffix=''):
+    """Returns a Placeholder for use as a step argument.
+
+    This placeholder can be used to pass data to steps. The recipe engine will
+    dump the 'data' into a file, and pass the filename to the command line
+    argument.
+
+    If 'suffix' is not '', it will be used when the engine calls
+    tempfile.mkstemp.
+
+    See example.py for usage example.
+    """
     return InputDataPlaceholder(data, suffix)
+
+  @recipe_util.returns_placeholder
+  @staticmethod
+  def input_text(data, suffix=''):
+    """Returns a Placeholder for use as a step argument.
+
+    Similar to input(), but tries to encode 'data' as utf-8 text, replacing
+    any encoding and decoding errors with �.
+    """
+    return InputTextPlaceholder(data, suffix)
 
   @recipe_util.returns_placeholder
   @staticmethod
@@ -149,6 +209,18 @@ class RawIOApi(recipe_api.RecipeApi):
     NOT deleted (i.e. it's 'leaking'). 'suffix' is ignored in that case.
     """
     return OutputDataPlaceholder(suffix, leak_to, name=name)
+
+  @recipe_util.returns_placeholder
+  @staticmethod
+  def output_text(suffix='', leak_to=None, name=None):
+    """Returns a Placeholder for use as a step argument, or for std{out,err}.
+
+    Similar to output(), but uses an OutputTextPlaceholder, which expects utf-8
+    encoded text.
+    Similar to input(), but tries to decode the resulting data as utf-8 text,
+    replacing any decoding errors with �.
+    """
+    return OutputTextPlaceholder(suffix, leak_to, name=name)
 
   @recipe_util.returns_placeholder
   @staticmethod
