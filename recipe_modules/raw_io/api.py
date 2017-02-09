@@ -114,7 +114,8 @@ class OutputTextPlaceholder(OutputDataPlaceholder):
     # replacing invalid bytes with �. Because python2's unicode support is
     # wonky, we re-encode the now-valid-utf-8 back into a str object so that
     # users don't need to deal with `unicode` objects.
-    return result.decode('utf-8', 'replace').encode('utf-8')
+    return (None if result is None
+            else result.decode('utf-8', 'replace').encode('utf-8'))
 
 class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
   def __init__(self, suffix, leak_to, name=None):
