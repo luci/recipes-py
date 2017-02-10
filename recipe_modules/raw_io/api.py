@@ -13,6 +13,10 @@ import tempfile
 
 class InputDataPlaceholder(recipe_util.InputPlaceholder):
   def __init__(self, data, suffix):
+    if not isinstance(data, str): # pragma: no cover
+      raise TypeError(
+        "Data passed to InputDataPlaceholder was %r, expected 'str'"
+        % (type(data).__name__))
     self.data = data
     self.suffix = suffix
     self._backing_file = None
@@ -60,8 +64,7 @@ class InputTextPlaceholder(InputDataPlaceholder):
     # Sometimes users give us invalid utf-8 data. They shouldn't, but it does
     # happen every once and a while. Just ignore it, and replace with �.
     # We're assuming users only want to write text data out.
-    decoded = self.data.decode('utf-8', 'replace')
-    return decoded.encode('utf-8')
+    return data.decode('utf-8', 'replace').encode('utf-8')
 
 
 class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
@@ -175,6 +178,8 @@ class RawIOApi(recipe_api.RecipeApi):
     dump the 'data' into a file, and pass the filename to the command line
     argument.
 
+    data MUST be of type 'str' (not basestring, not unicode).
+
     If 'suffix' is not '', it will be used when the engine calls
     tempfile.mkstemp.
 
@@ -187,8 +192,11 @@ class RawIOApi(recipe_api.RecipeApi):
   def input_text(data, suffix=''):
     """Returns a Placeholder for use as a step argument.
 
-    Similar to input(), but tries to encode 'data' as utf-8 text, replacing
-    any encoding and decoding errors with �.
+    data MUST be of type 'str' (not basestring, not unicode). The str is
+    expected to have valid utf-8 data in it.
+
+    Similar to input(), but ensures that 'data' is valid utf-8 text. Any
+    non-utf-8 characters will be replaced with �.
     """
     return InputTextPlaceholder(data, suffix)
 
