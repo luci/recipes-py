@@ -28,7 +28,7 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
   step_history OrderedDict passed to your recipe generator.
   """
   def __init__(self, api, add_json_log, name=None):
-    self.raw = api.m.raw_io.output('.json')
+    self.raw = api.m.raw_io.output_text('.json')
     self.add_json_log = add_json_log
     super(JsonOutputPlaceholder, self).__init__(name=name)
 
@@ -76,10 +76,7 @@ class JsonApi(recipe_api.RecipeApi):
   def loads(self, data, **kwargs):
     def strip_unicode(obj):
       if isinstance(obj, unicode):
-        try:
-          return obj.encode('ascii')
-        except UnicodeEncodeError:
-          return obj
+        return obj.encode('utf-8', 'replace')
 
       if isinstance(obj, list):
         return map(strip_unicode, obj)
@@ -104,7 +101,7 @@ class JsonApi(recipe_api.RecipeApi):
   @recipe_util.returns_placeholder
   def input(self, data):
     """A placeholder which will expand to a file path containing <data>."""
-    return self.m.raw_io.input(self.dumps(data), '.json')
+    return self.m.raw_io.input_text(self.dumps(data), '.json')
 
   @recipe_util.returns_placeholder
   def output(self, add_json_log=True, name=None):

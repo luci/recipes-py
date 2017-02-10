@@ -10,7 +10,7 @@ DEPS = [
   'step',
 ]
 
-FULLWIDTH_Z = u'\ufeff\uff5a'
+FULLWIDTH_Z = '\xef\xbb\xbf\xef\xbd\x9a'
 
 def RunSteps(api):
   step_result = api.step('echo1', ['echo', '[1, 2, 3]'],
