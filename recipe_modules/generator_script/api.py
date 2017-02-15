@@ -58,16 +58,17 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
     step_name = 'gen step(%s)' % self.m.path.basename(path_to_script)
 
     step_test_data = kwargs.pop('step_test_data', None)
-    if str(path_to_script).endswith('.py'):
-      step_result = self.m.python(
-        step_name,
-        path_to_script, list(args) + [f, self.m.json.output()],
-        cwd=self.m.path['checkout'], step_test_data=step_test_data)
-    else:
-      step_result = self.m.step(
-        step_name,
-        [path_to_script,] + list(args) + [f, self.m.json.output()],
-        cwd=self.m.path['checkout'], step_test_data=step_test_data)
+    with self.m.step.context({'cwd': self.m.path['checkout']}):
+      if str(path_to_script).endswith('.py'):
+        step_result = self.m.python(
+          step_name,
+          path_to_script, list(args) + [f, self.m.json.output()],
+          step_test_data=step_test_data)
+      else:
+        step_result = self.m.step(
+          step_name,
+          [path_to_script,] + list(args) + [f, self.m.json.output()],
+          step_test_data=step_test_data)
     new_steps = step_result.json.output
     assert isinstance(new_steps, list), new_steps
     env = kwargs.get('env')

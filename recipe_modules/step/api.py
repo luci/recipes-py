@@ -131,7 +131,7 @@ class StepApi(recipe_api.RecipeApiPlain):
     return recipe_api.defer_results
 
   def __call__(self, name, cmd, ok_ret=None, infra_step=False, wrapper=(),
-               timeout=None, cwd=None, env=None, allow_subannotations=None,
+               timeout=None, env=None, allow_subannotations=None,
                trigger_specs=None, stdout=None, stderr=None, stdin=None,
                step_test_data=None):
     """Returns a step dictionary which is compatible with annotator.py.
@@ -171,8 +171,6 @@ class StepApi(recipe_api.RecipeApiPlain):
       Opaque step object produced and understood by recipe engine.
     """
     kwargs = {}
-    if cwd:
-      kwargs['cwd'] = cwd
     if env:
       kwargs['env'] = env
     if allow_subannotations is not None:
