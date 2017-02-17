@@ -383,7 +383,7 @@ def placeholder_step_data(func):
           'placeholder_step_data is only expecting a single output placeholder '
           'datum. Got: %r' % data
         )
-      placeholder_data, retcode = all_data[0], data.retcode
+      placeholder_data, retcode = all_data[0], data._retcode
     else:
       placeholder_data, retcode, name = data
       placeholder_data = PlaceholderTestData(data=placeholder_data, name=name)
