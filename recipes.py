@@ -71,6 +71,16 @@ def lint(package_deps, args):
   lint_test.main(universe_view, args.whitelist or [])
 
 
+def bundle(package_deps, args):
+  from recipe_engine import bundle
+  from recipe_engine import loader
+
+  _, config_file = get_package_config(args)
+  universe = loader.RecipeUniverse(package_deps, config_file)
+
+  bundle.main(package_deps.root_package, universe, args.destination)
+
+
 def handle_recipe_return(recipe_result, result_filename, stream_engine,
                          engine_flags):
   if engine_flags and engine_flags.use_result_proto:
@@ -438,6 +448,17 @@ def main():
       help='A regexp matching module names to add to the default whitelist. '
            'Use multiple times to add multiple patterns,')
 
+  bundle_p = subp.add_parser(
+      'bundle',
+      description=(
+        'Create a hermetically runnable recipe bundle. This captures the result'
+        ' of all network operations the recipe_engine might normally do to'
+        ' bootstrap itself.'))
+  bundle_p.set_defaults(command='bundle')
+  bundle_p.add_argument(
+    '--destination', default='./bundle',
+    help='The directory of where to put the bundle (default: %(default)r).')
+
   run_p = subp.add_parser(
       'run',
       description='Run a recipe locally')
@@ -663,6 +684,8 @@ def _real_main(args, op_args):
     return 0
   if args.command == 'simulation_test':
     return simulation_test(package_deps, args, op_args)
+  elif args.command == 'bundle':
+    return bundle(package_deps, args)
   elif args.command == 'lint':
     return lint(package_deps, args)
   elif args.command == 'run':
