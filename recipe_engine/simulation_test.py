@@ -19,7 +19,11 @@ import inspect
 
 from collections import OrderedDict, namedtuple
 
+from . import config_types
 from . import env
+from . import loader
+from . import run
+from . import step_runner
 from . import stream
 from expect_tests.util import covers as expect_tests_covers
 from expect_tests.main import main as expect_tests_main
@@ -30,7 +34,7 @@ from google.protobuf import json_format as jsonpb
 # These variables must be set in the dynamic scope of the functions in this
 # file.  We do this instead of passing because the threading system of expect
 # tests doesn't know how to serialize it.
-_UNIVERSE = None
+_UNIVERSE_VIEW = None
 _ENGINE_FLAGS = None
 
 
@@ -93,15 +97,10 @@ copy._deepcopy_dispatch[re._pattern_type] = copy._deepcopy_atomic
 
 def RunRecipe(recipe_name, test_name):
   """Actually runs the recipe given the GenTests-supplied test_data."""
-  from . import config_types
-  from . import loader
-  from . import run
-  from . import step_runner
-
   cache_key = (recipe_name, test_name)
   if cache_key not in _GEN_TEST_CACHE:
-    recipe_script = _UNIVERSE.load_recipe(recipe_name)
-    test_api = loader.create_test_api(recipe_script.LOADED_DEPS, _UNIVERSE)
+    recipe_script = _UNIVERSE_VIEW.load_recipe(recipe_name)
+    test_api = loader.create_test_api(recipe_script.LOADED_DEPS, _UNIVERSE_VIEW)
     for test_data in recipe_script.gen_tests(test_api):
       _GEN_TEST_CACHE[(recipe_name, test_data.name)] = copy.deepcopy(test_data)
 
@@ -111,21 +110,22 @@ def RunRecipe(recipe_name, test_name):
 
   annotator = SimulationAnnotatorStreamEngine()
   with stream.StreamEngineInvariants.wrap(annotator) as stream_engine:
-    step_runner = step_runner.SimulationStepRunner(stream_engine, test_data,
-                                                   annotator)
+    runner = step_runner.SimulationStepRunner(
+        stream_engine, test_data, annotator)
 
     props = test_data.properties.copy()
     props['recipe'] = recipe_name
     engine = run.RecipeEngine(
-        step_runner, props, _UNIVERSE, engine_flags=_ENGINE_FLAGS)
-    recipe_script = _UNIVERSE.load_recipe(recipe_name, engine=engine)
+        runner, props, _UNIVERSE_VIEW, engine_flags=_ENGINE_FLAGS)
+    recipe_script = _UNIVERSE_VIEW.load_recipe(recipe_name, engine=engine)
 
     api = loader.create_recipe_api(
-      _UNIVERSE.universe.package_deps.root_package, recipe_script.LOADED_DEPS,
+      _UNIVERSE_VIEW.universe.package_deps.root_package,
+      recipe_script.LOADED_DEPS,
       recipe_script.path, engine, test_data)
     result = engine.run(recipe_script, api, test_data.properties)
 
-    raw_expectations = step_runner.steps_ran.copy()
+    raw_expectations = runner.steps_ran.copy()
     # Don't include tracebacks in expectations because they are too sensitive to
     # change.
     if _ENGINE_FLAGS.use_result_proto:
@@ -149,45 +149,54 @@ def RunRecipe(recipe_name, test_name):
       raise
 
 
-def test_gen_coverage():
-  cover = []
-
-  cover.append(os.path.join(_UNIVERSE.recipe_dir, '*'))
-  cover.append(os.path.join(_UNIVERSE.module_dir, '*', 'example.py'))
-  cover.append(os.path.join(_UNIVERSE.module_dir, '*', 'test_api.py'))
-
-  return cover
-
-
 def cover_omit():
   omit = [ ]
 
-  mod_dir_base = _UNIVERSE.module_dir
+  mod_dir_base = _UNIVERSE_VIEW.module_dir
   if os.path.isdir(mod_dir_base):
       omit.append(os.path.join(mod_dir_base, '*', 'resources', '*'))
+
+  # Exclude recipe engine files from simulation test coverage. Simulation tests
+  # should cover "user space" recipe code (recipes and modules), not the engine.
+  # The engine is covered by unit tests, not simulation tests.
+  omit.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '*'))
 
   return omit
 
 
-class InsufficientTestCoverage(Exception):
-  pass
-
-
-@expect_tests_covers(test_gen_coverage)
 def GenerateTests():
-  from . import loader
+  all_modules = set(_UNIVERSE_VIEW.loop_over_recipe_modules())
+  covered_modules = set()
 
-  cover_mods = [ ]
-  mod_dir_base = _UNIVERSE.module_dir
-  if os.path.isdir(mod_dir_base):
-    cover_mods.append(os.path.join(mod_dir_base, '*.py'))
+  base_covers = []
 
-  for recipe_path, recipe_name in _UNIVERSE.loop_over_recipes():
+  # Make sure disabling strict coverage also disables our additional check
+  # for module coverage. Note that coverage will still raise an error if
+  # the module is executed by any of the tests, but having less than 100%
+  # coverage.
+  for module in all_modules:
+    mod = _UNIVERSE_VIEW.load_recipe_module(module)
+    # Recipe modules can only be covered by tests inside the same module.
+    # To make transition possible for existing code (which will require
+    # writing tests), a temporary escape hatch is added.
+    # TODO(phajdan.jr): remove DISABLE_STRICT_COVERAGE (crbug/693058).
+    if (getattr(mod, 'DISABLE_STRICT_COVERAGE', False)):
+      covered_modules.add(module)
+      base_covers.append(os.path.join(
+          _UNIVERSE_VIEW.module_dir, module, '*.py'))
+
+  for recipe_path, recipe_name in _UNIVERSE_VIEW.loop_over_recipes():
     try:
-      recipe = _UNIVERSE.load_recipe(recipe_name)
-      test_api = loader.create_test_api(recipe.LOADED_DEPS, _UNIVERSE)
+      recipe = _UNIVERSE_VIEW.load_recipe(recipe_name)
+      test_api = loader.create_test_api(recipe.LOADED_DEPS, _UNIVERSE_VIEW)
 
-      covers = cover_mods + [recipe_path]
+      covers = [recipe_path] + base_covers
+
+      # Example/test recipes in a module always cover that module.
+      if ':' in recipe_name:
+        module, _ = recipe_name.split(':', 1)
+        covered_modules.add(module)
+        covers.append(os.path.join(_UNIVERSE_VIEW.module_dir, module, '*.py'))
 
       for test_data in recipe.gen_tests(test_api):
         root, name = os.path.split(recipe_path)
@@ -207,12 +216,17 @@ def GenerateTests():
         recipe_name, info[0].__name__, str(info[1])))
       raise new_exec.__class__, new_exec, info[2]
 
+  uncovered_modules = all_modules.difference(covered_modules)
+  if uncovered_modules:
+    raise Exception('The following modules lack test coverage: %s' % (
+        ','.join(sorted(uncovered_modules))))
 
-def main(universe, args=None, engine_flags=None):
+
+def main(universe_view, args=None, engine_flags=None):
   """Runs simulation tests on a given repo of recipes.
 
   Args:
-    universe: a RecipeUniverse object to operate on
+    universe_view: an UniverseView object to operate on
     args: command line arguments to expect_tests
   Returns:
     Doesn't -- exits with a status code
@@ -226,8 +240,8 @@ def main(universe, args=None, engine_flags=None):
       logging.warn("Ignoring %s environment variable." % env_var)
       os.environ.pop(env_var)
 
-  global _UNIVERSE
-  _UNIVERSE = universe
+  global _UNIVERSE_VIEW
+  _UNIVERSE_VIEW = universe_view
   global _ENGINE_FLAGS
   _ENGINE_FLAGS = engine_flags
 

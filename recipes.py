@@ -50,10 +50,14 @@ def simulation_test(package_deps, args, op_args):
     raise
 
   from recipe_engine import loader
+  from recipe_engine import package
 
   _, config_file = get_package_config(args)
   universe = loader.RecipeUniverse(package_deps, config_file)
   universe_view = loader.UniverseView(universe, package_deps.root_package)
+
+  # Prevent flakiness caused by stale pyc files.
+  package.cleanup_pyc(package_deps.root_package.recipes_dir)
 
   simulation_test.main(
       universe_view, args=json.loads(args.args),

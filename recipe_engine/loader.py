@@ -259,6 +259,11 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
                              if isinstance(v, _UnresolvedRequirement)})
     return script
 
+  def load_recipe_module(self, name):
+    """Given name of a module, loads and returns it (the python module object).
+    """
+    return self.universe.load(self.package, name)
+
   @property
   def module_dir(self):
     return self.package.module_dir

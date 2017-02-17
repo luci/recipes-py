@@ -244,7 +244,8 @@ class RepoTest(unittest.TestCase):
           ['git', 'add', os.path.join(recipes_dir, '%s.expected' % name)])
       return self.commit_in_repo(repo, message='recipe update')
 
-  def update_recipe_module(self, repo, name, methods):
+  def update_recipe_module(self, repo, name, methods, generate_example=True,
+                           disable_strict_coverage=False):
     """Updates or creates a recipe module in given repo.
     Commits the change.
 
@@ -255,6 +256,11 @@ class RepoTest(unittest.TestCase):
           provided by the module; first element of the tuple
           is method name (also used for the step name); second element
           is argv of the command that method should call as a step
+      generate_example(bool or iterable(str)):
+          if bool: whether to generate example.py covering the module
+          if iterable(str): which methods to cover in generated example.py
+      disable_strict_coverage(bool): whether to disable strict coverage
+          (http://crbug.com/693058)
     """
     with in_directory(repo['root']):
       module_dir = os.path.join('recipe_modules', name)
@@ -262,6 +268,8 @@ class RepoTest(unittest.TestCase):
         os.makedirs(module_dir)
       with open(os.path.join(module_dir, '__init__.py'), 'w') as f:
         f.write('DEPS = []')
+        if disable_strict_coverage:
+          f.write('\nDISABLE_STRICT_COVERAGE = True')
       with open(os.path.join(module_dir, 'api.py'), 'w') as f:
         f.write('\n'.join([
           'from recipe_engine import recipe_api',
@@ -281,15 +289,24 @@ class RepoTest(unittest.TestCase):
             '',
           ]) for m_name, m_cmd in methods.iteritems()
         ]))
+      if generate_example:
+        with open(os.path.join(module_dir, 'example.py'), 'w') as f:
+          f.write('\n'.join([
+            'DEPS = [%r]' % name,
+            '',
+            'def RunSteps(api):',
+          ] + ['  api.%s.%s()' % (name, m_name)
+               for m_name in methods.keys()
+               if generate_example is True or m_name in generate_example
+          ] + [
+            '',
+            'def GenTests(api):',
+            '  yield api.test("basic")',
+          ]))
+      elif os.path.exists(os.path.join(module_dir, 'example.py')):
+        os.unlink(os.path.join(module_dir, 'example.py'))
 
-      subprocess.check_output([
-          sys.executable, self._recipe_tool,
-          '--package', os.path.join(
-              repo['root'], 'infra', 'config', 'recipes.cfg'),
-          '--use-bootstrap',
-          'simulation_test',
-          'train',
-      ])
+      self.train_recipes(repo)
 
       subprocess.check_call(['git', 'add', module_dir])
       message = ' '.join(
