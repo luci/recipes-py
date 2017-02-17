@@ -203,7 +203,7 @@ RecipeResult = collections.namedtuple('RecipeResult', 'result')
 # will be used to seed recipe clients and expanded to include managed runtime
 # entities.
 def run_steps(properties, stream_engine, step_runner, universe_view,
-              engine_flags=None):
+              engine_flags=None, emit_initial_properties=False):
   """Runs a recipe (given by the 'recipe' property).
 
   Args:
@@ -213,10 +213,16 @@ def run_steps(properties, stream_engine, step_runner, universe_view,
     step_runner: The StepRunner to use to 'actually run' the steps.
     universe_view: The RecipeUniverse to use to load the recipes & modules.
     engine_flags: Any flags which modify engine behavior. See arguments.proto.
+    emit_initial_properties (bool): If True, write the initial recipe engine
+        properties in the "setup_build" step.
 
   Returns: result_pb2.Result
   """
   with stream_engine.make_step_stream('setup_build') as s:
+    if emit_initial_properties:
+      for key in sorted(properties.iterkeys()):
+        s.set_build_property(key, json.dumps(properties[key], sort_keys=True))
+
     engine = RecipeEngine(step_runner, properties, universe_view, engine_flags)
 
     # Create all API modules and top level RunSteps function.  It doesn't launch

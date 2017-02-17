@@ -245,21 +245,17 @@ def run(package_deps, args, op_args):
     stream_engines.append(build_annotation_stream_engine())
   multi_stream_engine = stream.MultiStreamEngine.create(*stream_engines)
 
+  emit_initial_properties = op_args.annotation_flags.emit_initial_properties
   engine_flags = op_args.engine_flags
 
   # Have a top-level set of invariants to enforce StreamEngine expectations.
   with stream.StreamEngineInvariants.wrap(multi_stream_engine) as stream_engine:
-    # Emit initial properties if configured to do so.
-    if op_args.annotation_flags.emit_initial_properties:
-      with stream_engine.new_step_stream('Initial Properties') as s:
-        for key in sorted(properties.iterkeys()):
-          s.set_build_property(key, json.dumps(properties[key], sort_keys=True))
-
     try:
       ret = recipe_run.run_steps(
           properties, stream_engine,
           step_runner.SubprocessStepRunner(stream_engine, engine_flags),
-          universe_view, engine_flags)
+          universe_view, engine_flags=engine_flags,
+          emit_initial_properties=emit_initial_properties)
     finally:
       os.chdir(old_cwd)
 
