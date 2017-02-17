@@ -16,7 +16,7 @@ from collections import OrderedDict, namedtuple, deque, defaultdict
 
 from . import env
 import astunparse
-import expect_tests
+from expect_tests.type_definitions import CheckFrame, Check
 
 
 class _resolved(ast.AST):
@@ -259,7 +259,7 @@ class Checker(object):
           if n.representation not in varmap:
             varmap[n.representation] = render_user_value(val)
 
-    return expect_tests.CheckFrame(
+    return CheckFrame(
       filename,
       lineno,
       func_name,
@@ -303,7 +303,7 @@ class Checker(object):
       # order it so that innermost frame is at the bottom
       keep_frames = keep_frames[::-1]
 
-      self.failed_checks.append(expect_tests.Check(
+      self.failed_checks.append(Check(
         hint,
         self._ctx_filename,
         self._ctx_lineno,

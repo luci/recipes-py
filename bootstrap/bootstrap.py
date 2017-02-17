@@ -209,8 +209,9 @@ def main(args):
                       default='ENV')
   opts = parser.parse_args(args)
 
-  deps = merge_deps(opts.deps_file)
-  activate_env(opts.env_path, deps, opts.quiet, cache_root=opts.cache_root)
+  deps = merge_deps(map(os.path.abspath, opts.deps_file))
+  activate_env(os.path.abspath(opts.env_path), deps, opts.quiet,
+               cache_root=os.path.abspath(opts.cache_root))
 
 
 if __name__ == '__main__':

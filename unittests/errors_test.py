@@ -69,6 +69,9 @@ class ErrorsTest(unittest.TestCase):
       _, path = tempfile.mkstemp('result_pb')
       cmd = [cmd[0]] + ['--output-result-json', path] + cmd[1:]
 
+    if '--use-bootstrap' not in engine_args:
+      engine_args.insert(0, '--use-bootstrap')
+
     try:
       subp = subprocess.Popen(
           repo.recipes_cmd + engine_args + cmd,

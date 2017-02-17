@@ -16,7 +16,7 @@ import test_env
 
 import mock
 
-from expect_tests import CheckFrame
+from expect_tests.type_definitions import CheckFrame
 from recipe_engine import checker
 
 

@@ -25,6 +25,7 @@ class TestAutoroll(repo_test_util.RepoTest):
           sys.executable, self._recipe_tool,
           '--package', os.path.join(
               repo['root'], 'infra', 'config', 'recipes.cfg'),
+          '--use-bootstrap',
           'autoroll',
           '--output-json', tempfile_path
       ] + list(args), stderr=subprocess.STDOUT)

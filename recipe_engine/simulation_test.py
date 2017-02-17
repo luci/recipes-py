@@ -21,7 +21,9 @@ from collections import OrderedDict, namedtuple
 
 from . import env
 from . import stream
-import expect_tests
+from expect_tests.util import covers as expect_tests_covers
+from expect_tests.main import main as expect_tests_main
+from expect_tests.type_definitions import Result, Test, FuncCall
 from .checker import Checker, VerifySubset
 from google.protobuf import json_format as jsonpb
 
@@ -64,7 +66,7 @@ def _renderExpectation(test_data, step_odict):
 
   # empty means drop expectation
   result_data = step_odict.values() if step_odict else None
-  return expect_tests.Result(result_data, failed_checks)
+  return Result(result_data, failed_checks)
 
 
 class SimulationAnnotatorStreamEngine(stream.AnnotatorStreamEngine):
@@ -171,7 +173,7 @@ class InsufficientTestCoverage(Exception):
   pass
 
 
-@expect_tests.covers(test_gen_coverage)
+@expect_tests_covers(test_gen_coverage)
 def GenerateTests():
   from . import loader
 
@@ -191,9 +193,9 @@ def GenerateTests():
         root, name = os.path.split(recipe_path)
         name = os.path.splitext(name)[0]
         expect_path = os.path.join(root, '%s.expected' % name)
-        yield expect_tests.Test(
+        yield Test(
             '%s.%s' % (recipe_name, test_data.name),
-            expect_tests.FuncCall(RunRecipe, recipe_name, test_data.name),
+            FuncCall(RunRecipe, recipe_name, test_data.name),
             expect_dir=expect_path,
             expect_base=test_data.name,
             covers=covers,
@@ -229,5 +231,5 @@ def main(universe, args=None, engine_flags=None):
   global _ENGINE_FLAGS
   _ENGINE_FLAGS = engine_flags
 
-  expect_tests.main('recipe_simulation_test', GenerateTests,
+  expect_tests_main('recipe_simulation_test', GenerateTests,
                     cover_omit=cover_omit(), args=args)

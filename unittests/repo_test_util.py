@@ -202,6 +202,7 @@ class RepoTest(unittest.TestCase):
       for repo, path in overrides:
         args.extend(['-O', '%s=%s' % (repo, path)])
       args.extend([
+          '--use-bootstrap',
           'simulation_test',
           'train',
       ])
@@ -285,6 +286,7 @@ class RepoTest(unittest.TestCase):
           sys.executable, self._recipe_tool,
           '--package', os.path.join(
               repo['root'], 'infra', 'config', 'recipes.cfg'),
+          '--use-bootstrap',
           'simulation_test',
           'train',
       ])

@@ -128,23 +128,24 @@ def _parse_args(args, test_gen):
   return opts
 
 
-def main(name, test_gen, cover_branches=False, cover_omit=None, 
+def main(name, test_gen, cover_branches=False, cover_omit=None,
          cover_threshold=100.0, args=None):
   """Entry point for tests using expect_tests.
 
   Example:
-    import expect_tests
+    from expect_tests.type_definitions import Result, Test
+    from expect_tests.main import main
 
     def happy_fn(val):
       # Usually you would return data which is the result of some deterministic
       # computation.
-      return expect_tests.Result({'neet': '%s string value' % val})
+      return Result({'neet': '%s string value' % val})
 
     def Gen():
-      yield expect_tests.Test('happy', happy_fn, args=('happy',))
+      yield Test('happy', happy_fn, args=('happy',))
 
     if __name__ == '__main__':
-      expect_tests.main('happy_test_suite', Gen)
+      main('happy_test_suite', Gen)
 
   @param name: Name of the test suite.
   @param test_gen: A Generator which yields Test objects.
@@ -163,7 +164,7 @@ def main(name, test_gen, cover_branches=False, cover_omit=None,
 
     cover_ctx.cleanup()
     if not killed and not opts.test_glob:
-      if not cover_ctx.report(verbose=opts.verbose, omit=cover_omit, 
+      if not cover_ctx.report(verbose=opts.verbose, omit=cover_omit,
                               threshold=opts.threshold):
         sys.exit(2)
 

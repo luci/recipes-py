@@ -16,7 +16,6 @@ import test_env
 from test_env import BASE_DIR
 
 import recipe_engine.run
-import recipe_engine.simulation_test as simulation_test
 import recipe_engine.step_runner
 from recipe_engine import requests_ssl
 from recipe_engine import recipe_test_api
@@ -187,31 +186,6 @@ class RunTest(unittest.TestCase):
       # zsh_output = subprocess.check_output([
       #     'zsh', '-c', '/bin/echo %s' % quoted])
       # self.assertEqual(zsh_output.decode('utf-8'), s + '\n')
-
-  def test_run_unconsumed(self):
-    with recipe_engine.stream.NoopStreamEngine() as stream_engine:
-      properties = {}
-
-      test_data = recipe_engine.recipe_test_api.TestData()
-      test_data.expect_exception('SomeException')
-
-      api = mock.Mock()
-      api._engine = mock.Mock()
-      api._engine.properties = properties
-
-      annotator = simulation_test.SimulationAnnotatorStreamEngine()
-      engine = recipe_engine.run.RecipeEngine(
-          recipe_engine.step_runner.SimulationStepRunner(
-              stream_engine, test_data, annotator),
-          properties,
-          None)
-
-      class FakeScript(object):
-        def run(self, _, __):
-          return None
-
-      with self.assertRaises(AssertionError):
-        engine.run(FakeScript(), api, properties)
 
   def test_subannotations(self):
     proc = subprocess.Popen(

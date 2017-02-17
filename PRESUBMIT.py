@@ -44,6 +44,13 @@ def CommonChecks(input_api, output_api):
       ],
   ))
 
+  input_api.subprocess.check_call([
+    sys.executable, 'bootstrap/bootstrap.py',
+    '--deps-file', 'bootstrap/deps.pyl',
+    '--cache-root', '.bootstrap_cache',
+    'ENV',
+  ])
+
   results.extend(input_api.RunTests(
       tests('recipe_engine', 'unittests') +
       tests('unittests')))

@@ -13,7 +13,7 @@ from repo_test_util import ROOT_DIR
 
 def recipes_py(*args):
   subprocess.check_call([
-      os.path.join(ROOT_DIR, 'recipes.py'),
+      os.path.join(ROOT_DIR, 'recipes.py'), '--use-bootstrap',
       '--package', os.path.join(ROOT_DIR, 'infra', 'config', 'recipes.cfg')] +
       list(args))
 
