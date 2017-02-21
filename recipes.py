@@ -24,7 +24,7 @@ sys.path.insert(0, ROOT_DIR)
 from recipe_engine import env
 from recipe_engine import arguments_pb2
 from google.protobuf import json_format as jsonpb
-from google.protobuf import text_format as textpb
+
 
 def get_package_config(args):
   from recipe_engine import package

@@ -3,18 +3,12 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import copy
-import json
-import os
-import subprocess
 import sys
 import unittest
 
 from collections import OrderedDict
 
 import test_env
-
-import mock
 
 from recipe_engine import post_process
 from recipe_engine import checker

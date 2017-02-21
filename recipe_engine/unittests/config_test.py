@@ -3,13 +3,11 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import os
-import sys
 import unittest
 
 import test_env
 
-from recipe_engine import loader, recipe_api, config
+from recipe_engine import config
 
 class TestConfigGroupSchema(unittest.TestCase):
   def testNewReturnsConfigGroup(self):

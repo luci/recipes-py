@@ -12,7 +12,6 @@ import sys
 
 from . import loader
 from . import run as recipe_run
-from . import package
 from . import recipe_api
 
 def trim_doc(docstring):

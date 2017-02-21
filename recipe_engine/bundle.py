@@ -14,12 +14,10 @@ import errno
 import logging
 import os
 import io
-import re
 import shutil
 import stat
 import subprocess
 import sys
-import types
 
 LOGGER = logging.getLogger(__name__)
 

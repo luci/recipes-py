@@ -14,8 +14,6 @@ e.g. you can run a recipe simulation for a Windows recipe on Linux.
 
 from __future__ import absolute_import
 import re
-import os
-import sys
 import types
 
 

@@ -4,9 +4,7 @@
 # that can be found in the LICENSE file.
 
 import os
-import shutil
 import sys
-import tempfile
 import unittest
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(

@@ -3,7 +3,6 @@
 # that can be found in the LICENSE file.
 
 import contextlib
-import datetime
 
 from recipe_engine import recipe_api
 

@@ -5,27 +5,20 @@
 """Provides simulator test coverage for individual recipes."""
 
 import StringIO
-import ast
-import contextlib
 import copy
 import json
 import logging
 import os
 import re
 import sys
-import textwrap
-import traceback
-import inspect
 
-from collections import OrderedDict, namedtuple
+from . import env
 
 from . import config_types
-from . import env
 from . import loader
 from . import run
 from . import step_runner
 from . import stream
-from expect_tests.util import covers as expect_tests_covers
 from expect_tests.main import main as expect_tests_main
 from expect_tests.type_definitions import Result, Test, FuncCall
 from .checker import Checker, VerifySubset

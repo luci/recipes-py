@@ -3,8 +3,6 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import os
-import sys
 import unittest
 
 import test_env
@@ -16,7 +14,7 @@ import mock
 class TestRecipeScript(unittest.TestCase):
   def testReturnSchemaHasValidClass(self):
     with self.assertRaises(ValueError):
-      script = loader.RecipeScript({'RETURN_SCHEMA': 3}, 'test_script')
+      loader.RecipeScript({'RETURN_SCHEMA': 3}, 'test_script')
 
   def testRunChecksReturnType(self):
     sentinel = object()

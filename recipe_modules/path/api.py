@@ -5,7 +5,6 @@
 import functools
 import itertools
 import os
-import sys
 import tempfile
 
 from recipe_engine import recipe_api

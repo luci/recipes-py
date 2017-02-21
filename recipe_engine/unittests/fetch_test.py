@@ -4,12 +4,8 @@
 # that can be found in the LICENSE file.
 
 import base64
-import io
 import json
-import os
-import sys
 import unittest
-import time
 
 import test_env
 

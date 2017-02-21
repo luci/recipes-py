@@ -2,19 +2,13 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import ast
-import collections
-import contextlib
 import copy
 import difflib
-import functools
-import itertools
 import logging
 import operator
 import os
 import subprocess
 import sys
-import tempfile
 
 from . import env
 
@@ -229,6 +223,7 @@ class GitRepoSpec(RepoSpec):
         context, (other_revision or self.backend.branch_spec(self.branch)))
     updates = []
     for rev in raw_updates:
+      # TODO(somebody): 'info' is not used.
       info = self._get_commit_info(rev, context)
       updates.append(GitRepoSpec(
           self.project_id,
@@ -372,10 +367,6 @@ class Package(object):
     self.deps = deps
     self.repo_root = repo_root
     self.relative_recipes_dir = relative_recipes_dir
-
-  def __repr__(self):
-    return '<Package(name=%r,repo_spec=%r,deps=%r,recipes_dir=%r)>' % (
-        self.name, self.repo_spec, self.deps, self.recipes_dir)
 
   @property
   def recipes_dir(self):

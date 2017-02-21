@@ -3,7 +3,6 @@
 # that can be found in the LICENSE file.
 
 import base64
-import functools
 import httplib
 import json
 import logging
@@ -12,7 +11,6 @@ import shutil
 import sys
 import tarfile
 import tempfile
-import time
 
 # Add third party paths.
 from . import env

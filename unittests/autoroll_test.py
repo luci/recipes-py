@@ -11,8 +11,6 @@ import unittest
 
 import repo_test_util
 
-from recipe_engine import package
-
 
 class TestAutoroll(repo_test_util.RepoTest):
   def run_roll(self, repo, *args):

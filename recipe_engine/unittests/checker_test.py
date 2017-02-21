@@ -3,9 +3,6 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import json
-import os
-import subprocess
 import sys
 import unittest
 import copy
@@ -13,8 +10,6 @@ import copy
 from collections import OrderedDict
 
 import test_env
-
-import mock
 
 from expect_tests.type_definitions import CheckFrame
 from recipe_engine import checker

@@ -3,7 +3,6 @@
 # that can be found in the LICENSE file.
 
 import collections
-import contextlib
 import imp
 import inspect
 import os
@@ -15,9 +14,9 @@ from .config import ConfigContext, ConfigGroupSchema
 from .config_types import Path, ModuleBasePath, PackageRepoBasePath
 from .config_types import RecipeScriptBasePath
 from .config_types import RECIPE_MODULE_PREFIX
-from .recipe_api import RecipeApi, RecipeApiPlain, RecipeScriptApi
+from .recipe_api import RecipeApiPlain, RecipeScriptApi
 from .recipe_api import _UnresolvedRequirement
-from .recipe_api import Property, BoundProperty
+from .recipe_api import BoundProperty
 from .recipe_api import UndefinedPropertyException, PROPERTY_SENTINEL
 from .recipe_test_api import RecipeTestApi, DisabledTestData
 

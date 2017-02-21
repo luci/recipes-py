@@ -3,16 +3,11 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import json
-import os
-import subprocess
 import sys
 import unittest
 
 import test_env
-import mock
 
-from recipe_engine import package
 from recipe_engine import autoroll
 
 class FakeCandidate(object):

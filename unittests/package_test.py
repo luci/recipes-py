@@ -7,7 +7,6 @@ import copy
 import doctest
 import os
 import subprocess
-import sys
 import unittest
 
 import repo_test_util

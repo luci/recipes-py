@@ -7,7 +7,6 @@ import json
 import os
 import re
 import subprocess
-import sys
 import unittest
 import tempfile
 import time
@@ -18,8 +17,6 @@ from test_env import BASE_DIR
 import recipe_engine.run
 import recipe_engine.step_runner
 from recipe_engine import requests_ssl
-from recipe_engine import recipe_test_api
-import mock
 
 class RunTest(unittest.TestCase):
   def _run_cmd(self, recipe, properties=None, engine_args=None):

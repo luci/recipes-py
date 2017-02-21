@@ -4,13 +4,10 @@
 # that can be found in the LICENSE file.
 
 import cStringIO
-import os
-import sys
 import unittest
 
 import test_env
 
-from recipe_engine import recipe_api
 from recipe_engine import stream
 
 class StreamTest(unittest.TestCase):

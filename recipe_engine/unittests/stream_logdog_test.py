@@ -21,7 +21,6 @@ import libs.logdog.stream
 import libs.logdog.varint
 from google.protobuf import json_format as jsonpb
 from recipe_engine import recipe_api
-from recipe_engine import stream
 from recipe_engine import stream_logdog
 
 

@@ -7,21 +7,16 @@ protobuf.
 """
 
 import collections
-import contextlib
 import copy
 import datetime
 import functools
-import itertools
 import os
 import threading
 import sys
 
 from . import env
 from . import stream
-from . import util
 
-import google.protobuf.message
-import google.protobuf.timestamp_pb2 as timestamp_pb2
 import libs.logdog.bootstrap
 import libs.logdog.stream
 import libs.logdog.streamname

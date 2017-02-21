@@ -12,7 +12,7 @@ import inspect
 import re
 import itertools
 
-from collections import OrderedDict, namedtuple, deque, defaultdict
+from collections import OrderedDict, deque, defaultdict
 
 from . import env
 import astunparse
