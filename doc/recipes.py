@@ -120,7 +120,7 @@ def find_engine_override(argv):
   p = argparse.ArgumentParser()
   p.add_argument('-O', '--project-override', action='append')
   args, _ = p.parse_known_args(argv)
-  for override in args.project_override:
+  for override in args.project_override or ():
     if override.startswith(PREFIX):
       return override[len(PREFIX):]
   return None
