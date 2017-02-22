@@ -340,18 +340,6 @@ class RecipeEngine(object):
     # When we pop from this stack, we close the corresponding step stream.
     self._step_stack = []
 
-    # TODO(iannucci): come up with a more structured way to advertise/set mode
-    # flags/options for the engine.
-    if '$recipe_engine' in properties:
-      options = properties['$recipe_engine']
-      try:
-        mode_flags = options.get('mode_flags')
-        if mode_flags:
-          if mode_flags.get('use_subprocess42'):
-            print "IGNORING MODE_SUBPROCESS42"
-      except Exception as e:
-        print "Failed to set recipe_engine options, got: %r: %s" % (options, e)
-
   @property
   def properties(self):
     return self._properties
