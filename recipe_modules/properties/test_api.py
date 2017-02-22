@@ -19,11 +19,12 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
     """
     ret = self(
         blamelist=['cool_dev1337@chromium.org', 'hax@chromium.org'],
+        bot_id='test_bot',
         buildbotURL='http://c.org/p/cr/',
         buildername='TestBuilder',
         buildnumber=571,
         mastername='chromium.testing.master',
-        slavename='TestSlavename',
+        slavename='TestSlavename',  # TODO(nodir): remove, in favor of bot_id
         workdir='/path/to/workdir/TestSlavename',
     )
     ret.properties.update(kwargs)

@@ -11,6 +11,7 @@
     "cmd": [
       "echo",
       "('blamelist', ['cool_dev1337@chromium.org', 'hax@chromium.org'])",
+      "('bot_id', 'test_bot')",
       "('branch', '')",
       "('buildbotURL', 'http://c.org/p/cr/')",
       "('buildername', 'TestBuilder')",
