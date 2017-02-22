@@ -334,15 +334,6 @@ def doc(package_deps, args):
   doc.main(universe_view)
 
 
-def info(args):
-  from recipe_engine import package
-  _, config_file = get_package_config(args)
-  package_spec = package.PackageSpec.load_proto(config_file)
-
-  if args.recipes_dir:
-    print package_spec.recipes_path
-
-
 # Map of arguments_pb2.Property "value" oneof conversion functions.
 #
 # The fields here should be kept in sync with the "value" oneof field names in
@@ -566,14 +557,6 @@ def main():
           'with their documentation')
   doc_p.set_defaults(command='doc')
 
-  info_p = subp.add_parser(
-      'info',
-      description='Query information about the current recipe package')
-  info_p.set_defaults(command='info')
-  info_p.add_argument(
-      '--recipes-dir', action='store_true',
-      help='Get the subpath where the recipes live relative to repository root')
-
   args = parser.parse_args()
 
   # Load/parse operational arguments.
@@ -698,8 +681,6 @@ def _real_main(args, op_args):
     return refs(package_deps, args)
   elif args.command == 'doc':
     return doc(package_deps, args)
-  elif args.command == 'info':
-    return info(args)
   else:
     print """Dear sir or madam,
         It has come to my attention that a quite impossible condition has come
