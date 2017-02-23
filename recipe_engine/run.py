@@ -81,120 +81,6 @@ import subprocess42
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 
-BUILDBOT_MAGIC_ENV = set([
-    'BUILDBOT_BLAMELIST',
-    'BUILDBOT_BRANCH',
-    'BUILDBOT_BUILDBOTURL',
-    'BUILDBOT_BUILDERNAME',
-    'BUILDBOT_BUILDNUMBER',
-    'BUILDBOT_CLOBBER',
-    'BUILDBOT_GOT_REVISION',
-    'BUILDBOT_MASTERNAME',
-    'BUILDBOT_REVISION',
-    'BUILDBOT_SCHEDULER',
-    'BUILDBOT_SLAVENAME',
-])
-
-ENV_WHITELIST_PYTHON = set([
-    'PYTHONPATH',
-    'PYTHONUNBUFFERED',
-])
-
-ENV_WHITELIST_SWARMING = set([
-    'SWARMING_BOT_ID',
-    'SWARMING_HEADLESS',
-    'SWARMING_TASK_ID',
-])
-
-ENV_WHITELIST_LOGDOG = set([
-    'LOGDOG_STREAM_SERVER_PATH',
-    'LOGDOG_STREAM_PROJECT',
-    'LOGDOG_STREAM_PREFIX',
-    'LOGDOG_COORDINATOR_HOST',
-])
-
-ENV_WHITELIST_CIPD = set([
-    'CIPD_CACHE_DIR',
-])
-
-ENV_WHITELIST_INFRA = (ENV_WHITELIST_PYTHON | ENV_WHITELIST_SWARMING |
-                       ENV_WHITELIST_LOGDOG | ENV_WHITELIST_CIPD | set([
-    'AWS_CREDENTIAL_FILE',
-    'BOTO_CONFIG',
-    'BUILDBOT_ARCHIVE_FORCE_SSH',
-    'CHROME_HEADLESS',
-    'CHROMIUM_BUILD',
-    'GIT_USER_AGENT',
-    'TESTING_MASTER',
-    'TESTING_MASTER_HOST',
-    'TESTING_SLAVENAME',
-]))
-
-ENV_WHITELIST_WIN = ENV_WHITELIST_INFRA | BUILDBOT_MAGIC_ENV | set([
-    # infra windows specific
-    'DEPOT_TOOLS_GIT_BLEEDING',
-
-    'APPDATA',
-    'COMMONPROGRAMFILES',
-    'COMMONPROGRAMFILES(X86)',
-    'COMMONPROGRAMW6432',
-    'COMSPEC',
-    'COMPUTERNAME',
-    'DBUS_SESSION_BUS_ADDRESS',
-    'DXSDK_DIR',
-    'HOME',
-    'HOMEDRIVE',
-    'HOMEPATH',
-    'LOCALAPPDATA',
-    'NUMBER_OF_PROCESSORS',
-    'OS',
-    'PATH',
-    'PATHEXT',
-    'PROCESSOR_ARCHITECTURE',
-    'PROCESSOR_ARCHITEW6432',
-    'PROCESSOR_IDENTIFIER',
-    'PROGRAMFILES',
-    'PROGRAMW6432',
-    'PWD',
-    'SYSTEMDRIVE',
-    'SYSTEMROOT',
-    'TEMP',
-    'TMP',
-    'USERNAME',
-    'USERDOMAIN',
-    'USERPROFILE',
-    'VS100COMNTOOLS',
-    'VS110COMNTOOLS',
-    'WINDIR',
-])
-
-ENV_WHITELIST_POSIX = ENV_WHITELIST_INFRA | BUILDBOT_MAGIC_ENV | set([
-    # infra posix specific
-    'CHROME_ALLOCATOR',
-    'CHROME_VALGRIND_NUMCPUS',
-
-    'CCACHE_DIR',
-    'DISPLAY',
-    'DISTCC_DIR',
-    'HOME',
-    'HOSTNAME',
-    'HTTP_PROXY',
-    'http_proxy',
-    'HTTPS_PROXY',
-    'LANG',
-    'LOGNAME',
-    'PAGER',
-    'PATH',
-    'PWD',
-    'SHELL',
-    'SSH_AGENT_PID',
-    'SSH_AUTH_SOCK',
-    'SSH_CLIENT',
-    'SSH_CONNECTION',
-    'SSH_TTY',
-    'USER',
-    'USERNAME',
-])
 
 # TODO(martiniss): Remove this
 RecipeResult = collections.namedtuple('RecipeResult', 'result')
@@ -251,8 +137,6 @@ def run_steps(properties, stream_engine, step_runner, universe_view,
       for line in run_recipe_help_lines:
         l.write_line(line)
 
-    _isolate_environment()
-
     # Find and load the recipe to run.
     try:
       recipe_script = universe_view.load_recipe(recipe, engine=engine)
@@ -285,22 +169,6 @@ def run_steps(properties, stream_engine, step_runner, universe_view,
   # Run the steps emitted by a recipe via the engine, emitting annotations
   # into |stream| along the way.
   return engine.run(recipe_script, api, properties)
-
-
-def _isolate_environment():
-  """Isolate the environment to a known subset set."""
-  if sys.platform.startswith('win'):
-    whitelist = ENV_WHITELIST_WIN
-  elif sys.platform in ('darwin', 'posix', 'linux2'):
-    whitelist = ENV_WHITELIST_POSIX
-  else:
-    print ('WARNING: unknown platform %s, not isolating environment.' %
-           sys.platform)
-    return
-
-  for k in os.environ.keys():
-    if k not in whitelist:
-      del os.environ[k]
 
 
 # Return value of run_steps and RecipeEngine.run.  Just a container for the
