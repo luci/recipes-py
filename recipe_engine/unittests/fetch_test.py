@@ -35,13 +35,30 @@ class TestGit(unittest.TestCase):
   @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
   def test_fresh_clone(self, git):
     fetch.GitBackend().checkout(
-        'repo', 'revision', 'dir', allow_fetch=True)
+        'repo', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'dir',
+        allow_fetch=True)
     git.assert_has_calls([
       mock.call('GIT', 'clone', '-q', 'repo', 'dir'),
       mock.call('GIT', '-C', 'dir', 'config', 'remote.origin.url', 'repo'),
       mock.call('GIT', '-C', 'dir', 'rev-parse', '-q', '--verify',
-                'revision^{commit}'),
-      mock.call('GIT', '-C', 'dir', 'reset', '-q', '--hard', 'revision'),
+                'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa^{commit}'),
+      mock.call('GIT', '-C', 'dir', 'reset', '-q', '--hard',
+                'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+    ])
+
+  @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
+  def test_fresh_clone_ref(self, git):
+    fetch.GitBackend().checkout(
+        'repo', 'refs/changes/45/12345/1', 'dir', allow_fetch=True)
+    git.assert_has_calls([
+      mock.call('GIT', 'clone', '-q', 'repo', 'dir'),
+      mock.call('GIT', '-C', 'dir', 'config', 'remote.origin.url', 'repo'),
+      mock.call('GIT', '-C', 'dir', 'fetch', 'origin',
+                'refs/changes/45/12345/1:refs/changes/45/12345/1'),
+      mock.call('GIT', '-C', 'dir', 'rev-parse', '-q', '--verify',
+                'refs/changes/45/12345/1^{commit}'),
+      mock.call('GIT', '-C', 'dir', 'reset', '-q', '--hard',
+                'refs/changes/45/12345/1'),
     ])
 
   @mock.patch('time.sleep')
@@ -59,13 +76,15 @@ class TestGit(unittest.TestCase):
     git.side_effect = fail_four_clones
 
     fetch.GitBackend().checkout(
-        'repo', 'revision', 'dir', allow_fetch=True)
+        'repo', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'dir',
+        allow_fetch=True)
     git.assert_has_calls([
       mock.call('GIT', 'clone', '-q', 'repo', 'dir')] * 5 + [
       mock.call('GIT', '-C', 'dir', 'config', 'remote.origin.url', 'repo'),
       mock.call('GIT', '-C', 'dir', 'rev-parse', '-q', '--verify',
-                'revision^{commit}'),
-      mock.call('GIT', '-C', 'dir', 'reset', '-q', '--hard', 'revision'),
+                'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa^{commit}'),
+      mock.call('GIT', '-C', 'dir', 'reset', '-q', '--hard',
+                'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
     ])
 
   @mock.patch('os.path.isdir')
@@ -73,7 +92,8 @@ class TestGit(unittest.TestCase):
   def test_existing_checkout(self, git, isdir):
     isdir.return_value = True
     fetch.GitBackend().checkout(
-        'repo', 'revision', 'dir', allow_fetch=True)
+        'repo', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'dir',
+        allow_fetch=True)
     isdir.assert_has_calls([
       mock.call('dir'),
       mock.call('dir/.git'),
@@ -81,15 +101,38 @@ class TestGit(unittest.TestCase):
     git.assert_has_calls([
       mock.call('GIT', '-C', 'dir', 'config', 'remote.origin.url', 'repo'),
       mock.call('GIT', '-C', 'dir', 'rev-parse', '-q', '--verify',
-                'revision^{commit}'),
-      mock.call('GIT', '-C', 'dir', 'reset', '-q', '--hard', 'revision'),
+                'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa^{commit}'),
+      mock.call('GIT', '-C', 'dir', 'reset', '-q', '--hard',
+                'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
     ])
+
+  @mock.patch('os.path.isdir')
+  @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
+  def test_existing_checkout_ref(self, git, isdir):
+    isdir.return_value = True
+    fetch.GitBackend().checkout(
+        'repo', 'refs/changes/45/12345/1', 'dir', allow_fetch=True)
+    isdir.assert_has_calls([
+      mock.call('dir'),
+      mock.call('dir/.git'),
+    ])
+    git.assert_has_calls([
+      mock.call('GIT', '-C', 'dir', 'config', 'remote.origin.url', 'repo'),
+      mock.call('GIT', '-C', 'dir', 'fetch', 'origin',
+                'refs/changes/45/12345/1:refs/changes/45/12345/1'),
+      mock.call('GIT', '-C', 'dir', 'rev-parse', '-q', '--verify',
+                'refs/changes/45/12345/1^{commit}'),
+      mock.call('GIT', '-C', 'dir', 'reset', '-q', '--hard',
+                'refs/changes/45/12345/1'),
+    ])
+
 
   @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
   def test_clone_not_allowed(self, git):
     with self.assertRaises(fetch.FetchNotAllowedError):
       fetch.GitBackend().checkout(
-          'repo', 'revision', 'dir', allow_fetch=False)
+          'repo', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'dir',
+          allow_fetch=False)
 
   @mock.patch('os.path.isdir')
   @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
@@ -97,7 +140,8 @@ class TestGit(unittest.TestCase):
     isdir.side_effect = [True, False]
     with self.assertRaises(fetch.UncleanFilesystemError):
       fetch.GitBackend().checkout(
-          'repo', 'revision', 'dir', allow_fetch=False)
+          'repo', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'dir',
+          allow_fetch=False)
     isdir.assert_has_calls([
       mock.call('dir'),
       mock.call('dir/.git'),
@@ -112,7 +156,8 @@ class TestGit(unittest.TestCase):
     # This should not raise UncleanFilesystemError, but instead
     # set the right origin automatically.
     fetch.GitBackend().checkout(
-        'repo', 'revision', 'dir', allow_fetch=False)
+        'repo', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'dir',
+        allow_fetch=False)
 
     isdir.assert_has_calls([
       mock.call('dir'),
@@ -133,7 +178,8 @@ class TestGit(unittest.TestCase):
     ]
     isdir.return_value = True
     fetch.GitBackend().checkout(
-        'repo', 'revision', 'dir', allow_fetch=True)
+        'repo', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'dir',
+        allow_fetch=True)
     isdir.assert_has_calls([
       mock.call('dir'),
       mock.call('dir/.git'),
@@ -141,9 +187,10 @@ class TestGit(unittest.TestCase):
     git.assert_has_calls([
       mock.call('GIT', '-C', 'dir', 'config', 'remote.origin.url', 'repo'),
       mock.call('GIT', '-C', 'dir', 'rev-parse', '-q', '--verify',
-                'revision^{commit}'),
+                'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa^{commit}'),
       mock.call('GIT', '-C', 'dir', 'fetch'),
-      mock.call('GIT', '-C', 'dir', 'reset', '-q', '--hard', 'revision'),
+      mock.call('GIT', '-C', 'dir', 'reset', '-q', '--hard',
+                'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
     ])
 
   @mock.patch('os.path.isdir')
@@ -156,7 +203,8 @@ class TestGit(unittest.TestCase):
     isdir.return_value = True
     with self.assertRaises(fetch.FetchNotAllowedError):
       fetch.GitBackend().checkout(
-          'repo', 'revision', 'dir', allow_fetch=False)
+          'repo', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'dir',
+          allow_fetch=False)
     isdir.assert_has_calls([
       mock.call('dir'),
       mock.call('dir/.git'),
@@ -164,21 +212,24 @@ class TestGit(unittest.TestCase):
     git.assert_has_calls([
       mock.call('GIT', '-C', 'dir', 'config', 'remote.origin.url', 'repo'),
       mock.call('GIT', '-C', 'dir', 'rev-parse', '-q', '--verify',
-                'revision^{commit}'),
+                'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa^{commit}'),
     ])
 
   @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
   def test_commit_metadata(self, git):
     git.side_effect = ['author', 'message']
     result = fetch.GitBackend().commit_metadata(
-        'repo', 'revision', 'dir', allow_fetch=True)
+        'repo', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'dir',
+        allow_fetch=True)
     self.assertEqual(result, {
       'author': 'author',
       'message': 'message',
     })
     git.assert_has_calls([
-      mock.call('GIT', '-C', 'dir', 'show', '-s', '--pretty=%aE', 'revision'),
-      mock.call('GIT', '-C', 'dir', 'show', '-s', '--pretty=%B', 'revision'),
+      mock.call('GIT', '-C', 'dir', 'show', '-s', '--pretty=%aE',
+                'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+      mock.call('GIT', '-C', 'dir', 'show', '-s', '--pretty=%B',
+                'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
     ])
 
 
