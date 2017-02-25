@@ -35,6 +35,7 @@ class RunTest(unittest.TestCase):
 
     prev_ignore = os.environ.pop(requests_ssl.ENV_VAR_IGNORE, '0')
     os.environ[requests_ssl.ENV_VAR_IGNORE] = '1'
+    os.environ['RANDOM_MULTILINE_ENV'] = 'foo\nbar\nbaz\n'
     try:
       return (
           ['python', script_path] + eng_args + ['run', recipe] + proplist)
@@ -42,10 +43,11 @@ class RunTest(unittest.TestCase):
       os.environ[requests_ssl.ENV_VAR_IGNORE] = prev_ignore
 
   def _test_recipe(self, recipe, properties=None):
-    exit_code = subprocess.call(
+    proc = subprocess.Popen(
         self._run_cmd(recipe, properties), stdout=subprocess.PIPE)
-    self.assertEqual(0, exit_code, '%d != %d when testing %s' % (
-        0, exit_code, recipe))
+    proc.communicate()
+    self.assertEqual(0, proc.returncode, '%d != %d when testing %s' % (
+        0, proc.returncode, recipe))
 
   def test_examples(self):
     tests = [

@@ -25,6 +25,27 @@ from . import recipe_api
 from . import util
 
 
+def output_iter(stream, it):
+  """Iterates through each string entry in "it", writing it in full to "stream"
+  using "write_line".
+
+  This protects against cases where text can't be directly rendered by
+  "write_line", notably newlines. In this case, the text will be written via a
+  series of "write_line" calls, one for each line.
+
+  A minimum of one "write_line" will be called per item in "it", regardless of
+  that item's content.
+
+  Args:
+    stream (StreamEngine.Stream): The stream to output to.
+    it (iterable): An iterable that yields strings to write.
+  """
+  for text in it:
+    lines = (text.split('\n') if text else ('',))
+    for line in lines:
+      stream.write_line(line)
+
+
 class StreamEngine(object):
   class Stream(object):
     def write_line(self, line):

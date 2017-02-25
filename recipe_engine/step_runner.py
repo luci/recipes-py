@@ -276,16 +276,17 @@ class SubprocessStepRunner(StepRunner):
     Intended to be similar to the information that Buildbot prints at the
     beginning of each non-annotator step.
     """
-    step_stream.write_line(' '.join(map(_shell_quote, step.config.cmd)))
-    step_stream.write_line('in dir %s:' % (step.config.cwd or os.getcwd()))
-    for key, value in sorted(step.config._asdict().items()):
-      if value is not None:
-        step_stream.write_line(
-            ' %s: %s' % (key, self._render_step_value(value)))
-    step_stream.write_line('full environment:')
-    for key, value in sorted(env.items()):
-      step_stream.write_line(' %s: %s' % (key, value))
-    step_stream.write_line('')
+    def gen_step_prelude():
+      yield ' '.join(map(_shell_quote, step.config.cmd))
+      yield 'in dir %s:' % (step.config.cwd or os.getcwd())
+      for key, value in sorted(step.config._asdict().items()):
+        if value is not None:
+          yield ' %s: %s' % (key, self._render_step_value(value))
+      yield 'full environment:'
+      for key, value in sorted(env.items()):
+        yield ' %s: %s' % (key, value)
+      yield ''
+    stream.output_iter(step_stream, gen_step_prelude())
 
   def _run_cmd(self, cmd, timeout, handles, env, cwd):
     """Runs cmd (subprocess-style).
