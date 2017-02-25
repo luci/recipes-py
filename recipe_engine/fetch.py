@@ -7,7 +7,6 @@ import httplib
 import json
 import logging
 import os
-import re
 import shutil
 import sys
 import tarfile
@@ -145,24 +144,6 @@ class GitBackend(Backend):
 
     git = self.Git(checkout_dir=checkout_dir)
     git('config', 'remote.origin.url', repo)
-
-    revision = revision or 'HEAD'
-    if re.match('[a-z0-9]{40}', revision):
-      # This is a commit hash. We assume that it is in history of the remote's
-      # HEAD.
-      # TODO: remove the assumption
-      pass
-    elif revision not in ('HEAD', 'FETCH_HEAD', 'master'):
-      # This is not a hash, we have to fetch it separately from HEAD.
-      # Note that if this is a Gerrit change ref, prefetching the target branch
-      # will make git reuse objects, otherwise entire history will be refetched.
-      # We did it by cloning, assuming that the change target branch is remote's
-      # HEAD.
-      # TODO: remove the assumption.
-      # TODO(iannucci): prohibit non-hash revisions when a better solution
-      # is ready.
-      git('fetch', 'origin', revision + ':' + revision)
-
     try:
       git('rev-parse', '-q', '--verify', '%s^{commit}' % revision)
     except GitError as e:

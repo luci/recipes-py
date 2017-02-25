@@ -15,19 +15,14 @@ class RemoteTest(repo_test_util.RepoTest):
     repos = self.repo_setup({'a': []})
     self.update_recipe_module(repos['a'], 'mod', {'foo': []})
     self.update_recipe(repos['a'], 'a_recipe', ['mod'], [('mod', 'foo')])
-    try:
-      subprocess.check_output([
-          sys.executable, self._recipe_tool,
-          'remote',
-          '--repository', repos['a']['root'],
-          '--',
-          'run',
-          'a_recipe',
-      ], stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as ex:
-      print 'Output:'
-      print ex.output
-      raise
+    subprocess.check_output([
+        sys.executable, self._recipe_tool,
+        'remote',
+        '--repository', repos['a']['root'],
+        '--',
+        'run',
+        'a_recipe',
+    ], stderr=subprocess.STDOUT)
 
 
 if __name__ == '__main__':
