@@ -6,6 +6,7 @@ import calendar
 import collections
 import contextlib
 import datetime
+import itertools
 import json
 import os
 import re
@@ -176,13 +177,10 @@ class SubprocessStepRunner(StepRunner):
     )
     step_config = None # Make sure we use rendered step config.
 
-    rendered_step = rendered_step._replace(
-        config=rendered_step.config._replace(
-            cmd=map(str, rendered_step.config.cmd),
-        ),
-    )
-
     step_env = _merge_envs(os.environ, (rendered_step.config.env or {}))
+    # Now that the step's environment is all sorted, evaluate PATH on windows
+    # to find the actual intended executable.
+    rendered_step = _hunt_path(rendered_step, step_env)
     self._print_step(step_stream, rendered_step, step_env)
 
     class ReturnOpenStep(OpenStep):
@@ -540,7 +538,7 @@ def render_step(step_config, step_test):
         output_phs[module_name][placeholder_name][item.name] = (item, tdata)
     else:
       new_cmd.append(item)
-  step_config = step_config._replace(cmd=new_cmd)
+  step_config = step_config._replace(cmd=map(str, new_cmd))
 
   # Process 'stdout', 'stderr' and 'stdin' placeholders, if given.
   stdio_placeholders = {}
@@ -649,6 +647,55 @@ def _merge_envs(original, override):
     else:
       result[str(k)] = str(v) % original
   return result
+
+
+if sys.platform == "win32":
+  _hunt_path_exts = ('.exe', '.bat')
+  def _hunt_path(rendered_step, step_env):
+    """This takes the lazy cross-product of PATH and ('.exe', '.bat') to find
+    what cmd.exe would have found for the command if we used shell=True.
+
+    This must be called on the render_step AFTER _merge_envs has produced
+    step_env to pick up any changes to PATH.
+
+    If it succeeds, it returns a new rendered_step. If it fails, it returns the
+    same rendered_step, and subprocess will run as normal (and likely fail).
+
+    This will not attempt to do any evaluations for commands where the program
+    already has an explicit extension (.exe, .bat, etc.), and it will not
+    attempt to do any evaluations for commands where the program is an absolute
+    path.
+
+    This DOES NOT use PATHEXT to keep the recipe engine's behavior as
+    predictable as possible. We don't currently rely on any other runnable
+    extensions besides these two, and when we could, we choose to explicitly
+    invoke the interpreter (e.g. python.exe, cscript.exe, etc.).
+    """
+    cmd = rendered_step.config.cmd
+    cmd0 = cmd[0]
+    if '.' in cmd0:  # something.ext will work fine with subprocess.
+      return rendered_step
+    if os.path.isabs(cmd0):  # PATH isn't even used
+      return rendered_step
+
+    # begin the hunt
+    paths = step_env.get('PATH', '').split(os.pathsep)
+    if not paths:
+      return rendered_step
+
+    # try every extension for each path
+    for path, ext in itertools.product(paths, _hunt_path_exts):
+      candidate = os.path.join(path, cmd0+ext)
+      if os.path.isfile(candidate):
+        return rendered_step._replace(
+          config=rendered_step.config._replace(
+            cmd=[candidate]+cmd[1:],
+          ),
+        )
+    return rendered_step
+else:
+  def _hunt_path(rendered_step, _step_env):
+    return rendered_step
 
 
 def _shell_quote(arg):
