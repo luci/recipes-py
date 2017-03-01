@@ -205,7 +205,8 @@ class SubprocessStepRunner(StepRunner):
               cmd=step_config.cmd, timeout=step_config.timeout, handles=handles,
               env=step_env, cwd=step_config.cwd)
         except subprocess42.TimeoutExpired as e:
-          # TODO(martiniss): mark as exception?
+          #FIXME: Make this respect the infra_step argument
+          step_stream.set_step_status('FAILURE')
           raise recipe_api.StepTimeout(step_config.name, e.timeout)
         except OSError:
           with step_stream.new_log_stream('exception') as l:
