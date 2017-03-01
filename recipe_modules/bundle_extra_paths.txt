@@ -1,0 +1,15 @@
+# We actually need to include essentially everything in this repo for recipes
+# to work.
+#
+# The alternatives are:
+#   * hard-code the bundle command to include the whole repo
+#   * have the bundle command include the whole `recipes_path` folder by
+#     default.
+#
+# The first alternative doesn't work for very large repos (like chromium/src),
+# and the second one systemically prevents us from creating minimal recipe
+# bundles. At least by awknowledging that we have so many includes we make the
+# dependency explicit.
+//bootstrap/
+//recipe_engine/
+//recipes.py
