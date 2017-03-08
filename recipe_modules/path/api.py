@@ -95,6 +95,10 @@ class fake_path(object):
     """Returns the absolute version of path."""
     return self.normpath(path)
 
+  def realpath(self, path):
+    """Returns the canonical version of the path."""
+    return self.normpath(path)
+
   def expanduser(self, path):
     return path.replace('~', '[HOME]')
 
@@ -138,7 +142,7 @@ class PathApi(recipe_api.RecipeApi):
   # of these methods to stringify them first (otherwise they would be getting
   # recipe_util_types.Path instances).
   FILTER_METHODS = ('abspath', 'basename', 'dirname', 'exists', 'expanduser',
-                    'join', 'split', 'splitext')
+                    'join', 'split', 'splitext', 'realpath')
 
   def get_config_defaults(self):
     return {
