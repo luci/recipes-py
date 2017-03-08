@@ -44,3 +44,11 @@ def GenTests(api):
   )
 
   yield api.test('result') + api.post_process(Filter('$result'))
+
+  def assert_stuff(check, results):
+    check('something important' in results)
+    check('another important' in results)
+    # drop the whole expectations, we're done here
+    return {}
+
+  yield api.test('custom_func') + api.post_process(assert_stuff)

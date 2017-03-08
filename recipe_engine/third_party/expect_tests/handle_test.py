@@ -46,7 +46,7 @@ class TestHandler(Handler):
         continue
 
       current, _ = GetCurrentData(test)
-      if current is NonExistant:
+      if current is NonExistant and result.data:
         put_next_stage(Missing(test, log_lines))
       else:
         diff = DiffData(current, result.data)
