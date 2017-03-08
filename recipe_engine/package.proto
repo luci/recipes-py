@@ -10,67 +10,24 @@ syntax = "proto2";
 package recipe_engine;
 
 message DepSpec {
-  // Same meaning as Package.project_id, but the id for this dependency. This
-  // should always match the project_id of the repo that we're depending on.
   optional string project_id = 1;
-
-  // The URL of where to fetch the package data. Must always be a git repo URL.
   optional string url = 2;
-
-  // The ref to git-fetch when syncing this dependency.
   optional string branch = 3;
-
-  // The git commit that we depend on.
   optional string revision = 4;
 
-  // Treat a subtree of a repo as a whole repo unto itself. This must match
-  // the value of `recipes_path` in the target repo.
+  // Treat a subtree of a repo as a whole repo unto itself.
   optional string path_override = 5;
 
   enum RepoType {
-    // Do a full 'git clone' of this dependency.
     GIT = 0;
-
-    // Use GITILES to fetch the dependency data via the GITILES REST API.
     GITILES = 1;
   }
-  // How this dependency should be fetched.
-  //
-  // NOTE: this option may be removed in the future in preference for
-  // automatically picking the repo fetch method.
   optional RepoType repo_type = 6 [default = GIT];
 }
 
 message Package {
-  // The "API Version" of this proto. Should always equal 1, currently. This may
-  // change if a backwards-incompatible update must be done for the proto. In
-  // the event that a backwards incompatible change happens, however,
-  // api_version will remain at tag 1.
   optional int32 api_version = 1;  // Version 1
-
-  // The "id" of how this package is referred to within recipes. This becomes
-  // the prefix in DEPS when something depends on one of this package's modules
-  // (e.g.  DEPS=["recipe_engine/path"]). This should match the name of the repo
-  // in the luci-config service associated with the repo, and should not contain
-  // slashes.
   optional string project_id = 2;
-
-  // The path (using forward slashes) to where the base of the recipes are found
-  // in the repo (i.e. where the "recipes" and/or "recipe_modules" directories
-  // live).
   optional string recipes_path = 3;
-
-  // The "source of truth" for this package's data, e.g.
-  //   "https://github.com/luci/recipes-py"
-  // This is used for documentation purposes, and does NOT need to match the
-  // `url` field in any other package's deps (in order to allow for mirroring).
-  //
-  // The documentation generator will infer paths to files that are relative to
-  // this URL, and knows about the following git host URL schemes:
-  //   * GitHub
-  //   * Gitiles
-  optional string canonical_base_url = 4;
-
-  // Any package dependencies that this package has.
-  repeated DepSpec deps = 5;
+  repeated DepSpec deps = 4;
 }

@@ -384,7 +384,6 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
 api_version: 1
 project_id: "super_main_package"
 recipes_path: "path/to/recipes"
-canonical_base_url: "https://bobbie.example.com"
 deps {
   project_id: "bar"
   url: "https://repo.com/bar.git"

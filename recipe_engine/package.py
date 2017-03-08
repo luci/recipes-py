@@ -36,7 +36,7 @@ def cleanup_pyc(path):
 
   This ensures we always use the fresh code.
   """
-  for root, _dirs, files in os.walk(path):
+  for root, dirs, files in os.walk(path):
     for f in files:
       if f.endswith('.pyc'):
         os.unlink(os.path.join(root, f))
@@ -361,14 +361,12 @@ class Package(object):
 
   This is accessed by loader.py through RecipeDeps.get_package.
   """
-  def __init__(self, name, repo_spec, deps, repo_root, relative_recipes_dir,
-               canonical_base_url):
+  def __init__(self, name, repo_spec, deps, repo_root, relative_recipes_dir):
     self.name = name
     self.repo_spec = repo_spec
     self.deps = deps
     self.repo_root = repo_root
     self.relative_recipes_dir = relative_recipes_dir
-    self.canonical_base_url = canonical_base_url
 
   @property
   def recipes_dir(self):
@@ -395,9 +393,8 @@ class Package(object):
     return os.path.join(self.recipes_dir, 'recipe_modules', module_name)
 
   def __repr__(self):
-    return 'Package(%r, %r, %r, %r, %r)' % (
-        self.name, self.repo_spec, self.deps, self.recipe_dir,
-        self.canonical_base_url)
+    return 'Package(%r, %r, %r, %r)' % (
+        self.name, self.repo_spec, self.deps, self.recipe_dir)
 
   def __str__(self):
     return 'Package %s, with dependencies %s' % (self.name, self.deps.keys())
@@ -469,8 +466,7 @@ class RollCandidate(object):
     return PackageSpec(
         self._package_spec.project_id,
         self._package_spec.recipes_path,
-        new_deps,
-        self._package_spec.canonical_base_url)
+        new_deps)
 
   def get_commit_infos(self):
     """Returns a mapping project_id -> list of commits from that repo
@@ -501,11 +497,10 @@ class RollCandidate(object):
 class PackageSpec(object):
   API_VERSION = 1
 
-  def __init__(self, project_id, recipes_path, deps, canonical_base_url):
+  def __init__(self, project_id, recipes_path, deps):
     self._project_id = project_id
     self._recipes_path = recipes_path
     self._deps = deps
-    self._canonical_base_url = canonical_base_url
 
   @classmethod
   def load_proto(cls, proto_file):
@@ -514,8 +509,7 @@ class PackageSpec(object):
 
     deps = { str(dep.project_id): cls.spec_for_dep(dep)
              for dep in buf.deps }
-    return cls(str(buf.project_id), str(buf.recipes_path), deps,
-               buf.canonical_base_url)
+    return cls(str(buf.project_id), str(buf.recipes_path), deps)
 
   @classmethod
   def spec_for_dep(cls, dep):
@@ -550,17 +544,12 @@ class PackageSpec(object):
   def deps(self):
     return self._deps
 
-  @property
-  def canonical_base_url(self):
-    return self._canonical_base_url
-
   def dump(self):
     return package_pb2.Package(
         api_version=self.API_VERSION,
         project_id=self._project_id,
         recipes_path=self._recipes_path,
-        deps=[ self._deps[dep].dump() for dep in sorted(self._deps.keys()) ],
-        canonical_base_url=self._canonical_base_url)
+        deps=[ self._deps[dep].dump() for dep in sorted(self._deps.keys()) ])
 
   def roll_candidates(self, root_spec, context):
     """Returns list of consistent roll candidates, and rejected roll candidates.
@@ -635,8 +624,7 @@ class PackageDeps(object):
                    for project_id, path in overrides.iteritems()}
     package_deps = cls(context, overrides=overrides)
 
-    package_deps._root_package = package_deps._create_package(
-        RootRepoSpec(proto_file))
+    package_deps._root_package = package_deps._create_package(RootRepoSpec(proto_file))
 
     return package_deps
 
@@ -669,8 +657,7 @@ class PackageDeps(object):
     package = Package(
         project_id, repo_spec, deps,
         repo_spec.repo_root(self._context),
-        package_spec.recipes_path,
-        package_spec.canonical_base_url)
+        package_spec.recipes_path)
 
     self._packages[project_id] = package
     return package
