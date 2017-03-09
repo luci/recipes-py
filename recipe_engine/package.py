@@ -36,7 +36,7 @@ def cleanup_pyc(path):
 
   This ensures we always use the fresh code.
   """
-  for root, dirs, files in os.walk(path):
+  for root, _dirs, files in os.walk(path):
     for f in files:
       if f.endswith('.pyc'):
         os.unlink(os.path.join(root, f))
