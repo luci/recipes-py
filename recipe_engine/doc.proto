@@ -1,0 +1,287 @@
+// Copyright 2017 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+import "package.proto";
+
+package recipe_engine;
+
+// Doc is the namespace for all documentation messages. The messages here can be
+// produced by the 'doc' subcommand.
+//
+// Messages in this namespace have some common fields:
+//   name - the name of the object. Unless specified, this is the 'local' name,
+//     or how you would refer to the object within the file.
+//   relpath - the forward-slash-delimited path from the root of the repo to
+//     this documented object.
+//   lineno - the line number of this documented object within the file. Line
+//     numbers start from 1.
+//   docstring - the docstring of the item :). This should be pretty obvious.
+//     check the comment in cases where it's not.
+message Doc {
+
+  // Schema defines a very simple recursive schema system used by the
+  // recipe_engine. These correspond to types in the recipe_engine's config.py
+  // file.
+  //
+  // These are named Schema instead of Config because they don't contain any
+  // values (with the exception of defaults). At some point in the future the
+  // schema and config concerns will be separated.
+  message Schema {
+    // These are the primitive allowed types. They correspond to the types
+    // allowed by JSON.
+    enum SimpleType {
+      STRING = 0;
+      NUMBER = 1;
+      BOOLEAN = 2;
+      OBJECT = 3;
+      ARRAY = 4;
+      NULL = 5;
+    }
+
+    // Struct defines a dictionary with a fixed set of keys, each of which has
+    // a specific schema.
+    message Struct {
+      // A mapping of member to schema
+      map<string, Schema> type_map = 1;
+    }
+
+    // Sequence defines a list of schema'd objects.
+    //
+    // Note this is currently equivalent to config.ConfigList.
+    message Sequence {
+      Schema inner_type = 1;
+    }
+
+    // List defines a list of simply-typed objects.
+    message List {
+      // The simple pythonic type that this list may contain. If specified
+      // multiple times, the List may contain any of the types.
+      repeated SimpleType inner_type = 1;
+    }
+
+    // Set defines a set() of simply-typed objects.
+    message Set {
+      // The simple pythonic type that this set may contain. If specified
+      // multiple times, the Set may contain any of the types.
+      repeated SimpleType inner_type = 1;
+    }
+
+    // Dict defines a mapping of string to simple type.
+    message Dict {
+      // The simple pythonic type that this dict may contain as values. If
+      // specified multiple times, the Dict may contain any of the types.
+      repeated SimpleType value_type = 1;
+    }
+
+    // Single defines a single value (non-collection) simple type.
+    message Single {
+      // The simple pythonic type that this value may contain. If
+      // specified multiple times, the Single may contain any of the types.
+      repeated SimpleType inner_type = 1;
+
+      // Indicates that omitting this value is an error.
+      bool required = 2;
+
+      // The default value (as JSON) if the value for this is omitted.
+      string default_json = 3;
+    }
+
+    // Static defines a single static piece of data.
+    message Static {
+      // The value of the Static (as JSON).
+      string default_json = 1;
+    }
+
+    // Enum defines an element of the schema which must be one of a fixed set of
+    // values.
+    message Enum {
+      // The JSON encoded list of accepted values.
+      repeated string values_json = 1;
+
+      // Indicates that omitting this value is an error.
+      bool required = 2;
+    }
+
+    oneof kind {
+      Struct struct = 1;
+      List list = 2;
+      Set set = 3;
+      Dict dict = 4;
+      Single single = 5;
+      Static static = 6;
+      Enum enum = 7;
+    }
+  }
+
+
+  // Documents one of the `DEPS = [...]` assignments which may show up in
+  // a recipe file, or in a recipe module's __init__.py file.
+  message Deps {
+    string relpath = 1;
+    int32 lineno = 2;
+
+    // A simple tuple of package id and module name. This should be enough to
+    // calculate a link to this module.
+    message ModuleLink {
+      string package = 1;
+      string name = 2;
+    }
+
+    // The list of recipe modules which are named in this Deps (e.g.
+    // ModuleLink("recipe_engine", "path")).
+    repeated ModuleLink module_links = 3;
+  }
+
+  // Parameter is the documentation for a single parameter (Property).
+  message Parameter {
+    // The docstring (e.g. the help param) of the parameter.
+    string docstring = 1;
+
+    // The schema for the data in this parameter.
+    Schema kind = 2;
+
+    // A JSON string which is the default value for this Parameter. If empty it
+    // means that this Parameter is required.
+    string default_json = 3;
+  }
+
+  // Parameters is the documentation for a PROPERTIES dictionary.
+  message Parameters {
+    string relpath = 1;
+    int32 lineno = 2;
+
+    // Mapping of parameter name (e.g. what the user would pass in the input
+    // JSON) to parameter.
+    map<string, Parameter> parameters = 3;
+  }
+
+  // ReturnSchema is the documentation for a recipe's optional RETURN_SCHEMA
+  // block.
+  message ReturnSchema {
+    string relpath = 1;
+    int32 lineno = 2;
+
+    // The schema defined in this ReturnSchema.
+    Schema schema = 3;
+  }
+
+  // Documentation for a regular python class.
+  message Class {
+    string name = 1;
+    string relpath = 2;
+    int32 lineno = 3;
+    string docstring = 4;
+
+    message Base {
+      oneof kind {
+        string generic = 1;
+        string known = 2;
+      }
+    }
+
+    repeated Base bases = 5;
+
+    // a mapping of visible inner classes (e.g. class definitions nested within
+    // this class).
+    map<string, Class> classes = 6;
+
+    // a mapping of visible methods in this class.
+    map<string, Func> funcs = 7;
+  }
+
+  // Documentation for a regular python function.
+  message Func {
+    string name = 1;
+    string relpath = 2;
+    int32 lineno = 3;
+    string docstring = 4;
+
+    message Decorator {
+      oneof kind {
+        string generic = 1;
+        string known = 2;
+      }
+    }
+
+    // The list of decorators this function has (if any). A decorator may either
+    // be 'known' or 'generic'. 'known' decorators refer to decorators defined
+    // in the recipe_engine repo and may be hyperlinked to the recipe engine
+    // documentation for them.
+    repeated Decorator decorators = 5;
+
+    // The rendered python ast node for the whole function signature, e.g.:
+    //   "arg, other_arg, default=True, **kwargs"
+    string signature = 6;
+  }
+
+  // Documentation for a recipe module.
+  message Module {
+    // The fully qualified name of this recipe module (e.g. "recipe_engine/path")
+    string name = 1;
+    string relpath = 2;
+    string docstring = 3;
+
+    // The dependencies (other modules) for this module.
+    Deps deps = 4;
+
+    // The PARAMETERS (formerly known as PROPERTIES) for this module.
+    Parameters parameters = 5;
+
+    // The primary class (RecipeApi) for this module.
+    Class api_class = 6;
+
+    // Other classes defined in api.py
+    map<string, Class> classes = 7;
+
+    // Other functions defined in api.py
+    map<string, Func> funcs = 8;
+  }
+
+  // Documentation for a recipe.
+  message Recipe {
+    // the name of this recipe within this repo (e.g. 'foo')
+    string name = 1;
+    string relpath = 2;
+    string docstring = 3;
+
+    // dependencies (to recipe modules) this recipe has.
+    Deps deps = 4;
+
+    // the documentation for any PARAMETERS this recipe has.
+    //
+    // NOTE: these are currently called PROPERTIES, soon to be renamed.
+    Parameters parameters = 5;
+
+    // the documentation for the RETURN_SCHEMA of this recipe.
+    ReturnSchema return_schema = 6;
+
+    // A mapping of visible class names to class documentation.
+    map<string, Class> classes = 7;
+
+    // A mapping of visible function names to function documentation. Excludes
+    // GenTests function.
+    map<string, Func> funcs = 8;
+  }
+
+  // Documentation for a package (recipe repo), including docs for all recipes
+  // and recipe_module's in that package.
+  message Package {
+    // the Package 'spec'. Contains lots of goodies like the project id, path
+    // within the repo to where the recipes start, and any other packages that
+    // this one depends on.
+    recipe_engine.Package spec = 1;
+
+    // the full contents of the 'README.recipes.md' file at the base of the repo
+    // plus recipe_root.
+    string docstring = 2;
+
+    // a map of all of this package's recipe_module names to their documentation.
+    map<string, Module> recipe_modules = 3;
+
+    // a map of all of this package's recipe names to their documentation.
+    map<string, Recipe> recipes = 4;
+  }
+}

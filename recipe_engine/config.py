@@ -435,7 +435,7 @@ class ConfigGroupSchema(ConfigSchemaBase):
       raise ValueError('A ConfigGroup with no type_map is meaningless.')
 
     object.__setattr__(self, '_type_map', type_map)
-    for name, typeval in self._type_map.iteritems():
+    for _, typeval in self._type_map.iteritems():
       typeAssert(typeval, ConfigBase)
 
   def __call__(self, *args, **kwargs):
@@ -458,8 +458,8 @@ class ConfigList(ConfigBase, collections.MutableSequence):
     config_blob = ConfigGroup(
       some_items = ConfigList(
         lambda: ConfigGroup(
-          herp = SimpleConfig(int),
-          derp = SimpleConfig(str)
+          herp = Single(int),
+          derp = Single(str)
         )
       )
     )
