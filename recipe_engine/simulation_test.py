@@ -173,7 +173,7 @@ def GenerateTests():
     # To make transition possible for existing code (which will require
     # writing tests), a temporary escape hatch is added.
     # TODO(phajdan.jr): remove DISABLE_STRICT_COVERAGE (crbug/693058).
-    if (getattr(mod, 'DISABLE_STRICT_COVERAGE', False)):
+    if mod.DISABLE_STRICT_COVERAGE:
       covered_modules.add(module)
       base_covers.append(os.path.join(
           _UNIVERSE_VIEW.module_dir, module, '*.py'))

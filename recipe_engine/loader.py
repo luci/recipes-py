@@ -397,6 +397,10 @@ def _patchup_module(name, submod, universe_view):
   submod.PACKAGE_REPO_ROOT = Path(PackageRepoBasePath(universe_view.package))
   submod.CONFIG_CTX = getattr(submod, 'CONFIG_CTX', None)
 
+  # TODO(phajdan.jr): remove DISABLE_STRICT_COVERAGE (crbug/693058).
+  submod.DISABLE_STRICT_COVERAGE = getattr(
+    submod, 'DISABLE_STRICT_COVERAGE', False)
+
   if hasattr(submod, 'config'):
     for v in submod.config.__dict__.itervalues():
       if isinstance(v, ConfigContext):

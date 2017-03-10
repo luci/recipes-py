@@ -11,10 +11,12 @@ import re
 from collections import defaultdict, OrderedDict, namedtuple
 
 
+_filterRegexEntry = namedtuple('_filterRegexEntry', 'at_most at_least fields')
+
+
 class Filter(object):
   """Filter is an implementation of a post_process callable which can remove
   unwanted data from a step OrderedDict."""
-  _reEntry = namedtuple('_reEntry', 'at_most at_least fields')
 
   def __init__(self, *steps):
     """Builds a new Filter object. It may be optionally prepopulated by
@@ -109,7 +111,7 @@ class Filter(object):
     if isinstance(fields, basestring):
       raise ValueError('Expected fields to be a non-string iterable')
     new_re_data = self.re_data.copy()
-    new_re_data[re.compile(step_name_re)] = Filter._reEntry(
+    new_re_data[re.compile(step_name_re)] = _filterRegexEntry(
       at_least, at_most, frozenset(fields))
 
     ret = Filter()

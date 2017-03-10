@@ -64,6 +64,32 @@ def simulation_test(package_deps, args, op_args):
       engine_flags=op_args.engine_flags)
 
 
+def test(package_deps, args, op_args):
+  try:
+    from recipe_engine import test
+  except ImportError:
+    logging.error(
+        'Error while importing testing libraries. You may be missing the pip'
+        ' package "coverage". Install it, or use the --use-bootstrap command'
+        ' line argument when calling into the recipe engine, which will install'
+        ' it for you.')
+    raise
+
+  from recipe_engine import loader
+  from recipe_engine import package
+
+  _, config_file = get_package_config(args)
+  universe = loader.RecipeUniverse(package_deps, config_file)
+  universe_view = loader.UniverseView(universe, package_deps.root_package)
+
+  # Prevent flakiness caused by stale pyc files.
+  package.cleanup_pyc(package_deps.root_package.recipes_dir)
+
+  return test.main(
+      universe_view, raw_args=args.args,
+      engine_flags=op_args.engine_flags)
+
+
 def lint(package_deps, args):
   from recipe_engine import lint_test
   from recipe_engine import loader
@@ -429,6 +455,12 @@ def main():
   simulation_test_p.set_defaults(command='simulation_test')
   simulation_test_p.add_argument('args')
 
+  test_p = subp.add_parser(
+    'test',
+    description='Generate or check expectations by simulation (EXPERIMENTAL)')
+  test_p.set_defaults(command='test')
+  test_p.add_argument('args', nargs=argparse.REMAINDER)
+
   lint_p = subp.add_parser(
       'lint',
       description='Check recipes for stylistic and hygenic issues')
@@ -608,7 +640,7 @@ def main():
             '--deps-file', os.path.join(ROOT_DIR, 'bootstrap', 'deps.pyl'),
             '--cache-root', bootstrap_cache_path,
             env_path,
-          ],
+          ] + ([] if args.verbose else ['--quiet']),
           cwd=ROOT_DIR)
 
       # Mark that we're bootstrapping, so the next invocation falls through to
@@ -667,6 +699,8 @@ def _real_main(args, op_args):
     return 0
   if args.command == 'simulation_test':
     return simulation_test(package_deps, args, op_args)
+  elif args.command == 'test':
+    return test(package_deps, args, op_args)
   elif args.command == 'bundle':
     return bundle(package_deps, args)
   elif args.command == 'lint':
