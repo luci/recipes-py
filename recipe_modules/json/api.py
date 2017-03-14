@@ -14,21 +14,24 @@ from recipe_engine import config_types
 
 class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
   """JsonOutputPlaceholder is meant to be a placeholder object which, when added
-  to a step's cmd list, will be replaced by annotated_run with the path to a
+  to a step's cmd list, will be replaced by the recipe engine with the path to a
   temporary file (e.g. /tmp/tmp4lp1qM) which will exist only for the duration of
-  the step. If the script requires a flag (e.g. --output-json /path/to/file),
-  you must supply that flag yourself in the cmd list.
+  the step. Create a JsonOutputPlaceholder by calling the 'output()' method of
+  the JsonApi.
 
-  This placeholder can be optionally added when you use the Steps.step()
-  method in this module.
+  The step is expected to write JSON data to this file, and when the step is
+  finished, the file will be read and the JSON parsed back into the recipe, and
+  will be available as part of the step result.
 
-  FIXME
-  After the termination of the step, this file is expected to contain a valid
-  JSON document, which will be set as the json.output for that step in the
-  step_history OrderedDict passed to your recipe generator.
+  Example:
+    result = api.step('step name',
+      ['write_json_to_file.sh', api.json.output()])
+    # `result.json.output` is the parsed JSON value.
+
+  See the example recipe (./example.py) for some more uses.
   """
-  def __init__(self, api, add_json_log, name=None):
-    self.raw = api.m.raw_io.output_text('.json')
+  def __init__(self, api, add_json_log, name=None, leak_to=None):
+    self.raw = api.m.raw_io.output_text('.json', leak_to=leak_to)
     self.add_json_log = add_json_log
     super(JsonOutputPlaceholder, self).__init__(name=name)
 
@@ -43,6 +46,7 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
     raw_data = self.raw.result(presentation, test)
 
     valid = False
+    invalid_error = ''
     ret = None
     try:
       ret = JsonApi.loads(
@@ -50,14 +54,18 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
       valid = True
     # TypeError is raised when raw_data is None, which can happen if the json
     # file was not created. We then correctly handle this as invalid result.
-    except (ValueError, TypeError):  # pragma: no cover
-      pass
+    except (ValueError, TypeError) as ex:  # pragma: no cover
+      invalid_error = str(ex)
 
     if self.add_json_log:
-      key = self.label + ('' if valid else ' (invalid)')
-      with contextlib.closing(recipe_util.StringListIO()) as listio:
-        json.dump(ret, listio, indent=2, sort_keys=True)
-      presentation.logs[key] = listio.lines
+      if valid:
+        with contextlib.closing(recipe_util.StringListIO()) as listio:
+          json.dump(ret, listio, indent=2, sort_keys=True)
+        presentation.logs[self.label] = listio.lines
+      else:
+        presentation.logs[self.label + ' (invalid)'] = raw_data.splitlines()
+        presentation.logs[self.label + ' (exception)'] = (
+          invalid_error.splitlines())
 
     return ret
 
@@ -104,9 +112,14 @@ class JsonApi(recipe_api.RecipeApi):
     return self.m.raw_io.input_text(self.dumps(data), '.json')
 
   @recipe_util.returns_placeholder
-  def output(self, add_json_log=True, name=None):
-    """A placeholder which will expand to '/tmp/file'."""
-    return JsonOutputPlaceholder(self, add_json_log, name=name)
+  def output(self, add_json_log=True, name=None, leak_to=None):
+    """A placeholder which will expand to '/tmp/file'.
+
+    If leak_to is provided, it must be a Path object. This path will be used in
+    place of a random temporary file, and the file will not be deleted at the
+    end of the step.
+    """
+    return JsonOutputPlaceholder(self, add_json_log, name=name, leak_to=leak_to)
 
   # TODO(you): This method should be in the `file` recipe_module
   def read(self, name, path, add_json_log=True, output_name=None, **kwargs):

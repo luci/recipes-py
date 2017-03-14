@@ -62,12 +62,38 @@ def RunSteps(api):
       step_test_data=lambda: api.json.test_api.output(example_dict))
   assert step_result.json.output == example_dict
 
+  # can leak directly to a file
+  step_result = api.step('leaking json', [
+    'python', api.resource('cool_script.py'),
+    '{"x":1,"y":2}',
+    api.json.output(leak_to=api.path['tmp_base'].join('leak.json')),
+  ])
+  assert step_result.json.output == example_dict
+
+  # invalid data gets rendered
+  step_result = api.step('invalid json', [
+    'python', api.resource('cool_script.py'),
+    '{"here is some total\ngarbage',
+    api.json.output(),
+  ])
+  assert step_result.json.output is None
+
 
 def GenTests(api):
-  yield (api.test('basic') +
-      api.step_data('echo1', stdout=api.json.output([1, 2, 3])) +
-      api.step_data(
-          'foo',
-          api.json.output([1, 2, 3], name='1') +
-          api.json.output(['x', 'y', FULLWIDTH_Z], name='2'),
-      ))
+  yield (
+    api.test('basic')
+    + api.step_data('echo1', stdout=api.json.output([1, 2, 3]))
+    + api.step_data(
+      'foo',
+      api.json.output([1, 2, 3], name='1') +
+      api.json.output(['x', 'y', FULLWIDTH_Z], name='2'),
+    )
+    + api.step_data(
+      'leaking json',
+      api.json.output({'x': 1, 'y': 2}),
+    )
+    + api.step_data(
+      'invalid json',
+      api.json.invalid('{"here is some total\ngarbage'),
+    )
+  )

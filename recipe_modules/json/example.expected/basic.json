@@ -104,6 +104,38 @@
     ]
   },
   {
+    "cmd": [
+      "python",
+      "RECIPE[recipe_engine::json:example].resources/cool_script.py",
+      "{\"x\":1,\"y\":2}",
+      "[TMP_BASE]/leak.json"
+    ],
+    "name": "leaking json",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"x\": 1, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"y\": 2@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "RECIPE[recipe_engine::json:example].resources/cool_script.py",
+      "{\"here is some total\ngarbage",
+      "/path/to/tmp/json"
+    ],
+    "name": "invalid json",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output (invalid)@{\"here is some total@@@",
+      "@@@STEP_LOG_LINE@json.output (invalid)@garbage@@@",
+      "@@@STEP_LOG_END@json.output (invalid)@@@",
+      "@@@STEP_LOG_LINE@json.output (exception)@Invalid control character at: line 1 column 21 (char 20)@@@",
+      "@@@STEP_LOG_END@json.output (exception)@@@"
+    ]
+  },
+  {
     "name": "$result",
     "recipe_result": null,
     "status_code": 0

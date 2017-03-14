@@ -94,7 +94,7 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
     assert self._backing_file
     if test.enabled:
       self._backing_file = None
-      return self.decode(test.data)
+      return self.decode(test.data or '')
     else:  # pragma: no cover
       try:
         with open(self._backing_file, 'rb') as f:
