@@ -71,7 +71,10 @@ BaseConfig derivatives for more info.
 from __future__ import absolute_import
 import collections
 import functools
+import json
 import types
+
+from . import doc_pb2 as doc
 
 class BadConf(Exception):
   pass
@@ -79,7 +82,6 @@ class BadConf(Exception):
 def typeAssert(obj, typearg):
   if not isinstance(obj, typearg):
     raise TypeError("Expected %r to be of type %r" % (obj, typearg))
-
 
 class ConfigContext(object):
   """A configuration context for a recipe module.
@@ -328,6 +330,33 @@ class ConfigBase(object):
       return self._is_default()
     return self._hidden_mode
 
+  def schema_proto(self):
+    """Returns a doc.Doc.Schema proto message for this config type."""
+    raise NotImplementedError
+
+
+_SIMPLE_TYPE_LOOKUP = {
+  str: doc.Doc.Schema.STRING,
+  int: doc.Doc.Schema.NUMBER,
+  float: doc.Doc.Schema.NUMBER,
+  bool: doc.Doc.Schema.BOOLEAN,
+  dict: doc.Doc.Schema.OBJECT,
+  list: doc.Doc.Schema.ARRAY,
+  type(None): doc.Doc.Schema.NULL,
+}
+
+
+def _inner_type_schema(inner_type):
+  ret = []
+  def _flatten(typ):
+    if isinstance(typ, collections.Iterable):
+      for subtyp in typ:
+        _flatten(subtyp)
+    else:
+      ret.append(_SIMPLE_TYPE_LOOKUP[typ])
+  _flatten(inner_type)
+  return list(set(ret))
+
 
 class ConfigSchemaBase(object):
   """
@@ -342,8 +371,6 @@ class ConfigSchemaBase(object):
     of this value.
     """
     raise NotImplementedError
-
-
 
 
 class ConfigGroup(ConfigBase):
@@ -419,6 +446,12 @@ class ConfigGroup(ConfigBase):
     # pylint: disable=W0212
     return all(v._is_default() for v in self._type_map.values())
 
+  def schema_proto(self):
+    ret = doc.Doc.Schema()
+    for k, v in self._type_map.iteritems():
+      ret.struct.type_map[k].CopyFrom(v.schema_proto())
+    return ret
+
 
 class ConfigGroupSchema(ConfigSchemaBase):
   """
@@ -446,6 +479,12 @@ class ConfigGroupSchema(ConfigSchemaBase):
     cfg = ConfigGroup(**self._type_map)
     cfg.set_val(kwargs)
     return cfg
+
+  def schema_proto(self):
+    ret = doc.Doc.Schema()
+    for k, v in self._type_map.iteritems():
+      ret.struct.type_map[k].CopyFrom(v.schema_proto())
+    return ret
 
 
 ReturnSchema = ConfigGroupSchema
@@ -525,6 +564,11 @@ class ConfigList(ConfigBase, collections.MutableSequence):
     # pylint: disable=W0212
     return all(v._is_default() for v in self.data)
 
+  def schema_proto(self):
+    ret = doc.Doc.Schema()
+    ret.sequence.inner_type.CopyFrom(self.item_schema().schema_proto())
+    return ret
+
 
 class Dict(ConfigBase, collections.MutableMapping):
   """Provides a semi-homogenous dict()-like configuration object."""
@@ -591,6 +635,11 @@ class Dict(ConfigBase, collections.MutableMapping):
   def _is_default(self):
     return not self.data
 
+  def schema_proto(self):
+    ret = doc.Doc.Schema()
+    ret.dict.value_type.extend(_inner_type_schema(self.value_type))
+    return ret
+
 
 class List(ConfigBase, collections.MutableSequence):
   """Provides a semi-homogenous list()-like configuration object."""
@@ -648,6 +697,11 @@ class List(ConfigBase, collections.MutableSequence):
   def _is_default(self):
     return not self.data
 
+  def schema_proto(self):
+    ret = doc.Doc.Schema()
+    ret.list.inner_type.extend(_inner_type_schema(self.inner_type))
+    return ret
+
 
 class Set(ConfigBase, collections.MutableSet):
   """Provides a semi-homogenous set()-like configuration object."""
@@ -704,6 +758,11 @@ class Set(ConfigBase, collections.MutableSet):
   def _is_default(self):
     return not self.data
 
+  def schema_proto(self):
+    ret = doc.Doc.Schema()
+    ret.set.inner_type.extend(_inner_type_schema(self.inner_type))
+    return ret
+
 
 class Single(ConfigBase):
   """Provides a configuration object which holds a single 'simple' type."""
@@ -751,6 +810,13 @@ class Single(ConfigBase):
   def _is_default(self):
     return self.data is self.empty_val
 
+  def schema_proto(self):
+    ret = doc.Doc.Schema()
+    ret.single.inner_type.extend(_inner_type_schema(self.inner_type))
+    ret.single.required = self.required
+    ret.single.default_json = json.dumps(self.jsonish_fn(self.empty_val))
+    return ret
+
 
 class Static(ConfigBase):
   """Holds a single, hidden, immutible data object.
@@ -782,6 +848,11 @@ class Static(ConfigBase):
 
   def _is_default(self):
     return True
+
+  def schema_proto(self):
+    ret = doc.Doc.Schema()
+    ret.static.default_json = json.dumps(self.data)
+    return ret
 
 
 class Enum(ConfigBase):
@@ -831,3 +902,10 @@ class Enum(ConfigBase):
 
   def _is_default(self):
     return self.data is None
+
+  def schema_proto(self):
+    ret = doc.Doc.Schema()
+    ret.enum.values_json.extend(json.dumps(self.jsonish_fn(v))
+                                for v in self.values)
+    ret.enum.required = self.required
+    return ret

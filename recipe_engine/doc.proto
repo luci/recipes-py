@@ -107,12 +107,13 @@ message Doc {
 
     oneof kind {
       Struct struct = 1;
-      List list = 2;
-      Set set = 3;
-      Dict dict = 4;
-      Single single = 5;
-      Static static = 6;
-      Enum enum = 7;
+      Sequence sequence = 2;
+      List list = 3;
+      Set set = 4;
+      Dict dict = 5;
+      Single single = 6;
+      Static static = 7;
+      Enum enum = 8;
     }
   }
 
