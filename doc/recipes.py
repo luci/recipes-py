@@ -157,7 +157,7 @@ def main():
                     .replace('/', os.path.sep))
 
   recipes_path = os.path.join(repo_root,
-      get_unique(protobuf.get('recipes_path', '')).replace('/', os.path.sep))
+      get_unique(protobuf.get('recipes_path', [''])).replace('/', os.path.sep))
   deps_path = os.path.join(recipes_path, '.recipe_deps')
   engine_path = find_engine_override(sys.argv[1:])
   if not engine_path:
