@@ -288,7 +288,6 @@ class StepConfig(_StepConfig):
     'base_name',
     'nest_level',
     'ok_ret',
-    'infra_step',
     'step_test_data',
   ))
 

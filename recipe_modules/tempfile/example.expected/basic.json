@@ -6,6 +6,7 @@
       "RECIPE_MODULE[recipe_engine::shutil]/resources/rmtree.py",
       "[TMP_BASE]/foo_tmp_1"
     ],
+    "infra_step": true,
     "name": "rmtree [TMP_BASE]/foo_tmp_1"
   },
   {
