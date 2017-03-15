@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='doc.proto',
   package='recipe_engine',
   syntax='proto3',
-  serialized_pb=_b('\n\tdoc.proto\x12\rrecipe_engine\x1a\rpackage.proto\"\xcc\x1b\n\x03\x44oc\x1a\xc8\x08\n\x06Schema\x12\x32\n\x06struct\x18\x01 \x01(\x0b\x32 .recipe_engine.Doc.Schema.StructH\x00\x12\x36\n\x08sequence\x18\x02 \x01(\x0b\x32\".recipe_engine.Doc.Schema.SequenceH\x00\x12.\n\x04list\x18\x03 \x01(\x0b\x32\x1e.recipe_engine.Doc.Schema.ListH\x00\x12,\n\x03set\x18\x04 \x01(\x0b\x32\x1d.recipe_engine.Doc.Schema.SetH\x00\x12.\n\x04\x64ict\x18\x05 \x01(\x0b\x32\x1e.recipe_engine.Doc.Schema.DictH\x00\x12\x32\n\x06single\x18\x06 \x01(\x0b\x32 .recipe_engine.Doc.Schema.SingleH\x00\x12\x32\n\x06static\x18\x07 \x01(\x0b\x32 .recipe_engine.Doc.Schema.StaticH\x00\x12.\n\x04\x65num\x18\x08 \x01(\x0b\x32\x1e.recipe_engine.Doc.Schema.EnumH\x00\x1a\x94\x01\n\x06Struct\x12?\n\x08type_map\x18\x01 \x03(\x0b\x32-.recipe_engine.Doc.Schema.Struct.TypeMapEntry\x1aI\n\x0cTypeMapEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12(\n\x05value\x18\x02 \x01(\x0b\x32\x19.recipe_engine.Doc.Schema:\x02\x38\x01\x1a\x39\n\x08Sequence\x12-\n\ninner_type\x18\x01 \x01(\x0b\x32\x19.recipe_engine.Doc.Schema\x1a@\n\x04List\x12\x38\n\ninner_type\x18\x01 \x03(\x0e\x32$.recipe_engine.Doc.Schema.SimpleType\x1a?\n\x03Set\x12\x38\n\ninner_type\x18\x01 \x03(\x0e\x32$.recipe_engine.Doc.Schema.SimpleType\x1a@\n\x04\x44ict\x12\x38\n\nvalue_type\x18\x01 \x03(\x0e\x32$.recipe_engine.Doc.Schema.SimpleType\x1aj\n\x06Single\x12\x38\n\ninner_type\x18\x01 \x03(\x0e\x32$.recipe_engine.Doc.Schema.SimpleType\x12\x10\n\x08required\x18\x02 \x01(\x08\x12\x14\n\x0c\x64\x65\x66\x61ult_json\x18\x03 \x01(\t\x1a\x1e\n\x06Static\x12\x14\n\x0c\x64\x65\x66\x61ult_json\x18\x01 \x01(\t\x1a-\n\x04\x45num\x12\x13\n\x0bvalues_json\x18\x01 \x03(\t\x12\x10\n\x08required\x18\x02 \x01(\x08\"R\n\nSimpleType\x12\n\n\x06STRING\x10\x00\x12\n\n\x06NUMBER\x10\x01\x12\x0b\n\x07\x42OOLEAN\x10\x02\x12\n\n\x06OBJECT\x10\x03\x12\t\n\x05\x41RRAY\x10\x04\x12\x08\n\x04NULL\x10\x05\x42\x06\n\x04kind\x1a\x8e\x01\n\x04\x44\x65ps\x12\x0f\n\x07relpath\x18\x01 \x01(\t\x12\x0e\n\x06lineno\x18\x02 \x01(\x05\x12\x38\n\x0cmodule_links\x18\x03 \x03(\x0b\x32\".recipe_engine.Doc.Deps.ModuleLink\x1a+\n\nModuleLink\x12\x0f\n\x07package\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x1a]\n\tParameter\x12\x11\n\tdocstring\x18\x01 \x01(\t\x12\'\n\x04kind\x18\x02 \x01(\x0b\x32\x19.recipe_engine.Doc.Schema\x12\x14\n\x0c\x64\x65\x66\x61ult_json\x18\x03 \x01(\t\x1a\xc1\x01\n\nParameters\x12\x0f\n\x07relpath\x18\x01 \x01(\t\x12\x0e\n\x06lineno\x18\x02 \x01(\x05\x12\x41\n\nparameters\x18\x03 \x03(\x0b\x32-.recipe_engine.Doc.Parameters.ParametersEntry\x1aO\n\x0fParametersEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12+\n\x05value\x18\x02 \x01(\x0b\x32\x1c.recipe_engine.Doc.Parameter:\x02\x38\x01\x1aZ\n\x0cReturnSchema\x12\x0f\n\x07relpath\x18\x01 \x01(\t\x12\x0e\n\x06lineno\x18\x02 \x01(\x05\x12)\n\x06schema\x18\x03 \x01(\x0b\x32\x19.recipe_engine.Doc.Schema\x1a\xa8\x03\n\x05\x43lass\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07relpath\x18\x02 \x01(\t\x12\x0e\n\x06lineno\x18\x03 \x01(\x05\x12\x11\n\tdocstring\x18\x04 \x01(\t\x12,\n\x05\x62\x61ses\x18\x05 \x03(\x0b\x32\x1d.recipe_engine.Doc.Class.Base\x12\x36\n\x07\x63lasses\x18\x06 \x03(\x0b\x32%.recipe_engine.Doc.Class.ClassesEntry\x12\x32\n\x05\x66uncs\x18\x07 \x03(\x0b\x32#.recipe_engine.Doc.Class.FuncsEntry\x1a\x32\n\x04\x42\x61se\x12\x11\n\x07generic\x18\x01 \x01(\tH\x00\x12\x0f\n\x05known\x18\x02 \x01(\tH\x00\x42\x06\n\x04kind\x1aH\n\x0c\x43lassesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\'\n\x05value\x18\x02 \x01(\x0b\x32\x18.recipe_engine.Doc.Class:\x02\x38\x01\x1a\x45\n\nFuncsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12&\n\x05value\x18\x02 \x01(\x0b\x32\x17.recipe_engine.Doc.Func:\x02\x38\x01\x1a\xcb\x01\n\x04\x46unc\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07relpath\x18\x02 \x01(\t\x12\x0e\n\x06lineno\x18\x03 \x01(\x05\x12\x11\n\tdocstring\x18\x04 \x01(\t\x12\x35\n\ndecorators\x18\x05 \x03(\x0b\x32!.recipe_engine.Doc.Func.Decorator\x12\x11\n\tsignature\x18\x06 \x01(\t\x1a\x37\n\tDecorator\x12\x11\n\x07generic\x18\x01 \x01(\tH\x00\x12\x0f\n\x05known\x18\x02 \x01(\tH\x00\x42\x06\n\x04kind\x1a\xc0\x03\n\x06Module\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07relpath\x18\x02 \x01(\t\x12\x11\n\tdocstring\x18\x03 \x01(\t\x12%\n\x04\x64\x65ps\x18\x04 \x01(\x0b\x32\x17.recipe_engine.Doc.Deps\x12\x31\n\nparameters\x18\x05 \x01(\x0b\x32\x1d.recipe_engine.Doc.Parameters\x12+\n\tapi_class\x18\x06 \x01(\x0b\x32\x18.recipe_engine.Doc.Class\x12\x37\n\x07\x63lasses\x18\x07 \x03(\x0b\x32&.recipe_engine.Doc.Module.ClassesEntry\x12\x33\n\x05\x66uncs\x18\x08 \x03(\x0b\x32$.recipe_engine.Doc.Module.FuncsEntry\x1aH\n\x0c\x43lassesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\'\n\x05value\x18\x02 \x01(\x0b\x32\x18.recipe_engine.Doc.Class:\x02\x38\x01\x1a\x45\n\nFuncsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12&\n\x05value\x18\x02 \x01(\x0b\x32\x17.recipe_engine.Doc.Func:\x02\x38\x01\x1a\xcb\x03\n\x06Recipe\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07relpath\x18\x02 \x01(\t\x12\x11\n\tdocstring\x18\x03 \x01(\t\x12%\n\x04\x64\x65ps\x18\x04 \x01(\x0b\x32\x17.recipe_engine.Doc.Deps\x12\x31\n\nparameters\x18\x05 \x01(\x0b\x32\x1d.recipe_engine.Doc.Parameters\x12\x36\n\rreturn_schema\x18\x06 \x01(\x0b\x32\x1f.recipe_engine.Doc.ReturnSchema\x12\x37\n\x07\x63lasses\x18\x07 \x03(\x0b\x32&.recipe_engine.Doc.Recipe.ClassesEntry\x12\x33\n\x05\x66uncs\x18\x08 \x03(\x0b\x32$.recipe_engine.Doc.Recipe.FuncsEntry\x1aH\n\x0c\x43lassesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\'\n\x05value\x18\x02 \x01(\x0b\x32\x18.recipe_engine.Doc.Class:\x02\x38\x01\x1a\x45\n\nFuncsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12&\n\x05value\x18\x02 \x01(\x0b\x32\x17.recipe_engine.Doc.Func:\x02\x38\x01\x1a\xdf\x02\n\x07Package\x12$\n\x04spec\x18\x01 \x01(\x0b\x32\x16.recipe_engine.Package\x12\x11\n\tdocstring\x18\x02 \x01(\t\x12\x45\n\x0erecipe_modules\x18\x03 \x03(\x0b\x32-.recipe_engine.Doc.Package.RecipeModulesEntry\x12\x38\n\x07recipes\x18\x04 \x03(\x0b\x32\'.recipe_engine.Doc.Package.RecipesEntry\x1aO\n\x12RecipeModulesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12(\n\x05value\x18\x02 \x01(\x0b\x32\x19.recipe_engine.Doc.Module:\x02\x38\x01\x1aI\n\x0cRecipesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12(\n\x05value\x18\x02 \x01(\x0b\x32\x19.recipe_engine.Doc.Recipe:\x02\x38\x01\x62\x06proto3')
+  serialized_pb=_b('\n\tdoc.proto\x12\rrecipe_engine\x1a\rpackage.proto\"\xaf\x1e\n\x03\x44oc\x1a\xa6\x01\n\x05Known\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\'\n\x04\x66unc\x18\x02 \x01(\x0b\x32\x17.recipe_engine.Doc.FuncH\x00\x12)\n\x05klass\x18\x03 \x01(\x0b\x32\x18.recipe_engine.Doc.ClassH\x00\x1a\x34\n\x06Object\x12\x11\n\x07generic\x18\x01 \x01(\tH\x00\x12\x0f\n\x05known\x18\x02 \x01(\tH\x00\x42\x06\n\x04kindB\x06\n\x04kind\x1a\xc8\x08\n\x06Schema\x12\x32\n\x06struct\x18\x01 \x01(\x0b\x32 .recipe_engine.Doc.Schema.StructH\x00\x12\x36\n\x08sequence\x18\x02 \x01(\x0b\x32\".recipe_engine.Doc.Schema.SequenceH\x00\x12.\n\x04list\x18\x03 \x01(\x0b\x32\x1e.recipe_engine.Doc.Schema.ListH\x00\x12,\n\x03set\x18\x04 \x01(\x0b\x32\x1d.recipe_engine.Doc.Schema.SetH\x00\x12.\n\x04\x64ict\x18\x05 \x01(\x0b\x32\x1e.recipe_engine.Doc.Schema.DictH\x00\x12\x32\n\x06single\x18\x06 \x01(\x0b\x32 .recipe_engine.Doc.Schema.SingleH\x00\x12\x32\n\x06static\x18\x07 \x01(\x0b\x32 .recipe_engine.Doc.Schema.StaticH\x00\x12.\n\x04\x65num\x18\x08 \x01(\x0b\x32\x1e.recipe_engine.Doc.Schema.EnumH\x00\x1a\x94\x01\n\x06Struct\x12?\n\x08type_map\x18\x01 \x03(\x0b\x32-.recipe_engine.Doc.Schema.Struct.TypeMapEntry\x1aI\n\x0cTypeMapEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12(\n\x05value\x18\x02 \x01(\x0b\x32\x19.recipe_engine.Doc.Schema:\x02\x38\x01\x1a\x39\n\x08Sequence\x12-\n\ninner_type\x18\x01 \x01(\x0b\x32\x19.recipe_engine.Doc.Schema\x1a@\n\x04List\x12\x38\n\ninner_type\x18\x01 \x03(\x0e\x32$.recipe_engine.Doc.Schema.SimpleType\x1a?\n\x03Set\x12\x38\n\ninner_type\x18\x01 \x03(\x0e\x32$.recipe_engine.Doc.Schema.SimpleType\x1a@\n\x04\x44ict\x12\x38\n\nvalue_type\x18\x01 \x03(\x0e\x32$.recipe_engine.Doc.Schema.SimpleType\x1aj\n\x06Single\x12\x38\n\ninner_type\x18\x01 \x03(\x0e\x32$.recipe_engine.Doc.Schema.SimpleType\x12\x10\n\x08required\x18\x02 \x01(\x08\x12\x14\n\x0c\x64\x65\x66\x61ult_json\x18\x03 \x01(\t\x1a\x1e\n\x06Static\x12\x14\n\x0c\x64\x65\x66\x61ult_json\x18\x01 \x01(\t\x1a-\n\x04\x45num\x12\x13\n\x0bvalues_json\x18\x01 \x03(\t\x12\x10\n\x08required\x18\x02 \x01(\x08\"R\n\nSimpleType\x12\n\n\x06STRING\x10\x00\x12\n\n\x06NUMBER\x10\x01\x12\x0b\n\x07\x42OOLEAN\x10\x02\x12\n\n\x06OBJECT\x10\x03\x12\t\n\x05\x41RRAY\x10\x04\x12\x08\n\x04NULL\x10\x05\x42\x06\n\x04kind\x1a\x8e\x01\n\x04\x44\x65ps\x12\x0f\n\x07relpath\x18\x01 \x01(\t\x12\x0e\n\x06lineno\x18\x02 \x01(\x05\x12\x38\n\x0cmodule_links\x18\x03 \x03(\x0b\x32\".recipe_engine.Doc.Deps.ModuleLink\x1a+\n\nModuleLink\x12\x0f\n\x07package\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x1a]\n\tParameter\x12\x11\n\tdocstring\x18\x01 \x01(\t\x12\'\n\x04kind\x18\x02 \x01(\x0b\x32\x19.recipe_engine.Doc.Schema\x12\x14\n\x0c\x64\x65\x66\x61ult_json\x18\x03 \x01(\t\x1a\xc1\x01\n\nParameters\x12\x0f\n\x07relpath\x18\x01 \x01(\t\x12\x0e\n\x06lineno\x18\x02 \x01(\x05\x12\x41\n\nparameters\x18\x03 \x03(\x0b\x32-.recipe_engine.Doc.Parameters.ParametersEntry\x1aO\n\x0fParametersEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12+\n\x05value\x18\x02 \x01(\x0b\x32\x1c.recipe_engine.Doc.Parameter:\x02\x38\x01\x1aZ\n\x0cReturnSchema\x12\x0f\n\x07relpath\x18\x01 \x01(\t\x12\x0e\n\x06lineno\x18\x02 \x01(\x05\x12)\n\x06schema\x18\x03 \x01(\x0b\x32\x19.recipe_engine.Doc.Schema\x1a\xf6\x02\n\x05\x43lass\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07relpath\x18\x02 \x01(\t\x12\x0e\n\x06lineno\x18\x03 \x01(\x05\x12\x11\n\tdocstring\x18\x04 \x01(\t\x12.\n\x05\x62\x61ses\x18\x05 \x03(\x0b\x32\x1f.recipe_engine.Doc.Known.Object\x12\x36\n\x07\x63lasses\x18\x06 \x03(\x0b\x32%.recipe_engine.Doc.Class.ClassesEntry\x12\x32\n\x05\x66uncs\x18\x07 \x03(\x0b\x32#.recipe_engine.Doc.Class.FuncsEntry\x1aH\n\x0c\x43lassesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\'\n\x05value\x18\x02 \x01(\x0b\x32\x18.recipe_engine.Doc.Class:\x02\x38\x01\x1a\x45\n\nFuncsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12&\n\x05value\x18\x02 \x01(\x0b\x32\x17.recipe_engine.Doc.Func:\x02\x38\x01\x1a\x90\x01\n\x04\x46unc\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07relpath\x18\x02 \x01(\t\x12\x0e\n\x06lineno\x18\x03 \x01(\x05\x12\x11\n\tdocstring\x18\x04 \x01(\t\x12\x33\n\ndecorators\x18\x05 \x03(\x0b\x32\x1f.recipe_engine.Doc.Known.Object\x12\x11\n\tsignature\x18\x06 \x01(\t\x1a\xc0\x03\n\x06Module\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07relpath\x18\x02 \x01(\t\x12\x11\n\tdocstring\x18\x03 \x01(\t\x12%\n\x04\x64\x65ps\x18\x04 \x01(\x0b\x32\x17.recipe_engine.Doc.Deps\x12\x31\n\nparameters\x18\x05 \x01(\x0b\x32\x1d.recipe_engine.Doc.Parameters\x12+\n\tapi_class\x18\x06 \x01(\x0b\x32\x18.recipe_engine.Doc.Class\x12\x37\n\x07\x63lasses\x18\x07 \x03(\x0b\x32&.recipe_engine.Doc.Module.ClassesEntry\x12\x33\n\x05\x66uncs\x18\x08 \x03(\x0b\x32$.recipe_engine.Doc.Module.FuncsEntry\x1aH\n\x0c\x43lassesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\'\n\x05value\x18\x02 \x01(\x0b\x32\x18.recipe_engine.Doc.Class:\x02\x38\x01\x1a\x45\n\nFuncsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12&\n\x05value\x18\x02 \x01(\x0b\x32\x17.recipe_engine.Doc.Func:\x02\x38\x01\x1a\xde\x04\n\x06Recipe\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07relpath\x18\x02 \x01(\t\x12\x11\n\tdocstring\x18\x03 \x01(\t\x12%\n\x04\x64\x65ps\x18\x04 \x01(\x0b\x32\x17.recipe_engine.Doc.Deps\x12\x31\n\nparameters\x18\x05 \x01(\x0b\x32\x1d.recipe_engine.Doc.Parameters\x12\x36\n\rreturn_schema\x18\x06 \x01(\x0b\x32\x1f.recipe_engine.Doc.ReturnSchema\x12\x37\n\x07\x63lasses\x18\x07 \x03(\x0b\x32&.recipe_engine.Doc.Recipe.ClassesEntry\x12\x33\n\x05\x66uncs\x18\x08 \x03(\x0b\x32$.recipe_engine.Doc.Recipe.FuncsEntry\x12\x42\n\rknown_objects\x18\t \x03(\x0b\x32+.recipe_engine.Doc.Recipe.KnownObjectsEntry\x1aH\n\x0c\x43lassesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\'\n\x05value\x18\x02 \x01(\x0b\x32\x18.recipe_engine.Doc.Class:\x02\x38\x01\x1a\x45\n\nFuncsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12&\n\x05value\x18\x02 \x01(\x0b\x32\x17.recipe_engine.Doc.Func:\x02\x38\x01\x1aM\n\x11KnownObjectsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\'\n\x05value\x18\x02 \x01(\x0b\x32\x18.recipe_engine.Doc.Known:\x02\x38\x01\x1a\xf3\x03\n\x07Package\x12$\n\x04spec\x18\x01 \x01(\x0b\x32\x16.recipe_engine.Package\x12\x11\n\tdocstring\x18\x02 \x01(\t\x12\x45\n\x0erecipe_modules\x18\x03 \x03(\x0b\x32-.recipe_engine.Doc.Package.RecipeModulesEntry\x12\x38\n\x07recipes\x18\x04 \x03(\x0b\x32\'.recipe_engine.Doc.Package.RecipesEntry\x12\x43\n\rknown_objects\x18\x05 \x03(\x0b\x32,.recipe_engine.Doc.Package.KnownObjectsEntry\x1aO\n\x12RecipeModulesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12(\n\x05value\x18\x02 \x01(\x0b\x32\x19.recipe_engine.Doc.Module:\x02\x38\x01\x1aI\n\x0cRecipesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12(\n\x05value\x18\x02 \x01(\x0b\x32\x19.recipe_engine.Doc.Recipe:\x02\x38\x01\x1aM\n\x11KnownObjectsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\'\n\x05value\x18\x02 \x01(\x0b\x32\x18.recipe_engine.Doc.Known:\x02\x38\x01\x62\x06proto3')
   ,
   dependencies=[package__pb2.DESCRIPTOR,])
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
@@ -60,11 +60,98 @@ _DOC_SCHEMA_SIMPLETYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=1058,
-  serialized_end=1140,
+  serialized_start=1227,
+  serialized_end=1309,
 )
 _sym_db.RegisterEnumDescriptor(_DOC_SCHEMA_SIMPLETYPE)
 
+
+_DOC_KNOWN_OBJECT = _descriptor.Descriptor(
+  name='Object',
+  full_name='recipe_engine.Doc.Known.Object',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='generic', full_name='recipe_engine.Doc.Known.Object.generic', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='known', full_name='recipe_engine.Doc.Known.Object.known', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+    _descriptor.OneofDescriptor(
+      name='kind', full_name='recipe_engine.Doc.Known.Object.kind',
+      index=0, containing_type=None, fields=[]),
+  ],
+  serialized_start=158,
+  serialized_end=210,
+)
+
+_DOC_KNOWN = _descriptor.Descriptor(
+  name='Known',
+  full_name='recipe_engine.Doc.Known',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='url', full_name='recipe_engine.Doc.Known.url', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='func', full_name='recipe_engine.Doc.Known.func', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='klass', full_name='recipe_engine.Doc.Known.klass', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[_DOC_KNOWN_OBJECT, ],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+    _descriptor.OneofDescriptor(
+      name='kind', full_name='recipe_engine.Doc.Known.kind',
+      index=0, containing_type=None, fields=[]),
+  ],
+  serialized_start=52,
+  serialized_end=218,
+)
 
 _DOC_SCHEMA_STRUCT_TYPEMAPENTRY = _descriptor.Descriptor(
   name='TypeMapEntry',
@@ -99,8 +186,8 @@ _DOC_SCHEMA_STRUCT_TYPEMAPENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=540,
-  serialized_end=613,
+  serialized_start=709,
+  serialized_end=782,
 )
 
 _DOC_SCHEMA_STRUCT = _descriptor.Descriptor(
@@ -129,8 +216,8 @@ _DOC_SCHEMA_STRUCT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=465,
-  serialized_end=613,
+  serialized_start=634,
+  serialized_end=782,
 )
 
 _DOC_SCHEMA_SEQUENCE = _descriptor.Descriptor(
@@ -159,8 +246,8 @@ _DOC_SCHEMA_SEQUENCE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=615,
-  serialized_end=672,
+  serialized_start=784,
+  serialized_end=841,
 )
 
 _DOC_SCHEMA_LIST = _descriptor.Descriptor(
@@ -189,8 +276,8 @@ _DOC_SCHEMA_LIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=674,
-  serialized_end=738,
+  serialized_start=843,
+  serialized_end=907,
 )
 
 _DOC_SCHEMA_SET = _descriptor.Descriptor(
@@ -219,8 +306,8 @@ _DOC_SCHEMA_SET = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=740,
-  serialized_end=803,
+  serialized_start=909,
+  serialized_end=972,
 )
 
 _DOC_SCHEMA_DICT = _descriptor.Descriptor(
@@ -249,8 +336,8 @@ _DOC_SCHEMA_DICT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=805,
-  serialized_end=869,
+  serialized_start=974,
+  serialized_end=1038,
 )
 
 _DOC_SCHEMA_SINGLE = _descriptor.Descriptor(
@@ -293,8 +380,8 @@ _DOC_SCHEMA_SINGLE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=871,
-  serialized_end=977,
+  serialized_start=1040,
+  serialized_end=1146,
 )
 
 _DOC_SCHEMA_STATIC = _descriptor.Descriptor(
@@ -323,8 +410,8 @@ _DOC_SCHEMA_STATIC = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=979,
-  serialized_end=1009,
+  serialized_start=1148,
+  serialized_end=1178,
 )
 
 _DOC_SCHEMA_ENUM = _descriptor.Descriptor(
@@ -360,8 +447,8 @@ _DOC_SCHEMA_ENUM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1011,
-  serialized_end=1056,
+  serialized_start=1180,
+  serialized_end=1225,
 )
 
 _DOC_SCHEMA = _descriptor.Descriptor(
@@ -443,8 +530,8 @@ _DOC_SCHEMA = _descriptor.Descriptor(
       name='kind', full_name='recipe_engine.Doc.Schema.kind',
       index=0, containing_type=None, fields=[]),
   ],
-  serialized_start=52,
-  serialized_end=1148,
+  serialized_start=221,
+  serialized_end=1317,
 )
 
 _DOC_DEPS_MODULELINK = _descriptor.Descriptor(
@@ -480,8 +567,8 @@ _DOC_DEPS_MODULELINK = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1250,
-  serialized_end=1293,
+  serialized_start=1419,
+  serialized_end=1462,
 )
 
 _DOC_DEPS = _descriptor.Descriptor(
@@ -524,8 +611,8 @@ _DOC_DEPS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1151,
-  serialized_end=1293,
+  serialized_start=1320,
+  serialized_end=1462,
 )
 
 _DOC_PARAMETER = _descriptor.Descriptor(
@@ -568,8 +655,8 @@ _DOC_PARAMETER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1295,
-  serialized_end=1388,
+  serialized_start=1464,
+  serialized_end=1557,
 )
 
 _DOC_PARAMETERS_PARAMETERSENTRY = _descriptor.Descriptor(
@@ -605,8 +692,8 @@ _DOC_PARAMETERS_PARAMETERSENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1505,
-  serialized_end=1584,
+  serialized_start=1674,
+  serialized_end=1753,
 )
 
 _DOC_PARAMETERS = _descriptor.Descriptor(
@@ -649,8 +736,8 @@ _DOC_PARAMETERS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1391,
-  serialized_end=1584,
+  serialized_start=1560,
+  serialized_end=1753,
 )
 
 _DOC_RETURNSCHEMA = _descriptor.Descriptor(
@@ -693,48 +780,8 @@ _DOC_RETURNSCHEMA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1586,
-  serialized_end=1676,
-)
-
-_DOC_CLASS_BASE = _descriptor.Descriptor(
-  name='Base',
-  full_name='recipe_engine.Doc.Class.Base',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='generic', full_name='recipe_engine.Doc.Class.Base.generic', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='known', full_name='recipe_engine.Doc.Class.Base.known', index=1,
-      number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-    _descriptor.OneofDescriptor(
-      name='kind', full_name='recipe_engine.Doc.Class.Base.kind',
-      index=0, containing_type=None, fields=[]),
-  ],
-  serialized_start=1908,
-  serialized_end=1958,
+  serialized_start=1755,
+  serialized_end=1845,
 )
 
 _DOC_CLASS_CLASSESENTRY = _descriptor.Descriptor(
@@ -770,8 +817,8 @@ _DOC_CLASS_CLASSESENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1960,
-  serialized_end=2032,
+  serialized_start=2079,
+  serialized_end=2151,
 )
 
 _DOC_CLASS_FUNCSENTRY = _descriptor.Descriptor(
@@ -807,8 +854,8 @@ _DOC_CLASS_FUNCSENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2034,
-  serialized_end=2103,
+  serialized_start=2153,
+  serialized_end=2222,
 )
 
 _DOC_CLASS = _descriptor.Descriptor(
@@ -870,7 +917,7 @@ _DOC_CLASS = _descriptor.Descriptor(
   ],
   extensions=[
   ],
-  nested_types=[_DOC_CLASS_BASE, _DOC_CLASS_CLASSESENTRY, _DOC_CLASS_FUNCSENTRY, ],
+  nested_types=[_DOC_CLASS_CLASSESENTRY, _DOC_CLASS_FUNCSENTRY, ],
   enum_types=[
   ],
   options=None,
@@ -879,48 +926,8 @@ _DOC_CLASS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1679,
-  serialized_end=2103,
-)
-
-_DOC_FUNC_DECORATOR = _descriptor.Descriptor(
-  name='Decorator',
-  full_name='recipe_engine.Doc.Func.Decorator',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='generic', full_name='recipe_engine.Doc.Func.Decorator.generic', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='known', full_name='recipe_engine.Doc.Func.Decorator.known', index=1,
-      number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-    _descriptor.OneofDescriptor(
-      name='kind', full_name='recipe_engine.Doc.Func.Decorator.kind',
-      index=0, containing_type=None, fields=[]),
-  ],
-  serialized_start=2254,
-  serialized_end=2309,
+  serialized_start=1848,
+  serialized_end=2222,
 )
 
 _DOC_FUNC = _descriptor.Descriptor(
@@ -975,7 +982,7 @@ _DOC_FUNC = _descriptor.Descriptor(
   ],
   extensions=[
   ],
-  nested_types=[_DOC_FUNC_DECORATOR, ],
+  nested_types=[],
   enum_types=[
   ],
   options=None,
@@ -984,8 +991,8 @@ _DOC_FUNC = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2106,
-  serialized_end=2309,
+  serialized_start=2225,
+  serialized_end=2369,
 )
 
 _DOC_MODULE_CLASSESENTRY = _descriptor.Descriptor(
@@ -1021,8 +1028,8 @@ _DOC_MODULE_CLASSESENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1960,
-  serialized_end=2032,
+  serialized_start=2079,
+  serialized_end=2151,
 )
 
 _DOC_MODULE_FUNCSENTRY = _descriptor.Descriptor(
@@ -1058,8 +1065,8 @@ _DOC_MODULE_FUNCSENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2034,
-  serialized_end=2103,
+  serialized_start=2153,
+  serialized_end=2222,
 )
 
 _DOC_MODULE = _descriptor.Descriptor(
@@ -1137,8 +1144,8 @@ _DOC_MODULE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2312,
-  serialized_end=2760,
+  serialized_start=2372,
+  serialized_end=2820,
 )
 
 _DOC_RECIPE_CLASSESENTRY = _descriptor.Descriptor(
@@ -1174,8 +1181,8 @@ _DOC_RECIPE_CLASSESENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1960,
-  serialized_end=2032,
+  serialized_start=2079,
+  serialized_end=2151,
 )
 
 _DOC_RECIPE_FUNCSENTRY = _descriptor.Descriptor(
@@ -1211,8 +1218,45 @@ _DOC_RECIPE_FUNCSENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2034,
-  serialized_end=2103,
+  serialized_start=2153,
+  serialized_end=2222,
+)
+
+_DOC_RECIPE_KNOWNOBJECTSENTRY = _descriptor.Descriptor(
+  name='KnownObjectsEntry',
+  full_name='recipe_engine.Doc.Recipe.KnownObjectsEntry',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='key', full_name='recipe_engine.Doc.Recipe.KnownObjectsEntry.key', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='value', full_name='recipe_engine.Doc.Recipe.KnownObjectsEntry.value', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=3352,
+  serialized_end=3429,
 )
 
 _DOC_RECIPE = _descriptor.Descriptor(
@@ -1278,10 +1322,17 @@ _DOC_RECIPE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='known_objects', full_name='recipe_engine.Doc.Recipe.known_objects', index=8,
+      number=9, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
-  nested_types=[_DOC_RECIPE_CLASSESENTRY, _DOC_RECIPE_FUNCSENTRY, ],
+  nested_types=[_DOC_RECIPE_CLASSESENTRY, _DOC_RECIPE_FUNCSENTRY, _DOC_RECIPE_KNOWNOBJECTSENTRY, ],
   enum_types=[
   ],
   options=None,
@@ -1290,8 +1341,8 @@ _DOC_RECIPE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2763,
-  serialized_end=3222,
+  serialized_start=2823,
+  serialized_end=3429,
 )
 
 _DOC_PACKAGE_RECIPEMODULESENTRY = _descriptor.Descriptor(
@@ -1327,8 +1378,8 @@ _DOC_PACKAGE_RECIPEMODULESENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3422,
-  serialized_end=3501,
+  serialized_start=3698,
+  serialized_end=3777,
 )
 
 _DOC_PACKAGE_RECIPESENTRY = _descriptor.Descriptor(
@@ -1364,8 +1415,45 @@ _DOC_PACKAGE_RECIPESENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3503,
-  serialized_end=3576,
+  serialized_start=3779,
+  serialized_end=3852,
+)
+
+_DOC_PACKAGE_KNOWNOBJECTSENTRY = _descriptor.Descriptor(
+  name='KnownObjectsEntry',
+  full_name='recipe_engine.Doc.Package.KnownObjectsEntry',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='key', full_name='recipe_engine.Doc.Package.KnownObjectsEntry.key', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='value', full_name='recipe_engine.Doc.Package.KnownObjectsEntry.value', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=3352,
+  serialized_end=3429,
 )
 
 _DOC_PACKAGE = _descriptor.Descriptor(
@@ -1403,10 +1491,17 @@ _DOC_PACKAGE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='known_objects', full_name='recipe_engine.Doc.Package.known_objects', index=4,
+      number=5, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
-  nested_types=[_DOC_PACKAGE_RECIPEMODULESENTRY, _DOC_PACKAGE_RECIPESENTRY, ],
+  nested_types=[_DOC_PACKAGE_RECIPEMODULESENTRY, _DOC_PACKAGE_RECIPESENTRY, _DOC_PACKAGE_KNOWNOBJECTSENTRY, ],
   enum_types=[
   ],
   options=None,
@@ -1415,8 +1510,8 @@ _DOC_PACKAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3225,
-  serialized_end=3576,
+  serialized_start=3432,
+  serialized_end=3931,
 )
 
 _DOC = _descriptor.Descriptor(
@@ -1429,7 +1524,7 @@ _DOC = _descriptor.Descriptor(
   ],
   extensions=[
   ],
-  nested_types=[_DOC_SCHEMA, _DOC_DEPS, _DOC_PARAMETER, _DOC_PARAMETERS, _DOC_RETURNSCHEMA, _DOC_CLASS, _DOC_FUNC, _DOC_MODULE, _DOC_RECIPE, _DOC_PACKAGE, ],
+  nested_types=[_DOC_KNOWN, _DOC_SCHEMA, _DOC_DEPS, _DOC_PARAMETER, _DOC_PARAMETERS, _DOC_RETURNSCHEMA, _DOC_CLASS, _DOC_FUNC, _DOC_MODULE, _DOC_RECIPE, _DOC_PACKAGE, ],
   enum_types=[
   ],
   options=None,
@@ -1439,9 +1534,25 @@ _DOC = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=44,
-  serialized_end=3576,
+  serialized_end=3931,
 )
 
+_DOC_KNOWN_OBJECT.containing_type = _DOC_KNOWN
+_DOC_KNOWN_OBJECT.oneofs_by_name['kind'].fields.append(
+  _DOC_KNOWN_OBJECT.fields_by_name['generic'])
+_DOC_KNOWN_OBJECT.fields_by_name['generic'].containing_oneof = _DOC_KNOWN_OBJECT.oneofs_by_name['kind']
+_DOC_KNOWN_OBJECT.oneofs_by_name['kind'].fields.append(
+  _DOC_KNOWN_OBJECT.fields_by_name['known'])
+_DOC_KNOWN_OBJECT.fields_by_name['known'].containing_oneof = _DOC_KNOWN_OBJECT.oneofs_by_name['kind']
+_DOC_KNOWN.fields_by_name['func'].message_type = _DOC_FUNC
+_DOC_KNOWN.fields_by_name['klass'].message_type = _DOC_CLASS
+_DOC_KNOWN.containing_type = _DOC
+_DOC_KNOWN.oneofs_by_name['kind'].fields.append(
+  _DOC_KNOWN.fields_by_name['func'])
+_DOC_KNOWN.fields_by_name['func'].containing_oneof = _DOC_KNOWN.oneofs_by_name['kind']
+_DOC_KNOWN.oneofs_by_name['kind'].fields.append(
+  _DOC_KNOWN.fields_by_name['klass'])
+_DOC_KNOWN.fields_by_name['klass'].containing_oneof = _DOC_KNOWN.oneofs_by_name['kind']
 _DOC_SCHEMA_STRUCT_TYPEMAPENTRY.fields_by_name['value'].message_type = _DOC_SCHEMA
 _DOC_SCHEMA_STRUCT_TYPEMAPENTRY.containing_type = _DOC_SCHEMA_STRUCT
 _DOC_SCHEMA_STRUCT.fields_by_name['type_map'].message_type = _DOC_SCHEMA_STRUCT_TYPEMAPENTRY
@@ -1503,29 +1614,15 @@ _DOC_PARAMETERS.fields_by_name['parameters'].message_type = _DOC_PARAMETERS_PARA
 _DOC_PARAMETERS.containing_type = _DOC
 _DOC_RETURNSCHEMA.fields_by_name['schema'].message_type = _DOC_SCHEMA
 _DOC_RETURNSCHEMA.containing_type = _DOC
-_DOC_CLASS_BASE.containing_type = _DOC_CLASS
-_DOC_CLASS_BASE.oneofs_by_name['kind'].fields.append(
-  _DOC_CLASS_BASE.fields_by_name['generic'])
-_DOC_CLASS_BASE.fields_by_name['generic'].containing_oneof = _DOC_CLASS_BASE.oneofs_by_name['kind']
-_DOC_CLASS_BASE.oneofs_by_name['kind'].fields.append(
-  _DOC_CLASS_BASE.fields_by_name['known'])
-_DOC_CLASS_BASE.fields_by_name['known'].containing_oneof = _DOC_CLASS_BASE.oneofs_by_name['kind']
 _DOC_CLASS_CLASSESENTRY.fields_by_name['value'].message_type = _DOC_CLASS
 _DOC_CLASS_CLASSESENTRY.containing_type = _DOC_CLASS
 _DOC_CLASS_FUNCSENTRY.fields_by_name['value'].message_type = _DOC_FUNC
 _DOC_CLASS_FUNCSENTRY.containing_type = _DOC_CLASS
-_DOC_CLASS.fields_by_name['bases'].message_type = _DOC_CLASS_BASE
+_DOC_CLASS.fields_by_name['bases'].message_type = _DOC_KNOWN_OBJECT
 _DOC_CLASS.fields_by_name['classes'].message_type = _DOC_CLASS_CLASSESENTRY
 _DOC_CLASS.fields_by_name['funcs'].message_type = _DOC_CLASS_FUNCSENTRY
 _DOC_CLASS.containing_type = _DOC
-_DOC_FUNC_DECORATOR.containing_type = _DOC_FUNC
-_DOC_FUNC_DECORATOR.oneofs_by_name['kind'].fields.append(
-  _DOC_FUNC_DECORATOR.fields_by_name['generic'])
-_DOC_FUNC_DECORATOR.fields_by_name['generic'].containing_oneof = _DOC_FUNC_DECORATOR.oneofs_by_name['kind']
-_DOC_FUNC_DECORATOR.oneofs_by_name['kind'].fields.append(
-  _DOC_FUNC_DECORATOR.fields_by_name['known'])
-_DOC_FUNC_DECORATOR.fields_by_name['known'].containing_oneof = _DOC_FUNC_DECORATOR.oneofs_by_name['kind']
-_DOC_FUNC.fields_by_name['decorators'].message_type = _DOC_FUNC_DECORATOR
+_DOC_FUNC.fields_by_name['decorators'].message_type = _DOC_KNOWN_OBJECT
 _DOC_FUNC.containing_type = _DOC
 _DOC_MODULE_CLASSESENTRY.fields_by_name['value'].message_type = _DOC_CLASS
 _DOC_MODULE_CLASSESENTRY.containing_type = _DOC_MODULE
@@ -1541,23 +1638,43 @@ _DOC_RECIPE_CLASSESENTRY.fields_by_name['value'].message_type = _DOC_CLASS
 _DOC_RECIPE_CLASSESENTRY.containing_type = _DOC_RECIPE
 _DOC_RECIPE_FUNCSENTRY.fields_by_name['value'].message_type = _DOC_FUNC
 _DOC_RECIPE_FUNCSENTRY.containing_type = _DOC_RECIPE
+_DOC_RECIPE_KNOWNOBJECTSENTRY.fields_by_name['value'].message_type = _DOC_KNOWN
+_DOC_RECIPE_KNOWNOBJECTSENTRY.containing_type = _DOC_RECIPE
 _DOC_RECIPE.fields_by_name['deps'].message_type = _DOC_DEPS
 _DOC_RECIPE.fields_by_name['parameters'].message_type = _DOC_PARAMETERS
 _DOC_RECIPE.fields_by_name['return_schema'].message_type = _DOC_RETURNSCHEMA
 _DOC_RECIPE.fields_by_name['classes'].message_type = _DOC_RECIPE_CLASSESENTRY
 _DOC_RECIPE.fields_by_name['funcs'].message_type = _DOC_RECIPE_FUNCSENTRY
+_DOC_RECIPE.fields_by_name['known_objects'].message_type = _DOC_RECIPE_KNOWNOBJECTSENTRY
 _DOC_RECIPE.containing_type = _DOC
 _DOC_PACKAGE_RECIPEMODULESENTRY.fields_by_name['value'].message_type = _DOC_MODULE
 _DOC_PACKAGE_RECIPEMODULESENTRY.containing_type = _DOC_PACKAGE
 _DOC_PACKAGE_RECIPESENTRY.fields_by_name['value'].message_type = _DOC_RECIPE
 _DOC_PACKAGE_RECIPESENTRY.containing_type = _DOC_PACKAGE
+_DOC_PACKAGE_KNOWNOBJECTSENTRY.fields_by_name['value'].message_type = _DOC_KNOWN
+_DOC_PACKAGE_KNOWNOBJECTSENTRY.containing_type = _DOC_PACKAGE
 _DOC_PACKAGE.fields_by_name['spec'].message_type = package__pb2._PACKAGE
 _DOC_PACKAGE.fields_by_name['recipe_modules'].message_type = _DOC_PACKAGE_RECIPEMODULESENTRY
 _DOC_PACKAGE.fields_by_name['recipes'].message_type = _DOC_PACKAGE_RECIPESENTRY
+_DOC_PACKAGE.fields_by_name['known_objects'].message_type = _DOC_PACKAGE_KNOWNOBJECTSENTRY
 _DOC_PACKAGE.containing_type = _DOC
 DESCRIPTOR.message_types_by_name['Doc'] = _DOC
 
 Doc = _reflection.GeneratedProtocolMessageType('Doc', (_message.Message,), dict(
+
+  Known = _reflection.GeneratedProtocolMessageType('Known', (_message.Message,), dict(
+
+    Object = _reflection.GeneratedProtocolMessageType('Object', (_message.Message,), dict(
+      DESCRIPTOR = _DOC_KNOWN_OBJECT,
+      __module__ = 'doc_pb2'
+      # @@protoc_insertion_point(class_scope:recipe_engine.Doc.Known.Object)
+      ))
+    ,
+    DESCRIPTOR = _DOC_KNOWN,
+    __module__ = 'doc_pb2'
+    # @@protoc_insertion_point(class_scope:recipe_engine.Doc.Known)
+    ))
+  ,
 
   Schema = _reflection.GeneratedProtocolMessageType('Schema', (_message.Message,), dict(
 
@@ -1673,13 +1790,6 @@ Doc = _reflection.GeneratedProtocolMessageType('Doc', (_message.Message,), dict(
 
   Class = _reflection.GeneratedProtocolMessageType('Class', (_message.Message,), dict(
 
-    Base = _reflection.GeneratedProtocolMessageType('Base', (_message.Message,), dict(
-      DESCRIPTOR = _DOC_CLASS_BASE,
-      __module__ = 'doc_pb2'
-      # @@protoc_insertion_point(class_scope:recipe_engine.Doc.Class.Base)
-      ))
-    ,
-
     ClassesEntry = _reflection.GeneratedProtocolMessageType('ClassesEntry', (_message.Message,), dict(
       DESCRIPTOR = _DOC_CLASS_CLASSESENTRY,
       __module__ = 'doc_pb2'
@@ -1700,13 +1810,6 @@ Doc = _reflection.GeneratedProtocolMessageType('Doc', (_message.Message,), dict(
   ,
 
   Func = _reflection.GeneratedProtocolMessageType('Func', (_message.Message,), dict(
-
-    Decorator = _reflection.GeneratedProtocolMessageType('Decorator', (_message.Message,), dict(
-      DESCRIPTOR = _DOC_FUNC_DECORATOR,
-      __module__ = 'doc_pb2'
-      # @@protoc_insertion_point(class_scope:recipe_engine.Doc.Func.Decorator)
-      ))
-    ,
     DESCRIPTOR = _DOC_FUNC,
     __module__ = 'doc_pb2'
     # @@protoc_insertion_point(class_scope:recipe_engine.Doc.Func)
@@ -1749,6 +1852,13 @@ Doc = _reflection.GeneratedProtocolMessageType('Doc', (_message.Message,), dict(
       # @@protoc_insertion_point(class_scope:recipe_engine.Doc.Recipe.FuncsEntry)
       ))
     ,
+
+    KnownObjectsEntry = _reflection.GeneratedProtocolMessageType('KnownObjectsEntry', (_message.Message,), dict(
+      DESCRIPTOR = _DOC_RECIPE_KNOWNOBJECTSENTRY,
+      __module__ = 'doc_pb2'
+      # @@protoc_insertion_point(class_scope:recipe_engine.Doc.Recipe.KnownObjectsEntry)
+      ))
+    ,
     DESCRIPTOR = _DOC_RECIPE,
     __module__ = 'doc_pb2'
     # @@protoc_insertion_point(class_scope:recipe_engine.Doc.Recipe)
@@ -1770,6 +1880,13 @@ Doc = _reflection.GeneratedProtocolMessageType('Doc', (_message.Message,), dict(
       # @@protoc_insertion_point(class_scope:recipe_engine.Doc.Package.RecipesEntry)
       ))
     ,
+
+    KnownObjectsEntry = _reflection.GeneratedProtocolMessageType('KnownObjectsEntry', (_message.Message,), dict(
+      DESCRIPTOR = _DOC_PACKAGE_KNOWNOBJECTSENTRY,
+      __module__ = 'doc_pb2'
+      # @@protoc_insertion_point(class_scope:recipe_engine.Doc.Package.KnownObjectsEntry)
+      ))
+    ,
     DESCRIPTOR = _DOC_PACKAGE,
     __module__ = 'doc_pb2'
     # @@protoc_insertion_point(class_scope:recipe_engine.Doc.Package)
@@ -1780,6 +1897,8 @@ Doc = _reflection.GeneratedProtocolMessageType('Doc', (_message.Message,), dict(
   # @@protoc_insertion_point(class_scope:recipe_engine.Doc)
   ))
 _sym_db.RegisterMessage(Doc)
+_sym_db.RegisterMessage(Doc.Known)
+_sym_db.RegisterMessage(Doc.Known.Object)
 _sym_db.RegisterMessage(Doc.Schema)
 _sym_db.RegisterMessage(Doc.Schema.Struct)
 _sym_db.RegisterMessage(Doc.Schema.Struct.TypeMapEntry)
@@ -1797,20 +1916,20 @@ _sym_db.RegisterMessage(Doc.Parameters)
 _sym_db.RegisterMessage(Doc.Parameters.ParametersEntry)
 _sym_db.RegisterMessage(Doc.ReturnSchema)
 _sym_db.RegisterMessage(Doc.Class)
-_sym_db.RegisterMessage(Doc.Class.Base)
 _sym_db.RegisterMessage(Doc.Class.ClassesEntry)
 _sym_db.RegisterMessage(Doc.Class.FuncsEntry)
 _sym_db.RegisterMessage(Doc.Func)
-_sym_db.RegisterMessage(Doc.Func.Decorator)
 _sym_db.RegisterMessage(Doc.Module)
 _sym_db.RegisterMessage(Doc.Module.ClassesEntry)
 _sym_db.RegisterMessage(Doc.Module.FuncsEntry)
 _sym_db.RegisterMessage(Doc.Recipe)
 _sym_db.RegisterMessage(Doc.Recipe.ClassesEntry)
 _sym_db.RegisterMessage(Doc.Recipe.FuncsEntry)
+_sym_db.RegisterMessage(Doc.Recipe.KnownObjectsEntry)
 _sym_db.RegisterMessage(Doc.Package)
 _sym_db.RegisterMessage(Doc.Package.RecipeModulesEntry)
 _sym_db.RegisterMessage(Doc.Package.RecipesEntry)
+_sym_db.RegisterMessage(Doc.Package.KnownObjectsEntry)
 
 
 _DOC_SCHEMA_STRUCT_TYPEMAPENTRY.has_options = True
@@ -1829,8 +1948,12 @@ _DOC_RECIPE_CLASSESENTRY.has_options = True
 _DOC_RECIPE_CLASSESENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
 _DOC_RECIPE_FUNCSENTRY.has_options = True
 _DOC_RECIPE_FUNCSENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
+_DOC_RECIPE_KNOWNOBJECTSENTRY.has_options = True
+_DOC_RECIPE_KNOWNOBJECTSENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
 _DOC_PACKAGE_RECIPEMODULESENTRY.has_options = True
 _DOC_PACKAGE_RECIPEMODULESENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
 _DOC_PACKAGE_RECIPESENTRY.has_options = True
 _DOC_PACKAGE_RECIPESENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
+_DOC_PACKAGE_KNOWNOBJECTSENTRY.has_options = True
+_DOC_PACKAGE_KNOWNOBJECTSENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
 # @@protoc_insertion_point(module_scope)

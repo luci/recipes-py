@@ -21,6 +21,25 @@ package recipe_engine;
 //   docstring - the docstring of the item :). This should be pretty obvious.
 //     check the comment in cases where it's not.
 message Doc {
+  message Known {
+    // The url of the repo that this object comes from.
+    string url = 1;
+
+    oneof kind {
+      Func func = 2;
+      Class klass = 3; // class is reserved in python
+    }
+
+    message Object {
+      oneof kind {
+        // This is a string representation of the object.
+        string generic = 1;
+
+        // This can be looked up in the known_objects map.
+        string known = 2;
+      }
+    }
+  }
 
   // Schema defines a very simple recursive schema system used by the
   // recipe_engine. These correspond to types in the recipe_engine's config.py
@@ -176,14 +195,10 @@ message Doc {
     int32 lineno = 3;
     string docstring = 4;
 
-    message Base {
-      oneof kind {
-        string generic = 1;
-        string known = 2;
-      }
-    }
-
-    repeated Base bases = 5;
+    // The list of base classes this class has (if any). A base class may either
+    // be 'known' or 'generic'. 'known' bases refer to classes defined in the
+    // known_objects map.
+    repeated Known.Object bases = 5;
 
     // a mapping of visible inner classes (e.g. class definitions nested within
     // this class).
@@ -200,18 +215,10 @@ message Doc {
     int32 lineno = 3;
     string docstring = 4;
 
-    message Decorator {
-      oneof kind {
-        string generic = 1;
-        string known = 2;
-      }
-    }
-
     // The list of decorators this function has (if any). A decorator may either
     // be 'known' or 'generic'. 'known' decorators refer to decorators defined
-    // in the recipe_engine repo and may be hyperlinked to the recipe engine
-    // documentation for them.
-    repeated Decorator decorators = 5;
+    // in the known_objects map.
+    repeated Known.Object decorators = 5;
 
     // The rendered python ast node for the whole function signature, e.g.:
     //   "arg, other_arg, default=True, **kwargs"
@@ -265,6 +272,10 @@ message Doc {
     // A mapping of visible function names to function documentation. Excludes
     // GenTests function.
     map<string, Func> funcs = 8;
+
+    // A map of known items (e.g. core portions of the recipe engine) to their
+    // documentation.
+    map<string, Known> known_objects = 9;
   }
 
   // Documentation for a package (recipe repo), including docs for all recipes
@@ -284,5 +295,9 @@ message Doc {
 
     // a map of all of this package's recipe names to their documentation.
     map<string, Recipe> recipes = 4;
+
+    // A map of known items (e.g. core portions of the recipe engine) to their
+    // documentation.
+    map<string, Known> known_objects = 5;
   }
 }

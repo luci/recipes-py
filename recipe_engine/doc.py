@@ -6,8 +6,6 @@
 from __future__ import print_function, absolute_import
 
 import ast
-import collections
-import contextlib
 import inspect
 import json
 import logging
@@ -16,7 +14,6 @@ import posixpath
 import sys
 import types as stdlib_types
 
-from collections import namedtuple
 from cStringIO import StringIO
 
 from . import config
@@ -33,6 +30,9 @@ from google.protobuf import text_format as textpb
 import astunparse
 
 LOGGER = logging.getLogger(__name__)
+
+RECIPE_ENGINE_BASE = os.path.dirname(
+  os.path.dirname(os.path.abspath(__file__)))
 
 join = posixpath.join
 if sys.platform == 'win32':
@@ -350,11 +350,6 @@ def parse_recipe(uv, base_dir, relpath, recipe_name):
   )
 
 
-KNOWN_RECIPE_API_BASES = (
-  'recipe_engine.recipe_api.RecipeApiPlain',
-  'recipe_engine.recipe_api.RecipeApi',
-)
-
 def parse_module(uv, base_dir, relpath, mod_name):
   native_relpath = _to_native(relpath)
 
@@ -418,6 +413,50 @@ def parse_package(uv, base_dir, spec):
   return ret
 
 
+KNOWN_RECIPE_API_BASES = {
+  'recipe_engine.recipe_api.RecipeApi': recipe_api.RecipeApi,
+  'recipe_engine.recipe_api.RecipeApiPlain': recipe_api.RecipeApiPlain,
+}
+
+
+KNOWN_OBJECTS = {
+  'recipe_engine.recipe_api.non_step': recipe_api.non_step,
+  'recipe_engine.recipe_api.infer_composite_step': (
+    recipe_api.infer_composite_step),
+
+  'recipe_engine.util.returns_placeholder': util.returns_placeholder,
+}
+KNOWN_OBJECTS.update(KNOWN_RECIPE_API_BASES)
+
+
+RECIPE_ENGINE_URL = 'https://github.com/luci/recipes-py'
+
+
+def _set_known_objects(base):
+  source_cache = {}
+
+  for k, v in KNOWN_OBJECTS.iteritems():
+    base.known_objects[k].url = RECIPE_ENGINE_URL
+    _, target = k.rsplit('.', 1)
+    fname = inspect.getsourcefile(v)
+    if fname not in source_cache:
+      # we load and cache the whole source file so that ast.parse gets the right
+      # line numbers for all the definitions.
+      source_lines, _ = inspect.findsource(v)
+      source_cache[fname] = ast.parse(''.join(source_lines), fname)
+
+    relpath = os.path.relpath(fname, RECIPE_ENGINE_BASE)
+    for node in source_cache[fname].body:
+      if isinstance(node, ast.ClassDef) and node.name == target:
+        base.known_objects[k].klass.CopyFrom(parse_class(node, relpath, {}))
+        break
+      elif isinstance(node, ast.FunctionDef) and node.name == target:
+        base.known_objects[k].func.CopyFrom(parse_func(node, relpath, {}))
+        break
+    else:
+      raise ValueError('could not find %r in %r' % (k, relpath))
+
+
 def main(universe_view, recipe, kind):
   logging.basicConfig()
 
@@ -432,6 +471,8 @@ def main(universe_view, recipe, kind):
     node = parse_recipe(universe_view, base_dir, relpath, recipe)
   else:
     node = parse_package(universe_view, base_dir, spec)
+
+  _set_known_objects(node)
 
   if kind == 'jsonpb':
     sys.stdout.write(jsonpb.MessageToJson(
