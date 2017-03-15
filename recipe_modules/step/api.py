@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 import contextlib
+import copy
 
 from recipe_engine import recipe_api
 
@@ -95,12 +96,14 @@ class StepApi(recipe_api.RecipeApiPlain):
 
   def get_from_context(self, key, default=None):
     """Returns |key|'s value from context if present, otherwise |default|."""
-    return recipe_api._STEP_CONTEXT.get(key, default)
+    # TODO(phajdan.jr): instead of copy, freeze contents of the context.
+    return copy.deepcopy(recipe_api._STEP_CONTEXT.get(key, default))
 
   def combine_with_context(self, key, value):
     """Combines |value| with the value for |key| in current context, if any.
     Returns the combined value."""
-    return recipe_api._STEP_CONTEXT.get_with_context(key, value)
+    # TODO(phajdan.jr): instead of copy, freeze contents of the context.
+    return copy.deepcopy(recipe_api._STEP_CONTEXT.get_with_context(key, value))
 
   @contextlib.contextmanager
   def nest(self, name):
