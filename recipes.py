@@ -357,7 +357,7 @@ def doc(package_deps, args):
   universe = loader.RecipeUniverse(package_deps, config_file)
   universe_view = loader.UniverseView(universe, package_deps.root_package)
 
-  doc.main(universe_view)
+  doc.main(universe_view, args.recipe, args.kind)
 
 
 # Map of arguments_pb2.Property "value" oneof conversion functions.
@@ -583,10 +583,16 @@ def main():
   refs_p.add_argument('--transitive', action='store_true',
                       help='Compute transitive closure of the references')
 
+  doc_kinds=('binarypb', 'jsonpb', 'textpb', 'markdown(github)',
+             'markdown(gitiles)')
   doc_p = subp.add_parser(
       'doc',
       description='List all known modules reachable from the current package, '
           'with their documentation')
+  doc_p.add_argument('recipe', nargs='?',
+                     help='Restrict documentation to this recipe')
+  doc_p.add_argument('--kind', default='jsonpb', choices=doc_kinds,
+                     help='Output this kind of documentation')
   doc_p.set_defaults(command='doc')
 
   args = parser.parse_args()

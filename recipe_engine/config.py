@@ -337,6 +337,8 @@ class ConfigBase(object):
 
 _SIMPLE_TYPE_LOOKUP = {
   str: doc.Doc.Schema.STRING,
+  basestring: doc.Doc.Schema.STRING,
+  unicode: doc.Doc.Schema.STRING,
   int: doc.Doc.Schema.NUMBER,
   float: doc.Doc.Schema.NUMBER,
   bool: doc.Doc.Schema.BOOLEAN,
@@ -355,7 +357,7 @@ def _inner_type_schema(inner_type):
     else:
       ret.append(_SIMPLE_TYPE_LOOKUP[typ])
   _flatten(inner_type)
-  return list(set(ret))
+  return sorted(set(ret))
 
 
 class ConfigSchemaBase(object):

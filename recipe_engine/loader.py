@@ -180,6 +180,39 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
       # In current package
       return self.package, name
 
+  def normalize_deps_spec(self, spec):
+    """Takes a deps spec in either list or dict form, and converts it to
+    normalized form.
+
+    List:
+      ["foo/module"]
+
+    Dict:
+      {
+        "local_name": "foo/module",
+      }
+
+    Normalized form:
+      {
+        "local_name": (Package("foo"), "module")
+      }
+    """
+    # Automatic local names.
+    if isinstance(spec, (list, tuple)):
+      deps = {}
+      for item in spec:
+        package, name = self._dep_from_name(item)
+        assert name not in deps, (
+            "You specified two dependencies with the name %s" % name)
+        deps[name] = package, name
+    # Explicit local names.
+    elif isinstance(spec, dict):
+      deps = {}
+      for name, item in spec.iteritems():
+        package, dep_real_name = self._dep_from_name(item)
+        deps[name] = package, dep_real_name
+    return deps
+
   def deps_from_spec(self, spec):
     """Load dependencies from a dependency spec.
 
@@ -194,24 +227,13 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
       'chromiuminternal': 'build_internal/chromium',
     }
     """
+    return {
+      local_name: self.universe.load(pkg, name)
+      for local_name, (pkg, name) in self.normalize_deps_spec(spec).iteritems()
+    }
 
-    # Automatic local names.
-    if isinstance(spec, (list, tuple)):
-      deps = {}
-      for item in spec:
-        package, name = self._dep_from_name(item)
-        assert name not in deps, (
-            "You specified two dependencies with the name %s" % name)
-        deps[name] = self.universe.load(package, name)
-    # Explicit local names.
-    elif isinstance(spec, dict):
-      deps = {}
-      for name, item in spec.iteritems():
-        package, dep_real_name = self._dep_from_name(item)
-        deps[name] = self.universe.load(package, dep_real_name)
-    return deps
 
-  def _find_recipe(self, recipe):
+  def find_recipe(self, recipe):
     if ':' in recipe:
       module_name, example = recipe.split(':')
       #TODO(martinis) change to example == 'example' ? Technically a bug...
@@ -246,7 +268,7 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
     # imported by load_recipe_modules instead of the normal search paths.
     # TODO(martiniss) change "infra/example" to ["infra", "example"], and handle
     # appropriately, because of windows.
-    recipe_path = self._find_recipe(recipe)
+    recipe_path = self.find_recipe(recipe)
     try:
       script = RecipeScript.from_script_path(recipe_path, self)
     except (LoaderError,AssertionError,ImportError) as e:
