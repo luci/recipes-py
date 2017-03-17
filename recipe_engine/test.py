@@ -125,18 +125,13 @@ class TestDescription(object):
     return '%s.%s' % (self.recipe_name, self.test_name)
 
 
-def expectation_path(expect_dir, test_name):
-  """Returns path where serialized expectation data is stored."""
-  return os.path.join(expect_dir, test_name + '.json')
-
-
-def run_test(test_description):
+def run_test(test_description, train=False):
   """Runs a test. Returns TestResults object."""
   expected = None
-  path = expectation_path(
-      test_description.expect_dir, test_description.test_name)
-  if os.path.exists(path):
-    with open(path) as f:
+  expectation_path = os.path.join(
+      test_description.expect_dir, test_description.test_name + '.json')
+  if os.path.exists(expectation_path):
+    with open(expectation_path) as f:
       # TODO(phajdan.jr): why do we need to re-encode golden data files?
       expected = re_encode(json.load(f))
 
@@ -152,14 +147,24 @@ def run_test(test_description):
     sys.stdout.write('C')
     failures.extend([CheckFailure(c) for c in failed_checks])
   elif actual != expected:
-    diff = '\n'.join(difflib.unified_diff(
-        pprint.pformat(expected).splitlines(),
-        pprint.pformat(actual).splitlines(),
-        fromfile='expected', tofile='actual',
-        n=4, lineterm=''))
+    if train:
+      expectation_dir = os.path.dirname(expectation_path)
+      if not os.path.exists(expectation_dir):
+        os.makedirs(expectation_dir)
+      with open(expectation_path, 'w') as f:
+        json.dump(
+            re_encode(actual), f, sort_keys=True, indent=2,
+            separators=(',', ': '))
+      sys.stdout.write('D')
+    else:
+      diff = '\n'.join(difflib.unified_diff(
+          pprint.pformat(expected).splitlines(),
+          pprint.pformat(actual).splitlines(),
+          fromfile='expected', tofile='actual',
+          n=4, lineterm=''))
 
-    failures.append(DiffFailure(diff))
-    sys.stdout.write('F')
+      failures.append(DiffFailure(diff))
+      sys.stdout.write('F')
   else:
     sys.stdout.write('.')
   sys.stdout.flush()
@@ -374,12 +379,12 @@ def worker(f):
 
 
 @worker
-def run_worker(test):
+def run_worker(test, train=False):
   """Worker for 'run' command (note decorator above)."""
-  return run_test(test)
+  return run_test(test, train=train)
 
 
-def run_run(jobs):
+def run_run(train, jobs):
   """Implementation of the 'run' command."""
   start_time = datetime.datetime.now()
 
@@ -392,7 +397,7 @@ def run_run(jobs):
 
   with kill_switch():
     pool = multiprocessing.Pool(jobs)
-    results = pool.map(run_worker, tests)
+    results = pool.map(functools.partial(run_worker, train=train), tests)
 
   print()
 
@@ -509,11 +514,14 @@ def parse_args(args):
 
   # TODO(phajdan.jr): support running a subset of tests.
   run_p = subp.add_parser('run', description='Run the tests')
-  run_p.set_defaults(func=lambda opts: run_run(opts.jobs))
+  run_p.set_defaults(func=lambda opts: run_run(opts.train, opts.jobs))
   run_p.add_argument(
       '--jobs', metavar='N', type=int,
       default=multiprocessing.cpu_count(),
       help='run N jobs in parallel (default %(default)s)')
+  run_p.add_argument(
+      '--train', action='store_true',
+      help='re-generate recipe expectations')
 
   return parser.parse_args(args)
 

@@ -56,7 +56,11 @@ class RecipeWriter(object):
 
   def write(self):
     """Writes the recipe to disk."""
-    for d in (self.recipes_dir, self.expect_dir):
+    dirs = [self.recipes_dir]
+    # Only create expectation directory if we have any expectations.
+    if self.expectations:
+      dirs.append(self.expect_dir)
+    for d in dirs:
       if not os.path.exists(d):
         os.makedirs(d)
     with open(os.path.join(self.recipes_dir, '%s.py' % self.name), 'w') as f:
@@ -370,6 +374,80 @@ class TestTest(unittest.TestCase):
     with self.assertRaises(subprocess.CalledProcessError) as cm:
       self._run_recipes('test', 'run')
     self.assertIn('FATAL: Insufficient coverage', cm.exception.output)
+
+  def test_train_basic(self):
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['pass']
+    rw.add_expectation('basic')
+    rw.write()
+    self._run_recipes('test', 'run', '--train')
+
+  def test_train_missing(self):
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['pass']
+    rw.write()
+    self.assertFalse(os.path.exists(rw.expect_dir))
+    self._run_recipes('test', 'run', '--train')
+    self.assertTrue(os.path.exists(rw.expect_dir))
+    expect_path = os.path.join(rw.expect_dir, 'basic.json')
+    self.assertTrue(os.path.exists(expect_path))
+    with open(expect_path) as f:
+      expect_contents = json.load(f)
+    self.assertEqual(
+        [{u'status_code': 0, u'recipe_result': None, u'name': u'$result'}],
+        expect_contents)
+
+  def test_train_diff(self):
+    # 1. Initial state: recipe expectations are passing.
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['pass']
+    rw.add_expectation('basic')
+    rw.write()
+    self._run_recipes('test', 'run')
+
+    # 2. Change the recipe and verify tests would fail.
+    rw.DEPS = ['recipe_engine/step']
+    rw.RunStepsLines = ['api.step("test", ["echo", "bar"])']
+    rw.write()
+    with self.assertRaises(subprocess.CalledProcessError) as cm:
+      self._run_recipes('test', 'run')
+    self.assertIn('foo.basic failed', cm.exception.output)
+
+    # 3. Make sure training the recipe succeeds and produces correct results.
+    self._run_recipes('test', 'run', '--train')
+    expect_path = os.path.join(rw.expect_dir, 'basic.json')
+    with open(expect_path) as f:
+      expect_contents = json.load(f)
+    self.assertEqual(
+        [{u'cmd': [u'echo', u'bar'], u'name': u'test'},
+         {u'status_code': 0, u'recipe_result': None, u'name': u'$result'}],
+        expect_contents)
+
+  def test_train_checks_coverage(self):
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['if False:', '  pass']
+    rw.add_expectation('basic')
+    rw.write()
+    with self.assertRaises(subprocess.CalledProcessError) as cm:
+      self._run_recipes('test', 'run', '--train')
+    self.assertIn('FATAL: Insufficient coverage', cm.exception.output)
+    self.assertNotIn('CHECK(FAIL)', cm.exception.output)
+    self.assertNotIn('foo.basic failed', cm.exception.output)
+
+  def test_train_runs_checks(self):
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['pass']
+    rw.GenTestsLines = [
+        'yield api.test("basic") + \\',
+        '  api.post_process(post_process.MustRun, "bar")'
+    ]
+    rw.add_expectation('basic')
+    rw.write()
+    with self.assertRaises(subprocess.CalledProcessError) as cm:
+      self._run_recipes('test', 'run', '--train')
+    self.assertNotIn('FATAL: Insufficient coverage', cm.exception.output)
+    self.assertIn('CHECK(FAIL)', cm.exception.output)
+    self.assertIn('foo.basic failed', cm.exception.output)
 
 
 if __name__ == '__main__':
