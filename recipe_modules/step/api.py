@@ -133,7 +133,7 @@ class StepApi(recipe_api.RecipeApiPlain):
     return recipe_api.defer_results
 
   def __call__(self, name, cmd, ok_ret=None, infra_step=False, wrapper=(),
-               timeout=None, env=None, allow_subannotations=None,
+               timeout=None, allow_subannotations=None,
                trigger_specs=None, stdout=None, stderr=None, stdin=None,
                step_test_data=None):
     """Returns a step dictionary which is compatible with annotator.py.
@@ -153,7 +153,6 @@ class StepApi(recipe_api.RecipeApiPlain):
       timeout: If supplied, the recipe engine will kill the step after the
         specified number of seconds.
       cwd (str or None): absolute path to working directory for the command
-      env (dict): overrides for environment variables
       allow_subannotations (bool): if True, lets the step emit its own
           annotations. NOTE: Enabling this can cause some buggy behavior. Please
           strongly consider using step_result.presentation instead. If you have
@@ -173,8 +172,6 @@ class StepApi(recipe_api.RecipeApiPlain):
       Opaque step object produced and understood by recipe engine.
     """
     kwargs = {}
-    if env:
-      kwargs['env'] = env
     if allow_subannotations is not None:
       kwargs['allow_subannotations'] = allow_subannotations
     if trigger_specs:
@@ -219,7 +216,8 @@ class StepApi(recipe_api.RecipeApiPlain):
 
     if 'cwd' not in kwargs:
       kwargs['cwd'] = self.get_from_context('cwd')
-    kwargs['env'] = self.combine_with_context('env', kwargs.get('env', {}))
+    if self.get_from_context('env'):
+      kwargs['env'] = self.get_from_context('env')
     kwargs['infra_step'] = self.combine_with_context(
         'infra_step', bool(infra_step))
     kwargs['step_nest_level'] = self.combine_with_context('nest_level', 0)

@@ -18,7 +18,8 @@ PROPERTIES = {
 
 def RunSteps(api, fakeit):
   api.step('something unimportant', ['echo', 'sup doc'])
-  api.step('something important', ['echo', 'crazy!'], env={'FLEEM': 'VERY YES'})
+  with api.step.context({'env': {'FLEEM': 'VERY YES'}}):
+    api.step('something important', ['echo', 'crazy!'])
   api.step('another important', ['echo', 'INSANITY'])
   if fakeit:
     api.step('fakestep', ['echo', 'FAAAAKE'])

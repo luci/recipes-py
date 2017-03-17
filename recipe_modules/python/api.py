@@ -9,18 +9,20 @@ import textwrap
 class PythonApi(recipe_api.RecipeApi):
   def __call__(self, name, script, args=None, unbuffered=True, **kwargs):
     """Return a step to run a python script with arguments."""
-    env = kwargs.pop('env', {})
+    env = self.m.step.get_from_context('env', {})
     cmd = ['python']
     if unbuffered:
       cmd.append('-u')
     else:
       env['PYTHONUNBUFFERED'] = None
 
+    context = {}
     if env:
-      kwargs['env'] = env
+      context['env'] = env
 
     cmd.append(script)
-    return self.m.step(name, cmd + list(args or []), **kwargs)
+    with self.m.step.context(context):
+      return self.m.step(name, cmd + list(args or []), **kwargs)
 
   def inline(self, name, program, add_python_log=True, **kwargs):
     """Run an inline python program as a step.
