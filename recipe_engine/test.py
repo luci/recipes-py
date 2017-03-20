@@ -17,6 +17,7 @@ import multiprocessing
 import os
 import pprint
 import re
+import shutil
 import signal
 import sys
 import tempfile
@@ -103,10 +104,12 @@ class CheckFailure(TestFailure):
 class TestResult(object):
   """Result of running a test."""
 
-  def __init__(self, test_description, failures, coverage_data):
+  def __init__(self, test_description, failures, coverage_data,
+               generates_expectation):
     self.test_description = test_description
     self.failures = failures
     self.coverage_data = coverage_data
+    self.generates_expectation = generates_expectation
 
 
 class TestDescription(object):
@@ -124,14 +127,16 @@ class TestDescription(object):
   def full_name(self):
     return '%s.%s' % (self.recipe_name, self.test_name)
 
+  @property
+  def expectation_path(self):
+    return os.path.join(self.expect_dir, self.test_name + '.json')
+
 
 def run_test(test_description, train=False):
   """Runs a test. Returns TestResults object."""
   expected = None
-  expectation_path = os.path.join(
-      test_description.expect_dir, test_description.test_name + '.json')
-  if os.path.exists(expectation_path):
-    with open(expectation_path) as f:
+  if os.path.exists(test_description.expectation_path):
+    with open(test_description.expectation_path) as f:
       # TODO(phajdan.jr): why do we need to re-encode golden data files?
       expected = re_encode(json.load(f))
 
@@ -148,10 +153,10 @@ def run_test(test_description, train=False):
     failures.extend([CheckFailure(c) for c in failed_checks])
   elif actual != expected:
     if train:
-      expectation_dir = os.path.dirname(expectation_path)
+      expectation_dir = os.path.dirname(test_description.expectation_path)
       if not os.path.exists(expectation_dir):
         os.makedirs(expectation_dir)
-      with open(expectation_path, 'w') as f:
+      with open(test_description.expectation_path, 'wb') as f:
         json.dump(
             re_encode(actual), f, sort_keys=True, indent=2,
             separators=(',', ': '))
@@ -169,7 +174,8 @@ def run_test(test_description, train=False):
     sys.stdout.write('.')
   sys.stdout.flush()
 
-  return TestResult(test_description, failures, coverage_data)
+  return TestResult(test_description, failures, coverage_data,
+                    actual is not None)
 
 
 def run_recipe(recipe_name, test_name, covers):
@@ -384,6 +390,25 @@ def run_worker(test, train=False):
   return run_test(test, train=train)
 
 
+def scan_for_expectations(root):
+  """Returns set of expectation paths recursively under |root|."""
+  collected_expectations = set()
+  for entry in os.listdir(root):
+    full_entry = os.path.join(root, entry)
+    if os.path.isdir(full_entry):
+      collected_expectations.update(scan_for_expectations(full_entry))
+    if not entry.endswith('.expected'):
+      continue
+    collected_expectations.add(full_entry)
+    if os.path.isdir(full_entry):
+      for subentry in os.listdir(full_entry):
+        if not subentry.endswith('.json'):
+          continue
+        full_subentry = os.path.join(full_entry, subentry)
+        collected_expectations.add(full_subentry)
+  return collected_expectations
+
+
 def run_run(train, jobs):
   """Implementation of the 'run' command."""
   start_time = datetime.datetime.now()
@@ -401,6 +426,8 @@ def run_run(train, jobs):
 
   print()
 
+  used_expectations = set()
+
   rc = 0
   for success, details in results:
     if success:
@@ -411,6 +438,10 @@ def run_run(train, jobs):
         for failure in details.failures:
           print(failure.format())
       coverage_data.update(details.coverage_data)
+      if details.generates_expectation:
+        used_expectations.add(details.test_description.expectation_path)
+        used_expectations.add(
+            os.path.dirname(details.test_description.expectation_path))
     else:
       rc = 1
       print('Internal failure:')
@@ -432,6 +463,29 @@ def run_run(train, jobs):
       print('FATAL: Insufficient coverage (%.f%%)' % int(percentage))
   finally:
     os.unlink(coverage_file.name)
+
+  actual_expectations = set()
+  if os.path.exists(_UNIVERSE_VIEW.recipe_dir):
+    actual_expectations.update(scan_for_expectations(_UNIVERSE_VIEW.recipe_dir))
+  if os.path.exists(_UNIVERSE_VIEW.module_dir):
+    for module_entry in os.listdir(_UNIVERSE_VIEW.module_dir):
+      if os.path.isdir(module_entry):
+        actual_expectations.update(scan_for_expectations(
+            os.path.join(_UNIVERSE_VIEW.module_dir, module_entry)))
+  unused_expectations = actual_expectations.difference(used_expectations)
+  if unused_expectations:
+    if train:
+      for entry in unused_expectations:
+        if not os.path.exists(entry):
+          continue
+        if os.path.isdir(entry):
+          shutil.rmtree(entry)
+        else:
+          os.unlink(entry)
+    else:
+      rc = 1
+      print('FATAL: unused expectations found:')
+      print('\n'.join(sorted(unused_expectations)))
 
   finish_time = datetime.datetime.now()
   print('-' * 70)

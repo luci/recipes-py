@@ -449,6 +449,116 @@ class TestTest(unittest.TestCase):
     self.assertIn('CHECK(FAIL)', cm.exception.output)
     self.assertIn('foo.basic failed', cm.exception.output)
 
+  def test_unused_expectation_file_test(self):
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['pass']
+    rw.add_expectation('basic')
+    rw.add_expectation('unused')
+    rw.write()
+    expectation_file = os.path.join(rw.expect_dir, 'unused.json')
+    self.assertTrue(os.path.exists(expectation_file))
+    with self.assertRaises(subprocess.CalledProcessError) as cm:
+      self._run_recipes('test', 'run')
+    self.assertIn(
+        'FATAL: unused expectations found:\n%s' % expectation_file,
+        cm.exception.output)
+    self.assertTrue(os.path.exists(expectation_file))
+
+  def test_unused_expectation_file_train(self):
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['pass']
+    rw.add_expectation('basic')
+    rw.add_expectation('unused')
+    rw.write()
+    expectation_file = os.path.join(rw.expect_dir, 'unused.json')
+    self.assertTrue(os.path.exists(expectation_file))
+    self._run_recipes('test', 'run', '--train')
+    self.assertFalse(os.path.exists(expectation_file))
+
+  def test_drop_expectation_test(self):
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['pass']
+    rw.GenTestsLines = [
+        'yield api.test("basic") + \\',
+        '  api.post_process(post_process.DropExpectation)'
+    ]
+    rw.write()
+    expectation_file = os.path.join(rw.expect_dir, 'basic.json')
+    self.assertFalse(os.path.exists(expectation_file))
+    self._run_recipes('test', 'run')
+    self.assertFalse(os.path.exists(expectation_file))
+
+  def test_drop_expectation_train(self):
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['pass']
+    rw.GenTestsLines = [
+        'yield api.test("basic") + \\',
+        '  api.post_process(post_process.DropExpectation)'
+    ]
+    rw.write()
+    expectation_file = os.path.join(rw.expect_dir, 'basic.json')
+    self.assertFalse(os.path.exists(expectation_file))
+    self._run_recipes('test', 'run', '--train')
+    self.assertFalse(os.path.exists(expectation_file))
+
+  def test_drop_expectation_test_unused(self):
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['pass']
+    rw.GenTestsLines = [
+        'yield api.test("basic") + \\',
+        '  api.post_process(post_process.DropExpectation)'
+    ]
+    rw.add_expectation('basic')
+    rw.write()
+    expectation_file = os.path.join(rw.expect_dir, 'basic.json')
+    self.assertTrue(os.path.exists(expectation_file))
+    with self.assertRaises(subprocess.CalledProcessError) as cm:
+      self._run_recipes('test', 'run')
+    self.assertIn(
+        'FATAL: unused expectations found:\n%s\n%s' % (
+            rw.expect_dir, expectation_file),
+        cm.exception.output)
+    self.assertTrue(os.path.exists(expectation_file))
+
+  def test_drop_expectation_train_unused(self):
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['pass']
+    rw.GenTestsLines = [
+        'yield api.test("basic") + \\',
+        '  api.post_process(post_process.DropExpectation)'
+    ]
+    rw.add_expectation('basic')
+    rw.write()
+    expectation_file = os.path.join(rw.expect_dir, 'basic.json')
+    self.assertTrue(os.path.exists(expectation_file))
+    self._run_recipes('test', 'run', '--train')
+    self.assertFalse(os.path.exists(expectation_file))
+    self.assertFalse(os.path.exists(rw.expect_dir))
+
+  def test_unused_expectation_preserves_owners_test(self):
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['pass']
+    rw.add_expectation('basic')
+    rw.write()
+    owners_file = os.path.join(rw.expect_dir, 'OWNERS')
+    with open(owners_file, 'w') as f:
+      pass
+    self.assertTrue(os.path.exists(owners_file))
+    self._run_recipes('test', 'run')
+    self.assertTrue(os.path.exists(owners_file))
+
+  def test_unused_expectation_preserves_owners_train(self):
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['pass']
+    rw.add_expectation('basic')
+    rw.write()
+    owners_file = os.path.join(rw.expect_dir, 'OWNERS')
+    with open(owners_file, 'w') as f:
+      pass
+    self.assertTrue(os.path.exists(owners_file))
+    self._run_recipes('test', 'run', '--train')
+    self.assertTrue(os.path.exists(owners_file))
+
 
 if __name__ == '__main__':
   sys.exit(unittest.main())
