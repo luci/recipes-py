@@ -53,7 +53,7 @@ def write_new_recipes_py(context, spec, repo_cfg_block):
       extracted from the repo's original recipes.py file (using the
       extract_repo_cfg_block function).
   """
-  source_path = os.path.join(spec.deps['recipe_engine'].path,
+  source_path = os.path.join(spec.deps['recipe_engine'].repo_root(context),
                              *RECIPES_PY_REL_PATH)
   dest_path = os.path.join(context.recipes_dir, 'recipes.py')
   with open(source_path, 'rb') as source:

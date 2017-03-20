@@ -104,6 +104,10 @@ class PackageContext(object):
     self.repo_root = repo_root
     self.allow_fetch = allow_fetch
 
+  def __repr__(self):
+    return 'PackageContext(%r, %r, %r, %s)' % (
+      self.recipes_dir, self.package_dir, self.repo_root, self.allow_fetch)
+
   @classmethod
   def from_proto_file(cls, repo_root, proto_file, allow_fetch, deps_path=None):
     buf = proto_file.read()
@@ -174,7 +178,7 @@ class GitRepoSpec(RepoSpec):
     self.path = path
     self.backend = backend
 
-  def __str__(self):
+  def __repr__(self):
     return ('GitRepoSpec{project_id="%(project_id)s", repo="%(repo)s", '
             'branch="%(branch)s", revision="%(revision)s", '
             'path="%(path)s"}' % self.__dict__)
@@ -223,8 +227,6 @@ class GitRepoSpec(RepoSpec):
         context, (other_revision or self.backend.branch_spec(self.branch)))
     updates = []
     for rev in raw_updates:
-      # TODO(somebody): 'info' is not used.
-      info = self._get_commit_info(rev, context)
       updates.append(GitRepoSpec(
           self.project_id,
           self.repo,
@@ -501,6 +503,10 @@ class PackageSpec(object):
     self._project_id = project_id
     self._recipes_path = recipes_path
     self._deps = deps
+
+  def __repr__(self):
+    return 'PackageSpec(%s, %s, %r)' % (self._project_id, self._recipes_path,
+                                        self._deps)
 
   @classmethod
   def load_proto(cls, proto_file):
