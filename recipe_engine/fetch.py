@@ -7,6 +7,7 @@ import httplib
 import json
 import logging
 import os
+import re
 import shutil
 import sys
 import tarfile
@@ -16,6 +17,7 @@ import tempfile
 from . import env
 from . import requests_ssl
 from . import util
+from . import types
 from .requests_ssl import requests
 
 import subprocess42
@@ -60,10 +62,35 @@ class Backend(object):
     """
     raise NotImplementedError()
 
+  # This is a simple mapping of
+  #   repo -> git_revision -> commit_metadata()
+  # It only holds cache entries for git commits (e.g. sha1 hashes)
+  _GIT_METADATA_CACHE = {}
+
+  # This matches git commit hashes.
+  _COMMIT_RE = re.compile('^[a-fA-F0-9]{40}$')
+
   def commit_metadata(self, repo, revision, checkout_dir, allow_fetch):
+    """Cached version of commit_metadata_slow. Implementations should only
+    override commit_metadata_slow and this implementation will call it if
+    there's no cached value for (repo, revision).
+    """
+    if self._COMMIT_RE.match(revision):
+      cache = self._GIT_METADATA_CACHE.setdefault(repo, {})
+      if revision not in cache:
+        cache[revision] = types.freeze(self.commit_metadata_slow(
+          repo, revision, checkout_dir, allow_fetch))
+      return cache[revision]
+    return self.commit_metadata_slow(repo, revision, checkout_dir, allow_fetch)
+
+  def commit_metadata_slow(self, repo, revision, checkout_dir, allow_fetch):
     """Returns a dictionary of metadata about commit |revision|.
 
     The dictionary contains the following keys: author, message.
+
+    This implementation will likely do slow operations (e.g. subprocess
+    invocations, network access, etc.). Users of Backend will always want to use
+    commit_metadata() instead.
     """
     raise NotImplementedError()
 
@@ -175,7 +202,7 @@ class GitBackend(Backend):
       args.extend(['--'] + paths)
     return filter(bool, git(*args).strip().split('\n'))
 
-  def commit_metadata(self, repo, revision, checkout_dir, allow_fetch):
+  def commit_metadata_slow(self, repo, revision, checkout_dir, allow_fetch):
     git = self.Git(checkout_dir=checkout_dir)
     return {
       'author': git('show', '-s', '--pretty=%aE', revision).strip(),
@@ -290,7 +317,7 @@ class GitilesBackend(Backend):
 
     return list(reversed(results))
 
-  def commit_metadata(self, repo, revision, checkout_dir, allow_fetch):
+  def commit_metadata_slow(self, repo, revision, checkout_dir, allow_fetch):
     if not allow_fetch:
       raise FetchNotAllowedError(
           ('requested commit metadata for %s (%s)from gitiles but fetch not '
