@@ -129,7 +129,8 @@ class TestDescription(object):
 
   @property
   def expectation_path(self):
-    return os.path.join(self.expect_dir, self.test_name + '.json')
+    name = ''.join('_' if c in '<>:"\\/|?*\0' else c for c in self.test_name)
+    return os.path.join(self.expect_dir, name + '.json')
 
 
 def run_test(test_description, train=False):

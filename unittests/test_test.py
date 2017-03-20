@@ -75,7 +75,8 @@ class RecipeWriter(object):
         'def GenTests(api):',
       ] + ['  %s' % l for l in self.GenTestsLines]))
     for test_name, test_contents in self.expectations.iteritems():
-      with open(os.path.join(self.expect_dir, '%s.json' % test_name), 'w') as f:
+      name = ''.join('_' if c in '<>:"\\/|?*\0' else c for c in test_name)
+      with open(os.path.join(self.expect_dir, '%s.json' % name), 'w') as f:
         json.dump(test_contents, f)
 
 
@@ -558,6 +559,15 @@ class TestTest(unittest.TestCase):
     self.assertTrue(os.path.exists(owners_file))
     self._run_recipes('test', 'run', '--train')
     self.assertTrue(os.path.exists(owners_file))
+
+  def test_test_slash_in_name(self):
+    test_name = 'bar/baz'
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['pass']
+    rw.GenTestsLines = ['yield api.test(%r)' % test_name]
+    rw.add_expectation(test_name)
+    rw.write()
+    self._run_recipes('test', 'run')
 
 
 if __name__ == '__main__':
