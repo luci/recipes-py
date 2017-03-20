@@ -89,11 +89,18 @@ class RepoTest(unittest.TestCase):
       subprocess.check_output(['git', 'init'])
       subprocess.check_output(['git', 'remote', 'add', 'origin', repo_dir])
       with open('recipes.py', 'w') as f:
-        f.write('import subprocess, sys\n'
-                'sys.exit(subprocess.call(\n'
-                '    [sys.executable, %r, "--package", %r] + sys.argv[1:]))' % (
-                    self._recipe_tool,
-                    os.path.join(repo_dir, 'infra', 'config', 'recipes.cfg')))
+        f.write('\n'.join([
+          'import subprocess, sys, os',
+          '#### PER-REPO CONFIGURATION (editable) ####',
+          'REPO_ROOT = "."',
+          'RECIPES_CFG = os.path.join("infra", "config", "recipes.cfg")',
+          '#### END PER-REPO CONFIGURATION ####',
+          'if sys.argv[1] != "fetch":',
+          '  sys.exit(subprocess.call(',
+          '      [sys.executable, %r, "--package", %r] + sys.argv[1:]))' % (
+            self._recipe_tool,
+            os.path.join(repo_dir, 'infra', 'config', 'recipes.cfg')),
+        ]))
       subprocess.check_output(['git', 'add', 'recipes.py'])
     rev = self.update_recipes_cfg(name, spec)
     return {

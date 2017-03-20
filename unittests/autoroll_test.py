@@ -20,13 +20,13 @@ class TestAutoroll(repo_test_util.RepoTest):
     with repo_test_util.in_directory(repo['root']), \
         repo_test_util.temporary_file() as tempfile_path:
       subprocess.check_output([
-          sys.executable, self._recipe_tool,
-          '--package', os.path.join(
-              repo['root'], 'infra', 'config', 'recipes.cfg'),
-          '--use-bootstrap',
-          'autoroll',
-          '--output-json', tempfile_path
-      ] + list(args), stderr=subprocess.STDOUT)
+        sys.executable, self._recipe_tool,
+        '--package', os.path.join(
+          repo['root'], 'infra', 'config', 'recipes.cfg'),
+        '--use-bootstrap',
+        'autoroll',
+        '--output-json', tempfile_path
+      ] + list(args) , stderr=subprocess.STDOUT)
       with open(tempfile_path) as f:
         return json.load(f)
 
@@ -41,6 +41,26 @@ class TestAutoroll(repo_test_util.RepoTest):
     self.assertFalse(roll_result['success'])
     self.assertEquals([], roll_result['roll_details'])
     self.assertEquals([], roll_result['rejected_candidates_details'])
+
+  def test_bogus_recipes_py(self):
+    repos = self.repo_setup({
+        'a': [],
+        'b': ['a'],
+    })
+    self.get_package_spec(repos['b'])
+
+    # Create a new commit in the A repo.
+    self.commit_in_repo(repos['a'], message='c1')
+
+    # goof up recipes.py in B repo.
+    with open(os.path.join(repos['b']['root'], 'recipes.py'), 'wb') as f:
+      print >> f, "Hey! This isn't even a python script."
+    self.commit_in_repo(repos['b'], message='goof it up!')
+
+    with self.assertRaises(subprocess.CalledProcessError) as ex:
+      self.run_roll(repos['b'])
+    self.assertIn('unable to find configuration section', ex.exception.output)
+
 
   def test_trivial(self):
     """Tests the simplest trivial (i.e. no expectation changes) roll scenario.
@@ -90,11 +110,11 @@ class TestAutoroll(repo_test_util.RepoTest):
     b_package_spec = self.get_package_spec(repos['b'])
 
     # Set up a recipe in repo B depending on a module in repo A.
-    a_c1 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
+    self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
     roll_result = self.run_roll(repos['b'])
     self.assertTrue(roll_result['success'])
     self.assertTrue(roll_result['trivial'])
-    b_c1 = self.update_recipe(
+    self.update_recipe(
         repos['b'], 'b_recipe', ['a/a_module'], [('a_module', 'foo')])
 
     # Change API of the recipe module in a way that's compatible,
@@ -140,15 +160,15 @@ class TestAutoroll(repo_test_util.RepoTest):
     })
 
     # Set up a recipe in repo B depending on a module in repo A.
-    a_c1 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
+    self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
     roll_result = self.run_roll(repos['b'])
     self.assertTrue(roll_result['success'])
     self.assertTrue(roll_result['trivial'])
-    b_c1 = self.update_recipe(
+    self.update_recipe(
         repos['b'], 'b_recipe', ['a/a_module'], [('a_module', 'foo')])
 
     # Change API of the recipe module in an incompatible way.
-    a_c2 = self.update_recipe_module(repos['a'], 'a_module', {'baz': ['baz']})
+    self.update_recipe_module(repos['a'], 'a_module', {'baz': ['baz']})
 
     roll_result = self.run_roll(repos['b'])
     self.assertFalse(roll_result['success'])
@@ -165,11 +185,11 @@ class TestAutoroll(repo_test_util.RepoTest):
     b_package_spec = self.get_package_spec(repos['b'])
 
     # Set up a recipe in repo B depending on a module in repo A.
-    a_c1 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
+    self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
     roll_result = self.run_roll(repos['b'])
     self.assertTrue(roll_result['success'])
     self.assertTrue(roll_result['trivial'])
-    b_c1 = self.update_recipe(
+    self.update_recipe(
         repos['b'], 'b_recipe', ['a/a_module'], [('a_module', 'foo')])
 
     # Change API of the recipe module in an incompatible way.
@@ -224,11 +244,11 @@ class TestAutoroll(repo_test_util.RepoTest):
     b_package_spec = self.get_package_spec(repos['b'])
 
     # Set up a recipe in repo B depending on a module in repo A.
-    a_c1 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
+    self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
     roll_result = self.run_roll(repos['b'])
     self.assertTrue(roll_result['success'])
     self.assertTrue(roll_result['trivial'])
-    b_c1 = self.update_recipe(
+    self.update_recipe(
         repos['b'], 'b_recipe', ['a/a_module'], [('a_module', 'foo')])
 
     # Change API of the recipe module in an incompatible way.
@@ -239,7 +259,7 @@ class TestAutoroll(repo_test_util.RepoTest):
 
     # Create another change that would result in a nontrivial roll,
     # which should not be picked - nontrivial rolls should be minimal.
-    a_c4 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bam']})
+    self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bam']})
 
     roll_result = self.run_roll(repos['b'])
     self.assertTrue(roll_result['success'])
@@ -288,11 +308,11 @@ class TestAutoroll(repo_test_util.RepoTest):
     b_package_spec = self.get_package_spec(repos['b'])
 
     # Set up a recipe in repo B depending on a module in repo A.
-    a_c1 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
+    self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
     roll_result = self.run_roll(repos['b'])
     self.assertTrue(roll_result['success'])
     self.assertTrue(roll_result['trivial'])
-    b_c1 = self.update_recipe(
+    self.update_recipe(
         repos['b'], 'b_recipe', ['a/a_module'], [('a_module', 'foo')])
 
     # Change API of the recipe module in an incompatible way.
@@ -367,11 +387,11 @@ class TestAutoroll(repo_test_util.RepoTest):
     c_package_spec = self.get_package_spec(repos['c'])
 
     # Set up a recipe in repo C depending on a module in repo B.
-    b_c1 = self.update_recipe_module(repos['b'], 'b_module', {'foo': ['bar']})
+    self.update_recipe_module(repos['b'], 'b_module', {'foo': ['bar']})
     roll_result = self.run_roll(repos['c'])
     self.assertTrue(roll_result['success'])
     self.assertTrue(roll_result['trivial'])
-    c_c1 = self.update_recipe(
+    self.update_recipe(
         repos['c'], 'c_recipe', ['b/b_module'], [('b_module', 'foo')])
 
     # Create a new commit in the A repo and roll it into B.
@@ -389,7 +409,7 @@ class TestAutoroll(repo_test_util.RepoTest):
     b_c2 = self.commit_in_repo(repos['b'], message='roll')
 
     # Change API of the recipe module in an incompatible way.
-    b_c3 = self.update_recipe_module(repos['b'], 'b_module', {'baz': ['baz']})
+    self.update_recipe_module(repos['b'], 'b_module', {'baz': ['baz']})
 
     roll_result = self.run_roll(repos['c'])
     self.assertTrue(roll_result['success'])
@@ -435,7 +455,7 @@ class TestAutoroll(repo_test_util.RepoTest):
         'b': ['a'],
         'c': ['b', 'a'],
     })
-    root_repo_spec = self.get_root_repo_spec(repos['c'])
+    self.get_root_repo_spec(repos['c'])
     b_repo_spec = self.get_git_repo_spec(repos['b'])
     c_package_spec = self.get_package_spec(repos['c'])
 
@@ -453,7 +473,7 @@ class TestAutoroll(repo_test_util.RepoTest):
         str(c_package_spec.dump()).replace(
             repos['a']['revision'], a_c1['revision']).replace(
                 repos['b']['revision'], b_c1_rev),
-        roll_result['picked_roll_details']['spec'])
+        picked_roll['spec'])
 
     # Create a new commit in B that would result in backwards roll.
     b_c2_rev = self.update_recipes_cfg(
