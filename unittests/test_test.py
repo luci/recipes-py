@@ -476,6 +476,30 @@ class TestTest(unittest.TestCase):
     self._run_recipes('test', 'run', '--train')
     self.assertFalse(os.path.exists(expectation_file))
 
+  def test_unused_expectation_dir_test(self):
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['pass']
+    rw.add_expectation('basic')
+    rw.write()
+    expectation_dir = os.path.join(rw.expect_dir, 'dir')
+    os.makedirs(expectation_dir)
+    with self.assertRaises(subprocess.CalledProcessError) as cm:
+      self._run_recipes('test', 'run')
+    self.assertIn(
+        'FATAL: unused expectations found:\n%s' % expectation_dir,
+        cm.exception.output)
+    self.assertTrue(os.path.exists(expectation_dir))
+
+  def test_unused_expectation_dir_train(self):
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['pass']
+    rw.add_expectation('basic')
+    rw.write()
+    expectation_dir = os.path.join(rw.expect_dir, 'dir')
+    os.makedirs(expectation_dir)
+    self._run_recipes('test', 'run', '--train')
+    self.assertFalse(os.path.exists(expectation_dir))
+
   def test_drop_expectation_test(self):
     rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
     rw.RunStepsLines = ['pass']

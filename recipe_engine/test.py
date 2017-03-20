@@ -391,22 +391,30 @@ def run_worker(test, train=False):
   return run_test(test, train=train)
 
 
-def scan_for_expectations(root):
-  """Returns set of expectation paths recursively under |root|."""
+def scan_for_expectations(root, inside_expectations=False):
+  """Returns set of expectation paths recursively under |root|.
+
+  Args:
+    inside_expectations(bool): whether the path is already within directory
+        tree of expectations (foo.expected)
+  """
   collected_expectations = set()
   for entry in os.listdir(root):
     full_entry = os.path.join(root, entry)
     if os.path.isdir(full_entry):
-      collected_expectations.update(scan_for_expectations(full_entry))
-    if not entry.endswith('.expected'):
+      collected_expectations.update(scan_for_expectations(
+          full_entry, inside_expectations or entry.endswith('.expected')))
+    if not entry.endswith('.expected') and not inside_expectations:
       continue
-    collected_expectations.add(full_entry)
     if os.path.isdir(full_entry):
+      collected_expectations.add(full_entry)
       for subentry in os.listdir(full_entry):
         if not subentry.endswith('.json'):
           continue
         full_subentry = os.path.join(full_entry, subentry)
         collected_expectations.add(full_subentry)
+    elif entry.endswith('.json'):
+      collected_expectations.add(full_entry)
   return collected_expectations
 
 
