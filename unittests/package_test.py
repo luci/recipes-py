@@ -342,7 +342,7 @@ class TestRollCandidate(repo_test_util.RepoTest):
 
     # Create a new commit in A repo. Roll it to C but not B.
     a_c1 = self.commit_in_repo(repos['a'], message='c1')
-    c_c1_rev = self.update_recipes_cfg(
+    self.update_recipes_cfg(
         'c', self.updated_package_spec_pb(repos['c'], 'a', a_c1['revision']))
 
     # Create a commit in the B repo (which will use an older revision of A).
@@ -362,14 +362,14 @@ class TestRollCandidate(repo_test_util.RepoTest):
 
 class MockProtoFile(package.ProtoFile):
   def __init__(self, path, text):
-    super(MockProtoFile, self).__init__(path)
     self._text = text
+    super(MockProtoFile, self).__init__(path)
 
   @property
   def path(self):
     return self._path
 
-  def read_text(self):
+  def read_raw(self):
     return self._text
 
   def write(self, buf):
@@ -380,23 +380,27 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
   def setUp(self):
     super(TestPackageSpec, self).setUp()
 
-    self.proto_text = """
-api_version: 1
-project_id: "super_main_package"
-recipes_path: "path/to/recipes"
-deps {
-  project_id: "bar"
-  url: "https://repo.com/bar.git"
-  branch: "superbar"
-  revision: "deadd00d"
-}
-deps {
-  project_id: "foo"
-  url: "https://repo.com/foo.git"
-  branch: "master"
-  revision: "cafebeef"
-}
-""".lstrip()
+    self.proto_text = '\n'.join([
+      '{',
+      '  "api_version": 1, ',
+      '  "deps": [',
+      '    {',
+      '      "branch": "superbar", ',
+      '      "project_id": "bar", ',
+      '      "revision": "deadd00d", ',
+      '      "url": "https://repo.com/bar.git"',
+      '    }, ',
+      '    {',
+      '      "branch": "master", ',
+      '      "project_id": "foo", ',
+      '      "revision": "cafebeef", ',
+      '      "url": "https://repo.com/foo.git"',
+      '    }',
+      '  ], ',
+      '  "project_id": "super_main_package", ',
+      '  "recipes_path": "path/to/recipes"',
+      '}',
+    ])
     self.proto_file = MockProtoFile('repo/root/infra/config/recipes.cfg',
                                     self.proto_text)
     self.context = package.PackageContext.from_proto_file(
@@ -405,15 +409,34 @@ deps {
   def test_dump_load_inverses(self):
     # Doubles as a test for equality reflexivity.
     package_spec = package.PackageSpec.load_proto(self.proto_file)
-    self.assertEqual(self.proto_file.to_text(package_spec.dump()),
+    self.assertEqual(self.proto_file.to_raw(package_spec.dump()),
                      self.proto_text)
     self.assertEqual(package.PackageSpec.load_proto(self.proto_file),
                      package_spec)
 
+  def test_dump_round_trips_text(self):
+    proto_text = """
+api_version: 1
+""".lstrip()
+    proto_file = MockProtoFile('repo/root/infra/config/recipes.cfg', proto_text)
+    package_spec = package.PackageSpec.load_proto(proto_file)
+    self.assertEqual(proto_file.to_raw(package_spec.dump()), proto_text)
+
+  def test_dump_round_trips_json(self):
+    proto_text = """
+{"api_version": 1}
+""".lstrip()
+    proto_file = MockProtoFile('repo/root/infra/config/recipes.cfg', proto_text)
+    package_spec = package.PackageSpec.load_proto(proto_file)
+    self.assertEqual(proto_file.to_raw(package_spec.dump()),
+                     '{\n  "api_version": 1\n}')
+
   def test_no_version(self):
     proto_text = """\
-project_id: "foo"
-recipes_path: "path/to/recipes"
+{
+  "project_id": "foo",
+  "recipes_path": "path/to/recipes"
+}
 """
     proto_file = MockProtoFile('repo/root/infra/config/recipes.cfg', proto_text)
 

@@ -4,6 +4,7 @@
 
 import copy
 import difflib
+import json
 import logging
 import operator
 import os
@@ -13,6 +14,7 @@ import sys
 from . import env
 
 from google.protobuf import text_format
+from google.protobuf import json_format
 from . import package_pb2
 from . import fetch
 
@@ -62,27 +64,41 @@ class ProtoFile(object):
   """
   def __init__(self, path):
     self._path = path
+    # TODO(iannucci): remove text proto support
+    self._is_json = False
+    try:
+      self._is_json = self.read_raw().lstrip().startswith('{')
+    except IOError:
+      pass
 
   @property
   def path(self):
     return os.path.realpath(self._path)
 
-  def read_text(self):
+  def read_raw(self):
     with open(self._path, 'r') as fh:
       return fh.read()
 
   def read(self):
-    text = self.read_text()
+    text = self.read_raw()
     buf = package_pb2.Package()
-    text_format.Merge(text, buf)
+    if text.lstrip().startswith('{'):
+      self._is_json = True
+      json_format.Parse(text, buf)
+    else:
+      text_format.Merge(text, buf)
     return buf
 
-  def to_text(self, buf):
-    return text_format.MessageToString(buf)
+  def to_raw(self, buf):
+    if self._is_json:
+      obj = json_format.MessageToDict(buf, preserving_proto_field_name=True)
+      return json.dumps(obj, indent=2, sort_keys=True)
+    else:
+      return text_format.MessageToString(buf)
 
   def write(self, buf):
     with open(self._path, 'w') as fh:
-      fh.write(self.to_text(buf))
+      fh.write(self.to_raw(buf))
 
 
 class PackageContext(object):
@@ -630,7 +646,8 @@ class PackageDeps(object):
                    for project_id, path in overrides.iteritems()}
     package_deps = cls(context, overrides=overrides)
 
-    package_deps._root_package = package_deps._create_package(RootRepoSpec(proto_file))
+    package_deps._root_package = package_deps._create_package(
+      RootRepoSpec(proto_file))
 
     return package_deps
 
