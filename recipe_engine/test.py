@@ -79,6 +79,10 @@ class TestFailure(object):
     """Returns a human-readable description of the failure."""
     raise NotImplementedError()
 
+  def structured_format(self):
+    """Returns a machine-readable description of the failure."""
+    raise NotImplementedError()
+
 
 class DiffFailure(TestFailure):
   """Failure when simulated recipe commands don't match recorded expectations.
@@ -90,6 +94,9 @@ class DiffFailure(TestFailure):
   def format(self):
     return self.diff
 
+  def structured_format(self):
+    return '<diff failure>'
+
 
 class CheckFailure(TestFailure):
   """Failure when any of the post-process checks fails."""
@@ -99,6 +106,9 @@ class CheckFailure(TestFailure):
 
   def format(self):
     return self.check.format(indent=4)
+
+  def structured_format(self):
+    return self.check.structured_format()
 
 
 class TestResult(object):
@@ -153,23 +163,27 @@ def run_test(test_description, train=False):
     sys.stdout.write('C')
     failures.extend([CheckFailure(c) for c in failed_checks])
   elif actual != expected:
+    if actual is not None:
+      if train:
+        expectation_dir = os.path.dirname(test_description.expectation_path)
+        if not os.path.exists(expectation_dir):
+          os.makedirs(expectation_dir)
+        with open(test_description.expectation_path, 'wb') as f:
+          json.dump(
+              re_encode(actual), f, sort_keys=True, indent=2,
+              separators=(',', ': '))
+      else:
+        diff = '\n'.join(difflib.unified_diff(
+            pprint.pformat(expected).splitlines(),
+            pprint.pformat(actual).splitlines(),
+            fromfile='expected', tofile='actual',
+            n=4, lineterm=''))
+
+        failures.append(DiffFailure(diff))
+
     if train:
-      expectation_dir = os.path.dirname(test_description.expectation_path)
-      if not os.path.exists(expectation_dir):
-        os.makedirs(expectation_dir)
-      with open(test_description.expectation_path, 'wb') as f:
-        json.dump(
-            re_encode(actual), f, sort_keys=True, indent=2,
-            separators=(',', ': '))
       sys.stdout.write('D')
     else:
-      diff = '\n'.join(difflib.unified_diff(
-          pprint.pformat(expected).splitlines(),
-          pprint.pformat(actual).splitlines(),
-          fromfile='expected', tofile='actual',
-          n=4, lineterm=''))
-
-      failures.append(DiffFailure(diff))
       sys.stdout.write('F')
   else:
     sys.stdout.write('.')
@@ -328,7 +342,7 @@ def get_tests():
         recipe_name, info[0].__name__, str(info[1])))
       raise new_exec.__class__, new_exec, info[2]
 
-  uncovered_modules = all_modules.difference(covered_modules)
+  uncovered_modules = sorted(all_modules.difference(covered_modules))
   return (tests, coverage_data, uncovered_modules)
 
 
@@ -418,16 +432,43 @@ def scan_for_expectations(root, inside_expectations=False):
   return collected_expectations
 
 
-def run_run(train, jobs):
+def run_run(json_file, train, jobs):
   """Implementation of the 'run' command."""
   start_time = datetime.datetime.now()
 
   report_coverage_version()
 
+  rc = 0
+  # TODO(phajdan.jr): use protos to define schema for JSON output.
+  structured_results = {
+    # Format of results is versioned. Increment on incompatible changes.
+    # WARNING: new failures types are incompatible changes. Tools processing
+    # the output may need to be updated to be aware of new failure types.
+    'version': 1,
+
+    # Keep all kinds of failures in one dict. Makes it easy for consumers
+    # to verify if they recognize various failure types.
+    'failures': {
+      'coverage': {},
+      'tests': {},
+      'uncovered_modules': [],
+      'unused_expectations': [],
+    },
+
+    # Used to indicate that the results might be invalid or incomplete,
+    # for example in case of internal errors.
+    'valid': True,
+  }
+  def report_global_failure(msg):
+    structured_results['global_failures'].append(msg)
+    print(msg)
+
   tests, coverage_data, uncovered_modules = get_tests()
   if uncovered_modules:
-    raise Exception('The following modules lack test coverage: %s' % (
-        ','.join(sorted(uncovered_modules))))
+    rc = 1
+    structured_results['failures']['uncovered_modules'] = uncovered_modules
+    print('ERROR: The following modules lack test coverage: %s' % (
+        ','.join(uncovered_modules)))
 
   with kill_switch():
     pool = multiprocessing.Pool(jobs)
@@ -437,14 +478,17 @@ def run_run(train, jobs):
 
   used_expectations = set()
 
-  rc = 0
   for success, details in results:
     if success:
       assert isinstance(details, TestResult)
       if details.failures:
         rc = 1
-        print('%s failed:' % details.test_description.full_name)
+        key = details.test_description.full_name
+        structured_results['failures']['tests'].setdefault(key, [])
+        print('%s failed:' % key)
         for failure in details.failures:
+          structured_results['failures']['tests'][key].append(
+              (failure.__class__.__name__, failure.structured_format()))
           print(failure.format())
       coverage_data.update(details.coverage_data)
       if details.generates_expectation:
@@ -453,6 +497,7 @@ def run_run(train, jobs):
             os.path.dirname(details.test_description.expectation_path))
     else:
       rc = 1
+      structured_results['valid'] = False
       print('Internal failure:')
       print(details)
 
@@ -470,6 +515,16 @@ def run_run(train, jobs):
       rc = 1
       print(outf.getvalue())
       print('FATAL: Insufficient coverage (%.f%%)' % int(percentage))
+
+      # TODO(phajdan.jr): Add API to coverage to apply path filters.
+      reporter = coverage.report.Reporter(cov, cov.config)
+      file_reporters = reporter.find_file_reporters(
+          coverage_data.measured_files())
+
+      for fr in file_reporters:
+        _fname, _stmts, _excl, missing, _mf = cov.analysis2(fr.filename)
+        if missing:
+          structured_results['failures']['coverage'][fr.filename] = missing
   finally:
     os.unlink(coverage_file.name)
 
@@ -481,7 +536,8 @@ def run_run(train, jobs):
       if os.path.isdir(module_entry):
         actual_expectations.update(scan_for_expectations(
             os.path.join(_UNIVERSE_VIEW.module_dir, module_entry)))
-  unused_expectations = actual_expectations.difference(used_expectations)
+  unused_expectations = sorted(
+      actual_expectations.difference(used_expectations))
   if unused_expectations:
     if train:
       for entry in unused_expectations:
@@ -493,8 +549,10 @@ def run_run(train, jobs):
           os.unlink(entry)
     else:
       rc = 1
+      structured_results['failures'][
+          'unused_expectations'] = unused_expectations
       print('FATAL: unused expectations found:')
-      print('\n'.join(sorted(unused_expectations)))
+      print('\n'.join(unused_expectations))
 
   finish_time = datetime.datetime.now()
   print('-' * 70)
@@ -502,6 +560,9 @@ def run_run(train, jobs):
       len(tests), (finish_time - start_time).total_seconds()))
   print()
   print('OK' if rc == 0 else 'FAILED')
+
+  if json_file:
+    json.dump(structured_results, json_file)
 
   return rc
 
@@ -577,11 +638,15 @@ def parse_args(args):
 
   # TODO(phajdan.jr): support running a subset of tests.
   run_p = subp.add_parser('run', description='Run the tests')
-  run_p.set_defaults(func=lambda opts: run_run(opts.train, opts.jobs))
+  run_p.set_defaults(func=lambda opts: run_run(
+      opts.json, opts.train, opts.jobs))
   run_p.add_argument(
       '--jobs', metavar='N', type=int,
       default=multiprocessing.cpu_count(),
       help='run N jobs in parallel (default %(default)s)')
+  run_p.add_argument(
+      '--json', metavar='FILE', type=argparse.FileType('w'),
+      help='path to JSON output file')
   run_p.add_argument(
       '--train', action='store_true',
       help='re-generate recipe expectations')

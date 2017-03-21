@@ -68,6 +68,16 @@ class Check(namedtuple('Check', (
     ret += (' '*indent)+'  '+func
     return ret
 
+  def structured_format(self):
+    return {
+      'name': self.name or '<unnamed>',
+      'func': str(self.ctx_func),
+      'args': [str(a) for a in self.ctx_args],
+      'kwargs': {str(k) : str(v) for k, v in self.ctx_kwargs.iteritems()},
+      'filename': self.ctx_filename,
+      'lineno': self.ctx_lineno,
+    }
+
 
 class ResultStageAbort(Exception):
   pass

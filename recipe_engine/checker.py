@@ -417,10 +417,10 @@ def VerifySubset(a, b):
 
 
 def _nameOfCallable(c):
-  if hasattr(c, '__call__'):
-    return c.__class__.__name__+'.__call__'
   if inspect.ismethod(c):
     return c.im_class.__name__+'.'+c.__name__
   if inspect.isfunction(c):
     return c.__name__
+  if hasattr(c, '__call__'):
+    return c.__class__.__name__+'.__call__'
   return repr(c)
