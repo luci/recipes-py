@@ -84,7 +84,7 @@ class ProtoFile(object):
     buf = package_pb2.Package()
     if text.lstrip().startswith('{'):
       self._is_json = True
-      json_format.Parse(text, buf)
+      json_format.Parse(text, buf, ignore_unknown_fields=True)
     else:
       text_format.Merge(text, buf)
     return buf
