@@ -91,7 +91,7 @@ tests to make sure that you maintain 100% code coverage.
 
 In order to run the tests, run
 
-    $ scripts/slave/unittests/recipe_simulation_test.py train hello
+    $ scripts/slave/recipes.py --use-bootstrap simulation_test train hello
 
 This will write the file `build/scripts/slave/recipes/hello.expected/basic.json`
 summarizing the actions of the recipe under the boring conditions
@@ -638,9 +638,15 @@ Use `scripts/slave/recipes.py doc`. It's super effective!
 
 ## How do I run those tests you were talking about?
 
-To test all the recipes/apis, use
-`scripts/slave/unittests/recipe_simulation_test.py`.  To set new expectations
-`scripts/slave/unittests/recipe_simulation_test.py train`.
+Each repo has a recipes.py entry point under `recipes_path` from `recipes.cfg` .
+
+Execute the following commands:
+`./recipes.py --use-bootstrap simulation_test test`
+`./recipes.py --use-bootstrap simulation_test train`
+
+Specifically, for `tools/build` repo, the commands to execute are:
+`scripts/slave/recipes.py --use-bootstrap simulation_test test`
+`scripts/slave/recipes.py --use-bootstrap simulation_test train`
 
 ## Where's the docs on `*.py`?
 
