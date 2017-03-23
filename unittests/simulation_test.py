@@ -31,7 +31,7 @@ class TestSimulation(repo_test_util.RepoTest):
           repos['a'], 'a_module', {'foo': ['bar']}, generate_example=False)
       self.train_recipes(repos['a'])
     self.assertIn(
-        'Exception: The following modules lack test coverage: a_module',
+        'ERROR: The following modules lack test coverage: a_module',
         cm.exception.output)
 
   def test_no_coverage_whitelisted(self):
@@ -39,12 +39,14 @@ class TestSimulation(repo_test_util.RepoTest):
         'a': [],
     })
 
-    self.update_recipe_module(
-        repos['a'], 'a_module', {'foo': ['bar']}, generate_example=False,
-        disable_strict_coverage=True)
-
-    # Training the recipes should work.
-    self.train_recipes(repos['a'])
+    with self.assertRaises(subprocess.CalledProcessError) as cm:
+      self.update_recipe_module(
+          repos['a'], 'a_module', {'foo': ['bar']}, generate_example=False,
+          disable_strict_coverage=True)
+      self.train_recipes(repos['a'])
+    self.assertIn(
+        'FATAL: Insufficient coverage',
+        cm.exception.output)
 
   def test_incomplete_coverage(self):
     repos = self.repo_setup({
@@ -56,9 +58,9 @@ class TestSimulation(repo_test_util.RepoTest):
           repos['a'], 'a_module', {'foo': ['bar'], 'baz': ['gazonk']},
           generate_example=['foo'])
       self.train_recipes(repos['a'])
-    self.assertRegexpMatches(
-        cm.exception.output,
-        r'FATAL: Test coverage \d+% is not the required 100% threshold')
+    self.assertIn(
+        'FATAL: Insufficient coverage',
+        cm.exception.output)
 
   def test_incomplete_coverage_whitelisted(self):
     repos = self.repo_setup({
@@ -72,9 +74,9 @@ class TestSimulation(repo_test_util.RepoTest):
           repos['a'], 'a_module', {'foo': ['bar'], 'baz': ['gazonk']},
           generate_example=['foo'], disable_strict_coverage=True)
       self.train_recipes(repos['a'])
-    self.assertRegexpMatches(
-        cm.exception.output,
-        r'FATAL: Test coverage \d+% is not the required 100% threshold')
+    self.assertIn(
+        'FATAL: Insufficient coverage',
+        cm.exception.output)
 
   def test_recipe_coverage_strict(self):
     repos = self.repo_setup({
@@ -95,9 +97,9 @@ class TestSimulation(repo_test_util.RepoTest):
           repos['a'], 'a_module', {'foo': ['bar'], 'baz': ['gazonk']},
           generate_example=['foo'])
       self.train_recipes(repos['a'])
-    self.assertRegexpMatches(
-        cm.exception.output,
-        r'FATAL: Test coverage \d+% is not the required 100% threshold')
+    self.assertIn(
+        'FATAL: Insufficient coverage',
+        cm.exception.output)
 
   def test_recipe_coverage_strict_whitelisted(self):
     repos = self.repo_setup({

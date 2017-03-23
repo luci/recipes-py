@@ -190,7 +190,7 @@ class RepoTest(unittest.TestCase):
     }
 
   def train_recipes(self, repo, overrides=None):
-    """Trains recipe simulation tests in given repo.
+    """Trains recipe tests in given repo.
 
     Arguments:
       repo(dict): one of the repos returned by |repo_setup|
@@ -210,8 +210,7 @@ class RepoTest(unittest.TestCase):
         args.extend(['-O', '%s=%s' % (repo, path)])
       args.extend([
           '--use-bootstrap',
-          'simulation_test',
-          'train',
+          'test', 'run', '--train',
       ])
       subprocess.check_output(args, stderr=subprocess.STDOUT)
 
