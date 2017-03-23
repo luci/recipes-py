@@ -395,7 +395,6 @@ def parse_package(uv, base_dir, spec):
   if os.path.isfile(readme):
     with open(readme, 'rb') as f:
       ret.docstring = f.read()
-  # TODO(iannucci): Add canonical_base_url
 
   mod_base = posixpath.relpath(uv.module_dir, base_dir)
   for mod_name in uv.loop_over_recipe_modules():

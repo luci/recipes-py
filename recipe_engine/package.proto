@@ -55,11 +55,15 @@ message Package {
   // slashes.
   string project_id = 2;
 
+  // This is the URL which points to the 'source of truth' for this repo. It's
+  // meant to be used for documentation generation.
+  string canonical_repo_url = 3;
+
   // The path (using forward slashes) to where the base of the recipes are found
   // in the repo (i.e. where the "recipes" and/or "recipe_modules" directories
   // live).
-  string recipes_path = 3;
+  string recipes_path = 4;
 
   // Any package dependencies that this package has.
-  repeated DepSpec deps = 4;
+  repeated DepSpec deps = 5;
 }
