@@ -203,7 +203,7 @@ class JsonGenerator(object):
 
 class TestTest(unittest.TestCase):
   def setUp(self):
-    root_dir = tempfile.mkdtemp()
+    root_dir = os.path.realpath(tempfile.mkdtemp())
     config_dir = os.path.join(root_dir, 'infra', 'config')
     os.makedirs(config_dir)
 
