@@ -92,7 +92,7 @@ class ProtoFile(object):
   def to_raw(self, buf):
     if self._is_json:
       obj = json_format.MessageToDict(buf, preserving_proto_field_name=True)
-      return json.dumps(obj, indent=2, sort_keys=True)
+      return json.dumps(obj, indent=2, sort_keys=True).replace(' \n', '\n')
     else:
       return text_format.MessageToString(buf)
 
