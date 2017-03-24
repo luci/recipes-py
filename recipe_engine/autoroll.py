@@ -131,7 +131,7 @@ def run_simulation_test(repo_root, package_spec, additional_args=None,
   ]
   if not allow_fetch:
     args.append('--no-fetch')
-  args.append('simulation_test')
+  args.extend(['test', 'run'])
   if additional_args:
     args.extend(additional_args)
   p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -198,7 +198,7 @@ def process_candidates(candidates, context, config_file, package_spec):
       write_new_recipes_py(context, spec, repo_cfg_block)
 
       rc, output = run_simulation_test(
-          context.repo_root, package_spec, ['train'])
+          context.repo_root, package_spec, ['--train'])
       roll_details[i]['recipes_simulation_test_train'] = {
         'output': output,
         'rc': rc,
@@ -268,7 +268,7 @@ def main(args, repo_root, config_file):
       # Restore initial state. Since we could be running simulation tests
       # on other revisions, re-run them now as well.
       config_file.write(package_spec.dump())
-      run_simulation_test(context.repo_root, package_spec, ['train'],
+      run_simulation_test(context.repo_root, package_spec, ['--train'],
                           allow_fetch=True)
 
   if args.output_json:

@@ -509,22 +509,25 @@ def run_run(json_file, train, jobs):
     cov = coverage.coverage(
         data_file=coverage_file.name, config_file=False, omit=cover_omit())
     cov.load()
-    outf = cStringIO.StringIO()
-    percentage = cov.report(file=outf, show_missing=True, skip_covered=True)
-    if int(percentage) != 100:
-      rc = 1
-      print(outf.getvalue())
-      print('FATAL: Insufficient coverage (%.f%%)' % int(percentage))
 
-      # TODO(phajdan.jr): Add API to coverage to apply path filters.
-      reporter = coverage.report.Reporter(cov, cov.config)
-      file_reporters = reporter.find_file_reporters(
-          coverage_data.measured_files())
+    # TODO(phajdan.jr): Add API to coverage to apply path filters.
+    reporter = coverage.report.Reporter(cov, cov.config)
+    file_reporters = reporter.find_file_reporters(
+        coverage_data.measured_files())
 
-      for fr in file_reporters:
-        _fname, _stmts, _excl, missing, _mf = cov.analysis2(fr.filename)
-        if missing:
-          structured_results['failures']['coverage'][fr.filename] = missing
+    # TODO(phajdan.jr): Make coverage not throw CoverageException for no data.
+    if file_reporters:
+      outf = cStringIO.StringIO()
+      percentage = cov.report(file=outf, show_missing=True, skip_covered=True)
+      if int(percentage) != 100:
+        rc = 1
+        print(outf.getvalue())
+        print('FATAL: Insufficient coverage (%.f%%)' % int(percentage))
+
+        for fr in file_reporters:
+          _fname, _stmts, _excl, missing, _mf = cov.analysis2(fr.filename)
+          if missing:
+            structured_results['failures']['coverage'][fr.filename] = missing
   finally:
     os.unlink(coverage_file.name)
 
