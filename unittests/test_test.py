@@ -280,6 +280,30 @@ class TestTest(unittest.TestCase):
     self.assertEqual(self.json_generator.diff_failure('foo.basic').get(),
                      self.json_contents)
 
+  def test_test_expectation_failure_empty_filter(self):
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['pass']
+    rw.GenTestsLines = [
+        'yield api.test("first")',
+        'yield api.test("second")',
+    ]
+    rw.add_expectation('second')
+    rw.write()
+
+    with self.assertRaises(subprocess.CalledProcessError) as cm:
+      self._run_recipes(
+          'test', 'run',
+          '--filter', 'foo.first',
+          '--json', self.json_path)
+    self.assertEqual(self.json_generator.diff_failure('foo.first').get(),
+                     self.json_contents)
+
+    self._run_recipes(
+        'test', 'run',
+        '--filter', 'foo.second',
+        '--json', self.json_path)
+    self.assertEqual(self.json_generator.get(), self.json_contents)
+
   def test_test_expectation_failure_different(self):
     rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
     rw.DEPS = ['recipe_engine/step']
@@ -322,6 +346,15 @@ class TestTest(unittest.TestCase):
         self.json_generator.coverage_failure('recipes/foo.py', [7]).get(),
         self.json_contents)
 
+  def test_test_recipe_not_covered_filter(self):
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['if False:', '  pass']
+    rw.add_expectation('basic')
+    rw.write()
+    self._run_recipes(
+        'test', 'run', '--filter', 'foo.*', '--json', self.json_path)
+    self.assertEqual(self.json_generator.get(), self.json_contents)
+
   def test_test_check_failure(self):
     rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
     rw.RunStepsLines = ['pass']
@@ -333,6 +366,29 @@ class TestTest(unittest.TestCase):
     rw.write()
     with self.assertRaises(subprocess.CalledProcessError) as cm:
       self._run_recipes('test', 'run', '--json', self.json_path)
+    self.assertNotIn('FATAL: Insufficient coverage', cm.exception.output)
+    self.assertIn('CHECK(FAIL)', cm.exception.output)
+    self.assertIn('foo.basic failed', cm.exception.output)
+    self.assertEqual(
+        self.json_generator.check_failure(
+            'foo.basic', 'recipes/foo.py', 10,
+            'MustRun', args=['\'bar\'']).get(),
+        self.json_contents)
+
+  def test_test_check_failure_filter(self):
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['pass']
+    rw.GenTestsLines = [
+        'yield api.test("basic") + \\',
+        '  api.post_process(post_process.MustRun, "bar")'
+    ]
+    rw.add_expectation('basic')
+    rw.write()
+    with self.assertRaises(subprocess.CalledProcessError) as cm:
+      self._run_recipes(
+          'test', 'run',
+          '--filter', 'foo.*',
+          '--json', self.json_path)
     self.assertNotIn('FATAL: Insufficient coverage', cm.exception.output)
     self.assertIn('CHECK(FAIL)', cm.exception.output)
     self.assertIn('foo.basic failed', cm.exception.output)

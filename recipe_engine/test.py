@@ -11,6 +11,7 @@ import copy
 import coverage
 import datetime
 import difflib
+import fnmatch
 import functools
 import json
 import multiprocessing
@@ -267,7 +268,7 @@ def run_recipe(recipe_name, test_name, covers):
     return (result_data, failed_checks, coverage_data)
 
 
-def get_tests():
+def get_tests(test_filter=None):
   """Returns a list of tests for current recipe package."""
   tests = []
   coverage_data = coverage.CoverageData()
@@ -298,7 +299,19 @@ def get_tests():
       base_covers.append(os.path.join(
           _UNIVERSE_VIEW.module_dir, module, '*.py'))
 
+  recipe_filter = []
+  if test_filter:
+    recipe_filter = [p.split('.', 1)[0] for p in test_filter]
   for recipe_path, recipe_name in _UNIVERSE_VIEW.loop_over_recipes():
+    if recipe_filter:
+      match = False
+      for pattern in recipe_filter:
+        if fnmatch.fnmatch(recipe_name, pattern):
+          match = True
+          break
+      if not match:
+        continue
+
     try:
       covers = [recipe_path] + base_covers
 
@@ -334,8 +347,15 @@ def get_tests():
         _GEN_TEST_CACHE[(recipe_name, test_data.name)] = copy.deepcopy(
             test_data)
 
-        tests.append(TestDescription(
-            recipe_name, test_data.name, expect_dir, covers))
+        test_description = TestDescription(
+            recipe_name, test_data.name, expect_dir, covers)
+        if test_filter:
+          for pattern in test_filter:
+            if fnmatch.fnmatch(test_description.full_name, pattern):
+              tests.append(test_description)
+              break
+        else:
+          tests.append(test_description)
     except:
       info = sys.exc_info()
       new_exec = Exception('While generating results for %r: %s: %s' % (
@@ -432,7 +452,7 @@ def scan_for_expectations(root, inside_expectations=False):
   return collected_expectations
 
 
-def run_run(json_file, train, jobs):
+def run_run(json_file, train, jobs, test_filter):
   """Implementation of the 'run' command."""
   start_time = datetime.datetime.now()
 
@@ -463,8 +483,8 @@ def run_run(json_file, train, jobs):
     structured_results['global_failures'].append(msg)
     print(msg)
 
-  tests, coverage_data, uncovered_modules = get_tests()
-  if uncovered_modules:
+  tests, coverage_data, uncovered_modules = get_tests(test_filter)
+  if uncovered_modules and not test_filter:
     rc = 1
     structured_results['failures']['uncovered_modules'] = uncovered_modules
     print('ERROR: The following modules lack test coverage: %s' % (
@@ -501,61 +521,69 @@ def run_run(json_file, train, jobs):
       print('Internal failure:')
       print(details)
 
-  try:
-    # TODO(phajdan.jr): Add API to coverage to load data from memory.
-    with tempfile.NamedTemporaryFile(delete=False) as coverage_file:
-      coverage_data.write_file(coverage_file.name)
+  if test_filter:
+    print('NOTE: not checking coverage, because a filter is enabled')
+  else:
+    try:
+      # TODO(phajdan.jr): Add API to coverage to load data from memory.
+      with tempfile.NamedTemporaryFile(delete=False) as coverage_file:
+        coverage_data.write_file(coverage_file.name)
 
-    cov = coverage.coverage(
-        data_file=coverage_file.name, config_file=False, omit=cover_omit())
-    cov.load()
+      cov = coverage.coverage(
+          data_file=coverage_file.name, config_file=False, omit=cover_omit())
+      cov.load()
 
-    # TODO(phajdan.jr): Add API to coverage to apply path filters.
-    reporter = coverage.report.Reporter(cov, cov.config)
-    file_reporters = reporter.find_file_reporters(
-        coverage_data.measured_files())
+      # TODO(phajdan.jr): Add API to coverage to apply path filters.
+      reporter = coverage.report.Reporter(cov, cov.config)
+      file_reporters = reporter.find_file_reporters(
+          coverage_data.measured_files())
 
-    # TODO(phajdan.jr): Make coverage not throw CoverageException for no data.
-    if file_reporters:
-      outf = cStringIO.StringIO()
-      percentage = cov.report(file=outf, show_missing=True, skip_covered=True)
-      if int(percentage) != 100:
+      # TODO(phajdan.jr): Make coverage not throw CoverageException for no data.
+      if file_reporters:
+        outf = cStringIO.StringIO()
+        percentage = cov.report(file=outf, show_missing=True, skip_covered=True)
+        if int(percentage) != 100:
+          rc = 1
+          print(outf.getvalue())
+          print('FATAL: Insufficient coverage (%.f%%)' % int(percentage))
+
+          for fr in file_reporters:
+            _fname, _stmts, _excl, missing, _mf = cov.analysis2(fr.filename)
+            if missing:
+              structured_results['failures']['coverage'][fr.filename] = missing
+    finally:
+      os.unlink(coverage_file.name)
+
+  if test_filter:
+    print('NOTE: not checking for unused expectations, '
+          'because a filter is enabled')
+  else:
+    actual_expectations = set()
+    if os.path.exists(_UNIVERSE_VIEW.recipe_dir):
+      actual_expectations.update(
+          scan_for_expectations(_UNIVERSE_VIEW.recipe_dir))
+    if os.path.exists(_UNIVERSE_VIEW.module_dir):
+      for module_entry in os.listdir(_UNIVERSE_VIEW.module_dir):
+        if os.path.isdir(module_entry):
+          actual_expectations.update(scan_for_expectations(
+              os.path.join(_UNIVERSE_VIEW.module_dir, module_entry)))
+    unused_expectations = sorted(
+        actual_expectations.difference(used_expectations))
+    if unused_expectations:
+      if train:
+        for entry in unused_expectations:
+          if not os.path.exists(entry):
+            continue
+          if os.path.isdir(entry):
+            shutil.rmtree(entry)
+          else:
+            os.unlink(entry)
+      else:
         rc = 1
-        print(outf.getvalue())
-        print('FATAL: Insufficient coverage (%.f%%)' % int(percentage))
-
-        for fr in file_reporters:
-          _fname, _stmts, _excl, missing, _mf = cov.analysis2(fr.filename)
-          if missing:
-            structured_results['failures']['coverage'][fr.filename] = missing
-  finally:
-    os.unlink(coverage_file.name)
-
-  actual_expectations = set()
-  if os.path.exists(_UNIVERSE_VIEW.recipe_dir):
-    actual_expectations.update(scan_for_expectations(_UNIVERSE_VIEW.recipe_dir))
-  if os.path.exists(_UNIVERSE_VIEW.module_dir):
-    for module_entry in os.listdir(_UNIVERSE_VIEW.module_dir):
-      if os.path.isdir(module_entry):
-        actual_expectations.update(scan_for_expectations(
-            os.path.join(_UNIVERSE_VIEW.module_dir, module_entry)))
-  unused_expectations = sorted(
-      actual_expectations.difference(used_expectations))
-  if unused_expectations:
-    if train:
-      for entry in unused_expectations:
-        if not os.path.exists(entry):
-          continue
-        if os.path.isdir(entry):
-          shutil.rmtree(entry)
-        else:
-          os.unlink(entry)
-    else:
-      rc = 1
-      structured_results['failures'][
-          'unused_expectations'] = unused_expectations
-      print('FATAL: unused expectations found:')
-      print('\n'.join(unused_expectations))
+        structured_results['failures'][
+            'unused_expectations'] = unused_expectations
+        print('FATAL: unused expectations found:')
+        print('\n'.join(unused_expectations))
 
   finish_time = datetime.datetime.now()
   print('-' * 70)
@@ -631,7 +659,7 @@ def parse_args(args):
   """Returns parsed command line arguments."""
   parser = argparse.ArgumentParser()
 
-  subp = parser.add_subparsers()
+  subp = parser.add_subparsers(dest='command')
 
   list_p = subp.add_parser('list', description='Print all test names')
   list_p.set_defaults(func=lambda opts: run_list(opts.json))
@@ -639,10 +667,9 @@ def parse_args(args):
       '--json', metavar='FILE', type=argparse.FileType('w'),
       help='path to JSON output file')
 
-  # TODO(phajdan.jr): support running a subset of tests.
   run_p = subp.add_parser('run', description='Run the tests')
   run_p.set_defaults(func=lambda opts: run_run(
-      opts.json, opts.train, opts.jobs))
+      opts.json, opts.train, opts.jobs, opts.filter))
   run_p.add_argument(
       '--jobs', metavar='N', type=int,
       default=multiprocessing.cpu_count(),
@@ -651,10 +678,28 @@ def parse_args(args):
       '--json', metavar='FILE', type=argparse.FileType('w'),
       help='path to JSON output file')
   run_p.add_argument(
+      '--filter', action='append',
+      help='glob filter for the tests to run; '
+           'can be specified multiple times; '
+           'the globs have the form of '
+           '`<recipe_name_glob>[.<test_name_glob>]`. If `.<test_name_glob>` '
+           'is omitted, it is implied to be `.*`, i.e. all tests.)')
+  run_p.add_argument(
       '--train', action='store_true',
       help='re-generate recipe expectations')
 
-  return parser.parse_args(args)
+  args = parser.parse_args(args)
+  if args.command == 'run' and args.filter:
+    normalize_filters = []
+    for filt in args.filter:
+      if not filt:
+        parser.error('empty filters not allowed')
+      # filters missing a test_name portion imply all tests for the
+      # matching recipe.
+      normalize_filters.append(filt if '.' in filt else filt+'.*')
+    args.filter = normalize_filters
+
+  return args
 
 
 def main(universe_view, raw_args, engine_flags):
