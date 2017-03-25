@@ -414,15 +414,7 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
     self.assertEqual(package.PackageSpec.load_proto(self.proto_file),
                      package_spec)
 
-  def test_dump_round_trips_text(self):
-    proto_text = """
-api_version: 1
-""".lstrip()
-    proto_file = MockProtoFile('repo/root/infra/config/recipes.cfg', proto_text)
-    package_spec = package.PackageSpec.load_proto(proto_file)
-    self.assertEqual(proto_file.to_raw(package_spec.dump()), proto_text)
-
-  def test_dump_round_trips_json(self):
+  def test_dump_round_trips(self):
     proto_text = """
 {"api_version": 1}
 """.lstrip()
@@ -432,8 +424,7 @@ api_version: 1
                      '{\n  "api_version": 1\n}')
 
   def test_no_version(self):
-    proto_text = """\
-{
+    proto_text = """{
   "project_id": "foo",
   "recipes_path": "path/to/recipes"
 }
@@ -444,11 +435,11 @@ api_version: 1
       package.PackageSpec.load_proto(proto_file)
 
   def test_unsupported_version(self):
-    proto_text = """\
-api_version: 99999999
-project_id: "fizzbar"
-recipes_path: "path/to/recipes"
-"""
+    proto_text = """{
+  "api_version": 99999999,
+  "project_id": "fizzbar",
+  "recipes_path": "path/to/recipes"
+}"""
     proto_file = MockProtoFile('repo/root/infra/config/recipes.cfg', proto_text)
 
     with self.assertRaises(AssertionError):
@@ -458,25 +449,28 @@ recipes_path: "path/to/recipes"
 class TestPackageDeps(MockIOThings, unittest.TestCase):
 
   def test_create_with_overrides(self):
-    base_proto_text = """
-api_version: 1
-project_id: "base_package"
-recipes_path: "path/to/recipes"
-deps {
-  project_id: "foo"
-  url: "https://repo.com/foo.git"
-  branch: "foobranch"
-  revision: "deadd00d"
+    base_proto_text = """{
+  "api_version": 1,
+  "project_id": "base_package",
+  "recipes_path": "path/to/recipes",
+  "deps": [
+    {
+      "project_id": "foo",
+      "url": "https://repo.com/foo.git",
+      "branch": "foobranch",
+      "revision": "deadd00d"
+    }
+  ]
 }
 """
     base_proto_file = MockProtoFile('base/infra/config/recipes.cfg',
                                     base_proto_text)
 
-    foo_proto_text = """
-api_version: 1
-project_id: "foo"
-recipes_path: "path/to/recipes"
-"""
+    foo_proto_text = """{
+  "api_version": 1,
+  "project_id": "foo",
+  "recipes_path": "path/to/recipes"
+}"""
     foo_proto_file = MockProtoFile('foo/infra/config/recipes.cfg',
                                    foo_proto_text)
 

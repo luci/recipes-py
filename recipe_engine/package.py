@@ -13,7 +13,6 @@ import sys
 
 from . import env
 
-from google.protobuf import text_format
 from google.protobuf import json_format
 from . import package_pb2
 from . import fetch
@@ -64,12 +63,6 @@ class ProtoFile(object):
   """
   def __init__(self, path):
     self._path = path
-    # TODO(iannucci): remove text proto support
-    self._is_json = False
-    try:
-      self._is_json = self.read_raw().lstrip().startswith('{')
-    except IOError:
-      pass
 
   @property
   def path(self):
@@ -82,19 +75,12 @@ class ProtoFile(object):
   def read(self):
     text = self.read_raw()
     buf = package_pb2.Package()
-    if text.lstrip().startswith('{'):
-      self._is_json = True
-      json_format.Parse(text, buf, ignore_unknown_fields=True)
-    else:
-      text_format.Merge(text, buf)
+    json_format.Parse(text, buf, ignore_unknown_fields=True)
     return buf
 
   def to_raw(self, buf):
-    if self._is_json:
-      obj = json_format.MessageToDict(buf, preserving_proto_field_name=True)
-      return json.dumps(obj, indent=2, sort_keys=True).replace(' \n', '\n')
-    else:
-      return text_format.MessageToString(buf)
+    obj = json_format.MessageToDict(buf, preserving_proto_field_name=True)
+    return json.dumps(obj, indent=2, sort_keys=True).replace(' \n', '\n')
 
   def write(self, buf):
     with open(self._path, 'w') as fh:

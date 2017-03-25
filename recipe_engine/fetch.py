@@ -21,7 +21,7 @@ from . import types
 from .requests_ssl import requests
 
 import subprocess42
-from google.protobuf import text_format
+from google.protobuf import json_format
 
 from . import package_pb2
 
@@ -260,7 +260,8 @@ class GitilesBackend(Backend):
     recipes_cfg_text = base64.b64decode(
         self._fetch_gitiles(recipes_cfg_url).text)
     recipes_cfg_proto = package_pb2.Package()
-    text_format.Merge(recipes_cfg_text, recipes_cfg_proto)
+    json_format.Parse(recipes_cfg_text, recipes_cfg_proto,
+                      ignore_unknown_fields=True)
     recipes_path_rel = recipes_cfg_proto.recipes_path
 
     # Re-create recipes.cfg in |checkout_dir| so that the repo's recipes.py

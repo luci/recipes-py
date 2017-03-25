@@ -192,11 +192,11 @@ class TestGitiles(unittest.TestCase):
   @mock.patch('tarfile.open')
   @mock.patch('requests.get')
   def test_checkout(self, requests_get, tarfile_open, makedirs, rmtree):
-    proto_text = u"""
-api_version: 1
-project_id: "foo"
-recipes_path: "path/to/recipes"
-""".lstrip()
+    proto_text = u"""{
+  "api_version": 1,
+  "project_id": "foo",
+  "recipes_path": "path/to/recipes"
+}""".lstrip()
     requests_get.side_effect = [
         mock.Mock(text=u')]}\'\n{ "commit": "abc123" }', status_code=200),
         mock.Mock(text=base64.b64encode(proto_text), status_code=200),
