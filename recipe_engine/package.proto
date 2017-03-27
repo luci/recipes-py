@@ -41,6 +41,34 @@ message DepSpec {
   RepoType repo_type = 6;
 }
 
+// These options control the behavior of the autoroller recipe:
+//   https://chromium.googlesource.com/infra/infra/+/master/recipes/recipes/recipe_autoroller.py
+message AutorollRecipeOptions {
+  // These control the behavior of the autoroller when it finds a trivial roll
+  // (i.e. a roll without expectation changes).
+  message TrivialOptions {
+    // These email addresses will be TBR'd.
+    repeated string tbr_emails = 1;
+
+    // If true, the autoroller recipe will automatically CQ the change.
+    bool automatic_commit = 2;
+  }
+  TrivialOptions trivial = 1;
+
+  // These control the behavior of the autoroller when it finds a non-trivial
+  // roll (i.e. a roll with expectation changes but which otherwise completes
+  // the simulation tests).
+  message NontrivialOptions {
+    // These add additional reviewer emails on the change.
+    repeated string extra_reviewer_emails = 1;
+
+    // If true, the autoroller recipe will automatically do a CQ dry run when
+    // uploading the change.
+    bool automatic_commit_dry_run = 2;
+  }
+  NontrivialOptions nontrivial = 2;
+}
+
 message Package {
   // The "API Version" of this proto. Should always equal 1, currently. This may
   // change if a backwards-incompatible update must be done for the proto. In
@@ -66,4 +94,11 @@ message Package {
 
   // Any package dependencies that this package has.
   repeated DepSpec deps = 5;
+
+  // The autoroller options for this repo. These options will be respected by
+  // the autoroller recipe (which currently lives here:
+  //   https://chromium.googlesource.com/infra/infra/+/master/recipes/recipes/recipe_autoroller.py
+  // ).
+  AutorollRecipeOptions autoroll_recipe_options = 6;
+
 }
