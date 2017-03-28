@@ -12,8 +12,9 @@ import unittest
 import repo_test_util
 
 import mock
-from recipe_engine import package
 
+from recipe_engine import fetch
+from recipe_engine import package
 
 TEST_AUTHOR = 'foo@example.com'
 
@@ -382,21 +383,19 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
 
     self.proto_text = '\n'.join([
       '{',
-      '  "api_version": 1,',
-      '  "deps": [',
-      '    {',
+      '  "api_version": 2,',
+      '  "deps": {',
+      '    "bar": {',
       '      "branch": "superbar",',
-      '      "project_id": "bar",',
       '      "revision": "deadd00d",',
       '      "url": "https://repo.com/bar.git"',
       '    },',
-      '    {',
+      '    "foo": {',
       '      "branch": "master",',
-      '      "project_id": "foo",',
       '      "revision": "cafebeef",',
       '      "url": "https://repo.com/foo.git"',
       '    }',
-      '  ],',
+      '  },',
       '  "project_id": "super_main_package",',
       '  "recipes_path": "path/to/recipes"',
       '}',
@@ -433,6 +432,42 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
 
     with self.assertRaises(AssertionError):
       package.PackageSpec.load_proto(proto_file)
+
+  def test_old_deps(self):
+    proto_text = '\n'.join([
+      '{',
+      '  "api_version": 1,',
+      '  "deps": [',
+      '    {',
+      '      "branch": "superbar",',
+      '      "project_id": "bar",',
+      '      "revision": "deadd00d",',
+      '      "url": "https://repo.com/bar.git"',
+      '    },',
+      '    {',
+      '      "branch": "master",',
+      '      "project_id": "foo",',
+      '      "revision": "cafebeef",',
+      '      "url": "https://repo.com/foo.git"',
+      '    }',
+      '  ],',
+      '  "project_id": "super_main_package",',
+      '  "recipes_path": "path/to/recipes"',
+      '}',
+    ])
+    proto_file = MockProtoFile('repo/root/infra/config/recipes.cfg', proto_text)
+
+    spec = package.PackageSpec.load_proto(proto_file)
+    self.assertEqual(spec.deps['foo'], package.GitRepoSpec(
+      'foo',
+      'https://repo.com/foo.git',
+      'master',
+      'cafebeef',
+      '',
+      fetch.GitBackend()
+    ))
+    self.assertEqual(proto_file.to_raw(spec.dump()), proto_text)
+
 
   def test_unsupported_version(self):
     proto_text = """{

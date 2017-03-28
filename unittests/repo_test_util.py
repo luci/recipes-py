@@ -120,18 +120,15 @@ class RepoTest(unittest.TestCase):
     """
     repos = {}
     for k in sorted(repo_deps):
-      deps=[package_pb2.DepSpec(
-          project_id='recipe_engine',
-          url="file://"+ROOT_DIR,
-      )] + [
-        package_pb2.DepSpec(
-          project_id=d,
+      deps = {
+        'recipe_engine': package_pb2.DepSpec(url="file://"+ROOT_DIR),
+      }
+      for d in repo_deps[k]:
+        deps[d] = package_pb2.DepSpec(
           url=repos[d]['root'],
           branch='master',
           revision=repos[d]['revision'],
         )
-        for d in repo_deps[k]
-      ]
 
       repos[k] = self.create_repo(k, package_pb2.Package(
           api_version=1,

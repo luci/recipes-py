@@ -60,7 +60,12 @@ class ProtoFile(object):
   """A collection of functions operating on a proto path.
 
   This is an object so that it can be mocked in the tests.
+
+  Proto files read will always be upconverted to the current proto in
+  package.proto, and will be written back in their original format.
   """
+  API_VERSIONS = (1, 2)
+
   def __init__(self, path):
     self._path = path
 
@@ -73,13 +78,32 @@ class ProtoFile(object):
       return fh.read()
 
   def read(self):
-    text = self.read_raw()
+    obj = json.loads(self.read_raw())
+
+    vers = obj.get('api_version')
+    assert vers in self.API_VERSIONS, (
+      'expected %r to be one of %r' % (vers, self.API_VERSIONS)
+    )
+
+    # upconvert old deps-as-a-list to deps-as-a-dict
+    if 'deps' in obj and vers == 1:
+      obj['deps'] = {d.pop('project_id'): d for d in obj['deps']}
+
     buf = package_pb2.Package()
-    json_format.Parse(text, buf, ignore_unknown_fields=True)
+    json_format.ParseDict(obj, buf, ignore_unknown_fields=True)
     return buf
 
   def to_raw(self, buf):
     obj = json_format.MessageToDict(buf, preserving_proto_field_name=True)
+
+    # downconvert if api_version is 1
+    if buf.deps and buf.api_version < 2:
+      deps = []
+      for pid, d in sorted(obj['deps'].iteritems()):
+        d['project_id'] = pid
+        deps.append(d)
+      obj['deps'] = deps
+
     return json.dumps(obj, indent=2, sort_keys=True).replace(' \n', '\n')
 
   def write(self, buf):
@@ -205,7 +229,6 @@ class GitRepoSpec(RepoSpec):
 
   def dump(self):
     buf = package_pb2.DepSpec(
-        project_id=self.project_id,
         url=self.repo,
         branch=self.branch,
         revision=self.revision)
@@ -330,7 +353,6 @@ class PathRepoSpec(RepoSpec):
   def dump(self):
     """Returns the package.proto DepSpec form of this RepoSpec."""
     return package_pb2.DepSpec(
-        project_id=self.project_id,
         url="file://"+self.path)
 
   def __eq__(self, other):
@@ -462,12 +484,12 @@ class RollCandidate(object):
 
   def get_rolled_spec(self):
     """Returns a PackageSpec with all the deps updates from this roll."""
-    # TODO(phajdan.jr): does this preserve comments? should it?
     new_deps = _updated(
         self._package_spec.deps,
         { project_id: spec for project_id, spec in
           self._updates.iteritems() })
     return PackageSpec(
+        self._package_spec.api_version,
         self._package_spec.project_id,
         self._package_spec.recipes_path,
         new_deps)
@@ -499,9 +521,8 @@ class RollCandidate(object):
 
 
 class PackageSpec(object):
-  API_VERSION = 1
-
-  def __init__(self, project_id, recipes_path, deps):
+  def __init__(self, api_version, project_id, recipes_path, deps):
+    self._api_version = api_version
     self._project_id = project_id
     self._recipes_path = recipes_path
     self._deps = deps
@@ -513,25 +534,25 @@ class PackageSpec(object):
   @classmethod
   def load_proto(cls, proto_file):
     buf = proto_file.read()
-    assert buf.api_version == cls.API_VERSION
 
-    deps = { str(dep.project_id): cls.spec_for_dep(dep)
-             for dep in buf.deps }
-    return cls(str(buf.project_id), str(buf.recipes_path), deps)
+    deps = { pid: cls.spec_for_dep(pid, dep)
+             for pid, dep in buf.deps.iteritems() }
+    return cls(buf.api_version, str(buf.project_id), str(buf.recipes_path),
+               deps)
 
   @classmethod
-  def spec_for_dep(cls, dep):
+  def spec_for_dep(cls, project_id, dep):
     """Returns a RepoSpec for the given dependency protobuf."""
     url = str(dep.url)
     if url.startswith("file://"):
-      return PathRepoSpec(str(dep.project_id), url[len("file://"):])
+      return PathRepoSpec(str(project_id), url[len("file://"):])
 
     if dep.repo_type in (package_pb2.DepSpec.GIT, package_pb2.DepSpec.GITILES):
       if dep.repo_type == package_pb2.DepSpec.GIT:
         backend = fetch.GitBackend()
       elif dep.repo_type == package_pb2.DepSpec.GITILES:
         backend = fetch.GitilesBackend()
-      return GitRepoSpec(str(dep.project_id),
+      return GitRepoSpec(str(project_id),
                          url,
                          str(dep.branch),
                          str(dep.revision),
@@ -552,12 +573,16 @@ class PackageSpec(object):
   def deps(self):
     return self._deps
 
+  @property
+  def api_version(self):
+    return self._api_version
+
   def dump(self):
     return package_pb2.Package(
-        api_version=self.API_VERSION,
+        api_version=self._api_version,
         project_id=self._project_id,
         recipes_path=self._recipes_path,
-        deps=[ self._deps[dep].dump() for dep in sorted(self._deps.keys()) ])
+        deps={k: v.dump() for k, v in self._deps.iteritems()})
 
   def roll_candidates(self, root_spec, context):
     """Returns list of consistent roll candidates, and rejected roll candidates.

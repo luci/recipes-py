@@ -10,22 +10,18 @@ syntax = "proto3";
 package recipe_engine;
 
 message DepSpec {
-  // Same meaning as Package.project_id, but the id for this dependency. This
-  // should always match the project_id of the repo that we're depending on.
-  string project_id = 1;
-
   // The URL of where to fetch the package data. Must always be a git repo URL.
-  string url = 2;
+  string url = 1;
 
   // The ref to git-fetch when syncing this dependency.
-  string branch = 3;
+  string branch = 2;
 
   // The git commit that we depend on.
-  string revision = 4;
+  string revision = 3;
 
   // Treat a subtree of a repo as a whole repo unto itself. This must match
   // the value of `recipes_path` in the target repo.
-  string path_override = 5;
+  string path_override = 4;
 
   enum RepoType {
     // Do a full 'git clone' of this dependency.
@@ -38,7 +34,7 @@ message DepSpec {
   //
   // NOTE: this option may be removed in the future in preference for
   // automatically picking the repo fetch method.
-  RepoType repo_type = 6;
+  RepoType repo_type = 5;
 }
 
 // These options control the behavior of the autoroller recipe:
@@ -92,13 +88,12 @@ message Package {
   // live).
   string recipes_path = 4;
 
-  // Any package dependencies that this package has.
-  repeated DepSpec deps = 5;
+  // A mapping of a dependency ("project_id") to spec needed to fetch its code.
+  map<string, DepSpec> deps = 5;
 
   // The autoroller options for this repo. These options will be respected by
   // the autoroller recipe (which currently lives here:
   //   https://chromium.googlesource.com/infra/infra/+/master/recipes/recipes/recipe_autoroller.py
   // ).
   AutorollRecipeOptions autoroll_recipe_options = 6;
-
 }

@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='package.proto',
   package='recipe_engine',
   syntax='proto3',
-  serialized_pb=_b('\n\rpackage.proto\x12\rrecipe_engine\"\xb9\x01\n\x07\x44\x65pSpec\x12\x12\n\nproject_id\x18\x01 \x01(\t\x12\x0b\n\x03url\x18\x02 \x01(\t\x12\x0e\n\x06\x62ranch\x18\x03 \x01(\t\x12\x10\n\x08revision\x18\x04 \x01(\t\x12\x15\n\rpath_override\x18\x05 \x01(\t\x12\x32\n\trepo_type\x18\x06 \x01(\x0e\x32\x1f.recipe_engine.DepSpec.RepoType\" \n\x08RepoType\x12\x07\n\x03GIT\x10\x00\x12\x0b\n\x07GITILES\x10\x01\"\xbf\x02\n\x15\x41utorollRecipeOptions\x12\x44\n\x07trivial\x18\x01 \x01(\x0b\x32\x33.recipe_engine.AutorollRecipeOptions.TrivialOptions\x12J\n\nnontrivial\x18\x02 \x01(\x0b\x32\x36.recipe_engine.AutorollRecipeOptions.NontrivialOptions\x1a>\n\x0eTrivialOptions\x12\x12\n\ntbr_emails\x18\x01 \x03(\t\x12\x18\n\x10\x61utomatic_commit\x18\x02 \x01(\x08\x1aT\n\x11NontrivialOptions\x12\x1d\n\x15\x65xtra_reviewer_emails\x18\x01 \x03(\t\x12 \n\x18\x61utomatic_commit_dry_run\x18\x02 \x01(\x08\"\xd1\x01\n\x07Package\x12\x13\n\x0b\x61pi_version\x18\x01 \x01(\x05\x12\x12\n\nproject_id\x18\x02 \x01(\t\x12\x1a\n\x12\x63\x61nonical_repo_url\x18\x03 \x01(\t\x12\x14\n\x0crecipes_path\x18\x04 \x01(\t\x12$\n\x04\x64\x65ps\x18\x05 \x03(\x0b\x32\x16.recipe_engine.DepSpec\x12\x45\n\x17\x61utoroll_recipe_options\x18\x06 \x01(\x0b\x32$.recipe_engine.AutorollRecipeOptionsb\x06proto3')
+  serialized_pb=_b('\n\rpackage.proto\x12\rrecipe_engine\"\xa5\x01\n\x07\x44\x65pSpec\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x0e\n\x06\x62ranch\x18\x02 \x01(\t\x12\x10\n\x08revision\x18\x03 \x01(\t\x12\x15\n\rpath_override\x18\x04 \x01(\t\x12\x32\n\trepo_type\x18\x05 \x01(\x0e\x32\x1f.recipe_engine.DepSpec.RepoType\" \n\x08RepoType\x12\x07\n\x03GIT\x10\x00\x12\x0b\n\x07GITILES\x10\x01\"\xbf\x02\n\x15\x41utorollRecipeOptions\x12\x44\n\x07trivial\x18\x01 \x01(\x0b\x32\x33.recipe_engine.AutorollRecipeOptions.TrivialOptions\x12J\n\nnontrivial\x18\x02 \x01(\x0b\x32\x36.recipe_engine.AutorollRecipeOptions.NontrivialOptions\x1a>\n\x0eTrivialOptions\x12\x12\n\ntbr_emails\x18\x01 \x03(\t\x12\x18\n\x10\x61utomatic_commit\x18\x02 \x01(\x08\x1aT\n\x11NontrivialOptions\x12\x1d\n\x15\x65xtra_reviewer_emails\x18\x01 \x03(\t\x12 \n\x18\x61utomatic_commit_dry_run\x18\x02 \x01(\x08\"\xa0\x02\n\x07Package\x12\x13\n\x0b\x61pi_version\x18\x01 \x01(\x05\x12\x12\n\nproject_id\x18\x02 \x01(\t\x12\x1a\n\x12\x63\x61nonical_repo_url\x18\x03 \x01(\t\x12\x14\n\x0crecipes_path\x18\x04 \x01(\t\x12.\n\x04\x64\x65ps\x18\x05 \x03(\x0b\x32 .recipe_engine.Package.DepsEntry\x12\x45\n\x17\x61utoroll_recipe_options\x18\x06 \x01(\x0b\x32$.recipe_engine.AutorollRecipeOptions\x1a\x43\n\tDepsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12%\n\x05value\x18\x02 \x01(\x0b\x32\x16.recipe_engine.DepSpec:\x02\x38\x01\x62\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -42,8 +42,8 @@ _DEPSPEC_REPOTYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=186,
-  serialized_end=218,
+  serialized_start=166,
+  serialized_end=198,
 )
 _sym_db.RegisterEnumDescriptor(_DEPSPEC_REPOTYPE)
 
@@ -56,43 +56,36 @@ _DEPSPEC = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='project_id', full_name='recipe_engine.DepSpec.project_id', index=0,
+      name='url', full_name='recipe_engine.DepSpec.url', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='url', full_name='recipe_engine.DepSpec.url', index=1,
+      name='branch', full_name='recipe_engine.DepSpec.branch', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='branch', full_name='recipe_engine.DepSpec.branch', index=2,
+      name='revision', full_name='recipe_engine.DepSpec.revision', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='revision', full_name='recipe_engine.DepSpec.revision', index=3,
+      name='path_override', full_name='recipe_engine.DepSpec.path_override', index=3,
       number=4, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='path_override', full_name='recipe_engine.DepSpec.path_override', index=4,
-      number=5, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='repo_type', full_name='recipe_engine.DepSpec.repo_type', index=5,
-      number=6, type=14, cpp_type=8, label=1,
+      name='repo_type', full_name='recipe_engine.DepSpec.repo_type', index=4,
+      number=5, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -111,7 +104,7 @@ _DEPSPEC = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=33,
-  serialized_end=218,
+  serialized_end=198,
 )
 
 
@@ -148,8 +141,8 @@ _AUTOROLLRECIPEOPTIONS_TRIVIALOPTIONS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=392,
-  serialized_end=454,
+  serialized_start=372,
+  serialized_end=434,
 )
 
 _AUTOROLLRECIPEOPTIONS_NONTRIVIALOPTIONS = _descriptor.Descriptor(
@@ -185,8 +178,8 @@ _AUTOROLLRECIPEOPTIONS_NONTRIVIALOPTIONS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=456,
-  serialized_end=540,
+  serialized_start=436,
+  serialized_end=520,
 )
 
 _AUTOROLLRECIPEOPTIONS = _descriptor.Descriptor(
@@ -222,10 +215,47 @@ _AUTOROLLRECIPEOPTIONS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=221,
-  serialized_end=540,
+  serialized_start=201,
+  serialized_end=520,
 )
 
+
+_PACKAGE_DEPSENTRY = _descriptor.Descriptor(
+  name='DepsEntry',
+  full_name='recipe_engine.Package.DepsEntry',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='key', full_name='recipe_engine.Package.DepsEntry.key', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='value', full_name='recipe_engine.Package.DepsEntry.value', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=744,
+  serialized_end=811,
+)
 
 _PACKAGE = _descriptor.Descriptor(
   name='Package',
@@ -279,7 +309,7 @@ _PACKAGE = _descriptor.Descriptor(
   ],
   extensions=[
   ],
-  nested_types=[],
+  nested_types=[_PACKAGE_DEPSENTRY, ],
   enum_types=[
   ],
   options=None,
@@ -288,8 +318,8 @@ _PACKAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=543,
-  serialized_end=752,
+  serialized_start=523,
+  serialized_end=811,
 )
 
 _DEPSPEC.fields_by_name['repo_type'].enum_type = _DEPSPEC_REPOTYPE
@@ -298,7 +328,9 @@ _AUTOROLLRECIPEOPTIONS_TRIVIALOPTIONS.containing_type = _AUTOROLLRECIPEOPTIONS
 _AUTOROLLRECIPEOPTIONS_NONTRIVIALOPTIONS.containing_type = _AUTOROLLRECIPEOPTIONS
 _AUTOROLLRECIPEOPTIONS.fields_by_name['trivial'].message_type = _AUTOROLLRECIPEOPTIONS_TRIVIALOPTIONS
 _AUTOROLLRECIPEOPTIONS.fields_by_name['nontrivial'].message_type = _AUTOROLLRECIPEOPTIONS_NONTRIVIALOPTIONS
-_PACKAGE.fields_by_name['deps'].message_type = _DEPSPEC
+_PACKAGE_DEPSENTRY.fields_by_name['value'].message_type = _DEPSPEC
+_PACKAGE_DEPSENTRY.containing_type = _PACKAGE
+_PACKAGE.fields_by_name['deps'].message_type = _PACKAGE_DEPSENTRY
 _PACKAGE.fields_by_name['autoroll_recipe_options'].message_type = _AUTOROLLRECIPEOPTIONS
 DESCRIPTOR.message_types_by_name['DepSpec'] = _DEPSPEC
 DESCRIPTOR.message_types_by_name['AutorollRecipeOptions'] = _AUTOROLLRECIPEOPTIONS
@@ -335,11 +367,21 @@ _sym_db.RegisterMessage(AutorollRecipeOptions.TrivialOptions)
 _sym_db.RegisterMessage(AutorollRecipeOptions.NontrivialOptions)
 
 Package = _reflection.GeneratedProtocolMessageType('Package', (_message.Message,), dict(
+
+  DepsEntry = _reflection.GeneratedProtocolMessageType('DepsEntry', (_message.Message,), dict(
+    DESCRIPTOR = _PACKAGE_DEPSENTRY,
+    __module__ = 'package_pb2'
+    # @@protoc_insertion_point(class_scope:recipe_engine.Package.DepsEntry)
+    ))
+  ,
   DESCRIPTOR = _PACKAGE,
   __module__ = 'package_pb2'
   # @@protoc_insertion_point(class_scope:recipe_engine.Package)
   ))
 _sym_db.RegisterMessage(Package)
+_sym_db.RegisterMessage(Package.DepsEntry)
 
 
+_PACKAGE_DEPSENTRY.has_options = True
+_PACKAGE_DEPSENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
 # @@protoc_insertion_point(module_scope)

@@ -215,11 +215,9 @@ class TestTest(unittest.TestCase):
         api_version=1,
         project_id='test_pkg',
         recipes_path='',
-        deps=[
-            package_pb2.DepSpec(
-                project_id='recipe_engine',
-                url='file://'+ROOT_DIR),
-        ],
+        deps={
+          'recipe_engine': package_pb2.DepSpec(url='file://'+ROOT_DIR),
+        }
     )
     package.ProtoFile(self._recipes_cfg).write(test_pkg)
 
