@@ -63,6 +63,9 @@ message AutorollRecipeOptions {
     bool automatic_commit_dry_run = 2;
   }
   NontrivialOptions nontrivial = 2;
+
+  // Make the autoroller skip this repo entirely with a human-readable message.
+  string disable_reason = 3;
 }
 
 message Package {
