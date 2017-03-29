@@ -131,7 +131,7 @@ class RepoTest(unittest.TestCase):
         )
 
       repos[k] = self.create_repo(k, package_pb2.Package(
-          api_version=1,
+          api_version=2,
           project_id=k,
           recipes_path='',
           deps=deps,
