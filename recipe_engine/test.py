@@ -5,6 +5,7 @@
 from __future__ import print_function
 
 import argparse
+import bdb
 import cStringIO
 import contextlib
 import copy
@@ -16,6 +17,7 @@ import functools
 import json
 import multiprocessing
 import os
+import pdb
 import pprint
 import re
 import shutil
@@ -61,9 +63,13 @@ class PostProcessError(ValueError):
 
 
 @contextlib.contextmanager
-def coverage_context(include=None):
+def coverage_context(include=None, enable=True):
   """Context manager that records coverage data."""
   c = coverage.coverage(config_file=False, include=include)
+
+  if not enable:
+    yield c
+    return
 
   # Sometimes our strict include lists will result in a run
   # not adding any coverage info. That's okay, avoid output spam.
@@ -153,7 +159,51 @@ class TestDescription(object):
     return os.path.join(self.expect_dir, name + '.json')
 
 
-def run_test(test_description, train=False):
+@contextlib.contextmanager
+def maybe_debug(break_funcs, enable):
+  """Context manager to wrap a block to possibly run under debugger.
+
+  Arguments:
+    break_funcs(list): functions to set up breakpoints for
+    enable(bool): whether to actually trigger debugger, or be no-op
+  """
+  if not enable:
+    yield
+    return
+
+  debugger = pdb.Pdb()
+
+  for func in break_funcs:
+    debugger.set_break(
+        func.func_code.co_filename,
+        func.func_code.co_firstlineno,
+        funcname=func.func_code.co_name)
+
+  try:
+    def dispatch_thunk(*args):
+      """Triggers 'continue' command when debugger starts."""
+      val = debugger.trace_dispatch(*args)
+      debugger.set_continue()
+      sys.settrace(debugger.trace_dispatch)
+      return val
+    debugger.reset()
+    sys.settrace(dispatch_thunk)
+    try:
+      yield
+    finally:
+      debugger.quitting = 1
+      sys.settrace(None)
+  except bdb.BdbQuit:
+    pass
+  except Exception:
+    traceback.print_exc()
+    print('Uncaught exception. Entering post mortem debugging')
+    print('Running \'cont\' or \'step\' will restart the program')
+    t = sys.exc_info()[2]
+    debugger.interaction(None, t)
+
+
+def run_test(test_description, debug=False, train=False):
   """Runs a test. Returns TestResults object."""
   expected = None
   if os.path.exists(test_description.expectation_path):
@@ -161,9 +211,15 @@ def run_test(test_description, train=False):
       # TODO(phajdan.jr): why do we need to re-encode golden data files?
       expected = re_encode(json.load(f))
 
-  actual, failed_checks, coverage_data = run_recipe(
-      test_description.recipe_name, test_description.test_name,
-      test_description.covers)
+  break_funcs = [
+    _UNIVERSE_VIEW.load_recipe(test_description.recipe_name).run_steps,
+  ]
+
+  with maybe_debug(break_funcs, debug):
+    actual, failed_checks, coverage_data = run_recipe(
+        test_description.recipe_name, test_description.test_name,
+        test_description.covers,
+        enable_coverage=(not debug))
   actual = re_encode(actual)
 
   failures = []
@@ -203,7 +259,7 @@ def run_test(test_description, train=False):
                     actual is not None)
 
 
-def run_recipe(recipe_name, test_name, covers):
+def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
   """Runs the recipe under test in simulation mode.
 
   Returns a tuple:
@@ -225,7 +281,7 @@ def run_recipe(recipe_name, test_name, covers):
     props['recipe'] = recipe_name
     engine = run.RecipeEngine(
         runner, props, _UNIVERSE_VIEW, engine_flags=_ENGINE_FLAGS)
-    with coverage_context(include=covers) as cov:
+    with coverage_context(include=covers, enable=enable_coverage) as cov:
       # Run recipe loading under coverage context. This ensures we collect
       # coverage of all definitions and globals.
       recipe_script = _UNIVERSE_VIEW.load_recipe(recipe_name, engine=engine)
@@ -255,7 +311,7 @@ def run_recipe(recipe_name, test_name, covers):
       checker_obj = checker.Checker(
           filename, lineno, hook, args, kwargs, input_odict)
 
-      with coverage_context(include=covers) as cov:
+      with coverage_context(include=covers, enable=enable_coverage) as cov:
         # Run the hook itself under coverage. There may be custom post-process
         # functions in recipe test code.
         rslt = hook(checker_obj, input_odict, *args, **kwargs)
@@ -429,9 +485,9 @@ def worker(f):
 
 
 @worker
-def run_worker(test, train=False):
+def run_worker(test, debug=False, train=False):
   """Worker for 'run' command (note decorator above)."""
-  return run_test(test, train=train)
+  return run_test(test, debug=debug, train=train)
 
 
 def scan_for_expectations(root, inside_expectations=False):
@@ -461,7 +517,7 @@ def scan_for_expectations(root, inside_expectations=False):
   return collected_expectations
 
 
-def run_run(json_file, train, jobs, test_filter):
+def run_run(test_filter, jobs=None, debug=False, train=False, json_file=None):
   """Implementation of the 'run' command."""
   start_time = datetime.datetime.now()
 
@@ -479,9 +535,14 @@ def run_run(json_file, train, jobs, test_filter):
     print('ERROR: The following modules lack test coverage: %s' % (
         ','.join(uncovered_modules)))
 
-  with kill_switch():
-    pool = multiprocessing.Pool(jobs)
-    results = pool.map(functools.partial(run_worker, train=train), tests)
+  if debug:
+    results = []
+    for t in tests:
+      results.append(run_worker(t, debug=debug, train=train))
+  else:
+    with kill_switch():
+      pool = multiprocessing.Pool(jobs)
+      results = pool.map(functools.partial(run_worker, train=train), tests)
 
   print()
 
@@ -656,7 +717,7 @@ def parse_args(args):
 
   run_p = subp.add_parser('run', description='Run the tests')
   run_p.set_defaults(func=lambda opts: run_run(
-      opts.json, opts.train, opts.jobs, opts.filter))
+      opts.filter, jobs=opts.jobs, train=opts.train, json_file=opts.json))
   run_p.add_argument(
       '--jobs', metavar='N', type=int,
       default=multiprocessing.cpu_count(),
@@ -675,8 +736,20 @@ def parse_args(args):
       '--train', action='store_true',
       help='re-generate recipe expectations')
 
+  debug_p = subp.add_parser(
+      'debug', description='Run the tests under debugger (pdb)')
+  debug_p.set_defaults(func=lambda opts: run_run(
+      opts.filter, debug=True))
+  debug_p.add_argument(
+      '--filter', action='append',
+      help='glob filter for the tests to run; '
+           'can be specified multiple times; '
+           'the globs have the form of '
+           '`<recipe_name_glob>[.<test_name_glob>]`. If `.<test_name_glob>` '
+           'is omitted, it is implied to be `.*`, i.e. all tests.)')
+
   args = parser.parse_args(args)
-  if args.command == 'run' and args.filter:
+  if args.command in ('debug', 'run') and args.filter:
     normalize_filters = []
     for filt in args.filter:
       if not filt:
