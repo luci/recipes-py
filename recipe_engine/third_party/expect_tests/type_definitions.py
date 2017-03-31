@@ -8,6 +8,8 @@ import re
 
 from collections import namedtuple
 
+from recipe_engine import test_result_pb2
+
 # These have to do with deriving classes from namedtuple return values.
 # Pylint can't tell that namedtuple returns a new-style type() object.
 #
@@ -68,15 +70,17 @@ class Check(namedtuple('Check', (
     ret += (' '*indent)+'  '+func
     return ret
 
-  def structured_format(self):
-    return {
-      'name': self.name or '<unnamed>',
-      'func': str(self.ctx_func),
-      'args': [str(a) for a in self.ctx_args],
-      'kwargs': {str(k) : str(v) for k, v in self.ctx_kwargs.iteritems()},
-      'filename': self.ctx_filename,
-      'lineno': self.ctx_lineno,
-    }
+  def as_proto(self):
+    proto = test_result_pb2.TestResult.TestFailure()
+    if self.name:
+      proto.check_failure.name = self.name
+    proto.check_failure.func = self.ctx_func
+    proto.check_failure.args.extend([str(a) for a in self.ctx_args])
+    for k, v in self.ctx_kwargs.iteritems():
+      proto.check_failure.kwargs[k] = v
+    proto.check_failure.filename = self.ctx_filename
+    proto.check_failure.lineno = self.ctx_lineno
+    return proto
 
 
 class ResultStageAbort(Exception):

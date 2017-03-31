@@ -24,12 +24,15 @@ import sys
 import tempfile
 import traceback
 
+from google.protobuf import json_format
+
 from . import checker
 from . import config_types
 from . import loader
 from . import run
 from . import step_runner
 from . import stream
+from . import test_result_pb2
 
 
 # These variables must be set in the dynamic scope of the functions in this
@@ -80,8 +83,12 @@ class TestFailure(object):
     """Returns a human-readable description of the failure."""
     raise NotImplementedError()
 
-  def structured_format(self):
-    """Returns a machine-readable description of the failure."""
+  def as_proto(self):
+    """Returns a machine-readable description of the failure as proto.
+
+    The returned message should be an instance of TestResult.TestFailure
+    (see test_result.proto).
+    """
     raise NotImplementedError()
 
 
@@ -95,8 +102,10 @@ class DiffFailure(TestFailure):
   def format(self):
     return self.diff
 
-  def structured_format(self):
-    return '<diff failure>'
+  def as_proto(self):
+    proto = test_result_pb2.TestResult.TestFailure()
+    proto.diff_failure.MergeFrom(test_result_pb2.TestResult.DiffFailure())
+    return proto
 
 
 class CheckFailure(TestFailure):
@@ -108,8 +117,8 @@ class CheckFailure(TestFailure):
   def format(self):
     return self.check.format(indent=4)
 
-  def structured_format(self):
-    return self.check.structured_format()
+  def as_proto(self):
+    return self.check.as_proto()
 
 
 class TestResult(object):
@@ -459,34 +468,14 @@ def run_run(json_file, train, jobs, test_filter):
   report_coverage_version()
 
   rc = 0
-  # TODO(phajdan.jr): use protos to define schema for JSON output.
-  structured_results = {
-    # Format of results is versioned. Increment on incompatible changes.
-    # WARNING: new failures types are incompatible changes. Tools processing
-    # the output may need to be updated to be aware of new failure types.
-    'version': 1,
-
-    # Keep all kinds of failures in one dict. Makes it easy for consumers
-    # to verify if they recognize various failure types.
-    'failures': {
-      'coverage': {},
-      'tests': {},
-      'uncovered_modules': [],
-      'unused_expectations': [],
-    },
-
-    # Used to indicate that the results might be invalid or incomplete,
-    # for example in case of internal errors.
-    'valid': True,
-  }
-  def report_global_failure(msg):
-    structured_results['global_failures'].append(msg)
-    print(msg)
+  results_proto = test_result_pb2.TestResult()
+  results_proto.version = 1
+  results_proto.valid = True
 
   tests, coverage_data, uncovered_modules = get_tests(test_filter)
   if uncovered_modules and not test_filter:
     rc = 1
-    structured_results['failures']['uncovered_modules'] = uncovered_modules
+    results_proto.uncovered_modules.extend(uncovered_modules)
     print('ERROR: The following modules lack test coverage: %s' % (
         ','.join(uncovered_modules)))
 
@@ -504,11 +493,9 @@ def run_run(json_file, train, jobs, test_filter):
       if details.failures:
         rc = 1
         key = details.test_description.full_name
-        structured_results['failures']['tests'].setdefault(key, [])
         print('%s failed:' % key)
         for failure in details.failures:
-          structured_results['failures']['tests'][key].append(
-              (failure.__class__.__name__, failure.structured_format()))
+          results_proto.test_failures[key].failures.extend([failure.as_proto()])
           print(failure.format())
       coverage_data.update(details.coverage_data)
       if details.generates_expectation:
@@ -517,7 +504,7 @@ def run_run(json_file, train, jobs, test_filter):
             os.path.dirname(details.test_description.expectation_path))
     else:
       rc = 1
-      structured_results['valid'] = False
+      results_proto.valid = False
       print('Internal failure:')
       print(details)
 
@@ -550,7 +537,7 @@ def run_run(json_file, train, jobs, test_filter):
           for fr in file_reporters:
             _fname, _stmts, _excl, missing, _mf = cov.analysis2(fr.filename)
             if missing:
-              structured_results['failures']['coverage'][fr.filename] = missing
+              results_proto.coverage_failures[fr.filename].uncovered_lines.extend(missing)
     finally:
       os.unlink(coverage_file.name)
 
@@ -580,8 +567,7 @@ def run_run(json_file, train, jobs, test_filter):
             os.unlink(entry)
       else:
         rc = 1
-        structured_results['failures'][
-            'unused_expectations'] = unused_expectations
+        results_proto.unused_expectations.extend(unused_expectations)
         print('FATAL: unused expectations found:')
         print('\n'.join(unused_expectations))
 
@@ -593,7 +579,8 @@ def run_run(json_file, train, jobs, test_filter):
   print('OK' if rc == 0 else 'FAILED')
 
   if json_file:
-    json.dump(structured_results, json_file)
+    obj = json_format.MessageToDict(results_proto, preserving_proto_field_name=True)
+    json.dump(obj, json_file)
 
   return rc
 

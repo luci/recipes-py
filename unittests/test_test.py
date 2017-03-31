@@ -135,19 +135,13 @@ class JsonGenerator(object):
     self._root_dir = root_dir
     self._result = {
       'version': 1,
-      'failures': {
-        'coverage': {},
-        'tests': {},
-        'uncovered_modules': [],
-        'unused_expectations': [],
-      },
       'valid': True,
     }
 
   def diff_failure(self, test):
     """Simulates a diff failure for |test|."""
-    self._result['failures']['tests'].setdefault(
-        test, []).append(['DiffFailure', '<diff failure>'])
+    self._result.setdefault('test_failures', {}).setdefault(
+        test, {'failures': []})['failures'].append({'diff_failure': {}})
     return self
 
   def check_failure(self, test, filename, lineno, func, args=None, kwargs=None,
@@ -163,15 +157,19 @@ class JsonGenerator(object):
       kwargs(dict): kwargs for |func|
       name(str): name of the check
     """
-    self._result['failures']['tests'].setdefault(
-        test, []).append(['CheckFailure', {
-            'name': name or '<unnamed>',
-            'func': func,
-            'args': args or [],
-            'kwargs': kwargs or {},
-            'filename': os.path.join(self._root_dir, filename),
-            'lineno': lineno,
-        }])
+    details = {
+        'func': func,
+        'filename': os.path.join(self._root_dir, filename),
+        'lineno': str(lineno),
+    }
+    if name:
+      details['name'] = name
+    if args:
+      details['args'] = args
+    if kwargs:
+      details['kwargs'] = kwargs
+    self._result.setdefault('test_failures', {}).setdefault(
+        test, {'failures': []})['failures'].append({'check_failure': details})
     return self
 
   def coverage_failure(self, path, missing):
@@ -181,18 +179,19 @@ class JsonGenerator(object):
       path(str): path that has missing coverage
       missing(list): list of lines that miss coverage
     """
-    self._result['failures']['coverage'].setdefault(
-        os.path.join(self._root_dir, path), []).extend(missing)
+    self._result.setdefault('coverage_failures', {}).setdefault(
+        os.path.join(self._root_dir, path), {}).setdefault(
+            'uncovered_lines', []).extend([str(l) for l in missing])
     return self
 
   def uncovered_module(self, module):
     """Simulates recipe module not being properly covered."""
-    self._result['failures']['uncovered_modules'].append(module)
+    self._result.setdefault('uncovered_modules', []).append(module)
     return self
 
   def unused_expectation(self, path):
     """Simulates unused recipe expectation."""
-    self._result['failures']['unused_expectations'].append(
+    self._result.setdefault('unused_expectations', []).append(
         os.path.join(self._root_dir, path))
     return self
 
@@ -417,7 +416,7 @@ class TestTest(unittest.TestCase):
       self._run_recipes('test', 'run', '--json', self.json_path)
     self.assertIn('NameError: global name \'baz\' is not defined',
                   cm.exception.output)
-    self.assertFalse(self.json_contents['valid'])
+    self.assertFalse(self.json_contents.get('valid'))
 
   def test_test_recipe_module_uncovered(self):
     mw = RecipeModuleWriter(self._root_dir, 'foo')
@@ -441,7 +440,7 @@ class TestTest(unittest.TestCase):
     self.assertIn('NameError: global name \'baz\' is not defined',
                   cm.exception.output)
     self.assertIn('FATAL: Insufficient coverage', cm.exception.output)
-    self.assertFalse(self.json_contents['valid'])
+    self.assertFalse(self.json_contents.get('valid'))
 
   def test_test_recipe_module_syntax_error_in_example(self):
     mw = RecipeModuleWriter(self._root_dir, 'foo_module')
@@ -455,7 +454,7 @@ class TestTest(unittest.TestCase):
     self.assertIn('NameError: global name \'baz\' is not defined',
                   cm.exception.output)
     self.assertIn('FATAL: Insufficient coverage', cm.exception.output)
-    self.assertFalse(self.json_contents['valid'])
+    self.assertFalse(self.json_contents.get('valid'))
 
   def test_test_recipe_module_example_not_covered(self):
     mw = RecipeModuleWriter(self._root_dir, 'foo_module')
