@@ -207,7 +207,7 @@ class RepoTest(unittest.TestCase):
         args.extend(['-O', '%s=%s' % (repo, path)])
       args.extend([
           '--use-bootstrap',
-          'test', 'run', '--train',
+          'test', 'train',
       ])
       subprocess.check_output(args, stderr=subprocess.STDOUT)
 

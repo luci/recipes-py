@@ -557,7 +557,7 @@ class TestTest(unittest.TestCase):
     rw.RunStepsLines = ['pass']
     rw.add_expectation('basic')
     rw.write()
-    self._run_recipes('test', 'run', '--train', '--json', self.json_path)
+    self._run_recipes('test', 'train', '--json', self.json_path)
     self.assertEqual(self.json_generator.get(), self.json_contents)
 
   def test_train_missing(self):
@@ -565,7 +565,7 @@ class TestTest(unittest.TestCase):
     rw.RunStepsLines = ['pass']
     rw.write()
     self.assertFalse(os.path.exists(rw.expect_dir))
-    self._run_recipes('test', 'run', '--train', '--json', self.json_path)
+    self._run_recipes('test', 'train', '--json', self.json_path)
     self.assertTrue(os.path.exists(rw.expect_dir))
     expect_path = os.path.join(rw.expect_dir, 'basic.json')
     self.assertTrue(os.path.exists(expect_path))
@@ -596,7 +596,7 @@ class TestTest(unittest.TestCase):
                      self.json_contents)
 
     # 3. Make sure training the recipe succeeds and produces correct results.
-    self._run_recipes('test', 'run', '--train', '--json', self.json_path)
+    self._run_recipes('test', 'train', '--json', self.json_path)
     expect_path = os.path.join(rw.expect_dir, 'basic.json')
     with open(expect_path) as f:
       expect_contents = json.load(f)
@@ -612,7 +612,7 @@ class TestTest(unittest.TestCase):
     rw.add_expectation('basic')
     rw.write()
     with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--train', '--json', self.json_path)
+      self._run_recipes('test', 'train', '--json', self.json_path)
     self.assertIn('FATAL: Insufficient coverage', cm.exception.output)
     self.assertNotIn('CHECK(FAIL)', cm.exception.output)
     self.assertNotIn('foo.basic failed', cm.exception.output)
@@ -630,7 +630,7 @@ class TestTest(unittest.TestCase):
     rw.add_expectation('basic')
     rw.write()
     with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--train', '--json', self.json_path)
+      self._run_recipes('test', 'train', '--json', self.json_path)
     self.assertNotIn('FATAL: Insufficient coverage', cm.exception.output)
     self.assertIn('CHECK(FAIL)', cm.exception.output)
     self.assertIn('foo.basic failed', cm.exception.output)
@@ -667,7 +667,7 @@ class TestTest(unittest.TestCase):
     rw.write()
     expectation_file = os.path.join(rw.expect_dir, 'unused.json')
     self.assertTrue(os.path.exists(expectation_file))
-    self._run_recipes('test', 'run', '--train', '--json', self.json_path)
+    self._run_recipes('test', 'train', '--json', self.json_path)
     self.assertFalse(os.path.exists(expectation_file))
     self.assertEqual(self.json_generator.get(), self.json_contents)
 
@@ -696,7 +696,7 @@ class TestTest(unittest.TestCase):
     rw.write()
     expectation_dir = os.path.join(rw.expect_dir, 'dir')
     os.makedirs(expectation_dir)
-    self._run_recipes('test', 'run', '--train', '--json', self.json_path)
+    self._run_recipes('test', 'train', '--json', self.json_path)
     self.assertFalse(os.path.exists(expectation_dir))
     self.assertEqual(self.json_generator.get(), self.json_contents)
 
@@ -724,7 +724,7 @@ class TestTest(unittest.TestCase):
     rw.write()
     expectation_file = os.path.join(rw.expect_dir, 'basic.json')
     self.assertFalse(os.path.exists(expectation_file))
-    self._run_recipes('test', 'run', '--train', '--json', self.json_path)
+    self._run_recipes('test', 'train', '--json', self.json_path)
     self.assertFalse(os.path.exists(expectation_file))
     self.assertEqual(self.json_generator.get(), self.json_contents)
 
@@ -763,7 +763,7 @@ class TestTest(unittest.TestCase):
     rw.write()
     expectation_file = os.path.join(rw.expect_dir, 'basic.json')
     self.assertTrue(os.path.exists(expectation_file))
-    self._run_recipes('test', 'run', '--train', '--json', self.json_path)
+    self._run_recipes('test', 'train', '--json', self.json_path)
     self.assertFalse(os.path.exists(expectation_file))
     self.assertFalse(os.path.exists(rw.expect_dir))
     self.assertEqual(self.json_generator.get(), self.json_contents)
@@ -790,7 +790,7 @@ class TestTest(unittest.TestCase):
     with open(owners_file, 'w') as f:
       pass
     self.assertTrue(os.path.exists(owners_file))
-    self._run_recipes('test', 'run', '--train', '--json', self.json_path)
+    self._run_recipes('test', 'train', '--json', self.json_path)
     self.assertTrue(os.path.exists(owners_file))
     self.assertEqual(self.json_generator.get(), self.json_contents)
 

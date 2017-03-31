@@ -732,9 +732,28 @@ def parse_args(args):
            'the globs have the form of '
            '`<recipe_name_glob>[.<test_name_glob>]`. If `.<test_name_glob>` '
            'is omitted, it is implied to be `.*`, i.e. all tests.)')
+  # TODO(phajdan.jr): remove --train the switch in favor of train subcommand.
   run_p.add_argument(
       '--train', action='store_true',
-      help='re-generate recipe expectations')
+      help='re-generate recipe expectations (DEPRECATED)')
+
+  train_p = subp.add_parser('train', description='Re-train recipe expectations')
+  train_p.set_defaults(func=lambda opts: run_run(
+      opts.filter, jobs=opts.jobs, json_file=opts.json, train=True))
+  train_p.add_argument(
+      '--jobs', metavar='N', type=int,
+      default=multiprocessing.cpu_count(),
+      help='run N jobs in parallel (default %(default)s)')
+  train_p.add_argument(
+      '--json', metavar='FILE', type=argparse.FileType('w'),
+      help='path to JSON output file')
+  train_p.add_argument(
+      '--filter', action='append',
+      help='glob filter for the tests to run; '
+           'can be specified multiple times; '
+           'the globs have the form of '
+           '`<recipe_name_glob>[.<test_name_glob>]`. If `.<test_name_glob>` '
+           'is omitted, it is implied to be `.*`, i.e. all tests.)')
 
   debug_p = subp.add_parser(
       'debug', description='Run the tests under debugger (pdb)')
