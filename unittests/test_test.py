@@ -144,6 +144,12 @@ class JsonGenerator(object):
         test, {'failures': []})['failures'].append({'diff_failure': {}})
     return self
 
+  def internal_failure(self, test):
+    """Simulates an internal failure for |test|."""
+    self._result.setdefault('test_failures', {}).setdefault(
+        test, {'failures': []})['failures'].append({'internal_failure': {}})
+    return self
+
   def check_failure(self, test, filename, lineno, func, args=None, kwargs=None,
                     name=None):
     """Simulates a check failure for |test|.
@@ -428,7 +434,14 @@ class TestTest(unittest.TestCase):
       self._run_recipes('test', 'run', '--json', self.json_path)
     self.assertIn('NameError: global name \'baz\' is not defined',
                   cm.exception.output)
-    self.assertFalse(self.json_contents.get('valid'))
+    self.assertEqual(
+        self.json_generator
+            .invalid()
+            .internal_failure('foo.basic')
+            .coverage_failure('recipes/foo.py', [6])
+            .unused_expectation('recipes/foo.expected')
+            .unused_expectation('recipes/foo.expected/basic.json').get(),
+        self.json_contents)
 
   def test_test_recipe_module_uncovered(self):
     mw = RecipeModuleWriter(self._root_dir, 'foo')
@@ -452,7 +465,14 @@ class TestTest(unittest.TestCase):
     self.assertIn('NameError: global name \'baz\' is not defined',
                   cm.exception.output)
     self.assertIn('FATAL: Insufficient coverage', cm.exception.output)
-    self.assertFalse(self.json_contents.get('valid'))
+    self.assertEqual(
+        self.json_generator
+            .invalid()
+            .internal_failure('foo_module:example.basic')
+            .coverage_failure('recipe_modules/foo_module/api.py', [6])
+            .coverage_failure('recipe_modules/foo_module/example.py', [6])
+            .get(),
+        self.json_contents)
 
   def test_test_recipe_module_syntax_error_in_example(self):
     mw = RecipeModuleWriter(self._root_dir, 'foo_module')
@@ -466,7 +486,14 @@ class TestTest(unittest.TestCase):
     self.assertIn('NameError: global name \'baz\' is not defined',
                   cm.exception.output)
     self.assertIn('FATAL: Insufficient coverage', cm.exception.output)
-    self.assertFalse(self.json_contents.get('valid'))
+    self.assertEqual(
+        self.json_generator
+            .invalid()
+            .internal_failure('foo_module:example.basic')
+            .coverage_failure('recipe_modules/foo_module/api.py', [6])
+            .coverage_failure('recipe_modules/foo_module/example.py', [6])
+            .get(),
+        self.json_contents)
 
   def test_test_recipe_module_example_not_covered(self):
     mw = RecipeModuleWriter(self._root_dir, 'foo_module')
@@ -866,6 +893,9 @@ class TestTest(unittest.TestCase):
         'foo_check', 'foo_file', 1, 'foo_func').check_failure(
             'bar_check', 'bar_file', 2, 'bar_func', ['bar_args'])
 
+    g1.internal_failure('foo_internal')
+    g2.internal_failure('foo_internal').internal_failure('bar_internal')
+
     g1.uncovered_module('foo_module')
     g2.uncovered_module('foo_module').uncovered_module('bar_module')
 
@@ -885,6 +915,7 @@ class TestTest(unittest.TestCase):
             .coverage_failure('bar_coverage', [2])
             .diff_failure('bar_diff')
             .check_failure('bar_check', 'bar_file', 2, 'bar_func', ['bar_args'])
+            .internal_failure('bar_internal')
             .uncovered_module('bar_module')
             .unused_expectation('bar_expectation')
             .get(),

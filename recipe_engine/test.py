@@ -543,13 +543,13 @@ def worker(f):
     - they can hang on uncaught exceptions
     - we need explicit kill switch to clearly terminate parent"""
   @functools.wraps(f)
-  def wrapper(*args, **kwargs):
+  def wrapper(test, *args, **kwargs):
     try:
       if _KILL_SWITCH.is_set():
-        return (False, 'kill switch')
-      return (True, f(*args, **kwargs))
+        return (False, test, 'kill switch')
+      return (True, test, f(test, *args, **kwargs))
     except Exception:
-      return (False, traceback.format_exc())
+      return (False, test, traceback.format_exc())
   return wrapper
 
 
@@ -617,7 +617,7 @@ def run_run(test_filter, jobs=None, debug=False, train=False, json_file=None):
 
   used_expectations = set()
 
-  for success, details in results:
+  for success, test_description, details in results:
     if success:
       assert isinstance(details, TestResult)
       if details.failures:
@@ -635,7 +635,12 @@ def run_run(test_filter, jobs=None, debug=False, train=False, json_file=None):
     else:
       rc = 1
       results_proto.valid = False
-      print('Internal failure:')
+      failure_proto = test_result_pb2.TestResult.TestFailure()
+      failure_proto.internal_failure.MergeFrom(
+          test_result_pb2.TestResult.InternalFailure())
+      results_proto.test_failures[test_description.full_name].failures.extend([
+          failure_proto])
+      print('%s failed:' % test_description.full_name)
       print(details)
 
   if test_filter:

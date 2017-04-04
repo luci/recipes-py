@@ -51,11 +51,19 @@ message TestResult {
     int64 lineno = 6;
   }
 
+  // An internal failure (either ctrl-c interruption, or an exception
+  // while running the test; this could mean a crashing recipe execution,
+  // or even failure in the test runner itself).
+  message InternalFailure {
+  }
+
   message TestFailure {
     oneof failures {
       DiffFailure diff_failure = 1;
 
       CheckFailure check_failure = 2;
+
+      InternalFailure internal_failure = 3;
     }
   }
 

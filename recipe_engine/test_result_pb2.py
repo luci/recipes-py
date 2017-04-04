@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='recipe_engine/test_result.proto',
   package='recipe_engine',
   syntax='proto3',
-  serialized_pb=_b('\n\x1frecipe_engine/test_result.proto\x12\rrecipe_engine\"\xa5\x07\n\nTestResult\x12\x0f\n\x07version\x18\x01 \x01(\x05\x12\r\n\x05valid\x18\x02 \x01(\x08\x12J\n\x11\x63overage_failures\x18\x03 \x03(\x0b\x32/.recipe_engine.TestResult.CoverageFailuresEntry\x12\x42\n\rtest_failures\x18\x04 \x03(\x0b\x32+.recipe_engine.TestResult.TestFailuresEntry\x12\x19\n\x11uncovered_modules\x18\x05 \x03(\t\x12\x1b\n\x13unused_expectations\x18\x06 \x03(\t\x1a*\n\x0f\x43overageFailure\x12\x17\n\x0funcovered_lines\x18\x01 \x03(\x03\x1a\x62\n\x15\x43overageFailuresEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x38\n\x05value\x18\x02 \x01(\x0b\x32).recipe_engine.TestResult.CoverageFailure:\x02\x38\x01\x1a\r\n\x0b\x44iffFailure\x1a\xcd\x01\n\x0c\x43heckFailure\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0c\n\x04\x66unc\x18\x02 \x01(\t\x12\x0c\n\x04\x61rgs\x18\x03 \x03(\t\x12\x42\n\x06kwargs\x18\x04 \x03(\x0b\x32\x32.recipe_engine.TestResult.CheckFailure.KwargsEntry\x12\x10\n\x08\x66ilename\x18\x05 \x01(\t\x12\x0e\n\x06lineno\x18\x06 \x01(\x03\x1a-\n\x0bKwargsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x99\x01\n\x0bTestFailure\x12=\n\x0c\x64iff_failure\x18\x01 \x01(\x0b\x32%.recipe_engine.TestResult.DiffFailureH\x00\x12?\n\rcheck_failure\x18\x02 \x01(\x0b\x32&.recipe_engine.TestResult.CheckFailureH\x00\x42\n\n\x08\x66\x61ilures\x1aG\n\x0cTestFailures\x12\x37\n\x08\x66\x61ilures\x18\x01 \x03(\x0b\x32%.recipe_engine.TestResult.TestFailure\x1a[\n\x11TestFailuresEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x35\n\x05value\x18\x02 \x01(\x0b\x32&.recipe_engine.TestResult.TestFailures:\x02\x38\x01\x62\x06proto3')
+  serialized_pb=_b('\n\x1frecipe_engine/test_result.proto\x12\rrecipe_engine\"\xff\x07\n\nTestResult\x12\x0f\n\x07version\x18\x01 \x01(\x05\x12\r\n\x05valid\x18\x02 \x01(\x08\x12J\n\x11\x63overage_failures\x18\x03 \x03(\x0b\x32/.recipe_engine.TestResult.CoverageFailuresEntry\x12\x42\n\rtest_failures\x18\x04 \x03(\x0b\x32+.recipe_engine.TestResult.TestFailuresEntry\x12\x19\n\x11uncovered_modules\x18\x05 \x03(\t\x12\x1b\n\x13unused_expectations\x18\x06 \x03(\t\x1a*\n\x0f\x43overageFailure\x12\x17\n\x0funcovered_lines\x18\x01 \x03(\x03\x1a\x62\n\x15\x43overageFailuresEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x38\n\x05value\x18\x02 \x01(\x0b\x32).recipe_engine.TestResult.CoverageFailure:\x02\x38\x01\x1a\r\n\x0b\x44iffFailure\x1a\xcd\x01\n\x0c\x43heckFailure\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0c\n\x04\x66unc\x18\x02 \x01(\t\x12\x0c\n\x04\x61rgs\x18\x03 \x03(\t\x12\x42\n\x06kwargs\x18\x04 \x03(\x0b\x32\x32.recipe_engine.TestResult.CheckFailure.KwargsEntry\x12\x10\n\x08\x66ilename\x18\x05 \x01(\t\x12\x0e\n\x06lineno\x18\x06 \x01(\x03\x1a-\n\x0bKwargsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x11\n\x0fInternalFailure\x1a\xe0\x01\n\x0bTestFailure\x12=\n\x0c\x64iff_failure\x18\x01 \x01(\x0b\x32%.recipe_engine.TestResult.DiffFailureH\x00\x12?\n\rcheck_failure\x18\x02 \x01(\x0b\x32&.recipe_engine.TestResult.CheckFailureH\x00\x12\x45\n\x10internal_failure\x18\x03 \x01(\x0b\x32).recipe_engine.TestResult.InternalFailureH\x00\x42\n\n\x08\x66\x61ilures\x1aG\n\x0cTestFailures\x12\x37\n\x08\x66\x61ilures\x18\x01 \x03(\x0b\x32%.recipe_engine.TestResult.TestFailure\x1a[\n\x11TestFailuresEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x35\n\x05value\x18\x02 \x01(\x0b\x32&.recipe_engine.TestResult.TestFailures:\x02\x38\x01\x62\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -218,6 +218,29 @@ _TESTRESULT_CHECKFAILURE = _descriptor.Descriptor(
   serialized_end=662,
 )
 
+_TESTRESULT_INTERNALFAILURE = _descriptor.Descriptor(
+  name='InternalFailure',
+  full_name='recipe_engine.TestResult.InternalFailure',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=664,
+  serialized_end=681,
+)
+
 _TESTRESULT_TESTFAILURE = _descriptor.Descriptor(
   name='TestFailure',
   full_name='recipe_engine.TestResult.TestFailure',
@@ -239,6 +262,13 @@ _TESTRESULT_TESTFAILURE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='internal_failure', full_name='recipe_engine.TestResult.TestFailure.internal_failure', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -254,8 +284,8 @@ _TESTRESULT_TESTFAILURE = _descriptor.Descriptor(
       name='failures', full_name='recipe_engine.TestResult.TestFailure.failures',
       index=0, containing_type=None, fields=[]),
   ],
-  serialized_start=665,
-  serialized_end=818,
+  serialized_start=684,
+  serialized_end=908,
 )
 
 _TESTRESULT_TESTFAILURES = _descriptor.Descriptor(
@@ -284,8 +314,8 @@ _TESTRESULT_TESTFAILURES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=820,
-  serialized_end=891,
+  serialized_start=910,
+  serialized_end=981,
 )
 
 _TESTRESULT_TESTFAILURESENTRY = _descriptor.Descriptor(
@@ -321,8 +351,8 @@ _TESTRESULT_TESTFAILURESENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=893,
-  serialized_end=984,
+  serialized_start=983,
+  serialized_end=1074,
 )
 
 _TESTRESULT = _descriptor.Descriptor(
@@ -377,7 +407,7 @@ _TESTRESULT = _descriptor.Descriptor(
   ],
   extensions=[
   ],
-  nested_types=[_TESTRESULT_COVERAGEFAILURE, _TESTRESULT_COVERAGEFAILURESENTRY, _TESTRESULT_DIFFFAILURE, _TESTRESULT_CHECKFAILURE, _TESTRESULT_TESTFAILURE, _TESTRESULT_TESTFAILURES, _TESTRESULT_TESTFAILURESENTRY, ],
+  nested_types=[_TESTRESULT_COVERAGEFAILURE, _TESTRESULT_COVERAGEFAILURESENTRY, _TESTRESULT_DIFFFAILURE, _TESTRESULT_CHECKFAILURE, _TESTRESULT_INTERNALFAILURE, _TESTRESULT_TESTFAILURE, _TESTRESULT_TESTFAILURES, _TESTRESULT_TESTFAILURESENTRY, ],
   enum_types=[
   ],
   options=None,
@@ -387,7 +417,7 @@ _TESTRESULT = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=51,
-  serialized_end=984,
+  serialized_end=1074,
 )
 
 _TESTRESULT_COVERAGEFAILURE.containing_type = _TESTRESULT
@@ -397,8 +427,10 @@ _TESTRESULT_DIFFFAILURE.containing_type = _TESTRESULT
 _TESTRESULT_CHECKFAILURE_KWARGSENTRY.containing_type = _TESTRESULT_CHECKFAILURE
 _TESTRESULT_CHECKFAILURE.fields_by_name['kwargs'].message_type = _TESTRESULT_CHECKFAILURE_KWARGSENTRY
 _TESTRESULT_CHECKFAILURE.containing_type = _TESTRESULT
+_TESTRESULT_INTERNALFAILURE.containing_type = _TESTRESULT
 _TESTRESULT_TESTFAILURE.fields_by_name['diff_failure'].message_type = _TESTRESULT_DIFFFAILURE
 _TESTRESULT_TESTFAILURE.fields_by_name['check_failure'].message_type = _TESTRESULT_CHECKFAILURE
+_TESTRESULT_TESTFAILURE.fields_by_name['internal_failure'].message_type = _TESTRESULT_INTERNALFAILURE
 _TESTRESULT_TESTFAILURE.containing_type = _TESTRESULT
 _TESTRESULT_TESTFAILURE.oneofs_by_name['failures'].fields.append(
   _TESTRESULT_TESTFAILURE.fields_by_name['diff_failure'])
@@ -406,6 +438,9 @@ _TESTRESULT_TESTFAILURE.fields_by_name['diff_failure'].containing_oneof = _TESTR
 _TESTRESULT_TESTFAILURE.oneofs_by_name['failures'].fields.append(
   _TESTRESULT_TESTFAILURE.fields_by_name['check_failure'])
 _TESTRESULT_TESTFAILURE.fields_by_name['check_failure'].containing_oneof = _TESTRESULT_TESTFAILURE.oneofs_by_name['failures']
+_TESTRESULT_TESTFAILURE.oneofs_by_name['failures'].fields.append(
+  _TESTRESULT_TESTFAILURE.fields_by_name['internal_failure'])
+_TESTRESULT_TESTFAILURE.fields_by_name['internal_failure'].containing_oneof = _TESTRESULT_TESTFAILURE.oneofs_by_name['failures']
 _TESTRESULT_TESTFAILURES.fields_by_name['failures'].message_type = _TESTRESULT_TESTFAILURE
 _TESTRESULT_TESTFAILURES.containing_type = _TESTRESULT
 _TESTRESULT_TESTFAILURESENTRY.fields_by_name['value'].message_type = _TESTRESULT_TESTFAILURES
@@ -451,6 +486,13 @@ TestResult = _reflection.GeneratedProtocolMessageType('TestResult', (_message.Me
     ))
   ,
 
+  InternalFailure = _reflection.GeneratedProtocolMessageType('InternalFailure', (_message.Message,), dict(
+    DESCRIPTOR = _TESTRESULT_INTERNALFAILURE,
+    __module__ = 'recipe_engine.test_result_pb2'
+    # @@protoc_insertion_point(class_scope:recipe_engine.TestResult.InternalFailure)
+    ))
+  ,
+
   TestFailure = _reflection.GeneratedProtocolMessageType('TestFailure', (_message.Message,), dict(
     DESCRIPTOR = _TESTRESULT_TESTFAILURE,
     __module__ = 'recipe_engine.test_result_pb2'
@@ -481,6 +523,7 @@ _sym_db.RegisterMessage(TestResult.CoverageFailuresEntry)
 _sym_db.RegisterMessage(TestResult.DiffFailure)
 _sym_db.RegisterMessage(TestResult.CheckFailure)
 _sym_db.RegisterMessage(TestResult.CheckFailure.KwargsEntry)
+_sym_db.RegisterMessage(TestResult.InternalFailure)
 _sym_db.RegisterMessage(TestResult.TestFailure)
 _sym_db.RegisterMessage(TestResult.TestFailures)
 _sym_db.RegisterMessage(TestResult.TestFailuresEntry)
