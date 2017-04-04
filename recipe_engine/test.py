@@ -445,6 +445,75 @@ def run_list(json_file):
   return 0
 
 
+def run_diff(baseline, actual, json_file=None):
+  """Implementation of the 'diff' command."""
+  baseline_proto = test_result_pb2.TestResult()
+  json_format.ParseDict(json.load(baseline), baseline_proto)
+
+  actual_proto = test_result_pb2.TestResult()
+  json_format.ParseDict(json.load(actual), actual_proto)
+
+  success, results_proto = _diff_internal(baseline_proto, actual_proto)
+
+  if json_file:
+    obj = json_format.MessageToDict(
+        results_proto, preserving_proto_field_name=True)
+    json.dump(obj, json_file)
+
+  return 0 if success else 1
+
+def _diff_internal(baseline_proto, actual_proto):
+  results_proto = test_result_pb2.TestResult(version=1, valid=True)
+
+  if (not baseline_proto.valid or
+      not actual_proto.valid or
+      baseline_proto.version != 1 or
+      actual_proto.version != 1):
+    results_proto.valid = False
+    return (False, results_proto)
+
+  success = True
+
+  for filename, details in actual_proto.coverage_failures.iteritems():
+    actual_uncovered_lines = set(details.uncovered_lines)
+    baseline_uncovered_lines = set(
+        baseline_proto.coverage_failures[filename].uncovered_lines)
+    cover_diff = actual_uncovered_lines.difference(baseline_uncovered_lines)
+    if cover_diff:
+      success = False
+      results_proto.coverage_failures[
+          filename].uncovered_lines.extend(cover_diff)
+
+  for test_name, test_failures in actual_proto.test_failures.iteritems():
+    for test_failure in test_failures.failures:
+      found = False
+      for baseline_test_failure in baseline_proto.test_failures[
+          test_name].failures:
+        if test_failure == baseline_test_failure:
+          found = True
+          break
+      if not found:
+        results_proto.test_failures[test_name].failures.extend([test_failure])
+
+  actual_uncovered_modules = set(actual_proto.uncovered_modules)
+  baseline_uncovered_modules = set(baseline_proto.uncovered_modules)
+  uncovered_modules_diff = actual_uncovered_modules.difference(
+      baseline_uncovered_modules)
+  if uncovered_modules_diff:
+    success = False
+    results_proto.uncovered_modules.extend(uncovered_modules_diff)
+
+  actual_unused_expectations = set(actual_proto.unused_expectations)
+  baseline_unused_expectations = set(baseline_proto.unused_expectations)
+  unused_expectations_diff = actual_unused_expectations.difference(
+      baseline_unused_expectations)
+  if unused_expectations_diff:
+    success = False
+    results_proto.unused_expectations.extend(unused_expectations_diff)
+
+  return (success, results_proto)
+
+
 def cover_omit():
   """Returns list of patterns to omit from coverage analysis."""
   omit = [ ]
@@ -598,7 +667,8 @@ def run_run(test_filter, jobs=None, debug=False, train=False, json_file=None):
           for fr in file_reporters:
             _fname, _stmts, _excl, missing, _mf = cov.analysis2(fr.filename)
             if missing:
-              results_proto.coverage_failures[fr.filename].uncovered_lines.extend(missing)
+              results_proto.coverage_failures[
+                  fr.filename].uncovered_lines.extend(missing)
     finally:
       os.unlink(coverage_file.name)
 
@@ -640,7 +710,8 @@ def run_run(test_filter, jobs=None, debug=False, train=False, json_file=None):
   print('OK' if rc == 0 else 'FAILED')
 
   if json_file:
-    obj = json_format.MessageToDict(results_proto, preserving_proto_field_name=True)
+    obj = json_format.MessageToDict(
+        results_proto, preserving_proto_field_name=True)
     json.dump(obj, json_file)
 
   return rc
@@ -712,6 +783,22 @@ def parse_args(args):
   list_p = subp.add_parser('list', description='Print all test names')
   list_p.set_defaults(func=lambda opts: run_list(opts.json))
   list_p.add_argument(
+      '--json', metavar='FILE', type=argparse.FileType('w'),
+      help='path to JSON output file')
+
+  diff_p = subp.add_parser(
+      'diff', description='Compare results of two test runs')
+  diff_p.set_defaults(func=lambda opts: run_diff(
+      opts.baseline, opts.actual, json_file=opts.json))
+  diff_p.add_argument(
+      '--baseline', metavar='FILE', type=argparse.FileType('r'),
+      required=True,
+      help='path to baseline JSON file')
+  diff_p.add_argument(
+      '--actual', metavar='FILE', type=argparse.FileType('r'),
+      required=True,
+      help='path to actual JSON file')
+  diff_p.add_argument(
       '--json', metavar='FILE', type=argparse.FileType('w'),
       help='path to JSON output file')
 

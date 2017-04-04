@@ -195,9 +195,20 @@ class JsonGenerator(object):
         os.path.join(self._root_dir, path))
     return self
 
+  def invalid(self):
+    """Simulates invalid results."""
+    self._result.pop('valid', False)
+    return self
+
   def get(self):
     """Returns generated object."""
     return self._result
+
+  def write(self):
+    """Writes data to a temporary file and returns its path."""
+    with tempfile.NamedTemporaryFile(delete=False, dir=self._root_dir) as f:
+      json.dump(self.get(), f)
+      return f.name
 
 
 class TestTest(unittest.TestCase):
@@ -234,6 +245,7 @@ class TestTest(unittest.TestCase):
     with open(self.json_path) as f:
       return json.load(f)
 
+  # TODO(phajdan.jr): Make json_generator non-property (it's not idempotent).
   @property
   def json_generator(self):
     return JsonGenerator(self._root_dir)
@@ -803,6 +815,80 @@ class TestTest(unittest.TestCase):
     rw.write()
     self._run_recipes('test', 'run', '--json', self.json_path)
     self.assertEqual(self.json_generator.get(), self.json_contents)
+
+  def test_diff_basic(self):
+    g1 = self.json_generator
+    g2 = self.json_generator
+    self._run_recipes(
+        'test', 'diff',
+        '--baseline', g1.write(),
+        '--actual', g2.write(),
+        '--json', self.json_path)
+    self.assertEqual(self.json_generator.get(), self.json_contents)
+
+  def test_diff_invalid_baseline(self):
+    g1 = self.json_generator.invalid()
+    g2 = self.json_generator
+    with self.assertRaises(subprocess.CalledProcessError) as cm:
+      self._run_recipes(
+          'test', 'diff',
+          '--baseline', g1.write(),
+          '--actual', g2.write(),
+          '--json', self.json_path)
+    self.assertEqual(self.json_generator.invalid().get(), self.json_contents)
+
+  def test_diff_invalid_actual(self):
+    g1 = self.json_generator
+    g2 = self.json_generator.invalid()
+    with self.assertRaises(subprocess.CalledProcessError) as cm:
+      self._run_recipes(
+          'test', 'diff',
+          '--baseline', g1.write(),
+          '--actual', g2.write(),
+          '--json', self.json_path)
+    self.assertEqual(self.json_generator.invalid().get(), self.json_contents)
+
+  def test_diff_full(self):
+    g1 = self.json_generator
+    g2 = self.json_generator
+
+    g1.coverage_failure(
+        'foo_coverage', [1, 2, 3]).coverage_failure('bar_coverage', [1])
+    g2.coverage_failure(
+        'foo_coverage', [1, 2, 3]).coverage_failure('bar_coverage', [1, 2])
+
+    g1.diff_failure('foo_diff')
+    g2.diff_failure('foo_diff').diff_failure('bar_diff')
+
+    g1.check_failure(
+        'foo_check', 'foo_file', 1, 'foo_func')
+    g2.check_failure(
+        'foo_check', 'foo_file', 1, 'foo_func').check_failure(
+            'bar_check', 'bar_file', 2, 'bar_func', ['bar_args'])
+
+    g1.uncovered_module('foo_module')
+    g2.uncovered_module('foo_module').uncovered_module('bar_module')
+
+    g1.unused_expectation(
+        'foo_expectation')
+    g2.unused_expectation(
+        'foo_expectation').unused_expectation('bar_expectation')
+
+    with self.assertRaises(subprocess.CalledProcessError) as cm:
+      self._run_recipes(
+          'test', 'diff',
+          '--baseline', g1.write(),
+          '--actual', g2.write(),
+          '--json', self.json_path)
+    self.assertEqual(
+        self.json_generator
+            .coverage_failure('bar_coverage', [2])
+            .diff_failure('bar_diff')
+            .check_failure('bar_check', 'bar_file', 2, 'bar_func', ['bar_args'])
+            .uncovered_module('bar_module')
+            .unused_expectation('bar_expectation')
+            .get(),
+        self.json_contents)
 
 
 if __name__ == '__main__':
