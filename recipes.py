@@ -415,10 +415,12 @@ def main():
 
   parser.add_argument(
       '--package',
+      type=os.path.abspath,
       help='Path to recipes.cfg of the recipe package to operate on'
         ', usually in infra/config/recipes.cfg')
   parser.add_argument(
       '--deps-path',
+      type=os.path.abspath,
       help='Path where recipe engine dependencies will be extracted. Specify '
            '"-" to use a temporary directory for deps, which will be cleaned '
            'up on exit.')
@@ -438,6 +440,7 @@ def main():
            ' with required python dependencies.')
   parser.add_argument(
       '--operational-args-path', action='store',
+      type=os.path.abspath,
       help='The path to an operational Arguments file. If provided, this file '
            'must contain a JSONPB-encoded Arguments protobuf message, and will '
            'be integrated into the runtime parameters.')
@@ -479,8 +482,9 @@ def main():
         ' bootstrap itself.'))
   bundle_p.set_defaults(command='bundle')
   bundle_p.add_argument(
-    '--destination', default='./bundle',
-    help='The directory of where to put the bundle (default: %(default)r).')
+      '--destination', default='./bundle',
+      type=os.path.abspath,
+      help='The directory of where to put the bundle (default: %(default)r).')
 
   run_p = subp.add_parser(
       'run',
@@ -488,15 +492,18 @@ def main():
   run_p.set_defaults(command='run')
   run_p.add_argument(
       '--properties-file',
+      type=os.path.abspath,
       help='A file containing a json blob of properties')
   run_p.add_argument(
       '--properties',
       help='A json string containing the properties')
   run_p.add_argument(
       '--workdir',
+      type=os.path.abspath,
       help='The working directory of recipe execution')
   run_p.add_argument(
       '--output-result-json',
+      type=os.path.abspath,
       help='The file to write the JSON serialized returned value \
             of the recipe to')
   run_p.add_argument(
@@ -531,6 +538,7 @@ def main():
       help='Git commit hash to check out; defaults to latest revision (HEAD)')
   remote_p.add_argument(
       '--workdir',
+      type=os.path.abspath,
       help='The working directory of repo checkout')
   remote_p.add_argument(
       '--use-gitiles', action='store_true',
@@ -546,6 +554,7 @@ def main():
   autoroll_p.set_defaults(command='autoroll')
   autoroll_p.add_argument(
       '--output-json',
+      type=os.path.abspath,
       help='A json file to output information about the roll to.')
   autoroll_p.add_argument(
       '--projects', action='append', default=None,
