@@ -13,6 +13,22 @@ from . import handle_list, handle_debug, handle_train, handle_test
 from .pipeline import result_loop
 
 
+DEPRECATION_MESSAGE = """
+*** DEPRECATION WARNING ***
+
+recipes.py simulation_test is DEPRECATED
+
+It's being replaced by recipes.py test, see http://crbug.com/699120 .
+
+Please use the following way to invoke the new command, and file
+blocking bugs against above tracker for any issues:
+
+path/to/recipes.py --use-bootstrap test {run,train}
+
+*** DEPRECATION WARNING ***
+"""
+
+
 HANDLERS = {
   'list': handle_list.ListHandler,
   'debug': handle_debug.DebugHandler,
@@ -166,8 +182,10 @@ def main(name, test_gen, cover_branches=False, cover_omit=None,
     if not killed and not opts.test_glob:
       if not cover_ctx.report(verbose=opts.verbose, omit=cover_omit,
                               threshold=opts.threshold):
+        sys.stderr.write(DEPRECATION_MESSAGE)
         sys.exit(2)
 
+    sys.stderr.write(DEPRECATION_MESSAGE)
     sys.exit(error or killed)
   except KeyboardInterrupt:
     pass
