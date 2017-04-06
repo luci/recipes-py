@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+package recipe_engine;
+
 // The result of a recipe execution.
 message Result {
   oneof oneof_result {

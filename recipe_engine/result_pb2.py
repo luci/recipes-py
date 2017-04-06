@@ -17,9 +17,9 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='result.proto',
-  package='',
+  package='recipe_engine',
   syntax='proto3',
-  serialized_pb=_b('\n\x0cresult.proto\"L\n\x06Result\x12\x15\n\x0bjson_result\x18\x01 \x01(\tH\x00\x12\x1b\n\x07\x66\x61ilure\x18\x02 \x01(\x0b\x32\x08.FailureH\x00\x42\x0e\n\x0coneof_result\"\xae\x01\n\x07\x46\x61ilure\x12\x14\n\x0chuman_reason\x18\x01 \x01(\t\x12\x1b\n\x07timeout\x18\x02 \x01(\x0b\x32\x08.TimeoutH\x00\x12\x1f\n\texception\x18\x03 \x01(\x0b\x32\n.ExceptionH\x00\x12\x1e\n\tstep_data\x18\x04 \x01(\x0b\x32\t.StepDataH\x00\x12\x1f\n\x07\x66\x61ilure\x18\x05 \x01(\x0b\x32\x0c.StepFailureH\x00\x42\x0e\n\x0c\x66\x61ilure_type\"\x1e\n\tException\x12\x11\n\ttraceback\x18\x01 \x03(\t\"\x1c\n\x07Timeout\x12\x11\n\ttimeout_s\x18\x01 \x01(\x02\"\x18\n\x08StepData\x12\x0c\n\x04step\x18\x01 \x01(\t\"\x1b\n\x0bStepFailure\x12\x0c\n\x04step\x18\x01 \x01(\tb\x06proto3')
+  serialized_pb=_b('\n\x0cresult.proto\x12\rrecipe_engine\"Z\n\x06Result\x12\x15\n\x0bjson_result\x18\x01 \x01(\tH\x00\x12)\n\x07\x66\x61ilure\x18\x02 \x01(\x0b\x32\x16.recipe_engine.FailureH\x00\x42\x0e\n\x0coneof_result\"\xe6\x01\n\x07\x46\x61ilure\x12\x14\n\x0chuman_reason\x18\x01 \x01(\t\x12)\n\x07timeout\x18\x02 \x01(\x0b\x32\x16.recipe_engine.TimeoutH\x00\x12-\n\texception\x18\x03 \x01(\x0b\x32\x18.recipe_engine.ExceptionH\x00\x12,\n\tstep_data\x18\x04 \x01(\x0b\x32\x17.recipe_engine.StepDataH\x00\x12-\n\x07\x66\x61ilure\x18\x05 \x01(\x0b\x32\x1a.recipe_engine.StepFailureH\x00\x42\x0e\n\x0c\x66\x61ilure_type\"\x1e\n\tException\x12\x11\n\ttraceback\x18\x01 \x03(\t\"\x1c\n\x07Timeout\x12\x11\n\ttimeout_s\x18\x01 \x01(\x02\"\x18\n\x08StepData\x12\x0c\n\x04step\x18\x01 \x01(\t\"\x1b\n\x0bStepFailure\x12\x0c\n\x04step\x18\x01 \x01(\tb\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -28,20 +28,20 @@ _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 _RESULT = _descriptor.Descriptor(
   name='Result',
-  full_name='Result',
+  full_name='recipe_engine.Result',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='json_result', full_name='Result.json_result', index=0,
+      name='json_result', full_name='recipe_engine.Result.json_result', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='failure', full_name='Result.failure', index=1,
+      name='failure', full_name='recipe_engine.Result.failure', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -59,51 +59,51 @@ _RESULT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
     _descriptor.OneofDescriptor(
-      name='oneof_result', full_name='Result.oneof_result',
+      name='oneof_result', full_name='recipe_engine.Result.oneof_result',
       index=0, containing_type=None, fields=[]),
   ],
-  serialized_start=16,
-  serialized_end=92,
+  serialized_start=31,
+  serialized_end=121,
 )
 
 
 _FAILURE = _descriptor.Descriptor(
   name='Failure',
-  full_name='Failure',
+  full_name='recipe_engine.Failure',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='human_reason', full_name='Failure.human_reason', index=0,
+      name='human_reason', full_name='recipe_engine.Failure.human_reason', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='timeout', full_name='Failure.timeout', index=1,
+      name='timeout', full_name='recipe_engine.Failure.timeout', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='exception', full_name='Failure.exception', index=2,
+      name='exception', full_name='recipe_engine.Failure.exception', index=2,
       number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='step_data', full_name='Failure.step_data', index=3,
+      name='step_data', full_name='recipe_engine.Failure.step_data', index=3,
       number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='failure', full_name='Failure.failure', index=4,
+      name='failure', full_name='recipe_engine.Failure.failure', index=4,
       number=5, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -121,23 +121,23 @@ _FAILURE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
     _descriptor.OneofDescriptor(
-      name='failure_type', full_name='Failure.failure_type',
+      name='failure_type', full_name='recipe_engine.Failure.failure_type',
       index=0, containing_type=None, fields=[]),
   ],
-  serialized_start=95,
-  serialized_end=269,
+  serialized_start=124,
+  serialized_end=354,
 )
 
 
 _EXCEPTION = _descriptor.Descriptor(
   name='Exception',
-  full_name='Exception',
+  full_name='recipe_engine.Exception',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='traceback', full_name='Exception.traceback', index=0,
+      name='traceback', full_name='recipe_engine.Exception.traceback', index=0,
       number=1, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -155,22 +155,22 @@ _EXCEPTION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=271,
-  serialized_end=301,
+  serialized_start=356,
+  serialized_end=386,
 )
 
 
 _TIMEOUT = _descriptor.Descriptor(
   name='Timeout',
-  full_name='Timeout',
+  full_name='recipe_engine.Timeout',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='timeout_s', full_name='Timeout.timeout_s', index=0,
+      name='timeout_s', full_name='recipe_engine.Timeout.timeout_s', index=0,
       number=1, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -186,20 +186,20 @@ _TIMEOUT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=303,
-  serialized_end=331,
+  serialized_start=388,
+  serialized_end=416,
 )
 
 
 _STEPDATA = _descriptor.Descriptor(
   name='StepData',
-  full_name='StepData',
+  full_name='recipe_engine.StepData',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='step', full_name='StepData.step', index=0,
+      name='step', full_name='recipe_engine.StepData.step', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -217,20 +217,20 @@ _STEPDATA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=333,
-  serialized_end=357,
+  serialized_start=418,
+  serialized_end=442,
 )
 
 
 _STEPFAILURE = _descriptor.Descriptor(
   name='StepFailure',
-  full_name='StepFailure',
+  full_name='recipe_engine.StepFailure',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='step', full_name='StepFailure.step', index=0,
+      name='step', full_name='recipe_engine.StepFailure.step', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -248,8 +248,8 @@ _STEPFAILURE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=359,
-  serialized_end=386,
+  serialized_start=444,
+  serialized_end=471,
 )
 
 _RESULT.fields_by_name['failure'].message_type = _FAILURE
@@ -285,42 +285,42 @@ DESCRIPTOR.message_types_by_name['StepFailure'] = _STEPFAILURE
 Result = _reflection.GeneratedProtocolMessageType('Result', (_message.Message,), dict(
   DESCRIPTOR = _RESULT,
   __module__ = 'result_pb2'
-  # @@protoc_insertion_point(class_scope:Result)
+  # @@protoc_insertion_point(class_scope:recipe_engine.Result)
   ))
 _sym_db.RegisterMessage(Result)
 
 Failure = _reflection.GeneratedProtocolMessageType('Failure', (_message.Message,), dict(
   DESCRIPTOR = _FAILURE,
   __module__ = 'result_pb2'
-  # @@protoc_insertion_point(class_scope:Failure)
+  # @@protoc_insertion_point(class_scope:recipe_engine.Failure)
   ))
 _sym_db.RegisterMessage(Failure)
 
 Exception = _reflection.GeneratedProtocolMessageType('Exception', (_message.Message,), dict(
   DESCRIPTOR = _EXCEPTION,
   __module__ = 'result_pb2'
-  # @@protoc_insertion_point(class_scope:Exception)
+  # @@protoc_insertion_point(class_scope:recipe_engine.Exception)
   ))
 _sym_db.RegisterMessage(Exception)
 
 Timeout = _reflection.GeneratedProtocolMessageType('Timeout', (_message.Message,), dict(
   DESCRIPTOR = _TIMEOUT,
   __module__ = 'result_pb2'
-  # @@protoc_insertion_point(class_scope:Timeout)
+  # @@protoc_insertion_point(class_scope:recipe_engine.Timeout)
   ))
 _sym_db.RegisterMessage(Timeout)
 
 StepData = _reflection.GeneratedProtocolMessageType('StepData', (_message.Message,), dict(
   DESCRIPTOR = _STEPDATA,
   __module__ = 'result_pb2'
-  # @@protoc_insertion_point(class_scope:StepData)
+  # @@protoc_insertion_point(class_scope:recipe_engine.StepData)
   ))
 _sym_db.RegisterMessage(StepData)
 
 StepFailure = _reflection.GeneratedProtocolMessageType('StepFailure', (_message.Message,), dict(
   DESCRIPTOR = _STEPFAILURE,
   __module__ = 'result_pb2'
-  # @@protoc_insertion_point(class_scope:StepFailure)
+  # @@protoc_insertion_point(class_scope:recipe_engine.StepFailure)
   ))
 _sym_db.RegisterMessage(StepFailure)
 
