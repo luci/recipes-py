@@ -662,9 +662,11 @@ def main():
       # standard recipe operation.
       os.environ['RECIPES_RUN_BOOTSTRAP'] = '1'
       args = sys.argv
+      is_windows = sys.platform.startswith(('win', 'cygwin'))
+      python_exe = 'python.bat' if is_windows else 'python'
       return subprocess.call(
           [
-            os.path.join(env_path, 'bin', 'python'),
+            os.path.join(env_path, 'bin', python_exe),
             os.path.join(ROOT_DIR, 'recipes.py'),
           ] + original_sys_argv[1:])
 
