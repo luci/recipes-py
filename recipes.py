@@ -434,10 +434,14 @@ def main():
   parser.add_argument('-O', '--project-override', metavar='ID=PATH',
       action=ProjectOverrideAction,
       help='Override a project repository path with a local one.')
+  # TODO(phajdan.jr): Remove bootstrap switches once established as default.
   parser.add_argument(
-      '--use-bootstrap', action='store_true',
+      '--use-bootstrap', action='store_true', default=True,
       help='Use bootstrap/bootstrap.py to create a isolated python virtualenv'
            ' with required python dependencies.')
+  parser.add_argument(
+      '--disable-bootstrap', action='store_false', dest='use_bootstrap',
+      help='Disables bootstrap (see --use-bootstrap)')
   parser.add_argument(
       '--operational-args-path', action='store',
       type=os.path.abspath,
