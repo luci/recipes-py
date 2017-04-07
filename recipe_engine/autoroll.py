@@ -108,8 +108,6 @@ def fetch(repo_root, package_spec):
   args = [
     sys.executable,
     os.path.join(repo_root, package_spec.recipes_path, 'recipes.py'),
-    # Invoked recipes.py should not re-bootstrap (to avoid issues on bots).
-    '--disable-bootstrap',
     'fetch',
   ]
   subprocess.check_call(args)
@@ -128,8 +126,6 @@ def run_simulation_test(repo_root, package_spec, additional_args=None,
   args = [
     sys.executable,
     os.path.join(repo_root, package_spec.recipes_path, 'recipes.py'),
-    # Invoked recipes.py should not re-bootstrap (to avoid issues on bots).
-    '--disable-bootstrap',
   ]
   if not allow_fetch:
     args.append('--no-fetch')
