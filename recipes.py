@@ -435,7 +435,9 @@ def main():
       action=ProjectOverrideAction,
       help='Override a project repository path with a local one.')
   parser.add_argument(
-      '--use-bootstrap', action='store_true',
+      # Use "None" as default so that we can recognize when none of the
+      # bootstrap options were passed.
+      '--use-bootstrap', action='store_true', default=None,
       help='Use bootstrap/bootstrap.py to create a isolated python virtualenv'
            ' with required python dependencies.')
   parser.add_argument(
@@ -620,6 +622,11 @@ def main():
     logging.getLogger().setLevel(logging.DEBUG)
   elif args.verbose > 0:
     logging.getLogger().setLevel(logging.INFO)
+
+  # Auto-enable bootstrap for test command invocations (necessary to get recent
+  # enough version of coverage package), unless explicitly disabled.
+  if args.command == 'test' and args.use_bootstrap is None:
+    args.use_bootstrap = True
 
   # If we're using a temporary deps directory, create it.
   temp_deps_dir = None
