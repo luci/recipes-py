@@ -439,6 +439,9 @@ def main():
       help='Use bootstrap/bootstrap.py to create a isolated python virtualenv'
            ' with required python dependencies.')
   parser.add_argument(
+      '--disable-bootstrap', action='store_false', dest='use_bootstrap',
+      help='Disables bootstrap (see --use-bootstrap)')
+  parser.add_argument(
       '--operational-args-path', action='store',
       type=os.path.abspath,
       help='The path to an operational Arguments file. If provided, this file '
