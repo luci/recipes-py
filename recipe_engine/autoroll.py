@@ -12,8 +12,6 @@ import sys
 from . import package
 
 
-NUL = open(os.devnull, 'w')
-
 ROOT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 
 
@@ -112,7 +110,7 @@ def fetch(repo_root, package_spec):
     os.path.join(repo_root, package_spec.recipes_path, 'recipes.py'),
     'fetch',
   ]
-  subprocess.check_call(args, stdout=NUL, stderr=NUL)
+  subprocess.check_call(args)
 
 
 def run_simulation_test(repo_root, package_spec, additional_args=None,
