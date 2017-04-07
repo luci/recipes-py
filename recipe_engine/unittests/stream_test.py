@@ -161,48 +161,5 @@ bar tries to kiss foo, but foo already left
       with self.assertRaises(AssertionError):
         foo.set_step_status('SUCCESS')
 
-  def test_content_assertions(self):
-    with stream.StreamEngineInvariants() as engine:
-      with self.assertRaises(ValueError):
-        engine.make_step_stream('foo\nbar')
-
-      # Test StepStream.
-      s = engine.make_step_stream('foo')
-      with self.assertRaises(ValueError):
-        s.new_log_stream('foo\nbar')
-      ls = s.new_log_stream('foo')
-
-      with self.assertRaises(ValueError):
-        s.add_step_text('foo\nbar')
-      s.add_step_text('foo')
-
-      with self.assertRaises(ValueError):
-        s.add_step_summary_text('foo\nbar')
-      s.add_step_summary_text('foo')
-
-      with self.assertRaises(ValueError):
-        s.add_step_link('foo\nbar', 'baz')
-      with self.assertRaises(ValueError):
-        s.add_step_link('foo', 'bar\nbaz')
-      s.add_step_link('foo', 'bar')
-
-      with self.assertRaises(ValueError):
-        s.set_build_property('foo\nbar', 'true')
-      with self.assertRaises(ValueError):
-        s.set_build_property('foo', 'true\n')
-      with self.assertRaises(ValueError):
-        s.set_build_property('foo', 'NOT JSON')
-      s.set_build_property('foo', '"Is JSON"')
-
-      with self.assertRaises(ValueError):
-        s.trigger('true\n')
-      with self.assertRaises(ValueError):
-        s.trigger('NOT JSON')
-      s.trigger('"Is JSON"')
-
-      ls.close()
-      s.close()
-
-
 if __name__ == '__main__':
   unittest.main()

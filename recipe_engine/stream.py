@@ -46,14 +46,7 @@ def output_iter(stream, it):
       stream.write_line(line)
 
 
-def _check(cond, msg, **kwargs):
-  """Runtime assertion used for parameter correctness."""
-  if not cond:
-    raise ValueError('Failed assertion: %s %r' % (msg, kwargs))
-
-
 class StreamEngine(object):
-
   class Stream(object):
     def write_line(self, line):
       raise NotImplementedError()
@@ -100,8 +93,6 @@ class StreamEngine(object):
 
   def make_step_stream(self, name, **kwargs):
     """Shorthand for creating a step stream from a step configuration dict."""
-    _check('\n' not in name, 'Stream name must not contain a newline.',
-           name=name)
     kwargs['name'] = name
     return self.new_step_stream(recipe_api.StepConfig.create(**kwargs))
 
@@ -323,7 +314,7 @@ class StreamEngineInvariants(StreamEngine):
       self._status = 'SUCCESS'
 
     def write_line(self, line):
-      assert '\n' not in line, 'Individual line must not contain a newline.'
+      assert '\n' not in line
       assert self._open
 
     def close(self):
@@ -337,30 +328,19 @@ class StreamEngineInvariants(StreamEngine):
       assert self._open
       assert log_name not in self._logs, 'Log %s already exists in step %s' % (
           log_name, self._step_name)
-
-      _check('\n' not in log_name, 'Log name must not contain a newline.',
-             log_name=log_name)
       ret = self._engine.LogStream(self, log_name)
       self._logs[log_name] = ret
       return ret
 
     def add_step_text(self, text):
-      _check('\n' not in text, 'Step text must not contain a newline.',
-             text=text)
+      pass
 
     def add_step_summary_text(self, text):
-      _check('\n' not in text, 'Step summary text must not contain a newline.',
-             text=text)
+      pass
 
     def add_step_link(self, name, url):
-      _check(isinstance(name, basestring), 'Link name is not a string',
-             name=name)
-      _check('\n' not in name, 'Link name must not contain a newline.',
-             name=name)
-      _check(isinstance(url, basestring),
-             'Link URL is not a string', url=url)
-      _check('\n' not in url, 'Link URL must not contain a newline.',
-             url=url)
+      assert isinstance(name, basestring), 'Link name %s is not a string' % name
+      assert isinstance(url, basestring), 'Link url %s is not a string' % url
 
     def set_step_status(self, status):
       assert status in ('SUCCESS', 'WARNING', 'FAILURE', 'EXCEPTION')
@@ -371,16 +351,11 @@ class StreamEngineInvariants(StreamEngine):
       self._status = status
 
     def set_build_property(self, key, value):
-      _check('\n' not in key, 'Property key must not contain a newline.',
-             key=key)
-      _check('\n' not in value, 'Property value must not contain a newline.',
-             value=value)
-      json.loads(value) # value must be a valid JSON object.
+      pass
 
     def trigger(self, spec):
-      _check('\n' not in spec, 'Spec must not contain a newline.',
-             spec=spec)
-      json.loads(spec) # Spec must be a valid JSON object.
+      assert '\n' not in spec # Spec must fit on one line.
+      json.loads(spec) # Spec must be a valid json object.
 
   class LogStream(StreamEngine.Stream):
     def __init__(self, step_stream, log_name):
@@ -389,7 +364,7 @@ class StreamEngineInvariants(StreamEngine):
       self._open = True
 
     def write_line(self, line):
-      assert '\n' not in line, 'Individual line must not contain a newline.'
+      assert '\n' not in line
       assert self._step_stream._open
       assert self._open
 
