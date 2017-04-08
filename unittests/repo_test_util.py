@@ -6,6 +6,7 @@
 
 
 import contextlib
+import logging
 import os
 import shutil
 import subprocess
@@ -22,6 +23,20 @@ import recipe_engine.env
 from recipe_engine import fetch
 from recipe_engine import package
 from recipe_engine import package_pb2
+
+
+class CapturableHandler(logging.StreamHandler):
+  """Allows unittests to capture log output.
+
+  From: http://stackoverflow.com/a/33271004
+  """
+  @property
+  def stream(self):
+    return sys.stdout
+
+  @stream.setter
+  def stream(self, value):
+    pass
 
 
 @contextlib.contextmanager
@@ -48,6 +63,8 @@ def temporary_file():
 
 class RepoTest(unittest.TestCase):
   def setUp(self):
+    self.maxDiff = None
+
     self._root_dir = tempfile.mkdtemp()
     self._recipe_tool = os.path.join(ROOT_DIR, 'recipes.py')
 
@@ -84,9 +101,8 @@ class RepoTest(unittest.TestCase):
   def create_repo(self, name, spec):
     """Creates a real git repo with simple recipes.cfg."""
     repo_dir = os.path.join(self._root_dir, name)
-    os.mkdir(repo_dir)
+    subprocess.check_output(['git', 'init', repo_dir])
     with in_directory(repo_dir):
-      subprocess.check_output(['git', 'init'])
       subprocess.check_output(['git', 'remote', 'add', 'origin', repo_dir])
       with open('recipes.py', 'w') as f:
         f.write('\n'.join([
@@ -209,7 +225,12 @@ class RepoTest(unittest.TestCase):
           '--use-bootstrap',
           'test', 'train',
       ])
-      subprocess.check_output(args, stderr=subprocess.STDOUT)
+      try:
+        subprocess.check_output(args, stderr=subprocess.STDOUT)
+      except subprocess.CalledProcessError as e:
+        print >> sys.stdout, e.output
+        raise
+
 
   def update_recipe(self, repo, name, deps, calls):
     """Updates or creates a recipe in given repo.

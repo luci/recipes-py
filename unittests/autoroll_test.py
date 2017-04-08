@@ -4,6 +4,7 @@
 # that can be found in the LICENSE file.
 
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -17,18 +18,22 @@ class TestAutoroll(repo_test_util.RepoTest):
     """Runs the autoroll command and returns JSON.
     Does not commit the resulting roll.
     """
-    with repo_test_util.in_directory(repo['root']), \
-        repo_test_util.temporary_file() as tempfile_path:
-      subprocess.check_output([
-        sys.executable, self._recipe_tool,
-        '--package', os.path.join(
-          repo['root'], 'infra', 'config', 'recipes.cfg'),
-        '--use-bootstrap',
-        'autoroll',
-        '--output-json', tempfile_path
-      ] + list(args) , stderr=subprocess.STDOUT)
-      with open(tempfile_path) as f:
-        return json.load(f)
+    try:
+      with repo_test_util.in_directory(repo['root']), \
+          repo_test_util.temporary_file() as tempfile_path:
+        subprocess.check_output([
+          sys.executable, self._recipe_tool,
+          '-v', '-v', '--package', os.path.join(
+            repo['root'], 'infra', 'config', 'recipes.cfg'),
+          '--use-bootstrap',
+          'autoroll',
+          '--output-json', tempfile_path
+        ] + list(args) , stderr=subprocess.STDOUT)
+        with open(tempfile_path) as f:
+          return json.load(f)
+    except subprocess.CalledProcessError as e:
+      print >> sys.stdout, e.output
+      raise
 
   def test_empty(self):
     """Tests the scenario where there are no roll candidates.
@@ -529,4 +534,8 @@ class TestAutoroll(repo_test_util.RepoTest):
 
 
 if __name__ == '__main__':
-  sys.exit(unittest.main())
+  if '-v' in sys.argv:
+    logging.basicConfig(
+      level=logging.DEBUG,
+      handler=repo_test_util.CapturableHandler())
+  sys.exit(unittest.main(buffer=True))

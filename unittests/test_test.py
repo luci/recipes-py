@@ -305,7 +305,7 @@ class TestTest(unittest.TestCase):
     rw.add_expectation('second')
     rw.write()
 
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
+    with self.assertRaises(subprocess.CalledProcessError):
       self._run_recipes(
           'test', 'run',
           '--filter', 'foo.first',
@@ -813,7 +813,7 @@ class TestTest(unittest.TestCase):
     rw.add_expectation('basic')
     rw.write()
     owners_file = os.path.join(rw.expect_dir, 'OWNERS')
-    with open(owners_file, 'w') as f:
+    with open(owners_file, 'w'):
       pass
     self.assertTrue(os.path.exists(owners_file))
     self._run_recipes('test', 'run', '--json', self.json_path)
@@ -826,7 +826,7 @@ class TestTest(unittest.TestCase):
     rw.add_expectation('basic')
     rw.write()
     owners_file = os.path.join(rw.expect_dir, 'OWNERS')
-    with open(owners_file, 'w') as f:
+    with open(owners_file, 'w'):
       pass
     self.assertTrue(os.path.exists(owners_file))
     self._run_recipes('test', 'train', '--json', self.json_path)
@@ -856,7 +856,7 @@ class TestTest(unittest.TestCase):
   def test_diff_invalid_baseline(self):
     g1 = self.json_generator.invalid()
     g2 = self.json_generator
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
+    with self.assertRaises(subprocess.CalledProcessError):
       self._run_recipes(
           'test', 'diff',
           '--baseline', g1.write(),
@@ -867,7 +867,7 @@ class TestTest(unittest.TestCase):
   def test_diff_invalid_actual(self):
     g1 = self.json_generator
     g2 = self.json_generator.invalid()
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
+    with self.assertRaises(subprocess.CalledProcessError):
       self._run_recipes(
           'test', 'diff',
           '--baseline', g1.write(),
@@ -904,7 +904,7 @@ class TestTest(unittest.TestCase):
     g2.unused_expectation(
         'foo_expectation').unused_expectation('bar_expectation')
 
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
+    with self.assertRaises(subprocess.CalledProcessError):
       self._run_recipes(
           'test', 'diff',
           '--baseline', g1.write(),

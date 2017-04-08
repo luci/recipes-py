@@ -5,8 +5,10 @@
 
 import copy
 import doctest
+import logging
 import os
 import subprocess
+import sys
 import unittest
 
 import repo_test_util
@@ -528,4 +530,8 @@ def load_tests(_loader, tests, _ignore):
 
 
 if __name__ == '__main__':
-  result = unittest.main()
+  if '-v' in sys.argv:
+    logging.basicConfig(
+      level=logging.DEBUG,
+      handler=repo_test_util.CapturableHandler())
+  result = unittest.main(buffer=True)
