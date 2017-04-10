@@ -37,6 +37,18 @@
     "name": "run json.tool"
   },
   {
+    "cmd": [
+      "python",
+      "-u",
+      "print \"Hello World!\""
+    ],
+    "name": "inline",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@python.inline@print \"Hello World!\"@@@",
+      "@@@STEP_LOG_END@python.inline@@@"
+    ]
+  },
+  {
     "name": "$result",
     "recipe_result": null,
     "status_code": 0

@@ -34,6 +34,146 @@
     "name": "echo all"
   },
   {
+    "cmd": [
+      "echo",
+      "'chrome'"
+    ],
+    "name": "echo project"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'/path/to/workdir/TestSlavename'"
+    ],
+    "name": "echo workdir"
+  },
+  {
+    "cmd": [
+      "echo",
+      "''"
+    ],
+    "name": "echo repository"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'TestBuilder'"
+    ],
+    "name": "echo buildername"
+  },
+  {
+    "cmd": [
+      "echo",
+      "None"
+    ],
+    "name": "echo test_prop"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'properties:example'"
+    ],
+    "name": "echo recipe"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'chromium.testing.master'"
+    ],
+    "name": "echo mastername"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'thing'"
+    ],
+    "name": "echo foo.bar-bam"
+  },
+  {
+    "cmd": [
+      "echo",
+      "571"
+    ],
+    "name": "echo buildnumber"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'TestSlavename'"
+    ],
+    "name": "echo slavename"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'https://codereview.chromium.org'"
+    ],
+    "name": "echo rietveld"
+  },
+  {
+    "cmd": [
+      "echo",
+      "('cool_dev1337@chromium.org', 'hax@chromium.org')"
+    ],
+    "name": "echo blamelist"
+  },
+  {
+    "cmd": [
+      "echo",
+      "''"
+    ],
+    "name": "echo branch"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'commit-bot@chromium.org'"
+    ],
+    "name": "echo requester"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'http://c.org/p/cr/'"
+    ],
+    "name": "echo buildbotURL"
+  },
+  {
+    "cmd": [
+      "echo",
+      "1"
+    ],
+    "name": "echo patchset"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'HEAD'"
+    ],
+    "name": "echo revision"
+  },
+  {
+    "cmd": [
+      "echo",
+      "12853011"
+    ],
+    "name": "echo issue"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'chromium'"
+    ],
+    "name": "echo patch_project"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'test_bot'"
+    ],
+    "name": "echo bot_id"
+  },
+  {
     "name": "$result",
     "recipe_result": null,
     "status_code": 0

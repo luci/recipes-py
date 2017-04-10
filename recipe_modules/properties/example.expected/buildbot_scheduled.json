@@ -29,6 +29,111 @@
     "name": "echo all"
   },
   {
+    "cmd": [
+      "echo",
+      "''"
+    ],
+    "name": "echo project"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'/path/to/workdir/TestSlavename'"
+    ],
+    "name": "echo workdir"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'svn://svn-mirror.golo.chromium.org/chrome/trunk'"
+    ],
+    "name": "echo repository"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'TestBuilder'"
+    ],
+    "name": "echo buildername"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'properties:example'"
+    ],
+    "name": "echo recipe"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'thing'"
+    ],
+    "name": "echo foo.bar-bam"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'chromium.testing.master'"
+    ],
+    "name": "echo mastername"
+  },
+  {
+    "cmd": [
+      "echo",
+      "571"
+    ],
+    "name": "echo buildnumber"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'TestSlavename'"
+    ],
+    "name": "echo slavename"
+  },
+  {
+    "cmd": [
+      "echo",
+      "('cool_dev1337@chromium.org', 'hax@chromium.org')"
+    ],
+    "name": "echo blamelist"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'TestBranch'"
+    ],
+    "name": "echo branch"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'http://c.org/p/cr/'"
+    ],
+    "name": "echo buildbotURL"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'204787'"
+    ],
+    "name": "echo revision"
+  },
+  {
+    "cmd": [
+      "echo",
+      "None"
+    ],
+    "name": "echo test_prop"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'test_bot'"
+    ],
+    "name": "echo bot_id"
+  },
+  {
     "name": "$result",
     "recipe_result": null,
     "status_code": 0

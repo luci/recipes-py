@@ -28,6 +28,8 @@ def RunSteps(api):
     'json.tool', api.raw_io.input('{"something":[true,true]}'),
   ], unbuffered=False)
 
+  api.python.inline('inline', 'print "Hello World!"')
+
 
 def GenTests(api):
   yield api.test('basic')

@@ -23,8 +23,7 @@ def RunSteps(api, test_prop, param_name_test):
   # It should behave like a real dictionary.
   assert len(properties) == len(api.properties)
   for k in api.properties:
-    assert k in properties
-    # We would assert that v is there too, but sometimes it's frozen...
+    api.step('echo %s' % k, ['echo', repr(api.properties[k])])
 
 
 def GenTests(api):
