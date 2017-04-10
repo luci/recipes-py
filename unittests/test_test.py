@@ -92,6 +92,9 @@ class RecipeModuleWriter(object):
     self.DEPS = []
     self.disable_strict_coverage = False
     self.methods = {}
+    self.test_methods = {}
+    self.base_config = {}
+    self.configs = {}
 
     self.example = RecipeWriter(self.module_dir, 'example')
 
@@ -127,6 +130,53 @@ class RecipeModuleWriter(object):
       api_lines.append('  pass')
     with open(os.path.join(self.module_dir, 'api.py'), 'w') as f:
       f.write('\n'.join(api_lines))
+
+    if self.base_config or self.configs:
+      config_imports = [
+          'ConfigGroup',
+          'ConfigList',
+          'Dict',
+          'List',
+          'Set',
+          'Single',
+          'config_item_context',
+      ]
+      config_lines = []
+      for i in config_imports:
+        config_lines.append('from recipe_engine.config import %s' % i)
+      config_lines.extend([
+          '',
+          'def BaseConfig(**_kwargs):',
+          '  return ConfigGroup(',
+      ] + ['    %s = %s,' % (k, v) for k, v in self.base_config.iteritems()] + [
+          '  )',
+          '',
+          'config_ctx = config_item_context(BaseConfig)',
+          '',
+      ])
+      for name, lines in self.configs.iteritems():
+        config_lines.extend([
+            '@config_ctx()',
+            'def %s(c):' % name,
+        ] + ['  %s' % l for l in lines])
+      with open(os.path.join(self.module_dir, 'config.py'), 'w') as f:
+        f.write('\n'.join(config_lines))
+
+    if self.test_methods:
+      test_api_lines = [
+          'from recipe_engine import recipe_test_api',
+          '',
+          'class MyTestApi(recipe_test_api.RecipeTestApi):',
+      ]
+      for m_name, m_lines in self.test_methods.iteritems():
+        test_api_lines.extend([
+            '',
+            '  def %s(self):' % m_name,
+          ] + ['    %s' % l for l in m_lines] + [
+            '',
+          ])
+      with open(os.path.join(self.module_dir, 'test_api.py'), 'w') as f:
+        f.write('\n'.join(test_api_lines))
 
 
 class JsonGenerator(object):
@@ -841,6 +891,148 @@ class TestTest(unittest.TestCase):
     rw.GenTestsLines = ['yield api.test(%r)' % test_name]
     rw.add_expectation(test_name)
     rw.write()
+    self._run_recipes('test', 'run', '--json', self.json_path)
+    self.assertEqual(self.json_generator.get(), self.json_contents)
+
+  def test_config_uncovered(self):
+    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
+    mw.base_config['bar'] = 'Single(str)'
+    mw.disable_strict_coverage = True
+    mw.write()
+    with self.assertRaises(subprocess.CalledProcessError):
+      self._run_recipes('test', 'run', '--json', self.json_path)
+    self.assertEqual(
+        self.json_generator
+            .coverage_failure('recipe_modules/foo_module/config.py', [10])
+            .get(),
+        self.json_contents)
+
+  def test_config_uncovered_strict(self):
+    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
+    mw.base_config['bar'] = 'Single(str)'
+    mw.write()
+    with self.assertRaises(subprocess.CalledProcessError):
+      self._run_recipes('test', 'run', '--json', self.json_path)
+    self.assertEqual(
+        self.json_generator
+            .coverage_failure('recipe_modules/foo_module/config.py', [10])
+            .uncovered_module('foo_module')
+            .get(),
+        self.json_contents)
+
+  def test_config_covered_by_recipe(self):
+    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
+    mw.base_config['bar'] = 'Single(str)'
+    mw.configs['bar_config'] = ['c.bar = "gazonk"']
+    mw.disable_strict_coverage = True
+    mw.write()
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.DEPS = ['foo_module']
+    rw.RunStepsLines = ['api.foo_module.set_config("bar_config")']
+    rw.add_expectation('basic')
+    rw.write()
+    self._run_recipes('test', 'run', '--json', self.json_path)
+    self.assertEqual(self.json_generator.get(), self.json_contents)
+
+  def test_config_covered_by_recipe_strict(self):
+    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
+    mw.base_config['bar'] = 'Single(str)'
+    mw.configs['bar_config'] = ['c.bar = "gazonk"']
+    mw.write()
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.DEPS = ['foo_module']
+    rw.RunStepsLines = ['api.foo_module.set_config("bar_config")']
+    rw.add_expectation('basic')
+    rw.write()
+    with self.assertRaises(subprocess.CalledProcessError):
+      self._run_recipes('test', 'run', '--json', self.json_path)
+    self.assertEqual(
+        self.json_generator
+            .coverage_failure('recipe_modules/foo_module/config.py', [10, 18])
+            .uncovered_module('foo_module')
+            .get(),
+        self.json_contents)
+
+  def test_config_covered_by_example(self):
+    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
+    mw.base_config['bar'] = 'Single(str)'
+    mw.configs['bar_config'] = ['c.bar = "gazonk"']
+    mw.disable_strict_coverage = True
+    mw.write()
+    mw.example.DEPS = ['foo_module']
+    mw.example.RunStepsLines = ['api.foo_module.set_config("bar_config")']
+    mw.example.add_expectation('basic')
+    mw.example.write()
+    self._run_recipes('test', 'run', '--json', self.json_path)
+    self.assertEqual(self.json_generator.get(), self.json_contents)
+
+  def test_test_api_uncovered(self):
+    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
+    mw.test_methods['baz'] = ['pass']
+    mw.disable_strict_coverage = True
+    mw.write()
+    with self.assertRaises(subprocess.CalledProcessError):
+      self._run_recipes('test', 'run', '--json', self.json_path)
+    self.assertEqual(
+        self.json_generator
+            .coverage_failure('recipe_modules/foo_module/test_api.py', [6])
+            .get(),
+        self.json_contents)
+
+  def test_test_api_uncovered_strict(self):
+    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
+    mw.test_methods['baz'] = ['pass']
+    mw.write()
+    with self.assertRaises(subprocess.CalledProcessError):
+      self._run_recipes('test', 'run', '--json', self.json_path)
+    self.assertEqual(
+        self.json_generator
+            .coverage_failure('recipe_modules/foo_module/test_api.py', [6])
+            .uncovered_module('foo_module')
+            .get(),
+        self.json_contents)
+
+  def test_test_api_covered_by_recipe(self):
+    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
+    mw.test_methods['baz'] = ['pass']
+    mw.disable_strict_coverage = True
+    mw.write()
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.DEPS = ['foo_module']
+    rw.RunStepsLines = ['pass']
+    rw.GenTestsLines = ['api.foo_module.baz()', 'yield api.test("basic")']
+    rw.add_expectation('basic')
+    rw.write()
+    self._run_recipes('test', 'run', '--json', self.json_path)
+    self.assertEqual(self.json_generator.get(), self.json_contents)
+
+  def test_test_api_covered_by_recipe_strict(self):
+    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
+    mw.test_methods['baz'] = ['pass']
+    mw.write()
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.DEPS = ['foo_module']
+    rw.RunStepsLines = ['pass']
+    rw.GenTestsLines = ['api.foo_module.baz()', 'yield api.test("basic")']
+    rw.add_expectation('basic')
+    rw.write()
+    with self.assertRaises(subprocess.CalledProcessError):
+      self._run_recipes('test', 'run', '--json', self.json_path)
+    self.assertEqual(
+        self.json_generator
+            .coverage_failure('recipe_modules/foo_module/test_api.py', [6])
+            .uncovered_module('foo_module')
+            .get(),
+        self.json_contents)
+
+  def test_test_api_covered_by_example(self):
+    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
+    mw.test_methods['baz'] = ['pass']
+    mw.write()
+    mw.example.DEPS = ['foo_module']
+    mw.example.GenTestsLines = ['api.foo_module.baz()', 'yield api.test("basic")']
+    mw.example.add_expectation('basic')
+    mw.example.write()
     self._run_recipes('test', 'run', '--json', self.json_path)
     self.assertEqual(self.json_generator.get(), self.json_contents)
 
