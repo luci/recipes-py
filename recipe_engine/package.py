@@ -14,8 +14,10 @@ import sys
 from . import env
 
 from google.protobuf import json_format
-from . import package_pb2
+
 from . import fetch
+from . import package_io
+from . import package_pb2
 
 
 class InconsistentDependencyGraphError(Exception):
@@ -56,61 +58,6 @@ class InfraRepoConfig(object):
                 os.path.abspath(recipes_cfg)))) # recipes.cfg
 
 
-class ProtoFile(object):
-  """A collection of functions operating on a proto path.
-
-  This is an object so that it can be mocked in the tests.
-
-  Proto files read will always be upconverted to the current proto in
-  package.proto, and will be written back in their original format.
-  """
-  API_VERSIONS = (1, 2)
-
-  def __init__(self, path):
-    self._path = path
-
-  @property
-  def path(self):
-    return os.path.realpath(self._path)
-
-  def read_raw(self):
-    with open(self._path, 'r') as fh:
-      return fh.read()
-
-  def read(self):
-    obj = json.loads(self.read_raw())
-
-    vers = obj.get('api_version')
-    assert vers in self.API_VERSIONS, (
-      'expected %r to be one of %r' % (vers, self.API_VERSIONS)
-    )
-
-    # upconvert old deps-as-a-list to deps-as-a-dict
-    if 'deps' in obj and vers == 1:
-      obj['deps'] = {d.pop('project_id'): d for d in obj['deps']}
-
-    buf = package_pb2.Package()
-    json_format.ParseDict(obj, buf, ignore_unknown_fields=True)
-    return buf
-
-  def to_raw(self, buf):
-    obj = json_format.MessageToDict(buf, preserving_proto_field_name=True)
-
-    # downconvert if api_version is 1
-    if buf.deps and buf.api_version < 2:
-      deps = []
-      for pid, d in sorted(obj['deps'].iteritems()):
-        d['project_id'] = pid
-        deps.append(d)
-      obj['deps'] = deps
-
-    return json.dumps(obj, indent=2, sort_keys=True).replace(' \n', '\n')
-
-  def write(self, buf):
-    with open(self._path, 'w') as fh:
-      fh.write(self.to_raw(buf))
-
-
 class PackageContext(object):
   """Contains information about where the root package and its dependency
   checkouts live.
@@ -135,8 +82,9 @@ class PackageContext(object):
       self.recipes_dir, self.package_dir, self.repo_root, self.allow_fetch)
 
   @classmethod
-  def from_proto_file(cls, repo_root, proto_file, allow_fetch, deps_path=None):
-    buf = proto_file.read()
+  def from_package_file(cls, repo_root, package_file, allow_fetch,
+                        deps_path=None):
+    buf = package_file.read()
 
     recipes_path = str(buf.recipes_path).replace('/', os.sep)
 
@@ -189,10 +137,11 @@ class RepoSpec(object):
   def __ne__(self, other):
     return not (self == other)
 
-  def proto_file(self, context):
-    """Returns the ProtoFile of the recipes config file in this repository.
+  def package_file(self, context):
+    """Returns the PackageFile of the recipes config file in this repository.
     Requires a good checkout."""
-    return ProtoFile(InfraRepoConfig().to_recipes_cfg(self.repo_root(context)))
+    return package_io.PackageFile(
+      InfraRepoConfig().to_recipes_cfg(self.repo_root(context)))
 
 
 class GitRepoSpec(RepoSpec):
@@ -275,11 +224,11 @@ class GitRepoSpec(RepoSpec):
     checkout_dir = self._dep_dir(context)
 
     paths = []
-    subdir = self.proto_file(context).read().recipes_path
+    subdir = self.package_file(context).read().recipes_path
     if subdir:
-      # We add proto_file to the list of paths to check because it might contain
-      # other upstream rolls, which we want.
-      paths.extend([subdir + os.path.sep, self.proto_file(context).path])
+      # We add package_file to the list of paths to check because it might
+      # contain other upstream rolls, which we want.
+      paths.extend([subdir + os.path.sep, self.package_file(context).path])
 
     return self.backend.updates(
         self.repo, self.revision, checkout_dir, context.allow_fetch,
@@ -341,10 +290,10 @@ class PathRepoSpec(RepoSpec):
   def repo_root(self, _context):
     return self.path
 
-  def proto_file(self, context):
-    """Returns the ProtoFile of the recipes config file in this repository.
+  def package_file(self, context):
+    """Returns the PackageFile of the recipes config file in this repository.
     Requires a good checkout."""
-    return ProtoFile(InfraRepoConfig().to_recipes_cfg(self.path))
+    return package_io.PackageFile(InfraRepoConfig().to_recipes_cfg(self.path))
 
   def updates(self, _context, _other_revision=None):
     """Returns (empty) list of potential updates for this spec."""
@@ -362,8 +311,8 @@ class PathRepoSpec(RepoSpec):
 
 
 class RootRepoSpec(RepoSpec):
-  def __init__(self, proto_file):
-    self._proto_file = proto_file
+  def __init__(self, package_file):
+    self._package_file = package_file
 
   def checkout(self, context):
     # We assume this is already checked out.
@@ -372,13 +321,13 @@ class RootRepoSpec(RepoSpec):
   def repo_root(self, context):
     return context.repo_root
 
-  def proto_file(self, context):
-    return self._proto_file
+  def package_file(self, context):
+    return self._package_file
 
   def __eq__(self, other):
     if not isinstance(other, type(self)):
       return False
-    return self._proto_file == other._proto_file
+    return self._package_file == other._package_file
 
 
 class Package(object):
@@ -532,8 +481,8 @@ class PackageSpec(object):
                                         self._deps)
 
   @classmethod
-  def load_proto(cls, proto_file):
-    buf = proto_file.read()
+  def load_package(cls, package_file):
+    buf = package_file.read()
 
     deps = { pid: cls.spec_for_dep(pid, dep)
              for pid, dep in buf.deps.iteritems() }
@@ -636,21 +585,21 @@ class PackageDeps(object):
     return self._root_package
 
   @classmethod
-  def create(cls, repo_root, proto_file, deps_path=None, allow_fetch=False,
+  def create(cls, repo_root, package_file, deps_path=None, allow_fetch=False,
              overrides=None):
     """Creates a PackageDeps object.
 
     Arguments:
       repo_root: the root of the repository containing this package.
-      proto_file: a ProtoFile object corresponding to the repos recipes.cfg
+      package_file: a PackageFile object corresponding to the repos recipes.cfg
       allow_fetch: whether to fetch dependencies rather than just checking for
                    them.
       overrides: if not None, a dictionary of project overrides. Dictionary keys
                  are the `project_id` field to override, and dictionary values
                  are the override path.
     """
-    context = PackageContext.from_proto_file(repo_root, proto_file, allow_fetch,
-                                             deps_path=deps_path)
+    context = PackageContext.from_package_file(
+      repo_root, package_file, allow_fetch, deps_path=deps_path)
 
     if overrides:
       overrides = {project_id: PathRepoSpec(project_id, path)
@@ -658,13 +607,14 @@ class PackageDeps(object):
     package_deps = cls(context, overrides=overrides)
 
     package_deps._root_package = package_deps._create_package(
-      RootRepoSpec(proto_file))
+      RootRepoSpec(package_file))
 
     return package_deps
 
   def _create_package(self, repo_spec):
     repo_spec.checkout(self._context)
-    package_spec = PackageSpec.load_proto(repo_spec.proto_file(self._context))
+    package_spec = PackageSpec.load_package(
+      repo_spec.package_file(self._context))
     return self._create_from_spec(repo_spec, package_spec)
 
   def _create_from_spec(self, repo_spec, package_spec):

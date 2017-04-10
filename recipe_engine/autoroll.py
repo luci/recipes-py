@@ -257,9 +257,9 @@ def test_rolls(config_file, context, package_spec, projects=None):
 
 
 def main(args, repo_root, config_file):
-  context = package.PackageContext.from_proto_file(
+  context = package.PackageContext.from_package_file(
       repo_root, config_file, allow_fetch=not args.no_fetch)
-  package_spec = package.PackageSpec.load_proto(config_file)
+  package_spec = package.PackageSpec.load_package(config_file)
 
   results = {}
   try:

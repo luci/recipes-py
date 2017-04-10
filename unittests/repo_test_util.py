@@ -22,6 +22,7 @@ import recipe_engine.env
 
 from recipe_engine import fetch
 from recipe_engine import package
+from recipe_engine import package_io
 from recipe_engine import package_pb2
 
 
@@ -96,7 +97,7 @@ class RepoTest(unittest.TestCase):
   def get_package_spec(self, repo):
     """Returns PackageSpec corresponding to given repo."""
     config_file = os.path.join(repo['root'], 'infra', 'config', 'recipes.cfg')
-    return package.PackageSpec.load_proto(package.ProtoFile(config_file))
+    return package.PackageSpec.load_package(package_io.PackageFile(config_file))
 
   def create_repo(self, name, spec):
     """Creates a real git repo with simple recipes.cfg."""
@@ -174,7 +175,7 @@ class RepoTest(unittest.TestCase):
       config_dir = os.path.dirname(config_file)
       if not os.path.exists(config_dir):
         os.makedirs(config_dir)
-      package.ProtoFile(config_file).write(spec_pb)
+      package_io.PackageFile(config_file).write(spec_pb)
       subprocess.check_output(['git', 'add', config_file])
       subprocess.check_output(['git', 'commit', '-m', message])
       rev = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()

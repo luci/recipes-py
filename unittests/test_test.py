@@ -18,6 +18,7 @@ import recipe_engine.env
 
 
 from recipe_engine import package
+from recipe_engine import package_io
 from recipe_engine import package_pb2
 
 
@@ -235,7 +236,7 @@ class TestTest(unittest.TestCase):
           'recipe_engine': package_pb2.DepSpec(url='file://'+ROOT_DIR),
         }
     )
-    package.ProtoFile(self._recipes_cfg).write(test_pkg)
+    package_io.PackageFile(self._recipes_cfg).write(test_pkg)
 
     self.maxDiff = None
 

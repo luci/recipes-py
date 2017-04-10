@@ -14,6 +14,7 @@ import tempfile
 
 from recipe_engine import fetch
 from recipe_engine import package
+from recipe_engine import package_io
 
 
 @contextlib.contextmanager
@@ -42,7 +43,7 @@ def main(args):
       backend = fetch.GitBackend()
     backend.checkout(
         args.repository, args.revision, checkout_dir, allow_fetch=True)
-    recipes_cfg = package.ProtoFile(
+    recipes_cfg = package_io.PackageFile(
         package.InfraRepoConfig().to_recipes_cfg(checkout_dir))
     cmd = [
         sys.executable,

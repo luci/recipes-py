@@ -17,6 +17,7 @@ import mock
 
 from recipe_engine import fetch
 from recipe_engine import package
+from recipe_engine import package_io
 
 TEST_AUTHOR = 'foo@example.com'
 
@@ -363,10 +364,10 @@ class TestRollCandidate(repo_test_util.RepoTest):
     self.assertFalse(candidate.make_consistent(root_repo_spec))
 
 
-class MockProtoFile(package.ProtoFile):
+class MockPackageFile(package_io.PackageFile):
   def __init__(self, path, text):
     self._text = text
-    super(MockProtoFile, self).__init__(path)
+    super(MockPackageFile, self).__init__(path)
 
   @property
   def path(self):
@@ -402,26 +403,27 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
       '  "recipes_path": "path/to/recipes"',
       '}',
     ])
-    self.proto_file = MockProtoFile('repo/root/infra/config/recipes.cfg',
-                                    self.proto_text)
-    self.context = package.PackageContext.from_proto_file(
-        'repo/root', self.proto_file, allow_fetch=False)
+    self.package_file = MockPackageFile('repo/root/infra/config/recipes.cfg',
+                                        self.proto_text)
+    self.context = package.PackageContext.from_package_file(
+        'repo/root', self.package_file, allow_fetch=False)
 
   def test_dump_load_inverses(self):
     # Doubles as a test for equality reflexivity.
-    package_spec = package.PackageSpec.load_proto(self.proto_file)
-    self.assertEqual(self.proto_file.to_raw(package_spec.dump()),
+    package_spec = package.PackageSpec.load_package(self.package_file)
+    self.assertEqual(self.package_file.to_raw(package_spec.dump()),
                      self.proto_text)
-    self.assertEqual(package.PackageSpec.load_proto(self.proto_file),
+    self.assertEqual(package.PackageSpec.load_package(self.package_file),
                      package_spec)
 
   def test_dump_round_trips(self):
     proto_text = """
 {"api_version": 1}
 """.lstrip()
-    proto_file = MockProtoFile('repo/root/infra/config/recipes.cfg', proto_text)
-    package_spec = package.PackageSpec.load_proto(proto_file)
-    self.assertEqual(proto_file.to_raw(package_spec.dump()),
+    package_file = MockPackageFile('repo/root/infra/config/recipes.cfg',
+                                   proto_text)
+    package_spec = package.PackageSpec.load_package(package_file)
+    self.assertEqual(package_file.to_raw(package_spec.dump()),
                      '{\n  "api_version": 1\n}')
 
   def test_no_version(self):
@@ -430,10 +432,11 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
   "recipes_path": "path/to/recipes"
 }
 """
-    proto_file = MockProtoFile('repo/root/infra/config/recipes.cfg', proto_text)
+    package_file = MockPackageFile('repo/root/infra/config/recipes.cfg',
+                                   proto_text)
 
     with self.assertRaises(AssertionError):
-      package.PackageSpec.load_proto(proto_file)
+      package.PackageSpec.load_package(package_file)
 
   def test_old_deps(self):
     proto_text = '\n'.join([
@@ -457,9 +460,10 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
       '  "recipes_path": "path/to/recipes"',
       '}',
     ])
-    proto_file = MockProtoFile('repo/root/infra/config/recipes.cfg', proto_text)
+    package_file = MockPackageFile('repo/root/infra/config/recipes.cfg',
+                                   proto_text)
 
-    spec = package.PackageSpec.load_proto(proto_file)
+    spec = package.PackageSpec.load_package(package_file)
     self.assertEqual(spec.deps['foo'], package.GitRepoSpec(
       'foo',
       'https://repo.com/foo.git',
@@ -468,7 +472,7 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
       '',
       fetch.GitBackend()
     ))
-    self.assertEqual(proto_file.to_raw(spec.dump()), proto_text)
+    self.assertEqual(package_file.to_raw(spec.dump()), proto_text)
 
 
   def test_unsupported_version(self):
@@ -477,10 +481,11 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
   "project_id": "fizzbar",
   "recipes_path": "path/to/recipes"
 }"""
-    proto_file = MockProtoFile('repo/root/infra/config/recipes.cfg', proto_text)
+    package_file = MockPackageFile('repo/root/infra/config/recipes.cfg',
+                                   proto_text)
 
     with self.assertRaises(AssertionError):
-      package.PackageSpec.load_proto(proto_file)
+      package.PackageSpec.load_package(package_file)
 
 
 class TestPackageDeps(MockIOThings, unittest.TestCase):
@@ -500,21 +505,21 @@ class TestPackageDeps(MockIOThings, unittest.TestCase):
   ]
 }
 """
-    base_proto_file = MockProtoFile('base/infra/config/recipes.cfg',
-                                    base_proto_text)
+    base_package_file = MockPackageFile('base/infra/config/recipes.cfg',
+                                        base_proto_text)
 
     foo_proto_text = """{
   "api_version": 1,
   "project_id": "foo",
   "recipes_path": "path/to/recipes"
 }"""
-    foo_proto_file = MockProtoFile('foo/infra/config/recipes.cfg',
-                                   foo_proto_text)
+    foo_package_file = MockPackageFile('foo/infra/config/recipes.cfg',
+                                       foo_proto_text)
 
     with mock.patch.object(package.GitRepoSpec, 'checkout') as checkout:
-      with mock.patch.object(package.PathRepoSpec, 'proto_file',
-                             return_value=foo_proto_file):
-        deps = package.PackageDeps.create('base', base_proto_file, overrides={
+      with mock.patch.object(package.PathRepoSpec, 'package_file',
+                             return_value=foo_package_file):
+        deps = package.PackageDeps.create('base', base_package_file, overrides={
           'foo': '/path/to/local/foo',
         })
 

@@ -459,7 +459,7 @@ def _set_known_objects(base):
 def main(universe_view, recipe, kind):
   logging.basicConfig()
 
-  spec = universe_view.package.repo_spec.proto_file(None).read()
+  spec = universe_view.package.repo_spec.package_file(None).read()
   base_dir = universe_view.package.repo_root
   if spec.recipes_path:
     base_dir = join(base_dir, spec.recipes_path)

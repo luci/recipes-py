@@ -35,13 +35,14 @@ from google.protobuf import json_format as jsonpb
 
 def get_package_config(args):
   from recipe_engine import package
+  from recipe_engine import package_io
 
   assert args.package, 'No recipe config (--package) given.'
   assert os.path.exists(args.package), (
       'Given recipes config file %s does not exist.' % args.package)
   return (
       package.InfraRepoConfig().from_recipes_cfg(args.package),
-      package.ProtoFile(args.package)
+      package_io.PackageFile(args.package)
   )
 
 
