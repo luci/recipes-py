@@ -535,21 +535,32 @@ def report_coverage_version():
   print('Using coverage %s from %r' % (coverage.__version__, coverage.__file__))
 
 
+@contextlib.contextmanager
+def scoped_override(obj, attr, override):
+  """Sets |obj|.|attr| to |override| in scope of the context manager."""
+  orig = getattr(obj, attr)
+  setattr(obj, attr, override)
+  yield
+  setattr(obj, attr, orig)
+
+
 def worker(f):
   """Wrapper for a multiprocessing worker function.
 
   This addresses known issues with multiprocessing workers:
 
     - they can hang on uncaught exceptions
+    - os._exit causes hangs, so we patch it
     - we need explicit kill switch to clearly terminate parent"""
   @functools.wraps(f)
   def wrapper(test, *args, **kwargs):
-    try:
-      if _KILL_SWITCH.is_set():
-        return (False, test, 'kill switch')
-      return (True, test, f(test, *args, **kwargs))
-    except Exception:
-      return (False, test, traceback.format_exc())
+    with scoped_override(os, '_exit', sys.exit):
+      try:
+        if _KILL_SWITCH.is_set():
+          return (False, test, 'kill switch')
+        return (True, test, f(test, *args, **kwargs))
+      except:
+        return (False, test, traceback.format_exc())
   return wrapper
 
 
