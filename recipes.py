@@ -18,11 +18,18 @@ import subprocess
 import sys
 import tempfile
 
+# This is necessary to ensure that str literals are by-default assumed to hold
+# utf-8. It also makes the implicit str(unicode(...)) act like
+# unicode(...).encode('utf-8'), rather than unicode(...).encode('ascii') .
+reload(sys)
+sys.setdefaultencoding('UTF8')
+
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ROOT_DIR)
 
 from recipe_engine import env
 from recipe_engine import arguments_pb2
+from recipe_engine import util as recipe_util
 from google.protobuf import json_format as jsonpb
 
 
@@ -231,6 +238,8 @@ def run(package_deps, args, op_args):
     properties = arg_properties
 
   properties['recipe'] = args.recipe
+
+  properties = recipe_util.strip_unicode(properties)
 
   os.environ['PYTHONUNBUFFERED'] = '1'
   os.environ['PYTHONIOENCODING'] = 'UTF-8'

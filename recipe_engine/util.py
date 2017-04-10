@@ -309,3 +309,19 @@ def map_defer_exceptions(fn, it, *exc_types):
     with mexc_builder.catch(*exc_types):
       fn(e)
   mexc_builder.raise_if_any()
+
+def strip_unicode(obj):
+  """Recursively re-encodes strings as utf-8 inside |obj|. Returns the result.
+  """
+  if isinstance(obj, unicode):
+    return obj.encode('utf-8', 'replace')
+
+  if isinstance(obj, list):
+    return map(strip_unicode, obj)
+
+  if isinstance(obj, dict):
+    new_obj = type(obj)(
+        (strip_unicode(k), strip_unicode(v)) for k, v in obj.iteritems() )
+    return new_obj
+
+  return obj

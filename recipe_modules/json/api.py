@@ -82,21 +82,7 @@ class JsonApi(recipe_api.RecipeApi):
 
   @classmethod
   def loads(self, data, **kwargs):
-    def strip_unicode(obj):
-      if isinstance(obj, unicode):
-        return obj.encode('utf-8', 'replace')
-
-      if isinstance(obj, list):
-        return map(strip_unicode, obj)
-
-      if isinstance(obj, dict):
-        new_obj = type(obj)(
-            (strip_unicode(k), strip_unicode(v)) for k, v in obj.iteritems() )
-        return new_obj
-
-      return obj
-
-    return strip_unicode(json.loads(data, **kwargs))
+    return recipe_util.strip_unicode(json.loads(data, **kwargs))
 
   def is_serializable(self, obj):
     """Returns True if the object is JSON-serializable."""
