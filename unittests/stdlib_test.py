@@ -17,9 +17,6 @@ def recipes_py(*args):
       '--package', os.path.join(ROOT_DIR, 'infra', 'config', 'recipes.cfg')] +
       list(args))
 
-# Run both current simulation test logic (simulation_test), and experimental
-# (test). Eventually the former will be removed.
-recipes_py('simulation_test')
 recipes_py('test', 'run')
 
 recipes_py('lint')
