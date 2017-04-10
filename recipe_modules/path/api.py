@@ -161,13 +161,19 @@ class PathApi(recipe_api.RecipeApi):
     # Used in mkdtemp when generating and checking expectations.
     self._test_counter = 0
 
+  def _read_module_property(self, property_name, default=None):
+    """Reads a path property module from "$recipe_engine/path". If absent,
+    returns the default.
+    """
+    props = self.m.properties.get('$recipe_engine/path', {})
+    return props.get(property_name, default)
+
   def _read_path(self, property_name, default):  # pragma: no cover
     """Reads a path from a property. If absent, returns the default.
 
     Validates that the path is absolute.
     """
-    props = self.m.properties.get('$recipe_engine/path', {})
-    value = props.get(property_name)
+    value = self._read_module_property(property_name)
     if not value:
       assert os.path.isabs(default), default
       return default
@@ -203,6 +209,8 @@ class PathApi(recipe_api.RecipeApi):
       self._temp_dir = ['/']
       self._cache_dir = ['/', 'b', 'c']
 
+    self._volatile_paths = self._read_module_property('volatile', [])
+
     self.set_config('BASE')
 
   def mock_add_paths(self, path):
@@ -212,6 +220,14 @@ class PathApi(recipe_api.RecipeApi):
 
   def assert_absolute(self, path):
     assert self.abspath(path) == str(path), '%s is not absolute' % path
+
+  def is_volatile(self, base):
+    """Returns (bool): True if the named path is declared as volatile.
+
+    A path is volatile if it is scoped to the recipe engine execution. Note that
+    some paths may be volatile, but not explicitly declared as such.
+    """
+    return base in self.c.volatile_paths or base in self._volatile_paths
 
   def mkdtemp(self, prefix):
     """Makes a new temp directory, returns path to it."""
