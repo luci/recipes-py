@@ -110,7 +110,7 @@ class RunTest(unittest.TestCase):
 
   def test_trigger(self):
     subp = subprocess.Popen(
-        self._run_cmd('step:tests/trigger'),
+        self._run_cmd('engine_tests/trigger'),
         stdout=subprocess.PIPE)
     stdout, _ = subp.communicate()
     self.assertEqual(0, subp.returncode)
@@ -123,7 +123,7 @@ class RunTest(unittest.TestCase):
     """Tests that trigger still happens even if running the command fails."""
     subp = subprocess.Popen(
         self._run_cmd(
-            'step:tests/trigger', properties={'command': ['na-huh']}),
+            'engine_tests/trigger', properties={'command': ['na-huh']}),
         stdout=subprocess.PIPE)
     stdout, _ = subp.communicate()
     self.assertRegexpMatches(stdout, r'(?m)^@@@STEP_TRIGGER@(.*)@@@$')
@@ -142,7 +142,7 @@ class RunTest(unittest.TestCase):
     try:
       subp = subprocess.Popen(
           self._run_cmd(
-              'step:tests/trigger', properties={'command': ['na-huh']},
+              'engine_tests/trigger', properties={'command': ['na-huh']},
               engine_args=['--operational-args-path', path]),
           stdout=subprocess.PIPE)
       stdout, _ = subp.communicate()
@@ -188,7 +188,7 @@ class RunTest(unittest.TestCase):
 
   def test_subannotations(self):
     proc = subprocess.Popen(
-        self._run_cmd('step:tests/subannotations'),
+        self._run_cmd('engine_tests/subannotations'),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     stdout, _ = proc.communicate()

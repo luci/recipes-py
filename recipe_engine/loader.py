@@ -235,17 +235,12 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
 
   def find_recipe(self, recipe):
     if ':' in recipe:
-      module_name, recipe_name = recipe.split(':')
-      module_dir = os.path.join(self.package.module_dir, module_name)
-      if _is_recipe_module_dir(module_dir):
-        if recipe_name.endswith('example'):
-          # TODO(martinis) change to example == 'example' ? Technically a bug...
-          recipe_path = os.path.join(module_dir, 'example.py')
-        elif recipe_name.startswith('tests/'):
-          recipe_path = os.path.join(
-              module_dir, 'tests', recipe_name[len('tests/'):] + '.py')
-        else:
-          raise NoSuchRecipe(recipe)
+      module_name, example = recipe.split(':')
+      #TODO(martinis) change to example == 'example' ? Technically a bug...
+      assert example.endswith('example')
+      subpath = os.path.join(self.package.module_dir, module_name)
+      if _is_recipe_module_dir(subpath):
+        recipe_path = os.path.join(subpath, 'example.py')
     else:
       recipe_path = os.path.join(self.package.recipe_dir, recipe)+".py"
 
@@ -317,18 +312,11 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
         path, lambda f: f.endswith('.py') and f[0] != '_'):
       yield recipe, recipe[len(path)+1:-len('.py')]
 
-    for module_name in self.loop_over_recipe_modules():
-      module_dir = os.path.join(self.package.module_dir, module_name)
-
-      example_path = os.path.join(module_dir, 'example.py')
-      if os.path.exists(example_path):
-        yield example_path, '%s:example' % module_name
-
-      test_dir = os.path.join(module_dir, 'tests')
-      if os.path.exists(test_dir):
-        for recipe in scan_directory(test_dir, lambda f: f.endswith('.py')):
-          yield recipe, '%s:tests/%s' % (
-              module_name, recipe[len(test_dir)+1:-len('.py')])
+    path = self.package.module_dir
+    for recipe in scan_directory(
+        path, lambda f: f.endswith('example.py')):
+      module_name = os.path.dirname(recipe)[len(path)+1:]
+      yield recipe, '%s:example' % module_name
 
   def loop_over_recipe_modules(self):
     """Yields the paths to all the modules that this view can see."""
