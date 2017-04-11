@@ -47,9 +47,13 @@ def cleanup_pyc(path):
 
 class InfraRepoConfig(object):
   def to_recipes_cfg(self, repo_root):
+    return os.path.join(repo_root, self.relative_recipes_cfg)
+
+  @property
+  def relative_recipes_cfg(self):
     # TODO(luqui): This is not always correct.  It can be configured in
     # infra/config:refs.cfg.
-    return os.path.join(repo_root, 'infra', 'config', 'recipes.cfg')
+    return os.path.join('infra', 'config', 'recipes.cfg')
 
   def from_recipes_cfg(self, recipes_cfg):
     return os.path.dirname( # <repo root>
@@ -238,7 +242,8 @@ class GitRepoSpec(RepoSpec):
     if subdir:
       # We add package_file to the list of paths to check because it might
       # contain other upstream rolls, which we want.
-      paths.extend([subdir + os.path.sep, self.spec_pb().recipes_path])
+      paths.extend([subdir + os.path.sep,
+                    InfraRepoConfig().relative_recipes_cfg])
 
     if other_refspec is None:
       other_refspec = self._branch_for_remote
