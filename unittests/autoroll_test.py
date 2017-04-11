@@ -492,7 +492,7 @@ class TestAutoroll(repo_test_util.RepoTest):
     expected_rejected_candidate = {
         'commit_infos': {
             'b': [
-                b_repo_spec._get_commit_info(b_c2_rev, self._context).dump(),
+                b_repo_spec._get_commit_info(b_c2_rev).dump(),
             ],
         },
         'spec': str(c_package_spec.dump()).replace(
@@ -538,4 +538,4 @@ if __name__ == '__main__':
     logging.basicConfig(
       level=logging.DEBUG,
       handler=repo_test_util.CapturableHandler())
-  sys.exit(unittest.main(buffer=True))
+  sys.exit(unittest.main())

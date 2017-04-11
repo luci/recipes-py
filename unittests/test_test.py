@@ -17,7 +17,6 @@ sys.path.insert(0, ROOT_DIR)
 import recipe_engine.env
 
 
-from recipe_engine import package
 from recipe_engine import package_io
 from recipe_engine import package_pb2
 
@@ -1049,7 +1048,7 @@ class TestTest(unittest.TestCase):
   def test_diff_invalid_baseline(self):
     g1 = self.json_generator.invalid()
     g2 = self.json_generator
-    with self.assertRaises(subprocess.CalledProcessError):
+    with self.assertRaises(subprocess.CalledProcessError) as cm:
       self._run_recipes(
           'test', 'diff',
           '--baseline', g1.write(),
@@ -1060,7 +1059,7 @@ class TestTest(unittest.TestCase):
   def test_diff_invalid_actual(self):
     g1 = self.json_generator
     g2 = self.json_generator.invalid()
-    with self.assertRaises(subprocess.CalledProcessError):
+    with self.assertRaises(subprocess.CalledProcessError) as cm:
       self._run_recipes(
           'test', 'diff',
           '--baseline', g1.write(),
@@ -1097,7 +1096,7 @@ class TestTest(unittest.TestCase):
     g2.unused_expectation(
         'foo_expectation').unused_expectation('bar_expectation')
 
-    with self.assertRaises(subprocess.CalledProcessError):
+    with self.assertRaises(subprocess.CalledProcessError) as cm:
       self._run_recipes(
           'test', 'diff',
           '--baseline', g1.write(),

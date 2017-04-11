@@ -87,7 +87,11 @@ class RepoTest(unittest.TestCase):
         'master',
         repo['revision'],
         '',
-        fetch.GitBackend())
+        fetch.GitBackend(
+          self._context.project_checkout_dir(repo['name']),
+          repo['root'],
+          self._context.allow_fetch
+        ))
 
   def get_root_repo_spec(self, repo):
     """Returns RootRepoSpec corresponding to given repo."""
@@ -97,7 +101,8 @@ class RepoTest(unittest.TestCase):
   def get_package_spec(self, repo):
     """Returns PackageSpec corresponding to given repo."""
     config_file = os.path.join(repo['root'], 'infra', 'config', 'recipes.cfg')
-    return package.PackageSpec.load_package(package_io.PackageFile(config_file))
+    return package.PackageSpec.load_package(
+      self._context, package_io.PackageFile(config_file))
 
   def create_repo(self, name, spec):
     """Creates a real git repo with simple recipes.cfg."""
@@ -179,7 +184,6 @@ class RepoTest(unittest.TestCase):
       subprocess.check_output(['git', 'add', config_file])
       subprocess.check_output(['git', 'commit', '-m', message])
       rev = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()
-      subprocess.check_call(['git', 'branch', '-f', 'origin/master', rev])
       return rev
 
   def commit_in_repo(self, repo, message='Empty commit',
@@ -193,7 +197,6 @@ class RepoTest(unittest.TestCase):
       subprocess.check_output(
           ['git', 'commit', '-a', '--allow-empty', '-m', message], env=env)
       rev = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()
-      subprocess.check_call(['git', 'branch', '-f', 'origin/master', rev])
     return {
         'root': repo['root'],
         'revision': rev,
@@ -339,8 +342,3 @@ class RepoTest(unittest.TestCase):
         ['%s(%s)' % t for t in methods.iteritems()]
       )
       return self.commit_in_repo(repo, message)
-
-  def reset_repo(self, repo, revision):
-    """Resets repo contents to given revision."""
-    with in_directory(repo['root']):
-      subprocess.check_output(['git', 'reset', '--hard', revision])

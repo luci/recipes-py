@@ -4,20 +4,20 @@
 
 import copy
 import difflib
-import json
 import logging
 import operator
 import os
 import subprocess
 import sys
 
+from . import package_io
+from . import fetch
+
 from . import env
 
-from google.protobuf import json_format
-
-from . import fetch
-from . import package_io
 from . import package_pb2
+
+LOGGER = logging.getLogger(__name__)
 
 
 class InconsistentDependencyGraphError(Exception):
@@ -81,6 +81,9 @@ class PackageContext(object):
     return 'PackageContext(%r, %r, %r, %s)' % (
       self.recipes_dir, self.package_dir, self.repo_root, self.allow_fetch)
 
+  def project_checkout_dir(self, project_id):
+    return os.path.join(self.package_dir, project_id)
+
   @classmethod
   def from_package_file(cls, repo_root, package_file, allow_fetch,
                         deps_path=None):
@@ -121,6 +124,10 @@ class RepoSpec(object):
   and branch.
   """
 
+  def fetch(self):
+    """Do any network fetching stuff."""
+    raise NotImplementedError()
+
   def checkout(self, context):
     """Fetches the specified package and returns the path of the package root
     (the directory that contains recipes and recipe_modules).
@@ -131,21 +138,40 @@ class RepoSpec(object):
     """Returns the root of this repository."""
     raise NotImplementedError()
 
+  def updates(self, other_revision=None):
+    """Returns a list of all updates to the branch since the revision this
+    repo spec refers to.
+
+    Args:
+      other_revision (str|None) - The target other revision to return the list
+      to. If None, it uses this spec's target branch.
+
+    Returns list(RepoSpec), one per available update.
+    """
+    raise NotImplementedError()
+
   def __eq__(self, other):
     raise NotImplementedError()
 
   def __ne__(self, other):
     return not (self == other)
 
-  def package_file(self, context):
-    """Returns the PackageFile of the recipes config file in this repository.
-    Requires a good checkout."""
-    return package_io.PackageFile(
-      InfraRepoConfig().to_recipes_cfg(self.repo_root(context)))
+  def spec_pb(self):
+    """Returns the PackageFile of the recipes config file in this repository."""
+    raise NotImplementedError()
 
 
 class GitRepoSpec(RepoSpec):
   def __init__(self, project_id, repo, branch, revision, path, backend):
+    """
+    Args:
+      project_id (str): The id of the project (e.g. "recipe_engine").
+      repo (str): The url of the remote git repo.
+      branch (str): The git branch of the repo.
+      revision (str): The target revision for this dependency.
+      path (str): The subdirectory in the repo where the recipes live.
+      backend (fetch.Backend): The git backend managing this directory.
+    """
     self.project_id = project_id
     self.repo = repo
     self.branch = branch
@@ -158,49 +184,35 @@ class GitRepoSpec(RepoSpec):
             'branch="%(branch)s", revision="%(revision)s", '
             'path="%(path)s"}' % self.__dict__)
 
-  def run_git(self, context, *args):
-    cmd = [self._git]
-    if context is not None:
-      cmd += ['-C', self._dep_dir(context)]
-    cmd += list(args)
+  def fetch(self):
+    return self.backend.fetch(self.branch)
 
-    logging.info('Running: %s', cmd)
-    return subprocess.check_output(cmd)
+  def spec_pb(self):
+    return self.backend.commit_metadata(self.revision).spec
 
   def checkout(self, context):
-    checkout_dir = self._dep_dir(context)
-    self.backend.checkout(
-        self.repo, self.revision, checkout_dir, context.allow_fetch)
-    cleanup_pyc(checkout_dir)
+    self.backend.checkout(self.revision)
+    cleanup_pyc(self._dep_dir(context))
 
   def repo_root(self, context):
     return os.path.join(self._dep_dir(context), self.path)
 
   def dump(self):
-    buf = package_pb2.DepSpec(
-        url=self.repo,
-        branch=self.branch,
-        revision=self.revision)
-    if self.path:
-      buf.path_override = self.path
+    return package_pb2.DepSpec(
+      url=self.repo,
+      branch=self.branch,
+      revision=self.revision,
+      path_override = self.path)
 
-    # Only dump repo_type if it's different from default. This preserves
-    # compatibility e.g. with recipes.py bootstrap scripts in client repos
-    # which may not handle repo_type correctly.
-    # TODO(phajdan.jr): programmatically extract the default value.
-    if self.backend.repo_type != package_pb2.DepSpec.GIT:
-      buf.repo_type = self.backend.repo_type
+  @property
+  def _branch_for_remote(self):
+    if self.branch.startswith('refs/'):
+      return self.branch
+    return 'refs/heads/' + self.branch
 
-    return buf
-
-  def updates(self, context, other_revision=None):
-    """Returns a list of all updates to the branch since the revision this
-    repo spec refers to.
-    """
-    raw_updates = self.raw_updates(
-        context, (other_revision or self.backend.branch_spec(self.branch)))
+  def updates(self, other_revision=None):
     updates = []
-    for rev in raw_updates:
+    for rev in self.raw_updates(other_revision):
       updates.append(GitRepoSpec(
           self.project_id,
           self.repo,
@@ -210,57 +222,37 @@ class GitRepoSpec(RepoSpec):
           self.backend))
     return updates
 
-  def commit_infos(self, context, other_revision):
+  def commit_infos(self, other_refspec):
     """Returns a list of commit infos on the branch between the pinned revision
     and |other_revision|.
     """
-    raw_updates = self.raw_updates(context, other_revision)
-    return [self._get_commit_info(rev, context) for rev in raw_updates]
+    raw_updates = self.raw_updates(other_refspec)
+    return [self._get_commit_info(rev) for rev in raw_updates]
 
-  def raw_updates(self, context, other_revision):
+  def raw_updates(self, other_refspec):
     """Returns a list of revisions on the branch between the pinned revision
-    and |other_revision|.
+    and |other_refspec|.
     """
-    checkout_dir = self._dep_dir(context)
-
     paths = []
-    subdir = self.package_file(context).read().recipes_path
+    subdir = self.spec_pb().recipes_path
     if subdir:
       # We add package_file to the list of paths to check because it might
       # contain other upstream rolls, which we want.
-      paths.extend([subdir + os.path.sep, self.package_file(context).path])
+      paths.extend([subdir + os.path.sep, self.spec_pb().path])
 
-    return self.backend.updates(
-        self.repo, self.revision, checkout_dir, context.allow_fetch,
-        other_revision, paths)
+    if other_refspec is None:
+      other_refspec = self._branch_for_remote
+    other_revision = self.backend.resolve_refspec(other_refspec)
+    return self.backend.updates(self.revision, other_revision, paths)
 
-  def get_more_recent_revision(self, context, r1, r2):
-    """Returns the more recent revision."""
-    self.checkout(context)
-    if context.allow_fetch:
-      self.run_git(context, 'fetch')
-    args = [
-        'rev-list',
-        '%s...%s' % (r1, r2),  # Note three dots (...) here.
-    ]
-    return self.run_git(context, *args).strip().split('\n')[0]
-
-  def _get_commit_info(self, rev, context):
-    checkout_dir = self._dep_dir(context)
-    metadata = self.backend.commit_metadata(
-        self.repo, rev, checkout_dir, context.allow_fetch)
-    return CommitInfo(metadata['author'], metadata['message'], self.project_id,
-                      rev)
+  def _get_commit_info(self, rev):
+    metadata = self.backend.commit_metadata(rev)
+    return CommitInfo(
+      metadata.author_email, '\n'.join(metadata.message_lines),
+      self.project_id, rev)
 
   def _dep_dir(self, context):
     return os.path.join(context.package_dir, self.project_id)
-
-  @property
-  def _git(self):
-    if sys.platform.startswith(('win', 'cygwin')):
-      return 'git.bat'
-    else:
-      return 'git'
 
   def _components(self):
     return (self.project_id, self.repo, self.revision, self.path)
@@ -284,25 +276,26 @@ class PathRepoSpec(RepoSpec):
       % self.__dict__
     )
 
+  def fetch(self):
+    pass
+
   def checkout(self, context):
     pass
 
   def repo_root(self, _context):
     return self.path
 
-  def package_file(self, context):
-    """Returns the PackageFile of the recipes config file in this repository.
-    Requires a good checkout."""
-    return package_io.PackageFile(InfraRepoConfig().to_recipes_cfg(self.path))
+  def spec_pb(self):
+    return package_io.PackageFile(
+      InfraRepoConfig().to_recipes_cfg(self.path)).read()
 
-  def updates(self, _context, _other_revision=None):
-    """Returns (empty) list of potential updates for this spec."""
+  def updates(self, other_revision=None):
     return []
 
   def dump(self):
     """Returns the package.proto DepSpec form of this RepoSpec."""
     return package_pb2.DepSpec(
-        url="file://"+self.path)
+        url='file://'+self.path)
 
   def __eq__(self, other):
     if not isinstance(other, type(self)):
@@ -314,6 +307,13 @@ class RootRepoSpec(RepoSpec):
   def __init__(self, package_file):
     self._package_file = package_file
 
+  def fetch(self):
+    # We assume this is already checked out.
+    pass
+
+  def updates(self, other_revision=None):
+    raise NotImplementedError()
+
   def checkout(self, context):
     # We assume this is already checked out.
     pass
@@ -321,8 +321,8 @@ class RootRepoSpec(RepoSpec):
   def repo_root(self, context):
     return context.repo_root
 
-  def package_file(self, context):
-    return self._package_file
+  def spec_pb(self):
+    return self._package_file.read()
 
   def __eq__(self, other):
     if not isinstance(other, type(self)):
@@ -382,9 +382,8 @@ class RollCandidate(object):
   This is mostly used by recipes.py autoroll command.
   """
 
-  def __init__(self, package_spec, context, update):
+  def __init__(self, package_spec, update):
     self._package_spec = package_spec
-    self._context = context
     self._updates = {
       update.project_id: update,
     }
@@ -397,7 +396,7 @@ class RollCandidate(object):
   def get_affected_projects(self):
     return self._updates.keys()
 
-  def make_consistent(self, root_spec):
+  def make_consistent(self, context, root_spec):
     """Attempts to make the after-roll dependency graph consistent by rolling
     other package dependencies (changing their revisions). A consistent
     dependency graph means that all of the repos in the graph are pinned
@@ -407,8 +406,9 @@ class RollCandidate(object):
     """
     while True:
       try:
-        package_deps = PackageDeps(self._context)
-        package_deps._create_from_spec(root_spec, self.get_rolled_spec())
+        package_deps = PackageDeps()
+        package_deps._create_from_spec(context, root_spec,
+                                       self.get_rolled_spec())
         return True
       except InconsistentDependencyGraphError as e:
         # Don't update the same project twice - that'd mean we have two
@@ -424,8 +424,8 @@ class RollCandidate(object):
           other_spec = e.specs[0]
 
         # Prevent rolling backwards.
-        more_recent_revision = other_spec.get_more_recent_revision(
-            self._context, current_revision, other_spec.revision)
+        more_recent_revision = other_spec.backend.get_more_recent_revision(
+          current_revision, other_spec.revision)
         if more_recent_revision != other_spec.revision:
           return False
 
@@ -451,7 +451,7 @@ class RollCandidate(object):
 
     for project_id, update in self._updates.iteritems():
       commit_infos[project_id] = self._package_spec.deps[
-          project_id].commit_infos(self._context, update.revision)
+          project_id].commit_infos(update.revision)
 
     return commit_infos
 
@@ -481,34 +481,35 @@ class PackageSpec(object):
                                         self._deps)
 
   @classmethod
-  def load_package(cls, package_file):
-    buf = package_file.read()
+  def load_package(cls, context, package_file):
+    return cls.from_package(context, package_file.read())
 
-    deps = { pid: cls.spec_for_dep(pid, dep)
+  @classmethod
+  def from_package(cls, context, buf):
+    deps = { pid: cls.spec_for_dep(context, pid, dep)
              for pid, dep in buf.deps.iteritems() }
     return cls(buf.api_version, str(buf.project_id), str(buf.recipes_path),
                deps)
 
   @classmethod
-  def spec_for_dep(cls, project_id, dep):
+  def spec_for_dep(cls, context, project_id, dep):
     """Returns a RepoSpec for the given dependency protobuf."""
     url = str(dep.url)
-    if url.startswith("file://"):
-      return PathRepoSpec(str(project_id), url[len("file://"):])
+    if url.startswith('file://'):
+      return PathRepoSpec(str(project_id), url[len('file://'):])
 
-    if dep.repo_type in (package_pb2.DepSpec.GIT, package_pb2.DepSpec.GITILES):
-      if dep.repo_type == package_pb2.DepSpec.GIT:
-        backend = fetch.GitBackend()
-      elif dep.repo_type == package_pb2.DepSpec.GITILES:
-        backend = fetch.GitilesBackend()
-      return GitRepoSpec(str(project_id),
-                         url,
-                         str(dep.branch),
-                         str(dep.revision),
-                         str(dep.path_override),
-                         backend)
+    backend_class = fetch.Backend.class_for_type(dep.repo_type)
 
-    assert False, 'Unexpected repo type: %s' % dep
+    return GitRepoSpec(
+      str(project_id),
+      url,
+      str(dep.branch),
+      str(dep.revision),
+      str(dep.path_override),
+      backend_class(
+        context.project_checkout_dir(project_id),
+        dep.url,
+        context.allow_fetch))
 
   @property
   def project_id(self):
@@ -542,13 +543,22 @@ class PackageSpec(object):
     Second list is included to distinguish between a situation where there are
     no roll candidates from one where there are updates but they're not
     consistent.
+
+    context.allow_fetch must be True.
     """
+    # First, pre-fetch all the available data from the remotes.
+    if not context.allow_fetch:
+      raise ValueError('Calling roll_candidates with allow_fetch==False.')
+
+    for repo_spec in self.deps.values():
+      repo_spec.fetch()
+
     candidates = []
     rejected_candidates = []
     for dep in sorted(self._deps.keys()):
-      for update in self._deps[dep].updates(context):
-        candidate = RollCandidate(self, context, update)
-        if not candidate.make_consistent(root_spec):
+      for update in self._deps[dep].updates():
+        candidate = RollCandidate(self, update)
+        if not candidate.make_consistent(context, root_spec):
           rejected_candidates.append(candidate)
           continue
         # Computing the score requires running git commands to get info
@@ -574,8 +584,7 @@ class PackageSpec(object):
 class PackageDeps(object):
   """An object containing all the transitive dependencies of the root package.
   """
-  def __init__(self, context, overrides=None):
-    self._context = context
+  def __init__(self, overrides=None):
     self._packages = {}
     self._overrides = overrides or {}
     self._root_package = None
@@ -604,20 +613,26 @@ class PackageDeps(object):
     if overrides:
       overrides = {project_id: PathRepoSpec(project_id, path)
                    for project_id, path in overrides.iteritems()}
-    package_deps = cls(context, overrides=overrides)
+    package_deps = cls(overrides=overrides)
+
+    if allow_fetch:
+      # initialize all repos to their intended state.
+      package_spec = PackageSpec.from_package(
+        context, RootRepoSpec(package_file).spec_pb())
+      for repo_spec in package_spec.deps.values():
+        repo_spec.checkout(context)
 
     package_deps._root_package = package_deps._create_package(
-      RootRepoSpec(package_file))
+      context, RootRepoSpec(package_file))
 
     return package_deps
 
-  def _create_package(self, repo_spec):
-    repo_spec.checkout(self._context)
-    package_spec = PackageSpec.load_package(
-      repo_spec.package_file(self._context))
-    return self._create_from_spec(repo_spec, package_spec)
+  def _create_package(self, context, repo_spec):
+    package_spec = PackageSpec.from_package(
+      context, repo_spec.spec_pb())
+    return self._create_from_spec(context, repo_spec, package_spec)
 
-  def _create_from_spec(self, repo_spec, package_spec):
+  def _create_from_spec(self, context, repo_spec, package_spec):
     project_id = package_spec.project_id
     repo_spec = self._overrides.get(project_id, repo_spec)
     if project_id in self._packages:
@@ -636,11 +651,11 @@ class PackageDeps(object):
     deps = {}
     for dep, dep_repo in sorted(package_spec.deps.items()):
       dep_repo = self._overrides.get(dep, dep_repo)
-      deps[dep] = self._create_package(dep_repo)
+      deps[dep] = self._create_package(context, dep_repo)
 
     package = Package(
         project_id, repo_spec, deps,
-        repo_spec.repo_root(self._context),
+        repo_spec.repo_root(context),
         package_spec.recipes_path)
 
     self._packages[project_id] = package
@@ -658,7 +673,8 @@ class PackageDeps(object):
 
   @property
   def engine_recipes_py(self):
-    return os.path.join(self._context.repo_root, 'recipes.py')
+    return os.path.join(
+      self._packages['recipe_engine'].repo_root, 'recipes.py')
 
 
 def _updated(d, updates):

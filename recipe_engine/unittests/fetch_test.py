@@ -42,10 +42,7 @@ class TestGit(unittest.TestCase):
     fetch.Backend._GIT_METADATA_CACHE = {}
 
     self._patchers = [
-        mock.patch('logging.warning'),
-        mock.patch('logging.exception'),
-        mock.patch('recipe_engine.fetch.GitBackend.Git._resolve_git',
-                   return_value='GIT'),
+      mock.patch('recipe_engine.fetch.GitBackend._GIT_BINARY', 'GIT'),
     ]
     for p in self._patchers:
       p.start()
@@ -71,111 +68,116 @@ class TestGit(unittest.TestCase):
         return data_or_exception
     return _inner
 
-  @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
-  def test_fresh_clone(self, git):
-    git.side_effect = multi(
-      self.g(['clone', '-q', 'repo', 'dir']),
-      self.g(['-C', 'dir', 'config', 'remote.origin.url', 'repo']),
-      self.g(['-C', 'dir', 'rev-parse', '-q', '--verify', 'revision^{commit}']),
-      self.g(['-C', 'dir', 'reset', '-q', '--hard', 'revision']),
-    )
+  def g_metadata_calls(self, dirname='dir', commit='a'*40,
+                       email='foo@example.com', msg='hello\nworld',
+                       config=None):
+    config = config or {'api_version': 2}
 
-    fetch.GitBackend().checkout(
-        'repo', 'revision', 'dir', allow_fetch=True)
+    return [
+      self.g([
+        '-C', dirname, 'show', '-s', '--format=%aE%n%B', commit
+      ], '%s\n%s\n' % (email, msg)),
+      self.g([
+        '-C', dirname, 'cat-file', 'blob', commit+':infra/config/recipes.cfg'
+      ], json.dumps(config))
+    ]
+
+  @mock.patch('os.path.isdir')
+  @mock.patch('recipe_engine.fetch.GitBackend._execute')
+  def test_fresh_clone(self, git, isdir):
+    isdir.return_value = False
+    git.side_effect = multi(*([
+      self.g(['init', 'dir']),
+      self.g(['-C', 'dir',  'ls-remote', 'repo', 'revision'], 'a'*40),
+    ] + self.g_metadata_calls() + [
+      self.g(['-C', 'dir', 'reset', '-q', '--hard', 'a'*40])
+    ]))
+
+    fetch.GitBackend('dir', 'repo', True).checkout('revision')
 
     self.assertMultiDone(git)
 
   @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
+  @mock.patch('recipe_engine.fetch.GitBackend._execute')
   def test_existing_checkout(self, git, isdir):
     isdir.return_value = True
-    git.side_effect = multi(
-      self.g(['-C', 'dir', 'config', 'remote.origin.url', 'repo']),
-      self.g(['-C', 'dir', 'rev-parse', '-q', '--verify', 'revision^{commit}']),
-      self.g(['-C', 'dir', 'reset', '-q', '--hard', 'revision']),
-    )
+    git.side_effect = multi(*([
+      self.g(['-C', 'dir', 'ls-remote', 'repo', 'revision'], 'a'*40)
+    ] + self.g_metadata_calls() + [
+      self.g(['-C', 'dir', 'reset', '-q', '--hard', 'a'*40])
+    ]))
 
-    fetch.GitBackend().checkout(
-        'repo', 'revision', 'dir', allow_fetch=True)
+    fetch.GitBackend('dir', 'repo', True).checkout('revision')
 
     self.assertMultiDone(git)
     isdir.assert_has_calls([
-      mock.call('dir'),
       mock.call('dir/.git'),
     ])
 
-  @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
-  def test_clone_not_allowed(self, _git):
+  @mock.patch('os.path.isdir')
+  @mock.patch('recipe_engine.fetch.GitBackend._execute')
+  def test_clone_not_allowed(self, _git, isdir):
+    isdir.return_value = True
     with self.assertRaises(fetch.FetchNotAllowedError):
-      fetch.GitBackend().checkout(
-          'repo', 'revision', 'dir', allow_fetch=False)
+      fetch.GitBackend('dir', 'repo', False).checkout('revision')
 
   @mock.patch('os.path.isdir')
-  def test_unclean_filesystem(self, isdir):
-    isdir.side_effect = [True, False]
-    with self.assertRaises(fetch.UncleanFilesystemError):
-      fetch.GitBackend().checkout(
-          'repo', 'revision', 'dir', allow_fetch=False)
-    isdir.assert_has_calls([
-      mock.call('dir'),
-      mock.call('dir/.git'),
-    ])
+  @mock.patch('recipe_engine.fetch.GitBackend._execute')
+  def test_unclean_filesystem(self, git, isdir):
+    isdir.return_value = False
+    def _mock_execute(*_args):
+      raise subprocess42.CalledProcessError(1, 'bad stuff')
+    git.side_effect = _mock_execute
+
+    with self.assertRaises(fetch.GitError):
+      fetch.GitBackend('dir', 'repo', False).checkout('revision')
+
+    git.assert_called_once_with('GIT', 'init', 'dir')
 
   @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
+  @mock.patch('recipe_engine.fetch.GitBackend._execute')
   def test_rev_parse_fail(self, git, isdir):
-    git.side_effect = multi(
-      self.g(['-C', 'dir', 'config', 'remote.origin.url', 'repo']),
-      self.g(['-C', 'dir', 'rev-parse', '-q', '--verify', 'revision^{commit}'],
-             CPE(1, ['no such revision'])),
-      self.g(['-C', 'dir', 'fetch']),
-      self.g(['-C', 'dir', 'reset', '-q', '--hard', 'revision']),
-    )
     isdir.return_value = True
+    git.side_effect = multi(*(
+      self.g(['-C', 'dir', 'ls-remote', 'repo', 'revision'], 'a'*40),
 
+      self.g(
+        ['-C', 'dir', 'show', '-s', '--format=%aE%n%B', 'a'*40],
+        CPE(1, 'nope')),
 
-    fetch.GitBackend().checkout(
-        'repo', 'revision', 'dir', allow_fetch=True)
-    isdir.assert_has_calls([
-      mock.call('dir'),
-      mock.call('dir/.git'),
-    ])
+      self.g(['-C', 'dir', 'fetch', 'repo', 'revision']),
+      self.g(['-C', 'dir', 'reset', '-q', '--hard', 'a'*40]),
+    ))
+
+    fetch.GitBackend('dir', 'repo', True).checkout('revision')
+
     self.assertMultiDone(git)
 
   @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
+  @mock.patch('recipe_engine.fetch.GitBackend._execute')
   def test_rev_parse_fetch_not_allowed(self, git, isdir):
-    git.side_effect = multi(
-      self.g(['-C', 'dir', 'config', 'remote.origin.url', 'repo']),
-      self.g(['-C', 'dir', 'rev-parse', '-q', '--verify', 'revision^{commit}'],
-             CPE(1, ['no such revision'])),
-    )
     isdir.return_value = True
     with self.assertRaises(fetch.FetchNotAllowedError):
-      fetch.GitBackend().checkout(
-          'repo', 'revision', 'dir', allow_fetch=False)
+      fetch.GitBackend('dir', 'repo', False).checkout('revision')
     isdir.assert_has_calls([
-      mock.call('dir'),
       mock.call('dir/.git'),
     ])
-    self.assertMultiDone(git)
+    self.assertFalse(git.called)
 
-  @mock.patch('recipe_engine.fetch.GitBackend.Git._execute')
+  @mock.patch('recipe_engine.fetch.GitBackend._execute')
   def test_commit_metadata(self, git):
-    git.side_effect = multi(
-      self.g(['-C', 'dir', 'show', '-s', '--pretty=%aE', 'revision'],
-             'foo@example.com'),
-      self.g(['-C','dir', 'show', '-s', '--pretty=%B', 'revision'],
-             'message'),
-    )
+    git.side_effect = multi(*([
+      self.g(['init', 'dir']),
+      self.g(['-C', 'dir', 'ls-remote', 'repo', 'revision'], 'a'*40),
+    ] + self.g_metadata_calls()))
 
-    result = fetch.GitBackend().commit_metadata(
-        'repo', 'revision', 'dir', allow_fetch=True)
-
-    self.assertEqual(result, {
-      'author': 'foo@example.com',
-      'message': 'message',
-    })
+    result = fetch.GitBackend('dir', 'repo', True).commit_metadata('revision')
+    self.assertEqual(result, fetch.CommitMetadata(
+      revision = 'a'*40,
+      author_email  = 'foo@example.com',
+      message_lines = ('hello', 'world'),
+      spec = package_pb2.Package(api_version=2)
+    ))
     self.assertMultiDone(git)
 
 
@@ -196,10 +198,17 @@ class TestGitiles(unittest.TestCase):
       'author': {'email': 'foo@example.com'},
       'message': 'message',
     }
-    self.a_meta = {
-      'author': 'foo@example.com',
-      'message': 'message',
-    }
+
+    self.a_meta = fetch.CommitMetadata(
+      revision = 'a'*40,
+      author_email = 'foo@example.com',
+      message_lines = ('message',),
+      spec = package_pb2.Package(
+        api_version = 2,
+        project_id = 'foo',
+        recipes_path = 'path/to/recipes',
+      )
+    )
 
   def assertMultiDone(self, mocked_call):
     with self.assertRaises(NoMoreExpectatedCalls):
@@ -240,13 +249,13 @@ class TestGitiles(unittest.TestCase):
   def test_checkout(self, requests_get, _tarfile_open, makedirs, rmtree):
     requests_get.side_effect = multi(
       self.j('repo/+/revision?format=JSON', self.a_dat),
+      self.j('repo/+/%s?format=JSON' % self.a, self.a_dat),
       self.d('repo/+/%s/infra/config/recipes.cfg?format=TEXT' % self.a,
              self.proto_text),
       self.d('repo/+archive/%s/path/to/recipes.tar.gz' % self.a, ''),
     )
 
-    fetch.GitilesBackend().checkout(
-        'repo', 'revision', 'dir', allow_fetch=True)
+    fetch.GitilesBackend('dir', 'repo', True).checkout('revision')
 
     makedirs.assert_has_calls([
       mock.call('dir/infra/config'),
@@ -302,12 +311,13 @@ class TestGitiles(unittest.TestCase):
              log_json),
     )
 
-    be = fetch.GitilesBackend()
+    be = fetch.GitilesBackend('dir', 'repo', True)
+    self.assertEqual(sha_a, be.resolve_refspec('reva'))
+    self.assertEqual(sha_b, be.resolve_refspec('revb'))
 
     self.assertEqual(
         ['ghi789', 'abc123'],
-        be.updates('repo', 'reva', 'dir', True, 'revb', ['path1', 'path2']))
-
+        be.updates(sha_a, sha_b, ['path1', 'path2']))
     self.assertMultiDone(requests_get)
 
 
@@ -315,10 +325,13 @@ class TestGitiles(unittest.TestCase):
   def test_commit_metadata(self, requests_get):
     requests_get.side_effect = multi(
       self.j('repo/+/revision?format=JSON', self.a_dat),
+      self.j('repo/+/%s?format=JSON' % self.a, self.a_dat),
+      self.d('repo/+/%s/infra/config/recipes.cfg?format=TEXT' % self.a,
+             self.proto_text)
     )
 
-    result = fetch.GitilesBackend().commit_metadata(
-        'repo', 'revision', 'dir', allow_fetch=True)
+    result = fetch.GitilesBackend('dir', 'repo', True).commit_metadata(
+        'revision')
     self.assertEqual(result, self.a_meta)
     self.assertMultiDone(requests_get)
 
@@ -328,8 +341,8 @@ class TestGitiles(unittest.TestCase):
       self.r('repo/+/revision?format=JSON', fetch.GitilesFetchError(403, '')),
     )
     with self.assertRaises(fetch.GitilesFetchError):
-      fetch.GitilesBackend().commit_metadata(
-          'repo', 'revision', 'dir', allow_fetch=True)
+      fetch.GitilesBackend('dir', 'repo', True).commit_metadata(
+          'revision')
     self.assertMultiDone(requests_get)
 
   @mock.patch('requests.get')
@@ -342,10 +355,13 @@ class TestGitiles(unittest.TestCase):
       self.r('repo/+/revision?format=JSON', fetch.GitilesFetchError(500, '')),
       self.r('repo/+/revision?format=JSON', fetch.GitilesFetchError(500, '')),
       self.j('repo/+/revision?format=JSON', self.a_dat),
+      self.j('repo/+/%s?format=JSON' % self.a, self.a_dat),
+      self.d('repo/+/%s/infra/config/recipes.cfg?format=TEXT' % self.a,
+             self.proto_text),
     )
 
-    result = fetch.GitilesBackend().commit_metadata(
-        'repo', 'revision', 'dir', allow_fetch=True)
+    result = fetch.GitilesBackend('dir', 'repo', True).commit_metadata(
+        'revision')
     self.assertEqual(result, self.a_meta)
     self.assertMultiDone(requests_get)
 

@@ -35,14 +35,13 @@ def ensure_workdir(args):
 def main(args):
   with ensure_workdir(args):
     checkout_dir = os.path.join(args.workdir, 'checkout')
+    revision = args.revision or 'refs/heads/master'
     if args.use_gitiles:
-      args.revision = args.revision or 'HEAD'
-      backend = fetch.GitilesBackend()
+      backend_class = fetch.GitilesBackend
     else:
-      args.revision = args.revision or 'FETCH_HEAD'
-      backend = fetch.GitBackend()
-    backend.checkout(
-        args.repository, args.revision, checkout_dir, allow_fetch=True)
+      backend_class = fetch.GitBackend
+    backend = backend_class(checkout_dir, args.repository, True)
+    backend.checkout(revision)
     recipes_cfg = package_io.PackageFile(
         package.InfraRepoConfig().to_recipes_cfg(checkout_dir))
     cmd = [

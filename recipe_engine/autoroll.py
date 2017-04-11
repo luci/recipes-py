@@ -241,7 +241,6 @@ def test_rolls(config_file, context, package_spec, projects=None):
   root_spec = package.RootRepoSpec(config_file)
   candidates, rejected_candidates = package_spec.roll_candidates(
       root_spec, context)
-
   trivial, picked_roll_details, roll_details = process_candidates(
       candidates, context, config_file, package_spec)
 
@@ -259,7 +258,7 @@ def test_rolls(config_file, context, package_spec, projects=None):
 def main(args, repo_root, config_file):
   context = package.PackageContext.from_package_file(
       repo_root, config_file, allow_fetch=not args.no_fetch)
-  package_spec = package.PackageSpec.load_package(config_file)
+  package_spec = package.PackageSpec.load_package(context, config_file)
 
   results = {}
   try:

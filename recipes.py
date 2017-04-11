@@ -34,8 +34,7 @@ from google.protobuf import json_format as jsonpb
 
 
 def get_package_config(args):
-  from recipe_engine import package
-  from recipe_engine import package_io
+  from recipe_engine import package, package_io
 
   assert args.package, 'No recipe config (--package) given.'
   assert os.path.exists(args.package), (
@@ -550,7 +549,10 @@ def main():
       help='URL of a git repository to fetch')
   remote_p.add_argument(
       '--revision',
-      help='Git commit hash to check out; defaults to latest revision (HEAD)')
+      help=(
+        'Git commit hash to check out; defaults to latest revision on master'
+        ' (refs/heads/master)'
+      ))
   remote_p.add_argument(
       '--workdir',
       type=os.path.abspath,
@@ -628,10 +630,16 @@ def main():
       data = fd.read()
     jsonpb.Parse(data, op_args)
 
+  # TODO(iannucci): We should always do logging.basicConfig() (probably with
+  # logging.WARNING), even if no verbose is passed. However we need to be
+  # careful as this could cause issues with spurious/unexpected output. I think
+  # it's risky enough to do in a different CL.
+
+  if args.verbose > 0:
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.INFO)
   if args.verbose > 1:
     logging.getLogger().setLevel(logging.DEBUG)
-  elif args.verbose > 0:
-    logging.getLogger().setLevel(logging.INFO)
 
   # Auto-enable bootstrap for test command invocations (necessary to get recent
   # enough version of coverage package), unless explicitly disabled.
