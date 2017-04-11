@@ -794,6 +794,13 @@ def parse_args(args):
   """Returns parsed command line arguments."""
   parser = argparse.ArgumentParser()
 
+  def normalize_filter(filt):
+    if not filt:
+      parser.error('empty filters not allowed')
+    # filters missing a test_name portion imply that its a recipe prefix and we
+    # should run all tests for the matching recipes.
+    return filt if '.' in filt else filt+'*.*'
+
   subp = parser.add_subparsers(dest='command')
 
   list_p = subp.add_parser('list', description='Print all test names')
@@ -829,12 +836,13 @@ def parse_args(args):
       '--json', metavar='FILE', type=argparse.FileType('w'),
       help='path to JSON output file')
   run_p.add_argument(
-      '--filter', action='append',
+      '--filter', action='append', type=normalize_filter,
       help='glob filter for the tests to run; '
            'can be specified multiple times; '
            'the globs have the form of '
            '`<recipe_name_glob>[.<test_name_glob>]`. If `.<test_name_glob>` '
-           'is omitted, it is implied to be `.*`, i.e. all tests.)')
+           'is omitted, it is implied to be `*.*`, i.e. any recipe with this '
+           'prefix and all tests.)')
   # TODO(phajdan.jr): remove --train the switch in favor of train subcommand.
   run_p.add_argument(
       '--train', action='store_true',
@@ -851,37 +859,28 @@ def parse_args(args):
       '--json', metavar='FILE', type=argparse.FileType('w'),
       help='path to JSON output file')
   train_p.add_argument(
-      '--filter', action='append',
+      '--filter', action='append', type=normalize_filter,
       help='glob filter for the tests to run; '
            'can be specified multiple times; '
            'the globs have the form of '
            '`<recipe_name_glob>[.<test_name_glob>]`. If `.<test_name_glob>` '
-           'is omitted, it is implied to be `.*`, i.e. all tests.)')
+           'is omitted, it is implied to be `*.*`, i.e. any recipe with this '
+           'prefix and all tests.)')
 
   debug_p = subp.add_parser(
       'debug', description='Run the tests under debugger (pdb)')
   debug_p.set_defaults(func=lambda opts: run_run(
       opts.filter, debug=True))
   debug_p.add_argument(
-      '--filter', action='append',
+      '--filter', action='append', type=normalize_filter,
       help='glob filter for the tests to run; '
            'can be specified multiple times; '
            'the globs have the form of '
            '`<recipe_name_glob>[.<test_name_glob>]`. If `.<test_name_glob>` '
-           'is omitted, it is implied to be `.*`, i.e. all tests.)')
+           'is omitted, it is implied to be `*.*`, i.e. any recipe with this '
+           'prefix and all tests.)')
 
-  args = parser.parse_args(args)
-  if args.command in ('debug', 'run') and args.filter:
-    normalize_filters = []
-    for filt in args.filter:
-      if not filt:
-        parser.error('empty filters not allowed')
-      # filters missing a test_name portion imply all tests for the
-      # matching recipe.
-      normalize_filters.append(filt if '.' in filt else filt+'.*')
-    args.filter = normalize_filters
-
-  return args
+  return parser.parse_args(args)
 
 
 def main(universe_view, raw_args, engine_flags):
