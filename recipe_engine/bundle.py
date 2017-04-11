@@ -79,11 +79,13 @@ def prepare_destination(destination):
   destination = os.path.abspath(destination)
   LOGGER.info('prepping destination %s', destination)
   if os.path.exists(destination):
-    LOGGER.fatal(
-      'directory %s already exists! The directory must not exist to use it as '
-      'a bundle target.', destination)
-    sys.exit(1)
-  os.makedirs(destination)
+    if os.listdir(destination):
+      LOGGER.fatal(
+        'directory %s exists and is non-empty! The directory must be empty or'
+        ' missing to use it as a bundle target.', destination)
+      sys.exit(1)
+  else:
+    os.makedirs(destination)
   return NativePath(destination)
 
 
