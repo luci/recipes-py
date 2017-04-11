@@ -238,7 +238,7 @@ class GitRepoSpec(RepoSpec):
     if subdir:
       # We add package_file to the list of paths to check because it might
       # contain other upstream rolls, which we want.
-      paths.extend([subdir + os.path.sep, self.spec_pb().path])
+      paths.extend([subdir + os.path.sep, self.spec_pb().recipes_path])
 
     if other_refspec is None:
       other_refspec = self._branch_for_remote
