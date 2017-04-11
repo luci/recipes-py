@@ -24,6 +24,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 PYTHON_BAT_WIN = '@%~dp0\\..\\Scripts\\python.exe %*'
 
+IS_WINDOWS = sys.platform.startswith('win')
+
+EXE_SUFFIX = '.exe' if IS_WINDOWS else ''
+
 
 class NoWheelException(Exception):
   def __init__(self, name, version, build, source_sha):
@@ -75,7 +79,8 @@ def sha_for(deps_entry):
 
 
 def install(deps, cache_root):
-  bin_dir = 'Scripts' if sys.platform.startswith('win') else 'bin'
+  bin_dir = 'Scripts' if IS_WINDOWS else 'bin'
+  python = os.path.join(sys.prefix, bin_dir, 'python%s' % (EXE_SUFFIX,))
   pip = os.path.join(sys.prefix, bin_dir, 'pip')
 
   requirements = []
@@ -98,7 +103,7 @@ def install(deps, cache_root):
 
   # Download the package into our cache directory.
   subprocess.check_call([
-      pip, 'download',
+      python, pip, 'download',
       '--find-links', 'file://' + wheel_cache_dir,
       '--dest', wheel_cache_dir,
       ] + requirements,
@@ -106,7 +111,7 @@ def install(deps, cache_root):
 
   # Install the downloaded packages.
   subprocess.check_call([
-      pip, 'install',
+      python, pip, 'install',
       '--find-links', 'file://' + wheel_cache_dir,
       '--no-index',
       ] + requirements,
