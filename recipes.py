@@ -695,6 +695,9 @@ def main():
       return subprocess.call(
           [
             os.path.join(env_path, 'bin', python_exe),
+            '-B',  # Don't compile "pyo" binaries.
+            '-E',  # Don't use PYTHON* enviornment variables.
+            '-s',  # Don't use user 'site.py'.
             os.path.join(ROOT_DIR, 'recipes.py'),
           ] + original_sys_argv[1:])
 
