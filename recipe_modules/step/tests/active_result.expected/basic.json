@@ -1,0 +1,17 @@
+[
+  {
+    "cmd": [],
+    "name": "test step",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@test step text@@@",
+      "@@@STEP_LOG_LINE@test_log@line 1@@@",
+      "@@@STEP_LOG_LINE@test_log@line2@@@",
+      "@@@STEP_LOG_END@test_log@@@"
+    ]
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

@@ -6,7 +6,9 @@ DEPS = ['step']
 
 def RunSteps(api):
   api.step('Dont subannotate me', ['echo', '@@@BUILD_STEP@steppy@@@'])
-  api.step('Subannotate me', ['echo', '@@@BUILD_STEP@pippy@@@'], allow_subannotations=True)
+  api.step('Subannotate me',
+           ['echo', '@@@BUILD_STEP@pippy@@@'],
+           allow_subannotations=True)
 
 def GenTests(api):
   yield api.test('basic')
