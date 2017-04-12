@@ -55,8 +55,6 @@ def RunSteps(api):
   api.path.mock_add_paths(home_path)
   assert api.path.exists(home_path)
 
-  api.step('volatile tmp_dir', ['echo', api.path.is_volatile('tmp_dir')])
-
   # Convert strings to Paths
   paths_to_convert =  [
     api.path['start_dir'].join('some', 'thing'),
@@ -110,8 +108,7 @@ def GenTests(api):
            api.properties(**{
               '$recipe_engine/path': {
                 'cache_dir': '/c',
-                'tmp_dir': '/t',
-                'volatile': ['tmp_dir'],
+                'tmp_dir': '/t'
               },
            }) +
            api.path.exists(api.path['tmp_base']))

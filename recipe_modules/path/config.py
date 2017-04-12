@@ -2,8 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from recipe_engine.config import config_item_context, ConfigGroup, Dict, \
-                                 Set, Static
+from recipe_engine.config import config_item_context, ConfigGroup, Dict, Static
 from recipe_engine.config_types import Path
 
 def BaseConfig(PLATFORM, START_DIR, TEMP_DIR, CACHE_DIR, **_kwargs):
@@ -16,10 +15,6 @@ def BaseConfig(PLATFORM, START_DIR, TEMP_DIR, CACHE_DIR, **_kwargs):
 
     # dynamic path name -> Path object (referencing one of the base_paths)
     dynamic_paths = Dict(value_type=(Path, type(None))),
-
-    # Path keys from "base_paths" and "dynamic_paths" that are known to be
-    # volatile.
-    volatile_paths = Set(str),
 
     PLATFORM = Static(PLATFORM),
     START_DIR = Static(tuple(START_DIR)),

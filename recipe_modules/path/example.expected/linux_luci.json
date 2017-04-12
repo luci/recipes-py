@@ -44,13 +44,6 @@
   {
     "cmd": [
       "echo",
-      "True"
-    ],
-    "name": "volatile tmp_dir"
-  },
-  {
-    "cmd": [
-      "echo",
       "[START_DIR]/some/thing"
     ],
     "name": "converted path [START_DIR]/some/thing"
