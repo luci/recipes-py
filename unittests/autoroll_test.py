@@ -27,7 +27,8 @@ class TestAutoroll(repo_test_util.RepoTest):
             repo['root'], 'infra', 'config', 'recipes.cfg'),
           '--use-bootstrap',
           'autoroll',
-          '--output-json', tempfile_path
+          '--output-json', tempfile_path,
+          '--verbose-json'
         ] + list(args) , stderr=subprocess.STDOUT)
         with open(tempfile_path) as f:
           return json.load(f)

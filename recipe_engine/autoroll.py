@@ -235,7 +235,7 @@ def process_rejected(rejected_candidates, projects=None):
 
   return rejected_candidates_details
 
-def test_rolls(config_file, context, package_spec, projects=None):
+def test_rolls(config_file, context, package_spec, verbose_json, projects):
   print('finding roll candidates...')
 
   root_spec = package.RootRepoSpec(config_file)
@@ -244,15 +244,17 @@ def test_rolls(config_file, context, package_spec, projects=None):
   trivial, picked_roll_details, roll_details = process_candidates(
       candidates, context, config_file, package_spec)
 
-  rejected_candidates_details = process_rejected(rejected_candidates, projects)
-
-  return {
+  ret = {
     'success': bool(picked_roll_details),
     'trivial': trivial,
     'roll_details': roll_details,
     'picked_roll_details': picked_roll_details,
-    'rejected_candidates_details': rejected_candidates_details,
+    'rejected_candidates_count': len(rejected_candidates),
   }
+  if verbose_json:
+    ret['rejected_candidates_details'] = process_rejected(
+      rejected_candidates, projects)
+  return ret
 
 
 def main(args, repo_root, config_file):
@@ -263,7 +265,8 @@ def main(args, repo_root, config_file):
   results = {}
   try:
     results = test_rolls(
-      config_file, context, package_spec, args.projects or [])
+      config_file, context, package_spec, args.verbose_json,
+      args.projects or [])
   finally:
     if not results.get('success'):
       # Restore initial state. Since we could be running simulation tests

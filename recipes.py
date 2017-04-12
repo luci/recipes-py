@@ -311,6 +311,10 @@ def remote(args):
 def autoroll(args):
   from recipe_engine import autoroll
 
+  if args.verbose_json and not args.output_json:
+    print >> sys.stderr, '--verbose-json passed without --output-json'
+    return 1
+
   repo_root, config_file = get_package_config(args)
 
   return autoroll.main(args, repo_root, config_file)
@@ -573,6 +577,11 @@ def main():
       '--output-json',
       type=os.path.abspath,
       help='A json file to output information about the roll to.')
+  autoroll_p.add_argument(
+      '--verbose-json',
+      action='store_true',
+      help=('Emit even more data in the output-json file. '
+            'Requires --output-json.'))
   autoroll_p.add_argument(
       '--projects', action='append', default=None,
       help='Projects we care about rolling. Any project which has a rejected'
