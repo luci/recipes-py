@@ -90,6 +90,7 @@ class TestGit(unittest.TestCase):
       self.g(['init', 'dir']),
       self.g(['-C', 'dir',  'ls-remote', 'repo', 'revision'], 'a'*40),
     ] + self.g_metadata_calls() + [
+      self.g(['-C', 'dir', 'diff', '--quiet', 'a'*40], CPE('', 1)),
       self.g(['-C', 'dir', 'reset', '-q', '--hard', 'a'*40])
     ]))
 
@@ -104,7 +105,25 @@ class TestGit(unittest.TestCase):
     git.side_effect = multi(*([
       self.g(['-C', 'dir', 'ls-remote', 'repo', 'revision'], 'a'*40)
     ] + self.g_metadata_calls() + [
+      self.g(['-C', 'dir', 'diff', '--quiet', 'a'*40], CPE('', 1)),
       self.g(['-C', 'dir', 'reset', '-q', '--hard', 'a'*40])
+    ]))
+
+    fetch.GitBackend('dir', 'repo', True).checkout('revision')
+
+    self.assertMultiDone(git)
+    isdir.assert_has_calls([
+      mock.call('dir/.git'),
+    ])
+
+  @mock.patch('os.path.isdir')
+  @mock.patch('recipe_engine.fetch.GitBackend._execute')
+  def test_existing_checkout_same_revision(self, git, isdir):
+    isdir.return_value = True
+    git.side_effect = multi(*([
+      self.g(['-C', 'dir', 'ls-remote', 'repo', 'revision'], 'a'*40)
+    ] + self.g_metadata_calls() + [
+      self.g(['-C', 'dir', 'diff', '--quiet', 'a'*40]),
     ]))
 
     fetch.GitBackend('dir', 'repo', True).checkout('revision')
@@ -146,6 +165,7 @@ class TestGit(unittest.TestCase):
         CPE(1, 'nope')),
 
       self.g(['-C', 'dir', 'fetch', 'repo', 'revision']),
+      self.g(['-C', 'dir', 'diff', '--quiet', 'a'*40], CPE('', 1)),
       self.g(['-C', 'dir', 'reset', '-q', '--hard', 'a'*40]),
     ))
 

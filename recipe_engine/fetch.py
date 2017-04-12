@@ -339,7 +339,13 @@ class GitBackend(Backend):
     if not self._has_rev(revision):
       self.fetch(refspec)
 
-    self._git('reset', '-q', '--hard', revision)
+    # reset touches index.lock which is problematic when multiple processes are
+    # accessing the recipes at the same time. To allieviate this, we do a quick
+    # diff, which will exit if `revision` is not already checked out.
+    try:
+      self._git('diff', '--quiet', revision)
+    except GitError:
+      self._git('reset', '-q', '--hard', revision)
 
   def _get_more_recent_revision_impl(self, revision, other_revision):
     return self._git(
