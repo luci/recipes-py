@@ -698,9 +698,17 @@ def run_run(test_filter, jobs=None, debug=False, train=False, json_file=None):
           scan_for_expectations(_UNIVERSE_VIEW.recipe_dir))
     if os.path.exists(_UNIVERSE_VIEW.module_dir):
       for module_entry in os.listdir(_UNIVERSE_VIEW.module_dir):
-        if os.path.isdir(module_entry):
-          actual_expectations.update(scan_for_expectations(
-              os.path.join(_UNIVERSE_VIEW.module_dir, module_entry)))
+        full_entry = os.path.join(_UNIVERSE_VIEW.module_dir, module_entry)
+        if not os.path.isdir(full_entry):
+          continue
+
+        # Handle example.py recipe.
+        actual_expectations.update(scan_for_expectations(full_entry))
+
+        module_tests = os.path.join(full_entry, 'tests')
+        if os.path.isdir(module_tests):
+          actual_expectations.update(scan_for_expectations(module_tests))
+
     unused_expectations = sorted(
         actual_expectations.difference(used_expectations))
     if unused_expectations:
