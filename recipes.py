@@ -582,12 +582,6 @@ def main():
       action='store_true',
       help=('Emit even more data in the output-json file. '
             'Requires --output-json.'))
-  autoroll_p.add_argument(
-      '--projects', action='append', default=None,
-      help='Projects we care about rolling. Any project which has a rejected'
-        'roll which isn\'t part of this set will be ignored, when computing'
-        'rejected candidates.')
-
 
   depgraph_p = subp.add_parser(
       'depgraph',

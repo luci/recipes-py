@@ -524,15 +524,6 @@ class TestAutoroll(repo_test_util.RepoTest):
     # projects we care about.
     self.assertTrue(bool(roll_result['rejected_candidates_details']))
 
-    roll_result = self.run_roll(
-        repos['d'],
-        '--project=c',
-        '--project=d',
-    )
-    self.assertFalse(roll_result['success'])
-    self.assertFalse(bool(roll_result['roll_details']))
-    self.assertFalse(bool(roll_result['rejected_candidates_details']))
-
 
 if __name__ == '__main__':
   if '-v' in sys.argv:

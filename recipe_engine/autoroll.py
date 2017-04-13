@@ -216,26 +216,8 @@ def process_candidates(candidates, context, config_file, package_spec):
 
   return trivial, picked_roll_details, roll_details
 
-def process_rejected(rejected_candidates, projects=None):
-  """
-  Gets details of (optionally filtered) rejected rolls.
 
-  If the rejected rolls pertain to projects which we don't care about, then we
-  ignore them.
-
-  TODO(martiniss): guess which projects to use, using luci-config.
-  """
-  projects = set(projects or [])
-  rejected_candidates_details = []
-
-  for candidate in rejected_candidates:
-    if not projects or set(
-        candidate.get_affected_projects()).intersection(projects):
-      rejected_candidates_details.append(candidate.to_dict())
-
-  return rejected_candidates_details
-
-def test_rolls(config_file, context, package_spec, verbose_json, projects):
+def test_rolls(config_file, context, package_spec, verbose_json):
   print('finding roll candidates...')
 
   root_spec = package.RootRepoSpec(config_file)
@@ -252,8 +234,8 @@ def test_rolls(config_file, context, package_spec, verbose_json, projects):
     'rejected_candidates_count': len(rejected_candidates),
   }
   if verbose_json:
-    ret['rejected_candidates_details'] = process_rejected(
-      rejected_candidates, projects)
+    ret['rejected_candidates_details'] = [
+      c.to_dict() for c in rejected_candidates]
   return ret
 
 
@@ -265,8 +247,7 @@ def main(args, repo_root, config_file):
   results = {}
   try:
     results = test_rolls(
-      config_file, context, package_spec, args.verbose_json,
-      args.projects or [])
+      config_file, context, package_spec, args.verbose_json)
   finally:
     if not results.get('success'):
       # Restore initial state. Since we could be running simulation tests
