@@ -3,7 +3,6 @@
 # that can be found in the LICENSE file.
 
 import copy
-import difflib
 import logging
 import operator
 import os
@@ -465,13 +464,6 @@ class RollCandidate(object):
         'spec': str(self.get_rolled_spec().dump()),
         'commit_infos': self.get_commit_infos(),
     }
-
-  def get_diff(self):
-    """Returns a unified diff between original package spec and one after roll.
-    """
-    orig = str(self._package_spec.dump()).splitlines()
-    new = str(self.get_rolled_spec().dump()).splitlines()
-    return '\n'.join(difflib.unified_diff(orig, new, lineterm=''))
 
 
 class PackageSpec(object):

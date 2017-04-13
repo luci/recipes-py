@@ -156,7 +156,6 @@ def process_candidates(candidates, context, config_file, package_spec):
   for candidate in candidates:
     roll_details.append({
       'spec': str(candidate.get_rolled_spec().dump()),
-      'diff': candidate.get_diff(),
       'commit_infos': candidate.get_commit_infos(),
     })
 
