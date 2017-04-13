@@ -111,11 +111,20 @@ class CommitInfo(object):
     self.repo_id = repo_id
     self.revision = revision
 
-  def dump(self):
+  def dump(self, full_message):
+    """Dumps commit info to a dict.
+
+    Args:
+      full_message (bool) - include all lines of the message. Otherwise just
+        includes the first line.
+    """
+    message_lines = self.message.splitlines()
+    if not full_message:
+      message_lines = message_lines[:1]
+
     return {
-      'author': self.author,
-      'message': self.message,
-      'repo_id': self.repo_id,
+      'author_email': self.author,
+      'message_lines': message_lines,
       'revision': self.revision,
     }
 

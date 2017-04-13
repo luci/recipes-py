@@ -53,37 +53,42 @@ class TestGitRepoSpec(repo_test_util.RepoTest):
     spec = self.get_git_repo_spec(repos['a'])
     self.assertEqual(
         [],
-        [ci.dump() for ci in spec.commit_infos('refs/heads/master')])
+        [ci.dump(False) for ci in spec.commit_infos('refs/heads/master')])
 
     c1 = self.commit_in_repo(
-        repos['a'], message='c1', author_email=TEST_AUTHOR)
+        repos['a'], message='c1\nwoot', author_email=TEST_AUTHOR)
     self.assertEqual([
             {
-                'repo_id': 'a',
                 'revision': c1['revision'],
-                'message': 'c1',
-                'author': TEST_AUTHOR
+                'message_lines': ['c1', 'woot'],
+                'author_email': TEST_AUTHOR
             },
         ],
-        [ci.dump() for ci in spec.commit_infos(c1['revision'])])
+        [ci.dump(True) for ci in spec.commit_infos(c1['revision'])])
+    self.assertEqual([
+            {
+                'revision': c1['revision'],
+                'message_lines': ['c1'],
+                'author_email': TEST_AUTHOR
+            },
+        ],
+        [ci.dump(False) for ci in spec.commit_infos(c1['revision'])])
 
     c2 = self.commit_in_repo(
         repos['a'], message='c2', author_email=TEST_AUTHOR)
     self.assertEqual([
             {
-                'repo_id': 'a',
                 'revision': c1['revision'],
-                'message': 'c1',
-                'author': TEST_AUTHOR
+                'message_lines': ['c1'],
+                'author_email': TEST_AUTHOR
             },
             {
-                'repo_id': 'a',
                 'revision': c2['revision'],
-                'message': 'c2',
-                'author': TEST_AUTHOR
+                'message_lines': ['c2'],
+                'author_email': TEST_AUTHOR
             },
         ],
-        [ci.dump() for ci in spec.commit_infos(c2['revision'])])
+        [ci.dump(False) for ci in spec.commit_infos(c2['revision'])])
 
   def test_raw_updates(self):
     self._context.allow_fetch = True

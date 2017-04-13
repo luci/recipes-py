@@ -88,9 +88,8 @@ class TestAutoroll(repo_test_util.RepoTest):
         'commit_infos': {
             'a': [
                 {
-                    'author': a_c1['author_email'],
-                    'message': a_c1['message'],
-                    'repo_id': 'a',
+                    'author_email': a_c1['author_email'],
+                    'message_lines': a_c1['message_lines'],
                     'revision': a_c1['revision'],
                 },
             ],
@@ -135,9 +134,8 @@ class TestAutoroll(repo_test_util.RepoTest):
         'commit_infos': {
             'a': [
                 {
-                    'author': a_c2['author_email'],
-                    'message': a_c2['message'],
-                    'repo_id': 'a',
+                    'author_email': a_c2['author_email'],
+                    'message_lines': a_c2['message_lines'],
                     'revision': a_c2['revision'],
                 },
             ],
@@ -212,15 +210,13 @@ class TestAutoroll(repo_test_util.RepoTest):
         'commit_infos': {
             'a': [
                 {
-                    'author': a_c2['author_email'],
-                    'message': a_c2['message'],
-                    'repo_id': 'a',
+                    'author_email': a_c2['author_email'],
+                    'message_lines': a_c2['message_lines'],
                     'revision': a_c2['revision'],
                 },
                 {
-                    'author': a_c3['author_email'],
-                    'message': a_c3['message'],
-                    'repo_id': 'a',
+                    'author_email': a_c3['author_email'],
+                    'message_lines': a_c3['message_lines'],
                     'revision': a_c3['revision'],
                 },
             ],
@@ -275,15 +271,13 @@ class TestAutoroll(repo_test_util.RepoTest):
         'commit_infos': {
             'a': [
                 {
-                    'author': a_c2['author_email'],
-                    'message': a_c2['message'],
-                    'repo_id': 'a',
+                    'author_email': a_c2['author_email'],
+                    'message_lines': a_c2['message_lines'],
                     'revision': a_c2['revision'],
                 },
                 {
-                    'author': a_c3['author_email'],
-                    'message': a_c3['message'],
-                    'repo_id': 'a',
+                    'author_email': a_c3['author_email'],
+                    'message_lines': a_c3['message_lines'],
                     'revision': a_c3['revision'],
                 },
             ],
@@ -342,27 +336,23 @@ class TestAutoroll(repo_test_util.RepoTest):
         'commit_infos': {
             'a': [
                 {
-                    'author': a_c2['author_email'],
-                    'message': a_c2['message'],
-                    'repo_id': 'a',
+                    'author_email': a_c2['author_email'],
+                    'message_lines': a_c2['message_lines'],
                     'revision': a_c2['revision'],
                 },
                 {
-                    'author': a_c3['author_email'],
-                    'message': a_c3['message'],
-                    'repo_id': 'a',
+                    'author_email': a_c3['author_email'],
+                    'message_lines': a_c3['message_lines'],
                     'revision': a_c3['revision'],
                 },
                 {
-                    'author': a_c4['author_email'],
-                    'message': a_c4['message'],
-                    'repo_id': 'a',
+                    'author_email': a_c4['author_email'],
+                    'message_lines': a_c4['message_lines'],
                     'revision': a_c4['revision'],
                 },
                 {
-                    'author': a_c5['author_email'],
-                    'message': a_c5['message'],
-                    'repo_id': 'a',
+                    'author_email': a_c5['author_email'],
+                    'message_lines': a_c5['message_lines'],
                     'revision': a_c5['revision'],
                 },
             ],
@@ -425,17 +415,15 @@ class TestAutoroll(repo_test_util.RepoTest):
         'commit_infos': {
             'a': [
                 {
-                    'author': a_c1['author_email'],
-                    'message': a_c1['message'],
-                    'repo_id': 'a',
+                    'author_email': a_c1['author_email'],
+                    'message_lines': a_c1['message_lines'],
                     'revision': a_c1['revision'],
                 },
             ],
             'b': [
                 {
-                    'author': b_c2['author_email'],
-                    'message': b_c2['message'],
-                    'repo_id': 'b',
+                    'author_email': b_c2['author_email'],
+                    'message_lines': b_c2['message_lines'],
                     'revision': b_c2['revision'],
                 },
             ],
@@ -493,7 +481,7 @@ class TestAutoroll(repo_test_util.RepoTest):
     expected_rejected_candidate = {
         'commit_infos': {
             'b': [
-                b_repo_spec._get_commit_info(b_c2_rev).dump(),
+                b_repo_spec._get_commit_info(b_c2_rev).dump(True),
             ],
         },
         'spec': str(c_package_spec.dump()).replace(

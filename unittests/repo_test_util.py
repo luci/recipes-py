@@ -203,7 +203,7 @@ class RepoTest(unittest.TestCase):
         'spec': repo['spec'],
         'author_name': author_name,
         'author_email': author_email,
-        'message': message,
+        'message_lines': message.splitlines(),
     }
 
   def train_recipes(self, repo, overrides=None):

@@ -15,14 +15,6 @@ from . import package
 ROOT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 
 
-def default_json_encode(o):
-  """Fallback for objects that JSON library can't serialize."""
-  if isinstance(o, package.CommitInfo):
-    return o.dump()
-
-  return repr(o)
-
-
 # This is the path within the recipes-py repo to the per-repo recipes.py script.
 # Ideally we'd read this somehow from each candidate engine repo version, but
 # for now assume it lives in a fixed location within the engine.
@@ -142,7 +134,16 @@ def run_simulation_test(repo_root, package_spec, additional_args=None,
   return rc, output
 
 
-def process_candidates(candidates, context, config_file, package_spec):
+def dump_commit_infos(commit_infos, verbose_json):
+  # TODO(iannucci): remove this when autorolling is sane.
+  return {
+    repo_id: [c.dump(verbose_json) for c in cis]
+    for repo_id, cis in commit_infos.iteritems()
+  }
+
+
+def process_candidates(candidates, context, config_file, package_spec,
+                       verbose_json):
   roll_details = []
   trivial = None
   picked_roll_details = None
@@ -156,7 +157,8 @@ def process_candidates(candidates, context, config_file, package_spec):
   for candidate in candidates:
     roll_details.append({
       'spec': str(candidate.get_rolled_spec().dump()),
-      'commit_infos': candidate.get_commit_infos(),
+      'commit_infos': dump_commit_infos(
+        candidate.get_commit_infos(), verbose_json),
     })
 
   # Process candidates biggest first. If the roll is trivial, we want
@@ -223,7 +225,7 @@ def test_rolls(config_file, context, package_spec, verbose_json):
   candidates, rejected_candidates = package_spec.roll_candidates(
       root_spec, context)
   trivial, picked_roll_details, roll_details = process_candidates(
-      candidates, context, config_file, package_spec)
+      candidates, context, config_file, package_spec, verbose_json)
 
   ret = {
     'success': bool(picked_roll_details),
@@ -233,8 +235,12 @@ def test_rolls(config_file, context, package_spec, verbose_json):
     'rejected_candidates_count': len(rejected_candidates),
   }
   if verbose_json:
-    ret['rejected_candidates_details'] = [
-      c.to_dict() for c in rejected_candidates]
+    rejected = []
+    for c in rejected_candidates:
+      d = c.to_dict()
+      d['commit_infos'] = dump_commit_infos(d['commit_infos'], verbose_json)
+      rejected.append(d)
+    ret['rejected_candidates_details'] = rejected
   return ret
 
 
@@ -257,7 +263,6 @@ def main(args, repo_root, config_file):
 
   if args.output_json:
     with open(args.output_json, 'w') as f:
-      json.dump(
-          results, f, default=default_json_encode, sort_keys=True, indent=4)
+      json.dump(results, f, sort_keys=True, indent=2)
 
   return 0
