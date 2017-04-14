@@ -2,18 +2,16 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import errno
+import calendar
 import httplib
 import json
 import logging
 import os
 import re
 import shutil
-import stat
 import sys
 import tarfile
-import tempfile
-
+import time
 
 from cStringIO import StringIO
 from collections import namedtuple
@@ -47,10 +45,12 @@ class UnresolvedRefspec(Exception):
 
 # revision (str): the revision of this commit (i.e. hash)
 # author_email (str|None): the email of the author of this commit
+# commit_timestamp (int): the unix commit timestamp for this commit
 # message_lines (tuple(str)): the message of this commit
 # spec (package_pb2.Package): the parsed infra/config/recipes.cfg file or None.
-CommitMetadata = namedtuple('_CommitMetadata',
-                            'revision author_email message_lines spec')
+CommitMetadata = namedtuple(
+  '_CommitMetadata',
+  'revision author_email commit_timestamp message_lines spec')
 
 
 class Backend(object):
@@ -141,29 +141,17 @@ class Backend(object):
     return self._resolve_refspec_impl(refspec)
 
   def updates(self, revision, other_revision, paths):
-    """Returns a list of revisions between |revision| and |other_revision|.
+    """Returns a list of revisions |revision| through |other_revision|
+    (inclusive).
 
     If |paths| is a non-empty list, the history is scoped just to these paths.
 
-    Returns list(str) - The revisions in the range (revision,other_revision].
+    Returns list(CommitMetadata) - The commit metadata in the range
+      (revision,other_revision].
     """
-    # TODO(iannucci): make this return list(CommitMetadata) instead.
     self.assert_resolved(revision)
     self.assert_resolved(other_revision)
     return self._updates_impl(revision, other_revision, paths)
-
-  def get_more_recent_revision(self, revision, other_revision):
-    """Returns the more recent of two revisions.
-
-    Args:
-      revision (str) - the first git commit
-      other_revision (str) - the second git commit
-
-    Returns (str) - either revision or other_revision
-    """
-    self.assert_resolved(revision)
-    self.assert_resolved(other_revision)
-    return self._get_more_recent_revision_impl(revision, other_revision)
 
   ### direct overrides. These are public methods which must be overridden.
 
@@ -197,26 +185,18 @@ class Backend(object):
   ### private overrides. Override these in the implementations, but don't call
   ### externally.
 
-  def _get_more_recent_revision_impl(self, revision, other_revision):
-    """Returns the more recent of two revisions.
-
-    Args:
-      revision (str) - the first git commit
-      other_revision (str) - the second git commit
-
-    Returns (str) - either revision or other_revision
-    """
-    raise NotImplementedError()
-
-
   def _updates_impl(self, revision, other_revision, paths):
-    """Returns a list of revisions between |revision| and |other_revision|.
+    """Returns a list of revisions |revision| through |other_revision|. This
+    includes |revision| and |other_revision|.
 
     If |paths| is a non-empty list, the history is scoped just to these paths.
 
     Args:
       revision (str) - the first git commit
       other_revision (str) - the second git commit
+
+    Returns list(CommitMetadata) - The commit metadata in the range
+      [revision,other_revision].
     """
     raise NotImplementedError()
 
@@ -278,7 +258,7 @@ class GitBackend(Backend):
 
   def _execute(self, *args):
     """Runs a raw command. Separate so it's easily mockable."""
-    LOGGER.info('Running: %s', args)
+    LOGGER.debug('Running: %s', args)
     return subprocess42.check_output(args)
 
   def _ensure_local_repo_exists(self):
@@ -347,21 +327,20 @@ class GitBackend(Backend):
     except GitError:
       self._git('reset', '-q', '--hard', revision)
 
-  def _get_more_recent_revision_impl(self, revision, other_revision):
-    return self._git(
-      # Note three dots (...) here.
-      'rev-list', '%s...%s' % (revision, other_revision),
-    ).strip().splitlines()[0]
-
   def _updates_impl(self, revision, other_revision, paths):
     args = [
         'rev-list',
         '--reverse',
+        '--topo-order',
         '%s..%s' % (revision, other_revision),
     ]
     if paths:
       args.extend(['--'] + paths)
-    return filter(bool, self._git(*args).strip().split('\n'))
+    return [
+      self.commit_metadata(rev)
+      for rev in self._git(*args).strip().split('\n')
+      if bool(rev)
+    ]
 
   def _resolve_refspec_impl(self, revision):
     self._ensure_local_repo_exists()
@@ -375,10 +354,12 @@ class GitBackend(Backend):
 
     # show
     #   %`author Email`
-    #   %`Newline`
+    #   %`newline`
+    #   %`commit time`
+    #   %`newline`
     #   %`Body`
-    email_and_body = self._git(
-      'show', '-s', '--format=%aE%n%B', revision).rstrip('\n').splitlines()
+    meta = self._git(
+      'show', '-s', '--format=%aE%n%ct%n%B', revision).rstrip('\n').splitlines()
 
     try:
       spec = package_io.parse(self._git(
@@ -386,8 +367,9 @@ class GitBackend(Backend):
     except GitError:
       spec = None
 
-    return CommitMetadata(revision, email_and_body[0],
-                          tuple(email_and_body[1:]), spec)
+    return CommitMetadata(revision, meta[0],
+                          int(meta[1]), tuple(meta[2:]),
+                          spec)
 
 class GitilesFetchError(FetchError):
   """An HTTP error that occurred during Gitiles fetching."""
@@ -405,6 +387,23 @@ class GitilesFetchError(FetchError):
     """
     return (isinstance(e, GitilesFetchError) and
             e.status >= httplib.INTERNAL_SERVER_ERROR)
+
+
+# Internal cache object for GitilesBackend.
+# commit (str) - the git commit hash
+# author_email (str) - the author email for this commit
+# message_lines (tuple) - the lines of the commit message
+class _GitilesCommitJson(namedtuple(
+    '_GitilesCommitJson',
+    'commit author_email commit_timestamp message_lines')):
+  @classmethod
+  def from_raw_json(cls, raw):
+    return cls(
+      raw['commit'],
+      raw['author']['email'],
+      calendar.timegm(time.strptime(raw['committer']['time'])),
+      tuple(raw['message'].splitlines()),
+    )
 
 
 class GitilesBackend(Backend):
@@ -448,6 +447,31 @@ class GitilesBackend(Backend):
     if not resp.text.startswith(self._GERRIT_XSRF_HEADER):
       raise GitilesFetchError(resp.status_code, 'Missing XSRF prefix')
     return json.loads(resp.text[len(self._GERRIT_XSRF_HEADER):])
+
+  # This caches entries from _fetch_commit_json. It's populated by
+  # _fetch_commit_json as well as _updates_impl.
+  #
+  # Mapping of:
+  #   repo_url -> git_revision -> _GitilesCommitJson
+  #
+  # Only populated if _fetch_commit_json is passed a resolved commit.
+  _COMMIT_JSON_CACHE = {}
+
+  def _fetch_commit_json(self, refspec):
+    """Returns _GitilesCommitJson for the refspec.
+
+    If refspec is resolved then this value is cached.
+    """
+    c = self._COMMIT_JSON_CACHE.setdefault(self.repo_url, {})
+    if refspec in c:
+      return c[refspec]
+
+    raw = self._fetch_gitiles_json('+/%s?format=JSON', refspec)
+    ret = _GitilesCommitJson.from_raw_json(raw)
+    if self.is_resolved_revision(refspec):
+      c[refspec] = ret
+
+    return ret
 
 
   ### Backend implementations
@@ -501,19 +525,6 @@ class GitilesBackend(Backend):
     with tarfile.open(fileobj=StringIO(archive_response.content)) as tf:
       tf.extractall(recipes_path)
 
-  def _get_more_recent_revision_impl(self, revision, other_revision):
-    # TODO(iannucci): implement or remove the need for this.
-    #
-    # This is used by the autoroller logic currently, which is forced to use
-    # GitRepo's for all backends because this is not implemented.
-    #
-    # We could use gitiles apis (i.e. 'updates') to pre-fetch all commit
-    # metadata and calculate roll candidates efficiently using those revision
-    # lists. Doing that would eliminate the need to implement this method, and
-    # would allow the autoroller to function without any persistent local state
-    # (making it easier to administer an autoroller bot).
-    raise NotImplementedError()
-
   def _updates_impl(self, revision, other_revision, paths):
     self.assert_remote('_updates_impl')
 
@@ -523,8 +534,13 @@ class GitilesBackend(Backend):
     log_json = self._fetch_gitiles_json(
       '+log/%s..%s?name-status=1&format=JSON', revision, other_revision)
 
+    c = self._COMMIT_JSON_CACHE.setdefault(self.repo_url, {})
+
     results = []
     for entry in log_json['log']:
+      commit = entry['commit']
+      c[commit] = _GitilesCommitJson.from_raw_json(entry)
+
       matched = False
       for path in paths:
         for diff_entry in entry['tree_diff']:
@@ -535,18 +551,15 @@ class GitilesBackend(Backend):
         if matched:
           break
       if matched or not paths:
-        results.append(entry['commit'])
+        results.append(commit)
 
     results.reverse()
-    return results
-
-  def _fetch_commit_json(self, refspec):
-    return self._fetch_gitiles_json('+/%s?format=JSON', refspec)
+    return map(self.commit_metadata, results)
 
   def _resolve_refspec_impl(self, refspec):
     if self.is_resolved_revision(refspec):
       return self.commit_metadata(refspec).commit
-    return self._fetch_commit_json(refspec)['commit']
+    return self._fetch_commit_json(refspec).commit
 
   def _commit_metadata_impl(self, revision):
     self.assert_remote('_commit_metadata_impl')
@@ -560,6 +573,7 @@ class GitilesBackend(Backend):
 
     return CommitMetadata(
       revision,
-      rev_json['author']['email'],
-      tuple(rev_json['message'].splitlines()),
+      rev_json.author_email,
+      rev_json.commit_timestamp,
+      rev_json.message_lines,
       spec)

@@ -46,308 +46,29 @@ class MockIOThings(object):
 
 
 class TestGitRepoSpec(repo_test_util.RepoTest):
-  def test_commit_infos(self):
+  def test_updates(self):
     self._context.allow_fetch = True
     repos = self.repo_setup({'a': []})
 
     spec = self.get_git_repo_spec(repos['a'])
-    self.assertEqual(
-        [],
-        [ci.dump(False) for ci in spec.commit_infos('refs/heads/master')])
+    self.assertEqual([], spec.updates())
 
-    c1 = self.commit_in_repo(
-        repos['a'], message='c1\nwoot', author_email=TEST_AUTHOR)
-    self.assertEqual([
-            {
-                'revision': c1['revision'],
-                'message_lines': ['c1', 'woot'],
-                'author_email': TEST_AUTHOR
-            },
-        ],
-        [ci.dump(True) for ci in spec.commit_infos(c1['revision'])])
-    self.assertEqual([
-            {
-                'revision': c1['revision'],
-                'message_lines': ['c1'],
-                'author_email': TEST_AUTHOR
-            },
-        ],
-        [ci.dump(False) for ci in spec.commit_infos(c1['revision'])])
-
-    c2 = self.commit_in_repo(
-        repos['a'], message='c2', author_email=TEST_AUTHOR)
-    self.assertEqual([
-            {
-                'revision': c1['revision'],
-                'message_lines': ['c1'],
-                'author_email': TEST_AUTHOR
-            },
-            {
-                'revision': c2['revision'],
-                'message_lines': ['c2'],
-                'author_email': TEST_AUTHOR
-            },
-        ],
-        [ci.dump(False) for ci in spec.commit_infos(c2['revision'])])
-
-  def test_raw_updates(self):
-    self._context.allow_fetch = True
-    repos = self.repo_setup({'a': []})
-
-    spec = self.get_git_repo_spec(repos['a'])
-    self.assertEqual([], spec.raw_updates('refs/heads/master'))
+    revs = lambda cmetas: [m.revision for m in cmetas]
 
     c1 = self.commit_in_repo(repos['a'], message='c1')
     self.assertEqual([
         c1['revision']],
-        spec.raw_updates(c1['revision']))
+        revs(spec.updates()))
 
     c2 = self.commit_in_repo(repos['a'], message='c2')
     self.assertEqual([
         c1['revision'], c2['revision']],
-        spec.raw_updates(c2['revision']))
+        revs(spec.updates()))
 
     c3 = self.commit_in_repo(repos['a'], message='c3')
     self.assertEqual([
         c1['revision'], c2['revision'], c3['revision']],
-        spec.raw_updates(c3['revision']))
-
-  def test_get_more_recent_revision(self):
-    repos = self.repo_setup({'a': []})
-
-    spec = self.get_git_repo_spec(repos['a'])
-
-    c1 = self.commit_in_repo(repos['a'], message='c1')
-    c2 = self.commit_in_repo(repos['a'], message='c2')
-
-    self.assertEqual(
-        c2['revision'],
-        spec.backend.get_more_recent_revision(
-            c1['revision'], c2['revision']))
-
-    self.assertEqual(
-        c2['revision'],
-        spec.backend.get_more_recent_revision(
-            c2['revision'], c1['revision']))
-
-
-class TestRollCandidate(repo_test_util.RepoTest):
-  def setUp(self):
-    super(TestRollCandidate, self).setUp()
-    self._context.allow_fetch = True
-
-  def test_trivial(self):
-    repos = self.repo_setup({
-        'a': [],
-        'b': ['a'],
-    })
-    root_repo_spec = self.get_root_repo_spec(repos['b'])
-    a_repo_spec = self.get_git_repo_spec(repos['a'])
-    b_package_spec = self.get_package_spec(repos['b'])
-
-    # Create a new commit in the A repo.
-    a_c1 = self.commit_in_repo(repos['a'], message='c1')
-    a_updates = a_repo_spec.updates(a_c1['revision'])
-    self.assertEqual(
-        [a_c1['revision']],
-        [u.revision for u in a_updates])
-
-    # Create a roll candidate to roll the new A commit into B.
-    candidate = package.RollCandidate(b_package_spec, a_updates[0])
-
-    # Verify it's the only roll candidate in this situation.
-    roll_candidates, rejected_candidates = b_package_spec.roll_candidates(
-        root_repo_spec, self._context)
-    self.assertEqual([candidate], roll_candidates)
-    self.assertEqual([], rejected_candidates)
-
-    original_candidate = copy.deepcopy(candidate)
-    self.assertTrue(candidate.make_consistent(self._context, root_repo_spec))
-    rolled_spec = candidate.get_rolled_spec()
-
-    # Original roll should already be consistent, so that make_consistent
-    # is a no-op.
-    self.assertEqual(original_candidate.get_rolled_spec().dump(),
-                     rolled_spec.dump())
-
-    # The roll should make package spec different from the original
-    # by changing the revision to use for the A repo.
-    self.assertNotEqual(b_package_spec.dump(),
-                        rolled_spec.dump())
-    self.assertEqual(
-        str(b_package_spec.dump()).replace(
-            repos['a']['revision'], a_c1['revision']),
-        str(rolled_spec.dump()))
-
-    self.assertEqual(
-        {'a': [a_c1['revision']]},
-        {project_id: [ci.revision for ci in cis] for project_id, cis in
-         candidate.get_commit_infos().iteritems()})
-
-  def test_nontrivial(self):
-    repos = self.repo_setup({
-        'a': [],
-        'b': ['a'],
-        'c': ['b', 'a'],
-    })
-    root_repo_spec = self.get_root_repo_spec(repos['c'])
-    a_repo_spec = self.get_git_repo_spec(repos['a'])
-    b_repo_spec = self.get_git_repo_spec(repos['b'])
-    c_package_spec = self.get_package_spec(repos['c'])
-
-    # Create some commits in the A repo.
-    a_c1 = self.commit_in_repo(repos['a'], message='c1')
-    a_c2 = self.commit_in_repo(repos['a'], message='c2')
-    a_updates = a_repo_spec.updates(a_c2['revision'])
-    self.assertEqual(
-        [a_c1['revision'], a_c2['revision']],
-        [u.revision for u in a_updates])
-
-    # Create commits in the B repo that pull different A repo revisions.
-    b_c1_rev = self.update_recipes_cfg(
-        'b', self.updated_package_spec_pb(repos['b'], 'a', a_c1['revision']))
-    b_c2_rev = self.update_recipes_cfg(
-        'b', self.updated_package_spec_pb(repos['b'], 'a', a_c2['revision']))
-    b_updates = b_repo_spec.updates(b_c2_rev)
-    self.assertEqual(
-        [b_c1_rev, b_c2_rev],
-        [u.revision for u in b_updates])
-
-    # Create a roll candidate to roll some B commits into C.
-    candidate = package.RollCandidate(c_package_spec, b_updates[1])
-    self.assertTrue(candidate.make_consistent(self._context, root_repo_spec))
-
-    # The roll should make package spec different from the original
-    # by changing the revision to use for the A repo.
-    rolled_spec = candidate.get_rolled_spec()
-    self.assertNotEqual(c_package_spec.dump(),
-                        rolled_spec.dump())
-    self.assertEqual(
-        str(c_package_spec.dump()).replace(
-            repos['b']['revision'], b_c2_rev).replace(
-            repos['a']['revision'], a_c2['revision']),
-        str(rolled_spec.dump()))
-
-    self.assertEqual(
-        {
-            'a': [a_c1['revision'], a_c2['revision']],
-            'b': [b_c1_rev, b_c2_rev],
-        },
-        {project_id: [ci.revision for ci in cis] for project_id, cis in
-         candidate.get_commit_infos().iteritems()})
-
-    # There's an alternative, smaller roll possible. Make sure it was
-    # considered.
-    alternative_candidate = package.RollCandidate(c_package_spec, b_updates[0])
-    self.assertTrue(alternative_candidate.make_consistent(
-      self._context, root_repo_spec))
-
-    self.assertEqual(
-        {
-            'a': [a_c1['revision']],
-            'b': [b_c1_rev],
-        },
-        {project_id: [ci.revision for ci in cis] for project_id, cis in
-         alternative_candidate.get_commit_infos().iteritems()})
-
-    roll_candidates, _ = c_package_spec.roll_candidates(
-        root_repo_spec, self._context)
-    self.assertEqual([candidate, alternative_candidate], roll_candidates)
-
-  def test_roll_candidates(self):
-    """Tests that we consider all consistent rolls, not just a subset.
-    This differentiates the new roll algorithm from previous one.
-    """
-    repos = self.repo_setup({
-        'a': [],
-        'b': ['a'],
-        'c': ['b', 'a'],
-    })
-    root_repo_spec = self.get_root_repo_spec(repos['c'])
-    a_repo_spec = self.get_git_repo_spec(repos['a'])
-    b_repo_spec = self.get_git_repo_spec(repos['b'])
-    c_package_spec = self.get_package_spec(repos['c'])
-
-    # Create some commits in the A repo.
-    a_c1 = self.commit_in_repo(repos['a'], message='c1')
-    a_c2 = self.commit_in_repo(repos['a'], message='c2')
-    a_c3 = self.commit_in_repo(repos['a'], message='c3')
-    a_updates = a_repo_spec.updates(a_c3['revision'])
-    self.assertEqual(
-        [a_c1['revision'], a_c2['revision'], a_c3['revision']],
-        [u.revision for u in a_updates])
-
-    # Create a commit in the B repo that uses the same revision of A.
-    b_c1_rev = self.commit_in_repo(repos['b'], message='c1')['revision']
-    # Create commits in the B repo that pull different A repo revisions.
-    b_c2_rev = self.update_recipes_cfg(
-        'b', self.updated_package_spec_pb(repos['b'], 'a', a_c2['revision']))
-    b_c3_rev = self.update_recipes_cfg(
-        'b', self.updated_package_spec_pb(repos['b'], 'a', a_c3['revision']))
-    b_updates = b_repo_spec.updates(b_c3_rev)
-    self.assertEqual(
-        [b_c1_rev, b_c2_rev, b_c3_rev],
-        [u.revision for u in b_updates])
-
-    candidate1 = package.RollCandidate(c_package_spec, b_updates[2])
-    self.assertTrue(candidate1.make_consistent(self._context, root_repo_spec))
-    self.assertEqual(
-        {
-            'a': [a_c1['revision'], a_c2['revision'], a_c3['revision']],
-            'b': [b_c1_rev, b_c2_rev, b_c3_rev],
-        },
-        {project_id: [ci.revision for ci in cis] for project_id, cis in
-         candidate1.get_commit_infos().iteritems()})
-
-    candidate2 = package.RollCandidate(c_package_spec, b_updates[1])
-    self.assertTrue(candidate2.make_consistent(self._context, root_repo_spec))
-    self.assertEqual(
-        {
-            'a': [a_c1['revision'], a_c2['revision']],
-            'b': [b_c1_rev, b_c2_rev],
-        },
-        {project_id: [ci.revision for ci in cis] for project_id, cis in
-         candidate2.get_commit_infos().iteritems()})
-
-    candidate3 = package.RollCandidate(c_package_spec, b_updates[0])
-    self.assertTrue(candidate3.make_consistent(self._context, root_repo_spec))
-    self.assertEqual(
-        {
-            'b': [b_c1_rev],
-        },
-        {project_id: [ci.revision for ci in cis] for project_id, cis in
-         candidate3.get_commit_infos().iteritems()})
-
-    roll_candidates, _ = c_package_spec.roll_candidates(
-        root_repo_spec, self._context)
-    self.assertEqual([candidate1, candidate2, candidate3], roll_candidates)
-
-  def test_no_backwards_roll(self):
-    """Tests that we never roll backwards.
-    """
-    repos = self.repo_setup({
-        'a': [],
-        'b': ['a'],
-        'c': ['b', 'a'],
-    })
-    root_repo_spec = self.get_root_repo_spec(repos['c'])
-    b_repo_spec = self.get_git_repo_spec(repos['b'])
-
-    # Create a new commit in A repo. Roll it to C but not B.
-    a_c1 = self.commit_in_repo(repos['a'], message='c1')
-    self.update_recipes_cfg(
-        'c', self.updated_package_spec_pb(repos['c'], 'a', a_c1['revision']))
-
-    # Create a commit in the B repo (which will use an older revision of A).
-    b_c1 = self.commit_in_repo(repos['b'], message='c1')
-    b_updates = b_repo_spec.updates(b_c1['revision'])
-    self.assertEqual(
-        [b_c1['revision']],
-        [u.revision for u in b_updates])
-
-    c_package_spec = self.get_package_spec(repos['c'])
-    candidate = package.RollCandidate(c_package_spec, b_updates[0])
-    self.assertFalse(candidate.make_consistent(self._context, root_repo_spec))
+        revs(spec.updates()))
 
 
 class MockPackageFile(package_io.PackageFile):
@@ -390,27 +111,28 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
       '}',
     ])
     self.package_file = MockPackageFile('repo/root/infra/config/recipes.cfg',
-                                      self.proto_text)
-    self.context = package.PackageContext.from_package_file(
-        'repo/root', self.package_file, allow_fetch=False)
+                                        self.proto_text)
+    self.context = package.PackageContext.from_package_pb(
+        'repo/root', self.package_file.read(), allow_fetch=False)
 
   def test_dump_load_inverses(self):
     # Doubles as a test for equality reflexivity.
-    package_spec = package.PackageSpec.load_package(
-      self.context, self.package_file)
-    self.assertEqual(self.package_file.to_raw(package_spec.dump()),
+    package_spec = package.PackageSpec.from_package_pb(
+      self.context, self.package_file.read())
+    self.assertEqual(self.package_file.to_raw(package_spec.spec_pb),
                      self.proto_text)
-    self.assertEqual(package.PackageSpec.load_package(
-      self.context, self.package_file), package_spec)
+    self.assertEqual(package.PackageSpec.from_package_pb(
+      self.context, self.package_file.read()), package_spec)
 
   def test_dump_round_trips(self):
     proto_text = """
 {"api_version": 1}
 """.lstrip()
     package_file = MockPackageFile('repo/root/infra/config/recipes.cfg',
-                                 proto_text)
-    package_spec = package.PackageSpec.load_package(self.context, package_file)
-    self.assertEqual(package_file.to_raw(package_spec.dump()),
+                                   proto_text)
+    package_spec = package.PackageSpec.from_package_pb(
+      self.context, package_file.read())
+    self.assertEqual(package_file.to_raw(package_spec.spec_pb),
                      '{\n  "api_version": 1\n}')
 
   def test_no_version(self):
@@ -420,10 +142,10 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
 }
 """
     package_file = MockPackageFile('repo/root/infra/config/recipes.cfg',
-                                 proto_text)
+                                   proto_text)
 
     with self.assertRaises(AssertionError):
-      package.PackageSpec.load_package(self.context, package_file)
+      package.PackageSpec.from_package_pb(self.context, package_file.read())
 
   def test_old_deps(self):
     proto_text = '\n'.join([
@@ -448,9 +170,10 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
       '}',
     ])
     package_file = MockPackageFile('repo/root/infra/config/recipes.cfg',
-                                 proto_text)
+                                   proto_text)
 
-    spec = package.PackageSpec.load_package(self.context, package_file)
+    spec = package.PackageSpec.from_package_pb(
+      self.context, package_file.read())
     self.assertEqual(spec.deps['foo'], package.GitRepoSpec(
       'foo',
       'https://repo.com/foo.git',
@@ -459,7 +182,7 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
       '',
       fetch.GitBackend('', '', False)
     ))
-    self.assertEqual(package_file.to_raw(spec.dump()), proto_text)
+    self.assertEqual(package_file.to_raw(spec.spec_pb), proto_text)
 
 
   def test_unsupported_version(self):
@@ -469,10 +192,10 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
   "recipes_path": "path/to/recipes"
 }"""
     package_file = MockPackageFile('repo/root/infra/config/recipes.cfg',
-                                 proto_text)
+                                   proto_text)
 
     with self.assertRaises(AssertionError):
-      package.PackageSpec.load_package(self.context, package_file)
+      package.PackageSpec.from_package_pb(self.context, package_file.read())
 
 
 class TestPackageDeps(MockIOThings, unittest.TestCase):

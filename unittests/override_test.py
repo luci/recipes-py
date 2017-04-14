@@ -3,6 +3,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import copy
 import subprocess
 import sys
 import unittest
@@ -19,9 +20,9 @@ class TestOverride(repo_test_util.RepoTest):
     })
 
     a_c1 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
-    b_c1_rev = self.update_recipes_cfg(
+    self.update_recipes_cfg(
         'b', self.updated_package_spec_pb(repos['b'], 'a', a_c1['revision']))
-    b_c2 = self.update_recipe(
+    self.update_recipe(
         repos['b'], 'b_recipe', ['a/a_module'], [('a_module', 'foo')])
 
     # Training the recipes should work.
@@ -47,21 +48,21 @@ class TestOverride(repo_test_util.RepoTest):
     })
 
     a_c1 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
-    b_c1_rev = self.update_recipes_cfg(
+    self.update_recipes_cfg(
         'b', self.updated_package_spec_pb(repos['b'], 'a', a_c1['revision']))
-    b1_c1_rev = self.update_recipes_cfg(
+    self.update_recipes_cfg(
         'b1', self.updated_package_spec_pb(repos['b1'], 'a', a_c1['revision']))
 
     a_c2 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['baz']})
     b_c2_rev = self.update_recipes_cfg(
         'b', self.updated_package_spec_pb(repos['b'], 'a', a_c2['revision']))
 
-    c_spec = self.get_package_spec(repos['c'])
+    c_spec = copy.deepcopy(self.get_package_spec(repos['c']).spec_pb)
     c_spec.deps['a'].revision = a_c2['revision']
     c_spec.deps['b'].revision = b_c2_rev
-    c_c1 = self.update_recipes_cfg('c', c_spec.dump())
+    self.update_recipes_cfg('c', c_spec)
 
-    c_c2 = self.update_recipe(
+    self.update_recipe(
         repos['c'], 'c_recipe', ['a/a_module'], [('a_module', 'foo')])
 
     # Training the recipes should work.

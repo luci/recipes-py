@@ -3,6 +3,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import copy
 import json
 import logging
 import os
@@ -11,6 +12,8 @@ import sys
 import unittest
 
 import repo_test_util
+
+from recipe_engine import package_io
 
 
 class TestAutoroll(repo_test_util.RepoTest):
@@ -46,7 +49,7 @@ class TestAutoroll(repo_test_util.RepoTest):
     roll_result = self.run_roll(repos['a'])
     self.assertFalse(roll_result['success'])
     self.assertEquals([], roll_result['roll_details'])
-    self.assertEquals([], roll_result['rejected_candidates_details'])
+    self.assertEquals([], roll_result['rejected_candidate_specs'])
 
   def test_bogus_recipes_py(self):
     repos = self.repo_setup({
@@ -84,6 +87,9 @@ class TestAutoroll(repo_test_util.RepoTest):
     self.assertTrue(roll_result['success'])
     self.assertTrue(roll_result['trivial'])
 
+    spec = copy.deepcopy(b_package_spec.spec_pb)
+    spec.deps['a'].revision = a_c1['revision']
+
     expected_picked_roll = {
         'commit_infos': {
             'a': [
@@ -94,8 +100,7 @@ class TestAutoroll(repo_test_util.RepoTest):
                 },
             ],
         },
-        'spec': str(b_package_spec.dump()).replace(
-            repos['a']['revision'], a_c1['revision']),
+        'spec': package_io.dump_obj(spec),
     }
 
     self.assertEqual(expected_picked_roll['commit_infos'],
@@ -130,6 +135,9 @@ class TestAutoroll(repo_test_util.RepoTest):
     self.assertTrue(roll_result['success'])
     self.assertFalse(roll_result['trivial'])
 
+    spec = copy.deepcopy(b_package_spec.spec_pb)
+    spec.deps['a'].revision = a_c2['revision']
+
     expected_picked_roll = {
         'commit_infos': {
             'a': [
@@ -140,8 +148,7 @@ class TestAutoroll(repo_test_util.RepoTest):
                 },
             ],
         },
-        'spec': str(b_package_spec.dump()).replace(
-            repos['a']['revision'], a_c2['revision']),
+        'spec': package_io.dump_obj(spec),
     }
 
     picked_roll = roll_result['picked_roll_details']
@@ -206,6 +213,9 @@ class TestAutoroll(repo_test_util.RepoTest):
     self.assertTrue(roll_result['success'])
     self.assertFalse(roll_result['trivial'])
 
+    spec = copy.deepcopy(b_package_spec.spec_pb)
+    spec.deps['a'].revision = a_c3['revision']
+
     expected_picked_roll = {
         'commit_infos': {
             'a': [
@@ -221,8 +231,7 @@ class TestAutoroll(repo_test_util.RepoTest):
                 },
             ],
         },
-        'spec': str(b_package_spec.dump()).replace(
-            repos['a']['revision'], a_c3['revision']),
+        'spec': package_io.dump_obj(spec),
     }
 
     picked_roll = roll_result['picked_roll_details']
@@ -267,6 +276,9 @@ class TestAutoroll(repo_test_util.RepoTest):
     self.assertTrue(roll_result['success'])
     self.assertFalse(roll_result['trivial'])
 
+    spec = copy.deepcopy(b_package_spec.spec_pb)
+    spec.deps['a'].revision = a_c3['revision']
+
     expected_picked_roll = {
         'commit_infos': {
             'a': [
@@ -282,8 +294,7 @@ class TestAutoroll(repo_test_util.RepoTest):
                 },
             ],
         },
-        'spec': str(b_package_spec.dump()).replace(
-            repos['a']['revision'], a_c3['revision']),
+        'spec': package_io.dump_obj(spec),
     }
 
     picked_roll = roll_result['picked_roll_details']
@@ -332,6 +343,9 @@ class TestAutoroll(repo_test_util.RepoTest):
     self.assertTrue(roll_result['success'])
     self.assertTrue(roll_result['trivial'])
 
+    spec = copy.deepcopy(b_package_spec.spec_pb)
+    spec.deps['a'].revision = a_c5['revision']
+
     expected_picked_roll = {
         'commit_infos': {
             'a': [
@@ -357,8 +371,7 @@ class TestAutoroll(repo_test_util.RepoTest):
                 },
             ],
         },
-        'spec': str(b_package_spec.dump()).replace(
-            repos['a']['revision'], a_c5['revision']),
+        'spec': package_io.dump_obj(spec),
     }
 
     picked_roll = roll_result['picked_roll_details']
@@ -396,9 +409,12 @@ class TestAutoroll(repo_test_util.RepoTest):
     self.assertTrue(roll_result['success'])
     self.assertTrue(roll_result['trivial'])
     picked_roll = roll_result['picked_roll_details']
+
+    spec = copy.deepcopy(b_package_spec.spec_pb)
+    spec.deps['a'].revision = a_c1['revision']
+
     self.assertEqual(
-        str(b_package_spec.dump()).replace(
-            repos['a']['revision'], a_c1['revision']),
+        package_io.dump_obj(spec),
         roll_result['picked_roll_details']['spec'])
 
     # Commit the roll.
@@ -410,6 +426,10 @@ class TestAutoroll(repo_test_util.RepoTest):
     roll_result = self.run_roll(repos['c'])
     self.assertTrue(roll_result['success'])
     self.assertTrue(roll_result['trivial'])
+
+    spec = copy.deepcopy(c_package_spec.spec_pb)
+    spec.deps['a'].revision = a_c1['revision']
+    spec.deps['b'].revision = b_c2['revision']
 
     expected_picked_roll = {
         'commit_infos': {
@@ -428,9 +448,7 @@ class TestAutoroll(repo_test_util.RepoTest):
                 },
             ],
         },
-        'spec': str(c_package_spec.dump()).replace(
-            repos['a']['revision'], a_c1['revision']).replace(
-                repos['b']['revision'], b_c2['revision']),
+        'spec': package_io.dump_obj(spec),
     }
 
     picked_roll = roll_result['picked_roll_details']
@@ -450,7 +468,6 @@ class TestAutoroll(repo_test_util.RepoTest):
         'c': ['b', 'a'],
     })
     self.get_root_repo_spec(repos['c'])
-    b_repo_spec = self.get_git_repo_spec(repos['b'])
     c_package_spec = self.get_package_spec(repos['c'])
 
     # Create a new commit in A repo and roll it to B.
@@ -463,34 +480,24 @@ class TestAutoroll(repo_test_util.RepoTest):
     self.assertTrue(roll_result['success'])
     self.assertTrue(roll_result['trivial'])
     picked_roll = roll_result['picked_roll_details']
+
+    spec = copy.deepcopy(c_package_spec.spec_pb)
+    spec.deps['a'].revision = a_c1['revision']
+    spec.deps['b'].revision = b_c1_rev
+
     self.assertEqual(
-        str(c_package_spec.dump()).replace(
-            repos['a']['revision'], a_c1['revision']).replace(
-                repos['b']['revision'], b_c1_rev),
+        package_io.dump_obj(spec),
         picked_roll['spec'])
 
     # Create a new commit in B that would result in backwards roll.
-    b_c2_rev = self.update_recipes_cfg(
+    self.update_recipes_cfg(
         'b', self.updated_package_spec_pb(
             repos['b'], 'a', repos['a']['revision']))
 
     roll_result = self.run_roll(repos['c'])
     self.assertFalse(roll_result['success'])
     self.assertEqual([], roll_result['roll_details'])
-
-    expected_rejected_candidate = {
-        'commit_infos': {
-            'b': [
-                b_repo_spec._get_commit_info(b_c2_rev).dump(True),
-            ],
-        },
-        'spec': str(c_package_spec.dump()).replace(
-            repos['a']['revision'], a_c1['revision']).replace(
-                repos['b']['revision'], b_c2_rev),
-    }
-    self.assertEqual(
-        [expected_rejected_candidate],
-        roll_result['rejected_candidates_details'])
+    self.assertEqual([], roll_result['rejected_candidate_specs'])
 
   def test_inconsistent_errors(self):
     repos = self.repo_setup({
@@ -510,7 +517,7 @@ class TestAutoroll(repo_test_util.RepoTest):
     self.assertFalse(bool(roll_result['roll_details']))
     # Will cause the autoroller to fail, because we didn't specify which
     # projects we care about.
-    self.assertTrue(bool(roll_result['rejected_candidates_details']))
+    self.assertTrue(bool(roll_result['rejected_candidate_specs']))
 
 
 if __name__ == '__main__':

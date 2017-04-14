@@ -101,8 +101,8 @@ class RepoTest(unittest.TestCase):
   def get_package_spec(self, repo):
     """Returns PackageSpec corresponding to given repo."""
     config_file = os.path.join(repo['root'], 'infra', 'config', 'recipes.cfg')
-    return package.PackageSpec.load_package(
-      self._context, package_io.PackageFile(config_file))
+    return package.PackageSpec.from_package_pb(
+      self._context, package_io.PackageFile(config_file).read())
 
   def create_repo(self, name, spec):
     """Creates a real git repo with simple recipes.cfg."""
@@ -164,9 +164,9 @@ class RepoTest(unittest.TestCase):
     """Returns package spec for given repo, with specified revision
     for given dependency.
     """
-    spec = self.get_package_spec(repo)
+    spec = self.get_package_spec(repo).spec_pb
     spec.deps[dep_name].revision = dep_revision
-    return spec.dump()
+    return spec
 
   def update_recipes_cfg(self, name, spec_pb, message='recipes.cfg update'):
     """Creates a commit setting recipes.cfg to have provided protobuf
@@ -190,13 +190,17 @@ class RepoTest(unittest.TestCase):
                      author_name='John Doe',
                      author_email='john.doe@example.com'):
     """Creates a commit in given repo."""
-    with in_directory(repo['root']):
-      env = dict(os.environ)
-      env['GIT_AUTHOR_NAME'] = author_name
-      env['GIT_AUTHOR_EMAIL'] = author_email
-      subprocess.check_output(
-          ['git', 'commit', '-a', '--allow-empty', '-m', message], env=env)
-      rev = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()
+    root = repo['root']
+
+    env = dict(os.environ)
+    env['GIT_AUTHOR_NAME'] = author_name
+    env['GIT_AUTHOR_EMAIL'] = author_email
+    subprocess.check_output(
+      ['git', '-C', root, 'commit',
+       '-a', '--allow-empty',
+       '-m', message], env=env)
+    rev = subprocess.check_output(
+      ['git', '-C', root, 'rev-parse', 'HEAD']).strip()
     return {
         'root': repo['root'],
         'revision': rev,

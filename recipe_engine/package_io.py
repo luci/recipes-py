@@ -39,17 +39,16 @@ def parse(raw):
   return buf
 
 
-def dump(buf):
-  """Dumps a package_pb2.Package to a string.
+def dump_obj(buf):
+  """Dumps a package_pb2.Package to a jsonish dict.
 
   Downconverts from api_version 2 to api_version 1 (if buf.api_version == 1).
 
   Args:
     buf (package_pb2.Package) - the Package to dump
 
-  Returns (str)
+  Returns (dict)
   """
-
   obj = json_format.MessageToDict(buf, preserving_proto_field_name=True)
 
   # downconvert if api_version is 1
@@ -60,7 +59,21 @@ def dump(buf):
       deps.append(d)
     obj['deps'] = deps
 
-  return json.dumps(obj, indent=2, sort_keys=True).replace(' \n', '\n')
+  return obj
+
+
+def dump(buf):
+  """Dumps a package_pb2.Package to a string.
+
+  Downconverts from api_version 2 to api_version 1 (if buf.api_version == 1).
+
+  Args:
+    buf (package_pb2.Package) - the Package to dump
+
+  Returns (str)
+  """
+  return json.dumps(
+    dump_obj(buf), indent=2, sort_keys=True).replace(' \n', '\n')
 
 
 class PackageFile(object):

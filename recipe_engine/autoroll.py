@@ -4,13 +4,22 @@
 
 from __future__ import print_function
 
+import copy
 import json
+import logging
 import os
 import subprocess
 import sys
+import time
+
+from collections import namedtuple
 
 from . import package
+from . import package_io
+from .autoroll_impl.candidate_algorithm import get_roll_candidates
 
+
+LOGGER = logging.getLogger(__name__)
 
 ROOT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 
@@ -27,7 +36,7 @@ EDIT_HEADER = '#### PER-REPO CONFIGURATION (editable) ####\n'
 EDIT_FOOTER = '#### END PER-REPO CONFIGURATION ####\n'
 
 
-def write_new_recipes_py(context, spec, repo_cfg_block):
+def write_new_recipes_py(context, pspec, repo_cfg_block):
   """Uses the doc/recipes.py script from the currently-checked-out version of
   the recipe_engine (in `context`) as a template, and writes it to the
   recipes_dir of the destination repo (also from `context`). Replaces the lines
@@ -37,14 +46,13 @@ def write_new_recipes_py(context, spec, repo_cfg_block):
   Args:
     context (PackageContext) - The context of where to find the checked-out
       recipe_engine as well as where to put the new recipes.py.
-    spec (PackageSpec) - The rolled spec (result of
-      RollCandidate.get_rolled_spec())
+    spec (PackageSpec) - The current (rolled) PackageSpec spec.
     repo_cfg_block (list(str)) - The list of lines (including newlines)
       extracted from the repo's original recipes.py file (using the
       extract_repo_cfg_block function).
   """
-  source_path = os.path.join(spec.deps['recipe_engine'].repo_root(context),
-                             *RECIPES_PY_REL_PATH)
+  engine_root = pspec.deps['recipe_engine'].repo_root(context)
+  source_path = os.path.join(engine_root, *RECIPES_PY_REL_PATH)
   dest_path = os.path.join(context.recipes_dir, 'recipes.py')
   with open(source_path, 'rb') as source:
     with open(dest_path, 'wb') as dest:
@@ -90,7 +98,16 @@ def extract_repo_cfg_block(context):
   return block
 
 
-def fetch(repo_root, package_spec):
+def write_spec_to_disk(context, repo_cfg_block, config_file, spec_pb):
+  LOGGER.info('writing: %s', package_io.dump(spec_pb))
+  pspec = package.PackageSpec.from_package_pb(context, spec_pb)
+
+  config_file.write(spec_pb)
+  fetch(context.repo_root, spec_pb.recipes_path)
+  write_new_recipes_py(context, pspec, repo_cfg_block)
+
+
+def fetch(repo_root, recipes_path):
   """
   Just fetch the recipes to the newly configured version.
   """
@@ -99,7 +116,7 @@ def fetch(repo_root, package_spec):
   # than the pinned one.
   args = [
     sys.executable,
-    os.path.join(repo_root, package_spec.recipes_path, 'recipes.py'),
+    os.path.join(repo_root, recipes_path, 'recipes.py'),
     # Invoked recipes.py should not re-bootstrap (to avoid issues on bots).
     '--disable-bootstrap',
     'fetch',
@@ -107,8 +124,7 @@ def fetch(repo_root, package_spec):
   subprocess.check_call(args)
 
 
-def run_simulation_test(repo_root, package_spec, additional_args=None,
-                        allow_fetch=False):
+def run_simulation_test(repo_root, recipes_path, additional_args=None):
   """
   Runs recipe simulation test for given package.
 
@@ -119,13 +135,12 @@ def run_simulation_test(repo_root, package_spec, additional_args=None,
   # than the pinned one.
   args = [
     sys.executable,
-    os.path.join(repo_root, package_spec.recipes_path, 'recipes.py'),
+    os.path.join(repo_root, recipes_path, 'recipes.py'),
     # Invoked recipes.py should not re-bootstrap (to avoid issues on bots).
     '--disable-bootstrap',
+    '--no-fetch',
+    'test',
   ]
-  if not allow_fetch:
-    args.append('--no-fetch')
-  args.append('test')
   if additional_args:
     args.extend(additional_args)
   p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -134,21 +149,23 @@ def run_simulation_test(repo_root, package_spec, additional_args=None,
   return rc, output
 
 
-def dump_commit_infos(commit_infos, verbose_json):
-  # TODO(iannucci): remove this when autorolling is sane.
-  return {
-    repo_id: [c.dump(verbose_json) for c in cis]
-    for repo_id, cis in commit_infos.iteritems()
-  }
-
-
-def process_candidates(candidates, context, config_file, package_spec,
+def process_candidates(repo_cfg_block, candidates, repos, context, config_file,
                        verbose_json):
+  """
+
+  Args:
+    candidates (list(RollCandidate)) - A list of valid (self-consistent) roll
+      candidates to try in least-changes to most-changes order.
+    repos (dict(project_id, CommitList)) - A repos dictionary suitable for
+      invoking RollCandidate.changelist().
+    context (PackageContext)
+  """
   roll_details = []
   trivial = None
   picked_roll_details = None
 
-  repo_cfg_block = extract_repo_cfg_block(context)
+  # Rest of the function assumes this is big-to-small candidates.
+  candidates.reverse()
 
   print('looking for a trivial roll...')
 
@@ -156,9 +173,16 @@ def process_candidates(candidates, context, config_file, package_spec,
   # we exit early depending on test results.
   for candidate in candidates:
     roll_details.append({
-      'spec': str(candidate.get_rolled_spec().dump()),
-      'commit_infos': dump_commit_infos(
-        candidate.get_commit_infos(), verbose_json),
+      'spec': package_io.dump_obj(candidate.package_pb),
+      'commit_infos': {
+        pid: [{
+          'author_email': c.author_email,
+          'message_lines': (
+            c.message_lines if verbose_json else c.message_lines[:1]
+          ),
+          'revision': c.revision,
+        } for c in clist]
+        for pid, clist in candidate.changelist(repos).iteritems()},
     })
 
   # Process candidates biggest first. If the roll is trivial, we want
@@ -167,12 +191,11 @@ def process_candidates(candidates, context, config_file, package_spec,
   for i, candidate in enumerate(candidates):
     print('  processing candidate #%d... ' % (i + 1), end='')
 
-    spec = candidate.get_rolled_spec()
-    config_file.write(spec.dump())
-    fetch(context.repo_root, package_spec)
-    write_new_recipes_py(context, spec, repo_cfg_block)
+    write_spec_to_disk(context, repo_cfg_block, config_file,
+                       candidate.package_pb)
 
-    rc, output = run_simulation_test(context.repo_root, package_spec, ['run'])
+    rc, output = run_simulation_test(
+      context.repo_root, candidate.package_pb.recipes_path, ['run'])
     roll_details[i]['recipes_simulation_test'] = {
       'output': output,
       'rc': rc,
@@ -195,13 +218,11 @@ def process_candidates(candidates, context, config_file, package_spec,
     for i, candidate in reversed(list(enumerate(candidates))):
       print('  processing candidate #%d... ' % (i + 1), end='')
 
-      spec = candidate.get_rolled_spec()
-      config_file.write(spec.dump())
-      fetch(context.repo_root, package_spec)
-      write_new_recipes_py(context, spec, repo_cfg_block)
+      write_spec_to_disk(context, repo_cfg_block, config_file,
+                         candidate.package_pb)
 
       rc, output = run_simulation_test(
-          context.repo_root, package_spec, ['train'])
+          context.repo_root, candidate.package_pb.recipes_path, ['train'])
       roll_details[i]['recipes_simulation_test_train'] = {
         'output': output,
         'rc': rc,
@@ -218,14 +239,12 @@ def process_candidates(candidates, context, config_file, package_spec,
   return trivial, picked_roll_details, roll_details
 
 
-def test_rolls(config_file, context, package_spec, verbose_json):
-  print('finding roll candidates...')
-
-  root_spec = package.RootRepoSpec(config_file)
-  candidates, rejected_candidates = package_spec.roll_candidates(
-      root_spec, context)
+def test_rolls(repo_cfg_block, config_file, context, package_spec,
+               verbose_json):
+  candidates, rejected_candidates, repos = get_roll_candidates(
+    context, package_spec)
   trivial, picked_roll_details, roll_details = process_candidates(
-      candidates, context, config_file, package_spec, verbose_json)
+    repo_cfg_block, candidates, repos, context, config_file, verbose_json)
 
   ret = {
     'success': bool(picked_roll_details),
@@ -235,31 +254,32 @@ def test_rolls(config_file, context, package_spec, verbose_json):
     'rejected_candidates_count': len(rejected_candidates),
   }
   if verbose_json:
-    rejected = []
-    for c in rejected_candidates:
-      d = c.to_dict()
-      d['commit_infos'] = dump_commit_infos(d['commit_infos'], verbose_json)
-      rejected.append(d)
-    ret['rejected_candidates_details'] = rejected
+    ret['rejected_candidate_specs'] = [
+      package_io.dump_obj(c.package_pb) for c in rejected_candidates]
   return ret
 
 
 def main(args, repo_root, config_file):
-  context = package.PackageContext.from_package_file(
-      repo_root, config_file, allow_fetch=not args.no_fetch)
-  package_spec = package.PackageSpec.load_package(context, config_file)
+  package_pb = config_file.read()
+
+  context = package.PackageContext.from_package_pb(
+    repo_root, package_pb, allow_fetch=not args.no_fetch)
+  package_spec = package.PackageSpec.from_package_pb(context, package_pb)
+  for repo_spec in package_spec.deps.values():
+    repo_spec.fetch()
+
+  repo_cfg_block = extract_repo_cfg_block(context)
 
   results = {}
   try:
     results = test_rolls(
-      config_file, context, package_spec, args.verbose_json)
+      repo_cfg_block, config_file, context, package_spec, args.verbose_json)
   finally:
     if not results.get('success'):
       # Restore initial state. Since we could be running simulation tests
       # on other revisions, re-run them now as well.
-      config_file.write(package_spec.dump())
-      run_simulation_test(context.repo_root, package_spec, ['train'],
-                          allow_fetch=True)
+      write_spec_to_disk(context, repo_cfg_block, config_file, package_pb)
+      run_simulation_test(repo_root, package_spec.recipes_path, ['train'])
 
   if args.output_json:
     with open(args.output_json, 'w') as f:

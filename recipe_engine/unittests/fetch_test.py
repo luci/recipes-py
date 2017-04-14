@@ -70,13 +70,13 @@ class TestGit(unittest.TestCase):
 
   def g_metadata_calls(self, dirname='dir', commit='a'*40,
                        email='foo@example.com', msg='hello\nworld',
-                       config=None):
+                       commit_timestamp=1492131405, config=None):
     config = config or {'api_version': 2}
 
     return [
       self.g([
-        '-C', dirname, 'show', '-s', '--format=%aE%n%B', commit
-      ], '%s\n%s\n' % (email, msg)),
+        '-C', dirname, 'show', '-s', '--format=%aE%n%ct%n%B', commit
+      ], '%s\n%d\n%s\n' % (email, commit_timestamp, msg)),
       self.g([
         '-C', dirname, 'cat-file', 'blob', commit+':infra/config/recipes.cfg'
       ], json.dumps(config))
@@ -161,7 +161,7 @@ class TestGit(unittest.TestCase):
       self.g(['-C', 'dir', 'ls-remote', 'repo', 'revision'], 'a'*40),
 
       self.g(
-        ['-C', 'dir', 'show', '-s', '--format=%aE%n%B', 'a'*40],
+        ['-C', 'dir', 'show', '-s', '--format=%aE%n%ct%n%B', 'a'*40],
         CPE(1, 'nope')),
 
       self.g(['-C', 'dir', 'fetch', 'repo', 'revision']),
@@ -194,7 +194,8 @@ class TestGit(unittest.TestCase):
     result = fetch.GitBackend('dir', 'repo', True).commit_metadata('revision')
     self.assertEqual(result, fetch.CommitMetadata(
       revision = 'a'*40,
-      author_email  = 'foo@example.com',
+      author_email = 'foo@example.com',
+      commit_timestamp = 1492131405,
       message_lines = ('hello', 'world'),
       spec = package_pb2.Package(api_version=2)
     ))
@@ -205,6 +206,7 @@ class TestGitiles(unittest.TestCase):
   def setUp(self):
     requests_ssl.disable_check()
     fetch.Backend._GIT_METADATA_CACHE = {}
+    fetch.GitilesBackend._COMMIT_JSON_CACHE = {}
 
     self.proto_text = u"""{
   "api_version": 2,
@@ -216,12 +218,14 @@ class TestGitiles(unittest.TestCase):
     self.a_dat = {
       'commit': self.a,
       'author': {'email': 'foo@example.com'},
+      'committer': {'time': 'Fri Apr 14 00:56:45 2017'},
       'message': 'message',
     }
 
     self.a_meta = fetch.CommitMetadata(
       revision = 'a'*40,
       author_email = 'foo@example.com',
+      commit_timestamp = 1492131405,
       message_lines = ('message',),
       spec = package_pb2.Package(
         api_version = 2,
@@ -287,10 +291,15 @@ class TestGitiles(unittest.TestCase):
 
   @mock.patch('requests.get')
   def test_updates(self, requests_get):
+    sha_a = 'a'*40
+    sha_b = 'b'*40
     log_json = {
       'log': [
         {
-          'commit': 'abc123',
+          'commit': sha_b,
+          'author': {'email': 'foo@example.com'},
+          'committer': {'time': 'Fri Apr 14 00:58:45 2017'},
+          'message': 'message',
           'tree_diff': [
             {
               'old_path': '/dev/null',
@@ -300,6 +309,9 @@ class TestGitiles(unittest.TestCase):
         },
         {
           'commit': 'def456',
+          'author': {'email': 'foo@example.com'},
+          'committer': {'time': 'Fri Apr 14 00:57:45 2017'},
+          'message': 'message',
           'tree_diff': [
             {
               'old_path': '/dev/null',
@@ -308,7 +320,10 @@ class TestGitiles(unittest.TestCase):
           ],
         },
         {
-          'commit': 'ghi789',
+          'commit': sha_a,
+          'author': {'email': 'foo@example.com'},
+          'committer': {'time': 'Fri Apr 14 00:56:45 2017'},
+          'message': 'message',
           'tree_diff': [
             {
               'old_path': '/dev/null',
@@ -322,13 +337,26 @@ class TestGitiles(unittest.TestCase):
         },
       ],
     }
-    sha_a = 'a'*40
-    sha_b = 'b'*40
+
     requests_get.side_effect = multi(
-      self.j('repo/+/reva?format=JSON', {'commit': sha_a}),
-      self.j('repo/+/revb?format=JSON', {'commit': sha_b}),
+      self.j('repo/+/reva?format=JSON', {
+        'commit': sha_a,
+        'author': {'email': 'foo@example.com'},
+        'committer': {'time': 'Fri Apr 14 00:56:45 2017'},
+        'message': 'message',
+      }),
+      self.j('repo/+/revb?format=JSON', {
+        'commit': sha_b,
+        'author': {'email': 'foo@example.com'},
+        'committer': {'time': 'Fri Apr 14 00:58:45 2017'},
+        'message': 'message',
+      }),
       self.j('repo/+log/%s..%s?name-status=1&format=JSON' % (sha_a, sha_b),
              log_json),
+      self.d('repo/+/%s/infra/config/recipes.cfg?format=TEXT' % sha_a,
+             self.proto_text),
+      self.d('repo/+/%s/infra/config/recipes.cfg?format=TEXT' % sha_b,
+             self.proto_text),
     )
 
     be = fetch.GitilesBackend('dir', 'repo', True)
@@ -336,8 +364,19 @@ class TestGitiles(unittest.TestCase):
     self.assertEqual(sha_b, be.resolve_refspec('revb'))
 
     self.assertEqual(
-        ['ghi789', 'abc123'],
-        be.updates(sha_a, sha_b, ['path1', 'path2']))
+        [self.a_meta,
+         fetch.CommitMetadata(
+          revision = sha_b,
+          author_email = 'foo@example.com',
+          commit_timestamp = 1492131525,
+          message_lines = ('message',),
+          spec = package_pb2.Package(
+            api_version = 2,
+            project_id = 'foo',
+            recipes_path = 'path/to/recipes',
+          )
+        )],
+      be.updates(sha_a, sha_b, ['path1', 'path2']))
     self.assertMultiDone(requests_get)
 
 
