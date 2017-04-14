@@ -215,9 +215,9 @@ DEPS = [ (sic)
       def assert_syntaxerror(stdout, stderr):
         self.assertRegexpMatches(stdout + stderr, r'SyntaxError')
 
-      self._test_cmd(repo, ['simulation_test', 'test', 'foo'],
+      self._test_cmd(repo, ['test', 'run', '--filter', 'foo'],
           asserts=assert_syntaxerror, retcode=1)
-      self._test_cmd(repo, ['simulation_test', 'train', 'foo'],
+      self._test_cmd(repo, ['test', 'train', '--filter', 'foo'],
           asserts=assert_syntaxerror, retcode=1)
       self._test_cmd(repo, ['run', 'foo'],
           asserts=assert_syntaxerror, retcode=1)
@@ -238,9 +238,9 @@ def GenTests(api):
             stdout + stderr, r"KeyError: 'Unknown path: bippityboppityboo'",
             stdout + stderr)
 
-      self._test_cmd(repo, ['simulation_test', 'train', 'missing_path'],
+      self._test_cmd(repo, ['test', 'train', '--filter', 'missing_path'],
           asserts=assert_keyerror, retcode=1)
-      self._test_cmd(repo, ['simulation_test', 'test', 'missing_path'],
+      self._test_cmd(repo, ['test', 'run', '--filter', 'missing_path'],
           asserts=assert_keyerror, retcode=1)
       self._test_cmd(repo, ['run', 'missing_path'],
           asserts=assert_keyerror, retcode=255)
@@ -270,10 +270,10 @@ def GenTests(api):
         }, f)
 
       try:
-        self._test_cmd(repo, ['simulation_test', 'train', 'missing_path'],
+        self._test_cmd(repo, ['test', 'train', '--filter', 'missing_path'],
             asserts=assert_keyerror, retcode=1,
             engine_args=['--operational-args-path', path])
-        self._test_cmd(repo, ['simulation_test', 'test', 'missing_path'],
+        self._test_cmd(repo, ['test', 'run', '--filter', 'missing_path'],
             asserts=assert_keyerror, retcode=1,
             engine_args=['--operational-args-path', path])
         self._test_cmd(repo, ['run', 'missing_path'],
@@ -320,7 +320,7 @@ def RunSteps(api):
 def GenTests(api):
   yield api.test('basic') + api.expect_exception('AssertionError')
 """)
-      self._test_cmd(repo, ['simulation_test', 'train', 'unconsumed_assertion'],
+      self._test_cmd(repo, ['test', 'train', '--filter', 'unconsumed_assertion'],
         asserts=lambda stdout, stderr: self.assertRegexpMatches(
             stdout + stderr, 'Unconsumed'),
         retcode=1)
