@@ -243,11 +243,17 @@ def test_rolls(repo_cfg_block, config_file, context, package_spec,
                verbose_json):
   candidates, rejected_candidates, repos = get_roll_candidates(
     context, package_spec)
-  trivial, picked_roll_details, roll_details = process_candidates(
-    repo_cfg_block, candidates, repos, context, config_file, verbose_json)
+
+  roll_details = []
+  picked_roll_details = None
+  trivial = True
+  if candidates:
+    trivial, picked_roll_details, roll_details = process_candidates(
+      repo_cfg_block, candidates, repos, context, config_file, verbose_json)
 
   ret = {
-    'success': bool(picked_roll_details),
+    # it counts as success if there are no candidates at all :)
+    'success': bool(not candidates or picked_roll_details),
     'trivial': trivial,
     'roll_details': roll_details,
     'picked_roll_details': picked_roll_details,

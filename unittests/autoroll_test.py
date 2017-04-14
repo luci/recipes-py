@@ -47,7 +47,7 @@ class TestAutoroll(repo_test_util.RepoTest):
     })
 
     roll_result = self.run_roll(repos['a'])
-    self.assertFalse(roll_result['success'])
+    self.assertTrue(roll_result['success'])
     self.assertEquals([], roll_result['roll_details'])
     self.assertEquals([], roll_result['rejected_candidate_specs'])
 
@@ -495,7 +495,7 @@ class TestAutoroll(repo_test_util.RepoTest):
             repos['b'], 'a', repos['a']['revision']))
 
     roll_result = self.run_roll(repos['c'])
-    self.assertFalse(roll_result['success'])
+    self.assertTrue(roll_result['success'])
     self.assertEqual([], roll_result['roll_details'])
     self.assertEqual([], roll_result['rejected_candidate_specs'])
 
@@ -513,11 +513,9 @@ class TestAutoroll(repo_test_util.RepoTest):
         'b', self.updated_package_spec_pb(repos['b'], 'a', a_c1['revision']))
 
     roll_result = self.run_roll(repos['d'])
-    self.assertFalse(roll_result['success'])
-    self.assertFalse(bool(roll_result['roll_details']))
-    # Will cause the autoroller to fail, because we didn't specify which
-    # projects we care about.
-    self.assertTrue(bool(roll_result['rejected_candidate_specs']))
+    self.assertTrue(roll_result['success'])
+    self.assertEqual([], roll_result['roll_details'])
+    self.assertGreater(len(roll_result['rejected_candidate_specs']), 0)
 
 
 if __name__ == '__main__':
