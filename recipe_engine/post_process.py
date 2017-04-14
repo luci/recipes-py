@@ -185,6 +185,24 @@ def MustRunRE(check, step_odict, step_regex, at_least=1, at_most=None):
     check(matches <= at_most)
 
 
+def StatusCodeIn(check, step_odict, *codes):
+  """Assert that recipe result status code is within expected codes.
+
+  Args:
+    codes (list): list of expected status codes (int).
+  """
+  check(step_odict['$result']['status_code'] in codes)
+
+
+def ResultReasonRE(check, step_odict, reason_regex):
+  """Assert that recipe result reason matches given regex.
+
+  Args:
+    reason_regex (str): the regular expression to match.
+  """
+  check(re.match(reason_regex, step_odict['$result']['reason']))
+
+
 def DropExpectation(_check, _step_odict):
   """Using this post-process hook will drop the expectations for this test
   completely.
