@@ -196,10 +196,11 @@ def process_candidates(repo_cfg_block, candidates, repos, context, config_file,
 
     rc, output = run_simulation_test(
       context.repo_root, candidate.package_pb.recipes_path, ['run'])
-    roll_details[i]['recipes_simulation_test'] = {
-      'output': output,
-      'rc': rc,
-    }
+    if verbose_json:
+      roll_details[i]['recipes_simulation_test'] = {
+        'output': output,
+        'rc': rc,
+      }
 
     if rc == 0:
       print('SUCCESS!')
@@ -223,10 +224,11 @@ def process_candidates(repo_cfg_block, candidates, repos, context, config_file,
 
       rc, output = run_simulation_test(
           context.repo_root, candidate.package_pb.recipes_path, ['train'])
-      roll_details[i]['recipes_simulation_test_train'] = {
-        'output': output,
-        'rc': rc,
-      }
+      if verbose_json:
+        roll_details[i]['recipes_simulation_test_train'] = {
+          'output': output,
+          'rc': rc,
+        }
 
       if rc == 0:
         print('SUCCESS!')
