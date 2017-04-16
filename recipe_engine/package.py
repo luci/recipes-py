@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 import copy
+import errno
 import logging
 import operator
 import os
@@ -41,7 +42,13 @@ def cleanup_pyc(path):
   for root, _dirs, files in os.walk(path):
     for f in files:
       if f.endswith('.pyc'):
-        os.unlink(os.path.join(root, f))
+        try:
+          os.unlink(os.path.join(root, f))
+        except OSError as ex:
+          # If multiple things are cleaning pyc's at the same time this can
+          # race. Fortunately we only care that SOMETHING deleted the pyc :)
+          if ex.errno != errno.ENOENT:
+            raise
 
 
 class InfraRepoConfig(object):
