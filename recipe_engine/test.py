@@ -896,7 +896,7 @@ def main(universe_view, raw_args, engine_flags):
 
   Args:
     universe_view: an UniverseView object to operate on
-    raw_args: command line arguments to simulation_test_ng
+    raw_args: command line arguments to the 'test' command
     engine_flags: recipe engine command-line flags
   Returns:
     Exit code

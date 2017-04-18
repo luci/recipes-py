@@ -91,7 +91,7 @@ tests to make sure that you maintain 100% code coverage.
 
 In order to run the tests, run
 
-    $ scripts/slave/recipes.py --use-bootstrap simulation_test train hello
+    $ scripts/slave/recipes.py test train --filter hello
 
 This will write the file `build/scripts/slave/recipes/hello.expected/basic.json`
 summarizing the actions of the recipe under the boring conditions
@@ -641,12 +641,12 @@ Use `scripts/slave/recipes.py doc`. It's super effective!
 Each repo has a recipes.py entry point under `recipes_path` from `recipes.cfg` .
 
 Execute the following commands:
-`./recipes.py --use-bootstrap simulation_test test`
-`./recipes.py --use-bootstrap simulation_test train`
+`./recipes.py test run`
+`./recipes.py test train`
 
 Specifically, for `tools/build` repo, the commands to execute are:
-`scripts/slave/recipes.py --use-bootstrap simulation_test test`
-`scripts/slave/recipes.py --use-bootstrap simulation_test train`
+`scripts/slave/recipes.py test run`
+`scripts/slave/recipes.py test train`
 
 ## Where's the docs on `*.py`?
 

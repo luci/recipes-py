@@ -65,7 +65,7 @@ For example, to make a change in `build` and see what its effect on
 `build_internal` recipes, one would execute `build_internal`'s recipe,
 overriding its `build` project to point to the local path.
 
-    $ ./recipes.py -O build=/path/to/build simulation_test train
+    $ ./recipes.py -O build=/path/to/build test train
 
 This would simulate and train `build_internal` recipes, using the local `build`
 checkout instead of the one configured in `build_internal`'s `recipes.cfg`.
@@ -76,7 +76,7 @@ a `recipes-py` checkout in `/b/recipes-py`, which you've modified, and you
 want to see its effects on the repository `/b/build`.  Run:
 
     $ /b/recipes-py/recipes.py --package /b/build/infra/config/recipes.cfg \
-      -O recipe_engine=/b/recipes-py simulation_test
+      -O recipe_engine=/b/recipes-py test run
 
 Running `/b/recipes-py/recipes.py` uses the modified engine, however without
 the `-O` package override option, it would still use core modules pinned in
