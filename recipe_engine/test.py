@@ -409,8 +409,10 @@ def get_tests(test_filter=None):
         # a weird recipe generates tests non-deterministically. The recipe
         # engine should be robust against such user recipe code where
         # reasonable.
-        _GEN_TEST_CACHE[(recipe_name, test_data.name)] = copy.deepcopy(
-            test_data)
+        key = (recipe_name, test_data.name)
+        if key in _GEN_TEST_CACHE:
+          raise ValueError('Duplicate test found: %s' % test_data.name)
+        _GEN_TEST_CACHE[key] = copy.deepcopy(test_data)
 
         test_description = TestDescription(
             recipe_name, test_data.name, expect_dir, covers)

@@ -1085,6 +1085,19 @@ class TestTest(unittest.TestCase):
     self._run_recipes('test', 'run', '--json', self.json_path)
     self.assertEqual(self.json_generator.get(), self.json_contents)
 
+  def test_test_duplicate(self):
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['pass']
+    rw.GenTestsLines = ['yield api.test("basic")'] * 2
+    rw.add_expectation('basic')
+    rw.write()
+    with self.assertRaises(subprocess.CalledProcessError) as cm:
+      self._run_recipes('test', 'run')
+    self.assertIn(
+        'Exception: While generating results for \'foo\': '
+            'ValueError: Duplicate test found: basic',
+        cm.exception.output)
+
   def test_diff_basic(self):
     g1 = self.json_generator
     g2 = self.json_generator
