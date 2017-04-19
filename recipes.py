@@ -45,32 +45,6 @@ def get_package_config(args):
   )
 
 
-def simulation_test(package_deps, args, op_args):
-  try:
-    from recipe_engine import simulation_test
-  except ImportError:
-    logging.error(
-        'Error while importing testing libraries. You may be missing the pip'
-        ' package "coverage". Install it, or use the --use-bootstrap command'
-        ' line argument when calling into the recipe engine, which will install'
-        ' it for you.')
-    raise
-
-  from recipe_engine import loader
-  from recipe_engine import package
-
-  _, config_file = get_package_config(args)
-  universe = loader.RecipeUniverse(package_deps, config_file)
-  universe_view = loader.UniverseView(universe, package_deps.root_package)
-
-  # Prevent flakiness caused by stale pyc files.
-  package.cleanup_pyc(package_deps.root_package.recipes_dir)
-
-  simulation_test.main(
-      universe_view, args=json.loads(args.args),
-      engine_flags=op_args.engine_flags)
-
-
 def test(package_deps, args, op_args):
   try:
     from recipe_engine import test
@@ -415,14 +389,6 @@ def _op_properties_to_dict(pmap):
 
 
 def main():
-  # Super-annoyingly, we need to manually parse for simulation_test since
-  # argparse is bonkers and doesn't allow us to forward --help to subcommands.
-  # Save old_args for if we're using bootstrap
-  original_sys_argv = sys.argv[:]
-  if 'simulation_test' in sys.argv:
-    index = sys.argv.index('simulation_test')
-    sys.argv = sys.argv[:index+1] + [json.dumps(sys.argv[index+1:])]
-
   parser = argparse.ArgumentParser(
       description='Interact with the recipe system.')
 
@@ -470,15 +436,9 @@ def main():
       description='Fetch and update dependencies.')
   fetch_p.set_defaults(command='fetch')
 
-  simulation_test_p = subp.add_parser(
-    'simulation_test',
-    description='Generate or check expectations by simulation')
-  simulation_test_p.set_defaults(command='simulation_test')
-  simulation_test_p.add_argument('args')
-
   test_p = subp.add_parser(
     'test',
-    description='Generate or check expectations by simulation (EXPERIMENTAL)')
+    description='Generate or check expectations by simulation')
   test_p.set_defaults(command='test')
   test_p.add_argument('args', nargs=argparse.REMAINDER)
 
@@ -702,7 +662,7 @@ def main():
             '-E',  # Don't use PYTHON* enviornment variables.
             '-s',  # Don't use user 'site.py'.
             os.path.join(ROOT_DIR, 'recipes.py'),
-          ] + original_sys_argv[1:])
+          ] + sys.argv[1:])
 
     # Standard recipe engine operation.
     return _real_main(args, op_args)
@@ -748,8 +708,6 @@ def _real_main(args, op_args):
     # We already did everything in the create() call above.
     assert not args.no_fetch, 'Fetch? No-fetch? Make up your mind!'
     return 0
-  if args.command == 'simulation_test':
-    return simulation_test(package_deps, args, op_args)
   elif args.command == 'test':
     return test(package_deps, args, op_args)
   elif args.command == 'bundle':
