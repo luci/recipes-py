@@ -12,11 +12,70 @@ import inspect
 import re
 import itertools
 
-from collections import OrderedDict, deque, defaultdict
+from collections import OrderedDict, deque, defaultdict, namedtuple
 
 from . import env
 import astunparse
-from expect_tests.type_definitions import CheckFrame, Check
+
+from recipe_engine import test_result_pb2
+
+
+class CheckFrame(namedtuple('CheckFrame', 'fname line function code varmap')):
+  def format(self, indent):
+    lines = [
+      '%s%s:%s - %s()' % ((' '*indent), self.fname, self.line, self.function)
+    ]
+    indent += 2
+    lines.append('%s`%s`' % ((' '*indent), self.code))
+    indent += 2
+    if self.varmap:
+      lines.extend('%s%s: %s' % ((' '*indent), k, v)
+                   for k, v in self.varmap.iteritems())
+    return '\n'.join(lines)
+
+
+class Check(namedtuple('Check', (
+    'name ctx_filename ctx_lineno ctx_func ctx_args ctx_kwargs '
+    'frames passed'))):
+  def format(self, indent):
+    '''Example:
+    CHECK "something was run" (FAIL):
+      added /.../recipes-py/recipes/engine_tests/whitelist_steps.py:28
+        MustRun('fakiestep')
+      /.../recipes-py/recipe_engine/post_process.py:160 - MustRun()
+        `check("something was run", (step_name in step_odict))`
+          step_odict.keys(): ['something important', 'fakestep', '$result']
+          step_name: 'fakiestep'
+    '''
+
+    ret = (' '*indent)+'CHECK%(name)s(%(passed)s):\n' % {
+      'name': ' %r ' % self.name if self.name else '',
+      'passed': 'PASS' if self.passed else 'FAIL',
+    }
+    indent += 2
+    ret += '\n'.join(map(lambda f: f.format(indent), self.frames)) + '\n'
+
+    ret += (' '*indent)+'added %s:%d\n' % (self.ctx_filename, self.ctx_lineno)
+    func = '%s(' % self.ctx_func
+    if self.ctx_args:
+      func += ', '.join(self.ctx_args)
+    if self.ctx_kwargs:
+      func += ', '.join(['%s=%s' % i for i in self.ctx_kwargs.iteritems()])
+    func += ')'
+    ret += (' '*indent)+'  '+func
+    return ret
+
+  def as_proto(self):
+    proto = test_result_pb2.TestResult.TestFailure()
+    if self.name:
+      proto.check_failure.name = self.name
+    proto.check_failure.func = self.ctx_func
+    proto.check_failure.args.extend([str(a) for a in self.ctx_args])
+    for k, v in self.ctx_kwargs.iteritems():
+      proto.check_failure.kwargs[k] = v
+    proto.check_failure.filename = self.ctx_filename
+    proto.check_failure.lineno = self.ctx_lineno
+    return proto
 
 
 class _resolved(ast.AST):

@@ -11,7 +11,6 @@ from collections import OrderedDict
 
 import test_env
 
-from expect_tests.type_definitions import CheckFrame
 from recipe_engine import checker
 
 
@@ -20,7 +19,7 @@ class TestChecker(unittest.TestCase):
     return checkframe._replace(line=0, fname='')
 
   def mk(self, fname, code, varmap):
-    return CheckFrame(
+    return checker.CheckFrame(
       fname='', line=0, function=fname, code=code, varmap=varmap)
 
   def test_no_calls(self):
