@@ -109,7 +109,7 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
       '  "project_id": "super_main_package",',
       '  "recipes_path": "path/to/recipes"',
       '}',
-    ])
+    ]) + '\n'
     self.package_file = MockPackageFile('repo/root/infra/config/recipes.cfg',
                                         self.proto_text)
     self.context = package.PackageContext.from_package_pb(
@@ -133,7 +133,7 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
     package_spec = package.PackageSpec.from_package_pb(
       self.context, package_file.read())
     self.assertEqual(package_file.to_raw(package_spec.spec_pb),
-                     '{\n  "api_version": 1\n}')
+                     '{\n  "api_version": 1\n}\n')
 
   def test_no_version(self):
     proto_text = """{
@@ -168,7 +168,7 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
       '  "project_id": "super_main_package",',
       '  "recipes_path": "path/to/recipes"',
       '}',
-    ])
+    ]) + '\n'
     package_file = MockPackageFile('repo/root/infra/config/recipes.cfg',
                                    proto_text)
 

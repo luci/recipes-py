@@ -73,7 +73,7 @@ def dump(buf):
   Returns (str)
   """
   return json.dumps(
-    dump_obj(buf), indent=2, sort_keys=True).replace(' \n', '\n')
+    dump_obj(buf), indent=2, sort_keys=True).replace(' \n', '\n') + '\n'
 
 
 class PackageFile(object):

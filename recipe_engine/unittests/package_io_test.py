@@ -42,7 +42,7 @@ class TestPackageIO(unittest.TestCase):
       'recipes_path': 'foo/bar',
       'deps': [dict(dep1)],
       'autoroll_recipe_options': autoroll_options,
-    }, indent=2, sort_keys=True).replace(' \n', '\n')
+    }, indent=2, sort_keys=True).replace(' \n', '\n') + '\n'
 
     dep1.pop('project_id')
 
@@ -55,7 +55,7 @@ class TestPackageIO(unittest.TestCase):
         'dep1': dep1,
       },
       'autoroll_recipe_options': autoroll_options,
-    }, indent=2, sort_keys=True).replace(' \n', '\n')
+    }, indent=2, sort_keys=True).replace(' \n', '\n') + '\n'
 
     self.parsed = package_pb2.Package(
       project_id='test',
