@@ -24,6 +24,7 @@ class CommitList(object):
     assert all(isinstance(c, CommitMetadata) for c in commit_list)
     self._commits = list(commit_list)
     self._cur_idx = 0
+    self._next_roll_candidate_idx = None
 
     # This maps from commit hash -> index in _commits.
     self._rev_idx = {}
@@ -68,6 +69,28 @@ class CommitList(object):
     if nxt_idx >= len(self._commits):
       return None
     return self._commits[nxt_idx]
+
+  @property
+  def next_roll_candidate(self):
+    """Gets the next CommitMetadata and distance with roll_candidate==True
+    without advancing the current index.
+
+    Returns (CommitMetadata, <distance>), or (None, None) if there is no next
+      roll_candidate.
+    """
+    # Compute and cache the next roll candidate index.
+    nxt_idx = self._next_roll_candidate_idx
+    if nxt_idx is None or nxt_idx <= self._cur_idx:
+      nxt_idx = None
+      for i, commit in enumerate(self._commits[self._cur_idx+1:]):
+        if commit.roll_candidate:
+          nxt_idx = self._cur_idx + i + 1
+          break
+      self._next_roll_candidate_idx = nxt_idx
+
+    if nxt_idx is not None:
+      return self._commits[nxt_idx], nxt_idx - self._cur_idx
+    return (None, None)
 
   def advance(self):
     """Advances the current CommitMetadata by one.
