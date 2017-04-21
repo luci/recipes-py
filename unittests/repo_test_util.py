@@ -123,9 +123,7 @@ class RepoTest(unittest.TestCase):
             self._recipe_tool,
             os.path.join(repo_dir, 'infra', 'config', 'recipes.cfg')),
         ]))
-      with open('some_file', 'w') as f:
-        print >> f, 'I\'m a file'
-      subprocess.check_output(['git', 'add', 'recipes.py', 'some_file'])
+      subprocess.check_output(['git', 'add', 'recipes.py'])
     rev = self.update_recipes_cfg(name, spec)
     return {
         'name': name,
@@ -197,11 +195,10 @@ class RepoTest(unittest.TestCase):
     env = dict(os.environ)
     env['GIT_AUTHOR_NAME'] = author_name
     env['GIT_AUTHOR_EMAIL'] = author_email
-    with open(os.path.join(root, 'some_file'), 'a') as f:
-      print >> f, message
     subprocess.check_output(
       ['git', '-C', root, 'commit',
-       '-a', '-m', message], env=env)
+       '-a', '--allow-empty',
+       '-m', message], env=env)
     rev = subprocess.check_output(
       ['git', '-C', root, 'rev-parse', 'HEAD']).strip()
     return {

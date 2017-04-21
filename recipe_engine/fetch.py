@@ -31,14 +31,6 @@ from google.protobuf import json_format
 LOGGER = logging.getLogger(__name__)
 
 
-def has_interesting_changes(spec, changed_files):
-  # TODO(iannucci): analyze bundle_extra_paths.txt  too.
-  return (
-    'infra/config/recipes.cfg' in changed_files or
-    any(f.startswith(spec.recipes_path) for f in changed_files)
-  )
-
-
 class FetchError(Exception):
   pass
 
@@ -56,12 +48,9 @@ class UnresolvedRefspec(Exception):
 # commit_timestamp (int): the unix commit timestamp for this commit
 # message_lines (tuple(str)): the message of this commit
 # spec (package_pb2.Package): the parsed infra/config/recipes.cfg file or None.
-# roll_candidate (bool): if this commit contains changes which are known to
-#   affect the behavior of the recipes (i.e. modifications within recipe_path
-#   and/or modifications to recipes.cfg)
 CommitMetadata = namedtuple(
   '_CommitMetadata',
-  'revision author_email commit_timestamp message_lines spec roll_candidate')
+  'revision author_email commit_timestamp message_lines spec')
 
 
 class Backend(object):
@@ -125,7 +114,11 @@ class Backend(object):
 
     The refspec will be resolved if it's not absolute.
 
-    Returns (CommitMetadata).
+    Returns {
+      'author': '<author name>',
+      'message': '<commit message>',
+      'spec': package_pb2.Package or None,  # the parsed recipes.cfg file.
+    }
     """
     revision = self.resolve_refspec(refspec)
     cache = self._GIT_METADATA_CACHE.setdefault(self.repo_url, {})
@@ -147,16 +140,18 @@ class Backend(object):
       return refspec
     return self._resolve_refspec_impl(refspec)
 
-  def updates(self, revision, other_revision):
+  def updates(self, revision, other_revision, paths):
     """Returns a list of revisions |revision| through |other_revision|
     (inclusive).
+
+    If |paths| is a non-empty list, the history is scoped just to these paths.
 
     Returns list(CommitMetadata) - The commit metadata in the range
       (revision,other_revision].
     """
     self.assert_resolved(revision)
     self.assert_resolved(other_revision)
-    return self._updates_impl(revision, other_revision)
+    return self._updates_impl(revision, other_revision, paths)
 
   ### direct overrides. These are public methods which must be overridden.
 
@@ -190,9 +185,11 @@ class Backend(object):
   ### private overrides. Override these in the implementations, but don't call
   ### externally.
 
-  def _updates_impl(self, revision, other_revision):
+  def _updates_impl(self, revision, other_revision, paths):
     """Returns a list of revisions |revision| through |other_revision|. This
     includes |revision| and |other_revision|.
+
+    If |paths| is a non-empty list, the history is scoped just to these paths.
 
     Args:
       revision (str) - the first git commit
@@ -248,15 +245,6 @@ class GitBackend(Backend):
 
     Raises GitError on failure.
     """
-    if self._GIT_BINARY.endswith('.bat'):
-      # On the esteemed Windows Operating System, '^' is an escape character.
-      # Since .bat files are running cmd.exe under the hood, they interpret this
-      # escape character. We need to ultimately get a single ^, so we need two
-      # ^'s for when we invoke the .bat, and each of those needs to be escaped
-      # when the bat ultimately invokes the git.exe binary. This leaves us with
-      # a total of 4x the ^'s that we originally wanted. Hooray.
-      args = [a.replace('^', '^^^^') for a in args]
-
     cmd = [
       self._GIT_BINARY,
       '-C', self.checkout_dir,
@@ -339,13 +327,15 @@ class GitBackend(Backend):
     except GitError:
       self._git('reset', '-q', '--hard', revision)
 
-  def _updates_impl(self, revision, other_revision):
+  def _updates_impl(self, revision, other_revision, paths):
     args = [
         'rev-list',
         '--reverse',
         '--topo-order',
         '%s..%s' % (revision, other_revision),
     ]
+    if paths:
+      args.extend(['--'] + paths)
     return [
       self.commit_metadata(rev)
       for rev in self._git(*args).strip().split('\n')
@@ -377,14 +367,9 @@ class GitBackend(Backend):
     except GitError:
       spec = None
 
-    # check diff to see if it touches anything interesting.
-    changed_files = set(self._git(
-      'diff-tree', '-r', '--no-commit-id', '--name-only', '%s^!' % revision)
-      .splitlines())
-
     return CommitMetadata(revision, meta[0],
                           int(meta[1]), tuple(meta[2:]),
-                          spec, has_interesting_changes(spec, changed_files))
+                          spec)
 
 class GitilesFetchError(FetchError):
   """An HTTP error that occurred during Gitiles fetching."""
@@ -408,22 +393,16 @@ class GitilesFetchError(FetchError):
 # commit (str) - the git commit hash
 # author_email (str) - the author email for this commit
 # message_lines (tuple) - the lines of the commit message
-# changed_files (frozenset) - all paths touched by this commit
 class _GitilesCommitJson(namedtuple(
     '_GitilesCommitJson',
-    'commit author_email commit_timestamp message_lines changed_files')):
+    'commit author_email commit_timestamp message_lines')):
   @classmethod
   def from_raw_json(cls, raw):
-    mod_files = set()
-    for entry in raw['tree_diff']:
-      mod_files.add(entry['old_path'])
-      mod_files.add(entry['new_path'])
     return cls(
       raw['commit'],
       raw['author']['email'],
       calendar.timegm(time.strptime(raw['committer']['time'])),
       tuple(raw['message'].splitlines()),
-      frozenset(mod_files),
     )
 
 
@@ -453,13 +432,8 @@ class GitilesBackend(Backend):
       raise GitilesFetchError(resp.status_code, resp.text)
     return resp
 
-  def _fetch_gitiles_committish_json(self, url_fmt, *args):
+  def _fetch_gitiles_json(self, url_fmt, *args):
     """Fetches a remote URL path and expects a JSON object on success.
-
-    This appends two GET params to url_fmt:
-      format=JSON   - Does what you expect
-      name-status=1 - Ensures that commit objects returned have a 'tree_diff'
-        member which shows the diff for that commit.
 
     Args:
       url_fmt (str) - the url path fragment as a python %format string, like
@@ -469,7 +443,7 @@ class GitilesBackend(Backend):
 
     Returns the decoded JSON object
     """
-    resp = self._fetch_gitiles(url_fmt+'?name-status=1&format=JSON', *args)
+    resp = self._fetch_gitiles(url_fmt, *args)
     if not resp.text.startswith(self._GERRIT_XSRF_HEADER):
       raise GitilesFetchError(resp.status_code, 'Missing XSRF prefix')
     return json.loads(resp.text[len(self._GERRIT_XSRF_HEADER):])
@@ -492,7 +466,7 @@ class GitilesBackend(Backend):
     if refspec in c:
       return c[refspec]
 
-    raw = self._fetch_gitiles_committish_json('+/%s', refspec)
+    raw = self._fetch_gitiles_json('+/%s?format=JSON', refspec)
     ret = _GitilesCommitJson.from_raw_json(raw)
     if self.is_resolved_revision(refspec):
       c[refspec] = ret
@@ -551,13 +525,14 @@ class GitilesBackend(Backend):
     with tarfile.open(fileobj=StringIO(archive_response.content)) as tf:
       tf.extractall(recipes_path)
 
-  def _updates_impl(self, revision, other_revision):
+  def _updates_impl(self, revision, other_revision, paths):
     self.assert_remote('_updates_impl')
 
     # TODO(iannucci): implement paging
 
-    log_json = self._fetch_gitiles_committish_json(
-      '+log/%s..%s', revision, other_revision)
+    # To include info about touched paths (tree_diff), pass name-status=1 below.
+    log_json = self._fetch_gitiles_json(
+      '+log/%s..%s?name-status=1&format=JSON', revision, other_revision)
 
     c = self._COMMIT_JSON_CACHE.setdefault(self.repo_url, {})
 
@@ -565,7 +540,18 @@ class GitilesBackend(Backend):
     for entry in log_json['log']:
       commit = entry['commit']
       c[commit] = _GitilesCommitJson.from_raw_json(entry)
-      results.append(commit)
+
+      matched = False
+      for path in paths:
+        for diff_entry in entry['tree_diff']:
+          if (diff_entry['old_path'].startswith(path) or
+              diff_entry['new_path'].startswith(path)):
+            matched = True
+            break
+        if matched:
+          break
+      if matched or not paths:
+        results.append(commit)
 
     results.reverse()
     return map(self.commit_metadata, results)
@@ -590,5 +576,4 @@ class GitilesBackend(Backend):
       rev_json.author_email,
       rev_json.commit_timestamp,
       rev_json.message_lines,
-      spec,
-      has_interesting_changes(spec, rev_json.changed_files))
+      spec)
