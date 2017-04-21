@@ -209,18 +209,8 @@ class GitRepoSpec(RepoSpec):
 
     Returns list(CommitMetadata)
     """
-    spec = self.spec_pb()
-
-    paths = []
-    subdir = spec.recipes_path
-    if subdir:
-      # We add package_file to the list of paths to check because it might
-      # contain other upstream rolls, which we want.
-      paths.extend([subdir + os.path.sep,
-                    InfraRepoConfig().relative_recipes_cfg])
-
-    other_revision = self.backend.resolve_refspec(self._branch_for_remote)
-    return self.backend.updates(self.revision, other_revision, paths)
+    return self.backend.updates(
+      self.revision, self.backend.resolve_refspec(self._branch_for_remote))
 
   def _components(self):
     return (self.project_id, self.repo, self.revision, self.path)
@@ -250,7 +240,8 @@ class PathRepoSpec(RepoSpec):
       '',
       0,
       (),
-      self.spec_pb()
+      self.spec_pb(),
+      False
     )
 
   def updates(self):

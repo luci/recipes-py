@@ -70,7 +70,8 @@ class TestGit(unittest.TestCase):
 
   def g_metadata_calls(self, dirname='dir', commit='a'*40,
                        email='foo@example.com', msg='hello\nworld',
-                       commit_timestamp=1492131405, config=None):
+                       commit_timestamp=1492131405, config=None,
+                       diff=('foo', 'bar')):
     config = config or {'api_version': 2}
 
     return [
@@ -79,7 +80,11 @@ class TestGit(unittest.TestCase):
       ], '%s\n%d\n%s\n' % (email, commit_timestamp, msg)),
       self.g([
         '-C', dirname, 'cat-file', 'blob', commit+':infra/config/recipes.cfg'
-      ], json.dumps(config))
+      ], json.dumps(config)),
+      self.g([
+        '-C', dirname,
+        'diff-tree', '-r', '--no-commit-id', '--name-only', commit+'^!',
+      ], '\n'.join(diff))
     ]
 
   @mock.patch('os.path.isdir')
@@ -197,7 +202,8 @@ class TestGit(unittest.TestCase):
       author_email = 'foo@example.com',
       commit_timestamp = 1492131405,
       message_lines = ('hello', 'world'),
-      spec = package_pb2.Package(api_version=2)
+      spec = package_pb2.Package(api_version=2),
+      roll_candidate = True,
     ))
     self.assertMultiDone(git)
 
@@ -220,6 +226,16 @@ class TestGitiles(unittest.TestCase):
       'author': {'email': 'foo@example.com'},
       'committer': {'time': 'Fri Apr 14 00:56:45 2017'},
       'message': 'message',
+      'tree_diff': [
+        {
+          'old_path': 'unrelated',
+          'new_path': 'unrelated',
+        },
+        {
+          'old_path': 'path/to/recipes/foo',
+          'new_path': 'path/to/recipes/bar',
+        },
+      ]
     }
 
     self.a_meta = fetch.CommitMetadata(
@@ -231,7 +247,8 @@ class TestGitiles(unittest.TestCase):
         api_version = 2,
         project_id = 'foo',
         recipes_path = 'path/to/recipes',
-      )
+      ),
+      roll_candidate = True,
     )
 
   def assertMultiDone(self, mocked_call):
@@ -272,8 +289,8 @@ class TestGitiles(unittest.TestCase):
   @mock.patch('requests.get')
   def test_checkout(self, requests_get, _tarfile_open, makedirs, rmtree):
     requests_get.side_effect = multi(
-      self.j('repo/+/revision?format=JSON', self.a_dat),
-      self.j('repo/+/%s?format=JSON' % self.a, self.a_dat),
+      self.j('repo/+/revision?name-status=1&format=JSON', self.a_dat),
+      self.j('repo/+/%s?name-status=1&format=JSON' % self.a, self.a_dat),
       self.d('repo/+/%s/infra/config/recipes.cfg?format=TEXT' % self.a,
              self.proto_text),
       self.d('repo/+archive/%s/path/to/recipes.tar.gz' % self.a, ''),
@@ -303,7 +320,7 @@ class TestGitiles(unittest.TestCase):
           'tree_diff': [
             {
               'old_path': '/dev/null',
-              'new_path': 'path1/foo',
+              'new_path': 'path/to/recipes/path1/foo',
             },
           ],
         },
@@ -327,7 +344,7 @@ class TestGitiles(unittest.TestCase):
           'tree_diff': [
             {
               'old_path': '/dev/null',
-              'new_path': 'path8/foo',
+              'new_path': 'path/to/recipes/path8/foo',
             },
             {
               'old_path': 'path2/foo',
@@ -339,21 +356,13 @@ class TestGitiles(unittest.TestCase):
     }
 
     requests_get.side_effect = multi(
-      self.j('repo/+/reva?format=JSON', {
-        'commit': sha_a,
-        'author': {'email': 'foo@example.com'},
-        'committer': {'time': 'Fri Apr 14 00:56:45 2017'},
-        'message': 'message',
-      }),
-      self.j('repo/+/revb?format=JSON', {
-        'commit': sha_b,
-        'author': {'email': 'foo@example.com'},
-        'committer': {'time': 'Fri Apr 14 00:58:45 2017'},
-        'message': 'message',
-      }),
+      self.j('repo/+/reva?name-status=1&format=JSON', log_json['log'][2]),
+      self.j('repo/+/revb?name-status=1&format=JSON', log_json['log'][0]),
       self.j('repo/+log/%s..%s?name-status=1&format=JSON' % (sha_a, sha_b),
              log_json),
       self.d('repo/+/%s/infra/config/recipes.cfg?format=TEXT' % sha_a,
+             self.proto_text),
+      self.d('repo/+/%s/infra/config/recipes.cfg?format=TEXT' % 'def456',
              self.proto_text),
       self.d('repo/+/%s/infra/config/recipes.cfg?format=TEXT' % sha_b,
              self.proto_text),
@@ -366,6 +375,18 @@ class TestGitiles(unittest.TestCase):
     self.assertEqual(
         [self.a_meta,
          fetch.CommitMetadata(
+          revision = 'def456',
+          author_email = 'foo@example.com',
+          commit_timestamp = 1492131465,
+          message_lines = ('message',),
+          spec = package_pb2.Package(
+            api_version = 2,
+            project_id = 'foo',
+            recipes_path = 'path/to/recipes',
+          ),
+          roll_candidate = False,
+        ),
+         fetch.CommitMetadata(
           revision = sha_b,
           author_email = 'foo@example.com',
           commit_timestamp = 1492131525,
@@ -374,17 +395,18 @@ class TestGitiles(unittest.TestCase):
             api_version = 2,
             project_id = 'foo',
             recipes_path = 'path/to/recipes',
-          )
+          ),
+          roll_candidate = True,
         )],
-      be.updates(sha_a, sha_b, ['path1', 'path2']))
+      be.updates(sha_a, sha_b))
     self.assertMultiDone(requests_get)
 
 
   @mock.patch('requests.get')
   def test_commit_metadata(self, requests_get):
     requests_get.side_effect = multi(
-      self.j('repo/+/revision?format=JSON', self.a_dat),
-      self.j('repo/+/%s?format=JSON' % self.a, self.a_dat),
+      self.j('repo/+/revision?name-status=1&format=JSON', self.a_dat),
+      self.j('repo/+/%s?name-status=1&format=JSON' % self.a, self.a_dat),
       self.d('repo/+/%s/infra/config/recipes.cfg?format=TEXT' % self.a,
              self.proto_text)
     )
@@ -397,7 +419,8 @@ class TestGitiles(unittest.TestCase):
   @mock.patch('requests.get')
   def test_non_transient_error(self, requests_get):
     requests_get.side_effect = multi(
-      self.r('repo/+/revision?format=JSON', fetch.GitilesFetchError(403, '')),
+      self.r('repo/+/revision?name-status=1&format=JSON',
+             fetch.GitilesFetchError(403, '')),
     )
     with self.assertRaises(fetch.GitilesFetchError):
       fetch.GitilesBackend('dir', 'repo', True).commit_metadata(
@@ -409,12 +432,16 @@ class TestGitiles(unittest.TestCase):
   @mock.patch('logging.exception')
   def test_transient_retry(self, _logging_exception, _time_sleep, requests_get):
     requests_get.side_effect = multi(
-      self.r('repo/+/revision?format=JSON', fetch.GitilesFetchError(500, '')),
-      self.r('repo/+/revision?format=JSON', fetch.GitilesFetchError(500, '')),
-      self.r('repo/+/revision?format=JSON', fetch.GitilesFetchError(500, '')),
-      self.r('repo/+/revision?format=JSON', fetch.GitilesFetchError(500, '')),
-      self.j('repo/+/revision?format=JSON', self.a_dat),
-      self.j('repo/+/%s?format=JSON' % self.a, self.a_dat),
+      self.r('repo/+/revision?name-status=1&format=JSON',
+             fetch.GitilesFetchError(500, '')),
+      self.r('repo/+/revision?name-status=1&format=JSON',
+             fetch.GitilesFetchError(500, '')),
+      self.r('repo/+/revision?name-status=1&format=JSON',
+             fetch.GitilesFetchError(500, '')),
+      self.r('repo/+/revision?name-status=1&format=JSON',
+             fetch.GitilesFetchError(500, '')),
+      self.j('repo/+/revision?name-status=1&format=JSON', self.a_dat),
+      self.j('repo/+/%s?name-status=1&format=JSON' % self.a, self.a_dat),
       self.d('repo/+/%s/infra/config/recipes.cfg?format=TEXT' % self.a,
              self.proto_text),
     )
