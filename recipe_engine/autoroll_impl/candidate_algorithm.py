@@ -31,8 +31,13 @@ def get_commitlists(deps):
 def find_best_rev(repos):
   """Returns the project_id of the best repo to roll.
 
-  "Best" is determined by "moves the least amount of commits, globally". There
-  are two ways that rolling a repo can move commits:
+  "Best" is determined by "is an interesting commit and moves the least amount
+  of commits, globally".
+
+  "Interesting" means "the commit modifies one or more recipe related files",
+  and is defined by CommitMetadata.roll_candidate.
+
+  There are two ways that rolling a repo can move commits:
 
     1) As dependencies. Rolling repo A that depends on (B, C) will take
        a penalty for each commit that B and C need to move in order to be
@@ -77,13 +82,12 @@ def find_best_rev(repos):
 
   for project_id, clist in repos.iteritems():
     assert isinstance(clist, CommitList)
-    candidate = clist.next
+    candidate, movement_score = clist.next_roll_candidate
     if not candidate:
       continue
 
     unaccounted_repos = set(repo_set)
 
-    movement_score = 0
     # first, determine if rolling this repo will force other repos to move.
     for d_pid, dep in candidate.spec.deps.iteritems():
       unaccounted_repos.discard(d_pid)
@@ -204,4 +208,5 @@ def get_roll_candidates(context, package_spec):
 
   print('found %d/%d good/bad candidates in %0.2f seconds' % (
     len(ret_good), len(ret_bad), time.time()-start))
+  sys.stdout.flush()
   return ret_good, ret_bad, repos

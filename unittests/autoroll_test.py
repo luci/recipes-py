@@ -91,16 +91,16 @@ class TestAutoroll(repo_test_util.RepoTest):
     spec.deps['a'].revision = a_c1['revision']
 
     expected_picked_roll = {
-        'commit_infos': {
-            'a': [
-                {
-                    'author_email': a_c1['author_email'],
-                    'message_lines': a_c1['message_lines'],
-                    'revision': a_c1['revision'],
-                },
-            ],
-        },
-        'spec': package_io.dump_obj(spec),
+      'commit_infos': {
+        'a': [
+          {
+            'author_email': a_c1['author_email'],
+            'message_lines': a_c1['message_lines'],
+            'revision': a_c1['revision'],
+          },
+        ],
+      },
+      'spec': package_io.dump_obj(spec),
     }
 
     self.assertEqual(expected_picked_roll['commit_infos'],
