@@ -175,7 +175,7 @@ class Path(RecipeConfigType):
             self.platform_ext == other.platform_ext)
 
   def __ne__(self, other):
-    return not self.base == other
+    return not self == other
 
   def join(self, *pieces, **kwargs):
     if not pieces and not kwargs:
