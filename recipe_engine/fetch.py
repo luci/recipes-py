@@ -258,7 +258,7 @@ class GitBackend(Backend):
 
   def _execute(self, *args):
     """Runs a raw command. Separate so it's easily mockable."""
-    LOGGER.debug('Running: %s', args)
+    LOGGER.info('Running: %s', args)
     return subprocess42.check_output(args)
 
   def _ensure_local_repo_exists(self):
