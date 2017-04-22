@@ -138,7 +138,7 @@ class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
       self._backing_dir = str(self.leak_to)
       if not test.enabled: # pragma: no cover
         if not os.path.exists(self._backing_dir):
-          os.mkdir(self._backing_dir)
+          os.makedirs(self._backing_dir)
     else:
       if not test.enabled: # pragma: no cover
         self._backing_dir = tempfile.mkdtemp(suffix=self.suffix)
