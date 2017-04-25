@@ -154,7 +154,7 @@ class StepPresentation(object):
     for label, url in self.links.iteritems():
       step_stream.add_step_link(label, url)
     step_stream.set_step_status(self.status)
-    for key, value in self._properties.iteritems():
+    for key, value in sorted(self._properties.iteritems()):
       step_stream.set_build_property(key, json.dumps(value, sort_keys=True))
 
 

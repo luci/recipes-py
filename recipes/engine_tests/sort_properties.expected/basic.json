@@ -1,0 +1,17 @@
+[
+  {
+    "cmd": [],
+    "name": "property_step",
+    "~followup_annotations": [
+      "@@@SET_BUILD_PROPERTY@a@\"a\"@@@",
+      "@@@SET_BUILD_PROPERTY@b@\"b\"@@@",
+      "@@@SET_BUILD_PROPERTY@c@\"c\"@@@",
+      "@@@SET_BUILD_PROPERTY@d@\"d\"@@@"
+    ]
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]
