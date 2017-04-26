@@ -33,19 +33,7 @@ from recipe_engine import util as recipe_util
 from google.protobuf import json_format as jsonpb
 
 
-def get_package_config(args):
-  from recipe_engine import package, package_io
-
-  assert args.package, 'No recipe config (--package) given.'
-  assert os.path.exists(args.package), (
-      'Given recipes config file %s does not exist.' % args.package)
-  return (
-      package.InfraRepoConfig().from_recipes_cfg(args.package),
-      package_io.PackageFile(args.package)
-  )
-
-
-def test(package_deps, args, op_args):
+def test(config_file, package_deps, args, op_args):
   try:
     from recipe_engine import test
   except ImportError:
@@ -59,7 +47,6 @@ def test(package_deps, args, op_args):
   from recipe_engine import loader
   from recipe_engine import package
 
-  _, config_file = get_package_config(args)
   universe = loader.RecipeUniverse(package_deps, config_file)
   universe_view = loader.UniverseView(universe, package_deps.root_package)
 
@@ -71,22 +58,20 @@ def test(package_deps, args, op_args):
       engine_flags=op_args.engine_flags)
 
 
-def lint(package_deps, args):
+def lint(config_file, package_deps, args):
   from recipe_engine import lint_test
   from recipe_engine import loader
 
-  _, config_file = get_package_config(args)
   universe = loader.RecipeUniverse(package_deps, config_file)
   universe_view = loader.UniverseView(universe, package_deps.root_package)
 
   lint_test.main(universe_view, args.whitelist or [])
 
 
-def bundle(package_deps, args):
+def bundle(config_file, package_deps, args):
   from recipe_engine import bundle
   from recipe_engine import loader
 
-  _, config_file = get_package_config(args)
   universe = loader.RecipeUniverse(package_deps, config_file)
 
   bundle.main(package_deps.root_package, universe, args.destination)
@@ -163,7 +148,7 @@ def new_handle_recipe_return(result, result_filename, stream_engine):
   return 0
 
 
-def run(package_deps, args, op_args):
+def run(config_file, package_deps, args, op_args):
   from recipe_engine import run as recipe_run
   from recipe_engine import loader
   from recipe_engine import step_runner
@@ -195,7 +180,6 @@ def run(package_deps, args, op_args):
   os.environ['PYTHONUNBUFFERED'] = '1'
   os.environ['PYTHONIOENCODING'] = 'UTF-8'
 
-  _, config_file = get_package_config(args)
   universe_view = loader.UniverseView(
       loader.RecipeUniverse(
           package_deps, config_file), package_deps.root_package)
@@ -259,14 +243,12 @@ def remote(args):
   return remote.main(args)
 
 
-def autoroll(args):
+def autoroll(repo_root, config_file, args):
   from recipe_engine import autoroll
 
   if args.verbose_json and not args.output_json:
     print >> sys.stderr, '--verbose-json passed without --output-json'
     return 1
-
-  repo_root, config_file = get_package_config(args)
 
   return autoroll.main(args, repo_root, config_file)
 
@@ -292,32 +274,29 @@ class ProjectOverrideAction(argparse.Action):
     v[project_id] = path
 
 
-def depgraph(package_deps, args):
+def depgraph(config_file, package_deps, args):
   from recipe_engine import depgraph
   from recipe_engine import loader
 
-  _, config_file = get_package_config(args)
   universe = loader.RecipeUniverse(package_deps, config_file)
 
   depgraph.main(universe, package_deps.root_package,
                 args.ignore_package, args.output, args.recipe_filter)
 
 
-def refs(package_deps, args):
+def refs(config_file, package_deps, args):
   from recipe_engine import refs
   from recipe_engine import loader
 
-  _, config_file = get_package_config(args)
   universe = loader.RecipeUniverse(package_deps, config_file)
 
   refs.main(universe, package_deps.root_package, args.modules, args.transitive)
 
 
-def doc(package_deps, args):
+def doc(config_file, package_deps, args):
   from recipe_engine import doc
   from recipe_engine import loader
 
-  _, config_file = get_package_config(args)
   universe = loader.RecipeUniverse(package_deps, config_file)
   universe_view = loader.UniverseView(universe, package_deps.root_package)
 
@@ -688,14 +667,18 @@ def main():
 
 
 def _real_main(args, op_args):
-  from recipe_engine import package
+  from recipe_engine import package, package_io
 
   # Commands which do not require config_file, package_deps, and other objects
   # initialized later.
   if args.command == 'remote':
     return remote(args)
 
-  repo_root, config_file = get_package_config(args)
+  assert args.package, 'No recipe config (--package) given.'
+  assert os.path.isfile(args.package), (
+      'Given recipes config file %r does not exist.' % (args.package,))
+  repo_root = package.InfraRepoConfig().from_recipes_cfg(args.package)
+  config_file = package_io.PackageFile(args.package)
 
   try:
     # TODO(phajdan.jr): gracefully handle inconsistent deps when rolling.
@@ -716,21 +699,21 @@ def _real_main(args, op_args):
     assert not args.no_fetch, 'Fetch? No-fetch? Make up your mind!'
     return 0
   elif args.command == 'test':
-    return test(package_deps, args, op_args)
+    return test(config_file, package_deps, args, op_args)
   elif args.command == 'bundle':
-    return bundle(package_deps, args)
+    return bundle(config_file, package_deps, args)
   elif args.command == 'lint':
-    return lint(package_deps, args)
+    return lint(config_file, package_deps, args)
   elif args.command == 'run':
-    return run(package_deps, args, op_args)
+    return run(config_file, package_deps, args, op_args)
   elif args.command == 'autoroll':
-    return autoroll(args)
+    return autoroll(repo_root, config_file, args)
   elif args.command == 'depgraph':
-    return depgraph(package_deps, args)
+    return depgraph(config_file, package_deps, args)
   elif args.command == 'refs':
-    return refs(package_deps, args)
+    return refs(config_file, package_deps, args)
   elif args.command == 'doc':
-    return doc(package_deps, args)
+    return doc(config_file, package_deps, args)
   else:
     print """Dear sir or madam,
         It has come to my attention that a quite impossible condition has come
