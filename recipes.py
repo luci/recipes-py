@@ -344,13 +344,18 @@ def _op_properties_to_dict(pmap):
   return dict((k, _op_property_value(pmap[k])) for k in pmap)
 
 
-def main():
-  parser = argparse.ArgumentParser(
-      description='Interact with the recipe system.')
+def add_common_args(parser):
+  from recipe_engine import package_io
+
+  def package_type(value):
+    if not os.path.isfile(value):
+      raise argparse.ArgumentTypeError(
+        'Given recipes config file %r does not exist.' % (value,))
+    return package_io.PackageFile(value)
 
   parser.add_argument(
       '--package',
-      type=os.path.abspath,
+      type=package_type,
       help='Path to recipes.cfg of the recipe package to operate on'
         ', usually in infra/config/recipes.cfg')
   parser.add_argument(
@@ -384,6 +389,24 @@ def main():
       help='The path to an operational Arguments file. If provided, this file '
            'must contain a JSONPB-encoded Arguments protobuf message, and will '
            'be integrated into the runtime parameters.')
+
+
+def post_process_common_args(parser, args):
+  if args.command == "remote":
+    # TODO(iannucci): this is a hack; remote doesn't behave like ANY other
+    # commands. A way to solve this will be to allow --package to take a remote
+    # repo and then simply remove the remote subcommand entirely.
+    return
+
+  if not args.package:
+    parser.error('%s requires --package' % args.command)
+
+
+def main():
+  parser = argparse.ArgumentParser(
+      description='Interact with the recipe system.')
+
+  add_common_args(parser)
 
   subp = parser.add_subparsers()
 
@@ -571,6 +594,7 @@ def main():
   doc_p.set_defaults(command='doc')
 
   args = parser.parse_args()
+  post_process_common_args(parser, args)
 
   # Load/parse operational arguments.
   op_args = arguments_pb2.Arguments()
@@ -674,11 +698,8 @@ def _real_main(args, op_args):
   if args.command == 'remote':
     return remote(args)
 
-  assert args.package, 'No recipe config (--package) given.'
-  assert os.path.isfile(args.package), (
-      'Given recipes config file %r does not exist.' % (args.package,))
-  repo_root = package.InfraRepoConfig().from_recipes_cfg(args.package)
-  config_file = package_io.PackageFile(args.package)
+  config_file = args.package
+  repo_root = package.InfraRepoConfig().from_recipes_cfg(args.package.path)
 
   try:
     # TODO(phajdan.jr): gracefully handle inconsistent deps when rolling.
