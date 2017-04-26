@@ -33,7 +33,7 @@ from recipe_engine import util as recipe_util
 from google.protobuf import json_format as jsonpb
 
 
-def test(config_file, package_deps, args, op_args):
+def test(config_file, package_deps, args):
   try:
     from recipe_engine import test
   except ImportError:
@@ -55,7 +55,7 @@ def test(config_file, package_deps, args, op_args):
 
   return test.main(
       universe_view, raw_args=args.args,
-      engine_flags=op_args.engine_flags)
+      engine_flags=args.operational_args.engine_flags)
 
 
 def lint(config_file, package_deps, args):
@@ -148,7 +148,7 @@ def new_handle_recipe_return(result, result_filename, stream_engine):
   return 0
 
 
-def run(config_file, package_deps, args, op_args):
+def run(config_file, package_deps, args):
   from recipe_engine import run as recipe_run
   from recipe_engine import loader
   from recipe_engine import step_runner
@@ -164,6 +164,7 @@ def run(config_file, package_deps, args, op_args):
       return None
     return _op_properties_to_dict(op_args.properties.property)
 
+  op_args = args.operational_args
   op_properties = get_properties_from_operational_args(op_args)
   if args.properties and op_properties:
     raise ValueError(
@@ -383,9 +384,17 @@ def add_common_args(parser):
   parser.add_argument(
       '--disable-bootstrap', action='store_false', dest='use_bootstrap',
       help='Disables bootstrap (see --use-bootstrap)')
+
+  def operational_args_type(value):
+    with open(value) as fd:
+      return jsonpb.ParseDict(json.load(fd), arguments_pb2.Arguments())
+
+  parser.set_defaults(operational_args=arguments_pb2.Arguments())
+
   parser.add_argument(
-      '--operational-args-path', action='store',
-      type=os.path.abspath,
+      '--operational-args-path',
+      dest='operational_args',
+      type=operational_args_type,
       help='The path to an operational Arguments file. If provided, this file '
            'must contain a JSONPB-encoded Arguments protobuf message, and will '
            'be integrated into the runtime parameters.')
@@ -596,13 +605,6 @@ def main():
   args = parser.parse_args()
   post_process_common_args(parser, args)
 
-  # Load/parse operational arguments.
-  op_args = arguments_pb2.Arguments()
-  if args.operational_args_path is not None:
-    with open(args.operational_args_path) as fd:
-      data = fd.read()
-    jsonpb.Parse(data, op_args)
-
   # TODO(iannucci): We should always do logging.basicConfig() (probably with
   # logging.WARNING), even if no verbose is passed. However we need to be
   # careful as this could cause issues with spurious/unexpected output. I think
@@ -675,7 +677,7 @@ def main():
           ] + sys.argv[1:])
 
     # Standard recipe engine operation.
-    return _real_main(args, op_args)
+    return _real_main(args)
 
   finally:
     # If we're using a temporary deps directory, clean it up here.
@@ -690,8 +692,8 @@ def main():
       shutil.rmtree(temp_deps_dir, onerror=on_error)
 
 
-def _real_main(args, op_args):
-  from recipe_engine import package, package_io
+def _real_main(args):
+  from recipe_engine import package
 
   # Commands which do not require config_file, package_deps, and other objects
   # initialized later.
@@ -720,13 +722,13 @@ def _real_main(args, op_args):
     assert not args.no_fetch, 'Fetch? No-fetch? Make up your mind!'
     return 0
   elif args.command == 'test':
-    return test(config_file, package_deps, args, op_args)
+    return test(config_file, package_deps, args)
   elif args.command == 'bundle':
     return bundle(config_file, package_deps, args)
   elif args.command == 'lint':
     return lint(config_file, package_deps, args)
   elif args.command == 'run':
-    return run(config_file, package_deps, args, op_args)
+    return run(config_file, package_deps, args)
   elif args.command == 'autoroll':
     return autoroll(repo_root, config_file, args)
   elif args.command == 'depgraph':
