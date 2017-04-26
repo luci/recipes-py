@@ -170,46 +170,23 @@ def run(package_deps, args, op_args):
   from recipe_engine import stream
   from recipe_engine import stream_logdog
 
-  def get_properties_from_args(args):
-    properties = dict(x.split('=', 1) for x in args)
-    for key, val in properties.iteritems():
-      try:
-        properties[key] = json.loads(val)
-      except (ValueError, SyntaxError):
-        pass  # If a value couldn't be evaluated, keep the string version
-    return properties
-
-  def get_properties_from_file(filename):
-    properties_file = sys.stdin if filename == '-' else open(filename)
-    properties = json.load(properties_file)
-    if filename == '-':
-      properties_file.close()
-    assert isinstance(properties, dict)
-    return properties
-
-  def get_properties_from_json(props):
-    return json.loads(props)
+  if args.props:
+    for p in args.props:
+      args.properties.update(p)
 
   def get_properties_from_operational_args(op_args):
     if not op_args.properties.property:
       return None
     return _op_properties_to_dict(op_args.properties.property)
 
-
-  arg_properties = get_properties_from_args(args.props)
   op_properties = get_properties_from_operational_args(op_args)
-  assert len(filter(bool,
-      (arg_properties, args.properties_file, args.properties,
-       op_properties))) <= 1, (
-          'Only one source of properties is allowed')
-  if args.properties:
-    properties = get_properties_from_json(args.properties)
-  elif args.properties_file:
-    properties = get_properties_from_file(args.properties_file)
-  elif op_properties is not None:
-    properties = op_properties
-  else:
-    properties = arg_properties
+  if args.properties and op_properties:
+    raise ValueError(
+      "Got operational args properties as well as CLI properties.")
+
+  properties = op_properties
+  if not properties:
+    properties = args.properties
 
   properties['recipe'] = args.recipe
 
@@ -464,17 +441,33 @@ def main():
       type=os.path.abspath,
       help='The directory of where to put the bundle (default: %(default)r).')
 
+  def properties_file_type(filename):
+    with (sys.stdin if filename == '-' else open(filename)) as f:
+      obj = json.load(f)
+      if not isinstance(obj, dict):
+        raise argparse.ArgumentTypeError(
+          "must contain a JSON object, i.e. `{}`.")
+      return obj
+
+  def parse_prop(prop):
+    key, val = prop.split('=', 1)
+    try:
+      val = json.loads(val)
+    except (ValueError, SyntaxError):
+      pass  # If a value couldn't be evaluated, keep the string version
+    return {key: val}
+
+  def properties_type(value):
+    obj = json.loads(value)
+    if not isinstance(obj, dict):
+      raise argparse.ArgumentTypeError("must contain a JSON object, i.e. `{}`.")
+    return obj
+
   run_p = subp.add_parser(
       'run',
       description='Run a recipe locally')
-  run_p.set_defaults(command='run')
-  run_p.add_argument(
-      '--properties-file',
-      type=os.path.abspath,
-      help='A file containing a json blob of properties')
-  run_p.add_argument(
-      '--properties',
-      help='A json string containing the properties')
+  run_p.set_defaults(command='run', properties={})
+
   run_p.add_argument(
       '--workdir',
       type=os.path.abspath,
@@ -484,14 +477,6 @@ def main():
       type=os.path.abspath,
       help='The file to write the JSON serialized returned value \
             of the recipe to')
-  run_p.add_argument(
-      'recipe',
-      help='The recipe to execute')
-  run_p.add_argument(
-      'props',
-      nargs=argparse.REMAINDER,
-      help='A list of property pairs; e.g. mastername=chromium.linux '
-           'issue=12345')
   run_p.add_argument(
       '--timestamps',
       action='store_true',
@@ -503,6 +488,28 @@ def main():
            'end of the annotation stream and also immediately before each '
            'STEP_STARTED and STEP_CLOSED annotations.',
   )
+  prop_group = run_p.add_mutually_exclusive_group()
+  prop_group.add_argument(
+      '--properties-file',
+      dest='properties',
+      type=properties_file_type,
+      help=('A file containing a json blob of properties. '
+            'Pass "-" to read from stdin'))
+  prop_group.add_argument(
+      '--properties',
+      type=properties_type,
+      help='A json string containing the properties')
+
+  run_p.add_argument(
+      'recipe',
+      help='The recipe to execute')
+  run_p.add_argument(
+      'props',
+      nargs=argparse.REMAINDER,
+      type=parse_prop,
+      help='A list of property pairs; e.g. mastername=chromium.linux '
+           'issue=12345. The property value will be decoded as JSON, but if '
+           'this decoding fails the value will be interpreted as a string.')
 
   remote_p = subp.add_parser(
       'remote',
