@@ -18,6 +18,13 @@
   {
     "cmd": [
       "echo",
+      "{\"cool\": [1, 2, 3], \"hello\": \"world\"}"
+    ],
+    "name": "echo_dumps_property"
+  },
+  {
+    "cmd": [
+      "echo",
       "[2, 3, 4]"
     ],
     "name": "echo2",

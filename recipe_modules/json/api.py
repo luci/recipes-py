@@ -11,6 +11,11 @@ from recipe_engine import recipe_api
 from recipe_engine import util as recipe_util
 from recipe_engine import config_types
 
+@functools.wraps(json.dumps)
+def dumps(*args, **kwargs):
+  kwargs['sort_keys'] = True
+  kwargs.setdefault('default', config_types.json_fixup)
+  return json.dumps(*args, **kwargs)
 
 class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
   """JsonOutputPlaceholder is meant to be a placeholder object which, when added
@@ -73,15 +78,10 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
 class JsonApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
     super(JsonApi, self).__init__(**kwargs)
-    @functools.wraps(json.dumps)
-    def dumps(*args, **kwargs):
-      kwargs['sort_keys'] = True
-      kwargs.setdefault('default', config_types.json_fixup)
-      return json.dumps(*args, **kwargs)
     self.dumps = dumps
 
-  @classmethod
-  def loads(self, data, **kwargs):
+  @staticmethod
+  def loads(data, **kwargs):
     return recipe_util.strip_unicode(json.loads(data, **kwargs))
 
   def is_serializable(self, obj):

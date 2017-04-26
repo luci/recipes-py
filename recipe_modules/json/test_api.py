@@ -6,7 +6,13 @@ import json
 
 from recipe_engine import recipe_test_api
 
+from .api import dumps
+
 class JsonTestApi(recipe_test_api.RecipeTestApi):
+  @staticmethod
+  def dumps(*args, **kwargs):
+    return dumps(*args, **kwargs)
+
   @recipe_test_api.placeholder_step_data
   @staticmethod
   def output(data, retcode=None, name=None):
