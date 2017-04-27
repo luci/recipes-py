@@ -745,6 +745,46 @@ class TestTest(unittest.TestCase):
         expect_contents)
     self.assertEqual(self.json_generator.get(), self.json_contents)
 
+  def test_train_invaid_json(self):
+    # 1. Initial state: recipe expectations are passing.
+    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
+    rw.RunStepsLines = ['pass']
+    rw.add_expectation('basic')
+    rw.write()
+    self._run_recipes('test', 'run', '--json', self.json_path)
+    self.assertEqual(self.json_generator.get(), self.json_contents)
+
+    # 2. Change the expectation and verify tests would fail.
+    expect_path = os.path.join(rw.expect_dir, 'basic.json')
+    with open(expect_path, 'w') as f:
+      f.write('\n'.join([
+          'not valid JSON',
+          '<<<<<',
+          'merge conflict',
+          '>>>>>',
+      ]))
+    with self.assertRaises(subprocess.CalledProcessError) as cm:
+      self._run_recipes('test', 'run', '--json', self.json_path)
+    self.assertIn('foo.basic failed', cm.exception.output)
+    self.assertEqual(
+        self.json_generator
+            .internal_failure('foo.basic')
+            .invalid()
+            .unused_expectation('recipes/foo.expected')
+            .unused_expectation('recipes/foo.expected/basic.json')
+            .coverage_failure('recipes/foo.py', [6])
+            .get(),
+        self.json_contents)
+
+    # 3. Make sure training the recipe succeeds and produces correct results.
+    self._run_recipes('test', 'train', '--json', self.json_path)
+    with open(expect_path) as f:
+      expect_contents = json.load(f)
+    self.assertEqual(
+        [{u'status_code': 0, u'recipe_result': None, u'name': u'$result'}],
+        expect_contents)
+    self.assertEqual(self.json_generator.get(), self.json_contents)
+
   def test_train_checks_coverage(self):
     rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
     rw.RunStepsLines = ['if False:', '  pass']

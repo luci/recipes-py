@@ -207,9 +207,16 @@ def run_test(test_description, debug=False, train=False):
   """Runs a test. Returns TestResults object."""
   expected = None
   if os.path.exists(test_description.expectation_path):
-    with open(test_description.expectation_path) as f:
-      # TODO(phajdan.jr): why do we need to re-encode golden data files?
-      expected = re_encode(json.load(f))
+    try:
+      with open(test_description.expectation_path) as f:
+        # TODO(phajdan.jr): why do we need to re-encode golden data files?
+          expected = re_encode(json.load(f))
+    except Exception:
+      if train:
+        # Ignore errors when training; we're going to overwrite the file anyway.
+        expected = None
+      else:
+        raise
 
   break_funcs = [
     _UNIVERSE_VIEW.load_recipe(test_description.recipe_name).run_steps,
