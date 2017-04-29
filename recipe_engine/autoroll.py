@@ -18,6 +18,10 @@ from . import package
 from . import package_io
 from .autoroll_impl.candidate_algorithm import get_roll_candidates
 
+from . import env
+
+import argparse  # this is vendored
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -273,7 +277,7 @@ def add_subparser(parser):
     'autoroll', help=helpstr, description=helpstr)
   autoroll_p.add_argument(
     '--output-json',
-    type=os.path.abspath,
+    type=argparse.FileType('w'),
     help='A json file to output information about the roll to.')
   autoroll_p.add_argument(
     '--verbose-json',
@@ -318,7 +322,7 @@ def main(_package_deps, args):
       run_simulation_test(repo_root, package_spec.recipes_path, ['train'])
 
   if args.output_json:
-    with open(args.output_json, 'w') as f:
-      json.dump(results, f, sort_keys=True, indent=2)
+    with args.output_json:
+      json.dump(results, args.output_json, sort_keys=True, indent=2)
 
   return 0

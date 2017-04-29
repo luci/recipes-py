@@ -3,12 +3,20 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import os
 import sys
+import tempfile
 import unittest
+
+from cStringIO import StringIO
 
 import test_env
 
+import argparse  # this is vendored
+import mock
+
 from recipe_engine import autoroll
+from recipe_engine import common_args
 
 def process_rejected(rejected_candidates):
   return [c.to_dict() for c in rejected_candidates]
@@ -40,6 +48,38 @@ class TestProcess(unittest.TestCase):
             FakeCandidate('theother'),
             FakeCandidate('thing'),
         ]))
+
+
+class TestArgs(unittest.TestCase):
+  def setUp(self):
+    self.p = argparse.ArgumentParser()
+    self.followup = common_args.add_common_args(self.p)
+    subp = self.p.add_subparsers()
+    autoroll.add_subparser(subp)
+
+    fd, self.tmpfile = tempfile.mkstemp()
+    os.close(fd)
+
+  def tearDown(self):
+    os.remove(self.tmpfile)
+
+  @mock.patch('argparse._sys.stderr', new_callable=StringIO)
+  def test_no_fetch(self, stderr):
+    with self.assertRaises(SystemExit):
+      args = self.p.parse_args(['--no-fetch', 'autoroll'])
+      args.postprocess_func(self.p, args)
+    self.assertIn('--no-fetch does not make sense', stderr.getvalue())
+
+  @mock.patch('argparse._sys.stderr', new_callable=StringIO)
+  def test_json_flags(self, stderr):
+    with self.assertRaises(SystemExit):
+      args = self.p.parse_args(['autoroll', '--verbose-json'])
+      args.postprocess_func(self.p, args)
+    self.assertIn('without --output-json', stderr.getvalue())
+
+    args = self.p.parse_args([
+      'autoroll', '--verbose-json', '--output-json', self.tmpfile])
+    args.postprocess_func(self.p, args)
 
 
 if __name__ == '__main__':
