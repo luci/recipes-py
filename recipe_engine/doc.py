@@ -18,6 +18,7 @@ from cStringIO import StringIO
 
 from . import config
 from . import doc_pb2 as doc
+from . import loader
 from . import recipe_api
 from . import types
 from . import util
@@ -456,7 +457,25 @@ def _set_known_objects(base):
       raise ValueError('could not find %r in %r' % (k, relpath))
 
 
-def main(universe_view, recipe, kind):
+def add_subparser(parser):
+  doc_kinds=('binarypb', 'jsonpb', 'textpb', 'markdown(github)',
+             'markdown(gitiles)')
+  doc_p = parser.add_parser(
+      'doc',
+      description='List all known modules reachable from the current package, '
+          'with their documentation')
+  doc_p.add_argument('recipe', nargs='?',
+                     help='Restrict documentation to this recipe')
+  doc_p.add_argument('--kind', default='jsonpb', choices=doc_kinds,
+                     help='Output this kind of documentation')
+
+  doc_p.set_defaults(command='doc', func=main)
+
+
+def main(package_deps, args):
+  universe = loader.RecipeUniverse(package_deps, args.package)
+  universe_view = loader.UniverseView(universe, package_deps.root_package)
+
   logging.basicConfig()
 
   spec = universe_view.package.repo_spec.spec_pb()
@@ -464,22 +483,22 @@ def main(universe_view, recipe, kind):
   if spec.recipes_path:
     base_dir = join(base_dir, spec.recipes_path)
 
-  if recipe:
-    recipe_fullpath = universe_view.find_recipe(recipe)
+  if args.recipe:
+    recipe_fullpath = universe_view.find_recipe(args.recipe)
     relpath = _to_posix(os.path.relpath(recipe_fullpath, base_dir))
-    node = parse_recipe(universe_view, base_dir, relpath, recipe)
+    node = parse_recipe(universe_view, base_dir, relpath, args.recipe)
   else:
     node = parse_package(universe_view, base_dir, spec)
 
   _set_known_objects(node)
 
-  if kind == 'jsonpb':
+  if args.kind == 'jsonpb':
     sys.stdout.write(jsonpb.MessageToJson(
       node, including_default_value_fields=True,
       preserving_proto_field_name=True))
-  elif kind == 'binarypb':
+  elif args.kind == 'binarypb':
     sys.stdout.write(node.SerializeToString())
-  elif kind == 'textpb':
+  elif args.kind == 'textpb':
     sys.stdout.write(textpb.MessageToString(node))
   else:
-    raise NotImplementedError('--kind=%s' % kind)
+    raise NotImplementedError('--kind=%s' % args.kind)

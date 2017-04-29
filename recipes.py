@@ -241,16 +241,6 @@ class ProjectOverrideAction(argparse.Action):
     v[project_id] = path
 
 
-def doc(config_file, package_deps, args):
-  from recipe_engine import doc
-  from recipe_engine import loader
-
-  universe = loader.RecipeUniverse(package_deps, config_file)
-  universe_view = loader.UniverseView(universe, package_deps.root_package)
-
-  doc.main(universe_view, args.recipe, args.kind)
-
-
 # Map of arguments_pb2.Property "value" oneof conversion functions.
 #
 # The fields here should be kept in sync with the "value" oneof field names in
@@ -375,8 +365,8 @@ def main():
   common_postprocess_func = add_common_args(parser)
 
   from recipe_engine import fetch, lint_test, bundle, depgraph, autoroll
-  from recipe_engine import remote, refs
-  to_add = [fetch, lint_test, bundle, depgraph, autoroll, remote, refs]
+  from recipe_engine import remote, refs, doc
+  to_add = [fetch, lint_test, bundle, depgraph, autoroll, remote, refs, doc]
 
   subp = parser.add_subparsers()
   for module in to_add:
@@ -459,18 +449,6 @@ def main():
            'issue=12345. The property value will be decoded as JSON, but if '
            'this decoding fails the value will be interpreted as a string.')
 
-  doc_kinds=('binarypb', 'jsonpb', 'textpb', 'markdown(github)',
-             'markdown(gitiles)')
-  doc_p = subp.add_parser(
-      'doc',
-      description='List all known modules reachable from the current package, '
-          'with their documentation')
-  doc_p.add_argument('recipe', nargs='?',
-                     help='Restrict documentation to this recipe')
-  doc_p.add_argument('--kind', default='jsonpb', choices=doc_kinds,
-                     help='Output this kind of documentation')
-  doc_p.set_defaults(command='doc')
-
   args = parser.parse_args()
   common_postprocess_func(parser, args)
   if hasattr(args, 'postprocess_func'):
@@ -551,8 +529,6 @@ def _real_main(args):
     return test(config_file, package_deps, args)
   elif args.command == 'run':
     return run(config_file, package_deps, args)
-  elif args.command == 'doc':
-    return doc(config_file, package_deps, args)
   else:
     print """Dear sir or madam,
         It has come to my attention that a quite impossible condition has come
