@@ -8,11 +8,16 @@ import itertools
 import json
 import unittest
 
+from cStringIO import StringIO
+
 import test_env
+
+import argparse  # this is vendored
 
 import mock
 import subprocess42
 
+from recipe_engine import common_args
 from recipe_engine import fetch
 from recipe_engine import package_pb2
 from recipe_engine import requests_ssl
@@ -450,6 +455,22 @@ class TestGitiles(unittest.TestCase):
         'revision')
     self.assertEqual(result, self.a_meta)
     self.assertMultiDone(requests_get)
+
+
+class TestArgs(unittest.TestCase):
+  def setUp(self):
+    self.p = argparse.ArgumentParser()
+    self.followup = common_args.add_common_args(self.p)
+    subp = self.p.add_subparsers()
+    fetch.add_subparser(subp)
+
+  @mock.patch('argparse._sys.stderr', new_callable=StringIO)
+  def test_no_fetch(self, stderr):
+    with self.assertRaises(SystemExit):
+      args = self.p.parse_args(['--no-fetch', 'fetch'])
+      args.postprocess_func(self.p, args)
+    self.assertIn('--no-fetch does not make sense', stderr.getvalue())
+
 
 if __name__ == '__main__':
   unittest.main()

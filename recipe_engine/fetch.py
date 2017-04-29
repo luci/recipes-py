@@ -602,7 +602,7 @@ def add_subparser(parser):
 
   def postprocess_func(parser, args):
     if args.no_fetch:
-      parser.error('--no-fetch doesn\'t make sense with fetch command')
+      parser.error('--no-fetch does not make sense with fetch command')
 
   fetch_p.set_defaults(
     command='fetch',
