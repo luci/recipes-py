@@ -25,25 +25,28 @@ _GRAPH_FOOTER = """}
 
 def add_subparser(parser):
   depgraph_p = parser.add_parser(
-      'depgraph',
-      description=(
-          'Produce graph of recipe and recipe module dependencies. Example: '
-          './recipes.py --package infra/config/recipes.cfg depgraph | tred | '
-          'dot -Tpdf > graph.pdf'))
+    'depgraph',
+    help='Produce graphviz graph of recipe and recipe module dependencies.',
+    description=(
+      'Produce graphviz graph of recipe and recipe module dependencies. '
+      'Example: ./recipes.py --package infra/config/recipes.cfg depgraph | '
+      'tred | dot -Tpdf > graph.pdf'))
   depgraph_p.add_argument(
-      '--output', type=argparse.FileType('w'), default=sys.stdout,
-      help='The file to write output to')
+    '--output', type=argparse.FileType('w'), default=sys.stdout,
+    help='The file to write output to')
   depgraph_p.add_argument(
-      '--ignore-package', action='append', default=[],
-      dest='ignore_packages',
-      help='Ignore a recipe package (e.g. recipe_engine). Can be passed '
-           'multiple times')
+    '--ignore-package', action='append', default=[],
+    dest='ignore_packages',
+    help=(
+      'Ignore a recipe package (e.g. recipe_engine). Can be passed '
+      'multiple times'))
   depgraph_p.add_argument(
-      '--recipe-filter', default='',
-      help='A recipe substring to examine. If present, the depgraph will '
-           'include a recipe section containing recipes whose names contain '
-           'this substring. It will also filter all nodes of the graph to only '
-           'include modules touched by the filtered recipes.')
+    '--recipe-filter', default='',
+    help=(
+      'A recipe substring to examine. If present, the depgraph will '
+      'include a recipe section containing recipes whose names contain '
+      'this substring. It will also filter all nodes of the graph to only '
+      'include modules touched by the filtered recipes.'))
 
   depgraph_p.set_defaults(command='depgraph', func=main)
 

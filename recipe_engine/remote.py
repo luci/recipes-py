@@ -33,9 +33,9 @@ def ensure_workdir(args):
 
 
 def add_subparser(parser):
+  helpstr = 'Invoke a recipe command from specified repo and revision.'
   remote_p = parser.add_parser(
-      'remote',
-      description='Invoke a recipe command from specified repo and revision')
+      'remote', help=helpstr, description=helpstr)
   remote_p.add_argument(
       '--repository', required=True,
       help='URL of a git repository to fetch')

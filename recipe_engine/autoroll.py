@@ -268,20 +268,23 @@ def test_rolls(repo_cfg_block, config_file, context, package_spec,
 
 
 def add_subparser(parser):
+  helpstr = 'Roll dependencies of a recipe package forward.'
   autoroll_p = parser.add_parser(
-      'autoroll',
-      help='Roll dependencies of a recipe package forward (implies fetch)')
+    'autoroll', help=helpstr, description=helpstr)
   autoroll_p.add_argument(
-      '--output-json',
-      type=os.path.abspath,
-      help='A json file to output information about the roll to.')
+    '--output-json',
+    type=os.path.abspath,
+    help='A json file to output information about the roll to.')
   autoroll_p.add_argument(
-      '--verbose-json',
-      action='store_true',
-      help=('Emit even more data in the output-json file. '
-            'Requires --output-json.'))
+    '--verbose-json',
+    action='store_true',
+    help=('Emit even more data in the output-json file. '
+          'Requires --output-json.'))
 
   def postprocess_func(parser, args):
+    if args.no_fetch:
+      parser.error('autoroll with --no-fetch does not make sense.')
+
     if args.verbose_json and not args.output_json:
       parser.error('--verbose-json passed without --output-json')
 

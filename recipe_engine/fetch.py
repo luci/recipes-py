@@ -1,4 +1,4 @@
-# Copyright 2016 The LUCI Authors. All rights reserved.
+# Copyright 2017 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
@@ -595,9 +595,10 @@ class GitilesBackend(Backend):
 
 
 def add_subparser(parser):
+  helpstr = 'Fetch and update dependencies but take no other action.'
+
   fetch_p = parser.add_parser(
-    'fetch',
-    description='Fetch and update dependencies.')
+    'fetch', help=helpstr, description=helpstr)
 
   def postprocess_func(parser, args):
     if args.no_fetch:

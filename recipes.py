@@ -37,7 +37,41 @@ from recipe_engine import fetch, lint_test, bundle, depgraph, autoroll
 from recipe_engine import remote, refs, doc, test, run
 
 
+# Each of these subcommands has a method:
+#
+#   def add_subparsers(argparse._SubParsersAction): ...
+#
+# which is expected to add a subparser by calling .add_parser on it. In
+# addition, the add_subparsers method should call .set_defaults on the created
+# sub-parser, and set the following values:
+#   func (fn(package_deps, args)) - The function called if the sub command is
+#     invoked.
+#   postprocess_func (fn(parser, args)) - A validation/normalization function
+#     which is called if the sub command is invoked. This function can
+#     check/adjust the parsed args, calling parser.error if a problem is
+#     encountered. This function is optional.
+#   bare_command (bool) - This sub command's func will be called before parsing
+#     package_deps. This is only used for the `remote` subcommand. See the
+#     comment in add_common_args for why.
+#
+# Example:
+#
+#   def add_subparsers(parser):
+#     sub = parser.add_parser("subcommand", help="a cool subcommand")
+#     sub.add_argument("--cool_arg", help="it's gotta be cool")
+#
+#     def postprocess_args(parser, args):
+#       if "cool" not in args.cool_arg:
+#         parser.error("your cool_arg is not cool!")
+#
+#     sub.set_defaults(func=main)
+#
+#   def main(package_deps, args):
+#     print args.cool_arg
 _SUBCOMMANDS = [
+  run,
+  test,
+
   autoroll,
   bundle,
   depgraph,
@@ -46,8 +80,6 @@ _SUBCOMMANDS = [
   lint_test,
   refs,
   remote,
-  run,
-  test,
 ]
 
 
@@ -150,7 +182,7 @@ def add_common_args(parser):
 
 def main():
   parser = argparse.ArgumentParser(
-      description='Interact with the recipe system.')
+    description='Interact with the recipe system.')
 
   common_postprocess_func = add_common_args(parser)
 

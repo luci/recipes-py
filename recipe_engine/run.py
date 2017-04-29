@@ -1,4 +1,4 @@
-# Copyright 2016 The LUCI Authors. All rights reserved.
+# Copyright 2017 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
@@ -468,52 +468,55 @@ def add_subparser(parser):
       raise argparse.ArgumentTypeError('must contain a JSON object, i.e. `{}`.')
     return obj
 
+  helpstr='Run a recipe locally.'
   run_p = parser.add_parser(
-      'run',
-      description='Run a recipe locally')
+    'run', help=helpstr, description=helpstr)
 
   run_p.add_argument(
-      '--workdir',
-      type=os.path.abspath,
-      help='The working directory of recipe execution')
+    '--workdir',
+    type=os.path.abspath,
+    help='The working directory of recipe execution')
   run_p.add_argument(
-      '--output-result-json',
-      type=os.path.abspath,
-      help='The file to write the JSON serialized returned value \
-            of the recipe to')
+    '--output-result-json',
+    type=os.path.abspath,
+    help=(
+      'The file to write the JSON serialized returned value '
+      ' of the recipe to'))
   run_p.add_argument(
-      '--timestamps',
-      action='store_true',
-      help='If true, emit CURRENT_TIMESTAMP annotations. '
-           'Default: false. '
-           'CURRENT_TIMESTAMP annotation has one parameter, current time in '
-           'Unix timestamp format. '
-           'CURRENT_TIMESTAMP annotation will be printed at the beginning and '
-           'end of the annotation stream and also immediately before each '
-           'STEP_STARTED and STEP_CLOSED annotations.',
-  )
+    '--timestamps',
+    action='store_true',
+    help=(
+      'If true, emit CURRENT_TIMESTAMP annotations. '
+      'Default: false. '
+      'CURRENT_TIMESTAMP annotation has one parameter, current time in '
+      'Unix timestamp format. '
+      'CURRENT_TIMESTAMP annotation will be printed at the beginning and '
+      'end of the annotation stream and also immediately before each '
+      'STEP_STARTED and STEP_CLOSED annotations.'))
   prop_group = run_p.add_mutually_exclusive_group()
   prop_group.add_argument(
-      '--properties-file',
-      dest='properties',
-      type=properties_file_type,
-      help=('A file containing a json blob of properties. '
-            'Pass "-" to read from stdin'))
+    '--properties-file',
+    dest='properties',
+    type=properties_file_type,
+    help=(
+      'A file containing a json blob of properties. '
+      'Pass "-" to read from stdin'))
   prop_group.add_argument(
-      '--properties',
-      type=properties_type,
-      help='A json string containing the properties')
+    '--properties',
+    type=properties_type,
+    help='A json string containing the properties')
 
   run_p.add_argument(
-      'recipe',
-      help='The recipe to execute')
+    'recipe',
+    help='The recipe to execute')
   run_p.add_argument(
-      'props',
-      nargs=argparse.REMAINDER,
-      type=parse_prop,
-      help='A list of property pairs; e.g. mastername=chromium.linux '
-           'issue=12345. The property value will be decoded as JSON, but if '
-           'this decoding fails the value will be interpreted as a string.')
+    'props',
+    nargs=argparse.REMAINDER,
+    type=parse_prop,
+    help=(
+      'A list of property pairs; e.g. mastername=chromium.linux '
+      'issue=12345. The property value will be decoded as JSON, but if '
+      'this decoding fails the value will be interpreted as a string.'))
 
   run_p.set_defaults(command='run', properties={}, func=main)
 

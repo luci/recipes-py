@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright 2016 The LUCI Authors. All rights reserved.
+# Copyright 2017 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
@@ -627,15 +627,16 @@ def prep_recipes_py(universe, root_package, destination):
 
 def add_subparser(parser):
   bundle_p = parser.add_parser(
-      'bundle',
-      description=(
-        'Create a hermetically runnable recipe bundle. This captures the result'
-        ' of all network operations the recipe_engine might normally do to'
-        ' bootstrap itself.'))
+    'bundle',
+    help='Create a hermetically runnable recipe bundle.',
+    description=(
+      'Create a hermetically runnable recipe bundle. This captures the result'
+      ' of all network operations the recipe_engine might normally do to'
+      ' bootstrap itself.'))
   bundle_p.add_argument(
-      '--destination', default='./bundle',
-      type=os.path.abspath,
-      help='The directory of where to put the bundle (default: %(default)r).')
+    '--destination', default='./bundle',
+    type=os.path.abspath,
+    help='The directory of where to put the bundle (default: %(default)r).')
 
   bundle_p.set_defaults(command='bundle', func=main)
 

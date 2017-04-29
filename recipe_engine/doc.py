@@ -460,10 +460,12 @@ def _set_known_objects(base):
 def add_subparser(parser):
   doc_kinds=('binarypb', 'jsonpb', 'textpb', 'markdown(github)',
              'markdown(gitiles)')
+  helpstr = (
+    'List all known modules reachable from the current package, with their '
+    'documentation.'
+  )
   doc_p = parser.add_parser(
-      'doc',
-      description='List all known modules reachable from the current package, '
-          'with their documentation')
+    'doc', help=helpstr, description=helpstr)
   doc_p.add_argument('recipe', nargs='?',
                      help='Restrict documentation to this recipe')
   doc_p.add_argument('--kind', default='jsonpb', choices=doc_kinds,

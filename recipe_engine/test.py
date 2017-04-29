@@ -824,106 +824,96 @@ def re_encode(obj):
     return obj
 
 
-def parse_args(args):
-  """Returns parsed command line arguments."""
-  parser = argparse.ArgumentParser()
+def add_subparser(parser):
+  helpstr='Generate or check expectations by simulation.'
+  test_p = parser.add_parser(
+    'test',
+    help=helpstr, description=helpstr)
 
   def normalize_filter(filt):
     if not filt:
-      parser.error('empty filters not allowed')
+      raise argparse.ArgumentTypeError('empty filters not allowed')
     # filters missing a test_name portion imply that its a recipe prefix and we
     # should run all tests for the matching recipes.
     return filt if '.' in filt else filt+'*.*'
 
-  subp = parser.add_subparsers(dest='command')
+  subp = test_p.add_subparsers(dest='subcommand')
 
-  list_p = subp.add_parser('list', description='Print all test names')
-  list_p.set_defaults(func=lambda opts: run_list(opts.json))
+  helpstr = 'Print all test names.'
+  list_p = subp.add_parser(
+    'list', help=helpstr, description=helpstr)
+  list_p.set_defaults(subfunc=lambda opts: run_list(opts.json))
   list_p.add_argument(
-      '--json', metavar='FILE', type=argparse.FileType('w'),
-      help='path to JSON output file')
+    '--json', metavar='FILE', type=argparse.FileType('w'),
+    help='path to JSON output file')
 
+  helpstr='Compare results of two test runs.'
   diff_p = subp.add_parser(
-      'diff', description='Compare results of two test runs')
-  diff_p.set_defaults(func=lambda opts: run_diff(
-      opts.baseline, opts.actual, json_file=opts.json))
+    'diff', help=helpstr, description=helpstr)
+  diff_p.set_defaults(subfunc=lambda opts: run_diff(
+    opts.baseline, opts.actual, json_file=opts.json))
   diff_p.add_argument(
-      '--baseline', metavar='FILE', type=argparse.FileType('r'),
-      required=True,
-      help='path to baseline JSON file')
+    '--baseline', metavar='FILE', type=argparse.FileType('r'),
+    required=True,
+    help='path to baseline JSON file')
   diff_p.add_argument(
-      '--actual', metavar='FILE', type=argparse.FileType('r'),
-      required=True,
-      help='path to actual JSON file')
+    '--actual', metavar='FILE', type=argparse.FileType('r'),
+    required=True,
+    help='path to actual JSON file')
   diff_p.add_argument(
-      '--json', metavar='FILE', type=argparse.FileType('w'),
-      help='path to JSON output file')
+    '--json', metavar='FILE', type=argparse.FileType('w'),
+    help='path to JSON output file')
 
-  run_p = subp.add_parser('run', description='Run the tests')
-  run_p.set_defaults(func=lambda opts: run_run(
-      opts.filter, jobs=opts.jobs, train=opts.train, json_file=opts.json))
+  glob_helpstr = (
+    'glob filter for the tests to run; '
+    'can be specified multiple times; '
+    'the globs have the form of '
+    '`<recipe_name_glob>[.<test_name_glob>]`. If `.<test_name_glob>` '
+    'is omitted, it is implied to be `*.*`, i.e. any recipe with this '
+    'prefix and all tests.')
+
+  helpstr = 'Run the tests.'
+  run_p = subp.add_parser('run', help=helpstr, description=helpstr)
+  run_p.set_defaults(subfunc=lambda opts: run_run(
+    opts.filter, jobs=opts.jobs, train=opts.train, json_file=opts.json))
   run_p.add_argument(
-      '--jobs', metavar='N', type=int,
-      default=multiprocessing.cpu_count(),
-      help='run N jobs in parallel (default %(default)s)')
+    '--jobs', metavar='N', type=int,
+    default=multiprocessing.cpu_count(),
+    help='run N jobs in parallel (default %(default)s)')
   run_p.add_argument(
-      '--json', metavar='FILE', type=argparse.FileType('w'),
-      help='path to JSON output file')
+    '--json', metavar='FILE', type=argparse.FileType('w'),
+    help='path to JSON output file')
   run_p.add_argument(
-      '--filter', action='append', type=normalize_filter,
-      help='glob filter for the tests to run; '
-           'can be specified multiple times; '
-           'the globs have the form of '
-           '`<recipe_name_glob>[.<test_name_glob>]`. If `.<test_name_glob>` '
-           'is omitted, it is implied to be `*.*`, i.e. any recipe with this '
-           'prefix and all tests.)')
+    '--filter', action='append', type=normalize_filter,
+    help=glob_helpstr)
   # TODO(phajdan.jr): remove --train the switch in favor of train subcommand.
   run_p.add_argument(
-      '--train', action='store_true',
-      help='re-generate recipe expectations (DEPRECATED)')
+    '--train', action='store_true',
+    help='re-generate recipe expectations (DEPRECATED)')
 
-  train_p = subp.add_parser('train', description='Re-train recipe expectations')
-  train_p.set_defaults(func=lambda opts: run_run(
-      opts.filter, jobs=opts.jobs, json_file=opts.json, train=True))
+  helpstr = 'Re-train recipe expectations.'
+  train_p = subp.add_parser('train', help=helpstr, description=helpstr)
+  train_p.set_defaults(subfunc=lambda opts: run_run(
+    opts.filter, jobs=opts.jobs, json_file=opts.json, train=True))
   train_p.add_argument(
-      '--jobs', metavar='N', type=int,
-      default=multiprocessing.cpu_count(),
-      help='run N jobs in parallel (default %(default)s)')
+    '--jobs', metavar='N', type=int,
+    default=multiprocessing.cpu_count(),
+    help='run N jobs in parallel (default %(default)s)')
   train_p.add_argument(
-      '--json', metavar='FILE', type=argparse.FileType('w'),
-      help='path to JSON output file')
+    '--json', metavar='FILE', type=argparse.FileType('w'),
+    help='path to JSON output file')
   train_p.add_argument(
-      '--filter', action='append', type=normalize_filter,
-      help='glob filter for the tests to run; '
-           'can be specified multiple times; '
-           'the globs have the form of '
-           '`<recipe_name_glob>[.<test_name_glob>]`. If `.<test_name_glob>` '
-           'is omitted, it is implied to be `*.*`, i.e. any recipe with this '
-           'prefix and all tests.)')
+    '--filter', action='append', type=normalize_filter,
+    help=glob_helpstr)
 
+  helpstr = 'Run the tests under debugger (pdb).'
   debug_p = subp.add_parser(
-      'debug', description='Run the tests under debugger (pdb)')
-  debug_p.set_defaults(func=lambda opts: run_run(
-      opts.filter, debug=True))
+    'debug', help=helpstr, description=helpstr)
+  debug_p.set_defaults(subfunc=lambda opts: run_run(
+    opts.filter, debug=True))
   debug_p.add_argument(
-      '--filter', action='append', type=normalize_filter,
-      help='glob filter for the tests to run; '
-           'can be specified multiple times; '
-           'the globs have the form of '
-           '`<recipe_name_glob>[.<test_name_glob>]`. If `.<test_name_glob>` '
-           'is omitted, it is implied to be `*.*`, i.e. any recipe with this '
-           'prefix and all tests.)')
-
-  return parser.parse_args(args)
-
-
-def add_subparser(parser):
-  # TODO(iannucci): add actual subparsers here, make main argparse parser to do
-  # full commandline parsing to allow --help to work correctly.
-  test_p = parser.add_parser(
-    'test',
-    description='Generate or check expectations by simulation')
-  test_p.add_argument('args', nargs=argparse.REMAINDER)
+    '--filter', action='append', type=normalize_filter,
+    help=glob_helpstr)
 
   def postprocess_func(_parser, args):
     # Auto-enable bootstrap for test command invocations (necessary to get
@@ -931,23 +921,23 @@ def add_subparser(parser):
     if args.use_bootstrap is None:
       args.use_bootstrap = True
 
-  test_p.set_defaults(command='test', func=main,
-                      postprocess_func=postprocess_func)
+  test_p.set_defaults(
+    command='test', func=main,
+    postprocess_func=postprocess_func,
+  )
 
 
 def main(package_deps, args):
   """Runs simulation tests on a given repo of recipes.
 
   Args:
-    universe_view: an UniverseView object to operate on
-    raw_args: command line arguments to the 'test' command
-    engine_flags: recipe engine command-line flags
+    package_deps (PackageDeps)
+    args: the parsed args (see add_subparser).
   Returns:
     Exit code
   """
   universe = loader.RecipeUniverse(package_deps, args.package)
   universe_view = loader.UniverseView(universe, package_deps.root_package)
-  raw_args=args.args
   engine_flags=args.operational_args.engine_flags
 
   # Prevent flakiness caused by stale pyc files.
@@ -958,5 +948,4 @@ def main(package_deps, args):
   global _ENGINE_FLAGS
   _ENGINE_FLAGS = engine_flags
 
-  args = parse_args(raw_args)
-  return args.func(args)
+  return args.subfunc(args)

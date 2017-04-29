@@ -62,9 +62,11 @@ def ImportsTest(recipe_path, recipe_name, whitelist, universe_view):
 
 
 def add_subparser(parser):
+  # TODO(iannucci): merge this with the test command, doesn't need to be top
+  # level.
+  helpstr = 'Check recipes for stylistic and hygenic issues.'
   lint_p = parser.add_parser(
-      'lint',
-      description='Check recipes for stylistic and hygenic issues')
+      'lint', help=helpstr, description=helpstr)
   lint_p.add_argument(
       '--whitelist', '-w', action='append', default=[],
       help='A regexp matching module names to add to the default whitelist. '

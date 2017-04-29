@@ -8,9 +8,9 @@ from . import loader
 
 
 def add_subparser(parser):
+  helpstr = 'List places referencing given recipe module(s).'
   refs_p = parser.add_parser(
-      'refs',
-      description='List places referencing given recipe module(s).')
+      'refs', help=helpstr, description=helpstr)
   refs_p.add_argument('modules', nargs='+', help='Module(s) to query for')
   refs_p.add_argument('--transitive', action='store_true',
                       help='Compute transitive closure of the references')
