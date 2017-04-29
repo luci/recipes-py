@@ -18,6 +18,7 @@ import types
 
 
 MODULES_WHITELIST = [
+  r'ast',
   r'base64',
   r'collections',
   r'contextlib',
@@ -32,14 +33,6 @@ MODULES_WHITELIST = [
   r'urlparse',
   r'zlib',
 ]
-
-
-class ImportViolationError(Exception):
-  pass
-
-
-class TestFailure(Exception):
-  pass
 
 
 def ImportsTest(recipe_path, recipe_name, whitelist, universe_view):
@@ -89,4 +82,7 @@ def main(package_deps, args):
         ImportsTest(recipe_path, recipe_name, whitelist, universe_view))
 
   if errors:
-    raise TestFailure('\n'.join(map(str, errors)))
+    for line in map(str, errors):
+      print line
+    return 1
+  return 0
