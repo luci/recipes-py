@@ -4,7 +4,6 @@
 
 from __future__ import print_function
 
-import argparse
 import bdb
 import cStringIO
 import contextlib
@@ -35,6 +34,10 @@ from . import run
 from . import step_runner
 from . import stream
 from . import test_result_pb2
+
+from . import env
+
+import argparse  # this is vendored
 
 
 # These variables must be set in the dynamic scope of the functions in this

@@ -1,0 +1,8 @@
+This argparse is a direct copy of the one available in python 2.7.9 (released on
+2014-12-10). This fixes a critical bug with subparsers and set_default values.
+
+Unfortunately some machines that recipes need to run on are still running 2.7.6,
+which doesn't have this fix.
+
+Argparse.py is taken from:
+  https://github.com/python/cpython/commit/af26c15110b76195e62a06d17e39176d42c0511c

@@ -9,7 +9,6 @@ This tool operates on the nearest ancestor directory containing an
 infra/config/recipes.cfg.
 """
 
-import argparse
 import json
 import logging
 import os
@@ -28,6 +27,8 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ROOT_DIR)
 
 from recipe_engine import env
+
+import argparse  # this is vendored
 from recipe_engine import arguments_pb2
 from recipe_engine import util as recipe_util
 from google.protobuf import json_format as jsonpb
