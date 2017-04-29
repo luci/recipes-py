@@ -39,17 +39,13 @@ def CommonChecks(input_api, output_api):
   results.extend(input_api.canned_checks.PanProjectChecks(
       input_api, output_api, license_header=header(input_api),
       excluded_paths=[
-          'bootstrap/virtualenv/*',
           r'recipe_engine/.+_pb2\.py',
       ],
   ))
 
-  input_api.subprocess.check_call([
-    sys.executable, 'bootstrap/bootstrap.py',
-    '--deps-file', 'bootstrap/deps.pyl',
-    '--cache-root', '.bootstrap_cache',
-    'ENV',
-  ])
+  input_api.subprocess.check_output([
+    input_api.python_executable,
+    'bootstrap/bootstrap_vpython.py', '--presubmit'])
 
   results.extend(input_api.RunTests(
       tests('recipe_engine', 'unittests') +

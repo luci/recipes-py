@@ -354,6 +354,10 @@ def add_common_args(parser):
       help='Use bootstrap/bootstrap.py to create a isolated python virtualenv'
            ' with required python dependencies.')
   parser.add_argument(
+      '--bootstrap-vpython-path', metavar='PATH',
+      help='Specify the `vpython` executable path to use when bootstrapping ('
+           'requires --use-bootstrap).')
+  parser.add_argument(
       '--disable-bootstrap', action='store_false', dest='use_bootstrap',
       help='Disables bootstrap (see --use-bootstrap)')
 
@@ -555,75 +559,33 @@ def main():
   if args.command == 'test' and args.use_bootstrap is None:
     args.use_bootstrap = True
 
-  # If we're using a temporary deps directory, create it.
-  temp_deps_dir = None
-  try:
-    # When bootstrapping, re-use the calling wrapper's deps directory instead of
-    # creating a new one.
-    args.deps_path = os.environ.pop('RECIPES_RUN_BOOTSTRAP_DEPS_DIR',
-                                    args.deps_path)
-    if args.deps_path == '-':
-      # "-" means use a temporary deps path.
-      temp_deps_dir = tempfile.mkdtemp(suffix='_recipe_deps')
-      args.deps_path = temp_deps_dir
+  # If we're bootstrapping, construct our bootstrap environment. If we're
+  # using a custom deps path, install our enviornment there too.
+  if args.use_bootstrap and not env.USING_BOOTSTRAP:
+    logging.debug('Bootstrapping recipe engine through vpython...')
 
-    if args.deps_path:
-      logging.warning('(Not Bad) Using custom deps path: %s', args.deps_path)
+    bootstrap_env = os.environ.copy()
+    bootstrap_env[env.BOOTSTRAP_ENV_KEY] = '1'
 
-    # If we're bootstrapping, construct our bootstrap environment. If we're
-    # using a custom deps path, install our enviornment there too.
-    if args.use_bootstrap and not os.environ.pop('RECIPES_RUN_BOOTSTRAP', None):
-      # Propagate our deps path, if specified, so we re-use our temporary
-      # directory.
-      if args.deps_path:
-        venv_root = os.path.join(args.deps_path, '.virtualenv')
-        env_path = os.path.join(venv_root, 'ENV')
-        bootstrap_cache_path = os.path.join(venv_root, 'bootstrap_cache')
-        os.environ['RECIPES_RUN_BOOTSTRAP_DEPS_DIR'] = args.deps_path
-      else:
-        env_path = os.path.join(ROOT_DIR, 'ENV')
-        bootstrap_cache_path = os.path.join(ROOT_DIR, '.bootstrap_cache')
+    cmd = [
+        sys.executable,
+        os.path.join(ROOT_DIR, 'bootstrap', 'bootstrap_vpython.py'),
+    ]
+    if args.bootstrap_vpython_path:
+      cmd += ['--vpython-path', args.bootstrap_vpython_path]
+    cmd += [
+        '--',
+        os.path.join(ROOT_DIR, 'recipes.py'),
+    ] + sys.argv[1:]
 
-      logging.debug('Installing bootstrap environment into: %s', env_path)
-      subprocess.check_call(
-          [
-            sys.executable,
-            os.path.join(ROOT_DIR, 'bootstrap', 'bootstrap.py'),
-            '--deps-file', os.path.join(ROOT_DIR, 'bootstrap', 'deps.pyl'),
-            '--cache-root', bootstrap_cache_path,
-            env_path,
-          ] + ([] if args.verbose else ['--quiet']),
-          cwd=ROOT_DIR)
+    logging.debug('Running bootstrap command (cwd=%s): %s', ROOT_DIR, cmd)
+    return subprocess.call(
+        cmd,
+        cwd=ROOT_DIR,
+        env=bootstrap_env)
 
-      # Mark that we're bootstrapping, so the next invocation falls through to
-      # standard recipe operation.
-      os.environ['RECIPES_RUN_BOOTSTRAP'] = '1'
-      args = sys.argv
-      is_windows = sys.platform.startswith(('win', 'cygwin'))
-      python_exe = 'python.bat' if is_windows else 'python'
-      return subprocess.call(
-          [
-            os.path.join(env_path, 'bin', python_exe),
-            '-B',  # Don't compile "pyo" binaries.
-            '-E',  # Don't use PYTHON* enviornment variables.
-            '-s',  # Don't use user 'site.py'.
-            os.path.join(ROOT_DIR, 'recipes.py'),
-          ] + sys.argv[1:])
-
-    # Standard recipe engine operation.
-    return _real_main(args)
-
-  finally:
-    # If we're using a temporary deps directory, clean it up here.
-    if temp_deps_dir:
-      logging.info('Cleaning up temporary deps path: %s', temp_deps_dir)
-
-      # Remove as much of the temporary directory as we can. If something goes
-      # wrong, log the error, but don't actually raise anything.
-      def on_error(_function, path, excinfo):
-        logging.error('Error cleaning up temporary deps file: %s', path,
-                      exc_info=excinfo)
-      shutil.rmtree(temp_deps_dir, onerror=on_error)
+  # Standard recipe engine operation.
+  return _real_main(args)
 
 
 def _real_main(args):
