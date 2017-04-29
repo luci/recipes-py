@@ -67,7 +67,7 @@ def RunSteps(api):
   for p in paths_to_convert:
     after = api.path.abs_to_path(str(p))
     api.step('converted path %s' % p, ['echo', after])
-    assert after == p, p
+    assert after == p, (after, p)
 
   try:
     api.path.abs_to_path('non/../absolute')

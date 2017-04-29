@@ -4,10 +4,13 @@
 
 from __future__ import print_function
 
-import argparse
 import sys
 
 from . import loader
+
+from . import env
+
+import argparse  # this is vendored
 
 
 _GRAPH_HEADER = """strict digraph {
