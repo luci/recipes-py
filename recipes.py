@@ -34,31 +34,6 @@ from recipe_engine import util as recipe_util
 from google.protobuf import json_format as jsonpb
 
 
-def test(config_file, package_deps, args):
-  try:
-    from recipe_engine import test
-  except ImportError:
-    logging.error(
-        'Error while importing testing libraries. You may be missing the pip'
-        ' package "coverage". Install it, or use the --use-bootstrap command'
-        ' line argument when calling into the recipe engine, which will install'
-        ' it for you.')
-    raise
-
-  from recipe_engine import loader
-  from recipe_engine import package
-
-  universe = loader.RecipeUniverse(package_deps, config_file)
-  universe_view = loader.UniverseView(universe, package_deps.root_package)
-
-  # Prevent flakiness caused by stale pyc files.
-  package.cleanup_pyc(package_deps.root_package.recipes_dir)
-
-  return test.main(
-      universe_view, raw_args=args.args,
-      engine_flags=args.operational_args.engine_flags)
-
-
 def handle_recipe_return(recipe_result, result_filename, stream_engine,
                          engine_flags):
   if engine_flags and engine_flags.use_result_proto:
@@ -333,6 +308,7 @@ def add_common_args(parser):
   parser.set_defaults(
     operational_args=arguments_pb2.Arguments(),
     bare_command=False,  # don't call postprocess_func, don't use package_deps
+    postprocess_func=lambda parser, args: None,
   )
 
   parser.add_argument(
@@ -365,18 +341,14 @@ def main():
   common_postprocess_func = add_common_args(parser)
 
   from recipe_engine import fetch, lint_test, bundle, depgraph, autoroll
-  from recipe_engine import remote, refs, doc
-  to_add = [fetch, lint_test, bundle, depgraph, autoroll, remote, refs, doc]
+  from recipe_engine import remote, refs, doc, test
+  to_add = [
+    fetch, lint_test, bundle, depgraph, autoroll, remote, refs, doc, test,
+  ]
 
   subp = parser.add_subparsers()
   for module in to_add:
     module.add_subparser(subp)
-
-  test_p = subp.add_parser(
-    'test',
-    description='Generate or check expectations by simulation')
-  test_p.set_defaults(command='test')
-  test_p.add_argument('args', nargs=argparse.REMAINDER)
 
 
   def properties_file_type(filename):
@@ -451,8 +423,7 @@ def main():
 
   args = parser.parse_args()
   common_postprocess_func(parser, args)
-  if hasattr(args, 'postprocess_func'):
-    args.postprocess_func(parser, args)
+  args.postprocess_func(parser, args)
 
   # TODO(iannucci): We should always do logging.basicConfig() (probably with
   # logging.WARNING), even if no verbose is passed. However we need to be
@@ -464,11 +435,6 @@ def main():
     logging.getLogger().setLevel(logging.INFO)
   if args.verbose > 1:
     logging.getLogger().setLevel(logging.DEBUG)
-
-  # Auto-enable bootstrap for test command invocations (necessary to get recent
-  # enough version of coverage package), unless explicitly disabled.
-  if args.command == 'test' and args.use_bootstrap is None:
-    args.use_bootstrap = True
 
   # If we're bootstrapping, construct our bootstrap environment. If we're
   # using a custom deps path, install our enviornment there too.
@@ -525,9 +491,7 @@ def _real_main(args):
   if hasattr(args, 'func'):
     return args.func(package_deps, args)
 
-  if args.command == 'test':
-    return test(config_file, package_deps, args)
-  elif args.command == 'run':
+  if args.command == 'run':
     return run(config_file, package_deps, args)
   else:
     print """Dear sir or madam,

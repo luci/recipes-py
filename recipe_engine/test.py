@@ -8,7 +8,6 @@ import bdb
 import cStringIO
 import contextlib
 import copy
-import coverage
 import datetime
 import difflib
 import fnmatch
@@ -25,14 +24,18 @@ import sys
 import tempfile
 import traceback
 
-from google.protobuf import json_format
-
 from . import checker
 from . import config_types
 from . import loader
+from . import package
 from . import run
 from . import step_runner
 from . import stream
+
+from . import env
+
+from google.protobuf import json_format
+
 from . import test_result_pb2
 
 from . import env
@@ -68,6 +71,8 @@ class PostProcessError(ValueError):
 @contextlib.contextmanager
 def coverage_context(include=None, enable=True):
   """Context manager that records coverage data."""
+  # TODO(iannucci): once we're always bootstrapping, move this to the top.
+  import coverage
   c = coverage.coverage(config_file=False, include=include)
 
   if not enable:
@@ -345,6 +350,9 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
 
 def get_tests(test_filter=None):
   """Returns a list of tests for current recipe package."""
+  # TODO(iannucci): once we're always bootstrapping, move this to the top.
+  import coverage
+
   tests = []
   coverage_data = coverage.CoverageData()
 
@@ -544,6 +552,9 @@ def cover_omit():
 
 def report_coverage_version():
   """Prints info about coverage module (for debugging)."""
+  # TODO(iannucci): once we're always bootstrapping, move this to the top.
+  import coverage
+
   print('Using coverage %s from %r' % (coverage.__version__, coverage.__file__))
 
 
@@ -611,6 +622,9 @@ def scan_for_expectations(root, inside_expectations=False):
 
 def run_run(test_filter, jobs=None, debug=False, train=False, json_file=None):
   """Implementation of the 'run' command."""
+  # TODO(iannucci): once we're always bootstrapping, move this to the top.
+  import coverage
+
   start_time = datetime.datetime.now()
 
   report_coverage_version()
@@ -903,7 +917,25 @@ def parse_args(args):
   return parser.parse_args(args)
 
 
-def main(universe_view, raw_args, engine_flags):
+def add_subparser(parser):
+  # TODO(iannucci): add actual subparsers here, make main argparse parser to do
+  # full commandline parsing to allow --help to work correctly.
+  test_p = parser.add_parser(
+    'test',
+    description='Generate or check expectations by simulation')
+  test_p.add_argument('args', nargs=argparse.REMAINDER)
+
+  def postprocess_func(_parser, args):
+    # Auto-enable bootstrap for test command invocations (necessary to get
+    # recent enough version of coverage package), unless explicitly disabled.
+    if args.use_bootstrap is None:
+      args.use_bootstrap = True
+
+  test_p.set_defaults(command='test', func=main,
+                      postprocess_func=postprocess_func)
+
+
+def main(package_deps, args):
   """Runs simulation tests on a given repo of recipes.
 
   Args:
@@ -913,6 +945,14 @@ def main(universe_view, raw_args, engine_flags):
   Returns:
     Exit code
   """
+  universe = loader.RecipeUniverse(package_deps, args.package)
+  universe_view = loader.UniverseView(universe, package_deps.root_package)
+  raw_args=args.args
+  engine_flags=args.operational_args.engine_flags
+
+  # Prevent flakiness caused by stale pyc files.
+  package.cleanup_pyc(package_deps.root_package.recipes_dir)
+
   global _UNIVERSE_VIEW
   _UNIVERSE_VIEW = universe_view
   global _ENGINE_FLAGS
