@@ -7,7 +7,23 @@ from __future__ import print_function
 from . import loader
 
 
-def main(universe, own_package, modules, transitive):
+def add_subparser(parser):
+  refs_p = parser.add_parser(
+      'refs',
+      description='List places referencing given recipe module(s).')
+  refs_p.add_argument('modules', nargs='+', help='Module(s) to query for')
+  refs_p.add_argument('--transitive', action='store_true',
+                      help='Compute transitive closure of the references')
+
+  refs_p.set_defaults(command='refs', func=main)
+
+
+def main(package_deps, args):
+  universe = loader.RecipeUniverse(package_deps, args.package)
+  own_package = package_deps.root_package
+  modules = args.modules
+  transitive = args.transitive
+
   result_modules = set()
   result_recipes = set()
 

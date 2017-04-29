@@ -241,15 +241,6 @@ class ProjectOverrideAction(argparse.Action):
     v[project_id] = path
 
 
-def refs(config_file, package_deps, args):
-  from recipe_engine import refs
-  from recipe_engine import loader
-
-  universe = loader.RecipeUniverse(package_deps, config_file)
-
-  refs.main(universe, package_deps.root_package, args.modules, args.transitive)
-
-
 def doc(config_file, package_deps, args):
   from recipe_engine import doc
   from recipe_engine import loader
@@ -384,8 +375,8 @@ def main():
   common_postprocess_func = add_common_args(parser)
 
   from recipe_engine import fetch, lint_test, bundle, depgraph, autoroll
-  from recipe_engine import remote
-  to_add = [fetch, lint_test, bundle, depgraph, autoroll, remote]
+  from recipe_engine import remote, refs
+  to_add = [fetch, lint_test, bundle, depgraph, autoroll, remote, refs]
 
   subp = parser.add_subparsers()
   for module in to_add:
@@ -467,14 +458,6 @@ def main():
       help='A list of property pairs; e.g. mastername=chromium.linux '
            'issue=12345. The property value will be decoded as JSON, but if '
            'this decoding fails the value will be interpreted as a string.')
-
-  refs_p = subp.add_parser(
-      'refs',
-      description='List places referencing given recipe module(s).')
-  refs_p.set_defaults(command='refs')
-  refs_p.add_argument('modules', nargs='+', help='Module(s) to query for')
-  refs_p.add_argument('--transitive', action='store_true',
-                      help='Compute transitive closure of the references')
 
   doc_kinds=('binarypb', 'jsonpb', 'textpb', 'markdown(github)',
              'markdown(gitiles)')
@@ -568,8 +551,6 @@ def _real_main(args):
     return test(config_file, package_deps, args)
   elif args.command == 'run':
     return run(config_file, package_deps, args)
-  elif args.command == 'refs':
-    return refs(config_file, package_deps, args)
   elif args.command == 'doc':
     return doc(config_file, package_deps, args)
   else:
