@@ -257,16 +257,6 @@ class ProjectOverrideAction(argparse.Action):
     v[project_id] = path
 
 
-def depgraph(config_file, package_deps, args):
-  from recipe_engine import depgraph
-  from recipe_engine import loader
-
-  universe = loader.RecipeUniverse(package_deps, config_file)
-
-  depgraph.main(universe, package_deps.root_package,
-                args.ignore_package, args.output, args.recipe_filter)
-
-
 def refs(config_file, package_deps, args):
   from recipe_engine import refs
   from recipe_engine import loader
@@ -400,8 +390,8 @@ def main():
 
   common_postprocess_func = add_common_args(parser)
 
-  from recipe_engine import fetch, lint_test, bundle
-  to_add = [fetch, lint_test, bundle]
+  from recipe_engine import fetch, lint_test, bundle, depgraph
+  to_add = [fetch, lint_test, bundle, depgraph]
 
   subp = parser.add_subparsers()
   for module in to_add:
@@ -523,27 +513,6 @@ def main():
       action='store_true',
       help=('Emit even more data in the output-json file. '
             'Requires --output-json.'))
-
-  depgraph_p = subp.add_parser(
-      'depgraph',
-      description=(
-          'Produce graph of recipe and recipe module dependencies. Example: '
-          './recipes.py --package infra/config/recipes.cfg depgraph | tred | '
-          'dot -Tpdf > graph.pdf'))
-  depgraph_p.set_defaults(command='depgraph')
-  depgraph_p.add_argument(
-      '--output', type=argparse.FileType('w'), default=sys.stdout,
-      help='The file to write output to')
-  depgraph_p.add_argument(
-      '--ignore-package', action='append', default=[],
-      help='Ignore a recipe package (e.g. recipe_engine). Can be passed '
-           'multiple times')
-  depgraph_p.add_argument(
-      '--recipe-filter', default='',
-      help='A recipe substring to examine. If present, the depgraph will '
-           'include a recipe section containing recipes whose names contain '
-           'this substring. It will also filter all nodes of the graph to only '
-           'include modules touched by the filtered recipes.')
 
   refs_p = subp.add_parser(
       'refs',
@@ -691,8 +660,6 @@ def _real_main(args):
     return run(config_file, package_deps, args)
   elif args.command == 'autoroll':
     return autoroll(repo_root, config_file, args)
-  elif args.command == 'depgraph':
-    return depgraph(config_file, package_deps, args)
   elif args.command == 'refs':
     return refs(config_file, package_deps, args)
   elif args.command == 'doc':
