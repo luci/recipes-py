@@ -61,11 +61,25 @@ def ImportsTest(recipe_path, recipe_name, whitelist, universe_view):
                (recipe_path, module_name))
 
 
-def main(universe_view, whitelist=[]):
-  from . import loader
-  from . import package
+def add_subparser(parser):
+  lint_p = parser.add_parser(
+      'lint',
+      description='Check recipes for stylistic and hygenic issues')
+  lint_p.add_argument(
+      '--whitelist', '-w', action='append', default=[],
+      help='A regexp matching module names to add to the default whitelist. '
+           'Use multiple times to add multiple patterns,')
 
-  whitelist = map(re.compile, MODULES_WHITELIST + whitelist)
+  lint_p.set_defaults(command='lint', func=main)
+
+
+def main(package_deps, args):
+  from . import loader
+
+  universe = loader.RecipeUniverse(package_deps, args.package)
+  universe_view = loader.UniverseView(universe, package_deps.root_package)
+
+  whitelist = map(re.compile, MODULES_WHITELIST + args.whitelist)
 
   errors = []
   for recipe_path, recipe_name in universe_view.loop_over_recipes():
@@ -74,4 +88,3 @@ def main(universe_view, whitelist=[]):
 
   if errors:
     raise TestFailure('\n'.join(map(str, errors)))
-

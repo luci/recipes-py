@@ -625,7 +625,22 @@ def prep_recipes_py(universe, root_package, destination):
     recipes_bat.write(u' %*\n')
 
 
-def main(root_package, universe, destination):
+def add_subparser(parser):
+  bundle_p = parser.add_parser(
+      'bundle',
+      description=(
+        'Create a hermetically runnable recipe bundle. This captures the result'
+        ' of all network operations the recipe_engine might normally do to'
+        ' bootstrap itself.'))
+  bundle_p.add_argument(
+      '--destination', default='./bundle',
+      type=os.path.abspath,
+      help='The directory of where to put the bundle (default: %(default)r).')
+
+  bundle_p.set_defaults(command='bundle', func=main)
+
+
+def main(package_deps, args):
   """
   Args:
     root_package (package.Package) - The recipes script in the produced bundle
@@ -635,12 +650,12 @@ def main(root_package, universe, destination):
     destination (str) - Path to the bundle output folder. This folder should not
       exist before calling this function.
   """
-  check(root_package, package.Package)
-  check(universe, loader.RecipeUniverse)
-  check(destination, str)
+  universe = loader.RecipeUniverse(package_deps, args.package)
+  destination = args.destination
+  root_package = package_deps.root_package
 
   logging.basicConfig()
-  destination = prepare_destination(destination)
+  destination = prepare_destination(args.destination)
   for pkg in universe.packages:
     export_package(pkg, destination, pkg == root_package)
   prep_recipes_py(universe, root_package, destination)

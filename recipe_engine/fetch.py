@@ -592,3 +592,20 @@ class GitilesBackend(Backend):
       rev_json.message_lines,
       spec,
       has_interesting_changes(spec, rev_json.changed_files))
+
+
+def add_subparser(parser):
+  fetch_p = parser.add_parser(
+    'fetch',
+    description='Fetch and update dependencies.')
+
+  def postprocess_func(parser, args):
+    if args.no_fetch:
+      parser.error('--no-fetch doesn\'t make sense with fetch command')
+
+  fetch_p.set_defaults(
+    command='fetch',
+    # fetch action is implied by recipes.py
+    func=(lambda package_deps, engine_flags: 0),
+    postprocess_func=postprocess_func,
+  )

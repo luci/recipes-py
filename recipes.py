@@ -59,25 +59,6 @@ def test(config_file, package_deps, args):
       engine_flags=args.operational_args.engine_flags)
 
 
-def lint(config_file, package_deps, args):
-  from recipe_engine import lint_test
-  from recipe_engine import loader
-
-  universe = loader.RecipeUniverse(package_deps, config_file)
-  universe_view = loader.UniverseView(universe, package_deps.root_package)
-
-  lint_test.main(universe_view, args.whitelist or [])
-
-
-def bundle(config_file, package_deps, args):
-  from recipe_engine import bundle
-  from recipe_engine import loader
-
-  universe = loader.RecipeUniverse(package_deps, config_file)
-
-  bundle.main(package_deps.root_package, universe, args.destination)
-
-
 def handle_recipe_return(recipe_result, result_filename, stream_engine,
                          engine_flags):
   if engine_flags and engine_flags.use_result_proto:
@@ -169,7 +150,7 @@ def run(config_file, package_deps, args):
   op_properties = get_properties_from_operational_args(op_args)
   if args.properties and op_properties:
     raise ValueError(
-      "Got operational args properties as well as CLI properties.")
+      'Got operational args properties as well as CLI properties.')
 
   properties = op_properties
   if not properties:
@@ -259,7 +240,7 @@ class ProjectOverrideAction(argparse.Action):
   def __call__(self, parser, namespace, values, option_string=None):
     p = values.split('=', 2)
     if len(p) != 2:
-      raise ValueError("Override must have the form: repo=path")
+      raise ValueError('Override must have the form: repo=path')
     project_id, path = p
 
     v = getattr(namespace, self.dest, None)
@@ -268,11 +249,11 @@ class ProjectOverrideAction(argparse.Action):
       setattr(namespace, self.dest, v)
 
     if v.get(project_id):
-      raise ValueError("An override is already defined for [%s] (%s)" % (
+      raise ValueError('An override is already defined for [%s] (%s)' % (
                        project_id, v[project_id]))
     path = os.path.abspath(os.path.expanduser(path))
     if not os.path.isdir(path):
-      raise ValueError("Override path [%s] is not a directory" % (path,))
+      raise ValueError('Override path [%s] is not a directory' % (path,))
     v[project_id] = path
 
 
@@ -327,7 +308,7 @@ def _op_property_value(prop):
     prop (arguments_pb2.Property): property to convert.
   Returns: The converted value.
   Raises:
-    ValueError: If "prop" is incomplete or invalid.
+    ValueError: If 'prop' is incomplete or invalid.
   """
   typ = prop.WhichOneof('value')
   conv = _OP_PROPERTY_CONV.get(typ)
@@ -341,7 +322,7 @@ def _op_properties_to_dict(pmap):
 
   Args:
     pmap (arguments_pb2.PropertyMap): Map to convert to dictionary form.
-  Returns (dict): A dictionary derived from the properties in "pmap".
+  Returns (dict): A dictionary derived from the properties in 'pmap'.
   """
   return dict((k, _op_property_value(pmap[k])) for k in pmap)
 
@@ -377,7 +358,7 @@ def add_common_args(parser):
       action=ProjectOverrideAction,
       help='Override a project repository path with a local one.')
   parser.add_argument(
-      # Use "None" as default so that we can recognize when none of the
+      # Use 'None' as default so that we can recognize when none of the
       # bootstrap options were passed.
       '--use-bootstrap', action='store_true', default=None,
       help='Use bootstrap/bootstrap.py to create a isolated python virtualenv'
@@ -400,30 +381,31 @@ def add_common_args(parser):
            'must contain a JSONPB-encoded Arguments protobuf message, and will '
            'be integrated into the runtime parameters.')
 
+  def post_process_args(parser, args):
+    if args.command == 'remote':
+      # TODO(iannucci): this is a hack; remote doesn't behave like ANY other
+      # commands. A way to solve this will be to allow --package to take
+      # a remote repo and then simply remove the remote subcommand entirely.
+      return
 
-def post_process_common_args(parser, args):
-  if args.command == "remote":
-    # TODO(iannucci): this is a hack; remote doesn't behave like ANY other
-    # commands. A way to solve this will be to allow --package to take a remote
-    # repo and then simply remove the remote subcommand entirely.
-    return
+    if not args.package:
+      parser.error('%s requires --package' % args.command)
 
-  if not args.package:
-    parser.error('%s requires --package' % args.command)
+  return post_process_args
 
 
 def main():
   parser = argparse.ArgumentParser(
       description='Interact with the recipe system.')
 
-  add_common_args(parser)
+  common_postprocess_func = add_common_args(parser)
+
+  from recipe_engine import fetch, lint_test, bundle
+  to_add = [fetch, lint_test, bundle]
 
   subp = parser.add_subparsers()
-
-  fetch_p = subp.add_parser(
-      'fetch',
-      description='Fetch and update dependencies.')
-  fetch_p.set_defaults(command='fetch')
+  for module in to_add:
+    module.add_subparser(subp)
 
   test_p = subp.add_parser(
     'test',
@@ -431,34 +413,13 @@ def main():
   test_p.set_defaults(command='test')
   test_p.add_argument('args', nargs=argparse.REMAINDER)
 
-  lint_p = subp.add_parser(
-      'lint',
-      description='Check recipes for stylistic and hygenic issues')
-  lint_p.set_defaults(command='lint')
-
-  lint_p.add_argument(
-      '--whitelist', '-w', action='append',
-      help='A regexp matching module names to add to the default whitelist. '
-           'Use multiple times to add multiple patterns,')
-
-  bundle_p = subp.add_parser(
-      'bundle',
-      description=(
-        'Create a hermetically runnable recipe bundle. This captures the result'
-        ' of all network operations the recipe_engine might normally do to'
-        ' bootstrap itself.'))
-  bundle_p.set_defaults(command='bundle')
-  bundle_p.add_argument(
-      '--destination', default='./bundle',
-      type=os.path.abspath,
-      help='The directory of where to put the bundle (default: %(default)r).')
 
   def properties_file_type(filename):
     with (sys.stdin if filename == '-' else open(filename)) as f:
       obj = json.load(f)
       if not isinstance(obj, dict):
         raise argparse.ArgumentTypeError(
-          "must contain a JSON object, i.e. `{}`.")
+          'must contain a JSON object, i.e. `{}`.')
       return obj
 
   def parse_prop(prop):
@@ -472,7 +433,7 @@ def main():
   def properties_type(value):
     obj = json.loads(value)
     if not isinstance(obj, dict):
-      raise argparse.ArgumentTypeError("must contain a JSON object, i.e. `{}`.")
+      raise argparse.ArgumentTypeError('must contain a JSON object, i.e. `{}`.')
     return obj
 
   run_p = subp.add_parser(
@@ -522,6 +483,7 @@ def main():
       help='A list of property pairs; e.g. mastername=chromium.linux '
            'issue=12345. The property value will be decoded as JSON, but if '
            'this decoding fails the value will be interpreted as a string.')
+
 
   remote_p = subp.add_parser(
       'remote',
@@ -604,7 +566,9 @@ def main():
   doc_p.set_defaults(command='doc')
 
   args = parser.parse_args()
-  post_process_common_args(parser, args)
+  common_postprocess_func(parser, args)
+  if hasattr(args, 'postprocess_func'):
+    args.postprocess_func(parser, args)
 
   # TODO(iannucci): We should always do logging.basicConfig() (probably with
   # logging.WARNING), even if no verbose is passed. However we need to be
@@ -718,16 +682,11 @@ def _real_main(args):
     # an infra failure, rather than a test failure.
     return 2
 
-  if args.command == 'fetch':
-    # We already did everything in the create() call above.
-    assert not args.no_fetch, 'Fetch? No-fetch? Make up your mind!'
-    return 0
-  elif args.command == 'test':
+  if hasattr(args, 'func'):
+    return args.func(package_deps, args)
+
+  if args.command == 'test':
     return test(config_file, package_deps, args)
-  elif args.command == 'bundle':
-    return bundle(config_file, package_deps, args)
-  elif args.command == 'lint':
-    return lint(config_file, package_deps, args)
   elif args.command == 'run':
     return run(config_file, package_deps, args)
   elif args.command == 'autoroll':
