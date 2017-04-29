@@ -226,16 +226,6 @@ def remote(args):
   return remote.main(args)
 
 
-def autoroll(repo_root, config_file, args):
-  from recipe_engine import autoroll
-
-  if args.verbose_json and not args.output_json:
-    print >> sys.stderr, '--verbose-json passed without --output-json'
-    return 1
-
-  return autoroll.main(args, repo_root, config_file)
-
-
 class ProjectOverrideAction(argparse.Action):
   def __call__(self, parser, namespace, values, option_string=None):
     p = values.split('=', 2)
@@ -394,8 +384,8 @@ def main():
 
   common_postprocess_func = add_common_args(parser)
 
-  from recipe_engine import fetch, lint_test, bundle, depgraph
-  to_add = [fetch, lint_test, bundle, depgraph]
+  from recipe_engine import fetch, lint_test, bundle, depgraph, autoroll
+  to_add = [fetch, lint_test, bundle, depgraph, autoroll]
 
   subp = parser.add_subparsers()
   for module in to_add:
@@ -504,19 +494,6 @@ def main():
       'remote_args', nargs='*',
       help='Arguments to pass to fetched repo\'s recipes.py')
 
-  autoroll_p = subp.add_parser(
-      'autoroll',
-      help='Roll dependencies of a recipe package forward (implies fetch)')
-  autoroll_p.set_defaults(command='autoroll')
-  autoroll_p.add_argument(
-      '--output-json',
-      type=os.path.abspath,
-      help='A json file to output information about the roll to.')
-  autoroll_p.add_argument(
-      '--verbose-json',
-      action='store_true',
-      help=('Emit even more data in the output-json file. '
-            'Requires --output-json.'))
 
   refs_p = subp.add_parser(
       'refs',
@@ -620,8 +597,6 @@ def _real_main(args):
     return test(config_file, package_deps, args)
   elif args.command == 'run':
     return run(config_file, package_deps, args)
-  elif args.command == 'autoroll':
-    return autoroll(repo_root, config_file, args)
   elif args.command == 'refs':
     return refs(config_file, package_deps, args)
   elif args.command == 'doc':

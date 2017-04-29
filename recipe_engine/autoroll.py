@@ -267,7 +267,32 @@ def test_rolls(repo_cfg_block, config_file, context, package_spec,
   return ret
 
 
-def main(args, repo_root, config_file):
+def add_subparser(parser):
+  autoroll_p = parser.add_parser(
+      'autoroll',
+      help='Roll dependencies of a recipe package forward (implies fetch)')
+  autoroll_p.add_argument(
+      '--output-json',
+      type=os.path.abspath,
+      help='A json file to output information about the roll to.')
+  autoroll_p.add_argument(
+      '--verbose-json',
+      action='store_true',
+      help=('Emit even more data in the output-json file. '
+            'Requires --output-json.'))
+
+  def postprocess_func(parser, args):
+    if args.verbose_json and not args.output_json:
+      parser.error('--verbose-json passed without --output-json')
+
+  autoroll_p.set_defaults(
+    command='autoroll', func=main, postprocess_func=postprocess_func)
+
+
+def main(_package_deps, args):
+  config_file = args.package
+  repo_root = package.InfraRepoConfig().from_recipes_cfg(config_file.path)
+
   package_pb = config_file.read()
 
   context = package.PackageContext.from_package_pb(
