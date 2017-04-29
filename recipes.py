@@ -87,7 +87,7 @@ def main():
 
   common_postprocess_func = common_args.add_common_args(parser)
 
-  subp = parser.add_subparsers()
+  subp = parser.add_subparsers(dest='command')
   for module in _SUBCOMMANDS:
     module.add_subparser(subp)
 

@@ -293,7 +293,7 @@ def add_subparser(parser):
       parser.error('--verbose-json passed without --output-json')
 
   autoroll_p.set_defaults(
-    command='autoroll', func=main, postprocess_func=postprocess_func)
+    func=main, postprocess_func=postprocess_func)
 
 
 def main(_package_deps, args):

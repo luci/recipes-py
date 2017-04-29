@@ -15,7 +15,7 @@ def add_subparser(parser):
   refs_p.add_argument('--transitive', action='store_true',
                       help='Compute transitive closure of the references')
 
-  refs_p.set_defaults(command='refs', func=main)
+  refs_p.set_defaults(func=main)
 
 
 def main(package_deps, args):

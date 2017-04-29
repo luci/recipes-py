@@ -922,8 +922,7 @@ def add_subparser(parser):
       args.use_bootstrap = True
 
   test_p.set_defaults(
-    command='test', func=main,
-    postprocess_func=postprocess_func,
+    func=main, postprocess_func=postprocess_func,
   )
 
 

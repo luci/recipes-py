@@ -471,7 +471,7 @@ def add_subparser(parser):
   doc_p.add_argument('--kind', default='jsonpb', choices=doc_kinds,
                      help='Output this kind of documentation')
 
-  doc_p.set_defaults(command='doc', func=main)
+  doc_p.set_defaults(func=main)
 
 
 def main(package_deps, args):

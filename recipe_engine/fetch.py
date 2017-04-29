@@ -605,7 +605,6 @@ def add_subparser(parser):
       parser.error('--no-fetch does not make sense with fetch command')
 
   fetch_p.set_defaults(
-    command='fetch',
     # fetch action is implied by recipes.py
     func=(lambda package_deps, engine_flags: 0),
     postprocess_func=postprocess_func,

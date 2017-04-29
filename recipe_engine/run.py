@@ -518,7 +518,7 @@ def add_subparser(parser):
       'issue=12345. The property value will be decoded as JSON, but if '
       'this decoding fails the value will be interpreted as a string.'))
 
-  run_p.set_defaults(command='run', properties={}, func=main)
+  run_p.set_defaults(properties={}, func=main)
 
 
 def handle_recipe_return(recipe_result, result_filename, stream_engine,

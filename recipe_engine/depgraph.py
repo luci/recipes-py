@@ -48,7 +48,7 @@ def add_subparser(parser):
       'this substring. It will also filter all nodes of the graph to only '
       'include modules touched by the filtered recipes.'))
 
-  depgraph_p.set_defaults(command='depgraph', func=main)
+  depgraph_p.set_defaults(func=main)
 
 
 def main(package_deps, args):

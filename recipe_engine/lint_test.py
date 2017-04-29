@@ -72,7 +72,7 @@ def add_subparser(parser):
       help='A regexp matching module names to add to the default whitelist. '
            'Use multiple times to add multiple patterns,')
 
-  lint_p.set_defaults(command='lint', func=main)
+  lint_p.set_defaults(func=main)
 
 
 def main(package_deps, args):

@@ -638,7 +638,7 @@ def add_subparser(parser):
     type=os.path.abspath,
     help='The directory of where to put the bundle (default: %(default)r).')
 
-  bundle_p.set_defaults(command='bundle', func=main)
+  bundle_p.set_defaults(func=main)
 
 
 def main(package_deps, args):

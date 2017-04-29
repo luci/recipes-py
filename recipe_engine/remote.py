@@ -58,7 +58,6 @@ def add_subparser(parser):
       help='Arguments to pass to fetched repo\'s recipes.py')
 
   remote_p.set_defaults(
-    command='remote',
     bare_command=True,
     func=main,
   )
