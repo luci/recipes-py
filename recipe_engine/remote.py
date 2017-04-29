@@ -32,7 +32,39 @@ def ensure_workdir(args):
       shutil.rmtree(args.workdir, ignore_errors=True)
 
 
-def main(args):
+def add_subparser(parser):
+  remote_p = parser.add_parser(
+      'remote',
+      description='Invoke a recipe command from specified repo and revision')
+  remote_p.add_argument(
+      '--repository', required=True,
+      help='URL of a git repository to fetch')
+  remote_p.add_argument(
+      '--revision',
+      help=(
+        'Git commit hash to check out; defaults to latest revision on master'
+        ' (refs/heads/master)'
+      ))
+  remote_p.add_argument(
+      '--workdir',
+      type=os.path.abspath,
+      help='The working directory of repo checkout')
+  remote_p.add_argument(
+      '--use-gitiles', action='store_true',
+      help='Use Gitiles-specific way to fetch repo (potentially cheaper for '
+           'large repos)')
+  remote_p.add_argument(
+      'remote_args', nargs='*',
+      help='Arguments to pass to fetched repo\'s recipes.py')
+
+  remote_p.set_defaults(
+    command='remote',
+    bare_command=True,
+    func=main,
+  )
+
+
+def main(_package_deps, args):
   with ensure_workdir(args):
     checkout_dir = os.path.join(args.workdir, 'checkout')
     revision = args.revision or 'refs/heads/master'

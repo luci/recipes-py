@@ -220,12 +220,6 @@ def run(config_file, package_deps, args):
         ret, args.output_result_json, stream_engine, engine_flags)
 
 
-def remote(args):
-  from recipe_engine import remote
-
-  return remote.main(args)
-
-
 class ProjectOverrideAction(argparse.Action):
   def __call__(self, parser, namespace, values, option_string=None):
     p = values.split('=', 2)
@@ -355,7 +349,10 @@ def add_common_args(parser):
     with open(value) as fd:
       return jsonpb.ParseDict(json.load(fd), arguments_pb2.Arguments())
 
-  parser.set_defaults(operational_args=arguments_pb2.Arguments())
+  parser.set_defaults(
+    operational_args=arguments_pb2.Arguments(),
+    bare_command=False,  # don't call postprocess_func, don't use package_deps
+  )
 
   parser.add_argument(
       '--operational-args-path',
@@ -366,14 +363,16 @@ def add_common_args(parser):
            'be integrated into the runtime parameters.')
 
   def post_process_args(parser, args):
-    if args.command == 'remote':
-      # TODO(iannucci): this is a hack; remote doesn't behave like ANY other
-      # commands. A way to solve this will be to allow --package to take
-      # a remote repo and then simply remove the remote subcommand entirely.
-      return
-
-    if not args.package:
-      parser.error('%s requires --package' % args.command)
+    if args.bare_command:
+      # TODO(iannucci): this is gross, and only for the remote subcommand;
+      # remote doesn't behave like ANY other commands. A way to solve this will
+      # be to allow --package to take a remote repo and then simply remove the
+      # remote subcommand entirely.
+      if args.package is not None:
+        parser.error('%s forbids --package' % args.command)
+    else:
+      if not args.package:
+        parser.error('%s requires --package' % args.command)
 
   return post_process_args
 
@@ -385,7 +384,8 @@ def main():
   common_postprocess_func = add_common_args(parser)
 
   from recipe_engine import fetch, lint_test, bundle, depgraph, autoroll
-  to_add = [fetch, lint_test, bundle, depgraph, autoroll]
+  from recipe_engine import remote
+  to_add = [fetch, lint_test, bundle, depgraph, autoroll, remote]
 
   subp = parser.add_subparsers()
   for module in to_add:
@@ -468,33 +468,6 @@ def main():
            'issue=12345. The property value will be decoded as JSON, but if '
            'this decoding fails the value will be interpreted as a string.')
 
-
-  remote_p = subp.add_parser(
-      'remote',
-      description='Invoke a recipe command from specified repo and revision')
-  remote_p.set_defaults(command='remote')
-  remote_p.add_argument(
-      '--repository', required=True,
-      help='URL of a git repository to fetch')
-  remote_p.add_argument(
-      '--revision',
-      help=(
-        'Git commit hash to check out; defaults to latest revision on master'
-        ' (refs/heads/master)'
-      ))
-  remote_p.add_argument(
-      '--workdir',
-      type=os.path.abspath,
-      help='The working directory of repo checkout')
-  remote_p.add_argument(
-      '--use-gitiles', action='store_true',
-      help='Use Gitiles-specific way to fetch repo (potentially cheaper for '
-           'large repos)')
-  remote_p.add_argument(
-      'remote_args', nargs='*',
-      help='Arguments to pass to fetched repo\'s recipes.py')
-
-
   refs_p = subp.add_parser(
       'refs',
       description='List places referencing given recipe module(s).')
@@ -568,10 +541,8 @@ def main():
 def _real_main(args):
   from recipe_engine import package
 
-  # Commands which do not require config_file, package_deps, and other objects
-  # initialized later.
-  if args.command == 'remote':
-    return remote(args)
+  if args.bare_command:
+    return args.func(None, args)
 
   config_file = args.package
   repo_root = package.InfraRepoConfig().from_recipes_cfg(args.package.path)

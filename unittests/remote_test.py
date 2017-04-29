@@ -25,7 +25,7 @@ class RemoteTest(repo_test_util.RepoTest):
           'a_recipe',
       ], stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as ex:
-      print >> sys.stdout, ex.message
+      print >> sys.stdout, ex.message, ex.output
       raise
 
 
