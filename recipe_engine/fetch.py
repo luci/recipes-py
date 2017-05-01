@@ -271,7 +271,19 @@ class GitBackend(Backend):
   def _execute(self, *args):
     """Runs a raw command. Separate so it's easily mockable."""
     LOGGER.info('Running: %s', args)
-    return subprocess42.check_output(args)
+
+    process = subprocess42.Popen(
+      args, stdout=subprocess42.PIPE, stderr=subprocess42.PIPE)
+    output, stderr = process.communicate()
+    retcode = process.poll()
+    if retcode:
+      if output and stderr:
+        new_output = 'STDOUT\n%s\nSTDERR\n%s' % (output, stderr)
+      else:
+        new_output = output or stderr
+      raise subprocess42.CalledProcessError(
+        retcode, args, new_output)
+    return output
 
   def _ensure_local_repo_exists(self):
     """Ensures that self.checkout_dir is a valid git repository. Safe to call
@@ -319,6 +331,7 @@ class GitBackend(Backend):
       args.append(refspec)
 
     self.assert_remote('fetch')
+    LOGGER.info('fetching %s', self.repo_url)
     self._git(*args)
 
   def checkout(self, refspec):
