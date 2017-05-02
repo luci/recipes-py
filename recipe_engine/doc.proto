@@ -227,7 +227,7 @@ message Doc {
 
   // Documentation for a recipe module.
   message Module {
-    // The fully qualified name of this recipe module (e.g. "recipe_engine/path")
+    // The unqualified name of this recipe module (e.g. "path")
     string name = 1;
     string relpath = 2;
     string docstring = 3;

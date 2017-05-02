@@ -246,9 +246,11 @@ class PathApi(recipe_api.RecipeApi):
       * base_paths
 
     Example:
+    ```
       # assume [START_DIR] == "/basis/dir/for/recipe"
       api.path.abs_to_path("/basis/dir/for/recipe/some/other/dir") ->
         Path("[START_DIR]/some/other/dir")
+    ```
 
     Raises an ValueError if the preconditions are not met, otherwise returns the
     Path object.

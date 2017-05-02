@@ -17,13 +17,15 @@ import types as stdlib_types
 from cStringIO import StringIO
 
 from . import config
-from . import doc_pb2 as doc
 from . import loader
+from . import doc_markdown
 from . import recipe_api
 from . import types
 from . import util
 
 from . import env
+
+from . import doc_pb2 as doc
 
 from google.protobuf import json_format as jsonpb
 from google.protobuf import text_format as textpb
@@ -218,7 +220,11 @@ def _extract_classes_funcs(body_ast, relpath, imports, do_fixup=True):
       if not node.name.startswith('_'):
         classes[node.name] = parse_class(node, relpath, imports)
     elif isinstance(node, ast.FunctionDef):
-      if not node.name.startswith('_'):
+      ok = (
+        not node.name.startswith('_') or
+        (node.name.startswith('__') and node.name.endswith('__'))
+      )
+      if ok:
         funcs[node.name] = parse_func(node, relpath, imports)
 
   if do_fixup:
@@ -354,7 +360,8 @@ def parse_recipe(uv, base_dir, relpath, recipe_name):
 def parse_module(uv, base_dir, relpath, mod_name):
   native_relpath = _to_native(relpath)
 
-  api = _grab_ast(base_dir, os.path.join(native_relpath, 'api.py'))
+  api_relpath = relpath + '/api.py'
+  api = _grab_ast(base_dir, _to_native(api_relpath))
   if not api:
     return None
 
@@ -364,7 +371,7 @@ def parse_module(uv, base_dir, relpath, mod_name):
     return None
 
   imports = _parse_mock_imports(api, MOCK_IMPORTS_MODULE)
-  classes, funcs = _extract_classes_funcs(api, relpath, imports)
+  classes, funcs = _extract_classes_funcs(api, api_relpath, imports)
 
   api_class = None
   for name, val in sorted(classes.iteritems()):
@@ -502,5 +509,9 @@ def main(package_deps, args):
     sys.stdout.write(node.SerializeToString())
   elif args.kind == 'textpb':
     sys.stdout.write(textpb.MessageToString(node))
+  elif args.kind == 'markdown-github':
+    doc_markdown.Emit(doc_markdown.Printer(doc_markdown.GITHUB), node)
+  elif args.kind == 'markdown-gitiles':
+    doc_markdown.Emit(doc_markdown.Printer(doc_markdown.GITILES), node)
   else:
     raise NotImplementedError('--kind=%s' % args.kind)
