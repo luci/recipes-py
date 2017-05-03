@@ -73,7 +73,9 @@ def _find_value_of(mod_ast, target):
   """
   for node in mod_ast.body:
     if isinstance(node, ast.Assign):
-      if len(node.targets) == 1 and node.targets[0].id == target:
+      if (len(node.targets) == 1 and
+          isinstance(node.targets[0], ast.Name) and
+          node.targets[0].id == target):
         return node.value, node.lineno
   return None, None
 
@@ -126,6 +128,8 @@ def _expand_mock_imports(*mock_imports):
 
   return expanded_imports
 
+ALL_IMPORTS = {}  # used in doc_test to ensure everything is actually importable
+KNOWN_OBJECTS = {}
 
 _decorator_imports = {
   'recipe_engine.util.returns_placeholder': util.returns_placeholder,
@@ -133,6 +137,7 @@ _decorator_imports = {
   'recipe_engine.recipe_api.infer_composite_step': (
     recipe_api.infer_composite_step)
 }
+KNOWN_OBJECTS.update(_decorator_imports)
 
 _config_imports = {
   'recipe_engine.config.ConfigGroup': config.ConfigGroup,
@@ -144,36 +149,36 @@ _config_imports = {
   'recipe_engine.config.Static': config.Static,
   'recipe_engine.config.Enum': config.Enum,
 }
+KNOWN_OBJECTS.update(_config_imports)
 
 _placeholder_imports = {
   'recipe_engine.util.OutputPlaceholder': util.OutputPlaceholder,
   'recipe_engine.util.InputPlaceholder': util.InputPlaceholder,
   'recipe_engine.util.Placeholder': util.Placeholder,
 }
+KNOWN_OBJECTS.update(_placeholder_imports)
 
-MOCK_IMPORTS_PARAMETERS = _expand_mock_imports({
+_property_imports = {
   'recipe_engine.recipe_api.Property': recipe_api.Property,
-}, _config_imports)
+}
+KNOWN_OBJECTS.update(_property_imports)
 
-MOCK_IMPORTS_RETURN_SCHEMA = _expand_mock_imports({
+_return_schema_imports = {
   'recipe_engine.config.ReturnSchema': config.ReturnSchema,
   'recipe_engine.config.ConfigGroupSchema': config.ConfigGroupSchema,
-}, _config_imports)
+}
+KNOWN_OBJECTS.update(_return_schema_imports)
 
-MOCK_IMPORTS_RECIPE = _expand_mock_imports({
+_util_imports = {
   'recipe_engine.types.freeze': types.freeze,
-}, _decorator_imports, _placeholder_imports)
+}
+KNOWN_OBJECTS.update(_util_imports)
 
-MOCK_IMPORTS_MODULE = _expand_mock_imports({
+_recipe_api_class_imports = {
   'recipe_engine.recipe_api.RecipeApi': recipe_api.RecipeApi,
   'recipe_engine.recipe_api.RecipeApiPlain': recipe_api.RecipeApiPlain,
-}, _decorator_imports, _placeholder_imports)
-
-ALL_IMPORTS = {}
-ALL_IMPORTS.update(MOCK_IMPORTS_PARAMETERS)
-ALL_IMPORTS.update(MOCK_IMPORTS_RETURN_SCHEMA)
-ALL_IMPORTS.update(MOCK_IMPORTS_RECIPE)
-ALL_IMPORTS.update(MOCK_IMPORTS_MODULE)
+}
+KNOWN_OBJECTS.update(_recipe_api_class_imports)
 
 
 def _parse_mock_imports(mod_ast, expanded_imports):
@@ -277,6 +282,34 @@ def parse_deps(uv, mod_ast, relpath):
   return ret
 
 
+def extract_jsonish_assignments(mod_ast):
+  """This extracts all single assignments where the target is a name, and the
+  value is a simple 'jsonish' statement (aka python literal).
+
+  The result is returned as a dictionary of name to the decoded literal.
+
+  Example:
+    Foo = "hello"
+    Bar = [1, 2, "something"]
+    Other, Things = range(2)  # not single assignment
+    Bogus = object()  # not a python literal
+    # returns: {"Foo": "hello", "Bar": [1, 2, "something"]}
+  """
+  ret = {}
+  for node in mod_ast.body:
+    if not isinstance(node, ast.Assign):
+      continue
+    if len(node.targets) != 1:
+      continue
+    if not isinstance(node.targets[0], ast.Name):
+      continue
+    try:
+      ret[node.targets[0].id] = ast.literal_eval(node.value)
+    except (KeyError, ValueError):
+      pass
+  return ret
+
+
 def parse_parameter(param):
   assert isinstance(param, recipe_api.Property), type(param)
   default = None
@@ -289,12 +322,18 @@ def parse_parameter(param):
     default_json=default)
 
 
+MOCK_IMPORTS_PARAMETERS = _expand_mock_imports(
+  _property_imports, _config_imports)
+ALL_IMPORTS.update(MOCK_IMPORTS_PARAMETERS)
+
+
 def parse_parameters(mod_ast, relpath):
   parameters, lineno = _find_value_of(mod_ast, 'PROPERTIES')
   if not parameters:
     return None
 
   imports = _parse_mock_imports(mod_ast, MOCK_IMPORTS_PARAMETERS)
+  imports.update(extract_jsonish_assignments(mod_ast))
   data = eval(_unparse(parameters), imports)
   if not data:
     return None
@@ -324,6 +363,11 @@ def parse_func(func_node, relpath, imports):
   return ret
 
 
+MOCK_IMPORTS_RETURN_SCHEMA = _expand_mock_imports(
+  _return_schema_imports, _config_imports)
+ALL_IMPORTS.update(MOCK_IMPORTS_RETURN_SCHEMA)
+
+
 def parse_return_schema(mod_ast, relpath):
   imports = _parse_mock_imports(mod_ast, MOCK_IMPORTS_RETURN_SCHEMA)
   schema, lineno = _find_value_of(mod_ast, 'RETURN_SCHEMA')
@@ -334,6 +378,11 @@ def parse_return_schema(mod_ast, relpath):
     return None
   return doc.Doc.ReturnSchema(relpath=relpath, lineno=lineno,
                               schema=schema.schema_proto())
+
+
+MOCK_IMPORTS_RECIPE = _expand_mock_imports(
+ _util_imports, _decorator_imports, _placeholder_imports)
+ALL_IMPORTS.update(MOCK_IMPORTS_RECIPE)
 
 
 def parse_recipe(uv, base_dir, relpath, recipe_name):
@@ -357,6 +406,11 @@ def parse_recipe(uv, base_dir, relpath, recipe_name):
   )
 
 
+MOCK_IMPORTS_MODULE = _expand_mock_imports(
+  _recipe_api_class_imports, _decorator_imports, _placeholder_imports)
+ALL_IMPORTS.update(MOCK_IMPORTS_MODULE)
+
+
 def parse_module(uv, base_dir, relpath, mod_name):
   native_relpath = _to_native(relpath)
 
@@ -375,7 +429,7 @@ def parse_module(uv, base_dir, relpath, mod_name):
 
   api_class = None
   for name, val in sorted(classes.iteritems()):
-    if any(b.known in KNOWN_RECIPE_API_BASES for b in val.bases):
+    if any(b.known in _recipe_api_class_imports for b in val.bases):
       api_class = classes.pop(name)
       break
   if not api_class:
@@ -420,27 +474,32 @@ def parse_package(uv, base_dir, spec):
   return ret
 
 
-KNOWN_RECIPE_API_BASES = {
-  'recipe_engine.recipe_api.RecipeApi': recipe_api.RecipeApi,
-  'recipe_engine.recipe_api.RecipeApiPlain': recipe_api.RecipeApiPlain,
-}
-
-
-KNOWN_OBJECTS = {
-  'recipe_engine.recipe_api.non_step': recipe_api.non_step,
-  'recipe_engine.recipe_api.infer_composite_step': (
-    recipe_api.infer_composite_step),
-
-  'recipe_engine.util.returns_placeholder': util.returns_placeholder,
-}
-KNOWN_OBJECTS.update(KNOWN_RECIPE_API_BASES)
-
-
 RECIPE_ENGINE_URL = 'https://github.com/luci/recipes-py'
 
 
 def _set_known_objects(base):
   source_cache = {}
+
+  def _add_it(key, fname, target):
+    relpath = os.path.relpath(fname, RECIPE_ENGINE_BASE)
+    for node in source_cache[fname].body:
+      if isinstance(node, ast.ClassDef) and node.name == target:
+        # This is a class definition in the form of:
+        #   def Target(...)
+        base.known_objects[key].klass.CopyFrom(parse_class(node, relpath, {}))
+        return
+      elif isinstance(node, ast.FunctionDef) and node.name == target:
+        # This is a function definition in the form of:
+        #   def Target(...)
+        base.known_objects[key].func.CopyFrom(parse_func(node, relpath, {}))
+        return
+      elif isinstance(node, ast.Assign) and node.targets[0].id == target:
+        # This is an alias in the form of:
+        #   Target = RealImplementation
+        _add_it(key, fname, node.value.id)
+        return
+
+    raise ValueError('could not find %r in %r' % (key, relpath))
 
   for k, v in KNOWN_OBJECTS.iteritems():
     base.known_objects[k].url = RECIPE_ENGINE_URL
@@ -452,16 +511,7 @@ def _set_known_objects(base):
       source_lines, _ = inspect.findsource(v)
       source_cache[fname] = ast.parse(''.join(source_lines), fname)
 
-    relpath = os.path.relpath(fname, RECIPE_ENGINE_BASE)
-    for node in source_cache[fname].body:
-      if isinstance(node, ast.ClassDef) and node.name == target:
-        base.known_objects[k].klass.CopyFrom(parse_class(node, relpath, {}))
-        break
-      elif isinstance(node, ast.FunctionDef) and node.name == target:
-        base.known_objects[k].func.CopyFrom(parse_func(node, relpath, {}))
-        break
-    else:
-      raise ValueError('could not find %r in %r' % (k, relpath))
+    _add_it(k, fname, target)
 
 
 def add_subparser(parser):

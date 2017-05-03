@@ -7,6 +7,7 @@ import bisect
 import collections
 import contextlib
 import copy
+import json
 import keyword
 import re
 import types
@@ -895,9 +896,8 @@ class BoundProperty(object):
     Constructor for BoundProperty.
 
     Args:
-      default: The default value for this Property. Note: A default
-               value of None is allowed. To have no default value, omit
-               this argument.
+      default: The default value for this Property. Must be JSON-encodable or
+               PROPERTY_SENTINEL.
       help: The help text for this Property.
       kind: The type of this Property. You can either pass in a raw python
             type, or a Config Type, using the recipe engine config system.
@@ -917,6 +917,12 @@ class BoundProperty(object):
     if not BoundProperty.legal_name(param_name, is_param_name=True):
       raise ValueError("Illegal param_name '{}'.".format(param_name))
 
+    if default is not PROPERTY_SENTINEL:
+      try:
+        json.dumps(default)
+      except:
+        raise TypeError('default=%r is not json-encodable' % (default,))
+
     self.__default = default
     self.__help = help
     self.__kind = kind
@@ -935,7 +941,9 @@ class BoundProperty(object):
 
   @property
   def default(self):
-    return self.__default
+    if self.__default is PROPERTY_SENTINEL:
+      return self.__default
+    return copy.deepcopy(self.__default)
 
   @property
   def kind(self):
@@ -967,7 +975,7 @@ class BoundProperty(object):
         self.kind.set_val(value)
       return value
 
-    if self.default is not PROPERTY_SENTINEL:
+    if self.__default is not PROPERTY_SENTINEL:
       return self.default
 
     raise ValueError(
@@ -983,11 +991,17 @@ class Property(object):
     Args:
       default: The default value for this Property. Note: A default
                value of None is allowed. To have no default value, omit
-               this argument.
+               this argument. This must be a valid JSON-encodable object.
       help: The help text for this Property.
       kind: The type of this Property. You can either pass in a raw python
             type, or a Config Type, using the recipe engine config system.
     """
+    if default is not PROPERTY_SENTINEL:
+      try:
+        json.dumps(default)
+      except:
+        raise TypeError('default=%r is not json-encodable' % (default,))
+
     self._default = default
     self.help = help
     self.param_name = param_name

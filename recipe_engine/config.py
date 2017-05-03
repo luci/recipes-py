@@ -340,6 +340,7 @@ _SIMPLE_TYPE_LOOKUP = {
   basestring: doc.Doc.Schema.STRING,
   unicode: doc.Doc.Schema.STRING,
   int: doc.Doc.Schema.NUMBER,
+  long: doc.Doc.Schema.NUMBER,
   float: doc.Doc.Schema.NUMBER,
   bool: doc.Doc.Schema.BOOLEAN,
   dict: doc.Doc.Schema.OBJECT,

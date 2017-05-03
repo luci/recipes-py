@@ -16,7 +16,7 @@ def make_prop(**kwargs):
 class TestProperties(unittest.TestCase):
   def testDefault(self):
     """Tests the default option of properties."""
-    for default in (1, object(), "test", None):
+    for default in (1, {}, "test", None):
       prop = make_prop(default=default)
       self.assertEqual(default, prop.interpret(recipe_api.PROPERTY_SENTINEL))
 
