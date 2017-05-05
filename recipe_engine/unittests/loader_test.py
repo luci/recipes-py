@@ -14,7 +14,8 @@ import mock
 class TestRecipeScript(unittest.TestCase):
   def testReturnSchemaHasValidClass(self):
     with self.assertRaises(ValueError):
-      loader.RecipeScript({'RETURN_SCHEMA': 3}, 'test_script')
+      loader.RecipeScript('fake_recipe',
+                          {'RETURN_SCHEMA': 3}, 'fake_package', 'some/path')
 
   def testRunChecksReturnType(self):
     sentinel = object()
@@ -25,17 +26,20 @@ class TestRecipeScript(unittest.TestCase):
 
         return mocked_return
 
-    script = loader.RecipeScript({
+    script = loader.RecipeScript(
+      'fake_recipe', {
         'RETURN_SCHEMA': config.ConfigGroupSchema(a=config.Single(int)),
         'RunSteps': None,
-    }, 'test_script')
+      }, 'fake_package', 'some/path')
     loader.invoke_with_properties = lambda *args, **kwargs: FakeReturn()
 
     self.assertEqual(mocked_return, script.run(None, None))
 
 def make_prop(**kwargs):
   name = kwargs.pop('name', "dumb_name")
-  return recipe_api.Property(**kwargs).bind(name, 'test', 'properties_test')
+  return recipe_api.Property(**kwargs).bind(
+    name, recipe_api.BoundProperty.RECIPE_PROPERTY,
+    'fake_package::fake_recipe')
 
 
 class TestInvoke(unittest.TestCase):

@@ -7,7 +7,7 @@
   },
   {
     "name": "$result",
-    "reason": "Uncaught Exception: ValueError('Recipe no_return did not return a value.',)",
+    "reason": "Uncaught Exception: ValueError('Recipe engine_tests/depend_on/no_return did not return a value.',)",
     "status_code": -1
   }
 ]

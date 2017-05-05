@@ -9,9 +9,13 @@ import test_env
 
 from recipe_engine import recipe_api, config
 
+RECIPE_PROPERTY = recipe_api.BoundProperty.RECIPE_PROPERTY
+MODULE_PROPERTY = recipe_api.BoundProperty.MODULE_PROPERTY
+
 def make_prop(**kwargs):
   name = kwargs.pop('name', "dumb_name")
-  return recipe_api.Property(**kwargs).bind(name, 'test', 'properties_test')
+  return recipe_api.Property(**kwargs).bind(
+    name, RECIPE_PROPERTY, 'fake_package::fake_recipe')
 
 class TestProperties(unittest.TestCase):
   def testDefault(self):
@@ -59,18 +63,11 @@ class TestProperties(unittest.TestCase):
               test, result, is_param_name))
 
   def testParamName(self):
-    """Tests the default param name is the regular name."""
-    prop = recipe_api.Property()
-    bound = prop.bind('a')
-
-    self.assertEqual('a', bound.param_name)
-
-  def testParamName(self):
     """
     Tests setting a param name correctly carries through to a bound property.
     """
     prop = recipe_api.Property(param_name='b')
-    bound = prop.bind('a', 'test', 'test_me')
+    bound = prop.bind('a', RECIPE_PROPERTY, 'fake_package::fake_recipe')
 
     self.assertEqual('b', bound.param_name)
 
@@ -79,9 +76,26 @@ class TestProperties(unittest.TestCase):
     Tests setting a param name correctly carries through to a bound property.
     """
     prop = recipe_api.Property(param_name='good_name')
-    bound = prop.bind('bad.name-time', 'test', 'test_me')
+    bound = prop.bind('bad.name-time', RECIPE_PROPERTY,
+                      'fake_package::fake_recipe')
 
     self.assertEqual('good_name', bound.param_name)
+
+  def testModuleName(self):
+    """
+    Tests declaring $package/module properties.
+    """
+    prop = recipe_api.Property(param_name='foo')
+    prop.bind('$fake_package/fake_module', MODULE_PROPERTY,
+              'fake_package::fake_module')
+
+    with self.assertRaises(ValueError):
+      prop.bind('$fake_package/wrong_module', MODULE_PROPERTY,
+                'fake_package::fake_module')
+
+    with self.assertRaises(ValueError):
+      prop.bind('$fake_package/fake_module', RECIPE_PROPERTY,
+                'fake_package::fake_module:example')
 
 
 if __name__ == '__main__':

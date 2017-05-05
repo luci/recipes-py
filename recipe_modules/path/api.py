@@ -152,11 +152,13 @@ class PathApi(recipe_api.RecipeApi):
       'CACHE_DIR': self._cache_dir,
     }
 
-  def __init__(self, **kwargs):
+  def __init__(self, path_properties, **kwargs):
     super(PathApi, self).__init__(**kwargs)
     config_types.Path.set_tostring_fn(
       PathToString(self, self._test_data))
     config_types.NamedBasePath.set_path_api(self)
+
+    self._path_properties = path_properties
 
     # Used in mkdtemp when generating and checking expectations.
     self._test_counter = 0
@@ -166,8 +168,7 @@ class PathApi(recipe_api.RecipeApi):
 
     Validates that the path is absolute.
     """
-    props = self.m.properties.get('$recipe_engine/path', {})
-    value = props.get(property_name)
+    value = self._path_properties.get(property_name)
     if not value:
       assert os.path.isabs(default), default
       return default

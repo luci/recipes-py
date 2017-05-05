@@ -863,6 +863,14 @@ class BoundProperty(object):
   RECIPE_PROPERTY = 'recipe'
 
   @staticmethod
+  def legal_module_property_name(name, full_decl_name):
+    """
+    If this is a special $package/module name.
+    """
+    package, module = full_decl_name.split('::', 1)
+    return name == '$%s/%s' % (package, module)
+
+  @staticmethod
   def legal_name(name, is_param_name=False):
     """
     If this name is a legal property name.
@@ -890,27 +898,40 @@ class BoundProperty(object):
         r'^[a-zA-Z][.\w-]*$')
     return bool(re.match(regex, name))
 
-  def __init__(self, default, help, kind, name, property_type, module,
+  def __init__(self, default, help, kind, name, property_type, full_decl_name,
                param_name=None):
     """
     Constructor for BoundProperty.
 
     Args:
-      default: The default value for this Property. Must be JSON-encodable or
-               PROPERTY_SENTINEL.
-      help: The help text for this Property.
-      kind: The type of this Property. You can either pass in a raw python
-            type, or a Config Type, using the recipe engine config system.
-      name: The name of this Property.
-      param_name: The name of the python function parameter this property
-                  should be stored in. Can be used to allow for dotted property
-                  names, e.g.
-        PROPERTIES = {
-          'foo.bar.bam': Property(param_name="bizbaz")
-        }
-      module: The module this Property is a part of.
+      default (jsonish): The default value for this Property. Must be
+        JSON-encodable or PROPERTY_SENTINEL.
+      help (str): The help text for this Property.
+      kind (type|ConfigBase): The type of this Property. You can either pass in
+        a raw python type, or a Config Type, using the recipe engine config
+        system.
+      name (str): The name of this Property.
+      property_type (str): One of RECIPE_PROPERTY or MODULE_PROPERTY.
+      full_decl_name (str): The fully qualified name of the recipe or module
+        where this property is defined. This has the form of:
+          package_name::module_name
+          package_name::path/to/recipe
+      param_name (str|None): The name of the python function parameter this
+        property should be stored in. Can be used to allow for dotted property
+        names, e.g.
+          PROPERTIES = {
+            'foo.bar.bam': Property(param_name="bizbaz")
+          }
     """
-    if not BoundProperty.legal_name(name):
+    assert property_type in (self.RECIPE_PROPERTY, self.MODULE_PROPERTY), \
+      property_type
+
+    # first, check if this is a special '$package/module' property type
+    # declaration.
+    is_module_property = (
+      property_type is self.MODULE_PROPERTY and
+      self.legal_module_property_name(name, full_decl_name))
+    if not (is_module_property or BoundProperty.legal_name(name)):
       raise ValueError("Illegal name '{}'.".format(name))
 
     param_name = param_name or name
@@ -929,7 +950,7 @@ class BoundProperty(object):
     self.__name = name
     self.__property_type = property_type
     self.__param_name = param_name
-    self.__module = module
+    self.__full_decl_name = full_decl_name
 
   @property
   def name(self):
@@ -954,8 +975,8 @@ class BoundProperty(object):
     return self.__help
 
   @property
-  def module(self):
-    return self.__module
+  def full_decl_name(self):
+    return self.__full_decl_name
 
   def interpret(self, value):
     """
@@ -980,7 +1001,7 @@ class BoundProperty(object):
 
     raise ValueError(
       "No default specified and no value provided for '{}' from {} '{}'".format(
-        self.name, self.__property_type, self.module))
+        self.name, self.__property_type, self.full_decl_name))
 
 class Property(object):
   def __init__(self, default=PROPERTY_SENTINEL, help="", kind=None,
@@ -1012,13 +1033,13 @@ class Property(object):
       kind = Single(kind)
     self.kind = kind
 
-  def bind(self, name, property_type, module):
+  def bind(self, name, property_type, full_decl_name):
     """
     Gets the BoundProperty version of this Property. Requires a name.
     """
     return BoundProperty(
-        self._default, self.help, self.kind, name, property_type, module,
-        self.param_name)
+      self._default, self.help, self.kind, name, property_type, full_decl_name,
+      self.param_name)
 
 class UndefinedPropertyException(TypeError):
   pass

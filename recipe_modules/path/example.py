@@ -108,7 +108,7 @@ def GenTests(api):
            api.properties(**{
               '$recipe_engine/path': {
                 'cache_dir': '/c',
-                'tmp_dir': '/t'
+                'temp_dir': '/t'
               },
            }) +
            api.path.exists(api.path['tmp_base']))

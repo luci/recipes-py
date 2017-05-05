@@ -34,16 +34,19 @@ class NoSuchRecipe(LoaderError):
 class RecipeScript(object):
   """Holds dict of an evaluated recipe script."""
 
-  def __init__(self, recipe_globals, path):
-    self.path = path
+  def __init__(self, name, recipe_globals, package_name, path):
+    self._path = path
+    self._name = name
     self._recipe_globals = recipe_globals
 
     self.run_steps, self.gen_tests = [
         recipe_globals.get(k) for k in ('RunSteps', 'GenTests')]
 
     # Let each property object know about the property name.
+    full_decl_name = '%s::%s' % (package_name, name)
     recipe_globals['PROPERTIES'] = {
-        name: value.bind(name, BoundProperty.RECIPE_PROPERTY, name)
+        name: value.bind(
+          name, BoundProperty.RECIPE_PROPERTY, full_decl_name)
         for name, value in recipe_globals.get('PROPERTIES', {}).items()}
 
     return_schema = recipe_globals.get('RETURN_SCHEMA')
@@ -52,9 +55,12 @@ class RecipeScript(object):
                        'ConfigGroupSchema')
 
   @property
+  def path(self):
+    return self._path
+
+  @property
   def name(self):
-    # 'a/b/c/my_name.py' -> my_name
-    return os.path.splitext(os.path.basename(self.path))[0]
+    return self._name
 
   @property
   def globals(self):
@@ -88,7 +94,7 @@ class RecipeScript(object):
       return None
 
   @classmethod
-  def from_script_path(cls, script_path, universe_view):
+  def from_script_path(cls, name, script_path, universe_view):
     """Evaluates a script and returns RecipeScript instance."""
 
     recipe_globals = {}
@@ -100,7 +106,7 @@ class RecipeScript(object):
     recipe_globals['LOADED_DEPS'] = universe_view.deps_from_spec(
         recipe_globals.get('DEPS', []))
 
-    return cls(recipe_globals, script_path)
+    return cls(name, recipe_globals, universe_view.package.name, script_path)
 
 
 class RecipeUniverse(object):
@@ -275,7 +281,7 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
     # appropriately, because of windows.
     recipe_path = self.find_recipe(recipe)
     try:
-      script = RecipeScript.from_script_path(recipe_path, self)
+      script = RecipeScript.from_script_path(recipe, recipe_path, self)
     except (LoaderError,AssertionError,ImportError) as e:
       _amend_exception(e, 'while loading recipe %s' % recipe)
 
@@ -469,8 +475,10 @@ def _patchup_module(name, submod, universe_view):
     )
 
   # Let each property object know about the property name.
+  full_decl_name = '%s::%s' % (universe_view.package.name, name)
   submod.PROPERTIES = {
-      prop_name: value.bind(prop_name, BoundProperty.MODULE_PROPERTY, name)
+      prop_name: value.bind(prop_name, BoundProperty.MODULE_PROPERTY,
+                            full_decl_name)
       for prop_name, value in getattr(submod, 'PROPERTIES', {}).items()}
 
 
