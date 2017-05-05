@@ -14,10 +14,11 @@ class StepApi(recipe_api.RecipeApiPlain):
 
   step_client = recipe_api.RequireClient('step')
 
-  def __init__(self, **kwargs):
+  def __init__(self, step_properties, **kwargs):
     super(StepApi, self).__init__(**kwargs)
     self._step_names = {}
     self._seen_steps = set()
+    self._prefix_path = step_properties.get('prefix_path', [])
 
   EXCEPTION = 'EXCEPTION'
   FAILURE = 'FAILURE'
@@ -216,8 +217,12 @@ class StepApi(recipe_api.RecipeApiPlain):
 
     if 'cwd' not in kwargs:
       kwargs['cwd'] = self.get_from_context('cwd')
-    if self.get_from_context('env'):
-      kwargs['env'] = self.get_from_context('env')
+    kwargs['env'] = self.get_from_context('env', {})
+    if self._prefix_path:
+      ps = self.m.path.pathsep
+      prefix = ps.join(self._prefix_path)
+      suffix = kwargs['env'].get('PATH', '%(PATH)s')
+      kwargs['env']['PATH'] = '%s%s%s' % (prefix, ps, suffix)
     kwargs['infra_step'] = self.combine_with_context(
         'infra_step', bool(infra_step))
     kwargs['step_nest_level'] = self.combine_with_context('nest_level', 0)

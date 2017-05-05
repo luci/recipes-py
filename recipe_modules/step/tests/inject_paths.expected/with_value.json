@@ -1,0 +1,38 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "hi"
+    ],
+    "env": {
+      "FOO": "bar",
+      "PATH": "foo:bar:%(PATH)s"
+    },
+    "name": "test step (no env)"
+  },
+  {
+    "cmd": [
+      "echo",
+      "hi"
+    ],
+    "env": {
+      "PATH": "foo:bar:something"
+    },
+    "name": "test step (env)"
+  },
+  {
+    "cmd": [
+      "echo",
+      "hi"
+    ],
+    "env": {
+      "PATH": "foo:bar:something:%(PATH)s"
+    },
+    "name": "test step (env, $PATH)"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]
