@@ -13,9 +13,12 @@ import mock
 
 class TestRecipeScript(unittest.TestCase):
   def testReturnSchemaHasValidClass(self):
-    with self.assertRaises(ValueError):
-      loader.RecipeScript('fake_recipe',
-                          {'RETURN_SCHEMA': 3}, 'fake_package', 'some/path')
+    with self.assertRaises(loader.MalformedRecipeError):
+      loader.RecipeScript('fake_recipe', {
+        'GenTests': lambda api: None,
+        'RunSteps': lambda api: None,
+        'RETURN_SCHEMA': 3,
+      }, 'fake_package', 'some/path')
 
   def testRunChecksReturnType(self):
     sentinel = object()
@@ -29,7 +32,8 @@ class TestRecipeScript(unittest.TestCase):
     script = loader.RecipeScript(
       'fake_recipe', {
         'RETURN_SCHEMA': config.ConfigGroupSchema(a=config.Single(int)),
-        'RunSteps': None,
+        'RunSteps': lambda api: None,
+        'GenTests': lambda api: None,
       }, 'fake_package', 'some/path')
     loader.invoke_with_properties = lambda *args, **kwargs: FakeReturn()
 

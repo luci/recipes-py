@@ -293,6 +293,9 @@ from recipe_engine import step_runner
 def bad_print_step(self, step_stream, step, env):
   raise Exception("Buh buh buh buh bad to the bone")
 
+def GenTests(api):
+  pass
+
 def RunSteps(api):
   step_runner.SubprocessStepRunner._print_step = bad_print_step
   try:
@@ -304,6 +307,29 @@ def RunSteps(api):
         asserts=lambda stdout, stderr: self.assertRegexpMatches(
             stdout + stderr,
             r'(?s)Recipe engine bug.*Buh buh buh buh bad to the bone'),
+        retcode=2)
+
+  def test_missing_method(self):
+    with RecipeRepo() as repo:
+      repo.make_recipe('no_gen_tests', """
+def RunSteps(api):
+  pass
+""")
+      repo.make_recipe('no_run_steps', """
+def GenTests(api):
+  pass
+""")
+
+      self._test_cmd(repo, ['run', 'no_gen_tests'],
+        asserts=lambda stdout, stderr: self.assertRegexpMatches(
+            stdout + stderr,
+            r'(?s)misspelled GenTests'),
+        retcode=2)
+
+      self._test_cmd(repo, ['run', 'no_run_steps'],
+        asserts=lambda stdout, stderr: self.assertRegexpMatches(
+            stdout + stderr,
+            r'(?s)misspelled RunSteps'),
         retcode=2)
 
   def test_unconsumed_assertion(self):

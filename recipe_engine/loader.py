@@ -14,7 +14,7 @@ from .config import ConfigContext, ConfigGroupSchema
 from .config_types import Path, ModuleBasePath, PackageRepoBasePath
 from .config_types import RecipeScriptBasePath
 from .config_types import RECIPE_MODULE_PREFIX
-from .recipe_api import RecipeApiPlain, RecipeScriptApi
+from .recipe_api import RecipeApi, RecipeApiPlain, RecipeScriptApi
 from .recipe_api import _UnresolvedRequirement
 from .recipe_api import BoundProperty
 from .recipe_api import UndefinedPropertyException, PROPERTY_SENTINEL
@@ -23,6 +23,10 @@ from .recipe_test_api import RecipeTestApi, DisabledTestData
 
 class LoaderError(Exception):
   """Raised when something goes wrong loading recipes or modules."""
+
+
+class MalformedRecipeError(LoaderError):
+  """Raised when a recipe doesn't conform to the expected interface."""
 
 
 class NoSuchRecipe(LoaderError):
@@ -42,6 +46,12 @@ class RecipeScript(object):
     self.run_steps, self.gen_tests = [
         recipe_globals.get(k) for k in ('RunSteps', 'GenTests')]
 
+    if not self.run_steps:
+      raise MalformedRecipeError('Missing or misspelled RunSteps function.')
+
+    if not self.gen_tests:
+      raise MalformedRecipeError('Missing or misspelled GenTests function.')
+
     # Let each property object know about the property name.
     full_decl_name = '%s::%s' % (package_name, name)
     recipe_globals['PROPERTIES'] = {
@@ -51,8 +61,9 @@ class RecipeScript(object):
 
     return_schema = recipe_globals.get('RETURN_SCHEMA')
     if return_schema and not isinstance(return_schema, ConfigGroupSchema):
-      raise ValueError('Invalid RETURN_SCHEMA; must be an instance of '
-                       'ConfigGroupSchema')
+      raise MalformedRecipeError(
+        'Invalid RETURN_SCHEMA; must be an instance of ConfigGroupSchema')
+
 
   @property
   def path(self):
@@ -454,6 +465,10 @@ def _patchup_module(name, submod, universe_view):
   submod.API = getattr(submod, 'API', None)
   assert hasattr(submod, 'api'), '%s is missing api.py' % (name,)
   for v in submod.api.__dict__.itervalues():
+    # If the recipe has literally imported the RecipeApi, we don't wan't
+    # to consider that to be the real RecipeApi :)
+    if v is RecipeApiPlain or v is RecipeApi:
+      continue
     if inspect.isclass(v) and issubclass(v, RecipeApiPlain):
       assert not submod.API, (
         '%s has more than one RecipeApi subclass: %s, %s' % (
@@ -465,6 +480,10 @@ def _patchup_module(name, submod, universe_view):
   submod.TEST_API = getattr(submod, 'TEST_API', None)
   if hasattr(submod, 'test_api'):
     for v in submod.test_api.__dict__.itervalues():
+      # If the recipe has literally imported the RecipeTestApi, we don't wan't
+      # to consider that to be the real RecipeTestApi :)
+      if v is RecipeTestApi:
+        continue
       if inspect.isclass(v) and issubclass(v, RecipeTestApi):
         assert not submod.TEST_API, (
           'More than one TestApi subclass: %s' % submod.api)
