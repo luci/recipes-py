@@ -55,12 +55,6 @@ def add_common_args(parser):
       help='Path to recipes.cfg of the recipe package to operate on'
         ', usually in infra/config/recipes.cfg')
   parser.add_argument(
-      '--deps-path',
-      type=os.path.abspath,
-      help='Path where recipe engine dependencies will be extracted. Specify '
-           '"-" to use a temporary directory for deps, which will be cleaned '
-           'up on exit.')
-  parser.add_argument(
       '--verbose', '-v', action='count',
       help='Increase logging verboisty')
   # TODO(phajdan.jr): Figure out if we need --no-fetch; remove if not.

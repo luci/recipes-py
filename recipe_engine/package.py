@@ -72,40 +72,45 @@ class PackageContext(object):
   """Contains information about where the root package and its dependency
   checkouts live.
 
-  - recipes_dir is the location of recipes/ and recipe_modules/ which contain
-    the actual recipes of the root package.
-  - package_dir is where dependency checkouts live, e.g.
-    package_dir/recipe_engine/recipes/...
-  - repo_root is the root of the repository containing the root package.
+  - repo_root is the absolute path to the repository containing the root
+    package.
+  - recipes_path is the relative path in the repository to where the recipes
+    live.
   - allow_fetch controls whether automatic fetching latest repo contents
     from origin is allowed
   """
 
-  def __init__(self, recipes_dir, package_dir, repo_root, allow_fetch):
-    self.recipes_dir = recipes_dir
-    self.package_dir = package_dir
+  def __init__(self, repo_root, recipes_path, allow_fetch):
     self.repo_root = repo_root
+    self.recipes_path = recipes_path
     self.allow_fetch = allow_fetch
 
+  @property
+  def package_dir(self):
+    """package_dir is where dependency checkouts live, e.g.
+    <repo_root>/path/to/recipes/.recipe_deps/...
+    """
+    return os.path.join(self.recipes_dir, '.recipe_deps')
+
+  @property
+  def recipes_dir(self):
+    """recipes_dir is the absolute path to the root repo's recipes subdirectory.
+    """
+    return os.path.join(self.repo_root, self.recipes_path)
+
   def __repr__(self):
-    return 'PackageContext(%r, %r, %r, %s)' % (
-      self.recipes_dir, self.package_dir, self.repo_root, self.allow_fetch)
+    return 'PackageContext(%r, %r, %s)' % (
+      self.repo_root, self.recipes_path, self.allow_fetch)
 
   def project_checkout_dir(self, project_id):
     return os.path.join(self.package_dir, project_id)
 
   @classmethod
-  def from_package_pb(cls, repo_root, package_pb, allow_fetch,
-                      deps_path=None):
-    recipes_path = str(package_pb.recipes_path).replace('/', os.sep)
-
-    if not deps_path:
-      deps_path = os.path.join(repo_root, recipes_path, '.recipe_deps')
-
-    return cls(os.path.join(repo_root, recipes_path),
-               os.path.abspath(deps_path),
-               repo_root,
-               allow_fetch)
+  def from_package_pb(cls, repo_root, package_pb, allow_fetch):
+    return cls(
+      os.path.abspath(repo_root),
+      str(package_pb.recipes_path).replace('/', os.sep),
+      allow_fetch)
 
 
 class RepoSpec(object):
@@ -430,7 +435,7 @@ class PackageDeps(object):
     return self._root_package
 
   @classmethod
-  def create(cls, repo_root, package_file, deps_path=None, allow_fetch=False,
+  def create(cls, repo_root, package_file, allow_fetch=False,
              overrides=None):
     """Creates a PackageDeps object.
 
@@ -444,7 +449,7 @@ class PackageDeps(object):
                  are the override path.
     """
     context = PackageContext.from_package_pb(
-      repo_root, package_file.read(), allow_fetch, deps_path=deps_path)
+      repo_root, package_file.read(), allow_fetch)
 
     if overrides:
       overrides = {project_id: PathRepoSpec(project_id, path)

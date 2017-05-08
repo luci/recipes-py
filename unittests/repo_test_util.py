@@ -70,9 +70,8 @@ class RepoTest(unittest.TestCase):
     self._recipe_tool = os.path.join(ROOT_DIR, 'recipes.py')
 
     self._context = package.PackageContext(
-      recipes_dir='foo',
-      package_dir=self._root_dir,
-      repo_root='bar',
+      repo_root=os.path.join(self._root_dir),
+      recipes_path='',  # .recipe_deps will be created under _root_dir
       allow_fetch=False
     )
 
@@ -106,10 +105,9 @@ class RepoTest(unittest.TestCase):
 
   def create_repo(self, name, spec):
     """Creates a real git repo with simple recipes.cfg."""
-    repo_dir = os.path.join(self._root_dir, name)
+    repo_dir = os.path.join(self._context.package_dir, name)
     subprocess.check_output(['git', 'init', repo_dir])
     with in_directory(repo_dir):
-      subprocess.check_output(['git', 'remote', 'add', 'origin', repo_dir])
       with open('recipes.py', 'w') as f:
         f.write('\n'.join([
           'import subprocess, sys, os',
@@ -174,7 +172,7 @@ class RepoTest(unittest.TestCase):
     """Creates a commit setting recipes.cfg to have provided protobuf
     contents.
     """
-    repo_dir = os.path.join(self._root_dir, name)
+    repo_dir = os.path.join(self._context.package_dir, name)
     with in_directory(repo_dir):
       config_file = os.path.join('infra', 'config', 'recipes.cfg')
       # This supports both updating existing recipes.cfg, as well as adding

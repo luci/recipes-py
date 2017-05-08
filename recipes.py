@@ -95,8 +95,7 @@ def main():
   common_postprocess_func(parser, args)
   args.postprocess_func(parser, args)
 
-  # If we're bootstrapping, construct our bootstrap environment. If we're
-  # using a custom deps path, install our enviornment there too.
+  # If we're bootstrapping, construct our bootstrap environment.
   if args.use_bootstrap and not env.USING_BOOTSTRAP:
     logging.debug('Bootstrapping recipe engine through vpython...')
 
@@ -130,7 +129,7 @@ def main():
     # Especially that only some subcommands refer to package_deps.
     package_deps = package.PackageDeps.create(
         repo_root, args.package, allow_fetch=not args.no_fetch,
-        deps_path=args.deps_path, overrides=args.project_override)
+        overrides=args.project_override)
   except subprocess.CalledProcessError:
     # A git checkout failed somewhere. Return 2, which is the sign that this is
     # an infra failure, rather than a test failure.
