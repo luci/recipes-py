@@ -71,7 +71,7 @@ def main(_package_deps, args):
       backend_class = fetch.GitilesBackend
     else:
       backend_class = fetch.GitBackend
-    backend = backend_class(checkout_dir, args.repository, True)
+    backend = backend_class(checkout_dir, args.repository)
     backend.checkout(revision)
     recipes_cfg = package_io.PackageFile(
         package.InfraRepoConfig().to_recipes_cfg(checkout_dir))

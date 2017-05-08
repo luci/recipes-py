@@ -47,7 +47,6 @@ class MockIOThings(object):
 
 class TestGitRepoSpec(repo_test_util.RepoTest):
   def test_updates(self):
-    self._context.allow_fetch = True
     repos = self.repo_setup({'a': []})
 
     spec = self.get_git_repo_spec(repos['a'])
@@ -113,7 +112,7 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
     self.package_file = MockPackageFile('repo/root/infra/config/recipes.cfg',
                                         self.proto_text)
     self.context = package.PackageContext.from_package_pb(
-        'repo/root', self.package_file.read(), allow_fetch=False)
+        'repo/root', self.package_file.read())
 
   def test_dump_load_inverses(self):
     # Doubles as a test for equality reflexivity.
@@ -180,7 +179,7 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
       'master',
       'cafebeef',
       '',
-      fetch.GitBackend('', '', False)
+      fetch.GitBackend('', '')
     ))
     self.assertEqual(package_file.to_raw(spec.spec_pb), proto_text)
 
@@ -226,12 +225,17 @@ class TestPackageDeps(MockIOThings, unittest.TestCase):
     foo_package_file = MockPackageFile('foo/infra/config/recipes.cfg',
                                        foo_proto_text)
 
+    with mock.patch.object(os.path, 'abspath', lambda x: x):
+      context = package.PackageContext.from_package_pb(
+        'base', foo_package_file.read())
+
     with mock.patch.object(package.GitRepoSpec, 'checkout') as checkout:
       with mock.patch.object(package.PathRepoSpec, 'spec_pb',
                              return_value=foo_package_file.read()):
-        deps = package.PackageDeps.create('base', base_package_file, overrides={
-          'foo': '/path/to/local/foo',
-        })
+        deps = package.PackageDeps.create(
+          context, base_package_file, overrides={
+            'foo': '/path/to/local/foo',
+          })
 
       foo_deps = deps.get_package('foo')
       self.assertIsInstance(foo_deps.repo_spec, package.PathRepoSpec)

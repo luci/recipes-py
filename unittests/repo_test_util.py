@@ -72,7 +72,6 @@ class RepoTest(unittest.TestCase):
     self._context = package.PackageContext(
       repo_root=os.path.join(self._root_dir),
       recipes_path='',  # .recipe_deps will be created under _root_dir
-      allow_fetch=False
     )
 
   def tearDown(self):
@@ -87,9 +86,8 @@ class RepoTest(unittest.TestCase):
         repo['revision'],
         '',
         fetch.GitBackend(
-          self._context.project_checkout_dir(repo['name']),
+          os.path.join(self._context.package_dir, repo['name']),
           repo['root'],
-          self._context.allow_fetch
         ))
 
   def get_root_repo_spec(self, repo):

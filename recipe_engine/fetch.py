@@ -43,10 +43,6 @@ class FetchError(Exception):
   pass
 
 
-class FetchNotAllowedError(FetchError):
-  pass
-
-
 class UnresolvedRefspec(Exception):
   pass
 
@@ -79,38 +75,18 @@ class Backend(object):
       package_pb2.DepSpec.GITILES: GitilesBackend,
     }[repo_type]
 
-  def __init__(self, checkout_dir, repo_url, allow_network):
+  def __init__(self, checkout_dir, repo_url):
     """
     Args:
       checkout_dir (str): native absolute path to local directory that this
         Backend will manage.
       repo_url (str): url to remote repository that this Backend will connect
         to.
-      allow_network (bool): Indicates that this Backend is permitted to make
-        network operations.
     """
     self.checkout_dir = checkout_dir
     self.repo_url = repo_url
 
-    self._allow_network = allow_network
-
   ### shared public implementations, do not override
-
-  def assert_remote(self, opname):
-    """This is a helper for Backend objects to use to check if network
-    operations are allowed and raise FetchNotAllowedError if not.
-
-    Example:
-      self.assert_remote('fetch')
-      self._do_real_fetch(...)
-
-    Args:
-      opname (str) - human-recognizable operation name for exception.
-    """
-    if not self._allow_network:
-      raise FetchNotAllowedError('remote operation %r on %s' %
-                                 (opname, self.repo_url,))
-
 
   # This is a simple mapping of
   #   repo_url -> git_revision -> commit_metadata()
@@ -330,7 +306,6 @@ class GitBackend(Backend):
     if not self.is_resolved_revision(refspec):
       args.append(refspec)
 
-    self.assert_remote('fetch')
     LOGGER.info('fetching %s', self.repo_url)
     self._git(*args)
 
@@ -367,7 +342,6 @@ class GitBackend(Backend):
 
   def _resolve_refspec_impl(self, revision):
     self._ensure_local_repo_exists()
-    self.assert_remote('resolve refspec %r' % revision)
     rslt = self._git('ls-remote', self.repo_url, revision).split()[0]
     assert self.is_resolved_revision(rslt), repr(rslt)
     return rslt
@@ -531,8 +505,6 @@ class GitilesBackend(Backend):
 
     shutil.rmtree(self.checkout_dir, ignore_errors=True)
 
-    self.assert_remote('checkout')
-
     # Resolve the refspec if it's not a revision.
     revision = self.resolve_refspec(refspec)
 
@@ -565,8 +537,6 @@ class GitilesBackend(Backend):
       tf.extractall(recipes_path)
 
   def _updates_impl(self, revision, other_revision):
-    self.assert_remote('_updates_impl')
-
     # TODO(iannucci): implement paging
 
     log_json = self._fetch_gitiles_committish_json(
@@ -589,7 +559,6 @@ class GitilesBackend(Backend):
     return self._fetch_commit_json(refspec).commit
 
   def _commit_metadata_impl(self, revision):
-    self.assert_remote('_commit_metadata_impl')
     rev_json = self._fetch_commit_json(revision)
 
     recipes_cfg_text = self._fetch_gitiles(
@@ -613,12 +582,6 @@ def add_subparser(parser):
   fetch_p = parser.add_parser(
     'fetch', help=helpstr, description=helpstr)
 
-  def postprocess_func(parser, args):
-    if args.no_fetch:
-      parser.error('--no-fetch does not make sense with fetch command')
-
   fetch_p.set_defaults(
     # fetch action is implied by recipes.py
-    func=(lambda package_deps, engine_flags: 0),
-    postprocess_func=postprocess_func,
-  )
+    func=(lambda package_deps, engine_flags: 0))

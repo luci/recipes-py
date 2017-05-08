@@ -170,7 +170,8 @@ def _get_roll_candidates_impl(context, package_spec, repos):
         # Going forward we have to account for the new repos. current_pb has all
         # the old and new repos already.
         package_spec = package.PackageSpec.from_package_pb(context, current_pb)
-        package_spec.ensure_up_to_date(context)
+        for repo_spec in package_spec.deps.values():
+          repo_spec.checkout(context)
 
         # Add any newly discovered repos to our repos set. We don't replace
         # repos because we want to keep the metadata for all already-rolled

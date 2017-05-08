@@ -76,14 +76,11 @@ class PackageContext(object):
     package.
   - recipes_path is the relative path in the repository to where the recipes
     live.
-  - allow_fetch controls whether automatic fetching latest repo contents
-    from origin is allowed
   """
 
-  def __init__(self, repo_root, recipes_path, allow_fetch):
+  def __init__(self, repo_root, recipes_path):
     self.repo_root = repo_root
     self.recipes_path = recipes_path
-    self.allow_fetch = allow_fetch
 
   @property
   def package_dir(self):
@@ -99,18 +96,13 @@ class PackageContext(object):
     return os.path.join(self.repo_root, self.recipes_path)
 
   def __repr__(self):
-    return 'PackageContext(%r, %r, %s)' % (
-      self.repo_root, self.recipes_path, self.allow_fetch)
-
-  def project_checkout_dir(self, project_id):
-    return os.path.join(self.package_dir, project_id)
+    return 'PackageContext(%r, %r)' % (self.repo_root, self.recipes_path)
 
   @classmethod
-  def from_package_pb(cls, repo_root, package_pb, allow_fetch):
+  def from_package_pb(cls, repo_root, package_pb):
     return cls(
       os.path.abspath(repo_root),
-      str(package_pb.recipes_path).replace('/', os.sep),
-      allow_fetch)
+      str(package_pb.recipes_path).replace('/', os.sep))
 
 
 class RepoSpec(object):
@@ -358,17 +350,6 @@ class PackageSpec(object):
     return 'PackageSpec(%s, %s, %r)' % (self._project_id, self._recipes_path,
                                         self._deps)
 
-  def ensure_up_to_date(self, context):
-    """Does a local checkout of all stated dependencies.
-
-    May do a `fetch` if necessary.
-
-    Args:
-      context (PackageContext)
-    """
-    for repo_spec in self._deps.values():
-      repo_spec.checkout(context)
-
   @classmethod
   def from_package_pb(cls, context, buf):
     deps = { pid: cls._spec_for_dep(context, pid, dep)
@@ -392,9 +373,8 @@ class PackageSpec(object):
       str(dep.revision),
       str(dep.path_override),
       backend_class(
-        context.project_checkout_dir(project_id),
-        dep.url,
-        context.allow_fetch))
+        os.path.join(context.package_dir, project_id),
+        dep.url))
 
   @property
   def project_id(self):
@@ -435,33 +415,29 @@ class PackageDeps(object):
     return self._root_package
 
   @classmethod
-  def create(cls, repo_root, package_file, allow_fetch=False,
-             overrides=None):
+  def create(cls, context, package_file, overrides):
     """Creates a PackageDeps object.
 
+    If any of the dependencies are not overridden in overrides, this will do
+    network access to bring them up to date.
+
     Arguments:
-      repo_root: the root of the repository containing this package.
+      context (PackageContext)
       package_file: a PackageFile object corresponding to the repos recipes.cfg
-      allow_fetch: whether to fetch dependencies rather than just checking for
-                   them.
-      overrides: if not None, a dictionary of project overrides. Dictionary keys
+      overrides: a dictionary of project overrides. Dictionary keys
                  are the `project_id` field to override, and dictionary values
                  are the override path.
     """
-    context = PackageContext.from_package_pb(
-      repo_root, package_file.read(), allow_fetch)
+    package_deps = cls(overrides={
+      project_id: PathRepoSpec(project_id, path)
+      for project_id, path in overrides.iteritems()
+    })
 
-    if overrides:
-      overrides = {project_id: PathRepoSpec(project_id, path)
-                   for project_id, path in overrides.iteritems()}
-    package_deps = cls(overrides=overrides)
-
-    if allow_fetch:
-      # initialize all repos to their intended state.
-      package_spec = PackageSpec.from_package_pb(
-        context, RootRepoSpec(package_file).spec_pb())
-
-      package_spec.ensure_up_to_date(context)
+    # initialize all non-overridden repos to their intended state.
+    pspec = PackageSpec.from_package_pb(context, package_file.read())
+    for project_id, dep in pspec.deps.iteritems():
+      if project_id not in overrides:
+        dep.checkout(context)
 
     package_deps._root_package = package_deps._create_package(
       context, RootRepoSpec(package_file))

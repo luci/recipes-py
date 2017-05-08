@@ -127,9 +127,10 @@ def main():
     # graph. When performing an automated roll, it'd make sense to attempt
     # to automatically find a consistent state, rather than bailing out.
     # Especially that only some subcommands refer to package_deps.
+    context = package.PackageContext.from_package_pb(
+      repo_root, args.package.read())
     package_deps = package.PackageDeps.create(
-        repo_root, args.package, allow_fetch=not args.no_fetch,
-        overrides=args.project_override)
+        context, args.package, overrides=args.project_override)
   except subprocess.CalledProcessError:
     # A git checkout failed somewhere. Return 2, which is the sign that this is
     # an infra failure, rather than a test failure.

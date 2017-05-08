@@ -30,10 +30,7 @@ def add_common_args(parser):
         raise ValueError('Override must have the form: repo=path')
       project_id, path = p
 
-      v = getattr(namespace, self.dest, None)
-      if v is None:
-        v = {}
-        setattr(namespace, self.dest, v)
+      v = getattr(namespace, self.dest)
 
       if v.get(project_id):
         raise ValueError('An override is already defined for [%s] (%s)' % (
@@ -57,12 +54,8 @@ def add_common_args(parser):
   parser.add_argument(
       '--verbose', '-v', action='count',
       help='Increase logging verboisty')
-  # TODO(phajdan.jr): Figure out if we need --no-fetch; remove if not.
-  parser.add_argument(
-      '--no-fetch', action='store_true',
-      help='Disable automatic fetching')
   parser.add_argument('-O', '--project-override', metavar='ID=PATH',
-      action=ProjectOverrideAction,
+      action=ProjectOverrideAction, default={},
       help='Override a project repository path with a local one.')
   parser.add_argument(
       # Use 'None' as default so that we can recognize when none of the

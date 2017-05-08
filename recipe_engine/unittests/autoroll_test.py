@@ -64,13 +64,6 @@ class TestArgs(unittest.TestCase):
     os.remove(self.tmpfile)
 
   @mock.patch('argparse._sys.stderr', new_callable=StringIO)
-  def test_no_fetch(self, stderr):
-    with self.assertRaises(SystemExit):
-      args = self.p.parse_args(['--no-fetch', 'autoroll'])
-      args.postprocess_func(self.p, args)
-    self.assertIn('--no-fetch does not make sense', stderr.getvalue())
-
-  @mock.patch('argparse._sys.stderr', new_callable=StringIO)
   def test_json_flags(self, stderr):
     with self.assertRaises(SystemExit):
       args = self.p.parse_args(['autoroll', '--verbose-json'])

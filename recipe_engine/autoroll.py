@@ -142,7 +142,6 @@ def run_simulation_test(repo_root, recipes_path, additional_args=None):
     os.path.join(repo_root, recipes_path, 'recipes.py'),
     # Invoked recipes.py should not re-bootstrap (to avoid issues on bots).
     '--disable-bootstrap',
-    '--no-fetch',
     'test',
   ]
   if additional_args:
@@ -286,9 +285,6 @@ def add_subparser(parser):
           'Requires --output-json.'))
 
   def postprocess_func(parser, args):
-    if args.no_fetch:
-      parser.error('autoroll with --no-fetch does not make sense.')
-
     if args.verbose_json and not args.output_json:
       parser.error('--verbose-json passed without --output-json')
 
@@ -302,8 +298,7 @@ def main(_package_deps, args):
 
   package_pb = config_file.read()
 
-  context = package.PackageContext.from_package_pb(
-    repo_root, package_pb, allow_fetch=not args.no_fetch)
+  context = package.PackageContext.from_package_pb(repo_root, package_pb)
   package_spec = package.PackageSpec.from_package_pb(context, package_pb)
   for repo_spec in package_spec.deps.values():
     repo_spec.fetch()

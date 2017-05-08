@@ -104,7 +104,7 @@ class TestGit(unittest.TestCase):
       self.g(['-C', 'dir', 'reset', '-q', '--hard', 'a'*40])
     ]))
 
-    fetch.GitBackend('dir', 'repo', True).checkout('revision')
+    fetch.GitBackend('dir', 'repo').checkout('revision')
 
     self.assertMultiDone(git)
 
@@ -119,7 +119,7 @@ class TestGit(unittest.TestCase):
       self.g(['-C', 'dir', 'reset', '-q', '--hard', 'a'*40])
     ]))
 
-    fetch.GitBackend('dir', 'repo', True).checkout('revision')
+    fetch.GitBackend('dir', 'repo').checkout('revision')
 
     self.assertMultiDone(git)
     isdir.assert_has_calls([
@@ -136,19 +136,12 @@ class TestGit(unittest.TestCase):
       self.g(['-C', 'dir', 'diff', '--quiet', 'a'*40]),
     ]))
 
-    fetch.GitBackend('dir', 'repo', True).checkout('revision')
+    fetch.GitBackend('dir', 'repo').checkout('revision')
 
     self.assertMultiDone(git)
     isdir.assert_has_calls([
       mock.call('dir/.git'),
     ])
-
-  @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch.GitBackend._execute')
-  def test_clone_not_allowed(self, _git, isdir):
-    isdir.return_value = True
-    with self.assertRaises(fetch.FetchNotAllowedError):
-      fetch.GitBackend('dir', 'repo', False).checkout('revision')
 
   @mock.patch('os.path.isdir')
   @mock.patch('recipe_engine.fetch.GitBackend._execute')
@@ -159,7 +152,7 @@ class TestGit(unittest.TestCase):
     git.side_effect = _mock_execute
 
     with self.assertRaises(fetch.GitError):
-      fetch.GitBackend('dir', 'repo', False).checkout('revision')
+      fetch.GitBackend('dir', 'repo').checkout('revision')
 
     git.assert_called_once_with('GIT', 'init', 'dir')
 
@@ -179,20 +172,9 @@ class TestGit(unittest.TestCase):
       self.g(['-C', 'dir', 'reset', '-q', '--hard', 'a'*40]),
     ))
 
-    fetch.GitBackend('dir', 'repo', True).checkout('revision')
+    fetch.GitBackend('dir', 'repo').checkout('revision')
 
     self.assertMultiDone(git)
-
-  @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch.GitBackend._execute')
-  def test_rev_parse_fetch_not_allowed(self, git, isdir):
-    isdir.return_value = True
-    with self.assertRaises(fetch.FetchNotAllowedError):
-      fetch.GitBackend('dir', 'repo', False).checkout('revision')
-    isdir.assert_has_calls([
-      mock.call('dir/.git'),
-    ])
-    self.assertFalse(git.called)
 
   @mock.patch('recipe_engine.fetch.GitBackend._execute')
   def test_commit_metadata(self, git):
@@ -201,7 +183,7 @@ class TestGit(unittest.TestCase):
       self.g(['-C', 'dir', 'ls-remote', 'repo', 'revision'], 'a'*40),
     ] + self.g_metadata_calls()))
 
-    result = fetch.GitBackend('dir', 'repo', True).commit_metadata('revision')
+    result = fetch.GitBackend('dir', 'repo').commit_metadata('revision')
     self.assertEqual(result, fetch.CommitMetadata(
       revision = 'a'*40,
       author_email = 'foo@example.com',
@@ -301,7 +283,7 @@ class TestGitiles(unittest.TestCase):
       self.d('repo/+archive/%s/path/to/recipes.tar.gz' % self.a, ''),
     )
 
-    fetch.GitilesBackend('dir', 'repo', True).checkout('revision')
+    fetch.GitilesBackend('dir', 'repo').checkout('revision')
 
     makedirs.assert_has_calls([
       mock.call('dir/infra/config'),
@@ -373,7 +355,7 @@ class TestGitiles(unittest.TestCase):
              self.proto_text),
     )
 
-    be = fetch.GitilesBackend('dir', 'repo', True)
+    be = fetch.GitilesBackend('dir', 'repo')
     self.assertEqual(sha_a, be.resolve_refspec('reva'))
     self.assertEqual(sha_b, be.resolve_refspec('revb'))
 
@@ -416,7 +398,7 @@ class TestGitiles(unittest.TestCase):
              self.proto_text)
     )
 
-    result = fetch.GitilesBackend('dir', 'repo', True).commit_metadata(
+    result = fetch.GitilesBackend('dir', 'repo').commit_metadata(
         'revision')
     self.assertEqual(result, self.a_meta)
     self.assertMultiDone(requests_get)
@@ -428,7 +410,7 @@ class TestGitiles(unittest.TestCase):
              fetch.GitilesFetchError(403, '')),
     )
     with self.assertRaises(fetch.GitilesFetchError):
-      fetch.GitilesBackend('dir', 'repo', True).commit_metadata(
+      fetch.GitilesBackend('dir', 'repo').commit_metadata(
           'revision')
     self.assertMultiDone(requests_get)
 
@@ -451,25 +433,10 @@ class TestGitiles(unittest.TestCase):
              self.proto_text),
     )
 
-    result = fetch.GitilesBackend('dir', 'repo', True).commit_metadata(
+    result = fetch.GitilesBackend('dir', 'repo').commit_metadata(
         'revision')
     self.assertEqual(result, self.a_meta)
     self.assertMultiDone(requests_get)
-
-
-class TestArgs(unittest.TestCase):
-  def setUp(self):
-    self.p = argparse.ArgumentParser()
-    self.followup = common_args.add_common_args(self.p)
-    subp = self.p.add_subparsers()
-    fetch.add_subparser(subp)
-
-  @mock.patch('argparse._sys.stderr', new_callable=StringIO)
-  def test_no_fetch(self, stderr):
-    with self.assertRaises(SystemExit):
-      args = self.p.parse_args(['--no-fetch', 'fetch'])
-      args.postprocess_func(self.p, args)
-    self.assertIn('--no-fetch does not make sense', stderr.getvalue())
 
 
 if __name__ == '__main__':
