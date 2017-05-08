@@ -18,7 +18,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CIPD_ROOT = os.path.join(ROOT, '.cipd_root')
 
 VPYTHON_PACKAGE = 'infra/tools/luci/vpython/${platform}'
-VPYTHON_VERSION = 'git_revision:4ff2211fe419a7a0083ea2010ea8b33fb5e342a9'
+VPYTHON_VERSION = 'git_revision:0d9aafc8115a09361c878329f301ea1e329c465b'
 
 
 def _ensure_vpython(cipd_root):
