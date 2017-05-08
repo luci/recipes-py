@@ -27,7 +27,7 @@ sys.path.insert(0, ROOT_DIR)
 
 from recipe_engine import env
 
-from recipe_engine import common_args
+from recipe_engine import common_args, package
 
 import argparse  # this is vendored
 
@@ -104,28 +104,18 @@ def main():
     bootstrap_env[env.BOOTSTRAP_ENV_KEY] = '1'
 
     cmd = [
-        sys.executable,
-        os.path.join(ROOT_DIR, 'bootstrap', 'bootstrap_vpython.py'),
+      sys.executable,
+      os.path.join(ROOT_DIR, 'bootstrap', 'bootstrap_vpython.py'),
     ]
     if args.bootstrap_vpython_path:
       cmd += ['--vpython-path', args.bootstrap_vpython_path]
     cmd += [
-        '--',
-        os.path.join(ROOT_DIR, 'recipes.py'),
+      '--',
+      os.path.join(ROOT_DIR, 'recipes.py'),
     ] + sys.argv[1:]
 
-    logging.debug('Running bootstrap command (cwd=%s): %s', ROOT_DIR, cmd)
-    return subprocess.call(
-        cmd,
-        cwd=ROOT_DIR,
-        env=bootstrap_env)
-
-  # Standard recipe engine operation.
-  return _real_main(args)
-
-
-def _real_main(args):
-  from recipe_engine import package
+    logging.debug('Running bootstrap command: %s', cmd)
+    return subprocess.call(cmd, env=bootstrap_env)
 
   if args.bare_command:
     return args.func(None, args)
