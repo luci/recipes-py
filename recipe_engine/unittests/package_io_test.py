@@ -27,24 +27,12 @@ class TestPackageIO(unittest.TestCase):
     }
 
     dep1 = {
-      'project_id': 'dep1',
       'url': 'https://dep1.example.com',
       'branch': 'master',
       'revision': 'a'*40,
       'path_override': 'sub/path',
       'repo_type': 'GITILES',
     }
-
-    self.raw_v1 = json.dumps({
-      'api_version': 1,
-      'project_id': 'test',
-      'canonical_repo_url': 'https://canonical.example.com',
-      'recipes_path': 'foo/bar',
-      'deps': [dict(dep1)],
-      'autoroll_recipe_options': autoroll_options,
-    }, indent=2, sort_keys=True).replace(' \n', '\n') + '\n'
-
-    dep1.pop('project_id')
 
     self.raw_v2 = json.dumps({
       'api_version': 2,
@@ -58,6 +46,7 @@ class TestPackageIO(unittest.TestCase):
     }, indent=2, sort_keys=True).replace(' \n', '\n') + '\n'
 
     self.parsed = package_pb2.Package(
+      api_version=2,
       project_id='test',
       canonical_repo_url='https://canonical.example.com',
       recipes_path='foo/bar',
@@ -84,20 +73,10 @@ class TestPackageIO(unittest.TestCase):
     )
 
 
-  def test_parse_v1(self):
-    self.parsed.api_version = 1
-    self.assertEqual(package_io.parse(self.raw_v1), self.parsed)
-
-  def test_dump_v1(self):
-    self.parsed.api_version = 1
-    self.assertEqual(package_io.dump(self.parsed), self.raw_v1)
-
   def test_parse_v2(self):
-    self.parsed.api_version = 2
     self.assertEqual(package_io.parse(self.raw_v2), self.parsed)
 
   def test_dump_v2(self):
-    self.parsed.api_version = 2
     self.assertEqual(package_io.dump(self.parsed), self.raw_v2)
 
 

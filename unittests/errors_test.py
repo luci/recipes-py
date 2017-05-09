@@ -22,17 +22,16 @@ class RecipeRepo(object):
         self._root, 'infra', 'config', 'recipes.cfg')
     with open(self._recipes_cfg, 'w') as fh:
       json.dump({
-        "api_version": 1,
-        "project_id": "testproj",
-        "recipes_path": recipes_path,
-        "deps": [
-          {
-            "project_id": "recipe_engine",
-            "url": ROOT_DIR,
-            "branch": "master",
-            "revision": "HEAD"
+        'api_version': 2,
+        'project_id': 'testproj',
+        'recipes_path': recipes_path,
+        'deps': {
+          'recipe_engine':{
+            'url': ROOT_DIR,
+            'branch': 'master',
+            'revision': 'HEAD'
           }
-        ]
+        }
       }, fh)
     self._recipes_dir = os.path.join(self._root, 'recipes')
     os.mkdir(self._recipes_dir)

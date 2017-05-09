@@ -5,20 +5,22 @@ recipe modules, soon to be more.  Repositories declare their relationships to
 each other in a file called `recipes.cfg`, usually in the `infra/config`
 directory from the repository root.  For example:
 
-    api_version: 1
-    project_id: "build_internal"
-    recipes_path: ""
-    deps {
-      project_id: "build"
-      url: "https://chromium.googlesource.com/chromium/tools/build"
-      branch: "master"
-      revision: "09cee0ae226949923db058cb21e98a42d7d29f11"
-    }
-    deps {
-      project_id: "recipe_engine"
-      url: "https://chromium.googlesource.com/external/github.com/luci/recipes-py.git"
-      branch: "master"
-      revision: "fe88a668a6cea70d2233c4e61be352fc1551d1ce"
+    {
+      "api_version": 2,
+      "project_id": "build_internal",
+      "recipes_path": "",
+      "deps": {
+        "build": {
+          "url": "https://chromium.googlesource.com/chromium/tools/build",
+          "branch": "master",
+          "revision": "09cee0ae226949923db058cb21e98a42d7d29f11"
+        },
+        "recipe_engine": {
+          "url": "https://chromium.googlesource.com/external/github.com/luci/recipes-py.git",
+          "branch": "master",
+          "revision": "fe88a668a6cea70d2233c4e61be352fc1551d1ce"
+        }
+      }
     }
 
 `project_id` is the LUCI-config identifier for the project.  `recipes_path` is

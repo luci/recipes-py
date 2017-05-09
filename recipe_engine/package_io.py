@@ -11,13 +11,11 @@ from google.protobuf import json_format
 from . import package_pb2
 
 
-API_VERSIONS = (1, 2)
+API_VERSIONS = frozenset([2])
 
 
 def parse(raw):
   """Parses a package_pb2.Package from a string.
-
-  Upconverts from api_version 1 to api_version 2.
 
   Args:
     raw (str) - The string containing the recipes.cfg contents.
@@ -30,10 +28,6 @@ def parse(raw):
   assert vers in API_VERSIONS, (
     'expected %r to be one of %r' % (vers, API_VERSIONS))
 
-  # upconvert old deps-as-a-list to deps-as-a-dict
-  if 'deps' in obj and vers == 1:
-    obj['deps'] = {d.pop('project_id'): d for d in obj['deps']}
-
   buf = package_pb2.Package()
   json_format.ParseDict(obj, buf, ignore_unknown_fields=True)
   return buf
@@ -42,30 +36,16 @@ def parse(raw):
 def dump_obj(buf):
   """Dumps a package_pb2.Package to a jsonish dict.
 
-  Downconverts from api_version 2 to api_version 1 (if buf.api_version == 1).
-
   Args:
     buf (package_pb2.Package) - the Package to dump
 
   Returns (dict)
   """
-  obj = json_format.MessageToDict(buf, preserving_proto_field_name=True)
-
-  # downconvert if api_version is 1
-  if buf.deps and buf.api_version < 2:
-    deps = []
-    for pid, d in sorted(obj['deps'].iteritems()):
-      d['project_id'] = pid
-      deps.append(d)
-    obj['deps'] = deps
-
-  return obj
+  return json_format.MessageToDict(buf, preserving_proto_field_name=True)
 
 
 def dump(buf):
   """Dumps a package_pb2.Package to a string.
-
-  Downconverts from api_version 2 to api_version 1 (if buf.api_version == 1).
 
   Args:
     buf (package_pb2.Package) - the Package to dump

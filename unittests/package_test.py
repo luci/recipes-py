@@ -125,14 +125,14 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
 
   def test_dump_round_trips(self):
     proto_text = """
-{"api_version": 1}
+{"api_version": 2}
 """.lstrip()
     package_file = MockPackageFile('repo/root/infra/config/recipes.cfg',
                                    proto_text)
     package_spec = package.PackageSpec.from_package_pb(
       self.context, package_file.read())
     self.assertEqual(package_file.to_raw(package_spec.spec_pb),
-                     '{\n  "api_version": 1\n}\n')
+                     '{\n  "api_version": 2\n}\n')
 
   def test_no_version(self):
     proto_text = """{
@@ -145,44 +145,6 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
 
     with self.assertRaises(AssertionError):
       package.PackageSpec.from_package_pb(self.context, package_file.read())
-
-  def test_old_deps(self):
-    proto_text = '\n'.join([
-      '{',
-      '  "api_version": 1,',
-      '  "deps": [',
-      '    {',
-      '      "branch": "superbar",',
-      '      "project_id": "bar",',
-      '      "revision": "deadd00d",',
-      '      "url": "https://repo.com/bar.git"',
-      '    },',
-      '    {',
-      '      "branch": "master",',
-      '      "project_id": "foo",',
-      '      "revision": "cafebeef",',
-      '      "url": "https://repo.com/foo.git"',
-      '    }',
-      '  ],',
-      '  "project_id": "super_main_package",',
-      '  "recipes_path": "path/to/recipes"',
-      '}',
-    ]) + '\n'
-    package_file = MockPackageFile('repo/root/infra/config/recipes.cfg',
-                                   proto_text)
-
-    spec = package.PackageSpec.from_package_pb(
-      self.context, package_file.read())
-    self.assertEqual(spec.deps['foo'], package.GitRepoSpec(
-      'foo',
-      'https://repo.com/foo.git',
-      'master',
-      'cafebeef',
-      '',
-      fetch.GitBackend('', '')
-    ))
-    self.assertEqual(package_file.to_raw(spec.spec_pb), proto_text)
-
 
   def test_unsupported_version(self):
     proto_text = """{
@@ -201,24 +163,23 @@ class TestPackageDeps(MockIOThings, unittest.TestCase):
 
   def test_create_with_overrides(self):
     base_proto_text = """{
-  "api_version": 1,
+  "api_version": 2,
   "project_id": "base_package",
   "recipes_path": "path/to/recipes",
-  "deps": [
-    {
-      "project_id": "foo",
+  "deps": {
+    "foo": {
       "url": "https://repo.com/foo.git",
       "branch": "foobranch",
       "revision": "deadd00d"
     }
-  ]
+  }
 }
 """
     base_package_file = MockPackageFile('base/infra/config/recipes.cfg',
                                         base_proto_text)
 
     foo_proto_text = """{
-  "api_version": 1,
+  "api_version": 2,
   "project_id": "foo",
   "recipes_path": "path/to/recipes"
 }"""

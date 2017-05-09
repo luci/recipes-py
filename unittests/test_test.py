@@ -282,7 +282,7 @@ class TestTest(unittest.TestCase):
     self._recipe_tool = os.path.join(ROOT_DIR, 'recipes.py')
 
     test_pkg = package_pb2.Package(
-        api_version=1,
+        api_version=2,
         project_id='test_pkg',
         recipes_path='',
         deps={

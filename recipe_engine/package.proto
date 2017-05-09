@@ -73,7 +73,7 @@ message Package {
   // change if a backwards-incompatible update must be done for the proto. In
   // the event that a backwards incompatible change happens, however,
   // api_version will remain at tag 1.
-  int32 api_version = 1;  // Version 1
+  int32 api_version = 1;  // Version 2
 
   // The "id" of how this package is referred to within recipes. This becomes
   // the prefix in DEPS when something depends on one of this package's modules
