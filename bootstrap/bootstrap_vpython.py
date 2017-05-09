@@ -28,12 +28,22 @@ def _ensure_vpython(cipd_root):
   cmd = [cipd_bin, 'ensure', '-root', cipd_root, '-ensure-file=-']
 
   LOGGER.debug('Running CIPD ensure command (cwd=%s): %s', os.getcwd(), cmd)
-  proc = subprocess.Popen(
-    cmd,
-    stdin=subprocess.PIPE,
-    stdout=subprocess.PIPE,
-    stderr=subprocess.STDOUT,
-  )
+  try:
+    proc = subprocess.Popen(
+      cmd,
+      stdin=subprocess.PIPE,
+      stdout=subprocess.PIPE,
+      stderr=subprocess.STDOUT,
+    )
+  except OSError as e:
+    LOGGER.error(
+      "Failed to call 'cipd' subprocess for the Recipe Engine bootstrap. Is it "
+      "on your PATH?\n\n"
+      "The recipe engine expects certain tooling to be available on PATH\n"
+      "Please manually install 'cipd', or include it by adding a Chromium\n"
+      "'depot_tools' checkout to PATH.\n")
+    raise
+
   stdout, _ = proc.communicate(input=manifest)
   if proc.returncode != 0:
     raise ValueError('Failed to install CIPD manifest (%d):\n%s' % (
