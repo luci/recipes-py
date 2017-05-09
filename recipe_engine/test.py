@@ -10,6 +10,7 @@ import contextlib
 import copy
 import datetime
 import difflib
+import errno
 import fnmatch
 import functools
 import json
@@ -247,8 +248,13 @@ def run_test(test_description, debug=False, train=False):
     if actual is not None:
       if train:
         expectation_dir = os.path.dirname(test_description.expectation_path)
-        if not os.path.exists(expectation_dir):
+        # This may race with other processes, so just attempt to create dir
+        # and ignore failure if it already exists.
+        try:
           os.makedirs(expectation_dir)
+        except OSError as e:
+          if e.errno != errno.EEXIST:
+            raise e
         with open(test_description.expectation_path, 'wb') as f:
           json.dump(
               re_encode(actual), f, sort_keys=True, indent=2,
