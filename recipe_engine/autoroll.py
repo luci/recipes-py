@@ -63,13 +63,12 @@ def write_new_recipes_py(context, pspec, repo_cfg_block):
       for line in source:
         dest.write(line)
         if line == EDIT_HEADER:
-          break
-      dest.writelines(repo_cfg_block)
-      for line in source:
-        if line == EDIT_FOOTER:
-          dest.write(line)
-          break
-      dest.writelines(source)
+          dest.writelines(repo_cfg_block)
+          for line in source:
+            if line == EDIT_FOOTER:
+              dest.write(line)
+              break
+          dest.writelines(source)
   if sys.platform != 'win32':
     os.chmod(dest_path, os.stat(dest_path).st_mode|0111)
 
@@ -96,9 +95,6 @@ def extract_repo_cfg_block(context):
         if line == EDIT_FOOTER:
           break
         block.append(line)
-  if not block:
-    raise ValueError('unable to find configuration section in %r' %
-                     (recipes_py_path,))
   return block
 
 

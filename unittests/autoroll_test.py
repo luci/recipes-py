@@ -51,26 +51,6 @@ class TestAutoroll(repo_test_util.RepoTest):
     self.assertEquals([], roll_result['roll_details'])
     self.assertEquals([], roll_result['rejected_candidate_specs'])
 
-  def test_bogus_recipes_py(self):
-    repos = self.repo_setup({
-        'a': [],
-        'b': ['a'],
-    })
-    self.get_package_spec(repos['b'])
-
-    # Create a new commit in the A repo.
-    self.commit_in_repo(repos['a'], message='c1')
-
-    # goof up recipes.py in B repo.
-    with open(os.path.join(repos['b']['root'], 'recipes.py'), 'wb') as f:
-      print >> f, "Hey! This isn't even a python script."
-    self.commit_in_repo(repos['b'], message='goof it up!')
-
-    with self.assertRaises(subprocess.CalledProcessError) as ex:
-      self.run_roll(repos['b'])
-    self.assertIn('unable to find configuration section', ex.exception.output)
-
-
   def test_trivial(self):
     """Tests the simplest trivial (i.e. no expectation changes) roll scenario.
     """
