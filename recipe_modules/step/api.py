@@ -153,7 +153,6 @@ class StepApi(recipe_api.RecipeApiPlain):
         command wrapper.
       timeout: If supplied, the recipe engine will kill the step after the
         specified number of seconds.
-      cwd (str or None): absolute path to working directory for the command
       allow_subannotations (bool): if True, lets the step emit its own
           annotations. NOTE: Enabling this can cause some buggy behavior. Please
           strongly consider using step_result.presentation instead. If you have
@@ -215,8 +214,9 @@ class StepApi(recipe_api.RecipeApiPlain):
       name = "%s (%d)" % (name, step_count)
     self._seen_steps.add(full_name)
 
-    if 'cwd' not in kwargs:
-      kwargs['cwd'] = self.get_from_context('cwd')
+    cwd = self.get_from_context('cwd')
+    if cwd is not None and cwd != self.m.path['start_dir']:
+      kwargs['cwd'] = cwd
     kwargs['env'] = self.get_from_context('env', {})
     if self._prefix_path:
       ps = self.m.path.pathsep

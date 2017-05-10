@@ -15,6 +15,30 @@
   },
   {
     "cmd": [
+      "mkdir",
+      "something"
+    ],
+    "name": "mk subdir"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo Why hello, there, in a subdir."
+    ],
+    "cwd": "[START_DIR]/something",
+    "name": "something"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo what happen"
+    ],
+    "name": "start_dir ignored"
+  },
+  {
+    "cmd": [
       "bash",
       "-c",
       "echo Good bye, $friend."

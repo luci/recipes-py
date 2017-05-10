@@ -18,14 +18,12 @@ RETURN_SCHEMA = config.ReturnSchema(
 
 PROPERTIES = {
   'bad_return': recipe_api.Property(default=False),
-  'raise_infra_failure': recipe_api.Property(default=False),
   'access_invalid_data': recipe_api.Property(default=False),
   'timeout': recipe_api.Property(default=0, kind=int),
 }
 
 
-def RunSteps(
-    api, bad_return, raise_infra_failure, access_invalid_data, timeout):
+def RunSteps(api, bad_return, access_invalid_data, timeout):
   if bad_return:
     return RETURN_SCHEMA.new(test_me='this should fail')
   elif timeout:
@@ -44,6 +42,17 @@ def RunSteps(
   # The api.step object is directly callable.
   api.step('hello', ['echo', 'Hello World'])
   api.step('hello', ['echo', 'Why hello, there.'])
+
+  # You can change the current working directory as well
+  api.step('mk subdir', ['mkdir', 'something'])
+  with api.step.context({'cwd': api.path['start_dir'].join('something')}):
+    api.step('something', ['bash', '-c', 'echo Why hello, there, in a subdir.'])
+
+  # By default, all steps run in 'start_dir', or the cwd of the recipe engine
+  # when the recipe begins. Because of this, setting cwd to start_dir doesn't
+  # show anything in particular in the expectations.
+  with api.step.context({'cwd': api.path['start_dir']}):
+    api.step('start_dir ignored', ['bash', '-c', 'echo what happen'])
 
   # You can also manipulate various aspects of the step, such as env.
   # These are passed straight through to subprocess.Popen.
@@ -75,7 +84,7 @@ def RunSteps(
     api.step('goodbye', ['echo', 'goodbye'])
     # Modifying step_result now would raise an AssertionError.
   except api.step.StepFailure:
-    # Raising anything besides StepFailure or StepWarning causes the build to go 
+    # Raising anything besides StepFailure or StepWarning causes the build to go
     # purple.
     raise ValueError('goodbye must exit 0!')
 
@@ -157,7 +166,6 @@ def GenTests(api):
 
   yield (
       api.test('infra_failure') +
-      api.properties(raise_infra_failure=True) +
       api.step_data('cleanup', retcode=1)
     )
 
