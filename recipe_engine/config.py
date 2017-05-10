@@ -585,7 +585,7 @@ class Dict(ConfigBase, collections.MutableMapping):
       jsonish_fn - A function which renders a list of outputs of item_fn to a
         JSON-compatiple python datatype. Defaults to dict().
       value_type - A type object used for constraining/validating the values
-        assigned to this dictionary.
+        assigned to this dictionary. If None, the value can be any type.
       hidden - See ConfigBase.
     """
     super(Dict, self).__init__(hidden)
@@ -621,8 +621,9 @@ class Dict(ConfigBase, collections.MutableMapping):
     if isinstance(val, Dict):
       val = val.data
     typeAssert(val, collections.Mapping)
-    for v in val.itervalues():
-      typeAssert(v, self.value_type)
+    if self.value_type:
+      for v in val.itervalues():
+        typeAssert(v, self.value_type)
     self.data = val
 
   def as_jsonish(self, _include_hidden=None):
