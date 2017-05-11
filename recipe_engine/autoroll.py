@@ -4,15 +4,12 @@
 
 from __future__ import print_function
 
-import copy
 import json
 import logging
 import os
+import shutil
 import subprocess
 import sys
-import time
-
-from collections import namedtuple
 
 from . import package
 from . import package_io
@@ -28,83 +25,18 @@ LOGGER = logging.getLogger(__name__)
 ROOT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 
 
-# This is the path within the recipes-py repo to the per-repo recipes.py script.
-# Ideally we'd read this somehow from each candidate engine repo version, but
-# for now assume it lives in a fixed location within the engine.
-RECIPES_PY_REL_PATH = ('doc', 'recipes.py')
-
-# These are the lines to look for in doc/recipes.py as well as the target repo's
-# copy of that file. Any lines found between these lines will be replaced
-# verbatim in the new recipes.py file.
-EDIT_HEADER = '#### PER-REPO CONFIGURATION (editable) ####\n'
-EDIT_FOOTER = '#### END PER-REPO CONFIGURATION ####\n'
-
-
-def write_new_recipes_py(context, pspec, repo_cfg_block):
-  """Uses the doc/recipes.py script from the currently-checked-out version of
-  the recipe_engine (in `context`) as a template, and writes it to the
-  recipes_dir of the destination repo (also from `context`). Replaces the lines
-  between the EDIT_HEADER and EDIT_FOOTER with the lines from repo_cfg_block,
-  verbatim.
-
-  Args:
-    context (PackageContext) - The context of where to find the checked-out
-      recipe_engine as well as where to put the new recipes.py.
-    spec (PackageSpec) - The current (rolled) PackageSpec spec.
-    repo_cfg_block (list(str)) - The list of lines (including newlines)
-      extracted from the repo's original recipes.py file (using the
-      extract_repo_cfg_block function).
-  """
-  engine_root = pspec.deps['recipe_engine'].repo_root(context)
-  source_path = os.path.join(engine_root, *RECIPES_PY_REL_PATH)
-  dest_path = os.path.join(context.recipes_dir, 'recipes.py')
-  with open(source_path, 'rb') as source:
-    with open(dest_path, 'wb') as dest:
-      for line in source:
-        dest.write(line)
-        if line == EDIT_HEADER:
-          dest.writelines(repo_cfg_block)
-          for line in source:
-            if line == EDIT_FOOTER:
-              dest.write(line)
-              break
-          dest.writelines(source)
-  if sys.platform != 'win32':
-    os.chmod(dest_path, os.stat(dest_path).st_mode|0111)
-
-
-def extract_repo_cfg_block(context):
-  """Extracts the lines between EDIT_HEADER and EDIT_FOOTER from the
-  to-be-autorolled-repo's recipes.py file.
-
-  Args:
-    context (PackageContext) - The context of where to find the repo's current
-      recipes.py file.
-
-  Returns list(str) - The list of lines (including newlines) which occur between
-    the EDIT_HEADER and EDIT_FOOTER in the repo's recipes.py file.
-  """
-  recipes_py_path = os.path.join(context.recipes_dir, 'recipes.py')
-  block = []
-  with open(recipes_py_path, 'rb') as f:
-    in_section = False
-    for line in f:
-      if not in_section and line == EDIT_HEADER:
-        in_section = True
-      elif in_section:
-        if line == EDIT_FOOTER:
-          break
-        block.append(line)
-  return block
-
-
-def write_spec_to_disk(context, repo_cfg_block, config_file, spec_pb):
+def write_spec_to_disk(context, config_file, spec_pb):
   LOGGER.info('writing: %s', package_io.dump(spec_pb))
-  pspec = package.PackageSpec.from_package_pb(context, spec_pb)
 
   config_file.write(spec_pb)
   fetch(context.repo_root, spec_pb.recipes_path)
-  write_new_recipes_py(context, pspec, repo_cfg_block)
+
+  pspec = package.PackageSpec.from_package_pb(context, spec_pb)
+  engine_root = pspec.deps['recipe_engine'].repo_root(context)
+  shutil.copy(
+    os.path.join(engine_root, 'doc', 'recipes.py'),
+    os.path.join(context.recipes_dir, 'recipes.py')
+  )
 
 
 def fetch(repo_root, recipes_path):
@@ -148,7 +80,7 @@ def run_simulation_test(repo_root, recipes_path, additional_args=None):
   return rc, output
 
 
-def process_candidates(repo_cfg_block, candidates, repos, context, config_file,
+def process_candidates(candidates, repos, context, config_file,
                        verbose_json):
   """
 
@@ -190,8 +122,7 @@ def process_candidates(repo_cfg_block, candidates, repos, context, config_file,
   for i, candidate in enumerate(candidates):
     print('  processing candidate #%d... ' % (i + 1), end='')
 
-    write_spec_to_disk(context, repo_cfg_block, config_file,
-                       candidate.package_pb)
+    write_spec_to_disk(context, config_file, candidate.package_pb)
 
     rc, output = run_simulation_test(
       context.repo_root, candidate.package_pb.recipes_path, ['run'])
@@ -218,8 +149,7 @@ def process_candidates(repo_cfg_block, candidates, repos, context, config_file,
     for i, candidate in reversed(list(enumerate(candidates))):
       print('  processing candidate #%d... ' % (i + 1), end='')
 
-      write_spec_to_disk(context, repo_cfg_block, config_file,
-                         candidate.package_pb)
+      write_spec_to_disk(context, config_file, candidate.package_pb)
 
       rc, output = run_simulation_test(
           context.repo_root, candidate.package_pb.recipes_path, ['train'])
@@ -240,7 +170,7 @@ def process_candidates(repo_cfg_block, candidates, repos, context, config_file,
   return trivial, picked_roll_details, roll_details
 
 
-def test_rolls(repo_cfg_block, config_file, context, package_spec,
+def test_rolls(config_file, context, package_spec,
                verbose_json):
   candidates, rejected_candidates, repos = get_roll_candidates(
     context, package_spec)
@@ -250,7 +180,7 @@ def test_rolls(repo_cfg_block, config_file, context, package_spec,
   trivial = True
   if candidates:
     trivial, picked_roll_details, roll_details = process_candidates(
-      repo_cfg_block, candidates, repos, context, config_file, verbose_json)
+      candidates, repos, context, config_file, verbose_json)
 
   ret = {
     # it counts as success if there are no candidates at all :)
@@ -299,17 +229,15 @@ def main(_package_deps, args):
   for repo_spec in package_spec.deps.values():
     repo_spec.fetch()
 
-  repo_cfg_block = extract_repo_cfg_block(context)
-
   results = {}
   try:
     results = test_rolls(
-      repo_cfg_block, config_file, context, package_spec, args.verbose_json)
+      config_file, context, package_spec, args.verbose_json)
   finally:
     if not results.get('success'):
       # Restore initial state. Since we could be running simulation tests
       # on other revisions, re-run them now as well.
-      write_spec_to_disk(context, repo_cfg_block, config_file, package_pb)
+      write_spec_to_disk(context, config_file, package_pb)
       run_simulation_test(repo_root, package_spec.recipes_path, ['train'])
 
   if args.output_json:

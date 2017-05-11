@@ -14,15 +14,10 @@ This is a copy of https://github.com/luci/recipes-py/blob/master/doc/recipes.py.
 To fix bugs, fix in the github repo then run the autoroller.
 """
 
-import os
-
-#### PER-REPO CONFIGURATION (editable) ####
-# This section is defunct and will be removed at a later time.
-#### END PER-REPO CONFIGURATION ####
-
 import argparse
 import json
 import logging
+import os
 import random
 import subprocess
 import sys

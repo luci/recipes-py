@@ -108,11 +108,7 @@ class RepoTest(unittest.TestCase):
     with in_directory(repo_dir):
       with open('recipes.py', 'w') as f:
         f.write('\n'.join([
-          'import subprocess, sys, os',
-          '#### PER-REPO CONFIGURATION (editable) ####',
-          'REPO_ROOT = "."',
-          'RECIPES_CFG = os.path.join("infra", "config", "recipes.cfg")',
-          '#### END PER-REPO CONFIGURATION ####',
+          'import subprocess, sys',
           'if sys.argv[1] != "fetch":',
           '  sys.exit(subprocess.call(',
           '      [sys.executable, %r, "--package", %r] + sys.argv[1:]))' % (
