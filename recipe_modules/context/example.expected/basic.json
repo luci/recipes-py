@@ -1,0 +1,86 @@
+[
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo default!"
+    ],
+    "name": "default step"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo default!"
+    ],
+    "name": "default step (2)"
+  },
+  {
+    "cmd": [
+      "mkdir",
+      "subdir"
+    ],
+    "name": "mk subdir"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "pwd"
+    ],
+    "cwd": "[START_DIR]/subdir",
+    "name": "subdir step"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo hi again!"
+    ],
+    "cwd": "[START_DIR]/subdir",
+    "name": "other subdir step"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo $HELLO; echo $HOME"
+    ],
+    "env": {
+      "HELLO": "WORLD",
+      "HOME": null
+    },
+    "name": "env step"
+  },
+  {
+    "cmd": [],
+    "name": "nested"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo yay!"
+    ],
+    "name": "nested.properly indented",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo indent?"
+    ],
+    "name": "indented with wrong name",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

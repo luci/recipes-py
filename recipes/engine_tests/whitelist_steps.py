@@ -8,6 +8,7 @@ from recipe_engine.recipe_api import Property
 from recipe_engine.post_process import Filter, DoesNotRun, MustRun
 
 DEPS = [
+  'context',
   'step',
   'properties',
 ]
@@ -18,7 +19,7 @@ PROPERTIES = {
 
 def RunSteps(api, fakeit):
   api.step('something unimportant', ['echo', 'sup doc'])
-  with api.step.context({'env': {'FLEEM': 'VERY YES'}}):
+  with api.context(env={'FLEEM': 'VERY YES'}):
     api.step('something important', ['echo', 'crazy!'])
   api.step('another important', ['echo', 'INSANITY'])
   if fakeit:

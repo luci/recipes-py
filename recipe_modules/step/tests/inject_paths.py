@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 DEPS = [
+  'context',
   'path',
   'step',
   'properties',
@@ -10,14 +11,14 @@ DEPS = [
 
 
 def RunSteps(api):
-  with api.step.context({'env': {'FOO': 'bar'}}):
+  with api.context(env={'FOO': 'bar'}):
     api.step('test step (no env)', ['echo', 'hi'])
 
-  with api.step.context({'env': {'PATH': 'something'}}):
+  with api.context(env={'PATH': 'something'}):
     api.step('test step (env)', ['echo', 'hi'])
 
-  with api.step.context({'env': {
-      'PATH': api.path.pathsep.join(('something', '%(PATH)s'))}}):
+  with api.context(env={
+      'PATH': api.path.pathsep.join(('something', '%(PATH)s'))}):
     api.step('test step (env, $PATH)', ['echo', 'hi'])
 
 

@@ -74,37 +74,13 @@ class StepApi(recipe_api.RecipeApiPlain):
     return self.step_client.previous_step_result()
 
   @property
-  def context(self):
-    """Returns a context manager which can set values applying to all steps
-    within the block.
-
-    Example usage:
-      with api.step.context({'cwd': api.path['checkout']}):
-        api.step(...)
-
-    Valid keys:
-      cwd (Path object from api.path):  working directory
-      env ({name -> value}): environment variables
-      infra_step (bool): whether the step failure should be marked as infra
-          failure
-      name (str): step name prefix
-      nest_level (int): the nesting level of all steps. Use the nest() method
-        instead of directly manipulating this value.
-
-    See recipe_api.py for more info.
-    """
+  def context(self):  # pragma: no cover
+    """DEPRECATED: use the recipe_engine/context module instead."""
     return recipe_api.context
 
-  def get_from_context(self, key, default=None):
-    """Returns |key|'s value from context if present, otherwise |default|."""
-    # TODO(phajdan.jr): instead of copy, freeze contents of the context.
+  def get_from_context(self, key, default=None):  # pragma: no cover
+    """DEPRECATED: use the recipe_engine/context module instead."""
     return copy.deepcopy(recipe_api._STEP_CONTEXT.get(key, default))
-
-  def combine_with_context(self, key, value):
-    """Combines |value| with the value for |key| in current context, if any.
-    Returns the combined value."""
-    # TODO(phajdan.jr): instead of copy, freeze contents of the context.
-    return copy.deepcopy(recipe_api._STEP_CONTEXT.get_with_context(key, value))
 
   @contextlib.contextmanager
   def nest(self, name):
@@ -124,8 +100,7 @@ class StepApi(recipe_api.RecipeApiPlain):
     of the context (see the context() method above).
     """
     step_result = self(name, [])
-    context_dict = {'name': name, 'nest_level': 1}
-    with self.context(context_dict):
+    with self.m.context(name_prefix=name, increment_nest_level=True):
       yield step_result
 
   @property
@@ -204,28 +179,31 @@ class StepApi(recipe_api.RecipeApiPlain):
     # Note that another step could exist with that index already added to it
     # by the user. If this happens, we'll continue appending indexes until we
     # have a unique step name.
+    with self.m.context(name_prefix=name):
+      base_name = self.m.context.name_prefix
+    name_suffix = ''
+
     while True:
-      full_name = self.combine_with_context('name', name)
+      full_name = base_name + name_suffix
       if full_name not in self._seen_steps:
         break
 
       step_count = self._step_names.setdefault(full_name, 1) + 1
       self._step_names[full_name] = step_count
-      name = "%s (%d)" % (name, step_count)
+      name_suffix = ' (%d)' % step_count
     self._seen_steps.add(full_name)
 
-    cwd = self.get_from_context('cwd')
+    cwd = self.m.context.cwd
     if cwd is not None and cwd != self.m.path['start_dir']:
       kwargs['cwd'] = cwd
-    kwargs['env'] = self.get_from_context('env', {})
+    kwargs['env'] = self.m.context.env
     if self._prefix_path:
       ps = self.m.path.pathsep
       prefix = ps.join(self._prefix_path)
       suffix = kwargs['env'].get('PATH', '%(PATH)s')
       kwargs['env']['PATH'] = '%s%s%s' % (prefix, ps, suffix)
-    kwargs['infra_step'] = self.combine_with_context(
-        'infra_step', bool(infra_step))
-    kwargs['step_nest_level'] = self.combine_with_context('nest_level', 0)
+    kwargs['infra_step'] = self.m.context.infra_step or bool(infra_step)
+    kwargs['step_nest_level'] = self.m.context.nest_level
     kwargs['name'] = full_name
     kwargs['base_name'] = name
 

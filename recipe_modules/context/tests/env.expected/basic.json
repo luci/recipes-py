@@ -1,0 +1,35 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "hello"
+    ],
+    "name": "no env"
+  },
+  {
+    "cmd": [
+      "echo",
+      "hello"
+    ],
+    "env": {
+      "SOMETHING": "1"
+    },
+    "name": "with env"
+  },
+  {
+    "cmd": [
+      "echo",
+      "hello"
+    ],
+    "env": {
+      "SOMETHING": "1",
+      "SOMETHING_ELSE": "0"
+    },
+    "name": "with 2 envs"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

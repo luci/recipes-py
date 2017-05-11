@@ -1,4 +1,4 @@
-# Copyright 2013 The LUCI Authors. All rights reserved.
+# Copyright 2017 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
@@ -58,7 +58,7 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
     step_name = 'gen step(%s)' % self.m.path.basename(path_to_script)
 
     step_test_data = kwargs.pop('step_test_data', None)
-    with self.m.step.context({'cwd': self.m.path['checkout']}):
+    with self.m.context(cwd=self.m.path['checkout']):
       if str(path_to_script).endswith('.py'):
         step_result = self.m.python(
           step_name,

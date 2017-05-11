@@ -5,6 +5,7 @@
 from recipe_engine import recipe_api, config
 
 DEPS = [
+  'context',
   'path',
   'properties',
   'step',
@@ -57,13 +58,13 @@ def RunSteps(api, bad_return, access_invalid_data, timeout):
   # You can also manipulate various aspects of the step, such as env.
   # These are passed straight through to subprocess.Popen.
   # Also, abusing bash -c in this way is a TERRIBLE IDEA DON'T DO IT.
-  with api.step.context({'env': {'friend': 'Darth Vader'}}):
+  with api.context(env={'friend': 'Darth Vader'}):
     api.step('goodbye', ['bash', '-c', 'echo Good bye, $friend.'])
 
   # You can modify environment in terms of old environment. Environment
   # variables are substituted in for expressions of the form %(VARNAME)s.
-  with api.step.context({'env': {'PATH': api.path.pathsep.join(
-      [str(api.step.package_repo_resource()), '%(PATH)s'])}}):
+  with api.context(env={'PATH': api.path.pathsep.join(
+      [str(api.step.package_repo_resource()), '%(PATH)s'])}):
     api.step('recipes help', ['recipes.py', '--help'])
 
   # Finally, you can make your step accept any return code

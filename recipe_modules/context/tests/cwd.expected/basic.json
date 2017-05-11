@@ -1,0 +1,23 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "hello"
+    ],
+    "name": "no cwd"
+  },
+  {
+    "cmd": [
+      "echo",
+      "hello",
+      "subdir"
+    ],
+    "cwd": "[START_DIR]/subdir",
+    "name": "with cwd"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

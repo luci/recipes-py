@@ -1,0 +1,38 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "hello"
+    ],
+    "name": "no nesting"
+  },
+  {
+    "cmd": [
+      "echo",
+      "hello"
+    ],
+    "name": "nested",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "proper nesting"
+  },
+  {
+    "cmd": [
+      "echo",
+      "hello"
+    ],
+    "name": "proper nesting.real nested",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]
