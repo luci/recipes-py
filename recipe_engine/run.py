@@ -164,6 +164,7 @@ def run_steps(properties, stream_engine, step_runner, universe_view,
       s.set_step_status('EXCEPTION')
       if engine_flags and engine_flags.use_result_proto:
         return result_pb2.Result(
+            recipe_package=universe_view.universe.config_file.read(),
             failure=result_pb2.Failure(
                 human_reason=str(e),
                 exception=result_pb2.Exception(
@@ -317,49 +318,36 @@ class RecipeEngine(object):
     return self._old_run(recipe_script, api, properties)
 
   def _new_run(self, recipe_script, api, properties):
-    result = None
+    result = result_pb2.Result(
+        recipe_package=self.universe.config_file.read(),
+    )
 
     with self._step_runner.run_context():
       try:
         try:
           recipe_result = recipe_script.run(api, properties)
-          result = result_pb2.Result(json_result=json.dumps(recipe_result))
+          result.json_result = json.dumps(recipe_result)
         finally:
           self._close_through_level(0)
       except recipe_api.StepFailure as f:
-        result = result_pb2.Result(
-          failure=result_pb2.Failure(
-              human_reason=f.reason,
-              failure=result_pb2.StepFailure(
-                  step=f.name
-              )))
+        result.failure.human_reason = f.reason
+        result.failure.failure.step = f.name
 
       except types.StepDataAttributeError as ex:
-        result = result_pb2.Result(
-            failure=result_pb2.Failure(
-                human_reason=ex.message,
-                step_data=result_pb2.StepData(
-                    step=f.name
-                )))
+        result.failure.human_reason = ex.message
+        result.failure.step_data.step = f.name
 
         # Let the step runner run_context decide what to do.
         raise
 
       except subprocess42.TimeoutExpired as ex:
-        result = result_pb2.Result(
-          failure=result_pb2.Failure(
-              human_reason="Step time out: %r" % ex,
-              timeout= result_pb2.Timeout(
-                  timeout_s=ex.timeout
-              )))
+        result.failure.human_reason = "Step time out: %r" % ex
+        result.failure.timeout.timeout_s = ex.timeout
 
       except Exception as ex:
-        result = result_pb2.Result(
-          failure=result_pb2.Failure(
-              human_reason="Uncaught Exception: %r" % ex,
-              exception=result_pb2.Exception(
-                  traceback=traceback.format_exc().splitlines()
-              )))
+        result.failure.human_reason = "Uncaught Exception: %r" % ex
+        result.failure.exception.traceback[:] = (
+            traceback.format_exc().splitlines())
 
         # Let the step runner run_context decide what to do.
         raise
