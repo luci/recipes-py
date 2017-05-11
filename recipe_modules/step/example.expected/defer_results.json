@@ -16,6 +16,7 @@
   {
     "cmd": [
       "mkdir",
+      "-p",
       "something"
     ],
     "name": "mk subdir"

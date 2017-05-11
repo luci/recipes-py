@@ -45,7 +45,7 @@ def RunSteps(api, bad_return, access_invalid_data, timeout):
   api.step('hello', ['echo', 'Why hello, there.'])
 
   # You can change the current working directory as well
-  api.step('mk subdir', ['mkdir', 'something'])
+  api.step('mk subdir', ['mkdir', '-p', 'something'])
   with api.step.context({'cwd': api.path['start_dir'].join('something')}):
     api.step('something', ['bash', '-c', 'echo Why hello, there, in a subdir.'])
 
