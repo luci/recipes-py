@@ -1,0 +1,35 @@
+[
+  {
+    "cmd": [
+      "/bin/echo",
+      "foo/bar/baz"
+    ],
+    "name": "step1"
+  },
+  {
+    "cmd": [
+      "/bin/echo",
+      "foo/bar/baz"
+    ],
+    "name": "step2"
+  },
+  {
+    "cmd": [
+      "/bin/echo",
+      "foo/bar/baz//"
+    ],
+    "name": "step3"
+  },
+  {
+    "cmd": [
+      "/bin/echo",
+      "foo/bar/baz//"
+    ],
+    "name": "step4"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

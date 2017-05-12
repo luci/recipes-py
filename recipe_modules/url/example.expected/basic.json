@@ -1,0 +1,128 @@
+[
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
+      "--url",
+      "https://chromium.org",
+      "--status-json",
+      "/path/to/tmp/json",
+      "--outfile",
+      "[START_DIR]/download.bin",
+      "--headers-json",
+      "{\"Authorization\": \"thing\"}"
+    ],
+    "name": "GET https://chromium.org"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
+      "--url",
+      "http://chromium.org",
+      "--status-json",
+      "/path/to/tmp/json",
+      "--outfile",
+      "/path/to/tmp/"
+    ],
+    "name": "GET http://chromium.org"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
+      "--url",
+      "https://chromium.googlesource.com/infra/infra?format=JSON",
+      "--status-json",
+      "/path/to/tmp/json",
+      "--outfile",
+      "/path/to/tmp/json",
+      "--strip-prefix",
+      "\")]}'\\n\""
+    ],
+    "name": "GET https://chromium.googlesource.com/infra/infra?format=JSON",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output[output]@{@@@",
+      "@@@STEP_LOG_LINE@json.output[output]@  \"is_json\": true@@@",
+      "@@@STEP_LOG_LINE@json.output[output]@}@@@",
+      "@@@STEP_LOG_END@json.output[output]@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
+      "--url",
+      "http://httpstat.us/500",
+      "--status-json",
+      "/path/to/tmp/json",
+      "--outfile",
+      "/path/to/tmp/",
+      "--transient-retry",
+      "4"
+    ],
+    "name": "error"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
+      "--url",
+      "http://httpstat.us/500",
+      "--status-json",
+      "/path/to/tmp/json",
+      "--outfile",
+      "/path/to/tmp/",
+      "--transient-retry",
+      "0"
+    ],
+    "infra_step": true,
+    "name": "infra error"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
+      "--url",
+      "https://wrong.host.badssl.com/",
+      "--status-json",
+      "/path/to/tmp/json",
+      "--outfile",
+      "/path/to/tmp/"
+    ],
+    "name": "GET https://wrong.host.badssl.com/",
+    "~followup_annotations": [
+      "step returned non-zero exit code: 1",
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
+      "--url",
+      "https://expired.badssl.com/",
+      "--status-json",
+      "/path/to/tmp/json",
+      "--outfile",
+      "/path/to/tmp/"
+    ],
+    "name": "GET https://expired.badssl.com/",
+    "~followup_annotations": [
+      "step returned non-zero exit code: 1",
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]
