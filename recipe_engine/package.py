@@ -222,7 +222,6 @@ class PathRepoSpec(RepoSpec):
   """A RepoSpec implementation that uses a local filesystem path."""
 
   def __init__(self, project_id, path):
-    assert os.path.isabs(path), path
     self.project_id = project_id
     self.path = path
 
@@ -427,7 +426,7 @@ class PackageDeps(object):
       package_file: a PackageFile object corresponding to the repos recipes.cfg
       overrides: a dictionary of project overrides. Dictionary keys
                  are the `project_id` field to override, and dictionary values
-                 are the absolute override path.
+                 are the override path.
     """
     package_deps = cls(overrides={
       project_id: PathRepoSpec(project_id, path)

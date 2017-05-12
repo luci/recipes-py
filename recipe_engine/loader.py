@@ -189,7 +189,6 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
   This is used mainly for dependency loading -- a package can only see modules
   in itself and packages that it directly depends on.
   """
-
   def _dep_from_name(self, name):
     if '/' in name:
       package, module = name.split('/')
@@ -249,6 +248,7 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
       local_name: self.universe.load(pkg, name)
       for local_name, (pkg, name) in self.normalize_deps_spec(spec).iteritems()
     }
+
 
   def find_recipe(self, recipe):
     if ':' in recipe:
