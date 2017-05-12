@@ -1,0 +1,14 @@
+##
+# "vpython" VirtualEnv spec file.
+#
+# Pick a test package with no dependencies from "/bootstrap/venv.cfg" that
+# differs from teh package inlined in "test.py".
+#
+# This is used for "test.py" by "example.py", along with the "--verify-six"
+# flag.
+##
+
+wheel: <
+  name: "infra/python/wheels/six-py2_py3"
+  version: "version:1.10.0"
+>

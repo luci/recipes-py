@@ -49,6 +49,26 @@
     ]
   },
   {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE[recipe_engine::python:example].resources/test.py",
+      "--verify-enum34"
+    ],
+    "name": "run vpython.inlinespec"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-spec",
+      "RECIPE[recipe_engine::python:example].resources/test.vpython",
+      "-u",
+      "RECIPE[recipe_engine::python:example].resources/test.py",
+      "--verify-six"
+    ],
+    "name": "run vpython.spec"
+  },
+  {
     "name": "$result",
     "recipe_result": null,
     "status_code": 0

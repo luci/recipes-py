@@ -2,15 +2,44 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from recipe_engine import recipe_api
-
 import textwrap
 
+from recipe_engine import config_types
+from recipe_engine import recipe_api
+
 class PythonApi(recipe_api.RecipeApi):
-  def __call__(self, name, script, args=None, unbuffered=True, **kwargs):
-    """Return a step to run a python script with arguments."""
+  def __call__(self, name, script, args=None, unbuffered=True, venv=None,
+               **kwargs):
+    """Return a step to run a python script with arguments.
+
+    TODO: We should just use a single "args" list. Having "script"
+    separate but required/first leads to weird things like:
+        (... script='-m', args=['module'])
+
+    Args:
+      name (str): The name of the step.
+      script (str or Path): The Path of the script to run, or the first
+          command-line argument to pass to Python.
+      args (list or None): If not None, additional arguments to pass to the
+          Python command.
+      unbuffered (bool): If True, run Python in unbuffered mode.
+      venv (None or False or True or Path): If True, run the script through
+          "vpython". This will, by default, probe the target script for a
+          configured VirtualEnv and, failing that, use an empty VirtualEnv. If a
+          Path, this is a path to an explicit "vpython" VirtualEnv spec file to
+          use. If False or None (default), the script will be run through the
+          standard Python interpreter.
+      kwargs: Additional keyword arguments to forward to "step".
+    """
     env = self.m.context.env
-    cmd = ['python']
+
+    if venv:
+      cmd = ['vpython']
+      if isinstance(venv, config_types.Path):
+        cmd += ['-spec', venv]
+    else:
+      cmd = ['python']
+
     if unbuffered:
       cmd.append('-u')
     else:

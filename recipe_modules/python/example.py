@@ -5,6 +5,7 @@
 """Launches the repo bundler."""
 
 DEPS = [
+  'path',
   'python',
   'raw_io',
   'step',
@@ -29,6 +30,18 @@ def RunSteps(api):
   ], unbuffered=False)
 
   api.python.inline('inline', 'print "Hello World!"')
+
+  # Test "vpython"-based invocation.
+  #
+  # The "test.py" script has an inline VirtualEnv spec that is read by default
+  # when "vpython" is invoked.
+  #
+  # The second invocation uses an explicit spec with a different package set to
+  # verify that the explicit spec is laoded instead of the inline spec.
+  api.python('run vpython.inlinespec', api.resource('test.py'),
+             args=['--verify-enum34'], venv=True)
+  api.python('run vpython.spec', api.resource('test.py'),
+             args=['--verify-six'], venv=api.resource('test.vpython'))
 
 
 def GenTests(api):

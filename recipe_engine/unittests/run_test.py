@@ -46,10 +46,12 @@ class RunTest(unittest.TestCase):
 
   def _test_recipe(self, recipe, properties=None):
     proc = subprocess.Popen(
-        self._run_cmd(recipe, properties), stdout=subprocess.PIPE)
-    proc.communicate()
-    self.assertEqual(0, proc.returncode, '%d != %d when testing %s' % (
-        0, proc.returncode, recipe))
+        self._run_cmd(recipe, properties),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT)
+    stdout = proc.communicate()
+    self.assertEqual(0, proc.returncode, '%d != %d when testing %s:\n%s' % (
+        0, proc.returncode, recipe, stdout))
 
   def test_examples(self):
     tests = [
