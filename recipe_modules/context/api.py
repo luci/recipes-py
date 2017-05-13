@@ -68,11 +68,11 @@ class ContextApi(RecipeApi):
     Multiple invocations concatenate values with '.'.
 
     Example:
-      with api.context.name_prefix('hello'):
+      with api.context(name_prefix='hello'):
         # has name 'hello.something'
         api.step('something', ['echo', 'something'])
 
-        with api.context.name_prefix('world'):
+        with api.context(name_prefix='world'):
           # has name 'hello.world.other'
           api.step('other', ['echo', 'other'])
 
@@ -97,9 +97,9 @@ class ContextApi(RecipeApi):
 
     Example:
       # suppose the OS's envar $OTHER is set to "yes"
-      with api.context.env(ENV_VAR="something:%(OTHER)s"):
+      with api.context(env={'ENV_VAR': 'something:%(OTHER)s'}):
         # environment updates are additive.
-        with api.context.env(OTHER="cool:%(OTHER)s"):
+        with api.context(env={'OTHER': 'cool:%(OTHER)s'}):
           # echos 'something:yes'
           # Note that the substitution always happens with the system
           # environment, not any of the computed environment here.
@@ -107,7 +107,7 @@ class ContextApi(RecipeApi):
           # echos 'cool:yes'
           api.step("check $OTHER", ['bash', '-c', 'echo $OTHER'])
 
-        with api.context.env(OTHER=None):
+        with api.context(env={'OTHER': None}):
           # echos ''
           api.step("check $OTHER", ['bash', '-c', 'echo $OTHER'])
     """
