@@ -35,8 +35,13 @@ def RunSteps(api):
   assert str(v.output) == str(dest)
 
   # get_text (HTTP)
-  v = api.url.get_text(TEST_HTTP_URL)
+  v = api.url.get_text(TEST_HTTP_URL, default_test_data='will be overridden')
   assert v.method == 'GET'
+  assert 'The Chromium Projects' in v.output
+  assert v.size == len(v.output)
+  assert v.status_code == 200
+
+  v = api.url.get_text(TEST_HTTP_URL, default_test_data='The Chromium Projects')
   assert 'The Chromium Projects' in v.output
   assert v.size == len(v.output)
   assert v.status_code == 200
@@ -44,6 +49,12 @@ def RunSteps(api):
   # get_json (HTTPS)
   v = api.url.get_json(TEST_JSON_URL, log=True,
       strip_prefix=api.url.GERRIT_JSON_PREFIX)
+  assert isinstance(v.output, dict)
+  assert v.status_code == 200
+
+  v = api.url.get_json(TEST_JSON_URL,
+      strip_prefix=api.url.GERRIT_JSON_PREFIX,
+      default_test_data={'pants': 'shirt'})
   assert isinstance(v.output, dict)
   assert v.status_code == 200
 

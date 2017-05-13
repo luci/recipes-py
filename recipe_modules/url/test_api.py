@@ -45,3 +45,16 @@ class UrlTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
         len(self.m.json.dumps(obj)),
         200,
         None)
+
+  def _get_step_test_data(self, status_cls, is_json, test_data):
+    if test_data is None:
+      return None
+
+    output_class = (self.m.json.output if is_json
+                    else self.m.raw_io.output_text)
+    success_status = status_cls(
+        status_code=200, success=True, size=len(test_data),
+        error_body=None)._asdict()
+    return lambda: (
+        output_class(test_data, name='output') +
+        self.m.json.output(success_status, name='status_json'))

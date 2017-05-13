@@ -35,6 +35,20 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
       "--url",
+      "http://chromium.org",
+      "--status-json",
+      "/path/to/tmp/json",
+      "--outfile",
+      "/path/to/tmp/"
+    ],
+    "name": "GET http://chromium.org (2)"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
+      "--url",
       "https://chromium.googlesource.com/infra/infra?format=JSON",
       "--status-json",
       "/path/to/tmp/json",
@@ -50,6 +64,22 @@
       "@@@STEP_LOG_LINE@json.output[output]@}@@@",
       "@@@STEP_LOG_END@json.output[output]@@@"
     ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
+      "--url",
+      "https://chromium.googlesource.com/infra/infra?format=JSON",
+      "--status-json",
+      "/path/to/tmp/json",
+      "--outfile",
+      "/path/to/tmp/json",
+      "--strip-prefix",
+      "\")]}'\\n\""
+    ],
+    "name": "GET https://chromium.googlesource.com/infra/infra?format=JSON (2)"
   },
   {
     "cmd": [

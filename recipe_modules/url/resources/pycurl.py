@@ -67,7 +67,7 @@ def _download(url, outfile, headers, transient_retry, strip_prefix):
           raise ValueError(
               'Expected prefix was not observed: %r != %r...' % (
               loaded_prefix, strip_prefix))
-        chunk = chunk[len(loaded_prefix):]
+        chunk = chunk[len(round_prefix):]
         if not chunk:
           continue
 
@@ -113,6 +113,7 @@ def main():
       'status_code': status_code,
       'success': True,
       'size': size,
+      'error_body': None,
     }
   except requests.HTTPError as e:
     body = e.response.text

@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import collections
+import types
 import urllib
 import urlparse
 
@@ -27,6 +29,11 @@ class UrlApi(recipe_api.RecipeApi):
       self.response = response
 
 
+  # Status JSON output from "pycurl.py" resource.
+  _PyCurlStatus = collections.namedtuple('_PyCurlStatus', (
+      'status_code', 'success', 'size', 'error_body'))
+
+
   class Response(object):
     """Response is an HTTP response object."""
 
@@ -44,7 +51,7 @@ class UrlApi(recipe_api.RecipeApi):
     @property
     def status_code(self):
       """Returns (int): The HTTP status code."""
-      return self._status['status_code']
+      return self._status.status_code
 
     @property
     def output(self):
@@ -63,12 +70,12 @@ class UrlApi(recipe_api.RecipeApi):
 
       Returns (str or None): The error body, or None if not an error.
       """
-      return self._status.get('error_body')
+      return self._status.error_body
 
     @property
     def size(self):
       """Returns (int): The number of bytes in the HTTP response."""
-      return self._status.get('size')
+      return self._status.size
 
     def raise_on_error(self):
       """Raises an exception if the HTTP operation was not successful.
@@ -77,7 +84,7 @@ class UrlApi(recipe_api.RecipeApi):
         UrlApi.HTTPError on HTTP failure, if not an infra step.
         UrlApi.InfraHTTPError on HTTP failure, if an infra step.
       """
-      if not self._status['success']:
+      if not self._status.success:
         cls = UrlApi.InfraHTTPError if self._infra_step else UrlApi.HTTPError
         raise cls('HTTP status (%d)' % (self.status_code,), self)
 
@@ -144,10 +151,10 @@ class UrlApi(recipe_api.RecipeApi):
       ValueError: If the request was invalid.
     """
     return self._get_step(url, path, step_name, headers, transient_retry,
-                          strip_prefix, False, timeout)
+                          strip_prefix, False, timeout, None)
 
   def get_text(self, url, step_name=None, headers=None, transient_retry=True,
-               timeout=None):
+               timeout=None, default_test_data=None):
     """GET data at given URL and writes it to file.
 
     Args:
@@ -160,6 +167,8 @@ class UrlApi(recipe_api.RecipeApi):
           is supplied, this is the number of transient retries to perform. All
           retries have exponential backoff applied.
       timeout: Timeout (see step.__call__).
+      default_test_data (str): If provided, use this as the text output when
+          testing if no overriding data is available.
 
     Returns (UrlApi.Response): Response with the content as its output value.
 
@@ -167,11 +176,12 @@ class UrlApi(recipe_api.RecipeApi):
       HTTPError, InfraHTTPError: if the request failed.
       ValueError: If the request was invalid.
     """
+    assert isinstance(default_test_data, (types.NoneType, str))
     return self._get_step(url, None, step_name, headers, transient_retry,
-                          None, False, timeout)
+                          None, False, timeout, default_test_data)
 
   def get_json(self, url, step_name=None, headers=None, transient_retry=True,
-               strip_prefix=None, log=False, timeout=None):
+               strip_prefix=None, log=False, timeout=None, default_test_data=None):
     """GET data at given URL and writes it to file.
 
     Args:
@@ -188,6 +198,8 @@ class UrlApi(recipe_api.RecipeApi):
           content (e.g., GERRIT_JSON_PREFIX).
       log (bool): If True, emit the JSON content as a log.
       timeout: Timeout (see step.__call__).
+      default_test_data (jsonish): If provided, use this as the unmarshalled
+          JSON result when testing if no overriding data is available.
 
     Returns (UrlApi.Response): Response with the JSON as its "output" value.
 
@@ -195,11 +207,12 @@ class UrlApi(recipe_api.RecipeApi):
       HTTPError, InfraHTTPError: if the request failed.
       ValueError: If the request was invalid.
     """
+    as_json = 'log' if log else True
     return self._get_step(url, None, step_name, headers, transient_retry,
-                          strip_prefix, 'log' if log else True, timeout)
+                          strip_prefix, as_json, timeout, default_test_data)
 
   def _get_step(self, url, path, step_name, headers, transient_retry,
-                strip_prefix, as_json, timeout):
+                strip_prefix, as_json, timeout, default_test_data):
 
     step_name = step_name or 'GET %s' % url
     is_secure = self.validate_url(url)
@@ -241,16 +254,17 @@ class UrlApi(recipe_api.RecipeApi):
         self.resource('pycurl.py'),
         args=args,
         venv=True,
-        timeout=timeout)
-    status = result.json.outputs['status_json']
+        timeout=timeout,
+        step_test_data=self.test_api._get_step_test_data(
+            self._PyCurlStatus, as_json, default_test_data))
 
     output = path
     if not output:
-      if as_json:
-        output = result.json.outputs['output']
-      else:
-        output = result.raw_io.output_texts['output']
+      output_placeholder = (result.json.outputs if as_json
+                            else result.raw_io.output_texts)
+      output = output_placeholder['output']
 
+    status = self._PyCurlStatus(**result.json.outputs['status_json'])
     response = self.Response('GET', output, status, self.m.context.infra_step)
     response.raise_on_error()
     return response
