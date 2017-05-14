@@ -151,7 +151,7 @@ class UrlApi(recipe_api.RecipeApi):
       ValueError: If the request was invalid.
     """
     return self._get_step(url, path, step_name, headers, transient_retry,
-                          strip_prefix, False, timeout, None)
+                          strip_prefix, False, timeout, '')
 
   def get_text(self, url, step_name=None, headers=None, transient_retry=True,
                timeout=None, default_test_data=None):

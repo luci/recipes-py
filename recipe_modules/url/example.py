@@ -97,7 +97,6 @@ def GenTests(api):
 
   test = (
       api.test('basic') +
-      api.url.text(get(TEST_HTTPS_URL), 'ohai') +
       api.url.text(get(TEST_HTTP_URL), '<html>The Chromium Projects</html>') +
       api.url.json(get(TEST_JSON_URL), {'is_json': True}) +
 
