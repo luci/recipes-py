@@ -37,7 +37,7 @@ from recipe_engine.recipe_api import context, RecipeApi
 def check_type(name, var, expect):
   if not isinstance(var, expect):  # pragma: no cover
     raise TypeError('%s is not %s: %r (%s)' % (
-      name, type(expect).__name__, var, type(var).__name__))
+      name, expect.__name__, var, type(var).__name__))
 
 
 class ContextApi(RecipeApi):
