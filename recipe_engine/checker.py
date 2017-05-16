@@ -384,6 +384,7 @@ class Checker(object):
       hint = None
       exp = arg1
     self._call_impl(hint, exp)
+    return bool(exp)
 
 
 MISSING = object()

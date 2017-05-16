@@ -579,8 +579,10 @@ class RecipeTestApi(object):
       be written as the ___ in the sentence 'check that ___.'. Essentially,
       check has the function signatures:
 
-        `def check(<bool expression>)`
-        `def check(hint, <bool expression>)`
+        `def check(<bool expression>) #=> bool`
+        `def check(hint, <bool expression>) #=> bool`
+
+      Check returns True iff the boolean expression was True.
 
       If the hint is omitted, then the boolean expression itself becomes the
       hint when the check failure message is printed.

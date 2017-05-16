@@ -49,7 +49,8 @@ def GenTests(api):
 
   def assert_stuff(check, results):
     check('something important' in results)
-    check('another important' in results)
+    if check('another important' in results):
+      check('INSANITY' in results['another important']['cmd'])
     # drop the whole expectations, we're done here
     return {}
 
