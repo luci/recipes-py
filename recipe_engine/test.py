@@ -755,6 +755,20 @@ def run_run(test_filter, jobs=None, debug=False, train=False, json_file=None):
   print()
   print('OK' if rc == 0 else 'FAILED')
 
+  if rc != 0:
+    print()
+    print('NOTE: You may need to re-train the expectation files by running:')
+    print()
+    new_args = [('train' if s == 'run' else s) for s in sys.argv]
+    new_args[0] = os.path.relpath(new_args[0])
+    if not new_args[0].startswith('.'):
+      new_args[0] = os.path.join('.', new_args[0])
+    print('  ' + ' '.join(new_args))
+    print()
+    print('This will update all the .json files to have content which matches')
+    print('the current recipe logic. Review them for correctness and include')
+    print('them with your CL.')
+
   if json_file:
     obj = json_format.MessageToDict(
         results_proto, preserving_proto_field_name=True)
