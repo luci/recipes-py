@@ -556,14 +556,6 @@ def cover_omit():
   return omit
 
 
-def report_coverage_version():
-  """Prints info about coverage module (for debugging)."""
-  # TODO(iannucci): once we're always bootstrapping, move this to the top.
-  import coverage
-
-  print('Using coverage %s from %r' % (coverage.__version__, coverage.__file__))
-
-
 @contextlib.contextmanager
 def scoped_override(obj, attr, override):
   """Sets |obj|.|attr| to |override| in scope of the context manager."""
@@ -632,8 +624,6 @@ def run_run(test_filter, jobs=None, debug=False, train=False, json_file=None):
   import coverage
 
   start_time = datetime.datetime.now()
-
-  report_coverage_version()
 
   rc = 0
   results_proto = test_result_pb2.TestResult()
