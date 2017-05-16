@@ -112,4 +112,15 @@ def add_common_args(parser):
       if not args.package:
         parser.error('%s requires --package' % args.command)
 
+      try:
+        spec = args.package.read()
+      except Exception as ex:
+        parser.error('bad --package %r: %s' % (args.package.path, ex.message,))
+
+      extra = set(args.project_override).difference(set(spec.deps))
+      if extra:
+        parser.error(
+          "attempted to override %r, which don't appear in recipes.cfg" %
+          (extra,))
+
   return post_process_args

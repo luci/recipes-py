@@ -48,7 +48,7 @@ class TestArgs(unittest.TestCase):
     with tempfile.NamedTemporaryFile('w', delete=False) as tf:
       tf.write("""{
         "api_version": 2,
-        "project_id": "fake",
+        "project_id": "fake"
       }""")
 
     try:
