@@ -599,6 +599,9 @@ def prep_recipes_py(universe, root_package, destination):
   check(root_package, package.Package)
   check(destination, NativePath)
 
+  overrides = [pkg.name for pkg in universe.packages
+               if pkg.name != universe.package_deps.root_package.name]
+
   LOGGER.info('prepping recipes.py for %s', root_package.name)
   recipes_script = destination.join('recipes').raw_value
   with io.open(recipes_script, 'w', newline='\n') as recipes_sh:
@@ -607,9 +610,8 @@ def prep_recipes_py(universe, root_package, destination):
     pkg_path = package.InfraRepoConfig().to_recipes_cfg(
       '${BASH_SOURCE[0]%%/*}/%s' % root_package.name)
     recipes_sh.write(u' --package %s \\\n' % pkg_path)
-    for pkg in universe.packages:
-      recipes_sh.write(u' -O %s=${BASH_SOURCE[0]%%/*}/%s \\\n' %
-                       (pkg.name, pkg.name))
+    for o in overrides:
+      recipes_sh.write(u' -O %s=${BASH_SOURCE[0]%%/*}/%s \\\n' % (o, o))
     recipes_sh.write(u' "$@"\n')
   os.chmod(recipes_script, os.stat(recipes_script).st_mode | stat.S_IXUSR)
 
@@ -619,9 +621,8 @@ def prep_recipes_py(universe, root_package, destination):
     pkg_path = package.InfraRepoConfig().to_recipes_cfg(
       '"%%~dp0\\%s"' % root_package.name)
     recipes_bat.write(u' --package %s ^\n' % pkg_path)
-    for pkg in universe.packages:
-      recipes_bat.write(u' -O %s=%%~dp0/%s ^\n' % (
-        pkg.name, pkg.name))
+    for o in overrides:
+      recipes_bat.write(u' -O %s=%%~dp0/%s ^\n' % (o, o))
     recipes_bat.write(u' %*\n')
 
 
