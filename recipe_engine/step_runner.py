@@ -179,6 +179,7 @@ class SubprocessStepRunner(StepRunner):
       step_config = None  # Make sure we use rendered step config.
     except:
       with self.stream_engine.make_step_stream('Placeholder Exception') as s:
+        s.set_step_status('EXCEPTION')
         with s.new_log_stream('exception') as l:
           l.write_split(traceback.format_exc())
       raise
@@ -424,6 +425,7 @@ class SimulationStepRunner(StepRunner):
       step_config = None  # Make sure we use rendered step config.
     except:
       with self.stream_engine.make_step_stream('Placeholder Exception') as s:
+        s.set_step_status('EXCEPTION')
         with s.new_log_stream('exception') as l:
           l.write_split(traceback.format_exc())
       raise

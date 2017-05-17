@@ -539,12 +539,14 @@ def handle_recipe_return(recipe_result, result_filename, stream_engine,
 
   if 'traceback' in recipe_result.result:
     with stream_engine.make_step_stream('Uncaught Exception') as s:
+      s.set_step_status('EXCEPTION')
       with s.new_log_stream('exception') as l:
         for line in recipe_result.result['traceback']:
           l.write_line(line)
 
   if 'reason' in recipe_result.result:
     with stream_engine.make_step_stream('Failure reason') as s:
+      s.set_step_status('FAILURE')
       with s.new_log_stream('reason') as l:
         for line in recipe_result.result['reason'].splitlines():
           l.write_line(line)
@@ -570,6 +572,7 @@ def new_handle_recipe_return(result, result_filename, stream_engine):
     f = result.failure
     if f.HasField('exception'):
       with stream_engine.make_step_stream('Uncaught Exception') as s:
+        s.set_step_status('EXCEPTION')
         s.add_step_text(f.human_reason)
         with s.new_log_stream('exception') as l:
           for line in f.exception.traceback:
@@ -577,14 +580,17 @@ def new_handle_recipe_return(result, result_filename, stream_engine):
     # TODO(martiniss): Remove this code once calling code handles these states
     elif f.HasField('timeout'):
       with stream_engine.make_step_stream('Step Timed Out') as s:
+        s.set_step_status('FAILURE')
         with s.new_log_stream('timeout_s') as l:
           l.write_line(f.timeout.timeout_s)
     elif f.HasField('step_data'):
       with stream_engine.make_step_stream('Invalid Step Data Access') as s:
+        s.set_step_status('FAILURE')
         with s.new_log_stream('step') as l:
           l.write_line(f.step_data.step)
 
     with stream_engine.make_step_stream('Failure reason') as s:
+      s.set_step_status('FAILURE')
       with s.new_log_stream('reason') as l:
         l.write_split(f.human_reason)
 
