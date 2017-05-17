@@ -172,10 +172,16 @@ class SubprocessStepRunner(StepRunner):
 
       return EmptyOpenStep()
 
-    rendered_step = render_step(
-        step_config, recipe_test_api.DisabledTestData()
-    )
-    step_config = None # Make sure we use rendered step config.
+    try:
+      rendered_step = render_step(
+          step_config, recipe_test_api.DisabledTestData()
+      )
+      step_config = None  # Make sure we use rendered step config.
+    except:
+      with self.stream_engine.make_step_stream('Placeholder Exception') as s:
+        with s.new_log_stream('exception') as l:
+          l.write_split(traceback.format_exc())
+      raise
 
     step_env = _merge_envs(os.environ, (rendered_step.config.env or {}))
     # Now that the step's environment is all sorted, evaluate PATH on windows
@@ -410,11 +416,17 @@ class SimulationStepRunner(StepRunner):
     return self._stream_engine
 
   def open_step(self, step_config):
-    test_data_fn = step_config.step_test_data or recipe_test_api.StepTestData
-    step_test = self._test_data.pop_step_test_data(step_config.name,
-                                                   test_data_fn)
-    rendered_step = render_step(step_config, step_test)
-    step_config = None # Make sure we use rendered step config.
+    try:
+      test_data_fn = step_config.step_test_data or recipe_test_api.StepTestData
+      step_test = self._test_data.pop_step_test_data(step_config.name,
+                                                     test_data_fn)
+      rendered_step = render_step(step_config, step_test)
+      step_config = None  # Make sure we use rendered step config.
+    except:
+      with self.stream_engine.make_step_stream('Placeholder Exception') as s:
+        with s.new_log_stream('exception') as l:
+          l.write_split(traceback.format_exc())
+      raise
 
     # Layer the simulation step on top of the given stream engine.
     step_stream = self._stream_engine.new_step_stream(rendered_step.config)
