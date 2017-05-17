@@ -291,7 +291,7 @@ class SubprocessStepRunner(StepRunner):
         except OSError as ex:
           cwd = '??? (ENGINE START_DIR IS MISSING: %r)' % (ex,)
       elif not os.path.isdir(cwd):
-          cwd += ' (ENGINE START_DIR IS MISSING OR NOT A DIR)'
+          cwd += ' (MISSING OR NOT A DIR)'
       yield 'in dir %s:' % (cwd,)
       for key, value in sorted(step.config._asdict().items()):
         if value is not None:
