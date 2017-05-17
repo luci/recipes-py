@@ -1,9 +1,9 @@
 [
   {
     "cmd": [
-      "echo",
-      "some",
-      "step"
+      "bash",
+      "-c",
+      "echo some step"
     ],
     "name": "innocent step"
   },

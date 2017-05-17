@@ -1,0 +1,39 @@
+[
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo some step"
+    ],
+    "name": "innocent step"
+  },
+  {
+    "cmd": [
+      "rm",
+      "-rf",
+      "[START_DIR]"
+    ],
+    "name": "nuke it"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo fail"
+    ],
+    "name": "bash needs cwd"
+  },
+  {
+    "cmd": [
+      "python",
+      "-c",
+      "print \"hi\""
+    ],
+    "name": "python does not"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

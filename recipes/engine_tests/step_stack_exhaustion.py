@@ -2,7 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-"""Tests that step_data can accept multiple specs at once."""
+"""Tests that placeholders can't wreck the world by exhausting the step stack."""
 
 from recipe_engine.util import InputPlaceholder
 from recipe_engine.recipe_api import StepFailure
@@ -18,7 +18,7 @@ class BadPlaceholder(InputPlaceholder):
 
 def RunSteps(api):
   try:
-    api.step('innocent step', ['echo', 'some', 'step'])
+    api.step('innocent step', ['bash', '-c', "echo some step"])
 
     ph = BadPlaceholder('name')
     ph.namespaces = ('fake', 'namespace')
