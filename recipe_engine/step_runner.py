@@ -177,18 +177,18 @@ class SubprocessStepRunner(StepRunner):
           step_config, recipe_test_api.DisabledTestData()
       )
       step_config = None  # Make sure we use rendered step config.
+
+      step_env = _merge_envs(os.environ, (rendered_step.config.env or {}))
+      # Now that the step's environment is all sorted, evaluate PATH on windows
+      # to find the actual intended executable.
+      rendered_step = _hunt_path(rendered_step, step_env)
+      self._print_step(step_stream, rendered_step, step_env)
     except:
-      with self.stream_engine.make_step_stream('Placeholder Exception') as s:
+      with self.stream_engine.make_step_stream('Step Preparation Exception') as s:
         s.set_step_status('EXCEPTION')
         with s.new_log_stream('exception') as l:
           l.write_split(traceback.format_exc())
       raise
-
-    step_env = _merge_envs(os.environ, (rendered_step.config.env or {}))
-    # Now that the step's environment is all sorted, evaluate PATH on windows
-    # to find the actual intended executable.
-    rendered_step = _hunt_path(rendered_step, step_env)
-    self._print_step(step_stream, rendered_step, step_env)
 
     class ReturnOpenStep(OpenStep):
       def run(inner):
@@ -431,15 +431,15 @@ class SimulationStepRunner(StepRunner):
                                                      test_data_fn)
       rendered_step = render_step(step_config, step_test)
       step_config = None  # Make sure we use rendered step config.
+
+      # Layer the simulation step on top of the given stream engine.
+      step_stream = self._stream_engine.new_step_stream(rendered_step.config)
     except:
-      with self.stream_engine.make_step_stream('Placeholder Exception') as s:
+      with self.stream_engine.make_step_stream('Step Preparation Exception') as s:
         s.set_step_status('EXCEPTION')
         with s.new_log_stream('exception') as l:
           l.write_split(traceback.format_exc())
       raise
-
-    # Layer the simulation step on top of the given stream engine.
-    step_stream = self._stream_engine.new_step_stream(rendered_step.config)
 
     class ReturnOpenStep(OpenStep):
       def run(inner):
