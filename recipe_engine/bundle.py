@@ -588,10 +588,10 @@ def export_package(pkg, destination, with_recipes):
 
 
 TEMPLATE_SH = u"""#!/usr/bin/env bash
-python ${BASH_SOURCE[0]%/*}/recipe_engine/recipes.py \
+python -u ${BASH_SOURCE[0]%/*}/recipe_engine/recipes.py \
 """
 
-TEMPLATE_BAT = u"""python "%~dp0\\recipe_engine\\recipes.py" ^
+TEMPLATE_BAT = u"""python -u "%~dp0\\recipe_engine\\recipes.py" ^
 """
 
 def prep_recipes_py(universe, root_package, destination):
