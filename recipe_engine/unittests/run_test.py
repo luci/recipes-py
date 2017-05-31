@@ -55,12 +55,12 @@ class RunTest(unittest.TestCase):
 
   def test_examples(self):
     tests = [
-      ['step:example'],
-      ['path:example'],
-      ['raw_io:example'],
-      ['python:example'],
-      ['json:example'],
-      ['uuid:example'],
+      ['step:examples/full'],
+      ['path:examples/full'],
+      ['raw_io:examples/full'],
+      ['python:examples/full'],
+      ['json:examples/full'],
+      ['uuid:examples/full'],
 
       ['engine_tests/depend_on/top', {'to_pass': 42}],
       ['engine_tests/functools_partial'],

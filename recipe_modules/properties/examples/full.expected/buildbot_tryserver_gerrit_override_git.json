@@ -1,0 +1,173 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "None",
+      "'thing'"
+    ],
+    "name": "echo"
+  },
+  {
+    "cmd": [
+      "echo",
+      "('blamelist', ['cool_dev1337@chromium.org', 'hax@chromium.org'])",
+      "('bot_id', 'test_bot')",
+      "('buildbotURL', 'http://c.org/p/cr/')",
+      "('buildername', 'TestBuilder')",
+      "('buildnumber', 571)",
+      "('foo.bar-bam', 'thing')",
+      "('mastername', 'chromium.testing.master')",
+      "('patch_branch', 'master')",
+      "('patch_gerrit_url', 'https://chrome-internal-review.googlesource.com')",
+      "('patch_issue', 456789)",
+      "('patch_project', 'infra/hidden')",
+      "('patch_ref', 'refs/changes/89/456789/12')",
+      "('patch_repository_url', 'https://chrome-internal.googlesource.com/infra/hidden')",
+      "('patch_set', 12)",
+      "('patch_storage', 'gerrit')",
+      "('recipe', 'properties:examples/full')",
+      "('slavename', 'TestSlavename')",
+      "('test_prop', None)",
+      "('workdir', '/path/to/workdir/TestSlavename')"
+    ],
+    "name": "echo all"
+  },
+  {
+    "cmd": [
+      "echo",
+      "12"
+    ],
+    "name": "echo patch_set"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'/path/to/workdir/TestSlavename'"
+    ],
+    "name": "echo workdir"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'https://chrome-internal-review.googlesource.com'"
+    ],
+    "name": "echo patch_gerrit_url"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'master'"
+    ],
+    "name": "echo patch_branch"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'TestBuilder'"
+    ],
+    "name": "echo buildername"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'refs/changes/89/456789/12'"
+    ],
+    "name": "echo patch_ref"
+  },
+  {
+    "cmd": [
+      "echo",
+      "None"
+    ],
+    "name": "echo test_prop"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'https://chrome-internal.googlesource.com/infra/hidden'"
+    ],
+    "name": "echo patch_repository_url"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'properties:examples/full'"
+    ],
+    "name": "echo recipe"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'chromium.testing.master'"
+    ],
+    "name": "echo mastername"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'gerrit'"
+    ],
+    "name": "echo patch_storage"
+  },
+  {
+    "cmd": [
+      "echo",
+      "571"
+    ],
+    "name": "echo buildnumber"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'TestSlavename'"
+    ],
+    "name": "echo slavename"
+  },
+  {
+    "cmd": [
+      "echo",
+      "('cool_dev1337@chromium.org', 'hax@chromium.org')"
+    ],
+    "name": "echo blamelist"
+  },
+  {
+    "cmd": [
+      "echo",
+      "456789"
+    ],
+    "name": "echo patch_issue"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'http://c.org/p/cr/'"
+    ],
+    "name": "echo buildbotURL"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'infra/hidden'"
+    ],
+    "name": "echo patch_project"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'thing'"
+    ],
+    "name": "echo foo.bar-bam"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'test_bot'"
+    ],
+    "name": "echo bot_id"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

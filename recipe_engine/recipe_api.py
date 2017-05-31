@@ -1043,4 +1043,3 @@ class Property(object):
 
 class UndefinedPropertyException(TypeError):
   pass
-

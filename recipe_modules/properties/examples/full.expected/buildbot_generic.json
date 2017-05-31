@@ -1,0 +1,109 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "None",
+      "'thing'"
+    ],
+    "name": "echo"
+  },
+  {
+    "cmd": [
+      "echo",
+      "('blamelist', ['cool_dev1337@chromium.org', 'hax@chromium.org'])",
+      "('bot_id', 'test_bot')",
+      "('buildbotURL', 'http://c.org/p/cr/')",
+      "('buildername', 'TestBuilder')",
+      "('buildnumber', 571)",
+      "('foo.bar-bam', 'thing')",
+      "('mastername', 'chromium.testing.master')",
+      "('recipe', 'properties:examples/full')",
+      "('slavename', 'TestSlavename')",
+      "('test_prop', None)",
+      "('workdir', '/path/to/workdir/TestSlavename')"
+    ],
+    "name": "echo all"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'/path/to/workdir/TestSlavename'"
+    ],
+    "name": "echo workdir"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'TestBuilder'"
+    ],
+    "name": "echo buildername"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'properties:examples/full'"
+    ],
+    "name": "echo recipe"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'thing'"
+    ],
+    "name": "echo foo.bar-bam"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'chromium.testing.master'"
+    ],
+    "name": "echo mastername"
+  },
+  {
+    "cmd": [
+      "echo",
+      "571"
+    ],
+    "name": "echo buildnumber"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'TestSlavename'"
+    ],
+    "name": "echo slavename"
+  },
+  {
+    "cmd": [
+      "echo",
+      "('cool_dev1337@chromium.org', 'hax@chromium.org')"
+    ],
+    "name": "echo blamelist"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'http://c.org/p/cr/'"
+    ],
+    "name": "echo buildbotURL"
+  },
+  {
+    "cmd": [
+      "echo",
+      "None"
+    ],
+    "name": "echo test_prop"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'test_bot'"
+    ],
+    "name": "echo bot_id"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

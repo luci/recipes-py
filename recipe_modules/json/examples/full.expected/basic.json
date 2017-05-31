@@ -1,0 +1,150 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "[1, 2, 3]"
+    ],
+    "name": "echo1",
+    "stdout": "/path/to/tmp/json",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@[@@@",
+      "@@@STEP_LOG_LINE@json.output@  1, @@@",
+      "@@@STEP_LOG_LINE@json.output@  2, @@@",
+      "@@@STEP_LOG_LINE@json.output@  3@@@",
+      "@@@STEP_LOG_LINE@json.output@]@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "{\"cool\": [1, 2, 3], \"hello\": \"world\"}"
+    ],
+    "name": "echo_dumps_property"
+  },
+  {
+    "cmd": [
+      "echo",
+      "[2, 3, 4]"
+    ],
+    "name": "echo2",
+    "stdout": "/path/to/tmp/json",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@[@@@",
+      "@@@STEP_LOG_LINE@json.output@  2, @@@",
+      "@@@STEP_LOG_LINE@json.output@  3, @@@",
+      "@@@STEP_LOG_LINE@json.output@  4@@@",
+      "@@@STEP_LOG_LINE@json.output@]@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "\nimport json\nimport sys\nwith open(sys.argv[1], 'w') as f:\n  f.write(json.dumps([1, 2, 3]))\nwith open(sys.argv[2], 'w') as f:\n  f.write(json.dumps(['x', 'y', '\\xef\\xbb\\xbf\\xef\\xbd\\x9a']))\n",
+      "/path/to/tmp/json",
+      "/path/to/tmp/json"
+    ],
+    "name": "foo",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output[1]@[@@@",
+      "@@@STEP_LOG_LINE@json.output[1]@  1, @@@",
+      "@@@STEP_LOG_LINE@json.output[1]@  2, @@@",
+      "@@@STEP_LOG_LINE@json.output[1]@  3@@@",
+      "@@@STEP_LOG_LINE@json.output[1]@]@@@",
+      "@@@STEP_LOG_END@json.output[1]@@@",
+      "@@@STEP_LOG_LINE@json.output[2]@[@@@",
+      "@@@STEP_LOG_LINE@json.output[2]@  \"x\", @@@",
+      "@@@STEP_LOG_LINE@json.output[2]@  \"y\", @@@",
+      "@@@STEP_LOG_LINE@json.output[2]@  \"\\ufeff\\uff5a\"@@@",
+      "@@@STEP_LOG_LINE@json.output[2]@]@@@",
+      "@@@STEP_LOG_END@json.output[2]@@@",
+      "@@@STEP_LOG_LINE@python.inline@@@@",
+      "@@@STEP_LOG_LINE@python.inline@import json@@@",
+      "@@@STEP_LOG_LINE@python.inline@import sys@@@",
+      "@@@STEP_LOG_LINE@python.inline@with open(sys.argv[1], 'w') as f:@@@",
+      "@@@STEP_LOG_LINE@python.inline@  f.write(json.dumps([1, 2, 3]))@@@",
+      "@@@STEP_LOG_LINE@python.inline@with open(sys.argv[2], 'w') as f:@@@",
+      "@@@STEP_LOG_LINE@python.inline@  f.write(json.dumps(['x', 'y', '\\xef\\xbb\\xbf\\xef\\xbd\\x9a']))@@@",
+      "@@@STEP_LOG_END@python.inline@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cat",
+      "{\"x\": 1, \"y\": 2}"
+    ],
+    "name": "json through",
+    "stdout": "/path/to/tmp/json",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"x\": 1, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"y\": 2@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cat",
+      "{\"x\": 1, \"y\": 2}"
+    ],
+    "name": "write json to file",
+    "stdout": "[TMP_BASE]/temp.json"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "\nimport shutil\nimport sys\nshutil.copy(sys.argv[1], sys.argv[2])\n",
+      "[TMP_BASE]/temp.json",
+      "/path/to/tmp/json"
+    ],
+    "name": "read json from file we just wrote",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"x\": 1, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"y\": 2@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "RECIPE[recipe_engine::json:examples/full].resources/cool_script.py",
+      "{\"x\":1,\"y\":2}",
+      "[TMP_BASE]/leak.json"
+    ],
+    "name": "leaking json",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"x\": 1, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"y\": 2@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "RECIPE[recipe_engine::json:examples/full].resources/cool_script.py",
+      "{\"here is some total\ngarbage",
+      "/path/to/tmp/json"
+    ],
+    "name": "invalid json",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output (invalid)@{\"here is some total@@@",
+      "@@@STEP_LOG_LINE@json.output (invalid)@garbage@@@",
+      "@@@STEP_LOG_END@json.output (invalid)@@@",
+      "@@@STEP_LOG_LINE@json.output (exception)@Invalid control character at: line 1 column 21 (char 20)@@@",
+      "@@@STEP_LOG_END@json.output (exception)@@@"
+    ]
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

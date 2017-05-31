@@ -5,6 +5,7 @@
 import functools
 import itertools
 import os
+import re
 import tempfile
 
 from recipe_engine import recipe_api
@@ -72,13 +73,16 @@ class fake_path(object):
     self._mock_path_exists = path_set(self, _mock_path_exists)
     self._pth = None
 
-  def __getattr__(self, name):
+  def _init_pth(self):
     if not self._pth:
       if self._api.m.platform.is_win:
         import ntpath as pth
       elif self._api.m.platform.is_mac or self._api.m.platform.is_linux:
         import posixpath as pth
       self._pth = pth
+
+  def __getattr__(self, name):
+    self._init_pth()
     return getattr(self._pth, name)
 
   def mock_add_paths(self, path):
@@ -90,6 +94,31 @@ class fake_path(object):
   def exists(self, path):  # pylint: disable=E0202
     """Return True if path refers to an existing path."""
     return self._mock_path_exists.contains(path)
+
+  # This matches:
+  #   [START_DIR]
+  #   RECIPE[some_pkg::some_module:recipe_name]
+  #
+  # and friends at the beginning of a string.
+  ROOT_MATCHER = re.compile('^[A-Z_]*\[[^]]*\]')
+
+  def normpath(self, path):
+    """Normalizese the path.
+
+    This splits off a recipe base (i.e. RECIPE[...]) so that normpath is
+    only called on the user-supplied portion of the path.
+    """
+    self._init_pth()
+    real_normpath = self._pth.normpath
+    m = self.ROOT_MATCHER.match(path)
+    if m:
+      prefix = m.group(0)
+      rest = path[len(prefix):]
+      if rest == '':
+        # normpath turns '' into '.'
+        return prefix
+      return prefix + real_normpath(rest)
+    return real_normpath(path)
 
   def abspath(self, path):
     """Returns the absolute version of path."""
@@ -256,8 +285,9 @@ class PathApi(recipe_api.RecipeApi):
     Raises an ValueError if the preconditions are not met, otherwise returns the
     Path object.
     """
-    if self.abspath(abs_string_path) != abs_string_path:
-      raise ValueError("path is not absolute: %r" % abs_string_path)
+    ap = self.abspath(abs_string_path)
+    if ap != abs_string_path:
+      raise ValueError("path is not absolute: %r v %r" % (abs_string_path, ap))
 
     # try module/recipe/package resource paths first
     sPath, path = self._paths_client.find_longest_prefix(

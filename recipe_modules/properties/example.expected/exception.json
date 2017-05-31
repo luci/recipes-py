@@ -1,7 +1,0 @@
-[
-  {
-    "name": "$result",
-    "reason": "Uncaught Exception: ValueError(\"No default specified and no value provided for 'test_prop' from recipe 'recipe_engine::properties:example'\",)",
-    "status_code": -1
-  }
-]

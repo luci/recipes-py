@@ -251,16 +251,35 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
 
 
   def find_recipe(self, recipe):
+    """Finds the given recipe.
+
+    Args:
+      recipe (str) - the name of the recipe as you would specify to
+      `recipes.py run`. This may have the form:
+        recipe, path/to/recipe - a recipe under the `recipes folder`
+        module:tests/recipe - a test recipe under a recipe_module.
+        module:examples/recipe - an example recipe under a recipe_module.
+        module:example - a legacy example example recipe under a recipe_module
+
+    Return (str) - The absolute path to the recipe .py file.
+
+    Raises NoSuchRecipe if this cannot find the recipe.
+    """
+    # If the recipe is specified as "module:recipe", then it is an recipe
+    # contained in a recipe_module as an example, or a test. Look for it in the
+    # modules imported by load_recipe_modules instead of the normal search
+    # paths.
+    #
+    # TODO(martiniss) change "infra/example" to ["infra", "example"],
+    # and handle appropriately, because of windows.
     if ':' in recipe:
       module_name, recipe_name = recipe.split(':')
       module_dir = os.path.join(self.package.module_dir, module_name)
       if _is_recipe_module_dir(module_dir):
-        if recipe_name.endswith('example'):
-          # TODO(martinis) change to example == 'example' ? Technically a bug...
-          recipe_path = os.path.join(module_dir, 'example.py')
-        elif recipe_name.startswith('tests/'):
-          recipe_path = os.path.join(
-              module_dir, 'tests', recipe_name[len('tests/'):] + '.py')
+        # TODO(iannucci): remove legacy example.
+        if (recipe_name == 'example' or
+            recipe_name.startswith(('tests/', 'examples/'))):
+          recipe_path = os.path.join(module_dir, recipe_name + '.py')
         else:
           raise NoSuchRecipe(recipe)
     else:
@@ -285,11 +304,6 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
     Raises:
       NoSuchRecipe: recipe is not found.
     """
-    # If the recipe is specified as "module:recipe", then it is an recipe
-    # contained in a recipe_module as an example. Look for it in the modules
-    # imported by load_recipe_modules instead of the normal search paths.
-    # TODO(martiniss) change "infra/example" to ["infra", "example"], and handle
-    # appropriately, because of windows.
     recipe_path = self.find_recipe(recipe)
     try:
       script = RecipeScript.from_script_path(recipe, recipe_path, self)
@@ -337,15 +351,17 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
     for module_name in self.loop_over_recipe_modules():
       module_dir = os.path.join(self.package.module_dir, module_name)
 
+      # TODO(iannucci): remove unscoped example.py
       example_path = os.path.join(module_dir, 'example.py')
       if os.path.exists(example_path):
         yield example_path, '%s:example' % module_name
 
-      test_dir = os.path.join(module_dir, 'tests')
-      if os.path.exists(test_dir):
-        for recipe in scan_directory(test_dir, lambda f: f.endswith('.py')):
-          yield recipe, '%s:tests/%s' % (
-              module_name, recipe[len(test_dir)+1:-len('.py')])
+      for subdir_name in ('tests', 'examples'):
+        subdir = os.path.join(module_dir, subdir_name)
+        if os.path.exists(subdir):
+          for recipe in scan_directory(subdir, lambda f: f.endswith('.py')):
+            yield recipe, '%s:%s/%s' % (
+                module_name, subdir_name, recipe[len(subdir)+1:-len('.py')])
 
   def loop_over_recipe_modules(self):
     """Yields the paths to all the modules that this view can see."""

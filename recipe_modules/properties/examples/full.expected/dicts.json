@@ -1,0 +1,45 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "{'key': {'other_key': {'key': 'value'}, 'key': 'value'}}",
+      "'thing'"
+    ],
+    "name": "echo"
+  },
+  {
+    "cmd": [
+      "echo",
+      "('foo.bar-bam', 'thing')",
+      "('recipe', 'properties:examples/full')",
+      "('test_prop', {'key': {'other_key': {'key': 'value'}, 'key': 'value'}})"
+    ],
+    "name": "echo all"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'properties:examples/full'"
+    ],
+    "name": "echo recipe"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'thing'"
+    ],
+    "name": "echo foo.bar-bam"
+  },
+  {
+    "cmd": [
+      "echo",
+      "FrozenDict([('key', FrozenDict([('other_key', FrozenDict([('key', 'value')])), ('key', 'value')]))])"
+    ],
+    "name": "echo test_prop"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

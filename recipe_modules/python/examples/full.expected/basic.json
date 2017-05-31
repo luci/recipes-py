@@ -1,0 +1,76 @@
+[
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "import sys; sys.exit(0)"
+    ],
+    "name": "success",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@success@This step is a success@@@",
+      "@@@STEP_LOG_END@success@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "import sys; sys.exit(1)"
+    ],
+    "name": "failure",
+    "~followup_annotations": [
+      "step returned non-zero exit code: 1",
+      "@@@STEP_TEXT@This step is a failure :(@@@",
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-m",
+      "json.tool",
+      "{\"something\":[true,true]}"
+    ],
+    "env": {
+      "PYTHONUNBUFFERED": null
+    },
+    "name": "run json.tool"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "print \"Hello World!\""
+    ],
+    "name": "inline",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@python.inline@print \"Hello World!\"@@@",
+      "@@@STEP_LOG_END@python.inline@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE[recipe_engine::python:examples/full].resources/test.py",
+      "--verify-enum34"
+    ],
+    "name": "run vpython.inlinespec"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-spec",
+      "RECIPE[recipe_engine::python:examples/full].resources/test.vpython",
+      "-u",
+      "RECIPE[recipe_engine::python:examples/full].resources/test.py",
+      "--verify-six"
+    ],
+    "name": "run vpython.spec"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]
