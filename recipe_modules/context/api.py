@@ -25,6 +25,7 @@ Example:
 """
 
 
+import collections
 import copy
 
 from contextlib import contextmanager
@@ -137,8 +138,27 @@ class ContextApi(RecipeApi):
       check_type('env', env, dict)
       # strify everything except None in the env to allow for ints, Paths, etc.
       # None has special meaning (i.e. "delete this env key")
-      kwargs['env'] = {str(k): (str(v) if v is not None else None)
-                       for k, v in env.iteritems()}
+      new_env = {}
+      for k, v in env.iteritems():
+        k = str(k)
+        if v is not None:
+          v = str(v)
+          try:
+            # This odd little piece of code does the following:
+            #   * add a bogus dictionary format %(foo)s to v. This forces % into
+            #     'dictionary lookup' mode
+            #   * format the result with a defaultdict. This allows all
+            #     `%(key)s` format lookups to succeed, but any sequential `%s`
+            #     lookups to fail.
+            # If the string contains any accidental sequential lookups, this
+            # will raise an exception. If not, then this is a pluasible format
+            # string.
+            ('%(foo)s'+v) % collections.defaultdict(str)
+          except Exception:
+            raise ValueError(('Invalid %%-formatting parameter in envvar, '
+                              'only %%(ENVVAR)s allowed: %r') % (v,))
+        new_env[k] = v
+      kwargs['env'] = new_env
 
     if not kwargs:
       yield

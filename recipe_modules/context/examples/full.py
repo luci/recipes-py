@@ -27,8 +27,21 @@ def RunSteps(api):
     api.step('other subdir step', ['bash', '-c', 'echo hi again!'])
 
   # can set envvars
-  with api.context(env={"HELLO": "WORLD", "HOME": None}):
+  with api.context(env={'HELLO': 'WORLD', 'HOME': None}):
     api.step('env step', ['bash', '-c', 'echo $HELLO; echo $HOME'])
+
+  # %-formats are errors (for now). Double-% escape them.
+  bad_examples = ['%format', '%s']
+  for example in bad_examples:
+    try:
+      with api.context(env={'BAD': example}):
+        assert False  # pragma: no cover
+    except ValueError:
+      pass
+
+  # this is fine though:
+  with api.context(env={'FINE': '%%format'}):
+    pass
 
   # can increment nest level... note that this is a low level api, prefer
   # api.step.nest instead:

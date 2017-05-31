@@ -6,7 +6,7 @@
     ],
     "env": {
       "FOO": "bar",
-      "PATH": "foo:bar:%(PATH)s"
+      "PATH": "foo:bar:<PATH>"
     },
     "name": "test step (no env)"
   },
@@ -26,7 +26,7 @@
       "hi"
     ],
     "env": {
-      "PATH": "foo:bar:something:%(PATH)s"
+      "PATH": "foo:bar:something:<PATH>"
     },
     "name": "test step (env, $PATH)"
   },

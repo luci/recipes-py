@@ -406,6 +406,38 @@ class SubprocessStepRunner(StepRunner):
     return change
 
 
+class fakeEnviron(object):
+  """This is a fake dictionary which is meant to emulate os.environ strictly for
+  the purposes of interacting with _merge_envs.
+
+  It supports:
+    * Any key access is answered with <key>, allowing this to be used as
+      a % format argument.
+    * Deleting/setting items sets them to None/value, appropriately.
+    * `in` checks always returns True
+    * copy() returns self
+
+  The 'formatted' result can be obtained by looking at .data.
+  """
+  def __init__(self):
+    self.data = {}
+
+  def __getitem__(self, key):
+    return '<%s>' % key
+
+  def __delitem__(self, key):
+    self.data[key] = None
+
+  def __contains__(self, key):
+    return True
+
+  def __setitem__(self, key, value):
+    self.data[key] = value
+
+  def copy(self):
+    return self
+
+
 class SimulationStepRunner(StepRunner):
   """Pretends to run steps, instead recording what would have been run.
 
@@ -430,6 +462,9 @@ class SimulationStepRunner(StepRunner):
       step_test = self._test_data.pop_step_test_data(step_config.name,
                                                      test_data_fn)
       rendered_step = render_step(step_config, step_test)
+      step_env = _merge_envs(fakeEnviron(), (rendered_step.config.env or {}))
+      rendered_step = rendered_step._replace(
+        config=rendered_step.config._replace(env=step_env.data))
       step_config = None  # Make sure we use rendered step config.
 
       # Layer the simulation step on top of the given stream engine.

@@ -25,7 +25,7 @@
       "hi"
     ],
     "env": {
-      "PATH": "something:%(PATH)s"
+      "PATH": "something:<PATH>"
     },
     "name": "test step (env, $PATH)"
   },

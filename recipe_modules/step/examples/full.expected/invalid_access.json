@@ -55,7 +55,7 @@
       "--help"
     ],
     "env": {
-      "PATH": "RECIPE_PACKAGE_REPO[recipe_engine]:%(PATH)s"
+      "PATH": "RECIPE_PACKAGE_REPO[recipe_engine]:<PATH>"
     },
     "name": "recipes help"
   },
