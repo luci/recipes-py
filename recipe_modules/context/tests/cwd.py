@@ -14,5 +14,8 @@ def RunSteps(api):
   with api.context(cwd=api.path['start_dir'].join('subdir')):
     api.step('with cwd', ['echo', 'hello', 'subdir'])
 
+  with api.context(cwd=None):
+    api.step('with cwd=None', ['echo', 'hello', 'subdir'])
+
 def GenTests(api):
   yield api.test('basic')

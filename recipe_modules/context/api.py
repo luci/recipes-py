@@ -26,13 +26,12 @@ Example:
 
 
 import collections
-import copy
 
 from contextlib import contextmanager
 
 from recipe_engine import recipe_api
 from recipe_engine.config_types import Path
-from recipe_engine.recipe_api import context, RecipeApi
+from recipe_engine.recipe_api import RecipeApi
 
 
 def check_type(name, var, expect):
@@ -43,6 +42,15 @@ def check_type(name, var, expect):
 
 class ContextApi(RecipeApi):
   # TODO(iannucci): move implementation of these data directly into this class.
+  def __init__(self, **kwargs):
+    super(RecipeApi, self).__init__(**kwargs)
+
+    self._cwd = [None]
+    self._env = [{}]
+    self._infra_step = [False]
+    self._name_prefix = ['']
+    # this could be a number, but it makes the logic easier to use a stack.
+    self._nest_level = [0]
 
   @contextmanager
   def __call__(self, cwd=None, env=None, increment_nest_level=None,
@@ -112,33 +120,38 @@ class ContextApi(RecipeApi):
           # echos ''
           api.step("check $OTHER", ['bash', '-c', 'echo $OTHER'])
     """
-    kwargs = {}
+    to_pop = []
 
     if cwd is not None:
       check_type('cwd', cwd, Path)
-      kwargs['cwd'] = cwd
+      self._cwd.append(cwd)
+      to_pop.append(self._cwd)
 
     if infra_steps is not None:
       check_type('infra_steps', infra_steps, bool)
-      # Note it's infra_step here for now until this class is reimplemented to
-      # not rely on _STEP_CONTEXT.
-      kwargs['infra_step'] = infra_steps
+      self._infra_step.append(infra_steps)
+      to_pop.append(self._infra_step)
 
     if increment_nest_level is not None:
       check_type('increment_nest_level', increment_nest_level, bool)
       if not increment_nest_level:
         raise ValueError('increment_nest_level=False makes no sense')
-      kwargs['nest_level'] = 1
+      self._nest_level.append(self.nest_level+1)
+      to_pop.append(self._nest_level)
 
     if name_prefix is not None:
       check_type('name_prefix', name_prefix, str)
-      kwargs['name'] = name_prefix
+      cur = self.name_prefix
+      if cur:
+        self._name_prefix.append('%s.%s' % (cur, name_prefix))
+      else:
+        self._name_prefix.append(name_prefix)
+      to_pop.append(self._name_prefix)
 
     if env is not None and env != {}:
       check_type('env', env, dict)
-      # strify everything except None in the env to allow for ints, Paths, etc.
-      # None has special meaning (i.e. "delete this env key")
-      new_env = {}
+      # we hit _env directly to avoid an extra copy.
+      new = dict(self._env[-1])
       for k, v in env.iteritems():
         k = str(k)
         if v is not None:
@@ -157,24 +170,25 @@ class ContextApi(RecipeApi):
           except Exception:
             raise ValueError(('Invalid %%-formatting parameter in envvar, '
                               'only %%(ENVVAR)s allowed: %r') % (v,))
-        new_env[k] = v
-      kwargs['env'] = new_env
+        new[k] = v
+      self._env.append(new)
+      to_pop.append(self._env)
 
-    if not kwargs:
+    try:
       yield
-    else:
-      with context(kwargs):
-        yield
+    finally:
+      for p in to_pop:
+        p.pop()
 
   @property
   def cwd(self):
     """Returns the current working directory that steps will run in.
 
     Returns (Path|None) - The current working directory. A value of None is
-      equivalent to api.path['start_dir'].
+      equivalent to api.path['start_dir'], though only occurs if no cwd has been
+      set (e.g. in the outermost context of RunSteps).
     """
-    # TODO(iannucci): make this always return non None values.
-    return recipe_api._STEP_CONTEXT.get('cwd', None)
+    return self._cwd[-1]
 
   @property
   def env(self):
@@ -189,7 +203,7 @@ class ContextApi(RecipeApi):
     """
     # TODO(iannucci): store env in an immutable way to avoid excessive copies.
     # TODO(iannucci): handle case-insensitive keys on windows
-    return copy.deepcopy(recipe_api._STEP_CONTEXT.get('env', {}))
+    return dict(self._env[-1])
 
   @property
   def infra_step(self):
@@ -197,7 +211,7 @@ class ContextApi(RecipeApi):
 
     Returns (bool) - True iff steps are currently considered infra steps.
     """
-    return recipe_api._STEP_CONTEXT.get('infra_step', False)
+    return self._infra_step[-1]
 
   @property
   def name_prefix(self):
@@ -205,7 +219,7 @@ class ContextApi(RecipeApi):
 
     Returns (str) - The string prefix that every step will have prepended to it.
     """
-    return recipe_api._STEP_CONTEXT.get('name', '')
+    return self._name_prefix[-1]
 
   @property
   def nest_level(self):
@@ -217,4 +231,4 @@ class ContextApi(RecipeApi):
 
     Returns (int) - The current nesting level.
     """
-    return recipe_api._STEP_CONTEXT.get('nest_level', 0)
+    return self._nest_level[-1]

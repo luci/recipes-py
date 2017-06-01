@@ -16,6 +16,14 @@
     "name": "with cwd"
   },
   {
+    "cmd": [
+      "echo",
+      "hello",
+      "subdir"
+    ],
+    "name": "with cwd=None"
+  },
+  {
     "name": "$result",
     "recipe_result": null,
     "status_code": 0

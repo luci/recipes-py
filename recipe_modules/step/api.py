@@ -73,15 +73,6 @@ class StepApi(recipe_api.RecipeApiPlain):
     """
     return self.step_client.previous_step_result()
 
-  @property
-  def context(self):  # pragma: no cover
-    """DEPRECATED: use the recipe_engine/context module instead."""
-    return recipe_api.context
-
-  def get_from_context(self, key, default=None):  # pragma: no cover
-    """DEPRECATED: use the recipe_engine/context module instead."""
-    return copy.deepcopy(recipe_api._STEP_CONTEXT.get(key, default))
-
   @contextlib.contextmanager
   def nest(self, name):
     """Nest allows you to nest steps hierarchically on the build UI.

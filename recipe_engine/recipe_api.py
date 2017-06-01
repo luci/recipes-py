@@ -19,8 +19,6 @@ from .config import Single
 
 from .util import ModuleInjectionSite
 
-from . import field_composer
-
 
 class UnknownRequirementError(object):
   """Raised by a requirement function when the referenced requirement is
@@ -367,7 +365,8 @@ class StepFailure(Exception):
   infer_composite_step's logic.
   """
   def __init__(self, name_or_reason, result=None):
-    _STEP_CONTEXT['ran_step'][0] = True
+    # Raising a StepFailure counts as running a step.
+    _DEFER_CONTEXT.mark_ran_step()
     if result:
       self.name = name_or_reason
       self.result = result
@@ -455,18 +454,6 @@ class AggregatedStepFailure(StepFailure):
     return "Aggregate Step Failure"
 
 
-_FUNCTION_REGISTRY = {
-  'aggregated_result': {'combine': lambda a, b: b},
-  'cwd': {'combine': lambda a, b: b},
-  # TODO(phajdan.jr): instead of copy, freeze env.
-  'env': {'combine': lambda a, b: copy.deepcopy(dict(a, **b))},
-  'infra_step': {'combine': lambda a, b: a or b},
-  'name': {'combine': lambda a, b: '%s.%s' % (a, b)},
-  'nest_level': {'combine': lambda a, b: a + b},
-  'ran_step': {'combine': lambda a, b: b},
-}
-
-
 class AggregatedResult(object):
   """Holds the result of an aggregated run of steps.
 
@@ -520,8 +507,69 @@ class DeferredResult(object):
     return self._failure
 
 
-_STEP_CONTEXT = field_composer.FieldComposer(
-  {'ran_step': [False]}, _FUNCTION_REGISTRY)
+class _DEFER_CONTEXT_OBJ(object):
+  """This object keeps track of state pertaining to the behavior of
+  defer_results and composite_step.
+  """
+
+  def __init__(self):
+    """The object starts in a state where no steps have been run, and there's no
+    current aggregated_result."""
+    self._ran_step = [False]
+    self._aggregated_result = [None]
+
+  @property
+  def ran_step(self):
+    """Returns True if a step has run within this defer_results context."""
+    return self._ran_step[-1]
+
+  def mark_ran_step(self):
+    """Marks that a step has run within this defer_results context."""
+    self._ran_step[-1] = True
+
+  @property
+  def aggregated_result(self):
+    """Returns the current AggregatedResult() or None, if we're not currently
+    deferring results."""
+    return self._aggregated_result[-1]
+
+  @contextlib.contextmanager
+  def begin_aggregate(self):
+    """Begins aggregating new results. Use with a with statement:
+
+      with _DEFER_CONTEXT.begin_aggregate() as agg:
+        ...
+
+    Where `agg` is the AggregatedResult() for that with section.
+    """
+    try:
+      yield self._enter(AggregatedResult())
+    finally:
+      self._exit()
+
+  @contextlib.contextmanager
+  def begin_normal(self):
+    """Returns the context to normal (stop aggregating results).
+
+      with _DEFER_CONTEXT.begin_normal():
+        ...
+    """
+    try:
+      yield self._enter(None)
+    finally:
+      self._exit()
+
+  def _enter(self, agg):
+    self._ran_step.append(False)
+    self._aggregated_result.append(agg)
+    return agg
+
+  def _exit(self):
+    self._ran_step.pop()
+    self._aggregated_result.pop()
+
+
+_DEFER_CONTEXT = _DEFER_CONTEXT_OBJ()
 
 
 def non_step(func):
@@ -539,17 +587,6 @@ def non_step(func):
   return func
 
 _skip_inference = non_step
-
-
-@contextlib.contextmanager
-def context(fields):
-  global _STEP_CONTEXT
-  old = _STEP_CONTEXT
-  try:
-    _STEP_CONTEXT = old.compose(fields)
-    yield
-  finally:
-    _STEP_CONTEXT = old
 
 
 def infer_composite_step(func):
@@ -574,19 +611,21 @@ def infer_composite_step(func):
   @_skip_inference # to prevent double-wraps
   @wraps(func)
   def _inner(*a, **kw):
-    # We're not in a defer_results context, so just run the function normally.
-    if _STEP_CONTEXT.get('aggregated_result') is None:
+    agg = _DEFER_CONTEXT.aggregated_result
+
+    # We're not deferring results, so run the function normally.
+    if agg is None:
       return func(*a, **kw)
 
-    agg = _STEP_CONTEXT['aggregated_result']
-
-    # Setting the aggregated_result to None allows the contents of func to be
-    # written in the same style (e.g. with exceptions) no matter how func is
-    # being called.
-    with context({'aggregated_result': None, 'ran_step': [False]}):
+    # Stop deferring results within this function; the ultimate result of the
+    # function will be added to our parent context's aggregated results and
+    # we'll return a DeferredResult.
+    with _DEFER_CONTEXT.begin_normal():
       try:
         ret = func(*a, **kw)
-        if not _STEP_CONTEXT.get('ran_step', [False])[0]:
+        # This is how we differ from composite_step; if we didn't actually run
+        # a step or throw a StepFailure, return normally.
+        if not _DEFER_CONTEXT.ran_step:
           return ret
         agg.add_success(ret)
         return DeferredResult(ret, None)
@@ -612,18 +651,19 @@ def composite_step(func):
   @_skip_inference  # to avoid double-wraps
   @wraps(func)
   def _inner(*a, **kw):
-    # always counts as running a step
-    _STEP_CONTEXT['ran_step'][0] = True
+    # composite_steps always count as running a step.
+    _DEFER_CONTEXT.mark_ran_step()
 
-    if _STEP_CONTEXT.get('aggregated_result') is None:
+    agg = _DEFER_CONTEXT.aggregated_result
+
+    # If we're not aggregating
+    if agg is None:
       return func(*a, **kw)
 
-    agg = _STEP_CONTEXT['aggregated_result']
-
-    # Setting the aggregated_result to None allows the contents of func to be
-    # written in the same style (e.g. with exceptions) no matter how func is
-    # being called.
-    with context({'aggregated_result': None}):
+    # Stop deferring results within this function; the ultimate result of the
+    # function will be added to our parent context's aggregated results and
+    # we'll return a DeferredResult.
+    with _DEFER_CONTEXT.begin_normal():
       try:
         ret = func(*a, **kw)
         agg.add_success(ret)
@@ -659,10 +699,9 @@ def defer_results():
     failure will still be raised once you exit the suite inside
     the with statement.
   """
-  assert _STEP_CONTEXT.get('aggregated_result') is None, (
+  assert _DEFER_CONTEXT.aggregated_result is None, (
       "may not call defer_results in an active defer_results context")
-  agg = AggregatedResult()
-  with context({'aggregated_result': agg}):
+  with _DEFER_CONTEXT.begin_aggregate() as agg:
     yield
   if agg.failures:
     raise AggregatedStepFailure(agg)
