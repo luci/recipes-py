@@ -734,13 +734,17 @@ def run_run(test_filter, jobs=None, debug=False, train=False, json_file=None):
         actual_expectations.difference(used_expectations))
     if unused_expectations:
       if train:
-        for entry in unused_expectations:
-          if not os.path.exists(entry):
-            continue
-          if os.path.isdir(entry):
-            shutil.rmtree(entry)
-          else:
-            os.unlink(entry)
+        # we only want to prune expectations if training was otherwise
+        # successful. Otherwise a failure during training can blow away expected
+        # directories which contain things like OWNERS files.
+        if rc == 0:
+          for entry in unused_expectations:
+            if not os.path.exists(entry):
+              continue
+            if os.path.isdir(entry):
+              shutil.rmtree(entry)
+            else:
+              os.unlink(entry)
       else:
         rc = 1
         results_proto.unused_expectations.extend(unused_expectations)

@@ -692,6 +692,26 @@ class TestTest(unittest.TestCase):
     self.assertFalse(os.path.exists(expectation_file))
     self.assertEqual(self.json_generator.get(), self.json_contents)
 
+  def test_module_tests_unused_expectation_file_stays_on_failure(self):
+    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
+    mw.write()
+    rw = mw.test_recipe_writer('foo')
+    rw.RunStepsLines = ['raise ValueErorr("boom")']
+    rw.add_expectation('basic')
+    rw.add_expectation('unused')
+    rw.write()
+    expectation_file = os.path.join(rw.expect_dir, 'unused.json')
+    self.assertTrue(os.path.exists(expectation_file))
+    with self.assertRaises(subprocess.CalledProcessError):
+      self._run_recipes('test', 'train', '--json', self.json_path)
+    self.assertTrue(os.path.exists(expectation_file))
+    self.assertEqual(
+      self.json_generator
+          .invalid()
+          .coverage_failure('recipe_modules/foo_module/tests/foo.py', [6])
+          .internal_failure('foo_module:tests/foo.basic').get(),
+      self.json_contents)
+
   def test_train_basic(self):
     rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
     rw.RunStepsLines = ['pass']
