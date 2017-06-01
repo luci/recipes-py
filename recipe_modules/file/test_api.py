@@ -1,0 +1,82 @@
+# Copyright 2017 The LUCI Authors. All rights reserved.
+# Use of this source code is governed under the Apache License, Version 2.0
+# that can be found in the LICENSE file.
+
+import os
+
+from recipe_engine import recipe_test_api
+
+
+def renderNames(names):
+  def check(name):
+    name = str(name)
+    if '/' in name or '\\' in name:  # pragma: no cover
+      raise ValueError('file name contains slash: %r' % name)
+    return name
+  return '\n'.join(sorted(map(check, names)))
+
+
+class FileTestApi(recipe_test_api.RecipeTestApi):
+  def listdir(self, names=(), errno_name=0):
+    """Provides test mock for the `listdir` method.
+
+    Args:
+      names (iterable[str]) - The list of dir entry names for this `listdir`
+        step to return.
+      errno_name (str|None) - The error name for this step to return, if any.
+
+    Example:
+      yield (api.test('my_test')
+        + api.step_data('listdir step name', api.file.listdir(['a', 'b', 'c']))
+    """
+    return (self.m.raw_io.stream_output(renderNames(names))
+            + self.errno(errno_name))
+
+  def read_text(self, text_content='', errno_name=0):
+    """Provides test mock for the `read_text` method.
+
+    Args:
+      text_content (str) - The text data for this read_text step to return.
+      errno_name (str|None) - The error name for this step to return, if any.
+
+    Example:
+      yield (api.test('my_test')
+        + api.step_data('read step name',
+            api.file.read_text('some\nfile\ncontent'))
+      )
+    """
+    return (self.m.raw_io.output_text(text_content)
+            + self.errno(errno_name))
+
+  def glob_paths(self, names=(), errno_name=0):
+    """Provides test mock for the `glob_paths` method.
+
+    Args:
+      names (iterable[str]) - The file names for the glob_paths step to return.
+      errno_name (str|None) - The error name for this step to return, if any.
+
+    Example:
+      yield (api.test('my_test')
+        + api.step_data('glob step name', api.file.glob_paths([
+          'pattern_path', 'pattern_other_thing'
+      ]))
+    """
+    return (self.m.raw_io.stream_output(renderNames(names))
+            + self.errno(errno_name))
+
+  def errno(self, errno_name=None):
+    """Provides test mock for any file module method, causing the step to raise
+    a file.Error exception.
+
+    Args:
+      errno_name (None|str) - The errno error name that the step should raise.
+        This must be e.g. 'EPERM', 'EEXIST', etc.
+    """
+    data = {'ok': True}
+    if errno_name:
+      data['ok'] = False
+      data['errno_name'] = errno_name
+      # in real operation, this message will come from the underlying OS and
+      # will potentially have descriptive detail.
+      data['message'] = 'file command encountered system error '+errno_name
+    return self.m.json.output(data)

@@ -178,6 +178,20 @@ class Path(RecipeConfigType):
     return not self == other
 
   def join(self, *pieces, **kwargs):
+    """Appends *pieces to this Path, returning a new Path.
+
+    Empty values ('', None) in pieces will be omitted.
+
+    Args:
+      pieces (tuple(str)) - The components of the path relative to base. These
+        pieces must be non-relative (i.e. no '..' or '.', etc. as a piece).
+
+    Kwargs:
+      platform_ext (dict(str, str)) - A mapping from platform name (as defined
+        by the 'platform' module), to a suffix for the path.
+
+    Returns (Path) - the new Path.
+    """
     if not pieces and not kwargs:
       return self
     kwargs.setdefault('platform_ext', self.platform_ext)

@@ -43,6 +43,47 @@
   },
   {
     "cmd": [
+      "rm",
+      "-rf",
+      "[START_DIR]\\copy2"
+    ],
+    "name": "rm copy2 (initial)"
+  },
+  {
+    "cmd": [
+      "mkdir",
+      "-p",
+      "[START_DIR]\\copy1\\foo\\bar"
+    ],
+    "name": "mkdirs"
+  },
+  {
+    "cmd": [
+      "cp",
+      "-a",
+      "[START_DIR]\\copy1",
+      "[START_DIR]\\copy2"
+    ],
+    "name": "cp copy1 copy2"
+  },
+  {
+    "cmd": [
+      "rm",
+      "-rf",
+      "[START_DIR]\\copy2\\foo"
+    ],
+    "name": "rm copy2/foo"
+  },
+  {
+    "cmd": [
+      "rm",
+      "-rf",
+      "[START_DIR]\\copy2"
+    ],
+    "name": "rm copy2"
+  },
+  {
+    "cmd": [
       "echo",
       "[START_DIR]\\some\\thing"
     ],

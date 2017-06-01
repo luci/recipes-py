@@ -61,6 +61,8 @@ class RunTest(unittest.TestCase):
       ['python:examples/full'],
       ['json:examples/full'],
       ['uuid:examples/full'],
+      ['file:examples/copy'],
+      ['file:examples/copytree'],
 
       ['engine_tests/depend_on/top', {'to_pass': 42}],
       ['engine_tests/functools_partial'],

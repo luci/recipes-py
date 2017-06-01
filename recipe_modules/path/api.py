@@ -35,6 +35,8 @@ def string_filter(func):
 class path_set(object):
   """ implements a set which contains all the parents folders of added folders.
   """
+  # TODO(iannucci): Expand this to be a full fakey filesystem, including file
+  # contents and file types. Coordinate with the `file` module.
   def __init__(self, path_mod, initial_paths):
     self._path_mod = path_mod
     self._initial_paths = set(initial_paths)
@@ -53,6 +55,21 @@ class path_set(object):
     while path:
       self._paths.add(path)
       path = self._path_mod.dirname(path)
+
+  def copy(self, source, dest):
+    source, dest = str(source), str(dest)
+    self._initialize()
+    to_add = set()
+    for p in self._paths:
+      if p.startswith(source):
+        to_add.add(p.replace(source, dest))
+    self._paths |= to_add
+
+  def remove(self, path, filt):
+    path = str(path)
+    self._initialize()
+    kill_set = set(p for p in self._paths if p.startswith(path) and filt(p))
+    self._paths -= kill_set
 
   def contains(self, path):
     self._initialize()
@@ -90,6 +107,18 @@ class fake_path(object):
     Adds a path and all of its parents to the set of existing paths.
     """
     self._mock_path_exists.add(path)
+
+  def mock_copy_paths(self, source, dest):
+    """
+    Duplicates a path and all of its children to another path.
+    """
+    self._mock_path_exists.copy(source, dest)
+
+  def mock_remove_paths(self, path, filt):
+    """
+    Removes a path and all of its children from the set of existing paths.
+    """
+    self._mock_path_exists.remove(path, filt)
 
   def exists(self, path):  # pylint: disable=E0202
     """Return True if path refers to an existing path."""
@@ -239,6 +268,22 @@ class PathApi(recipe_api.RecipeApi):
     """For testing purposes, assert that |path| exists."""
     if self._test_data.enabled:
       self._path_mod.mock_add_paths(path)
+
+  def mock_copy_paths(self, source, dest):
+    """For testing purposes, copy |source| to |dest|."""
+    if self._test_data.enabled:
+      self._path_mod.mock_copy_paths(source, dest)
+
+  def mock_remove_paths(self, path, filt=lambda p: True):
+    """For testing purposes, assert that |path| doesn't exist.
+
+    Args:
+      path (str|Path) - The path to remove.
+      filt (func[str] bool) - Called for every candidate path. Return
+        True to remove this path.
+    """
+    if self._test_data.enabled:
+      self._path_mod.mock_remove_paths(path, filt)
 
   def assert_absolute(self, path):
     assert self.abspath(path) == str(path), '%s is not absolute' % path

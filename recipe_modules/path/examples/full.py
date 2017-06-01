@@ -55,6 +55,28 @@ def RunSteps(api):
   api.path.mock_add_paths(home_path)
   assert api.path.exists(home_path)
 
+  # can mock copy paths. See the file module to do this for real.
+  copy1 = api.path['start_dir'].join('copy1')
+  copy2 = api.path['start_dir'].join('copy2')
+  api.step('rm copy2 (initial)', ['rm', '-rf', copy2])
+
+  api.step('mkdirs', ['mkdir', '-p', copy1.join('foo', 'bar')])
+  api.path.mock_add_paths(copy1.join('foo', 'bar'))
+  api.step('cp copy1 copy2', ['cp', '-a', copy1, copy2])
+  api.path.mock_copy_paths(copy1, copy2)
+  assert api.path.exists(copy2.join('foo', 'bar'))
+
+  # can mock remove paths. See the file module to do this for real.
+  api.step('rm copy2/foo', ['rm', '-rf', copy2.join('foo')])
+  api.path.mock_remove_paths(str(copy2)+api.path.sep)
+  assert not api.path.exists(copy2.join('foo', 'bar'))
+  assert not api.path.exists(copy2.join('foo'))
+  assert api.path.exists(copy2)
+
+  api.step('rm copy2', ['rm', '-rf', copy2])
+  api.path.mock_remove_paths(copy2)
+  assert not api.path.exists(copy2)
+
   # Convert strings to Paths
   paths_to_convert =  [
     api.path['start_dir'].join('some', 'thing'),
