@@ -183,7 +183,7 @@ class RawIOApi(recipe_api.RecipeApi):
     If 'suffix' is not '', it will be used when the engine calls
     tempfile.mkstemp.
 
-    See example.py for usage example.
+    See examples/full.py for usage example.
     """
     return InputDataPlaceholder(data, suffix)
 

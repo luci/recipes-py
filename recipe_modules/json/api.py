@@ -35,7 +35,7 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
       ['write_json_to_file.sh', api.json.output()])
     # `result.json.output` is the parsed JSON value.
 
-  See the example recipe (./example.py) for some more uses.
+  See the example recipe (./examples/full.py) for some more uses.
   """
   def __init__(self, api, add_json_log, name=None, leak_to=None):
     self.raw = api.m.raw_io.output_text('.json', leak_to=leak_to)

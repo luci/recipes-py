@@ -44,7 +44,8 @@ sequences of subprocess calls in a cross-platform and testable way.
 *   `recipe_modules/`
 
     Built in recipe modules. These are very useful when writing recipes; take a
-    look in there, and look at their `example.py` files.
+    look in there, and look at each of their `examples` subfolders to get an
+    idea how to use them in a recipe.
 
 *   `recipe_engine/`
 

@@ -284,8 +284,8 @@ class RepoTest(unittest.TestCase):
           is method name (also used for the step name); second element
           is argv of the command that method should call as a step
       generate_example(bool or iterable(str)):
-          if bool: whether to generate example.py covering the module
-          if iterable(str): which methods to cover in generated example.py
+          if bool: whether to generate examples/full.py covering the module
+          if iterable(str): which methods to cover in generated example
       disable_strict_coverage(bool): whether to disable strict coverage
           (http://crbug.com/693058)
     """
@@ -316,8 +316,12 @@ class RepoTest(unittest.TestCase):
             '',
           ]) for m_name, m_cmd in methods.iteritems()
         ]))
+
+      examples_dir = os.path.join(module_dir, 'examples')
       if generate_example:
-        with open(os.path.join(module_dir, 'example.py'), 'w') as f:
+        if not os.path.exists(examples_dir):
+          os.makedirs(examples_dir)
+        with open(os.path.join(examples_dir, 'full.py'), 'w') as f:
           f.write('\n'.join([
             'DEPS = [%r]' % name,
             '',
@@ -330,8 +334,8 @@ class RepoTest(unittest.TestCase):
             'def GenTests(api):',
             '  yield api.test("basic")',
           ]))
-      elif os.path.exists(os.path.join(module_dir, 'example.py')):
-        os.unlink(os.path.join(module_dir, 'example.py'))
+      elif os.path.exists(examples_dir):
+        shutil.rmtree(examples_dir)
 
       self.train_recipes(repo)
 

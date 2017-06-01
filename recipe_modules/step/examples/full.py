@@ -139,7 +139,7 @@ def GenTests(api):
   #   <full stack trace ommitted>
   #   File "annotated_run.py", line 537, in run
   #     retcode = steps_function(api)
-  #   File "recipe_modules/step/example.py", line 39, in RunSteps
+  #   File "recipe_modules/step/examples/full.py", line 39, in RunSteps
   #     raise ValueError('goodbye must exit 0!')
   # ValueError: goodbye must exit 0!
 

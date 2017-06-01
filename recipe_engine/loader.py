@@ -276,9 +276,7 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
       module_name, recipe_name = recipe.split(':')
       module_dir = os.path.join(self.package.module_dir, module_name)
       if _is_recipe_module_dir(module_dir):
-        # TODO(iannucci): remove legacy example.
-        if (recipe_name == 'example' or
-            recipe_name.startswith(('tests/', 'examples/'))):
+        if recipe_name.startswith(('tests/', 'examples/')):
           recipe_path = os.path.join(module_dir, recipe_name + '.py')
         else:
           raise NoSuchRecipe(recipe)
@@ -350,11 +348,6 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
 
     for module_name in self.loop_over_recipe_modules():
       module_dir = os.path.join(self.package.module_dir, module_name)
-
-      # TODO(iannucci): remove unscoped example.py
-      example_path = os.path.join(module_dir, 'example.py')
-      if os.path.exists(example_path):
-        yield example_path, '%s:example' % module_name
 
       for subdir_name in ('tests', 'examples'):
         subdir = os.path.join(module_dir, subdir_name)

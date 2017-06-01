@@ -95,7 +95,8 @@ class RecipeModuleWriter(object):
     self.base_config = {}
     self.configs = {}
 
-    self.example = RecipeWriter(self.module_dir, 'example')
+    self.example = RecipeWriter(
+      os.path.join(self.module_dir, 'examples'), 'full')
 
   @property
   def module_dir(self):
@@ -522,9 +523,9 @@ class TestTest(unittest.TestCase):
     self.assertEqual(
         self.json_generator
             .invalid()
-            .internal_failure('foo_module:example.basic')
+            .internal_failure('foo_module:examples/full.basic')
             .coverage_failure('recipe_modules/foo_module/api.py', [6])
-            .coverage_failure('recipe_modules/foo_module/example.py', [6])
+            .coverage_failure('recipe_modules/foo_module/examples/full.py', [6])
             .get(),
         self.json_contents)
 
@@ -543,9 +544,9 @@ class TestTest(unittest.TestCase):
     self.assertEqual(
         self.json_generator
             .invalid()
-            .internal_failure('foo_module:example.basic')
+            .internal_failure('foo_module:examples/full.basic')
             .coverage_failure('recipe_modules/foo_module/api.py', [6])
-            .coverage_failure('recipe_modules/foo_module/example.py', [6])
+            .coverage_failure('recipe_modules/foo_module/examples/full.py', [6])
             .get(),
         self.json_contents)
 
@@ -562,8 +563,8 @@ class TestTest(unittest.TestCase):
     self.assertEqual(
         self.json_generator
             .coverage_failure('recipe_modules/foo_module/api.py', [6])
-            .coverage_failure('recipe_modules/foo_module/example.py', [7])
-            .diff_failure('foo_module:example.basic').get(),
+            .coverage_failure('recipe_modules/foo_module/examples/full.py', [7])
+            .diff_failure('foo_module:examples/full.basic').get(),
         self.json_contents)
 
   def test_test_recipe_module_uncovered_not_strict(self):

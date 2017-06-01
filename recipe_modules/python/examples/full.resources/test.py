@@ -32,7 +32,7 @@ if __name__ == '__main__':
 # Pick a test package with no dependencies from "/bootstrap/venv.cfg" that
 # differs from the package in "test.vpython" file.
 #
-# This is used in "example.py" along with the "--verify-enum34" flag.
+# This is used in "examples/full.py" along with the "--verify-enum34" flag.
 ##
 # [VPYTHON:BEGIN]
 #

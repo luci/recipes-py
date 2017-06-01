@@ -168,7 +168,7 @@ then the recipe wouldn't know about the other `some_other_chill_thing` property
 at all.
 
 Note that properties without a default are required. If you don't want a
-property to be required, just add `default=None` to the definition. 
+property to be required, just add `default=None` to the definition.
 
 Yes, elements of a test specification are combined with `+` and it's weird.
 
@@ -548,7 +548,7 @@ api.step(..., stdin=api.raw_io.input('test input'))
 ```
 
 Also see [raw_io's
-example.py](https://chromium.googlesource.com/chromium/tools/build.git/+/master/scripts/slave/recipe_modules/raw_io/example.py).
+example](https://chromium.googlesource.com/chromium/tools/build.git/+/master/scripts/slave/recipe_modules/raw_io/examples/full.py).
 
 ### Example: read standard output of a step as json
 
@@ -559,7 +559,7 @@ data = step_result.stdout
 ```
 
 Also see [json's
-example.py](https://chromium.googlesource.com/chromium/tools/build.git/+/master/scripts/slave/recipe_modules/json/example.py).
+example](https://chromium.googlesource.com/chromium/tools/build.git/+/master/scripts/slave/recipe_modules/json/examples/full.py).
 
 ### Example: write to standard input of a step as json
 
@@ -569,7 +569,7 @@ api.step(..., stdin=api.json.input(data))
 ```
 
 Also see [json's
-example.py](https://chromium.googlesource.com/chromium/tools/build.git/+/master/scripts/slave/recipe_modules/json/example.py).
+example](https://chromium.googlesource.com/chromium/tools/build.git/+/master/scripts/slave/recipe_modules/json/examples/full.py).
 
 ### Example: simulated step output
 
@@ -652,9 +652,5 @@ Specifically, for `tools/build` repo, the commands to execute are:
 
 Check the docstrings in `*.py`. `<trollface text="Problem?"/>`
 
-In addition, most recipe modules have an `example.py` file which exercises most
-of the code in the module for both test coverage and example purposes.
-
-If you want to know what keys a step dictionary can take, take a look at
-`third_party/recipe_engine/main.py`.
-
+In addition, most recipe modules have example recipes in the `examples`
+subfolder which exercises most of the code in the module for example purposes.

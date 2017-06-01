@@ -724,12 +724,11 @@ def run_run(test_filter, jobs=None, debug=False, train=False, json_file=None):
         if not os.path.isdir(full_entry):
           continue
 
-        # Handle example.py recipe.
-        actual_expectations.update(scan_for_expectations(full_entry))
+        for subfolder in ['tests', 'examples']:
+          full_subdir = os.path.join(full_entry, subfolder)
+          if os.path.isdir(full_subdir):
+            actual_expectations.update(scan_for_expectations(full_subdir))
 
-        module_tests = os.path.join(full_entry, 'tests')
-        if os.path.isdir(module_tests):
-          actual_expectations.update(scan_for_expectations(module_tests))
 
     unused_expectations = sorted(
         actual_expectations.difference(used_expectations))
