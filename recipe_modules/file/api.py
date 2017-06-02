@@ -163,6 +163,8 @@ class FileApi(recipe_api.RecipeApi):
   def remove(self, name, source):
     """Remove a file.
 
+    Does not raise Error if the file doesn't exist.
+
     Args:
       name (str) - The name of the step.
       source (Path) - The file to remove.

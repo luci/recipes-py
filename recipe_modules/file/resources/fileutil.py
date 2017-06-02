@@ -155,6 +155,14 @@ def _Glob(base, pattern):
     os.chdir(cwd)
 
 
+def _Remove(path):
+  try:
+    os.remove(path)
+  except OSError as e:
+    if e.errno != errno.ENOENT:
+      raise
+
+
 def main(args):
   parser = argparse.ArgumentParser()
   parser.add_argument('--json-output', required=True,
@@ -219,8 +227,7 @@ def main(args):
   subparser = subparsers.add_parser('remove',
       help='Remove a file')
   subparser.add_argument('source', help='The file to remove.')
-  subparser.set_defaults(
-    func=lambda opts: os.remove(opts.source))
+  subparser.set_defaults(func=lambda opts: _Remove(opts.source))
 
   # Subcommand: listdir
   subparser = subparsers.add_parser('listdir',
