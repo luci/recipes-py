@@ -13,7 +13,8 @@
     "infra_step": true,
     "name": "does not exist",
     "~followup_annotations": [
-      "@@@STEP_TEXT@file command encountered system error ENOENT@@@"
+      "@@@STEP_TEXT@file command encountered system error ENOENT@@@",
+      "@@@STEP_FAILURE@@@"
     ]
   },
   {

@@ -15,7 +15,7 @@ import fnmatch
 class FileApi(recipe_api.RecipeApi):
   """FileApi contains helper functions for reading and writing files."""
 
-  class Error(recipe_api.InfraFailure):
+  class Error(recipe_api.StepFailure):
     """Error is an InfraFailure, except that it also contains an errno field
     indicating the errno name (i.e. 'EEXIST') of the underlying error.
     """
@@ -36,6 +36,7 @@ class FileApi(recipe_api.RecipeApi):
       infra_step=True)
     j = result.json.output
     if not j['ok']:
+      result.presentation.status = self.m.step.FAILURE
       result.presentation.step_text = j['message']
       # pylint thinks this isn't a standard exception... silly pylint.
       # pylint: disable=nonstandard-exception
