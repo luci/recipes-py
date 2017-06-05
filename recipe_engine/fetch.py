@@ -32,9 +32,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 def has_interesting_changes(spec, changed_files):
-  # TODO(iannucci): analyze bundle_extra_paths.txt  too.
+  # TODO(iannucci): analyze any `recipe` gitattr-tagged files too
   return (
-    'infra/config/recipes.cfg' in changed_files or
+    package_io.InfraRepoConfig.RELPATH in changed_files or
     any(f.startswith(spec.recipes_path) for f in changed_files)
   )
 
@@ -360,7 +360,8 @@ class GitBackend(Backend):
 
     try:
       spec = package_io.parse(self._git(
-        'cat-file', 'blob', '%s:infra/config/recipes.cfg' % revision))
+        'cat-file', 'blob', '%s:%s' %
+        (revision, package_io.InfraRepoConfig.RELPATH)))
     except GitError:
       spec = None
 
@@ -514,8 +515,8 @@ class GitilesBackend(Backend):
 
     # Re-create recipes.cfg in |checkout_dir| so that the repo's recipes.py
     # can look it up.
-    recipes_cfg_path = os.path.join(self.checkout_dir,
-                                    'infra', 'config', 'recipes.cfg')
+    recipes_cfg_path = package_io.InfraRepoConfig().to_recipes_cfg(
+      self.checkout_dir)
     os.makedirs(os.path.dirname(recipes_cfg_path))
     package_io.PackageFile(recipes_cfg_path).write(package_spec)
 
@@ -523,9 +524,8 @@ class GitilesBackend(Backend):
     if not os.path.exists(recipes_path):
       os.makedirs(recipes_path)
 
-    # TODO(iannucci): Implement parsing of 'bundle_extra_paths.txt' files so
-    # that we can generate a bundle directly from gitiles without any local
-    # state.
+    # TODO(iannucci): Implement checkout using same file-listing logic as in
+    # bundle.py.
 
     # TODO(iannucci): This implementation may be slow if we need to retieve
     # multiple files/archives from the remote server. Should possibly consider
@@ -562,7 +562,7 @@ class GitilesBackend(Backend):
     rev_json = self._fetch_commit_json(revision)
 
     recipes_cfg_text = self._fetch_gitiles(
-      '+/%s/infra/config/recipes.cfg?format=TEXT', revision
+      '+/%%s/%s?format=TEXT' % package_io.InfraRepoConfig.RELPATH, revision
     ).text.decode('base64')
     spec = json_format.Parse(
       recipes_cfg_text, package_pb2.Package(), ignore_unknown_fields=True)

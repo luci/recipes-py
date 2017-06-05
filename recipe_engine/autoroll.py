@@ -220,7 +220,7 @@ def add_subparser(parser):
 
 def main(_package_deps, args):
   config_file = args.package
-  repo_root = package.InfraRepoConfig().from_recipes_cfg(config_file.path)
+  repo_root = package_io.InfraRepoConfig().from_recipes_cfg(config_file.path)
 
   package_pb = config_file.read()
 

@@ -27,7 +27,7 @@ sys.path.insert(0, ROOT_DIR)
 
 from recipe_engine import env
 
-from recipe_engine import common_args, package
+from recipe_engine import common_args, package, package_io
 
 import argparse  # this is vendored
 
@@ -119,7 +119,7 @@ def main():
   if args.bare_command:
     return args.func(None, args)
 
-  repo_root = package.InfraRepoConfig().from_recipes_cfg(args.package.path)
+  repo_root = package_io.InfraRepoConfig().from_recipes_cfg(args.package.path)
 
   try:
     # TODO(phajdan.jr): gracefully handle inconsistent deps when rolling.

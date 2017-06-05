@@ -51,23 +51,6 @@ def cleanup_pyc(path):
             raise
 
 
-class InfraRepoConfig(object):
-  def to_recipes_cfg(self, repo_root):
-    return os.path.join(repo_root, self.relative_recipes_cfg)
-
-  @property
-  def relative_recipes_cfg(self):
-    # TODO(luqui): This is not always correct.  It can be configured in
-    # infra/config:refs.cfg.
-    return os.path.join('infra', 'config', 'recipes.cfg')
-
-  def from_recipes_cfg(self, recipes_cfg):
-    return os.path.dirname( # <repo root>
-            os.path.dirname( # infra
-              os.path.dirname( # config
-                os.path.abspath(recipes_cfg)))) # recipes.cfg
-
-
 class PackageContext(object):
   """Contains information about where the root package and its dependency
   checkouts live.
@@ -255,7 +238,7 @@ class PathRepoSpec(RepoSpec):
 
   def spec_pb(self):
     return package_io.PackageFile(
-      InfraRepoConfig().to_recipes_cfg(self.path)).read()
+      package_io.InfraRepoConfig().to_recipes_cfg(self.path)).read()
 
   def __eq__(self, other):
     if not isinstance(other, type(self)):

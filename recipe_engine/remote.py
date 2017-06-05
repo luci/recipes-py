@@ -74,7 +74,7 @@ def main(_package_deps, args):
     backend = backend_class(checkout_dir, args.repository)
     backend.checkout(revision)
     recipes_cfg = package_io.PackageFile(
-        package.InfraRepoConfig().to_recipes_cfg(checkout_dir))
+        package_io.InfraRepoConfig().to_recipes_cfg(checkout_dir))
     cmd = [
         sys.executable,
         os.path.join(

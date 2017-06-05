@@ -20,6 +20,7 @@ from recipe_engine import package
 from recipe_engine import package_io
 
 TEST_AUTHOR = 'foo@example.com'
+IRC = package_io.InfraRepoConfig.RELPATH
 
 
 class MockIOThings(object):
@@ -109,8 +110,7 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
       '  "recipes_path": "path/to/recipes"',
       '}',
     ]) + '\n'
-    self.package_file = MockPackageFile('repo/root/infra/config/recipes.cfg',
-                                        self.proto_text)
+    self.package_file = MockPackageFile('repo/root/'+IRC, self.proto_text)
     self.context = package.PackageContext.from_package_pb(
         'repo/root', self.package_file.read())
 
@@ -127,8 +127,7 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
     proto_text = """
 {"api_version": 2}
 """.lstrip()
-    package_file = MockPackageFile('repo/root/infra/config/recipes.cfg',
-                                   proto_text)
+    package_file = MockPackageFile('repo/root/'+IRC, proto_text)
     package_spec = package.PackageSpec.from_package_pb(
       self.context, package_file.read())
     self.assertEqual(package_file.to_raw(package_spec.spec_pb),
@@ -140,8 +139,7 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
   "recipes_path": "path/to/recipes"
 }
 """
-    package_file = MockPackageFile('repo/root/infra/config/recipes.cfg',
-                                   proto_text)
+    package_file = MockPackageFile('repo/root/'+IRC, proto_text)
 
     with self.assertRaises(AssertionError):
       package.PackageSpec.from_package_pb(self.context, package_file.read())
@@ -152,8 +150,7 @@ class TestPackageSpec(MockIOThings, unittest.TestCase):
   "project_id": "fizzbar",
   "recipes_path": "path/to/recipes"
 }"""
-    package_file = MockPackageFile('repo/root/infra/config/recipes.cfg',
-                                   proto_text)
+    package_file = MockPackageFile('repo/root/'+IRC, proto_text)
 
     with self.assertRaises(AssertionError):
       package.PackageSpec.from_package_pb(self.context, package_file.read())
@@ -175,16 +172,14 @@ class TestPackageDeps(MockIOThings, unittest.TestCase):
   }
 }
 """
-    base_package_file = MockPackageFile('base/infra/config/recipes.cfg',
-                                        base_proto_text)
+    base_package_file = MockPackageFile('base/'+IRC, base_proto_text)
 
     foo_proto_text = """{
   "api_version": 2,
   "project_id": "foo",
   "recipes_path": "path/to/recipes"
 }"""
-    foo_package_file = MockPackageFile('foo/infra/config/recipes.cfg',
-                                       foo_proto_text)
+    foo_package_file = MockPackageFile('foo/'+IRC, foo_proto_text)
 
     with mock.patch.object(os.path, 'abspath', lambda x: x):
       context = package.PackageContext.from_package_pb(

@@ -19,12 +19,13 @@ import subprocess42
 
 from recipe_engine import common_args
 from recipe_engine import fetch
+from recipe_engine import package_io
 from recipe_engine import package_pb2
 from recipe_engine import requests_ssl
 
 
 CPE = subprocess42.CalledProcessError
-
+IRC = package_io.InfraRepoConfig.RELPATH
 
 class NoMoreExpectatedCalls(ValueError):
   pass
@@ -84,7 +85,7 @@ class TestGit(unittest.TestCase):
         '-C', dirname, 'show', '-s', '--format=%aE%n%ct%n%B', commit
       ], '%s\n%d\n%s\n' % (email, commit_timestamp, msg)),
       self.g([
-        '-C', dirname, 'cat-file', 'blob', commit+':infra/config/recipes.cfg'
+        '-C', dirname, 'cat-file', 'blob', commit+':'+IRC
       ], json.dumps(config)),
       self.g([
         '-C', dirname,
@@ -278,7 +279,7 @@ class TestGitiles(unittest.TestCase):
     requests_get.side_effect = multi(
       self.j('repo/+/revision?name-status=1&format=JSON', self.a_dat),
       self.j('repo/+/%s?name-status=1&format=JSON' % self.a, self.a_dat),
-      self.d('repo/+/%s/infra/config/recipes.cfg?format=TEXT' % self.a,
+      self.d('repo/+/%s/%s?format=TEXT' % (self.a, IRC),
              self.proto_text),
       self.d('repo/+archive/%s/path/to/recipes.tar.gz' % self.a, ''),
     )
@@ -347,12 +348,9 @@ class TestGitiles(unittest.TestCase):
       self.j('repo/+/revb?name-status=1&format=JSON', log_json['log'][0]),
       self.j('repo/+log/%s..%s?name-status=1&format=JSON' % (sha_a, sha_b),
              log_json),
-      self.d('repo/+/%s/infra/config/recipes.cfg?format=TEXT' % sha_a,
-             self.proto_text),
-      self.d('repo/+/%s/infra/config/recipes.cfg?format=TEXT' % 'def456',
-             self.proto_text),
-      self.d('repo/+/%s/infra/config/recipes.cfg?format=TEXT' % sha_b,
-             self.proto_text),
+      self.d('repo/+/%s/%s?format=TEXT' % (sha_a, IRC), self.proto_text),
+      self.d('repo/+/%s/%s?format=TEXT' % ('def456', IRC), self.proto_text),
+      self.d('repo/+/%s/%s?format=TEXT' % (sha_b, IRC), self.proto_text),
     )
 
     be = fetch.GitilesBackend('dir', 'repo')
@@ -394,8 +392,7 @@ class TestGitiles(unittest.TestCase):
     requests_get.side_effect = multi(
       self.j('repo/+/revision?name-status=1&format=JSON', self.a_dat),
       self.j('repo/+/%s?name-status=1&format=JSON' % self.a, self.a_dat),
-      self.d('repo/+/%s/infra/config/recipes.cfg?format=TEXT' % self.a,
-             self.proto_text)
+      self.d('repo/+/%s/%s?format=TEXT' % (self.a, IRC), self.proto_text)
     )
 
     result = fetch.GitilesBackend('dir', 'repo').commit_metadata(
@@ -429,8 +426,7 @@ class TestGitiles(unittest.TestCase):
              fetch.GitilesFetchError(500, '')),
       self.j('repo/+/revision?name-status=1&format=JSON', self.a_dat),
       self.j('repo/+/%s?name-status=1&format=JSON' % self.a, self.a_dat),
-      self.d('repo/+/%s/infra/config/recipes.cfg?format=TEXT' % self.a,
-             self.proto_text),
+      self.d('repo/+/%s/%s?format=TEXT' % (self.a, IRC), self.proto_text),
     )
 
     result = fetch.GitilesBackend('dir', 'repo').commit_metadata(

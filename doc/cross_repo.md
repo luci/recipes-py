@@ -2,7 +2,7 @@
 
 At the time of writing, there are three repositories containing recipes and
 recipe modules, soon to be more.  Repositories declare their relationships to
-each other in a file called `recipes.cfg`, usually in the `infra/config`
+each other in a file called `recipes.cfg`, in the `infra/config`
 directory from the repository root.  For example:
 
     {

@@ -85,3 +85,22 @@ class PackageFile(object):
   def write(self, buf):
     with open(self._path, 'w') as fh:
       fh.write(self.to_raw(buf))
+
+
+class InfraRepoConfig(object):
+  RELPATH = 'infra/config/recipes.cfg'
+
+  def to_recipes_cfg(self, repo_root):
+    return os.path.join(repo_root, self.relative_recipes_cfg)
+
+  @property
+  def relative_recipes_cfg(self):
+    # TODO(luqui): This is not always correct.  It can be configured in
+    # infra/config:refs.cfg.
+    return os.path.join('infra', 'config', 'recipes.cfg')
+
+  def from_recipes_cfg(self, recipes_cfg):
+    return os.path.dirname( # <repo root>
+            os.path.dirname( # infra
+              os.path.dirname( # config
+                os.path.abspath(recipes_cfg)))) # recipes.cfg

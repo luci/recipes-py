@@ -1,0 +1,4 @@
+/recipes.py         recipes
+/bootstrap/**       recipes
+/recipe_engine/**   recipes
+/**/unittests/**   -recipes

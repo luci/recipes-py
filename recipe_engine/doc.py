@@ -436,8 +436,6 @@ def parse_module(uv, base_dir, relpath, mod_name):
     LOGGER.error('could not determine main RecipeApi class: %r', relpath)
     return None
 
-  # TODO(iannucci): bundle_extra_paths.txt
-
   return doc.Doc.Module(
     name=mod_name,
     relpath=relpath,
