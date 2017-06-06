@@ -153,13 +153,13 @@ class FileApi(recipe_api.RecipeApi):
 
     Raises file.Error.
     """
-    ret = self._run(
+    result = self._run(
       name, ['glob', source, pattern],
       lambda: self.test_api.glob_paths(test_data),
       self.m.raw_io.output_text())
-    return [
-      source.join(x) for x in ret.stdout.splitlines()
-    ]
+    ret = [source.join(x) for x in result.stdout.splitlines()]
+    result.presentation.logs["glob"] = map(str, ret)
+    return ret
 
   def remove(self, name, source):
     """Remove a file.
@@ -191,11 +191,13 @@ class FileApi(recipe_api.RecipeApi):
     Raises file.Error.
     """
     self.m.path.assert_absolute(source)
-    ret = self._run(
+    result = self._run(
       name, ['listdir', source],
       lambda: self.test_api.listdir(test_data),
       self.m.raw_io.output_text())
-    return [source.join(x) for x in ret.stdout.splitlines()]
+    ret = [source.join(x) for x in result.stdout.splitlines()]
+    result.presentation.logs['listdir'] = map(str, ret)
+    return ret
 
   def ensure_directory(self, name, dest, mode=0777):
     """Ensures that `dest` exists and is a directory.

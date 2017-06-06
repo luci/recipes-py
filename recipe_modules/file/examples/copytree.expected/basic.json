@@ -137,7 +137,16 @@
     ],
     "infra_step": true,
     "name": "list new dir",
-    "stdout": "/path/to/tmp/"
+    "stdout": "/path/to/tmp/",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@listdir@[START_DIR]/some other dir/a@@@",
+      "@@@STEP_LOG_LINE@listdir@[START_DIR]/some other dir/aa@@@",
+      "@@@STEP_LOG_LINE@listdir@[START_DIR]/some other dir/b@@@",
+      "@@@STEP_LOG_LINE@listdir@[START_DIR]/some other dir/bb@@@",
+      "@@@STEP_LOG_LINE@listdir@[START_DIR]/some other dir/c@@@",
+      "@@@STEP_LOG_LINE@listdir@[START_DIR]/some other dir/cc@@@",
+      "@@@STEP_LOG_END@listdir@@@"
+    ]
   },
   {
     "cmd": [
@@ -152,7 +161,12 @@
     ],
     "infra_step": true,
     "name": "glob *a",
-    "stdout": "/path/to/tmp/"
+    "stdout": "/path/to/tmp/",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@glob@[START_DIR]/some other dir/a@@@",
+      "@@@STEP_LOG_LINE@glob@[START_DIR]/some other dir/aa@@@",
+      "@@@STEP_LOG_END@glob@@@"
+    ]
   },
   {
     "cmd": [
@@ -208,7 +222,11 @@
     ],
     "infra_step": true,
     "name": "glob *a (2)",
-    "stdout": "/path/to/tmp/"
+    "stdout": "/path/to/tmp/",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@glob@[START_DIR]/some other dir/aa@@@",
+      "@@@STEP_LOG_END@glob@@@"
+    ]
   },
   {
     "cmd": [
@@ -236,7 +254,13 @@
     ],
     "infra_step": true,
     "name": "list new dir (2)",
-    "stdout": "/path/to/tmp/"
+    "stdout": "/path/to/tmp/",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@listdir@[START_DIR]/some other dir/aa@@@",
+      "@@@STEP_LOG_LINE@listdir@[START_DIR]/some other dir/c@@@",
+      "@@@STEP_LOG_LINE@listdir@[START_DIR]/some other dir/cc@@@",
+      "@@@STEP_LOG_END@listdir@@@"
+    ]
   },
   {
     "cmd": [
