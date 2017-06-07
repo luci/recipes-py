@@ -425,6 +425,9 @@ class fakeEnviron(object):
   def __getitem__(self, key):
     return '<%s>' % key
 
+  def keys(self):
+    return self.data.keys()
+
   def __delitem__(self, key):
     self.data[key] = None
 
@@ -695,6 +698,8 @@ def _merge_envs(original, override):
   opposed to overwriting, variables like PATH).
   """
   result = original.copy()
+  subst = (original if isinstance(original, fakeEnviron)
+           else collections.defaultdict(lambda: '', **original))
   if not override:
     return result
   for k, v in override.items():
@@ -702,7 +707,7 @@ def _merge_envs(original, override):
       if k in result:
         del result[k]
     else:
-      result[str(k)] = str(v) % original
+      result[str(k)] = str(v) % subst
   return result
 
 

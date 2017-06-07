@@ -28,6 +28,50 @@
     "name": "with 2 envs"
   },
   {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo $FOO"
+    ],
+    "env": {
+      "FOO": "bar"
+    },
+    "name": "env step"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo $FOO"
+    ],
+    "env": {
+      "FOO": "foo:<FOO>:baz"
+    },
+    "name": "env step augmented"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo $FOO"
+    ],
+    "env": {
+      "FOO": "[START_DIR]/pants:[START_DIR]/shirt:foo:<FOO>:baz"
+    },
+    "name": "env step with prefix"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo $FOO"
+    ],
+    "env": {
+      "FOO": "[START_DIR]/shirt"
+    },
+    "name": "env with default value"
+  },
+  {
     "name": "$result",
     "recipe_result": null,
     "status_code": 0

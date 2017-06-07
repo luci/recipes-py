@@ -21,14 +21,20 @@ def RunSteps(api):
     api.step('default step', ['bash', '-c', 'echo default!'])
 
   # can change cwd
-  api.step('mk subdir', ['mkdir', 'subdir'])
+  api.step('mk subdir', ['mkdir', '-p', 'subdir'])
   with api.context(cwd=api.path['start_dir'].join('subdir')):
     api.step('subdir step', ['bash', '-c', 'pwd'])
     api.step('other subdir step', ['bash', '-c', 'echo hi again!'])
 
-  # can set envvars
-  with api.context(env={'HELLO': 'WORLD', 'HOME': None}):
-    api.step('env step', ['bash', '-c', 'echo $HELLO; echo $HOME'])
+  # can set envvars, and path prefix.
+  with api.context(env={'FOO': 'bar'}):
+    api.step('env step', ['bash', '-c', 'echo $FOO'])
+
+    pants = api.path['start_dir'].join('pants')
+    shirt = api.path['start_dir'].join('shirt')
+    with api.context(env={'FOO': api.context.Prefix(pants, shirt)}):
+      api.step('env step with prefix',
+               ['bash', '-c', 'echo $FOO'])
 
   # %-formats are errors (for now). Double-% escape them.
   bad_examples = ['%format', '%s']

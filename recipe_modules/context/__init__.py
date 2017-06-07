@@ -3,5 +3,5 @@
 # that can be found in the LICENSE file.
 
 DEPS = [
-  "path"
+  'path',
 ]

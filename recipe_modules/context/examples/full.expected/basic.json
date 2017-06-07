@@ -18,6 +18,7 @@
   {
     "cmd": [
       "mkdir",
+      "-p",
       "subdir"
     ],
     "name": "mk subdir"
@@ -44,13 +45,23 @@
     "cmd": [
       "bash",
       "-c",
-      "echo $HELLO; echo $HOME"
+      "echo $FOO"
     ],
     "env": {
-      "HELLO": "WORLD",
-      "HOME": null
+      "FOO": "bar"
     },
     "name": "env step"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo $FOO"
+    ],
+    "env": {
+      "FOO": "[START_DIR]/pants:[START_DIR]/shirt:bar"
+    },
+    "name": "env step with prefix"
   },
   {
     "cmd": [],

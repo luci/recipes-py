@@ -26,6 +26,8 @@ Example:
 
 
 import collections
+import os
+import types
 
 from contextlib import contextmanager
 
@@ -40,7 +42,15 @@ def check_type(name, var, expect):
       name, expect.__name__, var, type(var).__name__))
 
 
+_EnvPathComponent = collections.namedtuple('_EnvPathComponent', (
+    'paths',))
+
+_EnvValue = collections.namedtuple('_EnvValue', (
+    'prefixes', 'str'))
+
+
 class ContextApi(RecipeApi):
+
   # TODO(iannucci): move implementation of these data directly into this class.
   def __init__(self, **kwargs):
     super(RecipeApi, self).__init__(**kwargs)
@@ -88,37 +98,24 @@ class ContextApi(RecipeApi):
     Environmental Variable Overrides:
 
     Env is a mapping of environment variable name to the value you want that
-    environment variable to have. The value is a string, with a couple
-    exceptions:
-      * If value is None, this environment variable will be removed from the
-        environment when the step runs.
-      * String values will be %-formatted with the current value of the
-        environment at the time the step runs. This means that you can have
-        a value like:
-          "/path/to/my/stuff:%(PATH)s"
+    environment variable to have. The value is one of:
+      * None, indicating that the environment variable should be removed from
+        the environment when the step runs.
+      * A string value. Note that string values will be %-formatted with the
+        current value of the environment at the time the step runs. This means
+        that you can have a value like:
+            "/path/to/my/stuff:%(PATH)s"
         Which, at the time the step executes, will inject the current value of
         $PATH.
+      * A sentinel value such as Prefix to attach a specific component to a
+        pathsep-delimited list variable.
 
-    TODO(iannucci): implement env_paths which allows for easier manipulation of
-    `pathsep` environment variables like $PATH, $PYTHONPATH, etc.
+    TODO(iannucci,dnj): Disallow "env" values to be mixes of string or
+    Prefix/Suffix.
 
     TODO(iannucci): combine nest_level and name_prefix
 
-    Example:
-      # suppose the OS's envar $OTHER is set to "yes"
-      with api.context(env={'ENV_VAR': 'something:%(OTHER)s'}):
-        # environment updates are additive.
-        with api.context(env={'OTHER': 'cool:%(OTHER)s'}):
-          # echos 'something:yes'
-          # Note that the substitution always happens with the system
-          # environment, not any of the computed environment here.
-          api.step("check $ENV_VAR", ['bash', '-c', 'echo $ENV_VAR'])
-          # echos 'cool:yes'
-          api.step("check $OTHER", ['bash', '-c', 'echo $OTHER'])
-
-        with api.context(env={'OTHER': None}):
-          # echos ''
-          api.step("check $OTHER", ['bash', '-c', 'echo $OTHER'])
+    Look at the examples in "examples/" for examples of context module usage.
     """
     to_pop = []
 
@@ -154,23 +151,30 @@ class ContextApi(RecipeApi):
       new = dict(self._env[-1])
       for k, v in env.iteritems():
         k = str(k)
+        ev = new.get(k)
+        if ev is None:
+          ev = _EnvValue(prefixes=(), str=None)
         if v is not None:
-          v = str(v)
-          try:
-            # This odd little piece of code does the following:
-            #   * add a bogus dictionary format %(foo)s to v. This forces % into
-            #     'dictionary lookup' mode
-            #   * format the result with a defaultdict. This allows all
-            #     `%(key)s` format lookups to succeed, but any sequential `%s`
-            #     lookups to fail.
-            # If the string contains any accidental sequential lookups, this
-            # will raise an exception. If not, then this is a pluasible format
-            # string.
-            ('%(foo)s'+v) % collections.defaultdict(str)
-          except Exception:
-            raise ValueError(('Invalid %%-formatting parameter in envvar, '
-                              'only %%(ENVVAR)s allowed: %r') % (v,))
-        new[k] = v
+          if isinstance(v, _EnvPathComponent):
+            ev = ev._replace(prefixes=v.paths+ev.prefixes)
+          else:
+            v = str(v)
+            try:
+              # This odd little piece of code does the following:
+              #   * add a bogus dictionary format %(foo)s to v. This forces %
+              #     into 'dictionary lookup' mode
+              #   * format the result with a defaultdict. This allows all
+              #     `%(key)s` format lookups to succeed, but any sequential `%s`
+              #     lookups to fail.
+              # If the string contains any accidental sequential lookups, this
+              # will raise an exception. If not, then this is a pluasible format
+              # string.
+              ('%(foo)s'+v) % collections.defaultdict(str)
+            except Exception:
+              raise ValueError(('Invalid %%-formatting parameter in envvar, '
+                                'only %%(ENVVAR)s allowed: %r') % (v,))
+            ev = ev._replace(str=v)
+        new[k] = ev
       self._env.append(new)
       to_pop.append(self._env)
 
@@ -203,7 +207,14 @@ class ContextApi(RecipeApi):
     """
     # TODO(iannucci): store env in an immutable way to avoid excessive copies.
     # TODO(iannucci): handle case-insensitive keys on windows
-    return dict(self._env[-1])
+    def parts(ev):
+      for p in ev.prefixes:
+        yield str(p)
+      if ev.str is not None:
+        yield ev.str
+
+    return {k: self.m.path.pathsep.join(parts(ev))
+            for k, ev in self._env[-1].iteritems()}
 
   @property
   def infra_step(self):
@@ -232,3 +243,18 @@ class ContextApi(RecipeApi):
     Returns (int) - The current nesting level.
     """
     return self._nest_level[-1]
+
+  def Prefix(self, *paths):
+    """Returns: an assignable "env" value that prefixes the specified paths to
+    the beginning of an environment variable.
+
+    Each path in paths is added, in order, as a prefix to the environment
+    variable, delimited by the OS path separator. This can be used for
+    easy manipulation of path environment variables such as PATH and PYTHONPATH.
+
+    Args:
+      paths (...Path): The list of paths to prefix.
+    """
+    for i, path in enumerate(paths):
+        check_type('path element %d' % (i,), path, Path)
+    return _EnvPathComponent(paths=paths)
