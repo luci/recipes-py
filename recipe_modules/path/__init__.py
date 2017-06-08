@@ -19,6 +19,8 @@ PROPERTIES = {
       temp_dir=Single(str),
       # The absolute path to the cache directory that the recipe should use.
       cache_dir=Single(str),
+      # The absolute path to the cleanup directory that the recipe should use.
+      cleanup_dir=Single(str),
     ), default={},
   )
 }

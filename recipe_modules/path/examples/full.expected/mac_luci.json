@@ -85,6 +85,34 @@
   {
     "cmd": [
       "echo",
+      "[START_DIR]"
+    ],
+    "name": "base path (start_dir)"
+  },
+  {
+    "cmd": [
+      "echo",
+      "[TMP_BASE]"
+    ],
+    "name": "base path (tmp_base)"
+  },
+  {
+    "cmd": [
+      "echo",
+      "[CACHE]"
+    ],
+    "name": "base path (cache)"
+  },
+  {
+    "cmd": [
+      "echo",
+      "[CLEANUP]"
+    ],
+    "name": "base path (cleanup)"
+  },
+  {
+    "cmd": [
+      "echo",
       "[START_DIR]/some/thing"
     ],
     "name": "converted path [START_DIR]/some/thing"

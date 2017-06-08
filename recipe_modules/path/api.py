@@ -208,6 +208,7 @@ class PathApi(recipe_api.RecipeApi):
       'START_DIR': self._startup_cwd,
       'TEMP_DIR': self._temp_dir,
       'CACHE_DIR': self._cache_dir,
+      'CLEANUP_DIR': self._cleanup_dir,
     }
 
   def __init__(self, path_properties, **kwargs):
@@ -246,21 +247,31 @@ class PathApi(recipe_api.RecipeApi):
     if not self._test_data.enabled:  # pragma: no cover
       self._path_mod = os.path
       # Capture the cwd on process start to avoid shenanigans.
-      self._startup_cwd = _split_path(os.getcwd())
+      cwd = os.getcwd()
+      self._startup_cwd = _split_path(cwd)
 
       tmp_dir = self._read_path('temp_dir', tempfile.gettempdir())
       self._ensure_dir(tmp_dir)
       self._temp_dir = _split_path(tmp_dir)
 
-      cache_dir = self._read_path('cache_dir', os.path.join(os.getcwd(), 'cache'))
+      cache_dir = self._read_path('cache_dir', os.path.join(cwd, 'cache'))
       self._ensure_dir(cache_dir)
       self._cache_dir = _split_path(cache_dir)
+
+      # If no cleanup directory is specified, assume that any directory
+      # underneath of the working directory is transient and will be purged in
+      # between builds.
+      cleanup_dir = self._read_path('cleanup_dir',
+          os.path.join(cwd, 'recipe_cleanup'))
+      self._ensure_dir(cleanup_dir)
+      self._cleanup_dir = _split_path(cleanup_dir)
     else:
       self._path_mod = fake_path(self, self._test_data.get('exists', []))
       self._startup_cwd = ['/', 'b', 'FakeTestingCWD']
       # Appended to placeholder '[TMP]' to get fake path in test.
       self._temp_dir = ['/']
       self._cache_dir = ['/', 'b', 'c']
+      self._cleanup_dir = ['/', 'b', 'cleanup']
 
     self.set_config('BASE')
 
