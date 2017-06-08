@@ -32,7 +32,7 @@
       "{\"something\":[true,true]}"
     ],
     "env": {
-      "PYTHONUNBUFFERED": ""
+      "PYTHONUNBUFFERED": null
     },
     "name": "run json.tool"
   },

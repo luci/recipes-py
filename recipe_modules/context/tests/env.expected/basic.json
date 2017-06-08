@@ -72,6 +72,17 @@
     "name": "env with default value"
   },
   {
+    "cmd": [
+      "bash",
+      "-c",
+      "set"
+    ],
+    "env": {
+      "PYTHONPATH": null
+    },
+    "name": "drop PYTHONPATH"
+  },
+  {
     "name": "$result",
     "recipe_result": null,
     "status_code": 0

@@ -45,8 +45,10 @@ def check_type(name, var, expect):
 _EnvPathComponent = collections.namedtuple('_EnvPathComponent', (
     'paths',))
 
+# prefixes is a list of strings
+# value is either a string or None
 _EnvValue = collections.namedtuple('_EnvValue', (
-    'prefixes', 'str'))
+    'prefixes', 'value'))
 
 
 class ContextApi(RecipeApi):
@@ -151,10 +153,10 @@ class ContextApi(RecipeApi):
       new = dict(self._env[-1])
       for k, v in env.iteritems():
         k = str(k)
-        ev = new.get(k)
-        if ev is None:
-          ev = _EnvValue(prefixes=(), str=None)
-        if v is not None:
+        if v is None:
+          ev = _EnvValue(prefixes=(), value=None)
+        else:
+          ev = new.get(k, _EnvValue(prefixes=(), value=''))
           if isinstance(v, _EnvPathComponent):
             ev = ev._replace(prefixes=v.paths+ev.prefixes)
           else:
@@ -173,7 +175,7 @@ class ContextApi(RecipeApi):
             except Exception:
               raise ValueError(('Invalid %%-formatting parameter in envvar, '
                                 'only %%(ENVVAR)s allowed: %r') % (v,))
-            ev = ev._replace(str=v)
+            ev = ev._replace(value=v)
         new[k] = ev
       self._env.append(new)
       to_pop.append(self._env)
@@ -210,11 +212,17 @@ class ContextApi(RecipeApi):
     def parts(ev):
       for p in ev.prefixes:
         yield str(p)
-      if ev.str is not None:
-        yield ev.str
+      if ev.value:
+        yield ev.value
 
-    return {k: self.m.path.pathsep.join(parts(ev))
-            for k, ev in self._env[-1].iteritems()}
+    ret = {}
+    for k, ev in self._env[-1].iteritems():
+      if ev.value is None:
+        ret[k] = None
+      else:
+        ret[k] = self.m.path.pathsep.join(parts(ev))
+
+    return ret
 
   @property
   def infra_step(self):

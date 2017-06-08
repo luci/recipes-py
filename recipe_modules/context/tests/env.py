@@ -35,6 +35,10 @@ def RunSteps(api):
     api.step('env with default value',
              ['bash', '-c', 'echo $FOO'])
 
+  # Can cause envvars to be dropped completely.
+  with api.context(env={"PYTHONPATH": None}):
+    api.step('drop PYTHONPATH', ['bash', '-c', 'set'])
+
 
 def GenTests(api):
   yield api.test('basic')
