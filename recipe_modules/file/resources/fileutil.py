@@ -86,11 +86,15 @@ def _RmTree(path):
       time.sleep(3)
     return
 
+  # If we call "rmtree" on a file, just delete it.
+  if not os.path.isdir(path):
+    os.remove(path)
+    return
+
   def RemoveWithRetry_non_win(rmfunc, path):
     if os.path.islink(path):
       return os.remove(path)
-    else:
-      return rmfunc(path)
+    return rmfunc(path)
 
   remove_with_retry = RemoveWithRetry_non_win
 
