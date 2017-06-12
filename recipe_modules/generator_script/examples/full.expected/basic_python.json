@@ -27,9 +27,6 @@
       "echo",
       "mock step python"
     ],
-    "env": {
-      "FOO": "bar"
-    },
     "name": "mock.step.python"
   },
   {

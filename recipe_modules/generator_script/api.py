@@ -5,7 +5,7 @@
 from recipe_engine import recipe_api
 
 class GeneratorScriptApi(recipe_api.RecipeApi):
-  def __call__(self, path_to_script, *args, **kwargs):
+  def __call__(self, path_to_script, *args):
     """Run a script and generate the steps emitted by that script.
 
     The script will be invoked with --output-json /path/to/file.json. The script
@@ -25,13 +25,7 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
        % operator, so a value of "%(PATH)s:/some/other/path" would resolve to
        the current PATH value, concatenated with ":/some/other/path"
 
-      ok_ret: a list of non-error return codes. This defaults to [0]
-
-      infra_step: a bool which indicates that failures in this step are 'infra'
-        failures and should abort with a purple coloration instead red.
-
-      step_nest_level: an integer which indicates that this step should appear
-        on the build status page with this indentation level.
+      cwd: an absolute path to the current working directory for this script.
 
       always_run: a bool which indicates that this step should run, even if
         some previous step failed.
@@ -51,51 +45,45 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
             via the status page. There is intentionally no mechanism to read
             them back from inside of the recipes.
 
-    kwargs:
-      env - The environment for the generated steps.
+      allow_subannotations: allow this step to emit legacy buildbot
+        subannotations. If you don't know what this is, you shouldn't use it. If
+        you know what it is, you also shouldn't use it.
     """
     f = '--output-json'
     step_name = 'gen step(%s)' % self.m.path.basename(path_to_script)
 
-    step_test_data = kwargs.pop('step_test_data', None)
     with self.m.context(cwd=self.m.path['checkout']):
       if str(path_to_script).endswith('.py'):
         step_result = self.m.python(
           step_name,
-          path_to_script, list(args) + [f, self.m.json.output()],
-          step_test_data=step_test_data)
+          path_to_script, list(args) + [f, self.m.json.output()])
       else:
         step_result = self.m.step(
           step_name,
-          [path_to_script,] + list(args) + [f, self.m.json.output()],
-          step_test_data=step_test_data)
+          [path_to_script,] + list(args) + [f, self.m.json.output()])
     new_steps = step_result.json.output
     assert isinstance(new_steps, list), new_steps
-    env = kwargs.get('env')
 
     failed_steps = []
     for step in new_steps:
-      assert all([ isinstance(arg, basestring) for arg in step['cmd']]), (
-        step['cmd'])
+      cmd = step['cmd']
+      assert all(isinstance(arg, basestring) for arg in cmd), cmd
 
-      if env:
-        new_env = dict(env)
-        new_env.update(step.get('env', {}))
-        step['env'] = new_env
       outputs_json = step.pop('outputs_presentation_json', False)
       if outputs_json:
         # This step has requested a JSON file which the binary that
         # it invokes can write to, so provide it with one.
-        step['cmd'].extend(['--presentation-json', self.m.json.output(False)])
+        cmd.extend(['--presentation-json', self.m.json.output(False)])
 
-      #TODO(martiniss) change this to use a regular step call
-      step['ok_ret'] = set(step.pop('ok_ret', {0}))
-      step['infra_step'] = bool(step.pop('infra_step', False))
-      step['step_nest_level'] = step.pop('step_nest_level', 0)
-
-      if step.pop('always_run', False) or not failed_steps:
+      if not failed_steps or step.get('always_run'):
         try:
-          self.m.step.run_from_dict(step)
+          cwd = self.m.path.abs_to_path(step['cwd']) if 'cwd' in step else None
+          with self.m.context(env=step.get('env'), cwd=cwd):
+            self.m.step(
+              step['name'], cmd,
+              allow_subannotations=bool(step.get(
+                'allow_subannotations', False)),
+            )
         except self.m.step.StepFailure:
           failed_steps.append(step['name'])
         finally:

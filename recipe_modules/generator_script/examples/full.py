@@ -14,14 +14,12 @@ DEPS = [
 
 PROPERTIES = {
   'script_name': Property(kind=str),
-  'script_env': Property(default=None, kind=dict),
 }
 
-def RunSteps(api, script_name, script_env):
+def RunSteps(api, script_name):
   api.path['checkout'] = api.path['tmp_base']
   script_name = api.properties['script_name']
-  script_env = api.properties.get('script_env')
-  api.generator_script(script_name, env=script_env)
+  api.generator_script(script_name)
 
 def GenTests(api):
   yield (
@@ -35,7 +33,7 @@ def GenTests(api):
 
   yield (
     api.test('basic_python') +
-    api.properties(script_name="bogus.py", script_env={'FOO': 'bar'}) +
+    api.properties(script_name="bogus.py") +
     api.generator_script(
       'bogus.py',
       {'name': 'mock.step.python', 'cmd': ['echo', 'mock step python']},
@@ -70,20 +68,6 @@ def GenTests(api):
        'always_run': True},
     ) +
     api.step_data('fails', retcode=1)
-  )
-
-  yield (
-    api.test('nested') +
-    api.properties(script_name='nested.py') +
-    api.generator_script(
-      'nested.py',
-      {'name': 'grandparent', 'cmd': ['echo', 'grandparent']},
-      {'name': 'parent', 'step_nest_level': 1, 'cmd': ['echo', 'parent']},
-      {'name': 'child', 'step_nest_level': 2, 'cmd': ['echo', 'child']},
-      {'name': 'sibling', 'step_nest_level': 2, 'cmd': ['echo', 'sibling']},
-      {'name': 'uncle', 'step_nest_level': 1, 'cmd': ['echo', 'uncle']},
-      {'name': 'cousin', 'step_nest_level': 2, 'cmd': ['echo', 'cousin']},
-    )
   )
 
   yield (
