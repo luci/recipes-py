@@ -5,6 +5,32 @@
 from recipe_engine import recipe_api
 
 class GeneratorScriptApi(recipe_api.RecipeApi):
+  ALLOWED_KEYS = frozenset([
+    # supported by step module
+    'name', 'cmd', 'env', 'cwd', 'allow_subannotations',
+
+    # implemented by GeneratorScriptApi
+    'always_run', 'outputs_presentation_json',
+  ])
+
+  class UnknownKey(recipe_api.StepFailure):
+    def __init__(self, step_name, bad_keys):
+      reason = 'Step(%r) generated step with bad keys %r' % (
+        step_name, bad_keys)
+      super(GeneratorScriptApi.UnknownKey, self).__init__(reason)
+      self.bad_keys = frozenset(bad_keys)
+
+  class MalformedStepList(recipe_api.StepFailure):
+    def __init__(self, step_name):
+      super(GeneratorScriptApi.MalformedStepList, self).__init__(
+        'Step(%r) generated non-list JSON output' % (step_name,))
+
+  class MalformedCmd(recipe_api.StepFailure):
+    def __init__(self, step_name):
+      super(GeneratorScriptApi.MalformedCmd, self).__init__(
+        'Step(%r) generated step with "cmd" containing non-strings' % (
+          step_name,))
+
   def __call__(self, path_to_script, *args):
     """Run a script and generate the steps emitted by that script.
 
@@ -62,12 +88,21 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
           step_name,
           [path_to_script,] + list(args) + [f, self.m.json.output()])
     new_steps = step_result.json.output
-    assert isinstance(new_steps, list), new_steps
+    if not isinstance(new_steps, list):
+      # pylint: disable=nonstandard-exception
+      raise self.MalformedStepList(step_name)
 
     failed_steps = []
     for step in new_steps:
+      diff = set(step) - self.ALLOWED_KEYS
+      if diff:
+        # pylint: disable=nonstandard-exception
+        raise self.UnknownKey(step_name, diff)
+
       cmd = step['cmd']
-      assert all(isinstance(arg, basestring) for arg in cmd), cmd
+      if not all(isinstance(arg, basestring) for arg in cmd):
+        # pylint: disable=nonstandard-exception
+        raise self.MalformedCmd(step_name)
 
       outputs_json = step.pop('outputs_presentation_json', False)
       if outputs_json:

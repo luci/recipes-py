@@ -71,10 +71,25 @@ def GenTests(api):
   )
 
   yield (
+    api.test('malformed_list') +
+    api.properties(script_name='not_list.py') +
+    api.step_data(
+      'gen step(not_list.py)',
+      api.json.output({'not': 'a list'}))
+  )
+
+  yield (
     api.test('malformed_command') +
     api.properties(script_name='malformed.py') +
     api.generator_script(
       'malformed.py',
-      {'name': 'run', 'cmd': ['echo', 'there are', 4, 'cows']}) +
-    api.expect_exception('AssertionError')
+      {'name': 'run', 'cmd': ['echo', 'there are', 4, 'cows']})
+  )
+
+  yield (
+    api.test('bad_key') +
+    api.properties(script_name='bad_key.py') +
+    api.generator_script(
+      'bad_key.py',
+      {'name': 'whatever', 'bad': 'key'})
   )

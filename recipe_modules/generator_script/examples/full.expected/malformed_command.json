@@ -26,7 +26,8 @@
   },
   {
     "name": "$result",
-    "reason": "Uncaught Exception: AssertionError(['echo', 'there are', 4, 'cows'],)",
-    "status_code": -1
+    "reason": "Step('gen step(malformed.py)') generated step with \"cmd\" containing non-strings",
+    "recipe_result": null,
+    "status_code": 1
   }
 ]
