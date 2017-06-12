@@ -192,6 +192,8 @@ class PathApi(recipe_api.RecipeApi):
 
   def get_config_defaults(self):
     return {
+      # Needed downstream in depot_tools
+      'PLATFORM': self.m.platform.name,
       'START_DIR': self._startup_cwd,
       'TEMP_DIR': self._temp_dir,
       'CACHE_DIR': self._cache_dir,
