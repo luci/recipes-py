@@ -161,19 +161,6 @@ class fake_path(object):
     return path.replace('~', '[HOME]')
 
 
-def _split_path(path):  # pragma: no cover
-  """Relative or absolute path -> tuple of components."""
-  abs_path = os.path.abspath(path).split(os.path.sep)
-  # Guarantee that the first element is an absolute drive or the posix root.
-  if abs_path[0].endswith(':'):
-    abs_path[0] += '\\'
-  elif abs_path[0] == '':
-    abs_path[0] = '/'
-  else:
-    assert False, 'Got unexpected path format: %r' % abs_path
-  return abs_path
-
-
 class PathApi(recipe_api.RecipeApi):
   """
   PathApi provides common os.path functions as well as convenience functions
@@ -194,6 +181,7 @@ class PathApi(recipe_api.RecipeApi):
 
   _paths_client = recipe_api.RequireClient('paths')
 
+  # Attribute accesses that we pass through to our "_path_mod" module.
   OK_ATTRS = ('pardir', 'sep', 'pathsep')
 
   # Because the native 'path' type in python is a str, we filter the *args
@@ -204,7 +192,6 @@ class PathApi(recipe_api.RecipeApi):
 
   def get_config_defaults(self):
     return {
-      'PLATFORM': self.m.platform.name,
       'START_DIR': self._startup_cwd,
       'TEMP_DIR': self._temp_dir,
       'CACHE_DIR': self._cache_dir,
@@ -218,6 +205,13 @@ class PathApi(recipe_api.RecipeApi):
     config_types.NamedBasePath.set_path_api(self)
 
     self._path_properties = path_properties
+
+    # Assigned at "initialize".
+    self._path_mod = None # NT or POSIX path module, or "os.path" in prod.
+    self._start_dir = None
+    self._temp_dir = None
+    self._cache_dir = None
+    self._cleanup_dir = None
 
     # Used in mkdtemp when generating and checking expectations.
     self._test_counter = 0
@@ -243,20 +237,32 @@ class PathApi(recipe_api.RecipeApi):
     except os.error:
       pass # Perhaps already exists.
 
+  def _split_path(self, path):  # pragma: no cover
+    """Relative or absolute path -> tuple of components."""
+    abs_path = os.path.abspath(path).split(self.sep)
+    # Guarantee that the first element is an absolute drive or the posix root.
+    if abs_path[0].endswith(':'):
+      abs_path[0] += '\\'
+    elif abs_path[0] == '':
+      abs_path[0] = '/'
+    else:
+      assert False, 'Got unexpected path format: %r' % abs_path
+    return abs_path
+
   def initialize(self):
     if not self._test_data.enabled:  # pragma: no cover
       self._path_mod = os.path
       # Capture the cwd on process start to avoid shenanigans.
       cwd = os.getcwd()
-      self._startup_cwd = _split_path(cwd)
+      self._startup_cwd = self._split_path(cwd)
 
       tmp_dir = self._read_path('temp_dir', tempfile.gettempdir())
       self._ensure_dir(tmp_dir)
-      self._temp_dir = _split_path(tmp_dir)
+      self._temp_dir = self._split_path(tmp_dir)
 
       cache_dir = self._read_path('cache_dir', os.path.join(cwd, 'cache'))
       self._ensure_dir(cache_dir)
-      self._cache_dir = _split_path(cache_dir)
+      self._cache_dir = self._split_path(cache_dir)
 
       # If no cleanup directory is specified, assume that any directory
       # underneath of the working directory is transient and will be purged in
@@ -264,14 +270,16 @@ class PathApi(recipe_api.RecipeApi):
       cleanup_dir = self._read_path('cleanup_dir',
           os.path.join(cwd, 'recipe_cleanup'))
       self._ensure_dir(cleanup_dir)
-      self._cleanup_dir = _split_path(cleanup_dir)
+      self._cleanup_dir = self._split_path(cleanup_dir)
     else:
       self._path_mod = fake_path(self, self._test_data.get('exists', []))
-      self._startup_cwd = ['/', 'b', 'FakeTestingCWD']
+
+      root = 'C:\\' if self.m.platform.is_win else '/'
+      self._startup_cwd = [root, 'b', 'FakeTestingCWD']
       # Appended to placeholder '[TMP]' to get fake path in test.
-      self._temp_dir = ['/']
-      self._cache_dir = ['/', 'b', 'c']
-      self._cleanup_dir = ['/', 'b', 'cleanup']
+      self._temp_dir = [root]
+      self._cache_dir = [root, 'b', 'c']
+      self._cleanup_dir = [root, 'b', 'cleanup']
 
     self.set_config('BASE')
 
@@ -305,7 +313,7 @@ class PathApi(recipe_api.RecipeApi):
       # New path as str.
       new_path = tempfile.mkdtemp(prefix=prefix, dir=str(self['tmp_base']))
       # Ensure it's under self._temp_dir, convert to Path.
-      new_path = _split_path(new_path)
+      new_path = self._split_path(new_path)
       assert new_path[:len(self._temp_dir)] == self._temp_dir
       temp_dir = self['tmp_base'].join(*new_path[len(self._temp_dir):])
     else:

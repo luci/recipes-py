@@ -85,30 +85,16 @@
   {
     "cmd": [
       "echo",
-      "[START_DIR]"
-    ],
-    "name": "base path (start_dir)"
-  },
-  {
-    "cmd": [
-      "echo",
+      "[CACHE]",
+      "[CLEANUP]",
+      "[START_DIR]",
       "[TMP_BASE]"
     ],
-    "name": "base path (tmp_base)"
-  },
-  {
-    "cmd": [
-      "echo",
-      "[CACHE]"
-    ],
-    "name": "base path (cache)"
-  },
-  {
-    "cmd": [
-      "echo",
-      "[CLEANUP]"
-    ],
-    "name": "base path (cleanup)"
+    "name": "base paths",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@result@base_paths: {'start_dir': ('/', 'b', 'FakeTestingCWD'), 'cleanup': ('/', 'b', 'cleanup'), 'cache': ('/', 'b', 'c'), 'tmp_base': ('/',)}@@@",
+      "@@@STEP_LOG_END@result@@@"
+    ]
   },
   {
     "cmd": [

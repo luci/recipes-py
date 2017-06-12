@@ -77,8 +77,12 @@ def RunSteps(api):
   api.path.mock_remove_paths(copy2)
   assert not api.path.exists(copy2)
 
-  for name in ('start_dir', 'tmp_base', 'cache', 'cleanup'):
-    api.step('base path (%s)' % (name,), ['echo', api.path[name]])
+  result = api.step('base paths', ['echo'] + [
+      api.path[name] for name in sorted(api.path.c.base_paths.keys())
+  ])
+  result.presentation.logs['result'] = [
+      'base_paths: %r' % (api.path.c.base_paths,),
+  ]
 
   # Convert strings to Paths
   paths_to_convert =  [
