@@ -145,7 +145,7 @@ if __name__ == '__main__':
 # [VPYTHON:BEGIN]
 #
 # wheel: <
-#   name: "infra/python/wheels/cryptography/${platform}_${py_version}_${py_abi}"
+#   name: "infra/python/wheels/cryptography/${platform}_${py_python}_${py_abi}"
 #   version: "version:1.8.1"
 # >
 #
@@ -165,7 +165,7 @@ if __name__ == '__main__':
 # >
 #
 # wheel: <
-#   name: "infra/python/wheels/cffi/${platform}_${py_version}_${py_abi}"
+#   name: "infra/python/wheels/cffi/${platform}_${py_python}_${py_abi}"
 #   version: "version:1.10.0"
 # >
 #
