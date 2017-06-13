@@ -92,7 +92,7 @@ class StepRunner(object):
     """Constructs an OpenStep object which can be used to actually run a step.
 
     Args:
-      step_config (StepConfig): The step data.
+      step_config (recipe_api.StepClient.StepConfig): The step data.
 
     Returns: an OpenStep object.
     """
@@ -549,7 +549,7 @@ Placeholders = collections.namedtuple('Placeholders',
 # Result of 'render_step'.
 #
 # Fields:
-#   config (recipe_api.StepConfig): The step configuration.
+#   config (recipe_api.StepClient.StepConfig): The step configuration.
 #   placeholders (Placeholders): Placeholders for this rendered step.
 #   followup_annotations (list): A list of followup annotation, populated during
 #       simulation test.
@@ -565,7 +565,7 @@ def render_step(step_config, step_test):
   """Renders a step so that it can be fed to annotator.py.
 
   Args:
-    step_config (StepConfig): The step config to render.
+    step_config (recipe_api.StepClient.StepConfig): The step config to render.
     step_test: The test data json dictionary for this step, if any.
                Passed through unaltered to each placeholder.
 

@@ -261,7 +261,7 @@ class StreamEngineTest(unittest.TestCase):
   def _step_stream(self, se, **kwargs):
     # Initialize and yield a new step stream.
     self._advance_time()
-    step_stream = se.new_step_stream(recipe_api.StepConfig.create(**kwargs))
+    step_stream = se.new_step_stream(recipe_api.StepClient.StepConfig(**kwargs))
     yield step_stream
 
     # Close the step stream when we're done with it.
@@ -662,20 +662,20 @@ class StreamEngineTest(unittest.TestCase):
       # parent."child 1"
       with self._step_stream(se,
           name='child 1',
-          step_nest_level=1) as step:
+          nest_level=1) as step:
         step.write_line('I am child #1.')
 
       # parent."child 1"."grandchild"
       with self._step_stream(se,
           name='grandchild',
-          step_nest_level=2) as step:
+          nest_level=2) as step:
         step.write_line("I am child #1's child.")
 
       # parent."child 2". Mark this child as failed. This should not propagate
       # to the parent, since it has an explicit status.
       with self._step_stream(se,
           name='child 2',
-          step_nest_level=1) as step:
+          nest_level=1) as step:
         step.write_line('I am child #2.')
 
       # parent."child 2". Mark this child as failed. This should not propagate
@@ -770,7 +770,7 @@ class StreamEngineTest(unittest.TestCase):
   def testNoSubannotations(self):
     with self._new_stream_engine(ignore_triggers=True) as se:
       with self.assertRaises(NotImplementedError):
-        se.new_step_stream(recipe_api.StepConfig.create(
+        se.new_step_stream(recipe_api.StepClient.StepConfig(
             name='uses subannotations',
             allow_subannotations=True,
         ))
@@ -963,22 +963,22 @@ class AnnotationStateTest(unittest.TestCase):
   def testCanCreateAndGetStep(self):
     # Root step.
     base = self.astate.base
-    self.astate.create_step(recipe_api.StepConfig.create(name='first'))
+    self.astate.create_step(recipe_api.StepClient.StepConfig(name='first'))
     self.assertEqual(len(base.substep), 1)
     self.assertEqual(base.substep[0].step.name, 'first')
     self.assertIsNotNone(self.astate.check())
 
     # Child step.
-    self.astate.create_step(recipe_api.StepConfig.create(
+    self.astate.create_step(recipe_api.StepClient.StepConfig(
       name='first child',
-      step_nest_level=1))
+      nest_level=1))
     self.assertEqual(len(base.substep), 1)
     self.assertEqual(len(base.substep[0].step.substep), 1)
     self.assertEqual(base.substep[0].step.substep[0].step.name, 'first child')
     self.assertIsNotNone(self.astate.check())
 
     # Sibling step to 'first'.
-    self.astate.create_step(recipe_api.StepConfig.create(name='second'))
+    self.astate.create_step(recipe_api.StepClient.StepConfig(name='second'))
     self.assertEqual(len(base.substep), 2)
     self.assertEqual(base.substep[1].step.name, 'second')
     self.assertIsNotNone(self.astate.check())

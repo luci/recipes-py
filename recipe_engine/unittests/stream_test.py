@@ -37,7 +37,7 @@ class StreamTest(unittest.TestCase):
     bars_baby = engine.make_step_stream(
         'bar\'s baby',
         allow_subannotations=True,
-        step_nest_level=1)
+        nest_level=1)
     bars_baby.write_line('I\'m in bar\'s imagination!!')
     bars_baby.write_line('@@@STEP_WARNINGS@@@')
     bars_baby.reset_subannotation_state()

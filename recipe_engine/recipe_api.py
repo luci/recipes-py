@@ -16,8 +16,7 @@ from functools import wraps
 
 from .recipe_test_api import DisabledTestData, ModuleTestData
 from .config import Single
-
-from .util import ModuleInjectionSite
+from .util import ModuleInjectionSite, Placeholder
 
 
 class UnknownRequirementError(object):
@@ -172,133 +171,20 @@ class StepClient(object):
 
   IDENT = 'step'
 
-  def __init__(self, engine):
-    self._engine = engine
 
-  def previous_step_result(self):
-    """Allows api.step to get the active result from any context.
+  class StepConfig(collections.namedtuple('_StepConfig', (
+      'name', 'base_name', 'cmd', 'cwd', 'env', 'allow_subannotations',
+      'trigger_specs', 'timeout', 'infra_step', 'stdout', 'stderr', 'stdin',
+      'ok_ret', 'step_test_data', 'nest_level'))):
 
-    This always returns the innermost nested step that is still open --
-    presumably the one that just failed if we are in an exception handler."""
-    if not self._engine._step_stack:
-      raise ValueError(
-          'No steps have been run yet, and you are asking for a previous step '
-          'result.')
-    return self._engine._step_stack[-1].step_result
-
-  def run_step(self, step_dict):
     """
-    Runs a step.
+    StepConfig is the representation of a raw step as the recipe_engine sees it.
+    You should use the standard 'step' recipe module, which will construct and
+    pass this data to the engine for you, instead. The only reason why you would
+    need to worry about this object is if you're modifying the step module
+    itself.
 
-    Args:
-      step_dict (dict): A step dictionary to run.
-
-    Returns:
-      A StepData object containing the result of running the step.
-    """
-    return self._engine.run_step(StepConfig.create(**step_dict))
-
-
-class DependencyManagerClient(object):
-  """A recipe engine client representing the dependency manager."""
-
-  IDENT = 'dependency_manager'
-
-  def __init__(self, engine):
-    self._engine = engine
-
-  def depend_on(self, recipe, properties, **kwargs):
-    return self._engine.depend_on(recipe, properties, **kwargs)
-
-
-_TriggerSpec = collections.namedtuple('_TriggerSpec',
-    ('bucket', 'builder_name', 'properties', 'buildbot_changes', 'tags',
-     'critical'))
-
-class TriggerSpec(_TriggerSpec):
-  """
-  TriggerSpec is the internal representation of a raw trigger step. You should
-  use the standard 'step' recipe module, which will construct trigger specs
-  via API.
-  """
-
-  @classmethod
-  def _create(cls, builder_name, bucket=None, properties=None,
-              buildbot_changes=None, tags=None, critical=None):
-    """Creates a new TriggerSpec instance from its step API dictionary
-    keys/values.
-
-    Args:
-      builder_name (str): The name of the builder to trigger.
-      bucket (str or None): The name of the trigger bucket.
-      properties (dict or None): Key/value properties dictionary.
-      buildbot_changes (list or None): Optional list of BuildBot change dicts.
-      tags (list or None): Optional list of tag strings.
-      critical (bool or None): If true and triggering fails asynchronously, fail
-          the entire build. If None, the step defaults to being True.
-    """
-    if not isinstance(buildbot_changes, (types.NoneType, list)):
-      raise ValueError('buildbot_changes must be a list')
-
-    return cls(
-        bucket=bucket,
-        builder_name=builder_name,
-        properties=properties,
-        buildbot_changes=buildbot_changes,
-        tags=tags,
-        critical=bool(critical) if critical is not None else (True),
-    )
-
-  def _render_to_dict(self):
-    d = dict((k, v) for k, v in self._asdict().iteritems() if v)
-    if d['critical']:
-      d.pop('critical')
-    return d
-
-
-_StepConfig = collections.namedtuple('_StepConfig',
-    ('name', 'base_name', 'cmd', 'cwd', 'env', 'allow_subannotations',
-     'trigger_specs', 'timeout', 'infra_step', 'stdout', 'stderr', 'stdin',
-     'ok_ret', 'step_test_data', 'nest_level'))
-
-class StepConfig(_StepConfig):
-  """
-  StepConfig is the representation of a raw step as the recipe_engine sees it.
-  You should use the standard 'step' recipe module, which will construct and
-  pass this data to the engine for you, instead. The only reason why you would
-  need to worry about this object is if you're modifying the step module itself.
-
-  The optional "env" parameter provides optional overrides for environment
-  variables. Each value is % formatted with the entire existing os.environ. A
-  value of `None` will remove that envvar from the environ. e.g.
-
-    {
-        "envvar": "%(envvar)s;%(envvar2)s;extra",
-        "delete_this": None,
-        "static_value": "something",
-    }
-  """
-
-  _RENDER_WHITELIST=frozenset((
-    'cmd',
-  ))
-
-  _RENDER_BLACKLIST=frozenset((
-    'base_name',
-    'nest_level',
-    'ok_ret',
-    'step_test_data',
-  ))
-
-  @classmethod
-  def create(cls, name, base_name=None, cmd=None, cwd=None, env=None,
-             allow_subannotations=None, trigger_specs=None, timeout=None,
-             infra_step=None, stdout=None, stderr=None, stdin=None,
-             ok_ret=None, step_test_data=None, step_nest_level=None):
-    """
-    Initializes a new StepConfig step API dictionary.
-
-    Args:
+    Fields:
       name (str): name of the step, will appear in buildbots waterfall
       base_name (str): the base name of the step. If the step has a derived
           name (e.g., nested may be concatenated with its parent), this is the
@@ -326,35 +212,129 @@ class StepConfig(_StepConfig):
           returns a StepTestData object that will be used as the default test
           data for this step. The recipe author can override/augment this object
           in the GenTests function.
-      step_nest_level (int): the step's nesting level.
-    """
-    return cls(
-        name=name,
-        base_name=(base_name or name),
-        cmd=cmd,
-        cwd=cwd,
-        env=env,
-        allow_subannotations=bool(allow_subannotations),
-        trigger_specs=[TriggerSpec._create(**trig)
-                       for trig in (trigger_specs or ())],
-        timeout=timeout,
-        infra_step=bool(infra_step),
-        stdout=stdout,
-        stderr=stderr,
-        stdin=stdin,
-        ok_ret=frozenset(ok_ret or (0,)),
-        step_test_data=step_test_data,
-        nest_level=int(step_nest_level or 0),
-    )
+      nest_level (int): the step's nesting level.
 
-  def render_to_dict(self):
-    self = self._replace(
-        trigger_specs=[trig._render_to_dict()
-                       for trig in (self.trigger_specs or ())],
-    )
-    return dict((k, v) for k, v in self._asdict().iteritems()
-                if (v or k in self._RENDER_WHITELIST)
-                and k not in self._RENDER_BLACKLIST)
+    The optional "env" parameter provides optional overrides for environment
+    variables. Each value is % formatted with the entire existing os.environ. A
+    value of `None` will remove that envvar from the environ. e.g.
+
+      {
+          "envvar": "%(envvar)s;%(envvar2)s;extra",
+          "delete_this": None,
+          "static_value": "something",
+      }
+    """
+
+    _RENDER_WHITELIST=frozenset((
+      'cmd',
+    ))
+
+    _RENDER_BLACKLIST=frozenset((
+      'base_name',
+      'nest_level',
+      'ok_ret',
+      'step_test_data',
+    ))
+
+    def __new__(cls, **kwargs):
+      for field in cls._fields:
+        kwargs.setdefault(field, None)
+      sc = super(StepClient.StepConfig, cls).__new__(cls, **kwargs)
+
+      return sc._replace(
+          cmd=[(x if isinstance(x, Placeholder) else str(x))
+               for x in (sc.cmd or ())],
+          cwd=(str(sc.cwd) if sc.cwd else (None)),
+          base_name=sc.base_name or sc.name,
+          allow_subannotations=bool(sc.allow_subannotations),
+          trigger_specs=sc.trigger_specs or (),
+          infra_step=bool(sc.infra_step),
+          ok_ret=frozenset(sc.ok_ret or (0,)),
+          nest_level=int(sc.nest_level or 0),
+      )
+
+    def render_to_dict(self):
+      sc = self._replace(
+          trigger_specs=[trig._render_to_dict()
+                         for trig in (self.trigger_specs or ())],
+      )
+      return dict((k, v) for k, v in sc._asdict().iteritems()
+                  if (v or k in sc._RENDER_WHITELIST)
+                  and k not in sc._RENDER_BLACKLIST)
+
+
+  class TriggerSpec(collections.namedtuple('_TriggerSpec', (
+      'bucket', 'builder_name', 'properties', 'buildbot_changes', 'tags',
+      'critical'))):
+
+    """
+    TriggerSpec is the internal representation of a raw trigger step. You should
+    use the standard 'step' recipe module, which will construct trigger specs
+    via API.
+
+    Fields:
+      builder_name (str): The name of the builder to trigger.
+      bucket (str or None): The name of the trigger bucket.
+      properties (dict or None): Key/value properties dictionary.
+      buildbot_changes (list or None): Optional list of BuildBot change dicts.
+      tags (list or None): Optional list of tag strings.
+      critical (bool or None): If true and triggering fails asynchronously, fail
+          the entire build. If None, the step defaults to being True.
+    """
+
+    def __new__(cls, **kwargs):
+      for field in cls._fields:
+        kwargs.setdefault(field, None)
+      trig = super(StepClient.TriggerSpec, cls).__new__(cls, **kwargs)
+      return trig._replace(
+          critical=bool(trig.critical),
+      )
+
+    def _render_to_dict(self):
+      d = dict((k, v) for k, v in self._asdict().iteritems() if v)
+      if d['critical']:
+        d.pop('critical')
+      return d
+
+
+  def __init__(self, engine):
+    self._engine = engine
+
+  def previous_step_result(self):
+    """Allows api.step to get the active result from any context.
+
+    This always returns the innermost nested step that is still open --
+    presumably the one that just failed if we are in an exception handler."""
+    if not self._engine._step_stack:
+      raise ValueError(
+          'No steps have been run yet, and you are asking for a previous step '
+          'result.')
+    return self._engine._step_stack[-1].step_result
+
+  def run_step(self, step_config):
+    """
+    Runs a step from a StepConfig.
+
+    Args:
+      step_config: Keyword arguments to use to instantiate a StepConfig.
+
+    Returns:
+      A StepData object containing the result of running the step.
+    """
+    assert isinstance(step_config, self.StepConfig)
+    return self._engine.run_step(step_config)
+
+
+class DependencyManagerClient(object):
+  """A recipe engine client representing the dependency manager."""
+
+  IDENT = 'dependency_manager'
+
+  def __init__(self, engine):
+    self._engine = engine
+
+  def depend_on(self, recipe, properties, **kwargs):
+    return self._engine.depend_on(recipe, properties, **kwargs)
 
 
 class StepFailure(Exception):

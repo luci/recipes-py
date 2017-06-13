@@ -4,8 +4,11 @@
 
 import contextlib
 import copy
+import types
 
 from recipe_engine import recipe_api
+from recipe_engine.config_types import Path
+from recipe_engine.util import Placeholder
 
 
 # Inherit from RecipeApiPlain because the only thing which is a step is
@@ -99,6 +102,7 @@ class StepApi(recipe_api.RecipeApiPlain):
     """ See recipe_api.py for docs. """
     return recipe_api.defer_results
 
+  @recipe_api.composite_step
   def __call__(self, name, cmd, ok_ret=None, infra_step=False, wrapper=(),
                timeout=None, allow_subannotations=None,
                trigger_specs=None, stdout=None, stderr=None, stdin=None,
@@ -137,33 +141,6 @@ class StepApi(recipe_api.RecipeApiPlain):
     Returns:
       Opaque step object produced and understood by recipe engine.
     """
-    kwargs = {}
-    if allow_subannotations is not None:
-      kwargs['allow_subannotations'] = allow_subannotations
-    if trigger_specs:
-      kwargs['trigger_specs'] = trigger_specs
-    if stdout:
-      kwargs['stdout'] = stdout
-    if stderr:
-      kwargs['stderr'] = stderr
-    if stdin:
-      kwargs['stdin'] = stdin
-    if step_test_data:
-      kwargs['step_test_data'] = step_test_data
-    assert cmd is None or isinstance(cmd, list)
-    if not ok_ret:
-      ok_ret = {0}
-    if ok_ret in ('any', 'all'):
-      ok_ret = set(range(-256, 256))
-
-    if cmd is not None:
-      command = list(wrapper)
-      command += cmd
-      kwargs['cmd'] = command
-
-    kwargs['timeout'] = timeout
-    kwargs['ok_ret'] = ok_ret
-
     # Calculate our full step name. If a step already has that name, add an
     # index to the end of it.
     #
@@ -184,25 +161,55 @@ class StepApi(recipe_api.RecipeApiPlain):
       name_suffix = ' (%d)' % step_count
     self._seen_steps.add(full_name)
 
+    assert isinstance(cmd, (types.NoneType, list))
+    if cmd is not None:
+      cmd = list(wrapper) + cmd
+      assert all(isinstance(x, (int, long, basestring, Path, Placeholder))
+                 for x in cmd)
+
     cwd = self.m.context.cwd
-    if cwd is not None and cwd != self.m.path['start_dir']:
-      kwargs['cwd'] = cwd
-    kwargs['env'] = self.m.context.env
+    if cwd and cwd == self.m.path['start_dir']:
+      cwd = None
+
+    env = self.m.context.env
     if self._prefix_path:
       ps = self.m.path.pathsep
       prefix = ps.join(self._prefix_path)
-      suffix = kwargs['env'].get('PATH', '%(PATH)s')
-      kwargs['env']['PATH'] = '%s%s%s' % (prefix, ps, suffix)
-    kwargs['infra_step'] = self.m.context.infra_step or bool(infra_step)
-    kwargs['step_nest_level'] = self.m.context.nest_level
-    kwargs['name'] = full_name
-    kwargs['base_name'] = name
+      suffix = env.get('PATH', '%(PATH)s')
+      env['PATH'] = '%s%s%s' % (prefix, ps, suffix)
 
-    schema = self.make_config()
-    schema.set_val(kwargs)
-    return self.run_from_dict(schema.as_jsonish())
+    if ok_ret in ('any', 'all'):
+      ok_ret = range(-256, 256)
 
-  # TODO(martiniss) delete, and make generator_script use **kwargs on step()
-  @recipe_api.composite_step
-  def run_from_dict(self, dct):
-    return self.step_client.run_step(dct)
+    return self.step_client.run_step(self.step_client.StepConfig(
+        name=full_name,
+        base_name=full_name or name,
+        cmd=cmd,
+        cwd=cwd,
+        env=env,
+        allow_subannotations=bool(allow_subannotations),
+        trigger_specs=[self._make_trigger_spec(trig)
+                       for trig in (trigger_specs or ())],
+        timeout=timeout,
+        infra_step=self.m.context.infra_step or bool(infra_step),
+        stdout=stdout,
+        stderr=stderr,
+        stdin=stdin,
+        ok_ret=ok_ret,
+        step_test_data=step_test_data,
+        nest_level=self.m.context.nest_level,
+    ))
+
+  def _make_trigger_spec(self, trig):
+    buildbot_changes = trig.get('buildbot_changes')
+    assert isinstance(buildbot_changes, (types.NoneType, list))
+
+    critical = trig.get('critical')
+    return self.step_client.TriggerSpec(
+        bucket=trig.get('bucket'),
+        builder_name=trig['builder_name'],
+        properties=trig.get('properties'),
+        buildbot_changes=buildbot_changes,
+        tags=trig.get('tags'),
+        critical=bool(critical) if critical is not None else (True),
+    )

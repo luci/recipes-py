@@ -94,7 +94,7 @@ class StreamEngine(object):
   def make_step_stream(self, name, **kwargs):
     """Shorthand for creating a step stream from a step configuration dict."""
     kwargs['name'] = name
-    return self.new_step_stream(recipe_api.StepConfig.create(**kwargs))
+    return self.new_step_stream(recipe_api.StepClient.StepConfig(**kwargs))
 
   def new_step_stream(self, step_config):
     """Creates a new StepStream in this engine.
@@ -108,7 +108,7 @@ class StreamEngine(object):
     i.e. parse -> re-emit.
 
     Args:
-      step_config (recipe_api.StepConfig): The step configuration.
+      step_config (recipe_api.StepCleint.StepConfig): The step configuration.
     """
     raise NotImplementedError()
 

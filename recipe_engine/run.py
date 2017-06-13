@@ -250,7 +250,8 @@ class RecipeEngine(object):
     Runs a step.
 
     Args:
-      step_config (recipe_api.StepConfig): The step configuration to run.
+      step_config (recipe_api.StepClient.StepConfig): The step configuration to
+        run.
 
     Returns:
       A StepData object containing the result of running the step.
@@ -274,20 +275,20 @@ class RecipeEngine(object):
       if step_result.retcode in step_config.ok_ret:
         step_result.presentation.status = 'SUCCESS'
         return step_result
+
+      if not step_config.infra_step:
+        state = 'FAILURE'
+        exc = recipe_api.StepFailure
       else:
-        if not step_config.infra_step:
-          state = 'FAILURE'
-          exc = recipe_api.StepFailure
-        else:
-          state = 'EXCEPTION'
-          exc = recipe_api.InfraFailure
+        state = 'EXCEPTION'
+        exc = recipe_api.InfraFailure
 
-        step_result.presentation.status = state
+      step_result.presentation.status = state
 
-        self._step_stack[-1].open_step.stream.write_line(
-            'step returned non-zero exit code: %d' % step_result.retcode)
+      self._step_stack[-1].open_step.stream.write_line(
+          'step returned non-zero exit code: %d' % step_result.retcode)
 
-        raise exc(step_config.name, step_result)
+      raise exc(step_config.name, step_result)
 
   def run(self, recipe_script, api, properties):
     """Run a recipe represented by a recipe_script object.

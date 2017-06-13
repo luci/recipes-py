@@ -294,7 +294,7 @@ class RepoTest(unittest.TestCase):
       if not os.path.exists(module_dir):
         os.makedirs(module_dir)
       with open(os.path.join(module_dir, '__init__.py'), 'w') as f:
-        f.write('DEPS = []')
+        f.write("DEPS = ['recipe_engine/step']")
         if disable_strict_coverage:
           f.write('\nDISABLE_STRICT_COVERAGE = True')
       with open(os.path.join(module_dir, 'api.py'), 'w') as f:
@@ -307,7 +307,7 @@ class RepoTest(unittest.TestCase):
           '\n'.join([
             '',
             '  def %s(self):' % m_name,
-            '    return self.step_client.run_step(%r)' % {
+            '    return self.m.step(**%r)' % {
                 'name': m_name,
                 'cmd': m_cmd,
                 'ok_ret': [0],
