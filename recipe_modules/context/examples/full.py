@@ -7,6 +7,7 @@ from recipe_engine import recipe_api, config
 DEPS = [
   'context',
   'path',
+  'raw_io',
   'step',
 ]
 
@@ -27,14 +28,21 @@ def RunSteps(api):
     api.step('other subdir step', ['bash', '-c', 'echo hi again!'])
 
   # can set envvars, and path prefix.
+  pants = api.path['start_dir'].join('pants')
+  shirt = api.path['start_dir'].join('shirt')
   with api.context(env={'FOO': 'bar'}):
     api.step('env step', ['bash', '-c', 'echo $FOO'])
 
-    pants = api.path['start_dir'].join('pants')
-    shirt = api.path['start_dir'].join('shirt')
-    with api.context(env={'FOO': api.context.Prefix(pants, shirt)}):
-      api.step('env step with prefix',
-               ['bash', '-c', 'echo $FOO'])
+    with api.context(env_prefixes={'FOO': [pants, shirt]}):
+      expected = api.path.pathsep.join([str(pants), str(shirt), 'bar'])
+      result = api.step('env step with prefix',
+                        ['bash', '-c', 'echo $FOO'])
+
+  # Path prefix won't append empty environment variables.
+  with api.context(env={'FOO': ''}, env_prefixes={'FOO': [pants, shirt]}):
+    expected = api.path.pathsep.join([str(pants), str(shirt)])
+    result = api.step('env prefixes with empty value',
+                      ['bash', '-c', 'echo $FOO'])
 
   # %-formats are errors (for now). Double-% escape them.
   bad_examples = ['%format', '%s']

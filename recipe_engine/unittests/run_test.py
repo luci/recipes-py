@@ -44,17 +44,27 @@ class RunTest(unittest.TestCase):
     finally:
       os.environ[requests_ssl.ENV_VAR_IGNORE] = prev_ignore
 
-  def _test_recipe(self, recipe, properties=None):
+  def _test_recipe(self, recipe, properties=None, env=None):
     proc = subprocess.Popen(
         self._run_cmd(recipe, properties),
         stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT)
+        stderr=subprocess.STDOUT,
+        env=env)
     stdout = proc.communicate()
     self.assertEqual(0, proc.returncode, '%d != %d when testing %s:\n%s' % (
         0, proc.returncode, recipe, stdout))
 
   def test_examples(self):
+    env = os.environ.copy()
+
+    # Set the "RECIPE_ENGINE_CONTEXT_TEST" environment variable to a known
+    # value, "default". This is used by the "context:tests/env" recipe module
+    # as a basis for runtime tests.
+    env['RECIPE_ENGINE_CONTEXT_TEST'] = 'default'
+
     tests = [
+      ['context:examples/full'],
+      ['context:tests/env'],
       ['step:examples/full'],
       ['path:examples/full'],
       ['raw_io:examples/full'],
@@ -68,7 +78,7 @@ class RunTest(unittest.TestCase):
       ['engine_tests/functools_partial'],
     ]
     for test in tests:
-      self._test_recipe(*test)
+      self._test_recipe(*test, env=env)
 
   def test_bad_subprocess(self):
     now = time.time()

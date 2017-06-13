@@ -178,7 +178,9 @@ class SubprocessStepRunner(StepRunner):
       )
       step_config = None  # Make sure we use rendered step config.
 
-      step_env = _merge_envs(os.environ, (rendered_step.config.env or {}))
+      step_env = _merge_envs(os.environ,
+          rendered_step.config.env, rendered_step.config.env_prefixes.prefixes,
+          rendered_step.config.env_prefixes.pathsep)
       # Now that the step's environment is all sorted, evaluate PATH on windows
       # to find the actual intended executable.
       rendered_step = _hunt_path(rendered_step, step_env)
@@ -425,8 +427,16 @@ class fakeEnviron(object):
   def __getitem__(self, key):
     return '<%s>' % key
 
+  def get(self, key, default=None):
+    return self[key]
+
   def keys(self):
     return self.data.keys()
+
+  def pop(self, key, default=None):
+    result = self.data.get(key, default)
+    self.data[key] = None
+    return result
 
   def __delitem__(self, key):
     self.data[key] = None
@@ -465,7 +475,10 @@ class SimulationStepRunner(StepRunner):
       step_test = self._test_data.pop_step_test_data(step_config.name,
                                                      test_data_fn)
       rendered_step = render_step(step_config, step_test)
-      step_env = _merge_envs(fakeEnviron(), (rendered_step.config.env or {}))
+
+      # Merge our environment. Note that do NOT apply prefixes when rendering
+      # expectations, as they are rendered independently.
+      step_env = _merge_envs(fakeEnviron(), rendered_step.config.env, {}, None)
       rendered_step = rendered_step._replace(
         config=rendered_step.config._replace(env=step_env.data))
       step_config = None  # Make sure we use rendered step config.
@@ -688,7 +701,7 @@ def construct_step_result(rendered_step, retcode):
   return step_result
 
 
-def _merge_envs(original, override):
+def _merge_envs(original, overrides, prefixes, pathsep):
   """Merges two environments.
 
   Returns a new environment dict with entries from |override| overwriting
@@ -696,18 +709,42 @@ def _merge_envs(original, override):
   remove the environment variable. Values can contain %(KEY)s strings, which
   will be substituted with the values from the original (useful for amending, as
   opposed to overwriting, variables like PATH).
+
+  See recipe_api.StepConfig for environment construction rules.
   """
   result = original.copy()
   subst = (original if isinstance(original, fakeEnviron)
            else collections.defaultdict(lambda: '', **original))
-  if not override:
+
+  if not any((prefixes, overrides)):
     return result
-  for k, v in override.items():
-    if v is None:
-      if k in result:
-        del result[k]
+
+  merged = set()
+  for k, paths in prefixes.iteritems():
+    if not paths:
+      continue
+
+    # If the same key is defined in "overrides", we need to incorporate with it.
+    # We'll do so here, and skip it in the "overrides" construction.
+    merged.add(k)
+    if k in overrides:
+      val = overrides[k]
+      if val is not None:
+        val = str(val) % subst
     else:
-      result[str(k)] = str(v) % subst
+      # Not defined. Append "val" iff it is defined in "original" and not empty.
+      val = original.get(k, '')
+    if val:
+      paths += (val,)
+    result[k] = pathsep.join(str(v) for v in paths)
+
+  for k, v in overrides.iteritems():
+    if k in merged:
+      continue
+    if v is None:
+      result.pop(k, None)
+    else:
+      result[k] = str(v) % subst
   return result
 
 

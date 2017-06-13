@@ -31,56 +31,129 @@
     "cmd": [
       "bash",
       "-c",
-      "echo $FOO"
+      "echo -n $RECIPE_ENGINE_CONTEXT_TEST"
     ],
-    "env": {
-      "FOO": "bar"
-    },
-    "name": "env step"
+    "name": "default",
+    "stdout": "/path/to/tmp/"
   },
   {
     "cmd": [
       "bash",
       "-c",
-      "echo $FOO"
+      "echo -n $RECIPE_ENGINE_CONTEXT_TEST"
     ],
     "env": {
-      "FOO": "foo:<FOO>:baz"
+      "RECIPE_ENGINE_CONTEXT_TEST": null
     },
-    "name": "env step augmented"
+    "name": "drop",
+    "stdout": "/path/to/tmp/"
   },
   {
     "cmd": [
       "bash",
       "-c",
-      "echo $FOO"
+      "echo -n $RECIPE_ENGINE_CONTEXT_TEST"
     ],
     "env": {
-      "FOO": "[START_DIR]/pants:[START_DIR]/shirt:foo:<FOO>:baz"
+      "RECIPE_ENGINE_CONTEXT_TEST": "bar"
     },
-    "name": "env step with prefix"
+    "name": "env step",
+    "stdout": "/path/to/tmp/"
   },
   {
     "cmd": [
       "bash",
       "-c",
-      "echo $FOO"
+      "echo -n $RECIPE_ENGINE_CONTEXT_TEST"
     ],
     "env": {
-      "FOO": "[START_DIR]/shirt"
+      "RECIPE_ENGINE_CONTEXT_TEST": "foo:<RECIPE_ENGINE_CONTEXT_TEST>:bar"
     },
-    "name": "env with default value"
+    "name": "env step augmented",
+    "stdout": "/path/to/tmp/"
   },
   {
     "cmd": [
       "bash",
       "-c",
-      "set"
+      "echo -n $RECIPE_ENGINE_CONTEXT_TEST"
     ],
     "env": {
-      "PYTHONPATH": null
+      "RECIPE_ENGINE_CONTEXT_TEST": "foo:<RECIPE_ENGINE_CONTEXT_TEST>:bar"
     },
-    "name": "drop PYTHONPATH"
+    "env_prefixes": {
+      "RECIPE_ENGINE_CONTEXT_TEST": [
+        "[START_DIR]/pants",
+        "[START_DIR]/shirt"
+      ]
+    },
+    "name": "env step with prefix",
+    "stdout": "/path/to/tmp/"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo -n $RECIPE_ENGINE_CONTEXT_TEST"
+    ],
+    "env_prefixes": {
+      "RECIPE_ENGINE_CONTEXT_TEST": [
+        "[START_DIR]/shirt"
+      ]
+    },
+    "name": "env with default value",
+    "stdout": "/path/to/tmp/"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo -n $RECIPE_ENGINE_CONTEXT_TEST"
+    ],
+    "env": {
+      "RECIPE_ENGINE_CONTEXT_TEST": "foo"
+    },
+    "env_prefixes": {
+      "RECIPE_ENGINE_CONTEXT_TEST": [
+        "[START_DIR]/shirt"
+      ]
+    },
+    "name": "env with override value",
+    "stdout": "/path/to/tmp/"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo -n $RECIPE_ENGINE_CONTEXT_TEST"
+    ],
+    "env": {
+      "RECIPE_ENGINE_CONTEXT_TEST": null
+    },
+    "env_prefixes": {
+      "RECIPE_ENGINE_CONTEXT_TEST": [
+        "[START_DIR]/shirt"
+      ]
+    },
+    "name": "env with cleared value",
+    "stdout": "/path/to/tmp/"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo -n $RECIPE_ENGINE_CONTEXT_TEST"
+    ],
+    "env": {
+      "RECIPE_ENGINE_CONTEXT_TEST": ""
+    },
+    "env_prefixes": {
+      "RECIPE_ENGINE_CONTEXT_TEST": [
+        "[START_DIR]/shirt"
+      ]
+    },
+    "name": "env with empty value",
+    "stdout": "/path/to/tmp/"
   },
   {
     "name": "$result",

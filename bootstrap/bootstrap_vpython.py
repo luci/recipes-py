@@ -58,7 +58,7 @@ def main(args):
   parser = argparse.ArgumentParser()
   parser.add_argument('--venv-spec', metavar='PATH',
       default=os.path.join(ROOT, 'bootstrap', 'venv.cfg'),
-      help='Path to vpython enviornment specification file to use (default '
+      help='Path to vpython environment specification file to use (default '
            'is %(default)s).')
   parser.add_argument('--vpython-path', metavar='PATH',
       help='Use "vpython" binary at PATH, instead of the bootstrap default.')

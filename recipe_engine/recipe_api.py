@@ -9,6 +9,7 @@ import contextlib
 import copy
 import json
 import keyword
+import os
 import re
 import types
 
@@ -173,9 +174,9 @@ class StepClient(object):
 
 
   class StepConfig(collections.namedtuple('_StepConfig', (
-      'name', 'base_name', 'cmd', 'cwd', 'env', 'allow_subannotations',
-      'trigger_specs', 'timeout', 'infra_step', 'stdout', 'stderr', 'stdin',
-      'ok_ret', 'step_test_data', 'nest_level'))):
+      'name', 'base_name', 'cmd', 'cwd', 'env', 'env_prefixes',
+      'allow_subannotations', 'trigger_specs', 'timeout', 'infra_step',
+      'stdout', 'stderr', 'stdin', 'ok_ret', 'step_test_data', 'nest_level'))):
 
     """
     StepConfig is the representation of a raw step as the recipe_engine sees it.
@@ -192,6 +193,8 @@ class StepClient(object):
       cmd: command to run. Acceptable types: str, Path, Placeholder, or None.
       cwd (str or None): absolute path to working directory for the command
       env (dict): overrides for environment variables, described above.
+      env_prefixes (dict): environment prefix variables, mapping environment
+        variable names to EnvPrefix values.
       allow_subannotations (bool): if True, lets the step emit its own
           annotations. NOTE: Enabling this can cause some buggy behavior. Please
           strongly consider using step_result.presentation instead. If you have
@@ -223,7 +226,33 @@ class StepClient(object):
           "delete_this": None,
           "static_value": "something",
       }
+
+    The optional "env_prefixes" parameter contains values that, if specified,
+    will transform an environment variable into a "pathsep"-delimited sequence
+    of items:
+      - If an environment variable is also specified for this key, it will be
+        appended as the last element: <prefix0>:...:<prefixN>:ENV
+      - If no environment variable is specified, the current environment's value
+        will be appended, unless it's empty: <prefix0>:...:<prefixN>[:ENV]?
+      - If an environment variable with a value of None (delete) is specified,
+        nothing will be appeneded: <prefix0>:...:<prefixN>
+
+    There is currently no way to remove prefix paths; once they're there,
+    they're there for good. If you think you need to remove paths from the
+    prefix lists, please talk to infra-dev@chromium.org.
     """
+
+    class EnvPrefix(collections.namedtuple('_EnvPrefix', (
+        'prefixes', 'pathsep'))):
+      """Expresses a series of environment prefixes.
+
+      This is used as StepConfig's "env_prefix" value.
+      """
+
+      @classmethod
+      def empty(cls):
+        return cls(prefixes={}, pathsep=None)
+
 
     _RENDER_WHITELIST=frozenset((
       'cmd',
@@ -245,6 +274,8 @@ class StepClient(object):
           cmd=[(x if isinstance(x, Placeholder) else str(x))
                for x in (sc.cmd or ())],
           cwd=(str(sc.cwd) if sc.cwd else (None)),
+          env=sc.env or {},
+          env_prefixes=sc.env_prefixes or cls.EnvPrefix.empty(),
           base_name=sc.base_name or sc.name,
           allow_subannotations=bool(sc.allow_subannotations),
           trigger_specs=sc.trigger_specs or (),
@@ -255,6 +286,8 @@ class StepClient(object):
 
     def render_to_dict(self):
       sc = self._replace(
+          env_prefixes={k: list(str(e) for e in v)
+                        for k, v in self.env_prefixes.prefixes.iteritems()},
           trigger_specs=[trig._render_to_dict()
                          for trig in (self.trigger_specs or ())],
       )

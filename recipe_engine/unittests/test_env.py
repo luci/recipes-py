@@ -3,7 +3,7 @@
 # that can be found in the LICENSE file.
 
 """Module imported by other tests to automatically install a consistent test
-enviornment.
+environment.
 
 This consists largely of system path manipulation.
 """

@@ -59,9 +59,32 @@
       "echo $FOO"
     ],
     "env": {
-      "FOO": "[START_DIR]/pants:[START_DIR]/shirt:bar"
+      "FOO": "bar"
+    },
+    "env_prefixes": {
+      "FOO": [
+        "[START_DIR]/pants",
+        "[START_DIR]/shirt"
+      ]
     },
     "name": "env step with prefix"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo $FOO"
+    ],
+    "env": {
+      "FOO": ""
+    },
+    "env_prefixes": {
+      "FOO": [
+        "[START_DIR]/pants",
+        "[START_DIR]/shirt"
+      ]
+    },
+    "name": "env prefixes with empty value"
   },
   {
     "cmd": [],

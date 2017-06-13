@@ -171,12 +171,8 @@ class StepApi(recipe_api.RecipeApiPlain):
     if cwd and cwd == self.m.path['start_dir']:
       cwd = None
 
-    env = self.m.context.env
-    if self._prefix_path:
-      ps = self.m.path.pathsep
-      prefix = ps.join(self._prefix_path)
-      suffix = env.get('PATH', '%(PATH)s')
-      env['PATH'] = '%s%s%s' % (prefix, ps, suffix)
+    with self.m.context(env_prefixes={'PATH': self._prefix_path}):
+      env_prefixes = self.m.context.env_prefixes
 
     if ok_ret in ('any', 'all'):
       ok_ret = range(-256, 256)
@@ -186,7 +182,11 @@ class StepApi(recipe_api.RecipeApiPlain):
         base_name=full_name or name,
         cmd=cmd,
         cwd=cwd,
-        env=env,
+        env=self.m.context.env,
+        env_prefixes=self.step_client.StepConfig.EnvPrefix(
+          prefixes=env_prefixes,
+          pathsep=self.m.path.pathsep,
+        ),
         allow_subannotations=bool(allow_subannotations),
         trigger_specs=[self._make_trigger_spec(trig)
                        for trig in (trigger_specs or ())],

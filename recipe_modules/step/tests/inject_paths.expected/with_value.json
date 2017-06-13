@@ -5,8 +5,13 @@
       "hi"
     ],
     "env": {
-      "FOO": "bar",
-      "PATH": "foo:bar:<PATH>"
+      "FOO": "bar"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "foo",
+        "bar"
+      ]
     },
     "name": "test step (no env)"
   },
@@ -16,7 +21,13 @@
       "hi"
     ],
     "env": {
-      "PATH": "foo:bar:something"
+      "PATH": "something"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "foo",
+        "bar"
+      ]
     },
     "name": "test step (env)"
   },
@@ -26,7 +37,13 @@
       "hi"
     ],
     "env": {
-      "PATH": "foo:bar:something:<PATH>"
+      "PATH": "something:<PATH>"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "foo",
+        "bar"
+      ]
     },
     "name": "test step (env, $PATH)"
   },

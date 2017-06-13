@@ -31,7 +31,7 @@ class PythonApi(recipe_api.RecipeApi):
           standard Python interpreter.
       kwargs: Additional keyword arguments to forward to "step".
     """
-    env = self.m.context.env
+    env = {}
 
     if venv:
       cmd = ['vpython']
@@ -45,12 +45,8 @@ class PythonApi(recipe_api.RecipeApi):
     else:
       env['PYTHONUNBUFFERED'] = None
 
-    context = {}
-    if env:
-      context['env'] = env
-
     cmd.append(script)
-    with self.m.context(**context):
+    with self.m.context(env=env):
       return self.m.step(name, cmd + list(args or []), **kwargs)
 
   def inline(self, name, program, add_python_log=True, **kwargs):
