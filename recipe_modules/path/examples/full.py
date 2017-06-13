@@ -22,9 +22,18 @@ def RunSteps(api):
   api.step('print package dir',
            ['echo', api.path.package_repo_resource('dir', 'file.py')])
 
+  assert 'start_dir' in api.path
   assert 'checkout' not in api.path
   api.path['checkout'] = api.path['tmp_base'].join('checkout')
   assert 'checkout' in api.path
+
+  # Test missing / default value.
+  assert 'nonexistent' not in api.path
+  assert api.path.get('nonexistent') is None
+  try:
+    raise Exception('Should never raise: %s' % (api.path['nonexistent'],))
+  except KeyError:
+    pass
 
   # Global dynamic paths (see config.py example for declaration):
   dynamic_path = api.path['checkout'].join('jerky')

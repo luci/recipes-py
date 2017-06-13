@@ -377,7 +377,8 @@ class PathApi(recipe_api.RecipeApi):
 
 
   def __contains__(self, pathname):
-    return bool(self.c.dynamic_paths.get(pathname))
+    return any(path_set.get(pathname) for path_set in (
+        self.c.dynamic_paths, self.c.base_paths))
 
   def __setitem__(self, pathname, path):
     assert isinstance(path, config_types.Path), (
@@ -388,10 +389,16 @@ class PathApi(recipe_api.RecipeApi):
       'Dynamic path values must be based on a base_path' % path.base)
     self.c.dynamic_paths[pathname] = path
 
-  def __getitem__(self, name):
+  def get(self, name, default=None):
     if name in self.c.base_paths or name in self.c.dynamic_paths:
       return config_types.Path(config_types.NamedBasePath(name))
-    raise KeyError('Unknown path: %s' % name) # pragma: no cover
+    return default
+
+  def __getitem__(self, name):
+    result = self.get(name)
+    if not result:
+      raise KeyError('Unknown path: %s' % name)
+    return result
 
   def __getattr__(self, name):
     # retrieve os.path attributes
