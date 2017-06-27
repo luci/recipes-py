@@ -60,6 +60,10 @@ _KILL_SWITCH = multiprocessing.Event()
 _GEN_TEST_CACHE = {}
 
 
+# These are modes that various functions in this file switch on.
+_MODE_TEST, _MODE_TRAIN, _MODE_DEBUG = range(3)
+
+
 # Allow regex patterns to be 'deep copied' by using them as-is.
 copy._deepcopy_dispatch[re._pattern_type] = copy._deepcopy_atomic
 
@@ -212,7 +216,7 @@ def maybe_debug(break_funcs, enable):
     debugger.interaction(None, t)
 
 
-def run_test(test_description, debug=False, train=False):
+def run_test(test_description, mode):
   """Runs a test. Returns TestResults object."""
   expected = None
   if os.path.exists(test_description.expectation_path):
@@ -221,7 +225,7 @@ def run_test(test_description, debug=False, train=False):
         # TODO(phajdan.jr): why do we need to re-encode golden data files?
           expected = re_encode(json.load(f))
     except Exception:
-      if train:
+      if mode == _MODE_TRAIN:
         # Ignore errors when training; we're going to overwrite the file anyway.
         expected = None
       else:
@@ -231,11 +235,11 @@ def run_test(test_description, debug=False, train=False):
     _UNIVERSE_VIEW.load_recipe(test_description.recipe_name).run_steps,
   ]
 
-  with maybe_debug(break_funcs, debug):
+  with maybe_debug(break_funcs, mode == _MODE_DEBUG):
     actual, failed_checks, coverage_data = run_recipe(
         test_description.recipe_name, test_description.test_name,
         test_description.covers,
-        enable_coverage=(not debug))
+        enable_coverage=(mode != _MODE_DEBUG))
   actual = re_encode(actual)
 
   failures = []
@@ -246,7 +250,7 @@ def run_test(test_description, debug=False, train=False):
     failures.extend([CheckFailure(c) for c in failed_checks])
   elif actual != expected:
     if actual is not None:
-      if train:
+      if mode == _MODE_TRAIN:
         expectation_dir = os.path.dirname(test_description.expectation_path)
         # This may race with other processes, so just attempt to create dir
         # and ignore failure if it already exists.
@@ -268,7 +272,7 @@ def run_test(test_description, debug=False, train=False):
 
         failures.append(DiffFailure(diff))
 
-    if train:
+    if mode == _MODE_TRAIN:
       sys.stdout.write('D')
     else:
       sys.stdout.write('F')
@@ -580,15 +584,15 @@ def worker(f):
         if _KILL_SWITCH.is_set():
           return (False, test, 'kill switch')
         return (True, test, f(test, *args, **kwargs))
-      except:
+      except:  # pylint: disable=bare-except
         return (False, test, traceback.format_exc())
   return wrapper
 
 
 @worker
-def run_worker(test, debug=False, train=False):
+def run_worker(test, mode):
   """Worker for 'run' command (note decorator above)."""
-  return run_test(test, debug=debug, train=train)
+  return run_test(test, mode)
 
 
 def scan_for_expectations(root, inside_expectations=False):
@@ -618,7 +622,7 @@ def scan_for_expectations(root, inside_expectations=False):
   return collected_expectations
 
 
-def run_run(test_filter, jobs=None, debug=False, train=False, json_file=None):
+def run_run(test_filter, jobs, json_file, mode):
   """Implementation of the 'run' command."""
   # TODO(iannucci): once we're always bootstrapping, move this to the top.
   import coverage
@@ -637,14 +641,18 @@ def run_run(test_filter, jobs=None, debug=False, train=False, json_file=None):
     print('ERROR: The following modules lack test coverage: %s' % (
         ','.join(uncovered_modules)))
 
-  if debug:
+  if mode == _MODE_DEBUG:
     results = []
     for t in tests:
-      results.append(run_worker(t, debug=debug, train=train))
+      results.append(run_worker(t, mode))
   else:
     with kill_switch():
       pool = multiprocessing.Pool(jobs)
-      results = pool.map(functools.partial(run_worker, train=train), tests)
+      # the 'mode=mode' is necessary, because we want a function call like:
+      #   func(test) -> run_worker(test, mode)
+      # if we supply 'mode' as an arg, it will end up calling:
+      #   func(test) -> run_worker(mode, test)
+      results = pool.map(functools.partial(run_worker, mode=mode), tests)
 
   print()
 
@@ -733,7 +741,7 @@ def run_run(test_filter, jobs=None, debug=False, train=False, json_file=None):
     unused_expectations = sorted(
         actual_expectations.difference(used_expectations))
     if unused_expectations:
-      if train:
+      if mode == _MODE_TRAIN:
         # we only want to prune expectations if training was otherwise
         # successful. Otherwise a failure during training can blow away expected
         # directories which contain things like OWNERS files.
@@ -888,7 +896,7 @@ def add_subparser(parser):
   helpstr = 'Run the tests.'
   run_p = subp.add_parser('run', help=helpstr, description=helpstr)
   run_p.set_defaults(subfunc=lambda opts: run_run(
-    opts.filter, jobs=opts.jobs, train=opts.train, json_file=opts.json))
+    opts.filter, opts.jobs, opts.json, _MODE_TEST))
   run_p.add_argument(
     '--jobs', metavar='N', type=int,
     default=multiprocessing.cpu_count(),
@@ -899,15 +907,11 @@ def add_subparser(parser):
   run_p.add_argument(
     '--filter', action='append', type=normalize_filter,
     help=glob_helpstr)
-  # TODO(phajdan.jr): remove --train the switch in favor of train subcommand.
-  run_p.add_argument(
-    '--train', action='store_true',
-    help='re-generate recipe expectations (DEPRECATED)')
 
   helpstr = 'Re-train recipe expectations.'
   train_p = subp.add_parser('train', help=helpstr, description=helpstr)
   train_p.set_defaults(subfunc=lambda opts: run_run(
-    opts.filter, jobs=opts.jobs, json_file=opts.json, train=True))
+    opts.filter, opts.jobs, opts.json, _MODE_TRAIN))
   train_p.add_argument(
     '--jobs', metavar='N', type=int,
     default=multiprocessing.cpu_count(),
@@ -923,7 +927,7 @@ def add_subparser(parser):
   debug_p = subp.add_parser(
     'debug', help=helpstr, description=helpstr)
   debug_p.set_defaults(subfunc=lambda opts: run_run(
-    opts.filter, debug=True))
+    opts.filter, None, None, _MODE_DEBUG))
   debug_p.add_argument(
     '--filter', action='append', type=normalize_filter,
     help=glob_helpstr)
