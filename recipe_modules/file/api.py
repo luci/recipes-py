@@ -80,8 +80,8 @@ class FileApi(recipe_api.RecipeApi):
     """
     self.m.path.assert_absolute(source)
     self.m.path.assert_absolute(dest)
-    prefix = ['--symlinks'] if symlinks else []
-    self._run(name, prefix+['copytree', source, dest])
+    args = ['--symlinks'] if symlinks else []
+    self._run(name, ['copytree'] + args + [source, dest])
     self.m.path.mock_copy_paths(source, dest)
 
   def move(self, name, source, dest):
