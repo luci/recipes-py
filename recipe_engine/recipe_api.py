@@ -10,6 +10,7 @@ import copy
 import json
 import keyword
 import os
+import pprint
 import re
 import types
 
@@ -252,6 +253,11 @@ class StepClient(object):
       @classmethod
       def empty(cls):
         return cls(prefixes={}, pathsep=None)
+
+      def render_step_value(self):
+        rendered = {k: (self.pathsep or ':').join(str(x) for x in v)
+                    for k, v in self.prefixes.iteritems()}
+        return pprint.pformat(rendered, width=1024)
 
 
     _RENDER_WHITELIST=frozenset((

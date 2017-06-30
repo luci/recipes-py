@@ -9,6 +9,7 @@ import datetime
 import itertools
 import json
 import os
+import pprint
 import re
 import StringIO
 import sys
@@ -272,7 +273,9 @@ class SubprocessStepRunner(StepRunner):
 
   def _render_step_value(self, value):
     if not callable(value):
-      return value
+      render_func = getattr(value, 'render_step_value',
+                            lambda: pprint.pformat(value))
+      return render_func()
 
     while hasattr(value, 'func'):
       value = value.func
