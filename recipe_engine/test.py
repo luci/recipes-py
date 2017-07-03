@@ -32,6 +32,7 @@ from . import package
 from . import run
 from . import step_runner
 from . import stream
+from . import doc
 
 from . import env
 
@@ -58,7 +59,6 @@ _KILL_SWITCH = multiprocessing.Event()
 # This maps from (recipe_name,test_name) -> yielded test_data. It's outside of
 # run_recipe so that it can persist between RunRecipe calls in the same process.
 _GEN_TEST_CACHE = {}
-
 
 # These are modes that various functions in this file switch on.
 _MODE_TEST, _MODE_TRAIN, _MODE_DEBUG = range(3)
@@ -622,6 +622,14 @@ def scan_for_expectations(root, inside_expectations=False):
   return collected_expectations
 
 
+def run_train(package_deps, gen_docs, test_filter, jobs, json_file):
+  rc = run_run(test_filter, jobs, json_file, _MODE_TRAIN)
+  if rc == 0 and gen_docs:
+    print('Generating README.recipes.md')
+    doc.regenerate_docs(_UNIVERSE_VIEW, package_deps)
+  return rc
+
+
 def run_run(test_filter, jobs, json_file, mode):
   """Implementation of the 'run' command."""
   # TODO(iannucci): once we're always bootstrapping, move this to the top.
@@ -863,7 +871,7 @@ def add_subparser(parser):
   helpstr = 'Print all test names.'
   list_p = subp.add_parser(
     'list', help=helpstr, description=helpstr)
-  list_p.set_defaults(subfunc=lambda opts: run_list(opts.json))
+  list_p.set_defaults(subfunc=lambda opts, _: run_list(opts.json))
   list_p.add_argument(
     '--json', metavar='FILE', type=argparse.FileType('w'),
     help='path to JSON output file')
@@ -871,7 +879,7 @@ def add_subparser(parser):
   helpstr='Compare results of two test runs.'
   diff_p = subp.add_parser(
     'diff', help=helpstr, description=helpstr)
-  diff_p.set_defaults(subfunc=lambda opts: run_diff(
+  diff_p.set_defaults(subfunc=lambda opts, _: run_diff(
     opts.baseline, opts.actual, json_file=opts.json))
   diff_p.add_argument(
     '--baseline', metavar='FILE', type=argparse.FileType('r'),
@@ -895,7 +903,7 @@ def add_subparser(parser):
 
   helpstr = 'Run the tests.'
   run_p = subp.add_parser('run', help=helpstr, description=helpstr)
-  run_p.set_defaults(subfunc=lambda opts: run_run(
+  run_p.set_defaults(subfunc=lambda opts, _: run_run(
     opts.filter, opts.jobs, opts.json, _MODE_TEST))
   run_p.add_argument(
     '--jobs', metavar='N', type=int,
@@ -910,8 +918,8 @@ def add_subparser(parser):
 
   helpstr = 'Re-train recipe expectations.'
   train_p = subp.add_parser('train', help=helpstr, description=helpstr)
-  train_p.set_defaults(subfunc=lambda opts: run_run(
-    opts.filter, opts.jobs, opts.json, _MODE_TRAIN))
+  train_p.set_defaults(subfunc=lambda opts, pd: run_train(
+    pd, opts.docs, opts.filter, opts.jobs, opts.json))
   train_p.add_argument(
     '--jobs', metavar='N', type=int,
     default=multiprocessing.cpu_count(),
@@ -922,11 +930,14 @@ def add_subparser(parser):
   train_p.add_argument(
     '--filter', action='append', type=normalize_filter,
     help=glob_helpstr)
+  train_p.add_argument(
+    '--no-docs', action='store_false', default=True, dest='docs',
+    help='Disable automatic documentation generation.')
 
   helpstr = 'Run the tests under debugger (pdb).'
   debug_p = subp.add_parser(
     'debug', help=helpstr, description=helpstr)
-  debug_p.set_defaults(subfunc=lambda opts: run_run(
+  debug_p.set_defaults(subfunc=lambda opts, _: run_run(
     opts.filter, None, None, _MODE_DEBUG))
   debug_p.add_argument(
     '--filter', action='append', type=normalize_filter,
@@ -964,4 +975,4 @@ def main(package_deps, args):
   global _ENGINE_FLAGS
   _ENGINE_FLAGS = engine_flags
 
-  return args.subfunc(args)
+  return args.subfunc(args, package_deps)

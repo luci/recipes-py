@@ -449,9 +449,12 @@ def parse_module(uv, base_dir, relpath, mod_name):
 
 
 def parse_package(uv, base_dir, spec):
-  ret = doc.Doc.Package(spec=spec)
+  ret = doc.Doc.Package(project_id=spec.project_id)
+  ret.specs[spec.project_id].CopyFrom(spec)
+  for dep, pkg in uv.package.deps.iteritems():
+    ret.specs[dep].CopyFrom(pkg.repo_spec.spec_pb())
 
-  readme = join(base_dir, 'README.recipes.md')
+  readme = join(base_dir, 'README.recipes.intro.md')
   if os.path.isfile(readme):
     with open(readme, 'rb') as f:
       ret.docstring = f.read()
@@ -513,8 +516,7 @@ def _set_known_objects(base):
 
 
 def add_subparser(parser):
-  doc_kinds=('binarypb', 'jsonpb', 'textpb', 'markdown(github)',
-             'markdown(gitiles)')
+  doc_kinds=('binarypb', 'jsonpb', 'textpb', 'gen', 'markdown')
   helpstr = (
     'List all known modules reachable from the current package, with their '
     'documentation.'
@@ -523,10 +525,25 @@ def add_subparser(parser):
     'doc', help=helpstr, description=helpstr)
   doc_p.add_argument('recipe', nargs='?',
                      help='Restrict documentation to this recipe')
-  doc_p.add_argument('--kind', default='jsonpb', choices=doc_kinds,
-                     help='Output this kind of documentation')
+  doc_p.add_argument(
+    '--kind', default='jsonpb', choices=doc_kinds,
+    help=(
+      'Output this kind of documentation. `gen` will write the standard '
+      'README.recipes.md file. All others output to stdout'))
 
   doc_p.set_defaults(func=main)
+
+
+def regenerate_docs(universe_view, package_deps):
+  spec = universe_view.package.repo_spec.spec_pb()
+  base_dir = universe_view.package.repo_root
+  node = parse_package(universe_view, base_dir, spec)
+  _set_known_objects(node)
+
+  readme = os.path.join(
+    package_deps.root_package.recipes_dir, 'README.recipes.md')
+  with open(readme, 'wb') as f:
+    doc_markdown.Emit(doc_markdown.Printer(f), node)
 
 
 def main(package_deps, args):
@@ -534,6 +551,12 @@ def main(package_deps, args):
   universe_view = loader.UniverseView(universe, package_deps.root_package)
 
   logging.basicConfig()
+
+  # defer to regenerate_docs for consistency between train and 'doc --kind gen'
+  if args.kind == 'gen':
+    print('Generating README.recipes.md')
+    regenerate_docs(universe_view, package_deps)
+    return 0
 
   spec = universe_view.package.repo_spec.spec_pb()
   base_dir = universe_view.package.repo_root
@@ -557,9 +580,7 @@ def main(package_deps, args):
     sys.stdout.write(node.SerializeToString())
   elif args.kind == 'textpb':
     sys.stdout.write(textpb.MessageToString(node))
-  elif args.kind == 'markdown-github':
-    doc_markdown.Emit(doc_markdown.Printer(doc_markdown.GITHUB), node)
-  elif args.kind == 'markdown-gitiles':
-    doc_markdown.Emit(doc_markdown.Printer(doc_markdown.GITILES), node)
+  elif args.kind == 'markdown':
+    doc_markdown.Emit(doc_markdown.Printer(sys.stdout), node)
   else:
     raise NotImplementedError('--kind=%s' % args.kind)

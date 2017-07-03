@@ -9,29 +9,40 @@ from . import env
 
 from . import doc_pb2 as doc
 
-# These are modes for Printer
-GITHUB = 'github'
-GITILES = 'gitiles'
+
+GITHUB, GITILES = range(2)
+
+def markdown_flavor_for_url(url):
+  """Returns either GITHUB or GITILES for the given URL to indicate which flavor
+  of markdown is hosted at the URL."""
+  if 'github' in url:
+    return GITHUB
+  return GITILES
 
 
 class Printer(object):
-  def __init__(self, mode):
-    assert mode in (GITHUB, GITILES), mode
-
-    self.mode = mode
-    self._url_mode = None
+  def __init__(self, outf):
+    self._outf = outf
     self._url = None
     self._current_package = None
     self._known_objects = None
+    self._specs = None
+
+  @property
+  def specs(self):
+    return self._specs
+
+  @specs.setter
+  def specs(self, v):
+    self._specs = v
 
   @property
   def url(self):
-    return self._url
+    return self._specs[self._current_package].canonical_repo_url
 
-  @url.setter
-  def url(self, v):
-    self._url = v
-    self._url_mode = GITHUB if 'github.com/' in v else GITILES
+  @property
+  def markdown_flavor(self):
+    return markdown_flavor_for_url(self.url)
 
   @property
   def current_package(self):
@@ -49,10 +60,10 @@ class Printer(object):
   def known_objects(self, v):
     self._known_objects = v
 
-  def __call__(self, *args, **kwargs):
+  def __call__(self, *args):
     """Prints some text to the document. Behaves exactly like the builtin print
     function."""
-    print(*args, **kwargs)
+    print(*args, file=self._outf)
 
   def docstring(self, node):
     """Prints the docstring on the node (if any).
@@ -72,7 +83,7 @@ class Printer(object):
     name = name.replace('_', '\_')
     return "[%s](%s)" % (name, url)
 
-  def link(self, node, name=None, relpath=None, lineno=None):
+  def srclink(self, node, name=None, relpath=None, lineno=None, package=None):
     """Links to the source for a given documentation node.
 
     Node is duck-typed, and will be probed for:
@@ -87,8 +98,9 @@ class Printer(object):
     flavor of markdown we're targetting (since the source links depend solely on
     on the canonical_repo_url).
     """
-    if not self._url:
-      raise ValueError("unset url")
+    url, flavor = "", self.markdown_flavor
+    if package is not None:
+      url, _, flavor = self.baseurl(package)
 
     if name is None:
       name = getattr(node, 'name')
@@ -98,23 +110,21 @@ class Printer(object):
       lineno = getattr(node, 'lineno', None)
 
     if relpath:
-      # TODO(iannucci): pin these to the revisions in the recipes.cfg file.
-      if self._url_mode == GITHUB:
-        url = '/'.join((self._url, 'tree/master', relpath))
-        if lineno:
+      url += '/'+relpath
+      if lineno:
+        if flavor == GITHUB:
           url += '#L%d' % lineno
-      else:
-        url = '/'.join((self._url, '+/master', relpath))
-        if lineno:
+        else:
           url += '#%d' % lineno
     else:
-      url = self._url
+      url += '/'
 
     return self.generic_link(name, url)
 
-  def anchorlink(self, pkgname, name, prefix=None):
+  @staticmethod
+  def anchor(flavor, name, prefix=None):
     anchor = name
-    if self.mode == GITILES:
+    if flavor == GITILES:
       if prefix is not None:
         anchor = '%s-%s' % (prefix, anchor)
       replacement = '_'
@@ -127,37 +137,62 @@ class Printer(object):
 
     for c in '/:':
       anchor = anchor.replace(c, replacement)
-    if self.mode == GITHUB:
+    if flavor == GITHUB:
       anchor = anchor.lower()
+    return anchor
 
+  def anchorlink(self, name, prefix=None):
+    anchor = self.anchor(self.markdown_flavor, name, prefix)
+    return "[%s](#%s)" % (name, anchor)
+
+  def baseurl(self, pkgname):
     if pkgname == self.current_package:
-      return "[%s](#%s)" % (name, anchor)
+      return '', self.specs[pkgname].recipes_path, self.markdown_flavor
 
-    return "[%s](./%s.md#%s)" % (name, pkgname, anchor)
+    s = self.specs[pkgname]
+    r = self.specs[self.current_package].deps[pkgname].revision
+    url = s.canonical_repo_url
+    flavor = markdown_flavor_for_url(url)
+    if flavor == GITHUB:
+      url += '/blob/%s' % r
+    else:
+      url += '/+/%s' % r
+    return url, s.recipes_path, flavor
+
+  def readmeurl(self, pkgname):
+    if pkgname == self.current_package:
+      return '', self.markdown_flavor
+
+    url, recipes_path, flavor = self.baseurl(pkgname)
+    if recipes_path:
+      url += '/%s' % recipes_path
+    url += '/README.recipes.md'
+    return url, flavor
 
   def modlink(self, pkgname, name):
     """Returns a link to the generated markdown for a recipe module."""
-    return self.anchorlink(pkgname, name, 'recipe_modules')
-
-  def recipelink(self, pkgname, name):
-    """Returns a link to the generated markdown for a recipe."""
-    return self.anchorlink(pkgname, name, 'recipes')
+    url, flavor = self.readmeurl(pkgname)
+    url += '#' + self.anchor(flavor, name, 'recipe_modules')
+    return '[%s](%s)' % (name, url)
 
   def objlink(self, obj):
     """Returns a markdown link to a well-known object `obj`"""
     if obj.generic:
       return str(obj.generic)
     else:
+      # TODO(iannucci): link to a generated markdown doc, not directly to
+      # source.
       obj = self.known_objects[obj.known]
-      return self.link(getattr(obj, obj.WhichOneof('kind')))
+      return self.srclink(getattr(obj, obj.WhichOneof('kind')),
+                          package='recipe_engine')
 
   def toc(self, section_name, section_map):
     if section_map:
       self()
-      self('**%s**' % (self.anchorlink(self.current_package, section_name),))
+      self('**%s**' % (self.anchorlink(section_name),))
       for name, mod in sorted(section_map.items()):
-        link = self.anchorlink(self.current_package, name,
-                               section_name.replace(' ', '_'))
+        link = self.anchorlink(name,
+                               section_name.replace(' ', '_').lower())
         if mod.docstring:
           first_line = mod.docstring.split('.', 1)[0].replace('\n', ' ')+'.'
           self('  * %s &mdash; %s' % (link, first_line))
@@ -169,7 +204,7 @@ def Emit(p, node):
   assert isinstance(p, Printer)
 
   if isinstance(node, doc.Doc.Recipe):
-    p("### *recipes* /", p.link(node))
+    p("### *recipes* /", p.srclink(node))
 
     Emit(p, node.deps)
 
@@ -182,14 +217,13 @@ def Emit(p, node):
       Emit(p, func)
 
   elif isinstance(node, doc.Doc.Package):
-    # TODO(iannucci): this is a bit hacky. Maybe these should be set on p before
-    # calling Emit?
-    p.current_package = node.spec.project_id
-    p.url = node.spec.canonical_repo_url
+    p.current_package = node.project_id
+    p.specs = node.specs
     p.known_objects = node.known_objects
 
+    p('<!--- AUTOGENERATED BY `./recipes.py test train` -->')
     p('# Package documentation for', p.generic_link(
-      node.spec.project_id, p.url))
+      node.project_id, p.url))
 
     p.docstring(node)
 
@@ -210,7 +244,7 @@ def Emit(p, node):
         Emit(p, mod)
 
   elif isinstance(node, doc.Doc.Module):
-    p("### *recipe_modules* /", p.link(node))
+    p("### *recipe_modules* /", p.srclink(node))
 
     Emit(p, node.deps)
 
@@ -228,13 +262,13 @@ def Emit(p, node):
     if node.module_links:
       p()
       links = [p.modlink(n.package, n.name) for n in node.module_links]
-      p(p.link(node, name="DEPS")+":", ', '.join(links))
+      p(p.srclink(node, name="DEPS")+":", ', '.join(links))
 
   elif isinstance(node, doc.Doc.Class):
     p()
     bases = [p.objlink(b) for b in node.bases]
     p('#### **class %s(%s):**' % (
-      p.link(node), ', '.join(bases)))
+      p.srclink(node), ', '.join(bases)))
 
     p.docstring(node)
 
@@ -252,7 +286,7 @@ def Emit(p, node):
     if decos:
       decos += '<br>'
     p("%s&mdash; **def %s(%s):**" % (
-      decos, p.link(node), node.signature.replace('*', '\*')))
+      decos, p.srclink(node), node.signature.replace('*', '\*')))
 
     p.docstring(node)
 

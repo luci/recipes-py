@@ -281,23 +281,28 @@ message Doc {
   // Documentation for a package (recipe repo), including docs for all recipes
   // and recipe_module's in that package.
   message Package {
-    // the Package 'spec'. Contains lots of goodies like the project id, path
-    // within the repo to where the recipes start, and any other packages that
-    // this one depends on.
-    recipe_engine.Package spec = 1;
+    // This is the project_id that's being documented.
+    string project_id = 1;
+
+    // This is a mapping from project_id to Package `spec`, including the
+    // project for the main project (as indicated by `project_id`).
+    //
+    // Contains lots of goodies like the path within the repo to where the
+    // recipes start, and the dependencies of the repos.
+    map<string, recipe_engine.Package > specs = 2;
 
     // the full contents of the 'README.recipes.md' file at the base of the repo
     // plus recipe_root.
-    string docstring = 2;
+    string docstring = 3;
 
     // a map of all of this package's recipe_module names to their documentation.
-    map<string, Module> recipe_modules = 3;
+    map<string, Module> recipe_modules = 4;
 
     // a map of all of this package's recipe names to their documentation.
-    map<string, Recipe> recipes = 4;
+    map<string, Recipe> recipes = 5;
 
     // A map of known items (e.g. core portions of the recipe engine) to their
     // documentation.
-    map<string, Known> known_objects = 5;
+    map<string, Known> known_objects = 6;
   }
 }
