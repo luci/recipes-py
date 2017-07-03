@@ -80,6 +80,23 @@ def run_simulation_test(repo_root, recipes_path, additional_args=None):
   return rc, output
 
 
+def regen_docs(repo_root, recipes_path):
+  """
+  Regenerates README.recipes.md.
+
+  Raises a CalledProcessError on failure.
+  """
+  # Use _local_ recipes.py, so that it checks out the pinned recipe engine,
+  # rather than running recipe engine which may be at a different revision
+  # than the pinned one.
+  subprocess.check_call([
+    sys.executable,
+    os.path.join(repo_root, recipes_path, 'recipes.py'),
+    'doc',
+    '--kind', 'gen',
+  ])
+
+
 def process_candidates(candidates, repos, context, config_file,
                        verbose_json):
   """
@@ -152,7 +169,8 @@ def process_candidates(candidates, repos, context, config_file,
       write_spec_to_disk(context, config_file, candidate.package_pb)
 
       rc, output = run_simulation_test(
-          context.repo_root, candidate.package_pb.recipes_path, ['train'])
+          context.repo_root, candidate.package_pb.recipes_path,
+          ['train', '--no-docs'])
       if verbose_json:
         roll_details[i]['recipes_simulation_test_train'] = {
           'output': output,
@@ -239,6 +257,9 @@ def main(_package_deps, args):
       # on other revisions, re-run them now as well.
       write_spec_to_disk(context, config_file, package_pb)
       run_simulation_test(repo_root, package_spec.recipes_path, ['train'])
+    elif results.get('picked_roll_details'):
+      # Success! We need to regen docs now.
+      regen_docs(context.repo_root, package_spec.recipes_path)
 
   if args.output_json:
     with args.output_json:
