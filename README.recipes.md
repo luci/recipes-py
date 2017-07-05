@@ -212,7 +212,7 @@ purposes.
 Returns (int) - The current nesting level.
 ### *recipe_modules* / [file](/recipe_modules/file)
 
-[DEPS](/recipe_modules/file/__init__.py#L5): [json](#recipe_modules--json), [path](#recipe_modules--path), [python](#recipe_modules--python), [raw_io](#recipe_modules--raw_io), [step](#recipe_modules--step)
+[DEPS](/recipe_modules/file/__init__.py#L5): [python](#recipe_modules--python), [path](#recipe_modules--path), [step](#recipe_modules--step), [raw_io](#recipe_modules--raw_io), [json](#recipe_modules--json)
 
 #### **class [FileApi](/recipe_modules/file/api.py#L15)([RecipeApi](/recipe_engine/recipe_api.py#L884)):**
 
@@ -390,7 +390,7 @@ Args:
 Raises file.Error.
 ### *recipe_modules* / [generator\_script](/recipe_modules/generator_script)
 
-[DEPS](/recipe_modules/generator_script/__init__.py#L5): [context](#recipe_modules--context), [json](#recipe_modules--json), [path](#recipe_modules--path), [python](#recipe_modules--python), [step](#recipe_modules--step)
+[DEPS](/recipe_modules/generator_script/__init__.py#L5): [context](#recipe_modules--context), [step](#recipe_modules--step), [json](#recipe_modules--json), [python](#recipe_modules--python), [path](#recipe_modules--path)
 
 #### **class [GeneratorScriptApi](/recipe_modules/generator_script/api.py#L7)([RecipeApi](/recipe_engine/recipe_api.py#L884)):**
 
@@ -440,7 +440,7 @@ corresponds to one step, and contains the following keys:
     you know what it is, you also shouldn't use it.
 ### *recipe_modules* / [json](/recipe_modules/json)
 
-[DEPS](/recipe_modules/json/__init__.py#L5): [properties](#recipe_modules--properties), [python](#recipe_modules--python), [raw_io](#recipe_modules--raw_io)
+[DEPS](/recipe_modules/json/__init__.py#L5): [raw_io](#recipe_modules--raw_io), [python](#recipe_modules--python), [properties](#recipe_modules--properties)
 
 Methods for producing and consuming JSON.
 
@@ -616,7 +616,7 @@ Returns a set of properties, possibly used by legacy scripts.
 Returns a vanilla python jsonish dictionary of properties.
 ### *recipe_modules* / [python](/recipe_modules/python)
 
-[DEPS](/recipe_modules/python/__init__.py#L5): [context](#recipe_modules--context), [raw_io](#recipe_modules--raw_io), [step](#recipe_modules--step)
+[DEPS](/recipe_modules/python/__init__.py#L5): [raw_io](#recipe_modules--raw_io), [context](#recipe_modules--context), [step](#recipe_modules--step)
 
 #### **class [PythonApi](/recipe_modules/python/api.py#L10)([RecipeApi](/recipe_engine/recipe_api.py#L884)):**
 
@@ -721,7 +721,7 @@ Similar to input(), but tries to decode the resulting data as utf-8 text,
 replacing any decoding errors with �.
 ### *recipe_modules* / [shutil](/recipe_modules/shutil)
 
-[DEPS](/recipe_modules/shutil/__init__.py#L5): [json](#recipe_modules--json), [path](#recipe_modules--path), [python](#recipe_modules--python), [raw_io](#recipe_modules--raw_io)
+[DEPS](/recipe_modules/shutil/__init__.py#L5): [python](#recipe_modules--python), [path](#recipe_modules--path), [raw_io](#recipe_modules--raw_io), [json](#recipe_modules--json)
 
 #### **class [ShutilApi](/recipe_modules/shutil/api.py#L7)([RecipeApi](/recipe_engine/recipe_api.py#L884)):**
 
@@ -889,7 +889,7 @@ Return current timestamp as a float number of seconds since epoch.
 Return current UTC time as a datetime.datetime.
 ### *recipe_modules* / [url](/recipe_modules/url)
 
-[DEPS](/recipe_modules/url/__init__.py#L5): [context](#recipe_modules--context), [json](#recipe_modules--json), [path](#recipe_modules--path), [python](#recipe_modules--python), [raw_io](#recipe_modules--raw_io)
+[DEPS](/recipe_modules/url/__init__.py#L5): [python](#recipe_modules--python), [path](#recipe_modules--path), [json](#recipe_modules--json), [context](#recipe_modules--context), [raw_io](#recipe_modules--raw_io)
 
 #### **class [UrlApi](/recipe_modules/url/api.py#L13)([RecipeApi](/recipe_engine/recipe_api.py#L884)):**
 
@@ -1006,17 +1006,17 @@ Generates and returns a random UUID as a string.
 &mdash; **def [RunSteps](/recipe_modules/context/examples/full.py#L15)(api):**
 ### *recipes* / [context:tests/cwd](/recipe_modules/context/tests/cwd.py)
 
-[DEPS](/recipe_modules/context/tests/cwd.py#L5): [context](#recipe_modules--context), [path](#recipe_modules--path), [step](#recipe_modules--step)
+[DEPS](/recipe_modules/context/tests/cwd.py#L5): [context](#recipe_modules--context), [step](#recipe_modules--step), [path](#recipe_modules--path)
 
 &mdash; **def [RunSteps](/recipe_modules/context/tests/cwd.py#L11)(api):**
 ### *recipes* / [context:tests/env](/recipe_modules/context/tests/env.py)
 
-[DEPS](/recipe_modules/context/tests/env.py#L5): [context](#recipe_modules--context), [path](#recipe_modules--path), [raw_io](#recipe_modules--raw_io), [step](#recipe_modules--step)
+[DEPS](/recipe_modules/context/tests/env.py#L5): [path](#recipe_modules--path), [raw_io](#recipe_modules--raw_io), [step](#recipe_modules--step), [context](#recipe_modules--context)
 
 &mdash; **def [RunSteps](/recipe_modules/context/tests/env.py#L19)(api):**
 ### *recipes* / [context:tests/increment\_nest\_level](/recipe_modules/context/tests/increment_nest_level.py)
 
-[DEPS](/recipe_modules/context/tests/increment_nest_level.py#L5): [context](#recipe_modules--context), [path](#recipe_modules--path), [step](#recipe_modules--step)
+[DEPS](/recipe_modules/context/tests/increment_nest_level.py#L5): [step](#recipe_modules--step), [context](#recipe_modules--context), [path](#recipe_modules--path)
 
 &mdash; **def [RunSteps](/recipe_modules/context/tests/increment_nest_level.py#L12)(api):**
 ### *recipes* / [context:tests/infra\_step](/recipe_modules/context/tests/infra_step.py)
@@ -1111,7 +1111,7 @@ Tests that step_data can accept multiple specs at once.
 &mdash; **def [RunSteps](/recipes/engine_tests/nonexistent_command.py#L3)(api):**
 ### *recipes* / [engine\_tests/recipe\_paths](/recipes/engine_tests/recipe_paths.py)
 
-[DEPS](/recipes/engine_tests/recipe_paths.py#L7): [path](#recipe_modules--path), [python](#recipe_modules--python), [step](#recipe_modules--step)
+[DEPS](/recipes/engine_tests/recipe_paths.py#L7): [step](#recipe_modules--step), [path](#recipe_modules--path), [python](#recipe_modules--python)
 
 Tests that recipes have access to names, resources and their package.
 
@@ -1132,12 +1132,12 @@ Tests that placeholders can't wreck the world by exhausting the step stack.
 &mdash; **def [RunSteps](/recipes/engine_tests/step_stack_exhaustion.py#L19)(api):**
 ### *recipes* / [engine\_tests/undeclared\_method](/recipes/engine_tests/undeclared_method.py)
 
-[DEPS](/recipes/engine_tests/undeclared_method.py#L7): [properties](#recipe_modules--properties), [python](#recipe_modules--python), [step](#recipe_modules--step)
+[DEPS](/recipes/engine_tests/undeclared_method.py#L7): [properties](#recipe_modules--properties), [step](#recipe_modules--step), [python](#recipe_modules--python)
 
 &mdash; **def [RunSteps](/recipes/engine_tests/undeclared_method.py#L19)(api, from_recipe, attribute, module):**
 ### *recipes* / [engine\_tests/unicode](/recipes/engine_tests/unicode.py)
 
-[DEPS](/recipes/engine_tests/unicode.py#L6): [properties](#recipe_modules--properties), [step](#recipe_modules--step)
+[DEPS](/recipes/engine_tests/unicode.py#L6): [step](#recipe_modules--step), [properties](#recipe_modules--properties)
 
 &mdash; **def [RunSteps](/recipes/engine_tests/unicode.py#L11)(api):**
 ### *recipes* / [engine\_tests/whitelist\_steps](/recipes/engine_tests/whitelist_steps.py)
@@ -1159,7 +1159,7 @@ Tests that step_data can accept multiple specs at once.
 &mdash; **def [RunSteps](/recipe_modules/file/examples/copytree.py#L11)(api):**
 ### *recipes* / [file:examples/error](/recipe_modules/file/examples/error.py)
 
-[DEPS](/recipe_modules/file/examples/error.py#L5): [file](#recipe_modules--file), [path](#recipe_modules--path)
+[DEPS](/recipe_modules/file/examples/error.py#L5): [path](#recipe_modules--path), [file](#recipe_modules--file)
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/error.py#L11)(api):**
 ### *recipes* / [generator\_script:examples/full](/recipe_modules/generator_script/examples/full.py)
@@ -1169,12 +1169,12 @@ Tests that step_data can accept multiple specs at once.
 &mdash; **def [RunSteps](/recipe_modules/generator_script/examples/full.py#L19)(api, script_name):**
 ### *recipes* / [json:examples/full](/recipe_modules/json/examples/full.py)
 
-[DEPS](/recipe_modules/json/examples/full.py#L5): [json](#recipe_modules--json), [path](#recipe_modules--path), [properties](#recipe_modules--properties), [python](#recipe_modules--python), [raw_io](#recipe_modules--raw_io), [step](#recipe_modules--step)
+[DEPS](/recipe_modules/json/examples/full.py#L5): [path](#recipe_modules--path), [json](#recipe_modules--json), [properties](#recipe_modules--properties), [python](#recipe_modules--python), [raw_io](#recipe_modules--raw_io), [step](#recipe_modules--step)
 
 &mdash; **def [RunSteps](/recipe_modules/json/examples/full.py#L16)(api):**
 ### *recipes* / [path:examples/full](/recipe_modules/path/examples/full.py)
 
-[DEPS](/recipe_modules/path/examples/full.py#L5): [path](#recipe_modules--path), [platform](#recipe_modules--platform), [properties](#recipe_modules--properties), [step](#recipe_modules--step)
+[DEPS](/recipe_modules/path/examples/full.py#L5): [properties](#recipe_modules--properties), [step](#recipe_modules--step), [path](#recipe_modules--path), [platform](#recipe_modules--platform)
 
 &mdash; **def [RunSteps](/recipe_modules/path/examples/full.py#L14)(api):**
 ### *recipes* / [platform:examples/full](/recipe_modules/platform/examples/full.py)
@@ -1189,7 +1189,7 @@ Tests that step_data can accept multiple specs at once.
 &mdash; **def [RunSteps](/recipe_modules/properties/examples/full.py#L17)(api, test_prop, param_name_test):**
 ### *recipes* / [python:examples/full](/recipe_modules/python/examples/full.py)
 
-[DEPS](/recipe_modules/python/examples/full.py#L7): [path](#recipe_modules--path), [python](#recipe_modules--python), [raw_io](#recipe_modules--raw_io), [step](#recipe_modules--step)
+[DEPS](/recipe_modules/python/examples/full.py#L7): [step](#recipe_modules--step), [path](#recipe_modules--path), [python](#recipe_modules--python), [raw_io](#recipe_modules--raw_io)
 
 Launches the repo bundler.
 
@@ -1206,7 +1206,7 @@ Launches the repo bundler.
 &mdash; **def [RunSteps](/recipe_modules/shutil/examples/full.py#L25)(api):**
 ### *recipes* / [step:examples/full](/recipe_modules/step/examples/full.py)
 
-[DEPS](/recipe_modules/step/examples/full.py#L7): [context](#recipe_modules--context), [path](#recipe_modules--path), [properties](#recipe_modules--properties), [step](#recipe_modules--step)
+[DEPS](/recipe_modules/step/examples/full.py#L7): [properties](#recipe_modules--properties), [path](#recipe_modules--path), [context](#recipe_modules--context), [step](#recipe_modules--step)
 
 &mdash; **def [RunSteps](/recipe_modules/step/examples/full.py#L27)(api, bad_return, access_invalid_data, timeout):**
 ### *recipes* / [step:tests/active\_result](/recipe_modules/step/tests/active_result.py)
@@ -1221,7 +1221,7 @@ Launches the repo bundler.
 &mdash; **def [RunSteps](/recipe_modules/step/tests/defer.py#L9)(api):**
 ### *recipes* / [step:tests/inject\_paths](/recipe_modules/step/tests/inject_paths.py)
 
-[DEPS](/recipe_modules/step/tests/inject_paths.py#L5): [context](#recipe_modules--context), [path](#recipe_modules--path), [properties](#recipe_modules--properties), [step](#recipe_modules--step)
+[DEPS](/recipe_modules/step/tests/inject_paths.py#L5): [properties](#recipe_modules--properties), [step](#recipe_modules--step), [context](#recipe_modules--context), [path](#recipe_modules--path)
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/inject_paths.py#L13)(api):**
 ### *recipes* / [step:tests/nested](/recipe_modules/step/tests/nested.py)
@@ -1241,7 +1241,7 @@ Launches the repo bundler.
 &mdash; **def [RunSteps](/recipe_modules/step/tests/subannotations.py#L7)(api):**
 ### *recipes* / [step:tests/timeout](/recipe_modules/step/tests/timeout.py)
 
-[DEPS](/recipe_modules/step/tests/timeout.py#L8): [properties](#recipe_modules--properties), [step](#recipe_modules--step)
+[DEPS](/recipe_modules/step/tests/timeout.py#L8): [step](#recipe_modules--step), [properties](#recipe_modules--properties)
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/timeout.py#L19)(api, timeout):**
 ### *recipes* / [step:tests/trigger](/recipe_modules/step/tests/trigger.py)
@@ -1261,7 +1261,7 @@ Launches the repo bundler.
 &mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#L13)(api):**
 ### *recipes* / [url:examples/full](/recipe_modules/url/examples/full.py)
 
-[DEPS](/recipe_modules/url/examples/full.py#L5): [context](#recipe_modules--context), [path](#recipe_modules--path), [step](#recipe_modules--step), [url](#recipe_modules--url)
+[DEPS](/recipe_modules/url/examples/full.py#L5): [step](#recipe_modules--step), [url](#recipe_modules--url), [context](#recipe_modules--context), [path](#recipe_modules--path)
 
 &mdash; **def [RunSteps](/recipe_modules/url/examples/full.py#L27)(api):**
 ### *recipes* / [url:tests/join](/recipe_modules/url/tests/join.py)
@@ -1271,7 +1271,7 @@ Launches the repo bundler.
 &mdash; **def [RunSteps](/recipe_modules/url/tests/join.py#L11)(api):**
 ### *recipes* / [url:tests/validate\_url](/recipe_modules/url/tests/validate_url.py)
 
-[DEPS](/recipe_modules/url/tests/validate_url.py#L5): [properties](#recipe_modules--properties), [step](#recipe_modules--step), [url](#recipe_modules--url)
+[DEPS](/recipe_modules/url/tests/validate_url.py#L5): [url](#recipe_modules--url), [properties](#recipe_modules--properties), [step](#recipe_modules--step)
 
 &mdash; **def [RunSteps](/recipe_modules/url/tests/validate_url.py#L12)(api):**
 ### *recipes* / [uuid:examples/full](/recipe_modules/uuid/examples/full.py)

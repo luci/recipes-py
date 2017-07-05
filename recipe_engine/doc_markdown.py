@@ -173,7 +173,10 @@ class Printer(object):
     """Returns a link to the generated markdown for a recipe module."""
     url, flavor = self.readmeurl(pkgname)
     url += '#' + self.anchor(flavor, name, 'recipe_modules')
-    return '[%s](%s)' % (name, url)
+    displayname = name
+    if pkgname != self.current_package:
+      displayname = '%s/%s' % (pkgname, name)
+    return '[%s](%s)' % (displayname, url)
 
   def objlink(self, obj):
     """Returns a markdown link to a well-known object `obj`"""
@@ -261,7 +264,7 @@ def Emit(p, node):
   elif isinstance(node, doc.Doc.Deps):
     if node.module_links:
       p()
-      links = [p.modlink(n.package, n.name) for n in node.module_links]
+      links = [p.modlink(n.package, n.name) for n in sorted(node.module_links)]
       p(p.srclink(node, name="DEPS")+":", ', '.join(links))
 
   elif isinstance(node, doc.Doc.Class):
