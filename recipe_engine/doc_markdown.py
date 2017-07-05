@@ -28,6 +28,11 @@ class Printer(object):
     self._known_objects = None
     self._specs = None
 
+    # name -> url:
+    #   <repo_name/recipe_modules/modname>
+    #   <repo_name>/wkt/<type_name>
+    self._links = {}
+
   @property
   def specs(self):
     return self._specs
@@ -78,30 +83,14 @@ class Printer(object):
       self(node.docstring)
 
   @staticmethod
-  def generic_link(name, url):
+  def generic_link(name, url, ref=False):
     """Returns a markdown link for the name,url pair."""
     name = name.replace('_', '\_')
+    if ref:
+      return "[%s][%s]" % (name, url)
     return "[%s](%s)" % (name, url)
 
-  def srclink(self, node, name=None, relpath=None, lineno=None, package=None):
-    """Links to the source for a given documentation node.
-
-    Node is duck-typed, and will be probed for:
-      name (str) - the name of the link
-      relpath (str) - the relative path from the repo root to this node's file.
-      lineno (int, optional) - the line number in the source
-
-    All of these values may be provided/overridden in the kwargs, in which case
-    node will not be probed for that particular value.
-
-    This understands how to link to either github or gitiles, regardless of the
-    flavor of markdown we're targetting (since the source links depend solely on
-    on the canonical_repo_url).
-    """
-    url, flavor = "", self.markdown_flavor
-    if package is not None:
-      url, _, flavor = self.baseurl(package)
-
+  def munge_url(self, url, flavor, node, name=None, relpath=None, lineno=None):
     if name is None:
       name = getattr(node, 'name')
     if relpath is None:
@@ -119,6 +108,25 @@ class Printer(object):
     else:
       url += '/'
 
+    return name, url
+
+  def srclink(self, node, name=None, relpath=None, lineno=None):
+    """Links to the source for a given documentation node.
+
+    Node is duck-typed, and will be probed for:
+      name (str) - the name of the link
+      relpath (str) - the relative path from the repo root to this node's file.
+      lineno (int, optional) - the line number in the source
+
+    All of these values may be provided/overridden in the kwargs, in which case
+    node will not be probed for that particular value.
+
+    This understands how to link to either github or gitiles, regardless of the
+    flavor of markdown we're targetting (since the source links depend solely on
+    on the canonical_repo_url).
+    """
+    url, flavor = "", self.markdown_flavor
+    name, url = self.munge_url(url, flavor, node, name, relpath, lineno)
     return self.generic_link(name, url)
 
   @staticmethod
@@ -171,12 +179,18 @@ class Printer(object):
 
   def modlink(self, pkgname, name):
     """Returns a link to the generated markdown for a recipe module."""
+    displayname = name
     url, flavor = self.readmeurl(pkgname)
     url += '#' + self.anchor(flavor, name, 'recipe_modules')
-    displayname = name
-    if pkgname != self.current_package:
-      displayname = '%s/%s' % (pkgname, name)
-    return '[%s](%s)' % (displayname, url)
+
+    if pkgname == self.current_package:
+      return self.generic_link(displayname, url)
+
+    displayname = '%s/%s' % (pkgname, name)
+    link_name = "%s/recipe_modules/%s" % (pkgname, name)
+    if link_name not in self._links:
+      self._links[link_name] = url
+    return self.generic_link(displayname, link_name, ref=True)
 
   def objlink(self, obj):
     """Returns a markdown link to a well-known object `obj`"""
@@ -186,8 +200,18 @@ class Printer(object):
       # TODO(iannucci): link to a generated markdown doc, not directly to
       # source.
       obj = self.known_objects[obj.known]
-      return self.srclink(getattr(obj, obj.WhichOneof('kind')),
-                          package='recipe_engine')
+      node = getattr(obj, obj.WhichOneof('kind'))
+      url, _, flavor = self.baseurl('recipe_engine')
+      _, url = self.munge_url(url, flavor, node)
+
+      if self.current_package == 'recipe_engine':
+        return self.generic_link(node.name, url)
+
+      link_name = "recipe_engine/wkt/%s" % node.name
+      if link_name not in self._links:
+        self._links[link_name] = url
+
+      return self.generic_link(node.name, link_name, ref=True)
 
   def toc(self, section_name, section_map):
     if section_map:
@@ -201,6 +225,11 @@ class Printer(object):
           self('  * %s &mdash; %s' % (link, first_line))
         else:
           self('  * %s' % (link,))
+
+  def dump_links(self):
+    self()
+    for name, url in sorted(self._links.items()):
+      self('[%s]: %s' % (name, url))
 
 
 def Emit(p, node):
@@ -246,6 +275,8 @@ def Emit(p, node):
       for _, mod in sorted(node.recipes.items()):
         Emit(p, mod)
 
+    p.dump_links()
+
   elif isinstance(node, doc.Doc.Module):
     p("### *recipe_modules* /", p.srclink(node))
 
@@ -264,7 +295,8 @@ def Emit(p, node):
   elif isinstance(node, doc.Doc.Deps):
     if node.module_links:
       p()
-      links = [p.modlink(n.package, n.name) for n in sorted(node.module_links)]
+      links = [p.modlink(pkg, name) for pkg, name in
+               sorted((n.package, n.name) for n in node.module_links)]
       p(p.srclink(node, name="DEPS")+":", ', '.join(links))
 
   elif isinstance(node, doc.Doc.Class):
