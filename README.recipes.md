@@ -48,6 +48,7 @@
   * [file:examples/copy](#recipes--fileexamplescopy)
   * [file:examples/copytree](#recipes--fileexamplescopytree)
   * [file:examples/error](#recipes--fileexampleserror)
+  * [file:examples/glob](#recipes--fileexamplesglob)
   * [generator_script:examples/full](#recipes--generator_scriptexamplesfull)
   * [json:examples/full](#recipes--jsonexamplesfull)
   * [path:examples/full](#recipes--pathexamplesfull)
@@ -1162,6 +1163,11 @@ Tests that step_data can accept multiple specs at once.
 [DEPS](/recipe_modules/file/examples/error.py#L5): [file](#recipe_modules--file), [path](#recipe_modules--path)
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/error.py#L11)(api):**
+### *recipes* / [file:examples/glob](/recipe_modules/file/examples/glob.py)
+
+[DEPS](/recipe_modules/file/examples/glob.py#L5): [file](#recipe_modules--file), [json](#recipe_modules--json), [path](#recipe_modules--path)
+
+&mdash; **def [RunSteps](/recipe_modules/file/examples/glob.py#L11)(api):**
 ### *recipes* / [generator\_script:examples/full](/recipe_modules/generator_script/examples/full.py)
 
 [DEPS](/recipe_modules/generator_script/examples/full.py#L7): [generator\_script](#recipe_modules--generator_script), [json](#recipe_modules--json), [path](#recipe_modules--path), [properties](#recipe_modules--properties), [step](#recipe_modules--step)

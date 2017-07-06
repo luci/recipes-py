@@ -154,7 +154,9 @@ def _Glob(base, pattern):
   cwd = os.getcwd()
   try:
     os.chdir(base)
-    print('\n'.join(sorted(glob.glob(pattern))))
+    hits = glob.glob(pattern)
+    if hits:
+      print('\n'.join(sorted(hits)))
   finally:
     os.chdir(cwd)
 
