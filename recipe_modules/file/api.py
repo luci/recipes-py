@@ -24,6 +24,13 @@ class FileApi(recipe_api.RecipeApi):
       super(FileApi.Error, self).__init__(reason)
       self.errno_name = errno_name
 
+  def _assert_absolute_path_or_placeholder(self, path_or_placeholder):
+    if isinstance(path_or_placeholder, recipe_api.Placeholder):
+      # We assume that all Placeholder classes will render to an absolute path,
+      # as this is part of their api contract.
+      return True
+    return self.m.path.assert_absolute(path_or_placeholder)
+
   def _run(self, name, args, step_test_data=None, stdout=None):
     if not step_test_data:
       step_test_data = self.test_api.errno
@@ -51,15 +58,15 @@ class FileApi(recipe_api.RecipeApi):
 
     Args:
       name (str) - The name of the step.
-      source (Path) - The path to the file you want to copy.
-      dest (Path) - The path to the destination file name. If this path exists
-        and is a directory, the basename of `source` will be appended to derive
-        a path to a destination file.
+      source (Path|Placeholder) - The path to the file you want to copy.
+      dest (Path|Placeholder) - The path to the destination file name. If this
+        path exists and is a directory, the basename of `source` will be
+        appended to derive a path to a destination file.
 
     Raises file.Error
     """
-    self.m.path.assert_absolute(source)
-    self.m.path.assert_absolute(dest)
+    self._assert_absolute_path_or_placeholder(source)
+    self._assert_absolute_path_or_placeholder(dest)
     self._run(name, ['copy', source, dest])
     self.m.path.mock_copy_paths(source, dest)
 

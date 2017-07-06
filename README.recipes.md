@@ -218,7 +218,7 @@ Returns (int) - The current nesting level.
 
 FileApi contains helper functions for reading and writing files.
 
-&mdash; **def [copy](/recipe_modules/file/api.py#L46)(self, name, source, dest):**
+&mdash; **def [copy](/recipe_modules/file/api.py#L53)(self, name, source, dest):**
 
 Copies a file (including mode bits) from source to destination on the
 local filesystem.
@@ -227,14 +227,14 @@ Behaves identically to shutil.copy.
 
 Args:
   name (str) - The name of the step.
-  source (Path) - The path to the file you want to copy.
-  dest (Path) - The path to the destination file name. If this path exists
-    and is a directory, the basename of `source` will be appended to derive
-    a path to a destination file.
+  source (Path|Placeholder) - The path to the file you want to copy.
+  dest (Path|Placeholder) - The path to the destination file name. If this
+    path exists and is a directory, the basename of `source` will be
+    appended to derive a path to a destination file.
 
 Raises file.Error
 
-&mdash; **def [copytree](/recipe_modules/file/api.py#L66)(self, name, source, dest, symlinks=False):**
+&mdash; **def [copytree](/recipe_modules/file/api.py#L73)(self, name, source, dest, symlinks=False):**
 
 Recursively copies a directory tree.
 
@@ -250,7 +250,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#L202)(self, name, dest, mode=511):**
+&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#L209)(self, name, dest, mode=511):**
 
 Ensures that `dest` exists and is a directory.
 
@@ -263,7 +263,7 @@ Args:
 
 Raises file.Error if the path exists but is not a directory.
 
-&mdash; **def [glob\_paths](/recipe_modules/file/api.py#L138)(self, name, source, pattern, test_data=()):**
+&mdash; **def [glob\_paths](/recipe_modules/file/api.py#L145)(self, name, source, pattern, test_data=()):**
 
 Performs glob expansion on `pattern`.
 
@@ -282,7 +282,7 @@ Returns list[Path] - All paths found.
 
 Raises file.Error.
 
-&mdash; **def [listdir](/recipe_modules/file/api.py#L179)(self, name, source, test_data=()):**
+&mdash; **def [listdir](/recipe_modules/file/api.py#L186)(self, name, source, test_data=()):**
 
 List all files inside a directory.
 
@@ -297,7 +297,7 @@ Returns list[Path]
 
 Raises file.Error.
 
-&mdash; **def [move](/recipe_modules/file/api.py#L87)(self, name, source, dest):**
+&mdash; **def [move](/recipe_modules/file/api.py#L94)(self, name, source, dest):**
 
 Moves a file or directory.
 
@@ -310,7 +310,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [read\_text](/recipe_modules/file/api.py#L105)(self, name, source, test_data=''):**
+&mdash; **def [read\_text](/recipe_modules/file/api.py#L112)(self, name, source, test_data=''):**
 
 Reads a file as UTF-8 encoded text.
 
@@ -324,7 +324,7 @@ Returns (str) - The content of the file.
 
 Raises file.Error
 
-&mdash; **def [remove](/recipe_modules/file/api.py#L164)(self, name, source):**
+&mdash; **def [remove](/recipe_modules/file/api.py#L171)(self, name, source):**
 
 Remove a file.
 
@@ -336,7 +336,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#L236)(self, name, source):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#L243)(self, name, source):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -351,7 +351,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#L254)(self, name, source, pattern):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#L261)(self, name, source, pattern):**
 
 Removes all entries in `source` matching the glob `pattern`.
 
@@ -364,7 +364,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#L219)(self, name, source):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#L226)(self, name, source):**
 
 Recursively removes a directory.
 
@@ -378,7 +378,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [write\_text](/recipe_modules/file/api.py#L124)(self, name, dest, text_data):**
+&mdash; **def [write\_text](/recipe_modules/file/api.py#L131)(self, name, dest, text_data):**
 
 Write the given UTF-8 encoded `text_data` to `dest`.
 
@@ -1149,9 +1149,9 @@ Tests that step_data can accept multiple specs at once.
 &mdash; **def [RunSteps](/recipes/engine_tests/whitelist_steps.py#L20)(api, fakeit):**
 ### *recipes* / [file:examples/copy](/recipe_modules/file/examples/copy.py)
 
-[DEPS](/recipe_modules/file/examples/copy.py#L5): [file](#recipe_modules--file), [path](#recipe_modules--path)
+[DEPS](/recipe_modules/file/examples/copy.py#L5): [file](#recipe_modules--file), [json](#recipe_modules--json), [path](#recipe_modules--path)
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/copy.py#L11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/copy.py#L12)(api):**
 ### *recipes* / [file:examples/copytree](/recipe_modules/file/examples/copytree.py)
 
 [DEPS](/recipe_modules/file/examples/copytree.py#L5): [file](#recipe_modules--file), [path](#recipe_modules--path)

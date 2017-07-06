@@ -5,6 +5,7 @@
 DEPS = [
   "file",
   "path",
+  "json",
 ]
 
 
@@ -24,6 +25,16 @@ def RunSteps(api):
 
   read_data = api.file.read_text(
     'read it', api.path['start_dir'].join('new new path'), test_data=data)
+
+  assert read_data == data, (read_data, data)
+
+  api.file.copy(
+    'Copy some JSON data',
+    api.json.input({"hello": "world"}),
+    dest)
+
+  data = '{"hello": "world"}'
+  read_data = api.file.read_text('read json back', dest, test_data=data)
 
   assert read_data == data, (read_data, data)
 

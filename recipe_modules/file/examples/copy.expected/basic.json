@@ -70,6 +70,34 @@
     "name": "read it (2)"
   },
   {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "{\"hello\": \"world\"}",
+      "[START_DIR]/some file"
+    ],
+    "infra_step": true,
+    "name": "Copy some JSON data"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "[START_DIR]/some file",
+      "/path/to/tmp/"
+    ],
+    "infra_step": true,
+    "name": "read json back"
+  },
+  {
     "name": "$result",
     "recipe_result": null,
     "status_code": 0
