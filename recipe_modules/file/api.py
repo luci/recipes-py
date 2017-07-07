@@ -164,7 +164,8 @@ class FileApi(recipe_api.RecipeApi):
       name, ['glob', source, pattern],
       lambda: self.test_api.glob_paths(test_data),
       self.m.raw_io.output_text())
-    ret = [source.join(x) for x in result.stdout.splitlines()]
+    ret = [source.join(*x.split(self.m.path.sep))
+           for x in result.stdout.splitlines()]
     result.presentation.logs["glob"] = map(str, ret)
     return ret
 

@@ -6,12 +6,70 @@
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
       "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[START_DIR]/a"
+    ],
+    "infra_step": true,
+    "name": "mkdir a"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[START_DIR]/b"
+    ],
+    "infra_step": true,
+    "name": "mkdir b"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
       "copy",
       "data",
       "[START_DIR]/thing.pat"
     ],
     "infra_step": true,
     "name": "write thing.pat"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "data",
+      "[START_DIR]/a/thing.pat"
+    ],
+    "infra_step": true,
+    "name": "write a/thing.pat"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "data",
+      "[START_DIR]/b/thing.pat"
+    ],
+    "infra_step": true,
+    "name": "write b/thing.pat"
   },
   {
     "cmd": [
@@ -36,6 +94,34 @@
       "/path/to/tmp/json",
       "copy",
       "data",
+      "[START_DIR]/a/other.pat"
+    ],
+    "infra_step": true,
+    "name": "write a/other.pat"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "data",
+      "[START_DIR]/b/other.pat"
+    ],
+    "infra_step": true,
+    "name": "write b/other.pat"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "data",
       "[START_DIR]/something"
     ],
     "infra_step": true,
@@ -50,10 +136,66 @@
       "/path/to/tmp/json",
       "copy",
       "data",
+      "[START_DIR]/a/something"
+    ],
+    "infra_step": true,
+    "name": "write a/something"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "data",
+      "[START_DIR]/b/something"
+    ],
+    "infra_step": true,
+    "name": "write b/something"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "data",
       "[START_DIR]/file"
     ],
     "infra_step": true,
     "name": "write file"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "data",
+      "[START_DIR]/a/file"
+    ],
+    "infra_step": true,
+    "name": "write a/file"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "data",
+      "[START_DIR]/b/file"
+    ],
+    "infra_step": true,
+    "name": "write b/file"
   },
   {
     "cmd": [
@@ -110,6 +252,28 @@
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@glob@[START_DIR]/something@@@",
       "@@@STEP_LOG_LINE@glob@[START_DIR]/thing.pat@@@",
+      "@@@STEP_LOG_END@glob@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "glob",
+      "[START_DIR]",
+      "*/*.pat"
+    ],
+    "infra_step": true,
+    "name": "nest",
+    "stdout": "/path/to/tmp/",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@glob@[START_DIR]/a/other.pat@@@",
+      "@@@STEP_LOG_LINE@glob@[START_DIR]/a/thing.pat@@@",
+      "@@@STEP_LOG_LINE@glob@[START_DIR]/b/other.pat@@@",
+      "@@@STEP_LOG_LINE@glob@[START_DIR]/b/thing.pat@@@",
       "@@@STEP_LOG_END@glob@@@"
     ]
   },

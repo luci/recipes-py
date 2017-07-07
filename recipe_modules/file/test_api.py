@@ -7,15 +7,6 @@ import os
 from recipe_engine import recipe_test_api
 
 
-def renderNames(names):
-  def check(name):
-    name = str(name)
-    if '/' in name or '\\' in name:  # pragma: no cover
-      raise ValueError('file name contains slash: %r' % name)
-    return name
-  return '\n'.join(sorted(map(check, names)))
-
-
 class FileTestApi(recipe_test_api.RecipeTestApi):
   def listdir(self, names=(), errno_name=0):
     """Provides test mock for the `listdir` method.
@@ -29,7 +20,12 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
       yield (api.test('my_test')
         + api.step_data('listdir step name', api.file.listdir(['a', 'b', 'c']))
     """
-    return (self.m.raw_io.stream_output(renderNames(names))
+    def _check(name):
+      name = str(name)
+      if '/' in name or '\\' in name:  # pragma: no cover
+        raise ValueError('file name contains slash: %r' % name)
+      return name
+    return (self.m.raw_io.stream_output('\n'.join(sorted(map(_check, names))))
             + self.errno(errno_name))
 
   def read_text(self, text_content='', errno_name=0):
@@ -61,7 +57,7 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
           'pattern_path', 'pattern_other_thing'
       ]))
     """
-    return (self.m.raw_io.stream_output(renderNames(names))
+    return (self.m.raw_io.stream_output('\n'.join(sorted(map(str, names))))
             + self.errno(errno_name))
 
   def errno(self, errno_name=None):

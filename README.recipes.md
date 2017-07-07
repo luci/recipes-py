@@ -251,7 +251,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#L209)(self, name, dest, mode=511):**
+&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#L210)(self, name, dest, mode=511):**
 
 Ensures that `dest` exists and is a directory.
 
@@ -283,7 +283,7 @@ Returns list[Path] - All paths found.
 
 Raises file.Error.
 
-&mdash; **def [listdir](/recipe_modules/file/api.py#L186)(self, name, source, test_data=()):**
+&mdash; **def [listdir](/recipe_modules/file/api.py#L187)(self, name, source, test_data=()):**
 
 List all files inside a directory.
 
@@ -325,7 +325,7 @@ Returns (str) - The content of the file.
 
 Raises file.Error
 
-&mdash; **def [remove](/recipe_modules/file/api.py#L171)(self, name, source):**
+&mdash; **def [remove](/recipe_modules/file/api.py#L172)(self, name, source):**
 
 Remove a file.
 
@@ -337,7 +337,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#L243)(self, name, source):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#L244)(self, name, source):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -352,7 +352,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#L261)(self, name, source, pattern):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#L262)(self, name, source, pattern):**
 
 Removes all entries in `source` matching the glob `pattern`.
 
@@ -365,7 +365,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#L226)(self, name, source):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#L227)(self, name, source):**
 
 Recursively removes a directory.
 
