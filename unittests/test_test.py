@@ -77,7 +77,8 @@ class RecipeWriter(object):
     for test_name, test_contents in self.expectations.iteritems():
       name = ''.join('_' if c in '<>:"\\/|?*\0' else c for c in test_name)
       with open(os.path.join(self.expect_dir, '%s.json' % name), 'w') as f:
-        json.dump(test_contents, f)
+        json.dump(test_contents, f, sort_keys=True, indent=2,
+                  separators=(',', ': '))
 
 
 class RecipeModuleWriter(object):
@@ -382,14 +383,6 @@ class TestTest(unittest.TestCase):
     rw.write()
     with self.assertRaises(subprocess.CalledProcessError) as cm:
       self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertNotIn('FATAL: Insufficient coverage', cm.exception.output)
-    self.assertNotIn('CHECK(FAIL)', cm.exception.output)
-    self.assertIn(
-        'foo.basic failed',
-        cm.exception.output)
-    self.assertIn(
-        '+[{\'cmd\': [\'echo\', \'bar\'], \'name\': \'test\'},\n',
-        cm.exception.output)
     self.assertEqual(self.json_generator.diff_failure('foo.basic').get(),
                      self.json_contents)
 
@@ -789,11 +782,7 @@ class TestTest(unittest.TestCase):
     self.assertIn('foo.basic failed', cm.exception.output)
     self.assertEqual(
         self.json_generator
-            .internal_failure('foo.basic')
-            .invalid()
-            .unused_expectation('recipes/foo.expected')
-            .unused_expectation('recipes/foo.expected/basic.json')
-            .coverage_failure('recipes/foo.py', [6])
+            .diff_failure('foo.basic')
             .get(),
         self.json_contents)
 

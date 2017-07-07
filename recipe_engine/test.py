@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import bdb
 import cStringIO
+import collections
 import contextlib
 import copy
 import datetime
@@ -222,8 +223,7 @@ def run_test(test_description, mode):
   if os.path.exists(test_description.expectation_path):
     try:
       with open(test_description.expectation_path) as f:
-        # TODO(phajdan.jr): why do we need to re-encode golden data files?
-          expected = re_encode(json.load(f))
+        expected = f.read()
     except Exception:
       if mode == _MODE_TRAIN:
         # Ignore errors when training; we're going to overwrite the file anyway.
@@ -236,11 +236,13 @@ def run_test(test_description, mode):
   ]
 
   with maybe_debug(break_funcs, mode == _MODE_DEBUG):
-    actual, failed_checks, coverage_data = run_recipe(
+    actual_obj, failed_checks, coverage_data = run_recipe(
         test_description.recipe_name, test_description.test_name,
         test_description.covers,
         enable_coverage=(mode != _MODE_DEBUG))
-  actual = re_encode(actual)
+  actual = json.dumps(
+      re_encode(actual_obj), sort_keys=True, indent=2,
+      separators=(',', ': '))
 
   failures = []
 
@@ -248,8 +250,10 @@ def run_test(test_description, mode):
   if failed_checks:
     sys.stdout.write('C')
     failures.extend([CheckFailure(c) for c in failed_checks])
+  elif actual_obj is None and expected is None:
+    sys.stdout.write('.')
   elif actual != expected:
-    if actual is not None:
+    if actual_obj is not None:
       if mode == _MODE_TRAIN:
         expectation_dir = os.path.dirname(test_description.expectation_path)
         # This may race with other processes, so just attempt to create dir
@@ -260,13 +264,11 @@ def run_test(test_description, mode):
           if e.errno != errno.EEXIST:
             raise e
         with open(test_description.expectation_path, 'wb') as f:
-          json.dump(
-              re_encode(actual), f, sort_keys=True, indent=2,
-              separators=(',', ': '))
+          f.write(actual)
       else:
         diff = '\n'.join(difflib.unified_diff(
-            pprint.pformat(expected).splitlines(),
-            pprint.pformat(actual).splitlines(),
+            unicode(expected).splitlines(),
+            unicode(actual).splitlines(),
             fromfile='expected', tofile='actual',
             n=4, lineterm=''))
 
@@ -281,7 +283,7 @@ def run_test(test_description, mode):
   sys.stdout.flush()
 
   return TestResult(test_description, failures, coverage_data,
-                    actual is not None)
+                    actual_obj is not None)
 
 
 def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
@@ -841,14 +843,14 @@ def kill_switch():
 # TODO(phajdan.jr): Consider integrating with json.JSONDecoder.
 def re_encode(obj):
   """Ensure consistent encoding for common python data structures."""
-  if isinstance(obj, dict):
-    return {re_encode(k): re_encode(v) for k, v in obj.iteritems()}
-  elif isinstance(obj, list):
-    return [re_encode(i) for i in obj]
-  elif isinstance(obj, (unicode, str)):
+  if isinstance(obj, (unicode, str)):
     if isinstance(obj, str):
       obj = obj.decode('utf-8', 'replace')
     return obj.encode('utf-8', 'replace')
+  elif isinstance(obj, collections.Mapping):
+    return {re_encode(k): re_encode(v) for k, v in obj.iteritems()}
+  elif isinstance(obj, collections.Iterable):
+    return [re_encode(i) for i in obj]
   else:
     return obj
 
