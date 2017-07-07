@@ -12,7 +12,6 @@
   * [properties](#recipe_modules--properties)
   * [python](#recipe_modules--python)
   * [raw_io](#recipe_modules--raw_io)
-  * [shutil](#recipe_modules--shutil)
   * [step](#recipe_modules--step)
   * [tempfile](#recipe_modules--tempfile)
   * [time](#recipe_modules--time)
@@ -56,7 +55,6 @@
   * [properties:examples/full](#recipes--propertiesexamplesfull)
   * [python:examples/full](#recipes--pythonexamplesfull) &mdash; Launches the repo bundler.
   * [raw_io:examples/full](#recipes--raw_ioexamplesfull)
-  * [shutil:examples/full](#recipes--shutilexamplesfull)
   * [step:examples/full](#recipes--stepexamplesfull)
   * [step:tests/active_result](#recipes--steptestsactive_result)
   * [step:tests/defer](#recipes--steptestsdefer)
@@ -720,48 +718,6 @@ Similar to output(), but uses an OutputTextPlaceholder, which expects utf-8
 encoded text.
 Similar to input(), but tries to decode the resulting data as utf-8 text,
 replacing any decoding errors with �.
-### *recipe_modules* / [shutil](/recipe_modules/shutil)
-
-[DEPS](/recipe_modules/shutil/__init__.py#L5): [json](#recipe_modules--json), [path](#recipe_modules--path), [python](#recipe_modules--python), [raw\_io](#recipe_modules--raw_io)
-
-#### **class [ShutilApi](/recipe_modules/shutil/api.py#L7)([RecipeApi](/recipe_engine/recipe_api.py#L884)):**
-
-&mdash; **def [copy](/recipe_modules/shutil/api.py#L16)(self, name, source, dest, step_test_data=None, \*\*kwargs):**
-
-Copy a file.
-
-&mdash; **def [copytree](/recipe_modules/shutil/api.py#L31)(self, name, source, dest, symlinks=False, \*\*kwargs):**
-
-Run shutil.copytree in a step.
-
-&mdash; **def [glob](/recipe_modules/shutil/api.py#L67)(self, name, pattern, test_data=None, \*\*kwargs):**
-
-Performs glob search on a directory.
-
-Returns list of files found.
-
-&mdash; **def [listdir](/recipe_modules/shutil/api.py#L105)(self, name, path, step_test_data=None, \*\*kwargs):**
-
-Wrapper for os.listdir.
-
-&mdash; **def [makedirs](/recipe_modules/shutil/api.py#L120)(self, name, path, mode=511, \*\*kwargs):**
-
-Like os.makedirs, except that if the directory exists, then there is no
-error.
-
-&mdash; **def [read](/recipe_modules/shutil/api.py#L45)(self, name, path, test_data=None, \*\*kwargs):**
-
-Read a file and return its contents.
-
-&mdash; **def [remove](/recipe_modules/shutil/api.py#L92)(self, name, path, \*\*kwargs):**
-
-Remove the given file.
-
-&mdash; **def [rmtree](/recipe_modules/shutil/api.py#L8)(self, path, \*\*kwargs):**
-
-&mdash; **def [write](/recipe_modules/shutil/api.py#L53)(self, name, path, data, \*\*kwargs):**
-
-Write the given data to a file.
 ### *recipe_modules* / [step](/recipe_modules/step)
 
 [DEPS](/recipe_modules/step/__init__.py#L8): [context](#recipe_modules--context), [path](#recipe_modules--path)
@@ -870,7 +826,7 @@ The nesting is implemented by adjusting the 'name' and 'nest_level' fields
 of the context (see the context() method above).
 ### *recipe_modules* / [tempfile](/recipe_modules/tempfile)
 
-[DEPS](/recipe_modules/tempfile/__init__.py#L5): [path](#recipe_modules--path), [shutil](#recipe_modules--shutil)
+[DEPS](/recipe_modules/tempfile/__init__.py#L5): [file](#recipe_modules--file), [path](#recipe_modules--path)
 
 #### **class [TempfileApi](/recipe_modules/tempfile/api.py#L10)([RecipeApi](/recipe_engine/recipe_api.py#L884)):**
 
@@ -1205,11 +1161,6 @@ Launches the repo bundler.
 [DEPS](/recipe_modules/raw_io/examples/full.py#L5): [path](#recipe_modules--path), [properties](#recipe_modules--properties), [python](#recipe_modules--python), [raw\_io](#recipe_modules--raw_io), [step](#recipe_modules--step)
 
 &mdash; **def [RunSteps](/recipe_modules/raw_io/examples/full.py#L14)(api):**
-### *recipes* / [shutil:examples/full](/recipe_modules/shutil/examples/full.py)
-
-[DEPS](/recipe_modules/shutil/examples/full.py#L8): [path](#recipe_modules--path), [shutil](#recipe_modules--shutil), [step](#recipe_modules--step)
-
-&mdash; **def [RunSteps](/recipe_modules/shutil/examples/full.py#L25)(api):**
 ### *recipes* / [step:examples/full](/recipe_modules/step/examples/full.py)
 
 [DEPS](/recipe_modules/step/examples/full.py#L7): [context](#recipe_modules--context), [path](#recipe_modules--path), [properties](#recipe_modules--properties), [step](#recipe_modules--step)

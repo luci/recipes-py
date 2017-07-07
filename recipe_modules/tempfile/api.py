@@ -16,4 +16,4 @@ class TempfileApi(recipe_api.RecipeApi):
       yield path
     finally:
       if path:
-        self.m.shutil.rmtree(path, infra_step=True)
+        self.m.file.rmtree('rmtree %s' % path, path)
