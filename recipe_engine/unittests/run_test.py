@@ -70,7 +70,6 @@ class RunTest(unittest.TestCase):
       ['raw_io:examples/full'],
       ['python:examples/full'],
       ['json:examples/full'],
-      ['uuid:examples/full'],
       ['file:examples/copy'],
       ['file:examples/copytree'],
       ['file:examples/glob'],

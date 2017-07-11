@@ -16,7 +16,6 @@
   * [tempfile](#recipe_modules--tempfile)
   * [time](#recipe_modules--time)
   * [url](#recipe_modules--url)
-  * [uuid](#recipe_modules--uuid)
 
 **[Recipes](#recipes)**
   * [context:examples/full](#recipes--contextexamplesfull)
@@ -69,7 +68,6 @@
   * [url:examples/full](#recipes--urlexamplesfull)
   * [url:tests/join](#recipes--urltestsjoin)
   * [url:tests/validate_url](#recipes--urltestsvalidate_url)
-  * [uuid:examples/full](#recipes--uuidexamplesfull)
 ## Recipe Modules
 
 ### *recipe_modules* / [context](/recipe_modules/context)
@@ -947,13 +945,6 @@ Returns (bool): True if the URL is considered secure, False if not.
 
 Raises:
   ValueError: if "v" is not valid.
-### *recipe_modules* / [uuid](/recipe_modules/uuid)
-
-#### **class [UuidApi](/recipe_modules/uuid/api.py#L9)([RecipeApi](/recipe_engine/recipe_api.py#L884)):**
-
-&mdash; **def [random](/recipe_modules/uuid/api.py#L10)(self):**
-
-Generates and returns a random UUID as a string.
 ## Recipes
 
 ### *recipes* / [context:examples/full](/recipe_modules/context/examples/full.py)
@@ -1231,9 +1222,4 @@ Launches the repo bundler.
 [DEPS](/recipe_modules/url/tests/validate_url.py#L5): [properties](#recipe_modules--properties), [step](#recipe_modules--step), [url](#recipe_modules--url)
 
 &mdash; **def [RunSteps](/recipe_modules/url/tests/validate_url.py#L12)(api):**
-### *recipes* / [uuid:examples/full](/recipe_modules/uuid/examples/full.py)
-
-[DEPS](/recipe_modules/uuid/examples/full.py#L5): [step](#recipe_modules--step), [uuid](#recipe_modules--uuid)
-
-&mdash; **def [RunSteps](/recipe_modules/uuid/examples/full.py#L11)(api):**
 
