@@ -68,15 +68,10 @@ class TestOverride(repo_test_util.RepoTest):
     # Training the recipes should work.
     self.train_recipes(repos['c'])
 
-    # Trying to override just the b repo should fail (conflicting revisions
-    # of the a repo).
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self.train_recipes(repos['c'], overrides=[('b', repos['b1']['root'])])
-    # TODO(phajdan.jr): assert on full message after making exception printable.
-    self.assertIn('InconsistentDependencyGraphError', cm.exception.output)
-
-    # The solution is to also override the a repo to make it clear what revision
-    # should be used.
+    # Both overrides should also work, thanks to recursive override processing.
+    self.train_recipes(
+        repos['c'],
+        overrides=[('b', repos['b1']['root'])])
     self.train_recipes(
         repos['c'],
         overrides=[('b', repos['b1']['root']), ('a', repos['a']['root'])])

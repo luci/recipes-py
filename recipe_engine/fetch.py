@@ -241,8 +241,7 @@ class GitBackend(Backend):
     try:
       return self._execute(*cmd)
     except subprocess42.CalledProcessError as e:
-      subcommand = (args[0]) if args else ('')
-      raise GitError('Git "%s" failed: %s' % (subcommand, e.message,))
+      raise GitError('%r failed: %s: %s' % (cmd, e.message, e.output))
 
   def _execute(self, *args):
     """Runs a raw command. Separate so it's easily mockable."""

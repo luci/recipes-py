@@ -208,7 +208,7 @@ class PathRepoSpec(RepoSpec):
     self.project_id = project_id
     self.path = path
 
-  def __str__(self):
+  def __repr__(self):
     return (
       'PathRepoSpec{project_id="%(project_id)s", path="%(path)s"}'
       % self.__dict__
@@ -411,16 +411,27 @@ class PackageDeps(object):
                  are the `project_id` field to override, and dictionary values
                  are the override path.
     """
-    package_deps = cls(overrides={
-      project_id: PathRepoSpec(project_id, path)
-      for project_id, path in overrides.iteritems()
-    })
+    # Apply deps of overrides to ensure consistent dependency graph.
+    # We don't need to recurse further, since by design the deps
+    # should already be transitive.
+    overrides_deep = {}
+    for project_id, path in overrides.iteritems():
+      repo_spec = PathRepoSpec(project_id, path)
+      repo_spec.fetch()
+      overrides_deep[project_id] = repo_spec
 
-    # initialize all non-overridden repos to their intended state.
+      package_spec = PackageSpec.from_package_pb(context, repo_spec.spec_pb())
+      for sub_project_id, sub_repo_spec in package_spec.deps.iteritems():
+        sub_repo_spec.fetch()
+        overrides_deep[sub_project_id] = sub_repo_spec
+
+    package_deps = cls(overrides=overrides_deep)
+
+    # Initialize all repos to their intended state.
     pspec = PackageSpec.from_package_pb(context, package_file.read())
     for project_id, dep in pspec.deps.iteritems():
-      if project_id not in overrides:
-        dep.checkout(context)
+      effective_dep = overrides_deep.get(project_id, dep)
+      effective_dep.checkout(context)
 
     package_deps._root_package = package_deps._create_package(
       context, RootRepoSpec(package_file))

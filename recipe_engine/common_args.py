@@ -7,6 +7,7 @@
 This is in a separate file for recipes.py for testing purposes.
 """
 
+import collections
 import json
 import logging
 import os
@@ -55,7 +56,7 @@ def add_common_args(parser):
       '--verbose', '-v', action='count',
       help='Increase logging verboisty')
   parser.add_argument('-O', '--project-override', metavar='ID=PATH',
-      action=ProjectOverrideAction, default={},
+      action=ProjectOverrideAction, default=collections.OrderedDict(),
       help='Override a project repository path with a local one.')
   parser.add_argument(
       # Use 'None' as default so that we can recognize when none of the
