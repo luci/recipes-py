@@ -3,13 +3,15 @@
 # that can be found in the LICENSE file.
 
 """The context module provides APIs for manipulating a few pieces of 'ambient'
-data that affect how steps are run:
-  cwd - The current working directory.
-  env - The environment variables.
-  infra_step - Whether or not failures should be treated as infrastructure
+data that affect how steps are run.
+
+The pieces of information which can be modified are:
+  * cwd - The current working directory.
+  * env - The environment variables.
+  * infra_step - Whether or not failures should be treated as infrastructure
     failures vs. normal failures.
-  name_prefix - A prefix for all step names.
-  nest_level - An indicator for the UI of how deeply to nest steps.
+  * name_prefix - A prefix for all step names.
+  * nest_level - An indicator for the UI of how deeply to nest steps.
 
 The values here are all scoped using Python's `with` statement; there's no
 mechanism to make an open-ended adjustment to these values (i.e. there's no way
@@ -19,9 +21,11 @@ typically arise with things like os.environ or os.chdir in a normal python
 program.
 
 Example:
-  with api.context(cwd=api.path['start_dir'].join('subdir')):
-    # this step is run inside of the subdir directory.
-    api.step("cat subdir/foo", ['cat', './foo'])
+```python
+with api.context(cwd=api.path['start_dir'].join('subdir')):
+  # this step is run inside of the subdir directory.
+  api.step("cat subdir/foo", ['cat', './foo'])
+```
 """
 
 
@@ -61,7 +65,7 @@ class ContextApi(RecipeApi):
                increment_nest_level=None, infra_steps=None, name_prefix=None):
     """Allows adjustment of multiple context values in a single call.
 
-    Contextual data:
+    Args:
       * cwd (Path) - the current working directory to use for all steps.
         To 'reset' to the original cwd at the time recipes started, pass
         `api.path['start_dir']`.
@@ -83,13 +87,15 @@ class ContextApi(RecipeApi):
     Multiple invocations concatenate values with '.'.
 
     Example:
-      with api.context(name_prefix='hello'):
-        # has name 'hello.something'
-        api.step('something', ['echo', 'something'])
+    ```python
+    with api.context(name_prefix='hello'):
+      # has name 'hello.something'
+      api.step('something', ['echo', 'something'])
 
-        with api.context(name_prefix='world'):
-          # has name 'hello.world.other'
-          api.step('other', ['echo', 'other'])
+      with api.context(name_prefix='world'):
+        # has name 'hello.world.other'
+        api.step('other', ['echo', 'other'])
+    ```
 
     Environmental Variable Overrides:
 
@@ -111,7 +117,7 @@ class ContextApi(RecipeApi):
     defined in "env", it will be installed as the last path component if it is
     not empty.
 
-    TODO(iannucci): combine nest_level and name_prefix
+    **TODO(iannucci): combine nest_level and name_prefix**
 
     Look at the examples in "examples/" for examples of context module usage.
     """
@@ -186,9 +192,9 @@ class ContextApi(RecipeApi):
   def cwd(self):
     """Returns the current working directory that steps will run in.
 
-    Returns (Path|None) - The current working directory. A value of None is
-      equivalent to api.path['start_dir'], though only occurs if no cwd has been
-      set (e.g. in the outermost context of RunSteps).
+    **Returns (Path|None)** - The current working directory. A value of None is
+    equivalent to api.path['start_dir'], though only occurs if no cwd has been
+    set (e.g. in the outermost context of RunSteps).
     """
     return self._cwd[-1]
 
@@ -200,7 +206,7 @@ class ContextApi(RecipeApi):
     startup environment. If you want to pass data to the recipe, it should be
     done with properties.
 
-    Returns (dict) - The env-key -> value mapping of current environment
+    **Returns (dict)** - The env-key -> value mapping of current environment
       modifications.
     """
     # TODO(iannucci): store env in an immutable way to avoid excessive copies.
@@ -214,8 +220,8 @@ class ContextApi(RecipeApi):
     This will return a mapping of environment key to Path tuple for Path
     prefixes registered with the environment.
 
-    Returns (dict) - The env-key -> value(Path) mapping of current environment
-      prefix modifications.
+    **Returns (dict)** - The env-key -> value(Path) mapping of current
+    environment prefix modifications.
     """
     # TODO(iannucci): store env in an immutable way to avoid excessive copies.
     # TODO(iannucci): handle case-insensitive keys on windows
@@ -225,7 +231,7 @@ class ContextApi(RecipeApi):
   def infra_step(self):
     """Returns the current value of the infra_step setting.
 
-    Returns (bool) - True iff steps are currently considered infra steps.
+    **Returns (bool)** - True iff steps are currently considered infra steps.
     """
     return self._infra_step[-1]
 
@@ -233,7 +239,8 @@ class ContextApi(RecipeApi):
   def name_prefix(self):
     """Gets the current step name prefix.
 
-    Returns (str) - The string prefix that every step will have prepended to it.
+    **Returns (str)** - The string prefix that every step will have prepended to
+    it.
     """
     return self._name_prefix[-1]
 
@@ -245,6 +252,6 @@ class ContextApi(RecipeApi):
     `api.step.nest`. This api is included for completeness and documentation
     purposes.
 
-    Returns (int) - The current nesting level.
+    **Returns (int)** - The current nesting level.
     """
     return self._nest_level[-1]

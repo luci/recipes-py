@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+"""Methods for interacting with HTTP(s) URLs."""
+
 import collections
 import types
 import urllib
@@ -93,7 +95,7 @@ class UrlApi(recipe_api.RecipeApi):
     """Constructs a URL path from composite parts.
 
     Args:
-      parts (str...): Strings to concastenate. Any leading or trailing slashes
+      * parts (str...): Strings to concastenate. Any leading or trailing slashes
           will be stripped from intermediate strings to ensure that they join
           together. Trailing slashes will not be stripped from the last part.
     """
@@ -111,12 +113,12 @@ class UrlApi(recipe_api.RecipeApi):
     A valid URL has a scheme and netloc, and must begin with HTTP or HTTPS.
 
     Args:
-      v (str): The URL to validate.
+      * v (str): The URL to validate.
 
-    Returns (bool): True if the URL is considered secure, False if not.
+    **Returns (bool)** - True if the URL is considered secure, False if not.
 
-    Raises:
-      ValueError: if "v" is not valid.
+    **Raises:**
+      * ValueError: if "v" is not valid.
     """
     u = urlparse.urlparse(v)
     if u.scheme.lower() not in ('http', 'https'):
@@ -130,25 +132,25 @@ class UrlApi(recipe_api.RecipeApi):
     """GET data at given URL and writes it to file.
 
     Args:
-      url: URL to request.
-      path (Path): the Path where the content will be written.
-      step_name: optional step name, 'fetch <url>' by default.
-      headers: a {header_name: value} dictionary for HTTP headers.
-      transient_retry (bool or int): Determines how transient HTTP errorts
+      * url: URL to request.
+      * path (Path): the Path where the content will be written.
+      * step_name: optional step name, 'fetch <url>' by default.
+      * headers: a {header_name: value} dictionary for HTTP headers.
+      * transient_retry (bool or int): Determines how transient HTTP errorts
           (>500) will be retried. If True (default), errors will be retried up
           to 10 times. If False, no transient retries will occur. If an integer
           is supplied, this is the number of transient retries to perform. All
           retries have exponential backoff applied.
-      strip_prefix (str or None): If not None, this prefix must be present at
+      * strip_prefix (str or None): If not None, this prefix must be present at
           the beginning of the response, and will be stripped from the resulting
           content (e.g., GERRIT_JSON_PREFIX).
-      timeout: Timeout (see step.__call__).
+      * timeout: Timeout (see step.__call__).
 
-    Returns (UrlApi.Response): Response with "path" as its "output" value.
+    **Returns (UrlApi.Response)** - Response with "path" as its "output" value.
 
-    Raises:
-      HTTPError, InfraHTTPError: if the request failed.
-      ValueError: If the request was invalid.
+    **Raises:**
+      * HTTPError, InfraHTTPError: if the request failed.
+      * ValueError: If the request was invalid.
     """
     return self._get_step(url, path, step_name, headers, transient_retry,
                           strip_prefix, False, timeout, '')
@@ -158,54 +160,57 @@ class UrlApi(recipe_api.RecipeApi):
     """GET data at given URL and writes it to file.
 
     Args:
-      url: URL to request.
-      step_name: optional step name, 'fetch <url>' by default.
-      headers: a {header_name: value} dictionary for HTTP headers.
-      transient_retry (bool or int): Determines how transient HTTP errorts
+      * url: URL to request.
+      * step_name: optional step name, 'fetch <url>' by default.
+      * headers: a {header_name: value} dictionary for HTTP headers.
+      * transient_retry (bool or int): Determines how transient HTTP errorts
           (>500) will be retried. If True (default), errors will be retried up
           to 10 times. If False, no transient retries will occur. If an integer
           is supplied, this is the number of transient retries to perform. All
           retries have exponential backoff applied.
-      timeout: Timeout (see step.__call__).
-      default_test_data (str): If provided, use this as the text output when
+      * timeout: Timeout (see step.__call__).
+      * default_test_data (str): If provided, use this as the text output when
           testing if no overriding data is available.
 
-    Returns (UrlApi.Response): Response with the content as its output value.
+    **Returns (UrlApi.Response)** - Response with the content as its output
+    value.
 
-    Raises:
-      HTTPError, InfraHTTPError: if the request failed.
-      ValueError: If the request was invalid.
+    **Raises:**
+      * HTTPError, InfraHTTPError: if the request failed.
+      * ValueError: If the request was invalid.
     """
     assert isinstance(default_test_data, (types.NoneType, str))
     return self._get_step(url, None, step_name, headers, transient_retry,
                           None, False, timeout, default_test_data)
 
   def get_json(self, url, step_name=None, headers=None, transient_retry=True,
-               strip_prefix=None, log=False, timeout=None, default_test_data=None):
+               strip_prefix=None, log=False, timeout=None,
+               default_test_data=None):
     """GET data at given URL and writes it to file.
 
     Args:
-      url: URL to request.
-      step_name: optional step name, 'fetch <url>' by default.
-      headers: a {header_name: value} dictionary for HTTP headers.
-      transient_retry (bool or int): Determines how transient HTTP errorts
+      * url: URL to request.
+      * step_name: optional step name, 'fetch <url>' by default.
+      * headers: a {header_name: value} dictionary for HTTP headers.
+      * transient_retry (bool or int): Determines how transient HTTP errorts
           (>500) will be retried. If True (default), errors will be retried up
           to 10 times. If False, no transient retries will occur. If an integer
           is supplied, this is the number of transient retries to perform. All
           retries have exponential backoff applied.
-      strip_prefix (str or None): If not None, this prefix must be present at
+      * strip_prefix (str or None): If not None, this prefix must be present at
           the beginning of the response, and will be stripped from the resulting
           content (e.g., GERRIT_JSON_PREFIX).
-      log (bool): If True, emit the JSON content as a log.
-      timeout: Timeout (see step.__call__).
-      default_test_data (jsonish): If provided, use this as the unmarshalled
+      * log (bool): If True, emit the JSON content as a log.
+      * timeout: Timeout (see step.__call__).
+      * default_test_data (jsonish): If provided, use this as the unmarshalled
           JSON result when testing if no overriding data is available.
 
-    Returns (UrlApi.Response): Response with the JSON as its "output" value.
+    **Returns (UrlApi.Response)** - Response with the JSON as its "output"
+    value.
 
-    Raises:
-      HTTPError, InfraHTTPError: if the request failed.
-      ValueError: If the request was invalid.
+    **Raises:**
+      * HTTPError, InfraHTTPError: if the request failed.
+      * ValueError: If the request was invalid.
     """
     as_json = 'log' if log else True
     return self._get_step(url, None, step_name, headers, transient_retry,

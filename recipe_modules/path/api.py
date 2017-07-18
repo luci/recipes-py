@@ -2,6 +2,38 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+"""All functions related to manipulating paths in recipes.
+
+Recipes handle paths a bit differently than python does. All path manipulation
+in recipes revolves around Path objects. These objects store a base path (always
+absolute), plus a list of components to join with it. New paths can be derived
+by calling the .join method with additional components.
+
+In this way, all paths in Recipes are absolute, and are constructed from a small
+collection of anchor points. The built-in anchor points are:
+  * `api.path['start_dir']` - This is the directory that the recipe started in.
+    it's similar to `cwd`, except that it's constant.
+  * `api.path['cache']` - This directory is provided by whatever's running the
+    recipe. Files and directories created under here /may/ be evicted in between
+    runs of the recipe (i.e. to relieve disk pressure).
+  * `api.path['cleanup']` - This directory is provided by whatever's running the
+    recipe. Files and directories created under here /are guaranteed/ to be
+    evicted in between runs of the recipe. Additionally, this directory is
+    guaranteed to be empty when the recipe starts.
+  * `api.path['tmp_base']` - This directory is the system-configured temp dir.
+    This is a weaker form of 'cleanup', and its use should be avoided. This may
+    be removed in the future (or converted to an alias of 'cleanup').
+  * `api.path['checkout']` - This directory is set by various 'checkout' modules
+    in recipes. It was originally intended to make recipes easier to read and
+    make code somewhat generic or homogenous, but this was a mistake. New code
+    should avoid 'checkout', and instead just explicitly pass paths around. This
+    path may be removed in the future.
+
+There are other anchor points which can be defined (e.g. by the
+`depot_tools/infra_paths` module). Refer to those modules for additional
+documentation.
+"""
+
 import functools
 import itertools
 import os
@@ -162,23 +194,6 @@ class fake_path(object):
 
 
 class PathApi(recipe_api.RecipeApi):
-  """
-  PathApi provides common os.path functions as well as convenience functions
-  for generating absolute paths to things in a testable way.
-
-  It defines paths to standard directories:
-  - start_dir: the directory where the recipe execution starts.
-  - cache: a directory where each subdirectory is a cache of a specific format,
-    e.g. for git, isolate, goma, etc. A program that runs the recipe has a right
-    to cleanup individual subdirectories in the cache directory.
-    Typical usage: api.path["cache'].join("mycache")
-  - tmp_base: the base directory for temporary files.
-
-  Mocks:
-    exists (list): Paths which should exist in the test case. Thes must be paths
-      using the [*_ROOT] placeholders. ex. '[BUILD_ROOT]/scripts'.
-  """
-
   _paths_client = recipe_api.RequireClient('paths')
 
   # Attribute accesses that we pass through to our "_path_mod" module.
@@ -191,6 +206,7 @@ class PathApi(recipe_api.RecipeApi):
                     'join', 'split', 'splitext', 'realpath')
 
   def get_config_defaults(self):
+    """Internal recipe implementation function."""
     return {
       # Needed downstream in depot_tools
       'PLATFORM': self.m.platform.name,
@@ -252,6 +268,7 @@ class PathApi(recipe_api.RecipeApi):
     return abs_path
 
   def initialize(self):
+    """Internal recipe implementation function."""
     if not self._test_data.enabled:  # pragma: no cover
       self._path_mod = os.path
       # Capture the cwd on process start to avoid shenanigans.
@@ -286,7 +303,7 @@ class PathApi(recipe_api.RecipeApi):
     self.set_config('BASE')
 
   def mock_add_paths(self, path):
-    """For testing purposes, assert that |path| exists."""
+    """For testing purposes, mark that |path| exists."""
     if self._test_data.enabled:
       self._path_mod.mock_add_paths(path)
 
@@ -299,18 +316,23 @@ class PathApi(recipe_api.RecipeApi):
     """For testing purposes, assert that |path| doesn't exist.
 
     Args:
-      path (str|Path) - The path to remove.
-      filt (func[str] bool) - Called for every candidate path. Return
+      * path (str|Path) - The path to remove.
+      * filt (func[str] bool) - Called for every candidate path. Return
         True to remove this path.
     """
     if self._test_data.enabled:
       self._path_mod.mock_remove_paths(path, filt)
 
   def assert_absolute(self, path):
+    """Raises AssertionError if the given path is not an absolute path.
+
+    Args:
+      * path (Path|str) - The path to check.
+    """
     assert self.abspath(path) == str(path), '%s is not absolute' % path
 
   def mkdtemp(self, prefix):
-    """Makes a new temp directory, returns path to it."""
+    """Makes a new temporary directory, returns Path to it."""
     if not self._test_data.enabled:  # pragma: no cover
       # New path as str.
       new_path = tempfile.mkdtemp(prefix=prefix, dir=str(self['tmp_base']))
@@ -330,9 +352,9 @@ class PathApi(recipe_api.RecipeApi):
     """Converts an absolute path string `string_path` to a real Path object,
     using the most appropriate known base path.
 
-    * abs_string_path MUST be an absolute path
-    * abs_string_path MUST be rooted in one of the configured base paths known
-      to the path module.
+      * abs_string_path MUST be an absolute path
+      * abs_string_path MUST be rooted in one of the configured base paths known
+        to the path module.
 
     This method will find the longest match in all the following:
       * module resource paths
@@ -343,9 +365,9 @@ class PathApi(recipe_api.RecipeApi):
 
     Example:
     ```
-      # assume [START_DIR] == "/basis/dir/for/recipe"
-      api.path.abs_to_path("/basis/dir/for/recipe/some/other/dir") ->
-        Path("[START_DIR]/some/other/dir")
+    # assume [START_DIR] == "/basis/dir/for/recipe"
+    api.path.abs_to_path("/basis/dir/for/recipe/some/other/dir") ->
+      Path("[START_DIR]/some/other/dir")
     ```
 
     Raises an ValueError if the preconditions are not met, otherwise returns the
@@ -390,11 +412,15 @@ class PathApi(recipe_api.RecipeApi):
     self.c.dynamic_paths[pathname] = path
 
   def get(self, name, default=None):
+    """Gets the base path named `name`. See module docstring for more
+    information."""
     if name in self.c.base_paths or name in self.c.dynamic_paths:
       return config_types.Path(config_types.NamedBasePath(name))
     return default
 
   def __getitem__(self, name):
+    """Gets the base path named `name`. See module docstring for more
+    information."""
     result = self.get(name)
     if not result:
       raise KeyError('Unknown path: %s' % name)

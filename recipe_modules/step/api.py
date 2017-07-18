@@ -2,6 +2,9 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+"""Step is the primary API for running steps (external programs, scripts,
+etc.)."""
+
 import contextlib
 import copy
 import types
@@ -30,49 +33,68 @@ class StepApi(recipe_api.RecipeApiPlain):
 
   @property
   def StepFailure(self):
-    """ See recipe_api.py for docs. """
+    """This is the base Exception class for all step failures.
+
+    It can be manually raised from recipe code to cause the build to turn red.
+
+    Usage:
+      * `raise api.StepFailure("some reason")`
+      * `except api.StepFailure:`
+    """
     return recipe_api.StepFailure
 
   @property
   def StepWarning(self):
-    """ See recipe_api.py for docs. """
+    """StepWarning is a subclass of StepFailure, and will translate to a yellow
+    build."""
     return recipe_api.StepWarning
 
   @property
   def InfraFailure(self):
-    """ See recipe_api.py for docs. """
+    """InfraFailure is a subclass of StepFailure, and will translate to a purple
+    build.
+
+    This exception is raised from steps which are marked as `infra_step`s when
+    they fail.
+    """
     return recipe_api.InfraFailure
 
   @property
   def StepTimeout(self):
-    """ See recipe_api.py for docs. """
+    """StepTimeout is a subclass of StepFailure and is raised when a step times
+    out."""
     return recipe_api.StepTimeout
 
   @property
   def active_result(self):
-    """The currently active (open) result from the last step that was run.
+    """The currently active (open) result from the last step that was run. This
+    is a `types.StepData` object.
 
     Allows you to do things like:
-      try:
-        api.step('run test', [..., api.json.output()])
-      finally:
-        result = api.step.active_result
-        if result.json.output:
-          new_step_text = result.json.output['step_text']
-          api.step.active_result.presentation.step_text = new_step_text
+    ```python
+    try:
+      api.step('run test', [..., api.json.output()])
+    finally:
+      result = api.step.active_result
+      if result.json.output:
+        new_step_text = result.json.output['step_text']
+        api.step.active_result.presentation.step_text = new_step_text
+    ```
 
     This will update the step_text of the test, even if the test fails. Without
     this api, the above code would look like:
 
-      try:
-        result = api.step('run test', [..., api.json.output()])
-      except api.StepFailure as f:
-        result = f.result
-        raise
-      finally:
-        if result.json.output:
-          new_step_text = result.json.output['step_text']
-          api.step.active_result.presentation.step_text = new_step_text
+    ```python
+    try:
+      result = api.step('run test', [..., api.json.output()])
+    except api.StepFailure as f:
+      result = f.result
+      raise
+    finally:
+      if result.json.output:
+        new_step_text = result.json.output['step_text']
+        api.step.active_result.presentation.step_text = new_step_text
+    ```
     """
     return self.step_client.previous_step_result()
 
@@ -81,9 +103,10 @@ class StepApi(recipe_api.RecipeApiPlain):
     """Nest allows you to nest steps hierarchically on the build UI.
 
     Calling
-
-        with api.step.nest(<name>):
-          ...
+    ```python
+    with api.step.nest(<name>):
+      ...
+    ```
 
     will generate a dummy step with the provided name. All other steps run
     within this with statement will be hidden from the UI by default under this
@@ -110,36 +133,36 @@ class StepApi(recipe_api.RecipeApiPlain):
     """Returns a step dictionary which is compatible with annotator.py.
 
     Args:
-      name (string): The name of this step.
-      cmd (list of strings): in the style of subprocess.Popen or None to create
-        a no-op fake step.
-      ok_ret (tuple or set of ints, str): allowed return codes. Any unexpected
+      * name (string): The name of this step.
+      * cmd (list of strings): in the style of subprocess.Popen or None to
+        create a no-op fake step.
+      * ok_ret (tuple or set of ints, str): allowed return codes. Any unexpected
         return codes will cause an exception to be thrown. If you pass in the
         value 'any' or 'all', the engine will allow any return code to be
         returned. Defaults to {0}
-      infra_step: Whether or not this is an infrastructure step. Infrastructure
-        steps will place the step in an EXCEPTION state and raise InfraFailure.
-      wrapper: If supplied, a command to prepend to the executed step as a
+      * infra_step: Whether or not this is an infrastructure step.
+        Infrastructure steps will place the step in an EXCEPTION state and raise
+        InfraFailure.
+      * wrapper: If supplied, a command to prepend to the executed step as a
         command wrapper.
-      timeout: If supplied, the recipe engine will kill the step after the
+      * timeout: If supplied, the recipe engine will kill the step after the
         specified number of seconds.
-      allow_subannotations (bool): if True, lets the step emit its own
+      * allow_subannotations (bool): if True, lets the step emit its own
           annotations. NOTE: Enabling this can cause some buggy behavior. Please
           strongly consider using step_result.presentation instead. If you have
           questions, please contact infra-dev@chromium.org.
-      trigger_specs: a list of trigger specifications
-      stdout: Placeholder to put step stdout into. If used, stdout won't appear
-          in annotator's stdout (and |allow_subannotations| is ignored).
-      stderr: Placeholder to put step stderr into. If used, stderr won't appear
-          in annotator's stderr.
-      stdin: Placeholder to read step stdin from.
-      step_test_data (func -> recipe_test_api.StepTestData): A factory which
+      * trigger_specs: a list of trigger specifications
+      * stdout: Placeholder to put step stdout into. If used, stdout won't
+        appear in annotator's stdout (and |allow_subannotations| is ignored).
+      * stderr: Placeholder to put step stderr into. If used, stderr won't
+        appear in annotator's stderr.
+      * stdin: Placeholder to read step stdin from.
+      * step_test_data (func -> recipe_test_api.StepTestData): A factory which
           returns a StepTestData object that will be used as the default test
           data for this step. The recipe author can override/augment this object
           in the GenTests function.
 
-    Returns:
-      Opaque step object produced and understood by recipe engine.
+    Returns a `types.StepData` for the running step.
     """
     # Calculate our full step name. If a step already has that name, add an
     # index to the end of it.

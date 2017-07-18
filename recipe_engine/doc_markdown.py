@@ -232,6 +232,15 @@ class Printer(object):
       self('[%s]: %s' % (name, url))
 
 
+def emit_funcs(p, func_map):
+  for _, func in sorted(func_map.items()):
+    name = func.name
+    if name.startswith('__') and name.endswith('__') and not func.docstring:
+      # If it's a magic function without a docstring, skip it.
+      continue
+    Emit(p, func)
+
+
 def Emit(p, node):
   assert isinstance(p, Printer)
 
@@ -245,8 +254,7 @@ def Emit(p, node):
 
     p.docstring(node)
 
-    for _, func in sorted(node.funcs.items()):
-      Emit(p, func)
+    emit_funcs(p, node.funcs)
 
   elif isinstance(node, doc.Doc.Package):
     p.current_package = node.project_id
@@ -309,8 +317,7 @@ def Emit(p, node):
 
     # TODO(iannucci): inner classes
 
-    for _, func in sorted(node.funcs.items()):
-      Emit(p, func)
+    emit_funcs(p, node.funcs)
 
   elif isinstance(node, doc.Doc.Func):
     p()

@@ -2,6 +2,22 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+"""Provides access to the recipes input properties.
+
+Every recipe is run with a JSON object called "properties". These contain all
+inputs to the recipe. Some common examples would be properties like "revision",
+which the build scheduler sets to tell a recipe to build/test a certain
+revision.
+
+The properties that affect a particular recipe are defined by the recipe itself,
+and this module provides access to them.
+
+Recipe properties are read-only; the values obtained via this API reflect the
+values provided to the recipe engine at the beginning of execution. There is
+intentionally no API to write property values (lest they become a kind of
+random-access global variable).
+"""
+
 from recipe_engine import recipe_api
 from recipe_engine.types import freeze
 import collections
@@ -10,14 +26,8 @@ import collections
 # Additionally, nothing in this class is a composite_step (nothing in this class
 # is any sort of step :).
 class PropertiesApi(recipe_api.RecipeApiPlain, collections.Mapping):
-  """
-  Provide an immutable mapping view into the 'properties' for the current run.
-
-  The value of this api is equivalent to this transformation of the legacy
-  build values:
-    val = factory_properties
-    val.update(build_properties)
-  """
+  """PropertiesApi implements all the standard Mapping functions, so you
+  can use it like a read-only dict."""
 
   properties_client = recipe_api.RequireClient('properties')
 
@@ -42,7 +52,8 @@ class PropertiesApi(recipe_api.RecipeApiPlain, collections.Mapping):
     return iter(self._properties)
 
   def legacy(self):  # pragma: no cover
-    """Returns a set of properties, possibly used by legacy scripts."""
+    """DEPRECATED: Returns a set of properties, possibly used by legacy
+    scripts."""
 
     # Add all properties to this blacklist that are required for testing, but
     # not used by any lecacy scripts, in order to avoid vast expecation
@@ -56,5 +67,5 @@ class PropertiesApi(recipe_api.RecipeApiPlain, collections.Mapping):
     return props
 
   def thaw(self):
-    """Returns a vanilla python jsonish dictionary of properties."""
+    """Returns a read-write copy of all of the properties."""
     return self.properties_client.get_properties()

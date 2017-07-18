@@ -84,6 +84,8 @@ class JsonApi(recipe_api.RecipeApi):
 
   @staticmethod
   def loads(data, **kwargs):
+    """Works like `json.loads`, but strips out unicode objects (replacing them
+    with utf8-encoded str objects)."""
     return recipe_util.strip_unicode(json.loads(data, **kwargs))
 
   def is_serializable(self, obj):

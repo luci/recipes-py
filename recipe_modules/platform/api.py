@@ -2,22 +2,13 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+"""Mockable system platform identity functions."""
+
 import sys
 import platform
 import multiprocessing
 
 from recipe_engine import recipe_api
-
-
-def norm_plat(plat):
-  if plat.startswith('linux'):
-    return 'linux'
-  elif plat.startswith(('win', 'cygwin')):
-    return 'win'
-  elif plat.startswith(('darwin', 'mac')):
-    return 'mac'
-  else:  # pragma: no cover
-    raise ValueError('Don\'t understand platform "%s"' % plat)
 
 
 def norm_bits(arch):
@@ -29,21 +20,22 @@ class PlatformApi(recipe_api.RecipeApi):
   Provides host-platform-detection properties.
 
   Mocks:
-    name (str): A value equivalent to something that might be returned by
+    * name (str): A value equivalent to something that might be returned by
       sys.platform.
-    bits (int): Either 32 or 64.
+    * bits (int): Either 32 or 64.
   """
 
   def __init__(self, **kwargs):
     super(PlatformApi, self).__init__(**kwargs)
-    self._name = norm_plat(sys.platform)
+    self._name = PlatformApi.normalize_platform_name(sys.platform)
 
     self._arch = 'intel'
     self._bits = norm_bits(platform.machine())
 
     if self._test_data.enabled:
       # Default to linux/64, unless test case says otherwise.
-      self._name = norm_plat(self._test_data.get('name', 'linux'))
+      self._name = PlatformApi.normalize_platform_name(
+        self._test_data.get('name', 'linux'))
       self._bits = norm_bits(self._test_data.get('bits', 64))
       self._cpu_count = self._test_data.get('cpu_count', 2)
     else:  # pragma: no cover
@@ -66,28 +58,45 @@ class PlatformApi(recipe_api.RecipeApi):
 
   @property
   def is_win(self):
+    """Returns True iff the recipe is running on Windows."""
     return self.name == 'win'
 
   @property
   def is_mac(self):
+    """Returns True iff the recipe is running on OS X."""
     return self.name == 'mac'
 
   @property
   def is_linux(self):
+    """Returns True iff the recipe is running on Linux."""
     return self.name == 'linux'
 
   @property
   def name(self):
+    """Returns the current platform name which will be in:
+      * win
+      * mac
+      * linux
+    """
     return self._name
 
   @property
   def bits(self):
-    # The returned bitness corresponds to the userland. If anyone ever wants
-    # to query for bitness of the kernel, another accessor should be added.
+    """Returns the bitness of the userland for the current system (either 32 or
+    64 bit).
+
+    TODO: If anyone needs to query for the kernel bitness, another accessor
+    should be added.
+    """
     return self._bits
 
   @property
   def arch(self):
+    """Returns the current CPU architecture.
+
+    TODO: This is currently always hard-coded to 'intel'... Apparently no one
+    has actually needed this function?
+    """
     return self._arch
 
   @property
@@ -96,6 +105,13 @@ class PlatformApi(recipe_api.RecipeApi):
     return self._cpu_count
 
   @staticmethod
-  def normalize_platform_name(platform):
+  def normalize_platform_name(plat):
     """One of python's sys.platform values -> 'win', 'linux' or 'mac'."""
-    return norm_plat(platform)  # pragma: no cover
+    if plat.startswith('linux'):
+      return 'linux'
+    elif plat.startswith(('win', 'cygwin')):
+      return 'win'
+    elif plat.startswith(('darwin', 'mac')):
+      return 'mac'
+    else:  # pragma: no cover
+      raise ValueError('Don\'t understand platform "%s"' % plat)

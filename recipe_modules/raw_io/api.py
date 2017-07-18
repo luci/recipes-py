@@ -3,6 +3,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+"""Provides objects for reading and writing raw data to and from steps."""
+
 from recipe_engine import recipe_api
 from recipe_engine import util as recipe_util
 

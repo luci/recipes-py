@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+"""File manipulation (read/write/delete/glob) methods."""
+
 from recipe_engine import recipe_api
 
 
@@ -13,8 +15,6 @@ import fnmatch
 # invocation.
 
 class FileApi(recipe_api.RecipeApi):
-  """FileApi contains helper functions for reading and writing files."""
-
   class Error(recipe_api.StepFailure):
     """Error is an InfraFailure, except that it also contains an errno field
     indicating the errno name (i.e. 'EEXIST') of the underlying error.
@@ -57,9 +57,9 @@ class FileApi(recipe_api.RecipeApi):
     Behaves identically to shutil.copy.
 
     Args:
-      name (str) - The name of the step.
-      source (Path|Placeholder) - The path to the file you want to copy.
-      dest (Path|Placeholder) - The path to the destination file name. If this
+      * name (str) - The name of the step.
+      * source (Path|Placeholder) - The path to the file you want to copy.
+      * dest (Path|Placeholder) - The path to the destination file name. If this
         path exists and is a directory, the basename of `source` will be
         appended to derive a path to a destination file.
 
@@ -77,11 +77,11 @@ class FileApi(recipe_api.RecipeApi):
     `dest` must not exist.
 
     Args:
-      name (str) - The name of the step.
-      source (Path) - The path of the directory to copy.
-      dest (Path) - The place where you want the recursive copy to show up. This
+      * name (str) - The name of the step.
+      * source (Path) - The path of the directory to copy.
+      * dest (Path) - The place where you want the recursive copy to show up. This
         must not already exist.
-      symlinks (bool) - Preserve symlinks. No effect on Windows.
+      * symlinks (bool) - Preserve symlinks. No effect on Windows.
 
     Raises file.Error
     """
@@ -97,9 +97,9 @@ class FileApi(recipe_api.RecipeApi):
     Behaves identically to shutil.move.
 
     Args:
-      name (str) - The name of the step.
-      source (Path) - The path of the item to move.
-      dest (Path) - The new name of the item.
+      * name (str) - The name of the step.
+      * source (Path) - The path of the item to move.
+      * dest (Path) - The new name of the item.
 
     Raises file.Error
     """
@@ -113,9 +113,9 @@ class FileApi(recipe_api.RecipeApi):
     """Reads a file as UTF-8 encoded text.
 
     Args:
-      name (str) - The name of the step.
-      source (Path) - The path of the file to read.
-      test_data (str) - Some default data for this step to return when running
+      * name (str) - The name of the step.
+      * source (Path) - The path of the file to read.
+      * test_data (str) - Some default data for this step to return when running
         under simulation.
 
     Returns (str) - The content of the file.
@@ -132,9 +132,9 @@ class FileApi(recipe_api.RecipeApi):
     """Write the given UTF-8 encoded `text_data` to `dest`.
 
     Args:
-      name (str) - The name of the step.
-      dest (Path) - The path of the file to write.
-      text_data (str) - The UTF-8 encoded data to write.
+      * name (str) - The name of the step.
+      * dest (Path) - The path of the file to write.
+      * text_data (str) - The UTF-8 encoded data to write.
 
     Raises file.Error.
     """
@@ -149,10 +149,10 @@ class FileApi(recipe_api.RecipeApi):
     stdlib module.
 
     Args:
-      name (str) - The name of the step.
-      source (Path) - The directory whose contents should be globbed.
-      pattern (str) - The glob pattern to apply under `source`.
-      test_data (iterable[str]) - Some default data for this step to return when
+      * name (str) - The name of the step.
+      * source (Path) - The directory whose contents should be globbed.
+      * pattern (str) - The glob pattern to apply under `source`.
+      * test_data (iterable[str]) - Some default data for this step to return when
         running under simulation. This should be the list of file items found
         in this directory.
 
@@ -175,8 +175,8 @@ class FileApi(recipe_api.RecipeApi):
     Does not raise Error if the file doesn't exist.
 
     Args:
-      name (str) - The name of the step.
-      source (Path) - The file to remove.
+      * name (str) - The name of the step.
+      * source (Path) - The file to remove.
 
     Raises file.Error.
     """
@@ -188,9 +188,9 @@ class FileApi(recipe_api.RecipeApi):
     """List all files inside a directory.
 
     Args:
-      name (str) - The name of the step.
-      source (Path) - The directory to list.
-      test_data (iterable[str]) - Some default data for this step to return when
+      * name (str) - The name of the step.
+      * source (Path) - The directory to list.
+      * test_data (iterable[str]) - Some default data for this step to return when
         running under simulation. This should be the list of file items found
         in this directory.
 
@@ -211,9 +211,9 @@ class FileApi(recipe_api.RecipeApi):
     """Ensures that `dest` exists and is a directory.
 
     Args:
-      name (str) - The name of the step.
-      dest (Path) - The directory to ensure.
-      mode (int) - The mode to use if the directory doesn't exist. This method
+      * name (str) - The name of the step.
+      * dest (Path) - The directory to ensure.
+      * mode (int) - The mode to use if the directory doesn't exist. This method
         does not ensure the mode if the directory already exists (if you need
         that behaviour, file a bug).
 
@@ -232,8 +232,8 @@ class FileApi(recipe_api.RecipeApi):
     gone already, this returns without error.
 
     Args:
-      name (str) - The name of the step.
-      source (Path) - The directory to remove.
+      * name (str) - The name of the step.
+      * source (Path) - The directory to remove.
 
     Raises file.Error.
     """
@@ -250,8 +250,8 @@ class FileApi(recipe_api.RecipeApi):
     a call that doesn't delete the directory itself.
 
     Args:
-      name (str) - The name of the step.
-      source (Path) - The directory whose contents should be removed.
+      * name (str) - The name of the step.
+      * source (Path) - The directory whose contents should be removed.
 
     Raises file.Error.
     """
@@ -263,10 +263,10 @@ class FileApi(recipe_api.RecipeApi):
     """Removes all entries in `source` matching the glob `pattern`.
 
     Args:
-      name (str) - The name of the step.
-      source (Path) - The directory whose contents should be filtered and
+      * name (str) - The name of the step.
+      * source (Path) - The directory whose contents should be filtered and
         removed.
-      pattern (str) - The glob pattern to apply under `source`. Anything
+      * pattern (str) - The glob pattern to apply under `source`. Anything
         matching this pattern will be removed.
 
     Raises file.Error.
