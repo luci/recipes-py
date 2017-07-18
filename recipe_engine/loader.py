@@ -272,18 +272,17 @@ class UniverseView(collections.namedtuple('UniverseView', 'universe package')):
     #
     # TODO(martiniss) change "infra/example" to ["infra", "example"],
     # and handle appropriately, because of windows.
+    recipe_path = None
     if ':' in recipe:
       module_name, recipe_name = recipe.split(':')
       module_dir = os.path.join(self.package.module_dir, module_name)
       if _is_recipe_module_dir(module_dir):
         if recipe_name.startswith(('tests/', 'examples/')):
           recipe_path = os.path.join(module_dir, recipe_name + '.py')
-        else:
-          raise NoSuchRecipe(recipe)
     else:
       recipe_path = os.path.join(self.package.recipe_dir, recipe)+".py"
 
-    if os.path.exists(recipe_path):
+    if recipe_path and os.path.exists(recipe_path):
       return recipe_path
 
     raise NoSuchRecipe(recipe)
