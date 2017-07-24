@@ -56,6 +56,11 @@ def RunSteps(api):
   api.path.mock_add_paths(file_path)
   assert api.path.exists(file_path)
 
+  # Assert that we can mock filesystem paths.
+  root_path = ('C:\\Windows' if api.platform.is_win else '/bin')
+  api.path.mock_add_paths(root_path)
+  assert api.path.exists(root_path)
+
   realpath = api.path.realpath(file_path)
   assert api.path.exists(realpath)
 

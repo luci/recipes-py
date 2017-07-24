@@ -507,14 +507,14 @@ There are other anchor points which can be defined (e.g. by the
 `depot_tools/infra_paths` module). Refer to those modules for additional
 documentation.
 
-#### **class [PathApi](/recipe_modules/path/api.py#L196)([RecipeApi](/recipe_engine/recipe_api.py#L884)):**
+#### **class [PathApi](/recipe_modules/path/api.py#L197)([RecipeApi](/recipe_engine/recipe_api.py#L884)):**
 
-&mdash; **def [\_\_getitem\_\_](/recipe_modules/path/api.py#L421)(self, name):**
+&mdash; **def [\_\_getitem\_\_](/recipe_modules/path/api.py#L422)(self, name):**
 
 Gets the base path named `name`. See module docstring for more
 information.
 
-&mdash; **def [abs\_to\_path](/recipe_modules/path/api.py#L351)(self, abs_string_path):**
+&mdash; **def [abs\_to\_path](/recipe_modules/path/api.py#L352)(self, abs_string_path):**
 
 Converts an absolute path string `string_path` to a real Path object,
 using the most appropriate known base path.
@@ -540,39 +540,39 @@ api.path.abs_to_path("/basis/dir/for/recipe/some/other/dir") ->
 Raises an ValueError if the preconditions are not met, otherwise returns the
 Path object.
 
-&mdash; **def [assert\_absolute](/recipe_modules/path/api.py#L326)(self, path):**
+&mdash; **def [assert\_absolute](/recipe_modules/path/api.py#L327)(self, path):**
 
 Raises AssertionError if the given path is not an absolute path.
 
 Args:
   * path (Path|str) - The path to check.
 
-&mdash; **def [get](/recipe_modules/path/api.py#L414)(self, name, default=None):**
+&mdash; **def [get](/recipe_modules/path/api.py#L415)(self, name, default=None):**
 
 Gets the base path named `name`. See module docstring for more
 information.
 
-&mdash; **def [get\_config\_defaults](/recipe_modules/path/api.py#L208)(self):**
+&mdash; **def [get\_config\_defaults](/recipe_modules/path/api.py#L209)(self):**
 
 Internal recipe implementation function.
 
-&mdash; **def [initialize](/recipe_modules/path/api.py#L270)(self):**
+&mdash; **def [initialize](/recipe_modules/path/api.py#L271)(self):**
 
 Internal recipe implementation function.
 
-&mdash; **def [mkdtemp](/recipe_modules/path/api.py#L334)(self, prefix):**
+&mdash; **def [mkdtemp](/recipe_modules/path/api.py#L335)(self, prefix):**
 
 Makes a new temporary directory, returns Path to it.
 
-&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#L305)(self, path):**
+&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#L306)(self, path):**
 
 For testing purposes, mark that |path| exists.
 
-&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#L310)(self, source, dest):**
+&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#L311)(self, source, dest):**
 
 For testing purposes, copy |source| to |dest|.
 
-&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#L315)(self, path, filt=(lambda p: True)):**
+&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#L316)(self, path, filt=(lambda p: True)):**
 
 For testing purposes, assert that |path| doesn't exist.
 

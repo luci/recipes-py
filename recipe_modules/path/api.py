@@ -84,9 +84,10 @@ class path_set(object):
   def add(self, path):
     path = str(path)
     self._initialize()
-    while path:
+    prev_path = None
+    while path != prev_path:
       self._paths.add(path)
-      path = self._path_mod.dirname(path)
+      prev_path, path = path, self._path_mod.dirname(path)
 
   def copy(self, source, dest):
     source, dest = str(source), str(dest)
