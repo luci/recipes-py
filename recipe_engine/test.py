@@ -525,6 +525,7 @@ def _diff_internal(baseline_proto, actual_proto):
           found = True
           break
       if not found:
+        success = False
         results_proto.test_failures[test_name].failures.extend([test_failure])
 
   actual_uncovered_modules = set(actual_proto.uncovered_modules)

@@ -1180,6 +1180,23 @@ class TestTest(unittest.TestCase):
           '--json', self.json_path)
     self.assertEqual(self.json_generator.invalid().get(), self.json_contents)
 
+  def test_diff_just_diff(self):
+    g1 = self.json_generator
+    g2 = self.json_generator
+
+    g1.diff_failure('foo_diff')
+    g2.diff_failure('foo_diff').diff_failure('bar_diff')
+
+    with self.assertRaises(subprocess.CalledProcessError) as cm:
+      self._run_recipes(
+          'test', 'diff',
+          '--baseline', g1.write(),
+          '--actual', g2.write(),
+          '--json', self.json_path)
+    self.assertEqual(
+        self.json_generator.diff_failure('bar_diff').get(),
+        self.json_contents)
+
   def test_diff_full(self):
     g1 = self.json_generator
     g2 = self.json_generator
