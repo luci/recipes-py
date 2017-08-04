@@ -272,18 +272,12 @@ class RecipeEngine(object):
       self._step_stack[-1] = (
           self._step_stack[-1]._replace(step_result=step_result))
 
-      if step_result.retcode in step_config.ok_ret:
-        step_result.presentation.status = 'SUCCESS'
+      if step_result.presentation.status == 'SUCCESS':
         return step_result
 
-      if not step_config.infra_step:
-        state = 'FAILURE'
-        exc = recipe_api.StepFailure
-      else:
-        state = 'EXCEPTION'
+      exc = recipe_api.StepFailure
+      if step_result.presentation.status == 'EXCEPTION':
         exc = recipe_api.InfraFailure
-
-      step_result.presentation.status = state
 
       self._step_stack[-1].open_step.stream.write_line(
           'step returned non-zero exit code: %d' % step_result.retcode)

@@ -174,6 +174,14 @@ class StepData(object):
     self._retcode = retcode
 
     self._presentation = StepPresentation()
+    if retcode in step_config.ok_ret:
+      self._presentation.status = 'SUCCESS'
+    else:
+      if not step_config.infra_step:
+        self._presentation.status = 'FAILURE'
+      else:
+        self._presentation.status = 'EXCEPTION'
+
     self.abort_reason = None
 
   @property
