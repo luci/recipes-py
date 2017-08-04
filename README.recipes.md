@@ -49,6 +49,7 @@
   * [file:examples/glob](#recipes--fileexamplesglob)
   * [generator_script:examples/full](#recipes--generator_scriptexamplesfull)
   * [json:examples/full](#recipes--jsonexamplesfull)
+  * [json:tests/add_json_log](#recipes--jsontestsadd_json_log)
   * [path:examples/full](#recipes--pathexamplesfull)
   * [platform:examples/full](#recipes--platformexamplesfull)
   * [properties:examples/full](#recipes--propertiesexamplesfull)
@@ -446,22 +447,22 @@ corresponds to one step, and contains the following keys:
 
 Methods for producing and consuming JSON.
 
-#### **class [JsonApi](/recipe_modules/json/api.py#L80)([RecipeApi](/recipe_engine/recipe_api.py#L884)):**
+#### **class [JsonApi](/recipe_modules/json/api.py#L83)([RecipeApi](/recipe_engine/recipe_api.py#L884)):**
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#L119)**<br>&mdash; **def [input](/recipe_modules/json/api.py#L99)(self, data):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#L119)**<br>&mdash; **def [input](/recipe_modules/json/api.py#L102)(self, data):**
 
 A placeholder which will expand to a file path containing <data>.
 
-&mdash; **def [is\_serializable](/recipe_modules/json/api.py#L91)(self, obj):**
+&mdash; **def [is\_serializable](/recipe_modules/json/api.py#L94)(self, obj):**
 
 Returns True if the object is JSON-serializable.
 
-&emsp; **@staticmethod**<br>&mdash; **def [loads](/recipe_modules/json/api.py#L85)(data, \*\*kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [loads](/recipe_modules/json/api.py#L88)(data, \*\*kwargs):**
 
 Works like `json.loads`, but strips out unicode objects (replacing them
 with utf8-encoded str objects).
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#L119)**<br>&mdash; **def [output](/recipe_modules/json/api.py#L104)(self, add_json_log=True, name=None, leak_to=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#L119)**<br>&mdash; **def [output](/recipe_modules/json/api.py#L107)(self, add_json_log=True, name=None, leak_to=None):**
 
 A placeholder which will expand to '/tmp/file'.
 
@@ -469,7 +470,12 @@ If leak_to is provided, it must be a Path object. This path will be used in
 place of a random temporary file, and the file will not be deleted at the
 end of the step.
 
-&mdash; **def [read](/recipe_modules/json/api.py#L115)(self, name, path, add_json_log=True, output_name=None, \*\*kwargs):**
+Args:
+  * add_json_log (True|False|'on_failure') - Log a copy of the output json
+    to a step link named `name`. If this is 'on_failure', only create this
+    log when the step has a non-SUCCESS status.
+
+&mdash; **def [read](/recipe_modules/json/api.py#L123)(self, name, path, add_json_log=True, output_name=None, \*\*kwargs):**
 
 Returns a step that reads a JSON file.
 ### *recipe_modules* / [path](/recipe_modules/path)
@@ -1236,6 +1242,11 @@ Tests that step_data can accept multiple specs at once.
 [DEPS](/recipe_modules/json/examples/full.py#L5): [json](#recipe_modules--json), [path](#recipe_modules--path), [properties](#recipe_modules--properties), [python](#recipe_modules--python), [raw\_io](#recipe_modules--raw_io), [step](#recipe_modules--step)
 
 &mdash; **def [RunSteps](/recipe_modules/json/examples/full.py#L16)(api):**
+### *recipes* / [json:tests/add\_json\_log](/recipe_modules/json/tests/add_json_log.py)
+
+[DEPS](/recipe_modules/json/tests/add_json_log.py#L5): [json](#recipe_modules--json), [step](#recipe_modules--step)
+
+&mdash; **def [RunSteps](/recipe_modules/json/tests/add_json_log.py#L10)(api):**
 ### *recipes* / [path:examples/full](/recipe_modules/path/examples/full.py)
 
 [DEPS](/recipe_modules/path/examples/full.py#L5): [path](#recipe_modules--path), [platform](#recipe_modules--platform), [properties](#recipe_modules--properties), [step](#recipe_modules--step)

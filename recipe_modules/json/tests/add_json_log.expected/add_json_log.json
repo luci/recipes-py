@@ -1,0 +1,32 @@
+[
+  {
+    "cmd": [
+      "cat",
+      "{\"x\":1,\"y\":2}"
+    ],
+    "name": "no log on success",
+    "stdout": "/path/to/tmp/json"
+  },
+  {
+    "cmd": [
+      "cat",
+      "{\"x\":1,\"y\":2}"
+    ],
+    "name": "add log on failure",
+    "stdout": "/path/to/tmp/json",
+    "~followup_annotations": [
+      "step returned non-zero exit code: 1",
+      "@@@STEP_LOG_LINE@json.output[log2]@{@@@",
+      "@@@STEP_LOG_LINE@json.output[log2]@  \"x\": 1, @@@",
+      "@@@STEP_LOG_LINE@json.output[log2]@  \"y\": 2@@@",
+      "@@@STEP_LOG_LINE@json.output[log2]@}@@@",
+      "@@@STEP_LOG_END@json.output[log2]@@@",
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

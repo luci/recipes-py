@@ -38,6 +38,8 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
   See the example recipe (./examples/full.py) for some more uses.
   """
   def __init__(self, api, add_json_log, name=None, leak_to=None):
+    assert add_json_log in (True, False, 'on_failure'), (
+        'add_json_log=%r' % add_json_log)
     self.raw = api.m.raw_io.output_text('.json', leak_to=leak_to)
     self.add_json_log = add_json_log
     super(JsonOutputPlaceholder, self).__init__(name=name)
@@ -64,7 +66,8 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
     except (ValueError, TypeError) as ex:  # pragma: no cover
       invalid_error = str(ex)
 
-    if self.add_json_log:
+    if self.add_json_log is True or (
+        self.add_json_log == 'on_failure' and presentation.status != 'SUCCESS'):
       if valid:
         with contextlib.closing(recipe_util.StringListIO()) as listio:
           json.dump(ret, listio, indent=2, sort_keys=True)
@@ -108,6 +111,11 @@ class JsonApi(recipe_api.RecipeApi):
     If leak_to is provided, it must be a Path object. This path will be used in
     place of a random temporary file, and the file will not be deleted at the
     end of the step.
+
+    Args:
+      * add_json_log (True|False|'on_failure') - Log a copy of the output json
+        to a step link named `name`. If this is 'on_failure', only create this
+        log when the step has a non-SUCCESS status.
     """
     return JsonOutputPlaceholder(self, add_json_log, name=name, leak_to=leak_to)
 
