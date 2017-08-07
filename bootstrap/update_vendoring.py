@@ -280,7 +280,6 @@ _ACTIONS = (
         'bootstrap/virtualenv',
         name='virtualenv',
         version='15.1.0'),
-    )
 
     _VendoredPipPackage(
         'recipe_engine/third_party/six',
