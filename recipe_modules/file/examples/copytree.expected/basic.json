@@ -105,6 +105,34 @@
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
       "/path/to/tmp/json",
+      "filesizes",
+      "[START_DIR]/some dir/a",
+      "[START_DIR]/some dir/aa",
+      "[START_DIR]/some dir/b",
+      "[START_DIR]/some dir/bb",
+      "[START_DIR]/some dir/c",
+      "[START_DIR]/some dir/cc"
+    ],
+    "infra_step": true,
+    "name": "check filesizes",
+    "stdout": "/path/to/tmp/",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@filesizes@[START_DIR]/some dir/a: \t111@@@",
+      "@@@STEP_LOG_LINE@filesizes@[START_DIR]/some dir/aa: \t221@@@",
+      "@@@STEP_LOG_LINE@filesizes@[START_DIR]/some dir/b: \t333@@@",
+      "@@@STEP_LOG_LINE@filesizes@[START_DIR]/some dir/bb: \t438@@@",
+      "@@@STEP_LOG_LINE@filesizes@[START_DIR]/some dir/c: \t551@@@",
+      "@@@STEP_LOG_LINE@filesizes@[START_DIR]/some dir/cc: \t666@@@",
+      "@@@STEP_LOG_END@filesizes@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
       "rmtree",
       "[START_DIR]/some other dir"
     ],

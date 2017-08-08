@@ -250,6 +250,14 @@ def main(args):
   subparser.add_argument('dest', help='The dir to ensure.')
   subparser.set_defaults(func=lambda opts: _EnsureDir(opts.mode, opts.dest))
 
+  # Subcommand: filesizes
+  subparser = subparsers.add_parser('filesizes',
+      help='Prints a list for sizes in bytes (1 per line) for each given file')
+  subparser.add_argument('file', nargs='+', help='Path to a file')
+  subparser.set_defaults(
+      func=lambda opts: print('\n'.join(str(os.stat(f).st_size)
+                                            for f in opts.file)))
+
   # Parse arguments.
   opts = parser.parse_args(args)
 

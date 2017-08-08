@@ -15,6 +15,7 @@ def RunSteps(api):
   api.file.ensure_directory('ensure "some dir"', dest)
   for fname in file_names:
     api.file.write_text('write %s' % fname, dest.join(fname), fname)
+  api.file.filesizes('check filesizes', map(dest.join, file_names))
 
   dest2 = api.path['start_dir'].join('some other dir')
   api.file.rmtree('make sure dest is gone', dest2)

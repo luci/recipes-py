@@ -224,6 +224,28 @@ class FileApi(recipe_api.RecipeApi):
       name, ['ensure-directory', '--mode', oct(mode), dest])
     self.m.path.mock_add_paths(dest)
 
+  def filesizes(self, name, files, test_data=None):
+    """Returns list of filesizes for the given files.
+
+    Args:
+      * name (str) - The name of the step.
+      * files (list[Path]) - Paths to files.
+
+    Returns list[int], size of each file in bytes.
+    """
+    if test_data is None:
+      test_data = [111 * (i+1) + (i % 3 - 2) * i for i, _ in enumerate(files)]
+    for f in files:
+      self.m.path.assert_absolute(f)
+    result = self._run(
+      name, ['filesizes'] + list(files),
+      lambda: self.test_api.filesizes(test_data),
+      self.m.raw_io.output_text())
+    ret = map(int, result.stdout.strip().splitlines())
+    result.presentation.logs['filesizes'] = ['%s: \t%d' % fs
+                                             for fs in zip(files, ret)]
+    return ret
+
   def rmtree(self, name, source):
     """Recursively removes a directory.
 

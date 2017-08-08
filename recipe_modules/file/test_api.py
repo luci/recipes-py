@@ -28,6 +28,20 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
     return (self.m.raw_io.stream_output('\n'.join(sorted(map(_check, names))))
             + self.errno(errno_name))
 
+  def filesizes(self, sizes=(), errno_name=0):
+    """Provides test mock for the `filesizes` method.
+
+    Args:
+      sizes (iterable[int]) - The list of sizes to return.
+      errno_name (str|None) - The error name for this step to return, if any.
+
+    Example:
+      yield (api.test('my_test')
+        + api.step_data('filesize step name', api.file.filesizes([1674, 5714]))
+    """
+    return (self.m.raw_io.stream_output('\n'.join(map(str, sizes)))
+            + self.errno(errno_name))
+
   def read_text(self, text_content='', errno_name=0):
     """Provides test mock for the `read_text` method.
 

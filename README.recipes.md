@@ -266,6 +266,16 @@ Args:
 
 Raises file.Error if the path exists but is not a directory.
 
+&mdash; **def [filesizes](/recipe_modules/file/api.py#L227)(self, name, files, test_data=None):**
+
+Returns list of filesizes for the given files.
+
+Args:
+  * name (str) - The name of the step.
+  * files (list[Path]) - Paths to files.
+
+Returns list[int], size of each file in bytes.
+
 &mdash; **def [glob\_paths](/recipe_modules/file/api.py#L145)(self, name, source, pattern, test_data=()):**
 
 Performs glob expansion on `pattern`.
@@ -339,7 +349,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#L244)(self, name, source):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#L266)(self, name, source):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -354,7 +364,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#L262)(self, name, source, pattern):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#L284)(self, name, source, pattern):**
 
 Removes all entries in `source` matching the glob `pattern`.
 
@@ -367,7 +377,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#L227)(self, name, source):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#L249)(self, name, source):**
 
 Recursively removes a directory.
 

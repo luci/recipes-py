@@ -34,6 +34,12 @@ def RunSteps(api):
   for element in result:
     api.step('manipulate %s' % str(element), ['some', 'command'])
 
+  # filesizes demo.
+  filepaths = ['/fake/one', '/fake/other']
+  sizes = api.file.filesizes('filesizes', filepaths)
+  for f, s in zip(filepaths, sizes):
+    api.step('filesize of %s is %d bytes' % (f, s))
+
   # mkdtemp demo.
   for prefix in ('prefix_a', 'prefix_b'):
     # Create temp dir.
@@ -92,5 +98,6 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  yield api.test('file_io') + api.file.listdir('other', ['aaa'])
-
+  yield (api.test('file_io')
+         + api.file.listdir('other', ['aaa'])
+         + api.file.filesizes([1, 44]))
