@@ -34,12 +34,12 @@ message Manifest {
     // The canonicalized URL of the original repo that is considered the “source
     // of truth” for the source code. Ex.
     //   https://chromium.googlesource.com/chromium/tools/build.git
-    //   https://github.com/luci/recipes-py
+    //   https://chromium.googlesource.com/infra/luci/recipes-py
     string repo_url = 1;
 
     // If different from repo_url, this can be the URL of the repo that the source
     // was actually fetched from (i.e. a mirror). Ex.
-    //   https://chromium.googlesource.com/external/github.com/luci/recipes-py
+    //   https://github.com/luci/recipes-py
     //
     // If this is empty, it's presumed to be equal to repo_url.
     string fetch_url = 2;

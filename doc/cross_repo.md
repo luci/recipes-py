@@ -16,7 +16,7 @@ directory from the repository root.  For example:
           "revision": "09cee0ae226949923db058cb21e98a42d7d29f11"
         },
         "recipe_engine": {
-          "url": "https://chromium.googlesource.com/external/github.com/luci/recipes-py.git",
+          "url": "https://chromium.googlesource.com/infra/luci/recipes-py.git",
           "branch": "master",
           "revision": "fe88a668a6cea70d2233c4e61be352fc1551d1ce"
         }
