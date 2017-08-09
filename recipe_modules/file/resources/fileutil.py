@@ -240,7 +240,7 @@ def main(args):
       help='Print all entries in the given folder to stdout.')
   subparser.add_argument('source', help='The dir to list.')
   subparser.set_defaults(
-    func=lambda opts: print('\n'.join(sorted(os.listdir(opts.source)))))
+    func=lambda opts: print('\n'.join(sorted(os.listdir(opts.source))), end=''))
 
   # Subcommand: ensure-directory
   subparser = subparsers.add_parser('ensure-directory',
