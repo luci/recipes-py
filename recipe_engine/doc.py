@@ -475,7 +475,7 @@ def parse_package(uv, base_dir, spec):
   return ret
 
 
-RECIPE_ENGINE_URL = 'https://github.com/luci/recipes-py'
+RECIPE_ENGINE_URL = 'https://chromium.googlesource.com/infra/luci/recipes-py'
 
 
 def _set_known_objects(base):

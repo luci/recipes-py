@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 # This is a direct vendored copy of the original which is located at:
-#   https://github.com/luci/luci-py/blob/master/client/utils/subprocess42.py
+#   https://chromium.googlesource.com/infra/luci/luci-py/+/master/client/utils/subprocess42.py
 
 """subprocess42 is the answer to life the universe and everything.
 

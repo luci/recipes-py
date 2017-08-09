@@ -293,7 +293,7 @@ _ACTIONS = (
 
     _VendoredGitRepo(
         'recipe_engine/third_party/client-py/libs',
-        repo='https://github.com/luci/client-py',
+        repo='https://chromium.googlesource.com/infra/luci/client-py',
         ref='origin/master',
         subpath='libs'),
 
