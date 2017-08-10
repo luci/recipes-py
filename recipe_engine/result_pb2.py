@@ -170,7 +170,7 @@ _TIMEOUT = _descriptor.Descriptor(
     _descriptor.FieldDescriptor(
       name='timeout_s', full_name='recipe_engine.Timeout.timeout_s', index=0,
       number=1, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=0,
+      has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),

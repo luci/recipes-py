@@ -594,48 +594,6 @@ def new_handle_recipe_return(result, result_filename, stream_engine):
   return 0
 
 
-# Map of arguments_pb2.Property "value" oneof conversion functions.
-#
-# The fields here should be kept in sync with the "value" oneof field names in
-# the arguments_pb2.Arguments.Property protobuf message.
-_OP_PROPERTY_CONV = {
-    's': lambda prop: prop.s,
-    'int': lambda prop: prop.int,
-    'uint': lambda prop: prop.uint,
-    'd': lambda prop: prop.d,
-    'b': lambda prop: prop.b,
-    'data': lambda prop: prop.data,
-    'map': lambda prop: _op_properties_to_dict(prop.map.property),
-    'list': lambda prop: [_op_property_value(v) for v in prop.list.property],
-}
-
-
-def _op_property_value(prop):
-  """Returns the Python-converted value of an arguments_pb2.Property.
-
-  Args:
-    prop (arguments_pb2.Property): property to convert.
-  Returns: The converted value.
-  Raises:
-    ValueError: If 'prop' is incomplete or invalid.
-  """
-  typ = prop.WhichOneof('value')
-  conv = _OP_PROPERTY_CONV.get(typ)
-  if not conv:
-    raise ValueError('Unknown property field [%s]' % (typ,))
-  return conv(prop)
-
-
-def _op_properties_to_dict(pmap):
-  """Creates a properties dictionary from an arguments_pb2.PropertyMap entry.
-
-  Args:
-    pmap (arguments_pb2.PropertyMap): Map to convert to dictionary form.
-  Returns (dict): A dictionary derived from the properties in 'pmap'.
-  """
-  return dict((k, _op_property_value(pmap[k])) for k in pmap)
-
-
 def main(package_deps, args):
   from recipe_engine import step_runner
   from recipe_engine import stream
@@ -647,20 +605,7 @@ def main(package_deps, args):
     for p in args.props:
       args.properties.update(p)
 
-  def get_properties_from_operational_args(op_args):
-    if not op_args.properties.property:
-      return None
-    return _op_properties_to_dict(op_args.properties.property)
-
-  op_args = args.operational_args
-  op_properties = get_properties_from_operational_args(op_args)
-  if args.properties and op_properties:
-    raise ValueError(
-      'Got operational args properties as well as CLI properties.')
-
-  properties = op_properties
-  if not properties:
-    properties = args.properties
+  properties = args.properties
 
   properties['recipe'] = args.recipe
 
@@ -684,6 +629,8 @@ def main(package_deps, args):
 
   old_cwd = os.getcwd()
   os.chdir(workdir)
+
+  op_args = args.operational_args
 
   # Construct our stream engines. We may want to share stream events with more
   # than one StreamEngine implementation, so we will accumulate them in a
