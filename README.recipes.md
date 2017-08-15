@@ -680,7 +680,14 @@ can use it like a read-only dict.
 DEPRECATED: Returns a set of properties, possibly used by legacy
 scripts.
 
-&mdash; **def [thaw](/recipe_modules/properties/api.py#69)(self):**
+This excludes any recipe module-specific properties (i.e. those beginning
+with `$`).
+
+Instead of passing all of the properties as a blob, please consider passing
+specific arguments to scripts that need them. Doing this makes it much
+easier to debug and diagnose which scripts use which properties.
+
+&mdash; **def [thaw](/recipe_modules/properties/api.py#78)(self):**
 
 Returns a read-write copy of all of the properties.
 ### *recipe_modules* / [python](/recipe_modules/python)
