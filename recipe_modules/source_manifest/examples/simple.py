@@ -12,13 +12,12 @@ DEPS = [
 def RunSteps(api):
   api.python.succeeding_step('a step', 'Source manifest requires a step.')
 
-  revision = 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef'.decode('hex')
   api.source_manifest.set_json_manifest('main_checkout', {
     'directories': {
       'src': {
         'git_checkout': {
           'repo_url': 'https://chromium.googlesource.com/chromium/src.git',
-          'revision': revision,
+          'revision': 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
         }
       }
     }

@@ -46,9 +46,7 @@ message Manifest {
 
     // The fully resolved revision (commit hash) of the source. Ex.
     //   3617b0eea7ec74b8e731a23fed2f4070cbc284c4
-    //
-    // Note that this is the raw revision bytes, not their hex-encoded form.
-    bytes revision = 3;
+    string revision = 3;
 
     // The ref that the task used to resolve the revision of the source (if any). Ex.
     //   refs/heads/master
@@ -77,9 +75,7 @@ message Manifest {
 
     // The fully resolved instance ID of the deployed package. Ex.
     //   0cfafb3a705bd8f05f86c6444ff500397fbb711c
-    //
-    // Note that this is the raw instance_id bytes, not their hex-encoded form.
-    bytes cipd_instance_id = 4;
+    string cipd_instance_id = 4;
 
     // The unresolved version ID of the deployed package (if known). Ex.
     //   git_revision:aaf3a2cfccc227b5141caa1b6b3502c9907d7420
@@ -99,9 +95,7 @@ message Manifest {
 
     // The hash of the isolated document. Ex.
     //   62a7df62ea122380afb306bb4d9cdac1bc7e9a96
-    //
-    // Note that this is the raw hash bytes, not their hex-encoded form.
-    bytes hash = 3;
+    string hash = 3;
   }
 
   // A Directory contains one or more descriptions of deployed artifacts. Note
