@@ -205,10 +205,11 @@ class RecipeEngine(object):
     self._properties = properties
     self._universe_view = universe_view
     self._clients = {client.IDENT: client for client in (
-        recipe_api.PathsClient(),
-        recipe_api.StepClient(self),
-        recipe_api.PropertiesClient(self),
         recipe_api.DependencyManagerClient(self),
+        recipe_api.PathsClient(),
+        recipe_api.PropertiesClient(self),
+        recipe_api.SourceManifestClient(self, properties),
+        recipe_api.StepClient(self),
     )}
     self._engine_flags = engine_flags
 
@@ -236,6 +237,13 @@ class RecipeEngine(object):
       if cur.step_result:
         cur.step_result.presentation.finalize(cur.open_step.stream)
       cur.open_step.finalize()
+
+  @property
+  def active_step(self):
+    """Returns the current ActiveStep (if there is one) or None."""
+    if self._step_stack:
+      return self._step_stack[-1]
+    return None
 
   def _get_client(self, name):
     """Returns: the client instance for name, or None if not such client exists.

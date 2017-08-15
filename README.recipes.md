@@ -12,6 +12,7 @@
   * [properties](#recipe_modules-properties) &mdash; Provides access to the recipes input properties.
   * [python](#recipe_modules-python) &mdash; Provides methods for running python scripts correctly.
   * [raw_io](#recipe_modules-raw_io) &mdash; Provides objects for reading and writing raw data to and from steps.
+  * [source_manifest](#recipe_modules-source_manifest)
   * [step](#recipe_modules-step) &mdash; Step is the primary API for running steps (external programs, scripts, etc.
   * [tempfile](#recipe_modules-tempfile) &mdash; Simplistic temporary directory manager (deprecated).
   * [time](#recipe_modules-time) &mdash; Allows mockable access to the current time.
@@ -56,6 +57,7 @@
   * [properties:examples/full](#recipes-properties_examples_full)
   * [python:examples/full](#recipes-python_examples_full) &mdash; Launches the repo bundler.
   * [raw_io:examples/full](#recipes-raw_io_examples_full)
+  * [source_manifest:examples/simple](#recipes-source_manifest_examples_simple)
   * [step:examples/full](#recipes-step_examples_full)
   * [step:tests/active_result](#recipes-step_tests_active_result)
   * [step:tests/defer](#recipes-step_tests_defer)
@@ -101,7 +103,7 @@ with api.context(cwd=api.path['start_dir'].join('subdir')):
   api.step("cat subdir/foo", ['cat', './foo'])
 ```
 
-#### **class [ContextApi](/recipe_modules/context/api.py#49)([RecipeApi](/recipe_engine/recipe_api.py#884)):**
+#### **class [ContextApi](/recipe_modules/context/api.py#49)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
 
 &emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#63)(self, cwd=None, env_prefixes=None, env=None, increment_nest_level=None, infra_steps=None, name_prefix=None):**
 
@@ -220,7 +222,7 @@ purposes.
 
 File manipulation (read/write/delete/glob) methods.
 
-#### **class [FileApi](/recipe_modules/file/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#884)):**
+#### **class [FileApi](/recipe_modules/file/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
 
 &mdash; **def [copy](/recipe_modules/file/api.py#53)(self, name, source, dest):**
 
@@ -412,7 +414,7 @@ This module was created before there was a way to put recipes directly into
 another repo. It is not recommended to use this, and it will be removed in the
 near future.
 
-#### **class [GeneratorScriptApi](/recipe_modules/generator_script/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#884)):**
+#### **class [GeneratorScriptApi](/recipe_modules/generator_script/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
 
 &mdash; **def [\_\_call\_\_](/recipe_modules/generator_script/api.py#43)(self, path_to_script, \*args):**
 
@@ -458,7 +460,7 @@ corresponds to one step, and contains the following keys:
 
 Methods for producing and consuming JSON.
 
-#### **class [JsonApi](/recipe_modules/json/api.py#83)([RecipeApi](/recipe_engine/recipe_api.py#884)):**
+#### **class [JsonApi](/recipe_modules/json/api.py#83)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
 
 &emsp; **@[returns\_placeholder](/recipe_engine/util.py#119)**<br>&mdash; **def [input](/recipe_modules/json/api.py#102)(self, data):**
 
@@ -524,7 +526,7 @@ There are other anchor points which can be defined (e.g. by the
 `depot_tools/infra_paths` module). Refer to those modules for additional
 documentation.
 
-#### **class [PathApi](/recipe_modules/path/api.py#197)([RecipeApi](/recipe_engine/recipe_api.py#884)):**
+#### **class [PathApi](/recipe_modules/path/api.py#197)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
 
 &mdash; **def [\_\_getitem\_\_](/recipe_modules/path/api.py#422)(self, name):**
 
@@ -601,7 +603,7 @@ Args:
 
 Mockable system platform identity functions.
 
-#### **class [PlatformApi](/recipe_modules/platform/api.py#18)([RecipeApi](/recipe_engine/recipe_api.py#884)):**
+#### **class [PlatformApi](/recipe_modules/platform/api.py#18)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
 
 Provides host-platform-detection properties.
 
@@ -668,7 +670,7 @@ values provided to the recipe engine at the beginning of execution. There is
 intentionally no API to write property values (lest they become a kind of
 random-access global variable).
 
-#### **class [PropertiesApi](/recipe_modules/properties/api.py#28)([RecipeApiPlain](/recipe_engine/recipe_api.py#752), collections.Mapping):**
+#### **class [PropertiesApi](/recipe_modules/properties/api.py#28)([RecipeApiPlain](/recipe_engine/recipe_api.py#860), collections.Mapping):**
 
 PropertiesApi implements all the standard Mapping functions, so you
 can use it like a read-only dict.
@@ -691,7 +693,7 @@ This includes support for `vpython`, and knows how to specify parameters
 correctly for bots (e.g. ensuring that python is working on Windows, passing the
 unbuffered flag, etc.)
 
-#### **class [PythonApi](/recipe_modules/python/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#884)):**
+#### **class [PythonApi](/recipe_modules/python/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
 
 &mdash; **def [\_\_call\_\_](/recipe_modules/python/api.py#18)(self, name, script, args=None, unbuffered=True, venv=None, \*\*kwargs):**
 
@@ -752,7 +754,7 @@ Runs a succeeding step (exits 0).
 
 Provides objects for reading and writing raw data to and from steps.
 
-#### **class [RawIOApi](/recipe_modules/raw_io/api.py#173)([RecipeApi](/recipe_engine/recipe_api.py#884)):**
+#### **class [RawIOApi](/recipe_modules/raw_io/api.py#173)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
 
 &emsp; **@[returns\_placeholder](/recipe_engine/util.py#119)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#174)(data, suffix=''):**
 
@@ -809,6 +811,28 @@ Similar to output(), but uses an OutputTextPlaceholder, which expects utf-8
 encoded text.
 Similar to input(), but tries to decode the resulting data as utf-8 text,
 replacing any decoding errors with �.
+### *recipe_modules* / [source\_manifest](/recipe_modules/source_manifest)
+
+#### **class [SourceManfiestApi](/recipe_modules/source_manifest/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
+
+&mdash; **def [set\_json\_manifest](/recipe_modules/source_manifest/api.py#35)(self, name, data):**
+
+Uploads a source manifest with the given name.
+
+NOTE: Due to current implementation restrictions, this method may only be
+called after some step has been run from the recipe. Calling this before
+running any steps is invalid and will fail. We hope to lift this restriction
+sometime after we don't need to support buildbot any more.
+
+# TODO(iannucci): remove this restriction.
+
+Args:
+  * name (str) - the name of the manifest. These names must be valid LogDog
+    stream names, and must be unique within a recipe run. e.g.
+    * "main_checkout"
+    * "bisect/deadbeef"
+  * data (dict) - the JSONPB representation of the source_manifest.proto
+    Manifest message.
 ### *recipe_modules* / [step](/recipe_modules/step)
 
 [DEPS](/recipe_modules/step/__init__.py#8): [context](#recipe_modules-context), [path](#recipe_modules-path)
@@ -816,7 +840,7 @@ replacing any decoding errors with �.
 Step is the primary API for running steps (external programs, scripts,
 etc.).
 
-#### **class [StepApi](/recipe_modules/step/api.py#19)([RecipeApiPlain](/recipe_engine/recipe_api.py#752)):**
+#### **class [StepApi](/recipe_modules/step/api.py#19)([RecipeApiPlain](/recipe_engine/recipe_api.py#860)):**
 
 &emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#52)(self):**
 
@@ -940,7 +964,7 @@ of the context (see the context() method above).
 
 Simplistic temporary directory manager (deprecated).
 
-#### **class [TempfileApi](/recipe_modules/tempfile/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#884)):**
+#### **class [TempfileApi](/recipe_modules/tempfile/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
 
 &emsp; **@contextlib.contextmanager**<br>&mdash; **def [temp\_dir](/recipe_modules/tempfile/api.py#13)(self, prefix):**
 
@@ -957,7 +981,7 @@ with api.tempfile.temp_dir("some_prefix") as path:
 
 Allows mockable access to the current time.
 
-#### **class [TimeApi](/recipe_modules/time/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#884)):**
+#### **class [TimeApi](/recipe_modules/time/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
 
 &mdash; **def [time](/recipe_modules/time/api.py#21)(self):**
 
@@ -972,7 +996,7 @@ Return current UTC time as a datetime.datetime.
 
 Methods for interacting with HTTP(s) URLs.
 
-#### **class [UrlApi](/recipe_modules/url/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#884)):**
+#### **class [UrlApi](/recipe_modules/url/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
 
 &mdash; **def [get\_file](/recipe_modules/url/api.py#130)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None, timeout=None):**
 
@@ -1290,6 +1314,11 @@ Launches the repo bundler.
 [DEPS](/recipe_modules/raw_io/examples/full.py#5): [path](#recipe_modules-path), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/raw_io/examples/full.py#14)(api):**
+### *recipes* / [source\_manifest:examples/simple](/recipe_modules/source_manifest/examples/simple.py)
+
+[DEPS](/recipe_modules/source_manifest/examples/simple.py#6): [python](#recipe_modules-python), [source\_manifest](#recipe_modules-source_manifest)
+
+&mdash; **def [RunSteps](/recipe_modules/source_manifest/examples/simple.py#12)(api):**
 ### *recipes* / [step:examples/full](/recipe_modules/step/examples/full.py)
 
 [DEPS](/recipe_modules/step/examples/full.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

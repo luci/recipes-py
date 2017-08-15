@@ -7,6 +7,7 @@ import bisect
 import collections
 import contextlib
 import copy
+import hashlib
 import json
 import keyword
 import os
@@ -19,6 +20,12 @@ from functools import wraps
 from .recipe_test_api import DisabledTestData, ModuleTestData
 from .config import Single
 from .util import ModuleInjectionSite, Placeholder
+
+from . import env
+
+from .source_manifest_pb2 import Manifest
+from libs.logdog import streamname
+from libs.logdog.bootstrap import ButlerBootstrap, NotBootstrappedError
 
 
 class UnknownRequirementError(object):
@@ -344,11 +351,12 @@ class StepClient(object):
 
     This always returns the innermost nested step that is still open --
     presumably the one that just failed if we are in an exception handler."""
-    if not self._engine._step_stack:
+    step = self._engine.active_step
+    if not step:
       raise ValueError(
           'No steps have been run yet, and you are asking for a previous step '
           'result.')
-    return self._engine._step_stack[-1].step_result
+    return step.step_result
 
   def run_step(self, step_config):
     """
@@ -374,6 +382,106 @@ class DependencyManagerClient(object):
 
   def depend_on(self, recipe, properties, **kwargs):
     return self._engine.depend_on(recipe, properties, **kwargs)
+
+
+class SourceManifestClient(object):
+  """A recipe engine client allowing the upload of Source Manifests.
+
+  The Source Manifest definition is in `recipe_engine/source_manifest.proto`.
+  """
+
+  class ManifestUploadException(Exception):
+    pass
+
+  class BadManifestName(Exception):
+    pass
+
+  class DuplicateManifestException(Exception):
+    pass
+
+  class NoActiveStep(Exception):
+    pass
+
+  IDENT = 'source_manifest'
+
+  def __init__(self, engine, properties):
+    self._engine = engine
+
+    self._debug_dir = None
+    self._logdog_client = None
+    self._manifest_names = set()
+    self._prod = True
+
+    try:
+      self._debug_dir = (
+        properties['$recipe_engine/source_manifest']['debug_dir'])
+      self._prod = False
+    except (KeyError, TypeError):
+      pass
+
+    if not self._prod:
+      if not isinstance(self._debug_dir, (type(None), str)):
+        raise TypeError(
+          '$recipe_engine/source_manifest["debug_dir"] must be null or str: %r'
+          % self._debug_dir)
+      if self._debug_dir and not os.path.isdir(self._debug_dir):
+        # let it fail
+        os.makedirs(self._debug_dir)
+    else:
+      try:
+        self._logdog_client = ButlerBootstrap.probe().stream_client()
+      except NotBootstrappedError:
+        # This will become an exception in upload_manifest later.
+        pass
+
+  def upload_manifest(self, name, manifest_pb):
+    if not isinstance(manifest_pb, Manifest):
+      raise TypeError('expected source_manifest_pb2.Manifest, got %r'
+                      % type(manifest_pb))
+
+    if self._prod and not self._logdog_client:
+      raise self.ManifestUploadException(
+        'LogDog not configured; if debugging locally, set the '
+        '"$recipe_engine/source_manifest"={"debug_dir": "some/local/directory"}'
+        ' property. You may also set debug_dir to `null` to disable all source '
+        ' manifest saving.')
+
+    if name.startswith('luci/'):
+      raise self.BadManifestName('Manifest names beginning with "luci/" are '
+                                 'reserved: %r' % name)
+
+    try:
+      streamname.validate_stream_name(name)
+    except ValueError:
+      raise self.BadManifestName('Manifest name must be a valid LogDog name: '
+                                 '%r' % name)
+
+    if not self._engine.active_step:
+      raise self.NoActiveStep('Uploading a manifest requires an active step.')
+
+    if name in self._manifest_names:
+      raise self.DuplicateManifestException(name)
+
+    self._manifest_names.add(name)
+
+    data = manifest_pb.SerializeToString()
+    sha256 = hashlib.sha256(data).digest()
+
+    if self._debug_dir:
+      path = os.path.join(self._debug, name)
+      with open(path, 'wb') as f:
+        f.write(data)
+      with open(path+'.sha256', 'wb') as f:
+        f.write(sha256)
+    elif self._prod:
+      logdog_name = '/'.join(['source_manifest', name])
+      with self._logdog_client.binary(logdog_name) as bs:
+        bs.write(data)
+      host = self._logdog_client.coordinator_host
+      project = self._logdog_client.project
+      path = self._logdog_client.get_stream_path(logdog_name)
+      self._engine.active_step.open_step.stream.set_manifest_link(
+        name, sha256, 'logdog://%s/%s/%s' % (host, project, path))
 
 
 class StepFailure(Exception):

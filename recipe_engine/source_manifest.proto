@@ -34,7 +34,7 @@ message Manifest {
     // The canonicalized URL of the original repo that is considered the “source
     // of truth” for the source code. Ex.
     //   https://chromium.googlesource.com/chromium/tools/build.git
-    //   https://chromium.googlesource.com/infra/luci/recipes-py
+    //   https://chromium.googlesource.com/infra/luci/recipes-py.git
     string repo_url = 1;
 
     // If different from repo_url, this can be the URL of the repo that the source

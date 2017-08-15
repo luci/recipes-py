@@ -10,11 +10,19 @@
   {
     "cmd": [
       "echo",
+      "('$recipe_engine/source_manifest', {'debug_dir': None})",
       "('foo.bar-bam', 'thing')",
       "('recipe', 'properties:examples/full')",
       "('test_prop', {'key': {'other_key': {'key': 'value'}, 'key': 'value'}})"
     ],
     "name": "echo all"
+  },
+  {
+    "cmd": [
+      "echo",
+      "FrozenDict([('debug_dir', None)])"
+    ],
+    "name": "echo $recipe_engine/source_manifest"
   },
   {
     "cmd": [

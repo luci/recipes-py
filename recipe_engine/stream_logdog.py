@@ -14,13 +14,13 @@ import os
 import threading
 import sys
 
-from . import env
+from . import env as _env  # because we use 'env' as a variable
 from . import stream
 
 import libs.logdog.bootstrap
 import libs.logdog.stream
 import libs.logdog.streamname
-import annotations_pb2 as pb
+from . import annotations_pb2 as pb
 
 
 # The datetime for the epoch.
@@ -348,7 +348,7 @@ class StreamEngine(stream.StreamEngine):
         raise ValueError('Unknown status [%s]' % (status,))
 
     def set_build_property(self, key, value):
-      self._engine._anno.update_properties(key=value)
+      self._engine._astate.update_properties(key=value)
 
     def trigger(self, trigger_spec):
       if self._engine._ignore_triggers:
@@ -357,6 +357,11 @@ class StreamEngine(stream.StreamEngine):
           'Stream-based triggering is not supported for LogDog. Please use '
           'a recipe module (e.g., buildbucket) directly for build scheduling.')
 
+    def set_manifest_link(self, name, sha256, url):
+      m = self._engine._astate.base.source_manifests[name]
+      m.url = url
+      m.sha256 = sha256
+      self._engine._notify_annotation_changed()
 
   def new_step_stream(self, step_config):
     # TODO(dnj): In the current iteration, subannotations are NOT supported.

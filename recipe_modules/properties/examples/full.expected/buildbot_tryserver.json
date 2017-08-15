@@ -10,6 +10,7 @@
   {
     "cmd": [
       "echo",
+      "('$recipe_engine/source_manifest', {'debug_dir': None})",
       "('blamelist', ['cool_dev1337@chromium.org', 'hax@chromium.org'])",
       "('bot_id', 'test_bot')",
       "('branch', '')",
@@ -46,6 +47,13 @@
       "'/path/to/workdir/TestSlavename'"
     ],
     "name": "echo workdir"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'TestSlavename'"
+    ],
+    "name": "echo slavename"
   },
   {
     "cmd": [
@@ -99,9 +107,9 @@
   {
     "cmd": [
       "echo",
-      "'TestSlavename'"
+      "FrozenDict([('debug_dir', None)])"
     ],
-    "name": "echo slavename"
+    "name": "echo $recipe_engine/source_manifest"
   },
   {
     "cmd": [

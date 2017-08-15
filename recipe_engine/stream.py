@@ -91,6 +91,9 @@ class StreamEngine(object):
     def trigger(self, trigger_spec):
       raise NotImplementedError()
 
+    def set_manifest_link(self, name, sha256, url):
+      raise NotImplementedError()
+
   def make_step_stream(self, name, **kwargs):
     """Shorthand for creating a step stream from a step configuration dict."""
     kwargs['name'] = name
@@ -177,6 +180,7 @@ class ProductStreamEngine(StreamEngine):
     set_step_status = _void_product('set_step_status')
     set_build_property = _void_product('set_build_property')
     trigger = _void_product('trigger')
+    set_manifest_link = _void_product('set_manifest_link')
 
   def new_step_stream(self, step_config):
     return self.StepStream(
@@ -357,6 +361,9 @@ class StreamEngineInvariants(StreamEngine):
       assert '\n' not in spec # Spec must fit on one line.
       json.loads(spec) # Spec must be a valid json object.
 
+    def set_manifest_link(self, name, sha256, url):
+      pass
+
   class LogStream(StreamEngine.Stream):
     def __init__(self, step_stream, log_name):
       self._step_stream = step_stream
@@ -481,6 +488,8 @@ class AnnotatorStreamEngine(StreamEngine):
     def trigger(self, spec):
       self.output_annotation('STEP_TRIGGER', spec)
 
+    def set_manifest_link(self, name, sha256, url):
+      self.output_annotation('SOURCE_MANIFEST', name, sha256.encode('hex'), url)
 
   class StepLogStream(StreamEngine.Stream):
     def __init__(self, step_stream, log_name):

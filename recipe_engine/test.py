@@ -306,6 +306,11 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
 
     props = test_data.properties.copy()
     props['recipe'] = recipe_name
+    # Disable source manifest uploading by default.
+    if '$recipe_engine/source_manifest' not in props:
+      props['$recipe_engine/source_manifest'] = {}
+    if 'debug_dir' not in props['$recipe_engine/source_manifest']:
+      props['$recipe_engine/source_manifest']['debug_dir'] = None
     engine = run.RecipeEngine(
         runner, props, _UNIVERSE_VIEW, engine_flags=_ENGINE_FLAGS)
     with coverage_context(include=covers, enable=enable_coverage) as cov:

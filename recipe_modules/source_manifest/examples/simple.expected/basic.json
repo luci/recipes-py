@@ -1,0 +1,18 @@
+[
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "import sys; sys.exit(0)"
+    ],
+    "name": "a step",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@Source manifest requires a step.@@@"
+    ]
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

@@ -10,6 +10,7 @@
   {
     "cmd": [
       "echo",
+      "('$recipe_engine/source_manifest', {'debug_dir': None})",
       "('blamelist', ['cool_dev1337@chromium.org', 'hax@chromium.org'])",
       "('bot_id', 'test_bot')",
       "('buildbotURL', 'http://c.org/p/cr/')",
@@ -70,6 +71,13 @@
   {
     "cmd": [
       "echo",
+      "'TestSlavename'"
+    ],
+    "name": "echo slavename"
+  },
+  {
+    "cmd": [
+      "echo",
       "'refs/changes/89/456789/12'"
     ],
     "name": "echo patch_ref"
@@ -119,9 +127,9 @@
   {
     "cmd": [
       "echo",
-      "'TestSlavename'"
+      "FrozenDict([('debug_dir', None)])"
     ],
-    "name": "echo slavename"
+    "name": "echo $recipe_engine/source_manifest"
   },
   {
     "cmd": [

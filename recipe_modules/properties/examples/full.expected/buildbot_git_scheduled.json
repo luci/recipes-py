@@ -10,6 +10,7 @@
   {
     "cmd": [
       "echo",
+      "('$recipe_engine/source_manifest', {'debug_dir': None})",
       "('blamelist', ['cool_dev1337@chromium.org', 'hax@chromium.org'])",
       "('bot_id', 'test_bot')",
       "('branch', 'master')",
@@ -59,6 +60,13 @@
   {
     "cmd": [
       "echo",
+      "None"
+    ],
+    "name": "echo test_prop"
+  },
+  {
+    "cmd": [
+      "echo",
       "'properties:examples/full'"
     ],
     "name": "echo recipe"
@@ -87,9 +95,9 @@
   {
     "cmd": [
       "echo",
-      "'TestSlavename'"
+      "FrozenDict([('debug_dir', None)])"
     ],
-    "name": "echo slavename"
+    "name": "echo $recipe_engine/source_manifest"
   },
   {
     "cmd": [
@@ -122,9 +130,9 @@
   {
     "cmd": [
       "echo",
-      "None"
+      "'TestSlavename'"
     ],
-    "name": "echo test_prop"
+    "name": "echo slavename"
   },
   {
     "cmd": [
