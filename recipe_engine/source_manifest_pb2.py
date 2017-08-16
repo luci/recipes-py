@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='source_manifest.proto',
   package='',
   syntax='proto3',
-  serialized_pb=_b('\n\x15source_manifest.proto\"\xdb\x04\n\x08Manifest\x12\x0f\n\x07version\x18\x01 \x01(\x05\x12/\n\x0b\x64irectories\x18\x02 \x03(\x0b\x32\x1a.Manifest.DirectoriesEntry\x1aZ\n\x0bGitCheckout\x12\x10\n\x08repo_url\x18\x01 \x01(\t\x12\x11\n\tfetch_url\x18\x02 \x01(\t\x12\x10\n\x08revision\x18\x03 \x01(\t\x12\x14\n\x0ctracking_ref\x18\x04 \x01(\t\x1a\x8f\x01\n\x0b\x43IPDPackage\x12\x17\n\x0f\x63ipd_server_url\x18\x01 \x01(\t\x12\x19\n\x11\x63ipd_package_name\x18\x02 \x01(\t\x12\x1c\n\x14\x63ipd_package_pattern\x18\x03 \x01(\t\x12\x18\n\x10\x63ipd_instance_id\x18\x04 \x01(\t\x12\x14\n\x0c\x63ipd_version\x18\x05 \x01(\t\x1aH\n\x08Isolated\x12\x1b\n\x13isolated_server_url\x18\x01 \x01(\t\x12\x11\n\tnamespace\x18\x02 \x01(\t\x12\x0c\n\x04hash\x18\x03 \x01(\t\x1a\x8b\x01\n\tDirectory\x12+\n\x0cgit_checkout\x18\x01 \x01(\x0b\x32\x15.Manifest.GitCheckout\x12+\n\x0c\x63ipd_package\x18\x02 \x03(\x0b\x32\x15.Manifest.CIPDPackage\x12$\n\x08isolated\x18\x03 \x03(\x0b\x32\x12.Manifest.Isolated\x1aG\n\x10\x44irectoriesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\"\n\x05value\x18\x02 \x01(\x0b\x32\x13.Manifest.Directory:\x02\x38\x01\x62\x06proto3')
+  serialized_pb=_b('\n\x15source_manifest.proto\"\xd8\x04\n\x08Manifest\x12\x0f\n\x07version\x18\x01 \x01(\x05\x12/\n\x0b\x64irectories\x18\x02 \x03(\x0b\x32\x1a.Manifest.DirectoriesEntry\x1aW\n\x0bGitCheckout\x12\x10\n\x08repo_url\x18\x01 \x01(\t\x12\x11\n\tfetch_url\x18\x02 \x01(\t\x12\x10\n\x08revision\x18\x03 \x01(\t\x12\x11\n\tfetch_ref\x18\x04 \x01(\t\x1a\x8f\x01\n\x0b\x43IPDPackage\x12\x17\n\x0f\x63ipd_server_url\x18\x01 \x01(\t\x12\x19\n\x11\x63ipd_package_name\x18\x02 \x01(\t\x12\x1c\n\x14\x63ipd_package_pattern\x18\x03 \x01(\t\x12\x18\n\x10\x63ipd_instance_id\x18\x04 \x01(\t\x12\x14\n\x0c\x63ipd_version\x18\x05 \x01(\t\x1aH\n\x08Isolated\x12\x1b\n\x13isolated_server_url\x18\x01 \x01(\t\x12\x11\n\tnamespace\x18\x02 \x01(\t\x12\x0c\n\x04hash\x18\x03 \x01(\t\x1a\x8b\x01\n\tDirectory\x12+\n\x0cgit_checkout\x18\x01 \x01(\x0b\x32\x15.Manifest.GitCheckout\x12+\n\x0c\x63ipd_package\x18\x02 \x03(\x0b\x32\x15.Manifest.CIPDPackage\x12$\n\x08isolated\x18\x03 \x03(\x0b\x32\x12.Manifest.Isolated\x1aG\n\x10\x44irectoriesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\"\n\x05value\x18\x02 \x01(\x0b\x32\x13.Manifest.Directory:\x02\x38\x01\x62\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -55,7 +55,7 @@ _MANIFEST_GITCHECKOUT = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='tracking_ref', full_name='Manifest.GitCheckout.tracking_ref', index=3,
+      name='fetch_ref', full_name='Manifest.GitCheckout.fetch_ref', index=3,
       number=4, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -74,7 +74,7 @@ _MANIFEST_GITCHECKOUT = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=104,
-  serialized_end=194,
+  serialized_end=191,
 )
 
 _MANIFEST_CIPDPACKAGE = _descriptor.Descriptor(
@@ -131,8 +131,8 @@ _MANIFEST_CIPDPACKAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=197,
-  serialized_end=340,
+  serialized_start=194,
+  serialized_end=337,
 )
 
 _MANIFEST_ISOLATED = _descriptor.Descriptor(
@@ -175,8 +175,8 @@ _MANIFEST_ISOLATED = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=342,
-  serialized_end=414,
+  serialized_start=339,
+  serialized_end=411,
 )
 
 _MANIFEST_DIRECTORY = _descriptor.Descriptor(
@@ -219,8 +219,8 @@ _MANIFEST_DIRECTORY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=417,
-  serialized_end=556,
+  serialized_start=414,
+  serialized_end=553,
 )
 
 _MANIFEST_DIRECTORIESENTRY = _descriptor.Descriptor(
@@ -256,8 +256,8 @@ _MANIFEST_DIRECTORIESENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=558,
-  serialized_end=629,
+  serialized_start=555,
+  serialized_end=626,
 )
 
 _MANIFEST = _descriptor.Descriptor(
@@ -294,7 +294,7 @@ _MANIFEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=26,
-  serialized_end=629,
+  serialized_end=626,
 )
 
 _MANIFEST_GITCHECKOUT.containing_type = _MANIFEST

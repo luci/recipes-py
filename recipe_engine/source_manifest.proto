@@ -48,7 +48,8 @@ message Manifest {
     //   3617b0eea7ec74b8e731a23fed2f4070cbc284c4
     string revision = 3;
 
-    // The ref that the task used to resolve the revision of the source (if any). Ex.
+    // The ref that the task used to resolve/fetch the revision of the source
+    // (if any). Ex.
     //   refs/heads/master
     //   refs/changes/04/511804/4
     //
@@ -57,7 +58,7 @@ message Manifest {
     //
     // This should always be an absolute ref (i.e. starts with 'refs/'). An
     // example of a non-absolute ref would be 'master'.
-    string tracking_ref = 4;
+    string fetch_ref = 4;
   }
 
   message CIPDPackage {
