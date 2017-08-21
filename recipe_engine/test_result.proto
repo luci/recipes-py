@@ -51,9 +51,12 @@ message TestResult {
     int64 lineno = 6;
   }
 
+  // Indicates recipe execution has crashed (in the user code).
+  message CrashFailure {
+  }
+
   // An internal failure (either ctrl-c interruption, or an exception
-  // while running the test; this could mean a crashing recipe execution,
-  // or even failure in the test runner itself).
+  // within test runner while running the test).
   message InternalFailure {
   }
 
@@ -64,6 +67,8 @@ message TestResult {
       CheckFailure check_failure = 2;
 
       InternalFailure internal_failure = 3;
+
+      CrashFailure crash_failure = 4;
     }
   }
 

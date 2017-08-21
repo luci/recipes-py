@@ -200,6 +200,12 @@ class JsonGenerator(object):
         test, {'failures': []})['failures'].append({'diff_failure': {}})
     return self
 
+  def crash_failure(self, test):
+    """Simulates a crash failure for |test|."""
+    self._result.setdefault('test_failures', {}).setdefault(
+        test, {'failures': []})['failures'].append({'crash_failure': {}})
+    return self
+
   def internal_failure(self, test):
     """Simulates an internal failure for |test|."""
     self._result.setdefault('test_failures', {}).setdefault(
@@ -484,8 +490,7 @@ class TestTest(unittest.TestCase):
                   cm.exception.output)
     self.assertEqual(
         self.json_generator
-            .invalid()
-            .internal_failure('foo.basic')
+            .crash_failure('foo.basic')
             .coverage_failure('recipes/foo.py', [6])
             .unused_expectation('recipes/foo.expected')
             .unused_expectation('recipes/foo.expected/basic.json').get(),
@@ -515,8 +520,7 @@ class TestTest(unittest.TestCase):
     self.assertIn('FATAL: Insufficient coverage', cm.exception.output)
     self.assertEqual(
         self.json_generator
-            .invalid()
-            .internal_failure('foo_module:examples/full.basic')
+            .crash_failure('foo_module:examples/full.basic')
             .coverage_failure('recipe_modules/foo_module/api.py', [6])
             .coverage_failure('recipe_modules/foo_module/examples/full.py', [6])
             .get(),
@@ -536,8 +540,7 @@ class TestTest(unittest.TestCase):
     self.assertIn('FATAL: Insufficient coverage', cm.exception.output)
     self.assertEqual(
         self.json_generator
-            .invalid()
-            .internal_failure('foo_module:examples/full.basic')
+            .crash_failure('foo_module:examples/full.basic')
             .coverage_failure('recipe_modules/foo_module/api.py', [6])
             .coverage_failure('recipe_modules/foo_module/examples/full.py', [6])
             .get(),
@@ -700,9 +703,8 @@ class TestTest(unittest.TestCase):
     self.assertTrue(os.path.exists(expectation_file))
     self.assertEqual(
       self.json_generator
-          .invalid()
           .coverage_failure('recipe_modules/foo_module/tests/foo.py', [6])
-          .internal_failure('foo_module:tests/foo.basic').get(),
+          .crash_failure('foo_module:tests/foo.basic').get(),
       self.json_contents)
 
   def test_train_basic(self):
@@ -1215,6 +1217,9 @@ class TestTest(unittest.TestCase):
         'foo_check', 'foo_file', 1, 'foo_func').check_failure(
             'bar_check', 'bar_file', 2, 'bar_func', ['bar_args'])
 
+    g1.crash_failure('foo_crash')
+    g2.crash_failure('foo_crash').crash_failure('bar_crash')
+
     g1.internal_failure('foo_internal')
     g2.internal_failure('foo_internal').internal_failure('bar_internal')
 
@@ -1237,6 +1242,7 @@ class TestTest(unittest.TestCase):
             .coverage_failure('bar_coverage', [2])
             .diff_failure('bar_diff')
             .check_failure('bar_check', 'bar_file', 2, 'bar_func', ['bar_args'])
+            .crash_failure('bar_crash')
             .internal_failure('bar_internal')
             .uncovered_module('bar_module')
             .unused_expectation('bar_expectation')

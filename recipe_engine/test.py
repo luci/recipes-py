@@ -69,6 +69,12 @@ _MODE_TEST, _MODE_TRAIN, _MODE_DEBUG = range(3)
 copy._deepcopy_dispatch[re._pattern_type] = copy._deepcopy_atomic
 
 
+class RecipeRunError(Exception):
+  """Exception raised when user recipe code fails
+  (as opposed to an internal error in recipe engine itself)."""
+  pass
+
+
 class PostProcessError(ValueError):
   """Exception raised when any of the post-process hooks fails."""
   pass
@@ -139,6 +145,21 @@ class CheckFailure(TestFailure):
 
   def as_proto(self):
     return self.check.as_proto()
+
+
+class CrashFailure(TestFailure):
+  """Failure when the recipe run crashes with an uncaught exception."""
+
+  def __init__(self, error):
+    self.error = error
+
+  def format(self):
+    return str(self.error)
+
+  def as_proto(self):
+    proto = test_result_pb2.TestResult.TestFailure()
+    proto.crash_failure.MergeFrom(test_result_pb2.TestResult.CrashFailure())
+    return proto
 
 
 class TestResult(object):
@@ -219,6 +240,9 @@ def maybe_debug(break_funcs, enable):
 
 def run_test(test_description, mode):
   """Runs a test. Returns TestResults object."""
+  # TODO(iannucci): once we're always bootstrapping, move this to the top.
+  import coverage
+
   expected = None
   if os.path.exists(test_description.expectation_path):
     try:
@@ -235,18 +259,24 @@ def run_test(test_description, mode):
     _UNIVERSE_VIEW.load_recipe(test_description.recipe_name).run_steps,
   ]
 
-  with maybe_debug(break_funcs, mode == _MODE_DEBUG):
-    actual_obj, failed_checks, coverage_data = run_recipe(
-        test_description.recipe_name, test_description.test_name,
-        test_description.covers,
-        enable_coverage=(mode != _MODE_DEBUG))
+  try:
+    with maybe_debug(break_funcs, mode == _MODE_DEBUG):
+      actual_obj, failed_checks, coverage_data = run_recipe(
+          test_description.recipe_name, test_description.test_name,
+          test_description.covers,
+          enable_coverage=(mode != _MODE_DEBUG))
+  except RecipeRunError as ex:
+    sys.stdout.write('E')
+    sys.stdout.flush()
+    return TestResult(
+        test_description, [CrashFailure(ex)], coverage.CoverageData(), False)
+
   actual = json.dumps(
       re_encode(actual_obj), sort_keys=True, indent=2,
       separators=(',', ': '))
 
   failures = []
 
-  # TODO(phajdan.jr): handle exception (errors) in the recipe execution.
   if failed_checks:
     sys.stdout.write('C')
     failures.extend([CheckFailure(c) for c in failed_checks])
@@ -322,7 +352,12 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
         _UNIVERSE_VIEW.universe.package_deps.root_package,
         recipe_script.LOADED_DEPS,
         recipe_script.path, engine, test_data)
-      result = engine.run(recipe_script, api, test_data.properties)
+      try:
+        result = engine.run(recipe_script, api, test_data.properties)
+      except Exception as ex:
+        ex_type, ex_value, ex_tb = sys.exc_info()
+        raise RecipeRunError(
+            '%s: %s' % (ex_type.__name__, ex_value)), None, ex_tb
     coverage_data = cov.get_data()
 
     raw_expectations = runner.steps_ran.copy()
