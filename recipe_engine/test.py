@@ -356,8 +356,10 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
         result = engine.run(recipe_script, api, test_data.properties)
       except Exception as ex:
         ex_type, ex_value, ex_tb = sys.exc_info()
-        raise RecipeRunError(
-            '%s: %s' % (ex_type.__name__, ex_value)), None, ex_tb
+        raise (
+            RecipeRunError(
+                ''.join(traceback.format_exception(ex_type, ex_value, ex_tb))),
+            None, ex_tb)
     coverage_data = cov.get_data()
 
     raw_expectations = runner.steps_ran.copy()

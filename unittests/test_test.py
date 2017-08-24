@@ -35,6 +35,10 @@ class RecipeWriter(object):
     self.expectations = {}
 
   @property
+  def recipe_path(self):
+    return os.path.join(self.recipes_dir, '%s.py' % self.name)
+
+  @property
   def expect_dir(self):
     return os.path.join(self.recipes_dir, '%s.expected' % self.name)
 
@@ -63,7 +67,7 @@ class RecipeWriter(object):
     for d in dirs:
       if not os.path.exists(d):
         os.makedirs(d)
-    with open(os.path.join(self.recipes_dir, '%s.py' % self.name), 'w') as f:
+    with open(self.recipe_path, 'w') as f:
       f.write('\n'.join([
         'from recipe_engine import post_process',
         '',
@@ -486,8 +490,10 @@ class TestTest(unittest.TestCase):
     rw.write()
     with self.assertRaises(subprocess.CalledProcessError) as cm:
       self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertIn('NameError: global name \'baz\' is not defined',
-                  cm.exception.output)
+    self.assertIn(
+        ('  File "%s", line 6, in RunSteps\n    baz\n'
+         'NameError: global name \'baz\' is not defined' % rw.recipe_path),
+        cm.exception.output)
     self.assertEqual(
         self.json_generator
             .crash_failure('foo.basic')
