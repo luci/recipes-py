@@ -146,7 +146,7 @@ if __name__ == '__main__':
 #
 # wheel: <
 #   name: "infra/python/wheels/cryptography/${platform}_${py_python}_${py_abi}"
-#   version: "version:1.8.1"
+#   version: "version:2.0.3"
 # >
 #
 # wheel: <
@@ -196,7 +196,7 @@ if __name__ == '__main__':
 #
 # wheel: <
 #   name: "infra/python/wheels/pyopenssl-py2_py3"
-#   version: "version:17.0.0"
+#   version: "version:17.2.0"
 # >
 #
 # wheel: <
