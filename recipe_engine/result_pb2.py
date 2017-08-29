@@ -13,14 +13,16 @@ from google.protobuf import descriptor_pb2
 _sym_db = _symbol_database.Default()
 
 
+import package_pb2 as package__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='result.proto',
   package='recipe_engine',
   syntax='proto3',
-  serialized_pb=_b('\n\x0cresult.proto\x12\rrecipe_engine\"Z\n\x06Result\x12\x15\n\x0bjson_result\x18\x01 \x01(\tH\x00\x12)\n\x07\x66\x61ilure\x18\x02 \x01(\x0b\x32\x16.recipe_engine.FailureH\x00\x42\x0e\n\x0coneof_result\"\xe6\x01\n\x07\x46\x61ilure\x12\x14\n\x0chuman_reason\x18\x01 \x01(\t\x12)\n\x07timeout\x18\x02 \x01(\x0b\x32\x16.recipe_engine.TimeoutH\x00\x12-\n\texception\x18\x03 \x01(\x0b\x32\x18.recipe_engine.ExceptionH\x00\x12,\n\tstep_data\x18\x04 \x01(\x0b\x32\x17.recipe_engine.StepDataH\x00\x12-\n\x07\x66\x61ilure\x18\x05 \x01(\x0b\x32\x1a.recipe_engine.StepFailureH\x00\x42\x0e\n\x0c\x66\x61ilure_type\"\x1e\n\tException\x12\x11\n\ttraceback\x18\x01 \x03(\t\"\x1c\n\x07Timeout\x12\x11\n\ttimeout_s\x18\x01 \x01(\x02\"\x18\n\x08StepData\x12\x0c\n\x04step\x18\x01 \x01(\t\"\x1b\n\x0bStepFailure\x12\x0c\n\x04step\x18\x01 \x01(\tb\x06proto3')
-)
+  serialized_pb=_b('\n\x0cresult.proto\x12\rrecipe_engine\x1a\rpackage.proto\"\x8a\x01\n\x06Result\x12\x15\n\x0bjson_result\x18\x01 \x01(\tH\x00\x12)\n\x07\x66\x61ilure\x18\x02 \x01(\x0b\x32\x16.recipe_engine.FailureH\x00\x12.\n\x0erecipe_package\x18\x03 \x01(\x0b\x32\x16.recipe_engine.PackageB\x0e\n\x0coneof_result\"\xe6\x01\n\x07\x46\x61ilure\x12\x14\n\x0chuman_reason\x18\x01 \x01(\t\x12)\n\x07timeout\x18\x02 \x01(\x0b\x32\x16.recipe_engine.TimeoutH\x00\x12-\n\texception\x18\x03 \x01(\x0b\x32\x18.recipe_engine.ExceptionH\x00\x12,\n\tstep_data\x18\x04 \x01(\x0b\x32\x17.recipe_engine.StepDataH\x00\x12-\n\x07\x66\x61ilure\x18\x05 \x01(\x0b\x32\x1a.recipe_engine.StepFailureH\x00\x42\x0e\n\x0c\x66\x61ilure_type\"\x1e\n\tException\x12\x11\n\ttraceback\x18\x01 \x03(\t\"\x1c\n\x07Timeout\x12\x11\n\ttimeout_s\x18\x01 \x01(\x02\"\x18\n\x08StepData\x12\x0c\n\x04step\x18\x01 \x01(\t\"\x1b\n\x0bStepFailure\x12\x0c\n\x04step\x18\x01 \x01(\tb\x06proto3')
+  ,
+  dependencies=[package__pb2.DESCRIPTOR,])
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 
@@ -47,6 +49,13 @@ _RESULT = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='recipe_package', full_name='recipe_engine.Result.recipe_package', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -62,8 +71,8 @@ _RESULT = _descriptor.Descriptor(
       name='oneof_result', full_name='recipe_engine.Result.oneof_result',
       index=0, containing_type=None, fields=[]),
   ],
-  serialized_start=31,
-  serialized_end=121,
+  serialized_start=47,
+  serialized_end=185,
 )
 
 
@@ -124,8 +133,8 @@ _FAILURE = _descriptor.Descriptor(
       name='failure_type', full_name='recipe_engine.Failure.failure_type',
       index=0, containing_type=None, fields=[]),
   ],
-  serialized_start=124,
-  serialized_end=354,
+  serialized_start=188,
+  serialized_end=418,
 )
 
 
@@ -155,8 +164,8 @@ _EXCEPTION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=356,
-  serialized_end=386,
+  serialized_start=420,
+  serialized_end=450,
 )
 
 
@@ -186,8 +195,8 @@ _TIMEOUT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=388,
-  serialized_end=416,
+  serialized_start=452,
+  serialized_end=480,
 )
 
 
@@ -217,8 +226,8 @@ _STEPDATA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=418,
-  serialized_end=442,
+  serialized_start=482,
+  serialized_end=506,
 )
 
 
@@ -248,11 +257,12 @@ _STEPFAILURE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=444,
-  serialized_end=471,
+  serialized_start=508,
+  serialized_end=535,
 )
 
 _RESULT.fields_by_name['failure'].message_type = _FAILURE
+_RESULT.fields_by_name['recipe_package'].message_type = package__pb2._PACKAGE
 _RESULT.oneofs_by_name['oneof_result'].fields.append(
   _RESULT.fields_by_name['json_result'])
 _RESULT.fields_by_name['json_result'].containing_oneof = _RESULT.oneofs_by_name['oneof_result']
