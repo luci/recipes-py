@@ -825,7 +825,7 @@ def run_run(test_filter, jobs, json_file, mode):
     print()
     new_args = [('train' if s == 'run' else s) for s in sys.argv]
     new_args[0] = os.path.relpath(new_args[0])
-    if not new_args[0].startswith('.'):
+    if not new_args[0].startswith('.%s' % os.path.sep):
       new_args[0] = os.path.join('.', new_args[0])
     print('  ' + ' '.join(new_args))
     print()
