@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package recipe_engine;
 
-import "package.proto";
-
 // The result of a recipe execution.
 message Result {
   oneof oneof_result {
@@ -14,9 +12,6 @@ message Result {
     // The cause of the failure of a recipe.
     Failure failure = 2;
   }
-
-  // Initial recipe repo's package spec (recipes.cfg).
-  Package recipe_package = 3;
 }
 
 message Failure {
