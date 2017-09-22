@@ -147,9 +147,9 @@ class RepoTest(unittest.TestCase):
       }
       if remote_fake_engine:
         deps['recipe_engine'] = package_pb2.DepSpec(
-          branch="master",
-          revision="deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-          url="https://chromium.googlesource.com/infra/luci/recipes-py.git",
+          branch='master',
+          revision='deadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+          url='https://chromium.googlesource.com/infra/luci/recipes-py.git',
         )
       for d in repo_deps[k]:
         deps[d] = package_pb2.DepSpec(
