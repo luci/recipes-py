@@ -126,19 +126,31 @@ class RepoTest(unittest.TestCase):
         'spec': spec,
     }
 
-  def repo_setup(self, repo_deps):
+  def repo_setup(self, repo_deps, remote_fake_engine=False):
     """Creates a set of repos with recipes.cfg reflecting requested
     dependencies.
 
     In order to avoid a topsort, we require that repo names are in
     alphebetical dependency order -- i.e. later names depend on earlier
     ones.
+
+    Normally all repos are created with a dependency on recipe_engine which is
+    a file:// url to the actual recipe_engine repo that this test is running in.
+    If `remote_fake_engine` is True, then it will insert a dependency on the
+    git url with a revision of `deadbeef`. This is useful for testing to make
+    sure that override dependencies actually work correctly.
     """
     repos = {}
     for k in sorted(repo_deps):
       deps = {
         'recipe_engine': package_pb2.DepSpec(url="file://"+ROOT_DIR),
       }
+      if remote_fake_engine:
+        deps['recipe_engine'] = package_pb2.DepSpec(
+          branch="master",
+          revision="deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          url="https://chromium.googlesource.com/infra/luci/recipes-py.git",
+        )
       for d in repo_deps[k]:
         deps[d] = package_pb2.DepSpec(
           url=repos[d]['root'],
@@ -235,7 +247,7 @@ class RepoTest(unittest.TestCase):
         raise
 
 
-  def update_recipe(self, repo, name, deps, calls):
+  def update_recipe(self, repo, name, deps, calls, overrides=None):
     """Updates or creates a recipe in given repo.
     Commits the change.
 
@@ -263,7 +275,7 @@ class RepoTest(unittest.TestCase):
           '  yield api.test("basic")',
         ]))
 
-      self.train_recipes(repo)
+      self.train_recipes(repo, overrides=overrides)
 
       subprocess.check_call(
           ['git', 'add', os.path.join(recipes_dir, '%s.py' % name)])
@@ -272,7 +284,7 @@ class RepoTest(unittest.TestCase):
       return self.commit_in_repo(repo, message='recipe update')
 
   def update_recipe_module(self, repo, name, methods, generate_example=True,
-                           disable_strict_coverage=False):
+                           disable_strict_coverage=False, overrides=None):
     """Updates or creates a recipe module in given repo.
     Commits the change.
 
@@ -337,7 +349,7 @@ class RepoTest(unittest.TestCase):
       elif os.path.exists(examples_dir):
         shutil.rmtree(examples_dir)
 
-      self.train_recipes(repo)
+      self.train_recipes(repo, overrides=overrides)
 
       subprocess.check_call(['git', 'add', module_dir])
       message = ' '.join(

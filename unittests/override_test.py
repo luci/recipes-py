@@ -4,12 +4,23 @@
 # that can be found in the LICENSE file.
 
 import copy
+import os
 import subprocess
 import sys
 import unittest
+import contextlib
 
 import repo_test_util
 
+@contextlib.contextmanager
+def fake_git():
+  fake_git_dir = os.path.join(repo_test_util.ROOT_DIR, 'unittests', 'fakegit')
+  cur_path = os.environ['PATH']
+  try:
+    os.environ['PATH'] = os.pathsep.join([fake_git_dir, cur_path])
+    yield
+  finally:
+    os.environ['PATH'] = cur_path
 
 class TestOverride(repo_test_util.RepoTest):
   def test_simple(self):
@@ -38,6 +49,37 @@ class TestOverride(repo_test_util.RepoTest):
         'Exception: While generating results for \'b_recipe\': ImportError: '
         'No module named a_module',
         cm.exception.output)
+
+  def test_bundle(self):
+    repos = self.repo_setup({
+        'a': [],
+        'b': ['a'],
+    }, remote_fake_engine=True)
+
+    engine_override = ('recipe_engine', repo_test_util.ROOT_DIR)
+
+    a_c1 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']},
+                                     overrides=[engine_override])
+
+    self.update_recipes_cfg(
+        'b', self.updated_package_spec_pb(repos['b'], 'a', a_c1['revision']))
+    self.update_recipe(
+        repos['b'], 'b_recipe', ['a/a_module'], [('a_module', 'foo')],
+        overrides=[engine_override])
+
+    with fake_git():
+      # Training the recipes, overriding just 'a' should fail.
+      with self.assertRaises(subprocess.CalledProcessError) as cm:
+        self.train_recipes(repos['b'], overrides=[
+          ('a', repos['a']['root']),
+        ])
+      self.assertIn('Git "init" failed', cm.exception.output)
+
+      # But! Overriding the engine too should work.
+      self.train_recipes(repos['b'], overrides=[
+        ('a', repos['a']['root']),
+        engine_override,
+      ])
 
   def test_dependency_conflict(self):
     repos = self.repo_setup({

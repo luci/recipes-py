@@ -422,8 +422,11 @@ class PackageDeps(object):
 
       package_spec = PackageSpec.from_package_pb(context, repo_spec.spec_pb())
       for sub_project_id, sub_repo_spec in package_spec.deps.iteritems():
-        sub_repo_spec.fetch()
-        overrides_deep[sub_project_id] = sub_repo_spec
+        # If there's no explicit override for this dependency, then it becomes
+        # an implied ("deep") override.
+        if sub_project_id not in overrides:
+          sub_repo_spec.fetch()
+          overrides_deep[sub_project_id] = sub_repo_spec
 
     package_deps = cls(overrides=overrides_deep)
 
