@@ -1,0 +1,19 @@
+[
+  {
+    "cmd": [
+      "authutil",
+      "token",
+      "-service-account-json",
+      "[START_DIR]/key_name.json",
+      "-lifetime",
+      "600s"
+    ],
+    "name": "get access token for key_name.json",
+    "stdout": "/path/to/tmp/"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

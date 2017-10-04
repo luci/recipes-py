@@ -1,0 +1,22 @@
+[
+  {
+    "cmd": [
+      "authutil",
+      "token",
+      "-lifetime",
+      "600s"
+    ],
+    "name": "get access token for default account",
+    "stdout": "/path/to/tmp/",
+    "~followup_annotations": [
+      "step returned non-zero exit code: 1",
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "name": "$result",
+    "reason": "Step('get access token for default account') failed with return_code 1",
+    "recipe_result": null,
+    "status_code": 1
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "cmd": [
+      "authutil",
+      "token",
+      "-lifetime",
+      "600s"
+    ],
+    "name": "get access token for default account",
+    "stdout": "/path/to/tmp/"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]
