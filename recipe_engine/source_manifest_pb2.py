@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='source_manifest.proto',
   package='milo',
   syntax='proto3',
-  serialized_pb=_b('\n\x15source_manifest.proto\x12\x04milo\"\xa7\x05\n\x08Manifest\x12\x0f\n\x07version\x18\x01 \x01(\x05\x12\x34\n\x0b\x64irectories\x18\x02 \x03(\x0b\x32\x1f.milo.Manifest.DirectoriesEntry\x1aW\n\x0bGitCheckout\x12\x10\n\x08repo_url\x18\x01 \x01(\t\x12\x11\n\tfetch_url\x18\x02 \x01(\t\x12\x10\n\x08revision\x18\x03 \x01(\t\x12\x11\n\tfetch_ref\x18\x04 \x01(\t\x1aL\n\x0b\x43IPDPackage\x12\x17\n\x0fpackage_pattern\x18\x01 \x01(\t\x12\x13\n\x0binstance_id\x18\x02 \x01(\t\x12\x0f\n\x07version\x18\x03 \x01(\t\x1a+\n\x08Isolated\x12\x11\n\tnamespace\x18\x01 \x01(\t\x12\x0c\n\x04hash\x18\x02 \x01(\t\x1a\xb1\x02\n\tDirectory\x12\x30\n\x0cgit_checkout\x18\x01 \x01(\x0b\x32\x1a.milo.Manifest.GitCheckout\x12\x18\n\x10\x63ipd_server_host\x18\x02 \x01(\t\x12?\n\x0c\x63ipd_package\x18\x04 \x03(\x0b\x32).milo.Manifest.Directory.CipdPackageEntry\x12\x1c\n\x14isolated_server_host\x18\x05 \x01(\t\x12)\n\x08isolated\x18\x06 \x03(\x0b\x32\x17.milo.Manifest.Isolated\x1aN\n\x10\x43ipdPackageEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12)\n\x05value\x18\x02 \x01(\x0b\x32\x1a.milo.Manifest.CIPDPackage:\x02\x38\x01\x1aL\n\x10\x44irectoriesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\'\n\x05value\x18\x02 \x01(\x0b\x32\x18.milo.Manifest.Directory:\x02\x38\x01\"+\n\x0cManifestLink\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x0e\n\x06sha256\x18\x02 \x01(\x0c\x62\x06proto3')
+  serialized_pb=_b('\n\x15source_manifest.proto\x12\x04milo\"\xd9\x05\n\x08Manifest\x12\x0f\n\x07version\x18\x01 \x01(\x05\x12\x34\n\x0b\x64irectories\x18\x02 \x03(\x0b\x32\x1f.milo.Manifest.DirectoriesEntry\x1a\x88\x01\n\x0bGitCheckout\x12\x10\n\x08repo_url\x18\x01 \x01(\t\x12\x11\n\tfetch_url\x18\x02 \x01(\t\x12\x10\n\x08revision\x18\x03 \x01(\t\x12\x11\n\tfetch_ref\x18\x04 \x01(\t\x12\x16\n\x0epatch_revision\x18\x05 \x01(\t\x12\x17\n\x0fpatch_fetch_ref\x18\x06 \x01(\t\x1aL\n\x0b\x43IPDPackage\x12\x17\n\x0fpackage_pattern\x18\x01 \x01(\t\x12\x13\n\x0binstance_id\x18\x02 \x01(\t\x12\x0f\n\x07version\x18\x03 \x01(\t\x1a+\n\x08Isolated\x12\x11\n\tnamespace\x18\x01 \x01(\t\x12\x0c\n\x04hash\x18\x02 \x01(\t\x1a\xb1\x02\n\tDirectory\x12\x30\n\x0cgit_checkout\x18\x01 \x01(\x0b\x32\x1a.milo.Manifest.GitCheckout\x12\x18\n\x10\x63ipd_server_host\x18\x02 \x01(\t\x12?\n\x0c\x63ipd_package\x18\x04 \x03(\x0b\x32).milo.Manifest.Directory.CipdPackageEntry\x12\x1c\n\x14isolated_server_host\x18\x05 \x01(\t\x12)\n\x08isolated\x18\x06 \x03(\x0b\x32\x17.milo.Manifest.Isolated\x1aN\n\x10\x43ipdPackageEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12)\n\x05value\x18\x02 \x01(\x0b\x32\x1a.milo.Manifest.CIPDPackage:\x02\x38\x01\x1aL\n\x10\x44irectoriesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\'\n\x05value\x18\x02 \x01(\x0b\x32\x18.milo.Manifest.Directory:\x02\x38\x01\"+\n\x0cManifestLink\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\x0e\n\x06sha256\x18\x02 \x01(\x0c\x62\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -61,6 +61,20 @@ _MANIFEST_GITCHECKOUT = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='patch_revision', full_name='milo.Manifest.GitCheckout.patch_revision', index=4,
+      number=5, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='patch_fetch_ref', full_name='milo.Manifest.GitCheckout.patch_fetch_ref', index=5,
+      number=6, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -73,8 +87,8 @@ _MANIFEST_GITCHECKOUT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=115,
-  serialized_end=202,
+  serialized_start=116,
+  serialized_end=252,
 )
 
 _MANIFEST_CIPDPACKAGE = _descriptor.Descriptor(
@@ -117,8 +131,8 @@ _MANIFEST_CIPDPACKAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=204,
-  serialized_end=280,
+  serialized_start=254,
+  serialized_end=330,
 )
 
 _MANIFEST_ISOLATED = _descriptor.Descriptor(
@@ -154,8 +168,8 @@ _MANIFEST_ISOLATED = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=282,
-  serialized_end=325,
+  serialized_start=332,
+  serialized_end=375,
 )
 
 _MANIFEST_DIRECTORY_CIPDPACKAGEENTRY = _descriptor.Descriptor(
@@ -191,8 +205,8 @@ _MANIFEST_DIRECTORY_CIPDPACKAGEENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=555,
-  serialized_end=633,
+  serialized_start=605,
+  serialized_end=683,
 )
 
 _MANIFEST_DIRECTORY = _descriptor.Descriptor(
@@ -249,8 +263,8 @@ _MANIFEST_DIRECTORY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=328,
-  serialized_end=633,
+  serialized_start=378,
+  serialized_end=683,
 )
 
 _MANIFEST_DIRECTORIESENTRY = _descriptor.Descriptor(
@@ -286,8 +300,8 @@ _MANIFEST_DIRECTORIESENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=635,
-  serialized_end=711,
+  serialized_start=685,
+  serialized_end=761,
 )
 
 _MANIFEST = _descriptor.Descriptor(
@@ -324,7 +338,7 @@ _MANIFEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=32,
-  serialized_end=711,
+  serialized_end=761,
 )
 
 
@@ -361,8 +375,8 @@ _MANIFESTLINK = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=713,
-  serialized_end=756,
+  serialized_start=763,
+  serialized_end=806,
 )
 
 _MANIFEST_GITCHECKOUT.containing_type = _MANIFEST
