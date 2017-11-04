@@ -77,11 +77,11 @@ Run the following to setup the code review tool and create your first review:
 
     # hack hack
 
-    git commit -a -m "This is awesome\nR=joe@example.com"
+    git commit -a -m "This is awesome"
     # This will ask for your Google Account credentials.
-    git cl upload -s
-    # Wait for LGTM over email.
-    # Check the commit queue box in codereview website.
+    git cl upload -s -r joe@example.com
+    # Wait for approval over email.
+    # Click "Submit to CQ" button or ask reviewer to do it for you.
     # Wait for the change to be tested and landed automatically.
 
 Use `git cl help` and `git cl help <cmd>` for more details.
