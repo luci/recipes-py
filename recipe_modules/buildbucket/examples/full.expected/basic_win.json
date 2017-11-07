@@ -1,0 +1,104 @@
+[
+  {
+    "cmd": [
+      "buildbucket",
+      "put",
+      "-host",
+      "cr-buildbucket.appspot.com",
+      "-service-account-json",
+      "some-fake-key.json",
+      "{\"bucket\": \"master.user.username\", \"parameters_json\": \"{\\\"builder_name\\\": \\\"linux_perf_bisect\\\", \\\"properties\\\": {\\\"bisect_config\\\": {\\\"bad_revision\\\": \\\"351054\\\", \\\"bug_id\\\": 537649, \\\"command\\\": \\\"src/tools/perf/run_benchmark -v --browser=release --output-format=chartjson --also-run-disabled-tests speedometer\\\", \\\"good_revision\\\": \\\"351045\\\", \\\"gs_bucket\\\": \\\"chrome-perf\\\", \\\"max_time_minutes\\\": \\\"20\\\", \\\"metric\\\": \\\"Total/Total\\\", \\\"recipe_tester_name\\\": \\\"linux_perf_bisect\\\", \\\"repeat_count\\\": \\\"10\\\", \\\"test_type\\\": \\\"perf\\\"}}}\", \"tags\": [\"builder:overriden_builder\", \"buildset:patch/rietveld/cr.chromium.org/123/10001\", \"master:overriden.master.url\", \"user_agent:recipe\"]}",
+      "{\"bucket\": \"master.user.username\", \"parameters_json\": \"{\\\"builder_name\\\": \\\"mac_perf_bisect\\\", \\\"properties\\\": {\\\"bisect_config\\\": {\\\"bad_revision\\\": \\\"351054\\\", \\\"bug_id\\\": 537649, \\\"command\\\": \\\"src/tools/perf/run_benchmark -v --browser=release --output-format=chartjson --also-run-disabled-tests speedometer\\\", \\\"good_revision\\\": \\\"351045\\\", \\\"gs_bucket\\\": \\\"chrome-perf\\\", \\\"max_time_minutes\\\": \\\"20\\\", \\\"metric\\\": \\\"Total/Total\\\", \\\"recipe_tester_name\\\": \\\"linux_perf_bisect\\\", \\\"repeat_count\\\": \\\"10\\\", \\\"test_type\\\": \\\"perf\\\"}}}\", \"tags\": [\"builder:some_builder\", \"buildset:patch/rietveld/cr.chromium.org/123/10001\", \"master:someother.master.url\", \"user_agent:recipe\"]}"
+    ],
+    "name": "buildbucket.put",
+    "stdout": "/path/to/tmp/json",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"builds\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@    {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"bucket\": \"user.username\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"created_by\": \"user:username@example.com\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"created_ts\": \"1459200369835900\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"id\": \"9016911228971028736\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"parameters_json\": \"{\\\"This_has_been\\\": \\\"removed\\\"}\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"result_details_json\": \"null\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"status\": \"SCHEDULED\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"status_changed_ts\": \"1459200369835930\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"updated_ts\": \"1459200369835940\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"utcnow_ts\": \"1459200369962370\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }, @@@",
+      "@@@STEP_LOG_LINE@json.output@    {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"bucket\": \"user.username\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"created_by\": \"user:username@example.com\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"created_ts\": \"1459200369835999\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"id\": \"9016911228971328738\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"parameters_json\": \"{\\\"This_has_been\\\": \\\"removed\\\"}\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"result_details_json\": \"null\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"status\": \"SCHEDULED\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"status_changed_ts\": \"1459200369835988\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"updated_ts\": \"1459200369835944\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"utcnow_ts\": \"1459200369962377\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  ], @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"etag\": \"\\\"8uCIh8TRuYs4vPN3iWmly9SJMqw\\\"\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"kind\": \"buildbucket#resourcesItem\"@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "buildbucket",
+      "get",
+      "-host",
+      "cr-buildbucket.appspot.com",
+      "-service-account-json",
+      "some-fake-key.json",
+      "9016911228971028736"
+    ],
+    "name": "buildbucket.get",
+    "stdout": "/path/to/tmp/json",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"build\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"bucket\": \"user.username\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"created_by\": \"user:username@example.com\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"created_ts\": \"1459200369835900\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"id\": \"9016911228971028736\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"parameters_json\": \"{\\\"This_has_been\\\": \\\"removed\\\"}\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"result_details_json\": \"null\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"status\": \"SCHEDULED\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"status_changed_ts\": \"1459200369835930\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"updated_ts\": \"1459200369835940\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"utcnow_ts\": \"1459200369962370\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"etag\": \"\\\"8uCIh8TRuYs4vPN3iWmly9SJMqw\\\"\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"kind\": \"buildbucket#resourcesItem\"@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "buildbucket",
+      "cancel",
+      "-host",
+      "cr-buildbucket.appspot.com",
+      "-service-account-json",
+      "some-fake-key.json",
+      "9016911228971028736"
+    ],
+    "name": "buildbucket.cancel",
+    "stdout": "/path/to/tmp/json",
+    "~followup_annotations": [
+      "@@@STEP_LOG_END@json.output (invalid)@@@",
+      "@@@STEP_LOG_LINE@json.output (exception)@No JSON object could be decoded@@@",
+      "@@@STEP_LOG_END@json.output (exception)@@@"
+    ]
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]
