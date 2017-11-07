@@ -643,6 +643,8 @@ def create_recipe_api(toplevel_package, toplevel_deps, recipe_script_path,
     for k, v in deps.iteritems():
       setattr(mod_api.m, k, v)
       setattr(mod_api.test_api.m, k, v.test_api)
+    setattr(mod_api.m, mod.NAME, mod_api)
+    setattr(mod_api.test_api.m, mod.NAME, mod_api.test_api)
 
     # Replace class-level Requirements placeholders in the recipe API with
     # their instance-level real values.

@@ -37,6 +37,7 @@
   * [engine_tests/expect_exception](#recipes-engine_tests_expect_exception) &mdash; Tests that step_data can accept multiple specs at once.
   * [engine_tests/functools_partial](#recipes-engine_tests_functools_partial) &mdash; Engine shouldn't explode when step_test_data gets functools.
   * [engine_tests/missing_start_dir](#recipes-engine_tests_missing_start_dir) &mdash; Tests that deleting the current working directory doesn't immediately fail.
+  * [engine_tests/module_injection_site](#recipes-engine_tests_module_injection_site) &mdash; This test serves to demonstrate that the ModuleInjectionSite object on recipe modules (i.
   * [engine_tests/multi_test_data](#recipes-engine_tests_multi_test_data) &mdash; Tests that step_data can accept multiple specs at once.
   * [engine_tests/nonexistent_command](#recipes-engine_tests_nonexistent_command)
   * [engine_tests/recipe_paths](#recipes-engine_tests_recipe_paths) &mdash; Tests that recipes have access to names, resources and their package.
@@ -1236,6 +1237,17 @@ When this recipe is run (by run_test.py), the _print_step code is exercised.
 Tests that deleting the current working directory doesn't immediately fail.
 
 &mdash; **def [RunSteps](/recipes/engine_tests/missing_start_dir.py#13)(api):**
+### *recipes* / [engine\_tests/module\_injection\_site](/recipes/engine_tests/module_injection_site.py)
+
+[DEPS](/recipes/engine_tests/module_injection_site.py#13): [path](#recipe_modules-path), [step](#recipe_modules-step)
+
+This test serves to demonstrate that the ModuleInjectionSite object on
+recipe modules (i.e. the `.m`) also contains a reference to the module which
+owns it.
+
+This was implemented to aid in refactoring some recipes (crbug.com/782142).
+
+&mdash; **def [RunSteps](/recipes/engine_tests/module_injection_site.py#18)(api):**
 ### *recipes* / [engine\_tests/multi\_test\_data](/recipes/engine_tests/multi_test_data.py)
 
 [DEPS](/recipes/engine_tests/multi_test_data.py#7): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

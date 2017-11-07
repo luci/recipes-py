@@ -1,0 +1,14 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "a/b"
+    ],
+    "name": "echo useless thing"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]
