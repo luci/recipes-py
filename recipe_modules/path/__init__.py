@@ -12,7 +12,7 @@ from recipe_engine.config import ConfigGroup, Single
 
 PROPERTIES = {
   '$recipe_engine/path': Property(
-    help='Properties specifically for the the recipe_engine path module.',
+    help='Properties specifically for the recipe_engine path module.',
     param_name='path_properties',
     kind=ConfigGroup(
       # The absolute path to the temporary directory that the recipe should use.
