@@ -13,6 +13,7 @@
   * [properties](#recipe_modules-properties) &mdash; Provides access to the recipes input properties.
   * [python](#recipe_modules-python) &mdash; Provides methods for running python scripts correctly.
   * [raw_io](#recipe_modules-raw_io) &mdash; Provides objects for reading and writing raw data to and from steps.
+  * [runtime](#recipe_modules-runtime)
   * [service_account](#recipe_modules-service_account) &mdash; API for getting OAuth2 access tokens for LUCI tasks or private keys.
   * [source_manifest](#recipe_modules-source_manifest)
   * [step](#recipe_modules-step) &mdash; Step is the primary API for running steps (external programs, scripts, etc.
@@ -64,6 +65,7 @@
   * [properties:examples/full](#recipes-properties_examples_full)
   * [python:examples/full](#recipes-python_examples_full) &mdash; Launches the repo bundler.
   * [raw_io:examples/full](#recipes-raw_io_examples_full)
+  * [runtime:tests/full](#recipes-runtime_tests_full)
   * [service_account:examples/full](#recipes-service_account_examples_full)
   * [source_manifest:examples/simple](#recipes-source_manifest_examples_simple)
   * [step:examples/full](#recipes-step_examples_full)
@@ -883,6 +885,32 @@ Similar to output(), but uses an OutputTextPlaceholder, which expects utf-8
 encoded text.
 Similar to input(), but tries to decode the resulting data as utf-8 text,
 replacing any decoding errors with �.
+### *recipe_modules* / [runtime](/recipe_modules/runtime)
+
+[DEPS](/recipe_modules/runtime/__init__.py#5): [path](#recipe_modules-path), [properties](#recipe_modules-properties)
+
+#### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
+
+This module assists in experimenting with production recipes.
+
+For example, when migrating builders from Buildbot to pure LUCI stack.
+
+&emsp; **@property**<br>&mdash; **def [is\_experimental](/recipe_modules/runtime/api.py#26)(self):**
+
+True if this recipe is currently running in experimental mode.
+
+Typical usage is to modify steps which produce external side-effects so that
+non-production runs of the recipe do not affect production data.
+
+Examples:
+  * Uploading to an alternate google storage file name when in non-prod mode
+  * Appending a 'non-production' tag to external RPCs
+
+&emsp; **@property**<br>&mdash; **def [is\_luci](/recipe_modules/runtime/api.py#18)(self):**
+
+True if this recipe is currently running on LUCI stack.
+
+Should be used only during migration from Buildbot to LUCI stack.
 ### *recipe_modules* / [service\_account](/recipe_modules/service_account)
 
 [DEPS](/recipe_modules/service_account/__init__.py#5): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
@@ -1449,6 +1477,11 @@ Launches the repo bundler.
 [DEPS](/recipe_modules/raw_io/examples/full.py#5): [path](#recipe_modules-path), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/raw_io/examples/full.py#14)(api):**
+### *recipes* / [runtime:tests/full](/recipe_modules/runtime/tests/full.py)
+
+[DEPS](/recipe_modules/runtime/tests/full.py#7): [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/runtime/tests/full.py#13)(api):**
 ### *recipes* / [service\_account:examples/full](/recipe_modules/service_account/examples/full.py)
 
 [DEPS](/recipe_modules/service_account/examples/full.py#7): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account)
