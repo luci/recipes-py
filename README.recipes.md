@@ -57,6 +57,7 @@
   * [file:examples/error](#recipes-file_examples_error)
   * [file:examples/glob](#recipes-file_examples_glob)
   * [file:examples/listdir](#recipes-file_examples_listdir)
+  * [file:examples/raw_copy](#recipes-file_examples_raw_copy)
   * [generator_script:examples/full](#recipes-generator_script_examples_full)
   * [json:examples/full](#recipes-json_examples_full)
   * [json:tests/add_json_log](#recipes-json_tests_add_json_log)
@@ -323,7 +324,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#210)(self, name, dest, mode=511):**
+&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#243)(self, name, dest, mode=511):**
 
 Ensures that `dest` exists and is a directory.
 
@@ -336,7 +337,7 @@ Args:
 
 Raises file.Error if the path exists but is not a directory.
 
-&mdash; **def [filesizes](/recipe_modules/file/api.py#227)(self, name, files, test_data=None):**
+&mdash; **def [filesizes](/recipe_modules/file/api.py#260)(self, name, files, test_data=None):**
 
 Returns list of filesizes for the given files.
 
@@ -346,7 +347,7 @@ Args:
 
 Returns list[int], size of each file in bytes.
 
-&mdash; **def [glob\_paths](/recipe_modules/file/api.py#145)(self, name, source, pattern, test_data=()):**
+&mdash; **def [glob\_paths](/recipe_modules/file/api.py#178)(self, name, source, pattern, test_data=()):**
 
 Performs glob expansion on `pattern`.
 
@@ -365,7 +366,7 @@ Returns list[Path] - All paths found.
 
 Raises file.Error.
 
-&mdash; **def [listdir](/recipe_modules/file/api.py#187)(self, name, source, test_data=()):**
+&mdash; **def [listdir](/recipe_modules/file/api.py#220)(self, name, source, test_data=()):**
 
 List all files inside a directory.
 
@@ -393,7 +394,21 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [read\_text](/recipe_modules/file/api.py#112)(self, name, source, test_data=''):**
+&mdash; **def [read\_raw](/recipe_modules/file/api.py#112)(self, name, source, test_data=''):**
+
+Reads a file as raw data.
+
+Args:
+  * name (str) - The name of the step.
+  * source (Path) - The path of the file to read.
+  * test_data (str) - Some default data for this step to return when running
+    under simulation.
+
+Returns (str) - The unencoded (binary) contents of the file.
+
+Raises file.Error
+
+&mdash; **def [read\_text](/recipe_modules/file/api.py#145)(self, name, source, test_data=''):**
 
 Reads a file as UTF-8 encoded text.
 
@@ -407,7 +422,7 @@ Returns (str) - The content of the file.
 
 Raises file.Error
 
-&mdash; **def [remove](/recipe_modules/file/api.py#172)(self, name, source):**
+&mdash; **def [remove](/recipe_modules/file/api.py#205)(self, name, source):**
 
 Remove a file.
 
@@ -419,7 +434,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#266)(self, name, source):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#299)(self, name, source):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -434,7 +449,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#284)(self, name, source, pattern):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#317)(self, name, source, pattern):**
 
 Removes all entries in `source` matching the glob `pattern`.
 
@@ -447,7 +462,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#249)(self, name, source):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#282)(self, name, source):**
 
 Recursively removes a directory.
 
@@ -461,7 +476,18 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [write\_text](/recipe_modules/file/api.py#131)(self, name, dest, text_data):**
+&mdash; **def [write\_raw](/recipe_modules/file/api.py#131)(self, name, dest, data):**
+
+Write the given `data` to `dest`.
+
+Args:
+  * name (str) - The name of the step.
+  * dest (Path) - The path of the file to write.
+  * data (str) - The data to write.
+
+Raises file.Error.
+
+&mdash; **def [write\_text](/recipe_modules/file/api.py#164)(self, name, dest, text_data):**
 
 Write the given UTF-8 encoded `text_data` to `dest`.
 
@@ -1435,6 +1461,11 @@ Tests that step_data can accept multiple specs at once.
 [DEPS](/recipe_modules/file/examples/listdir.py#5): [file](#recipe_modules-file), [path](#recipe_modules-path)
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/listdir.py#11)(api):**
+### *recipes* / [file:examples/raw\_copy](/recipe_modules/file/examples/raw_copy.py)
+
+[DEPS](/recipe_modules/file/examples/raw_copy.py#5): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
+
+&mdash; **def [RunSteps](/recipe_modules/file/examples/raw_copy.py#12)(api):**
 ### *recipes* / [generator\_script:examples/full](/recipe_modules/generator_script/examples/full.py)
 
 [DEPS](/recipe_modules/generator_script/examples/full.py#7): [generator\_script](#recipe_modules-generator_script), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

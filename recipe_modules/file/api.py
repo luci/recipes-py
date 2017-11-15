@@ -109,6 +109,39 @@ class FileApi(recipe_api.RecipeApi):
     self.m.path.mock_copy_paths(source, dest)
     self.m.path.mock_remove_paths(source)
 
+  def read_raw(self, name, source, test_data=''):
+    """Reads a file as raw data.
+
+    Args:
+      * name (str) - The name of the step.
+      * source (Path) - The path of the file to read.
+      * test_data (str) - Some default data for this step to return when running
+        under simulation.
+
+    Returns (str) - The unencoded (binary) contents of the file.
+
+    Raises file.Error
+    """
+    self.m.path.assert_absolute(source)
+    step_test_data = lambda: self.test_api.read_raw(test_data)
+    result = self._run(name, ['copy', source, self.m.raw_io.output()],
+                       step_test_data=step_test_data)
+    return result.raw_io.output
+
+  def write_raw(self, name, dest, data):
+    """Write the given `data` to `dest`.
+
+    Args:
+      * name (str) - The name of the step.
+      * dest (Path) - The path of the file to write.
+      * data (str) - The data to write.
+
+    Raises file.Error.
+    """
+    self.m.path.assert_absolute(dest)
+    self._run(name, ['copy', self.m.raw_io.input(data), dest])
+    self.m.path.mock_add_paths(dest)
+
   def read_text(self, name, source, test_data=''):
     """Reads a file as UTF-8 encoded text.
 

@@ -42,6 +42,23 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
     return (self.m.raw_io.stream_output('\n'.join(map(str, sizes)))
             + self.errno(errno_name))
 
+  def read_raw(self, content='', errno_name=0):
+    """Provides test mock for the `read_raw` method.
+
+    Args:
+      content (str) - The text data for this read_raw step to return.
+      errno_name (str|None) - The error name for this step to return, if any.
+
+    Example:
+      yield (api.test('my_test')
+        + api.step_data('read step name',
+            api.file.read_raw('some\0file\0content'))
+      )
+    """
+    return (self.m.raw_io.output(content)
+            + self.errno(errno_name))
+
+
   def read_text(self, text_content='', errno_name=0):
     """Provides test mock for the `read_text` method.
 
