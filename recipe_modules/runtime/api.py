@@ -34,4 +34,4 @@ class RuntimeApi(recipe_api.RecipeApi):
       * Uploading to an alternate google storage file name when in non-prod mode
       * Appending a 'non-production' tag to external RPCs
     """
-    return bool(self._properties.get('is_experimental', True))
+    return bool(self._properties.get('is_experimental', False))
