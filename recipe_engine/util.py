@@ -5,11 +5,12 @@
 import contextlib
 import datetime
 import functools
+import itertools
 import logging
 import os
 import sys
-import traceback
 import time
+import traceback
 import urllib
 
 from cStringIO import StringIO
@@ -310,6 +311,7 @@ def map_defer_exceptions(fn, it, *exc_types):
       fn(e)
   mexc_builder.raise_if_any()
 
+
 def strip_unicode(obj):
   """Recursively re-encodes strings as utf-8 inside |obj|. Returns the result.
   """
@@ -325,3 +327,46 @@ def strip_unicode(obj):
     return new_obj
 
   return obj
+
+
+if sys.platform == "win32":
+  _hunt_path_exts = ('.exe', '.bat')
+  def hunt_path(cmd0, env):
+    """This takes the lazy cross-product of PATH and ('.exe', '.bat') to find
+    what cmd.exe would have found for the command if we used shell=True.
+
+    This must be called with the output from _merge_envs to pick up any changes
+    to PATH.
+
+    If it succeeds, it returns a new cmd0. If it fails, it returns the
+    same cmd0, and subprocess will run as normal (and likely fail).
+
+    This will not attempt to do any evaluations for commands where the program
+    already has an explicit extension (.exe, .bat, etc.), and it will not
+    attempt to do any evaluations for commands where the program is an absolute
+    path.
+
+    This DOES NOT use PATHEXT to keep the recipe engine's behavior as
+    predictable as possible. We don't currently rely on any other runnable
+    extensions besides these two, and when we could, we choose to explicitly
+    invoke the interpreter (e.g. python.exe, cscript.exe, etc.).
+    """
+    if '.' in cmd0:  # something.ext will work fine with subprocess.
+      return cmd0
+    if os.path.isabs(cmd0):  # PATH isn't even used
+      return cmd0
+
+    # begin the hunt
+    paths = env.get('PATH', '').split(os.pathsep)
+    if not paths:
+      return cmd0
+
+    # try every extension for each path
+    for path, ext in itertools.product(paths, _hunt_path_exts):
+      candidate = os.path.join(path, cmd0+ext)
+      if os.path.isfile(candidate):
+        return candidate
+    return cmd0
+else:
+  def hunt_path(rendered_step, _step_env):
+    return rendered_step

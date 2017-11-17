@@ -65,10 +65,6 @@ def add_common_args(parser):
       help='Use bootstrap/bootstrap.py to create a isolated python virtualenv'
            ' with required python dependencies.')
   parser.add_argument(
-      '--bootstrap-vpython-path', metavar='PATH',
-      help='Specify the `vpython` executable path to use when bootstrapping ('
-           'requires --use-bootstrap).')
-  parser.add_argument(
       '--disable-bootstrap', action='store_false', dest='use_bootstrap',
       help='Disables bootstrap (see --use-bootstrap)')
 

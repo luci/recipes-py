@@ -60,7 +60,7 @@
   {
     "cmd": [
       "vpython",
-      "-spec",
+      "-vpython-spec",
       "RECIPE[recipe_engine::python:examples/full].resources/test.vpython",
       "-u",
       "RECIPE[recipe_engine::python:examples/full].resources/test.py",

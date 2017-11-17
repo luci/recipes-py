@@ -19,6 +19,14 @@ def main():
   if opts.verify_six:
     import six
     assert six.__version__ == '1.10.0'
+
+  try:
+    # ensure that the recipe_engine .vpython env doesn't leak through
+    import requests  # pylint: disable=unused-variable
+    assert False, "recipe engine .vpython env leaked through!"
+  except ImportError:
+    pass
+
   return 0
 
 
@@ -29,7 +37,7 @@ if __name__ == '__main__':
 ##
 # Inline VirtualEnv "vpython" spec.
 #
-# Pick a test package with no dependencies from "/bootstrap/venv.cfg" that
+# Pick a test package with no dependencies from ".vpython" that
 # differs from the package in "test.vpython" file.
 #
 # This is used in "examples/full.py" along with the "--verify-enum34" flag.

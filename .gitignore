@@ -1,7 +1,2 @@
 *.pyc
 /workdir
-
-# Used by "bootstrap/update_vendoring.py" to cache some vendoring artifacts.
-.update_vendoring_cache
-# Used by "bootstrap/bootstrap_vpython.py" as a cached CIPD root.
-.cipd_root

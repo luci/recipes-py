@@ -43,13 +43,11 @@ def CommonChecks(input_api, output_api):
       ],
   ))
 
-  input_api.subprocess.check_output([
-    input_api.python_executable,
-    'bootstrap/bootstrap_vpython.py', '--presubmit'])
-
   results.extend(input_api.RunTests(
       tests('recipe_engine', 'unittests') +
-      tests('unittests')))
+      tests('unittests') +
+      input_api.canned_checks.CheckVPythonSpec(input_api, output_api)
+  ))
 
   return results
 

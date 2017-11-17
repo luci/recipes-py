@@ -47,7 +47,7 @@ class PythonApi(recipe_api.RecipeApi):
     if venv:
       cmd = ['vpython']
       if isinstance(venv, config_types.Path):
-        cmd += ['-spec', venv]
+        cmd += ['-vpython-spec', venv]
     else:
       cmd = ['python']
 
