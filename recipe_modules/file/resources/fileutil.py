@@ -258,6 +258,14 @@ def main(args):
       func=lambda opts: print('\n'.join(str(os.stat(f).st_size)
                                             for f in opts.file)))
 
+  # Subcommand: filesizes
+  subparser = subparsers.add_parser('symlink',
+      help='Creates a symlink. Behaves like os.symlink.')
+  subparser.add_argument('source', help='The thing to link to.')
+  subparser.add_argument('link', help='The link to create.')
+  subparser.set_defaults(
+      func=lambda opts: os.symlink(opts.source, opts.link))
+
   # Parse arguments.
   opts = parser.parse_args(args)
 

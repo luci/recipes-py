@@ -58,6 +58,7 @@
   * [file:examples/glob](#recipes-file_examples_glob)
   * [file:examples/listdir](#recipes-file_examples_listdir)
   * [file:examples/raw_copy](#recipes-file_examples_raw_copy)
+  * [file:examples/symlink](#recipes-file_examples_symlink)
   * [generator_script:examples/full](#recipes-generator_script_examples_full)
   * [json:examples/full](#recipes-json_examples_full)
   * [json:tests/add_json_log](#recipes-json_tests_add_json_log)
@@ -475,6 +476,19 @@ Args:
   * source (Path) - The directory to remove.
 
 Raises file.Error.
+
+&mdash; **def [symlink](/recipe_modules/file/api.py#338)(self, name, source, link):**
+
+Creates a symlink from link to source on the local filesystem.
+
+Behaves identically to os.symlink.
+
+Args:
+  * name (str) - The name of the step.
+  * source (Path|Placeholder) - The path to link too.
+  * link (Path|Placeholder) - The link to create.
+
+Raises file.Error
 
 &mdash; **def [write\_raw](/recipe_modules/file/api.py#131)(self, name, dest, data):**
 
@@ -1466,6 +1480,11 @@ Tests that step_data can accept multiple specs at once.
 [DEPS](/recipe_modules/file/examples/raw_copy.py#5): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/raw_copy.py#12)(api):**
+### *recipes* / [file:examples/symlink](/recipe_modules/file/examples/symlink.py)
+
+[DEPS](/recipe_modules/file/examples/symlink.py#5): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
+
+&mdash; **def [RunSteps](/recipe_modules/file/examples/symlink.py#12)(api):**
 ### *recipes* / [generator\_script:examples/full](/recipe_modules/generator_script/examples/full.py)
 
 [DEPS](/recipe_modules/generator_script/examples/full.py#7): [generator\_script](#recipe_modules-generator_script), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

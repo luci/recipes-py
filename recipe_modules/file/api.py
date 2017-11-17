@@ -334,3 +334,20 @@ class FileApi(recipe_api.RecipeApi):
       assert p.startswith(src), (src, p)
       return fnmatch.fnmatch(p[len(src)+1:].split(os.path.sep)[0], pattern)
     self.m.path.mock_remove_paths(str(source), filt)
+
+  def symlink(self, name, source, link):
+    """Creates a symlink from link to source on the local filesystem.
+
+    Behaves identically to os.symlink.
+
+    Args:
+      * name (str) - The name of the step.
+      * source (Path|Placeholder) - The path to link to.
+      * link (Path|Placeholder) - The link to create.
+
+    Raises file.Error
+    """
+    self._assert_absolute_path_or_placeholder(source)
+    self._assert_absolute_path_or_placeholder(link)
+    self._run(name, ['symlink', source, link])
+    self.m.path.mock_copy_paths(source, link)
