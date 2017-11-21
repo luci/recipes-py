@@ -22,39 +22,6 @@ class BuildbucketApi(recipe_api.RecipeApi):
     self._service_account_key = None
     self._host = 'cr-buildbucket.appspot.com'
 
-  def _properties_for_build(self, properties):
-    properties = properties.copy()
-    if self.m.runtime.is_experimental:
-      # An experimental build triggering another build should also mark it as
-      # experimental by default.
-      properties.setdefault('$recipe_engine/runtime',
-                            self.m.json.dumps({'is_experimental': True}))
-    return properties
-
-  def _tags_for_build(self, bucket, parameters, override_tags=None):
-    buildbucket_info = self.properties or {}
-    original_tags_list = buildbucket_info.get('build', {}).get('tags', [])
-
-    original_tags = dict(t.split(':', 1) for t in original_tags_list)
-    new_tags = {'user_agent': 'recipe'}
-
-    # TODO: Some properties below are Buildbot-specific.
-
-    if 'buildset' in original_tags:
-      new_tags['buildset'] = original_tags['buildset']
-    builder_name = parameters.get('builder_name')
-    if builder_name:
-      new_tags['builder'] = builder_name
-    if bucket.startswith('master.'):
-      new_tags['master'] = bucket[7:]
-    if self._buildnumber is not None:
-      new_tags['parent_buildnumber'] = str(self._buildnumber)
-    if self._buildername is not None:
-      new_tags['parent_buildername'] = str(self._buildername)
-
-    new_tags.update(override_tags or {})
-    return sorted([':'.join((x, y)) for x, y in new_tags.iteritems()])
-
   def set_buildbucket_host(self, host):
     """Changes the buildbucket backend hostname used by this module.
 
@@ -128,3 +95,36 @@ class BuildbucketApi(recipe_api.RecipeApi):
       args = ['-service-account-json', self._service_account_key] + args
     args = ['buildbucket', command, '-host', self._host] + args
     return self.m.step(step_name, args, stdout=self.m.json.output(), **kwargs)
+
+  def _properties_for_build(self, properties):
+    properties = properties.copy()
+    if self.m.runtime.is_experimental:
+      # An experimental build triggering another build should also mark it as
+      # experimental by default.
+      properties.setdefault('$recipe_engine/runtime',
+                            self.m.json.dumps({'is_experimental': True}))
+    return properties
+
+  def _tags_for_build(self, bucket, parameters, override_tags=None):
+    buildbucket_info = self.properties or {}
+    original_tags_list = buildbucket_info.get('build', {}).get('tags', [])
+
+    original_tags = dict(t.split(':', 1) for t in original_tags_list)
+    new_tags = {'user_agent': 'recipe'}
+
+    # TODO: Some properties below are Buildbot-specific.
+
+    if 'buildset' in original_tags:
+      new_tags['buildset'] = original_tags['buildset']
+    builder_name = parameters.get('builder_name')
+    if builder_name:
+      new_tags['builder'] = builder_name
+    if bucket.startswith('master.'):
+      new_tags['master'] = bucket[7:]
+    if self._buildnumber is not None:
+      new_tags['parent_buildnumber'] = str(self._buildnumber)
+    if self._buildername is not None:
+      new_tags['parent_buildername'] = str(self._buildername)
+
+    new_tags.update(override_tags or {})
+    return sorted([':'.join((x, y)) for x, y in new_tags.iteritems()])
