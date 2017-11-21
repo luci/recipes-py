@@ -18,22 +18,14 @@ def RunSteps(api):
           'bisect_config': {
               'bad_revision': '351054',
               'bug_id': 537649,
-              'command': ('src/tools/perf/run_benchmark -v '
-                          '--browser=release --output-format=chartjson '
-                          '--also-run-disabled-tests speedometer'),
-              'good_revision': '351045',
-              'gs_bucket': 'chrome-perf',
-              'max_time_minutes': '20',
-              'metric': 'Total/Total',
-              'recipe_tester_name': 'linux_perf_bisect',
-              'repeat_count': '10',
-              'test_type': 'perf'
           },
       }
   }
 
   build_tags = {'master': 'overriden.master.url',
-                'builder': 'overriden_builder'}
+                'builder': 'overriden_builder',
+                'new-and-custom': 'tag',
+                'undesired': None}
 
   api.buildbucket.put(
       [{'bucket': example_bucket,
@@ -44,7 +36,14 @@ def RunSteps(api):
 def GenTests(api):
   yield (
       api.test('basic') +
-      api.properties(buildername='example_builder', buildnumber=123)
+      api.properties(
+        buildername='example_builder',
+        buildnumber=123,
+        buildbucket="""{"build": {"tags": [
+          "buildset:patch/gerrit/chromium-review.googlesource.com/123/10001",
+          "undesired:should-not-be-in-expectations"
+        ]}}"""
+      )
   )
   yield (
       api.test('basic_experimental') +
