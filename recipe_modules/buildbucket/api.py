@@ -22,6 +22,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
     self._service_account_key = None
     self._host = 'cr-buildbucket.appspot.com'
 
+  def _properties_for_build(self, properties):
+    properties = properties.copy()
+    if self.m.runtime.is_experimental:
+      # An experimental build triggering another build should also mark it as
+      # experimental by default.
+      properties.setdefault('$recipe_engine/runtime',
+                            self.m.json.dumps({'is_experimental': True}))
+    return properties
+
   def _tags_for_build(self, bucket, parameters, override_tags=None):
     buildbucket_info = self.properties or {}
     original_tags_list = buildbucket_info.get('build', {}).get('tags', [])
@@ -100,7 +109,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
     for build in builds:
       build_specs.append(self.m.json.dumps({
         'bucket': build['bucket'],
-        'parameters_json': self.m.json.dumps(build['parameters']),
+        'parameters_json': self.m.json.dumps(
+            self._properties_for_build(build['parameters'])),
         'tags': self._tags_for_build(build['bucket'], build['parameters'],
                                      build.get('tags')),
       }))

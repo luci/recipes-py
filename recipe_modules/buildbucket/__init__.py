@@ -7,6 +7,7 @@ DEPS = [
   'platform',
   'properties',
   'raw_io',
+  'runtime',
   'step',
 ]
 

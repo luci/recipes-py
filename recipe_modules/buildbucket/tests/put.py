@@ -5,6 +5,7 @@
 DEPS = [
   'buildbucket',
   'properties',
+  'runtime',
 ]
 
 
@@ -44,4 +45,9 @@ def GenTests(api):
   yield (
       api.test('basic') +
       api.properties(buildername='example_builder', buildnumber=123)
+  )
+  yield (
+      api.test('basic_experimental') +
+      api.properties(buildername='experimental_builder', buildnumber=123) +
+      api.runtime(is_luci=True, is_experimental=True)
   )

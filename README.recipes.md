@@ -88,7 +88,7 @@
 
 ### *recipe_modules* / [buildbucket](/recipe_modules/buildbucket)
 
-[DEPS](/recipe_modules/buildbucket/__init__.py#5): [json](#recipe_modules-json), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/__init__.py#5): [json](#recipe_modules-json), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
 API for interacting with the buildbucket service.
 
@@ -99,15 +99,15 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 
 A module for interacting with buildbucket.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#109)(self, build_id, \*\*kwargs):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#119)(self, build_id, \*\*kwargs):**
 
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#112)(self, build_id, \*\*kwargs):**
+&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#122)(self, build_id, \*\*kwargs):**
 
-&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#71)(self):**
+&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#80)(self):**
 
 Returns (dict-like or None): The BuildBucket properties, if present.
 
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#83)(self, builds, \*\*kwargs):**
+&mdash; **def [put](/recipe_modules/buildbucket/api.py#92)(self, builds, \*\*kwargs):**
 
 Puts a batch of builds.
 
@@ -124,14 +124,14 @@ Returns:
   A step that as its .stdout property contains the response object as
   returned by buildbucket.
 
-&mdash; **def [set\_buildbucket\_host](/recipe_modules/buildbucket/api.py#49)(self, host):**
+&mdash; **def [set\_buildbucket\_host](/recipe_modules/buildbucket/api.py#58)(self, host):**
 
 Changes the buildbucket backend hostname used by this module.
 
 Args:
   host (str): buildbucket server host (e.g. 'cr-buildbucket.appspot.com').
 
-&mdash; **def [use\_service\_account\_key](/recipe_modules/buildbucket/api.py#57)(self, key_path):**
+&mdash; **def [use\_service\_account\_key](/recipe_modules/buildbucket/api.py#66)(self, key_path):**
 
 Tells this module to start using given service account key for auth.
 
@@ -485,7 +485,7 @@ Behaves identically to os.symlink.
 
 Args:
   * name (str) - The name of the step.
-  * source (Path|Placeholder) - The path to link too.
+  * source (Path|Placeholder) - The path to link to.
   * link (Path|Placeholder) - The link to create.
 
 Raises file.Error
@@ -1288,9 +1288,9 @@ This file is a recipe demonstrating the buildbucket recipe module.
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/properties.py#12)(api):**
 ### *recipes* / [buildbucket:tests/put](/recipe_modules/buildbucket/tests/put.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/put.py#5): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties)
+[DEPS](/recipe_modules/buildbucket/tests/put.py#5): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime)
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/put.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/put.py#12)(api):**
 ### *recipes* / [context:examples/full](/recipe_modules/context/examples/full.py)
 
 [DEPS](/recipe_modules/context/examples/full.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
