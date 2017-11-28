@@ -351,3 +351,16 @@ class FileApi(recipe_api.RecipeApi):
     self._assert_absolute_path_or_placeholder(link)
     self._run(name, ['symlink', source, link])
     self.m.path.mock_copy_paths(source, link)
+
+  def truncate(self, name, path, size_mb=100):
+    """Creates an empty file with path and size_mb on the local filesystem.
+
+    Args:
+      * name (str) - The name of the step.
+      * path (Path|str) - The absolute path to create.
+      * size_mb (int) - The size of the file in megabytes. Defaults to 100
+
+    Raises file.Error
+    """
+    self._assert_absolute_path_or_placeholder(path)
+    self._run(name, ['truncate', path, size_mb])

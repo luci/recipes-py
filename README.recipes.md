@@ -59,6 +59,7 @@
   * [file:examples/listdir](#recipes-file_examples_listdir)
   * [file:examples/raw_copy](#recipes-file_examples_raw_copy)
   * [file:examples/symlink](#recipes-file_examples_symlink)
+  * [file:examples/truncate](#recipes-file_examples_truncate)
   * [generator_script:examples/full](#recipes-generator_script_examples_full)
   * [json:examples/full](#recipes-json_examples_full)
   * [json:tests/add_json_log](#recipes-json_tests_add_json_log)
@@ -491,6 +492,17 @@ Args:
   * link (Path|Placeholder) - The link to create.
 
 Raises file.Error
+
+&mdash; **def [truncate](/recipe_modules/file/api.py#355)(self, name, path, size_mb=100):**
+
+Creates an empty file with path and size_mb on the local filesystem.
+
+Args:
+  * name (str) - The name of the step.
+  * path (Path|str) - The absolute path to create.
+  * size_mb (int) - The size of the file in megabytes. Defaults to 100
+
+Raises file.
 
 &mdash; **def [write\_raw](/recipe_modules/file/api.py#131)(self, name, dest, data):**
 
@@ -1487,6 +1499,11 @@ Tests that step_data can accept multiple specs at once.
 [DEPS](/recipe_modules/file/examples/symlink.py#5): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/symlink.py#12)(api):**
+### *recipes* / [file:examples/truncate](/recipe_modules/file/examples/truncate.py)
+
+[DEPS](/recipe_modules/file/examples/truncate.py#5): [file](#recipe_modules-file), [path](#recipe_modules-path)
+
+&mdash; **def [RunSteps](/recipe_modules/file/examples/truncate.py#11)(api):**
 ### *recipes* / [generator\_script:examples/full](/recipe_modules/generator_script/examples/full.py)
 
 [DEPS](/recipe_modules/generator_script/examples/full.py#7): [generator\_script](#recipe_modules-generator_script), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

@@ -168,6 +168,9 @@ def _Remove(path):
     if e.errno != errno.ENOENT:
       raise
 
+def _Truncate(path, size_mb):
+  with open(path, 'w') as f:
+    f.truncate(size_mb * 1024 * 1024)
 
 def main(args):
   parser = argparse.ArgumentParser()
@@ -265,6 +268,13 @@ def main(args):
   subparser.add_argument('link', help='The link to create.')
   subparser.set_defaults(
       func=lambda opts: os.symlink(opts.source, opts.link))
+
+  # Subcommand: truncate
+  subparser = subparsers.add_parser(
+      'truncate', help='Creates an empty file with specified size.')
+  subparser.add_argument('path', help='The path to the file.')
+  subparser.add_argument('size_mb', help='The size of the file in megabytes.')
+  subparser.set_defaults(func=lambda opts: _Truncate(opts.path, opts.size_mb))
 
   # Parse arguments.
   opts = parser.parse_args(args)

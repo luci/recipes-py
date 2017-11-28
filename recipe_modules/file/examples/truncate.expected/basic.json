@@ -1,0 +1,39 @@
+[
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "truncate",
+      "[START_DIR]/some_file",
+      "300"
+    ],
+    "infra_step": true,
+    "name": "truncate a file"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "filesizes",
+      "[START_DIR]/some_file"
+    ],
+    "infra_step": true,
+    "name": "size of some_file",
+    "stdout": "/path/to/tmp/",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@filesizes@[START_DIR]/some_file: \t314572800@@@",
+      "@@@STEP_LOG_END@filesizes@@@"
+    ]
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]
