@@ -470,14 +470,21 @@ class TestAutoroll(repo_test_util.RepoTest):
         picked_roll['spec'])
 
     # Create a new commit in B that would result in backwards roll.
-    self.update_recipes_cfg(
+    b_new_rev = self.update_recipes_cfg(
         'b', self.updated_package_spec_pb(
             repos['b'], 'a', repos['a']['revision']))
 
     roll_result = self.run_roll(repos['c'])
     self.assertTrue(roll_result['success'])
     self.assertEqual([], roll_result['roll_details'])
-    self.assertEqual([], roll_result['rejected_candidate_specs'])
+
+    spec.deps['b'].revision = b_new_rev
+
+    self.assertEqual(
+      roll_result['rejected_candidate_specs'],
+      [package_io.dump_obj(spec)],
+    )
+
 
   def test_inconsistent_errors(self):
     repos = self.repo_setup({

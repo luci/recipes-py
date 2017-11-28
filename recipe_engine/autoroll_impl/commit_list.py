@@ -38,6 +38,9 @@ class CommitList(object):
         idx = self._dep_idx.setdefault(dep_project_id, {})
         idx.setdefault(dep.revision, set()).add(i)
 
+  def __len__(self):
+    return len(self._commits)
+
   @classmethod
   def from_repo_spec(cls, repo_spec):
     """Returns a CommitList given a package.RepoSpec.
@@ -168,11 +171,15 @@ class CommitList(object):
       # available revisions.
       return len(self._commits) - self._cur_idx
 
-    cur = self._cur_idx
     # only consider at same-or-future indicies
     return max(
       0,
-      min(cur - i for i in idx_table[dep_commit])
+      (
+        # We filter out indexes which are less than the current index to
+        # avoid issues during reverts.
+        min(i for i in idx_table[dep_commit] if i >= self._cur_idx)
+        - self._cur_idx
+      )
     )
 
   def advance_to(self, target_commit):
@@ -181,9 +188,11 @@ class CommitList(object):
     Args:
       target_commit (str) - the commit to determine the distance for.
 
-    Returns the new current CommitMetadata
+    Returns the new current CommitMetadata, or None if it couldn't be advanced.
     """
     dist = self.dist_to(target_commit)
+    if dist == len(self._commits) - self._cur_idx:
+      return None
     if dist > 0:
       self._cur_idx += dist
     return self.current

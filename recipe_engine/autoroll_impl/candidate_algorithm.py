@@ -2,6 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import logging
 import sys
 import time
 
@@ -10,6 +11,7 @@ from recipe_engine import package
 from .commit_list import CommitList
 from .roll_candidate import RollCandidate
 
+LOGGER = logging.getLogger(__name__)
 
 def get_commitlists(deps):
   """Returns {'project_id': CommitList} for every repo this recipe repo depends
@@ -114,6 +116,10 @@ def is_consistent(spec_pb, repos):
 
 
 def _get_roll_candidates_impl(context, package_spec, repos):
+  if LOGGER.isEnabledFor(logging.DEBUG):
+    count = sum(len(r) for r in repos.itervalues())
+    LOGGER.debug('analyzing %d commits across %d repos', count, len(repos))
+
   current_pb = package_spec.spec_pb
 
   ret_good = []
@@ -123,15 +129,21 @@ def _get_roll_candidates_impl(context, package_spec, repos):
     best_project_id = find_best_rev(repos)
     if best_project_id is None:
       # end when there's no best rev to roll
+      LOGGER.debug("terminating: no best project")
       return ret_good, ret_bad
 
     rev = repos[best_project_id].advance()
     if not rev:
+      LOGGER.debug("terminating: could not advance %r", best_project_id)
       return ret_good, ret_bad
 
+    backwards_roll = False
     for d_pid, dep in sorted(rev.spec.deps.items()):
       if not repos[d_pid].advance_to(dep.revision):
-        return ret_good, ret_bad
+        backwards_roll = True
+        LOGGER.debug("backwards_roll: rolling %r to %r causes (%r->%r)",
+                     best_project_id, rev.revision, d_pid, dep.revision)
+        break
 
     # TODO(iannucci): rationalize what happens if there's a conflict in e.g.
     # branch/url.
@@ -158,7 +170,8 @@ def _get_roll_candidates_impl(context, package_spec, repos):
         if d_pid not in current_pb.deps:
           current_pb.deps[d_pid].CopyFrom(dep)
 
-    if not is_consistent(current_pb, repos):
+    if backwards_roll or not is_consistent(current_pb, repos):
+      LOGGER.debug("skipping: not_consistent")
       ret_bad.append(RollCandidate(current_pb))
     else:
       ret_good.append(RollCandidate(current_pb))
@@ -200,11 +213,13 @@ def get_roll_candidates(context, package_spec):
   """
   start = time.time()
 
-  # not on py3 so we can't use print(..., flush=True) :(
-  sys.stdout.write('finding roll candidates... ')
+  print 'finding roll candidates... '
+  repos = get_commitlists(package_spec.deps)
+
+  for repo, commits in repos.iteritems():
+    print '  %s: %d commits' % (repo, len(commits))
   sys.stdout.flush()
 
-  repos = get_commitlists(package_spec.deps)
   ret_good, ret_bad = _get_roll_candidates_impl(context, package_spec, repos)
 
   print('found %d/%d good/bad candidates in %0.2f seconds' % (

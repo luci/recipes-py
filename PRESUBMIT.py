@@ -44,6 +44,7 @@ def CommonChecks(input_api, output_api):
   ))
 
   results.extend(input_api.RunTests(
+      tests('recipe_engine', 'autoroll_impl', 'unittests') +
       tests('recipe_engine', 'unittests') +
       tests('unittests') +
       input_api.canned_checks.CheckVPythonSpec(input_api, output_api)

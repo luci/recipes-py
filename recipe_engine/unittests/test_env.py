@@ -8,11 +8,14 @@ environment.
 This consists largely of system path manipulation.
 """
 
-import os
-import sys
+try:
+  from recipe_engine import env
+except ImportError:
+  import os
+  import sys
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))
-sys.path.insert(0, BASE_DIR)
+  BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
+      os.path.abspath(__file__))))
+  sys.path.insert(0, BASE_DIR)
 
-from recipe_engine import env
+  from recipe_engine import env
