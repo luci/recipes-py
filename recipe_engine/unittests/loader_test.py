@@ -37,7 +37,7 @@ class TestRecipeScript(unittest.TestCase):
       }, 'fake_package', 'some/path')
     loader.invoke_with_properties = lambda *args, **kwargs: FakeReturn()
 
-    self.assertEqual(mocked_return, script.run(None, None))
+    self.assertEqual(mocked_return, script.run(None, None, None))
 
 def make_prop(**kwargs):
   name = kwargs.pop('name', "dumb_name")
@@ -47,16 +47,16 @@ def make_prop(**kwargs):
 
 
 class TestInvoke(unittest.TestCase):
-  def invoke(self, callable, all_properties, prop_defs, arg_names, **kwargs):
+  def invoke(self, callable, props, environ, prop_defs, arg_names, **kwargs):
     return loader._invoke_with_properties(
-        callable, all_properties, prop_defs, arg_names, **kwargs)
+        callable, props, environ, prop_defs, arg_names, **kwargs)
 
   def testInvokeFuncSimple(self):
     """Simple test of invoke."""
     def func():
       pass
 
-    self.assertEqual(self.invoke(func, {}, {}, []), None)
+    self.assertEqual(self.invoke(func, {}, {}, {}, []), None)
 
   def testInvokeFuncComplex(self):
     """Tests invoke with two different properties."""
@@ -72,7 +72,7 @@ class TestInvoke(unittest.TestCase):
       'a': 1,
       'b': 2,
     }
-    self.assertEqual(1, self.invoke(func, props, prop_defs, ['a', 'b']))
+    self.assertEqual(1, self.invoke(func, props, {}, prop_defs, ['a', 'b']))
 
   def testInvokeParamName(self):
     """Tests invoke with a param name."""
@@ -86,7 +86,7 @@ class TestInvoke(unittest.TestCase):
     props = {
       'b.a': 2,
     }
-    self.assertEqual(2, self.invoke(func, props, prop_defs, ['c']))
+    self.assertEqual(2, self.invoke(func, props, {}, prop_defs, ['c']))
 
   def testInvokeClass(self):
     """Tests invoking a class."""
@@ -103,7 +103,30 @@ class TestInvoke(unittest.TestCase):
       'a': 1,
       'b': 2,
     }
-    self.assertEqual(1, self.invoke(test, props, prop_defs, ['a', 'b']).answer)
+    self.assertEqual(
+        1, self.invoke(test, props, {}, prop_defs, ['a', 'b']).answer)
+
+  def testPropertyFromEnviron(self):
+    """Tests properties that use from_environ."""
+    def func(a, b, c):
+      return a, b, c
+
+    prop_defs = {
+      'a': make_prop(name="a", from_environ='A_ENV'),
+      'b': make_prop(name="b", from_environ='B_ENV'),
+      'c': make_prop(name="c", default='3', from_environ='C_ENV'),
+    }
+
+    props = {
+      'b': '2',
+    }
+    environ = {
+      'A_ENV': '1',  # will be picked up by 'a'
+      'B_ENV': '?',  # will NOT be picked, since 'b' is passed explicitly
+    }
+    self.assertEqual(
+        ('1', '2', '3'),
+        self.invoke(func, props, environ, prop_defs, ['a', 'b', 'c']))
 
   def testMissingProperty(self):
     """Tests that invoke raises an error when missing a property."""
@@ -111,7 +134,7 @@ class TestInvoke(unittest.TestCase):
       return a
 
     with self.assertRaises(recipe_api.UndefinedPropertyException):
-      self.invoke(func, {}, {}, ['a'])
+      self.invoke(func, {}, {}, {}, ['a'])
 
   def testMustBeBound(self):
     """Tests that calling invoke with a non BoundProperty fails."""
@@ -120,7 +143,7 @@ class TestInvoke(unittest.TestCase):
     }
 
     with self.assertRaises(ValueError):
-      self.invoke(None, None, prop_defs, ['a'])
+      self.invoke(lambda a: None, {}, {}, prop_defs, ['a'])
 
   def testInvokeArgNamesFunc(self):
     def test_function(a, b):
@@ -128,7 +151,7 @@ class TestInvoke(unittest.TestCase):
 
     with mock.patch(
         'recipe_engine.loader._invoke_with_properties') as mocked_invoke:
-      loader.invoke_with_properties(test_function, None, None)
+      loader.invoke_with_properties(test_function, None, None, None)
       args, _ = mocked_invoke.call_args
       self.assertTrue(['a', 'b'] in args)
 
@@ -139,7 +162,7 @@ class TestInvoke(unittest.TestCase):
 
     with mock.patch(
         'recipe_engine.loader._invoke_with_properties') as mocked_invoke:
-      loader.invoke_with_properties(TestClass, None, None)
+      loader.invoke_with_properties(TestClass, None, None, None)
       args, _ = mocked_invoke.call_args
       self.assertTrue(['api', 'foo', 'bar'] in args)
 

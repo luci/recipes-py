@@ -1018,7 +1018,7 @@ class BoundProperty(object):
     }
 
   We don't want to have to duplicate the name in both the key of the dictionary
-  and then Property contstructor call, so we need to modify this dictionary
+  and then Property constructor call, so we need to modify this dictionary
   before we actually use it, and inject knowledge into it about its name. We
   don't want to actually mutate this though, since we're striving for immutable,
   declarative code, so instead we generate a new BoundProperty object from the
@@ -1064,14 +1064,19 @@ class BoundProperty(object):
         r'^[a-zA-Z][.\w-]*$')
     return bool(re.match(regex, name))
 
-  def __init__(self, default, help, kind, name, property_type, full_decl_name,
-               param_name=None):
+  def __init__(self, default, from_environ, help, kind, name, property_type,
+               full_decl_name, param_name=None):
     """
     Constructor for BoundProperty.
 
     Args:
       default (jsonish): The default value for this Property. Must be
         JSON-encodable or PROPERTY_SENTINEL.
+      from_environ (str|None): If given, specifies an environment variable to
+        grab the default property value from before falling back to the
+        hardcoded default. If the property value is explicitly passed to the
+        recipe, it still takes precedence over the environment. If you rely on
+        this, 'kind' must be string-compatible (since environ contains strings).
       help (str): The help text for this Property.
       kind (type|ConfigBase): The type of this Property. You can either pass in
         a raw python type, or a Config Type, using the recipe engine config
@@ -1111,6 +1116,7 @@ class BoundProperty(object):
         raise TypeError('default=%r is not json-encodable' % (default,))
 
     self.__default = default
+    self.__from_environ = from_environ
     self.__help = help
     self.__kind = kind
     self.__name = name
@@ -1133,6 +1139,10 @@ class BoundProperty(object):
     return copy.deepcopy(self.__default)
 
   @property
+  def from_environ(self):
+    return self.__from_environ
+
+  @property
   def kind(self):
     return self.__kind
 
@@ -1144,18 +1154,25 @@ class BoundProperty(object):
   def full_decl_name(self):
     return self.__full_decl_name
 
-  def interpret(self, value):
+  def interpret(self, value, environ):
     """
     Interprets the value for this Property.
 
     Args:
-      value: The value to interpret. May be None, which
-             means no value provided.
+      value: The value to interpret. May be None, which means no explicit value
+             is provided and we should grab a default.
+      environ: An environment dict to use for grabbing values for properties
+               that use 'from_environ'.
 
     Returns:
       The value to use for this property. Raises an error if
       this property has no valid interpretation.
     """
+    # Pick from environment if not given explicitly.
+    if value is PROPERTY_SENTINEL and self.__from_environ:
+      value = environ.get(self.__from_environ, PROPERTY_SENTINEL)
+
+    # If have a value (passed explicitly or through environ), check its type.
     if value is not PROPERTY_SENTINEL:
       if self.kind is not None:
         # The config system handles type checking for us here.
@@ -1170,8 +1187,8 @@ class BoundProperty(object):
         self.name, self.__property_type, self.full_decl_name))
 
 class Property(object):
-  def __init__(self, default=PROPERTY_SENTINEL, help="", kind=None,
-               param_name=None):
+  def __init__(self, default=PROPERTY_SENTINEL, from_environ=None, help="",
+               kind=None, param_name=None):
     """
     Constructor for Property.
 
@@ -1179,6 +1196,12 @@ class Property(object):
       default: The default value for this Property. Note: A default
                value of None is allowed. To have no default value, omit
                this argument. This must be a valid JSON-encodable object.
+      from_environ: If given, specifies an environment variable to grab the
+                    default property value from before falling back to the
+                    hardcoded default. If the property value is explicitly
+                    passed to the recipe, it still takes precedence over the
+                    environment. If you rely on this, 'kind' must be
+                    string-compatible (since environ contains strings).
       help: The help text for this Property.
       kind: The type of this Property. You can either pass in a raw python
             type, or a Config Type, using the recipe engine config system.
@@ -1189,7 +1212,12 @@ class Property(object):
       except:
         raise TypeError('default=%r is not json-encodable' % (default,))
 
+    if from_environ is not None:
+      if not isinstance(from_environ, basestring):
+        raise TypeError('from_environ=%r must be a string' % (from_environ,))
+
     self._default = default
+    self._from_environ = from_environ
     self.help = help
     self.param_name = param_name
 
@@ -1204,8 +1232,8 @@ class Property(object):
     Gets the BoundProperty version of this Property. Requires a name.
     """
     return BoundProperty(
-      self._default, self.help, self.kind, name, property_type, full_decl_name,
-      self.param_name)
+      self._default, self._from_environ, self.help, self.kind, name,
+      property_type, full_decl_name, self.param_name)
 
 class UndefinedPropertyException(TypeError):
   pass

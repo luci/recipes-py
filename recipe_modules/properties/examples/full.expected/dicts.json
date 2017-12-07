@@ -3,7 +3,8 @@
     "cmd": [
       "echo",
       "{'key': {'other_key': {'key': 'value'}, 'key': 'value'}}",
-      "'thing'"
+      "'thing'",
+      "'mocked_env'"
     ],
     "name": "echo"
   },
@@ -12,6 +13,7 @@
       "echo",
       "('$recipe_engine/source_manifest', {'debug_dir': None})",
       "('foo.bar-bam', 'thing')",
+      "('from_env', 'mocked_env')",
       "('recipe', 'properties:examples/full')",
       "('test_prop', {'key': {'other_key': {'key': 'value'}, 'key': 'value'}})"
     ],
@@ -20,9 +22,16 @@
   {
     "cmd": [
       "echo",
-      "FrozenDict([('debug_dir', None)])"
+      "'mocked_env'"
     ],
-    "name": "echo $recipe_engine/source_manifest"
+    "name": "echo from_env"
+  },
+  {
+    "cmd": [
+      "echo",
+      "FrozenDict([('key', FrozenDict([('other_key', FrozenDict([('key', 'value')])), ('key', 'value')]))])"
+    ],
+    "name": "echo test_prop"
   },
   {
     "cmd": [
@@ -41,9 +50,9 @@
   {
     "cmd": [
       "echo",
-      "FrozenDict([('key', FrozenDict([('other_key', FrozenDict([('key', 'value')])), ('key', 'value')]))])"
+      "FrozenDict([('debug_dir', None)])"
     ],
-    "name": "echo test_prop"
+    "name": "echo $recipe_engine/source_manifest"
   },
   {
     "name": "$result",

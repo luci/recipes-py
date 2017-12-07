@@ -3,7 +3,8 @@
     "cmd": [
       "echo",
       "None",
-      "'thing'"
+      "'thing'",
+      "'mocked_env'"
     ],
     "name": "echo"
   },
@@ -17,6 +18,7 @@
       "('buildername', 'TestBuilder')",
       "('buildnumber', 571)",
       "('foo.bar-bam', 'thing')",
+      "('from_env', 'mocked_env')",
       "('mastername', 'chromium.testing.master')",
       "('recipe', 'properties:examples/full')",
       "('slavename', 'TestSlavename')",
@@ -42,6 +44,13 @@
   {
     "cmd": [
       "echo",
+      "'properties:examples/full'"
+    ],
+    "name": "echo recipe"
+  },
+  {
+    "cmd": [
+      "echo",
       "None"
     ],
     "name": "echo test_prop"
@@ -49,9 +58,9 @@
   {
     "cmd": [
       "echo",
-      "'properties:examples/full'"
+      "'mocked_env'"
     ],
-    "name": "echo recipe"
+    "name": "echo from_env"
   },
   {
     "cmd": [

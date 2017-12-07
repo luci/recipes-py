@@ -3,7 +3,8 @@
     "cmd": [
       "echo",
       "None",
-      "'thing'"
+      "'thing'",
+      "'mocked_env'"
     ],
     "name": "echo"
   },
@@ -18,6 +19,7 @@
       "('buildername', 'TestBuilder')",
       "('buildnumber', 571)",
       "('foo.bar-bam', 'thing')",
+      "('from_env', 'mocked_env')",
       "('issue', 12853011)",
       "('mastername', 'chromium.testing.master')",
       "('patch_project', 'chromium')",
@@ -37,58 +39,9 @@
   {
     "cmd": [
       "echo",
-      "'chrome'"
-    ],
-    "name": "echo project"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'/path/to/workdir/TestSlavename'"
-    ],
-    "name": "echo workdir"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'TestSlavename'"
-    ],
-    "name": "echo slavename"
-  },
-  {
-    "cmd": [
-      "echo",
-      "''"
-    ],
-    "name": "echo repository"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'TestBuilder'"
-    ],
-    "name": "echo buildername"
-  },
-  {
-    "cmd": [
-      "echo",
-      "None"
-    ],
-    "name": "echo test_prop"
-  },
-  {
-    "cmd": [
-      "echo",
       "'properties:examples/full'"
     ],
     "name": "echo recipe"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'chromium.testing.master'"
-    ],
-    "name": "echo mastername"
   },
   {
     "cmd": [
@@ -100,13 +53,6 @@
   {
     "cmd": [
       "echo",
-      "571"
-    ],
-    "name": "echo buildnumber"
-  },
-  {
-    "cmd": [
-      "echo",
       "FrozenDict([('debug_dir', None)])"
     ],
     "name": "echo $recipe_engine/source_manifest"
@@ -114,9 +60,23 @@
   {
     "cmd": [
       "echo",
-      "'https://codereview.chromium.org'"
+      "'chromium'"
     ],
-    "name": "echo rietveld"
+    "name": "echo patch_project"
+  },
+  {
+    "cmd": [
+      "echo",
+      "571"
+    ],
+    "name": "echo buildnumber"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'TestSlavename'"
+    ],
+    "name": "echo slavename"
   },
   {
     "cmd": [
@@ -135,6 +95,62 @@
   {
     "cmd": [
       "echo",
+      "1"
+    ],
+    "name": "echo patchset"
+  },
+  {
+    "cmd": [
+      "echo",
+      "12853011"
+    ],
+    "name": "echo issue"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'HEAD'"
+    ],
+    "name": "echo revision"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'/path/to/workdir/TestSlavename'"
+    ],
+    "name": "echo workdir"
+  },
+  {
+    "cmd": [
+      "echo",
+      "''"
+    ],
+    "name": "echo repository"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'TestBuilder'"
+    ],
+    "name": "echo buildername"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'mocked_env'"
+    ],
+    "name": "echo from_env"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'chromium.testing.master'"
+    ],
+    "name": "echo mastername"
+  },
+  {
+    "cmd": [
+      "echo",
       "'commit-bot@chromium.org'"
     ],
     "name": "echo requester"
@@ -149,30 +165,23 @@
   {
     "cmd": [
       "echo",
-      "1"
+      "None"
     ],
-    "name": "echo patchset"
+    "name": "echo test_prop"
   },
   {
     "cmd": [
       "echo",
-      "'HEAD'"
+      "'https://codereview.chromium.org'"
     ],
-    "name": "echo revision"
+    "name": "echo rietveld"
   },
   {
     "cmd": [
       "echo",
-      "12853011"
+      "'chrome'"
     ],
-    "name": "echo issue"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'chromium'"
-    ],
-    "name": "echo patch_project"
+    "name": "echo project"
   },
   {
     "cmd": [

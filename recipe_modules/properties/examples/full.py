@@ -12,10 +12,13 @@ DEPS = [
 PROPERTIES = {
   'test_prop': Property(),
   'foo.bar-bam': Property(param_name='param_name_test'),
+  'from_env': Property(from_environ='FROM_ENV'),
 }
 
-def RunSteps(api, test_prop, param_name_test):
-  api.step('echo', ['echo'] + [repr(test_prop), repr(param_name_test)])
+def RunSteps(api, test_prop, param_name_test, from_env):
+  api.step('echo', ['echo'] + [
+    repr(test_prop), repr(param_name_test), repr(from_env)
+  ])
 
   properties = api.properties.thaw()
   api.step('echo all', ['echo'] + map(repr, sorted(properties.iteritems())))
@@ -27,7 +30,7 @@ def RunSteps(api, test_prop, param_name_test):
 
 
 def GenTests(api):
-  pd = {'foo.bar-bam': 'thing'}
+  pd = {'foo.bar-bam': 'thing', 'from_env': 'mocked_env'}
   yield api.test('basic') + api.properties(
     test_prop={'key': 'value'}, **pd)
   yield api.test('lists') + api.properties(

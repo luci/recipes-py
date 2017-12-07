@@ -3,7 +3,8 @@
     "cmd": [
       "echo",
       "None",
-      "'thing'"
+      "'thing'",
+      "'mocked_env'"
     ],
     "name": "echo"
   },
@@ -17,6 +18,7 @@
       "('buildername', 'TestBuilder')",
       "('buildnumber', 571)",
       "('foo.bar-bam', 'thing')",
+      "('from_env', 'mocked_env')",
       "('mastername', 'chromium.testing.master')",
       "('patch_branch', 'master')",
       "('patch_gerrit_url', 'https://chrome-internal-review.googlesource.com')",
@@ -78,16 +80,16 @@
   {
     "cmd": [
       "echo",
-      "'refs/changes/89/456789/12'"
+      "'properties:examples/full'"
     ],
-    "name": "echo patch_ref"
+    "name": "echo recipe"
   },
   {
     "cmd": [
       "echo",
-      "None"
+      "'refs/changes/89/456789/12'"
     ],
-    "name": "echo test_prop"
+    "name": "echo patch_ref"
   },
   {
     "cmd": [
@@ -99,9 +101,9 @@
   {
     "cmd": [
       "echo",
-      "'properties:examples/full'"
+      "'mocked_env'"
     ],
-    "name": "echo recipe"
+    "name": "echo from_env"
   },
   {
     "cmd": [
@@ -144,6 +146,13 @@
       "456789"
     ],
     "name": "echo patch_issue"
+  },
+  {
+    "cmd": [
+      "echo",
+      "None"
+    ],
+    "name": "echo test_prop"
   },
   {
     "cmd": [

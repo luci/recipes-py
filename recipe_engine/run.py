@@ -2,66 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-"""Entry point for fully-annotated builds.
-
-This script is part of the effort to move all builds to annotator-based
-systems. Any builder configured to use the AnnotatorFactory.BaseFactory()
-found in scripts/master/factory/annotator_factory.py executes a single
-AddAnnotatedScript step. That step (found in annotator_commands.py) calls
-this script with the build- and factory-properties passed on the command
-line.
-
-The main mode of operation is for factory_properties to contain a single
-property 'recipe' whose value is the basename (without extension) of a python
-script in one of the following locations (looked up in this order):
-  * build_internal/scripts/slave-internal/recipes
-  * build_internal/scripts/slave/recipes
-  * build/scripts/slave/recipes
-
-For example, these factory_properties would run the 'run_presubmit' recipe
-located in build/scripts/slave/recipes:
-    { 'recipe': 'run_presubmit' }
-
-TODO(vadimsh, iannucci, luqui): The following docs are very outdated.
-
-Annotated_run.py will then import the recipe and expect to call a function whose
-signature is:
-  RunSteps(api, properties) -> None.
-
-properties is a merged view of factory_properties with build_properties.
-
-Items in iterable_of_things must be one of:
-  * A step dictionary (as accepted by annotator.py)
-  * A sequence of step dictionaries
-  * A step generator
-Iterable_of_things is also permitted to be a raw step generator.
-
-A step generator is called with the following protocol:
-  * The generator is initialized with 'step_history' and 'failed'.
-  * Each iteration of the generator is passed the current value of 'failed'.
-
-On each iteration, a step generator may yield:
-  * A single step dictionary
-  * A sequence of step dictionaries
-    * If a sequence of dictionaries is yielded, and the first step dictionary
-      does not have a 'seed_steps' key, the first step will be augmented with
-      a 'seed_steps' key containing the names of all the steps in the sequence.
-
-For steps yielded by the generator, if annotated_run enters the failed state,
-it will only continue to call the generator if the generator sets the
-'keep_going' key on the steps which it has produced. Otherwise annotated_run
-will cease calling the generator and move on to the next item in
-iterable_of_things.
-
-'step_history' is an OrderedDict of {stepname -> StepData}, always representing
-    the current history of what steps have run, what they returned, and any
-    json data they emitted. Additionally, the OrderedDict has the following
-    convenience functions defined:
-      * last_step   - Returns the last step that ran or None
-      * nth_step(n) - Returns the N'th step that ran or None
-
-'failed' is a boolean representing if the build is in a 'failed' state.
-"""
+"""Entry point for running recipes for real (not in testing mode)."""
 
 import collections
 import json
@@ -98,7 +39,7 @@ RecipeResult = collections.namedtuple('RecipeResult', 'result')
 # entities.
 def run_steps(properties, stream_engine, step_runner, universe_view,
               engine_flags=None, emit_initial_properties=False):
-  """Runs a recipe (given by the 'recipe' property).
+  """Runs a recipe (given by the 'recipe' property) for real.
 
   Args:
     properties: a dictionary of properties to pass to the recipe.  The
@@ -117,7 +58,8 @@ def run_steps(properties, stream_engine, step_runner, universe_view,
       for key in sorted(properties.iterkeys()):
         s.set_build_property(key, json.dumps(properties[key], sort_keys=True))
 
-    engine = RecipeEngine(step_runner, properties, universe_view, engine_flags)
+    engine = RecipeEngine(
+        step_runner, properties, os.environ, universe_view, engine_flags)
 
     # Create all API modules and top level RunSteps function.  It doesn't launch
     # any recipe code yet; RunSteps needs to be called.
@@ -174,9 +116,9 @@ def run_steps(properties, stream_engine, step_runner, universe_view,
           'reason': str(e),
       })
 
-  # Run the steps emitted by a recipe via the engine, emitting annotations
-  # into |stream| along the way.
-  return engine.run(recipe_script, api, properties)
+  # The engine will use step_runner to run the steps, and the step_runner in
+  # turn uses stream_engine internally to build steam steps IO.
+  return engine.run(recipe_script, api)
 
 
 # Return value of run_steps and RecipeEngine.run.  Just a container for the
@@ -199,10 +141,12 @@ class RecipeEngine(object):
   ActiveStep = collections.namedtuple('ActiveStep', (
       'config', 'step_result', 'open_step'))
 
-  def __init__(self, step_runner, properties, universe_view, engine_flags=None):
+  def __init__(self, step_runner, properties, environ, universe_view,
+               engine_flags=None):
     """See run_steps() for parameter meanings."""
     self._step_runner = step_runner
     self._properties = properties
+    self._environ = environ.copy()
     self._universe_view = universe_view
     self._clients = {client.IDENT: client for client in (
         recipe_api.DependencyManagerClient(self),
@@ -221,6 +165,10 @@ class RecipeEngine(object):
   @property
   def properties(self):
     return self._properties
+
+  @property
+  def environ(self):
+    return self._environ
 
   @property
   def universe(self):
@@ -292,7 +240,7 @@ class RecipeEngine(object):
 
       raise exc(step_config.name, step_result)
 
-  def run(self, recipe_script, api, properties):
+  def run(self, recipe_script, api):
     """Run a recipe represented by a recipe_script object.
 
     This function blocks until recipe finishes.
@@ -302,7 +250,6 @@ class RecipeEngine(object):
       recipe_script: The recipe to run, as represented by a RecipeScript object.
       api: The api, with loaded module dependencies.
            Used by the some special modules.
-      properties: a dictionary of properties to pass to the recipe.
 
     Returns:
       result_pb2.Result which has return value or status code and exception.
@@ -316,16 +263,16 @@ class RecipeEngine(object):
     # format
     if self._engine_flags and self._engine_flags.use_result_proto:
       logging.info("Using new result proto logic")
-      return self._new_run(recipe_script, api, properties)
-    return self._old_run(recipe_script, api, properties)
+      return self._new_run(recipe_script, api)
+    return self._old_run(recipe_script, api)
 
-  def _new_run(self, recipe_script, api, properties):
+  def _new_run(self, recipe_script, api):
     result = None
 
     with self._step_runner.run_context():
       try:
         try:
-          recipe_result = recipe_script.run(api, properties)
+          recipe_result = recipe_script.run(api, self.properties, self.environ)
           result = result_pb2.Result(json_result=json.dumps(recipe_result))
         finally:
           self._close_through_level(0)
@@ -369,11 +316,11 @@ class RecipeEngine(object):
 
     return result
 
-  def _old_run(self, recipe_script, api, properties):
+  def _old_run(self, recipe_script, api):
     with self._step_runner.run_context():
       try:
         try:
-          recipe_result = recipe_script.run(api, properties)
+          recipe_result = recipe_script.run(api, self.properties, self.environ)
           result = {
             "recipe_result": recipe_result,
             "status_code": 0
@@ -434,11 +381,16 @@ class RecipeEngine(object):
       run_recipe = lambda *args, **kwargs: (
         self._step_runner.run_recipe(self._universe_view, recipe, properties))
 
+      # Forbid picking up default property values from the environment for
+      # recipes we depend upon. All configuration must be passed explicitly via
+      # properties.
+      environ = {}
+
       try:
         # This does type checking for properties
         results.append(
           loader._invoke_with_properties(
-            run_recipe, properties, recipe_script.PROPERTIES,
+            run_recipe, properties, environ, recipe_script.PROPERTIES,
             properties.keys()))
       except TypeError as e:
         raise TypeError(

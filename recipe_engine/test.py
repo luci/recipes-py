@@ -342,7 +342,7 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
     if 'debug_dir' not in props['$recipe_engine/source_manifest']:
       props['$recipe_engine/source_manifest']['debug_dir'] = None
     engine = run.RecipeEngine(
-        runner, props, _UNIVERSE_VIEW, engine_flags=_ENGINE_FLAGS)
+        runner, props, {}, _UNIVERSE_VIEW, engine_flags=_ENGINE_FLAGS)
     with coverage_context(include=covers, enable=enable_coverage) as cov:
       # Run recipe loading under coverage context. This ensures we collect
       # coverage of all definitions and globals.
@@ -353,8 +353,8 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
         recipe_script.LOADED_DEPS,
         recipe_script.path, engine, test_data)
       try:
-        result = engine.run(recipe_script, api, test_data.properties)
-      except Exception as ex:
+        result = engine.run(recipe_script, api)
+      except Exception:
         ex_type, ex_value, ex_tb = sys.exc_info()
         raise (
             RecipeRunError(

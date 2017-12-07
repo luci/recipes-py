@@ -20,32 +20,44 @@ def make_prop(**kwargs):
 class TestProperties(unittest.TestCase):
   def testDefault(self):
     """Tests the default option of properties."""
-    for default in (1, {}, "test", None):
-      prop = make_prop(default=default)
-      self.assertEqual(default, prop.interpret(recipe_api.PROPERTY_SENTINEL))
+    for val in (1, {}, "test", None):
+      prop = make_prop(default=val)
+      self.assertEqual(val, prop.interpret(recipe_api.PROPERTY_SENTINEL, {}))
 
   def testRequired(self):
     """Tests that a required property errors when not provided."""
     prop = make_prop()
     with self.assertRaises(ValueError):
-      prop.interpret(recipe_api.PROPERTY_SENTINEL)
+      prop.interpret(recipe_api.PROPERTY_SENTINEL, {})
 
   def testTypeSingle(self):
     """Tests a simple typed property."""
     prop = make_prop(kind=bool)
     with self.assertRaises(TypeError):
-      prop.interpret(1)
+      prop.interpret(1, {})
 
-    self.assertEqual(True, prop.interpret(True))
+    self.assertEqual(True, prop.interpret(True, {}))
 
   def testTypeFancy(self):
     """Tests a config style type property."""
     prop = make_prop(kind=config.List(int))
     for value in (1, "hi", [3, "test"]):
       with self.assertRaises(TypeError):
-        prop.interpret(value)
+        prop.interpret(value, {})
 
-    self.assertEqual([2, 3], prop.interpret([2, 3]))
+    self.assertEqual([2, 3], prop.interpret([2, 3], {}))
+
+  def testFromEnviron(self):
+    """Tests that properties can pick up values from environment."""
+    prop = make_prop(default='def', from_environ='ENV_VAR')
+
+    # Nothing is given => falls back to hardcoded default.
+    self.assertEqual('def', prop.interpret(recipe_api.PROPERTY_SENTINEL, {}))
+    # Only env var is given => uses it.
+    self.assertEqual(
+        'var', prop.interpret(recipe_api.PROPERTY_SENTINEL, {'ENV_VAR': 'var'}))
+    # Explicit values is given => uses it.
+    self.assertEqual('value', prop.interpret('value', {'ENV_VAR': 'var'}))
 
   def testValidTypes(self):
     check = recipe_api.BoundProperty.legal_name
