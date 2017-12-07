@@ -7,6 +7,7 @@
       "cr-buildbucket.appspot.com",
       "9016911228971028736"
     ],
+    "infra_step": true,
     "name": "buildbucket.get",
     "stdout": "/path/to/tmp/json",
     "~followup_annotations": [

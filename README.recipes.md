@@ -502,7 +502,7 @@ Args:
   * path (Path|str) - The absolute path to create.
   * size_mb (int) - The size of the file in megabytes. Defaults to 100
 
-Raises file.
+Raises file.Error
 
 &mdash; **def [write\_raw](/recipe_modules/file/api.py#131)(self, name, dest, data):**
 

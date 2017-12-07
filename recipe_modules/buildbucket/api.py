@@ -96,6 +96,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     if self._service_account_key:
       args = ['-service-account-json', self._service_account_key] + args
     args = ['buildbucket', command, '-host', self._host] + args
+    kwargs.setdefault('infra_step', True)
     return self.m.step(step_name, args, stdout=self.m.json.output(), **kwargs)
 
   def _properties_for_build(self, properties):

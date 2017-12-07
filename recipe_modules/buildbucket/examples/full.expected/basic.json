@@ -10,6 +10,7 @@
       "{\"bucket\": \"master.user.username\", \"parameters_json\": \"{\\\"builder_name\\\": \\\"linux_perf_bisect\\\", \\\"properties\\\": {\\\"bisect_config\\\": {\\\"bad_revision\\\": \\\"351054\\\", \\\"bug_id\\\": 537649, \\\"command\\\": \\\"src/tools/perf/run_benchmark -v --browser=release --output-format=chartjson --also-run-disabled-tests speedometer\\\", \\\"good_revision\\\": \\\"351045\\\", \\\"gs_bucket\\\": \\\"chrome-perf\\\", \\\"max_time_minutes\\\": \\\"20\\\", \\\"metric\\\": \\\"Total/Total\\\", \\\"recipe_tester_name\\\": \\\"linux_perf_bisect\\\", \\\"repeat_count\\\": \\\"10\\\", \\\"test_type\\\": \\\"perf\\\"}}}\", \"tags\": [\"builder:overriden_builder\", \"buildset:patch/rietveld/cr.chromium.org/123/10001\", \"master:overriden.master.url\", \"user_agent:recipe\"]}",
       "{\"bucket\": \"master.user.username\", \"parameters_json\": \"{\\\"builder_name\\\": \\\"mac_perf_bisect\\\", \\\"properties\\\": {\\\"bisect_config\\\": {\\\"bad_revision\\\": \\\"351054\\\", \\\"bug_id\\\": 537649, \\\"command\\\": \\\"src/tools/perf/run_benchmark -v --browser=release --output-format=chartjson --also-run-disabled-tests speedometer\\\", \\\"good_revision\\\": \\\"351045\\\", \\\"gs_bucket\\\": \\\"chrome-perf\\\", \\\"max_time_minutes\\\": \\\"20\\\", \\\"metric\\\": \\\"Total/Total\\\", \\\"recipe_tester_name\\\": \\\"linux_perf_bisect\\\", \\\"repeat_count\\\": \\\"10\\\", \\\"test_type\\\": \\\"perf\\\"}}}\", \"tags\": [\"builder:some_builder\", \"buildset:patch/rietveld/cr.chromium.org/123/10001\", \"master:someother.master.url\", \"user_agent:recipe\"]}"
     ],
+    "infra_step": true,
     "name": "buildbucket.put",
     "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
@@ -56,6 +57,7 @@
       "some-fake-key.json",
       "9016911228971028736"
     ],
+    "infra_step": true,
     "name": "buildbucket.get",
     "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
@@ -88,6 +90,7 @@
       "some-fake-key.json",
       "9016911228971028736"
     ],
+    "infra_step": true,
     "name": "buildbucket.cancel",
     "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
