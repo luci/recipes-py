@@ -78,10 +78,10 @@ class BuildbucketApi(recipe_api.RecipeApi):
     for build in builds:
       build_specs.append(self.m.json.dumps({
         'bucket': build['bucket'],
-        'parameters_json': self.m.json.dumps(
-            self._properties_for_build(build['parameters'])),
+        'parameters_json': self.m.json.dumps(build['parameters']),
         'tags': self._tags_for_build(build['bucket'], build['parameters'],
                                      build.get('tags')),
+        'experimental': self.m.runtime.is_experimental,
       }))
     return self._call_service('put', build_specs, **kwargs)
 
@@ -98,15 +98,6 @@ class BuildbucketApi(recipe_api.RecipeApi):
     args = ['buildbucket', command, '-host', self._host] + args
     kwargs.setdefault('infra_step', True)
     return self.m.step(step_name, args, stdout=self.m.json.output(), **kwargs)
-
-  def _properties_for_build(self, properties):
-    properties = properties.copy()
-    if self.m.runtime.is_experimental:
-      # An experimental build triggering another build should also mark it as
-      # experimental by default.
-      properties.setdefault('$recipe_engine/runtime',
-                            self.m.json.dumps({'is_experimental': True}))
-    return properties
 
   def _tags_for_build(self, bucket, parameters, override_tags=None):
     buildbucket_info = self.properties or {}
