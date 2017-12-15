@@ -180,8 +180,10 @@ class SubprocessStepRunner(StepRunner):
       step_config = None  # Make sure we use rendered step config.
 
       step_env = _merge_envs(os.environ,
-          rendered_step.config.env, rendered_step.config.env_prefixes.prefixes,
-          rendered_step.config.env_prefixes.pathsep)
+          rendered_step.config.env,
+          rendered_step.config.env_prefixes.mapping,
+          rendered_step.config.env_suffixes.mapping,
+          rendered_step.config.env_prefixes.pathsep)  # just pick one
 
       # Now that the step's environment is all sorted, evaluate PATH on windows
       # to find the actual intended executable.
@@ -489,7 +491,8 @@ class SimulationStepRunner(StepRunner):
 
       # Merge our environment. Note that do NOT apply prefixes when rendering
       # expectations, as they are rendered independently.
-      step_env = _merge_envs(fakeEnviron(), rendered_step.config.env, {}, None)
+      step_env = _merge_envs(fakeEnviron(), rendered_step.config.env, {}, {},
+                             None)
       rendered_step = rendered_step._replace(
         config=rendered_step.config._replace(env=step_env.data))
       step_config = None  # Make sure we use rendered step config.
@@ -712,7 +715,7 @@ def construct_step_result(rendered_step, retcode):
   return step_result
 
 
-def _merge_envs(original, overrides, prefixes, pathsep):
+def _merge_envs(original, overrides, prefixes, suffixes, pathsep):
   """Merges two environments.
 
   Returns a new environment dict with entries from |override| overwriting
@@ -727,12 +730,14 @@ def _merge_envs(original, overrides, prefixes, pathsep):
   subst = (original if isinstance(original, fakeEnviron)
            else collections.defaultdict(lambda: '', **original))
 
-  if not any((prefixes, overrides)):
+  if not any((prefixes, suffixes, overrides)):
     return result
 
   merged = set()
-  for k, paths in prefixes.iteritems():
-    if not paths:
+  for k in set(suffixes).union(prefixes):
+    pfxs = prefixes.get(k, ())
+    sfxs = suffixes.get(k, ())
+    if not (pfxs or sfxs):
       continue
 
     # If the same key is defined in "overrides", we need to incorporate with it.
@@ -746,8 +751,9 @@ def _merge_envs(original, overrides, prefixes, pathsep):
       # Not defined. Append "val" iff it is defined in "original" and not empty.
       val = original.get(k, '')
     if val:
-      paths += (val,)
-    result[k] = pathsep.join(str(v) for v in paths)
+      pfxs += (val,)
+    result[k] = pathsep.join(
+      str(v) for v in itertools.chain(pfxs, sfxs))
 
   for k, v in overrides.iteritems():
     if k in merged:

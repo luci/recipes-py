@@ -206,8 +206,12 @@ class StepApi(recipe_api.RecipeApiPlain):
         cmd=cmd,
         cwd=cwd,
         env=self.m.context.env,
-        env_prefixes=self.step_client.StepConfig.EnvPrefix(
-          prefixes=env_prefixes,
+        env_prefixes=self.step_client.StepConfig.EnvAffix(
+          mapping=env_prefixes,
+          pathsep=self.m.path.pathsep,
+        ),
+        env_suffixes=self.step_client.StepConfig.EnvAffix(
+          mapping=self.m.context.env_suffixes,
           pathsep=self.m.path.pathsep,
         ),
         allow_subannotations=bool(allow_subannotations),

@@ -182,7 +182,7 @@ class StepClient(object):
 
 
   class StepConfig(collections.namedtuple('_StepConfig', (
-      'name', 'base_name', 'cmd', 'cwd', 'env', 'env_prefixes',
+      'name', 'base_name', 'cmd', 'cwd', 'env', 'env_prefixes', 'env_suffixes',
       'allow_subannotations', 'trigger_specs', 'timeout', 'infra_step',
       'stdout', 'stderr', 'stdin', 'ok_ret', 'step_test_data', 'nest_level'))):
 
@@ -202,7 +202,9 @@ class StepClient(object):
       cwd (str or None): absolute path to working directory for the command
       env (dict): overrides for environment variables, described above.
       env_prefixes (dict): environment prefix variables, mapping environment
-        variable names to EnvPrefix values.
+        variable names to EnvAffix values.
+      env_suffixes (dict): environment suffix variables, mapping environment
+        variable names to EnvAffix values.
       allow_subannotations (bool): if True, lets the step emit its own
           annotations. NOTE: Enabling this can cause some buggy behavior. Please
           strongly consider using step_result.presentation instead. If you have
@@ -235,9 +237,9 @@ class StepClient(object):
           "static_value": "something",
       }
 
-    The optional "env_prefixes" parameter contains values that, if specified,
-    will transform an environment variable into a "pathsep"-delimited sequence
-    of items:
+    The optional "env_prefixes" (and similarly "env_suffixes") parameters
+    contains values that, if specified, will transform an environment variable
+    into a "pathsep"-delimited sequence of items:
       - If an environment variable is also specified for this key, it will be
         appended as the last element: <prefix0>:...:<prefixN>:ENV
       - If no environment variable is specified, the current environment's value
@@ -250,20 +252,20 @@ class StepClient(object):
     prefix lists, please talk to infra-dev@chromium.org.
     """
 
-    class EnvPrefix(collections.namedtuple('_EnvPrefix', (
-        'prefixes', 'pathsep'))):
-      """Expresses a series of environment prefixes.
+    class EnvAffix(collections.namedtuple('_EnvAffix', (
+        'mapping', 'pathsep'))):
+      """Expresses a mapping of environment keys to a list of paths.
 
-      This is used as StepConfig's "env_prefix" value.
+      This is used as StepConfig's "env_prefixes" and "env_suffixes" value.
       """
 
       @classmethod
       def empty(cls):
-        return cls(prefixes={}, pathsep=None)
+        return cls(mapping={}, pathsep=None)
 
       def render_step_value(self):
         rendered = {k: (self.pathsep or ':').join(str(x) for x in v)
-                    for k, v in self.prefixes.iteritems()}
+                    for k, v in self.mapping.iteritems()}
         return pprint.pformat(rendered, width=1024)
 
 
@@ -288,7 +290,8 @@ class StepClient(object):
                for x in (sc.cmd or ())],
           cwd=(str(sc.cwd) if sc.cwd else (None)),
           env=sc.env or {},
-          env_prefixes=sc.env_prefixes or cls.EnvPrefix.empty(),
+          env_prefixes=sc.env_prefixes or cls.EnvAffix.empty(),
+          env_suffixes=sc.env_suffixes or cls.EnvAffix.empty(),
           base_name=sc.base_name or sc.name,
           allow_subannotations=bool(sc.allow_subannotations),
           trigger_specs=sc.trigger_specs or (),
@@ -300,7 +303,9 @@ class StepClient(object):
     def render_to_dict(self):
       sc = self._replace(
           env_prefixes={k: list(str(e) for e in v)
-                        for k, v in self.env_prefixes.prefixes.iteritems()},
+                        for k, v in self.env_prefixes.mapping.iteritems()},
+          env_suffixes={k: list(str(e) for e in v)
+                        for k, v in self.env_suffixes.mapping.iteritems()},
           trigger_specs=[trig._render_to_dict()
                          for trig in (self.trigger_specs or ())],
       )

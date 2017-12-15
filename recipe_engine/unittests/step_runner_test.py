@@ -64,65 +64,65 @@ class TestMergeEnvs(unittest.TestCase):
   def pathjoin(*parts):
     return os.pathsep.join(parts)
 
-  def _merge(self, overrides, prefixes):
-    return step_runner._merge_envs(self.original, overrides, prefixes,
+  def _merge(self, overrides, prefixes, suffixes):
+    return step_runner._merge_envs(self.original, overrides, prefixes, suffixes,
                                    os.pathsep)
 
   def test_nothing_to_do(self):
     self.assertEqual(
-        self._merge({}, {}),
+        self._merge({}, {}, {}),
         self.original)
 
   def test_merge_with_empty_path_tuple(self):
     self.assertEqual(self._merge(
-      {'FOO': ''}, {'FOO': ()}),
+      {'FOO': ''}, {'FOO': ()}, {'FOO': ()}),
       {'FOO': ''})
 
   def test_merge_with_path_tuple(self):
     self.assertEqual(self._merge(
-      {}, {'BAR': ('bar', 'baz')}),
-      {'FOO': 'foo', 'BAR': self.pathjoin('bar', 'baz')})
+      {}, {'BAR': ('bar', 'baz')}, {'BAR': ('hat',)}),
+      {'FOO': 'foo', 'BAR': self.pathjoin('bar', 'baz', 'hat')})
 
   def test_merge_with_path_tuple_and_orig_env(self):
     self.assertEqual(self._merge(
-      {}, {'FOO': ('bar', 'baz')}),
-      {'FOO': self.pathjoin('bar', 'baz', 'foo')})
+      {}, {'FOO': ('bar', 'baz')}, {'FOO': ('hat',)}),
+      {'FOO': self.pathjoin('bar', 'baz', 'foo', 'hat')})
 
   def test_merge_with_path_tuple_and_env(self):
     self.assertEqual(self._merge(
-      {'FOO': 'override'}, {'FOO': ('bar', 'baz')}),
-      {'FOO': self.pathjoin('bar', 'baz', 'override')})
+      {'FOO': 'override'}, {'FOO': ('bar', 'baz')}, {'FOO': ('hat',)}),
+      {'FOO': self.pathjoin('bar', 'baz', 'override', 'hat')})
 
   def test_merge_with_path_tuple_and_env_subst(self):
     self.assertEqual(self._merge(
-      {'FOO': 'a-%(FOO)s-b'}, {'FOO': ('bar', 'baz')}),
-      {'FOO': self.pathjoin('bar', 'baz', 'a-foo-b')})
+      {'FOO': 'a-%(FOO)s-b'}, {'FOO': ('bar', 'baz')}, {'FOO': ('hat',)}),
+      {'FOO': self.pathjoin('bar', 'baz', 'a-foo-b', 'hat')})
 
   def test_merge_with_path_tuple_and_env_empty_subst(self):
     self.original['FOO'] = ''
     self.assertEqual(self._merge(
-      {'FOO': '%(FOO)s'}, {'FOO': ('bar', 'baz')}),
-      {'FOO': self.pathjoin('bar', 'baz')})
+      {'FOO': '%(FOO)s'}, {'FOO': ('bar', 'baz')}, {'FOO': ('hat',)}),
+      {'FOO': self.pathjoin('bar', 'baz', 'hat')})
 
   def test_merge_with_path_tuple_and_env_clear(self):
     self.assertEqual(self._merge(
-      {'FOO': None}, {'FOO': ('bar', 'baz')}),
-      {'FOO': self.pathjoin('bar', 'baz')})
+      {'FOO': None}, {'FOO': ('bar', 'baz')}, {'FOO': ('hat',)}),
+      {'FOO': self.pathjoin('bar', 'baz', 'hat')})
 
   def test_merge_with_subst(self):
     self.assertEqual(self._merge(
-        {'FOO': 'a-%(FOO)s-b'}, {}),
+        {'FOO': 'a-%(FOO)s-b'}, {}, {}),
         {'FOO': 'a-foo-b'})
 
   def test_merge_with_empty_subst(self):
     self.original['FOO'] = ''
     self.assertEqual(self._merge(
-        {'FOO': '%(FOO)s'}, {}),
+        {'FOO': '%(FOO)s'}, {}, {}),
         {'FOO': ''})
 
   def test_merge_with_clear(self):
     self.assertEqual(self._merge(
-        {'FOO': None}, {}),
+        {'FOO': None}, {}, {}),
         {})
 
 

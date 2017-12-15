@@ -47,6 +47,8 @@ def RunSteps(api):
 
   pants = api.path['start_dir'].join('pants')
   shirt = api.path['start_dir'].join('shirt')
+  good_hat = api.path['start_dir'].join('good_hat')
+  bad_hat = api.path['start_dir'].join('bad_hat')
   with api.context(env={_KEY: 'bar'}):
     expect_step('env step', 'bar')
 
@@ -59,6 +61,17 @@ def RunSteps(api):
         expect_step('env step with prefix',
             api.path.pathsep.join([str(pants), str(shirt), 'foo',
                                    'default', 'bar']))
+
+        with api.context(env_suffixes={_KEY: [good_hat], 'OTHER': []}):
+          expect_step('env step with prefix and suffix',
+              api.path.pathsep.join([str(pants), str(shirt), 'foo',
+                                     'default', 'bar', str(good_hat)]))
+
+          with api.context(env_suffixes={_KEY: [bad_hat]}):
+            expect_step('env step with 2 suffixes',
+                api.path.pathsep.join([str(pants), str(shirt), 'foo',
+                                       'default', 'bar', str(good_hat),
+                                       str(bad_hat)]))
 
   # Can set the path of default environment variables.
   with api.context(env_prefixes={_KEY: [shirt]}):

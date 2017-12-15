@@ -54,6 +54,7 @@ class ContextApi(RecipeApi):
 
     self._cwd = [None]
     self._env_prefixes = [{}]
+    self._env_suffixes = [{}]
     self._env = [{}]
     self._infra_step = [False]
     self._name_prefix = ['']
@@ -61,7 +62,7 @@ class ContextApi(RecipeApi):
     self._nest_level = [0]
 
   @contextmanager
-  def __call__(self, cwd=None, env_prefixes=None, env=None,
+  def __call__(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None,
                increment_nest_level=None, infra_steps=None, name_prefix=None):
     """Allows adjustment of multiple context values in a single call.
 
@@ -70,6 +71,8 @@ class ContextApi(RecipeApi):
         To 'reset' to the original cwd at the time recipes started, pass
         `api.path['start_dir']`.
       * env_prefixes (dict) - Environmental variable prefix augmentations. See
+          below for more info.
+      * env_suffixes (dict) - Environmental variable suffix augmentations. See
           below for more info.
       * env (dict) - Environmental variable overrides. See below for more info.
       * increment_nest_level (True) - increment the nest level by 1 in this
@@ -110,12 +113,12 @@ class ContextApi(RecipeApi):
         Which, at the time the step executes, will inject the current value of
         $PATH.
 
-    "env_prefix" is a list of Path or strings that get prefixed to their
-    respective environment variables, delimited with the system's path
-    separator. This can be used to add entries to environment variables such
-    as "PATH" and "PYTHONPATH". If prefixes are specified and a value is also
-    defined in "env", it will be installed as the last path component if it is
-    not empty.
+    "env_prefix" and "env_suffix" are a list of Path or strings that get
+    prefixed (or suffixed) to their respective environment variables, delimited
+    with the system's path separator. This can be used to add entries to
+    environment variables such as "PATH" and "PYTHONPATH". If prefixes are
+    specified and a value is also defined in "env", the value will be installed
+    as the last path component if it is not empty.
 
     **TODO(iannucci): combine nest_level and name_prefix**
 
@@ -156,6 +159,16 @@ class ContextApi(RecipeApi):
         k = str(k)
         new[k] = tuple(v) + new.get(k, ())
       _push(self._env_prefixes, new)
+
+    if env_suffixes is not None and len(env_suffixes) > 0:
+      check_type('env_suffixes', env_suffixes, dict)
+      new = dict(self._env_suffixes[-1])
+      for k, v in env_suffixes.iteritems():
+        if not v:
+          continue
+        k = str(k)
+        new[k] = new.get(k, ()) + tuple(v)
+      _push(self._env_suffixes, new)
 
     if env is not None and len(env) > 0:
       check_type('env', env, dict)
@@ -226,6 +239,20 @@ class ContextApi(RecipeApi):
     # TODO(iannucci): store env in an immutable way to avoid excessive copies.
     # TODO(iannucci): handle case-insensitive keys on windows
     return dict(self._env_prefixes[-1])
+
+  @property
+  def env_suffixes(self):
+    """Returns Path suffix modifications to the environment.
+
+    This will return a mapping of environment key to Path tuple for Path
+    suffixes registered with the environment.
+
+    **Returns (dict)** - The env-key -> value(Path) mapping of current
+    environment suffix modifications.
+    """
+    # TODO(iannucci): store env in an immutable way to avoid excessive copies.
+    # TODO(iannucci): handle case-insensitive keys on windows
+    return dict(self._env_suffixes[-1])
 
   @property
   def infra_step(self):

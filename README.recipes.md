@@ -96,7 +96,7 @@ API for interacting with the buildbucket service.
 Depends on 'buildbucket' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 
-#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#14)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
+#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#14)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
 A module for interacting with buildbucket.
 
@@ -175,9 +175,9 @@ with api.context(cwd=api.path['start_dir'].join('subdir')):
   api.step("cat subdir/foo", ['cat', './foo'])
 ```
 
-#### **class [ContextApi](/recipe_modules/context/api.py#49)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
+#### **class [ContextApi](/recipe_modules/context/api.py#49)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
-&emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#63)(self, cwd=None, env_prefixes=None, env=None, increment_nest_level=None, infra_steps=None, name_prefix=None):**
+&emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#64)(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None, increment_nest_level=None, infra_steps=None, name_prefix=None):**
 
 Allows adjustment of multiple context values in a single call.
 
@@ -186,6 +186,8 @@ Args:
     To 'reset' to the original cwd at the time recipes started, pass
     `api.path['start_dir']`.
   * env_prefixes (dict) - Environmental variable prefix augmentations. See
+      below for more info.
+  * env_suffixes (dict) - Environmental variable suffix augmentations. See
       below for more info.
   * env (dict) - Environmental variable overrides. See below for more info.
   * increment_nest_level (True) - increment the nest level by 1 in this
@@ -226,18 +228,18 @@ environment variable to have. The value is one of:
     Which, at the time the step executes, will inject the current value of
     $PATH.
 
-"env_prefix" is a list of Path or strings that get prefixed to their
-respective environment variables, delimited with the system's path
-separator. This can be used to add entries to environment variables such
-as "PATH" and "PYTHONPATH". If prefixes are specified and a value is also
-defined in "env", it will be installed as the last path component if it is
-not empty.
+"env_prefix" and "env_suffix" are a list of Path or strings that get
+prefixed (or suffixed) to their respective environment variables, delimited
+with the system's path separator. This can be used to add entries to
+environment variables such as "PATH" and "PYTHONPATH". If prefixes are
+specified and a value is also defined in "env", the value will be installed
+as the last path component if it is not empty.
 
 **TODO(iannucci): combine nest_level and name_prefix**
 
 Look at the examples in "examples/" for examples of context module usage.
 
-&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#191)(self):**
+&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#204)(self):**
 
 Returns the current working directory that steps will run in.
 
@@ -245,7 +247,7 @@ Returns the current working directory that steps will run in.
 equivalent to api.path['start_dir'], though only occurs if no cwd has been
 set (e.g. in the outermost context of RunSteps).
 
-&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#201)(self):**
+&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#214)(self):**
 
 Returns modifications to the environment.
 
@@ -256,7 +258,7 @@ done with properties.
 **Returns (dict)** - The env-key -> value mapping of current environment
   modifications.
 
-&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#216)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#229)(self):**
 
 Returns Path prefix modifications to the environment.
 
@@ -266,20 +268,30 @@ prefixes registered with the environment.
 **Returns (dict)** - The env-key -> value(Path) mapping of current
 environment prefix modifications.
 
-&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#230)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_suffixes](/recipe_modules/context/api.py#243)(self):**
+
+Returns Path suffix modifications to the environment.
+
+This will return a mapping of environment key to Path tuple for Path
+suffixes registered with the environment.
+
+**Returns (dict)** - The env-key -> value(Path) mapping of current
+environment suffix modifications.
+
+&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#257)(self):**
 
 Returns the current value of the infra_step setting.
 
 **Returns (bool)** - True iff steps are currently considered infra steps.
 
-&emsp; **@property**<br>&mdash; **def [name\_prefix](/recipe_modules/context/api.py#238)(self):**
+&emsp; **@property**<br>&mdash; **def [name\_prefix](/recipe_modules/context/api.py#265)(self):**
 
 Gets the current step name prefix.
 
 **Returns (str)** - The string prefix that every step will have prepended to
 it.
 
-&emsp; **@property**<br>&mdash; **def [nest\_level](/recipe_modules/context/api.py#247)(self):**
+&emsp; **@property**<br>&mdash; **def [nest\_level](/recipe_modules/context/api.py#274)(self):**
 
 Returns the current 'nesting' level.
 
@@ -294,7 +306,7 @@ purposes.
 
 File manipulation (read/write/delete/glob) methods.
 
-#### **class [FileApi](/recipe_modules/file/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
+#### **class [FileApi](/recipe_modules/file/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
 &mdash; **def [copy](/recipe_modules/file/api.py#53)(self, name, source, dest):**
 
@@ -535,7 +547,7 @@ This module was created before there was a way to put recipes directly into
 another repo. It is not recommended to use this, and it will be removed in the
 near future.
 
-#### **class [GeneratorScriptApi](/recipe_modules/generator_script/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
+#### **class [GeneratorScriptApi](/recipe_modules/generator_script/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
 &mdash; **def [\_\_call\_\_](/recipe_modules/generator_script/api.py#43)(self, path_to_script, \*args):**
 
@@ -581,7 +593,7 @@ corresponds to one step, and contains the following keys:
 
 Methods for producing and consuming JSON.
 
-#### **class [JsonApi](/recipe_modules/json/api.py#83)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
+#### **class [JsonApi](/recipe_modules/json/api.py#83)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
 &emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&mdash; **def [input](/recipe_modules/json/api.py#102)(self, data):**
 
@@ -647,7 +659,7 @@ There are other anchor points which can be defined (e.g. by the
 `depot_tools/infra_paths` module). Refer to those modules for additional
 documentation.
 
-#### **class [PathApi](/recipe_modules/path/api.py#197)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
+#### **class [PathApi](/recipe_modules/path/api.py#197)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
 &mdash; **def [\_\_getitem\_\_](/recipe_modules/path/api.py#422)(self, name):**
 
@@ -724,7 +736,7 @@ Args:
 
 Mockable system platform identity functions.
 
-#### **class [PlatformApi](/recipe_modules/platform/api.py#18)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
+#### **class [PlatformApi](/recipe_modules/platform/api.py#18)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
 Provides host-platform-detection properties.
 
@@ -791,7 +803,7 @@ values provided to the recipe engine at the beginning of execution. There is
 intentionally no API to write property values (lest they become a kind of
 random-access global variable).
 
-#### **class [PropertiesApi](/recipe_modules/properties/api.py#28)([RecipeApiPlain](/recipe_engine/recipe_api.py#860), collections.Mapping):**
+#### **class [PropertiesApi](/recipe_modules/properties/api.py#28)([RecipeApiPlain](/recipe_engine/recipe_api.py#865), collections.Mapping):**
 
 PropertiesApi implements all the standard Mapping functions, so you
 can use it like a read-only dict.
@@ -821,7 +833,7 @@ This includes support for `vpython`, and knows how to specify parameters
 correctly for bots (e.g. ensuring that python is working on Windows, passing the
 unbuffered flag, etc.)
 
-#### **class [PythonApi](/recipe_modules/python/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
+#### **class [PythonApi](/recipe_modules/python/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
 &mdash; **def [\_\_call\_\_](/recipe_modules/python/api.py#18)(self, name, script, args=None, unbuffered=True, venv=None, \*\*kwargs):**
 
@@ -882,7 +894,7 @@ Runs a succeeding step (exits 0).
 
 Provides objects for reading and writing raw data to and from steps.
 
-#### **class [RawIOApi](/recipe_modules/raw_io/api.py#173)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
+#### **class [RawIOApi](/recipe_modules/raw_io/api.py#173)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
 &emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#174)(data, suffix=''):**
 
@@ -943,7 +955,7 @@ replacing any decoding errors with �.
 
 [DEPS](/recipe_modules/runtime/__init__.py#5): [path](#recipe_modules-path), [properties](#recipe_modules-properties)
 
-#### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
+#### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
 This module assists in experimenting with production recipes.
 
@@ -976,7 +988,7 @@ https://godoc.org/go.chromium.org/luci/client/authcli
 
 Depends on authutil to be in PATH.
 
-#### **class [ServiceAccountApi](/recipe_modules/service_account/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
+#### **class [ServiceAccountApi](/recipe_modules/service_account/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
 &mdash; **def [default](/recipe_modules/service_account/api.py#49)(self):**
 
@@ -997,7 +1009,7 @@ Args:
   key_path: (str|Path) object pointing to a service account JSON key.
 ### *recipe_modules* / [source\_manifest](/recipe_modules/source_manifest)
 
-#### **class [SourceManfiestApi](/recipe_modules/source_manifest/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
+#### **class [SourceManfiestApi](/recipe_modules/source_manifest/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
 &mdash; **def [set\_json\_manifest](/recipe_modules/source_manifest/api.py#35)(self, name, data):**
 
@@ -1024,7 +1036,7 @@ Args:
 Step is the primary API for running steps (external programs, scripts,
 etc.).
 
-#### **class [StepApi](/recipe_modules/step/api.py#19)([RecipeApiPlain](/recipe_engine/recipe_api.py#860)):**
+#### **class [StepApi](/recipe_modules/step/api.py#19)([RecipeApiPlain](/recipe_engine/recipe_api.py#865)):**
 
 &emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#52)(self):**
 
@@ -1148,7 +1160,7 @@ of the context (see the context() method above).
 
 Simplistic temporary directory manager (deprecated).
 
-#### **class [TempfileApi](/recipe_modules/tempfile/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
+#### **class [TempfileApi](/recipe_modules/tempfile/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
 &emsp; **@contextlib.contextmanager**<br>&mdash; **def [temp\_dir](/recipe_modules/tempfile/api.py#13)(self, prefix):**
 
@@ -1165,7 +1177,7 @@ with api.tempfile.temp_dir("some_prefix") as path:
 
 Allows mockable access to the current time.
 
-#### **class [TimeApi](/recipe_modules/time/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
+#### **class [TimeApi](/recipe_modules/time/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
 &mdash; **def [time](/recipe_modules/time/api.py#21)(self):**
 
@@ -1180,7 +1192,7 @@ Return current UTC time as a datetime.datetime.
 
 Methods for interacting with HTTP(s) URLs.
 
-#### **class [UrlApi](/recipe_modules/url/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#992)):**
+#### **class [UrlApi](/recipe_modules/url/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
 &mdash; **def [get\_file](/recipe_modules/url/api.py#130)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None, timeout=None):**
 

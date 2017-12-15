@@ -96,6 +96,53 @@
       "-c",
       "echo -n $RECIPE_ENGINE_CONTEXT_TEST"
     ],
+    "env": {
+      "RECIPE_ENGINE_CONTEXT_TEST": "foo:<RECIPE_ENGINE_CONTEXT_TEST>:bar"
+    },
+    "env_prefixes": {
+      "RECIPE_ENGINE_CONTEXT_TEST": [
+        "[START_DIR]/pants",
+        "[START_DIR]/shirt"
+      ]
+    },
+    "env_suffixes": {
+      "RECIPE_ENGINE_CONTEXT_TEST": [
+        "[START_DIR]/good_hat"
+      ]
+    },
+    "name": "env step with prefix and suffix",
+    "stdout": "/path/to/tmp/"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo -n $RECIPE_ENGINE_CONTEXT_TEST"
+    ],
+    "env": {
+      "RECIPE_ENGINE_CONTEXT_TEST": "foo:<RECIPE_ENGINE_CONTEXT_TEST>:bar"
+    },
+    "env_prefixes": {
+      "RECIPE_ENGINE_CONTEXT_TEST": [
+        "[START_DIR]/pants",
+        "[START_DIR]/shirt"
+      ]
+    },
+    "env_suffixes": {
+      "RECIPE_ENGINE_CONTEXT_TEST": [
+        "[START_DIR]/good_hat",
+        "[START_DIR]/bad_hat"
+      ]
+    },
+    "name": "env step with 2 suffixes",
+    "stdout": "/path/to/tmp/"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo -n $RECIPE_ENGINE_CONTEXT_TEST"
+    ],
     "env_prefixes": {
       "RECIPE_ENGINE_CONTEXT_TEST": [
         "[START_DIR]/shirt"
