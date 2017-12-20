@@ -187,8 +187,10 @@ class StepApi(recipe_api.RecipeApiPlain):
     assert isinstance(cmd, (types.NoneType, list))
     if cmd is not None:
       cmd = list(wrapper) + cmd
-      assert all(isinstance(x, (int, long, basestring, Path, Placeholder))
-                 for x in cmd)
+      for x in cmd:
+        if not isinstance(x, (int, long, basestring, Path, Placeholder)):
+          raise AssertionError('Type %s is not permitted. '
+                               'cmd is %r' % (type(x), cmd))
 
     cwd = self.m.context.cwd
     if cwd and cwd == self.m.path['start_dir']:

@@ -77,6 +77,7 @@
   * [step:tests/inject_paths](#recipes-step_tests_inject_paths)
   * [step:tests/nested](#recipes-step_tests_nested)
   * [step:tests/stdio](#recipes-step_tests_stdio)
+  * [step:tests/step_call_args](#recipes-step_tests_step_call_args)
   * [step:tests/subannotations](#recipes-step_tests_subannotations)
   * [step:tests/timeout](#recipes-step_tests_timeout)
   * [step:tests/trigger](#recipes-step_tests_trigger)
@@ -1603,6 +1604,11 @@ Launches the repo bundler.
 [DEPS](/recipe_modules/step/tests/stdio.py#5): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/stdio.py#11)(api):**
+### *recipes* / [step:tests/step\_call\_args](/recipe_modules/step/tests/step_call_args.py)
+
+[DEPS](/recipe_modules/step/tests/step_call_args.py#5): [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/step/tests/step_call_args.py#10)(api):**
 ### *recipes* / [step:tests/subannotations](/recipe_modules/step/tests/subannotations.py)
 
 [DEPS](/recipe_modules/step/tests/subannotations.py#5): [step](#recipe_modules-step)
