@@ -14,7 +14,7 @@
       "('$recipe_engine/source_manifest', {'debug_dir': None})",
       "('blamelist', ['cool_dev1337@chromium.org', 'hax@chromium.org'])",
       "('bot_id', 'test_bot')",
-      "('branch', 'TestBranch')",
+      "('branch', 'master')",
       "('buildbotURL', 'http://c.org/p/cr/')",
       "('buildername', 'TestBuilder')",
       "('buildnumber', 571)",
@@ -23,8 +23,8 @@
       "('mastername', 'chromium.testing.master')",
       "('project', '')",
       "('recipe', 'properties:examples/full')",
-      "('repository', 'svn://svn-mirror.golo.chromium.org/chrome/trunk')",
-      "('revision', '204787')",
+      "('repository', 'https://chromium.googlesource.com/chromium/src.git')",
+      "('revision', 'c14d891d44f0afff64e56ed7c9702df1d807b1ee')",
       "('slavename', 'TestSlavename')",
       "('test_prop', None)",
       "('workdir', '/path/to/workdir/TestSlavename')"
@@ -48,7 +48,7 @@
   {
     "cmd": [
       "echo",
-      "'svn://svn-mirror.golo.chromium.org/chrome/trunk'"
+      "'https://chromium.googlesource.com/chromium/src.git'"
     ],
     "name": "echo repository"
   },
@@ -118,7 +118,7 @@
   {
     "cmd": [
       "echo",
-      "'TestBranch'"
+      "'master'"
     ],
     "name": "echo branch"
   },
@@ -132,7 +132,7 @@
   {
     "cmd": [
       "echo",
-      "'204787'"
+      "'c14d891d44f0afff64e56ed7c9702df1d807b1ee'"
     ],
     "name": "echo revision"
   },

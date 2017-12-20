@@ -33,16 +33,9 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
   def scheduled(self, **kwargs):
     """
     Merge kwargs into a typical buildbot properties blob for a job fired off
-    by a chrome/trunk svn scheduler, and return the blob.
+    by a gitpoller/scheduler, and return the blob.
     """
-    ret = self.generic(
-        branch='TestBranch',
-        project='',
-        repository='svn://svn-mirror.golo.chromium.org/chrome/trunk',
-        revision='204787',
-    )
-    ret.properties.update(kwargs)
-    return ret
+    return self.git_scheduled(**kwargs)
 
   def git_scheduled(self, **kwargs):
     """
