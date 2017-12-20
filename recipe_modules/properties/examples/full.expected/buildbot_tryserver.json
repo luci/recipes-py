@@ -14,22 +14,21 @@
       "('$recipe_engine/source_manifest', {'debug_dir': None})",
       "('blamelist', ['cool_dev1337@chromium.org', 'hax@chromium.org'])",
       "('bot_id', 'test_bot')",
-      "('branch', '')",
       "('buildbotURL', 'http://c.org/p/cr/')",
       "('buildername', 'TestBuilder')",
       "('buildnumber', 571)",
       "('foo.bar-bam', 'thing')",
       "('from_env', 'mocked_env')",
-      "('issue', 12853011)",
       "('mastername', 'chromium.testing.master')",
-      "('patch_project', 'chromium')",
-      "('patchset', 1)",
-      "('project', 'chrome')",
+      "('patch_branch', 'master')",
+      "('patch_gerrit_url', 'https://chromium-review.googlesource.com')",
+      "('patch_issue', 456789)",
+      "('patch_project', 'chromium/src')",
+      "('patch_ref', 'refs/changes/89/456789/12')",
+      "('patch_repository_url', 'https://chromium.googlesource.com/chromium/src')",
+      "('patch_set', 12)",
+      "('patch_storage', 'gerrit')",
       "('recipe', 'properties:examples/full')",
-      "('repository', '')",
-      "('requester', 'commit-bot@chromium.org')",
-      "('revision', 'HEAD')",
-      "('rietveld', 'https://codereview.chromium.org')",
       "('slavename', 'TestSlavename')",
       "('test_prop', None)",
       "('workdir', '/path/to/workdir/TestSlavename')"
@@ -39,79 +38,9 @@
   {
     "cmd": [
       "echo",
-      "'properties:examples/full'"
+      "12"
     ],
-    "name": "echo recipe"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'thing'"
-    ],
-    "name": "echo foo.bar-bam"
-  },
-  {
-    "cmd": [
-      "echo",
-      "FrozenDict([('debug_dir', None)])"
-    ],
-    "name": "echo $recipe_engine/source_manifest"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'chromium'"
-    ],
-    "name": "echo patch_project"
-  },
-  {
-    "cmd": [
-      "echo",
-      "571"
-    ],
-    "name": "echo buildnumber"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'TestSlavename'"
-    ],
-    "name": "echo slavename"
-  },
-  {
-    "cmd": [
-      "echo",
-      "('cool_dev1337@chromium.org', 'hax@chromium.org')"
-    ],
-    "name": "echo blamelist"
-  },
-  {
-    "cmd": [
-      "echo",
-      "''"
-    ],
-    "name": "echo branch"
-  },
-  {
-    "cmd": [
-      "echo",
-      "1"
-    ],
-    "name": "echo patchset"
-  },
-  {
-    "cmd": [
-      "echo",
-      "12853011"
-    ],
-    "name": "echo issue"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'HEAD'"
-    ],
-    "name": "echo revision"
+    "name": "echo patch_set"
   },
   {
     "cmd": [
@@ -123,9 +52,16 @@
   {
     "cmd": [
       "echo",
-      "''"
+      "'https://chromium-review.googlesource.com'"
     ],
-    "name": "echo repository"
+    "name": "echo patch_gerrit_url"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'master'"
+    ],
+    "name": "echo patch_branch"
   },
   {
     "cmd": [
@@ -133,6 +69,34 @@
       "'TestBuilder'"
     ],
     "name": "echo buildername"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'TestSlavename'"
+    ],
+    "name": "echo slavename"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'properties:examples/full'"
+    ],
+    "name": "echo recipe"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'refs/changes/89/456789/12'"
+    ],
+    "name": "echo patch_ref"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'https://chromium.googlesource.com/chromium/src'"
+    ],
+    "name": "echo patch_repository_url"
   },
   {
     "cmd": [
@@ -151,16 +115,37 @@
   {
     "cmd": [
       "echo",
-      "'commit-bot@chromium.org'"
+      "'gerrit'"
     ],
-    "name": "echo requester"
+    "name": "echo patch_storage"
   },
   {
     "cmd": [
       "echo",
-      "'http://c.org/p/cr/'"
+      "571"
     ],
-    "name": "echo buildbotURL"
+    "name": "echo buildnumber"
+  },
+  {
+    "cmd": [
+      "echo",
+      "FrozenDict([('debug_dir', None)])"
+    ],
+    "name": "echo $recipe_engine/source_manifest"
+  },
+  {
+    "cmd": [
+      "echo",
+      "('cool_dev1337@chromium.org', 'hax@chromium.org')"
+    ],
+    "name": "echo blamelist"
+  },
+  {
+    "cmd": [
+      "echo",
+      "456789"
+    ],
+    "name": "echo patch_issue"
   },
   {
     "cmd": [
@@ -172,16 +157,23 @@
   {
     "cmd": [
       "echo",
-      "'https://codereview.chromium.org'"
+      "'http://c.org/p/cr/'"
     ],
-    "name": "echo rietveld"
+    "name": "echo buildbotURL"
   },
   {
     "cmd": [
       "echo",
-      "'chrome'"
+      "'chromium/src'"
     ],
-    "name": "echo project"
+    "name": "echo patch_project"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'thing'"
+    ],
+    "name": "echo foo.bar-bam"
   },
   {
     "cmd": [

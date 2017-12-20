@@ -58,9 +58,10 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
     ret.properties.update(kwargs)
     return ret
 
-  def _gerrit_tryserver(self, **kwargs):
-    # Call it through self.tryserver with (gerrit_project='infra/infra').
-    project = kwargs.pop('gerrit_project')
+  def tryserver(self, **kwargs):
+    project = (
+        kwargs.pop('gerrit_project', None) or
+        kwargs.pop('project', 'chromium/src'))
     gerrit_url = kwargs.pop('gerrit_url', None)
     git_url = kwargs.pop('git_url', None)
     if not gerrit_url and not git_url:
@@ -100,31 +101,6 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
         patch_repository_url=git_url,
         patch_ref='refs/changes/%2d/%d/%d' % (
             patch_issue % 100, patch_issue, patch_set)
-    )
-    ret.properties.update(kwargs)
-    return ret
-
-  def tryserver(self, **kwargs):
-    """
-    Merge kwargs into a typical buildbot properties blob for a job fired off
-    by a rietveld tryjob on the tryserver, and return the blob.
-
-    If gerrit_project is given, generated properties for tryjobs for Gerrit
-    patches as if they were scheduled by CQ. In this case, gerrit_url and
-    git_url could be used to customize expectations.
-    """
-    if kwargs.get('gerrit_project') is not None:
-      return self._gerrit_tryserver(**kwargs)
-    ret = self.generic(
-        branch='',
-        issue=12853011,
-        patchset=1,
-        project='chrome',
-        repository='',
-        requester='commit-bot@chromium.org',
-        revision='HEAD',
-        rietveld='https://codereview.chromium.org',
-        patch_project='chromium',
     )
     ret.properties.update(kwargs)
     return ret
