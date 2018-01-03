@@ -86,3 +86,17 @@ if not USING_BOOTSTRAP:
   import google.protobuf
   assert (os.path.realpath(THIRD_PARTY) in
           os.path.realpath(google.protobuf.__path__[0]))
+
+# Prune all VirtualEnv paths out of $PATH. This means that recipe engine
+# 'unwraps' vpython VirtualEnv path manipulation. Invocations of `python` from
+# recipes should never inherit the recipe engine's own VirtualEnv.
+def _prune_virtualenvs(env):
+  # Look for "activate_this.py" in this path, which is installed by VirtualEnv.
+  # This mechanism is used by vpython as well to sanitize VirtualEnvs from
+  # $PATH.
+  env['PATH'] = os.pathsep.join([
+    p for p in env.get('PATH', '').split(os.pathsep)
+    if not os.path.isfile(os.path.join(p, 'activate_this.py'))
+  ])
+
+_prune_virtualenvs(os.environ)
