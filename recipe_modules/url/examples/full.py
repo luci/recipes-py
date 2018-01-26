@@ -26,6 +26,7 @@ TEST_BAD_CERTS = [
 
 def RunSteps(api):
   assert api.url.quote('~foo') == '%7Efoo'
+  assert api.url.unquote('%7Efoo') == '~foo'
   assert api.url.urlencode({'foo': 'bar'}) == 'foo=bar'
 
   # get_file

@@ -1195,7 +1195,7 @@ Methods for interacting with HTTP(s) URLs.
 
 #### **class [UrlApi](/recipe_modules/url/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
-&mdash; **def [get\_file](/recipe_modules/url/api.py#130)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None, timeout=None):**
+&mdash; **def [get\_file](/recipe_modules/url/api.py#131)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None, timeout=None):**
 
 GET data at given URL and writes it to file.
 
@@ -1220,7 +1220,7 @@ Args:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_json](/recipe_modules/url/api.py#186)(self, url, step_name=None, headers=None, transient_retry=True, strip_prefix=None, log=False, timeout=None, default_test_data=None):**
+&mdash; **def [get\_json](/recipe_modules/url/api.py#187)(self, url, step_name=None, headers=None, transient_retry=True, strip_prefix=None, log=False, timeout=None, default_test_data=None):**
 
 GET data at given URL and writes it to file.
 
@@ -1248,7 +1248,7 @@ value.
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_text](/recipe_modules/url/api.py#158)(self, url, step_name=None, headers=None, transient_retry=True, timeout=None, default_test_data=None):**
+&mdash; **def [get\_text](/recipe_modules/url/api.py#159)(self, url, step_name=None, headers=None, transient_retry=True, timeout=None, default_test_data=None):**
 
 GET data at given URL and writes it to file.
 
@@ -1272,7 +1272,7 @@ value.
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [join](/recipe_modules/url/api.py#94)(self, \*parts):**
+&mdash; **def [join](/recipe_modules/url/api.py#95)(self, \*parts):**
 
 Constructs a URL path from composite parts.
 
@@ -1281,7 +1281,7 @@ Args:
       will be stripped from intermediate strings to ensure that they join
       together. Trailing slashes will not be stripped from the last part.
 
-&mdash; **def [validate\_url](/recipe_modules/url/api.py#110)(self, v):**
+&mdash; **def [validate\_url](/recipe_modules/url/api.py#111)(self, v):**
 
 Validates that "v" is a valid URL.
 

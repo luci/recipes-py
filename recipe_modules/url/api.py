@@ -14,6 +14,7 @@ from recipe_engine import recipe_api
 
 class UrlApi(recipe_api.RecipeApi):
   quote = staticmethod(urllib.quote)
+  unquote = staticmethod(urllib.unquote)
   urlencode = staticmethod(urllib.urlencode)
 
   # JSON prefix used with Gerrit and Gitiles.
