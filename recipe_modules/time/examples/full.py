@@ -12,6 +12,7 @@ DEPS = [
 
 def RunSteps(api):
   now = api.time.time()
+  api.time.sleep(5)
   api.step('echo', ['echo', str(now)])
   assert isinstance(api.time.utcnow(), datetime.datetime)
 

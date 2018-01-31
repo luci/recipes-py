@@ -18,6 +18,12 @@ class TimeApi(recipe_api.RecipeApi):
       self._fake_time = self._test_data.get('seed', 1337000000.0)
       self._fake_step = self._test_data.get('step', 1.5)
 
+  def sleep(self, secs):
+    """Suspend execution of |secs| (float) seconds. Does nothing during
+    testing."""
+    if not self._test_data.enabled:  # pragma: no cover
+      time.sleep(secs)
+
   def time(self):
     """Return current timestamp as a float number of seconds since epoch."""
     if self._test_data.enabled:
