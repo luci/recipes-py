@@ -56,6 +56,21 @@ class BuildbucketApi(recipe_api.RecipeApi):
         self._properties = props
     return self._properties
 
+  @property
+  def build_id(self):
+    """Returns int64 identifier of the current build.
+
+    It is unique per buildbucket instance.
+    In practice, it means globally unique.
+
+    May return None if it is not a buildbucket build.
+    """
+    id = (self.properties or {}).get('build', {}).get('id')
+    if isinstance(id, basestring):
+      # JSON cannot hold int64 as a number
+      id = int(id)
+    return id
+
   def put(self, builds, **kwargs):
     """Puts a batch of builds.
 

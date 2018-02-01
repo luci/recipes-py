@@ -1,0 +1,14 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "123456789"
+    ],
+    "name": "build_id"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]
