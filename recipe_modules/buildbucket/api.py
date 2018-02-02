@@ -71,6 +71,28 @@ class BuildbucketApi(recipe_api.RecipeApi):
       id = int(id)
     return id
 
+  @property
+  def tags_for_child_build(self):
+    """A dict of tags (key -> value) derived from current (parent) build for a
+    child build."""
+    buildbucket_info = self.properties or {}
+    original_tags_list = buildbucket_info.get('build', {}).get('tags', [])
+
+    original_tags = dict(t.split(':', 1) for t in original_tags_list)
+    new_tags = {'user_agent': 'recipe'}
+
+    for tag in ['buildset', 'gitiles_ref']:
+      if tag in original_tags:
+        new_tags[tag] = original_tags[tag]
+
+    if self._buildnumber is not None:
+      new_tags['parent_buildnumber'] = str(self._buildnumber)
+    if self._buildername is not None:
+      new_tags['parent_buildername'] = str(self._buildername)
+    return new_tags
+
+  # RPCs.
+
   def put(self, builds, **kwargs):
     """Puts a batch of builds.
 
@@ -106,6 +128,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def get_build(self, build_id, **kwargs):
     return self._call_service('get', [build_id], **kwargs)
 
+  # Internal.
+
   def _call_service(self, command, args, **kwargs):
     step_name = kwargs.pop('name', 'buildbucket.' + command)
     if self._service_account_key:
@@ -115,28 +139,13 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return self.m.step(step_name, args, stdout=self.m.json.output(), **kwargs)
 
   def _tags_for_build(self, bucket, parameters, override_tags=None):
-    buildbucket_info = self.properties or {}
-    original_tags_list = buildbucket_info.get('build', {}).get('tags', [])
-
-    original_tags = dict(t.split(':', 1) for t in original_tags_list)
-    new_tags = {'user_agent': 'recipe'}
-
-    for tag in ['buildset', 'gitiles_ref']:
-      if tag in original_tags:
-        new_tags[tag] = original_tags[tag]
-
+    new_tags = self.tags_for_child_build
     builder_name = parameters.get('builder_name')
     if builder_name:
       new_tags['builder'] = builder_name
-    if self._buildnumber is not None:
-      new_tags['parent_buildnumber'] = str(self._buildnumber)
-    if self._buildername is not None:
-      new_tags['parent_buildername'] = str(self._buildername)
-
-    # TODO: this is Buildbot-specific.
+    # TODO(tandrii): remove this Buildbot-specific code.
     if bucket.startswith('master.'):
       new_tags['master'] = bucket[7:]
-
     new_tags.update(override_tags or {})
     return sorted(
         '%s:%s' % (k, v)

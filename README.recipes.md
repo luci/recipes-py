@@ -14,6 +14,7 @@
   * [python](#recipe_modules-python) &mdash; Provides methods for running python scripts correctly.
   * [raw_io](#recipe_modules-raw_io) &mdash; Provides objects for reading and writing raw data to and from steps.
   * [runtime](#recipe_modules-runtime)
+  * [scheduler](#recipe_modules-scheduler) &mdash; API for interacting with the LUCI Scheduler service.
   * [service_account](#recipe_modules-service_account) &mdash; API for getting OAuth2 access tokens for LUCI tasks or private keys.
   * [source_manifest](#recipe_modules-source_manifest)
   * [step](#recipe_modules-step) &mdash; Step is the primary API for running steps (external programs, scripts, etc.
@@ -70,6 +71,7 @@
   * [python:examples/full](#recipes-python_examples_full) &mdash; Launches the repo bundler.
   * [raw_io:examples/full](#recipes-raw_io_examples_full)
   * [runtime:tests/full](#recipes-runtime_tests_full)
+  * [scheduler:examples/emit_triggers](#recipes-scheduler_examples_emit_triggers) &mdash; This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
   * [service_account:examples/full](#recipes-service_account_examples_full)
   * [source_manifest:examples/simple](#recipes-source_manifest_examples_simple)
   * [step:examples/full](#recipes-step_examples_full)
@@ -104,19 +106,22 @@ A module for interacting with buildbucket.
 
 &emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#59)(self):**
 
-Returns int64 unique identifier of the current build.
+Returns int64 identifier of the current build.
+
+It is unique per buildbucket instance.
+In practice, it means globally unique.
 
 May return None if it is not a buildbucket build.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#100)(self, build_id, \*\*kwargs):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#125)(self, build_id, \*\*kwargs):**
 
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#103)(self, build_id, \*\*kwargs):**
+&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#128)(self, build_id, \*\*kwargs):**
 
 &emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#47)(self):**
 
 Returns (dict-like or None): The BuildBucket properties, if present.
 
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#71)(self, builds, \*\*kwargs):**
+&mdash; **def [put](/recipe_modules/buildbucket/api.py#96)(self, builds, \*\*kwargs):**
 
 Puts a batch of builds.
 
@@ -141,6 +146,11 @@ Changes the buildbucket backend hostname used by this module.
 
 Args:
   host (str): buildbucket server host (e.g. 'cr-buildbucket.appspot.com').
+
+&emsp; **@property**<br>&mdash; **def [tags\_for\_child\_build](/recipe_modules/buildbucket/api.py#74)(self):**
+
+A dict of tags (key -> value) derived from current (parent) build for a
+child build.
 
 &mdash; **def [use\_service\_account\_key](/recipe_modules/buildbucket/api.py#33)(self, key_path):**
 
@@ -985,6 +995,37 @@ Examples:
 True if this recipe is currently running on LUCI stack.
 
 Should be used only during migration from Buildbot to LUCI stack.
+### *recipe_modules* / [scheduler](/recipe_modules/scheduler)
+
+[DEPS](/recipe_modules/scheduler/__init__.py#5): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)
+
+API for interacting with the LUCI Scheduler service.
+
+Depends on 'prpc' binary available in $PATH:
+  https://godoc.org/go.chromium.org/luci/grpc/cmd/prpc
+Documentation for scheduler API is in
+  https://chromium.googlesource.com/infra/luci/luci-go/+/master/scheduler/api/scheduler/v1/scheduler.proto
+RPCExplorer available at
+  https://luci-scheduler.appspot.com/rpcexplorer/services/scheduler.Scheduler
+
+#### **class [SchedulerApi](/recipe_modules/scheduler/api.py#21)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+
+A module for interacting with LUCI Scheduler service.
+
+&mdash; **def [buildbucket\_trigger](/recipe_modules/scheduler/api.py#37)(self, properties=None, tags=None, id=None, title=None, url=None):**
+
+Returns trigger dict for passing into emit_trigger or emit_triggers.
+
+&mdash; **def [emit\_trigger](/recipe_modules/scheduler/api.py#59)(self, trigger, project, jobs, step_name=None):**
+
+&mdash; **def [emit\_triggers](/recipe_modules/scheduler/api.py#63)(self, trigger_project_jobs, timestamp_usec=None, step_name=None):**
+
+&mdash; **def [set\_host](/recipe_modules/scheduler/api.py#29)(self, host):**
+
+Changes the backend hostname used by this module.
+
+Args:
+  host (str): server host (e.g. 'luci-scheduler.appspot.com').
 ### *recipe_modules* / [service\_account](/recipe_modules/service_account)
 
 [DEPS](/recipe_modules/service_account/__init__.py#5): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
@@ -1576,6 +1617,13 @@ Launches the repo bundler.
 [DEPS](/recipe_modules/runtime/tests/full.py#7): [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/runtime/tests/full.py#13)(api):**
+### *recipes* / [scheduler:examples/emit\_triggers](/recipe_modules/scheduler/examples/emit_triggers.py)
+
+[DEPS](/recipe_modules/scheduler/examples/emit_triggers.py#7): [json](#recipe_modules-json), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [scheduler](#recipe_modules-scheduler), [time](#recipe_modules-time)
+
+This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
+
+&mdash; **def [RunSteps](/recipe_modules/scheduler/examples/emit_triggers.py#16)(api):**
 ### *recipes* / [service\_account:examples/full](/recipe_modules/service_account/examples/full.py)
 
 [DEPS](/recipe_modules/service_account/examples/full.py#7): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account)
