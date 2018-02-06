@@ -84,6 +84,43 @@ def RunSteps(api):
   assert step_result.raw_io.output_texts['test'] == 'good_value'
   assert step_result.raw_io.output_text == 'good_value'
 
+  # Example of add_output_log
+  step_result = api.python.inline(
+      'success output log',
+      """
+      import sys
+      with open(sys.argv[1], 'w') as f:
+        f.write('sucess')
+      """,
+      args=[api.raw_io.output(name='success_log', add_output_log=True)],
+      step_test_data=(
+          lambda: api.raw_io.test_api.output(
+              'sucess', name='success_log')))
+  assert ('sucess' ==
+          step_result.presentation.logs['raw_io.output[success_log]'])
+
+  # Example of add_output_log on failure
+  try:
+    api.python.inline(
+        'failure output log',
+        """
+        import sys
+        with open(sys.argv[1], 'w') as f:
+          f.write('failure')
+        exit(1)
+        """,
+        args=[api.raw_io.output(name='failure_log',
+                                add_output_log='on_failure')],
+        step_test_data=(
+            lambda: api.raw_io.test_api.output(
+                'failure', name='failure_log')))
+  except api.step.StepFailure:
+    pass # This step is expected to fail.
+  finally:
+    step_result = api.step.active_result
+    assert ('failure' ==
+            step_result.presentation.logs['raw_io.output[failure_log]'])
+
 
 def GenTests(api):
   # This test shows that you can override a specific placeholder, even with
@@ -106,5 +143,6 @@ def GenTests(api):
       api.step_data('cat (3)',
           stdout=api.raw_io.output('\xe2hello')) +
       api.step_data('override_default_mock',
-          api.raw_io.output_text('good_value', name='test'))
+          api.raw_io.output_text('good_value', name='test')) +
+      api.step_data('failure output log', retcode=1)
   )

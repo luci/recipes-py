@@ -70,9 +70,12 @@ class InputTextPlaceholder(InputDataPlaceholder):
 
 
 class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
-  def __init__(self, suffix, leak_to, name=None):
+  def __init__(self, suffix, leak_to, name=None, add_output_log=False):
+    assert add_output_log in (True, False, 'on_failure'), (
+        'add_output_log=%r' % add_output_log)
     self.suffix = suffix
     self.leak_to = leak_to
+    self.add_output_log = add_output_log
     self._backing_file = None
     super(OutputDataPlaceholder, self).__init__(name=name)
 
@@ -94,17 +97,26 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
 
   def result(self, presentation, test):
     assert self._backing_file
+    ret = None
     if test.enabled:
       self._backing_file = None
-      return self.decode(test.data or '')
+      ret = self.decode(test.data or '')
     else:  # pragma: no cover
       try:
         with open(self._backing_file, 'rb') as f:
-          return self.decode(f.read())
+          ret = self.decode(f.read())
       finally:
         if not self.leak_to:
           os.unlink(self._backing_file)
         self._backing_file = None
+
+    if ret is not None and (
+        self.add_output_log is True or
+        (self.add_output_log == 'on_failure' and
+         presentation.status != 'SUCCESS')):
+      presentation.logs[self.label] = ret
+
+    return ret
 
   def decode(self, result):
     """ Decodes data to be read in, when getting the result of this placeholder.
@@ -204,7 +216,7 @@ class RawIOApi(recipe_api.RecipeApi):
 
   @recipe_util.returns_placeholder
   @staticmethod
-  def output(suffix='', leak_to=None, name=None):
+  def output(suffix='', leak_to=None, name=None, add_output_log=False):
     """Returns a Placeholder for use as a step argument, or for std{out,err}.
 
     If 'leak_to' is None, the placeholder is backed by a temporary file with
@@ -213,8 +225,14 @@ class RawIOApi(recipe_api.RecipeApi):
     If 'leak_to' is not None, then it should be a Path and placeholder
     redirects IO to a file at that path. Once step finishes, the file is
     NOT deleted (i.e. it's 'leaking'). 'suffix' is ignored in that case.
+
+    Args:
+       * add_output_log (True|False|'on_failure') - Log a copy of the output
+         to a step link named `name`. If this is 'on_failure', only create this
+         log when the step has a non-SUCCESS status.
     """
-    return OutputDataPlaceholder(suffix, leak_to, name=name)
+    return OutputDataPlaceholder(suffix, leak_to, name=name,
+                                 add_output_log=add_output_log)
 
   @recipe_util.returns_placeholder
   @staticmethod

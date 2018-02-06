@@ -912,9 +912,9 @@ Runs a succeeding step (exits 0).
 
 Provides objects for reading and writing raw data to and from steps.
 
-#### **class [RawIOApi](/recipe_modules/raw_io/api.py#173)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [RawIOApi](/recipe_modules/raw_io/api.py#185)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#174)(data, suffix=''):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#186)(data, suffix=''):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -929,7 +929,7 @@ tempfile.mkstemp.
 
 See examples/full.py for usage example.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#192)(data, suffix=''):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#204)(data, suffix=''):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -939,7 +939,7 @@ expected to have valid utf-8 data in it.
 Similar to input(), but ensures that 'data' is valid utf-8 text. Any
 non-utf-8 characters will be replaced with �.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#205)(suffix='', leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#217)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -950,7 +950,12 @@ If 'leak_to' is not None, then it should be a Path and placeholder
 redirects IO to a file at that path. Once step finishes, the file is
 NOT deleted (i.e. it's 'leaking'). 'suffix' is ignored in that case.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#231)(suffix='', leak_to=None, name=None):**
+Args:
+   * add_output_log (True|False|'on_failure') - Log a copy of the output
+     to a step link named `name`. If this is 'on_failure', only create this
+     log when the step has a non-SUCCESS status.
+
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#249)(suffix='', leak_to=None, name=None):**
 
 Returns a directory Placeholder for use as a step argument.
 
@@ -961,7 +966,7 @@ If 'leak_to' is not None, then it should be a Path and placeholder
 redirects IO to a dir at that path. Once step finishes, the dir is
 NOT deleted (i.e. it's 'leaking'). 'suffix' is ignored in that case.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#219)(suffix='', leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#237)(suffix='', leak_to=None, name=None):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -1018,7 +1023,30 @@ Returns trigger dict for passing into emit_trigger or emit_triggers.
 
 &mdash; **def [emit\_trigger](/recipe_modules/scheduler/api.py#59)(self, trigger, project, jobs, step_name=None):**
 
-&mdash; **def [emit\_triggers](/recipe_modules/scheduler/api.py#63)(self, trigger_project_jobs, timestamp_usec=None, step_name=None):**
+Emits trigger to one or more jobs of a given project.
+
+Args:
+  trigger (dict): jsonpb dict of Trigger, typically result of
+    api.scheduler.buildbucket_trigger call. For all options, see
+    https://chromium.googlesource.com/infra/luci/luci-go/+/master/scheduler/api/scheduler/v1/triggers.proto
+  project (str): name of the project in LUCI Config service, which is used
+    by LUCI Scheduler instance. See https://luci-config.appspot.com/.
+  jobs (iterable of str): job names per LUCI Scheduler config for the given
+    project. These typically are the same as builder names.
+
+&mdash; **def [emit\_triggers](/recipe_modules/scheduler/api.py#73)(self, trigger_project_jobs, timestamp_usec=None, step_name=None):**
+
+Emits a batch of triggers spanning one or more projects.
+
+Up to date documentation is at
+https://chromium.googlesource.com/infra/luci/luci-go/+/master/scheduler/api/scheduler/v1/scheduler.proto
+
+Args:
+  trigger_project_jobs (iterable of tuples(trigger, project, jobs)):
+    each tuple corresponds to parameters of `emit_trigger` API above.
+  timestamp_usec (int): unix timestamp in microseconds.
+    Useful for idempotency of calls if your recipe is doing its own retries.
+    https://chromium.googlesource.com/infra/luci/luci-go/+/master/scheduler/api/scheduler/v1/triggers.proto
 
 &mdash; **def [set\_host](/recipe_modules/scheduler/api.py#29)(self, host):**
 

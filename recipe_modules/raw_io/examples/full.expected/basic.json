@@ -89,6 +89,56 @@
     ]
   },
   {
+    "cmd": [
+      "python",
+      "-u",
+      "\nimport sys\nwith open(sys.argv[1], 'w') as f:\n  f.write('sucess')\n",
+      "/path/to/tmp/"
+    ],
+    "name": "success output log",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@raw_io.output[success_log]@s@@@",
+      "@@@STEP_LOG_LINE@raw_io.output[success_log]@u@@@",
+      "@@@STEP_LOG_LINE@raw_io.output[success_log]@c@@@",
+      "@@@STEP_LOG_LINE@raw_io.output[success_log]@e@@@",
+      "@@@STEP_LOG_LINE@raw_io.output[success_log]@s@@@",
+      "@@@STEP_LOG_LINE@raw_io.output[success_log]@s@@@",
+      "@@@STEP_LOG_END@raw_io.output[success_log]@@@",
+      "@@@STEP_LOG_LINE@python.inline@@@@",
+      "@@@STEP_LOG_LINE@python.inline@import sys@@@",
+      "@@@STEP_LOG_LINE@python.inline@with open(sys.argv[1], 'w') as f:@@@",
+      "@@@STEP_LOG_LINE@python.inline@  f.write('sucess')@@@",
+      "@@@STEP_LOG_END@python.inline@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "\nimport sys\nwith open(sys.argv[1], 'w') as f:\n  f.write('failure')\nexit(1)\n",
+      "/path/to/tmp/"
+    ],
+    "name": "failure output log",
+    "~followup_annotations": [
+      "step returned non-zero exit code: 1",
+      "@@@STEP_LOG_LINE@raw_io.output[failure_log]@f@@@",
+      "@@@STEP_LOG_LINE@raw_io.output[failure_log]@a@@@",
+      "@@@STEP_LOG_LINE@raw_io.output[failure_log]@i@@@",
+      "@@@STEP_LOG_LINE@raw_io.output[failure_log]@l@@@",
+      "@@@STEP_LOG_LINE@raw_io.output[failure_log]@u@@@",
+      "@@@STEP_LOG_LINE@raw_io.output[failure_log]@r@@@",
+      "@@@STEP_LOG_LINE@raw_io.output[failure_log]@e@@@",
+      "@@@STEP_LOG_END@raw_io.output[failure_log]@@@",
+      "@@@STEP_LOG_LINE@python.inline@@@@",
+      "@@@STEP_LOG_LINE@python.inline@import sys@@@",
+      "@@@STEP_LOG_LINE@python.inline@with open(sys.argv[1], 'w') as f:@@@",
+      "@@@STEP_LOG_LINE@python.inline@  f.write('failure')@@@",
+      "@@@STEP_LOG_LINE@python.inline@exit(1)@@@",
+      "@@@STEP_LOG_END@python.inline@@@",
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
     "name": "$result",
     "recipe_result": null,
     "status_code": 0
