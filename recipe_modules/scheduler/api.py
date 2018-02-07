@@ -34,35 +34,90 @@ class SchedulerApi(recipe_api.RecipeApi):
     """
     self._host = host
 
+
+  class Trigger(object):
+    """Generic Trigger accepted by LUCI Scheduler API.
+
+    All supported triggers are documented here:
+      https://chromium.googlesource.com/infra/luci/luci-go/+/master/scheduler/api/scheduler/v1/triggers.proto
+    """
+    def __init__(self, id=None, title=None, url=None, payload=None):
+      self._id = id
+      self._title = title
+      self._url = url
+      self._payload = payload
+
+    def _serialize(self, api_self):
+      t = {}
+      t['id'] = self._id or api_self._next_uuid()
+      t['title'] = self._title or ('%s/%s' % (
+          api_self.m.properties.get('buildername'),
+          api_self.m.properties.get('buildnumber')))
+      # TODO(tandrii): find a way to get URL of current build.
+      if self._url:
+        t['url'] = self._url
+      t.update(self._serialize_payload(api_self))
+      return t
+
+    def _serialize_payload(self, api_self):
+      return self._payload
+
+
+  class BuildbucketTrigger(Trigger):
+    """Trigger with buildbucket payload for buildbucket jobs.
+
+    Args:
+      properties (dict, optional): key -> value properties.
+      tags (dict, optional): additional tags on top of default ones copied from
+        current build. If tag's value is None, this tag will be removed from
+        resulting tags.
+    """
+    def __init__(self, properties=None, tags=None, **kwargs):
+      super(SchedulerApi.BuildbucketTrigger, self).__init__(**kwargs)
+      self._properties = properties
+      self._tags = tags
+
+    def _serialize_payload(self, api_self):
+      tags = api_self.m.buildbucket.tags_for_child_build.copy()
+      if self._tags:
+        tags.update(self._tags)
+      return {'buildbucket': {
+        'properties': self._properties or {},
+        'tags': map(':'.join, sorted(
+            (k, v) for k, v in tags.iteritems() if v is not None)),
+      }}
+
+
+  class GitilesTrigger(Trigger):
+    """Trigger with new Gitiles commit payload, typically for buildbucket jobs.
+
+    Args:
+      repo (str): URL of a repo that changed.
+      ref (str): a ref that changed, in full, e.g. "refs/heads/master".
+      revision (str): a revision (SHA1 in hex) pointed to by the ref.
+    """
+    def __init__(self, repo, ref, revision, **kwargs):
+      kwargs['payload'] = {'gitiles': {
+        'repo': repo,
+        'ref': ref,
+        'revision': revision,
+      }}
+      super(SchedulerApi.GitilesTrigger, self).__init__(**kwargs)
+
+
   def buildbucket_trigger(
       self, properties=None, tags=None,
       id=None, title=None, url=None):
-    """Returns trigger dict for passing into emit_trigger or emit_triggers."""
-    t = {}
-    t['id'] = id or self._next_uuid()
-    t['title'] = title or ('%s/%s' % (
-        self.m.properties.get('buildername'),
-        self.m.properties.get('buildnumber')))
-    # TODO(tandrii): find a way to get URL of current build.
-    if url:
-      t['url'] = url
-
-    payload_tags = self.m.buildbucket.tags_for_child_build.copy()
-    if tags:
-      payload_tags.update(tags)
-    t['buildbucket'] = {
-      'properties': properties or {},
-      'tags': map(':'.join, sorted(payload_tags.items())),
-    }
-    return t
+    """DEPRECATED. Use BuildbucketTrigger instead."""
+    # TODO(tandrii): remove this once existing callers migrate.
+    return self.BuildbucketTrigger(
+        properties=properties, tags=tags, id=id, title=title, url=url)
 
   def emit_trigger(self, trigger, project, jobs, step_name=None):
     """Emits trigger to one or more jobs of a given project.
 
     Args:
-      trigger (dict): jsonpb dict of Trigger, typically result of
-        api.scheduler.buildbucket_trigger call. For all options, see
-        https://chromium.googlesource.com/infra/luci/luci-go/+/master/scheduler/api/scheduler/v1/triggers.proto
+      trigger (Trigger): defines payload to trigger jobs with.
       project (str): name of the project in LUCI Config service, which is used
         by LUCI Scheduler instance. See https://luci-config.appspot.com/.
       jobs (iterable of str): job names per LUCI Scheduler config for the given
@@ -84,11 +139,10 @@ class SchedulerApi(recipe_api.RecipeApi):
         Useful for idempotency of calls if your recipe is doing its own retries.
         https://chromium.googlesource.com/infra/luci/luci-go/+/master/scheduler/api/scheduler/v1/triggers.proto
     """
-
     req = {
       'batches': [
         {
-          'trigger': trigger,
+          'trigger': trigger._serialize(self),
           'jobs': [{'project': project, 'job': job} for job in jobs],
         }
         for trigger, project, jobs in trigger_project_jobs

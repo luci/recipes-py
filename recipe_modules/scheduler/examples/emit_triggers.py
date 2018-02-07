@@ -29,7 +29,7 @@ def RunSteps(api):
   api.scheduler.emit_triggers(
       [
         (
-          api.scheduler.buildbucket_trigger(
+          api.scheduler.BuildbucketTrigger(
             properties={'some': 'none'},
             tags={'this': 'test'},
           ),
@@ -37,12 +37,24 @@ def RunSteps(api):
           ['job1', 'job2']
         ),
         (
-          {'id': 'id2', 'title': 'custom', 'buildbucket': {
-            'properties': {'some':'one'},
-            'tags': ['any=tag'],
-          }},
+         api.scheduler.Trigger(
+             id='id2', title='custom', payload={'buildbucket': {
+               'properties': {'some':'one'},
+               'tags': ['any=tag'],
+             }},
+         ),
          'proj2',
          ['job3'],
+        ),
+        (
+         api.scheduler.GitilesTrigger(
+             repo='https://chromium.googlesource.com/chromium/src',
+             ref='refs/branch-heads/1235',
+             revision='2d2b87e5f9c872902d8508f6377470a4a6fa87e1',
+             title='advanced gitiles trigger'
+         ),
+         'proj3',
+         ['job1'],
         ),
       ],
       timestamp_usec=int(api.time.time()*1e6),

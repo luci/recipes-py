@@ -1017,24 +1017,22 @@ RPCExplorer available at
 
 A module for interacting with LUCI Scheduler service.
 
-&mdash; **def [buildbucket\_trigger](/recipe_modules/scheduler/api.py#37)(self, properties=None, tags=None, id=None, title=None, url=None):**
+&mdash; **def [buildbucket\_trigger](/recipe_modules/scheduler/api.py#108)(self, properties=None, tags=None, id=None, title=None, url=None):**
 
-Returns trigger dict for passing into emit_trigger or emit_triggers.
+DEPRECATED. Use BuildbucketTrigger instead.
 
-&mdash; **def [emit\_trigger](/recipe_modules/scheduler/api.py#59)(self, trigger, project, jobs, step_name=None):**
+&mdash; **def [emit\_trigger](/recipe_modules/scheduler/api.py#116)(self, trigger, project, jobs, step_name=None):**
 
 Emits trigger to one or more jobs of a given project.
 
 Args:
-  trigger (dict): jsonpb dict of Trigger, typically result of
-    api.scheduler.buildbucket_trigger call. For all options, see
-    https://chromium.googlesource.com/infra/luci/luci-go/+/master/scheduler/api/scheduler/v1/triggers.proto
+  trigger (Trigger): defines payload to trigger jobs with.
   project (str): name of the project in LUCI Config service, which is used
     by LUCI Scheduler instance. See https://luci-config.appspot.com/.
   jobs (iterable of str): job names per LUCI Scheduler config for the given
     project. These typically are the same as builder names.
 
-&mdash; **def [emit\_triggers](/recipe_modules/scheduler/api.py#73)(self, trigger_project_jobs, timestamp_usec=None, step_name=None):**
+&mdash; **def [emit\_triggers](/recipe_modules/scheduler/api.py#128)(self, trigger_project_jobs, timestamp_usec=None, step_name=None):**
 
 Emits a batch of triggers spanning one or more projects.
 
