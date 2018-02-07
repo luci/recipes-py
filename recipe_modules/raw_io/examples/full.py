@@ -96,7 +96,7 @@ def RunSteps(api):
       step_test_data=(
           lambda: api.raw_io.test_api.output(
               'sucess', name='success_log')))
-  assert ('sucess' ==
+  assert (['sucess'] ==
           step_result.presentation.logs['raw_io.output[success_log]'])
 
   # Example of add_output_log on failure
@@ -118,7 +118,7 @@ def RunSteps(api):
     pass # This step is expected to fail.
   finally:
     step_result = api.step.active_result
-    assert ('failure' ==
+    assert (['failure'] ==
             step_result.presentation.logs['raw_io.output[failure_log]'])
 
 

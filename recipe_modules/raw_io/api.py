@@ -114,7 +114,7 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
         self.add_output_log is True or
         (self.add_output_log == 'on_failure' and
          presentation.status != 'SUCCESS')):
-      presentation.logs[self.label] = ret
+      presentation.logs[self.label] = ret.splitlines()
 
     return ret
 
