@@ -105,14 +105,6 @@ class SchedulerApi(recipe_api.RecipeApi):
       super(SchedulerApi.GitilesTrigger, self).__init__(**kwargs)
 
 
-  def buildbucket_trigger(
-      self, properties=None, tags=None,
-      id=None, title=None, url=None):
-    """DEPRECATED. Use BuildbucketTrigger instead."""
-    # TODO(tandrii): remove this once existing callers migrate.
-    return self.BuildbucketTrigger(
-        properties=properties, tags=tags, id=id, title=title, url=url)
-
   def emit_trigger(self, trigger, project, jobs, step_name=None):
     """Emits trigger to one or more jobs of a given project.
 

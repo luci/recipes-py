@@ -17,7 +17,7 @@ def RunSteps(api):
   if api.runtime.is_experimental:
     api.scheduler.set_host('https://luci-scheduler-dev.appspot.com')
   api.scheduler.emit_trigger(
-      api.scheduler.buildbucket_trigger(
+      api.scheduler.BuildbucketTrigger(
         properties={'some': 'none'},
         tags={'this': 'test'},
         url='https://example.com',
