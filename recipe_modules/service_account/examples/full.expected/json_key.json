@@ -1,7 +1,7 @@
 [
   {
     "cmd": [
-      "authutil",
+      "luci-auth",
       "token",
       "-service-account-json",
       "[START_DIR]/key_name.json",

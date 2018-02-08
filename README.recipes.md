@@ -1054,10 +1054,10 @@ Args:
 
 API for getting OAuth2 access tokens for LUCI tasks or private keys.
 
-This is a thin wrapper over the authutil go executable, which itself calls
-https://godoc.org/go.chromium.org/luci/client/authcli
+This is a thin wrapper over the luci-auth go executable (
+https://godoc.org/go.chromium.org/luci/auth/client/cmd/luci-auth).
 
-Depends on authutil to be in PATH.
+Depends on luci-auth to be in PATH.
 
 #### **class [ServiceAccountApi](/recipe_modules/service_account/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
@@ -1067,7 +1067,7 @@ Returns an account associated with the task.
 
 On LUCI, this is default account exposed through LUCI_CONTEXT["local_auth"]
 protocol. When running locally this is an account the user logged in via
-"authutil login ..." command prior to running the recipe.
+"luci-auth login ..." command prior to running the recipe.
 
 &mdash; **def [from\_credentials\_json](/recipe_modules/service_account/api.py#58)(self, key_path):**
 

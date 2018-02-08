@@ -1,7 +1,7 @@
 [
   {
     "cmd": [
-      "authutil.exe",
+      "luci-auth",
       "token",
       "-lifetime",
       "600s"
