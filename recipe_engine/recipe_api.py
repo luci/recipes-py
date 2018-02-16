@@ -473,7 +473,7 @@ class SourceManifestClient(object):
     sha256 = hashlib.sha256(data).digest()
 
     if self._debug_dir:
-      path = os.path.join(self._debug, name)
+      path = os.path.join(self._debug_dir, name)
       with open(path, 'wb') as f:
         f.write(data)
       with open(path+'.sha256', 'wb') as f:
