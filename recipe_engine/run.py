@@ -235,8 +235,15 @@ class RecipeEngine(object):
       if step_result.presentation.status == 'EXCEPTION':
         exc = recipe_api.InfraFailure
 
+      if step_result.retcode <= -100:
+        # Windows error codes such as 0xC0000005 and 0xC0000409 are much
+        # easier to recognize and differentiate in hex. In order to print them
+        # as unsigned hex we need to add 4 Gig to them.
+        error_number = "0x%08X" % (step_result.retcode + (1 << 32))
+      else:
+        error_number = "%d" % step_result.retcode
       self._step_stack[-1].open_step.stream.write_line(
-          'step returned non-zero exit code: %d' % step_result.retcode)
+          'step returned non-zero exit code: %s' % error_number)
 
       raise exc(step_config.name, step_result)
 
