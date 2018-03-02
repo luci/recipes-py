@@ -212,6 +212,11 @@ class RecipeEngine(object):
     Returns:
       A StepData object containing the result of running the step.
     """
+    if '|' in step_config.name:
+      raise ValueError(
+          'Pipe character ("|") cannot be used in a step name. '
+          'It is reserved as a parent-child step separator.')
+
     with util.raises((recipe_api.StepFailure, OSError),
                      self._step_runner.stream_engine):
       step_result = None
