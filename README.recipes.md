@@ -1250,6 +1250,11 @@ Allows mockable access to the current time.
 
 #### **class [TimeApi](/recipe_modules/time/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
+&mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#35)(self):**
+
+Returns current timestamp as an int number of milliseconds since epoch.
+    
+
 &mdash; **def [sleep](/recipe_modules/time/api.py#21)(self, secs):**
 
 Suspend execution of |secs| (float) seconds. Does nothing during
@@ -1259,7 +1264,7 @@ testing.
 
 Return current timestamp as a float number of seconds since epoch.
 
-&mdash; **def [utcnow](/recipe_modules/time/api.py#35)(self):**
+&mdash; **def [utcnow](/recipe_modules/time/api.py#40)(self):**
 
 Return current UTC time as a datetime.datetime.
 ### *recipe_modules* / [url](/recipe_modules/url)
