@@ -15,6 +15,7 @@ def RunSteps(api):
   api.time.sleep(5)
   api.step('echo', ['echo', str(now)])
   assert isinstance(api.time.utcnow(), datetime.datetime)
+  assert isinstance(api.time.ms_since_epoch(), int)
 
 
 def GenTests(api):

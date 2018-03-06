@@ -32,6 +32,11 @@ class TimeApi(recipe_api.RecipeApi):
     else:  # pragma: no cover
       return time.time()
 
+  def ms_since_epoch(self):
+    """Returns current timestamp as an int number of milliseconds since epoch.
+    """
+    return int(round(self.time() * 1000))
+
   def utcnow(self):
     """Return current UTC time as a datetime.datetime."""
     if self._test_data.enabled:
