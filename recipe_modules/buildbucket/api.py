@@ -9,7 +9,18 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 """
 
 from recipe_engine import recipe_api
+from collections import namedtuple
 
+"""A collections.namedtuple identifying a builder configuration.
+
+  Properties:
+    project (str): The project ID.
+    bucket (str): The bucket name without the "luci.{project}." prefix.
+    builder (str): The builder name.
+
+    See `message Builder.ID` at: https://chromium.googlesource.com/infra/infra/+/83f40c82f9c9a176bd89ced280e55b9b9637dd23/appengine/cr-buildbucket/proto/build.proto#206
+"""
+BuilderID = namedtuple('BuilderID', ['project', 'bucket', 'builder'])
 
 class BuildbucketApi(recipe_api.RecipeApi):
   """A module for interacting with buildbucket."""
@@ -70,6 +81,28 @@ class BuildbucketApi(recipe_api.RecipeApi):
       # JSON cannot hold int64 as a number
       id = int(id)
     return id
+
+  @property
+  def builder_id(self):
+    """A BuilderID identifying the current builder configuration.
+
+    Any of the returned Builder's properties is set to None if no information
+    for that property is found.
+    """
+    build_info = (self.properties or {}).get('build', {})
+    project = build_info.get('project')
+    bucket = build_info.get('bucket')
+
+    if bucket:
+      luci_prefix = 'luci.%s.' % project
+      if bucket.startswith(luci_prefix):
+        bucket = bucket[len(luci_prefix):]
+
+    tags = build_info.get('tags', [])
+    tags_dict = dict(t.split(':', 1) for t in tags)
+    builder = tags_dict.get('builder')
+
+    return BuilderID(project=project, bucket=bucket, builder=builder)
 
   @property
   def tags_for_child_build(self):

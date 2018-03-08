@@ -100,11 +100,11 @@ API for interacting with the buildbucket service.
 Depends on 'buildbucket' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 
-#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#14)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#25)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
 A module for interacting with buildbucket.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#59)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#70)(self):**
 
 Returns int64 identifier of the current build.
 
@@ -113,15 +113,22 @@ In practice, it means globally unique.
 
 May return None if it is not a buildbucket build.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#125)(self, build_id, \*\*kwargs):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#85)(self):**
 
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#128)(self, build_id, \*\*kwargs):**
+A BuilderID identifying the current builder configuration.
 
-&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#47)(self):**
+Any of the returned Builder's properties is set to None if no information
+for that property is found.
+
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#158)(self, build_id, \*\*kwargs):**
+
+&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#161)(self, build_id, \*\*kwargs):**
+
+&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#58)(self):**
 
 Returns (dict-like or None): The BuildBucket properties, if present.
 
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#96)(self, builds, \*\*kwargs):**
+&mdash; **def [put](/recipe_modules/buildbucket/api.py#129)(self, builds, \*\*kwargs):**
 
 Puts a batch of builds.
 
@@ -140,19 +147,19 @@ Returns:
   A step that as its .stdout property contains the response object as
   returned by buildbucket.
 
-&mdash; **def [set\_buildbucket\_host](/recipe_modules/buildbucket/api.py#25)(self, host):**
+&mdash; **def [set\_buildbucket\_host](/recipe_modules/buildbucket/api.py#36)(self, host):**
 
 Changes the buildbucket backend hostname used by this module.
 
 Args:
   host (str): buildbucket server host (e.g. 'cr-buildbucket.appspot.com').
 
-&emsp; **@property**<br>&mdash; **def [tags\_for\_child\_build](/recipe_modules/buildbucket/api.py#74)(self):**
+&emsp; **@property**<br>&mdash; **def [tags\_for\_child\_build](/recipe_modules/buildbucket/api.py#107)(self):**
 
 A dict of tags (key -> value) derived from current (parent) build for a
 child build.
 
-&mdash; **def [use\_service\_account\_key](/recipe_modules/buildbucket/api.py#33)(self, key_path):**
+&mdash; **def [use\_service\_account\_key](/recipe_modules/buildbucket/api.py#44)(self, key_path):**
 
 Tells this module to start using given service account key for auth.
 

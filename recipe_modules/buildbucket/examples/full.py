@@ -17,6 +17,11 @@ def RunSteps(api):
   if api.buildbucket.properties is None:
     return
 
+  builder_id = api.buildbucket.builder_id
+  assert builder_id.project in ['test-project', None]
+  assert builder_id.bucket in ['test-bucket', None]
+  assert builder_id.builder in ['test-builder', None]
+
   # Note: this is not needed when running on LUCI. Buildbucket will use the
   # default account associated with the task.
   api.buildbucket.use_service_account_key('some-fake-key.json')
@@ -122,8 +127,12 @@ def GenTests(api):
              'buildbucket.get',
              stdout=api.raw_io.output_text(mock_buildbucket_single_response)) +
          api.properties(
-             buildbucket={'build': {'tags': [
-                 'buildset:patch/rietveld/cr.chromium.org/123/10001']}}))
+             buildbucket={'build': {
+               'project': 'test-project',
+               'bucket': 'luci.test-project.test-bucket',
+               'tags': [
+                 'buildset:patch/rietveld/cr.chromium.org/123/10001',
+                 'builder:test-builder']}}))
   yield (api.test('basic_win') +
          api.step_data(
              'buildbucket.put',
