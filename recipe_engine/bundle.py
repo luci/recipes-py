@@ -24,8 +24,6 @@ Some things that we'd want to do to make this better:
     * prune down to ONLY the modules which are required to run those particular
       recipes.
     * this may be more trouble than it's worth
-  * Support symlinks (maybe)
-    * gitattributes covers this pretty nicely
 
 Included files
 
@@ -125,7 +123,7 @@ def export_package(pkg, destination):
   def ignore_fn(base, items):
     return set(items) - copy_map[base]
 
-  shutil.copytree(pkg.repo_root, bundle_dst, symlinks=True, ignore=ignore_fn)
+  shutil.copytree(pkg.repo_root, bundle_dst, ignore=ignore_fn)
 
 
 TEMPLATE_SH = u"""#!/usr/bin/env bash
