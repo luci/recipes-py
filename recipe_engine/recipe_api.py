@@ -815,7 +815,7 @@ def defer_results():
 
   Any exceptions which were thrown during execution will be thrown when either:
     a. You call get_result() on the step's result.
-    b. You exit the suite inside of the with statement
+    b. You exit the lexical scope inside of the with statement
 
   Example:
     with defer_results():
@@ -828,7 +828,7 @@ def defer_results():
   If 'im a composite step' fails, then the get_result() call will raise
     an exception.
   If you don't try to use the result (don't call get_result()), an aggregate
-    failure will still be raised once you exit the suite inside
+    failure will still be raised once you exit the lexical scope inside
     the with statement.
   """
   assert _DEFER_CONTEXT.aggregated_result is None, (
