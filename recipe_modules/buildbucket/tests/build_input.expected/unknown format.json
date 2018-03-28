@@ -1,0 +1,16 @@
+[
+  {
+    "cmd": [
+      "dummy"
+    ],
+    "name": "build_id",
+    "~followup_annotations": [
+      "@@@SET_BUILD_PROPERTY@result@{\"build_input\": [[], []]}@@@"
+    ]
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

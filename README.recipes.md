@@ -25,6 +25,7 @@
 **[Recipes](#Recipes)**
   * [buildbucket:examples/full](#recipes-buildbucket_examples_full) &mdash; This file is a recipe demonstrating the buildbucket recipe module.
   * [buildbucket:tests/build_id](#recipes-buildbucket_tests_build_id)
+  * [buildbucket:tests/build_input](#recipes-buildbucket_tests_build_input)
   * [buildbucket:tests/get](#recipes-buildbucket_tests_get)
   * [buildbucket:tests/properties](#recipes-buildbucket_tests_properties)
   * [buildbucket:tests/put](#recipes-buildbucket_tests_put)
@@ -100,11 +101,11 @@ API for interacting with the buildbucket service.
 Depends on 'buildbucket' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 
-#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#25)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#97)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
 A module for interacting with buildbucket.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#70)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#164)(self):**
 
 Returns int64 identifier of the current build.
 
@@ -113,22 +114,24 @@ In practice, it means globally unique.
 
 May return None if it is not a buildbucket build.
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#85)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#152)(self):**
+
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#179)(self):**
 
 A BuilderID identifying the current builder configuration.
 
 Any of the returned Builder's properties is set to None if no information
 for that property is found.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#158)(self, build_id, \*\*kwargs):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#250)(self, build_id, \*\*kwargs):**
 
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#161)(self, build_id, \*\*kwargs):**
+&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#253)(self, build_id, \*\*kwargs):**
 
-&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#58)(self):**
+&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#131)(self):**
 
 Returns (dict-like or None): The BuildBucket properties, if present.
 
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#129)(self, builds, \*\*kwargs):**
+&mdash; **def [put](/recipe_modules/buildbucket/api.py#221)(self, builds, \*\*kwargs):**
 
 Puts a batch of builds.
 
@@ -147,19 +150,19 @@ Returns:
   A step that as its .stdout property contains the response object as
   returned by buildbucket.
 
-&mdash; **def [set\_buildbucket\_host](/recipe_modules/buildbucket/api.py#36)(self, host):**
+&mdash; **def [set\_buildbucket\_host](/recipe_modules/buildbucket/api.py#109)(self, host):**
 
 Changes the buildbucket backend hostname used by this module.
 
 Args:
   host (str): buildbucket server host (e.g. 'cr-buildbucket.appspot.com').
 
-&emsp; **@property**<br>&mdash; **def [tags\_for\_child\_build](/recipe_modules/buildbucket/api.py#107)(self):**
+&emsp; **@property**<br>&mdash; **def [tags\_for\_child\_build](/recipe_modules/buildbucket/api.py#200)(self):**
 
 A dict of tags (key -> value) derived from current (parent) build for a
 child build.
 
-&mdash; **def [use\_service\_account\_key](/recipe_modules/buildbucket/api.py#44)(self, key_path):**
+&mdash; **def [use\_service\_account\_key](/recipe_modules/buildbucket/api.py#117)(self, key_path):**
 
 Tells this module to start using given service account key for auth.
 
@@ -1395,6 +1398,11 @@ This file is a recipe demonstrating the buildbucket recipe module.
 [DEPS](/recipe_modules/buildbucket/tests/build_id.py#5): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/build_id.py#12)(api):**
+### *recipes* / [buildbucket:tests/build\_input](/recipe_modules/buildbucket/tests/build_input.py)
+
+[DEPS](/recipe_modules/buildbucket/tests/build_input.py#5): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/build_input.py#12)(api):**
 ### *recipes* / [buildbucket:tests/get](/recipe_modules/buildbucket/tests/get.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/get.py#5): [buildbucket](#recipe_modules-buildbucket)

@@ -8,19 +8,91 @@ Depends on 'buildbucket' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 """
 
+import collections
+import re
+
 from recipe_engine import recipe_api
-from collections import namedtuple
 
 """A collections.namedtuple identifying a builder configuration.
 
-  Properties:
-    project (str): The project ID.
-    bucket (str): The bucket name without the "luci.{project}." prefix.
-    builder (str): The builder name.
-
-    See `message Builder.ID` at: https://chromium.googlesource.com/infra/infra/+/83f40c82f9c9a176bd89ced280e55b9b9637dd23/appengine/cr-buildbucket/proto/build.proto#206
+See `message Builder.ID` at: https://chromium.googlesource.com/infra/infra/+/83f40c82f9c9a176bd89ced280e55b9b9637dd23/appengine/cr-buildbucket/proto/build.proto#206
 """
-BuilderID = namedtuple('BuilderID', ['project', 'bucket', 'builder'])
+BuilderID = collections.namedtuple('BuilderID', [
+  # Project ID, e.g. "chromium". Unique within a LUCI deployment.
+  'project',
+  # Bucket name, e.g. "try". Unique within the project.
+  # Together with project, defines an ACL.
+  'bucket',
+  # Builder name, e.g. "linux-rel". Unique within the bucket.
+  'builder',
+])
+
+
+# A Gerrit patchset.
+# Subset of GerritChange message in
+# https://chromium.googlesource.com/infra/infra/+/331dbdf84ea76d9d974395bf731ca53ab886ed58/appengine/cr-buildbucket/proto/common.proto#28
+GerritChange = collections.namedtuple('GerritChange', [
+  # Gerrit hostname, e.g. "chromium-review.googlesource.com".
+  'host',
+  # Change number, e.g. 12345.
+  'change',
+  # Patch set number, e.g. 1.
+  'patchset',
+])
+
+
+# A Gitiles commit.
+# Subset GitilesCommit message in
+# https://chromium.googlesource.com/infra/infra/+/331dbdf84ea76d9d974395bf731ca53ab886ed58/appengine/cr-buildbucket/proto/common.proto#40
+GitilesCommit = collections.namedtuple('GitilesCommit', [
+  # Gitiles hostname, e.g. "chromium.googlesource.com".
+  'host',
+  # Repository name on the host, e.g. "chromium/src".
+  'project',
+  # Commit HEX SHA1.
+  'id',
+])
+
+
+def _parse_build_set(bs_string):
+  """Parses a buildset string to GerritChange or GitilesCommit.
+
+  A port of
+  https://chromium.googlesource.com/infra/luci/luci-go/+/fe4e304639d11ca00537768f8bfbf20ffecf73e6/buildbucket/buildset.go#105
+  """
+  assert isinstance(bs_string, basestring)
+  p = bs_string.split('/')
+  if '' in p:
+    return None
+
+  n = len(p)
+
+  if n == 5 and p[0] == 'patch' and p[1] == 'gerrit':
+    return GerritChange(
+        host=p[2],
+        change=int(p[3]),
+        patchset=int(p[4])
+    )
+
+  if n >= 5 and p[0] == 'commit' and p[1] == 'gitiles':
+    if p[n-2] != '+' or not re.match('^[0-9a-f]{40}$', p[n-1]):
+      return None
+    return GitilesCommit(
+        host=p[2],
+        project='/'.join(p[3:n-2]), # exclude plus
+        id=p[n-1],
+    )
+
+  return None
+
+
+# Defines what to build/test.
+# A subset of Build.Input message in
+# https://chromium.googlesource.com/infra/infra/+/331dbdf84ea76d9d974395bf731ca53ab886ed58/appengine/cr-buildbucket/proto/build.proto#27
+# See its comments for documentation.
+BuildInput = collections.namedtuple(
+    'BuildInput', ['gitiles_commits', 'gerrit_changes'])
+
 
 class BuildbucketApi(recipe_api.RecipeApi):
   """A module for interacting with buildbucket."""
@@ -32,6 +104,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     self._properties = None
     self._service_account_key = None
     self._host = 'cr-buildbucket.appspot.com'
+    self._build_input = None
 
   def set_buildbucket_host(self, host):
     """Changes the buildbucket backend hostname used by this module.
@@ -68,6 +141,27 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return self._properties
 
   @property
+  def _tags(self):
+    return (self.properties or {}).get('build', {}).get('tags', [])
+
+  @property
+  def _build_sets(self):
+    prefix = 'buildset:'
+    return [t[len(prefix):] for t in self._tags if t.startswith(prefix)]
+
+  @property
+  def build_input(self):
+    if self._build_input is None:
+      build_sets = filter(None, map(_parse_build_set, self._build_sets))
+      self._build_input = BuildInput(
+          gitiles_commits=
+              [bs for bs in build_sets if isinstance(bs, GitilesCommit)],
+          gerrit_changes=
+              [bs for bs in build_sets if isinstance(bs, GerritChange)],
+      )
+    return self._build_input
+
+  @property
   def build_id(self):
     """Returns int64 identifier of the current build.
 
@@ -98,8 +192,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       if bucket.startswith(luci_prefix):
         bucket = bucket[len(luci_prefix):]
 
-    tags = build_info.get('tags', [])
-    tags_dict = dict(t.split(':', 1) for t in tags)
+    tags_dict = dict(t.split(':', 1) for t in self._tags)
     builder = tags_dict.get('builder')
 
     return BuilderID(project=project, bucket=bucket, builder=builder)
@@ -109,9 +202,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """A dict of tags (key -> value) derived from current (parent) build for a
     child build."""
     buildbucket_info = self.properties or {}
-    original_tags_list = buildbucket_info.get('build', {}).get('tags', [])
 
-    original_tags = dict(t.split(':', 1) for t in original_tags_list)
+    original_tags = dict(t.split(':', 1) for t in self._tags)
     new_tags = {'user_agent': 'recipe'}
 
     for tag in ['buildset', 'gitiles_ref']:
