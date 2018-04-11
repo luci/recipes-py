@@ -10,6 +10,7 @@ from recipe_engine import util as recipe_util
 
 import os
 import shutil
+import sys
 import tempfile
 
 
@@ -178,7 +179,13 @@ class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
         return all_files
       finally:
         if not self.leak_to:
-          shutil.rmtree(self._backing_dir)
+          to_nuke = self._backing_dir
+          # On windows, some paths underneath _backing_dir exceed MAX_PATH. Work
+          # around this by prepending the UNC magic prefix '\\?\' which allows
+          # the windows API file calls to ignore the MAX_PATH limit.
+          if sys.platform == 'win32':
+            to_nuke = ur'\\?\%s' % (to_nuke,)
+          shutil.rmtree(to_nuke)
         self._backing_dir = None
 
 
