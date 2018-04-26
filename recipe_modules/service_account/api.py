@@ -26,18 +26,18 @@ class ServiceAccountApi(recipe_api.RecipeApi):
       self._title = title
       self._key_path = key_path   # or None to use default LUCI account
 
-    def get_access_token(self, scopes=None, lifetime_sec=None):
+    def get_access_token(self, scopes=None):
       """Returns an access token for this service account.
+
+      Token's lifetime is guaranteed to be at least 3 minutes and at most 45.
 
       Args:
         scopes: list of OAuth scopes for new token, default is [userinfo.email].
-        lifetime_sec: minimum allowed lifetime of the returned token (the token
-            may live longer). Should be under 45m. Default is 10m.
       """
       extra_args = []
       if self._key_path:
         extra_args = ['-service-account-json', self._key_path]
-      return self._api._get_token(self._title, extra_args, scopes, lifetime_sec)
+      return self._api._get_token(self._title, extra_args, scopes)
 
     def get_email(self):
       """Returns the service account email."""
@@ -67,14 +67,16 @@ class ServiceAccountApi(recipe_api.RecipeApi):
     return self.ServiceAccount(self, self.m.path.split(key_path)[1], key_path)
 
 
-  def _get_token(self, title, extra_args, scopes, lifetime_sec):
+  def _get_token(self, title, extra_args, scopes):
     cmd = ['luci-auth', 'token'] + extra_args
     if scopes:
       cmd += ['-scopes', ' '.join(sorted(scopes))]
-    cmd += ['-lifetime',  '%ds' % (lifetime_sec or 600)]
+    # Due to Swarming, 5 min is the hard upper limit.
+    cmd += ['-lifetime', '3m']
     step_result = self.m.step(
         'get access token for %s' % title,
         cmd,
+        infra_step=True,
         stdout=self.m.raw_io.output_text(),
         step_test_data=lambda: self.m.raw_io.test_api.stream_output(
             'extra.secret.token.should.not.be.logged', stream='stdout'))

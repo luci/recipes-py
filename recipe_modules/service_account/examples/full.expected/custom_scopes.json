@@ -6,8 +6,9 @@
       "-scopes",
       "A B",
       "-lifetime",
-      "300s"
+      "3m"
     ],
+    "infra_step": true,
     "name": "get access token for default account",
     "stdout": "/path/to/tmp/"
   },

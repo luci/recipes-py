@@ -15,24 +15,22 @@ DEPS = [
 PROPERTIES = {
   'key_path': Property(),
   'scopes': Property(),
-  'lifetime_sec': Property(),
 }
 
 
-def RunSteps(api, key_path, scopes, lifetime_sec):
+def RunSteps(api, key_path, scopes):
   if key_path:
     account = api.service_account.from_credentials_json(key_path)
   else:
     account = api.service_account.default()
-  account.get_access_token(scopes, lifetime_sec)
+  account.get_access_token(scopes)
 
 
 def GenTests(api):
-  def props(key_path=None, scopes=None, lifetime_sec=None):
+  def props(key_path=None, scopes=None):
     return api.properties.generic(
         key_path=key_path,
-        scopes=scopes,
-        lifetime_sec=lifetime_sec)
+        scopes=scopes)
 
   yield (
       api.test('default') +
@@ -47,9 +45,9 @@ def GenTests(api):
       api.platform('linux', 64) +
       props(key_path=api.path['start_dir'].join('key_name.json')))
   yield (
-      api.test('custom_scopes_and_lifetime') +
+      api.test('custom_scopes') +
       api.platform('linux', 64) +
-      props(scopes=['B', 'A'], lifetime_sec=300))
+      props(scopes=['B', 'A']))
   yield (
       api.test('no_authutil') +
       api.platform('linux', 64) +

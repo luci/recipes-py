@@ -6,8 +6,9 @@
       "-service-account-json",
       "[START_DIR]/key_name.json",
       "-lifetime",
-      "600s"
+      "3m"
     ],
+    "infra_step": true,
     "name": "get access token for key_name.json",
     "stdout": "/path/to/tmp/"
   },

@@ -206,7 +206,7 @@ Args:
     platform default ('copy' on windows, 'symlink' on everything else).
 
 Returns:
-  The self.Pin instance.
+  The CIPDApi.Pin instance.
 
 &mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#241)(self, pkg_def, output_package):**
 
@@ -218,7 +218,7 @@ Args:
   output_package (Path) - The file to write the package to.
 
 Returns:
-  The self.Pin instance.
+  The CIPDApi.Pin instance.
 
 &mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#224)(self, pkg_def, output_package):**
 
@@ -229,7 +229,7 @@ Args:
   output_package (Path) - The file to write the package to.
 
 Returns:
-  The self.Pin instance.
+  The CIPDApi.Pin instance.
 
 &mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#361)(self, pkg_def, refs=(), tags={}):**
 
@@ -245,7 +245,7 @@ Args:
                           instance.
 
 Returns:
-  The self.Pin instance.
+  The CIPDApi.Pin instance.
 
 &mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#343)(self, pkg_def, refs=(), tags={}):**
 
@@ -261,7 +261,7 @@ Args:
                           instance.
 
 Returns:
-  The self.Pin instance.
+  The CIPDApi.Pin instance.
 
 &mdash; **def [describe](/recipe_modules/cipd/api.py#488)(self, package_name, version, test_data_refs=(), test_data_tags={}):**
 
@@ -273,7 +273,7 @@ Args:
   version (str) - The package version to point the ref to.
 
 Returns:
-  The Description instance describing the package.
+  The CIPDApi.Description instance describing the package.
 
 &mdash; **def [ensure](/recipe_modules/cipd/api.py#380)(self, root, packages):**
 
@@ -284,7 +284,7 @@ packages must be a mapping from package name to its version, where
   * version could be either instance_id, or ref, or unique tag.
 
 Returns:
-  The list of self.Pin instances.
+  The list of CIPDApi.Pin instances.
 
 &emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#196)(self):**
 
@@ -300,7 +300,7 @@ Args:
                           instance.
 
 Returns:
-  The self.Pin instance.
+  The CIPDApi.Pin instance.
 
 &mdash; **def [search](/recipe_modules/cipd/api.py#462)(self, package_name, tag):**
 
@@ -309,10 +309,10 @@ name.
 
 Args:
   package_name (str) - The name of the cipd package.
-  tag (str)) - The cipd package tag.
+  tag (str) - The cipd package tag.
 
 Returns:
-  The list of self.Pin.
+  The list of CIPDApi.Pin instances.
 
 &mdash; **def [set\_ref](/recipe_modules/cipd/api.py#434)(self, package_name, version, refs):**
 
@@ -324,7 +324,7 @@ Args:
   refs (list(str)) - A list of ref names to set for the package instance.
 
 Returns:
-  The self.Pin instance.
+  The CIPDApi.Pin instance.
 
 &mdash; **def [set\_tag](/recipe_modules/cipd/api.py#404)(self, package_name, version, tags):**
 
@@ -338,7 +338,7 @@ Args:
                           instance.
 
 Returns:
-  The self.Pin instance.
+  The CIPDApi.Pin instance.
 ### *recipe_modules* / [context](/recipe_modules/context)
 
 [DEPS](/recipe_modules/context/__init__.py#5): [path](#recipe_modules-path)
@@ -1087,9 +1087,9 @@ Runs a succeeding step (exits 0).
 
 Provides objects for reading and writing raw data to and from steps.
 
-#### **class [RawIOApi](/recipe_modules/raw_io/api.py#185)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [RawIOApi](/recipe_modules/raw_io/api.py#192)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#186)(data, suffix=''):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#193)(data, suffix=''):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -1104,7 +1104,7 @@ tempfile.mkstemp.
 
 See examples/full.py for usage example.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#204)(data, suffix=''):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#211)(data, suffix=''):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -1114,7 +1114,7 @@ expected to have valid utf-8 data in it.
 Similar to input(), but ensures that 'data' is valid utf-8 text. Any
 non-utf-8 characters will be replaced with �.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#217)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#224)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -1130,7 +1130,7 @@ Args:
      to a step link named `name`. If this is 'on_failure', only create this
      log when the step has a non-SUCCESS status.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#249)(suffix='', leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#256)(suffix='', leak_to=None, name=None):**
 
 Returns a directory Placeholder for use as a step argument.
 
@@ -1141,7 +1141,7 @@ If 'leak_to' is not None, then it should be a Path and placeholder
 redirects IO to a dir at that path. Once step finishes, the dir is
 NOT deleted (i.e. it's 'leaking'). 'suffix' is ignored in that case.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#237)(suffix='', leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#244)(suffix='', leak_to=None, name=None):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -1236,7 +1236,7 @@ Depends on luci-auth to be in PATH.
 
 #### **class [ServiceAccountApi](/recipe_modules/service_account/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
-&mdash; **def [default](/recipe_modules/service_account/api.py#49)(self):**
+&mdash; **def [default](/recipe_modules/service_account/api.py#50)(self):**
 
 Returns an account associated with the task.
 
@@ -1244,7 +1244,7 @@ On LUCI, this is default account exposed through LUCI_CONTEXT["local_auth"]
 protocol. When running locally this is an account the user logged in via
 "luci-auth login ..." command prior to running the recipe.
 
-&mdash; **def [from\_credentials\_json](/recipe_modules/service_account/api.py#58)(self, key_path):**
+&mdash; **def [from\_credentials\_json](/recipe_modules/service_account/api.py#59)(self, key_path):**
 
 Returns a service account based on a JSON credentials file.
 
@@ -1845,7 +1845,7 @@ This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
 
 [DEPS](/recipe_modules/service_account/examples/full.py#7): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account)
 
-&mdash; **def [RunSteps](/recipe_modules/service_account/examples/full.py#22)(api, key_path, scopes, lifetime_sec):**
+&mdash; **def [RunSteps](/recipe_modules/service_account/examples/full.py#21)(api, key_path, scopes):**
 ### *recipes* / [source\_manifest:examples/simple](/recipe_modules/source_manifest/examples/simple.py)
 
 [DEPS](/recipe_modules/source_manifest/examples/simple.py#6): [python](#recipe_modules-python), [source\_manifest](#recipe_modules-source_manifest)

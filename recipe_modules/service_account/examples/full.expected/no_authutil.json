@@ -4,18 +4,19 @@
       "luci-auth",
       "token",
       "-lifetime",
-      "600s"
+      "3m"
     ],
+    "infra_step": true,
     "name": "get access token for default account",
     "stdout": "/path/to/tmp/",
     "~followup_annotations": [
       "step returned non-zero exit code: 1",
-      "@@@STEP_FAILURE@@@"
+      "@@@STEP_EXCEPTION@@@"
     ]
   },
   {
     "name": "$result",
-    "reason": "Step('get access token for default account') failed with return_code 1",
+    "reason": "Infra Failure: Step('get access token for default account') returned 1",
     "recipe_result": null,
     "status_code": 1
   }
