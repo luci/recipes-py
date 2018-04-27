@@ -174,6 +174,8 @@ class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
           for filename in files:
             abs_path = os.path.join(dir_path, filename)
             rel_path = os.path.relpath(abs_path, self._backing_dir)
+            if sys.platform == 'win32':
+              abs_path = ur'\\?\%s' % (abs_path,)
             with open(abs_path, 'rb') as f:
               all_files[rel_path] = f.read()
         return all_files
