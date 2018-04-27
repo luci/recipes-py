@@ -47,6 +47,9 @@ def RunSteps(api):
   temp_dir = api.path.mkdtemp('kawaab')
   assert api.path.exists(temp_dir)
 
+  temp_file = api.path.mkstemp('kawaac')
+  assert api.path.exists(temp_file)
+
   file_path = api.path['tmp_base'].join('new_file')
   abspath = api.path.abspath(file_path)
   api.path.assert_absolute(abspath)

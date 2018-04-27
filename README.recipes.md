@@ -854,12 +854,12 @@ documentation.
 
 #### **class [PathApi](/recipe_modules/path/api.py#197)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
-&mdash; **def [\_\_getitem\_\_](/recipe_modules/path/api.py#422)(self, name):**
+&mdash; **def [\_\_getitem\_\_](/recipe_modules/path/api.py#440)(self, name):**
 
 Gets the base path named `name`. See module docstring for more
 information.
 
-&mdash; **def [abs\_to\_path](/recipe_modules/path/api.py#352)(self, abs_string_path):**
+&mdash; **def [abs\_to\_path](/recipe_modules/path/api.py#370)(self, abs_string_path):**
 
 Converts an absolute path string `string_path` to a real Path object,
 using the most appropriate known base path.
@@ -892,7 +892,7 @@ Raises AssertionError if the given path is not an absolute path.
 Args:
   * path (Path|str) - The path to check.
 
-&mdash; **def [get](/recipe_modules/path/api.py#415)(self, name, default=None):**
+&mdash; **def [get](/recipe_modules/path/api.py#433)(self, name, default=None):**
 
 Gets the base path named `name`. See module docstring for more
 information.
@@ -908,6 +908,10 @@ Internal recipe implementation function.
 &mdash; **def [mkdtemp](/recipe_modules/path/api.py#335)(self, prefix):**
 
 Makes a new temporary directory, returns Path to it.
+
+&mdash; **def [mkstemp](/recipe_modules/path/api.py#352)(self, prefix):**
+
+Makes a new temporary file, returns Path to it.
 
 &mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#306)(self, path):**
 
@@ -1236,7 +1240,7 @@ Depends on luci-auth to be in PATH.
 
 #### **class [ServiceAccountApi](/recipe_modules/service_account/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
-&mdash; **def [default](/recipe_modules/service_account/api.py#50)(self):**
+&mdash; **def [default](/recipe_modules/service_account/api.py#49)(self):**
 
 Returns an account associated with the task.
 
@@ -1244,7 +1248,7 @@ On LUCI, this is default account exposed through LUCI_CONTEXT["local_auth"]
 protocol. When running locally this is an account the user logged in via
 "luci-auth login ..." command prior to running the recipe.
 
-&mdash; **def [from\_credentials\_json](/recipe_modules/service_account/api.py#59)(self, key_path):**
+&mdash; **def [from\_credentials\_json](/recipe_modules/service_account/api.py#58)(self, key_path):**
 
 Returns a service account based on a JSON credentials file.
 

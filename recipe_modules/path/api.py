@@ -349,6 +349,24 @@ class PathApi(recipe_api.RecipeApi):
     self.mock_add_paths(temp_dir)
     return temp_dir
 
+  def mkstemp(self, prefix):
+    """Makes a new temporary file, returns Path to it."""
+    if not self._test_data.enabled:  # pragma: no cover
+      # New path as str.
+      fd, new_path = tempfile.mkstemp(prefix=prefix, dir=str(self['tmp_base']))
+      # Ensure it's under self._temp_dir, convert to Path.
+      new_path = self._split_path(new_path)
+      assert new_path[:len(self._temp_dir)] == self._temp_dir
+      temp_file = self['tmp_base'].join(*new_path[len(self._temp_dir):])
+      os.close(fd)
+    else:
+      self._test_counter += 1
+      assert isinstance(prefix, basestring)
+      temp_file = self['tmp_base'].join(
+          '%s_tmp_%d' % (prefix, self._test_counter))
+    self.mock_add_paths(temp_file)
+    return temp_file
+
   def abs_to_path(self, abs_string_path):
     """Converts an absolute path string `string_path` to a real Path object,
     using the most appropriate known base path.
