@@ -187,7 +187,8 @@ class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
           # the windows API file calls to ignore the MAX_PATH limit.
           if sys.platform == 'win32':
             to_nuke = ur'\\?\%s' % (to_nuke,)
-          shutil.rmtree(to_nuke)
+          if os.path.exists(to_nuke):
+            shutil.rmtree(to_nuke)
         self._backing_dir = None
 
 
