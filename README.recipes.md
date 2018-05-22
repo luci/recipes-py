@@ -21,6 +21,7 @@
   * [step](#recipe_modules-step) &mdash; Step is the primary API for running steps (external programs, scripts, etc.
   * [tempfile](#recipe_modules-tempfile) &mdash; Simplistic temporary directory manager (deprecated).
   * [time](#recipe_modules-time) &mdash; Allows mockable access to the current time.
+  * [tricium](#recipe_modules-tricium) &mdash; API for Tricium analyzers to use.
   * [url](#recipe_modules-url) &mdash; Methods for interacting with HTTP(s) URLs.
 
 **[Recipes](#Recipes)**
@@ -89,6 +90,7 @@
   * [step:tests/trigger](#recipes-step_tests_trigger)
   * [tempfile:examples/full](#recipes-tempfile_examples_full)
   * [time:examples/full](#recipes-time_examples_full)
+  * [tricium:examples/full](#recipes-tricium_examples_full)
   * [url:examples/full](#recipes-url_examples_full)
   * [url:tests/join](#recipes-url_tests_join)
   * [url:tests/validate_url](#recipes-url_tests_validate_url)
@@ -1091,9 +1093,9 @@ Runs a succeeding step (exits 0).
 
 Provides objects for reading and writing raw data to and from steps.
 
-#### **class [RawIOApi](/recipe_modules/raw_io/api.py#192)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [RawIOApi](/recipe_modules/raw_io/api.py#195)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#193)(data, suffix=''):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#196)(data, suffix=''):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -1108,7 +1110,7 @@ tempfile.mkstemp.
 
 See examples/full.py for usage example.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#211)(data, suffix=''):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#214)(data, suffix=''):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -1118,7 +1120,7 @@ expected to have valid utf-8 data in it.
 Similar to input(), but ensures that 'data' is valid utf-8 text. Any
 non-utf-8 characters will be replaced with �.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#224)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#227)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -1134,7 +1136,7 @@ Args:
      to a step link named `name`. If this is 'on_failure', only create this
      log when the step has a non-SUCCESS status.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#256)(suffix='', leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#259)(suffix='', leak_to=None, name=None):**
 
 Returns a directory Placeholder for use as a step argument.
 
@@ -1145,7 +1147,7 @@ If 'leak_to' is not None, then it should be a Path and placeholder
 redirects IO to a dir at that path. Once step finishes, the dir is
 NOT deleted (i.e. it's 'leaking'). 'suffix' is ignored in that case.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#244)(suffix='', leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#247)(suffix='', leak_to=None, name=None):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -1446,6 +1448,30 @@ Return current timestamp as a float number of seconds since epoch.
 &mdash; **def [utcnow](/recipe_modules/time/api.py#40)(self):**
 
 Return current UTC time as a datetime.datetime.
+### *recipe_modules* / [tricium](/recipe_modules/tricium)
+
+[DEPS](/recipe_modules/tricium/__init__.py#5): [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+API for Tricium analyzers to use.
+
+#### **class [TriciumApi](/recipe_modules/tricium/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+
+TriciumApi provides basic support for Tricium.
+
+&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#16)(self, repository, ref, paths, \*\*kwargs):**
+
+Sets up the API.
+
+This assumes that the input is a Tricium GitFileDetails
+object, and the output is a Tricium Results object (see
+https://chromium.googlesource.com/infra/infra/+/master/go/src/infra/tricium/api/v1/data.proto
+for details and definitions).
+
+&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#34)(self, category, message, path, url='', start_line=0, end_line=0, start_char=0, end_char=0, suggestions=None):**
+
+&emsp; **@property**<br>&mdash; **def [paths](/recipe_modules/tricium/api.py#30)(self):**
+
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#58)(self):**
 ### *recipe_modules* / [url](/recipe_modules/url)
 
 [DEPS](/recipe_modules/url/__init__.py#5): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io)
@@ -1915,6 +1941,11 @@ This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
 [DEPS](/recipe_modules/time/examples/full.py#7): [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 &mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#13)(api):**
+### *recipes* / [tricium:examples/full](/recipe_modules/tricium/examples/full.py)
+
+[DEPS](/recipe_modules/tricium/examples/full.py#5): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
+
+&mdash; **def [RunSteps](/recipe_modules/tricium/examples/full.py#11)(api):**
 ### *recipes* / [url:examples/full](/recipe_modules/url/examples/full.py)
 
 [DEPS](/recipe_modules/url/examples/full.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step), [url](#recipe_modules-url)
