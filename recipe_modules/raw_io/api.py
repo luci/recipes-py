@@ -181,15 +181,42 @@ class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
         return all_files
       finally:
         if not self.leak_to:
-          to_nuke = self._backing_dir
-          # On windows, some paths underneath _backing_dir exceed MAX_PATH. Work
-          # around this by prepending the UNC magic prefix '\\?\' which allows
-          # the windows API file calls to ignore the MAX_PATH limit.
-          if sys.platform == 'win32':
-            to_nuke = ur'\\?\%s' % (to_nuke,)
-          if os.path.exists(to_nuke):
-            shutil.rmtree(to_nuke)
+          self._rmtree(self._backing_dir)
         self._backing_dir = None
+
+  @staticmethod
+  def _rmtree(d):  # pragma: no cover
+    """Deletes a directory without throwing."""
+    if not os.path.exists(d):
+      return
+
+    if sys.platform == 'win32':
+      # Tested manually.
+      def unset_ro_and_remove_again(fn, p, excinfo):
+        """Removes file even if it has the READ_ONLY file attribute.
+
+        On Windows, a file with the READ_ONLY file attribute cannot be deleted.
+        This is different than on POSIX where only the containing directory ACL
+        matters.
+
+        shutil.rmtree() has trouble with this. Helps it a bit.
+        """
+        # fn is one of islink, listdir, remove or rmdir.
+        if fn is os.remove:
+          # Try to remove the read-only bit.
+          os.chmod(p, 0777)
+          # And remove again.
+          os.remove(p)
+          return
+        # Reraise the original exception.
+        raise excinfo[0], excinfo[1], excinfo[2]
+
+      # On Windows, some paths exceed MAX_PATH. Work around this by prepending
+      # the UNC magic prefix '\\?\' which allows the Windows API file calls to
+      # ignore the MAX_PATH limit.
+      shutil.rmtree(ur'\\?\%s' % (d,), onerror=unset_ro_and_remove_again)
+    else:
+      shutil.rmtree(d)
 
 
 class RawIOApi(recipe_api.RecipeApi):
