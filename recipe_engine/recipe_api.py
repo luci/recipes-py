@@ -28,6 +28,13 @@ from libs.logdog import streamname
 from libs.logdog.bootstrap import ButlerBootstrap, NotBootstrappedError
 
 
+# The source manifest ContentType.
+#
+# This must match the ContentType for the source manifest binary protobuf, which
+# is specified in "<luci-go>/common/proto/milo/util.go".
+SOURCE_MANIFEST_CONTENT_TYPE = 'text/x-chrome-infra-source-manifest; version=1'
+
+
 class UnknownRequirementError(object):
   """Raised by a requirement function when the referenced requirement is
   unknown.
@@ -480,7 +487,9 @@ class SourceManifestClient(object):
         f.write(sha256)
     elif self._prod:
       logdog_name = '/'.join(['source_manifest', name])
-      with self._logdog_client.binary(logdog_name) as bs:
+      with self._logdog_client.binary(
+          name=logdog_name,
+          content_type=SOURCE_MANIFEST_CONTENT_TYPE) as bs:
         bs.write(data)
       host = self._logdog_client.coordinator_host
       project = self._logdog_client.project
