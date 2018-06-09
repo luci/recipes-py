@@ -91,7 +91,7 @@ def _parse_build_set(bs_string):
 # https://chromium.googlesource.com/infra/infra/+/331dbdf84ea76d9d974395bf731ca53ab886ed58/appengine/cr-buildbucket/proto/build.proto#27
 # See its comments for documentation.
 BuildInput = collections.namedtuple(
-    'BuildInput', ['gitiles_commits', 'gerrit_changes'])
+    'BuildInput', ['gitiles_commit', 'gerrit_changes'])
 
 
 class BuildbucketApi(recipe_api.RecipeApi):
@@ -153,9 +153,13 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def build_input(self):
     if self._build_input is None:
       build_sets = filter(None, map(_parse_build_set, self._build_sets))
+      commit = None
+      for bs in build_sets:
+        if isinstance(bs, GitilesCommit):
+          commit = bs
+          break
       self._build_input = BuildInput(
-          gitiles_commits=
-              [bs for bs in build_sets if isinstance(bs, GitilesCommit)],
+          gitiles_commit=commit,
           gerrit_changes=
               [bs for bs in build_sets if isinstance(bs, GerritChange)],
       )

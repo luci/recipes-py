@@ -5,7 +5,7 @@
     ],
     "name": "build_id",
     "~followup_annotations": [
-      "@@@SET_BUILD_PROPERTY@result@{\"build_input\": [[], [[\"chromium-review.googlesource.com\", 1, 2]]]}@@@"
+      "@@@SET_BUILD_PROPERTY@result@{\"build_input\": [null, [[\"chromium-review.googlesource.com\", 1, 2]]]}@@@"
     ]
   },
   {

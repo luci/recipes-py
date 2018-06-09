@@ -105,11 +105,11 @@ API for interacting with the buildbucket service.
 Depends on 'buildbucket' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 
-#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#97)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#97)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 A module for interacting with buildbucket.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#164)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#168)(self):**
 
 Returns int64 identifier of the current build.
 
@@ -120,22 +120,22 @@ May return None if it is not a buildbucket build.
 
 &emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#152)(self):**
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#179)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#183)(self):**
 
 A BuilderID identifying the current builder configuration.
 
 Any of the returned Builder's properties is set to None if no information
 for that property is found.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#250)(self, build_id, \*\*kwargs):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#254)(self, build_id, \*\*kwargs):**
 
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#253)(self, build_id, \*\*kwargs):**
+&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#257)(self, build_id, \*\*kwargs):**
 
 &emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#131)(self):**
 
 Returns (dict-like or None): The BuildBucket properties, if present.
 
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#221)(self, builds, \*\*kwargs):**
+&mdash; **def [put](/recipe_modules/buildbucket/api.py#225)(self, builds, \*\*kwargs):**
 
 Puts a batch of builds.
 
@@ -161,7 +161,7 @@ Changes the buildbucket backend hostname used by this module.
 Args:
   host (str): buildbucket server host (e.g. 'cr-buildbucket.appspot.com').
 
-&emsp; **@property**<br>&mdash; **def [tags\_for\_child\_build](/recipe_modules/buildbucket/api.py#200)(self):**
+&emsp; **@property**<br>&mdash; **def [tags\_for\_child\_build](/recipe_modules/buildbucket/api.py#204)(self):**
 
 A dict of tags (key -> value) derived from current (parent) build for a
 child build.
@@ -187,7 +187,7 @@ API for interacting with CIPD.
 Depends on 'cipd' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 
-#### **class [CIPDApi](/recipe_modules/cipd/api.py#154)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [CIPDApi](/recipe_modules/cipd/api.py#154)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 CIPDApi provides basic support for CIPD.
 
@@ -370,7 +370,7 @@ with api.context(cwd=api.path['start_dir'].join('subdir')):
   api.step("cat subdir/foo", ['cat', './foo'])
 ```
 
-#### **class [ContextApi](/recipe_modules/context/api.py#49)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [ContextApi](/recipe_modules/context/api.py#49)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 &emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#64)(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None, increment_nest_level=None, infra_steps=None, name_prefix=None):**
 
@@ -501,7 +501,7 @@ purposes.
 
 File manipulation (read/write/delete/glob) methods.
 
-#### **class [FileApi](/recipe_modules/file/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [FileApi](/recipe_modules/file/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 &mdash; **def [copy](/recipe_modules/file/api.py#53)(self, name, source, dest):**
 
@@ -742,7 +742,7 @@ This module was created before there was a way to put recipes directly into
 another repo. It is not recommended to use this, and it will be removed in the
 near future.
 
-#### **class [GeneratorScriptApi](/recipe_modules/generator_script/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [GeneratorScriptApi](/recipe_modules/generator_script/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 &mdash; **def [\_\_call\_\_](/recipe_modules/generator_script/api.py#43)(self, path_to_script, \*args):**
 
@@ -788,7 +788,7 @@ corresponds to one step, and contains the following keys:
 
 Methods for producing and consuming JSON.
 
-#### **class [JsonApi](/recipe_modules/json/api.py#83)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [JsonApi](/recipe_modules/json/api.py#83)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 &emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&mdash; **def [input](/recipe_modules/json/api.py#102)(self, data):**
 
@@ -854,7 +854,7 @@ There are other anchor points which can be defined (e.g. by the
 `depot_tools/infra_paths` module). Refer to those modules for additional
 documentation.
 
-#### **class [PathApi](/recipe_modules/path/api.py#197)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [PathApi](/recipe_modules/path/api.py#197)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 &mdash; **def [\_\_getitem\_\_](/recipe_modules/path/api.py#440)(self, name):**
 
@@ -935,7 +935,7 @@ Args:
 
 Mockable system platform identity functions.
 
-#### **class [PlatformApi](/recipe_modules/platform/api.py#18)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [PlatformApi](/recipe_modules/platform/api.py#18)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 Provides host-platform-detection properties.
 
@@ -1002,7 +1002,7 @@ values provided to the recipe engine at the beginning of execution. There is
 intentionally no API to write property values (lest they become a kind of
 random-access global variable).
 
-#### **class [PropertiesApi](/recipe_modules/properties/api.py#28)([RecipeApiPlain](/recipe_engine/recipe_api.py#865), collections.Mapping):**
+#### **class [PropertiesApi](/recipe_modules/properties/api.py#28)([RecipeApiPlain](/recipe_engine/recipe_api.py#874), collections.Mapping):**
 
 PropertiesApi implements all the standard Mapping functions, so you
 can use it like a read-only dict.
@@ -1032,7 +1032,7 @@ This includes support for `vpython`, and knows how to specify parameters
 correctly for bots (e.g. ensuring that python is working on Windows, passing the
 unbuffered flag, etc.)
 
-#### **class [PythonApi](/recipe_modules/python/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [PythonApi](/recipe_modules/python/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 &mdash; **def [\_\_call\_\_](/recipe_modules/python/api.py#18)(self, name, script, args=None, unbuffered=True, venv=None, \*\*kwargs):**
 
@@ -1093,9 +1093,9 @@ Runs a succeeding step (exits 0).
 
 Provides objects for reading and writing raw data to and from steps.
 
-#### **class [RawIOApi](/recipe_modules/raw_io/api.py#195)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [RawIOApi](/recipe_modules/raw_io/api.py#222)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#196)(data, suffix=''):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#223)(data, suffix=''):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -1110,7 +1110,7 @@ tempfile.mkstemp.
 
 See examples/full.py for usage example.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#214)(data, suffix=''):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#241)(data, suffix=''):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -1120,7 +1120,7 @@ expected to have valid utf-8 data in it.
 Similar to input(), but ensures that 'data' is valid utf-8 text. Any
 non-utf-8 characters will be replaced with �.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#227)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#254)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -1136,7 +1136,7 @@ Args:
      to a step link named `name`. If this is 'on_failure', only create this
      log when the step has a non-SUCCESS status.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#259)(suffix='', leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#286)(suffix='', leak_to=None, name=None):**
 
 Returns a directory Placeholder for use as a step argument.
 
@@ -1147,7 +1147,7 @@ If 'leak_to' is not None, then it should be a Path and placeholder
 redirects IO to a dir at that path. Once step finishes, the dir is
 NOT deleted (i.e. it's 'leaking'). 'suffix' is ignored in that case.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#247)(suffix='', leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#274)(suffix='', leak_to=None, name=None):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -1159,7 +1159,7 @@ replacing any decoding errors with �.
 
 [DEPS](/recipe_modules/runtime/__init__.py#5): [path](#recipe_modules-path), [properties](#recipe_modules-properties)
 
-#### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 This module assists in experimenting with production recipes.
 
@@ -1194,7 +1194,7 @@ Documentation for scheduler API is in
 RPCExplorer available at
   https://luci-scheduler.appspot.com/rpcexplorer/services/scheduler.Scheduler
 
-#### **class [SchedulerApi](/recipe_modules/scheduler/api.py#21)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [SchedulerApi](/recipe_modules/scheduler/api.py#21)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 A module for interacting with LUCI Scheduler service.
 
@@ -1240,7 +1240,7 @@ https://godoc.org/go.chromium.org/luci/auth/client/cmd/luci-auth).
 
 Depends on luci-auth to be in PATH.
 
-#### **class [ServiceAccountApi](/recipe_modules/service_account/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [ServiceAccountApi](/recipe_modules/service_account/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 &mdash; **def [default](/recipe_modules/service_account/api.py#49)(self):**
 
@@ -1261,7 +1261,7 @@ Args:
   key_path: (str|Path) object pointing to a service account JSON key.
 ### *recipe_modules* / [source\_manifest](/recipe_modules/source_manifest)
 
-#### **class [SourceManfiestApi](/recipe_modules/source_manifest/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [SourceManfiestApi](/recipe_modules/source_manifest/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 &mdash; **def [set\_json\_manifest](/recipe_modules/source_manifest/api.py#35)(self, name, data):**
 
@@ -1288,7 +1288,7 @@ Args:
 Step is the primary API for running steps (external programs, scripts,
 etc.).
 
-#### **class [StepApi](/recipe_modules/step/api.py#19)([RecipeApiPlain](/recipe_engine/recipe_api.py#865)):**
+#### **class [StepApi](/recipe_modules/step/api.py#19)([RecipeApiPlain](/recipe_engine/recipe_api.py#874)):**
 
 &emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#52)(self):**
 
@@ -1412,7 +1412,7 @@ of the context (see the context() method above).
 
 Simplistic temporary directory manager (deprecated).
 
-#### **class [TempfileApi](/recipe_modules/tempfile/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [TempfileApi](/recipe_modules/tempfile/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 &emsp; **@contextlib.contextmanager**<br>&mdash; **def [temp\_dir](/recipe_modules/tempfile/api.py#13)(self, prefix):**
 
@@ -1429,7 +1429,7 @@ with api.tempfile.temp_dir("some_prefix") as path:
 
 Allows mockable access to the current time.
 
-#### **class [TimeApi](/recipe_modules/time/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [TimeApi](/recipe_modules/time/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 &mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#35)(self):**
 
@@ -1454,7 +1454,7 @@ Return current UTC time as a datetime.datetime.
 
 API for Tricium analyzers to use.
 
-#### **class [TriciumApi](/recipe_modules/tricium/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [TriciumApi](/recipe_modules/tricium/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 TriciumApi provides basic support for Tricium.
 
@@ -1478,7 +1478,7 @@ for details and definitions).
 
 Methods for interacting with HTTP(s) URLs.
 
-#### **class [UrlApi](/recipe_modules/url/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#997)):**
+#### **class [UrlApi](/recipe_modules/url/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 &mdash; **def [get\_file](/recipe_modules/url/api.py#131)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None, timeout=None):**
 
