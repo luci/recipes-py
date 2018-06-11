@@ -399,7 +399,7 @@ class CIPDApi(recipe_api.RecipeApi):
         'ensure_installed', cmd,
         step_test_data=lambda: self.test_api.example_ensure(packages)
     )
-    return [self.Pin(**pin) for pin in step_result.json.output['result']]
+    return [self.Pin(**pin) for pin in step_result.json.output['result']['']]
 
   def set_tag(self, package_name, version, tags):
     """Tags package of a specific version.
