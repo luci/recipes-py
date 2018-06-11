@@ -50,10 +50,6 @@ def add_subparser(parser):
       type=os.path.abspath,
       help='The working directory of repo checkout')
   remote_p.add_argument(
-      '--use-gitiles', action='store_true',
-      help='Use Gitiles-specific way to fetch repo (potentially cheaper for '
-           'large repos)')
-  remote_p.add_argument(
       'remote_args', nargs='*',
       help='Arguments to pass to fetched repo\'s recipes.py')
 
@@ -67,11 +63,7 @@ def main(_package_deps, args):
   with ensure_workdir(args):
     checkout_dir = os.path.join(args.workdir, 'checkout')
     revision = args.revision or 'refs/heads/master'
-    if args.use_gitiles:
-      backend_class = fetch.GitilesBackend
-    else:
-      backend_class = fetch.GitBackend
-    backend = backend_class(checkout_dir, args.repository)
+    backend = fetch.GitBackend(checkout_dir, args.repository)
     backend.checkout(revision)
     recipes_cfg = package_io.PackageFile(
         package_io.InfraRepoConfig().to_recipes_cfg(checkout_dir))
