@@ -39,10 +39,14 @@ it as a reference.
 All recipes take the form of a python file whose body looks like this:
 
 ```python
+# scripts/slave/recipes/hello.py
 DEPS = ['recipe_engine/step']
 
 def RunSteps(api):
   api.step('Print Hello World', ['echo', 'hello', 'world'])
+
+def GenTests(api):
+  return ()
 ```
 
 The `RunSteps` function is expected to take at least a single argument `api`
@@ -51,6 +55,9 @@ api functions.  All of these functions will eventually make calls to
 `api.step()`, which is the only way to actually get anything done on the
 machine.  Using python libraries with OS side-effects is prohibited to enable
 testing.
+
+The `GenTests` function currently does nothing, but a recipe is invalid and
+cannot be run unless it defines a `GenTests` function.
 
 For these examples we will work out of the
 [tools/build](https://chromium.googlesource.com/chromium/tools/build/)
@@ -73,9 +80,38 @@ having to guess at the parameters to `run_recipe.py`.
 
 **All recipes MUST have corresponding tests, which achieve 100% code coverage.**
 
-So, we have our recipe. Let's add a test to it.
+You can execute the tests for the recipes by running
+
+    $ scripts/slave/recipes.py test run
+
+As part of running the tests the coverage of the recipes is checked, so you
+should expect output similar to the following snippet to appear as part of the
+output of the command.
+
+    Name                             Stmts   Miss  Cover   Missing
+    --------------------------------------------------------------
+    scripts/slave/recipes/hello.py       5      1    80%   4
+    --------------------------------------------------------------
+    TOTAL                            21132      1    99%
+
+    488 files skipped due to complete coverage.
+
+    FATAL: Insufficient coverage (99%)
+    ----------------------------------------------------------------------
+    Ran 1940 tests in 61.135s
+
+    FAILED
+
+The Stmts column indicates the number of statements that are in the recipe file.
+The Miss column indicates the number of statements that do not have coverage.
+The Missing column details the spans of code that are not covered, so currently
+only the statement on line 4 is not covered.  The other statements are the DEPS
+and function definitions and the body of the `GenTests`.
+
+So let's add a test to get the necessary coverage.
 
 ```python
+# scripts/slave/recipes/hello.py
 DEPS = ['recipe_engine/step']
 
 def RunSteps(api):
@@ -85,29 +121,77 @@ def GenTests(api):
   yield api.test('basic')
 ```
 
-This causes a single test case to be generated, called 'basic', which has no
-input parameters.  As your recipe becomes more complex, you'll need to add more
-tests to make sure that you maintain 100% code coverage.
+The `GenTests` method takes a single parameter `api` that has methods for
+defining test specifications. Calling `GenTests` must result in an iterable of
+test specifications. `api.test('basic')` creates a test specification that
+causes a test case to be generated named 'basic' that has no input parameters.
+As your recipe becomes more complex, you'll need to add more tests to make sure
+that you maintain 100% code coverage.
 
-In order to run the tests, run
+If you were to run the tests at this point, you would now get a failure
+including the following output.
+
+    hello.basic failed:
+    --- expected
+    +++ actual
+    @@ -1 +1,15 @@
+    -None
+    +[
+    +  {
+    +    "cmd": [
+    +      "echo",
+    +      "hello",
+    +      "world"
+    +    ],
+    +    "name": "Print Hello World"
+    +  },
+    +  {
+    +    "name": "$result",
+    +    "recipe_result": null,
+    +    "status_code": 0
+    +  }
+    +]
+
+Every test case has associated json files detailing the steps executed by the
+recipe and the results of those actions. If the sequence of steps executed by
+the recipe don't match the expected values in the json file then the test will
+fail.
+
+You can train the test by running
 
     $ scripts/slave/recipes.py test train --filter hello
 
-This will write the file `build/scripts/slave/recipes/hello.expected/basic.json`
-summarizing the actions of the recipe under the boring conditions
-specified by `api.test('basic')`.
+> The `--filter` flag can be used when running or training the tests to limit
+> the tests that are executed. For details on the format, pass the `-h` flag to
+> either `test run` or `test train`. Coverage will not be checked when using the
+> `--filter` flag.
 
-    [
-      {
-        "cmd": [
-          "echo",
-          "hello",
-          "world"
-        ],
-        "cwd": "[SLAVE_BUILD]",
-        "name": "Print Hello World"
-      }
-    ]
+Training the test will generate or update the json expectation files. There
+should now be a file `scripts/slave/recipes/hello.expected.basic.json` in your
+working copy with content matching the steps executed by the recipe.
+
+```json
+[
+  {
+    "cmd": [
+      "echo",
+      "hello",
+      "world"
+    ],
+    "name": "Print Hello World"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]
+```
+
+When making actual changes, these json files should be included as part of your
+commit and reviewed for correctness.
+
+Running the tests now would result in a passing run, printing OK.
 
 ## Let's do something useful
 
@@ -130,22 +214,23 @@ properties it knows about, and pass them as arguments to your RunSteps function.
 Let's see an example!
 
 ```python
+# scripts/slave/recipes/hello.py
 from recipe_engine.recipe_api import Property
 
 DEPS = [
-  'step',
-  'properties',
+  'recipe_engine/properties',
+  'recipe_engine/step',
 ]
 
 PROPERTIES = {
   'target_of_admiration': Property(
-    kind=str, help="Who you love and adore.", default="Chrome Infra"),
+      kind=str, help="Who you love and adore.", default="Chrome Infra"),
 }
 
 def RunSteps(api, target_of_admiration):
-  verb = 'Hello, %s'
+  verb = 'Hello %s'
   if target_of_admiration == 'DarthVader':
-    verb = 'Die in a fire, %s!'
+    verb = 'Die in a fire %s!'
   api.step('Greet Admired Individual', ['echo', verb % target_of_admiration])
 
 def GenTests(api):
@@ -170,6 +255,9 @@ at all.
 Note that properties without a default are required. If you don't want a
 property to be required, just add `default=None` to the definition.
 
+Each parameter to `RunSteps` besides the `api` parameter requires a matching
+entry in the PROPERTIES dict.
+
 Yes, elements of a test specification are combined with `+` and it's weird.
 
 To specify property values in a local run:
@@ -183,9 +271,9 @@ Or, more explicitly::
 Where `<path/to/json>` is a file containing a valid json `object` (i.e.
 key:value pairs).
 
-Note that we need to put a dependency on the 'properties' module in the DEPS
-because we use it to generate our tests, even though we don't actually call
-the module in our code.
+Note that we need to put a dependency on the 'recipe_engine/properties' module
+in the DEPS because we use it to generate our tests, even though we don't
+actually call the module in our code.
 See this [crbug.com/532275](bug) for more info.
 
 ### Modules
@@ -193,16 +281,23 @@ See this [crbug.com/532275](bug) for more info.
 There are all sorts of helper modules.  They are found in the `recipe_modules`
 directory alongside the `recipes` directory where the recipes go.
 
-Notice the `DEPS` line in the recipe. Any modules named by string in DEPS are
-'injected' into the `api` parameter that your recipe gets. If you leave them out
-of DEPS, you'll get an AttributeError when you try to access them. The modules
-are located primarily in `recipe_modules/`, and their name is their folder name.
-
 There are a whole bunch of modules which provide really helpful tools. You
 should go take a look at them. `scripts/slave/recipes.py` is a
 pretty helpful tool. If you want to know more about properties, step and path, I
 would suggest starting with `scripts/slave/recipes.py doc`, and then delving
 into the helpful docstrings in those helpful modules.
+
+Notice the `DEPS` line in the recipe. Any modules named by string in DEPS are
+'injected' into the `api` parameter that your recipe gets. If you leave them out
+of DEPS, you'll get an AttributeError when you try to access them. The modules
+are located primarily in `recipe_modules/`, and their name is their folder name.
+
+The format of the strings in the DEPS entry depends on whether the depended-on
+module is part of the current repo or a dependency repo (e.g. depot_tools or
+recipe_engine for the build repo). Modules from dependency repos are specified
+with the form `<repo-name>/<module-name>` as has been done for the `step` and
+`properties` modules. Modules from the current repo are specified with just the
+module name.
 
 ## Making Modules
 
@@ -214,25 +309,35 @@ echo functionality across a couple recipes which all start the same way. To do
 this, you need to add a module directory.
 
 ```
-recipe_modules/
-  step/
-  properties/
-  path/
+scripts/slave/recipe_modules/
+  ...
+  goma/
+  halt/
   hello/
     __init__.py  # (Required) Contains optional `DEPS = list([other modules])`
     api.py       # (Required) Contains single required RecipeApi-derived class
     config.py    # (Optional) Contains configuration for your api
     *_config.py  # (Optional) These contain extensions to the configurations of
                  #   your dependency APIs
+    examples/    # (Recommended) Contains example recipes that show how to
+                 #   actually use the module
+    tests/       # (Optional) Contains test recipes that can be used to test
+                 #   individual behaviors of the module
+  ...
 ```
 
 First add an `__init__.py` with DEPS:
 
 ```python
-# recipe_modules/hello/__init__.py
-from recipe_api import Property
+# scripts/slave/recipe_modules/hello/__init__.py
+from recipe_engine.recipe_api import Property
 
-DEPS = ['properties', 'step']
+DEPS = [
+  'recipe_engine/path',
+  'recipe_engine/properties',
+  'recipe_engine/step',
+]
+
 PROPERTIES = {
   'target_of_admiration': Property(default=None),
 }
@@ -241,10 +346,12 @@ PROPERTIES = {
 And your api.py should look something like:
 
 ```python
-from slave import recipe_api
+# scripts/slave/recipe_modules/hello/api.py
+from recipe_engine import recipe_api
 
 class HelloApi(recipe_api.RecipeApi):
-  def __init__(self, target_of_admiration):
+  def __init__(self, target_of_admiration, *args, **kwargs):
+    super(HelloApi, self).__init__(*args, **kwargs)
     self._target = target_of_admiration
 
   def greet(self, default_verb=None):
@@ -264,7 +371,13 @@ of the object (i.e. not in `__init__`).
 And now, our refactored recipe:
 
 ```python
-DEPS = ['hello']
+# scripts/slave/recipes/hello.py
+from recipe_engine.recipe_api import Property
+
+DEPS = [
+  'hello',
+  'recipe_engine/properties',
+]
 
 def RunSteps(api):
   api.hello.greet()
@@ -274,8 +387,42 @@ def GenTests(api):
   yield api.test('vader') + api.properties(target_of_admiration='DarthVader')
 ```
 
-> NOTE: all of the modules are also require 100% code coverage, but you only
-> need coverage from SOME recipe.
+If you were to run or train the tests without the `--filter` flag at this point,
+you would experience a failure due to missing coverage of the hello module.
+Before running any of the tests the following will appear in the output:
+
+    ERROR: The following modules lack test coverage: hello
+
+And the coverage report will be as follows:
+
+    Name                                        Stmts   Miss  Cover   Missing
+    -------------------------------------------------------------------------
+    scripts/slave/recipe_modules/hello/api.py      10      6    40%   5-6, 9-12
+    -------------------------------------------------------------------------
+    TOTAL                                       21147      6    99%
+
+To get coverage for a module you need to put recipes with tests in the examples
+or tests subdirectory of the module. So let's move our hello recipe into the
+examples subdirectory of our module.
+
+```python
+# scripts/slave/recipe_modules/hello/examples/simple.py
+from recipe_engine.recipe_api import Property
+
+DEPS = [
+  'hello',
+  'recipe_engine/properties',
+]
+
+def RunSteps(api):
+  api.hello.greet()
+
+def GenTests(api):
+  yield api.test('basic') + api.properties(target_of_admiration='Bob')
+  yield api.test('vader') + api.properties(target_of_admiration='DarthVader')
+```
+
+Training the tests again now results in 100% coverage.
 
 ## So how do I really write those tests?
 
@@ -310,7 +457,7 @@ necessary than the recipe api, so this transformation has not been designed yet.
 **Configs are a way for a module to expose it's "global" state in a reusable
 way.**
 
-A common problem in Building Things is that you end up with an inordinantly
+A common problem in Building Things is that you end up with an inordinately
 large matrix of configurations. Let's take chromium, for example. Here is a
 sample list of axes of configuration which chromium needs to build and test:
 
@@ -334,19 +481,19 @@ will follow, and the config context based on it that we will add configuration
 items to.
 
 ```python
-# recipe_modules/hello/config.py
-from slave.recipe_config import config_item_context, ConfigGroup
-from slave.recipe_config import SimpleConfig, StaticConfig, BadConf
+# scripts/slave/recipe_modules/hello/config.py
+from recipe_engine.config import config_item_context, ConfigGroup
+from recipe_engine.config import Single, Static, BadConf
 
 def BaseConfig(TARGET='Bob'):
   # This is a schema for the 'config blobs' that the hello module deals with.
   return ConfigGroup(
-    verb   = SimpleConfig(str),
+    verb = Single(str),
     # A config blob is not complete() until all required entries have a value.
-    tool   = SimpleConfig(str, required=True),
+    tool = Single(str, required=True),
     # Generally, your schema should take a series of CAPITAL args which will be
     # set as StaticConfig data in the config blob.
-    TARGET = StaticConfig(str(TARGET)),
+    TARGET = Static(str(TARGET)),
   )
 
 config_ctx = config_item_context(BaseConfig)
@@ -369,23 +516,27 @@ updates the config blob, perhaps conditionally. There are many features to
 for all the details.
 
 ```python
+# scripts/slave/recipe_modules/hello/config.py
+
+...
+
 # Each of these functions is a 'config item' in the context of config_ctx.
 
 # is_root means that every config item will apply this item first.
 @config_ctx(is_root=True)
 def BASE(c):
   if c.TARGET == 'DarthVader':
-    c.verb = 'Die in a fire, %s!'
+    c.verb = 'Die in a fire %s!'
   else:
-    c.verb = 'Hello, %s'
+    c.verb = 'Hello %s'
 
-@config_ctx(group='tool'):  # items with the same group are mutually exclusive.
+@config_ctx(group='tool')  # items with the same group are mutually exclusive.
 def super_tool(c):
   if c.TARGET != 'Charlie':
     raise BadConf('Can only use super tool for Charlie!')
   c.tool = 'unicorn.py'
 
-@config_ctx(group='tool'):
+@config_ctx(group='tool')
 def default_tool(c):
   c.tool = 'echo'
 ```
@@ -393,19 +544,21 @@ def default_tool(c):
 Now that we have our config, let's use it.
 
 ```python
-# recipe_modules/hello/api.py
-from slave import recipe_api
+# scripts/slave/recipe_modules/hello/api.py
+from recipe_engine import recipe_api
 
 class HelloApi(recipe_api.RecipeApi):
-  def __init__(self, target_of_admiration):
+  def __init__(self, target_of_admiration, *args, **kwargs):
+    super(HelloApi, self).__init__(*args, **kwargs)
     self._target = target_of_admiration
 
-  def get_config_defaults(self, _config_name):
+  def get_config_defaults(self):
     return {'TARGET': self._target}
 
-  def greet(self):
+  def greet(self, default_verb=None):
     self.m.step('Hello World', [
-        self.m.path.build(self.c.tool), self.c.verb % self.c.TARGET])
+        self.m.path['start_dir'].join(self.c.tool),
+        self.c.verb % self.c.TARGET])
 ```
 
 Note that `recipe_api.RecipeApi` contains all the plumbing for dealing with
@@ -415,11 +568,17 @@ in one way or another. Also note that c is a 'public' variable, which means that
 recipes have direct access to the configuration state by `api.<modname>.c`.
 
 ```python
-# recipes/hello.py
-DEPS = ['hello']
+# scripts/slave/recipe_modules/examples/simple.py
+from recipe_engine.recipe_api import Property
+
+DEPS = [
+    'hello',
+    'recipe_engine/properties',
+]
+
 def RunSteps(api):
   api.hello.set_config('default_tool')
-  api.hello.greet()  # Greets 'target_of_admiration' or 'Bob' with echo.
+  api.hello.greet()
 
 def GenTests(api):
   yield api.test('bob')
@@ -432,11 +591,13 @@ specifed, finds it in the given module (`'hello'` in this case), and sets
 (`'default_tool'`) with the default configuration (the result of calling
 `get_config_defaults`), merged over the static defaults specified by the schema.
 
-We can also call `set_config` differently to get different results:
+100% coverage is required for `config.py` also, so lets add some additional
+examples that call `set_config` differently to get different results:
 
 ```python
-# recipes/rainbow_hello.py
+# scripts/slave/recipe_modules/examples/rainbow.py
 DEPS = ['hello']
+
 def RunSteps(api):
   api.hello.set_config('super_tool', TARGET='Charlie')
   api.hello.greet()  # Greets 'Charlie' with unicorn.py.
@@ -446,8 +607,9 @@ def GenTests(api):
 ```
 
 ```python
-# recipes/evil_hello.py
+# scripts/slave/recipe_modules/examples/evil.py
 DEPS = ['hello']
+
 def RunSteps(api):
   api.hello.set_config('default_tool', TARGET='DarthVader')
   api.hello.greet()  # Causes 'DarthVader' to despair with echo
@@ -469,26 +631,55 @@ design mistake)
 allow recipes more-direct access to the config items. However, `set_config()` is
 the most-preferred way to apply configurations.
 
+We still don't have coverage for the line in config.py that raises a `BadConf`.
+This isn't an example of how the `hello` module should be used, so lets add a
+recipe under the tests subdirectory to get the last bit of coverage.
+
+```python
+# scripts/slave/recipe_modules/hello/tests/badconf.py
+DEPS = ['hello']
+
+def RunSteps(api):
+  api.hello.set_config('super_tool', TARGET='Not Charlie')
+
+def GenTests(api):
+  yield api.test('badconf') + api.expect_exception('BadConf')
+```
+
 ## What about getting data back from a step?
 
 Consider this recipe:
 
 ```python
-DEPS = ['step', 'path']
+# scripts/slave/recipes/shake.py
+DEPS = [
+    'recipe_engine/path',
+    'recipe_engine/step',
+]
 
 def RunSteps(api):
-  step_result = api.step('Determine blue moon',
-      [api.path['build'].join('is_blue_moon.sh')])
+  step_result = api.step(
+      'Determine blue moon',
+      [api.path['start_dir'].join('is_blue_moon.sh')],
+      ok_ret='any')
 
   if step_result.retcode == 0:
-    api.step('HARLEM SHAKE!', [api.path['build'].join('do_the_harlem_shake.sh')])
+    api.step('HARLEM SHAKE!',
+             [api.path['start_dir'].join('do_the_harlem_shake.sh')])
   else:
-    api.step('Boring', [api.path['build'].join('its_a_small_world.sh')])
+    api.step('Boring',
+             [api.path['start_dir'].join('its_a_small_world.sh')])
 
 def GenTests(api):
   yield api.test('harlem') + api.step_data('Determine blue moon', retcode=0)
   yield api.test('boring') + api.step_data('Determine blue moon', retcode=1)
 ```
+
+The `ok_ret` parameter to `api.step()` is necessary if you wish to react to a
+step's retcode. By default, any retcode except 0 will result in an exception.
+Pass one of the strings 'any' or 'all' to continue execution regardless of the
+retcode. Alternatively you can pass a tuple or set of ints to continue execution
+if the step's retcode is one of the provided values.
 
 See how we use `step_result` to get the result of the last step? The item we get
 back is a `recipe_engine.main.StepData` instance (really, just a basic object
@@ -507,25 +698,30 @@ This is pretty neat... However, it turns out that returncodes suck bigtime for
 communicating actual information. `api.json.output()` to the rescue!
 
 ```python
-DEPS = ['step', 'path', 'step_history', 'json']
+# scripts/slave/recipes/war.py
+DEPS = [
+    'recipe_engine/json',
+    'recipe_engine/path',
+    'recipe_engine/step',
+]
 
 def RunSteps(api):
   step_result = api.step(
       'run tests',
-      [api.path['build'].join('do_test_things.sh'), api.json.output()])
+      [api.path['start_dir'].join('do_test_things.sh'), api.json.output()])
   num_passed = step_result.json.output['num_passed']
   if num_passed > 500:
-    api.step('victory', [api.path['build'].join('do_a_dance.sh')])
+    api.step('victory', [api.path['start_dir'].join('do_a_dance.sh')])
   elif num_passed > 200:
-    api.step('not defeated', [api.path['build'].join('woohoo.sh')])
+    api.step('not defeated', [api.path['start_dir'].join('woohoo.sh')])
   else:
-    api.step('deads!', [api.path['build'].join('you_r_deads.sh')])
+    api.step('deads!', [api.path['start_dir'].join('you_r_deads.sh')])
 
 def GenTests(api):
   yield (api.test('winning') +
-         api.step_data('run tests', api.json.output({'num_passed': 791}))
+         api.step_data('run tests', api.json.output({'num_passed': 791})))
   yield (api.test('not_dead_yet') +
-         api.step_data('run tests', api.json.output({'num_passed': 302}))
+         api.step_data('run tests', api.json.output({'num_passed': 302})))
   yield (api.test('noooooo') +
          api.step_data('run tests', api.json.output({'num_passed': 10})))
 ```
