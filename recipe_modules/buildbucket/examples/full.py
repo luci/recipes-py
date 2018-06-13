@@ -18,9 +18,14 @@ def RunSteps(api):
     return
 
   builder_id = api.buildbucket.builder_id
-  assert builder_id.project in ['test-project', None]
-  assert builder_id.bucket in ['test-bucket', None]
-  assert builder_id.builder in ['test-builder', None]
+  if builder_id.bucket == 'try':
+    assert builder_id.project == 'proj'
+    assert builder_id.builder == 'try-builder'
+    assert '-review' in api.buildbucket.build_input.gerrit_changes[0].host
+  else:  # ci
+    assert builder_id.project == 'proj-internal'
+    assert builder_id.builder == 'ci-builder'
+    assert 'chrome-internal' in api.buildbucket.build_input.gitiles_commit.host
 
   # Note: this is not needed when running on LUCI. Buildbucket will use the
   # default account associated with the task.
@@ -120,29 +125,25 @@ def GenTests(api):
    }
   """
   yield (api.test('basic') +
+         api.buildbucket.try_build(
+             project='proj',
+             builder='try-builder') +
          api.step_data(
              'buildbucket.put',
              stdout=api.raw_io.output_text(mock_buildbucket_multi_response)) +
          api.step_data(
              'buildbucket.get',
-             stdout=api.raw_io.output_text(mock_buildbucket_single_response)) +
-         api.properties(
-             buildbucket={'build': {
-               'project': 'test-project',
-               'bucket': 'luci.test-project.test-bucket',
-               'tags': [
-                 'buildset:patch/rietveld/cr.chromium.org/123/10001',
-                 'builder:test-builder']}}))
+             stdout=api.raw_io.output_text(mock_buildbucket_single_response)))
   yield (api.test('basic_win') +
+         api.buildbucket.ci_build(
+             project='proj-internal',
+             builder='ci-builder') +
          api.step_data(
              'buildbucket.put',
              stdout=api.raw_io.output_text(mock_buildbucket_multi_response)) +
          api.step_data(
              'buildbucket.get',
              stdout=api.raw_io.output_text(mock_buildbucket_single_response)) +
-         api.platform('win', 32) +
-         api.properties(
-             buildbucket={'build': {'tags': [
-                 'buildset:patch/rietveld/cr.chromium.org/123/10001']}}))
+         api.platform('win', 32))
 
   yield (api.test('no_properties'))
