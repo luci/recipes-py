@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env vpython
 # Copyright 2016 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -18,8 +18,10 @@ import mock
 from recipe_engine import autoroll
 from recipe_engine import common_args
 
+
 def process_rejected(rejected_candidates):
   return [c.to_dict() for c in rejected_candidates]
+
 
 class FakeCandidate(object):
   def __init__(self, data, projects=None):

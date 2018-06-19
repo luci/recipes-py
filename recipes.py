@@ -31,7 +31,7 @@ from recipe_engine import common_args, package, package_io, util
 
 import argparse  # this is vendored
 
-from recipe_engine import fetch, lint_test, bundle, depgraph, autoroll
+from recipe_engine import fetch, lint, bundle, depgraph, autoroll
 from recipe_engine import remote, refs, doc, test, run
 
 
@@ -75,13 +75,25 @@ _SUBCOMMANDS = [
   depgraph,
   doc,
   fetch,
-  lint_test,
+  lint,
   refs,
   remote,
 ]
 
 
 def main():
+  # Prune all VirtualEnv paths out of $PATH. This means that recipe engine
+  # 'unwraps' vpython VirtualEnv path manipulation. Invocations of `python` from
+  # recipes should never inherit the recipe engine's own VirtualEnv.
+
+  # Look for "activate_this.py" in this path, which is installed by VirtualEnv.
+  # This mechanism is used by vpython as well to sanitize VirtualEnvs from
+  # $PATH.
+  os.environ['PATH'] = os.pathsep.join([
+    p for p in os.environ.get('PATH', '').split(os.pathsep)
+    if not os.path.isfile(os.path.join(p, 'activate_this.py'))
+  ])
+
   parser = argparse.ArgumentParser(
     description='Interact with the recipe system.')
 

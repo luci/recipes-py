@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env vpython
 # Copyright 2017 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -11,6 +11,7 @@ import test_env
 
 from recipe_engine import package_io
 from recipe_engine import package_pb2
+
 
 class TestPackageIO(unittest.TestCase):
   def setUp(self):

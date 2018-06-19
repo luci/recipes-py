@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env vpython
 # Copyright 2015 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -9,13 +9,16 @@ import test_env
 
 from recipe_engine import recipe_api, config
 
+
 RECIPE_PROPERTY = recipe_api.BoundProperty.RECIPE_PROPERTY
 MODULE_PROPERTY = recipe_api.BoundProperty.MODULE_PROPERTY
+
 
 def make_prop(**kwargs):
   name = kwargs.pop('name', "dumb_name")
   return recipe_api.Property(**kwargs).bind(
     name, RECIPE_PROPERTY, 'fake_package::fake_recipe')
+
 
 class TestProperties(unittest.TestCase):
   def testDefault(self):

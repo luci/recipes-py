@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env vpython
 # Copyright 2017 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -12,6 +12,7 @@ import contextlib
 
 import repo_test_util
 
+
 @contextlib.contextmanager
 def fake_git():
   fake_git_dir = os.path.join(repo_test_util.ROOT_DIR, 'unittests', 'fakegit')
@@ -21,6 +22,7 @@ def fake_git():
     yield
   finally:
     os.environ['PATH'] = cur_path
+
 
 class TestOverride(repo_test_util.RepoTest):
   def test_simple(self):

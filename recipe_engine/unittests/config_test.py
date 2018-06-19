@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env vpython
 # Copyright 2015 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -10,7 +10,9 @@ import test_env
 from recipe_engine import config
 from recipe_engine import doc_pb2 as doc
 
+
 d = doc.Doc
+
 
 class TestConfigGroupSchema(unittest.TestCase):
   def testNewReturnsConfigGroup(self):

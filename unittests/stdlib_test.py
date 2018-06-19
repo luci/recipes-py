@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env vpython
 # Copyright 2015 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -7,13 +7,13 @@
 
 import os
 import subprocess
+import sys
 
-import repo_test_util
 from repo_test_util import ROOT_DIR
 
 def recipes_py(*args):
   subprocess.check_call([
-      os.path.join(ROOT_DIR, 'recipes.py'), '--use-bootstrap',
+      sys.executable, os.path.join(ROOT_DIR, 'recipes.py'), '--use-bootstrap',
       '--package', os.path.join(ROOT_DIR, 'infra', 'config', 'recipes.cfg')] +
       list(args))
 

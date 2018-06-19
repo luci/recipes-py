@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env vpython
 # Copyright 2016 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -27,8 +27,10 @@ from recipe_engine import requests_ssl
 CPE = subprocess42.CalledProcessError
 IRC = package_io.InfraRepoConfig.RELPATH
 
+
 class NoMoreExpectatedCalls(ValueError):
   pass
+
 
 def multi(*side_effect_funcs):
   l = len(side_effect_funcs)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env vpython
 # Copyright 2015 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -9,6 +9,7 @@ import unittest
 import test_env
 
 from recipe_engine import stream
+
 
 class StreamTest(unittest.TestCase):
   def _example(self, engine):
@@ -160,6 +161,7 @@ bar tries to kiss foo, but foo already left
       foo.set_step_status('FAILURE')
       with self.assertRaises(AssertionError):
         foo.set_step_status('SUCCESS')
+
 
 if __name__ == '__main__':
   unittest.main()

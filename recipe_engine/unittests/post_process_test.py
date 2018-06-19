@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env vpython
 # Copyright 2016 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -13,6 +13,7 @@ import test_env
 from recipe_engine import post_process
 from recipe_engine import checker
 
+
 def mkS(name, *fields):
   ret = {
     'name': name,
@@ -24,8 +25,10 @@ def mkS(name, *fields):
     return {k: v for k, v in ret.iteritems() if k in fields or k == 'name'}
   return ret
 
+
 def mkD(*steps):
   return OrderedDict([(n, mkS(n)) for n in steps])
+
 
 class TestFilter(unittest.TestCase):
   def setUp(self):

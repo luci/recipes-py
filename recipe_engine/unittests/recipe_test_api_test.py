@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env vpython
 # Copyright 2015 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -9,8 +9,10 @@ import test_env
 
 from recipe_engine import recipe_test_api
 
+
 class EXC(Exception):
   pass
+
 
 class TestExpectedException(unittest.TestCase):
   def testRecognizeException(self):
@@ -43,6 +45,7 @@ class TestExpectedException(unittest.TestCase):
 
     with test_data.should_raise_exception(EXC()) as should_raise:
       self.assertTrue(should_raise)
+
 
 if __name__ == '__main__':
   unittest.main()
