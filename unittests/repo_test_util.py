@@ -236,10 +236,7 @@ class RepoTest(unittest.TestCase):
       ]
       for repo, path in overrides:
         args.extend(['-O', '%s=%s' % (repo, path)])
-      args.extend([
-          '--use-bootstrap',
-          'test', 'train',
-      ])
+      args.extend(['test', 'train'])
       try:
         subprocess.check_output(args, stderr=subprocess.STDOUT)
       except subprocess.CalledProcessError as e:

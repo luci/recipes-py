@@ -58,15 +58,9 @@ def add_common_args(parser):
   parser.add_argument('-O', '--project-override', metavar='ID=PATH',
       action=ProjectOverrideAction, default=collections.OrderedDict(),
       help='Override a project repository path with a local one.')
-  parser.add_argument(
-      # Use 'None' as default so that we can recognize when none of the
-      # bootstrap options were passed.
-      '--use-bootstrap', action='store_true', default=None,
-      help='Use bootstrap/bootstrap.py to create a isolated python virtualenv'
-           ' with required python dependencies.')
-  parser.add_argument(
-      '--disable-bootstrap', action='store_false', dest='use_bootstrap',
-      help='Disables bootstrap (see --use-bootstrap)')
+  parser.add_argument('--use-bootstrap', action='store_true', help='Deprecated')
+  parser.add_argument('--disable-bootstrap', action='store_false',
+                      dest='use_bootstrap', help='Deprecated')
 
   def operational_args_type(value):
     with open(value) as fd:

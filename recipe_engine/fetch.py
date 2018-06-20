@@ -23,8 +23,7 @@ from . import gitattr_checker
 
 # Add third party paths.
 from . import env
-from . import requests_ssl
-from .requests_ssl import requests
+import requests
 
 import subprocess42
 from google.protobuf import json_format

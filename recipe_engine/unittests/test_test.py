@@ -44,22 +44,6 @@ class TestArgs(unittest.TestCase):
     args.postprocess_func(self.p, args)
     self.assertEqual(args.filter, ['foo.bar'])
 
-  def test_automatic_bootstrap(self):
-    with tempfile.NamedTemporaryFile('w', delete=False) as tf:
-      tf.write("""{
-        "api_version": 2,
-        "project_id": "fake"
-      }""")
-
-    try:
-      args = self.p.parse_args(['--package', tf.name, 'test', 'run'])
-      self.assertIsNone(args.use_bootstrap)
-      self.followup(self.p, args)
-      args.postprocess_func(self.p, args)
-      self.assertTrue(args.use_bootstrap)
-    finally:
-      os.remove(tf.name)
-
 
 if __name__ == '__main__':
   sys.exit(unittest.main())

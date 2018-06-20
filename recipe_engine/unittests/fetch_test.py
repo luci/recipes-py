@@ -21,7 +21,6 @@ from recipe_engine import common_args
 from recipe_engine import fetch
 from recipe_engine import package_io
 from recipe_engine import package_pb2
-from recipe_engine import requests_ssl
 
 
 CPE = subprocess42.CalledProcessError

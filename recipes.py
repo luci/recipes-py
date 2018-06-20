@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env vpython
 # Copyright 2017 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -21,6 +21,9 @@ import tempfile
 # unicode(...).encode('utf-8'), rather than unicode(...).encode('ascii') .
 reload(sys)
 sys.setdefaultencoding('UTF8')
+
+import urllib3.contrib.pyopenssl
+urllib3.contrib.pyopenssl.inject_into_urllib3()
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ROOT_DIR)
@@ -106,21 +109,6 @@ def main():
   args = parser.parse_args()
   common_postprocess_func(parser, args)
   args.postprocess_func(parser, args)
-
-  # If we're bootstrapping, construct our bootstrap environment.
-  if args.use_bootstrap and not env.USING_BOOTSTRAP:
-    logging.debug('Bootstrapping recipe engine through vpython...')
-
-    bootstrap_env = os.environ.copy()
-    bootstrap_env[env.BOOTSTRAP_ENV_KEY] = '1'
-
-    cmd = [
-      util.hunt_path('vpython', bootstrap_env),
-      os.path.join(ROOT_DIR, 'recipes.py'),
-    ] + sys.argv[1:]
-
-    logging.debug('Running bootstrap command: %s', cmd)
-    return subprocess.call(cmd, env=bootstrap_env)
 
   if args.bare_command:
     return args.func(None, args)

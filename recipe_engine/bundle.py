@@ -126,10 +126,10 @@ def export_package(pkg, destination):
 
 
 TEMPLATE_SH = u"""#!/usr/bin/env bash
-python -u ${BASH_SOURCE[0]%/*}/recipe_engine/recipes.py \
+vpython -u ${BASH_SOURCE[0]%/*}/recipe_engine/recipes.py \
 """
 
-TEMPLATE_BAT = u"""python -u "%~dp0\\recipe_engine\\recipes.py" ^
+TEMPLATE_BAT = u"""vpython.bat -u "%~dp0\\recipe_engine\\recipes.py" ^
 """
 
 def prep_recipes_py(universe, root_package, destination):

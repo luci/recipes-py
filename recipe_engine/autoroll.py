@@ -24,6 +24,8 @@ LOGGER = logging.getLogger(__name__)
 
 ROOT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 
+IS_WIN = sys.platform.startswith(('win', 'cygwin'))
+VPYTHON = 'vpython' + ('.bat' if IS_WIN else '')
 
 def write_spec_to_disk(context, config_file, spec_pb):
   LOGGER.info('writing: %s', package_io.dump(spec_pb))
@@ -47,11 +49,7 @@ def fetch(repo_root, recipes_path):
   # rather than running recipe engine which may be at a different revision
   # than the pinned one.
   args = [
-    sys.executable,
-    os.path.join(repo_root, recipes_path, 'recipes.py'),
-    # Invoked recipes.py should not re-bootstrap (to avoid issues on bots).
-    '--disable-bootstrap',
-    'fetch',
+    VPYTHON, os.path.join(repo_root, recipes_path, 'recipes.py'), 'fetch',
   ]
   subprocess.check_call(args)
 
@@ -66,11 +64,7 @@ def run_simulation_test(repo_root, recipes_path, additional_args=None):
   # rather than running recipe engine which may be at a different revision
   # than the pinned one.
   args = [
-    sys.executable,
-    os.path.join(repo_root, recipes_path, 'recipes.py'),
-    # Invoked recipes.py should not re-bootstrap (to avoid issues on bots).
-    '--disable-bootstrap',
-    'test',
+    VPYTHON, os.path.join(repo_root, recipes_path, 'recipes.py'), 'test',
   ]
   if additional_args:
     args.extend(additional_args)
@@ -90,9 +84,7 @@ def regen_docs(repo_root, recipes_path):
   # rather than running recipe engine which may be at a different revision
   # than the pinned one.
   subprocess.check_call([
-    sys.executable,
-    os.path.join(repo_root, recipes_path, 'recipes.py'),
-    'doc',
+    VPYTHON, os.path.join(repo_root, recipes_path, 'recipes.py'), 'doc',
     '--kind', 'gen',
   ])
 

@@ -15,10 +15,6 @@ sequences of subprocess calls in a cross-platform and testable way.
 
     This file!
 
-*   `bootstrap/`
-
-    Bootstrapping and vendoring related code.
-
 *   `doc/`
 
     Documentation for the recipe engine (including this file!). Also includes

@@ -26,6 +26,8 @@ import sys
 import tempfile
 import traceback
 
+import coverage
+
 from . import checker
 from . import config_types
 from . import loader
@@ -83,8 +85,6 @@ class PostProcessError(ValueError):
 @contextlib.contextmanager
 def coverage_context(include=None, enable=True):
   """Context manager that records coverage data."""
-  # TODO(iannucci): once we're always bootstrapping, move this to the top.
-  import coverage
   c = coverage.coverage(config_file=False, include=include)
 
   if not enable:
@@ -240,9 +240,6 @@ def maybe_debug(break_funcs, enable):
 
 def run_test(test_description, mode):
   """Runs a test. Returns TestResults object."""
-  # TODO(iannucci): once we're always bootstrapping, move this to the top.
-  import coverage
-
   expected = None
   if os.path.exists(test_description.expectation_path):
     try:
@@ -404,9 +401,6 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
 
 def get_tests(test_filter=None):
   """Returns a list of tests for current recipe package."""
-  # TODO(iannucci): once we're always bootstrapping, move this to the top.
-  import coverage
-
   tests = []
   coverage_data = coverage.CoverageData()
 
@@ -677,9 +671,6 @@ def run_train(package_deps, gen_docs, test_filter, jobs, json_file):
 
 def run_run(test_filter, jobs, json_file, mode):
   """Implementation of the 'run' command."""
-  # TODO(iannucci): once we're always bootstrapping, move this to the top.
-  import coverage
-
   start_time = datetime.datetime.now()
 
   rc = 0
@@ -988,15 +979,7 @@ def add_subparser(parser):
     '--filter', action='append', type=normalize_filter,
     help=glob_helpstr)
 
-  def postprocess_func(_parser, args):
-    # Auto-enable bootstrap for test command invocations (necessary to get
-    # recent enough version of coverage package), unless explicitly disabled.
-    if args.use_bootstrap is None:
-      args.use_bootstrap = True
-
-  test_p.set_defaults(
-    func=main, postprocess_func=postprocess_func,
-  )
+  test_p.set_defaults(func=main)
 
 
 def main(package_deps, args):

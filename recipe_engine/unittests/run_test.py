@@ -7,9 +7,9 @@ import json
 import os
 import re
 import subprocess
-import unittest
 import tempfile
 import time
+import unittest
 
 import test_env
 from test_env import BASE_DIR
@@ -18,7 +18,6 @@ import recipe_engine.run
 import recipe_engine.step_runner
 from recipe_engine import arguments_pb2
 from google.protobuf import json_format as jsonpb
-from recipe_engine import requests_ssl
 
 
 class RunTest(unittest.TestCase):
@@ -36,14 +35,8 @@ class RunTest(unittest.TestCase):
     if engine_args:
       eng_args.extend(engine_args)
 
-    prev_ignore = os.environ.pop(requests_ssl.ENV_VAR_IGNORE, '0')
-    os.environ[requests_ssl.ENV_VAR_IGNORE] = '1'
     os.environ['RANDOM_MULTILINE_ENV'] = 'foo\nbar\nbaz\n'
-    try:
-      return (
-          ['python', script_path] + eng_args + ['run', recipe] + proplist)
-    finally:
-      os.environ[requests_ssl.ENV_VAR_IGNORE] = prev_ignore
+    return (['python', script_path] + eng_args + ['run', recipe] + proplist)
 
   def _test_recipe(self, recipe, properties=None, env=None):
     proc = subprocess.Popen(

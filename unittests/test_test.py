@@ -12,9 +12,7 @@ import tempfile
 import unittest
 
 
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, ROOT_DIR)
-import recipe_engine.env
+from repo_test_util import ROOT_DIR
 
 from recipe_engine import package_io
 from recipe_engine import package_pb2
@@ -323,10 +321,7 @@ class TestTest(unittest.TestCase):
 
   def _run_recipes(self, *args):
     return subprocess.check_output((
-        sys.executable,
-        self._recipe_tool,
-        '--use-bootstrap',
-        '--package', self._recipes_cfg,
+        sys.executable, self._recipe_tool, '--package', self._recipes_cfg,
     ) + args, stderr=subprocess.STDOUT)
 
   def test_list(self):

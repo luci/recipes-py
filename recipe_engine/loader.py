@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 import collections
+import contextlib
 import imp
 import inspect
 import os
@@ -19,6 +20,15 @@ from .recipe_api import _UnresolvedRequirement
 from .recipe_api import BoundProperty
 from .recipe_api import UndefinedPropertyException, PROPERTY_SENTINEL
 from .recipe_test_api import RecipeTestApi, DisabledTestData
+
+
+@contextlib.contextmanager
+def _temp_sys_path():
+  orig_path = sys.path[:]
+  try:
+    yield
+  finally:
+    sys.path = orig_path
 
 
 class LoaderError(Exception):
@@ -111,7 +121,7 @@ class RecipeScript(object):
     recipe_globals = {}
     recipe_globals['__file__'] = script_path
 
-    with env.temp_sys_path():
+    with _temp_sys_path():
       execfile(script_path, recipe_globals)
 
     recipe_globals['LOADED_DEPS'] = universe_view.deps_from_spec(
@@ -402,7 +412,7 @@ def _load_recipe_module_module(path, universe_view):
   mod.LOADED_DEPS = universe_view.deps_from_spec(getattr(mod, 'DEPS', []))
 
   # Prevent any modules that mess with sys.path from leaking.
-  with env.temp_sys_path():
+  with _temp_sys_path():
     sys.modules['%s.DEPS' % fullname] = mod.LOADED_DEPS
     _recursive_import(
         path, '%s.%s' % (RECIPE_MODULE_PREFIX, universe_view.package.name))
