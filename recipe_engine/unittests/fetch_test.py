@@ -48,16 +48,8 @@ class TestGit(unittest.TestCase):
 
   def setUp(self):
     fetch.Backend._GIT_METADATA_CACHE = {}
-
-    self._patchers = [
-      mock.patch('recipe_engine.fetch.GitBackend._GIT_BINARY', 'GIT'),
-    ]
-    for p in self._patchers:
-      p.start()
-
-  def tearDown(self):
-    for p in reversed(self._patchers):
-      p.stop()
+    mock.patch('recipe_engine.fetch.GitBackend._GIT_BINARY', 'GIT').start()
+    self.addCleanup(mock.patch.stopall)
 
   def assertMultiDone(self, mocked_call):
     with self.assertRaises(NoMoreExpectatedCalls):
@@ -179,8 +171,10 @@ class TestGit(unittest.TestCase):
 
     self.assertMultiDone(git)
 
+  @mock.patch('os.path.isdir')
   @mock.patch('recipe_engine.fetch.GitBackend._execute')
-  def test_commit_metadata(self, git):
+  def test_commit_metadata_empty_recipes_path(self, git, isdir):
+    isdir.return_value = False
     git.side_effect = multi(*([
       self.g(['init', 'dir']),
       self.g(['-C', 'dir', 'ls-remote', 'repo', 'revision'], 'a'*40),
@@ -196,6 +190,106 @@ class TestGit(unittest.TestCase):
       roll_candidate = True,
     ))
     self.assertMultiDone(git)
+
+  @mock.patch('os.path.isdir')
+  @mock.patch('recipe_engine.fetch.GitBackend._execute')
+  @mock.patch('recipe_engine.fetch.gitattr_checker.AttrChecker.check_file')
+  def test_commit_metadata_not_interesting(self, attr_checker, git, isdir):
+    attr_checker.side_effect = [False, False]
+    isdir.return_value = False
+    spec = package_pb2.Package(api_version=2, recipes_path='recipes')
+    json_spec = package_io.dump_obj(spec)
+
+    git.side_effect = multi(*([
+      self.g(['init', 'dir']),
+      self.g(['-C', 'dir', 'ls-remote', 'repo', 'revision'], 'a'*40),
+    ] + self.g_metadata_calls(config=json_spec)))
+
+    result = fetch.GitBackend('dir', 'repo').commit_metadata('revision')
+    self.assertEqual(result, fetch.CommitMetadata(
+      revision = 'a'*40,
+      author_email = 'foo@example.com',
+      commit_timestamp = 1492131405,
+      message_lines = ('hello', 'world'),
+      spec = spec,
+      roll_candidate = False,
+    ))
+    self.assertMultiDone(git)
+    attr_checker.assert_has_calls([
+        mock.call('a'*40, 'foo'),
+        mock.call('a'*40, 'bar')])
+
+  @mock.patch('os.path.isdir')
+  @mock.patch('recipe_engine.fetch.GitBackend._execute')
+  def test_commit_metadata_IRC_change(self, git, isdir):
+    isdir.return_value = False
+    spec = package_pb2.Package(api_version=2, recipes_path='recipes')
+    json_spec = package_io.dump_obj(spec)
+
+    git.side_effect = multi(*([
+      self.g(['init', 'dir']),
+      self.g(['-C', 'dir', 'ls-remote', 'repo', 'revision'], 'a'*40),
+    ] + self.g_metadata_calls(config=json_spec, diff=tuple([IRC]))))
+
+    result = fetch.GitBackend('dir', 'repo').commit_metadata('revision')
+    self.assertEqual(result, fetch.CommitMetadata(
+      revision = 'a'*40,
+      author_email = 'foo@example.com',
+      commit_timestamp = 1492131405,
+      message_lines = ('hello', 'world'),
+      spec = spec,
+      roll_candidate = True,
+    ))
+    self.assertMultiDone(git)
+
+  @mock.patch('os.path.isdir')
+  @mock.patch('recipe_engine.fetch.GitBackend._execute')
+  def test_commit_metadata_recipes_change(self, git, isdir):
+    isdir.return_value = False
+    spec = package_pb2.Package(api_version=2, recipes_path='recipes')
+    json_spec = package_io.dump_obj(spec)
+
+    git.side_effect = multi(*([
+      self.g(['init', 'dir']),
+      self.g(['-C', 'dir', 'ls-remote', 'repo', 'revision'], 'a'*40),
+    ] + self.g_metadata_calls(config=json_spec, diff=tuple(['recipes/foo']))))
+
+    result = fetch.GitBackend('dir', 'repo').commit_metadata('revision')
+    self.assertEqual(result, fetch.CommitMetadata(
+      revision = 'a'*40,
+      author_email = 'foo@example.com',
+      commit_timestamp = 1492131405,
+      message_lines = ('hello', 'world'),
+      spec = spec,
+      roll_candidate = True,
+    ))
+    self.assertMultiDone(git)
+
+  @mock.patch('os.path.isdir')
+  @mock.patch('recipe_engine.fetch.GitBackend._execute')
+  @mock.patch('recipe_engine.fetch.gitattr_checker.AttrChecker.check_file')
+  def test_commit_metadata_tagged_change(self, attr_checker, git, isdir):
+    attr_checker.side_effect = [True]
+    isdir.return_value = False
+    spec = package_pb2.Package(api_version=2, recipes_path='recipes')
+    json_spec = package_io.dump_obj(spec)
+
+    git.side_effect = multi(*([
+      self.g(['init', 'dir']),
+      self.g(['-C', 'dir', 'ls-remote', 'repo', 'revision'], 'a'*40),
+    ] + self.g_metadata_calls(config=json_spec)))
+
+    result = fetch.GitBackend('dir', 'repo').commit_metadata('revision')
+    self.assertEqual(result, fetch.CommitMetadata(
+      revision = 'a'*40,
+      author_email = 'foo@example.com',
+      commit_timestamp = 1492131405,
+      message_lines = ('hello', 'world'),
+      spec = spec,
+      roll_candidate = True,
+    ))
+    self.assertMultiDone(git)
+    attr_checker.assert_has_calls([mock.call('a'*40, 'foo')])
 
 
 if __name__ == '__main__':

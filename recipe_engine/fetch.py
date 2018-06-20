@@ -19,6 +19,7 @@ from collections import namedtuple
 from . import package_pb2
 from . import package_io
 from . import util
+from . import gitattr_checker
 
 # Add third party paths.
 from . import env
@@ -29,14 +30,6 @@ import subprocess42
 from google.protobuf import json_format
 
 LOGGER = logging.getLogger(__name__)
-
-
-def has_interesting_changes(spec, changed_files):
-  # TODO(iannucci): analyze any `recipe` gitattr-tagged files too
-  return (
-    package_io.InfraRepoConfig.RELPATH in changed_files or
-    any(f.startswith(spec.recipes_path) for f in changed_files)
-  )
 
 
 class FetchError(Exception):
@@ -212,6 +205,7 @@ class GitBackend(Backend):
   def __init__(self, *args, **kwargs):
     super(GitBackend, self).__init__(*args, **kwargs)
     self._did_ensure = False
+    self._gitattr_checker = gitattr_checker.AttrChecker(self.checkout_dir)
 
   def _git(self, *args):
     """Runs a git command.
@@ -368,9 +362,15 @@ class GitBackend(Backend):
       'diff-tree', '-r', '--no-commit-id', '--name-only', '%s^!' % revision)
       .splitlines())
 
+    has_interesting_changes = (
+        package_io.InfraRepoConfig.RELPATH in changed_files or
+        any(f.startswith(spec.recipes_path) for f in changed_files) or
+        any(self._gitattr_checker.check_file(revision, f)
+            for f in changed_files))
+
     return CommitMetadata(revision, meta[0],
                           int(meta[1]), tuple(meta[2:]),
-                          spec, has_interesting_changes(spec, changed_files))
+                          spec, has_interesting_changes)
 
 
 def add_subparser(parser):
