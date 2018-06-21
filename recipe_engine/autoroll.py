@@ -26,32 +26,26 @@ ROOT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 
 IS_WIN = sys.platform.startswith(('win', 'cygwin'))
 VPYTHON = 'vpython' + ('.bat' if IS_WIN else '')
+GIT = 'git' + ('.bat' if IS_WIN else '')
 
 def write_spec_to_disk(context, config_file, spec_pb):
   LOGGER.info('writing: %s', package_io.dump(spec_pb))
 
   config_file.write(spec_pb)
-  fetch(context.repo_root, spec_pb.recipes_path)
-
   pspec = package.PackageSpec.from_package_pb(context, spec_pb)
   engine_root = pspec.deps['recipe_engine'].repo_root(context)
+
+  engine_spec = spec_pb.deps['recipe_engine']
+  if not engine_spec.url.startswith('file://'):
+    # Update recipe_engine to the correct version and copy its matching
+    # recipes.py bootstrap script.
+    subprocess.check_call([
+      GIT, '-C', engine_root, 'checkout', engine_spec.revision])
+
   shutil.copy(
     os.path.join(engine_root, 'doc', 'recipes.py'),
     os.path.join(context.recipes_dir, 'recipes.py')
   )
-
-
-def fetch(repo_root, recipes_path):
-  """
-  Just fetch the recipes to the newly configured version.
-  """
-  # Use _local_ recipes.py, so that it checks out the pinned recipe engine,
-  # rather than running recipe engine which may be at a different revision
-  # than the pinned one.
-  args = [
-    VPYTHON, os.path.join(repo_root, recipes_path, 'recipes.py'), 'fetch',
-  ]
-  subprocess.check_call(args)
 
 
 def run_simulation_test(repo_root, recipes_path, additional_args=None):
