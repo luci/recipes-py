@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Copyright 2018 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -170,7 +169,7 @@ class AttrChecker(object):
       'recipes' was set, and False if it was unset (-) or unspecified (!).
     """
     if blob_hash in self._gitattr_files_cache:
-      return self._gittattr_files_cache[blob_hash]
+      return self._gitattr_files_cache[blob_hash]
 
     rules = []
     for line in self._git('cat-file', 'blob', blob_hash).splitlines():
