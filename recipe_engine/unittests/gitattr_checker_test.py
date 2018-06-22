@@ -11,10 +11,11 @@ import unittest
 
 import test_env
 
+import mock
 from recipe_engine import gitattr_checker
 
 
-class TestAttrChecker(unittest.TestCase):
+class AttrCheckerEquivalenceTests(unittest.TestCase):
   def setUp(self):
     self.git_repo = tempfile.mkdtemp()
     self.git('init', '-q')
@@ -290,6 +291,108 @@ class TestAttrChecker(unittest.TestCase):
         revision,
         ['foo', 'bar', 'bar/foo', 'foo/bar', 'bar/foo/baz'])
 
+
+class AttrCheckerMockTests(unittest.TestCase):
+  def setUp(self):
+    self._attr_checker = gitattr_checker.AttrChecker('repo')
+    self._blobs = {
+        'blob1': {
+            'path': '.gitattributes',
+            'content': [
+                'foo recipes',
+                'bar lemur',
+            ],
+        },
+        'blob2': {
+            'path': 'irrelevant',
+            'content': [
+                'Neque porro quisquam est qui dolorem ipsum quia dolor',
+                'sit amet, consectetur, adipisci velit',
+            ],
+        },
+        'blob3': {
+            'path': 'baz/.gitattributes',
+            'content': [
+                'foo -recipes',
+                'foo lemur',
+            ],
+        }
+    }
+    self._ls_tree = self._ls_tree_from_revisions({
+        'rev1': ['blob1', 'blob2'],
+        'rev2': ['blob1'],
+        'rev3': ['blob1', 'blob3'],
+    })
+    self._git_mock = mock.Mock()
+    self._git_mock.side_effect = self._fake_git
+    mock.patch('recipe_engine.gitattr_checker.AttrChecker._git',
+               self._git_mock).start()
+    self.addCleanup(mock.patch.stopall)
+
+  def _ls_tree_from_revisions(self, revisions):
+    ls_tree = {}
+    for revision in revisions:
+      ls_tree[revision] = '\0'.join(
+          '<mode> <type> %s\t%s' % (blob_hash, self._blobs[blob_hash]['path'])
+          for blob_hash in revisions[revision])
+    return ls_tree
+
+  def _fake_git(self, *cmd):
+    self.assertIn(cmd[0], ['ls-tree', 'cat-file'])
+    if cmd[0] == 'ls-tree':
+      return self._ls_tree[cmd[-1]]
+    return '\n'.join(self._blobs[cmd[-1]]['content'])
+
+  def assertNewCalls(self, expected_calls):
+    self.assertEqual(
+        [(call[1][0], call[1][-1]) for call in self._git_mock.mock_calls],
+        expected_calls)
+    self._git_mock.reset_mock()
+
+  def testDoesntQueryNonGitattributesFiles(self):
+    # We should only ask information about the files in the revision, and the
+    # .gitattributes files, not irrelevant files.
+    self.assertTrue(self._attr_checker.check_file('rev1', 'foo'))
+    self.assertNewCalls([
+        ('ls-tree', 'rev1'),
+        ('cat-file', 'blob1'),
+    ])
+
+  def testDoesntQueryRevisionTwice(self):
+    self.assertTrue(self._attr_checker.check_file('rev1', 'foo'))
+    self.assertNewCalls([
+        ('ls-tree', 'rev1'),
+        ('cat-file', 'blob1'),
+    ])
+    # We shouldn't ask git for information again, since nothing has changed.
+    self.assertFalse(self._attr_checker.check_file('rev1', 'bar'))
+    self.assertFalse(self._git_mock.called)
+
+  def testCachesGitattributesFiles(self):
+    self.assertTrue(self._attr_checker.check_file('rev1', 'foo'))
+    self.assertNewCalls([
+        ('ls-tree', 'rev1'),
+        ('cat-file', 'blob1'),
+    ])
+    # The revision changed, but the .gitattributes files did not. We shouldn't
+    # ask git for information about file blobs.
+    self.assertTrue(self._attr_checker.check_file('rev2', 'foo'))
+    self.assertNewCalls([
+        ('ls-tree', 'rev2'),
+    ])
+
+  def testQueriesOnlyForNewGitattributesFiles(self):
+    self.assertTrue(self._attr_checker.check_file('rev2', 'baz/foo'))
+    self.assertNewCalls([
+        ('ls-tree', 'rev2'),
+        ('cat-file', 'blob1'),
+    ])
+    # A new .gitattribute file was added, but the old one hasn't changed.
+    self.assertFalse(self._attr_checker.check_file('rev3', 'baz/foo'))
+    self.assertNewCalls([
+        ('ls-tree', 'rev3'),
+        ('cat-file', 'blob3'),
+    ])
 
 
 if __name__ == '__main__':
