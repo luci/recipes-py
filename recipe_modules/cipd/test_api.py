@@ -36,6 +36,9 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
         error=error,
         retcode=1 if retcode is None else retcode)
 
+  def example_acl_check(self, package_path, check=True):
+    return self._resultify(check)
+
   def example_build(self, package_name, version=None):
     return self._resultify(self.make_pin(package_name, version))
 

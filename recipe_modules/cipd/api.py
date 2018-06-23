@@ -208,6 +208,34 @@ class CIPDApi(recipe_api.RecipeApi):
       else: # pragma: no cover
         raise
 
+  def acl_check(self, pkg_path, reader=True, writer=False, owner=False):
+    """Checks whether the caller has a given roles in a package.
+
+    Args:
+      pkg_path (str) - The package subpath.
+      reader (bool) - Check for READER role.
+      writer (bool) - Check for WRITER role.
+      owner (bool) - Check for OWNER role.
+
+    Returns:
+      True if the caller has given roles, False otherwise.
+    """
+    cmd = [
+        'acl-check',
+        pkg_path
+    ]
+    if reader:
+      cmd.append('-reader')
+    if writer:
+      cmd.append('-writer')
+    if owner:
+      cmd.append('-owner')
+    step_result = self._run(
+        'acl-check %s' % pkg_path, cmd,
+        step_test_data=lambda: self.test_api.example_acl_check(pkg_path)
+    )
+    return step_result.json.output['result']
+
   def _build(self, pkg_name, pkg_def_file_or_placeholder, output_package):
     step_result = self._run(
         'build %s' % pkg_name,

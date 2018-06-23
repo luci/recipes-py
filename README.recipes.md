@@ -194,7 +194,20 @@ CIPDApi provides basic support for CIPD.
 This assumes that `cipd` (or `cipd.exe` or `cipd.bat` on windows) has been
 installed somewhere in $PATH.
 
-&mdash; **def [build](/recipe_modules/cipd/api.py#259)(self, input_dir, output_package, package_name, install_mode=None):**
+&mdash; **def [acl\_check](/recipe_modules/cipd/api.py#211)(self, pkg_path, reader=True, writer=False, owner=False):**
+
+Checks whether the caller has a given roles in a package.
+
+Args:
+  pkg_path (str) - The package subpath.
+  reader (bool) - Check for READER role.
+  writer (bool) - Check for WRITER role.
+  owner (bool) - Check for OWNER role.
+
+Returns:
+  True if the caller has given roles, False otherwise.
+
+&mdash; **def [build](/recipe_modules/cipd/api.py#287)(self, input_dir, output_package, package_name, install_mode=None):**
 
 Builds, but does not upload, a cipd package from a directory.
 
@@ -210,7 +223,7 @@ Args:
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#241)(self, pkg_def, output_package):**
+&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#269)(self, pkg_def, output_package):**
 
 Builds a package based on a PackageDefinition object.
 
@@ -222,7 +235,7 @@ Args:
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#224)(self, pkg_def, output_package):**
+&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#252)(self, pkg_def, output_package):**
 
 Builds a package based on on-disk YAML package definition file.
 
@@ -233,7 +246,7 @@ Args:
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#361)(self, pkg_def, refs=(), tags={}):**
+&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#389)(self, pkg_def, refs=(), tags={}):**
 
 Builds and uploads a package based on a PackageDefinition object.
 
@@ -249,7 +262,7 @@ Args:
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#343)(self, pkg_def, refs=(), tags={}):**
+&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#371)(self, pkg_def, refs=(), tags={}):**
 
 Builds and uploads a package based on on-disk YAML package definition
 file.
@@ -265,7 +278,7 @@ Args:
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [describe](/recipe_modules/cipd/api.py#488)(self, package_name, version, test_data_refs=(), test_data_tags={}):**
+&mdash; **def [describe](/recipe_modules/cipd/api.py#516)(self, package_name, version, test_data_refs=(), test_data_tags={}):**
 
 Returns information about a pacakge instance given its version:
 who uploaded the instance and when and a list of attached tags.
@@ -277,7 +290,7 @@ Args:
 Returns:
   The CIPDApi.Description instance describing the package.
 
-&mdash; **def [ensure](/recipe_modules/cipd/api.py#380)(self, root, packages):**
+&mdash; **def [ensure](/recipe_modules/cipd/api.py#408)(self, root, packages):**
 
 Ensures that packages are installed in a given root dir.
 
@@ -290,7 +303,7 @@ Returns:
 
 &emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#196)(self):**
 
-&mdash; **def [register](/recipe_modules/cipd/api.py#291)(self, package_name, package_path, refs=(), tags={}):**
+&mdash; **def [register](/recipe_modules/cipd/api.py#319)(self, package_name, package_path, refs=(), tags={}):**
 
 Uploads and registers package instance in the package repository.
 
@@ -304,7 +317,7 @@ Args:
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [search](/recipe_modules/cipd/api.py#462)(self, package_name, tag):**
+&mdash; **def [search](/recipe_modules/cipd/api.py#490)(self, package_name, tag):**
 
 Searches for package instances by tag, optionally constrained by package
 name.
@@ -316,7 +329,7 @@ Args:
 Returns:
   The list of CIPDApi.Pin instances.
 
-&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#434)(self, package_name, version, refs):**
+&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#462)(self, package_name, version, refs):**
 
 Moves a ref to point to a given version.
 
@@ -328,7 +341,7 @@ Args:
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#404)(self, package_name, version, tags):**
+&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#432)(self, package_name, version, tags):**
 
 Tags package of a specific version.
 

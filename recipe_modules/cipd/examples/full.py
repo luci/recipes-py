@@ -49,6 +49,9 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, ver_files, install_mode):
 
   # The rest of commands expect credentials to be set.
 
+  # Check if we have READER, WRITER and OWNER roles for public/package path.
+  api.cipd.acl_check('public/package', reader=True, writer=True, owner=True)
+
   # Build & register new package version.
   api.cipd.build('fake-input-dir', 'fake-package-path', 'infra/fake-package')
   api.cipd.build('fake-input-dir', 'fake-package-path', 'infra/fake-package',

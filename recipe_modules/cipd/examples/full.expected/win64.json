@@ -175,6 +175,25 @@
   {
     "cmd": [
       "cipd.bat",
+      "acl-check",
+      "public/package",
+      "-reader",
+      "-writer",
+      "-owner",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "acl-check public/package",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": true@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd.bat",
       "pkg-build",
       "-in",
       "fake-input-dir",
