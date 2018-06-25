@@ -192,9 +192,9 @@ class TestGit(unittest.TestCase):
 
   @mock.patch('os.path.isdir')
   @mock.patch('recipe_engine.fetch.GitBackend._execute')
-  @mock.patch('recipe_engine.fetch.gitattr_checker.AttrChecker.check_file')
+  @mock.patch('recipe_engine.fetch.gitattr_checker.AttrChecker.check_files')
   def test_commit_metadata_not_interesting(self, attr_checker, git, isdir):
-    attr_checker.side_effect = [False, False]
+    attr_checker.side_effect = [False]
     isdir.return_value = False
     spec = package_pb2.Package(api_version=2, recipes_path='recipes')
     json_spec = package_io.dump_obj(spec)
@@ -214,9 +214,7 @@ class TestGit(unittest.TestCase):
       roll_candidate = False,
     ))
     self.assertMultiDone(git)
-    attr_checker.assert_has_calls([
-        mock.call('a'*40, 'foo'),
-        mock.call('a'*40, 'bar')])
+    attr_checker.assert_called_with('a'*40, set(['foo', 'bar']))
 
   @mock.patch('os.path.isdir')
   @mock.patch('recipe_engine.fetch.GitBackend._execute')
@@ -266,7 +264,7 @@ class TestGit(unittest.TestCase):
 
   @mock.patch('os.path.isdir')
   @mock.patch('recipe_engine.fetch.GitBackend._execute')
-  @mock.patch('recipe_engine.fetch.gitattr_checker.AttrChecker.check_file')
+  @mock.patch('recipe_engine.fetch.gitattr_checker.AttrChecker.check_files')
   def test_commit_metadata_tagged_change(self, attr_checker, git, isdir):
     attr_checker.side_effect = [True]
     isdir.return_value = False
@@ -288,7 +286,7 @@ class TestGit(unittest.TestCase):
       roll_candidate = True,
     ))
     self.assertMultiDone(git)
-    attr_checker.assert_has_calls([mock.call('a'*40, 'foo')])
+    attr_checker.assert_called_with('a'*40, set(['foo', 'bar']))
 
 
 if __name__ == '__main__':

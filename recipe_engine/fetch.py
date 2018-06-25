@@ -364,8 +364,7 @@ class GitBackend(Backend):
     has_interesting_changes = (
         package_io.InfraRepoConfig.RELPATH in changed_files or
         any(f.startswith(spec.recipes_path) for f in changed_files) or
-        any(self._gitattr_checker.check_file(revision, f)
-            for f in changed_files))
+        self._gitattr_checker.check_files(revision, changed_files))
 
     return CommitMetadata(revision, meta[0],
                           int(meta[1]), tuple(meta[2:]),

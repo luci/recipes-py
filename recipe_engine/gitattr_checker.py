@@ -110,11 +110,13 @@ def _parse_gitattr_line(line):
 
 
 class AttrChecker(object):
-
-  def __init__(self, repo):
+  def __init__(self, repo, shortcircuit=True):
     self._repo = repo
-    self._gitattr_files = None
-    self._gitattr_files_revision = None
+    # Shortcircuit means we only care about whether any of the files we check
+    # has the 'recipes' attribute set (which is useful when checking if the
+    # revision is interesting), and not about the results for each individual
+    # file (which is useful for testing).
+    self._shortcircuit = shortcircuit
     # A map from the git blob hash of a .gitattributes file to a list of the
     # rules specified in that file that affect the 'recipes' attribute.
     # Each rule is a pair of (pattern, action) where |pattern| is a compiled
@@ -122,35 +124,53 @@ class AttrChecker(object):
     # attributes is to be set or False otherwise.
     # Rules are stored in the order they appear in the .gitattributes file.
     self._gitattr_files_cache = {}
+    # Stores the gitattributes files for the current revision.
+    self._gitattr_files = None
 
-  def _git(self, *cmd):
-    return subprocess.check_output(['git'] + list(cmd), cwd=self._repo).strip()
+  def _git(self, cmd, stdin=None):
+    """Executes a git command and returns the standard output."""
+    p = subprocess.Popen(['git'] + cmd, cwd=self._repo, stdin=subprocess.PIPE,
+                         stdout=subprocess.PIPE)
+    stdout, _ = p.communicate(stdin)
+    if p.returncode != 0:
+      raise subprocess.CalledProcessError(p.returncode, ['git'] + cmd, None)
+    return stdout.strip().splitlines()
 
-  def _ensure_gitattributes_blobs_loaded(self, revision):
+  def _get_directories(self, files):
+    """Lists all the directories touched by any of the |files|."""
+    dirs = set([''])
+    for f in files:
+      f = os.path.dirname(f)
+      while f and f not in dirs:
+        dirs.add(f)
+        f = os.path.dirname(f)
+    return dirs
+
+  def _ensure_gitattributes_files_loaded(self, revision, files):
     """Loads and parses all the .gitattributes files in the given revision."""
-    if self._gitattr_files_revision == revision:
-      return
     self._gitattr_files = []
-    self._gitattr_files_revision = revision
-    # TODO: This might be an expensive operation for large repos. If the
-    # autoroller is slow on chromium/src and you're here, this might be the
-    # reason.
-    tree = self._git('ls-tree', '-rz', '--full-tree', revision)
-    for line in tree.split('\0'):
-      if not line:
+
+    # We list all the directories that were touched by any of the files, and
+    # search for .gitattributes files in them.
+    touched_dirs = self._get_directories(files)
+    possible_gitattr_paths = '\n'.join(
+        '%s:%s' % (revision, os.path.join(d, '.gitattributes'))
+        for d in touched_dirs)
+
+    # We ask git to list the hashes for all the .gitattributes files we listed
+    # above. If the file doesn't exist, git returns '<object> missing', where
+    # object is the revision and .gitattribute file we asked for.
+    possible_gitattr_blobs = self._git(
+        ['cat-file', '--batch-check=%(objectname)'],
+        possible_gitattr_paths)
+    for line, d in zip(possible_gitattr_blobs, touched_dirs):
+      if line.endswith(' missing'):
         continue
-      # The format for |line| looks like:
-      #   <mode> <type> <hash>\t<full/path/to/file>
-      line = line.split('\t')
-      dirname, basename = os.path.split('/' + line[1])
-      if basename != '.gitattributes':
-        continue
-      if dirname != '/':
-        dirname += '/'
-      blob_hash = line[0].split()[2]
-      self._gitattr_files.append((dirname,
-                                  self._parse_gitattr_file(blob_hash)))
-    # Store the paths in desc. order of length
+      if d != '':
+        d += '/'
+      self._gitattr_files.append(('/' + d, self._parse_gitattr_file(line)))
+
+    # Store the paths in desc. order of length.
     self._gitattr_files.sort()
     self._gitattr_files.reverse()
 
@@ -172,7 +192,7 @@ class AttrChecker(object):
       return self._gitattr_files_cache[blob_hash]
 
     rules = []
-    for line in self._git('cat-file', 'blob', blob_hash).splitlines():
+    for line in self._git(['cat-file', 'blob', blob_hash]):
       parsed_line = _parse_gitattr_line(line)
       if parsed_line is None:
         continue
@@ -189,15 +209,12 @@ class AttrChecker(object):
     self._gitattr_files_cache[blob_hash] = rules
     return rules
 
-  def check_file(self, revision, f):
+  def _check_file(self, f):
     """Check whether |f| has the 'recipes' attribute set.
 
     Returns True if the file |f| has the 'recipes' attribute set, and False
     otherwise.
     """
-    f = '/' + f
-    # Make sure the gitattribute files are loaded at the right revision.
-    self._ensure_gitattributes_blobs_loaded(revision)
     # If the file path starts with the GA path, then the path is a parent of
     # the file. Note that since the GA paths are sorted desc. according to
     # length, the first we find will be the most specific one.
@@ -218,3 +235,18 @@ class AttrChecker(object):
     # No GA specified a rule for the file, so the attribute is unspecified and
     # not set.
     return False
+
+  def check_files(self, revision, files):
+    """Checks the 'recipes' attribute for the |files| at the given |revision|.
+
+    If |shortcircuit| was specified when creating this object, returns True if
+    any of the |files| has the 'recipes' attribute set.
+    Otherwise, returns a list with an entry for each file |f| specifying
+    whether it has the 'recipes' attribute set or not.
+    """
+    # Make sure the gitattribute files are loaded at the right revision.
+    self._ensure_gitattributes_files_loaded(revision, files)
+    results = (self._check_file('/' + f) for f in files)
+    if self._shortcircuit:
+      return any(results)
+    return list(results)
