@@ -1,0 +1,38 @@
+[
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::archive]\\resources\\archive.py"
+    ],
+    "name": "archiving",
+    "stdin": "{\"archive_type\": \"tbz\", \"entries\": [{\"path\": \"[TMP_BASE]\\\\tar-example_tmp_1\", \"type\": \"dir\"}], \"output\": \"[START_DIR]\\\\output\\\\output.tar.bz2\", \"root\": \"[TMP_BASE]\\\\tar-example_tmp_1\"}"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::archive]\\resources\\archive.py"
+    ],
+    "name": "archiving more",
+    "stdin": "{\"archive_type\": \"zip\", \"entries\": [{\"path\": \"[TMP_BASE]\\\\tar-example_tmp_1\\\\a\", \"type\": \"file\"}, {\"path\": \"[TMP_BASE]\\\\tar-example_tmp_1\\\\b\", \"type\": \"file\"}, {\"path\": \"[TMP_BASE]\\\\tar-example_tmp_1\\\\sub\", \"type\": \"dir\"}], \"output\": \"[START_DIR]\\\\output\\\\more.zip\", \"root\": \"[TMP_BASE]\\\\tar-example_tmp_1\"}"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py"
+    ],
+    "name": "extract tar",
+    "stdin": "{\"archive_file\": \"[START_DIR]\\\\output\\\\output.tar.bz2\", \"output\": \"[TMP_BASE]\\\\tar-example_tmp_1\\\\output1\"}"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py"
+    ],
+    "name": "extract zip",
+    "stdin": "{\"archive_file\": \"[START_DIR]\\\\output\\\\more.zip\", \"output\": \"[TMP_BASE]\\\\tar-example_tmp_1\\\\output2\"}"
+  }
+]

@@ -3,6 +3,7 @@
 ## Table of Contents
 
 **[Recipe Modules](#Recipe-Modules)**
+  * [archive](#recipe_modules-archive)
   * [buildbucket](#recipe_modules-buildbucket) &mdash; API for interacting with the buildbucket service.
   * [cipd](#recipe_modules-cipd) &mdash; API for interacting with CIPD.
   * [context](#recipe_modules-context) &mdash; The context module provides APIs for manipulating a few pieces of 'ambient' data that affect how steps are run.
@@ -25,6 +26,7 @@
   * [url](#recipe_modules-url) &mdash; Methods for interacting with HTTP(s) URLs.
 
 **[Recipes](#Recipes)**
+  * [archive:examples/full](#recipes-archive_examples_full)
   * [buildbucket:examples/full](#recipes-buildbucket_examples_full) &mdash; This file is a recipe demonstrating the buildbucket recipe module.
   * [buildbucket:tests/build_id](#recipes-buildbucket_tests_build_id)
   * [buildbucket:tests/build_input](#recipes-buildbucket_tests_build_input)
@@ -96,6 +98,44 @@
   * [url:tests/validate_url](#recipes-url_tests_validate_url)
 ## Recipe Modules
 
+### *recipe_modules* / [archive](/recipe_modules/archive)
+
+[DEPS](/recipe_modules/archive/__init__.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [python](#recipe_modules-python)
+
+#### **class [ArchiveApi](/recipe_modules/archive/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
+
+Provides steps to manipulate archive files (tar, zip, etc.).
+
+&mdash; **def [extract](/recipe_modules/archive/api.py#31)(self, step_name, archive_file, output):**
+
+Step to uncompress |archive_file| into |output| directory.
+
+Archive will be unpacked to |output| so that root of an archive is in
+|output|, i.e. archive.tar/file.txt will become |output|/file.txt.
+
+Step will FAIL if |output| already exists.
+
+Args:
+  step_name: display name of a step.
+  archive_file: path to an archive file to uncompress, MUST exist.
+  output: path to a directory to unpack to, MUST NOT exist.
+
+&mdash; **def [package](/recipe_modules/archive/api.py#13)(self, root):**
+
+Returns Package object that can be used to compress a set of files.
+
+Usage:
+  (api.archive.make(root).
+      with_file(root.join('file')).
+      with_dir(root.join('directory')).
+      archive('archive step', output, 'tbz'))
+
+Args:
+  root: a directory that would become root of a package, all files added to
+      an archive will have archive paths relative to this directory.
+
+Returns:
+  Package object.
 ### *recipe_modules* / [buildbucket](/recipe_modules/buildbucket)
 
 [DEPS](/recipe_modules/buildbucket/__init__.py#5): [json](#recipe_modules-json), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
@@ -1594,6 +1634,11 @@ Args:
   * ValueError: if "v" is not valid.
 ## Recipes
 
+### *recipes* / [archive:examples/full](/recipe_modules/archive/examples/full.py)
+
+[DEPS](/recipe_modules/archive/examples/full.py#7): [archive](#recipe_modules-archive), [context](#recipe_modules-context), [file](#recipe_modules-file), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/archive/examples/full.py#18)(api):**
 ### *recipes* / [buildbucket:examples/full](/recipe_modules/buildbucket/examples/full.py)
 
 [DEPS](/recipe_modules/buildbucket/examples/full.py#7): [buildbucket](#recipe_modules-buildbucket), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
