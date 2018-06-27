@@ -28,19 +28,21 @@ PROPERTIES = {
 def RunSteps(api, use_pkg, pkg_files, pkg_dirs, ver_files, install_mode):
   package_name = 'public/package/${platform}'
   package_instance_id = '7f751b2237df2fdf3c1405be00590fefffbaea2d'
-  packages = {package_name: package_instance_id}
+  file = api.cipd.EnsureFile()
+  file.add_package(package_name, package_instance_id)
 
   cipd_root = api.path['start_dir'].join('packages')
   # Some packages don't require credentials to be installed or queried.
-  api.cipd.ensure(cipd_root, packages)
+  api.cipd.ensure(cipd_root, file)
   result = api.cipd.search(package_name, tag='git_revision:40-chars-long-hash')
   r = api.cipd.describe(package_name,
                     version=result[0].instance_id)
 
   # Others do, so provide creds first.
   private_package_name = 'private/package/${platform}'
-  packages[private_package_name] = 'latest'
-  api.cipd.ensure(cipd_root, packages)
+  #packages[private_package_name] = 'latest'
+  file.add_package(private_package_name, 'latest', subdir='private')
+  api.cipd.ensure(cipd_root, file)
   result = api.cipd.search(private_package_name, tag='key:value')
   api.cipd.describe(private_package_name,
                     version=result[0].instance_id,

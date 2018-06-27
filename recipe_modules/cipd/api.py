@@ -151,6 +151,34 @@ class PackageDefinition(object):
     }
 
 
+class EnsureFile(object):
+  Package = namedtuple('Package', ['name', 'version'])
+
+  def __init__(self):
+    self.packages = {}  # dict[Path, Package]
+
+  def add_package(self, name, version, subdir=None):
+    """Add a package to the ensure file.
+
+    Args:
+      name (str) - Name of the package, must be for right platform.
+      version (str) - Could be either instance_id, or ref, or unique tag.
+      subdir (str) - Subdirectory of root dir for the package.
+    """
+    self.packages.setdefault(subdir, []).append(self.Package(name, version))
+    return self
+
+  def render(self):
+    """Renders the ensure file as textual representation."""
+    package_list = []
+    for subdir in sorted(self.packages):
+      if subdir is not None:
+        package_list.append('@Subdir %s' % subdir)
+      for package in self.packages[subdir]:
+        package_list.append('%s %s' % (package.name, package.version))
+    return '\n'.join(package_list)
+
+
 class CIPDApi(recipe_api.RecipeApi):
   """CIPDApi provides basic support for CIPD.
 
@@ -158,6 +186,7 @@ class CIPDApi(recipe_api.RecipeApi):
   installed somewhere in $PATH.
   """
   PackageDefinition = PackageDefinition
+  EnsureFile = EnsureFile
 
   # A CIPD pin.
   Pin = namedtuple('Pin', [
@@ -405,29 +434,30 @@ class CIPDApi(recipe_api.RecipeApi):
     return self._create(
       pkg_def.package_name, self.m.json.input(pkg_def.to_jsonish()), refs, tags)
 
-  def ensure(self, root, packages):
+  def ensure(self, root, ensure_file):
     """Ensures that packages are installed in a given root dir.
 
-    packages must be a mapping from package name to its version, where
-      * name must be for right platform,
-      * version could be either instance_id, or ref, or unique tag.
+    Args:
+      root (Path) - Path to installation site root directory.
+      ensure_file (EnsureFile) - List of packages to install.
 
     Returns:
-      The list of CIPDApi.Pin instances.
+      The map of subdirectories to CIPDApi.Pin instances.
     """
-    package_list = ['%s %s' % (name, version)
-                    for name, version in sorted(packages.items())]
-    ensure_file = self.m.raw_io.input('\n'.join(package_list))
+    check_type('ensure_file', ensure_file, EnsureFile)
     cmd = [
       'ensure',
       '-root', root,
-      '-ensure-file', ensure_file,
+      '-ensure-file', self.m.raw_io.input(ensure_file.render())
     ]
     step_result = self._run(
         'ensure_installed', cmd,
-        step_test_data=lambda: self.test_api.example_ensure(packages)
+        step_test_data=lambda: self.test_api.example_ensure(ensure_file)
     )
-    return [self.Pin(**pin) for pin in step_result.json.output['result']['']]
+    return {
+        subdir: [self.Pin(**pin) for pin in pins]
+        for subdir, pins in step_result.json.output['result'].iteritems()
+    }
 
   def set_tag(self, package_name, version, tags):
     """Tags package of a specific version.

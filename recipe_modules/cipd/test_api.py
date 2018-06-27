@@ -44,10 +44,11 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
 
   example_register = example_build
 
-  def example_ensure(self, packages):
+  def example_ensure(self, ensure_file):
     return self._resultify({
-        '': [self.make_pin(name, version)
-             for name, version in sorted(packages.items())]
+        subdir or '': [self.make_pin(name, version)
+                       for name, version in sorted(packages)]
+        for subdir, packages in ensure_file.packages.iteritems()
     })
 
   def example_set_tag(self, package_name, version):
