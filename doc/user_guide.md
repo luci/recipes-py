@@ -71,9 +71,9 @@ run this recipe by calling
 *** promo
 Note: every recipe execution (e.g. build on buildbot) emits
 a step log called `run_recipe` on the `setup_build` step which provides
-a precise invocation for `run_recipe.py` correlating exactly with the current
+a precise invocation for `recipes.py` correlating exactly with the current
 recipe invocation. This is useful to locally repro a failing build without
-having to guess at the parameters to `run_recipe.py`.
+having to guess at the parameters to `recipes.py`.
 ***
 
 ## We should probably test as we go...
@@ -262,11 +262,11 @@ Yes, elements of a test specification are combined with `+` and it's weird.
 
 To specify property values in a local run:
 
-    build/scripts/tools/run_recipe.py <recipe-name> opt=bob other=sally
+    script/slaves/recipes.py run <recipe-name> opt=bob other=sally
 
 Or, more explicitly::
 
-    build/scripts/tools/run_recipe.py --properties-file <path/to/json>
+    script/slaves/recipes.py --properties-file <path/to/json>
 
 Where `<path/to/json>` is a file containing a valid json `object` (i.e.
 key:value pairs).
