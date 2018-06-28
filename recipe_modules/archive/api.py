@@ -28,7 +28,7 @@ class ArchiveApi(recipe_api.RecipeApi):
     """
     return Package(self._archive_impl, root)
 
-  def extract(self, step_name, archive_file, output):
+  def extract(self, step_name, archive_file, output, mode='safe'):
     """Step to uncompress |archive_file| into |output| directory.
 
     Archive will be unpacked to |output| so that root of an archive is in
@@ -37,17 +37,52 @@ class ArchiveApi(recipe_api.RecipeApi):
     Step will FAIL if |output| already exists.
 
     Args:
-      step_name: display name of a step.
-      archive_file: path to an archive file to uncompress, MUST exist.
-      output: path to a directory to unpack to, MUST NOT exist.
+      step_name (str): display name of a step.
+      archive_file (Path): path to an archive file to uncompress, MUST exist.
+      output (Path): path to a directory to unpack to, MUST NOT exist.
+      mode (str): Must be either 'safe' or 'unsafe'. In safe mode, if the
+        archive attempts to extract files which would escape the extraction
+        `output` location, the extraction will fail (raise StepException)
+        which contains a member `StepException.archive_skipped_files` (all
+        other files will be extracted normally). If 'unsafe', then tarfiles
+        containing paths escaping `output` will be extracted as-is.
     """
-    self.m.python(
-      name=step_name,
-      script=self.resource('extract.py'),
-      stdin=self.m.json.input({
-        'output': str(output),
-        'archive_file': str(archive_file),
+    assert mode in ('safe', 'unsafe'), 'Unknown mode %r' % (mode,)
+
+    step_result = self.m.python(
+      step_name,
+      self.resource('extract.py'),
+      [
+        '--json-input', self.m.json.input({
+          'output': str(output),
+          'archive_file': str(archive_file),
+          'safe_mode': mode == 'safe',
+        }),
+        '--json-output', self.m.json.output(),
+      ],
+      step_test_data=lambda: self.m.json.test_api.output({
+        'extracted': {
+          'filecount': 1337,
+          'bytes': 0xbadc0ffee,
+        },
       }))
+    self.m.path.mock_add_paths(output)
+    j = step_result.json.output
+    if j.get('extracted', {}).get('filecount'):
+      stat = j['extracted']
+      step_result.presentation.step_text += (
+        '<br/>extracted %s files - %.02f MB' % (
+          stat['filecount'], stat['bytes'] / (1000.0**2)))
+    if j.get('skipped', {}).get('filecount'):
+      stat = j['skipped']
+      step_result.presentation.step_text += (
+        '<br/>SKIPPED %s files - %.02f MB' % (
+          stat['filecount'], stat['bytes'] / (1000.0**2)))
+      step_result.presentation.logs['skipped files'] = stat['names']
+      step_result.presentation.status = self.m.step.FAILURE
+      ex = self.m.step.StepFailure(step_name)
+      ex.archive_skipped_files = stat['names']
+      raise ex
 
   def _archive_impl(self, root, entries, step_name, output, archive_type):
     if archive_type is None:

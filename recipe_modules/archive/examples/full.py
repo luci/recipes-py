@@ -8,6 +8,7 @@ DEPS = [
   'recipe_engine/archive',
   'recipe_engine/context',
   'recipe_engine/file',
+  'recipe_engine/json',
   'recipe_engine/path',
   'recipe_engine/platform',
   'recipe_engine/raw_io',
@@ -49,6 +50,11 @@ def RunSteps(api):
   api.archive.extract('extract tar', out_tar, temp.join('output1'))
   api.archive.extract('extract zip', out_zip, temp.join('output2'))
 
+  try:
+    api.archive.extract('extract failure', out_zip, temp.join('output3'))
+  except api.step.StepFailure:
+    pass
+
   # List extracted content.
   api.step('listing output1', ['find', temp.join('output1')])
   api.step('listing output2', ['find', temp.join('output2')])
@@ -63,4 +69,15 @@ def GenTests(api):
   for platform in ('linux', 'win', 'mac'):
     yield (api.test(platform)
       + api.platform.name(platform)
+      + api.step_data('extract failure', api.json.output({
+        'extracted': {
+          'filecount': 3,
+          'bytes': 123456,
+        },
+        'skipped': {
+          'filecount': 78,
+          'bytes': 723456,
+          'names': ['../bob', '/charlie', 'some/path/../../../../frank'],
+        }
+      }))
       + api.post_process(keep))

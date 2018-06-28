@@ -21,18 +21,80 @@
     "cmd": [
       "python",
       "-u",
-      "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py"
+      "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py",
+      "--json-input",
+      "{\"archive_file\": \"[START_DIR]\\\\output\\\\output.tar.bz2\", \"output\": \"[TMP_BASE]\\\\tar-example_tmp_1\\\\output1\", \"safe_mode\": true}",
+      "--json-output",
+      "/path/to/tmp/json"
     ],
     "name": "extract tar",
-    "stdin": "{\"archive_file\": \"[START_DIR]\\\\output\\\\output.tar.bz2\", \"output\": \"[TMP_BASE]\\\\tar-example_tmp_1\\\\output1\"}"
+    "~followup_annotations": [
+      "@@@STEP_TEXT@<br/>extracted 1337 files - 50159.75 MB@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"extracted\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"bytes\": 50159747054, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"filecount\": 1337@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
   },
   {
     "cmd": [
       "python",
       "-u",
-      "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py"
+      "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py",
+      "--json-input",
+      "{\"archive_file\": \"[START_DIR]\\\\output\\\\more.zip\", \"output\": \"[TMP_BASE]\\\\tar-example_tmp_1\\\\output2\", \"safe_mode\": true}",
+      "--json-output",
+      "/path/to/tmp/json"
     ],
     "name": "extract zip",
-    "stdin": "{\"archive_file\": \"[START_DIR]\\\\output\\\\more.zip\", \"output\": \"[TMP_BASE]\\\\tar-example_tmp_1\\\\output2\"}"
+    "~followup_annotations": [
+      "@@@STEP_TEXT@<br/>extracted 1337 files - 50159.75 MB@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"extracted\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"bytes\": 50159747054, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"filecount\": 1337@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py",
+      "--json-input",
+      "{\"archive_file\": \"[START_DIR]\\\\output\\\\more.zip\", \"output\": \"[TMP_BASE]\\\\tar-example_tmp_1\\\\output3\", \"safe_mode\": true}",
+      "--json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "extract failure",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@<br/>extracted 3 files - 0.12 MB<br/>SKIPPED 78 files - 0.72 MB@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"extracted\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"bytes\": 123456, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"filecount\": 3@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"skipped\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"bytes\": 723456, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"filecount\": 78, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"names\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"../bob\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"/charlie\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"some/path/../../../../frank\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LOG_LINE@skipped files@../bob@@@",
+      "@@@STEP_LOG_LINE@skipped files@/charlie@@@",
+      "@@@STEP_LOG_LINE@skipped files@some/path/../../../../frank@@@",
+      "@@@STEP_LOG_END@skipped files@@@",
+      "@@@STEP_FAILURE@@@"
+    ]
   }
 ]

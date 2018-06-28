@@ -72,7 +72,7 @@ def main():
   entries = data['entries']
   output = data['output']
   archive_type = data['archive_type']
-  root = data['root'].rstrip(os.path.sep) + os.path.sep
+  root = os.path.join(data['root'], '')
 
   # Archive root directory should exist and be an absolute path.
   assert os.path.exists(root), root
@@ -81,7 +81,7 @@ def main():
   # Output tar path should be an absolute path.
   assert os.path.isabs(output), output
 
-  print 'Archiving %s (%s)...' % (output, archive_type)
+  print 'Archiving %s -> %s (%s)...' % (root, output, archive_type)
   # TODO(iannucci): use CIPD to fetch native clients instead of using python
   # builtins.
   try:

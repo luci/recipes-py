@@ -100,13 +100,13 @@
 
 ### *recipe_modules* / [archive](/recipe_modules/archive)
 
-[DEPS](/recipe_modules/archive/__init__.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [python](#recipe_modules-python)
+[DEPS](/recipe_modules/archive/__init__.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [python](#recipe_modules-python), [step](#recipe_modules-step)
 
 #### **class [ArchiveApi](/recipe_modules/archive/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 Provides steps to manipulate archive files (tar, zip, etc.).
 
-&mdash; **def [extract](/recipe_modules/archive/api.py#31)(self, step_name, archive_file, output):**
+&mdash; **def [extract](/recipe_modules/archive/api.py#31)(self, step_name, archive_file, output, mode='safe'):**
 
 Step to uncompress |archive_file| into |output| directory.
 
@@ -116,9 +116,15 @@ Archive will be unpacked to |output| so that root of an archive is in
 Step will FAIL if |output| already exists.
 
 Args:
-  step_name: display name of a step.
-  archive_file: path to an archive file to uncompress, MUST exist.
-  output: path to a directory to unpack to, MUST NOT exist.
+  step_name (str): display name of a step.
+  archive_file (Path): path to an archive file to uncompress, MUST exist.
+  output (Path): path to a directory to unpack to, MUST NOT exist.
+  mode (str): Must be either 'safe' or 'unsafe'. In safe mode, if the
+    archive attempts to extract files which would escape the extraction
+    `output` location, the extraction will fail (raise StepException)
+    which contains a member `StepException.archive_skipped_files` (all
+    other files will be extracted normally). If 'unsafe', then tarfiles
+    containing paths escaping `output` will be extracted as-is.
 
 &mdash; **def [package](/recipe_modules/archive/api.py#13)(self, root):**
 
@@ -1636,9 +1642,9 @@ Args:
 
 ### *recipes* / [archive:examples/full](/recipe_modules/archive/examples/full.py)
 
-[DEPS](/recipe_modules/archive/examples/full.py#7): [archive](#recipe_modules-archive), [context](#recipe_modules-context), [file](#recipe_modules-file), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/archive/examples/full.py#7): [archive](#recipe_modules-archive), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/archive/examples/full.py#18)(api):**
+&mdash; **def [RunSteps](/recipe_modules/archive/examples/full.py#19)(api):**
 ### *recipes* / [buildbucket:examples/full](/recipe_modules/buildbucket/examples/full.py)
 
 [DEPS](/recipe_modules/buildbucket/examples/full.py#7): [buildbucket](#recipe_modules-buildbucket), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
