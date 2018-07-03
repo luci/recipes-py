@@ -25,7 +25,9 @@ def RunSteps(api):
   else:  # ci
     assert builder_id.project == 'proj-internal'
     assert builder_id.builder == 'ci-builder'
-    assert 'chrome-internal' in api.buildbucket.build_input.gitiles_commit.host
+    gm = api.buildbucket.build_input.gitiles_commit
+    assert 'chrome-internal.googlesource.com' == gm.host
+    assert 'repo' == gm.project
 
   # Note: this is not needed when running on LUCI. Buildbucket will use the
   # default account associated with the task.
@@ -137,7 +139,9 @@ def GenTests(api):
   yield (api.test('basic-ci-win') +
          api.buildbucket.ci_build(
              project='proj-internal',
-             builder='ci-builder') +
+             bucket='ci',
+             builder='ci-builder',
+             git_repo='https://chrome-internal.googlesource.com/repo.git') +
          api.step_data(
              'buildbucket.put',
              stdout=api.raw_io.output_text(mock_buildbucket_multi_response)) +

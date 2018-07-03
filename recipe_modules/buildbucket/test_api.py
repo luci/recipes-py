@@ -26,11 +26,16 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         yield (api.test('basic') +
                api.buildbucket.ci_build(project='my-proj', builder='win'))
     """
-    if git_repo is None:
+    if git_repo is None:  # pragma: no cover
       if 'internal' in project:
         git_repo = 'chrome-internal.googlesource.com/' + project
-      else:  # pragma: no cover
+      else:
         git_repo = 'chromium.googlesource.com/' + project
+    else:
+      if git_repo.startswith('https://'):
+        git_repo = git_repo[len('https://'):]
+      if git_repo.endswith('.git'):
+        git_repo = git_repo[:-len('.git')]
     tags = list(tags) if tags else []
     tags.extend([
       'user_agent:luci-scheduler',
