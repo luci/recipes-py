@@ -50,7 +50,6 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       },
     })
 
-
   def try_build(
       self,
       project='project',

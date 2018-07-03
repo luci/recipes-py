@@ -124,7 +124,7 @@ def GenTests(api):
      "etag": "\\"8uCIh8TRuYs4vPN3iWmly9SJMqw\\""
    }
   """
-  yield (api.test('basic') +
+  yield (api.test('basic-try') +
          api.buildbucket.try_build(
              project='proj',
              builder='try-builder') +
@@ -134,7 +134,7 @@ def GenTests(api):
          api.step_data(
              'buildbucket.get',
              stdout=api.raw_io.output_text(mock_buildbucket_single_response)))
-  yield (api.test('basic_win') +
+  yield (api.test('basic-ci-win') +
          api.buildbucket.ci_build(
              project='proj-internal',
              builder='ci-builder') +
