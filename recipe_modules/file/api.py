@@ -4,6 +4,7 @@
 
 """File manipulation (read/write/delete/glob) methods."""
 
+from recipe_engine import config_types
 from recipe_engine import recipe_api
 
 
@@ -193,6 +194,7 @@ class FileApi(recipe_api.RecipeApi):
 
     Raises file.Error.
     """
+    assert isinstance(source, config_types.Path)
     result = self._run(
       name, ['glob', source, pattern],
       lambda: self.test_api.glob_paths(test_data),
@@ -231,6 +233,7 @@ class FileApi(recipe_api.RecipeApi):
 
     Raises file.Error.
     """
+    assert isinstance(source, config_types.Path)
     self.m.path.assert_absolute(source)
     result = self._run(
       name, ['listdir', source],
