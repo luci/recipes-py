@@ -75,8 +75,15 @@ class LedApi(recipe_api.RecipeApi):
     if previous:
       kwargs['stdin'] = self.m.json.input(data=previous)
 
-    return self.m.step(
+    result = self.m.step(
         'led %s' % cmd[0], [self._led_binary_path]  + list(cmd), **kwargs)
+
+    # If we launched a task, add a link to the swarming task.
+    if cmd[0] == 'launch':
+      result.presentation.links['Swarming task'] = 'https://%s/task?id=%s' % (
+          result.stdout['swarming']['host_name'],
+          result.stdout['swarming']['task_id'])
+    return result
 
   def _ensure_led(self):
     """Ensures that led is checked out on disk.

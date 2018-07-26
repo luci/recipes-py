@@ -28,6 +28,7 @@ def GenTests(api):
       api.step_data('led launch',
                     stdout=api.json.output({
                       'swarming':{
+                          'host_name': 'chromium-swarm.appspot.com',
                           'task_id': 'deadbeeeeef',
                       }
                     }))
