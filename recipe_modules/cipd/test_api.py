@@ -82,6 +82,7 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
             'ref': ref,
             'modified_by': user,
             'modified_ts': tstamp,
+            'instance_id': self.make_resolved_version(ref),
           }
           for ref in (['latest'] if test_data_refs is None else test_data_refs)
         ],

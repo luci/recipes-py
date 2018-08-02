@@ -199,6 +199,7 @@ class CIPDApi(recipe_api.RecipeApi):
     'ref',
     'modified_by',
     'modified_ts',
+    'instance_id',
   ])
 
   # A CIPD tag.

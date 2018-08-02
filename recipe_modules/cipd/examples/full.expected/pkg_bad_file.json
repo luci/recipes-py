@@ -150,6 +150,7 @@
       "@@@STEP_LOG_LINE@json.output@    }, @@@",
       "@@@STEP_LOG_LINE@json.output@    \"refs\": [@@@",
       "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-latest----------\", @@@",
       "@@@STEP_LOG_LINE@json.output@        \"modified_by\": \"user:44-blablbla@developer.gserviceaccount.com\", @@@",
       "@@@STEP_LOG_LINE@json.output@        \"modified_ts\": 1446574210, @@@",
       "@@@STEP_LOG_LINE@json.output@        \"ref\": \"latest\"@@@",
