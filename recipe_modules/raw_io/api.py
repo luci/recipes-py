@@ -288,15 +288,21 @@ class RawIOApi(recipe_api.RecipeApi):
 
   @recipe_util.returns_placeholder
   @staticmethod
-  def output_text(suffix='', leak_to=None, name=None):
+  def output_text(suffix='', leak_to=None, name=None, add_output_log=False):
     """Returns a Placeholder for use as a step argument, or for std{out,err}.
 
     Similar to output(), but uses an OutputTextPlaceholder, which expects utf-8
     encoded text.
     Similar to input(), but tries to decode the resulting data as utf-8 text,
     replacing any decoding errors with �.
+
+    Args:
+       * add_output_log (True|False|'on_failure') - Log a copy of the output
+         to a step link named `name`. If this is 'on_failure', only create this
+         log when the step has a non-SUCCESS status.
     """
-    return OutputTextPlaceholder(suffix, leak_to, name=name)
+    return OutputTextPlaceholder(suffix, leak_to, name=name,
+                                 add_output_log=add_output_log)
 
   @recipe_util.returns_placeholder
   @staticmethod
