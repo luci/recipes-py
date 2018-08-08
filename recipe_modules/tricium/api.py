@@ -31,6 +31,14 @@ class TriciumApi(recipe_api.RecipeApi):
   def paths(self):
     return self._paths
 
+  @property
+  def repository(self):
+    return self._repo
+
+  @property
+  def ref(self):
+    return self._ref
+
   def add_comment(self,
                   category,
                   message,

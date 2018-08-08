@@ -1220,7 +1220,7 @@ Args:
      to a step link named `name`. If this is 'on_failure', only create this
      log when the step has a non-SUCCESS status.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#301)(suffix='', leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#307)(suffix='', leak_to=None, name=None):**
 
 Returns a directory Placeholder for use as a step argument.
 
@@ -1231,7 +1231,7 @@ If 'leak_to' is not None, then it should be a Path and placeholder
 redirects IO to a dir at that path. Once step finishes, the dir is
 NOT deleted (i.e. it's 'leaking'). 'suffix' is ignored in that case.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#289)(suffix='', leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#289)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -1239,6 +1239,11 @@ Similar to output(), but uses an OutputTextPlaceholder, which expects utf-8
 encoded text.
 Similar to input(), but tries to decode the resulting data as utf-8 text,
 replacing any decoding errors with �.
+
+Args:
+   * add_output_log (True|False|'on_failure') - Log a copy of the output
+     to a step link named `name`. If this is 'on_failure', only create this
+     log when the step has a non-SUCCESS status.
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
 [DEPS](/recipe_modules/runtime/__init__.py#5): [path](#recipe_modules-path), [properties](#recipe_modules-properties)
@@ -1551,11 +1556,15 @@ object, and the output is a Tricium Results object (see
 https://chromium.googlesource.com/infra/infra/+/master/go/src/infra/tricium/api/v1/data.proto
 for details and definitions).
 
-&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#34)(self, category, message, path, url='', start_line=0, end_line=0, start_char=0, end_char=0, suggestions=None):**
+&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#42)(self, category, message, path, url='', start_line=0, end_line=0, start_char=0, end_char=0, suggestions=None):**
 
 &emsp; **@property**<br>&mdash; **def [paths](/recipe_modules/tricium/api.py#30)(self):**
 
-&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#58)(self):**
+&emsp; **@property**<br>&mdash; **def [ref](/recipe_modules/tricium/api.py#38)(self):**
+
+&emsp; **@property**<br>&mdash; **def [repository](/recipe_modules/tricium/api.py#34)(self):**
+
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#66)(self):**
 ### *recipe_modules* / [url](/recipe_modules/url)
 
 [DEPS](/recipe_modules/url/__init__.py#5): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io)

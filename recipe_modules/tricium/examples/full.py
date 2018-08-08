@@ -13,7 +13,9 @@ def RunSteps(api):
     api.tricium.add_comment('test', 'test message', filename)
     # Check that duplicate comments aren't entered.
     api.tricium.add_comment('test', 'test message', filename)
-
+  
+  api.tricium.repository
+  api.tricium.ref
   api.tricium.add_comment(
     'another',
     'another test message',
