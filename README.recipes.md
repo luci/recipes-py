@@ -940,12 +940,12 @@ documentation.
 
 #### **class [PathApi](/recipe_modules/path/api.py#197)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
-&mdash; **def [\_\_getitem\_\_](/recipe_modules/path/api.py#440)(self, name):**
+&mdash; **def [\_\_getitem\_\_](/recipe_modules/path/api.py#455)(self, name):**
 
 Gets the base path named `name`. See module docstring for more
 information.
 
-&mdash; **def [abs\_to\_path](/recipe_modules/path/api.py#370)(self, abs_string_path):**
+&mdash; **def [abs\_to\_path](/recipe_modules/path/api.py#385)(self, abs_string_path):**
 
 Converts an absolute path string `string_path` to a real Path object,
 using the most appropriate known base path.
@@ -978,7 +978,7 @@ Raises AssertionError if the given path is not an absolute path.
 Args:
   * path (Path|str) - The path to check.
 
-&mdash; **def [get](/recipe_modules/path/api.py#433)(self, name, default=None):**
+&mdash; **def [get](/recipe_modules/path/api.py#448)(self, name, default=None):**
 
 Gets the base path named `name`. See module docstring for more
 information.
@@ -991,13 +991,26 @@ Internal recipe implementation function.
 
 Internal recipe implementation function.
 
-&mdash; **def [mkdtemp](/recipe_modules/path/api.py#335)(self, prefix):**
+&mdash; **def [mkdtemp](/recipe_modules/path/api.py#335)(self, prefix=tempfile.template):**
 
 Makes a new temporary directory, returns Path to it.
 
-&mdash; **def [mkstemp](/recipe_modules/path/api.py#352)(self, prefix):**
+Args:
+  * prefix (str) - a tempfile template for the directory name (defaults
+    to "tmp").
+
+Returns a Path to the new directory.
+
+&mdash; **def [mkstemp](/recipe_modules/path/api.py#359)(self, prefix=tempfile.template):**
 
 Makes a new temporary file, returns Path to it.
+
+Args:
+  * prefix (str) - a tempfile template for the file name (defaults to
+    "tmp").
+
+Returns a Path to the new file. Unlike tempfile.mkstemp, the file's file
+descriptor is closed.
 
 &mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#306)(self, path):**
 
@@ -1246,7 +1259,7 @@ Args:
      log when the step has a non-SUCCESS status.
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
-[DEPS](/recipe_modules/runtime/__init__.py#5): [path](#recipe_modules-path), [properties](#recipe_modules-properties)
+[DEPS](/recipe_modules/runtime/__init__.py#5): [properties](#recipe_modules-properties)
 
 #### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 

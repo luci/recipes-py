@@ -332,8 +332,15 @@ class PathApi(recipe_api.RecipeApi):
     """
     assert self.abspath(path) == str(path), '%s is not absolute' % path
 
-  def mkdtemp(self, prefix):
-    """Makes a new temporary directory, returns Path to it."""
+  def mkdtemp(self, prefix=tempfile.template):
+    """Makes a new temporary directory, returns Path to it.
+
+    Args:
+      * prefix (str) - a tempfile template for the directory name (defaults
+        to "tmp").
+
+    Returns a Path to the new directory.
+    """
     if not self._test_data.enabled:  # pragma: no cover
       # New path as str.
       new_path = tempfile.mkdtemp(prefix=prefix, dir=str(self['tmp_base']))
@@ -349,8 +356,16 @@ class PathApi(recipe_api.RecipeApi):
     self.mock_add_paths(temp_dir)
     return temp_dir
 
-  def mkstemp(self, prefix):
-    """Makes a new temporary file, returns Path to it."""
+  def mkstemp(self, prefix=tempfile.template):
+    """Makes a new temporary file, returns Path to it.
+
+    Args:
+      * prefix (str) - a tempfile template for the file name (defaults to
+        "tmp").
+
+    Returns a Path to the new file. Unlike tempfile.mkstemp, the file's file
+    descriptor is closed.
+    """
     if not self._test_data.enabled:  # pragma: no cover
       # New path as str.
       fd, new_path = tempfile.mkstemp(prefix=prefix, dir=str(self['tmp_base']))
