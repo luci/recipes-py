@@ -235,82 +235,77 @@ API for interacting with CIPD.
 Depends on 'cipd' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 
-#### **class [CIPDApi](/recipe_modules/cipd/api.py#182)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
+#### **class [CIPDApi](/recipe_modules/cipd/api.py#184)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 CIPDApi provides basic support for CIPD.
 
 This assumes that `cipd` (or `cipd.exe` or `cipd.bat` on windows) has been
 installed somewhere in $PATH.
 
-&mdash; **def [acl\_check](/recipe_modules/cipd/api.py#241)(self, pkg_path, reader=True, writer=False, owner=False):**
+&mdash; **def [acl\_check](/recipe_modules/cipd/api.py#243)(self, pkg_path, reader=True, writer=False, owner=False):**
 
 Checks whether the caller has a given roles in a package.
 
 Args:
-  pkg_path (str) - The package subpath.
-  reader (bool) - Check for READER role.
-  writer (bool) - Check for WRITER role.
-  owner (bool) - Check for OWNER role.
+  * pkg_path (str) - The package subpath.
+  * reader (bool) - Check for READER role.
+  * writer (bool) - Check for WRITER role.
+  * owner (bool) - Check for OWNER role.
 
-Returns:
-  True if the caller has given roles, False otherwise.
+Returns True if the caller has given roles, False otherwise.
 
-&mdash; **def [build](/recipe_modules/cipd/api.py#317)(self, input_dir, output_package, package_name, install_mode=None):**
+&mdash; **def [build](/recipe_modules/cipd/api.py#316)(self, input_dir, output_package, package_name, install_mode=None):**
 
 Builds, but does not upload, a cipd package from a directory.
 
 Args:
-  input_dir (Path) - The directory to build the package from.
-  output_package (Path) - The file to write the package to.
-  package_name (str) - The name of the cipd package as it would appear when
-    uploaded to the cipd package server.
-  install_mode (None|'copy'|'symlink') - The mechanism that the cipd client
-    should use when installing this package. If None, defaults to the
+  * input_dir (Path) - The directory to build the package from.
+  * output_package (Path) - The file to write the package to.
+  * package_name (str) - The name of the cipd package as it would appear
+    when uploaded to the cipd package server.
+  * install_mode (None|'copy'|'symlink') - The mechanism that the cipd
+    client should use when installing this package. If None, defaults to the
     platform default ('copy' on windows, 'symlink' on everything else).
 
-Returns:
-  The CIPDApi.Pin instance.
+Returns the CIPDApi.Pin instance.
 
 &mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#299)(self, pkg_def, output_package):**
 
 Builds a package based on a PackageDefinition object.
 
 Args:
-  pkg_def (PackageDefinition) - The description of the package we want to
+  * pkg_def (PackageDefinition) - The description of the package we want to
     create.
-  output_package (Path) - The file to write the package to.
+  * output_package (Path) - The file to write the package to.
 
-Returns:
-  The CIPDApi.Pin instance.
+Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#282)(self, pkg_def, output_package):**
+&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#283)(self, pkg_def, output_package):**
 
 Builds a package based on on-disk YAML package definition file.
 
 Args:
-  pkg_def (Path) - The path to the yaml file.
-  output_package (Path) - The file to write the package to.
+  * pkg_def (Path) - The path to the yaml file.
+  * output_package (Path) - The file to write the package to.
 
-Returns:
-  The CIPDApi.Pin instance.
+Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#419)(self, pkg_def, refs=(), tags={}):**
+&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#416)(self, pkg_def, refs=(), tags=None):**
 
 Builds and uploads a package based on a PackageDefinition object.
 
 This builds and uploads the package in one step.
 
 Args:
-  pkg_def (PackageDefinition) - The description of the package we want to
+  * pkg_def (PackageDefinition) - The description of the package we want to
     create.
-  refs (list(str)) - A list of ref names to set for the package instance.
-  tags (dict(str, str)) - A map of tag name -> value to set for the package
-                          instance.
+  * refs (list[str]) - A list of ref names to set for the package instance.
+  * tags (dict[str]str) - A map of tag name -> value to set for the
+    package instance.
 
-Returns:
-  The CIPDApi.Pin instance.
+Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#401)(self, pkg_def, refs=(), tags={}):**
+&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#399)(self, pkg_def, refs=(), tags=None):**
 
 Builds and uploads a package based on on-disk YAML package definition
 file.
@@ -318,90 +313,119 @@ file.
 This builds and uploads the package in one step.
 
 Args:
-  pkg_def (Path) - The path to the yaml file.
-  refs (list(str)) - A list of ref names to set for the package instance.
-  tags (dict(str, str)) - A map of tag name -> value to set for the package
-                          instance.
+  * pkg_def (Path) - The path to the yaml file.
+  * refs (list[str]) - A list of ref names to set for the package instance.
+  * tags (dict[str]str) - A map of tag name -> value to set for the
+    package instance.
 
-Returns:
-  The CIPDApi.Pin instance.
+Returns the CIPDApi.Pin instance.
 
-&mdash; **def [describe](/recipe_modules/cipd/api.py#547)(self, package_name, version, test_data_refs=(), test_data_tags={}):**
+&mdash; **def [describe](/recipe_modules/cipd/api.py#535)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
 
 Returns information about a pacakge instance given its version:
 who uploaded the instance and when and a list of attached tags.
 
 Args:
-  package_name (str) - The name of the cipd package.
-  version (str) - The package version to point the ref to.
+  * package_name (str) - The name of the cipd package.
+  * version (str) - The package version to point the ref to.
+  * test_data_refs (seq[str]) - The list of refs for this call to return
+    by default when in test mode.
+  * test_data_tags (seq[str]) - The list of tags (in 'name:val' form) for
+    this call to return by default when in test mode.
 
-Returns:
-  The CIPDApi.Description instance describing the package.
+Returns the CIPDApi.Description instance describing the package.
 
-&mdash; **def [ensure](/recipe_modules/cipd/api.py#438)(self, root, ensure_file):**
+&mdash; **def [ensure](/recipe_modules/cipd/api.py#434)(self, root, ensure_file):**
 
 Ensures that packages are installed in a given root dir.
 
 Args:
-  root (Path) - Path to installation site root directory.
-  ensure_file (EnsureFile) - List of packages to install.
+  * root (Path) - Path to installation site root directory.
+  * ensure_file (EnsureFile) - List of packages to install.
 
-Returns:
-  The map of subdirectories to CIPDApi.Pin instances.
+Returns the map of subdirectories to CIPDApi.Pin instances.
 
-&emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#226)(self):**
+&emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#228)(self):**
 
-&mdash; **def [register](/recipe_modules/cipd/api.py#349)(self, package_name, package_path, refs=(), tags={}):**
+&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#597)(self, root, package_file):**
+
+Deploys the specified package to root.
+
+ADVANCED METHOD: You shouldn't need this unless you're doing advanced things
+with CIPD. Typically you should use the `ensure` method here to
+fetch+install packages to the disk.
+
+Args:
+  * package_file (Path) - Path to a package file to install.
+  * root (Path) - Path to a CIPD root.
+
+Returns a Pin for the deployed package.
+
+&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#568)(self, destination, package_name, version):**
+
+Downloads the specified package to destination.
+
+ADVANCED METHOD: You shouldn't need this unless you're doing advanced things
+with CIPD. Typically you should use the `ensure` method here to
+fetch+install packages to the disk.
+
+Args:
+  * destination (Path) - Path to a file location which will be (over)written
+    with the package file contents.
+  * package_name (str) - The package name (or pattern with e.g.
+    ${platform})
+  * version (str) - The CIPD version to fetch
+
+Returns a Pin for the downloaded package.
+
+&mdash; **def [register](/recipe_modules/cipd/api.py#359)(self, package_name, package_path, refs=(), tags=None):**
 
 Uploads and registers package instance in the package repository.
 
 Args:
-  package_name (str) - The name of the cipd package.
-  package_path (Path) - The path to package instance file.
-  refs (list(str)) - A list of ref names to set for the package instance.
-  tags (dict(str, str)) - A map of tag name -> value to set for the package
+  * package_name (str) - The name of the cipd package.
+  * package_path (Path) - The path to package instance file.
+  * refs (seq[str]) - A list of ref names to set for the package instance.
+  * tags (dict[str]str) - A map of tag name -> value to set for the package
                           instance.
 
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [search](/recipe_modules/cipd/api.py#521)(self, package_name, tag):**
+&mdash; **def [search](/recipe_modules/cipd/api.py#510)(self, package_name, tag):**
 
 Searches for package instances by tag, optionally constrained by package
 name.
 
 Args:
-  package_name (str) - The name of the cipd package.
-  tag (str) - The cipd package tag.
+  * package_name (str) - The name of the cipd package.
+  * tag (str) - The cipd package tag.
 
-Returns:
-  The list of CIPDApi.Pin instances.
+Returns the list of CIPDApi.Pin instances.
 
-&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#493)(self, package_name, version, refs):**
+&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#485)(self, package_name, version, refs):**
 
 Moves a ref to point to a given version.
 
 Args:
-  package_name (str) - The name of the cipd package.
-  version (str) - The package version to point the ref to.
-  refs (list(str)) - A list of ref names to set for the package instance.
+  * package_name (str) - The name of the cipd package.
+  * version (str) - The package version to point the ref to.
+  * refs (list[str]) - A list of ref names to set for the package instance.
 
-Returns:
-  The CIPDApi.Pin instance.
+Returns the CIPDApi.Pin instance.
 
-&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#463)(self, package_name, version, tags):**
+&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#458)(self, package_name, version, tags):**
 
 Tags package of a specific version.
 
 Args:
-  package_name (str) - The name of the cipd package.
-  version (str) - The package version to resolve. Could also be itself a tag
-                  or ref.
-  tags (dict(str, str)) - A map of tag name -> value to set for the package
-                          instance.
+  * package_name (str) - The name of the cipd package.
+  * version (str) - The package version to resolve. Could also be itself a
+    tag or ref.
+  * tags (dict[str]str) - A map of tag name -> value to set for the
+    package instance.
 
-Returns:
-  The CIPDApi.Pin instance.
+Returns the CIPDApi.Pin instance.
 ### *recipe_modules* / [context](/recipe_modules/context)
 
 [DEPS](/recipe_modules/context/__init__.py#5): [path](#recipe_modules-path)

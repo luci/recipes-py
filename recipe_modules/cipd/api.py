@@ -42,13 +42,13 @@ class PackageDefinition(object):
     """Build a new PackageDefinition.
 
     Args:
-      package_name (str) - the name of the CIPD package
-      package_root (Path) - the path on the current filesystem that all files
+      * package_name (str) - the name of the CIPD package
+      * package_root (Path) - the path on the current filesystem that all files
         will be relative to. e.g. if your root is /.../foo, and you add the
         file /.../foo/bar/baz.json, the final cipd package will contain
         'bar/baz.json'.
-      install_mode (None|'copy'|'symlink') - the mechanism that the cipd client
-        should use when installing this package. If None, defaults to the
+      * install_mode (None|'copy'|'symlink') - the mechanism that the cipd
+        client should use when installing this package. If None, defaults to the
         platform default ('copy' on windows, 'symlink' on everything else).
     """
     check_type('package_name', package_name, str)
@@ -80,15 +80,15 @@ class PackageDefinition(object):
     """Recursively add a directory to the package.
 
     Args:
-      dir_path (Path) - A path on the current filesystem under the
+      * dir_path (Path) - A path on the current filesystem under the
         package_root to a directory which should be recursively included.
-      exclusions (list(str)) - A list of regexps to exclude when scanning the
+      * exclusions (list(str)) - A list of regexps to exclude when scanning the
         given directory. These will be tested against the forward-slash path
         to the file relative to `dir_path`.
 
     Raises:
-      ValueError - dir_path is not a subdirectory of the package root.
-      re.error - one of the exclusions is not a valid regex.
+      * ValueError - dir_path is not a subdirectory of the package root.
+      * re.error - one of the exclusions is not a valid regex.
     """
     check_type('dir_path', dir_path, Path)
     exclusions = exclusions or []
@@ -99,11 +99,11 @@ class PackageDefinition(object):
     """Add a single file to the package.
 
     Args:
-      file_path (Path) - A path on the current filesystem to the file you
+      * file_path (Path) - A path on the current filesystem to the file you
         wish to include.
 
     Raises:
-      ValueError - file_path is not a subdirectory of the package root.
+      * ValueError - file_path is not a subdirectory of the package root.
     """
     check_type('file_path', file_path, Path)
     self.files.append(self._rel_path(file_path))
@@ -112,10 +112,12 @@ class PackageDefinition(object):
     """Instruct the cipd client to place a version file in this location when
     unpacking the package.
 
-    Version files are JSON which look like: {
-      "package_name": "infra/tools/cipd/android-amd64",
-      "instance_id": "433bfdf86c0bb82d1eee2d1a0473d3709c25d2c4"
-    }
+    Version files are JSON which look like:
+
+        {
+          "package_name": "infra/tools/cipd/android-amd64",
+          "instance_id": "433bfdf86c0bb82d1eee2d1a0473d3709c25d2c4"
+        }
 
     The convention is to pick a location like '.versions/<name>.cipd_version'
     so that a given cipd installation root might have a .versions folder full
@@ -127,7 +129,7 @@ class PackageDefinition(object):
     A version file may be specifed exactly once per package.
 
     Args:
-      ver_file_rel (str) - A path string relative to the installation root.
+      * ver_file_rel (str) - A path string relative to the installation root.
         Should be specified in posix style (forward/slashes).
     """
     check_type('ver_file_rel', ver_file_rel, str)
@@ -161,9 +163,9 @@ class EnsureFile(object):
     """Add a package to the ensure file.
 
     Args:
-      name (str) - Name of the package, must be for right platform.
-      version (str) - Could be either instance_id, or ref, or unique tag.
-      subdir (str) - Subdirectory of root dir for the package.
+      * name (str) - Name of the package, must be for right platform.
+      * version (str) - Could be either instance_id, or ref, or unique tag.
+      * subdir (str) - Subdirectory of root dir for the package.
     """
     self.packages.setdefault(subdir, []).append(self.Package(name, version))
     return self
@@ -242,13 +244,12 @@ class CIPDApi(recipe_api.RecipeApi):
     """Checks whether the caller has a given roles in a package.
 
     Args:
-      pkg_path (str) - The package subpath.
-      reader (bool) - Check for READER role.
-      writer (bool) - Check for WRITER role.
-      owner (bool) - Check for OWNER role.
+      * pkg_path (str) - The package subpath.
+      * reader (bool) - Check for READER role.
+      * writer (bool) - Check for WRITER role.
+      * owner (bool) - Check for OWNER role.
 
-    Returns:
-      True if the caller has given roles, False otherwise.
+    Returns True if the caller has given roles, False otherwise.
     """
     cmd = [
         'acl-check',
@@ -283,11 +284,10 @@ class CIPDApi(recipe_api.RecipeApi):
     """Builds a package based on on-disk YAML package definition file.
 
     Args:
-      pkg_def (Path) - The path to the yaml file.
-      output_package (Path) - The file to write the package to.
+      * pkg_def (Path) - The path to the yaml file.
+      * output_package (Path) - The file to write the package to.
 
-    Returns:
-      The CIPDApi.Pin instance.
+    Returns the CIPDApi.Pin instance.
     """
     check_type('pkg_def', pkg_def, Path)
     return self._build(
@@ -300,12 +300,11 @@ class CIPDApi(recipe_api.RecipeApi):
     """Builds a package based on a PackageDefinition object.
 
     Args:
-      pkg_def (PackageDefinition) - The description of the package we want to
+      * pkg_def (PackageDefinition) - The description of the package we want to
         create.
-      output_package (Path) - The file to write the package to.
+      * output_package (Path) - The file to write the package to.
 
-    Returns:
-      The CIPDApi.Pin instance.
+    Returns the CIPDApi.Pin instance.
     """
     check_type('pkg_def', pkg_def, PackageDefinition)
     return self._build(
@@ -318,16 +317,15 @@ class CIPDApi(recipe_api.RecipeApi):
     """Builds, but does not upload, a cipd package from a directory.
 
     Args:
-      input_dir (Path) - The directory to build the package from.
-      output_package (Path) - The file to write the package to.
-      package_name (str) - The name of the cipd package as it would appear when
-        uploaded to the cipd package server.
-      install_mode (None|'copy'|'symlink') - The mechanism that the cipd client
-        should use when installing this package. If None, defaults to the
+      * input_dir (Path) - The directory to build the package from.
+      * output_package (Path) - The file to write the package to.
+      * package_name (str) - The name of the cipd package as it would appear
+        when uploaded to the cipd package server.
+      * install_mode (None|'copy'|'symlink') - The mechanism that the cipd
+        client should use when installing this package. If None, defaults to the
         platform default ('copy' on windows, 'symlink' on everything else).
 
-    Returns:
-      The CIPDApi.Pin instance.
+    Returns the CIPDApi.Pin instance.
     """
     assert not install_mode or install_mode in ['copy', 'symlink']
 
@@ -346,28 +344,34 @@ class CIPDApi(recipe_api.RecipeApi):
     result = step_result.json.output['result']
     return self.Pin(**result)
 
-  def register(self, package_name, package_path, refs=(), tags={}):
+  def _ref_tag_options(self, refs, tags):
+    """Computes a list of CIPD CLI -ref and -tag options given a sequence of
+    refs and a dict of tags."""
+    ret = []
+    if refs:
+      for ref in refs:
+        ret.extend(['-ref', ref])
+    if tags:
+      for tag, value in sorted(tags.items()):
+        ret.extend(['-tag', '%s:%s' % (tag, value)])
+    return ret
+
+  def register(self, package_name, package_path, refs=(), tags=None):
     """Uploads and registers package instance in the package repository.
 
     Args:
-      package_name (str) - The name of the cipd package.
-      package_path (Path) - The path to package instance file.
-      refs (list(str)) - A list of ref names to set for the package instance.
-      tags (dict(str, str)) - A map of tag name -> value to set for the package
+      * package_name (str) - The name of the cipd package.
+      * package_path (Path) - The path to package instance file.
+      * refs (seq[str]) - A list of ref names to set for the package instance.
+      * tags (dict[str]str) - A map of tag name -> value to set for the package
                               instance.
 
     Returns:
       The CIPDApi.Pin instance.
     """
     cmd = [
-      'pkg-register', package_path,
-    ]
-    if refs:
-      for ref in refs:
-        cmd.extend(['-ref', ref])
-    if tags:
-      for tag, value in sorted(tags.items()):
-        cmd.extend(['-tag', '%s:%s' % (tag, value)])
+      'pkg-register', package_path
+    ] + self._ref_tag_options(refs, tags)
     step_result = self._run(
         'register %s' % package_name,
         cmd,
@@ -375,19 +379,13 @@ class CIPDApi(recipe_api.RecipeApi):
     )
     return self.Pin(**step_result.json.output['result'])
 
-  def _create(self, pkg_name, pkg_def_file_or_placeholder, refs=(), tags={}):
-    refs = refs or []
-    tags = tags or {}
+  def _create(self, pkg_name, pkg_def_file_or_placeholder, refs=(), tags=None):
     check_list_type('refs', refs, str)
     check_dict_type('tags', tags, str, str)
     cmd = [
       'create',
       '-pkg-def', pkg_def_file_or_placeholder,
-    ]
-    for ref in refs:
-      cmd.extend(['-ref', ref])
-    for tag, value in sorted(tags.items()):
-      cmd.extend(['-tag', '%s:%s' % (tag, value)])
+    ] + self._ref_tag_options(refs, tags)
     step_result = self._run(
       'create %s' % pkg_name, cmd,
       step_test_data=lambda: self.test_api.m.json.output({
@@ -398,38 +396,36 @@ class CIPDApi(recipe_api.RecipeApi):
     step_result.presentation.step_text += '</br>id: %(instance_id)s' % result
     return self.Pin(**result)
 
-  def create_from_yaml(self, pkg_def, refs=(), tags={}):
+  def create_from_yaml(self, pkg_def, refs=(), tags=None):
     """Builds and uploads a package based on on-disk YAML package definition
     file.
 
     This builds and uploads the package in one step.
 
     Args:
-      pkg_def (Path) - The path to the yaml file.
-      refs (list(str)) - A list of ref names to set for the package instance.
-      tags (dict(str, str)) - A map of tag name -> value to set for the package
-                              instance.
+      * pkg_def (Path) - The path to the yaml file.
+      * refs (list[str]) - A list of ref names to set for the package instance.
+      * tags (dict[str]str) - A map of tag name -> value to set for the
+        package instance.
 
-    Returns:
-      The CIPDApi.Pin instance.
+    Returns the CIPDApi.Pin instance.
     """
     check_type('pkg_def', pkg_def, Path)
     return self._create(self.m.path.basename(pkg_def), pkg_def, refs, tags)
 
-  def create_from_pkg(self, pkg_def, refs=(), tags={}):
+  def create_from_pkg(self, pkg_def, refs=(), tags=None):
     """Builds and uploads a package based on a PackageDefinition object.
 
     This builds and uploads the package in one step.
 
     Args:
-      pkg_def (PackageDefinition) - The description of the package we want to
+      * pkg_def (PackageDefinition) - The description of the package we want to
         create.
-      refs (list(str)) - A list of ref names to set for the package instance.
-      tags (dict(str, str)) - A map of tag name -> value to set for the package
-                              instance.
+      * refs (list[str]) - A list of ref names to set for the package instance.
+      * tags (dict[str]str) - A map of tag name -> value to set for the
+        package instance.
 
-    Returns:
-      The CIPDApi.Pin instance.
+    Returns the CIPDApi.Pin instance.
     """
     check_type('pkg_def', pkg_def, PackageDefinition)
     return self._create(
@@ -439,11 +435,10 @@ class CIPDApi(recipe_api.RecipeApi):
     """Ensures that packages are installed in a given root dir.
 
     Args:
-      root (Path) - Path to installation site root directory.
-      ensure_file (EnsureFile) - List of packages to install.
+      * root (Path) - Path to installation site root directory.
+      * ensure_file (EnsureFile) - List of packages to install.
 
-    Returns:
-      The map of subdirectories to CIPDApi.Pin instances.
+    Returns the map of subdirectories to CIPDApi.Pin instances.
     """
     check_type('ensure_file', ensure_file, EnsureFile)
     cmd = [
@@ -464,21 +459,18 @@ class CIPDApi(recipe_api.RecipeApi):
     """Tags package of a specific version.
 
     Args:
-      package_name (str) - The name of the cipd package.
-      version (str) - The package version to resolve. Could also be itself a tag
-                      or ref.
-      tags (dict(str, str)) - A map of tag name -> value to set for the package
-                              instance.
+      * package_name (str) - The name of the cipd package.
+      * version (str) - The package version to resolve. Could also be itself a
+        tag or ref.
+      * tags (dict[str]str) - A map of tag name -> value to set for the
+        package instance.
 
-    Returns:
-      The CIPDApi.Pin instance.
+    Returns the CIPDApi.Pin instance.
     """
     cmd = [
       'set-tag', package_name,
       '-version', version,
-    ]
-    for tag, value in sorted(tags.items()):
-      cmd.extend(['-tag', '%s:%s' % (tag, value)])
+    ] + self._ref_tag_options((), tags)
 
     step_result = self._run(
         'cipd set-tag %s' % package_name,
@@ -494,19 +486,16 @@ class CIPDApi(recipe_api.RecipeApi):
     """Moves a ref to point to a given version.
 
     Args:
-      package_name (str) - The name of the cipd package.
-      version (str) - The package version to point the ref to.
-      refs (list(str)) - A list of ref names to set for the package instance.
+      * package_name (str) - The name of the cipd package.
+      * version (str) - The package version to point the ref to.
+      * refs (list[str]) - A list of ref names to set for the package instance.
 
-    Returns:
-      The CIPDApi.Pin instance.
+    Returns the CIPDApi.Pin instance.
     """
     cmd = [
       'set-ref', package_name,
       '-version', version,
-    ]
-    for r in refs:
-      cmd.extend(['-ref', r])
+    ] + self._ref_tag_options(refs, ())
 
     step_result = self._run(
         'cipd set-ref %s' % package_name,
@@ -523,11 +512,10 @@ class CIPDApi(recipe_api.RecipeApi):
     name.
 
     Args:
-      package_name (str) - The name of the cipd package.
-      tag (str) - The cipd package tag.
+      * package_name (str) - The name of the cipd package.
+      * tag (str) - The cipd package tag.
 
-    Returns:
-      The list of CIPDApi.Pin instances.
+    Returns the list of CIPDApi.Pin instances.
     """
 
     assert ':' in tag, 'tag must be in a form "k:v"'
@@ -545,25 +533,23 @@ class CIPDApi(recipe_api.RecipeApi):
     return [self.Pin(**pin) for pin in step_result.json.output['result']]
 
   def describe(self, package_name, version,
-               test_data_refs=(), test_data_tags={}):
+               test_data_refs=None, test_data_tags=None):
     """Returns information about a pacakge instance given its version:
     who uploaded the instance and when and a list of attached tags.
 
     Args:
-      package_name (str) - The name of the cipd package.
-      version (str) - The package version to point the ref to.
+      * package_name (str) - The name of the cipd package.
+      * version (str) - The package version to point the ref to.
+      * test_data_refs (seq[str]) - The list of refs for this call to return
+        by default when in test mode.
+      * test_data_tags (seq[str]) - The list of tags (in 'name:val' form) for
+        this call to return by default when in test mode.
 
-    Returns:
-      The CIPDApi.Description instance describing the package.
+    Returns the CIPDApi.Description instance describing the package.
     """
-    cmd = [
-      'describe', package_name,
-      '-version', version,
-    ]
-
     step_result = self._run(
         'cipd describe %s' % package_name,
-        cmd,
+        ['describe', package_name, '-version', version],
         step_test_data=lambda: self.test_api.example_describe(
             package_name, version,
             test_data_refs=test_data_refs,
@@ -578,3 +564,56 @@ class CIPDApi(recipe_api.RecipeApi):
         refs=[self.Ref(*ref) for ref in result['refs']],
         tags=[self.Tag(*tag) for tag in result['tags']],
     )
+
+  def pkg_fetch(self, destination, package_name, version):
+    """Downloads the specified package to destination.
+
+    ADVANCED METHOD: You shouldn't need this unless you're doing advanced things
+    with CIPD. Typically you should use the `ensure` method here to
+    fetch+install packages to the disk.
+
+    Args:
+      * destination (Path) - Path to a file location which will be (over)written
+        with the package file contents.
+      * package_name (str) - The package name (or pattern with e.g.
+        ${platform})
+      * version (str) - The CIPD version to fetch
+
+    Returns a Pin for the downloaded package.
+    """
+    check_type('destination', destination, Path)
+    check_type('package_name', package_name, str)
+    check_type('version', version, str)
+    step_result = self._run(
+      'cipd pkg-fetch %s' % package_name,
+      ['pkg-fetch', package_name, '-version', version, '-out', destination],
+      step_test_data=lambda: self.test_api.example_pkg_fetch(
+        package_name, version)
+    )
+    ret = self.Pin(**step_result.json.output['result'])
+    step_result.presentation.step_text = '%s %s' % (ret.package, ret.instance_id)
+    return ret
+
+  def pkg_deploy(self, root, package_file):
+    """Deploys the specified package to root.
+
+    ADVANCED METHOD: You shouldn't need this unless you're doing advanced things
+    with CIPD. Typically you should use the `ensure` method here to
+    fetch+install packages to the disk.
+
+    Args:
+      * package_file (Path) - Path to a package file to install.
+      * root (Path) - Path to a CIPD root.
+
+    Returns a Pin for the deployed package.
+    """
+    check_type('root', root, Path)
+    check_type('package_file', package_file, Path)
+    step_result = self._run(
+      'cipd pkg-deploy %s' % package_file,
+      ['pkg-deploy ', package_file, '-root', root],
+      step_test_data=lambda: self.test_api.example_pkg_deploy(
+        'pkg/name/of/'+package_file.pieces[-1],
+        'version/of/'+package_file.pieces[-1])
+    )
+    return self.Pin(**step_result.json.output['result'])

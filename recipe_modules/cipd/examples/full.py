@@ -48,6 +48,8 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, ver_files, install_mode):
                     version=result[0].instance_id,
                     test_data_tags=['custom:tagged', 'key:value'],
                     test_data_refs=['latest'])
+  api.cipd.describe('default/test/data',
+                    version=result[0].instance_id)
 
   # The rest of commands expect credentials to be set.
 
@@ -106,6 +108,15 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, ver_files, install_mode):
   api.cipd.set_ref('fake-package', version='latest', refs=['any', 'some'])
   # Search by the new tag.
   api.cipd.search('fake-package/${platform}', tag='dead:beaf')
+
+  # Fetch a raw package
+  api.cipd.pkg_fetch(api.path['start_dir'].join('fetched_pkg'),
+                     'fake-package/${platform}', 'some:tag')
+
+  # Deploy a raw package
+  api.cipd.pkg_deploy(
+    api.path['start_dir'].join('raw_root'),
+    api.path['start_dir'].join('fetched_pkg'))
 
 
 def GenTests(api):

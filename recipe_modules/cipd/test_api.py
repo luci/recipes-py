@@ -20,7 +20,7 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
 
   def make_pin(self, package_name, version=None):
     return {
-        'package': package_name,
+        'package': package_name.replace('${platform}', 'resolved-platform'),
         'instance_id': self.make_resolved_version(version),
     }
 
@@ -43,6 +43,8 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
     return self._resultify(self.make_pin(package_name, version))
 
   example_register = example_build
+  example_pkg_fetch = example_build
+  example_pkg_deploy = example_build
 
   def example_ensure(self, ensure_file):
     return self._resultify({
@@ -73,6 +75,16 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
                        user='user:44-blablbla@developer.gserviceaccount.com',
                        tstamp=1446574210):
     assert not test_data_tags or all(':' in tag for tag in test_data_tags)
+    if test_data_tags is None:
+      test_data_tags = [
+        'buildbot_build:some.waterfall/builder/1234',
+        'git_repository:https://chromium.googlesource.com/some/repo',
+        'git_revision:397a2597cdc237f3026e6143b683be4b9ab60540',
+      ]
+
+    if test_data_refs is None:
+      test_data_refs = ['latest']
+
     return self._resultify({
         'pin': self.make_pin(package_name, version),
         'registered_by': user,
@@ -84,7 +96,7 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
             'modified_ts': tstamp,
             'instance_id': self.make_resolved_version(ref),
           }
-          for ref in (['latest'] if test_data_refs is None else test_data_refs)
+          for ref in test_data_refs
         ],
         'tags': [
           {
@@ -92,10 +104,6 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
             'registered_by': user,
             'registered_ts': tstamp,
           }
-          for tag in ([
-              'buildbot_build:some.waterfall/builder/1234',
-              'git_repository:https://chromium.googlesource.com/some/repo',
-              'git_revision:397a2597cdc237f3026e6143b683be4b9ab60540',
-          ] if test_data_tags is None else test_data_tags)
+          for tag in test_data_tags
         ],
     })
