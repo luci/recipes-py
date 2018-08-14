@@ -185,6 +185,153 @@ def MustRunRE(check, step_odict, step_regex, at_least=1, at_most=None):
     check(matches <= at_most)
 
 
+_STEP_TEXT_RE = re.compile('@@@STEP_TEXT@(?P<text>.*)@@@$')
+
+
+def _extract_step_text(check, step_odict, step):
+  """Extract the step_text for a step.
+
+  The check function is used to check that the step was actually run.
+
+  Args:
+    step (str) - The name of the step to extract the step_text for.
+
+  Returns:
+    The step_text for the given step.
+  """
+  if not check('step %s was run' % step, step in step_odict):
+    return
+  for a in step_odict[step].get('~followup_annotations', []):
+    match = _STEP_TEXT_RE.match(a)
+    if match:
+      # TODO(gbeaty) Do we need to worry about the possibility of multiple lines
+      # matching the re?
+      return match.group('text')
+  return ''
+
+
+def StepTextEquals(check, step_odict, step, expected):
+  """Assert that a step's step_text is equal to a given string.
+
+  Args:
+    step (str) - The step to check the step_text of.
+    expected (str) - The expected value of the step_text.
+
+  Usage:
+    yield TEST + api.post_process(StepTextEquals, 'step-name', 'expected-text')
+  """
+  actual = _extract_step_text(check, step_odict, step)
+  if actual == None:
+    return
+  check(actual == expected)
+
+
+def StepTextContains(check, step_odict, step, expected_substrs):
+  """Assert that a step's step_text contains given substrings.
+
+  Args:
+    step (str) - The step to check the step_text of.
+    expected_substrs (list(str)) - The expected substrings the step_text should
+        contain.
+
+  Usage:
+    yield (
+        TEST
+        + api.post_process(StepTextContains, 'step-name',
+                           ['substr1', 'substr2'])
+    )
+  """
+  actual = _extract_step_text(check, step_odict, step)
+  if actual == None:
+    return
+  assert not isinstance(expected_substrs, basestring), \
+      'expected_substrs must be an iterable of strings'
+  for expected in expected_substrs:
+    check(expected in actual)
+
+
+_LOG_LINE_RE = re.compile('@@@STEP_LOG_LINE@(?P<log>[^@]*)@(?P<text>.*)@@@$')
+_LOG_END_RE = re.compile('@@@STEP_LOG_END@(?P<log>.*)@@@$')
+
+
+def _extract_log(check, step_odict, step, log):
+  """Extract the step_text for a step.
+
+  The check function is used to check that the step was actually run and that a
+  log with the given name was created for the step.
+
+  Args:
+    step (str) - The name of the step to extract a log for.
+    log (str) - The name of the log to extract.
+
+  Returns:
+    The log identified by the step and log parameters as a single string with
+    lines joined by \n.
+  """
+  if not check('step %s was run' % step, step in step_odict):
+    return
+  log_lines = []
+  for a in step_odict[step].get('~followup_annotations', []):
+    match = _LOG_LINE_RE.match(a)
+    if match and match.group('log') == log:
+      log_lines.append(match.group('text'))
+      continue
+    match = _LOG_END_RE.match(a)
+    if match and match.group('log') == log:
+      # TODO(gbeaty) Do we need to worry about the possibility of 0 or >1 end,
+      # or log lines appearing after end?
+      log_lines.append('')
+      break
+  if not check('step %s has log %s' % (step, log), log_lines):
+    return
+  return '\n'.join(log_lines)
+
+
+def LogEquals(check, step_odict, step, log, expected):
+  """Assert that a step's log is equal to a given string.
+
+  Args:
+    step (str) - The step to check the log of.
+    log (str) - The name of the log to check.
+    expected (str) - The expected value of the log.
+
+  Usage:
+    yield (
+        TEST
+         + api.post_process(LogEquals, 'step-name', 'log-name', 'expected-text')
+    )
+  """
+  actual = _extract_log(check, step_odict, step, log)
+  if actual == None:
+    return
+  check(actual == expected)
+
+
+def LogContains(check, step_odict, step, log, expected_substrs):
+  """Assert that a step's log contains given substrings.
+
+  Args:
+    step (str) - The step to check the log of.
+    log (str) - The name of the log to check.
+    expected_substrs (list(str)) - The expected substrings the log should
+        contain.
+
+  Usage:
+    yield (
+        TEST
+         + api.post_process(LogEquals, 'step-name', 'log-name',
+                            ['substr1', 'substr2'])
+    )
+  """
+  actual = _extract_log(check, step_odict, step, log)
+  if actual == None:
+    return
+  assert not isinstance(expected_substrs, basestring), \
+      'expected_substrs must be an iterable of strings'
+  for expected in expected_substrs:
+    check(expected in actual)
+
+
 def StatusCodeIn(check, step_odict, *codes):
   """Assert that recipe result status code is within expected codes.
 

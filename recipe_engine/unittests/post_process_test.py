@@ -139,5 +139,110 @@ class TestRun(unittest.TestCase):
     self.expect_fails(3, post_process.DoesNotRunRE, 'b')
 
 
+class TestStepText(unittest.TestCase):
+  def setUp(self):
+    self.d = OrderedDict([
+        ('x', {
+            '~followup_annotations': ['@@@STEP_TEXT@foobar@@@'],
+        })
+    ])
+
+  def expect_fails(self, num_fails, func, *args, **kwargs):
+    c = checker.Checker('<filename>', 0, func, args, kwargs)
+    func(c, self.d, *args, **kwargs)
+    self.assertEqual(len(c.failed_checks), num_fails)
+    return c
+
+  def test_step_text_equals_pass(self):
+    self.expect_fails(0, post_process.StepTextEquals, 'x', 'foobar')
+
+  def test_step_text_equals_fail(self):
+    c = self.expect_fails(1, post_process.StepTextEquals, 'y', 'foobar')
+    self.assertEqual(c.failed_checks[0].name, 'step y was run')
+
+    c = self.expect_fails(1, post_process.StepTextEquals, 'x', 'foo')
+    self.assertEqual(c.failed_checks[0].frames[-1].code,
+                     'check((actual == expected))')
+
+  def test_step_text_contains_pass(self):
+    self.expect_fails(0, post_process.StepTextContains, 'x', ['foo', 'bar'])
+
+  def test_step_text_contains_fail(self):
+    c = self.expect_fails(1, post_process.StepTextContains, 'y', ['foo', 'bar'])
+    self.assertEqual(c.failed_checks[0].name, 'step y was run')
+
+    c = self.expect_fails(
+        2, post_process.StepTextContains, 'x', ['food', 'bar', 'baz'])
+    self.assertEquals(c.failed_checks[0].frames[-1].code,
+                      'check((expected in actual))')
+    self.assertEquals(c.failed_checks[0].frames[-1].varmap['expected'],
+                      "'food'")
+    self.assertEquals(c.failed_checks[1].frames[-1].code,
+                      'check((expected in actual))')
+    self.assertEquals(c.failed_checks[1].frames[-1].varmap['expected'],
+                      "'baz'")
+
+class TestLog(unittest.TestCase):
+  def setUp(self):
+    self.d = OrderedDict([
+        ('x', {
+            '~followup_annotations': [
+                '@@@STEP_LOG_LINE@log-x@foo@@@',
+                '@@@STEP_LOG_LINE@log-x@bar@@@',
+                '@@@STEP_LOG_END@log-x@@@',
+            ],
+        })
+    ])
+
+  def expect_fails(self, num_fails, func, *args, **kwargs):
+    c = checker.Checker('<filename>', 0, func, args, kwargs)
+    func(c, self.d, *args, **kwargs)
+    self.assertEqual(len(c.failed_checks), num_fails)
+    return c
+
+  def test_log_equals_pass(self):
+    self.expect_fails(0, post_process.LogEquals, 'x', 'log-x', 'foo\nbar\n')
+
+  def test_log_equals_fail(self):
+    c = self.expect_fails(1, post_process.LogEquals, 'y', 'log-x', 'foo\nbar\n')
+    self.assertEqual(c.failed_checks[0].name, 'step y was run')
+
+    c = self.expect_fails(1, post_process.LogEquals, 'x', 'log-y', 'foo\nbar\n')
+    self.assertEqual(c.failed_checks[0].name, 'step x has log log-y')
+
+    c = self.expect_fails(1, post_process.LogEquals, 'x', 'log-x', 'foo\nbar')
+    self.assertEqual(c.failed_checks[0].frames[-1].code,
+                     'check((actual == expected))')
+
+  def test_log_contains_pass(self):
+    self.expect_fails(0, post_process.LogContains, 'x', 'log-x',
+                      ['foo\n', 'bar\n', 'foo\nbar'])
+
+  def test_log_contains_fail(self):
+    c = self.expect_fails(1, post_process.LogContains, 'y', 'log-x',
+                          ['foo', 'bar'])
+    self.assertEqual(c.failed_checks[0].name, 'step y was run')
+
+    c = self.expect_fails(1, post_process.LogContains, 'x', 'log-y',
+                          ['foo', 'bar'])
+    self.assertEqual(c.failed_checks[0].name, 'step x has log log-y')
+
+    c = self.expect_fails(
+        3, post_process.LogContains, 'x', 'log-x',
+        ['food', 'bar', 'baz', 'foobar'])
+    self.assertEquals(c.failed_checks[0].frames[-1].code,
+                      'check((expected in actual))')
+    self.assertEquals(c.failed_checks[0].frames[-1].varmap['expected'],
+                      "'food'")
+    self.assertEquals(c.failed_checks[1].frames[-1].code,
+                      'check((expected in actual))')
+    self.assertEquals(c.failed_checks[1].frames[-1].varmap['expected'],
+                      "'baz'")
+    self.assertEquals(c.failed_checks[2].frames[-1].code,
+                      'check((expected in actual))')
+    self.assertEquals(c.failed_checks[2].frames[-1].varmap['expected'],
+                      "'foobar'")
+
+
 if __name__ == '__main__':
   sys.exit(unittest.main())
