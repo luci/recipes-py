@@ -7,6 +7,7 @@ from recipe_engine.recipe_api import Property
 
 DEPS = [
   'cipd',
+  'json',
   'path',
   'platform',
   'properties',
@@ -155,6 +156,15 @@ def GenTests(api):
         'public/package/linux-amd64-ubuntu14_04',
         instances=3
       ))
+  )
+
+  yield (
+    api.test('search-empty-result')
+    + api.platform('linux', 64)
+    + api.override_step_data(
+      'cipd search fake-package/${platform} dead:beaf',
+      api.json.output({'result': None})
+    )
   )
 
   yield (

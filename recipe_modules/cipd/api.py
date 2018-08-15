@@ -530,7 +530,7 @@ class CIPDApi(recipe_api.RecipeApi):
         cmd,
         step_test_data=lambda: self.test_api.example_search(package_name)
     )
-    return [self.Pin(**pin) for pin in step_result.json.output['result']]
+    return [self.Pin(**pin) for pin in step_result.json.output['result'] or []]
 
   def describe(self, package_name, version,
                test_data_refs=None, test_data_tags=None):
