@@ -561,8 +561,8 @@ class CIPDApi(recipe_api.RecipeApi):
         pin=self.Pin(**result['pin']),
         registered_by=result['registered_by'],
         registered_ts=['registered_ts'],
-        refs=[self.Ref(*ref) for ref in result['refs']],
-        tags=[self.Tag(*tag) for tag in result['tags']],
+        refs=[self.Ref(**ref) for ref in result['refs']],
+        tags=[self.Tag(**tag) for tag in result['tags']],
     )
 
   def pkg_fetch(self, destination, package_name, version):

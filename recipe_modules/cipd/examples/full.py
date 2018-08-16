@@ -36,8 +36,10 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, ver_files, install_mode):
   # Some packages don't require credentials to be installed or queried.
   api.cipd.ensure(cipd_root, file)
   result = api.cipd.search(package_name, tag='git_revision:40-chars-long-hash')
-  r = api.cipd.describe(package_name,
-                    version=result[0].instance_id)
+  r = api.cipd.describe(package_name, version=result[0].instance_id)
+  api.step('describe response', cmd=None).presentation.logs['parsed'] = (
+      api.json.dumps(r.__dict__, indent=2).splitlines())
+
 
   # Others do, so provide creds first.
   private_package_name = 'private/package/${platform}'
