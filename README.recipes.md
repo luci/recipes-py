@@ -292,7 +292,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#432)(self, pkg_def, refs=(), tags=None):**
+&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#434)(self, pkg_def, refs=None, tags=None):**
 
 Builds and uploads a package based on a PackageDefinition object.
 
@@ -307,7 +307,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#412)(self, pkg_def, refs=(), tags=None, pkg_vars=None):**
+&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#414)(self, pkg_def, refs=None, tags=None, pkg_vars=None):**
 
 Builds and uploads a package based on on-disk YAML package definition
 file.
@@ -324,7 +324,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [describe](/recipe_modules/cipd/api.py#551)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
+&mdash; **def [describe](/recipe_modules/cipd/api.py#553)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
 
 Returns information about a pacakge instance given its version:
 who uploaded the instance and when and a list of attached tags.
@@ -339,7 +339,7 @@ Args:
 
 Returns the CIPDApi.Description instance describing the package.
 
-&mdash; **def [ensure](/recipe_modules/cipd/api.py#450)(self, root, ensure_file):**
+&mdash; **def [ensure](/recipe_modules/cipd/api.py#452)(self, root, ensure_file):**
 
 Ensures that packages are installed in a given root dir.
 
@@ -351,7 +351,7 @@ Returns the map of subdirectories to CIPDApi.Pin instances.
 
 &emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#228)(self):**
 
-&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#614)(self, root, package_file):**
+&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#616)(self, root, package_file):**
 
 Deploys the specified package to root.
 
@@ -365,7 +365,7 @@ Args:
 
 Returns a Pin for the deployed package.
 
-&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#584)(self, destination, package_name, version):**
+&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#586)(self, destination, package_name, version):**
 
 Downloads the specified package to destination.
 
@@ -396,7 +396,7 @@ Args:
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [search](/recipe_modules/cipd/api.py#526)(self, package_name, tag):**
+&mdash; **def [search](/recipe_modules/cipd/api.py#528)(self, package_name, tag):**
 
 Searches for package instances by tag, optionally constrained by package
 name.
@@ -407,7 +407,7 @@ Args:
 
 Returns the list of CIPDApi.Pin instances.
 
-&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#501)(self, package_name, version, refs):**
+&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#503)(self, package_name, version, refs):**
 
 Moves a ref to point to a given version.
 
@@ -418,7 +418,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#474)(self, package_name, version, tags):**
+&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#476)(self, package_name, version, tags):**
 
 Tags package of a specific version.
 
@@ -1756,7 +1756,7 @@ This file is a recipe demonstrating the buildbucket recipe module.
 
 [DEPS](/recipe_modules/cipd/examples/full.py#8): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/cipd/examples/full.py#30)(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files, install_mode):**
+&mdash; **def [RunSteps](/recipe_modules/cipd/examples/full.py#33)(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files, install_mode, refs, tags):**
 ### *recipes* / [context:examples/full](/recipe_modules/context/examples/full.py)
 
 [DEPS](/recipe_modules/context/examples/full.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

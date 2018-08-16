@@ -389,12 +389,14 @@ class CIPDApi(recipe_api.RecipeApi):
     )
     return self.Pin(**step_result.json.output['result'])
 
-  def _create(self, pkg_name, pkg_def_file_or_placeholder, refs=(), tags=None,
+  def _create(self, pkg_name, pkg_def_file_or_placeholder, refs=None, tags=None,
               pkg_vars=None):
+    refs = [] if refs is None else refs
+    tags = {} if tags is None else tags
+    pkg_vars = {} if pkg_vars is None else pkg_vars
     check_list_type('refs', refs, str)
     check_dict_type('tags', tags, str, str)
-    if pkg_vars:
-      check_dict_type('pkg_vars', pkg_vars, str, str)
+    check_dict_type('pkg_vars', pkg_vars, str, str)
     cmd = [
       'create',
       '-pkg-def', pkg_def_file_or_placeholder,
@@ -409,7 +411,7 @@ class CIPDApi(recipe_api.RecipeApi):
     step_result.presentation.step_text += '</br>id: %(instance_id)s' % result
     return self.Pin(**result)
 
-  def create_from_yaml(self, pkg_def, refs=(), tags=None, pkg_vars=None):
+  def create_from_yaml(self, pkg_def, refs=None, tags=None, pkg_vars=None):
     """Builds and uploads a package based on on-disk YAML package definition
     file.
 
@@ -429,7 +431,7 @@ class CIPDApi(recipe_api.RecipeApi):
     return self._create(
         self.m.path.basename(pkg_def), pkg_def, refs, tags, pkg_vars)
 
-  def create_from_pkg(self, pkg_def, refs=(), tags=None):
+  def create_from_pkg(self, pkg_def, refs=None, tags=None):
     """Builds and uploads a package based on a PackageDefinition object.
 
     This builds and uploads the package in one step.

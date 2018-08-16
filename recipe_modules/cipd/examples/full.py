@@ -24,11 +24,14 @@ PROPERTIES = {
   'pkg_vars': Property(default=None, kind=dict),
   'ver_files': Property(default=(), kind=List(str)),
   'install_mode': Property(default=None),
+  'refs': Property(default=['fake-ref-1', 'fake-ref-2'], kind=List(str)),
+  'tags': Property(kind=dict, default={'fake_tag_1': 'fake_value_1',
+                                       'fake_tag_2': 'fake_value_2'}),
 }
 
 
 def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
-             install_mode):
+             install_mode, refs, tags):
   package_name = 'public/package/${platform}'
   package_instance_id = '7f751b2237df2fdf3c1405be00590fefffbaea2d'
   ensure_file = api.cipd.EnsureFile()
@@ -66,9 +69,7 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
   api.cipd.build('fake-input-dir', 'fake-package-path', 'infra/fake-package',
                  install_mode='copy')
   api.cipd.register('infra/fake-package', 'fake-package-path',
-                    refs=['fake-ref-1', 'fake-ref-2'],
-                    tags={'fake_tag_1': 'fake_value_1',
-                          'fake_tag_2': 'fake_value_2'})
+                    refs=refs, tags=tags)
 
   # Create (build & register).
   if use_pkg:
@@ -85,27 +86,17 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
 
     api.cipd.build_from_pkg(pkg, 'fake-package-path')
     api.cipd.register('infra/fake-package', 'fake-package-path',
-                      refs=['fake-ref-1', 'fake-ref-2'],
-                      tags={'fake_tag_1': 'fake_value_1',
-                            'fake_tag_2': 'fake_value_2'})
+                      refs=refs, tags=tags)
 
-    api.cipd.create_from_pkg(pkg,
-                             refs=['fake-ref-1', 'fake-ref-2'],
-                             tags={'fake_tag_1': 'fake_value_1',
-                                   'fake_tag_2': 'fake_value_2'})
+    api.cipd.create_from_pkg(pkg, refs=refs, tags=tags)
   else:
     api.cipd.build_from_yaml(api.path['start_dir'].join('fake-package.yaml'),
                              'fake-package-path', pkg_vars=pkg_vars)
     api.cipd.register('infra/fake-package', 'fake-package-path',
-                      refs=['fake-ref-1', 'fake-ref-2'],
-                      tags={'fake_tag_1': 'fake_value_1',
-                            'fake_tag_2': 'fake_value_2'})
+                      refs=refs, tags=tags)
 
     api.cipd.create_from_yaml(api.path['start_dir'].join('fake-package.yaml'),
-                              refs=['fake-ref-1', 'fake-ref-2'],
-                              tags={'fake_tag_1': 'fake_value_1',
-                                    'fake_tag_2': 'fake_value_2'},
-                              pkg_vars=pkg_vars)
+                              refs=refs, tags=tags, pkg_vars=pkg_vars)
 
   # Set tag or ref of an already existing package.
   api.cipd.set_tag('fake-package',
@@ -231,5 +222,13 @@ def GenTests(api):
         'pkg_var_1': 'pkg_val_1',
         'pkg_var_2': 'pkg_val_2',
       }
+    )
+  )
+
+  yield (
+    api.test('basic_with_no_refs_or_tags')
+    + api.properties(
+      refs=[],
+      tags={},
     )
   )
