@@ -254,7 +254,7 @@ Args:
 
 Returns True if the caller has given roles, False otherwise.
 
-&mdash; **def [build](/recipe_modules/cipd/api.py#316)(self, input_dir, output_package, package_name, install_mode=None):**
+&mdash; **def [build](/recipe_modules/cipd/api.py#323)(self, input_dir, output_package, package_name, install_mode=None):**
 
 Builds, but does not upload, a cipd package from a directory.
 
@@ -269,7 +269,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#299)(self, pkg_def, output_package):**
+&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#306)(self, pkg_def, output_package):**
 
 Builds a package based on a PackageDefinition object.
 
@@ -280,17 +280,19 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#283)(self, pkg_def, output_package):**
+&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#287)(self, pkg_def, output_package, pkg_vars=None):**
 
 Builds a package based on on-disk YAML package definition file.
 
 Args:
   * pkg_def (Path) - The path to the yaml file.
   * output_package (Path) - The file to write the package to.
+  * pkg_vars (dict[str]str) - A map of var name -> value to use for vars
+    referenced in package definition file.
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#416)(self, pkg_def, refs=(), tags=None):**
+&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#432)(self, pkg_def, refs=(), tags=None):**
 
 Builds and uploads a package based on a PackageDefinition object.
 
@@ -305,7 +307,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#399)(self, pkg_def, refs=(), tags=None):**
+&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#412)(self, pkg_def, refs=(), tags=None, pkg_vars=None):**
 
 Builds and uploads a package based on on-disk YAML package definition
 file.
@@ -317,10 +319,12 @@ Args:
   * refs (list[str]) - A list of ref names to set for the package instance.
   * tags (dict[str]str) - A map of tag name -> value to set for the
     package instance.
+  * pkg_vars (dict[str]str) - A map of var name -> value to use for vars
+    referenced in package definition file.
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [describe](/recipe_modules/cipd/api.py#535)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
+&mdash; **def [describe](/recipe_modules/cipd/api.py#551)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
 
 Returns information about a pacakge instance given its version:
 who uploaded the instance and when and a list of attached tags.
@@ -335,7 +339,7 @@ Args:
 
 Returns the CIPDApi.Description instance describing the package.
 
-&mdash; **def [ensure](/recipe_modules/cipd/api.py#434)(self, root, ensure_file):**
+&mdash; **def [ensure](/recipe_modules/cipd/api.py#450)(self, root, ensure_file):**
 
 Ensures that packages are installed in a given root dir.
 
@@ -347,7 +351,7 @@ Returns the map of subdirectories to CIPDApi.Pin instances.
 
 &emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#228)(self):**
 
-&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#597)(self, root, package_file):**
+&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#614)(self, root, package_file):**
 
 Deploys the specified package to root.
 
@@ -361,7 +365,7 @@ Args:
 
 Returns a Pin for the deployed package.
 
-&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#568)(self, destination, package_name, version):**
+&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#584)(self, destination, package_name, version):**
 
 Downloads the specified package to destination.
 
@@ -378,7 +382,7 @@ Args:
 
 Returns a Pin for the downloaded package.
 
-&mdash; **def [register](/recipe_modules/cipd/api.py#359)(self, package_name, package_path, refs=(), tags=None):**
+&mdash; **def [register](/recipe_modules/cipd/api.py#369)(self, package_name, package_path, refs=(), tags=None):**
 
 Uploads and registers package instance in the package repository.
 
@@ -392,7 +396,7 @@ Args:
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [search](/recipe_modules/cipd/api.py#510)(self, package_name, tag):**
+&mdash; **def [search](/recipe_modules/cipd/api.py#526)(self, package_name, tag):**
 
 Searches for package instances by tag, optionally constrained by package
 name.
@@ -403,7 +407,7 @@ Args:
 
 Returns the list of CIPDApi.Pin instances.
 
-&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#485)(self, package_name, version, refs):**
+&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#501)(self, package_name, version, refs):**
 
 Moves a ref to point to a given version.
 
@@ -414,7 +418,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#458)(self, package_name, version, tags):**
+&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#474)(self, package_name, version, tags):**
 
 Tags package of a specific version.
 
@@ -1752,7 +1756,7 @@ This file is a recipe demonstrating the buildbucket recipe module.
 
 [DEPS](/recipe_modules/cipd/examples/full.py#8): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/cipd/examples/full.py#29)(api, use_pkg, pkg_files, pkg_dirs, ver_files, install_mode):**
+&mdash; **def [RunSteps](/recipe_modules/cipd/examples/full.py#30)(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files, install_mode):**
 ### *recipes* / [context:examples/full](/recipe_modules/context/examples/full.py)
 
 [DEPS](/recipe_modules/context/examples/full.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

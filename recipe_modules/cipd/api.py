@@ -267,25 +267,31 @@ class CIPDApi(recipe_api.RecipeApi):
     )
     return step_result.json.output['result']
 
-  def _build(self, pkg_name, pkg_def_file_or_placeholder, output_package):
+  def _build(self, pkg_name, pkg_def_file_or_placeholder, output_package,
+             pkg_vars=None):
+    if pkg_vars:
+      check_dict_type('pkg_vars', pkg_vars, str, str)
+
     step_result = self._run(
         'build %s' % pkg_name,
         [
           'pkg-build',
           '-pkg-def', pkg_def_file_or_placeholder,
           '-out', output_package,
-        ],
+        ] + self._cli_options((), (), pkg_vars),
         step_test_data=lambda: self.test_api.example_build(pkg_name)
     )
     result = step_result.json.output['result']
     return self.Pin(**result)
 
-  def build_from_yaml(self, pkg_def, output_package):
+  def build_from_yaml(self, pkg_def, output_package, pkg_vars=None):
     """Builds a package based on on-disk YAML package definition file.
 
     Args:
       * pkg_def (Path) - The path to the yaml file.
       * output_package (Path) - The file to write the package to.
+      * pkg_vars (dict[str]str) - A map of var name -> value to use for vars
+        referenced in package definition file.
 
     Returns the CIPDApi.Pin instance.
     """
@@ -293,7 +299,8 @@ class CIPDApi(recipe_api.RecipeApi):
     return self._build(
         self.m.path.basename(pkg_def),
         pkg_def,
-        output_package
+        output_package,
+        pkg_vars,
     )
 
   def build_from_pkg(self, pkg_def, output_package):
@@ -344,9 +351,9 @@ class CIPDApi(recipe_api.RecipeApi):
     result = step_result.json.output['result']
     return self.Pin(**result)
 
-  def _ref_tag_options(self, refs, tags):
-    """Computes a list of CIPD CLI -ref and -tag options given a sequence of
-    refs and a dict of tags."""
+  def _cli_options(self, refs, tags, pkg_vars):
+    """Computes a list of CIPD CLI -ref, -tag, and -pkg-var options given a
+    sequence of refs, a dict of tags, and a dict of pkg_vars."""
     ret = []
     if refs:
       for ref in refs:
@@ -354,6 +361,9 @@ class CIPDApi(recipe_api.RecipeApi):
     if tags:
       for tag, value in sorted(tags.items()):
         ret.extend(['-tag', '%s:%s' % (tag, value)])
+    if pkg_vars:
+      for var_name, value in sorted(pkg_vars.items()):
+        ret.extend(['-pkg-var', '%s:%s' % (var_name, value)])
     return ret
 
   def register(self, package_name, package_path, refs=(), tags=None):
@@ -371,7 +381,7 @@ class CIPDApi(recipe_api.RecipeApi):
     """
     cmd = [
       'pkg-register', package_path
-    ] + self._ref_tag_options(refs, tags)
+    ] + self._cli_options(refs, tags, ())
     step_result = self._run(
         'register %s' % package_name,
         cmd,
@@ -379,13 +389,16 @@ class CIPDApi(recipe_api.RecipeApi):
     )
     return self.Pin(**step_result.json.output['result'])
 
-  def _create(self, pkg_name, pkg_def_file_or_placeholder, refs=(), tags=None):
+  def _create(self, pkg_name, pkg_def_file_or_placeholder, refs=(), tags=None,
+              pkg_vars=None):
     check_list_type('refs', refs, str)
     check_dict_type('tags', tags, str, str)
+    if pkg_vars:
+      check_dict_type('pkg_vars', pkg_vars, str, str)
     cmd = [
       'create',
       '-pkg-def', pkg_def_file_or_placeholder,
-    ] + self._ref_tag_options(refs, tags)
+    ] + self._cli_options(refs, tags, pkg_vars)
     step_result = self._run(
       'create %s' % pkg_name, cmd,
       step_test_data=lambda: self.test_api.m.json.output({
@@ -396,7 +409,7 @@ class CIPDApi(recipe_api.RecipeApi):
     step_result.presentation.step_text += '</br>id: %(instance_id)s' % result
     return self.Pin(**result)
 
-  def create_from_yaml(self, pkg_def, refs=(), tags=None):
+  def create_from_yaml(self, pkg_def, refs=(), tags=None, pkg_vars=None):
     """Builds and uploads a package based on on-disk YAML package definition
     file.
 
@@ -407,11 +420,14 @@ class CIPDApi(recipe_api.RecipeApi):
       * refs (list[str]) - A list of ref names to set for the package instance.
       * tags (dict[str]str) - A map of tag name -> value to set for the
         package instance.
+      * pkg_vars (dict[str]str) - A map of var name -> value to use for vars
+        referenced in package definition file.
 
     Returns the CIPDApi.Pin instance.
     """
     check_type('pkg_def', pkg_def, Path)
-    return self._create(self.m.path.basename(pkg_def), pkg_def, refs, tags)
+    return self._create(
+        self.m.path.basename(pkg_def), pkg_def, refs, tags, pkg_vars)
 
   def create_from_pkg(self, pkg_def, refs=(), tags=None):
     """Builds and uploads a package based on a PackageDefinition object.
@@ -470,7 +486,7 @@ class CIPDApi(recipe_api.RecipeApi):
     cmd = [
       'set-tag', package_name,
       '-version', version,
-    ] + self._ref_tag_options((), tags)
+    ] + self._cli_options((), tags, ())
 
     step_result = self._run(
         'cipd set-tag %s' % package_name,
@@ -495,7 +511,7 @@ class CIPDApi(recipe_api.RecipeApi):
     cmd = [
       'set-ref', package_name,
       '-version', version,
-    ] + self._ref_tag_options(refs, ())
+    ] + self._cli_options(refs, (), ())
 
     step_result = self._run(
         'cipd set-ref %s' % package_name,
@@ -591,7 +607,8 @@ class CIPDApi(recipe_api.RecipeApi):
         package_name, version)
     )
     ret = self.Pin(**step_result.json.output['result'])
-    step_result.presentation.step_text = '%s %s' % (ret.package, ret.instance_id)
+    step_result.presentation.step_text = '%s %s' % (
+        ret.package, ret.instance_id)
     return ret
 
   def pkg_deploy(self, root, package_file):
