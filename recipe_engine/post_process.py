@@ -197,15 +197,15 @@ def _extract_step_text(check, step_odict, step):
     step (str) - The name of the step to extract the step_text for.
 
   Returns:
-    The step_text for the given step.
+    The step_text for the given step ('' if the a folloup annotation for the
+    step's step_text was not found). If the given step was not run, None will
+    be returned.
   """
   if not check('step %s was run' % step, step in step_odict):
     return
   for a in step_odict[step].get('~followup_annotations', []):
     match = _STEP_TEXT_RE.match(a)
     if match:
-      # TODO(gbeaty) Do we need to worry about the possibility of multiple lines
-      # matching the re?
       return match.group('text')
   return ''
 
@@ -221,7 +221,7 @@ def StepTextEquals(check, step_odict, step, expected):
     yield TEST + api.post_process(StepTextEquals, 'step-name', 'expected-text')
   """
   actual = _extract_step_text(check, step_odict, step)
-  if actual == None:
+  if actual is None:
     return
   check(actual == expected)
 
@@ -241,11 +241,11 @@ def StepTextContains(check, step_odict, step, expected_substrs):
                            ['substr1', 'substr2'])
     )
   """
-  actual = _extract_step_text(check, step_odict, step)
-  if actual == None:
-    return
   assert not isinstance(expected_substrs, basestring), \
-      'expected_substrs must be an iterable of strings'
+      'expected_substrs must be an iterable of strings and must not be a string'
+  actual = _extract_step_text(check, step_odict, step)
+  if actual is None:
+    return
   for expected in expected_substrs:
     check(expected in actual)
 
@@ -255,7 +255,7 @@ _LOG_END_RE = re.compile('@@@STEP_LOG_END@(?P<log>.*)@@@$')
 
 
 def _extract_log(check, step_odict, step, log):
-  """Extract the step_text for a step.
+  """Extract a log for a step.
 
   The check function is used to check that the step was actually run and that a
   log with the given name was created for the step.
@@ -266,7 +266,8 @@ def _extract_log(check, step_odict, step, log):
 
   Returns:
     The log identified by the step and log parameters as a single string with
-    lines joined by \n.
+    lines joined by \n. If the given step was not run or does not have the given
+    log, None will be returned.
   """
   if not check('step %s was run' % step, step in step_odict):
     return
@@ -278,8 +279,6 @@ def _extract_log(check, step_odict, step, log):
       continue
     match = _LOG_END_RE.match(a)
     if match and match.group('log') == log:
-      # TODO(gbeaty) Do we need to worry about the possibility of 0 or >1 end,
-      # or log lines appearing after end?
       log_lines.append('')
       break
   if not check('step %s has log %s' % (step, log), log_lines):
@@ -302,7 +301,7 @@ def LogEquals(check, step_odict, step, log, expected):
     )
   """
   actual = _extract_log(check, step_odict, step, log)
-  if actual == None:
+  if actual is None:
     return
   check(actual == expected)
 
@@ -323,11 +322,11 @@ def LogContains(check, step_odict, step, log, expected_substrs):
                             ['substr1', 'substr2'])
     )
   """
-  actual = _extract_log(check, step_odict, step, log)
-  if actual == None:
-    return
   assert not isinstance(expected_substrs, basestring), \
-      'expected_substrs must be an iterable of strings'
+      'expected_substrs must be an iterable of strings and must not be a string'
+  actual = _extract_log(check, step_odict, step, log)
+  if actual is None:
+    return
   for expected in expected_substrs:
     check(expected in actual)
 
