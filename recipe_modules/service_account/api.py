@@ -26,6 +26,14 @@ class ServiceAccountApi(recipe_api.RecipeApi):
       self._title = title
       self._key_path = key_path   # or None to use default LUCI account
 
+    @property
+    def key_path(self):
+      """Returns local path to service account key file.
+
+      Returns None if the default LUCI account is being used.
+      """
+      return self._key_path
+
     def get_access_token(self, scopes=None):
       """Returns an access token for this service account.
 

@@ -228,21 +228,21 @@ Args:
   key_path (str): a path to JSON file with service account credentials.
 ### *recipe_modules* / [cipd](/recipe_modules/cipd)
 
-[DEPS](/recipe_modules/cipd/__init__.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cipd/__init__.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step)
 
 API for interacting with CIPD.
 
 Depends on 'cipd' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 
-#### **class [CIPDApi](/recipe_modules/cipd/api.py#184)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
+#### **class [CIPDApi](/recipe_modules/cipd/api.py#185)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 CIPDApi provides basic support for CIPD.
 
 This assumes that `cipd` (or `cipd.exe` or `cipd.bat` on windows) has been
 installed somewhere in $PATH.
 
-&mdash; **def [acl\_check](/recipe_modules/cipd/api.py#243)(self, pkg_path, reader=True, writer=False, owner=False):**
+&mdash; **def [acl\_check](/recipe_modules/cipd/api.py#270)(self, pkg_path, reader=True, writer=False, owner=False):**
 
 Checks whether the caller has a given roles in a package.
 
@@ -254,7 +254,7 @@ Args:
 
 Returns True if the caller has given roles, False otherwise.
 
-&mdash; **def [build](/recipe_modules/cipd/api.py#323)(self, input_dir, output_package, package_name, install_mode=None):**
+&mdash; **def [build](/recipe_modules/cipd/api.py#350)(self, input_dir, output_package, package_name, install_mode=None):**
 
 Builds, but does not upload, a cipd package from a directory.
 
@@ -269,7 +269,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#306)(self, pkg_def, output_package):**
+&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#333)(self, pkg_def, output_package):**
 
 Builds a package based on a PackageDefinition object.
 
@@ -280,7 +280,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#287)(self, pkg_def, output_package, pkg_vars=None):**
+&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#314)(self, pkg_def, output_package, pkg_vars=None):**
 
 Builds a package based on on-disk YAML package definition file.
 
@@ -292,7 +292,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#434)(self, pkg_def, refs=None, tags=None):**
+&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#466)(self, pkg_def, refs=None, tags=None):**
 
 Builds and uploads a package based on a PackageDefinition object.
 
@@ -307,7 +307,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#414)(self, pkg_def, refs=None, tags=None, pkg_vars=None):**
+&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#446)(self, pkg_def, refs=None, tags=None, pkg_vars=None):**
 
 Builds and uploads a package based on on-disk YAML package definition
 file.
@@ -324,7 +324,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [describe](/recipe_modules/cipd/api.py#553)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
+&mdash; **def [describe](/recipe_modules/cipd/api.py#585)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
 
 Returns information about a pacakge instance given its version:
 who uploaded the instance and when and a list of attached tags.
@@ -339,7 +339,7 @@ Args:
 
 Returns the CIPDApi.Description instance describing the package.
 
-&mdash; **def [ensure](/recipe_modules/cipd/api.py#452)(self, root, ensure_file):**
+&mdash; **def [ensure](/recipe_modules/cipd/api.py#484)(self, root, ensure_file):**
 
 Ensures that packages are installed in a given root dir.
 
@@ -349,9 +349,9 @@ Args:
 
 Returns the map of subdirectories to CIPDApi.Pin instances.
 
-&emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#228)(self):**
+&emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#255)(self):**
 
-&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#616)(self, root, package_file):**
+&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#650)(self, root, package_file):**
 
 Deploys the specified package to root.
 
@@ -365,7 +365,7 @@ Args:
 
 Returns a Pin for the deployed package.
 
-&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#586)(self, destination, package_name, version):**
+&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#618)(self, destination, package_name, version):**
 
 Downloads the specified package to destination.
 
@@ -382,7 +382,7 @@ Args:
 
 Returns a Pin for the downloaded package.
 
-&mdash; **def [register](/recipe_modules/cipd/api.py#369)(self, package_name, package_path, refs=(), tags=None):**
+&mdash; **def [register](/recipe_modules/cipd/api.py#401)(self, package_name, package_path, refs=(), tags=None):**
 
 Uploads and registers package instance in the package repository.
 
@@ -396,7 +396,7 @@ Args:
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [search](/recipe_modules/cipd/api.py#528)(self, package_name, tag):**
+&mdash; **def [search](/recipe_modules/cipd/api.py#560)(self, package_name, tag):**
 
 Searches for package instances by tag, optionally constrained by package
 name.
@@ -407,7 +407,7 @@ Args:
 
 Returns the list of CIPDApi.Pin instances.
 
-&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#503)(self, package_name, version, refs):**
+&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#535)(self, package_name, version, refs):**
 
 Moves a ref to point to a given version.
 
@@ -418,7 +418,18 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#476)(self, package_name, version, tags):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [set\_service\_account](/recipe_modules/cipd/api.py#233)(self, service_account):**
+
+Temporarily sets the service account used for authentication to CIPD.
+
+Implemented as a context manager to avoid one part of a recipe from
+overwriting another's specified service account.
+
+Args:
+  * service_account(service_account.api.ServiceAccount): Service account to
+      use for authentication.
+
+&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#508)(self, package_name, version, tags):**
 
 Tags package of a specific version.
 
@@ -1372,7 +1383,7 @@ Depends on luci-auth to be in PATH.
 
 #### **class [ServiceAccountApi](/recipe_modules/service_account/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
-&mdash; **def [default](/recipe_modules/service_account/api.py#49)(self):**
+&mdash; **def [default](/recipe_modules/service_account/api.py#57)(self):**
 
 Returns an account associated with the task.
 
@@ -1380,7 +1391,7 @@ On LUCI, this is default account exposed through LUCI_CONTEXT["local_auth"]
 protocol. When running locally this is an account the user logged in via
 "luci-auth login ..." command prior to running the recipe.
 
-&mdash; **def [from\_credentials\_json](/recipe_modules/service_account/api.py#58)(self, key_path):**
+&mdash; **def [from\_credentials\_json](/recipe_modules/service_account/api.py#66)(self, key_path):**
 
 Returns a service account based on a JSON credentials file.
 
@@ -1754,9 +1765,9 @@ This file is a recipe demonstrating the buildbucket recipe module.
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/put.py#12)(api):**
 ### *recipes* / [cipd:examples/full](/recipe_modules/cipd/examples/full.py)
 
-[DEPS](/recipe_modules/cipd/examples/full.py#8): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cipd/examples/full.py#8): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/cipd/examples/full.py#33)(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files, install_mode, refs, tags):**
+&mdash; **def [RunSteps](/recipe_modules/cipd/examples/full.py#34)(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files, install_mode, refs, tags):**
 ### *recipes* / [context:examples/full](/recipe_modules/context/examples/full.py)
 
 [DEPS](/recipe_modules/context/examples/full.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

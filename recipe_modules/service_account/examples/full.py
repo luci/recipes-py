@@ -21,6 +21,7 @@ PROPERTIES = {
 def RunSteps(api, key_path, scopes):
   if key_path:
     account = api.service_account.from_credentials_json(key_path)
+    assert account.key_path == key_path
   else:
     account = api.service_account.default()
   account.get_access_token(scopes)

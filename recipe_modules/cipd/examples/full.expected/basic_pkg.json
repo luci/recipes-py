@@ -295,6 +295,8 @@
       "cipd",
       "acl-check",
       "public/package",
+      "-service-account-json",
+      "/path/to/cipd/creds.json",
       "-reader",
       "-writer",
       "-owner",
@@ -372,6 +374,8 @@
       "fake_tag_1:fake_value_1",
       "-tag",
       "fake_tag_2:fake_value_2",
+      "-service-account-json",
+      "/path/to/cipd/creds.json",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -421,6 +425,8 @@
       "fake_tag_1:fake_value_1",
       "-tag",
       "fake_tag_2:fake_value_2",
+      "-service-account-json",
+      "/path/to/cipd/creds.json",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -449,6 +455,8 @@
       "fake_tag_1:fake_value_1",
       "-tag",
       "fake_tag_2:fake_value_2",
+      "-service-account-json",
+      "/path/to/cipd/creds.json",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -503,6 +511,8 @@
       "any",
       "-ref",
       "some",
+      "-service-account-json",
+      "/path/to/cipd/creds.json",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -527,6 +537,8 @@
       "fake-package/${platform}",
       "-tag",
       "dead:beaf",
+      "-service-account-json",
+      "/path/to/cipd/creds.json",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -552,6 +564,8 @@
       "some:tag",
       "-out",
       "[START_DIR]/fetched_pkg",
+      "-service-account-json",
+      "/path/to/cipd/creds.json",
       "-json-output",
       "/path/to/tmp/json"
     ],

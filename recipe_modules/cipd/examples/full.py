@@ -11,6 +11,7 @@ DEPS = [
   'path',
   'platform',
   'properties',
+  'service_account',
   'step',
 ]
 
@@ -60,60 +61,62 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
                     version=result[0].instance_id)
 
   # The rest of commands expect credentials to be set.
+  service_account = api.service_account.from_credentials_json(
+      '/path/to/cipd/creds.json')
+  with api.cipd.set_service_account(service_account):
+    # Check if we have READER, WRITER and OWNER roles for public/package path.
+    api.cipd.acl_check('public/package', reader=True, writer=True, owner=True)
 
-  # Check if we have READER, WRITER and OWNER roles for public/package path.
-  api.cipd.acl_check('public/package', reader=True, writer=True, owner=True)
-
-  # Build & register new package version.
-  api.cipd.build('fake-input-dir', 'fake-package-path', 'infra/fake-package')
-  api.cipd.build('fake-input-dir', 'fake-package-path', 'infra/fake-package',
-                 install_mode='copy')
-  api.cipd.register('infra/fake-package', 'fake-package-path',
-                    refs=refs, tags=tags)
+    # Build & register new package version.
+    api.cipd.build('fake-input-dir', 'fake-package-path', 'infra/fake-package')
+    api.cipd.build('fake-input-dir', 'fake-package-path', 'infra/fake-package',
+                   install_mode='copy')
+    api.cipd.register('infra/fake-package', 'fake-package-path',
+                      refs=refs, tags=tags)
 
   # Create (build & register).
-  if use_pkg:
-    root = api.path['start_dir'].join('some_subdir')
-    pkg = api.cipd.PackageDefinition('infra/fake-package', root, install_mode)
-    for fullpath in pkg_files:
-      pkg.add_file(api.path.abs_to_path(fullpath))
-    pkg.add_dir(root)
-    for obj in pkg_dirs:
-      pkg.add_dir(api.path.abs_to_path(obj.get('path', '')),
-                  obj.get('exclusions'))
-    for pth in ver_files:
-      pkg.add_version_file(pth)
+    if use_pkg:
+      root = api.path['start_dir'].join('some_subdir')
+      pkg = api.cipd.PackageDefinition('infra/fake-package', root, install_mode)
+      for fullpath in pkg_files:
+        pkg.add_file(api.path.abs_to_path(fullpath))
+      pkg.add_dir(root)
+      for obj in pkg_dirs:
+        pkg.add_dir(api.path.abs_to_path(obj.get('path', '')),
+                    obj.get('exclusions'))
+      for pth in ver_files:
+        pkg.add_version_file(pth)
 
-    api.cipd.build_from_pkg(pkg, 'fake-package-path')
-    api.cipd.register('infra/fake-package', 'fake-package-path',
-                      refs=refs, tags=tags)
+      api.cipd.build_from_pkg(pkg, 'fake-package-path')
+      api.cipd.register('infra/fake-package', 'fake-package-path',
+                        refs=refs, tags=tags)
 
-    api.cipd.create_from_pkg(pkg, refs=refs, tags=tags)
-  else:
-    api.cipd.build_from_yaml(api.path['start_dir'].join('fake-package.yaml'),
-                             'fake-package-path', pkg_vars=pkg_vars)
-    api.cipd.register('infra/fake-package', 'fake-package-path',
-                      refs=refs, tags=tags)
+      api.cipd.create_from_pkg(pkg, refs=refs, tags=tags)
+    else:
+      api.cipd.build_from_yaml(api.path['start_dir'].join('fake-package.yaml'),
+                               'fake-package-path', pkg_vars=pkg_vars)
+      api.cipd.register('infra/fake-package', 'fake-package-path',
+                        refs=refs, tags=tags)
 
-    api.cipd.create_from_yaml(api.path['start_dir'].join('fake-package.yaml'),
-                              refs=refs, tags=tags, pkg_vars=pkg_vars)
+      api.cipd.create_from_yaml(api.path['start_dir'].join('fake-package.yaml'),
+                                refs=refs, tags=tags, pkg_vars=pkg_vars)
 
-  # Set tag or ref of an already existing package.
-  api.cipd.set_tag('fake-package',
-                   version='long/weird/ref/which/doesn/not/fit/into/40chars',
-                   tags={'dead': 'beaf', 'more': 'value'})
-  api.cipd.set_ref('fake-package', version='latest', refs=['any', 'some'])
-  # Search by the new tag.
-  api.cipd.search('fake-package/${platform}', tag='dead:beaf')
+    # Set tag or ref of an already existing package.
+    api.cipd.set_tag('fake-package',
+                     version='long/weird/ref/which/doesn/not/fit/into/40chars',
+                     tags={'dead': 'beaf', 'more': 'value'})
+    api.cipd.set_ref('fake-package', version='latest', refs=['any', 'some'])
+    # Search by the new tag.
+    api.cipd.search('fake-package/${platform}', tag='dead:beaf')
 
-  # Fetch a raw package
-  api.cipd.pkg_fetch(api.path['start_dir'].join('fetched_pkg'),
-                     'fake-package/${platform}', 'some:tag')
+    # Fetch a raw package
+    api.cipd.pkg_fetch(api.path['start_dir'].join('fetched_pkg'),
+                       'fake-package/${platform}', 'some:tag')
 
-  # Deploy a raw package
-  api.cipd.pkg_deploy(
-    api.path['start_dir'].join('raw_root'),
-    api.path['start_dir'].join('fetched_pkg'))
+    # Deploy a raw package
+    api.cipd.pkg_deploy(
+      api.path['start_dir'].join('raw_root'),
+      api.path['start_dir'].join('fetched_pkg'))
 
 
 def GenTests(api):

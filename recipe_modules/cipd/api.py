@@ -8,6 +8,7 @@ Depends on 'cipd' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 """
 
+import contextlib
 import re
 
 from collections import namedtuple
@@ -225,6 +226,32 @@ class CIPDApi(recipe_api.RecipeApi):
       reason = 'CIPD(%r) failed with: %s' % (step_name, message)
       super(CIPDApi.Error, self).__init__(reason)
 
+  def __init__(self, **kwargs):
+    super(recipe_api.RecipeApi, self).__init__(**kwargs)
+    self._service_account = None
+
+  @contextlib.contextmanager
+  def set_service_account(self, service_account):
+    """Temporarily sets the service account used for authentication to CIPD.
+
+    Implemented as a context manager to avoid one part of a recipe from
+    overwriting another's specified service account.
+
+    Args:
+      * service_account(service_account.api.ServiceAccount): Service account to
+          use for authentication.
+    """
+    assert isinstance(service_account, self.m.service_account.ServiceAccount), \
+        'Service account must be of type ' \
+        'recipe_module.service_account.ServiceAccount. Was %s' % (
+            type(service_account))
+    prev_service_account = self._service_account
+    self._service_account = service_account
+    try:
+      yield
+    finally:
+      self._service_account = prev_service_account
+
   @property
   def executable(self):
     return 'cipd' + ('.bat' if self.m.platform.is_win else '')
@@ -254,7 +281,7 @@ class CIPDApi(recipe_api.RecipeApi):
     cmd = [
         'acl-check',
         pkg_path
-    ]
+    ] + self._service_account_opts()
     if reader:
       cmd.append('-reader')
     if writer:
@@ -351,6 +378,11 @@ class CIPDApi(recipe_api.RecipeApi):
     result = step_result.json.output['result']
     return self.Pin(**result)
 
+  def _service_account_opts(self):
+    if self._service_account and self._service_account.key_path:
+      return ['-service-account-json', self._service_account.key_path]
+    return []
+
   def _cli_options(self, refs, tags, pkg_vars):
     """Computes a list of CIPD CLI -ref, -tag, and -pkg-var options given a
     sequence of refs, a dict of tags, and a dict of pkg_vars."""
@@ -381,7 +413,7 @@ class CIPDApi(recipe_api.RecipeApi):
     """
     cmd = [
       'pkg-register', package_path
-    ] + self._cli_options(refs, tags, ())
+    ] + self._cli_options(refs, tags, ()) + self._service_account_opts()
     step_result = self._run(
         'register %s' % package_name,
         cmd,
@@ -400,7 +432,7 @@ class CIPDApi(recipe_api.RecipeApi):
     cmd = [
       'create',
       '-pkg-def', pkg_def_file_or_placeholder,
-    ] + self._cli_options(refs, tags, pkg_vars)
+    ] + self._cli_options(refs, tags, pkg_vars) + self._service_account_opts()
     step_result = self._run(
       'create %s' % pkg_name, cmd,
       step_test_data=lambda: self.test_api.m.json.output({
@@ -513,7 +545,7 @@ class CIPDApi(recipe_api.RecipeApi):
     cmd = [
       'set-ref', package_name,
       '-version', version,
-    ] + self._cli_options(refs, (), ())
+    ] + self._cli_options(refs, (), ()) + self._service_account_opts()
 
     step_result = self._run(
         'cipd set-ref %s' % package_name,
@@ -541,7 +573,7 @@ class CIPDApi(recipe_api.RecipeApi):
     cmd = [
       'search', package_name,
       '-tag', tag,
-    ]
+    ] + self._service_account_opts()
 
     step_result = self._run(
         'cipd search %s %s' % (package_name, tag),
@@ -602,9 +634,11 @@ class CIPDApi(recipe_api.RecipeApi):
     check_type('destination', destination, Path)
     check_type('package_name', package_name, str)
     check_type('version', version, str)
+    cmd = ['pkg-fetch', package_name, '-version', version, '-out', destination]
+    cmd += self._service_account_opts()
     step_result = self._run(
       'cipd pkg-fetch %s' % package_name,
-      ['pkg-fetch', package_name, '-version', version, '-out', destination],
+      cmd,
       step_test_data=lambda: self.test_api.example_pkg_fetch(
         package_name, version)
     )
