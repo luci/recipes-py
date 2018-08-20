@@ -8,6 +8,9 @@
 from recipe_engine import recipe_api
 from recipe_engine import util as recipe_util
 
+import codecs
+import contextlib
+import cStringIO
 import os
 import shutil
 import sys
@@ -81,11 +84,13 @@ class InputDataPlaceholder(recipe_util.InputPlaceholder):
     if test.enabled:
       # cheat and pretend like we're going to pass the data on the
       # cmdline for test expectation purposes.
-      self._backing_file = self.encode(self.data)
+      with contextlib.closing(cStringIO.StringIO()) as output:
+        self.write_encoded_data(output)
+        self._backing_file = output.getvalue()
     else:  # pragma: no cover
       input_fd, self._backing_file = tempfile.mkstemp(suffix=self.suffix)
-
-      os.write(input_fd, self.encode(self.data))
+      with os.fdopen(os.dup(input_fd), 'wb') as f:
+        self.write_encoded_data(f)
       os.close(input_fd)
     return [self._backing_file]
 
@@ -98,10 +103,10 @@ class InputDataPlaceholder(recipe_util.InputPlaceholder):
         pass
     self._backing_file = None
 
-  def encode(self, data):
+  def write_encoded_data(self, f):
     """ Encodes data to be written out, when rendering this placeholder.
     """
-    return data
+    f.write(self.data)
 
 
 class InputTextPlaceholder(InputDataPlaceholder):
@@ -111,11 +116,19 @@ class InputTextPlaceholder(InputDataPlaceholder):
     super(InputTextPlaceholder, self).__init__(data, suffix)
     assert isinstance(data, basestring)
 
-  def encode(self, data):
+  def write_encoded_data(self, f):
     # Sometimes users give us invalid utf-8 data. They shouldn't, but it does
     # happen every once and a while. Just ignore it, and replace with �.
     # We're assuming users only want to write text data out.
-    return data.decode('utf-8', 'replace').encode('utf-8')
+    # self.data can be large, so be careful to do the conversion in chunks
+    # while streaming the data out, instead of requiring a full copy.
+    n = 1 << 16
+    # This is a generator expression, so this only copies one chunk of
+    # self.data at any one time.
+    chunks = (self.data[i:i + n] for i in xrange(0, len(self.data), n))
+    decoded = codecs.iterdecode(chunks, 'utf-8', 'replace')
+    for chunk in codecs.iterencode(decoded, 'utf-8'):
+      f.write(chunk)
 
 
 class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
