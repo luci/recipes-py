@@ -162,11 +162,12 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
     ret = None
     if test.enabled:
       self._backing_file = None
-      ret = self.decode(test.data or '')
+      with contextlib.closing(cStringIO.StringIO(test.data or '')) as infile:
+        ret = self.read_decoded_data(infile)
     else:  # pragma: no cover
       try:
         with open(self._backing_file, 'rb') as f:
-          ret = self.decode(f.read())
+          ret = self.read_decoded_data(f)
       finally:
         if not self.leak_to:
           _rmfile(self._backing_file)
@@ -180,22 +181,26 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
 
     return ret
 
-  def decode(self, result):
+  def read_decoded_data(self, f):
     """ Decodes data to be read in, when getting the result of this placeholder.
     """
-    return result
+    return f.read()
 
 
 class OutputTextPlaceholder(OutputDataPlaceholder):
   """ A output placeholder which expects to write out text.
   """
-  def decode(self, result):
+  def read_decoded_data(self, f):
     # This ensures that the raw result bytes we got are, in fact, valid utf-8,
     # replacing invalid bytes with �. Because python2's unicode support is
     # wonky, we re-encode the now-valid-utf-8 back into a str object so that
     # users don't need to deal with `unicode` objects.
-    return (None if result is None
-            else result.decode('utf-8', 'replace').encode('utf-8'))
+    # The file contents can be large, so be careful to do the conversion in
+    # chunks while streaming the data in, instead of requiring a full copy.
+    n = 1 << 16
+    chunks = iter(lambda: f.read(n), '')
+    decoded = codecs.iterdecode(chunks, 'utf-8', 'replace')
+    return ''.join(codecs.iterencode(decoded, 'utf-8'))
 
 class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
   def __init__(self, suffix, leak_to, name=None):
