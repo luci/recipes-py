@@ -15,6 +15,7 @@ import argparse
 import errno
 import fnmatch
 import glob
+import itertools
 import json
 import os
 import shutil
@@ -172,6 +173,34 @@ def _Truncate(path, size_mb):
   with open(path, 'w') as f:
     f.truncate(size_mb * 1024 * 1024)
 
+
+def _FlattenSingleDirectories(path):
+  assert os.path.isabs(path), 'nonabs path: %r' % (path,)
+  assert os.path.isdir(path), 'nondir path: %r' % (path,)
+
+  first_single_dir = None
+  print('flattening single directories in %r' % (path,))
+  for root, dirs, files in os.walk(path):
+    # if it's a single dir, we keep walking
+    if len(dirs) == 1 and not files:
+      if not first_single_dir:
+        first_single_dir = os.path.join(path, dirs[0])
+      continue
+
+    # otherwise we found the stuff!
+    print('found contents at: %r' % (os.path.relpath(root, path),))
+    for name in itertools.chain(dirs, files):
+      fullname = os.path.join(root, name)
+      to = os.path.join(path, name)
+      print('mv %r %r' % (fullname, to))
+      os.rename(fullname, to)
+    print('moved %d dirs and %d files' % (len(dirs), len(files)))
+    if first_single_dir:
+      print('rm -rf %r' % (first_single_dir,))
+      shutil.rmtree(first_single_dir)
+    return 0
+
+
 def main(args):
   parser = argparse.ArgumentParser()
   parser.add_argument('--json-output', required=True,
@@ -273,8 +302,17 @@ def main(args):
   subparser = subparsers.add_parser(
       'truncate', help='Creates an empty file with specified size.')
   subparser.add_argument('path', help='The path to the file.')
-  subparser.add_argument('size_mb', help='The size of the file in megabytes.')
+  subparser.add_argument('size_mb', help='The size of the file in megabytes.',
+                         type=int)
   subparser.set_defaults(func=lambda opts: _Truncate(opts.path, opts.size_mb))
+
+  # Subcommand: flatten_single_directories
+  subparser = subparsers.add_parser(
+      'flatten_single_directories',
+      help=('Moves contents of single/dir/with/contents to the top level '
+            'directory.'))
+  subparser.add_argument('path', help='The path to flatten from.')
+  subparser.set_defaults(func=lambda opts: _FlattenSingleDirectories(opts.path))
 
   # Parse arguments.
   opts = parser.parse_args(args)

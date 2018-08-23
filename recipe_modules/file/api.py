@@ -80,8 +80,8 @@ class FileApi(recipe_api.RecipeApi):
     Args:
       * name (str) - The name of the step.
       * source (Path) - The path of the directory to copy.
-      * dest (Path) - The place where you want the recursive copy to show up. This
-        must not already exist.
+      * dest (Path) - The place where you want the recursive copy to show up.
+        This must not already exist.
       * symlinks (bool) - Preserve symlinks. No effect on Windows.
 
     Raises file.Error
@@ -186,9 +186,9 @@ class FileApi(recipe_api.RecipeApi):
       * name (str) - The name of the step.
       * source (Path) - The directory whose contents should be globbed.
       * pattern (str) - The glob pattern to apply under `source`.
-      * test_data (iterable[str]) - Some default data for this step to return when
-        running under simulation. This should be the list of file items found
-        in this directory.
+      * test_data (iterable[str]) - Some default data for this step to return
+        when running under simulation. This should be the list of file items
+        found in this directory.
 
     Returns list[Path] - All paths found.
 
@@ -225,9 +225,9 @@ class FileApi(recipe_api.RecipeApi):
     Args:
       * name (str) - The name of the step.
       * source (Path) - The directory to list.
-      * test_data (iterable[str]) - Some default data for this step to return when
-        running under simulation. This should be the list of file items found
-        in this directory.
+      * test_data (iterable[str]) - Some default data for this step to return
+        when running under simulation. This should be the list of file items
+        found in this directory.
 
     Returns list[Path]
 
@@ -367,3 +367,34 @@ class FileApi(recipe_api.RecipeApi):
     """
     self._assert_absolute_path_or_placeholder(path)
     self._run(name, ['truncate', path, size_mb])
+
+  def flatten_single_directories(self, name, path):
+    """Flattens singular directories, starting at path.
+
+    Example:
+
+        $ mkdir -p dir/which_has/some/singlular/subdirs/
+        $ touch dir/which_has/some/singlular/subdirs/with
+        $ touch dir/which_has/some/singlular/subdirs/files
+        $ flatten_single_directories(dir)
+        $ ls dir
+        with
+        files
+
+    This can be useful when you just want the 'meat' of a very sparse directory
+    structure. For example, some tarballs like `foo-1.2.tar.gz` extract all
+    their contents into a subdirectory `foo-1.2/`.
+
+    Using this function would essentially move all the actual contents of the
+    extracted archive up to the top level directory, removing the need to e.g.
+    hard-code/find the subfolder name after extraction (not all archives are
+    even named after the subfolder they extract to).
+
+    Args:
+      * name (str) - The name of the step.
+      * path (Path|str) - The absolute path to begin flattening.
+
+    Raises file.Error
+    """
+    self.m.path.assert_absolute(path)
+    self._run(name, ['flatten_single_directories', path])

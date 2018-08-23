@@ -1,0 +1,77 @@
+[
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[START_DIR]/dir/which_has/some/singlular/subdirs"
+    ],
+    "infra_step": true,
+    "name": "make chain of single dirs"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "truncate",
+      "[START_DIR]/dir/which_has/some/singlular/subdirs/bunch",
+      "1"
+    ],
+    "infra_step": true,
+    "name": "touch bunch"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "truncate",
+      "[START_DIR]/dir/which_has/some/singlular/subdirs/of",
+      "1"
+    ],
+    "infra_step": true,
+    "name": "touch of"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "truncate",
+      "[START_DIR]/dir/which_has/some/singlular/subdirs/files",
+      "1"
+    ],
+    "infra_step": true,
+    "name": "touch files"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "flatten_single_directories",
+      "[START_DIR]/dir"
+    ],
+    "infra_step": true,
+    "name": "remove single dirs"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

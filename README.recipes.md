@@ -64,6 +64,7 @@
   * [file:examples/copy](#recipes-file_examples_copy)
   * [file:examples/copytree](#recipes-file_examples_copytree)
   * [file:examples/error](#recipes-file_examples_error)
+  * [file:examples/flatten_single_directories](#recipes-file_examples_flatten_single_directories)
   * [file:examples/glob](#recipes-file_examples_glob)
   * [file:examples/listdir](#recipes-file_examples_listdir)
   * [file:examples/raw_copy](#recipes-file_examples_raw_copy)
@@ -629,8 +630,8 @@ Behaves identically to shutil.copytree.
 Args:
   * name (str) - The name of the step.
   * source (Path) - The path of the directory to copy.
-  * dest (Path) - The place where you want the recursive copy to show up. This
-    must not already exist.
+  * dest (Path) - The place where you want the recursive copy to show up.
+    This must not already exist.
   * symlinks (bool) - Preserve symlinks. No effect on Windows.
 
 Raises file.Error
@@ -658,6 +659,35 @@ Args:
 
 Returns list[int], size of each file in bytes.
 
+&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#371)(self, name, path):**
+
+Flattens singular directories, starting at path.
+
+Example:
+
+    $ mkdir -p dir/which_has/some/singlular/subdirs/
+    $ touch dir/which_has/some/singlular/subdirs/with
+    $ touch dir/which_has/some/singlular/subdirs/files
+    $ flatten_single_directories(dir)
+    $ ls dir
+    with
+    files
+
+This can be useful when you just want the 'meat' of a very sparse directory
+structure. For example, some tarballs like `foo-1.2.tar.gz` extract all
+their contents into a subdirectory `foo-1.2/`.
+
+Using this function would essentially move all the actual contents of the
+extracted archive up to the top level directory, removing the need to e.g.
+hard-code/find the subfolder name after extraction (not all archives are
+even named after the subfolder they extract to).
+
+Args:
+  * name (str) - The name of the step.
+  * path (Path|str) - The absolute path to begin flattening.
+
+Raises file.Error
+
 &mdash; **def [glob\_paths](/recipe_modules/file/api.py#179)(self, name, source, pattern, test_data=()):**
 
 Performs glob expansion on `pattern`.
@@ -669,9 +699,9 @@ Args:
   * name (str) - The name of the step.
   * source (Path) - The directory whose contents should be globbed.
   * pattern (str) - The glob pattern to apply under `source`.
-  * test_data (iterable[str]) - Some default data for this step to return when
-    running under simulation. This should be the list of file items found
-    in this directory.
+  * test_data (iterable[str]) - Some default data for this step to return
+    when running under simulation. This should be the list of file items
+    found in this directory.
 
 Returns list[Path] - All paths found.
 
@@ -684,9 +714,9 @@ List all files inside a directory.
 Args:
   * name (str) - The name of the step.
   * source (Path) - The directory to list.
-  * test_data (iterable[str]) - Some default data for this step to return when
-    running under simulation. This should be the list of file items found
-    in this directory.
+  * test_data (iterable[str]) - Some default data for this step to return
+    when running under simulation. This should be the list of file items
+    found in this directory.
 
 Returns list[Path]
 
@@ -1942,6 +1972,11 @@ Tests that step_data can accept multiple specs at once.
 [DEPS](/recipe_modules/file/examples/error.py#5): [file](#recipe_modules-file), [path](#recipe_modules-path)
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/error.py#11)(api):**
+### *recipes* / [file:examples/flatten\_single\_directories](/recipe_modules/file/examples/flatten_single_directories.py)
+
+[DEPS](/recipe_modules/file/examples/flatten_single_directories.py#5): [file](#recipe_modules-file), [path](#recipe_modules-path)
+
+&mdash; **def [RunSteps](/recipe_modules/file/examples/flatten_single_directories.py#11)(api):**
 ### *recipes* / [file:examples/glob](/recipe_modules/file/examples/glob.py)
 
 [DEPS](/recipe_modules/file/examples/glob.py#5): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
