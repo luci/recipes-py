@@ -1,0 +1,23 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "builder {",
+      "}",
+      "tags {",
+      "  key: \"a\"",
+      "  value: \"b\"",
+      "}",
+      "tags {",
+      "  key: \"c\"",
+      "  value: \"d\"",
+      "}"
+    ],
+    "name": "dummy"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

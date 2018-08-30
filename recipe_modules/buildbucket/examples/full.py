@@ -14,20 +14,19 @@ DEPS = [
 
 
 def RunSteps(api):
-  if api.buildbucket.properties is None:
-    return
-
-  builder_id = api.buildbucket.builder_id
-  if builder_id.bucket == 'try':
-    assert builder_id.project == 'proj'
-    assert builder_id.builder == 'try-builder'
-    assert '-review' in api.buildbucket.build_input.gerrit_changes[0].host
-  else:  # ci
-    assert builder_id.project == 'proj-internal'
-    assert builder_id.builder == 'ci-builder'
-    gm = api.buildbucket.build_input.gitiles_commit
+  build = api.buildbucket.build
+  if build.builder.bucket == 'try':
+    assert build.builder.project == 'proj'
+    assert build.builder.builder == 'try-builder'
+    assert '-review' in build.input.gerrit_changes[0].host
+  elif build.builder.bucket == 'ci':
+    assert build.builder.project == 'proj-internal'
+    assert build.builder.builder == 'ci-builder'
+    gm = build.input.gitiles_commit
     assert 'chrome-internal.googlesource.com' == gm.host
     assert 'repo' == gm.project
+  else:
+    return
 
   # Note: this is not needed when running on LUCI. Buildbucket will use the
   # default account associated with the task.
@@ -129,7 +128,8 @@ def GenTests(api):
   yield (api.test('basic-try') +
          api.buildbucket.try_build(
              project='proj',
-             builder='try-builder') +
+             builder='try-builder',
+             tags=[api.buildbucket.common_pb2.StringPair(key='a', value='b')]) +
          api.step_data(
              'buildbucket.put',
              stdout=api.raw_io.output_text(mock_buildbucket_multi_response)) +
@@ -141,7 +141,8 @@ def GenTests(api):
              project='proj-internal',
              bucket='ci',
              builder='ci-builder',
-             git_repo='https://chrome-internal.googlesource.com/repo.git') +
+             git_repo='https://chrome-internal.googlesource.com/a/repo.git',
+             tags=['a:b']) +
          api.step_data(
              'buildbucket.put',
              stdout=api.raw_io.output_text(mock_buildbucket_multi_response)) +

@@ -1,0 +1,22 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "builder {",
+      "}",
+      "input {",
+      "  gerrit_changes {",
+      "    host: \"chromium-review.googlesource.com\"",
+      "    change: 1",
+      "    patchset: 2",
+      "  }",
+      "}"
+    ],
+    "name": "dummy"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

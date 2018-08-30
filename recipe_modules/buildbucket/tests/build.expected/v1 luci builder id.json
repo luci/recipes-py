@@ -1,0 +1,18 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "builder {",
+      "  project: \"chromium\"",
+      "  bucket: \"try\"",
+      "  builder: \"linux\"",
+      "}"
+    ],
+    "name": "dummy"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

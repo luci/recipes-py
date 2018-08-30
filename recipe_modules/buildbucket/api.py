@@ -8,50 +8,14 @@ Depends on 'buildbucket' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 """
 
-import collections
+import base64
+import json
 import re
 
 from recipe_engine import recipe_api
 
-"""A collections.namedtuple identifying a builder configuration.
-
-See `message Builder.ID` at: https://chromium.googlesource.com/infra/infra/+/83f40c82f9c9a176bd89ced280e55b9b9637dd23/appengine/cr-buildbucket/proto/build.proto#206
-"""
-BuilderID = collections.namedtuple('BuilderID', [
-  # Project ID, e.g. "chromium". Unique within a LUCI deployment.
-  'project',
-  # Bucket name, e.g. "try". Unique within the project.
-  # Together with project, defines an ACL.
-  'bucket',
-  # Builder name, e.g. "linux-rel". Unique within the bucket.
-  'builder',
-])
-
-
-# A Gerrit patchset.
-# Subset of GerritChange message in
-# https://chromium.googlesource.com/infra/infra/+/331dbdf84ea76d9d974395bf731ca53ab886ed58/appengine/cr-buildbucket/proto/common.proto#28
-GerritChange = collections.namedtuple('GerritChange', [
-  # Gerrit hostname, e.g. "chromium-review.googlesource.com".
-  'host',
-  # Change number, e.g. 12345.
-  'change',
-  # Patch set number, e.g. 1.
-  'patchset',
-])
-
-
-# A Gitiles commit.
-# Subset GitilesCommit message in
-# https://chromium.googlesource.com/infra/infra/+/331dbdf84ea76d9d974395bf731ca53ab886ed58/appengine/cr-buildbucket/proto/common.proto#40
-GitilesCommit = collections.namedtuple('GitilesCommit', [
-  # Gitiles hostname, e.g. "chromium.googlesource.com".
-  'host',
-  # Repository name on the host, e.g. "chromium/src".
-  'project',
-  # Commit HEX SHA1.
-  'id',
-])
+from .proto import build_pb2
+from .proto import common_pb2
 
 
 def _parse_build_set(bs_string):
@@ -68,7 +32,7 @@ def _parse_build_set(bs_string):
   n = len(p)
 
   if n == 5 and p[0] == 'patch' and p[1] == 'gerrit':
-    return GerritChange(
+    return common_pb2.GerritChange(
         host=p[2],
         change=int(p[3]),
         patchset=int(p[4])
@@ -77,7 +41,7 @@ def _parse_build_set(bs_string):
   if n >= 5 and p[0] == 'commit' and p[1] == 'gitiles':
     if p[n-2] != '+' or not re.match('^[0-9a-f]{40}$', p[n-1]):
       return None
-    return GitilesCommit(
+    return common_pb2.GitilesCommit(
         host=p[2],
         project='/'.join(p[3:n-2]), # exclude plus
         id=p[n-1],
@@ -86,25 +50,38 @@ def _parse_build_set(bs_string):
   return None
 
 
-# Defines what to build/test.
-# A subset of Build.Input message in
-# https://chromium.googlesource.com/infra/infra/+/331dbdf84ea76d9d974395bf731ca53ab886ed58/appengine/cr-buildbucket/proto/build.proto#27
-# See its comments for documentation.
-BuildInput = collections.namedtuple(
-    'BuildInput', ['gitiles_commit', 'gerrit_changes'])
-
-
 class BuildbucketApi(recipe_api.RecipeApi):
   """A module for interacting with buildbucket."""
 
-  def __init__(self, buildername, buildnumber, *args, **kwargs):
+  # Expose protobuf messages to the users of buildbucket module.
+  build_pb2 = build_pb2
+  common_pb2 = common_pb2
+
+  def __init__(
+      self, property, legacy_property, mastername, buildername, buildnumber,
+      *args, **kwargs):
     super(BuildbucketApi, self).__init__(*args, **kwargs)
-    self._buildername = buildername
-    self._buildnumber = buildnumber
-    self._properties = None
     self._service_account_key = None
     self._host = 'cr-buildbucket.appspot.com'
-    self._build_input = None
+
+    legacy_property = legacy_property or {}
+    if isinstance(legacy_property, basestring):
+      legacy_property = json.loads(legacy_property)
+    self._legacy_property = legacy_property
+
+    self._build = build_pb2.Build()
+    if property.get('build'):
+      self._build.ParseFromString(base64.b64decode(property.get('build')))
+    else:
+      # Legacy mode.
+      build_dict = legacy_property.get('build', {})
+      self.build.number = int(buildnumber or 0)
+      if 'id' in build_dict:
+        self._build.id = int(build_dict['id'])
+      _legacy_builder_id(
+          build_dict, mastername, buildername, self._build.builder)
+      _legacy_build_input(build_dict, self._build.input)
+      _legacy_tags(build_dict, self._build)
 
   def set_buildbucket_host(self, host):
     """Changes the buildbucket backend hostname used by this module.
@@ -129,95 +106,49 @@ class BuildbucketApi(recipe_api.RecipeApi):
     self._service_account_key = key_path
 
   @property
-  def properties(self):
-    """Returns (dict-like or None): The BuildBucket properties, if present."""
-    if self._properties is None:
-      # Not cached, load and deserialize from properties.
-      props = self.m.properties.get('buildbucket')
-      if props is not None:
-        if isinstance(props, basestring):
-          props = self.m.json.loads(props)
-        self._properties = props
-    return self._properties
+  def build(self):
+    """Returns current build as a buildbucket.v2.Build protobuf message.
 
-  @property
-  def _tags(self):
-    return (self.properties or {}).get('build', {}).get('tags', [])
+    Do not implement conditional logic on returned tags; they are for indexing.
+    Use returned build.input instead.
 
-  @property
-  def _build_sets(self):
-    prefix = 'buildset:'
-    return [t[len(prefix):] for t in self._tags if t.startswith(prefix)]
+    DO NOT MODIFY the returned value.
 
-  @property
-  def build_input(self):
-    if self._build_input is None:
-      build_sets = filter(None, map(_parse_build_set, self._build_sets))
-      commit = None
-      for bs in build_sets:
-        if isinstance(bs, GitilesCommit):
-          commit = bs
-          break
-      self._build_input = BuildInput(
-          gitiles_commit=commit,
-          gerrit_changes=
-              [bs for bs in build_sets if isinstance(bs, GerritChange)],
-      )
-    return self._build_input
-
-  @property
-  def build_id(self):
-    """Returns int64 identifier of the current build.
-
-    It is unique per buildbucket instance.
-    In practice, it means globally unique.
-
-    May return None if it is not a buildbucket build.
+    Pure Buildbot support: to simplify transition to buildbucket, returns a
+    message even if the current build is not a buildbucket build. Provides as
+    much information as possible. If the current build is not a buildbucket
+    build, returned build.id is 0.
     """
-    id = (self.properties or {}).get('build', {}).get('id')
-    if isinstance(id, basestring):
-      # JSON cannot hold int64 as a number
-      id = int(id)
-    return id
-
-  @property
-  def builder_id(self):
-    """A BuilderID identifying the current builder configuration.
-
-    Any of the returned Builder's properties is set to None if no information
-    for that property is found.
-    """
-    build_info = (self.properties or {}).get('build', {})
-    project = build_info.get('project')
-    bucket = build_info.get('bucket')
-
-    if bucket:
-      luci_prefix = 'luci.%s.' % project
-      if bucket.startswith(luci_prefix):
-        bucket = bucket[len(luci_prefix):]
-
-    tags_dict = dict(t.split(':', 1) for t in self._tags)
-    builder = tags_dict.get('builder')
-
-    return BuilderID(project=project, bucket=bucket, builder=builder)
+    return self._build
 
   @property
   def tags_for_child_build(self):
     """A dict of tags (key -> value) derived from current (parent) build for a
     child build."""
-    buildbucket_info = self.properties or {}
-
-    original_tags = dict(t.split(':', 1) for t in self._tags)
+    original_tags = {t.key: t.value for t in self.build.tags}
     new_tags = {'user_agent': 'recipe'}
 
-    for tag in ['buildset', 'gitiles_ref']:
-      if tag in original_tags:
-        new_tags[tag] = original_tags[tag]
+    # TODO(nodir): switch to ScheduleBuild API where we don't have to convert
+    # build input back to tags.
+    if self.build.input.HasField('gitiles_commit'):
+      c = self.build.input.gitiles_commit
+      new_tags['buildset'] = (
+          'commit/gitiles/%s/%s/+/%s' % (c.host, c.project, c.id))
+      if c.ref:
+        new_tags['gitiles_ref'] = c.ref
+    elif self.build.input.gerrit_changes:
+      cl = self.build.input.gerrit_changes[0]
+      new_tags['buildset'] = 'patch/gerrit/%s/%d/%d' % (
+          cl.host, cl.change, cl.patchset)
+    else:
+      buildset = original_tags.get('buildset')
+      if buildset:
+        new_tags['buildset'] = buildset
 
-    if self._buildnumber is not None:
-      new_tags['parent_buildnumber'] = str(self._buildnumber)
-    if self._buildername is not None:
-      new_tags['parent_buildername'] = str(self._buildername)
+    if self.build.number:
+      new_tags['parent_buildnumber'] = str(self.build.number)
+    if self.build.builder.builder:
+      new_tags['parent_buildername'] = str(self.build.builder.builder)
     return new_tags
 
   # RPCs.
@@ -280,3 +211,70 @@ class BuildbucketApi(recipe_api.RecipeApi):
         '%s:%s' % (k, v)
         for k, v in new_tags.iteritems()
         if v is not None)
+
+  # DEPRECATED API.
+
+  @property
+  def properties(self):  # pragma: no cover
+    """DEPRECATED, use build attribute instead."""
+    return self._legacy_property
+
+  @property
+  def build_id(self):  # pragma: no cover
+    """DEPRECATED, use build.id instead."""
+    return self.build.id or None
+
+  @property
+  def build_input(self):  # pragma: no cover
+    """DEPRECATED, use build.input instead."""
+    return self.build.input
+
+  @property
+  def builder_id(self):  # pragma: no cover
+    """Deprecated. Use build.builder instead."""
+    return self.build.builder
+
+
+# Legacy support.
+
+
+def _legacy_tags(build_dict, build_msg):
+  for t in build_dict.get('tags', []):
+    k, v = t.split(':', 1)
+    if k =='buildset' and v.startswith(('patch/gerrit/', 'commit/gitiles')):
+      continue
+    if k in ('build_address', 'builder'):
+      continue
+    build_msg.tags.add(key=k, value=v)
+
+
+def _legacy_build_input(build_dict, build_input):
+  bs_prefix = 'buildset:'
+  ref_prefix = 'gitiles_ref:'
+  for t in build_dict.get('tags', []):
+    if t.startswith(bs_prefix):
+      bs = _parse_build_set(t[len(bs_prefix):])
+      if isinstance(bs, common_pb2.GitilesCommit):
+        build_input.gitiles_commit.CopyFrom(bs)
+      elif isinstance(bs, common_pb2.GerritChange):
+        build_input.gerrit_changes.add().CopyFrom(bs)
+
+    elif t.startswith(ref_prefix):
+      build_input.gitiles_commit.ref = t[len(ref_prefix):]
+
+  # TODO(nodir): parse repository, branch and revision properties.
+
+
+def _legacy_builder_id(build_dict, mastername, buildername, builder_id):
+  builder_id.project = build_dict.get('project') or ''
+  builder_id.bucket = build_dict.get('bucket') or ''
+
+  if builder_id.bucket:
+    luci_prefix = 'luci.%s.' % builder_id.project
+    if builder_id.bucket.startswith(luci_prefix):
+      builder_id.bucket = builder_id.bucket[len(luci_prefix):]
+  if not builder_id.bucket and mastername:
+    builder_id.bucket = 'master.%s' % mastername
+
+  tags_dict = dict(t.split(':', 1) for t in build_dict.get('tags', []))
+  builder_id.builder = tags_dict.get('builder') or buildername or ''

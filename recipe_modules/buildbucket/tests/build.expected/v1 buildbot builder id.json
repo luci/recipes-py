@@ -2,9 +2,12 @@
   {
     "cmd": [
       "echo",
-      "None"
+      "builder {",
+      "  bucket: \"master.chromium\"",
+      "  builder: \"linux\"",
+      "}"
     ],
-    "name": "build_id"
+    "name": "dummy"
   },
   {
     "name": "$result",

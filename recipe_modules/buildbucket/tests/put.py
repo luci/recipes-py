@@ -39,10 +39,45 @@ def GenTests(api):
       api.properties(
         buildername='example_builder',
         buildnumber=123,
-        buildbucket="""{"build": {"tags": [
-          "buildset:patch/gerrit/chromium-review.googlesource.com/123/10001",
-          "undesired:should-not-be-in-expectations"
-        ]}}"""
+        buildbucket={
+            'build': {
+                'tags': [
+                    ('buildset:patch/gerrit/chromium-review.googlesource.com/'
+                    '123/10001'),
+                    'undesired:should-not-be-in-expectations',
+                ],
+            },
+        },
+      )
+  )
+  yield (
+      api.test('gitiles commit') +
+      api.properties(
+        buildername='example_builder',
+        buildnumber=123,
+        buildbucket={
+            'build': {
+                'tags': [
+                    ('buildset:commit/gitiles/chromium.googlesource.com/'
+                     'project/+/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+                    'gitiles_ref:refs/heads/master',
+                ],
+            },
+        },
+      )
+  )
+  yield (
+      api.test('custom buildset') +
+      api.properties(
+        buildername='example_builder',
+        buildnumber=123,
+        buildbucket={
+          'build': {
+            'tags': [
+              'buildset:x',
+            ],
+          },
+        },
       )
   )
   yield (

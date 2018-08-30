@@ -2,13 +2,33 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import base64
 import json
+
+from google.protobuf import timestamp_pb2
 
 from recipe_engine import recipe_test_api
 
-# TODO: make a real test api
+from .proto import build_pb2
+from .proto import common_pb2
+from . import util
+
 
 class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
+  # Expose protobuf messages to the users of buildbucket module.
+  build_pb2 = build_pb2
+  common_pb2 = common_pb2
+
+  def build(self, build_message):
+    """Emulates a buildbucket build.
+
+    build_message is a buildbucket.build_pb2.Build.
+    """
+    return self.m.properties(**{
+      '$recipe_engine/buildbucket': {
+        'build': base64.b64encode(build_message.SerializeToString()),
+      }
+    })
 
   def ci_build(
       self,
@@ -17,8 +37,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       builder='builder',
       tags=None,
       git_repo=None,
-      revision='2d72510e447ab60a9728aeea2362d8be2cbd7789',
-      hostname='cr-buildbucket.appspot.com'):
+      revision='2d72510e447ab60a9728aeea2362d8be2cbd7789'):
     """Emulate typical buildbucket CI build scheduled by luci-scheduler.
 
     Usage:
@@ -31,29 +50,31 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         git_repo = 'chrome-internal.googlesource.com/' + project
       else:
         git_repo = 'chromium.googlesource.com/' + project
-    else:
-      if git_repo.startswith('https://'):
-        git_repo = git_repo[len('https://'):]
-      if git_repo.endswith('.git'):
-        git_repo = git_repo[:-len('.git')]
-    tags = list(tags) if tags else []
-    tags.extend([
-      'user_agent:luci-scheduler',
-      'scheduler_invocation_id:9110941813804031728',
-      'builder:' + builder,
-      'gitiles_ref:refs/heads/master',
-      'buildset:commit/gitiles/%s/+/%s' % (git_repo.rstrip('/'), revision),
-    ])
-    return self.m.properties(buildbucket={
-      'build': {
-        'bucket': 'luci.%s.%s' % (project, bucket),
-        'created_by': 'user:luci-scheduler@appspot.gserviceaccount.com',
-        'created_ts': 1527292217677440,
-        'id': '8945511751514863184',
-        'project': project,
-        'tags': tags,
-      },
-    })
+    gitiles_host, gitiles_project = util.parse_gitiles_repo_url(git_repo)
+
+    build = build_pb2.Build(
+        id=8945511751514863184,
+        builder=build_pb2.BuilderID(
+            project=project,
+            bucket=bucket,
+            builder=builder,
+        ),
+        created_by='user:luci-scheduler@appspot.gserviceaccount.com',
+        create_time=timestamp_pb2.Timestamp(seconds=1527292217),
+        tags=map(util.parse_tag, tags or []),
+        input=build_pb2.Build.Input(
+            gitiles_commit=common_pb2.GitilesCommit(
+                host=gitiles_host,
+                project=gitiles_project,
+                ref='refs/heads/master',
+                id=revision,
+            ),
+        ),
+    )
+    build.tags.add(key='user_agent', value='luci-scheduler')
+    build.tags.add(
+        key='scheduler_invocation_id', value='luci-9110941813804031728')
+    return self.build(build)
 
   def try_build(
       self,
@@ -63,8 +84,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       tags=None,
       gerrit_host=None,
       change_number=123456,
-      patch_set=7,
-      hostname='cr-buildbucket.appspot.com'):
+      patch_set=7):
     """Emulate typical buildbucket try build scheduled by CQ.
 
     Usage:
@@ -77,23 +97,29 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         gerrit_host = 'chrome-internal-review.googlesource.com'
       else:
         gerrit_host = 'chromium-review.googlesource.com'
-    tags = list(tags) if tags else []
-    tags.extend([
-      'user_agent:cq',
-      'builder:' + builder,
-      'buildset:patch/gerrit/%s/%d/%d' % (
-          gerrit_host.rstrip('/'), change_number, patch_set),
-    ])
-    return self.m.properties(buildbucket={
-      'build': {
-        'bucket': 'luci.%s.%s' % (project, bucket),
-        'created_by': 'user:commit-bot@chromium.org',
-        'created_ts': 1527292217677440,
-        'id': '8945511751514863184',
-        'project': project,
-        'tags': tags,
-      },
-    })
+
+    build = build_pb2.Build(
+        id=8945511751514863184,
+        builder=build_pb2.BuilderID(
+            project=project,
+            bucket=bucket,
+            builder=builder,
+        ),
+        created_by='user:commit-bot@chromium.org',
+        create_time=timestamp_pb2.Timestamp(seconds=1527292217),
+        tags=map(util.parse_tag, tags or []),
+        input=build_pb2.Build.Input(
+            gerrit_changes=[
+                common_pb2.GerritChange(
+                    host=gerrit_host,
+                    change=change_number,
+                    patchset=patch_set,
+                ),
+            ],
+        ),
+    )
+    build.tags.add(key='user_agent', value='cq')
+    return self.build(build)
 
   def simulated_buildbucket_output(self, additional_build_parameters):
     buildbucket_output = {

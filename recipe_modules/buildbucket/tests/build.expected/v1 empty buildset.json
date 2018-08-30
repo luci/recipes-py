@@ -2,9 +2,13 @@
   {
     "cmd": [
       "echo",
-      "123456789"
+      "builder {",
+      "}",
+      "tags {",
+      "  key: \"buildset\"",
+      "}"
     ],
-    "name": "build_id"
+    "name": "dummy"
   },
   {
     "name": "$result",

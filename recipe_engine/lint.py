@@ -24,6 +24,7 @@ MODULES_WHITELIST = [
   r'copy',
   r'datetime',
   r'functools',
+  r'google\.protobuf',
   r'hashlib',
   r'itertools',
   r'json',

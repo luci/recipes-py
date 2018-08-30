@@ -29,10 +29,8 @@
 **[Recipes](#Recipes)**
   * [archive:examples/full](#recipes-archive_examples_full)
   * [buildbucket:examples/full](#recipes-buildbucket_examples_full) &mdash; This file is a recipe demonstrating the buildbucket recipe module.
-  * [buildbucket:tests/build_id](#recipes-buildbucket_tests_build_id)
-  * [buildbucket:tests/build_input](#recipes-buildbucket_tests_build_input)
+  * [buildbucket:tests/build](#recipes-buildbucket_tests_build)
   * [buildbucket:tests/get](#recipes-buildbucket_tests_get)
-  * [buildbucket:tests/properties](#recipes-buildbucket_tests_properties)
   * [buildbucket:tests/put](#recipes-buildbucket_tests_put)
   * [cipd:examples/full](#recipes-cipd_examples_full)
   * [context:examples/full](#recipes-context_examples_full)
@@ -154,37 +152,43 @@ API for interacting with the buildbucket service.
 Depends on 'buildbucket' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 
-#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#97)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
+#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#55)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 A module for interacting with buildbucket.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#168)(self):**
+&emsp; **@property**<br>&mdash; **def [build](/recipe_modules/buildbucket/api.py#109)(self):**
 
-Returns int64 identifier of the current build.
+Returns current build as a buildbucket.v2.Build protobuf message.
 
-It is unique per buildbucket instance.
-In practice, it means globally unique.
+Do not implement conditional logic on returned tags. They are for indexing.
+Use returned build.input instead.
 
-May return None if it is not a buildbucket build.
+Pure Buildbot support: returns a message even if the current build is not a
+buildbucket build, to simplify transition to buildbucket. Provides as much
+information as available in properties. If the current build is not a
+buildbucket build, returned build.id is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#152)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#220)(self):**
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#183)(self):**
+DEPRECATED, use build.id instead.
 
-A BuilderID identifying the current builder configuration.
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#225)(self):**
 
-Any of the returned Builder's properties is set to None if no information
-for that property is found.
+DEPRECATED, use build.input instead.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#254)(self, build_id, \*\*kwargs):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#230)(self):**
 
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#257)(self, build_id, \*\*kwargs):**
+Deprecated. Use build.builder instead.
 
-&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#131)(self):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#183)(self, build_id, \*\*kwargs):**
 
-Returns (dict-like or None): The BuildBucket properties, if present.
+&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#186)(self, build_id, \*\*kwargs):**
 
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#225)(self, builds, \*\*kwargs):**
+&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#215)(self):**
+
+DEPRECATED, use build attribute instead.
+
+&mdash; **def [put](/recipe_modules/buildbucket/api.py#154)(self, builds, \*\*kwargs):**
 
 Puts a batch of builds.
 
@@ -203,19 +207,19 @@ Returns:
   A step that as its .stdout property contains the response object as
   returned by buildbucket.
 
-&mdash; **def [set\_buildbucket\_host](/recipe_modules/buildbucket/api.py#109)(self, host):**
+&mdash; **def [set\_buildbucket\_host](/recipe_modules/buildbucket/api.py#87)(self, host):**
 
 Changes the buildbucket backend hostname used by this module.
 
 Args:
   host (str): buildbucket server host (e.g. 'cr-buildbucket.appspot.com').
 
-&emsp; **@property**<br>&mdash; **def [tags\_for\_child\_build](/recipe_modules/buildbucket/api.py#204)(self):**
+&emsp; **@property**<br>&mdash; **def [tags\_for\_child\_build](/recipe_modules/buildbucket/api.py#123)(self):**
 
 A dict of tags (key -> value) derived from current (parent) build for a
 child build.
 
-&mdash; **def [use\_service\_account\_key](/recipe_modules/buildbucket/api.py#117)(self, key_path):**
+&mdash; **def [use\_service\_account\_key](/recipe_modules/buildbucket/api.py#95)(self, key_path):**
 
 Tells this module to start using given service account key for auth.
 
@@ -1259,9 +1263,9 @@ Runs a succeeding step (exits 0).
 
 Provides objects for reading and writing raw data to and from steps.
 
-#### **class [RawIOApi](/recipe_modules/raw_io/api.py#237)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
+#### **class [RawIOApi](/recipe_modules/raw_io/api.py#255)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#238)(data, suffix=''):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#256)(data, suffix=''):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -1276,7 +1280,7 @@ tempfile.mkstemp.
 
 See examples/full.py for usage example.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#256)(data, suffix=''):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#274)(data, suffix=''):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -1286,7 +1290,7 @@ expected to have valid utf-8 data in it.
 Similar to input(), but ensures that 'data' is valid utf-8 text. Any
 non-utf-8 characters will be replaced with �.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#269)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#287)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -1302,7 +1306,7 @@ Args:
      to a step link named `name`. If this is 'on_failure', only create this
      log when the step has a non-SUCCESS status.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#307)(suffix='', leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#325)(suffix='', leak_to=None, name=None):**
 
 Returns a directory Placeholder for use as a step argument.
 
@@ -1313,7 +1317,7 @@ If 'leak_to' is not None, then it should be a Path and placeholder
 redirects IO to a dir at that path. Once step finishes, the dir is
 NOT deleted (i.e. it's 'leaking'). 'suffix' is ignored in that case.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#289)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#120)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#307)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -1768,26 +1772,16 @@ Args:
 This file is a recipe demonstrating the buildbucket recipe module.
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/examples/full.py#16)(api):**
-### *recipes* / [buildbucket:tests/build\_id](/recipe_modules/buildbucket/tests/build_id.py)
+### *recipes* / [buildbucket:tests/build](/recipe_modules/buildbucket/tests/build.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/build_id.py#5): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/build.py#9): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/build_id.py#12)(api):**
-### *recipes* / [buildbucket:tests/build\_input](/recipe_modules/buildbucket/tests/build_input.py)
-
-[DEPS](/recipe_modules/buildbucket/tests/build_input.py#5): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
-
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/build_input.py#12)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/build.py#16)(api):**
 ### *recipes* / [buildbucket:tests/get](/recipe_modules/buildbucket/tests/get.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/get.py#5): [buildbucket](#recipe_modules-buildbucket)
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/get.py#10)(api):**
-### *recipes* / [buildbucket:tests/properties](/recipe_modules/buildbucket/tests/properties.py)
-
-[DEPS](/recipe_modules/buildbucket/tests/properties.py#5): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
-
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/properties.py#12)(api):**
 ### *recipes* / [buildbucket:tests/put](/recipe_modules/buildbucket/tests/put.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/put.py#5): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime)

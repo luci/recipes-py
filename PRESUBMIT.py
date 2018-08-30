@@ -38,7 +38,7 @@ def CommonChecks(input_api, output_api):
   results.extend(input_api.canned_checks.PanProjectChecks(
       input_api, output_api, license_header=header(input_api),
       excluded_paths=[
-          r'recipe_engine/.+_pb2\.py',
+          r'.+_pb2\.py',
       ],
   ))
 
