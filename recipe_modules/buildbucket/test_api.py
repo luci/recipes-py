@@ -51,6 +51,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       else:
         git_repo = 'chromium.googlesource.com/' + project
     gitiles_host, gitiles_project = util.parse_gitiles_repo_url(git_repo)
+    assert gitiles_host and gitiles_project, 'invalid repo %s' % git_repo
 
     build = build_pb2.Build(
         id=8945511751514863184,
