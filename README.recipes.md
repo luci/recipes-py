@@ -152,11 +152,11 @@ API for interacting with the buildbucket service.
 Depends on 'buildbucket' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 
-#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#22)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
+#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#21)([RecipeApi](/recipe_engine/recipe_api.py#1006)):**
 
 A module for interacting with buildbucket.
 
-&emsp; **@property**<br>&mdash; **def [build](/recipe_modules/buildbucket/api.py#87)(self):**
+&emsp; **@property**<br>&mdash; **def [build](/recipe_modules/buildbucket/api.py#80)(self):**
 
 Returns current build as a buildbucket.v2.Build protobuf message.
 
@@ -170,27 +170,27 @@ message even if the current build is not a buildbucket build. Provides as
 much information as possible. If the current build is not a buildbucket
 build, returned build.id is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#201)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#194)(self):**
 
 DEPRECATED, use build.id instead.
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#206)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#199)(self):**
 
 DEPRECATED, use build.input instead.
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#211)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#204)(self):**
 
 Deprecated. Use build.builder instead.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#164)(self, build_id, \*\*kwargs):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#157)(self, build_id, \*\*kwargs):**
 
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#167)(self, build_id, \*\*kwargs):**
+&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#160)(self, build_id, \*\*kwargs):**
 
-&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#196)(self):**
+&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#189)(self):**
 
 DEPRECATED, use build attribute instead.
 
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#135)(self, builds, \*\*kwargs):**
+&mdash; **def [put](/recipe_modules/buildbucket/api.py#128)(self, builds, \*\*kwargs):**
 
 Puts a batch of builds.
 
@@ -209,19 +209,19 @@ Returns:
   A step that as its .stdout property contains the response object as
   returned by buildbucket.
 
-&mdash; **def [set\_buildbucket\_host](/recipe_modules/buildbucket/api.py#65)(self, host):**
+&mdash; **def [set\_buildbucket\_host](/recipe_modules/buildbucket/api.py#58)(self, host):**
 
 Changes the buildbucket backend hostname used by this module.
 
 Args:
   host (str): buildbucket server host (e.g. 'cr-buildbucket.appspot.com').
 
-&emsp; **@property**<br>&mdash; **def [tags\_for\_child\_build](/recipe_modules/buildbucket/api.py#103)(self):**
+&emsp; **@property**<br>&mdash; **def [tags\_for\_child\_build](/recipe_modules/buildbucket/api.py#96)(self):**
 
 A dict of tags (key -> value) derived from current (parent) build for a
 child build.
 
-&mdash; **def [use\_service\_account\_key](/recipe_modules/buildbucket/api.py#73)(self, key_path):**
+&mdash; **def [use\_service\_account\_key](/recipe_modules/buildbucket/api.py#66)(self, key_path):**
 
 Tells this module to start using given service account key for auth.
 

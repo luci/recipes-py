@@ -30,23 +30,11 @@ PROPERTIES = {
 
   # === Legacy =================================================================
   'buildbucket': Property(param_name='legacy_property', default={}),
-
   'mastername': Property(default=None),
   'buildername': Property(default=None),
   'buildnumber': Property(default=None),
-
-  # sources for buildbucket.build.input.gitiles_commit.
   'repository': Property(default=None),
   'branch': Property(default=None),
   'revision': Property(default=None),
-
-  # sources for buildbucket.build.input.gerrit_changes.
-  'patch_storage': Property(default=None),
-  'patch_gerrit_url': Property(default=None),
-  'patch_project': Property(default=None),
-  'patch_issue': Property(default=None),
-  'patch_set': Property(default=None),
-  'issue': Property(default=None),
-  'patchset': Property(default=None),
   # ============================================================================
 }

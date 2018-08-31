@@ -8,7 +8,7 @@ import urlparse
 from .proto import common_pb2
 
 
-def parse_http_host_and_path(url):
+def _parse_http_host_and_path(url):
   parsed = urlparse.urlparse(url)
   if not parsed.scheme:
     parsed = urlparse.urlparse('https://' + url)
@@ -21,7 +21,7 @@ def parse_http_host_and_path(url):
 
 
 def parse_gitiles_repo_url(repo_url):
-  host, project = parse_http_host_and_path(repo_url)
+  host, project = _parse_http_host_and_path(repo_url)
   if not host or not project or '+' in project.split('/'):
     return None, None
   project = project.strip('/')

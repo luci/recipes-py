@@ -27,10 +27,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   def __init__(
       self, property, legacy_property, mastername, buildername, buildnumber,
-      repository, branch, revision,
-      patch_storage, patch_gerrit_url, patch_project, patch_issue, patch_set,
-      issue, patchset,
-      *args, **kwargs):
+      repository, branch, revision, *args, **kwargs):
     super(BuildbucketApi, self).__init__(*args, **kwargs)
     self._service_account_key = None
     self._host = 'cr-buildbucket.appspot.com'
@@ -52,10 +49,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       build_sets = list(util._parse_buildset_tags(build_dict.get('tags', [])))
       _legacy_builder_id(
           build_dict, mastername, buildername, self._build.builder)
-      _legacy_input_gerrit_changes(
-          self._build.input.gerrit_changes, build_sets, patch_storage,
-          patch_gerrit_url, patch_project, patch_issue or issue,
-          patch_set or patchset)
+      _legacy_input_gerrit_changes(self._build.input.gerrit_changes, build_sets)
       _legacy_input_gitiles_commit(
           self._build.input.gitiles_commit, build_dict, build_sets, repository,
           branch, revision)
@@ -226,28 +220,11 @@ def _legacy_tags(build_dict, build_msg):
     build_msg.tags.add(key=k, value=v)
 
 
-def _legacy_input_gerrit_changes(
-    dest_repeated, build_sets,
-    patch_storage, patch_gerrit_url, patch_project, patch_issue, patch_set):
+def _legacy_input_gerrit_changes(dest_repeated, build_sets):
   for bs in build_sets:
     if isinstance(bs, common_pb2.GerritChange):
       dest_repeated.add().CopyFrom(bs)
-
-  if not dest_repeated and patch_storage == 'gerrit' and patch_project:
-    host, path = util.parse_http_host_and_path(patch_gerrit_url)
-    if host and (not path or path == '/'):
-      try:
-        patch_issue = int(patch_issue or 0)
-        patch_set = int(patch_set or 0)
-      except ValueError:
-        pass
-      else:
-        if patch_issue and patch_set:
-          dest_repeated.add(
-              host=host,
-              project=patch_project,
-              change=patch_issue,
-              patchset=patch_set)
+  # TODO(nodir): parse patch_* properties.
 
 
 def _legacy_input_gitiles_commit(
