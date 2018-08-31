@@ -9,7 +9,15 @@
       "  value: \"x\"",
       "}"
     ],
-    "name": "dummy"
+    "name": "build"
+  },
+  {
+    "cmd": [
+      "echo",
+      "buildset:x",
+      "user_agent:recipe"
+    ],
+    "name": "tags_for_child_build"
   },
   {
     "name": "$result",

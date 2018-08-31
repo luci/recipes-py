@@ -18,7 +18,16 @@
       "  }",
       "}"
     ],
-    "name": "dummy"
+    "name": "build"
+  },
+  {
+    "cmd": [
+      "echo",
+      "buildset:commit/gitiles/chromium.googlesource.com/chromium/src/+/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "parent_buildername:linux",
+      "user_agent:recipe"
+    ],
+    "name": "tags_for_child_build"
   },
   {
     "name": "$result",

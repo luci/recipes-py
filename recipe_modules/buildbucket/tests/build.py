@@ -15,8 +15,13 @@ DEPS = [
 
 def RunSteps(api):
   text = text_format.MessageToString(api.buildbucket.build)
-  api.step('dummy', ['echo'] + text.splitlines())
+  api.step('build', ['echo'] + text.splitlines())
 
+  child_build_tags = [
+      '%s:%s' % t
+      for t in api.buildbucket.tags_for_child_build.iteritems()
+  ]
+  api.step('tags_for_child_build', ['echo'] + child_build_tags)
 
 def GenTests(api):
 

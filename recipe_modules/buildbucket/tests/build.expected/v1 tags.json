@@ -13,7 +13,14 @@
       "  value: \"d\"",
       "}"
     ],
-    "name": "dummy"
+    "name": "build"
+  },
+  {
+    "cmd": [
+      "echo",
+      "user_agent:recipe"
+    ],
+    "name": "tags_for_child_build"
   },
   {
     "name": "$result",

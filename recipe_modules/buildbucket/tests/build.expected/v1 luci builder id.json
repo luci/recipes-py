@@ -8,7 +8,15 @@
       "  builder: \"linux\"",
       "}"
     ],
-    "name": "dummy"
+    "name": "build"
+  },
+  {
+    "cmd": [
+      "echo",
+      "parent_buildername:linux",
+      "user_agent:recipe"
+    ],
+    "name": "tags_for_child_build"
   },
   {
     "name": "$result",
