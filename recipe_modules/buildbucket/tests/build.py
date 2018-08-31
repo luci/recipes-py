@@ -115,6 +115,46 @@ def GenTests(api):
       repository='https://chromium.googlesource.com/v8/v8.git',
   )
 
+  yield case(
+      'buildbot gerrit change',
+      patch_storage='gerrit',
+      patch_gerrit_url='https://example.googlesource.com/',
+      patch_project='a/b',
+      patch_issue=1,
+      patch_set=2,
+  )
+  yield case(
+      'buildbot gerrit change, issue and patchset properties',
+      patch_storage='gerrit',
+      patch_gerrit_url='https://example.googlesource.com/',
+      patch_project='a/b',
+      issue=1,
+      patchset=2,
+  )
+  yield case(
+      'buildbot gerrit change, no project',
+      patch_storage='gerrit',
+      patch_gerrit_url='https://example.googlesource.com/',
+      patch_issue=1,
+      patch_set=2,
+  )
+  yield case(
+      'buildbot gerrit change, string issue',
+      patch_storage='gerrit',
+      patch_gerrit_url='https://example.googlesource.com/',
+      patch_project='a/b',
+      patch_issue='1',
+      patch_set=2,
+  )
+  yield case(
+      'buildbot gerrit change, string issue, not a number',
+      patch_storage='gerrit',
+      patch_gerrit_url='https://example.googlesource.com/',
+      patch_project='a/b',
+      patch_issue='x',
+      patch_set=2,
+  )
+
   yield legacy_build(
       'v1 luci builder id',
       project='chromium',
