@@ -36,8 +36,6 @@ PROPERTIES = {
   'buildnumber': Property(default=None),
 
   # sources for buildbucket.build.input.gitiles_commit.
-  'repository': Property(default=None),
-  'branch': Property(default=None),
   'revision': Property(default=None),
 
   # sources for buildbucket.build.input.gerrit_changes.

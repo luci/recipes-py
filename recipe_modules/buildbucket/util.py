@@ -22,8 +22,8 @@ def parse_http_host_and_path(url):
 
 def parse_gitiles_repo_url(repo_url):
   host, project = parse_http_host_and_path(repo_url)
-  if not host or not project or '+' in project.split('/'):
-    return None, None
+  assert host and project and '+' not in project.split('/'), (
+      'invalid repo_url %s' % repo_url)
   project = project.strip('/')
   if project.startswith('a/'):
     project = project[len('a/'):]
@@ -41,14 +41,6 @@ def parse_tag(tag):
 
 def is_sha1_hex(sha1):
   return sha1 and re.match('^[0-9a-f]{40}$', sha1)
-
-
-def branch_to_ref(branch):
-  if not branch:
-    return None
-  if branch.startswith('refs/'):
-    return branch
-  return 'refs/heads/%s' % branch
 
 
 def _parse_build_set(bs_string):

@@ -27,10 +27,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   def __init__(
       self, property, legacy_property, mastername, buildername, buildnumber,
-      repository, branch, revision,
-      patch_storage, patch_gerrit_url, patch_project, patch_issue, patch_set,
-      issue, patchset,
-      *args, **kwargs):
+      revision, patch_storage, patch_gerrit_url, patch_project, patch_issue,
+      patch_set, issue, patchset, *args, **kwargs):
     super(BuildbucketApi, self).__init__(*args, **kwargs)
     self._service_account_key = None
     self._host = 'cr-buildbucket.appspot.com'
@@ -57,8 +55,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
           patch_gerrit_url, patch_project, patch_issue or issue,
           patch_set or patchset)
       _legacy_input_gitiles_commit(
-          self._build.input.gitiles_commit, build_dict, build_sets, repository,
-          branch, revision)
+          self._build.input.gitiles_commit, build_dict, build_sets, revision)
       _legacy_tags(build_dict, self._build)
 
   def set_buildbucket_host(self, host):
@@ -87,15 +84,18 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def build(self):
     """Returns current build as a buildbucket.v2.Build protobuf message.
 
+    See Build message in
+    https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto.
+
+    DO NOT MODIFY the returned value.
     Do not implement conditional logic on returned tags; they are for indexing.
     Use returned build.input instead.
 
-    DO NOT MODIFY the returned value.
-
     Pure Buildbot support: to simplify transition to buildbucket, returns a
     message even if the current build is not a buildbucket build. Provides as
-    much information as possible. If the current build is not a buildbucket
-    build, returned build.id is 0.
+    much information as possible. Some fields may be left empty, violating
+    the rules described in the .proto files.
+    If the current build is not a buildbucket build, returned build.id is 0.
     """
     return self._build
 
@@ -111,6 +111,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     # This function returns a dict, so there can be only one buildset, although
     # we can have multiple sources.
     # Priority: CL buildset, commit buildset, custom buildset.
+    commit = self.build.input.gitiles_commit
     if self.build.input.gerrit_changes:
       cl = self.build.input.gerrit_changes[0]
       new_tags['buildset'] = 'patch/gerrit/%s/%d/%d' % (
@@ -118,12 +119,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     # Note: an input gitiles commit with ref without id is valid
     # but such commit cannot be used to construct a valid commit buildset.
-    elif self.build.input.gitiles_commit.id:
-      c = self.build.input.gitiles_commit
+    elif commit.host and commit.project and commit.id:
       new_tags['buildset'] = (
-          'commit/gitiles/%s/%s/+/%s' % (c.host, c.project, c.id))
-      if c.ref:
-        new_tags['gitiles_ref'] = c.ref
+          'commit/gitiles/%s/%s/+/%s' % (
+              commit.host, commit.project, commit.id))
+      if commit.ref:
+        new_tags['gitiles_ref'] = commit.ref
     else:
       buildset = original_tags.get('buildset')
       if buildset:
@@ -256,8 +257,7 @@ def _legacy_input_gerrit_changes(
               patchset=patch_set)
 
 
-def _legacy_input_gitiles_commit(
-    dest, build_dict, build_sets, repository, branch, revision):
+def _legacy_input_gitiles_commit(dest, build_dict, build_sets, revision):
   commit = None
   for bs in build_sets:
     if isinstance(bs, common_pb2.GitilesCommit):
@@ -274,21 +274,8 @@ def _legacy_input_gitiles_commit(
 
     return
 
-  # Try to fill commit from legacy properies.
-  if revision == 'HEAD':
-    revision = None
-  revision = revision or ''
-  if not revision or util.is_sha1_hex(revision):
-    # Avoid mutating dest unless the values are valid.
-    commit_host, commit_project = util.parse_gitiles_repo_url(repository or '')
-    ref = util.branch_to_ref(branch) or ''
-    if commit_host and commit_project:
-      dest.host = commit_host
-      dest.project = commit_project
-      dest.ref = ref
-      dest.id = revision
-      if not dest.ref and not dest.id:
-        dest.ref = 'refs/heads/master'
+  if util.is_sha1_hex(revision):
+    dest.id = revision
 
 
 def _legacy_builder_id(build_dict, mastername, buildername, builder_id):

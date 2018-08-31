@@ -56,67 +56,44 @@ def GenTests(api):
 
   yield case(
       'buildbot gitiles commit',
-      repository='https://chromium.googlesource.com/v8/v8.git',
-      branch='refs/heads/master',
       revision='a' * 40,
   )
   yield case(
-      'buildbot gitiles commit, invalid repo URL',
-      repository='ftp://chromium.googlesource.com/v8/v8.git',
-  )
-  yield case(
-      'buildbot gitiles commit, a project prefix',
-      repository='https://chromium.googlesource.com/a/v8/v8.git',
-      branch='refs/heads/master',
-      revision='a' * 40,
-  )
-  yield case(
-      'buildbot gitiles commit, branch',
-      repository='https://chromium.googlesource.com/v8/v8.git',
-      branch='master',
-      revision='a' * 40,
-  )
-  yield case(
-      'buildbot gitiles commit, invalid repo',
-      repository='https://invalid/',
-      branch='master',
-      revision='a' * 40,
-  )
-  yield case(
-      'buildbot gitiles commit, no branch',
-      repository='https://chromium.googlesource.com/v8/v8.git',
-      revision='a' * 40,
+      'buildbot gitiles commit, invalid revision',
+      revision='deafbeef',  # too short
   )
   yield case(
       'buildbot gitiles commit, HEAD revision',
-      repository='https://chromium.googlesource.com/v8/v8.git',
-      branch='refs/heads/master',
       revision='HEAD',
-  )
-  yield case(
-      'buildbot gitiles commit, no revision',
-      repository='https://chromium.googlesource.com/v8/v8.git',
-      branch='refs/heads/master',
-  )
-  yield case(
-      'buildbot gitiles commit, no revision, with CL',
-      repository='https://chromium.googlesource.com/v8/v8.git',
-      branch='refs/heads/master',
-      buildbucket={
-        'build': {
-          'tags': [
-            'buildset:patch/gerrit/chromium-review.googlesource.com/1/2'
-          ],
-        },
-      },
-  )
-  yield case(
-      'buildbot gitiles commit, neither ref nor revision',
-      repository='https://chromium.googlesource.com/v8/v8.git',
   )
 
   yield case(
       'buildbot gerrit change',
+      patch_storage='gerrit',
+      patch_gerrit_url='https://example.googlesource.com/',
+      patch_project='a/b',
+      patch_issue=1,
+      patch_set=2,
+  )
+  yield case(
+      'buildbot gerrit change, patch_gerrit_url without scheme',
+      patch_storage='gerrit',
+      patch_gerrit_url='example.googlesource.com',
+      patch_project='a/b',
+      patch_issue=1,
+      patch_set=2,
+  )
+  yield case(
+      'buildbot gerrit change, patch_gerrit_url with unexpected scheme',
+      patch_storage='gerrit',
+      patch_gerrit_url='ftp://example.googlesource.com',
+      patch_project='a/b',
+      patch_issue=1,
+      patch_set=2,
+  )
+  yield case(
+      'buildbot gerrit change with revision',
+      revision='a' * 40,
       patch_storage='gerrit',
       patch_gerrit_url='https://example.googlesource.com/',
       patch_project='a/b',

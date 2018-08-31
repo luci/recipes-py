@@ -3,13 +3,6 @@
     "cmd": [
       "echo",
       "builder {",
-      "}",
-      "input {",
-      "  gitiles_commit {",
-      "    host: \"chromium.googlesource.com\"",
-      "    project: \"v8/v8\"",
-      "    ref: \"refs/heads/master\"",
-      "  }",
       "}"
     ],
     "name": "build"

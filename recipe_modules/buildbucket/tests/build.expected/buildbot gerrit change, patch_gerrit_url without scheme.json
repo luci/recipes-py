@@ -5,10 +5,11 @@
       "builder {",
       "}",
       "input {",
-      "  gitiles_commit {",
-      "    host: \"chromium.googlesource.com\"",
-      "    project: \"v8/v8\"",
-      "    id: \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"",
+      "  gerrit_changes {",
+      "    host: \"example.googlesource.com\"",
+      "    project: \"a/b\"",
+      "    change: 1",
+      "    patchset: 2",
       "  }",
       "}"
     ],
@@ -17,7 +18,7 @@
   {
     "cmd": [
       "echo",
-      "buildset:commit/gitiles/chromium.googlesource.com/v8/v8/+/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "buildset:patch/gerrit/example.googlesource.com/1/2",
       "user_agent:recipe"
     ],
     "name": "tags_for_child_build"
