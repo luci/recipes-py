@@ -59,6 +59,15 @@ def GenTests(api):
       revision='a' * 40,
   )
   yield case(
+      'buildbot gitiles commit, parent_got_revision',
+      parent_got_revision='a' * 40,
+  )
+  yield case(
+      'buildbot gitiles commit, both revision and parent_got_revision',
+      revision='a' * 40,
+      parent_got_revision='b' * 40,
+  )
+  yield case(
       'buildbot gitiles commit, invalid revision',
       revision='deafbeef',  # too short
   )

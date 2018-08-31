@@ -37,6 +37,7 @@ PROPERTIES = {
 
   # sources for buildbucket.build.input.gitiles_commit.
   'revision': Property(default=None),
+  'parent_got_revision': Property(default=None),
 
   # sources for buildbucket.build.input.gerrit_changes.
   'patch_storage': Property(default=None),

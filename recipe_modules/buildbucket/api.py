@@ -27,8 +27,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   def __init__(
       self, property, legacy_property, mastername, buildername, buildnumber,
-      revision, patch_storage, patch_gerrit_url, patch_project, patch_issue,
-      patch_set, issue, patchset, *args, **kwargs):
+      revision, parent_got_revision, patch_storage, patch_gerrit_url,
+      patch_project, patch_issue, patch_set, issue, patchset, *args, **kwargs):
     super(BuildbucketApi, self).__init__(*args, **kwargs)
     self._service_account_key = None
     self._host = 'cr-buildbucket.appspot.com'
@@ -55,7 +55,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
           patch_gerrit_url, patch_project, patch_issue or issue,
           patch_set or patchset)
       _legacy_input_gitiles_commit(
-          self._build.input.gitiles_commit, build_dict, build_sets, revision)
+          self._build.input.gitiles_commit, build_dict, build_sets,
+          revision or parent_got_revision)
       _legacy_tags(build_dict, self._build)
 
   def set_buildbucket_host(self, host):
