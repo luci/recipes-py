@@ -3,18 +3,13 @@
     "cmd": [
       "echo",
       "builder {",
-      "  builder: \"linux\"",
       "}",
       "input {",
       "  gitiles_commit {",
       "    host: \"chromium.googlesource.com\"",
-      "    project: \"chromium/src\"",
+      "    project: \"v8/v8\"",
       "    id: \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"",
-      "  }",
-      "  gerrit_changes {",
-      "    host: \"chromium-review.googlesource.com\"",
-      "    change: 1",
-      "    patchset: 2",
+      "    ref: \"refs/heads/master\"",
       "  }",
       "}"
     ],
@@ -23,8 +18,8 @@
   {
     "cmd": [
       "echo",
-      "buildset:patch/gerrit/chromium-review.googlesource.com/1/2",
-      "parent_buildername:linux",
+      "buildset:commit/gitiles/chromium.googlesource.com/v8/v8/+/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "gitiles_ref:refs/heads/master",
       "user_agent:recipe"
     ],
     "name": "tags_for_child_build"
