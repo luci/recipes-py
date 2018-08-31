@@ -49,55 +49,6 @@ def GenTests(api):
       'buildset:commit/gitiles/a/b/c/d'
   ])
 
-  yield case(
-      'buildbot gitiles commit',
-      repository='https://chromium.googlesource.com/v8/v8.git',
-      branch='refs/heads/master',
-      revision='a' * 40,
-  )
-  yield case(
-      'buildbot gitiles commit, invalid repo URL',
-      repository='ftp://chromium.googlesource.com/v8/v8.git',
-  )
-  yield case(
-      'buildbot gitiles commit, a project prefix',
-      repository='https://chromium.googlesource.com/a/v8/v8.git',
-      branch='refs/heads/master',
-      revision='a' * 40,
-  )
-  yield case(
-      'buildbot gitiles commit, branch',
-      repository='https://chromium.googlesource.com/v8/v8.git',
-      branch='master',
-      revision='a' * 40,
-  )
-  yield case(
-      'buildbot gitiles commit, invalid repo',
-      repository='https://invalid/',
-      branch='master',
-      revision='a' * 40,
-  )
-  yield case(
-      'buildbot gitiles commit, no branch',
-      repository='https://chromium.googlesource.com/v8/v8.git',
-      revision='a' * 40,
-  )
-  yield case(
-      'buildbot gitiles commit, HEAD revision',
-      repository='https://chromium.googlesource.com/v8/v8.git',
-      branch='refs/heads/master',
-      revision='HEAD',
-  )
-  yield case(
-      'buildbot gitiles commit, no revision',
-      repository='https://chromium.googlesource.com/v8/v8.git',
-      branch='refs/heads/master',
-  )
-  yield case(
-      'buildbot gitiles commit, neither ref nor revision',
-      repository='https://chromium.googlesource.com/v8/v8.git',
-  )
-
   yield legacy_build(
       'v1 luci builder id',
       project='chromium',

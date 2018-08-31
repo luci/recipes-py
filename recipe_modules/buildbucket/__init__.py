@@ -33,8 +33,5 @@ PROPERTIES = {
   'mastername': Property(default=None),
   'buildername': Property(default=None),
   'buildnumber': Property(default=None),
-  'repository': Property(default=None),
-  'branch': Property(default=None),
-  'revision': Property(default=None),
   # ============================================================================
 }

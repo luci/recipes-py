@@ -10,12 +10,44 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 
 import base64
 import json
+import re
 
 from recipe_engine import recipe_api
 
 from .proto import build_pb2
 from .proto import common_pb2
-from . import util
+
+
+def _parse_build_set(bs_string):
+  """Parses a buildset string to GerritChange or GitilesCommit.
+
+  A port of
+  https://chromium.googlesource.com/infra/luci/luci-go/+/fe4e304639d11ca00537768f8bfbf20ffecf73e6/buildbucket/buildset.go#105
+  """
+  assert isinstance(bs_string, basestring)
+  p = bs_string.split('/')
+  if '' in p:
+    return None
+
+  n = len(p)
+
+  if n == 5 and p[0] == 'patch' and p[1] == 'gerrit':
+    return common_pb2.GerritChange(
+        host=p[2],
+        change=int(p[3]),
+        patchset=int(p[4])
+    )
+
+  if n >= 5 and p[0] == 'commit' and p[1] == 'gitiles':
+    if p[n-2] != '+' or not re.match('^[0-9a-f]{40}$', p[n-1]):
+      return None
+    return common_pb2.GitilesCommit(
+        host=p[2],
+        project='/'.join(p[3:n-2]), # exclude plus
+        id=p[n-1],
+    )
+
+  return None
 
 
 class BuildbucketApi(recipe_api.RecipeApi):
@@ -27,7 +59,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   def __init__(
       self, property, legacy_property, mastername, buildername, buildnumber,
-      repository, branch, revision, *args, **kwargs):
+      *args, **kwargs):
     super(BuildbucketApi, self).__init__(*args, **kwargs)
     self._service_account_key = None
     self._host = 'cr-buildbucket.appspot.com'
@@ -46,13 +78,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
       self.build.number = int(buildnumber or 0)
       if 'id' in build_dict:
         self._build.id = int(build_dict['id'])
-      build_sets = list(util._parse_buildset_tags(build_dict.get('tags', [])))
       _legacy_builder_id(
           build_dict, mastername, buildername, self._build.builder)
-      _legacy_input_gerrit_changes(self._build.input.gerrit_changes, build_sets)
-      _legacy_input_gitiles_commit(
-          self._build.input.gitiles_commit, build_dict, build_sets, repository,
-          branch, revision)
+      _legacy_build_input(build_dict, self._build.input)
       _legacy_tags(build_dict, self._build)
 
   def set_buildbucket_host(self, host):
@@ -220,46 +248,21 @@ def _legacy_tags(build_dict, build_msg):
     build_msg.tags.add(key=k, value=v)
 
 
-def _legacy_input_gerrit_changes(dest_repeated, build_sets):
-  for bs in build_sets:
-    if isinstance(bs, common_pb2.GerritChange):
-      dest_repeated.add().CopyFrom(bs)
-  # TODO(nodir): parse patch_* properties.
+def _legacy_build_input(build_dict, build_input):
+  bs_prefix = 'buildset:'
+  ref_prefix = 'gitiles_ref:'
+  for t in build_dict.get('tags', []):
+    if t.startswith(bs_prefix):
+      bs = _parse_build_set(t[len(bs_prefix):])
+      if isinstance(bs, common_pb2.GitilesCommit):
+        build_input.gitiles_commit.CopyFrom(bs)
+      elif isinstance(bs, common_pb2.GerritChange):
+        build_input.gerrit_changes.add().CopyFrom(bs)
 
+    elif t.startswith(ref_prefix):
+      build_input.gitiles_commit.ref = t[len(ref_prefix):]
 
-def _legacy_input_gitiles_commit(
-    dest, build_dict, build_sets, repository, branch, revision):
-  commit = None
-  for bs in build_sets:
-    if isinstance(bs, common_pb2.GitilesCommit):
-      commit = bs
-      break
-  if commit:
-    dest.CopyFrom(commit)
-
-    ref_prefix = 'gitiles_ref:'
-    for t in build_dict.get('tags', []):
-      if t.startswith(ref_prefix):
-        dest.ref = t[len(ref_prefix):]
-        break
-
-    return
-
-  # Try to fill commit from legacy properies.
-  if revision == 'HEAD':
-    revision = None
-  revision = revision or ''
-  if not revision or util.is_sha1_hex(revision):
-    # Avoid mutating dest unless the values are valid.
-    commit_host, commit_project = util.parse_gitiles_repo_url(repository or '')
-    ref = util.branch_to_ref(branch) or ''
-    if commit_host and commit_project:
-      dest.host = commit_host
-      dest.project = commit_project
-      dest.ref = ref
-      dest.id = revision
-      if not dest.ref and not dest.id:
-        dest.ref = 'refs/heads/master'
+  # TODO(nodir): parse repository, branch and revision properties.
 
 
 def _legacy_builder_id(build_dict, mastername, buildername, builder_id):
