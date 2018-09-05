@@ -293,6 +293,69 @@
   {
     "cmd": [
       "cipd",
+      "describe",
+      "empty/pkg",
+      "-version",
+      "ref",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "cipd describe empty/pkg",
+    "~followup_annotations": [
+      "step returned non-zero exit code: 1",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such ref\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "describe",
+      "empty/pkg",
+      "-version",
+      "tag:1.2.3",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "cipd describe empty/pkg (2)",
+    "~followup_annotations": [
+      "step returned non-zero exit code: 1",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "describe",
+      "empty/pkg",
+      "-version",
+      "hashhashhashhashhashhashhashhashhashhash",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "cipd describe empty/pkg (3)",
+    "~followup_annotations": [
+      "step returned non-zero exit code: 1",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such instance\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
       "acl-check",
       "public/package",
       "-service-account-json",

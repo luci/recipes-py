@@ -60,6 +60,15 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
   api.cipd.describe('default/test/data',
                     version=result[0].instance_id)
 
+  # examples of describe calls returning empty results
+  for ver in ('ref', 'tag:1.2.3', 'hash'*10):
+    try:
+      api.cipd.describe('empty/pkg', version=ver, test_data_tags=(),
+                        test_data_refs=())
+      assert False, "Previous step should have failed" # pragma: no cover
+    except api.step.StepFailure:
+      pass
+
   # The rest of commands expect credentials to be set.
   service_account = api.service_account.from_credentials_json(
       '/path/to/cipd/creds.json')

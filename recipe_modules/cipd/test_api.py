@@ -75,6 +75,7 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
                        user='user:44-blablbla@developer.gserviceaccount.com',
                        tstamp=1446574210):
     assert not test_data_tags or all(':' in tag for tag in test_data_tags)
+
     if test_data_tags is None:
       test_data_tags = [
         'buildbot_build:some.waterfall/builder/1234',
@@ -84,6 +85,15 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
 
     if test_data_refs is None:
       test_data_refs = ['latest']
+
+    # If user explicitly put empty tags/refs (i.e. ())
+    if not test_data_refs and not test_data_tags:
+      # quick and dirty version differentiation
+      if ':' in version:
+        return self._resultify(None, error='no such tag', retcode=1)
+      if len(version) == 44 or len(version) == 40:
+        return self._resultify(None, error='no such instance', retcode=1)
+      return self._resultify(None, error='no such ref', retcode=1)
 
     return self._resultify({
         'pin': self.make_pin(package_name, version),
