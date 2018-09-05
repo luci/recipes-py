@@ -128,8 +128,7 @@ def GenTests(api):
   yield (api.test('basic-try') +
          api.buildbucket.try_build(
              project='proj',
-             builder='try-builder',
-             tags=[api.buildbucket.common_pb2.StringPair(key='a', value='b')]) +
+             builder='try-builder') +
          api.step_data(
              'buildbucket.put',
              stdout=api.raw_io.output_text(mock_buildbucket_multi_response)) +
@@ -141,8 +140,7 @@ def GenTests(api):
              project='proj-internal',
              bucket='ci',
              builder='ci-builder',
-             git_repo='https://chrome-internal.googlesource.com/a/repo.git',
-             tags=['a:b']) +
+             git_repo='https://chrome-internal.googlesource.com/a/repo.git') +
          api.step_data(
              'buildbucket.put',
              stdout=api.raw_io.output_text(mock_buildbucket_multi_response)) +

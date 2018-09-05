@@ -35,7 +35,6 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       project='project',
       bucket='ci',  # shortname.
       builder='builder',
-      tags=None,
       git_repo=None,
       revision='2d72510e447ab60a9728aeea2362d8be2cbd7789'):
     """Emulate typical buildbucket CI build scheduled by luci-scheduler.
@@ -53,7 +52,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     gitiles_host, gitiles_project = util.parse_gitiles_repo_url(git_repo)
     assert gitiles_host and gitiles_project, 'invalid repo %s' % git_repo
 
-    build = build_pb2.Build(
+    # Do not add tags because recipe emulation results must not depend on tags.
+    return self.build(build_pb2.Build(
         id=8945511751514863184,
         builder=build_pb2.BuilderID(
             project=project,
@@ -62,7 +62,6 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         ),
         created_by='user:luci-scheduler@appspot.gserviceaccount.com',
         create_time=timestamp_pb2.Timestamp(seconds=1527292217),
-        tags=map(util.parse_tag, tags or []),
         input=build_pb2.Build.Input(
             gitiles_commit=common_pb2.GitilesCommit(
                 host=gitiles_host,
@@ -71,18 +70,13 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
                 id=revision,
             ),
         ),
-    )
-    build.tags.add(key='user_agent', value='luci-scheduler')
-    build.tags.add(
-        key='scheduler_invocation_id', value='luci-9110941813804031728')
-    return self.build(build)
+    ))
 
   def try_build(
       self,
       project='project',
       bucket='try',  # shortname.
       builder='builder',
-      tags=None,
       gerrit_host=None,
       change_number=123456,
       patch_set=7):
@@ -99,7 +93,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       else:
         gerrit_host = 'chromium-review.googlesource.com'
 
-    build = build_pb2.Build(
+    # Do not add tags because recipe emulation results must not depend on tags.
+    return self.build(build_pb2.Build(
         id=8945511751514863184,
         builder=build_pb2.BuilderID(
             project=project,
@@ -108,7 +103,6 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         ),
         created_by='user:commit-bot@chromium.org',
         create_time=timestamp_pb2.Timestamp(seconds=1527292217),
-        tags=map(util.parse_tag, tags or []),
         input=build_pb2.Build.Input(
             gerrit_changes=[
                 common_pb2.GerritChange(
@@ -118,9 +112,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
                 ),
             ],
         ),
-    )
-    build.tags.add(key='user_agent', value='cq')
-    return self.build(build)
+    ))
 
   def simulated_buildbucket_output(self, additional_build_parameters):
     buildbucket_output = {

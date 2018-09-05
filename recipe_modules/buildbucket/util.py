@@ -32,13 +32,6 @@ def parse_gitiles_repo_url(repo_url):
   return host, project
 
 
-def parse_tag(tag):
-  if isinstance(tag, common_pb2.StringPair):
-    return tag
-  k, v = tag.split(':', 1)
-  return common_pb2.StringPair(key=k, value=v)
-
-
 def is_sha1_hex(sha1):
   return sha1 and re.match('^[0-9a-f]{40}$', sha1)
 
