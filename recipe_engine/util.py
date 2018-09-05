@@ -15,6 +15,18 @@ import urllib
 
 from cStringIO import StringIO
 
+def sentinel(name):
+  """Create a sentinel object.
+
+  The sentinel's type is a class with the given name that has no behavior except
+  that it's string representation is also the given name. The sentinel is
+  intended for use where some special behavior is required where there is no
+  acceptable special value in the type of an argument. An identity check (x is
+  SENTINEL) can be used to check for the sentinel.
+  """
+  return type(name, (), {'__repr__': lambda _: name})()
+
+
 class RecipeAbort(Exception):
   pass
 

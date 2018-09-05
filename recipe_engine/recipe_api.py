@@ -19,6 +19,7 @@ from functools import wraps
 
 from .recipe_test_api import DisabledTestData, ModuleTestData
 from .config import Single
+from .types import StepData
 from .util import ModuleInjectionSite, Placeholder
 
 from . import env
@@ -225,9 +226,11 @@ class StepClient(object):
       stderr: Placeholder to put step stderr into. If used, stderr won't appear
           in annotator's stderr.
       stdin: Placeholder to read step stdin from.
-      ok_ret (iter): set of return codes allowed. If the step process returns
-          something not on this list, it will raise a StepFailure (or
+      ok_ret (iter, ALL_OK): set of return codes allowed. If the step process
+          returns something not on this list, it will raise a StepFailure (or
           InfraFailure if infra_step is True). If omitted, {0} will be used.
+          Alternatively, the sentinel StepConfig.ALL_OK can be used to allow any
+          return code.
       step_test_data (func -> recipe_test_api.StepTestData): A factory which
           returns a StepTestData object that will be used as the default test
           data for this step. The recipe author can override/augment this object
@@ -258,6 +261,8 @@ class StepClient(object):
     they're there for good. If you think you need to remove paths from the
     prefix lists, please talk to infra-dev@chromium.org.
     """
+
+    ALL_OK = StepData.ALL_OK
 
     class EnvAffix(collections.namedtuple('_EnvAffix', (
         'mapping', 'pathsep'))):
@@ -303,7 +308,8 @@ class StepClient(object):
           allow_subannotations=bool(sc.allow_subannotations),
           trigger_specs=sc.trigger_specs or (),
           infra_step=bool(sc.infra_step),
-          ok_ret=frozenset(sc.ok_ret or (0,)),
+          ok_ret=(sc.ok_ret if sc.ok_ret is StepClient.StepConfig.ALL_OK
+                  else frozenset(sc.ok_ret or (0,))),
           nest_level=int(sc.nest_level or 0),
       )
 

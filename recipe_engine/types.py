@@ -7,6 +7,8 @@ import copy
 import json
 import operator
 
+from .util import sentinel
+
 
 def freeze(obj):
   """Takes a generic object ``obj``, and returns an immutable version of it.
@@ -169,12 +171,14 @@ class StepDataAttributeError(AttributeError):
 
 
 class StepData(object):
+  ALL_OK = sentinel('ALL_OK')
+
   def __init__(self, step_config, retcode):
     self._step_config = step_config
     self._retcode = retcode
 
     self._presentation = StepPresentation()
-    if retcode in step_config.ok_ret:
+    if step_config.ok_ret is StepData.ALL_OK or retcode in step_config.ok_ret:
       self._presentation.status = 'SUCCESS'
     else:
       if not step_config.infra_step:

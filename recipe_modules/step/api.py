@@ -200,7 +200,7 @@ class StepApi(recipe_api.RecipeApiPlain):
       env_prefixes = self.m.context.env_prefixes
 
     if ok_ret in ('any', 'all'):
-      ok_ret = range(-256, 256)
+      ok_ret = self.step_client.StepConfig.ALL_OK
 
     return self.step_client.run_step(self.step_client.StepConfig(
         name=full_name,
