@@ -107,6 +107,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
             gerrit_changes=[
                 common_pb2.GerritChange(
                     host=gerrit_host,
+                    project=project,
                     change=change_number,
                     patchset=patch_set,
                 ),
