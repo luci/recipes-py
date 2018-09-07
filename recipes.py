@@ -34,7 +34,7 @@ from recipe_engine import common_args, package, package_io, util
 
 import argparse  # this is vendored
 
-from recipe_engine import fetch, lint, bundle, depgraph, autoroll
+from recipe_engine import fetch, lint, bundle, depgraph, analyze, autoroll
 from recipe_engine import remote, refs, doc, test, run
 
 
@@ -73,6 +73,7 @@ _SUBCOMMANDS = [
   run,
   test,
 
+  analyze,
   autoroll,
   bundle,
   depgraph,

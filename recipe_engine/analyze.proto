@@ -1,0 +1,38 @@
+// Copyright (c) 2018 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipe_engine;
+
+// Input is what is passed into the analyze command.
+message Input {
+  // The files the caller is interested in. Paths may be absolute or relative,
+  // and should use forward slashes only. If relative, they are assumed to be
+  // relative to the root of the recipe repo this command was executed in.
+  //
+  // Files may be outside the current git repository (an example of this is a
+  // file in a dependant recipe package). This can be used to detect if a recipe
+  // in this recipe package is affected by a file changed in a recipe package
+  // the recipe depends on.
+  repeated string files = 1;
+  // REQUIRED. The recipes which the caller is interested in. These recipes must
+  // be part of the recipe repo this command is executed in.
+  repeated string recipes = 2;
+}
+
+// Output is what the analyze command outputs.
+message Output {
+  // The recipes which are affected by the listed files.
+  repeated string recipes = 1;
+
+  // Any invalid recipes given in the input.
+  repeated string invalid_recipes = 2;
+
+  // Any errors which occured. Will be human readable. Some analysis may still
+  // have been done, even if this field is set.
+  string error = 3;
+}
+
+
