@@ -77,7 +77,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       project='project',
       bucket='try',  # shortname.
       builder='builder',
-      gerrit_host=None,
+      gerrit_host=None,  # gerrit_host is DEPRECATED. Use git_repo.
+      git_repo=None,
       change_number=123456,
       patch_set=7):
     """Emulate typical buildbucket try build scheduled by CQ.
@@ -87,8 +88,17 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         yield (api.test('basic') +
                api.buildbucket.try_build(project='my-proj', builder='win'))
     """
-    if gerrit_host is None:
-      if 'internal' in project:  # pragma: no cover
+    if git_repo:
+      gerrit_host, gerrit_project = util.parse_gitiles_repo_url(git_repo)
+      gs_suffix = '.googlesource.com'
+      if gerrit_host.endswith(gs_suffix):
+        prefix = gerrit_host[:-len(gs_suffix)]
+        if not prefix.endswith('-review'):
+          gerrit_host = '%s-review%s' % (prefix, gs_suffix)
+    else:  # pragma: no cover
+      gerrit_project = project
+    if gerrit_host is None:  # pragma: no cover
+      if 'internal' in project:
         gerrit_host = 'chrome-internal-review.googlesource.com'
       else:
         gerrit_host = 'chromium-review.googlesource.com'
@@ -107,7 +117,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
             gerrit_changes=[
                 common_pb2.GerritChange(
                     host=gerrit_host,
-                    project=project,
+                    project=gerrit_project,
                     change=change_number,
                     patchset=patch_set,
                 ),

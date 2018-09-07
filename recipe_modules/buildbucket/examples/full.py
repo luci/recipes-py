@@ -128,7 +128,8 @@ def GenTests(api):
   yield (api.test('basic-try') +
          api.buildbucket.try_build(
              project='proj',
-             builder='try-builder') +
+             builder='try-builder',
+             git_repo='https://chrome-internal.googlesource.com/a/repo.git') +
          api.step_data(
              'buildbucket.put',
              stdout=api.raw_io.output_text(mock_buildbucket_multi_response)) +
