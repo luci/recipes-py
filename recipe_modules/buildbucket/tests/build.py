@@ -83,6 +83,13 @@ def GenTests(api):
       patch_project='a/b',
       patch_issue=1,
       patch_set=2,
+      buildbucket={
+        'build': {
+          'tags': [
+             'buildset:patch/gerrit/chromium-review.googlesource.com/1/2',
+          ],
+        },
+      },
   )
   yield case(
       'buildbot gerrit change, patch_gerrit_url without scheme',

@@ -237,11 +237,7 @@ def _legacy_tags(build_dict, build_msg):
 def _legacy_input_gerrit_changes(
     dest_repeated, build_sets,
     patch_storage, patch_gerrit_url, patch_project, patch_issue, patch_set):
-  for bs in build_sets:
-    if isinstance(bs, common_pb2.GerritChange):
-      dest_repeated.add().CopyFrom(bs)
-
-  if not dest_repeated and patch_storage == 'gerrit' and patch_project:
+  if patch_storage == 'gerrit' and patch_project:
     host, path = util.parse_http_host_and_path(patch_gerrit_url)
     if host and (not path or path == '/'):
       try:
@@ -256,6 +252,11 @@ def _legacy_input_gerrit_changes(
               project=patch_project,
               change=patch_issue,
               patchset=patch_set)
+          return
+
+  for bs in build_sets:
+    if isinstance(bs, common_pb2.GerritChange):
+      dest_repeated.add().CopyFrom(bs)
 
 
 def _legacy_input_gitiles_commit(dest, build_dict, build_sets, revision):
