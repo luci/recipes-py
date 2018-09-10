@@ -19,10 +19,24 @@ class TimeApi(recipe_api.RecipeApi):
       self._fake_step = self._test_data.get('step', 1.5)
 
   def sleep(self, secs):
-    """Suspend execution of |secs| (float) seconds. Does nothing during
-    testing."""
-    if not self._test_data.enabled:  # pragma: no cover
-      time.sleep(secs)
+    """Suspend execution of |secs| (float) seconds. Does nothing in testing.
+
+    If secs > 60 (sleep longer than one minute), run a step to do the
+    sleep, so that if a user looks at a build, they know what the recipe is
+    doing.
+    """
+    if secs > 60: # pragma: no cover
+      self.m.python.inline(
+          'sleep',
+          """
+          import sys
+          import time
+          time.sleep(int(sys.argv[1]))
+          """,
+          args=[secs])
+    else:
+      if not self._test_data.enabled:  # pragma: no cover
+        time.sleep(secs)
 
   def time(self):
     """Return current timestamp as a float number of seconds since epoch."""
