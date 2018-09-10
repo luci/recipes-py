@@ -245,14 +245,14 @@ API for interacting with CIPD.
 Depends on 'cipd' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 
-#### **class [CIPDApi](/recipe_modules/cipd/api.py#185)([RecipeApi](/recipe_engine/recipe_api.py#1012)):**
+#### **class [CIPDApi](/recipe_modules/cipd/api.py#199)([RecipeApi](/recipe_engine/recipe_api.py#1012)):**
 
 CIPDApi provides basic support for CIPD.
 
 This assumes that `cipd` (or `cipd.exe` or `cipd.bat` on windows) has been
 installed somewhere in $PATH.
 
-&mdash; **def [acl\_check](/recipe_modules/cipd/api.py#270)(self, pkg_path, reader=True, writer=False, owner=False):**
+&mdash; **def [acl\_check](/recipe_modules/cipd/api.py#284)(self, pkg_path, reader=True, writer=False, owner=False):**
 
 Checks whether the caller has a given roles in a package.
 
@@ -264,7 +264,7 @@ Args:
 
 Returns True if the caller has given roles, False otherwise.
 
-&mdash; **def [build](/recipe_modules/cipd/api.py#350)(self, input_dir, output_package, package_name, install_mode=None):**
+&mdash; **def [build](/recipe_modules/cipd/api.py#376)(self, input_dir, output_package, package_name, compression_level=None, install_mode=None, preserve_mtime=False, preserve_writable=False):**
 
 Builds, but does not upload, a cipd package from a directory.
 
@@ -273,13 +273,17 @@ Args:
   * output_package (Path) - The file to write the package to.
   * package_name (str) - The name of the cipd package as it would appear
     when uploaded to the cipd package server.
+  * compression_level (None|[0-9]) - Deflate compression level. If None,
+    defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
   * install_mode (None|'copy'|'symlink') - The mechanism that the cipd
     client should use when installing this package. If None, defaults to the
     platform default ('copy' on windows, 'symlink' on everything else).
+  * preserve_mtime (bool) - Preserve file's modification time.
+  * preserve_writable (bool) - Preserve file's writable permission bit.
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#333)(self, pkg_def, output_package):**
+&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#355)(self, pkg_def, output_package, compression_level=None):**
 
 Builds a package based on a PackageDefinition object.
 
@@ -287,10 +291,12 @@ Args:
   * pkg_def (PackageDefinition) - The description of the package we want to
     create.
   * output_package (Path) - The file to write the package to.
+  * compression_level (None|[0-9]) - Deflate compression level. If None,
+    defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#314)(self, pkg_def, output_package, pkg_vars=None):**
+&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#332)(self, pkg_def, output_package, pkg_vars=None, compression_level=None):**
 
 Builds a package based on on-disk YAML package definition file.
 
@@ -299,10 +305,12 @@ Args:
   * output_package (Path) - The file to write the package to.
   * pkg_vars (dict[str]str) - A map of var name -> value to use for vars
     referenced in package definition file.
+  * compression_level (None|[0-9]) - Deflate compression level. If None,
+    defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#466)(self, pkg_def, refs=None, tags=None):**
+&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#513)(self, pkg_def, refs=None, tags=None, compression_level=None):**
 
 Builds and uploads a package based on a PackageDefinition object.
 
@@ -314,10 +322,12 @@ Args:
   * refs (list[str]) - A list of ref names to set for the package instance.
   * tags (dict[str]str) - A map of tag name -> value to set for the
     package instance.
+  * compression_level (None|[0-9]) - Deflate compression level. If None,
+    defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#446)(self, pkg_def, refs=None, tags=None, pkg_vars=None):**
+&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#489)(self, pkg_def, refs=None, tags=None, pkg_vars=None, compression_level=None):**
 
 Builds and uploads a package based on on-disk YAML package definition
 file.
@@ -331,10 +341,12 @@ Args:
     package instance.
   * pkg_vars (dict[str]str) - A map of var name -> value to use for vars
     referenced in package definition file.
+  * compression_level (None|[0-9]) - Deflate compression level. If None,
+    defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [describe](/recipe_modules/cipd/api.py#585)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
+&mdash; **def [describe](/recipe_modules/cipd/api.py#636)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
 
 Returns information about a pacakge instance given its version:
 who uploaded the instance and when and a list of attached tags.
@@ -349,7 +361,7 @@ Args:
 
 Returns the CIPDApi.Description instance describing the package.
 
-&mdash; **def [ensure](/recipe_modules/cipd/api.py#484)(self, root, ensure_file):**
+&mdash; **def [ensure](/recipe_modules/cipd/api.py#535)(self, root, ensure_file):**
 
 Ensures that packages are installed in a given root dir.
 
@@ -359,9 +371,9 @@ Args:
 
 Returns the map of subdirectories to CIPDApi.Pin instances.
 
-&emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#255)(self):**
+&emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#269)(self):**
 
-&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#650)(self, root, package_file):**
+&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#701)(self, root, package_file):**
 
 Deploys the specified package to root.
 
@@ -375,7 +387,7 @@ Args:
 
 Returns a Pin for the deployed package.
 
-&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#618)(self, destination, package_name, version):**
+&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#669)(self, destination, package_name, version):**
 
 Downloads the specified package to destination.
 
@@ -392,7 +404,7 @@ Args:
 
 Returns a Pin for the downloaded package.
 
-&mdash; **def [register](/recipe_modules/cipd/api.py#401)(self, package_name, package_path, refs=(), tags=None):**
+&mdash; **def [register](/recipe_modules/cipd/api.py#441)(self, package_name, package_path, refs=(), tags=None):**
 
 Uploads and registers package instance in the package repository.
 
@@ -406,7 +418,7 @@ Args:
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [search](/recipe_modules/cipd/api.py#560)(self, package_name, tag):**
+&mdash; **def [search](/recipe_modules/cipd/api.py#611)(self, package_name, tag):**
 
 Searches for package instances by tag, optionally constrained by package
 name.
@@ -417,7 +429,7 @@ Args:
 
 Returns the list of CIPDApi.Pin instances.
 
-&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#535)(self, package_name, version, refs):**
+&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#586)(self, package_name, version, refs):**
 
 Moves a ref to point to a given version.
 
@@ -428,7 +440,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [set\_service\_account](/recipe_modules/cipd/api.py#233)(self, service_account):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [set\_service\_account](/recipe_modules/cipd/api.py#247)(self, service_account):**
 
 Temporarily sets the service account used for authentication to CIPD.
 
@@ -439,7 +451,7 @@ Args:
   * service_account(service_account.api.ServiceAccount): Service account to
       use for authentication.
 
-&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#508)(self, package_name, version, tags):**
+&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#559)(self, package_name, version, tags):**
 
 Tags package of a specific version.
 

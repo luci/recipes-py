@@ -39,7 +39,8 @@ def check_dict_type(name, var, expect_key, expect_value):
 class PackageDefinition(object):
   DIR = namedtuple('DIR', ['path', 'exclusions'])
 
-  def __init__(self, package_name, package_root, install_mode=None):
+  def __init__(self, package_name, package_root, install_mode=None,
+               preserve_mtime=False, preserve_writable=False):
     """Build a new PackageDefinition.
 
     Args:
@@ -51,6 +52,8 @@ class PackageDefinition(object):
       * install_mode (None|'copy'|'symlink') - the mechanism that the cipd
         client should use when installing this package. If None, defaults to the
         platform default ('copy' on windows, 'symlink' on everything else).
+      * preserve_mtime (bool) - Preserve file's modification time.
+      * preserve_writable (bool) - Preserve file's writable permission bit.
     """
     check_type('package_name', package_name, str)
     check_type('package_root', package_root, Path)
@@ -60,6 +63,8 @@ class PackageDefinition(object):
     self.package_name = package_name
     self.package_root = package_root
     self.install_mode = install_mode
+    self.preserve_mtime = preserve_mtime
+    self.preserve_writable = preserve_writable
 
     self.dirs = []  # list(DIR)
     self.files = []  # list(Path)
@@ -150,7 +155,16 @@ class PackageDefinition(object):
       ] + [
         {'dir': str(d.path), 'exclude': d.exclusions}
         for d in self.dirs
-      ] + ([{'version_file': self.version_file}] if self.version_file else [])
+      ] + (
+        [{'version_file': self.version_file}]
+          if self.version_file else []
+      ) + (
+        [{'preserve_mtime': self.preserve_mtime}]
+          if self.preserve_mtime else []
+      ) + (
+        [{'preserve_writable': self.preserve_writable}]
+          if self.preserve_writable else []
+      )
     }
 
 
@@ -295,23 +309,28 @@ class CIPDApi(recipe_api.RecipeApi):
     return step_result.json.output['result']
 
   def _build(self, pkg_name, pkg_def_file_or_placeholder, output_package,
-             pkg_vars=None):
+             pkg_vars=None, compression_level=None):
     if pkg_vars:
       check_dict_type('pkg_vars', pkg_vars, str, str)
 
+    cmd = [
+      'pkg-build',
+      '-pkg-def', pkg_def_file_or_placeholder,
+      '-out', output_package,
+      '-hash-algo', 'sha256',
+    ] + self._cli_options((), (), pkg_vars)
+    if compression_level:
+      cmd.extend(['-compression-level', int(compression_level)])
+
     step_result = self._run(
-        'build %s' % pkg_name,
-        [
-          'pkg-build',
-          '-pkg-def', pkg_def_file_or_placeholder,
-          '-out', output_package,
-        ] + self._cli_options((), (), pkg_vars),
+        'build %s' % pkg_name, cmd,
         step_test_data=lambda: self.test_api.example_build(pkg_name)
     )
     result = step_result.json.output['result']
     return self.Pin(**result)
 
-  def build_from_yaml(self, pkg_def, output_package, pkg_vars=None):
+  def build_from_yaml(self, pkg_def, output_package, pkg_vars=None,
+                      compression_level=None):
     """Builds a package based on on-disk YAML package definition file.
 
     Args:
@@ -319,6 +338,8 @@ class CIPDApi(recipe_api.RecipeApi):
       * output_package (Path) - The file to write the package to.
       * pkg_vars (dict[str]str) - A map of var name -> value to use for vars
         referenced in package definition file.
+      * compression_level (None|[0-9]) - Deflate compression level. If None,
+        defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
 
     Returns the CIPDApi.Pin instance.
     """
@@ -328,15 +349,19 @@ class CIPDApi(recipe_api.RecipeApi):
         pkg_def,
         output_package,
         pkg_vars,
+        compression_level,
     )
 
-  def build_from_pkg(self, pkg_def, output_package):
+  def build_from_pkg(self, pkg_def, output_package,
+                     compression_level=None):
     """Builds a package based on a PackageDefinition object.
 
     Args:
       * pkg_def (PackageDefinition) - The description of the package we want to
         create.
       * output_package (Path) - The file to write the package to.
+      * compression_level (None|[0-9]) - Deflate compression level. If None,
+        defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
 
     Returns the CIPDApi.Pin instance.
     """
@@ -344,10 +369,13 @@ class CIPDApi(recipe_api.RecipeApi):
     return self._build(
         pkg_def.package_name,
         self.m.json.input(pkg_def.to_jsonish()),
-        output_package
+        output_package,
+        compression_level=compression_level,
     )
 
-  def build(self, input_dir, output_package, package_name, install_mode=None):
+  def build(self, input_dir, output_package, package_name,
+            compression_level=None, install_mode=None, preserve_mtime=False,
+            preserve_writable=False):
     """Builds, but does not upload, a cipd package from a directory.
 
     Args:
@@ -355,24 +383,36 @@ class CIPDApi(recipe_api.RecipeApi):
       * output_package (Path) - The file to write the package to.
       * package_name (str) - The name of the cipd package as it would appear
         when uploaded to the cipd package server.
+      * compression_level (None|[0-9]) - Deflate compression level. If None,
+        defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
       * install_mode (None|'copy'|'symlink') - The mechanism that the cipd
         client should use when installing this package. If None, defaults to the
         platform default ('copy' on windows, 'symlink' on everything else).
+      * preserve_mtime (bool) - Preserve file's modification time.
+      * preserve_writable (bool) - Preserve file's writable permission bit.
 
     Returns the CIPDApi.Pin instance.
     """
+    assert not compression_level or isinstance(compression_level, int)
     assert not install_mode or install_mode in ['copy', 'symlink']
 
+    cmd = [
+      'pkg-build',
+      '-in', input_dir,
+      '-name', package_name,
+      '-out', output_package,
+      '-hash-algo', 'sha256',
+    ]
+    if compression_level:
+      cmd.extend(['-compression-level', int(compression_level)])
+    if install_mode:
+      cmd.extend(['-install-mode', install_mode])
+    if preserve_mtime:
+      cmd.append('-preserve-mtime')
+    if preserve_writable:
+      cmd.append('-preserve-writable')
     step_result = self._run(
-        'build %s' % self.m.path.basename(package_name),
-        [
-          'pkg-build',
-          '-in', input_dir,
-          '-name', package_name,
-          '-out', output_package,
-        ] + (
-          ['-install-mode', install_mode] if install_mode else []
-        ),
+        'build %s' % self.m.path.basename(package_name), cmd,
         step_test_data=lambda: self.test_api.example_build(package_name)
     )
     result = step_result.json.output['result']
@@ -422,7 +462,7 @@ class CIPDApi(recipe_api.RecipeApi):
     return self.Pin(**step_result.json.output['result'])
 
   def _create(self, pkg_name, pkg_def_file_or_placeholder, refs=None, tags=None,
-              pkg_vars=None):
+              pkg_vars=None, compression_level=None):
     refs = [] if refs is None else refs
     tags = {} if tags is None else tags
     pkg_vars = {} if pkg_vars is None else pkg_vars
@@ -432,7 +472,10 @@ class CIPDApi(recipe_api.RecipeApi):
     cmd = [
       'create',
       '-pkg-def', pkg_def_file_or_placeholder,
+      '-hash-algo', 'sha256',
     ] + self._cli_options(refs, tags, pkg_vars) + self._service_account_opts()
+    if compression_level:
+      cmd.extend(['-compression-level', int(compression_level)])
     step_result = self._run(
       'create %s' % pkg_name, cmd,
       step_test_data=lambda: self.test_api.m.json.output({
@@ -443,7 +486,8 @@ class CIPDApi(recipe_api.RecipeApi):
     step_result.presentation.step_text += '</br>id: %(instance_id)s' % result
     return self.Pin(**result)
 
-  def create_from_yaml(self, pkg_def, refs=None, tags=None, pkg_vars=None):
+  def create_from_yaml(self, pkg_def, refs=None, tags=None, pkg_vars=None,
+                       compression_level=None):
     """Builds and uploads a package based on on-disk YAML package definition
     file.
 
@@ -456,14 +500,18 @@ class CIPDApi(recipe_api.RecipeApi):
         package instance.
       * pkg_vars (dict[str]str) - A map of var name -> value to use for vars
         referenced in package definition file.
+      * compression_level (None|[0-9]) - Deflate compression level. If None,
+        defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
 
     Returns the CIPDApi.Pin instance.
     """
     check_type('pkg_def', pkg_def, Path)
     return self._create(
-        self.m.path.basename(pkg_def), pkg_def, refs, tags, pkg_vars)
+        self.m.path.basename(pkg_def), pkg_def, refs, tags, pkg_vars,
+        compression_level)
 
-  def create_from_pkg(self, pkg_def, refs=None, tags=None):
+  def create_from_pkg(self, pkg_def, refs=None, tags=None,
+                      compression_level=None):
     """Builds and uploads a package based on a PackageDefinition object.
 
     This builds and uploads the package in one step.
@@ -474,12 +522,15 @@ class CIPDApi(recipe_api.RecipeApi):
       * refs (list[str]) - A list of ref names to set for the package instance.
       * tags (dict[str]str) - A map of tag name -> value to set for the
         package instance.
+      * compression_level (None|[0-9]) - Deflate compression level. If None,
+        defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
 
     Returns the CIPDApi.Pin instance.
     """
     check_type('pkg_def', pkg_def, PackageDefinition)
     return self._create(
-      pkg_def.package_name, self.m.json.input(pkg_def.to_jsonish()), refs, tags)
+        pkg_def.package_name, self.m.json.input(pkg_def.to_jsonish()), refs,
+        tags, compression_level=compression_level)
 
   def ensure(self, root, ensure_file):
     """Ensures that packages are installed in a given root dir.

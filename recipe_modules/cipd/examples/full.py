@@ -79,7 +79,8 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
     # Build & register new package version.
     api.cipd.build('fake-input-dir', 'fake-package-path', 'infra/fake-package')
     api.cipd.build('fake-input-dir', 'fake-package-path', 'infra/fake-package',
-                   install_mode='copy')
+                   compression_level=9, install_mode='copy',
+                   preserve_mtime=True, preserve_writable=True)
     api.cipd.register('infra/fake-package', 'fake-package-path',
                       refs=refs, tags=tags)
 
@@ -103,12 +104,14 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
       api.cipd.create_from_pkg(pkg, refs=refs, tags=tags)
     else:
       api.cipd.build_from_yaml(api.path['start_dir'].join('fake-package.yaml'),
-                               'fake-package-path', pkg_vars=pkg_vars)
+                               'fake-package-path', pkg_vars=pkg_vars,
+                               compression_level=9)
       api.cipd.register('infra/fake-package', 'fake-package-path',
                         refs=refs, tags=tags)
 
       api.cipd.create_from_yaml(api.path['start_dir'].join('fake-package.yaml'),
-                                refs=refs, tags=tags, pkg_vars=pkg_vars)
+                                refs=refs, tags=tags, pkg_vars=pkg_vars,
+                                compression_level=9)
 
     # Set tag or ref of an already existing package.
     api.cipd.set_tag('fake-package',

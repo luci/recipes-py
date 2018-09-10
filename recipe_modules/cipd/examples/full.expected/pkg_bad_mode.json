@@ -384,6 +384,8 @@
       "infra/fake-package",
       "-out",
       "fake-package-path",
+      "-hash-algo",
+      "sha256",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -408,8 +410,14 @@
       "infra/fake-package",
       "-out",
       "fake-package-path",
+      "-hash-algo",
+      "sha256",
+      "-compression-level",
+      "9",
       "-install-mode",
       "copy",
+      "-preserve-mtime",
+      "-preserve-writable",
       "-json-output",
       "/path/to/tmp/json"
     ],
