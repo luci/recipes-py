@@ -30,6 +30,11 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       }
     })
 
+  def _default_git_repo(self, project):  # pragma: no cover
+    if 'internal' in project:
+      return 'https://chrome-internal.googlesource.com/' + project
+    return 'https://chromium.googlesource.com/' + project
+
   def ci_build(
       self,
       project='project',
@@ -44,11 +49,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         yield (api.test('basic') +
                api.buildbucket.ci_build(project='my-proj', builder='win'))
     """
-    if git_repo is None:  # pragma: no cover
-      if 'internal' in project:
-        git_repo = 'chrome-internal.googlesource.com/' + project
-      else:
-        git_repo = 'chromium.googlesource.com/' + project
+    git_repo = git_repo or self._default_git_repo(project)
     gitiles_host, gitiles_project = util.parse_gitiles_repo_url(git_repo)
     assert gitiles_host and gitiles_project, 'invalid repo %s' % git_repo
 
@@ -77,7 +78,6 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       project='project',
       bucket='try',  # shortname.
       builder='builder',
-      gerrit_host=None,  # gerrit_host is DEPRECATED. Use git_repo.
       git_repo=None,
       change_number=123456,
       patch_set=7):
@@ -88,20 +88,13 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         yield (api.test('basic') +
                api.buildbucket.try_build(project='my-proj', builder='win'))
     """
-    if git_repo:
-      gerrit_host, gerrit_project = util.parse_gitiles_repo_url(git_repo)
-      gs_suffix = '.googlesource.com'
-      if gerrit_host.endswith(gs_suffix):
-        prefix = gerrit_host[:-len(gs_suffix)]
-        if not prefix.endswith('-review'):
-          gerrit_host = '%s-review%s' % (prefix, gs_suffix)
-    else:  # pragma: no cover
-      gerrit_project = project
-    if gerrit_host is None:  # pragma: no cover
-      if 'internal' in project:
-        gerrit_host = 'chrome-internal-review.googlesource.com'
-      else:
-        gerrit_host = 'chromium-review.googlesource.com'
+    git_repo = git_repo or self._default_git_repo(project)
+    gerrit_host, gerrit_project = util.parse_gitiles_repo_url(git_repo)
+    gs_suffix = '.googlesource.com'
+    if gerrit_host.endswith(gs_suffix):
+      prefix = gerrit_host[:-len(gs_suffix)]
+      if not prefix.endswith('-review'):
+        gerrit_host = '%s-review%s' % (prefix, gs_suffix)
 
     # Do not add tags because recipe emulation results must not depend on tags.
     return self.build(build_pb2.Build(
