@@ -80,7 +80,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       builder='builder',
       git_repo=None,
       change_number=123456,
-      patch_set=7):
+      patch_set=7,
+      revision=None):
     """Emulate typical buildbucket try build scheduled by CQ.
 
     Usage:
@@ -89,7 +90,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
                api.buildbucket.try_build(project='my-proj', builder='win'))
     """
     git_repo = git_repo or self._default_git_repo(project)
-    gerrit_host, gerrit_project = util.parse_gitiles_repo_url(git_repo)
+    git_host, git_project = util.parse_gitiles_repo_url(git_repo)
+
+    gerrit_host = git_host
     gs_suffix = '.googlesource.com'
     if gerrit_host.endswith(gs_suffix):
       prefix = gerrit_host[:-len(gs_suffix)]
@@ -97,7 +100,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         gerrit_host = '%s-review%s' % (prefix, gs_suffix)
 
     # Do not add tags because recipe emulation results must not depend on tags.
-    return self.build(build_pb2.Build(
+    build = build_pb2.Build(
         id=8945511751514863184,
         builder=build_pb2.BuilderID(
             project=project,
@@ -110,13 +113,21 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
             gerrit_changes=[
                 common_pb2.GerritChange(
                     host=gerrit_host,
-                    project=gerrit_project,
+                    project=git_project,
                     change=change_number,
                     patchset=patch_set,
                 ),
             ],
         ),
-    ))
+    )
+
+    if revision:
+      c = build.input.gitiles_commit
+      c.host = git_host
+      c.project = git_project
+      c.id = revision
+
+    return self.build(build)
 
   def simulated_buildbucket_output(self, additional_build_parameters):
     buildbucket_output = {

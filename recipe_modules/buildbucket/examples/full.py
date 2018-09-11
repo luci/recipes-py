@@ -19,6 +19,9 @@ def RunSteps(api):
     assert build.builder.project == 'proj'
     assert build.builder.builder == 'try-builder'
     assert '-review' in build.input.gerrit_changes[0].host
+    assert build.input.gitiles_commit.id == 'a' * 40
+    assert (build.input.gitiles_commit.project ==
+            build.input.gerrit_changes[0].project)
   elif build.builder.bucket == 'ci':
     assert build.builder.project == 'proj-internal'
     assert build.builder.builder == 'ci-builder'
@@ -129,7 +132,8 @@ def GenTests(api):
          api.buildbucket.try_build(
              project='proj',
              builder='try-builder',
-             git_repo='https://chrome-internal.googlesource.com/a/repo.git') +
+             git_repo='https://chrome-internal.googlesource.com/a/repo.git',
+             revision='a' * 40) +
          api.step_data(
              'buildbucket.put',
              stdout=api.raw_io.output_text(mock_buildbucket_multi_response)) +
