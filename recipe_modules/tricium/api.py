@@ -63,8 +63,13 @@ class TriciumApi(recipe_api.RecipeApi):
     if not comment in self._comments:
       self._comments.append(comment)
 
-  def write_comments(self):
+  def write_comments(self, dump=False):
     result = self.m.step('write results', [])
-    result.presentation.properties['tricium'] = {
-      'comments': self._comments,
-    }
+    if dump:
+      result.presentation.properties['tricium'] = self.m.json.dumps({
+        'comments': self._comments,
+      })
+    else:
+      result.presentation.properties['tricium'] = {
+        'comments': self._comments,
+      }

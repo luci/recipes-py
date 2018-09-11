@@ -25,6 +25,7 @@ def RunSteps(api):
   )
 
   api.tricium.write_comments()
+  api.tricium.write_comments(dump=True)
 
 
 def GenTests(api):

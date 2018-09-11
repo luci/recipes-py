@@ -1672,7 +1672,7 @@ for details and definitions).
 
 &emsp; **@property**<br>&mdash; **def [repository](/recipe_modules/tricium/api.py#34)(self):**
 
-&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#66)(self):**
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#66)(self, dump=False):**
 ### *recipe_modules* / [url](/recipe_modules/url)
 
 [DEPS](/recipe_modules/url/__init__.py#5): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io)
