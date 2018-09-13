@@ -21,6 +21,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 
 
@@ -187,17 +188,29 @@ def _FlattenSingleDirectories(path):
         first_single_dir = os.path.join(path, dirs[0])
       continue
 
-    # otherwise we found the stuff!
+    # otherwise we found some stuff!
+    if not first_single_dir:
+      # if we didn't find a first_single_dir, we're still in the base directory
+      # and don't have anything to do.
+      print('contents appears already flattened')
+      return 0
+
     print('found contents at: %r' % (os.path.relpath(root, path),))
+
+    # first move the first_single_dir out of the way, in case there's
+    # a file/folder we need to move that has a conflicting name.
+    tmpname = tempfile.mktemp(dir=path)
+    print('moving root folder out of the way: %r -> %r' % (first_single_dir, tmpname))
+    os.rename(first_single_dir, tmpname)
+
     for name in itertools.chain(dirs, files):
-      fullname = os.path.join(root, name)
+      fullname = os.path.join(root, name).replace(first_single_dir, tmpname)
       to = os.path.join(path, name)
       print('mv %r %r' % (fullname, to))
       os.rename(fullname, to)
     print('moved %d dirs and %d files' % (len(dirs), len(files)))
-    if first_single_dir:
-      print('rm -rf %r' % (first_single_dir,))
-      shutil.rmtree(first_single_dir)
+    print('rm -rf %r' % (tmpname,))
+    shutil.rmtree(tmpname)
     return 0
 
 
