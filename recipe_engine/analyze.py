@@ -146,6 +146,5 @@ def main(package_deps, args):
   args.input.close()
 
   data = analyze(universe, in_data)
-  args.output.write(jsonpb.MessageToJson(
-      data, including_default_value_fields=False))
+  args.output.write(jsonpb.MessageToJson(data))
   return bool(data.error)
