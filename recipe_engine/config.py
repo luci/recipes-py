@@ -641,7 +641,8 @@ class Dict(ConfigBase, collections.MutableMapping):
 
   def schema_proto(self):
     ret = doc.Doc.Schema()
-    ret.dict.value_type.extend(_inner_type_schema(self.value_type))
+    if self.value_type is not None:
+      ret.dict.value_type.extend(_inner_type_schema(self.value_type))
     return ret
 
 
