@@ -5,6 +5,7 @@
 import base64
 import json
 
+from google.protobuf import json_format
 from google.protobuf import timestamp_pb2
 
 from recipe_engine import recipe_test_api
@@ -26,8 +27,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     """
     return self.m.properties(**{
       '$recipe_engine/buildbucket': {
-        'build': base64.b64encode(build_message.SerializeToString()),
-      }
+        'build': json.loads(json_format.MessageToJson(build_message)),
+      },
     })
 
   def _default_git_repo(self, project):  # pragma: no cover

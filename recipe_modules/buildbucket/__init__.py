@@ -12,18 +12,17 @@ DEPS = [
 ]
 
 from recipe_engine.recipe_api import Property
-from recipe_engine.config import ConfigGroup, Single
+from recipe_engine.config import ConfigGroup, Dict
 
 PROPERTIES = {
   '$recipe_engine/buildbucket': Property(
       help='Internal property to initialize buildbucket module',
       param_name='property',
       kind=ConfigGroup(
-          # base64-encoded bytes of buildbucket.v2.Build message serialized as
-          # binary. Serialized to discourage users from interpreting it,
-          # and to ignore unrecognized fields.
-          # Exposed as buildbucket.build property, see its docstring.
-          build=Single(str),
+          # A dict representing a JSONPB-encoded buildbucket.v2.Build message.
+          # DO NOT USE DIRECTLY IN RECIPES!
+          # Use api.buildbucket.build instead, see its docstring.
+          build=Dict(),
       ),
       default={},
   ),

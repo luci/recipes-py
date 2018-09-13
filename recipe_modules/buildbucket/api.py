@@ -11,6 +11,8 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 import base64
 import json
 
+from google.protobuf import json_format
+
 from recipe_engine import recipe_api
 
 from .proto import build_pb2
@@ -40,7 +42,10 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     self._build = build_pb2.Build()
     if property.get('build'):
-      self._build.ParseFromString(base64.b64decode(property.get('build')))
+      json_format.Parse(
+          json.dumps(property.get('build')),
+          self._build,
+          ignore_unknown_fields=True)
     else:
       # Legacy mode.
       build_dict = legacy_property.get('build', {})
