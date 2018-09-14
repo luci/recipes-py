@@ -36,6 +36,7 @@ class AnalyzeTest(unittest.TestCase):
           self.assertEqual(json.load(f), {
             'error': 'Some input recipes were invalid',
             'invalidRecipes': ['engine_tests/unicooooooode'],
+            'recipes': [],
           })
         self.assertEqual(1, exit_code)
 
@@ -55,7 +56,11 @@ class AnalyzeTest(unittest.TestCase):
                 ROOT_DIR, 'infra', 'config', 'recipes.cfg'),
             'analyze', input_path, output_path])
         with open(output_path) as f:
-          self.assertEqual(json.load(f), {})
+          self.assertEqual(json.load(f), {
+            'error': '',
+            'invalidRecipes': [],
+            'recipes': [],
+          })
         self.assertEqual(0, exit_code)
 
   def testGitAttrs(self):
@@ -78,6 +83,8 @@ class AnalyzeTest(unittest.TestCase):
             'analyze', input_path, output_path])
         with open(output_path) as f:
           self.assertEqual(json.load(f), {
+            'error': '',
+            'invalidRecipes': [],
             # List should be safe to not wrap with a call to sorted, since
             # proto repeated fields are ordered, so everything should be
             # analyzed in the same order every time.
@@ -105,6 +112,8 @@ class AnalyzeTest(unittest.TestCase):
             'analyze', input_path, output_path])
         with open(output_path) as f:
           self.assertEqual(json.load(f), {
+            'error': '',
+            'invalidRecipes': [],
             'recipes': ['engine_tests/unicode'],
           })
         self.assertEqual(0, exit_code)
@@ -127,6 +136,8 @@ class AnalyzeTest(unittest.TestCase):
             'analyze', input_path, output_path])
         with open(output_path) as f:
           self.assertEqual(json.load(f), {
+            'error': '',
+            'invalidRecipes': [],
             'recipes': ['engine_tests/unicode'],
           })
         self.assertEqual(0, exit_code)
@@ -148,6 +159,8 @@ class AnalyzeTest(unittest.TestCase):
             'analyze', input_path, output_path])
         with open(output_path) as f:
           self.assertEqual(json.load(f), {
+            'error': '',
+            'invalidRecipes': [],
             'recipes': ['engine_tests/unicode'],
           })
         self.assertEqual(0, exit_code)
