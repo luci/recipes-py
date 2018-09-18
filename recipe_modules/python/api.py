@@ -89,7 +89,10 @@ class PythonApi(recipe_api.RecipeApi):
     return result
 
   def result_step(self, name, text, retcode, as_log=None):
-    """Runs a no-op step that exits with a specified return code."""
+    """Runs a no-op step that exits with a specified return code.
+
+    The recipe engine will raise an exception when seeing a return code != 0.
+    """
     try:
       return self.inline(
           name,
