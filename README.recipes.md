@@ -513,9 +513,9 @@ Args:
   * infra_steps (bool) - if steps in this context should be considered
     infrastructure steps. On failure, these will raise InfraFailure
     exceptions instead of StepFailure exceptions.
-  * name_prefix (str) - A string to prepend to the names of all steps in
-    this context. These compose with '.' characters if multiple name prefix
-    contexts occur. See below for more info.
+  * name_prefix (basestring) - A string to prepend to the names of all
+    steps in this context. These compose with '.' characters if multiple
+    name prefix contexts occur. See below for more info.
 
 Name prefixes:
 
@@ -1248,7 +1248,7 @@ Args:
 **Returns (`types.StepData`)** - The StepData object as returned by
 api.step.
 
-&mdash; **def [failing\_step](/recipe_modules/python/api.py#110)(self, name, text, as_log=None):**
+&mdash; **def [failing\_step](/recipe_modules/python/api.py#113)(self, name, text, as_log=None):**
 
 Runs a succeeding step (exits 1).
 
@@ -1273,7 +1273,9 @@ api.step.
 
 Runs a no-op step that exits with a specified return code.
 
-&mdash; **def [succeeding\_step](/recipe_modules/python/api.py#106)(self, name, text, as_log=None):**
+The recipe engine will raise an exception when seeing a return code != 0.
+
+&mdash; **def [succeeding\_step](/recipe_modules/python/api.py#109)(self, name, text, as_log=None):**
 
 Runs a succeeding step (exits 0).
 ### *recipe_modules* / [raw\_io](/recipe_modules/raw_io)

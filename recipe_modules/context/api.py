@@ -81,9 +81,9 @@ class ContextApi(RecipeApi):
       * infra_steps (bool) - if steps in this context should be considered
         infrastructure steps. On failure, these will raise InfraFailure
         exceptions instead of StepFailure exceptions.
-      * name_prefix (str) - A string to prepend to the names of all steps in
-        this context. These compose with '.' characters if multiple name prefix
-        contexts occur. See below for more info.
+      * name_prefix (basestring) - A string to prepend to the names of all
+        steps in this context. These compose with '.' characters if multiple
+        name prefix contexts occur. See below for more info.
 
     Name prefixes:
 
@@ -144,11 +144,11 @@ class ContextApi(RecipeApi):
       _push(self._nest_level, self.nest_level+1)
 
     if name_prefix is not None:
-      check_type('name_prefix', name_prefix, str)
+      check_type('name_prefix', name_prefix, basestring)
       cur = self.name_prefix
       if cur:
         name_prefix = '%s.%s' % (cur, name_prefix)
-      _push(self._name_prefix, name_prefix)
+      _push(self._name_prefix, str(name_prefix))
 
     if env_prefixes is not None and len(env_prefixes) > 0:
       check_type('env_prefixes', env_prefixes, dict)
