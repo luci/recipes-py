@@ -46,9 +46,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
           json.dumps(property.get('build')),
           self._build,
           ignore_unknown_fields=True)
+      self._bucket_v1 = 'luci.%s.%s' % (
+          self._build.builder.project, self._build.builder.bucket)
     else:
       # Legacy mode.
       build_dict = legacy_property.get('build', {})
+      self._bucket_v1 = build_dict.get('bucket', None)
       self.build.number = int(buildnumber or 0)
       if 'id' in build_dict:
         self._build.id = int(build_dict['id'])
@@ -202,6 +205,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
         '%s:%s' % (k, v)
         for k, v in new_tags.iteritems()
         if v is not None)
+
+  @property
+  def bucket_v1(self):
+    """Returns bucket name in v1 format.
+
+    Mostly useful for scheduling new builds using V1 API.
+    """
+    return self._bucket_v1
+
 
   # DEPRECATED API.
 

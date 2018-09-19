@@ -23,6 +23,9 @@ def RunSteps(api):
   ]
   api.step('tags_for_child_build', ['echo'] + child_build_tags)
 
+  assert api.buildbucket.bucket_v1 == api.properties.get('expected_bucket_v1')
+
+
 def GenTests(api):
 
   def case(name, **properties):
@@ -148,11 +151,13 @@ def GenTests(api):
       patch_set=2,
   )
 
-  yield legacy_build(
-      'v1 luci builder id',
-      project='chromium',
-      bucket='luci.chromium.try',
-      tags=['builder:linux'])
+  yield (
+      legacy_build(
+          'v1 luci builder id',
+          project='chromium',
+          bucket='luci.chromium.try',
+          tags=['builder:linux']) +
+      api.properties(expected_bucket_v1='luci.chromium.try'))
 
   yield case(
       'v1 buildbot builder id', mastername='chromium', buildername='linux')
