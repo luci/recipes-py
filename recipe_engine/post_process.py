@@ -331,6 +331,32 @@ def LogContains(check, step_odict, step, log, expected_substrs):
     check(expected in actual)
 
 
+def AnnotationContains(check, step_odict, step, expected_substrs):
+  """Assert that a step's annotations contains given substrings.
+
+  Args:
+    step (str) - The step to check the annotations of.
+    expected_substrs (list(str)) - The expected substrings the annotations
+        should contain.
+
+  Usage:
+    yield (
+        TEST
+         + api.post_process(AnnotationContains, 'step-name',
+                            ['substr1', 'substr2'])
+    )
+  """
+  assert not isinstance(expected_substrs, basestring), \
+      'expected_substrs must be an iterable of strings and must not be a string'
+
+  if not check('step %s was run' % step, step in step_odict):
+    return
+  annotations = '\n'.join(step_odict[step].get('~followup_annotations', []))
+
+  for expected in expected_substrs:
+    check(expected in annotations)
+
+
 def StatusCodeIn(check, step_odict, *codes):
   """Assert that recipe result status code is within expected codes.
 
