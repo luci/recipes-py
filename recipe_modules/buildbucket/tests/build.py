@@ -56,6 +56,9 @@ def GenTests(api):
   yield legacy_build('v1 gitiles commit, invalid', tags=[
       'buildset:commit/gitiles/a/b/c/d'
   ])
+  yield legacy_build(
+      'v1 created_by',
+      created_by='user:jane@example.com')
 
   yield case(
       'buildbot gitiles commit',

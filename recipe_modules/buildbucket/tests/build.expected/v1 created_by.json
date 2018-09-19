@@ -1,0 +1,23 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "builder {",
+      "}",
+      "created_by: \"user:jane@example.com\""
+    ],
+    "name": "build"
+  },
+  {
+    "cmd": [
+      "echo",
+      "user_agent:recipe"
+    ],
+    "name": "tags_for_child_build"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]

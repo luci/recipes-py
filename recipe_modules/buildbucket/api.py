@@ -53,6 +53,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       build_dict = legacy_property.get('build', {})
       self._bucket_v1 = build_dict.get('bucket', None)
       self.build.number = int(buildnumber or 0)
+      self.build.created_by = build_dict.get('created_by', '')
       if 'id' in build_dict:
         self._build.id = int(build_dict['id'])
       build_sets = list(util._parse_buildset_tags(build_dict.get('tags', [])))
