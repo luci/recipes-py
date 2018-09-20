@@ -731,11 +731,11 @@ def GenTests(api):
 `api.json.output()` returns a `recipe_api.Placeholder` which is meant to be
 added into a step command list. When the step runs, the placeholder gets
 rendered into some strings (in this case, like '/tmp/some392ra8'). When the step
-finishes, the Placeholder adds data to the `StepData` object for the step which
-just ran, namespaced by the module name (in this case, the 'json' module decided
-to add an 'output' attribute to the `step_history` item). I'd encourage you to
-take a peek at the implementation of the json module to see how this is
-implemented.
+finishes, the [Placeholder](#placeholders) adds data to the `StepData` object
+for the step which just ran, namespaced by the module name (in this case, the
+'json' module decided to add an 'output' attribute to the `step_history` item).
+I'd encourage you to take a peek at the implementation of the json module to see
+how this is implemented.
 
 ### Example: write to standard input of a step
 
@@ -850,3 +850,58 @@ Check the docstrings in `*.py`. `<trollface text="Problem?"/>`
 
 In addition, most recipe modules have example recipes in the `examples`
 subfolder which exercises most of the code in the module for example purposes.
+
+## <a name="placeholders"></a>  What are Placeholders and how do they work?
+
+Placeholders are wrappers around inputs and outputs from recipe steps. They
+provide a mocking mechanism for tests, and data-processing capabilities.
+
+### Example
+
+```python
+step_result = api.python('run a cool script', 'really_cool_script.py',
+                         ['--json-output-file', api.json.output()],
+                         ok_ret=(0,1))
+print step_result.json.output
+```
+
+There's quite a bit of magic happening underlying these two lines of code. Let's
+dive in.
+
+`api.json.output()` returns an instance of `JsonOutputPlaceholder`.
+`JsonOutputPlaceholder` is a subclass of `OutputPlaceholder`, and has two
+relevant public methods: `render()` and `result()`. The recipe engine will
+replace each instance of `OutputPlaceholder` in the arguments list with
+`OutputPlaceholder.render()`. `JsonOutputPlaceholder` creates a file and returns
+its name in `render()`. For this example, let's assume that `render()` returns
+`/tmp/output.json`.
+
+So in this case, the recipe engine will actually execute:
+```
+python really_cool_script.py --json-output-file /tmp/output.json
+```
+
+When the program returns, the recipe engine will call
+`JsonOutputPlaceholder.result()` and seed the result into
+`step_result.json.output`. Here, `json` refers to the name of the recipe module,
+and `output` was the name of the function that returned the
+`JsonOutputPlaceholder`.
+
+The implementation of `JsonOutputPlaceholder.result()` will parse the JSON from
+`/tmp/output.json`.
+
+### Tests and Mocks
+
+```python
+yield api.test('test really_cool_script.py') +
+api.step_data('run a cool script', api.json.output({'json': 'object'}))
+```
+
+This test case will stub out the actual invocation of `really_cool_script.py`
+and directly populate the test dictionary into
+`api.step.active_result.json.output`.
+
+Behind the scenes, this works because the `json` module has defined a
+`test_api.py` class with a method `output`. The invocation of `api.json.output`
+is actually calling a different function than the prior call to
+`api.json.output`.
