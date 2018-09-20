@@ -111,7 +111,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   @property
   def builder_name(self):
-    """Returns builder name. Shortcur for .build.builder.builder."""
+    """Returns builder name. Shortcut for .build.builder.builder."""
     return self.build.builder.builder
 
   @property
