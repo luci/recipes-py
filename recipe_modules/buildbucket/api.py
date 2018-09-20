@@ -110,6 +110,11 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return self._build
 
   @property
+  def builder_name(self):
+    """Returns builder name. Shortcur for .build.builder.builder."""
+    return self.build.builder.builder
+
+  @property
   def tags_for_child_build(self):
     """A dict of tags (key -> value) derived from current (parent) build for a
     child build."""

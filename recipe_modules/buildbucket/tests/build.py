@@ -17,6 +17,7 @@ def RunSteps(api):
   text = text_format.MessageToString(api.buildbucket.build)
   api.step('build', ['echo'] + text.splitlines())
 
+
   child_build_tags = [
       '%s:%s' % t
       for t in api.buildbucket.tags_for_child_build.iteritems()
@@ -24,6 +25,7 @@ def RunSteps(api):
   api.step('tags_for_child_build', ['echo'] + child_build_tags)
 
   assert api.buildbucket.bucket_v1 == api.properties.get('expected_bucket_v1')
+  assert api.buildbucket.builder_name == api.buildbucket.build.builder.builder
 
 
 def GenTests(api):
