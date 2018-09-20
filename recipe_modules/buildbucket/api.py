@@ -115,6 +115,14 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return self.build.builder.builder
 
   @property
+  def gitiles_commit(self):
+    """Returns input gitiles commit. Shortcut for .build.input.gitiles_commit.
+
+    Never returns None, but sub-fields may be empty.
+    """
+    return self.build.input.gitiles_commit
+
+  @property
   def tags_for_child_build(self):
     """A dict of tags (key -> value) derived from current (parent) build for a
     child build."""

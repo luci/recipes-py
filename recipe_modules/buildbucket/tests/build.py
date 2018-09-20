@@ -26,6 +26,8 @@ def RunSteps(api):
 
   assert api.buildbucket.bucket_v1 == api.properties.get('expected_bucket_v1')
   assert api.buildbucket.builder_name == api.buildbucket.build.builder.builder
+  assert api.buildbucket.gitiles_commit == (
+      api.buildbucket.build.input.gitiles_commit)
 
 
 def GenTests(api):
