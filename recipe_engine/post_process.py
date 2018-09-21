@@ -185,6 +185,33 @@ def MustRunRE(check, step_odict, step_regex, at_least=1, at_most=None):
     check(matches <= at_most)
 
 
+def StepCommandContains(check, step_odict, step, argument_sequence):
+  """Assert that a step's command contained the given sequence of arguments.
+
+  Args:
+    step (str) - The name of the step to check the command of.
+    argument_sequence (list of str) - The expected sequence of arguments.
+      Does not need to contain all of the command's arguments.
+      Arguments in the sequence are expected to be found consecutively and
+      in order.
+  """
+  def subsequence(containing, contained):
+    for i in xrange(len(containing) - len(contained) + 1):
+      if containing[i:i+len(contained)] == contained:
+        return True
+    return False
+
+  if not check(
+      'step %s was run' % step,
+      step in step_odict):
+    return step_odict
+  step_cmd = step_odict[step][cmd]
+  check('command line for step %s contained %s' % (
+            step, argument_sequence),
+        subsequence(step_cmd, argument_sequence))
+  return step_odict
+
+
 _STEP_TEXT_RE = re.compile('@@@STEP_TEXT@(?P<text>.*)@@@$')
 
 
