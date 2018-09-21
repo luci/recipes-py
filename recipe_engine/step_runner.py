@@ -420,6 +420,127 @@ class SubprocessStepRunner(StepRunner):
 
     return change
 
+class QuietSubprocessStepRunner(SubprocessStepRunner):
+  """Runs commands. Quieter than the normal subprocess runner.
+
+  Prints less annotations, which makes it much easier to handle when running a
+  recipe locally.
+  """
+
+  def __init__(self, stream_engine, engine_flags, tempdir):
+    super(QuietSubprocessStepRunner, self).__init__(stream_engine, engine_flags)
+    self._tempdir = tempdir
+
+  def _print_step(self, step_stream, step, env):
+    """Prints the step command and relevant metadata."""
+    def gen_step_prelude():
+      itms = []
+      for key, value in step.config._asdict().items():
+        # Don't need to print these.
+        # FIXME: maybe add a flag to print cmd?
+        if key in ('cmd', 'name', 'step_test_data'):
+          continue
+
+        # Only print something if it's actually different than the default.
+        if key == 'base_name' and value == step.config.name:
+          continue
+        if key == 'ok_ret' and value == frozenset([0]):
+          continue
+        if key in ('env_prefixes', 'env_suffixes') and not value.mapping:
+          continue
+        itms.append((key, value))
+
+      if itms:
+        for key, value in sorted(itms):
+          if value:
+            yield ' %s: %s' % (key, self._render_step_value(value))
+
+        yield ''
+    stream.output_iter(step_stream, gen_step_prelude())
+
+  def _run_cmd(self, cmd, timeout, handles, env, cwd):
+    """Runs cmd (subprocess-style).
+
+    Since this is quiet, print only the beginning of any stdout, and dump the
+    contents of the stdout to a file.
+    """
+    fhandles = {}
+
+    # If we are given StreamEngine.Streams, map them to PIPE for subprocess.
+    # We will manually forward them to their corresponding stream.
+    for key in ('stdout', 'stderr'):
+      handle = handles.get(key)
+      if isinstance(handle, stream.StreamEngine.Stream):
+        fhandles[key] = subprocess42.PIPE
+      else:
+        fhandles[key] = handle
+
+    # stdin must be a real handle, if it exists
+    fhandles['stdin'] = handles.get('stdin')
+
+    with _modify_lookup_path(env.get('PATH')):
+      proc = subprocess42.Popen(
+          cmd,
+          env=env,
+          cwd=cwd,
+          detached=True,
+          universal_newlines=True,
+          **fhandles)
+
+    # Safe to close file handles now that subprocess has inherited them.
+    for handle in fhandles.itervalues():
+      if isinstance(handle, file):
+        handle.close()
+
+    outstreams = {}
+    linebufs = {}
+
+    for key in ('stdout', 'stderr'):
+      handle = handles.get(key)
+      if isinstance(handle, stream.StreamEngine.Stream):
+        outstreams[key] = handle
+        linebufs[key] = _streamingLinebuf()
+
+    if linebufs:
+      _, temppath = tempfile.mkstemp(dir=self._tempdir)
+      tempf = open(temppath, 'w')
+      num_wrote = 0
+      last_printed = 0
+
+      try:
+        # manually check the timeout, because we poll
+        start_time = time.time()
+        for pipe, data in proc.yield_any(timeout=1):
+          if timeout and time.time() - start_time > timeout:
+            # Don't know the name of the step, so raise this and it'll get
+            # caught
+            raise subprocess42.TimeoutExpired(cmd, timeout)
+
+          if pipe is None:
+            continue
+          buf = linebufs.get(pipe)
+          if not buf:
+            continue
+          buf.ingest(data)
+          for line in buf.get_buffered():
+            tempf.writelines([line+'\n'])
+            if num_wrote < 10:
+              outstreams[pipe].write_line(line)
+            elif num_wrote == 10:
+              outstreams[pipe].write_line('<SNIP> see more at %s' % temppath)
+              last_printed = time.time()
+            else:
+              if time.time() - last_printed > 3:
+                outstreams[pipe].write_line('<still running>')
+                last_printed = time.time()
+            num_wrote += 1
+      finally:
+        tempf.close()
+    else:
+      proc.wait(timeout)
+
+    return proc.returncode
+
 
 class fakeEnviron(object):
   """This is a fake dictionary which is meant to emulate os.environ strictly for
