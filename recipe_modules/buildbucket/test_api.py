@@ -36,26 +36,20 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       return 'https://chrome-internal.googlesource.com/' + project
     return 'https://chromium.googlesource.com/' + project
 
-  def ci_build(
+  def ci_build_message(
       self,
       project='project',
       bucket='ci',  # shortname.
       builder='builder',
       git_repo=None,
       revision='2d72510e447ab60a9728aeea2362d8be2cbd7789'):
-    """Emulate typical buildbucket CI build scheduled by luci-scheduler.
-
-    Usage:
-
-        yield (api.test('basic') +
-               api.buildbucket.ci_build(project='my-proj', builder='win'))
-    """
+    """Returns a typical buildbucket CI build scheduled by luci-scheduler."""
     git_repo = git_repo or self._default_git_repo(project)
     gitiles_host, gitiles_project = util.parse_gitiles_repo_url(git_repo)
     assert gitiles_host and gitiles_project, 'invalid repo %s' % git_repo
 
     # Do not add tags because recipe emulation results must not depend on tags.
-    return self.build(build_pb2.Build(
+    return build_pb2.Build(
         id=8945511751514863184,
         builder=build_pb2.BuilderID(
             project=project,
@@ -72,9 +66,21 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
                 id=revision,
             ),
         ),
-    ))
+    )
 
-  def try_build(
+  def ci_build(self, *args, **kwargs):
+    """Returns a typical buildbucket CI build scheduled by luci-scheduler.
+
+    A shortcut for api.buildbucket.build(api.buildbucket.ci_build_message()).
+
+    Usage:
+        yield (api.test('basic') +
+               api.buildbucket.ci_build(project='my-proj', builder='win'))
+    """
+    return self.build(self.ci_build_message(*args, **kwargs))
+
+
+  def try_build_message(
       self,
       project='project',
       bucket='try',  # shortname.
@@ -128,7 +134,19 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       c.project = git_project
       c.id = revision
 
-    return self.build(build)
+    return build
+
+  def try_build(self, *args, **kwargs):
+    """Emulates a typical buildbucket try build scheduled by CQ.
+
+    Shortcut for api.buildbucket.build(api.buildbucket.try_build_message()).
+
+    Usage:
+
+        yield (api.test('basic') +
+               api.buildbucket.try_build(project='my-proj', builder='win'))
+    """
+    return self.build(self.try_build_message(*args, **kwargs))
 
   def simulated_buildbucket_output(self, additional_build_parameters):
     buildbucket_output = {
