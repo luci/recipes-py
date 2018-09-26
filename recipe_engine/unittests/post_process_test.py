@@ -139,6 +139,67 @@ class TestRun(unittest.TestCase):
     self.expect_fails(3, post_process.DoesNotRunRE, 'b')
 
 
+class TestStepCommand(unittest.TestCase):
+  def setUp(self):
+    self.d = OrderedDict([
+        ('x', {'cmd': ['echo', 'foo', 'bar', 'baz']})
+    ])
+
+  def expect_fails(self, num_fails, func, *args, **kwargs):
+    c = checker.Checker('<filename>', 0, func, args, kwargs)
+    func(c, self.d, *args, **kwargs)
+    self.assertEqual(len(c.failed_checks), num_fails)
+    return c
+
+  def test_step_command_re_pass(self):
+    self.expect_fails(0, post_process.StepCommandRE, 'x',
+                      ['echo', 'f.*', 'bar', '.*z'])
+
+  def test_step_command_re_fail(self):
+    c = self.expect_fails(1, post_process.StepCommandRE, 'y',
+                          ['echo', 'foo', 'bar', 'baz'])
+    self.assertEqual(c.failed_checks[0].name, 'step y was run')
+
+    c = self.expect_fails(2, post_process.StepCommandRE, 'x',
+                          ['echo', 'fo', 'bar2', 'baz'])
+    self.assertEqual(c.failed_checks[0].frames[-1].code,
+                     'check(_fullmatch(expected, actual))')
+    self.assertEqual(c.failed_checks[0].frames[-1].varmap['expected'],
+                      "'fo'")
+    self.assertEqual(c.failed_checks[1].frames[-1].code,
+                     'check(_fullmatch(expected, actual))')
+    self.assertEqual(c.failed_checks[1].frames[-1].varmap['expected'],
+                      "'bar2'")
+
+    c = self.expect_fails(1, post_process.StepCommandRE, 'x',
+                          ['echo', 'foo'])
+    self.assertEqual(c.failed_checks[0].name, 'all arguments matched')
+    self.assertEqual(c.failed_checks[0].frames[-1].varmap['unmatched'],
+                      "['bar', 'baz']")
+
+    c = self.expect_fails(1, post_process.StepCommandRE, 'x',
+                          ['echo', 'foo', 'bar', 'baz', 'quux', 'quuy'])
+    self.assertEqual(c.failed_checks[0].name, 'all patterns used')
+    self.assertEqual(c.failed_checks[0].frames[-1].varmap['unused'],
+                     "['quux', 'quuy']")
+
+  def test_step_command_contains_pass(self):
+    self.expect_fails(0, post_process.StepCommandContains, 'x',
+                      ['echo', 'foo', 'bar'])
+    self.expect_fails(0, post_process.StepCommandContains, 'x',
+                      ['foo', 'bar', 'baz'])
+
+  def test_step_command_contains_fail(self):
+    c = self.expect_fails(1, post_process.StepCommandContains, 'y',
+                          ['echo', 'foo', 'bar'])
+    self.assertEqual(c.failed_checks[0].name, 'step y was run')
+
+    c = self.expect_fails(1, post_process.StepCommandContains, 'x',
+                          ['foo', 'baz'])
+    self.assertEqual(c.failed_checks[0].name,
+                     'command line for step x contained %r' % ['foo', 'baz'])
+
+
 class TestStepText(unittest.TestCase):
   def setUp(self):
     self.d = OrderedDict([

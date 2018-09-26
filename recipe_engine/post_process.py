@@ -185,6 +185,42 @@ def MustRunRE(check, step_odict, step_regex, at_least=1, at_most=None):
     check(matches <= at_most)
 
 
+def _check_step_was_run(check, step_odict, step):
+  return check('step %s was run' % step, step in step_odict)
+
+
+def _fullmatch(pattern, string):
+  m = re.match(pattern, string)
+  return m and m.span()[1] == len(string)
+
+
+def StepCommandRE(check, step_odict, step, expected_patterns):
+  """Assert that a step's command matches a given list of regular expressions.
+
+  Args:
+    step (str) - The step to check the command of.
+    expected_patterns (list(str, re.Pattern)) - Regular expressions to match the
+      elements of the step's command. The i-th element of the step's command
+      will be matched against the i-th regular expression. If the pattern does
+      not match the entire argument string, it is a CHECK failure.
+
+  Usage:
+    yield (
+        TEST
+        + api.post_process(StepCommandRE, 'step-name',
+                           ['my', 'command', '.*'])
+    )
+  """
+  if not _check_step_was_run(check, step_odict, step):
+    return
+  cmd = step_odict[step]['cmd']
+  for expected, actual in zip(expected_patterns, cmd):
+    check(_fullmatch(expected, actual))
+  unmatched = cmd[len(expected_patterns):]
+  check('all arguments matched', not unmatched)
+  unused = expected_patterns[len(cmd):]
+  check('all patterns used', not unused)
+
 def StepCommandContains(check, step_odict, step, argument_sequence):
   """Assert that a step's command contained the given sequence of arguments.
 
@@ -201,16 +237,13 @@ def StepCommandContains(check, step_odict, step, argument_sequence):
         return True
     return False
 
-  if not check(
-      'step %s was run' % step,
-      step in step_odict):
-    return step_odict
-  step_cmd = step_odict[step][cmd]
+  if not _check_step_was_run(check, step_odict, step):
+    return
+  step_cmd = step_odict[step]['cmd']
   check('command line for step %s contained %s' % (
             step, argument_sequence),
         subsequence(step_cmd, argument_sequence))
   return step_odict
-
 
 _STEP_TEXT_RE = re.compile('@@@STEP_TEXT@(?P<text>.*)@@@$')
 
@@ -228,7 +261,7 @@ def _extract_step_text(check, step_odict, step):
     step's step_text was not found). If the given step was not run, None will
     be returned.
   """
-  if not check('step %s was run' % step, step in step_odict):
+  if not _check_step_was_run(check, step_odict, step):
     return
   for a in step_odict[step].get('~followup_annotations', []):
     match = _STEP_TEXT_RE.match(a)
@@ -296,7 +329,7 @@ def _extract_log(check, step_odict, step, log):
     lines joined by \n. If the given step was not run or does not have the given
     log, None will be returned.
   """
-  if not check('step %s was run' % step, step in step_odict):
+  if not _check_step_was_run(check, step_odict, step):
     return
   log_lines = []
   for a in step_odict[step].get('~followup_annotations', []):
