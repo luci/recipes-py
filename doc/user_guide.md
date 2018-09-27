@@ -90,7 +90,7 @@ output of the command.
 
     Name                             Stmts   Miss  Cover   Missing
     --------------------------------------------------------------
-    scripts/slave/recipes/hello.py       5      1    80%   4
+    scripts/slave/recipes/hello.py       5      1    80%   5
     --------------------------------------------------------------
     TOTAL                            21132      1    99%
 
@@ -193,6 +193,98 @@ commit and reviewed for correctness.
 
 Running the tests now would result in a passing run, printing OK.
 
+### But we can do better
+
+In reality, the json expectation files are something of a maintenance burden and
+they don't do an effective job of making it clear what is being tested. You
+still may need to know how to train expectations if you're making modifications
+to existing recipes and modules that already use expectation files, but new
+tests should instead use the post-process api which enables making assertions on
+the steps that were run.
+
+This functionality is exposed to `GenTests` by calling `api.post_process`. This
+method requires a single parameter that is a function that will perform the
+checks. The provided function must take two parameters: `check` and
+`step_odict`.
+
+*   `check` is the function that performs the low-level check operation; it
+    evalutes a boolean expression and if it's false it records it as a failure.
+    When it records a failure, it also records the backtrace and the values of
+    variables used in the expression to provide helpful context when the
+    failures are displayed.
+*   `step_odict` is an `OrderedDict` mapping step name to the step's dictionary.
+    The dictionary for a step contains the same information that appears for the
+    step in the json expectation files.
+
+`api.post_process` accepts arbitrary additional positional and keyword arguments
+and these will be forwarded on to the assertion function.
+
+The function can return a filtered subset of `step_odict` or it can return None
+to indicate that there are no changes to `step_odict`. Multiple calls to
+`api.post_process` can be made and each of the provided functions will be called
+in order with the `step_odict` that results from prior assertion functions.
+
+Let's re-write our test to use the post-process api:
+
+```python
+# scripts/slave/recipes/hello.py
+from recipe_engine.post_process import StepCommandRE, DropExpectation
+
+DEPS = ['recipe_engine/step']
+
+def RunSteps(api):
+  api.step('Print Hello World', ['echo', 'hello', 'world'])
+
+def GenTests(api):
+  yield (
+      api.test('basic')
+      + api.post_process(StepCommandRE, 'Print Hello World',
+                         ['echo', 'hello', 'world'])
+      + api.post_process(DropExpectation)
+  )
+```
+
+Yes, elements of a test specification are combined with `+` and it's weird.
+
+The call that includes `StepCommandRE` will check that the step named
+'Print Hello World' has as its list of arguments ['echo', 'hello', 'world']
+(each element can actually be a regular expression that must match the
+corresponding argument). The call with just DropExpectation doesn't check
+anything, it just inhibits the test from outputting a json expectation file.
+
+If you were to change the command list passed when using `StepCommandRE` so that
+it no longer matched, you would get output similar to the following:
+
+    hello.basic failed:
+        CHECK(FAIL):
+          .../infra/recipes-py/recipe_engine/post_process.py:224 - StepCommandRE()
+            `check(_fullmatch(expected, actual))`
+              expected: 'world2'
+              actual: 'world'
+        added .../build/scripts/slave/recipes/hello.py:14
+          StepCommandRE('Print Hello World', ['echo', 'hello', 'world2'])
+
+This output provides the following information: a backtrace rooted from the
+entry-point into the assertion function to the failed check call, the value of
+variables in the expression provided to check (evaluate the expression in the
+check call rather than before so that you get more helpful output) and the
+location where the assertion was added.
+
+See the documentation of `post_process` in
+[recipe_test_api.py](https://chromium.googlesource.com/infra/luci/recipes-py/+/master/recipe_engine/recipe_test_api.py)
+for more details about the post-processing api and see
+[post_process.py](https://chromium.googlesource.com/infra/luci/recipes-py/+/master/recipe_engine/post_process.py)
+for information on the available assertion functions.
+
+Tests should use the post-process api to make assertions about the steps under
+test. Just as when writing tests under any other frameworks, be careful not to
+make your assertions too strict or you run the risk of needing to update tests
+due to unrelated changes. Tests should also make sure to pass `DropExpectation`
+to the final call to `api.post_process` to avoid creating json expectation
+files. It's important for that to be the last call to `api.post_process` because
+the functions passed to any later calls will receive an empty step dict
+otherwise.
+
 ## Let's do something useful
 
 ### Properties are the primary input for your recipes
@@ -215,16 +307,17 @@ Let's see an example!
 
 ```python
 # scripts/slave/recipes/hello.py
+from recipe_engine.post_process import StepCommandRE, DropExpectation
 from recipe_engine.recipe_api import Property
 
 DEPS = [
-  'recipe_engine/properties',
-  'recipe_engine/step',
+    'recipe_engine/properties',
+    'recipe_engine/step',
 ]
 
 PROPERTIES = {
-  'target_of_admiration': Property(
-      kind=str, help="Who you love and adore.", default="Chrome Infra"),
+    'target_of_admiration': Property(
+        kind=str, help="Who you love and adore.", default="Chrome Infra"),
 }
 
 def RunSteps(api, target_of_admiration):
@@ -234,9 +327,28 @@ def RunSteps(api, target_of_admiration):
   api.step('Greet Admired Individual', ['echo', verb % target_of_admiration])
 
 def GenTests(api):
-  yield api.test('basic') + api.properties(target_of_admiration='Bob')
-  yield api.test('vader') + api.properties(target_of_admiration='DarthVader')
-  yield api.test('infra rocks')
+  yield (
+      api.test('basic')
+      + api.properties(target_of_admiration='Bob')
+      + api.post_process(StepCommandRE, 'Greet Admired Individual',
+                         ['echo', 'Hello Bob'])
+      + api.post_process(DropExpectation)
+  )
+
+  yield (
+      api.test('vader')
+      + api.properties(target_of_admiration='DarthVader')
+      + api.post_process(StepCommandRE, 'Greet Admired Individual',
+                         ['echo', 'Die in a fire DarthVader!'])
+      + api.post_process(DropExpectation)
+  )
+
+  yield (
+      api.test('infra rocks')
+      + api.post_process(StepCommandRE, 'Greet Admired Individual',
+                         ['echo', 'Hello Chrome Infra'])
+      + api.post_process(DropExpectation)
+  )
 ```
 
 The property list is a whitelist, so if the properties provided as inputs to the
@@ -257,8 +369,6 @@ property to be required, just add `default=None` to the definition.
 
 Each parameter to `RunSteps` besides the `api` parameter requires a matching
 entry in the PROPERTIES dict.
-
-Yes, elements of a test specification are combined with `+` and it's weird.
 
 To specify property values in a local run:
 
@@ -333,13 +443,13 @@ First add an `__init__.py` with DEPS:
 from recipe_engine.recipe_api import Property
 
 DEPS = [
-  'recipe_engine/path',
-  'recipe_engine/properties',
-  'recipe_engine/step',
+    'recipe_engine/path',
+    'recipe_engine/properties',
+    'recipe_engine/step',
 ]
 
 PROPERTIES = {
-  'target_of_admiration': Property(default=None),
+    'target_of_admiration': Property(default=None),
 }
 ```
 
@@ -358,7 +468,7 @@ class HelloApi(recipe_api.RecipeApi):
     verb = default_verb or 'Hello %s'
     if self._target == 'DarthVader':
       verb = 'Die in a fire %s!'
-    self.m.step('Hello World',
+    self.m.step('Greet Admired Individual',
                 ['echo', verb % self._target])
 ```
 
@@ -372,19 +482,32 @@ And now, our refactored recipe:
 
 ```python
 # scripts/slave/recipes/hello.py
-from recipe_engine.recipe_api import Property
+from recipe_engine.post_process import StepCommandRE, DropExpectation
 
 DEPS = [
-  'hello',
-  'recipe_engine/properties',
+    'hello',
+    'recipe_engine/properties',
 ]
 
 def RunSteps(api):
   api.hello.greet()
 
 def GenTests(api):
-  yield api.test('basic') + api.properties(target_of_admiration='Bob')
-  yield api.test('vader') + api.properties(target_of_admiration='DarthVader')
+  yield (
+      api.test('basic')
+      + api.properties(target_of_admiration='Bob')
+      + api.post_process(StepCommandRE, 'Greet Admired Individual',
+                         ['echo', 'Hello Bob'])
+      + api.post_process(DropExpectation)
+  )
+
+  yield (
+      api.test('vader')
+      + api.properties(target_of_admiration='DarthVader')
+      + api.post_process(StepCommandRE, 'Greet Admired Individual',
+                         ['echo', 'Die in a fire DarthVader!'])
+      + api.post_process(DropExpectation)
+  )
 ```
 
 If you were to run or train the tests without the `--filter` flag at this point,
@@ -397,7 +520,7 @@ And the coverage report will be as follows:
 
     Name                                        Stmts   Miss  Cover   Missing
     -------------------------------------------------------------------------
-    scripts/slave/recipe_modules/hello/api.py      10      6    40%   5-6, 9-12
+    scripts/slave/recipe_modules/hello/api.py      10      6    40%   6-7, 10-13
     -------------------------------------------------------------------------
     TOTAL                                       21147      6    99%
 
@@ -407,19 +530,32 @@ examples subdirectory of our module.
 
 ```python
 # scripts/slave/recipe_modules/hello/examples/simple.py
-from recipe_engine.recipe_api import Property
+from recipe_engine.post_process import StepCommandRE, DropExpectation
 
 DEPS = [
-  'hello',
-  'recipe_engine/properties',
+    'hello',
+    'recipe_engine/properties',
 ]
 
 def RunSteps(api):
   api.hello.greet()
 
 def GenTests(api):
-  yield api.test('basic') + api.properties(target_of_admiration='Bob')
-  yield api.test('vader') + api.properties(target_of_admiration='DarthVader')
+  yield (
+      api.test('basic')
+      + api.properties(target_of_admiration='Bob')
+      + api.post_process(StepCommandRE, 'Greet Admired Individual',
+                         ['echo', 'Hello Bob'])
+      + api.post_process(DropExpectation)
+  )
+
+  yield (
+      api.test('vader')
+      + api.properties(target_of_admiration='DarthVader')
+      + api.post_process(StepCommandRE, 'Greet Admired Individual',
+                         ['echo', 'Die in a fire DarthVader!'])
+      + api.post_process(DropExpectation)
+  )
 ```
 
 Training the tests again now results in 100% coverage.
@@ -553,10 +689,13 @@ class HelloApi(recipe_api.RecipeApi):
     self._target = target_of_admiration
 
   def get_config_defaults(self):
-    return {'TARGET': self._target}
+    defaults = {}
+    if self._target is not None:
+      defaults['TARGET'] = self._target
+    return defaults
 
   def greet(self, default_verb=None):
-    self.m.step('Hello World', [
+    self.m.step('Greet Admired Individual', [
         self.m.path['start_dir'].join(self.c.tool),
         self.c.verb % self.c.TARGET])
 ```
@@ -569,7 +708,7 @@ recipes have direct access to the configuration state by `api.<modname>.c`.
 
 ```python
 # scripts/slave/recipe_modules/examples/simple.py
-from recipe_engine.recipe_api import Property
+from recipe_engine.post_process import StepCommandRE, DropExpectation
 
 DEPS = [
     'hello',
@@ -581,8 +720,20 @@ def RunSteps(api):
   api.hello.greet()
 
 def GenTests(api):
-  yield api.test('bob')
-  yield api.test('anya') + api.properties(target_of_admiration='anya')
+  yield (
+      api.test('bob')
+      + api.post_process(StepCommandRE, 'Greet Admired Individual',
+                         [r'.*\becho', 'Hello Bob'])
+      + api.post_process(DropExpectation)
+  )
+
+  yield (
+      api.test('anya')
+      + api.properties(target_of_admiration='anya')
+      + api.post_process(StepCommandRE, 'Greet Admired Individual',
+                         [r'.*\becho', 'Hello anya'])
+      + api.post_process(DropExpectation)
+  )
 ```
 
 Note the call to `set_config`. This method takes the configuration name
@@ -591,11 +742,20 @@ specifed, finds it in the given module (`'hello'` in this case), and sets
 (`'default_tool'`) with the default configuration (the result of calling
 `get_config_defaults`), merged over the static defaults specified by the schema.
 
+Note that the first pattern provided when using StepCommandRE is now
+`r'.*\becho'`. Because we are using the path module to locate the tool now, the
+command line no longer has just echo. The patterns must match the entire
+argument (this simplifies the case of matching against most constant strings),
+so the `r'.*\b'` matches any number of leading characters and then a word
+boundary so that we match a tool named 'echo' in some location.
+
 100% coverage is required for `config.py` also, so lets add some additional
 examples that call `set_config` differently to get different results:
 
 ```python
 # scripts/slave/recipe_modules/examples/rainbow.py
+from recipe_engine.post_process import StepCommandRE, DropExpectation
+
 DEPS = ['hello']
 
 def RunSteps(api):
@@ -603,11 +763,18 @@ def RunSteps(api):
   api.hello.greet()  # Greets 'Charlie' with unicorn.py.
 
 def GenTests(api):
-  yield api.test('charlie')
+  yield (
+      api.test('charlie')
+      + api.post_process(StepCommandRE, 'Greet Admired Individual',
+                         [r'.*\bunicorn.py', 'Hello Charlie'])
+      + api.post_process(DropExpectation)
+  )
 ```
 
 ```python
 # scripts/slave/recipe_modules/examples/evil.py
+from recipe_engine.post_process import StepCommandRE, DropExpectation
+
 DEPS = ['hello']
 
 def RunSteps(api):
@@ -615,7 +782,12 @@ def RunSteps(api):
   api.hello.greet()  # Causes 'DarthVader' to despair with echo
 
 def GenTests(api):
-  yield api.test('darth')
+  yield (
+      api.test('darth')
+      + api.post_process(StepCommandRE, 'Greet Admired Individual',
+                         [r'.*\becho', 'Die in a fire DarthVader!'])
+      + api.post_process(DropExpectation)
+  )
 ```
 
 `set_config()` also has one additional bit of magic. If a module (say,
@@ -637,13 +809,19 @@ recipe under the tests subdirectory to get the last bit of coverage.
 
 ```python
 # scripts/slave/recipe_modules/hello/tests/badconf.py
+from recipe_engine.post_process import DropExpectation
+
 DEPS = ['hello']
 
 def RunSteps(api):
   api.hello.set_config('super_tool', TARGET='Not Charlie')
 
 def GenTests(api):
-  yield api.test('badconf') + api.expect_exception('BadConf')
+  yield (
+      api.test('badconf')
+      + api.expect_exception('BadConf')
+      + api.post_process(DropExpectation)
+  )
 ```
 
 ## What about getting data back from a step?
@@ -652,6 +830,8 @@ Consider this recipe:
 
 ```python
 # scripts/slave/recipes/shake.py
+from recipe_engine.post_process import DropExpectation, MustRun
+
 DEPS = [
     'recipe_engine/path',
     'recipe_engine/step',
@@ -671,8 +851,19 @@ def RunSteps(api):
              [api.path['start_dir'].join('its_a_small_world.sh')])
 
 def GenTests(api):
-  yield api.test('harlem') + api.step_data('Determine blue moon', retcode=0)
-  yield api.test('boring') + api.step_data('Determine blue moon', retcode=1)
+  yield (
+      api.test('harlem')
+      + api.step_data('Determine blue moon', retcode=0)
+      + api.post_process(MustRun, 'HARLEM SHAKE!')
+      + api.post_process(DropExpectation)
+  )
+
+  yield (
+      api.test('boring')
+      + api.step_data('Determine blue moon', retcode=1)
+      + api.post_process(MustRun, 'Boring')
+      + api.post_process(DropExpectation)
+  )
 ```
 
 The `ok_ret` parameter to `api.step()` is necessary if you wish to react to a
@@ -699,6 +890,8 @@ communicating actual information. `api.json.output()` to the rescue!
 
 ```python
 # scripts/slave/recipes/war.py
+from recipe_engine.post_process import DropExpectation, MustRun
+
 DEPS = [
     'recipe_engine/json',
     'recipe_engine/path',
@@ -718,12 +911,26 @@ def RunSteps(api):
     api.step('deads!', [api.path['start_dir'].join('you_r_deads.sh')])
 
 def GenTests(api):
-  yield (api.test('winning') +
-         api.step_data('run tests', api.json.output({'num_passed': 791})))
-  yield (api.test('not_dead_yet') +
-         api.step_data('run tests', api.json.output({'num_passed': 302})))
-  yield (api.test('noooooo') +
-         api.step_data('run tests', api.json.output({'num_passed': 10})))
+  yield (
+      api.test('winning')
+      + api.step_data('run tests', api.json.output({'num_passed': 791}))
+      + api.post_process(MustRun, 'victory')
+      + api.post_process(DropExpectation)
+  )
+
+  yield (
+      api.test('not_dead_yet')
+      + api.step_data('run tests', api.json.output({'num_passed': 302}))
+      + api.post_process(MustRun, 'not defeated')
+      + api.post_process(DropExpectation)
+  )
+
+  yield (
+      api.test('noooooo')
+      + api.step_data('run tests', api.json.output({'num_passed': 10}))
+      + api.post_process(MustRun, 'deads!')
+      + api.post_process(DropExpectation)
+  )
 ```
 
 ### How does THAT work!?
