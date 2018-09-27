@@ -188,6 +188,8 @@ def MustRunRE(check, step_odict, step_regex, at_least=1, at_most=None):
 def _check_step_was_run(check, step_odict, step):
   return check('step %s was run' % step, step in step_odict)
 
+def _check_cmd_was_in_step(check, step_odict, step):
+  return check('step %s had a command' % step, 'cmd' in step_odict[step])
 
 def _fullmatch(pattern, string):
   m = re.match(pattern, string)
@@ -212,6 +214,8 @@ def StepCommandRE(check, step_odict, step, expected_patterns):
     )
   """
   if not _check_step_was_run(check, step_odict, step):
+    return
+  if not _check_cmd_was_in_step(check, step_odict, step):
     return
   cmd = step_odict[step]['cmd']
   for expected, actual in zip(expected_patterns, cmd):
@@ -239,11 +243,12 @@ def StepCommandContains(check, step_odict, step, argument_sequence):
 
   if not _check_step_was_run(check, step_odict, step):
     return
+  if not _check_cmd_was_in_step(check, step_odict, step):
+    return
   step_cmd = step_odict[step]['cmd']
   check('command line for step %s contained %s' % (
             step, argument_sequence),
         subsequence(step_cmd, argument_sequence))
-  return step_odict
 
 _STEP_TEXT_RE = re.compile('@@@STEP_TEXT@(?P<text>.*)@@@$')
 
