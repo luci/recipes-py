@@ -663,7 +663,7 @@
   {
     "cmd": [
       "cipd.bat",
-      "pkg-deploy ",
+      "pkg-deploy",
       "[START_DIR]\\fetched_pkg",
       "-root",
       "[START_DIR]\\raw_root",

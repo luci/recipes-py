@@ -715,7 +715,7 @@ class CIPDApi(recipe_api.RecipeApi):
     check_type('package_file', package_file, Path)
     step_result = self._run(
       'cipd pkg-deploy %s' % package_file,
-      ['pkg-deploy ', package_file, '-root', root],
+      ['pkg-deploy', package_file, '-root', root],
       step_test_data=lambda: self.test_api.example_pkg_deploy(
         'pkg/name/of/'+package_file.pieces[-1],
         'version/of/'+package_file.pieces[-1])

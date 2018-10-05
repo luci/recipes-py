@@ -1300,7 +1300,7 @@ Provides objects for reading and writing raw data to and from steps.
 
 #### **class [RawIOApi](/recipe_modules/raw_io/api.py#255)([RecipeApi](/recipe_engine/recipe_api.py#1012)):**
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#132)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#256)(data, suffix=''):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#132)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#256)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -1315,7 +1315,7 @@ tempfile.mkstemp.
 
 See examples/full.py for usage example.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#132)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#274)(data, suffix=''):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#132)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#274)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
 
