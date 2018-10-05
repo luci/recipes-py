@@ -225,7 +225,10 @@ class TestData(BaseTestData):
   def pop_step_test_data(self, step_name, step_test_data_fn):
     step_test_data = step_test_data_fn()
     if step_name in self.step_data:
-      step_test_data += self.step_data.pop(step_name)
+      try:
+        step_test_data += self.step_data.pop(step_name)
+      except ValueError as ve:
+        raise ValueError('in step %r: %s' % (step_name, ve))
     return step_test_data
 
   def get_module_test_data(self, module_name):

@@ -118,10 +118,9 @@ class StepPresentation(object):
 
   @property
   def logs(self):
-    if not self._finalized:
-      return self._logs
-    else:
-      return copy.deepcopy(self._logs)
+    assert not self._finalized, (
+      'presentation.logs is not visible after step finalization')
+    return self._logs
 
   @property
   def links(self):
@@ -145,11 +144,16 @@ class StepPresentation(object):
 
   def finalize(self, step_stream):
     self._finalized = True
+
+    # crbug.com/833539: prune all logs from memory when finalizing.
+    logs = self._logs
+    self._logs = None
+
     if self.step_text:
       step_stream.add_step_text(self.step_text)
     if self.step_summary_text:
       step_stream.add_step_summary_text(self.step_summary_text)
-    for name, lines in self.logs.iteritems():
+    for name, lines in logs.iteritems():
       with step_stream.new_log_stream(name) as l:
         for line in lines:
           l.write_split(line)
