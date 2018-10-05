@@ -65,7 +65,7 @@ def _rmtree(d):  # pragma: no cover
 
 
 class InputDataPlaceholder(recipe_util.InputPlaceholder):
-  def __init__(self, data, suffix):
+  def __init__(self, data, suffix, name=None):
     if not isinstance(data, str): # pragma: no cover
       raise TypeError(
         "Data passed to InputDataPlaceholder was %r, expected 'str'"
@@ -73,7 +73,7 @@ class InputDataPlaceholder(recipe_util.InputPlaceholder):
     self.data = data
     self.suffix = suffix
     self._backing_file = None
-    super(InputDataPlaceholder, self).__init__()
+    super(InputDataPlaceholder, self).__init__(name=name)
 
   @property
   def backing_file(self):
@@ -112,8 +112,8 @@ class InputDataPlaceholder(recipe_util.InputPlaceholder):
 class InputTextPlaceholder(InputDataPlaceholder):
   """ A input placeholder which expects to write out text.
   """
-  def __init__(self, data, suffix):
-    super(InputTextPlaceholder, self).__init__(data, suffix)
+  def __init__(self, data, suffix, name=None):
+    super(InputTextPlaceholder, self).__init__(data, suffix, name=name)
     assert isinstance(data, basestring)
 
   def write_encoded_data(self, f):
@@ -255,7 +255,7 @@ class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
 class RawIOApi(recipe_api.RecipeApi):
   @recipe_util.returns_placeholder
   @staticmethod
-  def input(data, suffix=''):
+  def input(data, suffix='', name=None):
     """Returns a Placeholder for use as a step argument.
 
     This placeholder can be used to pass data to steps. The recipe engine will
@@ -269,11 +269,11 @@ class RawIOApi(recipe_api.RecipeApi):
 
     See examples/full.py for usage example.
     """
-    return InputDataPlaceholder(data, suffix)
+    return InputDataPlaceholder(data, suffix, name=name)
 
   @recipe_util.returns_placeholder
   @staticmethod
-  def input_text(data, suffix=''):
+  def input_text(data, suffix='', name=None):
     """Returns a Placeholder for use as a step argument.
 
     data MUST be of type 'str' (not basestring, not unicode). The str is
@@ -282,7 +282,7 @@ class RawIOApi(recipe_api.RecipeApi):
     Similar to input(), but ensures that 'data' is valid utf-8 text. Any
     non-utf-8 characters will be replaced with �.
     """
-    return InputTextPlaceholder(data, suffix)
+    return InputTextPlaceholder(data, suffix, name=name)
 
   @recipe_util.returns_placeholder
   @staticmethod
