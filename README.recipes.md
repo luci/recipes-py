@@ -25,6 +25,7 @@
   * [time](#recipe_modules-time) &mdash; Allows mockable access to the current time.
   * [tricium](#recipe_modules-tricium) &mdash; API for Tricium analyzers to use.
   * [url](#recipe_modules-url) &mdash; Methods for interacting with HTTP(s) URLs.
+  * [uuid](#recipe_modules-uuid) &mdash; Allows test-repeatable access to a random UUID.
 
 **[Recipes](#Recipes)**
   * [archive:examples/full](#recipes-archive_examples_full)
@@ -97,6 +98,7 @@
   * [url:examples/full](#recipes-url_examples_full)
   * [url:tests/join](#recipes-url_tests_join)
   * [url:tests/validate_url](#recipes-url_tests_validate_url)
+  * [uuid:examples/full](#recipes-uuid_examples_full)
 ## Recipe Modules
 
 ### *recipe_modules* / [archive](/recipe_modules/archive)
@@ -1798,6 +1800,15 @@ Args:
 
 **Raises:**
   * ValueError: if "v" is not valid.
+### *recipe_modules* / [uuid](/recipe_modules/uuid)
+
+Allows test-repeatable access to a random UUID.
+
+#### **class [UuidApi](/recipe_modules/uuid/api.py#11)([RecipeApi](/recipe_engine/recipe_api.py#1012)):**
+
+&mdash; **def [random](/recipe_modules/uuid/api.py#20)(self):**
+
+Returns a random UUID string.
 ## Recipes
 
 ### *recipes* / [archive:examples/full](/recipe_modules/archive/examples/full.py)
@@ -2185,4 +2196,9 @@ This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
 [DEPS](/recipe_modules/url/tests/validate_url.py#5): [properties](#recipe_modules-properties), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
 &mdash; **def [RunSteps](/recipe_modules/url/tests/validate_url.py#12)(api):**
+### *recipes* / [uuid:examples/full](/recipe_modules/uuid/examples/full.py)
+
+[DEPS](/recipe_modules/uuid/examples/full.py#5): [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
+
+&mdash; **def [RunSteps](/recipe_modules/uuid/examples/full.py#11)(api):**
 

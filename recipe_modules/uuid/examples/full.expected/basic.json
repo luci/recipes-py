@@ -1,0 +1,14 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "00000000-0000-0000-0000-000000001337"
+    ],
+    "name": "echo"
+  },
+  {
+    "name": "$result",
+    "recipe_result": null,
+    "status_code": 0
+  }
+]
