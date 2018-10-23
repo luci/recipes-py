@@ -18,6 +18,14 @@ import tarfile
 import zipfile
 
 
+if os.name == 'nt':
+  def unc_path(path):
+    return '\\\\?\\' + os.path.abspath(path)
+else:
+  def unc_path(path):
+    return path
+
+
 def untar(archive_file, output, stats, safe):
   """Untars an archive using 'tarfile' python module.
 
@@ -44,7 +52,7 @@ def untar(archive_file, output, stats, safe):
       print 'Extracting %r' % (tarinfo.name,)
       stats['extracted']['filecount'] += 1
       stats['extracted']['bytes'] += tarinfo.size
-      em(tarinfo, targetpath)
+      em(tarinfo, unc_path(targetpath))
     tf._extract_member = _extract_member
     tf.extractall(output)
 
@@ -63,7 +71,7 @@ def unzip(zip_file, output, stats):
       print 'Extracting %s' % zipinfo.filename
       stats['extracted']['filecount'] += 1
       stats['extracted']['bytes'] += zipinfo.file_size
-      zf.extract(zipinfo, output)
+      zf.extract(zipinfo, unc_path(output))
 
 
 def main():
