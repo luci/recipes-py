@@ -142,10 +142,9 @@
     "name": "application"
   },
   {
-    "name": "$result",
-    "recipe_result": {
+    "jsonResult": {
       "test_me": 3
     },
-    "status_code": 0
+    "name": "$result"
   }
 ]

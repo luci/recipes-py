@@ -25,9 +25,12 @@
     ]
   },
   {
-    "name": "$result",
-    "reason": "Step('gen step(malformed.py)') generated step with \"cmd\" containing non-strings",
-    "recipe_result": null,
-    "status_code": 1
+    "failure": {
+      "failure": {
+        "step": ""
+      },
+      "humanReason": "Step('gen step(malformed.py)') generated step with \"cmd\" containing non-strings"
+    },
+    "name": "$result"
   }
 ]

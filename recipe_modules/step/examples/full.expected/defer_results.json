@@ -121,9 +121,12 @@
     "name": "testb"
   },
   {
-    "name": "$result",
-    "reason": "You can catch step failures.",
-    "recipe_result": null,
-    "status_code": 1
+    "failure": {
+      "failure": {
+        "step": ""
+      },
+      "humanReason": "You can catch step failures."
+    },
+    "name": "$result"
   }
 ]

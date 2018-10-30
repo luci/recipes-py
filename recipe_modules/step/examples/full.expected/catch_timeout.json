@@ -8,10 +8,9 @@
     "timeout": 1
   },
   {
-    "name": "$result",
-    "recipe_result": {
+    "jsonResult": {
       "test_me": 4
     },
-    "status_code": 0
+    "name": "$result"
   }
 ]

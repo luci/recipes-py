@@ -104,39 +104,13 @@ class ErrorsTest(unittest.TestCase):
       repo.make_recipe('foo', """
 DEPS = ['aint_no_thang']
 """)
-      subp = subprocess.Popen(
-          repo.recipes_cmd + ['run', 'foo'],
-          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-      stdout, stderr = subp.communicate()
-      self.assertRegexpMatches(stdout + stderr,
-        r'No module named aint_no_thang', stdout + stderr)
-      self.assertEqual(subp.returncode, 2)
 
-  def test_missing_dependency_new(self):
-    with RecipeRepo() as repo:
-      repo.make_recipe('foo', """
-DEPS = ['aint_no_thang']
-""")
+      def assert_nomodule(stdout, stderr):
+        self.assertRegexpMatches(
+            stdout + stderr, r'No module named aint_no_thang')
 
-      _, path = tempfile.mkstemp('args_pb')
-      with open(path, 'w') as f:
-        json.dump({
-          'engine_flags': {
-            'use_result_proto': True
-          }
-        }, f)
-
-      try:
-        def assert_nomodule(stdout, stderr):
-          self.assertRegexpMatches(
-              stdout + stderr, r'No module named aint_no_thang')
-
-        self._test_cmd(
-            repo, ['run', 'foo'], retcode=1, asserts=assert_nomodule,
-            engine_args=['--operational-args-path', path])
-      finally:
-        if os.path.exists(path):
-          os.unlink(path)
+      self._test_cmd(
+          repo, ['run', 'foo'], retcode=1, asserts=assert_nomodule)
 
   def test_missing_module_dependency(self):
     with RecipeRepo() as repo:
@@ -147,60 +121,13 @@ DEPS = ['aint_no_thang']
         self.assertRegexpMatches(stdout + stderr, r'No module named love')
 
       self._test_cmd(
-          repo, ['run', 'foo'], retcode=2, asserts=assert_nomodule)
-
-  def test_missing_module_dependency_new(self):
-    with RecipeRepo() as repo:
-      _, path = tempfile.mkstemp('args_pb')
-      with open(path, 'w') as f:
-        json.dump({
-          'engine_flags': {
-            'use_result_proto': True
-          }
-        }, f)
-
-      try:
-        repo.make_recipe('foo', 'DEPS = ["le_module"]')
-        repo.make_module('le_module', 'DEPS = ["love"]', '')
-
-        def assert_nomodule(stdout, stderr):
-          self.assertRegexpMatches(stdout + stderr, r'No module named love')
-
-        self._test_cmd(
-            repo, ['run', 'foo'], retcode=1, asserts=assert_nomodule,
-            engine_args=['--operational-args-path', path])
-      finally:
-        if os.path.exists(path):
-          os.unlink(path)
+          repo, ['run', 'foo'], retcode=1, asserts=assert_nomodule)
 
   def test_no_such_recipe(self):
     with RecipeRepo() as repo:
-      subp = subprocess.Popen(
-          repo.recipes_cmd + ['run', 'nooope'],
-          stdout=subprocess.PIPE)
-      stdout, _ = subp.communicate()
-      self.assertRegexpMatches(stdout, r'No such recipe: nooope')
-      self.assertEqual(subp.returncode, 2)
-
-  def test_no_such_recipe_new(self):
-    with RecipeRepo() as repo:
-      _, path = tempfile.mkstemp('args_pb')
-      with open(path, 'w') as f:
-        json.dump({
-          'engine_flags': {
-            'use_result_proto': True
-          }
-        }, f)
-
-      try:
-        result = self._test_cmd(
-            repo, ['run', 'nooope'], retcode=1,
-            engine_args=['--operational-args-path', path])
-        self.assertIsNotNone(result['failure']['exception'])
-      finally:
-        if os.path.exists(path):
-          os.unlink(path)
-
+      result = self._test_cmd(
+          repo, ['run', 'nooope'], retcode=1)
+      self.assertIsNotNone(result['failure']['exception'])
 
   def test_syntax_error(self):
     with RecipeRepo() as repo:
@@ -235,49 +162,11 @@ def GenTests(api):
             stdout + stderr)
 
       self._test_cmd(repo, ['test', 'train', '--filter', 'missing_path'],
-          asserts=assert_keyerror, retcode=1)
+                     asserts=assert_keyerror, retcode=1)
       self._test_cmd(repo, ['test', 'run', '--filter', 'missing_path'],
-          asserts=assert_keyerror, retcode=1)
+                     asserts=assert_keyerror, retcode=1)
       self._test_cmd(repo, ['run', 'missing_path'],
-          asserts=assert_keyerror, retcode=255)
-
-  def test_missing_path_new(self):
-    with RecipeRepo() as repo:
-      repo.make_recipe('missing_path', """
-DEPS = ['recipe_engine/step', 'recipe_engine/path']
-
-def RunSteps(api):
-  api.step('do it, joe', ['echo', 'JOE'], cwd=api.path['bippityboppityboo'])
-
-def GenTests(api):
-  yield api.test('basic')
-""")
-      def assert_keyerror(stdout, stderr):
-        self.assertRegexpMatches(
-            stdout + stderr, r"KeyError: 'Unknown path: bippityboppityboo'",
-            stdout + stderr)
-
-      _, path = tempfile.mkstemp('args_pb')
-      with open(path, 'w') as f:
-        json.dump({
-          'engine_flags': {
-            'use_result_proto': True
-          }
-        }, f)
-
-      try:
-        self._test_cmd(repo, ['test', 'train', '--filter', 'missing_path'],
-            asserts=assert_keyerror, retcode=1,
-            engine_args=['--operational-args-path', path])
-        self._test_cmd(repo, ['test', 'run', '--filter', 'missing_path'],
-            asserts=assert_keyerror, retcode=1,
-            engine_args=['--operational-args-path', path])
-        self._test_cmd(repo, ['run', 'missing_path'],
-            asserts=assert_keyerror, retcode=1,
-            engine_args=['--operational-args-path', path])
-      finally:
-        if os.path.exists(path):
-          os.unlink(path)
+                     asserts=assert_keyerror, retcode=1)
 
   def test_engine_failure(self):
     with RecipeRepo() as repo:
@@ -320,13 +209,13 @@ def GenTests(api):
         asserts=lambda stdout, stderr: self.assertRegexpMatches(
             stdout + stderr,
             r'(?s)misspelled GenTests'),
-        retcode=2)
+        retcode=1)
 
       self._test_cmd(repo, ['run', 'no_run_steps'],
         asserts=lambda stdout, stderr: self.assertRegexpMatches(
             stdout + stderr,
             r'(?s)misspelled RunSteps'),
-        retcode=2)
+        retcode=1)
 
   def test_unconsumed_assertion(self):
     # There was a regression where unconsumed exceptions would not be detected
@@ -342,7 +231,8 @@ def RunSteps(api):
 def GenTests(api):
   yield api.test('basic') + api.expect_exception('AssertionError')
 """)
-      self._test_cmd(repo, ['test', 'train', '--filter', 'unconsumed_assertion'],
+      self._test_cmd(repo, [
+          'test', 'train', '--filter', 'unconsumed_assertion'],
         asserts=lambda stdout, stderr: self.assertRegexpMatches(
             stdout + stderr, 'Unconsumed'),
         retcode=1)

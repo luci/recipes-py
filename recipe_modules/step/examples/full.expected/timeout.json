@@ -8,9 +8,12 @@
     "timeout": 1
   },
   {
-    "name": "$result",
-    "reason": "Step Timeout: Step('timeout') timed out after 1",
-    "recipe_result": null,
-    "status_code": 1
+    "failure": {
+      "failure": {
+        "step": ""
+      },
+      "humanReason": "Step Timeout: Step('timeout') timed out after 1"
+    },
+    "name": "$result"
   }
 ]

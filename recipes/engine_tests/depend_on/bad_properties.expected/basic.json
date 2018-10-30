@@ -1,7 +1,13 @@
 [
   {
-    "name": "$result",
-    "reason": "Uncaught Exception: TypeError('Got TypeError(\"Expected \\'lalala\\' to be of type <type \\'int\\'>\",) while trying to call recipe engine_tests/depend_on/bottom with properties {\\'number\\': \\'lalala\\'}',)",
-    "status_code": -1
+    "failure": {
+      "exception": {
+        "traceback": [
+          "<omitted by recipe engine>"
+        ]
+      },
+      "humanReason": "Uncaught Exception: TypeError('Got TypeError(\"Expected \\'lalala\\' to be of type <type \\'int\\'>\",) while trying to call recipe engine_tests/depend_on/bottom with properties {\\'number\\': \\'lalala\\'}',)"
+    },
+    "name": "$result"
   }
 ]

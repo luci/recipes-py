@@ -39,20 +39,17 @@ class RecipeWriter(object):
   def expect_dir(self):
     return os.path.join(self.recipes_dir, '%s.expected' % self.name)
 
-  def add_expectation(self, test_name, commands=None, recipe_result=None,
-                      status_code=0):
+  def add_expectation(self, test_name, commands=None, recipe_result=None):
     """Adds expectation for a simulation test.
 
     Arguments:
       test_name(str): name of the test
       commands(list): list of expectation dictionaries
       recipe_result(object): expected result of the recipe
-      status_code(int): expected exit code
     """
     self.expectations[test_name] = (commands or []) + [{
         'name': '$result',
-        'recipe_result': recipe_result,
-        'status_code': status_code
+        'jsonResult': recipe_result,
     }]
 
   def write(self):
@@ -727,7 +724,7 @@ class TestTest(unittest.TestCase):
     with open(expect_path) as f:
       expect_contents = json.load(f)
     self.assertEqual(
-        [{u'status_code': 0, u'recipe_result': None, u'name': u'$result'}],
+        [{u'jsonResult': None, u'name': u'$result'}],
         expect_contents)
     self.assertEqual(self.json_generator.get(), self.json_contents)
 
@@ -757,11 +754,11 @@ class TestTest(unittest.TestCase):
       expect_contents = json.load(f)
     self.assertEqual(
         [{u'cmd': [u'echo', u'bar'], u'name': u'test'},
-         {u'status_code': 0, u'recipe_result': None, u'name': u'$result'}],
+         {u'jsonResult': None, u'name': u'$result'}],
         expect_contents)
     self.assertEqual(self.json_generator.get(), self.json_contents)
 
-  def test_train_invaid_json(self):
+  def test_train_invalid_json(self):
     # 1. Initial state: recipe expectations are passing.
     rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
     rw.RunStepsLines = ['pass']
@@ -793,7 +790,7 @@ class TestTest(unittest.TestCase):
     with open(expect_path) as f:
       expect_contents = json.load(f)
     self.assertEqual(
-        [{u'status_code': 0, u'recipe_result': None, u'name': u'$result'}],
+        [{u'jsonResult': None, u'name': u'$result'}],
         expect_contents)
     self.assertEqual(self.json_generator.get(), self.json_contents)
 
@@ -840,7 +837,8 @@ class TestTest(unittest.TestCase):
     expectation_file = os.path.join(rw.expect_dir, 'unused.json')
     self.assertTrue(os.path.exists(expectation_file))
     with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--json', self.json_path)
+      out = self._run_recipes('test', 'run', '--json', self.json_path)
+
     self.assertIn(
         'FATAL: unused expectations found:\n%s' % expectation_file,
         cm.exception.output)
@@ -1131,7 +1129,8 @@ class TestTest(unittest.TestCase):
     mw.test_methods['baz'] = ['pass']
     mw.write()
     mw.example.DEPS = ['foo_module']
-    mw.example.GenTestsLines = ['api.foo_module.baz()', 'yield api.test("basic")']
+    mw.example.GenTestsLines = [
+        'api.foo_module.baz()', 'yield api.test("basic")']
     mw.example.add_expectation('basic')
     mw.example.write()
     self._run_recipes('test', 'run', '--json', self.json_path)

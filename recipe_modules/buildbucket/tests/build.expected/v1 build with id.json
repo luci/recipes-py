@@ -16,8 +16,7 @@
     "name": "tags_for_child_build"
   },
   {
-    "name": "$result",
-    "recipe_result": null,
-    "status_code": 0
+    "jsonResult": null,
+    "name": "$result"
   }
 ]

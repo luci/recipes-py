@@ -17,9 +17,12 @@
     ]
   },
   {
-    "name": "$result",
-    "reason": "Step('gen step(not_list.py)') generated non-list JSON output",
-    "recipe_result": null,
-    "status_code": 1
+    "failure": {
+      "failure": {
+        "step": ""
+      },
+      "humanReason": "Step('gen step(not_list.py)') generated non-list JSON output"
+    },
+    "name": "$result"
   }
 ]

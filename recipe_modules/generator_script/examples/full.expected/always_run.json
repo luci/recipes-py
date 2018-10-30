@@ -70,9 +70,12 @@
     "name": "always_runs"
   },
   {
-    "name": "$result",
-    "reason": "the following steps in gen step(always_run.py) failed: ['fails']",
-    "recipe_result": null,
-    "status_code": 1
+    "failure": {
+      "failure": {
+        "step": ""
+      },
+      "humanReason": "the following steps in gen step(always_run.py) failed: ['fails']"
+    },
+    "name": "$result"
   }
 ]

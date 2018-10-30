@@ -6,8 +6,14 @@
     "name": "bam"
   },
   {
-    "name": "$result",
-    "reason": "Uncaught Exception: ValueError('Recipe engine_tests/depend_on/no_return did not return a value.',)",
-    "status_code": -1
+    "failure": {
+      "exception": {
+        "traceback": [
+          "<omitted by recipe engine>"
+        ]
+      },
+      "humanReason": "Uncaught Exception: ValueError('Recipe engine_tests/depend_on/no_return did not return a value.',)"
+    },
+    "name": "$result"
   }
 ]

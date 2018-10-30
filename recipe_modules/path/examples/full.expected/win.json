@@ -139,8 +139,7 @@
     "name": "converted path RECIPE[recipe_engine::path:examples/full].resources"
   },
   {
-    "name": "$result",
-    "recipe_result": null,
-    "status_code": 0
+    "jsonResult": null,
+    "name": "$result"
   }
 ]

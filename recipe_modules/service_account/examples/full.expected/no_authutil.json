@@ -15,9 +15,12 @@
     ]
   },
   {
-    "name": "$result",
-    "reason": "Infra Failure: Step('get access token for default account') returned 1",
-    "recipe_result": null,
-    "status_code": 1
+    "failure": {
+      "failure": {
+        "step": "get access token for default account"
+      },
+      "humanReason": "Infra Failure: Step('get access token for default account') returned 1"
+    },
+    "name": "$result"
   }
 ]

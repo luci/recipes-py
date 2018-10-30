@@ -8,10 +8,9 @@
     "stdout": "/path/to/tmp/out"
   },
   {
-    "name": "$result",
-    "recipe_result": {
+    "jsonResult": {
       "number_times_two": 6
     },
-    "status_code": 0
+    "name": "$result"
   }
 ]

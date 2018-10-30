@@ -1,9 +1,8 @@
 [
   {
-    "name": "$result",
-    "recipe_result": {
+    "jsonResult": {
       "result": 6
     },
-    "status_code": 0
+    "name": "$result"
   }
 ]

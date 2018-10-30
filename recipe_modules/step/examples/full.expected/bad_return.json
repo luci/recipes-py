@@ -1,7 +1,13 @@
 [
   {
-    "name": "$result",
-    "reason": "Uncaught Exception: TypeError(\"While assigning key 'test_me': Expected 'this should fail' to be of type <type 'int'>\",)",
-    "status_code": -1
+    "failure": {
+      "exception": {
+        "traceback": [
+          "<omitted by recipe engine>"
+        ]
+      },
+      "humanReason": "Uncaught Exception: TypeError(\"While assigning key 'test_me': Expected 'this should fail' to be of type <type 'int'>\",)"
+    },
+    "name": "$result"
   }
 ]

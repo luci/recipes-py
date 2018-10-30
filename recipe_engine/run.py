@@ -37,12 +37,11 @@ RecipeResult = collections.namedtuple('RecipeResult', 'result')
 # TODO(dnj): Replace "properties" with a generic runtime instance. This instance
 # will be used to seed recipe clients and expanded to include managed runtime
 # entities.
-def run_steps(args, properties, stream_engine, step_runner, universe_view,
+def run_steps(properties, stream_engine, step_runner, universe_view,
               engine_flags=None, emit_initial_properties=False):
   """Runs a recipe (given by the 'recipe' property) for real.
 
   Args:
-    args: Arguments passed to the run invocation.
     properties: a dictionary of properties to pass to the recipe.  The
       'recipe' property defines which recipe to actually run.
     stream_engine: the StreamEngine to use to create individual step streams.
@@ -70,33 +69,26 @@ def run_steps(args, properties, stream_engine, step_runner, universe_view,
     recipe = properties['recipe']
 
     root_package = universe_view.universe.package_deps.root_package
-    run_recipe_lines = []
-    if args.annotator_output:
-      run_recipe_lines = [
-          'To repro this locally, run the following line from the root of a %r'
-            ' checkout:' % (root_package.name),
-          '',
-          '%s run --properties-file - %s <<EOF' % (
-              os.path.join( '.', root_package.relative_recipes_dir,
-                           'recipes.py'),
-              recipe),
-          '%s' % json.dumps(properties),
-          'EOF',
-          '',
-          'To run on Windows, you can put the JSON in a file and redirect the',
-          'contents of the file into run_recipe.py, with the < operator.',
-      ]
-    elif not args.log_temp_dir:
-        run_recipe_lines = [
-            'Recipe logs will be dumped to stdout.',
-            'If this is too verbose, pass --log-temp-dir, and log lines will be'
-            ' dumped to files in that directory.'
-        ]
+    run_recipe_help_lines = [
+        'To repro this locally, run the following line from the root of a %r'
+          ' checkout:' % (root_package.name),
+        '',
+        '%s run --properties-file - %s <<EOF' % (
+            os.path.join( '.', root_package.relative_recipes_dir, 'recipes.py'),
+            recipe),
+    ]
+    run_recipe_help_lines.extend(
+        json.dumps(properties, indent=2).splitlines())
+    run_recipe_help_lines += [
+        'EOF',
+        '',
+        'To run on Windows, you can put the JSON in a file and redirect the',
+        'contents of the file into run_recipe.py, with the < operator.',
+    ]
 
-    if run_recipe_lines:
-      with s.new_log_stream('run_recipe') as l:
-        for line in run_recipe_lines:
-          l.write_line(line)
+    with s.new_log_stream('run_recipe') as l:
+      for line in run_recipe_help_lines:
+        l.write_line(line)
 
     # Find and load the recipe to run.
     try:
@@ -284,10 +276,7 @@ class RecipeEngine(object):
 
     # TODO(martiniss): Remove this once we've transitioned to the new results
     # format
-    if self._engine_flags and self._engine_flags.use_result_proto:
-      logging.info("Using new result proto logic")
-      return self._new_run(recipe_script, api)
-    return self._old_run(recipe_script, api)
+    return self._new_run(recipe_script, api)
 
   def _new_run(self, recipe_script, api):
     result = None
@@ -304,7 +293,7 @@ class RecipeEngine(object):
           failure=result_pb2.Failure(
               human_reason=f.reason,
               failure=result_pb2.StepFailure(
-                  step=f.name
+                  step=f.name,
               )))
 
       except types.StepDataAttributeError as ex:
@@ -312,7 +301,7 @@ class RecipeEngine(object):
             failure=result_pb2.Failure(
                 human_reason=ex.message,
                 step_data=result_pb2.StepData(
-                    step=f.name
+                    step=ex.step,
                 )))
 
         # Let the step runner run_context decide what to do.
@@ -388,7 +377,6 @@ class RecipeEngine(object):
         ((recipe, properties),), distributor=distributor)[0]
 
   def depend_on_multi(self, dependencies, distributor=None):
-    del distributor
     results = []
     for recipe, properties in dependencies:
       recipe_script = self._universe_view.load_recipe(recipe, engine=self)
@@ -455,13 +443,6 @@ def add_subparser(parser):
     '--workdir',
     type=os.path.abspath,
     help='The working directory of recipe execution')
-  run_p.add_argument(
-    '--annotator-output', default=(not sys.stdout.isatty()),
-    help='If set, recipe output will have inline annotations.')
-  run_p.add_argument(
-    '--log-temp-dir', type=str,
-    help='If set, log lines will be dumped to a file in this directory. Only'
-         ' affects recipe execution if annotator-output is false.')
   run_p.add_argument(
     '--output-result-json',
     type=os.path.abspath,
@@ -592,11 +573,6 @@ def main(package_deps, args):
 
   config_file = args.package
 
-  if args.log_temp_dir:
-    # Force to abs path now. We change directories when running the recipe, so
-    # capture this now, when it's relative to where the user starts the command.
-    args.log_temp_dir = os.path.abspath(args.log_temp_dir)
-
   if args.props:
     for p in args.props:
       args.properties.update(p)
@@ -632,15 +608,10 @@ def main(package_deps, args):
   # than one StreamEngine implementation, so we will accumulate them in a
   # "stream_engines" list and compose them into a MultiStreamEngine.
   def build_annotation_stream_engine():
-    cls = stream.AnnotatorStreamEngine
-    kwargs = {
-        'emit_timestamps': (
-            args.timestamps or op_args.annotation_flags.emit_timestamp),
-    }
-    if not args.annotator_output:
-      cls = stream.QuietAnnotatorStreamEngine
-      kwargs['tempdir'] = args.log_temp_dir
-    return cls(sys.stdout, **kwargs)
+    return stream.AnnotatorStreamEngine(
+        sys.stdout,
+        emit_timestamps=(args.timestamps or
+                         op_args.annotation_flags.emit_timestamp))
 
   stream_engines = []
   if op_args.logdog.streamserver_uri:
@@ -664,16 +635,11 @@ def main(package_deps, args):
 
   # Have a top-level set of invariants to enforce StreamEngine expectations.
   with stream.StreamEngineInvariants.wrap(multi_stream_engine) as stream_engine:
-    if not args.annotator_output and args.log_temp_dir:
-      runner = step_runner.QuietSubprocessStepRunner(
-          stream_engine, engine_flags, args.log_temp_dir)
-    else:
-      runner = step_runner.SubprocessStepRunner(stream_engine, engine_flags)
-
     try:
       ret = run_steps(
-          args, properties, stream_engine, runner, universe_view,
-          engine_flags=engine_flags,
+          properties, stream_engine,
+          step_runner.SubprocessStepRunner(stream_engine, engine_flags),
+          universe_view, engine_flags=engine_flags,
           emit_initial_properties=emit_initial_properties)
     finally:
       os.chdir(old_cwd)

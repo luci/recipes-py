@@ -1,7 +1,13 @@
 [
   {
-    "name": "$result",
-    "reason": "Uncaught Exception: ModuleInjectionError(\"Recipe Module 'python' has no dependency 'missing_module'. (Add it to __init__.py:DEPS?)\",)",
-    "status_code": -1
+    "failure": {
+      "exception": {
+        "traceback": [
+          "<omitted by recipe engine>"
+        ]
+      },
+      "humanReason": "Uncaught Exception: ModuleInjectionError(\"Recipe Module 'python' has no dependency 'missing_module'. (Add it to __init__.py:DEPS?)\",)"
+    },
+    "name": "$result"
   }
 ]

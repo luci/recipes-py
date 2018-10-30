@@ -1,7 +1,13 @@
 [
   {
-    "name": "$result",
-    "reason": "Uncaught Exception: ValueError('URL scheme must be either http:// or https://',)",
-    "status_code": -1
+    "failure": {
+      "exception": {
+        "traceback": [
+          "<omitted by recipe engine>"
+        ]
+      },
+      "humanReason": "Uncaught Exception: ValueError('URL scheme must be either http:// or https://',)"
+    },
+    "name": "$result"
   }
 ]

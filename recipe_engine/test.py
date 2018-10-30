@@ -363,8 +363,16 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
     # Don't include tracebacks in expectations because they are too sensitive
     # to change.
     # TODO(phajdan.jr): Record presence of traceback in expectations.
-    result.result.pop('traceback', None)
-    raw_expectations[result.result['name']] = result.result
+    if result.HasField('failure') and result.failure.HasField('exception'):
+      result.failure.exception.traceback[:] = ['<omitted by recipe engine>']
+    # Convert the result to a json object by dumping to json, and then parsing.
+    raw_expectations['$result'] = json.loads(json_format.MessageToJson(
+        result, including_default_value_fields=True))
+    # Parse the jsonResult, so that it shows up nicely in expectations.
+    if 'jsonResult' in raw_expectations['$result']:
+      raw_expectations['$result']['jsonResult'] = json.loads(
+          raw_expectations['$result']['jsonResult'])
+    raw_expectations['$result']['name'] = '$result'
 
     failed_checks = []
 

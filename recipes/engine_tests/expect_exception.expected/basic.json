@@ -1,7 +1,13 @@
 [
   {
-    "name": "$result",
-    "reason": "Uncaught Exception: TypeError('BAD DOGE',)",
-    "status_code": -1
+    "failure": {
+      "exception": {
+        "traceback": [
+          "<omitted by recipe engine>"
+        ]
+      },
+      "humanReason": "Uncaught Exception: TypeError('BAD DOGE',)"
+    },
+    "name": "$result"
   }
 ]

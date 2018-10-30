@@ -510,6 +510,9 @@ class StepFailure(Exception):
 
   Raising a StepFailure counts as 'running a step' for the purpose of
   infer_composite_step's logic.
+
+  FIXME: This class is as a general way to fail, but it should be split up.
+  See crbug.com/892792 for more information.
   """
   def __init__(self, name_or_reason, result=None):
     # Raising a StepFailure counts as running a step.

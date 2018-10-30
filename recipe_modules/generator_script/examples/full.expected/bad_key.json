@@ -20,9 +20,12 @@
     ]
   },
   {
-    "name": "$result",
-    "reason": "Step('gen step(bad_key.py)') generated step with bad keys set(['bad'])",
-    "recipe_result": null,
-    "status_code": 1
+    "failure": {
+      "failure": {
+        "step": ""
+      },
+      "humanReason": "Step('gen step(bad_key.py)') generated step with bad keys set(['bad'])"
+    },
+    "name": "$result"
   }
 ]

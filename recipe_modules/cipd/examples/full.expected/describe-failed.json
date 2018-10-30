@@ -70,9 +70,12 @@
     ]
   },
   {
-    "name": "$result",
-    "reason": "CIPD('cipd describe public/package/${platform}') failed with: package \"public/package/linux-amd64-ubuntu14_04\" not registered",
-    "recipe_result": null,
-    "status_code": 1
+    "failure": {
+      "failure": {
+        "step": ""
+      },
+      "humanReason": "CIPD('cipd describe public/package/${platform}') failed with: package \"public/package/linux-amd64-ubuntu14_04\" not registered"
+    },
+    "name": "$result"
   }
 ]

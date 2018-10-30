@@ -26,7 +26,8 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
     def __init__(self, step_name, bad_keys):
       reason = 'Step(%r) generated step with bad keys %r' % (
         step_name, bad_keys)
-      super(GeneratorScriptApi.UnknownKey, self).__init__(reason)
+      super(GeneratorScriptApi.UnknownKey, self).__init__(
+          reason)
       self.bad_keys = frozenset(bad_keys)
 
   class MalformedStepList(recipe_api.StepFailure):

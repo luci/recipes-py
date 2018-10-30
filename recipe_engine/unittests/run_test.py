@@ -90,33 +90,10 @@ class RunTest(unittest.TestCase):
         self._run_cmd('engine_tests/nonexistent_command'),
         stdout=subprocess.PIPE)
     stdout, _ = subp.communicate()
+
     self.assertRegexpMatches(stdout, '(?m)^@@@STEP_EXCEPTION@@@$')
     self.assertRegexpMatches(stdout, 'OSError')
-    self.assertEqual(255, subp.returncode, stdout)
-
-  def test_nonexistent_command_new(self):
-    _, path = tempfile.mkstemp('args_pb')
-    with open(path, 'w') as f:
-      json.dump({
-        'engine_flags': {
-            'use_result_proto': True
-        }
-      }, f)
-
-    try:
-      subp = subprocess.Popen(
-          self._run_cmd(
-              'engine_tests/nonexistent_command',
-              engine_args=['--operational-args-path', path]),
-          stdout=subprocess.PIPE)
-      stdout, _ = subp.communicate()
-
-      self.assertRegexpMatches(stdout, '(?m)^@@@STEP_EXCEPTION@@@$')
-      self.assertRegexpMatches(stdout, 'OSError')
-      self.assertEqual(1, subp.returncode, stdout)
-    finally:
-      if os.path.exists(path):
-        os.unlink(path)
+    self.assertEqual(1, subp.returncode, stdout)
 
   def test_trigger(self):
     subp = subprocess.Popen(
@@ -136,32 +113,9 @@ class RunTest(unittest.TestCase):
             'step:tests/trigger', properties={'command': ['na-huh']}),
         stdout=subprocess.PIPE)
     stdout, _ = subp.communicate()
+
     self.assertRegexpMatches(stdout, r'(?m)^@@@STEP_TRIGGER@(.*)@@@$')
-    self.assertEqual(255, subp.returncode)
-
-  def test_trigger_no_such_command_new(self):
-    """Tests that trigger still happens even if running the command fails."""
-    _, path = tempfile.mkstemp('args_pb')
-    with open(path, 'w') as f:
-      json.dump({
-        'engine_flags': {
-            'use_result_proto': True
-        }
-      }, f)
-
-    try:
-      subp = subprocess.Popen(
-          self._run_cmd(
-              'step:tests/trigger', properties={'command': ['na-huh']},
-              engine_args=['--operational-args-path', path]),
-          stdout=subprocess.PIPE)
-      stdout, _ = subp.communicate()
-
-      self.assertRegexpMatches(stdout, r'(?m)^@@@STEP_TRIGGER@(.*)@@@$')
-      self.assertEqual(1, subp.returncode)
-    finally:
-      if os.path.exists(path):
-        os.unlink(path)
+    self.assertEqual(1, subp.returncode)
 
   def test_shell_quote(self):
     # For regular-looking commands we shouldn't need any specialness.

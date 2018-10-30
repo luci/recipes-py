@@ -1,7 +1,13 @@
 [
   {
-    "name": "$result",
-    "reason": "Uncaught Exception: ValueError(\"No default specified and no value provided for 'test_prop' from recipe 'recipe_engine::properties:examples/full'\",)",
-    "status_code": -1
+    "failure": {
+      "exception": {
+        "traceback": [
+          "<omitted by recipe engine>"
+        ]
+      },
+      "humanReason": "Uncaught Exception: ValueError(\"No default specified and no value provided for 'test_prop' from recipe 'recipe_engine::properties:examples/full'\",)"
+    },
+    "name": "$result"
   }
 ]

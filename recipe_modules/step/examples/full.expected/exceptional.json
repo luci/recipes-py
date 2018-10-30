@@ -100,8 +100,14 @@
     ]
   },
   {
-    "name": "$result",
-    "reason": "Uncaught Exception: ValueError('goodbye must exit 0!',)",
-    "status_code": -1
+    "failure": {
+      "exception": {
+        "traceback": [
+          "<omitted by recipe engine>"
+        ]
+      },
+      "humanReason": "Uncaught Exception: ValueError('goodbye must exit 0!',)"
+    },
+    "name": "$result"
   }
 ]
