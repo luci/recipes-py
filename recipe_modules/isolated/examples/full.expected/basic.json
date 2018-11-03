@@ -1,0 +1,119 @@
+[
+  {
+    "cmd": [
+      "touch",
+      "[TMP_BASE]/isolated-example_tmp_1/a"
+    ],
+    "name": "touch a"
+  },
+  {
+    "cmd": [
+      "touch",
+      "[TMP_BASE]/isolated-example_tmp_1/b"
+    ],
+    "name": "touch b"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[TMP_BASE]/isolated-example_tmp_1/sub/dir"
+    ],
+    "infra_step": true,
+    "name": "mkdirs"
+  },
+  {
+    "cmd": [
+      "touch",
+      "[TMP_BASE]/isolated-example_tmp_1/sub/dir/c"
+    ],
+    "name": "touch c"
+  },
+  {
+    "cmd": [],
+    "name": "ensure_isolated"
+  },
+  {
+    "cmd": [
+      "cipd",
+      "ensure",
+      "-root",
+      "[START_DIR]/cipd",
+      "-ensure-file",
+      "infra/tools/luci/isolated/${platform} release",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "infra_step": true,
+    "name": "ensure_isolated.ensure_installed",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-release---------\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/tools/luci/isolated/resolved-platform\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[START_DIR]/cipd/isolated/isolated",
+      "archive",
+      "-isolate-server",
+      "isolateserver.appspot.com",
+      "-namespace",
+      "default-gzip",
+      "-dump-hash",
+      "/path/to/tmp/",
+      "-files",
+      "[TMP_BASE]/isolated-example_tmp_1:a",
+      "-files",
+      "[TMP_BASE]/isolated-example_tmp_1:b",
+      "-dirs",
+      "[TMP_BASE]/isolated-example_tmp_1:sub/dir"
+    ],
+    "name": "archiving"
+  },
+  {
+    "cmd": [
+      "[START_DIR]/cipd/isolated/isolated",
+      "archive",
+      "-isolate-server",
+      "other-isolateserver.appspot.com",
+      "-namespace",
+      "default-gzip",
+      "-dump-hash",
+      "/path/to/tmp/",
+      "-files",
+      "[TMP_BASE]/isolated-example_tmp_1:a",
+      "-files",
+      "[TMP_BASE]/isolated-example_tmp_1:b",
+      "-dirs",
+      "[TMP_BASE]/isolated-example_tmp_1:sub/dir"
+    ],
+    "name": "archiving elsewhere"
+  },
+  {
+    "cmd": [
+      "[START_DIR]/cipd/isolated/isolated",
+      "version"
+    ],
+    "name": "isolated version"
+  },
+  {
+    "jsonResult": null,
+    "name": "$result"
+  }
+]
