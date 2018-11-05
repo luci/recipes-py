@@ -44,7 +44,7 @@
       "cipd",
       "ensure",
       "-root",
-      "[START_DIR]/cipd",
+      "[CACHE]/isolated_client",
       "-ensure-file",
       "infra/tools/luci/isolated/${platform} release",
       "-json-output",
@@ -69,7 +69,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd/isolated/isolated",
+      "[CACHE]/isolated_client/isolated",
       "archive",
       "-isolate-server",
       "isolateserver.appspot.com",
@@ -88,7 +88,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd/isolated/isolated",
+      "[CACHE]/isolated_client/isolated",
       "archive",
       "-isolate-server",
       "other-isolateserver.appspot.com",
@@ -107,7 +107,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/cipd/isolated/isolated",
+      "[CACHE]/isolated_client/isolated",
       "version"
     ],
     "name": "isolated version"

@@ -432,7 +432,7 @@ Args:
   * package_name (str) - The name of the cipd package.
   * package_path (Path) - The path to package instance file.
   * refs (seq[str]) - A list of ref names to set for the package instance.
-  * tags (dict[str]str) - A map of tag name -> value to set for the package
+  * tags (dict[str]basestring) - A map of tag name -> value to set for the package
                           instance.
 
 Returns:
@@ -965,7 +965,10 @@ The isolated client implements a tar-like scatter-gather mechanism for
 archiving files. The tool's source lives at
 http://go.chromium.org/luci/client/cmd/isolated.
 
-&mdash; **def [isolated](/recipe_modules/isolated/api.py#49)(self, root_dir):**
+This module will deploy the client to [CACHE]/isolated_client/; users should
+add this path to the named cache for their builder.
+
+&mdash; **def [isolated](/recipe_modules/isolated/api.py#52)(self, root_dir):**
 
 Returns an Isolated object that can be used to archive a set of files
 and directories, relative to a given root directory.
@@ -974,7 +977,7 @@ Args:
   root_dir (Path): directory relative to which files and directory will be
     isolated.
 
-&mdash; **def [run](/recipe_modules/isolated/api.py#38)(self, name, cmd, step_test_data=None):**
+&mdash; **def [run](/recipe_modules/isolated/api.py#41)(self, name, cmd, step_test_data=None):**
 
 Return an isolated command step.
 Args:

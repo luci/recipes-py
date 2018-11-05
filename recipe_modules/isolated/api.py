@@ -13,6 +13,9 @@ class IsolatedApi(recipe_api.RecipeApi):
   The isolated client implements a tar-like scatter-gather mechanism for
   archiving files. The tool's source lives at
   http://go.chromium.org/luci/client/cmd/isolated.
+
+  This module will deploy the client to [CACHE]/isolated_client/; users should
+  add this path to the named cache for their builder.
   """
 
   def __init__(self, isolated_properties, *args, **kwargs):
@@ -28,12 +31,12 @@ class IsolatedApi(recipe_api.RecipeApi):
 
     with self.m.step.nest('ensure_isolated'):
       with self.m.context(infra_steps=True):
-        cipd_dir = self.m.path['start_dir'].join('cipd')
+        cipd_dir = self.m.path['cache'].join('isolated_client')
         pkgs = self.m.cipd.EnsureFile()
         pkgs.add_package('infra/tools/luci/isolated/${platform}',
                          self._isolated_version)
         self.m.cipd.ensure(cipd_dir, pkgs)
-        self._isolated_client = cipd_dir.join('isolated', 'isolated')
+        self._isolated_client = cipd_dir.join('isolated')
 
   def run(self, name, cmd, step_test_data=None):
     """Return an isolated command step.
