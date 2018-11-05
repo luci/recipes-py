@@ -445,7 +445,7 @@ class CIPDApi(recipe_api.RecipeApi):
       * package_name (str) - The name of the cipd package.
       * package_path (Path) - The path to package instance file.
       * refs (seq[str]) - A list of ref names to set for the package instance.
-      * tags (dict[str]str) - A map of tag name -> value to set for the package
+      * tags (dict[str]basestring) - A map of tag name -> value to set for the package
                               instance.
 
     Returns:
@@ -467,7 +467,7 @@ class CIPDApi(recipe_api.RecipeApi):
     tags = {} if tags is None else tags
     pkg_vars = {} if pkg_vars is None else pkg_vars
     check_list_type('refs', refs, str)
-    check_dict_type('tags', tags, str, str)
+    check_dict_type('tags', tags, str, basestring)
     check_dict_type('pkg_vars', pkg_vars, str, str)
     cmd = [
       'create',
