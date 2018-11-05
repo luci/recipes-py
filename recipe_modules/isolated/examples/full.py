@@ -16,13 +16,14 @@ def RunSteps(api):
   temp = api.path.mkdtemp('isolated-example')
   api.step('touch a', ['touch', temp.join('a')])
   api.step('touch b', ['touch', temp.join('b')])
+  api.step('touch c', ['touch', temp.join('c')])
   api.file.ensure_directory('mkdirs', temp.join('sub', 'dir'))
-  api.step('touch c', ['touch', temp.join('sub', 'dir', 'c')])
+  api.step('touch d', ['touch', temp.join('sub', 'dir', 'd')])
 
   # Create an isolated.
   isolated = api.isolated.isolated(temp)
   isolated.add_file(temp.join('a'))
-  isolated.add_file(temp.join('b'))
+  isolated.add_files([temp.join('b'), temp.join('c')])
   isolated.add_dir(temp.join('sub', 'dir'))
 
   # Archive with the default isolate server.

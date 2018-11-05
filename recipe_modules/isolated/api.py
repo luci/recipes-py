@@ -84,6 +84,15 @@ class Isolated(object):
     assert path
     self._files.append(path)
 
+  def add_files(self, paths):
+    """Stages a list of files to be added to the isolated.
+
+    Args:
+      paths list(Path): list of absolute paths to files.
+    """
+    for path in paths:
+      self.add_file(path)
+
   def add_dir(self, path):
     """Stages a single directory to be added to the isolated.
 

@@ -15,6 +15,13 @@
   },
   {
     "cmd": [
+      "touch",
+      "[TMP_BASE]/isolated-example_tmp_1/c"
+    ],
+    "name": "touch c"
+  },
+  {
+    "cmd": [
       "python",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
@@ -31,9 +38,9 @@
   {
     "cmd": [
       "touch",
-      "[TMP_BASE]/isolated-example_tmp_1/sub/dir/c"
+      "[TMP_BASE]/isolated-example_tmp_1/sub/dir/d"
     ],
-    "name": "touch c"
+    "name": "touch d"
   },
   {
     "cmd": [],
@@ -81,6 +88,8 @@
       "[TMP_BASE]/isolated-example_tmp_1:a",
       "-files",
       "[TMP_BASE]/isolated-example_tmp_1:b",
+      "-files",
+      "[TMP_BASE]/isolated-example_tmp_1:c",
       "-dirs",
       "[TMP_BASE]/isolated-example_tmp_1:sub/dir"
     ],
@@ -100,6 +109,8 @@
       "[TMP_BASE]/isolated-example_tmp_1:a",
       "-files",
       "[TMP_BASE]/isolated-example_tmp_1:b",
+      "-files",
+      "[TMP_BASE]/isolated-example_tmp_1:c",
       "-dirs",
       "[TMP_BASE]/isolated-example_tmp_1:sub/dir"
     ],
