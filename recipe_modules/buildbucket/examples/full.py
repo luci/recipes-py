@@ -133,7 +133,8 @@ def GenTests(api):
              project='proj',
              builder='try-builder',
              git_repo='https://chrome-internal.googlesource.com/a/repo.git',
-             revision='a' * 40) +
+             revision='a' * 40,
+             build_number=123) +
          api.step_data(
              'buildbucket.put',
              stdout=api.raw_io.output_text(mock_buildbucket_multi_response)) +
@@ -145,7 +146,8 @@ def GenTests(api):
              project='proj-internal',
              bucket='ci',
              builder='ci-builder',
-             git_repo='https://chrome-internal.googlesource.com/a/repo.git') +
+             git_repo='https://chrome-internal.googlesource.com/a/repo.git',
+             build_number=0) +
          api.step_data(
              'buildbucket.put',
              stdout=api.raw_io.output_text(mock_buildbucket_multi_response)) +

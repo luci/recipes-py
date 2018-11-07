@@ -42,7 +42,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       bucket='ci',  # shortname.
       builder='builder',
       git_repo=None,
-      revision='2d72510e447ab60a9728aeea2362d8be2cbd7789'):
+      revision='2d72510e447ab60a9728aeea2362d8be2cbd7789',
+      build_number=0):
     """Returns a typical buildbucket CI build scheduled by luci-scheduler."""
     git_repo = git_repo or self._default_git_repo(project)
     gitiles_host, gitiles_project = util.parse_gitiles_repo_url(git_repo)
@@ -51,6 +52,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     # Do not add tags because recipe emulation results must not depend on tags.
     return build_pb2.Build(
         id=8945511751514863184,
+        number=build_number,
         builder=build_pb2.BuilderID(
             project=project,
             bucket=bucket,
@@ -88,7 +90,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       git_repo=None,
       change_number=123456,
       patch_set=7,
-      revision=None):
+      revision=None,
+      build_number=0):
     """Emulate typical buildbucket try build scheduled by CQ.
 
     Usage:
@@ -109,6 +112,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     # Do not add tags because recipe emulation results must not depend on tags.
     build = build_pb2.Build(
         id=8945511751514863184,
+        number=build_number,
         builder=build_pb2.BuilderID(
             project=project,
             bucket=bucket,
