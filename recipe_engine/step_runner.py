@@ -267,7 +267,10 @@ class SubprocessStepRunner(StepRunner):
           'Recipe result: %r' % (
               recipe, properties, retcode, result))
 
-      return json.loads(result['jsonResult'])
+      if self._engine_flags and self._engine_flags.use_result_proto:
+        return json.loads(result['jsonResult'])
+
+      return result
 
   @contextlib.contextmanager
   def run_context(self):

@@ -49,7 +49,8 @@ message Arguments {
   // Any flags to pass to the recipe engine. Used to toggle on new behavior,
   // like sending logs through logdog.
   message EngineFlags {
-    reserved 1;
+    // If true, emit recipe execution results using a result.proto
+    bool use_result_proto = 1;
   }
   EngineFlags engine_flags = 4;
 }
