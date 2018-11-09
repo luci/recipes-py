@@ -42,6 +42,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       bucket='ci',  # shortname.
       builder='builder',
       git_repo=None,
+      git_ref='refs/heads/master',
       revision='2d72510e447ab60a9728aeea2362d8be2cbd7789',
       build_number=0):
     """Returns a typical buildbucket CI build scheduled by luci-scheduler."""
@@ -64,7 +65,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
             gitiles_commit=common_pb2.GitilesCommit(
                 host=gitiles_host,
                 project=gitiles_project,
-                ref='refs/heads/master',
+                ref=git_ref,
                 id=revision,
             ),
         ),
