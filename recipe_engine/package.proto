@@ -69,10 +69,7 @@ message AutorollRecipeOptions {
 }
 
 message Package {
-  // The "API Version" of this proto. Should always equal 1, currently. This may
-  // change if a backwards-incompatible update must be done for the proto. In
-  // the event that a backwards incompatible change happens, however,
-  // api_version will remain at tag 1.
+  // The "API Version" of this proto. Should always equal 2, currently.
   int32 api_version = 1;  // Version 2
 
   // The "id" of how this package is referred to within recipes. This becomes
