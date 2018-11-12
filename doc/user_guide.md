@@ -138,6 +138,74 @@ py-cryptography and the protobuf library).
 
 ### The `recipes.py` command
 
+The recipes.py command is the main entrypoint to your recipe. It has a couple
+important subcommands that you'll use frequently:
+  * `run` - This command actually executes a single recipe
+  * `test` - This command runs the simulation tests and trains the generated
+    README.recipes.md file as well as simulation expectation files. This also
+    has a 'debug' option which is pretty helpful.
+
+Less often-used:
+  * `autoroll` - Updates your `recipes.cfg` file with newer versions of the
+    dependencies there.
+  * `bundle` - Extracts all files necessary to run the recipe without making any
+    network requests (i.e. no git repository operations).
+
+And very infrequently used:
+  * `doc` - Shows/generates documentation for the recipes and modules from their
+    python docstrings. However the `test train` subcommand will generate
+    Markdown automatically from the docstrings, so you don't usually need to
+    invoke this subcommand explicitly.
+  * `fetch` - Explicitly runs the 'fetch' phase of the recipe engine (to sync
+    all local git repos to the versions in `recipes.cfg`). However, this happens
+    implicitly for all subcommands, and the `bundle` command is a superior way
+    to prepare recipes for offline use.
+  * `lint` - Runs some very simple static analysis on the recipes. This command
+    is mostly invoked automatically from PRESUBMIT scripts so you don't need to
+    run it manually.
+
+It also has a couple tools for analyzing the recipe dependency graph:
+  * `analyze` - Answers questions about the recipe dependency graph (for use in
+    continuous integration scenarios).
+  * `depgraph` - Shows the recipe dependency graph as a picture
+  * `refs` - Shows a list of recipes and recipe_modules which depend on a given
+    recipe_module.
+
+Note that the `remote` subcommand is deprecated and should not be used.
+
+#### Overriding dependencies
+
+If you're developing recipes locally, you may find the need to work on changes
+in multiple recipe repos simultaneously. You can override a dependency for
+a recipe repo with the `-O` option to `recipes.py`, for any of its subcommands.
+
+
+For example, you may want to change the behavior of the `root` repo and
+see how it affects the behavior of the recipes in the `dependent` repo (which
+presumably depends on the `root` repo). To do this you would:
+
+    $ # Hack on the root repo locally to make your change
+    $ cd /path/to/dependent/repo
+    $ ./recipes.py -O root=/path/to/root/repo test train
+    <uses your local root repo, regardless of what recipe.cfg specifies>
+
+This works for all dependency repos, and can be specified multiple times to
+override more than one dependency.
+
+#### The `run` command
+
+TODO(iannucci) - Document
+
+#### The `test` command
+
+TODO(iannucci) - Document
+
+#### The `autoroll` command
+
+TODO(iannucci) - Document
+
+#### The `bundle` command
+
 TODO(iannucci) - Document
 
 ### Writing recipes
