@@ -160,7 +160,7 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 
 A module for interacting with buildbucket.
 
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#223)(self):**
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#226)(self):**
 
 Returns bucket name in v1 format.
 
@@ -170,7 +170,7 @@ Mostly useful for scheduling new builds using V1 API.
 
 Returns current build as a buildbucket.v2.Build protobuf message.
 
-See Build message in
+For value format, see Build message in
 https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto.
 
 DO NOT MODIFY the returned value.
@@ -183,15 +183,15 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned build.id is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#239)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#242)(self):**
 
 DEPRECATED, use build.id instead.
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#244)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#247)(self):**
 
 DEPRECATED, use build.input instead.
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#249)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#252)(self):**
 
 Deprecated. Use build.builder instead.
 
@@ -199,21 +199,24 @@ Deprecated. Use build.builder instead.
 
 Returns builder name. Shortcut for .build.builder.builder.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#193)(self, build_id, \*\*kwargs):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#196)(self, build_id, \*\*kwargs):**
 
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#196)(self, build_id, \*\*kwargs):**
+&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#199)(self, build_id, \*\*kwargs):**
 
 &emsp; **@property**<br>&mdash; **def [gitiles\_commit](/recipe_modules/buildbucket/api.py#117)(self):**
 
 Returns input gitiles commit. Shortcut for .build.input.gitiles_commit.
 
+For value format, see GitilesCommit message in
+https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/common.proto.
+
 Never returns None, but sub-fields may be empty.
 
-&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#234)(self):**
+&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#237)(self):**
 
 DEPRECATED, use build attribute instead.
 
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#164)(self, builds, \*\*kwargs):**
+&mdash; **def [put](/recipe_modules/buildbucket/api.py#167)(self, builds, \*\*kwargs):**
 
 Puts a batch of builds.
 
@@ -239,7 +242,7 @@ Changes the buildbucket backend hostname used by this module.
 Args:
   host (str): buildbucket server host (e.g. 'cr-buildbucket.appspot.com').
 
-&emsp; **@property**<br>&mdash; **def [tags\_for\_child\_build](/recipe_modules/buildbucket/api.py#125)(self):**
+&emsp; **@property**<br>&mdash; **def [tags\_for\_child\_build](/recipe_modules/buildbucket/api.py#128)(self):**
 
 A dict of tags (key -> value) derived from current (parent) build for a
 child build.

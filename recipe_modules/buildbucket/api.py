@@ -94,7 +94,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def build(self):
     """Returns current build as a buildbucket.v2.Build protobuf message.
 
-    See Build message in
+    For value format, see Build message in
     https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto.
 
     DO NOT MODIFY the returned value.
@@ -117,6 +117,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
   @property
   def gitiles_commit(self):
     """Returns input gitiles commit. Shortcut for .build.input.gitiles_commit.
+
+    For value format, see GitilesCommit message in
+    https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/common.proto.
 
     Never returns None, but sub-fields may be empty.
     """
