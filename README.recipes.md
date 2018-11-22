@@ -111,7 +111,7 @@
 
 Provides steps to manipulate archive files (tar, zip, etc.).
 
-&mdash; **def [extract](/recipe_modules/archive/api.py#31)(self, step_name, archive_file, output, mode='safe'):**
+&mdash; **def [extract](/recipe_modules/archive/api.py#40)(self, step_name, archive_file, output, mode='safe'):**
 
 Step to uncompress |archive_file| into |output| directory.
 
@@ -136,14 +136,23 @@ Args:
 Returns Package object that can be used to compress a set of files.
 
 Usage:
-  (api.archive.make(root).
+  # Archive root/file and root/directory/**
+  (api.archive.package(root).
       with_file(root.join('file')).
       with_dir(root.join('directory')).
       archive('archive step', output, 'tbz'))
 
+  # Archive root/**
+  zip_path = (
+    api.archive.package(root).
+    archive('archive step', api.path['start_dir'].join('output.zip'))
+  )
+
 Args:
   root: a directory that would become root of a package, all files added to
-      an archive will have archive paths relative to this directory.
+      an archive must be Paths which are under this directory. If no files
+      or directories are added with 'with_file' or 'with_dir', the entire
+      root directory is packaged.
 
 Returns:
   Package object.

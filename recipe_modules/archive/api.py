@@ -14,14 +14,23 @@ class ArchiveApi(recipe_api.RecipeApi):
     """Returns Package object that can be used to compress a set of files.
 
     Usage:
-      (api.archive.make(root).
+      # Archive root/file and root/directory/**
+      (api.archive.package(root).
           with_file(root.join('file')).
           with_dir(root.join('directory')).
           archive('archive step', output, 'tbz'))
 
+      # Archive root/**
+      zip_path = (
+        api.archive.package(root).
+        archive('archive step', api.path['start_dir'].join('output.zip'))
+      )
+
     Args:
       root: a directory that would become root of a package, all files added to
-          an archive will have archive paths relative to this directory.
+          an archive must be Paths which are under this directory. If no files
+          or directories are added with 'with_file' or 'with_dir', the entire
+          root directory is packaged.
 
     Returns:
       Package object.
@@ -85,6 +94,8 @@ class ArchiveApi(recipe_api.RecipeApi):
       raise ex
 
   def _archive_impl(self, root, entries, step_name, output, archive_type):
+    assert entries, 'entries is empty!'
+
     if archive_type is None:
       base, ext = self.m.path.splitext(output)
       if base.endswith('.tar'):
@@ -122,7 +133,13 @@ class ArchiveApi(recipe_api.RecipeApi):
 
 
 class Package(object):
-  """Used to gather a list of files to archive."""
+  """Used to gather a list of files to archive.
+
+  Construct this with api.archive.package().
+
+  If no 'with_file' or 'with_dir' calls are made, this defaults to including
+  the entire root in the archive.
+  """
 
   def __init__(self, archive_callback, root):
     self._archive_callback = archive_callback
@@ -170,6 +187,9 @@ class Package(object):
   def archive(self, step_name, output, archive_type=None):
     """Archives all staged files to an archive file indicated by `output`.
 
+    If no 'with_file' or 'with_dir' calls were made, this will zip the entire
+    root by default.
+
     Args:
       output: path to an archive file to create.
       archive_type: The type of archive to create. This may be:
@@ -179,6 +199,9 @@ class Package(object):
     Returns:
       `output`, for convenience.
     """
-    self._archive_callback(self._root, self._entries, step_name, output,
+    entries = self._entries or [
+      {'type': 'dir', 'path': str(self._root)}
+    ]
+    self._archive_callback(self._root, entries, step_name, output,
                            archive_type)
     return output

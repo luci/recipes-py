@@ -21,6 +21,15 @@
     "cmd": [
       "python",
       "-u",
+      "RECIPE_MODULE[recipe_engine::archive]\\resources\\archive.py"
+    ],
+    "name": "archiving all_zip",
+    "stdin": "{\"archive_type\": \"zip\", \"entries\": [{\"path\": \"[TMP_BASE]\\\\tar-example_tmp_1\", \"type\": \"dir\"}], \"output\": \"[START_DIR]\\\\output\\\\all_zip.zip\", \"root\": \"[TMP_BASE]\\\\tar-example_tmp_1\"}"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
       "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py",
       "--json-input",
       "{\"archive_file\": \"[START_DIR]\\\\output\\\\output.tar.bz2\", \"output\": \"[TMP_BASE]\\\\tar-example_tmp_1\\\\output1\", \"safe_mode\": true}",
@@ -50,6 +59,28 @@
       "/path/to/tmp/json"
     ],
     "name": "extract zip",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@<br/>extracted 1337 files - 50159.75 MB@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"extracted\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"bytes\": 50159747054, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"filecount\": 1337@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py",
+      "--json-input",
+      "{\"archive_file\": \"[START_DIR]\\\\output\\\\all_zip.zip\", \"output\": \"[TMP_BASE]\\\\tar-example_tmp_1\\\\output3\", \"safe_mode\": true}",
+      "--json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "extract all_zip zip",
     "~followup_annotations": [
       "@@@STEP_TEXT@<br/>extracted 1337 files - 50159.75 MB@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",

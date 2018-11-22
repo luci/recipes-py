@@ -46,9 +46,16 @@ def RunSteps(api):
          with_dir(pkg.root.join('sub')))
   out_zip = pkg.archive('archiving more', out.join('more.zip'))
 
+  # Zip the whole root
+  all_zip = api.archive.package(temp).archive(
+    'archiving all_zip',
+    out.join('all_zip.zip')
+  )
+
   # Extract the packages.
   api.archive.extract('extract tar', out_tar, temp.join('output1'))
   api.archive.extract('extract zip', out_zip, temp.join('output2'))
+  api.archive.extract('extract all_zip zip', all_zip, temp.join('output3'))
 
   try:
     api.archive.extract('extract failure', out_zip, temp.join('output3'))
