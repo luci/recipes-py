@@ -38,6 +38,11 @@ class IsolatedApi(recipe_api.RecipeApi):
         self.m.cipd.ensure(cipd_dir, pkgs)
         self._isolated_client = cipd_dir.join('isolated')
 
+  @property
+  def isolate_server(self):
+    """Returns the associated isolate server."""
+    return self._default_isolate_server
+
   def run(self, name, cmd, step_test_data=None):
     """Return an isolated command step.
     Args:

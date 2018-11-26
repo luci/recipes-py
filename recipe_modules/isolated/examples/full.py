@@ -12,6 +12,9 @@ DEPS = [
 
 
 def RunSteps(api):
+  # Inspect the associated isolated server.
+  api.isolated.isolate_server
+
   # Prepare files.
   temp = api.path.mkdtemp('isolated-example')
   api.step('touch a', ['touch', temp.join('a')])

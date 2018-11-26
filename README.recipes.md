@@ -980,7 +980,11 @@ http://go.chromium.org/luci/client/cmd/isolated.
 This module will deploy the client to [CACHE]/isolated_client/; users should
 add this path to the named cache for their builder.
 
-&mdash; **def [isolated](/recipe_modules/isolated/api.py#52)(self, root_dir):**
+&emsp; **@property**<br>&mdash; **def [isolate\_server](/recipe_modules/isolated/api.py#41)(self):**
+
+Returns the associated isolate server.
+
+&mdash; **def [isolated](/recipe_modules/isolated/api.py#57)(self, root_dir):**
 
 Returns an Isolated object that can be used to archive a set of files
 and directories, relative to a given root directory.
@@ -989,7 +993,7 @@ Args:
   root_dir (Path): directory relative to which files and directory will be
     isolated.
 
-&mdash; **def [run](/recipe_modules/isolated/api.py#41)(self, name, cmd, step_test_data=None):**
+&mdash; **def [run](/recipe_modules/isolated/api.py#46)(self, name, cmd, step_test_data=None):**
 
 Return an isolated command step.
 Args:
