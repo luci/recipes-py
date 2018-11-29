@@ -1,0 +1,202 @@
+[
+  {
+    "cmd": [],
+    "name": "names"
+  },
+  {
+    "cmd": [],
+    "name": "names.Some Name",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "names.Unicode Name \ud83d\udca9",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "names.Duplicate",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "names.Duplicate (2)",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "non duplicate"
+  },
+  {
+    "cmd": [],
+    "name": "non duplicate.Duplicate",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "nesting"
+  },
+  {
+    "cmd": [],
+    "name": "nesting.pre-deep",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "nesting.deeper",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "nesting.deeper.deep",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "nesting.deeper.\ud83d\udca9-ier",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "nesting.deeper.\ud83d\udca9-ier.\ud83d\udca9",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@3@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "nesting.deeper.post \ud83d\udca9",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "nesting.post deep",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "presentation"
+  },
+  {
+    "cmd": [],
+    "name": "presentation.text",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "presentation.text.step_text",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@HI THERE I AM STEP TEXT, \ud83d\udca9@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "presentation.text.step_summary",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "presentation.text.all text",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@HI THERE I AM STEP TEXT, \ud83d\udca9@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "presentation.links",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "presentation.links.links",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_LINK@cool link@https://cool.link.example.com@@@",
+      "@@@STEP_LINK@\ud83d\udca9 link@https://\ud83d\udca9.link.example.com@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "presentation.logs",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "presentation.logs.logs",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_LOG_LINE@cool log@cool 0@@@",
+      "@@@STEP_LOG_LINE@cool log@cool 1@@@",
+      "@@@STEP_LOG_LINE@cool log@cool 2@@@",
+      "@@@STEP_LOG_LINE@cool log@cool 3@@@",
+      "@@@STEP_LOG_LINE@cool log@cool 4@@@",
+      "@@@STEP_LOG_LINE@cool log@cool 5@@@",
+      "@@@STEP_LOG_LINE@cool log@cool 6@@@",
+      "@@@STEP_LOG_LINE@cool log@cool 7@@@",
+      "@@@STEP_LOG_LINE@cool log@cool 8@@@",
+      "@@@STEP_LOG_LINE@cool log@cool 9@@@",
+      "@@@STEP_LOG_END@cool log@@@",
+      "@@@STEP_LOG_LINE@\ud83d\udca9 log@\ud83d\udca9 0@@@",
+      "@@@STEP_LOG_LINE@\ud83d\udca9 log@\ud83d\udca9 1@@@",
+      "@@@STEP_LOG_LINE@\ud83d\udca9 log@\ud83d\udca9 2@@@",
+      "@@@STEP_LOG_LINE@\ud83d\udca9 log@\ud83d\udca9 3@@@",
+      "@@@STEP_LOG_LINE@\ud83d\udca9 log@\ud83d\udca9 4@@@",
+      "@@@STEP_LOG_LINE@\ud83d\udca9 log@\ud83d\udca9 5@@@",
+      "@@@STEP_LOG_LINE@\ud83d\udca9 log@\ud83d\udca9 6@@@",
+      "@@@STEP_LOG_LINE@\ud83d\udca9 log@\ud83d\udca9 7@@@",
+      "@@@STEP_LOG_LINE@\ud83d\udca9 log@\ud83d\udca9 8@@@",
+      "@@@STEP_LOG_LINE@\ud83d\udca9 log@\ud83d\udca9 9@@@",
+      "@@@STEP_LOG_END@\ud83d\udca9 log@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "properties"
+  },
+  {
+    "cmd": [],
+    "name": "properties.logs",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@SET_BUILD_PROPERTY@obj_prop@{\"hi\": \"there\"}@@@",
+      "@@@SET_BUILD_PROPERTY@str_prop@\"hi\"@@@",
+      "@@@SET_BUILD_PROPERTY@\ud83d\udca9_prop@[\"\\ud83d\\udca9\", \"\\ud83d\\udca9\", \"\\ud83d\\udca9\", \"\\ud83d\\udca9\", \"\\ud83d\\udca9\", \"\\ud83d\\udca9\", \"\\ud83d\\udca9\", \"\\ud83d\\udca9\", \"\\ud83d\\udca9\", \"\\ud83d\\udca9\"]@@@"
+    ]
+  },
+  {
+    "jsonResult": null,
+    "name": "$result"
+  }
+]

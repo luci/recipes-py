@@ -41,6 +41,7 @@
   * [context:tests/increment_nest_level](#recipes-context_tests_increment_nest_level)
   * [context:tests/infra_step](#recipes-context_tests_infra_step)
   * [engine_tests/bad_subprocess](#recipes-engine_tests_bad_subprocess) &mdash; Tests that daemons that hang on to STDOUT can't cause the engine to hang.
+  * [engine_tests/comprehensive_ui](#recipes-engine_tests_comprehensive_ui) &mdash; A fast-running recipe which comprehensively covers all StepPresentation features available in the recipe engine.
   * [engine_tests/depend_on/bad_properties](#recipes-engine_tests_depend_on_bad_properties)
   * [engine_tests/depend_on/bottom](#recipes-engine_tests_depend_on_bottom)
   * [engine_tests/depend_on/dont_need_properties](#recipes-engine_tests_depend_on_dont_need_properties)
@@ -1923,6 +1924,14 @@ This file is a recipe demonstrating the buildbucket recipe module.
 Tests that daemons that hang on to STDOUT can't cause the engine to hang.
 
 &mdash; **def [RunSteps](/recipes/engine_tests/bad_subprocess.py#11)(api):**
+### *recipes* / [engine\_tests/comprehensive\_ui](/recipes/engine_tests/comprehensive_ui.py)
+
+[DEPS](/recipes/engine_tests/comprehensive_ui.py#11): [step](#recipe_modules-step)
+
+A fast-running recipe which comprehensively covers all StepPresentation
+features available in the recipe engine.
+
+&mdash; **def [RunSteps](/recipes/engine_tests/comprehensive_ui.py#15)(api):**
 ### *recipes* / [engine\_tests/depend\_on/bad\_properties](/recipes/engine_tests/depend_on/bad_properties.py)
 
 [DEPS](/recipes/engine_tests/depend_on/bad_properties.py#8): [properties](#recipe_modules-properties)
