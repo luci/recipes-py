@@ -292,7 +292,7 @@ class RecipeEngine(object):
       except recipe_api.InfraFailure as f:
         result = result_pb2.Result(
           failure=result_pb2.Failure(
-              human_reason=f.reason_message(),
+              human_reason=f.reason,
               exception=result_pb2.Exception(
                   traceback=traceback.format_exc().splitlines()
               )))
