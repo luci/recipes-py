@@ -80,6 +80,7 @@
   * [platform:examples/full](#recipes-platform_examples_full)
   * [properties:examples/full](#recipes-properties_examples_full)
   * [python:examples/full](#recipes-python_examples_full) &mdash; Launches the repo bundler.
+  * [python:tests/infra_failing_step](#recipes-python_tests_infra_failing_step) &mdash; Tests for api.
   * [raw_io:examples/full](#recipes-raw_io_examples_full)
   * [runtime:tests/full](#recipes-runtime_tests_full)
   * [scheduler:examples/emit_triggers](#recipes-scheduler_examples_emit_triggers) &mdash; This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
@@ -1315,9 +1316,13 @@ Args:
 **Returns (`types.StepData`)** - The StepData object as returned by
 api.step.
 
-&mdash; **def [failing\_step](/recipe_modules/python/api.py#113)(self, name, text, as_log=None):**
+&mdash; **def [failing\_step](/recipe_modules/python/api.py#114)(self, name, text, as_log=None):**
 
-Runs a succeeding step (exits 1).
+Runs a failing step (exits 1).
+
+&mdash; **def [infra\_failing\_step](/recipe_modules/python/api.py#118)(self, name, text, as_log=None):**
+
+Runs an infra-failing step (exits 1).
 
 &mdash; **def [inline](/recipe_modules/python/api.py#63)(self, name, program, add_python_log=True, \*\*kwargs):**
 
@@ -1336,13 +1341,13 @@ Args:
 **Returns (`types.StepData`)** - The StepData object as returned by
 api.step.
 
-&mdash; **def [result\_step](/recipe_modules/python/api.py#91)(self, name, text, retcode, as_log=None):**
+&mdash; **def [result\_step](/recipe_modules/python/api.py#91)(self, name, text, retcode, as_log=None, \*\*kwargs):**
 
 Runs a no-op step that exits with a specified return code.
 
 The recipe engine will raise an exception when seeing a return code != 0.
 
-&mdash; **def [succeeding\_step](/recipe_modules/python/api.py#109)(self, name, text, as_log=None):**
+&mdash; **def [succeeding\_step](/recipe_modules/python/api.py#110)(self, name, text, as_log=None):**
 
 Runs a succeeding step (exits 0).
 ### *recipe_modules* / [raw\_io](/recipe_modules/raw_io)
@@ -2151,6 +2156,13 @@ Tests that step_data can accept multiple specs at once.
 Launches the repo bundler.
 
 &mdash; **def [RunSteps](/recipe_modules/python/examples/full.py#15)(api):**
+### *recipes* / [python:tests/infra\_failing\_step](/recipe_modules/python/tests/infra_failing_step.py)
+
+[DEPS](/recipe_modules/python/tests/infra_failing_step.py#9): [python](#recipe_modules-python), [step](#recipe_modules-step)
+
+Tests for api.python.infra_failing_step.
+
+&mdash; **def [RunSteps](/recipe_modules/python/tests/infra_failing_step.py#15)(api):**
 ### *recipes* / [raw\_io:examples/full](/recipe_modules/raw_io/examples/full.py)
 
 [DEPS](/recipe_modules/raw_io/examples/full.py#5): [path](#recipe_modules-path), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

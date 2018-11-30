@@ -88,7 +88,7 @@ class PythonApi(recipe_api.RecipeApi):
 
     return result
 
-  def result_step(self, name, text, retcode, as_log=None):
+  def result_step(self, name, text, retcode, as_log=None, **kwargs):
     """Runs a no-op step that exits with a specified return code.
 
     The recipe engine will raise an exception when seeing a return code != 0.
@@ -99,7 +99,8 @@ class PythonApi(recipe_api.RecipeApi):
           'import sys; sys.exit(%d)' % (retcode,),
           add_python_log=False,
           step_test_data=lambda: self.m.raw_io.test_api.output(
-              text, retcode=retcode))
+              text, retcode=retcode),
+          **kwargs)
     finally:
       if as_log:
         self.m.step.active_result.presentation.logs[as_log] = text
@@ -111,5 +112,9 @@ class PythonApi(recipe_api.RecipeApi):
     return self.result_step(name, text, 0, as_log=as_log)
 
   def failing_step(self, name, text, as_log=None):
-    """Runs a succeeding step (exits 1)."""
+    """Runs a failing step (exits 1)."""
     return self.result_step(name, text, 1, as_log=as_log)
+
+  def infra_failing_step(self, name, text, as_log=None):
+    """Runs an infra-failing step (exits 1)."""
+    return self.result_step(name, text, 1, as_log=as_log, infra_step=True)
