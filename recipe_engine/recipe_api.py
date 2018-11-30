@@ -566,7 +566,7 @@ class InfraFailure(StepFailure):
   """
   def reason_message(self):
     return "Infra Failure: Step({!r}) returned {}".format(
-          self.name, self.result.retcode)
+          self.name, self.retcode)
 
   def __str__(self):
     return "Infra Failure in %s" % self.name

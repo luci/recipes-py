@@ -16,8 +16,10 @@
   },
   {
     "failure": {
-      "failure": {
-        "step": "get access token for default account"
+      "exception": {
+        "traceback": [
+          "<omitted by recipe engine>"
+        ]
       },
       "humanReason": "Infra Failure: Step('get access token for default account') returned 1"
     },

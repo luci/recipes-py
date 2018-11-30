@@ -288,6 +288,15 @@ class RecipeEngine(object):
           result = result_pb2.Result(json_result=json.dumps(recipe_result))
         finally:
           self._close_through_level(0)
+
+      except recipe_api.InfraFailure as f:
+        result = result_pb2.Result(
+          failure=result_pb2.Failure(
+              human_reason=f.reason_message(),
+              exception=result_pb2.Exception(
+                  traceback=traceback.format_exc().splitlines()
+              )))
+
       except recipe_api.StepFailure as f:
         result = result_pb2.Result(
           failure=result_pb2.Failure(
