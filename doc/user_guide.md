@@ -171,8 +171,6 @@ It also has a couple tools for analyzing the recipe dependency graph:
   * `refs` - Shows a list of recipes and recipe_modules which depend on a given
     recipe_module.
 
-Note that the `remote` subcommand is deprecated and should not be used.
-
 #### Overriding dependencies
 
 If you're developing recipes locally, you may find the need to work on changes

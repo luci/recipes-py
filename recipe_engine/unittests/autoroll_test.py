@@ -53,6 +53,16 @@ class TestProcess(unittest.TestCase):
 
 
 class TestArgs(unittest.TestCase):
+  @classmethod
+  def setUpClass(cls):
+    fd, cls.pkg_file = tempfile.mkstemp()
+    os.write(fd, "{}")
+    os.close(fd)
+
+  @classmethod
+  def tearDownClass(cls):
+    os.remove(cls.pkg_file)
+
   def setUp(self):
     self.p = argparse.ArgumentParser()
     self.followup = common_args.add_common_args(self.p)
@@ -68,12 +78,14 @@ class TestArgs(unittest.TestCase):
   @mock.patch('argparse._sys.stderr', new_callable=StringIO)
   def test_json_flags(self, stderr):
     with self.assertRaises(SystemExit):
-      args = self.p.parse_args(['autoroll', '--verbose-json'])
+      args = self.p.parse_args([
+        '--package', self.pkg_file, 'autoroll', '--verbose-json'])
       args.postprocess_func(self.p, args)
     self.assertIn('without --output-json', stderr.getvalue())
 
     args = self.p.parse_args([
-      'autoroll', '--verbose-json', '--output-json', self.tmpfile])
+      '--package', self.pkg_file, 'autoroll', '--verbose-json',
+      '--output-json', self.tmpfile])
     args.postprocess_func(self.p, args)
 
 

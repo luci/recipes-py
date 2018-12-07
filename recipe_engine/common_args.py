@@ -49,7 +49,7 @@ def add_common_args(parser):
 
   parser.add_argument(
       '--package',
-      type=package_type,
+      type=package_type, required=True,
       help='Path to recipes.cfg of the recipe package to operate on'
         ', usually in infra/config/recipes.cfg')
   parser.add_argument(
@@ -72,7 +72,6 @@ def add_common_args(parser):
             # TODO(martiniss): Remove this
             use_result_proto=True,
         )),
-    bare_command=False,  # don't call postprocess_func, don't use package_deps
     postprocess_func=lambda parser, args: None,
   )
 
@@ -96,26 +95,15 @@ def add_common_args(parser):
     if args.verbose > 1:
       logging.getLogger().setLevel(logging.DEBUG)
 
-    if args.bare_command:
-      # TODO(iannucci): this is gross, and only for the remote subcommand;
-      # remote doesn't behave like ANY other commands. A way to solve this will
-      # be to allow --package to take a remote repo and then simply remove the
-      # remote subcommand entirely.
-      if args.package is not None:
-        parser.error('%s forbids --package' % args.command)
-    else:
-      if not args.package:
-        parser.error('%s requires --package' % args.command)
+    try:
+      spec = args.package.read()
+    except Exception as ex:
+      parser.error('bad --package %r: %s' % (args.package.path, ex.message,))
 
-      try:
-        spec = args.package.read()
-      except Exception as ex:
-        parser.error('bad --package %r: %s' % (args.package.path, ex.message,))
-
-      extra = set(args.project_override).difference(set(spec.deps))
-      if extra:
-        parser.error(
-          "attempted to override %r, which don't appear in recipes.cfg" %
-          (extra,))
+    extra = set(args.project_override).difference(set(spec.deps))
+    if extra:
+      parser.error(
+        "attempted to override %r, which don't appear in recipes.cfg" %
+        (extra,))
 
   return post_process_args

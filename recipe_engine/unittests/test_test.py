@@ -21,6 +21,16 @@ from recipe_engine import common_args
 
 
 class TestArgs(unittest.TestCase):
+  @classmethod
+  def setUpClass(cls):
+    fd, cls.pkg_file = tempfile.mkstemp()
+    os.write(fd, "{}")
+    os.close(fd)
+
+  @classmethod
+  def tearDownClass(cls):
+    os.remove(cls.pkg_file)
+
   def setUp(self):
     self.p = argparse.ArgumentParser()
     self.followup = common_args.add_common_args(self.p)
@@ -30,17 +40,21 @@ class TestArgs(unittest.TestCase):
   @mock.patch('argparse._sys.stderr', new_callable=StringIO)
   def test_normalize_filter(self, stderr):
     with self.assertRaises(SystemExit):
-      args = self.p.parse_args(['test', 'run', '--filter', ''])
+      args = self.p.parse_args([
+        '--package', self.pkg_file, 'test', 'run',
+        '--filter', ''])
       args.postprocess_func(self.p, args)
     self.assertIn('empty filters not allowed', stderr.getvalue())
 
     stderr.reset()
-    args = self.p.parse_args(['test', 'run', '--filter', 'foo'])
+    args = self.p.parse_args(['--package', self.pkg_file, 'test', 'run',
+                              '--filter', 'foo'])
     args.postprocess_func(self.p, args)
     self.assertEqual(args.filter, ['foo*.*'])
 
     stderr.reset()
-    args = self.p.parse_args(['test', 'run', '--filter', 'foo.bar'])
+    args = self.p.parse_args(['--package', self.pkg_file, 'test', 'run',
+                              '--filter', 'foo.bar'])
     args.postprocess_func(self.p, args)
     self.assertEqual(args.filter, ['foo.bar'])
 

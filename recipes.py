@@ -35,7 +35,7 @@ from recipe_engine import common_args, package, package_io, util
 import argparse  # this is vendored
 
 from recipe_engine import fetch, lint, bundle, depgraph, analyze, autoroll
-from recipe_engine import remote, refs, doc, test, run
+from recipe_engine import refs, doc, test, run
 
 
 # Each of these subcommands has a method:
@@ -51,9 +51,6 @@ from recipe_engine import remote, refs, doc, test, run
 #     which is called if the sub command is invoked. This function can
 #     check/adjust the parsed args, calling parser.error if a problem is
 #     encountered. This function is optional.
-#   bare_command (bool) - This sub command's func will be called before parsing
-#     package_deps. This is only used for the `remote` subcommand. See the
-#     comment in add_common_args for why.
 #
 # Example:
 #
@@ -81,7 +78,6 @@ _SUBCOMMANDS = [
   fetch,
   lint,
   refs,
-  remote,
 ]
 
 
@@ -117,9 +113,6 @@ def main():
   args = parser.parse_args()
   common_postprocess_func(parser, args)
   args.postprocess_func(parser, args)
-
-  if args.bare_command:
-    return args.func(None, args)
 
   repo_root = package_io.InfraRepoConfig().from_recipes_cfg(args.package.path)
 
