@@ -42,10 +42,18 @@ def write_spec_to_disk(context, config_file, spec_pb):
     subprocess.check_call([
       GIT, '-C', engine_root, 'checkout', engine_spec.revision])
 
-  shutil.copy(
-    os.path.join(engine_root, 'doc', 'recipes.py'),
-    os.path.join(context.recipes_dir, 'recipes.py')
-  )
+  if os.path.isfile(os.path.join(engine_root, 'recipes.py')):
+    shutil.copy(
+      os.path.join(engine_root, 'recipes.py'),
+      os.path.join(context.recipes_dir, 'recipes.py')
+    )
+  else:
+    # TODO(iannucci): Remove this path when new engine is rolled everywhere.
+    # crbug.com/913102
+    shutil.copy(
+      os.path.join(engine_root, 'doc', 'recipes.py'),
+      os.path.join(context.recipes_dir, 'recipes.py')
+    )
 
 
 def run_simulation_test(repo_root, recipes_path, additional_args=None):

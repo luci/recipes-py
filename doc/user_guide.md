@@ -81,7 +81,7 @@ A recipe repo has a couple essential requirements:
     of the repository).
   * It contains a copy of [recipes.py] in its `recipes_path` folder.
 
-[recipes.py]: /doc/recipes.py
+[recipes.py]: /recipes.py
 
 #### recipes.cfg
 

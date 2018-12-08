@@ -17,10 +17,9 @@ sequences of subprocess calls in a cross-platform and testable way.
 
 *   `doc/`
 
-    Documentation for the recipe engine (including this file!). Also includes
-    `doc/recipes.py`, which is a file you can include in your repository to
-    start using recipes. See the [design doc](doc/design_doc.md) for more
-    detailed design information about the recipe engine.
+    Documentation for the recipe engine (including this file!).  See the
+    [design doc](doc/design_doc.md) for more detailed design information about
+    the recipe engine.
 
 *   `infra/`
 
@@ -29,7 +28,8 @@ sequences of subprocess calls in a cross-platform and testable way.
 *   `recipes.py`
 
     The main entry point to the recipe engine. It has many subcommands and
-    flags; run `recipes.py -h` to see them.
+    flags; run `recipes.py -h` to see them. Include this in your repository
+    to start using recipes.
 
 *   `recipes/`
 
@@ -46,6 +46,7 @@ sequences of subprocess calls in a cross-platform and testable way.
 *   `recipe_engine/`
 
     The core functionality of the recipe engine. Noteworthy files include:
+    * `main.py` -- The main entrypoint for the recipe engine.
     * `package.proto` -- The protobuf file which defines the format of a
     `recipes.cfg` file.
     * `third_party/` -- third_party code which is vendored into the recipe

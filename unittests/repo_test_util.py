@@ -67,7 +67,7 @@ class RepoTest(unittest.TestCase):
     self.maxDiff = None
 
     self._root_dir = tempfile.mkdtemp()
-    self._recipe_tool = os.path.join(ROOT_DIR, 'recipes.py')
+    self._recipe_tool = os.path.join(ROOT_DIR, 'recipe_engine', 'main.py')
 
     self._context = package.PackageContext(
       repo_root=os.path.join(self._root_dir),

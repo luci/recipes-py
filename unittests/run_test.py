@@ -33,7 +33,7 @@ class RunTest(repo_test_util.RepoTest):
     self.update_recipe_module(repos['a'], 'mod', {'foo': []})
     self.update_recipe(repos['a'], 'a_recipe', ['mod'], [('mod', 'foo')])
     shutil.rmtree(os.path.join(repos['a']['root'], '.git'))
-    shutil.copy(os.path.join(ROOT_DIR, 'doc', 'recipes.py'),
+    shutil.copy(os.path.join(ROOT_DIR, 'recipes.py'),
                 os.path.join(repos['a']['root'], 'recipes.py'))
     try:
       subprocess.check_output([
