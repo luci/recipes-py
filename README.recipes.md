@@ -16,6 +16,7 @@
   * [platform](#recipe_modules-platform) &mdash; Mockable system platform identity functions.
   * [properties](#recipe_modules-properties) &mdash; Provides access to the recipes input properties.
   * [python](#recipe_modules-python) &mdash; Provides methods for running python scripts correctly.
+  * [random](#recipe_modules-random) &mdash; Allows randomness in recipes.
   * [raw_io](#recipe_modules-raw_io) &mdash; Provides objects for reading and writing raw data to and from steps.
   * [runtime](#recipe_modules-runtime)
   * [scheduler](#recipe_modules-scheduler) &mdash; API for interacting with the LUCI Scheduler service.
@@ -81,6 +82,7 @@
   * [properties:examples/full](#recipes-properties_examples_full)
   * [python:examples/full](#recipes-python_examples_full) &mdash; Launches the repo bundler.
   * [python:tests/infra_failing_step](#recipes-python_tests_infra_failing_step) &mdash; Tests for api.
+  * [random:tests/full](#recipes-random_tests_full)
   * [raw_io:examples/full](#recipes-raw_io_examples_full)
   * [runtime:tests/full](#recipes-runtime_tests_full)
   * [scheduler:examples/emit_triggers](#recipes-scheduler_examples_emit_triggers) &mdash; This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
@@ -1350,6 +1352,32 @@ The recipe engine will raise an exception when seeing a return code != 0.
 &mdash; **def [succeeding\_step](/recipe_modules/python/api.py#110)(self, name, text, as_log=None):**
 
 Runs a succeeding step (exits 0).
+### *recipe_modules* / [random](/recipe_modules/random)
+
+Allows randomness in recipes.
+
+This module sets up an internal instance of 'random.Random'. In tests, this is
+seeded with `1234`, or a seed of your choosing (using the test_api's `seed()`
+method)
+
+All members of `random.Random` are exposed via this API with getattr.
+
+NOTE: This is based on the python `random` module, and so all caveats which
+apply there also apply to this (i.e. don't use it for anything resembling
+crypto).
+
+Example:
+
+    def RunSteps(api):
+      my_list = range(100)
+      api.random.shuffle(my_list)
+      # my_list is now random!
+
+#### **class [RandomApi](/recipe_modules/random/api.py#31)([RecipeApi](/recipe_engine/recipe_api.py#1015)):**
+
+&mdash; **def [\_\_getattr\_\_](/recipe_modules/random/api.py#38)(self, name):**
+
+Access a member of `random.Random`.
 ### *recipe_modules* / [raw\_io](/recipe_modules/raw_io)
 
 Provides objects for reading and writing raw data to and from steps.
@@ -2163,6 +2191,11 @@ Launches the repo bundler.
 Tests for api.python.infra_failing_step.
 
 &mdash; **def [RunSteps](/recipe_modules/python/tests/infra_failing_step.py#15)(api):**
+### *recipes* / [random:tests/full](/recipe_modules/random/tests/full.py)
+
+[DEPS](/recipe_modules/random/tests/full.py#5): [random](#recipe_modules-random), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/random/tests/full.py#11)(api):**
 ### *recipes* / [raw\_io:examples/full](/recipe_modules/raw_io/examples/full.py)
 
 [DEPS](/recipe_modules/raw_io/examples/full.py#5): [path](#recipe_modules-path), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

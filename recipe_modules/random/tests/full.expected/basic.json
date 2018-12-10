@@ -1,0 +1,13 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "8, 1, 7, 4, 2, 5, 6, 0, 3, 9"
+    ],
+    "name": "echo list"
+  },
+  {
+    "jsonResult": null,
+    "name": "$result"
+  }
+]
