@@ -6,7 +6,7 @@
       "RECIPE_MODULE[recipe_engine::archive]\\resources\\archive.py"
     ],
     "name": "archiving",
-    "stdin": "{\"archive_type\": \"tbz\", \"entries\": [{\"path\": \"[TMP_BASE]\\\\tar-example_tmp_1\", \"type\": \"dir\"}], \"output\": \"[START_DIR]\\\\output\\\\output.tar.bz2\", \"root\": \"[TMP_BASE]\\\\tar-example_tmp_1\"}"
+    "stdin": "{\"archive_type\": \"tbz\", \"entries\": [{\"path\": \"[CLEANUP]\\\\tar-example_tmp_1\", \"type\": \"dir\"}], \"output\": \"[START_DIR]\\\\output\\\\output.tar.bz2\", \"root\": \"[CLEANUP]\\\\tar-example_tmp_1\"}"
   },
   {
     "cmd": [
@@ -15,7 +15,7 @@
       "RECIPE_MODULE[recipe_engine::archive]\\resources\\archive.py"
     ],
     "name": "archiving more",
-    "stdin": "{\"archive_type\": \"zip\", \"entries\": [{\"path\": \"[TMP_BASE]\\\\tar-example_tmp_1\\\\a\", \"type\": \"file\"}, {\"path\": \"[TMP_BASE]\\\\tar-example_tmp_1\\\\b\", \"type\": \"file\"}, {\"path\": \"[TMP_BASE]\\\\tar-example_tmp_1\\\\sub\", \"type\": \"dir\"}], \"output\": \"[START_DIR]\\\\output\\\\more.zip\", \"root\": \"[TMP_BASE]\\\\tar-example_tmp_1\"}"
+    "stdin": "{\"archive_type\": \"zip\", \"entries\": [{\"path\": \"[CLEANUP]\\\\tar-example_tmp_1\\\\a\", \"type\": \"file\"}, {\"path\": \"[CLEANUP]\\\\tar-example_tmp_1\\\\b\", \"type\": \"file\"}, {\"path\": \"[CLEANUP]\\\\tar-example_tmp_1\\\\sub\", \"type\": \"dir\"}], \"output\": \"[START_DIR]\\\\output\\\\more.zip\", \"root\": \"[CLEANUP]\\\\tar-example_tmp_1\"}"
   },
   {
     "cmd": [
@@ -24,7 +24,7 @@
       "RECIPE_MODULE[recipe_engine::archive]\\resources\\archive.py"
     ],
     "name": "archiving all_zip",
-    "stdin": "{\"archive_type\": \"zip\", \"entries\": [{\"path\": \"[TMP_BASE]\\\\tar-example_tmp_1\", \"type\": \"dir\"}], \"output\": \"[START_DIR]\\\\output\\\\all_zip.zip\", \"root\": \"[TMP_BASE]\\\\tar-example_tmp_1\"}"
+    "stdin": "{\"archive_type\": \"zip\", \"entries\": [{\"path\": \"[CLEANUP]\\\\tar-example_tmp_1\", \"type\": \"dir\"}], \"output\": \"[START_DIR]\\\\output\\\\all_zip.zip\", \"root\": \"[CLEANUP]\\\\tar-example_tmp_1\"}"
   },
   {
     "cmd": [
@@ -32,7 +32,7 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py",
       "--json-input",
-      "{\"archive_file\": \"[START_DIR]\\\\output\\\\output.tar.bz2\", \"output\": \"[TMP_BASE]\\\\tar-example_tmp_1\\\\output1\", \"safe_mode\": true}",
+      "{\"archive_file\": \"[START_DIR]\\\\output\\\\output.tar.bz2\", \"output\": \"[CLEANUP]\\\\tar-example_tmp_1\\\\output1\", \"safe_mode\": true}",
       "--json-output",
       "/path/to/tmp/json"
     ],
@@ -54,7 +54,7 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py",
       "--json-input",
-      "{\"archive_file\": \"[START_DIR]\\\\output\\\\more.zip\", \"output\": \"[TMP_BASE]\\\\tar-example_tmp_1\\\\output2\", \"safe_mode\": true}",
+      "{\"archive_file\": \"[START_DIR]\\\\output\\\\more.zip\", \"output\": \"[CLEANUP]\\\\tar-example_tmp_1\\\\output2\", \"safe_mode\": true}",
       "--json-output",
       "/path/to/tmp/json"
     ],
@@ -76,7 +76,7 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py",
       "--json-input",
-      "{\"archive_file\": \"[START_DIR]\\\\output\\\\all_zip.zip\", \"output\": \"[TMP_BASE]\\\\tar-example_tmp_1\\\\output3\", \"safe_mode\": true}",
+      "{\"archive_file\": \"[START_DIR]\\\\output\\\\all_zip.zip\", \"output\": \"[CLEANUP]\\\\tar-example_tmp_1\\\\output3\", \"safe_mode\": true}",
       "--json-output",
       "/path/to/tmp/json"
     ],
@@ -98,7 +98,7 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py",
       "--json-input",
-      "{\"archive_file\": \"[START_DIR]\\\\output\\\\more.zip\", \"output\": \"[TMP_BASE]\\\\tar-example_tmp_1\\\\output3\", \"safe_mode\": true}",
+      "{\"archive_file\": \"[START_DIR]\\\\output\\\\more.zip\", \"output\": \"[CLEANUP]\\\\tar-example_tmp_1\\\\output3\", \"safe_mode\": true}",
       "--json-output",
       "/path/to/tmp/json"
     ],

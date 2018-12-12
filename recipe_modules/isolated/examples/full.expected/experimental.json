@@ -2,21 +2,21 @@
   {
     "cmd": [
       "touch",
-      "[TMP_BASE]/isolated-example_tmp_1/a"
+      "[CLEANUP]/isolated-example_tmp_1/a"
     ],
     "name": "touch a"
   },
   {
     "cmd": [
       "touch",
-      "[TMP_BASE]/isolated-example_tmp_1/b"
+      "[CLEANUP]/isolated-example_tmp_1/b"
     ],
     "name": "touch b"
   },
   {
     "cmd": [
       "touch",
-      "[TMP_BASE]/isolated-example_tmp_1/c"
+      "[CLEANUP]/isolated-example_tmp_1/c"
     ],
     "name": "touch c"
   },
@@ -30,7 +30,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[TMP_BASE]/isolated-example_tmp_1/sub/dir"
+      "[CLEANUP]/isolated-example_tmp_1/sub/dir"
     ],
     "infra_step": true,
     "name": "mkdirs"
@@ -38,7 +38,7 @@
   {
     "cmd": [
       "touch",
-      "[TMP_BASE]/isolated-example_tmp_1/sub/dir/d"
+      "[CLEANUP]/isolated-example_tmp_1/sub/dir/d"
     ],
     "name": "touch d"
   },
@@ -85,13 +85,13 @@
       "-dump-hash",
       "/path/to/tmp/",
       "-files",
-      "[TMP_BASE]/isolated-example_tmp_1:a",
+      "[CLEANUP]/isolated-example_tmp_1:a",
       "-files",
-      "[TMP_BASE]/isolated-example_tmp_1:b",
+      "[CLEANUP]/isolated-example_tmp_1:b",
       "-files",
-      "[TMP_BASE]/isolated-example_tmp_1:c",
+      "[CLEANUP]/isolated-example_tmp_1:c",
       "-dirs",
-      "[TMP_BASE]/isolated-example_tmp_1:sub/dir"
+      "[CLEANUP]/isolated-example_tmp_1:sub/dir"
     ],
     "name": "archiving"
   },
@@ -106,13 +106,13 @@
       "-dump-hash",
       "/path/to/tmp/",
       "-files",
-      "[TMP_BASE]/isolated-example_tmp_1:a",
+      "[CLEANUP]/isolated-example_tmp_1:a",
       "-files",
-      "[TMP_BASE]/isolated-example_tmp_1:b",
+      "[CLEANUP]/isolated-example_tmp_1:b",
       "-files",
-      "[TMP_BASE]/isolated-example_tmp_1:c",
+      "[CLEANUP]/isolated-example_tmp_1:c",
       "-dirs",
-      "[TMP_BASE]/isolated-example_tmp_1:sub/dir"
+      "[CLEANUP]/isolated-example_tmp_1:sub/dir"
     ],
     "name": "archiving elsewhere"
   },

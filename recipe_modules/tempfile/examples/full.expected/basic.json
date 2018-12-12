@@ -7,10 +7,10 @@
       "--json-output",
       "/path/to/tmp/json",
       "rmtree",
-      "[TMP_BASE]/foo_tmp_1"
+      "[CLEANUP]/foo_tmp_1"
     ],
     "infra_step": true,
-    "name": "rmtree [TMP_BASE]/foo_tmp_1"
+    "name": "rmtree [CLEANUP]/foo_tmp_1"
   },
   {
     "jsonResult": null,

@@ -343,15 +343,15 @@ class PathApi(recipe_api.RecipeApi):
     """
     if not self._test_data.enabled:  # pragma: no cover
       # New path as str.
-      new_path = tempfile.mkdtemp(prefix=prefix, dir=str(self['tmp_base']))
-      # Ensure it's under self._temp_dir, convert to Path.
+      new_path = tempfile.mkdtemp(prefix=prefix, dir=str(self['cleanup']))
+      # Ensure it's under self._cleanup_dir, convert to Path.
       new_path = self._split_path(new_path)
-      assert new_path[:len(self._temp_dir)] == self._temp_dir
-      temp_dir = self['tmp_base'].join(*new_path[len(self._temp_dir):])
+      assert new_path[:len(self._cleanup_dir)] == self._cleanup_dir
+      temp_dir = self['cleanup'].join(*new_path[len(self._cleanup_dir):])
     else:
       self._test_counter += 1
       assert isinstance(prefix, basestring)
-      temp_dir = self['tmp_base'].join(
+      temp_dir = self['cleanup'].join(
           '%s_tmp_%d' % (prefix, self._test_counter))
     self.mock_add_paths(temp_dir)
     return temp_dir
@@ -368,16 +368,16 @@ class PathApi(recipe_api.RecipeApi):
     """
     if not self._test_data.enabled:  # pragma: no cover
       # New path as str.
-      fd, new_path = tempfile.mkstemp(prefix=prefix, dir=str(self['tmp_base']))
-      # Ensure it's under self._temp_dir, convert to Path.
+      fd, new_path = tempfile.mkstemp(prefix=prefix, dir=str(self['cleanup']))
+      # Ensure it's under self._cleanup_dir, convert to Path.
       new_path = self._split_path(new_path)
-      assert new_path[:len(self._temp_dir)] == self._temp_dir
-      temp_file = self['tmp_base'].join(*new_path[len(self._temp_dir):])
+      assert new_path[:len(self._cleanup_dir)] == self._cleanup_dir
+      temp_file = self['cleanup'].join(*new_path[len(self._cleanup_dir):])
       os.close(fd)
     else:
       self._test_counter += 1
       assert isinstance(prefix, basestring)
-      temp_file = self['tmp_base'].join(
+      temp_file = self['cleanup'].join(
           '%s_tmp_%d' % (prefix, self._test_counter))
     self.mock_add_paths(temp_file)
     return temp_file
