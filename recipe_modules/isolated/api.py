@@ -6,6 +6,8 @@ from recipe_engine import recipe_api
 
 import os
 
+DEFAULT_CIPD_VERSION = 'git_revision:2fc3e2bd6c5b7e42a1ccedf808f90ffe3ca086cd'
+
 
 class IsolatedApi(recipe_api.RecipeApi):
   """API for interacting with isolated.
@@ -20,30 +22,36 @@ class IsolatedApi(recipe_api.RecipeApi):
 
   def __init__(self, isolated_properties, *args, **kwargs):
     super(IsolatedApi, self).__init__(*args, **kwargs)
-    self._default_isolate_server = isolated_properties.get('default_isolate_server')
-    self._isolated_version = isolated_properties.get('isolated_version', 'release')
-    self._isolated_client = None
+    self._server = isolated_properties.get('server', None)
+    self._version = isolated_properties.get('version', DEFAULT_CIPD_VERSION)
+    self._client = None
+
+  def initialize(self):
+    if self._test_data.enabled:
+      self._server = 'https://example.isolateserver.appspot.com'
+    if self.m.runtime.is_experimental:
+      self._version = 'latest'
+    assert self._server
 
   def _ensure_isolated(self):
     """Ensures that the isolated Go binary is installed."""
-    if self._isolated_client:
+    if self._client:
       return
 
-    with self.m.step.nest('ensure_isolated'):
+    with self.m.step.nest('ensure isolated'):
       with self.m.context(infra_steps=True):
         cipd_dir = self.m.path['cache'].join('isolated_client')
         pkgs = self.m.cipd.EnsureFile()
-        pkgs.add_package('infra/tools/luci/isolated/${platform}',
-                         self._isolated_version)
+        pkgs.add_package('infra/tools/luci/isolated/${platform}', self._version)
         self.m.cipd.ensure(cipd_dir, pkgs)
-        self._isolated_client = cipd_dir.join('isolated')
+        self._client = cipd_dir.join('isolated')
 
   @property
   def isolate_server(self):
     """Returns the associated isolate server."""
-    return self._default_isolate_server
+    return self._server
 
-  def run(self, name, cmd, step_test_data=None):
+  def _run(self, name, cmd, step_test_data=None):
     """Return an isolated command step.
     Args:
       name: (str): name of the step.
@@ -51,7 +59,7 @@ class IsolatedApi(recipe_api.RecipeApi):
     """
     self._ensure_isolated()
     return self.m.step(name,
-                       [self._isolated_client] + list(cmd),
+                       [self._client] + list(cmd),
                        step_test_data=step_test_data)
 
   def isolated(self, root_dir):
@@ -120,7 +128,7 @@ class Isolated(object):
     Returns:
       The hash of the isolated file.
     """
-    isolate_server = isolate_server or self._api._default_isolate_server
+    isolate_server = isolate_server or self._api.isolate_server
     cmd = [
         'archive',
         '-isolate-server', isolate_server,
@@ -131,7 +139,7 @@ class Isolated(object):
       cmd.extend(['-files', self._isolated_path_format(f)])
     for d in self._dirs:
       cmd.extend(['-dirs', self._isolated_path_format(d)])
-    return self._api.run(
+    return self._api._run(
         step_name,
         cmd,
         step_test_data=lambda: self._api.test_api.archive(),

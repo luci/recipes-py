@@ -971,9 +971,9 @@ corresponds to one step, and contains the following keys:
     you know what it is, you also shouldn't use it.
 ### *recipe_modules* / [isolated](/recipe_modules/isolated)
 
-[DEPS](/recipe_modules/isolated/__init__.py#1): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/isolated/__init__.py#1): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-#### **class [IsolatedApi](/recipe_modules/isolated/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#1015)):**
+#### **class [IsolatedApi](/recipe_modules/isolated/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#1015)):**
 
 API for interacting with isolated.
 
@@ -984,11 +984,13 @@ http://go.chromium.org/luci/client/cmd/isolated.
 This module will deploy the client to [CACHE]/isolated_client/; users should
 add this path to the named cache for their builder.
 
-&emsp; **@property**<br>&mdash; **def [isolate\_server](/recipe_modules/isolated/api.py#41)(self):**
+&mdash; **def [initialize](/recipe_modules/isolated/api.py#29)(self):**
+
+&emsp; **@property**<br>&mdash; **def [isolate\_server](/recipe_modules/isolated/api.py#49)(self):**
 
 Returns the associated isolate server.
 
-&mdash; **def [isolated](/recipe_modules/isolated/api.py#57)(self, root_dir):**
+&mdash; **def [isolated](/recipe_modules/isolated/api.py#65)(self, root_dir):**
 
 Returns an Isolated object that can be used to archive a set of files
 and directories, relative to a given root directory.
@@ -996,13 +998,6 @@ and directories, relative to a given root directory.
 Args:
   root_dir (Path): directory relative to which files and directory will be
     isolated.
-
-&mdash; **def [run](/recipe_modules/isolated/api.py#46)(self, name, cmd, step_test_data=None):**
-
-Return an isolated command step.
-Args:
-  name: (str): name of the step.
-  cmd (list(str|Path)): isolated client subcommand to run.
 ### *recipe_modules* / [json](/recipe_modules/json)
 
 [DEPS](/recipe_modules/json/__init__.py#5): [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io)
@@ -2144,9 +2139,9 @@ Tests that step_data can accept multiple specs at once.
 &mdash; **def [RunSteps](/recipe_modules/generator_script/examples/full.py#19)(api, script_name):**
 ### *recipes* / [isolated:examples/full](/recipe_modules/isolated/examples/full.py)
 
-[DEPS](/recipe_modules/isolated/examples/full.py#5): [file](#recipe_modules-file), [isolated](#recipe_modules-isolated), [json](#recipe_modules-json), [path](#recipe_modules-path), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/isolated/examples/full.py#5): [file](#recipe_modules-file), [isolated](#recipe_modules-isolated), [json](#recipe_modules-json), [path](#recipe_modules-path), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/isolated/examples/full.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/isolated/examples/full.py#15)(api):**
 ### *recipes* / [json:examples/full](/recipe_modules/json/examples/full.py)
 
 [DEPS](/recipe_modules/json/examples/full.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

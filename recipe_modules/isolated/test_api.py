@@ -6,13 +6,13 @@ from recipe_engine import recipe_test_api
 
 
 class IsolatedTestApi(recipe_test_api.RecipeTestApi):
-
-  @property
-  def default_properties(self):
+  def properties(self,
+                 server='https://example.isolateserver.appspot.com',
+                 version='test_version'):
     return self.m.properties(**{
       '$recipe_engine/isolated': {
-        'default_isolate_server': 'isolateserver.appspot.com',
-        'isolated_version': 'release',
+        'server': server,
+        'version': version,
       },
     })
 

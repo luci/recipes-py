@@ -7,6 +7,7 @@ DEPS = [
     'isolated',
     'json',
     'path',
+    'runtime',
     'step',
 ]
 
@@ -35,9 +36,9 @@ def RunSteps(api):
   isolated.archive('archiving elsewhere',
                    isolate_server='other-isolateserver.appspot.com')
 
-  # You can also run an arbitrary command.
-  api.isolated.run('isolated version', ['version'])
-
-
 def GenTests(api):
-  yield api.test('basic') + api.isolated.default_properties
+  yield api.test('basic')
+  yield api.test('experimental') + api.runtime(is_luci=False, is_experimental=True)
+  yield (api.test('override isolated') +
+    api.isolated.properties(server='bananas.example.com', version='release')
+  )

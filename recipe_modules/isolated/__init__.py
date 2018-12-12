@@ -1,11 +1,11 @@
 DEPS = [
     'cipd',
     'context',
-    'file',
     'json',
     'path',
     'properties',
     'raw_io',
+    'runtime',
     'step',
 ]
 
@@ -17,8 +17,9 @@ PROPERTIES = {
         help='Properties specifically for the isolated module',
         param_name='isolated_properties',
         kind=ConfigGroup(
-          default_isolate_server=Single(str),
-          isolated_version=Single(str),
+          server=Single(str),
+          version=Single(str),
         ),
+        default={},
       ),
 }
