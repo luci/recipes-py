@@ -107,17 +107,12 @@ def run_steps(properties, stream_engine, step_runner, universe_view,
       for line in str(e).splitlines():
         s.add_step_text(line)
       s.set_step_status('EXCEPTION')
-      if engine_flags and engine_flags.use_result_proto:
-        return result_pb2.Result(
-            failure=result_pb2.Failure(
-                human_reason=str(e),
-                exception=result_pb2.Exception(
-                  traceback=traceback.format_exc().splitlines()
-                )))
-      return RecipeResult({
-          'status_code': 2,
-          'reason': str(e),
-      })
+      return result_pb2.Result(
+          failure=result_pb2.Failure(
+              human_reason=str(e),
+              exception=result_pb2.Exception(
+                traceback=traceback.format_exc().splitlines()
+              )))
 
   # The engine will use step_runner to run the steps, and the step_runner in
   # turn uses stream_engine internally to build steam steps IO.
@@ -268,17 +263,8 @@ class RecipeEngine(object):
 
     Returns:
       result_pb2.Result which has return value or status code and exception.
-        or
-      RecipeResult which has return value or status code and exception.
-        depending on the value of self._engine_flags.use_result_proto
     """
     self._get_client('paths')._initialize_with_recipe_api(api)
-
-    # TODO(martiniss): Remove this once we've transitioned to the new results
-    # format
-    return self._new_run(recipe_script, api)
-
-  def _new_run(self, recipe_script, api):
     result = None
 
     with self._step_runner.run_context():
@@ -336,50 +322,6 @@ class RecipeEngine(object):
         raise
 
     return result
-
-  def _old_run(self, recipe_script, api):
-    with self._step_runner.run_context():
-      try:
-        try:
-          recipe_result = recipe_script.run(api, self.properties, self.environ)
-          result = {
-            "recipe_result": recipe_result,
-            "status_code": 0
-          }
-        finally:
-          self._close_through_level(0)
-      except recipe_api.StepFailure as f:
-        result = {
-          # Include "recipe_result" so it doesn't get marked as infra failure.
-          "recipe_result": None,
-          "reason": f.reason,
-          "status_code": f.retcode or 1
-        }
-      except types.StepDataAttributeError as ex:
-        result = {
-          "reason": "Invalid Step Data Access: %r" % ex,
-          "traceback": traceback.format_exc().splitlines(),
-          "status_code": -1
-        }
-
-        raise
-      except subprocess42.TimeoutExpired as ex:
-        result = {
-          "reason": "Step time out: %r" % ex,
-          "traceback": traceback.format_exc().splitlines(),
-          "status_code": -1
-        }
-      except Exception as ex:
-        result = {
-          "reason": "Uncaught Exception: %r" % ex,
-          "traceback": traceback.format_exc().splitlines(),
-          "status_code": -1
-        }
-
-        raise
-
-    result['name'] = '$result'
-    return RecipeResult(result)
 
   def depend_on(self, recipe, properties, distributor=None):
     return self.depend_on_multi(
@@ -497,55 +439,19 @@ def add_subparser(parser):
   run_p.set_defaults(properties={}, func=main)
 
 
-def handle_recipe_return(recipe_result, result_filename, stream_engine,
-                         engine_flags):
-  if engine_flags and engine_flags.use_result_proto:
-    return new_handle_recipe_return(
-        recipe_result, result_filename, stream_engine)
-
-  if 'recipe_result' in recipe_result.result:
-    result_string = json.dumps(
-        recipe_result.result['recipe_result'], indent=2)
-    if result_filename:
-      with open(result_filename, 'w') as f:
-        f.write(result_string)
-    with stream_engine.make_step_stream('recipe result') as s:
-      with s.new_log_stream('result') as l:
-        l.write_split(result_string)
-
-  if 'traceback' in recipe_result.result:
-    with stream_engine.make_step_stream('Uncaught Exception') as s:
-      s.set_step_status('EXCEPTION')
-      with s.new_log_stream('exception') as l:
-        for line in recipe_result.result['traceback']:
-          l.write_line(line)
-
-  if 'reason' in recipe_result.result:
-    with stream_engine.make_step_stream('Failure reason') as s:
-      s.set_step_status('FAILURE')
-      with s.new_log_stream('reason') as l:
-        for line in recipe_result.result['reason'].splitlines():
-          l.write_line(line)
-
-  if 'status_code' in recipe_result.result:
-    return recipe_result.result['status_code']
-  else:
-    return 0
-
-
-def new_handle_recipe_return(result, result_filename, stream_engine):
+def handle_recipe_return(recipe_result, result_filename, stream_engine):
   if result_filename:
     with open(result_filename, 'w') as fil:
       fil.write(jsonpb.MessageToJson(
-          result, including_default_value_fields=True))
+          recipe_result, including_default_value_fields=True))
 
-  if result.json_result:
+  if recipe_result.json_result:
     with stream_engine.make_step_stream('recipe result') as s:
       with s.new_log_stream('result') as l:
-        l.write_split(result.json_result)
+        l.write_split(recipe_result.json_result)
 
-  if result.HasField('failure'):
-    f = result.failure
+  if recipe_result.HasField('failure'):
+    f = recipe_result.failure
     if f.HasField('exception'):
       with stream_engine.make_step_stream('Uncaught Exception') as s:
         s.set_step_status('EXCEPTION')
@@ -653,5 +559,4 @@ def main(package_deps, args):
     finally:
       os.chdir(old_cwd)
 
-    return handle_recipe_return(
-        ret, args.output_result_json, stream_engine, engine_flags)
+    return handle_recipe_return(ret, args.output_result_json, stream_engine)

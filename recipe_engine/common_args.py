@@ -68,10 +68,7 @@ def add_common_args(parser):
 
   parser.set_defaults(
     operational_args=arguments_pb2.Arguments(
-        engine_flags=arguments_pb2.Arguments.EngineFlags(
-            # TODO(martiniss): Remove this
-            use_result_proto=True,
-        )),
+        engine_flags=arguments_pb2.Arguments.EngineFlags()),
     postprocess_func=lambda parser, args: None,
   )
 
