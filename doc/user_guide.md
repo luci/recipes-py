@@ -146,8 +146,14 @@ important subcommands that you'll use frequently:
     has a 'debug' option which is pretty helpful.
 
 Less often-used:
-  * `autoroll` - Updates your `recipes.cfg` file with newer versions of the
-    dependencies there.
+  * `autoroll` - Automatically updates your `recipes.cfg` file with newer
+    versions of the dependencies there. This rolls the recipes.cfg version
+    and also runs simulation tests to try to detect the largest 'trivial' roll,
+    or the smallest 'non-trivial' roll.
+  * `manual_roll` - Updates your `recipes.cfg` file with the smallest valid roll
+    possible, but doesn't do any automated testing. It's useful for when you
+    need to manually roll recipes (i.e. the automated roll doesn't find a
+    valid trivial or non-trivial roll, due to API changes, etc.)
   * `bundle` - Extracts all files necessary to run the recipe without making any
     network requests (i.e. no git repository operations).
 
@@ -201,6 +207,18 @@ TODO(iannucci) - Document
 #### The `autoroll` command
 
 TODO(iannucci) - Document
+
+#### The `manual_roll` command
+
+Updates your repo's `recipes.cfg` file with the smallest valid roll possible.
+This means that for all dependencies your repo has, the smallest number of
+commits change between the previous value of recipes.cfg and the new value of
+recipes.cfg.
+
+This will print out the effective changelog to stdout as well, for help in
+preparing a manual roll CL.
+
+You can run this command repeatedly to find successive roll candidates.
 
 #### The `bundle` command
 

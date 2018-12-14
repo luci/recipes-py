@@ -227,6 +227,7 @@ class GitBackend(Backend):
 
     cmd = [
       self._GIT_BINARY,
+      '-c', 'advice.detachedHead=false',  # to avoid spamming logs
       '-C', self.checkout_dir,
     ] + list(args)
 

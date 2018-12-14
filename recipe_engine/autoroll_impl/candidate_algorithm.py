@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from __future__ import print_function
+
 import logging
 import sys
 import time
@@ -199,6 +201,8 @@ def _get_roll_candidates_impl(context, package_spec, repos):
 def get_roll_candidates(context, package_spec):
   """Returns a list of RollCandidate objects.
 
+  Prints diagnostic information to stderr.
+
   Args:
     context (PackageContext)
     package_spec (PackageSpec)
@@ -213,16 +217,16 @@ def get_roll_candidates(context, package_spec):
   """
   start = time.time()
 
-  print 'finding roll candidates... '
+  print('finding roll candidates... ', file=sys.stderr)
   repos = get_commitlists(package_spec.deps)
 
   for repo, commits in repos.iteritems():
-    print '  %s: %d commits' % (repo, len(commits))
+    print('  %s: %d commits' % (repo, len(commits)), file=sys.stderr)
   sys.stdout.flush()
 
   ret_good, ret_bad = _get_roll_candidates_impl(context, package_spec, repos)
 
   print('found %d/%d good/bad candidates in %0.2f seconds' % (
-    len(ret_good), len(ret_bad), time.time()-start))
+    len(ret_good), len(ret_bad), time.time()-start), file=sys.stderr)
   sys.stdout.flush()
   return ret_good, ret_bad, repos

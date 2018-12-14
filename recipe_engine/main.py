@@ -35,7 +35,7 @@ from recipe_engine import common_args, package, package_io, util
 import argparse  # this is vendored
 
 from recipe_engine import fetch, lint, bundle, depgraph, analyze, autoroll
-from recipe_engine import refs, doc, test, run
+from recipe_engine import manual_roll, refs, doc, test, run
 
 
 # Each of these subcommands has a method:
@@ -72,6 +72,7 @@ _SUBCOMMANDS = [
 
   analyze,
   autoroll,
+  manual_roll,
   bundle,
   depgraph,
   doc,

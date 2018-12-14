@@ -40,7 +40,7 @@ def write_spec_to_disk(context, config_file, spec_pb):
     # Update recipe_engine to the correct version and copy its matching
     # recipes.py bootstrap script.
     subprocess.check_call([
-      GIT, '-C', engine_root, 'checkout', engine_spec.revision])
+      GIT, '-C', engine_root, 'checkout', '-q', engine_spec.revision])
 
   if os.path.isfile(os.path.join(engine_root, 'recipes.py')):
     shutil.copy(

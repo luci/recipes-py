@@ -55,7 +55,10 @@ class TestGit(unittest.TestCase):
       mocked_call()
 
   def g(self, args, data_or_exception=''):
-    full_args = ['GIT'] + args
+    full_args = ['GIT']
+    if args[0] != 'init':  # init is special
+      full_args += ['-c', 'advice.detachedHead=false']
+    full_args += args
 
     if isinstance(data_or_exception, Exception):
       def _inner(*real_args):
