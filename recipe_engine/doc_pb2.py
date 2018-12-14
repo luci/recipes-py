@@ -7,7 +7,6 @@ from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
-from google.protobuf import descriptor_pb2
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -20,10 +19,10 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='doc.proto',
   package='recipe_engine',
   syntax='proto3',
+  serialized_options=None,
   serialized_pb=_b('\n\tdoc.proto\x12\rrecipe_engine\x1a\rpackage.proto\"\x99\x1f\n\x03\x44oc\x1a\xa6\x01\n\x05Known\x12\x0b\n\x03url\x18\x01 \x01(\t\x12\'\n\x04\x66unc\x18\x02 \x01(\x0b\x32\x17.recipe_engine.Doc.FuncH\x00\x12)\n\x05klass\x18\x03 \x01(\x0b\x32\x18.recipe_engine.Doc.ClassH\x00\x1a\x34\n\x06Object\x12\x11\n\x07generic\x18\x01 \x01(\tH\x00\x12\x0f\n\x05known\x18\x02 \x01(\tH\x00\x42\x06\n\x04kindB\x06\n\x04kind\x1a\xc8\x08\n\x06Schema\x12\x32\n\x06struct\x18\x01 \x01(\x0b\x32 .recipe_engine.Doc.Schema.StructH\x00\x12\x36\n\x08sequence\x18\x02 \x01(\x0b\x32\".recipe_engine.Doc.Schema.SequenceH\x00\x12.\n\x04list\x18\x03 \x01(\x0b\x32\x1e.recipe_engine.Doc.Schema.ListH\x00\x12,\n\x03set\x18\x04 \x01(\x0b\x32\x1d.recipe_engine.Doc.Schema.SetH\x00\x12.\n\x04\x64ict\x18\x05 \x01(\x0b\x32\x1e.recipe_engine.Doc.Schema.DictH\x00\x12\x32\n\x06single\x18\x06 \x01(\x0b\x32 .recipe_engine.Doc.Schema.SingleH\x00\x12\x32\n\x06static\x18\x07 \x01(\x0b\x32 .recipe_engine.Doc.Schema.StaticH\x00\x12.\n\x04\x65num\x18\x08 \x01(\x0b\x32\x1e.recipe_engine.Doc.Schema.EnumH\x00\x1a\x94\x01\n\x06Struct\x12?\n\x08type_map\x18\x01 \x03(\x0b\x32-.recipe_engine.Doc.Schema.Struct.TypeMapEntry\x1aI\n\x0cTypeMapEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12(\n\x05value\x18\x02 \x01(\x0b\x32\x19.recipe_engine.Doc.Schema:\x02\x38\x01\x1a\x39\n\x08Sequence\x12-\n\ninner_type\x18\x01 \x01(\x0b\x32\x19.recipe_engine.Doc.Schema\x1a@\n\x04List\x12\x38\n\ninner_type\x18\x01 \x03(\x0e\x32$.recipe_engine.Doc.Schema.SimpleType\x1a?\n\x03Set\x12\x38\n\ninner_type\x18\x01 \x03(\x0e\x32$.recipe_engine.Doc.Schema.SimpleType\x1a@\n\x04\x44ict\x12\x38\n\nvalue_type\x18\x01 \x03(\x0e\x32$.recipe_engine.Doc.Schema.SimpleType\x1aj\n\x06Single\x12\x38\n\ninner_type\x18\x01 \x03(\x0e\x32$.recipe_engine.Doc.Schema.SimpleType\x12\x10\n\x08required\x18\x02 \x01(\x08\x12\x14\n\x0c\x64\x65\x66\x61ult_json\x18\x03 \x01(\t\x1a\x1e\n\x06Static\x12\x14\n\x0c\x64\x65\x66\x61ult_json\x18\x01 \x01(\t\x1a-\n\x04\x45num\x12\x13\n\x0bvalues_json\x18\x01 \x03(\t\x12\x10\n\x08required\x18\x02 \x01(\x08\"R\n\nSimpleType\x12\n\n\x06STRING\x10\x00\x12\n\n\x06NUMBER\x10\x01\x12\x0b\n\x07\x42OOLEAN\x10\x02\x12\n\n\x06OBJECT\x10\x03\x12\t\n\x05\x41RRAY\x10\x04\x12\x08\n\x04NULL\x10\x05\x42\x06\n\x04kind\x1a\x8e\x01\n\x04\x44\x65ps\x12\x0f\n\x07relpath\x18\x01 \x01(\t\x12\x0e\n\x06lineno\x18\x02 \x01(\x05\x12\x38\n\x0cmodule_links\x18\x03 \x03(\x0b\x32\".recipe_engine.Doc.Deps.ModuleLink\x1a+\n\nModuleLink\x12\x0f\n\x07package\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x1a]\n\tParameter\x12\x11\n\tdocstring\x18\x01 \x01(\t\x12\'\n\x04kind\x18\x02 \x01(\x0b\x32\x19.recipe_engine.Doc.Schema\x12\x14\n\x0c\x64\x65\x66\x61ult_json\x18\x03 \x01(\t\x1a\xc1\x01\n\nParameters\x12\x0f\n\x07relpath\x18\x01 \x01(\t\x12\x0e\n\x06lineno\x18\x02 \x01(\x05\x12\x41\n\nparameters\x18\x03 \x03(\x0b\x32-.recipe_engine.Doc.Parameters.ParametersEntry\x1aO\n\x0fParametersEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12+\n\x05value\x18\x02 \x01(\x0b\x32\x1c.recipe_engine.Doc.Parameter:\x02\x38\x01\x1aZ\n\x0cReturnSchema\x12\x0f\n\x07relpath\x18\x01 \x01(\t\x12\x0e\n\x06lineno\x18\x02 \x01(\x05\x12)\n\x06schema\x18\x03 \x01(\x0b\x32\x19.recipe_engine.Doc.Schema\x1a\xf6\x02\n\x05\x43lass\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07relpath\x18\x02 \x01(\t\x12\x0e\n\x06lineno\x18\x03 \x01(\x05\x12\x11\n\tdocstring\x18\x04 \x01(\t\x12.\n\x05\x62\x61ses\x18\x05 \x03(\x0b\x32\x1f.recipe_engine.Doc.Known.Object\x12\x36\n\x07\x63lasses\x18\x06 \x03(\x0b\x32%.recipe_engine.Doc.Class.ClassesEntry\x12\x32\n\x05\x66uncs\x18\x07 \x03(\x0b\x32#.recipe_engine.Doc.Class.FuncsEntry\x1aH\n\x0c\x43lassesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\'\n\x05value\x18\x02 \x01(\x0b\x32\x18.recipe_engine.Doc.Class:\x02\x38\x01\x1a\x45\n\nFuncsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12&\n\x05value\x18\x02 \x01(\x0b\x32\x17.recipe_engine.Doc.Func:\x02\x38\x01\x1a\x90\x01\n\x04\x46unc\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07relpath\x18\x02 \x01(\t\x12\x0e\n\x06lineno\x18\x03 \x01(\x05\x12\x11\n\tdocstring\x18\x04 \x01(\t\x12\x33\n\ndecorators\x18\x05 \x03(\x0b\x32\x1f.recipe_engine.Doc.Known.Object\x12\x11\n\tsignature\x18\x06 \x01(\t\x1a\xc0\x03\n\x06Module\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07relpath\x18\x02 \x01(\t\x12\x11\n\tdocstring\x18\x03 \x01(\t\x12%\n\x04\x64\x65ps\x18\x04 \x01(\x0b\x32\x17.recipe_engine.Doc.Deps\x12\x31\n\nparameters\x18\x05 \x01(\x0b\x32\x1d.recipe_engine.Doc.Parameters\x12+\n\tapi_class\x18\x06 \x01(\x0b\x32\x18.recipe_engine.Doc.Class\x12\x37\n\x07\x63lasses\x18\x07 \x03(\x0b\x32&.recipe_engine.Doc.Module.ClassesEntry\x12\x33\n\x05\x66uncs\x18\x08 \x03(\x0b\x32$.recipe_engine.Doc.Module.FuncsEntry\x1aH\n\x0c\x43lassesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\'\n\x05value\x18\x02 \x01(\x0b\x32\x18.recipe_engine.Doc.Class:\x02\x38\x01\x1a\x45\n\nFuncsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12&\n\x05value\x18\x02 \x01(\x0b\x32\x17.recipe_engine.Doc.Func:\x02\x38\x01\x1a\xde\x04\n\x06Recipe\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07relpath\x18\x02 \x01(\t\x12\x11\n\tdocstring\x18\x03 \x01(\t\x12%\n\x04\x64\x65ps\x18\x04 \x01(\x0b\x32\x17.recipe_engine.Doc.Deps\x12\x31\n\nparameters\x18\x05 \x01(\x0b\x32\x1d.recipe_engine.Doc.Parameters\x12\x36\n\rreturn_schema\x18\x06 \x01(\x0b\x32\x1f.recipe_engine.Doc.ReturnSchema\x12\x37\n\x07\x63lasses\x18\x07 \x03(\x0b\x32&.recipe_engine.Doc.Recipe.ClassesEntry\x12\x33\n\x05\x66uncs\x18\x08 \x03(\x0b\x32$.recipe_engine.Doc.Recipe.FuncsEntry\x12\x42\n\rknown_objects\x18\t \x03(\x0b\x32+.recipe_engine.Doc.Recipe.KnownObjectsEntry\x1aH\n\x0c\x43lassesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\'\n\x05value\x18\x02 \x01(\x0b\x32\x18.recipe_engine.Doc.Class:\x02\x38\x01\x1a\x45\n\nFuncsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12&\n\x05value\x18\x02 \x01(\x0b\x32\x17.recipe_engine.Doc.Func:\x02\x38\x01\x1aM\n\x11KnownObjectsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\'\n\x05value\x18\x02 \x01(\x0b\x32\x18.recipe_engine.Doc.Known:\x02\x38\x01\x1a\xdd\x04\n\x07Package\x12\x12\n\nproject_id\x18\x01 \x01(\t\x12\x34\n\x05specs\x18\x02 \x03(\x0b\x32%.recipe_engine.Doc.Package.SpecsEntry\x12\x11\n\tdocstring\x18\x03 \x01(\t\x12\x45\n\x0erecipe_modules\x18\x04 \x03(\x0b\x32-.recipe_engine.Doc.Package.RecipeModulesEntry\x12\x38\n\x07recipes\x18\x05 \x03(\x0b\x32\'.recipe_engine.Doc.Package.RecipesEntry\x12\x43\n\rknown_objects\x18\x06 \x03(\x0b\x32,.recipe_engine.Doc.Package.KnownObjectsEntry\x1a\x44\n\nSpecsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12%\n\x05value\x18\x02 \x01(\x0b\x32\x16.recipe_engine.Package:\x02\x38\x01\x1aO\n\x12RecipeModulesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12(\n\x05value\x18\x02 \x01(\x0b\x32\x19.recipe_engine.Doc.Module:\x02\x38\x01\x1aI\n\x0cRecipesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12(\n\x05value\x18\x02 \x01(\x0b\x32\x19.recipe_engine.Doc.Recipe:\x02\x38\x01\x1aM\n\x11KnownObjectsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\'\n\x05value\x18\x02 \x01(\x0b\x32\x18.recipe_engine.Doc.Known:\x02\x38\x01\x62\x06proto3')
   ,
   dependencies=[package__pb2.DESCRIPTOR,])
-_sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 
 
@@ -35,31 +34,31 @@ _DOC_SCHEMA_SIMPLETYPE = _descriptor.EnumDescriptor(
   values=[
     _descriptor.EnumValueDescriptor(
       name='STRING', index=0, number=0,
-      options=None,
+      serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
       name='NUMBER', index=1, number=1,
-      options=None,
+      serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
       name='BOOLEAN', index=2, number=2,
-      options=None,
+      serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
       name='OBJECT', index=3, number=3,
-      options=None,
+      serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
       name='ARRAY', index=4, number=4,
-      options=None,
+      serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
       name='NULL', index=5, number=5,
-      options=None,
+      serialized_options=None,
       type=None),
   ],
   containing_type=None,
-  options=None,
+  serialized_options=None,
   serialized_start=1227,
   serialized_end=1309,
 )
@@ -79,21 +78,21 @@ _DOC_KNOWN_OBJECT = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='known', full_name='recipe_engine.Doc.Known.Object.known', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -119,28 +118,28 @@ _DOC_KNOWN = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='func', full_name='recipe_engine.Doc.Known.func', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='klass', full_name='recipe_engine.Doc.Known.klass', index=2,
       number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[_DOC_KNOWN_OBJECT, ],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -166,21 +165,21 @@ _DOC_SCHEMA_STRUCT_TYPEMAPENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='recipe_engine.Doc.Schema.Struct.TypeMapEntry.value', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -203,14 +202,14 @@ _DOC_SCHEMA_STRUCT = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[_DOC_SCHEMA_STRUCT_TYPEMAPENTRY, ],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -233,14 +232,14 @@ _DOC_SCHEMA_SEQUENCE = _descriptor.Descriptor(
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -263,14 +262,14 @@ _DOC_SCHEMA_LIST = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -293,14 +292,14 @@ _DOC_SCHEMA_SET = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -323,14 +322,14 @@ _DOC_SCHEMA_DICT = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -353,28 +352,28 @@ _DOC_SCHEMA_SINGLE = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='required', full_name='recipe_engine.Doc.Schema.Single.required', index=1,
       number=2, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='default_json', full_name='recipe_engine.Doc.Schema.Single.default_json', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -397,14 +396,14 @@ _DOC_SCHEMA_STATIC = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -427,21 +426,21 @@ _DOC_SCHEMA_ENUM = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='required', full_name='recipe_engine.Doc.Schema.Enum.required', index=1,
       number=2, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -464,56 +463,56 @@ _DOC_SCHEMA = _descriptor.Descriptor(
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='sequence', full_name='recipe_engine.Doc.Schema.sequence', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='list', full_name='recipe_engine.Doc.Schema.list', index=2,
       number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='set', full_name='recipe_engine.Doc.Schema.set', index=3,
       number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='dict', full_name='recipe_engine.Doc.Schema.dict', index=4,
       number=5, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='single', full_name='recipe_engine.Doc.Schema.single', index=5,
       number=6, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='static', full_name='recipe_engine.Doc.Schema.static', index=6,
       number=7, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='enum', full_name='recipe_engine.Doc.Schema.enum', index=7,
       number=8, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -521,7 +520,7 @@ _DOC_SCHEMA = _descriptor.Descriptor(
   enum_types=[
     _DOC_SCHEMA_SIMPLETYPE,
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -547,21 +546,21 @@ _DOC_DEPS_MODULELINK = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='name', full_name='recipe_engine.Doc.Deps.ModuleLink.name', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -584,28 +583,28 @@ _DOC_DEPS = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='lineno', full_name='recipe_engine.Doc.Deps.lineno', index=1,
       number=2, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='module_links', full_name='recipe_engine.Doc.Deps.module_links', index=2,
       number=3, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[_DOC_DEPS_MODULELINK, ],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -628,28 +627,28 @@ _DOC_PARAMETER = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='kind', full_name='recipe_engine.Doc.Parameter.kind', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='default_json', full_name='recipe_engine.Doc.Parameter.default_json', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -672,21 +671,21 @@ _DOC_PARAMETERS_PARAMETERSENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='recipe_engine.Doc.Parameters.ParametersEntry.value', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -709,28 +708,28 @@ _DOC_PARAMETERS = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='lineno', full_name='recipe_engine.Doc.Parameters.lineno', index=1,
       number=2, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='parameters', full_name='recipe_engine.Doc.Parameters.parameters', index=2,
       number=3, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[_DOC_PARAMETERS_PARAMETERSENTRY, ],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -753,28 +752,28 @@ _DOC_RETURNSCHEMA = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='lineno', full_name='recipe_engine.Doc.ReturnSchema.lineno', index=1,
       number=2, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='schema', full_name='recipe_engine.Doc.ReturnSchema.schema', index=2,
       number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -797,21 +796,21 @@ _DOC_CLASS_CLASSESENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='recipe_engine.Doc.Class.ClassesEntry.value', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -834,21 +833,21 @@ _DOC_CLASS_FUNCSENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='recipe_engine.Doc.Class.FuncsEntry.value', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -871,56 +870,56 @@ _DOC_CLASS = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='relpath', full_name='recipe_engine.Doc.Class.relpath', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='lineno', full_name='recipe_engine.Doc.Class.lineno', index=2,
       number=3, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='docstring', full_name='recipe_engine.Doc.Class.docstring', index=3,
       number=4, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='bases', full_name='recipe_engine.Doc.Class.bases', index=4,
       number=5, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='classes', full_name='recipe_engine.Doc.Class.classes', index=5,
       number=6, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='funcs', full_name='recipe_engine.Doc.Class.funcs', index=6,
       number=7, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[_DOC_CLASS_CLASSESENTRY, _DOC_CLASS_FUNCSENTRY, ],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -943,49 +942,49 @@ _DOC_FUNC = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='relpath', full_name='recipe_engine.Doc.Func.relpath', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='lineno', full_name='recipe_engine.Doc.Func.lineno', index=2,
       number=3, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='docstring', full_name='recipe_engine.Doc.Func.docstring', index=3,
       number=4, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='decorators', full_name='recipe_engine.Doc.Func.decorators', index=4,
       number=5, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='signature', full_name='recipe_engine.Doc.Func.signature', index=5,
       number=6, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -1008,21 +1007,21 @@ _DOC_MODULE_CLASSESENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='recipe_engine.Doc.Module.ClassesEntry.value', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -1045,21 +1044,21 @@ _DOC_MODULE_FUNCSENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='recipe_engine.Doc.Module.FuncsEntry.value', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -1082,63 +1081,63 @@ _DOC_MODULE = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='relpath', full_name='recipe_engine.Doc.Module.relpath', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='docstring', full_name='recipe_engine.Doc.Module.docstring', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='deps', full_name='recipe_engine.Doc.Module.deps', index=3,
       number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='parameters', full_name='recipe_engine.Doc.Module.parameters', index=4,
       number=5, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='api_class', full_name='recipe_engine.Doc.Module.api_class', index=5,
       number=6, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='classes', full_name='recipe_engine.Doc.Module.classes', index=6,
       number=7, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='funcs', full_name='recipe_engine.Doc.Module.funcs', index=7,
       number=8, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[_DOC_MODULE_CLASSESENTRY, _DOC_MODULE_FUNCSENTRY, ],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -1161,21 +1160,21 @@ _DOC_RECIPE_CLASSESENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='recipe_engine.Doc.Recipe.ClassesEntry.value', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -1198,21 +1197,21 @@ _DOC_RECIPE_FUNCSENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='recipe_engine.Doc.Recipe.FuncsEntry.value', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -1235,21 +1234,21 @@ _DOC_RECIPE_KNOWNOBJECTSENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='recipe_engine.Doc.Recipe.KnownObjectsEntry.value', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -1272,70 +1271,70 @@ _DOC_RECIPE = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='relpath', full_name='recipe_engine.Doc.Recipe.relpath', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='docstring', full_name='recipe_engine.Doc.Recipe.docstring', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='deps', full_name='recipe_engine.Doc.Recipe.deps', index=3,
       number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='parameters', full_name='recipe_engine.Doc.Recipe.parameters', index=4,
       number=5, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='return_schema', full_name='recipe_engine.Doc.Recipe.return_schema', index=5,
       number=6, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='classes', full_name='recipe_engine.Doc.Recipe.classes', index=6,
       number=7, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='funcs', full_name='recipe_engine.Doc.Recipe.funcs', index=7,
       number=8, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='known_objects', full_name='recipe_engine.Doc.Recipe.known_objects', index=8,
       number=9, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[_DOC_RECIPE_CLASSESENTRY, _DOC_RECIPE_FUNCSENTRY, _DOC_RECIPE_KNOWNOBJECTSENTRY, ],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -1358,21 +1357,21 @@ _DOC_PACKAGE_SPECSENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='recipe_engine.Doc.Package.SpecsEntry.value', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -1395,21 +1394,21 @@ _DOC_PACKAGE_RECIPEMODULESENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='recipe_engine.Doc.Package.RecipeModulesEntry.value', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -1432,21 +1431,21 @@ _DOC_PACKAGE_RECIPESENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='recipe_engine.Doc.Package.RecipesEntry.value', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -1469,21 +1468,21 @@ _DOC_PACKAGE_KNOWNOBJECTSENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='recipe_engine.Doc.Package.KnownObjectsEntry.value', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -1506,49 +1505,49 @@ _DOC_PACKAGE = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='specs', full_name='recipe_engine.Doc.Package.specs', index=1,
       number=2, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='docstring', full_name='recipe_engine.Doc.Package.docstring', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='recipe_modules', full_name='recipe_engine.Doc.Package.recipe_modules', index=3,
       number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='recipes', full_name='recipe_engine.Doc.Package.recipes', index=4,
       number=5, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='known_objects', full_name='recipe_engine.Doc.Package.known_objects', index=5,
       number=6, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[_DOC_PACKAGE_SPECSENTRY, _DOC_PACKAGE_RECIPEMODULESENTRY, _DOC_PACKAGE_RECIPESENTRY, _DOC_PACKAGE_KNOWNOBJECTSENTRY, ],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -1571,7 +1570,7 @@ _DOC = _descriptor.Descriptor(
   nested_types=[_DOC_KNOWN, _DOC_SCHEMA, _DOC_DEPS, _DOC_PARAMETER, _DOC_PARAMETERS, _DOC_RETURNSCHEMA, _DOC_CLASS, _DOC_FUNC, _DOC_MODULE, _DOC_RECIPE, _DOC_PACKAGE, ],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -1705,6 +1704,7 @@ _DOC_PACKAGE.fields_by_name['recipes'].message_type = _DOC_PACKAGE_RECIPESENTRY
 _DOC_PACKAGE.fields_by_name['known_objects'].message_type = _DOC_PACKAGE_KNOWNOBJECTSENTRY
 _DOC_PACKAGE.containing_type = _DOC
 DESCRIPTOR.message_types_by_name['Doc'] = _DOC
+_sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Doc = _reflection.GeneratedProtocolMessageType('Doc', (_message.Message,), dict(
 
@@ -1986,30 +1986,17 @@ _sym_db.RegisterMessage(Doc.Package.RecipesEntry)
 _sym_db.RegisterMessage(Doc.Package.KnownObjectsEntry)
 
 
-_DOC_SCHEMA_STRUCT_TYPEMAPENTRY.has_options = True
-_DOC_SCHEMA_STRUCT_TYPEMAPENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
-_DOC_PARAMETERS_PARAMETERSENTRY.has_options = True
-_DOC_PARAMETERS_PARAMETERSENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
-_DOC_CLASS_CLASSESENTRY.has_options = True
-_DOC_CLASS_CLASSESENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
-_DOC_CLASS_FUNCSENTRY.has_options = True
-_DOC_CLASS_FUNCSENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
-_DOC_MODULE_CLASSESENTRY.has_options = True
-_DOC_MODULE_CLASSESENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
-_DOC_MODULE_FUNCSENTRY.has_options = True
-_DOC_MODULE_FUNCSENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
-_DOC_RECIPE_CLASSESENTRY.has_options = True
-_DOC_RECIPE_CLASSESENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
-_DOC_RECIPE_FUNCSENTRY.has_options = True
-_DOC_RECIPE_FUNCSENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
-_DOC_RECIPE_KNOWNOBJECTSENTRY.has_options = True
-_DOC_RECIPE_KNOWNOBJECTSENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
-_DOC_PACKAGE_SPECSENTRY.has_options = True
-_DOC_PACKAGE_SPECSENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
-_DOC_PACKAGE_RECIPEMODULESENTRY.has_options = True
-_DOC_PACKAGE_RECIPEMODULESENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
-_DOC_PACKAGE_RECIPESENTRY.has_options = True
-_DOC_PACKAGE_RECIPESENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
-_DOC_PACKAGE_KNOWNOBJECTSENTRY.has_options = True
-_DOC_PACKAGE_KNOWNOBJECTSENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
+_DOC_SCHEMA_STRUCT_TYPEMAPENTRY._options = None
+_DOC_PARAMETERS_PARAMETERSENTRY._options = None
+_DOC_CLASS_CLASSESENTRY._options = None
+_DOC_CLASS_FUNCSENTRY._options = None
+_DOC_MODULE_CLASSESENTRY._options = None
+_DOC_MODULE_FUNCSENTRY._options = None
+_DOC_RECIPE_CLASSESENTRY._options = None
+_DOC_RECIPE_FUNCSENTRY._options = None
+_DOC_RECIPE_KNOWNOBJECTSENTRY._options = None
+_DOC_PACKAGE_SPECSENTRY._options = None
+_DOC_PACKAGE_RECIPEMODULESENTRY._options = None
+_DOC_PACKAGE_RECIPESENTRY._options = None
+_DOC_PACKAGE_KNOWNOBJECTSENTRY._options = None
 # @@protoc_insertion_point(module_scope)

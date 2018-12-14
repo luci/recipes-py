@@ -7,7 +7,6 @@ from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
-from google.protobuf import descriptor_pb2
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -19,9 +18,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='test_result.proto',
   package='recipe_engine',
   syntax='proto3',
+  serialized_options=None,
   serialized_pb=_b('\n\x11test_result.proto\x12\rrecipe_engine\"\xd0\x08\n\nTestResult\x12\x0f\n\x07version\x18\x01 \x01(\x05\x12\r\n\x05valid\x18\x02 \x01(\x08\x12J\n\x11\x63overage_failures\x18\x03 \x03(\x0b\x32/.recipe_engine.TestResult.CoverageFailuresEntry\x12\x42\n\rtest_failures\x18\x04 \x03(\x0b\x32+.recipe_engine.TestResult.TestFailuresEntry\x12\x19\n\x11uncovered_modules\x18\x05 \x03(\t\x12\x1b\n\x13unused_expectations\x18\x06 \x03(\t\x1a*\n\x0f\x43overageFailure\x12\x17\n\x0funcovered_lines\x18\x01 \x03(\x03\x1a\x62\n\x15\x43overageFailuresEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x38\n\x05value\x18\x02 \x01(\x0b\x32).recipe_engine.TestResult.CoverageFailure:\x02\x38\x01\x1a\r\n\x0b\x44iffFailure\x1a\xcd\x01\n\x0c\x43heckFailure\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0c\n\x04\x66unc\x18\x02 \x01(\t\x12\x0c\n\x04\x61rgs\x18\x03 \x03(\t\x12\x42\n\x06kwargs\x18\x04 \x03(\x0b\x32\x32.recipe_engine.TestResult.CheckFailure.KwargsEntry\x12\x10\n\x08\x66ilename\x18\x05 \x01(\t\x12\x0e\n\x06lineno\x18\x06 \x01(\x03\x1a-\n\x0bKwargsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x0e\n\x0c\x43rashFailure\x1a\x11\n\x0fInternalFailure\x1a\xa1\x02\n\x0bTestFailure\x12=\n\x0c\x64iff_failure\x18\x01 \x01(\x0b\x32%.recipe_engine.TestResult.DiffFailureH\x00\x12?\n\rcheck_failure\x18\x02 \x01(\x0b\x32&.recipe_engine.TestResult.CheckFailureH\x00\x12\x45\n\x10internal_failure\x18\x03 \x01(\x0b\x32).recipe_engine.TestResult.InternalFailureH\x00\x12?\n\rcrash_failure\x18\x04 \x01(\x0b\x32&.recipe_engine.TestResult.CrashFailureH\x00\x42\n\n\x08\x66\x61ilures\x1aG\n\x0cTestFailures\x12\x37\n\x08\x66\x61ilures\x18\x01 \x03(\x0b\x32%.recipe_engine.TestResult.TestFailure\x1a[\n\x11TestFailuresEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x35\n\x05value\x18\x02 \x01(\x0b\x32&.recipe_engine.TestResult.TestFailures:\x02\x38\x01\x62\x06proto3')
 )
-_sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 
 
@@ -39,14 +38,14 @@ _TESTRESULT_COVERAGEFAILURE = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -69,21 +68,21 @@ _TESTRESULT_COVERAGEFAILURESENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='recipe_engine.TestResult.CoverageFailuresEntry.value', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -106,7 +105,7 @@ _TESTRESULT_DIFFFAILURE = _descriptor.Descriptor(
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -129,21 +128,21 @@ _TESTRESULT_CHECKFAILURE_KWARGSENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='recipe_engine.TestResult.CheckFailure.KwargsEntry.value', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -166,49 +165,49 @@ _TESTRESULT_CHECKFAILURE = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='func', full_name='recipe_engine.TestResult.CheckFailure.func', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='args', full_name='recipe_engine.TestResult.CheckFailure.args', index=2,
       number=3, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='kwargs', full_name='recipe_engine.TestResult.CheckFailure.kwargs', index=3,
       number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='filename', full_name='recipe_engine.TestResult.CheckFailure.filename', index=4,
       number=5, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='lineno', full_name='recipe_engine.TestResult.CheckFailure.lineno', index=5,
       number=6, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[_TESTRESULT_CHECKFAILURE_KWARGSENTRY, ],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -231,7 +230,7 @@ _TESTRESULT_CRASHFAILURE = _descriptor.Descriptor(
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -254,7 +253,7 @@ _TESTRESULT_INTERNALFAILURE = _descriptor.Descriptor(
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -277,35 +276,35 @@ _TESTRESULT_TESTFAILURE = _descriptor.Descriptor(
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='check_failure', full_name='recipe_engine.TestResult.TestFailure.check_failure', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='internal_failure', full_name='recipe_engine.TestResult.TestFailure.internal_failure', index=2,
       number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='crash_failure', full_name='recipe_engine.TestResult.TestFailure.crash_failure', index=3,
       number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -331,14 +330,14 @@ _TESTRESULT_TESTFAILURES = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -361,21 +360,21 @@ _TESTRESULT_TESTFAILURESENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='recipe_engine.TestResult.TestFailuresEntry.value', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -398,49 +397,49 @@ _TESTRESULT = _descriptor.Descriptor(
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='valid', full_name='recipe_engine.TestResult.valid', index=1,
       number=2, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='coverage_failures', full_name='recipe_engine.TestResult.coverage_failures', index=2,
       number=3, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='test_failures', full_name='recipe_engine.TestResult.test_failures', index=3,
       number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='uncovered_modules', full_name='recipe_engine.TestResult.uncovered_modules', index=4,
       number=5, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='unused_expectations', full_name='recipe_engine.TestResult.unused_expectations', index=5,
       number=6, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[_TESTRESULT_COVERAGEFAILURE, _TESTRESULT_COVERAGEFAILURESENTRY, _TESTRESULT_DIFFFAILURE, _TESTRESULT_CHECKFAILURE, _TESTRESULT_CRASHFAILURE, _TESTRESULT_INTERNALFAILURE, _TESTRESULT_TESTFAILURE, _TESTRESULT_TESTFAILURES, _TESTRESULT_TESTFAILURESENTRY, ],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -483,6 +482,7 @@ _TESTRESULT_TESTFAILURESENTRY.containing_type = _TESTRESULT
 _TESTRESULT.fields_by_name['coverage_failures'].message_type = _TESTRESULT_COVERAGEFAILURESENTRY
 _TESTRESULT.fields_by_name['test_failures'].message_type = _TESTRESULT_TESTFAILURESENTRY
 DESCRIPTOR.message_types_by_name['TestResult'] = _TESTRESULT
+_sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 TestResult = _reflection.GeneratedProtocolMessageType('TestResult', (_message.Message,), dict(
 
@@ -572,10 +572,7 @@ _sym_db.RegisterMessage(TestResult.TestFailures)
 _sym_db.RegisterMessage(TestResult.TestFailuresEntry)
 
 
-_TESTRESULT_COVERAGEFAILURESENTRY.has_options = True
-_TESTRESULT_COVERAGEFAILURESENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
-_TESTRESULT_CHECKFAILURE_KWARGSENTRY.has_options = True
-_TESTRESULT_CHECKFAILURE_KWARGSENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
-_TESTRESULT_TESTFAILURESENTRY.has_options = True
-_TESTRESULT_TESTFAILURESENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
+_TESTRESULT_COVERAGEFAILURESENTRY._options = None
+_TESTRESULT_CHECKFAILURE_KWARGSENTRY._options = None
+_TESTRESULT_TESTFAILURESENTRY._options = None
 # @@protoc_insertion_point(module_scope)

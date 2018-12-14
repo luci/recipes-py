@@ -97,7 +97,7 @@ wheel: <
 
 wheel: <
   name: "infra/python/wheels/protobuf-py2_py3"
-  version: "version:3.2.0"
+  version: "version:3.6.0"
 >
 
 wheel: <

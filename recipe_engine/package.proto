@@ -2,7 +2,7 @@
 // Use of this source code is governed under the Apache License, Version 2.0
 // that can be found in the LICENSE file.
 
-// Recompile with protoc 3.1.0+:
+// Recompile with protoc 3.6.0+:
 // cd recipe_engine && protoc package.proto --python_out=.
 
 syntax = "proto3";
