@@ -23,6 +23,7 @@
   * [service_account](#recipe_modules-service_account) &mdash; API for getting OAuth2 access tokens for LUCI tasks or private keys.
   * [source_manifest](#recipe_modules-source_manifest)
   * [step](#recipe_modules-step) &mdash; Step is the primary API for running steps (external programs, scripts, etc.
+  * [swarming](#recipe_modules-swarming)
   * [tempfile](#recipe_modules-tempfile) &mdash; Simplistic temporary directory manager (deprecated).
   * [time](#recipe_modules-time) &mdash; Allows mockable access to the current time.
   * [tricium](#recipe_modules-tricium) &mdash; API for Tricium analyzers to use.
@@ -90,6 +91,7 @@
   * [step:tests/subannotations](#recipes-step_tests_subannotations)
   * [step:tests/timeout](#recipes-step_tests_timeout)
   * [step:tests/trigger](#recipes-step_tests_trigger)
+  * [swarming:examples/full](#recipes-swarming_examples_full)
   * [tempfile:examples/full](#recipes-tempfile_examples_full)
   * [time:examples/full](#recipes-time_examples_full)
   * [tricium:examples/full](#recipes-tricium_examples_full)
@@ -1687,6 +1689,36 @@ each other.
 
 The nesting is implemented by adjusting the 'name' and 'nest_level' fields
 of the context (see the context() method above).
+### *recipe_modules* / [swarming](/recipe_modules/swarming)
+
+[DEPS](/recipe_modules/swarming/__init__.py#5): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [isolated](#recipe_modules-isolated), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+
+#### **class [SwarmingApi](/recipe_modules/swarming/api.py#449)([RecipeApi](/recipe_engine/recipe_api.py#1015)):**
+
+API for interacting with swarming.
+
+The tool's source lives at
+http://go.chromium.org/luci/client/cmd/swarming.
+
+This module will deploy the client to [CACHE]/swarming_client/; users should
+add this path to the named cache for their builder.
+
+&mdash; **def [initialize](/recipe_modules/swarming/api.py#465)(self):**
+
+&mdash; **def [task\_request](/recipe_modules/swarming/api.py#495)(self):**
+
+Creates a new TaskRequest object.
+
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#499)(self, requests):**
+
+Triggers a set of Swarming tasks.
+
+Args:
+  tasks (seq[TaskRequest]): A sequence of task request objects representing
+    the tasks we want to trigger.
+
+Returns:
+  A list of TaskRequestMetadata objects.
 ### *recipe_modules* / [tempfile](/recipe_modules/tempfile)
 
 [DEPS](/recipe_modules/tempfile/__init__.py#5): [file](#recipe_modules-file), [path](#recipe_modules-path)
@@ -2220,6 +2252,11 @@ This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
 [DEPS](/recipe_modules/step/tests/trigger.py#7): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/trigger.py#16)(api, command):**
+### *recipes* / [swarming:examples/full](/recipe_modules/swarming/examples/full.py)
+
+[DEPS](/recipe_modules/swarming/examples/full.py#8): [cipd](#recipe_modules-cipd), [runtime](#recipe_modules-runtime), [swarming](#recipe_modules-swarming)
+
+&mdash; **def [RunSteps](/recipe_modules/swarming/examples/full.py#15)(api):**
 ### *recipes* / [tempfile:examples/full](/recipe_modules/tempfile/examples/full.py)
 
 [DEPS](/recipe_modules/tempfile/examples/full.py#5): [tempfile](#recipe_modules-tempfile)

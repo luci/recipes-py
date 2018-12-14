@@ -1,0 +1,65 @@
+[
+  {
+    "cmd": [],
+    "name": "ensure swarming"
+  },
+  {
+    "cmd": [
+      "cipd",
+      "ensure",
+      "-root",
+      "[CACHE]/swarming_client",
+      "-ensure-file",
+      "infra/tools/luci/swarming/${platform} latest",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "infra_step": true,
+    "name": "ensure swarming.ensure_installed",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-latest----------\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/tools/luci/swarming/resolved-platform\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[CACHE]/swarming_client/swarming",
+      "spawn-tasks",
+      "-server",
+      "https://example.swarmingserver.appspot.com",
+      "-json-input",
+      "{\"requests\": [{\"name\": \"recipes-go\", \"priority\": 100, \"service_account\": \"account@example.iam.gserviceaccount.com\", \"task_slices\": [{\"expiration_secs\": \"3600\", \"properties\": {\"cipd_input\": {\"packages\": [{\"package_name\": \"infra/git/${platform}\", \"path\": \"\", \"version\": \"version:2.14.1.chromium10\"}]}, \"command\": [\"recipes\", \"run\", \"\\\"example\\\"\"], \"dimensions\": [{\"key\": \"pool\", \"value\": \"example.pool\"}], \"execution_timeout_secs\": \"3600\", \"grace_period_secs\": \"30\", \"hard_timeout_secs\": \"3600\", \"idempotent\": true, \"inputs_ref\": {\"isolated\": \"606d94add94223636ee516c6bc9918f937823ccc\", \"isolatedserver\": \"https://example.isolateserver.appspot.com\", \"namespace\": \"default-gzip\"}, \"io_timeout_secs\": \"600\", \"secret_bytes\": \"c2hoLCBkb24ndCB0ZWxs\"}}, {\"expiration_secs\": \"3600\", \"properties\": {\"cipd_input\": {\"packages\": [{\"package_name\": \"infra/git/${platform}\", \"path\": \"\", \"version\": \"version:2.14.1.chromium10\"}]}, \"command\": [\"recipes\", \"run\", \"\\\"example\\\"\"], \"dimensions\": [{\"key\": \"pool\", \"value\": \"example.pool\"}], \"execution_timeout_secs\": \"3600\", \"grace_period_secs\": \"20\", \"hard_timeout_secs\": \"3600\", \"idempotent\": true, \"inputs_ref\": {\"isolated\": \"606d94add94223636ee516c6bc9918f937823ccc\", \"isolatedserver\": \"https://example.isolateserver.appspot.com\", \"namespace\": \"default-gzip\"}, \"io_timeout_secs\": \"600\", \"secret_bytes\": \"c2hoLCBkb24ndCB0ZWxs\"}}]}]}",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "trigger 1 tasks",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"tasks\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@    {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"request\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"name\": \"recipes-go\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }, @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"task_id\": \"0\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  ]@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@Swarming task: recipes-go@https://example.swarmingserver.appspot.com/task?id=0@@@"
+    ]
+  },
+  {
+    "jsonResult": null,
+    "name": "$result"
+  }
+]
