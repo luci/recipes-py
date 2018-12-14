@@ -484,7 +484,6 @@ def handle_recipe_return(recipe_result, result_filename, stream_engine):
 def main(package_deps, args):
   from recipe_engine import step_runner
   from recipe_engine import stream
-  from recipe_engine import stream_logdog
 
   config_file = args.package
 
@@ -519,37 +518,16 @@ def main(package_deps, args):
 
   op_args = args.operational_args
 
-  # Construct our stream engines. We may want to share stream events with more
-  # than one StreamEngine implementation, so we will accumulate them in a
-  # "stream_engines" list and compose them into a MultiStreamEngine.
-  def build_annotation_stream_engine():
-    return stream.AnnotatorStreamEngine(
+  stream_engine = stream.AnnotatorStreamEngine(
         sys.stdout,
         emit_timestamps=(args.timestamps or
                          op_args.annotation_flags.emit_timestamp))
-
-  stream_engines = []
-  if op_args.logdog.streamserver_uri:
-    logging.debug('Using LogDog with parameters: [%s]', op_args.logdog)
-    stream_engines.append(stream_logdog.StreamEngine(
-        streamserver_uri=op_args.logdog.streamserver_uri,
-        name_base=(op_args.logdog.name_base or None),
-        dump_path=op_args.logdog.final_annotation_dump_path,
-    ))
-
-    # If we're teeing, also fold in a standard annotation stream engine.
-    if op_args.logdog.tee:
-      stream_engines.append(build_annotation_stream_engine())
-  else:
-    # Not using LogDog; use a standard annotation stream engine.
-    stream_engines.append(build_annotation_stream_engine())
-  multi_stream_engine = stream.MultiStreamEngine.create(*stream_engines)
 
   emit_initial_properties = op_args.annotation_flags.emit_initial_properties
   engine_flags = op_args.engine_flags
 
   # Have a top-level set of invariants to enforce StreamEngine expectations.
-  with stream.StreamEngineInvariants.wrap(multi_stream_engine) as stream_engine:
+  with stream.StreamEngineInvariants.wrap(stream_engine) as stream_engine:
     try:
       ret = run_steps(
           properties, stream_engine,

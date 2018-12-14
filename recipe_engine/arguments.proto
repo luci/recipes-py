@@ -23,29 +23,6 @@ message Arguments {
   // Annotation control flags.
   AnnotationFlags annotation_flags = 2;
 
-  // LogDog flags.
-  //
-  // If the "streamserver_uri" is provided, recipe output will be forwarded
-  // through LogDog streams using Milo's Annotation Protobuf instead of
-  // STDOUT/STDERR and classic @@@annotations@@@.
-  message LogDogFlags {
-    // The LogDog streamserver URI.
-    string streamserver_uri = 1;
-
-    // The log stream base name. If provided, generated stream names will be
-    // prefixed with "<name_base>/". This must be a valid LogDog stream name.
-    string name_base = 2;
-
-    // If true, tee output through STDOUT/STDERR using inline @@@annotation@@@
-    // markers in addition to LogDog streaming.
-    bool tee = 3;
-
-    // If not empty, this is a path where the final annotation protobuf should
-    // be dumped on completion.
-    string final_annotation_dump_path = 4;
-  }
-  LogDogFlags logdog = 3;
-
   // Any flags to pass to the recipe engine. Used to toggle on new behavior,
   // like sending logs through logdog.
   message EngineFlags {

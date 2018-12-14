@@ -125,10 +125,6 @@ bar tries to kiss foo, but foo already left
       self._example(engine)
     self.assertEqual(stringio.getvalue(), self._example_annotations())
 
-  def test_noop(self):
-    with stream.NoopStreamEngine() as engine:
-      self._example(engine)
-
   def test_write_after_close(self):
     with stream.StreamEngineInvariants() as engine:
       foo = engine.make_step_stream('foo')
