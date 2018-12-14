@@ -657,9 +657,6 @@ class SimulationStepRunner(StepRunner):
 
     return ReturnOpenStep()
 
-  def run_recipe(self, universe, recipe, properties):
-    return self._test_data.depend_on_data.pop(types.freeze((recipe, properties),))
-
   @contextlib.contextmanager
   def run_context(self):
     try:

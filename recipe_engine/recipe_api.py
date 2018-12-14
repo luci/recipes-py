@@ -390,18 +390,6 @@ class StepClient(object):
     return self._engine.run_step(step_config)
 
 
-class DependencyManagerClient(object):
-  """A recipe engine client representing the dependency manager."""
-
-  IDENT = 'dependency_manager'
-
-  def __init__(self, engine):
-    self._engine = engine
-
-  def depend_on(self, recipe, properties, **kwargs):
-    return self._engine.depend_on(recipe, properties, **kwargs)
-
-
 class SourceManifestClient(object):
   """A recipe engine client allowing the upload of Source Manifests.
 

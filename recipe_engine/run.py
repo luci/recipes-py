@@ -147,7 +147,6 @@ class RecipeEngine(object):
     self._environ = environ.copy()
     self._universe_view = universe_view
     self._clients = {client.IDENT: client for client in (
-        recipe_api.DependencyManagerClient(self),
         recipe_api.PathsClient(),
         recipe_api.PropertiesClient(self),
         recipe_api.SourceManifestClient(self, properties),
@@ -322,45 +321,6 @@ class RecipeEngine(object):
         raise
 
     return result
-
-  def depend_on(self, recipe, properties, distributor=None):
-    return self.depend_on_multi(
-        ((recipe, properties),), distributor=distributor)[0]
-
-  def depend_on_multi(self, dependencies, distributor=None):
-    results = []
-    for recipe, properties in dependencies:
-      recipe_script = self._universe_view.load_recipe(recipe, engine=self)
-
-      if not recipe_script.RETURN_SCHEMA:
-        raise ValueError(
-            "Invalid recipe %s. Recipe must have a return schema." % recipe)
-
-      # run_recipe is a function which will be called once the properties have
-      # been validated by the recipe engine. The arguments being passed in are
-      # simply the values being passed to the recipe, which we already know, so
-      # we ignore them. We're only using this for its properties validation
-      # functionality.
-      run_recipe = lambda *args, **kwargs: (
-        self._step_runner.run_recipe(self._universe_view, recipe, properties))
-
-      # Forbid picking up default property values from the environment for
-      # recipes we depend upon. All configuration must be passed explicitly via
-      # properties.
-      environ = {}
-
-      try:
-        # This does type checking for properties
-        results.append(
-          loader._invoke_with_properties(
-            run_recipe, properties, environ, recipe_script.PROPERTIES,
-            properties.keys()))
-      except TypeError as e:
-        raise TypeError(
-            "Got %r while trying to call recipe %s with properties %r" % (
-              e, recipe, properties))
-
-    return results
 
 
 def add_subparser(parser):

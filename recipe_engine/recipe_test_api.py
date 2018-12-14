@@ -194,7 +194,6 @@ class TestData(BaseTestData):
     self.properties = {}  # key -> val
     self.mod_data = defaultdict(ModuleTestData)
     self.step_data = defaultdict(StepTestData)
-    self.depend_on_data = {}
     self.expected_exception = None
     self.post_process_hooks = [] # list(PostprocessHook)
 
@@ -207,7 +206,6 @@ class TestData(BaseTestData):
 
     combineify('mod_data', ret, self, other)
     combineify('step_data', ret, self, other)
-    combineify('depend_on_data', ret, self, other)
 
     ret.post_process_hooks.extend(self.post_process_hooks)
     ret.post_process_hooks.extend(other.post_process_hooks)
@@ -276,13 +274,6 @@ class TestData(BaseTestData):
     if not should_raise:
       self.expected_exception = None
 
-  def depend_on(self, recipe, properties, result):
-    tup = freeze((recipe, properties))
-    if tup in self.depend_on_data:
-      raise ValueError('Already gave test data for recipe %s with properties %r'
-                       % tup)
-    self.depend_on_data[tup] = freeze(result)
-
   def post_process(self, func, args, kwargs, filename, lineno):
     self.post_process_hooks.append(PostprocessHook(
       func, args, kwargs, filename, lineno))
@@ -294,7 +285,6 @@ class TestData(BaseTestData):
       'mod_data': dict(self.mod_data.iteritems()),
       'step_data': dict(self.step_data.iteritems()),
       'expected_exception': self.expected_exception,
-      'depend_on_data': self.depend_on_data,
     },)
 
 
@@ -556,11 +546,6 @@ class RecipeTestApi(object):
   def expect_exception(self, exc_type): #pylint: disable=R0201
     ret = TestData(None)
     ret.expect_exception(exc_type)
-    return ret
-
-  def depend_on(self, recipe, properties, result):
-    ret = TestData()
-    ret.depend_on(recipe, properties, result)
     return ret
 
   def post_process(self, func, *args, **kwargs):
