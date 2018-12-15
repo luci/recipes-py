@@ -1693,7 +1693,7 @@ of the context (see the context() method above).
 
 [DEPS](/recipe_modules/swarming/__init__.py#5): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [isolated](#recipe_modules-isolated), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-#### **class [SwarmingApi](/recipe_modules/swarming/api.py#449)([RecipeApi](/recipe_engine/recipe_api.py#1015)):**
+#### **class [SwarmingApi](/recipe_modules/swarming/api.py#449)([RecipeApi](/recipe_engine/recipe_api.py#1003)):**
 
 API for interacting with swarming.
 
