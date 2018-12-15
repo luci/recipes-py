@@ -346,7 +346,8 @@ class PathApi(recipe_api.RecipeApi):
       new_path = tempfile.mkdtemp(prefix=prefix, dir=str(self['cleanup']))
       # Ensure it's under self._cleanup_dir, convert to Path.
       new_path = self._split_path(new_path)
-      assert new_path[:len(self._cleanup_dir)] == self._cleanup_dir
+      assert new_path[:len(self._cleanup_dir)] == self._cleanup_dir, (
+        'new_path: %r -- cleanup_dir: %r' % (new_path, self._cleanup_dir))
       temp_dir = self['cleanup'].join(*new_path[len(self._cleanup_dir):])
     else:
       self._test_counter += 1
@@ -371,7 +372,8 @@ class PathApi(recipe_api.RecipeApi):
       fd, new_path = tempfile.mkstemp(prefix=prefix, dir=str(self['cleanup']))
       # Ensure it's under self._cleanup_dir, convert to Path.
       new_path = self._split_path(new_path)
-      assert new_path[:len(self._cleanup_dir)] == self._cleanup_dir
+      assert new_path[:len(self._cleanup_dir)] == self._cleanup_dir, (
+        'new_path: %r -- cleanup_dir: %r' % (new_path, self._cleanup_dir))
       temp_file = self['cleanup'].join(*new_path[len(self._cleanup_dir):])
       os.close(fd)
     else:
