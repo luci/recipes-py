@@ -188,6 +188,80 @@ def MustRunRE(check, step_odict, step_regex, at_least=1, at_most=None):
 def _check_step_was_run(check, step_odict, step):
   return check('step %s was run' % step, step in step_odict)
 
+
+def _extract_step_status(check, step_odict, step):
+  """Extract the status for a step.
+
+  The check function is used to check that the step was actually run.
+
+  Args:
+    step (str) - The name of the step to extract the status for.
+
+  Returns:
+    A string containing one of the following values: 'success', 'failure' or
+    'exception'. If the given step was not run, None will be returned.
+  """
+  if not _check_step_was_run(check, step_odict, step):
+    return
+  for a in step_odict[step].get('~followup_annotations', []):
+    if a == '@@@STEP_EXCEPTION@@@':
+      return 'exception'
+    if a == '@@@STEP_FAILURE@@@':
+      return 'failure'
+  return 'success'
+
+def StepSuccess(check, step_odict, step):
+  """Assert that a step succeeded.
+
+  Args:
+    step (str) - The step to check for success.
+
+  Usage:
+    yield (
+        TEST
+        + api.post_process(StepSuccess, 'step-name')
+    )
+  """
+  status = _extract_step_status(check, step_odict, step)
+  if status is None:
+    return
+  check('step %s was success' % step, status == 'success')
+
+def StepFailure(check, step_odict, step):
+  """Assert that a step failed.
+
+  Args:
+    step (str) - The step to check for a failure.
+
+  Usage:
+    yield (
+        TEST
+        + api.post_process(StepFailure, 'step-name')
+    )
+  """
+  status = _extract_step_status(check, step_odict, step)
+  if status is None:
+    return
+  check('step %s was failure' % step, status == 'failure')
+
+def StepException(check, step_odict, step):
+  """Assert that a step had an exception.
+
+  Args:
+    step (str) - The step to check for an exception.
+
+  Usage:
+    yield (
+        TEST
+        + api.post_process(Step, 'step-name')
+    )
+  """
+  status = _extract_step_status(check, step_odict, step)
+  if status is None:
+    return
+  check('step %s was exception' % step, status == 'exception')
+
+
 def _check_cmd_was_in_step(check, step_odict, step):
   return check('step %s had a command' % step, 'cmd' in step_odict[step])
 

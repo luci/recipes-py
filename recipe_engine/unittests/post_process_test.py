@@ -139,6 +139,57 @@ class TestRun(unittest.TestCase):
     self.expect_fails(3, post_process.DoesNotRunRE, 'b')
 
 
+class TestStepStatus(unittest.TestCase):
+  def setUp(self):
+    self.d = OrderedDict([
+        ('success-step', {'~followup_annotations': []}),
+        ('failure-step', {'~followup_annotations': ['@@@STEP_FAILURE@@@']}),
+        ('exception-step', {'~followup_annotations': ['@@@STEP_EXCEPTION@@@']}),
+    ])
+
+  def expect_fails(self, num_fails, func, *args, **kwargs):
+    c = checker.Checker('<filanem>', 0, func, args, kwargs)
+    func(c, self.d, *args, **kwargs)
+    self.assertEqual(len(c.failed_checks), num_fails)
+    return c
+
+  def test_step_success_pass(self):
+    self.expect_fails(0, post_process.StepSuccess, 'success-step')
+
+  def test_step_success_fail(self):
+    c = self.expect_fails(1, post_process.StepSuccess, 'non-existent-step')
+    self.assertEqual(c.failed_checks[0].name, 'step non-existent-step was run')
+
+    c = self.expect_fails(1, post_process.StepSuccess, 'failure-step')
+    self.assertEqual(c.failed_checks[0].name, 'step failure-step was success')
+    c = self.expect_fails(1, post_process.StepSuccess, 'exception-step')
+    self.assertEqual(c.failed_checks[0].name, 'step exception-step was success')
+
+  def test_step_failure_pass(self):
+    self.expect_fails(0, post_process.StepFailure, 'failure-step')
+
+  def test_step_failure_fail(self):
+    c = self.expect_fails(1, post_process.StepFailure, 'non-existent-step')
+    self.assertEqual(c.failed_checks[0].name, 'step non-existent-step was run')
+
+    c = self.expect_fails(1, post_process.StepFailure, 'success-step')
+    self.assertEqual(c.failed_checks[0].name, 'step success-step was failure')
+    c = self.expect_fails(1, post_process.StepFailure, 'exception-step')
+    self.assertEqual(c.failed_checks[0].name, 'step exception-step was failure')
+
+  def test_step_exception_pass(self):
+    self.expect_fails(0, post_process.StepException, 'exception-step')
+
+  def test_step_exception_fail(self):
+    c = self.expect_fails(1, post_process.StepException, 'non-existent-step')
+    self.assertEqual(c.failed_checks[0].name, 'step non-existent-step was run')
+
+    c = self.expect_fails(1, post_process.StepException, 'success-step')
+    self.assertEqual(c.failed_checks[0].name, 'step success-step was exception')
+    c = self.expect_fails(1, post_process.StepException, 'failure-step')
+    self.assertEqual(c.failed_checks[0].name, 'step failure-step was exception')
+
+
 class TestStepCommandRe(unittest.TestCase):
   def setUp(self):
     self.d = OrderedDict([
