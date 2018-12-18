@@ -118,14 +118,15 @@
       "echo",
       "testb"
     ],
+    "infra_step": true,
     "name": "testb"
   },
   {
     "failure": {
       "failure": {
-        "step": ""
+        "step": "Aggregate step failure."
       },
-      "humanReason": "You can catch step failures."
+      "humanReason": "1 out of 2 aggregated steps failed: Step('testa') failed with return_code 1"
     },
     "name": "$result"
   }

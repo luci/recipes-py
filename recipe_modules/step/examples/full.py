@@ -100,9 +100,10 @@ def RunSteps(api, bad_return, access_invalid_data, timeout):
   try:
     with recipe_api.defer_results():
       api.step('testa', ['echo', 'testa'])
-      api.step('testb', ['echo', 'testb'])
+      api.step('testb', ['echo', 'testb'], infra_step=True)
   except recipe_api.AggregatedStepFailure as f:
-    raise api.step.StepFailure("You can catch step failures.")
+    # You can raise aggregated step failures.
+    raise f
 
   # Some steps are needed from an infrastructure point of view. If these
   # steps fail, the build stops, but doesn't get turned red because it's
@@ -157,6 +158,12 @@ def GenTests(api):
   yield (
       api.test('defer_results') +
       api.step_data('testa', retcode=1)
+    )
+
+  yield (
+      api.test('defer_results_with_infra_failure') +
+      api.step_data('testa', retcode=1) +
+      api.step_data('testb', retcode=1)
     )
 
   yield (

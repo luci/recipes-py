@@ -265,6 +265,19 @@ class RecipeEngine(object):
     """
     self._get_client('paths')._initialize_with_recipe_api(api)
     result = None
+    plain_failure_result = lambda f: result_pb2.Result(
+      failure=result_pb2.Failure(
+          human_reason=f.reason,
+          failure=result_pb2.StepFailure(
+              step=f.name,
+          )))
+    infra_failure_result = lambda f: result_pb2.Result(
+      failure=result_pb2.Failure(
+          human_reason=f.reason,
+          exception=result_pb2.Exception(
+              traceback=traceback.format_exc().splitlines()
+          )))
+
 
     with self._step_runner.run_context():
       try:
@@ -275,20 +288,16 @@ class RecipeEngine(object):
           self._close_through_level(0)
 
       except recipe_api.InfraFailure as f:
-        result = result_pb2.Result(
-          failure=result_pb2.Failure(
-              human_reason=f.reason,
-              exception=result_pb2.Exception(
-                  traceback=traceback.format_exc().splitlines()
-              )))
+        result = infra_failure_result(f)
+
+      except recipe_api.AggregatedStepFailure as f:
+        if f.result.contains_infra_failure:
+          result = infra_failure_result(f)
+        else:
+          result = plain_failure_result(f)
 
       except recipe_api.StepFailure as f:
-        result = result_pb2.Result(
-          failure=result_pb2.Failure(
-              human_reason=f.reason,
-              failure=result_pb2.StepFailure(
-                  step=f.name,
-              )))
+        result = plain_failure_result(f)
 
       except types.StepDataAttributeError as ex:
         result = result_pb2.Result(

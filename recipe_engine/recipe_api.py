@@ -583,7 +583,7 @@ class AggregatedStepFailure(StepFailure):
             "Aggregate step failure.", result=result)
 
   def reason_message(self):
-    msg = "{!r} out of {!r} aggregated steps failed. Failures: ".format(
+    msg = "{!r} out of {!r} aggregated steps failed: ".format(
         len(self.result.failures), len(self.result.all_results))
     msg += ', '.join((f.reason or f.name) for f in self.result.failures)
     return msg
@@ -604,6 +604,7 @@ class AggregatedResult(object):
   def __init__(self):
     self.successes = []
     self.failures = []
+    self.contains_infra_failure = False
 
     # Needs to be here to be able to treat this as a step result
     self.retcode = None
@@ -768,6 +769,8 @@ def infer_composite_step(func):
         agg.add_success(ret)
         return DeferredResult(ret, None)
       except StepFailure as ex:
+        if isinstance(ex, InfraFailure):
+          agg.contains_infra_failure = True
         agg.add_failure(ex)
         return DeferredResult(None, ex)
   _inner.__original = func
@@ -807,6 +810,8 @@ def composite_step(func):
         agg.add_success(ret)
         return DeferredResult(ret, None)
       except StepFailure as ex:
+        if isinstance(ex, InfraFailure):
+          agg.contains_infra_failure = True
         agg.add_failure(ex)
         return DeferredResult(None, ex)
   _inner.__original = func

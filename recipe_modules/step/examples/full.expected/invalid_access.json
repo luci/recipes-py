@@ -114,6 +114,7 @@
       "echo",
       "testb"
     ],
+    "infra_step": true,
     "name": "testb"
   },
   {
