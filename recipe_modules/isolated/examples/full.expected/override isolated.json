@@ -117,6 +117,32 @@
     "name": "archiving elsewhere"
   },
   {
+    "cmd": [
+      "[CACHE]/isolated_client/isolated",
+      "download",
+      "-isolate-server",
+      "https://example.isolateserver.appspot.com",
+      "-isolated",
+      "[dummy hash]",
+      "-output-dir",
+      "[CLEANUP]/first"
+    ],
+    "name": "download with first hash"
+  },
+  {
+    "cmd": [
+      "[CACHE]/isolated_client/isolated",
+      "download",
+      "-isolate-server",
+      "other-isolateserver.appspot.com",
+      "-isolated",
+      "[dummy hash]",
+      "-output-dir",
+      "[CLEANUP]/second"
+    ],
+    "name": "download with second hash"
+  },
+  {
     "cmd": [],
     "env_prefixes": {
       "PATH": [
