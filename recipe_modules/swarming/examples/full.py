@@ -29,6 +29,8 @@ def RunSteps(api):
         with_command(['recipes', 'run', '"example"']).
         with_dimensions(pool='example.pool', os='Debian').
         with_cipd_ensure_file(ensure_file).
+        with_env_vars(SOME_VARNAME='stuff', GOPATH='$HOME/go').
+        with_env_prefixes(PATH=["path/to/bin/dir", "path/to/other/bin/dir"]).
         with_isolated('606d94add94223636ee516c6bc9918f937823ccc').
         with_expiration_secs(3600).
         with_io_timeout_secs(600).
@@ -43,15 +45,28 @@ def RunSteps(api):
     with_secret_bytes('shh, don\'t tell'),
   )
 
-  # Dimensions can be unset.
-  slice = request[-1]
-  assert cmp(slice.dimensions, {'pool': 'example.pool', 'os': 'Debian'}) == 0
-
-  slice = slice.with_dimensions(os=None)
-  assert cmp(slice.dimensions, {'pool': 'example.pool'}) == 0
-
   # There should be two task slices at this point.
   assert len(request) == 2
+
+  # Dimensions, and environment variables and prefixes can be unset.
+  slice = request[-1]
+  assert cmp(slice.dimensions, {'pool': 'example.pool', 'os': 'Debian'}) == 0
+  assert cmp(slice.env_vars, {'SOME_VARNAME': 'stuff', 'GOPATH': '$HOME/go'}) == 0
+  assert cmp(slice.env_prefixes, {'PATH' : ["path/to/bin/dir", "path/to/other/bin/dir"]}) == 0
+
+  slice = (slice.
+    with_dimensions(os=None).
+    with_env_vars(GOPATH=None).
+    with_env_prefixes(PATH=None)
+  )
+  assert cmp(slice.dimensions, {'pool': 'example.pool'}) == 0
+  assert cmp(slice.env_vars, {'SOME_VARNAME': 'stuff'}) == 0
+  assert cmp(slice.env_prefixes, {}) == 0
+
+  # Setting environment prefixes is additive.
+  slice = slice.with_env_prefixes(PATH=['a']).with_env_prefixes(PATH=['b'])
+  assert cmp(slice.env_prefixes, {'PATH': ['a', 'b']}) == 0
+
 
   # Trigger the task request.
   metadata = api.swarming.trigger(requests=[request])

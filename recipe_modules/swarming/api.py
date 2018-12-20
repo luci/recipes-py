@@ -169,6 +169,8 @@ class TaskRequest(object):
       self._isolated = ''
       self._dimensions = {}
       self._cipd_ensure_file = api.cipd.EnsureFile()
+      self._env_vars = {}
+      self._env_prefixes = {}
       self._expiration_secs = 300
       self._io_timeout_secs = 60
       self._hard_timeout_secs = 1200
@@ -266,6 +268,69 @@ class TaskRequest(object):
       assert isinstance(ensure_file, self._api.cipd.EnsureFile)
       ret =  self._copy()
       ret._cipd_ensure_file = ensure_file
+      return ret
+
+    @property
+    def env_vars(self):
+      """Returns the mapping (dict) of an environment variable to its value."""
+      return self._env_vars.copy()
+
+    def with_env_vars(self, **kwargs):
+      """Returns the slice with the given environment variables set.
+
+      A key with a value of None will be interpreted as a directive to unset the
+      associated environment variable.
+
+      Example:
+      ```
+      slice = request[-1].with_env_vars(
+        SOME_VARNAME='stuff', OTHER_VAR='more stuff', UNSET_ME=None,
+      )
+      ```
+      """
+      ret = self._copy()
+      for k, v in kwargs.iteritems():
+        assert isinstance(k, basestring) and (isinstance(v, basestring) or v is None)
+        if v is None:
+          ret._env_vars.pop(k, None)
+        else:
+          ret._env_vars[k] = v
+      return ret
+
+    @property
+    def env_prefixes(self):
+      """Returns a mapping (dict) of an environment variable to the list of
+      paths to be prepended."""
+      return copy.deepcopy(self._env_prefixes)
+
+    def with_env_prefixes(self, **kwargs):
+      """Returns the slice with the given environment prefixes set.
+
+      The given paths are interpeted as relative to the Swarming root directory.
+
+      Successive calls to this method is additive with respect to prefixes: a
+      call that sets FOO=[a,...] chained with a call with FOO=[b,...] is
+      equivalent to a single call that sets FOO=[a,...,b,...].
+
+      A key with a value of None will be interpreted as a directive to unset the
+      associated environment variable.
+
+      Example:
+      ```
+      slice = request[-1].with_env_prefixes(
+        PATH=['path/to/bin/dir', 'path/to/other/bin/dir'], UNSET_ME=None,
+      )
+      ```
+      """
+      ret = self._copy()
+      for k, v in kwargs.iteritems():
+        assert isinstance(k, basestring) and (isinstance(v, list) or v is None), (
+          '%r must be a string and %r None or a list of strings' % (k, v))
+        if v is None:
+          ret._env_prefixes.pop(k, None)
+        else:
+          assert all(isinstance(prefix, basestring) for prefix in v)
+          ret._env_prefixes.setdefault(k, []).extend(v)
       return ret
 
     @property
@@ -391,12 +456,15 @@ class TaskRequest(object):
       properties = {
         'command': self.command,
         'dimensions': [{'key': k, 'value': v} for k, v in dims.iteritems()],
+        'env' : [{'key': k , 'value': v} for k, v in self.env_vars.iteritems()],
+        'env_prefixes' : [{'key': k , 'value' : v} for k, v in self.env_prefixes.iteritems()],
         'execution_timeout_secs': str(self.hard_timeout_secs),
         'io_timeout_secs': str(self.io_timeout_secs),
         'hard_timeout_secs': str(self.hard_timeout_secs),
         'grace_period_secs': str(self.grace_period_secs),
         'idempotent': self.idempotent,
       }
+
       if self.isolated:
         properties['inputs_ref'] = {
           'isolated': self.isolated,
