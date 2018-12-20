@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 import base64
+import contextlib
 import copy
 
 from recipe_engine import recipe_api
@@ -56,26 +57,27 @@ class TaskRequest(object):
     """Returns the number of task slices comprising the request."""
     return len(self._slices)
 
-  def add_slice(self, slice):
+  def add_slice(self, slice_obj):
     """Returns the request with the given slice appendedd.
 
     Args:
       * slice (TaskSlice) - The slice to append.
     """
     ret =  self._copy()
-    ret._slices.append(slice)
+    ret._slices.append(slice_obj)
     return ret
 
-  def with_slice(self, idx, slice):
+  def with_slice(self, idx, slice_obj):
     """Returns the request with the given slice set at the given index.
 
     Args:
       * idx (int) - The index at which to set a slice.
       * slice (TaskRequest) - The slice to set.
     """
-    assert 0 <= idx and idx < len(self._slices) and isinstance(slice, self.TaskSlice)
+    assert isinstance(slice_obj, self.TaskSlice)
+    assert 0 <= idx < len(self._slices)
     ret =  self._copy()
-    ret._slices[idx] = slice
+    ret._slices[idx] = slice_obj
     return ret
 
   @property
@@ -460,6 +462,7 @@ class SwarmingApi(recipe_api.RecipeApi):
     super(SwarmingApi, self).__init__(*args, **kwargs)
     self._server = swarming_properties.get('server', None)
     self._version = swarming_properties.get('version', DEFAULT_CIPD_VERSION)
+    self._client_dir = None
     self._client = None
 
   def initialize(self):
@@ -468,6 +471,7 @@ class SwarmingApi(recipe_api.RecipeApi):
     if self.m.runtime.is_experimental:
       self._version = 'latest'
     assert self._server
+    self._client_dir = self.m.path['cache'].join('swarming_client')
 
   def _ensure_swarming(self):
     """Ensures that swarming client is installed."""
@@ -477,9 +481,8 @@ class SwarmingApi(recipe_api.RecipeApi):
           pkgs = self.m.cipd.EnsureFile()
           pkgs.add_package('infra/tools/luci/swarming/${platform}',
                            self._version)
-          cipd_dir = self.m.path['cache'].join('swarming_client')
-          self.m.cipd.ensure(cipd_dir, pkgs)
-          self._client = cipd_dir.join('swarming')
+          self.m.cipd.ensure(self._client_dir, pkgs)
+          self._client = self._client_dir.join('swarming')
 
   def _run(self, name, cmd, step_test_data=None):
     """Return an swarming command step.
@@ -492,8 +495,29 @@ class SwarmingApi(recipe_api.RecipeApi):
     return self.m.step(name, [self._client] + list(cmd),
                        step_test_data=step_test_data)
 
+  @contextlib.contextmanager
+  def on_path(self):
+    """This context manager ensures the go swarming client is available on
+    $PATH.
+
+    Example:
+
+        with api.swarming.on_path():
+          # do your steps which require the swarming binary on path
+    """
+    self._ensure_swarming()
+    with self.m.context(env_prefixes={'PATH': [self._client_dir]}):
+      yield
+
   def task_request(self):
-    """Creates a new TaskRequest object."""
+    """Creates a new TaskRequest object.
+
+    See documentation for TaskRequest/TaskSlice to see how to build this up into
+    a full task.
+
+    Once your TaskRequest is complete, you can pass it to `trigger` in order to
+    have it start running on the swarming server.
+    """
     return TaskRequest(self.m)
 
   def trigger(self, requests):

@@ -8,6 +8,7 @@ from recipe_engine.recipe_api import Property
 DEPS = [
   'cipd',
   'runtime',
+  'step',
   'swarming',
 ]
 
@@ -55,6 +56,9 @@ def RunSteps(api):
   metadata[0].name
   metadata[0].id
   metadata[0].task_ui_link
+
+  with api.swarming.on_path():
+    api.step('some step with swarming on path', [])
 
 
 def GenTests(api):

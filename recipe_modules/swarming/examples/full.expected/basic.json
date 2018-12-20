@@ -59,6 +59,15 @@
     ]
   },
   {
+    "cmd": [],
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]/swarming_client"
+      ]
+    },
+    "name": "some step with swarming on path"
+  },
+  {
     "jsonResult": null,
     "name": "$result"
   }

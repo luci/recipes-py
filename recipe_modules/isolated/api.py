@@ -2,9 +2,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import contextlib
+
 from recipe_engine import recipe_api
 
-import os
 
 DEFAULT_CIPD_VERSION = 'git_revision:2fc3e2bd6c5b7e42a1ccedf808f90ffe3ca086cd'
 
@@ -24,6 +25,7 @@ class IsolatedApi(recipe_api.RecipeApi):
     super(IsolatedApi, self).__init__(*args, **kwargs)
     self._server = isolated_properties.get('server', None)
     self._version = isolated_properties.get('version', DEFAULT_CIPD_VERSION)
+    self._client_dir = None
     self._client = None
 
   def initialize(self):
@@ -32,6 +34,7 @@ class IsolatedApi(recipe_api.RecipeApi):
     if self.m.runtime.is_experimental:
       self._version = 'latest'
     assert self._server
+    self._client_dir = self.m.path['cache'].join('isolated_client')
 
   def _ensure_isolated(self):
     """Ensures that the isolated Go binary is installed."""
@@ -40,11 +43,10 @@ class IsolatedApi(recipe_api.RecipeApi):
 
     with self.m.step.nest('ensure isolated'):
       with self.m.context(infra_steps=True):
-        cipd_dir = self.m.path['cache'].join('isolated_client')
         pkgs = self.m.cipd.EnsureFile()
         pkgs.add_package('infra/tools/luci/isolated/${platform}', self._version)
-        self.m.cipd.ensure(cipd_dir, pkgs)
-        self._client = cipd_dir.join('isolated')
+        self.m.cipd.ensure(self._client_dir, pkgs)
+        self._client = self._client_dir.join('isolated')
 
   @property
   def isolate_server(self):
@@ -61,6 +63,20 @@ class IsolatedApi(recipe_api.RecipeApi):
     return self.m.step(name,
                        [self._client] + list(cmd),
                        step_test_data=step_test_data)
+
+  @contextlib.contextmanager
+  def on_path(self):
+    """This context manager ensures the go isolated client is available on
+    $PATH.
+
+    Example:
+
+        with api.isolated.on_path():
+          # do your steps which require the isolated binary on path
+    """
+    self._ensure_isolated()
+    with self.m.context(env_prefixes={'PATH': [self._client_dir]}):
+      yield
 
   def isolated(self, root_dir):
     """Returns an Isolated object that can be used to archive a set of files
@@ -86,7 +102,11 @@ class Isolated(object):
 
   def _isolated_path_format(self, path):
     """Returns the path format consumed by the isolated CLI."""
-    return str(self._root_dir) + ':' + os.path.relpath(str(path), str(self._root_dir))
+    assert self._root_dir.is_parent_of(path)
+    # path and root_dir share a base, and maybe some prefix of their additional
+    # pieces.
+    relpath = self._api.m.path.join(*path.pieces[len(self._root_dir.pieces):])
+    return '%s:%s' % (self._root_dir, relpath)
 
   def add_file(self, path):
     """Stages a single file to be added to the isolated.
@@ -94,7 +114,7 @@ class Isolated(object):
     Args:
       path (Path): absolute path to a file.
     """
-    assert path
+    assert self._root_dir.is_parent_of(path)
     self._files.append(path)
 
   def add_files(self, paths):
@@ -112,7 +132,7 @@ class Isolated(object):
     Args:
       path (Path): absolute path to a directory.
     """
-    assert path
+    assert self._root_dir.is_parent_of(path)
     self._dirs.append(path)
 
   def archive(self, step_name, isolate_server=None):
@@ -142,5 +162,5 @@ class Isolated(object):
     return self._api._run(
         step_name,
         cmd,
-        step_test_data=lambda: self._api.test_api.archive(),
+        step_test_data=self._api.test_api.archive,
     ).raw_io.output_text

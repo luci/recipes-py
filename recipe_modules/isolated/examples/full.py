@@ -36,6 +36,10 @@ def RunSteps(api):
   isolated.archive('archiving elsewhere',
                    isolate_server='other-isolateserver.appspot.com')
 
+  with api.isolated.on_path():
+    api.step('some step with isolated in path', [])
+
+
 def GenTests(api):
   yield api.test('basic')
   yield api.test('experimental') + api.runtime(is_luci=False, is_experimental=True)
