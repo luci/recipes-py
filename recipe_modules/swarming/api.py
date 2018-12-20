@@ -20,7 +20,7 @@ class TaskRequest(object):
   pattern. The with_* and add_* methods set the associated value on a copy of
   the object, and return that updated copy.
 
-  A new request has one, empty TaskSlice (see below).
+  A new request has a single empty TaskSlice (see below).
 
   Example:
   ```
@@ -71,7 +71,7 @@ class TaskRequest(object):
     """Returns the request with the given slice set at the given index.
 
     Args:
-      * idx (int) - The index at which to set a slice.
+      * idx (int) - The index at which to set the slice.
       * slice (TaskRequest) - The slice to set.
     """
     assert isinstance(slice_obj, self.TaskSlice)
@@ -183,7 +183,7 @@ class TaskRequest(object):
     @property
     def command(self):
       """Returns the command (list(str)) the task will run."""
-      return self._command
+      return copy.copy(self._command)
 
     def with_command(self, cmd):
       """Returns the slice with the given command set.
@@ -223,7 +223,7 @@ class TaskRequest(object):
       return self._dimensions.copy()
 
     def with_dimensions(self, **kwargs):
-      """Returns the slice with the given dimensions set
+      """Returns the slice with the given dimensions set.
 
       A key with a value of None will be interpreted as a directive to unset the
       associated dimension.
@@ -240,10 +240,13 @@ class TaskRequest(object):
       )
       ```
       """
+      ret =  self._copy()
       for k, v in kwargs.iteritems():
         assert isinstance(k, str) and (isinstance(v, str) or v == None)
-      ret =  self._copy()
-      ret._dimensions.update(kwargs)
+        if v is None:
+          ret._dimensions.pop(k, None)
+        else:
+          ret._dimensions[k] = v
       return ret
 
     @property
@@ -348,7 +351,7 @@ class TaskRequest(object):
       """Returns the slice with the given idempotency set.
 
       Args:
-        idempotent (int) - Whether the task is idempotent.
+        idempotent (bool) - Whether the task is idempotent.
       """
       assert isinstance(idempotent, bool)
       ret =  self._copy()
@@ -360,7 +363,7 @@ class TaskRequest(object):
       """Returns the data to be passed as secret bytes.
 
       Secret bytes are base64-encoded data that may be securely passed to the
-      task. This returns the raw, unecoded data initially passed.
+      task. This returns the raw, unencoded data initially passed.
       """
       return self._secret_bytes
 
@@ -368,7 +371,7 @@ class TaskRequest(object):
       """Returns the slice with the given data set as secret bytes.
 
       Args:
-        data (int) - The data to be written to secret bytes.
+        data (str) - The data to be written to secret bytes.
       """
       assert isinstance(data, str)
       ret =  self._copy()
@@ -382,18 +385,12 @@ class TaskRequest(object):
       The format follows the schema given by the TaskSlice class found here:
       https://cs.chromium.org/chromium/infra/luci/appengine/swarming/swarming_rpcs.py?q=TaskSlice\(
       """
-      dims = { k : v for k, v in self.dimensions.iteritems() if v is not None }
+      dims = self.dimensions
       assert len(dims) >= 1 and dims['pool']
 
       properties = {
         'command': self.command,
-        'dimensions': [
-          {
-            'key': k,
-            'value': v,
-          }
-          for k, v in dims.iteritems()
-        ],
+        'dimensions': [{'key': k, 'value': v} for k, v in dims.iteritems()],
         'execution_timeout_secs': str(self.hard_timeout_secs),
         'io_timeout_secs': str(self.io_timeout_secs),
         'hard_timeout_secs': str(self.hard_timeout_secs),
@@ -409,17 +406,17 @@ class TaskRequest(object):
       if self.secret_bytes:
         properties['secret_bytes'] = base64.b64encode(self.secret_bytes)
       if len(self.cipd_ensure_file.packages) > 0:
-        packages = []
-        for path, pkgs in self.cipd_ensure_file.packages.iteritems():
-          for pkg in pkgs:
-            packages.append(
-              {
-                'package_name': pkg.name,
-                'path': path or '',
-                'version': pkg.version,
-              }
-            )
-        properties['cipd_input'] = { 'packages': packages }
+        properties['cipd_input'] = {
+          'packages': [
+            {
+              'package_name': pkg.name,
+              'path': path or '',
+              'version': pkg.version,
+            }
+            for path, pkgs in self.cipd_ensure_file.packages.iteritems()
+              for pkg in pkgs
+          ]
+        }
 
       return {
         'expiration_secs': str(self.expiration_secs),
@@ -427,7 +424,7 @@ class TaskRequest(object):
       }
 
 class TaskRequestMetadata(object):
-  """Wrapper object for a requested task."""
+  """Metadata of a requested task."""
   def __init__(self, swarming_server, task_json):
     self._task_json = task_json
     self._swarming_server = swarming_server
@@ -531,21 +528,18 @@ class SwarmingApi(recipe_api.RecipeApi):
       A list of TaskRequestMetadata objects.
     """
     assert len(requests) > 0
-
-    request_json = []
-    for request in requests:
-      request_json.append(request.to_jsonish())
-
     trigger_resp = self._run(
         'trigger %d tasks' % len(requests),
         [
           'spawn-tasks',
           '-server', self._server,
-          '-json-input', self.m.json.input({'requests': request_json}),
+          '-json-input', self.m.json.input({
+            'requests': [ req.to_jsonish() for req in requests ]
+          }),
           '-json-output', self.m.json.output(),
         ],
         step_test_data=lambda: self.test_api.trigger(
-          task_names=tuple(map(lambda request: request.name, requests)),
+          task_names=tuple(map(lambda req: req.name, requests)),
         )
     ).json.output
 
@@ -553,7 +547,7 @@ class SwarmingApi(recipe_api.RecipeApi):
     presented_links = self.m.step.active_result.presentation.links
     for task_json in trigger_resp['tasks']:
       metadata_obj = TaskRequestMetadata(self._server, task_json)
-      presented_links['Swarming task: %s' % metadata_obj.name] = (
+      presented_links['Swarming task UI: %s' % metadata_obj.name] = (
           metadata_obj.task_ui_link)
       metadata_objs.append(metadata_obj)
 

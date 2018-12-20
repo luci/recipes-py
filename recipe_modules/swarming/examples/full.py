@@ -33,16 +33,22 @@ def RunSteps(api):
         with_expiration_secs(3600).
         with_io_timeout_secs(600).
         with_hard_timeout_secs(3600).
-        with_idempotent(True).
-        with_secret_bytes('shh, don\'t tell')
+        with_idempotent(True),
       )
   )
 
   # Append a slice that is a variation of the last one as a starting point.
   request = request.add_slice(request[-1].
     with_grace_period_secs(20).
-    with_dimensions(os=None),
+    with_secret_bytes('shh, don\'t tell'),
   )
+
+  # Dimensions can be unset.
+  slice = request[-1]
+  assert cmp(slice.dimensions, {'pool': 'example.pool', 'os': 'Debian'}) == 0
+
+  slice = slice.with_dimensions(os=None)
+  assert cmp(slice.dimensions, {'pool': 'example.pool'}) == 0
 
   # There should be two task slices at this point.
   assert len(request) == 2
