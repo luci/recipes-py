@@ -42,6 +42,17 @@
     "name": "read it"
   },
   {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/symlink.py",
+      "--link-json",
+      "{\"[START_DIR]/a-second-file\": [\"[CLEANUP]/root/yet/another/symlink\"], \"[START_DIR]/some file\": [\"[CLEANUP]/root/another/symlink\"]}"
+    ],
+    "infra_step": true,
+    "name": "create a tree of symlinks"
+  },
+  {
     "jsonResult": null,
     "name": "$result"
   }

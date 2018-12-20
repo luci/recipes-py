@@ -11,6 +11,56 @@ from recipe_engine import recipe_api
 import os
 import fnmatch
 
+
+class SymlinkTree(object):
+  """A representation of a tree of symlinks."""
+  def __init__(self, api, symlink_resource, root):
+    """See FileApi.symlink_tree for the public constructor."""
+    assert root and isinstance(root, config_types.Path)
+    self._api = api
+    self._resource = symlink_resource
+    self._root = root
+    #  dict[Path]list(Path): Maps target to a list of linknames.
+    self._link_map = {}
+
+  def register_link(self, target, linkname):
+    """Registers a pair of paths to symlink.
+
+    Args:
+      * target (Path) - The file/directory to which the symlink will point.
+      * linkname (Path) - The location of the symlink. Must be a child of the
+          SymlinkTree's `root`. It is an error to register two links with the
+          same linkname.
+    """
+    assert (isinstance(target, config_types.Path) and
+      isinstance(linkname, config_types.Path))
+    assert linkname not in self._link_map.get(target, ()), (
+      '%s is already linked' % linkname)
+    assert self._root.is_parent_of(linkname), (
+      '%s is not within the root directory %s' % (linkname, self._root))
+    self._link_map.setdefault(target, []).append(linkname)
+
+  def create_links(self, name):
+    """Creates all registered symlinks on disk.
+
+    Args:
+      * name (str) - The name of the step.
+    """
+    for target, linknames in self._link_map.iteritems():
+      for linkname in linknames:
+        self._api.path.mock_copy_paths(target, linkname)
+    self._api.python(
+      name,
+      self._resource,
+      args = [
+        '--link-json',
+        self._api.json.input({str(target) : linkname
+          for target, linkname in self._link_map.iteritems()
+        }),
+      ],
+      infra_step=True)
+
+
 # TODO(iannucci): Introduce the concept of a 'native step' and implement these
 # directly in the current python interpreter without the need for a subprocess
 # invocation.
@@ -338,22 +388,30 @@ class FileApi(recipe_api.RecipeApi):
       return fnmatch.fnmatch(p[len(src)+1:].split(os.path.sep)[0], pattern)
     self.m.path.mock_remove_paths(str(source), filt)
 
-  def symlink(self, name, source, link):
-    """Creates a symlink from link to source on the local filesystem.
+  def symlink(self, name, source, linkname):
+    """Creates a symlink on the local filesystem.
 
     Behaves identically to os.symlink.
 
     Args:
       * name (str) - The name of the step.
-      * source (Path|Placeholder) - The path to link to.
-      * link (Path|Placeholder) - The link to create.
+      * source (Path|Placeholder) - The path to link from.
+      * linkname (Path|Placeholder) - The destination to link to.
 
     Raises file.Error
     """
     self._assert_absolute_path_or_placeholder(source)
-    self._assert_absolute_path_or_placeholder(link)
-    self._run(name, ['symlink', source, link])
-    self.m.path.mock_copy_paths(source, link)
+    self._assert_absolute_path_or_placeholder(linkname)
+    self._run(name, ['symlink', source, linkname])
+    self.m.path.mock_copy_paths(source, linkname)
+
+  def symlink_tree(self, root):
+    """Creates a SymlinkTree, given a root directory.
+
+    Args:
+      * root (Path): root of a tree of symlinks.
+    """
+    return SymlinkTree(self.m, self.resource('symlink.py'), root)
 
   def truncate(self, name, path, size_mb=100):
     """Creates an empty file with path and size_mb on the local filesystem.
