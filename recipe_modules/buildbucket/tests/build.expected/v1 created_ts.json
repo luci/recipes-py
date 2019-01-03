@@ -1,0 +1,24 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "builder {",
+      "}",
+      "create_time {",
+      "  seconds: 1546473600",
+      "}"
+    ],
+    "name": "build"
+  },
+  {
+    "cmd": [
+      "echo",
+      "user_agent:recipe"
+    ],
+    "name": "tags_for_child_build"
+  },
+  {
+    "jsonResult": null,
+    "name": "$result"
+  }
+]

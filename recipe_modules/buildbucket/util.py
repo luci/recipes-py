@@ -2,10 +2,15 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import datetime
 import re
 import urlparse
 
 from .proto import common_pb2
+
+
+# UTC datetime corresponding to zero Unix timestamp.
+EPOCH = datetime.datetime.utcfromtimestamp(0)
 
 
 def parse_http_host_and_path(url):
@@ -75,3 +80,9 @@ def _parse_buildset_tags(tags):
       bs = _parse_build_set(t[len(bs_prefix):])
       if bs:
         yield bs
+
+
+def timestamp_to_datetime(value):
+  """Converts integer timestamp in microseconds since epoch to UTC datetime."""
+  assert isinstance(value, (int, long, float)), value
+  return EPOCH + datetime.timedelta(microseconds=value)
