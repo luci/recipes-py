@@ -168,6 +168,49 @@ class BuildbucketApi(recipe_api.RecipeApi):
       new_tags['parent_buildername'] = str(self.build.builder.builder)
     return new_tags
 
+  def set_output_gitiles_commit(self, gitiles_commit):
+    """Sets buildbucket.v2.Build.output.gitiles_commit field.
+
+    This will tell other systems, consuming the build, what version of the code
+    was actually used in this build and what is the position of this build
+    relative to other builds of the same builder.
+
+    Args:
+      gitiles_commit(buildbucket.common_pb2.GitilesCommit): the commit that was
+        actually checked out. Must have host, project and id.
+        ID must match r'^[0-9a-f]{40}$' (git revision).
+        If position is present, the build can be ordered along commits.
+        Position requires ref.
+        Ref, if not empty, must start with "refs/".
+
+    Can be called at most once per build.
+    """
+    # Validate commit object.
+    c = gitiles_commit
+    assert isinstance(c, common_pb2.GitilesCommit), c
+
+    assert c.host
+    assert '/' not in c.host, c.host
+
+    assert c.project
+    assert not c.project.startswith('/'), c.project
+    assert not c.project.startswith('a/'), c.project
+    assert not c.project.endswith('/'), c.project
+
+    assert util.is_sha1_hex(c.id), c.id
+
+    # position is uint32
+    assert not c.position or c.ref
+
+    assert not c.ref or c.ref.startswith('refs/'), c.ref
+    assert not c.ref.endswith('/'), c.ref
+
+    # The fact that it sets a property value is an implementation detail.
+    res = self.m.step('set_output_gitiles_commit', cmd=None)
+    prop_name = '$recipe_engine/buildbucket/output_gitiles_commit'
+    res.presentation.properties[prop_name] = json_format.MessageToDict(
+        gitiles_commit)
+
   # RPCs.
 
   def put(self, builds, **kwargs):

@@ -75,8 +75,17 @@ def RunSteps(api):
   if get_build_result.stdout['build']['status'] == 'SCHEDULED':
     api.buildbucket.cancel_build(new_job_id)
 
-  # Switching hostname for expectations coverage only.
+  # Setting values for expectations coverage only.
   api.buildbucket.set_buildbucket_host('cr-buildbucket-test.appspot.com')
+  api.buildbucket.set_output_gitiles_commit(
+    api.buildbucket.common_pb2.GitilesCommit(
+        host='chromium.googlesource.com',
+        project='infra/infra',
+        ref='refs/heads/master',
+        id='a' * 40,
+        position=42,
+    ),
+  )
 
 
 def GenTests(api):

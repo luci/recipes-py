@@ -100,6 +100,13 @@
     ]
   },
   {
+    "cmd": [],
+    "name": "set_output_gitiles_commit",
+    "~followup_annotations": [
+      "@@@SET_BUILD_PROPERTY@$recipe_engine/buildbucket/output_gitiles_commit@{\"host\": \"chromium.googlesource.com\", \"id\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"position\": 42, \"project\": \"infra/infra\", \"ref\": \"refs/heads/master\"}@@@"
+    ]
+  },
+  {
     "jsonResult": null,
     "name": "$result"
   }
