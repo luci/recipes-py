@@ -58,7 +58,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
       created_ts = build_dict.get('created_ts')
       if created_ts:
         self.build.create_time.FromDatetime(
-            util.timestamp_to_datetime(created_ts))
+            util.timestamp_to_datetime(float(created_ts)))
+
       if 'id' in build_dict:
         self._build.id = int(build_dict['id'])
       build_sets = list(util._parse_buildset_tags(build_dict.get('tags', [])))

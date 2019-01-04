@@ -65,7 +65,7 @@ def GenTests(api):
       created_by='user:jane@example.com')
   yield legacy_build(
       'v1 created_ts',
-      created_ts=1546473600000000)
+      created_ts='1546473600000000')
 
   yield case(
       'buildbot gitiles commit',
