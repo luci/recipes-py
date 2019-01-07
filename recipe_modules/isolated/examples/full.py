@@ -30,11 +30,15 @@ def RunSteps(api):
   isolated.add_files([temp.join('b'), temp.join('c')])
   isolated.add_dir(temp.join('sub', 'dir'))
 
+
   # Archive with the default isolate server.
   first_hash = isolated.archive('archiving')
-  # Or, archive to another server.
+
+  # Or try isolating the whole root directory - and doing so to another server.
+  isolated = api.isolated.isolated(temp)
+  isolated.add_dir(temp)
   second_hash = isolated.archive(
-    'archiving elsewhere',
+      'archiving root directory elsewhere',
     isolate_server='other-isolateserver.appspot.com',
   )
 

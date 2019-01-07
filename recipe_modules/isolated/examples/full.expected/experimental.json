@@ -105,16 +105,10 @@
       "default-gzip",
       "-dump-hash",
       "/path/to/tmp/",
-      "-files",
-      "[CLEANUP]/isolated-example_tmp_1:a",
-      "-files",
-      "[CLEANUP]/isolated-example_tmp_1:b",
-      "-files",
-      "[CLEANUP]/isolated-example_tmp_1:c",
       "-dirs",
-      "[CLEANUP]/isolated-example_tmp_1:sub/dir"
+      "[CLEANUP]:isolated-example_tmp_1"
     ],
-    "name": "archiving elsewhere"
+    "name": "archiving root directory elsewhere"
   },
   {
     "cmd": [

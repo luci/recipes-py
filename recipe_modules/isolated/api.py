@@ -86,7 +86,7 @@ class IsolatedApi(recipe_api.RecipeApi):
       root_dir (Path): directory relative to which files and directory will be
         isolated.
     """
-    return Isolated(self, root_dir)
+    return Isolated(self.m, root_dir)
 
   def download(self, step_name, isolated_hash, output_dir, isolate_server=None):
     """Downloads an isolated tree from an isolate server.
@@ -124,11 +124,18 @@ class Isolated(object):
 
   def _isolated_path_format(self, path):
     """Returns the path format consumed by the isolated CLI."""
-    assert self._root_dir.is_parent_of(path)
-    # path and root_dir share a base, and maybe some prefix of their additional
-    # pieces.
-    relpath = self._api.m.path.join(*path.pieces[len(self._root_dir.pieces):])
-    return '%s:%s' % (self._root_dir, relpath)
+    if self._root_dir.is_parent_of(path):
+      return '%s:%s' % (
+          self._root_dir,
+          self._api.path.join(*path.pieces[len(self._root_dir.pieces):])
+      )
+    else:
+      assert path == self._root_dir, \
+        "isolated path must be equal to or within %s" % self._root_dir
+      return '%s:%s' % (
+          self._api.path.dirname(self._root_dir),
+          self._api.path.basename(self._root_dir),
+      )
 
   def add_file(self, path):
     """Stages a single file to be added to the isolated.
@@ -154,7 +161,7 @@ class Isolated(object):
     Args:
       path (Path): absolute path to a directory.
     """
-    assert self._root_dir.is_parent_of(path)
+    assert self._root_dir == path or self._root_dir.is_parent_of(path)
     self._dirs.append(path)
 
   def archive(self, step_name, isolate_server=None):
@@ -170,19 +177,19 @@ class Isolated(object):
     Returns:
       The hash of the isolated tree.
     """
-    isolate_server = isolate_server or self._api.isolate_server
+    isolate_server = isolate_server or self._api.isolated.isolate_server
     cmd = [
         'archive',
         '-isolate-server', isolate_server,
         '-namespace', 'default-gzip',
-        '-dump-hash', self._api.m.raw_io.output_text(),
+        '-dump-hash', self._api.raw_io.output_text(),
     ]
     for f in self._files:
       cmd.extend(['-files', self._isolated_path_format(f)])
     for d in self._dirs:
       cmd.extend(['-dirs', self._isolated_path_format(d)])
-    return self._api._run(
+    return self._api.isolated._run(
         step_name,
         cmd,
-        step_test_data=self._api.test_api.archive,
+        step_test_data=self._api.isolated.test_api.archive,
     ).raw_io.output_text
