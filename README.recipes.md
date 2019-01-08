@@ -1019,7 +1019,7 @@ Args:
 
 &mdash; **def [initialize](/recipe_modules/isolated/api.py#31)(self):**
 
-&emsp; **@property**<br>&mdash; **def [isolate\_server](/recipe_modules/isolated/api.py#51)(self):**
+&emsp; **@property**<br>&mdash; **def [isolate\_server](/recipe_modules/isolated/api.py#50)(self):**
 
 Returns the associated isolate server.
 

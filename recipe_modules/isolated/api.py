@@ -33,7 +33,6 @@ class IsolatedApi(recipe_api.RecipeApi):
       self._server = 'https://example.isolateserver.appspot.com'
     if self.m.runtime.is_experimental:
       self._version = 'latest'
-    assert self._server
     self._client_dir = self.m.path['cache'].join('isolated_client')
 
   def _ensure_isolated(self):
@@ -51,6 +50,7 @@ class IsolatedApi(recipe_api.RecipeApi):
   @property
   def isolate_server(self):
     """Returns the associated isolate server."""
+    assert self._server
     return self._server
 
   def _run(self, name, cmd, step_test_data=None):
