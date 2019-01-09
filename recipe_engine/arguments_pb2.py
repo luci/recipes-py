@@ -7,6 +7,7 @@ from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
+from google.protobuf import descriptor_pb2
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -18,9 +19,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='arguments.proto',
   package='recipe_engine',
   syntax='proto3',
-  serialized_options=None,
-  serialized_pb=_b('\n\x0f\x61rguments.proto\x12\rrecipe_engine\"\xa9\x03\n\tArguments\x12\x42\n\x10\x61nnotation_flags\x18\x02 \x01(\x0b\x32(.recipe_engine.Arguments.AnnotationFlags\x12\x34\n\x06logdog\x18\x03 \x01(\x0b\x32$.recipe_engine.Arguments.LogDogFlags\x12:\n\x0c\x65ngine_flags\x18\x04 \x01(\x0b\x32$.recipe_engine.Arguments.EngineFlags\x1aJ\n\x0f\x41nnotationFlags\x12\x16\n\x0e\x65mit_timestamp\x18\x01 \x01(\x08\x12\x1f\n\x17\x65mit_initial_properties\x18\x02 \x01(\x08\x1ak\n\x0bLogDogFlags\x12\x18\n\x10streamserver_uri\x18\x01 \x01(\t\x12\x11\n\tname_base\x18\x02 \x01(\t\x12\x0b\n\x03tee\x18\x03 \x01(\x08\x12\"\n\x1a\x66inal_annotation_dump_path\x18\x04 \x01(\t\x1a\'\n\x0b\x45ngineFlags\x12\x18\n\x10use_result_proto\x18\x01 \x01(\x08J\x04\x08\x01\x10\x02\x62\x06proto3')
+  serialized_pb=_b('\n\x0f\x61rguments.proto\x12\rrecipe_engine\"\xf2\x01\n\tArguments\x12\x42\n\x10\x61nnotation_flags\x18\x02 \x01(\x0b\x32(.recipe_engine.Arguments.AnnotationFlags\x12:\n\x0c\x65ngine_flags\x18\x04 \x01(\x0b\x32$.recipe_engine.Arguments.EngineFlags\x1aJ\n\x0f\x41nnotationFlags\x12\x16\n\x0e\x65mit_timestamp\x18\x01 \x01(\x08\x12\x1f\n\x17\x65mit_initial_properties\x18\x02 \x01(\x08\x1a\x13\n\x0b\x45ngineFlagsJ\x04\x08\x01\x10\x02J\x04\x08\x01\x10\x02\x62\x06proto3')
 )
+_sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 
 
@@ -38,79 +39,28 @@ _ARGUMENTS_ANNOTATIONFLAGS = _descriptor.Descriptor(
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='emit_initial_properties', full_name='recipe_engine.Arguments.AnnotationFlags.emit_initial_properties', index=1,
       number=2, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      options=None),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  serialized_options=None,
+  options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=230,
-  serialized_end=304,
-)
-
-_ARGUMENTS_LOGDOGFLAGS = _descriptor.Descriptor(
-  name='LogDogFlags',
-  full_name='recipe_engine.Arguments.LogDogFlags',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='streamserver_uri', full_name='recipe_engine.Arguments.LogDogFlags.streamserver_uri', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='name_base', full_name='recipe_engine.Arguments.LogDogFlags.name_base', index=1,
-      number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='tee', full_name='recipe_engine.Arguments.LogDogFlags.tee', index=2,
-      number=3, type=8, cpp_type=7, label=1,
-      has_default_value=False, default_value=False,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='final_annotation_dump_path', full_name='recipe_engine.Arguments.LogDogFlags.final_annotation_dump_path', index=3,
-      number=4, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=306,
-  serialized_end=413,
+  serialized_start=176,
+  serialized_end=250,
 )
 
 _ARGUMENTS_ENGINEFLAGS = _descriptor.Descriptor(
@@ -120,27 +70,20 @@ _ARGUMENTS_ENGINEFLAGS = _descriptor.Descriptor(
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
-    _descriptor.FieldDescriptor(
-      name='use_result_proto', full_name='recipe_engine.Arguments.EngineFlags.use_result_proto', index=0,
-      number=1, type=8, cpp_type=7, label=1,
-      has_default_value=False, default_value=False,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  serialized_options=None,
+  options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=415,
-  serialized_end=454,
+  serialized_start=252,
+  serialized_end=271,
 )
 
 _ARGUMENTS = _descriptor.Descriptor(
@@ -156,45 +99,35 @@ _ARGUMENTS = _descriptor.Descriptor(
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
-      name='logdog', full_name='recipe_engine.Arguments.logdog', index=1,
-      number=3, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='engine_flags', full_name='recipe_engine.Arguments.engine_flags', index=2,
+      name='engine_flags', full_name='recipe_engine.Arguments.engine_flags', index=1,
       number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      options=None),
   ],
   extensions=[
   ],
-  nested_types=[_ARGUMENTS_ANNOTATIONFLAGS, _ARGUMENTS_LOGDOGFLAGS, _ARGUMENTS_ENGINEFLAGS, ],
+  nested_types=[_ARGUMENTS_ANNOTATIONFLAGS, _ARGUMENTS_ENGINEFLAGS, ],
   enum_types=[
   ],
-  serialized_options=None,
+  options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
   oneofs=[
   ],
   serialized_start=35,
-  serialized_end=460,
+  serialized_end=277,
 )
 
 _ARGUMENTS_ANNOTATIONFLAGS.containing_type = _ARGUMENTS
-_ARGUMENTS_LOGDOGFLAGS.containing_type = _ARGUMENTS
 _ARGUMENTS_ENGINEFLAGS.containing_type = _ARGUMENTS
 _ARGUMENTS.fields_by_name['annotation_flags'].message_type = _ARGUMENTS_ANNOTATIONFLAGS
-_ARGUMENTS.fields_by_name['logdog'].message_type = _ARGUMENTS_LOGDOGFLAGS
 _ARGUMENTS.fields_by_name['engine_flags'].message_type = _ARGUMENTS_ENGINEFLAGS
 DESCRIPTOR.message_types_by_name['Arguments'] = _ARGUMENTS
-_sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Arguments = _reflection.GeneratedProtocolMessageType('Arguments', (_message.Message,), dict(
 
@@ -202,13 +135,6 @@ Arguments = _reflection.GeneratedProtocolMessageType('Arguments', (_message.Mess
     DESCRIPTOR = _ARGUMENTS_ANNOTATIONFLAGS,
     __module__ = 'arguments_pb2'
     # @@protoc_insertion_point(class_scope:recipe_engine.Arguments.AnnotationFlags)
-    ))
-  ,
-
-  LogDogFlags = _reflection.GeneratedProtocolMessageType('LogDogFlags', (_message.Message,), dict(
-    DESCRIPTOR = _ARGUMENTS_LOGDOGFLAGS,
-    __module__ = 'arguments_pb2'
-    # @@protoc_insertion_point(class_scope:recipe_engine.Arguments.LogDogFlags)
     ))
   ,
 
@@ -224,7 +150,6 @@ Arguments = _reflection.GeneratedProtocolMessageType('Arguments', (_message.Mess
   ))
 _sym_db.RegisterMessage(Arguments)
 _sym_db.RegisterMessage(Arguments.AnnotationFlags)
-_sym_db.RegisterMessage(Arguments.LogDogFlags)
 _sym_db.RegisterMessage(Arguments.EngineFlags)
 
 

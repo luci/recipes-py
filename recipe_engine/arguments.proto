@@ -26,8 +26,7 @@ message Arguments {
   // Any flags to pass to the recipe engine. Used to toggle on new behavior,
   // like sending logs through logdog.
   message EngineFlags {
-    // DEPRECATED, DO NOT USE. Will be removed soon.
-    bool use_result_proto = 1;
+    reserved 1;
   }
   EngineFlags engine_flags = 4;
 }
