@@ -535,7 +535,6 @@ class SwarmingApi(recipe_api.RecipeApi):
       self._server = 'https://example.swarmingserver.appspot.com'
     if self.m.runtime.is_experimental:
       self._version = 'latest'
-    assert self._server
     self._client_dir = self.m.path['cache'].join('swarming_client')
 
   def _ensure_swarming(self):
@@ -596,6 +595,8 @@ class SwarmingApi(recipe_api.RecipeApi):
       A list of TaskRequestMetadata objects.
     """
     assert len(requests) > 0
+    assert self._server
+
     trigger_resp = self._run(
         'trigger %d tasks' % len(requests),
         [

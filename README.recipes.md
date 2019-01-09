@@ -1754,7 +1754,7 @@ add this path to the named cache for their builder.
 
 &mdash; **def [initialize](/recipe_modules/swarming/api.py#533)(self):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#563)(self):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#562)(self):**
 
 This context manager ensures the go swarming client is available on
 $PATH.
@@ -1764,7 +1764,7 @@ Example:
     with api.swarming.on_path():
       # do your steps which require the swarming binary on path
 
-&mdash; **def [task\_request](/recipe_modules/swarming/api.py#577)(self):**
+&mdash; **def [task\_request](/recipe_modules/swarming/api.py#576)(self):**
 
 Creates a new TaskRequest object.
 
@@ -1774,7 +1774,7 @@ a full task.
 Once your TaskRequest is complete, you can pass it to `trigger` in order to
 have it start running on the swarming server.
 
-&mdash; **def [trigger](/recipe_modules/swarming/api.py#588)(self, requests):**
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#587)(self, requests):**
 
 Triggers a set of Swarming tasks.
 
