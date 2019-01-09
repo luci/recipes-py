@@ -11,6 +11,15 @@ are meant to:
     subprocesses as "steps", and other UI attributes (step color,
     descriptive text, debugging logs, etc.)
 
+*** note
+This user guide is a work in progress, and is a revised version of the
+[old_user_guide]. Once this guide is fully updated, the old version will
+be removed.
+***
+
+[old_user_guide]: ./old_user_guide.md
+
+
 [TOC]
 
 ## Background
