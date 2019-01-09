@@ -29,7 +29,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   def __init__(
       self, property, legacy_property, mastername, buildername, buildnumber,
-      revision, parent_got_revision, patch_storage, patch_gerrit_url,
+      revision, parent_got_revision, branch, patch_storage, patch_gerrit_url,
       patch_project, patch_issue, patch_set, issue, patchset, *args, **kwargs):
     super(BuildbucketApi, self).__init__(*args, **kwargs)
     self._service_account_key = None
@@ -71,7 +71,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
           patch_set or patchset)
       _legacy_input_gitiles_commit(
           self._build.input.gitiles_commit, build_dict, build_sets,
-          revision or parent_got_revision)
+          revision or parent_got_revision, branch)
       _legacy_tags(build_dict, self._build)
 
   def set_buildbucket_host(self, host):
@@ -342,7 +342,8 @@ def _legacy_input_gerrit_changes(
       dest_repeated.add().CopyFrom(bs)
 
 
-def _legacy_input_gitiles_commit(dest, build_dict, build_sets, revision):
+def _legacy_input_gitiles_commit(
+    dest, build_dict, build_sets, revision, branch):
   commit = None
   for bs in build_sets:
     if isinstance(bs, common_pb2.GitilesCommit):
@@ -361,6 +362,8 @@ def _legacy_input_gitiles_commit(dest, build_dict, build_sets, revision):
 
   if util.is_sha1_hex(revision):
     dest.id = revision
+  if branch:
+    dest.ref = 'refs/heads/%s' % branch
 
 
 def _legacy_builder_id(build_dict, mastername, buildername, builder_id):

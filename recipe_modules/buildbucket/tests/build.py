@@ -70,6 +70,7 @@ def GenTests(api):
   yield case(
       'buildbot gitiles commit',
       revision='a' * 40,
+      branch='master',
   )
   yield case(
       'buildbot gitiles commit, parent_got_revision',
