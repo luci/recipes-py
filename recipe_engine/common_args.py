@@ -18,8 +18,6 @@ from . import env
 
 import argparse  # this is vendored
 
-from . import arguments_pb2
-
 from google.protobuf import json_format as jsonpb
 
 
@@ -62,23 +60,7 @@ def add_common_args(parser):
   parser.add_argument('--disable-bootstrap', action='store_false',
                       dest='use_bootstrap', help='Deprecated')
 
-  def operational_args_type(value):
-    with open(value) as fd:
-      return jsonpb.ParseDict(json.load(fd), arguments_pb2.Arguments())
-
-  parser.set_defaults(
-    operational_args=arguments_pb2.Arguments(
-        engine_flags=arguments_pb2.Arguments.EngineFlags()),
-    postprocess_func=lambda parser, args: None,
-  )
-
-  parser.add_argument(
-      '--operational-args-path',
-      dest='operational_args',
-      type=operational_args_type,
-      help='The path to an operational Arguments file. If provided, this file '
-           'must contain a JSONPB-encoded Arguments protobuf message, and will '
-           'be integrated into the runtime parameters.')
+  parser.set_defaults(postprocess_func=lambda parser, args: None)
 
   def post_process_args(parser, args):
     # TODO(iannucci): We should always do logging.basicConfig() (probably with

@@ -147,9 +147,8 @@ class SubprocessStepRunner(StepRunner):
   """Responsible for actually running steps as subprocesses, filtering their
   output into a stream."""
 
-  def __init__(self, stream_engine, engine_flags):
+  def __init__(self, stream_engine):
     self._stream_engine = stream_engine
-    self._engine_flags = engine_flags
 
   @property
   def stream_engine(self):
@@ -424,8 +423,8 @@ class QuietSubprocessStepRunner(SubprocessStepRunner):
   recipe locally.
   """
 
-  def __init__(self, stream_engine, engine_flags, tempdir):
-    super(QuietSubprocessStepRunner, self).__init__(stream_engine, engine_flags)
+  def __init__(self, stream_engine, tempdir):
+    super(QuietSubprocessStepRunner, self).__init__(stream_engine)
     self._tempdir = tempdir
 
   def _print_step(self, step_stream, step, env):

@@ -380,4 +380,4 @@ def add_subparser(parser):
 
   fetch_p.set_defaults(
     # fetch action is implied by recipes.py
-    func=(lambda package_deps, engine_flags: 0))
+    func=(lambda package_deps, _args: 0))
