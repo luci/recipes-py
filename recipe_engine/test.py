@@ -52,6 +52,7 @@ import argparse  # this is vendored
 # file.  We do this instead of passing because they're not picklable, and
 # that's required by multiprocessing.
 _UNIVERSE_VIEW = None
+_ENGINE_FLAGS = None
 
 
 # An event to signal exit, for example on Ctrl-C.
@@ -337,7 +338,8 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
       props['$recipe_engine/source_manifest'] = {}
     if 'debug_dir' not in props['$recipe_engine/source_manifest']:
       props['$recipe_engine/source_manifest']['debug_dir'] = None
-    engine = run.RecipeEngine(runner, props, {}, _UNIVERSE_VIEW)
+    engine = run.RecipeEngine(
+        runner, props, {}, _UNIVERSE_VIEW, engine_flags=_ENGINE_FLAGS)
     with coverage_context(include=covers, enable=enable_coverage) as cov:
       # Run recipe loading under coverage context. This ensures we collect
       # coverage of all definitions and globals.
@@ -999,11 +1001,14 @@ def main(package_deps, args):
   """
   universe = loader.RecipeUniverse(package_deps, args.package)
   universe_view = loader.UniverseView(universe, package_deps.root_package)
+  engine_flags=args.operational_args.engine_flags
 
   # Prevent flakiness caused by stale pyc files.
   package.cleanup_pyc(package_deps.root_package.recipes_dir)
 
   global _UNIVERSE_VIEW
   _UNIVERSE_VIEW = universe_view
+  global _ENGINE_FLAGS
+  _ENGINE_FLAGS = engine_flags
 
   return args.subfunc(args, package_deps)

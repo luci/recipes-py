@@ -23,7 +23,6 @@ import argparse  # this is vendored
 import subprocess42
 
 from . import result_pb2
-from . import arguments_pb2
 
 from google.protobuf import json_format as jsonpb
 
@@ -39,7 +38,7 @@ RecipeResult = collections.namedtuple('RecipeResult', 'result')
 # will be used to seed recipe clients and expanded to include managed runtime
 # entities.
 def run_steps(properties, stream_engine, step_runner, universe_view,
-              emit_initial_properties=False):
+              engine_flags=None, emit_initial_properties=False):
   """Runs a recipe (given by the 'recipe' property) for real.
 
   Args:
@@ -48,6 +47,7 @@ def run_steps(properties, stream_engine, step_runner, universe_view,
     stream_engine: the StreamEngine to use to create individual step streams.
     step_runner: The StepRunner to use to 'actually run' the steps.
     universe_view: The RecipeUniverse to use to load the recipes & modules.
+    engine_flags: Any flags which modify engine behavior. See arguments.proto.
     emit_initial_properties (bool): If True, write the initial recipe engine
         properties in the "setup_build" step.
 
@@ -59,7 +59,7 @@ def run_steps(properties, stream_engine, step_runner, universe_view,
         s.set_build_property(key, json.dumps(properties[key], sort_keys=True))
 
     engine = RecipeEngine(
-        step_runner, properties, os.environ, universe_view)
+        step_runner, properties, os.environ, universe_view, engine_flags)
 
     # Create all API modules and top level RunSteps function.  It doesn't launch
     # any recipe code yet; RunSteps needs to be called.
@@ -139,7 +139,8 @@ class RecipeEngine(object):
   ActiveStep = collections.namedtuple('ActiveStep', (
       'config', 'step_result', 'open_step'))
 
-  def __init__(self, step_runner, properties, environ, universe_view):
+  def __init__(self, step_runner, properties, environ, universe_view,
+               engine_flags=None):
     """See run_steps() for parameter meanings."""
     self._step_runner = step_runner
     self._properties = properties
@@ -151,6 +152,7 @@ class RecipeEngine(object):
         recipe_api.SourceManifestClient(self, properties),
         recipe_api.StepClient(self),
     )}
+    self._engine_flags = engine_flags
 
     # A stack of ActiveStep objects, holding the most recently executed step at
     # each nest level (objects deeper in the stack have lower nest levels).
@@ -367,8 +369,6 @@ def add_subparser(parser):
     help=(
       'The file to write the JSON serialized returned value '
       ' of the recipe to'))
-
-  # TODO(iannucci): Remove all this with build.proto. BEGIN[[
   run_p.add_argument(
     '--timestamps',
     action='store_true',
@@ -380,20 +380,6 @@ def add_subparser(parser):
       'CURRENT_TIMESTAMP annotation will be printed at the beginning and '
       'end of the annotation stream and also immediately before each '
       'STEP_STARTED and STEP_CLOSED annotations.'))
-
-  def operational_args_type(value):
-    with open(value) as fd:
-      return jsonpb.ParseDict(json.load(fd), arguments_pb2.Arguments())
-
-  run_p.add_argument(
-      '--operational-args-path',
-      dest='operational_args',
-      type=operational_args_type,
-      help='The path to an operational Arguments file. If provided, this file '
-           'must contain a JSONPB-encoded Arguments protobuf message, and will '
-           'be integrated into the runtime parameters.')
-  # END]]
-
   prop_group = run_p.add_mutually_exclusive_group()
   prop_group.add_argument(
     '--properties-file',
@@ -419,13 +405,7 @@ def add_subparser(parser):
       'issue=12345. The property value will be decoded as JSON, but if '
       'this decoding fails the value will be interpreted as a string.'))
 
-  run_p.set_defaults(
-    properties={},
-    func=main,
-    # TODO(iannucci): remove this too
-    operational_args=arguments_pb2.Arguments(
-        engine_flags=arguments_pb2.Arguments.EngineFlags()),
-  )
+  run_p.set_defaults(properties={}, func=main)
 
 
 def handle_recipe_return(recipe_result, result_filename, stream_engine):
@@ -513,14 +493,16 @@ def main(package_deps, args):
                          op_args.annotation_flags.emit_timestamp))
 
   emit_initial_properties = op_args.annotation_flags.emit_initial_properties
+  engine_flags = op_args.engine_flags
 
   # Have a top-level set of invariants to enforce StreamEngine expectations.
   with stream.StreamEngineInvariants.wrap(stream_engine) as stream_engine:
     try:
       ret = run_steps(
           properties, stream_engine,
-          step_runner.SubprocessStepRunner(stream_engine),
-          universe_view, emit_initial_properties=emit_initial_properties)
+          step_runner.SubprocessStepRunner(stream_engine, engine_flags),
+          universe_view, engine_flags=engine_flags,
+          emit_initial_properties=emit_initial_properties)
     finally:
       os.chdir(old_cwd)
 
