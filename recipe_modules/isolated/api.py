@@ -132,10 +132,7 @@ class Isolated(object):
     else:
       assert path == self._root_dir, \
         "isolated path must be equal to or within %s" % self._root_dir
-      return '%s:%s' % (
-          self._api.path.dirname(self._root_dir),
-          self._api.path.basename(self._root_dir),
-      )
+      return '%s:.' % self._root_dir
 
   def add_file(self, path):
     """Stages a single file to be added to the isolated.

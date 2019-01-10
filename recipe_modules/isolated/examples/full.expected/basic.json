@@ -106,7 +106,7 @@
       "-dump-hash",
       "/path/to/tmp/",
       "-dirs",
-      "[CLEANUP]:isolated-example_tmp_1"
+      "[CLEANUP]/isolated-example_tmp_1:."
     ],
     "name": "archiving root directory elsewhere"
   },
