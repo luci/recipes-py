@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='recipe_engine',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x0f\x61rguments.proto\x12\rrecipe_engine\"\x86\x02\n\tArguments\x12\x42\n\x10\x61nnotation_flags\x18\x02 \x01(\x0b\x32(.recipe_engine.Arguments.AnnotationFlags\x12:\n\x0c\x65ngine_flags\x18\x04 \x01(\x0b\x32$.recipe_engine.Arguments.EngineFlags\x1aJ\n\x0f\x41nnotationFlags\x12\x16\n\x0e\x65mit_timestamp\x18\x01 \x01(\x08\x12\x1f\n\x17\x65mit_initial_properties\x18\x02 \x01(\x08\x1a\'\n\x0b\x45ngineFlags\x12\x18\n\x10use_result_proto\x18\x01 \x01(\x08J\x04\x08\x01\x10\x02\x62\x06proto3')
+  serialized_pb=_b('\n\x0f\x61rguments.proto\x12\rrecipe_engine\"\xf4\x01\n\tArguments\x12\x42\n\x10\x61nnotation_flags\x18\x02 \x01(\x0b\x32(.recipe_engine.Arguments.AnnotationFlags\x12:\n\x0c\x65ngine_flags\x18\x04 \x01(\x0b\x32$.recipe_engine.Arguments.EngineFlags\x1a\x38\n\x0f\x41nnotationFlags\x12\x1f\n\x17\x65mit_initial_properties\x18\x02 \x01(\x08J\x04\x08\x01\x10\x02\x1a\'\n\x0b\x45ngineFlags\x12\x18\n\x10use_result_proto\x18\x01 \x01(\x08J\x04\x08\x01\x10\x02\x62\x06proto3')
 )
 
 
@@ -33,14 +33,7 @@ _ARGUMENTS_ANNOTATIONFLAGS = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='emit_timestamp', full_name='recipe_engine.Arguments.AnnotationFlags.emit_timestamp', index=0,
-      number=1, type=8, cpp_type=7, label=1,
-      has_default_value=False, default_value=False,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='emit_initial_properties', full_name='recipe_engine.Arguments.AnnotationFlags.emit_initial_properties', index=1,
+      name='emit_initial_properties', full_name='recipe_engine.Arguments.AnnotationFlags.emit_initial_properties', index=0,
       number=2, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
@@ -59,7 +52,7 @@ _ARGUMENTS_ANNOTATIONFLAGS = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=176,
-  serialized_end=250,
+  serialized_end=232,
 )
 
 _ARGUMENTS_ENGINEFLAGS = _descriptor.Descriptor(
@@ -88,8 +81,8 @@ _ARGUMENTS_ENGINEFLAGS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=252,
-  serialized_end=291,
+  serialized_start=234,
+  serialized_end=273,
 )
 
 _ARGUMENTS = _descriptor.Descriptor(
@@ -126,7 +119,7 @@ _ARGUMENTS = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=35,
-  serialized_end=297,
+  serialized_end=279,
 )
 
 _ARGUMENTS_ANNOTATIONFLAGS.containing_type = _ARGUMENTS

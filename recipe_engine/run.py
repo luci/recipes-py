@@ -366,17 +366,6 @@ def add_subparser(parser):
     help=(
       'The file to write the JSON serialized returned value '
       ' of the recipe to'))
-  run_p.add_argument(
-    '--timestamps',
-    action='store_true',
-    help=(
-      'If true, emit CURRENT_TIMESTAMP annotations. '
-      'Default: false. '
-      'CURRENT_TIMESTAMP annotation has one parameter, current time in '
-      'Unix timestamp format. '
-      'CURRENT_TIMESTAMP annotation will be printed at the beginning and '
-      'end of the annotation stream and also immediately before each '
-      'STEP_STARTED and STEP_CLOSED annotations.'))
   prop_group = run_p.add_mutually_exclusive_group()
   prop_group.add_argument(
     '--properties-file',
@@ -484,10 +473,7 @@ def main(package_deps, args):
 
   op_args = args.operational_args
 
-  stream_engine = stream.AnnotatorStreamEngine(
-        sys.stdout,
-        emit_timestamps=(args.timestamps or
-                         op_args.annotation_flags.emit_timestamp))
+  stream_engine = stream.AnnotatorStreamEngine(sys.stdout)
 
   emit_initial_properties = op_args.annotation_flags.emit_initial_properties
 

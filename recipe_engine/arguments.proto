@@ -13,8 +13,7 @@ message Arguments {
 
   // Message containing the set of supported annotation control flags.
   message AnnotationFlags {
-    // If true, emit CURRENT_TIMESTAMP annotations.
-    bool emit_timestamp = 1;
+    reserved 1;
 
     // If true, emit all input properties as annotations at the beginning of
     // recipe engine execution.
