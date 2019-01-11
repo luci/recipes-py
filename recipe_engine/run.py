@@ -38,7 +38,7 @@ RecipeResult = collections.namedtuple('RecipeResult', 'result')
 # will be used to seed recipe clients and expanded to include managed runtime
 # entities.
 def run_steps(properties, stream_engine, step_runner, universe_view,
-              engine_flags=None, emit_initial_properties=False):
+              emit_initial_properties=False):
   """Runs a recipe (given by the 'recipe' property) for real.
 
   Args:
@@ -47,7 +47,6 @@ def run_steps(properties, stream_engine, step_runner, universe_view,
     stream_engine: the StreamEngine to use to create individual step streams.
     step_runner: The StepRunner to use to 'actually run' the steps.
     universe_view: The RecipeUniverse to use to load the recipes & modules.
-    engine_flags: Any flags which modify engine behavior. See arguments.proto.
     emit_initial_properties (bool): If True, write the initial recipe engine
         properties in the "setup_build" step.
 
@@ -59,7 +58,7 @@ def run_steps(properties, stream_engine, step_runner, universe_view,
         s.set_build_property(key, json.dumps(properties[key], sort_keys=True))
 
     engine = RecipeEngine(
-        step_runner, properties, os.environ, universe_view, engine_flags)
+        step_runner, properties, os.environ, universe_view)
 
     # Create all API modules and top level RunSteps function.  It doesn't launch
     # any recipe code yet; RunSteps needs to be called.
@@ -139,8 +138,7 @@ class RecipeEngine(object):
   ActiveStep = collections.namedtuple('ActiveStep', (
       'config', 'step_result', 'open_step'))
 
-  def __init__(self, step_runner, properties, environ, universe_view,
-               engine_flags=None):
+  def __init__(self, step_runner, properties, environ, universe_view):
     """See run_steps() for parameter meanings."""
     self._step_runner = step_runner
     self._properties = properties
@@ -152,7 +150,6 @@ class RecipeEngine(object):
         recipe_api.SourceManifestClient(self, properties),
         recipe_api.StepClient(self),
     )}
-    self._engine_flags = engine_flags
 
     # A stack of ActiveStep objects, holding the most recently executed step at
     # each nest level (objects deeper in the stack have lower nest levels).
@@ -493,16 +490,14 @@ def main(package_deps, args):
                          op_args.annotation_flags.emit_timestamp))
 
   emit_initial_properties = op_args.annotation_flags.emit_initial_properties
-  engine_flags = op_args.engine_flags
 
   # Have a top-level set of invariants to enforce StreamEngine expectations.
   with stream.StreamEngineInvariants.wrap(stream_engine) as stream_engine:
     try:
       ret = run_steps(
           properties, stream_engine,
-          step_runner.SubprocessStepRunner(stream_engine, engine_flags),
-          universe_view, engine_flags=engine_flags,
-          emit_initial_properties=emit_initial_properties)
+          step_runner.SubprocessStepRunner(stream_engine),
+          universe_view, emit_initial_properties=emit_initial_properties)
     finally:
       os.chdir(old_cwd)
 
