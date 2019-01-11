@@ -471,11 +471,17 @@ def main(package_deps, args):
   old_cwd = os.getcwd()
   os.chdir(workdir)
 
-  op_args = args.operational_args
-
   stream_engine = stream.AnnotatorStreamEngine(sys.stdout)
 
-  emit_initial_properties = op_args.annotation_flags.emit_initial_properties
+  # This only applies to 'annotation' mode and will go away with build.proto.
+  # It is slightly hacky, but this property is the officially documented way
+  # to communicate to the recipes that they are in LUCI-mode, so we might as
+  # well use it.
+  emit_initial_properties = bool(
+    properties.
+    get('$recipe_engine/runtime', {}).
+    get('is_luci', False)
+  )
 
   # Have a top-level set of invariants to enforce StreamEngine expectations.
   with stream.StreamEngineInvariants.wrap(stream_engine) as stream_engine:
