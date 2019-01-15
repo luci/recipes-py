@@ -11,8 +11,6 @@ from . import package
 from . import package_io
 from .autoroll_impl.candidate_algorithm import get_roll_candidates
 
-from . import env
-
 
 def add_subparser(parser):
   helpstr = (

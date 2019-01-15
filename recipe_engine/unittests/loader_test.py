@@ -5,10 +5,11 @@
 
 import unittest
 
+import mock
+
 import test_env
 
 from recipe_engine import loader, recipe_api, config
-import mock
 
 
 class TestRecipeScript(unittest.TestCase):

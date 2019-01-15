@@ -3,6 +3,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import argparse
 import base64
 import itertools
 import json
@@ -10,17 +11,15 @@ import unittest
 
 from cStringIO import StringIO
 
-import test_env
-
-import argparse  # this is vendored
-
 import mock
-import subprocess42
+
+import test_env
 
 from recipe_engine import common_args
 from recipe_engine import fetch
 from recipe_engine import package_io
 from recipe_engine import package_pb2
+from recipe_engine.third_party import subprocess42
 
 
 CPE = subprocess42.CalledProcessError

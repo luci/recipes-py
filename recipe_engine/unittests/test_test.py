@@ -3,6 +3,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import argparse
 import os
 import sys
 import tempfile
@@ -10,11 +11,9 @@ import unittest
 
 from cStringIO import StringIO
 
-import test_env
-
-import argparse  # this is vendored
-
 import mock
+
+import test_env
 
 from recipe_engine import test
 from recipe_engine import common_args

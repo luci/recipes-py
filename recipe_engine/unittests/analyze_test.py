@@ -13,13 +13,13 @@ import tempfile
 import time
 import unittest
 
+import mock
+
 import test_env
 
 
 from recipe_engine import analyze, analyze_pb2
 import recipe_engine.loader
-
-import mock
 
 class MockPackage(object):
   def __init__(self, name):

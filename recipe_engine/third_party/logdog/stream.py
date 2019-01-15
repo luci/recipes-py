@@ -11,7 +11,7 @@ import sys
 import threading
 import types
 
-from libs.logdog import streamname, varint
+from . import streamname, varint
 
 
 _StreamParamsBase = collections.namedtuple('_StreamParamsBase',

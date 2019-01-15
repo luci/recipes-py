@@ -5,9 +5,8 @@
 import json
 import os
 
-from . import env
-
 from google.protobuf import json_format
+
 from . import package_pb2
 
 

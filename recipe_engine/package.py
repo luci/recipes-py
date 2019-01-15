@@ -10,11 +10,8 @@ import os
 import subprocess
 import sys
 
-from . import package_io
 from . import fetch
-
-from . import env
-
+from . import package_io
 from . import package_pb2
 
 LOGGER = logging.getLogger(__name__)

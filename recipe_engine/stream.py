@@ -21,7 +21,6 @@ import json
 import tempfile
 import time
 
-from . import env
 from . import recipe_api
 from . import util
 

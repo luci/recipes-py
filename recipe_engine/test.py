@@ -4,11 +4,12 @@
 
 from __future__ import print_function
 
+import argparse
 import bdb
-import cStringIO
 import collections
 import contextlib
 import copy
+import cStringIO
 import datetime
 import difflib
 import errno
@@ -28,6 +29,8 @@ import traceback
 
 import coverage
 
+from google.protobuf import json_format
+
 from . import checker
 from . import config_types
 from . import loader
@@ -36,16 +39,7 @@ from . import run
 from . import step_runner
 from . import stream
 from . import doc
-
-from . import env
-
-from google.protobuf import json_format
-
 from . import test_result_pb2
-
-from . import env
-
-import argparse  # this is vendored
 
 
 # These variables must be set in the dynamic scope of the functions in this

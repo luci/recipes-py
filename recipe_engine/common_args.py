@@ -7,16 +7,13 @@
 This is in a separate file for recipes.py for testing purposes.
 """
 
+import argparse
 import collections
 import json
 import logging
 import os
 
 from . import package_io
-
-from . import env
-
-import argparse  # this is vendored
 
 
 def add_common_args(parser):

@@ -4,6 +4,7 @@
 
 from __future__ import print_function
 
+import argparse
 import json
 import logging
 import os
@@ -14,10 +15,6 @@ import sys
 from . import package
 from . import package_io
 from .autoroll_impl.candidate_algorithm import get_roll_candidates
-
-from . import env
-
-import argparse  # this is vendored
 
 
 LOGGER = logging.getLogger(__name__)

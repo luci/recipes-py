@@ -30,10 +30,12 @@ Example:
 TODO(maruel): Add VOID support like subprocess2.
 """
 
+import collections
 import contextlib
 import errno
 import os
 import signal
+import sys
 import threading
 import time
 
@@ -47,7 +49,12 @@ from subprocess import list2cmdline
 MAX_SIZE = 16384
 
 
+# Set to True when inhibit_crash_dump() has been called.
+_OS_ERROR_REPORTING_INHIBITED = False
+
+
 if subprocess.mswindows:
+  import ctypes
   import msvcrt  # pylint: disable=F0401
   from ctypes import wintypes
   from ctypes import windll
@@ -209,7 +216,12 @@ class Popen(subprocess.Popen):
   Unlike subprocess, yield_any(), recv_*(), communicate() will close stdout and
   stderr once the child process closes them, after all the data is read.
 
-  Arguments:
+  Mutated behavior:
+  - args: transparently encode('utf-8') any unicode items.
+  - cwd: transparently encode('utf-8') if unicode.
+  - env: transparently encode('utf-8') any unicode keys or values.
+
+  Additional arguments:
   - detached: If True, the process is created in a new process group. On
     Windows, use CREATE_NEW_PROCESS_GROUP. On posix, use os.setpgid(0, 0).
 
@@ -236,6 +248,19 @@ class Popen(subprocess.Popen):
   def __init__(self, args, **kwargs):
     assert 'creationflags' not in kwargs
     assert 'preexec_fn' not in kwargs, 'Use detached=True instead'
+
+    # Windows version of subprocess.Popen() really doens't like unicode. In
+    # practice we should use the current ANSI code page, but settle for utf-8
+    # across all OSes for consistency.
+    to_str = lambda i: i if isinstance(i, str) else i.encode('utf-8')
+    args = [to_str(i) for i in args]
+    if kwargs.get('cwd') is not None:
+      kwargs['cwd'] = to_str(kwargs['cwd'])
+    if kwargs.get('env'):
+      kwargs['env'] = {
+        to_str(k): to_str(v) for k, v in kwargs['env'].iteritems()
+      }
+
     self.start = time.time()
     self.end = None
     self.gid = None
@@ -384,6 +409,13 @@ class Popen(subprocess.Popen):
       self.end = time.time()
     return ret
 
+  def yield_any_line(self, **kwargs):
+    """Yields lines until the process terminates.
+
+    Like yield_any, but yields lines.
+    """
+    return split(self.yield_any(**kwargs))
+
   def yield_any(self, maxsize=None, timeout=None):
     """Yields output until the process terminates.
 
@@ -415,8 +447,9 @@ class Popen(subprocess.Popen):
 
     last_yield = time.time()
     while self.poll() is None:
-      to = (None if timeout is None
-            else max(timeout() - (time.time() - last_yield), 0))
+      to = timeout() if timeout else None
+      if to is not None:
+        to = max(to - (time.time() - last_yield), 0)
       t, data = self.recv_any(
           maxsize=maxsize() if callable(maxsize) else maxsize, timeout=to)
       if data or to is 0:
@@ -443,7 +476,7 @@ class Popen(subprocess.Popen):
   def recv_any(self, maxsize=None, timeout=None):
     """Reads from the first pipe available from stdout and stderr.
 
-    Unlike wait(), it does not throw TimeoutExpired.
+    Unlike wait(), does not throw TimeoutExpired.
 
     Arguments:
     - maxsize: Maximum number of bytes to return. Defaults to MAX_SIZE.
@@ -604,3 +637,74 @@ def call_with_timeout(args, timeout, **kwargs):
     proc.kill()
     proc.wait()
   return out, err, proc.returncode, proc.duration()
+
+
+def inhibit_os_error_reporting():
+  """Inhibits error reporting UI and core files.
+
+  This function should be called as early as possible in the process lifetime.
+  """
+  global _OS_ERROR_REPORTING_INHIBITED
+  if not _OS_ERROR_REPORTING_INHIBITED:
+    _OS_ERROR_REPORTING_INHIBITED = True
+    if sys.platform == 'win32':
+      # Windows has a bad habit of opening a dialog when a console program
+      # crashes, rather than just letting it crash. Therefore, when a program
+      # crashes on Windows, we don't find out until the build step times out.
+      # This code prevents the dialog from appearing, so that we find out
+      # immediately and don't waste time waiting for a user to close the dialog.
+      # https://msdn.microsoft.com/en-us/library/windows/desktop/ms680621.aspx
+      SEM_FAILCRITICALERRORS = 1
+      SEM_NOGPFAULTERRORBOX = 2
+      SEM_NOALIGNMENTFAULTEXCEPT = 0x8000
+      ctypes.windll.kernel32.SetErrorMode(
+          SEM_FAILCRITICALERRORS|SEM_NOGPFAULTERRORBOX|
+            SEM_NOALIGNMENTFAULTEXCEPT)
+  # TODO(maruel): Other OSes.
+  # - OSX, need to figure out a way to make the following process tree local:
+  #     defaults write com.apple.CrashReporter UseUNC 1
+  #     defaults write com.apple.CrashReporter DialogType none
+  # - Ubuntu, disable apport if needed.
+
+
+def split(data, sep='\n'):
+  """Splits pipe data by |sep|. Does some buffering.
+
+  For example, [('stdout', 'a\nb'), ('stdout', '\n'), ('stderr', 'c\n')] ->
+  [('stdout', 'a'), ('stdout', 'b'), ('stderr', 'c')].
+
+  Args:
+    data: iterable of tuples (pipe_name, bytes).
+
+  Returns:
+    An iterator of tuples (pipe_name, bytes) where bytes is the input data
+    but split by sep into separate tuples.
+  """
+  # A dict {pipe_name -> list of pending chunks without separators}
+  pending_chunks = collections.defaultdict(list)
+  for pipe_name, chunk in data:
+    if chunk is None:
+      # Happens if a pipe is closed.
+      continue
+
+    pending = pending_chunks[pipe_name]
+    start = 0  # offset in chunk to start |sep| search from
+    while start < len(chunk):
+      j = chunk.find(sep, start)
+      if j == -1:
+        pending_chunks[pipe_name].append(chunk[start:])
+        break
+
+      to_emit = chunk[start:j]
+      start = j + 1
+      if pending:
+        # prepend and forget
+        to_emit = ''.join(pending) + to_emit
+        pending = []
+        pending_chunks[pipe_name] = pending
+      yield pipe_name, to_emit
+
+  # Emit remaining chunks that don't end with separators as is.
+  for pipe_name, chunks in sorted(pending_chunks.iteritems()):
+    if chunks:
+      yield pipe_name, ''.join(chunks)

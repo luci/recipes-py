@@ -17,16 +17,13 @@ import types
 
 from functools import wraps
 
-from .recipe_test_api import DisabledTestData, ModuleTestData
 from .config import Single
+from .recipe_test_api import DisabledTestData, ModuleTestData
+from .source_manifest_pb2 import Manifest
+from .third_party.logdog import streamname
+from .third_party.logdog.bootstrap import ButlerBootstrap, NotBootstrappedError
 from .types import StepData
 from .util import ModuleInjectionSite, Placeholder
-
-from . import env
-
-from .source_manifest_pb2 import Manifest
-from libs.logdog import streamname
-from libs.logdog.bootstrap import ButlerBootstrap, NotBootstrappedError
 
 
 # The source manifest ContentType.

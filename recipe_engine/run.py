@@ -10,21 +10,18 @@ import logging
 import os
 import sys
 import traceback
+import argparse
+
+from google.protobuf import json_format as jsonpb
+
+from .third_party import subprocess42
 
 from . import loader
 from . import recipe_api
 from . import recipe_test_api
 from . import types
 from . import util
-
-from . import env
-
-import argparse  # this is vendored
-import subprocess42
-
 from . import result_pb2
-
-from google.protobuf import json_format as jsonpb
 
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))

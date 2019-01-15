@@ -4,6 +4,7 @@
 
 from __future__ import print_function
 
+import argparse
 import collections
 import json
 import os
@@ -11,11 +12,8 @@ import subprocess
 import sys
 
 from . import loader
-from . import env
-
-import argparse  # this is vendored
-
 from . import analyze_pb2
+
 from google.protobuf import json_format as jsonpb
 
 GIT = 'git.bat' if sys.platform == 'win32' else 'git'

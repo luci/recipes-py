@@ -9,7 +9,7 @@ This consists largely of system path manipulation.
 """
 
 try:
-  from recipe_engine import env
+  import recipe_engine
 except ImportError:
   import os
   import sys
@@ -17,5 +17,3 @@ except ImportError:
   BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(
       os.path.abspath(__file__))))
   sys.path.insert(0, BASE_DIR)
-
-  from recipe_engine import env

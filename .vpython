@@ -7,6 +7,14 @@ wheel: <
   version: "version:4.3.4"
 >
 
+# Argparse is in python stdlib... but! Old versions of python 2.7 have versions
+# of this with bugs. This version is bug-free (well... it doesn't have any bugs
+# that we care about).
+wheel: <
+  name: "infra/python/wheels/argparse-py2_py3"
+  version: "version:1.4.0"
+>
+
 ##
 # BEGIN "cryptography" dependencies.
 ##

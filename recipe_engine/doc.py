@@ -15,21 +15,19 @@ import types as stdlib_types
 
 from cStringIO import StringIO
 
+import astunparse
+
+from google.protobuf import json_format as jsonpb
+from google.protobuf import text_format as textpb
+
 from . import config
 from . import loader
 from . import doc_markdown
 from . import recipe_api
 from . import types
 from . import util
-
-from . import env
-
 from . import doc_pb2 as doc
 
-from google.protobuf import json_format as jsonpb
-from google.protobuf import text_format as textpb
-
-import astunparse
 
 LOGGER = logging.getLogger(__name__)
 

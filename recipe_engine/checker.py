@@ -14,7 +14,6 @@ import itertools
 
 from collections import OrderedDict, deque, defaultdict, namedtuple
 
-from . import env
 import astunparse
 
 from recipe_engine import test_result_pb2

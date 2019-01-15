@@ -4,8 +4,6 @@
 
 from __future__ import print_function, absolute_import
 
-from . import env
-
 from . import doc_pb2 as doc
 
 

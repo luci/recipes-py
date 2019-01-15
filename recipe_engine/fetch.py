@@ -16,17 +16,17 @@ import time
 from cStringIO import StringIO
 from collections import namedtuple
 
+import requests
+
+from google.protobuf import json_format
+
 from . import package_pb2
 from . import package_io
 from . import util
 from . import gitattr_checker
 
-# Add third party paths.
-from . import env
-import requests
+from .third_party import subprocess42
 
-import subprocess42
-from google.protobuf import json_format
 
 LOGGER = logging.getLogger(__name__)
 

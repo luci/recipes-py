@@ -9,9 +9,10 @@ import subprocess
 import tempfile
 import unittest
 
+import mock
+
 import test_env
 
-import mock
 from recipe_engine import gitattr_checker
 
 

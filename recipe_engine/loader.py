@@ -9,8 +9,6 @@ import inspect
 import os
 import sys
 
-from . import env
-
 from .config import ConfigContext, ConfigGroupSchema
 from .config_types import Path, ModuleBasePath, PackageRepoBasePath
 from .config_types import RecipeScriptBasePath

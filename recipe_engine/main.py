@@ -9,12 +9,7 @@ This tool operates on the nearest ancestor directory containing an
 infra/config/recipes.cfg.
 """
 
-import logging
-import os
-import shutil
-import subprocess
 import sys
-import tempfile
 
 # This is necessary to ensure that str literals are by-default assumed to hold
 # utf-8. It also makes the implicit str(unicode(...)) act like
@@ -22,17 +17,20 @@ import tempfile
 reload(sys)
 sys.setdefaultencoding('UTF8')
 
+import argparse
+import logging
+import os
+import shutil
+import subprocess
+import tempfile
+
 import urllib3.contrib.pyopenssl
 urllib3.contrib.pyopenssl.inject_into_urllib3()
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT_DIR)
 
-from recipe_engine import env
-
 from recipe_engine import common_args, package, package_io, util
-
-import argparse  # this is vendored
 
 from recipe_engine import fetch, lint, bundle, depgraph, analyze, autoroll
 from recipe_engine import manual_roll, refs, doc, test, run
