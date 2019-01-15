@@ -16,8 +16,6 @@ from test_env import BASE_DIR
 
 import recipe_engine.run
 import recipe_engine.step_runner
-from recipe_engine import arguments_pb2
-from google.protobuf import json_format as jsonpb
 
 
 class RunTest(unittest.TestCase):
