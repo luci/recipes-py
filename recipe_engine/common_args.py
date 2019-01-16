@@ -51,6 +51,9 @@ def add_common_args(parser):
   parser.add_argument('-O', '--project-override', metavar='ID=PATH',
       action=ProjectOverrideAction, default=collections.OrderedDict(),
       help='Override a project repository path with a local one.')
+  parser.add_argument('--use-bootstrap', action='store_true', help='Deprecated')
+  parser.add_argument('--disable-bootstrap', action='store_false',
+                      dest='use_bootstrap', help='Deprecated')
 
   parser.set_defaults(
     postprocess_func=lambda parser, args: None,

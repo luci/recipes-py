@@ -1,8 +1,8 @@
 ##
 # "vpython" VirtualEnv spec file.
 #
-# Pick a test package with no dependencies from "/.vpython" that differs from
-# the package inlined in "test.py".
+# Pick a test package with no dependencies from "/bootstrap/venv.cfg" that
+# differs from teh package inlined in "test.py".
 #
 # This is used for "test.py" by "examples/full.py", along with the
 # "--verify-six" flag.
