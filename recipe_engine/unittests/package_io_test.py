@@ -31,8 +31,6 @@ class TestPackageIO(unittest.TestCase):
       'url': 'https://dep1.example.com',
       'branch': 'master',
       'revision': 'a'*40,
-      'path_override': 'sub/path',
-      'repo_type': 'GITILES',
     }
 
     self.raw_v2 = json.dumps({
@@ -56,8 +54,6 @@ class TestPackageIO(unittest.TestCase):
           url='https://dep1.example.com',
           branch='master',
           revision='a'*40,
-          path_override='sub/path',
-          repo_type=package_pb2.DepSpec.GITILES,
         ),
       },
       autoroll_recipe_options=package_pb2.AutorollRecipeOptions(

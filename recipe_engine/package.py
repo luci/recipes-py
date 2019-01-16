@@ -133,27 +133,24 @@ class RepoSpec(object):
 
 
 class GitRepoSpec(RepoSpec):
-  def __init__(self, project_id, repo, branch, revision, path, backend):
+  def __init__(self, project_id, repo, branch, revision, backend):
     """
     Args:
       project_id (str): The id of the project (e.g. "recipe_engine").
       repo (str): The url of the remote git repo.
       branch (str): The git branch of the repo.
       revision (str): The target revision for this dependency.
-      path (str): The subdirectory in the repo where the recipes live.
       backend (fetch.Backend): The git backend managing this directory.
     """
     self.project_id = project_id
     self.repo = repo
     self.branch = branch
     self.revision = revision
-    self.path = path
     self.backend = backend
 
   def __repr__(self):
     return ('GitRepoSpec{project_id="%(project_id)s", repo="%(repo)s", '
-            'branch="%(branch)s", revision="%(revision)s", '
-            'path="%(path)s"}' % self.__dict__)
+            'branch="%(branch)s", revision="%(revision)s"}' % self.__dict__)
 
   def fetch(self):
     return self.backend.fetch(self.branch)
@@ -169,7 +166,7 @@ class GitRepoSpec(RepoSpec):
     cleanup_pyc(self._dep_dir(context))
 
   def repo_root(self, context):
-    return os.path.join(self._dep_dir(context), self.path)
+    return self._dep_dir(context)
 
   @property
   def _branch_for_remote(self):
@@ -190,7 +187,7 @@ class GitRepoSpec(RepoSpec):
       self.revision, self.backend.resolve_refspec(self._branch_for_remote))
 
   def _components(self):
-    return (self.project_id, self.repo, self.revision, self.path)
+    return (self.project_id, self.repo, self.revision)
 
   def __eq__(self, other):
     if not isinstance(other, type(self)):
@@ -344,15 +341,12 @@ class PackageSpec(object):
     if url.startswith('file://'):
       return PathRepoSpec(str(project_id), url[len('file://'):])
 
-    backend_class = fetch.Backend.class_for_type(dep.repo_type)
-
     return GitRepoSpec(
       str(project_id),
       url,
       str(dep.branch),
       str(dep.revision),
-      str(dep.path_override),
-      backend_class(
+      fetch.GitBackend(
         os.path.join(context.package_dir, project_id),
         dep.url))
 

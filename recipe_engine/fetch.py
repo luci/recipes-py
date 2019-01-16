@@ -53,19 +53,6 @@ CommitMetadata = namedtuple(
 
 
 class Backend(object):
-  @staticmethod
-  def class_for_type(repo_type):
-    """
-    Args:
-      repo_type (package_pb2.DepSpec.RepoType)
-
-    Returns Backend (class): Returns the Backend appropriate for the
-      repo_type.
-    """
-    return {
-      package_pb2.DepSpec.GIT:     GitBackend,
-    }[repo_type]
-
   def __init__(self, checkout_dir, repo_url):
     """
     Args:
@@ -126,11 +113,6 @@ class Backend(object):
     return self._updates_impl(revision, other_revision)
 
   ### direct overrides. These are public methods which must be overridden.
-
-  @property
-  def repo_type(self):
-    """Returns package_pb2.DepSpec.RepoType."""
-    raise NotImplementedError()
 
   def fetch(self, refspec):
     """Does a fetch for the provided refspec (e.g. get all data from remote), if
@@ -285,11 +267,6 @@ class GitBackend(Backend):
 
 
   ### Backend implementations
-
-
-  @property
-  def repo_type(self):
-    return package_pb2.DepSpec.GIT
 
   def fetch(self, refspec):
     self._ensure_local_repo_exists()

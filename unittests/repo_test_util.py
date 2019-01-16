@@ -83,7 +83,6 @@ class RepoTest(unittest.TestCase):
         repo['root'],
         'master',
         repo['revision'],
-        '',
         fetch.GitBackend(
           os.path.join(self._context.package_dir, repo['name']),
           repo['root'],
