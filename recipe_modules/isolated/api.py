@@ -7,7 +7,7 @@ import contextlib
 from recipe_engine import recipe_api
 
 
-DEFAULT_CIPD_VERSION = 'git_revision:5c78afc7db0efe3c70843bee7c3fd991ef29326c'
+DEFAULT_CIPD_VERSION = 'git_revision:2688eb5af15b6d28ca9f0322ff7019aab384e342'
 
 
 class IsolatedApi(recipe_api.RecipeApi):

@@ -53,7 +53,7 @@
       "-root",
       "[CACHE]/isolated_client",
       "-ensure-file",
-      "infra/tools/luci/isolated/${platform} git_revision:5c78afc7db0efe3c70843bee7c3fd991ef29326c",
+      "infra/tools/luci/isolated/${platform} git_revision:2688eb5af15b6d28ca9f0322ff7019aab384e342",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -65,7 +65,7 @@
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
       "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-git_revision:5c7\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-git_revision:268\", @@@",
       "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/tools/luci/isolated/resolved-platform\"@@@",
       "@@@STEP_LOG_LINE@json.output@      }@@@",
       "@@@STEP_LOG_LINE@json.output@    ]@@@",
