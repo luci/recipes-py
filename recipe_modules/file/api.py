@@ -14,14 +14,19 @@ import fnmatch
 
 class SymlinkTree(object):
   """A representation of a tree of symlinks."""
-  def __init__(self, api, symlink_resource, root):
+  def __init__(self, root, api, symlink_resource):
     """See FileApi.symlink_tree for the public constructor."""
     assert root and isinstance(root, config_types.Path)
+    self._root = root
     self._api = api
     self._resource = symlink_resource
-    self._root = root
     #  dict[Path]list(Path): Maps target to a list of linknames.
     self._link_map = {}
+
+  @property
+  def root(self):
+    """The root (Path) of the symlink tree."""
+    return self._root
 
   def register_link(self, target, linkname):
     """Registers a pair of paths to symlink.
@@ -36,8 +41,8 @@ class SymlinkTree(object):
       isinstance(linkname, config_types.Path))
     assert linkname not in self._link_map.get(target, ()), (
       '%s is already linked' % linkname)
-    assert self._root.is_parent_of(linkname), (
-      '%s is not within the root directory %s' % (linkname, self._root))
+    assert self.root.is_parent_of(linkname), (
+      '%s is not within the root directory %s' % (linkname, self.root))
     self._link_map.setdefault(target, []).append(linkname)
 
   def create_links(self, name):
@@ -411,7 +416,7 @@ class FileApi(recipe_api.RecipeApi):
     Args:
       * root (Path): root of a tree of symlinks.
     """
-    return SymlinkTree(self.m, self.resource('symlink.py'), root)
+    return SymlinkTree(root, self.m, self.resource('symlink.py'))
 
   def truncate(self, name, path, size_mb=100):
     """Creates an empty file with path and size_mb on the local filesystem.
