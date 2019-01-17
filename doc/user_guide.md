@@ -1,6 +1,6 @@
 # Recipes
 
-Recipes are a python framework for writing Continuous Intergration scripts (i.e.
+Recipes are a python framework for writing Continuous Integration scripts (i.e.
 what you might otherwise write as a bash script). Unlike bash scripts, they
 are meant to:
   * Be testable
@@ -136,7 +136,7 @@ Example [recipe_modules folder](https://chromium.googlesource.com/chromium/tools
 
 #### The `recipes.py` script
 
-The `recipes.py` script is the entrypoint to the recipe_engine. It's primary
+The `recipes.py` script is the entrypoint to the recipe_engine. Its primary
 functionality is to clone a copy of the recipe_engine repo (matching the version
 in your `recipes.cfg` file), and then invoke the main recipe_engine code with
 whatever command line you gave it.
