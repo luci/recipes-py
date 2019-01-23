@@ -7,6 +7,7 @@ from recipe_engine.recipe_api import Property
 
 DEPS = [
   'cipd',
+  'path',
   'runtime',
   'step',
   'swarming',
@@ -78,6 +79,20 @@ def RunSteps(api):
   metadata[0].id
   metadata[0].task_ui_link
 
+  # Collect the result of the task by metadata
+  output_dir = api.path.mkdtemp('swarming')
+  results = api.swarming.collect('collect', metadata, output_dir=output_dir,
+                                 timeout='5m')
+  # Or collect by by id.
+  results += api.swarming.collect('collect other pending task', ['1'])
+
+  results[0].name
+  results[0].id
+  results[0].state
+  results[0].success
+  results[0].output
+  results[0].outputs
+
   with api.swarming.on_path():
     api.step('some step with swarming on path', [])
 
@@ -85,6 +100,29 @@ def RunSteps(api):
 def GenTests(api):
   yield api.test('basic')
   yield api.test('experimental') + api.runtime(is_luci=False, is_experimental=True)
-  yield (api.test('override swarming') +
+  yield (api.test('override_swarming') +
     api.swarming.properties(server='bananas.example.com', version='release')
+  )
+
+  states = {state.name : api.swarming.TaskState[state.name]
+            for state in api.swarming.TaskState if state not in [
+              api.swarming.TaskState.INVALID,
+              api.swarming.TaskState.PENDING,
+              api.swarming.TaskState.RUNNING,
+            ]}
+  states['unreachable'] = None
+  for name, value in states.iteritems():
+    result = api.swarming.task_result(
+        id='123', name='recipes-go', state=value, outputs=('out.tar'),
+    )
+    yield (api.test('collect_with_state_%s' % name) +
+      api.override_step_data('collect', api.swarming.collect([result]))
+    )
+
+  failed_result = api.swarming.task_result(
+      id='123', name='recipes-go', state=api.swarming.TaskState.COMPLETED,
+      failure=True, outputs=('out.tar'),
+  )
+  yield (api.test('collect_with_state_COMPLETED_and_failed') +
+    api.override_step_data('collect', api.swarming.collect([failed_result]))
   )

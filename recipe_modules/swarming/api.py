@@ -6,6 +6,8 @@ import base64
 import contextlib
 import copy
 
+from state import TaskState
+
 from recipe_engine import recipe_api
 
 DEFAULT_CIPD_VERSION = 'git_revision:0592590977f837a12f6dad2614a4ae469796b8ec'
@@ -512,6 +514,85 @@ class TaskRequestMetadata(object):
     """Returns the URL of the associated task in the Swarming UI."""
     return '%s/task?id=%s' % (self._swarming_server, self.id)
 
+class TaskResult(object):
+  """Result of a Swarming task."""
+  def __init__(self, api, id, raw_results, output_dir):
+    """
+    Args:
+      api (recipe_api.RecipeApi): a recipe API.
+      id (str): The task's id.
+      raw_results (dict): The jsonish summary output from a `collect` call.
+      output_dir (Path|None): Where the task's outputs were downloaded to.
+    """
+    self._id = id
+    self._raw_results = raw_results
+    self._outputs = {}
+    if 'error' in raw_results:
+      self._output = raw_results['error']
+      self._name = None
+      self._state = None
+      self._success = None
+    else:
+      self._name = self._raw_results['results']['name']
+      self._state = TaskState[raw_results['results']['state']]
+
+      assert self._state not in [
+          TaskState.INVALID, TaskState.PENDING, TaskState.RUNNING,
+      ], 'state %s is either invalid or non-final' % self._state.name
+
+      self._success = False
+      if self._state == TaskState.COMPLETED:
+        self._success = raw_results['results'].get('failure', True)
+
+      self._output = self._raw_results['output']
+      if output_dir and self._raw_results.get('outputs'):
+        self._outputs = {
+            output: api.path.join(output_dir, output)
+                for output in self._raw_results['outputs']
+        }
+
+  @property
+  def name(self):
+    """The name (str) of the task."""
+    return self._name
+
+  @property
+  def id(self):
+    """The ID (str) of the task."""
+    return self._id
+
+  @property
+  def state(self):
+    """The final state (TaskState|None) of the task.
+
+    Returns None if there was a client-side, RPC-level error in determining the
+    result, in which case the task is in an unknown state.
+    """
+    return self._state
+
+  @property
+  def success(self):
+    """Returns whether the task completed successfully (bool|None).
+
+    If None, then the task is in an unknown state due to a client-side,
+    RPC-level failure.
+    """
+    return self._success
+
+  @property
+  def output(self):
+    """The output (str) streamed from the task."""
+    return self._output
+
+  @property
+  def outputs(self):
+    """The list of files (list(str)) output from the task.
+
+    This list is identically the files found in $ISOLATED_OUTDIR upon exiting
+    the task.
+    """
+    return self._outputs
+
 
 class SwarmingApi(recipe_api.RecipeApi):
   """API for interacting with swarming.
@@ -522,6 +603,7 @@ class SwarmingApi(recipe_api.RecipeApi):
   This module will deploy the client to [CACHE]/swarming_client/; users should
   add this path to the named cache for their builder.
   """
+  TaskState = TaskState
 
   def __init__(self, swarming_properties, *args, **kwargs):
     super(SwarmingApi, self).__init__(*args, **kwargs)
@@ -621,3 +703,64 @@ class SwarmingApi(recipe_api.RecipeApi):
       metadata_objs.append(metadata_obj)
 
     return metadata_objs
+
+  def collect(self, name, tasks, output_dir=None, timeout=None):
+    """Waits on a set of Swarming tasks.
+
+    Args:
+      name (str): The name of the step.
+      tasks ((list(str|TaskRequestMetadata)): A list of ids or metadata objects
+        corresponding to tasks to wait
+      output_dir (Path|None): Where to download the tasks' isolated outputs. If
+        set to None, they will not be downloades; else, a given task's outputs
+        will be downloaded to output_dir/<task id>/.
+      timeout (str|None): The duration for which to wait on the tasks to finish.
+        If set to None, there will be no timeout; else, timeout follows the
+        format described by https://golang.org/pkg/time/#ParseDuration.
+
+    Returns:
+      A list of TaskResult objects.
+    """
+    assert self._server
+    assert isinstance(tasks, list)
+    cmd = [
+      'collect',
+      '-server', self._server,
+      '-task-summary-json', self.m.json.output(),
+      '-task-output-stdout', 'json',
+    ]
+    if output_dir:
+      cmd.extend(['-output-dir', output_dir])
+    if timeout:
+      cmd.extend(['-timeout', timeout])
+
+    test_data = []
+    for idx, task in enumerate(tasks):
+      if isinstance(task, str):
+        cmd.append(task)
+        test_data.append(self.test_api.task_result(id=task, name='my_task_%d' % idx))
+      elif isinstance(task, TaskRequestMetadata):
+        cmd.append(task.id)
+        test_data.append(self.test_api.task_result(id=task.id, name=task.name))
+      else:
+        raise ValueError("%s must be a string or TaskRequestMetadata object" %
+            task.__repr__()) # pragma: no cover
+    step_result = self._run(
+        name,
+        cmd,
+        step_test_data=lambda: self.test_api.collect(test_data),
+    )
+    parsed_results = [
+        TaskResult(self.m,
+                   id,
+                   task,
+                   self.m.path.join(output_dir, id) if output_dir else None)
+        for id, task in step_result.json.output.iteritems()
+    ]
+    # Update presentation on collect to reflect bot results.
+    for result in parsed_results:
+      if result.output:
+        step_result.presentation.logs['Swarming task output: %s' % result.name] = (
+          result.output.split('\n')
+        )
+    return parsed_results
