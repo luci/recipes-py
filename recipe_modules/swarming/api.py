@@ -6,9 +6,12 @@ import base64
 import contextlib
 import copy
 
+from collections import namedtuple
+
 from state import TaskState
 
 from recipe_engine import recipe_api
+
 
 DEFAULT_CIPD_VERSION = 'git_revision:0592590977f837a12f6dad2614a4ae469796b8ec'
 
@@ -516,6 +519,10 @@ class TaskRequestMetadata(object):
 
 class TaskResult(object):
   """Result of a Swarming task."""
+
+  # A tuple giving the isolated output refs of a task.
+  IsolatedOutputs = namedtuple('IsolatedOutputs', ['hash', 'server', 'namespace'])
+
   def __init__(self, api, id, raw_results, output_dir):
     """
     Args:
@@ -527,6 +534,7 @@ class TaskResult(object):
     self._id = id
     self._raw_results = raw_results
     self._outputs = {}
+    self._isolated_outputs = None
     if 'error' in raw_results:
       self._output = raw_results['error']
       self._name = None
@@ -543,6 +551,14 @@ class TaskResult(object):
       self._success = False
       if self._state == TaskState.COMPLETED:
         self._success = raw_results['results'].get('failure', True)
+
+      outputs_refs = self._raw_results['results'].get('outputs_refs')
+      if outputs_refs:
+        self._isolated_outputs = self.IsolatedOutputs(
+            hash=outputs_refs['isolated'],
+            server=outputs_refs['isolateserver'],
+            namespace=outputs_refs['namespace'],
+        )
 
       self._output = self._raw_results['output']
       if output_dir and self._raw_results.get('outputs'):
@@ -592,6 +608,11 @@ class TaskResult(object):
     the task.
     """
     return self._outputs
+
+  @property
+  def isolated_outputs(self):
+    """Returns the isolated output refs (IsolatedOutputs|None) of the task."""
+    return self._isolated_outputs
 
 
 class SwarmingApi(recipe_api.RecipeApi):

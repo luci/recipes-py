@@ -92,6 +92,7 @@ def RunSteps(api):
   results[0].success
   results[0].output
   results[0].outputs
+  results[0].isolated_outputs
 
   with api.swarming.on_path():
     api.step('some step with swarming on path', [])

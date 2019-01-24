@@ -72,6 +72,11 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
           'name': name,
           'task_id': id,
           'state': state.name,
+          'outputs_refs': {
+              'isolated': 'abc123',
+              'isolateserver': 'https://isolateserver.appspot.com',
+              'namespace': 'default-gzip',
+          },
         },
     }
     if state == TaskState.COMPLETED and failure:
