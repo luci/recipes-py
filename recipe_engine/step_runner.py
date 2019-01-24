@@ -665,10 +665,14 @@ class SimulationStepRunner(StepRunner):
         if should_raise:
           raise
 
-    assert self._test_data.consumed, (
-        "Unconsumed test data for steps: %s, (exception %s)" % (
+    assert_msg = (
+        "Unconsumed test data for steps: %s. Ran the following steps "
+        "(in order):\n%s" % (
             self._test_data.step_data.keys(),
-            self._test_data.expected_exception))
+            '\n'.join(repr(s) for s in self._step_history.keys())))
+    if self._test_data.expected_exception:
+      assert_msg += ", (exception %s)" % self._test_data.expected_exception
+    assert self._test_data.consumed, assert_msg
 
   def _rendered_step_to_dict(self, rs):
     d = rs.config.render_to_dict()
