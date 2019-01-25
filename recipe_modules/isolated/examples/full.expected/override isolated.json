@@ -93,7 +93,10 @@
       "-dirs",
       "[CLEANUP]/isolated-example_tmp_1:sub/dir"
     ],
-    "name": "archiving"
+    "name": "archiving",
+    "~followup_annotations": [
+      "@@@STEP_LINK@isolated UI@https://example.isolateserver.appspot.com/browse?namespace=default-gzip&hash=[dummy hash]@@@"
+    ]
   },
   {
     "cmd": [
@@ -108,7 +111,10 @@
       "-dirs",
       "[CLEANUP]/isolated-example_tmp_1:."
     ],
-    "name": "archiving root directory elsewhere"
+    "name": "archiving root directory elsewhere",
+    "~followup_annotations": [
+      "@@@STEP_LINK@isolated UI@other-isolateserver.appspot.com/browse?namespace=default-gzip&hash=[dummy hash]@@@"
+    ]
   },
   {
     "cmd": [

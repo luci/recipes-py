@@ -185,8 +185,15 @@ class Isolated(object):
       cmd.extend(['-files', self._isolated_path_format(f)])
     for d in self._dirs:
       cmd.extend(['-dirs', self._isolated_path_format(d)])
-    return self._api.isolated._run(
+    isolated_hash = self._api.isolated._run(
         step_name,
         cmd,
         step_test_data=self._api.isolated.test_api.archive,
     ).raw_io.output_text
+    self._api.step.active_result.presentation.links['isolated UI'] = (
+      '%s/browse?namespace=default-gzip&hash=%s' % (
+          isolate_server, isolated_hash,
+      )
+    )
+    return isolated_hash
+
