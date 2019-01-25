@@ -22,6 +22,8 @@ class SymlinkTree(object):
     self._resource = symlink_resource
     #  dict[Path]list(Path): Maps target to a list of linknames.
     self._link_map = {}
+    #  dict[Path]Path: Maps a linkname to its target.
+    self._reverse_map = {}
 
   @property
   def root(self):
@@ -39,11 +41,16 @@ class SymlinkTree(object):
     """
     assert (isinstance(target, config_types.Path) and
       isinstance(linkname, config_types.Path))
-    assert linkname not in self._link_map.get(target, ()), (
-      '%s is already linked' % linkname)
+    if linkname in self._link_map.get(target, ()):
+      return
+    else:
+      assert linkname not in self._reverse_map, (
+        '%s is alreadly linked to %s' % (linkname, self._reverse_map[linkname]))
+
     assert self.root.is_parent_of(linkname), (
       '%s is not within the root directory %s' % (linkname, self.root))
     self._link_map.setdefault(target, []).append(linkname)
+    self._reverse_map[linkname] = target
 
   def create_links(self, name):
     """Creates all registered symlinks on disk.

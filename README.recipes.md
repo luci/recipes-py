@@ -671,9 +671,9 @@ purposes.
 
 File manipulation (read/write/delete/glob) methods.
 
-#### **class [FileApi](/recipe_modules/file/api.py#73)([RecipeApi](/recipe_engine/recipe_api.py#1005)):**
+#### **class [FileApi](/recipe_modules/file/api.py#80)([RecipeApi](/recipe_engine/recipe_api.py#1005)):**
 
-&mdash; **def [copy](/recipe_modules/file/api.py#109)(self, name, source, dest):**
+&mdash; **def [copy](/recipe_modules/file/api.py#116)(self, name, source, dest):**
 
 Copies a file (including mode bits) from source to destination on the
 local filesystem.
@@ -689,7 +689,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [copytree](/recipe_modules/file/api.py#129)(self, name, source, dest, symlinks=False):**
+&mdash; **def [copytree](/recipe_modules/file/api.py#136)(self, name, source, dest, symlinks=False):**
 
 Recursively copies a directory tree.
 
@@ -705,7 +705,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#301)(self, name, dest, mode=511):**
+&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#308)(self, name, dest, mode=511):**
 
 Ensures that `dest` exists and is a directory.
 
@@ -718,7 +718,7 @@ Args:
 
 Raises file.Error if the path exists but is not a directory.
 
-&mdash; **def [filesizes](/recipe_modules/file/api.py#318)(self, name, files, test_data=None):**
+&mdash; **def [filesizes](/recipe_modules/file/api.py#325)(self, name, files, test_data=None):**
 
 Returns list of filesizes for the given files.
 
@@ -728,7 +728,7 @@ Args:
 
 Returns list[int], size of each file in bytes.
 
-&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#434)(self, name, path):**
+&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#441)(self, name, path):**
 
 Flattens singular directories, starting at path.
 
@@ -757,7 +757,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [glob\_paths](/recipe_modules/file/api.py#234)(self, name, source, pattern, test_data=()):**
+&mdash; **def [glob\_paths](/recipe_modules/file/api.py#241)(self, name, source, pattern, test_data=()):**
 
 Performs glob expansion on `pattern`.
 
@@ -776,7 +776,7 @@ Returns list[Path] - All paths found.
 
 Raises file.Error.
 
-&mdash; **def [listdir](/recipe_modules/file/api.py#277)(self, name, source, test_data=()):**
+&mdash; **def [listdir](/recipe_modules/file/api.py#284)(self, name, source, test_data=()):**
 
 List all files inside a directory.
 
@@ -791,7 +791,7 @@ Returns list[Path]
 
 Raises file.Error.
 
-&mdash; **def [move](/recipe_modules/file/api.py#150)(self, name, source, dest):**
+&mdash; **def [move](/recipe_modules/file/api.py#157)(self, name, source, dest):**
 
 Moves a file or directory.
 
@@ -804,7 +804,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [read\_raw](/recipe_modules/file/api.py#168)(self, name, source, test_data=''):**
+&mdash; **def [read\_raw](/recipe_modules/file/api.py#175)(self, name, source, test_data=''):**
 
 Reads a file as raw data.
 
@@ -818,7 +818,7 @@ Returns (str) - The unencoded (binary) contents of the file.
 
 Raises file.Error
 
-&mdash; **def [read\_text](/recipe_modules/file/api.py#201)(self, name, source, test_data=''):**
+&mdash; **def [read\_text](/recipe_modules/file/api.py#208)(self, name, source, test_data=''):**
 
 Reads a file as UTF-8 encoded text.
 
@@ -832,7 +832,7 @@ Returns (str) - The content of the file.
 
 Raises file.Error
 
-&mdash; **def [remove](/recipe_modules/file/api.py#262)(self, name, source):**
+&mdash; **def [remove](/recipe_modules/file/api.py#269)(self, name, source):**
 
 Remove a file.
 
@@ -844,7 +844,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#357)(self, name, source):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#364)(self, name, source):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -859,7 +859,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#375)(self, name, source, pattern):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#382)(self, name, source, pattern):**
 
 Removes all entries in `source` matching the glob `pattern`.
 
@@ -872,7 +872,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#340)(self, name, source):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#347)(self, name, source):**
 
 Recursively removes a directory.
 
@@ -886,7 +886,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [symlink](/recipe_modules/file/api.py#396)(self, name, source, linkname):**
+&mdash; **def [symlink](/recipe_modules/file/api.py#403)(self, name, source, linkname):**
 
 Creates a symlink on the local filesystem.
 
@@ -899,14 +899,14 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#413)(self, root):**
+&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#420)(self, root):**
 
 Creates a SymlinkTree, given a root directory.
 
 Args:
   * root (Path): root of a tree of symlinks.
 
-&mdash; **def [truncate](/recipe_modules/file/api.py#421)(self, name, path, size_mb=100):**
+&mdash; **def [truncate](/recipe_modules/file/api.py#428)(self, name, path, size_mb=100):**
 
 Creates an empty file with path and size_mb on the local filesystem.
 
@@ -917,7 +917,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [write\_raw](/recipe_modules/file/api.py#187)(self, name, dest, data):**
+&mdash; **def [write\_raw](/recipe_modules/file/api.py#194)(self, name, dest, data):**
 
 Write the given `data` to `dest`.
 
@@ -928,7 +928,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [write\_text](/recipe_modules/file/api.py#220)(self, name, dest, text_data):**
+&mdash; **def [write\_text](/recipe_modules/file/api.py#227)(self, name, dest, text_data):**
 
 Write the given UTF-8 encoded `text_data` to `dest`.
 

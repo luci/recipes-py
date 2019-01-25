@@ -25,6 +25,8 @@ def RunSteps(api):
   root = api.path['cleanup'].join('root')
   tree = api.file.symlink_tree(root)
   assert root == tree.root
+  # It is okay to register the same pair multiple times.
+  tree.register_link(src, root.join('another', 'symlink'))
   tree.register_link(src, root.join('another', 'symlink'))
   src2 = api.path['start_dir'].join('a-second-file')
   tree.register_link(src2, root.join('yet', 'another', 'symlink'))
