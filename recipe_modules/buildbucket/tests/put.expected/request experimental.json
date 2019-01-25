@@ -1,0 +1,23 @@
+[
+  {
+    "cmd": [
+      "buildbucket",
+      "put",
+      "-host",
+      "cr-buildbucket.appspot.com",
+      "{\"bucket\": \"master.user.username\", \"experimental\": true, \"parameters_json\": \"{\\\"builder_name\\\": \\\"linux_perf_bisect\\\", \\\"properties\\\": {\\\"bisect_config\\\": {\\\"bad_revision\\\": \\\"351054\\\", \\\"bug_id\\\": 537649}}}\", \"tags\": [\"builder:overriden_builder\", \"master:overriden.master.url\", \"new-and-custom:tag\", \"parent_buildername:example_builder\", \"parent_buildnumber:123\", \"user_agent:recipe\"]}"
+    ],
+    "infra_step": true,
+    "name": "buildbucket.put",
+    "stdout": "/path/to/tmp/json",
+    "~followup_annotations": [
+      "@@@STEP_LOG_END@json.output (invalid)@@@",
+      "@@@STEP_LOG_LINE@json.output (exception)@No JSON object could be decoded@@@",
+      "@@@STEP_LOG_END@json.output (exception)@@@"
+    ]
+  },
+  {
+    "jsonResult": null,
+    "name": "$result"
+  }
+]

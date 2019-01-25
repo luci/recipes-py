@@ -27,10 +27,14 @@ def RunSteps(api):
                 'new-and-custom': 'tag',
                 'undesired': None}
 
-  api.buildbucket.put(
-      [{'bucket': example_bucket,
-        'parameters': build_parameters,
-        'tags': build_tags}])
+  build = {'bucket': example_bucket,
+           'parameters': build_parameters,
+           'tags': build_tags}
+
+  if api.properties.get('request_experimental'):
+    build['experimental'] = True
+
+  api.buildbucket.put([build])
 
 
 def GenTests(api):
@@ -84,4 +88,12 @@ def GenTests(api):
       api.test('basic_experimental') +
       api.properties(buildername='experimental_builder', buildnumber=123) +
       api.runtime(is_luci=True, is_experimental=True)
+  )
+  yield (
+      api.test('request experimental') +
+      api.properties(
+          buildername='example_builder',
+          buildnumber=123,
+          request_experimental=True,
+      )
   )
