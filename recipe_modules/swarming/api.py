@@ -531,8 +531,8 @@ class TaskResult(object):
       raw_results (dict): The jsonish summary output from a `collect` call.
       output_dir (Path|None): Where the task's outputs were downloaded to.
     """
+    self._api = api
     self._id = id
-    self._raw_results = raw_results
     self._outputs = {}
     self._isolated_outputs = None
     if 'error' in raw_results:
@@ -540,9 +540,11 @@ class TaskResult(object):
       self._name = None
       self._state = None
       self._success = None
+      self._duration = None
     else:
-      self._name = self._raw_results['results']['name']
-      self._state = TaskState[raw_results['results']['state']]
+      results = raw_results['results']
+      self._name = results['name']
+      self._state = TaskState[results['state']]
 
       assert self._state not in [
           TaskState.INVALID, TaskState.PENDING, TaskState.RUNNING,
@@ -550,9 +552,13 @@ class TaskResult(object):
 
       self._success = False
       if self._state == TaskState.COMPLETED:
-        self._success = raw_results['results'].get('failure', True)
+        # If 0, a default value, exit_code may be omitted by the cloud
+        # endpoint's response.
+        self._success = results.get('exit_code', 0) == 0
 
-      outputs_refs = self._raw_results['results'].get('outputs_refs')
+      self._duration = results['duration']
+
+      outputs_refs = results.get('outputs_refs')
       if outputs_refs:
         self._isolated_outputs = self.IsolatedOutputs(
             hash=outputs_refs['isolated'],
@@ -560,11 +566,11 @@ class TaskResult(object):
             namespace=outputs_refs['namespace'],
         )
 
-      self._output = self._raw_results['output']
-      if output_dir and self._raw_results.get('outputs'):
+      self._output = raw_results['output']
+      if output_dir and raw_results.get('outputs'):
         self._outputs = {
             output: api.path.join(output_dir, output)
-                for output in self._raw_results['outputs']
+                for output in raw_results['outputs']
         }
 
   @property
@@ -614,6 +620,35 @@ class TaskResult(object):
     """Returns the isolated output refs (IsolatedOutputs|None) of the task."""
     return self._isolated_outputs
 
+  def analyze(self):
+    """Raises a step failure if the task was unsuccessful."""
+    if self.state == None:
+      raise self._api.step.InfraFailure('Failed to collect: %s' % self.output)
+    elif self.state == TaskState.EXPIRED:
+      raise self._api.step.InfraFailure('Timed out waiting for a bot to run on')
+    elif self.state == TaskState.TIMED_OUT:
+      # Duration is measured in seconds; round down to the nearest one.
+      duration = self._duration[:self._duration.find('.')]
+      output_lines = self.output.rsplit('\n', 11)
+      failure_lines = [
+          'Timed out. Last 10 lines of output:',
+      ] + output_lines[-10:]
+      raise self.m.step.StepTimeout(
+          '\n'.join(failure_lines), '%s seconds' % duration)
+    elif self.state == TaskState.BOT_DIED:
+      raise self._api.step.InfraFailure('The bot running this task died')
+    elif self.state == TaskState.CANCELED:
+      raise self._api.step.InfraFailure('The task was canceled before it could run')
+    elif self.state == TaskState.COMPLETED:
+      if not self.success:
+        raise self.m.step.InfraFailure('Swarming task failed:\n%s' % self.output)
+    elif self.state == TaskState.KILLED:
+      raise self._api.step.InfraFailure('The task was killed mid-execution')
+    elif self.state == TaskState.NO_RESOURCE:
+      raise self._api.step.InfraFailure('Found no bots to run this task')
+    assert false, 'unknown state %s; a case needs to be added above' % (
+      self.state.name # pragma: no cover
+    )
 
 class SwarmingApi(recipe_api.RecipeApi):
   """API for interacting with swarming.

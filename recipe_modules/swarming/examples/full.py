@@ -79,7 +79,7 @@ def RunSteps(api):
   metadata[0].id
   metadata[0].task_ui_link
 
-  # Collect the result of the task by metadata
+  # Collect the result of the task by metadata.
   output_dir = api.path.mkdtemp('swarming')
   results = api.swarming.collect('collect', metadata, output_dir=output_dir,
                                  timeout='5m')
@@ -93,6 +93,12 @@ def RunSteps(api):
   results[0].output
   results[0].outputs
   results[0].isolated_outputs
+
+  # Raise an error if something went wrong.
+  try:
+    results[0].analyze()
+  except:
+    pass
 
   with api.swarming.on_path():
     api.step('some step with swarming on path', [])

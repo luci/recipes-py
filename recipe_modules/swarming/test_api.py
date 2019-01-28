@@ -72,6 +72,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
           'name': name,
           'task_id': id,
           'state': state.name,
+          'duration': '62.35',
           'outputs_refs': {
               'isolated': 'abc123',
               'isolateserver': 'https://isolateserver.appspot.com',
@@ -79,8 +80,8 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
           },
         },
     }
-    if state == TaskState.COMPLETED and failure:
-      raw_results['results']['failure'] = True
+    if state == TaskState.COMPLETED:
+      raw_results['results']['exit_code'] = int(failure)
 
     return raw_results
 

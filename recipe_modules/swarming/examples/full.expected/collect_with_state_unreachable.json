@@ -108,6 +108,8 @@
       "@@@STEP_LOG_LINE@json.output@    \"output\": \"hello world!\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"outputs\": [], @@@",
       "@@@STEP_LOG_LINE@json.output@    \"results\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"duration\": \"62.35\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"exit_code\": 0, @@@",
       "@@@STEP_LOG_LINE@json.output@      \"name\": \"my_task_0\", @@@",
       "@@@STEP_LOG_LINE@json.output@      \"outputs_refs\": {@@@",
       "@@@STEP_LOG_LINE@json.output@        \"isolated\": \"abc123\", @@@",
