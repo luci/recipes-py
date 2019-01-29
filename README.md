@@ -55,7 +55,7 @@ sequences of subprocess calls in a cross-platform and testable way.
     * `unittests` -- Unittests for the engine.
 
     There are also several files which correspond to a subcommand of recipes.py;
-    `depgraph`, `run`, and `autoroll` are some examples.
+    `run`, and `autoroll` are some examples.
 
 *   `unittests/`
 

@@ -32,7 +32,7 @@ sys.path.insert(0, ROOT_DIR)
 
 from recipe_engine import common_args, package, package_io, util
 
-from recipe_engine import fetch, lint, bundle, depgraph, analyze, autoroll
+from recipe_engine import fetch, lint, bundle, analyze, autoroll
 from recipe_engine import manual_roll, refs, doc, test, run
 
 
@@ -72,7 +72,6 @@ _SUBCOMMANDS = [
   autoroll,
   manual_roll,
   bundle,
-  depgraph,
   doc,
   fetch,
   lint,
