@@ -33,7 +33,7 @@ sys.path.insert(0, ROOT_DIR)
 from recipe_engine import common_args, package, package_io, util
 
 from recipe_engine import fetch, lint, bundle, analyze, autoroll
-from recipe_engine import manual_roll, refs, doc, test, run
+from recipe_engine import manual_roll, doc, test, run
 
 
 # Each of these subcommands has a method:
@@ -75,7 +75,6 @@ _SUBCOMMANDS = [
   doc,
   fetch,
   lint,
-  refs,
 ]
 
 

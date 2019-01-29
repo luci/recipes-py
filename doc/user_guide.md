@@ -182,8 +182,6 @@ And very infrequently used:
 It also has a couple tools for analyzing the recipe dependency graph:
   * `analyze` - Answers questions about the recipe dependency graph (for use in
     continuous integration scenarios).
-  * `refs` - Shows a list of recipes and recipe_modules which depend on a given
-    recipe_module.
 
 #### Overriding dependencies
 
