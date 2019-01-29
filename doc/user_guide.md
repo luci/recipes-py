@@ -171,10 +171,6 @@ And very infrequently used:
     python docstrings. However the `test train` subcommand will generate
     Markdown automatically from the docstrings, so you don't usually need to
     invoke this subcommand explicitly.
-  * `fetch` - Explicitly runs the 'fetch' phase of the recipe engine (to sync
-    all local git repos to the versions in `recipes.cfg`). However, this happens
-    implicitly for all subcommands, and the `bundle` command is a superior way
-    to prepare recipes for offline use.
   * `lint` - Runs some very simple static analysis on the recipes. This command
     is mostly invoked automatically from PRESUBMIT scripts so you don't need to
     run it manually.
