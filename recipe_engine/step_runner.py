@@ -99,18 +99,6 @@ class StepRunner(object):
     """
     raise NotImplementedError()
 
-  def run_recipe(self, universe, recipe, properties):
-    """Run the recipe named |recipe|.
-
-    Args:
-      universe: The RecipeUniverse where the recipe lives.
-      recipe: The recipe name (e.g. 'infra/luci_py')
-      properties: a dictionary of properties to pass to the recipe
-
-    Returns the recipe result.
-    """
-    raise NotImplementedError()
-
   @contextlib.contextmanager
   def run_context(self):
     """A context in which the entire engine run takes place.
@@ -249,24 +237,6 @@ class SubprocessStepRunner(StepRunner):
         return step_stream
 
     return ReturnOpenStep()
-
-  def run_recipe(self, universe_view, recipe, properties):
-    with tempfile.NamedTemporaryFile() as f:
-      cmd = [sys.executable,
-             universe_view.universe.package_deps.engine_recipes_py,
-             '--package=%s' % universe_view.universe.config_file.path, 'run',
-             '--output-result-json=%s' % f.name, recipe]
-      cmd.extend(['%s=%s' % (k,repr(v)) for k, v in properties.iteritems()])
-
-      retcode = subprocess42.call(cmd)
-      result = json.load(f)
-      if retcode != 0:
-        raise recipe_api.StepFailure(
-          'depend on %s with properties %r failed with %d.\n'
-          'Recipe result: %r' % (
-              recipe, properties, retcode, result))
-
-      return json.loads(result['jsonResult'])
 
   @contextlib.contextmanager
   def run_context(self):
