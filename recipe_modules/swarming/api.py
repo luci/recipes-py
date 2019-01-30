@@ -646,9 +646,10 @@ class TaskResult(object):
       raise self._api.step.InfraFailure('The task was killed mid-execution')
     elif self.state == TaskState.NO_RESOURCE:
       raise self._api.step.InfraFailure('Found no bots to run this task')
-    assert false, 'unknown state %s; a case needs to be added above' % (
-      self.state.name # pragma: no cover
-    )
+    else:
+      assert False, 'unknown state %s; a case needs to be added above' % (
+        self.state.name # pragma: no cover
+      )
 
 class SwarmingApi(recipe_api.RecipeApi):
   """API for interacting with swarming.

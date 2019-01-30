@@ -95,10 +95,11 @@ def RunSteps(api):
   results[0].isolated_outputs
 
   # Raise an error if something went wrong.
-  try:
-    results[0].analyze()
-  except:
-    pass
+  if not results[0].success:
+    try:
+      results[0].analyze()
+    except:
+      pass
 
   with api.swarming.on_path():
     api.step('some step with swarming on path', [])
