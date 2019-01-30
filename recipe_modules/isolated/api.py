@@ -104,6 +104,7 @@ class IsolatedApi(recipe_api.RecipeApi):
     isolate_server = isolate_server or self.isolate_server
     cmd = [
         'download',
+        '-verbose',
         '-isolate-server', isolate_server,
         '-isolated', isolated_hash,
         '-output-dir', output_dir,
@@ -177,6 +178,7 @@ class Isolated(object):
     isolate_server = isolate_server or self._api.isolated.isolate_server
     cmd = [
         'archive',
+        '-verbose',
         '-isolate-server', isolate_server,
         '-namespace', 'default-gzip',
         '-dump-hash', self._api.raw_io.output_text(),
@@ -196,4 +198,3 @@ class Isolated(object):
       )
     )
     return isolated_hash
-

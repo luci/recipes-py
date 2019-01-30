@@ -78,6 +78,7 @@
     "cmd": [
       "[CACHE]/isolated_client/isolated",
       "archive",
+      "-verbose",
       "-isolate-server",
       "https://example.isolateserver.appspot.com",
       "-namespace",
@@ -102,6 +103,7 @@
     "cmd": [
       "[CACHE]/isolated_client/isolated",
       "archive",
+      "-verbose",
       "-isolate-server",
       "other-isolateserver.appspot.com",
       "-namespace",
@@ -120,6 +122,7 @@
     "cmd": [
       "[CACHE]/isolated_client/isolated",
       "download",
+      "-verbose",
       "-isolate-server",
       "https://example.isolateserver.appspot.com",
       "-isolated",
@@ -133,6 +136,7 @@
     "cmd": [
       "[CACHE]/isolated_client/isolated",
       "download",
+      "-verbose",
       "-isolate-server",
       "other-isolateserver.appspot.com",
       "-isolated",
