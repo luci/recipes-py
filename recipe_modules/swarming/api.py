@@ -695,8 +695,10 @@ class SwarmingApi(recipe_api.RecipeApi):
       cmd (list(str|Path)): swarming client subcommand to run.
     """
     self._ensure_swarming()
-    return self.m.step(name, [self._client] + list(cmd),
-                       step_test_data=step_test_data)
+    return self.m.step(name,
+                       [self._client] + list(cmd),
+                       step_test_data=step_test_data,
+                       infra_step=True)
 
   @contextlib.contextmanager
   def on_path(self):

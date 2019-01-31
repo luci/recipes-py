@@ -62,7 +62,8 @@ class IsolatedApi(recipe_api.RecipeApi):
     self._ensure_isolated()
     return self.m.step(name,
                        [self._client] + list(cmd),
-                       step_test_data=step_test_data)
+                       step_test_data=step_test_data,
+                       infra_step=True)
 
   @contextlib.contextmanager
   def on_path(self):

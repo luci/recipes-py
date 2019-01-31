@@ -42,6 +42,7 @@
       "-json-output",
       "/path/to/tmp/json"
     ],
+    "infra_step": true,
     "name": "trigger 1 tasks",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -74,6 +75,7 @@
       "5m",
       "0"
     ],
+    "infra_step": true,
     "name": "collect",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -101,6 +103,7 @@
       "json",
       "1"
     ],
+    "infra_step": true,
     "name": "collect other pending task",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",

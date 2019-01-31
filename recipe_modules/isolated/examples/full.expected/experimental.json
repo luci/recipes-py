@@ -94,6 +94,7 @@
       "-dirs",
       "[CLEANUP]/isolated-example_tmp_1:sub/dir"
     ],
+    "infra_step": true,
     "name": "archiving",
     "~followup_annotations": [
       "@@@STEP_LINK@isolated UI@https://example.isolateserver.appspot.com/browse?namespace=default-gzip&hash=[dummy hash]@@@"
@@ -113,6 +114,7 @@
       "-dirs",
       "[CLEANUP]/isolated-example_tmp_1:."
     ],
+    "infra_step": true,
     "name": "archiving root directory elsewhere",
     "~followup_annotations": [
       "@@@STEP_LINK@isolated UI@other-isolateserver.appspot.com/browse?namespace=default-gzip&hash=[dummy hash]@@@"
@@ -130,6 +132,7 @@
       "-output-dir",
       "[CLEANUP]/first"
     ],
+    "infra_step": true,
     "name": "download with first hash"
   },
   {
@@ -144,6 +147,7 @@
       "-output-dir",
       "[CLEANUP]/second"
     ],
+    "infra_step": true,
     "name": "download with second hash"
   },
   {
