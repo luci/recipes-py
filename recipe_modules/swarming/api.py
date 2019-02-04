@@ -558,12 +558,12 @@ class TaskResult(object):
 
       self._duration = results['duration']
 
-      outputs_refs = results.get('outputs_refs')
-      if outputs_refs:
+      outputs_ref = results.get('outputs_ref')
+      if outputs_ref:
         self._isolated_outputs = self.IsolatedOutputs(
-            hash=outputs_refs['isolated'],
-            server=outputs_refs['isolateserver'],
-            namespace=outputs_refs['namespace'],
+            hash=outputs_ref['isolated'],
+            server=outputs_ref['isolatedserver'],
+            namespace=outputs_ref['namespace'],
         )
 
       self._output = raw_results['output']
