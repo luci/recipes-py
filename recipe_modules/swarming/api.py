@@ -633,7 +633,7 @@ class TaskResult(object):
       failure_lines = [
           'Timed out. Last 10 lines of output:',
       ] + output_lines[-10:]
-      raise self.m.step.StepTimeout(
+      raise self._api.step.StepTimeout(
           '\n'.join(failure_lines), '%s seconds' % duration)
     elif self.state == TaskState.BOT_DIED:
       raise self._api.step.InfraFailure('The bot running this task died')
@@ -641,7 +641,7 @@ class TaskResult(object):
       raise self._api.step.InfraFailure('The task was canceled before it could run')
     elif self.state == TaskState.COMPLETED:
       if not self.success:
-        raise self.m.step.InfraFailure('Swarming task failed:\n%s' % self.output)
+        raise self._api.step.InfraFailure('Swarming task failed:\n%s' % self.output)
     elif self.state == TaskState.KILLED:
       raise self._api.step.InfraFailure('The task was killed mid-execution')
     elif self.state == TaskState.NO_RESOURCE:
