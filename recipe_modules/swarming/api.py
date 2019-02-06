@@ -174,6 +174,7 @@ class TaskRequest(object):
       self._isolated = ''
       self._dimensions = {}
       self._cipd_ensure_file = api.cipd.EnsureFile()
+      self._outputs = []
       self._env_vars = {}
       self._env_prefixes = {}
       self._expiration_secs = 300
@@ -276,9 +277,28 @@ class TaskRequest(object):
       return ret
 
     @property
+    def outputs(self):
+      """Returns the list of files to be isolated on task exit."""
+      return copy.copy(self._outputs)
+
+    def with_outputs(self, outputs):
+      """Returns the slice with given outputs set.
+
+      Args:
+        outputs (list(str)) - Files relative to the swarming task's root
+          directory; they are symlinked into $ISOLATED_OUTDIR and isolated upon
+          exit of the task.
+      """
+      assert isinstance(outputs, list)
+      assert all(isinstance(output, basestring) for output in outputs)
+      ret =  self._copy()
+      ret._outputs = outputs
+      return ret
+
+    @property
     def env_vars(self):
       """Returns the mapping (dict) of an environment variable to its value."""
-      return self._env_vars.copy()
+      return copy.deepcopy(self._env_vars)
 
     def with_env_vars(self, **kwargs):
       """Returns the slice with the given environment variables set.
@@ -461,6 +481,7 @@ class TaskRequest(object):
       properties = {
         'command': self.command,
         'dimensions': [{'key': k, 'value': v} for k, v in dims.iteritems()],
+        'outputs' : self.outputs,
         'env' : [{'key': k , 'value': v} for k, v in self.env_vars.iteritems()],
         'env_prefixes' : [{'key': k , 'value' : v} for k, v in self.env_prefixes.iteritems()],
         'execution_timeout_secs': str(self.hard_timeout_secs),
@@ -608,10 +629,15 @@ class TaskResult(object):
 
   @property
   def outputs(self):
-    """The list of files (list(str)) output from the task.
+    """A map (dict[str]Path) of the files, relative to absolute paths, output
+    from the task.
 
-    This list is identically the files found in $ISOLATED_OUTDIR upon exiting
-    the task.
+    This dictionary is comprised of the files found in $ISOLATED_OUTDIR upon
+    exiting the task, mapping to the paths on disk to where they were
+    downloaded.
+
+    There will be no outputs fetched unless api.swarming.collect() was called
+    with output_dir set.
     """
     return self._outputs
 

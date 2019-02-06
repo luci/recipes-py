@@ -43,7 +43,8 @@ def RunSteps(api):
   # Append a slice that is a variation of the last one as a starting point.
   request = request.add_slice(request[-1].
     with_grace_period_secs(20).
-    with_secret_bytes('shh, don\'t tell'),
+    with_secret_bytes('shh, don\'t tell').
+    with_outputs(['my/output/file'])
   )
 
   # There should be two task slices at this point.
