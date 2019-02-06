@@ -109,7 +109,7 @@
 
 Provides steps to manipulate archive files (tar, zip, etc.).
 
-&mdash; **def [extract](/recipe_modules/archive/api.py#40)(self, step_name, archive_file, output, mode='safe'):**
+&mdash; **def [extract](/recipe_modules/archive/api.py#42)(self, step_name, archive_file, output, mode='safe', include_files=()):**
 
 Step to uncompress |archive_file| into |output| directory.
 
@@ -119,38 +119,47 @@ Archive will be unpacked to |output| so that root of an archive is in
 Step will FAIL if |output| already exists.
 
 Args:
-  step_name (str): display name of a step.
-  archive_file (Path): path to an archive file to uncompress, MUST exist.
-  output (Path): path to a directory to unpack to, MUST NOT exist.
-  mode (str): Must be either 'safe' or 'unsafe'. In safe mode, if the
+
+  * step_name (str): display name of a step.
+  * archive_file (Path): path to an archive file to uncompress, MUST exist.
+  * output (Path): path to a directory to unpack to, MUST NOT exist.
+  * mode (str): Must be either 'safe' or 'unsafe'. In safe mode, if the
     archive attempts to extract files which would escape the extraction
     `output` location, the extraction will fail (raise StepException)
     which contains a member `StepException.archive_skipped_files` (all
     other files will be extracted normally). If 'unsafe', then tarfiles
     containing paths escaping `output` will be extracted as-is.
+  * include_files (List[str]) - A list of globs matching files within the
+    archive. Any files not matching any of these globs will be skipped.
+    If omitted, all files are extracted (the default). Globs are matched
+    with the `fnmatch` module. If a file "filename" in the archive exists,
+    include_files with "file*" will match it. All paths for the matcher
+    are converted to posix style (forward slash).
 
 &mdash; **def [package](/recipe_modules/archive/api.py#13)(self, root):**
 
 Returns Package object that can be used to compress a set of files.
 
 Usage:
-  # Archive root/file and root/directory/**
-  (api.archive.package(root).
-      with_file(root.join('file')).
-      with_dir(root.join('directory')).
-      archive('archive step', output, 'tbz'))
 
-  # Archive root/**
-  zip_path = (
-    api.archive.package(root).
-    archive('archive step', api.path['start_dir'].join('output.zip'))
-  )
+    # Archive root/file and root/directory/**
+    (api.archive.package(root).
+        with_file(root.join('file')).
+        with_dir(root.join('directory')).
+        archive('archive step', output, 'tbz'))
+
+    # Archive root/**
+    zip_path = (
+      api.archive.package(root).
+      archive('archive step', api.path['start_dir'].join('output.zip'))
+    )
 
 Args:
-  root: a directory that would become root of a package, all files added to
-      an archive must be Paths which are under this directory. If no files
-      or directories are added with 'with_file' or 'with_dir', the entire
-      root directory is packaged.
+
+  * root: a directory that would become root of a package, all files added
+      to an archive must be Paths which are under this directory. If no
+      files or directories are added with 'with_file' or 'with_dir', the
+      entire root directory is packaged.
 
 Returns:
   Package object.

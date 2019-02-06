@@ -8,9 +8,11 @@ the 'archive' recipe module internally. Should not be used elsewhere.
 
 import argparse
 import copy
+import fnmatch
 import json
 import operator
 import os
+import posixpath
 import shutil
 import subprocess
 import sys
@@ -26,7 +28,7 @@ else:
     return path
 
 
-def untar(archive_file, output, stats, safe):
+def untar(archive_file, output, stats, safe, include_filter):
   """Untars an archive using 'tarfile' python module.
 
   Works everywhere where Python works (Windows and POSIX).
@@ -34,6 +36,10 @@ def untar(archive_file, output, stats, safe):
   Args:
     archive_file: absolute path to an archive to untar.
     output: existing directory to untar to.
+    stats: the stats dict (see main() for its form)
+    safe (bool): If True, skips extracting files which would escape `output`.
+    include_filter (fn(path): bool): A function which is given the archive
+      path and should return True if we should extract it.
   """
   with tarfile.open(archive_file, 'r|*') as tf:
     # monkeypatch the TarFile object to allow printing messages for each
@@ -49,6 +55,10 @@ def untar(archive_file, output, stats, safe):
         stats['skipped']['names'].append(tarinfo.name)
         return
 
+      if not include_filter(tarinfo.name):
+        print 'Skipping %r (does not match include_files)' % (tarinfo.name,)
+        return
+
       print 'Extracting %r' % (tarinfo.name,)
       stats['extracted']['filecount'] += 1
       stats['extracted']['bytes'] += tarinfo.size
@@ -57,7 +67,7 @@ def untar(archive_file, output, stats, safe):
     tf.extractall(output)
 
 
-def unzip(zip_file, output, stats):
+def unzip(zip_file, output, stats, include_filter):
   """Unzips an archive using 'zipfile' python module.
 
   Works everywhere where Python works (Windows and POSIX).
@@ -65,9 +75,16 @@ def unzip(zip_file, output, stats):
   Args:
     zip_file: absolute path to an archive to unzip.
     output: existing directory to unzip to.
+    stats: the stats dict (see main() for its form)
+    include_filter (fn(path): bool): A function which is given the archive
+      path and should return True if we should extract it.
   """
   with zipfile.ZipFile(zip_file) as zf:
     for zipinfo in zf.infolist():
+      if not include_filter(zipinfo.filename):
+        print 'Skipping %r (does not match include_files)' % (zipinfo.filename,)
+        continue
+
       print 'Extracting %s' % zipinfo.filename
       stats['extracted']['filecount'] += 1
       stats['extracted']['bytes'] += zipinfo.file_size
@@ -85,6 +102,7 @@ def main():
   output = data['output']
   archive_file = data['archive_file']
   safe_mode = data['safe_mode']
+  include_files = data['include_files']
 
   # Archive path should exist and be an absolute path to a file.
   assert os.path.isabs(archive_file), archive_file
@@ -114,12 +132,23 @@ def main():
       },
     }
 
+    include_filter = lambda _path: True
+    if include_files:
+      def include_filter(path):
+        path = posixpath.normpath(path)
+        if path.startswith('./'):
+          path = path[2:]
+        for pattern in include_files:
+          if fnmatch.fnmatch(path, pattern):
+            return True
+        return False
+
     if file_type == 'zip':
       # NOTE: zipfile module is always safe in python 2.7.4+... it mangles
       # extracted file names to ensure they don't escape the extraction root.
-      unzip(archive_file, output, stats)
+      unzip(archive_file, output, stats, include_filter)
     else:
-      untar(archive_file, output, stats, safe_mode)
+      untar(archive_file, output, stats, safe_mode, include_filter)
 
     json.dump(stats, opts.json_output)
   except:

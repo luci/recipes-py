@@ -66,6 +66,11 @@ def RunSteps(api):
   api.step('listing output1', ['find', temp.join('output1')])
   api.step('listing output2', ['find', temp.join('output2')])
 
+  # Extract only a subset
+  api.archive.extract('extract tar subset', out_tar, temp.join('output_sub'),
+                      include_files=['*/dir/*'])
+  api.step('listing output_sub', ['find', temp.join('output_sub')])
+
 
 def GenTests(api):
   # only really care about the archiving and extract steps

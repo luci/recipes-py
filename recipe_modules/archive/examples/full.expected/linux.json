@@ -32,7 +32,7 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]/resources/extract.py",
       "--json-input",
-      "{\"archive_file\": \"[START_DIR]/output/output.tar.bz2\", \"output\": \"[CLEANUP]/tar-example_tmp_1/output1\", \"safe_mode\": true}",
+      "{\"archive_file\": \"[START_DIR]/output/output.tar.bz2\", \"include_files\": [], \"output\": \"[CLEANUP]/tar-example_tmp_1/output1\", \"safe_mode\": true}",
       "--json-output",
       "/path/to/tmp/json"
     ],
@@ -54,7 +54,7 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]/resources/extract.py",
       "--json-input",
-      "{\"archive_file\": \"[START_DIR]/output/more.zip\", \"output\": \"[CLEANUP]/tar-example_tmp_1/output2\", \"safe_mode\": true}",
+      "{\"archive_file\": \"[START_DIR]/output/more.zip\", \"include_files\": [], \"output\": \"[CLEANUP]/tar-example_tmp_1/output2\", \"safe_mode\": true}",
       "--json-output",
       "/path/to/tmp/json"
     ],
@@ -76,7 +76,7 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]/resources/extract.py",
       "--json-input",
-      "{\"archive_file\": \"[START_DIR]/output/all_zip.zip\", \"output\": \"[CLEANUP]/tar-example_tmp_1/output3\", \"safe_mode\": true}",
+      "{\"archive_file\": \"[START_DIR]/output/all_zip.zip\", \"include_files\": [], \"output\": \"[CLEANUP]/tar-example_tmp_1/output3\", \"safe_mode\": true}",
       "--json-output",
       "/path/to/tmp/json"
     ],
@@ -98,7 +98,7 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]/resources/extract.py",
       "--json-input",
-      "{\"archive_file\": \"[START_DIR]/output/more.zip\", \"output\": \"[CLEANUP]/tar-example_tmp_1/output3\", \"safe_mode\": true}",
+      "{\"archive_file\": \"[START_DIR]/output/more.zip\", \"include_files\": [], \"output\": \"[CLEANUP]/tar-example_tmp_1/output3\", \"safe_mode\": true}",
       "--json-output",
       "/path/to/tmp/json"
     ],
@@ -126,6 +126,28 @@
       "@@@STEP_LOG_LINE@skipped files@some/path/../../../../frank@@@",
       "@@@STEP_LOG_END@skipped files@@@",
       "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::archive]/resources/extract.py",
+      "--json-input",
+      "{\"archive_file\": \"[START_DIR]/output/output.tar.bz2\", \"include_files\": [\"*/dir/*\"], \"output\": \"[CLEANUP]/tar-example_tmp_1/output_sub\", \"safe_mode\": true}",
+      "--json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "extract tar subset",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@<br/>extracted 1337 files - 50159.75 MB@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"extracted\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"bytes\": 50159747054, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"filecount\": 1337@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
     ]
   }
 ]
