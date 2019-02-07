@@ -179,7 +179,7 @@ class TaskRequest(object):
       self._env_prefixes = {}
       self._expiration_secs = 300
       self._io_timeout_secs = 60
-      self._hard_timeout_secs = 1200
+      self._execution_timeout_secs = 1200
       self._grace_period_secs = 30
       self._idempotent = False
       self._secret_bytes = ''
@@ -391,11 +391,11 @@ class TaskRequest(object):
       return ret
 
     @property
-    def hard_timeout_secs(self):
+    def execution_timeout_secs(self):
       """Returns the seconds before Swarming should kill the task."""
-      return self._hard_timeout_secs
+      return self._execution_timeout_secs
 
-    def with_hard_timeout_secs(self, secs):
+    def with_execution_timeout_secs(self, secs):
       """Returns the slice with the given hard timeout set.
 
       Args:
@@ -403,7 +403,7 @@ class TaskRequest(object):
       """
       assert isinstance(secs, int) and secs >= 0
       ret =  self._copy()
-      ret._hard_timeout_secs = secs
+      ret._execution_timeout_secs = secs
       return ret
 
     @property
@@ -484,9 +484,8 @@ class TaskRequest(object):
         'outputs' : self.outputs,
         'env' : [{'key': k , 'value': v} for k, v in self.env_vars.iteritems()],
         'env_prefixes' : [{'key': k , 'value' : v} for k, v in self.env_prefixes.iteritems()],
-        'execution_timeout_secs': str(self.hard_timeout_secs),
+        'execution_timeout_secs': str(self.execution_timeout_secs),
         'io_timeout_secs': str(self.io_timeout_secs),
-        'hard_timeout_secs': str(self.hard_timeout_secs),
         'grace_period_secs': str(self.grace_period_secs),
         'idempotent': self.idempotent,
       }
@@ -504,7 +503,7 @@ class TaskRequest(object):
           'packages': [
             {
               'package_name': pkg.name,
-              'path': path or '',
+              'path': path or '.',
               'version': pkg.version,
             }
             for path, pkgs in self.cipd_ensure_file.packages.iteritems()
@@ -577,7 +576,7 @@ class TaskResult(object):
         # endpoint's response.
         self._success = results.get('exit_code', 0) == 0
 
-      self._duration = results['duration']
+      self._duration = results.get('duration', 0)
 
       outputs_ref = results.get('outputs_ref')
       if outputs_ref:
@@ -653,14 +652,12 @@ class TaskResult(object):
     elif self.state == TaskState.EXPIRED:
       raise self._api.step.InfraFailure('Timed out waiting for a bot to run on')
     elif self.state == TaskState.TIMED_OUT:
-      # Duration is measured in seconds; round down to the nearest one.
-      duration = self._duration[:self._duration.find('.')]
       output_lines = self.output.rsplit('\n', 11)
       failure_lines = [
           'Timed out. Last 10 lines of output:',
       ] + output_lines[-10:]
       raise self._api.step.StepTimeout(
-          '\n'.join(failure_lines), '%s seconds' % duration)
+          '\n'.join(failure_lines), '%s seconds' % int(duration))
     elif self.state == TaskState.BOT_DIED:
       raise self._api.step.InfraFailure('The bot running this task died')
     elif self.state == TaskState.CANCELED:
@@ -751,10 +748,11 @@ class SwarmingApi(recipe_api.RecipeApi):
     """
     return TaskRequest(self.m)
 
-  def trigger(self, requests):
+  def trigger(self, step_name, requests):
     """Triggers a set of Swarming tasks.
 
     Args:
+      step_name (str): The name of the step.
       tasks (seq[TaskRequest]): A sequence of task request objects representing
         the tasks we want to trigger.
 
@@ -765,7 +763,7 @@ class SwarmingApi(recipe_api.RecipeApi):
     assert self._server
 
     trigger_resp = self._run(
-        'trigger %d tasks' % len(requests),
+        step_name,
         [
           'spawn-tasks',
           '-server', self._server,

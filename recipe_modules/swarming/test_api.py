@@ -72,7 +72,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
           'name': name,
           'task_id': id,
           'state': state.name,
-          'duration': '62.35',
+          'duration': 62.35,
           'outputs_ref': {
               'isolated': 'abc123',
               'isolatedserver': 'https://isolateserver.appspot.com',

@@ -35,7 +35,7 @@ def RunSteps(api):
         with_isolated('606d94add94223636ee516c6bc9918f937823ccc').
         with_expiration_secs(3600).
         with_io_timeout_secs(600).
-        with_hard_timeout_secs(3600).
+        with_execution_timeout_secs(3600).
         with_idempotent(True),
       )
   )
@@ -71,7 +71,7 @@ def RunSteps(api):
 
 
   # Trigger the task request.
-  metadata = api.swarming.trigger(requests=[request])
+  metadata = api.swarming.trigger('trigger 1 task', requests=[request])
 
   # From the request metadata, one can access the task's name, id, and
   # associated UI link.
