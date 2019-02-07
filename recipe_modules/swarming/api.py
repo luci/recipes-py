@@ -657,7 +657,7 @@ class TaskResult(object):
           'Timed out. Last 10 lines of output:',
       ] + output_lines[-10:]
       raise self._api.step.StepTimeout(
-          '\n'.join(failure_lines), '%s seconds' % int(duration))
+          '\n'.join(failure_lines), '%s seconds' % int(self._duration))
     elif self.state == TaskState.BOT_DIED:
       raise self._api.step.InfraFailure('The bot running this task died')
     elif self.state == TaskState.CANCELED:

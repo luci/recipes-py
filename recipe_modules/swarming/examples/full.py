@@ -99,8 +99,10 @@ def RunSteps(api):
   if not results[0].success:
     try:
       results[0].analyze()
-    except:
+    except api.step.StepFailure:
       pass
+    except Exception as ex: # pragma: no cover
+      raise AssertionError("wrong exception raised: %r" % ex)
 
   with api.swarming.on_path():
     api.step('some step with swarming on path', [])
