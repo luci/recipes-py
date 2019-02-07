@@ -148,7 +148,7 @@ class TaskRequest(object):
     """
     return {
       'name': self.name,
-      'priority': self.priority,
+      'priority': str(self.priority),
       'service_account': self.service_account,
       'task_slices': [task_slice.to_jsonish() for task_slice in self._slices],
     }
