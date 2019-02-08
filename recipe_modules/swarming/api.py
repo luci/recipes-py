@@ -506,8 +506,8 @@ class TaskRequest(object):
               'path': path or '.',
               'version': pkg.version,
             }
-            for path, pkgs in self.cipd_ensure_file.packages.iteritems()
-              for pkg in pkgs
+            for path in sorted(self.cipd_ensure_file.packages)
+              for pkg in self.cipd_ensure_file.packages[path]
           ]
         }
 
