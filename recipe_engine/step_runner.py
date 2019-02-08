@@ -316,6 +316,7 @@ class SubprocessStepRunner(StepRunner):
           cwd=cwd,
           detached=True,
           universal_newlines=True,
+          close_fds=True,
           **fhandles)
 
     # Safe to close file handles now that subprocess has inherited them.
@@ -451,6 +452,7 @@ class QuietSubprocessStepRunner(SubprocessStepRunner):
           cwd=cwd,
           detached=True,
           universal_newlines=True,
+          close_fds=True,
           **fhandles)
 
     # Safe to close file handles now that subprocess has inherited them.
