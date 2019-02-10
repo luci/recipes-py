@@ -1,2 +1,2 @@
 These _pb2.py files were copied from
-https://chromium.googlesource.com/infra/infra/+/83d9a5d5a7d31cfcc4e534ab1cd8164b9b40b157/appengine/cr-buildbucket/proto
+https://chromium.googlesource.com/infra/infra/+/7b889234fd4e7723ef26326a69c10f2027029d59/infra/libs/buildbucket/proto

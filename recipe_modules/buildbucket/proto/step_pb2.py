@@ -7,7 +7,6 @@ from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
-from google.protobuf import descriptor_pb2
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -19,15 +18,17 @@ DESCRIPTOR = _descriptor.FileDescriptor(
     name='step.proto',
     package='buildbucket.v2',
     syntax='proto3',
+    serialized_options=_b(
+        'Z4go.chromium.org/luci/buildbucket/proto;buildbucketpb'
+    ),
     serialized_pb=_b(
-        '\n\nstep.proto\x12\x0e\x62uildbucket.v2\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x0c\x63ommon.proto\"\x83\x02\n\x04Step\x12\x0c\n\x04name\x18\x01 \x01(\t\x12.\n\nstart_time\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12,\n\x08\x65nd_time\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12&\n\x06status\x18\x04 \x01(\x0e\x32\x16.buildbucket.v2.Status\x12&\n\x04logs\x18\x05 \x03(\x0b\x32\x18.buildbucket.v2.Step.Log\x12\x18\n\x10summary_markdown\x18\x07 \x01(\t\x1a%\n\x03Log\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08view_url\x18\x02 \x01(\tB6Z4go.chromium.org/luci/buildbucket/proto;buildbucketpbb\x06proto3'
+        '\n\nstep.proto\x12\x0e\x62uildbucket.v2\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x0c\x63ommon.proto\"\x90\x02\n\x04Step\x12\x0c\n\x04name\x18\x01 \x01(\t\x12.\n\nstart_time\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12,\n\x08\x65nd_time\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12&\n\x06status\x18\x04 \x01(\x0e\x32\x16.buildbucket.v2.Status\x12&\n\x04logs\x18\x05 \x03(\x0b\x32\x18.buildbucket.v2.Step.Log\x12\x18\n\x10summary_markdown\x18\x07 \x01(\t\x1a\x32\n\x03Log\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08view_url\x18\x02 \x01(\t\x12\x0b\n\x03url\x18\x03 \x01(\tB6Z4go.chromium.org/luci/buildbucket/proto;buildbucketpbb\x06proto3'
     ),
     dependencies=[
         google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,
         common__pb2.DESCRIPTOR,
     ]
 )
-_sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 _STEP_LOG = _descriptor.Descriptor(
     name='Log',
@@ -51,7 +52,8 @@ _STEP_LOG = _descriptor.Descriptor(
             containing_type=None,
             is_extension=False,
             extension_scope=None,
-            options=None
+            serialized_options=None,
+            file=DESCRIPTOR
         ),
         _descriptor.FieldDescriptor(
             name='view_url',
@@ -68,19 +70,38 @@ _STEP_LOG = _descriptor.Descriptor(
             containing_type=None,
             is_extension=False,
             extension_scope=None,
-            options=None
+            serialized_options=None,
+            file=DESCRIPTOR
+        ),
+        _descriptor.FieldDescriptor(
+            name='url',
+            full_name='buildbucket.v2.Step.Log.url',
+            index=2,
+            number=3,
+            type=9,
+            cpp_type=9,
+            label=1,
+            has_default_value=False,
+            default_value=_b("").decode('utf-8'),
+            message_type=None,
+            enum_type=None,
+            containing_type=None,
+            is_extension=False,
+            extension_scope=None,
+            serialized_options=None,
+            file=DESCRIPTOR
         ),
     ],
     extensions=[],
     nested_types=[],
     enum_types=[],
-    options=None,
+    serialized_options=None,
     is_extendable=False,
     syntax='proto3',
     extension_ranges=[],
     oneofs=[],
     serialized_start=300,
-    serialized_end=337,
+    serialized_end=350,
 )
 
 _STEP = _descriptor.Descriptor(
@@ -105,7 +126,8 @@ _STEP = _descriptor.Descriptor(
             containing_type=None,
             is_extension=False,
             extension_scope=None,
-            options=None
+            serialized_options=None,
+            file=DESCRIPTOR
         ),
         _descriptor.FieldDescriptor(
             name='start_time',
@@ -122,7 +144,8 @@ _STEP = _descriptor.Descriptor(
             containing_type=None,
             is_extension=False,
             extension_scope=None,
-            options=None
+            serialized_options=None,
+            file=DESCRIPTOR
         ),
         _descriptor.FieldDescriptor(
             name='end_time',
@@ -139,7 +162,8 @@ _STEP = _descriptor.Descriptor(
             containing_type=None,
             is_extension=False,
             extension_scope=None,
-            options=None
+            serialized_options=None,
+            file=DESCRIPTOR
         ),
         _descriptor.FieldDescriptor(
             name='status',
@@ -156,7 +180,8 @@ _STEP = _descriptor.Descriptor(
             containing_type=None,
             is_extension=False,
             extension_scope=None,
-            options=None
+            serialized_options=None,
+            file=DESCRIPTOR
         ),
         _descriptor.FieldDescriptor(
             name='logs',
@@ -173,7 +198,8 @@ _STEP = _descriptor.Descriptor(
             containing_type=None,
             is_extension=False,
             extension_scope=None,
-            options=None
+            serialized_options=None,
+            file=DESCRIPTOR
         ),
         _descriptor.FieldDescriptor(
             name='summary_markdown',
@@ -190,7 +216,8 @@ _STEP = _descriptor.Descriptor(
             containing_type=None,
             is_extension=False,
             extension_scope=None,
-            options=None
+            serialized_options=None,
+            file=DESCRIPTOR
         ),
     ],
     extensions=[],
@@ -198,13 +225,13 @@ _STEP = _descriptor.Descriptor(
         _STEP_LOG,
     ],
     enum_types=[],
-    options=None,
+    serialized_options=None,
     is_extendable=False,
     syntax='proto3',
     extension_ranges=[],
     oneofs=[],
     serialized_start=78,
-    serialized_end=337,
+    serialized_end=350,
 )
 
 _STEP_LOG.containing_type = _STEP
@@ -212,11 +239,11 @@ _STEP.fields_by_name[
     'start_time'
 ].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
 _STEP.fields_by_name[
-    'end_time'
-].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
+    'end_time'].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
 _STEP.fields_by_name['status'].enum_type = common__pb2._STATUS
 _STEP.fields_by_name['logs'].message_type = _STEP_LOG
 DESCRIPTOR.message_types_by_name['Step'] = _STEP
+_sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Step = _reflection.GeneratedProtocolMessageType(
     'Step',
@@ -239,9 +266,5 @@ Step = _reflection.GeneratedProtocolMessageType(
 _sym_db.RegisterMessage(Step)
 _sym_db.RegisterMessage(Step.Log)
 
-DESCRIPTOR.has_options = True
-DESCRIPTOR._options = _descriptor._ParseOptions(
-    descriptor_pb2.FileOptions(),
-    _b('Z4go.chromium.org/luci/buildbucket/proto;buildbucketpb')
-)
+DESCRIPTOR._options = None
 # @@protoc_insertion_point(module_scope)
