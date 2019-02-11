@@ -27,6 +27,11 @@ from .third_party import subprocess42
 
 
 if sys.platform == "win32":
+  # subprocess.Popen(close_fds) raises an exception when attempting to do this
+  # and also redirect stdin/stdout/stderr. To be on the safe side, we just don't
+  # do this on windows.
+  CLOSE_FDS = False
+
   # Windows has a bad habit of opening a dialog when a console program
   # crashes, rather than just letting it crash.  Therefore, when a
   # program crashes on Windows, we don't find out until the build step
@@ -43,6 +48,9 @@ if sys.platform == "win32":
   # For more information, see:
   # https://msdn.microsoft.com/en-us/library/windows/desktop/ms680621.aspx
   ctypes.windll.kernel32.SetErrorMode(0x0001|0x0002|0x8000)
+else:
+  # Non-windows platforms implement close_fds in a safe way.
+  CLOSE_FDS = True
 
 
 class _streamingLinebuf(object):
@@ -316,6 +324,7 @@ class SubprocessStepRunner(StepRunner):
           cwd=cwd,
           detached=True,
           universal_newlines=True,
+          close_fds=CLOSE_FDS,
           **fhandles)
 
     # Safe to close file handles now that subprocess has inherited them.
@@ -451,6 +460,7 @@ class QuietSubprocessStepRunner(SubprocessStepRunner):
           cwd=cwd,
           detached=True,
           universal_newlines=True,
+          close_fds=CLOSE_FDS,
           **fhandles)
 
     # Safe to close file handles now that subprocess has inherited them.
