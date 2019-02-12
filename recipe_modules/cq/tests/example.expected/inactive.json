@@ -1,0 +1,14 @@
+[
+  {
+    "cmd": [],
+    "name": "show properties",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@result@state: State.INACTIVE@@@",
+      "@@@STEP_LOG_END@result@@@"
+    ]
+  },
+  {
+    "jsonResult": null,
+    "name": "$result"
+  }
+]
