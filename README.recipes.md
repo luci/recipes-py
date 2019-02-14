@@ -35,6 +35,7 @@
   * [archive:examples/full](#recipes-archive_examples_full)
   * [buildbucket:examples/full](#recipes-buildbucket_examples_full) &mdash; This file is a recipe demonstrating the buildbucket recipe module.
   * [buildbucket:tests/build](#recipes-buildbucket_tests_build)
+  * [buildbucket:tests/collect](#recipes-buildbucket_tests_collect)
   * [buildbucket:tests/get](#recipes-buildbucket_tests_get)
   * [buildbucket:tests/put](#recipes-buildbucket_tests_put)
   * [cipd:examples/full](#recipes-cipd_examples_full)
@@ -178,7 +179,7 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 
 A module for interacting with buildbucket.
 
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#279)(self):**
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#323)(self):**
 
 Returns bucket name in v1 format.
 
@@ -201,15 +202,15 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned build.id is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#295)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#339)(self):**
 
 DEPRECATED, use build.id instead.
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#300)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#344)(self):**
 
 DEPRECATED, use build.input instead.
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#305)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#349)(self):**
 
 Deprecated. Use build.builder instead.
 
@@ -218,6 +219,31 @@ Deprecated. Use build.builder instead.
 Returns builder name. Shortcut for .build.builder.builder.
 
 &mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#249)(self, build_id, \*\*kwargs):**
+
+&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#257)(self, build_id, mirror_status=False, \*\*kwargs):**
+
+Shorthand for collect_builds below, but for a single build only.
+
+Args:
+  build_id: Integer ID of the build to wait for.
+  mirror_status: Set step status to build status.
+
+Returns:
+  buildbucket.v2.Build protobuf message for the ended build.
+
+&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#276)(self, build_ids, interval=60, timeout=3600, step_name=None):**
+
+Waits for a set of builds to end and returns their details.
+
+Args:
+  build_ids: List of build IDs to wait for.
+  interval: Delay (in secs) between requests while waiting for build to end.
+  timeout: Maximum time to wait for builds to end.
+  step_name: Custom name for the generated step.
+
+Returns:
+  A map from integer build IDs to the corresponding buildbucket.v2.Build
+  protobuf messages for all specified builds.
 
 &mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#252)(self, build_id, \*\*kwargs):**
 
@@ -230,7 +256,7 @@ https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/
 
 Never returns None, but sub-fields may be empty.
 
-&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#290)(self):**
+&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#334)(self):**
 
 DEPRECATED, use build attribute instead.
 
@@ -2043,6 +2069,11 @@ This file is a recipe demonstrating the buildbucket recipe module.
 [DEPS](/recipe_modules/buildbucket/tests/build.py#9): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/build.py#16)(api):**
+### *recipes* / [buildbucket:tests/collect](/recipe_modules/buildbucket/tests/collect.py)
+
+[DEPS](/recipe_modules/buildbucket/tests/collect.py#5): [buildbucket](#recipe_modules-buildbucket)
+
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/collect.py#10)(api):**
 ### *recipes* / [buildbucket:tests/get](/recipe_modules/buildbucket/tests/get.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/get.py#5): [buildbucket](#recipe_modules-buildbucket)

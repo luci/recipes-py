@@ -44,15 +44,17 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       git_repo=None,
       git_ref='refs/heads/master',
       revision='2d72510e447ab60a9728aeea2362d8be2cbd7789',
-      build_number=0):
+      build_number=0,
+      build_id=8945511751514863184,
+      status=None):
     """Returns a typical buildbucket CI build scheduled by luci-scheduler."""
     git_repo = git_repo or self._default_git_repo(project)
     gitiles_host, gitiles_project = util.parse_gitiles_repo_url(git_repo)
     assert gitiles_host and gitiles_project, 'invalid repo %s' % git_repo
 
     # Do not add tags because recipe emulation results must not depend on tags.
-    return build_pb2.Build(
-        id=8945511751514863184,
+    build = build_pb2.Build(
+        id=build_id,
         number=build_number,
         builder=build_pb2.BuilderID(
             project=project,
@@ -70,6 +72,11 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
             ),
         ),
     )
+
+    if status:
+      build.status = common_pb2.Status.Value(status)
+
+    return build
 
   def ci_build(self, *args, **kwargs):
     """Returns a typical buildbucket CI build scheduled by luci-scheduler.
@@ -92,7 +99,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       change_number=123456,
       patch_set=7,
       revision=None,
-      build_number=0):
+      build_number=0,
+      build_id=8945511751514863184,
+      status=None):
     """Emulate typical buildbucket try build scheduled by CQ.
 
     Usage:
@@ -112,7 +121,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
 
     # Do not add tags because recipe emulation results must not depend on tags.
     build = build_pb2.Build(
-        id=8945511751514863184,
+        id=build_id,
         number=build_number,
         builder=build_pb2.BuilderID(
             project=project,
@@ -139,6 +148,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       c.project = git_project
       c.id = revision
 
+    if status:
+      build.status = common_pb2.Status.Value(status)
+
     return build
 
   def try_build(self, *args, **kwargs):
@@ -162,3 +174,10 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     return self.step_data(
         'buildbucket.get',
         stdout=self.m.raw_io.output_text(json.dumps(buildbucket_output)))
+
+
+  def simulated_collect_output(self, builds, step_name=None):
+    return self.step_data(
+        step_name or 'buildbucket.collect',
+        self.m.json.output([
+          json_format.MessageToDict(build) for build in builds]))

@@ -252,15 +252,59 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def get_build(self, build_id, **kwargs):
     return self._call_service('get', [build_id], **kwargs)
 
+  # Other buildbucket tool subcommands.
+
+  def collect_build(self, build_id, mirror_status=False, **kwargs):
+    """Shorthand for collect_builds below, but for a single build only.
+
+    Args:
+      build_id: Integer ID of the build to wait for.
+      mirror_status: Set step status to build status.
+
+    Returns:
+      buildbucket.v2.Build protobuf message for the ended build.
+    """
+    assert isinstance(build_id, int)
+    build = self.collect_builds([build_id], **kwargs)[build_id]
+    if mirror_status:
+      self.m.step.active_result.presentation.status = {
+        common_pb2.FAILURE: self.m.step.FAILURE,
+        common_pb2.SUCCESS: self.m.step.SUCCESS,
+      }.get(build.status, self.m.step.EXCEPTION)
+    return build
+
+  def collect_builds(
+      self, build_ids, interval=60, timeout=3600, step_name=None):
+    """Waits for a set of builds to end and returns their details.
+
+    Args:
+      build_ids: List of build IDs to wait for.
+      interval: Delay (in secs) between requests while waiting for build to end.
+      timeout: Maximum time to wait for builds to end.
+      step_name: Custom name for the generated step.
+
+    Returns:
+      A map from integer build IDs to the corresponding buildbucket.v2.Build
+      protobuf messages for all specified builds.
+    """
+    args = ['-json-output', self.m.json.output(), '-interval', '%ds' % interval]
+    args += build_ids
+    result = self._call_service(
+        'collect', args, json_stdout=False, timeout=timeout, name=step_name)
+    builds = [json_format.ParseDict(build_json, build_pb2.Build())
+              for build_json in result.json.output]
+    return {build.id: build for build in builds}
+
   # Internal.
 
-  def _call_service(self, command, args, **kwargs):
-    step_name = kwargs.pop('name', 'buildbucket.' + command)
+  def _call_service(self, command, args, json_stdout=True, name=None, **kwargs):
+    step_name = name or ('buildbucket.' + command)
     if self._service_account_key:
       args = ['-service-account-json', self._service_account_key] + args
     args = ['buildbucket', command, '-host', self._host] + args
     kwargs.setdefault('infra_step', True)
-    return self.m.step(step_name, args, stdout=self.m.json.output(), **kwargs)
+    stdout = self.m.json.output() if json_stdout else None
+    return self.m.step(step_name, args, stdout=stdout, **kwargs)
 
   def _tags_for_build(self, bucket, parameters, override_tags=None):
     new_tags = self.tags_for_child_build
