@@ -441,10 +441,11 @@ class Recipe(object):
   @cached_property
   def path(self):
     """The absolute path of the recipe script."""
+    native_name = self.name.replace('/', os.path.sep)
     if self.module:
-      ret = os.path.join(self.module.path, self.name.split(':', 1)[1])
+      ret = os.path.join(self.module.path, native_name.split(':', 1)[1])
     else:
-      ret = os.path.join(self.repo.recipes_root_path, 'recipes', self.name)
+      ret = os.path.join(self.repo.recipes_root_path, 'recipes', native_name)
     return ret + '.py'
 
   @cached_property
@@ -626,7 +627,9 @@ def _scan_recipe_directory(path):
       if not file_name.endswith('.py'):
         continue
       file_path = os.path.join(root, file_name)
-      yield file_path[len(path)+1:-len('.py')]
+      # raw_recipe_name has native path separators (e.g. '\\' on windows)
+      raw_recipe_name = file_path[len(path)+1:-len('.py')]
+      yield raw_recipe_name.replace(os.path.sep, '/')
 
 
 def parse_deps_spec(repo_name, deps_spec):
