@@ -395,7 +395,7 @@ class PathApi(recipe_api.RecipeApi):
     This method will find the longest match in all the following:
       * module resource paths
       * recipe resource paths
-      * package repo paths
+      * repo paths
       * dynamic_paths
       * base_paths
 
@@ -413,7 +413,7 @@ class PathApi(recipe_api.RecipeApi):
     if ap != abs_string_path:
       raise ValueError("path is not absolute: %r v %r" % (abs_string_path, ap))
 
-    # try module/recipe/package resource paths first
+    # try module/recipe/repo resource paths first
     sPath, path = self._paths_client.find_longest_prefix(
         abs_string_path, self.sep)
     if path is None:

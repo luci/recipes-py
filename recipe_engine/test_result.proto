@@ -76,6 +76,17 @@ message TestResult {
     repeated TestFailure failures = 1;
   }
   // Maps test names to failure details.
+  // TODO(iannucci): this is crazy; it should be:
+  //
+  //   message TestFailures {
+  //     DiffFailure diff = 1;
+  //     InternalFailure internal = 2;
+  //     CrashFailure crash = 3;
+  //     repeated CheckFailure check = 4;
+  //   }
+  //   map<string, TestFailures> test_failures = 4;
+  //
+  // The current proto generates really obtuse JSONPB.
   map<string, TestFailures> test_failures = 4;
 
   // Module names completely lacking test coverage.

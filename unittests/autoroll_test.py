@@ -3,83 +3,102 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import copy
 import json
-import logging
-import os
-import subprocess
 import sys
-import unittest
 
-import repo_test_util
+from google.protobuf import json_format as jsonpb
 
-from recipe_engine import package_io
+import test_env
 
 
-class TestAutoroll(repo_test_util.RepoTest):
-  def run_roll(self, repo, *args):
+def add_repo_with_basic_upstream_dependency(deps):
+  """Does:
+
+  Create `upstream` repo with `up_mod` module, containing a single method
+  `cool_step`.
+
+  Make the main repo depend on this module, and use the module for a recipe
+  `my_recipe`.
+
+  Run simulation training for the main repo, and commit the result.
+  """
+  upstream = deps.add_repo('upstream')
+
+  # Set up a recipe in main_repo depending on a module in upstream
+  with upstream.write_module('up_mod') as mod:
+    mod.api.write('''
+    def cool_method(self):
+      self.m.step('upstream step', ['echo', 'whats up'])
+    ''')
+  up_commit = upstream.commit('add "up_mod"')
+
+  # Now use the upstream module in main_repo
+  with deps.main_repo.edit_recipes_cfg_pb2() as pkg_pb:
+    pkg_pb.deps['upstream'].revision = up_commit.revision
+
+  with deps.main_repo.write_file('recipes/my_recipe.py') as buf:
+    buf.write('''
+    DEPS=['upstream/up_mod']
+    def RunSteps(api):
+      api.up_mod.cool_method()
+    def GenTests(api):
+      yield api.test('basic')
+    ''')
+  deps.main_repo.recipes_py('test', 'train')
+  deps.main_repo.commit('depend on upstream/up_mod')
+
+
+class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
+  def run_roll(self, deps, *args):
     """Runs the autoroll command and returns JSON.
     Does not commit the resulting roll.
     """
-    try:
-      with repo_test_util.in_directory(repo['root']), \
-          repo_test_util.temporary_file() as tempfile_path:
-        subprocess.check_output([
-          sys.executable, self._recipe_tool,
-          '-v', '-v', '--package', os.path.join(
-            repo['root'], 'infra', 'config', 'recipes.cfg'),
-          'autoroll',
-          '--output-json', tempfile_path,
-          '--verbose-json'
-        ] + list(args) , stderr=subprocess.STDOUT)
-        with open(tempfile_path) as f:
-          return json.load(f)
-    except subprocess.CalledProcessError as e:
-      print >> sys.stdout, e.output
-      raise
+    outfile = self.tempfile()
+    output, retcode = deps.main_repo.recipes_py(
+      '-v', '-v', 'autoroll', '--verbose-json', '--output-json',
+      outfile, *args
+    )
+    if retcode != 0:
+      print >> sys.stdout, output
+      raise Exception('Roll failed')
+    with open(outfile) as fil:
+      return json.load(fil)
 
   def test_empty(self):
-    """Tests the scenario where there are no roll candidates.
-    """
-    repos = self.repo_setup({
-        'a': [],
-    })
+    """Tests the scenario where there are no roll candidates."""
+    deps = self.FakeRecipeDeps()
 
-    roll_result = self.run_roll(repos['a'])
+    roll_result = self.run_roll(deps)
     self.assertTrue(roll_result['success'])
-    self.assertEquals([], roll_result['roll_details'])
-    self.assertEquals([], roll_result['rejected_candidate_specs'])
+    self.assertEqual([], roll_result['roll_details'])
+    self.assertEqual([], roll_result['rejected_candidate_specs'])
 
   def test_trivial(self):
     """Tests the simplest trivial (i.e. no expectation changes) roll scenario.
     """
-    repos = self.repo_setup({
-        'a': [],
-        'b': ['a'],
-    })
-    b_package_spec = self.get_package_spec(repos['b'])
+    # prep
+    deps = self.FakeRecipeDeps()
+    upstream = deps.add_repo('upstream')
 
-    # Create a new commit in the A repo.
-    a_c1 = self.commit_in_repo(repos['a'], message='c1')
+    with upstream.write_file('some_file') as buf:
+      buf.write('hi!')
+    upstream_commit = upstream.commit('c1')
 
-    roll_result = self.run_roll(repos['b'])
+    # test
+    spec = deps.main_repo.recipes_cfg_pb2
+    roll_result = self.run_roll(deps)
     self.assertTrue(roll_result['success'])
     self.assertTrue(roll_result['trivial'])
 
-    spec = copy.deepcopy(b_package_spec.spec_pb)
-    spec.deps['a'].revision = a_c1['revision']
+    spec.deps['upstream'].revision = upstream_commit.revision
 
     expected_picked_roll = {
       'commit_infos': {
-        'a': [
-          {
-            'author_email': a_c1['author_email'],
-            'message_lines': a_c1['message_lines'],
-            'revision': a_c1['revision'],
-          },
+        'upstream': [
+          upstream_commit.as_roll_info(),
         ],
       },
-      'spec': package_io.dump_obj(spec),
+      'spec': jsonpb.MessageToDict(spec),
     }
 
     self.assertEqual(expected_picked_roll['commit_infos'],
@@ -92,42 +111,35 @@ class TestAutoroll(repo_test_util.RepoTest):
   def test_nontrivial(self):
     """Tests the simplest nontrivial (i.e. expectation changes) roll scenario.
     """
-    repos = self.repo_setup({
-        'a': [],
-        'b': ['a'],
-    })
-    b_package_spec = self.get_package_spec(repos['b'])
+    deps = self.FakeRecipeDeps()
+    add_repo_with_basic_upstream_dependency(deps)
+    upstream = deps.repos['upstream']
 
-    # Set up a recipe in repo B depending on a module in repo A.
-    self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
-    roll_result = self.run_roll(repos['b'])
-    self.assertTrue(roll_result['success'])
-    self.assertTrue(roll_result['trivial'])
-    self.update_recipe(
-        repos['b'], 'b_recipe', ['a/a_module'], [('a_module', 'foo')])
+    spec = deps.main_repo.recipes_cfg_pb2
 
-    # Change API of the recipe module in a way that's compatible,
-    # but changes expectations.
-    a_c2 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['baz']})
+    # Change implementation of up_mod in a way that's compatible, but changes
+    # expectations.
+    with upstream.write_module('up_mod') as mod:
+      mod.api.write('''
+      def cool_method(self):
+        self.m.step('upstream step', ['echo', 'whats down'])
+      ''')
+    up_commit = upstream.commit('change "up_mod"')
 
-    roll_result = self.run_roll(repos['b'])
+    # Roll again, and we can see the non-trivial roll now.
+    roll_result = self.run_roll(deps)
     self.assertTrue(roll_result['success'])
     self.assertFalse(roll_result['trivial'])
 
-    spec = copy.deepcopy(b_package_spec.spec_pb)
-    spec.deps['a'].revision = a_c2['revision']
+    spec.deps['upstream'].revision = up_commit.revision
 
     expected_picked_roll = {
-        'commit_infos': {
-            'a': [
-                {
-                    'author_email': a_c2['author_email'],
-                    'message_lines': a_c2['message_lines'],
-                    'revision': a_c2['revision'],
-                },
-            ],
-        },
-        'spec': package_io.dump_obj(spec),
+      'commit_infos': {
+        'upstream': [
+          up_commit.as_roll_info()
+        ],
+      },
+      'spec': jsonpb.MessageToDict(spec),
     }
 
     picked_roll = roll_result['picked_roll_details']
@@ -144,23 +156,20 @@ class TestAutoroll(repo_test_util.RepoTest):
     """Tests the simplest scenario where an automated roll is not possible
     because of incompatible API changes.
     """
-    repos = self.repo_setup({
-        'a': [],
-        'b': ['a'],
-    })
+    deps = self.FakeRecipeDeps()
+    add_repo_with_basic_upstream_dependency(deps)
+    upstream = deps.repos['upstream']
 
-    # Set up a recipe in repo B depending on a module in repo A.
-    self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
-    roll_result = self.run_roll(repos['b'])
-    self.assertTrue(roll_result['success'])
-    self.assertTrue(roll_result['trivial'])
-    self.update_recipe(
-        repos['b'], 'b_recipe', ['a/a_module'], [('a_module', 'foo')])
+    # Change API of the recipe module in a totally incompatible way.
+    with upstream.write_module('up_mod') as mod:
+      mod.api.write('''
+      def uncool_method(self):
+        self.m.step('upstream step', ['echo', 'whats up'])
+      ''')
+    upstream.commit('add incompatibility')
 
-    # Change API of the recipe module in an incompatible way.
-    self.update_recipe_module(repos['a'], 'a_module', {'baz': ['baz']})
-
-    roll_result = self.run_roll(repos['b'])
+    # watch our roll fail
+    roll_result = self.run_roll(deps)
     self.assertFalse(roll_result['success'])
 
   def test_jump_over_failure(self):
@@ -168,49 +177,42 @@ class TestAutoroll(repo_test_util.RepoTest):
     the roll succeed, when earlier ones have incompatible API changes
     fixed later.
     """
-    repos = self.repo_setup({
-        'a': [],
-        'b': ['a'],
-    })
-    b_package_spec = self.get_package_spec(repos['b'])
+    deps = self.FakeRecipeDeps()
+    add_repo_with_basic_upstream_dependency(deps)
+    upstream = deps.repos['upstream']
 
-    # Set up a recipe in repo B depending on a module in repo A.
-    self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
-    roll_result = self.run_roll(repos['b'])
-    self.assertTrue(roll_result['success'])
-    self.assertTrue(roll_result['trivial'])
-    self.update_recipe(
-        repos['b'], 'b_recipe', ['a/a_module'], [('a_module', 'foo')])
+    spec = deps.main_repo.recipes_cfg_pb2
 
     # Change API of the recipe module in an incompatible way.
-    a_c2 = self.update_recipe_module(repos['a'], 'a_module', {'baz': ['baz']})
+    with upstream.write_module('up_mod') as mod:
+      mod.api.write('''
+      def uncool_method(self):
+        self.m.step('upstream step', ['echo', 'whats up'])
+      ''')
+    middle_commit = upstream.commit('add incompatibility')
 
     # Restore compatibility, but change expectations.
-    a_c3 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['baz']})
+    with upstream.write_module('up_mod') as mod:
+      mod.api.write('''
+      def cool_method(self):
+        self.m.step('upstream step', ['echo', 'whats down'])
+      ''')
+    final_commit = upstream.commit('restore similar method')
 
-    roll_result = self.run_roll(repos['b'])
+    roll_result = self.run_roll(deps)
     self.assertTrue(roll_result['success'])
     self.assertFalse(roll_result['trivial'])
 
-    spec = copy.deepcopy(b_package_spec.spec_pb)
-    spec.deps['a'].revision = a_c3['revision']
+    spec.deps['upstream'].revision = final_commit.revision
 
     expected_picked_roll = {
-        'commit_infos': {
-            'a': [
-                {
-                    'author_email': a_c2['author_email'],
-                    'message_lines': a_c2['message_lines'],
-                    'revision': a_c2['revision'],
-                },
-                {
-                    'author_email': a_c3['author_email'],
-                    'message_lines': a_c3['message_lines'],
-                    'revision': a_c3['revision'],
-                },
-            ],
-        },
-        'spec': package_io.dump_obj(spec),
+      'commit_infos': {
+        'upstream': [
+          middle_commit.as_roll_info(),
+          final_commit.as_roll_info(),
+        ],
+      },
+      'spec': jsonpb.MessageToDict(spec),
     }
 
     picked_roll = roll_result['picked_roll_details']
@@ -227,53 +229,51 @@ class TestAutoroll(repo_test_util.RepoTest):
     """Test that with several nontrivial rolls possible, the minimal one
     is picked.
     """
-    repos = self.repo_setup({
-        'a': [],
-        'b': ['a'],
-    })
-    b_package_spec = self.get_package_spec(repos['b'])
+    deps = self.FakeRecipeDeps()
+    add_repo_with_basic_upstream_dependency(deps)
+    upstream = deps.repos['upstream']
 
-    # Set up a recipe in repo B depending on a module in repo A.
-    self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
-    roll_result = self.run_roll(repos['b'])
-    self.assertTrue(roll_result['success'])
-    self.assertTrue(roll_result['trivial'])
-    self.update_recipe(
-        repos['b'], 'b_recipe', ['a/a_module'], [('a_module', 'foo')])
+    spec = deps.main_repo.recipes_cfg_pb2
 
     # Change API of the recipe module in an incompatible way.
-    a_c2 = self.update_recipe_module(repos['a'], 'a_module', {'baz': ['baz']})
+    with upstream.write_module('up_mod') as mod:
+      mod.api.write('''
+      def uncool_method(self):
+        self.m.step('upstream step', ['echo', 'whats up'])
+      ''')
+    middle_commit = upstream.commit('add incompatibility')
 
     # Restore compatibility, but change expectations.
-    a_c3 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['baz']})
+    with upstream.write_module('up_mod') as mod:
+      mod.api.write('''
+      def cool_method(self):
+        self.m.step('upstream step', ['echo', 'whats down'])
+      ''')
+    final_commit = upstream.commit('restore similar method')
 
     # Create another change that would result in a nontrivial roll,
     # which should not be picked - nontrivial rolls should be minimal.
-    self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bam']})
+    with upstream.write_module('up_mod') as mod:
+      mod.api.write('''
+      def cool_method(self):
+        self.m.step('upstream step', ['echo', 'whats superdown'])
+      ''')
+    upstream.commit('second nontrivial change')
 
-    roll_result = self.run_roll(repos['b'])
+    roll_result = self.run_roll(deps)
     self.assertTrue(roll_result['success'])
     self.assertFalse(roll_result['trivial'])
 
-    spec = copy.deepcopy(b_package_spec.spec_pb)
-    spec.deps['a'].revision = a_c3['revision']
+    spec.deps['upstream'].revision = final_commit.revision
 
     expected_picked_roll = {
-        'commit_infos': {
-            'a': [
-                {
-                    'author_email': a_c2['author_email'],
-                    'message_lines': a_c2['message_lines'],
-                    'revision': a_c2['revision'],
-                },
-                {
-                    'author_email': a_c3['author_email'],
-                    'message_lines': a_c3['message_lines'],
-                    'revision': a_c3['revision'],
-                },
-            ],
-        },
-        'spec': package_io.dump_obj(spec),
+      'commit_infos': {
+        'upstream': [
+          middle_commit.as_roll_info(),
+          final_commit.as_roll_info(),
+        ],
+      },
+      'spec': jsonpb.MessageToDict(spec),
     }
 
     picked_roll = roll_result['picked_roll_details']
@@ -291,66 +291,61 @@ class TestAutoroll(repo_test_util.RepoTest):
     This helps avoid noise with several rolls where one is sufficient,
     with no expectation changes.
     """
-    repos = self.repo_setup({
-        'a': [],
-        'b': ['a'],
-    })
-    b_package_spec = self.get_package_spec(repos['b'])
+    deps = self.FakeRecipeDeps()
+    add_repo_with_basic_upstream_dependency(deps)
+    upstream = deps.repos['upstream']
 
-    # Set up a recipe in repo B depending on a module in repo A.
-    self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
-    roll_result = self.run_roll(repos['b'])
-    self.assertTrue(roll_result['success'])
-    self.assertTrue(roll_result['trivial'])
-    self.update_recipe(
-        repos['b'], 'b_recipe', ['a/a_module'], [('a_module', 'foo')])
+    spec = deps.main_repo.recipes_cfg_pb2
 
     # Change API of the recipe module in an incompatible way.
-    a_c2 = self.update_recipe_module(repos['a'], 'a_module', {'baz': ['baz']})
+    with upstream.write_module('up_mod') as mod:
+      mod.api.write('''
+      def uncool_method(self):
+        self.m.step('upstream step', ['echo', 'whats up'])
+      ''')
+    first_commit = upstream.commit('add incompatibility')
 
     # Restore compatibility, but change expectations.
-    a_c3 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['baz']})
+    with upstream.write_module('up_mod') as mod:
+      mod.api.write('''
+      def cool_method(self):
+        self.m.step('upstream step', ['echo', 'whats down'])
+      ''')
+    second_commit = upstream.commit('restore similar method')
 
     # Create another change that would result in a nontrivial roll,
     # which should not be picked - nontrivial rolls should be minimal.
-    a_c4 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bam']})
+    with upstream.write_module('up_mod') as mod:
+      mod.api.write('''
+      def cool_method(self):
+        self.m.step('upstream step', ['echo', 'whats superdown'])
+      ''')
+    third_commit = upstream.commit('second nontrivial change')
 
     # Introduce another commit which makes the roll trivial again.
-    a_c5 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
+    with upstream.write_module('up_mod') as mod:
+      mod.api.write('''
+      def cool_method(self):
+        self.m.step('upstream step', ['echo', 'whats up'])
+      ''')
+    final_commit = upstream.commit('restore original behavior')
 
-    roll_result = self.run_roll(repos['b'])
+    roll_result = self.run_roll(deps)
     self.assertTrue(roll_result['success'])
     self.assertTrue(roll_result['trivial'])
 
-    spec = copy.deepcopy(b_package_spec.spec_pb)
-    spec.deps['a'].revision = a_c5['revision']
+    spec.deps['upstream'].revision = final_commit.revision
 
     expected_picked_roll = {
-        'commit_infos': {
-            'a': [
-                {
-                    'author_email': a_c2['author_email'],
-                    'message_lines': a_c2['message_lines'],
-                    'revision': a_c2['revision'],
-                },
-                {
-                    'author_email': a_c3['author_email'],
-                    'message_lines': a_c3['message_lines'],
-                    'revision': a_c3['revision'],
-                },
-                {
-                    'author_email': a_c4['author_email'],
-                    'message_lines': a_c4['message_lines'],
-                    'revision': a_c4['revision'],
-                },
-                {
-                    'author_email': a_c5['author_email'],
-                    'message_lines': a_c5['message_lines'],
-                    'revision': a_c5['revision'],
-                },
-            ],
-        },
-        'spec': package_io.dump_obj(spec),
+      'commit_infos': {
+        'upstream': [
+          first_commit.as_roll_info(),
+          second_commit.as_roll_info(),
+          third_commit.as_roll_info(),
+          final_commit.as_roll_info(),
+        ],
+      },
+      'spec': jsonpb.MessageToDict(spec),
     }
 
     picked_roll = roll_result['picked_roll_details']
@@ -366,68 +361,69 @@ class TestAutoroll(repo_test_util.RepoTest):
     roll candidate, in a scenario where previous roll algorithm
     was getting stuck.
     """
-    repos = self.repo_setup({
-        'a': [],
-        'b': ['a'],
-        'c': ['b', 'a'],
-    })
-    b_package_spec = self.get_package_spec(repos['b'])
-    c_package_spec = self.get_package_spec(repos['c'])
+    deps = self.FakeRecipeDeps()
+    upstream = deps.add_repo('upstream')
+    super_upstream = deps.add_repo('super_upstream')
 
-    # Set up a recipe in repo C depending on a module in repo B.
-    self.update_recipe_module(repos['b'], 'b_module', {'foo': ['bar']})
-    roll_result = self.run_roll(repos['c'])
+    spec = deps.main_repo.recipes_cfg_pb2
+
+    # Now make upstream depend on super_upstream, then roll that into the main
+    # repo.
+    upstream.add_dep('super_upstream')
+    super_commit = upstream.commit('add dep on super_upstream')
+
+    with deps.main_repo.edit_recipes_cfg_pb2() as pkg_pb:
+      pkg_pb.deps['upstream'].revision = super_commit.revision
+    deps.main_repo.commit('roll upstream')
+
+    # Set up a recipe in the main repo depending on a module in upstream.
+    with upstream.write_module('up_mod') as mod:
+      mod.api.write('''
+      def cool_method(self):
+        self.m.step('upstream step', ['echo', 'whats up'])
+      ''')
+    up_commit = upstream.commit('add up_mod')
+
+    with deps.main_repo.edit_recipes_cfg_pb2() as pkg_pb:
+      pkg_pb.deps['upstream'].revision = up_commit.revision
+    with deps.main_repo.write_file('recipes/my_recipe.py') as buf:
+      buf.write('''
+      DEPS=['upstream/up_mod']
+      def RunSteps(api):
+        api.up_mod.cool_method()
+      def GenTests(api):
+        yield api.test('basic')
+      ''')
+    deps.main_repo.recipes_py('test', 'train')
+    deps.main_repo.commit('depend on upstream/up_mod')
+
+    # Create a new commit in super_uptsream repo and roll it into upstream.
+    super_commit = super_upstream.commit('trivial commit')
+    with upstream.edit_recipes_cfg_pb2() as pkg_pb:
+      pkg_pb.deps['super_upstream'].revision = super_commit.revision
+    super_roll = upstream.commit('roll super_upstream')
+
+    # Change API of the upstream module in an incompatible way.
+    with upstream.write_module('up_mod') as mod:
+      mod.api.write('''
+      def uncool_method(self):
+        self.m.step('upstream step', ['echo', 'whats up'])
+      ''')
+    up_commit = upstream.commit('incompatible up_mod')
+
+    roll_result = self.run_roll(deps)
     self.assertTrue(roll_result['success'])
     self.assertTrue(roll_result['trivial'])
-    self.update_recipe(
-        repos['c'], 'c_recipe', ['b/b_module'], [('b_module', 'foo')])
 
-    # Create a new commit in the A repo and roll it into B.
-    a_c1 = self.commit_in_repo(repos['a'], message='c1')
-    roll_result = self.run_roll(repos['b'])
-    self.assertTrue(roll_result['success'])
-    self.assertTrue(roll_result['trivial'])
-    picked_roll = roll_result['picked_roll_details']
-
-    spec = copy.deepcopy(b_package_spec.spec_pb)
-    spec.deps['a'].revision = a_c1['revision']
-
-    self.assertEqual(
-        package_io.dump_obj(spec),
-        roll_result['picked_roll_details']['spec'])
-
-    # Commit the roll.
-    b_c2 = self.commit_in_repo(repos['b'], message='roll')
-
-    # Change API of the recipe module in an incompatible way.
-    self.update_recipe_module(repos['b'], 'b_module', {'baz': ['baz']})
-
-    roll_result = self.run_roll(repos['c'])
-    self.assertTrue(roll_result['success'])
-    self.assertTrue(roll_result['trivial'])
-
-    spec = copy.deepcopy(c_package_spec.spec_pb)
-    spec.deps['a'].revision = a_c1['revision']
-    spec.deps['b'].revision = b_c2['revision']
+    spec.deps['super_upstream'].revision = super_commit.revision
+    spec.deps['upstream'].revision = super_roll.revision
 
     expected_picked_roll = {
         'commit_infos': {
-            'a': [
-                {
-                    'author_email': a_c1['author_email'],
-                    'message_lines': a_c1['message_lines'],
-                    'revision': a_c1['revision'],
-                },
-            ],
-            'b': [
-                {
-                    'author_email': b_c2['author_email'],
-                    'message_lines': b_c2['message_lines'],
-                    'revision': b_c2['revision'],
-                },
-            ],
+            'upstream': [super_roll.as_roll_info()],
+            'super_upstream': [super_commit.as_roll_info()],
         },
-        'spec': package_io.dump_obj(spec),
+        'spec': jsonpb.MessageToDict(spec),
     }
 
     picked_roll = roll_result['picked_roll_details']
@@ -439,74 +435,108 @@ class TestAutoroll(repo_test_util.RepoTest):
         0, picked_roll['recipes_simulation_test']['rc'])
 
   def test_no_backwards_roll(self):
-    """Tests that we never roll backwards.
-    """
-    repos = self.repo_setup({
-        'a': [],
-        'b': ['a'],
-        'c': ['b', 'a'],
-    })
-    self.get_root_repo_spec(repos['c'])
-    c_package_spec = self.get_package_spec(repos['c'])
+    """Tests that we never roll backwards."""
+    deps = self.FakeRecipeDeps()
+    upstream = deps.add_repo('upstream')
+    super_upstream = deps.add_repo('super_upstream')
 
-    # Create a new commit in A repo and roll it to B.
-    a_c1 = self.commit_in_repo(repos['a'], message='c1')
-    b_c1_rev = self.update_recipes_cfg(
-        'b', self.updated_package_spec_pb(repos['b'], 'a', a_c1['revision']))
+    original_super_commit = super_upstream.backend.commit_metadata('HEAD')
 
-    # Roll above commits to C.
-    roll_result = self.run_roll(repos['c'])
-    self.assertTrue(roll_result['success'])
-    self.assertTrue(roll_result['trivial'])
-    picked_roll = roll_result['picked_roll_details']
+    upstream.add_dep('super_upstream')
+    upstream.commit('add dep on super_upstream')
 
-    spec = copy.deepcopy(c_package_spec.spec_pb)
-    spec.deps['a'].revision = a_c1['revision']
-    spec.deps['b'].revision = b_c1_rev
+    # Create a new commit in super_upstream repo and roll it to upstream.
+    super_commit = super_upstream.commit('trivial commit')
+    with upstream.edit_recipes_cfg_pb2() as pkg_pb:
+      pkg_pb.deps['super_upstream'].revision = super_commit.revision
+    up_commit = upstream.commit('roll')
 
-    self.assertEqual(
-        package_io.dump_obj(spec),
-        picked_roll['spec'])
+    # Roll above commits to main_repo.
+    with deps.main_repo.edit_recipes_cfg_pb2() as pkg_pb:
+      pkg_pb.deps['upstream'].revision = up_commit.revision
+      pkg_pb.deps['super_upstream'].revision = super_commit.revision
+    deps.main_repo.commit('roll upstream+super_upstream')
 
-    # Create a new commit in B that would result in backwards roll.
-    b_new_rev = self.update_recipes_cfg(
-        'b', self.updated_package_spec_pb(
-            repos['b'], 'a', repos['a']['revision']))
+    spec = deps.main_repo.recipes_cfg_pb2
 
-    roll_result = self.run_roll(repos['c'])
+    # Create a new commit in upstream that would result in backwards roll.
+    with upstream.edit_recipes_cfg_pb2() as pkg_pb:
+      pkg_pb.deps['super_upstream'].revision = original_super_commit.revision
+    up_commit = upstream.commit('backwards commit')
+
+    roll_result = self.run_roll(deps)
     self.assertTrue(roll_result['success'])
     self.assertEqual([], roll_result['roll_details'])
 
-    spec.deps['b'].revision = b_new_rev
+    spec.deps['upstream'].revision = up_commit.revision
 
     self.assertEqual(
       roll_result['rejected_candidate_specs'],
-      [package_io.dump_obj(spec)],
+      [jsonpb.MessageToDict(spec)],
     )
 
 
   def test_inconsistent_errors(self):
-    repos = self.repo_setup({
-        'a': [],
-        'b': ['a'],
-        'c': ['a', 'b'],
-        'd': ['a', 'b', 'c'],
-    })
+    deps = self.FakeRecipeDeps()
+    upstream = deps.add_repo('upstream')
+    upstream_deeper = deps.add_repo('upstream_deeper')
+    upstream_deepest = deps.add_repo('upstream_deepest')
 
-    # Create a new commit in A repo and roll it to B.
-    a_c1 = self.commit_in_repo(repos['a'], message='c1')
-    self.update_recipes_cfg(
-        'b', self.updated_package_spec_pb(repos['b'], 'a', a_c1['revision']))
+    # Add:
+    #   upstream_deeper -> upstream_deepest
+    #   upstream -> upstream_deeper
+    #   upstream -> upstream_deepest
+    upstream_deeper.add_dep('upstream_deepest')
+    upstream_deeper.commit('add dep on upstream_deepest')
 
-    roll_result = self.run_roll(repos['d'])
+    upstream.add_dep('upstream_deeper', 'upstream_deepest')
+    upstream.commit('add dep on upstream_deepest + upstream_deeper')
+
+    # Roll all of that into main.
+    self.run_roll(deps)
+
+    # Create a new commit in deepest repo and roll it to deeper.
+    deepest_commit = upstream_deepest.commit('deep commit')
+    with upstream_deeper.edit_recipes_cfg_pb2() as pkg_pb:
+      pkg_pb.deps['upstream_deepest'].revision = deepest_commit.revision
+    upstream_deeper.commit('roll deepest')
+
+    # We shouldn't be able to roll upstream_deeper/upstream_deepest until
+    # upstream includes them. i.e. there should be no roll, because there are no
+    # valid roll candidates.
+
+    roll_result = self.run_roll(deps)
     self.assertTrue(roll_result['success'])
     self.assertEqual([], roll_result['roll_details'])
     self.assertGreater(len(roll_result['rejected_candidate_specs']), 0)
 
+  def test_roll_adds_dependency(self):
+    deps = self.FakeRecipeDeps()
+    upstream = deps.add_repo('upstream')
+    other = deps.add_repo('other')
+
+    with deps.main_repo.edit_recipes_cfg_pb2() as spec:
+      del spec.deps['other']
+    deps.main_repo.commit('remove other dep')
+
+    spec = deps.main_repo.recipes_cfg_pb2
+    roll_result = self.run_roll(deps)
+    self.assertTrue(roll_result['success'])
+    self.assertEqual(spec, deps.main_repo.recipes_cfg_pb2)  # noop
+
+    # Now we add a commit to 'upstream' which pulls in 'other'.
+    upstream.add_dep('other')
+    upstream.commit('add other dep')
+    with upstream.write_file('trivial') as fil:
+      fil.write('trivial file')
+    up_commit = upstream.commit('add trivial file')
+
+    roll_result = self.run_roll(deps)
+    self.assertTrue(roll_result['success'])
+    spec.deps['upstream'].revision = up_commit.revision
+    spec.deps['other'].CopyFrom(upstream.recipes_cfg_pb2.deps['other'])
+    self.assertEqual(spec, deps.main_repo.recipes_cfg_pb2)
+
 
 if __name__ == '__main__':
-  if '-v' in sys.argv:
-    logging.basicConfig(
-      level=logging.DEBUG,
-      handler=repo_test_util.CapturableHandler())
-  sys.exit(unittest.main())
+  test_env.main()

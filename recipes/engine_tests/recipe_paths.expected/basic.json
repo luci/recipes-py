@@ -18,9 +18,9 @@
   {
     "cmd": [
       "echo",
-      "RECIPE_PACKAGE_REPO[recipe_engine]/file/path"
+      "RECIPE_REPO[recipe_engine]/file/path"
     ],
-    "name": "package_root"
+    "name": "repo_root"
   },
   {
     "jsonResult": null,

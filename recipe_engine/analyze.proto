@@ -13,8 +13,8 @@ message Input {
   // relative to the root of the recipe repo this command was executed in.
   //
   // Files may be outside the current git repository (an example of this is a
-  // file in a dependant recipe package). This can be used to detect if a recipe
-  // in this recipe package is affected by a file changed in a recipe package
+  // file in a dependant recipe repo). This can be used to detect if a recipe
+  // in this recipe repo is affected by a file changed in a recipe repo
   // the recipe depends on.
   repeated string files = 1;
   // REQUIRED. The recipes which the caller is interested in. These recipes must

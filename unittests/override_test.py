@@ -3,19 +3,21 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import contextlib
 import copy
 import os
+import shutil
 import subprocess
 import sys
-import unittest
-import contextlib
 
-import repo_test_util
+import test_env
+
+from recipe_engine.internal.simple_cfg import RECIPES_CFG_LOCATION_REL
 
 
 @contextlib.contextmanager
 def fake_git():
-  fake_git_dir = os.path.join(repo_test_util.ROOT_DIR, 'unittests', 'fakegit')
+  fake_git_dir = os.path.join(test_env.ROOT_DIR, 'unittests', 'fakegit')
   cur_path = os.environ['PATH']
   try:
     os.environ['PATH'] = os.pathsep.join([fake_git_dir, cur_path])
@@ -24,102 +26,77 @@ def fake_git():
     os.environ['PATH'] = cur_path
 
 
-class TestOverride(repo_test_util.RepoTest):
+class TestOverride(test_env.RecipeEngineUnitTest):
   def test_simple(self):
-    repos = self.repo_setup({
-        'a': [],
-        'a1': [],
-        'b': ['a'],
-    })
+    deps = self.FakeRecipeDeps()
+    upstream = deps.add_repo('upstream')
 
-    a_c1 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
-    self.update_recipes_cfg(
-        'b', self.updated_package_spec_pb(repos['b'], 'a', a_c1['revision']))
-    self.update_recipe(
-        repos['b'], 'b_recipe', ['a/a_module'], [('a_module', 'foo')])
+    with upstream.write_module('up_mod') as mod:
+      mod.api.write('''
+      def foo(self):
+        self.m.step('do the foo', ['echo', 'foo'])
+      ''')
+    up_commit = upstream.commit('add up_mod')
+
+    with deps.main_repo.edit_recipes_cfg_pb2() as pb:
+      pb.deps['upstream'].revision = up_commit.revision
+    with deps.main_repo.write_recipe('my_recipe') as recipe:
+      recipe.DEPS = ['upstream/up_mod']
+      recipe.RunSteps.write('''
+        api.up_mod.foo()
+      ''')
 
     # Training the recipes should work.
-    self.train_recipes(repos['b'])
+    deps.main_repo.recipes_py('test', 'train')
+    deps.main_repo.commit('add my_recipe')
 
-    # Using a no-op override should also work.
-    self.train_recipes(repos['b'], overrides=[('a', repos['a']['root'])])
+    # Using upstream no-op override should also work.
+    deps.main_repo.recipes_py('-O', 'upstream='+upstream.path,
+                              'test', 'train')
 
-    # Using an override pointing to empty repo should fail.
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self.train_recipes(repos['b'], overrides=[('a', repos['a1']['root'])])
+    # Make another repo, then remove our dependency on it.
+    other_upstream = deps.add_repo('other_upstream')
+    with deps.main_repo.edit_recipes_cfg_pb2() as pb:
+      del pb.deps['other_upstream']
+
+    # Then using an override pointing to a repo without up_mod should fail.
+    output, retcode = deps.main_repo.recipes_py(
+      '-O', 'upstream='+other_upstream.path, 'test', 'train')
+    self.assertEqual(retcode, 1)
     self.assertIn(
-        'Exception: While generating results for \'b_recipe\': ImportError: '
-        'No module named a_module',
-        cm.exception.output)
+        (
+          'While generating results for \'my_recipe\': '
+          'UnknownRecipeModule: '
+          '"No module named \'up_mod\' in repo \'other_upstream\'."'
+        ),
+        output)
 
   def test_bundle(self):
-    repos = self.repo_setup({
-        'a': [],
-        'b': ['a'],
-    }, remote_fake_engine=True)
-
-    engine_override = ('recipe_engine', repo_test_util.ROOT_DIR)
-
-    a_c1 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']},
-                                     overrides=[engine_override])
-
-    self.update_recipes_cfg(
-        'b', self.updated_package_spec_pb(repos['b'], 'a', a_c1['revision']))
-    self.update_recipe(
-        repos['b'], 'b_recipe', ['a/a_module'], [('a_module', 'foo')],
-        overrides=[engine_override])
+    deps = self.FakeRecipeDeps()
+    upstream = deps.add_repo('upstream')
 
     with fake_git():
-      # Training the recipes, overriding just 'a' should fail.
-      with self.assertRaises(subprocess.CalledProcessError) as cm:
-        self.train_recipes(repos['b'], overrides=[
-          ('a', repos['a']['root']),
-        ])
-      self.assertIn('Git "init" failed', cm.exception.output)
+      # Training the recipes, overriding just 'upstream' should fail because
+      # it will try to fetch the engine.
+      output, retcode = deps.main_repo.recipes_py(
+        # Provide --package to bypass all git calls in recipes.py
+        '--package',
+          os.path.join(deps.main_repo.path, RECIPES_CFG_LOCATION_REL),
+        '-O', 'upstream='+upstream.path,
+        'test', 'train'
+      )
+      self.assertEqual(retcode, 1)
+      self.assertIn('Git "init" failed', output)
 
       # But! Overriding the engine too should work.
-      self.train_recipes(repos['b'], overrides=[
-        ('a', repos['a']['root']),
-        engine_override,
-      ])
-
-  def test_dependency_conflict(self):
-    repos = self.repo_setup({
-        'a': [],
-        'b': ['a'],
-        'b1': ['a'],
-        'c': ['a', 'b'],
-    })
-
-    a_c1 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
-    self.update_recipes_cfg(
-        'b', self.updated_package_spec_pb(repos['b'], 'a', a_c1['revision']))
-    self.update_recipes_cfg(
-        'b1', self.updated_package_spec_pb(repos['b1'], 'a', a_c1['revision']))
-
-    a_c2 = self.update_recipe_module(repos['a'], 'a_module', {'foo': ['baz']})
-    b_c2_rev = self.update_recipes_cfg(
-        'b', self.updated_package_spec_pb(repos['b'], 'a', a_c2['revision']))
-
-    c_spec = copy.deepcopy(self.get_package_spec(repos['c']).spec_pb)
-    c_spec.deps['a'].revision = a_c2['revision']
-    c_spec.deps['b'].revision = b_c2_rev
-    self.update_recipes_cfg('c', c_spec)
-
-    self.update_recipe(
-        repos['c'], 'c_recipe', ['a/a_module'], [('a_module', 'foo')])
-
-    # Training the recipes should work.
-    self.train_recipes(repos['c'])
-
-    # Both overrides should also work, thanks to recursive override processing.
-    self.train_recipes(
-        repos['c'],
-        overrides=[('b', repos['b1']['root'])])
-    self.train_recipes(
-        repos['c'],
-        overrides=[('b', repos['b1']['root']), ('a', repos['a']['root'])])
-
+      output, retcode = deps.main_repo.recipes_py(
+        '--package',
+          os.path.join(deps.main_repo.path, RECIPES_CFG_LOCATION_REL),
+        '-O', 'upstream='+upstream.path,
+        '-O', 'recipe_engine='+test_env.ROOT_DIR,
+        'test', 'train'
+      )
+      self.assertEqual(retcode, 0)
 
 if __name__ == '__main__':
-  sys.exit(unittest.main())
+  sys.exit(test_env.main())

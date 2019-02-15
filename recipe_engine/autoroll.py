@@ -12,9 +12,10 @@ import shutil
 import subprocess
 import sys
 
-from . import package
-from . import package_io
-from .autoroll_impl.candidate_algorithm import get_roll_candidates
+from .internal import simple_cfg
+from .internal.autoroll_impl.candidate_algorithm import get_roll_candidates
+
+from google.protobuf import json_format as jsonpb
 
 
 LOGGER = logging.getLogger(__name__)
@@ -25,79 +26,107 @@ IS_WIN = sys.platform.startswith(('win', 'cygwin'))
 VPYTHON = 'vpython' + ('.bat' if IS_WIN else '')
 GIT = 'git' + ('.bat' if IS_WIN else '')
 
-def write_spec_to_disk(context, config_file, spec_pb):
-  LOGGER.info('writing: %s', package_io.dump(spec_pb))
+def write_global_files_to_main_repo(recipe_deps, spec):
+  """Writes the recipes.cfg and recipes.py scripts to the main repo on disk.
 
-  config_file.write(spec_pb)
-  pspec = package.PackageSpec.from_package_pb(context, spec_pb)
-  engine_root = pspec.deps['recipe_engine'].repo_root(context)
+  This pulls `recipes.py` from the current 'recipe_engine' dep in recipe_deps.
 
-  engine_spec = spec_pb.deps['recipe_engine']
-  if not engine_spec.url.startswith('file://'):
-    # Update recipe_engine to the correct version and copy its matching
-    # recipes.py bootstrap script.
-    subprocess.check_call([
-      GIT, '-C', engine_root, 'checkout', '-q', engine_spec.revision])
-
-  if os.path.isfile(os.path.join(engine_root, 'recipes.py')):
-    shutil.copy(
-      os.path.join(engine_root, 'recipes.py'),
-      os.path.join(context.recipes_dir, 'recipes.py')
-    )
-  else:
-    # TODO(iannucci): Remove this path when new engine is rolled everywhere.
-    # crbug.com/913102
-    shutil.copy(
-      os.path.join(engine_root, 'doc', 'recipes.py'),
-      os.path.join(context.recipes_dir, 'recipes.py')
-    )
-
-
-def run_simulation_test(repo_root, recipes_path, additional_args=None):
+  Args:
+    * recipe_deps (RecipeDeps) - The loaded recipe dependencies; the destination
+      repo is `recipe_deps.main_repo`.
+    * spec (proto message RepoSpec) - The RepoSpec proto to write to
+      recipes.cfg.
   """
-  Runs recipe simulation test for given package.
+  main_repo = recipe_deps.main_repo
+  if spec.project_id:
+    spec.repo_name = spec.project_id
+  out = jsonpb.MessageToJson(spec, preserving_proto_field_name=True)
+  LOGGER.info('writing: %s', out)
+
+  cfg_path = os.path.join(main_repo.path, simple_cfg.RECIPES_CFG_LOCATION_REL)
+  with open(cfg_path, 'wb') as f:
+    f.write(out)
+
+  engine = recipe_deps.repos['recipe_engine']
+  recipes_py_path = os.path.join(main_repo.recipes_root_path, 'recipes.py')
+  with open(recipes_py_path, 'wb') as f:
+    f.write(
+      engine.backend.cat_file(
+        spec.deps['recipe_engine'].revision, 'recipes.py'))
+
+
+def run_simulation_test(repo, *additional_args):
+  """Runs the recipe simulation test for given repo.
 
   Returns a tuple of exit code and output.
   """
-  # Use _local_ recipes.py, so that it checks out the pinned recipe engine,
-  # rather than running recipe engine which may be at a different revision
-  # than the pinned one.
-  args = [
-    VPYTHON, os.path.join(repo_root, recipes_path, 'recipes.py'), 'test',
-  ]
-  if additional_args:
-    args.extend(additional_args)
-  p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+  p = subprocess.Popen([
+    VPYTHON, os.path.join(repo.recipes_root_path, 'recipes.py'), 'test',
+  ] + list(additional_args), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
   output, _ = p.communicate()
   rc = p.returncode
   return rc, output
 
 
-def regen_docs(repo_root, recipes_path):
-  """
-  Regenerates README.recipes.md.
+def regen_docs(repo):
+  """Regenerates README.recipes.md.
 
   Raises a CalledProcessError on failure.
   """
-  # Use _local_ recipes.py, so that it checks out the pinned recipe engine,
-  # rather than running recipe engine which may be at a different revision
-  # than the pinned one.
   subprocess.check_call([
-    VPYTHON, os.path.join(repo_root, recipes_path, 'recipes.py'), 'doc',
+    VPYTHON, os.path.join(repo.recipes_root_path, 'recipes.py'), 'doc',
     '--kind', 'gen',
   ])
 
 
-def process_candidates(candidates, repos, context, config_file,
-                       verbose_json):
-  """
+def process_candidates(recipe_deps, candidates, repos, verbose_json):
+  """This processes a list of candidates by running simulation tests to find the
+  'best' roll.
+
+  The candidates are listed in the order of 'least commits implied by this roll'
+  to 'most commits implied by this roll'.
+
+  This algorithm will try to find:
+    1. The biggest roll candidate which does not change the expectations (a
+       "trivial" roll).
+    2. The smallest roll candidate which changes the expectations but otherwise
+       trains successfully (a "non-trivial" roll).
+
+  If it fails to find either of those, it gives up.
 
   Args:
-    candidates (list(RollCandidate)) - A list of valid (self-consistent) roll
+    * recipe_deps (RecipeDeps)
+    * candidates (List[RollCandidate]): A list of valid (self-consistent) roll
       candidates to try in least-changes to most-changes order.
-    repos (dict(project_id, CommitList)) - A repos dictionary suitable for
+    * repos (Dict[repo_name: str, CommitList]): A repos dictionary suitable for
       invoking RollCandidate.changelist().
-    context (PackageContext)
+    * verbose_json (bool): Causes the returned `roll_details` to include
+      additional information. See roll_details below.
+
+  TODO(iannucci, probably): Stop passing around all these Dicts and use some
+  real objects.
+
+  Returns a 3-tuple:
+    * trivial (bool): If the picked roll was trivial or not.
+    * picked_roll_details (Dict[...]): A copy of one of the dictionaries in
+      `roll_details`. This is the roll which was selected.
+    * roll_details (List[Dict[...]]): A list of dictionaries like:
+      * spec (JSONPB encoding of the picked RepoSpec)
+      * commit_infos (Dict[repo_name: str, List[Dict[...]]]): The mapping of
+        repo to commit information for all repos which advanced for this roll.
+        It contains:
+        * author_email (str): The author of this commit.
+        * message_lines (List[str]): The commit message. If verbose_json is
+          False this only contains the first line.
+        * revision (str): The git commit id for this commit.
+      * recipes_simulation_test (Dict[...]): If verbose_json is true, this will
+        be set if we ran `test run` on this roll. Contains:
+        * output (str): The full combined stdout/stderr from the test command.
+        * retcode (int): The return code of the test command.
+      * recipes_simulation_test_train (Dict[...]): If verbose_json is true,
+        this will be set if we ran `test train` on this roll. Contains:
+        * output (str): The full combined stdout/stderr from the test command.
+        * retcode (int): The return code of the test command.
   """
   roll_details = []
   trivial = None
@@ -112,16 +141,16 @@ def process_candidates(candidates, repos, context, config_file,
   # we exit early depending on test results.
   for candidate in candidates:
     roll_details.append({
-      'spec': package_io.dump_obj(candidate.package_pb),
+      'spec': jsonpb.MessageToDict(candidate.repo_spec),
       'commit_infos': {
-        pid: [{
+        repo_name: [{
           'author_email': c.author_email,
           'message_lines': (
             c.message_lines if verbose_json else c.message_lines[:1]
           ),
           'revision': c.revision,
         } for c in clist]
-        for pid, clist in candidate.changelist(repos).iteritems()},
+        for repo_name, clist in candidate.changelist(repos).iteritems()},
     })
 
   # Process candidates biggest first. If the roll is trivial, we want
@@ -130,17 +159,16 @@ def process_candidates(candidates, repos, context, config_file,
   for i, candidate in enumerate(candidates):
     print('  processing candidate #%d... ' % (i + 1), end='')
 
-    write_spec_to_disk(context, config_file, candidate.package_pb)
+    write_global_files_to_main_repo(recipe_deps, candidate.repo_spec)
 
-    rc, output = run_simulation_test(
-      context.repo_root, candidate.package_pb.recipes_path, ['run'])
+    retcode, output = run_simulation_test(recipe_deps.main_repo, 'run')
     if verbose_json:
       roll_details[i]['recipes_simulation_test'] = {
         'output': output,
-        'rc': rc,
+        'rc': retcode,
       }
 
-    if rc == 0:
+    if retcode == 0:
       print('SUCCESS!')
       trivial = True
       picked_roll_details = roll_details[i]
@@ -157,18 +185,17 @@ def process_candidates(candidates, repos, context, config_file,
     for i, candidate in reversed(list(enumerate(candidates))):
       print('  processing candidate #%d... ' % (i + 1), end='')
 
-      write_spec_to_disk(context, config_file, candidate.package_pb)
+      write_global_files_to_main_repo(recipe_deps, candidate.repo_spec)
 
-      rc, output = run_simulation_test(
-          context.repo_root, candidate.package_pb.recipes_path,
-          ['train', '--no-docs'])
+      retcode, output = run_simulation_test(
+        recipe_deps.main_repo, 'train', '--no-docs')
       if verbose_json:
         roll_details[i]['recipes_simulation_test_train'] = {
           'output': output,
-          'rc': rc,
+          'rc': retcode,
         }
 
-      if rc == 0:
+      if retcode == 0:
         print('SUCCESS!')
         trivial = False
         picked_roll_details = roll_details[i]
@@ -179,17 +206,15 @@ def process_candidates(candidates, repos, context, config_file,
   return trivial, picked_roll_details, roll_details
 
 
-def test_rolls(config_file, context, package_spec,
-               verbose_json):
-  candidates, rejected_candidates, repos = get_roll_candidates(
-    context, package_spec)
+def test_rolls(recipe_deps, verbose_json):
+  candidates, rejected_candidates, repos = get_roll_candidates(recipe_deps)
 
   roll_details = []
   picked_roll_details = None
   trivial = True
   if candidates:
     trivial, picked_roll_details, roll_details = process_candidates(
-      candidates, repos, context, config_file, verbose_json)
+      recipe_deps, candidates, repos, verbose_json)
 
   ret = {
     # it counts as success if there are no candidates at all :)
@@ -201,12 +226,12 @@ def test_rolls(config_file, context, package_spec,
   }
   if verbose_json:
     ret['rejected_candidate_specs'] = [
-      package_io.dump_obj(c.package_pb) for c in rejected_candidates]
+      jsonpb.MessageToDict(c.repo_spec) for c in rejected_candidates]
   return ret
 
 
 def add_subparser(parser):
-  helpstr = 'Roll dependencies of a recipe package forward.'
+  helpstr = 'Roll dependencies of a recipe repo forward.'
   autoroll_p = parser.add_parser(
     'autoroll', help=helpstr, description=helpstr)
   autoroll_p.add_argument(
@@ -227,30 +252,27 @@ def add_subparser(parser):
     func=main, postprocess_func=postprocess_func)
 
 
-def main(_package_deps, args):
-  config_file = args.package
-  repo_root = package_io.InfraRepoConfig().from_recipes_cfg(config_file.path)
+def main(args):
+  original_spec = args.recipe_deps.main_repo.recipes_cfg_pb2
 
-  package_pb = config_file.read()
-
-  context = package.PackageContext.from_package_pb(repo_root, package_pb)
-  package_spec = package.PackageSpec.from_package_pb(context, package_pb)
-  for repo_spec in package_spec.deps.values():
-    repo_spec.fetch()
+  # Fetch all remote changes locally, so we can compute metadata for them.
+  for repo in args.recipe_deps.repos.itervalues():
+    if repo.name == args.recipe_deps.main_repo_id:
+      continue
+    repo.backend.fetch(original_spec.deps[repo.name].branch)
 
   results = {}
   try:
-    results = test_rolls(
-      config_file, context, package_spec, args.verbose_json)
+    results = test_rolls(args.recipe_deps, args.verbose_json)
   finally:
     if not results.get('success'):
       # Restore initial state. Since we could be running simulation tests
       # on other revisions, re-run them now as well.
-      write_spec_to_disk(context, config_file, package_pb)
-      run_simulation_test(repo_root, package_spec.recipes_path, ['train'])
+      write_global_files_to_main_repo(args.recipe_deps, original_spec)
+      run_simulation_test(args.recipe_deps.main_repo, 'train')
     elif results.get('picked_roll_details'):
       # Success! We need to regen docs now.
-      regen_docs(context.repo_root, package_spec.recipes_path)
+      regen_docs(args.recipe_deps.main_repo)
 
   if args.output_json:
     with args.output_json:

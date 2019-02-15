@@ -41,6 +41,11 @@ class FrozenDict(collections.Mapping):
   def __init__(self, *args, **kwargs):
     self._d = collections.OrderedDict(*args, **kwargs)
 
+    # If getitem would raise a KeyError, then call this function back with the
+    # missing key instead. This should raise an exception. If the function
+    # returns, the original KeyError will be raised.
+    self.on_missing = lambda key: None
+
     # Calculate the hash immediately so that we know all the items are
     # hashable too.
     self._hash = reduce(operator.xor,
@@ -65,7 +70,11 @@ class FrozenDict(collections.Mapping):
     return len(self._d)
 
   def __getitem__(self, key):
-    return self._d[key]
+    try:
+      return self._d[key]
+    except KeyError:
+      self.on_missing(key)
+      raise
 
   def __hash__(self):
     return self._hash
@@ -206,3 +215,5 @@ class StepData(object):
 
   def __getattr__(self, name):
     raise StepDataAttributeError(self._step_config.name, name)
+
+

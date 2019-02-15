@@ -3,121 +3,158 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import subprocess
-import sys
-import unittest
-
-import repo_test_util
+import test_env
 
 
-class TestSimulation(repo_test_util.RepoTest):
+class TestSimulation(test_env.RecipeEngineUnitTest):
   def test_basic(self):
-    repos = self.repo_setup({
-        'a': [],
-    })
-
-    self.update_recipe_module(repos['a'], 'a_module', {'foo': ['bar']})
+    deps = self.FakeRecipeDeps()
+    with deps.main_repo.write_module('modname') as mod:
+      mod.api.write('''
+        def some_function(self):
+          self.m.step('do something', ['echo', 'hey'])
+      ''')
+    with deps.main_repo.write_file('recipe_modules/modname/tests/r.py') as mod:
+      mod.write('''
+        DEPS = ['modname']
+        def RunSteps(api):
+          api.modname.some_function()
+        def GenTests(api):
+          yield api.test('basic')
+      ''')
 
     # Training the recipes should work.
-    self.train_recipes(repos['a'])
+    output, retcode = deps.main_repo.recipes_py('test', 'train')
+    self.assertEqual(retcode, 0, 'failed train with output:\n' + output)
 
   def test_no_coverage(self):
-    repos = self.repo_setup({
-        'a': [],
-    })
+    deps = self.FakeRecipeDeps()
+    with deps.main_repo.write_module('modname') as mod:
+      mod.api.write('''
+        def some_function(self):
+          self.m.step('do something', ['echo', 'hey'])
+      ''')
 
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self.update_recipe_module(
-          repos['a'], 'a_module', {'foo': ['bar']}, generate_example=False)
-      self.train_recipes(repos['a'])
+    # Now there's nothing which uses the module, so we should get insufficient
+    # test coverage.
+    output, retcode = deps.main_repo.recipes_py('test', 'train')
+    self.assertEqual(retcode, 1)
     self.assertIn(
-        'ERROR: The following modules lack test coverage: a_module',
-        cm.exception.output)
+        'ERROR: The following modules lack test coverage: modname',
+        output)
 
   def test_no_coverage_whitelisted(self):
-    repos = self.repo_setup({
-        'a': [],
-    })
+    deps = self.FakeRecipeDeps()
 
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self.update_recipe_module(
-          repos['a'], 'a_module', {'foo': ['bar']}, generate_example=False,
-          disable_strict_coverage=True)
-      self.train_recipes(repos['a'])
-    self.assertIn(
-        'FATAL: Insufficient coverage',
-        cm.exception.output)
+    with deps.main_repo.write_module('modname') as mod:
+      mod.DISABLE_STRICT_COVERAGE = True
+      mod.api.write('''
+        def some_function(self):
+          self.m.step('do something', ['echo', 'hey'])
+      ''')
+
+    output, retcode = deps.main_repo.recipes_py('test', 'train')
+    self.assertEqual(retcode, 1)
+    self.assertIn('FATAL: Insufficient coverage', output)
 
   def test_incomplete_coverage(self):
-    repos = self.repo_setup({
-        'a': [],
-    })
+    deps = self.FakeRecipeDeps()
 
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self.update_recipe_module(
-          repos['a'], 'a_module', {'foo': ['bar'], 'baz': ['gazonk']},
-          generate_example=['foo'])
-      self.train_recipes(repos['a'])
-    self.assertIn(
-        'FATAL: Insufficient coverage',
-        cm.exception.output)
+    with deps.main_repo.write_module('modname') as mod:
+      mod.api.write('''
+        def some_function(self):
+          self.m.step('do something', ['echo', 'hey'])
+
+        def other_function(self):
+          self.m.step('do something else', ['echo', 'nop'])
+      ''')
+
+    with deps.main_repo.write_recipe('examples/full', 'modname') as recipe:
+      recipe.DEPS = ['modname']
+      recipe.RunSteps.write('''
+        api.modname.some_function()
+        # omit call to other_function()
+      ''')
+
+    output, retcode = deps.main_repo.recipes_py('test', 'train')
+    self.assertEqual(retcode, 1)
+    self.assertIn('FATAL: Insufficient coverage', output)
 
   def test_incomplete_coverage_whitelisted(self):
-    repos = self.repo_setup({
-        'a': [],
-    })
+    deps = self.FakeRecipeDeps()
 
     # Even with disabled strict coverage, regular coverage (100%)
     # should still be enforced.
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self.update_recipe_module(
-          repos['a'], 'a_module', {'foo': ['bar'], 'baz': ['gazonk']},
-          generate_example=['foo'], disable_strict_coverage=True)
-      self.train_recipes(repos['a'])
-    self.assertIn(
-        'FATAL: Insufficient coverage',
-        cm.exception.output)
+    with deps.main_repo.write_module('modname') as mod:
+      mod.DISABLE_STRICT_COVERAGE = True
+      mod.api.write('''
+        def some_function(self):
+          self.m.step('do something', ['echo', 'hey'])
+
+        def other_function(self):
+          self.m.step('do something else', ['echo', 'nop'])
+      ''')
+
+    output, retcode = deps.main_repo.recipes_py('test', 'train')
+    self.assertEqual(retcode, 1)
+    self.assertIn('FATAL: Insufficient coverage', output)
 
   def test_recipe_coverage_strict(self):
-    repos = self.repo_setup({
-        'a': [],
-    })
+    deps = self.FakeRecipeDeps()
 
-    self.update_recipe_module(
-        repos['a'], 'a_module', {'foo': ['bar'], 'baz': ['gazonk']})
-    self.update_recipe(
-        repos['a'], 'a_recipe', ['a/a_module'],
-        [('a_module', 'foo'), ('a_module', 'baz')])
+    with deps.main_repo.write_module('modname') as mod:
+      mod.api.write('''
+        def some_function(self):
+          self.m.step('do something', ['echo', 'hey'])
 
-    # Verify that strict coverage is enforced: even though the recipe
-    # would otherwise cover entire module, we want module's tests
-    # to be self-contained, and cover 100% of the module's code.
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self.update_recipe_module(
-          repos['a'], 'a_module', {'foo': ['bar'], 'baz': ['gazonk']},
-          generate_example=['foo'])
-      self.train_recipes(repos['a'])
-    self.assertIn(
-        'FATAL: Insufficient coverage',
-        cm.exception.output)
+        def other_function(self):
+          self.m.step('do something else', ['echo', 'nop'])
+      ''')
+
+    # Verify that strict coverage is enforced: even though the recipe would
+    # otherwise cover entire module, we want module's tests to be
+    # self-contained, and cover 100% of the module's code.
+    with deps.main_repo.write_recipe('my_recipe') as recipe:
+      recipe.DEPS = ['modname']
+      recipe.RunSteps.write('''
+        api.modname.some_function()
+        api.modname.other_function()
+      ''')
+      recipe.GenTests.write('''
+        yield api.test("basic")
+      ''')
+
+    output, retcode = deps.main_repo.recipes_py('test', 'train')
+    self.assertEqual(retcode, 1)
+    self.assertIn('FATAL: Insufficient coverage', output)
 
   def test_recipe_coverage_strict_whitelisted(self):
-    repos = self.repo_setup({
-        'a': [],
-    })
+    deps = self.FakeRecipeDeps()
 
-    self.update_recipe_module(
-        repos['a'], 'a_module', {'foo': ['bar'], 'baz': ['gazonk']})
-    self.update_recipe(
-        repos['a'], 'a_recipe', ['a/a_module'],
-        [('a_module', 'foo'), ('a_module', 'baz')])
-    self.update_recipe_module(
-        repos['a'], 'a_module', {'foo': ['bar'], 'baz': ['gazonk']},
-        generate_example=['foo'], disable_strict_coverage=True)
+    with deps.main_repo.write_module('modname') as mod:
+      mod.DISABLE_STRICT_COVERAGE = True
+      mod.api.write('''
+        def some_function(self):
+          self.m.step('do something', ['echo', 'hey'])
+
+        def other_function(self):
+          self.m.step('do something else', ['echo', 'nop'])
+      ''')
+
+    with deps.main_repo.write_recipe('my_recipe') as recipe:
+      recipe.DEPS = ['modname']
+      recipe.RunSteps.write('''
+        api.modname.some_function()
+        api.modname.other_function()
+      ''')
+      recipe.GenTests.write('''
+        yield api.test("basic")
+      ''')
 
     # Training the recipes should work.
-    self.train_recipes(repos['a'])
+    _, retcode = deps.main_repo.recipes_py('test', 'train')
+    self.assertEqual(retcode, 0)
 
 
 if __name__ == '__main__':
-  sys.exit(unittest.main())
+  test_env.main()

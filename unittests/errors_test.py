@@ -5,84 +5,25 @@
 
 import json
 import os
-import shutil
 import subprocess
-import tempfile
-import unittest
 
-import repo_test_util
-from repo_test_util import ROOT_DIR
+import test_env
 
 
-class RecipeRepo(object):
-  def __init__(self, recipes_path=''):
-    self._root = tempfile.mkdtemp()
-    os.makedirs(os.path.join(self._root, 'infra', 'config'))
-    self._recipes_cfg = os.path.join(
-        self._root, 'infra', 'config', 'recipes.cfg')
-    with open(self._recipes_cfg, 'w') as fh:
-      json.dump({
-        'api_version': 2,
-        'project_id': 'testproj',
-        'recipes_path': recipes_path,
-        'deps': {
-          'recipe_engine':{
-            'url': ROOT_DIR,
-            'branch': 'master',
-            'revision': 'HEAD'
-          }
-        }
-      }, fh)
-    self._recipes_dir = os.path.join(self._root, 'recipes')
-    os.mkdir(self._recipes_dir)
-    self._modules_dir = os.path.join(self._root, 'recipe_modules')
-    os.mkdir(self._modules_dir)
-
-  def make_recipe(self, recipe, contents):
-    with open(os.path.join(self._recipes_dir, '%s.py' % recipe), 'w') as fh:
-      fh.write(contents)
-
-  def make_module(self, name, init_contents, api_contents):
-    module_root = os.path.join(self._modules_dir, name)
-    os.mkdir(module_root)
-    with open(os.path.join(module_root, '__init__.py'), 'w') as fh:
-      fh.write(init_contents)
-    with open(os.path.join(module_root, 'api.py'), 'w') as fh:
-      fh.write(api_contents)
-
-  @property
-  def recipes_cmd(self):
-    return [
-        os.path.join(ROOT_DIR, 'recipes.py'),
-        '--package', self._recipes_cfg,
-        '-O', 'recipe_engine=%s' % ROOT_DIR]
-
-  def __enter__(self):
-    return self
-
-  def __exit__(self, *_):
-    shutil.rmtree(self._root)
-
-class ErrorsTest(unittest.TestCase):
-  def _test_cmd(self, repo, cmd, asserts=None, retcode=0, engine_args=None):
-    engine_args = engine_args or []
+class ErrorsTest(test_env.RecipeEngineUnitTest):
+  def _test_cmd(self, deps, cmd, asserts=None, retcode=0):
     if cmd[0] == 'run':
-      _, path = tempfile.mkstemp('result_pb')
+      path = self.tempfile()
       cmd = [cmd[0]] + ['--output-result-json', path] + cmd[1:]
 
     try:
-      subp = subprocess.Popen(
-          repo.recipes_cmd + engine_args + cmd,
-          stdout=subprocess.PIPE,
-          stderr=subprocess.PIPE)
-      stdout, stderr = subp.communicate()
+      output, returncode = deps.main_repo.recipes_py(*cmd)
 
       if asserts:
-        asserts(stdout, stderr)
+        asserts(output)
       self.assertEqual(
-          subp.returncode, retcode,
-          '%d != %d.\nstdout:\n%s\nstderr:\n%s' % (
-              subp.returncode, retcode, stdout, stderr))
+          returncode, retcode,
+          '%d != %d.\noutput:\n%s' % (returncode, retcode, output))
 
       if cmd[0] == 'run':
         if not os.path.exists(path):
@@ -100,162 +41,158 @@ class ErrorsTest(unittest.TestCase):
           os.unlink(path)
 
   def test_missing_dependency(self):
-    with RecipeRepo() as repo:
-      repo.make_recipe('foo', """
-DEPS = ['aint_no_thang']
-""")
+    deps = self.FakeRecipeDeps()
+    with deps.main_repo.write_recipe('foo') as recipe:
+      recipe.DEPS = ['aint_no_thang']
 
-      def assert_nomodule(stdout, stderr):
-        self.assertRegexpMatches(
-            stdout + stderr, r'No module named aint_no_thang')
+    def _assert_nomodule(output):
+      self.assertRegexpMatches(
+        output, r"No module named 'aint_no_thang' in repo 'main'.")
 
-      self._test_cmd(
-          repo, ['run', 'foo'], retcode=1, asserts=assert_nomodule)
+    self._test_cmd(
+        deps, ['run', 'foo'], retcode=1, asserts=_assert_nomodule)
 
   def test_missing_module_dependency(self):
-    with RecipeRepo() as repo:
-      repo.make_recipe('foo', 'DEPS = ["le_module"]')
-      repo.make_module('le_module', 'DEPS = ["love"]', '')
+    deps = self.FakeRecipeDeps()
+    with deps.main_repo.write_recipe('foo') as recipe:
+      recipe.DEPS = ['le_module']
 
-      def assert_nomodule(stdout, stderr):
-        self.assertRegexpMatches(stdout + stderr, r'No module named love')
+    with deps.main_repo.write_module('le_module') as mod:
+      mod.DEPS.append('love')
 
-      self._test_cmd(
-          repo, ['run', 'foo'], retcode=1, asserts=assert_nomodule)
+    def _assert_nomodule(output):
+      self.assertRegexpMatches(output, r"No module named 'love' in repo 'main'")
+
+    self._test_cmd(
+        deps, ['run', 'foo'], retcode=1, asserts=_assert_nomodule)
 
   def test_no_such_recipe(self):
-    with RecipeRepo() as repo:
-      result = self._test_cmd(
-          repo, ['run', 'nooope'], retcode=1)
-      self.assertIsNotNone(result['failure']['exception'])
+    deps = self.FakeRecipeDeps()
+    result = self._test_cmd(
+        deps, ['run', 'nooope'], retcode=1)
+    self.assertIsNotNone(result['failure']['exception'])
 
   def test_syntax_error(self):
-    with RecipeRepo() as repo:
-      repo.make_recipe('foo', """
-DEPS = [ (sic)
-""")
+    deps = self.FakeRecipeDeps()
+    with deps.main_repo.write_file('recipes/foo.py') as buf:
+      buf.write('''
+      DEPS = [ (sic)
+      ''')
 
-      def assert_syntaxerror(stdout, stderr):
-        self.assertRegexpMatches(stdout + stderr, r'SyntaxError')
+    def assert_syntaxerror(output):
+      self.assertRegexpMatches(output, r'SyntaxError')
 
-      self._test_cmd(repo, ['test', 'run', '--filter', 'foo'],
-          asserts=assert_syntaxerror, retcode=1)
-      self._test_cmd(repo, ['test', 'train', '--filter', 'foo'],
-          asserts=assert_syntaxerror, retcode=1)
-      self._test_cmd(repo, ['run', 'foo'],
-          asserts=assert_syntaxerror, retcode=1)
+    self._test_cmd(deps, ['test', 'run', '--filter', 'foo'],
+        asserts=assert_syntaxerror, retcode=1)
+    self._test_cmd(deps, ['test', 'train', '--filter', 'foo'],
+        asserts=assert_syntaxerror, retcode=1)
+    self._test_cmd(deps, ['run', 'foo'],
+        asserts=assert_syntaxerror, retcode=1)
 
   def test_missing_path(self):
-    with RecipeRepo() as repo:
-      repo.make_recipe('missing_path', """
-DEPS = ['recipe_engine/step', 'recipe_engine/path']
+    deps = self.FakeRecipeDeps()
+    with deps.main_repo.write_recipe('missing_path') as recipe:
+      recipe.DEPS.append('recipe_engine/path')
+      recipe.RunSteps.write('''
+        api.step('do it, joe', ['echo', 'JOE'],
+                 cwd=api.path['bippityboppityboo'])
+      ''')
+      recipe.GenTests.write('''
+        yield api.test('basic')
+      ''')
 
-def RunSteps(api):
-  api.step('do it, joe', ['echo', 'JOE'], cwd=api.path['bippityboppityboo'])
+    def _assert_keyerror(output):
+      self.assertRegexpMatches(
+          output, r"KeyError: 'Unknown path: bippityboppityboo'")
 
-def GenTests(api):
-  yield api.test('basic')
-""")
-      def assert_keyerror(stdout, stderr):
-        self.assertRegexpMatches(
-            stdout + stderr, r"KeyError: 'Unknown path: bippityboppityboo'",
-            stdout + stderr)
-
-      self._test_cmd(repo, ['test', 'train', '--filter', 'missing_path'],
-                     asserts=assert_keyerror, retcode=1)
-      self._test_cmd(repo, ['test', 'run', '--filter', 'missing_path'],
-                     asserts=assert_keyerror, retcode=1)
-      self._test_cmd(repo, ['run', 'missing_path'],
-                     asserts=assert_keyerror, retcode=1)
+    self._test_cmd(deps, ['test', 'train', '--filter', 'missing_path'],
+                   asserts=_assert_keyerror, retcode=1)
+    self._test_cmd(deps, ['test', 'run', '--filter', 'missing_path'],
+                   asserts=_assert_keyerror, retcode=1)
+    self._test_cmd(deps, ['run', 'missing_path'],
+                   asserts=_assert_keyerror, retcode=1)
 
   def test_engine_failure(self):
-    with RecipeRepo() as repo:
-      repo.make_recipe('print_step_error', """
-DEPS = ['recipe_engine/step']
+    deps = self.FakeRecipeDeps()
+    with deps.main_repo.write_file('recipes/print_step_error.py') as buf:
+      buf.write('''
+      DEPS = ['recipe_engine/step']
 
-from recipe_engine import step_runner
+      from recipe_engine import step_runner
 
-def bad_print_step(self, step_stream, step, env):
-  raise Exception("Buh buh buh buh bad to the bone")
+      def bad_print_step(self, step_stream, step, env):
+        raise Exception("Buh buh buh buh bad to the bone")
 
-def GenTests(api):
-  pass
+      def GenTests(api):
+        pass
 
-def RunSteps(api):
-  step_runner.SubprocessStepRunner._print_step = bad_print_step
-  try:
-    api.step('Be good', ['echo', 'Sunshine, lollipops, and rainbows'])
-  finally:
-    api.step.active_result.presentation.status = 'WARNING'
-""")
-      self._test_cmd(repo, ['run', 'print_step_error'],
-        asserts=lambda stdout, stderr: self.assertRegexpMatches(
-            stdout + stderr,
-            r'(?s)Recipe engine bug.*Buh buh buh buh bad to the bone'),
-        retcode=2)
+      def RunSteps(api):
+        step_runner.SubprocessStepRunner._print_step = bad_print_step
+        try:
+          api.step('Be good', ['echo', 'Sunshine, lollipops, and rainbows'])
+        finally:
+          api.step.active_result.presentation.status = 'WARNING'
+      ''')
+
+    self._test_cmd(deps, ['run', 'print_step_error'],
+      asserts=lambda output: self.assertRegexpMatches(
+          output,
+          r'(?s)Recipe engine bug.*Buh buh buh buh bad to the bone'),
+      retcode=2)
 
   def test_missing_method(self):
-    with RecipeRepo() as repo:
-      repo.make_recipe('no_gen_tests', """
-def RunSteps(api):
-  pass
-""")
-      repo.make_recipe('no_run_steps', """
-def GenTests(api):
-  pass
-""")
+    deps = self.FakeRecipeDeps()
+    with deps.main_repo.write_file('recipes/no_gen_tests.py') as buf:
+      buf.write('''
+      def RunSteps(api):
+        pass
+      ''')
+    self._test_cmd(deps, ['run', 'no_gen_tests'],
+      asserts=lambda output: self.assertRegexpMatches(
+          output,
+          r'(?s)misspelled GenTests'),
+      retcode=1)
 
-      self._test_cmd(repo, ['run', 'no_gen_tests'],
-        asserts=lambda stdout, stderr: self.assertRegexpMatches(
-            stdout + stderr,
-            r'(?s)misspelled GenTests'),
-        retcode=1)
+    with deps.main_repo.write_file('recipes/no_run_steps.py') as buf:
+      buf.write('''
+      def GenTests(api):
+        pass
+      ''')
+    self._test_cmd(deps, ['run', 'no_run_steps'],
+      asserts=lambda output: self.assertRegexpMatches(
+          output,
+          r'(?s)misspelled RunSteps'),
+      retcode=1)
 
-      self._test_cmd(repo, ['run', 'no_run_steps'],
-        asserts=lambda stdout, stderr: self.assertRegexpMatches(
-            stdout + stderr,
-            r'(?s)misspelled RunSteps'),
-        retcode=1)
 
   def test_unconsumed_assertion(self):
     # There was a regression where unconsumed exceptions would not be detected
     # if the exception was AssertionError.
+    deps = self.FakeRecipeDeps()
+    with deps.main_repo.write_recipe('unconsumed_assertion') as recipe:
+      recipe.DEPS = []
+      recipe.GenTests.write('''
+        yield api.test('basic') + api.expect_exception('AssertionError')
+      ''')
 
-    with RecipeRepo() as repo:
-      repo.make_recipe('unconsumed_assertion', """
-DEPS = []
-
-def RunSteps(api):
-  pass
-
-def GenTests(api):
-  yield api.test('basic') + api.expect_exception('AssertionError')
-""")
-      self._test_cmd(repo, [
-          'test', 'train', '--filter', 'unconsumed_assertion'],
-        asserts=lambda stdout, stderr: self.assertRegexpMatches(
-            stdout + stderr, 'Unconsumed'),
-        retcode=1)
+    self._test_cmd(deps, [
+        'test', 'train', '--filter', 'unconsumed_assertion'],
+      asserts=lambda output: self.assertRegexpMatches(output, 'Unconsumed'),
+      retcode=1)
 
   def test_run_recipe_help(self):
-    with RecipeRepo(recipes_path='foo/bar') as repo:
-      repo.make_recipe('do_nothing', """
-DEPS = []
-def RunSteps(api):
- pass
-""")
-      subp = subprocess.Popen(
-                    repo.recipes_cmd + ['run', 'do_nothing'],
-                              stdout=subprocess.PIPE)
-      stdout, _ = subp.communicate()
+    deps = self.FakeRecipeDeps()
+    with deps.main_repo.write_recipe('do_nothing') as recipe:
+      recipe.DEPS = []
+
+    def _assert_output(output):
       self.assertRegexpMatches(
-          stdout, r'from the root of a \'testproj\' checkout')
+          output, r'from the root of a \'main\' checkout')
       self.assertRegexpMatches(
-          stdout, r'\./foo/bar/recipes\.py run .* do_nothing')
-
-
-
+          output, r'\./recipes\.py run .* do_nothing')
+    self._test_cmd(deps, ['run', 'do_nothing'],
+      asserts=_assert_output)
 
 
 if __name__ == '__main__':
-  unittest.main()
+  test_env.main()

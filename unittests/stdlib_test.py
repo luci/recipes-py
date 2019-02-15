@@ -6,16 +6,13 @@
 """Runs simulation tests and lint on the standard recipe modules."""
 
 import os
-import subprocess
 import sys
 
-from repo_test_util import ROOT_DIR
+from subprocess import check_call
 
-def recipes_py(*args):
-  subprocess.check_call([
-      sys.executable, os.path.join(ROOT_DIR, 'recipes.py')
-  ]+list(args))
+from test_env import ROOT_DIR
 
-recipes_py('test', 'run')
+recipes_py = os.path.join(ROOT_DIR, 'recipes.py')
 
-recipes_py('lint')
+check_call([sys.executable, recipes_py, 'test', 'run'])
+check_call([sys.executable, recipes_py, 'lint'])

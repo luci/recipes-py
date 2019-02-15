@@ -64,7 +64,7 @@ def RunSteps(api, bad_return, access_invalid_data, timeout):
   # You can modify environment in terms of old environment. Environment
   # variables are substituted in for expressions of the form %(VARNAME)s.
   with api.context(env={'PATH': api.path.pathsep.join(
-      [str(api.step.package_repo_resource()), '%(PATH)s'])}):
+      [str(api.step.repo_resource()), '%(PATH)s'])}):
     api.step('recipes help', ['recipes.py', '--help'])
 
   # Finally, you can make your step accept any return code

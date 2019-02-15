@@ -18,9 +18,9 @@ def RunSteps(api):
   api.step('print resource',
            ['echo', api.path.resource('dir', 'file.py')])
 
-  # module.package_repo_resource() demo.
+  # module.repo_resource() demo.
   api.step('print package dir',
-           ['echo', api.path.package_repo_resource('dir', 'file.py')])
+           ['echo', api.path.repo_resource('dir', 'file.py')])
 
   assert 'start_dir' in api.path
   assert 'checkout' not in api.path

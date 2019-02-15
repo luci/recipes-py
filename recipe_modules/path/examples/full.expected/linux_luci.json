@@ -16,7 +16,7 @@
   {
     "cmd": [
       "echo",
-      "RECIPE_PACKAGE_REPO[recipe_engine]/dir/file.py"
+      "RECIPE_REPO[recipe_engine]/dir/file.py"
     ],
     "name": "print package dir"
   },

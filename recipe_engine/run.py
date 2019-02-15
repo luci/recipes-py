@@ -16,12 +16,12 @@ from google.protobuf import json_format as jsonpb
 
 from .third_party import subprocess42
 
-from . import loader
 from . import recipe_api
-from . import recipe_test_api
+from . import result_pb2
 from . import types
 from . import util
-from . import result_pb2
+from .internal.recipe_deps import Recipe
+from .internal.exceptions import RecipeUsageError
 
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -34,17 +34,17 @@ RecipeResult = collections.namedtuple('RecipeResult', 'result')
 # TODO(dnj): Replace "properties" with a generic runtime instance. This instance
 # will be used to seed recipe clients and expanded to include managed runtime
 # entities.
-def run_steps(properties, stream_engine, step_runner, universe_view,
+def run_steps(recipe_deps, properties, stream_engine, step_runner,
               emit_initial_properties=False):
   """Runs a recipe (given by the 'recipe' property) for real.
 
   Args:
-    properties: a dictionary of properties to pass to the recipe.  The
+    * recipe_deps (RecipeDeps) - The loaded recipe repo dependencies.
+    * properties: a dictionary of properties to pass to the recipe.  The
       'recipe' property defines which recipe to actually run.
-    stream_engine: the StreamEngine to use to create individual step streams.
-    step_runner: The StepRunner to use to 'actually run' the steps.
-    universe_view: The RecipeUniverse to use to load the recipes & modules.
-    emit_initial_properties (bool): If True, write the initial recipe engine
+    * stream_engine: the StreamEngine to use to create individual step streams.
+    * step_runner: The StepRunner to use to 'actually run' the steps.
+    * emit_initial_properties (bool): If True, write the initial recipe engine
         properties in the "setup_build" step.
 
   Returns: result_pb2.Result
@@ -55,22 +55,18 @@ def run_steps(properties, stream_engine, step_runner, universe_view,
         s.set_build_property(key, json.dumps(properties[key], sort_keys=True))
 
     engine = RecipeEngine(
-        step_runner, properties, os.environ, universe_view)
-
-    # Create all API modules and top level RunSteps function.  It doesn't launch
-    # any recipe code yet; RunSteps needs to be called.
-    api = None
+        recipe_deps, step_runner, properties, os.environ)
 
     assert 'recipe' in properties
     recipe = properties['recipe']
 
-    root_package = universe_view.universe.package_deps.root_package
     run_recipe_help_lines = [
         'To repro this locally, run the following line from the root of a %r'
-          ' checkout:' % (root_package.name),
+          ' checkout:' % (recipe_deps.main_repo.name),
         '',
         '%s run --properties-file - %s <<EOF' % (
-            os.path.join( '.', root_package.relative_recipes_dir, 'recipes.py'),
+            os.path.join(
+              '.', recipe_deps.main_repo.simple_cfg.recipes_path, 'recipes.py'),
             recipe),
     ]
     run_recipe_help_lines.extend(
@@ -88,18 +84,17 @@ def run_steps(properties, stream_engine, step_runner, universe_view,
 
     # Find and load the recipe to run.
     try:
-      recipe_script = universe_view.load_recipe(recipe, engine=engine)
+      # This does all loading and importing of the recipe script.
+      recipe_obj = recipe_deps.main_repo.recipes[recipe]
+      # Make sure `global_symbols` (which is a cached execfile of the recipe
+      # python file) executes here so that we can correctly catch any
+      # RecipeUsageError exceptions which exec'ing it may cause.
+      # TODO(iannucci): rethink how all this exception reporting stuff should
+      # work.
+      _ = recipe_obj.global_symbols
       s.write_line('Running recipe with %s' % (properties,))
-
-      api = loader.create_recipe_api(
-          universe_view.universe.package_deps.root_package,
-          recipe_script.LOADED_DEPS,
-          recipe_script.path,
-          engine,
-          recipe_test_api.DisabledTestData())
-
       s.add_step_text('running recipe: "%s"' % recipe)
-    except (loader.LoaderError, ImportError, AssertionError) as e:
+    except (RecipeUsageError, ImportError, AssertionError) as e:
       for line in str(e).splitlines():
         s.add_step_text(line)
       s.set_step_status('EXCEPTION')
@@ -112,7 +107,7 @@ def run_steps(properties, stream_engine, step_runner, universe_view,
 
   # The engine will use step_runner to run the steps, and the step_runner in
   # turn uses stream_engine internally to build steam steps IO.
-  return engine.run(recipe_script, api)
+  return engine.run(recipe_obj)
 
 
 # Return value of run_steps and RecipeEngine.run.  Just a container for the
@@ -135,12 +130,12 @@ class RecipeEngine(object):
   ActiveStep = collections.namedtuple('ActiveStep', (
       'config', 'step_result', 'open_step'))
 
-  def __init__(self, step_runner, properties, environ, universe_view):
+  def __init__(self, recipe_deps, step_runner, properties, environ):
     """See run_steps() for parameter meanings."""
+    self._recipe_deps = recipe_deps
     self._step_runner = step_runner
     self._properties = properties
     self._environ = environ.copy()
-    self._universe_view = universe_view
     self._clients = {client.IDENT: client for client in (
         recipe_api.PathsClient(),
         recipe_api.PropertiesClient(self),
@@ -161,9 +156,36 @@ class RecipeEngine(object):
   def environ(self):
     return self._environ
 
-  @property
-  def universe(self):
-    return self._universe_view.universe
+  def resolve_requirement(self, req):
+    """Resolves a requirement or raises ValueError if it cannot be resolved.
+
+    Args:
+      * req (_UnresolvedRequirement): The requirement to resolve.
+
+    Returns the resolved requirement.
+    Raises ValueError if the requirement cannot be satisfied.
+    """
+    assert isinstance(req, recipe_api._UnresolvedRequirement)
+    if req._typ == 'client':
+      return self._clients.get(req._name)
+    raise ValueError('Unknown requirement type [%s]' % (req._typ,))
+
+  def initialize_path_client_HACK(self, root_api):
+    """This is a hack; the "PathsClient" currently works to provide a reverse
+    string->Path lookup by walking down the recipe's `api` object and calling
+    the various 'root' path methods (like .resource(), etc.).
+
+    However, we would like to:
+      * Make the 'api' wholly internal to the `RecipeScript.run_steps` function.
+      * Eventually simplify the 'paths' system, whose whole complexity exists to
+        facilitate 'pure-data' config.py processing, which is also going to be
+        deprecated in favor of protos and removal of the config subsystem.
+
+    Args:
+      * root_api (RecipeScriptApi): The root `api` object which would be passed
+        to the recipe's RunSteps function.
+    """
+    self._clients['paths']._initialize_with_recipe_api(root_api)
 
   def _close_through_level(self, level):
     """Close all open steps whose nest level is >= the supplied level.
@@ -183,14 +205,6 @@ class RecipeEngine(object):
     if self._step_stack:
       return self._step_stack[-1]
     return None
-
-  def _get_client(self, name):
-    """Returns: the client instance for name, or None if not such client exists.
-
-    Args:
-      name (str): The name of the client instance to retrieve.
-    """
-    return self._clients.get(name)
 
   def run_step(self, step_config):
     """
@@ -243,21 +257,20 @@ class RecipeEngine(object):
 
       raise exc(step_config.name, step_result)
 
-  def run(self, recipe_script, api):
-    """Run a recipe represented by a recipe_script object.
+  def run(self, recipe, test_data=None):
+    """Run a recipe.
 
     This function blocks until recipe finishes.
     It mainly executes the recipe, and has some exception handling logic.
 
     Args:
-      recipe_script: The recipe to run, as represented by a RecipeScript object.
-      api: The api, with loaded module dependencies.
-           Used by the some special modules.
+      * recipe (Recipe): The recipe to run.
+      * test_data (None|TestData): The test data for this recipe run.
 
     Returns:
       result_pb2.Result which has return value or status code and exception.
     """
-    self._get_client('paths')._initialize_with_recipe_api(api)
+    assert isinstance(recipe, Recipe), type(recipe)
     result = None
     plain_failure_result = lambda f: result_pb2.Result(
       failure=result_pb2.Failure(
@@ -276,8 +289,8 @@ class RecipeEngine(object):
     with self._step_runner.run_context():
       try:
         try:
-          recipe_result = recipe_script.run(api, self.properties, self.environ)
-          result = result_pb2.Result(json_result=json.dumps(recipe_result))
+          raw_result = recipe.run_steps(self, test_data)
+          result = result_pb2.Result(json_result=json.dumps(raw_result))
         finally:
           self._close_through_level(0)
 
@@ -433,11 +446,9 @@ def handle_recipe_return(recipe_result, result_filename, stream_engine):
   return 0
 
 
-def main(package_deps, args):
+def main(args):
   from recipe_engine import step_runner
   from recipe_engine import stream
-
-  config_file = args.package
 
   if args.props:
     for p in args.props:
@@ -451,10 +462,6 @@ def main(package_deps, args):
 
   os.environ['PYTHONUNBUFFERED'] = '1'
   os.environ['PYTHONIOENCODING'] = 'UTF-8'
-
-  universe_view = loader.UniverseView(
-      loader.RecipeUniverse(
-          package_deps, config_file), package_deps.root_package)
 
   # TODO(iannucci): this is horrible; why do we want to set a workdir anyway?
   # Shouldn't the caller of recipes just CD somewhere if they want a different
@@ -484,9 +491,9 @@ def main(package_deps, args):
   with stream.StreamEngineInvariants.wrap(stream_engine) as stream_engine:
     try:
       ret = run_steps(
-          properties, stream_engine,
+          args.recipe_deps, properties, stream_engine,
           step_runner.SubprocessStepRunner(stream_engine),
-          universe_view, emit_initial_properties=emit_initial_properties)
+          emit_initial_properties=emit_initial_properties)
     finally:
       os.chdir(old_cwd)
 

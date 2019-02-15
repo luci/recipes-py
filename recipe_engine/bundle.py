@@ -1,20 +1,19 @@
-# Copyright 2017 The LUCI Authors. All rights reserved.
+# Copyright 2018 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-"""Bundles a universe_view into a standalone folder.
+"""Bundles all loaded RecipeDeps into a standalone folder.
 
 This captures the result of doing all the network operations that recipe_engine
 might do at startup to fetch repo code.
 
-This is a bit hacky, however, the API is solid. The general principle is that
-the input to bundle is:
-  * a universe
-  * a package manifest
+The general principle is that the input to bundle is:
+  * The loaded RecipeDeps (derived from the main repo's recipes.cfg file). This
+    is all the files on disk.
   * files tagged with the `recipes` gitattribute value (see
     `git help gitattributes`).
 And the output is:
-  * a runnable folder for the named package
+  * a runnable folder for the named repo
 
 Some things that we'd want to do to make this better:
   * Allow this to fetch lazily from gitiles (no git clones)
@@ -48,6 +47,7 @@ from __future__ import absolute_import
 import errno
 import io
 import logging
+import ntpath
 import os
 import posixpath
 import re
@@ -58,12 +58,12 @@ import sys
 
 from collections import defaultdict
 
-from . import loader
-from . import package
-from . import package_io
+from .internal import simple_cfg
+from .internal.recipe_deps import RecipeRepo, RecipeDeps
 
 LOGGER = logging.getLogger(__name__)
 GIT = 'git.bat' if sys.platform == 'win32' else 'git'
+
 
 def check(obj, typ):
   if not isinstance(obj, typ):
@@ -88,22 +88,30 @@ def prepare_destination(destination):
   return destination
 
 
-def export_package(pkg, destination):
-  check(pkg, package.Package)
+def export_repo(repo, destination):
+  """Copies all the recipe-relevant files for the repo to the given
+  destination.
+
+  Args:
+    * repo (RecipeRepo) - The repo to export.
+    * destination (str) - The absolute path we're exporting to (we'll export to
+      a subfolder equal to `repo.name`).
+  """
+  check(repo, RecipeRepo)
   check(destination, str)
 
-  bundle_dst = os.path.join(destination, pkg.name)
+  bundle_dst = os.path.join(destination, repo.name)
 
-  reldir = pkg.relative_recipes_dir
+  reldir = repo.simple_cfg.recipes_path
   if reldir:
     reldir += '/'
 
   args = [
-    GIT, '-C', pkg.repo_root, 'ls-files', '--',
-    ':(attr:recipes)',                  # anything tagged for recipes
-    package_io.InfraRepoConfig.RELPATH, # always grab the recipes.cfg file
-    '%srecipes/**' % reldir,            # all the recipes stuff
-    '%srecipe_modules/**' % reldir,     # all the recipe_modules stuff
+    GIT, '-C', repo.path, 'ls-files', '--',
+    ':(attr:recipes)',                       # anything tagged for recipes
+    simple_cfg.RECIPES_CFG_LOCATION_REL,     # always grab recipes.cfg
+    '%srecipes/**' % reldir,                 # all the recipes stuff
+    '%srecipe_modules/**' % reldir,          # all the recipe_modules stuff
 
     # And exclude all the json expectations
     ':(exclude)%s**/*.expected/*.json' % reldir,
@@ -116,13 +124,13 @@ def export_package(pkg, destination):
       i = i.replace(posixpath.sep, os.path.sep)
     while i:
       i, tail = os.path.split(i)
-      base = os.path.join(pkg.repo_root, i) if i else pkg.repo_root
+      base = os.path.join(repo.path, i) if i else repo.path
       copy_map[base].add(tail)
 
   def ignore_fn(base, items):
     return set(items) - copy_map[base]
 
-  shutil.copytree(pkg.repo_root, bundle_dst, ignore=ignore_fn)
+  shutil.copytree(repo.path, bundle_dst, ignore=ignore_fn)
 
 
 TEMPLATE_SH = u"""#!/usr/bin/env bash
@@ -134,21 +142,29 @@ TEMPLATE_BAT = (
 """
 )
 
-def prep_recipes_py(universe, root_package, destination):
-  check(universe, loader.RecipeUniverse)
-  check(root_package, package.Package)
+def prep_recipes_py(recipe_deps, destination):
+  """Prepares `recipes` and `recipes.bat` entrypoint scripts at the given
+  destination.
+
+  Args:
+    * recipe_deps (RecipeDeps) - All loaded dependency repos.
+    * destination (str) - The absolute path we're writing the scripts at.
+  """
+  check(recipe_deps, RecipeDeps)
   check(destination, str)
 
-  overrides = [pkg.name for pkg in universe.packages
-               if pkg.name != universe.package_deps.root_package.name]
+  overrides = recipe_deps.repos.keys()
+  overrides.remove(recipe_deps.main_repo_id)
 
-  LOGGER.info('prepping recipes.py for %s', root_package.name)
+  LOGGER.info('prepping recipes.py for %s', recipe_deps.main_repo.name)
   recipes_script = os.path.join(destination, 'recipes')
   with io.open(recipes_script, 'w', newline='\n') as recipes_sh:
     recipes_sh.write(TEMPLATE_SH)
 
-    pkg_path = package_io.InfraRepoConfig().to_recipes_cfg(
-      '${BASH_SOURCE[0]%%/*}/%s' % root_package.name)
+    pkg_path = posixpath.join(
+      '${BASH_SOURCE[0]%%/*}/%s' % recipe_deps.main_repo.name,
+      *simple_cfg.RECIPES_CFG_LOCATION_TOKS
+    )
     recipes_sh.write(u' --package %s \\\n' % pkg_path)
     for o in overrides:
       recipes_sh.write(u' -O %s=${BASH_SOURCE[0]%%/*}/%s \\\n' % (o, o))
@@ -158,8 +174,10 @@ def prep_recipes_py(universe, root_package, destination):
   with io.open(recipes_script+'.bat', 'w', newline='\r\n') as recipes_bat:
     recipes_bat.write(TEMPLATE_BAT)
 
-    pkg_path = package_io.InfraRepoConfig().to_recipes_cfg(
-      '"%%~dp0\\%s"' % root_package.name)
+    pkg_path = ntpath.join(
+      '"%%~dp0\\%s"' % recipe_deps.main_repo.name,
+      *simple_cfg.RECIPES_CFG_LOCATION_TOKS
+    )
     recipes_bat.write(u' --package %s ^\n' % pkg_path)
     for o in overrides:
       recipes_bat.write(u' -O %s=%%~dp0/%s ^\n' % (o, o))
@@ -191,23 +209,10 @@ def add_subparser(parser):
   bundle_p.set_defaults(func=main, postprocess_func=postprocess_func)
 
 
-def main(package_deps, args):
-  """
-  Args:
-    root_package (package.Package) - The recipes script in the produced bundle
-      will be tuned to run commands using this package.
-    universe (loader.RecipeUniverse) - All of the recipes necessary to support
-      root_package.
-    destination (str) - Path to the bundle output folder. This folder should not
-      exist before calling this function.
-  """
-  universe = loader.RecipeUniverse(package_deps, args.package)
-  destination = args.destination
-  root_package = package_deps.root_package
-
+def main(args):
   logging.basicConfig()
   destination = prepare_destination(args.destination)
-  for pkg in universe.packages:
-    export_package(pkg, destination)
-  prep_recipes_py(universe, root_package, destination)
+  for repo in args.recipe_deps.repos.values():
+    export_repo(repo, destination)
+  prep_recipes_py(args.recipe_deps, destination)
   LOGGER.info('done!')

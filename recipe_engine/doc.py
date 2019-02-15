@@ -20,13 +20,15 @@ import astunparse
 from google.protobuf import json_format as jsonpb
 from google.protobuf import text_format as textpb
 
+from recipe_engine import types  # this import name conflicts with stdlib :(
+
 from . import config
-from . import loader
 from . import doc_markdown
-from . import recipe_api
-from . import types
-from . import util
 from . import doc_pb2 as doc
+from . import recipe_api
+from . import util
+from .internal.recipe_deps import Recipe, RecipeModule, RecipeRepo
+from .internal.recipe_deps import parse_deps_spec
 
 
 LOGGER = logging.getLogger(__name__)
@@ -36,38 +38,70 @@ RECIPE_ENGINE_BASE = os.path.dirname(
 
 join = posixpath.join
 if sys.platform == 'win32':
-  def _to_native(posix_path):
-    return posix_path.replace(os.path.altsep, os.path.sep)
   def _to_posix(native_path):
     return native_path.replace(os.path.sep, os.path.altsep)
 else:
-  def _to_native(posix_path):
-    return posix_path
   def _to_posix(native_path):
     return native_path
 
 
-def _grab_ast(base_dir, relpath):
+def _grab_ast(repo, abspath):
+  """Parses the Python file indicated by `abspath`.
+
+  Args:
+    * repo (RecipeRepo) - The repo which contains `abspath`. Used for error
+      reporting.
+    * abspath (str) - The absolute (native) path to the Python file to parse.
+
+  Returns the Python AST object if the file exists and is parsable. Otherwise
+  logs an error and returns None.
+  """
+  assert isinstance(repo, RecipeRepo), type(repo)
+  relpath = os.path.relpath(abspath, repo.path)
+  assert '..' not in relpath
   try:
-    with open(os.path.join(base_dir, _to_native(relpath)), 'rb') as f:
+    with open(abspath, 'rb') as f:
       return ast.parse(f.read(), relpath)
   except SyntaxError as ex:
-    LOGGER.warn('skipping %s: bad syntax: %s', relpath, ex)
+    LOGGER.warn('skipping %s: bad syntax: %s', _to_posix(relpath), ex)
   except OSError as ex:
-    LOGGER.warn('skipping %s: %s', relpath, ex)
+    LOGGER.warn('skipping %s: %s', _to_posix(relpath), ex)
   return None
 
 
 def _unparse(node):
+  """Prints Python code which could parse to `node`.
+
+  Args:
+    * node (ast.AST) - The AST to produce Python code for.
+
+  Returns a str with the formatted code.
+  """
+  assert isinstance(node, ast.AST), type(node)
   buf = StringIO()
   astunparse.Unparser(node, buf)
   return buf.getvalue()
 
 
 def _find_value_of(mod_ast, target):
-  """Looks for an assignment to `target`, returning the assignment value ast
+  """Looks for an assignment to `target`, returning the assignment value AST
   node and the line number of the assignment.
+
+  Example:
+
+     some_var = 100
+     other = 20 + 10
+
+     _find_value_of(<code>, 'some_var')  ->  ast.Num(100)
+
+  Args:
+    * mod_ast (ast.Module) - The parsed Python module code.
+    * target (str) - The variable name to look for an assignment to.
+
+  Returns the Python AST object which is the right-hand-side of an assignment to
+  `target`.
   """
+  assert isinstance(mod_ast, ast.Module), type(mod_ast)
   for node in mod_ast.body:
     if isinstance(node, ast.Assign):
       if (len(node.targets) == 1 and
@@ -179,7 +213,7 @@ KNOWN_OBJECTS.update(_recipe_api_class_imports)
 
 
 def _parse_mock_imports(mod_ast, expanded_imports):
-  """Parses a module ast node for import statements and resolves them against
+  """Parses a module AST node for import statements and resolves them against
   expanded_imports (such as you might get from _expand_mock_imports).
 
   If an import is not recognized, it is omitted from the returned dictionary.
@@ -206,6 +240,21 @@ def _parse_mock_imports(mod_ast, expanded_imports):
 
 
 def _apply_imports_to_unparsed_expression(exp_ast, imports):
+  """Attempts to evaluate the code equivalent of `exp_ast`, with `imports`
+  as available symbols. If it's successful, it returns the evaluated object.
+  Otherwise this returns the unparsed code for `exp_ast`.
+
+  Args:
+    * exp_ast (Union[ast.Name, ast.Attribute, ast.Call]) - The expression to
+      evaluate.
+    * imports (Dict[str, object]) - The symbols to include during the evaluation
+      of `exp_ast`.
+
+  Returns the evaluation of `exp_ast` if it can successfully evaluate with
+  `imports`. Otherwise this returns the source-code representation of exp_ast as
+  a string.
+  """
+  assert isinstance(exp_ast, (ast.Name, ast.Attribute, ast.Call)), type(exp_ast)
   unparsed = _unparse(exp_ast).strip()
   try:
     return eval(unparsed, {'__builtins__': None}, imports)
@@ -214,6 +263,26 @@ def _apply_imports_to_unparsed_expression(exp_ast, imports):
 
 
 def _extract_classes_funcs(body_ast, relpath, imports, do_fixup=True):
+  """Extracts the classes and functions from the AST suite.
+
+  Args:
+    * body_ast (Union[ast.ClassDef, ast.Module]) - The statement suite to
+      evaluate.
+    * relpath (str) - The posix-style relative path which should be associated
+      with the code in body_ast.
+    * imports (Dict[str, object]) - The objects which should be available while
+      evaluating body_ast.
+    * do_fixup (bool) - If True, fixes all scanned classes so that any base
+      classes they have which are defined in body_ast will be patched up as
+      such. So if you have a `class A(B)`, and also `class B(object)` in the
+      same file, the returned `classes['A'].bases[0] is classes['B']` will be
+      True.
+
+  Returns (classes : Dict[str, Doc.Class], funcs : Dict[str, Doc.Func]) for all
+  classes and functions found in body_ast.
+  """
+  assert isinstance(body_ast, (ast.ClassDef, ast.Module)), type(body_ast)
+
   classes = {}
   funcs = {}
 
@@ -242,6 +311,19 @@ def _extract_classes_funcs(body_ast, relpath, imports, do_fixup=True):
 
 
 def parse_class(class_ast, relpath, imports):
+  """Parses a class AST object.
+
+  Args:
+    * class_ast (ast.ClassDef) - The class definition to parse.
+    * relpath (str) - The posix-style relative path which should be associated
+      with the code in class_ast.
+    * imports (Dict[str, object]) - The objects which should be available while
+      evaluating class_ast.
+
+  Returns Doc.Class proto message.
+  """
+  assert isinstance(class_ast, ast.ClassDef), type(class_ast)
+
   classes, funcs = _extract_classes_funcs(class_ast, relpath, imports, False)
 
   ret = doc.Doc.Class(
@@ -263,7 +345,19 @@ def parse_class(class_ast, relpath, imports):
   return ret
 
 
-def parse_deps(uv, mod_ast, relpath):
+def parse_deps(repo_name, mod_ast, relpath):
+  """Finds and parses the `DEPS` variable out of `mod_ast`.
+
+  Args:
+    * repo_name (str) - The implicit repo_name for DEPS entries which do not
+      specify one.
+    * mod_ast (ast.Module) - The Python module AST to parse from.
+    * relpath (str) - The posix-style relative path which should be associated
+      with the code in class_ast.
+
+  Returns Doc.Deps proto messsage.
+  """
+  assert isinstance(mod_ast, ast.Module), type(mod_ast)
   ret = None
 
   DEPS, lineno = _find_value_of(mod_ast, 'DEPS')
@@ -272,16 +366,16 @@ def parse_deps(uv, mod_ast, relpath):
       relpath=relpath,
       lineno=lineno,
     )
-    spec = uv.normalize_deps_spec(ast.literal_eval(_unparse(DEPS)))
-    for pkg, mod_name in sorted(spec.itervalues()):
-      ret.module_links.add(package=pkg.name, name=mod_name)
+    spec = parse_deps_spec(repo_name, ast.literal_eval(_unparse(DEPS)))
+    for dep_repo_name, mod_name in sorted(spec.itervalues()):
+      ret.module_links.add(repo_name=dep_repo_name, name=mod_name)
 
   return ret
 
 
 def extract_jsonish_assignments(mod_ast):
   """This extracts all single assignments where the target is a name, and the
-  value is a simple 'jsonish' statement (aka python literal).
+  value is a simple 'jsonish' statement (aka Python literal).
 
   The result is returned as a dictionary of name to the decoded literal.
 
@@ -289,7 +383,7 @@ def extract_jsonish_assignments(mod_ast):
     Foo = "hello"
     Bar = [1, 2, "something"]
     Other, Things = range(2)  # not single assignment
-    Bogus = object()  # not a python literal
+    Bogus = object()  # not a Python literal
     # returns: {"Foo": "hello", "Bar": [1, 2, "something"]}
   """
   ret = {}
@@ -308,6 +402,13 @@ def extract_jsonish_assignments(mod_ast):
 
 
 def parse_parameter(param):
+  """Parses a recipe parameter into a Doc.Parameter.
+
+  Args:
+    * param (recipe_api.Property) - The parameter to parse.
+
+  Returns Doc.Parameter.
+  """
   assert isinstance(param, recipe_api.Property), type(param)
   default = None
   if param._default is not recipe_api.PROPERTY_SENTINEL:
@@ -325,6 +426,16 @@ ALL_IMPORTS.update(MOCK_IMPORTS_PARAMETERS)
 
 
 def parse_parameters(mod_ast, relpath):
+  """Parses a set of recipe parameters from the PROPERTIES variable.
+
+  Args:
+    * mod_ast (ast.Module) - The parsed Python module code.
+    * relpath (str) - The posix-style relative path which should be associated
+      with the code in mod_ast.
+
+  Returns Doc.Parameter.
+  """
+  assert isinstance(mod_ast, ast.Module), type(mod_ast)
   parameters, lineno = _find_value_of(mod_ast, 'PROPERTIES')
   if not parameters:
     return None
@@ -341,22 +452,34 @@ def parse_parameters(mod_ast, relpath):
   return doc.Doc.Parameters(relpath=relpath, lineno=lineno, parameters=data)
 
 
-def parse_func(func_node, relpath, imports):
+def parse_func(func_ast, relpath, imports):
+  """Parses a function into a Doc.Func.
+
+  Args:
+    * func_ast (ast.FunctionDef) - The function to parse.
+    * relpath (str) - The posix-style relative path which should be associated
+      with the code in func_ast.
+    * imports (Dict[str, object]) - The symbols to include during the evaluation
+      of `func_ast`.
+
+  Returns Doc.Func.
+  """
+  assert isinstance(func_ast, ast.FunctionDef), type(func_ast)
   ret = doc.Doc.Func(
-    name=func_node.name,
+    name=func_ast.name,
     relpath=relpath,
-    lineno=func_node.lineno,
-    docstring=ast.get_docstring(func_node) or '',
+    lineno=func_ast.lineno,
+    docstring=ast.get_docstring(func_ast) or '',
   )
 
-  for exp in func_node.decorator_list:
+  for exp in func_ast.decorator_list:
     item = _apply_imports_to_unparsed_expression(exp, imports)
     if isinstance(item, str):
       ret.decorators.add(generic=item)
     else:
       ret.decorators.add(known=item.__module__+'.'+item.__name__)
 
-  ret.signature = _unparse(func_node.args).strip()
+  ret.signature = _unparse(func_ast.args).strip()
   return ret
 
 
@@ -366,6 +489,16 @@ ALL_IMPORTS.update(MOCK_IMPORTS_RETURN_SCHEMA)
 
 
 def parse_return_schema(mod_ast, relpath):
+  """Parses a return schema from the RETURN_SCHEMA of the Python module.
+
+  Args:
+    * mod_ast (ast.Module) - The parsed Python module code.
+    * relpath (str) - The posix-style relative path which should be associated
+      with the code in mod_ast.
+
+  Returns Doc.ReturnSchema.
+  """
+  assert isinstance(mod_ast, ast.Module), type(mod_ast)
   imports = _parse_mock_imports(mod_ast, MOCK_IMPORTS_RETURN_SCHEMA)
   schema, lineno = _find_value_of(mod_ast, 'RETURN_SCHEMA')
   if not schema:
@@ -382,22 +515,31 @@ MOCK_IMPORTS_RECIPE = _expand_mock_imports(
 ALL_IMPORTS.update(MOCK_IMPORTS_RECIPE)
 
 
-def parse_recipe(uv, base_dir, relpath, recipe_name):
-  recipe = _grab_ast(base_dir, relpath)
-  if not recipe:
+def parse_recipe(recipe):
+  """Parses a recipe object into a Doc.Recipe.
+
+  Args:
+    * recipe (Recipe) - The recipe object to parse.
+
+  Returns Doc.Recipe.
+  """
+  assert isinstance(recipe, Recipe), type(recipe)
+  relpath = _to_posix(recipe.relpath)
+
+  recipe_ast = _grab_ast(recipe.repo, recipe.path)
+  if not recipe_ast:
     return None
-  classes, funcs = _extract_classes_funcs(recipe, relpath, MOCK_IMPORTS_RECIPE)
+  classes, funcs = _extract_classes_funcs(recipe_ast, relpath,
+                                          MOCK_IMPORTS_RECIPE)
   funcs.pop('GenTests', None)
 
-  # TODO(iannucci): parse RequireClients
-
   return doc.Doc.Recipe(
-    name=recipe_name,
+    name=recipe.name,
     relpath=relpath,
-    docstring=ast.get_docstring(recipe) or '',
-    deps=parse_deps(uv, recipe, relpath),
-    parameters=parse_parameters(recipe, relpath),
-    return_schema=parse_return_schema(recipe, relpath),
+    docstring=ast.get_docstring(recipe_ast) or '',
+    deps=parse_deps(recipe.repo.name, recipe_ast, relpath),
+    parameters=parse_parameters(recipe_ast, relpath),
+    return_schema=parse_return_schema(recipe_ast, relpath),
     classes=classes,
     funcs=funcs,
   )
@@ -408,21 +550,28 @@ MOCK_IMPORTS_MODULE = _expand_mock_imports(
 ALL_IMPORTS.update(MOCK_IMPORTS_MODULE)
 
 
-def parse_module(uv, base_dir, relpath, mod_name):
-  native_relpath = _to_native(relpath)
+def parse_module(module):
+  """Parses a recipe module object into a Doc.Module.
 
-  api_relpath = relpath + '/api.py'
-  api = _grab_ast(base_dir, _to_native(api_relpath))
+  Args:
+    * recipe (RecipeModule) - The module object to parse.
+
+  Returns Doc.Module.
+  """
+  assert isinstance(module, RecipeModule), type(module)
+  relpath = _to_posix(module.relpath)
+
+  api = _grab_ast(module.repo, os.path.join(module.path, 'api.py'))
   if not api:
     return None
 
-  init_relpath = os.path.join(native_relpath, '__init__.py')
-  init = _grab_ast(base_dir, init_relpath)
+  init = _grab_ast(module.repo, os.path.join(module.path, '__init__.py'))
   if not init:
     return None
 
   imports = _parse_mock_imports(api, MOCK_IMPORTS_MODULE)
-  classes, funcs = _extract_classes_funcs(api, api_relpath, imports)
+  classes, funcs = _extract_classes_funcs(
+    api, posixpath.join(relpath, 'api.py'), imports)
 
   api_class = None
   for name, val in sorted(classes.iteritems()):
@@ -433,41 +582,49 @@ def parse_module(uv, base_dir, relpath, mod_name):
     LOGGER.error('could not determine main RecipeApi class: %r', relpath)
     return None
 
+  init_relpath = posixpath.join(relpath, '__init__.py')
+
   return doc.Doc.Module(
-    name=mod_name,
+    name=module.name,
     relpath=relpath,
     docstring=ast.get_docstring(api) or '',
     api_class=api_class,
     classes=classes,
     funcs=funcs,
-    deps=parse_deps(uv, init, init_relpath),
+    deps=parse_deps(module.repo.name, init, init_relpath),
     parameters=parse_parameters(init, init_relpath),
   )
 
 
-def parse_package(uv, base_dir, spec):
-  ret = doc.Doc.Package(project_id=spec.project_id)
-  ret.specs[spec.project_id].CopyFrom(spec)
-  for dep, pkg in uv.package.deps.iteritems():
-    ret.specs[dep].CopyFrom(pkg.repo_spec.spec_pb())
+def parse_repo(repo):
+  """Parses a recipe repo object into a Doc.Repo.
 
-  readme = join(base_dir, 'README.recipes.intro.md')
+  Args:
+    * recipe (RecipeRepo) - The repo to parse.
+
+  Returns Doc.Repo.
+  """
+  assert isinstance(repo, RecipeRepo), type(repo)
+  ret = doc.Doc.Repo(repo_name=repo.name)
+  ret.specs[repo.name].CopyFrom(repo.recipes_cfg_pb2)
+  for dep_repo_name in repo.recipes_cfg_pb2.deps:
+    ret.specs[dep_repo_name].CopyFrom(
+        repo.recipe_deps.repos[dep_repo_name].recipes_cfg_pb2)
+
+  readme = join(repo.recipes_root_path, 'README.recipes.intro.md')
   if os.path.isfile(readme):
     with open(readme, 'rb') as f:
       ret.docstring = f.read()
 
-  mod_base = posixpath.relpath(uv.module_dir, base_dir)
-  for mod_name in uv.loop_over_recipe_modules():
-    relpath = join(mod_base, mod_name)
-    mod = parse_module(uv, base_dir, relpath, mod_name)
+  for module in repo.modules.itervalues():
+    mod = parse_module(module)
     if mod:
-      ret.recipe_modules[mod_name].CopyFrom(mod)
+      ret.recipe_modules[module.name].CopyFrom(mod)
 
-  for recipe_path, recipe_name in uv.loop_over_recipes():
-    relpath = posixpath.relpath(recipe_path, base_dir)
-    recipe = parse_recipe(uv, base_dir, relpath, recipe_name)
+  for recipe in repo.recipes.itervalues():
+    recipe = parse_recipe(recipe)
     if recipe:
-      ret.recipes[recipe_name].CopyFrom(recipe)
+      ret.recipes[recipe.name].CopyFrom(recipe)
 
   return ret
 
@@ -476,6 +633,13 @@ RECIPE_ENGINE_URL = 'https://chromium.googlesource.com/infra/luci/recipes-py'
 
 
 def _set_known_objects(base):
+  """Populates `base` with all registered known objects.
+
+  Args:
+    * base (Doc.Repo) - The repo doc message to populate.
+  """
+  assert isinstance(base, doc.Doc.Repo), type(base)
+
   source_cache = {}
 
   def _add_it(key, fname, target):
@@ -515,7 +679,7 @@ def _set_known_objects(base):
 def add_subparser(parser):
   doc_kinds=('binarypb', 'jsonpb', 'textpb', 'gen', 'markdown')
   helpstr = (
-    'List all known modules reachable from the current package, with their '
+    'List all known modules reachable from the current repo, with their '
     'documentation.'
   )
   doc_p = parser.add_parser(
@@ -531,41 +695,34 @@ def add_subparser(parser):
   doc_p.set_defaults(func=main)
 
 
-def regenerate_docs(universe_view, package_deps):
-  spec = universe_view.package.repo_spec.spec_pb()
-  base_dir = universe_view.package.repo_root
-  node = parse_package(universe_view, base_dir, spec)
+def regenerate_docs(repo):
+  """Rewrites `README.recipes.md` in the given recipe repo.
+
+  Args:
+    * repo (RecipeRepo) - The repo to regenerate the markdown docs for.
+  """
+  assert isinstance(repo, RecipeRepo), type(repo)
+  node = parse_repo(repo)
   _set_known_objects(node)
 
-  readme = os.path.join(
-    package_deps.root_package.recipes_dir, 'README.recipes.md')
+  readme = os.path.join(repo.recipes_root_path, 'README.recipes.md')
   with open(readme, 'wb') as f:
     doc_markdown.Emit(doc_markdown.Printer(f), node)
 
 
-def main(package_deps, args):
-  universe = loader.RecipeUniverse(package_deps, args.package)
-  universe_view = loader.UniverseView(universe, package_deps.root_package)
-
+def main(args):
   logging.basicConfig()
 
   # defer to regenerate_docs for consistency between train and 'doc --kind gen'
   if args.kind == 'gen':
     print('Generating README.recipes.md')
-    regenerate_docs(universe_view, package_deps)
+    regenerate_docs(args.recipe_deps.main_repo)
     return 0
 
-  spec = universe_view.package.repo_spec.spec_pb()
-  base_dir = universe_view.package.repo_root
-  if spec.recipes_path:
-    base_dir = join(base_dir, spec.recipes_path)
-
   if args.recipe:
-    recipe_fullpath = universe_view.find_recipe(args.recipe)
-    relpath = _to_posix(os.path.relpath(recipe_fullpath, base_dir))
-    node = parse_recipe(universe_view, base_dir, relpath, args.recipe)
+    node = parse_recipe(args.recipe_deps.recipes[args.recipe])
   else:
-    node = parse_package(universe_view, base_dir, spec)
+    node = parse_repo(args.recipe_deps.main_repo)
 
   _set_known_objects(node)
 

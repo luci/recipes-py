@@ -30,7 +30,7 @@ urllib3.contrib.pyopenssl.inject_into_urllib3()
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT_DIR)
 
-from recipe_engine import common_args, package, package_io, util
+from recipe_engine import common_args, util
 
 from recipe_engine import fetch, lint, bundle, analyze, autoroll
 from recipe_engine import manual_roll, doc, test, run
@@ -43,7 +43,7 @@ from recipe_engine import manual_roll, doc, test, run
 # which is expected to add a subparser by calling .add_parser on it. In
 # addition, the add_subparsers method should call .set_defaults on the created
 # sub-parser, and set the following values:
-#   func (fn(package_deps, args)) - The function called if the sub command is
+#   func (fn(args)) - The function called if the sub command is
 #     invoked.
 #   postprocess_func (fn(parser, args)) - A validation/normalization function
 #     which is called if the sub command is invoked. This function can
@@ -62,7 +62,7 @@ from recipe_engine import manual_roll, doc, test, run
 #
 #     sub.set_defaults(func=main)
 #
-#   def main(package_deps, args):
+#   def main(args):
 #     print args.cool_arg
 _SUBCOMMANDS = [
   run,
@@ -108,27 +108,10 @@ def main():
     module.add_subparser(subp)
 
   args = parser.parse_args()
-  common_postprocess_func(parser, args)
+  common_postprocess_func(args)
   args.postprocess_func(parser, args)
 
-  repo_root = package_io.InfraRepoConfig().from_recipes_cfg(args.package.path)
-
-  try:
-    # TODO(phajdan.jr): gracefully handle inconsistent deps when rolling.
-    # This fails if the starting point does not have consistent dependency
-    # graph. When performing an automated roll, it'd make sense to attempt
-    # to automatically find a consistent state, rather than bailing out.
-    # Especially that only some subcommands refer to package_deps.
-    context = package.PackageContext.from_package_pb(
-      repo_root, args.package.read())
-    package_deps = package.PackageDeps.create(
-        context, args.package, overrides=args.project_override)
-  except subprocess.CalledProcessError:
-    # A git checkout failed somewhere. Return 2, which is the sign that this is
-    # an infra failure, rather than a test failure.
-    return 2
-
-  return args.func(package_deps, args)
+  return args.func(args)
 
 
 if __name__ == '__main__':

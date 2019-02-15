@@ -35,14 +35,13 @@ MODULES_WHITELIST = [
 ]
 
 
-def ImportsTest(recipe_path, recipe_name, whitelist, universe_view):
+def ImportsTest(recipe, whitelist):
   """Tests that recipe_name only uses allowed imports.
 
   Returns a list of errors, or an empty list if there are no errors (duh).
   """
 
-  recipe = universe_view.load_recipe(recipe_name)
-  for _, val in sorted(recipe.globals.iteritems()):
+  for _, val in sorted(recipe.global_symbols.iteritems()):
     if isinstance(val, types.ModuleType):
       module_name = val.__name__
       for pattern in whitelist:
@@ -51,7 +50,7 @@ def ImportsTest(recipe_path, recipe_name, whitelist, universe_view):
       else:
         yield ('In %s:\n'
                '  Non-whitelisted import of %s' %
-               (recipe_path, module_name))
+               (recipe.path, module_name))
 
 
 def add_subparser(parser):
@@ -68,21 +67,14 @@ def add_subparser(parser):
   lint_p.set_defaults(func=main)
 
 
-def main(package_deps, args):
-  from . import loader
-
-  universe = loader.RecipeUniverse(package_deps, args.package)
-  universe_view = loader.UniverseView(universe, package_deps.root_package)
-
+def main(args):
   whitelist = map(re.compile, MODULES_WHITELIST + args.whitelist)
 
   errors = []
-  for recipe_path, recipe_name in universe_view.loop_over_recipes():
-    errors.extend(
-        ImportsTest(recipe_path, recipe_name, whitelist, universe_view))
+  for recipe in args.recipe_deps.main_repo.recipes.itervalues():
+    errors.extend(ImportsTest(recipe, whitelist))
 
   if errors:
-    for line in map(str, errors):
-      print line
+    print '\n'.join(str(e) for e in errors)
     return 1
   return 0

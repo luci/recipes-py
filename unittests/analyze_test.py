@@ -2,170 +2,280 @@
 # Copyright 2018 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
-"""Small smoke test that makes sure analyze works.
-
-There are more extensive unit tests in //recipe_engine/unittests/analyze_test.py
-This is just here to test the command end to end."""
+"""Tests for the 'analyze' command."""
 
 import json
 import os
 import subprocess
 import sys
-import unittest
 
-from repo_test_util import ROOT_DIR, temporary_file
+import mock
+
+import test_env
+
+from recipe_engine import analyze, analyze_pb2
 
 
-class AnalyzeTest(unittest.TestCase):
+class AnalyzeTest(test_env.RecipeEngineUnitTest):
+  def setUp(self):
+    super(AnalyzeTest, self).setUp()
+    self.git_attr_patcher = mock.patch(
+        'recipe_engine.analyze.get_git_attribute_files',
+        side_effect=self.git_attr)
+    self.git_attr_patcher.start()
+    self.git_attr_files = []
+
+  def tearDown(self):
+    self.git_attr_patcher.stop()
+    self.git_attr_files = None
+    super(AnalyzeTest, self).tearDown()
+
+  def git_attr(self, repo_root):
+    return [os.path.join(repo_root, path) for path in self.git_attr_files]
+
+  def _run(self, recipe_deps, git_attr_files, in_data):
+    self.git_attr_files = git_attr_files
+    result = analyze.analyze(recipe_deps, in_data)
+    result.recipes.sort()
+    result.invalid_recipes.sort()
+
+    return result
+
   def testInvalidRecipe(self):
-    with temporary_file() as input_path:
-      with open(input_path, 'w') as f:
-        json.dump({
-            'files': ['recipe_modules/step/api.py'],
-            'recipes': ['engine_tests/unicooooooode'],
-        }, f)
+    result = self._run(
+      self.MockRecipeDeps(),
+      git_attr_files=[], in_data=analyze_pb2.Input(
+        files=['foo.py'],
+        recipes=['run_test.py'],
+      ))
+    self.assertEqual(result, analyze_pb2.Output(
+      error='Some input recipes were invalid',
+      invalid_recipes=['run_test.py'],
+    ))
 
-      with temporary_file() as output_path:
-        script_path = os.path.join(ROOT_DIR, 'recipes.py')
-        exit_code = subprocess.call([
-            sys.executable, script_path,
-            '--package', os.path.join(
-                ROOT_DIR, 'infra', 'config', 'recipes.cfg'),
-            'analyze', input_path, output_path])
-        with open(output_path) as f:
-          self.assertEqual(json.load(f), {
-            'error': 'Some input recipes were invalid',
-            'invalidRecipes': ['engine_tests/unicooooooode'],
-            'recipes': [],
-          })
-        self.assertEqual(1, exit_code)
-
-  def testNotChanged(self):
-    with temporary_file() as input_path:
-      with open(input_path, 'w') as f:
-        json.dump({
-            'files': ['recipe_modules/buildbucket/api.py'],
-            'recipes': ['engine_tests/unicode'],
-        }, f)
-
-      with temporary_file() as output_path:
-        script_path = os.path.join(ROOT_DIR, 'recipes.py')
-        exit_code = subprocess.call([
-            sys.executable, script_path,
-            '--package', os.path.join(
-                ROOT_DIR, 'infra', 'config', 'recipes.cfg'),
-            'analyze', input_path, output_path])
-        with open(output_path) as f:
-          self.assertEqual(json.load(f), {
-            'error': '',
-            'invalidRecipes': [],
-            'recipes': [],
-          })
-        self.assertEqual(0, exit_code)
+  def testUnusedFiles(self):
+    result = self._run(self.MockRecipeDeps(
+        {'foo_module': []},
+        {'run_test': ['foo_module']}
+      ), git_attr_files=[], in_data=analyze_pb2.Input(
+          files=['some_random_file'],
+          recipes=['run_test'],
+      ))
+    self.assertEqual(result, analyze_pb2.Output())
 
   def testGitAttrs(self):
-    with temporary_file() as input_path:
-      with open(input_path, 'w') as f:
-        json.dump({
-            'files': ['recipes.py'],
-            'recipes': [
-                'engine_tests/unicode',
-                'engine_tests/whitelist_steps',
-            ],
-        }, f)
+    result = self._run(self.MockRecipeDeps(
+        {'foo_module': []},
+        {
+          'run_test': ['foo_module'],
+          'other_thing': ['foo_module'],
+          'last_recipe': ['foo_module'],
+        }
+      ), git_attr_files=['foo.py'], in_data=analyze_pb2.Input(
+          files=['foo.py'],
+          recipes=['run_test', 'other_thing', 'last_recipe'],
+      ))
+    self.assertEqual(result, analyze_pb2.Output(
+        recipes=sorted(['run_test', 'other_thing', 'last_recipe']),
+    ))
 
-      with temporary_file() as output_path:
-        script_path = os.path.join(ROOT_DIR, 'recipes.py')
-        exit_code = subprocess.call([
-            sys.executable, script_path,
-            '--package', os.path.join(
-                ROOT_DIR, 'infra', 'config', 'recipes.cfg'),
-            'analyze', input_path, output_path])
-        with open(output_path) as f:
-          self.assertEqual(json.load(f), {
-            'error': '',
-            'invalidRecipes': [],
-            # List should be safe to not wrap with a call to sorted, since
-            # proto repeated fields are ordered, so everything should be
-            # analyzed in the same order every time.
-            'recipes': [
-              'engine_tests/whitelist_steps',
-              'engine_tests/unicode',
-            ],
-          })
-        self.assertEqual(0, exit_code)
+  def testSimple(self):
+    result = self._run(self.MockRecipeDeps(
+        {'foo_module': []},
+        {'run_test': ['foo_module']}
+      ), git_attr_files=[], in_data=analyze_pb2.Input(
+          files=['recipe_modules/foo_module/api.py'],
+          recipes=['run_test'],
+      ))
+    self.assertEqual(result, analyze_pb2.Output(
+      recipes=['run_test'],
+    ))
+
+  def testAbsPath(self):
+    result = self._run(self.MockRecipeDeps(
+        {'foo_module': []},
+        {'run_test': ['foo_module']}
+      ), git_attr_files=[], in_data=analyze_pb2.Input(
+          files=['/MAIN_ROOT/recipe_modules/foo_module/api.py'],
+          recipes=['run_test'],
+      ))
+    self.assertEqual(result, analyze_pb2.Output(
+      recipes=['run_test'],
+    ))
+
+  def testRecipeFile(self):
+    result = self._run(self.MockRecipeDeps(
+        {'foo_module': []},
+        {'run_test': ['foo_module']}
+      ), git_attr_files=[], in_data=analyze_pb2.Input(
+          files=['recipes/run_test.py'],
+          recipes=['run_test'],
+      ))
+    self.assertEqual(result, analyze_pb2.Output(
+      recipes=['run_test'],
+    ))
+
+  def testDependency(self):
+    result = self._run(self.MockRecipeDeps(
+        {
+          'foo_module': ['bar_module'],
+          'bar_module': [],
+        },
+        {'run_test': ['foo_module']}
+      ), git_attr_files=[], in_data=analyze_pb2.Input(
+          files=['recipe_modules/bar_module/api.py'],
+          recipes=['run_test'],
+      ))
+    self.assertEqual(result, analyze_pb2.Output(
+      recipes=['run_test'],
+    ))
+
+  def testTwoRecipes(self):
+    result = self._run(self.MockRecipeDeps(
+        {'foo_module': []},
+        {
+          'run_test': ['foo_module'],
+          'run_other_test': ['foo_module'],
+        }
+      ), git_attr_files=[], in_data=analyze_pb2.Input(
+          files=['recipe_modules/foo_module/api.py'],
+          recipes=['run_test', 'run_other_test'],
+      ))
+    self.assertEqual(result, analyze_pb2.Output(
+      recipes=sorted(['run_test', 'run_other_test']),
+    ))
+
+  def testTwoRecipesOnlyOne(self):
+    result = self._run(self.MockRecipeDeps(
+        {'foo_module': []},
+        {
+          'run_test': ['foo_module'],
+          'run_other_test': [],
+        }
+      ), git_attr_files=[], in_data=analyze_pb2.Input(
+          files=['recipe_modules/foo_module/api.py'],
+          recipes=['run_test', 'run_other_test'],
+      ))
+    self.assertEqual(result, analyze_pb2.Output(
+      recipes=['run_test'],
+    ))
+
+  def testOneRecipeTwoModules(self):
+    result = self._run(self.MockRecipeDeps(
+        {
+          'foo_module': [],
+          'bar_module': [],
+        },
+        {
+          'run_test': ['foo_module', 'bar_module'],
+        }
+      ), git_attr_files=[], in_data=analyze_pb2.Input(
+          files=['recipe_modules/foo_module/api.py'],
+          recipes=['run_test'],
+      ))
+    self.assertEqual(result, analyze_pb2.Output(
+      recipes=['run_test'],
+    ))
+
+
+class AnalyzeSmokeTest(test_env.RecipeEngineUnitTest):
+  """Small smoke test that makes sure analyze works.
+  """
+
+  def _run(self, indata):
+    infile = self.tempfile()
+    with open(infile, 'w') as f:
+      json.dump(indata, f)
+
+    outfile = self.tempfile()
+    exit_code = subprocess.call([
+      sys.executable, os.path.join(test_env.ROOT_DIR, 'recipes.py'),
+      'analyze', infile, outfile])
+    with open(outfile) as f:
+      return exit_code, json.load(f)
+
+  def testInvalidRecipe(self):
+    exit_code, outdata = self._run({
+      'files': ['recipe_modules/step/api.py'],
+      'recipes': ['engine_tests/unicooooooode'],
+    })
+    self.assertDictEqual(outdata, {
+      'error': 'Some input recipes were invalid',
+      'invalidRecipes': ['engine_tests/unicooooooode'],
+      'recipes': [],
+    })
+    self.assertEqual(exit_code, 1)
+
+  def testNotChanged(self):
+    exit_code, outdata = self._run({
+      'files': ['recipe_modules/buildbucket/api.py'],
+      'recipes': ['engine_tests/unicode'],
+    })
+    self.assertDictEqual(outdata, {
+      'error': '',
+      'invalidRecipes': [],
+      'recipes': [],
+    })
+    self.assertEqual(exit_code, 0)
+
+  def testGitAttrs(self):
+    exit_code, outdata = self._run({
+      'files': ['.vpython'],  # vpython is included via .gitattributes
+      'recipes': [
+        'engine_tests/unicode',
+        'engine_tests/whitelist_steps',
+      ],
+    })
+    self.assertDictEqual(outdata, {
+      'error': '',
+      'invalidRecipes': [],
+      # List should be safe to not wrap with a call to sorted, since
+      # proto repeated fields are ordered, so everything should be
+      # analyzed in the same order every time.
+      'recipes': [
+        'engine_tests/whitelist_steps',
+        'engine_tests/unicode',
+      ],
+    })
+    self.assertEqual(exit_code, 0)
 
   def testRecipeChanged(self):
-    with temporary_file() as input_path:
-      with open(input_path, 'w') as f:
-        json.dump({
-            'files': ['recipes/engine_tests/unicode.py'],
-            'recipes': ['engine_tests/unicode'],
-        }, f)
-
-      with temporary_file() as output_path:
-        script_path = os.path.join(ROOT_DIR, 'recipes.py')
-        exit_code = subprocess.call([
-            sys.executable, script_path,
-            '--package', os.path.join(
-                ROOT_DIR, 'infra', 'config', 'recipes.cfg'),
-            'analyze', input_path, output_path])
-        with open(output_path) as f:
-          self.assertEqual(json.load(f), {
-            'error': '',
-            'invalidRecipes': [],
-            'recipes': ['engine_tests/unicode'],
-          })
-        self.assertEqual(0, exit_code)
+    exit_code, outdata = self._run({
+      'files': ['recipes/engine_tests/unicode.py'],
+      'recipes': ['engine_tests/unicode'],
+    })
+    self.assertDictEqual(outdata, {
+      'error': '',
+      'invalidRecipes': [],
+      'recipes': ['engine_tests/unicode'],
+    })
+    self.assertEqual(exit_code, 0)
 
   def testRecipeChangedAbsPath(self):
-    with temporary_file() as input_path:
-      with open(input_path, 'w') as f:
-        json.dump({
+    exit_code, outdata = self._run({
             'files': [os.path.join(
-                ROOT_DIR, 'recipes', 'engine_tests', 'unicode.py')],
+                test_env.ROOT_DIR, 'recipes', 'engine_tests', 'unicode.py')],
             'recipes': ['engine_tests/unicode'],
-        }, f)
-
-      with temporary_file() as output_path:
-        script_path = os.path.join(ROOT_DIR, 'recipes.py')
-        exit_code = subprocess.call([
-            sys.executable, script_path,
-            '--package', os.path.join(
-                ROOT_DIR, 'infra', 'config', 'recipes.cfg'),
-            'analyze', input_path, output_path])
-        with open(output_path) as f:
-          self.assertEqual(json.load(f), {
-            'error': '',
-            'invalidRecipes': [],
-            'recipes': ['engine_tests/unicode'],
-          })
-        self.assertEqual(0, exit_code)
+        })
+    self.assertDictEqual(outdata, {
+      'error': '',
+      'invalidRecipes': [],
+      'recipes': ['engine_tests/unicode'],
+    })
+    self.assertEqual(exit_code, 0)
 
   def testModuleChanged(self):
-    with temporary_file() as input_path:
-      with open(input_path, 'w') as f:
-        json.dump({
-            'files': ['recipe_modules/step/api.py'],
-            'recipes': ['engine_tests/unicode'],
-        }, f)
-
-      with temporary_file() as output_path:
-        script_path = os.path.join(ROOT_DIR, 'recipes.py')
-        exit_code = subprocess.call([
-            sys.executable, script_path,
-            '--package', os.path.join(
-                ROOT_DIR, 'infra', 'config', 'recipes.cfg'),
-            'analyze', input_path, output_path])
-        with open(output_path) as f:
-          self.assertEqual(json.load(f), {
-            'error': '',
-            'invalidRecipes': [],
-            'recipes': ['engine_tests/unicode'],
-          })
-        self.assertEqual(0, exit_code)
+    exit_code, outdata = self._run({
+      'files': ['recipe_modules/step/api.py'],
+      'recipes': ['engine_tests/unicode'],
+    })
+    self.assertDictEqual(outdata, {
+      'error': '',
+      'invalidRecipes': [],
+      'recipes': ['engine_tests/unicode'],
+    })
+    self.assertEqual(exit_code, 0)
 
 
 if __name__ == '__main__':
-  unittest.TestCase.maxDiff = None
-  unittest.main()
+  test_env.main()

@@ -19,6 +19,12 @@ be removed.
 
 [old_user_guide]: ./old_user_guide.md
 
+*** note
+For more implementation details, please see [implementation_details].
+***
+
+[implementation_details]: ./implementation_details.md
+
 
 [TOC]
 
@@ -94,8 +100,8 @@ A recipe repo has a couple essential requirements:
 
 #### recipes.cfg
 
-The `recipes.cfg` file is a JSONPB file, which is defined by the [package.proto]
-protobuf file.
+The `recipes.cfg` file is a JSONPB file, which is defined by the
+[recipes_cfg.proto] protobuf file.
 
 Its purpose is to tell the recipe engine about this repo, and indicate any
 other repos that this repo depends on (including precise dependency pins). All
@@ -108,7 +114,7 @@ repos depend on your repo.
 
 Example [recipes.cfg](https://chromium.googlesource.com/chromium/tools/build/+/master/infra/config/recipes.cfg).
 
-[package.proto]: /recipe_engine/package.proto
+[recipes_cfg.proto]: /recipe_engine/recipes_cfg.proto
 
 #### Recipes folder
 
@@ -189,15 +195,14 @@ If you're developing recipes locally, you may find the need to work on changes
 in multiple recipe repos simultaneously. You can override a dependency for
 a recipe repo with the `-O` option to `recipes.py`, for any of its subcommands.
 
-
-For example, you may want to change the behavior of the `root` repo and
+For example, you may want to change the behavior of the upstream repo and
 see how it affects the behavior of the recipes in the `dependent` repo (which
-presumably depends on the `root` repo). To do this you would:
+presumably depends on the upstream repo). To do this you would:
 
-    $ # Hack on the root repo locally to make your change
+    $ # Hack on the upstream repo locally to make your change
     $ cd /path/to/dependent/repo
-    $ ./recipes.py -O root=/path/to/root/repo test train
-    <uses your local root repo, regardless of what recipe.cfg specifies>
+    $ ./recipes.py -O upstream_id=/path/to/upstream/repo test train
+    <uses your local upstream repo, regardless of what recipe.cfg specifies>
 
 This works for all dependency repos, and can be specified multiple times to
 override more than one dependency.
@@ -282,6 +287,10 @@ TODO(iannucci) - Document
 
 **DEPS** -- An expression of the dependency from a recipe to a recipe_module,
   or from one recipe_module to another.
+
+**repo_name** -- The name of a recipe repo, as indicated by the `repo_name`
+  field in it's recipes.cfg file. This is used to qualify module dependencies
+  from other repos.
 
 **properties** -- A JSON object that every recipe is started with; These are
   the input parameters to the recipe.

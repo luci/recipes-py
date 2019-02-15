@@ -127,3 +127,13 @@ wheel: <
   name: "infra/python/wheels/pbr-py2_py3"
   version: "version:3.0.0"
 >
+
+wheel: <
+  name: "infra/python/wheels/attrs-py2_py3"
+  version: "version:18.2.0"
+>
+
+wheel: <
+  name: "infra/python/wheels/scandir/${vpython_platform}"
+  version: "version:1.9.0"
+>

@@ -1,5 +1,10 @@
 # Cross-repo development in recipes
 
+*** note
+TODO(iannucci): This document is way out of date and should be merged into
+[user_guide.md][./user_guide.md]
+***
+
 At the time of writing, there are three repositories containing recipes and
 recipe modules, soon to be more.  Repositories declare their relationships to
 each other in a file called `recipes.cfg`, in the `infra/config`
@@ -7,7 +12,7 @@ directory from the repository root.  For example:
 
     {
       "api_version": 2,
-      "project_id": "build_internal",
+      "repo_name": "build_internal",
       "recipes_path": "",
       "deps": {
         "build": {
@@ -23,18 +28,19 @@ directory from the repository root.  For example:
       }
     }
 
-`project_id` is the LUCI-config identifier for the project.  `recipes_path` is
-the path from the root of the repository to the location of the `recipes` and
+`repo_name` is a unique name for this repo. Typically this is the same as the
+LUCI-config project_id for the repo.
+`recipes_path` is the path from the root of the repository to the location of the `recipes` and
 `recipe_modules` directories.  This collection of recipes-related things in a
-repository is called a *recipe package*.
+repository is called a *recipe repo*.
 
 There are two `deps` entries in this file.  There always has to be an entry for
-the `recipe_engine` project, which pins the version of the engine that is used,
-and all projects in a particular dependency graph must agree on the engine
+the `recipe_engine` repo, which pins the version of the engine that is used,
+and all repos in a particular dependency graph must agree on the engine
 revision (in fact, they must agree on the revision of any shared dependency).
 
 The `recipes.py` tool, which goes alongside the `recipes` and `recipe_modules`
-directories, can be used to interact with the dependencies of a recipe package.
+directories, can be used to interact with the dependencies of a recipe repo.
 
     $ ./recipes.py fetch
 
@@ -50,22 +56,22 @@ forward.  `roll` takes *as small a step forward as possible*, so you have to run
 it multiple times if you want to roll farther.  This is so that it is possible,
 for example, to tell at which point the simulation tests broke.
 
-The `recipes.py` tool has several other modes for working with a recipe package,
+The `recipes.py` tool has several other modes for working with a recipe repo,
 which are not covered here, but look at `recipes.py --help`.
 
 ## Local development
 
 When locally developing recipes, it is oftentimes desirable to observe the
 effect that your local changes will have on other repositories. This can be done
-by using recipe engine *local project overrides* command-line flags (`-O`).
+by using recipe engine *local overrides* command-line flags (`-O`).
 
-Local project overrides allow the user to redirect a project's checkout to a
-local path during execution. A developer would run the downstream project,
-overriding the one or more upstream projects under development.
+Local overrides allow the user to redirect a repo's checkout to a
+local path during execution. A developer would run the downstream recipes,
+overriding the one or more upstream recipe repos under development.
 
 For example, to make a change in `build` and see what its effect on
 `build_internal` recipes, one would execute `build_internal`'s recipe,
-overriding its `build` project to point to the local path.
+overriding its `build` repo to point to the local path.
 
     $ ./recipes.py -O build=/path/to/build test train
 
@@ -81,5 +87,5 @@ want to see its effects on the repository `/b/build`.  Run:
       -O recipe_engine=/b/recipes-py test run
 
 Running `/b/recipes-py/recipes.py` uses the modified engine, however without
-the `-O` package override option, it would still use core modules pinned in
+the `-O` repo override option, it would still use core modules pinned in
 `recipes.cfg`.

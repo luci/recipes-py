@@ -4,7 +4,7 @@
 
 syntax = "proto3";
 
-import "package.proto";
+import "recipes_cfg.proto";
 
 package recipe_engine;
 
@@ -143,10 +143,10 @@ message Doc {
     string relpath = 1;
     int32 lineno = 2;
 
-    // A simple tuple of package id and module name. This should be enough to
+    // A simple tuple of repo_name and module name. This should be enough to
     // calculate a link to this module.
     message ModuleLink {
-      string package = 1;
+      string repo_name = 1;
       string name = 2;
     }
 
@@ -278,27 +278,27 @@ message Doc {
     map<string, Known> known_objects = 9;
   }
 
-  // Documentation for a package (recipe repo), including docs for all recipes
-  // and recipe_module's in that package.
-  message Package {
-    // This is the project_id that's being documented.
-    string project_id = 1;
+  // Documentation for a recipe repo, including docs for all recipes
+  // and recipe_module's in that repo.
+  message Repo {
+    // This is the name of the repo that's being documented.
+    string repo_name = 1;
 
-    // This is a mapping from project_id to Package `spec`, including the
-    // project for the main project (as indicated by `project_id`).
+    // This is a mapping from repo_name to RepoSpec, including the
+    // spec for the main repo (as indicated by `repo_name`).
     //
     // Contains lots of goodies like the path within the repo to where the
     // recipes start, and the dependencies of the repos.
-    map<string, recipe_engine.Package > specs = 2;
+    map<string, recipe_engine.RepoSpec > specs = 2;
 
     // the full contents of the 'README.recipes.md' file at the base of the repo
     // plus recipe_root.
     string docstring = 3;
 
-    // a map of all of this package's recipe_module names to their documentation.
+    // a map of all of this repo's recipe_module names to their documentation.
     map<string, Module> recipe_modules = 4;
 
-    // a map of all of this package's recipe names to their documentation.
+    // a map of all of this repo's recipe names to their documentation.
     map<string, Recipe> recipes = 5;
 
     // A map of known items (e.g. core portions of the recipe engine) to their

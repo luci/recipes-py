@@ -102,7 +102,7 @@ class PathsClient(object):
   In particular, you can use this client to discover all known:
     * recipe resource path
     * loaded module resource paths
-    * loaded package repo paths
+    * loaded recipe repo paths
   """
 
   IDENT = 'paths'
@@ -127,7 +127,7 @@ class PathsClient(object):
       api = search_set.pop()
 
       add_found(api.resource())
-      add_found(api.package_repo_resource())
+      add_found(api.repo_resource())
 
       for name in dir(api.m):
         sub_api = getattr(api.m, name)
@@ -991,11 +991,11 @@ class RecipeApiPlain(object):
     #  module.resource('dir').join('subdir', 'file.py')
     return self._module.RESOURCE_DIRECTORY.join(*path)
 
-  def package_repo_resource(self, *path):
+  def repo_resource(self, *path):
     """Returns a resource path, where path is relative to the root of
-    the package repo where this module is defined.
+    the recipe repo where this module is defined.
     """
-    return self._module.PACKAGE_REPO_ROOT.join(*path)
+    return self._module.REPO_ROOT.join(*path)
 
   @property
   def name(self):
@@ -1044,10 +1044,10 @@ class BoundProperty(object):
   @staticmethod
   def legal_module_property_name(name, full_decl_name):
     """
-    If this is a special $package/module name.
+    If this is a special $repo_name/module name.
     """
-    package, module = full_decl_name.split('::', 1)
-    return name == '$%s/%s' % (package, module)
+    repo_name, module = full_decl_name.split('::', 1)
+    return name == '$%s/%s' % (repo_name, module)
 
   @staticmethod
   def legal_name(name, is_param_name=False):
@@ -1098,8 +1098,8 @@ class BoundProperty(object):
       property_type (str): One of RECIPE_PROPERTY or MODULE_PROPERTY.
       full_decl_name (str): The fully qualified name of the recipe or module
         where this property is defined. This has the form of:
-          package_name::module_name
-          package_name::path/to/recipe
+          repo_name::module_name
+          repo_name::path/to/recipe
       param_name (str|None): The name of the python function parameter this
         property should be stored in. Can be used to allow for dotted property
         names, e.g.
@@ -1110,7 +1110,7 @@ class BoundProperty(object):
     assert property_type in (self.RECIPE_PROPERTY, self.MODULE_PROPERTY), \
       property_type
 
-    # first, check if this is a special '$package/module' property type
+    # first, check if this is a special '$repo_name/module' property type
     # declaration.
     is_module_property = (
       property_type is self.MODULE_PROPERTY and

@@ -20,10 +20,9 @@ import requests
 
 from google.protobuf import json_format
 
-from . import package_pb2
-from . import package_io
-from . import util
 from . import gitattr_checker
+from . import util
+from .internal import simple_cfg
 
 from .third_party import subprocess42
 
@@ -43,7 +42,7 @@ class UnresolvedRefspec(Exception):
 # author_email (str|None): the email of the author of this commit
 # commit_timestamp (int): the unix commit timestamp for this commit
 # message_lines (tuple(str)): the message of this commit
-# spec (package_pb2.Package): the parsed infra/config/recipes.cfg file or None.
+# spec (SimpleRecipesCfg): the parsed infra/config/recipes.cfg file or None.
 # roll_candidate (bool): if this commit contains changes which are known to
 #   affect the behavior of the recipes (i.e. modifications within recipe_path
 #   and/or modifications to recipes.cfg)
@@ -58,8 +57,9 @@ class Backend(object):
     Args:
       checkout_dir (str): native absolute path to local directory that this
         Backend will manage.
-      repo_url (str): url to remote repository that this Backend will connect
-        to.
+      repo_url (str|None): url to remote repository that this Backend will
+        connect to. If None, then the repo will be assumed to exist at
+        checkout_dir and all write operations will be disabled.
     """
     self.checkout_dir = checkout_dir
     self.repo_url = repo_url
@@ -82,7 +82,10 @@ class Backend(object):
     Returns (CommitMetadata).
     """
     revision = self.resolve_refspec(refspec)
-    cache = self._GIT_METADATA_CACHE.setdefault(self.repo_url, {})
+    key = self.repo_url
+    if key is None:
+      key = self.checkout_dir
+    cache = self._GIT_METADATA_CACHE.setdefault(key, {})
     if revision not in cache:
       cache[revision] = self._commit_metadata_impl(revision)
     return cache[revision]
@@ -135,6 +138,18 @@ class Backend(object):
     # out the files referred to according to the rules that the bundle
     # subcommand uses.
     raise NotImplementedError()
+
+  def cat_file(self, revision, file_path):
+    """Returns the bytes of the given |file_path| in |revision|.
+
+    Args:
+      revision (str) - The revision to cat the file from.
+      file_path (str) - The git path for the file (from the root of the repo).
+
+    Returns the file contents as a str.
+    """
+    raise NotImplementedError()
+
 
   ### private overrides. Override these in the implementations, but don't call
   ### externally.
@@ -269,6 +284,8 @@ class GitBackend(Backend):
   ### Backend implementations
 
   def fetch(self, refspec):
+    if self.repo_url is None:
+      raise ValueError('cannot call GitBackend.fetch without a `repo_url`')
     self._ensure_local_repo_exists()
 
     args = ['fetch', self.repo_url]
@@ -296,6 +313,10 @@ class GitBackend(Backend):
     except GitError:
       self._git('reset', '-q', '--hard', revision)
 
+  def cat_file(self, revision, file_path):
+    self.assert_resolved(revision)
+    return self._git('cat-file', 'blob', '%s:%s' % (revision, file_path))
+
   def _updates_impl(self, revision, other_revision):
     args = [
         'rev-list',
@@ -311,7 +332,21 @@ class GitBackend(Backend):
 
   def _resolve_refspec_impl(self, revision):
     self._ensure_local_repo_exists()
-    rslt = self._git('ls-remote', self.repo_url, revision).split()[0]
+    # Can return e.g.
+    #
+    #   b4a1b1365895c5962fb3654aff61290be2a492ed	HEAD
+    #   39bbb4e3749b0a9ebc6cb36d8b679b147e4ed270	refs/remotes/origin/HEAD
+    #
+    # So we need the 'splitlines' bit too.
+    source = self.repo_url if self.repo_url is not None else '.'
+    mapping = {
+      ref: csum
+      for csum, ref in (
+        l.split()
+        for l in self._git('ls-remote', source, revision).splitlines()
+      )
+    }
+    rslt = mapping[revision]
     assert self.is_resolved_revision(rslt), repr(rslt)
     return rslt
 
@@ -328,10 +363,11 @@ class GitBackend(Backend):
       'show', '-s', '--format=%aE%n%ct%n%B', revision).rstrip('\n').splitlines()
 
     try:
-      spec = package_io.parse(self._git(
-        'cat-file', 'blob', '%s:%s' %
-        (revision, package_io.InfraRepoConfig.RELPATH)))
+      spec = simple_cfg.SimpleRecipesCfg.from_json_string(
+        self.cat_file(revision, simple_cfg.RECIPES_CFG_LOCATION_REL))
     except GitError:
+      spec = None
+    except ValueError:  # commit with unparsable recipes.cfg
       spec = None
 
     # check diff to see if it touches anything interesting.
@@ -339,9 +375,11 @@ class GitBackend(Backend):
       'diff-tree', '-r', '--no-commit-id', '--name-only', '%s^!' % revision)
       .splitlines())
 
+    recipes_path = spec.recipes_path if spec else ''
+
     has_interesting_changes = (
-        package_io.InfraRepoConfig.RELPATH in changed_files or
-        any(f.startswith(spec.recipes_path) for f in changed_files) or
+        simple_cfg.RECIPES_CFG_LOCATION_REL in changed_files or
+        any(f.startswith(recipes_path) for f in changed_files) or
         self._gitattr_checker.check_files(revision, changed_files))
 
     return CommitMetadata(revision, meta[0],
@@ -357,4 +395,4 @@ def add_subparser(parser):
 
   fetch_p.set_defaults(
     # fetch action is implied by recipes.py
-    func=(lambda package_deps, _args: 0))
+    func=(lambda _args: 0))

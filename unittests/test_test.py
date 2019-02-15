@@ -3,1251 +3,1035 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import argparse
 import json
 import os
-import shutil
 import subprocess
-import sys
-import tempfile
-import unittest
+
+from cStringIO import StringIO
+
+from google.protobuf import json_format as jsonpb
+
+# pylint: disable=import-error
+import attr
+import mock
+
+import test_env
+
+from recipe_engine import test
+from recipe_engine.util import strip_unicode
+from recipe_engine.test_result_pb2 import TestResult
+
+CheckFailure = TestResult.CheckFailure
 
 
-from repo_test_util import ROOT_DIR
+class Common(test_env.RecipeEngineUnitTest):
+  @attr.s(frozen=True)
+  class JsonResult(object):
+    text_output = attr.ib()
+    data = attr.ib()
 
-from recipe_engine import package_io
-from recipe_engine import package_pb2
+  def _run_test(self, *args, **kwargs):
+    should_fail = kwargs.pop('should_fail', False)
+    self.assertDictEqual(
+        kwargs, {}, 'got additional unexpectd kwargs: {!r}'.format(kwargs))
 
+    json_out = self.tempfile()
+    full_args = ['test'] + list(args) + ['--json', json_out]
+    output, retcode = self.main.recipes_py(*full_args)
+    expected_retcode = 1 if should_fail else 0
+    self.assertEqual(
+        retcode, expected_retcode,
+        (
+          '`recipes.py test {args}` had retcode '
+          '{actual} != {expected}:\n{output}'
+        ).format(
+            args=' '.join(args),
+            actual=retcode,
+            expected=expected_retcode,
+            output=output))
+    with open(json_out, 'rb') as json_file:
+      try:
+        data = json.load(json_file)
+      except Exception as ex:
+        if should_fail != 'crash':
+          raise Exception(
+              'failed to decode test json: {!r}\noutput:\n{}'.format(
+                  ex, output))
+        data = None
+      return self.JsonResult(output, data)
 
-class RecipeWriter(object):
-  """Helper to write a recipe for tests."""
+  def _result_json(self, coverage=None, diff=(), crash=(), internal=(),
+                        check=None, unused_expect=(), uncovered_mods=()):
+    """Generates a JSON dict representing a test_result_pb2.TestResult message.
 
-  def __init__(self, recipes_dir, name):
-    self.recipes_dir = recipes_dir
-    self.name = name
+    Args:
+      * coverage (Dict[relative path, List[uncovered line nums]])
+      * diff (Seq[test name]) - Tests which had diff failures.
+      * crash (Seq[test name]) - Tests which had crashes.
+      * internal (Seq[test name]) - Tests which had internal failures.
+      * check (Dict[test name, Seq[CheckFailure]]) - Mapping of tests which had
+        check failures to details about those check failures. Use the
+        test_result_pb2.TestResult.CheckFailure message as the value.
+      * unused_expect (Seq[relative path]) - The list of relative paths to
+        expectation files which were unused.
+      * uncovered_mods (Seq[foo_module]) - The list of module names which aren't
+        covered by tests.
 
-    # These are expected to be set appropriately by the caller.
-    self.DEPS = []
-    self.RunStepsLines = ['pass']
-    self.GenTestsLines = ['yield api.test("basic")']
-    self.expectations = {}
-
-  @property
-  def recipe_path(self):
-    return os.path.join(self.recipes_dir, '%s.py' % self.name)
-
-  @property
-  def expect_dir(self):
-    return os.path.join(self.recipes_dir, '%s.expected' % self.name)
-
-  def add_expectation(self, test_name, commands=None, recipe_result=None):
-    """Adds expectation for a simulation test.
-
-    Arguments:
-      test_name(str): name of the test
-      commands(list): list of expectation dictionaries
-      recipe_result(object): expected result of the recipe
+    Returns a python dict which is the JSONPB representation of the TestResult.
     """
-    self.expectations[test_name] = (commands or []) + [{
-        'name': '$result',
-        'jsonResult': recipe_result,
-    }]
+    # TODO(iannucci): this result proto is unnecessarially convoluted.
+    ret = TestResult(version=1, valid=True)
 
-  def write(self):
-    """Writes the recipe to disk."""
-    dirs = [self.recipes_dir]
-    # Only create expectation directory if we have any expectations.
-    if self.expectations:
-      dirs.append(self.expect_dir)
-    for d in dirs:
-      if not os.path.exists(d):
-        os.makedirs(d)
-    with open(self.recipe_path, 'w') as f:
-      f.write('\n'.join([
-        'from recipe_engine import post_process',
-        '',
-        'DEPS = %r' % self.DEPS,
-        '',
-        'def RunSteps(api):',
-      ] + ['  %s' % l for l in self.RunStepsLines] + [
-        '',
-        'def GenTests(api):',
-      ] + ['  %s' % l for l in self.GenTestsLines]))
-    for test_name, test_contents in self.expectations.iteritems():
-      name = ''.join('_' if c in '<>:"\\/|?*\0' else c for c in test_name)
-      with open(os.path.join(self.expect_dir, '%s.json' % name), 'w') as f:
-        json.dump(test_contents, f, sort_keys=True, indent=2,
-                  separators=(',', ': '))
+    for path, uncovered_lines in (coverage or {}).iteritems():
+      path = os.path.join(self.main.path, path)
+      ret.coverage_failures[path].uncovered_lines.extend(uncovered_lines)
 
+    for test_name in diff:
+      ret.test_failures[test_name].failures.add().diff_failure.SetInParent()
 
-class RecipeModuleWriter(object):
-  """Helper to write a recipe module for tests."""
+    for test_name in crash:
+      ret.test_failures[test_name].failures.add().crash_failure.SetInParent()
 
-  def __init__(self, root_dir, name):
-    self.root_dir = root_dir
-    self.name = name
+    for test_name in internal:
+      ret.test_failures[test_name].failures.add().internal_failure.SetInParent()
 
-    # These are expected to be set appropriately by the caller.
-    self.DEPS = []
-    self.disable_strict_coverage = False
-    self.methods = {}
-    self.test_methods = {}
-    self.base_config = {}
-    self.configs = {}
+    for test_name, failures in (check or {}).iteritems():
+      for failure in failures:
+        check_fail = ret.test_failures[test_name].failures.add().check_failure
+        check_fail.CopyFrom(failure)
+        check_fail.filename = os.path.join(
+            self.main.path, check_fail.filename)
 
-    self.example = RecipeWriter(
-      os.path.join(self.module_dir, 'examples'), 'full')
+    for relpath in unused_expect:
+      ret.unused_expectations.append(
+          os.path.join(self.main.path, relpath))
 
-  @property
-  def module_dir(self):
-    return os.path.join(self.root_dir, 'recipe_modules', self.name)
+    ret.uncovered_modules.extend(uncovered_mods)
 
-  def test_recipe_writer(self, name):
-    """Returns a RecipeWriter instance for a test recipe."""
-    return RecipeWriter(os.path.join(self.module_dir, 'tests'), name)
+    return jsonpb.MessageToDict(ret, preserving_proto_field_name=True)
 
-  def write(self):
-    """Writes the recipe module to disk."""
-
-    if not os.path.exists(self.module_dir):
-      os.makedirs(self.module_dir)
-
-    with open(os.path.join(self.module_dir, '__init__.py'), 'w') as f:
-      f.write('DEPS = %r\n' % self.DEPS)
-      if self.disable_strict_coverage:
-        f.write('\nDISABLE_STRICT_COVERAGE = True')
-
-    api_lines = [
-        'from recipe_engine import recipe_api',
-        '',
-        'class MyApi(recipe_api.RecipeApi):',
-    ]
-    if self.methods:
-      for m_name, m_lines in self.methods.iteritems():
-        api_lines.extend([
-            '',
-            '  def %s(self):' % m_name,
-          ] + ['    %s' % l for l in m_lines] + [
-            '',
-          ])
-    else:
-      api_lines.append('  pass')
-    with open(os.path.join(self.module_dir, 'api.py'), 'w') as f:
-      f.write('\n'.join(api_lines))
-
-    if self.base_config or self.configs:
-      config_imports = [
-          'ConfigGroup',
-          'ConfigList',
-          'Dict',
-          'List',
-          'Set',
-          'Single',
-          'config_item_context',
-      ]
-      config_lines = []
-      for i in config_imports:
-        config_lines.append('from recipe_engine.config import %s' % i)
-      config_lines.extend([
-          '',
-          'def BaseConfig(**_kwargs):',
-          '  return ConfigGroup(',
-      ] + ['    %s = %s,' % (k, v) for k, v in self.base_config.iteritems()] + [
-          '  )',
-          '',
-          'config_ctx = config_item_context(BaseConfig)',
-          '',
-      ])
-      for name, lines in self.configs.iteritems():
-        config_lines.extend([
-            '@config_ctx()',
-            'def %s(c):' % name,
-        ] + ['  %s' % l for l in lines])
-      with open(os.path.join(self.module_dir, 'config.py'), 'w') as f:
-        f.write('\n'.join(config_lines))
-
-    if self.test_methods:
-      test_api_lines = [
-          'from recipe_engine import recipe_test_api',
-          '',
-          'class MyTestApi(recipe_test_api.RecipeTestApi):',
-      ]
-      for m_name, m_lines in self.test_methods.iteritems():
-        test_api_lines.extend([
-            '',
-            '  def %s(self):' % m_name,
-          ] + ['    %s' % l for l in m_lines] + [
-            '',
-          ])
-      with open(os.path.join(self.module_dir, 'test_api.py'), 'w') as f:
-        f.write('\n'.join(test_api_lines))
-
-
-class JsonGenerator(object):
-  """Helper to generate structured JSON recipe test output."""
-
-  def __init__(self, root_dir):
-    self._root_dir = root_dir
-    self._result = {
-      'version': 1,
-      'valid': True,
-    }
-
-  def diff_failure(self, test):
-    """Simulates a diff failure for |test|."""
-    self._result.setdefault('test_failures', {}).setdefault(
-        test, {'failures': []})['failures'].append({'diff_failure': {}})
-    return self
-
-  def crash_failure(self, test):
-    """Simulates a crash failure for |test|."""
-    self._result.setdefault('test_failures', {}).setdefault(
-        test, {'failures': []})['failures'].append({'crash_failure': {}})
-    return self
-
-  def internal_failure(self, test):
-    """Simulates an internal failure for |test|."""
-    self._result.setdefault('test_failures', {}).setdefault(
-        test, {'failures': []})['failures'].append({'internal_failure': {}})
-    return self
-
-  def check_failure(self, test, filename, lineno, func, args=None, kwargs=None,
-                    name=None):
-    """Simulates a check failure for |test|.
-
-    Arguments:
-      test(str): name of the test
-      filename(str): path where check is introduced
-      lineno(int): line number where check is introduced
-      func(str): function/callable name of the check
-      args(list): arguments for |func|
-      kwargs(dict): kwargs for |func|
-      name(str): name of the check
-    """
-    details = {
-        'func': func,
-        'filename': os.path.join(self._root_dir, filename),
-        'lineno': str(lineno),
-    }
-    if name:
-      details['name'] = name
-    if args:
-      details['args'] = args
-    if kwargs:
-      details['kwargs'] = kwargs
-    self._result.setdefault('test_failures', {}).setdefault(
-        test, {'failures': []})['failures'].append({'check_failure': details})
-    return self
-
-  def coverage_failure(self, path, missing):
-    """Simulates lack of coverage.
-
-    Arguments:
-      path(str): path that has missing coverage
-      missing(list): list of lines that miss coverage
-    """
-    self._result.setdefault('coverage_failures', {}).setdefault(
-        os.path.join(self._root_dir, path), {}).setdefault(
-            'uncovered_lines', []).extend([str(l) for l in missing])
-    return self
-
-  def uncovered_module(self, module):
-    """Simulates recipe module not being properly covered."""
-    self._result.setdefault('uncovered_modules', []).append(module)
-    return self
-
-  def unused_expectation(self, path):
-    """Simulates unused recipe expectation."""
-    self._result.setdefault('unused_expectations', []).append(
-        os.path.join(self._root_dir, path))
-    return self
-
-  def invalid(self):
-    """Simulates invalid results."""
-    self._result.pop('valid', False)
-    return self
-
-  def get(self):
-    """Returns generated object."""
-    return self._result
-
-  def write(self):
-    """Writes data to a temporary file and returns its path."""
-    with tempfile.NamedTemporaryFile(delete=False, dir=self._root_dir) as f:
-      json.dump(self.get(), f)
-      return f.name
-
-
-class TestTest(unittest.TestCase):
   def setUp(self):
-    root_dir = os.path.realpath(tempfile.mkdtemp())
-    config_dir = os.path.join(root_dir, 'infra', 'config')
-    os.makedirs(config_dir)
+    super(Common, self).setUp()
+    self.deps = self.FakeRecipeDeps()
+    self.main = self.deps.main_repo
 
-    self._root_dir = root_dir
-    self._recipes_cfg = os.path.join(config_dir, 'recipes.cfg')
-    self._recipe_tool = os.path.join(ROOT_DIR, 'recipes.py')
 
-    test_pkg = package_pb2.Package(
-        api_version=2,
-        project_id='test_pkg',
-        recipes_path='',
-        deps={
-          'recipe_engine': package_pb2.DepSpec(url='file://'+ROOT_DIR),
-        }
-    )
-    package_io.PackageFile(self._recipes_cfg).write(test_pkg)
-
-    self.maxDiff = None
-
-  def tearDown(self):
-    shutil.rmtree(self._root_dir)
-
-  @property
-  def json_path(self):
-    return os.path.join(self._root_dir, 'output.json')
-
-  @property
-  def json_contents(self):
-    with open(self.json_path) as f:
-      return json.load(f)
-
-  # TODO(phajdan.jr): Make json_generator non-property (it's not idempotent).
-  @property
-  def json_generator(self):
-    return JsonGenerator(self._root_dir)
-
-  def _run_recipes(self, *args):
-    return subprocess.check_output((
-        sys.executable, self._recipe_tool, '--package', self._recipes_cfg,
-    ) + args, stderr=subprocess.STDOUT)
-
+class TestList(Common):
   def test_list(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.write()
-    self._run_recipes('test', 'list', '--json', self.json_path)
-    self.assertEqual(
-        {'format': 1, 'tests': ['foo.basic']},
-        self.json_contents)
+    with self.main.write_recipe('foo'):
+      pass
 
-  def test_test(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.add_expectation('basic')
-    rw.write()
-    self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
+    self.assertDictEqual(
+        self._run_test('list').data,
+        {'format': 1, 'tests': ['foo.basic']})
 
-  def test_test_expectation_failure_empty(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.write()
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertNotIn('FATAL: Insufficient coverage', cm.exception.output)
-    self.assertNotIn('CHECK(FAIL)', cm.exception.output)
+
+class TestRun(Common):
+  def test_basic(self):
+    with self.main.write_recipe('foo'):
+      pass
+
+    self.assertDictEqual(self._run_test('run').data, self._result_json())
+
+  def test_expectation_failure_empty(self):
+    with self.main.write_recipe('foo') as recipe:
+      del recipe.expectation['basic']
+
+    result = self._run_test('run', should_fail=True)
+    self.assertNotIn('FATAL: Insufficient coverage', result.text_output)
+    self.assertNotIn('CHECK(FAIL)', result.text_output)
+    self.assertIn('foo.basic failed', result.text_output)
+    self.assertDictEqual(result.data, self._result_json(diff=['foo.basic']))
+
+  def test_expectation_failure_empty_filter(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.GenTests.write('''
+        yield api.test('basic')
+        yield api.test('second')
+      ''')
+
+    self.assertDictEqual(
+        self._run_test(
+            'run', '--filter', 'foo.second', should_fail=True).data,
+        self._result_json(diff=['foo.second']))
+
+    self.assertDictEqual(
+        self._run_test('run', '--filter', 'foo.basic').data,
+        self._result_json())
+
+  def test_expectation_failure_different(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.RunSteps.write('api.step("test", ["echo", "bar"])')
+
+    self.assertDictEqual(
+        self._run_test('run', should_fail=True).data,
+        self._result_json(diff=['foo.basic']))
+
+  def test_expectation_pass(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.RunSteps.write('api.step("test", ["echo", "bar"])')
+      recipe.expectation['basic'] = [
+        {'cmd': ['echo', 'bar'], 'name': 'test'},
+        {'name': '$result', 'jsonResult': None},
+      ]
+
+    self.assertDictEqual(self._run_test('run').data, self._result_json())
+
+  def test_recipe_not_covered(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.RunSteps.write('''
+        if False:
+          pass
+      ''')
+
+    result = self._run_test('run', should_fail=True)
+    self.assertIn('FATAL: Insufficient coverage', result.text_output)
+    self.assertNotIn('CHECK(FAIL)', result.text_output)
+    self.assertNotIn('foo.basic failed', result.text_output)
+    self.assertDictEqual(
+        result.data,
+        self._result_json(coverage={'recipes/foo.py': [8]}))
+
+  def test_recipe_not_covered_filter(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.RunSteps.write('''
+        if False:
+          pass
+      ''')
+
+    self.assertDictEqual(
+        self._run_test('run', '--filter', 'foo.*').data,
+        self._result_json())
+
+  def test_check_failure(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.GenTests.write('''
+        yield (api.test('basic')
+          + api.post_process(post_process.MustRun, 'bar')
+        )
+      ''')
+
+    result = self._run_test('run', should_fail=True)
+    self.assertNotIn('FATAL: Insufficient coverage', result.text_output)
+    self.assertIn('CHECK(FAIL)', result.text_output)
+    self.assertIn('foo.basic failed', result.text_output)
+    self.assertDictEqual(
+        result.data,
+        self._result_json(check={
+          'foo.basic': [CheckFailure(
+              func='MustRun',
+              args=["'bar'"],
+              filename='recipes/foo.py',
+              lineno=11,
+          )]
+        }))
+
+  def test_check_failure_filter(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.GenTests.write('''
+        yield (api.test('basic')
+          + api.post_process(post_process.MustRun, 'bar')
+        )
+      ''')
+
+    result = self._run_test(
+        'run', '--filter', 'foo.*', should_fail=True)
+    self.assertNotIn('FATAL: Insufficient coverage', result.text_output)
+    self.assertIn('CHECK(FAIL)', result.text_output)
+    self.assertIn('foo.basic failed', result.text_output)
+    self.assertDictEqual(
+        result.data,
+        self._result_json(check={
+          'foo.basic': [CheckFailure(
+              func='MustRun',
+              args=["'bar'"],
+              filename='recipes/foo.py',
+              lineno=11,
+          )]
+        }))
+
+  def test_check_success(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.GenTests.write('''
+        yield (api.test('basic')
+          + api.post_process(post_process.DoesNotRun, 'bar')
+        )
+      ''')
+
+    self.assertDictEqual(self._run_test('run').data, self._result_json())
+
+  def test_recipe_syntax_error(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.RunSteps.write('baz')
+
+    result = self._run_test('run', should_fail=True)
     self.assertIn(
-        'foo.basic failed',
-        cm.exception.output)
-    self.assertEqual(self.json_generator.diff_failure('foo.basic').get(),
-                     self.json_contents)
+        ('line 7, in RunSteps\n    baz\n'
+         'NameError: global name \'baz\' is not defined'),
+        result.text_output)
+    self.assertDictEqual(
+        result.data,
+        self._result_json(
+            crash=['foo.basic'],
+            coverage={'recipes/foo.py': [7]},
+            unused_expect=[
+              'recipes/foo.expected',
+              'recipes/foo.expected/basic.json',
+            ]
+        ))
 
-  def test_test_expectation_failure_empty_filter(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.GenTestsLines = [
-        'yield api.test("first")',
-        'yield api.test("second")',
-    ]
-    rw.add_expectation('second')
-    rw.write()
+  def test_recipe_module_uncovered(self):
+    with self.main.write_module('foo'):
+      pass
 
-    with self.assertRaises(subprocess.CalledProcessError):
-      self._run_recipes(
-          'test', 'run',
-          '--filter', 'foo.first',
-          '--json', self.json_path)
-    self.assertEqual(self.json_generator.diff_failure('foo.first').get(),
-                     self.json_contents)
-
-    self._run_recipes(
-        'test', 'run',
-        '--filter', 'foo.second',
-        '--json', self.json_path)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
-
-  def test_test_expectation_failure_different(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.DEPS = ['recipe_engine/step']
-    rw.RunStepsLines = ['api.step("test", ["echo", "bar"])']
-    rw.add_expectation('basic')
-    rw.write()
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(self.json_generator.diff_failure('foo.basic').get(),
-                     self.json_contents)
-
-  def test_test_expectation_pass(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.DEPS = ['recipe_engine/step']
-    rw.RunStepsLines = ['api.step("test", ["echo", "bar"])']
-    rw.add_expectation('basic', [{'cmd': ['echo', 'bar'], 'name': 'test'}])
-    rw.write()
-    self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
-
-  def test_test_recipe_not_covered(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['if False:', '  pass']
-    rw.add_expectation('basic')
-    rw.write()
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertIn('FATAL: Insufficient coverage', cm.exception.output)
-    self.assertNotIn('CHECK(FAIL)', cm.exception.output)
-    self.assertNotIn('foo.basic failed', cm.exception.output)
-    self.assertEqual(
-        self.json_generator.coverage_failure('recipes/foo.py', [7]).get(),
-        self.json_contents)
-
-  def test_test_recipe_not_covered_filter(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['if False:', '  pass']
-    rw.add_expectation('basic')
-    rw.write()
-    self._run_recipes(
-        'test', 'run', '--filter', 'foo.*', '--json', self.json_path)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
-
-  def test_test_check_failure(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.GenTestsLines = [
-        'yield api.test("basic") + \\',
-        '  api.post_process(post_process.MustRun, "bar")'
-    ]
-    rw.add_expectation('basic')
-    rw.write()
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertNotIn('FATAL: Insufficient coverage', cm.exception.output)
-    self.assertIn('CHECK(FAIL)', cm.exception.output)
-    self.assertIn('foo.basic failed', cm.exception.output)
-    self.assertEqual(
-        self.json_generator.check_failure(
-            'foo.basic', 'recipes/foo.py', 10,
-            'MustRun', args=['\'bar\'']).get(),
-        self.json_contents)
-
-  def test_test_check_failure_filter(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.GenTestsLines = [
-        'yield api.test("basic") + \\',
-        '  api.post_process(post_process.MustRun, "bar")'
-    ]
-    rw.add_expectation('basic')
-    rw.write()
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes(
-          'test', 'run',
-          '--filter', 'foo.*',
-          '--json', self.json_path)
-    self.assertNotIn('FATAL: Insufficient coverage', cm.exception.output)
-    self.assertIn('CHECK(FAIL)', cm.exception.output)
-    self.assertIn('foo.basic failed', cm.exception.output)
-    self.assertEqual(
-        self.json_generator.check_failure(
-            'foo.basic', 'recipes/foo.py', 10,
-            'MustRun', args=['\'bar\'']).get(),
-        self.json_contents)
-
-  def test_test_check_success(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.GenTestsLines = [
-        'yield api.test("basic") + \\',
-        '  api.post_process(post_process.DoesNotRun, "bar")'
-    ]
-    rw.add_expectation('basic')
-    rw.write()
-    self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
-
-  def test_test_recipe_syntax_error(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['baz']
-    rw.add_expectation('basic')
-    rw.write()
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--json', self.json_path)
+    result = self._run_test('run', should_fail=True)
     self.assertIn(
-        ('  File "%s", line 6, in RunSteps\n    baz\n'
-         'NameError: global name \'baz\' is not defined' % rw.recipe_path),
-        cm.exception.output)
-    self.assertEqual(
-        self.json_generator
-            .crash_failure('foo.basic')
-            .coverage_failure('recipes/foo.py', [6])
-            .unused_expectation('recipes/foo.expected')
-            .unused_expectation('recipes/foo.expected/basic.json').get(),
-        self.json_contents)
+        'The following modules lack test coverage: foo',
+        result.text_output)
+    self.assertDictEqual(result.data, self._result_json(uncovered_mods=['foo']))
 
-  def test_test_recipe_module_uncovered(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo')
-    mw.write()
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertIn('The following modules lack test coverage: foo',
-                  cm.exception.output)
-    self.assertEqual(self.json_generator.uncovered_module('foo').get(),
-                     self.json_contents)
+  def test_recipe_module_syntax_error(self):
+    with self.main.write_module('foo_module') as mod:
+      mod.api.write('''
+        def foo(self):
+          baz
+      ''')
 
-  def test_test_recipe_module_syntax_error(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.methods['foo'] = ['baz']
-    mw.write()
-    mw.example.DEPS = ['foo_module']
-    mw.example.RunStepsLines = ['api.foo_module.foo()']
-    mw.example.write()
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--json', self.json_path)
+    with self.main.write_recipe('foo_module', 'examples/full') as recipe:
+      recipe.DEPS = ['foo_module']
+      recipe.RunSteps.write('api.foo_module.foo()')
+      del recipe.expectation['basic']
+
+    result = self._run_test('run', should_fail=True)
     self.assertIn('NameError: global name \'baz\' is not defined',
-                  cm.exception.output)
-    self.assertIn('FATAL: Insufficient coverage', cm.exception.output)
-    self.assertEqual(
-        self.json_generator
-            .crash_failure('foo_module:examples/full.basic')
-            .coverage_failure('recipe_modules/foo_module/api.py', [6])
-            .coverage_failure('recipe_modules/foo_module/examples/full.py', [6])
-            .get(),
-        self.json_contents)
+                  result.text_output)
+    self.assertIn('FATAL: Insufficient coverage', result.text_output)
+    self.assertDictEqual(
+        result.data,
+        self._result_json(
+            crash=['foo_module:examples/full.basic'],
+            coverage={
+              'recipe_modules/foo_module/api.py': [6],
+              'recipe_modules/foo_module/examples/full.py': [7],
+            },
+        ))
 
-  def test_test_recipe_module_syntax_error_in_example(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.methods['foo'] = ['pass']
-    mw.write()
-    mw.example.DEPS = ['foo_module']
-    mw.example.RunStepsLines = ['baz']
-    mw.example.write()
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--json', self.json_path)
+  def test_recipe_module_syntax_error_in_example(self):
+    with self.main.write_module('foo_module') as mod:
+      mod.api.write('''
+        def foo(self):
+          pass
+      ''')
+
+    with self.main.write_recipe('foo_module', 'examples/full') as recipe:
+      recipe.DEPS = ['foo_module']
+      recipe.RunSteps.write('baz')
+      del recipe.expectation['basic']
+
+    result = self._run_test('run', should_fail=True)
     self.assertIn('NameError: global name \'baz\' is not defined',
-                  cm.exception.output)
-    self.assertIn('FATAL: Insufficient coverage', cm.exception.output)
-    self.assertEqual(
-        self.json_generator
-            .crash_failure('foo_module:examples/full.basic')
-            .coverage_failure('recipe_modules/foo_module/api.py', [6])
-            .coverage_failure('recipe_modules/foo_module/examples/full.py', [6])
-            .get(),
-        self.json_contents)
+                  result.text_output)
+    self.assertIn('FATAL: Insufficient coverage', result.text_output)
+    self.assertDictEqual(
+        result.data,
+        self._result_json(
+            crash=['foo_module:examples/full.basic'],
+            coverage={
+              'recipe_modules/foo_module/api.py': [6],
+              'recipe_modules/foo_module/examples/full.py': [7],
+            }
+        ))
 
-  def test_test_recipe_module_example_not_covered(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.methods['foo'] = ['pass']
-    mw.write()
-    mw.example.DEPS = ['foo_module']
-    mw.example.RunStepsLines = ['if False:', '  pass']
-    mw.example.write()
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertIn('FATAL: Insufficient coverage', cm.exception.output)
-    self.assertEqual(
-        self.json_generator
-            .coverage_failure('recipe_modules/foo_module/api.py', [6])
-            .coverage_failure('recipe_modules/foo_module/examples/full.py', [7])
-            .diff_failure('foo_module:examples/full.basic').get(),
-        self.json_contents)
+  def test_recipe_module_example_not_covered(self):
+    with self.main.write_module('foo_module') as mod:
+      mod.api.write('''
+        def foo(self):
+          pass
+      ''')
 
-  def test_test_recipe_module_uncovered_not_strict(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo')
-    mw.disable_strict_coverage = True
-    mw.write()
-    self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
+    with self.main.write_recipe('foo_module', 'examples/full') as recipe:
+      recipe.DEPS = ['foo_module']
+      recipe.RunSteps.write('''
+        if False:
+          pass
+      ''')
+      del recipe.expectation['basic']
 
-  def test_test_recipe_module_covered_by_recipe_not_strict(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.methods['bar'] = ['pass']
-    mw.disable_strict_coverage = True
-    mw.write()
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo_recipe')
-    rw.DEPS = ['foo_module']
-    rw.RunStepsLines = ['api.foo_module.bar()']
-    rw.add_expectation('basic')
-    rw.write()
-    self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
+    result = self._run_test('run', should_fail=True)
+    self.assertIn('FATAL: Insufficient coverage', result.text_output)
+    self.assertDictEqual(
+        result.data,
+        self._result_json(
+            coverage={
+              'recipe_modules/foo_module/api.py': [6],
+              'recipe_modules/foo_module/examples/full.py': [8],
+            },
+            diff=['foo_module:examples/full.basic']
+        ))
 
-  def test_test_recipe_module_covered_by_recipe(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.methods['bar'] = ['pass']
-    mw.write()
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo_recipe')
-    rw.DEPS = ['foo_module']
-    rw.RunStepsLines = ['api.foo_module.bar()']
-    rw.add_expectation('basic')
-    rw.write()
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--json', self.json_path)
+  def test_recipe_module_uncovered_not_strict(self):
+    with self.main.write_module('foo_module') as mod:
+      mod.DISABLE_STRICT_COVERAGE = True
+
+    self.assertDictEqual(self._run_test('run').data, self._result_json())
+
+  def test_recipe_module_covered_by_recipe_not_strict(self):
+    with self.main.write_module('foo_module') as mod:
+      mod.DISABLE_STRICT_COVERAGE = True
+      mod.api.write('''
+        def bar(self):
+          pass
+      ''')
+
+    with self.main.write_recipe('my_recipe') as recipe:
+      recipe.DEPS = ['foo_module']
+      recipe.RunSteps.write('api.foo_module.bar()')
+
+    self.assertDictEqual(self._run_test('run').data, self._result_json())
+
+  def test_recipe_module_covered_by_recipe(self):
+    with self.main.write_module('foo_module') as mod:
+      mod.api.write('''
+        def bar(self):
+          pass
+      ''')
+
+    with self.main.write_recipe('my_recipe') as recipe:
+      recipe.DEPS = ['foo_module']
+      recipe.RunSteps.write('api.foo_module.bar()')
+
+    result = self._run_test('run', should_fail=True)
     self.assertIn('The following modules lack test coverage: foo_module',
-                  cm.exception.output)
-    self.assertEqual(
-        self.json_generator
-            .coverage_failure('recipe_modules/foo_module/api.py', [6])
-            .uncovered_module('foo_module').get(),
-        self.json_contents)
+                  result.text_output)
+    self.assertDictEqual(
+        result.data,
+        self._result_json(
+            coverage={'recipe_modules/foo_module/api.py': [6]},
+            uncovered_mods=['foo_module'],
+        ))
 
-  def test_test_recipe_module_partially_covered_by_recipe_not_strict(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.methods['bar'] = ['pass']
-    mw.methods['baz'] = ['pass']
-    mw.disable_strict_coverage = True
-    mw.write()
-    mw.example.DEPS = ['foo_module']
-    mw.example.RunStepsLines = ['api.foo_module.baz()']
-    mw.example.add_expectation('basic')
-    mw.example.write()
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo_recipe')
-    rw.DEPS = ['foo_module']
-    rw.RunStepsLines = ['api.foo_module.bar()']
-    rw.add_expectation('basic')
-    rw.write()
-    self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
+  def test_recipe_module_partially_covered_by_recipe_not_strict(self):
+    with self.main.write_module('foo_module') as mod:
+      mod.DISABLE_STRICT_COVERAGE= True
+      mod.api.write('''
+        def foo(self):
+          pass
 
-  def test_test_recipe_module_partially_covered_by_recipe(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.methods['bar'] = ['pass']
-    mw.methods['baz'] = ['pass']
-    mw.write()
-    mw.example.DEPS = ['foo_module']
-    mw.example.RunStepsLines = ['api.foo_module.baz()']
-    mw.example.add_expectation('basic')
-    mw.example.write()
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo_recipe')
-    rw.DEPS = ['foo_module']
-    rw.RunStepsLines = ['api.foo_module.bar()']
-    rw.add_expectation('basic')
-    rw.write()
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertIn('FATAL: Insufficient coverage', cm.exception.output)
-    self.assertEqual(
-        self.json_generator
-            .coverage_failure('recipe_modules/foo_module/api.py', [10]).get(),
-        self.json_contents)
+        def bar(self):
+          pass
+      ''')
 
-  def test_test_recipe_module_test_expectation_failure_empty(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.write()
-    rw = mw.test_recipe_writer('foo')
-    rw.write()
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(
-        self.json_generator.diff_failure('foo_module:tests/foo.basic').get(),
-        self.json_contents)
+    with self.main.write_recipe('foo_module', 'examples/full') as recipe:
+      recipe.DEPS = ['foo_module']
+      recipe.RunSteps.write('api.foo_module.bar()')
+
+    with self.main.write_recipe('foo_recipe') as recipe:
+      recipe.DEPS = ['foo_module']
+      recipe.RunSteps.write('api.foo_module.foo()')
+
+    self.assertDictEqual(self._run_test('run').data, self._result_json())
+
+  def test_recipe_module_partially_covered_by_recipe(self):
+    with self.main.write_module('foo_module') as mod:
+      mod.api.write('''
+        def foo(self):
+          pass
+
+        def bar(self):
+          pass
+      ''')
+
+    with self.main.write_recipe('foo_module', 'examples/full') as recipe:
+      recipe.DEPS = ['foo_module']
+      recipe.RunSteps.write('api.foo_module.bar()')
+
+    with self.main.write_recipe('foo_recipe') as recipe:
+      recipe.DEPS = ['foo_module']
+      recipe.RunSteps.write('api.foo_module.foo()')
+
+    result = self._run_test('run', should_fail=True)
+    self.assertIn('FATAL: Insufficient coverage', result.text_output)
+    self.assertDictEqual(
+        result.data,
+        self._result_json(
+            coverage={'recipe_modules/foo_module/api.py': [6]},
+        ))
+
+  def test_recipe_module_test_expectation_failure_empty(self):
+    with self.main.write_module('foo_module'):
+      pass
+
+    with self.main.write_recipe('foo_module', 'tests/foo') as recipe:
+      del recipe.expectation['basic']
+
+    result = self._run_test('run', should_fail=True)
+    self.assertDictEqual(
+        result.data,
+        self._result_json(diff=['foo_module:tests/foo.basic']))
 
   def test_module_tests_unused_expectation_file_test(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.write()
-    rw = mw.test_recipe_writer('foo')
-    rw.add_expectation('basic')
-    rw.add_expectation('unused')
-    rw.write()
-    expectation_file = os.path.join(rw.expect_dir, 'unused.json')
-    self.assertTrue(os.path.exists(expectation_file))
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertIn(
-        'FATAL: unused expectations found:\n%s' % expectation_file,
-        cm.exception.output)
-    self.assertTrue(os.path.exists(expectation_file))
-    self.assertEqual(
-        self.json_generator
-            .unused_expectation(
-                'recipe_modules/foo_module/tests/foo.expected/unused.json')
-            .get(),
-        self.json_contents)
-
-  def test_module_tests_unused_expectation_file_train(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.write()
-    rw = mw.test_recipe_writer('foo')
-    rw.add_expectation('basic')
-    rw.add_expectation('unused')
-    rw.write()
-    expectation_file = os.path.join(rw.expect_dir, 'unused.json')
-    self.assertTrue(os.path.exists(expectation_file))
-    self._run_recipes('test', 'train', '--json', self.json_path)
-    self.assertFalse(os.path.exists(expectation_file))
-    self.assertEqual(self.json_generator.get(), self.json_contents)
-
-  def test_module_tests_unused_expectation_file_stays_on_failure(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.write()
-    rw = mw.test_recipe_writer('foo')
-    rw.RunStepsLines = ['raise ValueErorr("boom")']
-    rw.add_expectation('basic')
-    rw.add_expectation('unused')
-    rw.write()
-    expectation_file = os.path.join(rw.expect_dir, 'unused.json')
-    self.assertTrue(os.path.exists(expectation_file))
-    with self.assertRaises(subprocess.CalledProcessError):
-      self._run_recipes('test', 'train', '--json', self.json_path)
-    self.assertTrue(os.path.exists(expectation_file))
-    self.assertEqual(
-      self.json_generator
-          .coverage_failure('recipe_modules/foo_module/tests/foo.py', [6])
-          .crash_failure('foo_module:tests/foo.basic').get(),
-      self.json_contents)
-
-  def test_train_basic(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.add_expectation('basic')
-    rw.write()
-    self._run_recipes('test', 'train', '--json', self.json_path)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
-
-  def test_train_missing(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.write()
-    self.assertFalse(os.path.exists(rw.expect_dir))
-    self._run_recipes('test', 'train', '--json', self.json_path)
-    self.assertTrue(os.path.exists(rw.expect_dir))
-    expect_path = os.path.join(rw.expect_dir, 'basic.json')
-    self.assertTrue(os.path.exists(expect_path))
-    with open(expect_path) as f:
-      expect_contents = json.load(f)
-    self.assertEqual(
-        [{u'jsonResult': None, u'name': u'$result'}],
-        expect_contents)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
-
-  def test_train_diff(self):
-    # 1. Initial state: recipe expectations are passing.
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.add_expectation('basic')
-    rw.write()
-    self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
-
-    # 2. Change the recipe and verify tests would fail.
-    rw.DEPS = ['recipe_engine/step']
-    rw.RunStepsLines = ['api.step("test", ["echo", "bar"])']
-    rw.write()
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertIn('foo.basic failed', cm.exception.output)
-    self.assertEqual(self.json_generator.diff_failure('foo.basic').get(),
-                     self.json_contents)
-
-    # 3. Make sure training the recipe succeeds and produces correct results.
-    self._run_recipes('test', 'train', '--json', self.json_path)
-    expect_path = os.path.join(rw.expect_dir, 'basic.json')
-    with open(expect_path) as f:
-      expect_contents = json.load(f)
-    self.assertEqual(
-        [{u'cmd': [u'echo', u'bar'], u'name': u'test'},
-         {u'jsonResult': None, u'name': u'$result'}],
-        expect_contents)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
-
-  def test_train_invalid_json(self):
-    # 1. Initial state: recipe expectations are passing.
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.add_expectation('basic')
-    rw.write()
-    self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
-
-    # 2. Change the expectation and verify tests would fail.
-    expect_path = os.path.join(rw.expect_dir, 'basic.json')
-    with open(expect_path, 'w') as f:
-      f.write('\n'.join([
-          'not valid JSON',
-          '<<<<<',
-          'merge conflict',
-          '>>>>>',
-      ]))
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertIn('foo.basic failed', cm.exception.output)
-    self.assertEqual(
-        self.json_generator
-            .diff_failure('foo.basic')
-            .get(),
-        self.json_contents)
-
-    # 3. Make sure training the recipe succeeds and produces correct results.
-    self._run_recipes('test', 'train', '--json', self.json_path)
-    with open(expect_path) as f:
-      expect_contents = json.load(f)
-    self.assertEqual(
-        [{u'jsonResult': None, u'name': u'$result'}],
-        expect_contents)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
-
-  def test_train_checks_coverage(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['if False:', '  pass']
-    rw.add_expectation('basic')
-    rw.write()
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'train', '--json', self.json_path)
-    self.assertIn('FATAL: Insufficient coverage', cm.exception.output)
-    self.assertNotIn('CHECK(FAIL)', cm.exception.output)
-    self.assertNotIn('foo.basic failed', cm.exception.output)
-    self.assertEqual(
-        self.json_generator.coverage_failure('recipes/foo.py', [7]).get(),
-        self.json_contents)
-
-  def test_train_runs_checks(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.GenTestsLines = [
-        'yield api.test("basic") + \\',
-        '  api.post_process(post_process.MustRun, "bar")'
-    ]
-    rw.add_expectation('basic')
-    rw.write()
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'train', '--json', self.json_path)
-    self.assertNotIn('FATAL: Insufficient coverage', cm.exception.output)
-    self.assertIn('CHECK(FAIL)', cm.exception.output)
-    self.assertIn('foo.basic failed', cm.exception.output)
-    self.assertEqual(
-        self.json_generator.check_failure(
-            'foo.basic', 'recipes/foo.py', 10,
-            'MustRun', args=['\'bar\'']).get(),
-        self.json_contents)
-
-  def test_unused_expectation_file_test(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.add_expectation('basic')
-    rw.add_expectation('unused')
-    rw.write()
-    expectation_file = os.path.join(rw.expect_dir, 'unused.json')
-    self.assertTrue(os.path.exists(expectation_file))
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      out = self._run_recipes('test', 'run', '--json', self.json_path)
-
-    self.assertIn(
-        'FATAL: unused expectations found:\n%s' % expectation_file,
-        cm.exception.output)
-    self.assertTrue(os.path.exists(expectation_file))
-    self.assertEqual(
-        self.json_generator
-            .unused_expectation('recipes/foo.expected/unused.json').get(),
-        self.json_contents)
-
-  def test_unused_expectation_file_train(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.add_expectation('basic')
-    rw.add_expectation('unused')
-    rw.write()
-    expectation_file = os.path.join(rw.expect_dir, 'unused.json')
-    self.assertTrue(os.path.exists(expectation_file))
-    self._run_recipes('test', 'train', '--json', self.json_path)
-    self.assertFalse(os.path.exists(expectation_file))
-    self.assertEqual(self.json_generator.get(), self.json_contents)
-
-  def test_unused_expectation_dir_test(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.add_expectation('basic')
-    rw.write()
-    expectation_dir = os.path.join(rw.expect_dir, 'dir')
-    os.makedirs(expectation_dir)
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertIn(
-        'FATAL: unused expectations found:\n%s' % expectation_dir,
-        cm.exception.output)
-    self.assertTrue(os.path.exists(expectation_dir))
-    self.assertEqual(
-        self.json_generator
-            .unused_expectation('recipes/foo.expected/dir').get(),
-        self.json_contents)
-
-  def test_unused_expectation_dir_train(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.add_expectation('basic')
-    rw.write()
-    expectation_dir = os.path.join(rw.expect_dir, 'dir')
-    os.makedirs(expectation_dir)
-    self._run_recipes('test', 'train', '--json', self.json_path)
-    self.assertFalse(os.path.exists(expectation_dir))
-    self.assertEqual(self.json_generator.get(), self.json_contents)
-
-  def test_drop_expectation_test(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.GenTestsLines = [
-        'yield api.test("basic") + \\',
-        '  api.post_process(post_process.DropExpectation)'
-    ]
-    rw.write()
-    expectation_file = os.path.join(rw.expect_dir, 'basic.json')
-    self.assertFalse(os.path.exists(expectation_file))
-    self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertFalse(os.path.exists(expectation_file))
-    self.assertEqual(self.json_generator.get(), self.json_contents)
-
-  def test_drop_expectation_train(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.GenTestsLines = [
-        'yield api.test("basic") + \\',
-        '  api.post_process(post_process.DropExpectation)'
-    ]
-    rw.write()
-    expectation_file = os.path.join(rw.expect_dir, 'basic.json')
-    self.assertFalse(os.path.exists(expectation_file))
-    self._run_recipes('test', 'train', '--json', self.json_path)
-    self.assertFalse(os.path.exists(expectation_file))
-    self.assertEqual(self.json_generator.get(), self.json_contents)
-
-  def test_drop_expectation_test_unused(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.GenTestsLines = [
-        'yield api.test("basic") + \\',
-        '  api.post_process(post_process.DropExpectation)'
-    ]
-    rw.add_expectation('basic')
-    rw.write()
-    expectation_file = os.path.join(rw.expect_dir, 'basic.json')
-    self.assertTrue(os.path.exists(expectation_file))
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertIn(
-        'FATAL: unused expectations found:\n%s\n%s' % (
-            rw.expect_dir, expectation_file),
-        cm.exception.output)
-    self.assertTrue(os.path.exists(expectation_file))
-    self.assertEqual(
-        self.json_generator
-            .unused_expectation('recipes/foo.expected')
-            .unused_expectation('recipes/foo.expected/basic.json').get(),
-        self.json_contents)
-
-  def test_drop_expectation_train_unused(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.GenTestsLines = [
-        'yield api.test("basic") + \\',
-        '  api.post_process(post_process.DropExpectation)'
-    ]
-    rw.add_expectation('basic')
-    rw.write()
-    expectation_file = os.path.join(rw.expect_dir, 'basic.json')
-    self.assertTrue(os.path.exists(expectation_file))
-    self._run_recipes('test', 'train', '--json', self.json_path)
-    self.assertFalse(os.path.exists(expectation_file))
-    self.assertFalse(os.path.exists(rw.expect_dir))
-    self.assertEqual(self.json_generator.get(), self.json_contents)
-
-  def test_unused_expectation_preserves_owners_test(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.add_expectation('basic')
-    rw.write()
-    owners_file = os.path.join(rw.expect_dir, 'OWNERS')
-    with open(owners_file, 'w'):
+    with self.main.write_module('foo_module'):
       pass
-    self.assertTrue(os.path.exists(owners_file))
-    self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertTrue(os.path.exists(owners_file))
-    self.assertEqual(self.json_generator.get(), self.json_contents)
 
-  def test_unused_expectation_preserves_owners_train(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.add_expectation('basic')
-    rw.write()
-    owners_file = os.path.join(rw.expect_dir, 'OWNERS')
-    with open(owners_file, 'w'):
-      pass
-    self.assertTrue(os.path.exists(owners_file))
-    self._run_recipes('test', 'train', '--json', self.json_path)
-    self.assertTrue(os.path.exists(owners_file))
-    self.assertEqual(self.json_generator.get(), self.json_contents)
+    with self.main.write_recipe('foo_module', 'tests/foo') as recipe:
+      recipe.expectation['unused'] = [{'name': '$result', 'jsonResult': None}]
 
-  def test_test_slash_in_name(self):
-    test_name = 'bar/baz'
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.GenTestsLines = ['yield api.test(%r)' % test_name]
-    rw.add_expectation(test_name)
-    rw.write()
-    self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
+    result = self._run_test('run', should_fail=True)
+    self.assertIn('FATAL: unused expectations found:', result.text_output)
+    self.assertDictEqual(
+        result.data,
+        self._result_json(unused_expect=[
+          'recipe_modules/foo_module/tests/foo.expected/unused.json'
+        ]))
 
-  def test_config_uncovered(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.base_config['bar'] = 'Single(str)'
-    mw.disable_strict_coverage = True
-    mw.write()
-    with self.assertRaises(subprocess.CalledProcessError):
-      self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(
-        self.json_generator
-            .coverage_failure('recipe_modules/foo_module/config.py', [10])
-            .get(),
-        self.json_contents)
+  def test_slash_in_name(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.GenTests.write('yield api.test("bar/baz")')
+      del recipe.expectation['basic']
+      recipe.expectation['bar/baz'] = [{'name': '$result', 'jsonResult': None}]
 
-  def test_config_uncovered_strict(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.base_config['bar'] = 'Single(str)'
-    mw.write()
-    with self.assertRaises(subprocess.CalledProcessError):
-      self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(
-        self.json_generator
-            .coverage_failure('recipe_modules/foo_module/config.py', [10])
-            .uncovered_module('foo_module')
-            .get(),
-        self.json_contents)
+    self.assertDictEqual(self._run_test('run').data, self._result_json())
 
-  def test_config_covered_by_recipe(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.base_config['bar'] = 'Single(str)'
-    mw.configs['bar_config'] = ['c.bar = "gazonk"']
-    mw.disable_strict_coverage = True
-    mw.write()
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.DEPS = ['foo_module']
-    rw.RunStepsLines = ['api.foo_module.set_config("bar_config")']
-    rw.add_expectation('basic')
-    rw.write()
-    self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
+  def test_api_uncovered(self):
+    with self.main.write_module('foo_module') as mod:
+      mod.DISABLE_STRICT_COVERAGE = True
+      mod.test_api.write('''
+        def baz(self):
+          pass
+      ''')
 
-  def test_config_covered_by_recipe_strict(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.base_config['bar'] = 'Single(str)'
-    mw.configs['bar_config'] = ['c.bar = "gazonk"']
-    mw.write()
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.DEPS = ['foo_module']
-    rw.RunStepsLines = ['api.foo_module.set_config("bar_config")']
-    rw.add_expectation('basic')
-    rw.write()
-    with self.assertRaises(subprocess.CalledProcessError):
-      self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(
-        self.json_generator
-            .coverage_failure('recipe_modules/foo_module/config.py', [10, 18])
-            .uncovered_module('foo_module')
-            .get(),
-        self.json_contents)
+    self.assertDictEqual(
+        self._run_test('run', should_fail=True).data,
+        self._result_json(
+            coverage={'recipe_modules/foo_module/test_api.py': [6]},
+        ))
 
-  def test_config_covered_by_example(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.base_config['bar'] = 'Single(str)'
-    mw.configs['bar_config'] = ['c.bar = "gazonk"']
-    mw.disable_strict_coverage = True
-    mw.write()
-    mw.example.DEPS = ['foo_module']
-    mw.example.RunStepsLines = ['api.foo_module.set_config("bar_config")']
-    mw.example.add_expectation('basic')
-    mw.example.write()
-    self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
+  def test_api_uncovered_strict(self):
+    with self.main.write_module('foo_module') as mod:
+      mod.test_api.write('''
+        def baz(self):
+          pass
+      ''')
+    self.assertDictEqual(
+        self._run_test('run', should_fail=True).data,
+        self._result_json(
+            coverage={'recipe_modules/foo_module/test_api.py': [6]},
+            uncovered_mods=['foo_module']
+        ))
 
-  def test_test_api_uncovered(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.test_methods['baz'] = ['pass']
-    mw.disable_strict_coverage = True
-    mw.write()
-    with self.assertRaises(subprocess.CalledProcessError):
-      self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(
-        self.json_generator
-            .coverage_failure('recipe_modules/foo_module/test_api.py', [6])
-            .get(),
-        self.json_contents)
+  def test_api_covered_by_recipe(self):
+    with self.main.write_module('foo_module') as mod:
+      mod.DISABLE_STRICT_COVERAGE = True
+      mod.test_api.write('''
+        def baz(self):
+          pass
+      ''')
 
-  def test_test_api_uncovered_strict(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.test_methods['baz'] = ['pass']
-    mw.write()
-    with self.assertRaises(subprocess.CalledProcessError):
-      self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(
-        self.json_generator
-            .coverage_failure('recipe_modules/foo_module/test_api.py', [6])
-            .uncovered_module('foo_module')
-            .get(),
-        self.json_contents)
+    with self.main.write_recipe('foo') as recipe:
+      recipe.DEPS = ['foo_module']
+      recipe.GenTests.write('''
+        api.foo_module.baz()
+        yield api.test('basic')
+      ''')
 
-  def test_test_api_covered_by_recipe(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.test_methods['baz'] = ['pass']
-    mw.disable_strict_coverage = True
-    mw.write()
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.DEPS = ['foo_module']
-    rw.RunStepsLines = ['pass']
-    rw.GenTestsLines = ['api.foo_module.baz()', 'yield api.test("basic")']
-    rw.add_expectation('basic')
-    rw.write()
-    self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
+    self.assertDictEqual(self._run_test('run').data, self._result_json())
 
-  def test_test_api_covered_by_recipe_strict(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.test_methods['baz'] = ['pass']
-    mw.write()
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.DEPS = ['foo_module']
-    rw.RunStepsLines = ['pass']
-    rw.GenTestsLines = ['api.foo_module.baz()', 'yield api.test("basic")']
-    rw.add_expectation('basic')
-    rw.write()
-    with self.assertRaises(subprocess.CalledProcessError):
-      self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(
-        self.json_generator
-            .coverage_failure('recipe_modules/foo_module/test_api.py', [6])
-            .uncovered_module('foo_module')
-            .get(),
-        self.json_contents)
+  def test_api_covered_by_recipe_strict(self):
+    with self.main.write_module('foo_module') as mod:
+      mod.test_api.write('''
+        def baz(self):
+          pass
+      ''')
 
-  def test_test_api_covered_by_example(self):
-    mw = RecipeModuleWriter(self._root_dir, 'foo_module')
-    mw.test_methods['baz'] = ['pass']
-    mw.write()
-    mw.example.DEPS = ['foo_module']
-    mw.example.GenTestsLines = [
-        'api.foo_module.baz()', 'yield api.test("basic")']
-    mw.example.add_expectation('basic')
-    mw.example.write()
-    self._run_recipes('test', 'run', '--json', self.json_path)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
+    with self.main.write_recipe('foo') as recipe:
+      recipe.DEPS = ['foo_module']
+      recipe.GenTests.write('''
+        api.foo_module.baz()
+        yield api.test("basic")
+      ''')
 
-  def test_test_duplicate(self):
-    rw = RecipeWriter(os.path.join(self._root_dir, 'recipes'), 'foo')
-    rw.RunStepsLines = ['pass']
-    rw.GenTestsLines = ['yield api.test("basic")'] * 2
-    rw.add_expectation('basic')
-    rw.write()
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes('test', 'run')
+    self.assertDictEqual(
+        self._run_test('run', should_fail=True).data,
+        self._result_json(
+            coverage={'recipe_modules/foo_module/test_api.py': [6]},
+            uncovered_mods=['foo_module'],
+        ))
+
+  def test_api_covered_by_example(self):
+    with self.main.write_module('foo_module') as mod:
+      mod.test_api.write('''
+        def baz(self):
+          pass
+      ''')
+
+    with self.main.write_recipe('foo_module', 'examples/full') as recipe:
+      recipe.DEPS = ['foo_module']
+      recipe.GenTests.write('''
+        api.foo_module.baz()
+        yield api.test("basic")
+      ''')
+
+    self.assertDictEqual(self._run_test('run').data, self._result_json())
+
+  def test_duplicate(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.GenTests.write('''
+        yield api.test("basic")
+        yield api.test("basic")
+      ''')
+
     self.assertIn(
         'Exception: While generating results for \'foo\': '
             'ValueError: Duplicate test found: basic',
-        cm.exception.output)
+        self._run_test('run', should_fail='crash').text_output)
 
-  def test_diff_basic(self):
-    g1 = self.json_generator
-    g2 = self.json_generator
-    self._run_recipes(
-        'test', 'diff',
-        '--baseline', g1.write(),
-        '--actual', g2.write(),
-        '--json', self.json_path)
-    self.assertEqual(self.json_generator.get(), self.json_contents)
+  def test_unused_expectation_file(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.expectation['unused'] = []
+      expectation_file = os.path.join(recipe.expect_path, 'unused.json')
+    result = self._run_test('run', should_fail=True)
+    self.assertIn('FATAL: unused expectations found', result.text_output)
+    self.assertTrue(self.main.is_file(expectation_file))
+    self.assertDictEqual(
+        result.data,
+        self._result_json(
+            unused_expect=['recipes/foo.expected/unused.json']))
 
-  def test_diff_invalid_baseline(self):
-    g1 = self.json_generator.invalid()
-    g2 = self.json_generator
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes(
-          'test', 'diff',
-          '--baseline', g1.write(),
-          '--actual', g2.write(),
-          '--json', self.json_path)
-    self.assertEqual(self.json_generator.invalid().get(), self.json_contents)
+  def test_unused_expectation_dir(self):
+    with self.main.write_recipe('foo') as recipe:
+      extra_file = os.path.join(recipe.expect_path, 'dir', 'wat')
+      with self.main.write_file(extra_file):
+        pass
+    result = self._run_test('run')
+    self.assertTrue(self.main.is_file(extra_file))
+    self.assertDictEqual(result.data, self._result_json())
 
-  def test_diff_invalid_actual(self):
-    g1 = self.json_generator
-    g2 = self.json_generator.invalid()
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes(
-          'test', 'diff',
-          '--baseline', g1.write(),
-          '--actual', g2.write(),
-          '--json', self.json_path)
-    self.assertEqual(self.json_generator.invalid().get(), self.json_contents)
+  def test_drop_expectation(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.GenTests.write('''
+        yield (api.test("basic") +
+          api.post_process(post_process.DropExpectation))
+      ''')
+      del recipe.expectation['basic']
+      expectation_file = os.path.join(recipe.expect_path, 'basic.json')
+    result = self._run_test('run')
+    self.assertFalse(self.main.exists(expectation_file))
+    self.assertDictEqual(result.data, self._result_json())
 
-  def test_diff_just_diff(self):
-    g1 = self.json_generator
-    g2 = self.json_generator
+  def test_drop_expectation_unused(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.GenTests.write('''
+        yield (api.test("basic") +
+          api.post_process(post_process.DropExpectation))
+      ''')
+      expectation_file = os.path.join(recipe.expect_path, 'basic.json')
+    result = self._run_test('run', should_fail=True)
+    self.assertIn('FATAL: unused expectations found', result.text_output)
+    self.assertTrue(self.main.is_file(expectation_file))
+    self.assertDictEqual(
+        result.data,
+        self._result_json(unused_expect=[
+          'recipes/foo.expected',
+          'recipes/foo.expected/basic.json',
+        ]))
 
-    g1.diff_failure('foo_diff')
-    g2.diff_failure('foo_diff').diff_failure('bar_diff')
+  def test_unused_expectation_preserves_owners(self):
+    with self.main.write_recipe('foo') as recipe:
+      owners_file = os.path.join(recipe.expect_path, 'OWNERS')
+    with self.main.write_file(owners_file):
+      pass
+    result = self._run_test('run')
+    self.assertTrue(self.main.is_file(owners_file))
+    self.assertDictEqual(result.data, self._result_json())
 
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes(
-          'test', 'diff',
-          '--baseline', g1.write(),
-          '--actual', g2.write(),
-          '--json', self.json_path)
-    self.assertEqual(
-        self.json_generator.diff_failure('bar_diff').get(),
-        self.json_contents)
+  def test_config_covered_by_recipe(self):
+    with self.main.write_module('foo_module') as mod:
+      mod.DISABLE_STRICT_COVERAGE = True
+      mod.config.write('''
+        def BaseConfig(**_kwargs):
+          return ConfigGroup(bar=Single(str))
+        config_ctx = config_item_context(BaseConfig)
+        @config_ctx()
+        def bar_config(c):
+          c.bar = "gazonk"
+      ''')
+    with self.main.write_recipe('foo') as recipe:
+      recipe.DEPS = ['foo_module']
+      recipe.RunSteps.write('api.foo_module.set_config("bar_config")')
+    self.assertDictEqual(self._run_test('run').data, self._result_json())
 
-  def test_diff_full(self):
-    g1 = self.json_generator
-    g2 = self.json_generator
+  def test_config_covered_by_recipe_strict(self):
+    with self.main.write_module('foo_module') as mod:
+      mod.config.write('''
+        def BaseConfig(**_kwargs):
+          return ConfigGroup(bar=Single(str))
+        config_ctx = config_item_context(BaseConfig)
+        @config_ctx()
+        def bar_config(c):
+          c.bar = "gazonk"
+      ''')
+    with self.main.write_recipe('foo') as recipe:
+      recipe.DEPS = ['foo_module']
+      recipe.RunSteps.write('api.foo_module.set_config("bar_config")')
+    self.assertDictEqual(
+        self._run_test('run', should_fail=True).data,
+        self._result_json(
+            coverage={'recipe_modules/foo_module/config.py': [6, 10]},
+            uncovered_mods=['foo_module'],
+        ))
 
-    g1.coverage_failure(
-        'foo_coverage', [1, 2, 3]).coverage_failure('bar_coverage', [1])
-    g2.coverage_failure(
-        'foo_coverage', [1, 2, 3]).coverage_failure('bar_coverage', [1, 2])
+  def test_config_covered_by_example(self):
+    with self.main.write_module('foo_module') as mod:
+      mod.config.write('''
+        def BaseConfig(**_kwargs):
+          return ConfigGroup(bar=Single(str))
+        config_ctx = config_item_context(BaseConfig)
+        @config_ctx()
+        def bar_config(c):
+          c.bar = "gazonk"
+      ''')
+    with self.main.write_recipe('foo_module', 'examples/full') as recipe:
+      recipe.DEPS = ['foo_module']
+      recipe.RunSteps.write('api.foo_module.set_config("bar_config")')
+    self.assertDictEqual(self._run_test('run').data, self._result_json())
 
-    g1.diff_failure('foo_diff')
-    g2.diff_failure('foo_diff').diff_failure('bar_diff')
 
-    g1.check_failure(
-        'foo_check', 'foo_file', 1, 'foo_func')
-    g2.check_failure(
-        'foo_check', 'foo_file', 1, 'foo_func').check_failure(
-            'bar_check', 'bar_file', 2, 'bar_func', ['bar_args'])
+class TestTrain(Common):
+  def test_module_tests_unused_expectation_file_train(self):
+    with self.main.write_module('foo_module') as mod:
+      pass
 
-    g1.crash_failure('foo_crash')
-    g2.crash_failure('foo_crash').crash_failure('bar_crash')
+    with self.main.write_recipe('foo_module', 'examples/foo') as recipe:
+      recipe.expectation['unused'] = []
+      expectation_file = os.path.join(recipe.expect_path, 'unused.json')
 
-    g1.internal_failure('foo_internal')
-    g2.internal_failure('foo_internal').internal_failure('bar_internal')
+    result = self._run_test('train')
+    self.assertFalse(os.path.exists(expectation_file))
+    self.assertDictEqual(self._result_json(), result.data)
 
-    g1.uncovered_module('foo_module')
-    g2.uncovered_module('foo_module').uncovered_module('bar_module')
+  def test_module_tests_unused_expectation_file_stays_on_failure(self):
+    with self.main.write_module('foo_module') as mod:
+      pass
 
-    g1.unused_expectation(
-        'foo_expectation')
-    g2.unused_expectation(
-        'foo_expectation').unused_expectation('bar_expectation')
+    with self.main.write_recipe('foo_module', 'tests/foo') as recipe:
+      recipe.RunSteps.write('raise ValueErorr("boom")')
+      recipe.expectation['unused'] = []
+      expectation_file = os.path.join(recipe.expect_path, 'unused.json')
 
-    with self.assertRaises(subprocess.CalledProcessError) as cm:
-      self._run_recipes(
-          'test', 'diff',
-          '--baseline', g1.write(),
-          '--actual', g2.write(),
-          '--json', self.json_path)
-    self.assertEqual(
-        self.json_generator
-            .coverage_failure('bar_coverage', [2])
-            .diff_failure('bar_diff')
-            .check_failure('bar_check', 'bar_file', 2, 'bar_func', ['bar_args'])
-            .crash_failure('bar_crash')
-            .internal_failure('bar_internal')
-            .uncovered_module('bar_module')
-            .unused_expectation('bar_expectation')
-            .get(),
-        self.json_contents)
+    result = self._run_test('train', should_fail=True)
+    self.assertTrue(self.main.is_file(expectation_file))
+    self.assertDictEqual(
+        self._result_json(
+            coverage={'recipe_modules/foo_module/tests/foo.py': [7]},
+            crash=['foo_module:tests/foo.basic'],
+        ),
+        result.data)
+
+  def test_basic(self):
+    with self.main.write_recipe('foo'):
+      pass
+    self.assertDictEqual(self._run_test('train').data, self._result_json())
+
+  def test_missing(self):
+    with self.main.write_recipe('foo') as recipe:
+      del recipe.expectation['basic']
+      expect_dir = recipe.expect_path
+
+    self.assertFalse(self.main.exists(expect_dir))
+    self.assertDictEqual(self._run_test('train').data, self._result_json())
+    expect_path = os.path.join(expect_dir, 'basic.json')
+    self.assertTrue(self.main.is_file(expect_path))
+    self.assertListEqual(
+        json.loads(self.main.read_file(expect_path)),
+        [{'jsonResult': None, 'name': '$result'}])
+
+  def test_diff(self):
+    # 1. Initial state: recipe expectations are passing.
+    with self.main.write_recipe('foo') as recipe:
+      expect_path = os.path.join(recipe.expect_path, 'basic.json')
+    self.assertDictEqual(self._run_test('run').data, self._result_json())
+
+    # 2. Change the recipe and verify tests would fail.
+    with self.main.write_recipe('foo') as recipe:
+      recipe.RunSteps.write('api.step("test", ["echo", "bar"])')
+
+    result = self._run_test('run', should_fail=True)
+    self.assertIn('foo.basic failed', result.text_output)
+    self.assertDictEqual(result.data, self._result_json(diff=['foo.basic']))
+
+    # 3. Make sure training the recipe succeeds and produces correct results.
+    result = self._run_test('train')
+    self.assertListEqual(
+        json.loads(self.main.read_file(expect_path)),
+        [{u'cmd': [u'echo', u'bar'], u'name': u'test'},
+         {u'jsonResult': None, u'name': u'$result'}])
+    self.assertDictEqual(result.data, self._result_json())
+
+  def test_invalid_json(self):
+    # 1. Initial state: recipe expectations are passing.
+    with self.main.write_recipe('foo') as recipe:
+      expect_path = os.path.join(recipe.expect_path, 'basic.json')
+    self.assertDictEqual(self._run_test('run').data, self._result_json())
+
+    # 2. Change the expectation and verify tests would fail.
+    with self.main.write_file(expect_path) as fil:
+      fil.write('''
+        not valid JSON
+        <<<<<
+        merge conflict
+        >>>>>
+      ''')
+    result = self._run_test('run', should_fail=True)
+    self.assertIn('foo.basic failed', result.text_output)
+    self.assertDictEqual(result.data, self._result_json(diff=['foo.basic']))
+
+    # 3. Make sure training the recipe succeeds and produces correct results.
+    result = self._run_test('train')
+    self.assertListEqual(
+        json.loads(self.main.read_file(expect_path)),
+        [{u'jsonResult': None, u'name': u'$result'}])
+    self.assertDictEqual(result.data, self._result_json())
+
+  def test_checks_coverage(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.RunSteps.write('''
+        if False:
+          pass
+      ''')
+    result = self._run_test('train', should_fail=True)
+    self.assertIn('FATAL: Insufficient coverage', result.text_output)
+    self.assertNotIn('CHECK(FAIL)', result.text_output)
+    self.assertNotIn('foo.basic failed', result.text_output)
+    self.assertDictEqual(
+        result.data, self._result_json(coverage={'recipes/foo.py': [8]}))
+
+  def test_runs_checks(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.GenTests.write('''
+        yield (api.test("basic") +
+          api.post_process(post_process.MustRun, "bar"))
+      ''')
+    result = self._run_test('train', should_fail=True)
+    self.assertNotIn('FATAL: Insufficient coverage', result.text_output)
+    self.assertIn('CHECK(FAIL)', result.text_output)
+    self.assertIn('foo.basic failed', result.text_output)
+    self.assertDictEqual(
+        result.data,
+        self._result_json(check={
+          'foo.basic': [CheckFailure(
+              filename='recipes/foo.py', lineno=11, func='MustRun',
+              args=["'bar'"])]
+        }))
+
+  def test_unused_expectation_file(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.expectation['unused'] = []
+      expectation_file = os.path.join(recipe.expect_path, 'unused.json')
+    result = self._run_test('train')
+    self.assertFalse(self.main.exists(expectation_file))
+    self.assertDictEqual(result.data, self._result_json())
+
+  def test_unused_expectation_dir(self):
+    with self.main.write_recipe('foo') as recipe:
+      extra_file = os.path.join(recipe.expect_path, 'dir', 'wat')
+      with self.main.write_file(extra_file):
+        pass
+    result = self._run_test('train')
+    self.assertTrue(self.main.is_file(extra_file))
+    self.assertDictEqual(result.data, self._result_json())
+
+  def test_drop_expectation(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.GenTests.write('''
+        yield (api.test("basic") +
+          api.post_process(post_process.DropExpectation))
+      ''')
+      expectation_file = os.path.join(recipe.expect_path, 'basic.json')
+    self.assertTrue(self.main.is_file(expectation_file))
+    result = self._run_test('train')
+    self.assertFalse(self.main.exists(expectation_file))
+    self.assertDictEqual(result.data, self._result_json())
+
+  def test_drop_expectation_unused(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.GenTests.write('''
+        yield (api.test("basic") +
+          api.post_process(post_process.DropExpectation))
+      ''')
+      expectation_file = os.path.join(recipe.expect_path, 'basic.json')
+    result = self._run_test('train')
+    self.assertFalse(self.main.exists(expectation_file))
+    self.assertDictEqual(result.data, self._result_json())
+
+  def test_unused_expectation_preserves_owners(self):
+    with self.main.write_recipe('foo') as recipe:
+      owners_file = os.path.join(recipe.expect_path, 'OWNERS')
+    with self.main.write_file(owners_file):
+      pass
+    result = self._run_test('train')
+    self.assertTrue(self.main.is_file(owners_file))
+    self.assertDictEqual(result.data, self._result_json())
+
+  def test_config_uncovered(self):
+    with self.main.write_module('foo_module') as mod:
+      mod.DISABLE_STRICT_COVERAGE = True
+      mod.config.write('''
+        def BaseConfig(**_kwargs):
+          return ConfigGroup(bar=Single(str))
+        config_ctx = config_item_context(BaseConfig)
+      ''')
+    self.assertDictEqual(
+        self._run_test('run', should_fail=True).data,
+        self._result_json(
+            coverage={'recipe_modules/foo_module/config.py': [6]},
+        ))
+
+  def test_config_uncovered_strict(self):
+    with self.main.write_module('foo_module') as mod:
+      mod.config.write('''
+        def BaseConfig(**_kwargs):
+          return ConfigGroup(bar=Single(str))
+        config_ctx = config_item_context(BaseConfig)
+      ''')
+    self.assertDictEqual(
+        self._run_test('run', should_fail=True).data,
+        self._result_json(
+            coverage={'recipe_modules/foo_module/config.py': [6]},
+            uncovered_mods=['foo_module'],
+        ))
+
+
+class TestDiff(Common):
+  def test_basic(self):
+    with self.main.write_file('base.json') as buf:
+      json.dump(self._result_json(), buf)
+
+    with self.main.write_file('new.json') as buf:
+      json.dump(self._result_json(), buf)
+
+    result = self._run_test(
+        'diff',
+        '--baseline', os.path.join(self.main.path, 'base.json'),
+        '--actual', os.path.join(self.main.path, 'new.json'),
+    )
+    self.assertDictEqual(result.data, self._result_json())
+
+  def test_invalid_baseline(self):
+    invalid = self._result_json()
+    del invalid['valid']
+
+    with self.main.write_file('base.json') as buf:
+      json.dump(invalid, buf)
+
+    with self.main.write_file('new.json') as buf:
+      json.dump(self._result_json(), buf)
+
+    result = self._run_test(
+        'diff',
+        '--baseline', os.path.join(self.main.path, 'base.json'),
+        '--actual', os.path.join(self.main.path, 'new.json'),
+        should_fail=True
+    )
+    self.assertDictEqual(result.data, invalid)
+
+  def test_invalid_actual(self):
+    invalid = self._result_json()
+    del invalid['valid']
+
+    with self.main.write_file('base.json') as buf:
+      json.dump(invalid, buf)
+
+    with self.main.write_file('new.json') as buf:
+      json.dump(self._result_json(), buf)
+
+    result = self._run_test(
+        'diff',
+        '--baseline', os.path.join(self.main.path, 'base.json'),
+        '--actual', os.path.join(self.main.path, 'new.json'),
+        should_fail=True
+    )
+    self.assertDictEqual(result.data, invalid)
+
+  def test_just_diff(self):
+    with self.main.write_file('base.json') as buf:
+      json.dump(self._result_json(diff=['foo']), buf)
+
+    with self.main.write_file('new.json') as buf:
+      json.dump(self._result_json(diff=['foo', 'bar']), buf)
+
+    result = self._run_test(
+        'diff',
+        '--baseline', os.path.join(self.main.path, 'base.json'),
+        '--actual', os.path.join(self.main.path, 'new.json'),
+        should_fail=True
+    )
+    self.assertDictEqual(result.data, self._result_json(diff=['bar']))
+
+  def test_full(self):
+    with self.main.write_file('base.json') as buf:
+      json.dump(self._result_json(
+          check={
+            'foo': [
+              CheckFailure(filename='foo_file', lineno=1, func='foo_func')],
+          },
+          coverage={'foo': [1, 2, 3], 'bar': [1]},
+          diff=['foo'], crash=['foo'], internal=['foo'], uncovered_mods=['foo'],
+          unused_expect=['foo_expect'],
+      ), buf)
+
+    with self.main.write_file('new.json') as buf:
+      json.dump(self._result_json(
+          check={
+            'foo': [
+              CheckFailure(filename='foo_file', lineno=1, func='foo_func')],
+            'bar': [
+              CheckFailure(filename='bar_file', lineno=2, func='bar_func',
+                           args=['"arg"'])],
+          },
+          coverage={'foo': [1, 2, 3], 'bar': [1, 2]},
+          diff=['foo', 'bar'], crash=['foo', 'bar'], internal=['foo', 'bar'],
+          uncovered_mods=['foo', 'bar'],
+          unused_expect=['foo_expect', 'bar_expect'],
+      ), buf)
+
+    result = self._run_test(
+        'diff',
+        '--baseline', os.path.join(self.main.path, 'base.json'),
+        '--actual', os.path.join(self.main.path, 'new.json'),
+        should_fail=True
+    )
+    self.assertDictEqual(
+        self._result_json(
+            check={'bar': [
+              CheckFailure(filename='bar_file', lineno=2, func='bar_func',
+                           args=['"arg"'])],
+            },
+            coverage={'bar': [2]},
+            diff=['bar'], crash=['bar'], internal=['bar'],
+            uncovered_mods=['bar'], unused_expect=['bar_expect']),
+        result.data)
+
+
+class TestArgs(test_env.RecipeEngineUnitTest):
+  @mock.patch('argparse._sys.stderr', new_callable=StringIO)
+  def test_normalize_filter(self, stderr):
+    parser = argparse.ArgumentParser()
+    test.add_subparser(parser.add_subparsers())
+
+    with self.assertRaises(SystemExit):
+      args = parser.parse_args([
+        'test', 'run', '--filter', ''])
+    self.assertIn('empty filters not allowed', stderr.getvalue())
+
+    stderr.reset()
+    args = parser.parse_args(['test', 'run', '--filter', 'foo'])
+    self.assertEqual(args.filter, ['foo*.*'])
+
+    stderr.reset()
+    args = parser.parse_args(['test', 'run', '--filter', 'foo.bar'])
+    self.assertEqual(args.filter, ['foo.bar'])
 
 
 if __name__ == '__main__':
-  sys.exit(unittest.main())
+  test_env.main()

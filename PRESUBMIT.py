@@ -1,11 +1,6 @@
-# Copyright 2015 The LUCI Authors. All rights reserved.
+# Copyright 2019 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
-
-import os
-import re
-import subprocess
-import sys
 
 
 def header(input_api):
@@ -26,13 +21,6 @@ def header(input_api):
 
 
 def CommonChecks(input_api, output_api):
-  def tests(*path):
-    return input_api.canned_checks.GetUnitTestsInDirectory(
-        input_api,
-        output_api,
-        input_api.os_path.join(*path),
-        whitelist=[r'.+_test\.py'])
-
   results = []
 
   results.extend(input_api.canned_checks.PanProjectChecks(
@@ -43,9 +31,8 @@ def CommonChecks(input_api, output_api):
   ))
 
   results.extend(input_api.RunTests(
-      tests('recipe_engine', 'autoroll_impl', 'unittests') +
-      tests('recipe_engine', 'unittests') +
-      tests('unittests') +
+      input_api.canned_checks.GetUnitTestsInDirectory(
+          input_api, output_api, 'unittests', whitelist=[r'.+_test\.py']) +
       input_api.canned_checks.CheckVPythonSpec(input_api, output_api)
   ))
 

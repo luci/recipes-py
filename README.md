@@ -47,7 +47,7 @@ sequences of subprocess calls in a cross-platform and testable way.
 
     The core functionality of the recipe engine. Noteworthy files include:
     * `main.py` -- The main entrypoint for the recipe engine.
-    * `package.proto` -- The protobuf file which defines the format of a
+    * `recipes_cfg.proto` -- The protobuf file which defines the format of a
     `recipes.cfg` file.
     * `third_party/` -- third_party code which is vendored into the recipe
       engine.

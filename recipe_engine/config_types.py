@@ -127,15 +127,15 @@ class RecipeScriptBasePath(
     return 'RECIPE[%s].resources' % self.recipe_name
 
 
-class PackageRepoBasePath(
-    BasePath, namedtuple('PackageRepoBasePath', 'package')):
+class RepoBasePath(
+    BasePath, namedtuple('RepoBasePath', 'repo_name repo_root_path')):
   def resolve(self, test_enabled):
     if test_enabled:
       return repr(self)
-    return self.package.repo_root  # pragma: no cover
+    return self.repo_root_path  # pragma: no cover
 
   def __repr__(self):
-    return 'RECIPE_PACKAGE_REPO[%s]' % self.package.name
+    return 'RECIPE_REPO[%s]' % self.repo_name
 
 
 class Path(RecipeConfigType):

@@ -7,9 +7,7 @@ from __future__ import print_function
 import sys
 
 from . import autoroll
-from . import package
-from . import package_io
-from .autoroll_impl.candidate_algorithm import get_roll_candidates
+from .internal.autoroll_impl.candidate_algorithm import get_roll_candidates
 
 
 def add_subparser(parser):
@@ -24,18 +22,16 @@ def add_subparser(parser):
   manual_roll_p.set_defaults(func=main)
 
 
-def main(_package_deps, args):
-  config_file = args.package
-  repo_root = package_io.InfraRepoConfig().from_recipes_cfg(config_file.path)
+def main(args):
+  original_spec = args.recipe_deps.main_repo.recipes_cfg_pb2
 
-  package_pb = config_file.read()
+  # Fetch all remote changes locally, so we can compute metadata for them.
+  for repo in args.recipe_deps.repos.itervalues():
+    if repo.name == args.recipe_deps.main_repo_id:
+      continue
+    repo.backend.fetch(original_spec.deps[repo.name].branch)
 
-  context = package.PackageContext.from_package_pb(repo_root, package_pb)
-  package_spec = package.PackageSpec.from_package_pb(context, package_pb)
-  for repo_spec in package_spec.deps.values():
-    repo_spec.fetch()
-
-  candidates, rejected, repos = get_roll_candidates(context, package_spec)
+  candidates, rejected, repos = get_roll_candidates(args.recipe_deps)
 
   if not candidates:
     print(
@@ -54,11 +50,12 @@ def main(_package_deps, args):
   for pid, clist in candidate.changelist(repos).iteritems():
     print()
     print(pid+':')
-    for c in clist:
+    for commit in clist:
       print('  https://crrev.com/%s %s (%s)' % (
-        c.revision, c.message_lines[0], c.author_email
+        commit.revision, commit.message_lines[0], commit.author_email
       ))
 
-  autoroll.write_spec_to_disk(context, config_file, candidate.package_pb)
+  autoroll.write_global_files_to_main_repo(
+      args.recipe_deps, candidate.repo_spec)
 
   return 0

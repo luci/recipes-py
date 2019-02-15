@@ -33,19 +33,21 @@ from google.protobuf import json_format
 
 from . import checker
 from . import config_types
-from . import loader
-from . import package
+from . import doc
 from . import run
 from . import step_runner
 from . import stream
-from . import doc
 from . import test_result_pb2
+from .internal import recipe_deps
 
 
 # These variables must be set in the dynamic scope of the functions in this
 # file.  We do this instead of passing because they're not picklable, and
 # that's required by multiprocessing.
-_UNIVERSE_VIEW = None
+#
+# For type hinting we populate this with an empty RecipeDeps, but it's
+# overwritten in main().
+_RECIPE_DEPS = None # type: recipe_deps.RecipeDeps
 
 
 # An event to signal exit, for example on Ctrl-C.
@@ -177,13 +179,17 @@ class TestDescription(object):
     self.expect_dir = expect_dir
     self.covers = covers
 
+  @staticmethod
+  def filesystem_safe(name):
+    return ''.join('_' if c in '<>:"\\/|?*\0' else c for c in name)
+
   @property
   def full_name(self):
     return '%s.%s' % (self.recipe_name, self.test_name)
 
   @property
   def expectation_path(self):
-    name = ''.join('_' if c in '<>:"\\/|?*\0' else c for c in self.test_name)
+    name = self.filesystem_safe(self.test_name)
     return os.path.join(self.expect_dir, name + '.json')
 
 
@@ -245,8 +251,9 @@ def run_test(test_description, mode):
       else:
         raise
 
+  main_repo = _RECIPE_DEPS.main_repo
   break_funcs = [
-    _UNIVERSE_VIEW.load_recipe(test_description.recipe_name).run_steps,
+    main_repo.recipes[test_description.recipe_name].global_symbols['RunSteps'],
   ]
 
   try:
@@ -331,18 +338,14 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
       props['$recipe_engine/source_manifest'] = {}
     if 'debug_dir' not in props['$recipe_engine/source_manifest']:
       props['$recipe_engine/source_manifest']['debug_dir'] = None
-    engine = run.RecipeEngine(runner, props, {}, _UNIVERSE_VIEW)
+    engine = run.RecipeEngine(_RECIPE_DEPS, runner, props, {})
     with coverage_context(include=covers, enable=enable_coverage) as cov:
       # Run recipe loading under coverage context. This ensures we collect
       # coverage of all definitions and globals.
-      recipe_script = _UNIVERSE_VIEW.load_recipe(recipe_name, engine=engine)
+      recipe_script = _RECIPE_DEPS.main_repo.recipes[recipe_name]
 
-      api = loader.create_recipe_api(
-        _UNIVERSE_VIEW.universe.package_deps.root_package,
-        recipe_script.LOADED_DEPS,
-        recipe_script.path, engine, test_data)
       try:
-        result = engine.run(recipe_script, api)
+        result = engine.run(recipe_script, test_data)
       except Exception:
         ex_type, ex_value, ex_tb = sys.exc_info()
         raise (
@@ -400,74 +403,67 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
 
 
 def get_tests(test_filter=None):
-  """Returns a list of tests for current recipe package."""
+  """Returns a list of tests for current recipe repo."""
   tests = []
   coverage_data = coverage.CoverageData()
 
-  all_modules = set(_UNIVERSE_VIEW.loop_over_recipe_modules())
+  main_repo = _RECIPE_DEPS.main_repo
+  mods_base_path = os.path.join(main_repo.recipes_root_path, 'recipe_modules')
+
+  all_modules = set(main_repo.modules.keys())
   covered_modules = set()
 
   base_covers = []
 
-  coverage_include = os.path.join(_UNIVERSE_VIEW.module_dir, '*', '*.py')
-  for module in all_modules:
-    # Run module loading under coverage context. This ensures we collect
+  coverage_include = os.path.join(mods_base_path, '*', '*.py')
+  for module_name in all_modules:
+    module = main_repo.modules[module_name]
+
+    # Import module under coverage context. This ensures we collect
     # coverage of all definitions and globals.
     with coverage_context(include=coverage_include) as cov:
-      mod = _UNIVERSE_VIEW.load_recipe_module(module)
+      imported_module = module.do_import()
     coverage_data.update(cov.get_data())
 
     # Recipe modules can only be covered by tests inside the same module.
     # To make transition possible for existing code (which will require
     # writing tests), a temporary escape hatch is added.
     # TODO(phajdan.jr): remove DISABLE_STRICT_COVERAGE (crbug/693058).
-    if mod.DISABLE_STRICT_COVERAGE:
-      covered_modules.add(module)
+    if imported_module.DISABLE_STRICT_COVERAGE:
+      covered_modules.add(module_name)
       # Make sure disabling strict coverage also disables our additional check
       # for module coverage. Note that coverage will still raise an error if
       # the module is executed by any of the tests, but having less than 100%
       # coverage.
-      base_covers.append(os.path.join(
-          _UNIVERSE_VIEW.module_dir, module, '*.py'))
+      base_covers.append(os.path.join(module.path, '*.py'))
 
   recipe_filter = []
   if test_filter:
     recipe_filter = [p.split('.', 1)[0] for p in test_filter]
-  for recipe_path, recipe_name in _UNIVERSE_VIEW.loop_over_recipes():
+  for recipe in main_repo.recipes.itervalues():
     if recipe_filter:
       match = False
       for pattern in recipe_filter:
-        if fnmatch.fnmatch(recipe_name, pattern):
+        if fnmatch.fnmatch(recipe.name, pattern):
           match = True
           break
       if not match:
         continue
 
     try:
-      covers = [recipe_path] + base_covers
+      covers = [recipe.path] + base_covers
 
       # Example/test recipes in a module always cover that module.
-      if ':' in recipe_name:
-        module, _ = recipe_name.split(':', 1)
-        covered_modules.add(module)
-        covers.append(os.path.join(_UNIVERSE_VIEW.module_dir, module, '*.py'))
+      if recipe.module:
+        covered_modules.add(recipe.module.name)
+        covers.append(os.path.join(recipe.module.path, '*.py'))
 
       with coverage_context(include=covers) as cov:
-        # Run recipe loading under coverage context. This ensures we collect
-        # coverage of all definitions and globals.
-        recipe = _UNIVERSE_VIEW.load_recipe(recipe_name)
-        test_api = loader.create_test_api(recipe.LOADED_DEPS, _UNIVERSE_VIEW)
+        recipe_tests = recipe.gen_tests()
 
-        root, name = os.path.split(recipe_path)
-        name = os.path.splitext(name)[0]
-        # TODO(phajdan.jr): move expectation tree outside of the recipe tree.
-        expect_dir = os.path.join(root, '%s.expected' % name)
-
-        # Immediately convert to list to force running the generator under
-        # coverage context. Otherwise coverage would only report executing
-        # the function definition, not GenTests body.
-        recipe_tests = list(recipe.gen_tests(test_api))
       coverage_data.update(cov.get_data())
+      # TODO(iannucci): move expectation tree outside of the recipe tree.
+      expect_dir = os.path.splitext(recipe.path)[0] + '.expected'
 
       for test_data in recipe_tests:
         # Put the test data in shared cache. This way it can only be generated
@@ -475,13 +471,13 @@ def get_tests(test_filter=None):
         # a weird recipe generates tests non-deterministically. The recipe
         # engine should be robust against such user recipe code where
         # reasonable.
-        key = (recipe_name, test_data.name)
+        key = (recipe.name, test_data.name)
         if key in _GEN_TEST_CACHE:
           raise ValueError('Duplicate test found: %s' % test_data.name)
         _GEN_TEST_CACHE[key] = copy.deepcopy(test_data)
 
         test_description = TestDescription(
-            recipe_name, test_data.name, expect_dir, covers)
+            recipe.name, test_data.name, expect_dir, covers)
         if test_filter:
           for pattern in test_filter:
             if fnmatch.fnmatch(test_description.full_name, pattern):
@@ -492,7 +488,7 @@ def get_tests(test_filter=None):
     except:
       info = sys.exc_info()
       new_exec = Exception('While generating results for %r: %s: %s' % (
-        recipe_name, info[0].__name__, str(info[1])))
+        recipe.name, info[0].__name__, str(info[1])))
       raise new_exec.__class__, new_exec, info[2]
 
   uncovered_modules = sorted(all_modules.difference(covered_modules))
@@ -587,7 +583,9 @@ def cover_omit():
   """Returns list of patterns to omit from coverage analysis."""
   omit = [ ]
 
-  mod_dir_base = _UNIVERSE_VIEW.module_dir
+  mod_dir_base = os.path.join(
+    _RECIPE_DEPS.main_repo.recipes_root_path,
+    'recipe_modules')
   if os.path.isdir(mod_dir_base):
       omit.append(os.path.join(mod_dir_base, '*', 'resources', '*'))
 
@@ -634,38 +632,11 @@ def run_worker(test, mode):
   return run_test(test, mode)
 
 
-def scan_for_expectations(root, inside_expectations=False):
-  """Returns set of expectation paths recursively under |root|.
-
-  Args:
-    inside_expectations(bool): whether the path is already within directory
-        tree of expectations (foo.expected)
-  """
-  collected_expectations = set()
-  for entry in os.listdir(root):
-    full_entry = os.path.join(root, entry)
-    if os.path.isdir(full_entry):
-      collected_expectations.update(scan_for_expectations(
-          full_entry, inside_expectations or entry.endswith('.expected')))
-    if not entry.endswith('.expected') and not inside_expectations:
-      continue
-    if os.path.isdir(full_entry):
-      collected_expectations.add(full_entry)
-      for subentry in os.listdir(full_entry):
-        if not subentry.endswith('.json'):
-          continue
-        full_subentry = os.path.join(full_entry, subentry)
-        collected_expectations.add(full_subentry)
-    elif entry.endswith('.json'):
-      collected_expectations.add(full_entry)
-  return collected_expectations
-
-
-def run_train(package_deps, gen_docs, test_filter, jobs, json_file):
+def run_train(gen_docs, test_filter, jobs, json_file):
   rc = run_run(test_filter, jobs, json_file, _MODE_TRAIN)
   if rc == 0 and gen_docs:
     print('Generating README.recipes.md')
-    doc.regenerate_docs(_UNIVERSE_VIEW, package_deps)
+    doc.regenerate_docs(_RECIPE_DEPS.main_repo)
   return rc
 
 
@@ -766,24 +737,14 @@ def run_run(test_filter, jobs, json_file, mode):
     print('NOTE: not checking for unused expectations, '
           'because a filter is enabled')
   else:
-    actual_expectations = set()
-    if os.path.exists(_UNIVERSE_VIEW.recipe_dir):
-      actual_expectations.update(
-          scan_for_expectations(_UNIVERSE_VIEW.recipe_dir))
-    if os.path.exists(_UNIVERSE_VIEW.module_dir):
-      for module_entry in os.listdir(_UNIVERSE_VIEW.module_dir):
-        full_entry = os.path.join(_UNIVERSE_VIEW.module_dir, module_entry)
-        if not os.path.isdir(full_entry):
-          continue
+    # Gather the paths for all expectations folders and files.
+    actual_expectations = reduce(
+      lambda s, r: s | r.expectation_paths,
+      _RECIPE_DEPS.main_repo.recipes.itervalues(),
+      set()
+    )
 
-        for subfolder in ['tests', 'examples']:
-          full_subdir = os.path.join(full_entry, subfolder)
-          if os.path.isdir(full_subdir):
-            actual_expectations.update(scan_for_expectations(full_subdir))
-
-
-    unused_expectations = sorted(
-        actual_expectations.difference(used_expectations))
+    unused_expectations = sorted(actual_expectations - used_expectations)
     if unused_expectations:
       if mode == _MODE_TRAIN:
         # we only want to prune expectations if training was otherwise
@@ -907,7 +868,7 @@ def add_subparser(parser):
   helpstr = 'Print all test names.'
   list_p = subp.add_parser(
     'list', help=helpstr, description=helpstr)
-  list_p.set_defaults(subfunc=lambda opts, _: run_list(opts.json))
+  list_p.set_defaults(subfunc=lambda opts: run_list(opts.json))
   list_p.add_argument(
     '--json', metavar='FILE', type=argparse.FileType('w'),
     help='path to JSON output file')
@@ -915,7 +876,7 @@ def add_subparser(parser):
   helpstr='Compare results of two test runs.'
   diff_p = subp.add_parser(
     'diff', help=helpstr, description=helpstr)
-  diff_p.set_defaults(subfunc=lambda opts, _: run_diff(
+  diff_p.set_defaults(subfunc=lambda opts: run_diff(
     opts.baseline, opts.actual, json_file=opts.json))
   diff_p.add_argument(
     '--baseline', metavar='FILE', type=argparse.FileType('r'),
@@ -939,7 +900,7 @@ def add_subparser(parser):
 
   helpstr = 'Run the tests.'
   run_p = subp.add_parser('run', help=helpstr, description=helpstr)
-  run_p.set_defaults(subfunc=lambda opts, _: run_run(
+  run_p.set_defaults(subfunc=lambda opts: run_run(
     opts.filter, opts.jobs, opts.json, _MODE_TEST))
   run_p.add_argument(
     '--jobs', metavar='N', type=int,
@@ -954,8 +915,8 @@ def add_subparser(parser):
 
   helpstr = 'Re-train recipe expectations.'
   train_p = subp.add_parser('train', help=helpstr, description=helpstr)
-  train_p.set_defaults(subfunc=lambda opts, pd: run_train(
-    pd, opts.docs, opts.filter, opts.jobs, opts.json))
+  train_p.set_defaults(subfunc=lambda opts: run_train(
+    opts.docs, opts.filter, opts.jobs, opts.json))
   train_p.add_argument(
     '--jobs', metavar='N', type=int,
     default=multiprocessing.cpu_count(),
@@ -973,7 +934,7 @@ def add_subparser(parser):
   helpstr = 'Run the tests under debugger (pdb).'
   debug_p = subp.add_parser(
     'debug', help=helpstr, description=helpstr)
-  debug_p.set_defaults(subfunc=lambda opts, _: run_run(
+  debug_p.set_defaults(subfunc=lambda opts: run_run(
     opts.filter, None, None, _MODE_DEBUG))
   debug_p.add_argument(
     '--filter', action='append', type=normalize_filter,
@@ -982,22 +943,14 @@ def add_subparser(parser):
   test_p.set_defaults(func=main)
 
 
-def main(package_deps, args):
+def main(args):
   """Runs simulation tests on a given repo of recipes.
 
   Args:
-    package_deps (PackageDeps)
     args: the parsed args (see add_subparser).
   Returns:
     Exit code
   """
-  universe = loader.RecipeUniverse(package_deps, args.package)
-  universe_view = loader.UniverseView(universe, package_deps.root_package)
-
-  # Prevent flakiness caused by stale pyc files.
-  package.cleanup_pyc(package_deps.root_package.recipes_dir)
-
-  global _UNIVERSE_VIEW
-  _UNIVERSE_VIEW = universe_view
-
-  return args.subfunc(args, package_deps)
+  global _RECIPE_DEPS
+  _RECIPE_DEPS = args.recipe_deps
+  return args.subfunc(args)
