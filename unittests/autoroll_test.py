@@ -98,7 +98,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
           upstream_commit.as_roll_info(),
         ],
       },
-      'spec': jsonpb.MessageToDict(spec),
+      'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
     }
 
     self.assertEqual(expected_picked_roll['commit_infos'],
@@ -139,7 +139,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
           up_commit.as_roll_info()
         ],
       },
-      'spec': jsonpb.MessageToDict(spec),
+      'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
     }
 
     picked_roll = roll_result['picked_roll_details']
@@ -212,7 +212,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
           final_commit.as_roll_info(),
         ],
       },
-      'spec': jsonpb.MessageToDict(spec),
+      'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
     }
 
     picked_roll = roll_result['picked_roll_details']
@@ -273,7 +273,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
           final_commit.as_roll_info(),
         ],
       },
-      'spec': jsonpb.MessageToDict(spec),
+      'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
     }
 
     picked_roll = roll_result['picked_roll_details']
@@ -345,7 +345,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
           final_commit.as_roll_info(),
         ],
       },
-      'spec': jsonpb.MessageToDict(spec),
+      'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
     }
 
     picked_roll = roll_result['picked_roll_details']
@@ -423,7 +423,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
             'upstream': [super_roll.as_roll_info()],
             'super_upstream': [super_commit.as_roll_info()],
         },
-        'spec': jsonpb.MessageToDict(spec),
+      'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
     }
 
     picked_roll = roll_result['picked_roll_details']
@@ -472,7 +472,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
 
     self.assertEqual(
       roll_result['rejected_candidate_specs'],
-      [jsonpb.MessageToDict(spec)],
+      [jsonpb.MessageToDict(spec, preserving_proto_field_name=True)],
     )
 
 

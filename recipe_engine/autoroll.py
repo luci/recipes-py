@@ -141,7 +141,8 @@ def process_candidates(recipe_deps, candidates, repos, verbose_json):
   # we exit early depending on test results.
   for candidate in candidates:
     roll_details.append({
-      'spec': jsonpb.MessageToDict(candidate.repo_spec),
+      'spec': jsonpb.MessageToDict(
+          candidate.repo_spec, preserving_proto_field_name=True),
       'commit_infos': {
         repo_name: [{
           'author_email': c.author_email,
@@ -226,7 +227,9 @@ def test_rolls(recipe_deps, verbose_json):
   }
   if verbose_json:
     ret['rejected_candidate_specs'] = [
-      jsonpb.MessageToDict(c.repo_spec) for c in rejected_candidates]
+      jsonpb.MessageToDict(c.repo_spec, preserving_proto_field_name=True)
+      for c in rejected_candidates
+    ]
   return ret
 
 
