@@ -289,8 +289,18 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """
     args = ['-json-output', self.m.json.output(), '-interval', '%ds' % interval]
     args += build_ids
+    test_response = [
+      {'id': str(bid), 'status': 'SUCCESS'}
+      for bid in build_ids
+    ]
     result = self._call_service(
-        'collect', args, json_stdout=False, timeout=timeout, name=step_name)
+        name=step_name,
+        command='collect',
+        args=args,
+        json_stdout=False,
+        timeout=timeout,
+        step_test_data=lambda: self.m.json.test_api.output(test_response),
+    )
     builds = [json_format.ParseDict(build_json, build_pb2.Build())
               for build_json in result.json.output]
     return {build.id: build for build in builds}

@@ -16,8 +16,10 @@ def RunSteps(api):
 
 
 def GenTests(api):
+  yield api.test('basic')
+
   yield (
-      api.test('basic') +
+      api.test('with mocking') +
       api.buildbucket.simulated_collect_output(
         [
           api.buildbucket.ci_build_message(
