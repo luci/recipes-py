@@ -40,7 +40,10 @@ def write_global_files_to_main_repo(recipe_deps, spec):
   main_repo = recipe_deps.main_repo
   if spec.project_id:
     spec.repo_name = spec.project_id
-  out = jsonpb.MessageToJson(spec, preserving_proto_field_name=True)
+  # Format recipes.cfg nicely and make it deterministic.
+  out = json.dumps(
+      jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
+      indent=2, sort_keys=True).replace(' \n', '\n') + '\n'
   LOGGER.info('writing: %s', out)
 
   cfg_path = os.path.join(main_repo.path, simple_cfg.RECIPES_CFG_LOCATION_REL)
