@@ -9,6 +9,7 @@ DEPS = [
   'raw_io',
   'runtime',
   'step',
+  'uuid',
 ]
 
 from recipe_engine.recipe_api import Property

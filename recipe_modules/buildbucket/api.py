@@ -4,13 +4,13 @@
 
 """API for interacting with the buildbucket service.
 
-Depends on 'buildbucket' binary available in PATH:
+Requires 'buildbucket' command in $PATH:
 https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 """
 
-import base64
 import json
 
+from google import protobuf
 from google.protobuf import json_format
 
 from recipe_engine import recipe_api
@@ -73,6 +73,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
           self._build.input.gitiles_commit, build_dict, build_sets,
           revision or parent_got_revision, branch)
       _legacy_tags(build_dict, self._build)
+
+    self._next_test_build_id = 8922054662172514000
 
   def set_buildbucket_host(self, host):
     """Changes the buildbucket backend hostname used by this module.
@@ -213,8 +215,196 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   # RPCs.
 
+  def schedule_request(
+      self,
+      builder,
+      project=None,
+      bucket=None,
+      properties=None,
+      experimental=None,
+      gitiles_commit=None,
+      gerrit_changes=None,
+      tags=None,
+      inherit_buildsets=True,
+      dimensions=None,
+      priority=None,
+    ):
+    """Creates a new ScheduleBuildRequest message with reasonable defaults.
+
+    CAUTION: returns a dict, not a protobuf message!
+    TODO(crbug.com/930761): return the message.
+    This will change the function signature.
+
+    This is a convenience function to create a ScheduleBuildRequest message.
+
+    Among args, messages can be passed as dicts of the same structure.
+
+    Example:
+        request = api.buildbucket.schedule_request(
+            builder='linux',
+            tags=[dict(key='a', value='b')],
+        )
+        build = api.buildbucket.schedule([request])[0]
+
+    Args:
+      builder (str): name of the destination builder.
+      project (str): project containing the destinaiton builder.
+        Defaults to the project of the current build.
+      bucket (str): bucket containing the destination builder.
+        Defaults to the bucket of the current build.
+      properties (dict): input properties for the new build.
+      experimental: whether the build is allowed to affect prod.
+        If not None, must be common_pb2.Trinary or bool.
+        Defaults to the value of the current build.
+        Read more at https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q="bool experimental"
+      gitiles_commit (common_pb2.GitilesCommit): input commit.
+        Defaults to the input commit of the current build.
+        Read more at https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q=Input.gitiles_commit
+      gerrit_changes (list or common_pb2.GerritChange): list of input CLs.
+        Defaults to gerrit changes of the current build.
+        Read more at https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q=Input.gerrit_changes
+      tags (list or common_pb2.StringPair): tags for the new build.
+      inherit_buildsets (bool): if True (default), the returned request will
+        include buildset tags from the current build.
+      dimensions (list of common_pb2.RequestedDimension): override dimensions
+        defined on the server.
+      priority (int): Swarming task priority.
+        The lower the more important. Valid values are [20..255].
+        Defaults to the value of the current build.
+    """
+
+    b = self.build
+    req = dict(
+        request_id='%d-%s' % (b.id, self.m.uuid.random()),
+        builder=dict(
+            project=project or b.builder.project,
+            bucket=bucket or b.builder.bucket,
+            builder=builder,
+        ),
+        priority=priority or b.infra.swarming.priority,
+        properties=properties or {},
+    )
+
+    if experimental is None:
+      experimental = b.input.experimental
+    elif isinstance(experimental, bool):
+      experimental = common_pb2.YES if experimental else common_pb2.NO
+    req['experimental'] = experimental
+
+    # Populate commit.
+    if not gitiles_commit and b.input.HasField('gitiles_commit'):
+      gitiles_commit = b.input.gitiles_commit
+    if gitiles_commit:
+      req['gitiles_commit'] = _as_dict(gitiles_commit)
+
+    # Populate CLs.
+    gerrit_changes = gerrit_changes or b.input.gerrit_changes
+    req['gerrit_changes'] = map(_as_dict, gerrit_changes)
+
+    # Populate tags.
+    tags = tags or b.tags
+    tag_set = set()
+    for t in tags:
+      t = _as_dict(t)
+      tag_set.add((t['key'], t['value']))
+
+    if inherit_buildsets:
+      for t in b.tags:
+        if t.key == 'buildset':
+          tag_set.add((t.key, t.value))
+
+    req['tags'] = [dict(key=k, value=v) for k, v in sorted(tag_set)]
+
+    req['dimensions'] = map(_as_dict, dimensions or [])
+
+    return req
+
+  def schedule(self, schedule_build_requests, step_name=None):
+    """Schedules a batch of builds.
+
+    schedule_build_requests must be a list of
+    buildbucket.v2.ScheduleBuildRequest protobuf messages.
+    Create one by calling schedule_request method.
+
+    CAUTION: accepts messages as dicts, not protobuf messages!
+    TODO(crbug.com/930761): accept messages.
+    This will change the function signature.
+
+    Example:
+      req = api.buildbucket.schedule_request(builder='linux')
+      api.buildbucket.schedule([req])
+
+    Returns:
+      A list of Build messages in the same order as requests.
+      For Build message, see
+      https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto
+
+    Raises:
+      InfraFailure if any of the requests fail.
+    """
+    assert isinstance(schedule_build_requests, list), schedule_build_requests
+
+    batch_req = {
+      'requests': [
+          {'schedule_request': r}
+          for r in schedule_build_requests
+      ]
+    }
+
+    test_res = {'responses': []}
+    for r in schedule_build_requests:
+      test_res['responses'].append({
+        'schedule_build': {
+          'id': str(self._next_test_build_id),
+          'builder': r['builder'],
+        },
+      })
+      self._next_test_build_id += 1
+
+    try:
+      self._run_buildbucket(
+          name=step_name or 'buildbucket.schedule',
+          subcommand='batch',
+          stdin=self.m.json.input(batch_req),
+          step_test_data=lambda: self.m.json.test_api.output_stream(test_res),
+      )
+    finally:
+      # Append build links regardless of step status.
+      step_res = self.m.step.active_result
+      pres = step_res.presentation
+      pres.logs['request'] = json.dumps(batch_req, indent=2).splitlines()
+
+      batch_res = step_res.stdout
+
+      step_text = []
+      for i, r in enumerate(batch_res.get('responses', [])):
+        err = r.get('error')
+        if err:
+          step_text.extend([
+              'Request #%d' % i,
+              'Status code: %s' % err['code'],
+              'Message: %s' % err.get('message', ''),
+              '',  # Blank line.
+          ])
+        else:
+          build_id = r['schedule_build']['id']
+          build_url = 'https://%s/build/%s' % (self._host, build_id)
+          pres.links['build %s' % build_id] = build_url
+
+      pres.step_text = '<br>'.join(step_text)
+
+    # Parse Build messages.
+    return [
+        # schedule_build may be missing because of crbug.com/931473
+        # This code should have been reached in the first place.
+        json_format.ParseDict(r.get('schedule_build', {}), build_pb2.Build())
+        for r in batch_res.get('responses', [])
+    ]
+
   def put(self, builds, **kwargs):
     """Puts a batch of builds.
+
+    DEPRECATED. Use schedule() instead.
 
     Args:
       builds (list): A list of dicts, where keys are:
@@ -244,13 +434,13 @@ class BuildbucketApi(recipe_api.RecipeApi):
         'experimental': build.get('experimental',
                                   self.m.runtime.is_experimental),
       }))
-    return self._call_service('put', build_specs, **kwargs)
+    return self._run_buildbucket('put', build_specs, **kwargs)
 
   def cancel_build(self, build_id, **kwargs):
-    return self._call_service('cancel', [build_id], **kwargs)
+    return self._run_buildbucket('cancel', [build_id], **kwargs)
 
   def get_build(self, build_id, **kwargs):
-    return self._call_service('get', [build_id], **kwargs)
+    return self._run_buildbucket('get', [build_id], **kwargs)
 
   # Other buildbucket tool subcommands.
 
@@ -293,9 +483,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
       {'id': str(bid), 'status': 'SUCCESS'}
       for bid in build_ids
     ]
-    result = self._call_service(
+    result = self._run_buildbucket(
         name=step_name,
-        command='collect',
+        subcommand='collect',
         args=args,
         json_stdout=False,
         timeout=timeout,
@@ -307,11 +497,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   # Internal.
 
-  def _call_service(self, command, args, json_stdout=True, name=None, **kwargs):
-    step_name = name or ('buildbucket.' + command)
+  def _run_buildbucket(
+      self, subcommand, args=None, json_stdout=True, name=None, **kwargs):
+    step_name = name or ('buildbucket.' + subcommand)
+
+    args = args or []
     if self._service_account_key:
       args = ['-service-account-json', self._service_account_key] + args
-    args = ['buildbucket', command, '-host', self._host] + args
+    args = ['buildbucket', subcommand, '-host', self._host] + args
+
     kwargs.setdefault('infra_step', True)
     stdout = self.m.json.output() if json_stdout else None
     return self.m.step(step_name, args, stdout=stdout, **kwargs)
@@ -437,3 +631,11 @@ def _legacy_builder_id(build_dict, mastername, buildername, builder_id):
 
   tags_dict = dict(t.split(':', 1) for t in build_dict.get('tags', []))
   builder_id.builder = tags_dict.get('builder') or buildername or ''
+
+
+def _as_dict(value):
+  """Returns a protobuf as a dict."""
+  assert isinstance(value, (dict, protobuf.message.Message))
+  if isinstance(value, protobuf.message.Message):
+    return json_format.MessageToDict(value)
+  return value

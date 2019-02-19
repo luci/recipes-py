@@ -2,7 +2,6 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import base64
 import json
 
 from google.protobuf import json_format
@@ -46,7 +45,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       revision='2d72510e447ab60a9728aeea2362d8be2cbd7789',
       build_number=0,
       build_id=8945511751514863184,
-      status=None):
+      status=None,
+      build_sets=None,
+    ):
     """Returns a typical buildbucket CI build scheduled by luci-scheduler."""
     git_repo = git_repo or self._default_git_repo(project)
     gitiles_host, gitiles_project = util.parse_gitiles_repo_url(git_repo)
@@ -71,6 +72,10 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
                 id=revision,
             ),
         ),
+        tags=[
+            dict(key='buildset', value=bs)
+            for bs in build_sets or []
+        ],
     )
 
     if status:
@@ -101,7 +106,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       revision=None,
       build_number=0,
       build_id=8945511751514863184,
-      status=None):
+      status=None,
+      build_sets=None,
+    ):
     """Emulate typical buildbucket try build scheduled by CQ.
 
     Usage:
@@ -140,6 +147,10 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
                 ),
             ],
         ),
+        tags=[
+            dict(key='buildset', value=bs)
+            for bs in build_sets or []
+        ],
     )
 
     if revision:
@@ -175,9 +186,16 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         'buildbucket.get',
         stdout=self.m.raw_io.output_text(json.dumps(buildbucket_output)))
 
-
   def simulated_collect_output(self, builds, step_name=None):
+    step_name = step_name or 'buildbucket.collect'
+    res = [json_format.MessageToDict(build) for build in builds]
+    return self.step_data(step_name, self.m.json.output(res))
+
+  def simulated_schedule_output(self, batch_response, step_name=None):
+    step_name = step_name or 'buildbucket.schedule'
+    ret_code = bool(any(
+        'error' in r for r in batch_response.get('responses', [])
+    ))
     return self.step_data(
-        step_name or 'buildbucket.collect',
-        self.m.json.output([
-          json_format.MessageToDict(build) for build in builds]))
+        step_name,
+        self.m.json.output_stream(batch_response, retcode=ret_code))

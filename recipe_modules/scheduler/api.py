@@ -12,7 +12,6 @@ RPCExplorer available at
   https://luci-scheduler.appspot.com/rpcexplorer/services/scheduler.Scheduler
 """
 
-import collections
 import uuid
 
 from recipe_engine import recipe_api

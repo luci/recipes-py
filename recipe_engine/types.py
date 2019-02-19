@@ -33,6 +33,27 @@ def freeze(obj):
     return obj
 
 
+def thaw(obj):
+  """Takes a a frozen object, and returns a mutable version of it.
+
+  Conversions:
+    * collections.Mapping -> dict
+    * tuple -> list
+    * frozenset -> set
+
+  Close to the opposite of freeze().
+  Does not convert dict keys.
+  """
+  if isinstance(obj, (dict, collections.OrderedDict, FrozenDict)):
+    return {k: thaw(v) for k, v in obj.iteritems()}
+  elif isinstance(obj, (list, tuple)):
+    return [thaw(i) for i in obj]
+  elif isinstance(obj, (set, frozenset)):
+    return {thaw(i) for i in obj}
+  else:
+    return obj
+
+
 class FrozenDict(collections.Mapping):
   """An immutable OrderedDict.
 
