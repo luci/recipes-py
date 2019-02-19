@@ -30,14 +30,13 @@ class CQApi(recipe_api.RecipeApi):
     self._state = None
 
   def initialize(self):
-    # TODO(tandrii): delete legacy support after February 20th, 2019.
-    legacy = self.m.properties.get('dry_run', None)
-    if self._properties.get('dry_run', legacy):
-      self._state = self.DRY
-    elif legacy is not None or self._properties:
-      self._state = self.FULL
-    else:
+    v = self._properties.get('dry_run')
+    if v is None:
       self._state = self.INACTIVE
+    elif v:
+      self._state = self.DRY
+    else:
+      self._state = self.FULL
 
   @property
   def state(self):

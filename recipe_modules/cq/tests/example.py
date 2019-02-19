@@ -22,4 +22,3 @@ def GenTests(api):
   yield api.test('inactive') + api.cq()
   yield api.test('dry') + api.cq(dry_run=True)
   yield api.test('full') + api.cq(full_run=True)
-  yield api.test('dry-legacy') + api.properties(dry_run='true')

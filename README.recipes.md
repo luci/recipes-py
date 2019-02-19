@@ -790,7 +790,7 @@ More information about CQ:
 
 &mdash; **def [initialize](/recipe_modules/cq/api.py#32)(self):**
 
-&emsp; **@property**<br>&mdash; **def [state](/recipe_modules/cq/api.py#42)(self):**
+&emsp; **@property**<br>&mdash; **def [state](/recipe_modules/cq/api.py#41)(self):**
 
 CQ state pertaining to this recipe execution.
 ### *recipe_modules* / [file](/recipe_modules/file)
