@@ -90,7 +90,6 @@ equivalent in all ways to doing:
 
     from RECIPE_MODULES.repo_name import module_name
 
-
 For example:
 
     from RECIPE_MODULES.depot_tools import gclient

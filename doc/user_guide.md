@@ -243,6 +243,49 @@ TODO(iannucci) - Document
 
 TODO(iannucci) - Document
 
+#### Accessing recipe_modules as python modules
+
+While recipe modules provide a way to share 'recipe' code (via `DEPS`), they are
+also regular python modules, and occasionally you may find yourself wishing to
+directly `import` some code from a recipe module.
+
+You may do this by importing the module from the special `RECIPE_MODULES`
+namespace; This namespace contains all reachable modules (i.e. from repos
+specified in your `recipes.cfg` file) sub namespaced by `repo_name` and
+`module_name`. This looks like:
+
+    from RECIPE_MODULES.repo_name.module_name import python_module
+    from RECIPE_MODULES.repo_name.module_name.python_module import Object
+
+etc. Everything past the `RECIPE_MODULES.repo_name.module_name` bit works
+exactly like any regular python import statement.
+
+### Writing recipe_module config.py
+
+*** note
+The config subsystem of recipes is very messy and we do not recommend adding
+additional dependencies on it. However some important modules (like `gclient` in
+depot_tools) still use it, and so this documentation section exists.
+
+We're looking to introduce native protobuf support as a means of fully
+deprecating and eventually removing config.py, so this section is very sparse
+without a "TODO" to document it more. I'll be adding additional documentation
+for it as strictly necessary.
+***
+
+#### Extending config.py
+
+If you need to extend the configurations provided by another recipe module,
+write your extensions in a file ending with `_config.py` in your recipe module
+and then import that other module's "CONFIG_CTX" to add additional named
+configurations to it (yes, this has very messy implications).
+
+You can import the upstream module's CONFIG_CTX by using the recipe module
+import syntax. For example, importing from the 'gclient' module in 'depot_tools'
+looks like:
+
+    from RECIPE_MODULES.depot_tools.gclient import CONFIG_CTX
+
 ### Structured data passing for steps
 
 TODO(iannucci) - Document
