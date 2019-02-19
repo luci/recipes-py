@@ -4,7 +4,7 @@
 
 """API for interacting with the buildbucket service.
 
-Requires 'buildbucket' command in $PATH:
+Requires `buildbucket` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 """
 
@@ -80,7 +80,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """Changes the buildbucket backend hostname used by this module.
 
     Args:
-      host (str): buildbucket server host (e.g. 'cr-buildbucket.appspot.com').
+    * host (str): buildbucket server host (e.g. 'cr-buildbucket.appspot.com').
     """
     self._host = host
 
@@ -94,40 +94,40 @@ class BuildbucketApi(recipe_api.RecipeApi):
     should not use this.
 
     Args:
-      key_path (str): a path to JSON file with service account credentials.
+    *  key_path (str): a path to JSON file with service account credentials.
     """
     self._service_account_key = key_path
 
   @property
   def build(self):
-    """Returns current build as a buildbucket.v2.Build protobuf message.
+    """Returns current build as a `buildbucket.v2.Build` protobuf message.
 
-    For value format, see Build message in
-    https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto.
+    For value format, see `Build` message in
+    [build.proto](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
 
     DO NOT MODIFY the returned value.
     Do not implement conditional logic on returned tags; they are for indexing.
-    Use returned build.input instead.
+    Use returned `build.input` instead.
 
     Pure Buildbot support: to simplify transition to buildbucket, returns a
     message even if the current build is not a buildbucket build. Provides as
     much information as possible. Some fields may be left empty, violating
     the rules described in the .proto files.
-    If the current build is not a buildbucket build, returned build.id is 0.
+    If the current build is not a buildbucket build, returned `build.id` is 0.
     """
     return self._build
 
   @property
   def builder_name(self):
-    """Returns builder name. Shortcut for .build.builder.builder."""
+    """Returns builder name. Shortcut for `.build.builder.builder`."""
     return self.build.builder.builder
 
   @property
   def gitiles_commit(self):
-    """Returns input gitiles commit. Shortcut for .build.input.gitiles_commit.
+    """Returns input gitiles commit. Shortcut for `.build.input.gitiles_commit`.
 
-    For value format, see GitilesCommit message in
-    https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/common.proto.
+    For value format, see
+    [`GitilesCommit` message](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
 
     Never returns None, but sub-fields may be empty.
     """
@@ -171,19 +171,19 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return new_tags
 
   def set_output_gitiles_commit(self, gitiles_commit):
-    """Sets buildbucket.v2.Build.output.gitiles_commit field.
+    """Sets `buildbucket.v2.Build.output.gitiles_commit` field.
 
     This will tell other systems, consuming the build, what version of the code
     was actually used in this build and what is the position of this build
     relative to other builds of the same builder.
 
     Args:
-      gitiles_commit(buildbucket.common_pb2.GitilesCommit): the commit that was
-        actually checked out. Must have host, project and id.
-        ID must match r'^[0-9a-f]{40}$' (git revision).
-        If position is present, the build can be ordered along commits.
-        Position requires ref.
-        Ref, if not empty, must start with "refs/".
+    * gitiles_commit(buildbucket.common_pb2.GitilesCommit): the commit that was
+      actually checked out. Must have host, project and id.
+      ID must match r'^[0-9a-f]{40}$' (git revision).
+      If position is present, the build can be ordered along commits.
+      Position requires ref.
+      Ref, if not empty, must start with `refs/`.
 
     Can be called at most once per build.
     """
@@ -229,17 +229,18 @@ class BuildbucketApi(recipe_api.RecipeApi):
       dimensions=None,
       priority=None,
     ):
-    """Creates a new ScheduleBuildRequest message with reasonable defaults.
+    """Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
     CAUTION: returns a dict, not a protobuf message!
     TODO(crbug.com/930761): return the message.
     This will change the function signature.
 
-    This is a convenience function to create a ScheduleBuildRequest message.
+    This is a convenience function to create a `ScheduleBuildRequest` message.
 
     Among args, messages can be passed as dicts of the same structure.
 
     Example:
+
         request = api.buildbucket.schedule_request(
             builder='linux',
             tags=[dict(key='a', value='b')],
@@ -247,30 +248,33 @@ class BuildbucketApi(recipe_api.RecipeApi):
         build = api.buildbucket.schedule([request])[0]
 
     Args:
-      builder (str): name of the destination builder.
-      project (str): project containing the destinaiton builder.
-        Defaults to the project of the current build.
-      bucket (str): bucket containing the destination builder.
-        Defaults to the bucket of the current build.
-      properties (dict): input properties for the new build.
-      experimental: whether the build is allowed to affect prod.
-        If not None, must be common_pb2.Trinary or bool.
-        Defaults to the value of the current build.
-        Read more at https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q="bool experimental"
-      gitiles_commit (common_pb2.GitilesCommit): input commit.
-        Defaults to the input commit of the current build.
-        Read more at https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q=Input.gitiles_commit
-      gerrit_changes (list or common_pb2.GerritChange): list of input CLs.
-        Defaults to gerrit changes of the current build.
-        Read more at https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q=Input.gerrit_changes
-      tags (list or common_pb2.StringPair): tags for the new build.
-      inherit_buildsets (bool): if True (default), the returned request will
-        include buildset tags from the current build.
-      dimensions (list of common_pb2.RequestedDimension): override dimensions
-        defined on the server.
-      priority (int): Swarming task priority.
-        The lower the more important. Valid values are [20..255].
-        Defaults to the value of the current build.
+    * builder (str): name of the destination builder.
+    * project (str): project containing the destinaiton builder.
+      Defaults to the project of the current build.
+    * bucket (str): bucket containing the destination builder.
+      Defaults to the bucket of the current build.
+    * properties (dict): input properties for the new build.
+    * experimental: whether the build is allowed to affect prod.
+      If not None, must be `common_pb2.Trinary` or bool.
+      Defaults to the value of the current build.
+      Read more about
+      [`experimental` field](https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q="bool experimental").
+    * gitiles_commit (common_pb2.GitilesCommit): input commit.
+      Defaults to the input commit of the current build.
+      Read more about
+      [`gitiles_commit`](https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q=Input.gitiles_commit).
+    * gerrit_changes (list or common_pb2.GerritChange): list of input CLs.
+      Defaults to gerrit changes of the current build.
+      Read more about
+      [`gerrit_changes`](https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q=Input.gerrit_changes).
+    * tags (list or common_pb2.StringPair): tags for the new build.
+    * inherit_buildsets (bool): if `True` (default), the returned request will
+      include buildset tags from the current build.
+    * dimensions (list of common_pb2.RequestedDimension): override dimensions
+      defined on the server.
+    * priority (int): Swarming task priority.
+      The lower the more important. Valid values are `[20..255]`.
+      Defaults to the value of the current build.
     """
 
     b = self.build
@@ -322,25 +326,26 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def schedule(self, schedule_build_requests, step_name=None):
     """Schedules a batch of builds.
 
-    schedule_build_requests must be a list of
-    buildbucket.v2.ScheduleBuildRequest protobuf messages.
-    Create one by calling schedule_request method.
+    `schedule_build_requests` must be a list of
+    `buildbucket.v2.ScheduleBuildRequest` protobuf messages.
+    Create one by calling `schedule_request` method.
 
     CAUTION: accepts messages as dicts, not protobuf messages!
     TODO(crbug.com/930761): accept messages.
     This will change the function signature.
 
     Example:
-      req = api.buildbucket.schedule_request(builder='linux')
-      api.buildbucket.schedule([req])
+
+        req = api.buildbucket.schedule_request(builder='linux')
+        api.buildbucket.schedule([req])
 
     Returns:
-      A list of Build messages in the same order as requests.
-      For Build message, see
-      https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto
+      A list of
+      [`Build`](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
+      messages in the same order as requests.
 
     Raises:
-      InfraFailure if any of the requests fail.
+      `InfraFailure` if any of the requests fail.
     """
     assert isinstance(schedule_build_requests, list), schedule_build_requests
 
@@ -404,24 +409,24 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def put(self, builds, **kwargs):
     """Puts a batch of builds.
 
-    DEPRECATED. Use schedule() instead.
+    DEPRECATED. Use `schedule()` instead.
 
     Args:
-      builds (list): A list of dicts, where keys are:
-        'bucket': (required) name of the bucket for the request.
-        'parameters' (dict): (required) arbitrary json-able parameters that a
-          build system would be able to interpret.
-        'experimental': (optional) a bool indicating whether build is
-          experimental. If not provided, the value will be determined by whether
-          the currently running build is experimental.
-        'tags': (optional) a dict(str->str) of tags for the build. These will
-          be added to those generated by this method and override them if
-          appropriate. If you need to remove a tag set by default, set its value
-          to None (for example, tags={'buildset': None} will ensure build is
-          triggered without 'buildset' tag).
+    * builds (list): A list of dicts, where keys are:
+      * 'bucket': (required) name of the bucket for the request.
+      * 'parameters' (dict): (required) arbitrary json-able parameters that a
+         build system would be able to interpret.
+      * 'experimental': (optional) a bool indicating whether build is
+         experimental. If not provided, the value will be determined by whether
+         the currently running build is experimental.
+      * 'tags': (optional) a dict(str->str) of tags for the build. These will
+         be added to those generated by this method and override them if
+         appropriate. If you need to remove a tag set by default, set its value
+         to `None` (for example, `tags={'buildset': None}` will ensure build is
+         triggered without `buildset` tag).
 
     Returns:
-      A step that as its .stdout property contains the response object as
+      A step that as its `.stdout` property contains the response object as
       returned by buildbucket.
     """
     build_specs = []
@@ -445,14 +450,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
   # Other buildbucket tool subcommands.
 
   def collect_build(self, build_id, mirror_status=False, **kwargs):
-    """Shorthand for collect_builds below, but for a single build only.
+    """Shorthand for `collect_builds` below, but for a single build only.
 
     Args:
-      build_id: Integer ID of the build to wait for.
-      mirror_status: Set step status to build status.
+    * build_id: Integer ID of the build to wait for.
+    * mirror_status: Set step status to build status.
 
     Returns:
-      buildbucket.v2.Build protobuf message for the ended build.
+      [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
+      for the ended build.
     """
     assert isinstance(build_id, int)
     build = self.collect_builds([build_id], **kwargs)[build_id]
@@ -468,14 +474,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """Waits for a set of builds to end and returns their details.
 
     Args:
-      build_ids: List of build IDs to wait for.
-      interval: Delay (in secs) between requests while waiting for build to end.
-      timeout: Maximum time to wait for builds to end.
-      step_name: Custom name for the generated step.
+    * build_ids: List of build IDs to wait for.
+    * interval: Delay (in secs) between requests while waiting for build to end.
+    * timeout: Maximum time to wait for builds to end.
+    * step_name: Custom name for the generated step.
 
     Returns:
-      A map from integer build IDs to the corresponding buildbucket.v2.Build
-      protobuf messages for all specified builds.
+      A map from integer build IDs to the corresponding
+      [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
+      for all specified builds.
     """
     args = ['-json-output', self.m.json.output(), '-interval', '%ds' % interval]
     args += build_ids
