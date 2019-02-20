@@ -2,24 +2,24 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+"""Calculate the smallest possible recipes.cfg roll.
+
+Prints changelist to stdout, extra info to stderr.
+
+Exits 1 if no roll is found.
+"""
+
 from __future__ import print_function
 
 import sys
 
-from . import autoroll
-from .internal.autoroll_impl.candidate_algorithm import get_roll_candidates
+from .autoroll.cmd import write_global_files_to_main_repo
+
+from ..autoroll_impl.candidate_algorithm import get_roll_candidates
 
 
-def add_subparser(parser):
-  helpstr = (
-    'Calculate the smallest possible recipes.cfg roll. '
-    'Prints changelist to stdout, extra info to stderr. Exits 1 if no roll '
-    'is found.'
-  )
-  manual_roll_p = parser.add_parser(
-    'manual_roll', help=helpstr, description=helpstr)
-
-  manual_roll_p.set_defaults(func=main)
+def add_arguments(parser):
+  parser.set_defaults(func=main)
 
 
 def main(args):
@@ -55,7 +55,6 @@ def main(args):
         commit.revision, commit.message_lines[0], commit.author_email
       ))
 
-  autoroll.write_global_files_to_main_repo(
-      args.recipe_deps, candidate.repo_spec)
+  write_global_files_to_main_repo(args.recipe_deps, candidate.repo_spec)
 
   return 0

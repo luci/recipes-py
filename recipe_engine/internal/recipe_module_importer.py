@@ -40,9 +40,9 @@ import os
 import sys
 
 from ..config_types import Path, ModuleBasePath, RepoBasePath
-from ..config import ConfigContext
 from ..recipe_api import BoundProperty, RecipeApi, RecipeApiPlain
 from ..recipe_test_api import RecipeTestApi
+
 
 class RecipeModuleImporter(object):
   """This implements both the `find_module` and `load_module` halves of the
@@ -200,6 +200,8 @@ class RecipeModuleImporter(object):
 
     # TODO(iannucci): do these imports on-demand at the callsites needing these.
 
+    # NOTE: late import to avoid early protobuf import
+    from ..config import ConfigContext
     cfg_module = None
     try:
       cfg_module = importlib.import_module(mod.__name__ + '.config')

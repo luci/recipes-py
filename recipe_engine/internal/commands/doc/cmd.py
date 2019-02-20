@@ -21,20 +21,22 @@ from google.protobuf import json_format as jsonpb
 from google.protobuf import text_format as textpb
 
 from recipe_engine import types  # this import name conflicts with stdlib :(
+from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 
-from . import config
+from .... import config
+from .... import doc_pb2 as doc
+from .... import recipe_api
+from .... import util
+
+from ...recipe_deps import Recipe, RecipeModule, RecipeRepo
+from ...recipe_deps import parse_deps_spec
+
 from . import doc_markdown
-from . import doc_pb2 as doc
-from . import recipe_api
-from . import util
-from .internal.recipe_deps import Recipe, RecipeModule, RecipeRepo
-from .internal.recipe_deps import parse_deps_spec
 
 
 LOGGER = logging.getLogger(__name__)
 
-RECIPE_ENGINE_BASE = os.path.dirname(
-  os.path.dirname(os.path.abspath(__file__)))
+RECIPE_ENGINE_BASE = os.path.dirname(os.path.abspath(RECIPE_ENGINE_PATH[0]))
 
 join = posixpath.join
 if sys.platform == 'win32':
@@ -674,25 +676,6 @@ def _set_known_objects(base):
       source_cache[fname] = ast.parse(''.join(source_lines), fname)
 
     _add_it(k, fname, target)
-
-
-def add_subparser(parser):
-  doc_kinds=('binarypb', 'jsonpb', 'textpb', 'gen', 'markdown')
-  helpstr = (
-    'List all known modules reachable from the current repo, with their '
-    'documentation.'
-  )
-  doc_p = parser.add_parser(
-    'doc', help=helpstr, description=helpstr)
-  doc_p.add_argument('recipe', nargs='?',
-                     help='Restrict documentation to this recipe')
-  doc_p.add_argument(
-    '--kind', default='jsonpb', choices=doc_kinds,
-    help=(
-      'Output this kind of documentation. `gen` will write the standard '
-      'README.recipes.md file. All others output to stdout'))
-
-  doc_p.set_defaults(func=main)
 
 
 def regenerate_docs(repo):

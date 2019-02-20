@@ -4,27 +4,24 @@
 
 from __future__ import print_function
 
-import argparse
 import json
 import logging
 import os
-import shutil
 import subprocess
 import sys
 
-from .internal import simple_cfg
-from .internal.autoroll_impl.candidate_algorithm import get_roll_candidates
-
 from google.protobuf import json_format as jsonpb
+
+from ... import simple_cfg
+from ...autoroll_impl.candidate_algorithm import get_roll_candidates
 
 
 LOGGER = logging.getLogger(__name__)
 
-ROOT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
-
 IS_WIN = sys.platform.startswith(('win', 'cygwin'))
 VPYTHON = 'vpython' + ('.bat' if IS_WIN else '')
 GIT = 'git' + ('.bat' if IS_WIN else '')
+
 
 def write_global_files_to_main_repo(recipe_deps, spec):
   """Writes the recipes.cfg and recipes.py scripts to the main repo on disk.
@@ -47,15 +44,15 @@ def write_global_files_to_main_repo(recipe_deps, spec):
   LOGGER.info('writing: %s', out)
 
   cfg_path = os.path.join(main_repo.path, simple_cfg.RECIPES_CFG_LOCATION_REL)
-  with open(cfg_path, 'wb') as f:
-    f.write(out)
+  with open(cfg_path, 'wb') as cfg_file:
+    cfg_file.write(out)
 
   engine = recipe_deps.repos['recipe_engine']
   recipes_py_path = os.path.join(main_repo.recipes_root_path, 'recipes.py')
-  with open(recipes_py_path, 'wb') as f:
-    f.write(
-      engine.backend.cat_file(
-        spec.deps['recipe_engine'].revision, 'recipes.py'))
+  with open(recipes_py_path, 'wb') as recipes_py:
+    recipes_py.write(
+        engine.backend.cat_file(
+            spec.deps['recipe_engine'].revision, 'recipes.py'))
 
 
 def run_simulation_test(repo, *additional_args):
@@ -63,12 +60,12 @@ def run_simulation_test(repo, *additional_args):
 
   Returns a tuple of exit code and output.
   """
-  p = subprocess.Popen([
+  proc = subprocess.Popen([
     VPYTHON, os.path.join(repo.recipes_root_path, 'recipes.py'), 'test',
   ] + list(additional_args), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-  output, _ = p.communicate()
-  rc = p.returncode
-  return rc, output
+  output, _ = proc.communicate()
+  retcode = proc.returncode
+  return retcode, output
 
 
 def regen_docs(repo):
@@ -192,7 +189,7 @@ def process_candidates(recipe_deps, candidates, repos, verbose_json):
       write_global_files_to_main_repo(recipe_deps, candidate.repo_spec)
 
       retcode, output = run_simulation_test(
-        recipe_deps.main_repo, 'train', '--no-docs')
+          recipe_deps.main_repo, 'train', '--no-docs')
       if verbose_json:
         roll_details[i]['recipes_simulation_test_train'] = {
           'output': output,
@@ -218,7 +215,7 @@ def test_rolls(recipe_deps, verbose_json):
   trivial = True
   if candidates:
     trivial, picked_roll_details, roll_details = process_candidates(
-      recipe_deps, candidates, repos, verbose_json)
+        recipe_deps, candidates, repos, verbose_json)
 
   ret = {
     # it counts as success if there are no candidates at all :)
@@ -234,28 +231,6 @@ def test_rolls(recipe_deps, verbose_json):
       for c in rejected_candidates
     ]
   return ret
-
-
-def add_subparser(parser):
-  helpstr = 'Roll dependencies of a recipe repo forward.'
-  autoroll_p = parser.add_parser(
-    'autoroll', help=helpstr, description=helpstr)
-  autoroll_p.add_argument(
-    '--output-json',
-    type=argparse.FileType('w'),
-    help='A json file to output information about the roll to.')
-  autoroll_p.add_argument(
-    '--verbose-json',
-    action='store_true',
-    help=('Emit even more data in the output-json file. '
-          'Requires --output-json.'))
-
-  def postprocess_func(parser, args):
-    if args.verbose_json and not args.output_json:
-      parser.error('--verbose-json passed without --output-json')
-
-  autoroll_p.set_defaults(
-    func=main, postprocess_func=postprocess_func)
 
 
 def main(args):

@@ -1,11 +1,13 @@
-# Copyright 2018 The LUCI Authors. All rights reserved.
+# Copyright 2019 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-"""Bundles all loaded RecipeDeps into a standalone folder.
+"""Create a hermetically runnable recipe bundle (no git operations on startup).
 
-This captures the result of doing all the network operations that recipe_engine
-might do at startup to fetch repo code.
+Requires a git version >= 2.13+
+
+This is done by packaging all the repos in RecipeDeps into a folder and then
+generating an entrypoint script with `-O` override flags to this folder.
 
 The general principle is that the input to bundle is:
   * The loaded RecipeDeps (derived from the main repo's recipes.cfg file). This
@@ -44,7 +46,6 @@ For more information on how gitattributes work.
 """
 
 from __future__ import absolute_import
-import errno
 import io
 import logging
 import ntpath
@@ -58,8 +59,8 @@ import sys
 
 from collections import defaultdict
 
-from .internal import simple_cfg
-from .internal.recipe_deps import RecipeRepo, RecipeDeps
+from .. import simple_cfg
+from ..recipe_deps import RecipeRepo, RecipeDeps
 
 LOGGER = logging.getLogger(__name__)
 GIT = 'git.bat' if sys.platform == 'win32' else 'git'
@@ -183,32 +184,6 @@ def prep_recipes_py(recipe_deps, destination):
       recipes_bat.write(u' -O %s=%%~dp0/%s ^\n' % (o, o))
     recipes_bat.write(u' %*\n')
 
-
-def add_subparser(parser):
-  bundle_p = parser.add_parser(
-    'bundle',
-    help='Create a hermetically runnable recipe bundle.',
-    description=(
-      'Create a hermetically runnable recipe bundle. This captures the result'
-      ' of all network operations the recipe_engine might normally do to'
-      ' bootstrap itself. This requires a git version >= 2.13+.'))
-  bundle_p.add_argument(
-    '--destination', default='./bundle',
-    type=os.path.abspath,
-    help='The directory of where to put the bundle (default: %(default)r).')
-
-  def postprocess_func(parser, _args):
-    raw = subprocess.check_output([GIT, 'version'])
-    m = re.match('git version (\d+\.\d+\.\d+).*', raw)
-    if not m:
-      parser.error('could not parse git version from %r' % raw)
-    vers = tuple(map(int, m.group(1).split('.')))
-    if vers < (2, 13, 0):
-      parser.error('git version %r is too old (need 2.13+)' % raw)
-
-  bundle_p.set_defaults(func=main, postprocess_func=postprocess_func)
-
-
 def main(args):
   logging.basicConfig()
   destination = prepare_destination(args.destination)
@@ -216,3 +191,23 @@ def main(args):
     export_repo(repo, destination)
   prep_recipes_py(args.recipe_deps, destination)
   LOGGER.info('done!')
+
+
+def add_arguments(parser):
+  parser.add_argument(
+      '--destination', default='./bundle',
+      type=os.path.abspath,
+      help='The directory of where to put the bundle (default: %(default)r).')
+
+  def _postprocess_func(error, _args):
+    raw = subprocess.check_output([GIT, 'version'])
+    match = re.match(r'git version (\d+\.\d+\.\d+).*', raw)
+    if not match:
+      error('could not parse git version from %r' % raw)
+    vers = tuple(map(int, match.group(1).split('.')))
+    if vers < (2, 13, 0):
+      error('git version %r is too old (need 2.13+)' % raw)
+
+  parser.set_defaults(
+      func=main,
+      postprocess_func=_postprocess_func)

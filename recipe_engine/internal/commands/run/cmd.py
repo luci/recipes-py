@@ -10,21 +10,20 @@ import logging
 import os
 import sys
 import traceback
-import argparse
 
 from google.protobuf import json_format as jsonpb
 
-from .third_party import subprocess42
+from recipe_engine.third_party import subprocess42
 
-from . import recipe_api
-from . import result_pb2
-from . import types
-from . import util
-from .internal.recipe_deps import Recipe
-from .internal.exceptions import RecipeUsageError
+from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 
+from .... import recipe_api
+from .... import result_pb2
+from .... import types
+from .... import util
 
-SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
+from ...recipe_deps import Recipe
+from ...exceptions import RecipeUsageError
 
 
 # TODO(martiniss): Remove this
@@ -339,71 +338,6 @@ class RecipeEngine(object):
     return result
 
 
-def add_subparser(parser):
-  def properties_file_type(filename):
-    with (sys.stdin if filename == '-' else open(filename)) as f:
-      obj = json.load(f)
-      if not isinstance(obj, dict):
-        raise argparse.ArgumentTypeError(
-          'must contain a JSON object, i.e. `{}`.')
-      return obj
-
-  def parse_prop(prop):
-    key, val = prop.split('=', 1)
-    try:
-      val = json.loads(val)
-    except (ValueError, SyntaxError):
-      pass  # If a value couldn't be evaluated, keep the string version
-    return {key: val}
-
-  def properties_type(value):
-    obj = json.loads(value)
-    if not isinstance(obj, dict):
-      raise argparse.ArgumentTypeError('must contain a JSON object, i.e. `{}`.')
-    return obj
-
-  helpstr='Run a recipe locally.'
-  run_p = parser.add_parser(
-    'run', help=helpstr, description=helpstr)
-
-  run_p.add_argument(
-    '--workdir',
-    type=os.path.abspath,
-    help='The working directory of recipe execution')
-  run_p.add_argument(
-    '--output-result-json',
-    type=os.path.abspath,
-    help=(
-      'The file to write the JSON serialized returned value '
-      ' of the recipe to'))
-  prop_group = run_p.add_mutually_exclusive_group()
-  prop_group.add_argument(
-    '--properties-file',
-    dest='properties',
-    type=properties_file_type,
-    help=(
-      'A file containing a json blob of properties. '
-      'Pass "-" to read from stdin'))
-  prop_group.add_argument(
-    '--properties',
-    type=properties_type,
-    help='A json string containing the properties')
-
-  run_p.add_argument(
-    'recipe',
-    help='The recipe to execute')
-  run_p.add_argument(
-    'props',
-    nargs=argparse.REMAINDER,
-    type=parse_prop,
-    help=(
-      'A list of property pairs; e.g. mastername=chromium.linux '
-      'issue=12345. The property value will be decoded as JSON, but if '
-      'this decoding fails the value will be interpreted as a string.'))
-
-  run_p.set_defaults(properties={}, func=main)
-
-
 def handle_recipe_return(recipe_result, result_filename, stream_engine):
   if result_filename:
     with open(result_filename, 'w') as fil:
@@ -467,7 +401,7 @@ def main(args):
   # Shouldn't the caller of recipes just CD somewhere if they want a different
   # workdir?
   workdir = (args.workdir or
-      os.path.join(SCRIPT_PATH, os.path.pardir, 'workdir'))
+      os.path.join(RECIPE_ENGINE_PATH[0], os.path.pardir, 'workdir'))
   logging.info('Using %s as work directory' % workdir)
   if not os.path.exists(workdir):
     os.makedirs(workdir)

@@ -10,7 +10,7 @@ import sys
 
 import test_env
 
-from recipe_engine import doc
+from recipe_engine.internal.commands.doc import cmd as doc
 
 
 class DocSmokeTest(test_env.RecipeEngineUnitTest):

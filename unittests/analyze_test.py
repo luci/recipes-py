@@ -13,14 +13,15 @@ import mock
 
 import test_env
 
-from recipe_engine import analyze, analyze_pb2
+from recipe_engine import analyze_pb2
+from recipe_engine.internal.commands.analyze import cmd as analyze
 
 
 class AnalyzeTest(test_env.RecipeEngineUnitTest):
   def setUp(self):
     super(AnalyzeTest, self).setUp()
     self.git_attr_patcher = mock.patch(
-        'recipe_engine.analyze.get_git_attribute_files',
+        'recipe_engine.internal.commands.analyze.cmd.get_git_attribute_files',
         side_effect=self.git_attr)
     self.git_attr_patcher.start()
     self.git_attr_files = []

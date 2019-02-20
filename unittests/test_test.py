@@ -18,8 +18,7 @@ import mock
 
 import test_env
 
-from recipe_engine import test
-from recipe_engine.util import strip_unicode
+from recipe_engine.internal.commands import test as test_parser
 from recipe_engine.test_result_pb2 import TestResult
 
 CheckFailure = TestResult.CheckFailure
@@ -1017,7 +1016,8 @@ class TestArgs(test_env.RecipeEngineUnitTest):
   @mock.patch('argparse._sys.stderr', new_callable=StringIO)
   def test_normalize_filter(self, stderr):
     parser = argparse.ArgumentParser()
-    test.add_subparser(parser.add_subparsers())
+    subp = parser.add_subparsers()
+    test_parser.add_arguments(subp.add_parser('test'))
 
     with self.assertRaises(SystemExit):
       args = parser.parse_args([

@@ -2,11 +2,13 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-"""Tests that recipes are on their best behavior.
+"""Checks recipes for stylistic and hygenic issues.
 
-Checks that recipes only import modules from a whitelist.  Imports are
-generally not safe in recipes if they depend on the platform, since
-e.g. you can run a recipe simulation for a Windows recipe on Linux.
+Currently only checks that recipes only import python modules from a whitelist.
+
+Imports are not safe in recipes if they depend on the platform or have functions
+which otherwise directly interact with the OS (since all recipe code must run
+correctly for all platforms under simulation).
 """
 
 # TODO(luqui): Implement lint for recipe modules also.
@@ -53,18 +55,16 @@ def ImportsTest(recipe, whitelist):
                (recipe.path, module_name))
 
 
-def add_subparser(parser):
+def add_arguments(parser):
   # TODO(iannucci): merge this with the test command, doesn't need to be top
   # level.
-  helpstr = 'Check recipes for stylistic and hygenic issues.'
-  lint_p = parser.add_parser(
-      'lint', help=helpstr, description=helpstr)
-  lint_p.add_argument(
+  parser.add_argument(
       '--whitelist', '-w', action='append', default=[],
-      help='A regexp matching module names to add to the default whitelist. '
-           'Use multiple times to add multiple patterns,')
+      help=(
+        'A regexp matching module names to add to the default whitelist. '
+        'Use multiple times to add multiple patterns,'))
 
-  lint_p.set_defaults(func=main)
+  parser.set_defaults(func=main)
 
 
 def main(args):

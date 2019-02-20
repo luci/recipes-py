@@ -10,7 +10,6 @@ import mock
 
 import test_env
 
-from recipe_engine import common_args
 from recipe_engine import fetch
 from recipe_engine.third_party import subprocess42
 from recipe_engine.internal.simple_cfg import \

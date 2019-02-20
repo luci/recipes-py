@@ -28,12 +28,14 @@ import attr
 
 from google.protobuf import json_format as jsonpb
 
+from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 from recipe_engine import recipes_cfg_pb2
-from recipe_engine.test import TestDescription
 from recipe_engine.fetch import GitBackend, CommitMetadata
+from recipe_engine.internal.commands.test.cmd import TestDescription
 from recipe_engine.internal.simple_cfg import RECIPES_CFG_LOCATION_REL
 
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+ROOT_DIR = os.path.dirname(RECIPE_ENGINE_PATH[0])
 DEVNULL = open(os.devnull, 'w')
 REAL_STDERR = sys.stderr  # capture stderr before tests potentially mess with it
 

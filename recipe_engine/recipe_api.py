@@ -17,9 +17,7 @@ import types
 
 from functools import wraps
 
-from .config import Single
 from .recipe_test_api import DisabledTestData, ModuleTestData
-from .source_manifest_pb2 import Manifest
 from .third_party.logdog import streamname
 from .third_party.logdog.bootstrap import ButlerBootstrap, NotBootstrappedError
 from .types import StepData
@@ -438,6 +436,8 @@ class SourceManifestClient(object):
         pass
 
   def upload_manifest(self, name, manifest_pb):
+    # NOTE: late import to avoid early protobuf import
+    from .source_manifest_pb2 import Manifest
     if not isinstance(manifest_pb, Manifest):
       raise TypeError('expected source_manifest_pb2.Manifest, got %r'
                       % type(manifest_pb))
@@ -1234,6 +1234,8 @@ class Property(object):
     self.help = help
     self.param_name = param_name
 
+    # NOTE: late import to avoid early protobuf import
+    from .config import Single
     if isinstance(kind, type):
       if kind in (str, unicode):
         kind = basestring

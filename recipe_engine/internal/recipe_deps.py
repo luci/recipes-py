@@ -46,7 +46,6 @@ import attr
 from attr.validators import optional
 
 from .. import fetch
-from ..config import ConfigGroupSchema
 from ..config_types import Path, RepoBasePath, RecipeScriptBasePath
 from ..recipe_api import _UnresolvedRequirement, RecipeScriptApi, BoundProperty
 from ..recipe_api import RecipeApiPlain
@@ -58,7 +57,6 @@ from .class_util import cached_property
 from .exceptions import CyclicalDependencyError, UnknownRecipe, UnknownRepoName
 from .exceptions import RecipeLoadError, RecipeSyntaxError, MalformedRecipeError
 from .exceptions import UnknownRecipeModule
-from .property_invoker import invoke_with_properties
 from .simple_cfg import SimpleRecipesCfg, RECIPES_CFG_LOCATION_REL
 
 
@@ -530,9 +528,12 @@ class Recipe(object):
         for name, value in recipe_globals.get('PROPERTIES', {}).items()}
 
     return_schema = recipe_globals.get('RETURN_SCHEMA')
-    if return_schema and not isinstance(return_schema, ConfigGroupSchema):
+    # NOTE: We check type.__name__ to avoid coupling to the config module (which
+    # indirectly imports doc_pb2.
+    if return_schema and type(return_schema).__name__ != 'ConfigGroupSchema':
       raise MalformedRecipeError(
-        'Invalid RETURN_SCHEMA; must be an instance of ConfigGroupSchema')
+        'Invalid RETURN_SCHEMA; must be a ConfigGroupSchema, got %r' % (
+          type(return_schema)))
 
     return recipe_globals
 
@@ -607,6 +608,8 @@ class Recipe(object):
     # see function docstring for hack description.
     engine.initialize_path_client_HACK(api)
 
+    # NOTE: late import to avoid early protobuf import
+    from .property_invoker import invoke_with_properties
     recipe_result = invoke_with_properties(
       self.global_symbols['RunSteps'], engine.properties, engine.environ,
       self.global_symbols['PROPERTIES'], api=api)
@@ -734,6 +737,8 @@ def _instantiate_api(engine, test_data, imported_module, test_api,
     # TODO(luqui): test_data will need to use canonical unique names.
     'test_data': test_data.get_module_test_data(imported_module.NAME)
   }
+  # NOTE: late import to avoid early protobuf import
+  from .property_invoker import invoke_with_properties
   inst = invoke_with_properties(
       imported_module.API, engine.properties, engine.environ,
       imported_module.PROPERTIES, **kwargs)
@@ -772,8 +777,9 @@ def _resolve(recipe_deps, deps_spec, variant, engine, test_data):
     assert engine is None
     assert test_data is None
   else:
-    # Import here to break import cycle
-    from ..run import RecipeEngine
+    # NOTE: late import to avoid import cycle
+    # NOTE: late import to avoid early protobuf import
+    from .commands.run.cmd import RecipeEngine
     assert isinstance(engine, RecipeEngine)
     assert isinstance(test_data, BaseTestData)
 

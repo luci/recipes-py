@@ -4,7 +4,6 @@
 
 from __future__ import print_function
 
-import argparse
 import bdb
 import collections
 import contextlib
@@ -19,7 +18,6 @@ import json
 import multiprocessing
 import os
 import pdb
-import pprint
 import re
 import shutil
 import signal
@@ -31,14 +29,16 @@ import coverage
 
 from google.protobuf import json_format
 
-from . import checker
-from . import config_types
-from . import doc
-from . import run
-from . import step_runner
-from . import stream
-from . import test_result_pb2
-from .internal import recipe_deps
+from recipe_engine import __path__ as RECIPE_ENGINE_PATH
+
+from .... import checker
+from .... import config_types
+from .... import step_runner
+from .... import stream
+from .... import test_result_pb2
+
+from ..doc.cmd import regenerate_docs
+from ..run.cmd import RecipeEngine
 
 
 # These variables must be set in the dynamic scope of the functions in this
@@ -47,6 +47,7 @@ from .internal import recipe_deps
 #
 # For type hinting we populate this with an empty RecipeDeps, but it's
 # overwritten in main().
+# pylint: disable=global-statement
 _RECIPE_DEPS = None # type: recipe_deps.RecipeDeps
 
 
@@ -63,6 +64,7 @@ _MODE_TEST, _MODE_TRAIN, _MODE_DEBUG = range(3)
 
 
 # Allow regex patterns to be 'deep copied' by using them as-is.
+# pylint: disable=protected-access
 copy._deepcopy_dispatch[re._pattern_type] = copy._deepcopy_atomic
 
 
@@ -338,7 +340,7 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
       props['$recipe_engine/source_manifest'] = {}
     if 'debug_dir' not in props['$recipe_engine/source_manifest']:
       props['$recipe_engine/source_manifest']['debug_dir'] = None
-    engine = run.RecipeEngine(_RECIPE_DEPS, runner, props, {})
+    engine = RecipeEngine(_RECIPE_DEPS, runner, props, {})
     with coverage_context(include=covers, enable=enable_coverage) as cov:
       # Run recipe loading under coverage context. This ensures we collect
       # coverage of all definitions and globals.
@@ -592,7 +594,7 @@ def cover_omit():
   # Exclude recipe engine files from simulation test coverage. Simulation tests
   # should cover "user space" recipe code (recipes and modules), not the engine.
   # The engine is covered by unit tests, not simulation tests.
-  omit.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '*'))
+  omit.append(os.path.join(RECIPE_ENGINE_PATH[0], '*'))
 
   return omit
 
@@ -636,7 +638,7 @@ def run_train(gen_docs, test_filter, jobs, json_file):
   rc = run_run(test_filter, jobs, json_file, _MODE_TRAIN)
   if rc == 0 and gen_docs:
     print('Generating README.recipes.md')
-    doc.regenerate_docs(_RECIPE_DEPS.main_repo)
+    regenerate_docs(_RECIPE_DEPS.main_repo)
   return rc
 
 
@@ -850,99 +852,6 @@ def re_encode(obj):
     return obj
 
 
-def add_subparser(parser):
-  helpstr='Generate or check expectations by simulation.'
-  test_p = parser.add_parser(
-    'test',
-    help=helpstr, description=helpstr)
-
-  def normalize_filter(filt):
-    if not filt:
-      raise argparse.ArgumentTypeError('empty filters not allowed')
-    # filters missing a test_name portion imply that its a recipe prefix and we
-    # should run all tests for the matching recipes.
-    return filt if '.' in filt else filt+'*.*'
-
-  subp = test_p.add_subparsers(dest='subcommand')
-
-  helpstr = 'Print all test names.'
-  list_p = subp.add_parser(
-    'list', help=helpstr, description=helpstr)
-  list_p.set_defaults(subfunc=lambda opts: run_list(opts.json))
-  list_p.add_argument(
-    '--json', metavar='FILE', type=argparse.FileType('w'),
-    help='path to JSON output file')
-
-  helpstr='Compare results of two test runs.'
-  diff_p = subp.add_parser(
-    'diff', help=helpstr, description=helpstr)
-  diff_p.set_defaults(subfunc=lambda opts: run_diff(
-    opts.baseline, opts.actual, json_file=opts.json))
-  diff_p.add_argument(
-    '--baseline', metavar='FILE', type=argparse.FileType('r'),
-    required=True,
-    help='path to baseline JSON file')
-  diff_p.add_argument(
-    '--actual', metavar='FILE', type=argparse.FileType('r'),
-    required=True,
-    help='path to actual JSON file')
-  diff_p.add_argument(
-    '--json', metavar='FILE', type=argparse.FileType('w'),
-    help='path to JSON output file')
-
-  glob_helpstr = (
-    'glob filter for the tests to run; '
-    'can be specified multiple times; '
-    'the globs have the form of '
-    '`<recipe_name_glob>[.<test_name_glob>]`. If `.<test_name_glob>` '
-    'is omitted, it is implied to be `*.*`, i.e. any recipe with this '
-    'prefix and all tests.')
-
-  helpstr = 'Run the tests.'
-  run_p = subp.add_parser('run', help=helpstr, description=helpstr)
-  run_p.set_defaults(subfunc=lambda opts: run_run(
-    opts.filter, opts.jobs, opts.json, _MODE_TEST))
-  run_p.add_argument(
-    '--jobs', metavar='N', type=int,
-    default=multiprocessing.cpu_count(),
-    help='run N jobs in parallel (default %(default)s)')
-  run_p.add_argument(
-    '--json', metavar='FILE', type=argparse.FileType('w'),
-    help='path to JSON output file')
-  run_p.add_argument(
-    '--filter', action='append', type=normalize_filter,
-    help=glob_helpstr)
-
-  helpstr = 'Re-train recipe expectations.'
-  train_p = subp.add_parser('train', help=helpstr, description=helpstr)
-  train_p.set_defaults(subfunc=lambda opts: run_train(
-    opts.docs, opts.filter, opts.jobs, opts.json))
-  train_p.add_argument(
-    '--jobs', metavar='N', type=int,
-    default=multiprocessing.cpu_count(),
-    help='run N jobs in parallel (default %(default)s)')
-  train_p.add_argument(
-    '--json', metavar='FILE', type=argparse.FileType('w'),
-    help='path to JSON output file')
-  train_p.add_argument(
-    '--filter', action='append', type=normalize_filter,
-    help=glob_helpstr)
-  train_p.add_argument(
-    '--no-docs', action='store_false', default=True, dest='docs',
-    help='Disable automatic documentation generation.')
-
-  helpstr = 'Run the tests under debugger (pdb).'
-  debug_p = subp.add_parser(
-    'debug', help=helpstr, description=helpstr)
-  debug_p.set_defaults(subfunc=lambda opts: run_run(
-    opts.filter, None, None, _MODE_DEBUG))
-  debug_p.add_argument(
-    '--filter', action='append', type=normalize_filter,
-    help=glob_helpstr)
-
-  test_p.set_defaults(func=main)
-
-
 def main(args):
   """Runs simulation tests on a given repo of recipes.
 
@@ -953,4 +862,15 @@ def main(args):
   """
   global _RECIPE_DEPS
   _RECIPE_DEPS = args.recipe_deps
-  return args.subfunc(args)
+
+  if args.subcommand == 'list':
+    return run_list(args.json)
+  if args.subcommand == 'diff':
+    return run_diff(args.baseline, args.actual, json_file=args.json)
+  if args.subcommand == 'run':
+    return run_run(args.filter, args.jobs, args.json, _MODE_TEST)
+  if args.subcommand == 'train':
+    return run_train(args.docs, args.filter, args.jobs, args.json)
+  if args.subcommand == 'debug':
+    return run_run(args.filter, None, None, _MODE_DEBUG)
+  raise ValueError('Unknown subcommand %r' % (args.subcommand,))

@@ -7,6 +7,49 @@ general recipe developement, please see [user_guide.md](./user_guide.md).
 [TOC]
 
 
+## Recipe engine subcommands
+
+All recipe engine subcommands live in the [commands] folder. The `__init__.py`
+file here contains the entrypoint for all subcommand parsing `parse_and_run`
+which is invoked from [main.py].
+
+The commands module contains (as submodules) all of the subcommands that the
+recipe engine supports. The protocol is pretty simple:
+
+  * The subcommand lives in a submodule (either directory or .py file).
+  * Each submodule has a `add_arguments(parser)` function (for directories, this
+    is expected to be in the `__init__.py` file).
+  * Each submodule may also define an optional `__cmd_priority__` field. This
+    should be an integer which will be used to rank commands (e.g. so that 'run'
+    and 'test' can preceed all other subcommands). Commands will be ordered
+    first by __cmd_priority__ (lower values sort earlier) and then
+    alphabetically. This is currently used to put `run` and `test` as the
+    topmost arguments in the `recipes.py` help output.
+  * The `add_arguments` function takes an argparse parser, and adds flags to it.
+    The parser will be created:
+    * using the module's name as the command name
+    * using the module's `__doc__` to generate both the description and 'help'
+      for the parser (help will be the first paragraph of `__doc__`).
+  * In addition to adding flags, the function must also call:
+
+      parser.set_defaults(
+          postprocess_func=function(error, args), # optional
+          func=function(args))                    # required
+
+  * Where the 'args' parameter is the parsed CLI arguments and 'error' is the
+    function to call if the preconditions for the subcommand aren't met.
+  * postprocess_func should do any post-CLI checks and call `error(msg)` if the
+    checks don't pass. Most subcommands don't need this, but it's a nice way to
+    verify preconditions for the command.
+  * func executes the actual subcommand.
+
+The reason for this structure is so that the actual `func` can do lazy
+importing; this is necessary if the subcommand requires protobufs to operate
+correctly (which are only available after the CLI has successfully parsed).
+
+All commands have `args.recipe_deps`, which is the resolved RecipeDeps instance
+to use.
+
 ## Loading
 
 This section talks about how the recipe engine gets from the the recipes.py
@@ -208,9 +251,10 @@ the `recipe_engine` repo; user recipe modules are not expected to use these.
 ***
 
 
-[recipes_cfg.proto]: /recipe_engine/recipes_cfg.proto
+[commands]: /recipe_engine/internal/commands
 [main.py]: /recipe_engine/main.py
-[recipes.py]: /recipes.py
-[simple_cfg.py]: /recipe_engine/internal/simple_cfg.py
-[recipe_module_importer.py]: /recipe_engine/internal/recipe_module_importer.py
 [PEP302]: https://www.python.org/dev/peps/pep-0302/
+[recipe_module_importer.py]: /recipe_engine/internal/recipe_module_importer.py
+[recipes.py]: /recipes.py
+[recipes_cfg.proto]: /recipe_engine/recipes_cfg.proto
+[simple_cfg.py]: /recipe_engine/internal/simple_cfg.py

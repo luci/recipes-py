@@ -4,34 +4,15 @@
 
 from __future__ import print_function
 
-import argparse
 import os
 import subprocess
 import sys
 
-from . import analyze_pb2
-
 from google.protobuf import json_format as jsonpb
 
+from recipe_engine.analyze_pb2 import Input, Output
+
 GIT = 'git.bat' if sys.platform == 'win32' else 'git'
-
-
-def add_subparser(parser):
-  help_str = ('Calculates the affected recipes from a set of modified files.'
-              ' Useful for triggering additional testing based on e.eg patches'
-              ' to the recipes.')
-  analyze_p = parser.add_parser(
-    'analyze',
-    help=help_str,
-    description=help_str)
-  analyze_p.add_argument(
-    'input', type=argparse.FileType('r'),
-    help='Path to a JSON object. Valid fields: "files", "recipes". See'
-         ' analyze.proto file for more information')
-  analyze_p.add_argument(
-    'output', type=argparse.FileType('w'), default=sys.stdout,
-    help='The file to write output to. See analyze.proto for more information.')
-  analyze_p.set_defaults(func=main)
 
 
 def get_git_attribute_files(repo_root):
@@ -63,7 +44,7 @@ def analyze(recipe_deps, in_data):
   Returns an instance of analyze_pb2.Output, representing the result of the
   analysis.
   """
-  output = analyze_pb2.Output()
+  output = Output()
 
   if not in_data.recipes:
     output.error = 'Must provide a set of recipes as input'
@@ -131,7 +112,7 @@ def analyze(recipe_deps, in_data):
 
 
 def main(args):
-  in_data = jsonpb.Parse(args.input.read(), analyze_pb2.Input())
+  in_data = jsonpb.Parse(args.input.read(), Input())
   args.input.close()
 
   data = analyze(args.recipe_deps, in_data)

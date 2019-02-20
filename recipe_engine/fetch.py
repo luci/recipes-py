@@ -385,14 +385,3 @@ class GitBackend(Backend):
     return CommitMetadata(revision, meta[0],
                           int(meta[1]), tuple(meta[2:]),
                           spec, has_interesting_changes)
-
-
-def add_subparser(parser):
-  helpstr = 'Fetch and update dependencies but take no other action.'
-
-  fetch_p = parser.add_parser(
-    'fetch', help=helpstr, description=helpstr)
-
-  fetch_p.set_defaults(
-    # fetch action is implied by recipes.py
-    func=(lambda _args: 0))
