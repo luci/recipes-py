@@ -4,6 +4,7 @@
 
 **[Recipe Modules](#Recipe-Modules)**
   * [archive](#recipe_modules-archive)
+  * [assertions](#recipe_modules-assertions)
   * [buildbucket](#recipe_modules-buildbucket) &mdash; API for interacting with the buildbucket service.
   * [cipd](#recipe_modules-cipd) &mdash; API for interacting with CIPD.
   * [context](#recipe_modules-context) &mdash; The context module provides APIs for manipulating a few pieces of 'ambient' data that affect how steps are run.
@@ -33,6 +34,8 @@
 
 **[Recipes](#Recipes)**
   * [archive:examples/full](#recipes-archive_examples_full)
+  * [assertions:tests/assertions](#recipes-assertions_tests_assertions)
+  * [assertions:tests/attribute_error](#recipes-assertions_tests_attribute_error)
   * [buildbucket:examples/full](#recipes-buildbucket_examples_full) &mdash; This file is a recipe demonstrating the buildbucket recipe module.
   * [buildbucket:tests/build](#recipes-buildbucket_tests_build)
   * [buildbucket:tests/collect](#recipes-buildbucket_tests_collect)
@@ -167,6 +170,52 @@ Args:
 
 Returns:
   Package object.
+### *recipe_modules* / [assertions](/recipe_modules/assertions)
+
+#### **class [AssertionsApi](/recipe_modules/assertions/api.py#52)([RecipeApi](/recipe_engine/recipe_api.py#1005)):**
+
+Provides access to the assertion methods of the python unittest module.
+
+Asserting non-step aspects of code (return values, non-step side effects) is
+expressed more naturally by making assertions within the RunSteps function of
+the test recipe. This api provides access to the assertion methods of
+unittest.TestCase to be used within test recipes.
+
+The methods of unittest.TestCase can be used with the following exceptions:
+* assertLogs
+* all methods deprecated in favor of a newer method
+
+An enhancement to the assertion methods is that if a custom msg is used,
+values for the non-msg arguments can be substituted into the message using
+named substitution with the format method of strings.
+e.g. self.AssertEqual(0, 1, '{first} should be {second}') will raise an
+AssertionError with the message: '0 should be 1'.
+
+Example (.../recipe_modules/my_module/tests/foo.py):
+DEPS = [
+    'my_module',
+    'recipe_engine/assertions',
+    'recipe_engine/properties',
+    'recipe_engine/runtime',
+]
+
+def RunSteps(api):
+  # Behavior of foo depends on whether build is experimental
+  value = api.my_module.foo()
+  expected_value = api.properties.get('expected_value')
+  api.assertions.assertEqual(value, expected_value)
+
+def GenTests(api):
+  yield (
+      api.test('basic')
+      + api.properties(expected_value='normal value')
+  )
+
+  yield (
+      api.test('experimental')
+      + api.properties(expected_value='experimental value')
+      + api.properties(is_luci=True, is_experimental=True)
+ )
 ### *recipe_modules* / [buildbucket](/recipe_modules/buildbucket)
 
 [DEPS](/recipe_modules/buildbucket/__init__.py#5): [json](#recipe_modules-json), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
@@ -2149,6 +2198,16 @@ Returns a random UUID string.
 [DEPS](/recipe_modules/archive/examples/full.py#7): [archive](#recipe_modules-archive), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/archive/examples/full.py#19)(api):**
+### *recipes* / [assertions:tests/assertions](/recipe_modules/assertions/tests/assertions.py)
+
+[DEPS](/recipe_modules/assertions/tests/assertions.py#7): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/assertions.py#13)(api):**
+### *recipes* / [assertions:tests/attribute\_error](/recipe_modules/assertions/tests/attribute_error.py)
+
+[DEPS](/recipe_modules/assertions/tests/attribute_error.py#7): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/attribute_error.py#13)(api):**
 ### *recipes* / [buildbucket:examples/full](/recipe_modules/buildbucket/examples/full.py)
 
 [DEPS](/recipe_modules/buildbucket/examples/full.py#7): [buildbucket](#recipe_modules-buildbucket), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

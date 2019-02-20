@@ -373,7 +373,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     batch_req = {
       'requests': [
-          {'schedule_request': r}
+          {'schedule_build': r}
           for r in schedule_build_requests
       ]
     }
