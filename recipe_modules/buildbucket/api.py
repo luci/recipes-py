@@ -215,6 +215,28 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   # RPCs.
 
+  def run(
+      self, schedule_build_requests, collect_interval=None, timeout=None,
+      step_name=None):
+    """Runs builds and returns results.
+
+    A shortcut for schedule() and collect_builds().
+    See their docstrings.
+
+    Returns:
+      A list of completed
+      [Builds](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
+      in the same order as schedule_build_requests.
+    """
+    with self.m.step.nest(step_name or 'buildbucket.run'):
+      builds = self.schedule(schedule_build_requests, step_name='schedule')
+      build_dict = self.collect_builds(
+          [b.id for b in builds],
+          interval=collect_interval,
+          timeout=timeout,
+          step_name='collect')
+      return [build_dict[b.id] for b in builds]
+
   def schedule_request(
       self,
       builder,
@@ -470,13 +492,14 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return build
 
   def collect_builds(
-      self, build_ids, interval=60, timeout=3600, step_name=None):
+      self, build_ids, interval=None, timeout=None, step_name=None):
     """Waits for a set of builds to end and returns their details.
 
     Args:
     * build_ids: List of build IDs to wait for.
     * interval: Delay (in secs) between requests while waiting for build to end.
-    * timeout: Maximum time to wait for builds to end.
+      Defaults to 1m.
+    * timeout: Maximum time to wait for builds to end. Defaults to 1h.
     * step_name: Custom name for the generated step.
 
     Returns:
@@ -484,6 +507,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
       [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
       for all specified builds.
     """
+    interval = interval or 60
+    timeout = timeout or 3600
     args = ['-json-output', self.m.json.output(), '-interval', '%ds' % interval]
     args += build_ids
     test_response = [

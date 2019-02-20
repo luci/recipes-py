@@ -18,6 +18,8 @@ def RunSteps(api):
   req = api.buildbucket.schedule_request(**req_body)
   api.buildbucket.schedule([req])
 
+  api.buildbucket.run([req])
+
 
 def GenTests(api):
 
