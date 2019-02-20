@@ -317,7 +317,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     if experimental is None:
       experimental = b.input.experimental
-    elif isinstance(experimental, bool):
+    if isinstance(experimental, bool):
       experimental = common_pb2.YES if experimental else common_pb2.NO
     req['experimental'] = experimental
 
