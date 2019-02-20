@@ -45,18 +45,18 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       revision='2d72510e447ab60a9728aeea2362d8be2cbd7789',
       build_number=0,
       build_id=8945511751514863184,
+      tags=None,
       status=None,
-      build_sets=None,
     ):
     """Returns a typical buildbucket CI build scheduled by luci-scheduler."""
     git_repo = git_repo or self._default_git_repo(project)
     gitiles_host, gitiles_project = util.parse_gitiles_repo_url(git_repo)
     assert gitiles_host and gitiles_project, 'invalid repo %s' % git_repo
 
-    # Do not add tags because recipe emulation results must not depend on tags.
     build = build_pb2.Build(
         id=build_id,
         number=build_number,
+        tags=tags or [],
         builder=build_pb2.BuilderID(
             project=project,
             bucket=bucket,
@@ -72,10 +72,6 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
                 id=revision,
             ),
         ),
-        tags=[
-            dict(key='buildset', value=bs)
-            for bs in build_sets or []
-        ],
     )
 
     if status:
@@ -94,7 +90,6 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     """
     return self.build(self.ci_build_message(*args, **kwargs))
 
-
   def try_build_message(
       self,
       project='project',
@@ -106,8 +101,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       revision=None,
       build_number=0,
       build_id=8945511751514863184,
+      tags=None,
       status=None,
-      build_sets=None,
     ):
     """Emulate typical buildbucket try build scheduled by CQ.
 
@@ -126,10 +121,10 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       if not prefix.endswith('-review'):
         gerrit_host = '%s-review%s' % (prefix, gs_suffix)
 
-    # Do not add tags because recipe emulation results must not depend on tags.
     build = build_pb2.Build(
         id=build_id,
         number=build_number,
+        tags=tags or [],
         builder=build_pb2.BuilderID(
             project=project,
             bucket=bucket,
@@ -147,10 +142,6 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
                 ),
             ],
         ),
-        tags=[
-            dict(key='buildset', value=bs)
-            for bs in build_sets or []
-        ],
     )
 
     if revision:
@@ -175,6 +166,10 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
                api.buildbucket.try_build(project='my-proj', builder='win'))
     """
     return self.build(self.try_build_message(*args, **kwargs))
+
+  def tags(self, **tags):
+    """Alias for tags in util.py. See doc there."""
+    return util.tags(**tags)
 
   def simulated_buildbucket_output(self, additional_build_parameters):
     buildbucket_output = {

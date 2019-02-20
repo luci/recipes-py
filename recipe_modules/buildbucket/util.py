@@ -86,3 +86,25 @@ def timestamp_to_datetime(value):
   """Converts integer timestamp in microseconds since epoch to UTC datetime."""
   assert isinstance(value, (int, long, float)), value
   return EPOCH + datetime.timedelta(microseconds=value)
+
+
+def tags(**tags):
+  """Helper method to generate a list of StringPair messages.
+
+  This method is useful to prepare tags argument for ci/try_build above and
+  schedule methods in the api.py.
+
+  Args:
+  * tags: Dict mapping keys to values. A value can be a list of values in
+    which case multiple tags for the same key will be created.
+
+  Returns:
+    List of common_pb2.StringPair messages.
+  """
+  messages = []
+  for key, values in tags.iteritems():
+    if not isinstance(values, list):
+      values = [values]
+    for value in values:
+      messages.append(common_pb2.StringPair(key=key, value=value))
+  return messages

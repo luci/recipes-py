@@ -28,6 +28,11 @@ def RunSteps(api):
     gm = build.input.gitiles_commit
     assert 'chrome-internal.googlesource.com' == gm.host
     assert 'repo' == gm.project
+    assert len(build.tags) == 2
+    assert build.tags[0].key == 'user_agent'
+    assert build.tags[0].value == 'cq'
+    assert build.tags[1].key == 'user_agent'
+    assert build.tags[1].value == 'recipe'
   else:
     return
 
@@ -156,7 +161,8 @@ def GenTests(api):
              bucket='ci',
              builder='ci-builder',
              git_repo='https://chrome-internal.googlesource.com/a/repo.git',
-             build_number=0) +
+             build_number=0,
+             tags=api.buildbucket.tags(user_agent=['cq', 'recipe'])) +
          api.step_data(
              'buildbucket.put',
              stdout=api.raw_io.output_text(mock_buildbucket_multi_response)) +

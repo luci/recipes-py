@@ -15,7 +15,10 @@ DEPS = [
 def RunSteps(api):
   # Convert from FrozenDict
   req_body = types.thaw(api.properties.get('request_kwargs'))
-  req = api.buildbucket.schedule_request(**req_body)
+  tags = api.properties.get('tags')
+  # This is needed to provide coverage for the tags() method in api.py.
+  tags = api.buildbucket.tags(**tags) if tags else tags
+  req = api.buildbucket.schedule_request(tags=tags, **req_body)
   api.buildbucket.schedule([req])
 
   api.buildbucket.run([req])
@@ -23,7 +26,7 @@ def RunSteps(api):
 
 def GenTests(api):
 
-  def test(test_name, response=None, **req):
+  def test(test_name, response=None, tags=None, **req):
     req.setdefault('builder', 'linux')
     return (
       api.test(test_name) +
@@ -33,16 +36,16 @@ def GenTests(api):
           builder='Builder',
           git_repo='https://chromium.googlesource.com/chromium/src',
           revision='a' * 40,
-          build_sets={'bs'},
+          tags=api.buildbucket.tags(buildset='bs'),
       ) +
-      api.properties(request_kwargs=req, response=response)
+      api.properties(request_kwargs=req, tags=tags, response=response)
     )
 
   yield test('basic')
 
   yield test(
       test_name='tags',
-      tags=[{'key': 'a', 'value': 'b'}]
+      tags={'a': 'b'}
   )
 
   yield test(

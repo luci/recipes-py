@@ -213,6 +213,10 @@ class BuildbucketApi(recipe_api.RecipeApi):
     res.presentation.properties[prop_name] = json_format.MessageToDict(
         gitiles_commit)
 
+  def tags(self, **tags):
+    """Alias for tags in util.py. See doc there."""
+    return util.tags(**tags)
+
   # RPCs.
 
   def run(
@@ -265,7 +269,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
         request = api.buildbucket.schedule_request(
             builder='linux',
-            tags=[dict(key='a', value='b')],
+            tags=api.buildbucket.tags(a='b'),
         )
         build = api.buildbucket.schedule([request])[0]
 
@@ -468,8 +472,6 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   def get_build(self, build_id, **kwargs):
     return self._run_buildbucket('get', [build_id], **kwargs)
-
-  # Other buildbucket tool subcommands.
 
   def collect_build(self, build_id, mirror_status=False, **kwargs):
     """Shorthand for `collect_builds` below, but for a single build only.
