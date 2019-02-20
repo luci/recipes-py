@@ -524,6 +524,12 @@ def StatusFailure(check, step_odict):
   check('failure' in step_odict['$result'])
 
 
+def StatusException(check, step_odict):
+  """Assert that the recipe failed."""
+  if check('failure' in step_odict['$result']):
+    check('exception' in step_odict['$result']['failure'])
+
+
 def ResultReasonRE(check, step_odict, reason_regex):
   """Assert that recipe result reason matches given regex.
 
@@ -531,8 +537,10 @@ def ResultReasonRE(check, step_odict, reason_regex):
     reason_regex (str): the regular expression to match.
   """
   result = step_odict['$result']
-  check('failure' in result)
-  check('humanReason' in result['failure'])
+  if not check('failure' in result):
+    return
+  if not check('humanReason' in result['failure']):
+    return
   check(re.match(reason_regex, result['failure']['humanReason']))
 
 
