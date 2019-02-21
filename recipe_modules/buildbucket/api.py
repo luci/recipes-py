@@ -305,7 +305,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     b = self.build
     req = dict(
-        request_id='%d-%s' % (b.id, self.m.uuid.random()),
+        requestId='%d-%s' % (b.id, self.m.uuid.random()),
         builder=dict(
             project=project or b.builder.project,
             bucket=bucket or b.builder.bucket,
@@ -325,11 +325,11 @@ class BuildbucketApi(recipe_api.RecipeApi):
     if not gitiles_commit and b.input.HasField('gitiles_commit'):
       gitiles_commit = b.input.gitiles_commit
     if gitiles_commit:
-      req['gitiles_commit'] = _as_dict(gitiles_commit)
+      req['gitilesCommit'] = _as_dict(gitiles_commit)
 
     # Populate CLs.
     gerrit_changes = gerrit_changes or b.input.gerrit_changes
-    req['gerrit_changes'] = map(_as_dict, gerrit_changes)
+    req['gerritChanges'] = map(_as_dict, gerrit_changes)
 
     # Populate tags.
     tags = tags or b.tags
@@ -377,7 +377,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     batch_req = {
       'requests': [
-          {'schedule_build': r}
+          {'scheduleBuild': r}
           for r in schedule_build_requests
       ]
     }
@@ -385,7 +385,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     test_res = {'responses': []}
     for r in schedule_build_requests:
       test_res['responses'].append({
-        'schedule_build': {
+        'scheduleBuild': {
           'id': str(self._next_test_build_id),
           'builder': r['builder'],
         },
@@ -418,7 +418,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
               '',  # Blank line.
           ])
         else:
-          build_id = r['schedule_build']['id']
+          build_id = r['scheduleBuild']['id']
           build_url = 'https://%s/build/%s' % (self._host, build_id)
           pres.links['build %s' % build_id] = build_url
 
@@ -428,7 +428,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return [
         # schedule_build may be missing because of crbug.com/931473
         # This code should have been reached in the first place.
-        json_format.ParseDict(r.get('schedule_build', {}), build_pb2.Build())
+        json_format.ParseDict(r.get('scheduleBuild', {}), build_pb2.Build())
         for r in batch_res.get('responses', [])
     ]
 
