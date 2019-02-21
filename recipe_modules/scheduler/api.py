@@ -50,8 +50,8 @@ class SchedulerApi(recipe_api.RecipeApi):
       t = {}
       t['id'] = self._id or api_self._next_uuid()
       t['title'] = self._title or ('%s/%s' % (
-          api_self.m.properties.get('buildername'),
-          api_self.m.properties.get('buildnumber')))
+          api_self.m.buildbucket.build.builder.builder,
+          api_self.m.buildbucket.build.number))
       # TODO(tandrii): find a way to get URL of current build.
       if self._url:
         t['url'] = self._url
@@ -77,7 +77,11 @@ class SchedulerApi(recipe_api.RecipeApi):
       self._tags = tags
 
     def _serialize_payload(self, api_self):
-      tags = api_self.m.buildbucket.tags_for_child_build.copy()
+      tags = {'user_agent': 'recipe'}
+      if api_self.m.buildbucket.build.number:
+        tags['parent_buildnumber'] = str(api_self.m.buildbucket.build.number)
+      if api_self.m.buildbucket.build.builder.builder:
+        tags['parent_buildername'] = str(api_self.m.buildbucket.build.builder.builder)
       if self._tags:
         tags.update(self._tags)
       return {'buildbucket': {

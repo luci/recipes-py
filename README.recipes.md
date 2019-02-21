@@ -1731,7 +1731,7 @@ RPCExplorer available at
 
 A module for interacting with LUCI Scheduler service.
 
-&mdash; **def [emit\_trigger](/recipe_modules/scheduler/api.py#107)(self, trigger, project, jobs, step_name=None):**
+&mdash; **def [emit\_trigger](/recipe_modules/scheduler/api.py#111)(self, trigger, project, jobs, step_name=None):**
 
 Emits trigger to one or more jobs of a given project.
 
@@ -1742,7 +1742,7 @@ Args:
   jobs (iterable of str): job names per LUCI Scheduler config for the given
     project. These typically are the same as builder names.
 
-&mdash; **def [emit\_triggers](/recipe_modules/scheduler/api.py#119)(self, trigger_project_jobs, timestamp_usec=None, step_name=None):**
+&mdash; **def [emit\_triggers](/recipe_modules/scheduler/api.py#123)(self, trigger_project_jobs, timestamp_usec=None, step_name=None):**
 
 Emits a batch of triggers spanning one or more projects.
 
@@ -2497,11 +2497,11 @@ Tests for api.python.infra_failing_step.
 &mdash; **def [RunSteps](/recipe_modules/runtime/tests/full.py#13)(api):**
 ### *recipes* / [scheduler:examples/emit\_triggers](/recipe_modules/scheduler/examples/emit_triggers.py)
 
-[DEPS](/recipe_modules/scheduler/examples/emit_triggers.py#7): [json](#recipe_modules-json), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [scheduler](#recipe_modules-scheduler), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/scheduler/examples/emit_triggers.py#7): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [scheduler](#recipe_modules-scheduler), [time](#recipe_modules-time)
 
 This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
 
-&mdash; **def [RunSteps](/recipe_modules/scheduler/examples/emit_triggers.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/scheduler/examples/emit_triggers.py#17)(api):**
 ### *recipes* / [service\_account:examples/full](/recipe_modules/service_account/examples/full.py)
 
 [DEPS](/recipe_modules/service_account/examples/full.py#7): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account)
