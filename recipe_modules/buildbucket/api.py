@@ -333,7 +333,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     # Populate tags.
     tags = tags or b.tags
-    tag_set = set()
+    tag_set = {('user_agent', 'recipe')}
     for t in tags:
       t = _as_dict(t)
       tag_set.add((t['key'], t['value']))
