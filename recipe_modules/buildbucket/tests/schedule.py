@@ -36,7 +36,7 @@ def GenTests(api):
           builder='Builder',
           git_repo='https://chromium.googlesource.com/chromium/src',
           revision='a' * 40,
-          tags=api.buildbucket.tags(buildset='bs'),
+          tags=api.buildbucket.tags(buildset='bs', unrelated='a'),
       ) +
       api.properties(request_kwargs=req, tags=tags, response=response)
     )

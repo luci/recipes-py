@@ -332,9 +332,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
     req['gerritChanges'] = map(_as_dict, gerrit_changes)
 
     # Populate tags.
-    tags = tags or b.tags
     tag_set = {('user_agent', 'recipe')}
-    for t in tags:
+    for t in tags or []:
       t = _as_dict(t)
       tag_set.add((t['key'], t['value']))
 
