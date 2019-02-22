@@ -511,7 +511,7 @@ def StatusCodeIn(check, step_odict, *codes):
   if code == 0:
     StatusSuccess(check, step_odict)
   else:
-    StatusFailure(check, step_odict)
+    StatusAnyFailure(check, step_odict)
 
 
 def StatusSuccess(check, step_odict):
@@ -526,9 +526,8 @@ def StatusAnyFailure(check, step_odict):
 
 def StatusFailure(check, step_odict):
   """Assert that the recipe failed."""
-  # TODO(sergiyb): Make this method only check for non-exceptional failures when
-  # all clients have been updated.
-  check('failure' in step_odict['$result'])
+  if check('failure' in step_odict['$result']):
+    check('exception' not in step_odict['$result']['failure'])
 
 
 def StatusException(check, step_odict):
