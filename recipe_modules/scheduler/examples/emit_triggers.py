@@ -5,7 +5,6 @@
 """This file is a recipe demonstrating emitting triggers to LUCI Scheduler."""
 
 DEPS = [
-  'buildbucket',
   'json',
   'properties',
   'runtime',
@@ -67,7 +66,7 @@ def GenTests(api):
   yield (
     api.test('basic')
     + api.runtime(is_luci=True, is_experimental=True)
-    + api.buildbucket.ci_build(builder='compiler', build_number=123)
+    + api.properties(buildername='compiler', buildnumber='123')
     + api.step_data('luci-scheduler.EmitTriggers', stdout=api.json.output({}))
     + api.step_data('luci-scheduler.EmitTriggers', stdout=api.json.output({}))
   )
