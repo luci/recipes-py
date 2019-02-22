@@ -48,7 +48,8 @@
   * [context:tests/env](#recipes-context_tests_env)
   * [context:tests/increment_nest_level](#recipes-context_tests_increment_nest_level)
   * [context:tests/infra_step](#recipes-context_tests_infra_step)
-  * [cq:tests/example](#recipes-cq_tests_example)
+  * [cq:tests/triggered_build_ids](#recipes-cq_tests_triggered_build_ids)
+  * [cq:tests/type_of_run](#recipes-cq_tests_type_of_run)
   * [engine_tests/bad_subprocess](#recipes-engine_tests_bad_subprocess) &mdash; Tests that daemons that hang on to STDOUT can't cause the engine to hang.
   * [engine_tests/comprehensive_ui](#recipes-engine_tests_comprehensive_ui) &mdash; A fast-running recipe which comprehensively covers all StepPresentation features available in the recipe engine.
   * [engine_tests/expect_exception](#recipes-engine_tests_expect_exception) &mdash; Tests that step_data can accept multiple specs at once.
@@ -229,7 +230,7 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 
 A module for interacting with buildbucket.
 
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#560)(self):**
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#566)(self):**
 
 Returns bucket name in v1 format.
 
@@ -252,15 +253,15 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#576)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#582)(self):**
 
 DEPRECATED, use build.id instead.
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#581)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#587)(self):**
 
 DEPRECATED, use build.input instead.
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#586)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#592)(self):**
 
 Deprecated. Use build.builder instead.
 
@@ -268,9 +269,9 @@ Deprecated. Use build.builder instead.
 
 Returns builder name. Shortcut for `.build.builder.builder`.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#469)(self, build_id, \*\*kwargs):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#475)(self, build_id, \*\*kwargs):**
 
-&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#475)(self, build_id, mirror_status=False, \*\*kwargs):**
+&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#481)(self, build_id, mirror_status=False, \*\*kwargs):**
 
 Shorthand for `collect_builds` below, but for a single build only.
 
@@ -282,7 +283,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
   for the ended build.
 
-&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#495)(self, build_ids, interval=None, timeout=None, step_name=None):**
+&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#501)(self, build_ids, interval=None, timeout=None, step_name=None):**
 
 Waits for a set of builds to end and returns their details.
 
@@ -298,7 +299,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   for all specified builds.
 
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#472)(self, build_id, \*\*kwargs):**
+&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#478)(self, build_id, \*\*kwargs):**
 
 &emsp; **@property**<br>&mdash; **def [gitiles\_commit](/recipe_modules/buildbucket/api.py#125)(self):**
 
@@ -309,11 +310,11 @@ For value format, see
 
 Never returns None, but sub-fields may be empty.
 
-&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#571)(self):**
+&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#577)(self):**
 
 DEPRECATED, use build attribute instead.
 
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#434)(self, builds, \*\*kwargs):**
+&mdash; **def [put](/recipe_modules/buildbucket/api.py#440)(self, builds, \*\*kwargs):**
 
 Puts a batch of builds.
 
@@ -362,9 +363,15 @@ TODO(crbug.com/930761): accept messages.
 This will change the function signature.
 
 Example:
-
+```python
     req = api.buildbucket.schedule_request(builder='linux')
     api.buildbucket.schedule([req])
+```
+
+Hint: when scheduling builds for CQ, let CQ know about them:
+```python
+    api.cq.record_triggered_builds(*api.buildbucket.schedule([req1, req2]))
+```
 
 Returns:
   A list of
@@ -852,7 +859,7 @@ purposes.
 **Returns (int)** - The current nesting level.
 ### *recipe_modules* / [cq](/recipe_modules/cq)
 
-[DEPS](/recipe_modules/cq/__init__.py#5): [properties](#recipe_modules-properties)
+[DEPS](/recipe_modules/cq/__init__.py#5): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 #### **class [CQApi](/recipe_modules/cq/api.py#9)([RecipeApi](/recipe_engine/recipe_api.py#1005)):**
 
@@ -861,11 +868,41 @@ This module provides recipe API of LUCI CQ, aka pre-commit testing system.
 More information about CQ:
   https://chromium.googlesource.com/infra/luci/luci-go/+/master/cq
 
-&mdash; **def [initialize](/recipe_modules/cq/api.py#32)(self):**
+&mdash; **def [initialize](/recipe_modules/cq/api.py#33)(self):**
 
-&emsp; **@property**<br>&mdash; **def [state](/recipe_modules/cq/api.py#41)(self):**
+&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cq/api.py#69)(self, \*build_ids):**
+
+Adds given Buildbucket build ids to the list of triggered builds for CQ
+to wait on corresponding build completion later.
+
+Must be called after some step.
+
+Args:
+  * build_id (int or string): Buildbucket build id.
+
+&mdash; **def [record\_triggered\_builds](/recipe_modules/cq/api.py#52)(self, \*builds):**
+
+Adds given Buildbucket builds to the list of triggered builds for CQ
+to wait on corresponding build completion later.
+
+Must be called after some step.
+
+Expected usage:
+  ```python
+    api.cq.record_triggered_builds(*api.buildbucket.schedule([req1, req2]))
+  ```
+
+Args:
+  * [`Build`](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
+    objects, typically returned by `api.buildbucket.schedule`.
+
+&emsp; **@property**<br>&mdash; **def [state](/recipe_modules/cq/api.py#42)(self):**
 
 CQ state pertaining to this recipe execution.
+
+&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cq/api.py#47)(self):**
+
+Returns recorded build ids as a list of integers.
 ### *recipe_modules* / [file](/recipe_modules/file)
 
 [DEPS](/recipe_modules/file/__init__.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
@@ -2274,11 +2311,16 @@ This file is a recipe demonstrating the buildbucket recipe module.
 [DEPS](/recipe_modules/context/tests/infra_step.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/context/tests/infra_step.py#11)(api):**
-### *recipes* / [cq:tests/example](/recipe_modules/cq/tests/example.py)
+### *recipes* / [cq:tests/triggered\_build\_ids](/recipe_modules/cq/tests/triggered_build_ids.py)
 
-[DEPS](/recipe_modules/cq/tests/example.py#7): [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cq/tests/triggered_build_ids.py#5): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/cq/tests/example.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/cq/tests/triggered_build_ids.py#12)(api):**
+### *recipes* / [cq:tests/type\_of\_run](/recipe_modules/cq/tests/type_of_run.py)
+
+[DEPS](/recipe_modules/cq/tests/type_of_run.py#5): [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/cq/tests/type_of_run.py#12)(api):**
 ### *recipes* / [engine\_tests/bad\_subprocess](/recipes/engine_tests/bad_subprocess.py)
 
 [DEPS](/recipes/engine_tests/bad_subprocess.py#7): [python](#recipe_modules-python)

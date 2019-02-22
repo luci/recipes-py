@@ -360,9 +360,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
     This will change the function signature.
 
     Example:
-
+    ```python
         req = api.buildbucket.schedule_request(builder='linux')
         api.buildbucket.schedule([req])
+    ```
+
+    Hint: when scheduling builds for CQ, let CQ know about them:
+    ```python
+        api.cq.record_triggered_builds(*api.buildbucket.schedule([req1, req2]))
+    ```
 
     Returns:
       A list of

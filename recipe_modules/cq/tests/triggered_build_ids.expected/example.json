@@ -1,0 +1,13 @@
+[
+  {
+    "cmd": [],
+    "name": "triggered some builds",
+    "~followup_annotations": [
+      "@@@SET_BUILD_PROPERTY@triggered_build_ids@[\"1\", \"2\", \"22\", \"11\"]@@@"
+    ]
+  },
+  {
+    "jsonResult": null,
+    "name": "$result"
+  }
+]
