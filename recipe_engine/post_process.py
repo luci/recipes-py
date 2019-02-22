@@ -519,8 +519,15 @@ def StatusSuccess(check, step_odict):
   check(not 'failure' in step_odict['$result'])
 
 
+def StatusAnyFailure(check, step_odict):
+  """Assert that the recipe failed."""
+  check('failure' in step_odict['$result'])
+
+
 def StatusFailure(check, step_odict):
   """Assert that the recipe failed."""
+  # TODO(sergiyb): Make this method only check for non-exceptional failures when
+  # all clients have been updated.
   check('failure' in step_odict['$result'])
 
 
