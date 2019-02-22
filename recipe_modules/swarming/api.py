@@ -13,7 +13,7 @@ from state import TaskState
 from recipe_engine import recipe_api
 
 
-DEFAULT_CIPD_VERSION = 'git_revision:70890ac4ebd49accb4d9708c36c53483ea8d939d'
+DEFAULT_CIPD_VERSION = 'git_revision:77ad228dacd5bf544b3fcfd93dedae3c08d2f2ea'
 
 
 # TODO(iannucci): Investigate whether slices can be made invisible to clients

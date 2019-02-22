@@ -10,7 +10,7 @@
       "-root",
       "[CACHE]/swarming_client",
       "-ensure-file",
-      "infra/tools/luci/swarming/${platform} git_revision:70890ac4ebd49accb4d9708c36c53483ea8d939d",
+      "infra/tools/luci/swarming/${platform} git_revision:77ad228dacd5bf544b3fcfd93dedae3c08d2f2ea",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -22,7 +22,7 @@
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
       "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-git_revision:708\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-git_revision:77a\", @@@",
       "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/tools/luci/swarming/resolved-platform\"@@@",
       "@@@STEP_LOG_LINE@json.output@      }@@@",
       "@@@STEP_LOG_LINE@json.output@    ]@@@",
