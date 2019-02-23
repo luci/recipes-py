@@ -10,14 +10,14 @@ Markdown (either on stdout or written to the repo).
 """
 
 def add_arguments(parser):
-  doc_kinds = ('binarypb', 'jsonpb', 'textpb', 'gen', 'markdown')
   parser.add_argument(
       'recipe', nargs='?', help='Restrict documentation to this recipe')
   parser.add_argument(
-      '--kind', default='jsonpb', choices=doc_kinds,
+      '--kind', default='gen',
+      choices=('gen', 'binarypb', 'jsonpb', 'textpb', 'markdown'),
       help=(
-        'Output this kind of documentation. `gen` will write the standard '
-        'README.recipes.md file. All others output to stdout'))
+        'Output this kind of documentation. `gen` (the default) will write the'
+        ' standard README.recipes.md file. All others output to stdout'))
 
   def _launch(args):
     from .cmd import main
