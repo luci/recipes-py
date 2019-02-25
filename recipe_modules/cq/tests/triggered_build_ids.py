@@ -10,7 +10,11 @@ DEPS = [
 
 
 def RunSteps(api):
-  api.step('triggered some builds', [])
+  api.step('no builds actually triggered', cmd=[])
+  api.cq.record_triggered_builds(*[])
+  assert api.cq.triggered_build_ids == []
+
+  api.step('triggered some builds', cmd=[])
   api.cq.record_triggered_build_ids(1, 2)
   api.cq.record_triggered_builds(
       api.buildbucket.build_pb2.Build(id=22),

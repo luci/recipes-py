@@ -75,7 +75,9 @@ class CQApi(recipe_api.RecipeApi):
     Args:
       * build_id (int or string): Buildbucket build id.
     """
+    if not build_ids:
+      return
     self._triggered_build_ids.extend(int(bid) for bid in build_ids)
     assert self.m.step.active_result, 'must be called after some step'
     self.m.step.active_result.presentation.properties['triggered_build_ids'] = [
-        str(build_id) for build_id in self._triggered_build_ids]
+          str(build_id) for build_id in self._triggered_build_ids]
