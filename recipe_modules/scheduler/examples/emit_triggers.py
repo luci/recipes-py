@@ -20,6 +20,7 @@ def RunSteps(api):
       api.scheduler.BuildbucketTrigger(
         properties={'some': 'none'},
         tags={'this': 'test'},
+        inherit_tags=False,
         url='https://example.com',
       ),
       project='proj',

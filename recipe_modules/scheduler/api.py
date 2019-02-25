@@ -66,18 +66,24 @@ class SchedulerApi(recipe_api.RecipeApi):
     """Trigger with buildbucket payload for buildbucket jobs.
 
     Args:
-      properties (dict, optional): key -> value properties.
-      tags (dict, optional): additional tags on top of default ones copied from
-        current build. If tag's value is None, this tag will be removed from
-        resulting tags.
+      * properties (dict, optional): key -> value properties.
+      * tags (dict, optional): custom tags to add. See also `inherit_tags`.
+        If tag's value is None, this tag will be removed from resulting tags,
+        however if you rely on this, consider using `inherit_tags=False`
+        instead.
+      * inherit_tags (bool): if true (default), auto-adds tags using
+        `api.buildbucket.tags_for_child_build` api.
     """
-    def __init__(self, properties=None, tags=None, **kwargs):
+    def __init__(self, properties=None, tags=None, inherit_tags=True, **kwargs):
       super(SchedulerApi.BuildbucketTrigger, self).__init__(**kwargs)
       self._properties = properties
       self._tags = tags
+      self._inherit_tags = inherit_tags
 
     def _serialize_payload(self, api_self):
-      tags = api_self.m.buildbucket.tags_for_child_build.copy()
+      tags = {}
+      if self._inherit_tags:
+        tags = api_self.m.buildbucket.tags_for_child_build.copy()
       if self._tags:
         tags.update(self._tags)
       return {'buildbucket': {
