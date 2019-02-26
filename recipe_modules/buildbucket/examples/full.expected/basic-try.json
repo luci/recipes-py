@@ -107,6 +107,13 @@
     ]
   },
   {
+    "cmd": [],
+    "name": "build_url",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@https://cr-buildbucket-test.appspot.com/build/8945511751514863184@@@"
+    ]
+  },
+  {
     "jsonResult": null,
     "name": "$result"
   }

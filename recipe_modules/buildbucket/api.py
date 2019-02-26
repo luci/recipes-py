@@ -122,6 +122,11 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """Returns builder name. Shortcut for `.build.builder.builder`."""
     return self.build.builder.builder
 
+  def build_url(self, host=None, build_id=None):
+    """Returns url to a build. Defaults to current build."""
+    return 'https://%s/build/%s' % (
+      host or self._host, build_id or self._build.id)
+
   @property
   def gitiles_commit(self):
     """Returns input gitiles commit. Shortcut for `.build.input.gitiles_commit`.
@@ -424,7 +429,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
           ])
         else:
           build_id = r['scheduleBuild']['id']
-          build_url = 'https://%s/build/%s' % (self._host, build_id)
+          build_url = self.build_url(build_id=build_id)
           pres.links['build %s' % build_id] = build_url
 
       pres.step_text = '<br>'.join(step_text)

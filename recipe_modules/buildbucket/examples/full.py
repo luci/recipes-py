@@ -92,6 +92,9 @@ def RunSteps(api):
     ),
   )
 
+  api.step('build_url', cmd=None).presentation.step_text = (
+      api.buildbucket.build_url())
+
 
 def GenTests(api):
   mock_buildbucket_multi_response ="""
