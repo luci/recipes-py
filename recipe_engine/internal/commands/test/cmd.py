@@ -31,11 +31,12 @@ from google.protobuf import json_format
 
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 
+from PB.recipe_engine.test_result import TestResult
+
 from .... import checker
 from .... import config_types
 from .... import step_runner
 from .... import stream
-from .... import test_result_pb2
 
 from ..doc.cmd import regenerate_docs
 from ..run.cmd import RecipeEngine
@@ -126,8 +127,8 @@ class DiffFailure(TestFailure):
     return self.diff
 
   def as_proto(self):
-    proto = test_result_pb2.TestResult.TestFailure()
-    proto.diff_failure.MergeFrom(test_result_pb2.TestResult.DiffFailure())
+    proto = TestResult.TestFailure()
+    proto.diff_failure.MergeFrom(TestResult.DiffFailure())
     return proto
 
 
@@ -154,12 +155,12 @@ class CrashFailure(TestFailure):
     return str(self.error)
 
   def as_proto(self):
-    proto = test_result_pb2.TestResult.TestFailure()
-    proto.crash_failure.MergeFrom(test_result_pb2.TestResult.CrashFailure())
+    proto = TestResult.TestFailure()
+    proto.crash_failure.MergeFrom(TestResult.CrashFailure())
     return proto
 
 
-class TestResult(object):
+class _TestResult(object):
   """Result of running a test."""
 
   def __init__(self, test_description, failures, coverage_data,
@@ -267,7 +268,7 @@ def run_test(test_description, mode):
   except RecipeRunError as ex:
     sys.stdout.write('E')
     sys.stdout.flush()
-    return TestResult(
+    return _TestResult(
         test_description, [CrashFailure(ex)], coverage.CoverageData(), False)
 
   actual = json.dumps(
@@ -311,7 +312,7 @@ def run_test(test_description, mode):
     sys.stdout.write('.')
   sys.stdout.flush()
 
-  return TestResult(test_description, failures, coverage_data,
+  return _TestResult(test_description, failures, coverage_data,
                     actual_obj is not None)
 
 
@@ -513,10 +514,10 @@ def run_list(json_file):
 
 def run_diff(baseline, actual, json_file=None):
   """Implementation of the 'diff' command."""
-  baseline_proto = test_result_pb2.TestResult()
+  baseline_proto = TestResult()
   json_format.ParseDict(json.load(baseline), baseline_proto)
 
-  actual_proto = test_result_pb2.TestResult()
+  actual_proto = TestResult()
   json_format.ParseDict(json.load(actual), actual_proto)
 
   success, results_proto = _diff_internal(baseline_proto, actual_proto)
@@ -529,7 +530,7 @@ def run_diff(baseline, actual, json_file=None):
   return 0 if success else 1
 
 def _diff_internal(baseline_proto, actual_proto):
-  results_proto = test_result_pb2.TestResult(version=1, valid=True)
+  results_proto = TestResult(version=1, valid=True)
 
   if (not baseline_proto.valid or
       not actual_proto.valid or
@@ -647,7 +648,7 @@ def run_run(test_filter, jobs, json_file, mode):
   start_time = datetime.datetime.now()
 
   rc = 0
-  results_proto = test_result_pb2.TestResult()
+  results_proto = TestResult()
   results_proto.version = 1
   results_proto.valid = True
 
@@ -677,7 +678,7 @@ def run_run(test_filter, jobs, json_file, mode):
 
   for success, test_description, details in results:
     if success:
-      assert isinstance(details, TestResult)
+      assert isinstance(details, _TestResult)
       if details.failures:
         rc = 1
         key = details.test_description.full_name
@@ -693,9 +694,8 @@ def run_run(test_filter, jobs, json_file, mode):
     else:
       rc = 1
       results_proto.valid = False
-      failure_proto = test_result_pb2.TestResult.TestFailure()
-      failure_proto.internal_failure.MergeFrom(
-          test_result_pb2.TestResult.InternalFailure())
+      failure_proto = TestResult.TestFailure()
+      failure_proto.internal_failure.MergeFrom(TestResult.InternalFailure())
       results_proto.test_failures[test_description.full_name].failures.extend([
           failure_proto])
       print('%s failed:' % test_description.full_name)

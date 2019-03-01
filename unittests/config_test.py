@@ -6,7 +6,7 @@
 import test_env
 
 from recipe_engine import config
-from recipe_engine import doc_pb2 as doc
+from PB.recipe_engine import doc
 
 
 d = doc.Doc

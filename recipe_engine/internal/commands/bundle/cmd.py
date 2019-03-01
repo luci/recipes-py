@@ -51,7 +51,6 @@ import logging
 import ntpath
 import os
 import posixpath
-import re
 import shutil
 import stat
 import subprocess
@@ -59,22 +58,24 @@ import sys
 
 from collections import defaultdict
 
-from .. import simple_cfg
-from ..recipe_deps import RecipeRepo, RecipeDeps
+from PB import __path__ as PB_PATH # pylint: disable=import-error
+
+from ... import simple_cfg
+from ...recipe_deps import RecipeRepo, RecipeDeps
 
 LOGGER = logging.getLogger(__name__)
 GIT = 'git.bat' if sys.platform == 'win32' else 'git'
 
 
-def check(obj, typ):
+def _check(obj, typ):
   if not isinstance(obj, typ):
     msg = '%r was %s, expected %s' % (obj, type(obj).__name__, typ.__name__)
     LOGGER.debug(msg)
     raise TypeError(msg)
 
 
-def prepare_destination(destination):
-  check(destination, str)
+def _prepare_destination(destination):
+  _check(destination, str)
 
   destination = os.path.abspath(destination)
   LOGGER.info('prepping destination %s', destination)
@@ -98,8 +99,8 @@ def export_repo(repo, destination):
     * destination (str) - The absolute path we're exporting to (we'll export to
       a subfolder equal to `repo.name`).
   """
-  check(repo, RecipeRepo)
-  check(destination, str)
+  _check(repo, RecipeRepo)
+  _check(destination, str)
 
   bundle_dst = os.path.join(destination, repo.name)
 
@@ -113,11 +114,12 @@ def export_repo(repo, destination):
     simple_cfg.RECIPES_CFG_LOCATION_REL,     # always grab recipes.cfg
     '%srecipes/**' % reldir,                 # all the recipes stuff
     '%srecipe_modules/**' % reldir,          # all the recipe_modules stuff
+    '%srecipe_proto/**.proto' % reldir,      # all the protos in recipe_proto
 
     # And exclude all the json expectations
     ':(exclude)%s**/*.expected/*.json' % reldir,
   ]
-  LOGGER.info('enumerating all recipe files: %r' % (args,))
+  LOGGER.info('enumerating all recipe files: %r', args)
   to_copy = subprocess.check_output(args).splitlines()
   copy_map = defaultdict(set)
   for i in to_copy:
@@ -128,10 +130,29 @@ def export_repo(repo, destination):
       base = os.path.join(repo.path, i) if i else repo.path
       copy_map[base].add(tail)
 
-  def ignore_fn(base, items):
+  def _ignore_fn(base, items):
     return set(items) - copy_map[base]
 
-  shutil.copytree(repo.path, bundle_dst, ignore=ignore_fn)
+  shutil.copytree(repo.path, bundle_dst, ignore=_ignore_fn)
+
+
+def export_protos(destination):
+  """Exports the compiled protos for the bundle.
+
+  The engine initialization process has already built all protos and made them
+  importable as `PB`. We rely on `PB.__path__` because this allows the
+  `--proto-override` flag to work.
+
+  Args:
+    * repo (RecipeRepo) - The repo to export.
+    * destination (str) - The absolute path we're exporting to (we'll export to
+      a subfolder `_pb/PB`).
+  """
+  shutil.copytree(
+      PB_PATH[0], # root of generated PB folder.
+      os.path.join(destination, '_pb', 'PB'),
+      ignore=lambda _base, names: [n for n in names if n.endswith('.pyc')],
+  )
 
 
 TEMPLATE_SH = u"""#!/usr/bin/env bash
@@ -151,8 +172,8 @@ def prep_recipes_py(recipe_deps, destination):
     * recipe_deps (RecipeDeps) - All loaded dependency repos.
     * destination (str) - The absolute path we're writing the scripts at.
   """
-  check(recipe_deps, RecipeDeps)
-  check(destination, str)
+  _check(recipe_deps, RecipeDeps)
+  _check(destination, str)
 
   overrides = recipe_deps.repos.keys()
   overrides.remove(recipe_deps.main_repo_id)
@@ -163,12 +184,14 @@ def prep_recipes_py(recipe_deps, destination):
     recipes_sh.write(TEMPLATE_SH)
 
     pkg_path = posixpath.join(
-      '${BASH_SOURCE[0]%%/*}/%s' % recipe_deps.main_repo.name,
-      *simple_cfg.RECIPES_CFG_LOCATION_TOKS
+        '${BASH_SOURCE[0]%%/*}/%s' % recipe_deps.main_repo.name,
+        *simple_cfg.RECIPES_CFG_LOCATION_TOKS
     )
     recipes_sh.write(u' --package %s \\\n' % pkg_path)
-    for o in overrides:
-      recipes_sh.write(u' -O %s=${BASH_SOURCE[0]%%/*}/%s \\\n' % (o, o))
+    recipes_sh.write(u' --proto-override ${BASH_SOURCE[0]%/*}/_pb \\\n')
+    for repo_name in overrides:
+      recipes_sh.write(
+          u' -O %s=${BASH_SOURCE[0]%%/*}/%s \\\n' % (repo_name, repo_name))
     recipes_sh.write(u' "$@"\n')
   os.chmod(recipes_script, os.stat(recipes_script).st_mode | stat.S_IXUSR)
 
@@ -180,34 +203,16 @@ def prep_recipes_py(recipe_deps, destination):
       *simple_cfg.RECIPES_CFG_LOCATION_TOKS
     )
     recipes_bat.write(u' --package %s ^\n' % pkg_path)
-    for o in overrides:
-      recipes_bat.write(u' -O %s=%%~dp0/%s ^\n' % (o, o))
+    recipes_bat.write(u' --proto-override "%~dp0\\_pb" ^\n')
+    for repo_name in overrides:
+      recipes_bat.write(u' -O %s=%%~dp0/%s ^\n' % (repo_name, repo_name))
     recipes_bat.write(u' %*\n')
 
 def main(args):
   logging.basicConfig()
-  destination = prepare_destination(args.destination)
+  destination = _prepare_destination(args.destination)
   for repo in args.recipe_deps.repos.values():
     export_repo(repo, destination)
+  export_protos(destination)
   prep_recipes_py(args.recipe_deps, destination)
   LOGGER.info('done!')
-
-
-def add_arguments(parser):
-  parser.add_argument(
-      '--destination', default='./bundle',
-      type=os.path.abspath,
-      help='The directory of where to put the bundle (default: %(default)r).')
-
-  def _postprocess_func(error, _args):
-    raw = subprocess.check_output([GIT, 'version'])
-    match = re.match(r'git version (\d+\.\d+\.\d+).*', raw)
-    if not match:
-      error('could not parse git version from %r' % raw)
-    vers = tuple(map(int, match.group(1).split('.')))
-    if vers < (2, 13, 0):
-      error('git version %r is too old (need 2.13+)' % raw)
-
-  parser.set_defaults(
-      func=main,
-      postprocess_func=_postprocess_func)

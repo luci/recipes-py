@@ -19,7 +19,7 @@ import mock
 import test_env
 
 from recipe_engine.internal.commands import test as test_parser
-from recipe_engine.test_result_pb2 import TestResult
+from PB.recipe_engine.test_result import TestResult
 
 CheckFailure = TestResult.CheckFailure
 
@@ -190,7 +190,7 @@ class TestRun(Common):
     self.assertNotIn('foo.basic failed', result.text_output)
     self.assertDictEqual(
         result.data,
-        self._result_json(coverage={'recipes/foo.py': [8]}))
+        self._result_json(coverage={'recipes/foo.py': [10]}))
 
   def test_recipe_not_covered_filter(self):
     with self.main.write_recipe('foo') as recipe:
@@ -205,6 +205,7 @@ class TestRun(Common):
 
   def test_check_failure(self):
     with self.main.write_recipe('foo') as recipe:
+      recipe.imports = ['from recipe_engine import post_process']
       recipe.GenTests.write('''
         yield (api.test('basic')
           + api.post_process(post_process.MustRun, 'bar')
@@ -222,12 +223,13 @@ class TestRun(Common):
               func='MustRun',
               args=["'bar'"],
               filename='recipes/foo.py',
-              lineno=11,
+              lineno=13,
           )]
         }))
 
   def test_check_failure_filter(self):
     with self.main.write_recipe('foo') as recipe:
+      recipe.imports = ['from recipe_engine import post_process']
       recipe.GenTests.write('''
         yield (api.test('basic')
           + api.post_process(post_process.MustRun, 'bar')
@@ -246,12 +248,13 @@ class TestRun(Common):
               func='MustRun',
               args=["'bar'"],
               filename='recipes/foo.py',
-              lineno=11,
+              lineno=13,
           )]
         }))
 
   def test_check_success(self):
     with self.main.write_recipe('foo') as recipe:
+      recipe.imports = ['from recipe_engine import post_process']
       recipe.GenTests.write('''
         yield (api.test('basic')
           + api.post_process(post_process.DoesNotRun, 'bar')
@@ -266,14 +269,14 @@ class TestRun(Common):
 
     result = self._run_test('run', should_fail=True)
     self.assertIn(
-        ('line 7, in RunSteps\n    baz\n'
+        ('line 9, in RunSteps\n    baz\n'
          'NameError: global name \'baz\' is not defined'),
         result.text_output)
     self.assertDictEqual(
         result.data,
         self._result_json(
             crash=['foo.basic'],
-            coverage={'recipes/foo.py': [7]},
+            coverage={'recipes/foo.py': [9]},
             unused_expect=[
               'recipes/foo.expected',
               'recipes/foo.expected/basic.json',
@@ -311,8 +314,8 @@ class TestRun(Common):
         self._result_json(
             crash=['foo_module:examples/full.basic'],
             coverage={
-              'recipe_modules/foo_module/api.py': [6],
-              'recipe_modules/foo_module/examples/full.py': [7],
+              'recipe_modules/foo_module/api.py': [8],
+              'recipe_modules/foo_module/examples/full.py': [9],
             },
         ))
 
@@ -337,8 +340,8 @@ class TestRun(Common):
         self._result_json(
             crash=['foo_module:examples/full.basic'],
             coverage={
-              'recipe_modules/foo_module/api.py': [6],
-              'recipe_modules/foo_module/examples/full.py': [7],
+              'recipe_modules/foo_module/api.py': [8],
+              'recipe_modules/foo_module/examples/full.py': [9],
             }
         ))
 
@@ -363,8 +366,8 @@ class TestRun(Common):
         result.data,
         self._result_json(
             coverage={
-              'recipe_modules/foo_module/api.py': [6],
-              'recipe_modules/foo_module/examples/full.py': [8],
+              'recipe_modules/foo_module/api.py': [8],
+              'recipe_modules/foo_module/examples/full.py': [10],
             },
             diff=['foo_module:examples/full.basic']
         ))
@@ -406,7 +409,7 @@ class TestRun(Common):
     self.assertDictEqual(
         result.data,
         self._result_json(
-            coverage={'recipe_modules/foo_module/api.py': [6]},
+            coverage={'recipe_modules/foo_module/api.py': [8]},
             uncovered_mods=['foo_module'],
         ))
 
@@ -454,7 +457,7 @@ class TestRun(Common):
     self.assertDictEqual(
         result.data,
         self._result_json(
-            coverage={'recipe_modules/foo_module/api.py': [6]},
+            coverage={'recipe_modules/foo_module/api.py': [8]},
         ))
 
   def test_recipe_module_test_expectation_failure_empty(self):
@@ -503,7 +506,7 @@ class TestRun(Common):
     self.assertDictEqual(
         self._run_test('run', should_fail=True).data,
         self._result_json(
-            coverage={'recipe_modules/foo_module/test_api.py': [6]},
+            coverage={'recipe_modules/foo_module/test_api.py': [8]},
         ))
 
   def test_api_uncovered_strict(self):
@@ -515,7 +518,7 @@ class TestRun(Common):
     self.assertDictEqual(
         self._run_test('run', should_fail=True).data,
         self._result_json(
-            coverage={'recipe_modules/foo_module/test_api.py': [6]},
+            coverage={'recipe_modules/foo_module/test_api.py': [8]},
             uncovered_mods=['foo_module']
         ))
 
@@ -553,7 +556,7 @@ class TestRun(Common):
     self.assertDictEqual(
         self._run_test('run', should_fail=True).data,
         self._result_json(
-            coverage={'recipe_modules/foo_module/test_api.py': [6]},
+            coverage={'recipe_modules/foo_module/test_api.py': [8]},
             uncovered_mods=['foo_module'],
         ))
 
@@ -608,6 +611,7 @@ class TestRun(Common):
 
   def test_drop_expectation(self):
     with self.main.write_recipe('foo') as recipe:
+      recipe.imports = ['from recipe_engine import post_process']
       recipe.GenTests.write('''
         yield (api.test("basic") +
           api.post_process(post_process.DropExpectation))
@@ -620,6 +624,7 @@ class TestRun(Common):
 
   def test_drop_expectation_unused(self):
     with self.main.write_recipe('foo') as recipe:
+      recipe.imports = ['from recipe_engine import post_process']
       recipe.GenTests.write('''
         yield (api.test("basic") +
           api.post_process(post_process.DropExpectation))
@@ -722,7 +727,7 @@ class TestTrain(Common):
     self.assertTrue(self.main.is_file(expectation_file))
     self.assertDictEqual(
         self._result_json(
-            coverage={'recipe_modules/foo_module/tests/foo.py': [7]},
+            coverage={'recipe_modules/foo_module/tests/foo.py': [9]},
             crash=['foo_module:tests/foo.basic'],
         ),
         result.data)
@@ -803,10 +808,11 @@ class TestTrain(Common):
     self.assertNotIn('CHECK(FAIL)', result.text_output)
     self.assertNotIn('foo.basic failed', result.text_output)
     self.assertDictEqual(
-        result.data, self._result_json(coverage={'recipes/foo.py': [8]}))
+        result.data, self._result_json(coverage={'recipes/foo.py': [10]}))
 
   def test_runs_checks(self):
     with self.main.write_recipe('foo') as recipe:
+      recipe.imports = ['from recipe_engine import post_process']
       recipe.GenTests.write('''
         yield (api.test("basic") +
           api.post_process(post_process.MustRun, "bar"))
@@ -819,7 +825,7 @@ class TestTrain(Common):
         result.data,
         self._result_json(check={
           'foo.basic': [CheckFailure(
-              filename='recipes/foo.py', lineno=11, func='MustRun',
+              filename='recipes/foo.py', lineno=13, func='MustRun',
               args=["'bar'"])]
         }))
 
@@ -842,6 +848,7 @@ class TestTrain(Common):
 
   def test_drop_expectation(self):
     with self.main.write_recipe('foo') as recipe:
+      recipe.imports = ['from recipe_engine import post_process']
       recipe.GenTests.write('''
         yield (api.test("basic") +
           api.post_process(post_process.DropExpectation))
@@ -854,6 +861,7 @@ class TestTrain(Common):
 
   def test_drop_expectation_unused(self):
     with self.main.write_recipe('foo') as recipe:
+      recipe.imports = ['from recipe_engine import post_process']
       recipe.GenTests.write('''
         yield (api.test("basic") +
           api.post_process(post_process.DropExpectation))

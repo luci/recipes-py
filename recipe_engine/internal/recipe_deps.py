@@ -33,11 +33,10 @@ respectively).
 All DEPS evaluation is also handled in this file.
 """
 
-
 import importlib
+import logging
 import os
 import sys
-import logging
 
 from collections import namedtuple
 
@@ -51,6 +50,8 @@ from ..recipe_api import _UnresolvedRequirement, RecipeScriptApi, BoundProperty
 from ..recipe_api import RecipeApiPlain
 from ..recipe_test_api import RecipeTestApi, BaseTestData, DisabledTestData
 from ..types import freeze, FrozenDict
+
+from . import proto_support
 
 from .attr_util import attr_type, attr_value_is, attr_superclass, attr_dict_type
 from .class_util import cached_property
@@ -108,7 +109,7 @@ class RecipeDeps(object):
     return os.path.join(self.main_repo.recipes_root_path, '.recipe_deps')
 
   @classmethod
-  def create(cls, main_repo_path, overrides):
+  def create(cls, main_repo_path, overrides, proto_override):
     """Creates a RecipeDeps.
 
     This will possibly do network operations to fetch recipe repos from git if
@@ -121,6 +122,8 @@ class RecipeDeps(object):
         resolve recipe names to run.
       * overrides (Dict[str, str]) - A map of repo_name to absolute path to
         the root of the repo which should be used to satisfy this dependency.
+      * proto_override (None|str) - The path to the compiled protobuf tree (if
+        any).
 
     Returns a RecipeDeps.
     """
@@ -138,12 +141,17 @@ class RecipeDeps(object):
     ret = cls({}, simple_cfg.repo_name)
 
     repos = {}
+    main_backend = None
+    if os.path.isdir(os.path.join(main_repo_path, '.git')):
+      main_backend = fetch.GitBackend(main_repo_path, None)
     repos[simple_cfg.repo_name] = RecipeRepo.create(
-      ret, main_repo_path, simple_cfg=simple_cfg,
-      backend=fetch.GitBackend(main_repo_path, '.'))
+      ret, main_repo_path, simple_cfg=simple_cfg, backend=main_backend)
 
-    for repo_name, path in overrides.iteritems():
-      repos[repo_name] = RecipeRepo.create(ret, path)
+    for project_id, path in overrides.iteritems():
+      backend = None
+      if os.path.isdir(os.path.join(path, '.git')):
+        backend = fetch.GitBackend(path, None)
+      repos[project_id] = RecipeRepo.create(ret, path, backend=backend)
 
     recipe_deps_path = os.path.join(
       main_repo_path,
@@ -164,6 +172,8 @@ class RecipeDeps(object):
     repos = freeze(repos)
     repos.on_missing = ret.repos.on_missing
     object.__setattr__(ret, 'repos', repos)
+
+    proto_support.ensure_compiled_and_on_syspath(ret, proto_override)
 
     return ret
 
@@ -235,12 +245,11 @@ class RecipeRepo(object):
 
     If successful, the return value is cached.
     """
-    from .. import recipes_cfg_pb2
+    from PB.recipe_engine.recipes_cfg import RepoSpec
     from google.protobuf import json_format as jsonpb
     recipes_cfg = os.path.join(self.path, RECIPES_CFG_LOCATION_REL)
     with open(recipes_cfg, 'rb') as f:
-      return jsonpb.Parse(f.read(), recipes_cfg_pb2.RepoSpec(),
-                          ignore_unknown_fields=True)
+      return jsonpb.Parse(f.read(), RepoSpec())
 
   @cached_property
   def recipes_root_path(self):

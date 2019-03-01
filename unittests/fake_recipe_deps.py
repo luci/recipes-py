@@ -18,7 +18,6 @@ import errno
 import json
 import os
 import shutil
-import subprocess
 import sys
 import textwrap
 
@@ -28,8 +27,10 @@ import attr
 
 from google.protobuf import json_format as jsonpb
 
+from recipe_engine.third_party import subprocess42
+
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
-from recipe_engine import recipes_cfg_pb2
+from PB.recipe_engine.recipes_cfg import RepoSpec
 from recipe_engine.fetch import GitBackend, CommitMetadata
 from recipe_engine.internal.commands.test.cmd import TestDescription
 from recipe_engine.internal.simple_cfg import RECIPES_CFG_LOCATION_REL
@@ -102,7 +103,7 @@ class FakeRecipeRepo(object):
     file in this repo."""
     cfg_path = os.path.join(self.path, RECIPES_CFG_LOCATION_REL)
     with open(cfg_path, 'rb') as fil:
-      return jsonpb.Parse(fil.read(), recipes_cfg_pb2.RepoSpec())
+      return jsonpb.Parse(fil.read(), RepoSpec())
 
   @contextlib.contextmanager
   def write_file(self, path):
@@ -183,7 +184,7 @@ class FakeRecipeRepo(object):
     """
     return os.path.isfile(os.path.join(self.path, path))
 
-  @attr.s
+  @attr.s(slots=True)
   class WriteableRecipe(object):
     """Yielded from the `write_recipe` method. Used to generate a recipe on
     disk.
@@ -196,6 +197,10 @@ class FakeRecipeRepo(object):
 
         RunSteps: pass
         GenTests: yield api.test('basic')
+
+    The imports attribute is a list of 'import' lines you want at the top of the
+    recipe. These lines should be an entire valid python import line (i.e
+    starting with `import` or `from`).
 
     The DEPS attribute corresponds exactly to the recipe DEPS field, and you may
     put a python list or dict here, depending on how you want your recipe's DEPS
@@ -212,6 +217,7 @@ class FakeRecipeRepo(object):
     """
     base_path = attr.ib()
 
+    imports = attr.ib(factory=list)
     RunSteps = attr.ib(factory=StringIO)
     GenTests = attr.ib(factory=StringIO)
     DEPS = attr.ib(factory=lambda: ['recipe_engine/step'])
@@ -269,9 +275,13 @@ class FakeRecipeRepo(object):
     recipe = self.WriteableRecipe(base_path)
     yield recipe
 
+    dump = self.fake_recipe_deps._ambient_toplevel_code_dump()
+
     with self.write_file(base_path + '.py') as buf:
       buf.write(textwrap.dedent('''
-        from recipe_engine import post_process
+        {imports}
+
+        {ambient_toplevel_code}
 
         DEPS = {DEPS!r}
 
@@ -281,6 +291,8 @@ class FakeRecipeRepo(object):
         def GenTests(api):
         {GenTests}
       ''').format(
+          imports='\n'.join(recipe.imports),
+          ambient_toplevel_code=dump,
           DEPS=recipe.DEPS,
           RunSteps=_get_suite(recipe.RunSteps, 'pass'),
           GenTests=_get_suite(
@@ -292,7 +304,7 @@ class FakeRecipeRepo(object):
       with self.write_file(expect_path) as buf:
         json.dump(expectation, buf, indent=2, separators=(',', ': '))
 
-  @attr.s
+  @attr.s(slots=True)
   class WriteableModule(object):
     """Yielded from the `write_module` method. Used to generate a recipe module
     on disk.
@@ -359,13 +371,18 @@ class FakeRecipeRepo(object):
       DISABLE_STRICT_COVERAGE = {DISABLE_STRICT_COVERAGE!r}
       '''.format(**attr.asdict(mod)))
 
+    dump = self.fake_recipe_deps._ambient_toplevel_code_dump()
+
     with self.write_file(os.path.join(base, 'api.py')) as buf:
       buf.write(textwrap.dedent('''
         from recipe_engine.recipe_api import RecipeApi
 
+        {ambient_toplevel_code}
+
         class {mod_name}Api(RecipeApi):
         {api}
       ''').format(
+          ambient_toplevel_code=dump,
           mod_name=mod_name.title().replace(' ', ''),
           api=_get_suite(mod.api, 'pass')))
 
@@ -373,9 +390,12 @@ class FakeRecipeRepo(object):
       buf.write(textwrap.dedent('''
         from recipe_engine.recipe_test_api import RecipeTestApi
 
+        {ambient_toplevel_code}
+
         class {mod_name}Api(RecipeTestApi):
         {test_api}
       ''').format(
+          ambient_toplevel_code=dump,
           mod_name=mod_name.title().replace(' ', ''),
           test_api=_get_suite(mod.test_api, 'pass')))
 
@@ -419,11 +439,11 @@ class FakeRecipeRepo(object):
     Returns (output, retcode) where 'output' is the combined stdout/stderr from
     the command and retcode it's return code.
     """
-    proc = subprocess.Popen(
+    proc = subprocess42.Popen(
       ['python', 'recipes.py']+list(args),
       cwd=self.path,
-      stdout=subprocess.PIPE,
-      stderr=subprocess.STDOUT,
+      stdout=subprocess42.PIPE,
+      stderr=subprocess42.STDOUT,
     )
     output, _ = proc.communicate()
     return output, proc.returncode
@@ -490,11 +510,21 @@ class FakeRecipeDeps(object):
   # A map of repo_name -> FakeRecipeRepo
   repos = attr.ib(factory=dict)
 
+  # A list of textwrap.deindent-able python snippets which will be injected into
+  # every recipe, module api and test_api written with this FakeRecipeDeps.
+  #
+  # This is useful to add helper methods and imports which are implicitly
+  # available everywhere in the test.
+  ambient_toplevel_code = attr.ib(factory=list)
+
+  def _ambient_toplevel_code_dump(self):
+    return '\n'.join(map(textwrap.dedent, self.ambient_toplevel_code))
+
   ENGINE_REVISION = None
   @classmethod
   def _get_engine_revision(cls):
     if not cls.ENGINE_REVISION:
-      if subprocess.call(['git', 'diff-index', '--quiet', 'HEAD', '--']):
+      if subprocess42.call(['git', 'diff-index', '--quiet', 'HEAD', '--']):
         print >>REAL_STDERR, '*' * 6
         print >>REAL_STDERR, textwrap.dedent('''
         WARNING: Tests may rely on current recipe engine repo, but you have
@@ -506,7 +536,7 @@ class FakeRecipeDeps(object):
         print >>REAL_STDERR
         REAL_STDERR.flush()
 
-      cls.ENGINE_REVISION = subprocess.check_output(
+      cls.ENGINE_REVISION = subprocess42.check_output(
         ['git', 'rev-parse', 'HEAD']).strip()
     return cls.ENGINE_REVISION
 
@@ -522,7 +552,7 @@ class FakeRecipeDeps(object):
     assert name not in self.repos, (
       'duplicate repo_name: %r' % (name,))
     os.makedirs(path)
-    subprocess.check_call(['git', 'init'], cwd=path, stdout=DEVNULL)
+    subprocess42.check_call(['git', 'init'], cwd=path, stdout=DEVNULL)
     cfg_path = os.path.join(path, RECIPES_CFG_LOCATION_REL)
     os.makedirs(os.path.dirname(cfg_path))
     with open(cfg_path, 'wb') as fil:
@@ -538,11 +568,11 @@ class FakeRecipeDeps(object):
         },
       }, fil)
     shutil.copy(os.path.join(ROOT_DIR, 'recipes.py'), path)
-    subprocess.check_call(['git', 'add', '.'], cwd=path, stdout=DEVNULL)
-    subprocess.check_call(['git', 'commit', '-m', 'init '+name], cwd=path,
+    subprocess42.check_call(['git', 'add', '.'], cwd=path, stdout=DEVNULL)
+    subprocess42.check_call(['git', 'commit', '-m', 'init '+name], cwd=path,
                           stdout=DEVNULL)
     self.repos[name] = FakeRecipeRepo(self, name, path)
-    return subprocess.check_output(
+    return subprocess42.check_output(
       ['git', 'rev-parse', 'HEAD'], cwd=path).strip()
 
   def __attrs_post_init__(self):

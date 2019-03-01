@@ -10,7 +10,7 @@ import sys
 
 from google.protobuf import json_format as jsonpb
 
-from recipe_engine.analyze_pb2 import Input, Output
+from PB.recipe_engine.analyze import Input, Output
 
 GIT = 'git.bat' if sys.platform == 'win32' else 'git'
 

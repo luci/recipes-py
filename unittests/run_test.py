@@ -25,14 +25,12 @@ class RunTest(test_env.RecipeEngineUnitTest):
       def do_thing(self):
         self.m.step('do the thing', ['echo', 'thing'])
       ''')
-    with deps.main_repo.write_file('recipes/my_recipe.py') as buf:
-      buf.write('''
-      DEPS = ['mod']
-      def RunSteps(api):
+    with deps.main_repo.write_recipe('my_recipe') as recipe:
+      recipe.DEPS = ['mod']
+      recipe.RunSteps.write('''
         api.mod.do_thing()
-      def GenTests(api):
-        pass
       ''')
+      recipe.GenTests.write('pass')
 
     _, retcode = deps.main_repo.recipes_py('-v', '-v', 'run', 'my_recipe')
     self.assertEqual(retcode, 0)

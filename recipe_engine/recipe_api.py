@@ -437,10 +437,11 @@ class SourceManifestClient(object):
 
   def upload_manifest(self, name, manifest_pb):
     # NOTE: late import to avoid early protobuf import
-    from .source_manifest_pb2 import Manifest
+    from PB.recipe_engine.source_manifest import Manifest
     if not isinstance(manifest_pb, Manifest):
-      raise TypeError('expected source_manifest_pb2.Manifest, got %r'
-                      % type(manifest_pb))
+      raise TypeError(
+          'expected PB.recipe_engine.source_manifest.Manifest, got %r' %
+          type(manifest_pb))
 
     if self._prod and not self._logdog_client:
       raise self.ManifestUploadException(

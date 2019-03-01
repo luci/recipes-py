@@ -17,8 +17,9 @@ from recipe_engine.third_party import subprocess42
 
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 
+from PB.recipe_engine import result as result_pb2
+
 from .... import recipe_api
-from .... import result_pb2
 from .... import types
 from .... import util
 

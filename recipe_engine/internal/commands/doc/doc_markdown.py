@@ -4,7 +4,7 @@
 
 from __future__ import print_function, absolute_import
 
-from recipe_engine import doc_pb2 as doc
+from PB.recipe_engine import doc
 
 
 GITHUB, GITILES = range(2)

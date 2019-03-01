@@ -103,9 +103,12 @@ wheel: <
   version: "version:2.13.0"
 >
 
+
 wheel: <
   name: "infra/python/wheels/protobuf-py2_py3"
-  version: "version:3.6.0"
+  # NOTE: This MUST have a matching version of:
+  #  infra/tools/protoc/${{platform}}
+  version: "version:3.6.1"
 >
 
 wheel: <

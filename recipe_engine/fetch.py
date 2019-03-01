@@ -150,6 +150,17 @@ class Backend(object):
     """
     raise NotImplementedError()
 
+  def ls_files(self, *args):
+    """Returns the stdout from `git ls-files *args` in this repo.
+
+    Args:
+      args (List[str]) - Additional arguments to pass to ls_files.
+
+    Returns the stdout of the command.
+    """
+    raise NotImplementedError()
+
+
 
   ### private overrides. Override these in the implementations, but don't call
   ### externally.
@@ -194,9 +205,9 @@ class GitBackend(Backend):
   """GitBackend uses a local git checkout."""
 
   if sys.platform.startswith(('win', 'cygwin')):
-    _GIT_BINARY = 'git.bat'
+    GIT_BINARY = 'git.bat'
   else:
-    _GIT_BINARY = 'git'
+    GIT_BINARY = 'git'
 
   def __init__(self, *args, **kwargs):
     super(GitBackend, self).__init__(*args, **kwargs)
@@ -213,7 +224,7 @@ class GitBackend(Backend):
 
     Raises GitError on failure.
     """
-    if self._GIT_BINARY.endswith('.bat'):
+    if self.GIT_BINARY.endswith('.bat'):
       # On the esteemed Windows Operating System, '^' is an escape character.
       # Since .bat files are running cmd.exe under the hood, they interpret this
       # escape character. We need to ultimately get a single ^, so we need two
@@ -223,7 +234,7 @@ class GitBackend(Backend):
       args = [a.replace('^', '^^^^') for a in args]
 
     cmd = [
-      self._GIT_BINARY,
+      self.GIT_BINARY,
       '-c', 'advice.detachedHead=false',  # to avoid spamming logs
       '-C', self.checkout_dir,
     ] + list(args)
@@ -264,7 +275,7 @@ class GitBackend(Backend):
       try:
         # note that it's safe to re-init an existing git repo. This should allow
         # us to switch between GitBackend and other Backends.
-        self._execute(self._GIT_BINARY, 'init', self.checkout_dir)
+        self._execute(self.GIT_BINARY, 'init', self.checkout_dir)
         self._did_ensure = True
       except subprocess42.CalledProcessError as e:
         raise GitError(False, 'Git "init" failed: '+e.message)
@@ -316,6 +327,9 @@ class GitBackend(Backend):
   def cat_file(self, revision, file_path):
     self.assert_resolved(revision)
     return self._git('cat-file', 'blob', '%s:%s' % (revision, file_path))
+
+  def ls_files(self, *args):
+    return self._git('ls-files', *args)
 
   def _updates_impl(self, revision, other_revision):
     args = [

@@ -126,6 +126,81 @@ form or another).
 [test]: /recipe_engine/test.py
 
 
+### Proto compilation
+
+The recipe engine facilitates the use of protobufs with builtin `protoc`
+capabilities. This is all implemented in [proto_support.py].
+
+*** note
+For the purposes of bundled recipes, it's possible to completely skip the proto
+compilation step by using the --proto-override option to the engine. This is
+exactly what `recipes.py bundle` generates so that builders don't need to do any
+`protoc` activity on their startup.
+***
+
+Due to the nature of .proto imports, the generated python code (specifically
+w.r.t. the generated `import` lines), and the layout of recipes and modules
+(specifically, across multiple repos), is a bit more involved than just putting
+the .proto files in a directory, running 'protoc' and calling it a day.
+
+After loading all the repos, the engine gathers and compiles any `.proto` files
+they contain into a single global namespace. The recipe engine looks for proto
+files in 3 (well, 4) places in a repo:
+  * Under the `recipe_modules` directory
+    * Placed into the global namespace as `recipe_modules/$repo_name/*`.
+  * Under the `recipes` directory
+    * Placed into the global namespace as `recipes/$repo_name/*`.
+  * Under the `recipe_engine` directory (only in the actual `recipe_engine`
+    repo).
+    * Placed into the global namespace as `recipe_engine/*`.
+  * In a `recipe_proto` directory (adjacent to the 'recipes' and/or
+    'recipe_modules' directories).
+    * Placed directly into the global namespace.
+    * May not contain anything in the `recipe_engine`, `recipes` or
+      `recipe_modules` subdirectories.
+
+While the engine gathers all the proto files, it sorts them and generates
+a checksum of their contents. This is a SHA2 of the following:
+  * `RECIPE_PB_VERSION` | `NUL` - The version of the recipe engine's compilation
+    algorithm.
+  * `PROTOC_VERSION` | `NUL` - The version of the protobuf library/compiler
+    we're using.
+  * `repo_name` | `NUL` | `NUL` - The name of the repo. Then, for every .proto
+    in the repo we hash:
+    * `relative_path_in_repo` | `NUL`
+    * `relative_path_of_global_destination` | `NUL`
+    * `githash_of_content` | `NUL`
+
+The `githash_of_content` is defined by git's "blob" hashing scheme (but is
+currently implemented in pure-python).
+
+Once we've gathered all proto files and have computed the checksum, we verify
+the checksum against `.recipe_deps/_pb/PB/csum`. If it's the same, we conclude
+that the currently cached protos are the same as what we're about to compile.
+
+If not, we copy all protos to a temporary directory reflecting their expected
+structure (see remarks about "global namespace" above). This structure is
+important to allow `protoc` to correctly resolve `import` lines in proto files,
+as well as to make the correct python import lines in the generated code.
+
+Once the proto files are in place, we compile them all with `protoc` into
+another tempdir.
+
+We then rewrite and rename all of the generated `_pb2` files to change their
+import lines from:
+
+    from path.to.package import blah_pb2 as <unique_id_in_file>
+
+to:
+
+    from PB.path.to.package import blah as <unique_id_in_file>
+
+And rename them from `*_pb2` to `*`. We also generate empty `__init__.py` files.
+
+After this, we write `csum`, and do a rename-swap of this tempdir to
+`.recipe_deps/_pb/PB`. Finally, we put `.recipe_deps/_pb` onto `sys.path`.
+
+
 ### Recipe Module loading
 
 Modules are loaded by calling the `RecipeModule.do_import()` function. This is
@@ -254,6 +329,7 @@ the `recipe_engine` repo; user recipe modules are not expected to use these.
 [commands]: /recipe_engine/internal/commands
 [main.py]: /recipe_engine/main.py
 [PEP302]: https://www.python.org/dev/peps/pep-0302/
+[proto_support.py]: /recipe_engine/internal/proto_support.py
 [recipe_module_importer.py]: /recipe_engine/internal/recipe_module_importer.py
 [recipes.py]: /recipes.py
 [recipes_cfg.proto]: /recipe_engine/recipes_cfg.proto

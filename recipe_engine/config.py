@@ -74,7 +74,7 @@ import functools
 import json
 import types
 
-from . import doc_pb2 as doc
+from PB.recipe_engine import doc
 
 class BadConf(Exception):
   pass

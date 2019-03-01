@@ -76,10 +76,10 @@ Recipes depend on a couple tools to be in the environment:
   * `vpython` - This is a LUCI tool to manage python VirtualEnvs. Recipes rely
     on this for the recipe engine runtime dependencies (like the python
     protobuf libraries, etc.)
+  * `cipd` - This is a LUCI tool to manage binary package distribution.
 
 Additionally, most existing recipes depend on the following:
 
-  * `cipd` - This is a LUCI tool to manage binary package distribution.
   * `luci-auth` - This is a LUCI tool to manage OAuth tokens; on bots it
     can mint tokens for service accounts installed as part of the Swarming task,
     and on dev machines it can mint tokens based on locally stored credentials
@@ -91,9 +91,9 @@ A recipe repo has a couple essential requirements:
   * It is a git repo
   * It contains a file called `//infra/config/recipes.cfg`. For historical
     reasons, this is a non-configurable path.
-  * It contains 'recipes', 'recipe_modules' folders (in the `recipes_path`
-    folder indicated by `recipes.cfg`. By default they are located at the base
-    of the repository).
+  * It contains 'recipes', 'recipe_modules', and/or 'recipe_proto' folders (in
+    the `recipes_path` folder indicated by `recipes.cfg`. By default they are
+    located at the base of the repository).
   * It contains a copy of [recipes.py] in its `recipes_path` folder.
 
 [recipes.py]: /recipes.py
@@ -139,6 +139,10 @@ a couple files:
   * `test_api.py` - Contains the implementation of the recipe module's fakes.
 
 Example [recipe_modules folder](https://chromium.googlesource.com/chromium/tools/build/+/master/scripts/slave/recipe_modules).
+
+#### recipe_proto folder
+
+See `Working with Protobufs` for details on this folder and it's contents.
 
 #### The `recipes.py` script
 
@@ -297,6 +301,158 @@ TODO(iannucci) - Document
 ### Testing recipes and recipe_modules
 
 TODO(iannucci) - Document
+
+### Working with Protobufs.
+
+The recipe engine facilitates the use of protobufs with builtin `protoc`
+capabilities.
+
+Due to the nature of .proto imports, the generated python code (specifically
+w.r.t. the generated `import` lines), and the layout of recipes and modules
+(specifically, across multiple repos), is a bit more involved than just putting
+the .proto files in a directory, running 'protoc' and calling it a day.
+
+#### Where Recipe Engine looks for .proto files
+
+Recipe engine will look for proto files in 3 places in your recipe repo:
+  * Mixed among the `recipe_modules` in your repo
+  * Mixed among the recipes in your repo
+  * In a `recipe_proto` directory (adjacent to your 'recipes' and/or
+    `recipe_modules` directories)
+
+For proto files which are only used in the recipe ecosystem, you should put them
+either in `recipes/*` or `recipe_modules/*`. For proto files which originate
+outside the recipe ecosystem (e.g. their source of truth is some other repo),
+place them into the `recipe_proto` directory in an appropriate subdirectory (so
+that `protoc` will find them where other protos expect to import them).
+
+##### recipe_modules
+
+Your recipe modules can have any .proto files they want, in any subdirectory
+structure that they want (the subdirectories do not need to be python modules,
+i.e. they are not required to have an `__init__.py` file). So you could have:
+
+    recipe_modules/
+      module_A/
+        cool.proto
+        other.proto
+        subdir/
+          sub.proto
+
+*** note
+The 'package' line in the protos MUST be in the form of:
+
+    package "recipe_modules.repo_name.module_name.path.holding_file";
+
+So if you had `.../recipe_modules/foo/path/holding_file/file.proto` in the
+"build" repo, its package must be `recipe_modules.build.foo.path.holding_file`.
+Note that this is the traditional way to namespace proto files in the same
+directory, but that this differs from how the package line for `recipes` works
+below.
+***
+
+The proto files are importable in other proto files as e.g.:
+
+    import "recipe_modules/repo_name/module_name/path/to/file.proto";
+
+The generated protobuf libraries are importable as e.g.:
+
+    import PB.recipe_modules.repo_name.module_name.path.to.file
+
+##### recipes folder
+
+Your recipes may also define protos. It's required that the protos in the recipe
+folder correspond 1:1 with an actual recipe. The name for this proto file should
+be the recipe's name, but with '.proto' instead of '.py'. So, you could have:
+
+    recipes/
+      my_recipe.py
+      my_recipe.proto
+      subdir/
+        sub_recipe.py
+        sub_recipe.proto
+
+If you need to have common messages which are shared between recipes, put them
+under the `recipe_modules` directory.
+
+*** note
+The 'package' line in the proto MUST be in the form of:
+
+    package "recipes.repo_name.path.to.file";
+
+So if you had a proto named `.../recipes/path/to/file.proto` in the "build"
+repo, its package must be "recipes.build.path.to.file".
+
+**Note that this includes the proto file name!**
+
+This is done because otherwise all (unrelated) recipe protos in the same
+directory would have to share a namespace, and we'd like to permit common
+message names like `Input` and `Output` on a per-recipe basis instead of
+`RecipeNameInput`, etc.
+***
+
+The proto files are importable in other proto files as e.g.:
+
+    import "recipes/repo_name/path/to/file.proto";
+
+The generated protobuf libraries are importable as e.g.:
+
+    import PB.recipes.repo_name.path.to.file
+
+##### **Special Case** recipe_engine protos
+
+The recipe engine repo itself also has some protos defined within it's own
+`recipe_engine` folder. These are the proto files [here](/recipe_engine).
+
+The proto files are importable in other proto files as e.g.:
+
+    import "recipe_engine/file.proto";
+
+The generated protobuf libraries are importable as e.g.:
+
+    import PB.recipe_engine.file
+
+##### recipe_proto folder
+
+The 'recipe_proto' directory can have arbitrary proto files in it from external
+sources (i.e. from other repos), and organized using that project's folder
+naming scheme. This is important to allow external proto files to work without
+modification (due to `import` lines in proto files; if proto A imports
+"go.chromium.org/luci/something/something.proto", then protoc needs to find
+"something.proto" in the "go.chromium.org/luci/something" subdirectory).
+
+Note that the following top-level folders are reserved under `recipe_proto`. All
+of these directories are managed by the recipe engine (as documented above):
+  * `recipe_engine`
+  * `recipe_modules`
+  * `recipes`
+
+These are ALSO reserved proto package namespaces, i.e. it's invalid to have
+a proto under a `recipe_proto` folder whose proto package line starts with
+'recipes.'.
+
+It's invalid for two recipe repos to both define protos under their
+`recipe_proto` folders with the same path. This will cause proto compilation in
+the downstream repo to fail. This usually just means that the downstream repo
+needs to stop including those proto files, since it will be able to import them
+from the upstream repo which now includes them.
+
+#### Using generated protos in your `recipes` / `recipe_modules`
+
+Once the protos are generated, you can import them anywhere in the recipe
+ecosystem by doing:
+
+    # from recipe_proto/external.example.com/repo_name/proto_name.proto
+    from PB.external.example.com.repo_name import proto_name
+
+    # from recipe_engine/proto_name.proto
+    from PB.recipe_engine import proto_name
+
+    # from repo_name.git//.../recipe_modules/module_name/proto_name.proto
+    from PB.recipe_modules.repo_name.module_name import proto_name
+
+    # from repo_name.git//.../recipes/recipe_name.proto
+    from PB.recipes.repo_name import recipe_name
 
 ### Productionizing
 

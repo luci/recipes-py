@@ -36,13 +36,10 @@ def add_repo_with_basic_upstream_dependency(deps):
   with deps.main_repo.edit_recipes_cfg_pb2() as pkg_pb:
     pkg_pb.deps['upstream'].revision = up_commit.revision
 
-  with deps.main_repo.write_file('recipes/my_recipe.py') as buf:
-    buf.write('''
-    DEPS=['upstream/up_mod']
-    def RunSteps(api):
+  with deps.main_repo.write_recipe('my_recipe') as recipe:
+    recipe.DEPS = ['upstream/up_mod']
+    recipe.RunSteps.write('''
       api.up_mod.cool_method()
-    def GenTests(api):
-      yield api.test('basic')
     ''')
   deps.main_repo.recipes_py('test', 'train')
   deps.main_repo.commit('depend on upstream/up_mod')
@@ -386,14 +383,12 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
 
     with deps.main_repo.edit_recipes_cfg_pb2() as pkg_pb:
       pkg_pb.deps['upstream'].revision = up_commit.revision
-    with deps.main_repo.write_file('recipes/my_recipe.py') as buf:
-      buf.write('''
-      DEPS=['upstream/up_mod']
-      def RunSteps(api):
+    with deps.main_repo.write_recipe('my_recipe') as recipe:
+      recipe.DEPS = ['upstream/up_mod']
+      recipe.RunSteps.write('''
         api.up_mod.cool_method()
-      def GenTests(api):
-        yield api.test('basic')
       ''')
+
     deps.main_repo.recipes_py('test', 'train')
     deps.main_repo.commit('depend on upstream/up_mod')
 

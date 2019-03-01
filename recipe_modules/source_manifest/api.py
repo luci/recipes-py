@@ -3,7 +3,7 @@
 # that can be found in the LICENSE file.
 
 from recipe_engine import recipe_api
-from recipe_engine import source_manifest_pb2
+from PB.recipe_engine import source_manifest
 
 from google.protobuf import json_format
 
@@ -50,6 +50,6 @@ class SourceManfiestApi(recipe_api.RecipeApi):
       * data (dict) - the JSONPB representation of the source_manifest.proto
         Manifest message.
     """
-    pb = source_manifest_pb2.Manifest()
+    pb = source_manifest.Manifest()
     json_format.ParseDict(data, pb, ignore_unknown_fields=True)
     self.source_client.upload_manifest(name, pb)

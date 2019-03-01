@@ -37,3 +37,6 @@ class UnknownRecipe(RecipeUsageError, KeyError):
 class UndefinedPropertyException(RecipeUsageError):
   """Raised when invoking a RunSteps or RecipeApiPlain constructor where the
   arguments don't match the PROPERTIES for that invocation."""
+
+class BadProtoDefinitions(RecipeUsageError):
+  """Raised when multiple repos have the same .proto file."""

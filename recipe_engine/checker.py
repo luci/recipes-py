@@ -16,7 +16,7 @@ from collections import OrderedDict, deque, defaultdict, namedtuple
 
 import astunparse
 
-from recipe_engine import test_result_pb2
+from PB.recipe_engine.test_result import TestResult
 
 
 class CheckFrame(namedtuple('CheckFrame', 'fname line function code varmap')):
@@ -65,7 +65,7 @@ class Check(namedtuple('Check', (
     return ret
 
   def as_proto(self):
-    proto = test_result_pb2.TestResult.TestFailure()
+    proto = TestResult.TestFailure()
     if self.name:
       proto.check_failure.name = self.name
     proto.check_failure.func = self.ctx_func

@@ -79,24 +79,25 @@ class TestOverride(test_env.RecipeEngineUnitTest):
       # Training the recipes, overriding just 'upstream' should fail because
       # it will try to fetch the engine.
       output, retcode = deps.main_repo.recipes_py(
-        # Provide --package to bypass all git calls in recipes.py
-        '--package',
+          # Provide --package to bypass all git calls in recipes.py
+          '--package',
           os.path.join(deps.main_repo.path, RECIPES_CFG_LOCATION_REL),
-        '-O', 'upstream='+upstream.path,
-        'test', 'train'
+          '-O', 'upstream='+upstream.path,
+          'test', 'train'
       )
       self.assertEqual(retcode, 1)
       self.assertIn('Git "init" failed', output)
 
-      # But! Overriding the engine too should work.
       output, retcode = deps.main_repo.recipes_py(
-        '--package',
+          '--package',
           os.path.join(deps.main_repo.path, RECIPES_CFG_LOCATION_REL),
-        '-O', 'upstream='+upstream.path,
-        '-O', 'recipe_engine='+test_env.ROOT_DIR,
-        'test', 'train'
+          '--proto-override',
+          os.path.join(test_env.ROOT_DIR, '.recipe_deps', '_pb'),
+          '-O', 'upstream='+upstream.path,
+          '-O', 'recipe_engine='+test_env.ROOT_DIR,
+          'test', 'train'
       )
-      self.assertEqual(retcode, 0)
+      self.assertEqual(retcode, 0, output)
 
 if __name__ == '__main__':
   sys.exit(test_env.main())

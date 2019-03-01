@@ -23,8 +23,9 @@ from google.protobuf import text_format as textpb
 from recipe_engine import types  # this import name conflicts with stdlib :(
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 
+from PB.recipe_engine import doc
+
 from .... import config
-from .... import doc_pb2 as doc
 from .... import recipe_api
 from .... import util
 

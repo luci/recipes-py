@@ -18,11 +18,16 @@ import unittest
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT_DIR)
 
+# pylint: disable=wrong-import-position
+from recipe_engine.internal.recipe_deps import RecipeDeps
+from recipe_engine.util import strip_unicode
+
+# Will compile all recipe protos and add them to sys.path as a side effect.
+_ = RecipeDeps.create(ROOT_DIR, {}, None)
+
 from fake_recipe_deps import FakeRecipeDeps
 from mock_recipe_deps import MockRecipeDeps
 
-from recipe_engine.util import strip_unicode
-from recipe_engine.fetch import GitBackend
 
 
 class CapturableHandler(logging.StreamHandler):

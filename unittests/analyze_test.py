@@ -13,8 +13,8 @@ import mock
 
 import test_env
 
-from recipe_engine import analyze_pb2
 from recipe_engine.internal.commands.analyze import cmd as analyze
+from PB.recipe_engine.analyze import Input, Output
 
 
 class AnalyzeTest(test_env.RecipeEngineUnitTest):
@@ -45,11 +45,11 @@ class AnalyzeTest(test_env.RecipeEngineUnitTest):
   def testInvalidRecipe(self):
     result = self._run(
       self.MockRecipeDeps(),
-      git_attr_files=[], in_data=analyze_pb2.Input(
+      git_attr_files=[], in_data=Input(
         files=['foo.py'],
         recipes=['run_test.py'],
       ))
-    self.assertEqual(result, analyze_pb2.Output(
+    self.assertEqual(result, Output(
       error='Some input recipes were invalid',
       invalid_recipes=['run_test.py'],
     ))
@@ -58,11 +58,11 @@ class AnalyzeTest(test_env.RecipeEngineUnitTest):
     result = self._run(self.MockRecipeDeps(
         {'foo_module': []},
         {'run_test': ['foo_module']}
-      ), git_attr_files=[], in_data=analyze_pb2.Input(
+      ), git_attr_files=[], in_data=Input(
           files=['some_random_file'],
           recipes=['run_test'],
       ))
-    self.assertEqual(result, analyze_pb2.Output())
+    self.assertEqual(result, Output())
 
   def testGitAttrs(self):
     result = self._run(self.MockRecipeDeps(
@@ -72,11 +72,11 @@ class AnalyzeTest(test_env.RecipeEngineUnitTest):
           'other_thing': ['foo_module'],
           'last_recipe': ['foo_module'],
         }
-      ), git_attr_files=['foo.py'], in_data=analyze_pb2.Input(
+      ), git_attr_files=['foo.py'], in_data=Input(
           files=['foo.py'],
           recipes=['run_test', 'other_thing', 'last_recipe'],
       ))
-    self.assertEqual(result, analyze_pb2.Output(
+    self.assertEqual(result, Output(
         recipes=sorted(['run_test', 'other_thing', 'last_recipe']),
     ))
 
@@ -84,11 +84,11 @@ class AnalyzeTest(test_env.RecipeEngineUnitTest):
     result = self._run(self.MockRecipeDeps(
         {'foo_module': []},
         {'run_test': ['foo_module']}
-      ), git_attr_files=[], in_data=analyze_pb2.Input(
+      ), git_attr_files=[], in_data=Input(
           files=['recipe_modules/foo_module/api.py'],
           recipes=['run_test'],
       ))
-    self.assertEqual(result, analyze_pb2.Output(
+    self.assertEqual(result, Output(
       recipes=['run_test'],
     ))
 
@@ -96,11 +96,11 @@ class AnalyzeTest(test_env.RecipeEngineUnitTest):
     result = self._run(self.MockRecipeDeps(
         {'foo_module': []},
         {'run_test': ['foo_module']}
-      ), git_attr_files=[], in_data=analyze_pb2.Input(
+      ), git_attr_files=[], in_data=Input(
           files=['/MAIN_ROOT/recipe_modules/foo_module/api.py'],
           recipes=['run_test'],
       ))
-    self.assertEqual(result, analyze_pb2.Output(
+    self.assertEqual(result, Output(
       recipes=['run_test'],
     ))
 
@@ -108,11 +108,11 @@ class AnalyzeTest(test_env.RecipeEngineUnitTest):
     result = self._run(self.MockRecipeDeps(
         {'foo_module': []},
         {'run_test': ['foo_module']}
-      ), git_attr_files=[], in_data=analyze_pb2.Input(
+      ), git_attr_files=[], in_data=Input(
           files=['recipes/run_test.py'],
           recipes=['run_test'],
       ))
-    self.assertEqual(result, analyze_pb2.Output(
+    self.assertEqual(result, Output(
       recipes=['run_test'],
     ))
 
@@ -123,11 +123,11 @@ class AnalyzeTest(test_env.RecipeEngineUnitTest):
           'bar_module': [],
         },
         {'run_test': ['foo_module']}
-      ), git_attr_files=[], in_data=analyze_pb2.Input(
+      ), git_attr_files=[], in_data=Input(
           files=['recipe_modules/bar_module/api.py'],
           recipes=['run_test'],
       ))
-    self.assertEqual(result, analyze_pb2.Output(
+    self.assertEqual(result, Output(
       recipes=['run_test'],
     ))
 
@@ -138,11 +138,11 @@ class AnalyzeTest(test_env.RecipeEngineUnitTest):
           'run_test': ['foo_module'],
           'run_other_test': ['foo_module'],
         }
-      ), git_attr_files=[], in_data=analyze_pb2.Input(
+      ), git_attr_files=[], in_data=Input(
           files=['recipe_modules/foo_module/api.py'],
           recipes=['run_test', 'run_other_test'],
       ))
-    self.assertEqual(result, analyze_pb2.Output(
+    self.assertEqual(result, Output(
       recipes=sorted(['run_test', 'run_other_test']),
     ))
 
@@ -153,11 +153,11 @@ class AnalyzeTest(test_env.RecipeEngineUnitTest):
           'run_test': ['foo_module'],
           'run_other_test': [],
         }
-      ), git_attr_files=[], in_data=analyze_pb2.Input(
+      ), git_attr_files=[], in_data=Input(
           files=['recipe_modules/foo_module/api.py'],
           recipes=['run_test', 'run_other_test'],
       ))
-    self.assertEqual(result, analyze_pb2.Output(
+    self.assertEqual(result, Output(
       recipes=['run_test'],
     ))
 
@@ -170,11 +170,11 @@ class AnalyzeTest(test_env.RecipeEngineUnitTest):
         {
           'run_test': ['foo_module', 'bar_module'],
         }
-      ), git_attr_files=[], in_data=analyze_pb2.Input(
+      ), git_attr_files=[], in_data=Input(
           files=['recipe_modules/foo_module/api.py'],
           recipes=['run_test'],
       ))
-    self.assertEqual(result, analyze_pb2.Output(
+    self.assertEqual(result, Output(
       recipes=['run_test'],
     ))
 

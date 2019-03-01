@@ -2,12 +2,10 @@
 // Use of this source code is governed under the Apache License, Version 2.0
 // that can be found in the LICENSE file.
 
-// Recompile with protoc 3.6.0+:
-// protoc source_manifest.proto --python_out=.
-
 syntax = "proto3";
 
-package milo;
+// TODO(iannucci) - Move this proto to `recipe_proto` folder
+package recipe_engine;
 
 // A Manifest attempts to make an accurate accounting of source/data directories
 // during the execution of a LUCI task.

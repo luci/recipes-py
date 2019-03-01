@@ -146,8 +146,9 @@ def _common_post_process(args):
     logging.root.manager.emittedNoHandlerWarning = True
 
   args.recipe_deps = RecipeDeps.create(
-    args.main_repo_path,
-    args.repo_override,
+      args.main_repo_path,
+      args.repo_override,
+      args.proto_override,
   )
 
   _check_recipes_cfg_consistency(args.recipe_deps)
@@ -220,6 +221,22 @@ def _add_common_args(parser):
   parser.add_argument('-O', '--repo-override', metavar='ID=PATH',
       action=_RepoOverrideAction, default={},
       help='Override a repo repository path with a local one.')
+
+  def _proto_override_abspath(value):
+    try:
+      value = os.path.abspath(value)
+    except Exception as ex:  # pylint: disable=broad-except
+      parser.error(
+          '--proto-override %r could not be converted to absolute path: %r' % (
+            value, ex,))
+
+    return value
+
+  # Override the location of the folder containing the `PB` module. This should
+  # only be used for recipe bundles, so we don't bother giving it a shortform
+  # option, and suppress the option's help to avoid confusing users.
+  parser.add_argument(
+      '--proto-override', type=_proto_override_abspath, help=argparse.SUPPRESS)
 
   parser.set_defaults(
     postprocess_func=lambda parser, args: None,

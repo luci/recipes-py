@@ -41,7 +41,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
   def setUp(self):
     super(TestGit, self).setUp()
     fetch.Backend._GIT_METADATA_CACHE = {}
-    mock.patch('recipe_engine.fetch.GitBackend._GIT_BINARY', 'GIT').start()
+    mock.patch('recipe_engine.fetch.GitBackend.GIT_BINARY', 'GIT').start()
     self.addCleanup(mock.patch.stopall)
 
   def assertMultiDone(self, mocked_call):

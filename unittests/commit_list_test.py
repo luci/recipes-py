@@ -11,7 +11,7 @@ import test_env
 
 from recipe_engine.internal.autoroll_impl.commit_list import \
   CommitMetadata, CommitList
-from recipe_engine import recipes_cfg_pb2
+from PB.recipe_engine.recipes_cfg import RepoSpec
 
 
 class BaseCommitTest(test_env.RecipeEngineUnitTest):
@@ -29,7 +29,7 @@ class BaseCommitTest(test_env.RecipeEngineUnitTest):
          author_email='author@example.com', commit_timestamp=None,
          message_lines=('message', 'lines'), roll_candidate=False):
 
-    spec = recipes_cfg_pb2.RepoSpec(
+    spec = RepoSpec(
       api_version=2,
       repo_name=repo,
       canonical_repo_url='https://git.example.com/%s.git' % repo,
