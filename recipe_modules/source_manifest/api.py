@@ -3,7 +3,7 @@
 # that can be found in the LICENSE file.
 
 from recipe_engine import recipe_api
-from PB.recipe_engine import source_manifest
+from PB.go.chromium.org.luci.common.proto.srcman.manifest import Manifest
 
 from google.protobuf import json_format
 
@@ -16,7 +16,7 @@ two recipe executions, or aiding in debugging by giving additional insight into
 the task.
 
 The Source Manifest data is described by the proto:
-  https://chromium.googlesource.com/infra/luci/recipes-py/+/master/recipe_engine/source_manifest.proto
+  https://chromium.googlesource.com/infra/luci/luci-go/+/master/common/proto/srcman/manifest.proto
 
 Every source_manifest has a name, which indicates what collection of sources it
 represents. Examples of names might be:
@@ -50,6 +50,6 @@ class SourceManfiestApi(recipe_api.RecipeApi):
       * data (dict) - the JSONPB representation of the source_manifest.proto
         Manifest message.
     """
-    pb = source_manifest.Manifest()
+    pb = Manifest()
     json_format.ParseDict(data, pb, ignore_unknown_fields=True)
     self.source_client.upload_manifest(name, pb)

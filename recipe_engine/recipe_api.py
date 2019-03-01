@@ -437,11 +437,10 @@ class SourceManifestClient(object):
 
   def upload_manifest(self, name, manifest_pb):
     # NOTE: late import to avoid early protobuf import
-    from PB.recipe_engine.source_manifest import Manifest
+    from PB.go.chromium.org.luci.common.proto.srcman.manifest import Manifest
     if not isinstance(manifest_pb, Manifest):
-      raise TypeError(
-          'expected PB.recipe_engine.source_manifest.Manifest, got %r' %
-          type(manifest_pb))
+      raise TypeError('expected %r, got %r' % (
+        Manifest.__name__, type(manifest_pb)))
 
     if self._prod and not self._logdog_client:
       raise self.ManifestUploadException(
