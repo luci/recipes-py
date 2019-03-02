@@ -158,7 +158,7 @@ class SchedulerApi(recipe_api.RecipeApi):
 
   def _run(self, method, input_data, step_test_data=None, step_name=None):
     assert self.m.runtime.is_luci, 'scheduler module only works on LUCI stack'
-    # TODO(tandrii): make this into standalone module.
+    # TODO(tandrii): encapsulate running prpc command in a standalone module.
     step_name = step_name or ('luci-scheduler.' + method)
     args = ['prpc', 'call', '-format=json', self._host,
             'scheduler.Scheduler.' + method]
