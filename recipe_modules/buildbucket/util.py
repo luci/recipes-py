@@ -6,7 +6,7 @@ import datetime
 import re
 import urlparse
 
-from .proto import common_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
 
 # UTC datetime corresponding to zero Unix timestamp.

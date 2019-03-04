@@ -9,6 +9,9 @@ DEPS = [
 ]
 
 
+from PB.go.chromium.org.luci.buildbucket.proto.build import Build
+
+
 def RunSteps(api):
   api.step('no builds actually triggered', cmd=[])
   api.cq.record_triggered_builds(*[])
@@ -16,9 +19,7 @@ def RunSteps(api):
 
   api.step('triggered some builds', cmd=[])
   api.cq.record_triggered_build_ids(1, 2)
-  api.cq.record_triggered_builds(
-      api.buildbucket.build_pb2.Build(id=22),
-      api.buildbucket.build_pb2.Build(id=11))
+  api.cq.record_triggered_builds(Build(id=22), Build(id=11))
   assert api.cq.triggered_build_ids == [1, 2, 22, 11]
 
 

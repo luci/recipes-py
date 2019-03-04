@@ -4,6 +4,8 @@
 
 """This file is a recipe demonstrating the buildbucket recipe module."""
 
+from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
+
 DEPS = [
   'buildbucket',
   'platform',
@@ -83,7 +85,7 @@ def RunSteps(api):
   # Setting values for expectations coverage only.
   api.buildbucket.set_buildbucket_host('cr-buildbucket-test.appspot.com')
   api.buildbucket.set_output_gitiles_commit(
-    api.buildbucket.common_pb2.GitilesCommit(
+    common_pb2.GitilesCommit(
         host='chromium.googlesource.com',
         project='infra/infra',
         ref='refs/heads/master',

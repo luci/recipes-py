@@ -9,16 +9,12 @@ from google.protobuf import timestamp_pb2
 
 from recipe_engine import recipe_test_api
 
-from .proto import build_pb2
-from .proto import common_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from . import util
 
 
 class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
-  # Expose protobuf messages to the users of buildbucket module.
-  build_pb2 = build_pb2
-  common_pb2 = common_pb2
-
   def build(self, build_message):
     """Emulates a buildbucket build.
 

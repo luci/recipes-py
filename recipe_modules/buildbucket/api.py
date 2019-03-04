@@ -15,17 +15,13 @@ from google.protobuf import json_format
 
 from recipe_engine import recipe_api
 
-from .proto import build_pb2
-from .proto import common_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from . import util
 
 
 class BuildbucketApi(recipe_api.RecipeApi):
   """A module for interacting with buildbucket."""
-
-  # Expose protobuf messages to the users of buildbucket module.
-  build_pb2 = build_pb2
-  common_pb2 = common_pb2
 
   def __init__(
       self, property, legacy_property, mastername, buildername, buildnumber,

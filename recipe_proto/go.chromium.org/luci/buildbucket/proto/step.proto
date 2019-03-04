@@ -1,0 +1,97 @@
+// Copyright 2018 The LUCI Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package buildbucket.v2;
+
+option go_package = "go.chromium.org/luci/buildbucket/proto;buildbucketpb";
+
+import "google/protobuf/timestamp.proto";
+import "go.chromium.org/luci/buildbucket/proto/common.proto";
+
+// A build step.
+//
+// A step may have children, see name field.
+message Step {
+
+  // A named log of a step.
+  message Log {
+    // Log name, standard ("stdout", "stderr") or custom ("json.output").
+    // Unique within the step.
+    string name = 1;
+
+    // URL of a Human-readable page that displays log contents.
+    string view_url = 2;
+
+    // URL of the log content.
+    // As of 2018-09-06, the only supported scheme is "logdog".
+    // Typically it has form
+    // "logdog://<host>/<project>/<prefix>/+/<stream_name>".
+    // See also
+    // https://godoc.org/go.chromium.org/luci/logdog/common/types#ParseURL
+    string url = 3;
+  }
+
+  // Name of the step, unique within the build.
+  // Identifies the step.
+  //
+  // Pipe character ("|") is reserved to separate parent and child step names.
+  // For example, value "a|b" indicates step "b" under step "a".
+  // If this is a child step, a parent MUST exist and MUST precede this step in
+  // the list of steps.
+  string name = 1;
+
+  // The timestamp when the step started.
+  // Required iff status is STARTED, SUCCESS or FAILURE, or if the step has
+  // children.
+  // MUST NOT be after start_time/end_time of any of the children.
+  google.protobuf.Timestamp start_time = 2;
+
+  // The timestamp when the step ended.
+  // Present iff status is terminal.
+  // MUST NOT be before start_time.
+  // MUST NOT be before start/end_time of any of the children.
+  google.protobuf.Timestamp end_time = 3;
+
+  // Status of the step.
+  // Must be specified, i.e. not STATUS_UNSPECIFIED.
+  //
+  // If the step has children
+  //   status MUST NOT be SCHEDULED.
+  //   status MUST be STARTED if status of any child is not terminal.
+  //
+  //   status MUST NOT be "better" than statuses of its children,
+  //   where "better" relation is defined by the following order,
+  //   from good to bad:
+  //     SUCCESS
+  //     FAILURE
+  //     INFRA_FAILURE
+  //     CANCELED
+  //   Note that this defines "better" relation only for some statuses.
+  //   For those statuses where "better" is not defined, this rule does not
+  //   apply.
+  Status status = 4;
+
+  // Logs produced by the step.
+  // Log order is up to the step.
+  repeated Log logs = 5;
+
+  // Human-readable summary of the step provided by the step itself,
+  // in Markdown format (https://spec.commonmark.org/0.28/).
+  //
+  // V1 equivalent: combines and supersedes Buildbot's step_text and step links and also supports
+  // other formatted text.
+  string summary_markdown = 7;
+}

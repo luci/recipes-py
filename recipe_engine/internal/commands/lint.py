@@ -31,6 +31,7 @@ MODULES_WHITELIST = [
   r'itertools',
   r'json',
   r'math',
+  r'PB',
   r're',
   r'urlparse',
   r'zlib',

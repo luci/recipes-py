@@ -241,11 +241,40 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
       }
     }, output)
 
+  def test_proto_import_from_buildbucket(self):
+    main = self.deps.main_repo
 
-  # TODO(iannucci): implement in subsequent CL
-  #def test_proto_import_from_buildbucket(self):
-  #  # import from buildbucket module in engine
-  #  pass
+    with main.write_file('recipes/a.proto') as proto:
+      proto.write('''
+        syntax = "proto3";
+        import "go.chromium.org/luci/buildbucket/proto/build.proto";
+        package recipes.main.a;
+        message Data {
+          string field = 1;
+          buildbucket.v2.Build build = 2;
+        }
+      ''')
+
+    with main.write_recipe('recipe') as recipe:
+      recipe.imports = [
+        'from PB.recipes.main import a',
+      ]
+      recipe.RunSteps.write('''
+        data = a.Data(field="value")
+        data.build.input.experimental = True
+        api.step('Hello!', ['echo', _dumps(data)])
+      ''')
+
+    output, retcode = main.recipes_py('run', 'recipe')
+    self.assertEqual(retcode, 0, output)
+    self.assertProtoInOutput({
+      "field": "value",
+      "build": {
+        "input": {
+          "experimental": True,
+        }
+      }
+    }, output)
 
   def test_bundled_protoc(self):
     main = self.deps.main_repo
