@@ -147,6 +147,8 @@ def _gather_proto_info_from_repo(repo):
   ret = []
   for scan_relpath, dest_namespace in scan_path:
     for base, dirs, fnames in OS_WALK(os.path.join(repo.path, scan_relpath)):
+      base = str(base)  # base can be unicode
+
       # Skip all '.expected' directories.
       dirs[:] = [dname for dname in dirs if not dname.endswith('.expected')]
 
@@ -154,6 +156,7 @@ def _gather_proto_info_from_repo(repo):
       relbase = _to_posix(os.path.relpath(base, repo.path))
 
       for fname in fnames:
+        fname = str(fname)  # fname can be unicode
         if not fname.endswith('.proto'):
           continue
         ret.append(_ProtoInfo.create(
