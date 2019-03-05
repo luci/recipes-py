@@ -3,10 +3,6 @@
     "cmd": [
       "echo",
       "builder {",
-      "}",
-      "tags {",
-      "  key: \"buildset\"",
-      "  value: \"x\"",
       "}"
     ],
     "name": "build"
@@ -14,14 +10,13 @@
   {
     "cmd": [
       "echo",
-      "cr-buildbucket.appspot.com"
+      "buildbucket.example.com"
     ],
     "name": "hostname"
   },
   {
     "cmd": [
       "echo",
-      "buildset:x",
       "user_agent:recipe"
     ],
     "name": "tags_for_child_build"

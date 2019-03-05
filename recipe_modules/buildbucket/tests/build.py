@@ -16,7 +16,7 @@ DEPS = [
 def RunSteps(api):
   text = text_format.MessageToString(api.buildbucket.build)
   api.step('build', ['echo'] + text.splitlines())
-
+  api.step('hostname', ['echo', api.buildbucket.host])
 
   child_build_tags = [
       '%s:%s' % t
@@ -39,6 +39,13 @@ def GenTests(api):
     return case(name, buildbucket={'build': buildbucket_build})
 
   yield case('empty')
+
+  yield case('hostname', **{
+      '$recipe_engine/buildbucket': {
+          'hostname': 'buildbucket.example.com',
+          'build': {},
+      },
+  })
 
   yield case('serialized buildbucket property', buildbucket=json.dumps({
     'build': {'id': '123456789'}

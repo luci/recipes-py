@@ -17,6 +17,13 @@
   {
     "cmd": [
       "echo",
+      "cr-buildbucket.appspot.com"
+    ],
+    "name": "hostname"
+  },
+  {
+    "cmd": [
+      "echo",
       "buildset:patch/gerrit/chromium-review.googlesource.com/1/2",
       "user_agent:recipe"
     ],

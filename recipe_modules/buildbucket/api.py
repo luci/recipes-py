@@ -30,7 +30,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       patch_project, patch_issue, patch_set, issue, patchset, *args, **kwargs):
     super(BuildbucketApi, self).__init__(*args, **kwargs)
     self._service_account_key = None
-    self._host = 'cr-buildbucket.appspot.com'
+    self._host = property.get('hostname') or 'cr-buildbucket.appspot.com'
 
     legacy_property = legacy_property or {}
     if isinstance(legacy_property, basestring):
@@ -73,13 +73,21 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     self._next_test_build_id = 8922054662172514000
 
-  def set_buildbucket_host(self, host):
-    """Changes the buildbucket backend hostname used by this module.
+  @property
+  def host(self):
+    """Hostname of buildbucket to use in API calls.
 
-    Args:
-    * host (str): buildbucket server host (e.g. 'cr-buildbucket.appspot.com').
+    Defaults to the hostname that the current build is originating from.
     """
-    self._host = host
+    return self._host
+
+  @host.setter
+  def host(self, value):
+    self._host = value
+
+  def set_buildbucket_host(self, host):
+    """DEPRECATED. Use host property."""
+    self.host = host
 
   def use_service_account_key(self, key_path):
     """Tells this module to start using given service account key for auth.

@@ -17,6 +17,13 @@
   {
     "cmd": [
       "echo",
+      "cr-buildbucket.appspot.com"
+    ],
+    "name": "hostname"
+  },
+  {
+    "cmd": [
+      "echo",
       "buildset:commit/gitiles/chromium.googlesource.com/chromium/src/+/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "user_agent:recipe"
     ],

@@ -13,6 +13,13 @@
   {
     "cmd": [
       "echo",
+      "cr-buildbucket.appspot.com"
+    ],
+    "name": "hostname"
+  },
+  {
+    "cmd": [
+      "echo",
       "parent_buildername:linux",
       "user_agent:recipe"
     ],
