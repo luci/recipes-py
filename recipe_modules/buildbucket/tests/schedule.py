@@ -4,6 +4,8 @@
 
 from recipe_engine import types
 
+from PB.go.chromium.org.luci.buildbucket.proto import rpc as rpc_pb2
+
 DEPS = [
   'buildbucket',
   'properties',
@@ -73,7 +75,7 @@ def GenTests(api):
       experimental=False,
   )
 
-  err_batch_res = dict(
+  err_batch_res = rpc_pb2.BatchResponse(
       responses=[
         dict(
             error=dict(

@@ -11,6 +11,7 @@ from recipe_engine import recipe_test_api
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import rpc as rpc_pb2
 from . import util
 
 
@@ -183,10 +184,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     return self.step_data(step_name, self.m.json.output(res))
 
   def simulated_schedule_output(self, batch_response, step_name=None):
+    assert isinstance(batch_response, rpc_pb2.BatchResponse)
     step_name = step_name or 'buildbucket.schedule'
-    ret_code = bool(any(
-        'error' in r for r in batch_response.get('responses', [])
-    ))
+    ret_code = int(any(r.HasField('error') for r in batch_response.responses))
+    jsonish = json_format.MessageToDict(batch_response)
     return self.step_data(
-        step_name,
-        self.m.json.output_stream(batch_response, retcode=ret_code))
+        step_name, self.m.json.output_stream(jsonish, retcode=ret_code))

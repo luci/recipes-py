@@ -17,6 +17,7 @@ from recipe_engine import recipe_api
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import rpc as rpc_pb2
 from . import util
 
 
@@ -258,11 +259,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     ):
     """Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
-    CAUTION: returns a dict, not a protobuf message!
-    TODO(crbug.com/930761): return the message.
-    This will change the function signature.
-
-    This is a convenience function to create a `ScheduleBuildRequest` message.
+    This is a convenient function to create a `ScheduleBuildRequest` message.
 
     Among args, messages can be passed as dicts of the same structure.
 
@@ -304,48 +301,62 @@ class BuildbucketApi(recipe_api.RecipeApi):
       Defaults to the value of the current build.
     """
 
+
+    def as_msg(value, typ):
+      assert isinstance(value, (dict, protobuf.message.Message))
+      if isinstance(value, dict):
+        value = typ(**value)
+      return value
+
+    def copy_msg(src, dest):
+      dest.CopyFrom(as_msg(src, type(dest)))
+
     b = self.build
-    req = dict(
-        requestId='%d-%s' % (b.id, self.m.uuid.random()),
+    req = rpc_pb2.ScheduleBuildRequest(
+        request_id='%d-%s' % (b.id, self.m.uuid.random()),
         builder=dict(
             project=project or b.builder.project,
             bucket=bucket or b.builder.bucket,
             builder=builder,
         ),
         priority=priority or b.infra.swarming.priority,
-        properties=properties or {},
+        experimental=b.input.experimental,
     )
+    req.properties.update(properties or {})
 
-    if experimental is None:
-      experimental = b.input.experimental
-    if isinstance(experimental, bool):
-      experimental = common_pb2.YES if experimental else common_pb2.NO
-    req['experimental'] = experimental
+    if experimental is not None:
+      if isinstance(experimental, bool):
+        experimental = common_pb2.YES if experimental else common_pb2.NO
+      req.experimental = experimental
 
     # Populate commit.
     if not gitiles_commit and b.input.HasField('gitiles_commit'):
       gitiles_commit = b.input.gitiles_commit
     if gitiles_commit:
-      req['gitilesCommit'] = _as_dict(gitiles_commit)
+      copy_msg(gitiles_commit, req.gitiles_commit)
 
     # Populate CLs.
-    gerrit_changes = gerrit_changes or b.input.gerrit_changes
-    req['gerritChanges'] = map(_as_dict, gerrit_changes)
+    if gerrit_changes is None:
+      gerrit_changes = b.input.gerrit_changes
+    for c in gerrit_changes:
+      copy_msg(c, req.gerrit_changes.add())
 
     # Populate tags.
     tag_set = {('user_agent', 'recipe')}
     for t in tags or []:
-      t = _as_dict(t)
-      tag_set.add((t['key'], t['value']))
+      t = as_msg(t, common_pb2.StringPair)
+      tag_set.add((t.key, t.value))
 
     if inherit_buildsets:
       for t in b.tags:
         if t.key == 'buildset':
           tag_set.add((t.key, t.value))
 
-    req['tags'] = [dict(key=k, value=v) for k, v in sorted(tag_set)]
+    for k, v in sorted(tag_set):
+      req.tags.add(key=k, value=v)
 
-    req['dimensions'] = map(_as_dict, dimensions or [])
+    for d in dimensions or []:
+      copy_msg(d, req.dimensions.add())
 
     return req
 
@@ -355,10 +366,6 @@ class BuildbucketApi(recipe_api.RecipeApi):
     `schedule_build_requests` must be a list of
     `buildbucket.v2.ScheduleBuildRequest` protobuf messages.
     Create one by calling `schedule_request` method.
-
-    CAUTION: accepts messages as dicts, not protobuf messages!
-    TODO(crbug.com/930761): accept messages.
-    This will change the function signature.
 
     Example:
     ```python
@@ -380,63 +387,64 @@ class BuildbucketApi(recipe_api.RecipeApi):
       `InfraFailure` if any of the requests fail.
     """
     assert isinstance(schedule_build_requests, list), schedule_build_requests
-
-    batch_req = {
-      'requests': [
-          {'scheduleBuild': r}
-          for r in schedule_build_requests
-      ]
-    }
-
-    test_res = {'responses': []}
     for r in schedule_build_requests:
-      test_res['responses'].append({
-        'scheduleBuild': {
-          'id': str(self._next_test_build_id),
-          'builder': r['builder'],
-        },
-      })
+      assert isinstance(r, rpc_pb2.ScheduleBuildRequest), r
+
+    batch_req = rpc_pb2.BatchRequest(
+        requests=[dict(schedule_build=r) for r in schedule_build_requests]
+    )
+
+    test_res = rpc_pb2.BatchResponse()
+    for r in schedule_build_requests:
+      test_res.responses.add(
+          schedule_build=dict(
+              id=self._next_test_build_id,
+              builder=r.builder,
+          )
+      )
       self._next_test_build_id += 1
+
 
     try:
       self._run_buildbucket(
           name=step_name or 'buildbucket.schedule',
           subcommand='batch',
-          stdin=self.m.json.input(batch_req),
-          step_test_data=lambda: self.m.json.test_api.output_stream(test_res),
+          stdin=self.m.json.input(json_format.MessageToDict(batch_req)),
+          step_test_data=lambda: self.m.json.test_api.output_stream(
+              json_format.MessageToDict(test_res)
+          ),
       )
     finally:
       # Append build links regardless of step status.
       step_res = self.m.step.active_result
       pres = step_res.presentation
-      pres.logs['request'] = json.dumps(batch_req, indent=2).splitlines()
+      pres.logs['request'] = json_format.MessageToJson(batch_req).splitlines()
 
-      batch_res = step_res.stdout
+      # Parse response.
+      batch_res = rpc_pb2.BatchResponse()
+      json_format.ParseDict(
+          step_res.stdout, batch_res,
+          # Do not fail the build because recipe's proto copy is stale.
+          ignore_unknown_fields=True)
 
       step_text = []
-      for i, r in enumerate(batch_res.get('responses', [])):
-        err = r.get('error')
-        if err:
+      for i, r in enumerate(batch_res.responses):
+        if r.HasField('error'):
           step_text.extend([
               'Request #%d' % i,
-              'Status code: %s' % err['code'],
-              'Message: %s' % err.get('message', ''),
+              'Status code: %s' % r.error.code,
+              'Message: %s' % r.error.message,
               '',  # Blank line.
           ])
         else:
-          build_id = r['scheduleBuild']['id']
+          build_id = r.schedule_build.id
           build_url = self.build_url(build_id=build_id)
           pres.links['build %s' % build_id] = build_url
 
       pres.step_text = '<br>'.join(step_text)
 
-    # Parse Build messages.
-    return [
-        # schedule_build may be missing because of crbug.com/931473
-        # This code should have been reached in the first place.
-        json_format.ParseDict(r.get('scheduleBuild', {}), build_pb2.Build())
-        for r in batch_res.get('responses', [])
-    ]
+    # Return Build messages.
+    return [r.schedule_build for r in batch_res.responses]
 
   def put(self, builds, **kwargs):
     """Puts a batch of builds.
@@ -672,10 +680,3 @@ def _legacy_builder_id(build_dict, mastername, buildername, builder_id):
   tags_dict = dict(t.split(':', 1) for t in build_dict.get('tags', []))
   builder_id.builder = tags_dict.get('builder') or buildername or ''
 
-
-def _as_dict(value):
-  """Returns a protobuf as a dict."""
-  assert isinstance(value, (dict, protobuf.message.Message))
-  if isinstance(value, protobuf.message.Message):
-    return json_format.MessageToDict(value)
-  return value
