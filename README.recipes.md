@@ -226,17 +226,17 @@ API for interacting with the buildbucket service.
 Requires `buildbucket` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 
-#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#24)([RecipeApi](/recipe_engine/recipe_api.py#1005)):**
+#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#23)([RecipeApi](/recipe_engine/recipe_api.py#1005)):**
 
 A module for interacting with buildbucket.
 
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#579)(self):**
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#567)(self):**
 
 Returns bucket name in v1 format.
 
 Mostly useful for scheduling new builds using V1 API.
 
-&emsp; **@property**<br>&mdash; **def [build](/recipe_modules/buildbucket/api.py#98)(self):**
+&emsp; **@property**<br>&mdash; **def [build](/recipe_modules/buildbucket/api.py#97)(self):**
 
 Returns current build as a `buildbucket.v2.Build` protobuf message.
 
@@ -253,29 +253,29 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#595)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#583)(self):**
 
 DEPRECATED, use build.id instead.
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#600)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#588)(self):**
 
 DEPRECATED, use build.input instead.
 
-&mdash; **def [build\_url](/recipe_modules/buildbucket/api.py#122)(self, host=None, build_id=None):**
+&mdash; **def [build\_url](/recipe_modules/buildbucket/api.py#121)(self, host=None, build_id=None):**
 
 Returns url to a build. Defaults to current build.
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#605)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#593)(self):**
 
 Deprecated. Use build.builder instead.
 
-&emsp; **@property**<br>&mdash; **def [builder\_name](/recipe_modules/buildbucket/api.py#117)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_name](/recipe_modules/buildbucket/api.py#116)(self):**
 
 Returns builder name. Shortcut for `.build.builder.builder`.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#488)(self, build_id, \*\*kwargs):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#476)(self, build_id, \*\*kwargs):**
 
-&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#494)(self, build_id, mirror_status=False, \*\*kwargs):**
+&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#482)(self, build_id, mirror_status=False, \*\*kwargs):**
 
 Shorthand for `collect_builds` below, but for a single build only.
 
@@ -287,7 +287,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
   for the ended build.
 
-&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#514)(self, build_ids, interval=None, timeout=None, step_name=None):**
+&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#502)(self, build_ids, interval=None, timeout=None, step_name=None):**
 
 Waits for a set of builds to end and returns their details.
 
@@ -303,9 +303,9 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   for all specified builds.
 
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#491)(self, build_id, \*\*kwargs):**
+&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#479)(self, build_id, \*\*kwargs):**
 
-&emsp; **@property**<br>&mdash; **def [gitiles\_commit](/recipe_modules/buildbucket/api.py#127)(self):**
+&emsp; **@property**<br>&mdash; **def [gitiles\_commit](/recipe_modules/buildbucket/api.py#126)(self):**
 
 Returns input gitiles commit. Shortcut for `.build.input.gitiles_commit`.
 
@@ -314,11 +314,11 @@ For value format, see
 
 Never returns None, but sub-fields may be empty.
 
-&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#590)(self):**
+&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#578)(self):**
 
 DEPRECATED, use build attribute instead.
 
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#453)(self, builds, \*\*kwargs):**
+&mdash; **def [put](/recipe_modules/buildbucket/api.py#441)(self, builds, \*\*kwargs):**
 
 Puts a batch of builds.
 
@@ -342,7 +342,7 @@ Returns:
   A step that as its `.stdout` property contains the response object as
   returned by buildbucket.
 
-&mdash; **def [run](/recipe_modules/buildbucket/api.py#224)(self, schedule_build_requests, collect_interval=None, timeout=None, step_name=None):**
+&mdash; **def [run](/recipe_modules/buildbucket/api.py#223)(self, schedule_build_requests, collect_interval=None, timeout=None, step_name=None):**
 
 Runs builds and returns results.
 
@@ -354,7 +354,7 @@ Returns:
   [Builds](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   in the same order as schedule_build_requests.
 
-&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#363)(self, schedule_build_requests, step_name=None):**
+&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#352)(self, schedule_build_requests, step_name=None):**
 
 Schedules a batch of builds.
 
@@ -385,11 +385,15 @@ Returns:
 Raises:
   `InfraFailure` if any of the requests fail.
 
-&mdash; **def [schedule\_request](/recipe_modules/buildbucket/api.py#246)(self, builder, project=None, bucket=None, properties=None, experimental=None, gitiles_commit=None, gerrit_changes=None, tags=None, inherit_buildsets=True, dimensions=None, priority=None):**
+&mdash; **def [schedule\_request](/recipe_modules/buildbucket/api.py#245)(self, builder, project=None, bucket=None, properties=None, experimental=None, gitiles_commit=None, gerrit_changes=None, tags=None, inherit_buildsets=True, dimensions=None, priority=None):**
 
 Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
-This is a convenient function to create a `ScheduleBuildRequest` message.
+CAUTION: returns a dict, not a protobuf message!
+TODO(crbug.com/930761): return the message.
+This will change the function signature.
+
+This is a convenience function to create a `ScheduleBuildRequest` message.
 
 Among args, messages can be passed as dicts of the same structure.
 
@@ -430,14 +434,14 @@ Args:
   The lower the more important. Valid values are `[20..255]`.
   Defaults to the value of the current build.
 
-&mdash; **def [set\_buildbucket\_host](/recipe_modules/buildbucket/api.py#76)(self, host):**
+&mdash; **def [set\_buildbucket\_host](/recipe_modules/buildbucket/api.py#75)(self, host):**
 
 Changes the buildbucket backend hostname used by this module.
 
 Args:
 * host (str): buildbucket server host (e.g. 'cr-buildbucket.appspot.com').
 
-&mdash; **def [set\_output\_gitiles\_commit](/recipe_modules/buildbucket/api.py#175)(self, gitiles_commit):**
+&mdash; **def [set\_output\_gitiles\_commit](/recipe_modules/buildbucket/api.py#174)(self, gitiles_commit):**
 
 Sets `buildbucket.v2.Build.output.gitiles_commit` field.
 
@@ -455,16 +459,16 @@ Args:
 
 Can be called at most once per build.
 
-&mdash; **def [tags](/recipe_modules/buildbucket/api.py#218)(self, \*\*tags):**
+&mdash; **def [tags](/recipe_modules/buildbucket/api.py#217)(self, \*\*tags):**
 
 Alias for tags in util.py. See doc there.
 
-&emsp; **@property**<br>&mdash; **def [tags\_for\_child\_build](/recipe_modules/buildbucket/api.py#138)(self):**
+&emsp; **@property**<br>&mdash; **def [tags\_for\_child\_build](/recipe_modules/buildbucket/api.py#137)(self):**
 
 A dict of tags (key -> value) derived from current (parent) build for a
 child build.
 
-&mdash; **def [use\_service\_account\_key](/recipe_modules/buildbucket/api.py#84)(self, key_path):**
+&mdash; **def [use\_service\_account\_key](/recipe_modules/buildbucket/api.py#83)(self, key_path):**
 
 Tells this module to start using given service account key for auth.
 
@@ -2278,9 +2282,9 @@ This file is a recipe demonstrating the buildbucket recipe module.
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/put.py#12)(api):**
 ### *recipes* / [buildbucket:tests/schedule](/recipe_modules/buildbucket/tests/schedule.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/schedule.py#9): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/schedule.py#7): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/schedule.py#17)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/schedule.py#15)(api):**
 ### *recipes* / [cipd:examples/full](/recipe_modules/cipd/examples/full.py)
 
 [DEPS](/recipe_modules/cipd/examples/full.py#8): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step)
