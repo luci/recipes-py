@@ -50,8 +50,8 @@ class SchedulerApi(recipe_api.RecipeApi):
       t = {}
       t['id'] = self._id or api_self._next_uuid()
       t['title'] = self._title or ('%s/%s' % (
-          api_self.m.properties.get('buildername'),
-          api_self.m.properties.get('buildnumber')))
+          api_self.m.buildbucket.builder_name,
+          api_self.m.buildbucket.build.number))
       # TODO(tandrii): find a way to get URL of current build.
       if self._url:
         t['url'] = self._url
