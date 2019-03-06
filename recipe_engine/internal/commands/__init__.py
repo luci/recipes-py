@@ -239,7 +239,7 @@ def _add_common_args(parser):
       '--proto-override', type=_proto_override_abspath, help=argparse.SUPPRESS)
 
   parser.set_defaults(
-    postprocess_func=lambda parser, args: None,
+    postprocess_func=lambda error, args: None,
   )
 
 
@@ -272,6 +272,6 @@ def parse_and_run():
 
   args = parser.parse_args()
   _common_post_process(args)
-  args.postprocess_func(parser, args)
+  args.postprocess_func(parser.error, args)
 
   return args.func(args)

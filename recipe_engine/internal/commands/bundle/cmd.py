@@ -156,13 +156,12 @@ def export_protos(destination):
 
 
 TEMPLATE_SH = u"""#!/usr/bin/env bash
-vpython -u ${BASH_SOURCE[0]%/*}/recipe_engine/recipe_engine/main.py \
-"""
+vpython -u ${BASH_SOURCE[0]%/*}/recipe_engine/recipe_engine/main.py
+""".strip()
 
-TEMPLATE_BAT = (
-  u"""call vpython.bat -u "%~dp0\\recipe_engine\\recipe_engine\\main.py" ^
-"""
-)
+TEMPLATE_BAT = u"""@echo off
+call vpython.bat -u "%~dp0\\recipe_engine\\recipe_engine\\main.py"
+""".strip()
 
 def prep_recipes_py(recipe_deps, destination):
   """Prepares `recipes` and `recipes.bat` entrypoint scripts at the given
@@ -179,34 +178,49 @@ def prep_recipes_py(recipe_deps, destination):
   overrides.remove(recipe_deps.main_repo_id)
 
   LOGGER.info('prepping recipes.py for %s', recipe_deps.main_repo.name)
-  recipes_script = os.path.join(destination, 'recipes')
-  with io.open(recipes_script, 'w', newline='\n') as recipes_sh:
-    recipes_sh.write(TEMPLATE_SH)
 
-    pkg_path = posixpath.join(
+  sh_joiner = ' \\\n'
+  sh_header = TEMPLATE_SH + sh_joiner + sh_joiner.join([
+    u' --package %s' % posixpath.join(
         '${BASH_SOURCE[0]%%/*}/%s' % recipe_deps.main_repo.name,
         *simple_cfg.RECIPES_CFG_LOCATION_TOKS
-    )
-    recipes_sh.write(u' --package %s \\\n' % pkg_path)
-    recipes_sh.write(u' --proto-override ${BASH_SOURCE[0]%/*}/_pb \\\n')
-    for repo_name in overrides:
-      recipes_sh.write(
-          u' -O %s=${BASH_SOURCE[0]%%/*}/%s \\\n' % (repo_name, repo_name))
-    recipes_sh.write(u' "$@"\n')
-  os.chmod(recipes_script, os.stat(recipes_script).st_mode | stat.S_IXUSR)
+    ),
+    u' --proto-override ${BASH_SOURCE[0]%/*}/_pb',
+  ]+[
+    u' -O %s=${BASH_SOURCE[0]%%/*}/%s' % (repo_name, repo_name)
+    for repo_name in overrides
+  ]) + sh_joiner
 
-  with io.open(recipes_script+'.bat', 'w', newline='\r\n') as recipes_bat:
-    recipes_bat.write(TEMPLATE_BAT)
+  bat_joiner = ' ^\n'
+  bat_header = TEMPLATE_BAT + bat_joiner + bat_joiner.join([
+    u' --package %s' % ntpath.join(
+        '"%%~dp0\\%s"' % recipe_deps.main_repo.name,
+        *simple_cfg.RECIPES_CFG_LOCATION_TOKS
+    ),
+    u' --proto-override "%~dp0\\_pb"'
+  ]+[
+    u' -O %s=%%~dp0/%s' % (repo_name, repo_name)
+    for repo_name in overrides
+  ]) + bat_joiner
 
-    pkg_path = ntpath.join(
-      '"%%~dp0\\%s"' % recipe_deps.main_repo.name,
-      *simple_cfg.RECIPES_CFG_LOCATION_TOKS
-    )
-    recipes_bat.write(u' --package %s ^\n' % pkg_path)
-    recipes_bat.write(u' --proto-override "%~dp0\\_pb" ^\n')
-    for repo_name in overrides:
-      recipes_bat.write(u' -O %s=%%~dp0/%s ^\n' % (repo_name, repo_name))
-    recipes_bat.write(u' %*\n')
+  files = {
+    "recipes": '"$@"',
+    "recipes.bat": '%*',
+    "run_build": 'run_build "$@"',
+    "run_build.bat": 'run_build %*',
+  }
+
+  for fname, runline in files.iteritems():
+    isbat = fname.endswith('.bat')
+    header = bat_header if isbat else sh_header
+    newline = '\r\n' if isbat else '\n'
+    script = os.path.join(destination, fname)
+    with io.open(script, 'w', newline=newline) as fil:
+      fil.write(header)
+      fil.write(u' {}\n'.format(runline))
+    if not isbat:
+      os.chmod(script, os.stat(script).st_mode | stat.S_IXUSR)
+
 
 def main(args):
   logging.basicConfig()
