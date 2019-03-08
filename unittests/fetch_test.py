@@ -10,7 +10,7 @@ import mock
 
 import test_env
 
-from recipe_engine import fetch
+from recipe_engine.internal import fetch, exceptions
 from recipe_engine.third_party import subprocess42
 from recipe_engine.internal.simple_cfg import \
   SimpleRecipesCfg, RECIPES_CFG_LOCATION_REL
@@ -19,6 +19,7 @@ from recipe_engine.internal.simple_cfg import \
 CPE = subprocess42.CalledProcessError
 IRC = RECIPES_CFG_LOCATION_REL
 
+FETCH_MOD = fetch.__name__
 
 class NoMoreExpectatedCalls(ValueError):
   pass
@@ -41,7 +42,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
   def setUp(self):
     super(TestGit, self).setUp()
     fetch.Backend._GIT_METADATA_CACHE = {}
-    mock.patch('recipe_engine.fetch.GitBackend.GIT_BINARY', 'GIT').start()
+    mock.patch(fetch.__name__+'.GitBackend.GIT_BINARY', 'GIT').start()
     self.addCleanup(mock.patch.stopall)
 
   def assertMultiDone(self, mocked_call):
@@ -102,7 +103,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
                   'a'*40 + '\trevision')
 
   @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch.GitBackend._execute')
+  @mock.patch(fetch.__name__+'.GitBackend._execute')
   def test_fresh_clone(self, git, isdir):
     isdir.return_value = False
     git.side_effect = multi(*([
@@ -118,7 +119,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
     self.assertMultiDone(git)
 
   @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch.GitBackend._execute')
+  @mock.patch(fetch.__name__+'.GitBackend._execute')
   def test_existing_checkout(self, git, isdir):
     isdir.return_value = True
     git.side_effect = multi(*([
@@ -136,7 +137,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
     ])
 
   @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch.GitBackend._execute')
+  @mock.patch(fetch.__name__+'.GitBackend._execute')
   def test_existing_checkout_same_revision(self, git, isdir):
     isdir.return_value = True
     git.side_effect = multi(*([
@@ -153,20 +154,20 @@ class TestGit(test_env.RecipeEngineUnitTest):
     ])
 
   @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch.GitBackend._execute')
+  @mock.patch(fetch.__name__+'.GitBackend._execute')
   def test_unclean_filesystem(self, git, isdir):
     isdir.return_value = False
     def _mock_execute(*_args):
       raise subprocess42.CalledProcessError(1, 'bad stuff')
     git.side_effect = _mock_execute
 
-    with self.assertRaises(fetch.GitError):
+    with self.assertRaises(exceptions.GitFetchError):
       fetch.GitBackend('dir', 'repo').checkout('revision')
 
     git.assert_called_once_with('GIT', 'init', 'dir')
 
   @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch.GitBackend._execute')
+  @mock.patch(fetch.__name__+'.GitBackend._execute')
   def test_rev_parse_fail(self, git, isdir):
     isdir.return_value = True
     git.side_effect = multi(*(
@@ -186,7 +187,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
     self.assertMultiDone(git)
 
   @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch.GitBackend._execute')
+  @mock.patch(fetch.__name__+'.GitBackend._execute')
   def test_commit_metadata_empty_recipes_path(self, git, isdir):
     isdir.return_value = False
     git.side_effect = multi(*([
@@ -206,8 +207,8 @@ class TestGit(test_env.RecipeEngineUnitTest):
     self.assertMultiDone(git)
 
   @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch.GitBackend._execute')
-  @mock.patch('recipe_engine.fetch.gitattr_checker.AttrChecker.check_files')
+  @mock.patch(fetch.__name__+'.GitBackend._execute')
+  @mock.patch(fetch.__name__+'.gitattr_checker.AttrChecker.check_files')
   def test_commit_metadata_not_interesting(self, attr_checker, git, isdir):
     attr_checker.side_effect = [False]
     isdir.return_value = False
@@ -231,7 +232,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
     attr_checker.assert_called_with('a'*40, set(['foo', 'bar']))
 
   @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch.GitBackend._execute')
+  @mock.patch(fetch.__name__+'.GitBackend._execute')
   def test_commit_metadata_IRC_change(self, git, isdir):
     isdir.return_value = False
     spec = attr.evolve(self.default_spec, recipes_path='recipes')
@@ -253,7 +254,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
     self.assertMultiDone(git)
 
   @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch.GitBackend._execute')
+  @mock.patch(fetch.__name__+'.GitBackend._execute')
   def test_commit_metadata_recipes_change(self, git, isdir):
     isdir.return_value = False
     spec = attr.evolve(self.default_spec, recipes_path='recipes')
@@ -275,8 +276,8 @@ class TestGit(test_env.RecipeEngineUnitTest):
     self.assertMultiDone(git)
 
   @mock.patch('os.path.isdir')
-  @mock.patch('recipe_engine.fetch.GitBackend._execute')
-  @mock.patch('recipe_engine.fetch.gitattr_checker.AttrChecker.check_files')
+  @mock.patch(fetch.__name__+'.GitBackend._execute')
+  @mock.patch(fetch.__name__+'.gitattr_checker.AttrChecker.check_files')
   def test_commit_metadata_tagged_change(self, attr_checker, git, isdir):
     attr_checker.side_effect = [True]
     isdir.return_value = False

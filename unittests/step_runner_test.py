@@ -7,7 +7,7 @@ import os
 
 import test_env
 
-from recipe_engine import step_runner
+from recipe_engine.internal import step_runner
 
 
 class TestLinebuf(test_env.RecipeEngineUnitTest):

@@ -9,7 +9,7 @@ import os
 import sys
 import time
 
-from ...fetch import GitBackend
+from ..fetch import GitBackend
 
 from .commit_list import CommitList
 from .roll_candidate import RollCandidate

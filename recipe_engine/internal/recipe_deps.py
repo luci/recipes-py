@@ -44,13 +44,13 @@ import attr
 
 from attr.validators import optional
 
-from .. import fetch
 from ..config_types import Path, RepoBasePath, RecipeScriptBasePath
 from ..recipe_api import _UnresolvedRequirement, RecipeScriptApi, BoundProperty
 from ..recipe_api import RecipeApiPlain
 from ..recipe_test_api import RecipeTestApi, BaseTestData, DisabledTestData
 from ..types import freeze, FrozenDict
 
+from . import fetch
 from . import proto_support
 
 from .attr_util import attr_type, attr_value_is, attr_superclass, attr_dict_type

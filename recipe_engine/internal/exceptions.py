@@ -40,3 +40,16 @@ class UndefinedPropertyException(RecipeUsageError):
 
 class BadProtoDefinitions(RecipeUsageError):
   """Raised when multiple repos have the same .proto file."""
+
+
+class RecipeEngineError(Exception):
+  """Base exception class for all errors due to an error within the recipe
+  engine."""
+
+class GitFetchError(RecipeEngineError):
+  """Raised when recipe_engine.internal.fetch.GitBackend fails a git
+  invocation."""
+
+class UnresolvedRefspec(RecipeEngineError):
+  """Raised from fetch.Backend.assert_resolved if the given revision is,
+  in fact, not resolved."""

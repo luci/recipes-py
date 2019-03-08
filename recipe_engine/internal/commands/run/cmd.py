@@ -23,8 +23,10 @@ from .... import recipe_api
 from .... import types
 from .... import util
 
-from ...recipe_deps import Recipe
 from ...exceptions import RecipeUsageError
+from ...recipe_deps import Recipe
+from ...step_runner import SubprocessStepRunner
+from ...stream import AnnotatorStreamEngine, StreamEngineInvariants
 
 
 # TODO(martiniss): Remove this
@@ -382,9 +384,6 @@ def handle_recipe_return(recipe_result, result_filename, stream_engine):
 
 
 def main(args):
-  from recipe_engine import step_runner
-  from recipe_engine import stream
-
   if args.props:
     for p in args.props:
       args.properties.update(p)
@@ -410,7 +409,7 @@ def main(args):
   old_cwd = os.getcwd()
   os.chdir(workdir)
 
-  stream_engine = stream.AnnotatorStreamEngine(sys.stdout)
+  stream_engine = AnnotatorStreamEngine(sys.stdout)
 
   # This only applies to 'annotation' mode and will go away with build.proto.
   # It is slightly hacky, but this property is the officially documented way
@@ -423,11 +422,11 @@ def main(args):
   )
 
   # Have a top-level set of invariants to enforce StreamEngine expectations.
-  with stream.StreamEngineInvariants.wrap(stream_engine) as stream_engine:
+  with StreamEngineInvariants.wrap(stream_engine) as stream_engine:
     try:
       ret = run_steps(
           args.recipe_deps, properties, stream_engine,
-          step_runner.SubprocessStepRunner(stream_engine),
+          SubprocessStepRunner(stream_engine),
           emit_initial_properties=emit_initial_properties)
     finally:
       os.chdir(old_cwd)

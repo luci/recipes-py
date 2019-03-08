@@ -33,10 +33,11 @@ from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 
 from PB.recipe_engine.test_result import TestResult
 
-from .... import checker
 from .... import config_types
-from .... import step_runner
-from .... import stream
+
+from ... import magic_check_fn
+from ... import step_runner
+from ... import stream
 
 from ..doc.cmd import regenerate_docs
 from ..run.cmd import RecipeEngine
@@ -380,7 +381,7 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
       # Usually the check invocation itself will index the input_odict or
       # will use it only for a key membership comparison, which provides
       # enough debugging context.
-      checker_obj = checker.Checker(
+      checker_obj = magic_check_fn.Checker(
           filename, lineno, hook, args, kwargs, input_odict)
 
       with coverage_context(include=covers, enable=enable_coverage) as cov:
@@ -391,7 +392,7 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
 
       failed_checks += checker_obj.failed_checks
       if rslt is not None:
-        msg = checker.VerifySubset(rslt, raw_expectations)
+        msg = magic_check_fn.VerifySubset(rslt, raw_expectations)
         if msg:
           raise PostProcessError('post_process: steps'+msg)
         # restore 'name'

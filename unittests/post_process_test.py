@@ -8,7 +8,7 @@ from collections import OrderedDict
 import test_env
 
 from recipe_engine import post_process
-from recipe_engine import checker
+from recipe_engine.internal.magic_check_fn import Checker
 
 
 def mkS(name, *fields):
@@ -34,13 +34,13 @@ class TestFilter(test_env.RecipeEngineUnitTest):
     self.f = post_process.Filter
 
   def test_basic(self):
-    c = checker.Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker('<filename>', 0, lambda: None, (), {})
     self.assertEqual(
       self.f('a', 'b')(c, self.d), mkD('a', 'b'))
     self.assertEqual(len(c.failed_checks), 0)
 
   def test_built(self):
-    c = checker.Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker('<filename>', 0, lambda: None, (), {})
     f = self.f()
     f = f.include('b')
     f = f.include('a')
@@ -48,7 +48,7 @@ class TestFilter(test_env.RecipeEngineUnitTest):
     self.assertEqual(len(c.failed_checks), 0)
 
   def test_built_fields(self):
-    c = checker.Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker('<filename>', 0, lambda: None, (), {})
     f = self.f()
     f = f.include('b', ['sub_b'])
     f = f.include('a', ['sub_a'])
@@ -60,7 +60,7 @@ class TestFilter(test_env.RecipeEngineUnitTest):
 
   def test_built_extra_includes(self):
     f = self.f('a', 'b', 'x')
-    c = checker.Checker('<filename>', 0, f, (), {})
+    c = Checker('<filename>', 0, f, (), {})
     self.assertEqual(f(c, self.d), mkD('a', 'b'))
     self.assertEqual(len(c.failed_checks), 1)
     self.assertEqual(c.failed_checks[0].frames[-1].code,
@@ -70,13 +70,13 @@ class TestFilter(test_env.RecipeEngineUnitTest):
 
   def test_re(self):
     f = self.f().include_re('b\.')
-    c = checker.Checker('<filename>', 0, f, (), {})
+    c = Checker('<filename>', 0, f, (), {})
     self.assertEqual(f(c, self.d), mkD('b.sub', 'b.sub2'))
     self.assertEqual(len(c.failed_checks), 0)
 
   def test_re_low_limit(self):
     f = self.f().include_re('b\.', at_least=3)
-    c = checker.Checker('<filename>', 0, f, (), {})
+    c = Checker('<filename>', 0, f, (), {})
     self.assertEqual(f(c, self.d), mkD('b.sub', 'b.sub2'))
     self.assertEqual(len(c.failed_checks), 1)
     self.assertEqual(c.failed_checks[0].frames[-1].code,
@@ -88,7 +88,7 @@ class TestFilter(test_env.RecipeEngineUnitTest):
 
   def test_re_high_limit(self):
     f = self.f().include_re('b\.', at_most=1)
-    c = checker.Checker('<filename>', 0, f, (), {})
+    c = Checker('<filename>', 0, f, (), {})
     self.assertEqual(f(c, self.d), mkD('b.sub', 'b.sub2'))
     self.assertEqual(len(c.failed_checks), 1)
     self.assertEqual(c.failed_checks[0].frames[-1].code,
@@ -105,7 +105,7 @@ class TestRun(test_env.RecipeEngineUnitTest):
     self.d = mkD('a', 'b', 'b.sub', 'b.sub2')
 
   def expect_fails(self, num_fails, func, *args, **kwargs):
-    c = checker.Checker('<filename>', 0, func, args, kwargs)
+    c = Checker('<filename>', 0, func, args, kwargs)
     func(c, self.d, *args, **kwargs)
     self.assertEqual(len(c.failed_checks), num_fails)
 
@@ -148,7 +148,7 @@ class TestStepStatus(test_env.RecipeEngineUnitTest):
     ])
 
   def expect_fails(self, num_fails, func, *args, **kwargs):
-    c = checker.Checker('<filanem>', 0, func, args, kwargs)
+    c = Checker('<filanem>', 0, func, args, kwargs)
     func(c, self.d, *args, **kwargs)
     self.assertEqual(len(c.failed_checks), num_fails)
     return c
@@ -198,7 +198,7 @@ class TestStepCommandRe(test_env.RecipeEngineUnitTest):
     ])
 
   def expect_fails(self, num_fails, func, *args, **kwargs):
-    c = checker.Checker('<filename>', 0, func, args, kwargs)
+    c = Checker('<filename>', 0, func, args, kwargs)
     func(c, self.d, *args, **kwargs)
     self.assertEqual(len(c.failed_checks), num_fails)
     return c
@@ -248,13 +248,13 @@ class TestStepCommandContains(test_env.RecipeEngineUnitTest):
     ])
 
   def expect_pass(self, func, *args, **kwargs):
-    c = checker.Checker('<filename>', 0, func, args, kwargs)
+    c = Checker('<filename>', 0, func, args, kwargs)
     func(c, self.d, *args, **kwargs)
     self.assertEqual(len(c.failed_checks), 0)
     return c
 
   def expect_fail(self, func, failure, *args, **kwargs):
-    c = checker.Checker('<filename>', 0, func, args, kwargs)
+    c = Checker('<filename>', 0, func, args, kwargs)
     func(c, self.d, *args, **kwargs)
     self.assertEqual(len(c.failed_checks), 1)
     self.assertEqual(c.failed_checks[0].name, failure)
@@ -314,7 +314,7 @@ class TestStepText(test_env.RecipeEngineUnitTest):
     ])
 
   def expect_fails(self, num_fails, func, *args, **kwargs):
-    c = checker.Checker('<filename>', 0, func, args, kwargs)
+    c = Checker('<filename>', 0, func, args, kwargs)
     func(c, self.d, *args, **kwargs)
     self.assertEqual(len(c.failed_checks), num_fails)
     return c
@@ -362,7 +362,7 @@ class TestLog(test_env.RecipeEngineUnitTest):
     ])
 
   def expect_fails(self, num_fails, func, *args, **kwargs):
-    c = checker.Checker('<filename>', 0, func, args, kwargs)
+    c = Checker('<filename>', 0, func, args, kwargs)
     func(c, self.d, *args, **kwargs)
     self.assertEqual(len(c.failed_checks), num_fails)
     return c

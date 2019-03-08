@@ -20,22 +20,15 @@ import requests
 
 from google.protobuf import json_format
 
-from . import gitattr_checker
-from . import util
-from .internal import simple_cfg
+from .. import util
+from ..third_party import subprocess42
 
-from .third_party import subprocess42
+from . import gitattr_checker
+from . import simple_cfg
+from .exceptions import GitFetchError, UnresolvedRefspec
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-class FetchError(Exception):
-  pass
-
-
-class UnresolvedRefspec(Exception):
-  pass
 
 
 # revision (str): the revision of this commit (i.e. hash)
@@ -197,10 +190,6 @@ class Backend(object):
     raise NotImplementedError()
 
 
-class GitError(FetchError):
-  pass
-
-
 class GitBackend(Backend):
   """GitBackend uses a local git checkout."""
 
@@ -222,7 +211,7 @@ class GitBackend(Backend):
     Args:
       *args (str) - The list of command arguments to pass to git.
 
-    Raises GitError on failure.
+    Raises GitFetchError on failure.
     """
     if self.GIT_BINARY.endswith('.bat'):
       # On the esteemed Windows Operating System, '^' is an escape character.
@@ -242,7 +231,7 @@ class GitBackend(Backend):
     try:
       return self._execute(*cmd)
     except subprocess42.CalledProcessError as e:
-      raise GitError('%r failed: %s: %s' % (cmd, e.message, e.output))
+      raise GitFetchError('%r failed: %s: %s' % (cmd, e.message, e.output))
 
   def _execute(self, *args):
     """Runs a raw command. Separate so it's easily mockable."""
@@ -266,7 +255,7 @@ class GitBackend(Backend):
     multiple times. If this is sucessful, the GitBackend will not try to
     re-initialize the checkout_dir again.
 
-    Raises GitError if it detected that checkout_dir is likely not a valid git
+    Raises GitFetchError if it detected that checkout_dir is likely not a valid git
     repo.
     """
     if self._did_ensure:
@@ -278,7 +267,7 @@ class GitBackend(Backend):
         self._execute(self.GIT_BINARY, 'init', self.checkout_dir)
         self._did_ensure = True
       except subprocess42.CalledProcessError as e:
-        raise GitError(False, 'Git "init" failed: '+e.message)
+        raise GitFetchError(False, 'Git "init" failed: '+e.message)
 
   def _has_rev(self, revision):
     """Returns True iff the on-disk repo has the given revision."""
@@ -288,7 +277,7 @@ class GitBackend(Backend):
       # shortly after _has_rev anyway.
       self.commit_metadata(revision)
       return True
-    except GitError:
+    except GitFetchError:
       return False
 
 
@@ -321,7 +310,7 @@ class GitBackend(Backend):
     # diff, which will exit if `revision` is not already checked out.
     try:
       self._git('diff', '--quiet', revision)
-    except GitError:
+    except GitFetchError:
       self._git('reset', '-q', '--hard', revision)
 
   def cat_file(self, revision, file_path):
@@ -379,7 +368,7 @@ class GitBackend(Backend):
     try:
       spec = simple_cfg.SimpleRecipesCfg.from_json_string(
         self.cat_file(revision, simple_cfg.RECIPES_CFG_LOCATION_REL))
-    except GitError:
+    except GitFetchError:
       spec = None
     except ValueError:  # commit with unparsable recipes.cfg
       spec = None

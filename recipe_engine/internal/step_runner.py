@@ -17,13 +17,13 @@ import tempfile
 import time
 import traceback
 
-from . import recipe_api
-from . import recipe_test_api
-from . import stream
-from . import types
-from . import util
+from .. import recipe_api
+from .. import recipe_test_api
+from .. import types
+from .. import util
+from ..third_party import subprocess42
 
-from .third_party import subprocess42
+from . import stream
 
 
 if sys.platform == "win32":

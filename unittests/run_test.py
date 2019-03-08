@@ -13,7 +13,7 @@ import time
 
 import test_env
 
-from recipe_engine import step_runner
+from recipe_engine.internal import step_runner
 
 
 class RunTest(test_env.RecipeEngineUnitTest):

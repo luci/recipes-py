@@ -7,7 +7,7 @@ import cStringIO
 
 import test_env
 
-from recipe_engine import stream
+from recipe_engine.internal import stream
 
 
 class StreamTest(test_env.RecipeEngineUnitTest):

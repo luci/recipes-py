@@ -10,7 +10,8 @@ from collections import OrderedDict
 
 import test_env
 
-from recipe_engine import checker
+from recipe_engine.internal.magic_check_fn import \
+  Checker, CheckFrame, VerifySubset
 
 
 class TestChecker(test_env.RecipeEngineUnitTest):
@@ -18,25 +19,25 @@ class TestChecker(test_env.RecipeEngineUnitTest):
     return checkframe._replace(line=0, fname='')
 
   def mk(self, fname, code, varmap):
-    return checker.CheckFrame(
+    return CheckFrame(
       fname='', line=0, function=fname, code=code, varmap=varmap)
 
   def test_no_calls(self):
-    c = checker.Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker('<filename>', 0, lambda: None, (), {})
     def body(_):
       pass
     body(c)
     self.assertEqual(len(c.failed_checks), 0)
 
   def test_success_call(self):
-    c = checker.Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker('<filename>', 0, lambda: None, (), {})
     def body(check):
       check(True is True)
     body(c)
     self.assertEqual(len(c.failed_checks), 0)
 
   def test_simple_fail(self):
-    c = checker.Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker('<filename>', 0, lambda: None, (), {})
     def body(check):
       check(True is False)
     body(c)
@@ -47,7 +48,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
       self.mk('body', 'check((True is False))', {}))
 
   def test_simple_fail_multiline(self):
-    c = checker.Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker('<filename>', 0, lambda: None, (), {})
     def body(check):
       falsey = lambda: False
       check(
@@ -63,7 +64,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
       self.mk('body', 'check((True is falsey()))', {}))
 
   def test_simple_fail_multiline_multistatement(self):
-    c = checker.Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker('<filename>', 0, lambda: None, (), {})
     def body(check):
       other = 'thing'
       falsey = lambda: False
@@ -80,7 +81,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
         'other': "'thing'" }))
 
   def test_fail_nested_statement(self):
-    c = checker.Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker('<filename>', 0, lambda: None, (), {})
     def body(check):
       other = 'thing'
       falsey = lambda: False
@@ -103,7 +104,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
         'other': "'thing'" }))
 
   def test_var_fail(self):
-    c = checker.Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker('<filename>', 0, lambda: None, (), {})
     def body(check):
       val = True
       check(val is False)
@@ -115,7 +116,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
       self.mk('body', 'check((val is False))', {'val': 'True'}))
 
   def test_dict_membership(self):
-    c = checker.Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker('<filename>', 0, lambda: None, (), {})
     def body(check):
       targ = {'a': 'b', 'c': 'd'}
       check('a' not in targ)
@@ -128,7 +129,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
               {'targ.keys()': "['a', 'c']"}))
 
   def test_dict_lookup(self):
-    c = checker.Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker('<filename>', 0, lambda: None, (), {})
     def body(check):
       targ = {'a': {'sub': 'b'}, 'c': 'd'}
       check('cow' in targ['a'])
@@ -141,7 +142,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
               {"targ['a'].keys()": "['sub']"}))
 
   def test_dict_lookup_nest(self):
-    c = checker.Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker('<filename>', 0, lambda: None, (), {})
     def body(check):
       sub = 'sub'
       targ = {'a': {'sub': 'whee'}, 'c': 'd'}
@@ -155,7 +156,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
               {"targ['a'][sub]": "'whee'", 'sub': "'sub'"}))
 
   def test_lambda_call(self):
-    c = checker.Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker('<filename>', 0, lambda: None, (), {})
     def body(check):
       vals = ['whee', 'sub']
       targ = {'a': {'sub': 'whee'}, 'c': 'd'}
@@ -189,7 +190,7 @@ class TestVerifySubset(test_env.RecipeEngineUnitTest):
 
   def setUp(self):
     super(TestVerifySubset, self).setUp()
-    self.v = checker.VerifySubset
+    self.v = VerifySubset
     self.d = self.mkData('a', 'b', 'c')
     self.c = copy.deepcopy(self.d)
 

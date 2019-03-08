@@ -11,7 +11,7 @@ import mock
 
 import test_env
 
-from recipe_engine import gitattr_checker
+from recipe_engine.internal import gitattr_checker
 
 
 class AttrCheckerEquivalenceTests(test_env.RecipeEngineUnitTest):
@@ -315,7 +315,7 @@ class AttrCheckerMockTests(test_env.RecipeEngineUnitTest):
     }
     self._git_mock = mock.Mock()
     self._git_mock.side_effect = self._fake_git
-    mock.patch('recipe_engine.gitattr_checker.AttrChecker._git',
+    mock.patch('recipe_engine.internal.gitattr_checker.AttrChecker._git',
                self._git_mock).start()
     self.addCleanup(mock.patch.stopall)
 

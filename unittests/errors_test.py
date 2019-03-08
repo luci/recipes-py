@@ -116,7 +116,7 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
     deps = self.FakeRecipeDeps()
     with deps.main_repo.write_recipe('print_step_error') as recipe:
       recipe.imports = [
-        'from recipe_engine import step_runner'
+        'from recipe_engine.internal import step_runner'
       ]
       recipe.RunSteps.write('''
         def bad_print_step(self, step_stream, step, env):
