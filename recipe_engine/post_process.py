@@ -393,6 +393,23 @@ _LOG_LINE_RE = re.compile('@@@STEP_LOG_LINE@(?P<log>[^@]*)@(?P<text>.*)@@@$')
 _LOG_END_RE = re.compile('@@@STEP_LOG_END@(?P<log>.*)@@@$')
 
 
+def GetLogs(step_dict):
+  """Get all logs from a step.
+
+  This is intended to be used to implement post_process checks.
+  """
+  logs = defaultdict(list)
+  for a in step_dict.get('~followup_annotations', []):
+    match = _LOG_LINE_RE.match(a)
+    if match:
+      logs[match.group('log')].append(match.group('text'))
+      continue
+    match = _LOG_END_RE.match(a)
+    if match:
+      logs[match.group('log')].append('')
+  return logs
+
+
 def _extract_log(check, step_odict, step, log):
   """Extract a log for a step.
 
@@ -410,16 +427,8 @@ def _extract_log(check, step_odict, step, log):
   """
   if not _check_step_was_run(check, step_odict, step):
     return
-  log_lines = []
-  for a in step_odict[step].get('~followup_annotations', []):
-    match = _LOG_LINE_RE.match(a)
-    if match and match.group('log') == log:
-      log_lines.append(match.group('text'))
-      continue
-    match = _LOG_END_RE.match(a)
-    if match and match.group('log') == log:
-      log_lines.append('')
-      break
+  logs = GetLogs(step_odict[step])
+  log_lines = logs.get(log, [])
   if not check('step %s has log %s' % (step, log), log_lines):
     return
   return '\n'.join(log_lines)
