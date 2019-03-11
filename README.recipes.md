@@ -184,9 +184,7 @@ expressed more naturally by making assertions within the RunSteps function of
 the test recipe. This api provides access to the assertion methods of
 unittest.TestCase to be used within test recipes.
 
-The methods of unittest.TestCase can be used with the following exceptions:
-* assertLogs
-* all methods deprecated in favor of a newer method
+All non-deprecated assertion methods of unittest.TestCase can be used.
 
 An enhancement to the assertion methods is that if a custom msg is used,
 values for the non-msg arguments can be substituted into the message using

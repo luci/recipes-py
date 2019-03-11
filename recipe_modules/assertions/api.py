@@ -61,9 +61,7 @@ class AssertionsApi(recipe_api.RecipeApi):
   the test recipe. This api provides access to the assertion methods of
   unittest.TestCase to be used within test recipes.
 
-  The methods of unittest.TestCase can be used with the following exceptions:
-  * assertLogs
-  * all methods deprecated in favor of a newer method
+  All non-deprecated assertion methods of unittest.TestCase can be used.
 
   An enhancement to the assertion methods is that if a custom msg is used,
   values for the non-msg arguments can be substituted into the message using
@@ -104,16 +102,15 @@ class AssertionsApi(recipe_api.RecipeApi):
   # Not included: assertLogs, all of the deprecated assertion methods, all
   # non-methods
   _TEST_CASE_WHITELIST = [
-      'assertAlmostEqual', 'assertCountEqual', 'assertDictContainsSubset',
-      'assertDictEqual', 'assertEqual', 'assertFalse', 'assertGreater',
-      'assertGreaterEqual', 'assertIn', 'assertIs', 'assertIsInstance',
-      'assertIsNone', 'assertIsNot', 'assertIsNotNone', 'assertLess',
+      'assertAlmostEqual', 'assertDictContainsSubset', 'assertDictEqual',
+      'assertEqual', 'assertFalse', 'assertGreater', 'assertGreaterEqual',
+      'assertIn', 'assertIs', 'assertIsInstance', 'assertIsNone',
+      'assertIsNot', 'assertIsNotNone', 'assertItemsEqual', 'assertLess',
       'assertLessEqual', 'assertListEqual', 'assertMultiLineEqual',
       'assertNotAlmostEqual', 'assertNotEqual', 'assertNotIn',
-      'assertNotIsInstance', 'assertNotRegex', 'assertRaises',
-      'assertRaisesRegex', 'assertRegex', 'assertSequenceEqual',
-      'assertSetEqual', 'assertTrue', 'assertTupleEqual', 'assertWarns',
-      'assertWarnsRegex', 'fail',
+      'assertNotIsInstance', 'assertNotRegexpMatches', 'assertRaises',
+      'assertRaisesRegexp', 'assertRegexpMatches', 'assertSequenceEqual',
+      'assertSetEqual', 'assertTrue', 'assertTupleEqual', 'fail',
   ]
 
   def __init__(self, *args, **kwargs):
