@@ -34,6 +34,7 @@
 
 **[Recipes](#Recipes)**
   * [archive:examples/full](#recipes-archive_examples_full)
+  * [assertions:tests/assert-raises](#recipes-assertions_tests_assert-raises)
   * [assertions:tests/assertions](#recipes-assertions_tests_assertions)
   * [assertions:tests/attribute_error](#recipes-assertions_tests_attribute_error)
   * [assertions:tests/long_message](#recipes-assertions_tests_long_message)
@@ -2237,6 +2238,11 @@ Returns a random UUID string.
 [DEPS](/recipe_modules/archive/examples/full.py#7): [archive](#recipe_modules-archive), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/archive/examples/full.py#19)(api):**
+### *recipes* / [assertions:tests/assert-raises](/recipe_modules/assertions/tests/assert-raises.py)
+
+[DEPS](/recipe_modules/assertions/tests/assert-raises.py#7): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/assert-raises.py#16)(api):**
 ### *recipes* / [assertions:tests/assertions](/recipe_modules/assertions/tests/assertions.py)
 
 [DEPS](/recipe_modules/assertions/tests/assertions.py#7): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

@@ -44,7 +44,7 @@ def make_assertion(assertion_method, **test_case_attrs):
     assertion = getattr(asserter, assertion_method)
 
     try:
-      assertion(*args, **kwargs)
+      return assertion(*args, **kwargs)
     # Catch and throw a new exception so that the frames for unittest's
     # implementation aren't part of the displayed traceback
     except AssertionError as e:
