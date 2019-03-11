@@ -36,6 +36,8 @@
   * [archive:examples/full](#recipes-archive_examples_full)
   * [assertions:tests/assertions](#recipes-assertions_tests_assertions)
   * [assertions:tests/attribute_error](#recipes-assertions_tests_attribute_error)
+  * [assertions:tests/long_message](#recipes-assertions_tests_long_message)
+  * [assertions:tests/max_diff](#recipes-assertions_tests_max_diff)
   * [buildbucket:examples/full](#recipes-buildbucket_examples_full) &mdash; This file is a recipe demonstrating the buildbucket recipe module.
   * [buildbucket:tests/build](#recipes-buildbucket_tests_build)
   * [buildbucket:tests/collect](#recipes-buildbucket_tests_collect)
@@ -173,7 +175,7 @@ Returns:
   Package object.
 ### *recipe_modules* / [assertions](/recipe_modules/assertions)
 
-#### **class [AssertionsApi](/recipe_modules/assertions/api.py#52)([RecipeApi](/recipe_engine/recipe_api.py#1005)):**
+#### **class [AssertionsApi](/recipe_modules/assertions/api.py#56)([RecipeApi](/recipe_engine/recipe_api.py#1005)):**
 
 Provides access to the assertion methods of the python unittest module.
 
@@ -191,6 +193,9 @@ values for the non-msg arguments can be substituted into the message using
 named substitution with the format method of strings.
 e.g. self.AssertEqual(0, 1, '{first} should be {second}') will raise an
 AssertionError with the message: '0 should be 1'.
+
+The attributes longMessage and maxDiff are supported and have the same
+behavior as the unittest module.
 
 Example (.../recipe_modules/my_module/tests/foo.py):
 DEPS = [
@@ -2244,6 +2249,16 @@ Returns a random UUID string.
 [DEPS](/recipe_modules/assertions/tests/attribute_error.py#7): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/assertions/tests/attribute_error.py#13)(api):**
+### *recipes* / [assertions:tests/long\_message](/recipe_modules/assertions/tests/long_message.py)
+
+[DEPS](/recipe_modules/assertions/tests/long_message.py#7): [assertions](#recipe_modules-assertions), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/long_message.py#12)(api):**
+### *recipes* / [assertions:tests/max\_diff](/recipe_modules/assertions/tests/max_diff.py)
+
+[DEPS](/recipe_modules/assertions/tests/max_diff.py#7): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/max_diff.py#13)(api):**
 ### *recipes* / [buildbucket:examples/full](/recipe_modules/buildbucket/examples/full.py)
 
 [DEPS](/recipe_modules/buildbucket/examples/full.py#9): [buildbucket](#recipe_modules-buildbucket), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

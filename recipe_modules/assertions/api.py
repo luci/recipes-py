@@ -10,43 +10,47 @@ import unittest
 
 from recipe_engine import recipe_api
 
-TracebackProxy = collections.namedtuple(
-    'TracebackProxy', ['tb_frame', 'tb_lasti', 'tb_lineno', 'tb_next'])
 
-def assertion_wrapper(assertion, *args, **kwargs):
-  class Asserter(unittest.TestCase):
-    def __init__(self):
-      super(Asserter, self).__init__('dummy_method')
+# Change the value of the message for when a diff is omitted to refer to
+# assertions.maxDiff instead of self.maxDiff.
+unittest.case.DIFF_OMITTED = unittest.case.DIFF_OMITTED.replace(
+    'self.maxDiff', 'assertions.maxDiff')
 
-    def dummy_method(self):
-      """Does nothing.
+def make_assertion(assertion_method, **test_case_attrs):
+  def assertion_wrapper(*args, **kwargs):
+    class Asserter(unittest.TestCase):
+      # The __init__ method of TestCase requires the name of a method on the
+      # class that is the test to run. We're not going to run a test, we just
+      # want access to the assertion methods, so just put some method.
+      def __init__(self):
+        super(Asserter, self).__init__('__init__')
 
-      The __init__ method for unittest.TestCase requires the name of a method on
-      the class that is the test being run, so a "test" method must be provided.
-      """
-      pass  # pragma: no cover
+      def _formatMessage(self, msg, standardMsg):
+        if msg:
+          # Extract the non-msg, non-self arguments to the assertion method to
+          # be used in formatting custom messages e.g.
+          # assertEqual(0, 1, '{first} should be {second}'), format_args will be
+          # {'first': 0, 'second': 1} because the name of assertEqual's
+          # arguments are named first and second
+          call_args = inspect.getcallargs(assertion, *args, **kwargs)
+          format_args = {k: v for k, v in call_args.iteritems()
+                         if k not in ('self', 'msg')}
+          msg = msg.format(**format_args)
+        return super(Asserter, self)._formatMessage(msg, standardMsg)
 
-    def _formatMessage(self, msg, standardMsg):
-      if msg:
-        # Extract the non-msg, non-self arguments to the assertion method to be
-        # used in formatting custom messages
-        # e.g. assertEqual(0, 1, '{first} should be {second}'), format_args will
-        # be {'first': 0, 'second': 1} because the name of assertEqual's
-        # arguments are named first and second
-        call_args = inspect.getcallargs(
-            getattr(self, assertion), *args, **kwargs)
-        format_args = {k: v for k, v in call_args.iteritems()
-                       if k not in ('self', 'msg')}
-        msg = msg.format(**format_args)
-      return super(Asserter, self)._formatMessage(msg, standardMsg)
+    asserter = Asserter()
+    for a, v in test_case_attrs.iteritems():
+      setattr(asserter, a, v)
+    assertion = getattr(asserter, assertion_method)
 
-  try:
-    getattr(Asserter(), assertion)(*args, **kwargs)
+    try:
+      assertion(*args, **kwargs)
+    # Catch and throw a new exception so that the frames for unittest's
+    # implementation aren't part of the displayed traceback
+    except AssertionError as e:
+      raise AssertionError(e.message)
 
-  # Catch and throw a new exception so that the frames for unittest's
-  # implementation aren't part of the displayed traceback
-  except AssertionError as e:
-    raise AssertionError(e.message)
+  return assertion_wrapper
 
 
 class AssertionsApi(recipe_api.RecipeApi):
@@ -66,6 +70,9 @@ class AssertionsApi(recipe_api.RecipeApi):
   named substitution with the format method of strings.
   e.g. self.AssertEqual(0, 1, '{first} should be {second}') will raise an
   AssertionError with the message: '0 should be 1'.
+
+  The attributes longMessage and maxDiff are supported and have the same
+  behavior as the unittest module.
 
   Example (.../recipe_modules/my_module/tests/foo.py):
   DEPS = [
@@ -113,9 +120,17 @@ class AssertionsApi(recipe_api.RecipeApi):
     super(AssertionsApi, self).__init__(*args, **kwargs)
     if not self._test_data.enabled:  # pragma: no cover
       raise Exception('assertions module is only for use in tests')
+    # The __init__ method of TestCase requires the name of a method on the class
+    # that is the test to run. We're not going to run a test, we just want the
+    # object to be able to read default values of attrs, so just put some
+    # method.
+    prototype = unittest.TestCase('__init__')
+    self.longMessage = prototype.longMessage
+    self.maxDiff = prototype.maxDiff
 
   def __getattr__(self, attr):
     if attr in self._TEST_CASE_WHITELIST:
-      return functools.partial(assertion_wrapper, attr)
+      return make_assertion(
+          attr, longMessage=self.longMessage, maxDiff=self.maxDiff)
     raise AttributeError("'%s' object has no attribute '%s'"
                          % (type(self).__name__, attr))
