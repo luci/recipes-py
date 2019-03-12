@@ -7,7 +7,11 @@ import logging
 import os
 import sys
 
-from recipe_engine.third_party import logdog
+from recipe_engine.third_party import logdog, luci_context
+from recipe_engine.internal.stream import StreamEngine, StreamEngineInvariants
+from recipe_engine.internal import step_runner
+
+from ..run.cmd import run_steps
 
 from google.protobuf import json_format as jsonpb
 
@@ -24,6 +28,13 @@ def _contract_in_env(key):
     raise RunBuildContractViolation('Expected $%s in environment.' % key)
   return os.environ[key]
 
+def _contract_in_luci_context(section, key):
+  section = luci_context.read(section)
+  if section is None or key not in section:
+    raise RunBuildContractViolation('Expected %r in $LUCI_CONTEXT[%r].' % (
+      key, section))
+  return section[key]
+
 
 def _synth_properties(build):
   # TODO(iannucci): expose this data natively as a Build message.
@@ -35,11 +46,27 @@ def _synth_properties(build):
     '$recipe_engine/buildbucket': jsonpb.MessageToDict(build),
     '$recipe_engine/path': {
       'temp_dir': _contract_in_env('TMP'),
-      'cache_dir': _contract_in_env('LUCI_CACHE_DIR'),
+      'cache_dir': _contract_in_luci_context('run_build', 'cache_dir'),
     },
   }
   LOG.info('Synthesized properties: %r', synth_props)
   return synth_props
+
+
+def _tweak_env():
+  # These tweaks are recipe-engine-specific tweaks to be compatible with the
+  # behavior of `recipes.py run`.
+  os.environ['PYTHONUNBUFFERED'] = '1'
+  os.environ['PYTHONIOENCODING'] = 'UTF-8'
+
+
+class LUCIStreamEngine(StreamEngine):
+  def __init__(self):
+    self._butler = logdog.bootstrap.ButlerBootstrap.probe()
+
+  @property
+  def was_successful(self):
+    return 0
 
 
 def main(args):
@@ -49,10 +76,16 @@ def main(args):
   LOG.info('finished parsing Build message')
   LOG.debug('build proto: %s', jsonpb.MessageToJson(build))
 
-  butler = logdog.bootstrap.ButlerBootstrap.probe()
+  properties = jsonpb.MessageToDict(build.input.properties)
+  properties.update(_synth_properties(build))
 
-  props = jsonpb.MessageToDict(build.input.properties)
-  props.update(_synth_properties(build))
+  _tweak_env()
 
-  LOG.fatal('Remainder of run_build not implemented')
-  return 1
+  run_build_engine = LUCIStreamEngine()
+
+  with StreamEngineInvariants.wrap(run_build_engine) as stream_engine:
+    run_steps(
+        args.recipe_deps, properties, stream_engine,
+        step_runner.SubprocessStepRunner(stream_engine))
+
+  return 0 if run_build_engine.was_successful else 1
