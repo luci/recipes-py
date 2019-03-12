@@ -48,6 +48,7 @@ rm -rf "$WD"
 mkdir -p "$WD/tmp" "$WD/cache" "$WD/wd" "$WD/luci_context"
 
 # Set up environmental predicates
+unset LS_COLORS
 export TMP="$WD/tmp"
 export LOGDOG_NAMESPACE=u
 export LUCI_CONTEXT="$WD/luci_context/context.json"
@@ -59,12 +60,20 @@ cat > $LUCI_CONTEXT <<EOF
 }
 EOF
 
+case "$(uname -s)" in
+    Linux*|Darwin*)
+      STREAMSERVER="unix:$WD/butler.sock";;
+    *)
+      STREAMSERVER="net.pipe:\\\\.\\fake_kitchen\\butler"
+esac
+
 # Convert JSON -> binary PB
 # Start a local logdog server.
 # Project is "required" but its value doesn't matter.
 # Output to the 'logs' subdir of workdir
 # Attach "stdout" and "stderr" at their usual names.
 # Set startdir to an empty dir.
+# Set up a local fifo for butler to serve on.
 # Actaully run the recipes.
 $ROOT/misc/build_proto.py | \
     logdog_butler -project local                              \
@@ -72,4 +81,5 @@ $ROOT/misc/build_proto.py | \
     run -stdout=name=stdout -stderr=name=stderr               \
     -forward-stdin                                            \
     -chdir="$WD/wd"                                           \
+    -streamserver-uri="$STREAMSERVER"                         \
     python "$ROOT/recipes.py" -vvv run_build "$@"

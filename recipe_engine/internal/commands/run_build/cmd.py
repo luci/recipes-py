@@ -62,7 +62,13 @@ def _tweak_env():
 
 class LUCIStreamEngine(StreamEngine):
   def __init__(self):
-    self._butler = logdog.bootstrap.ButlerBootstrap.probe()
+    self._build_proto = Build()
+    bsc = logdog.bootstrap.ButlerBootstrap.probe().stream_client()
+    assert isinstance(bsc, logdog.stream.StreamClient)
+    self._stream = bsc.open_datagram(
+        'build.proto',
+        content_type='application/luci+proto; message=buildbucket.v2.Build',
+        binary_file_extension='.pb')
 
   @property
   def was_successful(self):
