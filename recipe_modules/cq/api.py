@@ -46,7 +46,7 @@ class CQApi(recipe_api.RecipeApi):
 
   @property
   def triggered_build_ids(self):
-    """Returns recorded build ids as a list of integers."""
+    """Returns recorded Buildbucket build ids as a list of integers."""
     return self._triggered_build_ids
 
   def record_triggered_builds(self, *builds):

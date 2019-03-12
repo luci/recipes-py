@@ -901,7 +901,7 @@ CQ state pertaining to this recipe execution.
 
 &emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cq/api.py#47)(self):**
 
-Returns recorded build ids as a list of integers.
+Returns recorded Buildbucket build ids as a list of integers.
 ### *recipe_modules* / [file](/recipe_modules/file)
 
 [DEPS](/recipe_modules/file/__init__.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
