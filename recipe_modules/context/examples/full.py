@@ -53,18 +53,44 @@ def RunSteps(api):
     except ValueError:
       pass
 
+  # Don't use | in namespaces or name prefixes
+  try:
+    with api.context(namespace="dope|pipe"):
+      assert False  # pragma: no cover
+  except ValueError:
+    pass
+  try:
+    with api.context(name_prefix="nope|pipe"):
+      assert False  # pragma: no cover
+  except ValueError:
+    pass
+
   # this is fine though:
   with api.context(env={'FINE': '%%format'}):
     pass
 
-  # can increment nest level... note that this is a low level api, prefer
-  # api.step.nest instead:
+  # can increment namespace. However, if you use `api.step.nest` it gives you
+  # the step result to manipulate.
   # YES:
-  with api.step.nest('nested'):
+  with api.step.nest('nested') as nest:
     api.step('properly indented', ['bash', '-c', 'echo yay!'])
-  # AVOID:
-  with api.context(increment_nest_level=True):
-    api.step('indented with wrong name', ['bash', '-c', 'echo indent?'])
+    nest.presentation.status = 'FAILURE'
+  # As opposed to:
+  with api.context(namespace='something'):
+    api.step('indented but no step', ['bash', '-c', 'echo y u do?'])
+
+  # Can also adjust name_prefix within the current namespace:
+  with api.context(namespace='neat namespace'):
+    with api.context(name_prefix='information: '):
+      api.step('informed', ['bash', '-c', 'echo yay!'])
+
+      with api.context(namespace='secret'):
+        api.step('informed secret!', ['bash', '-c', 'echo yay!'])
+
+    with api.context(namespace='deep', name_prefix='sturdy: '):
+      api.step('mines of moria', ['bash', '-c', 'echo yay!'])
+
+    api.step('regular', ['bash', '-c', 'echo yay!'])
 
 
 def GenTests(api):

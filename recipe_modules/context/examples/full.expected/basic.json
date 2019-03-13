@@ -88,7 +88,10 @@
   },
   {
     "cmd": [],
-    "name": "nested"
+    "name": "nested",
+    "~followup_annotations": [
+      "@@@STEP_FAILURE@@@"
+    ]
   },
   {
     "cmd": [
@@ -105,9 +108,53 @@
     "cmd": [
       "bash",
       "-c",
-      "echo indent?"
+      "echo y u do?"
     ],
-    "name": "indented with wrong name",
+    "name": "something.indented but no step",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo yay!"
+    ],
+    "name": "neat namespace.information: informed",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo yay!"
+    ],
+    "name": "neat namespace.information: secret.informed secret!",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo yay!"
+    ],
+    "name": "neat namespace.deep.sturdy: mines of moria",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo yay!"
+    ],
+    "name": "neat namespace.regular",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]

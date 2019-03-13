@@ -185,9 +185,9 @@ class StepClient(object):
 
 
   class StepConfig(collections.namedtuple('_StepConfig', (
-      'name', 'base_name', 'cmd', 'cwd', 'env', 'env_prefixes', 'env_suffixes',
+      'name_tokens', 'cmd', 'cwd', 'env', 'env_prefixes', 'env_suffixes',
       'allow_subannotations', 'trigger_specs', 'timeout', 'infra_step',
-      'stdout', 'stderr', 'stdin', 'ok_ret', 'step_test_data', 'nest_level'))):
+      'stdout', 'stderr', 'stdin', 'ok_ret', 'step_test_data'))):
 
     """
     StepConfig is the representation of a raw step as the recipe_engine sees it.
@@ -197,10 +197,7 @@ class StepClient(object):
     itself.
 
     Fields:
-      name (str): name of the step, will appear in buildbots waterfall
-      base_name (str): the base name of the step. If the step has a derived
-          name (e.g., nested may be concatenated with its parent), this is the
-          name component of just this step. If None, this will be set to "name".
+      name_tokens (List[str]): The list of name pieces for this step.
       cmd: command to run. Acceptable types: str, Path, Placeholder, or None.
       cwd (str or None): absolute path to working directory for the command
       env (dict): overrides for environment variables, described above.
@@ -230,7 +227,6 @@ class StepClient(object):
           returns a StepTestData object that will be used as the default test
           data for this step. The recipe author can override/augment this object
           in the GenTests function.
-      nest_level (int): the step's nesting level.
 
     The optional "env" parameter provides optional overrides for environment
     variables. Each value is % formatted with the entire existing os.environ. A
@@ -281,11 +277,18 @@ class StepClient(object):
     ))
 
     _RENDER_BLACKLIST=frozenset((
-      'base_name',
-      'nest_level',
+      'name_tokens',
       'ok_ret',
       'step_test_data',
     ))
+
+    @property
+    def name(self):
+      """Returns a '.' separated string version of name_tokens for backwards
+      compatibility with old recipe engine code."""
+      # TODO(iannucci): Remove this method or make it use '|' separators
+      # instead.
+      return '.'.join(self.name_tokens)
 
     def __new__(cls, **kwargs):
       for field in cls._fields:
@@ -299,13 +302,11 @@ class StepClient(object):
           env=sc.env or {},
           env_prefixes=sc.env_prefixes or cls.EnvAffix.empty(),
           env_suffixes=sc.env_suffixes or cls.EnvAffix.empty(),
-          base_name=sc.base_name or sc.name,
           allow_subannotations=bool(sc.allow_subannotations),
           trigger_specs=sc.trigger_specs or (),
           infra_step=bool(sc.infra_step),
           ok_ret=(sc.ok_ret if sc.ok_ret is StepClient.StepConfig.ALL_OK
                   else frozenset(sc.ok_ret or (0,))),
-          nest_level=int(sc.nest_level or 0),
       )
 
     def render_to_dict(self):
@@ -317,9 +318,11 @@ class StepClient(object):
           trigger_specs=[trig._render_to_dict()
                          for trig in (self.trigger_specs or ())],
       )
-      return dict((k, v) for k, v in sc._asdict().iteritems()
+      ret = dict((k, v) for k, v in sc._asdict().iteritems()
                   if (v or k in sc._RENDER_WHITELIST)
                   and k not in sc._RENDER_BLACKLIST)
+      ret['name'] = self.name
+      return ret
 
 
   class TriggerSpec(collections.namedtuple('_TriggerSpec', (

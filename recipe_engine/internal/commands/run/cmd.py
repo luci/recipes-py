@@ -189,13 +189,36 @@ class RecipeEngine(object):
     """
     self._clients['paths']._initialize_with_recipe_api(root_api)
 
-  def _close_through_level(self, level):
-    """Close all open steps whose nest level is >= the supplied level.
+  def _close_until_ns(self, namespace):
+    """Close all open steps until we close all of them or until we find one
+    that's a parent of of namespace.
+
+    Example:
+       open_steps = [
+          name=('namespace'),
+          name=('namespace', 'subspace'),
+          name=('namespace', 'subspace', 'step'),
+       ]
+       # if the new step is ('namespace', 'subspace', 'new_step') we call:
+         _close_until_ns(('namespace', 'subspace'))
+         # Closes ('namespace', 'subspace', 'step')
+       # if the new step is ('namespace', 'new_subspace') we call:
+         _close_until_ns(('namespace',))
+         # Closes ('namespace', 'subspace', 'step')
+         # Closes ('namespace', 'subspace')
+       # if the new step is ('bob',) we call:
+         _close_until_ns(())
+         # Closes ('namespace', 'subspace', 'step')
+         # Closes ('namespace', 'subspace')
+         # Closes ('namespace')
 
     Args:
-      level (int): the nest level to close through.
+      namespace (Tuple[basestring]): the namespace we're looking to get back to.
     """
-    while self._step_stack and self._step_stack[-1].config.nest_level >= level:
+    while self._step_stack:
+      if self._step_stack[-1].config.name_tokens == namespace:
+        return
+
       cur = self._step_stack.pop()
       if cur.step_result:
         cur.step_result.presentation.finalize(cur.open_step.stream)
@@ -219,16 +242,11 @@ class RecipeEngine(object):
     Returns:
       A StepData object containing the result of running the step.
     """
-    if '|' in step_config.name:
-      raise ValueError(
-          'Pipe character ("|") cannot be used in a step name. '
-          'It is reserved as a parent-child step separator.')
-
     with util.raises((recipe_api.StepFailure, OSError),
                      self._step_runner.stream_engine):
       step_result = None
 
-      self._close_through_level(step_config.nest_level)
+      self._close_until_ns(step_config.name_tokens[:-1])
 
       open_step = self._step_runner.open_step(step_config)
       self._step_stack.append(self.ActiveStep(
@@ -294,7 +312,7 @@ class RecipeEngine(object):
           raw_result = recipe.run_steps(self, test_data)
           result = result_pb2.Result(json_result=json.dumps(raw_result))
         finally:
-          self._close_through_level(0)
+          self._close_until_ns(())
 
       except recipe_api.InfraFailure as f:
         result = infra_failure_result(f)

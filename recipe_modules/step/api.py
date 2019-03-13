@@ -6,7 +6,6 @@
 etc.)."""
 
 import contextlib
-import copy
 import types
 
 from recipe_engine import recipe_api
@@ -22,8 +21,6 @@ class StepApi(recipe_api.RecipeApiPlain):
 
   def __init__(self, step_properties, **kwargs):
     super(StepApi, self).__init__(**kwargs)
-    self._step_names = {}
-    self._seen_steps = set()
     self._prefix_path = step_properties.get('prefix_path', [])
 
   EXCEPTION = 'EXCEPTION'
@@ -112,12 +109,14 @@ class StepApi(recipe_api.RecipeApiPlain):
     within this with statement will be hidden from the UI by default under this
     dummy step in a collapsible hierarchy. Nested blocks can also nest within
     each other.
-
-    The nesting is implemented by adjusting the 'name' and 'nest_level' fields
-    of the context (see the context() method above).
     """
-    step_result = self(name, [])
-    with self.m.context(name_prefix=name, increment_nest_level=True):
+    dedup_name_tokens = self.m.context.record_step_name(name)
+    # We use a raw step runner here because we need the same deduplicated name
+    # for the step as well as the context namespace, and using `self` is tricky.
+    step_result = self.step_client.run_step(self.step_client.StepConfig(
+      name_tokens=dedup_name_tokens,
+    ))
+    with self.m.context(namespace=dedup_name_tokens[-1]):
       yield step_result
 
   @property
@@ -164,25 +163,10 @@ class StepApi(recipe_api.RecipeApiPlain):
 
     Returns a `types.StepData` for the running step.
     """
-    # Calculate our full step name. If a step already has that name, add an
-    # index to the end of it.
-    #
-    # Note that another step could exist with that index already added to it
-    # by the user. If this happens, we'll continue appending indexes until we
-    # have a unique step name.
-    with self.m.context(name_prefix=name):
-      base_name = self.m.context.name_prefix
-    name_suffix = ''
+    if '|' in name:
+      raise ValueError('Reserved character "|" in name')
 
-    while True:
-      full_name = base_name + name_suffix
-      if full_name not in self._seen_steps:
-        break
-
-      step_count = self._step_names.setdefault(full_name, 1) + 1
-      self._step_names[full_name] = step_count
-      name_suffix = ' (%d)' % step_count
-    self._seen_steps.add(full_name)
+    name_tokens = self.m.context.record_step_name(name)
 
     assert isinstance(cmd, (types.NoneType, list))
     if cmd is not None:
@@ -203,8 +187,7 @@ class StepApi(recipe_api.RecipeApiPlain):
       ok_ret = self.step_client.StepConfig.ALL_OK
 
     return self.step_client.run_step(self.step_client.StepConfig(
-        name=full_name,
-        base_name=full_name or name,
+        name_tokens=name_tokens,
         cmd=cmd,
         cwd=cwd,
         env=self.m.context.env,
@@ -226,7 +209,6 @@ class StepApi(recipe_api.RecipeApiPlain):
         stdin=stdin,
         ok_ret=ok_ret,
         step_test_data=step_test_data,
-        nest_level=self.m.context.nest_level,
     ))
 
   def _make_trigger_spec(self, trig):

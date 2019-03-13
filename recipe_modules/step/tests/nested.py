@@ -16,10 +16,11 @@ def RunSteps(api):
       api.step('wait a bit', ['sleep', '1'])
 
     # Prefix the name without indenting.
-    with api.context(name_prefix='attempt number'):
+    with api.context(name_prefix='attempt number: '):
       step_result = api.step('one', ['echo', 'herpy'])
-      expected_name = 'complicated thing.attempt number.one'
-      assert step_result.step['name'] == expected_name, step_result.step['name']
+      sc = step_result.step_config
+      expected_name = ('complicated thing', 'attempt number: one')
+      assert sc.name_tokens == expected_name, sc.name_tokens
       api.step('two', ['echo', 'derpy'])
 
   # Outer nested step's status should not inherit from inner.
@@ -38,7 +39,32 @@ def RunSteps(api):
   assert nest_step.presentation.status == api.step.FAILURE, \
     nest_step.presentation.status
 
+  # Duplicate nesting names with unique child steps
+  for i in xrange(3):
+    with api.step.nest('Do Iteration'):
+      api.step('Iterate %d' % i, ['echo', 'lerpy'])
+
   api.step('simple thing', ['sleep', '1'])
+
+  # Show interaction between name_prefix and namespace.
+  with api.context(name_prefix='cool '):
+    api.step('something', ['echo', 'something'])
+
+    with api.context(namespace='world', name_prefix='hot '):
+      api.step('other', ['echo', 'other'])
+
+      with api.context(name_prefix='tamale '):
+        api.step('yowza', ['echo', 'yowza'])
+
+    with api.context(namespace='ocean'):
+      api.step('mild', ['echo', 'mild'])
+
+  # Note that "|" is a reserved character:
+  try:
+    api.step('cool|step', ['echo', 'hi'])
+    assert False  # pragma: no cover
+  except ValueError:
+    pass
 
 
 def GenTests(api):

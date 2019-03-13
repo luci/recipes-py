@@ -25,7 +25,7 @@
       "echo",
       "herpy"
     ],
-    "name": "complicated thing.attempt number.one",
+    "name": "complicated thing.attempt number: one",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -35,7 +35,7 @@
       "echo",
       "derpy"
     ],
-    "name": "complicated thing.attempt number.two",
+    "name": "complicated thing.attempt number: two",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -74,11 +74,90 @@
     ]
   },
   {
+    "cmd": [],
+    "name": "Do Iteration"
+  },
+  {
+    "cmd": [
+      "echo",
+      "lerpy"
+    ],
+    "name": "Do Iteration.Iterate 0",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "Do Iteration (2)"
+  },
+  {
+    "cmd": [
+      "echo",
+      "lerpy"
+    ],
+    "name": "Do Iteration (2).Iterate 1",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "Do Iteration (3)"
+  },
+  {
+    "cmd": [
+      "echo",
+      "lerpy"
+    ],
+    "name": "Do Iteration (3).Iterate 2",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
     "cmd": [
       "sleep",
       "1"
     ],
     "name": "simple thing"
+  },
+  {
+    "cmd": [
+      "echo",
+      "something"
+    ],
+    "name": "cool something"
+  },
+  {
+    "cmd": [
+      "echo",
+      "other"
+    ],
+    "name": "cool world.hot other",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "yowza"
+    ],
+    "name": "cool world.hot tamale yowza",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "mild"
+    ],
+    "name": "cool ocean.mild",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "jsonResult": null,

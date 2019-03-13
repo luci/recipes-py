@@ -107,7 +107,8 @@ class FrozenDict(collections.Mapping):
 class StepPresentation(object):
   STATUSES = set(('SUCCESS', 'FAILURE', 'WARNING', 'EXCEPTION'))
 
-  def __init__(self):
+  def __init__(self, step_name):
+    self._name = step_name
     self._finalized = False
 
     self._logs = collections.OrderedDict()
@@ -124,7 +125,7 @@ class StepPresentation(object):
 
   @status.setter
   def status(self, val):  # pylint: disable=E0202
-    assert not self._finalized
+    assert not self._finalized, 'Changing finalized step %r' % self._name
     assert val in self.STATUSES
     self._status = val
 
@@ -134,7 +135,7 @@ class StepPresentation(object):
 
   @step_text.setter
   def step_text(self, val):
-    assert not self._finalized
+    assert not self._finalized, 'Changing finalized step %r' % self._name
     self._step_text = val
 
   @property
@@ -143,13 +144,12 @@ class StepPresentation(object):
 
   @step_summary_text.setter
   def step_summary_text(self, val):
-    assert not self._finalized
+    assert not self._finalized, 'Changing finalized step %r' % self._name
     self._step_summary_text = val
 
   @property
   def logs(self):
-    assert not self._finalized, (
-      'presentation.logs is not visible after step finalization')
+    assert not self._finalized, 'Reading logs afetr finalized %r' % self._name
     return self._logs
 
   @property
@@ -168,7 +168,7 @@ class StepPresentation(object):
 
   @properties.setter
   def properties(self, val):  # pylint: disable=E0202
-    assert not self._finalized
+    assert not self._finalized, 'Changing finalized step %r' % self._name
     assert isinstance(val, dict)
     self._properties = val
 
@@ -211,7 +211,7 @@ class StepData(object):
     self._step_config = step_config
     self._retcode = retcode
 
-    self._presentation = StepPresentation()
+    self._presentation = StepPresentation(step_config.name)
     if step_config.ok_ret is StepData.ALL_OK or retcode in step_config.ok_ret:
       self._presentation.status = 'SUCCESS'
     else:
@@ -223,8 +223,18 @@ class StepData(object):
     self.abort_reason = None
 
   @property
+  def step_config(self):
+    return self._step_config
+
+  @property
   def step(self):
-    return dict((k, v) for k, v in self._step_config._asdict().iteritems() if v)
+    """DEPRECATED: For backward compatibility only.
+
+    Use step_config instead."""
+    # TODO(iannucci): remove this
+    return {
+      'name': self._step_config.name,
+    }
 
   @property
   def retcode(self):

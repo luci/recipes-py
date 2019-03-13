@@ -22,7 +22,6 @@ import tempfile
 import time
 
 from .. import recipe_api
-from .. import util
 
 
 def output_iter(stream, it):
@@ -94,10 +93,12 @@ class StreamEngine(object):
     def set_manifest_link(self, name, sha256, url):
       raise NotImplementedError()
 
-  def make_step_stream(self, name, **kwargs):
-    """Shorthand for creating a step stream from a step configuration dict."""
-    kwargs['name'] = name
-    return self.new_step_stream(recipe_api.StepClient.StepConfig(**kwargs))
+  def make_step_stream(self, name):
+    """Shorthand for creating a root-level step stream."""
+    # TODO(iannucci): remove this method
+    return self.new_step_stream(recipe_api.StepClient.StepConfig(
+        name_tokens=(name,)
+    ))
 
   def new_step_stream(self, step_config):
     """Creates a new StepStream in this engine.
@@ -429,9 +430,10 @@ class AnnotatorStreamEngine(StreamEngine):
     else:
       stream = self.StepStream(self, outstream, step_config.name)
 
-    if step_config.nest_level > 0:
+    if len(step_config.name_tokens) > 1:
       # Emit our current nest level, if we are nested.
-      stream.output_annotation('STEP_NEST_LEVEL', str(step_config.nest_level))
+      stream.output_annotation(
+          'STEP_NEST_LEVEL', str(len(step_config.name_tokens)-1))
     return stream
 
 class QuietAnnotatorStreamEngine(AnnotatorStreamEngine):

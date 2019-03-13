@@ -7,6 +7,7 @@ import cStringIO
 
 import test_env
 
+from recipe_engine import recipe_api
 from recipe_engine.internal import stream
 
 
@@ -29,19 +30,6 @@ class StreamTest(test_env.RecipeEngineUnitTest):
     foo.add_step_summary_text('read a killer poem and took a bow')
     foo.trigger('{"builderName":["bar\'s fantasies"]}')
     foo.close()
-
-    # TODO(luqui): N.B. stream interleaving is not really possible with
-    # subannotations, since the subannotator stream could have changed the
-    # active step.  To do this right we would need to parse and re-emit
-    # subannotations.
-    bars_baby = engine.make_step_stream(
-        'bar\'s baby',
-        allow_subannotations=True,
-        nest_level=1)
-    bars_baby.write_line('I\'m in bar\'s imagination!!')
-    bars_baby.write_line('@@@STEP_WARNINGS@@@')
-    bars_baby.reset_subannotation_state()
-    bars_baby.close()
 
     bar.set_build_property('is_babycrazy', 'true')
     bar.write_line('bar tries to kiss foo, but foo already left')
@@ -75,16 +63,6 @@ foo begins to read a poem
 @@@STEP_LINK@read it online!@https://foospoemtobar.com/@@@
 @@@STEP_SUMMARY_TEXT@read a killer poem and took a bow@@@
 @@@STEP_TRIGGER@{"builderName":["bar's fantasies"]}@@@
-@@@CURRENT_TIMESTAMP@123@@@
-@@@STEP_CLOSED@@@
-@@@SEED_STEP@bar's baby@@@
-@@@STEP_CURSOR@bar's baby@@@
-@@@CURRENT_TIMESTAMP@123@@@
-@@@STEP_STARTED@@@
-@@@STEP_NEST_LEVEL@1@@@
-I'm in bar's imagination!!
-@@@STEP_WARNINGS@@@
-@@@STEP_CURSOR@bar's baby@@@
 @@@CURRENT_TIMESTAMP@123@@@
 @@@STEP_CLOSED@@@
 @@@STEP_CURSOR@bar@@@

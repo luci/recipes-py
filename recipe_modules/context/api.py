@@ -10,8 +10,8 @@ The pieces of information which can be modified are:
   * env - The environment variables.
   * infra_step - Whether or not failures should be treated as infrastructure
     failures vs. normal failures.
-  * name_prefix - A prefix for all step names.
-  * nest_level - An indicator for the UI of how deeply to nest steps.
+  * namespace - A nesting namespace for all steps.
+  * name_prefix - A prefix for all step names (within the current namespace).
 
 The values here are all scoped using Python's `with` statement; there's no
 mechanism to make an open-ended adjustment to these values (i.e. there's no way
@@ -30,12 +30,9 @@ with api.context(cwd=api.path['start_dir'].join('subdir')):
 
 
 import collections
-import os
-import types
 
 from contextlib import contextmanager
 
-from recipe_engine import recipe_api
 from recipe_engine.config_types import Path
 from recipe_engine.recipe_api import RecipeApi
 
@@ -50,20 +47,24 @@ class ContextApi(RecipeApi):
 
   # TODO(iannucci): move implementation of these data directly into this class.
   def __init__(self, **kwargs):
-    super(RecipeApi, self).__init__(**kwargs)
+    super(ContextApi, self).__init__(**kwargs)
 
     self._cwd = [None]
     self._env_prefixes = [{}]
     self._env_suffixes = [{}]
     self._env = [{}]
     self._infra_step = [False]
-    self._name_prefix = ['']
-    # this could be a number, but it makes the logic easier to use a stack.
-    self._nest_level = [0]
+
+    # _raw_namespace is a combination of the actual namespace and 'name_prefix'
+    self._raw_namespace = [('',)]
+
+    # Map of namespace_tuple -> {step_name: int} to deduplicate `step_name`s
+    # within a namespace.
+    self._step_names = {}
 
   @contextmanager
   def __call__(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None,
-               increment_nest_level=None, infra_steps=None, name_prefix=None):
+               infra_steps=None, name_prefix=None, namespace=None):
     """Allows adjustment of multiple context values in a single call.
 
     Args:
@@ -75,29 +76,34 @@ class ContextApi(RecipeApi):
       * env_suffixes (dict) - Environmental variable suffix augmentations. See
           below for more info.
       * env (dict) - Environmental variable overrides. See below for more info.
-      * increment_nest_level (True) - increment the nest level by 1 in this
-        context. Typically you won't directly interact with this, but should
-        use api.step.nest instead.
       * infra_steps (bool) - if steps in this context should be considered
         infrastructure steps. On failure, these will raise InfraFailure
         exceptions instead of StepFailure exceptions.
+      * namespace (basestring) - Nest steps under this additional namespace.
+        Resets the name_prefix.
       * name_prefix (basestring) - A string to prepend to the names of all
-        steps in this context. These compose with '.' characters if multiple
-        name prefix contexts occur. See below for more info.
+        steps and sub-namespaces within the current namespace. If there's
+        already a name_prefix defined in the context, this appends to it.
 
-    Name prefixes:
-
-    Multiple invocations concatenate values with '.'.
+    Name prefixes and namespaces:
 
     Example:
     ```python
-    with api.context(name_prefix='hello'):
-      # has name 'hello.something'
+    with api.context(name_prefix='cool '):
+      # has name 'cool something'
       api.step('something', ['echo', 'something'])
 
-      with api.context(name_prefix='world'):
-        # has name 'hello.world.other'
+      with api.context(namespace='world', name_prefix='hot '):
+        # has name 'cool world|hot other'
         api.step('other', ['echo', 'other'])
+
+        with api.context(name_prefix='tamale '):
+          # has name 'cool world|hot tamale yowza'
+          api.step('yowza', ['echo', 'yowza'])
+
+      with api.context(namespace='ocean'):
+        # has name 'cool ocean|mild'
+        api.step('other', ['echo', 'mild'])
     ```
 
     Environmental Variable Overrides:
@@ -120,8 +126,6 @@ class ContextApi(RecipeApi):
     specified and a value is also defined in "env", the value will be installed
     as the last path component if it is not empty.
 
-    **TODO(iannucci): combine nest_level and name_prefix**
-
     Look at the examples in "examples/" for examples of context module usage.
     """
     to_pop = []
@@ -137,18 +141,35 @@ class ContextApi(RecipeApi):
       check_type('infra_steps', infra_steps, bool)
       _push(self._infra_step, infra_steps)
 
-    if increment_nest_level is not None:
-      check_type('increment_nest_level', increment_nest_level, bool)
-      if not increment_nest_level:
-        raise ValueError('increment_nest_level=False makes no sense')
-      _push(self._nest_level, self.nest_level+1)
+    # Namespace and name_prefix are interrelated:
+    #   * a new namespace makes the tail of `namespace` look like:
+    #        (..., cur_prefix + namespace, '')
+    #   * a new name_prefix makes the tail of `namespace` look like:
+    #        (..., cur_prefix + name_prefix)
+    #
+    # So, if both are specified then we need to apply the namespace followed by
+    # the name_prefix, but only push one new entry to our state.
+    # BEGIN namespace handling {{{
+    new_namespace = None
+    if namespace is not None:
+      check_type('namespace', namespace, basestring)
+      if '|' in namespace:
+        raise ValueError('Reserved character "|" in namespace.')
+      cur_ns = self.namespace
+      base_ns, cur_prefix = cur_ns[:-1], cur_ns[-1]
+      new_namespace = base_ns + (cur_prefix + str(namespace), '')
 
     if name_prefix is not None:
       check_type('name_prefix', name_prefix, basestring)
-      cur = self.name_prefix
-      if cur:
-        name_prefix = '%s.%s' % (cur, name_prefix)
-      _push(self._name_prefix, str(name_prefix))
+      if '|' in name_prefix:
+        raise ValueError('Reserved character "|" in name_prefix.')
+      cur_ns = new_namespace or self.namespace
+      base_ns, cur_prefix = cur_ns[:-1], cur_ns[-1]
+      new_namespace = base_ns + (cur_prefix + str(name_prefix),)
+
+    if new_namespace:
+      _push(self._raw_namespace, new_namespace)
+    # }}} END namespace handling
 
     if env_prefixes is not None and len(env_prefixes) > 0:
       check_type('env_prefixes', env_prefixes, dict)
@@ -263,22 +284,32 @@ class ContextApi(RecipeApi):
     return self._infra_step[-1]
 
   @property
-  def name_prefix(self):
-    """Gets the current step name prefix.
+  def namespace(self):
+    """Gets the current namespace.
 
-    **Returns (str)** - The string prefix that every step will have prepended to
-    it.
+    **Returns (Tuple[str])** - The current step namespace plus name prefix for
+    nesting.
     """
-    return self._name_prefix[-1]
+    return self._raw_namespace[-1]
 
-  @property
-  def nest_level(self):
-    """Returns the current 'nesting' level.
+  def record_step_name(self, name):
+    """Records a step name in the current namespace.
 
-    Note: This api is low-level, and you should always prefer to use
-    `api.step.nest`. This api is included for completeness and documentation
-    purposes.
+    Args:
+      * name (str) - The name of the step we want to run in the current context.
 
-    **Returns (int)** - The current nesting level.
+    Returns Tuple[str] of the step name_tokens that should ACTUALLY run.
+
+    Side-effect: Updates global tracking state for this step name.
     """
-    return self._nest_level[-1]
+    cur_ns = self.namespace
+    base_ns, cur_prefix = cur_ns[:-1], cur_ns[-1]
+    name = cur_prefix + name
+    dedup_name = name
+
+    cur_state = self._step_names.setdefault(base_ns, {})
+    cur_count = cur_state.setdefault(name, 0)
+    if cur_count:
+      dedup_name = name + ' (%d)' % (cur_count + 1)
+    cur_state[name] += 1
+    return base_ns + (dedup_name,)
