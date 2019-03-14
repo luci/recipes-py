@@ -12,13 +12,12 @@ from PB.go.chromium.org.luci.buildbucket.proto.build import Build
 
 from ....third_party import luci_context
 
-from ...step_runner.subproc import SubprocessStepRunner
-from ...stream import StreamEngineInvariants
-
 from ...engine import run_steps
+from ...step_runner.subproc import SubprocessStepRunner
+from ...stream.invariants import StreamEngineInvariants
+from ...stream.luci import LUCIStreamEngine
 
 from . import RunBuildContractViolation
-from .stream import LUCIStreamEngine
 
 
 LOG = logging.getLogger(__name__)

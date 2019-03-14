@@ -18,7 +18,8 @@ from ...engine import run_steps
 from ...exceptions import RecipeUsageError
 from ...recipe_deps import Recipe
 from ...step_runner.subproc import SubprocessStepRunner
-from ...stream import AnnotatorStreamEngine, StreamEngineInvariants
+from ...stream.annotator import AnnotatorStreamEngine
+from ...stream.invariants import StreamEngineInvariants
 
 
 def handle_recipe_return(recipe_result, result_filename, stream_engine):

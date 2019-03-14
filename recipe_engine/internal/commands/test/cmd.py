@@ -36,9 +36,10 @@ from PB.recipe_engine.test_result import TestResult
 from .... import config_types
 
 from ... import magic_check_fn
-from ... import stream
 from ...engine import RecipeEngine
 from ...step_runner.sim import SimulationStepRunner
+from ...stream.annotator import AnnotatorStreamEngine
+from ...stream.invariants import StreamEngineInvariants
 
 from ..doc.cmd import regenerate_docs
 
@@ -331,7 +332,7 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
   test_data = _GEN_TEST_CACHE[(recipe_name, test_name)]
 
   annotator = SimulationAnnotatorStreamEngine()
-  with stream.StreamEngineInvariants.wrap(annotator) as stream_engine:
+  with StreamEngineInvariants.wrap(annotator) as stream_engine:
     runner = SimulationStepRunner(stream_engine, test_data, annotator)
 
     props = test_data.properties.copy()
@@ -802,7 +803,7 @@ def run_run(test_filter, jobs, json_file, mode):
   return rc
 
 
-class SimulationAnnotatorStreamEngine(stream.AnnotatorStreamEngine):
+class SimulationAnnotatorStreamEngine(AnnotatorStreamEngine):
   """Stream engine which just records generated commands."""
 
   def __init__(self):

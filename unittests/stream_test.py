@@ -7,8 +7,8 @@ import cStringIO
 
 import test_env
 
-from recipe_engine import recipe_api
-from recipe_engine.internal import stream
+from recipe_engine.internal.stream.annotator import AnnotatorStreamEngine
+from recipe_engine.internal.stream.invariants import StreamEngineInvariants
 
 
 class StreamTest(test_env.RecipeEngineUnitTest):
@@ -80,7 +80,7 @@ bar tries to kiss foo, but foo already left
 
   def test_example(self):
     stringio = cStringIO.StringIO()
-    engine = stream.AnnotatorStreamEngine(
+    engine = AnnotatorStreamEngine(
         stringio, emit_timestamps=True, time_fn=self.fake_time)
     with engine:
       self._example(engine)
@@ -90,46 +90,46 @@ bar tries to kiss foo, but foo already left
         self._example_annotations().splitlines())
 
   def test_example_wellformed(self):
-    with stream.StreamEngineInvariants() as engine:
+    with StreamEngineInvariants() as engine:
       self._example(engine)
 
   def test_product_with_invariants_on_example(self):
     stringio = cStringIO.StringIO()
-    engine = stream.StreamEngineInvariants.wrap(
-        stream.AnnotatorStreamEngine(
+    engine = StreamEngineInvariants.wrap(
+        AnnotatorStreamEngine(
             stringio, emit_timestamps=True, time_fn=self.fake_time))
     with engine:
       self._example(engine)
     self.assertEqual(stringio.getvalue(), self._example_annotations())
 
   def test_write_after_close(self):
-    with stream.StreamEngineInvariants() as engine:
+    with StreamEngineInvariants() as engine:
       foo = engine.make_step_stream('foo')
       foo.close()
       with self.assertRaises(AssertionError):
         foo.write_line('no')
 
   def test_log_still_open(self):
-    with stream.StreamEngineInvariants() as engine:
+    with StreamEngineInvariants() as engine:
       foo = engine.make_step_stream('foo')
       log = foo.new_log_stream('log')
       with self.assertRaises(AssertionError):
         foo.close()
 
   def test_no_write_multiple_lines(self):
-    with stream.StreamEngineInvariants() as engine:
+    with StreamEngineInvariants() as engine:
       foo = engine.make_step_stream('foo')
       with self.assertRaises(AssertionError):
         foo.write_line('one thing\nand another!')
 
   def test_invalid_status(self):
-    with stream.StreamEngineInvariants() as engine:
+    with StreamEngineInvariants() as engine:
       foo = engine.make_step_stream('foo')
       with self.assertRaises(AssertionError):
         foo.set_step_status('SINGLE')
 
   def test_buildbot_status_constraint(self):
-    with stream.StreamEngineInvariants() as engine:
+    with StreamEngineInvariants() as engine:
       foo = engine.make_step_stream('foo')
       foo.set_step_status('FAILURE')
       with self.assertRaises(AssertionError):

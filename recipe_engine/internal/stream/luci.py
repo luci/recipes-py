@@ -3,8 +3,9 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import logging
 import json
+import logging
+import textwrap
 
 import attr
 
@@ -15,16 +16,49 @@ from PB.go.chromium.org.luci.buildbucket.proto.build import Build
 from PB.go.chromium.org.luci.buildbucket.proto.step import Step
 from PB.go.chromium.org.luci.buildbucket.proto import common
 
-from ....recipe_api import StepClient, InfraFailure
-from ....third_party import logdog
+from ...recipe_api import StepClient, InfraFailure
+from ...third_party import logdog
 
-from ...stream import StreamEngine
-from ...attr_util import attr_type
+from ..attr_util import attr_type
 
-from .markdown_writer import LUCIStepMarkdownWriter
+from . import StreamEngine
 
 
 LOG = logging.getLogger(__name__)
+
+
+@attr.s
+class LUCIStepMarkdownWriter(object):
+  _step_text = attr.ib(default='')
+  def add_step_text(self, text):
+    self._step_text += text
+
+  _step_summary_text = attr.ib(default='')
+  def add_step_summary_text(self, text):
+    self._step_summary_text += text
+
+  _step_links = attr.ib(factory=list)
+  def add_step_link(self, linkname, link):
+    self._step_links.append((linkname, link))
+
+  def render(self):
+    escape_parens = lambda link: link.replace('(', r'\(').replace(')', r'\)')
+
+    paragraphs = []
+
+    if self._step_summary_text:
+      paragraphs.append(self._step_summary_text)
+
+    if self._step_text:
+      paragraphs.append(self._step_text)
+
+    if self._step_links:
+      paragraphs.append(
+          '\n'.join(
+              '  * [%s](%s)' % (name, escape_parens(link))
+              for name, link in self._step_links))
+
+    return '\n\n'.join(paragraphs)
 
 
 @attr.s
@@ -327,3 +361,5 @@ class LUCIStreamEngine(StreamEngine):
   def was_successful(self):
     """Used by run_build to set the recipe engine's returncode."""
     return self._build_proto.status == common.SUCCESS
+
+
