@@ -9,13 +9,27 @@ This tool operates on the nearest ancestor directory containing an
 infra/config/recipes.cfg.
 """
 
-import sys
+# Hacks!
 
+# Hack 1; Change default encoding.
 # This is necessary to ensure that str literals are by-default assumed to hold
 # utf-8. It also makes the implicit str(unicode(...)) act like
 # unicode(...).encode('utf-8'), rather than unicode(...).encode('ascii') .
+import sys
 reload(sys)
 sys.setdefaultencoding('UTF8')
+
+# Hack 2; Lookup all available codecs (crbug.com/932259).
+def _hack_lookup_codecs():
+  import encodings
+  import pkgutil
+  import codecs
+  for _, name, _ in pkgutil.iter_modules(encodings.__path__):
+    if name in ('aliases', 'mbcs'):
+      continue
+    codecs.lookup(name)
+_hack_lookup_codecs()
+del _hack_lookup_codecs
 
 # pylint: disable=wrong-import-position
 import os
