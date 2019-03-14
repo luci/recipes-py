@@ -7,12 +7,13 @@ import os
 
 import test_env
 
-from recipe_engine.internal import step_runner
+from recipe_engine.internal.step_runner import merge_envs
+from recipe_engine.internal.step_runner.subproc import _streamingLinebuf
 
 
 class TestLinebuf(test_env.RecipeEngineUnitTest):
   def test_add_partial(self):
-    lb = step_runner._streamingLinebuf()
+    lb = _streamingLinebuf()
     lb.ingest("blarf")
     self.assertEqual([], lb.get_buffered())
 
@@ -20,7 +21,7 @@ class TestLinebuf(test_env.RecipeEngineUnitTest):
     self.assertEqual("blarf", lb.extra.getvalue())
 
   def test_add_whole(self):
-    lb = step_runner._streamingLinebuf()
+    lb = _streamingLinebuf()
     lb.ingest("blarf\n")
     self.assertEqual(["blarf"], lb.get_buffered())
 
@@ -28,7 +29,7 @@ class TestLinebuf(test_env.RecipeEngineUnitTest):
     self.assertEqual("", lb.extra.getvalue())
 
   def test_add_partial_whole(self):
-    lb = step_runner._streamingLinebuf()
+    lb = _streamingLinebuf()
     lb.ingest("foof\nfleem\nblarf")
     self.assertEqual(["foof", "fleem"], lb.get_buffered())
 
@@ -39,7 +40,7 @@ class TestLinebuf(test_env.RecipeEngineUnitTest):
     self.assertEqual("wat", lb.extra.getvalue())
 
   def test_leftovers(self):
-    lb = step_runner._streamingLinebuf()
+    lb = _streamingLinebuf()
 
     lb.ingest("nerds")
     self.assertEqual([], lb.get_buffered())
@@ -65,8 +66,7 @@ class TestMergeEnvs(test_env.RecipeEngineUnitTest):
     return os.pathsep.join(parts)
 
   def _merge(self, overrides, prefixes, suffixes):
-    return step_runner._merge_envs(self.original, overrides, prefixes, suffixes,
-                                   os.pathsep)
+    return merge_envs(self.original, overrides, prefixes, suffixes, os.pathsep)
 
   def test_nothing_to_do(self):
     self.assertEqual(

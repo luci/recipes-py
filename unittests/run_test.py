@@ -13,7 +13,7 @@ import time
 
 import test_env
 
-from recipe_engine.internal import step_runner
+from recipe_engine.internal.step_runner.subproc import _shell_quote
 
 
 class RunTest(test_env.RecipeEngineUnitTest):
@@ -132,7 +132,7 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
   def test_shell_quote(self):
     # For regular-looking commands we shouldn't need any specialness.
     self.assertEqual(
-        step_runner._shell_quote('/usr/bin/python-wrapper.bin'),
+        _shell_quote('/usr/bin/python-wrapper.bin'),
         '/usr/bin/python-wrapper.bin')
 
     STRINGS = [
@@ -145,7 +145,7 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     ]
 
     for s in STRINGS:
-      quoted = step_runner._shell_quote(s)
+      quoted = _shell_quote(s)
 
       # We shouldn't ever get an actual newline in a command, that's awful
       # for copypasta.

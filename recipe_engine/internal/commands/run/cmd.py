@@ -25,7 +25,7 @@ from .... import util
 
 from ...exceptions import RecipeUsageError
 from ...recipe_deps import Recipe
-from ...step_runner import SubprocessStepRunner
+from ...step_runner.subproc import SubprocessStepRunner
 from ...stream import AnnotatorStreamEngine, StreamEngineInvariants
 
 

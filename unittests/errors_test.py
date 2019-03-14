@@ -116,13 +116,13 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
     deps = self.FakeRecipeDeps()
     with deps.main_repo.write_recipe('print_step_error') as recipe:
       recipe.imports = [
-        'from recipe_engine.internal import step_runner'
+        'from recipe_engine.internal.step_runner import subproc'
       ]
       recipe.RunSteps.write('''
         def bad_print_step(self, step_stream, step, env):
           raise Exception("Buh buh buh buh bad to the bone")
 
-        step_runner.SubprocessStepRunner._print_step = bad_print_step
+        subproc.SubprocessStepRunner._print_step = bad_print_step
         try:
           api.step('Be good', ['echo', 'Sunshine, lollipops, and rainbows'])
         finally:
