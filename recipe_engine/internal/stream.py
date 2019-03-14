@@ -493,68 +493,6 @@ class AnnotatorStreamEngine(StreamEngine):
           'STEP_NEST_LEVEL', str(len(step_config.name_tokens)-1))
     return stream
 
-class QuietAnnotatorStreamEngine(AnnotatorStreamEngine):
-  def __init__(self, outstream, emit_timestamps=False, time_fn=None,
-               tempdir=None):
-    super(QuietAnnotatorStreamEngine, self).__init__(
-        outstream, emit_timestamps, time_fn)
-    self._tempdir = tempdir
-
-  @staticmethod
-  def write_annotation(outstream, *args):
-    ignored = {
-        'STEP_CURSOR',
-        'HONOR_ZERO_RETURN_CODE',
-    }
-    if args[0] in ignored:
-      return
-    title = {
-        'STEP_TEXT': 'Step text:',
-        'STEP_STARTED': '-' * 13,
-        'SET_BUILD_PROPERTY': 'SET BUILD PROPERTY:',
-        'STEP_EXCEPTION': 'STEP EXCEPTION',
-        'STEP_FAILURE': 'STEP FAILURE',
-        'SEED_STEP': 'STARTED STEP:',
-        'STEP_CLOSED': 'FINISHED STEP',
-    }.get(args[0])
-    if title:
-      outstream.flush()
-      outstream.write(' '.join((title,) + args[1:]) + '\n')
-      outstream.flush()
-    else:
-      AnnotatorStreamEngine.write_annotation(outstream, *args)
-
-  class StepStream(AnnotatorStreamEngine.StepStream):
-    def new_log_stream(self, log_name):
-      return self._engine.StepLogStream(self, log_name, self._engine._tempdir)
-
-  class StepLogStream(AnnotatorStreamEngine.StepLogStream):
-    def __init__(self, step_stream, log_name, tempdir):
-      super(QuietAnnotatorStreamEngine.StepLogStream, self).__init__(
-          step_stream, log_name)
-      self._step_stream = step_stream
-      self._log_name = log_name.replace('/', '&#x2f;')
-      self._tempdir = tempdir
-      if self._tempdir:
-        _, self._quiet_log_location = tempfile.mkstemp(dir=self._tempdir)
-        self._quiet_log_f = open(self._quiet_log_location, 'w')
-
-    def write_line(self, line):
-      if not self._tempdir:
-        super(QuietAnnotatorStreamEngine.StepLogStream, self).write_line(line)
-        return
-
-      self._quiet_log_f.write(line+'\n')
-
-    def close(self):
-      if not self._tempdir:
-        super(QuietAnnotatorStreamEngine.StepLogStream, self).close()
-        return
-
-      self._step_stream.write_line('STEP LOG:\'%s\' has been written to %s' % (
-          self._log_name, self._quiet_log_location))
-
-
 
 def encode_str(s):
   """Tries to encode a string into a python str type.
