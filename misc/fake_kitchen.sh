@@ -40,7 +40,7 @@
 # [1]: https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto
 # [2]: https://chromium.googlesource.com/infra/luci/luci-go/+/refs/heads/master/logdog/client/cmd/logdog_butler
 
-ROOT="$(realpath $(git rev-parse --show-toplevel))"
+ROOT="$(realpath "$(git rev-parse --show-toplevel)")"
 WD="$ROOT/workdir"
 
 echo "Clean workdir."
@@ -51,8 +51,9 @@ mkdir -p "$WD/tmp" "$WD/cache" "$WD/wd" "$WD/luci_context"
 unset LS_COLORS
 export TMP="$WD/tmp"
 export LOGDOG_NAMESPACE=u
+export LOGDOG_COORDINATOR_HOST=logs.example.com
 export LUCI_CONTEXT="$WD/luci_context/context.json"
-cat > $LUCI_CONTEXT <<EOF
+cat > "$LUCI_CONTEXT" <<EOF
 {
   "run_build": {
     "cache_dir": "$WD/cache"
@@ -75,11 +76,12 @@ esac
 # Set startdir to an empty dir.
 # Set up a local fifo for butler to serve on.
 # Actaully run the recipes.
-$ROOT/misc/build_proto.py | \
+"$ROOT/misc/build_proto.py" | \
     logdog_butler -project local                              \
     -output directory,path="$WD/logs"                         \
     run -stdout=name=stdout -stderr=name=stderr               \
     -forward-stdin                                            \
     -chdir="$WD/wd"                                           \
     -streamserver-uri="$STREAMSERVER"                         \
-    python "$ROOT/recipes.py" -vvv run_build "$@"
+    python "$ROOT/recipes.py" -vvv                            \
+    run_build --build-proto-jsonpb "$@"

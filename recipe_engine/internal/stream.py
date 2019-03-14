@@ -18,6 +18,7 @@ can just write to without worrying.
 """
 
 import json
+import logging
 import tempfile
 import time
 
@@ -56,14 +57,25 @@ class StreamEngine(object):
       for actual_line in string.splitlines() or ['']: # preserve empty lines
         self.write_line(actual_line)
 
+    def fileno(self):
+      """If this has a real file descriptor, return it (int).
+
+      Otherwise return self."""
+      return self
+
     def close(self):
       raise NotImplementedError()
+
+    def handle_exception(self, exc_type, exc_val, exc_tb):
+      pass
 
     def __enter__(self):
       return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+      ret = self.handle_exception(exc_type, exc_val, exc_tb)
       self.close()
+      return ret
 
   class StepStream(Stream):
     def new_log_stream(self, log_name):
@@ -92,6 +104,19 @@ class StreamEngine(object):
 
     def set_manifest_link(self, name, sha256, url):
       raise NotImplementedError()
+
+    # The StepStreams that this step should use for stdout/stderr.
+    #
+    # @property
+    # def stdout(self): return StepStream
+    #
+    # @property
+    # def stderr(self): return StepStream
+    #
+    # These are omitted from the base implementation so that ProductStreamEngine
+    # will pick and return the value from real StreamEngine, not
+    # StreamEngineInvariants.
+
 
   def make_step_stream(self, name):
     """Shorthand for creating a root-level step stream."""
@@ -122,12 +147,17 @@ class StreamEngine(object):
   def close(self):
     pass
 
+  def handle_exception(self, exc_type, exc_val, exc_tb):
+    pass
+
   def __enter__(self):
     self.open()
     return self
 
-  def __exit__(self, _exc_type, _exc_val, _exc_tb):
+  def __exit__(self, exc_type, exc_val, exc_tb):
+    ret = self.handle_exception(exc_type, exc_val, exc_tb)
     self.close()
+    return ret
 
 
 class ProductStreamEngine(StreamEngine):
@@ -157,6 +187,11 @@ class ProductStreamEngine(StreamEngine):
       self._stream_a.write_line(line)
       self._stream_b.write_line(line)
 
+    def handle_exception(self, exc_type, exc_val, exc_tb):
+      ret = self._stream_a.handle_exception(exc_type, exc_val, exc_tb)
+      ret = ret or self._stream_b.handle_exception(exc_type, exc_val, exc_tb)
+      return ret
+
     def close(self):
       self._stream_a.close()
       self._stream_b.close()
@@ -173,6 +208,23 @@ class ProductStreamEngine(StreamEngine):
       return ProductStreamEngine.Stream(
           self._stream_a.new_log_stream(log_name),
           self._stream_b.new_log_stream(log_name))
+
+    @property
+    def stdout(self):
+      return getattr(
+          self._stream_a, 'stdout', getattr(
+              self._stream_b, 'stdout', self))
+
+    @property
+    def stderr(self):
+      return getattr(
+          self._stream_a, 'stderr', getattr(
+              self._stream_b, 'stderr', self))
+
+    def handle_exception(self, exc_type, exc_val, exc_tb):
+      ret = self._stream_a.handle_exception(exc_type, exc_val, exc_tb)
+      ret = ret or self._stream_b.handle_exception(exc_type, exc_val, exc_tb)
+      return ret
 
     add_step_text = _void_product('add_step_text')
     add_step_summary_text = _void_product('add_step_summary_text')
@@ -191,6 +243,11 @@ class ProductStreamEngine(StreamEngine):
   def open(self):
     self._engine_a.open()
     self._engine_b.open()
+
+  def handle_exception(self, exc_type, exc_val, exc_tb):
+    ret = self._engine_a.handle_exception(exc_type, exc_val, exc_tb)
+    ret = ret or self._engine_b.handle_exception(exc_type, exc_val, exc_tb)
+    return ret
 
   def close(self):
     self._engine_a.close()
@@ -235,7 +292,7 @@ class StreamEngineInvariants(StreamEngine):
     def new_log_stream(self, log_name):
       assert self._open
       assert log_name not in self._logs, 'Log %s already exists in step %s' % (
-          log_name, self._step_name)
+        log_name, self._step_name)
       ret = self._engine.LogStream(self, log_name)
       self._logs[log_name] = ret
       return ret

@@ -204,15 +204,18 @@ class SubprocessStepRunner(StepRunner):
         try:
           # Open file handles for IO redirection based on file names in
           # step_config.
-          handles = {
-            'stdout': step_stream,
-            'stderr': step_stream,
-            'stdin': None,
-          }
-          for key in handles:
-            fileName = getattr(step_config, key)
-            if fileName:
-              handles[key] = open(fileName, 'rb' if key == 'stdin' else 'wb')
+          handles = {}
+          fname = step_config.stdin
+          handles['stdin'] = open(fname, 'rb') if fname else None
+
+          fname = step_config.stdout
+          handles['stdout'] = (
+            open(fname, 'wb') if fname else step_stream.stdout.fileno())
+
+          fname = step_config.stderr
+          handles['stderr'] = (
+            open(fname, 'wb') if fname else step_stream.stderr.fileno())
+
           # The subprocess will inherit and close these handles.
           retcode = self._run_cmd(
               cmd=step_config.cmd, timeout=step_config.timeout, handles=handles,

@@ -2,22 +2,23 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-
 import logging
 import os
 import sys
-
-from recipe_engine.third_party import logdog, luci_context
-from recipe_engine.internal.stream import StreamEngine, StreamEngineInvariants
-from recipe_engine.internal import step_runner
-
-from ..run.cmd import run_steps
 
 from google.protobuf import json_format as jsonpb
 
 from PB.go.chromium.org.luci.buildbucket.proto.build import Build
 
+from ....third_party import luci_context
+
+from ... import step_runner
+from ...stream import StreamEngineInvariants
+
+from ..run.cmd import run_steps
+
 from . import RunBuildContractViolation
+from .stream import LUCIStreamEngine
 
 
 LOG = logging.getLogger(__name__)
@@ -60,20 +61,6 @@ def _tweak_env():
   os.environ['PYTHONIOENCODING'] = 'UTF-8'
 
 
-class LUCIStreamEngine(StreamEngine):
-  def __init__(self):
-    self._build_proto = Build()
-    bsc = logdog.bootstrap.ButlerBootstrap.probe().stream_client()
-    assert isinstance(bsc, logdog.stream.StreamClient)
-    self._stream = bsc.open_datagram(
-        'build.proto',
-        content_type='application/luci+proto; message=buildbucket.v2.Build',
-        binary_file_extension='.pb')
-
-  @property
-  def was_successful(self):
-    return 0
-
 
 def main(args):
   LOG.info('run_build started, parsing Build message from stdin.')
@@ -87,7 +74,7 @@ def main(args):
 
   _tweak_env()
 
-  run_build_engine = LUCIStreamEngine()
+  run_build_engine = LUCIStreamEngine(args.build_proto_jsonpb)
 
   with StreamEngineInvariants.wrap(run_build_engine) as stream_engine:
     run_steps(

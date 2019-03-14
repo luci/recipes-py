@@ -4,28 +4,44 @@
     "name": "names"
   },
   {
-    "cmd": [],
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/comprehensive_ui].resources/dual_output.py"
+    ],
     "name": "names.Some Name",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
-    "cmd": [],
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/comprehensive_ui].resources/dual_output.py"
+    ],
     "name": "names.Unicode Name \ud83d\udca9",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
-    "cmd": [],
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/comprehensive_ui].resources/dual_output.py"
+    ],
     "name": "names.Duplicate",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
-    "cmd": [],
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/comprehensive_ui].resources/dual_output.py"
+    ],
     "name": "names.Duplicate (2)",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -36,7 +52,11 @@
     "name": "non duplicate"
   },
   {
-    "cmd": [],
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/comprehensive_ui].resources/dual_output.py"
+    ],
     "name": "non duplicate.Duplicate",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -47,7 +67,11 @@
     "name": "nesting"
   },
   {
-    "cmd": [],
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/comprehensive_ui].resources/dual_output.py"
+    ],
     "name": "nesting.pre-deep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -61,7 +85,11 @@
     ]
   },
   {
-    "cmd": [],
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/comprehensive_ui].resources/dual_output.py"
+    ],
     "name": "nesting.deeper.deep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -75,21 +103,33 @@
     ]
   },
   {
-    "cmd": [],
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/comprehensive_ui].resources/dual_output.py"
+    ],
     "name": "nesting.deeper.\ud83d\udca9-ier.\ud83d\udca9",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@"
     ]
   },
   {
-    "cmd": [],
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/comprehensive_ui].resources/dual_output.py"
+    ],
     "name": "nesting.deeper.post \ud83d\udca9",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
-    "cmd": [],
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/comprehensive_ui].resources/dual_output.py"
+    ],
     "name": "nesting.post deep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -107,7 +147,11 @@
     ]
   },
   {
-    "cmd": [],
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/comprehensive_ui].resources/dual_output.py"
+    ],
     "name": "presentation.text.step_text",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -115,14 +159,22 @@
     ]
   },
   {
-    "cmd": [],
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/comprehensive_ui].resources/dual_output.py"
+    ],
     "name": "presentation.text.step_summary",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
-    "cmd": [],
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/comprehensive_ui].resources/dual_output.py"
+    ],
     "name": "presentation.text.all text",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -137,7 +189,11 @@
     ]
   },
   {
-    "cmd": [],
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/comprehensive_ui].resources/dual_output.py"
+    ],
     "name": "presentation.links.links",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -153,7 +209,11 @@
     ]
   },
   {
-    "cmd": [],
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/comprehensive_ui].resources/dual_output.py"
+    ],
     "name": "presentation.logs.logs",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
@@ -182,11 +242,26 @@
     ]
   },
   {
+    "cmd": [
+      "echo",
+      "OHAI"
+    ],
+    "name": "capture stdout",
+    "stdout": "/path/to/tmp/",
+    "~followup_annotations": [
+      "@@@STEP_LOG_END@stdout@@@"
+    ]
+  },
+  {
     "cmd": [],
     "name": "properties"
   },
   {
-    "cmd": [],
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/comprehensive_ui].resources/dual_output.py"
+    ],
     "name": "properties.logs",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",

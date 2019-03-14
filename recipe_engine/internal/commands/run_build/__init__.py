@@ -31,6 +31,12 @@ def add_arguments(parser):
   parser.add_argument(
       '--final-state', type=argparse.FileType('wb'),
       help='Path to write the final build.proto state to (as binary PB).')
+  parser.add_argument(
+      '--build-proto-jsonpb', action='store_true',
+      help=(
+        'If specified, output build.proto datagrams as JSONPB instead of PB. '
+        'Only for debugging.'
+      ))
 
   def _launch(args):
     from .cmd import main
