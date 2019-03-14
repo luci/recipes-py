@@ -788,7 +788,7 @@ def _resolve(recipe_deps, deps_spec, variant, engine, test_data):
   else:
     # NOTE: late import to avoid import cycle
     # NOTE: late import to avoid early protobuf import
-    from .commands.run.cmd import RecipeEngine
+    from .engine import RecipeEngine
     assert isinstance(engine, RecipeEngine)
     assert isinstance(test_data, BaseTestData)
 

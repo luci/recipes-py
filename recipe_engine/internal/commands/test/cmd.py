@@ -37,10 +37,10 @@ from .... import config_types
 
 from ... import magic_check_fn
 from ... import stream
+from ...engine import RecipeEngine
 from ...step_runner.sim import SimulationStepRunner
 
 from ..doc.cmd import regenerate_docs
-from ..run.cmd import RecipeEngine
 
 
 # These variables must be set in the dynamic scope of the functions in this

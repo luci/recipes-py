@@ -15,7 +15,7 @@ from ....third_party import luci_context
 from ...step_runner.subproc import SubprocessStepRunner
 from ...stream import StreamEngineInvariants
 
-from ..run.cmd import run_steps
+from ...engine import run_steps
 
 from . import RunBuildContractViolation
 from .stream import LUCIStreamEngine
