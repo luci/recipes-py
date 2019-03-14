@@ -11,7 +11,7 @@ from collections import OrderedDict
 import test_env
 
 from recipe_engine.internal.magic_check_fn import \
-  Checker, CheckFrame, VerifySubset
+  Checker, CheckException, CheckFrame, StepsDict, VerifySubset
 
 
 class TestChecker(test_env.RecipeEngineUnitTest):
@@ -172,6 +172,49 @@ class TestChecker(test_env.RecipeEngineUnitTest):
       self.mk('<lambda>', "map((lambda v: check((v in targ['a']))), vals)",
               {"targ['a'].keys()": "['sub']", 'v': "'whee'"}))
 
+  def test_steps_dict_implicit_check(self):
+    d = OrderedDict(foo={})
+    c = Checker('<filename>', 0, lambda: None, (), d)
+    s = StepsDict(c, d)
+    def body(check, steps_dict):
+      check('x' in steps_dict['bar']['cmd'])
+    with self.assertRaises(CheckException):
+      body(c, s)
+    self.assertEqual(len(c.failed_checks), 1)
+    self.assertEqual(len(c.failed_checks[0].frames), 2)
+    self.assertEqual(
+        self.sanitize(c.failed_checks[0].frames[0]),
+        self.mk('body', "check(('x' in steps_dict['bar']['cmd']))", None))
+    self.assertEqual(
+        self.sanitize(c.failed_checks[0].frames[1]),
+        self.mk('__getitem__', 'step_present = check((step in steps_dict))',
+                {'step': "'bar'", 'steps_dict.keys()': "['foo']"}))
+
+  def test_steps_dict_implicit_check_no_checker_in_frame(self):
+    d = OrderedDict(foo={})
+    c = Checker('<filename>', 0, lambda: None, (), d)
+    s = StepsDict(c, d)
+    def body(check, steps_dict):
+      # The failure backtrace for the implicit check should even includes frames
+      # where check isn't explicitly passed
+      def inner(steps_dict):
+        return 'x' in steps_dict['bar']['cmd']
+      check(inner(steps_dict))
+    with self.assertRaises(CheckException):
+      body(c, s)
+    self.assertEqual(len(c.failed_checks), 1)
+    self.assertEqual(len(c.failed_checks[0].frames), 3)
+    self.assertEqual(
+        self.sanitize(c.failed_checks[0].frames[0]),
+        self.mk('body', 'check(inner(steps_dict))', None))
+    self.assertEqual(
+        self.sanitize(c.failed_checks[0].frames[1]),
+        self.mk('inner', "return ('x' in steps_dict['bar']['cmd'])", None))
+    self.assertEqual(
+        self.sanitize(c.failed_checks[0].frames[2]),
+        self.mk('__getitem__', 'step_present = check((step in steps_dict))',
+                {'step': "'bar'", 'steps_dict.keys()': "['foo']"}))
+
 
 class TestVerifySubset(test_env.RecipeEngineUnitTest):
   @staticmethod
@@ -202,6 +245,12 @@ class TestVerifySubset(test_env.RecipeEngineUnitTest):
     self.assertIn(
       "type mismatch: 'list' v 'OrderedDict'",
       self.v(['hi'], self.d))
+
+  def test_steps_dict(self):
+    c = Checker('<filename>', 0, lambda: None, (), {})
+    steps_dict = StepsDict(c, self.d)
+    self.assertIsNone(self.v(self.d, steps_dict))
+    self.assertIsNone(self.v(steps_dict, self.d))
 
   def test_empty(self):
     self.assertIsNone(self.v({}, self.d))

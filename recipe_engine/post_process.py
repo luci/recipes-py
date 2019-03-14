@@ -185,10 +185,6 @@ def MustRunRE(check, step_odict, step_regex, at_least=1, at_most=None):
     check(matches <= at_most)
 
 
-def _check_step_was_run(check, step_odict, step):
-  return check('step %s was run' % step, step in step_odict)
-
-
 def _extract_step_status(check, step_odict, step):
   """Extract the status for a step.
 
@@ -201,9 +197,8 @@ def _extract_step_status(check, step_odict, step):
     A string containing one of the following values: 'success', 'failure' or
     'exception'. If the given step was not run, None will be returned.
   """
-  if not _check_step_was_run(check, step_odict, step):
-    return
-  for a in step_odict[step].get('~followup_annotations', []):
+  annotations = step_odict[step].get('~followup_annotations', [])
+  for a in annotations:
     if a == '@@@STEP_EXCEPTION@@@':
       return 'exception'
     if a == '@@@STEP_FAILURE@@@':
@@ -287,8 +282,6 @@ def StepCommandRE(check, step_odict, step, expected_patterns):
                            ['my', 'command', '.*'])
     )
   """
-  if not _check_step_was_run(check, step_odict, step):
-    return
   if not _check_cmd_was_in_step(check, step_odict, step):
     return
   cmd = step_odict[step]['cmd']
@@ -315,8 +308,6 @@ def StepCommandContains(check, step_odict, step, argument_sequence):
         return True
     return False
 
-  if not _check_step_was_run(check, step_odict, step):
-    return
   if not _check_cmd_was_in_step(check, step_odict, step):
     return
   step_cmd = step_odict[step]['cmd']
@@ -340,9 +331,8 @@ def _extract_step_text(check, step_odict, step):
     step's step_text was not found). If the given step was not run, None will
     be returned.
   """
-  if not _check_step_was_run(check, step_odict, step):
-    return
-  for a in step_odict[step].get('~followup_annotations', []):
+  annotations = step_odict[step].get('~followup_annotations', [])
+  for a in annotations:
     match = _STEP_TEXT_RE.match(a)
     if match:
       return match.group('text')
@@ -425,8 +415,6 @@ def _extract_log(check, step_odict, step, log):
     lines joined by \n. If the given step was not run or does not have the given
     log, None will be returned.
   """
-  if not _check_step_was_run(check, step_odict, step):
-    return
   logs = GetLogs(step_odict[step])
   log_lines = logs.get(log, [])
   if not check('step %s has log %s' % (step, log), log_lines):

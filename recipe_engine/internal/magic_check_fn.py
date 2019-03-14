@@ -343,23 +343,26 @@ class Checker(object):
       # this check passed
       return
 
+    # Grab all frames between (non-inclusive) the creation of the checker and
+    # self.__call__
     try:
-      frames = inspect.stack()[2:]
+      # Skip over the __call__ and _call_impl frames and order it so that
+      # innermost frame is at the bottom
+      frames = inspect.stack()[2:][::-1]
 
-      # grab all frames which have self as a local variable (e.g. frames
-      # associated with this checker), excluding self.__call__.
       try:
-        i = 0
         for i, f in enumerate(frames):
-          if self not in f[0].f_locals.itervalues():
+          # The first frame that has self in the local variables is the one
+          # where the checker is created
+          if self in f[0].f_locals.itervalues():
             break
-        keep_frames = [self._process_frame(f, j == 0)
-                       for j, f in enumerate(frames[:i-1])]
+        frames = frames[i+1:]
+
+        innermost = len(frames) - 1
+        keep_frames = [self._process_frame(f, i == innermost)
+                       for i, f in enumerate(frames)]
       finally:
         del f
-
-      # order it so that innermost frame is at the bottom
-      keep_frames = keep_frames[::-1]
 
       self.failed_checks.append(Check(
         hint,
@@ -384,6 +387,48 @@ class Checker(object):
       exp = arg1
     self._call_impl(hint, exp)
     return bool(exp)
+
+
+class CheckException(Exception):
+  """An exception that can be raised to signal an implicit check failure.
+
+  This exception type is used to implement implicit checks such as the one
+  performed by StepsDict. In the case of an implict check failure, it's not
+  generally feasible to continue execution of the post process function. This
+  exception allows for halting execution of the post process function in a way
+  that the engine can recognize as safe to continue with further checks.
+  """
+  pass
+
+
+class StepsDict(OrderedDict):
+  """The dictionary of steps to be used in post_process functions.
+
+  StepsDict acts just like an OrderedDict, mapping the step name to the step
+  details for the step, with the exception that indexing with a missing key does
+  not raise a KeyError. Instead StepsDict does an implicit check to make sure
+  that the step is in the dictionary. If the check fails, the execution of the
+  post process function is halted, a check failure will be recorded and the
+  engine will continue execution as though the post process function returned
+  None.
+  """
+  def __init__(self, checker, *args, **kwargs):
+    super(StepsDict, self).__init__(*args, **kwargs)
+    assert isinstance(checker, Checker)
+    self._checker = checker
+
+  def __getitem__(self, step):
+    # Store this to a local variable so that the variable expansion in the check
+    # failure backtrace includes only the important details
+    check = self._checker
+    steps_dict = self
+    # Store the result into a variable rather than directly using if check(...)
+    # because compound statements (if) don't get nicely displayed in the check
+    # failure backtrace
+    step_present = check(step in steps_dict)
+    if not step_present:
+      raise CheckException()
+    return super(StepsDict, self).__getitem__(step)
 
 
 MISSING = object()
@@ -421,7 +466,11 @@ def VerifySubset(a, b):
     elif len(a) == 1:
       a = OrderedDict([next(a.iteritems())])
 
-  if type(a) != type(b):
+  # One or both may be a StepsDict, which is just OrderedDict with custom
+  # __getitem__, so don't require an exact type match
+  if isinstance(a, OrderedDict) and isinstance(b, OrderedDict):
+    pass
+  elif type(a) != type(b):
     return ': type mismatch: %r v %r' % (type(a).__name__, type(b).__name__)
 
   if isinstance(a, OrderedDict):

@@ -557,7 +557,11 @@ class RecipeTestApi(object):
     Where:
       * `step_odict` is an ordered dictionary of step dictionaries, as would be
       recorded into the JSON expectation file for this test. The dictionary key
-      is the step's name.
+      is the step's name. The dictionary has enhanced behavior such that
+      indexing with a key that isn't in the dictionary won't raise a KeyError;
+      instead the execution of your function is halted and a check failure will
+      be reported. This allows you to write your check functions without having
+      to worry about if a step is missing to provide usable failure output.
 
       * `check` is a semi-magical function which you can use to test things.
       Using `check` will allow you to see all the violated assertions from your

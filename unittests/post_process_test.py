@@ -8,7 +8,7 @@ from collections import OrderedDict
 import test_env
 
 from recipe_engine import post_process
-from recipe_engine.internal.magic_check_fn import Checker
+from recipe_engine.internal.magic_check_fn import CheckException, Checker, StepsDict
 
 
 def mkS(name, *fields):
@@ -33,10 +33,13 @@ class TestFilter(test_env.RecipeEngineUnitTest):
     self.d = mkD('a', 'b', 'b.sub', 'b.sub2')
     self.f = post_process.Filter
 
+  def check(self, f, c):
+    return f(c, StepsDict(c, self.d))
+
   def test_basic(self):
     c = Checker('<filename>', 0, lambda: None, (), {})
     self.assertEqual(
-      self.f('a', 'b')(c, self.d), mkD('a', 'b'))
+        self.check(self.f('a', 'b'), c), mkD('a', 'b'))
     self.assertEqual(len(c.failed_checks), 0)
 
   def test_built(self):
@@ -44,7 +47,7 @@ class TestFilter(test_env.RecipeEngineUnitTest):
     f = self.f()
     f = f.include('b')
     f = f.include('a')
-    self.assertEqual(f(c, self.d), mkD('a', 'b'))
+    self.assertEqual(self.check(f, c), mkD('a', 'b'))
     self.assertEqual(len(c.failed_checks), 0)
 
   def test_built_fields(self):
@@ -52,7 +55,7 @@ class TestFilter(test_env.RecipeEngineUnitTest):
     f = self.f()
     f = f.include('b', ['sub_b'])
     f = f.include('a', ['sub_a'])
-    self.assertEqual(f(c, self.d), OrderedDict([
+    self.assertEqual(self.check(f, c), OrderedDict([
       ('a', mkS('a', 'sub_a')),
       ('b', mkS('b', 'sub_b')),
     ]))
@@ -61,7 +64,7 @@ class TestFilter(test_env.RecipeEngineUnitTest):
   def test_built_extra_includes(self):
     f = self.f('a', 'b', 'x')
     c = Checker('<filename>', 0, f, (), {})
-    self.assertEqual(f(c, self.d), mkD('a', 'b'))
+    self.assertEqual(self.check(f, c), mkD('a', 'b'))
     self.assertEqual(len(c.failed_checks), 1)
     self.assertEqual(c.failed_checks[0].frames[-1].code,
                      'check((len(unused_includes) == 0))')
@@ -71,13 +74,13 @@ class TestFilter(test_env.RecipeEngineUnitTest):
   def test_re(self):
     f = self.f().include_re('b\.')
     c = Checker('<filename>', 0, f, (), {})
-    self.assertEqual(f(c, self.d), mkD('b.sub', 'b.sub2'))
+    self.assertEqual(self.check(f, c), mkD('b.sub', 'b.sub2'))
     self.assertEqual(len(c.failed_checks), 0)
 
   def test_re_low_limit(self):
     f = self.f().include_re('b\.', at_least=3)
     c = Checker('<filename>', 0, f, (), {})
-    self.assertEqual(f(c, self.d), mkD('b.sub', 'b.sub2'))
+    self.assertEqual(self.check(f, c), mkD('b.sub', 'b.sub2'))
     self.assertEqual(len(c.failed_checks), 1)
     self.assertEqual(c.failed_checks[0].frames[-1].code,
                      'check((re_usage_count[regex] >= at_least))')
@@ -89,7 +92,7 @@ class TestFilter(test_env.RecipeEngineUnitTest):
   def test_re_high_limit(self):
     f = self.f().include_re('b\.', at_most=1)
     c = Checker('<filename>', 0, f, (), {})
-    self.assertEqual(f(c, self.d), mkD('b.sub', 'b.sub2'))
+    self.assertEqual(self.check(f, c), mkD('b.sub', 'b.sub2'))
     self.assertEqual(len(c.failed_checks), 1)
     self.assertEqual(c.failed_checks[0].frames[-1].code,
                      'check((re_usage_count[regex] <= at_most))')
@@ -106,7 +109,7 @@ class TestRun(test_env.RecipeEngineUnitTest):
 
   def expect_fails(self, num_fails, func, *args, **kwargs):
     c = Checker('<filename>', 0, func, args, kwargs)
-    func(c, self.d, *args, **kwargs)
+    func(c, StepsDict(c, self.d), *args, **kwargs)
     self.assertEqual(len(c.failed_checks), num_fails)
 
   def test_mr_pass(self):
@@ -149,7 +152,10 @@ class TestStepStatus(test_env.RecipeEngineUnitTest):
 
   def expect_fails(self, num_fails, func, *args, **kwargs):
     c = Checker('<filanem>', 0, func, args, kwargs)
-    func(c, self.d, *args, **kwargs)
+    try:
+      func(c, StepsDict(c, self.d), *args, **kwargs)
+    except CheckException:
+      pass
     self.assertEqual(len(c.failed_checks), num_fails)
     return c
 
@@ -158,7 +164,10 @@ class TestStepStatus(test_env.RecipeEngineUnitTest):
 
   def test_step_success_fail(self):
     c = self.expect_fails(1, post_process.StepSuccess, 'non-existent-step')
-    self.assertEqual(c.failed_checks[0].name, 'step non-existent-step was run')
+    self.assertEqual(c.failed_checks[0].frames[-1].code,
+                     'step_present = check((step in steps_dict))')
+    self.assertEquals(c.failed_checks[0].frames[-1].varmap['step'],
+                      "'non-existent-step'"),
 
     c = self.expect_fails(1, post_process.StepSuccess, 'failure-step')
     self.assertEqual(c.failed_checks[0].name, 'step failure-step was success')
@@ -170,7 +179,10 @@ class TestStepStatus(test_env.RecipeEngineUnitTest):
 
   def test_step_failure_fail(self):
     c = self.expect_fails(1, post_process.StepFailure, 'non-existent-step')
-    self.assertEqual(c.failed_checks[0].name, 'step non-existent-step was run')
+    self.assertEqual(c.failed_checks[0].frames[-1].code,
+                     'step_present = check((step in steps_dict))')
+    self.assertEquals(c.failed_checks[0].frames[-1].varmap['step'],
+                      "'non-existent-step'"),
 
     c = self.expect_fails(1, post_process.StepFailure, 'success-step')
     self.assertEqual(c.failed_checks[0].name, 'step success-step was failure')
@@ -182,7 +194,10 @@ class TestStepStatus(test_env.RecipeEngineUnitTest):
 
   def test_step_exception_fail(self):
     c = self.expect_fails(1, post_process.StepException, 'non-existent-step')
-    self.assertEqual(c.failed_checks[0].name, 'step non-existent-step was run')
+    self.assertEqual(c.failed_checks[0].frames[-1].code,
+                     'step_present = check((step in steps_dict))')
+    self.assertEquals(c.failed_checks[0].frames[-1].varmap['step'],
+                      "'non-existent-step'"),
 
     c = self.expect_fails(1, post_process.StepException, 'success-step')
     self.assertEqual(c.failed_checks[0].name, 'step success-step was exception')
@@ -199,7 +214,10 @@ class TestStepCommandRe(test_env.RecipeEngineUnitTest):
 
   def expect_fails(self, num_fails, func, *args, **kwargs):
     c = Checker('<filename>', 0, func, args, kwargs)
-    func(c, self.d, *args, **kwargs)
+    try:
+      func(c, StepsDict(c, self.d), *args, **kwargs)
+    except CheckException:
+      pass
     self.assertEqual(len(c.failed_checks), num_fails)
     return c
 
@@ -210,7 +228,9 @@ class TestStepCommandRe(test_env.RecipeEngineUnitTest):
   def test_step_command_re_fail(self):
     c = self.expect_fails(1, post_process.StepCommandRE, 'y',
                           ['echo', 'foo', 'bar', 'baz'])
-    self.assertEqual(c.failed_checks[0].name, 'step y was run')
+    self.assertEqual(c.failed_checks[0].frames[-1].code,
+                     'step_present = check((step in steps_dict))')
+    self.assertEquals(c.failed_checks[0].frames[-1].varmap['step'], "'y'")
 
     c = self.expect_fails(2, post_process.StepCommandRE, 'x',
                           ['echo', 'fo', 'bar2', 'baz'])
@@ -249,13 +269,16 @@ class TestStepCommandContains(test_env.RecipeEngineUnitTest):
 
   def expect_pass(self, func, *args, **kwargs):
     c = Checker('<filename>', 0, func, args, kwargs)
-    func(c, self.d, *args, **kwargs)
+    func(c, StepsDict(c, self.d), *args, **kwargs)
     self.assertEqual(len(c.failed_checks), 0)
     return c
 
   def expect_fail(self, func, failure, *args, **kwargs):
     c = Checker('<filename>', 0, func, args, kwargs)
-    func(c, self.d, *args, **kwargs)
+    try:
+      func(c, StepsDict(c, self.d), *args, **kwargs)
+    except CheckException:
+      pass
     self.assertEqual(len(c.failed_checks), 1)
     self.assertEqual(c.failed_checks[0].name, failure)
     return c
@@ -296,9 +319,12 @@ class TestStepCommandContains(test_env.RecipeEngineUnitTest):
                      ['foo', 'bar', 'baz'])
 
   def test_step_command_contains_fail(self):
-    self.expect_fail(post_process.StepCommandContains,
-                     'step y was run',
-                     'y', ['echo', 'foo', 'bar'])
+    c = self.expect_fail(post_process.StepCommandContains, None,
+                         'y', ['echo', 'foo', 'bar'])
+    self.assertEqual(c.failed_checks[0].frames[-1].code,
+                     'step_present = check((step in steps_dict))')
+    self.assertEquals(c.failed_checks[0].frames[-1].varmap['step'], "'y'")
+
     self.expect_fail(post_process.StepCommandContains,
                      'command line for step x contained %r' % ['foo', 'baz'],
                      'x', ['foo', 'baz'])
@@ -315,7 +341,10 @@ class TestStepText(test_env.RecipeEngineUnitTest):
 
   def expect_fails(self, num_fails, func, *args, **kwargs):
     c = Checker('<filename>', 0, func, args, kwargs)
-    func(c, self.d, *args, **kwargs)
+    try:
+      func(c, StepsDict(c, self.d), *args, **kwargs)
+    except CheckException:
+      pass
     self.assertEqual(len(c.failed_checks), num_fails)
     return c
 
@@ -324,7 +353,9 @@ class TestStepText(test_env.RecipeEngineUnitTest):
 
   def test_step_text_equals_fail(self):
     c = self.expect_fails(1, post_process.StepTextEquals, 'y', 'foobar')
-    self.assertEqual(c.failed_checks[0].name, 'step y was run')
+    self.assertEqual(c.failed_checks[0].frames[-1].code,
+                     'step_present = check((step in steps_dict))')
+    self.assertEquals(c.failed_checks[0].frames[-1].varmap['step'], "'y'"),
 
     c = self.expect_fails(1, post_process.StepTextEquals, 'x', 'foo')
     self.assertEqual(c.failed_checks[0].frames[-1].code,
@@ -335,7 +366,9 @@ class TestStepText(test_env.RecipeEngineUnitTest):
 
   def test_step_text_contains_fail(self):
     c = self.expect_fails(1, post_process.StepTextContains, 'y', ['foo', 'bar'])
-    self.assertEqual(c.failed_checks[0].name, 'step y was run')
+    self.assertEqual(c.failed_checks[0].frames[-1].code,
+                     'step_present = check((step in steps_dict))')
+    self.assertEquals(c.failed_checks[0].frames[-1].varmap['step'], "'y'"),
 
     c = self.expect_fails(
         2, post_process.StepTextContains, 'x', ['food', 'bar', 'baz'])
@@ -363,7 +396,10 @@ class TestLog(test_env.RecipeEngineUnitTest):
 
   def expect_fails(self, num_fails, func, *args, **kwargs):
     c = Checker('<filename>', 0, func, args, kwargs)
-    func(c, self.d, *args, **kwargs)
+    try:
+      func(c, StepsDict(c, self.d), *args, **kwargs)
+    except CheckException:
+      pass
     self.assertEqual(len(c.failed_checks), num_fails)
     return c
 
@@ -372,7 +408,9 @@ class TestLog(test_env.RecipeEngineUnitTest):
 
   def test_log_equals_fail(self):
     c = self.expect_fails(1, post_process.LogEquals, 'y', 'log-x', 'foo\nbar\n')
-    self.assertEqual(c.failed_checks[0].name, 'step y was run')
+    self.assertEqual(c.failed_checks[0].frames[-1].code,
+                     'step_present = check((step in steps_dict))')
+    self.assertEquals(c.failed_checks[0].frames[-1].varmap['step'], "'y'"),
 
     c = self.expect_fails(1, post_process.LogEquals, 'x', 'log-y', 'foo\nbar\n')
     self.assertEqual(c.failed_checks[0].name, 'step x has log log-y')
@@ -388,7 +426,9 @@ class TestLog(test_env.RecipeEngineUnitTest):
   def test_log_contains_fail(self):
     c = self.expect_fails(1, post_process.LogContains, 'y', 'log-x',
                           ['foo', 'bar'])
-    self.assertEqual(c.failed_checks[0].name, 'step y was run')
+    self.assertEqual(c.failed_checks[0].frames[-1].code,
+                     'step_present = check((step in steps_dict))')
+    self.assertEquals(c.failed_checks[0].frames[-1].varmap['step'], "'y'"),
 
     c = self.expect_fails(1, post_process.LogContains, 'x', 'log-y',
                           ['foo', 'bar'])
