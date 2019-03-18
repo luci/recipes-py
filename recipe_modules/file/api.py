@@ -8,8 +8,9 @@ from recipe_engine import config_types
 from recipe_engine import recipe_api
 
 
-import os
 import fnmatch
+import json
+import os
 
 
 class SymlinkTree(object):
@@ -237,6 +238,36 @@ class FileApi(recipe_api.RecipeApi):
     self.m.path.assert_absolute(dest)
     self._run(name, ['copy', self.m.raw_io.input_text(text_data), dest])
     self.m.path.mock_add_paths(dest)
+
+  def read_json(self, name, source, test_data=''):
+    """Reads a file as UTF-8 encoded json.
+
+    Args:
+      * name (str) - The name of the step.
+      * source (Path) - The path of the file to read.
+      * test_data (object) - Some default json serializable data for this step
+        to return when running under simulation.
+
+    Returns (object) - The content of the file.
+
+    Raise file.Error
+    """
+    test_data_text = json.dumps(test_data)
+    text = self.read_text(name, source, test_data=test_data_text)
+    return json.loads(text)
+
+  def write_json(self, name, dest, data):
+    """Write the given json serializable `data` to `dest`.
+
+    Args:
+      * name (str) - The name of the step.
+      * dest (Path) - The path of the file to write.
+      * data (object) - Json serializable data to write.
+
+    Raises file.Error.
+    """
+    text_data = json.dumps(data)
+    self.write_text(name, dest, text_data)
 
   def glob_paths(self, name, source, pattern, test_data=()):
     """Performs glob expansion on `pattern`.

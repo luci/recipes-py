@@ -2,6 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import json
 import os
 
 from recipe_engine import recipe_test_api
@@ -73,6 +74,23 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
       )
     """
     return (self.m.raw_io.output_text(text_content)
+            + self.errno(errno_name))
+
+  def read_json(self, json_content='', errno_name=0):
+    """Provides test mock for the `read_json` method.
+
+    Args:
+      json_content (object) - The json serializable data for this read_json step
+        to return.
+      errno_name (str|None) - The error name for this step to return, if any.
+
+    Example:
+      yield (api.test('my_test')
+        + api.step_data('read step name',
+            api.file.read_json({'is_content': true}))
+      )
+    """
+    return (self.m.raw_io.output_text(json.dumps(json_content))
             + self.errno(errno_name))
 
   def glob_paths(self, names=(), errno_name=0):

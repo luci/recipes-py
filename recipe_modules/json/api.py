@@ -119,9 +119,11 @@ class JsonApi(recipe_api.RecipeApi):
     """
     return JsonOutputPlaceholder(self, add_json_log, name=name, leak_to=leak_to)
 
-  # TODO(you): This method should be in the `file` recipe_module
   def read(self, name, path, add_json_log=True, output_name=None, **kwargs):
-    """Returns a step that reads a JSON file."""
+    """Returns a step that reads a JSON file.
+
+    This method is deprecated. Use file.read_json instead.
+    """
     return self.m.python.inline(
         name,
         """

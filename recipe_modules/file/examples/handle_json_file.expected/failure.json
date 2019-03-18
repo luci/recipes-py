@@ -1,0 +1,43 @@
+[
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "{\"is_json\": true}",
+      "[START_DIR]/some_file.json"
+    ],
+    "infra_step": true,
+    "name": "write_json"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "[START_DIR]/some_file.json",
+      "/path/to/tmp/"
+    ],
+    "infra_step": true,
+    "name": "read_json",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@file command encountered system error JSON READ FAILURE@@@",
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "failure": {
+      "failure": {
+        "step": ""
+      },
+      "humanReason": "Step('read_json') failed 'JSON READ FAILURE' with: file command encountered system error JSON READ FAILURE"
+    },
+    "name": "$result"
+  }
+]

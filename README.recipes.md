@@ -71,6 +71,7 @@
   * [file:examples/error](#recipes-file_examples_error)
   * [file:examples/flatten_single_directories](#recipes-file_examples_flatten_single_directories)
   * [file:examples/glob](#recipes-file_examples_glob)
+  * [file:examples/handle_json_file](#recipes-file_examples_handle_json_file)
   * [file:examples/listdir](#recipes-file_examples_listdir)
   * [file:examples/raw_copy](#recipes-file_examples_raw_copy)
   * [file:examples/symlink](#recipes-file_examples_symlink)
@@ -911,9 +912,9 @@ Returns recorded Buildbucket build ids as a list of integers.
 
 File manipulation (read/write/delete/glob) methods.
 
-#### **class [FileApi](/recipe_modules/file/api.py#80)([RecipeApi](/recipe_engine/recipe_api.py#1008)):**
+#### **class [FileApi](/recipe_modules/file/api.py#81)([RecipeApi](/recipe_engine/recipe_api.py#1008)):**
 
-&mdash; **def [copy](/recipe_modules/file/api.py#116)(self, name, source, dest):**
+&mdash; **def [copy](/recipe_modules/file/api.py#117)(self, name, source, dest):**
 
 Copies a file (including mode bits) from source to destination on the
 local filesystem.
@@ -929,7 +930,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [copytree](/recipe_modules/file/api.py#136)(self, name, source, dest, symlinks=False):**
+&mdash; **def [copytree](/recipe_modules/file/api.py#137)(self, name, source, dest, symlinks=False):**
 
 Recursively copies a directory tree.
 
@@ -945,7 +946,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#308)(self, name, dest, mode=511):**
+&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#339)(self, name, dest, mode=511):**
 
 Ensures that `dest` exists and is a directory.
 
@@ -958,7 +959,7 @@ Args:
 
 Raises file.Error if the path exists but is not a directory.
 
-&mdash; **def [filesizes](/recipe_modules/file/api.py#325)(self, name, files, test_data=None):**
+&mdash; **def [filesizes](/recipe_modules/file/api.py#356)(self, name, files, test_data=None):**
 
 Returns list of filesizes for the given files.
 
@@ -968,7 +969,7 @@ Args:
 
 Returns list[int], size of each file in bytes.
 
-&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#441)(self, name, path):**
+&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#472)(self, name, path):**
 
 Flattens singular directories, starting at path.
 
@@ -997,7 +998,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [glob\_paths](/recipe_modules/file/api.py#241)(self, name, source, pattern, test_data=()):**
+&mdash; **def [glob\_paths](/recipe_modules/file/api.py#272)(self, name, source, pattern, test_data=()):**
 
 Performs glob expansion on `pattern`.
 
@@ -1016,7 +1017,7 @@ Returns list[Path] - All paths found.
 
 Raises file.Error.
 
-&mdash; **def [listdir](/recipe_modules/file/api.py#284)(self, name, source, test_data=()):**
+&mdash; **def [listdir](/recipe_modules/file/api.py#315)(self, name, source, test_data=()):**
 
 List all files inside a directory.
 
@@ -1031,7 +1032,7 @@ Returns list[Path]
 
 Raises file.Error.
 
-&mdash; **def [move](/recipe_modules/file/api.py#157)(self, name, source, dest):**
+&mdash; **def [move](/recipe_modules/file/api.py#158)(self, name, source, dest):**
 
 Moves a file or directory.
 
@@ -1044,7 +1045,21 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [read\_raw](/recipe_modules/file/api.py#175)(self, name, source, test_data=''):**
+&mdash; **def [read\_json](/recipe_modules/file/api.py#242)(self, name, source, test_data=''):**
+
+Reads a file as UTF-8 encoded json.
+
+Args:
+  * name (str) - The name of the step.
+  * source (Path) - The path of the file to read.
+  * test_data (object) - Some default json serializable data for this step
+    to return when running under simulation.
+
+Returns (object) - The content of the file.
+
+Raise file.Error
+
+&mdash; **def [read\_raw](/recipe_modules/file/api.py#176)(self, name, source, test_data=''):**
 
 Reads a file as raw data.
 
@@ -1058,7 +1073,7 @@ Returns (str) - The unencoded (binary) contents of the file.
 
 Raises file.Error
 
-&mdash; **def [read\_text](/recipe_modules/file/api.py#208)(self, name, source, test_data=''):**
+&mdash; **def [read\_text](/recipe_modules/file/api.py#209)(self, name, source, test_data=''):**
 
 Reads a file as UTF-8 encoded text.
 
@@ -1072,7 +1087,7 @@ Returns (str) - The content of the file.
 
 Raises file.Error
 
-&mdash; **def [remove](/recipe_modules/file/api.py#269)(self, name, source):**
+&mdash; **def [remove](/recipe_modules/file/api.py#300)(self, name, source):**
 
 Remove a file.
 
@@ -1084,7 +1099,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#364)(self, name, source):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#395)(self, name, source):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -1099,7 +1114,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#382)(self, name, source, pattern):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#413)(self, name, source, pattern):**
 
 Removes all entries in `source` matching the glob `pattern`.
 
@@ -1112,7 +1127,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#347)(self, name, source):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#378)(self, name, source):**
 
 Recursively removes a directory.
 
@@ -1126,7 +1141,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [symlink](/recipe_modules/file/api.py#403)(self, name, source, linkname):**
+&mdash; **def [symlink](/recipe_modules/file/api.py#434)(self, name, source, linkname):**
 
 Creates a symlink on the local filesystem.
 
@@ -1139,14 +1154,14 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#420)(self, root):**
+&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#451)(self, root):**
 
 Creates a SymlinkTree, given a root directory.
 
 Args:
   * root (Path): root of a tree of symlinks.
 
-&mdash; **def [truncate](/recipe_modules/file/api.py#428)(self, name, path, size_mb=100):**
+&mdash; **def [truncate](/recipe_modules/file/api.py#459)(self, name, path, size_mb=100):**
 
 Creates an empty file with path and size_mb on the local filesystem.
 
@@ -1157,7 +1172,18 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [write\_raw](/recipe_modules/file/api.py#194)(self, name, dest, data):**
+&mdash; **def [write\_json](/recipe_modules/file/api.py#259)(self, name, dest, data):**
+
+Write the given json serializable `data` to `dest`.
+
+Args:
+  * name (str) - The name of the step.
+  * dest (Path) - The path of the file to write.
+  * data (object) - Json serializable data to write.
+
+Raises file.Error.
+
+&mdash; **def [write\_raw](/recipe_modules/file/api.py#195)(self, name, dest, data):**
 
 Write the given `data` to `dest`.
 
@@ -1168,7 +1194,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [write\_text](/recipe_modules/file/api.py#227)(self, name, dest, text_data):**
+&mdash; **def [write\_text](/recipe_modules/file/api.py#228)(self, name, dest, text_data):**
 
 Write the given UTF-8 encoded `text_data` to `dest`.
 
@@ -1315,9 +1341,11 @@ Args:
     to a step link named `name`. If this is 'on_failure', only create this
     log when the step has a non-SUCCESS status.
 
-&mdash; **def [read](/recipe_modules/json/api.py#123)(self, name, path, add_json_log=True, output_name=None, \*\*kwargs):**
+&mdash; **def [read](/recipe_modules/json/api.py#122)(self, name, path, add_json_log=True, output_name=None, \*\*kwargs):**
 
 Returns a step that reads a JSON file.
+
+This method is deprecated. Use file.read_json instead.
 ### *recipe_modules* / [led](/recipe_modules/led)
 
 [DEPS](/recipe_modules/led/__init__.py#5): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step)
@@ -2459,6 +2487,11 @@ Tests that step_data can accept multiple specs at once.
 [DEPS](/recipe_modules/file/examples/glob.py#5): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/glob.py#11)(api):**
+### *recipes* / [file:examples/handle\_json\_file](/recipe_modules/file/examples/handle_json_file.py)
+
+[DEPS](/recipe_modules/file/examples/handle_json_file.py#1): [file](#recipe_modules-file), [path](#recipe_modules-path)
+
+&mdash; **def [RunSteps](/recipe_modules/file/examples/handle_json_file.py#7)(api):**
 ### *recipes* / [file:examples/listdir](/recipe_modules/file/examples/listdir.py)
 
 [DEPS](/recipe_modules/file/examples/listdir.py#5): [file](#recipe_modules-file), [path](#recipe_modules-path)
