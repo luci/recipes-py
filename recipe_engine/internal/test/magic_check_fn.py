@@ -255,7 +255,7 @@ class Checker(object):
       # nodes. The goal is to add the CONTENTS of all multi-statement statements
       # to the queue, and anything else is considered a 'single statement' for
       # the purposes of this code.
-      to_push = ['body', 'orelse', 'finalbody', 'excepthandler']
+      to_push = ['test', 'body', 'orelse', 'finalbody', 'excepthandler']
       lines, _ = inspect.findsource(raw_frame)
       # Start with the entire parsed document (probably ast.Module).
       queue = deque([ast.parse(''.join(lines), filename)])
@@ -268,10 +268,15 @@ class Checker(object):
           val = getattr(node, key, MISSING)
           if val is not MISSING:
             had_statements = True
-            # Because we're popping things off the start of the queue, and we
-            # want to append nodes to _PARSED_FILE_CACHE, we reverse the
-            # statements when we extend the queue with them.
-            queue.extend(val[::-1])
+            if isinstance(val, list):
+              # Because we're popping things off the start of the queue, and we
+              # want to append nodes to _PARSED_FILE_CACHE, we reverse the
+              # statements when we extend the queue with them.
+              queue.extend(val[::-1])
+            else:
+              # In the case of 'test', it's just a single expression, not a list
+              # of statements
+              queue.append(val)
         if had_statements:
           continue
         # node is a 'simple' statement (doesn't contain any nested statements),

@@ -172,6 +172,54 @@ class TestChecker(test_env.RecipeEngineUnitTest):
       self.mk('<lambda>', "map((lambda v: check((v in targ['a']))), vals)",
               {"targ['a'].keys()": "['sub']", 'v': "'whee'"}))
 
+  def test_if_test(self):
+    c = Checker('<filename>', 0, lambda: None, (), {})
+    def body(check):
+      vals = ['foo', 'bar']
+      target = 'baz'
+      if check(target in vals):
+        pass
+    body(c)
+    self.assertEqual(len(c.failed_checks), 1)
+    self.assertEqual(len(c.failed_checks[0].frames), 1)
+    self.assertEqual(
+        self.sanitize(c.failed_checks[0].frames[0]),
+        self.mk('body', 'check((target in vals))',
+                {'target': "'baz'", 'vals': "['foo', 'bar']"}))
+
+  def test_elif_test(self):
+    c = Checker('<filename>', 0, lambda: None, (), {})
+    def body(check):
+      vals = ['foo', 'bar']
+      target = 'baz'
+      if False:
+        pass
+      elif check(target in vals):
+        pass
+    body(c)
+    self.assertEqual(len(c.failed_checks), 1)
+    self.assertEqual(len(c.failed_checks[0].frames), 1)
+    self.assertEqual(
+        self.sanitize(c.failed_checks[0].frames[0]),
+        self.mk('body', 'check((target in vals))',
+                {'target': "'baz'", 'vals': "['foo', 'bar']"}))
+
+  def test_while_test(self):
+    c = Checker('<filename>', 0, lambda: None, (), {})
+    def body(check):
+      vals = ['foo', 'bar', 'baz']
+      invalid_value = 'bar'
+      i = 0
+      while check(vals[i] != invalid_value):
+        i += 1
+    body(c)
+    self.assertEqual(len(c.failed_checks), 1)
+    self.assertEqual(len(c.failed_checks[0].frames), 1)
+    self.assertEqual(
+        self.sanitize(c.failed_checks[0].frames[0]),
+        self.mk('body', 'check((vals[i] != invalid_value))',
+                {'i': '1', 'invalid_value': "'bar'", 'vals[i]': "'bar'"}))
+
   def test_steps_dict_implicit_check(self):
     d = OrderedDict(foo={})
     c = Checker('<filename>', 0, lambda: None, (), d)
