@@ -8,7 +8,8 @@ from collections import OrderedDict
 import test_env
 
 from recipe_engine import post_process
-from recipe_engine.internal.magic_check_fn import CheckException, Checker, StepsDict
+from recipe_engine.internal.test.magic_check_fn import \
+    CheckException, Checker, StepsDict
 
 
 def mkS(name, *fields):

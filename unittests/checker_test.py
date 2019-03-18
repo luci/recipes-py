@@ -10,7 +10,7 @@ from collections import OrderedDict
 
 import test_env
 
-from recipe_engine.internal.magic_check_fn import \
+from recipe_engine.internal.test.magic_check_fn import \
   Checker, CheckException, CheckFrame, StepsDict, VerifySubset
 
 

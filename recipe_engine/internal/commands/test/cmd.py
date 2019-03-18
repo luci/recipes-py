@@ -35,8 +35,8 @@ from PB.recipe_engine.test_result import TestResult
 
 from .... import config_types
 
-from ... import magic_check_fn
 from ...engine import RecipeEngine
+from ...test import magic_check_fn
 from ...step_runner.sim import SimulationStepRunner
 from ...stream.annotator import AnnotatorStreamEngine
 from ...stream.invariants import StreamEngineInvariants
