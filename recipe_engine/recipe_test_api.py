@@ -89,7 +89,7 @@ class StepTestData(BaseTestData):
     ret._stderr = other._stderr or self._stderr
     ret._retcode = self._retcode
     if other._retcode is not None:
-      if ret._retcode is not None:
+      if ret._retcode is not None and ret._retcode != other._retcode:
         raise ValueError('Conflicting retcode values.')
       ret._retcode = other._retcode
 
