@@ -97,7 +97,7 @@
     "infra_step": true,
     "name": "archiving",
     "~followup_annotations": [
-      "@@@STEP_LINK@isolated UI@https://example.isolateserver.appspot.com/browse?namespace=default-gzip&hash=[dummy hash]@@@"
+      "@@@STEP_LINK@isolated UI@https://example.isolateserver.appspot.com/browse?namespace=default-gzip&hash=%5Bdummy+hash%5D@@@"
     ]
   },
   {
@@ -117,7 +117,7 @@
     "infra_step": true,
     "name": "archiving root directory elsewhere",
     "~followup_annotations": [
-      "@@@STEP_LINK@isolated UI@other-isolateserver.appspot.com/browse?namespace=default-gzip&hash=[dummy hash]@@@"
+      "@@@STEP_LINK@isolated UI@other-isolateserver.appspot.com/browse?namespace=default-gzip&hash=%5Bdummy+hash%5D@@@"
     ]
   },
   {

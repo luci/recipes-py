@@ -1258,7 +1258,7 @@ corresponds to one step, and contains the following keys:
 
 [DEPS](/recipe_modules/isolated/__init__.py#1): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-#### **class [IsolatedApi](/recipe_modules/isolated/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#1008)):**
+#### **class [IsolatedApi](/recipe_modules/isolated/api.py#14)([RecipeApi](/recipe_engine/recipe_api.py#1008)):**
 
 API for interacting with isolated.
 
@@ -1269,7 +1269,7 @@ http://go.chromium.org/luci/client/cmd/isolated.
 This module will deploy the client to [CACHE]/isolated_client/; users should
 add this path to the named cache for their builder.
 
-&mdash; **def [download](/recipe_modules/isolated/api.py#92)(self, step_name, isolated_hash, output_dir, isolate_server=None):**
+&mdash; **def [download](/recipe_modules/isolated/api.py#100)(self, step_name, isolated_hash, output_dir, isolate_server=None):**
 
 Downloads an isolated tree from an isolate server.
 
@@ -1283,13 +1283,13 @@ Args:
   isolate_server (str|None): an isolate server to donwload from; if None,
     the module's default server will be used instead.
 
-&mdash; **def [initialize](/recipe_modules/isolated/api.py#31)(self):**
+&mdash; **def [initialize](/recipe_modules/isolated/api.py#33)(self):**
 
-&emsp; **@property**<br>&mdash; **def [isolate\_server](/recipe_modules/isolated/api.py#50)(self):**
+&emsp; **@property**<br>&mdash; **def [isolate\_server](/recipe_modules/isolated/api.py#52)(self):**
 
 Returns the associated isolate server.
 
-&mdash; **def [isolated](/recipe_modules/isolated/api.py#82)(self, root_dir):**
+&mdash; **def [isolated](/recipe_modules/isolated/api.py#90)(self, root_dir):**
 
 Returns an Isolated object that can be used to archive a set of files
 and directories, relative to a given root directory.
@@ -1298,7 +1298,11 @@ Args:
   root_dir (Path): directory relative to which files and directory will be
     isolated.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/isolated/api.py#68)(self):**
+&emsp; **@property**<br>&mdash; **def [namespace](/recipe_modules/isolated/api.py#58)(self):**
+
+Returns the associated namespace.
+
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/isolated/api.py#76)(self):**
 
 This context manager ensures the go isolated client is available on
 $PATH.
@@ -2007,7 +2011,7 @@ each other.
 
 [DEPS](/recipe_modules/swarming/__init__.py#5): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [isolated](#recipe_modules-isolated), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-#### **class [SwarmingApi](/recipe_modules/swarming/api.py#677)([RecipeApi](/recipe_engine/recipe_api.py#1008)):**
+#### **class [SwarmingApi](/recipe_modules/swarming/api.py#685)([RecipeApi](/recipe_engine/recipe_api.py#1008)):**
 
 API for interacting with swarming.
 
@@ -2017,7 +2021,7 @@ http://go.chromium.org/luci/client/cmd/swarming.
 This module will deploy the client to [CACHE]/swarming_client/; users should
 add this path to the named cache for their builder.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#790)(self, name, tasks, output_dir=None, timeout=None):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#798)(self, name, tasks, output_dir=None, timeout=None):**
 
 Waits on a set of Swarming tasks.
 
@@ -2035,9 +2039,9 @@ Args:
 Returns:
   A list of TaskResult objects.
 
-&mdash; **def [initialize](/recipe_modules/swarming/api.py#695)(self):**
+&mdash; **def [initialize](/recipe_modules/swarming/api.py#703)(self):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#726)(self):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#734)(self):**
 
 This context manager ensures the go swarming client is available on
 $PATH.
@@ -2047,7 +2051,7 @@ Example:
     with api.swarming.on_path():
       # do your steps which require the swarming binary on path
 
-&mdash; **def [task\_request](/recipe_modules/swarming/api.py#740)(self):**
+&mdash; **def [task\_request](/recipe_modules/swarming/api.py#748)(self):**
 
 Creates a new TaskRequest object.
 
@@ -2057,7 +2061,7 @@ a full task.
 Once your TaskRequest is complete, you can pass it to `trigger` in order to
 have it start running on the swarming server.
 
-&mdash; **def [trigger](/recipe_modules/swarming/api.py#751)(self, step_name, requests):**
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#759)(self, step_name, requests):**
 
 Triggers a set of Swarming tasks.
 
@@ -2489,9 +2493,9 @@ Tests that step_data can accept multiple specs at once.
 &mdash; **def [RunSteps](/recipe_modules/file/examples/glob.py#11)(api):**
 ### *recipes* / [file:examples/handle\_json\_file](/recipe_modules/file/examples/handle_json_file.py)
 
-[DEPS](/recipe_modules/file/examples/handle_json_file.py#1): [file](#recipe_modules-file), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/file/examples/handle_json_file.py#5): [file](#recipe_modules-file), [path](#recipe_modules-path)
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/handle_json_file.py#7)(api):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/handle_json_file.py#11)(api):**
 ### *recipes* / [file:examples/listdir](/recipe_modules/file/examples/listdir.py)
 
 [DEPS](/recipe_modules/file/examples/listdir.py#5): [file](#recipe_modules-file), [path](#recipe_modules-path)

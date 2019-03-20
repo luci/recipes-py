@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import contextlib
+import urllib
 
 from recipe_engine import recipe_api
 
@@ -24,6 +25,7 @@ class IsolatedApi(recipe_api.RecipeApi):
   def __init__(self, isolated_properties, *args, **kwargs):
     super(IsolatedApi, self).__init__(*args, **kwargs)
     self._server = isolated_properties.get('server', None)
+    self._namespace = isolated_properties.get('namespace', 'default-gzip')
     self._version = isolated_properties.get('version', DEFAULT_CIPD_VERSION)
     self._client_dir = None
     self._client = None
@@ -52,6 +54,12 @@ class IsolatedApi(recipe_api.RecipeApi):
     """Returns the associated isolate server."""
     assert self._server
     return self._server
+
+  @property
+  def namespace(self):
+    """Returns the associated namespace."""
+    assert self._namespace
+    return self._namespace
 
   def _run(self, name, cmd, step_test_data=None):
     """Return an isolated command step.
@@ -181,7 +189,7 @@ class Isolated(object):
         'archive',
         '-verbose',
         '-isolate-server', isolate_server,
-        '-namespace', 'default-gzip',
+        '-namespace', self._api.isolated.namespace,
         '-dump-hash', self._api.raw_io.output_text(),
     ]
     for f in self._files:
@@ -193,9 +201,11 @@ class Isolated(object):
         cmd,
         step_test_data=self._api.isolated.test_api.archive,
     ).raw_io.output_text
+    q = {
+      'hash': isolated_hash,
+      'namespace': self._api.isolated.namespace,
+    }
     self._api.step.active_result.presentation.links['isolated UI'] = (
-      '%s/browse?namespace=default-gzip&hash=%s' % (
-          isolate_server, isolated_hash,
-      )
+      '%s/browse?%s' % (isolate_server, urllib.urlencode(q))
     )
     return isolated_hash

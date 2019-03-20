@@ -315,7 +315,9 @@ class TaskRequest(object):
       """
       ret = self._copy()
       for k, v in kwargs.iteritems():
-        assert isinstance(k, basestring) and (isinstance(v, basestring) or v is None)
+        assert (
+            isinstance(k, basestring) and
+            (isinstance(v, basestring) or v is None))
         if v is None:
           ret._env_vars.pop(k, None)
         else:
@@ -349,7 +351,8 @@ class TaskRequest(object):
       """
       ret = self._copy()
       for k, v in kwargs.iteritems():
-        assert isinstance(k, basestring) and (isinstance(v, list) or v is None), (
+        assert (
+            isinstance(k, basestring) and (isinstance(v, list) or v is None)), (
           '%r must be a string and %r None or a list of strings' % (k, v))
         if v is None:
           ret._env_prefixes.pop(k, None)
@@ -483,7 +486,9 @@ class TaskRequest(object):
         'dimensions': [{'key': k, 'value': v} for k, v in dims.iteritems()],
         'outputs' : self.outputs,
         'env' : [{'key': k , 'value': v} for k, v in self.env_vars.iteritems()],
-        'env_prefixes' : [{'key': k , 'value' : v} for k, v in self.env_prefixes.iteritems()],
+        'env_prefixes' : [
+          {'key': k , 'value' : v} for k, v in self.env_prefixes.iteritems()
+        ],
         'execution_timeout_secs': str(self.execution_timeout_secs),
         'io_timeout_secs': str(self.io_timeout_secs),
         'grace_period_secs': str(self.grace_period_secs),
@@ -493,7 +498,7 @@ class TaskRequest(object):
       if self.isolated:
         properties['inputs_ref'] = {
           'isolated': self.isolated,
-          'namespace': 'default-gzip',
+          'namespace': self._api.isolated.namespace,
           'isolatedserver': self._api.isolated.isolate_server,
         }
       if self.secret_bytes:
@@ -541,7 +546,8 @@ class TaskResult(object):
   """Result of a Swarming task."""
 
   # A tuple giving the isolated output refs of a task.
-  IsolatedOutputs = namedtuple('IsolatedOutputs', ['hash', 'server', 'namespace'])
+  IsolatedOutputs = namedtuple(
+      'IsolatedOutputs', ['hash', 'server', 'namespace'])
 
   def __init__(self, api, id, raw_results, output_dir):
     """
@@ -661,10 +667,12 @@ class TaskResult(object):
     elif self.state == TaskState.BOT_DIED:
       raise self._api.step.InfraFailure('The bot running this task died')
     elif self.state == TaskState.CANCELED:
-      raise self._api.step.InfraFailure('The task was canceled before it could run')
+      raise self._api.step.InfraFailure(
+          'The task was canceled before it could run')
     elif self.state == TaskState.COMPLETED:
       if not self.success:
-        raise self._api.step.InfraFailure('Swarming task failed:\n%s' % self.output)
+        raise self._api.step.InfraFailure(
+            'Swarming task failed:\n%s' % self.output)
     elif self.state == TaskState.KILLED:
       raise self._api.step.InfraFailure('The task was killed mid-execution')
     elif self.state == TaskState.NO_RESOURCE:
