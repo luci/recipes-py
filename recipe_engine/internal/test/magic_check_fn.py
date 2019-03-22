@@ -284,8 +284,24 @@ class Checker(object):
         # show up in a stack trace), and add it to _PARSED_FILE_CACHE. Note that
         # even though this is a simple statement, it could still span multiple
         # lines.
-        max_line = max(map(lambda n: getattr(n, 'lineno', 0), ast.walk(node)))
+        def get_max_lineno(node):
+          return max(getattr(n, 'lineno', 0) for n in ast.walk(node))
+        max_line = get_max_lineno(node)
         self._PARSED_FILE_CACHE[filename][max_line].append(node)
+        # If the expression contains any nested lambda definitions, then its
+        # possible we may encounter frames that are executing the lambda. In
+        # that case, any lambdas that do not appear on the last line of the
+        # expression will have frames with line numbers different from frames
+        # that are executing the containing expression, so look for any nested
+        # lambdas and add them to the cache with the appropriate line number.
+        for n in ast.walk(node):
+          if isinstance(n, ast.Lambda):
+            # Adding the lambda to the nodes when its on the last line results
+            # in both the containing expression and the lambda itself appearing
+            # in the failure output, so don't add the lambda to the nodes
+            lambda_max_line = get_max_lineno(n)
+            if lambda_max_line != max_line:
+              self._PARSED_FILE_CACHE[filename][lambda_max_line].append(n)
     return self._PARSED_FILE_CACHE[filename][lineno]
 
   def _process_frame(self, frame, with_vars):

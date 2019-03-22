@@ -172,6 +172,31 @@ class TestChecker(test_env.RecipeEngineUnitTest):
       self.mk('<lambda>', "map((lambda v: check((v in targ['a']))), vals)",
               {"targ['a'].keys()": "['sub']", 'v': "'whee'"}))
 
+  def test_lambda_in_multiline_expr_call(self):
+    c = Checker('<filename>', 0, lambda: None, (), {})
+    def wrap(f):
+      return f
+    def body(check, f):
+      f(check)
+    value = 'food'
+    target = ['foo', 'bar', 'baz']
+    # Make sure the lambda is part of a larger expression that ends on a
+    # later line than the lambda
+    func = [lambda check: check(value == target),
+            lambda check: check(value in target),
+            lambda check: check(value and target),
+           ][1]
+    body(c, func)
+    self.assertEqual(len(c.failed_checks), 1)
+    self.assertEqual(len(c.failed_checks[0].frames), 2)
+    self.assertEqual(
+        self.sanitize(c.failed_checks[0].frames[0]),
+        self.mk('body', 'f(check)', None))
+    self.assertEqual(
+        self.sanitize(c.failed_checks[0].frames[1]),
+        self.mk('<lambda>', '(lambda check: check((value in target)))',
+                {'value': "'food'", 'target': "['foo', 'bar', 'baz']"}))
+
   def test_if_test(self):
     c = Checker('<filename>', 0, lambda: None, (), {})
     def body(check):
