@@ -16,19 +16,19 @@ def RunSteps(api):
   try:
     api.python.infra_failing_step(
         'infra failure',
-        ['This step is an infra failure!'])
+        'This step is an infra failure!')
   except api.step.InfraFailure:
     api.python.succeeding_step(
         'InfraFailure',
-        ['Expected exception thrown.'])
+        'Expected exception thrown.')
   except api.step.StepFailure:  # pragma: no cover
     api.python.failing_step(
         'StepFailure',
-        ['Unexpected exception thrown.'])
+        'Unexpected exception thrown.')
   else:  # pragma: no cover
     api.python.failing_step(
         'No failure',
-        ['No exception thrown?'])
+        'No exception thrown?')
 
 
 def GenTests(api):

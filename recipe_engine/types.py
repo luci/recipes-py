@@ -180,7 +180,7 @@ class StepPresentation(object):
     self._logs = None
 
     if self.step_text:
-      step_stream.add_step_text(self.step_text)
+      step_stream.add_step_text(self.step_text.replace('\n', '<br/>'))
     if self.step_summary_text:
       step_stream.add_step_summary_text(self.step_summary_text)
     for name, lines in logs.iteritems():
@@ -246,5 +246,3 @@ class StepData(object):
 
   def __getattr__(self, name):
     raise StepDataAttributeError(self._step_config.name, name)
-
-
