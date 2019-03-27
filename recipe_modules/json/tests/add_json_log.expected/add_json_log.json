@@ -15,7 +15,6 @@
     "name": "add log on failure",
     "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
-      "step returned non-zero exit code: 1",
       "@@@STEP_LOG_LINE@json.output[log2]@{@@@",
       "@@@STEP_LOG_LINE@json.output[log2]@  \"x\": 1, @@@",
       "@@@STEP_LOG_LINE@json.output[log2]@  \"y\": 2@@@",

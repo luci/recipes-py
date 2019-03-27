@@ -128,7 +128,6 @@
     ],
     "name": "GET https://wrong.host.badssl.com/",
     "~followup_annotations": [
-      "step returned non-zero exit code: 1",
       "@@@STEP_FAILURE@@@"
     ]
   },
@@ -146,7 +145,6 @@
     ],
     "name": "GET https://expired.badssl.com/",
     "~followup_annotations": [
-      "step returned non-zero exit code: 1",
       "@@@STEP_FAILURE@@@"
     ]
   },

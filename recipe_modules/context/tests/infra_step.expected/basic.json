@@ -6,7 +6,6 @@
     ],
     "name": "boom",
     "~followup_annotations": [
-      "step returned non-zero exit code: 1",
       "@@@STEP_FAILURE@@@"
     ]
   },
@@ -19,7 +18,6 @@
     "infra_step": true,
     "name": "boom 2",
     "~followup_annotations": [
-      "step returned non-zero exit code: 1",
       "@@@STEP_EXCEPTION@@@"
     ]
   },

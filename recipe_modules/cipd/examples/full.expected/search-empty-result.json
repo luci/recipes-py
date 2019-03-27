@@ -302,7 +302,6 @@
     ],
     "name": "cipd describe empty/pkg",
     "~followup_annotations": [
-      "step returned non-zero exit code: 1",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such ref\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -323,7 +322,6 @@
     ],
     "name": "cipd describe empty/pkg (2)",
     "~followup_annotations": [
-      "step returned non-zero exit code: 1",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
@@ -344,7 +342,6 @@
     ],
     "name": "cipd describe empty/pkg (3)",
     "~followup_annotations": [
-      "step returned non-zero exit code: 1",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such instance\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",

@@ -115,7 +115,6 @@
     ],
     "name": "failure output log",
     "~followup_annotations": [
-      "step returned non-zero exit code: 1",
       "@@@STEP_LOG_LINE@raw_io.output[failure_log]@failure@@@",
       "@@@STEP_LOG_END@raw_io.output[failure_log]@@@",
       "@@@STEP_LOG_LINE@python.inline@@@@",

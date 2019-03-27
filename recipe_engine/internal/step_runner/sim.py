@@ -78,7 +78,8 @@ class SimulationStepRunner(StepRunner):
         # dictionary.
         buf = self._annotator.step_buffer(rs.config.name)
         lines = filter(None, buf.getvalue()).splitlines()
-        lines = [stream.encode_str(x) for x in lines]
+        # Only keep @@@annotation@@@ lines.
+        lines = [stream.encode_str(x) for x in lines if x.startswith('@@@')]
         if lines:
           # This magically floats into step_history, which we have already
           # added step_config to.
