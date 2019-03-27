@@ -16,10 +16,11 @@ from PB.go.chromium.org.luci.buildbucket.proto.build import Build
 from PB.go.chromium.org.luci.buildbucket.proto.step import Step
 from PB.go.chromium.org.luci.buildbucket.proto import common
 
-from ...recipe_api import StepClient, InfraFailure
+from ...recipe_api import InfraFailure
 from ...third_party import logdog
 
 from ..attr_util import attr_type
+from ..engine_step import StepConfig
 
 from . import StreamEngine
 
@@ -321,7 +322,7 @@ class LUCIStreamEngine(StreamEngine):
     )
 
   def new_step_stream(self, step_config):
-    assert isinstance(step_config, StepClient.StepConfig)
+    assert isinstance(step_config, StepConfig)
     assert not step_config.allow_subannotations, (
       'Subannotations not currently supported in build.proto mode'
     )

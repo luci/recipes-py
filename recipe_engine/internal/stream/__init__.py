@@ -22,7 +22,7 @@ import logging
 import tempfile
 import time
 
-from ... import recipe_api
+from ..engine_step import StepConfig
 
 
 def output_iter(stream, it):
@@ -121,9 +121,7 @@ class StreamEngine(object):
   def make_step_stream(self, name):
     """Shorthand for creating a root-level step stream."""
     # TODO(iannucci): remove this method
-    return self.new_step_stream(recipe_api.StepClient.StepConfig(
-        name_tokens=(name,)
-    ))
+    return self.new_step_stream(StepConfig(name_tokens=(name,)))
 
   def new_step_stream(self, step_config):
     """Creates a new StepStream in this engine.
@@ -137,7 +135,7 @@ class StreamEngine(object):
     i.e. parse -> re-emit.
 
     Args:
-      step_config (recipe_api.StepCleint.StepConfig): The step configuration.
+      step_config (StepConfig): The step configuration.
     """
     raise NotImplementedError()
 

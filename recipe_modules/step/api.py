@@ -191,11 +191,11 @@ class StepApi(recipe_api.RecipeApiPlain):
         cmd=cmd,
         cwd=cwd,
         env=self.m.context.env,
-        env_prefixes=self.step_client.StepConfig.EnvAffix(
+        env_prefixes=self.step_client.EnvAffix(
           mapping=env_prefixes,
           pathsep=self.m.path.pathsep,
         ),
-        env_suffixes=self.step_client.StepConfig.EnvAffix(
+        env_suffixes=self.step_client.EnvAffix(
           mapping=self.m.context.env_suffixes,
           pathsep=self.m.path.pathsep,
         ),

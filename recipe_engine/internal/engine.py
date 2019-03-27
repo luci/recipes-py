@@ -217,8 +217,7 @@ class RecipeEngine(object):
     Runs a step.
 
     Args:
-      step_config (recipe_api.StepClient.StepConfig): The step configuration to
-        run.
+      step_config (StepConfig): The step configuration to run.
 
     Returns:
       A StepData object containing the result of running the step.
