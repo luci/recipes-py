@@ -4,6 +4,8 @@
 
 """Tests that step_data can accept multiple specs at once."""
 
+
+from recipe_engine import post_process
 from recipe_engine.recipe_api import Property
 from recipe_engine.post_process import Filter, DoesNotRun, MustRun
 
@@ -24,6 +26,8 @@ def RunSteps(api, fakeit):
   api.step('another important', ['echo', 'INSANITY'])
   if fakeit:
     api.step('fakestep', ['echo', 'FAAAAKE'])
+  step_result = api.step('set build properties', ['dummy'])
+  step_result.presentation.properties['test_build_property'] = True
 
 
 def GenTests(api):
@@ -55,3 +59,12 @@ def GenTests(api):
     return {}
 
   yield api.test('custom_func') + api.post_process(assert_stuff)
+
+  yield (
+      api.test('set_build_properties') +
+      api.post_process(post_process.PropertyEquals,
+                       'test_build_property', True) +
+      api.post_process(post_process.PropertiesDoNotContain,
+                       'build_property_not_present') +
+      api.post_process(post_process.DropExpectation)
+  )

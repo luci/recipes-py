@@ -31,6 +31,15 @@
     "name": "fakestep"
   },
   {
+    "cmd": [
+      "dummy"
+    ],
+    "name": "set build properties",
+    "~followup_annotations": [
+      "@@@SET_BUILD_PROPERTY@test_build_property@true@@@"
+    ]
+  },
+  {
     "jsonResult": null,
     "name": "$result"
   }

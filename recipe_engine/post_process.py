@@ -6,6 +6,7 @@
 RecipeTestApi.post_process method in GenTests.
 """
 
+import json
 import re
 
 from collections import defaultdict, OrderedDict, namedtuple
@@ -491,6 +492,61 @@ def AnnotationContains(check, step_odict, step, expected_substrs):
 
   for expected in expected_substrs:
     check(expected in annotations)
+
+
+# If the key has the '@' character, then both this regex and all the consumers
+# of this annotation will have the wrong behavior.
+_BUILD_PROPERTY_RE = re.compile(
+    '@@@SET_BUILD_PROPERTY@(?P<key>[^@]*)@(?P<value>.*)@@@$')
+
+def GetBuildProperties(step_odict):
+  """Retrieves the build properties for a recipe."""
+  build_properties = {}
+  for _, step_dict in step_odict.iteritems():
+    for a in step_dict.get('~followup_annotations', []):
+      match = _BUILD_PROPERTY_RE.match(a)
+      if match:
+        build_properties[match.group('key')] = json.loads(match.group('value'))
+
+  return build_properties
+
+
+def PropertyEquals(check, step_odict, key, value):
+  """Assert that a recipe's output property `key` equals `value`.
+
+  Args:
+    key (str) - The key to look for in output properties.
+    value (jsonish) - The value to look for in output properties.
+
+  Usage:
+    yield (
+        TEST
+         + api.post_process(PropertyEquals, 'do_not_retry', True)
+    )
+  """
+  build_properties = GetBuildProperties(step_odict)
+
+  # Short circuiting of boolean expressions is broken in check().
+  # https://crbug.com/946015.
+  if check(key in build_properties):
+    check(build_properties[key] == value)
+
+
+def PropertiesDoNotContain(check, step_odict, key):
+  """Assert that a recipe's output properties do not contain `key`.
+
+  Args:
+    key (str) - The key to check for.
+
+  Usage:
+    yield (
+        TEST
+         + api.post_process(PropertyEquals,
+                            [('do_not_retry', 'true')])
+    )
+  """
+  build_properties = GetBuildProperties(step_odict)
+  check(key not in build_properties)
 
 
 def StatusCodeIn(check, step_odict, *codes):

@@ -2461,11 +2461,11 @@ Tests that placeholders can't wreck the world by exhausting the step stack.
 &mdash; **def [RunSteps](/recipes/engine_tests/unicode.py#11)(api):**
 ### *recipes* / [engine\_tests/whitelist\_steps](/recipes/engine_tests/whitelist_steps.py)
 
-[DEPS](/recipes/engine_tests/whitelist_steps.py#10): [context](#recipe_modules-context), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/whitelist_steps.py#12): [context](#recipe_modules-context), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 Tests that step_data can accept multiple specs at once.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/whitelist_steps.py#20)(api, fakeit):**
+&mdash; **def [RunSteps](/recipes/engine_tests/whitelist_steps.py#22)(api, fakeit):**
 ### *recipes* / [file:examples/copy](/recipe_modules/file/examples/copy.py)
 
 [DEPS](/recipe_modules/file/examples/copy.py#5): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
