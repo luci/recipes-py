@@ -377,14 +377,9 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
 
     for hook, args, kwargs, filename, lineno in test_data.post_process_hooks:
       input_odict = copy.deepcopy(raw_expectations)
-      # We ignore the input_odict so that it never gets printed in full.
-      # Usually the check invocation itself will index the input_odict or
-      # will use it only for a key membership comparison, which provides
-      # enough debugging context.
       # The checker MUST be saved to a local variable in order for it to be able
       # to correctly detect the frames to keep when creating a failure backtrace
-      checker_obj = magic_check_fn.Checker(
-          filename, lineno, hook, args, kwargs, input_odict)
+      checker_obj = magic_check_fn.Checker(filename, lineno, hook, args, kwargs)
       input_odict = magic_check_fn.StepsDict(checker_obj, input_odict)
 
       with coverage_context(include=covers, enable=enable_coverage) as cov:

@@ -288,6 +288,20 @@ class TestChecker(test_env.RecipeEngineUnitTest):
         self.mk('__getitem__', 'step_present = check((step in steps_dict))',
                 {'step': "'bar'", 'steps_dict.keys()': "['foo']"}))
 
+  def test_steps_dict_is_ignored(self):
+    d = OrderedDict(foo={})
+    c = Checker('<filename>', 0, lambda:None, (), d)
+    s = StepsDict(c, d)
+    body = lambda check, steps: check('bar' in steps)
+    body(c, s)
+    self.assertEqual(len(c.failed_checks), 1)
+    self.assertEqual(len(c.failed_checks[0].frames), 1)
+    self.assertEqual(
+        self.sanitize(c.failed_checks[0].frames[0]),
+        self.mk('<lambda>',
+                "body = (lambda check, steps: check(('bar' in steps)))",
+                {'steps.keys()': "['foo']"}))
+
 
 class TestVerifySubset(test_env.RecipeEngineUnitTest):
   @staticmethod

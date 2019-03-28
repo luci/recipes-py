@@ -223,19 +223,22 @@ class Checker(object):
   # filename -> {lineno -> [statements]}
   _PARSED_FILE_CACHE = defaultdict(lambda: defaultdict(list))
 
-  def __init__(self, filename, lineno, func, args, kwargs, *ignores):
+  def __init__(self, filename, lineno, func, args, kwargs):
     self.failed_checks = []
 
     # _ignore_set is the set of objects that we should never print as local
     # variables. We start this set off by including the actual Checker object,
     # since there's no value to printing that.
-    self._ignore_set = {id(x) for x in ignores+(self,)}
+    self._ignore_set = {id(self)}
 
     self._ctx_filename = filename
     self._ctx_lineno = lineno
     self._ctx_funcname = _nameOfCallable(func)
     self._ctx_args = map(repr, args)
     self._ctx_kwargs = {k: repr(v) for k, v in kwargs.iteritems()}
+
+  def _ignore(self, *ignores):
+    self._ignore_set.update(id(i) for i in ignores)
 
   def _get_statements_for_frame(self, frame):
     """This parses the file containing frame, and then extracts all simple
@@ -436,6 +439,7 @@ class StepsDict(OrderedDict):
   def __init__(self, checker, *args, **kwargs):
     super(StepsDict, self).__init__(*args, **kwargs)
     assert isinstance(checker, Checker)
+    checker._ignore(self)
     self._checker = checker
 
   def __getitem__(self, step):
