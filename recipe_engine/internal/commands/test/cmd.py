@@ -77,11 +77,6 @@ class RecipeRunError(Exception):
   pass
 
 
-class PostProcessError(ValueError):
-  """Exception raised when any of the post-process hooks fails."""
-  pass
-
-
 @contextlib.contextmanager
 def coverage_context(include=None, enable=True):
   """Context manager that records coverage data."""
@@ -373,38 +368,11 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
           raw_expectations['$result']['jsonResult'])
     raw_expectations['$result']['name'] = '$result'
 
-    failed_checks = []
+    with coverage_context(include=covers, enable=enable_coverage) as cov:
+      result_data, failed_checks = magic_check_fn.post_process(
+          raw_expectations, test_data)
+    coverage_data.update(cov.get_data())
 
-    for hook, args, kwargs, filename, lineno in test_data.post_process_hooks:
-      input_odict = copy.deepcopy(raw_expectations)
-      # The checker MUST be saved to a local variable in order for it to be able
-      # to correctly detect the frames to keep when creating a failure backtrace
-      checker_obj = magic_check_fn.Checker(filename, lineno, hook, args, kwargs)
-      input_odict = magic_check_fn.StepsDict(checker_obj, input_odict)
-
-      with coverage_context(include=covers, enable=enable_coverage) as cov:
-        # Run the hook itself under coverage. There may be custom post-process
-        # functions in recipe test code.
-        try:
-          rslt = hook(checker_obj, input_odict, *args, **kwargs)
-        except magic_check_fn.CheckException as e:
-          rslt = None
-      coverage_data.update(cov.get_data())
-
-      failed_checks += checker_obj.failed_checks
-      if rslt is not None:
-        rslt = collections.OrderedDict(rslt)
-        msg = magic_check_fn.VerifySubset(rslt, raw_expectations)
-        if msg:
-          raise PostProcessError('post_process: steps'+msg)
-        # restore 'name'
-        for k, v in rslt.iteritems():
-          if 'name' not in v:
-            v['name'] = k
-        raw_expectations = rslt
-
-    # empty means drop expectation
-    result_data = raw_expectations.values() if raw_expectations else None
     return (result_data, failed_checks, coverage_data)
 
 

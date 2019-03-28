@@ -183,8 +183,19 @@ class ModuleTestData(BaseTestData, dict):
     return "ModuleTestData(%r)" % super(ModuleTestData, self).__repr__()
 
 
+PostprocessHookContext = namedtuple(
+    'PostprocessHookContext', 'func args kwargs filename lineno')
+"""The context describing where a post-process hook was added."""
+
 PostprocessHook = namedtuple(
-  'PostprocessHook', 'func args kwargs filename lineno')
+  'PostprocessHook', 'func args kwargs context')
+"""The details of a post-process hook.
+
+func, args and kwargs detail the actual objects to use to invoke the check.
+Context describes where the hook was added. Depending on whether post_process
+or post_check is used, the context may or may not contain the same func, args
+and kwargs.
+"""
 
 
 class TestData(BaseTestData):
@@ -274,9 +285,8 @@ class TestData(BaseTestData):
     if not should_raise:
       self.expected_exception = None
 
-  def post_process(self, func, args, kwargs, filename, lineno):
-    self.post_process_hooks.append(PostprocessHook(
-      func, args, kwargs, filename, lineno))
+  def post_process(self, func, args, kwargs, context):
+    self.post_process_hooks.append(PostprocessHook(func, args, kwargs, context))
 
   def __repr__(self):
     return "TestData(%r)" % ({
@@ -640,10 +650,38 @@ class RecipeTestApi(object):
         )
     """
     ret = TestData()
-    try:
-      stk = inspect.stack()
-      _, filename, lineno, _, _, _ = stk[1]
-    finally:
-      del stk
-    ret.post_process(func, args, kwargs, filename, lineno)
+    _, filename, lineno, _, _, _ = inspect.stack()[1]
+    context = PostprocessHookContext(func, args, kwargs, filename, lineno)
+    ret.post_process(func, args, kwargs, context)
+    return ret
+
+  def post_check(self, func, *args, **kwargs):
+    """Add a check-only post-processing hook.
+
+    See `post_process` for information on the arguments and behavior. The
+    difference between `post_check` and `post_process` is the return value of
+    `func` is ignored, so it's not possible for a hook added using `post_check`
+    to propagate changes in the steps dictionary to later hooks. This enables
+    the use of lambdas for performing simple checks.
+
+    Example:
+      from recipe_engine.post_process import DoesNotRun, DropExpectation
+
+    def GenTests(api):
+      yield (api.test('lambda-check')
+        + api.post_check(lambda check, steps: check('foo' not in steps))
+        + api.post_process(DropExpectation)
+      )
+
+      yield (api.test('reuse-existing-hook')
+        + api.post_check(DoesNotRun, 'foo')
+        + api.post_process(DropExpectation)
+      )
+    """
+    def post_check(check, steps, f, *args, **kwargs):
+      f(check, steps, *args, **kwargs)
+    ret = TestData()
+    _, filename, lineno, _, _, _ = inspect.stack()[1]
+    context = PostprocessHookContext(func, args, kwargs, filename, lineno)
+    ret.post_process(post_check, (func,) + args, kwargs, context)
     return ret

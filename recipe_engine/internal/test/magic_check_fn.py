@@ -222,6 +222,7 @@ def render_re(regex):
 class Checker(object):
   # filename -> {lineno -> [statements]}
   _PARSED_FILE_CACHE = defaultdict(lambda: defaultdict(list))
+  _LAMBDA_CACHE = defaultdict(lambda: defaultdict(list))
 
   def __init__(self, filename, lineno, func, args, kwargs):
     self.failed_checks = []
@@ -233,14 +234,40 @@ class Checker(object):
 
     self._ctx_filename = filename
     self._ctx_lineno = lineno
-    self._ctx_funcname = _nameOfCallable(func)
+    self._ctx_funcname = self._get_name_of_callable(func)
     self._ctx_args = map(repr, args)
     self._ctx_kwargs = {k: repr(v) for k, v in kwargs.iteritems()}
 
   def _ignore(self, *ignores):
     self._ignore_set.update(id(i) for i in ignores)
 
+  @classmethod
+  def _get_name_of_callable(cls, c):
+    if inspect.ismethod(c):
+      return c.im_class.__name__+'.'+c.__name__
+    if inspect.isfunction(c):
+      if c.__name__ == (lambda: None).__name__:
+        filename = c.func_code.co_filename
+        cls._ensure_file_in_cache(filename, c)
+        definitions = cls._LAMBDA_CACHE[filename][c.func_code.co_firstlineno]
+        assert definitions
+        # If there's multiple definitions at the same line, there's not enough
+        # information to distinguish which lambda c refers to, so just let
+        # python's generic lambda name be used
+        if len(definitions) == 1:
+          return astunparse.unparse(definitions[0]).strip()
+      return c.__name__
+    if hasattr(c, '__call__'):
+      return c.__class__.__name__+'.__call__'
+    return repr(c)
+
   def _get_statements_for_frame(self, frame):
+    raw_frame, filename, lineno, _, _, _ = frame
+    self._ensure_file_in_cache(filename, raw_frame)
+    return self._PARSED_FILE_CACHE[filename][lineno]
+
+  @classmethod
+  def _ensure_file_in_cache(cls, filename, obj_with_code):
     """This parses the file containing frame, and then extracts all simple
     statements (i.e. those which do not contain other statements). It then
     returns the list of all statements (as AST nodes) which occur on the line
@@ -250,8 +277,7 @@ class Checker(object):
     variable, so multiple assertions in the same file only pay the parsing cost
     once.
     """
-    raw_frame, filename, lineno, _, _, _ = frame
-    if filename not in self._PARSED_FILE_CACHE:
+    if filename not in cls._PARSED_FILE_CACHE:
       # multi-statement nodes like Module, FunctionDef, etc. have attributes on
       # them like 'body' which house the list of statements they contain. The
       # `to_push` list here is the set of all such attributes across all ast
@@ -259,7 +285,7 @@ class Checker(object):
       # to the queue, and anything else is considered a 'single statement' for
       # the purposes of this code.
       to_push = ['test', 'body', 'orelse', 'finalbody', 'excepthandler']
-      lines, _ = inspect.findsource(raw_frame)
+      lines, _ = inspect.findsource(obj_with_code)
       # Start with the entire parsed document (probably ast.Module).
       queue = deque([ast.parse(''.join(lines), filename)])
       while queue:
@@ -290,7 +316,8 @@ class Checker(object):
         def get_max_lineno(node):
           return max(getattr(n, 'lineno', 0) for n in ast.walk(node))
         max_line = get_max_lineno(node)
-        self._PARSED_FILE_CACHE[filename][max_line].append(node)
+        cls._PARSED_FILE_CACHE[filename][max_line].append(node)
+
         # If the expression contains any nested lambda definitions, then its
         # possible we may encounter frames that are executing the lambda. In
         # that case, any lambdas that do not appear on the last line of the
@@ -298,14 +325,19 @@ class Checker(object):
         # that are executing the containing expression, so look for any nested
         # lambdas and add them to the cache with the appropriate line number.
         for n in ast.walk(node):
-          if isinstance(n, ast.Lambda):
-            # Adding the lambda to the nodes when its on the last line results
-            # in both the containing expression and the lambda itself appearing
-            # in the failure output, so don't add the lambda to the nodes
-            lambda_max_line = get_max_lineno(n)
-            if lambda_max_line != max_line:
-              self._PARSED_FILE_CACHE[filename][lambda_max_line].append(n)
-    return self._PARSED_FILE_CACHE[filename][lineno]
+          if not isinstance(n, ast.Lambda):
+            continue
+          # For the lambda cache we'll have a function with the first line
+          # number rather than a frame with the current point of execution so we
+          # want n.lineno rather than the maximum line number for the expression
+          cls._LAMBDA_CACHE[filename][n.lineno].append(n)
+
+          # Adding the lambda to the nodes when its on the last line results
+          # in both the containing expression and the lambda itself appearing
+          # in the failure output, so don't add the lambda to the nodes
+          lambda_max_line = get_max_lineno(n)
+          if lambda_max_line != max_line:
+            cls._PARSED_FILE_CACHE[filename][lambda_max_line].append(n)
 
   def _process_frame(self, frame, with_vars):
     """This processes a stack frame into an expect_tests.CheckFrame, which
@@ -549,11 +581,52 @@ def VerifySubset(a, b):
     return ': unknown type: %r' % (type(a).__name__)
 
 
-def _nameOfCallable(c):
-  if inspect.ismethod(c):
-    return c.im_class.__name__+'.'+c.__name__
-  if inspect.isfunction(c):
-    return c.__name__
-  if hasattr(c, '__call__'):
-    return c.__class__.__name__+'.__call__'
-  return repr(c)
+class PostProcessError(ValueError):
+  """Exception raised when any of the post-process hooks fails."""
+  pass
+
+
+def post_process(raw_expectations, test_data):
+  """Run post processing hooks against the expectations generated by a test.
+
+  Args:
+    raw_expectations - A dictionary mapping the name of a step to a dictionary
+        containing the details of that step.
+    test_data - The TestData object for the current test, containing the post
+        process hooks to run.
+
+  Returns:
+    A tuple containing 2 items: the resultant raw expectations and a list of
+    check failures. The raw expectations will be in the same format as the
+    raw_expectations argument or None if expectations should not be written out.
+    The failures will be a list of Check objects describing the check failures
+    encountered by the post processing hooks.
+  """
+  failed_checks = []
+  for hook, args, kwargs, context in test_data.post_process_hooks:
+    # The checker MUST be saved to a local variable in order for it to be able
+    # to correctly detect the frames to keep when creating a failure backtrace
+    check = Checker(context.filename, context.lineno,
+                    context.func, context.args, context.kwargs)
+    steps = StepsDict(check, copy.deepcopy(raw_expectations))
+    try:
+      rslt = hook(check, steps, *args, **kwargs)
+    except CheckException:
+      rslt = None
+
+    failed_checks += check.failed_checks
+    if rslt is not None:
+      msg = VerifySubset(rslt, raw_expectations)
+      if msg:
+        raise PostProcessError('post process: steps' + msg)
+      # restore 'name' if it was removed
+      for k, v in rslt.iteritems():
+        v['name'] = k
+      # Convert to a bare OrderedDict to avoid copy issues
+      if isinstance(rslt, StepsDict):
+        rslt = OrderedDict(rslt)
+      raw_expectations = rslt
+
+  # Empty means drop expectations
+  result_data = raw_expectations.values() if raw_expectations else None
+  return result_data, failed_checks

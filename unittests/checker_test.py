@@ -10,8 +10,10 @@ from collections import OrderedDict
 
 import test_env
 
+from recipe_engine.recipe_test_api import RecipeTestApi
 from recipe_engine.internal.test.magic_check_fn import \
-  Checker, CheckException, CheckFrame, StepsDict, VerifySubset
+  Checker, CheckException, CheckFrame, PostProcessError, StepsDict, \
+  VerifySubset, post_process
 
 
 class TestChecker(test_env.RecipeEngineUnitTest):
@@ -394,6 +396,159 @@ class TestVerifySubset(test_env.RecipeEngineUnitTest):
     self.assertIn(
       "key 'a' is out of order",
       self.v(self.c, self.d))
+
+
+class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
+  @staticmethod
+  def mkApi():
+    return RecipeTestApi()
+
+  @staticmethod
+  def mk(fname, code, varmap):
+    return CheckFrame(
+      fname='', line=0, function=fname, code=code, varmap=varmap)
+
+  @staticmethod
+  def sanitize(checkframe):
+    return checkframe._replace(line=0, fname='')
+
+  def assertCheckFailure(self, failure, func, args, kwargs):
+    self.assertEqual(failure.ctx_func, func)
+    self.assertEqual(failure.ctx_args, args)
+    self.assertEqual(failure.ctx_kwargs, kwargs)
+
+  def test_returning_none(self):
+    d = OrderedDict([
+        ('x', {'name': 'x', 'cmd': ['one', 'two', 'three']}),
+        ('y', {'name': 'y', 'cmd': []}),
+        ('z', {'name': 'z', 'cmd': ['foo', 'bar']}),
+    ])
+    test_data = self.mkApi().post_process(lambda check, steps: None)
+    results, failures = post_process(d, test_data)
+    self.assertEqual(results, [
+        {'name': 'x', 'cmd': ['one', 'two', 'three']},
+        {'name': 'y', 'cmd': []},
+        {'name': 'z', 'cmd': ['foo', 'bar']},
+    ])
+    self.assertEqual(failures, [])
+
+  def test_returning_subset(self):
+    d = OrderedDict([
+        ('x', {'name': 'x', 'cmd': ['one', 'two', 'three']}),
+        ('y', {'name': 'y', 'cmd': []}),
+        ('z', {'name': 'z', 'cmd': ['foo', 'bar']}),
+    ])
+    test_data = self.mkApi().post_process(
+        lambda check, steps:
+        OrderedDict((k, {'name': v['name']}) for k, v in steps.iteritems()))
+    results, failures = post_process(d, test_data)
+    self.assertEqual(results, [{'name': 'x'}, {'name': 'y'}, {'name': 'z'}])
+    self.assertEqual(failures, [])
+
+  def test_returning_empty(self):
+    d = OrderedDict([
+        ('x', {'name': 'x', 'cmd': ['one', 'two', 'three']}),
+        ('y', {'name': 'y', 'cmd': []}),
+        ('z', {'name': 'z', 'cmd': ['foo', 'bar']}),
+    ])
+    test_data = self.mkApi().post_process(lambda check, steps: {})
+    results, failures = post_process(d, test_data)
+    self.assertIsNone(results)
+    self.assertEqual(failures, [])
+
+  def test_returning_nonsubset(self):
+    d = OrderedDict([
+        ('x', {'name': 'x', 'cmd': ['one', 'two', 'three']}),
+        ('y', {'name': 'y', 'cmd': []}),
+        ('z', {'name': 'z', 'cmd': ['foo', 'bar']}),
+    ])
+    test_data = self.mkApi().post_process(
+        lambda check, steps:
+        OrderedDict((k, dict(cwd='cwd', **v)) for k, v in steps.iteritems()))
+    with self.assertRaises(PostProcessError):
+      post_process(d, test_data)
+
+  def test_removing_name(self):
+    d = OrderedDict([
+        ('x', {'name': 'x', 'cmd': ['one', 'two', 'three']}),
+        ('y', {'name': 'y', 'cmd': []}),
+        ('z', {'name': 'z', 'cmd': ['foo', 'bar']}),
+    ])
+    test_data = self.mkApi().post_process(
+        lambda check, steps:
+        OrderedDict((k, {a: value for a, value in v.iteritems() if a != 'name'})
+                    for k,v in steps.iteritems()))
+    results, failures = post_process(d, test_data)
+    self.assertEqual(results, [
+        {'name': 'x', 'cmd': ['one', 'two', 'three']},
+        {'name': 'y', 'cmd': []},
+        {'name': 'z', 'cmd': ['foo', 'bar']},
+    ])
+    self.assertEqual(failures, [])
+
+  def test_post_process_failure(self):
+    d = OrderedDict([('x', {'name': 'x'})])
+    def body(check, steps, *args, **kwargs):
+      check('x' not in steps)
+    test_data = self.mkApi().post_process(body, 'foo', 'bar', a=1, b=2)
+    results, failures = post_process(d, test_data)
+    self.assertEqual(results, [{'name': 'x'}])
+    self.assertEqual(len(failures), 1)
+    self.assertCheckFailure(failures[0],
+                            'body', ["'foo'", "'bar'"], {'a': '1', 'b': '2'})
+    self.assertEqual(len(failures[0].frames), 1)
+    self.assertEqual(
+        self.sanitize(failures[0].frames[0]),
+        self.mk('body', "check(('x' not in steps))",
+                {'steps.keys()': "['x']"}))
+
+  def test_post_process_failure_in_multiple_hooks(self):
+    d = OrderedDict([('x', {'name': 'x'})])
+    def body(check, steps, *args, **kwargs):
+      check('x' not in steps)
+    def body2(check, steps, *args, **kwargs):
+      check('y' in steps)
+    api = self.mkApi()
+    test_data = (api.post_process(body, 'foo', a=1) +
+                 api.post_process(body2, 'bar', b=2))
+    results, failures = post_process(d, test_data)
+    self.assertEqual(results, [{'name': 'x'}])
+    self.assertEqual(len(failures), 2)
+    self.assertCheckFailure(failures[0], 'body', ["'foo'"], {'a': '1'})
+    self.assertEqual(len(failures[0].frames), 1)
+    self.assertEqual(
+        self.sanitize(failures[0].frames[0]),
+        self.mk('body', "check(('x' not in steps))",
+                {'steps.keys()': "['x']"}))
+    self.assertCheckFailure(failures[1], 'body2', ["'bar'"], {'b': '2'})
+    self.assertEqual(len(failures[1].frames), 1)
+    self.assertEqual(
+        self.sanitize(failures[1].frames[0]),
+        self.mk('body2', "check(('y' in steps))",
+                {'steps.keys()': "['x']"}))
+
+  def test_post_check_failure(self):
+    d = OrderedDict([('x', {'name': 'x'})])
+    test_data = self.mkApi().post_check(
+        lambda check, steps, *args, **kwargs: check('x' not in steps),
+        'foo', 'bar', a=1, b=2)
+    results, failures = post_process(d, test_data)
+    self.assertEqual(results, [{'name': 'x'}])
+    self.assertEqual(len(failures), 1)
+    self.assertCheckFailure(
+        failures[0],
+        "(lambda check, steps, *args, **kwargs: check(('x' not in steps)))",
+        ["'foo'", "'bar'"], {'a': '1', 'b': '2'})
+    self.assertEqual(len(failures[0].frames), 2)
+    self.assertEqual(
+        self.sanitize(failures[0].frames[0]),
+        self.mk('post_check', 'f(check, steps, *args, **kwargs)', None))
+    self.assertEqual(
+        self.sanitize(failures[0].frames[1]),
+        self.mk(
+            '<lambda>',
+            "(lambda check, steps, *args, **kwargs: check(('x' not in steps)))",
+            {'steps.keys()': "['x']"}))
 
 
 if __name__ == '__main__':
