@@ -541,8 +541,7 @@ def PropertiesDoNotContain(check, step_odict, key):
   Usage:
     yield (
         TEST
-         + api.post_process(PropertyEquals,
-                            [('do_not_retry', 'true')])
+         + api.post_process(PropertiesDoNotContain, 'property_key')
     )
   """
   build_properties = GetBuildProperties(step_odict)
