@@ -80,7 +80,7 @@ class SymlinkTree(object):
 
 class FileApi(recipe_api.RecipeApi):
   class Error(recipe_api.StepFailure):
-    """Error is an InfraFailure, except that it also contains an errno field
+    """Error is a StepFailure, except that it also contains an errno field
     indicating the errno name (i.e. 'EEXIST') of the underlying error.
     """
     def __init__(self, step_name, errno_name, message):
