@@ -8,6 +8,7 @@ package buildbucket.v2;
 
 option go_package = "go.chromium.org/luci/buildbucket/proto;buildbucketpb";
 
+import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/struct.proto";
 import "google/rpc/status.proto";
@@ -69,6 +70,10 @@ service Builds {
   // Cancels a build.
   // The requester must have at least SCHEDULER role in the destination bucket.
   rpc CancelBuild(CancelBuildRequest) returns (Build) {};
+
+  // Asynchronously mass-cancels all builds matching a predicate.
+  // Use with care!
+  rpc CancelBuilds(CancelBuildsRequest) returns (google.protobuf.Empty) {};
 
   // Executes multiple requests in a batch.
   // The response code is always OK.
@@ -137,15 +142,12 @@ message BatchRequest {
   // One request in a batch.
   message Request {
     oneof request {
-      // GetBuild request.
       GetBuildRequest get_build = 1;
-      // SearchBuilds request.
       SearchBuildsRequest search_builds = 2;
-      // ScheduleBuild request.
-      //
       // All ScheduleBuild requests in the batch are executed before other
       // requests.
       ScheduleBuildRequest schedule_build = 3;
+      CancelBuildRequest cancel_build = 4 ;
     }
   }
 
@@ -163,12 +165,10 @@ message BatchResponse {
   // Response a BatchRequest.Response.
   message Response {
     oneof response {
-      // GetBuild response.
       Build get_build = 1;
-      // SearchBuilds response.
       SearchBuildsResponse search_builds = 2;
-      // ScheduleBuild response.
       Build schedule_build = 3;
+      Build cancel_build = 4;
 
       // Error code and details of the unsuccessful RPC.
       google.rpc.Status error = 100;
@@ -199,9 +199,10 @@ message UpdateBuildRequest {
 
 // A request message for ScheduleBuild rpc.
 //
-// Next ID: 13.
+// Next ID: 14.
 message ScheduleBuildRequest {
-  // Required. A unique string id used for detecting duplicate requests.
+  // ** STRONGLY RECOMMENDED **.
+  // A unique string id used for detecting duplicate requests.
   // Should be unique at least per requesting identity.
   // Used to dedup build scheduling requests with same id within 1 min.
   // If a build was successfully scheduled with the same request id in the past
@@ -254,6 +255,8 @@ message ScheduleBuildRequest {
   // Setting this field will cause the created build to have a "buildset"
   // tag with value "commit/gitiles/{hostname}/{project}/+/{id}".
   //
+  // GitilesCommit objects MUST have host, project, ref fields set.
+  //
   // V1 equivalent: supersedes "revision" property and "buildset"
   // tag that starts with "commit/gitiles/".
   GitilesCommit gitiles_commit = 7;
@@ -261,6 +264,7 @@ message ScheduleBuildRequest {
   // Value for Build.input.gerrit_changes.
   // Usually present in tryjobs, set by CQ, Gerrit, git-cl-try.
   // Applied on top of gitiles_commit if specified, otherwise tip of the tree.
+  // All GerritChange fields are required.
   //
   // Setting this field will cause the created build to have a "buildset"
   // tag with value "patch/gerrit/{hostname}/{change}/{patchset}"
@@ -297,6 +301,9 @@ message ScheduleBuildRequest {
 
   // Fields to include in the response. See also GetBuildRequest.fields.
   google.protobuf.FieldMask fields = 100;
+
+  // Value for Build.critical.
+  Trinary critical = 13;
 }
 
 // A request message for CancelBuild rpc.
@@ -309,6 +316,18 @@ message CancelBuildRequest {
 
   // Fields to include in the response. See also GetBuildRequest.fields.
   google.protobuf.FieldMask fields = 100;
+}
+
+// A request message for CancelBuilds rpc.
+message CancelBuildsRequest {
+  // Predicate for the builds to cancel.
+  // predicate.status MUST be SCHEDULED or STARTED.
+  // If bucket is not specified, predicate matches all buckets where the
+  // requester has WRITER role.
+  BuildPredicate predicate = 1;
+
+  // Required. Value for Build.summary_markdown.
+  string summary_markdown = 2;
 }
 
 // A build predicate.

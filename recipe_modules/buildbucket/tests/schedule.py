@@ -56,6 +56,11 @@ def GenTests(api):
   )
 
   yield test(
+      test_name='critical',
+      critical=True,
+  )
+
+  yield test(
       test_name='properties',
       properties={
           'str': 'b',

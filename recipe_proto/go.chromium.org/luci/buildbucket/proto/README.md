@@ -1,2 +1,2 @@
 These protos were copied from
-https://chromium.googlesource.com/infra/luci/luci-go/+/eb69e6d06c2c85af31f0985f16ef2ad38e5fd247/buildbucket/proto
+https://chromium.googlesource.com/infra/luci/luci-go/+/d163a51e0f5e1355029dd92188f2d3ec8c555bd3/buildbucket/proto

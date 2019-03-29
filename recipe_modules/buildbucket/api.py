@@ -264,6 +264,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       inherit_buildsets=True,
       dimensions=None,
       priority=None,
+      critical=None,
     ):
     """Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
@@ -307,6 +308,11 @@ class BuildbucketApi(recipe_api.RecipeApi):
     * priority (int): Swarming task priority.
       The lower the more important. Valid values are `[20..255]`.
       Defaults to the value of the current build.
+    * critical: whether the build status should not be used to assess
+      correctness of the commit/CL.
+      Defaults to .build.critical.
+      See also Build.critical in
+      https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto
     """
 
 
@@ -319,6 +325,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
     def copy_msg(src, dest):
       dest.CopyFrom(as_msg(src, type(dest)))
 
+    def as_trinary(value):
+      assert isinstance(value, (bool, int))
+      if isinstance(value, bool):
+        value = common_pb2.YES if value else common_pb2.NO
+      return value
+
     b = self.build
     req = rpc_pb2.ScheduleBuildRequest(
         request_id='%d-%s' % (b.id, self.m.uuid.random()),
@@ -329,13 +341,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
         ),
         priority=priority or b.infra.swarming.priority,
         experimental=b.input.experimental,
+        critical=b.critical,
     )
     req.properties.update(properties or {})
 
     if experimental is not None:
-      if isinstance(experimental, bool):
-        experimental = common_pb2.YES if experimental else common_pb2.NO
-      req.experimental = experimental
+      req.experimental = as_trinary(experimental)
+
+    if critical is not None:
+      req.critical = as_trinary(critical)
 
     # Populate commit.
     if not gitiles_commit and b.input.HasField('gitiles_commit'):
