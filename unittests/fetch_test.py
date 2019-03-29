@@ -300,6 +300,50 @@ class TestGit(test_env.RecipeEngineUnitTest):
     self.assertMultiDone(git)
     attr_checker.assert_called_with('a'*40, set(['foo', 'bar']))
 
+  @mock.patch('os.path.isdir')
+  @mock.patch(fetch.__name__+'.GitBackend._execute')
+  def test_commit_metadata_only_gitattributes_file(self, git, isdir):
+    isdir.return_value = False
+    spec = attr.evolve(self.default_spec, recipes_path='recipes')
+
+    git.side_effect = multi(*([
+      self.g(['init', 'dir']),
+      self.g_ls_remote()
+    ] + self.g_metadata_calls(config=spec, diff=['.gitattributes'])))
+
+    result = fetch.GitBackend('dir', 'repo').commit_metadata('revision')
+    self.assertEqual(result, fetch.CommitMetadata(
+      revision = 'a'*40,
+      author_email = 'foo@example.com',
+      commit_timestamp = 1492131405,
+      message_lines = ('hello', 'world'),
+      spec = spec,
+      roll_candidate = True,
+    ))
+    self.assertMultiDone(git)
+
+  @mock.patch('os.path.isdir')
+  @mock.patch(fetch.__name__+'.GitBackend._execute')
+  def test_commit_metadata_only_gitattributes_file_2(self, git, isdir):
+    isdir.return_value = False
+    spec = attr.evolve(self.default_spec, recipes_path='recipes')
+
+    git.side_effect = multi(*([
+      self.g(['init', 'dir']),
+      self.g_ls_remote()
+    ] + self.g_metadata_calls(config=spec, diff=['subdir/.gitattributes'])))
+
+    result = fetch.GitBackend('dir', 'repo').commit_metadata('revision')
+    self.assertEqual(result, fetch.CommitMetadata(
+      revision = 'a'*40,
+      author_email = 'foo@example.com',
+      commit_timestamp = 1492131405,
+      message_lines = ('hello', 'world'),
+      spec = spec,
+      roll_candidate = True,
+    ))
+    self.assertMultiDone(git)
+
 
 if __name__ == '__main__':
   test_env.main()

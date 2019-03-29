@@ -383,6 +383,7 @@ class GitBackend(Backend):
     has_interesting_changes = (
         simple_cfg.RECIPES_CFG_LOCATION_REL in changed_files or
         any(f.startswith(recipes_path) for f in changed_files) or
+        any(f.split('/')[-1] == '.gitattributes' for f in changed_files) or
         self._gitattr_checker.check_files(revision, changed_files))
 
     return CommitMetadata(revision, meta[0],
