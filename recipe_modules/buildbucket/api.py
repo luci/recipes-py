@@ -209,13 +209,13 @@ class BuildbucketApi(recipe_api.RecipeApi):
     assert not c.project.startswith('a/'), c.project
     assert not c.project.endswith('/'), c.project
 
+    assert c.ref.startswith('refs/'), c.ref
+    assert not c.ref.endswith('/'), c.ref
+
     assert util.is_sha1_hex(c.id), c.id
 
     # position is uint32
-    assert not c.position or c.ref
-
-    assert not c.ref or c.ref.startswith('refs/'), c.ref
-    assert not c.ref.endswith('/'), c.ref
+    # Does not need extra validation.
 
     # The fact that it sets a property value is an implementation detail.
     res = self.m.step('set_output_gitiles_commit', cmd=None)
