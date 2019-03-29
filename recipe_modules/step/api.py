@@ -218,15 +218,13 @@ class StepApi(recipe_api.RecipeApiPlain):
     ))
 
   def _make_trigger_spec(self, trig):
-    buildbot_changes = trig.get('buildbot_changes')
-    assert isinstance(buildbot_changes, (types.NoneType, list))
-
     critical = trig.get('critical')
     return self.step_client.TriggerSpec(
-        bucket=trig.get('bucket'),
         builder_name=trig['builder_name'],
-        properties=trig.get('properties'),
-        buildbot_changes=buildbot_changes,
-        tags=trig.get('tags'),
+
+        bucket=trig.get('bucket', ''),
+        properties=trig.get('properties', {}),
+        buildbot_changes=trig.get('buildbot_changes', []),
+        tags=trig.get('tags', ()),
         critical=bool(critical) if critical is not None else (True),
     )

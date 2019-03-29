@@ -14,8 +14,9 @@ from collections import namedtuple
 
 import attr
 
-from .attr_util import attr_type, attr_dict_type
+from .attr_util import attr_type, attr_dict_type, attr_seq_type
 
+from ..types import FrozenDict
 from ..util import Placeholder, sentinel
 from ..types import freeze
 
@@ -37,6 +38,37 @@ class EnvAffix(object):
     rendered = {k: (self.pathsep or ':').join(str(x) for x in v)
                 for k, v in self.mapping.iteritems()}
     return pprint.pformat(rendered, width=1024)
+
+
+@attr.s(frozen=True)
+class TriggerSpec(object):
+  """TriggerSpec is the internal representation of a raw trigger step. You should
+  use the standard 'step' recipe module, which will construct trigger specs
+  via API.
+  """
+  # The name of the builder to trigger.
+  builder_name = attr.ib(validator=attr_type(str))
+
+  # The name of the trigger bucket.
+  bucket = attr.ib(default='', validator=attr_type(str))
+
+  # Key/value properties dictionary.
+  properties = attr.ib(factory=dict, validator=attr_type((dict, FrozenDict)))
+
+  # Optional list of BuildBot change dicts.
+  buildbot_changes = attr.ib(default=(), validator=attr_seq_type(dict))
+
+  # Optional list of tag strings.
+  tags = attr.ib(default=(), validator=attr_seq_type(str))
+
+  # If true and triggering fails asynchronously, fail the entire build.
+  critical = attr.ib(default=True, validator=attr_type(bool))
+
+  def _render_to_dict(self):
+    d = dict((k, v) for k, v in attr.asdict(self).iteritems() if v)
+    if d['critical']:
+      d.pop('critical')
+    return d
 
 
 class StepConfig(namedtuple('_StepConfig', (
@@ -161,37 +193,3 @@ class StepConfig(namedtuple('_StepConfig', (
                 and k not in sc._RENDER_BLACKLIST)
     ret['name'] = self.name
     return ret
-
-
-class TriggerSpec(namedtuple('_TriggerSpec', (
-    'bucket', 'builder_name', 'properties', 'buildbot_changes', 'tags',
-    'critical'))):
-
-  """
-  TriggerSpec is the internal representation of a raw trigger step. You should
-  use the standard 'step' recipe module, which will construct trigger specs
-  via API.
-
-  Fields:
-    builder_name (str): The name of the builder to trigger.
-    bucket (str or None): The name of the trigger bucket.
-    properties (dict or None): Key/value properties dictionary.
-    buildbot_changes (list or None): Optional list of BuildBot change dicts.
-    tags (list or None): Optional list of tag strings.
-    critical (bool or None): If true and triggering fails asynchronously, fail
-        the entire build. If None, the step defaults to being True.
-  """
-
-  def __new__(cls, **kwargs):
-    for field in cls._fields:
-      kwargs.setdefault(field, None)
-    trig = super(TriggerSpec, cls).__new__(cls, **kwargs)
-    return trig._replace(
-        critical=bool(trig.critical),
-    )
-
-  def _render_to_dict(self):
-    d = dict((k, v) for k, v in self._asdict().iteritems() if v)
-    if d['critical']:
-      d.pop('critical')
-    return d
