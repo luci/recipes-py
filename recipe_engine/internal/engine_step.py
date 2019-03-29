@@ -12,19 +12,26 @@ import pprint
 
 from collections import namedtuple
 
+import attr
+
+from .attr_util import attr_type, attr_dict_type
+
 from ..util import Placeholder, sentinel
+from ..types import freeze
 
 
-class EnvAffix(namedtuple('_EnvAffix', (
-    'mapping', 'pathsep'))):
+@attr.s(frozen=True)
+class EnvAffix(object):
   """Expresses a mapping of environment keys to a list of paths.
 
   This is used as StepConfig's "env_prefixes" and "env_suffixes" value.
   """
+  mapping = attr.ib(factory=dict,
+                    validator=attr_dict_type(str, str, value_seq=True))
+  pathsep = attr.ib(default=None, validator=attr_type((str, type(None))))
 
-  @classmethod
-  def empty(cls):
-    return cls(mapping={}, pathsep=None)
+  def __attrs_post_init__(self):
+    object.__setattr__(self, 'mapping', freeze(self.mapping))
 
   def render_step_value(self):
     rendered = {k: (self.pathsep or ':').join(str(x) for x in v)
@@ -131,8 +138,8 @@ class StepConfig(namedtuple('_StepConfig', (
              for x in (sc.cmd or ())],
         cwd=(str(sc.cwd) if sc.cwd else (None)),
         env=sc.env or {},
-        env_prefixes=sc.env_prefixes or EnvAffix.empty(),
-        env_suffixes=sc.env_suffixes or EnvAffix.empty(),
+        env_prefixes=sc.env_prefixes or EnvAffix(),
+        env_suffixes=sc.env_suffixes or EnvAffix(),
         allow_subannotations=bool(sc.allow_subannotations),
         trigger_specs=sc.trigger_specs or (),
         infra_step=bool(sc.infra_step),

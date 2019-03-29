@@ -7,8 +7,6 @@ import copy
 import json
 import operator
 
-from .internal.engine_step import StepConfig
-
 
 def freeze(obj):
   """Takes a generic object ``obj``, and returns an immutable version of it.
@@ -208,6 +206,9 @@ class StepData(object):
   def __init__(self, step_config, retcode):
     self._step_config = step_config
     self._retcode = retcode
+
+    # TODO(iannucci): This late import will go away in a later CL
+    from .internal.engine_step import StepConfig
 
     self._presentation = StepPresentation(step_config.name)
     if step_config.ok_ret is StepConfig.ALL_OK or retcode in step_config.ok_ret:

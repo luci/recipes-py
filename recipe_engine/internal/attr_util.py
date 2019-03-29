@@ -4,8 +4,6 @@
 
 """Helpers for using the `attr` library."""
 
-from ..types import FrozenDict
-
 
 def attr_type(type_, subname=''):
   """An `attr.s` validator for asserting the type of a value.
@@ -72,25 +70,51 @@ def attr_superclass(type_, subname=''):
   return _inner
 
 
-def attr_dict_type(key_type, val_type):
+def attr_dict_type(key_type, val_type, value_seq=False):
   """Helper function for writing attr.s validators for dictionary types.
 
   Args:
     * key_type (object) - The python type object to validate the dict's keys.
-    * value_type (object) - The python type object to validate the dict's
+    * val_type (object) - The python type object to validate the dict's
       values.
+    * value_seq (bool) - If the dictionary maps to a sequence of val_type.
 
   Returns a validator function which raises TypeError if:
     * The value is not a dictionary
     * All of it's keys don't match `key_type`
     * All of it's values don't match `val_type`
   """
-
   def _inner(self, attrib, value):
+    # late import to avoid import cycle
+    from ..types import FrozenDict
+
     attr_type((dict, FrozenDict))(self, attrib, value)
     for k, subval in value.iteritems():
       attr_type(key_type, ' keys')(self, attrib, k)
-      attr_type(val_type, ' values')(self, attrib, subval)
+      subname = '[%r]' % k
+      if value_seq:
+        attr_seq_type(val_type, subname)(self, attrib, subval)
+      else:
+        attr_type(val_type, subname)(self, attrib, subval)
+
+  return _inner
+
+
+def attr_seq_type(val_type, subname=''):
+  """Helper function for writing attr.s validators for list types.
+
+  Args:
+    * val_type (object) - The python type object to validate the list's values.
+
+  Returns a validator function which raises TypeError if:
+    * The value is not a list, tuple, set or frozenset
+    * All of it's values don't match `val_type`
+  """
+
+  def _inner(self, attrib, value):
+    attr_type((list, tuple, set, frozenset), subname)(self, attrib, value)
+    for subval in value:
+      attr_type(val_type, subname + ' values')(self, attrib, subval)
 
   return _inner
 
@@ -123,5 +147,3 @@ def attr_value_is(msg, check_fn, subname=''):
         subname,
       )
   return _inner
-
-

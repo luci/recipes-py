@@ -192,11 +192,17 @@ class StepApi(recipe_api.RecipeApiPlain):
         cwd=cwd,
         env=self.m.context.env,
         env_prefixes=self.step_client.EnvAffix(
-          mapping=env_prefixes,
+          mapping={
+            k: map(str, vs)
+            for k, vs in env_prefixes.iteritems()
+          },
           pathsep=self.m.path.pathsep,
         ),
         env_suffixes=self.step_client.EnvAffix(
-          mapping=self.m.context.env_suffixes,
+          mapping={
+            k: map(str, vs)
+            for k, vs in self.m.context.env_suffixes.iteritems()
+          },
           pathsep=self.m.path.pathsep,
         ),
         allow_subannotations=bool(allow_subannotations),
