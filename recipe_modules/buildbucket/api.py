@@ -143,6 +143,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """
     return self.build.input.gitiles_commit
 
+  def is_critical(self, build=None):
+    """Returns True if the build is critical. Build defaults to the current one.
+    """
+    build = build or self.build
+    return build.critical in (common_pb2.UNSET, common_pb2.YES)
+
   @property
   def tags_for_child_build(self):
     """A dict of tags (key -> value) derived from current (parent) build for a

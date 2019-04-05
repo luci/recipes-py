@@ -24,6 +24,13 @@
   {
     "cmd": [
       "echo",
+      "True"
+    ],
+    "name": "is_critical"
+  },
+  {
+    "cmd": [
+      "echo",
       "buildset:commit/gitiles/chromium.googlesource.com/chromium/src/+/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "user_agent:recipe"
     ],

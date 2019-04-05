@@ -19,6 +19,13 @@
   {
     "cmd": [
       "echo",
+      "True"
+    ],
+    "name": "is_critical"
+  },
+  {
+    "cmd": [
+      "echo",
       "parent_buildername:linux",
       "user_agent:recipe"
     ],

@@ -21,6 +21,13 @@
   {
     "cmd": [
       "echo",
+      "True"
+    ],
+    "name": "is_critical"
+  },
+  {
+    "cmd": [
+      "echo",
       "buildset:x",
       "user_agent:recipe"
     ],

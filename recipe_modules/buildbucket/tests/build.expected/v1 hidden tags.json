@@ -30,6 +30,13 @@
   {
     "cmd": [
       "echo",
+      "True"
+    ],
+    "name": "is_critical"
+  },
+  {
+    "cmd": [
+      "echo",
       "buildset:patch/gerrit/chromium-review.googlesource.com/1/2",
       "parent_buildername:linux",
       "user_agent:recipe"

@@ -17,6 +17,7 @@ def RunSteps(api):
   text = text_format.MessageToString(api.buildbucket.build)
   api.step('build', ['echo'] + text.splitlines())
   api.step('hostname', ['echo', api.buildbucket.host])
+  api.step('is_critical', ['echo', api.buildbucket.is_critical()])
 
   child_build_tags = [
       '%s:%s' % t
