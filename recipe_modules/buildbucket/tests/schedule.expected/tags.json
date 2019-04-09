@@ -1,7 +1,7 @@
 [
   {
     "cmd": [
-      "buildbucket",
+      "bb",
       "batch",
       "-host",
       "cr-buildbucket.appspot.com"
@@ -77,7 +77,7 @@
   },
   {
     "cmd": [
-      "buildbucket",
+      "bb",
       "batch",
       "-host",
       "cr-buildbucket.appspot.com"

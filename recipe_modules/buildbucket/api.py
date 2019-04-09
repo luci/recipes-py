@@ -434,10 +434,11 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
 
     try:
-      self._run_buildbucket(
-          name=step_name or 'buildbucket.schedule',
+      self._run_bb(
+          step_name=step_name or 'buildbucket.schedule',
           subcommand='batch',
           stdin=self.m.json.input(json_format.MessageToDict(batch_req)),
+          stdout=self.m.json.output(),
           step_test_data=lambda: self.m.json.test_api.output_stream(
               json_format.MessageToDict(test_res)
           ),
@@ -573,6 +574,28 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   # Internal.
 
+  def _run_bb(
+      self, subcommand, step_name=None, args=None, stdin=None, stdout=None,
+      step_test_data=None):
+    cmdline = [
+      'bb', subcommand,
+      '-host', self._host,
+    ]
+    # Do not pass -service-account-json. It is not needed on LUCI.
+    # TODO(nodir): change api.runtime.is_luci default to True and assert
+    # it is true here.
+    cmdline += args or []
+
+    return self.m.step(
+        step_name or ('bb ' + subcommand),
+        cmdline,
+        infra_step=True,
+        stdin=stdin,
+        stdout=stdout,
+        step_test_data=step_test_data,
+    )
+
+  # TODO(nodir): remove in favor of _run_bb
   def _run_buildbucket(
       self, subcommand, args=None, json_stdout=True, name=None, **kwargs):
     step_name = name or ('buildbucket.' + subcommand)
