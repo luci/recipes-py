@@ -7,6 +7,7 @@
   * [assertions](#recipe_modules-assertions)
   * [buildbucket](#recipe_modules-buildbucket) &mdash; API for interacting with the buildbucket service.
   * [cipd](#recipe_modules-cipd) &mdash; API for interacting with CIPD.
+  * [commit_position](#recipe_modules-commit_position)
   * [context](#recipe_modules-context) &mdash; The context module provides APIs for manipulating a few pieces of 'ambient' data that affect how steps are run.
   * [cq](#recipe_modules-cq)
   * [file](#recipe_modules-file) &mdash; File manipulation (read/write/delete/glob) methods.
@@ -46,6 +47,7 @@
   * [buildbucket:tests/put](#recipes-buildbucket_tests_put)
   * [buildbucket:tests/schedule](#recipes-buildbucket_tests_schedule)
   * [cipd:examples/full](#recipes-cipd_examples_full)
+  * [commit_position:examples/full](#recipes-commit_position_examples_full)
   * [context:examples/full](#recipes-context_examples_full)
   * [context:tests/cwd](#recipes-context_tests_cwd)
   * [context:tests/env](#recipes-context_tests_env)
@@ -714,6 +716,21 @@ Args:
     package instance.
 
 Returns the CIPDApi.Pin instance.
+### *recipe_modules* / [commit\_position](/recipe_modules/commit_position)
+
+#### **class [CommitPositionApi](/recipe_modules/commit_position/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+
+Recipe module providing commit position parsing and formatting.
+
+&emsp; **@classmethod**<br>&mdash; **def [format](/recipe_modules/commit_position/api.py#26)(cls, ref, revision_number):**
+
+Returns a commit position string.
+
+ref must start with 'refs/'.
+
+&emsp; **@classmethod**<br>&mdash; **def [parse](/recipe_modules/commit_position/api.py#16)(cls, value):**
+
+Returns (ref, revision_number) tuple.
 ### *recipe_modules* / [context](/recipe_modules/context)
 
 [DEPS](/recipe_modules/context/__init__.py#5): [path](#recipe_modules-path)
@@ -2354,6 +2371,11 @@ This file is a recipe demonstrating the buildbucket recipe module.
 [DEPS](/recipe_modules/cipd/examples/full.py#8): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/cipd/examples/full.py#34)(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files, install_mode, refs, tags):**
+### *recipes* / [commit\_position:examples/full](/recipe_modules/commit_position/examples/full.py)
+
+[DEPS](/recipe_modules/commit_position/examples/full.py#5): [commit\_position](#recipe_modules-commit_position), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/commit_position/examples/full.py#11)(api):**
 ### *recipes* / [context:examples/full](/recipe_modules/context/examples/full.py)
 
 [DEPS](/recipe_modules/context/examples/full.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
