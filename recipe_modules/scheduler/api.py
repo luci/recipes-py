@@ -12,18 +12,42 @@ RPCExplorer available at
   https://luci-scheduler.appspot.com/rpcexplorer/services/scheduler.Scheduler
 """
 
+import copy
 import uuid
 
+from google.protobuf import json_format
+
 from recipe_engine import recipe_api
+
+from PB.go.chromium.org.luci.scheduler.api.scheduler.v1 import (
+    triggers as triggers_pb2)
 
 
 class SchedulerApi(recipe_api.RecipeApi):
   """A module for interacting with LUCI Scheduler service."""
 
-  def __init__(self, **kwargs):
+  def __init__(self, init_state, **kwargs):
     super(SchedulerApi, self).__init__(**kwargs)
-    self._host = 'luci-scheduler.appspot.com'
+    self._host = init_state.get('hostname') or 'luci-scheduler.appspot.com'
     self._fake_uuid_count = 0
+
+    self._triggers = []
+    for t_dict in init_state.get('triggers') or []:
+      self._triggers.append(
+          json_format.ParseDict(t_dict, triggers_pb2.Trigger()))
+
+  @property
+  def triggers(self):
+    """Returns a list of triggers that triggered the current build.
+
+    A trigger is an instance of triggers_pb2.Trigger.
+    """
+    return copy.copy(self._triggers)
+
+  @property
+  def host(self):
+    """Returns the backend hostname used by this module."""
+    return self._host
 
   def set_host(self, host):
     """Changes the backend hostname used by this module.
@@ -34,6 +58,7 @@ class SchedulerApi(recipe_api.RecipeApi):
     self._host = host
 
 
+  # TODO(tandrii): remove in favor of triggers_pb2 types
   class Trigger(object):
     """Generic Trigger accepted by LUCI Scheduler API.
 

@@ -1,0 +1,33 @@
+[
+  {
+    "cmd": [],
+    "name": "triggers",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@triggers@[@@@",
+      "@@@STEP_LOG_LINE@triggers@  {@@@",
+      "@@@STEP_LOG_LINE@triggers@    \"gitiles\": {@@@",
+      "@@@STEP_LOG_LINE@triggers@      \"ref\": \"refs/heads/master\", @@@",
+      "@@@STEP_LOG_LINE@triggers@      \"repo\": \"https://chromium.googlesource.com/chomium/src\", @@@",
+      "@@@STEP_LOG_LINE@triggers@      \"revision\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"@@@",
+      "@@@STEP_LOG_LINE@triggers@    }, @@@",
+      "@@@STEP_LOG_LINE@triggers@    \"id\": \"a\"@@@",
+      "@@@STEP_LOG_LINE@triggers@  }, @@@",
+      "@@@STEP_LOG_LINE@triggers@  {@@@",
+      "@@@STEP_LOG_LINE@triggers@    \"gitiles\": {@@@",
+      "@@@STEP_LOG_LINE@triggers@      \"ref\": \"refs/heads/master\", @@@",
+      "@@@STEP_LOG_LINE@triggers@      \"repo\": \"https://chromium.googlesource.com/chomium/src\", @@@",
+      "@@@STEP_LOG_LINE@triggers@      \"revision\": \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"@@@",
+      "@@@STEP_LOG_LINE@triggers@    }, @@@",
+      "@@@STEP_LOG_LINE@triggers@    \"id\": \"b\"@@@",
+      "@@@STEP_LOG_LINE@triggers@  }@@@",
+      "@@@STEP_LOG_LINE@triggers@]@@@",
+      "@@@STEP_LOG_END@triggers@@@",
+      "@@@STEP_LOG_LINE@first_repo@https://chromium.googlesource.com/chomium/src@@@",
+      "@@@STEP_LOG_END@first_repo@@@"
+    ]
+  },
+  {
+    "jsonResult": null,
+    "name": "$result"
+  }
+]

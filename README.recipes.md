@@ -90,6 +90,8 @@
   * [raw_io:examples/full](#recipes-raw_io_examples_full)
   * [runtime:tests/full](#recipes-runtime_tests_full)
   * [scheduler:examples/emit_triggers](#recipes-scheduler_examples_emit_triggers) &mdash; This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
+  * [scheduler:examples/host](#recipes-scheduler_examples_host) &mdash; This file is a recipe demonstrating reading/mocking scheduler host.
+  * [scheduler:examples/triggers](#recipes-scheduler_examples_triggers) &mdash; This file is a recipe demonstrating reading triggers of the current build.
   * [service_account:examples/full](#recipes-service_account_examples_full)
   * [source_manifest:examples/simple](#recipes-source_manifest_examples_simple)
   * [step:examples/full](#recipes-step_examples_full)
@@ -1797,7 +1799,7 @@ True if this recipe is currently running on LUCI stack.
 Should be used only during migration from Buildbot to LUCI stack.
 ### *recipe_modules* / [scheduler](/recipe_modules/scheduler)
 
-[DEPS](/recipe_modules/scheduler/__init__.py#5): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/scheduler/__init__.py#8): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 API for interacting with the LUCI Scheduler service.
 
@@ -1808,11 +1810,11 @@ Documentation for scheduler API is in
 RPCExplorer available at
   https://luci-scheduler.appspot.com/rpcexplorer/services/scheduler.Scheduler
 
-#### **class [SchedulerApi](/recipe_modules/scheduler/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [SchedulerApi](/recipe_modules/scheduler/api.py#26)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
 
 A module for interacting with LUCI Scheduler service.
 
-&mdash; **def [emit\_trigger](/recipe_modules/scheduler/api.py#113)(self, trigger, project, jobs, step_name=None):**
+&mdash; **def [emit\_trigger](/recipe_modules/scheduler/api.py#138)(self, trigger, project, jobs, step_name=None):**
 
 Emits trigger to one or more jobs of a given project.
 
@@ -1823,7 +1825,7 @@ Args:
   jobs (iterable of str): job names per LUCI Scheduler config for the given
     project. These typically are the same as builder names.
 
-&mdash; **def [emit\_triggers](/recipe_modules/scheduler/api.py#125)(self, trigger_project_jobs, timestamp_usec=None, step_name=None):**
+&mdash; **def [emit\_triggers](/recipe_modules/scheduler/api.py#150)(self, trigger_project_jobs, timestamp_usec=None, step_name=None):**
 
 Emits a batch of triggers spanning one or more projects.
 
@@ -1837,12 +1839,22 @@ Args:
     Useful for idempotency of calls if your recipe is doing its own retries.
     https://chromium.googlesource.com/infra/luci/luci-go/+/master/scheduler/api/scheduler/v1/triggers.proto
 
-&mdash; **def [set\_host](/recipe_modules/scheduler/api.py#28)(self, host):**
+&emsp; **@property**<br>&mdash; **def [host](/recipe_modules/scheduler/api.py#47)(self):**
+
+Returns the backend hostname used by this module.
+
+&mdash; **def [set\_host](/recipe_modules/scheduler/api.py#52)(self, host):**
 
 Changes the backend hostname used by this module.
 
 Args:
   host (str): server host (e.g. 'luci-scheduler.appspot.com').
+
+&emsp; **@property**<br>&mdash; **def [triggers](/recipe_modules/scheduler/api.py#39)(self):**
+
+Returns a list of triggers that triggered the current build.
+
+A trigger is an instance of triggers_pb2.Trigger.
 ### *recipe_modules* / [service\_account](/recipe_modules/service_account)
 
 [DEPS](/recipe_modules/service_account/__init__.py#5): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
@@ -2602,6 +2614,20 @@ Tests for api.python.infra_failing_step.
 This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
 
 &mdash; **def [RunSteps](/recipe_modules/scheduler/examples/emit_triggers.py#16)(api):**
+### *recipes* / [scheduler:examples/host](/recipe_modules/scheduler/examples/host.py)
+
+[DEPS](/recipe_modules/scheduler/examples/host.py#7): [scheduler](#recipe_modules-scheduler), [step](#recipe_modules-step)
+
+This file is a recipe demonstrating reading/mocking scheduler host.
+
+&mdash; **def [RunSteps](/recipe_modules/scheduler/examples/host.py#12)(api):**
+### *recipes* / [scheduler:examples/triggers](/recipe_modules/scheduler/examples/triggers.py)
+
+[DEPS](/recipe_modules/scheduler/examples/triggers.py#14): [scheduler](#recipe_modules-scheduler), [step](#recipe_modules-step)
+
+This file is a recipe demonstrating reading triggers of the current build.
+
+&mdash; **def [RunSteps](/recipe_modules/scheduler/examples/triggers.py#19)(api):**
 ### *recipes* / [service\_account:examples/full](/recipe_modules/service_account/examples/full.py)
 
 [DEPS](/recipe_modules/service_account/examples/full.py#7): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account)

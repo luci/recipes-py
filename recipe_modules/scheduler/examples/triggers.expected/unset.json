@@ -1,0 +1,14 @@
+[
+  {
+    "cmd": [],
+    "name": "triggers",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@triggers@[]@@@",
+      "@@@STEP_LOG_END@triggers@@@"
+    ]
+  },
+  {
+    "jsonResult": null,
+    "name": "$result"
+  }
+]

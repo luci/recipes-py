@@ -1,0 +1,104 @@
+// Copyright 2016 The LUCI Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package scheduler;
+
+import "google/protobuf/struct.proto";
+
+
+// Trigger can be emitted by triggering tasks (such as Gitiles tasks) or through
+// API and consumed by triggered tasks (such as Buildbucket tasks).
+message Trigger {
+  // Unique identifier of the trigger.
+  //
+  // It is used to deduplicate and hence provide idempotency for adding
+  // a trigger. Each job has an internal buffer with IDs of recent triggers it
+  // received. Triggers that have already been seen are silently skipped. The
+  // buffer is periodically cleaned, so old IDs can be potentially reused,
+  // though you should not rely on that.
+  //
+  // Must be provided by whoever emits the trigger. Can be anything at all, as
+  // long as it is unique.
+  string id = 1;
+
+  // Optional user friendly name for this trigger that shows up in Scheduler UI.
+  string title = 2;
+
+  // Optional HTTP link to display in Scheduler UI.
+  string url = 3;
+
+  // Actual trigger data. Its type defines how the trigger will be processed
+  // by the Scheduler, see corresponding protos.
+  oneof payload {
+    CronTrigger cron = 40;
+    WebUITrigger webui = 41;
+    NoopTrigger noop = 50;
+    GitilesTrigger gitiles = 51;
+    BuildbucketTrigger buildbucket = 52;
+  }
+}
+
+
+// CronTrigger is used internally by Scheduler to implement periodic jobs.
+//
+// It is emitted by the cron state machines whenever it decides the scheduler
+// should launch the invocation.
+//
+// Note: such triggers can't be scheduled through external Scheduler API. They
+// may appear in the API responses though.
+message CronTrigger {
+  int64 generation = 1; // monotonically increasing number
+}
+
+
+// WebUITrigger is emitted whenever users click "Trigger" button in UI.
+//
+// Note: such triggers can't be scheduled through external Scheduler API (to
+// avoid confusion). They may appear in the API responses though.
+message WebUITrigger {
+}
+
+
+// NoopTrigger is used by Scheduler integration tests to represent test
+// triggers.
+message NoopTrigger {
+  string data = 1;
+}
+
+
+// GitilesTrigger is emitted by sources that watch Gitiles and consumed by
+// Buildbucket tasks.
+//
+// Such triggers are emitted whenever the repository state changes.
+message GitilesTrigger {
+  string repo = 1;     // an URL of a repo that changed
+  string ref = 2;      // a ref that changed, in full, e.g "refs/heads/master"
+  string revision = 3; // a revision (SHA1 in hex) pointed to by the ref
+}
+
+
+// BuildbucketTrigger is emitted by sources that request a build and consumed by
+// Buildbucket tasks.
+//
+// The trigger contains information to pass to the new Buildbucket build.
+//
+// Note: what builds to trigger is specified separately, either in the job
+// configuration (when one job triggers another) or via the API request
+// parameters (when triggering through public API).
+message BuildbucketTrigger {
+  google.protobuf.Struct properties = 1;
+  repeated string tags = 2;
+}
