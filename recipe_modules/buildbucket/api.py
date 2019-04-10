@@ -466,9 +466,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
               '',  # Blank line.
           ])
         else:
-          build_id = r.schedule_build.id
-          build_url = self.build_url(build_id=build_id)
-          pres.links['build %s' % build_id] = build_url
+          b = r.schedule_build
+          build_url = self.build_url(build_id=b.id)
+          build_title = '%s/%s/%s/%d' % (
+              b.builder.project, b.builder.bucket, b.builder.builder,
+              b.number or b.id)
+          pres.links[build_title] = build_url
 
       pres.step_text = '<br>'.join(step_text)
 
