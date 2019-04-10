@@ -24,7 +24,11 @@ def sentinel(name):
   acceptable special value in the type of an argument. An identity check (x is
   SENTINEL) can be used to check for the sentinel.
   """
-  return type(name, (), {'__repr__': lambda _: name})()
+  return type(name, (), {
+      '__repr__': lambda _: name,
+      '__copy__': lambda self: self,
+      '__deepcopy__': lambda self, _: self,
+  })()
 
 
 class RecipeAbort(Exception):
