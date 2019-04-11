@@ -107,6 +107,13 @@ def RunSteps(api):
   with api.swarming.on_path():
     api.step('some step with swarming on path', [])
 
+  with api.swarming.with_server('some-server.com'):
+    api.swarming.trigger('trigger on some-server.com', requests=[request])
+    api.swarming.collect('collect on some-server.com', ['1'])
+
+  # verify swarming server correctly reverts
+  api.swarming.trigger('trigger on original server', requests=[request])
+  api.swarming.collect('collect on original server', ['1'])
 
 def GenTests(api):
   yield api.test('basic')

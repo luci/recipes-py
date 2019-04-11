@@ -2060,7 +2060,7 @@ http://go.chromium.org/luci/client/cmd/swarming.
 This module will deploy the client to [CACHE]/swarming_client/; users should
 add this path to the named cache for their builder.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#798)(self, name, tasks, output_dir=None, timeout=None):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#816)(self, name, tasks, output_dir=None, timeout=None):**
 
 Waits on a set of Swarming tasks.
 
@@ -2090,7 +2090,7 @@ Example:
     with api.swarming.on_path():
       # do your steps which require the swarming binary on path
 
-&mdash; **def [task\_request](/recipe_modules/swarming/api.py#748)(self):**
+&mdash; **def [task\_request](/recipe_modules/swarming/api.py#766)(self):**
 
 Creates a new TaskRequest object.
 
@@ -2100,7 +2100,7 @@ a full task.
 Once your TaskRequest is complete, you can pass it to `trigger` in order to
 have it start running on the swarming server.
 
-&mdash; **def [trigger](/recipe_modules/swarming/api.py#759)(self, step_name, requests):**
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#777)(self, step_name, requests):**
 
 Triggers a set of Swarming tasks.
 
@@ -2111,6 +2111,18 @@ Args:
 
 Returns:
   A list of TaskRequestMetadata objects.
+
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [with\_server](/recipe_modules/swarming/api.py#748)(self, server):**
+
+This context sets the server for Swarming calls.
+
+Example:
+
+  with api.swarming.server('new-swarming-server.com'):
+    # perform swarming calls
+
+Args:
+  server (str): The swarming server to call within context.
 ### *recipe_modules* / [tempfile](/recipe_modules/tempfile)
 
 [DEPS](/recipe_modules/tempfile/__init__.py#5): [file](#recipe_modules-file), [path](#recipe_modules-path)

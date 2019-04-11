@@ -745,6 +745,24 @@ class SwarmingApi(recipe_api.RecipeApi):
     with self.m.context(env_prefixes={'PATH': [self._client_dir]}):
       yield
 
+  @contextlib.contextmanager
+  def with_server(self, server):
+    """This context sets the server for Swarming calls.
+
+    Example:
+
+      with api.swarming.server('new-swarming-server.com'):
+        # perform swarming calls
+
+    Args:
+      server (str): The swarming server to call within context.
+    """
+    old_server = self._server
+    self._server = server
+    yield
+
+    self._server = old_server
+
   def task_request(self):
     """Creates a new TaskRequest object.
 

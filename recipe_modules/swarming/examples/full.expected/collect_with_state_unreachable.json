@@ -139,6 +139,138 @@
     "name": "some step with swarming on path"
   },
   {
+    "cmd": [
+      "[CACHE]/swarming_client/swarming",
+      "spawn-tasks",
+      "-server",
+      "some-server.com",
+      "-json-input",
+      "{\"requests\": [{\"name\": \"recipes-go\", \"priority\": \"100\", \"service_account\": \"account@example.iam.gserviceaccount.com\", \"task_slices\": [{\"expiration_secs\": \"3600\", \"properties\": {\"cipd_input\": {\"packages\": [{\"package_name\": \"infra/git/${platform}\", \"path\": \".\", \"version\": \"version:2.14.1.chromium10\"}]}, \"command\": [\"recipes\", \"run\", \"\\\"example\\\"\"], \"dimensions\": [{\"key\": \"pool\", \"value\": \"example.pool\"}], \"env\": [{\"key\": \"SOME_VARNAME\", \"value\": \"stuff\"}], \"env_prefixes\": [{\"key\": \"PATH\", \"value\": [\"a\", \"b\"]}], \"execution_timeout_secs\": \"3600\", \"grace_period_secs\": \"30\", \"idempotent\": true, \"inputs_ref\": {\"isolated\": \"606d94add94223636ee516c6bc9918f937823ccc\", \"isolatedserver\": \"https://example.isolateserver.appspot.com\", \"namespace\": \"default-gzip\"}, \"io_timeout_secs\": \"600\", \"outputs\": []}}, {\"expiration_secs\": \"3600\", \"properties\": {\"cipd_input\": {\"packages\": [{\"package_name\": \"infra/git/${platform}\", \"path\": \".\", \"version\": \"version:2.14.1.chromium10\"}]}, \"command\": [\"recipes\", \"run\", \"\\\"example\\\"\"], \"dimensions\": [{\"key\": \"pool\", \"value\": \"example.pool\"}], \"env\": [{\"key\": \"SOME_VARNAME\", \"value\": \"stuff\"}], \"env_prefixes\": [{\"key\": \"PATH\", \"value\": [\"a\", \"b\"]}], \"execution_timeout_secs\": \"3600\", \"grace_period_secs\": \"20\", \"idempotent\": true, \"inputs_ref\": {\"isolated\": \"606d94add94223636ee516c6bc9918f937823ccc\", \"isolatedserver\": \"https://example.isolateserver.appspot.com\", \"namespace\": \"default-gzip\"}, \"io_timeout_secs\": \"600\", \"outputs\": [\"my/output/file\"], \"secret_bytes\": \"c2hoLCBkb24ndCB0ZWxs\"}}]}]}",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "infra_step": true,
+    "name": "trigger on some-server.com",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"tasks\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@    {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"request\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"name\": \"recipes-go\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }, @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"task_id\": \"0\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  ]@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@Swarming task UI: recipes-go@some-server.com/task?id=0@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[CACHE]/swarming_client/swarming",
+      "collect",
+      "-server",
+      "some-server.com",
+      "-task-summary-json",
+      "/path/to/tmp/json",
+      "-task-output-stdout",
+      "json",
+      "1"
+    ],
+    "infra_step": true,
+    "name": "collect on some-server.com",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"1\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"output\": \"hello world!\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"outputs\": [], @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"results\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"duration\": 62.35, @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"exit_code\": 0, @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"name\": \"my_task_0\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"outputs_ref\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"isolated\": \"abc123\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"isolatedserver\": \"https://isolateserver.appspot.com\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"namespace\": \"default-gzip\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }, @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"state\": \"COMPLETED\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"task_id\": \"1\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LOG_LINE@Swarming task output: my_task_0@hello world!@@@",
+      "@@@STEP_LOG_END@Swarming task output: my_task_0@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[CACHE]/swarming_client/swarming",
+      "spawn-tasks",
+      "-server",
+      "https://example.swarmingserver.appspot.com",
+      "-json-input",
+      "{\"requests\": [{\"name\": \"recipes-go\", \"priority\": \"100\", \"service_account\": \"account@example.iam.gserviceaccount.com\", \"task_slices\": [{\"expiration_secs\": \"3600\", \"properties\": {\"cipd_input\": {\"packages\": [{\"package_name\": \"infra/git/${platform}\", \"path\": \".\", \"version\": \"version:2.14.1.chromium10\"}]}, \"command\": [\"recipes\", \"run\", \"\\\"example\\\"\"], \"dimensions\": [{\"key\": \"pool\", \"value\": \"example.pool\"}], \"env\": [{\"key\": \"SOME_VARNAME\", \"value\": \"stuff\"}], \"env_prefixes\": [{\"key\": \"PATH\", \"value\": [\"a\", \"b\"]}], \"execution_timeout_secs\": \"3600\", \"grace_period_secs\": \"30\", \"idempotent\": true, \"inputs_ref\": {\"isolated\": \"606d94add94223636ee516c6bc9918f937823ccc\", \"isolatedserver\": \"https://example.isolateserver.appspot.com\", \"namespace\": \"default-gzip\"}, \"io_timeout_secs\": \"600\", \"outputs\": []}}, {\"expiration_secs\": \"3600\", \"properties\": {\"cipd_input\": {\"packages\": [{\"package_name\": \"infra/git/${platform}\", \"path\": \".\", \"version\": \"version:2.14.1.chromium10\"}]}, \"command\": [\"recipes\", \"run\", \"\\\"example\\\"\"], \"dimensions\": [{\"key\": \"pool\", \"value\": \"example.pool\"}], \"env\": [{\"key\": \"SOME_VARNAME\", \"value\": \"stuff\"}], \"env_prefixes\": [{\"key\": \"PATH\", \"value\": [\"a\", \"b\"]}], \"execution_timeout_secs\": \"3600\", \"grace_period_secs\": \"20\", \"idempotent\": true, \"inputs_ref\": {\"isolated\": \"606d94add94223636ee516c6bc9918f937823ccc\", \"isolatedserver\": \"https://example.isolateserver.appspot.com\", \"namespace\": \"default-gzip\"}, \"io_timeout_secs\": \"600\", \"outputs\": [\"my/output/file\"], \"secret_bytes\": \"c2hoLCBkb24ndCB0ZWxs\"}}]}]}",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "infra_step": true,
+    "name": "trigger on original server",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"tasks\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@    {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"request\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"name\": \"recipes-go\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }, @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"task_id\": \"0\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  ]@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@Swarming task UI: recipes-go@https://example.swarmingserver.appspot.com/task?id=0@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[CACHE]/swarming_client/swarming",
+      "collect",
+      "-server",
+      "https://example.swarmingserver.appspot.com",
+      "-task-summary-json",
+      "/path/to/tmp/json",
+      "-task-output-stdout",
+      "json",
+      "1"
+    ],
+    "infra_step": true,
+    "name": "collect on original server",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"1\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"output\": \"hello world!\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"outputs\": [], @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"results\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"duration\": 62.35, @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"exit_code\": 0, @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"name\": \"my_task_0\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"outputs_ref\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"isolated\": \"abc123\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"isolatedserver\": \"https://isolateserver.appspot.com\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"namespace\": \"default-gzip\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }, @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"state\": \"COMPLETED\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"task_id\": \"1\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LOG_LINE@Swarming task output: my_task_0@hello world!@@@",
+      "@@@STEP_LOG_END@Swarming task output: my_task_0@@@"
+    ]
+  },
+  {
     "jsonResult": null,
     "name": "$result"
   }
