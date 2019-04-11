@@ -237,7 +237,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   def run(
       self, schedule_build_requests, collect_interval=None, timeout=None,
-      step_name=None):
+      url_title_fn=None, step_name=None):
     """Runs builds and returns results.
 
     A shortcut for schedule() and collect_builds().
@@ -249,7 +249,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
       in the same order as schedule_build_requests.
     """
     with self.m.step.nest(step_name or 'buildbucket.run'):
-      builds = self.schedule(schedule_build_requests, step_name='schedule')
+      builds = self.schedule(
+          schedule_build_requests, step_name='schedule',
+           url_title_fn=url_title_fn)
       build_dict = self.collect_builds(
           [b.id for b in builds],
           interval=collect_interval,
@@ -388,12 +390,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     return req
 
-  def schedule(self, schedule_build_requests, step_name=None):
+  def schedule(
+      self, schedule_build_requests, url_title_fn=None, step_name=None):
     """Schedules a batch of builds.
-
-    `schedule_build_requests` must be a list of
-    `buildbucket.v2.ScheduleBuildRequest` protobuf messages.
-    Create one by calling `schedule_request` method.
 
     Example:
     ```python
@@ -406,6 +405,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
         api.cq.record_triggered_builds(*api.buildbucket.schedule([req1, req2]))
     ```
 
+    Args:
+
+    *   schedule_build_requests: a list of `buildbucket.v2.ScheduleBuildRequest`
+        protobuf messages. Create one by calling `schedule_request` method.
+    *   url_title_fn: a function (build_pb2.Build) -> (str) that returns a title
+        of build link for the step. Defaults to build id.
+        If returns None, the link is not emitted.
+    *   step_name: name for this step.
+
     Returns:
       A list of
       [`Build`](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
@@ -417,6 +425,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     assert isinstance(schedule_build_requests, list), schedule_build_requests
     for r in schedule_build_requests:
       assert isinstance(r, rpc_pb2.ScheduleBuildRequest), r
+    url_title_fn = url_title_fn or (lambda b: b.id)
 
     batch_req = rpc_pb2.BatchRequest(
         requests=[dict(schedule_build=r) for r in schedule_build_requests]
@@ -466,12 +475,10 @@ class BuildbucketApi(recipe_api.RecipeApi):
               '',  # Blank line.
           ])
         else:
-          b = r.schedule_build
-          build_url = self.build_url(build_id=b.id)
-          build_title = '%s/%s/%s/%d' % (
-              b.builder.project, b.builder.bucket, b.builder.builder,
-              b.number or b.id)
-          pres.links[build_title] = build_url
+          build_title = url_title_fn(r.schedule_build)
+          if build_title is not None:
+            pres.links[str(build_title)] = self.build_url(
+                build_id=r.schedule_build.id)
 
       pres.step_text = '<br>'.join(step_text)
 

@@ -238,7 +238,7 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 
 A module for interacting with buildbucket.
 
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#629)(self):**
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#636)(self):**
 
 Returns bucket name in v1 format.
 
@@ -261,11 +261,11 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#645)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#652)(self):**
 
 DEPRECATED, use build.id instead.
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#650)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#657)(self):**
 
 DEPRECATED, use build.input instead.
 
@@ -273,7 +273,7 @@ DEPRECATED, use build.input instead.
 
 Returns url to a build. Defaults to current build.
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#655)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#662)(self):**
 
 Deprecated. Use build.builder instead.
 
@@ -281,9 +281,9 @@ Deprecated. Use build.builder instead.
 
 Returns builder name. Shortcut for `.build.builder.builder`.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#516)(self, build_id, \*\*kwargs):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#523)(self, build_id, \*\*kwargs):**
 
-&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#522)(self, build_id, mirror_status=False, \*\*kwargs):**
+&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#529)(self, build_id, mirror_status=False, \*\*kwargs):**
 
 Shorthand for `collect_builds` below, but for a single build only.
 
@@ -295,7 +295,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
   for the ended build.
 
-&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#542)(self, build_ids, interval=None, timeout=None, step_name=None):**
+&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#549)(self, build_ids, interval=None, timeout=None, step_name=None):**
 
 Waits for a set of builds to end and returns their details.
 
@@ -311,7 +311,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   for all specified builds.
 
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#519)(self, build_id, \*\*kwargs):**
+&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#526)(self, build_id, \*\*kwargs):**
 
 &emsp; **@property**<br>&mdash; **def [gitiles\_commit](/recipe_modules/buildbucket/api.py#135)(self):**
 
@@ -329,11 +329,11 @@ Never returns None, but sub-fields may be empty.
 Returns True if the build is critical. Build defaults to the current one.
     
 
-&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#640)(self):**
+&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#647)(self):**
 
 DEPRECATED, use build attribute instead.
 
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#481)(self, builds, \*\*kwargs):**
+&mdash; **def [put](/recipe_modules/buildbucket/api.py#488)(self, builds, \*\*kwargs):**
 
 Puts a batch of builds.
 
@@ -357,7 +357,7 @@ Returns:
   A step that as its `.stdout` property contains the response object as
   returned by buildbucket.
 
-&mdash; **def [run](/recipe_modules/buildbucket/api.py#238)(self, schedule_build_requests, collect_interval=None, timeout=None, step_name=None):**
+&mdash; **def [run](/recipe_modules/buildbucket/api.py#238)(self, schedule_build_requests, collect_interval=None, timeout=None, url_title_fn=None, step_name=None):**
 
 Runs builds and returns results.
 
@@ -369,13 +369,9 @@ Returns:
   [Builds](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   in the same order as schedule_build_requests.
 
-&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#391)(self, schedule_build_requests, step_name=None):**
+&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#393)(self, schedule_build_requests, url_title_fn=None, step_name=None):**
 
 Schedules a batch of builds.
-
-`schedule_build_requests` must be a list of
-`buildbucket.v2.ScheduleBuildRequest` protobuf messages.
-Create one by calling `schedule_request` method.
 
 Example:
 ```python
@@ -388,6 +384,15 @@ Hint: when scheduling builds for CQ, let CQ know about them:
     api.cq.record_triggered_builds(*api.buildbucket.schedule([req1, req2]))
 ```
 
+Args:
+
+*   schedule_build_requests: a list of `buildbucket.v2.ScheduleBuildRequest`
+    protobuf messages. Create one by calling `schedule_request` method.
+*   url_title_fn: a function (build_pb2.Build) -> (str) that returns a title
+    of build link for the step. Defaults to build id.
+    If returns None, the link is not emitted.
+*   step_name: step name/
+
 Returns:
   A list of
   [`Build`](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
@@ -396,7 +401,7 @@ Returns:
 Raises:
   `InfraFailure` if any of the requests fail.
 
-&mdash; **def [schedule\_request](/recipe_modules/buildbucket/api.py#260)(self, builder, project=None, bucket=None, properties=None, experimental=None, gitiles_commit=None, gerrit_changes=None, tags=None, inherit_buildsets=True, dimensions=None, priority=None, critical=None):**
+&mdash; **def [schedule\_request](/recipe_modules/buildbucket/api.py#262)(self, builder, project=None, bucket=None, properties=None, experimental=None, gitiles_commit=None, gerrit_changes=None, tags=None, inherit_buildsets=True, dimensions=None, priority=None, critical=None):**
 
 Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
