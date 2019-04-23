@@ -23,7 +23,8 @@ def RunSteps(api):
   req = api.buildbucket.schedule_request(tags=tags, **req_body)
   api.buildbucket.schedule([req])
 
-  api.buildbucket.run([req])
+  api.buildbucket.run([req], raise_if_unsuccessful=api.properties.get(
+      'raise_failed_status'))
 
 
 def GenTests(api):
@@ -93,4 +94,12 @@ def GenTests(api):
   yield (
       test(test_name='error') +
       api.buildbucket.simulated_schedule_output(err_batch_res)
+  )
+  yield (
+      test(test_name='mirror_failure') +
+      api.properties(raise_failed_status=True) +
+      api.buildbucket.simulated_collect_output([
+        api.buildbucket.ci_build_message(
+            build_id=8922054662172514001, status='FAILURE'),
+      ], step_name='buildbucket.run.collect')
   )

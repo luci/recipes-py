@@ -237,7 +237,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   def run(
       self, schedule_build_requests, collect_interval=None, timeout=None,
-      url_title_fn=None, step_name=None):
+      url_title_fn=None, step_name=None, raise_if_unsuccessful=False):
     """Runs builds and returns results.
 
     A shortcut for schedule() and collect_builds().
@@ -256,7 +256,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
           [b.id for b in builds],
           interval=collect_interval,
           timeout=timeout,
-          step_name='collect')
+          step_name='collect',
+          raise_if_unsuccessful=raise_if_unsuccessful,
+      )
       return [build_dict[b.id] for b in builds]
 
   def schedule_request(
@@ -547,7 +549,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return build
 
   def collect_builds(
-      self, build_ids, interval=None, timeout=None, step_name=None):
+      self, build_ids, interval=None, timeout=None, step_name=None,
+      raise_if_unsuccessful=False
+  ):
     """Waits for a set of builds to end and returns their details.
 
     Args:
@@ -556,6 +560,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
       Defaults to 1m.
     * timeout: Maximum time to wait for builds to end. Defaults to 1h.
     * step_name: Custom name for the generated step.
+    * raise_if_unsuccessful: if any build being collected did not succeed, raise
+      an exception.
 
     Returns:
       A map from integer build IDs to the corresponding
@@ -580,6 +586,16 @@ class BuildbucketApi(recipe_api.RecipeApi):
     )
     builds = [json_format.ParseDict(build_json, build_pb2.Build())
               for build_json in result.json.output]
+    if raise_if_unsuccessful:
+      unsuccessful_builds = sorted(b.id for b in builds
+                                   if b.status != common_pb2.SUCCESS)
+      if unsuccessful_builds:
+        self.m.step.active_result.presentation.status = self.m.step.FAILURE
+        self.m.step.active_result.presentation.logs[
+            'unsuccessful_builds'] = map(str, unsuccessful_builds)
+        raise self.m.step.InfraFailure(
+            'Triggered build(s) did not succeed, unexpectedly')
+
     return {build.id: build for build in builds}
 
   # Internal.
