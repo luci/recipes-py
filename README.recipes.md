@@ -1969,18 +1969,19 @@ out.
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#127)(self, name, cmd, ok_ret=None, infra_step=False, wrapper=(), timeout=None, allow_subannotations=None, trigger_specs=None, stdout=None, stderr=None, stdin=None, step_test_data=None):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#127)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, allow_subannotations=None, trigger_specs=None, stdout=None, stderr=None, stdin=None, step_test_data=None):**
 
 Returns a step dictionary which is compatible with annotator.py.
 
 Args:
+
   * name (string): The name of this step.
   * cmd (list of strings): in the style of subprocess.Popen or None to
     create a no-op fake step.
-  * ok_ret (tuple or set of ints, str): allowed return codes. Any unexpected
-    return codes will cause an exception to be thrown. If you pass in the
-    value 'any' or 'all', the engine will allow any return code to be
-    returned. Defaults to {0}
+  * ok_ret (tuple or set of ints, 'any', 'all'): allowed return codes. Any
+    unexpected return codes will cause an exception to be thrown. If you
+    pass in the value 'any' or 'all', the engine will allow any return code
+    to be returned. Defaults to {0}.
   * infra_step: Whether or not this is an infrastructure step.
     Infrastructure steps will place the step in an EXCEPTION state and raise
     InfraFailure.

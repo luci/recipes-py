@@ -125,20 +125,21 @@ class StepApi(recipe_api.RecipeApiPlain):
     return recipe_api.defer_results
 
   @recipe_api.composite_step
-  def __call__(self, name, cmd, ok_ret=None, infra_step=False, wrapper=(),
+  def __call__(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(),
                timeout=None, allow_subannotations=None,
                trigger_specs=None, stdout=None, stderr=None, stdin=None,
                step_test_data=None):
     """Returns a step dictionary which is compatible with annotator.py.
 
     Args:
+
       * name (string): The name of this step.
       * cmd (list of strings): in the style of subprocess.Popen or None to
         create a no-op fake step.
-      * ok_ret (tuple or set of ints, str): allowed return codes. Any unexpected
-        return codes will cause an exception to be thrown. If you pass in the
-        value 'any' or 'all', the engine will allow any return code to be
-        returned. Defaults to {0}
+      * ok_ret (tuple or set of ints, 'any', 'all'): allowed return codes. Any
+        unexpected return codes will cause an exception to be thrown. If you
+        pass in the value 'any' or 'all', the engine will allow any return code
+        to be returned. Defaults to {0}.
       * infra_step: Whether or not this is an infrastructure step.
         Infrastructure steps will place the step in an EXCEPTION state and raise
         InfraFailure.
@@ -179,6 +180,8 @@ class StepApi(recipe_api.RecipeApiPlain):
     cwd = self.m.context.cwd
     if cwd and cwd == self.m.path['start_dir']:
       cwd = None
+    elif cwd is not None:
+      cwd = str(cwd)
 
     with self.m.context(env_prefixes={'PATH': self._prefix_path}):
       env_prefixes = self.m.context.env_prefixes
@@ -188,7 +191,7 @@ class StepApi(recipe_api.RecipeApiPlain):
 
     return self.step_client.run_step(self.step_client.StepConfig(
         name_tokens=name_tokens,
-        cmd=cmd,
+        cmd=cmd or (),
         cwd=cwd,
         env=self.m.context.env,
         env_prefixes=self.step_client.EnvAffix(

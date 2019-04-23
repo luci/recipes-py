@@ -18,6 +18,8 @@ import astunparse
 
 from PB.recipe_engine.test_result import TestResult
 
+from ...types import FrozenDict
+
 
 class CheckFrame(namedtuple('CheckFrame', 'fname line function code varmap')):
   def format(self, indent):
@@ -547,7 +549,7 @@ def VerifySubset(a, b):
       if msg:
         return '[%r]%s' % (k, msg)
 
-  elif isinstance(a, dict):
+  elif isinstance(a, (dict, FrozenDict)):
     for k, v in a.iteritems():
       b_val = b.get(k, MISSING)
       if b_val is MISSING:

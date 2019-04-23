@@ -15,6 +15,8 @@ import traceback
 
 from cStringIO import StringIO
 
+import attr
+
 from ... import recipe_api
 from ... import recipe_test_api
 from ... import types
@@ -232,7 +234,7 @@ class SubprocessStepRunner(StepRunner):
       elif not os.path.isdir(cwd):
           cwd += ' (MISSING OR NOT A DIR)'
       yield 'in dir %s:' % (cwd,)
-      for key, value in sorted(step.config._asdict().items()):
+      for key, value in sorted(attr.asdict(step.config).items()):
         if value is not None:
           yield ' %s: %s' % (key, self._render_step_value(value))
       yield 'full environment:'

@@ -6,6 +6,8 @@ import collections
 import contextlib
 import itertools
 
+import attr
+
 from ... import util
 from ...types import StepData
 
@@ -122,7 +124,7 @@ def render_step(step_config, step_test):
         output_phs[module_name][placeholder_name][item.name] = (item, tdata)
     else:
       new_cmd.append(item)
-  step_config = step_config._replace(cmd=map(str, new_cmd))
+  step_config = attr.evolve(step_config, cmd=new_cmd)
 
   # Process 'stdout', 'stderr' and 'stdin' placeholders, if given.
   stdio_placeholders = {}
@@ -139,7 +141,7 @@ def render_step(step_config, step_test):
       tdata = getattr(step_test, key)
       placeholder.render(tdata)
       assert placeholder.backing_file is not None
-      step_config = step_config._replace(**{key:placeholder.backing_file})
+      step_config = attr.evolve(step_config, **{key:placeholder.backing_file})
     stdio_placeholders[key] = (placeholder, tdata)
 
   return RenderedStep(

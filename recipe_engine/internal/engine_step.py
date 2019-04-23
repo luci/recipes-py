@@ -10,15 +10,12 @@ RecipeEngine.
 
 import pprint
 
-from collections import namedtuple
-
 import attr
 
-from .attr_util import attr_type, attr_dict_type, attr_seq_type
+from .attr_util import attr_type, attr_dict_type, attr_seq_type, attr_value_is
 
-from ..types import FrozenDict
-from ..util import Placeholder, sentinel
-from ..types import freeze
+from ..types import FrozenDict, freeze, thaw
+from ..util import InputPlaceholder, OutputPlaceholder, Placeholder, sentinel
 
 
 @attr.s(frozen=True)
@@ -64,81 +61,148 @@ class TriggerSpec(object):
   # If true and triggering fails asynchronously, fail the entire build.
   critical = attr.ib(default=True, validator=attr_type(bool))
 
-  def _render_to_dict(self):
+  def _asdict(self):
     d = dict((k, v) for k, v in attr.asdict(self).iteritems() if v)
     if d['critical']:
       d.pop('critical')
     return d
 
 
-class StepConfig(namedtuple('_StepConfig', (
-    'name_tokens', 'cmd', 'cwd', 'env', 'env_prefixes', 'env_suffixes',
-    'allow_subannotations', 'trigger_specs', 'timeout', 'infra_step',
-    'stdout', 'stderr', 'stdin', 'ok_ret', 'step_test_data'))):
+def _file_placeholder(base_placeholder_type):
+  """Returns a attr validator for StepConfig.stdin/stdout/stderr."""
+  return [
+    attr_type((str, base_placeholder_type, type(None))),
+    attr_value_is(
+        'backed by a file',
+        lambda value: (
+          value is None or isinstance(value, str) or
+          value.backing_file is not Placeholder.backing_file
+        )
+    )
+  ]
 
-  """
-  StepConfig is the representation of a raw step as the recipe_engine sees it.
+
+@attr.s
+class StepConfig(object):
+  """StepConfig is the representation of a raw step as the recipe_engine sees it.
   You should use the standard 'step' recipe module, which will construct and
   pass this data to the engine for you, instead. The only reason why you would
   need to worry about this object is if you're modifying the step module
   itself.
-
-  Fields:
-    name_tokens (List[str]): The list of name pieces for this step.
-    cmd: command to run. Acceptable types: str, Path, Placeholder, or None.
-    cwd (str or None): absolute path to working directory for the command
-    env (dict): overrides for environment variables, described above.
-    env_prefixes (dict): environment prefix variables, mapping environment
-      variable names to EnvAffix values.
-    env_suffixes (dict): environment suffix variables, mapping environment
-      variable names to EnvAffix values.
-    allow_subannotations (bool): if True, lets the step emit its own
-        annotations. NOTE: Enabling this can cause some buggy behavior. Please
-        strongly consider using step_result.presentation instead. If you have
-        questions, please contact infra-dev@chromium.org.
-    trigger_specs: a list of trigger specifications, see also _trigger_builds.
-    timeout: if not None, a datetime.timedelta for the step timeout.
-    infra_step: if True, this is an infrastructure step. Failures will raise
-        InfraFailure instead of StepFailure.
-    stdout: Placeholder to put step stdout into. If used, stdout won't appear
-        in annotator's stdout (and |allow_subannotations| is ignored).
-    stderr: Placeholder to put step stderr into. If used, stderr won't appear
-        in annotator's stderr.
-    stdin: Placeholder to read step stdin from.
-    ok_ret (iter, ALL_OK): set of return codes allowed. If the step process
-        returns something not on this list, it will raise a StepFailure (or
-        InfraFailure if infra_step is True). If omitted, {0} will be used.
-        Alternatively, the sentinel StepConfig.ALL_OK can be used to allow any
-        return code.
-    step_test_data (func -> recipe_test_api.StepTestData): A factory which
-        returns a StepTestData object that will be used as the default test
-        data for this step. The recipe author can override/augment this object
-        in the GenTests function.
-
-  The optional "env" parameter provides optional overrides for environment
-  variables. Each value is % formatted with the entire existing os.environ. A
-  value of `None` will remove that envvar from the environ. e.g.
-
-    {
-        "envvar": "%(envvar)s;%(envvar2)s;extra",
-        "delete_this": None,
-        "static_value": "something",
-    }
-
-  The optional "env_prefixes" (and similarly "env_suffixes") parameters
-  contains values that, if specified, will transform an environment variable
-  into a "pathsep"-delimited sequence of items:
-    - If an environment variable is also specified for this key, it will be
-      appended as the last element: <prefix0>:...:<prefixN>:ENV
-    - If no environment variable is specified, the current environment's value
-      will be appended, unless it's empty: <prefix0>:...:<prefixN>[:ENV]?
-    - If an environment variable with a value of None (delete) is specified,
-      nothing will be appeneded: <prefix0>:...:<prefixN>
-
-  There is currently no way to remove prefix paths; once they're there,
-  they're there for good. If you think you need to remove paths from the
-  prefix lists, please talk to infra-dev@chromium.org.
   """
+  # The list of name pieces for this step. Every piece indicates a level of
+  # nesting. So, ('foo', 'bar') would be the step 'bar' nested under the parent
+  # 'foo'.
+  name_tokens = attr.ib(validator=attr_seq_type(basestring))
+
+  # List of args of the command to run. Acceptable types: Placeholder or any
+  # str()'able type.
+  cmd = attr.ib(
+      default=(),
+      converter=(lambda value: [
+        itm if isinstance(itm, Placeholder) else str(itm)
+        for itm in value
+      ]),
+      validator=attr_seq_type((str, Placeholder)))
+
+  # Absolute path to working directory for the command.
+  cwd = attr.ib(
+      default=None,
+      validator=attr_type((str, type(None))))
+
+  # Overrides for environment variables
+  #
+  # Each value is % formatted with the entire existing os.environ. A value of
+  # `None` will remove that envvar from the environ. e.g.
+  #
+  #   {
+  #      "envvar": "%(envvar)s-extra",
+  #      "delete_this": None,
+  #      "static_value": "something",
+  #   }
+  #
+  # The "env_prefixes" parameter contain values that transform an environment
+  # variable into a "pathsep"-delimited sequence of items:
+  #   - If an environment variable is also specified for this key, it will be
+  #     appended as the last element: <prefix0>:...:<prefixN>:ENV
+  #   - If no environment variable is specified, the current environment's value
+  #     will be appended, unless it's empty: <prefix0>:...:<prefixN>[:ENV]?
+  #   - If an environment variable with a value of None (delete) is specified,
+  #     nothing will be appeneded: <prefix0>:...:<prefixN>
+  # "env_suffixes" is identical, except that it appends instead of prepends to
+  # the envvar.
+  #
+  # NOTE: Always prefer env_prefixes and env_suffixes to manually substituting
+  # variables with %(envvar)s.
+  env = attr.ib(factory=dict, validator=attr_dict_type(str, (str, type(None))))
+  env_prefixes = attr.ib(factory=EnvAffix, validator=attr_type(EnvAffix))
+  env_suffixes = attr.ib(factory=EnvAffix, validator=attr_type(EnvAffix))
+
+  # If True, lets the step emit its own @@@annotations@@@.
+  #
+  # TODO(iannucci): Move this into an annotee wrapper command in the `step`
+  # module.
+  #
+  # NOTE: Enabling this can cause some buggy behavior. Use
+  # step_result.presentation instead. If you have questions, please contact
+  # infra-dev@chromium.org.
+  allow_subannotations = attr.ib(default=False, validator=attr_type(bool))
+
+  # The time, in seconds, that this step is allowed to run for before timing
+  # out.
+  timeout = attr.ib(
+      default=None,
+      validator=attr_type((int, float, long, type(None))))
+
+  # Set of return codes allowed. If the step process returns something not on
+  # this list, it will raise a StepFailure (or InfraFailure if infra_step is
+  # True).
+  #
+  # Alternatively, the sentinel StepConfig.ALL_OK can be used to allow any
+  # return code.
+  ok_ret = attr.ib(default=(0,))
+  @ok_ret.validator
+  def _ok_ret_validator(self, attrib, value):
+    if value is self.ALL_OK:
+      return
+    attr_seq_type((int, long))(self, attrib, value)
+
+  # If True and the step returns an unacceptable return code (see `ok_ret`),
+  # this will raise InfraFailure instead of StepFailure.
+  infra_step = attr.ib(default=False, validator=attr_type(bool))
+
+  # Standard handle redirection.
+  # If None, stdin is closed and stdout/stderr are routed to the UI.
+  # These placeholders require a non-default implementation of `backing_file`.
+  stdin = attr.ib(default=None, validator=_file_placeholder(InputPlaceholder))
+  stdout = attr.ib(default=None, validator=_file_placeholder(OutputPlaceholder))
+  stderr = attr.ib(default=None, validator=_file_placeholder(OutputPlaceholder))
+
+  # A function returning recipe_test_api.StepTestData.
+  #
+  # A factory which returns a StepTestData object that will be used as the
+  # default test data for this step. The recipe author can override/augment this
+  # object in the GenTests function.
+  step_test_data = attr.ib(
+      default=None,
+      validator=attr_value_is(
+          'None or callable',
+          lambda value: value is None or callable(value)))
+
+  # DEPRECATED: Do not use this.
+  trigger_specs = attr.ib(default=(), validator=attr_seq_type(TriggerSpec))
+
+  def __attrs_post_init__(self):
+    object.__setattr__(self, 'name_tokens', tuple(self.name_tokens))
+    object.__setattr__(self, 'cmd', tuple(self.cmd))
+    if self.ok_ret is not self.ALL_OK:
+      object.__setattr__(self, 'ok_ret', frozenset(self.ok_ret))
+    object.__setattr__(self, 'env', freeze(self.env))
+    # TODO(iannucci): add additional validation
+    #   * No two placeholders in the same namespace may have the same 'name'.
+    #   * At most one placeholder in the same namespace has the default name
+    #   * If noop command, ensure all other fields are appropriately blank.
+
   # Used with to indicate that all retcodes values are acceptable.
   ALL_OK = sentinel('ALL_OK')
 
@@ -150,6 +214,9 @@ class StepConfig(namedtuple('_StepConfig', (
     'name_tokens',
     'ok_ret',
     'step_test_data',
+    'env_prefixes',
+    'env_suffixes',
+    'trigger_specs',
   ))
 
   @property
@@ -160,36 +227,16 @@ class StepConfig(namedtuple('_StepConfig', (
     # instead.
     return '.'.join(self.name_tokens)
 
-  def __new__(cls, **kwargs):
-    for field in cls._fields:
-      kwargs.setdefault(field, None)
-    sc = super(StepConfig, cls).__new__(cls, **kwargs)
-
-    return sc._replace(
-        cmd=[(x if isinstance(x, Placeholder) else str(x))
-             for x in (sc.cmd or ())],
-        cwd=(str(sc.cwd) if sc.cwd else (None)),
-        env=sc.env or {},
-        env_prefixes=sc.env_prefixes or EnvAffix(),
-        env_suffixes=sc.env_suffixes or EnvAffix(),
-        allow_subannotations=bool(sc.allow_subannotations),
-        trigger_specs=sc.trigger_specs or (),
-        infra_step=bool(sc.infra_step),
-        ok_ret=(sc.ok_ret if sc.ok_ret is StepConfig.ALL_OK
-                else frozenset(sc.ok_ret or (0,))),
-    )
-
-  def render_to_dict(self):
-    sc = self._replace(
-        env_prefixes={k: list(str(e) for e in v)
-                      for k, v in self.env_prefixes.mapping.iteritems()},
-        env_suffixes={k: list(str(e) for e in v)
-                      for k, v in self.env_suffixes.mapping.iteritems()},
-        trigger_specs=[trig._render_to_dict()
-                       for trig in (self.trigger_specs or ())],
-    )
-    ret = dict((k, v) for k, v in sc._asdict().iteritems()
-                if (v or k in sc._RENDER_WHITELIST)
-                and k not in sc._RENDER_BLACKLIST)
+  def _asdict(self):
+    ret = thaw(attr.asdict(self, filter=(lambda attr, val: (
+      (val or (attr.name in self._RENDER_WHITELIST)) and
+      attr.name not in self._RENDER_BLACKLIST
+    ))))
+    if self.env_prefixes.mapping:
+      ret['env_prefixes'] = dict(self.env_prefixes.mapping)
+    if self.env_suffixes.mapping:
+      ret['env_suffixes'] = dict(self.env_suffixes.mapping)
+    if self.trigger_specs:
+      ret['trigger_specs'] = [ts._asdict() for ts in self.trigger_specs]
     ret['name'] = self.name
     return ret

@@ -6,6 +6,8 @@ import collections
 import contextlib
 import traceback
 
+import attr
+
 from ... import recipe_api
 from ... import recipe_test_api
 
@@ -46,7 +48,8 @@ class SimulationStepRunner(StepRunner):
       step_env = merge_envs(FakeEnviron(), rendered_step.config.env, {}, {},
                             None)
       rendered_step = rendered_step._replace(
-        config=rendered_step.config._replace(env=step_env.data))
+          config=attr.evolve(
+              rendered_step.config, env=step_env.data))
       step_config = None  # Make sure we use rendered step config.
 
       # Layer the simulation step on top of the given stream engine.
@@ -112,7 +115,7 @@ class SimulationStepRunner(StepRunner):
     assert self._test_data.consumed, assert_msg
 
   def _rendered_step_to_dict(self, rs):
-    d = rs.config.render_to_dict()
+    d = rs.config._asdict()
     if rs.followup_annotations:
       d['~followup_annotations'] = rs.followup_annotations
     return d
