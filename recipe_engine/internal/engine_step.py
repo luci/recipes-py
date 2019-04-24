@@ -195,13 +195,37 @@ class StepConfig(object):
   def __attrs_post_init__(self):
     object.__setattr__(self, 'name_tokens', tuple(self.name_tokens))
     object.__setattr__(self, 'cmd', tuple(self.cmd))
+    object.__setattr__(self, 'trigger_specs', tuple(self.trigger_specs))
+
+    # if cmd is empty, then remove all values except for the few that actually
+    # apply with a null command.
+    if not self.cmd:
+      _keep_fields = ('name_tokens', 'cmd', 'trigger_specs')
+      for attrib in attr.fields(self.__class__):
+        if attrib.name in _keep_fields:
+          continue
+        # cribbed from attr/_make.py; the goal is to compute the attribute's
+        # default value.
+        if isinstance(attrib.default, attr.Factory):
+          if attrib.default.takes_self:
+            val = attrib.default.factory(self)
+          else:
+            val = attrib.default.factory()
+        else:
+          val = attrib.default
+        if attrib.converter:
+          val = attrib.converter(val)
+        object.__setattr__(self, attrib.name, val)
+      return
+
     if self.ok_ret is not self.ALL_OK:
       object.__setattr__(self, 'ok_ret', frozenset(self.ok_ret))
     object.__setattr__(self, 'env', freeze(self.env))
+
     # TODO(iannucci): add additional validation
     #   * No two placeholders in the same namespace may have the same 'name'.
     #   * At most one placeholder in the same namespace has the default name
-    #   * If noop command, ensure all other fields are appropriately blank.
+
 
   # Used with to indicate that all retcodes values are acceptable.
   ALL_OK = sentinel('ALL_OK')
