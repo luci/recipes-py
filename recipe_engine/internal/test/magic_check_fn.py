@@ -10,6 +10,7 @@ import ast
 import copy
 import inspect
 import re
+import sys
 import itertools
 
 from collections import OrderedDict, deque, defaultdict, namedtuple
@@ -43,12 +44,14 @@ class Check(namedtuple('Check', (
   _LAMBDA_CACHE = defaultdict(lambda: defaultdict(list))
 
   @classmethod
-  def create(cls, name, hook_context, frames, passed, ignore_set):
+  def create(cls, name, hook_context, frames, passed, ignore_set,
+             additional_varmap=None):
     try:
       keep_frames = [cls._process_frame(f, ignore_set, with_vars=False)
                      for f in frames[:-1]]
       keep_frames.append(cls._process_frame(
-          frames[-1], ignore_set, with_vars=True))
+          frames[-1], ignore_set, with_vars=True,
+          additional_varmap=additional_varmap))
     finally:
       # avoid reference cycle as suggested by inspect docs.
       del frames
@@ -164,7 +167,7 @@ class Check(namedtuple('Check', (
             cls._PARSED_FILE_CACHE[filename][lambda_max_line].append(n)
 
   @classmethod
-  def _process_frame(cls, frame, ignore_set, with_vars):
+  def _process_frame(cls, frame, ignore_set, with_vars, additional_varmap=None):
     """This processes a stack frame into an expect_tests.CheckFrame, which
     includes file name, line number, function name (of the function containing
     the frame), the parsed statement at that line, and the relevant local
@@ -181,7 +184,7 @@ class Check(namedtuple('Check', (
 
     varmap = None
     if with_vars:
-      varmap = {}
+      varmap = dict(additional_varmap or {})
 
       xfrmr = _checkTransformer(raw_frame.f_locals, raw_frame.f_globals)
       xfrmd = xfrmr.visit(ast.Module(copy.deepcopy(nodes)))
@@ -250,11 +253,16 @@ class Check(namedtuple('Check', (
 class _resolved(ast.AST):
   """_resolved is a fake AST node which represents a resolved sub-expression.
   It's used by _checkTransformer to replace portions of its AST with their
-  resolved equivalents."""
-  def __init__(self, representation, value):
+  resolved equivalents. The valid field indicates that the value corresponds to
+  the actual value in source, so operations present in source can be applied.
+  Otherwise, attempting to execute operations present in the source may cause
+  errors e.g. a dictionary value replaced with its keys because the values
+  aren't relevant to the check failure."""
+  def __init__(self, representation, value, valid=True):
     super(_resolved, self).__init__()
     self.representation = representation
     self.value = value
+    self.valid = valid
 
 
 class _checkTransformer(ast.NodeTransformer):
@@ -302,7 +310,8 @@ class _checkTransformer(ast.NodeTransformer):
             node.left,
             node.ops,
             [_resolved(rslvd.representation+".keys()",
-                      sorted(rslvd.value.keys()))])
+                       sorted(rslvd.value.keys()),
+                       valid=False)])
 
     return node
 
@@ -314,7 +323,8 @@ class _checkTransformer(ast.NodeTransformer):
     node = self.generic_visit(node)
 
     if (isinstance(node.slice, ast.Index) and
-        isinstance(node.value, _resolved)):
+        isinstance(node.value, _resolved) and
+        node.value.valid):
       sliceVal = MISSING
       sliceRepr = ''
       if isinstance(node.slice.value, _resolved):
@@ -330,9 +340,17 @@ class _checkTransformer(ast.NodeTransformer):
         sliceVal = node.slice.value.s
         sliceRepr = repr(sliceVal)
       if sliceVal is not MISSING:
-        node = _resolved(
-          '%s[%s]' % (node.value.representation, sliceRepr),
-          node.value.value[sliceVal])
+        try:
+          node = _resolved(
+            '%s[%s]' % (node.value.representation, sliceRepr),
+            node.value.value[sliceVal])
+        except KeyError:
+          rslvd = node.value
+          if not isinstance(rslvd.value, dict):
+            raise
+          node = _resolved(rslvd.representation+".keys()",
+                           sorted(rslvd.value.keys()),
+                           valid=False)
 
     return node
 
@@ -390,18 +408,15 @@ def render_re(regex):
 
 
 class Checker(object):
-  def __init__(self, hook_context):
+  def __init__(self, hook_context, *ignores):
     self.failed_checks = []
 
     # _ignore_set is the set of objects that we should never print as local
     # variables. We start this set off by including the actual Checker object,
     # since there's no value to printing that.
-    self._ignore_set = {id(self)}
+    self._ignore_set = {id(x) for x in ignores+(self,)}
 
     self._hook_context = hook_context
-
-  def _ignore(self, *ignores):
-    self._ignore_set.update(id(i) for i in ignores)
 
   def _call_impl(self, hint, exp):
     """This implements the bulk of what happens when you run `check(exp)`. It
@@ -461,49 +476,6 @@ class Checker(object):
     return bool(exp)
 
 
-class CheckException(Exception):
-  """An exception that can be raised to signal an implicit check failure.
-
-  This exception type is used to implement implicit checks such as the one
-  performed by StepsDict. In the case of an implict check failure, it's not
-  generally feasible to continue execution of the post process function. This
-  exception allows for halting execution of the post process function in a way
-  that the engine can recognize as safe to continue with further checks.
-  """
-  pass
-
-
-class StepsDict(OrderedDict):
-  """The dictionary of steps to be used in post_process functions.
-
-  StepsDict acts just like an OrderedDict, mapping the step name to the step
-  details for the step, with the exception that indexing with a missing key does
-  not raise a KeyError. Instead StepsDict does an implicit check to make sure
-  that the step is in the dictionary. If the check fails, the execution of the
-  post process function is halted, a check failure will be recorded and the
-  engine will continue execution as though the post process function returned
-  None.
-  """
-  def __init__(self, checker, *args, **kwargs):
-    super(StepsDict, self).__init__(*args, **kwargs)
-    assert isinstance(checker, Checker)
-    checker._ignore(self)
-    self._checker = checker
-
-  def __getitem__(self, step):
-    # Store this to a local variable so that the variable expansion in the check
-    # failure backtrace includes only the important details
-    check = self._checker
-    steps_dict = self
-    # Store the result into a variable rather than directly using if check(...)
-    # because compound statements (if) don't get nicely displayed in the check
-    # failure backtrace
-    step_present = check(step in steps_dict)
-    if not step_present:
-      raise CheckException()
-    return super(StepsDict, self).__getitem__(step)
-
-
 MISSING = object()
 
 
@@ -539,11 +511,7 @@ def VerifySubset(a, b):
     elif len(a) == 1:
       a = OrderedDict([next(a.iteritems())])
 
-  # One or both may be a StepsDict, which is just OrderedDict with custom
-  # __getitem__, so don't require an exact type match
-  if isinstance(a, OrderedDict) and isinstance(b, OrderedDict):
-    pass
-  elif type(a) != type(b):
+  if type(a) != type(b):
     return ': type mismatch: %r v %r' % (type(a).__name__, type(b).__name__)
 
   if isinstance(a, OrderedDict):
@@ -620,14 +588,28 @@ def post_process(raw_expectations, test_data):
   """
   failed_checks = []
   for hook, args, kwargs, context in test_data.post_process_hooks:
+    steps = copy.deepcopy(raw_expectations)
     # The checker MUST be saved to a local variable in order for it to be able
     # to correctly detect the frames to keep when creating a failure backtrace
-    check = Checker(context)
-    steps = StepsDict(check, copy.deepcopy(raw_expectations))
+    check = Checker(context, steps)
     try:
       rslt = hook(check, steps, *args, **kwargs)
-    except CheckException:
-      rslt = None
+    except KeyError:
+      exc_type, exc_value, exc_traceback = sys.exc_info()
+      try:
+        failed_checks.append(Check.create(
+            '',
+            context,
+            inspect.getinnerframes(exc_traceback)[1:],
+            False,
+            check._ignore_set,
+            {'raised exception':
+             '%s: %r' % (exc_type.__name__, exc_value.message)},
+        ))
+      finally:
+        # avoid reference cycle as suggested by inspect docs.
+        del exc_traceback
+      continue
 
     failed_checks += check.failed_checks
     if rslt is not None:
@@ -637,9 +619,6 @@ def post_process(raw_expectations, test_data):
       # restore 'name' if it was removed
       for k, v in rslt.iteritems():
         v['name'] = k
-      # Convert to a bare OrderedDict to avoid copy issues
-      if isinstance(rslt, StepsDict):
-        rslt = OrderedDict(rslt)
       raw_expectations = rslt
 
   # Empty means drop expectations

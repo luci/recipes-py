@@ -159,13 +159,6 @@ class TestStepStatus(PostProcessUnitTest):
     self.expect_fails(0, post_process.StepSuccess, 'success-step')
 
   def test_step_success_fail(self):
-    failures = self.expect_fails(1, post_process.StepSuccess,
-                                 'non-existent-step')
-    self.assertEqual(failures[0].frames[-1].code,
-                     'step_present = check((step in steps_dict))')
-    self.assertEquals(failures[0].frames[-1].varmap['step'],
-                      "'non-existent-step'")
-
     failures = self.expect_fails(1, post_process.StepSuccess, 'failure-step')
     self.assertEqual(failures[0].name, 'step failure-step was success')
     failures = self.expect_fails(1, post_process.StepSuccess, 'exception-step')
@@ -175,13 +168,6 @@ class TestStepStatus(PostProcessUnitTest):
     self.expect_fails(0, post_process.StepFailure, 'failure-step')
 
   def test_step_failure_fail(self):
-    failures = self.expect_fails(1, post_process.StepSuccess,
-                                 'non-existent-step')
-    self.assertEqual(failures[0].frames[-1].code,
-                     'step_present = check((step in steps_dict))')
-    self.assertEquals(failures[0].frames[-1].varmap['step'],
-                      "'non-existent-step'")
-
     failures = self.expect_fails(1, post_process.StepFailure, 'success-step')
     self.assertEqual(failures[0].name, 'step success-step was failure')
     failures = self.expect_fails(1, post_process.StepFailure, 'exception-step')
@@ -191,13 +177,6 @@ class TestStepStatus(PostProcessUnitTest):
     self.expect_fails(0, post_process.StepException, 'exception-step')
 
   def test_step_exception_fail(self):
-    failures = self.expect_fails(1, post_process.StepSuccess,
-                                 'non-existent-step')
-    self.assertEqual(failures[0].frames[-1].code,
-                     'step_present = check((step in steps_dict))')
-    self.assertEquals(failures[0].frames[-1].varmap['step'],
-                      "'non-existent-step'")
-
     failures = self.expect_fails(1, post_process.StepException, 'success-step')
     self.assertEqual(failures[0].name, 'step success-step was exception')
     failures = self.expect_fails(1, post_process.StepException, 'failure-step')
@@ -221,12 +200,6 @@ class TestStepCommandRe(PostProcessUnitTest):
                       ['echo', 'f.*', 'bar', '.*z'])
 
   def test_step_command_re_fail(self):
-    failures = self.expect_fails(1, post_process.StepCommandRE, 'y',
-                                 ['echo', 'foo', 'bar', 'baz'])
-    self.assertEqual(failures[0].frames[-1].code,
-                     'step_present = check((step in steps_dict))')
-    self.assertEquals(failures[0].frames[-1].varmap['step'], "'y'")
-
     failures = self.expect_fails(2, post_process.StepCommandRE, 'x',
                                  ['echo', 'fo', 'bar2', 'baz'])
     self.assertEqual(failures[0].frames[-1].code,
@@ -308,12 +281,6 @@ class TestStepCommandContains(PostProcessUnitTest):
                      ['foo', 'bar', 'baz'])
 
   def test_step_command_contains_fail(self):
-    failures = self.expect_fail(post_process.StepCommandContains, None,
-                                'y', ['echo', 'foo', 'bar'])
-    self.assertEqual(failures[0].frames[-1].code,
-                     'step_present = check((step in steps_dict))')
-    self.assertEquals(failures[0].frames[-1].varmap['step'], "'y'")
-
     self.expect_fail(post_process.StepCommandContains,
                      'command line for step x contained %r' % ['foo', 'baz'],
                      'x', ['foo', 'baz'])
@@ -337,11 +304,6 @@ class TestStepText(PostProcessUnitTest):
     self.expect_fails(0, post_process.StepTextEquals, 'x', 'foobar')
 
   def test_step_text_equals_fail(self):
-    failures = self.expect_fails(1, post_process.StepTextEquals, 'y', 'foobar')
-    self.assertEqual(failures[0].frames[-1].code,
-                     'step_present = check((step in steps_dict))')
-    self.assertEquals(failures[0].frames[-1].varmap['step'], "'y'")
-
     failures = self.expect_fails(1, post_process.StepTextEquals, 'x', 'foo')
     self.assertEqual(failures[0].frames[-1].code,
                      'check((actual == expected))')
@@ -350,12 +312,6 @@ class TestStepText(PostProcessUnitTest):
     self.expect_fails(0, post_process.StepTextContains, 'x', ['foo', 'bar'])
 
   def test_step_text_contains_fail(self):
-    failures = self.expect_fails(1, post_process.StepTextContains, 'y',
-                                 ['foo', 'bar'])
-    self.assertEqual(failures[0].frames[-1].code,
-                     'step_present = check((step in steps_dict))')
-    self.assertEquals(failures[0].frames[-1].varmap['step'], "'y'")
-
     failures = self.expect_fails(
         2, post_process.StepTextContains, 'x', ['food', 'bar', 'baz'])
     self.assertEquals(failures[0].frames[-1].code,
@@ -390,12 +346,6 @@ class TestLog(PostProcessUnitTest):
     self.expect_fails(0, post_process.LogEquals, 'x', 'log-x', 'foo\nbar\n')
 
   def test_log_equals_fail(self):
-    failures = self.expect_fails(1, post_process.LogEquals, 'y', 'log-x',
-                                 'foo\nbar\n')
-    self.assertEqual(failures[0].frames[-1].code,
-                     'step_present = check((step in steps_dict))')
-    self.assertEquals(failures[0].frames[-1].varmap['step'], "'y'")
-
     failures = self.expect_fails(1, post_process.LogEquals,
                                  'x', 'log-y', 'foo\nbar\n')
     self.assertEqual(failures[0].name, 'step x has log log-y')
@@ -410,12 +360,6 @@ class TestLog(PostProcessUnitTest):
                       ['foo\n', 'bar\n', 'foo\nbar'])
 
   def test_log_contains_fail(self):
-    failures = self.expect_fails(1, post_process.LogContains, 'y', 'log-x',
-                                 ['foo', 'bar'])
-    self.assertEqual(failures[0].frames[-1].code,
-                     'step_present = check((step in steps_dict))')
-    self.assertEquals(failures[0].frames[-1].varmap['step'], "'y'")
-
     failures = self.expect_fails(1, post_process.LogContains, 'x', 'log-y',
                           ['foo', 'bar'])
     self.assertEqual(failures[0].name, 'step x has log log-y')

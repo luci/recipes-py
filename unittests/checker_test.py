@@ -12,8 +12,10 @@ import test_env
 
 from recipe_engine.recipe_test_api import PostprocessHookContext, RecipeTestApi
 from recipe_engine.internal.test.magic_check_fn import \
-  Checker, CheckException, CheckFrame, PostProcessError, StepsDict, \
-  VerifySubset, post_process
+  Checker, CheckFrame, PostProcessError, VerifySubset, post_process
+
+
+HOOK_CONTEXT = PostprocessHookContext(lambda: None, (), {}, '<filename>', 0)
 
 
 HOOK_CONTEXT = PostprocessHookContext(lambda: None, (), {}, '<filename>', 0)
@@ -217,6 +219,19 @@ class TestChecker(test_env.RecipeEngineUnitTest):
         self.mk('body', 'check((target in vals))',
                 {'target': "'baz'", 'vals': "['foo', 'bar']"}))
 
+  def test_key_error_in_short_circuited_expression(self):
+    c = Checker(HOOK_CONTEXT)
+    def body(check):
+      d = {'foo': 1, 'bar': 2}
+      check('baz' in d and d['baz'] == 3)
+    body(c)
+    self.assertEqual(len(c.failed_checks), 1)
+    self.assertEqual(len(c.failed_checks[0].frames), 1)
+    self.assertEqual(
+        self.sanitize(c.failed_checks[0].frames[0]),
+        self.mk('body', "check((('baz' in d) and (d['baz'] == 3)))",
+                {'d.keys()': "['bar', 'foo']"}))
+
   def test_elif_test(self):
     c = Checker(HOOK_CONTEXT)
     def body(check):
@@ -250,63 +265,6 @@ class TestChecker(test_env.RecipeEngineUnitTest):
         self.mk('body', 'check((vals[i] != invalid_value))',
                 {'i': '1', 'invalid_value': "'bar'", 'vals[i]': "'bar'"}))
 
-  def test_steps_dict_implicit_check(self):
-    d = OrderedDict(foo={})
-    c = Checker(HOOK_CONTEXT)
-    s = StepsDict(c, d)
-    def body(check, steps_dict):
-      check('x' in steps_dict['bar']['cmd'])
-    with self.assertRaises(CheckException):
-      body(c, s)
-    self.assertEqual(len(c.failed_checks), 1)
-    self.assertEqual(len(c.failed_checks[0].frames), 2)
-    self.assertEqual(
-        self.sanitize(c.failed_checks[0].frames[0]),
-        self.mk('body', "check(('x' in steps_dict['bar']['cmd']))", None))
-    self.assertEqual(
-        self.sanitize(c.failed_checks[0].frames[1]),
-        self.mk('__getitem__', 'step_present = check((step in steps_dict))',
-                {'step': "'bar'", 'steps_dict.keys()': "['foo']"}))
-
-  def test_steps_dict_implicit_check_no_checker_in_frame(self):
-    d = OrderedDict(foo={})
-    c = Checker(HOOK_CONTEXT)
-    s = StepsDict(c, d)
-    def body(check, steps_dict):
-      # The failure backtrace for the implicit check should even includes frames
-      # where check isn't explicitly passed
-      def inner(steps_dict):
-        return 'x' in steps_dict['bar']['cmd']
-      check(inner(steps_dict))
-    with self.assertRaises(CheckException):
-      body(c, s)
-    self.assertEqual(len(c.failed_checks), 1)
-    self.assertEqual(len(c.failed_checks[0].frames), 3)
-    self.assertEqual(
-        self.sanitize(c.failed_checks[0].frames[0]),
-        self.mk('body', 'check(inner(steps_dict))', None))
-    self.assertEqual(
-        self.sanitize(c.failed_checks[0].frames[1]),
-        self.mk('inner', "return ('x' in steps_dict['bar']['cmd'])", None))
-    self.assertEqual(
-        self.sanitize(c.failed_checks[0].frames[2]),
-        self.mk('__getitem__', 'step_present = check((step in steps_dict))',
-                {'step': "'bar'", 'steps_dict.keys()': "['foo']"}))
-
-  def test_steps_dict_is_ignored(self):
-    d = OrderedDict(foo={})
-    c = Checker(HOOK_CONTEXT)
-    s = StepsDict(c, d)
-    body = lambda check, steps: check('bar' in steps)
-    body(c, s)
-    self.assertEqual(len(c.failed_checks), 1)
-    self.assertEqual(len(c.failed_checks[0].frames), 1)
-    self.assertEqual(
-        self.sanitize(c.failed_checks[0].frames[0]),
-        self.mk('<lambda>',
-                "body = (lambda check, steps: check(('bar' in steps)))",
-                {'steps.keys()': "['foo']"}))
-
 
 class TestVerifySubset(test_env.RecipeEngineUnitTest):
   @staticmethod
@@ -337,12 +295,6 @@ class TestVerifySubset(test_env.RecipeEngineUnitTest):
     self.assertIn(
       "type mismatch: 'list' v 'OrderedDict'",
       self.v(['hi'], self.d))
-
-  def test_steps_dict(self):
-    c = Checker(HOOK_CONTEXT)
-    steps_dict = StepsDict(c, self.d)
-    self.assertIsNone(self.v(self.d, steps_dict))
-    self.assertIsNone(self.v(steps_dict, self.d))
 
   def test_empty(self):
     self.assertIsNone(self.v({}, self.d))
@@ -552,6 +504,41 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
             '<lambda>',
             "(lambda check, steps, *args, **kwargs: check(('x' not in steps)))",
             {'steps.keys()': "['x']"}))
+
+  def test_key_error_implicit_check(self):
+    d = OrderedDict([('x', {'name': 'x'})])
+    def body(check, steps):
+      foo = steps['x']['env']['foo']
+    test_data = self.mkApi().post_process(body)
+    results, failures = post_process(d, test_data)
+    self.assertEqual(len(failures), 1)
+    self.assertEqual(len(failures[0].frames), 1)
+    self.assertEqual(
+        self.sanitize(failures[0].frames[0]),
+        self.mk('body', "foo = steps['x']['env']['foo']",
+                {"steps['x'].keys()": "['name']",
+                 'raised exception': "KeyError: 'env'"}))
+
+  def test_key_error_implicit_check_no_checker_in_frame(self):
+    d = OrderedDict([('x', {'name': 'x'})])
+    def body(check, steps_dict):
+      # The failure backtrace for the implicit check should even include frames
+      # where check isn't explicitly passed
+      def inner(steps_dict):
+        return 'foo' in steps_dict['x']['env']
+      check(inner(steps_dict))
+    test_data = self.mkApi().post_process(body)
+    results, failures = post_process(d, test_data)
+    self.assertEqual(len(failures), 1)
+    self.assertEqual(len(failures[0].frames), 2)
+    self.assertEqual(
+        self.sanitize(failures[0].frames[0]),
+        self.mk('body', 'check(inner(steps_dict))', None))
+    self.assertEqual(
+        self.sanitize(failures[0].frames[1]),
+        self.mk('inner', "return ('foo' in steps_dict['x']['env'])",
+                {"steps_dict['x'].keys()": "['name']",
+                 'raised exception': "KeyError: 'env'"}))
 
 
 if __name__ == '__main__':
