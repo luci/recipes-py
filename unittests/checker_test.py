@@ -10,10 +10,13 @@ from collections import OrderedDict
 
 import test_env
 
-from recipe_engine.recipe_test_api import RecipeTestApi
+from recipe_engine.recipe_test_api import PostprocessHookContext, RecipeTestApi
 from recipe_engine.internal.test.magic_check_fn import \
   Checker, CheckException, CheckFrame, PostProcessError, StepsDict, \
   VerifySubset, post_process
+
+
+HOOK_CONTEXT = PostprocessHookContext(lambda: None, (), {}, '<filename>', 0)
 
 
 class TestChecker(test_env.RecipeEngineUnitTest):
@@ -25,21 +28,21 @@ class TestChecker(test_env.RecipeEngineUnitTest):
       fname='', line=0, function=fname, code=code, varmap=varmap)
 
   def test_no_calls(self):
-    c = Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker(HOOK_CONTEXT)
     def body(_):
       pass
     body(c)
     self.assertEqual(len(c.failed_checks), 0)
 
   def test_success_call(self):
-    c = Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker(HOOK_CONTEXT)
     def body(check):
       check(True is True)
     body(c)
     self.assertEqual(len(c.failed_checks), 0)
 
   def test_simple_fail(self):
-    c = Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker(HOOK_CONTEXT)
     def body(check):
       check(True is False)
     body(c)
@@ -50,7 +53,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
       self.mk('body', 'check((True is False))', {}))
 
   def test_simple_fail_multiline(self):
-    c = Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker(HOOK_CONTEXT)
     def body(check):
       falsey = lambda: False
       check(
@@ -66,7 +69,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
       self.mk('body', 'check((True is falsey()))', {}))
 
   def test_simple_fail_multiline_multistatement(self):
-    c = Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker(HOOK_CONTEXT)
     def body(check):
       other = 'thing'
       falsey = lambda: False
@@ -83,7 +86,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
         'other': "'thing'" }))
 
   def test_fail_nested_statement(self):
-    c = Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker(HOOK_CONTEXT)
     def body(check):
       other = 'thing'
       falsey = lambda: False
@@ -106,7 +109,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
         'other': "'thing'" }))
 
   def test_var_fail(self):
-    c = Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker(HOOK_CONTEXT)
     def body(check):
       val = True
       check(val is False)
@@ -118,7 +121,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
       self.mk('body', 'check((val is False))', {'val': 'True'}))
 
   def test_dict_membership(self):
-    c = Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker(HOOK_CONTEXT)
     def body(check):
       targ = {'a': 'b', 'c': 'd'}
       check('a' not in targ)
@@ -131,7 +134,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
               {'targ.keys()': "['a', 'c']"}))
 
   def test_dict_lookup(self):
-    c = Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker(HOOK_CONTEXT)
     def body(check):
       targ = {'a': {'sub': 'b'}, 'c': 'd'}
       check('cow' in targ['a'])
@@ -144,7 +147,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
               {"targ['a'].keys()": "['sub']"}))
 
   def test_dict_lookup_nest(self):
-    c = Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker(HOOK_CONTEXT)
     def body(check):
       sub = 'sub'
       targ = {'a': {'sub': 'whee'}, 'c': 'd'}
@@ -158,7 +161,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
               {"targ['a'][sub]": "'whee'", 'sub': "'sub'"}))
 
   def test_lambda_call(self):
-    c = Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker(HOOK_CONTEXT)
     def body(check):
       vals = ['whee', 'sub']
       targ = {'a': {'sub': 'whee'}, 'c': 'd'}
@@ -175,7 +178,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
               {"targ['a'].keys()": "['sub']", 'v': "'whee'"}))
 
   def test_lambda_in_multiline_expr_call(self):
-    c = Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker(HOOK_CONTEXT)
     def wrap(f):
       return f
     def body(check, f):
@@ -200,7 +203,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
                 {'value': "'food'", 'target': "['foo', 'bar', 'baz']"}))
 
   def test_if_test(self):
-    c = Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker(HOOK_CONTEXT)
     def body(check):
       vals = ['foo', 'bar']
       target = 'baz'
@@ -215,7 +218,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
                 {'target': "'baz'", 'vals': "['foo', 'bar']"}))
 
   def test_elif_test(self):
-    c = Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker(HOOK_CONTEXT)
     def body(check):
       vals = ['foo', 'bar']
       target = 'baz'
@@ -232,7 +235,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
                 {'target': "'baz'", 'vals': "['foo', 'bar']"}))
 
   def test_while_test(self):
-    c = Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker(HOOK_CONTEXT)
     def body(check):
       vals = ['foo', 'bar', 'baz']
       invalid_value = 'bar'
@@ -249,7 +252,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
 
   def test_steps_dict_implicit_check(self):
     d = OrderedDict(foo={})
-    c = Checker('<filename>', 0, lambda: None, (), d)
+    c = Checker(HOOK_CONTEXT)
     s = StepsDict(c, d)
     def body(check, steps_dict):
       check('x' in steps_dict['bar']['cmd'])
@@ -267,7 +270,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
 
   def test_steps_dict_implicit_check_no_checker_in_frame(self):
     d = OrderedDict(foo={})
-    c = Checker('<filename>', 0, lambda: None, (), d)
+    c = Checker(HOOK_CONTEXT)
     s = StepsDict(c, d)
     def body(check, steps_dict):
       # The failure backtrace for the implicit check should even includes frames
@@ -292,7 +295,7 @@ class TestChecker(test_env.RecipeEngineUnitTest):
 
   def test_steps_dict_is_ignored(self):
     d = OrderedDict(foo={})
-    c = Checker('<filename>', 0, lambda:None, (), d)
+    c = Checker(HOOK_CONTEXT)
     s = StepsDict(c, d)
     body = lambda check, steps: check('bar' in steps)
     body(c, s)
@@ -336,7 +339,7 @@ class TestVerifySubset(test_env.RecipeEngineUnitTest):
       self.v(['hi'], self.d))
 
   def test_steps_dict(self):
-    c = Checker('<filename>', 0, lambda: None, (), {})
+    c = Checker(HOOK_CONTEXT)
     steps_dict = StepsDict(c, self.d)
     self.assertIsNone(self.v(self.d, steps_dict))
     self.assertIsNone(self.v(steps_dict, self.d))
