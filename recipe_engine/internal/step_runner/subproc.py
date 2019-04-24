@@ -133,7 +133,7 @@ class SubprocessStepRunner(StepRunner):
       cmd0 = util.hunt_path(rendered_step.config.cmd[0], step_env)
       if cmd0 != rendered_step.config.cmd[0]:
         rendered_step = rendered_step._replace(
-          config=rendered_step.config._replace(
+          config=attr.evolve(rendered_step.config,
             cmd=[cmd0]+rendered_step.config.cmd[1:],
           ),
         )
