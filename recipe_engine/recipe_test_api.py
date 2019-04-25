@@ -603,7 +603,7 @@ class RecipeTestApi(object):
     postprocessing chain entirely.
 
     The function must return either `None`, or it may return a filtered subset
-    of step_odict (e.g.  ommitting some steps and/or dictionary keys). This will
+    of step_odict (e.g. ommitting some steps and/or dictionary keys). This will
     be the new value of step_odict for the test. Returning an empty dict or
     OrderedDict will remove the expectations from disk altogether. Returning
     `None` (Python's implicit default return value) is equivalent to returning

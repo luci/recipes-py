@@ -62,6 +62,7 @@
   * [engine_tests/missing_start_dir](#recipes-engine_tests_missing_start_dir) &mdash; Tests that deleting the current working directory doesn't immediately fail.
   * [engine_tests/module_injection_site](#recipes-engine_tests_module_injection_site) &mdash; This test serves to demonstrate that the ModuleInjectionSite object on recipe modules (i.
   * [engine_tests/multi_test_data](#recipes-engine_tests_multi_test_data) &mdash; Tests that step_data can accept multiple specs at once.
+  * [engine_tests/multiple_placeholders](#recipes-engine_tests_multiple_placeholders) &mdash; Tests error checking around multiple placeholders in a single step.
   * [engine_tests/nonexistent_command](#recipes-engine_tests_nonexistent_command)
   * [engine_tests/recipe_paths](#recipes-engine_tests_recipe_paths) &mdash; Tests that recipes have access to names, resources and their repo.
   * [engine_tests/sort_properties](#recipes-engine_tests_sort_properties) &mdash; Tests that step presentation properties can be ordered.
@@ -2495,6 +2496,13 @@ This was implemented to aid in refactoring some recipes (crbug.com/782142).
 Tests that step_data can accept multiple specs at once.
 
 &mdash; **def [RunSteps](/recipes/engine_tests/multi_test_data.py#12)(api):**
+### *recipes* / [engine\_tests/multiple\_placeholders](/recipes/engine_tests/multiple_placeholders.py)
+
+[DEPS](/recipes/engine_tests/multiple_placeholders.py#10): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [step](#recipe_modules-step)
+
+Tests error checking around multiple placeholders in a single step.
+
+&mdash; **def [RunSteps](/recipes/engine_tests/multiple_placeholders.py#17)(api):**
 ### *recipes* / [engine\_tests/nonexistent\_command](/recipes/engine_tests/nonexistent_command.py)
 
 [DEPS](/recipes/engine_tests/nonexistent_command.py#1): [step](#recipe_modules-step)

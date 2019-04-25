@@ -222,9 +222,27 @@ class StepConfig(object):
       object.__setattr__(self, 'ok_ret', frozenset(self.ok_ret))
     object.__setattr__(self, 'env', freeze(self.env))
 
-    # TODO(iannucci): add additional validation
-    #   * No two placeholders in the same namespace may have the same 'name'.
-    #   * At most one placeholder in the same namespace has the default name
+    # Ensure that output placeholders don't have ambiguously overlapping names.
+    placeholders = set()
+    collisions = set()
+    ns_str = None
+    for itm in self.cmd:
+      if isinstance(itm, OutputPlaceholder):
+        key = itm.namespaces, itm.name
+        if key in placeholders:
+          ns_str = '.'.join(itm.namespaces)
+          if itm.name is None:
+            collisions.add("{} unnamed".format(ns_str))
+          else:
+            collisions.add("{} named {!r}".format(ns_str, itm.name))
+        else:
+          placeholders.add(key)
+
+    if collisions:
+      raise ValueError(
+          'Found conflicting Placeholders: {!r}. Please give these placeholders'
+          ' unique "name"s and access them like `step_result.{}s[name]`.'
+          .format(list(collisions), ns_str))
 
 
   # Used with to indicate that all retcodes values are acceptable.
