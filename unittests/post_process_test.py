@@ -15,9 +15,9 @@ from recipe_engine.recipe_test_api import RecipeTestApi
 def mkS(name, *fields):
   ret = {
     'name': name,
-    'sub_a': ['thing', 'other'],
-    'sub_b': 100,
-    'sub_c': 'hi',
+    'cmd': ['thing', 'other'],
+    'cwd': 'some-directory',
+    'env': {'var': 'value'},
   }
   if fields:
     return {k: v for k, v in ret.iteritems() if k in fields or k == 'name'}
@@ -56,10 +56,10 @@ class TestFilter(PostProcessUnitTest):
 
   def test_built_fields(self):
     f = self.f()
-    f = f.include('b', ['sub_b'])
-    f = f.include('a', ['sub_a'])
+    f = f.include('b', ['env'])
+    f = f.include('a', ['cmd'])
     results, failures = self.post_process(self.d, f)
-    self.assertEqual(results, [mkS('a', 'sub_a'), mkS('b', 'sub_b')])
+    self.assertEqual(results, [mkS('a', 'cmd'), mkS('b', 'env')])
     self.assertEqual(len(failures), 0)
 
   def test_built_extra_includes(self):
@@ -145,9 +145,11 @@ class TestStepStatus(PostProcessUnitTest):
   def setUp(self):
     super(TestStepStatus, self).setUp()
     self.d = OrderedDict([
-        ('success-step', {'~followup_annotations': []}),
-        ('failure-step', {'~followup_annotations': ['@@@STEP_FAILURE@@@']}),
-        ('exception-step', {'~followup_annotations': ['@@@STEP_EXCEPTION@@@']}),
+        ('success-step', {'name': 'success-step', '~followup_annotations': []}),
+        ('failure-step', {'name': 'failure-step',
+                          '~followup_annotations': ['@@@STEP_FAILURE@@@']}),
+        ('exception-step', {'name': 'exception-step',
+                            '~followup_annotations': ['@@@STEP_EXCEPTION@@@']}),
     ])
 
   def expect_fails(self, num_fails, func, *args, **kwargs):
@@ -187,7 +189,7 @@ class TestStepCommandRe(PostProcessUnitTest):
   def setUp(self):
     super(TestStepCommandRe, self).setUp()
     self.d = OrderedDict([
-        ('x', {'cmd': ['echo', 'foo', 'bar', 'baz']})
+        ('x', {'name': 'x', 'cmd': ['echo', 'foo', 'bar', 'baz']})
     ])
 
   def expect_fails(self, num_fails, func, *args, **kwargs):
@@ -228,11 +230,11 @@ class TestStepCommandContains(PostProcessUnitTest):
   def setUp(self):
     super(TestStepCommandContains, self).setUp()
     self.d = OrderedDict([
-        ('two', {'cmd': ['a', 'b']}),
-        ('one', {'cmd': ['a']}),
-        ('zero', {'cmd': []}),
-        ('no_cmd', {}),
-        ('x', {'cmd': ['echo', 'foo', 'bar', 'baz']})
+        ('two', {'name': 'two', 'cmd': ['a', 'b']}),
+        ('one', {'name': 'one', 'cmd': ['a']}),
+        ('zero', {'name': 'zero', 'cmd': []}),
+        ('no_cmd', {'name': 'no_cmd'}),
+        ('x', {'name': 'x', 'cmd': ['echo', 'foo', 'bar', 'baz']})
     ])
 
   def expect_pass(self, func, *args, **kwargs):
@@ -291,6 +293,7 @@ class TestStepText(PostProcessUnitTest):
     super(TestStepText, self).setUp()
     self.d = OrderedDict([
         ('x', {
+            'name': 'x',
             '~followup_annotations': ['@@@STEP_TEXT@foobar@@@'],
         })
     ])
@@ -329,6 +332,7 @@ class TestLog(PostProcessUnitTest):
     super(TestLog, self).setUp()
     self.d = OrderedDict([
         ('x', {
+            'name': 'x',
             '~followup_annotations': [
                 '@@@STEP_LOG_LINE@log-x@foo@@@',
                 '@@@STEP_LOG_LINE@log-x@bar@@@',

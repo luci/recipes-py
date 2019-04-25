@@ -5,6 +5,7 @@
 
 import sys
 import copy
+import datetime
 
 from collections import OrderedDict
 
@@ -12,7 +13,7 @@ import test_env
 
 from recipe_engine.recipe_test_api import PostprocessHookContext, RecipeTestApi
 from recipe_engine.internal.test.magic_check_fn import \
-  Checker, CheckFrame, PostProcessError, VerifySubset, post_process
+  Checker, CheckFrame, PostProcessError, Step, VerifySubset, post_process
 
 
 HOOK_CONTEXT = PostprocessHookContext(lambda: None, (), {}, '<filename>', 0)
@@ -265,6 +266,300 @@ class TestChecker(test_env.RecipeEngineUnitTest):
         self.mk('body', 'check((vals[i] != invalid_value))',
                 {'i': '1', 'invalid_value': "'bar'", 'vals[i]': "'bar'"}))
 
+class TestStep(test_env.RecipeEngineUnitTest):
+  def assertConversion(self, step_dict, expected_step):
+    s = Step.from_step_dict(step_dict)
+    self.assertEqual(s, expected_step)
+    self.assertEqual(s.to_step_dict(), step_dict)
+
+  def test_empty_step(self):
+    with self.assertRaisesRegexp(ValueError, "step dict must have 'name' key"):
+      Step.from_step_dict({})
+
+  def test_minimal_step(self):
+    d = {'name': 'foo'}
+    self.assertConversion(d, Step(name='foo'))
+
+  def test_all_step_dict_fields(self):
+    d = {
+        'name': 'fake-step-name',
+        'cmd': ['my', 'command', 'arguments'],
+        'cwd': 'fake-cwd',
+        'env': {
+            'FOO': 'fake-foo-value',
+        },
+        'env_prefixes': {
+            'PATH': ['fake-path-prefix'],
+        },
+        'env_suffixes': {
+            'PATH': ['fake-path-suffix'],
+        },
+        'allow_subannotations': True,
+        'trigger_specs': ['fake-trigger-spec'],
+        'timeout': datetime.timedelta(seconds=30),
+        'infra_step': True,
+        'stdout': 'fake-stdout',
+        'stderr': 'fake-stderr',
+        'stdin': 'fake-stdin',
+    }
+    self.assertConversion(d, Step(
+        name='fake-step-name',
+        cmd=['my', 'command', 'arguments'],
+        cwd='fake-cwd',
+        env={
+            'FOO': 'fake-foo-value',
+        },
+        env_prefixes={
+            'PATH': ['fake-path-prefix'],
+        },
+        env_suffixes={
+            'PATH': ['fake-path-suffix'],
+        },
+        allow_subannotations=True,
+        trigger_specs=['fake-trigger-spec'],
+        timeout=datetime.timedelta(seconds=30),
+        infra_step=True,
+        stdout='fake-stdout',
+        stderr='fake-stderr',
+        stdin='fake-stdin',
+    ))
+
+  def test_parse_nest_level(self):
+    d = {
+        'name': 'foo',
+        '~followup_annotations': [
+            '@@@STEP_NEST_LEVEL@42@@@',
+        ],
+    }
+    self.assertConversion(d, Step(name='foo', nest_level=42))
+
+  def test_parse_step_text(self):
+    d = {
+        'name': 'foo',
+        '~followup_annotations': [
+            '@@@STEP_TEXT@fake-step-text@@@',
+        ],
+    }
+    self.assertConversion(d, Step(
+        name='foo',
+        step_text='fake-step-text',
+    ))
+
+  def test_parse_step_summary_text(self):
+    d = {
+        'name': 'foo',
+        '~followup_annotations': [
+            '@@@STEP_SUMMARY_TEXT@fake-step-summary-text@@@',
+        ],
+    }
+    self.assertConversion(d, Step(
+        name='foo',
+        step_summary_text='fake-step-summary-text',
+    ))
+
+  def test_parse_logs(self):
+    d = {
+        'name': 'foo',
+        '~followup_annotations': [
+            '@@@STEP_LOG_LINE@foo@foo-line-1@@@',
+            '@@@STEP_LOG_LINE@foo@foo-line-2@@@',
+            '@@@STEP_LOG_END@foo@@@',
+            '@@@STEP_LOG_LINE@bar@bar-line-1@@@',
+            '@@@STEP_LOG_LINE@bar@bar-line-2@@@',
+            '@@@STEP_LOG_END@bar@@@',
+        ],
+    }
+    self.assertConversion(d, Step(
+        name='foo',
+        logs=OrderedDict([
+            ('foo', 'foo-line-1\nfoo-line-2'),
+            ('bar', 'bar-line-1\nbar-line-2'),
+        ]),
+    ))
+
+  def test_parse_logs_no_lines(self):
+    d = {
+        'name': 'foo',
+        '~followup_annotations': [
+            '@@@STEP_LOG_END@foo@@@',
+        ],
+    }
+    self.assertConversion(d, Step(
+        name='foo',
+        logs=OrderedDict([
+            ('foo', ''),
+        ]),
+    ))
+
+  def test_parse_logs_single_empty_line(self):
+    d = {
+        'name': 'foo',
+        '~followup_annotations': [
+            '@@@STEP_LOG_LINE@foo@@@@',
+            '@@@STEP_LOG_END@foo@@@',
+        ],
+    }
+    self.assertConversion(d, Step(
+        name='foo',
+        logs=OrderedDict([
+            ('foo', ''),
+        ]),
+    ))
+
+  def test_parse_links(self):
+    d = {
+        'name': 'foo',
+        '~followup_annotations': [
+            '@@@STEP_LINK@foo@fake-foo-url@@@',
+            '@@@STEP_LINK@bar@fake-bar-url@@@',
+        ],
+    }
+    self.assertConversion(d, Step(
+        name='foo',
+        links=OrderedDict([
+            ('foo', 'fake-foo-url'),
+            ('bar', 'fake-bar-url'),
+        ]),
+    ))
+
+  def test_parse_status_exception(self):
+    d = {
+        'name': 'foo',
+        '~followup_annotations': [
+            '@@@STEP_EXCEPTION@@@',
+        ],
+    }
+    self.assertConversion(d, Step(name='foo', status='EXCEPTION'))
+
+  def test_parse_status_failure(self):
+    d = {
+        'name': 'foo',
+        '~followup_annotations': [
+            '@@@STEP_FAILURE@@@',
+        ],
+    }
+    self.assertConversion(d, Step(name='foo', status='FAILURE'))
+
+  def test_parse_status_warning(self):
+    d = {
+        'name': 'foo',
+        '~followup_annotations': [
+            '@@@STEP_WARNINGS@@@',
+        ],
+    }
+    self.assertConversion(d, Step(name='foo', status='WARNING'))
+
+  def test_parse_output_properties(self):
+    d = {
+        'name': 'foo',
+        '~followup_annotations': [
+            '@@@SET_BUILD_PROPERTY@foo@foo-value@@@',
+            '@@@SET_BUILD_PROPERTY@bar@bar-value@@@',
+        ],
+    }
+    self.assertConversion(d, Step(
+        name='foo',
+        output_properties=OrderedDict([
+            ('foo', 'foo-value'),
+            ('bar', 'bar-value'),
+        ]),
+    ))
+
+  def test_modifying_annotation_field(self):
+    d = {
+        'name': 'foo',
+        '~followup_annotations': [
+            '@@@STEP_LINK@foo@fake-foo-url@@@',
+            '@@@STEP_LINK@bar@fake-bar-url@@@',
+            '@@@STEP_LINK@baz@fake-baz-url@@@',
+        ],
+    }
+    s = Step.from_step_dict(d)
+    del s.links['bar']
+    self.assertEqual(s.to_step_dict(), {
+        'name': 'foo',
+        '~followup_annotations': [
+            '@@@STEP_LINK@foo@fake-foo-url@@@',
+            '@@@STEP_LINK@baz@fake-baz-url@@@',
+        ],
+    })
+
+  def test_modifying_annotation_field_to_default(self):
+    d = {
+        'name': 'foo',
+        '~followup_annotations': [
+            '@@@STEP_LINK@foo@fake-foo-url@@@',
+            '@@@STEP_LINK@bar@fake-bar-url@@@',
+            '@@@STEP_LINK@baz@fake-baz-url@@@',
+        ],
+    }
+    s = Step.from_step_dict(d)
+    s.links.clear()
+    self.assertEqual(s.to_step_dict(), {'name': 'foo'})
+
+  def test_getitem(self):
+    d = {'name': 'foo', 'infra_step': True}
+    s = Step.from_step_dict(d)
+    self.assertEqual(s['name'], 'foo')
+    self.assertEqual(s['infra_step'], True)
+    s.infra_step = False
+    with self.assertRaises(KeyError):
+      s['infra_step']
+
+  def test_getitem_followup_annotations(self):
+    d = {
+        'name': 'foo',
+        '~followup_annotations': [
+            '@@@STEP_NEST_LEVEL@1@@@',
+            '@@@STEP_TEXT@fake-step-text@@@',
+            '@@@STEP_LINK@foo@fake-foo-url@@@',
+            '@@@STEP_LINK@bar@fake-bar-url@@@',
+            '@@@STEP_LINK@baz@fake-baz-url@@@',
+        ],
+    }
+    s = Step.from_step_dict(d)
+    self.assertEqual(s['~followup_annotations'], [
+        '@@@STEP_NEST_LEVEL@1@@@',
+        '@@@STEP_TEXT@fake-step-text@@@',
+        '@@@STEP_LINK@foo@fake-foo-url@@@',
+        '@@@STEP_LINK@bar@fake-bar-url@@@',
+        '@@@STEP_LINK@baz@fake-baz-url@@@',
+    ])
+    with self.assertRaises(KeyError):
+      s['step_text']
+    s.step_text = ''
+    self.assertEqual(s['~followup_annotations'], [
+        '@@@STEP_NEST_LEVEL@1@@@',
+        '@@@STEP_LINK@foo@fake-foo-url@@@',
+        '@@@STEP_LINK@bar@fake-bar-url@@@',
+        '@@@STEP_LINK@baz@fake-baz-url@@@',
+    ])
+
+  def test_mapping(self):
+    d = {
+        'name': 'foo',
+        'infra_step': True,
+        '~followup_annotations': [
+            '@@@STEP_TEXT@fake-step-text@@@',
+            '@@@STEP_NEST_LEVEL@1@@@',
+        ],
+    }
+    s = Step.from_step_dict(d)
+    self.assertItemsEqual(s, ['name', 'infra_step', '~followup_annotations'])
+    self.assertEqual(len(s), 3)
+
+    s.infra_step = False
+    self.assertItemsEqual(s, ['name', '~followup_annotations'])
+    self.assertEqual(len(s), 2)
+
+    s.step_text = ''
+    self.assertItemsEqual(s, ['name', '~followup_annotations'])
+    self.assertEqual(len(s), 2)
+
+    s.nest_level = 0
+    self.assertItemsEqual(s, ['name'])
+    self.assertEqual(len(s), 1)
+
 
 class TestVerifySubset(test_env.RecipeEngineUnitTest):
   @staticmethod
@@ -277,7 +572,6 @@ class TestVerifySubset(test_env.RecipeEngineUnitTest):
           'many': 'strings,'
         },
         'name': s,
-        'status_code': 1,
       }) for s in steps
     ])
 
@@ -508,16 +802,16 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
   def test_key_error_implicit_check(self):
     d = OrderedDict([('x', {'name': 'x'})])
     def body(check, steps):
-      foo = steps['x']['env']['foo']
+      foo = steps['x'].env['foo']
     test_data = self.mkApi().post_process(body)
     results, failures = post_process(d, test_data)
     self.assertEqual(len(failures), 1)
     self.assertEqual(len(failures[0].frames), 1)
     self.assertEqual(
         self.sanitize(failures[0].frames[0]),
-        self.mk('body', "foo = steps['x']['env']['foo']",
-                {"steps['x'].keys()": "['name']",
-                 'raised exception': "KeyError: 'env'"}))
+        self.mk('body', "foo = steps['x'].env['foo']",
+                {"steps['x'].env.keys()": '[]',
+                 'raised exception': "KeyError: 'foo'"}))
 
   def test_key_error_implicit_check_no_checker_in_frame(self):
     d = OrderedDict([('x', {'name': 'x'})])
@@ -525,7 +819,7 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
       # The failure backtrace for the implicit check should even include frames
       # where check isn't explicitly passed
       def inner(steps_dict):
-        return 'foo' in steps_dict['x']['env']
+        return steps_dict['x'].env['foo'] == 'bar'
       check(inner(steps_dict))
     test_data = self.mkApi().post_process(body)
     results, failures = post_process(d, test_data)
@@ -536,9 +830,9 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
         self.mk('body', 'check(inner(steps_dict))', None))
     self.assertEqual(
         self.sanitize(failures[0].frames[1]),
-        self.mk('inner', "return ('foo' in steps_dict['x']['env'])",
-                {"steps_dict['x'].keys()": "['name']",
-                 'raised exception': "KeyError: 'env'"}))
+        self.mk('inner', "return (steps_dict['x'].env['foo'] == 'bar')",
+                {"steps_dict['x'].env.keys()": '[]',
+                 'raised exception': "KeyError: 'foo'"}))
 
 
 if __name__ == '__main__':

@@ -7,13 +7,15 @@ conditions inside tests, but with much more debugging information, including
 a smart selection of local variables mentioned inside of the call to check."""
 
 import ast
+import attr
 import copy
 import inspect
 import re
 import sys
 import itertools
+import weakref
 
-from collections import OrderedDict, deque, defaultdict, namedtuple
+from collections import Mapping, OrderedDict, deque, defaultdict, namedtuple
 
 import astunparse
 
@@ -315,6 +317,18 @@ class _checkTransformer(ast.NodeTransformer):
 
     return node
 
+  def visit_Attribute(self, node):
+    """Attribute nodes occur for attribute access (e.g. foo.bar). We want to
+    follow attribute access where possible to so that we can provide the value
+    that resulted in a check failure.
+    """
+    node = self.generic_visit(node)
+    if isinstance(node.value, _resolved):
+      node = _resolved(
+          '%s.%s' % (node.value.representation, node.attr),
+          getattr(node.value.value, node.attr))
+    return node
+
   def visit_Subscript(self, node):
     """Subscript nodes are anything which is __[__]. We only want to match __[x]
     here so where the [x] is a regular Index expression (not an elipsis or
@@ -476,6 +490,286 @@ class Checker(object):
     return bool(exp)
 
 
+_NEST_LEVEL_RE = re.compile('@@@STEP_NEST_LEVEL@(?P<level>[0-9]+)@@@$')
+
+def _parse_nest_level(step, field, annotation):
+  match = _NEST_LEVEL_RE.match(annotation)
+  if not match:
+    return False
+  setattr(step, field, int(match.group('level')))
+  return True
+
+def _unparse_nest_level(value):
+  yield '@@@STEP_NEST_LEVEL@%d@@@' % value
+
+
+_STEP_TEXT_RE = re.compile('@@@STEP_TEXT@(?P<text>.+)@@@$')
+
+def _parse_step_text(step, field, annotation):
+  match = _STEP_TEXT_RE.match(annotation)
+  if not match:
+    return False
+  setattr(step, field, match.group('text'))
+  return True
+
+def _unparse_step_text(value):
+  yield '@@@STEP_TEXT@%s@@@' % value
+
+
+_STEP_SUMMARY_TEXT_RE = re.compile('@@@STEP_SUMMARY_TEXT@(?P<text>.+)@@@$')
+
+def _parse_step_summary_text(step, field, annotation):
+  match = _STEP_SUMMARY_TEXT_RE.match(annotation)
+  if not match:
+    return False
+  setattr(step, field, match.group('text'))
+  return True
+
+def _unparse_step_summary_text(value):
+  yield '@@@STEP_SUMMARY_TEXT@%s@@@' % value
+
+
+_LOG_LINE_RE = re.compile('@@@STEP_LOG_LINE@(?P<log>[^@]+)@(?P<text>.*)@@@$')
+_LOG_END_RE = re.compile('@@@STEP_LOG_END@(?P<log>[^@]+)@@@$')
+
+# A special string object equal to the empty string that we can identify so as
+# to distinguish between logs with no lines and logs containing a single empty
+# line
+class EmptyLog(str):
+  def __new__(cls):
+    return super(EmptyLog, cls).__new__(cls, '')
+
+EMPTY_LOG = EmptyLog()
+
+def _parse_logs(step, field, annotation):
+  logs = getattr(step, field)
+  match = _LOG_END_RE.match(annotation)
+  if match:
+    log = match.group('log')
+    logs.setdefault(log, EMPTY_LOG)
+    return True
+
+  match = _LOG_LINE_RE.match(annotation)
+  if match:
+    log = match.group('log')
+    line = match.group('text')
+    if log in logs:
+      logs[log] = '\n'.join([logs[log], line])
+    else:
+      logs[log] = line
+    return True
+
+  return False
+
+def _unparse_logs(value):
+  for log, text in value.iteritems():
+    if text is not EMPTY_LOG:
+      for l in text.split('\n'):
+        yield '@@@STEP_LOG_LINE@%s@%s@@@' % (log, l)
+    yield '@@@STEP_LOG_END@%s@@@' % log
+
+
+_LINK_RE = re.compile('@@@STEP_LINK@(?P<label>[^@]+)@(?P<url>.*)@@@$')
+
+def _parse_links(step, field, annotation):
+  match = _LINK_RE.match(annotation)
+  if not match:
+    return False
+  getattr(step, field)[match.group('label')] = match.group('url')
+  return True
+
+def _unparse_links(value):
+  for link, url in value.iteritems():
+    yield '@@@STEP_LINK@%s@%s@@@' % (link, url)
+
+
+_STATUS_MAP = {
+    '@@@STEP_EXCEPTION@@@': 'EXCEPTION',
+    '@@@STEP_FAILURE@@@': 'FAILURE',
+    '@@@STEP_WARNINGS@@@': 'WARNING',
+}
+
+def _parse_status(step, field, annotation):
+  status = _STATUS_MAP.get(annotation, None)
+  if not status:
+    return False
+  setattr(step, field, status)
+  return True
+
+_REVERSE_STATUS_MAP = {v: k for k, v in _STATUS_MAP.iteritems()}
+
+def _unparse_status(value):
+  assert value in _REVERSE_STATUS_MAP, (
+      'status must be one of %r' % _REVERSE_STATUS_MAP_KEYS)
+  yield _REVERSE_STATUS_MAP[value]
+
+
+_OUTPUT_PROPERTY_RE = re.compile(
+    '@@@SET_BUILD_PROPERTY@(?P<name>[^@]+)@(?P<value>.*)@@@')
+
+def _parse_output_properties(step, field, annotation):
+  match = _OUTPUT_PROPERTY_RE.match(annotation)
+  if not match:
+    return False
+  # Should we do json.loads on the value?
+  getattr(step, field)[match.group('name')] = match.group('value')
+  return True
+
+def _unparse_output_properties(value):
+  for prop, prop_value in value.iteritems():
+    yield '@@@SET_BUILD_PROPERTY@%s@%s@@@' % (prop, prop_value)
+
+
+def _annotation(parser, unparser, **kwargs):
+  return attr.ib(metadata={'parser': parser, 'unparser': unparser}, **kwargs)
+
+
+@attr.s
+class Step(Mapping):
+  """The representation of a step provided to post-process hooks."""
+  # Fields from step dict
+  # The name of the step as a string
+  name = attr.ib()
+
+  # The step's command as a list of strings
+  # cmd is present in the initial step dict even when its empty, so using None
+  # as the default allows us to just compare against the default like any other
+  # field and preserve any empty list
+  cmd = attr.ib(default=None)
+
+  # The working directory that the step is executed under as a string
+  cwd = attr.ib(default='')
+
+  # See //recipe_modules/context/api.py for information on the precise meaning
+  # of env, env_prefixes and env_suffixes
+  # env will be the env value for the step, a dictionary mapping strings
+  # containing the environment variable names to strings containing the
+  # environment variable value
+  env = attr.ib(factory=dict)
+  # env_prefixes and env_suffixes will be the env prefixes and suffixes for the
+  # step, dictionaries mapping strings containing the environment variable names
+  # to lists containing strings to be prepended/addended to the environment
+  # variable
+  env_prefixes = attr.ib(factory=dict)
+  env_suffixes = attr.ib(factory=dict)
+
+  # A bool indicating whether a step can emit its own annotations
+  allow_subannotations = attr.ib(default=False)
+
+  # Deprecated
+  trigger_specs = attr.ib(factory=list)
+
+  # Either None for no timeout or a numeric type containing the number of
+  # seconds the step must complete in
+  timeout = attr.ib(default=None)
+
+  # A bool indicating the step is an infrastructure step that should raise
+  # InfraFailure instead of StepFailure if the step finishes with an exit code
+  # that is not allowed
+  infra_step = attr.ib(default=False)
+
+  # Strings containing the content of the step's stdin, stdout and stderr
+  stdout = attr.ib(default='')
+  stderr = attr.ib(default='')
+  stdin = attr.ib(default='')
+
+  # Fields parsed from followup annotations, order is important for preserving
+  # the order in expectations files
+  # The nest level of the step: 0 is a top-level step
+  nest_level = _annotation(
+      default=0, parser=_parse_nest_level, unparser=_unparse_nest_level)
+
+  # A string containing the step's step text
+  step_text = _annotation(
+      default='', parser=_parse_step_text, unparser=_unparse_step_text)
+
+  # A string containing the step's step summary text
+  step_summary_text = _annotation(
+      default='',
+      parser=_parse_step_summary_text,
+      unparser=_unparse_step_summary_text)
+
+  # A dictionary containing the step's logs, mapping strings containing the log
+  # name to strings containing the content of the log
+  logs = _annotation(
+      factory=OrderedDict, parser=_parse_logs, unparser=_unparse_logs)
+
+  # A dictionary containing the step's links, mapping strings containing the
+  # link name to strings containing the link url
+  links = _annotation(
+      factory=OrderedDict, parser=_parse_links, unparser=_unparse_links)
+
+  # A string containing the resulting status of the step, one of: 'SUCCESS',
+  # 'EXCEPTION', 'FAILURE', 'WARNING'
+  status = _annotation(
+      default='SUCCESS', parser=_parse_status, unparser=_unparse_status)
+
+  # A dictionary containing the build properties set by the step, mapping
+  # strings containing the property name to json-ish strings containing the
+  # value of the property
+  output_properties = _annotation(
+      factory=OrderedDict,
+      parser=_parse_output_properties,
+      unparser=_unparse_output_properties)
+
+  _ANNOTATION_FIELDS = None
+
+  @classmethod
+  def _get_annotation_fields(cls):
+    if cls._ANNOTATION_FIELDS is None:
+      cls._ANNOTATION_FIELDS = [f for f in attr.fields(cls)
+                                if 'parser' in f.metadata]
+    return cls._ANNOTATION_FIELDS
+
+  @classmethod
+  def from_step_dict(cls, step_dict):
+    if 'name' not in step_dict:
+      raise ValueError("step dict must have 'name' key, step dict keys: %r"
+                       % sorted(step_dict.iterkeys()))
+
+    step = Step(**{k: v for k, v in step_dict.iteritems()
+                   if k != '~followup_annotations'})
+    parsers = [f.metadata['parser'] for f in cls._get_annotation_fields()]
+    for annotation in step_dict.get('~followup_annotations', []):
+      for field in cls._get_annotation_fields():
+        if field.metadata['parser'](step, field.name, annotation):
+          break
+      else:
+        assert False, 'Unknown annotation: %r' % annotation
+
+    return step
+
+  def _as_dict(self):
+    return attr.asdict(self, recurse=False)
+
+  def to_step_dict(self):
+    prototype = Step('')._as_dict()
+    step_dict = {k: v for k, v in self._as_dict().iteritems()
+                 if k == 'name' or v != prototype[k]}
+    annotations = []
+    for field in self._get_annotation_fields():
+      value = step_dict.pop(field.name, MISSING)
+      if value is not MISSING:
+        annotations.extend(field.metadata['unparser'](value))
+    if annotations:
+      step_dict['~followup_annotations'] = annotations
+
+    return step_dict
+
+  # TODO(crbug.com/939120) Remove the Mapping base
+  # The Mapping interface is temporarily provided to preserve compatibility with
+  # existing post processing hooks. Once all hooks have been migrated to use the
+  # attribute interface, it will be removed.
+  def __getitem__(self, key):
+    return self.to_step_dict()[key]
+
+  def __iter__(self):
+    return iter(self.to_step_dict())
+
+  def __len__(self):
+    return len(self.to_step_dict())
+
+
 MISSING = object()
 
 
@@ -592,6 +886,9 @@ def post_process(raw_expectations, test_data):
     # The checker MUST be saved to a local variable in order for it to be able
     # to correctly detect the frames to keep when creating a failure backtrace
     check = Checker(context, steps)
+    for k, v in steps.iteritems():
+      if k != '$result':
+        steps[k] = Step.from_step_dict(v)
     try:
       rslt = hook(check, steps, *args, **kwargs)
     except KeyError:
@@ -613,6 +910,9 @@ def post_process(raw_expectations, test_data):
 
     failed_checks += check.failed_checks
     if rslt is not None:
+      for k, v in rslt.iteritems():
+        if isinstance(v, Step):
+          rslt[k] = v.to_step_dict()
       msg = VerifySubset(rslt, raw_expectations)
       if msg:
         raise PostProcessError('post process: steps' + msg)
