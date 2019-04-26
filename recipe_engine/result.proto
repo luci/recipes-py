@@ -24,9 +24,6 @@ message Failure {
 
   // The cause of this failure.
   oneof failure_type {
-    // Step timed out.
-    Timeout timeout = 2;
-
     // Step threw an exception.
     Exception exception = 3;
 
@@ -43,13 +40,6 @@ message Failure {
 message Exception {
   // Traceback of an exception which occured.
   repeated string traceback = 1;
-}
-
-// A step timed out during its execution. Caused by StepTimeout in
-// recipe_api.py
-message Timeout {
-  // The timeout set for the step.
-  float timeout_s = 1;
 }
 
 // A step attempted to access data which did not exist. Caused by

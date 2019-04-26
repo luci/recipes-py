@@ -317,14 +317,6 @@ class RecipeEngine(object):
         # Let the step runner run_context decide what to do.
         raise
 
-      except subprocess42.TimeoutExpired as ex:
-        result = result_pb2.Result(
-          failure=result_pb2.Failure(
-              human_reason="Step time out: %r" % ex,
-              timeout= result_pb2.Timeout(
-                  timeout_s=ex.timeout
-              )))
-
       except Exception as ex:
         result = result_pb2.Result(
           failure=result_pb2.Failure(
