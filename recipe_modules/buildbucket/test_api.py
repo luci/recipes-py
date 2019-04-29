@@ -190,3 +190,13 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     jsonish = json_format.MessageToDict(batch_response)
     return self.step_data(
         step_name, self.m.json.output_stream(jsonish, retcode=ret_code))
+
+  def simulated_search_results(self, builds, step_name=None):
+    assert isinstance(builds, list), builds
+    assert all(isinstance(b, build_pb2.Build) for b in builds), builds
+
+    step_name = step_name or 'buildbucket.search'
+    jsonish = json_format.MessageToDict(rpc_pb2.BatchResponse(
+        responses=[dict(search_builds=dict(builds=builds))],
+    ))
+    return self.step_data(step_name, self.m.json.output_stream(jsonish))

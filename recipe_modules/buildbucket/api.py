@@ -408,12 +408,11 @@ class BuildbucketApi(recipe_api.RecipeApi):
     ```
 
     Args:
-
     *   schedule_build_requests: a list of `buildbucket.v2.ScheduleBuildRequest`
         protobuf messages. Create one by calling `schedule_request` method.
-    *   url_title_fn: a function (build_pb2.Build) -> (str) that returns a title
-        of build link for the step. Defaults to build id.
-        If returns None, the link is not emitted.
+    *   url_title_fn: a function that accepts a `build_pb2.Build` and returns a
+        link title. If returns `None`, the link is not reported.
+        Default link title is build id.
     *   step_name: name for this step.
 
     Returns:
@@ -427,7 +426,6 @@ class BuildbucketApi(recipe_api.RecipeApi):
     assert isinstance(schedule_build_requests, list), schedule_build_requests
     for r in schedule_build_requests:
       assert isinstance(r, rpc_pb2.ScheduleBuildRequest), r
-    url_title_fn = url_title_fn or (lambda b: b.id)
 
     batch_req = rpc_pb2.BatchRequest(
         requests=[dict(schedule_build=r) for r in schedule_build_requests]
@@ -443,49 +441,32 @@ class BuildbucketApi(recipe_api.RecipeApi):
       )
       self._next_test_build_id += 1
 
+    step_res, batch_res, has_errors = self._batch_request(
+        step_name or 'buildbucket.schedule', batch_req, test_res)
 
-    try:
-      self._run_bb(
-          step_name=step_name or 'buildbucket.schedule',
-          subcommand='batch',
-          stdin=self.m.json.input(json_format.MessageToDict(batch_req)),
-          stdout=self.m.json.output(),
-          step_test_data=lambda: self.m.json.test_api.output_stream(
-              json_format.MessageToDict(test_res)
-          ),
-      )
-    finally:
-      # Append build links regardless of step status.
-      step_res = self.m.step.active_result
-      pres = step_res.presentation
-      pres.logs['request'] = json_format.MessageToJson(batch_req).splitlines()
+    # Append build links regardless of errors.
+    for r in batch_res.responses:
+      if not r.HasField('error'):
+        self._report_build_maybe(
+            step_res, r.schedule_build, url_title_fn=url_title_fn)
 
-      # Parse response.
-      batch_res = rpc_pb2.BatchResponse()
-      json_format.ParseDict(
-          step_res.stdout, batch_res,
-          # Do not fail the build because recipe's proto copy is stale.
-          ignore_unknown_fields=True)
-
-      step_text = []
-      for i, r in enumerate(batch_res.responses):
-        if r.HasField('error'):
-          step_text.extend([
-              'Request #%d' % i,
-              'Status code: %s' % r.error.code,
-              'Message: %s' % r.error.message,
-              '',  # Blank line.
-          ])
-        else:
-          build_title = url_title_fn(r.schedule_build)
-          if build_title is not None:
-            pres.links[str(build_title)] = self.build_url(
-                build_id=r.schedule_build.id)
-
-      pres.step_text = '<br>'.join(step_text)
+    if has_errors:
+      raise self.m.step.InfraFailure('Build creation failed')
 
     # Return Build messages.
     return [r.schedule_build for r in batch_res.responses]
+
+  def _report_build_maybe(self, step_result, build, url_title_fn=None):
+    """Reports a build in the step presentation.
+
+    url_title_fn is a function that accepts a `build_pb2.Build` and returns a
+    link title. If returns None, the link is not reported.
+    Default link title is build id.
+    """
+    build_title = url_title_fn(build) if url_title_fn else build.id
+    if build_title is not None:
+      pres = step_result.presentation
+      pres.links[str(build_title)] = self.build_url(build_id=build.id)
 
   def put(self, builds, **kwargs):
     """Puts a batch of builds.
@@ -521,6 +502,56 @@ class BuildbucketApi(recipe_api.RecipeApi):
                                   self.m.runtime.is_experimental),
       }))
     return self._run_buildbucket('put', build_specs, **kwargs)
+
+  def search(self, predicate, url_title_fn=None, step_name=None):
+    """Searches for builds.
+
+    Example: find all builds of the current CL.
+
+    ```python
+    from PB.go.chromium.org.luci.buildbucket.proto import rpc as rpc_pb2
+
+    related_builds = api.buildbucket.search(rpc_pb2.BuildPredicate(
+      gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),
+    ))
+    ```
+
+    Args:
+    *   predicate: a `rpc_pb2.BuildPredicate` object or a list thereof.
+        If a list, the predicates are connected with logical OR.
+    *   url_title_fn: a function that accepts a `build_pb2.Build` and returns a
+        link title. If returns `None`, the link is not reported.
+        Default link title is build id.
+
+    Returns:
+      A list of builds ordered newest-to-oldest.
+    """
+    assert isinstance(predicate, (list, rpc_pb2.BuildPredicate)), predicate
+    if not isinstance(predicate, list):
+      predicate = [predicate]
+    assert all(isinstance(p, rpc_pb2.BuildPredicate) for p in predicate)
+
+    batch_req = rpc_pb2.BatchRequest(
+        requests=[
+            dict(search_builds=dict(predicate=p, page_size=1000))
+            for p in predicate
+        ],
+    )
+    step_res, batch_res, has_errors = self._batch_request(
+        step_name or 'buildbucket.search',
+        batch_req,
+        rpc_pb2.BatchResponse())
+    if has_errors:
+      raise self.m.step.InfraFailure('Build search failed')
+
+    # Union build results.
+    builds = {}
+    for r in batch_res.responses:
+      for b in r.search_builds.builds:
+        if b.id not in builds:
+          builds[b.id] = builds
+          self._report_build_maybe(step_res, b, url_title_fn=url_title_fn)
+    return [b for _, b in sorted(builds.iteritems())]
 
   def cancel_build(self, build_id, **kwargs):
     return self._run_buildbucket('cancel', [build_id], **kwargs)
@@ -599,6 +630,56 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return {build.id: build for build in builds}
 
   # Internal.
+
+  def _batch_request(self, step_name, request, test_response):
+    """Makes a Builds.Batch request.
+
+    Returns (StepResult, rpc_pb2.BatchResponse, has_errors) tuple.
+    """
+    request_dict = json_format.MessageToDict(request)
+    try:
+      self._run_bb(
+          step_name=step_name,
+          subcommand='batch',
+          stdin=self.m.json.input(request_dict),
+          stdout=self.m.json.output(),
+          step_test_data=lambda: self.m.json.test_api.output_stream(
+              json_format.MessageToDict(test_response)
+          ),
+      )
+    except self.m.step.StepFailure:  # pragma: no cover
+      # Ignore the exit code and parse the response as BatchResponse.
+      # Fail if parsing fails.
+      pass
+
+    step_res = self.m.step.active_result
+
+    # Log the request.
+    step_res.presentation.logs['request'] = json.dumps(
+        request_dict, indent=2, sort_keys=True).splitlines()
+
+    # Parse the response.
+    batch_res = rpc_pb2.BatchResponse()
+    json_format.ParseDict(
+        step_res.stdout, batch_res,
+        # Do not fail the build because recipe's proto copy is stale.
+        ignore_unknown_fields=True)
+
+    # Print response errors in step text.
+    step_text = []
+    has_errors = False
+    for i, r in enumerate(batch_res.responses):
+      if r.HasField('error'):
+        has_errors = True
+        step_text.extend([
+            'Request #%d' % i,
+            'Status code: %s' % r.error.code,
+            'Message: %s' % r.error.message,
+            '',  # Blank line.
+        ])
+    step_res.presentation.step_text = '<br>'.join(step_text)
+
+    return (step_res, batch_res, has_errors)
 
   def _run_bb(
       self, subcommand, step_name=None, args=None, stdin=None, stdout=None,
