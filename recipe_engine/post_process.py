@@ -56,7 +56,7 @@ class Filter(object):
         to_ret[name] = step
       else:
         to_ret[name] = {
-          k: v for k, v in step.iteritems()
+          k: v for k, v in step.to_step_dict().iteritems()
           if k in field_set or k == 'name'
         }
 
@@ -186,26 +186,6 @@ def MustRunRE(check, step_odict, step_regex, at_least=1, at_most=None):
     check(matches <= at_most)
 
 
-def _extract_step_status(check, step_odict, step):
-  """Extract the status for a step.
-
-  The check function is used to check that the step was actually run.
-
-  Args:
-    step (str) - The name of the step to extract the status for.
-
-  Returns:
-    A string containing one of the following values: 'success', 'failure' or
-    'exception'. If the given step was not run, None will be returned.
-  """
-  annotations = step_odict[step].get('~followup_annotations', [])
-  for a in annotations:
-    if a == '@@@STEP_EXCEPTION@@@':
-      return 'exception'
-    if a == '@@@STEP_FAILURE@@@':
-      return 'failure'
-  return 'success'
-
 def StepSuccess(check, step_odict, step):
   """Assert that a step succeeded.
 
@@ -218,10 +198,7 @@ def StepSuccess(check, step_odict, step):
         + api.post_process(StepSuccess, 'step-name')
     )
   """
-  status = _extract_step_status(check, step_odict, step)
-  if status is None:
-    return
-  check('step %s was success' % step, status == 'success')
+  check(step_odict[step].status == 'SUCCESS')
 
 def StepFailure(check, step_odict, step):
   """Assert that a step failed.
@@ -235,10 +212,7 @@ def StepFailure(check, step_odict, step):
         + api.post_process(StepFailure, 'step-name')
     )
   """
-  status = _extract_step_status(check, step_odict, step)
-  if status is None:
-    return
-  check('step %s was failure' % step, status == 'failure')
+  check(step_odict[step].status == 'FAILURE')
 
 def StepException(check, step_odict, step):
   """Assert that a step had an exception.
@@ -252,14 +226,8 @@ def StepException(check, step_odict, step):
         + api.post_process(Step, 'step-name')
     )
   """
-  status = _extract_step_status(check, step_odict, step)
-  if status is None:
-    return
-  check('step %s was exception' % step, status == 'exception')
+  check(step_odict[step].status == 'EXCEPTION')
 
-
-def _check_cmd_was_in_step(check, step_odict, step):
-  return check('step %s had a command' % step, 'cmd' in step_odict[step])
 
 def _fullmatch(pattern, string):
   m = re.match(pattern, string)
@@ -283,9 +251,7 @@ def StepCommandRE(check, step_odict, step, expected_patterns):
                            ['my', 'command', '.*'])
     )
   """
-  if not _check_cmd_was_in_step(check, step_odict, step):
-    return
-  cmd = step_odict[step]['cmd']
+  cmd = step_odict[step].cmd
   for expected, actual in zip(expected_patterns, cmd):
     check(_fullmatch(expected, actual))
   unmatched = cmd[len(expected_patterns):]
@@ -309,35 +275,10 @@ def StepCommandContains(check, step_odict, step, argument_sequence):
         return True
     return False
 
-  if not _check_cmd_was_in_step(check, step_odict, step):
-    return
-  step_cmd = step_odict[step]['cmd']
+  step_cmd = step_odict[step].cmd
   check('command line for step %s contained %s' % (
             step, argument_sequence),
         subsequence(step_cmd, argument_sequence))
-
-_STEP_TEXT_RE = re.compile('@@@STEP_TEXT@(?P<text>.*)@@@$')
-
-
-def _extract_step_text(check, step_odict, step):
-  """Extract the step_text for a step.
-
-  The check function is used to check that the step was actually run.
-
-  Args:
-    step (str) - The name of the step to extract the step_text for.
-
-  Returns:
-    The step_text for the given step ('' if the a folloup annotation for the
-    step's step_text was not found). If the given step was not run, None will
-    be returned.
-  """
-  annotations = step_odict[step].get('~followup_annotations', [])
-  for a in annotations:
-    match = _STEP_TEXT_RE.match(a)
-    if match:
-      return match.group('text')
-  return ''
 
 
 def StepTextEquals(check, step_odict, step, expected):
@@ -350,10 +291,7 @@ def StepTextEquals(check, step_odict, step, expected):
   Usage:
     yield TEST + api.post_process(StepTextEquals, 'step-name', 'expected-text')
   """
-  actual = _extract_step_text(check, step_odict, step)
-  if actual is None:
-    return
-  check(actual == expected)
+  check(step_odict[step].step_text == expected)
 
 
 def StepTextContains(check, step_odict, step, expected_substrs):
@@ -373,54 +311,8 @@ def StepTextContains(check, step_odict, step, expected_substrs):
   """
   assert not isinstance(expected_substrs, basestring), \
       'expected_substrs must be an iterable of strings and must not be a string'
-  actual = _extract_step_text(check, step_odict, step)
-  if actual is None:
-    return
   for expected in expected_substrs:
-    check(expected in actual)
-
-
-_LOG_LINE_RE = re.compile('@@@STEP_LOG_LINE@(?P<log>[^@]*)@(?P<text>.*)@@@$')
-_LOG_END_RE = re.compile('@@@STEP_LOG_END@(?P<log>.*)@@@$')
-
-
-def GetLogs(step_dict):
-  """Get all logs from a step.
-
-  This is intended to be used to implement post_process checks.
-  """
-  logs = defaultdict(list)
-  for a in step_dict.get('~followup_annotations', []):
-    match = _LOG_LINE_RE.match(a)
-    if match:
-      logs[match.group('log')].append(match.group('text'))
-      continue
-    match = _LOG_END_RE.match(a)
-    if match:
-      logs[match.group('log')].append('')
-  return logs
-
-
-def _extract_log(check, step_odict, step, log):
-  """Extract a log for a step.
-
-  The check function is used to check that the step was actually run and that a
-  log with the given name was created for the step.
-
-  Args:
-    step (str) - The name of the step to extract a log for.
-    log (str) - The name of the log to extract.
-
-  Returns:
-    The log identified by the step and log parameters as a single string with
-    lines joined by \n. If the given step was not run or does not have the given
-    log, None will be returned.
-  """
-  logs = GetLogs(step_odict[step])
-  log_lines = logs.get(log, [])
-  if not check('step %s has log %s' % (step, log), log_lines):
-    return
-  return '\n'.join(log_lines)
+    check(expected in step_odict[step].step_text)
 
 
 def LogEquals(check, step_odict, step, log, expected):
@@ -437,10 +329,7 @@ def LogEquals(check, step_odict, step, log, expected):
          + api.post_process(LogEquals, 'step-name', 'log-name', 'expected-text')
     )
   """
-  actual = _extract_log(check, step_odict, step, log)
-  if actual is None:
-    return
-  check(actual == expected)
+  check(step_odict[step].logs[log] == expected)
 
 
 def LogContains(check, step_odict, step, log, expected_substrs):
@@ -461,53 +350,18 @@ def LogContains(check, step_odict, step, log, expected_substrs):
   """
   assert not isinstance(expected_substrs, basestring), \
       'expected_substrs must be an iterable of strings and must not be a string'
-  actual = _extract_log(check, step_odict, step, log)
-  if actual is None:
-    return
   for expected in expected_substrs:
-    check(expected in actual)
+    check(expected in step_odict[step].logs[log])
 
-
-def AnnotationContains(check, step_odict, step, expected_substrs):
-  """Assert that a step's annotations contains given substrings.
-
-  Args:
-    step (str) - The step to check the annotations of.
-    expected_substrs (list(str)) - The expected substrings the annotations
-        should contain.
-
-  Usage:
-    yield (
-        TEST
-         + api.post_process(AnnotationContains, 'step-name',
-                            ['substr1', 'substr2'])
-    )
-  """
-  assert not isinstance(expected_substrs, basestring), \
-      'expected_substrs must be an iterable of strings and must not be a string'
-
-  if not check('step %s was run' % step, step in step_odict):
-    return
-  annotations = '\n'.join(step_odict[step].get('~followup_annotations', []))
-
-  for expected in expected_substrs:
-    check(expected in annotations)
-
-
-# If the key has the '@' character, then both this regex and all the consumers
-# of this annotation will have the wrong behavior.
-_BUILD_PROPERTY_RE = re.compile(
-    '@@@SET_BUILD_PROPERTY@(?P<key>[^@]*)@(?P<value>.*)@@@$')
 
 def GetBuildProperties(step_odict):
   """Retrieves the build properties for a recipe."""
   build_properties = {}
-  for _, step_dict in step_odict.iteritems():
-    for a in step_dict.get('~followup_annotations', []):
-      match = _BUILD_PROPERTY_RE.match(a)
-      if match:
-        build_properties[match.group('key')] = json.loads(match.group('value'))
-
+  for name, step in step_odict.iteritems():
+    if name == '$result':
+      continue
+    for prop, value in step.output_properties.iteritems():
+      build_properties[prop] = json.loads(value)
   return build_properties
 
 

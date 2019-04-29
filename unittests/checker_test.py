@@ -497,69 +497,6 @@ class TestStep(test_env.RecipeEngineUnitTest):
     s.links.clear()
     self.assertEqual(s.to_step_dict(), {'name': 'foo'})
 
-  def test_getitem(self):
-    d = {'name': 'foo', 'infra_step': True}
-    s = Step.from_step_dict(d)
-    self.assertEqual(s['name'], 'foo')
-    self.assertEqual(s['infra_step'], True)
-    s.infra_step = False
-    with self.assertRaises(KeyError):
-      s['infra_step']
-
-  def test_getitem_followup_annotations(self):
-    d = {
-        'name': 'foo',
-        '~followup_annotations': [
-            '@@@STEP_NEST_LEVEL@1@@@',
-            '@@@STEP_TEXT@fake-step-text@@@',
-            '@@@STEP_LINK@foo@fake-foo-url@@@',
-            '@@@STEP_LINK@bar@fake-bar-url@@@',
-            '@@@STEP_LINK@baz@fake-baz-url@@@',
-        ],
-    }
-    s = Step.from_step_dict(d)
-    self.assertEqual(s['~followup_annotations'], [
-        '@@@STEP_NEST_LEVEL@1@@@',
-        '@@@STEP_TEXT@fake-step-text@@@',
-        '@@@STEP_LINK@foo@fake-foo-url@@@',
-        '@@@STEP_LINK@bar@fake-bar-url@@@',
-        '@@@STEP_LINK@baz@fake-baz-url@@@',
-    ])
-    with self.assertRaises(KeyError):
-      s['step_text']
-    s.step_text = ''
-    self.assertEqual(s['~followup_annotations'], [
-        '@@@STEP_NEST_LEVEL@1@@@',
-        '@@@STEP_LINK@foo@fake-foo-url@@@',
-        '@@@STEP_LINK@bar@fake-bar-url@@@',
-        '@@@STEP_LINK@baz@fake-baz-url@@@',
-    ])
-
-  def test_mapping(self):
-    d = {
-        'name': 'foo',
-        'infra_step': True,
-        '~followup_annotations': [
-            '@@@STEP_TEXT@fake-step-text@@@',
-            '@@@STEP_NEST_LEVEL@1@@@',
-        ],
-    }
-    s = Step.from_step_dict(d)
-    self.assertItemsEqual(s, ['name', 'infra_step', '~followup_annotations'])
-    self.assertEqual(len(s), 3)
-
-    s.infra_step = False
-    self.assertItemsEqual(s, ['name', '~followup_annotations'])
-    self.assertEqual(len(s), 2)
-
-    s.step_text = ''
-    self.assertItemsEqual(s, ['name', '~followup_annotations'])
-    self.assertEqual(len(s), 2)
-
-    s.nest_level = 0
-    self.assertItemsEqual(s, ['name'])
-    self.assertEqual(len(s), 1)
-
 
 class TestVerifySubset(test_env.RecipeEngineUnitTest):
   @staticmethod
@@ -689,7 +626,7 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
     ])
     test_data = self.mkApi().post_process(
         lambda check, steps:
-        OrderedDict((k, {'name': v['name']}) for k, v in steps.iteritems()))
+        OrderedDict((k, {'name': v.name}) for k, v in steps.iteritems()))
     results, failures = post_process(d, test_data)
     self.assertEqual(results, [{'name': 'x'}, {'name': 'y'}, {'name': 'z'}])
     self.assertEqual(failures, [])
@@ -713,7 +650,8 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
     ])
     test_data = self.mkApi().post_process(
         lambda check, steps:
-        OrderedDict((k, dict(cwd='cwd', **v)) for k, v in steps.iteritems()))
+        OrderedDict((k, dict(cwd='cwd', **v.to_step_dict()))
+                    for k, v in steps.iteritems()))
     with self.assertRaises(PostProcessError):
       post_process(d, test_data)
 
@@ -725,8 +663,10 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
     ])
     test_data = self.mkApi().post_process(
         lambda check, steps:
-        OrderedDict((k, {a: value for a, value in v.iteritems() if a != 'name'})
-                    for k,v in steps.iteritems()))
+        OrderedDict(
+            (k, {a: value for a, value in v.to_step_dict().iteritems()
+                 if a != 'name'})
+            for k,v in steps.iteritems()))
     results, failures = post_process(d, test_data)
     self.assertEqual(results, [
         {'name': 'x', 'cmd': ['one', 'two', 'three']},

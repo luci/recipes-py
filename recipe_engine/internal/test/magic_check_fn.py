@@ -15,7 +15,7 @@ import sys
 import itertools
 import weakref
 
-from collections import Mapping, OrderedDict, deque, defaultdict, namedtuple
+from collections import OrderedDict, deque, defaultdict, namedtuple
 
 import astunparse
 
@@ -625,7 +625,7 @@ def _annotation(parser, unparser, **kwargs):
 
 
 @attr.s
-class Step(Mapping):
+class Step(object):
   """The representation of a step provided to post-process hooks."""
   # Fields from step dict
   # The name of the step as a string
@@ -755,19 +755,6 @@ class Step(Mapping):
       step_dict['~followup_annotations'] = annotations
 
     return step_dict
-
-  # TODO(crbug.com/939120) Remove the Mapping base
-  # The Mapping interface is temporarily provided to preserve compatibility with
-  # existing post processing hooks. Once all hooks have been migrated to use the
-  # attribute interface, it will be removed.
-  def __getitem__(self, key):
-    return self.to_step_dict()[key]
-
-  def __iter__(self):
-    return iter(self.to_step_dict())
-
-  def __len__(self):
-    return len(self.to_step_dict())
 
 
 MISSING = object()
