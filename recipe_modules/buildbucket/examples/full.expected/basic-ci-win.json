@@ -114,6 +114,13 @@
     ]
   },
   {
+    "cmd": [],
+    "name": "builder_cache",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@[CACHE]\\builder@@@"
+    ]
+  },
+  {
     "jsonResult": null,
     "name": "$result"
   }

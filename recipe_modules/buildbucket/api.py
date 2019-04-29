@@ -233,6 +233,17 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """Alias for tags in util.py. See doc there."""
     return util.tags(**tags)
 
+  @property
+  def builder_cache_path(self):
+    """Path to the builder cache directory.
+
+    Such directory can be used to cache builder-specific data.
+    It remains on the bot from build to build.
+    See "Builder cache" in
+    https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/project_config.proto
+    """
+    return self.m.path['cache'].join('builder')
+
   # RPCs.
 
   def run(
