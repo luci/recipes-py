@@ -241,9 +241,119 @@ TODO(iannucci) - Document
 
 ### Writing recipes
 
+A "recipe" is a python script which the recipe engine can run and test. This
+script:
+  * Must have a RunSteps function
+  * Must have a GenTests generator
+  * May have a DEPS list
+  * May have a `PROPERTIES` declaration
+
+Recipes must exist in one of the following places in a recipe repo:
+  * Under the `recipes` directory
+  * Under a `recipe_modules/*/examples` directory
+  * Under a `recipe_modules/*/tests` directory
+  * Under a `recipe_modules/*/run` directory
+
+Recipes in subfolders of these are also permitted. Recipes in the global recipe
+directory have a name which is the path of the recipe script relative to the
+recipe folder containing it. If the recipe is located under a recipe module
+folder, the name is prepended with the module's name and a colon. For example:
+
+    //recipes/something.py                      ->  "something"
+    //recipes/sub/something.py                  ->  "sub/something"
+    //recipe_modules/foo/tests/something.py     ->  "foo:tests/something"
+    //recipe_modules/foo/run/sub/something.py   ->  "foo:run/sub/something"
+
+Here's a simple example recipe:
+
+    DEPS = [
+      "recipe_engine/step",
+    ]
+
+    def RunSteps(api):
+      # This runs a single step called "say hello" which executes the `echo`
+      # program to print 'hello' to stdout. `echo` is assumed to be resolvable
+      # via $PATH here.
+      api.step('say hello', ['echo', 'hello'])
+
+    def GenTests(api):
+      # yields a single test case called 'basic' which has no particular inputs
+      # and asserts that the step 'say hello' runs.
+      yield (
+          api.test('basic')
+        + api.post_process(lambda check, steps: check('say hello' in steps))
+      )
+
+#### `RunSteps`
+
+The RunSteps function has a signature like:
+
+     # PROPERTIES is not declared
+     def RunSteps(api):
+
+     # (DEPRECATED) Old style PROPERTIES declaration.
+     def RunSteps(api, name, of, properties):
+
+Where `api` is a python object containing all loaded `DEPS` (see section on
+`DEPS` below), and the properties arguments are loaded from the properties
+passed in to the recipe when the recipe is started.
+
+The RunSteps function may invoke any recipe module it wants via `api` (at its
+most basic, a recipe would run steps via `api.step(...)` after including
+'recipe_engine/step' in `DEPS`).
+
+#### `GenTests`
+
+The GenTests function is a generator which yields test cases. Every test case:
+  * Has a unique name
+  * Specifies input properties for the test
+  * Specifies input data for recipe modules
+    * e.g. 'paths which exist' for the `recipe_engine/path` module, what OS and
+      architecture the `recipe_engine/platform` module should simulate, etc.
+  * Specifies the behavior of various steps by name (i.e. their return code, the
+    output from placeholders)
+  * Assertions about steps which should have run (or should not have run) given
+    those inputs.
+  * Filters for the 'test expectation' of the test case to omit details from the
+    test expectations which aren't relevant to the test case.
+
+Each test case also produces a test expectation file adjacent to the recipe; the
+final state of the recipe execution in the form of a listing of the steps that
+have run. The test expectation files are written to a folder which is generated
+by replacing the '.py' extension of the recipe script with '.expected/'.
+
+#### `DEPS`
+
+The DEPS section of the recipe specifies what recipe modules this recipe depends
+on. The DEPS section has two possible forms, a list and a dict.
+
+As a list, DEPS can specify a module by its fully qualified name, like
+`recipe_engine/step`, or its unqualified name (for modules in the same recipe
+repo as the recipe) like `step`. The 'local name' of an entry is the last token
+of the fully qualified name, or the whole name for an unqualified name (in this
+example, the local name for both of these is just 'step').
+
+As a dict, DEPS maps from a local name of your choosing to either the fully
+qualified or unqulaified name of the module. This would allow you to
+disambiguate between modules which would end up having the same local name. For
+example `{'my_archive': 'archive', 'archive': 'recipe_engine/archive'}`.
+
+The recipe engine, when running your recipe, will inject an instance of each
+DEPS'd recipe module into the `api` object passed to `RunSteps`. The instance
+will be injected with the local name of the dependency. Within a given execution
+of a recipe module instances behave like singletons; if a recipe and a module
+both DEPS in the same other module (say 'tertiary'), there will only be one
+instance of the 'tertiary' module.
+
+#### `PROPERTIES`
+
 TODO(iannucci) - Document
 
 ### Writing recipe_modules
+
+TODO(iannucci) - Document
+
+#### `PROPERTIES`
 
 TODO(iannucci) - Document
 
@@ -289,6 +399,14 @@ import syntax. For example, importing from the 'gclient' module in 'depot_tools'
 looks like:
 
     from RECIPE_MODULES.depot_tools.gclient import CONFIG_CTX
+
+### How recipes execute
+
+TODO(iannucci) - Document
+
+### How recipe simulation tests work
+
+TODO(iannucci) - Document
 
 ### Structured data passing for steps
 
