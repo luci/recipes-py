@@ -20,9 +20,12 @@ DEPS = [
 
 
 def RunSteps(api):
-  api.buildbucket.search(rpc_pb2.BuildPredicate(
+  builds = api.buildbucket.search(rpc_pb2.BuildPredicate(
       gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),
   ))
+  pres = api.step.active_result.presentation
+  for b in builds:
+    pres.logs['build %s' % b.id] = json_format.MessageToJson(b).splitlines()
 
 
 def GenTests(api):

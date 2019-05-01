@@ -50,6 +50,16 @@
       "@@@STEP_LOG_LINE@request@  ]@@@",
       "@@@STEP_LOG_LINE@request@}@@@",
       "@@@STEP_LOG_END@request@@@",
+      "@@@STEP_LOG_LINE@build 1@{@@@",
+      "@@@STEP_LOG_LINE@build 1@  \"status\": \"SUCCESS\", @@@",
+      "@@@STEP_LOG_LINE@build 1@  \"id\": \"1\"@@@",
+      "@@@STEP_LOG_LINE@build 1@}@@@",
+      "@@@STEP_LOG_END@build 1@@@",
+      "@@@STEP_LOG_LINE@build 2@{@@@",
+      "@@@STEP_LOG_LINE@build 2@  \"status\": \"FAILURE\", @@@",
+      "@@@STEP_LOG_LINE@build 2@  \"id\": \"2\"@@@",
+      "@@@STEP_LOG_LINE@build 2@}@@@",
+      "@@@STEP_LOG_END@build 2@@@",
       "@@@STEP_LINK@1@https://cr-buildbucket.appspot.com/build/1@@@",
       "@@@STEP_LINK@2@https://cr-buildbucket.appspot.com/build/2@@@"
     ]

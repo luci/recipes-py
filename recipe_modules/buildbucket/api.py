@@ -560,7 +560,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     for r in batch_res.responses:
       for b in r.search_builds.builds:
         if b.id not in builds:
-          builds[b.id] = builds
+          builds[b.id] = b
           self._report_build_maybe(step_res, b, url_title_fn=url_title_fn)
     return [b for _, b in sorted(builds.iteritems())]
 
