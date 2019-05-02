@@ -58,6 +58,7 @@
   * [cq:tests/type_of_run](#recipes-cq_tests_type_of_run)
   * [engine_tests/bad_subprocess](#recipes-engine_tests_bad_subprocess) &mdash; Tests that daemons that hang on to STDOUT can't cause the engine to hang.
   * [engine_tests/comprehensive_ui](#recipes-engine_tests_comprehensive_ui) &mdash; A fast-running recipe which comprehensively covers all StepPresentation features available in the recipe engine.
+  * [engine_tests/config_operations](#recipes-engine_tests_config_operations) &mdash; Tests that recipes can modify configuration options in various ways.
   * [engine_tests/expect_exception](#recipes-engine_tests_expect_exception) &mdash; Tests that step_data can accept multiple specs at once.
   * [engine_tests/functools_partial](#recipes-engine_tests_functools_partial) &mdash; Engine shouldn't explode when step_test_data gets functools.
   * [engine_tests/missing_start_dir](#recipes-engine_tests_missing_start_dir) &mdash; Tests that deleting the current working directory doesn't immediately fail.
@@ -2490,6 +2491,23 @@ features available in the recipe engine.
 &mdash; **def [RunSteps](/recipes/engine_tests/comprehensive_ui.py#20)(api):**
 
 &mdash; **def [named\_step](/recipes/engine_tests/comprehensive_ui.py#17)(api, name):**
+### *recipes* / [engine\_tests/config\_operations](/recipes/engine_tests/config_operations.py)
+
+[DEPS](/recipes/engine_tests/config_operations.py#41): [json](#recipe_modules-json), [step](#recipe_modules-step)
+
+Tests that recipes can modify configuration options in various ways.
+
+&mdash; **def [BaseConfig](/recipes/engine_tests/config_operations.py#12)(\*\*_kwargs):**
+
+&mdash; **def [DumpRecipeEngineTestConfig](/recipes/engine_tests/config_operations.py#46)(api, config):**
+
+&mdash; **def [RunSteps](/recipes/engine_tests/config_operations.py#51)(api):**
+
+&emsp; **@config_ctx()**<br>&mdash; **def [test1](/recipes/engine_tests/config_operations.py#27)(c):**
+
+&emsp; **@config_ctx(includes=['test2a'])**<br>&mdash; **def [test2](/recipes/engine_tests/config_operations.py#35)(c):**
+
+&emsp; **@config_ctx()**<br>&mdash; **def [test2a](/recipes/engine_tests/config_operations.py#31)(c):**
 ### *recipes* / [engine\_tests/expect\_exception](/recipes/engine_tests/expect_exception.py)
 
 [DEPS](/recipes/engine_tests/expect_exception.py#7): [step](#recipe_modules-step)

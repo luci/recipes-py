@@ -671,7 +671,7 @@ class List(ConfigBase, collections.MutableSequence):
     self.data[index] = value
 
   def __delitem__(self, index):
-    del self.data
+    del self.data[index]
 
   def __len__(self):
     return len(self.data)
