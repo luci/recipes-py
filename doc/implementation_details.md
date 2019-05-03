@@ -325,8 +325,141 @@ started with, etc. Typically these are only used by a single module somewhere in
 the `recipe_engine` repo; user recipe modules are not expected to use these.
 ***
 
+## Simulation tests
+
+This section talks about the code that implements the test command of
+recipes.py.
+
+### Post-process hooks
+
+As part of the definition of a simulation test, the user can add post-process
+hooks to filter and/or make assertions on the expectations recorded for the test
+run. Hooks can be added using either the `post_process` or `post_check` methods
+of RecipeTestApi. The code that runs these hooks as well as the implementation
+of the `check` callable passed as the first argument to hooks is located in
+[magic_check_fn.py].
+
+The `check` callable passed to post-process hooks is an instance of `Checker`.
+The `Checker` class is responsible for recording failed checks, including
+determining the relevant stack frames to be included in the failure output.
+
+The `Checker` is instantiated in `post_process` and assigned to a local
+variable. The local varible is important because the `Checker` object uses the
+presence of itself in the frame locals to define the boundary between engine
+code and post-process hook code. In the event of a failure, the `Checker`
+iterates over the stack frames, starting from the outermost frame and proceeding
+towards the current execution point. The first frame where the `Checker` appears
+in the frame locals is the last frame of engine code and the relevant frames
+begin starting at the next frame and excluding the 2 innermost frames (the
+`__call__` method calls `_call_impl` which is where the frame walking takes
+place.
+
+Failures may also be recorded in the case of a KeyError. KeyErrors are caught in
+`post_process` and the frames to be included in the failure are extracted from
+the exception info.
+
+Once relevant frames are determined by `Checker` or `post_process`,
+`Check.create` is called to create a representation of the failure containing
+processed frames. The frames are converted to `CheckFrame`, a representation
+that holds information about the point in code that the frame refers to without
+keeping all of the frame locals alive.
+
+Processing a frame involves extracting the filename, line number and function
+name from the frame and where possible reconstructing the expression being
+evaluated in that frame. To reconstuct the expression, `CheckFrame` maintains a
+cache that maps filename and line number to AST nodes corresponding to
+expressions whose definitions end at that line number. The end line is the line
+that will appear as the line number of a frame executing that expression. The
+cache is populated by parsing the source code into nodes and then examining the
+nodes. Nodes that define expressions or simple statements (statements that can't
+have additional nested statements) are added to the cache. Other statements
+result in nested statements or expressions being added to the queue. When a
+simple statement or expression is added to the cache, we also walk over all of
+its nested nodes to find any lambda definitions. Lambda definitions within a
+larger expression may result in line numbers in an execution frame that doesn't
+correspond with the line number of the larger expression, so in order to display
+code for frames that occur in lambdas we add them to the cache separately.
+
+In the case of the innermost frame, the `CheckFrame` also includes information
+about the values of the variables and expressions relevant for determining the
+exact nature of the check failure. `CheckFrame` has a varmap field that is a
+dict mapping a string representation for a variable or expression to the value
+of that variable or expression (e.g. 'my_variable' -> 'foo'). The expression
+may not be an expression that actually appears in the code if the expression
+would actually be more useful than the actual expression in the code (e.g.
+'some_dict.keys()' will appear if the call `check('x' in some_dict) fails
+because the values in `some_dict` aren't relevant to whether 'x' is in it). This
+varmap is constructed by the `_checkTransformer` class, which is a subclass of
+`ast.NodeTransformer`. `ast.NodeTransformer` is an instance of the visitor
+design pattern containing methods corresponding to each node subclass. These
+methods can be overridden to modify or replace the nodes in the AST.
+
+`_checkTransformer` overrides some of these methods to replace nodes with
+resolved nodes where possible. Resolved nodes are represented by `_resolved`, a
+custom node subclass that records a string representation and a value for a
+variable or expression. It also records whether the node is valid. The node
+would not be valid if the recorded value doesn't correspond to the actual value
+in the code, which is the case if we replace an expression with an expression
+more useful for the user (e.g. showing only the keys of a dict when a membership
+check fails). The node types handled by `_checkTransformer` are:
+
+  * `Name` nodes correspond to a variable or constant and have the following
+    fields:
+    * `id` - string that acts as a key into one of frame locals, frame globals
+      or builtins
+    If `id` is one of the constants `True`, `False` and `None` the node is
+    replaced with a resolved node with the name of the constant as the
+    representation and the constant itself as the value. Otherwise, if the name
+    is found in either the frame locals or the frame globals, the node is
+    replaced with a resolved node with `id` as the representation and the looked
+    up value as the value.
+  * `Attribute` nodes correspond to an expression such as `x.y` and  have the
+    following fields:
+    * `value` - node corresponding to the expression an attribute is looked up
+      on (`x`)
+    * `attr` - string containing the attribute to look up (`y`)
+    If `value` refers to a resolved node, then we have been able to resolve the
+    preceding expression and so we replace the node with a resolved node with
+    the value of the lookup.
+  * `Compare` nodes correspond to an expression performing a series of
+    comparison operations and have the following fields:
+    * `left` - node corresponding the left-most argument of the comparison
+    * `ops` - sequence of nodes corresponding to the comparison operators
+    * `cmps` - sequence of nodes corresponding to the remaining arguments of the
+      comparison
+    The only change we make to `Compare` nodes is to prevent the full display of
+    dictionaries when a membership check is performed; if the expression
+    `x in y` fails when y is a dict, we do not actually care about the values of
+    `y`, only its keys. If `ops` has only a single element that is an instance
+    of either `ast.In` or `ast.NotIn` and `cmps` has only a single element that
+    is a resolved node referring to a dict, then we make a node that replaces
+    the `cmps` with a single resolved node with the dict's keys as its value.
+    The new resolved node is marked not valid because we wouldn't expect
+    operations that work against the dict to necessarily work against its keys.
+  * `Subscript` nodes correspond to an expression such as `x[y]` and contains
+    the following fields:
+    * `value` - node corresponding to the expression being indexed (`x`)
+    * `slice` - node corresponding to the subscript expression (`y`), which may
+      be a simple index, a slice or an ellipsis
+    If `value` is a valid resolved node and `slice` is a simple index (instance
+    of `ast.Index`), then we attempt to create a resolved node with the value of
+    the lookup as its value. We don't attempt a lookup if the `value` is an
+    invalid resolved node because we would expect the lookup to raise an
+    exception or return a different value then the actual code would. In the
+    case that we do perform the lookup, it still may fail (e.g.
+    `check('x' in y and y['x'] == 'z')` when 'x' is not in `y`). If the lookup
+    fails and `value` is a dict, then we return a new invalid resolved node with
+    the dict's keys as its value so that the user has some helpful information
+    about what went wrong.
+
+The nodes returned by the transformer are walked to find the resolved nodes and
+the varmap is populated mapping the resolved nodes' representations to their
+values that have been rendered in a user-friendly fashion.
+
+
 
 [commands]: /recipe_engine/internal/commands
+[magic_check_fn.py]: /recipe_engine/internal/test/magic_check_fn.py
 [main.py]: /recipe_engine/main.py
 [PEP302]: https://www.python.org/dev/peps/pep-0302/
 [proto_support.py]: /recipe_engine/internal/proto_support.py
