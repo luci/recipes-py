@@ -5,12 +5,65 @@
 import re
 import urlparse
 
+from google.protobuf.message import Message as PBMessage
+from google.protobuf import json_format as jsonpb
+
 from recipe_engine import recipe_test_api
 
 class PropertiesTestApi(recipe_test_api.RecipeTestApi):
-  def __call__(self, **kwargs):
+  def __call__(self, *proto_msgs, **kwargs):
+    """Sets property data for this test case.
+
+    You may pass a list of protobuf messages to use; their JSONPB
+    representations will be merged together with `dict.update`.
+
+    You may also pass explicit key/value pairs; these will be merged into
+    properties at the top level with `dict.update`.
+    """
     ret = self.test(None)
-    ret.properties.update(kwargs)
+
+    for msg in proto_msgs:
+      if not isinstance(msg, PBMessage):
+        raise ValueError(
+            'Positional arguments for api.properties must be protobuf messages.'
+            ' Got: %r (type %r)' % (msg, type(msg)))
+      ret.properties.update(**jsonpb.MessageToDict(
+          msg, preserving_proto_field_name=True))
+
+    for key, value in kwargs.iteritems():
+      if isinstance(value, PBMessage):
+        value = jsonpb.MessageToDict(value, preserving_proto_field_name=True)
+      # TODO(iannucci): recursively validate type of value to be all JSONish
+      # types.
+      # TODO(iannucci): recursively convert Path instances to string here.
+      ret.properties[key] = value
+
+    return ret
+
+  def environ(self, *proto_msgs, **kwargs):
+    """Sets environment data for this test case."""
+    ret = self.test(None)
+
+    to_apply = []
+
+    for msg in proto_msgs:
+      if not isinstance(msg, PBMessage):
+        raise ValueError(
+            'Positional arguments for api.properties must be protobuf messages.'
+            ' Got: %r (type %r)' % (msg, type(msg)))
+      to_apply.append(jsonpb.MessageToDict(
+          msg, preserving_proto_field_name=True))
+
+    to_apply.append(kwargs)
+
+    for dictionary in to_apply:
+      for key, value in dictionary.iteritems():
+        if not isinstance(value, (int, float, basestring)):
+          raise ValueError(
+              'Environment values must be int, float or string. '
+              'Got: %r=%r (type %r)' % (key, value, type(value)))
+        ret.environ[key] = str(value)
+
     return ret
 
   def generic(self, **kwargs):

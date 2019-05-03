@@ -133,7 +133,7 @@ The recipe_modules folder contains subfolders, one per module. Unlike recipes,
 the module namespace is flat in each repo. A recipe_module is composed of
 a couple files:
 
-  * `__init__.py` - Contains the DEPS and PROPERTIES declarations for the
+  * `__init__.py` - Contains the `DEPS`, `PROPERTIES`, etc. declarations for the
     recipe_module.
   * `api.py` - Contains the implementation of the recipe module.
   * `test_api.py` - Contains the implementation of the recipe module's fakes.
@@ -247,6 +247,7 @@ script:
   * Must have a GenTests generator
   * May have a DEPS list
   * May have a `PROPERTIES` declaration
+  * May have a `ENV_PROPERTIES` declaration
 
 Recipes must exist in one of the following places in a recipe repo:
   * Under the `recipes` directory
@@ -288,8 +289,20 @@ Here's a simple example recipe:
 
 The RunSteps function has a signature like:
 
-     # PROPERTIES is not declared
+     # RunSteps(api[, properties][, env_properties])
+     # For example:
+
+     # Neither PROPERTIES or ENV_PROPERTIES are declared
      def RunSteps(api):
+
+     # PROPERTIES(proto message)
+     def RunSteps(api, properties):
+
+     # PROPERTIES(proto message) and ENV_PROPERTIES(proto message)
+     def RunSteps(api, properties, env_properties):
+
+     # ENV_PROPERTIES(proto message)
+     def RunSteps(api, env_properties):
 
      # (DEPRECATED) Old style PROPERTIES declaration.
      def RunSteps(api, name, of, properties):
@@ -345,17 +358,124 @@ of a recipe module instances behave like singletons; if a recipe and a module
 both DEPS in the same other module (say 'tertiary'), there will only be one
 instance of the 'tertiary' module.
 
-#### `PROPERTIES`
+#### `PROPERTIES` and `ENV_PROPERTIES`
 
-TODO(iannucci) - Document
+Recipe code has a couple ways to observe the input properties. Currently the
+best way is to define a proto message and then set this as the `PROPERTIES`
+value in your recipe:
+
+    # my_recipe.proto
+    syntax = "proto3";
+    package recipes.repo_name.my_recipe;
+    message InputProperties {
+      int32 an_int = 1;
+      string some_string = 2;
+    }
+
+    message EnvProperties {
+      int32 SOME_ENVVAR = 1;    // All envvar keys must be capitalized.
+      string OTHER_ENVVAR = 2;
+    }
+
+    # my_recipe.py
+    from PB.recipes.repo_name.my_recipe import InputProperties
+    from PB.recipes.repo_name.my_recipe import EnvProperties
+
+    PROPERTIES = InputProperties
+    ENV_PROPERTIES = EnvProperties
+
+    def RunSteps(api, properties, env_properties):
+      # properties and env_properties are instances of their respective proto
+      # messages.
+      ...
+
+In a recipe, `PROPERTIES` is populated by taking the input property JSON object
+for the recipe engine, removing all keys beginning with '$' and then decoding
+the remaining object as JSONPB into the `PROPERTIES` message. Keys beginning
+with '$' are reserved by the recipe engine and/or recipe modules.
+
+The `ENV_PROPERTIES` is populated by taking the current environment variables
+(i.e. `os.environ`), capitalizing all keys (i.e. `key.upper()`) then decoding
+that into the `ENV_PROPERTIES` message.
+
+The other way to access properties (which will eventually be deprecated) is
+directly via the `recipe_engine/properties` module. This method is very loose
+compared to direct PROPERTIES declarations and can lead to difficult to debug
+recipe code (i.e. different recipes using the same property for different
+things, or dozens of seemingly unrelated places all interpreting the same
+property, different default values, etc.). Additionally, `api.properties` does
+not allow access to environment variables.
+
+There's another way to define `PROPERTIES` which is deprecated, but it has no
+advantages over the proto method, and will (hopefully) be deleted soon.
 
 ### Writing recipe_modules
 
 TODO(iannucci) - Document
 
-#### `PROPERTIES`
+#### `PROPERTIES`, `GLOBAL_PROPERTIES` and `ENV_PROPERTIES`
 
-TODO(iannucci) - Document
+In a recipe module's `__init__.py`, you may specify `PROPERTIES` and
+`ENV_PROPERTIES` the same way that you do for a recipe, with the exception that
+a recipe module's `PROPERTIES` object will be decoded from the input property of
+the form `"$recipe_repo/module_name"`. This input property is expected to be
+a JSON object, and will be decoded as JSONPB into the `PROPERTIES` message of
+the recipe module.
+
+For legacy reasons, some recipe modules are actually configured by top-level
+(non-namespaced) properties. To support this, recipe modules may also specify
+a `GLOBAL_PROPERTIES` message which is decoded in the same way a recipe's
+`PROPERTIES` message is decoded (i.e. all the input properties sans properties
+beginning with '$').
+
+Example:
+
+    # recipe_modules/something/my_proto.proto
+    syntax = "proto3";
+    package recipe_modules.repo_name.something;
+    message InputProperties {
+      string some_string = 1;
+    }
+    message GlobalProperties {
+      string global_string = 1;
+    }
+    message EnvProperties {
+      string ENV_STRING = 1;  // All envvar keys must be capitalized.
+    }
+
+    # __init__.py
+    from PB.recipe_modules.repo_name.something import my_proto
+
+    PROPERTIES = my_proto.InputProperties
+
+    # Note: if you're writing NEW module code that uses global properties, you
+    # should strongly consider NOT doing that. Please talk to your local recipe
+    # expert if you're unsure.
+    GLOBAL_PROPERTIES = my_proto.GlobalProperties
+    ENV_PROPERTIES = my_proto.EnvProperties
+
+    # api.py
+    from recipe_engine.recipe_api import RecipeApi
+
+    class MyApi(RecipeApi):
+      def __init__(self, props, globals, envvars, **kwargs):
+        super(MyApi, self).__init__(**kwargs)
+
+        self.prop = props.some_string
+        self.global_prop = globals.global_string
+        self.env_prop = envvars.ENV_STRING
+
+In this example, you could set `prop` and `global_prop` with the following
+property JSON:
+
+    {
+      "global_string": "value for global_prop",
+      "$repo_name/something": {
+        "some_string": "value for prop",
+      },
+    }
+
+And `env_prop` could be set by setting the environment variable `$ENV_STRING`.
 
 #### Accessing recipe_modules as python modules
 
@@ -407,6 +527,45 @@ TODO(iannucci) - Document
 ### How recipe simulation tests work
 
 TODO(iannucci) - Document
+
+#### Protobufs in tests
+
+Because `PROPERTIES` (and friends) may be defined in terms of protobufs, you may
+also pass proto messages in your tests when using the `properties` recipe
+module.
+
+For example:
+
+    # global properties used by this recipe
+    from PB.recipes.my_repo.my_recipe import InputProps
+
+    # global properties used by e.g. 'bot_update'
+    from PB.recipe_modules.depot_tools.bot_update.protos import GlobalProps
+
+    # module-specific properties used by 'cool_module'
+    from PB.recipe_modules.my_repo.cool_module.protos import CoolProps
+
+    DEPS = [
+      "recipe_engine/properties",
+      "some_repo/cool_module",
+    ]
+
+    PROPERTIES = InputProps
+
+    def RunSteps(api, props):
+       ...
+
+    def GenTests(api):
+      yield (
+          api.test('basic')
+        + api.properties(
+            InputProps(...),
+            GlobalProps(...),
+            **{
+              '$my_repo/cool_module': CoolProps(...),
+            }
+        )
+      )
 
 ### Structured data passing for steps
 

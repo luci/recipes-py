@@ -190,7 +190,7 @@ class TestRun(Common):
     self.assertNotIn('foo.basic failed', result.text_output)
     self.assertDictEqual(
         result.data,
-        self._result_json(coverage={'recipes/foo.py': [10]}))
+        self._result_json(coverage={'recipes/foo.py': [13]}))
 
   def test_recipe_not_covered_filter(self):
     with self.main.write_recipe('foo') as recipe:
@@ -223,7 +223,7 @@ class TestRun(Common):
               func='MustRun',
               args=["'bar'"],
               filename='recipes/foo.py',
-              lineno=13,
+              lineno=16,
           )]
         }))
 
@@ -248,7 +248,7 @@ class TestRun(Common):
               func='MustRun',
               args=["'bar'"],
               filename='recipes/foo.py',
-              lineno=13,
+              lineno=16,
           )]
         }))
 
@@ -269,14 +269,14 @@ class TestRun(Common):
 
     result = self._run_test('run', should_fail=True)
     self.assertIn(
-        ('line 9, in RunSteps\n    baz\n'
+        ('line 12, in RunSteps\n    baz\n'
          'NameError: global name \'baz\' is not defined'),
         result.text_output)
     self.assertDictEqual(
         result.data,
         self._result_json(
             crash=['foo.basic'],
-            coverage={'recipes/foo.py': [9]},
+            coverage={'recipes/foo.py': [12]},
             unused_expect=[
               'recipes/foo.expected',
               'recipes/foo.expected/basic.json',
@@ -314,8 +314,8 @@ class TestRun(Common):
         self._result_json(
             crash=['foo_module:examples/full.basic'],
             coverage={
-              'recipe_modules/foo_module/api.py': [8],
-              'recipe_modules/foo_module/examples/full.py': [9],
+              'recipe_modules/foo_module/api.py': [10],
+              'recipe_modules/foo_module/examples/full.py': [12],
             },
         ))
 
@@ -340,8 +340,8 @@ class TestRun(Common):
         self._result_json(
             crash=['foo_module:examples/full.basic'],
             coverage={
-              'recipe_modules/foo_module/api.py': [8],
-              'recipe_modules/foo_module/examples/full.py': [9],
+              'recipe_modules/foo_module/api.py': [10],
+              'recipe_modules/foo_module/examples/full.py': [12],
             }
         ))
 
@@ -366,8 +366,8 @@ class TestRun(Common):
         result.data,
         self._result_json(
             coverage={
-              'recipe_modules/foo_module/api.py': [8],
-              'recipe_modules/foo_module/examples/full.py': [10],
+              'recipe_modules/foo_module/api.py': [10],
+              'recipe_modules/foo_module/examples/full.py': [13],
             },
             diff=['foo_module:examples/full.basic']
         ))
@@ -409,7 +409,7 @@ class TestRun(Common):
     self.assertDictEqual(
         result.data,
         self._result_json(
-            coverage={'recipe_modules/foo_module/api.py': [8]},
+            coverage={'recipe_modules/foo_module/api.py': [10]},
             uncovered_mods=['foo_module'],
         ))
 
@@ -457,7 +457,7 @@ class TestRun(Common):
     self.assertDictEqual(
         result.data,
         self._result_json(
-            coverage={'recipe_modules/foo_module/api.py': [8]},
+            coverage={'recipe_modules/foo_module/api.py': [10]},
         ))
 
   def test_recipe_module_test_expectation_failure_empty(self):
@@ -506,7 +506,7 @@ class TestRun(Common):
     self.assertDictEqual(
         self._run_test('run', should_fail=True).data,
         self._result_json(
-            coverage={'recipe_modules/foo_module/test_api.py': [8]},
+            coverage={'recipe_modules/foo_module/test_api.py': [10]},
         ))
 
   def test_api_uncovered_strict(self):
@@ -518,7 +518,7 @@ class TestRun(Common):
     self.assertDictEqual(
         self._run_test('run', should_fail=True).data,
         self._result_json(
-            coverage={'recipe_modules/foo_module/test_api.py': [8]},
+            coverage={'recipe_modules/foo_module/test_api.py': [10]},
             uncovered_mods=['foo_module']
         ))
 
@@ -556,7 +556,7 @@ class TestRun(Common):
     self.assertDictEqual(
         self._run_test('run', should_fail=True).data,
         self._result_json(
-            coverage={'recipe_modules/foo_module/test_api.py': [8]},
+            coverage={'recipe_modules/foo_module/test_api.py': [10]},
             uncovered_mods=['foo_module'],
         ))
 
@@ -681,7 +681,7 @@ class TestRun(Common):
     self.assertDictEqual(
         self._run_test('run', should_fail=True).data,
         self._result_json(
-            coverage={'recipe_modules/foo_module/config.py': [6, 10]},
+            coverage={'recipe_modules/foo_module/config.py': [8, 12]},
             uncovered_mods=['foo_module'],
         ))
 
@@ -727,7 +727,7 @@ class TestTrain(Common):
     self.assertTrue(self.main.is_file(expectation_file))
     self.assertDictEqual(
         self._result_json(
-            coverage={'recipe_modules/foo_module/tests/foo.py': [9]},
+            coverage={'recipe_modules/foo_module/tests/foo.py': [12]},
             crash=['foo_module:tests/foo.basic'],
         ),
         result.data)
@@ -808,7 +808,7 @@ class TestTrain(Common):
     self.assertNotIn('CHECK(FAIL)', result.text_output)
     self.assertNotIn('foo.basic failed', result.text_output)
     self.assertDictEqual(
-        result.data, self._result_json(coverage={'recipes/foo.py': [10]}))
+        result.data, self._result_json(coverage={'recipes/foo.py': [13]}))
 
   def test_runs_checks(self):
     with self.main.write_recipe('foo') as recipe:
@@ -825,7 +825,7 @@ class TestTrain(Common):
         result.data,
         self._result_json(check={
           'foo.basic': [CheckFailure(
-              filename='recipes/foo.py', lineno=13, func='MustRun',
+              filename='recipes/foo.py', lineno=16, func='MustRun',
               args=["'bar'"])]
         }))
 
@@ -891,7 +891,7 @@ class TestTrain(Common):
     self.assertDictEqual(
         self._run_test('run', should_fail=True).data,
         self._result_json(
-            coverage={'recipe_modules/foo_module/config.py': [6]},
+            coverage={'recipe_modules/foo_module/config.py': [8]},
         ))
 
   def test_config_uncovered_strict(self):
@@ -904,7 +904,7 @@ class TestTrain(Common):
     self.assertDictEqual(
         self._run_test('run', should_fail=True).data,
         self._result_json(
-            coverage={'recipe_modules/foo_module/config.py': [6]},
+            coverage={'recipe_modules/foo_module/config.py': [8]},
             uncovered_mods=['foo_module'],
         ))
 

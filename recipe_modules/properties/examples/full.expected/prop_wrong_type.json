@@ -1,0 +1,13 @@
+[
+  {
+    "failure": {
+      "exception": {
+        "traceback": [
+          "<omitted by recipe engine>"
+        ]
+      },
+      "humanReason": "Uncaught Exception: ParseError(\"Failed to parse test_prop field: 'bool' object is not iterable.\",)"
+    },
+    "name": "$result"
+  }
+]

@@ -2,11 +2,16 @@
   {
     "cmd": [
       "echo",
-      "None",
-      "'thing'",
-      "'mocked_env'"
+      ""
     ],
-    "name": "echo"
+    "name": "echo props"
+  },
+  {
+    "cmd": [
+      "echo",
+      ""
+    ],
+    "name": "echo env_props"
   },
   {
     "cmd": [
@@ -18,15 +23,12 @@
       "('buildbotURL', 'http://c.org/p/cr/')",
       "('buildername', 'TestBuilder')",
       "('buildnumber', 571)",
-      "('foo.bar-bam', 'thing')",
-      "('from_env', 'mocked_env')",
       "('mastername', 'chromium.testing.master')",
       "('project', '')",
       "('recipe', 'properties:examples/full')",
       "('repository', 'https://chromium.googlesource.com/chromium/src.git')",
       "('revision', 'c14d891d44f0afff64e56ed7c9702df1d807b1ee')",
       "('slavename', 'TestSlavename')",
-      "('test_prop', None)",
       "('workdir', '/path/to/workdir/TestSlavename')"
     ],
     "name": "echo all"
@@ -69,30 +71,9 @@
   {
     "cmd": [
       "echo",
-      "None"
-    ],
-    "name": "echo test_prop"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'mocked_env'"
-    ],
-    "name": "echo from_env"
-  },
-  {
-    "cmd": [
-      "echo",
       "'chromium.testing.master'"
     ],
     "name": "echo mastername"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'thing'"
-    ],
-    "name": "echo foo.bar-bam"
   },
   {
     "cmd": [

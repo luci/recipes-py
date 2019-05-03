@@ -7,6 +7,7 @@
 
 import errno
 import hashlib
+import inspect
 import os
 import posixpath
 import re
@@ -17,6 +18,7 @@ import tempfile
 import attr
 
 import google.protobuf  # pinned in .vpython
+import google.protobuf.message
 
 from recipe_engine.third_party import subprocess42
 
@@ -605,3 +607,9 @@ def ensure_compiled_and_on_syspath(deps, proto_override):
 
   if proto_package not in sys.path:
     sys.path.append(proto_package)
+
+
+def is_message_class(obj):
+  """Returns True if |obj| is a subclass of google.protobuf.message.Message."""
+  return (inspect.isclass(obj) and
+          issubclass(obj, google.protobuf.message.Message))

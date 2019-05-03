@@ -2,36 +2,58 @@
   {
     "cmd": [
       "echo",
-      "{'key': 'value'}",
-      "'thing'",
-      "'mocked_env'"
+      "test_prop {\n  key: \"value\"\n}\nlist: \"some\"\nlist: \"strings\"\ndict {\n  fields {\n    key: \"cool\"\n    value {\n      string_value: \"dictionary\"\n    }\n  }\n}\nparam_name_test: \"thing\"\n"
     ],
-    "name": "echo"
+    "name": "echo props"
   },
   {
     "cmd": [
       "echo",
+      "FROM_ENV: \"mocked_env\"\n"
+    ],
+    "name": "echo env_props"
+  },
+  {
+    "cmd": [
+      "echo",
+      "('$fake_repo/fake_module', {'test_prop': {'key': u'value'}})",
       "('$recipe_engine/source_manifest', {'debug_dir': None})",
-      "('foo.bar-bam', 'thing')",
-      "('from_env', 'mocked_env')",
+      "('arbitrary_property', True)",
+      "('dict', {u'cool': u'dictionary'})",
+      "('list', [u'some', u'strings'])",
+      "('param_name_test', u'thing')",
       "('recipe', 'properties:examples/full')",
-      "('test_prop', {'key': 'value'})"
+      "('test_prop', {'key': u'value'})"
     ],
     "name": "echo all"
   },
   {
     "cmd": [
       "echo",
-      "'mocked_env'"
+      "u'thing'"
     ],
-    "name": "echo from_env"
+    "name": "echo param_name_test"
   },
   {
     "cmd": [
       "echo",
-      "FrozenDict([('key', 'value')])"
+      "True"
     ],
-    "name": "echo test_prop"
+    "name": "echo arbitrary_property"
+  },
+  {
+    "cmd": [
+      "echo",
+      "(u'some', u'strings')"
+    ],
+    "name": "echo list"
+  },
+  {
+    "cmd": [
+      "echo",
+      "FrozenDict([('test_prop', FrozenDict([('key', u'value')]))])"
+    ],
+    "name": "echo $fake_repo/fake_module"
   },
   {
     "cmd": [
@@ -43,16 +65,23 @@
   {
     "cmd": [
       "echo",
-      "'thing'"
+      "FrozenDict([('debug_dir', None)])"
     ],
-    "name": "echo foo.bar-bam"
+    "name": "echo $recipe_engine/source_manifest"
   },
   {
     "cmd": [
       "echo",
-      "FrozenDict([('debug_dir', None)])"
+      "FrozenDict([(u'cool', u'dictionary')])"
     ],
-    "name": "echo $recipe_engine/source_manifest"
+    "name": "echo dict"
+  },
+  {
+    "cmd": [
+      "echo",
+      "FrozenDict([('key', u'value')])"
+    ],
+    "name": "echo test_prop"
   },
   {
     "jsonResult": null,

@@ -2,11 +2,16 @@
   {
     "cmd": [
       "echo",
-      "None",
-      "'thing'",
-      "'mocked_env'"
+      ""
     ],
-    "name": "echo"
+    "name": "echo props"
+  },
+  {
+    "cmd": [
+      "echo",
+      ""
+    ],
+    "name": "echo env_props"
   },
   {
     "cmd": [
@@ -17,8 +22,6 @@
       "('buildbotURL', 'http://c.org/p/cr/')",
       "('buildername', 'TestBuilder')",
       "('buildnumber', 571)",
-      "('foo.bar-bam', 'thing')",
-      "('from_env', 'mocked_env')",
       "('mastername', 'chromium.testing.master')",
       "('patch_branch', 'master')",
       "('patch_gerrit_url', 'https://gerrit.my.host')",
@@ -30,7 +33,6 @@
       "('patch_storage', 'gerrit')",
       "('recipe', 'properties:examples/full')",
       "('slavename', 'TestSlavename')",
-      "('test_prop', None)",
       "('workdir', '/path/to/workdir/TestSlavename')"
     ],
     "name": "echo all"
@@ -80,13 +82,6 @@
   {
     "cmd": [
       "echo",
-      "'properties:examples/full'"
-    ],
-    "name": "echo recipe"
-  },
-  {
-    "cmd": [
-      "echo",
       "'refs/changes/98/989898/3'"
     ],
     "name": "echo patch_ref"
@@ -101,16 +96,9 @@
   {
     "cmd": [
       "echo",
-      "'mocked_env'"
+      "'properties:examples/full'"
     ],
-    "name": "echo from_env"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'chromium.testing.master'"
-    ],
-    "name": "echo mastername"
+    "name": "echo recipe"
   },
   {
     "cmd": [
@@ -118,6 +106,13 @@
       "'gerrit'"
     ],
     "name": "echo patch_storage"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'chromium.testing.master'"
+    ],
+    "name": "echo mastername"
   },
   {
     "cmd": [
@@ -150,13 +145,6 @@
   {
     "cmd": [
       "echo",
-      "None"
-    ],
-    "name": "echo test_prop"
-  },
-  {
-    "cmd": [
-      "echo",
       "'http://c.org/p/cr/'"
     ],
     "name": "echo buildbotURL"
@@ -167,13 +155,6 @@
       "'custom'"
     ],
     "name": "echo patch_project"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'thing'"
-    ],
-    "name": "echo foo.bar-bam"
   },
   {
     "cmd": [

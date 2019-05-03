@@ -1,0 +1,42 @@
+[
+  {
+    "cmd": [
+      "echo",
+      ""
+    ],
+    "name": "echo props"
+  },
+  {
+    "cmd": [
+      "echo",
+      "FROM_ENV: \"mocked_env\"\n"
+    ],
+    "name": "echo env_props"
+  },
+  {
+    "cmd": [
+      "echo",
+      "('$recipe_engine/source_manifest', {'debug_dir': None})",
+      "('recipe', 'properties:examples/full')"
+    ],
+    "name": "echo all"
+  },
+  {
+    "cmd": [
+      "echo",
+      "FrozenDict([('debug_dir', None)])"
+    ],
+    "name": "echo $recipe_engine/source_manifest"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'properties:examples/full'"
+    ],
+    "name": "echo recipe"
+  },
+  {
+    "jsonResult": null,
+    "name": "$result"
+  }
+]

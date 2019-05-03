@@ -436,11 +436,15 @@ def parse_parameters(mod_ast, relpath):
     * relpath (str) - The posix-style relative path which should be associated
       with the code in mod_ast.
 
-  Returns Doc.Parameter.
+  Returns Doc.Parameters.
   """
   assert isinstance(mod_ast, ast.Module), type(mod_ast)
   parameters, lineno = _find_value_of(mod_ast, 'PROPERTIES')
   if not parameters:
+    return None
+
+  if not isinstance(parameters, ast.Dict):
+    # TODO(iannucci): Docs for new-style Protobuf PROPERTIES.
     return None
 
   imports = _parse_mock_imports(mod_ast, MOCK_IMPORTS_PARAMETERS)

@@ -43,6 +43,8 @@ from ..config_types import Path, ModuleBasePath, RepoBasePath
 from ..recipe_api import BoundProperty, RecipeApi, RecipeApiPlain
 from ..recipe_test_api import RecipeTestApi
 
+from . import proto_support
+
 
 class RecipeModuleImporter(object):
   """This implements both the `find_module` and `load_module` halves of the
@@ -262,9 +264,14 @@ class RecipeModuleImporter(object):
     else:
       mod.TEST_API = RecipeTestApi
 
-    # Let each property object know about the property name.
-    full_decl_name = '%s::%s' % (repo_name, module_name)
-    mod.PROPERTIES = {
-        prop_name: value.bind(prop_name, BoundProperty.MODULE_PROPERTY,
-                              full_decl_name)
-        for prop_name, value in getattr(mod, 'PROPERTIES', {}).items()}
+    properties_def = getattr(mod, 'PROPERTIES', {})
+
+    # If PROPERTIES isn't a protobuf Message, it must be a legacy Property dict.
+    if not proto_support.is_message_class(properties_def):
+      # Let each property object know about the property name.
+      full_decl_name = '%s::%s' % (repo_name, module_name)
+      mod.PROPERTIES = {
+          prop_name: value.bind(prop_name, BoundProperty.MODULE_PROPERTY,
+                                full_decl_name)
+          for prop_name, value in properties_def.items()
+      }

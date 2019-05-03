@@ -1,0 +1,27 @@
+// Copyright 2019 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+import "google/protobuf/struct.proto";
+
+package recipe_modules.recipe_engine.properties.examples;
+
+message InputProps {
+  message SubMessage {
+    string key = 1;
+  }
+  SubMessage test_prop = 1;
+
+  repeated string list = 2;
+
+  google.protobuf.Struct dict = 3;
+
+  string param_name_test = 4 [json_name="foo.bar-bam"];
+}
+
+message EnvProps {
+  string FROM_ENV = 1;
+  int32 ENV_INT = 2;
+}

@@ -203,6 +203,7 @@ class TestData(BaseTestData):
     super(TestData, self).__init__()
     self.name = name
     self.properties = {}  # key -> val
+    self.environ = {}  # key -> val
     self.mod_data = defaultdict(ModuleTestData)
     self.step_data = defaultdict(StepTestData)
     self.expected_exception = None
@@ -214,6 +215,9 @@ class TestData(BaseTestData):
 
     ret.properties.update(self.properties)
     ret.properties.update(other.properties)
+
+    ret.environ.update(self.environ)
+    ret.environ.update(other.environ)
 
     combineify('mod_data', ret, self, other)
     combineify('step_data', ret, self, other)
@@ -292,6 +296,7 @@ class TestData(BaseTestData):
     return "TestData(%r)" % ({
       'name': self.name,
       'properties': self.properties,
+      'environ': self.environ,
       'mod_data': dict(self.mod_data.iteritems()),
       'step_data': dict(self.step_data.iteritems()),
       'expected_exception': self.expected_exception,
@@ -411,8 +416,12 @@ class RecipeTestApi(object):
 
   There are 4 basic pieces to TestData:
     name       - The name of the test.
-    properties - Simple key-value dictionary which is used as the combined
-                 build_properties and factory_properties for this test.
+    properties - Dictionary which is used as the properties for this test.
+                 You may use protobuf message objects as part of the dictionary
+                 and they'll be expanded to their JSON dictionary
+                 representation.
+    environ    - Single-level key-value dictionary which is used as the
+                 environment variables for this test.
     mod_data   - Module-specific testing data (see the platform module for a
                  good example). This is testing data which is only used once at
                  the start of the execution of the recipe. Modules should

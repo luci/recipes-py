@@ -44,6 +44,8 @@ import attr
 
 from attr.validators import optional
 
+from google.protobuf import json_format as jsonpb
+
 from ..config_types import Path, RepoBasePath, RecipeScriptBasePath
 from ..recipe_api import _UnresolvedRequirement, RecipeScriptApi, BoundProperty
 from ..recipe_api import RecipeApiPlain
@@ -246,7 +248,6 @@ class RecipeRepo(object):
     If successful, the return value is cached.
     """
     from PB.recipe_engine.recipes_cfg import RepoSpec
-    from google.protobuf import json_format as jsonpb
     recipes_cfg = os.path.join(self.path, RECIPES_CFG_LOCATION_REL)
     with open(recipes_cfg, 'rb') as f:
       return jsonpb.Parse(f.read(), RepoSpec())
@@ -530,11 +531,15 @@ class Recipe(object):
       raise MalformedRecipeError(
           'Missing or misspelled GenTests function in recipe %r.' % self.path)
 
-    # Let each property object know about the fully qualified property name.
-    recipe_globals['PROPERTIES'] = {
-        name: value.bind(
-          name, BoundProperty.RECIPE_PROPERTY, self.full_name)
-        for name, value in recipe_globals.get('PROPERTIES', {}).items()}
+    properties_def = recipe_globals.get('PROPERTIES', {})
+
+    # If PROPERTIES isn't a protobuf Message, it must be a legacy Property dict.
+    if not proto_support.is_message_class(properties_def):
+      # Let each property object know about the fully qualified property name.
+      recipe_globals['PROPERTIES'] = {
+          name: value.bind(name, BoundProperty.RECIPE_PROPERTY, self.full_name)
+          for name, value in properties_def.items()
+      }
 
     return_schema = recipe_globals.get('RETURN_SCHEMA')
     # NOTE: We check type.__name__ to avoid coupling to the config module (which
@@ -617,11 +622,46 @@ class Recipe(object):
     # see function docstring for hack description.
     engine.initialize_path_client_HACK(api)
 
-    # NOTE: late import to avoid early protobuf import
-    from .property_invoker import invoke_with_properties
-    recipe_result = invoke_with_properties(
-      self.global_symbols['RunSteps'], engine.properties, engine.environ,
-      self.global_symbols['PROPERTIES'], api=api)
+    properties_def = self.global_symbols['PROPERTIES']
+    env_properties_def = self.global_symbols.get('ENV_PROPERTIES')
+
+    if properties_def and env_properties_def:
+      if not proto_support.is_message_class(properties_def):
+        raise ValueError(
+            'Recipe has ENV_PROPERTIES with old-style PROPERTIES. '
+            'Use a proto message for both, or use the old-style envvar '
+            'support.')
+
+    # ENV_PROPERTIES only supported in protobuf mode.
+    if proto_support.is_message_class(properties_def) or env_properties_def:
+      args = [api]
+
+      if properties_def:
+        # New-style Protobuf PROPERTIES.
+        properties_without_reserved = {
+          k: v for k, v in engine.properties.iteritems()
+          if not k.startswith('$')
+        }
+        args.append(jsonpb.ParseDict(
+            properties_without_reserved,
+            properties_def(),
+            ignore_unknown_fields=True))
+
+      if env_properties_def:
+        args.append(jsonpb.ParseDict(
+            {k.upper(): v for k, v in engine.environ.iteritems()},
+            env_properties_def(),
+            ignore_unknown_fields=True))
+
+      recipe_result = self.global_symbols['RunSteps'](*args)
+    else:
+      # Old-style Property dict.
+      # NOTE: late import to avoid early protobuf import
+      from .property_invoker import invoke_with_properties
+      recipe_result = invoke_with_properties(
+          self.global_symbols['RunSteps'], engine.properties, engine.environ,
+          properties_def, api=api)
+
     if self.global_symbols.get('RETURN_SCHEMA'):
       if not recipe_result:
         raise ValueError("Recipe %s did not return a value." % self.name)
@@ -721,7 +761,7 @@ def _instantiate_test_api(imported_module, resolved_deps):
   return inst
 
 
-def _instantiate_api(engine, test_data, imported_module, test_api,
+def _instantiate_api(engine, test_data, fqname, imported_module, test_api,
                      resolved_deps):
   """Instantiates the RecipeApiPlain subclass from the given imported recipe
   module.
@@ -730,6 +770,8 @@ def _instantiate_api(engine, test_data, imported_module, test_api,
     * engine (run.RecipeEngine) - The recipe engine we're going to use to run
       the recipe.
     * test_data (TestData) - The test data for this run.
+    * fqname (string) - The fully qualified 'repo_name/module_name' of the
+      module we're instantiating.
     * imported_module (raw imported python module) - The result of calling
       RecipeRepo.import_recipe_module().
     * test_api (RecipeTestApi) - The instantiated recipe test api object for
@@ -746,11 +788,55 @@ def _instantiate_api(engine, test_data, imported_module, test_api,
     # TODO(luqui): test_data will need to use canonical unique names.
     'test_data': test_data.get_module_test_data(imported_module.NAME)
   }
-  # NOTE: late import to avoid early protobuf import
-  from .property_invoker import invoke_with_properties
-  inst = invoke_with_properties(
-      imported_module.API, engine.properties, engine.environ,
-      imported_module.PROPERTIES, **kwargs)
+
+  properties_def = imported_module.PROPERTIES
+  global_properties_def = getattr(imported_module, 'GLOBAL_PROPERTIES', None)
+  env_properties_def = getattr(imported_module, 'ENV_PROPERTIES', None)
+
+  if properties_def and (env_properties_def or global_properties_def):
+    if not proto_support.is_message_class(properties_def):
+      raise ValueError(
+          'Recipe has ENV_PROPERTIES/GLOBAL_PROPERTIES with old-style '
+          'PROPERTIES. Use a proto message for all, or use the old-style '
+          'envvar support.')
+
+  if (proto_support.is_message_class(properties_def)
+      or env_properties_def
+      or global_properties_def):
+    # New-style Protobuf PROPERTIES.
+    args = []
+
+    # TODO(iannucci): deduplicate this with recipe invocation code.
+    if properties_def:
+      args.append(jsonpb.ParseDict(
+          engine.properties.get('$' + fqname, {}),
+          properties_def(),
+          ignore_unknown_fields=True))
+
+    if global_properties_def:
+      properties_without_reserved = {
+        k: v for k, v in engine.properties.iteritems()
+        if not k.startswith('$')
+      }
+      args.append(jsonpb.ParseDict(
+          properties_without_reserved,
+          global_properties_def(),
+          ignore_unknown_fields=True))
+
+    if env_properties_def:
+      args.append(jsonpb.ParseDict(
+          {k.upper(): v for k, v in engine.environ.iteritems()},
+          env_properties_def(),
+          ignore_unknown_fields=True))
+
+    inst = imported_module.API(*args, **kwargs)
+  else:
+    # Old-style Property dict.
+    # NOTE: late import to avoid early protobuf import
+    from .property_invoker import invoke_with_properties
+    inst = invoke_with_properties(imported_module.API, engine.properties,
+                                  engine.environ, properties_def, **kwargs)
+
   inst.test_api = test_api
 
   inst.m.__dict__.update(resolved_deps)
@@ -826,9 +912,10 @@ def _resolve(recipe_deps, deps_spec, variant, engine, test_data):
       in deps_spec.iteritems()
     })
 
+    fqname = '%s/%s' % (repo_name, module_name)
     api = None
     if variant == 'API':
-      api = _instantiate_api(engine, test_data, mod_imp, test_api, {
+      api = _instantiate_api(engine, test_data, fqname, mod_imp, test_api, {
         local_name: _inner(d_repo_name, d_module, loading_chain).api
         for local_name, (d_repo_name, d_module)
         in deps_spec.iteritems()

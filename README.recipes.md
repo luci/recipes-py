@@ -66,6 +66,7 @@
   * [engine_tests/multi_test_data](#recipes-engine_tests_multi_test_data) &mdash; Tests that step_data can accept multiple specs at once.
   * [engine_tests/multiple_placeholders](#recipes-engine_tests_multiple_placeholders) &mdash; Tests error checking around multiple placeholders in a single step.
   * [engine_tests/nonexistent_command](#recipes-engine_tests_nonexistent_command)
+  * [engine_tests/proto_properties](#recipes-engine_tests_proto_properties)
   * [engine_tests/recipe_paths](#recipes-engine_tests_recipe_paths) &mdash; Tests that recipes have access to names, resources and their repo.
   * [engine_tests/sort_properties](#recipes-engine_tests_sort_properties) &mdash; Tests that step presentation properties can be ordered.
   * [engine_tests/step_stack_exhaustion](#recipes-engine_tests_step_stack_exhaustion) &mdash; Tests that placeholders can't wreck the world by exhausting the step stack.
@@ -2564,6 +2565,11 @@ Tests error checking around multiple placeholders in a single step.
 [DEPS](/recipes/engine_tests/nonexistent_command.py#1): [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipes/engine_tests/nonexistent_command.py#3)(api):**
+### *recipes* / [engine\_tests/proto\_properties](/recipes/engine_tests/proto_properties.py)
+
+[DEPS](/recipes/engine_tests/proto_properties.py#7): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties)
+
+&mdash; **def [RunSteps](/recipes/engine_tests/proto_properties.py#16)(api, properties, env_props):**
 ### *recipes* / [engine\_tests/recipe\_paths](/recipes/engine_tests/recipe_paths.py)
 
 [DEPS](/recipes/engine_tests/recipe_paths.py#7): [path](#recipe_modules-path), [python](#recipe_modules-python), [step](#recipe_modules-step)
@@ -2689,9 +2695,9 @@ Tests that step_data can accept multiple specs at once.
 &mdash; **def [RunSteps](/recipe_modules/platform/examples/full.py#10)(api):**
 ### *recipes* / [properties:examples/full](/recipe_modules/properties/examples/full.py)
 
-[DEPS](/recipe_modules/properties/examples/full.py#7): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/properties/examples/full.py#10): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/properties/examples/full.py#18)(api, test_prop, param_name_test, from_env):**
+&mdash; **def [RunSteps](/recipe_modules/properties/examples/full.py#18)(api, props, env_props):**
 ### *recipes* / [python:examples/full](/recipe_modules/python/examples/full.py)
 
 [DEPS](/recipe_modules/python/examples/full.py#7): [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

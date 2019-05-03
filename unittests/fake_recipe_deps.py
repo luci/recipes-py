@@ -198,6 +198,10 @@ class FakeRecipeRepo(object):
         RunSteps: pass
         GenTests: yield api.test('basic')
 
+    The RunSteps_args attribute is a list of argument names to be used in the
+    RunSteps function definition. It defaults to ['api'] and should generally
+    only be extended.
+
     The imports attribute is a list of 'import' lines you want at the top of the
     recipe. These lines should be an entire valid python import line (i.e
     starting with `import` or `from`).
@@ -207,6 +211,9 @@ class FakeRecipeRepo(object):
     to look. The DEPS comes, by default, as a list containing the
     'recipe_engine/step' module. This list may be appended to, or replaced
     entirely (with assignment), if you choose.
+
+    The PROPERTIES attribute is a Python expression to assign to the recipe
+    PROPERTIES field.
 
     The `expectation` dictionary can be populated with expectation JSON data to
     write to disk. The key is the test name (e.g. "basic", "test_on_luci", etc.)
@@ -219,8 +226,11 @@ class FakeRecipeRepo(object):
 
     imports = attr.ib(factory=list)
     RunSteps = attr.ib(factory=StringIO)
+    RunSteps_args = attr.ib(factory=lambda: ['api'])
     GenTests = attr.ib(factory=StringIO)
     DEPS = attr.ib(factory=lambda: ['recipe_engine/step'])
+    PROPERTIES = attr.ib(default='{}')
+    ENV_PROPERTIES = attr.ib(default='None')
     expectation = attr.ib(factory=lambda: {
       'basic': [{'name': '$result', 'jsonResult': None}],
     })
@@ -285,7 +295,10 @@ class FakeRecipeRepo(object):
 
         DEPS = {DEPS!r}
 
-        def RunSteps(api):
+        PROPERTIES = {PROPERTIES}
+        ENV_PROPERTIES = {ENV_PROPERTIES}
+
+        def RunSteps({RunSteps_args}):
         {RunSteps}
 
         def GenTests(api):
@@ -294,6 +307,9 @@ class FakeRecipeRepo(object):
           imports='\n'.join(recipe.imports),
           ambient_toplevel_code=dump,
           DEPS=recipe.DEPS,
+          PROPERTIES=recipe.PROPERTIES,
+          ENV_PROPERTIES=recipe.ENV_PROPERTIES,
+          RunSteps_args=', '.join(recipe.RunSteps_args),
           RunSteps=_get_suite(recipe.RunSteps, 'pass'),
           GenTests=_get_suite(
               recipe.GenTests, "yield api.test('basic')")))
@@ -320,11 +336,18 @@ class FakeRecipeRepo(object):
       * `config` represents the body of `config.py`. If not written to then
         `config.py` will not be written to disk.
 
+    The imports attribute is a list of 'import' lines you want at the top of the
+    module files. These lines should be an entire valid python import line (i.e
+    starting with `import` or `from`).
+
     The DEPS attribute corresponds exactly to the recipe module's DEPS field,
     and you may put a python list or dict here, depending on how you want your
     recipe's DEPS to look. The DEPS comes, by default, as a list containing the
     'recipe_engine/step' module. This list may be appended to, or replaced
     entirely (with assignment), if you choose.
+
+    The PROPERTIES attribute is a Python expression to assign to the module's
+    PROPERTIES field.
 
     The DISABLE_STRICT_COVERAGE maps directly to the same-named option in
     `__init__.py`.
@@ -334,7 +357,11 @@ class FakeRecipeRepo(object):
     api = attr.ib(factory=StringIO)
     test_api = attr.ib(factory=StringIO)
     config = attr.ib(factory=StringIO)
+    imports = attr.ib(factory=list)
     DEPS = attr.ib(factory=lambda: ['recipe_engine/step'])
+    PROPERTIES = attr.ib(default='{}')
+    GLOBAL_PROPERTIES = attr.ib(default='None')
+    ENV_PROPERTIES = attr.ib(default='None')
     DISABLE_STRICT_COVERAGE = attr.ib(default=False)
 
   @contextlib.contextmanager
@@ -366,10 +393,23 @@ class FakeRecipeRepo(object):
 
     with self.write_file(os.path.join(base, '__init__.py')) as buf:
       buf.write('''
+      {imports}
+
       DEPS = {DEPS!r}
 
       DISABLE_STRICT_COVERAGE = {DISABLE_STRICT_COVERAGE!r}
-      '''.format(**attr.asdict(mod)))
+
+      PROPERTIES = {PROPERTIES}
+      GLOBAL_PROPERTIES = {GLOBAL_PROPERTIES}
+      ENV_PROPERTIES = {ENV_PROPERTIES}
+      '''.format(
+          imports='\n'.join(mod.imports),
+          DEPS=mod.DEPS,
+          DISABLE_STRICT_COVERAGE=mod.DISABLE_STRICT_COVERAGE,
+          PROPERTIES=mod.PROPERTIES,
+          GLOBAL_PROPERTIES=mod.GLOBAL_PROPERTIES,
+          ENV_PROPERTIES=mod.ENV_PROPERTIES,
+      ))
 
     dump = self.fake_recipe_deps._ambient_toplevel_code_dump()
 
@@ -377,11 +417,14 @@ class FakeRecipeRepo(object):
       buf.write(textwrap.dedent('''
         from recipe_engine.recipe_api import RecipeApi
 
+        {imports}
+
         {ambient_toplevel_code}
 
         class {mod_name}Api(RecipeApi):
         {api}
       ''').format(
+          imports='\n'.join(mod.imports),
           ambient_toplevel_code=dump,
           mod_name=mod_name.title().replace(' ', ''),
           api=_get_suite(mod.api, 'pass')))
@@ -390,11 +433,14 @@ class FakeRecipeRepo(object):
       buf.write(textwrap.dedent('''
         from recipe_engine.recipe_test_api import RecipeTestApi
 
+        {imports}
+
         {ambient_toplevel_code}
 
         class {mod_name}Api(RecipeTestApi):
         {test_api}
       ''').format(
+          imports='\n'.join(mod.imports),
           ambient_toplevel_code=dump,
           mod_name=mod_name.title().replace(' ', ''),
           test_api=_get_suite(mod.test_api, 'pass')))
@@ -406,9 +452,12 @@ class FakeRecipeRepo(object):
           from recipe_engine.config import ConfigGroup, ConfigList, Dict, List
           from recipe_engine.config import Set, Single, config_item_context
 
+          {imports}
+
           {config_body}
         ''').format(
-            config_body=config_body
+            imports='\n'.join(mod.imports),
+            config_body=config_body,
         ))
 
   def add_dep(self, *depnames):
@@ -429,21 +478,28 @@ class FakeRecipeRepo(object):
         dep_entry.branch = 'refs/heads/master'
         dep_entry.revision = dep_repo.backend.commit_metadata('HEAD').revision
 
-  def recipes_py(self, *args):
+  def recipes_py(self, *args, **kwargs):
     """Runs `recipes.py` in this repo with the given args, just like a user
     might run it.
 
     Args:
       * args (List[str]) - the arguments to pass to recipes.py.
 
+    Kwargs:
+      * env (Dict[str, str]) - Extra environment variables to set while invoking
+        recipes.py.
+
     Returns (output, retcode) where 'output' is the combined stdout/stderr from
     the command and retcode it's return code.
     """
+    env = os.environ.copy()
+    env.update(kwargs.pop('env', {}))
     proc = subprocess42.Popen(
-      ['python', 'recipes.py']+list(args),
-      cwd=self.path,
-      stdout=subprocess42.PIPE,
-      stderr=subprocess42.STDOUT,
+        ['python', 'recipes.py']+list(args),
+        cwd=self.path,
+        stdout=subprocess42.PIPE,
+        stderr=subprocess42.STDOUT,
+        env=env,
     )
     output, _ = proc.communicate()
     return output, proc.returncode

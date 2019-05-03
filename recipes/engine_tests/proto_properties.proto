@@ -1,0 +1,17 @@
+// Copyright 2019 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipes.recipe_engine.engine_tests.proto_properties;
+
+message TestProperties {
+  int32 an_int = 1;
+  string some_string = 2;
+}
+
+message EnvProperties {
+  string STR_ENV = 1;
+  int32 INT_ENV = 2;
+}
