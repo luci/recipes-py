@@ -27,9 +27,6 @@ message Failure {
     // Step threw an exception.
     Exception exception = 3;
 
-    // Step accessed invalid step data.
-    StepData step_data = 4;
-
     // Step failed (return code not ok).
     StepFailure failure = 5;
   }
@@ -40,13 +37,6 @@ message Failure {
 message Exception {
   // Traceback of an exception which occured.
   repeated string traceback = 1;
-}
-
-// A step attempted to access data which did not exist. Caused by
-// StepDataAttributeError in types.py.
-message StepData {
-  // The step which attempted to access invalid data.
-  string step = 1;
 }
 
 // A step failed to execute "correctly". Correct generally is indicated by a

@@ -154,7 +154,7 @@
           "<omitted by recipe engine>"
         ]
       },
-      "humanReason": "Uncaught Exception: AttributeError(\"StepData from step 'no-op' has no attribute 'json'.\",)"
+      "humanReason": "Uncaught Exception: ValueError(\"Cannot assign to 'json' on finalized StepData from step 'no-op'\",)"
     },
     "name": "$result"
   }

@@ -42,11 +42,6 @@ def handle_recipe_return(recipe_result, result_filename, stream_engine):
         with s.new_log_stream('exception') as l:
           for line in f.exception.traceback:
             l.write_line(line)
-    elif f.HasField('step_data'):
-      with stream_engine.make_step_stream('Invalid Step Data Access') as s:
-        s.set_step_status('FAILURE')
-        with s.new_log_stream('step') as l:
-          l.write_line(f.step_data.step)
 
     with stream_engine.make_step_stream('Failure reason') as s:
       s.set_step_status('FAILURE')

@@ -6,6 +6,7 @@ from recipe_engine import recipe_api, config
 
 DEPS = [
   'context',
+  'json',
   'path',
   'properties',
   'step',
@@ -20,11 +21,14 @@ RETURN_SCHEMA = config.ReturnSchema(
 PROPERTIES = {
   'bad_return': recipe_api.Property(default=False),
   'access_invalid_data': recipe_api.Property(default=False),
+  'access_deep_invalid_data': recipe_api.Property(default=False),
+  'assign_extra_junk': recipe_api.Property(default=False),
   'timeout': recipe_api.Property(default=0, kind=int),
 }
 
 
-def RunSteps(api, bad_return, access_invalid_data, timeout):
+def RunSteps(api, bad_return, access_invalid_data, access_deep_invalid_data,
+             assign_extra_junk, timeout):
   if bad_return:
     return RETURN_SCHEMA.new(test_me='this should fail')
   elif timeout:
@@ -122,6 +126,16 @@ def RunSteps(api, bad_return, access_invalid_data, timeout):
     # Trying to access non-existent attributes on the result should raise.
     _ = result.json.output
 
+  if access_deep_invalid_data:
+    result = api.step('no-op', ['echo', api.json.output()])
+    # Trying to access deep, non-existent attributes on the result should raise.
+    _ = result.json.outpurt
+
+  if assign_extra_junk:
+    result = api.step('no-op', ['echo', 'I', 'do', 'nothing'])
+    # Assigning extra junk to the result raises ValueError.
+    result.json = "hi"
+
   return RETURN_SCHEMA(test_me=3)
 
 
@@ -169,7 +183,19 @@ def GenTests(api):
   yield (
       api.test('invalid_access') +
       api.properties(access_invalid_data=True) +
-      api.expect_exception('StepDataAttributeError')
+      api.expect_exception('AttributeError')
+    )
+
+  yield (
+      api.test('deep_invalid_access') +
+      api.properties(access_deep_invalid_data=True) +
+      api.expect_exception('AttributeError')
+    )
+
+  yield (
+      api.test('extra_junk') +
+      api.properties(assign_extra_junk=True) +
+      api.expect_exception('ValueError')
     )
 
   yield (

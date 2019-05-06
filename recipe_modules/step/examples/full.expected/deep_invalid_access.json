@@ -141,11 +141,14 @@
   {
     "cmd": [
       "echo",
-      "I",
-      "do",
-      "nothing"
+      "/path/to/tmp/json"
     ],
-    "name": "no-op"
+    "name": "no-op",
+    "~followup_annotations": [
+      "@@@STEP_LOG_END@json.output (invalid)@@@",
+      "@@@STEP_LOG_LINE@json.output (exception)@No JSON object could be decoded@@@",
+      "@@@STEP_LOG_END@json.output (exception)@@@"
+    ]
   },
   {
     "failure": {
@@ -154,7 +157,7 @@
           "<omitted by recipe engine>"
         ]
       },
-      "humanReason": "Uncaught Exception: AttributeError(\"StepData from step 'no-op' has no attribute 'json'.\",)"
+      "humanReason": "Uncaught Exception: AttributeError(\"StepData('no-op').json has no attribute 'outpurt'.\",)"
     },
     "name": "$result"
   }

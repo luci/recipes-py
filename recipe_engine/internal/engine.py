@@ -306,17 +306,6 @@ class RecipeEngine(object):
       except recipe_api.StepFailure as f:
         result = plain_failure_result(f)
 
-      except types.StepDataAttributeError as ex:
-        result = result_pb2.Result(
-            failure=result_pb2.Failure(
-                human_reason=ex.message,
-                step_data=result_pb2.StepData(
-                    step=ex.step,
-                )))
-
-        # Let the step runner run_context decide what to do.
-        raise
-
       except Exception as ex:
         result = result_pb2.Result(
           failure=result_pb2.Failure(

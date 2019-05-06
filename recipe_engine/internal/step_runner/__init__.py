@@ -100,8 +100,7 @@ def render_step(step_config, step_test):
   """
   # Process 'cmd', rendering placeholders there.
   input_phs = collections.defaultdict(lambda: collections.defaultdict(list))
-  output_phs = collections.defaultdict(
-      lambda: collections.defaultdict(collections.OrderedDict))
+  output_phs = []
   new_cmd = []
   for item in (step_config.cmd or ()):
     if isinstance(item, util.Placeholder):
@@ -114,14 +113,7 @@ def render_step(step_config, step_test):
       else:
         assert isinstance(item, util.OutputPlaceholder), (
             'Not an OutputPlaceholder: %r' % item)
-        # This assert ensures that:
-        #   no two placeholders have the same name
-        #   at most one placeholder has the default name
-        assert item.name not in output_phs[module_name][placeholder_name], (
-            'Step "%s" has multiple output placeholders of %s.%s. Please '
-            'specify explicit and different names for them.' % (
-              step_config.name, module_name, placeholder_name))
-        output_phs[module_name][placeholder_name][item.name] = (item, tdata)
+        output_phs.append((item, tdata))
     else:
       new_cmd.append(item)
   step_config = attr.evolve(step_config, cmd=new_cmd)
@@ -163,53 +155,31 @@ def construct_step_result(rendered_step, retcode):
   """
   step_result = StepData(rendered_step.config, retcode)
 
-  class BlankObject(object):
-    pass
+  try:
+    # Input placeholders inside step |cmd|.
+    placeholders = rendered_step.placeholders
+    for _, pholders in placeholders.inputs_cmd.iteritems():
+      for _, items in pholders.iteritems():
+        for ph, td in items:
+          ph.cleanup(td.enabled)
 
-  # Input placeholders inside step |cmd|.
-  placeholders = rendered_step.placeholders
-  for _, pholders in placeholders.inputs_cmd.iteritems():
-    for _, items in pholders.iteritems():
-      for ph, td in items:
-        ph.cleanup(td.enabled)
+    # Output placeholders inside step |cmd|.
+    for pholder, test_data in placeholders.outputs_cmd:
+      step_result.assign_placeholder(
+          pholder, pholder.result(step_result.presentation, test_data))
 
-  # Output placeholders inside step |cmd|.
-  for module_name, pholders in placeholders.outputs_cmd.iteritems():
-    assert not hasattr(step_result, module_name)
-    o = BlankObject()
-    setattr(step_result, module_name, o)
-
-    for placeholder_name, instances in pholders.iteritems():
-      named_results = {}
-      default_result = UNSET_VALUE
-      for _, (ph, td) in instances.iteritems():
-        result = ph.result(step_result.presentation, td)
-        if ph.name is None:
-          default_result = result
+    # Placeholders that are used with IO redirection.
+    for key in ('stdout', 'stderr', 'stdin'):
+      ph, td = getattr(placeholders, key)
+      if ph:
+        if isinstance(ph, util.OutputPlaceholder):
+          setattr(step_result, key, ph.result(step_result.presentation, td))
         else:
-          named_results[ph.name] = result
-      setattr(o, placeholder_name + "s", named_results)
-
-      if default_result is UNSET_VALUE and len(named_results) == 1:
-        # If only 1 output placeholder with an explicit name, we set the default
-        # output.
-        default_result = named_results.values()[0]
-
-      # If 2+ placeholders have explicit names, we don't set the default output.
-      if default_result is not UNSET_VALUE:
-        setattr(o, placeholder_name, default_result)
-
-  # Placeholders that are used with IO redirection.
-  for key in ('stdout', 'stderr', 'stdin'):
-    assert not hasattr(step_result, key)
-    ph, td = getattr(placeholders, key)
-    if ph:
-      if isinstance(ph, util.OutputPlaceholder):
-        setattr(step_result, key, ph.result(step_result.presentation, td))
-      else:
-        assert isinstance(ph, util.InputPlaceholder), (
-            '%s(%r) should be an InputPlaceholder.' % (key, ph))
-        ph.cleanup(td.enabled)
+          assert isinstance(ph, util.InputPlaceholder), (
+              '%s(%r) should be an InputPlaceholder.' % (key, ph))
+          ph.cleanup(td.enabled)
+  finally:
+    step_result.finalize()
 
   return step_result
 
