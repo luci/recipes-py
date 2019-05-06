@@ -514,7 +514,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       }))
     return self._run_buildbucket('put', build_specs, **kwargs)
 
-  def search(self, predicate, url_title_fn=None, step_name=None):
+  def search(self, predicate, limit=None, url_title_fn=None, step_name=None):
     """Searches for builds.
 
     Example: find all builds of the current CL.
@@ -530,6 +530,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     Args:
     *   predicate: a `rpc_pb2.BuildPredicate` object or a list thereof.
         If a list, the predicates are connected with logical OR.
+    *   limit: max number of builds to return. Defaults to 1000.
     *   url_title_fn: a function that accepts a `build_pb2.Build` and returns a
         link title. If returns `None`, the link is not reported.
         Default link title is build id.
@@ -541,10 +542,14 @@ class BuildbucketApi(recipe_api.RecipeApi):
     if not isinstance(predicate, list):
       predicate = [predicate]
     assert all(isinstance(p, rpc_pb2.BuildPredicate) for p in predicate)
+    assert isinstance(limit, (type(None), int))
+    assert limit is None or limit >= 0
+
+    limit = limit or 1000
 
     batch_req = rpc_pb2.BatchRequest(
         requests=[
-            dict(search_builds=dict(predicate=p, page_size=1000))
+            dict(search_builds=dict(predicate=p, page_size=limit))
             for p in predicate
         ],
     )
@@ -561,8 +566,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
       for b in r.search_builds.builds:
         if b.id not in builds:
           builds[b.id] = b
-          self._report_build_maybe(step_res, b, url_title_fn=url_title_fn)
-    return [b for _, b in sorted(builds.iteritems())]
+
+    # Order newest-to-oldest. Then cut using the limit.
+    ret = [b for _, b in sorted(builds.iteritems())][:limit]
+    for b in ret:
+      self._report_build_maybe(step_res, b, url_title_fn=url_title_fn)
+    return ret
 
   def cancel_build(self, build_id, **kwargs):
     return self._run_buildbucket('cancel', [build_id], **kwargs)
