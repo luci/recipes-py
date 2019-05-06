@@ -19,8 +19,8 @@ import attr
 
 from ... import recipe_api
 from ... import recipe_test_api
-from ... import types
 from ... import util
+from ...step_data import StepData
 from ...third_party import subprocess42
 
 from .. import stream
@@ -105,7 +105,7 @@ class SubprocessStepRunner(StepRunner):
         def run(inner):
           if step_config.trigger_specs:
             self._trigger_builds(step_stream, step_config.trigger_specs)
-          return types.StepData(step_config, 0)
+          return StepData(step_config, 0)
 
         def finalize(inner):
           step_stream.close()

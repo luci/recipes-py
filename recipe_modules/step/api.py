@@ -65,7 +65,7 @@ class StepApi(recipe_api.RecipeApiPlain):
   @property
   def active_result(self):
     """The currently active (open) result from the last step that was run. This
-    is a `types.StepData` object.
+    is a `step_data.StepData` object.
 
     Allows you to do things like:
     ```python
@@ -162,7 +162,7 @@ class StepApi(recipe_api.RecipeApiPlain):
           data for this step. The recipe author can override/augment this object
           in the GenTests function.
 
-    Returns a `types.StepData` for the running step.
+    Returns a `step_data.StepData` for the running step.
     """
     if '|' in name:
       raise ValueError('Reserved character "|" in name')

@@ -39,7 +39,7 @@ class PythonApi(recipe_api.RecipeApi):
           standard Python interpreter.
       * kwargs: Additional keyword arguments to forward to "step".
 
-    **Returns (`types.StepData`)** - The StepData object as returned by
+    **Returns (`step_data.StepData`)** - The StepData object as returned by
     api.step.
     """
     env = {}
@@ -73,7 +73,7 @@ class PythonApi(recipe_api.RecipeApi):
         step on the build page. If true, the link will point to a log with
         a copy of `program`.
 
-    **Returns (`types.StepData`)** - The StepData object as returned by
+    **Returns (`step_data.StepData`)** - The StepData object as returned by
     api.step.
     """
     program = textwrap.dedent(program)

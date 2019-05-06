@@ -1699,7 +1699,7 @@ Args:
       standard Python interpreter.
   * kwargs: Additional keyword arguments to forward to "step".
 
-**Returns (`types.StepData`)** - The StepData object as returned by
+**Returns (`step_data.StepData`)** - The StepData object as returned by
 api.step.
 
 &mdash; **def [failing\_step](/recipe_modules/python/api.py#114)(self, name, text, as_log=None):**
@@ -1724,7 +1724,7 @@ Args:
     step on the build page. If true, the link will point to a log with
     a copy of `program`.
 
-**Returns (`types.StepData`)** - The StepData object as returned by
+**Returns (`step_data.StepData`)** - The StepData object as returned by
 api.step.
 
 &mdash; **def [result\_step](/recipe_modules/python/api.py#91)(self, name, text, retcode, as_log=None, \*\*kwargs):**
@@ -2041,12 +2041,12 @@ Args:
       data for this step. The recipe author can override/augment this object
       in the GenTests function.
 
-Returns a `types.StepData` for the running step.
+Returns a `step_data.StepData` for the running step.
 
 &emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#65)(self):**
 
 The currently active (open) result from the last step that was run. This
-is a `types.StepData` object.
+is a `step_data.StepData` object.
 
 Allows you to do things like:
 ```python

@@ -9,7 +9,7 @@ import itertools
 import attr
 
 from ... import util
-from ...types import StepData
+from ...step_data import StepData
 
 
 class StepRunner(object):
