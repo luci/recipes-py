@@ -9,9 +9,7 @@
   },
   {
     "failure": {
-      "failure": {
-        "step": ""
-      },
+      "failure": {},
       "humanReason": "Step Timeout: Step('timeout') timed out after 1"
     },
     "name": "$result"

@@ -107,11 +107,6 @@
   },
   {
     "failure": {
-      "exception": {
-        "traceback": [
-          "<omitted by recipe engine>"
-        ]
-      },
       "humanReason": "Triggered build(s) did not succeed, unexpectedly"
     },
     "name": "$result"

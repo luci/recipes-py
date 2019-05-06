@@ -200,12 +200,14 @@ class SubprocessStepRunner(StepRunner):
 
   @contextlib.contextmanager
   def run_context(self):
-    """Swallow exceptions -- they will be captured and reported in the
-    RecipeResult"""
+    """Report uncaught exceptions."""
     try:
       yield
-    except Exception:
-      pass
+    except Exception:  # pylint: disable=broad-except
+      with self._stream_engine.make_step_stream('Uncaught Exception') as step:
+        step.set_step_status('EXCEPTION')
+        with step.new_log_stream('exception') as log:
+          log.write_split(traceback.format_exc())
 
   def _render_step_value(self, value):
     if not callable(value):

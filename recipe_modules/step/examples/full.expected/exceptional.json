@@ -100,11 +100,6 @@
   },
   {
     "failure": {
-      "exception": {
-        "traceback": [
-          "<omitted by recipe engine>"
-        ]
-      },
       "humanReason": "Uncaught Exception: ValueError('goodbye must exit 0!',)"
     },
     "name": "$result"

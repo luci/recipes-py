@@ -1,11 +1,6 @@
 [
   {
     "failure": {
-      "exception": {
-        "traceback": [
-          "<omitted by recipe engine>"
-        ]
-      },
       "humanReason": "Uncaught Exception: AttributeError(\"'PythonApi' object has no attribute 'missing_method'\",)"
     },
     "name": "$result"

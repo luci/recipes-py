@@ -70,9 +70,7 @@
   },
   {
     "failure": {
-      "failure": {
-        "step": ""
-      },
+      "failure": {},
       "humanReason": "the following steps in gen step(always_run.py) failed: ['fails']"
     },
     "name": "$result"

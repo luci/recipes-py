@@ -1,11 +1,6 @@
 [
   {
     "failure": {
-      "exception": {
-        "traceback": [
-          "<omitted by recipe engine>"
-        ]
-      },
       "humanReason": "Uncaught Exception: ModuleInjectionError(\"RecipeApi has no dependency 'missing_module'. (Add it to DEPS?)\",)"
     },
     "name": "$result"

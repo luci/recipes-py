@@ -1,6 +1,6 @@
-# Copyright 2019 The Chromium Authors. All rights reserved.
-# Use of this source code is governed by a BSD-style license that can be
-# found in the LICENSE file.
+# Copyright 2019 The LUCI Authors. All rights reserved.
+# Use of this source code is governed under the Apache License, Version 2.0
+# that can be found in the LICENSE file.
 
 import collections
 import os
@@ -87,12 +87,7 @@ def run_steps(recipe_deps, properties, stream_engine, step_runner,
         s.add_step_text(line)
       s.set_step_status('EXCEPTION')
 
-      return result_pb2.Result(
-          failure=result_pb2.Failure(
-              human_reason=str(e),
-              exception=result_pb2.Exception(
-                traceback=traceback.format_exc().splitlines()
-              )))
+      return result_pb2.Result(failure=result_pb2.Failure(human_reason=str(e)))
 
   # The engine will use step_runner to run the steps, and the step_runner in
   # turn uses stream_engine internally to build steam steps IO.
@@ -271,48 +266,30 @@ class RecipeEngine(object):
       result_pb2.Result which has return value or status code and exception.
     """
     assert isinstance(recipe, Recipe), type(recipe)
-    result = None
-    plain_failure_result = lambda f: result_pb2.Result(
-      failure=result_pb2.Failure(
-          human_reason=f.reason,
-          failure=result_pb2.StepFailure(
-              step=f.name,
-          )))
-    infra_failure_result = lambda f: result_pb2.Result(
-      failure=result_pb2.Failure(
-          human_reason=f.reason,
-          exception=result_pb2.Exception(
-              traceback=traceback.format_exc().splitlines()
-          )))
-
+    result = result_pb2.Result()
 
     with self._step_runner.run_context():
       try:
         try:
           raw_result = recipe.run_steps(self, test_data)
-          result = result_pb2.Result(json_result=json.dumps(raw_result))
+          result.json_result = json.dumps(raw_result)
         finally:
           self._close_until_ns(())
 
-      except recipe_api.InfraFailure as f:
-        result = infra_failure_result(f)
+      except recipe_api.InfraFailure as ex:
+        result.failure.human_reason = ex.reason
 
-      except recipe_api.AggregatedStepFailure as f:
-        if f.result.contains_infra_failure:
-          result = infra_failure_result(f)
-        else:
-          result = plain_failure_result(f)
+      except recipe_api.AggregatedStepFailure as ex:
+        result.failure.human_reason = ex.reason
+        if not ex.result.contains_infra_failure:
+          result.failure.failure.SetInParent()
 
-      except recipe_api.StepFailure as f:
-        result = plain_failure_result(f)
+      except recipe_api.StepFailure as ex:
+        result.failure.human_reason = ex.reason
+        result.failure.failure.SetInParent()
 
       except Exception as ex:
-        result = result_pb2.Result(
-          failure=result_pb2.Failure(
-              human_reason="Uncaught Exception: %r" % ex,
-              exception=result_pb2.Exception(
-                  traceback=traceback.format_exc().splitlines()
-              )))
+        result.failure.human_reason = "Uncaught Exception: %r" % ex
 
         # Let the step runner run_context decide what to do.
         raise

@@ -22,27 +22,20 @@ message Failure {
   // A reason readable by humans. Printed to the UI, and will be seen by users.
   string human_reason = 1;
 
-  // The cause of this failure.
-  oneof failure_type {
-    // Step threw an exception.
-    Exception exception = 3;
+  message Dummy {}
 
-    // Step failed (return code not ok).
-    StepFailure failure = 5;
-  }
+  // The kitchen code only recognizes two types of failures: Infra failures and
+  // non-infra failures. It distinguishes them by the existance of the 'failure'
+  // message below, but doesn't actually care about the contents of this message
+  // (just the 'human_reason' field above).
+  //
+  // So, we only need to have a dummy message here which is set for 'regular'
+  // failures, and unset for 'infra' failures.
+  //
+  // This result.proto can't go away quickly enough :). Once the recipe engine
+  // is purely on build.proto, this result.proto file can go away.
+  //
+  // Kitchen's result parsing code:
+  // https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/tools/kitchen/cook.go#202
+  Dummy failure = 5;
 }
-
-// An unexpected exception occured during execution. Caused by the builtin
-// Exception class.
-message Exception {
-  // Traceback of an exception which occured.
-  repeated string traceback = 1;
-}
-
-// A step failed to execute "correctly". Correct generally is indicated by a
-// return code of 0, but the step can allow for other return codes as well.
-message StepFailure {
-  // The step which failed.
-  string step = 1;
-}
-

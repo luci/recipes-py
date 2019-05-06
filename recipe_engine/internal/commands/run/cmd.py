@@ -35,16 +35,9 @@ def handle_recipe_return(recipe_result, result_filename, stream_engine):
 
   if recipe_result.HasField('failure'):
     f = recipe_result.failure
-    if f.HasField('exception'):
-      with stream_engine.make_step_stream('Uncaught Exception') as s:
-        s.set_step_status('EXCEPTION')
-        s.add_step_text(f.human_reason)
-        with s.new_log_stream('exception') as l:
-          for line in f.exception.traceback:
-            l.write_line(line)
-
     with stream_engine.make_step_stream('Failure reason') as s:
-      s.set_step_status('FAILURE')
+      s.set_step_status(
+         'FAILURE' if recipe_result.failure.HasField('failure') else 'EXCEPTION')
       with s.new_log_stream('reason') as l:
         l.write_split(f.human_reason)
 

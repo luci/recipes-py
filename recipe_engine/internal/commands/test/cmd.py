@@ -354,11 +354,6 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
     coverage_data = cov.get_data()
 
     raw_expectations = runner.steps_ran.copy()
-    # Don't include tracebacks in expectations because they are too sensitive
-    # to change.
-    # TODO(phajdan.jr): Record presence of traceback in expectations.
-    if result.HasField('failure') and result.failure.HasField('exception'):
-      result.failure.exception.traceback[:] = ['<omitted by recipe engine>']
     # Convert the result to a json object by dumping to json, and then parsing.
     raw_expectations['$result'] = json.loads(json_format.MessageToJson(
         result, including_default_value_fields=True))

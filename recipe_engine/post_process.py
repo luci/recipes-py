@@ -431,15 +431,13 @@ def StatusAnyFailure(check, step_odict):
 
 
 def StatusFailure(check, step_odict):
-  """Assert that the recipe failed."""
-  if check('failure' in step_odict['$result']):
-    check('exception' not in step_odict['$result']['failure'])
+  """Assert that the recipe had a non-infra failure."""
+  check('failure' in step_odict['$result']['failure'])
 
 
 def StatusException(check, step_odict):
-  """Assert that the recipe failed."""
-  if check('failure' in step_odict['$result']):
-    check('exception' in step_odict['$result']['failure'])
+  """Assert that the recipe had an infra failure."""
+  check('failure' not in step_odict['$result']['failure'])
 
 
 def ResultReasonRE(check, step_odict, reason_regex):

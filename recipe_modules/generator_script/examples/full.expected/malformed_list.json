@@ -18,9 +18,7 @@
   },
   {
     "failure": {
-      "failure": {
-        "step": ""
-      },
+      "failure": {},
       "humanReason": "Step('gen step(not_list.py)') generated non-list JSON output"
     },
     "name": "$result"

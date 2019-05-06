@@ -149,11 +149,6 @@
   },
   {
     "failure": {
-      "exception": {
-        "traceback": [
-          "<omitted by recipe engine>"
-        ]
-      },
       "humanReason": "Uncaught Exception: AttributeError(\"StepData from step 'no-op' has no attribute 'json'.\",)"
     },
     "name": "$result"

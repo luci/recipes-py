@@ -152,11 +152,6 @@
   },
   {
     "failure": {
-      "exception": {
-        "traceback": [
-          "<omitted by recipe engine>"
-        ]
-      },
       "humanReason": "Uncaught Exception: AttributeError(\"StepData('no-op').json has no attribute 'outpurt'.\",)"
     },
     "name": "$result"

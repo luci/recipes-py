@@ -70,7 +70,7 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
     deps = self.FakeRecipeDeps()
     result = self._test_cmd(
         deps, ['run', 'nooope'], retcode=1)
-    self.assertIsNotNone(result['failure']['exception'])
+    self.assertNotIn('failure', result['failure'])
 
   def test_syntax_error(self):
     deps = self.FakeRecipeDeps()
@@ -80,7 +80,7 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
       ''')
 
     def assert_syntaxerror(output):
-      self.assertRegexpMatches(output, r'SyntaxError')
+      self.assertRegexpMatches(output, r'invalid syntax')
 
     self._test_cmd(deps, ['test', 'run', '--filter', 'foo'],
         asserts=assert_syntaxerror, retcode=1)

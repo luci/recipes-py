@@ -33,9 +33,7 @@
   },
   {
     "failure": {
-      "failure": {
-        "step": ""
-      },
+      "failure": {},
       "humanReason": "Step('read_json') failed 'JSON READ FAILURE' with: file command encountered system error JSON READ FAILURE"
     },
     "name": "$result"

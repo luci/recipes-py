@@ -70,9 +70,7 @@
   },
   {
     "failure": {
-      "failure": {
-        "step": ""
-      },
+      "failure": {},
       "humanReason": "CIPD('cipd describe public/package/${platform}') failed with: package \"public/package/linux-amd64-ubuntu14_04\" not registered"
     },
     "name": "$result"

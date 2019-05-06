@@ -26,9 +26,7 @@
   },
   {
     "failure": {
-      "failure": {
-        "step": ""
-      },
+      "failure": {},
       "humanReason": "Step('gen step(malformed.py)') generated step with \"cmd\" containing non-strings"
     },
     "name": "$result"
