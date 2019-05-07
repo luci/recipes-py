@@ -20,12 +20,14 @@ DEPS = [
 
 
 def RunSteps(api):
+  limit = api.properties.get('limit')
   builds = api.buildbucket.search(
       rpc_pb2.BuildPredicate(
         gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),
       ),
-      limit=api.properties.get('limit'),
+      limit=limit,
   )
+  assert limit is None or len(builds) <= limit
   pres = api.step.active_result.presentation
   for b in builds:
     pres.logs['build %s' % b.id] = json_format.MessageToJson(b).splitlines()
@@ -72,6 +74,7 @@ def GenTests(api):
       api.properties(limit=5) +
       api.buildbucket.simulated_search_results([
         build_pb2.Build(id=i+1, status=common_pb2.SUCCESS)
+        # Returning more to test trimming of the returned list.
         for i in xrange(10)
       ])
   )
