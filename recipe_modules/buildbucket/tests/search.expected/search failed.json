@@ -8,7 +8,7 @@
     ],
     "infra_step": true,
     "name": "buildbucket.search",
-    "stdin": "{\"requests\": [{\"searchBuilds\": {\"pageSize\": 1000, \"predicate\": {\"gerritChanges\": [{\"change\": \"123456\", \"host\": \"chromium-review.googlesource.com\", \"patchset\": \"7\", \"project\": \"chromium/src\"}]}}}]}",
+    "stdin": "{\"requests\": [{\"searchBuilds\": {\"fields\": \"builds.builder,builds.createTime,builds.createdBy,builds.endTime,builds.id,builds.input,builds.number,builds.output,builds.startTime,builds.status,builds.updateTime\", \"pageSize\": 1000, \"predicate\": {\"gerritChanges\": [{\"change\": \"123456\", \"host\": \"chromium-review.googlesource.com\", \"patchset\": \"7\", \"project\": \"chromium/src\"}]}}}]}",
     "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
       "@@@STEP_TEXT@Request #0<br>Status code: 0<br>Message: there was a problem<br>@@@",
@@ -26,6 +26,7 @@
       "@@@STEP_LOG_LINE@request@  \"requests\": [@@@",
       "@@@STEP_LOG_LINE@request@    {@@@",
       "@@@STEP_LOG_LINE@request@      \"searchBuilds\": {@@@",
+      "@@@STEP_LOG_LINE@request@        \"fields\": \"builds.builder,builds.createTime,builds.createdBy,builds.endTime,builds.id,builds.input,builds.number,builds.output,builds.startTime,builds.status,builds.updateTime\", @@@",
       "@@@STEP_LOG_LINE@request@        \"pageSize\": 1000, @@@",
       "@@@STEP_LOG_LINE@request@        \"predicate\": {@@@",
       "@@@STEP_LOG_LINE@request@          \"gerritChanges\": [@@@",

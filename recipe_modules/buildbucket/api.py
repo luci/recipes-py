@@ -6,11 +6,16 @@
 
 Requires `buildbucket` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
+
+`url_title_fn` parameter used in this module is a function that accepts a
+`build_pb2.Build` and returns a link title.
+If it returns `None`, the link is not reported. Default link title is build id.
 """
 
 import json
 
 from google import protobuf
+from google.protobuf import field_mask_pb2
 from google.protobuf import json_format
 
 from recipe_engine import recipe_api
@@ -246,6 +251,23 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   # RPCs.
 
+  def _default_field_mask(self, path_prefix=''):
+    """Returns a default FieldMask message to use in requests."""
+    paths = [
+      'builder',
+      'create_time',
+      'created_by',
+      'end_time',
+      'id',
+      'input',
+      'number',
+      'output',
+      'start_time',
+      'status',
+      'update_time',
+    ]
+    return field_mask_pb2.FieldMask(paths=[path_prefix + p for p in paths])
+
   def run(
       self, schedule_build_requests, collect_interval=None, timeout=None,
       url_title_fn=None, step_name=None, raise_if_unsuccessful=False):
@@ -421,9 +443,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     Args:
     *   schedule_build_requests: a list of `buildbucket.v2.ScheduleBuildRequest`
         protobuf messages. Create one by calling `schedule_request` method.
-    *   url_title_fn: a function that accepts a `build_pb2.Build` and returns a
-        link title. If returns `None`, the link is not reported.
-        Default link title is build id.
+    *   url_title_fn: generates a build URL title. See module docstring.
     *   step_name: name for this step.
 
     Returns:
@@ -531,9 +551,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     *   predicate: a `rpc_pb2.BuildPredicate` object or a list thereof.
         If a list, the predicates are connected with logical OR.
     *   limit: max number of builds to return. Defaults to 1000.
-    *   url_title_fn: a function that accepts a `build_pb2.Build` and returns a
-        link title. If returns `None`, the link is not reported.
-        Default link title is build id.
+    *   url_title_fn: generates a build URL title. See module docstring.
 
     Returns:
       A list of builds ordered newest-to-oldest.
@@ -549,7 +567,11 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     batch_req = rpc_pb2.BatchRequest(
         requests=[
-            dict(search_builds=dict(predicate=p, page_size=limit))
+            dict(search_builds=dict(
+                predicate=p,
+                page_size=limit,
+                fields=self._default_field_mask('builds.'),
+            ))
             for p in predicate
         ],
     )
@@ -576,7 +598,60 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def cancel_build(self, build_id, **kwargs):
     return self._run_buildbucket('cancel', [build_id], **kwargs)
 
+  def get_multi(self, build_ids, url_title_fn=None, step_name=None):
+    """Gets multiple builds.
+
+    Args:
+    *   `build_ids`: a list of build IDs.
+    *   `url_title_fn`: generates build URL title. See module docstring.
+    *   `step_name`: name for this step.
+
+    Returns:
+      A dict {build_id: build_pb2.Build}.
+    """
+    batch_req = rpc_pb2.BatchRequest(
+        requests=[
+          dict(get_build=dict(id=id, fields=self._default_field_mask()))
+          for id in build_ids
+        ],
+    )
+    test_res = rpc_pb2.BatchResponse(
+        responses=[
+          dict(get_build=dict(id=id, status=common_pb2.SUCCESS))
+          for id in build_ids
+        ]
+    )
+    step_res, batch_res, has_errors = self._batch_request(
+        step_name or 'buildbucket.get_multi', batch_req, test_res)
+    ret = {}
+    for res in batch_res.responses:
+      if res.HasField('get_build'):
+        b = res.get_build
+        self._report_build_maybe(step_res, b, url_title_fn=url_title_fn)
+        ret[b.id] = b
+    if has_errors:
+      raise self.m.step.InfraFailure('Getting builds failed')
+    return ret
+
+  def get(self, build_id, url_title_fn=None, step_name=None):
+    """Gets a build.
+
+    Args:
+    *   `build_id`: a buildbucket build ID.
+    *   `url_title_fn`: generates build URL title. See module docstring.
+    *   `step_name`: name for this step.
+
+    Returns:
+      A build_pb2.Build.
+    """
+    builds = self.get_multi(
+        [build_id],
+        url_title_fn=url_title_fn,
+        step_name=step_name or 'buildbucket.get')
+    return builds[build_id]
+
   def get_build(self, build_id, **kwargs):
+    """DEPRECATED. Use get()."""
     return self._run_buildbucket('get', [build_id], **kwargs)
 
   def collect_build(self, build_id, mirror_status=False, **kwargs):

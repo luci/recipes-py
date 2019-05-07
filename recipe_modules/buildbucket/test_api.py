@@ -168,22 +168,28 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     """Alias for tags in util.py. See doc there."""
     return util.tags(**tags)
 
-  def simulated_buildbucket_output(self, additional_build_parameters):
+  def simulated_buildbucket_output(
+      self, additional_build_parameters, step_name=None):
+    """Simulates a buildbucket.get_build call."""
+    step_name = step_name or 'buildbucket.get'
     buildbucket_output = {
         'build':{
           'parameters_json': json.dumps(additional_build_parameters)
         }
     }
     return self.step_data(
-        'buildbucket.get',
+        step_name,
         stdout=self.m.raw_io.output_text(json.dumps(buildbucket_output)))
 
+
   def simulated_collect_output(self, builds, step_name=None):
+    """Simulates a buildbucket.collect call."""
     step_name = step_name or 'buildbucket.collect'
     res = [json_format.MessageToDict(build) for build in builds]
     return self.step_data(step_name, self.m.json.output(res))
 
   def simulated_schedule_output(self, batch_response, step_name=None):
+    """Simulates a buildbucket.schedule call."""
     assert isinstance(batch_response, rpc_pb2.BatchResponse)
     step_name = step_name or 'buildbucket.schedule'
     ret_code = int(any(r.HasField('error') for r in batch_response.responses))
@@ -192,11 +198,28 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         step_name, self.m.json.output_stream(jsonish, retcode=ret_code))
 
   def simulated_search_results(self, builds, step_name=None):
+    """Simulates a buildbucket.search call."""
     assert isinstance(builds, list), builds
     assert all(isinstance(b, build_pb2.Build) for b in builds), builds
 
     step_name = step_name or 'buildbucket.search'
     jsonish = json_format.MessageToDict(rpc_pb2.BatchResponse(
         responses=[dict(search_builds=dict(builds=builds))],
+    ))
+    return self.step_data(step_name, self.m.json.output_stream(jsonish))
+
+  def simulated_get(self, build, step_name=None):
+    """Simulates a buildbucket.get call."""
+    step_name = step_name or 'buildbucket.get'
+    jsonish = json_format.MessageToDict(rpc_pb2.BatchResponse(
+        responses=[dict(get_build=build)],
+    ))
+    return self.step_data(step_name, self.m.json.output_stream(jsonish))
+
+  def simulated_get_multi(self, builds, step_name=None):
+    """Simulates a buildbucket.get_multi call."""
+    step_name = step_name or 'buildbucket.get_multi'
+    jsonish = json_format.MessageToDict(rpc_pb2.BatchResponse(
+        responses=[dict(get_build=b) for b in builds],
     ))
     return self.step_data(step_name, self.m.json.output_stream(jsonish))
