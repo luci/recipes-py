@@ -570,7 +570,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
             dict(search_builds=dict(
                 predicate=p,
                 page_size=limit,
-                fields=self._default_field_mask('builds.'),
+                fields=self._default_field_mask('builds.*.'),
             ))
             for p in predicate
         ],
