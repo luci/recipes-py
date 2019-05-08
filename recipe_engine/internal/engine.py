@@ -116,7 +116,7 @@ class RecipeEngine(object):
     self._environ = environ.copy()
     self._clients = {client.IDENT: client for client in (
         recipe_api.PathsClient(),
-        recipe_api.PropertiesClient(self),
+        recipe_api.PropertiesClient(properties),
         recipe_api.SourceManifestClient(self, properties),
         recipe_api.StepClient(self),
     )}

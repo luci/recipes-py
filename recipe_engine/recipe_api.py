@@ -172,11 +172,11 @@ class PropertiesClient(object):
 
   IDENT = 'properties'
 
-  def __init__(self, engine):
-    self._engine = engine
+  def __init__(self, properties):
+    self._properties = properties
 
   def get_properties(self):
-    return copy.deepcopy(self._engine.properties)
+    return copy.deepcopy(self._properties)
 
 
 class StepClient(object):
