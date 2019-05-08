@@ -28,6 +28,7 @@ def _contract_in_env(key):
     raise RunBuildContractViolation('Expected $%s in environment.' % key)
   return os.environ[key]
 
+
 def _contract_in_luci_context(section, key):
   section = luci_context.read(section)
   if section is None or key not in section:
@@ -60,7 +61,6 @@ def _tweak_env():
   os.environ['PYTHONIOENCODING'] = 'UTF-8'
 
 
-
 def main(args):
   LOG.info('run_build started, parsing Build message from stdin.')
   build = Build()
@@ -78,6 +78,6 @@ def main(args):
   with StreamEngineInvariants.wrap(run_build_engine) as stream_engine:
     run_steps(
         args.recipe_deps, properties, stream_engine,
-        SubprocessStepRunner(stream_engine))
+        SubprocessStepRunner(stream_engine), os.getcwd())
 
   return 0 if run_build_engine.was_successful else 1

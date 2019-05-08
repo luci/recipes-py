@@ -106,9 +106,10 @@ class PathsClient(object):
 
   IDENT = 'paths'
 
-  def __init__(self):
+  def __init__(self, start_dir):
     self.paths = []
     self.path_strings = []
+    self._start_dir = start_dir
 
   def _initialize_with_recipe_api(self, root_api):
     """This method is called once before the start of every recipe.
@@ -165,6 +166,11 @@ class PathsClient(object):
         return sPath, path
 
     return (None, None)
+
+  @property
+  def start_dir(self):
+    """Returns the START_DIR for this recipe execution."""
+    return self._start_dir
 
 
 class PropertiesClient(object):

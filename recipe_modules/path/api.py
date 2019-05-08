@@ -272,15 +272,14 @@ class PathApi(recipe_api.RecipeApi):
     """Internal recipe implementation function."""
     if not self._test_data.enabled:  # pragma: no cover
       self._path_mod = os.path
-      # Capture the cwd on process start to avoid shenanigans.
-      cwd = os.getcwd()
-      self._startup_cwd = self._split_path(cwd)
+      start_dir = self._paths_client.start_dir
+      self._startup_cwd = self._split_path(start_dir)
 
       tmp_dir = self._read_path('temp_dir', tempfile.gettempdir())
       self._ensure_dir(tmp_dir)
       self._temp_dir = self._split_path(tmp_dir)
 
-      cache_dir = self._read_path('cache_dir', os.path.join(cwd, 'cache'))
+      cache_dir = self._read_path('cache_dir', os.path.join(start_dir, 'cache'))
       self._ensure_dir(cache_dir)
       self._cache_dir = self._split_path(cache_dir)
 
@@ -288,7 +287,7 @@ class PathApi(recipe_api.RecipeApi):
       # underneath of the working directory is transient and will be purged in
       # between builds.
       cleanup_dir = self._read_path('cleanup_dir',
-          os.path.join(cwd, 'recipe_cleanup'))
+          os.path.join(start_dir, 'recipe_cleanup'))
       self._ensure_dir(cleanup_dir)
       self._cleanup_dir = self._split_path(cleanup_dir)
     else:

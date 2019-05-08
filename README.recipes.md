@@ -125,7 +125,7 @@
 
 [DEPS](/recipe_modules/archive/__init__.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [python](#recipe_modules-python), [step](#recipe_modules-step)
 
-#### **class [ArchiveApi](/recipe_modules/archive/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [ArchiveApi](/recipe_modules/archive/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 Provides steps to manipulate archive files (tar, zip, etc.).
 
@@ -185,7 +185,7 @@ Returns:
   Package object.
 ### *recipe_modules* / [assertions](/recipe_modules/assertions)
 
-#### **class [AssertionsApi](/recipe_modules/assertions/api.py#56)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [AssertionsApi](/recipe_modules/assertions/api.py#56)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 Provides access to the assertion methods of the python unittest module.
 
@@ -243,7 +243,7 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 `build_pb2.Build` and returns a link title.
 If it returns `None`, the link is not reported. Default link title is build id.
 
-#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#29)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#29)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 A module for interacting with buildbucket.
 
@@ -569,7 +569,7 @@ API for interacting with CIPD.
 Depends on 'cipd' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 
-#### **class [CIPDApi](/recipe_modules/cipd/api.py#199)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [CIPDApi](/recipe_modules/cipd/api.py#199)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 CIPDApi provides basic support for CIPD.
 
@@ -789,7 +789,7 @@ Args:
 Returns the CIPDApi.Pin instance.
 ### *recipe_modules* / [commit\_position](/recipe_modules/commit_position)
 
-#### **class [CommitPositionApi](/recipe_modules/commit_position/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [CommitPositionApi](/recipe_modules/commit_position/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 Recipe module providing commit position parsing and formatting.
 
@@ -831,7 +831,7 @@ with api.context(cwd=api.path['start_dir'].join('subdir')):
   api.step("cat subdir/foo", ['cat', './foo'])
 ```
 
-#### **class [ContextApi](/recipe_modules/context/api.py#46)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [ContextApi](/recipe_modules/context/api.py#46)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 &emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#65)(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None, infra_steps=None, name_prefix=None, namespace=None):**
 
@@ -964,7 +964,7 @@ Side-effect: Updates global tracking state for this step name.
 
 [DEPS](/recipe_modules/cq/__init__.py#5): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-#### **class [CQApi](/recipe_modules/cq/api.py#9)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [CQApi](/recipe_modules/cq/api.py#9)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 This module provides recipe API of LUCI CQ, aka pre-commit testing system.
 
@@ -1012,7 +1012,7 @@ Returns recorded Buildbucket build ids as a list of integers.
 
 File manipulation (read/write/delete/glob) methods.
 
-#### **class [FileApi](/recipe_modules/file/api.py#81)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [FileApi](/recipe_modules/file/api.py#81)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 &mdash; **def [copy](/recipe_modules/file/api.py#117)(self, name, source, dest):**
 
@@ -1314,7 +1314,7 @@ This module was created before there was a way to put recipes directly into
 another repo. It is not recommended to use this, and it will be removed in the
 near future.
 
-#### **class [GeneratorScriptApi](/recipe_modules/generator_script/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [GeneratorScriptApi](/recipe_modules/generator_script/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 &mdash; **def [\_\_call\_\_](/recipe_modules/generator_script/api.py#44)(self, path_to_script, \*args):**
 
@@ -1358,7 +1358,7 @@ corresponds to one step, and contains the following keys:
 
 [DEPS](/recipe_modules/isolated/__init__.py#1): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-#### **class [IsolatedApi](/recipe_modules/isolated/api.py#14)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [IsolatedApi](/recipe_modules/isolated/api.py#14)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 API for interacting with isolated.
 
@@ -1417,7 +1417,7 @@ Example:
 
 Methods for producing and consuming JSON.
 
-#### **class [JsonApi](/recipe_modules/json/api.py#83)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [JsonApi](/recipe_modules/json/api.py#83)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 &emsp; **@[returns\_placeholder](/recipe_engine/util.py#136)**<br>&mdash; **def [input](/recipe_modules/json/api.py#102)(self, data):**
 
@@ -1454,7 +1454,7 @@ This method is deprecated. Use file.read_json instead.
 
 [DEPS](/recipe_modules/led/__init__.py#5): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step)
 
-#### **class [LedApi](/recipe_modules/led/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [LedApi](/recipe_modules/led/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 Interface to the led tool.
 
@@ -1508,14 +1508,14 @@ There are other anchor points which can be defined (e.g. by the
 `depot_tools/infra_paths` module). Refer to those modules for additional
 documentation.
 
-#### **class [PathApi](/recipe_modules/path/api.py#197)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [PathApi](/recipe_modules/path/api.py#197)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
-&mdash; **def [\_\_getitem\_\_](/recipe_modules/path/api.py#457)(self, name):**
+&mdash; **def [\_\_getitem\_\_](/recipe_modules/path/api.py#456)(self, name):**
 
 Gets the base path named `name`. See module docstring for more
 information.
 
-&mdash; **def [abs\_to\_path](/recipe_modules/path/api.py#387)(self, abs_string_path):**
+&mdash; **def [abs\_to\_path](/recipe_modules/path/api.py#386)(self, abs_string_path):**
 
 Converts an absolute path string `string_path` to a real Path object,
 using the most appropriate known base path.
@@ -1541,14 +1541,14 @@ api.path.abs_to_path("/basis/dir/for/recipe/some/other/dir") ->
 Raises an ValueError if the preconditions are not met, otherwise returns the
 Path object.
 
-&mdash; **def [assert\_absolute](/recipe_modules/path/api.py#327)(self, path):**
+&mdash; **def [assert\_absolute](/recipe_modules/path/api.py#326)(self, path):**
 
 Raises AssertionError if the given path is not an absolute path.
 
 Args:
   * path (Path|str) - The path to check.
 
-&mdash; **def [get](/recipe_modules/path/api.py#450)(self, name, default=None):**
+&mdash; **def [get](/recipe_modules/path/api.py#449)(self, name, default=None):**
 
 Gets the base path named `name`. See module docstring for more
 information.
@@ -1561,7 +1561,7 @@ Internal recipe implementation function.
 
 Internal recipe implementation function.
 
-&mdash; **def [mkdtemp](/recipe_modules/path/api.py#335)(self, prefix=tempfile.template):**
+&mdash; **def [mkdtemp](/recipe_modules/path/api.py#334)(self, prefix=tempfile.template):**
 
 Makes a new temporary directory, returns Path to it.
 
@@ -1571,7 +1571,7 @@ Args:
 
 Returns a Path to the new directory.
 
-&mdash; **def [mkstemp](/recipe_modules/path/api.py#360)(self, prefix=tempfile.template):**
+&mdash; **def [mkstemp](/recipe_modules/path/api.py#359)(self, prefix=tempfile.template):**
 
 Makes a new temporary file, returns Path to it.
 
@@ -1582,15 +1582,15 @@ Args:
 Returns a Path to the new file. Unlike tempfile.mkstemp, the file's file
 descriptor is closed.
 
-&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#306)(self, path):**
+&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#305)(self, path):**
 
 For testing purposes, mark that |path| exists.
 
-&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#311)(self, source, dest):**
+&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#310)(self, source, dest):**
 
 For testing purposes, copy |source| to |dest|.
 
-&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#316)(self, path, filt=(lambda p: True)):**
+&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#315)(self, path, filt=(lambda p: True)):**
 
 For testing purposes, assert that |path| doesn't exist.
 
@@ -1602,7 +1602,7 @@ Args:
 
 Mockable system platform identity functions.
 
-#### **class [PlatformApi](/recipe_modules/platform/api.py#18)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [PlatformApi](/recipe_modules/platform/api.py#18)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 Provides host-platform-detection properties.
 
@@ -1669,7 +1669,7 @@ values provided to the recipe engine at the beginning of execution. There is
 intentionally no API to write property values (lest they become a kind of
 random-access global variable).
 
-#### **class [PropertiesApi](/recipe_modules/properties/api.py#28)([RecipeApiPlain](/recipe_engine/recipe_api.py#706), collections.Mapping):**
+#### **class [PropertiesApi](/recipe_modules/properties/api.py#28)([RecipeApiPlain](/recipe_engine/recipe_api.py#712), collections.Mapping):**
 
 PropertiesApi implements all the standard Mapping functions, so you
 can use it like a read-only dict.
@@ -1699,7 +1699,7 @@ This includes support for `vpython`, and knows how to specify parameters
 correctly for bots (e.g. ensuring that python is working on Windows, passing the
 unbuffered flag, etc.)
 
-#### **class [PythonApi](/recipe_modules/python/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [PythonApi](/recipe_modules/python/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 &mdash; **def [\_\_call\_\_](/recipe_modules/python/api.py#18)(self, name, script, args=None, unbuffered=True, venv=None, \*\*kwargs):**
 
@@ -1783,7 +1783,7 @@ Example:
       api.random.shuffle(my_list)
       # my_list is now random!
 
-#### **class [RandomApi](/recipe_modules/random/api.py#31)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [RandomApi](/recipe_modules/random/api.py#31)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 &mdash; **def [\_\_getattr\_\_](/recipe_modules/random/api.py#38)(self, name):**
 
@@ -1792,7 +1792,7 @@ Access a member of `random.Random`.
 
 Provides objects for reading and writing raw data to and from steps.
 
-#### **class [RawIOApi](/recipe_modules/raw_io/api.py#255)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [RawIOApi](/recipe_modules/raw_io/api.py#255)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 &emsp; **@[returns\_placeholder](/recipe_engine/util.py#136)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#256)(data, suffix='', name=None):**
 
@@ -1863,7 +1863,7 @@ Args:
 
 [DEPS](/recipe_modules/runtime/__init__.py#5): [properties](#recipe_modules-properties)
 
-#### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 This module assists in experimenting with production recipes.
 
@@ -1898,7 +1898,7 @@ Documentation for scheduler API is in
 RPCExplorer available at
   https://luci-scheduler.appspot.com/rpcexplorer/services/scheduler.Scheduler
 
-#### **class [SchedulerApi](/recipe_modules/scheduler/api.py#26)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [SchedulerApi](/recipe_modules/scheduler/api.py#26)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 A module for interacting with LUCI Scheduler service.
 
@@ -1954,7 +1954,7 @@ https://godoc.org/go.chromium.org/luci/auth/client/cmd/luci-auth).
 
 Depends on luci-auth to be in PATH.
 
-#### **class [ServiceAccountApi](/recipe_modules/service_account/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [ServiceAccountApi](/recipe_modules/service_account/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 &mdash; **def [default](/recipe_modules/service_account/api.py#57)(self):**
 
@@ -1975,7 +1975,7 @@ Args:
   key_path: (str|Path) object pointing to a service account JSON key.
 ### *recipe_modules* / [source\_manifest](/recipe_modules/source_manifest)
 
-#### **class [SourceManfiestApi](/recipe_modules/source_manifest/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [SourceManfiestApi](/recipe_modules/source_manifest/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 &mdash; **def [set\_json\_manifest](/recipe_modules/source_manifest/api.py#35)(self, name, data):**
 
@@ -2002,7 +2002,7 @@ Args:
 Step is the primary API for running steps (external programs, scripts,
 etc.).
 
-#### **class [StepApi](/recipe_modules/step/api.py#18)([RecipeApiPlain](/recipe_engine/recipe_api.py#706)):**
+#### **class [StepApi](/recipe_modules/step/api.py#18)([RecipeApiPlain](/recipe_engine/recipe_api.py#712)):**
 
 &emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#49)(self):**
 
@@ -2122,7 +2122,7 @@ each other.
 
 [DEPS](/recipe_modules/swarming/__init__.py#5): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [isolated](#recipe_modules-isolated), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-#### **class [SwarmingApi](/recipe_modules/swarming/api.py#685)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [SwarmingApi](/recipe_modules/swarming/api.py#685)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 API for interacting with swarming.
 
@@ -2201,7 +2201,7 @@ Args:
 
 Simplistic temporary directory manager (deprecated).
 
-#### **class [TempfileApi](/recipe_modules/tempfile/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [TempfileApi](/recipe_modules/tempfile/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 &emsp; **@contextlib.contextmanager**<br>&mdash; **def [temp\_dir](/recipe_modules/tempfile/api.py#13)(self, prefix):**
 
@@ -2220,7 +2220,7 @@ with api.tempfile.temp_dir("some_prefix") as path:
 
 Allows mockable access to the current time.
 
-#### **class [TimeApi](/recipe_modules/time/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [TimeApi](/recipe_modules/time/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 &mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#49)(self):**
 
@@ -2248,7 +2248,7 @@ Return current UTC time as a datetime.datetime.
 
 API for Tricium analyzers to use.
 
-#### **class [TriciumApi](/recipe_modules/tricium/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [TriciumApi](/recipe_modules/tricium/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 TriciumApi provides basic support for Tricium.
 
@@ -2276,7 +2276,7 @@ for details and definitions).
 
 Methods for interacting with HTTP(s) URLs.
 
-#### **class [UrlApi](/recipe_modules/url/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [UrlApi](/recipe_modules/url/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 &mdash; **def [get\_file](/recipe_modules/url/api.py#131)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None, timeout=None):**
 
@@ -2381,7 +2381,7 @@ Args:
 
 Allows test-repeatable access to a random UUID.
 
-#### **class [UuidApi](/recipe_modules/uuid/api.py#11)([RecipeApi](/recipe_engine/recipe_api.py#838)):**
+#### **class [UuidApi](/recipe_modules/uuid/api.py#11)([RecipeApi](/recipe_engine/recipe_api.py#844)):**
 
 &mdash; **def [random](/recipe_modules/uuid/api.py#20)(self):**
 

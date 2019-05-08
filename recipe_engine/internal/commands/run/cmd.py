@@ -15,8 +15,6 @@ from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 from .... import util
 
 from ...engine import run_steps
-from ...exceptions import RecipeUsageError
-from ...recipe_deps import Recipe
 from ...step_runner.subproc import SubprocessStepRunner
 from ...stream.annotator import AnnotatorStreamEngine
 from ...stream.invariants import StreamEngineInvariants
@@ -69,9 +67,6 @@ def main(args):
   if not os.path.exists(workdir):
     os.makedirs(workdir)
 
-  old_cwd = os.getcwd()
-  os.chdir(workdir)
-
   stream_engine = AnnotatorStreamEngine(sys.stdout)
 
   # This only applies to 'annotation' mode and will go away with build.proto.
@@ -86,12 +81,10 @@ def main(args):
 
   # Have a top-level set of invariants to enforce StreamEngine expectations.
   with StreamEngineInvariants.wrap(stream_engine) as stream_engine:
-    try:
-      ret = run_steps(
-          args.recipe_deps, properties, stream_engine,
-          SubprocessStepRunner(stream_engine),
-          emit_initial_properties=emit_initial_properties)
-    finally:
-      os.chdir(old_cwd)
+    ret = run_steps(
+        args.recipe_deps, properties, stream_engine,
+        SubprocessStepRunner(stream_engine),
+        os.path.abspath(workdir),
+        emit_initial_properties=emit_initial_properties)
 
     return handle_recipe_return(ret, args.output_result_json, stream_engine)

@@ -337,7 +337,8 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
       props['$recipe_engine/source_manifest'] = {}
     if 'debug_dir' not in props['$recipe_engine/source_manifest']:
       props['$recipe_engine/source_manifest']['debug_dir'] = None
-    engine = RecipeEngine(_RECIPE_DEPS, runner, props, test_data.environ.copy())
+    engine = RecipeEngine(
+        _RECIPE_DEPS, runner, props, test_data.environ.copy(), '')
     with coverage_context(include=covers, enable=enable_coverage) as cov:
       # Run recipe loading under coverage context. This ensures we collect
       # coverage of all definitions and globals.

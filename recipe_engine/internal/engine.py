@@ -23,7 +23,7 @@ from .recipe_deps import Recipe
 # will be used to seed recipe clients and expanded to include managed runtime
 # entities.
 def run_steps(recipe_deps, properties, stream_engine, step_runner,
-              emit_initial_properties=False):
+              cwd, emit_initial_properties=False):
   """Runs a recipe (given by the 'recipe' property) for real.
 
   Args:
@@ -43,7 +43,7 @@ def run_steps(recipe_deps, properties, stream_engine, step_runner,
         s.set_build_property(key, json.dumps(properties[key], sort_keys=True))
 
     engine = RecipeEngine(
-        recipe_deps, step_runner, properties, os.environ)
+        recipe_deps, step_runner, properties, os.environ, cwd)
 
     assert 'recipe' in properties
     recipe = properties['recipe']
@@ -108,14 +108,15 @@ class RecipeEngine(object):
   ActiveStep = collections.namedtuple('ActiveStep', (
       'config', 'step_result', 'open_step'))
 
-  def __init__(self, recipe_deps, step_runner, properties, environ):
+  def __init__(self, recipe_deps, step_runner, properties, environ, start_dir):
     """See run_steps() for parameter meanings."""
     self._recipe_deps = recipe_deps
     self._step_runner = step_runner
     self._properties = properties
     self._environ = environ.copy()
+    self._start_dir = start_dir
     self._clients = {client.IDENT: client for client in (
-        recipe_api.PathsClient(),
+        recipe_api.PathsClient(start_dir),
         recipe_api.PropertiesClient(properties),
         recipe_api.SourceManifestClient(self, properties),
         recipe_api.StepClient(self),
