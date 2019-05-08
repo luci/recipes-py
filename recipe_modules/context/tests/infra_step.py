@@ -17,7 +17,7 @@ def RunSteps(api):
   except api.step.StepFailure:
     was_infra_failure = False
 
-  assert was_infra_failure is False
+  assert was_infra_failure is False, 'got: %r' % was_infra_failure
 
   with api.context(infra_steps=True):
     was_infra_failure = None

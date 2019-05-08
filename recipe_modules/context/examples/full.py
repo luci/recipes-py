@@ -34,13 +34,10 @@ def RunSteps(api):
     api.step('env step', ['bash', '-c', 'echo $FOO'])
 
     with api.context(env_prefixes={'FOO': [pants, shirt]}):
-      expected = api.path.pathsep.join([str(pants), str(shirt), 'bar'])
-      result = api.step('env step with prefix',
-                        ['bash', '-c', 'echo $FOO'])
+      api.step('env step with prefix', ['bash', '-c', 'echo $FOO'])
 
   # Path prefix won't append empty environment variables.
   with api.context(env={'FOO': ''}, env_prefixes={'FOO': [pants, shirt]}):
-    expected = api.path.pathsep.join([str(pants), str(shirt)])
     result = api.step('env prefixes with empty value',
                       ['bash', '-c', 'echo $FOO'])
 
