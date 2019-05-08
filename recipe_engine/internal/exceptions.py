@@ -53,3 +53,16 @@ class GitFetchError(RecipeEngineError):
 class UnresolvedRefspec(RecipeEngineError):
   """Raised from fetch.Backend.assert_resolved if the given revision is,
   in fact, not resolved."""
+
+
+### BaseException-derived exceptions.
+
+class CrashEngine(BaseException):
+  """Raised from the engine when the user-provided functions (like step
+  callbacks) raise an exception.
+
+  This exception should only be handled by the recipe engine.
+  """
+  def __init__(self, reason):
+    super(CrashEngine, self).__init__(reason)
+    self.reason = reason
