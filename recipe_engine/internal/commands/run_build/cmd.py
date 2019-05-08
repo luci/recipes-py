@@ -44,7 +44,10 @@ def _synth_properties(build):
       'is_experimental': build.input.experimental,
       'is_luci': True,
     },
-    '$recipe_engine/buildbucket': jsonpb.MessageToDict(build),
+    '$recipe_engine/buildbucket': {
+      'build': jsonpb.MessageToDict(build),
+      'hostname': _contract_in_luci_context('buildbucket', 'hostname'),
+    },
     '$recipe_engine/path': {
       'temp_dir': _contract_in_env('TMP'),
       'cache_dir': _contract_in_luci_context('run_build', 'cache_dir'),
