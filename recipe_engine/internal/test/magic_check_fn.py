@@ -15,7 +15,7 @@ import sys
 import itertools
 import weakref
 
-from collections import OrderedDict, deque, defaultdict, namedtuple
+from collections import Iterable, OrderedDict, deque, defaultdict, namedtuple
 
 import astunparse
 
@@ -624,6 +624,55 @@ def _annotation(parser, unparser, **kwargs):
   return attr.ib(metadata={'parser': parser, 'unparser': unparser}, **kwargs)
 
 
+class Command(list):
+  """Specialized list enabling enhanced searching in command arguments.
+
+  Command is a list of strings that supports searching for individual strings
+  or subsequences of strings comparing by either string equality or regular
+  expression. Regular expression elements are compared against strings using the
+  search method of the regular expression object.
+
+  e.g. the following all evaluate as True:
+  'foo' in Command(['foo', 'bar', 'baz'])
+  re.compile('a') in Command(['foo', 'bar', 'baz'])
+  ['foo', 'bar'] in Command(['foo', 'bar', 'baz'])
+  [re.compile('o$'), 'bar', re.compile('^b')] in Command(['foo', 'bar', 'baz'])
+  """
+
+  def __contains__(self, item):
+    # Get a function that can be used for matching against an element
+    # Command's elements will always be strings, so we'll only try to match
+    # against strings or regexes
+    def get_matcher(obj):
+      if isinstance(obj, basestring):
+        return lambda other: obj == other
+      if isinstance(obj, re._pattern_type):
+        return obj.search
+      return None
+
+    if isinstance(item, Iterable) and not isinstance(item, basestring):
+      matchers = [get_matcher(e) for e in item]
+    else:
+      matchers = [get_matcher(item)]
+
+    # If None is present in matchers, then that means item is/contains an object
+    # of a type that we won't use for matching
+    if any(m is None for m in matchers):
+      return False
+
+    # At this point, matchers is a list of functions that we can apply against
+    # the elements of each subsequence in the list; if each matcher matches the
+    # corresponding element of the subsequence then we say that the sequence of
+    # strings/regexes is contained in the command
+    for i in xrange(len(self) - len(matchers) + 1):
+      for j, matcher in enumerate(matchers):
+        if not matcher(self[i + j]):
+          break
+      else:
+        return True
+    return False
+
+
 @attr.s
 class Step(object):
   """The representation of a step provided to post-process hooks."""
@@ -729,6 +778,8 @@ class Step(object):
 
     step = Step(**{k: v for k, v in step_dict.iteritems()
                    if k != '~followup_annotations'})
+    if step.cmd is not None:
+      step.cmd = Command(step.cmd)
     parsers = [f.metadata['parser'] for f in cls._get_annotation_fields()]
     for annotation in step_dict.get('~followup_annotations', []):
       for field in cls._get_annotation_fields():
@@ -746,6 +797,8 @@ class Step(object):
     prototype = Step('')._as_dict()
     step_dict = {k: v for k, v in self._as_dict().iteritems()
                  if k == 'name' or v != prototype[k]}
+    if step_dict.get('cmd', None) is not None:
+      step_dict['cmd'] = list(step_dict['cmd'])
     annotations = []
     for field in self._get_annotation_fields():
       value = step_dict.pop(field.name, MISSING)
@@ -900,6 +953,10 @@ def post_process(raw_expectations, test_data):
       for k, v in rslt.iteritems():
         if isinstance(v, Step):
           rslt[k] = v.to_step_dict()
+        else:
+          cmd = rslt[k].get('cmd', None)
+          if cmd is not None:
+            rslt[k]['cmd'] = list(cmd)
       msg = VerifySubset(rslt, raw_expectations)
       if msg:
         raise PostProcessError('post process: steps' + msg)

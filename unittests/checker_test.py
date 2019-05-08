@@ -6,6 +6,7 @@
 import sys
 import copy
 import datetime
+import re
 
 from collections import OrderedDict
 
@@ -13,7 +14,8 @@ import test_env
 
 from recipe_engine.recipe_test_api import PostprocessHookContext, RecipeTestApi
 from recipe_engine.internal.test.magic_check_fn import \
-  Checker, CheckFrame, PostProcessError, Step, VerifySubset, post_process
+  Checker, CheckFrame, Command, PostProcessError, Step, VerifySubset, \
+  post_process
 
 
 HOOK_CONTEXT = PostprocessHookContext(lambda: None, (), {}, '<filename>', 0)
@@ -497,6 +499,40 @@ class TestStep(test_env.RecipeEngineUnitTest):
     s.links.clear()
     self.assertEqual(s.to_step_dict(), {'name': 'foo'})
 
+
+class CommandTest(test_env.RecipeEngineUnitTest):
+  def test_contains_single_non_matcher(self):
+    c = Command(['foo', 'bar', 'baz'])
+    self.assertFalse(0 in c)
+
+  def test_contains_single_string(self):
+    c = Command(['foo', 'bar', 'baz'])
+    self.assertTrue('foo' in c)
+    self.assertTrue('bar' in c)
+    self.assertTrue('baz' in c)
+    self.assertFalse('quux' in c)
+
+  def test_contains_single_regex(self):
+    c = Command(['foo', 'bar', 'baz'])
+    self.assertTrue(re.compile('ba.') in c)
+    self.assertTrue(re.compile('a') in c)
+    self.assertTrue(re.compile('z$') in c)
+    self.assertTrue(re.compile('^bar$') in c)
+    self.assertFalse(re.compile('^a$') in c)
+
+  def test_contains_string_sequence(self):
+    c = Command(['foo', 'bar', 'baz'])
+    self.assertTrue(['bar'] in c)
+    self.assertTrue(['foo', 'bar'] in c)
+    self.assertTrue(['bar', 'baz'] in c)
+    self.assertTrue(['foo', 'bar', 'baz'] in c)
+    self.assertFalse(['foo', 'baz'] in c)
+
+  def test_contains_matcher_sequence(self):
+    c = Command(['foo', 'bar', 'baz'])
+    self.assertTrue([re.compile('z')] in c)
+    self.assertTrue([re.compile('.o.'), 'bar', re.compile('z')] in c)
+    self.assertFalse([re.compile('f'), re.compile('z'), re.compile('r')] in c)
 
 class TestVerifySubset(test_env.RecipeEngineUnitTest):
   @staticmethod
