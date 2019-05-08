@@ -21,7 +21,7 @@ def attr_type(type_, subname=''):
   the value.
   """
 
-  def _inner(_self, attrib, value):
+  def inner(_self, attrib, value):
     if not isinstance(value, type_):
       raise TypeError(
         "'{name}' must be {type!r} (got {value!r} that is a "
@@ -36,7 +36,7 @@ def attr_type(type_, subname=''):
         type_,
         subname,
       )
-  return _inner
+  return inner
 
 
 def attr_superclass(type_, subname=''):
@@ -52,7 +52,7 @@ def attr_superclass(type_, subname=''):
   the value.
   """
 
-  def _inner(_self, attrib, value):
+  def inner(_self, attrib, value):
     if not issubclass(type(value), type_):
       raise TypeError(
         "'{name}' must be a subclass of {type!r} (got {value!r} that is a "
@@ -67,7 +67,7 @@ def attr_superclass(type_, subname=''):
         type_,
         subname,
       )
-  return _inner
+  return inner
 
 
 def attr_dict_type(key_type, val_type, value_seq=False):
@@ -84,7 +84,8 @@ def attr_dict_type(key_type, val_type, value_seq=False):
     * All of it's keys don't match `key_type`
     * All of it's values don't match `val_type`
   """
-  def _inner(self, attrib, value):
+
+  def inner(self, attrib, value):
     # late import to avoid import cycle
     from ..types import FrozenDict
 
@@ -97,7 +98,7 @@ def attr_dict_type(key_type, val_type, value_seq=False):
       else:
         attr_type(val_type, subname)(self, attrib, subval)
 
-  return _inner
+  return inner
 
 
 def attr_seq_type(val_type, subname=''):
@@ -111,12 +112,31 @@ def attr_seq_type(val_type, subname=''):
     * All of it's values don't match `val_type`
   """
 
-  def _inner(self, attrib, value):
+  def inner(self, attrib, value):
     attr_type((list, tuple, set, frozenset), subname)(self, attrib, value)
     for subval in value:
       attr_type(val_type, subname + ' values')(self, attrib, subval)
 
-  return _inner
+  return inner
+
+
+def attr_list_type(val_type):
+  """Helper function for writing attr.s validators for list types.
+
+  Args:
+    * val_type (object) - The python type object to validate the list's values.
+
+  Returns a validator function which raises TypeError if:
+    * The value is not a list
+    * All of it's values don't match `val_type`
+  """
+
+  def inner(self, attrib, value):
+    attr_type((list, tuple))(self, attrib, value)
+    for subval in value:
+      attr_type(val_type, ' values')(self, attrib, subval)
+
+  return inner
 
 
 def attr_value_is(msg, check_fn, subname=''):
@@ -133,7 +153,7 @@ def attr_value_is(msg, check_fn, subname=''):
   Returns a validator function which raises TypeError if the value doesn't match
   the value.
   """
-  def _inner(_self, attrib, value):
+  def inner(_self, attrib, value):
     if not check_fn(value):
       raise ValueError(
         "'{name}' is not {msg} (got {value!r})".format(
@@ -146,4 +166,4 @@ def attr_value_is(msg, check_fn, subname=''):
         msg,
         subname,
       )
-  return _inner
+  return inner
