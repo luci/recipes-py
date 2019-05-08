@@ -456,9 +456,133 @@ The nodes returned by the transformer are walked to find the resolved nodes and
 the varmap is populated mapping the resolved nodes' representations to their
 values that have been rendered in a user-friendly fashion.
 
+## How recipes are run
 
+Once the recipe is loaded, the running subcommand (i.e. `run`, `test`,
+`run_build`) selects a [StreamEngine] and a [StepRunner]. The StreamEngine is
+responsible for exporting the state of the running recipe to the outside world,
+and the StepRunner is responsible for 'running' steps.
 
+Once the subcommand has selected the relevant engine and runner, it then hands
+control off to `RecipeEngine.run_steps`, which orchestrates the actual execution
+of the recipe (namely; running steps, handling errors and updating presentation
+via the StreamEngine).
+
+### StreamEngine
+
+The StreamEngine's responsibility is to accept reports about the UI and data
+export ("output properties") state of the recipe, and channel them to an
+appropriate backend service which can render them. The UI backend is the LUCI
+project called "Milo", which runs on https://ci.chromium.org.
+
+There are 2 primary implementations of the StreamEngine; one for the old
+`@@@annotation@@@` protocol, and another which directly emits [build.proto] via
+logdog.
+
+The entire recipe engine was originally written to support the
+`@@@annotation@@@` protocol, and thus StreamEngine is very heavily informed by
+this. It assumes that all data is 'append only', and structures things as
+commands to a backend, rather than setting state on a persistent object and
+assuming that the StreamEngine will worry about state replication to the
+backend.
+
+The 'build.proto' (LUCI) engine maps the command-oriented StreamEngine interface
+onto a persistent `buildbucket.v2.Build` protobuf message, and then replicates
+the state of this message to the backend via 'logdog' (which is LUCI's log
+streaming service).
+
+Going forward the plan is to completely remove the `@@@annotation@@@` engine in
+favor of the LUCI engine.
+
+### StepRunner
+
+The StepRunner's responsibility is to translate between the recipe and "the
+system". This includes things like mediating access to the filesystem and
+actually executing subprocesses for steps. This interface is currently an ad-hoc
+collection of functions pertaining to the particulars of how recipes work today
+(i.e. the `placeholder` methods returning test data).
+
+*** TODO
+Give StepRunner a full vfs-style interface; Instead of doing weird mocks in the
+path module for asserting that files exist, and having placeholder-specific
+data, the user could manipulate the state of the filesytem in their test and
+then the placeholders would be implemented against the (virtual) filesystem
+directly.
+***
+
+There are two implementations of the StepRunner; A "real" implementation and
+a "simulation" implementation.
+
+The real implementation actually talks to the real filesystem and executes
+subprocesses when asked for the execution result of steps.
+
+The simulation implementation supplies responses to the RecipeEngine for
+placeholder test data and step results.
+
+One feature of the StepRunner implementations is that they don't raise
+exceptions; In particular the 'run' function should return an ExecutionResult
+even if the step crashes, doesn't exist or whatever other terrible condition
+it may have.
+
+### Running steps
+
+Within a chunk of recipe user code, steps are executed sequentially. When a step
+runs (i.e. the recipe user code invokes `api.step(...)`), a number of things
+happens:
+
+  1. Inform the StepRunner that we're about to run the step
+  1. Create a new `step_stream` with the StreamEngine so the UI knows about the
+     step.
+  1. Open a debug log '$debug'. The progress of the engine running the step will
+     be recorded here, along with any 'surprises' (such as exceptions raised).
+  1. Open a log "execution details" which contains all the data associated with
+     running the step (command, env, etc.) and also the final exit code of the
+     step.
+  1. The engine renders all input placeholders attached to the step. This
+     typically involves writing data to disk (but it depends on the placeholder
+     implementation).
+  1. The engine runs the step to get an ExecutionResult.
+  1. The step's "initial status" is calculated. This is a function of running
+     the step (its ExecutionResult) and also properties like `ok_ret` and
+     `infra_step`.
+  1. The output placeholders are resolved.
+
+If an exception is raised during this process it's logged (to `$debug`) and then
+saved while the engine does the final processing.
+
+Currently, when a step has finished execution, its `step_stream` is kept open
+and the step is pushed onto a stack of `ActiveStep`s. Depending on the
+configuration of the step (`ok_ret`, `infra_step`, etc.) the engine will raise
+an exeption back into user code. If something broke while running the step (like
+a bad placeholder, or the user asked to run a non-executable file... you know,
+the usual stuff), this exception will be re-raised after the engine finalizes
+the StepData, and sets up the presentation status (likely, "EXCEPTION").
+
+#### Drawbacks of current presentation/exception handling implementation.
+
+However, the step remains open until **the next step runs!**
+
+The step's presentation can be accessed, _and modified_ in a couple ways:
+  * Via the return value of `api.step()`
+  * Via the '.result' property of the caught StepFailure exception.
+  * Via the magical `api.step.active_result` property.
+
+The first one isn't too bad, but the last two are pretty awful. This means that
+a user of your module function can get access to your step result and:
+  * Modify the presentation of your step
+    * (not too bad, though kinda weird... if the changes they make to your step
+      don't mesh well with your own changes it'll look like you goofed something
+      up).
+  * Directly read the data results of your step's placeholders.
+    * Change your implementation to use 2 placeholders instead of one? Surprise!
+      You've now broken all your downstream users.
+    * This is pretty bad.
+  * Read the output properties from your step!
+    * Hey! Those were supposed to be write-only! What the heck?
+
+[build.proto]: https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto
 [commands]: /recipe_engine/internal/commands
+[engine]: /recipe_engine/internal/engine.py
 [magic_check_fn.py]: /recipe_engine/internal/test/magic_check_fn.py
 [main.py]: /recipe_engine/main.py
 [PEP302]: https://www.python.org/dev/peps/pep-0302/
@@ -467,3 +591,5 @@ values that have been rendered in a user-friendly fashion.
 [recipes.py]: /recipes.py
 [recipes_cfg.proto]: /recipe_engine/recipes_cfg.proto
 [simple_cfg.py]: /recipe_engine/internal/simple_cfg.py
+[StepRunner]: /recipe_engine/internal/step_runner/__init__.py
+[StreamEngine]: /recipe_engine/internal/stream/__init__.py
