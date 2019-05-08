@@ -7,7 +7,7 @@ import os
 
 import test_env
 
-from recipe_engine.internal.step_runner import merge_envs
+from recipe_engine.internal.engine_env import merge_envs
 from recipe_engine.internal.step_runner.subproc import _streamingLinebuf
 
 
@@ -66,7 +66,8 @@ class TestMergeEnvs(test_env.RecipeEngineUnitTest):
     return os.pathsep.join(parts)
 
   def _merge(self, overrides, prefixes, suffixes):
-    return merge_envs(self.original, overrides, prefixes, suffixes, os.pathsep)
+    return merge_envs(
+        self.original, overrides, prefixes, suffixes, os.pathsep)[0]
 
   def test_nothing_to_do(self):
     self.assertEqual(

@@ -12,9 +12,10 @@ from ... import recipe_api
 from ... import recipe_test_api
 
 from .. import stream
+from ..engine_env import FakeEnviron, merge_envs
 
-from . import StepRunner, OpenStep, FakeEnviron
-from . import construct_step_result, render_step, merge_envs
+from . import StepRunner, OpenStep
+from . import construct_step_result, render_step
 
 
 
@@ -45,11 +46,14 @@ class SimulationStepRunner(StepRunner):
 
       # Merge our environment. Note that do NOT apply prefixes when rendering
       # expectations, as they are rendered independently.
-      step_env = merge_envs(FakeEnviron(), rendered_step.config.env, {}, {},
-                            None)
+      step_env, removed = merge_envs(
+          FakeEnviron(), rendered_step.config.env, {}, {}, None)
+      # We want envvar deletions to show up in the test expectations, so add
+      # them back into step_env.
+      step_env.update((k, None) for k in removed)
+
       rendered_step = rendered_step._replace(
-          config=attr.evolve(
-              rendered_step.config, env=step_env.data))
+          config=attr.evolve(rendered_step.config, env=step_env))
       step_config = None  # Make sure we use rendered step config.
 
       # Layer the simulation step on top of the given stream engine.

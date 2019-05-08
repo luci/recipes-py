@@ -24,9 +24,10 @@ from ...step_data import StepData
 from ...third_party import subprocess42
 
 from .. import stream
+from ..engine_env import merge_envs
 
 from . import StepRunner, OpenStep
-from . import construct_step_result, render_step, merge_envs
+from . import construct_step_result, render_step
 
 
 if sys.platform == "win32":
@@ -122,7 +123,7 @@ class SubprocessStepRunner(StepRunner):
       )
       step_config = None  # Make sure we use rendered step config.
 
-      step_env = merge_envs(os.environ,
+      step_env, _ = merge_envs(os.environ,
           rendered_step.config.env,
           rendered_step.config.env_prefixes.mapping,
           rendered_step.config.env_suffixes.mapping,
