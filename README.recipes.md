@@ -69,7 +69,6 @@
   * [engine_tests/proto_properties](#recipes-engine_tests_proto_properties)
   * [engine_tests/recipe_paths](#recipes-engine_tests_recipe_paths) &mdash; Tests that recipes have access to names, resources and their repo.
   * [engine_tests/sort_properties](#recipes-engine_tests_sort_properties) &mdash; Tests that step presentation properties can be ordered.
-  * [engine_tests/step_stack_exhaustion](#recipes-engine_tests_step_stack_exhaustion) &mdash; Tests that placeholders can't wreck the world by exhausting the step stack.
   * [engine_tests/undeclared_method](#recipes-engine_tests_undeclared_method)
   * [engine_tests/unicode](#recipes-engine_tests_unicode)
   * [engine_tests/whitelist_steps](#recipes-engine_tests_whitelist_steps) &mdash; Tests that step_data can accept multiple specs at once.
@@ -2611,13 +2610,6 @@ Tests that recipes have access to names, resources and their repo.
 Tests that step presentation properties can be ordered.
 
 &mdash; **def [RunSteps](/recipes/engine_tests/sort_properties.py#11)(api):**
-### *recipes* / [engine\_tests/step\_stack\_exhaustion](/recipes/engine_tests/step_stack_exhaustion.py)
-
-[DEPS](/recipes/engine_tests/step_stack_exhaustion.py#10): [step](#recipe_modules-step)
-
-Tests that placeholders can't wreck the world by exhausting the step stack.
-
-&mdash; **def [RunSteps](/recipes/engine_tests/step_stack_exhaustion.py#19)(api):**
 ### *recipes* / [engine\_tests/undeclared\_method](/recipes/engine_tests/undeclared_method.py)
 
 [DEPS](/recipes/engine_tests/undeclared_method.py#7): [properties](#recipe_modules-properties), [python](#recipe_modules-python), [step](#recipe_modules-step)
