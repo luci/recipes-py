@@ -574,13 +574,44 @@ class RecipeTestApi(object):
       func(check, step_odict, *args, **kwargs) -> (step_odict or None)
 
     Where:
-      * `step_odict` is an ordered dictionary of step dictionaries, as would be
-      recorded into the JSON expectation file for this test. The dictionary key
-      is the step's name. The dictionary has enhanced behavior such that
-      indexing with a key that isn't in the dictionary won't raise a KeyError;
-      instead the execution of your function is halted and a check failure will
-      be reported. This allows you to write your check functions without having
-      to worry about if a step is missing to provide usable failure output.
+      * `step_odict` is an ordered dictionary of steps. The dictionary keys are
+      the names of the steps. The value for each key corresponding to an actual
+      step is a `Step`. A `Step` has fields for all of the details of a step
+      that would be recorded into the JSON expectation file for this test.
+      Fields are populated with default values so that even if there wouldn't
+      be anything recorded into the expectation file, you can simply access the
+      field, you don't have to do anything to provide the default yourself (e.g.
+      a successful step will have the status field set to 'SUCCESS' even though
+      this would not be recorded in an expectations file). The final item will
+      have the key '$result' and will be a dictionary describing the final
+      result of the recipe.
+
+      The `cmd` field of Step merits special mention. The `cmd` field is a list
+      of strings that has an enhanced contains check. The `in` operator can be
+      used to check the cmd field for regexes and/or subsequences in addition to
+      the expected ability to check for strings. The first argument to `in` can
+      be a compiled regex rather than a string. In that case, `in` will return
+      True if the result of calling `search` on the compiled regex with any of
+      the elements of the command. The first argument can also be a sequence
+      containing strings and/or compiled regexes. In the case of a sequence,
+      `in` will return True if there is a subsequence of the command whose
+      elements can be matched against the corresponding elements of the argument
+      sequence, where strings are matched by equality and regexes are matched as
+      described above. So given a step that executed the command "python
+      /some/path/script.py --flag1 /tmp/path/output.json --flag2=value2
+      --bool_flag subcommand argument", the following all return True:
+
+      `'--bool_flag' in step.cmd`
+      `re.compile('/script.py$') in step.cmd`
+      `re.compile('^--flag2=') in step.cmd`
+      `['subcommand', 'argument'] in step.cmd`
+      `['--flag1', re.compile('/output.json$')] in step.cmd`
+
+      The `cmd` field is also recorded into expectation files even when empty.
+      If a post-process hook filters out the cmd field, it's default value is
+      None, so if your post-process hook may be run after a post-process hook
+      that filters step fields then you will have to account for the default
+      value (e.g. `step.cmd or []`).
 
       * `check` is a semi-magical function which you can use to test things.
       Using `check` will allow you to see all the violated assertions from your
@@ -608,21 +639,32 @@ class RecipeTestApi(object):
       eliminate an extra `lambda` if your function needs to take additional
       inputs.
 
-    Raising an exception will print the exception and will halt the
-    postprocessing chain entirely.
+    If a KeyError is raised, it will be caught and a check failure will be
+    emitted with details about the expression that resulted in the KeyError and
+    post-processing will continue at the next hook. This allows hooks to assume
+    that a key is present without sacrificing debuggability. If any other
+    exception is raised, the exception will be printed and the post-processing
+    chain will be halted.
 
     The function must return either `None`, or it may return a filtered subset
-    of step_odict (e.g. ommitting some steps and/or dictionary keys). This will
-    be the new value of step_odict for the test. Returning an empty dict or
+    of step_odict (e.g. ommitting some steps and/or step fields). This will be
+    the new value of step_odict for the test. Returning an empty dict or
     OrderedDict will remove the expectations from disk altogether. Returning
     `None` (Python's implicit default return value) is equivalent to returning
-    the unmodified step_odict. 'name' will always be preserved in every step,
-    even if you remove it.
+    the unmodified step_odict. To use lambdas that simply call `check`, use
+    `post_check` instead of `post_process`.
+
+    Steps can be returned either as a `Step` or as a dictionary obtained by
+    calling `to_step_dict` on a `Step`. It is fine to mix representations
+    between different steps. Fields can be removed from a field either by
+    setting them to their default value or removing the item for the field when
+    returning a dict. 'name' will always be preserved in every step, even if you
+    remove it.
 
     Calling post_process multiple times will apply each function in order,
     chaining the output of one function to the input of the next function. This
     is intended to be use to compose the effects of multiple re-usable
-    postprocessing functions, some of which are pre-defined in
+    post-processing functions, some of which are pre-defined in
     `recipe_engine.post_process` which you can import in your recipe.
 
     Example:
@@ -651,7 +693,7 @@ class RecipeTestApi(object):
         )
 
         def assertStuff(check, step_odict, to_check):
-          check(to_check in step_odict['step_name']['cmd'])
+          check(to_check in step_odict['step_name'].cmd)
 
         yield (api.test('assert something and have NO expectation file')
           + api.post_process(assertStuff, 'to_check_arg')
