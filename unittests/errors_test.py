@@ -188,6 +188,38 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
     self._test_cmd(deps, ['run', 'do_nothing'],
       asserts=_assert_output)
 
+  def test_bad_config_import(self):
+    deps = self.FakeRecipeDeps()
+    with deps.main_repo.write_module('mod') as mod:
+      mod.config.write('''
+        import BAD_IMPORT
+      ''')
+
+    with deps.main_repo.write_recipe('recipe') as recipe:
+      recipe.DEPS.append('mod')
+
+    self._test_cmd(
+        deps, ['test', 'train'],
+        asserts=lambda output: self.assertRegexpMatches(
+            output, r'No module named BAD_IMPORT'),
+        retcode=1)
+
+  def test_bad_test_api_import(self):
+    deps = self.FakeRecipeDeps()
+    with deps.main_repo.write_module('mod') as mod:
+      mod.test_api.write('''
+        import BAD_IMPORT
+      ''')
+
+    with deps.main_repo.write_recipe('recipe') as recipe:
+      recipe.DEPS.append('mod')
+
+    self._test_cmd(
+        deps, ['test', 'train'],
+        asserts=lambda output: self.assertRegexpMatches(
+            output, r'No module named BAD_IMPORT'),
+        retcode=1)
+
 
 if __name__ == '__main__':
   test_env.main()

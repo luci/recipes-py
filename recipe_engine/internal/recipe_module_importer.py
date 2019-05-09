@@ -204,11 +204,11 @@ class RecipeModuleImporter(object):
 
     # NOTE: late import to avoid early protobuf import
     from ..config import ConfigContext
+
     cfg_module = None
-    try:
+    if os.path.isfile(os.path.join(mod.__path__[0], 'config.py')):
       cfg_module = importlib.import_module(mod.__name__ + '.config')
-    except ImportError:
-      pass
+
     if cfg_module:
       for v in cfg_module.__dict__.itervalues():
         if isinstance(v, ConfigContext):
@@ -243,10 +243,8 @@ class RecipeModuleImporter(object):
 
     # Identify the (optional) RecipeTestApi subclass as this module's test API.
     test_module = None
-    try:
+    if os.path.isfile(os.path.join(mod.__path__[0], 'test_api.py')):
       test_module = importlib.import_module(mod.__name__ + '.test_api')
-    except ImportError:
-      pass
 
     mod.TEST_API = getattr(mod, 'TEST_API', None)
     if test_module:
