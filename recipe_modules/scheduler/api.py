@@ -199,8 +199,8 @@ class SchedulerApi(recipe_api.RecipeApi):
       # TODO(tandrii): add hostname to step presentation's links.
       # TODO(tandrii): handle errors nicely.
     finally:
-      self.m.step.active_result.presentation.step_text = 'input %s' % (
-          self.m.json.dumps(input_data, indent=4))
+      self.m.step.active_result.presentation.logs['input'] = self.m.json.dumps(
+          input_data, indent=4).splitlines()
 
     return step_result.stdout
 
