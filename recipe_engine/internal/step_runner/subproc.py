@@ -229,12 +229,8 @@ class SubprocessStepRunner(StepRunner):
     def gen_step_prelude():
       yield ' '.join(map(_shell_quote, step.config.cmd))
       cwd = step.config.cwd
-      if cwd is None:
-        try:
-          cwd = os.getcwd()
-        except OSError as ex:
-          cwd = '??? (ENGINE START_DIR IS MISSING: %r)' % (ex,)
-      elif not os.path.isdir(cwd):
+      assert cwd is not None
+      if not os.path.isdir(cwd):
           cwd += ' (MISSING OR NOT A DIR)'
       yield 'in dir %s:' % (cwd,)
       for key, value in sorted(attr.asdict(step.config).items()):

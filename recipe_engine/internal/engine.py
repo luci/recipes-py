@@ -224,6 +224,9 @@ class RecipeEngine(object):
 
       self._close_until_ns(step_config.name_tokens[:-1])
 
+      if step_config.cwd is None:
+        step_config.cwd = self._start_dir
+
       open_step = self._step_runner.open_step(step_config)
       self._step_stack.append(self.ActiveStep(
           config=step_config,
