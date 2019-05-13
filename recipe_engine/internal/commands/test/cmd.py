@@ -384,9 +384,13 @@ def _make_path_cleaner(recipe_deps):
     return '"%s%s"' % (
       roots[match.group(1)], match.group(2).replace('\\', '/'))
 
+  # Replace paths from longest to shortest; because of the way the recipe engine
+  # fetches dependencies (i.e. into the .recipe_deps folder) dependencies of
+  # repo X will have a prefix of X's path.
+  paths = sorted(roots.keys(), key=lambda v: -len(v))
+
   # Look for paths in double quotes (as we might see in a stack trace)
-  replacer = re.compile(r'"(%s)([^"]*)"' % (
-    '|'.join(map(re.escape, roots.keys())),))
+  replacer = re.compile(r'"(%s)([^"]*)"' % ('|'.join(map(re.escape, paths)),))
 
   return lambda lines: [replacer.sub(_root_subber, line) for line in lines]
 
