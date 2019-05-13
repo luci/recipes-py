@@ -34,7 +34,7 @@ class StreamTest(test_env.RecipeEngineUnitTest):
     bar.set_build_property('is_babycrazy', 'true')
     bar.write_line('bar tries to kiss foo, but foo already left')
     bar.write_line('@@@KISS@foo@@@')
-    bar.set_step_status('EXCEPTION')
+    bar.set_step_status('EXCEPTION', had_timeout=False)
     bar.close()
 
   def _example_annotations(self):
@@ -126,14 +126,14 @@ bar tries to kiss foo, but foo already left
     with StreamEngineInvariants() as engine:
       foo = engine.make_step_stream('foo')
       with self.assertRaises(AssertionError):
-        foo.set_step_status('SINGLE')
+        foo.set_step_status('SINGLE', had_timeout=False)
 
   def test_buildbot_status_constraint(self):
     with StreamEngineInvariants() as engine:
       foo = engine.make_step_stream('foo')
-      foo.set_step_status('FAILURE')
+      foo.set_step_status('FAILURE', had_timeout=False)
       with self.assertRaises(AssertionError):
-        foo.set_step_status('SUCCESS')
+        foo.set_step_status('SUCCESS', had_timeout=False)
 
 
 if __name__ == '__main__':

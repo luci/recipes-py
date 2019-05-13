@@ -1,5 +1,30 @@
 [
   {
+    "cmd": [],
+    "name": "RECIPE CRASH (Uncaught exception)",
+    "~followup_annotations": [
+      "@@@STEP_EXCEPTION@@@",
+      "The recipe has crashed at point 'Uncaught exception'!",
+      "",
+      "Traceback (most recent call last):",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/engine.py\", line 375, in run_steps",
+      "    raw_result = recipe_obj.run_steps(api, engine)",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/recipe_deps.py\", line 670, in run_steps",
+      "    properties_def, api=api)",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/property_invoker.py\", line 89, in invoke_with_properties",
+      "    arg_names, **additional_args)",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/property_invoker.py\", line 52, in _invoke_with_properties",
+      "    return callable_obj(*props, **additional_args)",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/step/examples/full.py\", line 33, in RunSteps",
+      "    return RETURN_SCHEMA.new(test_me='this should fail')",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/config.py\", line 483, in new",
+      "    cfg.set_val(kwargs)",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/config.py\", line 431, in set_val",
+      "    raise type(e)('While assigning key %r: %s' % (name, e))",
+      "TypeError: While assigning key 'test_me': Expected 'this should fail' to be of type <type 'int'>"
+    ]
+  },
+  {
     "failure": {
       "humanReason": "Uncaught Exception: TypeError(\"While assigning key 'test_me': Expected 'this should fail' to be of type <type 'int'>\",)"
     },

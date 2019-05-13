@@ -69,7 +69,10 @@
   },
   {
     "cmd": [],
-    "name": "buildbucket.run"
+    "name": "buildbucket.run",
+    "~followup_annotations": [
+      "@@@STEP_EXCEPTION@@@"
+    ]
   },
   {
     "cmd": [

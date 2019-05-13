@@ -5,12 +5,15 @@
       "20"
     ],
     "name": "timeout",
-    "timeout": 1
+    "timeout": 1,
+    "~followup_annotations": [
+      "@@@STEP_FAILURE@@@"
+    ]
   },
   {
     "failure": {
       "failure": {},
-      "humanReason": "Step Timeout: Step('timeout') timed out after 1"
+      "humanReason": "Step('timeout') (timeout)"
     },
     "name": "$result"
   }

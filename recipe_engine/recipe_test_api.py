@@ -255,40 +255,6 @@ class TestData(BaseTestData):
                        'exception class name')
     self.expected_exception = exception
 
-  @contextlib.contextmanager
-  def should_raise_exception(self, exception):
-    """
-    Context manager which tells the caller if it should re-raise the exception.
-
-    Should be called by something handling an exception caused by executing the
-    test. The caller can handle the exception, taking any actions it wants with
-    the exception. Once it is done, the caller should check the value given by
-    this context manager. If it is true, it should re-raise the exception.
-
-    The caller should reraise the exception, rather than this function, because
-    that preserves the previous stack trace, which immensely helps with
-    debugging.
-
-    Usage:
-
-      try:
-        foo.bar()
-        boom.baz()
-      except Something as exc:
-        with test_data.should_raise_exception(exc) as should_raise:
-          print 'exception occured: %s' % exc
-
-          if test_data.should_raise_exception(exc):
-            raise
-    """
-    name = exception.__class__.__name__
-    should_raise = not (self.enabled and name == self.expected_exception)
-
-    yield should_raise
-
-    if not should_raise:
-      self.expected_exception = None
-
   def post_process(self, func, args, kwargs, context):
     self.post_process_hooks.append(PostprocessHook(func, args, kwargs, context))
 
@@ -318,10 +284,6 @@ class DisabledTestData(BaseTestData):
 
   def get_module_test_data(self, _module_name):
     return self
-
-  @contextlib.contextmanager
-  def should_raise_exception(self, exception): # pylint: disable=unused-argument
-    yield True
 
 def mod_test_data(func):
   @static_wraps(func)

@@ -37,6 +37,14 @@ class ProductStreamEngine(StreamEngine):
       ret = ret or self._stream_b.handle_exception(exc_type, exc_val, exc_tb)
       return ret
 
+    def __getattr__(self, name):
+      if name == 'fileno':
+        if hasattr(self._stream_a, 'fileno'):
+          return self._stream_a.fileno
+        if hasattr(self._stream_b, 'fileno'):
+          return self._stream_b.fileno
+      return object.__getattribute__(self, name)
+
     def close(self):
       self._stream_a.close()
       self._stream_b.close()
@@ -44,9 +52,9 @@ class ProductStreamEngine(StreamEngine):
   class StepStream(Stream):
     # pylint: disable=no-self-argument
     def _void_product(method_name):
-      def inner(self, *args):
-        getattr(self._stream_a, method_name)(*args)
-        getattr(self._stream_b, method_name)(*args)
+      def inner(self, *args, **kwargs):
+        getattr(self._stream_a, method_name)(*args, **kwargs)
+        getattr(self._stream_b, method_name)(*args, **kwargs)
       return inner
 
     def new_log_stream(self, log_name):

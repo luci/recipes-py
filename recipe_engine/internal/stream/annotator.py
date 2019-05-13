@@ -3,6 +3,11 @@
 # that can be found in the LICENSE file.
 
 import time
+import traceback
+
+from PB.recipe_engine.result import Result
+
+from ...recipe_api import StepClient
 
 from . import StreamEngine, encode_str
 
@@ -14,6 +19,8 @@ class AnnotatorStreamEngine(StreamEngine):
     self._outstream = outstream
     self.emit_timestamps = emit_timestamps
     self.time_fn = time_fn or time.time
+
+    self.final_result = Result()
 
   def open(self):
     super(AnnotatorStreamEngine, self).open()
@@ -90,7 +97,8 @@ class AnnotatorStreamEngine(StreamEngine):
     def add_step_link(self, name, url):
       self.output_annotation('STEP_LINK', name, url)
 
-    def set_step_status(self, status):
+    def set_step_status(self, status, had_timeout):
+      _ = had_timeout
       if status == 'SUCCESS':
         pass
       elif status == 'WARNING':
@@ -151,5 +159,3 @@ class AnnotatorStreamEngine(StreamEngine):
       stream.output_annotation(
           'STEP_NEST_LEVEL', str(len(step_config.name_tokens)-1))
     return stream
-
-

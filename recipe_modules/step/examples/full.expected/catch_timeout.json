@@ -5,7 +5,10 @@
       "20"
     ],
     "name": "caught timeout",
-    "timeout": 1
+    "timeout": 1,
+    "~followup_annotations": [
+      "@@@STEP_FAILURE@@@"
+    ]
   },
   {
     "jsonResult": {

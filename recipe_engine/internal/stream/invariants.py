@@ -1,8 +1,10 @@
-# Copyright 2019 The Chromium Authors. All rights reserved.
-# Use of this source code is governed by a BSD-style license that can be
-# found in the LICENSE file.
+# Copyright 2019 The LUCI Authors. All rights reserved.
+# Use of this source code is governed under the Apache License, Version 2.0
+# that can be found in the LICENSE file.
 
 import json
+
+from ...types import StepPresentation
 
 from . import StreamEngine
 from .product import ProductStreamEngine
@@ -61,8 +63,9 @@ class StreamEngineInvariants(StreamEngine):
       assert isinstance(name, basestring), 'Link name %s is not a string' % name
       assert isinstance(url, basestring), 'Link url %s is not a string' % url
 
-    def set_step_status(self, status):
-      assert status in ('SUCCESS', 'WARNING', 'FAILURE', 'EXCEPTION')
+    def set_step_status(self, status, had_timeout):
+      _ = had_timeout
+      assert status in StepPresentation.STATUSES, 'Unknown status %r' % status
       if status == 'SUCCESS':
         # A constraint imposed by the annotations implementation
         assert self._status == 'SUCCESS', (
@@ -86,7 +89,7 @@ class StreamEngineInvariants(StreamEngine):
       self._open = True
 
     def write_line(self, line):
-      assert '\n' not in line
+      assert '\n' not in line, 'Newline in %r' % (line,)
       assert self._step_stream._open
       assert self._open
 
@@ -100,5 +103,3 @@ class StreamEngineInvariants(StreamEngine):
         'Step %s already exists' % step_config.name)
     self._streams.add(step_config.name)
     return self.StepStream(self, step_config.name)
-
-

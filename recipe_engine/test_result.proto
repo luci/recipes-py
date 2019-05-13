@@ -53,6 +53,12 @@ message TestResult {
 
   // Indicates recipe execution has crashed (in the user code).
   message CrashFailure {
+    string error = 1;
+  }
+
+  // Indicates that the test was badly formed in some way.
+  message BadTestFailure {
+    string error = 1;
   }
 
   // An internal failure (either ctrl-c interruption, or an exception
@@ -69,6 +75,8 @@ message TestResult {
       InternalFailure internal_failure = 3;
 
       CrashFailure crash_failure = 4;
+
+      BadTestFailure bad_test_failure = 5;
     }
   }
 
@@ -82,6 +90,7 @@ message TestResult {
   //     DiffFailure diff = 1;
   //     InternalFailure internal = 2;
   //     CrashFailure crash = 3;
+  //     BadTestFailure bad_test = 3;
   //     repeated CheckFailure check = 4;
   //   }
   //   map<string, TestFailures> test_failures = 4;

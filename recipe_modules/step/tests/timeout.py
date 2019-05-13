@@ -21,14 +21,23 @@ def RunSteps(api, timeout):
   # longer to run than you allow. Units are seconds.
   try:
     api.step('timeout', ['sleep', '20'], timeout=1)
-  except api.step.StepTimeout:
-    api.step('caught timeout', [])
-    raise
+  except api.step.StepFailure as ex:
+    assert ex.had_timeout
+    api.step('caught timeout (failure)', [])
+
+  # If the step was marked as an infra_step, then it raises InfraFailure
+  # on timeout.
+  try:
+    api.step('timeout', ['sleep', '20'], timeout=1, infra_step=True)
+  except api.step.InfraFailure as ex:
+    assert ex.had_timeout
+    api.step('caught timeout (failure)', [])
 
 
 def GenTests(api):
   yield (
       api.test('timeout') +
       api.properties(timeout=1) +
-      api.step_data('timeout', times_out_after=20)
+      api.step_data('timeout', times_out_after=20) +
+      api.step_data('timeout (2)', times_out_after=20)
     )
