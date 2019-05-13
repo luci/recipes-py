@@ -123,7 +123,7 @@
   {
     "failure": {
       "failure": {},
-      "humanReason": "1 out of 2 aggregated steps failed: Step('testa') (retcode: 1)"
+      "humanReason": "1 out of 2 aggregated steps failed: Step('testa') failed with return_code 1"
     },
     "name": "$result"
   }

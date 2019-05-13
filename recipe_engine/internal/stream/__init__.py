@@ -25,6 +25,27 @@ import time
 from ..engine_step import StepConfig
 
 
+def output_iter(stream, it):
+  """Iterates through each string entry in "it", writing it in full to "stream"
+  using "write_line".
+
+  This protects against cases where text can't be directly rendered by
+  "write_line", notably newlines. In this case, the text will be written via a
+  series of "write_line" calls, one for each line.
+
+  A minimum of one "write_line" will be called per item in "it", regardless of
+  that item's content.
+
+  Args:
+    stream (StreamEngine.Stream): The stream to output to.
+    it (iterable): An iterable that yields strings to write.
+  """
+  for text in it:
+    lines = (text.split('\n') if text else ('',))
+    for line in lines:
+      stream.write_line(line)
+
+
 class StreamEngine(object):
   class Stream(object):
     def write_line(self, line):
@@ -36,16 +57,15 @@ class StreamEngine(object):
       for actual_line in string.splitlines() or ['']: # preserve empty lines
         self.write_line(actual_line)
 
-    # TODO(iannucci): Having a phantom method as part of the API is weird.
-    # If there's a real filelike for this Stream, return it.
-    #
-    # Otherwise don't implement this.
-    # def fileno(self):
+    def fileno(self):
+      """If this has a real file descriptor, return it (int).
+
+      Otherwise return self."""
+      return self
 
     def close(self):
       raise NotImplementedError()
 
-    # TODO(iannucci): make handle_exception unnecessary
     def handle_exception(self, exc_type, exc_val, exc_tb):
       pass
 
@@ -73,7 +93,7 @@ class StreamEngine(object):
     def reset_subannotation_state(self):
       pass
 
-    def set_step_status(self, status, had_timeout):
+    def set_step_status(self, status):
       raise NotImplementedError()
 
     def set_build_property(self, key, value):
@@ -125,7 +145,6 @@ class StreamEngine(object):
   def close(self):
     pass
 
-  # TODO(iannucci): make handle_exception unnecessary
   def handle_exception(self, exc_type, exc_val, exc_tb):
     pass
 

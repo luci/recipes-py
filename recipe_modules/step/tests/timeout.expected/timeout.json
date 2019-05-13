@@ -5,33 +5,17 @@
       "20"
     ],
     "name": "timeout",
-    "timeout": 1,
-    "~followup_annotations": [
-      "@@@STEP_FAILURE@@@"
-    ]
+    "timeout": 1
   },
   {
     "cmd": [],
-    "name": "caught timeout (failure)"
+    "name": "caught timeout"
   },
   {
-    "cmd": [
-      "sleep",
-      "20"
-    ],
-    "infra_step": true,
-    "name": "timeout (2)",
-    "timeout": 1,
-    "~followup_annotations": [
-      "@@@STEP_EXCEPTION@@@"
-    ]
-  },
-  {
-    "cmd": [],
-    "name": "caught timeout (failure) (2)"
-  },
-  {
-    "jsonResult": null,
+    "failure": {
+      "failure": {},
+      "humanReason": "Step Timeout: Step('timeout') timed out after 1"
+    },
     "name": "$result"
   }
 ]

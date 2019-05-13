@@ -15,12 +15,11 @@ import types
 
 from functools import wraps
 
-from .internal import engine_step
 from .recipe_test_api import DisabledTestData, ModuleTestData
 from .third_party.logdog import streamname
 from .third_party.logdog.bootstrap import ButlerBootstrap, NotBootstrappedError
-from .types import StepPresentation
 from .util import ModuleInjectionSite
+from .internal import engine_step
 
 # TODO(iannucci): Rationalize the use of this in downstream scripts.
 from .util import Placeholder  # pylint: disable=unused-import
@@ -203,19 +202,12 @@ class StepClient(object):
 
     This always returns the innermost nested step that is still open --
     presumably the one that just failed if we are in an exception handler."""
-    active_step = self._engine.active_step
-    if not active_step:
+    step = self._engine.active_step
+    if not step:
       raise ValueError(
           'No steps have been run yet, and you are asking for a previous step '
           'result.')
-    return active_step.step_result
-
-  def open_parent_step(self, name_tokens, callback):
-    """Opens a parent step.
-
-    Returns a StepData object with an adjustable StepPresentation.
-    """
-    return self._engine.open_parent_step(name_tokens, callback)
+    return step.step_result
 
   def run_step(self, step):
     """
@@ -226,7 +218,7 @@ class StepClient(object):
       * step (StepConfig) - The step to run.
 
     Returns:
-      A StepData object containing the result of finished the step.
+      A StepData object containing the result of running the step.
     """
     assert isinstance(step, engine_step.StepConfig)
     return self._engine.run_step(step)
@@ -332,7 +324,7 @@ class SourceManifestClient(object):
       host = self._logdog_client.coordinator_host
       project = self._logdog_client.project
       path = self._logdog_client.get_stream_path(logdog_name)
-      self._engine.active_step.step_stream.set_manifest_link(
+      self._engine.active_step.open_step.stream.set_manifest_link(
         name, sha256, 'logdog://%s/%s/%s' % (host, project, path))
 
 
@@ -345,27 +337,14 @@ class StepFailure(Exception):
 
   FIXME: This class is as a general way to fail, but it should be split up.
   See crbug.com/892792 for more information.
-
-  FIXME: These exceptions should be made into more-normal exceptions (e.g.
-  the way reason_message is overridden by subclasses is very strange).
   """
   def __init__(self, name_or_reason, result=None):
     # Raising a StepFailure counts as running a step.
     _DEFER_CONTEXT.mark_ran_step()
-    self.exc_result = None   # default to None
     if result:
       self.name = name_or_reason
       self.result = result
       self.reason = self.reason_message()
-      # TODO(iannucci): This hasattr stuff is pretty bogus. This is attempting
-      # to detect when 'result' was a StepData. However AggregatedStepFailure
-      # passes in something else.
-      if hasattr(result, 'exc_result'):
-        self.exc_result = result.exc_result
-        if self.exc_result.had_timeout:
-          self.reason += ' (timeout)'
-        else:
-          self.reason += ' (retcode: {!r})'.format(self.exc_result.retcode)
     else:
       self.name = None
       self.result = None
@@ -374,17 +353,11 @@ class StepFailure(Exception):
     super(StepFailure, self).__init__(self.reason)
 
   def reason_message(self):
-    return 'Step({!r})'.format(self.name)
+    return "Step({!r}) failed with return_code {}".format(
+        self.name, self.result.retcode)
 
-  @property
-  def had_timeout(self):
-    """
-    Returns True if this exception was caused by a timeout. If this was a manual
-    failure, returns None.
-    """
-    if not self.exc_result:
-      return None
-    return self.exc_result.had_timeout
+  def __str__(self):  # pragma: no cover
+    return "Step Failure in %s" % self.name
 
   @property
   def retcode(self):
@@ -392,9 +365,9 @@ class StepFailure(Exception):
     Returns the retcode of the step which failed. If this was a manual
     failure, returns None
     """
-    if not self.exc_result:
+    if not self.result:
       return None
-    return self.exc_result.retcode
+    return self.result.retcode
 
 
 class StepWarning(StepFailure):
@@ -403,7 +376,11 @@ class StepWarning(StepFailure):
   a warning. Need to figure out how exactly this will be useful.
   """
   def reason_message(self):  # pragma: no cover
-    return "Warning: Step({!r})".format(self.name)
+    return "Warning: Step({!r}) returned {}".format(
+          self.name, self.result.retcode)
+
+  def __str__(self):  # pragma: no cover
+    return "Step Warning in %s" % self.name
 
 
 class InfraFailure(StepFailure):
@@ -412,7 +389,28 @@ class InfraFailure(StepFailure):
   infrastructure.
   """
   def reason_message(self):
-    return "Infra Failure: Step({!r})".format(self.name)
+    return "Infra Failure: Step({!r}) returned {}".format(
+          self.name, self.retcode)
+
+  def __str__(self):
+    return "Infra Failure in %s" % self.name
+
+
+class StepTimeout(StepFailure):
+  """
+  A subclass of StepFailure, where a step times out and is killed.
+  """
+  def __init__(self, name, timeout):
+    self.timeout = timeout
+    self.name = name
+    super(StepTimeout, self).__init__(self.reason_message())
+
+  def reason_message(self):
+    return "Step Timeout: Step({!r}) timed out after {}".format(
+        self.name, self.timeout)
+
+  def __str__(self):
+    return "Step Timeout in %s" % self.name
 
 
 class AggregatedStepFailure(StepFailure):
@@ -426,6 +424,8 @@ class AggregatedStepFailure(StepFailure):
     msg += ', '.join((f.reason or f.name) for f in self.result.failures)
     return msg
 
+  def __str__(self):  # pragma: no cover
+    return "Aggregate Step Failure"
 
 
 class AggregatedResult(object):
@@ -458,11 +458,9 @@ class AggregatedResult(object):
 
   def add_success(self, result):
     self.successes.append(result)
-    return DeferredResult(result, None)
 
   def add_failure(self, exception):
     self.failures.append(exception)
-    return DeferredResult(None, exception)
 
 
 class DeferredResult(object):
@@ -480,6 +478,7 @@ class DeferredResult(object):
     return self._result
 
   def get_error(self):
+    assert self._failure, "WHAT IS IT ARE YOU DOING???!?!?!? SHTAP NAO"
     return self._failure
 
 
@@ -603,9 +602,13 @@ def infer_composite_step(func):
         # a step or throw a StepFailure, return normally.
         if not _DEFER_CONTEXT.ran_step:
           return ret
-        return agg.add_success(ret)
+        agg.add_success(ret)
+        return DeferredResult(ret, None)
       except StepFailure as ex:
-        return agg.add_failure(ex)
+        if isinstance(ex, InfraFailure):
+          agg.contains_infra_failure = True
+        agg.add_failure(ex)
+        return DeferredResult(None, ex)
   _inner.__original = func
   return _inner
 
@@ -639,9 +642,14 @@ def composite_step(func):
     # we'll return a DeferredResult.
     with _DEFER_CONTEXT.begin_normal():
       try:
-        return agg.add_success(func(*a, **kw))
+        ret = func(*a, **kw)
+        agg.add_success(ret)
+        return DeferredResult(ret, None)
       except StepFailure as ex:
-        return agg.add_failure(ex)
+        if isinstance(ex, InfraFailure):
+          agg.contains_infra_failure = True
+        agg.add_failure(ex)
+        return DeferredResult(None, ex)
   _inner.__original = func
   return _inner
 

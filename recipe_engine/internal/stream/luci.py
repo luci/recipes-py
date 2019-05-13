@@ -6,7 +6,6 @@
 import json
 import logging
 import textwrap
-import traceback
 
 import attr
 
@@ -17,7 +16,7 @@ from PB.go.chromium.org.luci.buildbucket.proto.build import Build
 from PB.go.chromium.org.luci.buildbucket.proto.step import Step
 from PB.go.chromium.org.luci.buildbucket.proto import common
 
-from ...recipe_api import InfraFailure, StepFailure
+from ...recipe_api import InfraFailure
 from ...third_party import logdog
 
 from ..attr_util import attr_type
@@ -228,15 +227,13 @@ class LUCIStepStream(StreamEngine.StepStream):
         'please talk to the luci-dev folks. When this is supported on '
         'run_build it will be via direct manifest embedding')
 
-  def set_step_status(self, status, had_timeout):
-    _ = had_timeout
+  def set_step_status(self, status):
     self._step.status = {
       'SUCCESS': common.SUCCESS,
       'FAILURE': common.FAILURE,
       'WARNING': common.FAILURE, # TODO(iannucci): support WARNING
       'EXCEPTION': common.INFRA_FAILURE,
     }[status]
-    # TODO(iannucci): set timeout bit here
 
   def set_build_property(self, key, value):
     self._properties[key] = json.loads(value)
@@ -270,7 +267,6 @@ class LUCIStepStream(StreamEngine.StepStream):
     return self.logging.write_line(line)
 
   def close(self):
-    # TODO(iannucci): close ALL log streams, not just stdout/stderr/logging
     if self._stdout:
       self._stdout.close()
     if self._stderr:
@@ -343,10 +339,8 @@ class LUCIStreamEngine(StreamEngine):
     self._build_stream.close()
 
   def handle_exception(self, exc_type, exc_val, exc_tb):
-    need_tb = True
     if exc_type is None:
       self._build_proto.status = common.SUCCESS
-      need_tb = False
     elif exc_type is InfraFailure:
       self._build_proto.status = common.INFRA_FAILURE
       # TODO(iannucci): add error log stream
@@ -354,22 +348,12 @@ class LUCIStreamEngine(StreamEngine):
         'caught InfraFailure at top level: %r'
       ) % (exc_val,)
     # TODO(iannucci): handle timeout
-    elif exc_type is StepFailure:
-      self._build_proto.status = common.FAILURE
-      self._build_proto.output.summary_markdown = (
-        'caught StepFailure at top level: %r'
-      ) % (exc_val,)
     else:
-      self._build_proto.status = common.INFRA_FAILURE
+      self._build_proto.status = common.FAILURE
+      # TODO(iannucci): add error log stream
       self._build_proto.output.summary_markdown = (
         'caught Exception at top level: %r'
       ) % (exc_val,)
-
-    if need_tb:
-      self._build_proto.output.summary_markdown += '\n\n'
-      for line in traceback.format_exception(exc_type, exc_val, exc_tb):
-        self._build_proto.output.summary_markdown += '    ' + line
-
     self._send()
 
     return True
@@ -378,3 +362,5 @@ class LUCIStreamEngine(StreamEngine):
   def was_successful(self):
     """Used by run_build to set the recipe engine's returncode."""
     return self._build_proto.status == common.SUCCESS
+
+

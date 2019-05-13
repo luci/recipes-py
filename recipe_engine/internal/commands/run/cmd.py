@@ -8,18 +8,40 @@ import logging
 import os
 import sys
 
-from PB.recipe_engine.result import Result
-
 from google.protobuf import json_format as jsonpb
 
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 
 from .... import util
 
-from ...engine import RecipeEngine
+from ...engine import run_steps
 from ...step_runner.subproc import SubprocessStepRunner
 from ...stream.annotator import AnnotatorStreamEngine
 from ...stream.invariants import StreamEngineInvariants
+
+
+def handle_recipe_return(recipe_result, result_filename, stream_engine):
+  if result_filename:
+    with open(result_filename, 'w') as fil:
+      fil.write(jsonpb.MessageToJson(
+          recipe_result, including_default_value_fields=True))
+
+  if recipe_result.json_result:
+    with stream_engine.make_step_stream('recipe result') as s:
+      with s.new_log_stream('result') as l:
+        l.write_split(recipe_result.json_result)
+
+  if recipe_result.HasField('failure'):
+    f = recipe_result.failure
+    with stream_engine.make_step_stream('Failure reason') as s:
+      s.set_step_status(
+         'FAILURE' if recipe_result.failure.HasField('failure') else 'EXCEPTION')
+      with s.new_log_stream('reason') as l:
+        l.write_split(f.human_reason)
+
+    return 1
+
+  return 0
 
 
 def main(args):
@@ -58,16 +80,11 @@ def main(args):
   )
 
   # Have a top-level set of invariants to enforce StreamEngine expectations.
-  result = RecipeEngine.run_steps(
-      args.recipe_deps, properties,
-      StreamEngineInvariants.wrap(stream_engine),
-      SubprocessStepRunner(),
-      os.environ, os.path.abspath(workdir),
-      emit_initial_properties=emit_initial_properties)
+  with StreamEngineInvariants.wrap(stream_engine) as stream_engine:
+    ret = run_steps(
+        args.recipe_deps, properties, stream_engine,
+        SubprocessStepRunner(stream_engine),
+        os.path.abspath(workdir),
+        emit_initial_properties=emit_initial_properties)
 
-  if args.output_result_json:
-    with open(args.output_result_json, 'w') as fil:
-      fil.write(jsonpb.MessageToJson(
-          result, including_default_value_fields=True))
-
-  return 1 if result.HasField("failure") else 0
+    return handle_recipe_return(ret, args.output_result_json, stream_engine)

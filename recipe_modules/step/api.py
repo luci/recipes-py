@@ -6,14 +6,10 @@
 etc.)."""
 
 import contextlib
-import sys
 import types
-
-import attr
 
 from recipe_engine import recipe_api
 from recipe_engine.config_types import Path
-from recipe_engine.types import StepPresentation
 from recipe_engine.util import Placeholder
 
 
@@ -61,6 +57,12 @@ class StepApi(recipe_api.RecipeApiPlain):
     return recipe_api.InfraFailure
 
   @property
+  def StepTimeout(self):
+    """StepTimeout is a subclass of StepFailure and is raised when a step times
+    out."""
+    return recipe_api.StepTimeout
+
+  @property
   def active_result(self):
     """The currently active (open) result from the last step that was run. This
     is a `step_data.StepData` object.
@@ -94,72 +96,28 @@ class StepApi(recipe_api.RecipeApiPlain):
     return self.step_client.previous_step_result()
 
   @contextlib.contextmanager
-  def nest(self, name, status='worst'):
+  def nest(self, name):
     """Nest allows you to nest steps hierarchically on the build UI.
 
     Calling
-
     ```python
-    with api.step.nest(<name>) as parent:
+    with api.step.nest(<name>):
       ...
     ```
 
-    will generate a dummy step with the provided name in the current namespace.
-    All other steps run within this with statement will be hidden from the UI
-    by default under this dummy step in a collapsible hierarchy.
-
-    Nested blocks can also nest within each other.
-
-    The `parent` step emitted here....
-    # TODO(iannucci): finish documentation
+    will generate a dummy step with the provided name. All other steps run
+    within this with statement will be hidden from the UI by default under this
+    dummy step in a collapsible hierarchy. Nested blocks can also nest within
+    each other.
     """
-    assert status in ('worst', 'last'), 'Got bad status: %r' % (status,)
     dedup_name_tokens = self.m.context.record_step_name(name)
     # We use a raw step runner here because we need the same deduplicated name
     # for the step as well as the context namespace, and using `self` is tricky.
-
-    @attr.s
-    class _OpenStep(object):
-      presentation = attr.ib(default=None)
-      callback = attr.ib(default=None)
-    open_step = _OpenStep()
-
-    caught_exc = None
-
-    def _callback(presentation, nest_data):
-      # Then, if they didn't set an initial presentation.status, calculate one.
-      if presentation.status is None:
-        if caught_exc:
-          presentation.status = {
-            recipe_api.StepFailure: self.FAILURE,
-            recipe_api.StepWarning: self.WARNING,
-          }.get(caught_exc, self.EXCEPTION)
-        elif nest_data.children:
-          if status == 'worst':
-            worst = self.SUCCESS
-            for child in nest_data.children:
-              worst = StepPresentation.status_worst(
-                  worst, child.presentation.status)
-            presentation.status = worst
-          else:
-            presentation.status = nest_data.children[-1].presentation.status
-        else:
-          presentation.status = self.SUCCESS
-
-      # Finally, call the callback, if needed.
-      if open_step.callback:
-        open_step.callback(presentation, nest_data)
-
-    step_result = self.step_client.open_parent_step(
-        dedup_name_tokens, _callback)
-    open_step.presentation = step_result.presentation
-
+    step_result = self.step_client.run_step(self.step_client.StepConfig(
+      name_tokens=dedup_name_tokens,
+    ))
     with self.m.context(namespace=dedup_name_tokens[-1]):
-      try:
-        yield open_step
-      except:
-        caught_exc = sys.exc_info()[0]
-        raise
+      yield step_result
 
   @property
   def defer_results(self):

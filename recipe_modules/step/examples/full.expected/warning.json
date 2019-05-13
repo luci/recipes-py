@@ -108,7 +108,7 @@
   {
     "failure": {
       "failure": {},
-      "humanReason": "Step('warning') (retcode: 1)"
+      "humanReason": "Step('warning') failed with return_code 1"
     },
     "name": "$result"
   }

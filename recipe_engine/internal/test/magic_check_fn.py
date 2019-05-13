@@ -748,6 +748,11 @@ class Step(object):
   links = _annotation(
       factory=OrderedDict, parser=_parse_links, unparser=_unparse_links)
 
+  # A string containing the resulting status of the step, one of: 'SUCCESS',
+  # 'EXCEPTION', 'FAILURE', 'WARNING'
+  status = _annotation(
+      default='SUCCESS', parser=_parse_status, unparser=_unparse_status)
+
   # A dictionary containing the build properties set by the step, mapping
   # strings containing the property name to json-ish strings containing the
   # value of the property
@@ -755,11 +760,6 @@ class Step(object):
       factory=OrderedDict,
       parser=_parse_output_properties,
       unparser=_unparse_output_properties)
-
-  # A string containing the resulting status of the step, one of: 'SUCCESS',
-  # 'EXCEPTION', 'FAILURE', 'WARNING'
-  status = _annotation(
-      default='SUCCESS', parser=_parse_status, unparser=_unparse_status)
 
   _ANNOTATION_FIELDS = None
 
@@ -782,8 +782,6 @@ class Step(object):
       step.cmd = Command(step.cmd)
     parsers = [f.metadata['parser'] for f in cls._get_annotation_fields()]
     for annotation in step_dict.get('~followup_annotations', []):
-      if not annotation.startswith('@@@'):
-        continue
       for field in cls._get_annotation_fields():
         if field.metadata['parser'](step, field.name, annotation):
           break

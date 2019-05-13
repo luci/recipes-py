@@ -1,26 +1,5 @@
 [
   {
-    "cmd": [],
-    "name": "RECIPE CRASH (Uncaught exception)",
-    "~followup_annotations": [
-      "@@@STEP_EXCEPTION@@@",
-      "The recipe has crashed at point 'Uncaught exception'!",
-      "",
-      "Traceback (most recent call last):",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/engine.py\", line 375, in run_steps",
-      "    raw_result = recipe_obj.run_steps(api, engine)",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/recipe_deps.py\", line 655, in run_steps",
-      "    ignore_unknown_fields=True))",
-      "  File \"PYTHON/lib/python2.7/site-packages/google/protobuf/json_format.py\", line 421, in ParseDict",
-      "    parser.ConvertMessage(js_dict, message)",
-      "  File \"PYTHON/lib/python2.7/site-packages/google/protobuf/json_format.py\", line 452, in ConvertMessage",
-      "    self._ConvertFieldValuePair(value, message)",
-      "  File \"PYTHON/lib/python2.7/site-packages/google/protobuf/json_format.py\", line 558, in _ConvertFieldValuePair",
-      "    raise ParseError('Failed to parse {0} field: {1}.'.format(name, e))",
-      "ParseError: Failed to parse test_prop field: 'bool' object is not iterable."
-    ]
-  },
-  {
     "failure": {
       "humanReason": "Uncaught Exception: ParseError(\"Failed to parse test_prop field: 'bool' object is not iterable.\",)"
     },

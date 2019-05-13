@@ -5,6 +5,7 @@
 import contextlib
 import datetime
 import functools
+import itertools
 import logging
 import os
 import sys
@@ -142,6 +143,46 @@ def returns_placeholder(func):
   # prevent this placeholder-returning function from becoming a composite_step.
   inner._non_step = True # pylint: disable=protected-access
   return inner
+
+
+BUG_LINK = (
+    'https://code.google.com/p/chromium/issues/entry?%s' % urllib.urlencode({
+        'summary': 'Recipe engine bug: unexpected failure',
+        'comment': 'Link to the failing build and paste the exception here',
+        'labels': 'Infra,Infra-Area-Recipes,Pri-1,Restrict-View-Google,'
+                  'Infra-Troopers',
+        'cc': 'martiniss@chromium.org,iannucci@chromium.org',
+    }))
+
+
+@contextlib.contextmanager
+def raises(exc_cls, stream_engine=None):
+  """If the body raises an exception not in exc_cls, print and abort the engine.
+
+  This is so that we have something to go on when a function goes wrong, yet the
+  exception is covered up by something else (e.g. an error in a finally block).
+  """
+
+  try:
+    yield
+  except Exception as e:
+    if isinstance(e, exc_cls):
+      raise
+    else:
+      # Print right away in case the bug is in the stream_engine.
+      traceback.print_exc()
+      print '@@@STEP_EXCEPTION@@@'
+
+      if stream_engine:
+        # Now do it a little nicer with annotations.
+        with stream_engine.make_step_stream('Recipe engine bug') as stream:
+          stream.set_step_status('EXCEPTION')
+          with stream.new_log_stream('exception') as log:
+            log.write_split(traceback.format_exc())
+          stream.add_step_link('file a bug', BUG_LINK)
+      sys.stdout.flush()
+      sys.stderr.flush()
+      os._exit(2)
 
 
 class StringListIO(object):
@@ -302,3 +343,46 @@ def strip_unicode(obj):
     return new_obj
 
   return obj
+
+
+if sys.platform == "win32":
+  _hunt_path_exts = ('.exe', '.bat')
+  def hunt_path(cmd0, env):
+    """This takes the lazy cross-product of PATH and ('.exe', '.bat') to find
+    what cmd.exe would have found for the command if we used shell=True.
+
+    This must be called with the output from _merge_envs to pick up any changes
+    to PATH.
+
+    If it succeeds, it returns a new cmd0. If it fails, it returns the
+    same cmd0, and subprocess will run as normal (and likely fail).
+
+    This will not attempt to do any evaluations for commands where the program
+    already has an explicit extension (.exe, .bat, etc.), and it will not
+    attempt to do any evaluations for commands where the program is an absolute
+    path.
+
+    This DOES NOT use PATHEXT to keep the recipe engine's behavior as
+    predictable as possible. We don't currently rely on any other runnable
+    extensions besides these two, and when we could, we choose to explicitly
+    invoke the interpreter (e.g. python.exe, cscript.exe, etc.).
+    """
+    if '.' in cmd0:  # something.ext will work fine with subprocess.
+      return cmd0
+    if os.path.isabs(cmd0):  # PATH isn't even used
+      return cmd0
+
+    # begin the hunt
+    paths = env.get('PATH', '').split(os.pathsep)
+    if not paths:
+      return cmd0
+
+    # try every extension for each path
+    for path, ext in itertools.product(paths, _hunt_path_exts):
+      candidate = os.path.join(path, cmd0+ext)
+      if os.path.isfile(candidate):
+        return candidate
+    return cmd0
+else:
+  def hunt_path(rendered_step, _step_env):
+    return rendered_step

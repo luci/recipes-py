@@ -8,6 +8,8 @@ RecipeEngine.
 # TODO(iannucci): Simplify this.
 """
 
+import pprint
+
 import attr
 
 from .attr_util import attr_type, attr_dict_type, attr_seq_type, attr_value_is
@@ -29,12 +31,17 @@ class EnvAffix(object):
   def __attrs_post_init__(self):
     object.__setattr__(self, 'mapping', freeze(self.mapping))
 
+  def render_step_value(self):
+    rendered = {k: (self.pathsep or ':').join(str(x) for x in v)
+                for k, v in self.mapping.iteritems()}
+    return pprint.pformat(rendered, width=1024)
+
 
 @attr.s(frozen=True)
 class TriggerSpec(object):
-  """TriggerSpec is the internal representation of a raw trigger step. You
-  should use the standard 'step' recipe module, which will construct trigger
-  specs via API.
+  """TriggerSpec is the internal representation of a raw trigger step. You should
+  use the standard 'step' recipe module, which will construct trigger specs
+  via API.
   """
   # The name of the builder to trigger.
   builder_name = attr.ib(validator=attr_type(str))
@@ -77,10 +84,10 @@ def _file_placeholder(base_placeholder_type):
 
 @attr.s
 class StepConfig(object):
-  """StepConfig is the representation of a raw step as the recipe_engine sees
-  it.  You should use the standard 'step' recipe module, which will construct
-  and pass this data to the engine for you, instead. The only reason why you
-  would need to worry about this object is if you're modifying the step module
+  """StepConfig is the representation of a raw step as the recipe_engine sees it.
+  You should use the standard 'step' recipe module, which will construct and
+  pass this data to the engine for you, instead. The only reason why you would
+  need to worry about this object is if you're modifying the step module
   itself.
   """
   # The list of name pieces for this step. Every piece indicates a level of

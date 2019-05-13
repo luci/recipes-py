@@ -584,13 +584,14 @@ class Recipe(object):
     """
     return parse_deps_spec(self.repo.name, self.global_symbols.get('DEPS', ()))
 
-  def mk_api(self, engine, test_data=None):
-    """Makes a RecipeScriptApi, suitable for use with run_steps.
+  def run_steps(self, engine, test_data=None):
+    """Runs this recipe's RunSteps function.
 
+    Args:
       * engine (RecipeEngine) - The engine to use for running.
-      * test_data (RecipeTestData) - The test data to build the api with.
+      * test_data (None|TestData) - The test data for this run.
 
-    Returns RecipeScriptApi.
+    Returns the result of RunSteps.
     """
     test_data = test_data or DisabledTestData()
     # Provide a fake module to the ScriptApi so that recipes can use:
@@ -617,18 +618,10 @@ class Recipe(object):
       for local_name, resolved_dep in resolved_deps.iteritems()
       if resolved_dep is not None
     })
-    return api
 
-  def run_steps(self, api, engine):
-    """Runs this recipe's RunSteps function.
+    # see function docstring for hack description.
+    engine.initialize_path_client_HACK(api)
 
-    Args:
-      * api (RecipeScriptApi) - The api object corresponding to this recipe
-        (built with mk_api.)
-      * engine (RecipeEngine) - The engine to use for running.
-
-    Returns the result of RunSteps.
-    """
     properties_def = self.global_symbols['PROPERTIES']
     env_properties_def = self.global_symbols.get('ENV_PROPERTIES')
 

@@ -13,7 +13,7 @@ import time
 
 import test_env
 
-from recipe_engine.internal.engine import _shell_quote
+from recipe_engine.internal.step_runner.subproc import _shell_quote
 
 
 class RunTest(test_env.RecipeEngineUnitTest):
@@ -104,7 +104,7 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     stdout, _ = subp.communicate()
 
     self.assertRegexpMatches(stdout, '(?m)^@@@STEP_EXCEPTION@@@$')
-    self.assertRegexpMatches(stdout, 'failed to resolve cmd0')
+    self.assertRegexpMatches(stdout, 'OSError')
     self.assertEqual(1, subp.returncode, stdout)
 
   def test_trigger(self):
@@ -141,7 +141,7 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
         'Command with "quotes"',
         "I have 'single quotes'",
         'Some \\Esc\ape Seque\nces/',
-        u'Unicode makes me \u2609\u203f\u2299'.encode('utf-8'),
+        u'Unicode makes me \u2609\u203f\u2299',
     ]
 
     for s in STRINGS:
@@ -155,7 +155,7 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       # exactly what subprocess did.
       bash_output = subprocess.check_output([
           'bash', '-c', '/bin/echo %s' % quoted])
-      self.assertEqual(bash_output, s + '\n')
+      self.assertEqual(bash_output.decode('utf-8'), s + '\n')
 
       # zsh is untested because zsh isn't provisioned on our bots.
       # zsh_output = subprocess.check_output([
@@ -172,11 +172,8 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     self.assertRegexpMatches(stdout, r'(?m)^@@@BUILD_STEP@pippy@@@$')
     # Before 'Subannotate me' we expect an extra STEP_CURSOR to reset the
     # state.
-    self.assertRegexpMatches(stdout, '(?m)^' + r'\n'.join([
-      r'@@@STEP_CURSOR@Subannotate me@@@',
-      r'@@@STEP_LOG_END@\$debug@@@',
-      r'@@@STEP_CLOSED@@@',
-    ]) + '$')
+    self.assertRegexpMatches(stdout,
+        r'(?m)^@@@STEP_CURSOR@Subannotate me@@@\n@@@STEP_CLOSED@@@$')
 
 
 
