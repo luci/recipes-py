@@ -2,21 +2,16 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import collections
-import contextlib
-import traceback
+from collections import OrderedDict
 
 import attr
 
-from ... import recipe_api
-from ... import recipe_test_api
+from ...recipe_test_api import StepTestData, BaseTestData
+from ...step_data import ExecutionResult
 
-from .. import stream
-from ..engine_env import FakeEnviron, merge_envs
+from ..engine_env import FakeEnviron
 
-from . import StepRunner, OpenStep
-from . import construct_step_result, render_step
-
+from . import StepRunner, Step
 
 
 class SimulationStepRunner(StepRunner):
@@ -27,107 +22,165 @@ class SimulationStepRunner(StepRunner):
   values.
   """
 
-  def __init__(self, stream_engine, test_data, annotator):
+  def __init__(self, test_data):
     self._test_data = test_data
-    self._stream_engine = stream_engine
-    self._annotator = annotator
-    self._step_history = collections.OrderedDict()
 
-  @property
-  def stream_engine(self):
-    return self._stream_engine
+    # dot-name -> StepTestData
+    self._used_steps = {}
 
-  def open_step(self, step_config):
-    try:
-      test_data_fn = step_config.step_test_data or recipe_test_api.StepTestData
-      step_test = self._test_data.pop_step_test_data(step_config.name,
-                                                     test_data_fn)
-      rendered_step = render_step(step_config, step_test)
+    # (dot-name, namespace, name) -> PlaceholderTestData
+    self._used_placeholders = {}
 
-      # Merge our environment. Note that do NOT apply prefixes when rendering
-      # expectations, as they are rendered independently.
-      step_env, removed = merge_envs(
-          FakeEnviron(), rendered_step.config.env, {}, {}, None)
-      # We want envvar deletions to show up in the test expectations, so add
-      # them back into step_env.
-      step_env.update((k, None) for k in removed)
+    # (dot-name, handle_name) -> PlaceholderTestData
+    self._used_handle_placeholders = {}
 
-      rendered_step = rendered_step._replace(
-          config=attr.evolve(rendered_step.config, env=step_env))
-      step_config = None  # Make sure we use rendered step config.
+    # dot-name -> {
+    #   env_prefixes: {str: List[str]}
+    #   env_suffixes: {str: List[str]}
+    #   env: {str: str}
+    #   infra_step: bool
+    #   allow_subannotations: bool
+    # }
+    #
+    # NOTE: This data is merged with the ordered presentation (UI) data in the
+    # test command implementation. Thus this dictionary doesn't need to be
+    # ordered.
+    #
+    # TODO(iannucci): Make this expectation data a real type (either @attr.s or
+    # a protobuf message)
+    self._step_precursor_data = {}
 
-      # Layer the simulation step on top of the given stream engine.
-      step_stream = self._stream_engine.new_step_stream(rendered_step.config)
-    except:
-      with self.stream_engine.make_step_stream('Step Preparation Exception') as s:
-        s.set_step_status('EXCEPTION')
-        with s.new_log_stream('exception') as l:
-          l.write_split(traceback.format_exc())
-      raise
+    # dot-name -> Step
+    self._step_history = {}
 
-    class ReturnOpenStep(OpenStep):
-      # pylint: disable=no-self-argument
-      def run(inner):
-        timeout = rendered_step.config.timeout
-        if (timeout and step_test.times_out_after and
-            step_test.times_out_after > timeout):
-          raise recipe_api.StepTimeout(rendered_step.config.name, timeout)
+  def register_step_config(self, step_config):
+    dot_name = '.'.join(step_config.name_tokens)
 
-        # Install a placeholder for order.
-        self._step_history[rendered_step.config.name] = None
-        return construct_step_result(rendered_step, step_test.retcode)
+    # This moves the test data from _test_data to _used_steps. This will return
+    # StepData() if `dot_name` isn't in self._test_data.
+    self._used_steps[dot_name] = self._test_data.pop_step_test_data(
+        dot_name, step_config.step_test_data or StepTestData)
 
-      def finalize(inner):
-        rs = rendered_step
+    if step_config.trigger_specs:
+      # Triggers happen even if we don't run the step.
+      self._step_history[dot_name] = {
+        'name': dot_name,
+        'cmd': [],
+        'trigger_specs': [
+          trig._asdict()
+          for trig in (step_config.trigger_specs or ())
+        ]
+      }
 
-        # note that '~' sorts after 'z' so that this will be last on each
-        # step. also use _step to get access to the mutable step
-        # dictionary.
-        buf = self._annotator.step_buffer(rs.config.name)
-        lines = filter(None, buf.getvalue()).splitlines()
-        # Only keep @@@annotation@@@ lines.
-        lines = [stream.encode_str(x) for x in lines if x.startswith('@@@')]
-        if lines:
-          # This magically floats into step_history, which we have already
-          # added step_config to.
-          rs = rs._replace(followup_annotations=lines)
-        step_stream.close()
-        self._step_history[rs.config.name] = rs
+    self._step_precursor_data[dot_name] = {
+      'env_prefixes': step_config.env_prefixes.mapping,
+      'env_suffixes': step_config.env_suffixes.mapping,
+      'env': step_config.env,
+      'infra_step': step_config.infra_step,
+      'allow_subannotations': step_config.allow_subannotations,
+    }
 
-      @property
-      def stream(inner):
-        return step_stream
+  def placeholder(self, name_tokens, placeholder):
+    dot_name = '.'.join(name_tokens)
+    # TODO(iannucci): this is janky; simplify all the placeholder naming stuff.
+    # See comment on types.StepData.
+    module_name, method_name = placeholder.namespaces
+    name = placeholder.name
 
-    return ReturnOpenStep()
+    key = (dot_name, module_name, method_name, name)
+    if key not in self._used_placeholders:
+      self._used_placeholders[key] = self._used_steps[dot_name].pop_placeholder(
+          module_name, method_name, name)
+    ret = self._used_placeholders[key]
+    return ret
 
-  @contextlib.contextmanager
-  def run_context(self):
-    try:
-      yield
-    except Exception as ex:
-      with self._test_data.should_raise_exception(ex) as should_raise:
-        if should_raise:
-          raise
+  def handle_placeholder(self, name_tokens, handle_name):
+    dot_name = '.'.join(name_tokens)
 
-    assert_msg = (
-        "Unconsumed test data for steps: %s. Ran the following steps "
-        "(in order):\n%s" % (
-            self._test_data.step_data.keys(),
-            '\n'.join(repr(s) for s in self._step_history.keys())))
-    if self._test_data.expected_exception:
-      assert_msg += ", (exception %s)" % self._test_data.expected_exception
-    assert self._test_data.consumed, assert_msg
+    key = (dot_name, handle_name)
+    if key not in self._used_placeholders:
+      self._used_placeholders[key] = getattr(
+          self._used_steps[dot_name], handle_name)
+    return self._used_placeholders[key]
 
-  def _rendered_step_to_dict(self, rs):
-    d = rs.config._asdict()
-    if rs.followup_annotations:
-      d['~followup_annotations'] = rs.followup_annotations
-    return d
+  def run(self, name_tokens, debug_log, step):
+    del debug_log  # unused
 
-  @property
-  def steps_ran(self):
-    return collections.OrderedDict(
-      (name, self._rendered_step_to_dict(rs))
-      for name, rs in self._step_history.iteritems())
+    dot_name = '.'.join(name_tokens)
 
+    # Create the "recipe expectation" dict for this step.
+    # TODO(iannucci): Rationalize these:
+    #   * use step.env instead of precursor
+    #   * Always omit empty fields (right now cmd is kept)
+    step_obj = attr.asdict(
+        step, filter=lambda attr, value: bool(value))
+    step_obj['name'] = dot_name
+    if 'cmd' not in step_obj:
+      step_obj['cmd'] = []
+    for handle_name in ('stdout', 'stderr'):
+      if handle_name not in step_obj:
+        continue
+      if not isinstance(step_obj[handle_name], str):
+        del step_obj[handle_name]
+    precursor = self._step_precursor_data[dot_name]
+    if precursor['env_prefixes']:
+      step_obj['env_prefixes'] = precursor['env_prefixes']
+    if precursor['env_suffixes']:
+      step_obj['env_suffixes'] = precursor['env_suffixes']
+    if precursor['env']:
+      fake_env = FakeEnviron()
+      step_obj['env'] = {
+        k: (v if v is None else v % fake_env)
+        for k, v in precursor['env'].iteritems()
+      }
+    else:
+      step_obj.pop('env', None)
+    if precursor['infra_step']:
+      step_obj['infra_step'] = True
+    if precursor['allow_subannotations']:
+      step_obj['allow_subannotations'] = True
+    self._step_history.setdefault(dot_name, {}).update(step_obj)
+
+    tdata = self._used_steps[dot_name]
+
+    if tdata.times_out_after and step.timeout:
+      if tdata.times_out_after > step.timeout:
+        return ExecutionResult(had_timeout=True)
+
+    return ExecutionResult(retcode=tdata.retcode)
+
+  def run_noop(self, name_tokens, debug_log):
+    return self.run(name_tokens, debug_log, Step(
+        cmd=[],
+        cwd='',
+        stdin=None,
+        stdout='',
+        stderr='',
+        env={},
+        timeout=None,
+    ))
+
+  def export_steps_ran(self):
+    """Returns a dictionary of all steps run.
+
+    This maps from the step's dot-name to dictionaries of:
+
+      * name (str) - The step's dot-name
+      * cmd (List[str]) - The command
+      * cwd (str) - The current working directory
+      * env (Dict[str, (str|None)]) - Mapping of direct environment
+        replacements.
+      * env_prefixes (Dict[str, List[str]]) - Mapping of direct environment
+        replacements which should be joined at the beginning of the env key with
+        os.pathsep.
+      * env_suffixes (Dict[str, List[str]]) - Mapping of direct environment
+        replacements which should be joined at the end of the env key with
+        os.pathsep.
+      * infra_step (bool) - If this step was intended to be an 'infra step' or
+        not.
+      * timeout (int) - The timeout, in seconds.
+
+    TODO(iannucci): Make this map to a real type.
+    """
+    return self._step_history.copy()
 

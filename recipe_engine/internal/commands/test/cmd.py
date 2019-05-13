@@ -36,10 +36,13 @@ from PB.recipe_engine.test_result import TestResult
 from .... import config_types
 
 from ...engine import RecipeEngine
-from ...test import magic_check_fn
+from ...engine_env import FakeEnviron
+from ...exceptions import CrashEngine
 from ...step_runner.sim import SimulationStepRunner
+from ...stream import StreamEngine
 from ...stream.annotator import AnnotatorStreamEngine
 from ...stream.invariants import StreamEngineInvariants
+from ...test import magic_check_fn
 
 from ..doc.cmd import regenerate_docs
 
@@ -52,6 +55,10 @@ from ..doc.cmd import regenerate_docs
 # overwritten in main().
 # pylint: disable=global-statement
 _RECIPE_DEPS = None # type: recipe_deps.RecipeDeps
+
+# A function which efficiently scrubs system-specific paths from tracebacks. Set
+# in main().
+_PATH_CLEANER = None
 
 
 # An event to signal exit, for example on Ctrl-C.
@@ -69,12 +76,6 @@ _MODE_TEST, _MODE_TRAIN, _MODE_DEBUG = range(3)
 # Allow regex patterns to be 'deep copied' by using them as-is.
 # pylint: disable=protected-access
 copy._deepcopy_dispatch[re._pattern_type] = copy._deepcopy_atomic
-
-
-class RecipeRunError(Exception):
-  """Exception raised when user recipe code fails
-  (as opposed to an internal error in recipe engine itself)."""
-  pass
 
 
 @contextlib.contextmanager
@@ -142,6 +143,22 @@ class CheckFailure(TestFailure):
     return self.check.as_proto()
 
 
+class BadTestFailure(TestFailure):
+  """Failure when the test itself was bad somehow (e.g. provides mock data
+  for steps which never ran)."""
+
+  def __init__(self, error):
+    self.error = error
+
+  def format(self):
+    return str(self.error)
+
+  def as_proto(self):
+    proto = TestResult.TestFailure()
+    proto.bad_test_failure.error = self.error
+    return proto
+
+
 class CrashFailure(TestFailure):
   """Failure when the recipe run crashes with an uncaught exception."""
 
@@ -153,7 +170,7 @@ class CrashFailure(TestFailure):
 
   def as_proto(self):
     proto = TestResult.TestFailure()
-    proto.crash_failure.MergeFrom(TestResult.CrashFailure())
+    proto.crash_failure.error = self.error
     return proto
 
 
@@ -237,13 +254,65 @@ def maybe_debug(break_funcs, enable):
     debugger.interaction(None, t)
 
 
+def _compare_results(train_mode, failures, actual_obj, expected,
+                    expectation_path):
+  """Compares the actual and expected results.
+
+  Args:
+
+    * train_mode (bool) - if we're in _MODE_TRAIN
+    * failures (List[TestFailure]) - The list of accumulated failures for this
+      test run. This function may append to this list.
+    * actual_obj (Jsonish test expectation) - What the simulation actually
+      produced.
+    * expected (None|JSON encoded test expectation) - The current test
+      expectation from the disk.
+    * expectation_path (str) - The path on disk of the expectation file.
+
+  Side-effects: appends to `failures` if something doesn't match up.
+  Returns the character code for stdout.
+  """
+  if actual_obj is None and expected is None:
+    return '.'
+
+  actual = json.dumps(
+      re_encode(actual_obj), sort_keys=True, indent=2,
+      separators=(',', ': '))
+
+  if actual == expected:
+    return '.'
+
+  if actual_obj is not None:
+    if train_mode:
+      expectation_dir = os.path.dirname(expectation_path)
+      # This may race with other processes, so just attempt to create dir
+      # and ignore failure if it already exists.
+      try:
+        os.makedirs(expectation_dir)
+      except OSError as ex:
+        if ex.errno != errno.EEXIST:
+          raise ex
+      with open(expectation_path, 'wb') as fil:
+        fil.write(actual)
+    else:
+      diff = '\n'.join(difflib.unified_diff(
+          unicode(expected).splitlines(),
+          unicode(actual).splitlines(),
+          fromfile='expected', tofile='actual',
+          n=4, lineterm=''))
+
+      failures.append(DiffFailure(diff))
+
+  return 'D' if train_mode else 'F'
+
+
 def run_test(test_description, mode):
   """Runs a test. Returns TestResults object."""
   expected = None
   if os.path.exists(test_description.expectation_path):
     try:
-      with open(test_description.expectation_path) as f:
-        expected = f.read()
+      with open(test_description.expectation_path) as fil:
+        expected = fil.read()
     except Exception:
       if mode == _MODE_TRAIN:
         # Ignore errors when training; we're going to overwrite the file anyway.
@@ -256,69 +325,253 @@ def run_test(test_description, mode):
     main_repo.recipes[test_description.recipe_name].global_symbols['RunSteps'],
   ]
 
-  try:
-    with maybe_debug(break_funcs, mode == _MODE_DEBUG):
-      actual_obj, failed_checks, coverage_data = run_recipe(
-          test_description.recipe_name, test_description.test_name,
-          test_description.covers,
-          enable_coverage=(mode != _MODE_DEBUG))
-  except RecipeRunError as ex:
-    sys.stdout.write('E')
-    sys.stdout.flush()
-    return _TestResult(
-        test_description, [CrashFailure(ex)], coverage.CoverageData(), False)
-
-  actual = json.dumps(
-      re_encode(actual_obj), sort_keys=True, indent=2,
-      separators=(',', ': '))
+  with maybe_debug(break_funcs, mode == _MODE_DEBUG):
+    (
+      actual_obj, failed_checks, crash_failure, bad_test_failures, coverage_data
+    ) = run_recipe(
+        test_description.recipe_name, test_description.test_name,
+        test_description.covers,
+        enable_coverage=(mode != _MODE_DEBUG))
 
   failures = []
 
+  status = _compare_results(
+      mode == _MODE_TRAIN, failures, actual_obj, expected,
+      test_description.expectation_path)
+  if bad_test_failures:
+    status = 'B'
+    failures.extend(bad_test_failures)
+  if crash_failure:
+    status = 'E'
+    failures.append(crash_failure)
   if failed_checks:
-    sys.stdout.write('C')
+    status = 'C'
     failures.extend([CheckFailure(c) for c in failed_checks])
-  elif actual_obj is None and expected is None:
-    sys.stdout.write('.')
-  elif actual != expected:
-    if actual_obj is not None:
-      if mode == _MODE_TRAIN:
-        expectation_dir = os.path.dirname(test_description.expectation_path)
-        # This may race with other processes, so just attempt to create dir
-        # and ignore failure if it already exists.
-        try:
-          os.makedirs(expectation_dir)
-        except OSError as e:
-          if e.errno != errno.EEXIST:
-            raise e
-        with open(test_description.expectation_path, 'wb') as f:
-          f.write(actual)
-      else:
-        diff = '\n'.join(difflib.unified_diff(
-            unicode(expected).splitlines(),
-            unicode(actual).splitlines(),
-            fromfile='expected', tofile='actual',
-            n=4, lineterm=''))
 
-        failures.append(DiffFailure(diff))
-
-    if mode == _MODE_TRAIN:
-      sys.stdout.write('D')
-    else:
-      sys.stdout.write('F')
-  else:
-    sys.stdout.write('.')
+  sys.stdout.write(status)
   sys.stdout.flush()
 
   return _TestResult(test_description, failures, coverage_data,
                     actual_obj is not None)
 
 
+def _make_path_cleaner(recipe_deps):
+  """Returns a filtering function which substitutes real paths-on-disk with
+  expectation-compatible `RECIPE_REPO[repo name]` mock paths. This only works
+  for paths contained in double-quotes (e.g. as part of a stack trace).
+
+  Args:
+
+    * recipe_deps (RecipeDeps) - All of the loaded recipe dependencies.
+
+  Returns `func(lines : List[str]) -> List[str]` which converts real on-disk
+  absolute paths to RECIPE_REPO mock paths.
+  """
+  # maps path_to_replace -> replacement
+  roots = {}
+  # paths of all recipe_deps
+  for repo in recipe_deps.repos.itervalues():
+    roots[repo.path] = 'RECIPE_REPO[%s]' % repo.name
+
+  # NOTE: Recipes ALWAYS run under vpython currently, so unguarded access to
+  # `sys.real_prefix` below is safe.
+  # sys.prefix -> path of virtualenv prefix
+  # sys.real_prefix -> path of system prefix
+  roots[os.path.abspath(sys.prefix)] = 'PYTHON'
+  roots[os.path.abspath(sys.real_prefix)] = 'PYTHON' # pylint: disable=no-member
+
+  def _root_subber(match):
+    return '"%s%s"' % (
+      roots[match.group(1)], match.group(2).replace('\\', '/'))
+
+  # Look for paths in double quotes (as we might see in a stack trace)
+  replacer = re.compile(r'"(%s)([^"]*)"' % (
+    '|'.join(map(re.escape, roots.keys())),))
+
+  return lambda lines: [replacer.sub(_root_subber, line) for line in lines]
+
+
+def _merge_presentation_updates(steps_ran, presentation_steps):
+  """Merges the steps ran (from the SimulationStepRunner) with the steps
+  presented (from the SimulationAnnotatorStreamEngine).
+
+  Args:
+
+    * steps_ran (Dict[str, dict]) - Mapping of step name to its run details as
+      an expectation dict (e.g. 'cmd', 'env', etc.)
+    * presentation_steps (OrderedDict[str, StringIO]) - Mapping of presentation
+      step name (in the order that they were presented) to all emitted
+      annotations for that step.
+
+  Returns OrderedDict[str, expectation: dict]. This will have the order of steps
+  in the order that they were presented.
+  """
+  ret = collections.OrderedDict()
+  for step_name, step_presented in presentation_steps.iteritems():
+    # root annotations
+    if step_name is None:
+      continue
+    ret[step_name] = steps_ran.get(step_name, {
+      'name': step_name,
+      # TODO(iannucci): Drop 'cmd' field for presentation-only steps.
+      'cmd': [],
+    })
+    output = step_presented.getvalue()
+    if output:
+      lines = _PATH_CLEANER(output.splitlines())
+      # wowo hacks!
+      # We only want to see $debug if it's got a crash in it.
+      if "@@@STEP_LOG_LINE@$debug@Unhandled exception:@@@" not in lines:
+        lines = [line for line in lines if '$debug' not in line]
+      if lines:
+        ret[step_name]['~followup_annotations'] = lines
+
+  return ret
+
+
+def _check_exception(expected_exception, raw_expectations):
+  """Check to see if the test run failed with an exception from RunSteps.
+
+  This currently extracts and does some lite parsing of the stacktrace from the
+  "RECIPE CRASH (Uncaught exception)" step, which the engine produces from
+  _log_crash when RunSteps tosses a non StepFailure exception. This is
+  definitely looser than it should be, but it's the best we can do until
+  expectations are natively object-oriented instead of bag of JSONish stuff.
+  That said, it works Alright For Now (tm).
+
+  Args:
+
+    * expected_exception (str|None) - The name of the exception that the test
+      case expected.
+    * raw_expectations (Dict[str, dict]) - Mapping of presentation step name to
+      the expectation dictionary for that step.
+
+  Returns CrashFailure|None.
+  """
+
+
+  # Check to see if the user expected the recipe to crash in this test case or
+  # not.
+  # TODO(iannucci): This step name matching business is a bit sketchy.
+  crash_step = raw_expectations.get('RECIPE CRASH (Uncaught exception)')
+  crash_lines = crash_step['~followup_annotations'] if crash_step else []
+  if expected_exception:
+    if crash_step:
+      # TODO(iannucci): the traceback really isn't "followup_annotations", but
+      # stdout printed to the step currently ends up there. Fix this when
+      # refactoring the test expectation format.
+      #
+      # The Traceback looks like:
+      #   Traceback (most recent call last)
+      #      ...
+      #      ...
+      #   ExceptionClass: Some exception text    <- want this line
+      #   with newlines in it.
+      exception_line = None
+      for line in reversed(crash_lines):
+        if line.startswith((' ', 'Traceback (most recent')):
+          break
+        exception_line = line
+      # We expect the traceback line to look like:
+      #   "ExceptionClass"
+      #   "ExceptionClass: Text from the exception message."
+      if not exception_line.startswith(expected_exception):
+        return CrashFailure((
+          'Expected exception mismatch in RunSteps. The test expected %r'
+          ' but the exception line was %r.' % (
+            expected_exception, exception_line,
+          )
+        ))
+    else:
+      return CrashFailure(
+          'Missing expected exception in RunSteps. `api.expect_exception` is'
+          ' specified, but the exception did not occur.'
+      )
+  else:
+    if crash_step:
+      msg_lines = [
+        'Unexpected exception in RunSteps. Use `api.expect_exception` if'
+        ' the crash is intentional.',
+      ]
+
+      traceback_idx = 0
+      for i, line in enumerate(crash_lines):
+        if line.startswith('Traceback '):
+          traceback_idx = i
+          break
+      msg_lines.extend(
+          '    ' + line
+          for line in crash_lines[traceback_idx:]
+          if not line.startswith('@@@')
+      )
+      return CrashFailure('\n'.join(msg_lines))
+
+  return None
+
+
+def _check_bad_test(test_data, steps_ran, presentation_steps):
+  """Check to see if the user-provided test was malformed in some way.
+
+  Currently this only identifies issues around unconsumed or misplaced
+  step_data.
+
+  Args:
+
+    * test_data (recipe_engine.recipe_test_api.TestData) - The user-provided
+      test data object, after running the test. We're checking to see that it's
+      empty now.
+    * steps_ran (List[str]) - The list of step names which the
+      SimulationStepRunner saw. This will only include step names run via
+      `api.step()`, and notably omits 'presentation only' steps such as parent
+      nest steps or steps emitted by the engine for UI purposes (e.g. crash
+      reports).
+    * presentation_steps (List[str]) - The list of step names which the
+      SimulationAnnotatorStreamEngine saw. This is the full list of steps which
+      would occur on the build UI.
+
+  Returns List[BadTestFailure].
+  """
+  ret = []
+
+  for step in test_data.step_data:
+    # This is an unconsumed step name.
+
+    if step in presentation_steps:
+      # If the step is unconsumed but present in presentation_steps it means
+      # that the step was really a presentation-only step (like a parent nesting
+      # step) and not eligble for test data.
+      ret.append(BadTestFailure((
+          'Mock data provided for presentation only step %r.\n'
+          '  Presentation-only steps (like parent nesting steps) have no\n'
+          '  subprocess associated with them and so cannot have mock data.\n'
+          '  Please change your test so that it provides mock data for one of\n'
+          '  the real steps.'
+      ) % step))
+
+    else:
+      ret.append(BadTestFailure(
+        'Mock data provided for non-existent step %r.' % step))
+
+  if ret:
+    ret.append(BadTestFailure(
+        'For reference, this test ran the following steps:\n' +
+        '\n'.join('  ' + repr(s) for s in steps_ran)
+    ))
+
+  return ret
+
+
 def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
   """Runs the recipe under test in simulation mode.
+
+  # TODO(iannucci): Implement a better flow for this returned data; interaction
+  # with run_test is a bit weird. Maybe combine/refactor them?
 
   Returns a tuple:
     - expectation data
     - failed post-process checks (if any)
+    - a CrashFailure (if any)
+    - a list of BadTestFailure objects (if any)
     - coverage data
   """
   config_types.ResetTostringFns()
@@ -326,50 +579,58 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
   # Grab test data from the cache. This way it's only generated once.
   test_data = _GEN_TEST_CACHE[(recipe_name, test_name)]
 
+  step_runner = SimulationStepRunner(test_data)
   annotator = SimulationAnnotatorStreamEngine()
-  with StreamEngineInvariants.wrap(annotator) as stream_engine:
-    runner = SimulationStepRunner(stream_engine, test_data, annotator)
+  stream_engine = StreamEngineInvariants.wrap(annotator)
 
-    props = test_data.properties.copy()
-    props['recipe'] = recipe_name
-    # Disable source manifest uploading by default.
-    if '$recipe_engine/source_manifest' not in props:
-      props['$recipe_engine/source_manifest'] = {}
-    if 'debug_dir' not in props['$recipe_engine/source_manifest']:
-      props['$recipe_engine/source_manifest']['debug_dir'] = None
-    engine = RecipeEngine(
-        _RECIPE_DEPS, runner, props, test_data.environ.copy(), '')
-    with coverage_context(include=covers, enable=enable_coverage) as cov:
-      # Run recipe loading under coverage context. This ensures we collect
-      # coverage of all definitions and globals.
-      recipe_script = _RECIPE_DEPS.main_repo.recipes[recipe_name]
+  props = test_data.properties.copy()
+  props['recipe'] = recipe_name
+  # Disable source manifest uploading by default.
+  if '$recipe_engine/source_manifest' not in props:
+    props['$recipe_engine/source_manifest'] = {}
+  if 'debug_dir' not in props['$recipe_engine/source_manifest']:
+    props['$recipe_engine/source_manifest']['debug_dir'] = None
+  with coverage_context(include=covers, enable=enable_coverage) as cov:
+    # run_steps shouldn't ever raise an exception (captured exceptions
+    # are reported in expectations and then returned as part of 'result')
+    environ = FakeEnviron()
+    for key, value in test_data.environ.iteritems():
+      environ[key] = value
+    result = RecipeEngine.run_steps(
+        _RECIPE_DEPS, props, stream_engine, step_runner, environ, '',
+        test_data=test_data, skip_setup_build=True)
 
-      try:
-        result = engine.run(recipe_script, test_data)
-      except Exception:
-        ex_type, ex_value, ex_tb = sys.exc_info()
-        raise (
-            RecipeRunError(
-                ''.join(traceback.format_exception(ex_type, ex_value, ex_tb))),
-            None, ex_tb)
-    coverage_data = cov.get_data()
+  coverage_data = cov.get_data()
 
-    raw_expectations = runner.steps_ran.copy()
-    # Convert the result to a json object by dumping to json, and then parsing.
-    raw_expectations['$result'] = json.loads(json_format.MessageToJson(
-        result, including_default_value_fields=True))
-    # Parse the jsonResult, so that it shows up nicely in expectations.
-    if 'jsonResult' in raw_expectations['$result']:
-      raw_expectations['$result']['jsonResult'] = json.loads(
-          raw_expectations['$result']['jsonResult'])
-    raw_expectations['$result']['name'] = '$result'
+  steps_ran = step_runner.export_steps_ran()
 
-    with coverage_context(include=covers, enable=enable_coverage) as cov:
-      result_data, failed_checks = magic_check_fn.post_process(
-          raw_expectations, test_data)
-    coverage_data.update(cov.get_data())
+  raw_expectations = _merge_presentation_updates(
+      steps_ran, annotator.buffered_steps)
 
-    return (result_data, failed_checks, coverage_data)
+  bad_test_failures = _check_bad_test(
+      test_data, steps_ran.keys(), raw_expectations.keys())
+
+  # Convert the result to a json object by dumping to json, and then parsing.
+  raw_expectations['$result'] = json.loads(json_format.MessageToJson(
+      result, including_default_value_fields=True))
+  # Parse the jsonResult, so that it shows up nicely in expectations.
+  if 'jsonResult' in raw_expectations['$result']:
+    raw_expectations['$result']['jsonResult'] = json.loads(
+        raw_expectations['$result']['jsonResult'])
+  raw_expectations['$result']['name'] = '$result'
+
+  crash_failure = _check_exception(
+      test_data.expected_exception, raw_expectations)
+
+  failed_checks = []
+  with coverage_context(include=covers, enable=enable_coverage) as cov:
+    result_data, failed_checks = magic_check_fn.post_process(
+        raw_expectations, test_data)
+  coverage_data.update(cov.get_data())
+
+  return (
+    result_data, failed_checks, crash_failure, bad_test_failures, coverage_data
+  )
 
 
 def get_tests(test_filter=None):
@@ -762,20 +1023,86 @@ def run_run(test_filter, jobs, json_file, mode):
   return rc
 
 
+class _NopFile(object):
+  # pylint: disable=multiple-statements,missing-docstring
+  def write(self, data): pass
+  def flush(self): pass
+
+
+class _NopLogStream(StreamEngine.Stream):
+  # pylint: disable=multiple-statements
+  def write_line(self, line): pass
+  def close(self): pass
+
+
+class _NopStepStream(AnnotatorStreamEngine.StepStream):
+  def __init__(self, engine, step_name):
+    super(_NopStepStream, self).__init__(engine, _NopFile(), step_name)
+
+  def new_log_stream(self, _):
+    return _NopLogStream()
+
+  def close(self):
+    pass
+
+
+class _SimulationStepStream(AnnotatorStreamEngine.StepStream):
+  # We override annotations we don't want to show up in followup_annotations
+  def new_log_stream(self, log_name):
+    # We sink 'execution details' to dev/null. This is the log that the recipe
+    # engine produces that contains the printout of the command, environment,
+    # etc.
+    #
+    # The '$debug' log is conditionally filtered in _merge_presentation_updates.
+    if log_name in ('execution details',):
+      return _NopLogStream()
+    return super(_SimulationStepStream, self).new_log_stream(log_name)
+
+  def trigger(self, spec):
+    pass
+
+  def close(self):
+    pass
+
+
 class SimulationAnnotatorStreamEngine(AnnotatorStreamEngine):
   """Stream engine which just records generated commands."""
 
-  def __init__(self):
-    self._step_buffer_map = {}
-    super(SimulationAnnotatorStreamEngine, self).__init__(
-        self.step_buffer(None))
+  # TODO(iannucci): Move this (and related classes) to their own file, perhaps
+  # adjacent to AnnotatorStreamEngine.
 
-  def step_buffer(self, step_name):
+  def __init__(self):
+    self._step_buffer_map = collections.OrderedDict()
+    super(SimulationAnnotatorStreamEngine, self).__init__(
+        self._step_buffer(None))
+
+  @property
+  def buffered_steps(self):
+    """Returns an OrderedDict of all steps run by dot-name to a cStringIO
+    buffer with any annotations printed."""
+    return self._step_buffer_map
+
+  def _step_buffer(self, step_name):
     return self._step_buffer_map.setdefault(step_name, cStringIO.StringIO())
 
   def new_step_stream(self, step_config):
-    return self._create_step_stream(step_config,
-                                    self.step_buffer(step_config.name))
+    # TODO(iannucci): don't skip these. Omitting them for now to reduce the
+    # amount of test expectation changes.
+    steps_to_skip = (
+      'recipe result',   # explicitly covered by '$result'
+    )
+    if step_config.name in steps_to_skip:
+      return _NopStepStream(self, step_config.name)
+
+    stream = _SimulationStepStream(
+        self, self._step_buffer(step_config.name), step_config.name)
+    # TODO(iannucci): this is duplicated with
+    # AnnotatorStreamEngine._create_step_stream
+    if len(step_config.name_tokens) > 1:
+      # Emit our current nest level, if we are nested.
+      stream.output_annotation(
+          'STEP_NEST_LEVEL', str(len(step_config.name_tokens)-1))
+    return stream
 
 
 def handle_killswitch(*_):
@@ -827,8 +1154,9 @@ def main(args):
   Returns:
     Exit code
   """
-  global _RECIPE_DEPS
+  global _RECIPE_DEPS, _PATH_CLEANER
   _RECIPE_DEPS = args.recipe_deps
+  _PATH_CLEANER = _make_path_cleaner(args.recipe_deps)
 
   if args.subcommand == 'list':
     return run_list(args.json)

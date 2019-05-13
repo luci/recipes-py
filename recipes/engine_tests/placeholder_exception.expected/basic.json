@@ -1,0 +1,70 @@
+[
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo some step"
+    ],
+    "name": "innocent step"
+  },
+  {
+    "cmd": [],
+    "name": "bad step",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@$debug@Prepopulating placeholder data@@@",
+      "@@@STEP_LOG_LINE@$debug@Rendering input placeholders@@@",
+      "@@@STEP_LOG_LINE@$debug@rendering placeholders@@@",
+      "@@@STEP_LOG_LINE@$debug@  <BadPlaceholder>@@@",
+      "@@@STEP_LOG_LINE@$debug@Unhandled exception:@@@",
+      "@@@STEP_LOG_LINE@$debug@Traceback (most recent call last):@@@",
+      "@@@STEP_LOG_LINE@$debug@  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/engine.py\", line 602, in _run_step@@@",
+      "@@@STEP_LOG_LINE@$debug@    start_dir)@@@",
+      "@@@STEP_LOG_LINE@$debug@  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/engine.py\", line 500, in _render_config@@@",
+      "@@@STEP_LOG_LINE@$debug@    cmd.extend(itm.render(step_runner.placeholder(name, itm)))@@@",
+      "@@@STEP_LOG_LINE@$debug@  File \"RECIPE_REPO[recipe_engine]/recipes/engine_tests/placeholder_exception.py\", line 16, in render@@@",
+      "@@@STEP_LOG_LINE@$debug@    raise Exception(\"EXPLOSION\")@@@",
+      "@@@STEP_LOG_LINE@$debug@Exception: EXPLOSION@@@",
+      "@@@STEP_LOG_END@$debug@@@",
+      "@@@STEP_EXCEPTION@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "RECIPE CRASH (Uncaught exception)",
+    "~followup_annotations": [
+      "@@@STEP_EXCEPTION@@@",
+      "The recipe has crashed at point 'Uncaught exception'!",
+      "",
+      "Traceback (most recent call last):",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/engine.py\", line 375, in run_steps",
+      "    raw_result = recipe_obj.run_steps(api, engine)",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/recipe_deps.py\", line 670, in run_steps",
+      "    properties_def, api=api)",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/property_invoker.py\", line 89, in invoke_with_properties",
+      "    arg_names, **additional_args)",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/property_invoker.py\", line 52, in _invoke_with_properties",
+      "    return callable_obj(*props, **additional_args)",
+      "  File \"RECIPE_REPO[recipe_engine]/recipes/engine_tests/placeholder_exception.py\", line 28, in RunSteps",
+      "    api.step('bad step', ['echo', ph])",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/recipe_api.py\", line 635, in _inner",
+      "    return func(*a, **kw)",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/step/api.py\", line 262, in __call__",
+      "    step_test_data=step_test_data,",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/recipe_api.py\", line 232, in run_step",
+      "    return self._engine.run_step(step)",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/engine.py\", line 602, in _run_step",
+      "    start_dir)",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/engine.py\", line 500, in _render_config",
+      "    cmd.extend(itm.render(step_runner.placeholder(name, itm)))",
+      "  File \"RECIPE_REPO[recipe_engine]/recipes/engine_tests/placeholder_exception.py\", line 16, in render",
+      "    raise Exception(\"EXPLOSION\")",
+      "Exception: EXPLOSION"
+    ]
+  },
+  {
+    "failure": {
+      "humanReason": "Uncaught Exception: Exception('EXPLOSION',)"
+    },
+    "name": "$result"
+  }
+]

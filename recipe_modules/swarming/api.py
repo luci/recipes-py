@@ -659,11 +659,11 @@ class TaskResult(object):
       raise self._api.step.InfraFailure('Timed out waiting for a bot to run on')
     elif self.state == TaskState.TIMED_OUT:
       output_lines = self.output.rsplit('\n', 11)
+      timeout = int(self._duration)
       failure_lines = [
-          'Timed out. Last 10 lines of output:',
+          'Timed out after %s seconds. Last 10 lines of output:' % timeout,
       ] + output_lines[-10:]
-      raise self._api.step.StepTimeout(
-          '\n'.join(failure_lines), '%s seconds' % int(self._duration))
+      raise self._api.step.StepFailure('\n'.join(failure_lines))
     elif self.state == TaskState.BOT_DIED:
       raise self._api.step.InfraFailure('The bot running this task died')
     elif self.state == TaskState.CANCELED:

@@ -39,7 +39,7 @@ def RunSteps(api, bad_return, access_invalid_data, access_deep_invalid_data,
     elif timeout == 2:
       try:
         api.step('caught timeout', ['sleep', '20'], timeout=1)
-      except api.step.StepTimeout:
+      except api.step.StepFailure:
         return RETURN_SCHEMA(test_me=4)
 
 

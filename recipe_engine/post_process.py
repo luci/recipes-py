@@ -200,6 +200,22 @@ def StepSuccess(check, step_odict, step):
   """
   check(step_odict[step].status == 'SUCCESS')
 
+
+def StepWarning(check, step_odict, step):
+  """Assert that a step has the warning status.
+
+  Args:
+    step (str) - The step to check for warning.
+
+  Usage:
+    yield (
+        TEST
+        + api.post_process(StepWarning, 'step-name')
+    )
+  """
+  check(step_odict[step].status == 'WARNING')
+
+
 def StepFailure(check, step_odict, step):
   """Assert that a step failed.
 

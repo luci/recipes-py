@@ -116,13 +116,13 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
     deps = self.FakeRecipeDeps()
     with deps.main_repo.write_recipe('print_step_error') as recipe:
       recipe.imports = [
-        'from recipe_engine.internal.step_runner import subproc'
+        'from recipe_engine.internal import engine'
       ]
       recipe.RunSteps.write('''
-        def bad_print_step(self, step_stream, step, env):
-          raise Exception("Buh buh buh buh bad to the bone")
+        def bad_print_step(execution_log, step):
+          raise Exception("bad to the bone")
 
-        subproc.SubprocessStepRunner._print_step = bad_print_step
+        engine._print_step = bad_print_step
         try:
           api.step('Be good', ['echo', 'Sunshine, lollipops, and rainbows'])
         finally:
@@ -130,10 +130,10 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
       ''')
 
     self._test_cmd(deps, ['run', 'print_step_error'],
-      asserts=lambda output: self.assertRegexpMatches(
-          output,
-          r'(?s)Recipe engine bug.*Buh buh buh buh bad to the bone'),
-      retcode=2)
+      asserts=lambda output: self.assertIn(
+          '@@@STEP_LOG_LINE@$debug@Exception: bad to the bone@@@',
+          output),
+      retcode=1)
 
   def test_missing_method(self):
     deps = self.FakeRecipeDeps()
@@ -172,7 +172,8 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
 
     self._test_cmd(deps, [
         'test', 'train', '--filter', 'unconsumed_assertion'],
-      asserts=lambda output: self.assertRegexpMatches(output, 'Unconsumed'),
+      asserts=lambda output: self.assertIn(
+          'Missing expected exception in RunSteps', output),
       retcode=1)
 
   def test_run_recipe_help(self):

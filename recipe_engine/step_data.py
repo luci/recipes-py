@@ -32,6 +32,13 @@ class _AttributeRaiser(object):
       self._step_name, self._namespace, name))
 
 
+@attr.s(frozen=True)
+class ExecutionResult(object):
+  retcode = attr.ib(validator=attr_type((int, type(None))), default=None)
+  had_timeout = attr.ib(validator=attr_type(bool), default=False)
+  had_exception = attr.ib(validator=attr_type(bool), default=False)
+
+
 @attr.s
 class StepData(object):
   """StepData represents the result of running a step.
@@ -125,35 +132,19 @@ class StepData(object):
         'charlie': json.output(name='charlie')
       }
   """
-  # The StepConfig object associated with this step.
+  # The name of this step as a tuple of strings.
   #
-  # TODO(iannucci): Almost no code actually relies on this, except for testing
-  # code in the recipe engine. Remove this.
-  step_config = attr.ib()
-  @step_config.validator
-  def _step_config_validator(self, attrib, value):
-    # TODO(iannucci): This late import will go away in a later CL
-    from .internal.engine_step import StepConfig
-    attr_type(StepConfig)(self, attrib, value)
+  # Each entry in the tuple represents a nesting namespace, and the final value
+  # in the tuple represents the step's leaf name.
+  #
+  # Example:
+  #
+  #    ('step name')             # a top level step
+  #    ('parent', 'step name')   # a step named "step name" under "parent"
+  name_tokens = attr.ib(validator=attr_type(tuple))
 
-  # The returncode of the step.
-  retcode = attr.ib(validator=attr_type(int))
-
-  # The StepPresentation object associated with this step.
-  presentation = attr.ib(validator=attr_type(StepPresentation))
-  @presentation.default
-  def _presentation_default(self):
-    # TODO(iannucci): move this logic out of StepData and into the engine.
-    ret = StepPresentation(self.step_config.name)
-    if (self.step_config.ok_ret is self.step_config.ALL_OK
-        or self.retcode in self.step_config.ok_ret):
-      ret.status = 'SUCCESS'
-    else:
-      if not self.step_config.infra_step:
-        ret.status = 'FAILURE'
-      else:
-        ret.status = 'EXCEPTION'
-    return ret
+  # The execution result of the step.
+  exc_result = attr.ib(validator=attr_type(ExecutionResult))
 
   # The result of the `stdout` Placeholder, if the step had one.
   #
@@ -213,16 +204,21 @@ class StepData(object):
   @property
   def name(self):
     """Returns the build.proto step name (i.e. name_tokens joined with '|')."""
-    return '|'.join(self.step_config.name_tokens)
+    return '|'.join(self.name_tokens)
 
   @property
   def step(self):
     """DEPRECATED: For backward compatibility only. Uses old @@@annotation@@@
     step name.
 
-    Use .step_config.name_tokens or .name instead."""
+    Use .name_tokens or .name instead."""
     # TODO(iannucci): remove this
-    return {'name': self.step_config.name}
+    return {'name': '.'.join(self.name_tokens)}
+
+  @property
+  def retcode(self):
+    """DEPRECATED: use .exc_result directly."""
+    return self.exc_result.retcode
 
   def _populate_placeholders(self):
     """

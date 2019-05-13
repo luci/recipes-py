@@ -12,7 +12,7 @@ from PB.go.chromium.org.luci.buildbucket.proto.build import Build
 
 from ....third_party import luci_context
 
-from ...engine import run_steps
+from ...engine import RecipeEngine
 from ...step_runner.subproc import SubprocessStepRunner
 from ...stream.invariants import StreamEngineInvariants
 from ...stream.luci import LUCIStreamEngine
@@ -79,8 +79,8 @@ def main(args):
   run_build_engine = LUCIStreamEngine(args.build_proto_jsonpb)
 
   with StreamEngineInvariants.wrap(run_build_engine) as stream_engine:
-    run_steps(
+    result = RecipeEngine.run_steps(
         args.recipe_deps, properties, stream_engine,
-        SubprocessStepRunner(stream_engine), os.getcwd())
+        SubprocessStepRunner(), os.environ, os.getcwd())
 
-  return 0 if run_build_engine.was_successful else 1
+  return 1 if result.HasField("failure") else 0

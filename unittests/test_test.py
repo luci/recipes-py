@@ -24,6 +24,16 @@ from PB.recipe_engine.test_result import TestResult
 CheckFailure = TestResult.CheckFailure
 
 
+def prune_crash_explanation(test_result_dict):
+  # We want to remove the 'error' field from crash reports; these contain
+  # a stacktrace which is non-essential for this test.
+  for name, results in test_result_dict.get('test_failures', {}).iteritems():
+    for failure in results.get('failures', ()):
+      if 'crash_failure' in failure:
+        failure['crash_failure'] = {}  # blank out the details
+  return test_result_dict
+
+
 class Common(test_env.RecipeEngineUnitTest):
   @attr.s(frozen=True)
   class JsonResult(object):
@@ -266,17 +276,18 @@ class TestRun(Common):
   def test_recipe_syntax_error(self):
     with self.main.write_recipe('foo') as recipe:
       recipe.RunSteps.write('baz')
+      recipe.GenTests.write('''
+        yield api.test('basic') + api.post_process(lambda _c, _s: {})
+      ''')
 
     result = self._run_test('run', should_fail=True)
     self.assertIn(
-        ('line 12, in RunSteps\n    baz\n'
-         'NameError: global name \'baz\' is not defined'),
+        "NameError: global name 'baz' is not defined",
         result.text_output)
     self.assertDictEqual(
-        result.data,
+        prune_crash_explanation(result.data),
         self._result_json(
             crash=['foo.basic'],
-            coverage={'recipes/foo.py': [12]},
             unused_expect=[
               'recipes/foo.expected',
               'recipes/foo.expected/basic.json',
@@ -303,20 +314,18 @@ class TestRun(Common):
     with self.main.write_recipe('foo_module', 'examples/full') as recipe:
       recipe.DEPS = ['foo_module']
       recipe.RunSteps.write('api.foo_module.foo()')
+      recipe.GenTests.write('''
+        yield api.test('basic') + api.post_process(lambda _c, _s: {})
+      ''')
       del recipe.expectation['basic']
 
     result = self._run_test('run', should_fail=True)
     self.assertIn('NameError: global name \'baz\' is not defined',
                   result.text_output)
-    self.assertIn('FATAL: Insufficient coverage', result.text_output)
     self.assertDictEqual(
-        result.data,
+        prune_crash_explanation(result.data),
         self._result_json(
             crash=['foo_module:examples/full.basic'],
-            coverage={
-              'recipe_modules/foo_module/api.py': [10],
-              'recipe_modules/foo_module/examples/full.py': [12],
-            },
         ))
 
   def test_recipe_module_syntax_error_in_example(self):
@@ -329,6 +338,9 @@ class TestRun(Common):
     with self.main.write_recipe('foo_module', 'examples/full') as recipe:
       recipe.DEPS = ['foo_module']
       recipe.RunSteps.write('baz')
+      recipe.GenTests.write('''
+        yield api.test('basic') + api.post_process(lambda _c, _s: {})
+      ''')
       del recipe.expectation['basic']
 
     result = self._run_test('run', should_fail=True)
@@ -336,12 +348,11 @@ class TestRun(Common):
                   result.text_output)
     self.assertIn('FATAL: Insufficient coverage', result.text_output)
     self.assertDictEqual(
-        result.data,
+        prune_crash_explanation(result.data),
         self._result_json(
             crash=['foo_module:examples/full.basic'],
             coverage={
               'recipe_modules/foo_module/api.py': [10],
-              'recipe_modules/foo_module/examples/full.py': [12],
             }
         ))
 
@@ -715,11 +726,11 @@ class TestTrain(Common):
     self.assertDictEqual(self._result_json(), result.data)
 
   def test_module_tests_unused_expectation_file_stays_on_failure(self):
-    with self.main.write_module('foo_module') as mod:
+    with self.main.write_module('foo_module'):
       pass
 
     with self.main.write_recipe('foo_module', 'tests/foo') as recipe:
-      recipe.RunSteps.write('raise ValueErorr("boom")')
+      recipe.RunSteps.write('raise ValueError("boom")')
       recipe.expectation['unused'] = []
       expectation_file = os.path.join(recipe.expect_path, 'unused.json')
 
@@ -727,10 +738,9 @@ class TestTrain(Common):
     self.assertTrue(self.main.is_file(expectation_file))
     self.assertDictEqual(
         self._result_json(
-            coverage={'recipe_modules/foo_module/tests/foo.py': [12]},
             crash=['foo_module:tests/foo.basic'],
         ),
-        result.data)
+        prune_crash_explanation(result.data))
 
   def test_basic(self):
     with self.main.write_recipe('foo'):

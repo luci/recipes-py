@@ -103,7 +103,21 @@ class FrozenDict(collections.Mapping):
 
 
 class StepPresentation(object):
-  STATUSES = set(('SUCCESS', 'FAILURE', 'WARNING', 'EXCEPTION'))
+  RAW_STATUSES = ('SUCCESS', 'WARNING', 'FAILURE', 'EXCEPTION')
+  STATUSES = frozenset(RAW_STATUSES)
+
+  # TODO(iannucci): use attr for this
+
+  @classmethod
+  def status_worst(cls, status_a, status_b):
+    """Given two STATUS strings, return the worse of the two."""
+    if not hasattr(cls, 'STATUS_TO_BADNESS'):
+      cls.STATUS_TO_BADNESS = freeze({
+        status: i for i, status in enumerate(StepPresentation.RAW_STATUSES)})
+
+    if cls.STATUS_TO_BADNESS[status_a] > cls.STATUS_TO_BADNESS[status_b]:
+      return status_a
+    return status_b
 
   def __init__(self, step_name):
     self._name = step_name
@@ -112,20 +126,34 @@ class StepPresentation(object):
     self._logs = collections.OrderedDict()
     self._links = collections.OrderedDict()
     self._status = None
+    self._had_timeout = False
     self._step_summary_text = ''
     self._step_text = ''
     self._properties = {}
 
-  # (E0202) pylint bug: http://www.logilab.org/ticket/89092
   @property
-  def status(self):  # pylint: disable=E0202
+  def status(self):
     return self._status
 
   @status.setter
-  def status(self, val):  # pylint: disable=E0202
+  def status(self, val):
     assert not self._finalized, 'Changing finalized step %r' % self._name
     assert val in self.STATUSES
     self._status = val
+
+  def set_worse_status(self, status):
+    """Sets .status to this value if it's worse than the current status."""
+    self.status = self.status_worst(self.status, status)
+
+  @property
+  def had_timeout(self):
+    return self._had_timeout
+
+  @had_timeout.setter
+  def had_timeout(self, val):
+    assert not self._finalized, 'Changing finalized step %r' % self._name
+    assert isinstance(val, bool)
+    self._had_timeout = val
 
   @property
   def step_text(self):
@@ -147,7 +175,7 @@ class StepPresentation(object):
 
   @property
   def logs(self):
-    assert not self._finalized, 'Reading logs afetr finalized %r' % self._name
+    assert not self._finalized, 'Reading logs after finalized %r' % self._name
     return self._logs
 
   @property
@@ -182,11 +210,11 @@ class StepPresentation(object):
     if self.step_summary_text:
       step_stream.add_step_summary_text(self.step_summary_text)
     for name, lines in logs.iteritems():
-      with step_stream.new_log_stream(name) as l:
+      with step_stream.new_log_stream(name) as log:
         for line in lines:
-          l.write_split(line)
+          log.write_split(line)
     for label, url in self.links.iteritems():
       step_stream.add_step_link(label, url)
-    step_stream.set_step_status(self.status)
     for key, value in sorted(self._properties.iteritems()):
       step_stream.set_build_property(key, json.dumps(value, sort_keys=True))
+    step_stream.set_step_status(self.status, self.had_timeout)
