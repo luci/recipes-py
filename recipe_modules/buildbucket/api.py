@@ -457,6 +457,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
     assert isinstance(schedule_build_requests, list), schedule_build_requests
     for r in schedule_build_requests:
       assert isinstance(r, rpc_pb2.ScheduleBuildRequest), r
+    if not schedule_build_requests:
+      return []
 
     batch_req = rpc_pb2.BatchRequest(
         requests=[dict(schedule_build=r) for r in schedule_build_requests]
@@ -694,6 +696,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
       [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
       for all specified builds.
     """
+    if not build_ids:
+      return {}
     interval = interval or 60
     timeout = timeout or 3600
     args = ['-json-output', self.m.json.output(), '-interval', '%ds' % interval]

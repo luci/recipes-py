@@ -26,6 +26,8 @@ def RunSteps(api):
   api.buildbucket.run([req], raise_if_unsuccessful=api.properties.get(
       'raise_failed_status'))
 
+  api.buildbucket.run([], step_name='run nothing')
+
 
 def GenTests(api):
 
