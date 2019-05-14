@@ -36,7 +36,11 @@ def RunSteps(api):
         with_expiration_secs(3600).
         with_io_timeout_secs(600).
         with_execution_timeout_secs(3600).
-        with_idempotent(True),
+        with_idempotent(True).
+        with_lower_priority(True).
+        with_containment_type('AUTO').
+        with_limit_processes(16).
+        with_limit_total_committed_memory(1024*1024*1024),
       )
   )
 
@@ -52,9 +56,12 @@ def RunSteps(api):
 
   # Dimensions, and environment variables and prefixes can be unset.
   slice = request[-1]
-  assert cmp(slice.dimensions, {'pool': 'example.pool', 'os': 'Debian'}) == 0
-  assert cmp(slice.env_vars, {'SOME_VARNAME': 'stuff', 'GOPATH': '$HOME/go'}) == 0
-  assert cmp(slice.env_prefixes, {'PATH' : ["path/to/bin/dir", "path/to/other/bin/dir"]}) == 0
+  assert not cmp(slice.dimensions, {'pool': 'example.pool', 'os': 'Debian'})
+  assert not cmp(
+      slice.env_vars, {'SOME_VARNAME': 'stuff', 'GOPATH': '$HOME/go'})
+  assert not cmp(
+      slice.env_prefixes,
+      {'PATH' : ["path/to/bin/dir", "path/to/other/bin/dir"]})
 
   slice = (slice.
     with_dimensions(os=None).
@@ -117,7 +124,8 @@ def RunSteps(api):
 
 def GenTests(api):
   yield api.test('basic')
-  yield api.test('experimental') + api.runtime(is_luci=False, is_experimental=True)
+  yield api.test('experimental') + api.runtime(
+      is_luci=False, is_experimental=True)
   yield (api.test('override_swarming') +
     api.swarming.properties(server='bananas.example.com', version='release')
   )

@@ -183,6 +183,13 @@ class TaskRequest(object):
       self._grace_period_secs = 30
       self._idempotent = False
       self._secret_bytes = ''
+
+      # Containment
+      self._lower_priority = False
+      self._containment_type = 'NONE'
+      self._limit_processes = 0
+      self._limit_total_committed_memory = 0
+
       self._api = api
 
     def _copy(self):
@@ -432,7 +439,7 @@ class TaskRequest(object):
 
     @property
     def idempotent(self):
-      """Returns whether the task is idempotent on a copy of self.
+      """Returns whether the task is idempotent.
 
       A task is idempotent if for another task is executed with identical
       properties, we can short-circuit execution and just return the other
@@ -471,6 +478,75 @@ class TaskRequest(object):
       ret._secret_bytes = data
       return ret
 
+    @property
+    def lower_priority(self):
+      """Returns whether the task process is run with a low priority."""
+      return self._lower_priority
+
+    def with_lower_priority(self, lower_priority):
+      """Returns the slice with the given lower_priority boolean set.
+
+      Args:
+        lower_priority (bool) - Whether the task is run with low process
+            priority.
+      """
+      assert isinstance(lower_priority, bool)
+      ret =  self._copy()
+      ret._lower_priority = lower_priority
+      return ret
+
+    @property
+    def containment_type(self):
+      """Returns whether the task process is contained."""
+      return self._containment_type
+
+    def with_containment_type(self, containment_type):
+      """Returns the slice with the given containment_type set.
+
+      Args:
+        containment_type (str) - One of the supported containment types.
+      """
+      assert containment_type in ('NONE', 'AUTO', 'JOB_OJBECT')
+      ret =  self._copy()
+      ret._containment_type = containment_type
+      return ret
+
+    @property
+    def limit_processes(self):
+      """Returns the maximum number of concurrent processes a task can run."""
+      return self._limit_processes
+
+    def with_limit_processes(self, limit_processes):
+      """Returns the slice with the maximum number of concurrent processes a
+      task can run set.
+
+      Args:
+        limit_processes (int) - 0 or the maximum number of concurrent processes
+      """
+      assert isinstance(limit_processes, int)
+      ret =  self._copy()
+      ret._limit_processes = limit_processes
+      return ret
+
+    @property
+    def limit_total_committed_memory(self):
+      """Returns the maximum amount of committed memory the processes in this
+      task can use.
+      """
+      return self._limit_total_committed_memory
+
+    def with_limit_total_committed_memory(self, limit_total_committed_memory):
+      """Returns the slice with the maximum amount of RAM all processes can
+      commit set.
+
+      Args:
+        limit_total_committed_memory (int) - 0 or the maximum amount of RAM
+            committed
+      """
+      assert isinstance(limit_total_committed_memory, int)
+      ret =  self._copy()
+      ret._limit_total_committed_memory = limit_total_committed_memory
+      return ret
 
     def to_jsonish(self):
       """Renders the task request as a JSON-serializable dict.
@@ -493,6 +569,12 @@ class TaskRequest(object):
         'io_timeout_secs': str(self.io_timeout_secs),
         'grace_period_secs': str(self.grace_period_secs),
         'idempotent': self.idempotent,
+        'containment': {
+          'lower_priority': self.lower_priority,
+          'containment_type': self.containment_type,
+          'limit_processes': self.limit_processes,
+          'limit_total_committed_memory': self.limit_total_committed_memory,
+        },
       }
 
       if self.isolated:
