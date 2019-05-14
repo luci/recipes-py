@@ -193,12 +193,13 @@ class TaskRequest(object):
       self._api = api
 
     def _copy(self):
+      # Warning: the copy may have its member mutated.
       return copy.copy(self)
 
     @property
     def command(self):
       """Returns the command (list(str)) the task will run."""
-      return copy.copy(self._command)
+      return self._command[:]
 
     def with_command(self, cmd):
       """Returns the slice with the given command set.
@@ -235,7 +236,7 @@ class TaskRequest(object):
       """Returns the dimensions (dict[str]str) on which to filter swarming
       bots.
       """
-      return self._dimensions.copy()
+      return copy.deepcopy(self._dimensions)
 
     def with_dimensions(self, **kwargs):
       """Returns the slice with the given dimensions set.
@@ -256,6 +257,8 @@ class TaskRequest(object):
       ```
       """
       ret =  self._copy()
+      # Make a copy.
+      ret._dimensions = self.dimensions
       for k, v in kwargs.iteritems():
         assert isinstance(k, str) and (isinstance(v, str) or v == None)
         if v is None:
@@ -269,7 +272,7 @@ class TaskRequest(object):
       """Returns the CIPD ensure file (api.cipd.EnsureFile) of packages to
       install.
       """
-      return copy.copy(self._cipd_ensure_file)
+      return copy.deepcopy(self._cipd_ensure_file)
 
     def with_cipd_ensure_file(self, ensure_file):
       """Returns the slice with the given CIPD packages set.
@@ -321,6 +324,8 @@ class TaskRequest(object):
       ```
       """
       ret = self._copy()
+      # Make a copy.
+      ret._env_vars = self.env_vars
       for k, v in kwargs.iteritems():
         assert (
             isinstance(k, basestring) and
@@ -357,6 +362,8 @@ class TaskRequest(object):
       ```
       """
       ret = self._copy()
+      # Make a copy.
+      ret._env_prefixes = self.env_prefixes
       for k, v in kwargs.iteritems():
         assert (
             isinstance(k, basestring) and (isinstance(v, list) or v is None)), (
