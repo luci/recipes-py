@@ -13,7 +13,7 @@ from state import TaskState
 from recipe_engine import recipe_api
 
 
-DEFAULT_CIPD_VERSION = 'git_revision:1399f5bdee4cf1c0826b64cf103418b1b9e7c15b'
+DEFAULT_CIPD_VERSION = 'git_revision:fd7d55c05dac7486ba163c0d08827a0901afaa7b'
 
 
 # TODO(iannucci): Investigate whether slices can be made invisible to clients
@@ -847,7 +847,8 @@ class SwarmingApi(recipe_api.RecipeApi):
     for idx, task in enumerate(tasks):
       if isinstance(task, str):
         cmd.append(task)
-        test_data.append(self.test_api.task_result(id=task, name='my_task_%d' % idx))
+        test_data.append(
+            self.test_api.task_result(id=task, name='my_task_%d' % idx))
       elif isinstance(task, TaskRequestMetadata):
         cmd.append(task.id)
         test_data.append(self.test_api.task_result(id=task.id, name=task.name))
@@ -869,7 +870,6 @@ class SwarmingApi(recipe_api.RecipeApi):
     # Update presentation on collect to reflect bot results.
     for result in parsed_results:
       if result.output:
-        step_result.presentation.logs['Swarming task output: %s' % result.name] = (
-          result.output.split('\n')
-        )
+        log_name = 'Swarming task output: %s' % result.name
+        step_result.presentation.logs[log_name] = result.output.splitlines()
     return parsed_results
