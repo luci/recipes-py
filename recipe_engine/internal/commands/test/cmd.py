@@ -4,7 +4,6 @@
 
 from __future__ import print_function
 
-import bdb
 import collections
 import contextlib
 import copy
@@ -17,7 +16,6 @@ import functools
 import json
 import multiprocessing
 import os
-import pdb
 import re
 import shutil
 import signal
@@ -35,12 +33,8 @@ from PB.recipe_engine.test_result import TestResult
 
 from .... import config_types
 
-from ...engine import RecipeEngine
-from ...engine_env import FakeEnviron
-from ...step_runner.sim import SimulationStepRunner
-from ...stream.invariants import StreamEngineInvariants
-from ...stream.simulator import SimulationAnnotatorStreamEngine
 from ...test import magic_check_fn
+from ...test.execute_test_case import execute_test_case
 
 from ..doc.cmd import regenerate_docs
 
@@ -68,7 +62,7 @@ _KILL_SWITCH = multiprocessing.Event()
 _GEN_TEST_CACHE = {}
 
 # These are modes that various functions in this file switch on.
-_MODE_TEST, _MODE_TRAIN, _MODE_DEBUG = range(3)
+_MODE_TEST, _MODE_TRAIN = range(2)
 
 
 # Allow regex patterns to be 'deep copied' by using them as-is.
@@ -77,13 +71,9 @@ copy._deepcopy_dispatch[re._pattern_type] = copy._deepcopy_atomic
 
 
 @contextlib.contextmanager
-def coverage_context(include=None, enable=True):
+def coverage_context(include=None):
   """Context manager that records coverage data."""
   c = coverage.coverage(config_file=False, include=include)
-
-  if not enable:
-    yield c
-    return
 
   # Sometimes our strict include lists will result in a run
   # not adding any coverage info. That's okay, avoid output spam.
@@ -208,50 +198,6 @@ class TestDescription(object):
     return os.path.join(self.expect_dir, name + '.json')
 
 
-@contextlib.contextmanager
-def maybe_debug(break_funcs, enable):
-  """Context manager to wrap a block to possibly run under debugger.
-
-  Arguments:
-    break_funcs(list): functions to set up breakpoints for
-    enable(bool): whether to actually trigger debugger, or be no-op
-  """
-  if not enable:
-    yield
-    return
-
-  debugger = pdb.Pdb()
-
-  for func in break_funcs:
-    debugger.set_break(
-        func.func_code.co_filename,
-        func.func_code.co_firstlineno,
-        funcname=func.func_code.co_name)
-
-  try:
-    def dispatch_thunk(*args):
-      """Triggers 'continue' command when debugger starts."""
-      val = debugger.trace_dispatch(*args)
-      debugger.set_continue()
-      sys.settrace(debugger.trace_dispatch)
-      return val
-    debugger.reset()
-    sys.settrace(dispatch_thunk)
-    try:
-      yield
-    finally:
-      debugger.quitting = 1
-      sys.settrace(None)
-  except bdb.BdbQuit:
-    pass
-  except Exception:
-    traceback.print_exc()
-    print('Uncaught exception. Entering post mortem debugging')
-    print('Running \'cont\' or \'step\' will restart the program')
-    t = sys.exc_info()[2]
-    debugger.interaction(None, t)
-
-
 def _compare_results(train_mode, failures, actual_obj, expected,
                     expectation_path):
   """Compares the actual and expected results.
@@ -304,7 +250,7 @@ def _compare_results(train_mode, failures, actual_obj, expected,
   return 'D' if train_mode else 'F'
 
 
-def run_test(test_description, mode):
+def run_test(train_mode, test_description):
   """Runs a test. Returns TestResults object."""
   expected = None
   if os.path.exists(test_description.expectation_path):
@@ -312,7 +258,7 @@ def run_test(test_description, mode):
       with open(test_description.expectation_path) as fil:
         expected = fil.read()
     except Exception:
-      if mode == _MODE_TRAIN:
+      if train_mode:
         # Ignore errors when training; we're going to overwrite the file anyway.
         expected = None
       else:
@@ -323,18 +269,16 @@ def run_test(test_description, mode):
     main_repo.recipes[test_description.recipe_name].global_symbols['RunSteps'],
   ]
 
-  with maybe_debug(break_funcs, mode == _MODE_DEBUG):
-    (
-      actual_obj, failed_checks, crash_failure, bad_test_failures, coverage_data
-    ) = run_recipe(
-        test_description.recipe_name, test_description.test_name,
-        test_description.covers,
-        enable_coverage=(mode != _MODE_DEBUG))
+  (
+    actual_obj, failed_checks, crash_failure, bad_test_failures, coverage_data
+  ) = run_recipe(
+      test_description.recipe_name, test_description.test_name,
+      test_description.covers)
 
   failures = []
 
   status = _compare_results(
-      mode == _MODE_TRAIN, failures, actual_obj, expected,
+      train_mode, failures, actual_obj, expected,
       test_description.expectation_path)
   if bad_test_failures:
     status = 'B'
@@ -563,7 +507,7 @@ def _check_bad_test(test_data, steps_ran, presentation_steps):
   return ret
 
 
-def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
+def run_recipe(recipe_name, test_name, covers):
   """Runs the recipe under test in simulation mode.
 
   # TODO(iannucci): Implement a better flow for this returned data; interaction
@@ -581,33 +525,13 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
   # Grab test data from the cache. This way it's only generated once.
   test_data = _GEN_TEST_CACHE[(recipe_name, test_name)]
 
-  step_runner = SimulationStepRunner(test_data)
-  annotator = SimulationAnnotatorStreamEngine()
-  stream_engine = StreamEngineInvariants.wrap(annotator)
-
-  props = test_data.properties.copy()
-  props['recipe'] = recipe_name
-  # Disable source manifest uploading by default.
-  if '$recipe_engine/source_manifest' not in props:
-    props['$recipe_engine/source_manifest'] = {}
-  if 'debug_dir' not in props['$recipe_engine/source_manifest']:
-    props['$recipe_engine/source_manifest']['debug_dir'] = None
-  with coverage_context(include=covers, enable=enable_coverage) as cov:
-    # run_steps shouldn't ever raise an exception (captured exceptions
-    # are reported in expectations and then returned as part of 'result')
-    environ = FakeEnviron()
-    for key, value in test_data.environ.iteritems():
-      environ[key] = value
-    result = RecipeEngine.run_steps(
-        _RECIPE_DEPS, props, stream_engine, step_runner, environ, '',
-        test_data=test_data, skip_setup_build=True)
+  with coverage_context(include=covers) as cov:
+    result, steps_ran, buffered_steps = execute_test_case(
+        _RECIPE_DEPS, recipe_name, test_data)
 
   coverage_data = cov.get_data()
 
-  steps_ran = step_runner.export_steps_ran()
-
-  raw_expectations = _merge_presentation_updates(
-      steps_ran, annotator.buffered_steps)
+  raw_expectations = _merge_presentation_updates(steps_ran, buffered_steps)
 
   bad_test_failures = _check_bad_test(
       test_data, steps_ran.keys(), raw_expectations.keys())
@@ -625,7 +549,7 @@ def run_recipe(recipe_name, test_name, covers, enable_coverage=True):
       test_data.expected_exception, raw_expectations)
 
   failed_checks = []
-  with coverage_context(include=covers, enable=enable_coverage) as cov:
+  with coverage_context(include=covers) as cov:
     result_data, failed_checks = magic_check_fn.post_process(
         raw_expectations, test_data)
   coverage_data.update(cov.get_data())
@@ -860,20 +784,20 @@ def worker(f):
 
 
 @worker
-def run_worker(test, mode):
+def run_worker(train_mode, test):
   """Worker for 'run' command (note decorator above)."""
-  return run_test(test, mode)
+  return run_test(train_mode, test)
 
 
 def run_train(gen_docs, test_filter, jobs, json_file):
-  rc = run_run(test_filter, jobs, json_file, _MODE_TRAIN)
+  rc = run_run(test_filter, jobs, json_file, train_mode=True)
   if rc == 0 and gen_docs:
     print('Generating README.recipes.md')
     regenerate_docs(_RECIPE_DEPS.main_repo)
   return rc
 
 
-def run_run(test_filter, jobs, json_file, mode):
+def run_run(test_filter, jobs, json_file, train_mode):
   """Implementation of the 'run' command."""
   start_time = datetime.datetime.now()
 
@@ -889,18 +813,9 @@ def run_run(test_filter, jobs, json_file, mode):
     print('ERROR: The following modules lack test coverage: %s' % (
         ','.join(uncovered_modules)))
 
-  if mode == _MODE_DEBUG:
-    results = []
-    for t in tests:
-      results.append(run_worker(t, mode))
-  else:
-    with kill_switch():
-      pool = multiprocessing.Pool(jobs)
-      # the 'mode=mode' is necessary, because we want a function call like:
-      #   func(test) -> run_worker(test, mode)
-      # if we supply 'mode' as an arg, it will end up calling:
-      #   func(test) -> run_worker(mode, test)
-      results = pool.map(functools.partial(run_worker, mode=mode), tests)
+  with kill_switch():
+    pool = multiprocessing.Pool(jobs)
+    results = pool.map(functools.partial(run_worker, train_mode), tests)
 
   print()
 
@@ -978,7 +893,7 @@ def run_run(test_filter, jobs, json_file, mode):
 
     unused_expectations = sorted(actual_expectations - used_expectations)
     if unused_expectations:
-      if mode == _MODE_TRAIN:
+      if train_mode:
         # we only want to prune expectations if training was otherwise
         # successful. Otherwise a failure during training can blow away expected
         # directories which contain things like OWNERS files.
@@ -1084,9 +999,7 @@ def main(args):
   if args.subcommand == 'diff':
     return run_diff(args.baseline, args.actual, json_file=args.json)
   if args.subcommand == 'run':
-    return run_run(args.filter, args.jobs, args.json, _MODE_TEST)
+    return run_run(args.filter, args.jobs, args.json, train_mode=False)
   if args.subcommand == 'train':
     return run_train(args.docs, args.filter, args.jobs, args.json)
-  if args.subcommand == 'debug':
-    return run_run(args.filter, None, None, _MODE_DEBUG)
   raise ValueError('Unknown subcommand %r' % (args.subcommand,))

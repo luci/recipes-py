@@ -83,13 +83,6 @@ def add_arguments(parser):
     '--no-docs', action='store_false', default=True, dest='docs',
     help='Disable automatic documentation generation.')
 
-  helpstr = 'Run the tests under debugger (pdb).'
-  debug_p = subp.add_parser(
-    'debug', help=helpstr, description=helpstr)
-  debug_p.add_argument(
-    '--filter', action='append', type=_normalize_filter,
-    help=glob_helpstr)
-
   def _launch(args):
     from .cmd import main
     return main(args)
