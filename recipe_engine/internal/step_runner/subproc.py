@@ -111,8 +111,8 @@ class SubprocessStepRunner(StepRunner):
         return None
       return cmd0
 
-    # See if cmd0 is relative to CWD.
-    if cmd0.startswith('.'):
+    # If cmd0 has a path separator, treat it as relative to CWD.
+    if os.path.sep in cmd0:
       candidate = os.path.join(cwd, cmd0)
       if not os.access(candidate, os.X_OK):
         debug_log.write_line(
