@@ -18,6 +18,7 @@ import errno
 import json
 import os
 import shutil
+import subprocess
 import sys
 import textwrap
 
@@ -26,8 +27,6 @@ from cStringIO import StringIO
 import attr
 
 from google.protobuf import json_format as jsonpb
-
-from recipe_engine.third_party import subprocess42
 
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 from PB.recipe_engine.recipes_cfg import RepoSpec
@@ -494,11 +493,11 @@ class FakeRecipeRepo(object):
     """
     env = os.environ.copy()
     env.update(kwargs.pop('env', {}))
-    proc = subprocess42.Popen(
+    proc = subprocess.Popen(
         ['python', 'recipes.py']+list(args),
         cwd=self.path,
-        stdout=subprocess42.PIPE,
-        stderr=subprocess42.STDOUT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
         env=env,
     )
     output, _ = proc.communicate()
@@ -580,7 +579,7 @@ class FakeRecipeDeps(object):
   @classmethod
   def _get_engine_revision(cls):
     if not cls.ENGINE_REVISION:
-      if subprocess42.call(['git', 'diff-index', '--quiet', 'HEAD', '--']):
+      if subprocess.call(['git', 'diff-index', '--quiet', 'HEAD', '--']):
         print >>REAL_STDERR, '*' * 6
         print >>REAL_STDERR, textwrap.dedent('''
         WARNING: Tests may rely on current recipe engine repo, but you have
@@ -592,7 +591,7 @@ class FakeRecipeDeps(object):
         print >>REAL_STDERR
         REAL_STDERR.flush()
 
-      cls.ENGINE_REVISION = subprocess42.check_output(
+      cls.ENGINE_REVISION = subprocess.check_output(
         ['git', 'rev-parse', 'HEAD']).strip()
     return cls.ENGINE_REVISION
 
@@ -608,7 +607,7 @@ class FakeRecipeDeps(object):
     assert name not in self.repos, (
       'duplicate repo_name: %r' % (name,))
     os.makedirs(path)
-    subprocess42.check_call(['git', 'init'], cwd=path, stdout=DEVNULL)
+    subprocess.check_call(['git', 'init'], cwd=path, stdout=DEVNULL)
     cfg_path = os.path.join(path, RECIPES_CFG_LOCATION_REL)
     os.makedirs(os.path.dirname(cfg_path))
     with open(cfg_path, 'wb') as fil:
@@ -624,11 +623,11 @@ class FakeRecipeDeps(object):
         },
       }, fil)
     shutil.copy(os.path.join(ROOT_DIR, 'recipes.py'), path)
-    subprocess42.check_call(['git', 'add', '.'], cwd=path, stdout=DEVNULL)
-    subprocess42.check_call(['git', 'commit', '-m', 'init '+name], cwd=path,
+    subprocess.check_call(['git', 'add', '.'], cwd=path, stdout=DEVNULL)
+    subprocess.check_call(['git', 'commit', '-m', 'init '+name], cwd=path,
                           stdout=DEVNULL)
     self.repos[name] = FakeRecipeRepo(self, name, path)
-    return subprocess42.check_output(
+    return subprocess.check_output(
       ['git', 'rev-parse', 'HEAD'], cwd=path).strip()
 
   def __attrs_post_init__(self):

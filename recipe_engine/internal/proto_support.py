@@ -12,6 +12,7 @@ import os
 import posixpath
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 
@@ -19,8 +20,6 @@ import attr
 
 import google.protobuf  # pinned in .vpython
 import google.protobuf.message
-
-from recipe_engine.third_party import subprocess42
 
 from .attr_util import attr_type
 from .exceptions import BadProtoDefinitions
@@ -458,9 +457,9 @@ def _compile_protos(proto_files, proto_tree, protoc, argfile, dest):
       every .proto file in proto_tree on its own line.
     * dest (str): Path to the destination where the compiled protos should go.
   """
-  protoc_proc = subprocess42.Popen(
+  protoc_proc = subprocess.Popen(
       [protoc, '--python_out', dest, '@'+argfile],
-      cwd=proto_tree, stdout=subprocess42.PIPE, stderr=subprocess42.STDOUT)
+      cwd=proto_tree, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
   output, _ = protoc_proc.communicate()
   os.remove(argfile)
 
@@ -506,9 +505,9 @@ def _install_protos(proto_package_path, dgst, proto_files):
     * Ensures that `{proto_package_path}/protoc` contains the correct
       `protoc` compiler from CIPD.
   """
-  cipd_proc = subprocess42.Popen([
+  cipd_proc = subprocess.Popen([
     'cipd'+_BAT, 'ensure', '-root', os.path.join(proto_package_path, 'protoc'),
-    '-ensure-file', '-'], stdin=subprocess42.PIPE)
+    '-ensure-file', '-'], stdin=subprocess.PIPE)
   cipd_proc.communicate('''
     infra/tools/protoc/${{platform}} protobuf_version:v{PROTOC_VERSION}
   '''.format(PROTOC_VERSION=PROTOC_VERSION))

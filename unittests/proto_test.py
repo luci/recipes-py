@@ -6,11 +6,11 @@
 import json
 import os
 import shutil
+import subprocess
 import textwrap
 
 import test_env
 
-from recipe_engine.third_party import subprocess42
 from recipe_engine.internal.simple_cfg import RECIPES_CFG_LOCATION_REL
 
 
@@ -318,11 +318,11 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
     output, retcode = main.recipes_py('bundle', '--destination', bundle_dir)
     self.assertEqual(retcode, 0, output)
 
-    proc = subprocess42.Popen(
+    proc = subprocess.Popen(
       [os.path.join(bundle_dir, 'recipes'), 'run', 'recipe'],
       cwd=bundle_dir,
-      stdout=subprocess42.PIPE,
-      stderr=subprocess42.STDOUT,
+      stdout=subprocess.PIPE,
+      stderr=subprocess.STDOUT,
     )
     output, _ = proc.communicate()
 

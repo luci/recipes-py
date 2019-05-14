@@ -9,6 +9,7 @@ import logging
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tarfile
 import time
@@ -21,7 +22,6 @@ import requests
 from google.protobuf import json_format
 
 from .. import util
-from ..third_party import subprocess42
 
 from . import gitattr_checker
 from . import simple_cfg
@@ -230,15 +230,15 @@ class GitBackend(Backend):
 
     try:
       return self._execute(*cmd)
-    except subprocess42.CalledProcessError as e:
+    except subprocess.CalledProcessError as e:
       raise GitFetchError('%r failed: %s: %s' % (cmd, e.message, e.output))
 
   def _execute(self, *args):
     """Runs a raw command. Separate so it's easily mockable."""
     LOGGER.info('Running: %s', args)
 
-    process = subprocess42.Popen(
-      args, stdout=subprocess42.PIPE, stderr=subprocess42.PIPE)
+    process = subprocess.Popen(
+      args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, stderr = process.communicate()
     retcode = process.poll()
     if retcode:
@@ -246,7 +246,7 @@ class GitBackend(Backend):
         new_output = 'STDOUT\n%s\nSTDERR\n%s' % (output, stderr)
       else:
         new_output = output or stderr
-      raise subprocess42.CalledProcessError(
+      raise subprocess.CalledProcessError(
         retcode, args, new_output)
     return output
 
@@ -266,7 +266,7 @@ class GitBackend(Backend):
         # us to switch between GitBackend and other Backends.
         self._execute(self.GIT_BINARY, 'init', self.checkout_dir)
         self._did_ensure = True
-      except subprocess42.CalledProcessError as e:
+      except subprocess.CalledProcessError as e:
         raise GitFetchError(False, 'Git "init" failed: '+e.message)
 
   def _has_rev(self, revision):

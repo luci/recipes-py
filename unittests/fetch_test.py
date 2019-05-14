@@ -4,6 +4,7 @@
 # that can be found in the LICENSE file.
 
 import json
+import subprocess
 
 import attr
 import mock
@@ -11,12 +12,11 @@ import mock
 import test_env
 
 from recipe_engine.internal import fetch, exceptions
-from recipe_engine.third_party import subprocess42
 from recipe_engine.internal.simple_cfg import \
   SimpleRecipesCfg, RECIPES_CFG_LOCATION_REL
 
 
-CPE = subprocess42.CalledProcessError
+CPE = subprocess.CalledProcessError
 IRC = RECIPES_CFG_LOCATION_REL
 
 FETCH_MOD = fetch.__name__
@@ -158,7 +158,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
   def test_unclean_filesystem(self, git, isdir):
     isdir.return_value = False
     def _mock_execute(*_args):
-      raise subprocess42.CalledProcessError(1, 'bad stuff')
+      raise CPE(1, 'bad stuff')
     git.side_effect = _mock_execute
 
     with self.assertRaises(exceptions.GitFetchError):
