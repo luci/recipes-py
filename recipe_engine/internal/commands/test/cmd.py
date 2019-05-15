@@ -315,12 +315,19 @@ def _make_path_cleaner(recipe_deps):
   for repo in recipe_deps.repos.itervalues():
     roots[repo.path] = 'RECIPE_REPO[%s]' % repo.name
 
-  # NOTE: Recipes ALWAYS run under vpython currently, so unguarded access to
-  # `sys.real_prefix` below is safe.
-  # sys.prefix -> path of virtualenv prefix
-  # sys.real_prefix -> path of system prefix
-  roots[os.path.abspath(sys.prefix)] = 'PYTHON'
-  roots[os.path.abspath(sys.real_prefix)] = 'PYTHON' # pylint: disable=no-member
+  # Derive path to python prefix. We WOULD use `sys.prefix` and
+  # `sys.real_prefix` (a vpython construction), however SOME python
+  # distributions have these set to unhelpful paths (like '/usr'). So, we import
+  # one library known to be in the vpython prefix and one known to be in the
+  # system prefix and then derive the real paths from those.
+  #
+  # FIXME(iannucci): This is all pretty fragile.
+  dirn = os.path.dirname
+  # os is in the vpython root
+  roots[os.path.abspath(dirn(dirn(dirn(os.__file__))))] = 'PYTHON'
+  # io is in the system root
+  import io
+  roots[os.path.abspath(dirn(dirn(dirn(io.__file__))))] = 'PYTHON'
 
   def _root_subber(match):
     return '"%s%s"' % (
