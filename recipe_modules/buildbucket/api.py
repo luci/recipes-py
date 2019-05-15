@@ -257,6 +257,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       'builder',
       'create_time',
       'created_by',
+      'critical',
       'end_time',
       'id',
       'input',
