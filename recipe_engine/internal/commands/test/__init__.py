@@ -7,6 +7,7 @@
 # TODO(iannucci): Add a real docstring.
 
 import argparse
+import json
 import multiprocessing
 
 
@@ -84,6 +85,43 @@ def add_arguments(parser):
     help='Disable automatic documentation generation.')
 
   def _launch(args):
-    from .cmd import main
+    if args.subcommand == 'list':
+      return run_list(args.recipe_deps, args.json)
+
+    if args.subcommand == 'diff':
+      from .diff import run_diff
+      return run_diff(args.baseline, args.actual, args.json)
+
+    from .run_train import main
     return main(args)
   parser.set_defaults(func=_launch)
+
+
+def run_list(recipe_deps, json_file):
+  """Runs the `test list` subcommand.
+
+  Lists all tests either to stdout or to a JSON file.
+
+  Args:
+
+    * recipe_deps (RecipeDeps)
+    * json_file (writable file obj|None) - If non-None, has a JSON file written
+      to it in the form of `{"format": 1, "tests": ["test", "names"]}`
+
+  Returns 0
+  """
+  from .common import TestDescription
+
+  tests = [
+    TestDescription.test_case_full_name(recipe.name, tc.name)
+    for recipe in recipe_deps.main_repo.recipes.values()
+    for tc in recipe.gen_tests()
+  ]
+  tests.sort()
+
+  if json_file:
+    json.dump({'format': 1, 'tests': tests}, json_file)
+  else:
+    print '\n'.join(tests)
+
+  return 0

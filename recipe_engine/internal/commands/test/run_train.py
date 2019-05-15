@@ -29,6 +29,7 @@ from google.protobuf import json_format
 
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 
+# pylint: disable=import-error
 from PB.recipe_engine.test_result import TestResult
 
 from .... import config_types
@@ -37,6 +38,9 @@ from ...test import magic_check_fn
 from ...test.execute_test_case import execute_test_case
 
 from ..doc.cmd import regenerate_docs
+
+from .common import DiffFailure, CheckFailure, BadTestFailure, CrashFailure
+from .common import TestDescription, TestResult_
 
 
 # These variables must be set in the dynamic scope of the functions in this
@@ -84,118 +88,6 @@ def coverage_context(include=None):
     yield c
   finally:
     c.stop()
-
-
-class TestFailure(object):
-  """Base class for different kinds of test failures."""
-
-  def format(self):
-    """Returns a human-readable description of the failure."""
-    raise NotImplementedError()
-
-  def as_proto(self):
-    """Returns a machine-readable description of the failure as proto.
-
-    The returned message should be an instance of TestResult.TestFailure
-    (see test_result.proto).
-    """
-    raise NotImplementedError()
-
-
-class DiffFailure(TestFailure):
-  """Failure when simulated recipe commands don't match recorded expectations.
-  """
-
-  def __init__(self, diff):
-    self.diff = diff
-
-  def format(self):
-    return self.diff
-
-  def as_proto(self):
-    proto = TestResult.TestFailure()
-    proto.diff_failure.MergeFrom(TestResult.DiffFailure())
-    return proto
-
-
-class CheckFailure(TestFailure):
-  """Failure when any of the post-process checks fails."""
-
-  def __init__(self, check):
-    self.check = check
-
-  def format(self):
-    return self.check.format(indent=4)
-
-  def as_proto(self):
-    return self.check.as_proto()
-
-
-class BadTestFailure(TestFailure):
-  """Failure when the test itself was bad somehow (e.g. provides mock data
-  for steps which never ran)."""
-
-  def __init__(self, error):
-    self.error = error
-
-  def format(self):
-    return str(self.error)
-
-  def as_proto(self):
-    proto = TestResult.TestFailure()
-    proto.bad_test_failure.error = self.error
-    return proto
-
-
-class CrashFailure(TestFailure):
-  """Failure when the recipe run crashes with an uncaught exception."""
-
-  def __init__(self, error):
-    self.error = error
-
-  def format(self):
-    return str(self.error)
-
-  def as_proto(self):
-    proto = TestResult.TestFailure()
-    proto.crash_failure.error = self.error
-    return proto
-
-
-class _TestResult(object):
-  """Result of running a test."""
-
-  def __init__(self, test_description, failures, coverage_data,
-               generates_expectation):
-    self.test_description = test_description
-    self.failures = failures
-    self.coverage_data = coverage_data
-    self.generates_expectation = generates_expectation
-
-
-class TestDescription(object):
-  """Identifies a specific test.
-
-  Deliberately small and picklable for use with multiprocessing."""
-
-  def __init__(self, recipe_name, test_name, expect_dir, covers):
-    self.recipe_name = recipe_name
-    self.test_name = test_name
-    self.expect_dir = expect_dir
-    self.covers = covers
-
-  @staticmethod
-  def filesystem_safe(name):
-    return ''.join('_' if c in '<>:"\\/|?*\0' else c for c in name)
-
-  @property
-  def full_name(self):
-    return '%s.%s' % (self.recipe_name, self.test_name)
-
-  @property
-  def expectation_path(self):
-    name = self.filesystem_safe(self.test_name)
-    return os.path.join(self.expect_dir, name + '.json')
 
 
 def _compare_results(train_mode, failures, actual_obj, expected,
@@ -293,8 +185,8 @@ def run_test(train_mode, test_description):
   sys.stdout.write(status)
   sys.stdout.flush()
 
-  return _TestResult(test_description, failures, coverage_data,
-                    actual_obj is not None)
+  return TestResult_(test_description, failures, coverage_data,
+                     actual_obj is not None)
 
 
 def _make_path_cleaner(recipe_deps):
@@ -659,90 +551,6 @@ def get_tests(test_filter=None):
   return (tests, coverage_data, uncovered_modules)
 
 
-def run_list(json_file):
-  """Implementation of the 'list' command."""
-  tests, _coverage_data, _uncovered_modules = get_tests()
-  result = sorted(t.full_name for t in tests)
-  if json_file:
-    json.dump({
-        'format': 1,
-        'tests': result,
-    }, json_file)
-  else:
-    print('\n'.join(result))
-  return 0
-
-
-def run_diff(baseline, actual, json_file=None):
-  """Implementation of the 'diff' command."""
-  baseline_proto = TestResult()
-  json_format.ParseDict(json.load(baseline), baseline_proto)
-
-  actual_proto = TestResult()
-  json_format.ParseDict(json.load(actual), actual_proto)
-
-  success, results_proto = _diff_internal(baseline_proto, actual_proto)
-
-  if json_file:
-    obj = json_format.MessageToDict(
-        results_proto, preserving_proto_field_name=True)
-    json.dump(obj, json_file)
-
-  return 0 if success else 1
-
-def _diff_internal(baseline_proto, actual_proto):
-  results_proto = TestResult(version=1, valid=True)
-
-  if (not baseline_proto.valid or
-      not actual_proto.valid or
-      baseline_proto.version != 1 or
-      actual_proto.version != 1):
-    results_proto.valid = False
-    return (False, results_proto)
-
-  success = True
-
-  for filename, details in actual_proto.coverage_failures.iteritems():
-    actual_uncovered_lines = set(details.uncovered_lines)
-    baseline_uncovered_lines = set(
-        baseline_proto.coverage_failures[filename].uncovered_lines)
-    cover_diff = actual_uncovered_lines.difference(baseline_uncovered_lines)
-    if cover_diff:
-      success = False
-      results_proto.coverage_failures[
-          filename].uncovered_lines.extend(cover_diff)
-
-  for test_name, test_failures in actual_proto.test_failures.iteritems():
-    for test_failure in test_failures.failures:
-      found = False
-      for baseline_test_failure in baseline_proto.test_failures[
-          test_name].failures:
-        if test_failure == baseline_test_failure:
-          found = True
-          break
-      if not found:
-        success = False
-        results_proto.test_failures[test_name].failures.extend([test_failure])
-
-  actual_uncovered_modules = set(actual_proto.uncovered_modules)
-  baseline_uncovered_modules = set(baseline_proto.uncovered_modules)
-  uncovered_modules_diff = actual_uncovered_modules.difference(
-      baseline_uncovered_modules)
-  if uncovered_modules_diff:
-    success = False
-    results_proto.uncovered_modules.extend(uncovered_modules_diff)
-
-  actual_unused_expectations = set(actual_proto.unused_expectations)
-  baseline_unused_expectations = set(baseline_proto.unused_expectations)
-  unused_expectations_diff = actual_unused_expectations.difference(
-      baseline_unused_expectations)
-  if unused_expectations_diff:
-    success = False
-    results_proto.unused_expectations.extend(unused_expectations_diff)
-
-  return (success, results_proto)
-
-
 def cover_omit():
   """Returns list of patterns to omit from coverage analysis."""
   omit = [ ]
@@ -830,7 +638,7 @@ def run_run(test_filter, jobs, json_file, train_mode):
 
   for success, test_description, details in results:
     if success:
-      assert isinstance(details, _TestResult)
+      assert isinstance(details, TestResult_)
       if details.failures:
         rc = 1
         key = details.test_description.full_name
@@ -1001,12 +809,9 @@ def main(args):
   _RECIPE_DEPS = args.recipe_deps
   _PATH_CLEANER = _make_path_cleaner(args.recipe_deps)
 
-  if args.subcommand == 'list':
-    return run_list(args.json)
-  if args.subcommand == 'diff':
-    return run_diff(args.baseline, args.actual, json_file=args.json)
   if args.subcommand == 'run':
     return run_run(args.filter, args.jobs, args.json, train_mode=False)
   if args.subcommand == 'train':
     return run_train(args.docs, args.filter, args.jobs, args.json)
+
   raise ValueError('Unknown subcommand %r' % (args.subcommand,))

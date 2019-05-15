@@ -31,7 +31,7 @@ from google.protobuf import json_format as jsonpb
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 from PB.recipe_engine.recipes_cfg import RepoSpec
 from recipe_engine.internal.fetch import GitBackend, CommitMetadata
-from recipe_engine.internal.commands.test.cmd import TestDescription
+from recipe_engine.internal.commands.test.run_train import TestDescription
 from recipe_engine.internal.simple_cfg import RECIPES_CFG_LOCATION_REL
 
 
