@@ -578,30 +578,15 @@ def scoped_override(obj, attr, override):
   setattr(obj, attr, orig)
 
 
-def worker(f):
-  """Wrapper for a multiprocessing worker function.
-
-  This addresses known issues with multiprocessing workers:
-
-    - they can hang on uncaught exceptions
-    - os._exit causes hangs, so we patch it
-    - we need explicit kill switch to clearly terminate parent"""
-  @functools.wraps(f)
-  def wrapper(test, *args, **kwargs):
-    with scoped_override(os, '_exit', sys.exit):
-      try:
-        if _KILL_SWITCH.is_set():
-          return (False, test, 'kill switch')
-        return (True, test, f(test, *args, **kwargs))
-      except:  # pylint: disable=bare-except
-        return (False, test, traceback.format_exc())
-  return wrapper
-
-
-@worker
 def run_worker(train_mode, test):
   """Worker for 'run' command (note decorator above)."""
-  return run_test(train_mode, test)
+  with scoped_override(os, '_exit', sys.exit):
+    try:
+      if _KILL_SWITCH.is_set():
+        return (False, test, 'kill switch')
+      return (True, test, run_test(train_mode, test))
+    except:  # pylint: disable=bare-except
+      return (False, test, traceback.format_exc())
 
 
 def run_train(gen_docs, test_filter, jobs, json_file):
