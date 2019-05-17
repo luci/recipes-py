@@ -32,16 +32,16 @@
   {
     "cmd": [
       "echo",
-      "'properties:examples/full'"
+      "'blarp'"
     ],
-    "name": "echo recipe"
+    "name": "echo foo.bar-bam"
   },
   {
     "cmd": [
       "echo",
-      "'blarp'"
+      "'properties:examples/full'"
     ],
-    "name": "echo foo.bar-bam"
+    "name": "echo recipe"
   },
   {
     "jsonResult": null,

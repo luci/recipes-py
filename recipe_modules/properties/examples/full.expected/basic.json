@@ -30,37 +30,9 @@
   {
     "cmd": [
       "echo",
-      "u'thing'"
-    ],
-    "name": "echo param_name_test"
-  },
-  {
-    "cmd": [
-      "echo",
-      "True"
-    ],
-    "name": "echo arbitrary_property"
-  },
-  {
-    "cmd": [
-      "echo",
-      "(u'some', u'strings')"
-    ],
-    "name": "echo list"
-  },
-  {
-    "cmd": [
-      "echo",
       "FrozenDict([('test_prop', FrozenDict([('key', u'value')]))])"
     ],
     "name": "echo $fake_repo/fake_module"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'properties:examples/full'"
-    ],
-    "name": "echo recipe"
   },
   {
     "cmd": [
@@ -72,9 +44,37 @@
   {
     "cmd": [
       "echo",
+      "True"
+    ],
+    "name": "echo arbitrary_property"
+  },
+  {
+    "cmd": [
+      "echo",
       "FrozenDict([(u'cool', u'dictionary')])"
     ],
     "name": "echo dict"
+  },
+  {
+    "cmd": [
+      "echo",
+      "(u'some', u'strings')"
+    ],
+    "name": "echo list"
+  },
+  {
+    "cmd": [
+      "echo",
+      "u'thing'"
+    ],
+    "name": "echo param_name_test"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'properties:examples/full'"
+    ],
+    "name": "echo recipe"
   },
   {
     "cmd": [

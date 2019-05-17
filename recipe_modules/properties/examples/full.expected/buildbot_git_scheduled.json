@@ -36,55 +36,6 @@
   {
     "cmd": [
       "echo",
-      "''"
-    ],
-    "name": "echo project"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'/path/to/workdir/TestSlavename'"
-    ],
-    "name": "echo workdir"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'https://chromium.googlesource.com/chromium/src.git'"
-    ],
-    "name": "echo repository"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'TestBuilder'"
-    ],
-    "name": "echo buildername"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'properties:examples/full'"
-    ],
-    "name": "echo recipe"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'chromium.testing.master'"
-    ],
-    "name": "echo mastername"
-  },
-  {
-    "cmd": [
-      "echo",
-      "571"
-    ],
-    "name": "echo buildnumber"
-  },
-  {
-    "cmd": [
-      "echo",
       "FrozenDict([('debug_dir', None)])"
     ],
     "name": "echo $recipe_engine/source_manifest"
@@ -95,6 +46,13 @@
       "('cool_dev1337@chromium.org', 'hax@chromium.org')"
     ],
     "name": "echo blamelist"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'test_bot'"
+    ],
+    "name": "echo bot_id"
   },
   {
     "cmd": [
@@ -113,6 +71,48 @@
   {
     "cmd": [
       "echo",
+      "'TestBuilder'"
+    ],
+    "name": "echo buildername"
+  },
+  {
+    "cmd": [
+      "echo",
+      "571"
+    ],
+    "name": "echo buildnumber"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'chromium.testing.master'"
+    ],
+    "name": "echo mastername"
+  },
+  {
+    "cmd": [
+      "echo",
+      "''"
+    ],
+    "name": "echo project"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'properties:examples/full'"
+    ],
+    "name": "echo recipe"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'https://chromium.googlesource.com/chromium/src.git'"
+    ],
+    "name": "echo repository"
+  },
+  {
+    "cmd": [
+      "echo",
       "'c14d891d44f0afff64e56ed7c9702df1d807b1ee'"
     ],
     "name": "echo revision"
@@ -127,9 +127,9 @@
   {
     "cmd": [
       "echo",
-      "'test_bot'"
+      "'/path/to/workdir/TestSlavename'"
     ],
-    "name": "echo bot_id"
+    "name": "echo workdir"
   },
   {
     "jsonResult": null,

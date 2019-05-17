@@ -24,7 +24,7 @@ def RunSteps(api, props, env_props):
 
   # It should behave like a real dictionary.
   assert len(properties) == len(api.properties)
-  for k in api.properties:
+  for k in sorted(api.properties):
     api.step('echo %s' % k, ['echo', repr(api.properties[k])])
 
 

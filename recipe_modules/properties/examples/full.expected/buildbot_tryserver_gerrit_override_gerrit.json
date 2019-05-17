@@ -40,30 +40,30 @@
   {
     "cmd": [
       "echo",
-      "12"
+      "FrozenDict([('debug_dir', None)])"
     ],
-    "name": "echo patch_set"
+    "name": "echo $recipe_engine/source_manifest"
   },
   {
     "cmd": [
       "echo",
-      "'/path/to/workdir/TestSlavename'"
+      "('cool_dev1337@chromium.org', 'hax@chromium.org')"
     ],
-    "name": "echo workdir"
+    "name": "echo blamelist"
   },
   {
     "cmd": [
       "echo",
-      "'https://chrome-internal-review.googlesource.com'"
+      "'test_bot'"
     ],
-    "name": "echo patch_gerrit_url"
+    "name": "echo bot_id"
   },
   {
     "cmd": [
       "echo",
-      "'master'"
+      "'http://c.org/p/cr/'"
     ],
-    "name": "echo patch_branch"
+    "name": "echo buildbotURL"
   },
   {
     "cmd": [
@@ -75,9 +75,44 @@
   {
     "cmd": [
       "echo",
-      "'TestSlavename'"
+      "571"
     ],
-    "name": "echo slavename"
+    "name": "echo buildnumber"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'chromium.testing.master'"
+    ],
+    "name": "echo mastername"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'master'"
+    ],
+    "name": "echo patch_branch"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'https://chrome-internal-review.googlesource.com'"
+    ],
+    "name": "echo patch_gerrit_url"
+  },
+  {
+    "cmd": [
+      "echo",
+      "456789"
+    ],
+    "name": "echo patch_issue"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'infra/internal'"
+    ],
+    "name": "echo patch_project"
   },
   {
     "cmd": [
@@ -96,9 +131,9 @@
   {
     "cmd": [
       "echo",
-      "'properties:examples/full'"
+      "12"
     ],
-    "name": "echo recipe"
+    "name": "echo patch_set"
   },
   {
     "cmd": [
@@ -110,58 +145,23 @@
   {
     "cmd": [
       "echo",
-      "'chromium.testing.master'"
+      "'properties:examples/full'"
     ],
-    "name": "echo mastername"
+    "name": "echo recipe"
   },
   {
     "cmd": [
       "echo",
-      "571"
+      "'TestSlavename'"
     ],
-    "name": "echo buildnumber"
+    "name": "echo slavename"
   },
   {
     "cmd": [
       "echo",
-      "FrozenDict([('debug_dir', None)])"
+      "'/path/to/workdir/TestSlavename'"
     ],
-    "name": "echo $recipe_engine/source_manifest"
-  },
-  {
-    "cmd": [
-      "echo",
-      "('cool_dev1337@chromium.org', 'hax@chromium.org')"
-    ],
-    "name": "echo blamelist"
-  },
-  {
-    "cmd": [
-      "echo",
-      "456789"
-    ],
-    "name": "echo patch_issue"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'http://c.org/p/cr/'"
-    ],
-    "name": "echo buildbotURL"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'infra/internal'"
-    ],
-    "name": "echo patch_project"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'test_bot'"
-    ],
-    "name": "echo bot_id"
+    "name": "echo workdir"
   },
   {
     "jsonResult": null,

@@ -32,41 +32,6 @@
   {
     "cmd": [
       "echo",
-      "'/path/to/workdir/TestSlavename'"
-    ],
-    "name": "echo workdir"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'TestBuilder'"
-    ],
-    "name": "echo buildername"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'properties:examples/full'"
-    ],
-    "name": "echo recipe"
-  },
-  {
-    "cmd": [
-      "echo",
-      "'chromium.testing.master'"
-    ],
-    "name": "echo mastername"
-  },
-  {
-    "cmd": [
-      "echo",
-      "571"
-    ],
-    "name": "echo buildnumber"
-  },
-  {
-    "cmd": [
-      "echo",
       "FrozenDict([('debug_dir', None)])"
     ],
     "name": "echo $recipe_engine/source_manifest"
@@ -81,9 +46,44 @@
   {
     "cmd": [
       "echo",
+      "'test_bot'"
+    ],
+    "name": "echo bot_id"
+  },
+  {
+    "cmd": [
+      "echo",
       "'http://c.org/p/cr/'"
     ],
     "name": "echo buildbotURL"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'TestBuilder'"
+    ],
+    "name": "echo buildername"
+  },
+  {
+    "cmd": [
+      "echo",
+      "571"
+    ],
+    "name": "echo buildnumber"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'chromium.testing.master'"
+    ],
+    "name": "echo mastername"
+  },
+  {
+    "cmd": [
+      "echo",
+      "'properties:examples/full'"
+    ],
+    "name": "echo recipe"
   },
   {
     "cmd": [
@@ -95,9 +95,9 @@
   {
     "cmd": [
       "echo",
-      "'test_bot'"
+      "'/path/to/workdir/TestSlavename'"
     ],
-    "name": "echo bot_id"
+    "name": "echo workdir"
   },
   {
     "jsonResult": null,
