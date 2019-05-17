@@ -591,14 +591,19 @@ class TestProtoSupport(test_env.RecipeEngineUnitTest):
 
     output, retcode = main.recipes_py('fetch')
     self.assertEqual(retcode, 1, output)
-    self.assertIn(textwrap.dedent('''
-      Error while rewriting generated protos. Output:
-
-      BASE/recipe_proto/impersonates_module.proto: bad package: uses reserved namespace 'recipe_modules'
-      BASE/recipe_proto/impersonates_recipe.proto: bad package: uses reserved namespace 'recipes'
-      BASE/recipe_modules/foobar/bad_namespace.proto: bad package: expected 'recipe_modules.main.foobar', got 'recipe_modules.main.foobar.etc'
-      BASE/recipes/bad_namespace.proto: bad package: expected 'recipes.main.bad_namespace', got 'recipes.main'
-    ''').strip(), output.replace(main.path, 'BASE').replace('\\', '/'))
+    output = output.replace(main.path, 'BASE').replace('\\', '/')
+    self.assertIn(
+        "BASE/recipe_proto/impersonates_module.proto: bad package: uses reserved namespace 'recipe_modules'",
+        output)
+    self.assertIn(
+        "BASE/recipe_proto/impersonates_recipe.proto: bad package: uses reserved namespace 'recipes'",
+        output)
+    self.assertIn(
+        "BASE/recipe_modules/foobar/bad_namespace.proto: bad package: expected 'recipe_modules.main.foobar', got 'recipe_modules.main.foobar.etc'",
+        output)
+    self.assertIn(
+        "BASE/recipes/bad_namespace.proto: bad package: expected 'recipes.main.bad_namespace', got 'recipes.main'",
+        output)
 
 
 if __name__ == '__main__':
