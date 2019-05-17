@@ -810,8 +810,8 @@ def main(args):
   _PATH_CLEANER = _make_path_cleaner(args.recipe_deps)
 
   if args.subcommand == 'run':
-    return run_run(args.filter, args.jobs, args.json, train_mode=False)
+    return run_run(args.test_filters, args.jobs, args.json, train_mode=False)
   if args.subcommand == 'train':
-    return run_train(args.docs, args.filter, args.jobs, args.json)
+    return run_train(args.docs, args.test_filters, args.jobs, args.json)
 
   raise ValueError('Unknown subcommand %r' % (args.subcommand,))

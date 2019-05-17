@@ -1044,11 +1044,11 @@ class TestArgs(test_env.RecipeEngineUnitTest):
 
     stderr.reset()
     args = parser.parse_args(['test', 'run', '--filter', 'foo'])
-    self.assertEqual(args.filter, ['foo*.*'])
+    self.assertEqual(args.test_filters, ['foo*.*'])
 
     stderr.reset()
     args = parser.parse_args(['test', 'run', '--filter', 'foo.bar'])
-    self.assertEqual(args.filter, ['foo.bar'])
+    self.assertEqual(args.test_filters, ['foo.bar'])
 
 
 if __name__ == '__main__':
