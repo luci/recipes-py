@@ -7,6 +7,8 @@ import os
 # pylint: disable=import-error
 from PB.recipe_engine.test_result import TestResult
 
+from ...test.test_util import filesystem_safe
+
 
 class TestFailure(object):
   """Base class for different kinds of test failures."""
@@ -107,10 +109,6 @@ class TestDescription(object):
     self.covers = covers
 
   @staticmethod
-  def filesystem_safe(name):
-    return ''.join('_' if c in '<>:"\\/|?*\0' else c for c in name)
-
-  @staticmethod
   def test_case_full_name(recipe_name, test_name):
     return '%s.%s' % (recipe_name, test_name)
 
@@ -120,5 +118,5 @@ class TestDescription(object):
 
   @property
   def expectation_path(self):
-    name = self.filesystem_safe(self.test_name)
+    name = filesystem_safe(self.test_name)
     return os.path.join(self.expect_dir, name + '.json')

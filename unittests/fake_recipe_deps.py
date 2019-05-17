@@ -31,7 +31,7 @@ from google.protobuf import json_format as jsonpb
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 from PB.recipe_engine.recipes_cfg import RepoSpec
 from recipe_engine.internal.fetch import GitBackend, CommitMetadata
-from recipe_engine.internal.commands.test.run_train import TestDescription
+from recipe_engine.internal.test.test_util import filesystem_safe
 from recipe_engine.internal.simple_cfg import RECIPES_CFG_LOCATION_REL
 
 
@@ -314,7 +314,7 @@ class FakeRecipeRepo(object):
               recipe.GenTests, "yield api.test('basic')")))
 
     for test_name, expectation in recipe.expectation.iteritems():
-      test_name = TestDescription.filesystem_safe(test_name)
+      test_name = filesystem_safe(test_name)
       expect_path = os.path.join(base_path + '.expected', test_name + '.json')
       with self.write_file(expect_path) as buf:
         json.dump(expectation, buf, indent=2, separators=(',', ': '))
