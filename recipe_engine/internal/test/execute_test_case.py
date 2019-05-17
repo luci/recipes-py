@@ -9,7 +9,7 @@ def execute_test_case(recipe_deps, recipe_name, test_data):
   Args:
 
     * recipe_deps (RecipeDeps)
-    * recipe_name (str) - The recipe to run.
+    * recipe_name (basestring) - The recipe to run.
     * test_data (TestData) - The test data to use for the simulated run.
 
   Returns a 3-tuple of:
@@ -31,7 +31,7 @@ def execute_test_case(recipe_deps, recipe_name, test_data):
   stream_engine = StreamEngineInvariants.wrap(annotator)
 
   props = test_data.properties.copy()
-  props['recipe'] = recipe_name
+  props['recipe'] = str(recipe_name)
   # Disable source manifest uploading by default.
   if '$recipe_engine/source_manifest' not in props:
     props['$recipe_engine/source_manifest'] = {}
