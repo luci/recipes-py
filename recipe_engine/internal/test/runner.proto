@@ -1,0 +1,76 @@
+// Copyright 2019 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipe_engine.internal.test;
+
+// Description of test to run (for runner subprocess)
+message Description {
+  // The fully qualified name of the recipe in the main repo:
+  //    path/to/recipe
+  //    module_name:path/to/recipe
+  string recipe_name = 1;
+
+  // The name of the test, as provided in GenTests (i.e. the name part of
+  // `api.test(name)`).
+  string test_name = 2;
+}
+
+// Result of running recipe tests (for the recipe engine's own 'test'
+// integration testing).
+message Outcome {
+  message Results {
+    message Lines {
+      repeated string lines = 1;
+    }
+
+    oneof expectation_file {
+      // Indicates recorded steps differ from results of actual recipe
+      // simulation.
+      Lines diff = 1;
+
+      // In 'train' mode, one of these could be set depending on what action the
+      // test runner took.
+      bool removed = 2;
+      bool written = 3;
+    }
+
+    // Each Lines is a single failed post_process check.
+    repeated Lines check = 4;
+
+    // The recipe raised an exception from RunSteps which was either unexpected
+    // (the test case didn't declare it, or declared a different exception), or
+    // the test case expected an exception but one wasn't raised. Contains
+    // a human-readable error message about what happened.
+    repeated string crash_mismatch = 5;
+
+    // The test itself was bad (e.g. declared test data for a step which didn't
+    // run).
+    repeated string bad_test = 6;
+
+    // Error messages from internal failures.
+    repeated string internal_error = 7;
+  }
+  // Maps full test names (i.e. 'recipe_name.test_case') to test result details.
+  map<string, Results> test_results = 1;
+
+  // Coverage percentage from 0 -> 100. Recipe tests consider anything less than
+  // 100% to be a failure.
+  //
+  // NOTE: This does not evaluate coverage for recipe modules which are
+  // completely uncovered. You also need to check the `uncovered_modules` field
+  // for this.
+  float coverage_percent = 2;
+
+  // Modules completely lacking any tests/recipes which could cover them at all.
+  repeated string uncovered_modules = 3;
+
+  // Absolute paths of expectation files which have no corresponding test cases.
+  repeated string unused_expectation_files = 4;
+
+  // Error messages from internal failures not associated with any individual
+  // test.
+  repeated string internal_error = 5;
+}
