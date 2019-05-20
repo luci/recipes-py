@@ -209,6 +209,9 @@ class TestData(BaseTestData):
     self.expected_exception = None
     self.post_process_hooks = [] # list(PostprocessHook)
 
+    # Filled in by recipe_deps.Recipe.gen_tests()
+    self.expect_file = None
+
   def __add__(self, other):
     assert isinstance(other, TestData)
     ret = TestData(self.name or other.name)

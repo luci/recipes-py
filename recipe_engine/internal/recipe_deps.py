@@ -266,6 +266,16 @@ class RecipeRepo(object):
     """Shorthand for `RecipeRepo.simple_cfg.repo_name`."""
     return self.simple_cfg.repo_name
 
+  @cached_property
+  def sloppy_coverage_patterns(self):
+    """Returns a frozenset of patterns (fnmatch absolute paths) for files which
+    are covered in this repo by `DISABLE_STRICT_COVERAGE=True`."""
+    patterns = []
+    for mod in self.modules.itervalues():
+      if mod.uses_sloppy_coverage:
+        patterns.append(os.path.join(mod.path, '*.py'))
+    return frozenset(patterns)
+
   @classmethod
   def create(cls, recipe_deps, path, backend=None, simple_cfg=None):
     """Creates a RecipeRepo.
@@ -389,6 +399,19 @@ class RecipeModule(object):
     return importlib.import_module(
       'RECIPE_MODULES.%s.%s' % (self.repo.name, self.name))
 
+  @cached_property
+  def uses_sloppy_coverage(self):
+    """Returns True if this module has DISABLE_STRICT_COVERAGE set.
+
+    This implies that ANY recipe code in the whole repo should count towards the
+    coverage report on this module. This is the slowest way to do coverage
+    calculation (especially for large modules), but there are still modules
+    which have this set.
+
+    crbug.com/965278 - Get rid of this feature.
+    """
+    return self.do_import().DISABLE_STRICT_COVERAGE
+
   @classmethod
   def create(cls, repo, name):
     """Creates a RecipeModule.
@@ -486,6 +509,18 @@ class Recipe(object):
       ])
 
     return ret
+
+  @cached_property
+  def coverage_patterns(self):
+    """Returns a frozenset of patterns (fnmatch absolute paths) for files which
+    are covered by this recipe.
+
+    Includes any sloppily covered files in this repo.
+    """
+    patterns = [self.path]
+    if self.module:
+      patterns.append(os.path.join(self.module.path, '*.py'))
+    return self.repo.sloppy_coverage_patterns | frozenset(patterns)
 
   @cached_property
   def global_symbols(self):
