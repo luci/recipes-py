@@ -282,7 +282,7 @@ Here's a simple example recipe:
       # and asserts that the step 'say hello' runs.
       yield (
           api.test('basic')
-        + api.post_process(lambda check, steps: check('say hello' in steps))
+        + api.post_check(lambda check, steps: check('say hello' in steps))
       )
 
 #### `RunSteps`
