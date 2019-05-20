@@ -4,7 +4,7 @@
 
 syntax = "proto3";
 
-package recipe_engine;
+package recipe_engine.internal.test;
 
 // Result of running recipe tests.
 message TestResult {

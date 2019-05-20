@@ -19,7 +19,7 @@ import mock
 import test_env
 
 from recipe_engine.internal.commands import test as test_parser
-from PB.recipe_engine.test_result import TestResult
+from PB.recipe_engine.internal.test.test_result import TestResult
 
 CheckFailure = TestResult.CheckFailure
 
@@ -917,117 +917,6 @@ class TestTrain(Common):
             coverage={'recipe_modules/foo_module/config.py': [8]},
             uncovered_mods=['foo_module'],
         ))
-
-
-class TestDiff(Common):
-  def test_basic(self):
-    with self.main.write_file('base.json') as buf:
-      json.dump(self._result_json(), buf)
-
-    with self.main.write_file('new.json') as buf:
-      json.dump(self._result_json(), buf)
-
-    result = self._run_test(
-        'diff',
-        '--baseline', os.path.join(self.main.path, 'base.json'),
-        '--actual', os.path.join(self.main.path, 'new.json'),
-    )
-    self.assertDictEqual(result.data, self._result_json())
-
-  def test_invalid_baseline(self):
-    invalid = self._result_json()
-    del invalid['valid']
-
-    with self.main.write_file('base.json') as buf:
-      json.dump(invalid, buf)
-
-    with self.main.write_file('new.json') as buf:
-      json.dump(self._result_json(), buf)
-
-    result = self._run_test(
-        'diff',
-        '--baseline', os.path.join(self.main.path, 'base.json'),
-        '--actual', os.path.join(self.main.path, 'new.json'),
-        should_fail=True
-    )
-    self.assertDictEqual(result.data, invalid)
-
-  def test_invalid_actual(self):
-    invalid = self._result_json()
-    del invalid['valid']
-
-    with self.main.write_file('base.json') as buf:
-      json.dump(invalid, buf)
-
-    with self.main.write_file('new.json') as buf:
-      json.dump(self._result_json(), buf)
-
-    result = self._run_test(
-        'diff',
-        '--baseline', os.path.join(self.main.path, 'base.json'),
-        '--actual', os.path.join(self.main.path, 'new.json'),
-        should_fail=True
-    )
-    self.assertDictEqual(result.data, invalid)
-
-  def test_just_diff(self):
-    with self.main.write_file('base.json') as buf:
-      json.dump(self._result_json(diff=['foo']), buf)
-
-    with self.main.write_file('new.json') as buf:
-      json.dump(self._result_json(diff=['foo', 'bar']), buf)
-
-    result = self._run_test(
-        'diff',
-        '--baseline', os.path.join(self.main.path, 'base.json'),
-        '--actual', os.path.join(self.main.path, 'new.json'),
-        should_fail=True
-    )
-    self.assertDictEqual(result.data, self._result_json(diff=['bar']))
-
-  def test_full(self):
-    with self.main.write_file('base.json') as buf:
-      json.dump(self._result_json(
-          check={
-            'foo': [
-              CheckFailure(filename='foo_file', lineno=1, func='foo_func')],
-          },
-          coverage={'foo': [1, 2, 3], 'bar': [1]},
-          diff=['foo'], crash=['foo'], internal=['foo'], uncovered_mods=['foo'],
-          unused_expect=['foo_expect'],
-      ), buf)
-
-    with self.main.write_file('new.json') as buf:
-      json.dump(self._result_json(
-          check={
-            'foo': [
-              CheckFailure(filename='foo_file', lineno=1, func='foo_func')],
-            'bar': [
-              CheckFailure(filename='bar_file', lineno=2, func='bar_func',
-                           args=['"arg"'])],
-          },
-          coverage={'foo': [1, 2, 3], 'bar': [1, 2]},
-          diff=['foo', 'bar'], crash=['foo', 'bar'], internal=['foo', 'bar'],
-          uncovered_mods=['foo', 'bar'],
-          unused_expect=['foo_expect', 'bar_expect'],
-      ), buf)
-
-    result = self._run_test(
-        'diff',
-        '--baseline', os.path.join(self.main.path, 'base.json'),
-        '--actual', os.path.join(self.main.path, 'new.json'),
-        should_fail=True
-    )
-    self.assertDictEqual(
-        self._result_json(
-            check={'bar': [
-              CheckFailure(filename='bar_file', lineno=2, func='bar_func',
-                           args=['"arg"'])],
-            },
-            coverage={'bar': [2]},
-            diff=['bar'], crash=['bar'], internal=['bar'],
-            uncovered_mods=['bar'], unused_expect=['bar_expect']),
-        result.data)
 
 
 class TestArgs(test_env.RecipeEngineUnitTest):

@@ -19,7 +19,7 @@ from collections import Iterable, OrderedDict, deque, defaultdict, namedtuple
 
 import astunparse
 
-from PB.recipe_engine.test_result import TestResult
+from PB.recipe_engine.internal.test.test_result import TestResult
 
 from ...types import FrozenDict
 

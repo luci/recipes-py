@@ -5,7 +5,7 @@
 import os
 
 # pylint: disable=import-error
-from PB.recipe_engine.test_result import TestResult
+from PB.recipe_engine.internal.test.test_result import TestResult
 
 from ...test.test_util import filesystem_safe
 

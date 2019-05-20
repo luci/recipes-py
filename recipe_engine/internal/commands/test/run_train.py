@@ -30,7 +30,7 @@ from google.protobuf import json_format
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 
 # pylint: disable=import-error
-from PB.recipe_engine.test_result import TestResult
+from PB.recipe_engine.internal.test.test_result import TestResult
 
 from .... import config_types
 

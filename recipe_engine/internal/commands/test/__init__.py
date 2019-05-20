@@ -25,10 +25,7 @@ def add_arguments(parser):
     # should run all tests for the matching recipes.
     return filt if '.' in filt else filt+'*.*'
 
-  subp = parser.add_subparsers(
-      dest='subcommand',
-      metavar='{run, train, list, diff}'
-  )
+  subp = parser.add_subparsers(dest='subcommand', metavar='{run, train, list}')
 
   glob_helpstr = textwrap.dedent('''
     glob filter for the tests to run (can be specified multiple times);
@@ -46,11 +43,10 @@ def add_arguments(parser):
       default=multiprocessing.cpu_count(),
       help='run N jobs in parallel (default %(default)s)')
   run_p.add_argument(
-      '--json', metavar='FILE', type=argparse.FileType('w'),
-      help='path to JSON output file')
-  run_p.add_argument(
       '--filter', dest='test_filters', action='append', type=_normalize_filter,
       help=glob_helpstr)
+  run_p.add_argument(
+      '--json', type=argparse.FileType('w'), help=argparse.SUPPRESS)
 
   helpstr = 'Re-train recipe expectations.'
   train_p = subp.add_parser(
@@ -61,14 +57,13 @@ def add_arguments(parser):
       default=multiprocessing.cpu_count(),
       help='run N jobs in parallel (default %(default)s)')
   train_p.add_argument(
-      '--json', metavar='FILE', type=argparse.FileType('w'),
-      help='path to JSON output file')
-  train_p.add_argument(
       '--filter', dest='test_filters', action='append', type=_normalize_filter,
       help=glob_helpstr)
   train_p.add_argument(
       '--no-docs', action='store_false', default=True, dest='docs',
       help='Disable automatic documentation generation.')
+  train_p.add_argument(
+      '--json', type=argparse.FileType('w'), help=argparse.SUPPRESS)
 
   helpstr = 'Print all test names.'
   list_p = subp.add_parser(
@@ -77,28 +72,9 @@ def add_arguments(parser):
       '--json', metavar='FILE', type=argparse.FileType('w'),
       help='path to JSON output file')
 
-  helpstr = 'Compare results of two test runs.'
-  diff_p = subp.add_parser(
-      'diff', help=helpstr, description=helpstr)
-  diff_p.add_argument(
-      '--baseline', metavar='FILE', type=argparse.FileType('r'),
-      required=True,
-      help='path to baseline JSON file')
-  diff_p.add_argument(
-      '--actual', metavar='FILE', type=argparse.FileType('r'),
-      required=True,
-      help='path to actual JSON file')
-  diff_p.add_argument(
-      '--json', metavar='FILE', type=argparse.FileType('w'),
-      help='path to JSON output file')
-
   def _launch(args):
     if args.subcommand == 'list':
       return run_list(args.recipe_deps, args.json)
-
-    if args.subcommand == 'diff':
-      from .diff import run_diff
-      return run_diff(args.baseline, args.actual, args.json)
 
     from .run_train import main
     return main(args)
@@ -118,10 +94,8 @@ def run_list(recipe_deps, json_file):
 
   Returns 0
   """
-  from .common import TestDescription
-
   tests = [
-    TestDescription.test_case_full_name(recipe.name, tc.name)
+    '%s.%s' % (recipe.name, tc.name)
     for recipe in recipe_deps.main_repo.recipes.values()
     for tc in recipe.gen_tests()
   ]
