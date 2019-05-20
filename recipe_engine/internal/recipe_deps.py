@@ -61,6 +61,7 @@ from .exceptions import CyclicalDependencyError, UnknownRecipe, UnknownRepoName
 from .exceptions import RecipeLoadError, RecipeSyntaxError, MalformedRecipeError
 from .exceptions import UnknownRecipeModule
 from .simple_cfg import SimpleRecipesCfg, RECIPES_CFG_LOCATION_REL
+from .test.test_util import filesystem_safe
 
 
 LOG = logging.getLogger(__name__)
@@ -457,6 +458,12 @@ class Recipe(object):
     return ret + '.py'
 
   @cached_property
+  def expectation_dir(self):
+    """Returns the directory where this recipe's expectation JSON files live."""
+    # TODO(iannucci): move expectation tree outside of the recipe tree.
+    return os.path.splitext(self.path)[0] + '.expected'
+
+  @cached_property
   def relpath(self):
     """The path to the recipe module relative to the repo root."""
     return os.path.relpath(self.path, self.repo.path)
@@ -470,12 +477,11 @@ class Recipe(object):
     """
     ret = set()
 
-    expectation_path = os.path.splitext(self.path)[0] + '.expected'
-    if os.path.isdir(expectation_path):
-      ret.add(expectation_path)
+    if os.path.isdir(self.expectation_dir):
+      ret.add(self.expectation_dir)
       ret.update([
-        os.path.join(expectation_path, fname)
-        for fname in os.listdir(expectation_path)
+        os.path.join(self.expectation_dir, fname)
+        for fname in os.listdir(self.expectation_dir)
         if fname.endswith('.json')
       ])
 
@@ -560,7 +566,8 @@ class Recipe(object):
   def gen_tests(self):
     """Runs this recipe's GenTests function.
 
-    Returns a list of all test data fixtures for this recipe.
+    Yields all TestData fixtures for this recipe. Fills in the .expect_file
+    property on each with an absolute path to the expectation file.
     """
     api = RecipeTestApi(module=None)
     resolved_deps = _resolve(
@@ -570,7 +577,11 @@ class Recipe(object):
       for local_name, resolved_dep in resolved_deps.iteritems()
       if resolved_dep is not None
     })
-    return list(self.global_symbols['GenTests'](api))
+    for test_data in self.global_symbols['GenTests'](api):
+      test_data.expect_file = os.path.join(
+          self.expectation_dir, filesystem_safe(test_data.name),
+      ) + '.json'
+      yield test_data
 
   @cached_property
   def normalized_DEPS(self):

@@ -515,7 +515,7 @@ def get_tests(test_filter=None):
         covers.append(os.path.join(recipe.module.path, '*.py'))
 
       with coverage_context(include=covers) as cov:
-        recipe_tests = recipe.gen_tests()
+        recipe_tests = list(recipe.gen_tests())  # run generator
 
       coverage_data.update(cov.get_data())
       # TODO(iannucci): move expectation tree outside of the recipe tree.

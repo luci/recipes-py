@@ -34,7 +34,7 @@ def add_arguments(parser):
       sys.exit(1)
 
     recipe = args.recipe_deps.main_repo.recipes[args.recipe_name]
-    all_tests = recipe.gen_tests()
+    all_tests = list(recipe.gen_tests())
     test_data = None
     if len(all_tests) == 1 and not args.test_name:
       test_data = all_tests[0]
