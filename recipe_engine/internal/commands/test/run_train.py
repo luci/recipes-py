@@ -220,6 +220,9 @@ def _make_path_cleaner(recipe_deps):
   # io is in the system root
   import io
   roots[os.path.abspath(dirn(dirn(dirn(io.__file__))))] = 'PYTHON'
+  # coverage is in the local site-packages in the vpython root
+  roots[os.path.abspath(dirn(dirn(coverage.__file__)))] = \
+      'PYTHON(site-packages)'
 
   def _root_subber(match):
     return '"%s%s"' % (
