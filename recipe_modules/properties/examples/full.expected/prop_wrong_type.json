@@ -11,11 +11,11 @@
       "    raw_result = recipe_obj.run_steps(api, engine)",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/recipe_deps.py\", line 666, in run_steps",
       "    ignore_unknown_fields=True))",
-      "  File \"PYTHON(site-packages)/google/protobuf/json_format.py\", line 421, in ParseDict",
+      "  File \"PYTHON(site-packages)/google/protobuf/json_format.py\", in ParseDict",
       "    parser.ConvertMessage(js_dict, message)",
-      "  File \"PYTHON(site-packages)/google/protobuf/json_format.py\", line 452, in ConvertMessage",
+      "  File \"PYTHON(site-packages)/google/protobuf/json_format.py\", in ConvertMessage",
       "    self._ConvertFieldValuePair(value, message)",
-      "  File \"PYTHON(site-packages)/google/protobuf/json_format.py\", line 558, in _ConvertFieldValuePair",
+      "  File \"PYTHON(site-packages)/google/protobuf/json_format.py\", in _ConvertFieldValuePair",
       "    raise ParseError('Failed to parse {0} field: {1}.'.format(name, e))",
       "ParseError: Failed to parse test_prop field: 'bool' object is not iterable."
     ]

@@ -206,6 +206,7 @@ def _make_path_cleaner(recipe_deps):
   # paths of all recipe_deps
   for repo in recipe_deps.repos.itervalues():
     roots[repo.path] = 'RECIPE_REPO[%s]' % repo.name
+  main_repo_root = 'RECIPE_REPO[%s]' % recipe_deps.main_repo.name
 
   # Derive path to python prefix. We WOULD use `sys.prefix` and
   # `sys.real_prefix` (a vpython construction), however SOME python
@@ -225,8 +226,15 @@ def _make_path_cleaner(recipe_deps):
       'PYTHON(site-packages)'
 
   def _root_subber(match):
-    return '"%s%s"' % (
-      roots[match.group(1)], match.group(2).replace('\\', '/'))
+    root = roots[match.group(1)]
+    path = match.group(2).replace('\\', '/')
+    line = ', line ' + match.group(3)
+    # If this is a path from some other repo, then replace the line number as
+    # it is very noisy, but the general shape of the traceback can still be
+    # useful.
+    if root != main_repo_root:
+      line = ''
+    return '"%s%s"%s' % (root, path, line)
 
   # Replace paths from longest to shortest; because of the way the recipe engine
   # fetches dependencies (i.e. into the .recipe_deps folder) dependencies of
@@ -234,7 +242,7 @@ def _make_path_cleaner(recipe_deps):
   paths = sorted(roots.keys(), key=lambda v: -len(v))
 
   # Look for paths in double quotes (as we might see in a stack trace)
-  replacer = re.compile(r'"(%s)([^"]*)"' % ('|'.join(map(re.escape, paths)),))
+  replacer = re.compile(r'"(%s)([^"]*)", line (\d+)' % ('|'.join(map(re.escape, paths)),))
 
   return lambda lines: [replacer.sub(_root_subber, line) for line in lines]
 
