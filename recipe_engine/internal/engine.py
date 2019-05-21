@@ -727,7 +727,7 @@ def _print_step(execution_log, step):
   # TODO(iannucci): print the DIFF against the original environment
   execution_log.write_line('full environment:')
   for key, value in sorted(step.env.items()):
-    execution_log.write_line('  %s: %s' % (key, value))
+    execution_log.write_line('  %s: %s' % (key, value.replace('\n', '\\n')))
 
   execution_log.write_line('')
 
