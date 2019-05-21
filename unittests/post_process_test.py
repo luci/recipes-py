@@ -145,11 +145,9 @@ class TestStepStatus(PostProcessUnitTest):
   def setUp(self):
     super(TestStepStatus, self).setUp()
     self.d = OrderedDict([
-        ('success-step', {'name': 'success-step', '~followup_annotations': []}),
-        ('failure-step', {'name': 'failure-step',
-                          '~followup_annotations': ['@@@STEP_FAILURE@@@']}),
-        ('exception-step', {'name': 'exception-step',
-                            '~followup_annotations': ['@@@STEP_EXCEPTION@@@']}),
+        ('success-step', {'name': 'success-step', 'status': 'SUCCESS'}),
+        ('failure-step', {'name': 'failure-step', 'status': 'FAILURE'}),
+        ('exception-step', {'name': 'exception-step', 'status': 'EXCEPTION'}),
     ])
 
   def expect_fails(self, num_fails, func, *args, **kwargs):
@@ -294,7 +292,7 @@ class TestStepText(PostProcessUnitTest):
     self.d = OrderedDict([
         ('x', {
             'name': 'x',
-            '~followup_annotations': ['@@@STEP_TEXT@foobar@@@'],
+            'step_text': 'foobar',
         })
     ])
 
@@ -333,11 +331,9 @@ class TestLog(PostProcessUnitTest):
     self.d = OrderedDict([
         ('x', {
             'name': 'x',
-            '~followup_annotations': [
-                '@@@STEP_LOG_LINE@log-x@foo@@@',
-                '@@@STEP_LOG_LINE@log-x@bar@@@',
-                '@@@STEP_LOG_END@log-x@@@',
-            ],
+            'logs': {
+                'log-x': 'foo\nbar',
+            },
         })
     ])
 

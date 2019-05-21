@@ -105,5 +105,3 @@ class ProductStreamEngine(StreamEngine):
   def close(self):
     self._engine_a.close()
     self._engine_b.close()
-
-

@@ -12,10 +12,11 @@ def execute_test_case(recipe_deps, recipe_name, test_data):
     * recipe_name (basestring) - The recipe to run.
     * test_data (TestData) - The test data to use for the simulated run.
 
-  Returns a 3-tuple of:
+  Returns a 4-tuple of:
     * The result of RecipeEngine.run_steps
     * SimulationStepRunner.export_steps_ran()
-    * SimulationAnnotatorStreamEngine.buffered_steps
+    * SimulationStreamEngine.annotations
+    * Uncaught exception triggered by recipe code or None
   """
   # pylint: disable=too-many-locals
 
@@ -24,11 +25,11 @@ def execute_test_case(recipe_deps, recipe_name, test_data):
   from ..engine_env import FakeEnviron
   from ..step_runner.sim import SimulationStepRunner
   from ..stream.invariants import StreamEngineInvariants
-  from ..stream.simulator import SimulationAnnotatorStreamEngine
+  from ..stream.simulator import SimulationStreamEngine
 
   step_runner = SimulationStepRunner(test_data)
-  annotator = SimulationAnnotatorStreamEngine()
-  stream_engine = StreamEngineInvariants.wrap(annotator)
+  simulator = SimulationStreamEngine()
+  stream_engine = StreamEngineInvariants.wrap(simulator)
 
   props = test_data.properties.copy()
   props['recipe'] = str(recipe_name)
@@ -42,8 +43,9 @@ def execute_test_case(recipe_deps, recipe_name, test_data):
   for key, value in test_data.environ.iteritems():
     environ[key] = value
 
-  result = RecipeEngine.run_steps(
+  result, uncaught_exception = RecipeEngine.run_steps(
       recipe_deps, props, stream_engine, step_runner, environ, '',
       test_data=test_data, skip_setup_build=True)
 
-  return result, step_runner.export_steps_ran(), annotator.buffered_steps
+  return result, step_runner.export_steps_ran(), simulator.annotations, \
+      uncaught_exception

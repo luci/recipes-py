@@ -2,71 +2,106 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import cStringIO
 import collections
 
-from . import StreamEngine
-from .annotator import AnnotatorStreamEngine
+from . import StreamEngine, encode_str
+from ..test.empty_log import EMPTY_LOG
 
 
-class _NopFile(object):
-  # pylint: disable=multiple-statements,missing-docstring
-  def write(self, data): pass
-  def flush(self): pass
+def _ignoreable(f):
+  def check_annotations(self, *args, **kwargs):
+    if self._annotations is not None:
+      f(self, *args, **kwargs)
+  return check_annotations
 
 
-class _NopLogStream(StreamEngine.Stream):
-  # pylint: disable=multiple-statements
-  def write_line(self, line): pass
-  def close(self): pass
+class _SimulationStepStream(StreamEngine.StepStream):
+  def __init__(self, annotations):
+    """A step stream recording annotations for simulation tests.
 
+    Args:
+      annotations - The dictionary to map annotations into. If None, annotations
+          will be ignored.
+    """
+    super(_SimulationStepStream, self).__init__()
+    self._annotations = annotations
 
-class _NopStepStream(AnnotatorStreamEngine.StepStream):
-  def __init__(self, engine, step_name):
-    super(_NopStepStream, self).__init__(engine, _NopFile(), step_name)
+  def _dict_annotation(self, field):
+    return self._annotations.setdefault(field, collections.OrderedDict())
 
-  def new_log_stream(self, _):
-    return _NopLogStream()
+  @_ignoreable
+  def write_line(self, line):
+    self._annotations.setdefault('raw_annotations', []).append(line)
 
   def close(self):
     pass
 
-
-class _SimulationStepStream(AnnotatorStreamEngine.StepStream):
-  # We override annotations we don't want to show up in followup_annotations
   def new_log_stream(self, log_name):
     # We sink 'execution details' to dev/null. This is the log that the recipe
     # engine produces that contains the printout of the command, environment,
     # etc.
     #
     # The '$debug' log is conditionally filtered in _merge_presentation_updates.
-    if log_name in ('execution details',):
-      return _NopLogStream()
-    return super(_SimulationStepStream, self).new_log_stream(log_name)
+    if self._annotations is None or log_name in ('execution details',):
+      lines = None
+    else:
+      # TODO(gbeaty) Remove this?
+      log_name = log_name.replace('/', '&#x2f;')
+      logs = self._dict_annotation('logs')
+      lines = []
+
+    class LogStream(StreamEngine.Stream):
+      def write_line(self, line):
+        if lines is not None:
+          lines.append(line)
+
+      def close(self):
+        if lines is not None:
+          if not lines:
+            logs[log_name] = EMPTY_LOG
+          else:
+            logs[log_name] = '\n'.join(encode_str(l) for l in lines)
+
+    return LogStream()
+
+  @_ignoreable
+  def add_step_text(self, text):
+    self._annotations['step_text'] = text
+
+  @_ignoreable
+  def add_step_summary_text(self, text):
+    self._annotations['step_summary_text'] = text
+
+  @_ignoreable
+  def add_step_link(self, name, url):
+    self._dict_annotation('links')[name] = url
+
+  @_ignoreable
+  def set_step_status(self, status, had_timeout):
+    assert status in ('SUCCESS', 'WARNING', 'FAILURE', 'EXCEPTION'), (
+        'Impossible status %s' % status)
+    del had_timeout
+    if status != 'SUCCESS':
+      self._annotations['status'] = status
+
+  @_ignoreable
+  def set_build_property(self, key, value):
+    self._dict_annotation('output_properties')[key] = value
 
   def trigger(self, spec):
     pass
 
-  def close(self):
-    pass
 
-
-class SimulationAnnotatorStreamEngine(AnnotatorStreamEngine):
+class SimulationStreamEngine(StreamEngine):
   """Stream engine which just records generated commands."""
 
   def __init__(self):
-    self._step_buffer_map = collections.OrderedDict()
-    super(SimulationAnnotatorStreamEngine, self).__init__(
-        self._step_buffer(None))
+    self._annotations_map = collections.OrderedDict()
+    super(SimulationStreamEngine, self).__init__()
 
   @property
-  def buffered_steps(self):
-    """Returns an OrderedDict of all steps run by dot-name to a cStringIO
-    buffer with any annotations printed."""
-    return self._step_buffer_map
-
-  def _step_buffer(self, step_name):
-    return self._step_buffer_map.setdefault(step_name, cStringIO.StringIO())
+  def annotations(self):
+    return self._annotations_map
 
   def new_step_stream(self, step_config):
     # TODO(iannucci): don't skip these. Omitting them for now to reduce the
@@ -75,14 +110,11 @@ class SimulationAnnotatorStreamEngine(AnnotatorStreamEngine):
       'recipe result',   # explicitly covered by '$result'
     )
     if step_config.name in steps_to_skip:
-      return _NopStepStream(self, step_config.name)
-
-    stream = _SimulationStepStream(
-        self, self._step_buffer(step_config.name), step_config.name)
-    # TODO(iannucci): this is duplicated with
-    # AnnotatorStreamEngine._create_step_stream
-    if len(step_config.name_tokens) > 1:
-      # Emit our current nest level, if we are nested.
-      stream.output_annotation(
-          'STEP_NEST_LEVEL', str(len(step_config.name_tokens)-1))
-    return stream
+      annotations = None
+    else:
+      annotations = self._annotations_map[step_config.name] = {}
+      # TODO(iannucci): this is duplicated with
+      # AnnotatorStreamEngine._create_step_stream
+      if len(step_config.name_tokens) > 1:
+        annotations['nest_level'] = len(step_config.name_tokens) - 1
+    return _SimulationStepStream(annotations)

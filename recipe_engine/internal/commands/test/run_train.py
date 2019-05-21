@@ -35,6 +35,7 @@ from PB.recipe_engine.internal.test.test_result import TestResult
 from .... import config_types
 
 from ...test import magic_check_fn
+from ...test.empty_log import EMPTY_LOG
 from ...test.execute_test_case import execute_test_case
 
 from ..doc.cmd import regenerate_docs
@@ -255,8 +256,8 @@ def _merge_presentation_updates(steps_ran, presentation_steps):
 
     * steps_ran (Dict[str, dict]) - Mapping of step name to its run details as
       an expectation dict (e.g. 'cmd', 'env', etc.)
-    * presentation_steps (OrderedDict[str, StringIO]) - Mapping of presentation
-      step name (in the order that they were presented) to all emitted
+    * presentation_steps (OrderedDict[str, dict]) - Mapping of step name (in the
+      order that they were presented) to a dict containing the collected
       annotations for that step.
 
   Returns OrderedDict[str, expectation: dict]. This will have the order of steps
@@ -272,95 +273,52 @@ def _merge_presentation_updates(steps_ran, presentation_steps):
       # TODO(iannucci): Drop 'cmd' field for presentation-only steps.
       'cmd': [],
     })
-    output = step_presented.getvalue()
-    if output:
-      lines = _PATH_CLEANER(output.splitlines())
-      # wowo hacks!
-      # We only want to see $debug if it's got a crash in it.
-      if "@@@STEP_LOG_LINE@$debug@Unhandled exception:@@@" not in lines:
-        lines = [line for line in lines if '$debug' not in line]
-      if lines:
-        ret[step_name]['~followup_annotations'] = lines
+    debug_logs = step_presented.get('logs', {}).get('$debug', None)
+    # wowo hacks!
+    # We only want to see $debug if it's got a crash in it.
+    if debug_logs and 'Unhandled exception:' not in debug_logs.splitlines():
+      step_presented['logs'].pop('$debug')
+
+    ret[step_name].update(step_presented)
 
   return ret
 
 
-def _check_exception(expected_exception, raw_expectations):
+def _check_exception(expected_exception, uncaught_exception_info):
   """Check to see if the test run failed with an exception from RunSteps.
 
-  This currently extracts and does some lite parsing of the stacktrace from the
-  "RECIPE CRASH (Uncaught exception)" step, which the engine produces from
-  _log_crash when RunSteps tosses a non StepFailure exception. This is
-  definitely looser than it should be, but it's the best we can do until
-  expectations are natively object-oriented instead of bag of JSONish stuff.
-  That said, it works Alright For Now (tm).
-
   Args:
-
     * expected_exception (str|None) - The name of the exception that the test
       case expected.
-    * raw_expectations (Dict[str, dict]) - Mapping of presentation step name to
-      the expectation dictionary for that step.
+    * uncaught_exception_info (Tuple[type, Exception, traceback]|None) - The
+      exception info for any uncaught exception triggered by user recipe code.
 
   Returns CrashFailure|None.
   """
-
-
   # Check to see if the user expected the recipe to crash in this test case or
   # not.
-  # TODO(iannucci): This step name matching business is a bit sketchy.
-  crash_step = raw_expectations.get('RECIPE CRASH (Uncaught exception)')
-  crash_lines = crash_step['~followup_annotations'] if crash_step else []
+  if uncaught_exception_info:
+    exc_type, exc, tb = uncaught_exception_info
+    exc_name = exc_type.__name__
+  else:
+    exc_name = exc = None
   if expected_exception:
-    if crash_step:
-      # TODO(iannucci): the traceback really isn't "followup_annotations", but
-      # stdout printed to the step currently ends up there. Fix this when
-      # refactoring the test expectation format.
-      #
-      # The Traceback looks like:
-      #   Traceback (most recent call last)
-      #      ...
-      #      ...
-      #   ExceptionClass: Some exception text    <- want this line
-      #   with newlines in it.
-      exception_line = None
-      for line in reversed(crash_lines):
-        if line.startswith((' ', 'Traceback (most recent')):
-          break
-        exception_line = line
-      # We expect the traceback line to look like:
-      #   "ExceptionClass"
-      #   "ExceptionClass: Text from the exception message."
-      if not exception_line.startswith(expected_exception):
-        return CrashFailure((
-          'Expected exception mismatch in RunSteps. The test expected %r'
-          ' but the exception line was %r.' % (
-            expected_exception, exception_line,
-          )
-        ))
-    else:
+    if not exc:
       return CrashFailure(
           'Missing expected exception in RunSteps. `api.expect_exception` is'
           ' specified, but the exception did not occur.'
       )
-  else:
-    if crash_step:
-      msg_lines = [
+    elif exc_name != expected_exception:
+      return CrashFailure(
+          'Expected exception mismatch in RunSteps. The test expected %r'
+          ' but the actual exception was %r.' % (expected_exception, exc_name)
+      )
+  elif exc:
+    msg_lines = [
         'Unexpected exception in RunSteps. Use `api.expect_exception` if'
         ' the crash is intentional.',
-      ]
-
-      traceback_idx = 0
-      for i, line in enumerate(crash_lines):
-        if line.startswith('Traceback '):
-          traceback_idx = i
-          break
-      msg_lines.extend(
-          '    ' + line
-          for line in crash_lines[traceback_idx:]
-          if not line.startswith('@@@')
-      )
-      return CrashFailure('\n'.join(msg_lines))
+    ] + traceback.format_exception(exc_type, exc, tb)
+    return CrashFailure('\n'.join(msg_lines))
 
   return None
 
@@ -436,12 +394,12 @@ def run_recipe(recipe_name, test_name, covers):
   test_data = _GEN_TEST_CACHE[(recipe_name, test_name)]
 
   with coverage_context(include=covers) as cov:
-    result, steps_ran, buffered_steps = execute_test_case(
-        _RECIPE_DEPS, recipe_name, test_data)
+    result, steps_ran, annotations, uncaught_exception_info = \
+        execute_test_case(_RECIPE_DEPS, recipe_name, test_data)
 
   coverage_data = cov.get_data()
 
-  raw_expectations = _merge_presentation_updates(steps_ran, buffered_steps)
+  raw_expectations = _merge_presentation_updates(steps_ran, annotations)
 
   bad_test_failures = _check_bad_test(
       test_data, steps_ran.keys(), raw_expectations.keys())
@@ -456,7 +414,7 @@ def run_recipe(recipe_name, test_name, covers):
   raw_expectations['$result']['name'] = '$result'
 
   crash_failure = _check_exception(
-      test_data.expected_exception, raw_expectations)
+      test_data.expected_exception, uncaught_exception_info)
 
   failed_checks = []
   with coverage_context(include=covers) as cov:
@@ -464,9 +422,84 @@ def run_recipe(recipe_name, test_name, covers):
         raw_expectations, test_data)
   coverage_data.update(cov.get_data())
 
+  convert_to_expectations(result_data)
+
   return (
     result_data, failed_checks, crash_failure, bad_test_failures, coverage_data
   )
+
+
+def _convert_nest_level(value):
+  yield '@@@STEP_NEST_LEVEL@%d@@@' % value
+
+
+def _convert_step_text(value):
+  yield '@@@STEP_TEXT@%s@@@' % value
+
+
+def _convert_step_summary_text(value):
+  yield '@@@STEP_SUMMARY_TEXT@%s@@@' % value
+
+
+def _convert_logs(value):
+  for name, log in value.iteritems():
+    if log is not EMPTY_LOG:
+      for l in log.split('\n'):
+        yield '@@@STEP_LOG_LINE@%s@%s@@@' % (name, l)
+    yield '@@@STEP_LOG_END@%s@@@' % name
+
+
+def _convert_links(value):
+  for link, url in value.iteritems():
+    yield '@@@STEP_LINK@%s@%s@@@' % (link, url)
+
+
+_STATUS_MAP = {
+    'EXCEPTION': '@@@STEP_EXCEPTION@@@',
+    'FAILURE': '@@@STEP_FAILURE@@@',
+    'WARNING': '@@@STEP_WARNINGS@@@',
+}
+
+def _convert_output_properties(value):
+  for prop, prop_value in value.iteritems():
+    yield '@@@SET_BUILD_PROPERTY@%s@%s@@@' % (prop, prop_value)
+
+
+def _convert_status(value):
+  assert value in _STATUS_MAP, (
+      'status must be one of %r' % _STATUS_MAP.keys())
+  yield _STATUS_MAP[value]
+
+
+def _convert_raw_annotations(value):
+  return value
+
+
+_CONVERTERS = [
+    ('nest_level', _convert_nest_level),
+    ('step_text', _convert_step_text),
+    ('step_summary_text', _convert_step_summary_text),
+    ('logs', _convert_logs),
+    ('links', _convert_links),
+    ('output_properties', _convert_output_properties),
+    ('status', _convert_status),
+    ('raw_annotations', _convert_raw_annotations),
+]
+
+def convert_to_expectations(result_data):
+  if result_data is None:
+    return
+
+  for step in result_data:
+    if step['name'] == '$result':
+      continue
+
+    annotations = []
+    for field, converter in _CONVERTERS:
+      if field in step:
+        annotations.extend(converter(step.pop(field)))
+    if annotations:
+      step['~followup_annotations'] = _PATH_CLEANER(annotations)
 
 
 def get_tests(test_filter=None):

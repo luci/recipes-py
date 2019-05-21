@@ -58,7 +58,7 @@ def main(args):
   )
 
   # Have a top-level set of invariants to enforce StreamEngine expectations.
-  result = RecipeEngine.run_steps(
+  result, _ = RecipeEngine.run_steps(
       args.recipe_deps, properties,
       StreamEngineInvariants.wrap(stream_engine),
       SubprocessStepRunner(),

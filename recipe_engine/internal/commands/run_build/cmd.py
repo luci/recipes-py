@@ -79,7 +79,7 @@ def main(args):
   run_build_engine = LUCIStreamEngine(args.build_proto_jsonpb)
 
   with StreamEngineInvariants.wrap(run_build_engine) as stream_engine:
-    result = RecipeEngine.run_steps(
+    result, _ = RecipeEngine.run_steps(
         args.recipe_deps, properties, stream_engine,
         SubprocessStepRunner(), os.environ, os.getcwd())
 

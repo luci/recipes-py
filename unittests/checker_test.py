@@ -303,7 +303,24 @@ class TestStep(test_env.RecipeEngineUnitTest):
         'stdout': 'fake-stdout',
         'stderr': 'fake-stderr',
         'stdin': 'fake-stdin',
+        'nest_level': 42,
+        'step_text': 'fake-step-text',
+        'step_summary_text': 'fake-step-summary-text',
+        'logs': OrderedDict([
+            ('foo', 'foo-line-1\nfoo-line-2'),
+            ('bar', 'bar-line-1\nbar-line-2'),
+        ]),
+        'links': OrderedDict([
+            ('foo', 'fake-foo-url'),
+            ('bar', 'fake-bar-url'),
+        ]),
+        'status': 'EXCEPTION',
+        'output_properties': OrderedDict([
+            ('foo', 'foo-value'),
+            ('bar', 'bar-value'),
+        ]),
     }
+
     self.assertConversion(d, Step(
         name='fake-step-name',
         cmd=['my', 'command', 'arguments'],
@@ -324,180 +341,23 @@ class TestStep(test_env.RecipeEngineUnitTest):
         stdout='fake-stdout',
         stderr='fake-stderr',
         stdin='fake-stdin',
-    ))
-
-  def test_parse_nest_level(self):
-    d = {
-        'name': 'foo',
-        '~followup_annotations': [
-            '@@@STEP_NEST_LEVEL@42@@@',
-        ],
-    }
-    self.assertConversion(d, Step(name='foo', nest_level=42))
-
-  def test_parse_step_text(self):
-    d = {
-        'name': 'foo',
-        '~followup_annotations': [
-            '@@@STEP_TEXT@fake-step-text@@@',
-        ],
-    }
-    self.assertConversion(d, Step(
-        name='foo',
+        nest_level=42,
         step_text='fake-step-text',
-    ))
-
-  def test_parse_step_summary_text(self):
-    d = {
-        'name': 'foo',
-        '~followup_annotations': [
-            '@@@STEP_SUMMARY_TEXT@fake-step-summary-text@@@',
-        ],
-    }
-    self.assertConversion(d, Step(
-        name='foo',
         step_summary_text='fake-step-summary-text',
-    ))
-
-  def test_parse_logs(self):
-    d = {
-        'name': 'foo',
-        '~followup_annotations': [
-            '@@@STEP_LOG_LINE@foo@foo-line-1@@@',
-            '@@@STEP_LOG_LINE@foo@foo-line-2@@@',
-            '@@@STEP_LOG_END@foo@@@',
-            '@@@STEP_LOG_LINE@bar@bar-line-1@@@',
-            '@@@STEP_LOG_LINE@bar@bar-line-2@@@',
-            '@@@STEP_LOG_END@bar@@@',
-        ],
-    }
-    self.assertConversion(d, Step(
-        name='foo',
         logs=OrderedDict([
             ('foo', 'foo-line-1\nfoo-line-2'),
             ('bar', 'bar-line-1\nbar-line-2'),
         ]),
-    ))
-
-  def test_parse_logs_no_lines(self):
-    d = {
-        'name': 'foo',
-        '~followup_annotations': [
-            '@@@STEP_LOG_END@foo@@@',
-        ],
-    }
-    self.assertConversion(d, Step(
-        name='foo',
-        logs=OrderedDict([
-            ('foo', ''),
-        ]),
-    ))
-
-  def test_parse_logs_single_empty_line(self):
-    d = {
-        'name': 'foo',
-        '~followup_annotations': [
-            '@@@STEP_LOG_LINE@foo@@@@',
-            '@@@STEP_LOG_END@foo@@@',
-        ],
-    }
-    self.assertConversion(d, Step(
-        name='foo',
-        logs=OrderedDict([
-            ('foo', ''),
-        ]),
-    ))
-
-  def test_parse_links(self):
-    d = {
-        'name': 'foo',
-        '~followup_annotations': [
-            '@@@STEP_LINK@foo@fake-foo-url@@@',
-            '@@@STEP_LINK@bar@fake-bar-url@@@',
-        ],
-    }
-    self.assertConversion(d, Step(
-        name='foo',
         links=OrderedDict([
             ('foo', 'fake-foo-url'),
             ('bar', 'fake-bar-url'),
         ]),
-    ))
-
-  def test_parse_status_exception(self):
-    d = {
-        'name': 'foo',
-        '~followup_annotations': [
-            '@@@STEP_EXCEPTION@@@',
-        ],
-    }
-    self.assertConversion(d, Step(name='foo', status='EXCEPTION'))
-
-  def test_parse_status_failure(self):
-    d = {
-        'name': 'foo',
-        '~followup_annotations': [
-            '@@@STEP_FAILURE@@@',
-        ],
-    }
-    self.assertConversion(d, Step(name='foo', status='FAILURE'))
-
-  def test_parse_status_warning(self):
-    d = {
-        'name': 'foo',
-        '~followup_annotations': [
-            '@@@STEP_WARNINGS@@@',
-        ],
-    }
-    self.assertConversion(d, Step(name='foo', status='WARNING'))
-
-  def test_parse_output_properties(self):
-    d = {
-        'name': 'foo',
-        '~followup_annotations': [
-            '@@@SET_BUILD_PROPERTY@foo@foo-value@@@',
-            '@@@SET_BUILD_PROPERTY@bar@bar-value@@@',
-        ],
-    }
-    self.assertConversion(d, Step(
-        name='foo',
+        status='EXCEPTION',
         output_properties=OrderedDict([
             ('foo', 'foo-value'),
             ('bar', 'bar-value'),
         ]),
     ))
-
-  def test_modifying_annotation_field(self):
-    d = {
-        'name': 'foo',
-        '~followup_annotations': [
-            '@@@STEP_LINK@foo@fake-foo-url@@@',
-            '@@@STEP_LINK@bar@fake-bar-url@@@',
-            '@@@STEP_LINK@baz@fake-baz-url@@@',
-        ],
-    }
-    s = Step.from_step_dict(d)
-    del s.links['bar']
-    self.assertEqual(s.to_step_dict(), {
-        'name': 'foo',
-        '~followup_annotations': [
-            '@@@STEP_LINK@foo@fake-foo-url@@@',
-            '@@@STEP_LINK@baz@fake-baz-url@@@',
-        ],
-    })
-
-  def test_modifying_annotation_field_to_default(self):
-    d = {
-        'name': 'foo',
-        '~followup_annotations': [
-            '@@@STEP_LINK@foo@fake-foo-url@@@',
-            '@@@STEP_LINK@bar@fake-bar-url@@@',
-            '@@@STEP_LINK@baz@fake-baz-url@@@',
-        ],
-    }
-    s = Step.from_step_dict(d)
-    s.links.clear()
-    self.assertEqual(s.to_step_dict(), {'name': 'foo'})
 
 
 class CommandTest(test_env.RecipeEngineUnitTest):

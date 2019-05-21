@@ -328,7 +328,10 @@ class RecipeEngine(object):
       * emit_initial_properties (bool): If True, write the initial recipe engine
           properties in the "setup_build" step.
 
-    Returns: result_pb2.Result
+    Returns a 2-tuple of:
+      * result_pb2.Result
+      * The tuple containing exception info if there is an uncaught exception
+          triggered by recipe code or None
 
     Does NOT raise exceptions.
     """
@@ -356,7 +359,7 @@ class RecipeEngine(object):
       # TODO(iannucci): differentiate the human reasons for all of these; will
       # result in expectation changes, but that should be safe in its own CL.
       result.failure.human_reason = 'Uncaught exception: ' + repr(ex)
-      return result
+      return result, None
 
     # TODO(iannucci): Don't skip this during tests (but maybe filter it out from
     # expectations).
@@ -368,7 +371,7 @@ class RecipeEngine(object):
       except Exception as ex:
         _log_crash(stream_engine, 'setup_build')
         result.failure.human_reason = 'Uncaught Exception: ' + repr(ex)
-        return result
+        return result, None
 
     try:
       try:
@@ -397,13 +400,14 @@ class RecipeEngine(object):
     except Exception as ex:  # pylint: disable=broad-except
       _log_crash(stream_engine, 'Uncaught exception')
       result.failure.human_reason = 'Uncaught Exception: ' + repr(ex)
+      return result, sys.exc_info()
 
     except CrashEngine as ex:
       _log_crash(stream_engine, 'Engine Crash')
       result.failure.human_reason = repr(ex)
 
     if result.HasField('failure'):
-      return result
+      return result, None
 
     try:
       result.json_result = json.dumps(raw_result, sort_keys=True)
@@ -411,11 +415,11 @@ class RecipeEngine(object):
         with stream_engine.make_step_stream('recipe result') as stream:
           stream.set_build_property('$retval', result.json_result)
           stream.write_split(result.json_result)
-      return result
+      return result, None
     except Exception as ex:  # pylint: disable=broad-except
       _log_crash(stream_engine, "Serializing RunSteps retval")
       result.failure.human_reason = 'Uncaught Exception: ' + repr(ex)
-      return result
+      return result, None
 
 
 def _set_initial_status(presentation, step_config, exc_result):

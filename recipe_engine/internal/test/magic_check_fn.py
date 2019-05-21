@@ -490,140 +490,6 @@ class Checker(object):
     return bool(exp)
 
 
-_NEST_LEVEL_RE = re.compile('@@@STEP_NEST_LEVEL@(?P<level>[0-9]+)@@@$')
-
-def _parse_nest_level(step, field, annotation):
-  match = _NEST_LEVEL_RE.match(annotation)
-  if not match:
-    return False
-  setattr(step, field, int(match.group('level')))
-  return True
-
-def _unparse_nest_level(value):
-  yield '@@@STEP_NEST_LEVEL@%d@@@' % value
-
-
-_STEP_TEXT_RE = re.compile('@@@STEP_TEXT@(?P<text>.+)@@@$')
-
-def _parse_step_text(step, field, annotation):
-  match = _STEP_TEXT_RE.match(annotation)
-  if not match:
-    return False
-  setattr(step, field, match.group('text'))
-  return True
-
-def _unparse_step_text(value):
-  yield '@@@STEP_TEXT@%s@@@' % value
-
-
-_STEP_SUMMARY_TEXT_RE = re.compile('@@@STEP_SUMMARY_TEXT@(?P<text>.+)@@@$')
-
-def _parse_step_summary_text(step, field, annotation):
-  match = _STEP_SUMMARY_TEXT_RE.match(annotation)
-  if not match:
-    return False
-  setattr(step, field, match.group('text'))
-  return True
-
-def _unparse_step_summary_text(value):
-  yield '@@@STEP_SUMMARY_TEXT@%s@@@' % value
-
-
-_LOG_LINE_RE = re.compile('@@@STEP_LOG_LINE@(?P<log>[^@]+)@(?P<text>.*)@@@$')
-_LOG_END_RE = re.compile('@@@STEP_LOG_END@(?P<log>[^@]+)@@@$')
-
-# A special string object equal to the empty string that we can identify so as
-# to distinguish between logs with no lines and logs containing a single empty
-# line
-class EmptyLog(str):
-  def __new__(cls):
-    return super(EmptyLog, cls).__new__(cls, '')
-
-EMPTY_LOG = EmptyLog()
-
-def _parse_logs(step, field, annotation):
-  logs = getattr(step, field)
-  match = _LOG_END_RE.match(annotation)
-  if match:
-    log = match.group('log')
-    logs.setdefault(log, EMPTY_LOG)
-    return True
-
-  match = _LOG_LINE_RE.match(annotation)
-  if match:
-    log = match.group('log')
-    line = match.group('text')
-    if log in logs:
-      logs[log] = '\n'.join([logs[log], line])
-    else:
-      logs[log] = line
-    return True
-
-  return False
-
-def _unparse_logs(value):
-  for log, text in value.iteritems():
-    if text is not EMPTY_LOG:
-      for l in text.split('\n'):
-        yield '@@@STEP_LOG_LINE@%s@%s@@@' % (log, l)
-    yield '@@@STEP_LOG_END@%s@@@' % log
-
-
-_LINK_RE = re.compile('@@@STEP_LINK@(?P<label>[^@]+)@(?P<url>.*)@@@$')
-
-def _parse_links(step, field, annotation):
-  match = _LINK_RE.match(annotation)
-  if not match:
-    return False
-  getattr(step, field)[match.group('label')] = match.group('url')
-  return True
-
-def _unparse_links(value):
-  for link, url in value.iteritems():
-    yield '@@@STEP_LINK@%s@%s@@@' % (link, url)
-
-
-_STATUS_MAP = {
-    '@@@STEP_EXCEPTION@@@': 'EXCEPTION',
-    '@@@STEP_FAILURE@@@': 'FAILURE',
-    '@@@STEP_WARNINGS@@@': 'WARNING',
-}
-
-def _parse_status(step, field, annotation):
-  status = _STATUS_MAP.get(annotation, None)
-  if not status:
-    return False
-  setattr(step, field, status)
-  return True
-
-_REVERSE_STATUS_MAP = {v: k for k, v in _STATUS_MAP.iteritems()}
-
-def _unparse_status(value):
-  assert value in _REVERSE_STATUS_MAP, (
-      'status must be one of %r' % _REVERSE_STATUS_MAP_KEYS)
-  yield _REVERSE_STATUS_MAP[value]
-
-
-_OUTPUT_PROPERTY_RE = re.compile(
-    '@@@SET_BUILD_PROPERTY@(?P<name>[^@]+)@(?P<value>.*)@@@')
-
-def _parse_output_properties(step, field, annotation):
-  match = _OUTPUT_PROPERTY_RE.match(annotation)
-  if not match:
-    return False
-  # Should we do json.loads on the value?
-  getattr(step, field)[match.group('name')] = match.group('value')
-  return True
-
-def _unparse_output_properties(value):
-  for prop, prop_value in value.iteritems():
-    yield '@@@SET_BUILD_PROPERTY@%s@%s@@@' % (prop, prop_value)
-
-
-def _annotation(parser, unparser, **kwargs):
-  return attr.ib(metadata={'parser': parser, 'unparser': unparser}, **kwargs)
-
-
 class Command(list):
   """Specialized list enabling enhanced searching in command arguments.
 
@@ -722,75 +588,45 @@ class Step(object):
   stderr = attr.ib(default='')
   stdin = attr.ib(default='')
 
-  # Fields parsed from followup annotations, order is important for preserving
-  # the order in expectations files
+  # Fields that appear in followup annotations in expectations
   # The nest level of the step: 0 is a top-level step
-  nest_level = _annotation(
-      default=0, parser=_parse_nest_level, unparser=_unparse_nest_level)
+  nest_level = attr.ib(default=0)
 
   # A string containing the step's step text
-  step_text = _annotation(
-      default='', parser=_parse_step_text, unparser=_unparse_step_text)
+  step_text = attr.ib(default='')
 
   # A string containing the step's step summary text
-  step_summary_text = _annotation(
-      default='',
-      parser=_parse_step_summary_text,
-      unparser=_unparse_step_summary_text)
+  step_summary_text = attr.ib(default='')
 
   # A dictionary containing the step's logs, mapping strings containing the log
   # name to strings containing the content of the log
-  logs = _annotation(
-      factory=OrderedDict, parser=_parse_logs, unparser=_unparse_logs)
+  logs = attr.ib(factory=OrderedDict)
 
   # A dictionary containing the step's links, mapping strings containing the
   # link name to strings containing the link url
-  links = _annotation(
-      factory=OrderedDict, parser=_parse_links, unparser=_unparse_links)
+  links = attr.ib(factory=OrderedDict)
 
   # A dictionary containing the build properties set by the step, mapping
   # strings containing the property name to json-ish strings containing the
   # value of the property
-  output_properties = _annotation(
-      factory=OrderedDict,
-      parser=_parse_output_properties,
-      unparser=_unparse_output_properties)
+  output_properties = attr.ib(factory=OrderedDict)
 
   # A string containing the resulting status of the step, one of: 'SUCCESS',
   # 'EXCEPTION', 'FAILURE', 'WARNING'
-  status = _annotation(
-      default='SUCCESS', parser=_parse_status, unparser=_unparse_status)
+  status = attr.ib(default='SUCCESS')
 
-  _ANNOTATION_FIELDS = None
-
-  @classmethod
-  def _get_annotation_fields(cls):
-    if cls._ANNOTATION_FIELDS is None:
-      cls._ANNOTATION_FIELDS = [f for f in attr.fields(cls)
-                                if 'parser' in f.metadata]
-    return cls._ANNOTATION_FIELDS
+  # Aribtrary lines that are output into ~followup_annotations in expectations
+  _raw_annotations = attr.ib(default=[])
 
   @classmethod
   def from_step_dict(cls, step_dict):
     if 'name' not in step_dict:
       raise ValueError("step dict must have 'name' key, step dict keys: %r"
                        % sorted(step_dict.iterkeys()))
-
-    step = Step(**{k: v for k, v in step_dict.iteritems()
-                   if k != '~followup_annotations'})
-    if step.cmd is not None:
-      step.cmd = Command(step.cmd)
-    parsers = [f.metadata['parser'] for f in cls._get_annotation_fields()]
-    for annotation in step_dict.get('~followup_annotations', []):
-      if not annotation.startswith('@@@'):
-        continue
-      for field in cls._get_annotation_fields():
-        if field.metadata['parser'](step, field.name, annotation):
-          break
-      else:
-        assert False, 'Unknown annotation: %r' % annotation
-
-    return step
+    if step_dict.get('cmd', None) is not None:
+      step_dict = step_dict.copy()
+      step_dict['cmd'] = Command(step_dict['cmd'])
+    return cls(**step_dict)
 
   def _as_dict(self):
     return attr.asdict(self, recurse=False)
@@ -801,14 +637,9 @@ class Step(object):
                  if k == 'name' or v != prototype[k]}
     if step_dict.get('cmd', None) is not None:
       step_dict['cmd'] = list(step_dict['cmd'])
-    annotations = []
-    for field in self._get_annotation_fields():
-      value = step_dict.pop(field.name, MISSING)
-      if value is not MISSING:
-        annotations.extend(field.metadata['unparser'](value))
-    if annotations:
-      step_dict['~followup_annotations'] = annotations
-
+    for k in step_dict.keys():
+      if k.startswith('_'):
+        step_dict[k[1:]] = step_dict.pop(k)
     return step_dict
 
 
