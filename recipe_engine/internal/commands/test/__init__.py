@@ -72,9 +72,25 @@ def add_arguments(parser):
       '--json', metavar='FILE', type=argparse.FileType('w'),
       help='path to JSON output file')
 
+  # The _runner subcommand is hidden from users, but is used in subprocesses
+  # to actually run tests.
+  runner_p = subp.add_parser('_runner')
+  runner_p.add_argument('--cov-file')
+  runner_p.add_argument('--train', action='store_true', default=False)
+  runner_p.add_argument('--cover-module-imports', action='store_true',
+                        default=False)
+
   def _launch(args):
     if args.subcommand == 'list':
       return run_list(args.recipe_deps, args.json)
+
+    if args.subcommand == '_runner':
+      from .runner import main
+      try:
+        return main(args.recipe_deps, args.cov_file, args.train,
+                    args.cover_module_imports)
+      except KeyboardInterrupt:
+        return 0
 
     from .run_train import main
     return main(args)
