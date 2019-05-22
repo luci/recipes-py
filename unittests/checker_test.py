@@ -649,6 +649,35 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
                 {"steps['x'].env.keys()": '[]',
                  'raised exception': "KeyError: 'foo'"}))
 
+  def test_key_error_followed_by_attribute(self):
+    d = OrderedDict([('x', {'name': 'x'})])
+    def body(check, steps):
+      foo = steps['y'].env['foo']
+    test_data = self.mkApi().post_process(body)
+    results, failures = post_process(d, test_data)
+    self.assertEqual(len(failures), 1)
+    self.assertEqual(len(failures[0].frames), 1)
+    self.assertEqual(
+        self.sanitize(failures[0].frames[0]),
+        self.mk('body', "foo = steps['y'].env['foo']",
+                {'steps.keys()': "['x']",
+                 'raised exception': "KeyError: 'y'"}))
+
+  def test_key_error_in_subscript_expression(self):
+    d = OrderedDict([('x', {'name': 'x'})])
+    def body(check, steps):
+      d2 = {}
+      foo = steps[d2['x']].env['foo']
+    test_data = self.mkApi().post_process(body)
+    results, failures = post_process(d, test_data)
+    self.assertEqual(len(failures), 1)
+    self.assertEqual(len(failures[0].frames), 1)
+    self.assertEqual(
+        self.sanitize(failures[0].frames[0]),
+        self.mk('body', "foo = steps[d2['x']].env['foo']",
+                {'d2.keys()': '[]',
+                 'raised exception': "KeyError: 'x'"}))
+
   def test_key_error_implicit_check_no_checker_in_frame(self):
     d = OrderedDict([('x', {'name': 'x'})])
     def body(check, steps_dict):

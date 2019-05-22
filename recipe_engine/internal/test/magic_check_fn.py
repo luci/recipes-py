@@ -295,6 +295,10 @@ class _checkTransformer(ast.NodeTransformer):
     self.gvars = gvars
     self.extras = []
 
+  @staticmethod
+  def _is_valid_resolved(node):
+    return isinstance(node, _resolved) and node.valid
+
   def visit_Compare(self, node):
     """Compare nodes occur for all sequences of comparison (`in`, gt, lt, etc.)
     operators. We only want to match `___ in instanceof(dict)` here, so we
@@ -305,7 +309,7 @@ class _checkTransformer(ast.NodeTransformer):
 
     if len(node.ops) == 1 and isinstance(node.ops[0], (ast.In, ast.NotIn)):
       cmps = node.comparators
-      if len(cmps) == 1 and isinstance(cmps[0], _resolved):
+      if len(cmps) == 1 and self._is_valid_resolved(cmps[0]):
         rslvd = cmps[0]
         if isinstance(rslvd.value, dict):
           node = ast.Compare(
@@ -323,7 +327,7 @@ class _checkTransformer(ast.NodeTransformer):
     that resulted in a check failure.
     """
     node = self.generic_visit(node)
-    if isinstance(node.value, _resolved):
+    if self._is_valid_resolved(node.value):
       node = _resolved(
           '%s.%s' % (node.value.representation, node.attr),
           getattr(node.value.value, node.attr))
@@ -337,11 +341,10 @@ class _checkTransformer(ast.NodeTransformer):
     node = self.generic_visit(node)
 
     if (isinstance(node.slice, ast.Index) and
-        isinstance(node.value, _resolved) and
-        node.value.valid):
+        self._is_valid_resolved(node.value)):
       sliceVal = MISSING
       sliceRepr = ''
-      if isinstance(node.slice.value, _resolved):
+      if self._is_valid_resolved(node.slice.value):
         # (a[b])[c]
         # will include `a[b]` in the extras.
         self.extras.append(node.slice.value)
