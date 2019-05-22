@@ -38,7 +38,7 @@ def add_arguments(parser):
       ❌ - `post_process` assertions failed.
       🛑 - Test case specification was bad/invalid.
       🌟 - (train mode) The test expectation was deleted from disk.
-      📜 - (train mode) The test expectation was updated on disk.
+      💾 - (train mode) The test expectation was updated on disk.
       🆘 - Internal test harness error (file a Infra>Platform>Recipes bug)
   ''')
 

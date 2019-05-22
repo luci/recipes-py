@@ -148,7 +148,7 @@ FIELD_TO_DISPLAY = collections.OrderedDict([
   ('diff',           (False, 'expectation file has diff',           '⚡')),
 
   ('removed',        (True,  'removed expectation file',            '🌟')),
-  ('written',        (True,  'updated expectation file',            '📜')),
+  ('written',        (True,  'updated expectation file',            '💾')),
 
   (None,             (True,  '',                                    '✅'))
 ])
