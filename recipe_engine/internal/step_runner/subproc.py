@@ -211,7 +211,8 @@ class SubprocessStepRunner(StepRunner):
       else:
         proc.wait(step.timeout)
     except subprocess42.TimeoutExpired:
-      return ExecutionResult(has_timeout=True)
+      proc.kill()
+      return ExecutionResult(had_timeout=True)
 
     return ExecutionResult(retcode=proc.returncode)
 
