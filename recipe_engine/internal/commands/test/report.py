@@ -165,7 +165,7 @@ def _check_field(test_result, field_name):
   return (None, None, None), None
 
 
-_VERBOSE = logging.getLogger().level < logging.WARNING
+VERBOSE = logging.getLogger().level < logging.WARNING
 
 
 def _print_summary_info(test_name, test_result):
@@ -175,7 +175,7 @@ def _print_summary_info(test_name, test_result):
     if icon:
       break
 
-  if _VERBOSE:
+  if VERBOSE:
     msg = '' if not verbose_msg else ' (%s)' % verbose_msg
     print '%s ... %s%s' % (test_name, 'ok' if success else 'FAIL', msg)
   else:

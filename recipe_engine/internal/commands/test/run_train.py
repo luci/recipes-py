@@ -15,6 +15,8 @@ from cStringIO import StringIO
 
 import coverage
 
+from backports.shutil_get_terminal_size import get_terminal_size
+
 from google.protobuf import json_format
 
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
@@ -133,7 +135,11 @@ def _run(test_result, recipe_deps, test_filters, is_train):
         _push_tests(test_filters, is_train, main_repo, test_desc_chan)))
 
     err_buf = StringIO()
-    status_tick_count = 0
+    emoji_count = 0
+    # all emoji are 2 columns wide; default to 80 cols if we can't figure out
+    # the width (or are on a bot), and then prevent emoji_max from ever falling
+    # below 1 (to avoid division by 0)
+    emoji_max = max(1, (get_terminal_size().columns or 80) / 2)
     while True:
       rslt = test_rslt_chan.get()
       if rslt is None:
@@ -141,10 +147,11 @@ def _run(test_result, recipe_deps, test_filters, is_train):
       test_result.MergeFrom(rslt)
 
       report.test_cases_to_stdout(rslt, err_buf)
-      status_tick_count += 1
-      if (status_tick_count % 80) == 0:
-        status_tick_count = 0
-        print
+      emoji_count += 1
+      if not report.VERBOSE:
+        if (emoji_count % emoji_max) == 0:
+          emoji_count = 0
+          print
 
     # At this point we know all subprocesses and their threads have finished
     # (because test_rslt_chan has been closed by each worker, which is how we

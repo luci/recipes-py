@@ -140,3 +140,8 @@ wheel: <
   name: "infra/python/wheels/scandir/${vpython_platform}"
   version: "version:1.9.0"
 >
+
+wheel: <
+  name: "infra/python/wheels/backports_shutil_get_terminal_size-py2_py3"
+  version: "version:1.0.0"
+>
