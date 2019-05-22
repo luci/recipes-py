@@ -40,7 +40,7 @@ class TestSimulation(test_env.RecipeEngineUnitTest):
     output, retcode = deps.main_repo.recipes_py('test', 'train')
     self.assertEqual(retcode, 1)
     self.assertIn(
-        'ERROR: The following modules lack test coverage: modname',
+        'The following modules lack any form of test coverage:\n   modname',
         output)
 
   def test_no_coverage_whitelisted(self):
@@ -52,6 +52,10 @@ class TestSimulation(test_env.RecipeEngineUnitTest):
         def some_function(self):
           self.m.step('do something', ['echo', 'hey'])
       ''')
+
+    # Unrelated recipe; otherwise NO tests run and so coverage is ignored.
+    with deps.main_repo.write_recipe('unrelated'):
+      pass
 
     output, retcode = deps.main_repo.recipes_py('test', 'train')
     self.assertEqual(retcode, 1)
@@ -69,7 +73,7 @@ class TestSimulation(test_env.RecipeEngineUnitTest):
           self.m.step('do something else', ['echo', 'nop'])
       ''')
 
-    with deps.main_repo.write_recipe('examples/full', 'modname') as recipe:
+    with deps.main_repo.write_recipe('modname', 'examples/full') as recipe:
       recipe.DEPS = ['modname']
       recipe.RunSteps.write('''
         api.modname.some_function()
@@ -93,6 +97,13 @@ class TestSimulation(test_env.RecipeEngineUnitTest):
 
         def other_function(self):
           self.m.step('do something else', ['echo', 'nop'])
+      ''')
+
+    with deps.main_repo.write_recipe('modname', 'examples/full') as recipe:
+      recipe.DEPS = ['modname']
+      recipe.RunSteps.write('''
+        api.modname.some_function()
+        # omit call to other_function()
       ''')
 
     output, retcode = deps.main_repo.recipes_py('test', 'train')

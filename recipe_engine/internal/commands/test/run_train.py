@@ -1,27 +1,17 @@
-# Copyright 2017 The LUCI Authors. All rights reserved.
+# Copyright 2019 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from __future__ import print_function
-
-import collections
-import contextlib
-import copy
-import cStringIO
 import datetime
-import difflib
 import errno
 import fnmatch
-import functools
 import json
 import multiprocessing
 import os
 import re
 import shutil
-import signal
-import sys
-import tempfile
-import traceback
+
+from cStringIO import StringIO
 
 import coverage
 
@@ -30,800 +20,162 @@ from google.protobuf import json_format
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 
 # pylint: disable=import-error
-from PB.recipe_engine.internal.test.test_result import TestResult
-
-from .... import config_types
-
-from ...test import magic_check_fn
-from ...test.empty_log import EMPTY_LOG
-from ...test.execute_test_case import execute_test_case
+from PB.recipe_engine.internal.test.runner import Description, Outcome
 
 from ..doc.cmd import regenerate_docs
 
-from .common import DiffFailure, CheckFailure, BadTestFailure, CrashFailure
-from .common import TestDescription, TestResult_
-
-
-# These variables must be set in the dynamic scope of the functions in this
-# file.  We do this instead of passing because they're not picklable, and
-# that's required by multiprocessing.
-#
-# For type hinting we populate this with an empty RecipeDeps, but it's
-# overwritten in main().
-# pylint: disable=global-statement
-_RECIPE_DEPS = None # type: recipe_deps.RecipeDeps
-
-# A function which efficiently scrubs system-specific paths from tracebacks. Set
-# in main().
-_PATH_CLEANER = None
-
-
-# An event to signal exit, for example on Ctrl-C.
-_KILL_SWITCH = multiprocessing.Event()
-
-
-# This maps from (recipe_name,test_name) -> yielded test_data. It's outside of
-# run_recipe so that it can persist between RunRecipe calls in the same process.
-_GEN_TEST_CACHE = {}
-
-# These are modes that various functions in this file switch on.
-_MODE_TEST, _MODE_TRAIN = range(2)
-
-
-# Allow regex patterns to be 'deep copied' by using them as-is.
-# pylint: disable=protected-access
-copy._deepcopy_dispatch[re._pattern_type] = copy._deepcopy_atomic
-
-
-@contextlib.contextmanager
-def coverage_context(include=None):
-  """Context manager that records coverage data."""
-  c = coverage.coverage(config_file=False, include=include)
-
-  # Sometimes our strict include lists will result in a run
-  # not adding any coverage info. That's okay, avoid output spam.
-  c._warn_no_data = False
-
-  c.start()
-  try:
-    yield c
-  finally:
-    c.stop()
-
-
-def _compare_results(train_mode, failures, actual_obj, expected,
-                    expectation_path):
-  """Compares the actual and expected results.
-
-  Args:
-
-    * train_mode (bool) - if we're in _MODE_TRAIN
-    * failures (List[TestFailure]) - The list of accumulated failures for this
-      test run. This function may append to this list.
-    * actual_obj (Jsonish test expectation) - What the simulation actually
-      produced.
-    * expected (None|JSON encoded test expectation) - The current test
-      expectation from the disk.
-    * expectation_path (str) - The path on disk of the expectation file.
-
-  Side-effects: appends to `failures` if something doesn't match up.
-  Returns the character code for stdout.
-  """
-  if actual_obj is None and expected is None:
-    return '.'
-
-  actual = json.dumps(
-      re_encode(actual_obj), sort_keys=True, indent=2,
-      separators=(',', ': '))
-
-  if actual == expected:
-    return '.'
-
-  if actual_obj is not None:
-    if train_mode:
-      expectation_dir = os.path.dirname(expectation_path)
-      # This may race with other processes, so just attempt to create dir
-      # and ignore failure if it already exists.
-      try:
-        os.makedirs(expectation_dir)
-      except OSError as ex:
-        if ex.errno != errno.EEXIST:
-          raise ex
-      with open(expectation_path, 'wb') as fil:
-        fil.write(actual)
-    else:
-      diff = '\n'.join(difflib.unified_diff(
-          unicode(expected).splitlines(),
-          unicode(actual).splitlines(),
-          fromfile='expected', tofile='actual',
-          n=4, lineterm=''))
-
-      failures.append(DiffFailure(diff))
-
-  return 'D' if train_mode else 'F'
-
-
-def run_test(train_mode, test_description):
-  """Runs a test. Returns TestResults object."""
-  expected = None
-  if os.path.exists(test_description.expectation_path):
-    try:
-      with open(test_description.expectation_path) as fil:
-        expected = fil.read()
-    except Exception:
-      if train_mode:
-        # Ignore errors when training; we're going to overwrite the file anyway.
-        expected = None
-      else:
-        raise
-
-  main_repo = _RECIPE_DEPS.main_repo
-  break_funcs = [
-    main_repo.recipes[test_description.recipe_name].global_symbols['RunSteps'],
-  ]
-
-  (
-    actual_obj, failed_checks, crash_failure, bad_test_failures, coverage_data
-  ) = run_recipe(
-      test_description.recipe_name, test_description.test_name,
-      test_description.covers)
-
-  failures = []
-
-  status = _compare_results(
-      train_mode, failures, actual_obj, expected,
-      test_description.expectation_path)
-  if bad_test_failures:
-    status = 'B'
-    failures.extend(bad_test_failures)
-  if crash_failure:
-    status = 'E'
-    failures.append(crash_failure)
-  if failed_checks:
-    status = 'C'
-    failures.extend([CheckFailure(c) for c in failed_checks])
-
-  sys.stdout.write(status)
-  sys.stdout.flush()
-
-  return TestResult_(test_description, failures, coverage_data,
-                     actual_obj is not None)
-
-
-def _make_path_cleaner(recipe_deps):
-  """Returns a filtering function which substitutes real paths-on-disk with
-  expectation-compatible `RECIPE_REPO[repo name]` mock paths. This only works
-  for paths contained in double-quotes (e.g. as part of a stack trace).
-
-  Args:
-
-    * recipe_deps (RecipeDeps) - All of the loaded recipe dependencies.
-
-  Returns `func(lines : List[str]) -> List[str]` which converts real on-disk
-  absolute paths to RECIPE_REPO mock paths.
-  """
-  # maps path_to_replace -> replacement
-  roots = {}
-  # paths of all recipe_deps
-  for repo in recipe_deps.repos.itervalues():
-    roots[repo.path] = 'RECIPE_REPO[%s]' % repo.name
-  main_repo_root = 'RECIPE_REPO[%s]' % recipe_deps.main_repo.name
-
-  # Derive path to python prefix. We WOULD use `sys.prefix` and
-  # `sys.real_prefix` (a vpython construction), however SOME python
-  # distributions have these set to unhelpful paths (like '/usr'). So, we import
-  # one library known to be in the vpython prefix and one known to be in the
-  # system prefix and then derive the real paths from those.
-  #
-  # FIXME(iannucci): This is all pretty fragile.
-  dirn = os.path.dirname
-  # os is in the vpython root
-  roots[os.path.abspath(dirn(dirn(dirn(os.__file__))))] = 'PYTHON'
-  # io is in the system root
-  import io
-  roots[os.path.abspath(dirn(dirn(dirn(io.__file__))))] = 'PYTHON'
-  # coverage is in the local site-packages in the vpython root
-  roots[os.path.abspath(dirn(dirn(coverage.__file__)))] = \
-      'PYTHON(site-packages)'
-
-  def _root_subber(match):
-    root = roots[match.group(1)]
-    path = match.group(2).replace('\\', '/')
-    line = ', line ' + match.group(3)
-    # If this is a path from some other repo, then replace the line number as
-    # it is very noisy, but the general shape of the traceback can still be
-    # useful.
-    if root != main_repo_root:
-      line = ''
-    return '"%s%s"%s' % (root, path, line)
-
-  # Replace paths from longest to shortest; because of the way the recipe engine
-  # fetches dependencies (i.e. into the .recipe_deps folder) dependencies of
-  # repo X will have a prefix of X's path.
-  paths = sorted(roots.keys(), key=lambda v: -len(v))
-
-  # Look for paths in double quotes (as we might see in a stack trace)
-  replacer = re.compile(r'"(%s)([^"]*)", line (\d+)' % ('|'.join(map(re.escape, paths)),))
-
-  return lambda lines: [replacer.sub(_root_subber, line) for line in lines]
-
-
-def _merge_presentation_updates(steps_ran, presentation_steps):
-  """Merges the steps ran (from the SimulationStepRunner) with the steps
-  presented (from the SimulationAnnotatorStreamEngine).
-
-  Args:
-
-    * steps_ran (Dict[str, dict]) - Mapping of step name to its run details as
-      an expectation dict (e.g. 'cmd', 'env', etc.)
-    * presentation_steps (OrderedDict[str, dict]) - Mapping of step name (in the
-      order that they were presented) to a dict containing the collected
-      annotations for that step.
-
-  Returns OrderedDict[str, expectation: dict]. This will have the order of steps
-  in the order that they were presented.
-  """
-  ret = collections.OrderedDict()
-  for step_name, step_presented in presentation_steps.iteritems():
-    # root annotations
-    if step_name is None:
-      continue
-    ret[step_name] = steps_ran.get(step_name, {
-      'name': step_name,
-      # TODO(iannucci): Drop 'cmd' field for presentation-only steps.
-      'cmd': [],
-    })
-    debug_logs = step_presented.get('logs', {}).get('$debug', None)
-    # wowo hacks!
-    # We only want to see $debug if it's got a crash in it.
-    if debug_logs and 'Unhandled exception:' not in debug_logs.splitlines():
-      step_presented['logs'].pop('$debug')
-
-    ret[step_name].update(step_presented)
-
-  return ret
-
-
-def _check_exception(expected_exception, uncaught_exception_info):
-  """Check to see if the test run failed with an exception from RunSteps.
-
-  Args:
-    * expected_exception (str|None) - The name of the exception that the test
-      case expected.
-    * uncaught_exception_info (Tuple[type, Exception, traceback]|None) - The
-      exception info for any uncaught exception triggered by user recipe code.
-
-  Returns CrashFailure|None.
-  """
-  # Check to see if the user expected the recipe to crash in this test case or
-  # not.
-  if uncaught_exception_info:
-    exc_type, exc, tb = uncaught_exception_info
-    exc_name = exc_type.__name__
-  else:
-    exc_name = exc = None
-  if expected_exception:
-    if not exc:
-      return CrashFailure(
-          'Missing expected exception in RunSteps. `api.expect_exception` is'
-          ' specified, but the exception did not occur.'
-      )
-    elif exc_name != expected_exception:
-      return CrashFailure(
-          'Expected exception mismatch in RunSteps. The test expected %r'
-          ' but the actual exception was %r.' % (expected_exception, exc_name)
-      )
-  elif exc:
-    msg_lines = [
-        'Unexpected exception in RunSteps. Use `api.expect_exception` if'
-        ' the crash is intentional.',
-    ] + traceback.format_exception(exc_type, exc, tb)
-    return CrashFailure('\n'.join(msg_lines))
-
-  return None
-
-
-def _check_bad_test(test_data, steps_ran, presentation_steps):
-  """Check to see if the user-provided test was malformed in some way.
-
-  Currently this only identifies issues around unconsumed or misplaced
-  step_data.
-
-  Args:
-
-    * test_data (recipe_engine.recipe_test_api.TestData) - The user-provided
-      test data object, after running the test. We're checking to see that it's
-      empty now.
-    * steps_ran (List[str]) - The list of step names which the
-      SimulationStepRunner saw. This will only include step names run via
-      `api.step()`, and notably omits 'presentation only' steps such as parent
-      nest steps or steps emitted by the engine for UI purposes (e.g. crash
-      reports).
-    * presentation_steps (List[str]) - The list of step names which the
-      SimulationAnnotatorStreamEngine saw. This is the full list of steps which
-      would occur on the build UI.
-
-  Returns List[BadTestFailure].
-  """
-  ret = []
-
-  for step in test_data.step_data:
-    # This is an unconsumed step name.
-
-    if step in presentation_steps:
-      # If the step is unconsumed but present in presentation_steps it means
-      # that the step was really a presentation-only step (like a parent nesting
-      # step) and not eligble for test data.
-      ret.append(BadTestFailure((
-          'Mock data provided for presentation only step %r.\n'
-          '  Presentation-only steps (like parent nesting steps) have no\n'
-          '  subprocess associated with them and so cannot have mock data.\n'
-          '  Please change your test so that it provides mock data for one of\n'
-          '  the real steps.'
-      ) % step))
-
-    else:
-      ret.append(BadTestFailure(
-        'Mock data provided for non-existent step %r.' % step))
-
-  if ret:
-    ret.append(BadTestFailure(
-        'For reference, this test ran the following steps:\n' +
-        '\n'.join('  ' + repr(s) for s in steps_ran)
-    ))
-
-  return ret
-
-
-def run_recipe(recipe_name, test_name, covers):
-  """Runs the recipe under test in simulation mode.
-
-  # TODO(iannucci): Implement a better flow for this returned data; interaction
-  # with run_test is a bit weird. Maybe combine/refactor them?
-
-  Returns a tuple:
-    - expectation data
-    - failed post-process checks (if any)
-    - a CrashFailure (if any)
-    - a list of BadTestFailure objects (if any)
-    - coverage data
-  """
-  config_types.ResetTostringFns()
-
-  # Grab test data from the cache. This way it's only generated once.
-  test_data = _GEN_TEST_CACHE[(recipe_name, test_name)]
-
-  with coverage_context(include=covers) as cov:
-    result, steps_ran, annotations, uncaught_exception_info = \
-        execute_test_case(_RECIPE_DEPS, recipe_name, test_data)
-
-  coverage_data = cov.get_data()
-
-  raw_expectations = _merge_presentation_updates(steps_ran, annotations)
-
-  bad_test_failures = _check_bad_test(
-      test_data, steps_ran.keys(), raw_expectations.keys())
-
-  # Convert the result to a json object by dumping to json, and then parsing.
-  raw_expectations['$result'] = json.loads(json_format.MessageToJson(
-      result, including_default_value_fields=True))
-  # Parse the jsonResult, so that it shows up nicely in expectations.
-  if 'jsonResult' in raw_expectations['$result']:
-    raw_expectations['$result']['jsonResult'] = json.loads(
-        raw_expectations['$result']['jsonResult'])
-  raw_expectations['$result']['name'] = '$result'
-
-  crash_failure = _check_exception(
-      test_data.expected_exception, uncaught_exception_info)
-
-  failed_checks = []
-  with coverage_context(include=covers) as cov:
-    result_data, failed_checks = magic_check_fn.post_process(
-        raw_expectations, test_data)
-  coverage_data.update(cov.get_data())
-
-  convert_to_expectations(result_data)
+from . import report
+from .pipe import Channel
+from .runner import RunnerThread
+
+
+def _extract_filter_matchers(test_filters):
+  if not test_filters:
+    return (
+      (lambda _recipe_name: True),
+      (lambda _full_test_case_name: True),
+    )
 
   return (
-    result_data, failed_checks, crash_failure, bad_test_failures, coverage_data
+    re.compile('|'.join([
+      fnmatch.translate(pattern.split('.', 1)[0])
+      for pattern in test_filters
+    ])).match,
+    re.compile('|'.join([
+      fnmatch.translate(pattern)
+      for pattern in test_filters
+    ])).match
   )
 
 
-def _convert_nest_level(value):
-  yield '@@@STEP_NEST_LEVEL@%d@@@' % value
+def _push_tests(test_filters, is_train, main_repo, test_desc_chan):
+  recipe_filter, test_filter = _extract_filter_matchers(test_filters)
 
-
-def _convert_step_text(value):
-  yield '@@@STEP_TEXT@%s@@@' % value
-
-
-def _convert_step_summary_text(value):
-  yield '@@@STEP_SUMMARY_TEXT@%s@@@' % value
-
-
-def _convert_logs(value):
-  for name, log in value.iteritems():
-    if log is not EMPTY_LOG:
-      for l in log.split('\n'):
-        yield '@@@STEP_LOG_LINE@%s@%s@@@' % (name, l)
-    yield '@@@STEP_LOG_END@%s@@@' % name
-
-
-def _convert_links(value):
-  for link, url in value.iteritems():
-    yield '@@@STEP_LINK@%s@%s@@@' % (link, url)
-
-
-_STATUS_MAP = {
-    'EXCEPTION': '@@@STEP_EXCEPTION@@@',
-    'FAILURE': '@@@STEP_FAILURE@@@',
-    'WARNING': '@@@STEP_WARNINGS@@@',
-}
-
-def _convert_output_properties(value):
-  for prop, prop_value in value.iteritems():
-    yield '@@@SET_BUILD_PROPERTY@%s@%s@@@' % (prop, prop_value)
-
-
-def _convert_status(value):
-  assert value in _STATUS_MAP, (
-      'status must be one of %r' % _STATUS_MAP.keys())
-  yield _STATUS_MAP[value]
-
-
-def _convert_raw_annotations(value):
-  return value
-
-
-_CONVERTERS = [
-    ('nest_level', _convert_nest_level),
-    ('step_text', _convert_step_text),
-    ('step_summary_text', _convert_step_summary_text),
-    ('logs', _convert_logs),
-    ('links', _convert_links),
-    ('output_properties', _convert_output_properties),
-    ('status', _convert_status),
-    ('raw_annotations', _convert_raw_annotations),
-]
-
-def convert_to_expectations(result_data):
-  if result_data is None:
-    return
-
-  for step in result_data:
-    if step['name'] == '$result':
+  unused_expectation_files = set()
+  for recipe in main_repo.recipes.itervalues():
+    if not recipe_filter(recipe.name):
       continue
 
-    annotations = []
-    for field, converter in _CONVERTERS:
-      if field in step:
-        annotations.extend(converter(step.pop(field)))
-    if annotations:
-      step['~followup_annotations'] = _PATH_CLEANER(annotations)
+    if is_train:
+      # Try to make the expectation dir.
+      try:
+        os.makedirs(recipe.expectation_dir)
+      except OSError as ex:
+        if ex.errno != errno.EEXIST:
+          raise
 
+    used_expectations = set()
 
-def get_tests(test_filter=None):
-  """Returns a list of tests for current recipe repo."""
-  tests = []
-  coverage_data = coverage.CoverageData()
-
-  main_repo = _RECIPE_DEPS.main_repo
-  mods_base_path = os.path.join(main_repo.recipes_root_path, 'recipe_modules')
-
-  all_modules = set(main_repo.modules.keys())
-  covered_modules = set()
-
-  base_covers = []
-
-  coverage_include = os.path.join(mods_base_path, '*', '*.py')
-  for module_name in all_modules:
-    module = main_repo.modules[module_name]
-
-    # Import module under coverage context. This ensures we collect
-    # coverage of all definitions and globals.
-    with coverage_context(include=coverage_include) as cov:
-      imported_module = module.do_import()
-    coverage_data.update(cov.get_data())
-
-    # Recipe modules can only be covered by tests inside the same module.
-    # To make transition possible for existing code (which will require
-    # writing tests), a temporary escape hatch is added.
-    # TODO(phajdan.jr): remove DISABLE_STRICT_COVERAGE (crbug/693058).
-    if imported_module.DISABLE_STRICT_COVERAGE:
-      covered_modules.add(module_name)
-      # Make sure disabling strict coverage also disables our additional check
-      # for module coverage. Note that coverage will still raise an error if
-      # the module is executed by any of the tests, but having less than 100%
-      # coverage.
-      base_covers.append(os.path.join(module.path, '*.py'))
-
-  recipe_filter = []
-  if test_filter:
-    recipe_filter = [p.split('.', 1)[0] for p in test_filter]
-  for recipe in main_repo.recipes.itervalues():
-    if recipe_filter:
-      match = False
-      for pattern in recipe_filter:
-        if fnmatch.fnmatch(recipe.name, pattern):
-          match = True
-          break
-      if not match:
-        continue
-
+    # Maps expect_file -> original test_name
+    test_filenames = {}
     try:
-      covers = [recipe.path] + base_covers
+      for test_case in recipe.gen_tests():  # User code, could raise
+        expect_file = test_case.expect_file
+        used_expectations.add(expect_file)
+        if expect_file in test_filenames:
+          og_name = test_filenames[expect_file]
+          if og_name == test_case.name:
+            raise ValueError(
+                'Emitted test with duplicate name %r' % (test_case.name,))
+          else:
+            raise ValueError(
+                'Emitted test %r which maps to the same JSON file as %r: %r' %
+                (test_case.name, og_name, expect_file))
+        test_filenames[expect_file] = test_case.name
+        if not test_filter('%s.%s' % (recipe.name, test_case.name)):
+          continue
 
-      # Example/test recipes in a module always cover that module.
-      if recipe.module:
-        covered_modules.add(recipe.module.name)
-        covers.append(os.path.join(recipe.module.path, '*.py'))
-
-      with coverage_context(include=covers) as cov:
-        recipe_tests = list(recipe.gen_tests())  # run generator
-
-      coverage_data.update(cov.get_data())
-      # TODO(iannucci): move expectation tree outside of the recipe tree.
-      expect_dir = os.path.splitext(recipe.path)[0] + '.expected'
-
-      for test_data in recipe_tests:
-        # Put the test data in shared cache. This way it can only be generated
-        # once. We do this primarily for _correctness_ , for example in case
-        # a weird recipe generates tests non-deterministically. The recipe
-        # engine should be robust against such user recipe code where
-        # reasonable.
-        key = (recipe.name, test_data.name)
-        if key in _GEN_TEST_CACHE:
-          raise ValueError('Duplicate test found: %s' % test_data.name)
-        _GEN_TEST_CACHE[key] = copy.deepcopy(test_data)
-
-        test_description = TestDescription(
-            recipe.name, test_data.name, expect_dir, covers)
-        if test_filter:
-          for pattern in test_filter:
-            if fnmatch.fnmatch(test_description.full_name, pattern):
-              tests.append(test_description)
-              break
-        else:
-          tests.append(test_description)
+        test_desc_chan.put(Description(
+            recipe_name=recipe.name,
+            test_name=test_case.name,
+        ))
+    except KeyboardInterrupt:
+      raise
     except:
-      info = sys.exc_info()
-      new_exec = Exception('While generating results for %r: %s: %s' % (
-        recipe.name, info[0].__name__, str(info[1])))
-      raise new_exec.__class__, new_exec, info[2]
+      print "USER CODE ERROR:"
+      print "Crashed while running GenTests from recipe %r" % (recipe.name,)
+      raise
 
-  uncovered_modules = sorted(all_modules.difference(covered_modules))
-  return (tests, coverage_data, uncovered_modules)
+    unused_expectation_files |= recipe.expectation_paths - used_expectations
 
+  test_desc_chan.dec_writer()
 
-def cover_omit():
-  """Returns list of patterns to omit from coverage analysis."""
-  omit = [ ]
+  if not is_train:
+    return unused_expectation_files
 
-  mod_dir_base = os.path.join(
-    _RECIPE_DEPS.main_repo.recipes_root_path,
-    'recipe_modules')
-  if os.path.isdir(mod_dir_base):
-      omit.append(os.path.join(mod_dir_base, '*', 'resources', '*'))
-
-  # Exclude recipe engine files from simulation test coverage. Simulation tests
-  # should cover "user space" recipe code (recipes and modules), not the engine.
-  # The engine is covered by unit tests, not simulation tests.
-  omit.append(os.path.join(RECIPE_ENGINE_PATH[0], '*'))
-
-  return omit
+  for path in unused_expectation_files:
+    os.remove(path)
+  return set()
 
 
-@contextlib.contextmanager
-def scoped_override(obj, attr, override):
-  """Sets |obj|.|attr| to |override| in scope of the context manager."""
-  orig = getattr(obj, attr)
-  setattr(obj, attr, override)
-  yield
-  setattr(obj, attr, orig)
-
-
-def run_worker(train_mode, test):
-  """Worker for 'run' command (note decorator above)."""
-  with scoped_override(os, '_exit', sys.exit):
-    try:
-      if _KILL_SWITCH.is_set():
-        return (False, test, 'kill switch')
-      return (True, test, run_test(train_mode, test))
-    except:  # pylint: disable=bare-except
-      return (False, test, traceback.format_exc())
-
-
-def run_train(gen_docs, test_filter, jobs, json_file):
-  rc = run_run(test_filter, jobs, json_file, train_mode=True)
-  if rc == 0 and gen_docs:
-    print('Generating README.recipes.md')
-    regenerate_docs(_RECIPE_DEPS.main_repo)
-  return rc
-
-
-def run_run(test_filter, jobs, json_file, train_mode):
-  """Implementation of the 'run' command."""
+def _run(test_result, recipe_deps, test_filters, is_train):
   start_time = datetime.datetime.now()
+  main_repo = recipe_deps.main_repo
 
-  rc = 0
-  results_proto = TestResult()
-  results_proto.version = 1
-  results_proto.valid = True
+  test_desc_chan = Channel()
+  test_rslt_chan = Channel(multiprocessing.cpu_count())
 
-  tests, coverage_data, uncovered_modules = get_tests(test_filter)
-  if uncovered_modules and not test_filter:
-    rc = 1
-    results_proto.uncovered_modules.extend(uncovered_modules)
-    print('ERROR: The following modules lack test coverage: %s' % (
-        ','.join(uncovered_modules)))
+  test_result.uncovered_modules.extend(sorted(
+      set(main_repo.modules.keys())
+      - set(
+          module.name
+          for module in main_repo.modules.itervalues()
+          if module.uses_sloppy_coverage or module.recipes
+      )
+  ))
 
-  with kill_switch():
-    pool = multiprocessing.Pool(jobs)
-    results = pool.map(functools.partial(run_worker, train_mode), tests)
-
-  print()
-
-  used_expectations = set()
-
-  for success, test_description, details in results:
-    if success:
-      assert isinstance(details, TestResult_)
-      if details.failures:
-        rc = 1
-        key = details.test_description.full_name
-        print('%s failed:' % key)
-        for failure in details.failures:
-          results_proto.test_failures[key].failures.extend([failure.as_proto()])
-          print(failure.format())
-      coverage_data.update(details.coverage_data)
-      if details.generates_expectation:
-        used_expectations.add(details.test_description.expectation_path)
-        used_expectations.add(
-            os.path.dirname(details.test_description.expectation_path))
-    else:
-      rc = 1
-      results_proto.valid = False
-      failure_proto = TestResult.TestFailure()
-      failure_proto.internal_failure.MergeFrom(TestResult.InternalFailure())
-      results_proto.test_failures[test_description.full_name].failures.extend([
-          failure_proto])
-      print('%s failed:' % test_description.full_name)
-      print(details)
-
-  if test_filter:
-    print('NOTE: not checking coverage, because a filter is enabled')
-  else:
-    try:
-      # TODO(phajdan.jr): Add API to coverage to load data from memory.
-      with tempfile.NamedTemporaryFile(delete=False) as coverage_file:
-        coverage_data.write_file(coverage_file.name)
-
-      cov = coverage.coverage(
-          data_file=coverage_file.name, config_file=False, omit=cover_omit())
-      cov.load()
-
-      # TODO(phajdan.jr): Add API to coverage to apply path filters.
-      reporter = coverage.report.Reporter(cov, cov.config)
-      file_reporters = reporter.find_file_reporters(
-          coverage_data.measured_files())
-
-      # TODO(phajdan.jr): Make coverage not throw CoverageException for no data.
-      if file_reporters:
-        outf = cStringIO.StringIO()
-        percentage = cov.report(file=outf, show_missing=True, skip_covered=True)
-        if int(percentage) != 100:
-          rc = 1
-          print(outf.getvalue())
-          print('FATAL: Insufficient coverage (%.f%%)' % int(percentage))
-
-          for fr in file_reporters:
-            _fname, _stmts, _excl, missing, _mf = cov.analysis2(fr.filename)
-            if missing:
-              results_proto.coverage_failures[
-                  fr.filename].uncovered_lines.extend(missing)
-    finally:
-      os.unlink(coverage_file.name)
-
-  if test_filter:
-    print('NOTE: not checking for unused expectations, '
-          'because a filter is enabled')
-  else:
-    # Gather the paths for all expectations folders and files.
-    actual_expectations = reduce(
-      lambda s, r: s | r.expectation_paths,
-      _RECIPE_DEPS.main_repo.recipes.itervalues(),
-      set()
-    )
-
-    unused_expectations = sorted(actual_expectations - used_expectations)
-    if unused_expectations:
-      if train_mode:
-        # we only want to prune expectations if training was otherwise
-        # successful. Otherwise a failure during training can blow away expected
-        # directories which contain things like OWNERS files.
-        if rc == 0:
-          for entry in unused_expectations:
-            if not os.path.exists(entry):
-              continue
-            if os.path.isdir(entry):
-              shutil.rmtree(entry)
-            else:
-              os.unlink(entry)
-      else:
-        rc = 1
-        results_proto.unused_expectations.extend(unused_expectations)
-        print('FATAL: unused expectations found:')
-        print('\n'.join(unused_expectations))
-
-  finish_time = datetime.datetime.now()
-  print('-' * 70)
-  print('Ran %d tests in %0.3fs' % (
-      len(tests), (finish_time - start_time).total_seconds()))
-  print()
-  print('OK' if rc == 0 else 'FAILED')
-
-  if rc != 0:
-    print()
-    print('NOTE: You may need to re-train the expectation files by running:')
-    print()
-    new_args = [('train' if s == 'run' else s) for s in sys.argv]
-    new_args[0] = os.path.relpath(new_args[0])
-    if not new_args[0].startswith('.%s' % os.path.sep):
-      new_args[0] = os.path.join('.', new_args[0])
-    print('  ' + ' '.join(new_args))
-    print()
-    print('This will update all the .json files to have content which matches')
-    print('the current recipe logic. Review them for correctness and include')
-    print('them with your CL.')
-
-  if json_file:
-    obj = json_format.MessageToDict(
-        results_proto, preserving_proto_field_name=True)
-    json.dump(obj, json_file)
-
-  return rc
-
-
-
-def handle_killswitch(*_):
-  """Function invoked by ctrl-c. Signals worker processes to exit."""
-  _KILL_SWITCH.set()
-
-  # Reset the signal to DFL so that double ctrl-C kills us for sure.
-  signal.signal(signal.SIGINT, signal.SIG_DFL)
-  signal.signal(signal.SIGTERM, signal.SIG_DFL)
-
-
-@contextlib.contextmanager
-def kill_switch():
-  """Context manager to handle ctrl-c properly with multiprocessing."""
-  orig_sigint = signal.signal(signal.SIGINT, handle_killswitch)
   try:
-    orig_sigterm = signal.signal(signal.SIGTERM, handle_killswitch)
-    try:
-      yield
-    finally:
-      signal.signal(signal.SIGTERM, orig_sigterm)
+    cov_dir, pool = RunnerThread.make_pool(
+        recipe_deps, test_desc_chan, test_rslt_chan, is_train,
+        collect_coverage=not test_filters)
+
+    test_result.unused_expectation_files.extend(sorted(
+        _push_tests(test_filters, is_train, main_repo, test_desc_chan)))
+
+    err_buf = StringIO()
+    status_tick_count = 0
+    while True:
+      rslt = test_rslt_chan.get()
+      if rslt is None:
+        break
+      test_result.MergeFrom(rslt)
+
+      report.test_cases_to_stdout(rslt, err_buf)
+      status_tick_count += 1
+      if (status_tick_count % 80) == 0:
+        status_tick_count = 0
+        print
+
+    # At this point we know all subprocesses and their threads have finished
+    # (because test_rslt_chan has been closed by each worker, which is how we
+    # escaped the loop above).
+    #
+    # If we don't have any filters, collect coverage data.
+    cov = None
+    if not test_filters:
+      cov = coverage.Coverage(config_file=False)
+      cov.get_data()  # initializes data object
+      for thread in pool:
+        thread_data = coverage.CoverageData()
+        thread_data.read_file(thread.cov_file)
+        cov.data.update(thread_data)
+
+    report.final_summary_to_stdout(
+        err_buf, is_train, cov, test_result, start_time)
+
+  except:
+    # In the event of a crash, we want to wake up all the runner threads so we
+    # crash these channels in case the thread is blocked on reading/writing to
+    # them.
+    test_desc_chan.crash('uncaught exception')
+    test_rslt_chan.crash('uncaught exception')
+    raise
+
   finally:
-    signal.signal(signal.SIGINT, orig_sigint)
-
-  if _KILL_SWITCH.is_set():
-    sys.exit(1)
-
-
-# TODO(phajdan.jr): Consider integrating with json.JSONDecoder.
-def re_encode(obj):
-  """Ensure consistent encoding for common python data structures."""
-  if isinstance(obj, (unicode, str)):
-    if isinstance(obj, str):
-      obj = obj.decode('utf-8', 'replace')
-    return obj.encode('utf-8', 'replace')
-  elif isinstance(obj, collections.Mapping):
-    return {re_encode(k): re_encode(v) for k, v in obj.iteritems()}
-  elif isinstance(obj, collections.Iterable):
-    return [re_encode(i) for i in obj]
-  else:
-    return obj
+    for thread in pool:
+      thread.join()  # wait for threads and their subprocesses to die
+    if cov_dir:
+      shutil.rmtree(cov_dir, ignore_errors=True)
 
 
 def main(args):
@@ -834,13 +186,25 @@ def main(args):
   Returns:
     Exit code
   """
-  global _RECIPE_DEPS, _PATH_CLEANER
-  _RECIPE_DEPS = args.recipe_deps
-  _PATH_CLEANER = _make_path_cleaner(args.recipe_deps)
+  is_train = args.subcommand == 'train'
+  ret = Outcome()
 
-  if args.subcommand == 'run':
-    return run_run(args.test_filters, args.jobs, args.json, train_mode=False)
-  if args.subcommand == 'train':
-    return run_train(args.docs, args.test_filters, args.jobs, args.json)
+  def _dump():
+    if args.json:
+      json.dump(
+          json_format.MessageToDict(ret, preserving_proto_field_name=True),
+          args.json)
 
-  raise ValueError('Unknown subcommand %r' % (args.subcommand,))
+  try:
+    _run(ret, args.recipe_deps, args.test_filters, is_train)
+    _dump()
+  except KeyboardInterrupt:
+    args.docs = False  # skip docs
+  except SystemExit:
+    _dump()
+    raise
+
+  if is_train and args.docs:
+    print 'Generating README.recipes.md'
+    regenerate_docs(args.recipe_deps.main_repo)
+  return 0

@@ -64,11 +64,7 @@ class TestOverride(test_env.RecipeEngineUnitTest):
       '-O', 'upstream='+other_upstream.path, 'test', 'train')
     self.assertEqual(retcode, 1)
     self.assertIn(
-        (
-          'While generating results for \'my_recipe\': '
-          'UnknownRecipeModule: '
-          '"No module named \'up_mod\' in repo \'other_upstream\'."'
-        ),
+        ('"No module named \'up_mod\' in repo \'other_upstream\'."'),
         output)
 
   def test_bundle(self):

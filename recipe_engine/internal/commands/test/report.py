@@ -78,7 +78,9 @@ def final_summary_to_stdout(err_buf, is_train, cov, outcome_msg, start_time):
   print
   sys.stdout.write(err_buf.getvalue())
 
-  if cov:
+  # For some integration tests we have repos which don't actually have any
+  # recipe files at all. We skip coverage measurement if cov has no data.
+  if cov and cov.get_data().measured_files():
     covf = StringIO()
     try:
       outcome_msg.coverage_percent = cov.report(

@@ -11,6 +11,8 @@ from recipe_engine import post_process
 from recipe_engine.internal.test import magic_check_fn
 from recipe_engine.recipe_test_api import RecipeTestApi
 
+from PB.recipe_engine.internal.test.runner import Outcome
+
 
 def mkS(name, *fields):
   ret = {
@@ -32,7 +34,14 @@ class PostProcessUnitTest(test_env.RecipeEngineUnitTest):
   @staticmethod
   def post_process(d, f, *args, **kwargs):
     test_data = RecipeTestApi().post_process(f, *args, **kwargs)
-    return magic_check_fn.post_process(d, test_data)
+    results = Outcome.Results()
+    expectations = magic_check_fn.post_process(results, d, test_data)
+    return expectations, results.check
+
+  def assertHas(self, failure, *text):
+    combined = '\n'.join(failure.lines)
+    for item in text:
+      self.assertIn(item, combined)
 
 
 class TestFilter(PostProcessUnitTest):
@@ -67,10 +76,9 @@ class TestFilter(PostProcessUnitTest):
     results, failures = self.post_process(self.d, f)
     self.assertEqual(results, mkD('a', 'b').values())
     self.assertEqual(len(failures), 1)
-    self.assertEqual(failures[0].frames[-1].code,
-                     'check((len(unused_includes) == 0))')
-    self.assertEqual(failures[0].frames[-1].varmap,
-                     {'unused_includes': "{'x': ()}"})
+    self.assertHas(failures[0],
+                   'check((len(unused_includes) == 0))',
+                   "unused_includes: {'x': ()}")
 
   def test_re(self):
     f = self.f().include_re('b\.')
@@ -83,24 +91,22 @@ class TestFilter(PostProcessUnitTest):
     results, failures = self.post_process(self.d, f)
     self.assertEqual(results, mkD('b.sub', 'b.sub2').values())
     self.assertEqual(len(failures), 1)
-    self.assertEqual(failures[0].frames[-1].code,
-                     'check((re_usage_count[regex] >= at_least))')
-    self.assertEqual(failures[0].frames[-1].varmap,
-                     {'at_least': '3',
-                      're_usage_count[regex]': '2',
-                      'regex': "re.compile('b\\\\.')"})
+    self.assertHas(failures[-1],
+                   'check((re_usage_count[regex] >= at_least))',
+                   'at_least: 3',
+                   're_usage_count[regex]: 2',
+                   'regex: re.compile(\'b\\\\.\')')
 
   def test_re_high_limit(self):
     f = self.f().include_re('b\.', at_most=1)
     results, failures = self.post_process(self.d, f)
     self.assertEqual(results, mkD('b.sub', 'b.sub2').values())
     self.assertEqual(len(failures), 1)
-    self.assertEqual(failures[0].frames[-1].code,
-                     'check((re_usage_count[regex] <= at_most))')
-    self.assertEqual(failures[0].frames[-1].varmap,
-                     {'at_most': '1',
-                      're_usage_count[regex]': '2',
-                      'regex': "re.compile('b\\\\.')"})
+    self.assertHas(failures[0], 'check((re_usage_count[regex] <= at_most))')
+    self.assertHas(failures[0],
+                   'at_most: 1',
+                   're_usage_count[regex]: 2',
+                   'regex: re.compile(\'b\\\\.\')')
 
 
 class TestRun(PostProcessUnitTest):
@@ -160,33 +166,33 @@ class TestStepStatus(PostProcessUnitTest):
 
   def test_step_success_fail(self):
     failures = self.expect_fails(1, post_process.StepSuccess, 'failure-step')
-    self.assertEqual(failures[0].frames[-1].code,
-                     "check((step_odict[step].status == 'SUCCESS'))")
+    self.assertHas(failures[0],
+                   "check((step_odict[step].status == 'SUCCESS'))")
     failures = self.expect_fails(1, post_process.StepSuccess, 'exception-step')
-    self.assertEqual(failures[0].frames[-1].code,
-                     "check((step_odict[step].status == 'SUCCESS'))")
+    self.assertHas(failures[0],
+                   "check((step_odict[step].status == 'SUCCESS'))")
 
   def test_step_failure_pass(self):
     self.expect_fails(0, post_process.StepFailure, 'failure-step')
 
   def test_step_failure_fail(self):
     failures = self.expect_fails(1, post_process.StepFailure, 'success-step')
-    self.assertEqual(failures[0].frames[-1].code,
-                     "check((step_odict[step].status == 'FAILURE'))")
+    self.assertHas(failures[0],
+                   "check((step_odict[step].status == 'FAILURE'))")
     failures = self.expect_fails(1, post_process.StepFailure, 'exception-step')
-    self.assertEqual(failures[0].frames[-1].code,
-                     "check((step_odict[step].status == 'FAILURE'))")
+    self.assertHas(failures[0],
+                   "check((step_odict[step].status == 'FAILURE'))")
 
   def test_step_exception_pass(self):
     self.expect_fails(0, post_process.StepException, 'exception-step')
 
   def test_step_exception_fail(self):
     failures = self.expect_fails(1, post_process.StepException, 'success-step')
-    self.assertEqual(failures[0].frames[-1].code,
-                     "check((step_odict[step].status == 'EXCEPTION'))")
+    self.assertHas(failures[0],
+                   "check((step_odict[step].status == 'EXCEPTION'))")
     failures = self.expect_fails(1, post_process.StepException, 'failure-step')
-    self.assertEqual(failures[0].frames[-1].code,
-                     "check((step_odict[step].status == 'EXCEPTION'))")
+    self.assertHas(failures[0],
+                   "check((step_odict[step].status == 'EXCEPTION'))")
 
 
 class TestStepCommandRe(PostProcessUnitTest):
@@ -208,26 +214,24 @@ class TestStepCommandRe(PostProcessUnitTest):
   def test_step_command_re_fail(self):
     failures = self.expect_fails(2, post_process.StepCommandRE, 'x',
                                  ['echo', 'fo', 'bar2', 'baz'])
-    self.assertEqual(failures[0].frames[-1].code,
-                     'check(_fullmatch(expected, actual))')
-    self.assertEqual(failures[0].frames[-1].varmap['expected'],
-                      "'fo'")
-    self.assertEqual(failures[1].frames[-1].code,
-                     'check(_fullmatch(expected, actual))')
-    self.assertEqual(failures[1].frames[-1].varmap['expected'],
-                      "'bar2'")
+    self.assertHas(failures[0],
+                   'check(_fullmatch(expected, actual))',
+                   "expected: 'fo'")
+    self.assertHas(failures[1],
+                   'check(_fullmatch(expected, actual))',
+                   "expected: 'bar2'")
 
     failures = self.expect_fails(1, post_process.StepCommandRE, 'x',
                                  ['echo', 'foo'])
-    self.assertEqual(failures[0].name, 'all arguments matched')
-    self.assertEqual(failures[0].frames[-1].varmap['unmatched'],
-                      "['bar', 'baz']")
+    self.assertHas(failures[0],
+                   "CHECK 'all arguments matched'",
+                   "unmatched: ['bar', 'baz']")
 
     failures = self.expect_fails(1, post_process.StepCommandRE, 'x',
                                  ['echo', 'foo', 'bar', 'baz', 'quux', 'quuy'])
-    self.assertEqual(failures[0].name, 'all patterns used')
-    self.assertEqual(failures[0].frames[-1].varmap['unused'],
-                     "['quux', 'quuy']")
+    self.assertHas(failures[0],
+                   "CHECK 'all patterns used'",
+                   "unused: ['quux', 'quuy']")
 
 
 class TestStepCommandContains(PostProcessUnitTest):
@@ -247,7 +251,7 @@ class TestStepCommandContains(PostProcessUnitTest):
   def expect_fail(self, func, failure, *args, **kwargs):
     _, failures = self.post_process(self.d, func, *args, **kwargs)
     self.assertEqual(len(failures), 1)
-    self.assertEqual(failures[0].name, failure)
+    self.assertHas(failures[0], 'CHECK %r' % failure)
     return failures
 
   def test_step_command_contains_one_pass(self):
@@ -306,8 +310,8 @@ class TestStepText(PostProcessUnitTest):
 
   def test_step_text_equals_fail(self):
     failures = self.expect_fails(1, post_process.StepTextEquals, 'x', 'foo')
-    self.assertEqual(failures[0].frames[-1].code,
-                     'check((step_odict[step].step_text == expected))')
+    self.assertHas(failures[0],
+                   'check((step_odict[step].step_text == expected))')
 
   def test_step_text_contains_pass(self):
     self.expect_fails(0, post_process.StepTextContains, 'x', ['foo', 'bar'])
@@ -315,14 +319,12 @@ class TestStepText(PostProcessUnitTest):
   def test_step_text_contains_fail(self):
     failures = self.expect_fails(
         2, post_process.StepTextContains, 'x', ['food', 'bar', 'baz'])
-    self.assertEquals(failures[0].frames[-1].code,
-                      'check((expected in step_odict[step].step_text))')
-    self.assertEquals(failures[0].frames[-1].varmap['expected'],
-                      "'food'")
-    self.assertEquals(failures[1].frames[-1].code,
-                      'check((expected in step_odict[step].step_text))')
-    self.assertEquals(failures[1].frames[-1].varmap['expected'],
-                      "'baz'")
+    self.assertHas(failures[0],
+                   'check((expected in step_odict[step].step_text))',
+                   "expected: 'food'")
+    self.assertHas(failures[1],
+                   'check((expected in step_odict[step].step_text))',
+                   "expected: 'baz'")
 
 
 class TestLog(PostProcessUnitTest):
@@ -348,8 +350,8 @@ class TestLog(PostProcessUnitTest):
   def test_log_equals_fail(self):
     failures = self.expect_fails(1, post_process.LogEquals,
                                  'x', 'log-x', 'foo\nbar\n')
-    self.assertEqual(failures[0].frames[-1].code,
-                     'check((step_odict[step].logs[log] == expected))')
+    self.assertHas(failures[0],
+                   'check((step_odict[step].logs[log] == expected))')
 
   def test_log_contains_pass(self):
     self.expect_fails(0, post_process.LogContains, 'x', 'log-x',
@@ -359,18 +361,15 @@ class TestLog(PostProcessUnitTest):
     failures = self.expect_fails(
         3, post_process.LogContains, 'x', 'log-x',
         ['food', 'bar', 'baz', 'foobar'])
-    self.assertEquals(failures[0].frames[-1].code,
-                      'check((expected in step_odict[step].logs[log]))')
-    self.assertEquals(failures[0].frames[-1].varmap['expected'],
-                      "'food'")
-    self.assertEquals(failures[0].frames[-1].code,
-                      'check((expected in step_odict[step].logs[log]))')
-    self.assertEquals(failures[1].frames[-1].varmap['expected'],
-                      "'baz'")
-    self.assertEquals(failures[0].frames[-1].code,
-                      'check((expected in step_odict[step].logs[log]))')
-    self.assertEquals(failures[2].frames[-1].varmap['expected'],
-                      "'foobar'")
+    self.assertHas(failures[0],
+                   'check((expected in step_odict[step].logs[log]))',
+                   "expected: 'food'")
+    self.assertHas(failures[1],
+                   'check((expected in step_odict[step].logs[log]))',
+                   "expected: 'baz'")
+    self.assertHas(failures[2],
+                   'check((expected in step_odict[step].logs[log]))',
+                   "expected: 'foobar'")
 
 
 if __name__ == '__main__':

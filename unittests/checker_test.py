@@ -17,6 +17,8 @@ from recipe_engine.internal.test.magic_check_fn import \
   Checker, CheckFrame, Command, PostProcessError, Step, VerifySubset, \
   post_process
 
+from PB.recipe_engine.internal.test.runner import Outcome
+
 
 HOOK_CONTEXT = PostprocessHookContext(lambda: None, (), {}, '<filename>', 0)
 
@@ -485,19 +487,10 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
   def mkApi():
     return RecipeTestApi()
 
-  @staticmethod
-  def mk(fname, code, varmap):
-    return CheckFrame(
-      fname='', line=0, function=fname, code=code, varmap=varmap)
-
-  @staticmethod
-  def sanitize(checkframe):
-    return checkframe._replace(line=0, fname='')
-
-  def assertCheckFailure(self, failure, func, args, kwargs):
-    self.assertEqual(failure.ctx_func, func)
-    self.assertEqual(failure.ctx_args, args)
-    self.assertEqual(failure.ctx_kwargs, kwargs)
+  def assertHas(self, failure, *text):
+    combined = '\n'.join(failure.lines)
+    for item in text:
+      self.assertIn(item, combined)
 
   def test_returning_none(self):
     d = OrderedDict([
@@ -506,13 +499,14 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
         ('z', {'name': 'z', 'cmd': ['foo', 'bar']}),
     ])
     test_data = self.mkApi().post_process(lambda check, steps: None)
-    results, failures = post_process(d, test_data)
-    self.assertEqual(results, [
+    results = Outcome.Results()
+    expectations = post_process(results, d, test_data)
+    self.assertEqual(expectations, [
         {'name': 'x', 'cmd': ['one', 'two', 'three']},
         {'name': 'y', 'cmd': []},
         {'name': 'z', 'cmd': ['foo', 'bar']},
     ])
-    self.assertEqual(failures, [])
+    self.assertEqual(len(results.check), 0)
 
   def test_returning_subset(self):
     d = OrderedDict([
@@ -523,9 +517,10 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
     test_data = self.mkApi().post_process(
         lambda check, steps:
         OrderedDict((k, {'name': v.name}) for k, v in steps.iteritems()))
-    results, failures = post_process(d, test_data)
-    self.assertEqual(results, [{'name': 'x'}, {'name': 'y'}, {'name': 'z'}])
-    self.assertEqual(failures, [])
+    results = Outcome.Results()
+    expectations = post_process(results, d, test_data)
+    self.assertEqual(expectations, [{'name': 'x'}, {'name': 'y'}, {'name': 'z'}])
+    self.assertEqual(len(results.check), 0)
 
   def test_returning_empty(self):
     d = OrderedDict([
@@ -534,9 +529,10 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
         ('z', {'name': 'z', 'cmd': ['foo', 'bar']}),
     ])
     test_data = self.mkApi().post_process(lambda check, steps: {})
-    results, failures = post_process(d, test_data)
-    self.assertIsNone(results)
-    self.assertEqual(failures, [])
+    results = Outcome.Results()
+    expectations = post_process(results, d, test_data)
+    self.assertIsNone(expectations)
+    self.assertEqual(len(results.check), 0)
 
   def test_returning_nonsubset(self):
     d = OrderedDict([
@@ -549,7 +545,7 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
         OrderedDict((k, dict(cwd='cwd', **v.to_step_dict()))
                     for k, v in steps.iteritems()))
     with self.assertRaises(PostProcessError):
-      post_process(d, test_data)
+      post_process(Outcome.Results(), d, test_data)
 
   def test_removing_name(self):
     d = OrderedDict([
@@ -563,29 +559,30 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
             (k, {a: value for a, value in v.to_step_dict().iteritems()
                  if a != 'name'})
             for k,v in steps.iteritems()))
-    results, failures = post_process(d, test_data)
-    self.assertEqual(results, [
+    results = Outcome.Results()
+    expectations = post_process(results, d, test_data)
+    self.assertEqual(expectations, [
         {'name': 'x', 'cmd': ['one', 'two', 'three']},
         {'name': 'y', 'cmd': []},
         {'name': 'z', 'cmd': ['foo', 'bar']},
     ])
-    self.assertEqual(failures, [])
+    self.assertEqual(len(results.check), 0)
 
   def test_post_process_failure(self):
     d = OrderedDict([('x', {'name': 'x'})])
     def body(check, steps, *args, **kwargs):
       check('x' not in steps)
     test_data = self.mkApi().post_process(body, 'foo', 'bar', a=1, b=2)
-    results, failures = post_process(d, test_data)
-    self.assertEqual(results, [{'name': 'x'}])
-    self.assertEqual(len(failures), 1)
-    self.assertCheckFailure(failures[0],
-                            'body', ["'foo'", "'bar'"], {'a': '1', 'b': '2'})
-    self.assertEqual(len(failures[0].frames), 1)
-    self.assertEqual(
-        self.sanitize(failures[0].frames[0]),
-        self.mk('body', "check(('x' not in steps))",
-                {'steps.keys()': "['x']"}))
+    results = Outcome.Results()
+    expectations = post_process(results, d, test_data)
+    self.assertEqual(expectations, [{'name': 'x'}])
+    self.assertEqual(len(results.check), 1)
+    self.assertHas(results.check[0],
+                   "body('foo', 'bar', a=1, b=2)")
+    self.assertHas(
+        results.check[0],
+        "check(('x' not in steps))",
+        "steps.keys(): ['x']")
 
   def test_post_process_failure_in_multiple_hooks(self):
     d = OrderedDict([('x', {'name': 'x'})])
@@ -596,72 +593,71 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
     api = self.mkApi()
     test_data = (api.post_process(body, 'foo', a=1) +
                  api.post_process(body2, 'bar', b=2))
-    results, failures = post_process(d, test_data)
-    self.assertEqual(results, [{'name': 'x'}])
-    self.assertEqual(len(failures), 2)
-    self.assertCheckFailure(failures[0], 'body', ["'foo'"], {'a': '1'})
-    self.assertEqual(len(failures[0].frames), 1)
-    self.assertEqual(
-        self.sanitize(failures[0].frames[0]),
-        self.mk('body', "check(('x' not in steps))",
-                {'steps.keys()': "['x']"}))
-    self.assertCheckFailure(failures[1], 'body2', ["'bar'"], {'b': '2'})
-    self.assertEqual(len(failures[1].frames), 1)
-    self.assertEqual(
-        self.sanitize(failures[1].frames[0]),
-        self.mk('body2', "check(('y' in steps))",
-                {'steps.keys()': "['x']"}))
+    results = Outcome.Results()
+    expectations = post_process(results, d, test_data)
+    self.assertEqual(expectations, [{'name': 'x'}])
+    self.assertEqual(len(results.check), 2)
+    self.assertHas(
+        results.check[0],
+        "body('foo', a=1)",
+        "check(('x' not in steps))",
+        "steps.keys(): ['x']")
+    self.assertHas(
+        results.check[1],
+        "body2('bar', b=2)",
+        "check(('y' in steps))",
+        "steps.keys(): ['x']")
 
   def test_post_check_failure(self):
     d = OrderedDict([('x', {'name': 'x'})])
     test_data = self.mkApi().post_check(
         lambda check, steps, *args, **kwargs: check('x' not in steps),
         'foo', 'bar', a=1, b=2)
-    results, failures = post_process(d, test_data)
-    self.assertEqual(results, [{'name': 'x'}])
-    self.assertEqual(len(failures), 1)
-    self.assertCheckFailure(
-        failures[0],
+    results = Outcome.Results()
+    expectations = post_process(results, d, test_data)
+    self.assertEqual(expectations, [{'name': 'x'}])
+    self.assertEqual(len(results.check), 1)
+    self.assertHas(
+        results.check[0],
+        (
+          "(lambda check, steps, *args, **kwargs: check(('x' not in steps)))"
+          "('foo', 'bar', a=1, b=2)"
+        ))
+    self.assertHas(
+        results.check[0],
+        'f(check, steps, *args, **kwargs)')
+    self.assertHas(
+        results.check[0],
         "(lambda check, steps, *args, **kwargs: check(('x' not in steps)))",
-        ["'foo'", "'bar'"], {'a': '1', 'b': '2'})
-    self.assertEqual(len(failures[0].frames), 2)
-    self.assertEqual(
-        self.sanitize(failures[0].frames[0]),
-        self.mk('post_check', 'f(check, steps, *args, **kwargs)', None))
-    self.assertEqual(
-        self.sanitize(failures[0].frames[1]),
-        self.mk(
-            '<lambda>',
-            "(lambda check, steps, *args, **kwargs: check(('x' not in steps)))",
-            {'steps.keys()': "['x']"}))
+        "steps.keys(): ['x']")
 
   def test_key_error_implicit_check(self):
     d = OrderedDict([('x', {'name': 'x'})])
     def body(check, steps):
       foo = steps['x'].env['foo']
     test_data = self.mkApi().post_process(body)
-    results, failures = post_process(d, test_data)
-    self.assertEqual(len(failures), 1)
-    self.assertEqual(len(failures[0].frames), 1)
-    self.assertEqual(
-        self.sanitize(failures[0].frames[0]),
-        self.mk('body', "foo = steps['x'].env['foo']",
-                {"steps['x'].env.keys()": '[]',
-                 'raised exception': "KeyError: 'foo'"}))
+    results = Outcome.Results()
+    expectations = post_process(results, d, test_data)
+    self.assertEqual(len(results.check), 1)
+    self.assertHas(
+        results.check[0],
+        "foo = steps['x'].env['foo']",
+        "steps['x'].env.keys(): []",
+        "raised exception: KeyError: 'foo'")
 
   def test_key_error_followed_by_attribute(self):
     d = OrderedDict([('x', {'name': 'x'})])
     def body(check, steps):
       foo = steps['y'].env['foo']
     test_data = self.mkApi().post_process(body)
-    results, failures = post_process(d, test_data)
-    self.assertEqual(len(failures), 1)
-    self.assertEqual(len(failures[0].frames), 1)
-    self.assertEqual(
-        self.sanitize(failures[0].frames[0]),
-        self.mk('body', "foo = steps['y'].env['foo']",
-                {'steps.keys()': "['x']",
-                 'raised exception': "KeyError: 'y'"}))
+    results = Outcome.Results()
+    post_process(results, d, test_data)
+    self.assertEqual(len(results.check), 1)
+    self.assertHas(
+        results.check[0],
+        "foo = steps['y'].env['foo']",
+        "steps.keys(): ['x']",
+        "raised exception: KeyError: 'y'")
 
   def test_key_error_in_subscript_expression(self):
     d = OrderedDict([('x', {'name': 'x'})])
@@ -669,14 +665,14 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
       d2 = {}
       foo = steps[d2['x']].env['foo']
     test_data = self.mkApi().post_process(body)
-    results, failures = post_process(d, test_data)
-    self.assertEqual(len(failures), 1)
-    self.assertEqual(len(failures[0].frames), 1)
-    self.assertEqual(
-        self.sanitize(failures[0].frames[0]),
-        self.mk('body', "foo = steps[d2['x']].env['foo']",
-                {'d2.keys()': '[]',
-                 'raised exception': "KeyError: 'x'"}))
+    results = Outcome.Results()
+    expectations = post_process(results, d, test_data)
+    self.assertEqual(len(results.check), 1)
+    self.assertHas(
+        results.check[0],
+        "foo = steps[d2['x']].env['foo']",
+        'd2.keys(): []',
+        "raised exception: KeyError: 'x'")
 
   def test_key_error_implicit_check_no_checker_in_frame(self):
     d = OrderedDict([('x', {'name': 'x'})])
@@ -687,17 +683,17 @@ class TestPostProcessHooks(test_env.RecipeEngineUnitTest):
         return steps_dict['x'].env['foo'] == 'bar'
       check(inner(steps_dict))
     test_data = self.mkApi().post_process(body)
-    results, failures = post_process(d, test_data)
-    self.assertEqual(len(failures), 1)
-    self.assertEqual(len(failures[0].frames), 2)
-    self.assertEqual(
-        self.sanitize(failures[0].frames[0]),
-        self.mk('body', 'check(inner(steps_dict))', None))
-    self.assertEqual(
-        self.sanitize(failures[0].frames[1]),
-        self.mk('inner', "return (steps_dict['x'].env['foo'] == 'bar')",
-                {"steps_dict['x'].env.keys()": '[]',
-                 'raised exception': "KeyError: 'foo'"}))
+    results = Outcome.Results()
+    post_process(results, d, test_data)
+    self.assertEqual(len(results.check), 1)
+    self.assertHas(
+        results.check[0],
+        'check(inner(steps_dict))')
+    self.assertHas(
+        results.check[0],
+        "return (steps_dict['x'].env['foo'] == 'bar')",
+        "steps_dict['x'].env.keys(): []",
+        "raised exception: KeyError: 'foo'")
 
 
 if __name__ == '__main__':

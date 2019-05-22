@@ -173,7 +173,7 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
     self._test_cmd(deps, [
         'test', 'train', '--filter', 'unconsumed_assertion'],
       asserts=lambda output: self.assertIn(
-          'Missing expected exception in RunSteps', output),
+          'FAIL (recipe crashed in an unexpected way)', output),
       retcode=1)
 
   def test_run_recipe_help(self):

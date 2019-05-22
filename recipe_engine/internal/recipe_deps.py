@@ -495,13 +495,11 @@ class Recipe(object):
   def expectation_paths(self):
     """Get all existing expectation file paths for this recipe.
 
-    Returns a set of absolute paths to all discovered expectation files,
-    including the expectation folder path itself.
+    Returns a set of absolute paths to all discovered expectation files.
     """
     ret = set()
 
     if os.path.isdir(self.expectation_dir):
-      ret.add(self.expectation_dir)
       ret.update([
         os.path.join(self.expectation_dir, fname)
         for fname in os.listdir(self.expectation_dir)

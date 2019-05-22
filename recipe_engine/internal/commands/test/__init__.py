@@ -27,6 +27,21 @@ def add_arguments(parser):
 
   subp = parser.add_subparsers(dest='subcommand', metavar='{run, train, list}')
 
+  status_info = textwrap.dedent('''
+    Key for non-verbose symbols:
+
+      ✅ - The test passed.
+      ⚡ - Test produced an expectation diff. Review diff to see if this was
+           intentional or not.
+      🔥 - The recipe crashed (raised uncaught exception) in a way that the test
+           specification wasn't expecting.
+      ❌ - `post_process` assertions failed.
+      🛑 - Test case specification was bad/invalid.
+      🌟 - (train mode) The test expectation was deleted from disk.
+      📜 - (train mode) The test expectation was updated on disk.
+      🆘 - Internal test harness error (file a Infra>Platform>Recipes bug)
+  ''')
+
   glob_helpstr = textwrap.dedent('''
     glob filter for the tests to run (can be specified multiple times);
     globs have the form of `<recipe_name_glob>[.<test_name_glob>]`.
@@ -36,7 +51,7 @@ def add_arguments(parser):
 
   helpstr = 'Run the tests.'
   run_p = subp.add_parser(
-      'run', help=helpstr, description=helpstr + '\n',
+      'run', help=helpstr, description=helpstr + '\n' + status_info,
       formatter_class=argparse.RawDescriptionHelpFormatter)
   run_p.add_argument(
       '--jobs', metavar='N', type=int,
@@ -50,7 +65,7 @@ def add_arguments(parser):
 
   helpstr = 'Re-train recipe expectations.'
   train_p = subp.add_parser(
-      'train', help=helpstr, description=helpstr + '\n',
+      'train', help=helpstr, description=helpstr + '\n' + status_info,
       formatter_class=argparse.RawDescriptionHelpFormatter)
   train_p.add_argument(
       '--jobs', metavar='N', type=int,

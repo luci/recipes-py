@@ -1,6 +1,6 @@
-# Copyright 2019 The Chromium Authors. All rights reserved.
-# Use of this source code is governed by a BSD-style license that can be
-# found in the LICENSE file.
+# Copyright 2019 The LUCI Authors. All rights reserved.
+# Use of this source code is governed under the Apache License, Version 2.0
+# that can be found in the LICENSE file.
 
 import collections
 import difflib
@@ -31,6 +31,7 @@ from ...test import magic_check_fn
 from ...test.execute_test_case import execute_test_case
 
 from .pipe import write_message, read_message, Channel
+from .expectation_conversion import transform_exepctations
 
 
 def _merge_presentation_updates(path_cleaner, steps_ran, presentation_steps):
@@ -41,8 +42,8 @@ def _merge_presentation_updates(path_cleaner, steps_ran, presentation_steps):
 
     * steps_ran (Dict[str, dict]) - Mapping of step name to its run details as
       an expectation dict (e.g. 'cmd', 'env', etc.)
-    * presentation_steps (OrderedDict[str, StringIO]) - Mapping of presentation
-      step name (in the order that they were presented) to all emitted
+    * presentation_steps (OrderedDict[str, dict]) - Mapping of step name (in the
+      order that they were presented) to a dict containing the collected
       annotations for that step.
 
   Returns OrderedDict[str, expectation: dict]. This will have the order of steps
@@ -58,15 +59,13 @@ def _merge_presentation_updates(path_cleaner, steps_ran, presentation_steps):
       # TODO(iannucci): Drop 'cmd' field for presentation-only steps.
       'cmd': [],
     })
-    output = step_presented.getvalue()
-    if output:
-      lines = path_cleaner(output.splitlines())
-      # wowo hacks!
-      # We only want to see $debug if it's got a crash in it.
-      if "@@@STEP_LOG_LINE@$debug@Unhandled exception:@@@" not in lines:
-        lines = [line for line in lines if '$debug' not in line]
-      if lines:
-        ret[step_name]['~followup_annotations'] = lines
+    debug_logs = step_presented.get('logs', {}).get('$debug', None)
+    # wowo hacks!
+    # We only want to see $debug if it's got a crash in it.
+    if debug_logs and 'Unhandled exception:' not in debug_logs.splitlines():
+      step_presented['logs'].pop('$debug')
+
+    ret[step_name].update(step_presented)
 
   return ret
 
@@ -120,15 +119,8 @@ def _check_bad_test(test_results, test_data, steps_ran, presentation_steps):
     test_results.bad_test.extend('  ' + repr(s) for s in steps_ran)
 
 
-def _check_exception(test_results, expected_exception, raw_expectations):
+def _check_exception(test_results, expected_exception, uncaught_exception_info):
   """Check to see if the test run failed with an exception from RunSteps.
-
-  This currently extracts and does some lite parsing of the stacktrace from the
-  "RECIPE CRASH (Uncaught exception)" step, which the engine produces from
-  _log_crash when RunSteps tosses a non StepFailure exception. This is
-  definitely looser than it should be, but it's the best we can do until
-  expectations are natively object-oriented instead of bag of JSONish stuff.
-  That said, it works Alright For Now (tm).
 
   Args:
 
@@ -136,67 +128,37 @@ def _check_exception(test_results, expected_exception, raw_expectations):
       the event the test exception expectation was bad.
     * expected_exception (str|None) - The name of the exception that the test
       case expected.
-    * raw_expectations (Dict[str, dict]) - Mapping of presentation step name to
-      the expectation dictionary for that step.
+    * uncaught_exception_info (Tuple[type, Exception, traceback]|None) - The
+      exception info for any uncaught exception triggered by user recipe code.
 
   Returns CrashFailure|None.
   """
   # Check to see if the user expected the recipe to crash in this test case or
   # not.
-  # TODO(iannucci): This step name matching business is a bit sketchy.
-  crash_step = raw_expectations.get('RECIPE CRASH (Uncaught exception)')
-  crash_lines = crash_step['~followup_annotations'] if crash_step else []
+  if uncaught_exception_info:
+    exc_type, exc, tback = uncaught_exception_info
+    exc_name = exc_type.__name__
+  else:
+    exc_name = exc = None
   if expected_exception:
-    if crash_step:
-      # TODO(iannucci): the traceback really isn't "followup_annotations", but
-      # stdout printed to the step currently ends up there. Fix this when
-      # refactoring the test expectation format.
-      #
-      # The Traceback looks like:
-      #   Traceback (most recent call last)
-      #      ...
-      #      ...
-      #   ExceptionClass: Some exception text    <- want this line
-      #   with newlines in it.
-      exception_line = None
-      for line in reversed(crash_lines):
-        if line.startswith((' ', 'Traceback (most recent')):
-          break
-        exception_line = line
+    if not exc:
+      test_results.crash_mismatch.append(
+        'Expected exception mismatch in RunSteps. The test expected %r but '
+        'the exception line was %r.' % (expected_exception, exc_name)
+      )
 
-      # We expect the traceback line to look like:
-      #   "ExceptionClass"
-      #   "ExceptionClass: Text from the exception message."
-      if not exception_line.startswith(expected_exception):
-        test_results.crash_mismatch.append(
-          'Expected exception mismatch in RunSteps. The test expected %r but '
-          'the exception line was %r.' % (expected_exception, exception_line)
-        )
-
-    else:
+    elif exc_name != expected_exception:
       test_results.crash_mismatch.append(
         'Missing expected exception in RunSteps. `api.expect_exception` is'
         ' specified, but the exception did not occur.'
       )
 
-  else:
-    if crash_step:
-      msg_lines = [
-        'Unexpected exception in RunSteps. Use `api.expect_exception` if'
-        ' the crash is intentional.',
-      ]
-
-      traceback_idx = 0
-      for i, line in enumerate(crash_lines):
-        if line.startswith('Traceback '):
-          traceback_idx = i
-          break
-      msg_lines.extend(
-          '    ' + line
-          for line in crash_lines[traceback_idx:]
-          if not line.startswith('@@@')
-      )
-      test_results.crash_mismatch.extend(msg_lines)
+  elif exc:
+    msg_lines = [
+      'Unexpected exception in RunSteps. Use `api.expect_exception` if'
+      ' the crash is intentional.',
+    ] + traceback.format_exception(exc_type, exc, tback)
+    test_results.crash_mismatch.extend(msg_lines)
 
 
 def _diff_test(test_results, expect_file, new_expect, is_train):
@@ -293,7 +255,7 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
     * test_data (TestData)
   """
   config_types.ResetTostringFns()
-  result, ran_steps, ui_steps = execute_test_case(
+  result, ran_steps, ui_steps, uncaught_exception_info = execute_test_case(
       recipe_deps, test_desc.recipe_name, test_data)
 
   raw_expectations = _merge_presentation_updates(
@@ -301,7 +263,7 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
   _check_bad_test(
       test_results, test_data, ran_steps.keys(), raw_expectations.keys())
   _check_exception(
-      test_results, test_data.expected_exception, raw_expectations)
+      test_results, test_data.expected_exception, uncaught_exception_info)
 
   # Convert the result to a json object by dumping to json, and then parsing.
   # TODO(iannucci): Use real objects so this only needs to be serialized once.
@@ -315,6 +277,8 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
 
   raw_expectations = magic_check_fn.post_process(
       test_results, raw_expectations, test_data)
+
+  transform_exepctations(path_cleaner, raw_expectations)
 
   _diff_test(test_results, test_data.expect_file, raw_expectations, is_train)
 
@@ -349,6 +313,8 @@ def main(recipe_deps, cov_file, is_train, cover_module_imports):
   main_repo = recipe_deps.main_repo
 
   cov_data = coverage.CoverageData()
+  if cover_module_imports:
+    cov_data.update(_cover_all_imports(main_repo))
 
   test_data_cache = {}
 
@@ -363,10 +329,6 @@ def main(recipe_deps, cov_file, is_train, cover_module_imports):
 
     result = Outcome()
     try:
-      if cover_module_imports:
-        cover_module_imports = False  # only do it once
-        cov_data.update(_cover_all_imports(main_repo))
-
       full_name = '%s.%s' % (test_desc.recipe_name, test_desc.test_name)
       test_result = result.test_results[full_name]
 
@@ -396,11 +358,7 @@ def main(recipe_deps, cov_file, is_train, cover_module_imports):
       break  # EOF
 
   if cov_file:
-    data_file = coverage.data.CoverageDataFiles(
-        basename=cov_file,
-        warn=lambda msg, slug: sys.stderr.write('cov warn %s (%s)' % (msg, slug)),
-    )
-    data_file.write(cov_data)
+    coverage.data.CoverageDataFiles(basename=cov_file).write(cov_data)
 
 
 def _read_test_desc():
@@ -455,6 +413,7 @@ def _make_path_cleaner(recipe_deps):
   # paths of all recipe_deps
   for repo in recipe_deps.repos.itervalues():
     roots[repo.path] = 'RECIPE_REPO[%s]' % repo.name
+  main_repo_root = 'RECIPE_REPO[%s]' % recipe_deps.main_repo.name
 
   # Derive path to python prefix. We WOULD use `sys.prefix` and
   # `sys.real_prefix` (a vpython construction), however SOME python
@@ -469,10 +428,20 @@ def _make_path_cleaner(recipe_deps):
   # io is in the system root
   import io
   roots[os.path.abspath(dirn(dirn(dirn(io.__file__))))] = 'PYTHON'
+  # coverage is in the local site-packages in the vpython root
+  roots[os.path.abspath(dirn(dirn(coverage.__file__)))] = \
+      'PYTHON(site-packages)'
 
   def _root_subber(match):
-    return '"%s%s"' % (
-      roots[match.group(1)], match.group(2).replace('\\', '/'))
+    root = roots[match.group(1)]
+    path = match.group(2).replace('\\', '/')
+    line = ', line ' + match.group(3)
+    # If this is a path from some other repo, then replace the line number as
+    # it is very noisy, but the general shape of the traceback can still be
+    # useful.
+    if root != main_repo_root:
+      line = ''
+    return '"%s%s"%s' % (root, path, line)
 
   # Replace paths from longest to shortest; because of the way the recipe engine
   # fetches dependencies (i.e. into the .recipe_deps folder) dependencies of
@@ -480,7 +449,8 @@ def _make_path_cleaner(recipe_deps):
   paths = sorted(roots.keys(), key=lambda v: -len(v))
 
   # Look for paths in double quotes (as we might see in a stack trace)
-  replacer = re.compile(r'"(%s)([^"]*)"' % ('|'.join(map(re.escape, paths)),))
+  replacer = re.compile(
+      r'"(%s)([^"]*)", line (\d+)' % ('|'.join(map(re.escape, paths)),))
 
   return lambda lines: [replacer.sub(_root_subber, line) for line in lines]
 
@@ -497,14 +467,21 @@ class RunnerThread(threading.Thread):
       '--package', os.path.join(
           recipe_deps.main_repo.path, RECIPES_CFG_LOCATION_REL),
       '--proto-override', os.path.dirname(PB.__path__[0]),
-      'test', '_runner',
     ]
+    # Carry through all repos explicitly via overrides
+    for repo_name, repo in recipe_deps.repos.iteritems():
+      if repo_name == recipe_deps.main_repo.name:
+        continue
+      cmd.extend(['-O', '%s=%s' % (repo_name, repo.path)])
+
+    cmd.extend(['test', '_runner'])
     if is_train:
       cmd.append('--train')
     if cov_file:
       cmd.extend(['--cov-file', cov_file])
       if cover_module_imports:
         cmd.append('--cover-module-imports')
+
     self._runner_proc = subprocess.Popen(
         cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     self._test_desc_chan = test_desc_chan
