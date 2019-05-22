@@ -463,8 +463,10 @@ class Checker(object):
       try:
         for i, f in enumerate(frames):
           # The first frame that has self in the local variables is the one
-          # where the checker is created
-          if self in f[0].f_locals.itervalues():
+          # where the checker is created. We must use `is` for equality check
+          # here because otherwise we might end up calling an unrelated object's
+          # __eq__ method.
+          if any(self is obj for obj in f[0].f_locals.itervalues()):
             break
         frames = frames[i+1:]
 
