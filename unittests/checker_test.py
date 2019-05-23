@@ -12,9 +12,10 @@ from collections import OrderedDict
 
 import test_env
 
+from recipe_engine.post_process_inputs import Command
 from recipe_engine.recipe_test_api import PostprocessHookContext, RecipeTestApi
 from recipe_engine.internal.test.magic_check_fn import \
-  Checker, CheckFrame, Command, PostProcessError, Step, VerifySubset, \
+  Checker, CheckFrame, PostProcessError, Step, VerifySubset, \
   post_process
 
 from PB.recipe_engine.internal.test.runner import Outcome

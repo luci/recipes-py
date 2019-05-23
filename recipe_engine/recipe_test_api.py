@@ -539,44 +539,10 @@ class RecipeTestApi(object):
       func(check, step_odict, *args, **kwargs) -> (step_odict or None)
 
     Where:
-      * `step_odict` is an ordered dictionary of steps. The dictionary keys are
-      the names of the steps. The value for each key corresponding to an actual
-      step is a `Step`. A `Step` has fields for all of the details of a step
-      that would be recorded into the JSON expectation file for this test.
-      Fields are populated with default values so that even if there wouldn't
-      be anything recorded into the expectation file, you can simply access the
-      field, you don't have to do anything to provide the default yourself (e.g.
-      a successful step will have the status field set to 'SUCCESS' even though
-      this would not be recorded in an expectations file). The final item will
-      have the key '$result' and will be a dictionary describing the final
-      result of the recipe.
-
-      The `cmd` field of Step merits special mention. The `cmd` field is a list
-      of strings that has an enhanced contains check. The `in` operator can be
-      used to check the cmd field for regexes and/or subsequences in addition to
-      the expected ability to check for strings. The first argument to `in` can
-      be a compiled regex rather than a string. In that case, `in` will return
-      True if the result of calling `search` on the compiled regex with any of
-      the elements of the command. The first argument can also be a sequence
-      containing strings and/or compiled regexes. In the case of a sequence,
-      `in` will return True if there is a subsequence of the command whose
-      elements can be matched against the corresponding elements of the argument
-      sequence, where strings are matched by equality and regexes are matched as
-      described above. So given a step that executed the command "python
-      /some/path/script.py --flag1 /tmp/path/output.json --flag2=value2
-      --bool_flag subcommand argument", the following all return True:
-
-      `'--bool_flag' in step.cmd`
-      `re.compile('/script.py$') in step.cmd`
-      `re.compile('^--flag2=') in step.cmd`
-      `['subcommand', 'argument'] in step.cmd`
-      `['--flag1', re.compile('/output.json$')] in step.cmd`
-
-      The `cmd` field is also recorded into expectation files even when empty.
-      If a post-process hook filters out the cmd field, it's default value is
-      None, so if your post-process hook may be run after a post-process hook
-      that filters step fields then you will have to account for the default
-      value (e.g. `step.cmd or []`).
+      * `step_odict` is an ordered dictionary of `Step` objects (see `Step` in
+      //recipe_engine/post_process_inputs.py). The final item will have the key
+      '$result' and will be a dictionary describing the final result of the
+      recipe rather than a `Step`.
 
       * `check` is a semi-magical function which you can use to test things.
       Using `check` will allow you to see all the violated assertions from your
