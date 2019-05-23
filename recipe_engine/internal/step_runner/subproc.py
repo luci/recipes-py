@@ -61,49 +61,83 @@ class SubprocessStepRunner(StepRunner):
     return os.access(path, mode)
 
   _PATH_EXTS = ('.exe', '.bat') if sys.platform == "win32" else ('',)
+  @classmethod
+  def _resolve_base_path(cls, debug_log, base_path):
+    """Checks for existance/permission for a potential executable at
+    `base_path`.
+
+    If `base_path` contains an extension (e.g. '.bat'), then it will be checked
+    for existance+execute permission without modification.
+
+    If `base_path` doesn't contain an extension, the platform-specific
+    extensions (_PATH_EXTS) will be tried in order.
+
+    If base_path, or a modification of it, is accessible, the resolved path will
+    be returned. Otherwise this returns None.
+
+    Args:
+
+      * debug_log (Stream)
+      * base_path (str) - Absolute base path to check.
+
+    Returns base_path or base_path+ext if an existing executable candidate was
+    found, None otherwise.
+    """
+    if os.path.splitext(base_path)[1]:
+      debug_log.write_line('path has extension')
+      if not os.access(base_path, os.X_OK):
+        debug_log.write_line(
+            'file does not exist or user has no execute permission')
+        return None
+      return base_path
+
+    for ext in cls._PATH_EXTS:
+      candidate = base_path + ext
+      debug_log.write_line('checking %r' % (candidate,))
+      if os.access(candidate, os.X_OK):
+        return candidate
+
+    return None
+
   def resolve_cmd0(self, name_tokens, debug_log, cmd0, cwd, paths):
     """Transforms `cmd0` into an absolute path to the resolved executable, as if
     we had used `shell=True` in the current `env` and `cwd`.
 
     If this fails to resolve cmd0, this will return None.
 
-    Windows:
+    Rules:
+      * If
+        - cmd0 is absolute, PATH and CWD are not used.
+        - cmd0 contains os.path.sep, it's treated as relative to CWD.
+        - otherwise, cmd0 is tried within each component of PATH.
+      * If cmd0 lacks an extension (i.e. ".exe"), the platform appropriate
+        extensions will be tried (_PATH_EXTS). On windows this is
+        ['.exe', '.bat']. On non-windows this is just [''] (empty string).
+      * The candidate is checked for 'access' with the +x permission for the
+        current user (using `os.access`).
+      * The first candidate found is returned, or None, if no candidate matches
+        all of the rules.
 
-    On windows, if cmd0 does not have an extension, this takes the lazy
-    cross-product of PATH and ('.exe', '.bat') to find what cmd.exe would have
-    found for the command.
-
-    This DOES NOT use $PATHEXT to keep the recipe engine's behavior as
+    NOTE (windows):
+    This DOES NOT use $PATHEXT, in order to keep the recipe engine's behavior as
     predictable as possible. We don't currently rely on any other runnable
-    extensions besides these two, and when we could, we choose to explicitly
+    extensions besides exe/bat, and when we could, we choose to explicitly
     invoke the interpreter (e.g. python.exe, cscript.exe, etc.).
     """
     del name_tokens
     if os.path.isabs(cmd0):
-      debug_log.write_line('cmd0 appears to already be absolute')
-      if not os.access(cmd0, os.X_OK):
-        debug_log.write_line('current user has no execute permission!')
-        return None
-      return cmd0
+      debug_log.write_line('cmd0 appears to be absolute')
+      return self._resolve_base_path(debug_log, cmd0)
 
     # If cmd0 has a path separator, treat it as relative to CWD.
     if os.path.sep in cmd0:
-      candidate = os.path.join(cwd, cmd0)
-      if not os.access(candidate, os.X_OK):
-        debug_log.write_line(
-            'cmd0 was relative to cwd but does not have executable permission.'
-        )
-        return None
-      return candidate
+      debug_log.write_line('cmd0 appears to be relative to cwd')
+      return self._resolve_base_path(debug_log, os.path.join(cwd, cmd0))
 
-    # Otherwise find it in $PATH.
-    # If it already has an extension don't propose new extensions for it.
-    exts = self._PATH_EXTS if '.' not in os.path.basename(cmd0) else ('',)
-
-    # Look along each path+ext combination until we find an executable match.
-    for path, ext in itertools.product(paths, exts):
-      candidate = os.path.join(path, cmd0+ext)
-      if os.access(candidate, os.X_OK):
+    debug_log.write_line('looking in PATH')
+    for path in paths:
+      candidate = self._resolve_base_path(debug_log, os.path.join(path, cmd0))
+      if candidate:
         return candidate
 
     return None
