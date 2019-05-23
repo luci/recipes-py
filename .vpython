@@ -2,6 +2,15 @@
 
 python_version: "2.7"
 
+verify_pep425_tag {python: "cp27" abi: "cp27mu" platform: "manylinux1_i686"}
+verify_pep425_tag {python: "cp27" abi: "cp27mu" platform: "manylinux1_x86_64"}
+verify_pep425_tag {python: "cp27" abi: "cp27mu" platform: "linux_arm64"}
+verify_pep425_tag {python: "cp27" abi: "cp27mu" platform: "linux_mips64"}
+verify_pep425_tag {python: "cp27" abi: "cp27mu" platform: "linux_armv6l"}
+verify_pep425_tag {python: "cp27" abi: "cp27mu" platform: "linux_armv7l"}
+verify_pep425_tag {python: "cp27" abi: "cp27m"  platform: "macosx_10_10_intel"}
+verify_pep425_tag {python: "cp27" abi: "cp27m"  platform: "win_amd64"}
+
 wheel: <
   name: "infra/python/wheels/coverage/${vpython_platform}"
   version: "version:4.3.4"
@@ -40,11 +49,6 @@ wheel: <
 >
 
 wheel: <
-  name: "infra/python/wheels/cffi/${vpython_platform}"
-  version: "version:1.10.0"
->
-
-wheel: <
   name: "infra/python/wheels/idna-py2_py3"
   version: "version:2.5"
 >
@@ -62,11 +66,6 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/pyasn1-py2_py3"
   version: "version:0.2.3"
->
-
-wheel: <
-  name: "infra/python/wheels/pycparser-py2_py3"
-  version: "version:2.17"
 >
 
 wheel: <
@@ -144,4 +143,26 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/backports_shutil_get_terminal_size-py2_py3"
   version: "version:1.0.0"
+>
+
+## Gevent
+wheel: <
+  name: "infra/python/wheels/gevent/${vpython_platform}"
+  version: "version:1.4.0"
+>
+wheel: <
+  name: "infra/python/wheels/greenlet/${vpython_platform}"
+  version: "version:0.4.15"
+>
+wheel: <
+  name: "infra/python/wheels/cffi/${vpython_platform}"
+  version: "version:1.12.3"
+>
+wheel: <
+  name: "infra/python/wheels/pycparser-py2_py3"
+  version: "version:2.19"
+>
+wheel: <
+  name: "infra/python/wheels/psutil/${vpython_platform}"
+  version: "version:5.6.2"
 >

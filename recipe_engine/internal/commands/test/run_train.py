@@ -6,7 +6,6 @@ import datetime
 import errno
 import fnmatch
 import json
-import multiprocessing
 import os
 import re
 import shutil
@@ -14,6 +13,8 @@ import shutil
 from cStringIO import StringIO
 
 import coverage
+import gevent
+import gevent.queue
 
 from backports.shutil_get_terminal_size import get_terminal_size
 
@@ -27,7 +28,6 @@ from PB.recipe_engine.internal.test.runner import Description, Outcome
 from ..doc.cmd import regenerate_docs
 
 from . import report
-from .pipe import Channel
 from .runner import RunnerThread
 
 
@@ -50,7 +50,7 @@ def _extract_filter_matchers(test_filters):
   )
 
 
-def _push_tests(test_filters, is_train, main_repo, test_desc_chan):
+def _push_tests(test_filters, is_train, main_repo, description_queue):
   recipe_filter, test_filter = _extract_filter_matchers(test_filters)
 
   unused_expectation_files = set()
@@ -87,10 +87,11 @@ def _push_tests(test_filters, is_train, main_repo, test_desc_chan):
         if not test_filter('%s.%s' % (recipe.name, test_case.name)):
           continue
 
-        test_desc_chan.put(Description(
+        description_queue.put(Description(
             recipe_name=recipe.name,
             test_name=test_case.name,
         ))
+        gevent.sleep()  # let any blocking threads pick this up
     except KeyboardInterrupt:
       raise
     except:
@@ -99,8 +100,6 @@ def _push_tests(test_filters, is_train, main_repo, test_desc_chan):
       raise
 
     unused_expectation_files |= recipe.expectation_paths - used_expectations
-
-  test_desc_chan.dec_writer()
 
   if not is_train:
     return unused_expectation_files
@@ -114,8 +113,8 @@ def _run(test_result, recipe_deps, test_filters, is_train):
   start_time = datetime.datetime.now()
   main_repo = recipe_deps.main_repo
 
-  test_desc_chan = Channel()
-  test_rslt_chan = Channel(multiprocessing.cpu_count())
+  description_queue = gevent.queue.UnboundQueue()
+  outcome_queue = gevent.queue.UnboundQueue()
 
   test_result.uncovered_modules.extend(sorted(
       set(main_repo.modules.keys())
@@ -127,12 +126,19 @@ def _run(test_result, recipe_deps, test_filters, is_train):
   ))
 
   try:
-    cov_dir, pool = RunnerThread.make_pool(
-        recipe_deps, test_desc_chan, test_rslt_chan, is_train,
+    # in case of crash; don't want this undefined in finally clause.
+    live_threads = []
+    cov_dir, all_threads = RunnerThread.make_pool(
+        recipe_deps, description_queue, outcome_queue, is_train,
         collect_coverage=not test_filters)
+    live_threads = list(all_threads)
 
     test_result.unused_expectation_files.extend(sorted(
-        _push_tests(test_filters, is_train, main_repo, test_desc_chan)))
+        _push_tests(test_filters, is_train, main_repo, description_queue)))
+
+    # Put a None poison pill for each thread.
+    for thread in all_threads:
+      description_queue.put(None)
 
     err_buf = StringIO()
     emoji_count = 0
@@ -140,21 +146,22 @@ def _run(test_result, recipe_deps, test_filters, is_train):
     # the width (or are on a bot), and then prevent emoji_max from ever falling
     # below 1 (to avoid division by 0)
     emoji_max = max(1, (get_terminal_size().columns or 80) / 2)
-    while True:
-      rslt = test_rslt_chan.get()
+    while live_threads:
+      rslt = outcome_queue.get()
       if rslt is None:
-        break
-      test_result.MergeFrom(rslt)
+        live_threads = [thread for thread in live_threads if not thread.dead]
+      else:
+        test_result.MergeFrom(rslt)
 
-      report.test_cases_to_stdout(rslt, err_buf)
-      emoji_count += 1
-      if not report.VERBOSE:
-        if (emoji_count % emoji_max) == 0:
-          emoji_count = 0
-          print
+        report.test_cases_to_stdout(rslt, err_buf)
+        emoji_count += 1
+        if not report.VERBOSE:
+          if (emoji_count % emoji_max) == 0:
+            emoji_count = 0
+            print
 
     # At this point we know all subprocesses and their threads have finished
-    # (because test_rslt_chan has been closed by each worker, which is how we
+    # (because outcome_queue has been closed by each worker, which is how we
     # escaped the loop above).
     #
     # If we don't have any filters, collect coverage data.
@@ -162,7 +169,7 @@ def _run(test_result, recipe_deps, test_filters, is_train):
     if not test_filters:
       cov = coverage.Coverage(config_file=False)
       cov.get_data()  # initializes data object
-      for thread in pool:
+      for thread in all_threads:
         thread_data = coverage.CoverageData()
         thread_data.read_file(thread.cov_file)
         cov.data.update(thread_data)
@@ -170,17 +177,10 @@ def _run(test_result, recipe_deps, test_filters, is_train):
     report.final_summary_to_stdout(
         err_buf, is_train, cov, test_result, start_time)
 
-  except:
-    # In the event of a crash, we want to wake up all the runner threads so we
-    # crash these channels in case the thread is blocked on reading/writing to
-    # them.
-    test_desc_chan.crash('uncaught exception')
-    test_rslt_chan.crash('uncaught exception')
-    raise
-
   finally:
-    for thread in pool:
-      thread.join()  # wait for threads and their subprocesses to die
+    for thread in live_threads:
+      thread.kill()
+      thread.join()
     if cov_dir:
       shutil.rmtree(cov_dir, ignore_errors=True)
 
