@@ -11,10 +11,6 @@ infra/config/recipes.cfg.
 
 # Hacks!
 
-# Hack 0 (sorta); gevent.monkey patch the world before any other code runs.
-import gevent.monkey
-gevent.monkey.patch_all()
-
 # Hack 1; Change default encoding.
 # This is necessary to ensure that str literals are by-default assumed to hold
 # utf-8. It also makes the implicit str(unicode(...)) act like
