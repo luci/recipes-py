@@ -5,18 +5,33 @@
 """Tests that daemons that hang on to STDOUT can't cause the engine to hang."""
 
 DEPS = [
-  'platform',
   'python',
 ]
 
-
 def RunSteps(api):
-  api.python(
-      'bad deamon',
-      api.resource('win.py' if api.platform.is_win else 'unix.py'),
-      venv=api.platform.is_win)
+  api.python.inline("bad deamon", """
+  import os
+  import time
+  import sys
 
+  print "parent"
+  pid = os.fork()
+  if pid > 0:
+    "parent leaves"
+    sys.exit(0)
+
+  print "child"
+  pid = os.fork()
+  if pid > 0:
+    "child leaves"
+    sys.exit(0)
+
+  print "daemon sleepin'"
+  time.sleep(30)
+
+  print "ROAAARRRR!!!"
+  """)
 
 def GenTests(api):
   yield api.test('basic')
-  yield api.test('basic_win') + api.platform(name='win', bits=64)
+

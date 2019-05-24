@@ -11,10 +11,10 @@ import re
 import subprocess
 import sys
 import tempfile
+import threading
 import traceback
 
 import coverage
-import gevent
 
 from google.protobuf import json_format as jsonpb
 
@@ -30,11 +30,11 @@ from ...simple_cfg import RECIPES_CFG_LOCATION_REL
 from ...test import magic_check_fn
 from ...test.execute_test_case import execute_test_case
 
+from .pipe import write_message, read_message, Channel
 from .expectation_conversion import transform_exepctations
-from .pipe import write_message, read_message
 
 
-def _merge_presentation_updates(steps_ran, presentation_steps):
+def _merge_presentation_updates(path_cleaner, steps_ran, presentation_steps):
   """Merges the steps ran (from the SimulationStepRunner) with the steps
   presented (from the SimulationAnnotatorStreamEngine).
 
@@ -258,7 +258,8 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
   result, ran_steps, ui_steps, uncaught_exception_info = execute_test_case(
       recipe_deps, test_desc.recipe_name, test_data)
 
-  raw_expectations = _merge_presentation_updates(ran_steps, ui_steps)
+  raw_expectations = _merge_presentation_updates(
+      path_cleaner, ran_steps, ui_steps)
   _check_bad_test(
       test_results, test_data, ran_steps.keys(), raw_expectations.keys())
   _check_exception(
@@ -334,8 +335,8 @@ def main(recipe_deps, cov_file, is_train, cover_module_imports):
       recipe = main_repo.recipes[test_desc.recipe_name]
 
       if cov_file:
-        cov = coverage.Coverage(config_file=False,
-                                include=recipe.coverage_patterns)
+        cov = coverage.Coverage(
+            config_file=False, include=recipe.coverage_patterns)
         cov.start()
       test_data = _get_test_data(test_data_cache, recipe, test_desc.test_name)
       try:
@@ -454,8 +455,8 @@ def _make_path_cleaner(recipe_deps):
   return lambda lines: [replacer.sub(_root_subber, line) for line in lines]
 
 
-class RunnerThread(gevent.Greenlet):
-  def __init__(self, recipe_deps, description_queue, outcome_queue, is_train,
+class RunnerThread(threading.Thread):
+  def __init__(self, recipe_deps, test_desc_chan, test_rslt_chan, is_train,
                cov_file, cover_module_imports):
     super(RunnerThread, self).__init__()
 
@@ -483,11 +484,11 @@ class RunnerThread(gevent.Greenlet):
 
     self._runner_proc = subprocess.Popen(
         cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    self._description_queue = description_queue
-    self._outcome_queue = outcome_queue
+    self._test_desc_chan = test_desc_chan
+    self._test_rslt_chan = test_rslt_chan
 
   @classmethod
-  def make_pool(cls, recipe_deps, description_queue, outcome_queue, is_train,
+  def make_pool(cls, recipe_deps, test_desc_chan, test_rslt_chan, is_train,
                 collect_coverage):
     """Returns a pool (list) of started RunnerThread instances.
 
@@ -499,10 +500,10 @@ class RunnerThread(gevent.Greenlet):
     Args:
 
       * recipe_deps (RecipeDeps)
-      * description_queue (gevent.queue.Queue) - The queue to pull Description
-        messages from to feed to the runner subprocess.
-      * outcome_queue (gevent.queue.Queue) - The queue to push Outcome messages
-        sourced from the runner subprocess.
+      * test_desc_chan (Channel) - The channel to pull Description messages from
+        to feed to the runner subprocess.
+      * test_rslt_chan (Channel) - The channel to push Outcome messages sourced
+        from the runner subprocess.
       * is_train (bool) - Whether or not the runner subprocess should train
         (write) expectation files to disk. If False will not write/delete
         anything on the filesystem.
@@ -521,18 +522,17 @@ class RunnerThread(gevent.Greenlet):
     # We assign import coverage to (only) the first runner subprocess; there's
     # no need to duplicate this work to all runners.
     pool = [
-      cls(recipe_deps, description_queue, outcome_queue, is_train, cov_file(i),
+      cls(recipe_deps, test_desc_chan, test_rslt_chan, is_train, cov_file(i),
           cover_module_imports=(i == 0))
       for i in xrange(multiprocessing.cpu_count())]
     for thread in pool:
       thread.start()
     return cov_dir, pool
 
-  # pylint: disable=method-hidden
-  def _run(self):
+  def run(self):
     try:
       while True:
-        test_desc = self._description_queue.get()
+        test_desc = self._test_desc_chan.get()
         if not test_desc:
           self._runner_proc.stdout.close()
           self._runner_proc.stdin.write('\0')
@@ -541,7 +541,7 @@ class RunnerThread(gevent.Greenlet):
           return
 
         if not write_message(self._runner_proc.stdin, test_desc):
-          self._outcome_queue.put(Outcome(internal_error=[
+          self._test_rslt_chan.put(Outcome(internal_error=[
             'Unable to send test description for (%s.%s) from %r' % (
               test_desc.recipe_name, test_desc.test_name, self.name
             )
@@ -552,17 +552,17 @@ class RunnerThread(gevent.Greenlet):
         if result is None:
           return
 
-        self._outcome_queue.put(result)
+        self._test_rslt_chan.put(result)
     except KeyboardInterrupt:
       pass
-    except gevent.GreenletExit:
+    except Channel.EmergencyTeardown:
       pass
     except Exception as ex:  # pylint: disable=broad-except
-      self._outcome_queue.put(Outcome(internal_error=[
+      self._test_rslt_chan.put(Outcome(internal_error=[
         'Uncaught exception in %r: %s' % (self.name, ex)
       ]+traceback.format_exc().splitlines()))
     finally:
-      self._outcome_queue.put(None)  # So the main thread knows we're done
+      self._test_rslt_chan.dec_writer()
       try:
         self._runner_proc.kill()
       except OSError:

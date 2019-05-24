@@ -3,9 +3,33 @@
     "cmd": [
       "python",
       "-u",
-      "RECIPE[recipe_engine::engine_tests/bad_subprocess].resources/unix.py"
+      "\nimport os\nimport time\nimport sys\n\nprint \"parent\"\npid = os.fork()\nif pid > 0:\n  \"parent leaves\"\n  sys.exit(0)\n\nprint \"child\"\npid = os.fork()\nif pid > 0:\n  \"child leaves\"\n  sys.exit(0)\n\nprint \"daemon sleepin'\"\ntime.sleep(30)\n\nprint \"ROAAARRRR!!!\"\n"
     ],
-    "name": "bad deamon"
+    "name": "bad deamon",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@python.inline@@@@",
+      "@@@STEP_LOG_LINE@python.inline@import os@@@",
+      "@@@STEP_LOG_LINE@python.inline@import time@@@",
+      "@@@STEP_LOG_LINE@python.inline@import sys@@@",
+      "@@@STEP_LOG_LINE@python.inline@@@@",
+      "@@@STEP_LOG_LINE@python.inline@print \"parent\"@@@",
+      "@@@STEP_LOG_LINE@python.inline@pid = os.fork()@@@",
+      "@@@STEP_LOG_LINE@python.inline@if pid > 0:@@@",
+      "@@@STEP_LOG_LINE@python.inline@  \"parent leaves\"@@@",
+      "@@@STEP_LOG_LINE@python.inline@  sys.exit(0)@@@",
+      "@@@STEP_LOG_LINE@python.inline@@@@",
+      "@@@STEP_LOG_LINE@python.inline@print \"child\"@@@",
+      "@@@STEP_LOG_LINE@python.inline@pid = os.fork()@@@",
+      "@@@STEP_LOG_LINE@python.inline@if pid > 0:@@@",
+      "@@@STEP_LOG_LINE@python.inline@  \"child leaves\"@@@",
+      "@@@STEP_LOG_LINE@python.inline@  sys.exit(0)@@@",
+      "@@@STEP_LOG_LINE@python.inline@@@@",
+      "@@@STEP_LOG_LINE@python.inline@print \"daemon sleepin'\"@@@",
+      "@@@STEP_LOG_LINE@python.inline@time.sleep(30)@@@",
+      "@@@STEP_LOG_LINE@python.inline@@@@",
+      "@@@STEP_LOG_LINE@python.inline@print \"ROAAARRRR!!!\"@@@",
+      "@@@STEP_LOG_END@python.inline@@@"
+    ]
   },
   {
     "jsonResult": null,
