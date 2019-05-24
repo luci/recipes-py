@@ -1,9 +1,9 @@
 [
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
-      "RECIPE[recipe_engine::engine_tests/bad_subprocess].resources/unix.py"
+      "RECIPE[recipe_engine::engine_tests/bad_subprocess].resources\\win.py"
     ],
     "name": "bad deamon"
   },

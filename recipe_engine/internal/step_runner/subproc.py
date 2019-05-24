@@ -2,19 +2,20 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import itertools
 import os
 import sys
-import time
+import signal
 
-from cStringIO import StringIO
+import gevent
+from gevent import subprocess
 
 from ...step_data import ExecutionResult
-from ...third_party import subprocess42
 
 from . import StepRunner
 
 
-if sys.platform == "win32":
+if subprocess.mswindows:
   # subprocess.Popen(close_fds) raises an exception when attempting to do this
   # and also redirect stdin/stdout/stderr. To be on the safe side, we just don't
   # do this on windows.
@@ -36,39 +37,14 @@ if sys.platform == "win32":
   # For more information, see:
   # https://msdn.microsoft.com/en-us/library/windows/desktop/ms680621.aspx
   ctypes.windll.kernel32.SetErrorMode(0x0001|0x0002|0x8000)
+  # gevent.subprocess has special import logic. This symbol is definitely there
+  # on windows.
+  # pylint: disable=no-member
+  EXTRA_KWARGS = {'creationflags': subprocess.CREATE_NEW_PROCESS_GROUP}
 else:
   # Non-windows platforms implement close_fds in a safe way.
   CLOSE_FDS = True
-
-
-class _streamingLinebuf(object):
-  def __init__(self):
-    self.buffedlines = []
-    self.extra = StringIO()
-
-  def ingest(self, data):
-    lines = data.splitlines()
-    ended_on_linebreak = data.endswith("\n")
-
-    if self.extra.tell():
-      # we had leftovers from some previous ingest
-      self.extra.write(lines[0])
-      if len(lines) > 1 or ended_on_linebreak:
-        lines[0] = self.extra.getvalue()
-        self.extra = StringIO()
-      else:
-        return
-
-    if not ended_on_linebreak:
-      self.extra.write(lines[-1])
-      lines = lines[:-1]
-
-    self.buffedlines += lines
-
-  def get_buffered(self):
-    ret = self.buffedlines
-    self.buffedlines = []
-    return ret
+  EXTRA_KWARGS = {'preexec_fn': lambda: os.setpgid(0, 0)}
 
 
 class SubprocessStepRunner(StepRunner):
@@ -166,13 +142,15 @@ class SubprocessStepRunner(StepRunner):
 
     return None
 
-  def run(self, _name_tokens, debug_log, step):
+  def run(self, name_tokens, debug_log, step):
     fhandles = {
       'stdin': open(step.stdin, 'rb') if step.stdin else None,
       'stdout': _fd_for_out(step.stdout),
       'stderr': _fd_for_out(step.stderr),
     }
     debug_log.write_line('fhandles %r' % fhandles)
+    extra_kwargs = fhandles.copy()
+    extra_kwargs.update(EXTRA_KWARGS)
 
     # Necessary because subprocess.Popen uses os.environ to perform lookup on
     # the supplied command, and only uses the |env| kwarg for modifying the
@@ -181,58 +159,116 @@ class SubprocessStepRunner(StepRunner):
     try:
       if 'PATH' in step.env:
         os.environ['PATH'] = step.env['PATH']
-      proc = subprocess42.Popen(
+      proc = subprocess.Popen(
           step.cmd,
           env=step.env,
           cwd=step.cwd,
-          detached=True,
           universal_newlines=True,
           close_fds=CLOSE_FDS,
-          **fhandles)
+          **extra_kwargs)
     finally:
       os.environ['PATH'] = orig_path
 
-    # Safe to close file handles now that subprocess has inherited them.
-    for handle in fhandles.itervalues():
+    # Lifted from subprocess42.
+    gid = None
+    if not subprocess.mswindows:
+      try:
+        gid = os.getpgid(proc.pid)
+      except OSError:
+        # sometimes the process can run+finish before we collect its pgid. fun.
+        pass
+
+    workers = []
+    to_close = []
+    for handle_name, handle in fhandles.iteritems():
+      # Safe to close file handles now that subprocess has inherited them.
       if hasattr(handle, 'close'):
         handle.close()
 
-    outstreams = {}
-    linebufs = {}
+      # Only want to set up copy workers for these two.
+      if handle_name not in ('stdout', 'stderr'):
+        continue
 
-    for handle_name in ('stdout', 'stderr'):
-      if fhandles[handle_name] == subprocess42.PIPE:
-        outstreams[handle_name] = getattr(step, handle_name)
-        linebufs[handle_name] = _streamingLinebuf()
+      if fhandles[handle_name] == subprocess.PIPE:
+        proc_handle = getattr(proc, handle_name)
+        to_close.append((handle_name, proc_handle))
+        workers.append(gevent.spawn(
+            _copy_lines, proc_handle, getattr(step, handle_name),
+        ))
 
+    proc.wait(step.timeout)
+    retcode = proc.poll()
+    debug_log.write_line('finished waiting for process, retcode %r' % retcode)
+
+    # TODO(iannucci): Make leaking subprocesses explicit (e.g. goma compiler
+    # daemon). Better, change deamons to be owned by a gevent Greenlet (so that
+    # we don't need to leak processes ever).
+    #
+    # _kill(proc, gid)  # In case of leaked subprocesses or timeout.
+    if retcode is None:
+      debug_log.write_line('timeout! killing process group %r' % gid)
+      # Process timed out, kill it. Currently all uses of non-None timeout
+      # intend to actually kill the subprocess when the timeout pops.
+      _kill(proc, gid)
+      proc.wait()
+    debug_log.write_line('reaping IO workers...')
+    for worker in workers:
+      worker.kill()
+    gevent.wait(workers)
+    debug_log.write_line('  done')
+    for handle_name, handle in to_close:
+      try:
+        debug_log.write_line('closing handle %r' % handle_name)
+        with gevent.Timeout(.1):
+          handle.close()
+        debug_log.write_line('  closed!')
+
+      except gevent.Timeout:
+        # This should never happen... except on windows when the process we
+        # launched itself leaked.
+        debug_log.write_line('  LEAKED: timeout closing handle')
+        # We assume we've now leaked 2 threads; one is blocked on 'read' and the
+        # other is blocked on 'close'. Add two more threads to the pool so we do
+        # not globally block the recipe engine on subsequent steps.
+        gevent.get_hub().threadpool.maxsize += 2
+
+      except IOError as ex:
+        # TODO(iannucci): Currently this leaks handles on windows for processes
+        # like the goma compiler proxy; because of python2.7's inability to set
+        # close_fds=True and also redirect std handles, daemonized subprocesses
+        # actually inherit our handles (yuck).
+        #
+        # This is fixable on python3, but not likely to be fixable on python 2.
+        debug_log.write_line('  LEAKED: unable to close: %r' % (ex,))
+        # We assume we've now leaked 2 threads; one is blocked on 'read' and the
+        # other is blocked on 'close'. Add two more threads to the pool so we do
+        # not globally block the recipe engine on subsequent steps.
+        gevent.get_hub().threadpool.maxsize += 2
+
+      except RuntimeError:
+        # NOTE(gevent): This can happen as a race between the worker greenlet
+        # and the process ending. See gevent.subprocess.Popen.communicate, which
+        # does the same thing.
+        debug_log.write_line('  LEAKED?: race with IO worker')
+
+    if retcode is not None:
+      return ExecutionResult(retcode=proc.returncode)
+
+    return ExecutionResult(had_timeout=True)
+
+
+def _copy_lines(handle, outstream):
+  while True:
     try:
-      if linebufs:
-        _stream_outputs(proc, step.timeout, outstreams, linebufs)
-      else:
-        proc.wait(step.timeout)
-    except subprocess42.TimeoutExpired:
-      proc.kill()
-      return ExecutionResult(had_timeout=True)
-
-    return ExecutionResult(retcode=proc.returncode)
-
-
-def _stream_outputs(proc, timeout, outstreams, linebufs):
-  # manually check the timeout, because we poll
-  start_time = time.time()
-  for handle_name, data in proc.yield_any(timeout=1):
-    if timeout and time.time() - start_time > timeout:
-      proc.kill()   # best-effort nuke
-      raise subprocess42.TimeoutExpired((), 0)
-
-    if handle_name is None:
-      continue
-    buf = linebufs.get(handle_name)
-    if not buf:
-      continue
-    buf.ingest(data)
-    for line in buf.get_buffered():
-      outstreams[handle_name].write_line(line)
+      # Because we use readline here we could, technically, lose some data in
+      # the event of a timeout.
+      data = handle.readline()
+    except RuntimeError:
+      # See NOTE(gevent) above.
+      return
+    if not data:
+      break
+    outstream.write_line(data.rstrip('\n'))
 
 
 # It's either a file-like object, a string or it's a Stream (so we need to
@@ -242,4 +278,24 @@ def _fd_for_out(raw_val):
     return raw_val.fileno()
   if isinstance(raw_val, str):
     return open(raw_val, 'wb')
-  return subprocess42.PIPE
+  return subprocess.PIPE
+
+
+def _kill(proc, gid):
+  """Kills the process and its children if possible.
+
+  Swallows exceptions and return True on success.
+
+  Lifted from subprocess42.
+  """
+  if gid:
+    try:
+      os.killpg(gid, signal.SIGKILL)
+    except OSError:
+      return False
+  else:
+    try:
+      proc.kill()
+    except OSError:
+      return False
+  return True

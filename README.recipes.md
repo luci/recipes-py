@@ -2504,11 +2504,11 @@ Launches multiple builds at the same revision.
 &mdash; **def [RunSteps](/recipe_modules/cq/tests/type_of_run.py#12)(api):**
 ### *recipes* / [engine\_tests/bad\_subprocess](/recipes/engine_tests/bad_subprocess.py)
 
-[DEPS](/recipes/engine_tests/bad_subprocess.py#7): [python](#recipe_modules-python)
+[DEPS](/recipes/engine_tests/bad_subprocess.py#7): [platform](#recipe_modules-platform), [python](#recipe_modules-python)
 
 Tests that daemons that hang on to STDOUT can't cause the engine to hang.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/bad_subprocess.py#11)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/bad_subprocess.py#13)(api):**
 ### *recipes* / [engine\_tests/comprehensive\_ui](/recipes/engine_tests/comprehensive_ui.py)
 
 [DEPS](/recipes/engine_tests/comprehensive_ui.py#11): [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

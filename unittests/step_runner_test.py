@@ -8,50 +8,6 @@ import os
 import test_env
 
 from recipe_engine.internal.engine_env import merge_envs
-from recipe_engine.internal.step_runner.subproc import _streamingLinebuf
-
-
-class TestLinebuf(test_env.RecipeEngineUnitTest):
-  def test_add_partial(self):
-    lb = _streamingLinebuf()
-    lb.ingest("blarf")
-    self.assertEqual([], lb.get_buffered())
-
-    self.assertEqual([], lb.buffedlines)
-    self.assertEqual("blarf", lb.extra.getvalue())
-
-  def test_add_whole(self):
-    lb = _streamingLinebuf()
-    lb.ingest("blarf\n")
-    self.assertEqual(["blarf"], lb.get_buffered())
-
-    self.assertEqual([], lb.buffedlines)
-    self.assertEqual("", lb.extra.getvalue())
-
-  def test_add_partial_whole(self):
-    lb = _streamingLinebuf()
-    lb.ingest("foof\nfleem\nblarf")
-    self.assertEqual(["foof", "fleem"], lb.get_buffered())
-
-    lb.ingest("dweeble\nwat")
-    self.assertEqual(["blarfdweeble"], lb.get_buffered())
-
-    self.assertEqual([], lb.buffedlines)
-    self.assertEqual("wat", lb.extra.getvalue())
-
-  def test_leftovers(self):
-    lb = _streamingLinebuf()
-
-    lb.ingest("nerds")
-    self.assertEqual([], lb.get_buffered())
-
-    lb.ingest("doop\n")
-    self.assertEqual(["nerdsdoop"], lb.get_buffered())
-
-    self.assertEqual([], lb.get_buffered())
-
-    self.assertEqual([], lb.buffedlines)
-    self.assertEqual("", lb.extra.getvalue())
 
 
 class TestMergeEnvs(test_env.RecipeEngineUnitTest):
