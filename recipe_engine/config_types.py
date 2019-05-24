@@ -209,8 +209,8 @@ class Path(RecipeConfigType):
     return child.pieces[:len(self.pieces)] == self.pieces
 
   def __repr__(self):
-    s = "Path(%r" % self.base
+    s = "Path(%r" % (self.base,)
     if self.pieces:
-      s += ", %s" % ",".join(repr(x) for x in self.pieces)
+      s += ", %s" % ", ".join(repr(x) for x in self.pieces)
 
     return s + ")"
