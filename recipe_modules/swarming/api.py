@@ -579,8 +579,8 @@ class TaskRequest(object):
         'containment': {
           'lower_priority': self.lower_priority,
           'containment_type': self.containment_type,
-          'limit_processes': self.limit_processes,
-          'limit_total_committed_memory': self.limit_total_committed_memory,
+          'limit_processes': str(self.limit_processes),
+          'limit_total_committed_memory': str(self.limit_total_committed_memory),
         },
       }
 
