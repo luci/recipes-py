@@ -157,7 +157,10 @@ def _check_exception(test_results, expected_exception, uncaught_exception_info):
     msg_lines = [
       'Unexpected exception in RunSteps. Use `api.expect_exception` if'
       ' the crash is intentional.',
-    ] + traceback.format_exception(exc_type, exc, tback)
+    ] + [
+      l.rstrip('\n')
+      for l in traceback.format_exception(exc_type, exc, tback)
+    ]
     test_results.crash_mismatch.extend(msg_lines)
 
 

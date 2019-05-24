@@ -201,10 +201,8 @@ def _print_detail_info(err_buf, test_name, test_result):
 
   (_, verbose_msg, _), lines_groups = _check_field(test_result, 'check')
   if lines_groups:
-    for idx, group in enumerate(lines_groups):
-      _header()
-      if idx != 0:
-        print >>err_buf, '  ------'
+    _header()
+    for group in lines_groups:
       for line in group.lines:
         print >>err_buf, line
       print >>err_buf
