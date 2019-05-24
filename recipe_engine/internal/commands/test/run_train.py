@@ -114,6 +114,10 @@ def _run(test_result, recipe_deps, test_filters, is_train):
   main_repo = recipe_deps.main_repo
 
   description_queue = gevent.queue.UnboundQueue()
+
+  # outcome_queue is written to by RunnerThreads; it will either contain Outcome
+  # messages, or it will contain one of our RunnerThread instances (to indicate
+  # to our main thread here that the RunnerThread is done).
   outcome_queue = gevent.queue.UnboundQueue()
 
   test_result.uncovered_modules.extend(sorted(
@@ -148,17 +152,20 @@ def _run(test_result, recipe_deps, test_filters, is_train):
     emoji_max = max(1, (get_terminal_size().columns or 80) / 2)
     while live_threads:
       rslt = outcome_queue.get()
-      if rslt is None:
-        live_threads = [thread for thread in live_threads if not thread.dead]
-      else:
-        test_result.MergeFrom(rslt)
+      if isinstance(rslt, RunnerThread):
+        # should be done at this point, but make sure for cleanliness sake.
+        gevent.wait([rslt])
+        live_threads.remove(rslt)
+        continue
 
-        report.test_cases_to_stdout(rslt, err_buf)
-        emoji_count += 1
-        if not report.VERBOSE:
-          if (emoji_count % emoji_max) == 0:
-            emoji_count = 0
-            print
+      test_result.MergeFrom(rslt)
+
+      report.test_cases_to_stdout(rslt, err_buf)
+      emoji_count += 1
+      if not report.VERBOSE:
+        if (emoji_count % emoji_max) == 0:
+          emoji_count = 0
+          print
 
     # At this point we know all subprocesses and their threads have finished
     # (because outcome_queue has been closed by each worker, which is how we

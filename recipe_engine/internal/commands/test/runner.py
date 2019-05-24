@@ -562,9 +562,17 @@ class RunnerThread(gevent.Greenlet):
         'Uncaught exception in %r: %s' % (self.name, ex)
       ]+traceback.format_exc().splitlines()))
     finally:
-      self._outcome_queue.put(None)  # So the main thread knows we're done
       try:
         self._runner_proc.kill()
       except OSError:
         pass
       self._runner_proc.wait()
+      # We rely on the thread to dump coverage information to disk; if we don't
+      # wait for the process to die, then our main thread will race with the
+      # runner thread for the coverage information. On windows this almost
+      # always causes an IOError, on *nix this will likely result in flakily
+      # truncated coverage files.
+      #
+      # Sending ourselves down the pipe lets the main process know that we've
+      # quit so it can remove us from the live threads.
+      self._outcome_queue.put(self)
