@@ -71,6 +71,9 @@ class FakeRecipeRepo(object):
   # The absolute path on disk to the root of this repo.
   path = attr.ib()
 
+  # Set to True by write_file when writing files ending with .proto.
+  has_protos = attr.ib(default=False)
+
   # The GitBackend for this FakeRecipeRepo.
   backend = attr.ib(default=attr.Factory(
       lambda self: GitBackend(self.path, None),
@@ -125,6 +128,8 @@ class FakeRecipeRepo(object):
     written to this StringIO object will be `textwrap.dedent`d to allow nice
     inline strings in test files.
     """
+    if path.endswith('.proto'):
+      self.has_protos = True
     full_path = os.path.join(self.path, path)
     try:
       os.makedirs(os.path.dirname(full_path))
@@ -493,8 +498,11 @@ class FakeRecipeRepo(object):
     """
     env = os.environ.copy()
     env.update(kwargs.pop('env', {}))
+    if not any(r.has_protos for r in self.fake_recipe_deps.repos.itervalues()):
+      pb_pkg_path = os.path.join(ROOT_DIR, '.recipe_deps', '_pb')
+      args = ('--proto-override', pb_pkg_path) + args
     proc = subprocess.Popen(
-        ['python', 'recipes.py']+list(args),
+        ('python', 'recipes.py')+args,
         cwd=self.path,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,

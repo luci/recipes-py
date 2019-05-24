@@ -93,8 +93,9 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
 
     # Test has a daemon that holds on to stdout for 30s, but the daemon's parent
     # process (e.g. the one that recipe engine actually runs) quits immediately.
-    # If this takes longer than 5 seconds to run, we consider it failed.
-    self.assertLess(after - now, 5)
+    # If this takes longer than 10 seconds to run (there can be overhead in
+    # running the engine/cipd/protoc/etc.), we consider it failed.
+    self.assertLess(after - now, 10)
 
 
   def test_nonexistent_command(self):

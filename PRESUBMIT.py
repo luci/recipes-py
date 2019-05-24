@@ -21,6 +21,7 @@ def header(input_api):
 
 
 def CommonChecks(input_api, output_api):
+  input_api.parallel = True
   results = []
 
   results.extend(input_api.canned_checks.PanProjectChecks(
