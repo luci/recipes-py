@@ -1,6 +1,6 @@
-# Copyright 2018 The Chromium Authors. All rights reserved.
-# Use of this source code is governed by a BSD-style license that can be
-# found in the LICENSE file.
+# Copyright 2018 The LUCI Authors. All rights reserved.
+# Use of this source code is governed under the Apache License, Version 2.0
+# that can be found in the LICENSE file.
 
 """Standalone Python script to extract an archive. Intended to be used by
 the 'archive' recipe module internally. Should not be used elsewhere.
@@ -45,7 +45,7 @@ def untar(archive_file, output, stats, safe, include_filter):
     # monkeypatch the TarFile object to allow printing messages for each
     # extracted file. extractall makes a single linear pass over the tarfile;
     # other naive implementations (such as `getmembers`) end up doing lots of
-    # random access over the file.
+    # random access over the file. Also patch it to support Unicode filenames.
     em = tf._extract_member
     def _extract_member(tarinfo, targetpath):
       if safe and not os.path.abspath(targetpath).startswith(output):
@@ -64,6 +64,12 @@ def untar(archive_file, output, stats, safe, include_filter):
       stats['extracted']['bytes'] += tarinfo.size
       em(tarinfo, unc_path(targetpath))
     tf._extract_member = _extract_member
+    ex = tf.extract
+    def extract(member, path=""):
+      if isinstance(member, tarfile.TarInfo):
+        member.name = member.name.decode('utf-8')
+      ex(member, path=path)
+    tf.extract = extract
     tf.extractall(output)
 
 
