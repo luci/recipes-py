@@ -71,7 +71,7 @@ def RunSteps(api):
   # YES:
   with api.step.nest('nested') as nest:
     api.step('properly indented', ['bash', '-c', 'echo yay!'])
-    nest.presentation.status = 'FAILURE'
+    nest.status = 'FAILURE'
   # As opposed to:
   with api.context(namespace='something'):
     api.step('indented but no step', ['bash', '-c', 'echo y u do?'])

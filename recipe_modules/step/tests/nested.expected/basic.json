@@ -52,6 +52,7 @@
     "name": "inherit status.inner step",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_TEXT@Hey!@@@",
       "@@@STEP_EXCEPTION@@@"
     ]
   },
@@ -79,9 +80,9 @@
   },
   {
     "cmd": [],
-    "name": "callback status",
+    "name": "extra_nonsense",
     "~followup_annotations": [
-      "@@@STEP_FAILURE@@@"
+      "@@@STEP_TEXT@Just use the yielded object as StepPresentation directly, do notuse the `.presentation` accessor.@@@"
     ]
   },
   {

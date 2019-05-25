@@ -27,22 +27,22 @@ def RunSteps(api):
 
   # Outer nested step's status gets the worst child's status by default.
   with api.step.nest('inherit status'):
-    with api.step.nest('inner step') as other_nest_step:
-      other_nest_step.presentation.status = api.step.EXCEPTION
+    with api.step.nest('inner step') as inner_step_presentation:
+      inner_step_presentation.step_text += 'Hey!'
+      inner_step_presentation.status = api.step.EXCEPTION
 
   # But, you could also pick the last status.
   with api.step.nest('last status', status='last'):
-    with api.step.nest('failpants') as other_nest_step:
-      other_nest_step.presentation.status = api.step.EXCEPTION
+    with api.step.nest('failpants') as failpants_presentation:
+      failpants_presentation.status = api.step.EXCEPTION
     api.step('everything OK', ['echo', 'hi'])
 
-  # Or, even add a callback
-  with api.step.nest('callback status') as nest_step:
-    def _callback(presentation, _nest_data):
-      # Presumably this would actually combine the result of some other steps
-      # inside nest_step.
-      presentation.status = 'FAILURE'
-    nest_step.callback = _callback
+  # DEPRECATED; DO NOT USE
+  with api.step.nest('extra_nonsense') as fake_step_data:
+    fake_step_data.presentation.step_text = (
+      'Just use the yielded object as StepPresentation directly, do not'
+      'use the `.presentation` accessor.'
+    )
 
   # Exceptions bubbling out take precedence.
   try:
@@ -65,11 +65,11 @@ def RunSteps(api):
     assert ex.had_timeout
 
   # Change outer status after nesting is complete.
-  with api.step.nest('versatile status') as nest_step:
+  with api.step.nest('versatile status') as versatile_presentation:
     with api.step.nest('inner step'):
       with api.step.nest('even deeper'):
         pass
-  nest_step.presentation.status = api.step.FAILURE
+  versatile_presentation.status = api.step.FAILURE
 
   # Duplicate nesting names with unique child steps
   for i in xrange(3):
@@ -108,7 +108,10 @@ def GenTests(api):
     api.test('basic')
     + api.post_process(StepException, 'inherit status')
     + api.post_process(StepSuccess, 'last status')
-    + api.post_process(StepFailure, 'callback status')
+
+    + api.post_check(lambda check, steps: check(
+        'StepPresentation' in steps['extra_nonsense'].step_text
+    ))
 
     + api.post_process(StepException, 'exception status')
 

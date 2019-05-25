@@ -93,70 +93,127 @@ class StepApi(recipe_api.RecipeApiPlain):
     """
     return self.step_client.previous_step_result()
 
+  # TODO(iannucci): Historically `nest` returned a StepData; there's tons of
+  # code which does:
+  #
+  #    with api.step.nest(...) as nest:
+  #      nest.presentation....
+  #
+  # But we want this code to be:
+  #
+  #    with api.step.nest(...) as presentation:
+  #      presentation....
+  #
+  # To make migration smoother, we yield a hacky object which passes through
+  # everything to the real presentation, except for `.presentation` which
+  # returns the StepPresentation directly. Ick.
+  class _StepPresentationProxy(object):
+    def __init__(self, presentation):
+      object.__setattr__(self, 'presentation', presentation)
+
+    def __getattr__(self, name):
+      return getattr(self.presentation, name)
+
+    def __setattr__(self, name, value):
+      setattr(self.presentation, name, value)
+
   @contextlib.contextmanager
   def nest(self, name, status='worst'):
     """Nest allows you to nest steps hierarchically on the build UI.
 
-    Calling
+    This generates a dummy step with the provided name in the current namespace.
+    All other steps run within this `with` statement will be nested inside of
+    this dummy step. Nested steps can also nest within each other.
 
-    ```python
-    with api.step.nest(<name>) as parent:
-      ...
-    ```
+    The presentation for the dummy step can be updated (e.g. to add step_text,
+    step_links, etc.) or set the step's status. If you do not set the status,
+    it will be calculated from the status' of all the steps run within this one
+    according to the `status` algorithm selected.
+      1. If there's an active exception when leaving the `with` statement, the
+         status will be one of FAILUR, WARNING or EXCEPTION (depending on the
+         type of exception).
+      2. Otherwise:
+         1. If the status algorithm is 'worst', it will assume the status of the
+            worst child step. This is useful for when your nest step runs e.g.
+            a bunch of test shards. If any shard fails, you want the nest step
+            to fail as well.
+         2. If the status algorithm is 'last', it will assume the status of the
+            last child step. This is useful for when you're using the nest step
+            to encapsulate a sequence operation where only the last step's
+            status really matters.
 
-    will generate a dummy step with the provided name in the current namespace.
-    All other steps run within this with statement will be hidden from the UI
-    by default under this dummy step in a collapsible hierarchy.
+    Example:
 
-    Nested blocks can also nest within each other.
+        # status='worst'
+        with api.step.nest('run test'):
+          with api.step.defer_results():
+            for shard in xrange(4):
+              run_shard('test', shard)
 
-    The `parent` step emitted here....
-    # TODO(iannucci): finish documentation
+        # status='last'
+        with api.step.nest('do upload'):
+          for attempt in xrange(4):
+            try:
+              do_upload()  # first one fails, but second succeeds.
+            except api.step.StepFailure:
+              pass
+          else:
+            report_error()
+
+        # manually adjust status
+        with api.step.nest('custom thing') as presentation:
+          # stuff!
+          presentation.status = 'FAILURE'  # or whatever
+
+    NOTE/DEPRECATION: The object yielded also has a '.presentation' field to be
+    compatible with code that treats the yielded object as a StepData object. If
+    you see such code, please updaet it to treat the yielded object directly as
+    StepPresentation instead.
+
+    Args:
+
+      * name (str) - The name of this step.
+      * status ('worst'|'last') - The algorithm to use to pick a
+        `presentation.status` if the recipe doesn't set one explicitly.
+
+    Yields a StepPresentation for this dummy step, which you may update as you
+    please.
     """
     assert status in ('worst', 'last'), 'Got bad status: %r' % (status,)
     dedup_name_tokens = self.m.context.record_step_name(name)
     # We use a raw step runner here because we need the same deduplicated name
     # for the step as well as the context namespace, and using `self` is tricky.
 
-    @attr.s
-    class _OpenStep(object):
-      presentation = attr.ib(default=None)
-      callback = attr.ib(default=None)
-    open_step = _OpenStep()
-
     caught_exc = None
 
     def _callback(presentation, nest_data):
-      # Then, if they didn't set an initial presentation.status, calculate one.
-      if presentation.status is None:
-        if caught_exc:
-          presentation.status = {
-            recipe_api.StepFailure: self.FAILURE,
-            recipe_api.StepWarning: self.WARNING,
-          }.get(caught_exc, self.EXCEPTION)
-        elif nest_data.children:
-          if status == 'worst':
-            worst = self.SUCCESS
-            for child in nest_data.children:
-              worst = StepPresentation.status_worst(
-                  worst, child.presentation.status)
-            presentation.status = worst
-          else:
-            presentation.status = nest_data.children[-1].presentation.status
-        else:
-          presentation.status = self.SUCCESS
+      if presentation.status is not None:
+        return
 
-      # Finally, call the callback, if needed.
-      if open_step.callback:
-        open_step.callback(presentation, nest_data)
+      # If they didn't set a presentation.status, calculate one.
+      if caught_exc:
+        presentation.status = {
+          recipe_api.StepFailure: self.FAILURE,
+          recipe_api.StepWarning: self.WARNING,
+        }.get(caught_exc, self.EXCEPTION)
+      elif nest_data.children:
+        if status == 'worst':
+          worst = self.SUCCESS
+          for child in nest_data.children:
+            worst = StepPresentation.status_worst(
+                worst, child.presentation.status)
+          presentation.status = worst
+        else:
+          presentation.status = nest_data.children[-1].presentation.status
+      else:
+        presentation.status = self.SUCCESS
 
     step_result = self.step_client.open_parent_step(
         dedup_name_tokens, _callback)
-    open_step.presentation = step_result.presentation
 
     with self.m.context(namespace=dedup_name_tokens[-1]):
       try:
-        yield open_step
+        yield self._StepPresentationProxy(step_result.presentation)
       except:
         caught_exc = sys.exc_info()[0]
         raise
