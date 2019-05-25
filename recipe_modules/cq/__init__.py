@@ -2,23 +2,11 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from PB.go.chromium.org.luci.cq.api.recipe.v1 import cq as cq_pb2
+
 DEPS = [
   'properties',
   'step',
 ]
 
-from recipe_engine.recipe_api import Property
-from recipe_engine.config import ConfigGroup, Single
-
-
-PROPERTIES = {
-  '$recipe_engine/cq': Property(
-    help='Properties specifically for the CQ module',
-    param_name='properties',
-    kind=ConfigGroup(
-      # Whether build is running in CQ dry run mode.
-      dry_run=Single(bool),
-    ),
-    default={},
-  ),
-}
+PROPERTIES = cq_pb2.Input

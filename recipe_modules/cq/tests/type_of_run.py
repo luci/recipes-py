@@ -20,3 +20,9 @@ def GenTests(api):
   yield api.test('inactive') + api.cq()
   yield api.test('dry') + api.cq(dry_run=True)
   yield api.test('full') + api.cq(full_run=True)
+  yield api.test('legacy-full') + api.properties(**{
+    '$recipe_engine/cq': {'dry_run': False},
+  })
+  yield api.test('legacy-dry') + api.properties(**{
+    '$recipe_engine/cq': {'dry_run': True},
+  })

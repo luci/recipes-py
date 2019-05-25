@@ -962,7 +962,7 @@ Returns Tuple[str] of the step name_tokens that should ACTUALLY run.
 Side-effect: Updates global tracking state for this step name.
 ### *recipe_modules* / [cq](/recipe_modules/cq)
 
-[DEPS](/recipe_modules/cq/__init__.py#5): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cq/__init__.py#7): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 #### **class [CQApi](/recipe_modules/cq/api.py#9)([RecipeApi](/recipe_engine/recipe_api.py#836)):**
 
@@ -973,7 +973,7 @@ More information about CQ:
 
 &mdash; **def [initialize](/recipe_modules/cq/api.py#33)(self):**
 
-&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cq/api.py#69)(self, \*build_ids):**
+&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cq/api.py#73)(self, \*build_ids):**
 
 Adds given Buildbucket build ids to the list of triggered builds for CQ
 to wait on corresponding build completion later.
@@ -983,7 +983,7 @@ Must be called after some step.
 Args:
   * build_id (int or string): Buildbucket build id.
 
-&mdash; **def [record\_triggered\_builds](/recipe_modules/cq/api.py#52)(self, \*builds):**
+&mdash; **def [record\_triggered\_builds](/recipe_modules/cq/api.py#56)(self, \*builds):**
 
 Adds given Buildbucket builds to the list of triggered builds for CQ
 to wait on corresponding build completion later.
@@ -999,11 +999,11 @@ Args:
   * [`Build`](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
     objects, typically returned by `api.buildbucket.schedule`.
 
-&emsp; **@property**<br>&mdash; **def [state](/recipe_modules/cq/api.py#42)(self):**
+&emsp; **@property**<br>&mdash; **def [state](/recipe_modules/cq/api.py#46)(self):**
 
 CQ state pertaining to this recipe execution.
 
-&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cq/api.py#47)(self):**
+&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cq/api.py#51)(self):**
 
 Returns recorded Buildbucket build ids as a list of integers.
 ### *recipe_modules* / [file](/recipe_modules/file)

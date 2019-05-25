@@ -24,17 +24,21 @@ class CQApi(recipe_api.RecipeApi):
   DRY = State.DRY
   FULL = State.FULL
 
-  def __init__(self, properties, **kwargs):
+  def __init__(self, input_props, **kwargs):
     super(CQApi, self).__init__(**kwargs)
-    self._properties = properties
+    self._input = input_props
     self._state = None
     self._triggered_build_ids = []
 
   def initialize(self):
-    v = self._properties.get('dry_run')
-    if v is None:
+    if self._input.active is False:
+      dry_run = self.m.properties.get('$recipe_engine/cq', {}).get('dry_run')
+    else:
+      dry_run = self._input.dry_run
+
+    if dry_run is None:
       self._state = self.INACTIVE
-    elif v:
+    elif dry_run:
       self._state = self.DRY
     else:
       self._state = self.FULL
