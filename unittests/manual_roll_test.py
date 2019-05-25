@@ -6,8 +6,6 @@
 import json
 import sys
 
-from google.protobuf import json_format as jsonpb
-
 import test_env
 
 class ManualRollSmokeTest(test_env.RecipeEngineUnitTest):
