@@ -2,7 +2,10 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import json
+
 from ...test.empty_log import EMPTY_LOG
+
 
 def _convert_nest_level(value):
   yield '@@@STEP_NEST_LEVEL@%d@@@' % value
@@ -37,7 +40,8 @@ _STATUS_MAP = {
 
 def _convert_output_properties(value):
   for prop, prop_value in value.iteritems():
-    yield '@@@SET_BUILD_PROPERTY@%s@%s@@@' % (prop, prop_value)
+    yield '@@@SET_BUILD_PROPERTY@%s@%s@@@' % (prop, json.dumps(
+        prop_value, sort_keys=True))
 
 
 def _convert_status(value):

@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 import collections
+import json
 
 from . import StreamEngine, encode_str
 from ..test.empty_log import EMPTY_LOG
@@ -86,7 +87,7 @@ class _SimulationStepStream(StreamEngine.StepStream):
 
   @_ignoreable
   def set_build_property(self, key, value):
-    self._dict_annotation('output_properties')[key] = value
+    self._dict_annotation('output_properties')[key] = json.loads(value)
 
   def trigger(self, spec):
     pass

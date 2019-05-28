@@ -377,7 +377,7 @@ def GetBuildProperties(step_odict):
     if name == '$result':
       continue
     for prop, value in step.output_properties.iteritems():
-      build_properties[prop] = json.loads(value)
+      build_properties[prop] = value
   return build_properties
 
 

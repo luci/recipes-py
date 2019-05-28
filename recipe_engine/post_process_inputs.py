@@ -151,8 +151,8 @@ class Step(object):
   links = attr.ib(factory=OrderedDict)
 
   # A dictionary containing the build properties set by the step, mapping
-  # strings containing the property name to json-ish strings containing the
-  # value of the property
+  # strings containing the property name to json-ish objects containing the
+  # value of the property.
   output_properties = attr.ib(factory=OrderedDict)
 
   # A string containing the resulting status of the step, one of: 'SUCCESS',
