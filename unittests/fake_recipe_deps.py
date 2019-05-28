@@ -28,11 +28,11 @@ import attr
 
 from google.protobuf import json_format as jsonpb
 
-from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 from PB.recipe_engine.recipes_cfg import RepoSpec
+from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 from recipe_engine.internal.fetch import GitBackend, CommitMetadata
-from recipe_engine.internal.test.test_util import filesystem_safe
 from recipe_engine.internal.simple_cfg import RECIPES_CFG_LOCATION_REL
+from recipe_engine.internal.test.test_util import filesystem_safe
 
 
 ROOT_DIR = os.path.dirname(RECIPE_ENGINE_PATH[0])

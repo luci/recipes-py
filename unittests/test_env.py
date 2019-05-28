@@ -24,6 +24,18 @@ from recipe_engine.util import strip_unicode
 
 # Will compile all recipe protos and add them to sys.path as a side effect.
 _ = RecipeDeps.create(ROOT_DIR, {}, None)
+# Assert that the protos actually were compiled and are in path.
+try:
+  # pylint: disable=unused-import
+  from PB.recipe_engine import recipes_cfg
+except ImportError as exc:
+  print 'Failed to import `PB` with sys.path: ', sys.path
+  for path in sys.path:
+    if path.endswith('_pb'):
+      print '%r contains:' % (path,)
+      for entry in os.listdir(path):
+        print '  %r: %r' % (entry, os.stat(os.path.join(path, entry)))
+  raise
 
 from fake_recipe_deps import FakeRecipeDeps
 from mock_recipe_deps import MockRecipeDeps

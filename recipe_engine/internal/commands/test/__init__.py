@@ -28,18 +28,18 @@ def add_arguments(parser):
   subp = parser.add_subparsers(dest='subcommand', metavar='{run, train, list}')
 
   status_info = textwrap.dedent('''
-    Key for non-verbose symbols:
+    Key for non-verbose symbols (no-emoji equvalent in parens):
 
-      ✅ - The test passed.
-      ⚡ - Test produced an expectation diff. Review diff to see if this was
-           intentional or not.
-      🔥 - The recipe crashed (raised uncaught exception) in a way that the test
-           specification wasn't expecting.
-      ❌ - `post_process` assertions failed.
-      🛑 - Test case specification was bad/invalid.
-      🌟 - (train mode) The test expectation was deleted from disk.
-      💾 - (train mode) The test expectation was updated on disk.
-      🆘 - Internal test harness error (file a Infra>Platform>Recipes bug)
+      ✅ (.) - The test passed.
+      ⚡ (D) - Test produced an expectation diff. Review diff to see if this was
+               intentional or not.
+      🔥 (E) - The recipe crashed (raised uncaught exception) in a way that the
+               test specification wasn't expecting.
+      ❌ (X) - `post_process` assertions failed.
+      🛑 (S) - Test case specification was bad/invalid.
+      🌟 (R) - (train mode) The test expectation was deleted from disk.
+      💾 (D) - (train mode) The test expectation was updated on disk.
+      🆘 (!) - Internal test harness error (file a Infra>Platform>Recipes bug)
   ''')
 
   glob_helpstr = textwrap.dedent('''
@@ -62,6 +62,9 @@ def add_arguments(parser):
       help=glob_helpstr)
   run_p.add_argument(
       '--json', type=argparse.FileType('w'), help=argparse.SUPPRESS)
+  run_p.add_argument(
+      '--no-emoji', dest='use_emoji', action='store_false', default=True,
+      help='Use text symbols instead of emoji.')
 
   helpstr = 'Re-train recipe expectations.'
   train_p = subp.add_parser(
@@ -79,6 +82,9 @@ def add_arguments(parser):
       help='Disable automatic documentation generation.')
   train_p.add_argument(
       '--json', type=argparse.FileType('w'), help=argparse.SUPPRESS)
+  train_p.add_argument(
+      '--no-emoji', dest='use_emoji', action='store_false', default=True,
+      help='Use text symbols instead of emoji.')
 
   helpstr = 'Print all test names.'
   list_p = subp.add_parser(

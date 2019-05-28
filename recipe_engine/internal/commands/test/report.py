@@ -13,126 +13,156 @@ import sys
 
 from cStringIO import StringIO
 
+import attr
 import coverage
 
-
-def test_cases_to_stdout(outcome_msg, err_buf):
-  """Prints all test results from `outcome_msg` to stdout.
-
-  Detailed error messages (if any) will be written to err_buf.
-
-  NOTE: Will report and then raise SystemExit if the outcome_msg contains an
-  'internal_error', as this indicates that the test harness is in an invalid
-  state.
-
-  Args:
-
-    * outcome_msg (Outcome proto) - The message to report.
-    * err_buf (file-like object) - The buffer (usually StringIO) to render error
-      messages to.
-
-  Raises SystemExit if outcome_msg has an internal_error.
-  """
-  # Global error; this means something in the actual test execution code went
-  # wrong.
-  if outcome_msg.internal_error:
-    # This is pretty bad.
-    print 'ABORT ABORT ABORT'
-    print 'Global failure(s):'
-    for failure in outcome_msg.internal_error:
-      print '  ', failure
-    sys.exit(1)
-
-  for test_name, test_result in outcome_msg.test_results.iteritems():
-    _print_summary_info(test_name, test_result)
-    _print_detail_info(err_buf, test_name, test_result)
+from backports.shutil_get_terminal_size import get_terminal_size
 
 
-def final_summary_to_stdout(err_buf, is_train, cov, outcome_msg, start_time):
-  """Prints all final information about the test run to stdout. Raises
-  SystemExit if the tests have failed.
+@attr.s
+class Reporter(object):
+  _use_emoji = attr.ib()
+  _is_train = attr.ib()
 
-  Args:
+  _symbol_count = attr.ib(default=0)
+  _long_err_buf = attr.ib(factory=StringIO)
 
-    * err_buf (file-like object) - This should be populated with all buffered
-      error reports (i.e. from `test_cases_to_stdout()`). If this buffer
-      contains anything, it counts as a test failure.
-    * is_train (bool) - True iff we're in train mode. If False and the test
-      failed, prints instructions on how to re-train the expectations.
-    * cov (coverage.Coverage|None) - The accumulated coverage data to report.
-      If None, then no coverage analysis/report will be done. Coverage less than
-      100% counts as a test failure.
-    * outcome_msg (Outcome proto) - Consulted for uncovered_modules and
-      unused_expectation_files. coverage_percent is also populated as a side
-      effect. Any uncovered_modules/unused_expectation_files count as test
-      failure.
-    * start_time (datetime.datetime) - The time that we started running the
-      tests.
+  _start_time = attr.ib(factory=datetime.datetime.now)
 
-  Side-effects: Populates outcome_msg.coverage_percent.
+  _symbol_count = attr.ib(default=0)
 
-  Raises SystemExit if the tests failed.
-  """
-  fail = err_buf.tell() > 0
+  # all emoji are 2 columns wide
+  _symbol_width = attr.ib()
+  @_symbol_width.default
+  def _symbol_width_default(self):
+    return 2 if self._use_emoji else 1
 
-  print
-  sys.stdout.write(err_buf.getvalue())
+  # default to 80 cols if we can't figure out the width (or are on a bot), and
+  # then prevent _symbol_max from ever falling below 1 (to avoid division by 0).
+  _symbol_max = attr.ib()
+  @_symbol_max.default
+  def _symbol_max_default(self):
+    return max(1, (get_terminal_size().columns or 80) / self._symbol_width)
 
-  # For some integration tests we have repos which don't actually have any
-  # recipe files at all. We skip coverage measurement if cov has no data.
-  if cov and cov.get_data().measured_files():
-    covf = StringIO()
-    try:
-      outcome_msg.coverage_percent = cov.report(
-          file=covf, show_missing=True, skip_covered=True)
-    except coverage.CoverageException as ex:
-      print '%s: %s' % (ex.__class__.__name__, ex)
-    if int(outcome_msg.coverage_percent) != 100:
+  _verbose = attr.ib()
+  @_verbose.default
+  def _verbose_default(self):
+    return logging.getLogger().level < logging.WARNING
+
+  def short_report(self, outcome_msg):
+    """Prints all test results from `outcome_msg` to stdout.
+
+    Detailed error messages (if any) will be accumulated in this reporter.
+
+    NOTE: Will report and then raise SystemExit if the outcome_msg contains an
+    'internal_error', as this indicates that the test harness is in an invalid
+    state.
+
+    Args:
+
+      * outcome_msg (Outcome proto) - The message to report.
+
+    Raises SystemExit if outcome_msg has an internal_error.
+    """
+    # Global error; this means something in the actual test execution code went
+    # wrong.
+    if outcome_msg.internal_error:
+      # This is pretty bad.
+      print 'ABORT ABORT ABORT'
+      print 'Global failure(s):'
+      for failure in outcome_msg.internal_error:
+        print '  ', failure
+      sys.exit(1)
+
+    for test_name, test_result in outcome_msg.test_results.iteritems():
+      _print_summary_info(
+          self._verbose, self._use_emoji, test_name, test_result)
+      _print_detail_info(self._long_err_buf, test_name, test_result)
+
+    self._symbol_count += 1
+    if not self._verbose:
+      if (self._symbol_count % self._symbol_max) == 0:
+        self._symbol_count = 0
+        print
+
+  def final_report(self, cov, outcome_msg):
+    """Prints all final information about the test run to stdout. Raises
+    SystemExit if the tests have failed.
+
+    Args:
+
+      * cov (coverage.Coverage|None) - The accumulated coverage data to report.
+        If None, then no coverage analysis/report will be done. Coverage less than
+        100% counts as a test failure.
+      * outcome_msg (Outcome proto) - Consulted for uncovered_modules and
+        unused_expectation_files. coverage_percent is also populated as a side
+        effect. Any uncovered_modules/unused_expectation_files count as test
+        failure.
+
+    Side-effects: Populates outcome_msg.coverage_percent.
+
+    Raises SystemExit if the tests failed.
+    """
+    fail = self._long_err_buf.tell() > 0
+
+    print
+    sys.stdout.write(self._long_err_buf.getvalue())
+
+    # For some integration tests we have repos which don't actually have any
+    # recipe files at all. We skip coverage measurement if cov has no data.
+    if cov and cov.get_data().measured_files():
+      covf = StringIO()
+      try:
+        outcome_msg.coverage_percent = cov.report(
+            file=covf, show_missing=True, skip_covered=True)
+      except coverage.CoverageException as ex:
+        print '%s: %s' % (ex.__class__.__name__, ex)
+      if int(outcome_msg.coverage_percent) != 100:
+        fail = True
+        print covf.getvalue()
+        print 'FATAL: Insufficient coverage (%.2f%%)' % (
+          outcome_msg.coverage_percent,)
+        print
+
+    duration = (datetime.datetime.now() - self._start_time).total_seconds()
+    print '-' * 70
+    print 'Ran %d tests in %0.3fs' % (len(outcome_msg.test_results), duration)
+    print
+
+    if outcome_msg.uncovered_modules:
       fail = True
-      print covf.getvalue()
-      print 'FATAL: Insufficient coverage (%.2f%%)' % (
-        outcome_msg.coverage_percent,)
+      print '------'
+      print 'ERROR: The following modules lack any form of test coverage:'
+      for modname in outcome_msg.uncovered_modules:
+        print '  ', modname
+      print
+      print 'Please add test recipes for them (e.g. recipes in the module\'s'
+      print '"tests" subdirectory).'
       print
 
-  duration = (datetime.datetime.now() - start_time).total_seconds()
-  print '-' * 70
-  print 'Ran %d tests in %0.3fs' % (len(outcome_msg.test_results), duration)
-  print
-
-  if outcome_msg.uncovered_modules:
-    fail = True
-    print '------'
-    print 'ERROR: The following modules lack any form of test coverage:'
-    for modname in outcome_msg.uncovered_modules:
-      print '  ', modname
-    print
-    print 'Please add test recipes for them (e.g. recipes in the module\'s'
-    print '"tests" subdirectory).'
-    print
-
-  if outcome_msg.unused_expectation_files:
-    fail = True
-    print '------'
-    print 'ERROR: The following expectation files have no associated test case:'
-    for expect_file in outcome_msg.unused_expectation_files:
-      print '  ', expect_file
-    print
-
-  if fail:
-    print '------'
-    print 'FAILED'
-    print
-    if not is_train:
-      print 'NOTE: You may need to re-train the expectation files by running:'
+    if outcome_msg.unused_expectation_files:
+      fail = True
+      print '------'
+      print 'ERROR: The following expectation files have no associated test case:'
+      for expect_file in outcome_msg.unused_expectation_files:
+        print '  ', expect_file
       print
-      print '  ./recipes.py test train'
-      print
-      print 'This will update all the .json files to have content which matches'
-      print 'the current recipe logic. Review them for correctness and include'
-      print 'them with your CL.'
-    sys.exit(1)
 
-  print 'OK'
+    if fail:
+      print '------'
+      print 'FAILED'
+      print
+      if not self._is_train:
+        print 'NOTE: You may need to re-train the expectation files by running:'
+        print
+        print '  ./recipes.py test train'
+        print
+        print 'This will update all the .json files to have content which matches'
+        print 'the current recipe logic. Review them for correctness and include'
+        print 'them with your CL.'
+      sys.exit(1)
+
+    print 'OK'
 
 
 # Internal helper stuff
@@ -140,17 +170,17 @@ def final_summary_to_stdout(err_buf, is_train, cov, outcome_msg, start_time):
 
 FIELD_TO_DISPLAY = collections.OrderedDict([
   # pylint: disable=bad-whitespace
-  ('internal_error', (False, 'internal testrunner error',           '🆘')),
+  ('internal_error', (False, 'internal testrunner error',           '🆘', '!')),
 
-  ('bad_test',       (False, 'test specification was bad/invalid',  '🛑')),
-  ('crash_mismatch', (False, 'recipe crashed in an unexpected way', '🔥')),
-  ('check',          (False, 'failed post_process check(s)',        '❌')),
-  ('diff',           (False, 'expectation file has diff',           '⚡')),
+  ('bad_test',       (False, 'test specification was bad/invalid',  '🛑', 'S')),
+  ('crash_mismatch', (False, 'recipe crashed in an unexpected way', '🔥', 'E')),
+  ('check',          (False, 'failed post_process check(s)',        '❌', 'X')),
+  ('diff',           (False, 'expectation file has diff',           '⚡', 'D')),
 
-  ('removed',        (True,  'removed expectation file',            '🌟')),
-  ('written',        (True,  'updated expectation file',            '💾')),
+  ('removed',        (True,  'removed expectation file',            '🌟', 'R')),
+  ('written',        (True,  'updated expectation file',            '💾', 'D')),
 
-  (None,             (True,  '',                                    '✅'))
+  (None,             (True,  '',                                    '✅', '.'))
 ])
 
 
@@ -162,20 +192,18 @@ def _check_field(test_result, field_name):
     if descriptor.name == field_name:
       return FIELD_TO_DISPLAY[field_name], value
 
-  return (None, None, None), None
+  return (None, None, None, None), None
 
 
-VERBOSE = logging.getLogger().level < logging.WARNING
-
-
-def _print_summary_info(test_name, test_result):
+def _print_summary_info(verbose, use_emoji, test_name, test_result):
   # Pick the first populated field in the TestResults.Results
   for field_name in FIELD_TO_DISPLAY:
-    (success, verbose_msg, icon), _ = _check_field(test_result, field_name)
+    (success, verbose_msg, emj, txt), _ = _check_field(test_result, field_name)
+    icon = emj if use_emoji else txt
     if icon:
       break
 
-  if VERBOSE:
+  if verbose:
     msg = '' if not verbose_msg else ' (%s)' % verbose_msg
     print '%s ... %s%s' % (test_name, 'ok' if success else 'FAIL', msg)
   else:
@@ -192,14 +220,14 @@ def _print_detail_info(err_buf, test_name, test_result):
     print >>err_buf, '-' * 70
 
   for field in ('internal_error', 'bad_test', 'crash_mismatch'):
-    (_, verbose_msg, _), lines = _check_field(test_result, field)
+    (_, verbose_msg, _, _), lines = _check_field(test_result, field)
     if lines:
       _header()
       for line in lines:
         print >>err_buf, line
       print >>err_buf
 
-  (_, verbose_msg, _), lines_groups = _check_field(test_result, 'check')
+  (_, verbose_msg, _, _), lines_groups = _check_field(test_result, 'check')
   if lines_groups:
     _header()
     for group in lines_groups:
@@ -207,7 +235,7 @@ def _print_detail_info(err_buf, test_name, test_result):
         print >>err_buf, line
       print >>err_buf
 
-  (_, verbose_msg, _), lines = _check_field(test_result, 'diff')
+  (_, verbose_msg, _, _), lines = _check_field(test_result, 'diff')
   if lines:
     _header()
     for line in lines.lines:

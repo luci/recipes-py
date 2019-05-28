@@ -9,6 +9,7 @@ import subprocess
 
 import test_env
 
+
 class TestBundle(test_env.RecipeEngineUnitTest):
   def test_simple(self):
     deps = self.FakeRecipeDeps()
