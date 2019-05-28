@@ -21,7 +21,6 @@ def header(input_api):
 
 
 def CommonChecks(input_api, output_api):
-  input_api.parallel = True
   results = []
 
   results.extend(input_api.canned_checks.PanProjectChecks(
@@ -31,10 +30,30 @@ def CommonChecks(input_api, output_api):
       ],
   ))
 
+  # explicitly run these independently because they update files on disk and are
+  # called implicitly with the other tests. The vpython check is nominally
+  # locked with a file lock, but updating the protos, etc. of recipes.py is not.
+  recipes_py = input_api.os_path.join(
+      input_api.PresubmitLocalPath(), 'recipes.py')
+  run_first = (
+    input_api.canned_checks.CheckVPythonSpec(input_api, output_api) + [
+      input_api.Command(
+          'Compile recipe protos',
+          ['python', recipes_py, 'fetch'],
+          {},
+          output_api.PresubmitError,
+      ),
+    ])
+
+  for cmd in run_first:
+    result = input_api.thread_pool.CallCommand(cmd)
+    if result:
+      results.append(result)
+
+  # Now run all the unit tests in parallel.
   results.extend(input_api.RunTests(
       input_api.canned_checks.GetUnitTestsInDirectory(
-          input_api, output_api, 'unittests', whitelist=[r'.+_test\.py']) +
-      input_api.canned_checks.CheckVPythonSpec(input_api, output_api)
+          input_api, output_api, 'unittests', whitelist=[r'.+_test\.py'])
   ))
 
   return results

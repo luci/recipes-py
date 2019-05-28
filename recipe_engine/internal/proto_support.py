@@ -536,9 +536,12 @@ def _install_protos(proto_package_path, dgst, proto_files):
     csum_f.write(dgst)
 
   dest = os.path.join(proto_package_path, 'PB')
-  old = tempfile.mkdtemp(dir=tmp_base)
-  _try_rename(dest, os.path.join(old, 'PB'))
-  _try_rename(pb_temp, dest)
+  # Check the digest again, in case another engine beat us to the punch.
+  # This is still racy, but it makes the window substantially smaller.
+  if not _check_digest(proto_package_path, dgst):
+    old = tempfile.mkdtemp(dir=tmp_base)
+    _try_rename(dest, os.path.join(old, 'PB'))
+    _try_rename(pb_temp, dest)
 
 
 def _check_digest(proto_package, dgst):
