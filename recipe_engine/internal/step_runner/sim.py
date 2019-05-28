@@ -118,10 +118,7 @@ class SimulationStepRunner(StepRunner):
     if 'cmd' not in step_obj:
       step_obj['cmd'] = []
     for handle_name in ('stdout', 'stderr'):
-      if handle_name not in step_obj:
-        continue
-      if not isinstance(step_obj[handle_name], str):
-        del step_obj[handle_name]
+      step_obj.pop(handle_name, None)
     precursor = self._step_precursor_data[dot_name]
     if precursor['env_prefixes']:
       step_obj['env_prefixes'] = precursor['env_prefixes']
@@ -183,4 +180,3 @@ class SimulationStepRunner(StepRunner):
     TODO(iannucci): Make this map to a real type.
     """
     return self._step_history.copy()
-

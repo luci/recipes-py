@@ -9,7 +9,6 @@
     "infra_step": true,
     "name": "buildbucket.schedule",
     "stdin": "{\"requests\": [{\"scheduleBuild\": {\"builder\": {\"bucket\": \"try\", \"builder\": \"linux\", \"project\": \"chromium\"}, \"gerritChanges\": [{\"change\": \"123456\", \"host\": \"chromium-review.googlesource.com\", \"patchset\": \"7\", \"project\": \"chromium/src\"}], \"gitilesCommit\": {\"host\": \"chromium.googlesource.com\", \"id\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"project\": \"chromium/src\"}, \"requestId\": \"8945511751514863184-00000000-0000-0000-0000-000000001337\", \"tags\": [{\"key\": \"buildset\", \"value\": \"bs\"}, {\"key\": \"user_agent\", \"value\": \"recipe\"}]}}]}",
-    "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"responses\": [@@@",
@@ -84,7 +83,6 @@
     "infra_step": true,
     "name": "buildbucket.run.schedule",
     "stdin": "{\"requests\": [{\"scheduleBuild\": {\"builder\": {\"bucket\": \"try\", \"builder\": \"linux\", \"project\": \"chromium\"}, \"gerritChanges\": [{\"change\": \"123456\", \"host\": \"chromium-review.googlesource.com\", \"patchset\": \"7\", \"project\": \"chromium/src\"}], \"gitilesCommit\": {\"host\": \"chromium.googlesource.com\", \"id\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"project\": \"chromium/src\"}, \"requestId\": \"8945511751514863184-00000000-0000-0000-0000-000000001337\", \"tags\": [{\"key\": \"buildset\", \"value\": \"bs\"}, {\"key\": \"user_agent\", \"value\": \"recipe\"}]}}]}",
-    "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",

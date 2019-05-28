@@ -3,9 +3,7 @@
     "cmd": [
       "doge"
     ],
-    "name": "doge",
-    "stderr": "/path/to/tmp/",
-    "stdout": "/path/to/tmp/"
+    "name": "doge"
   },
   {
     "jsonResult": null,

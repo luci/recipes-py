@@ -9,7 +9,6 @@
     "infra_step": true,
     "name": "buildbucket.get",
     "stdin": "{\"requests\": [{\"getBuild\": {\"fields\": \"builder,createTime,createdBy,critical,endTime,id,input,number,output,startTime,status,updateTime\", \"id\": \"9016911228971028736\"}}]}",
-    "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"responses\": [@@@",
@@ -46,7 +45,6 @@
     "infra_step": true,
     "name": "buildbucket.get_multi",
     "stdin": "{\"requests\": [{\"getBuild\": {\"fields\": \"builder,createTime,createdBy,critical,endTime,id,input,number,output,startTime,status,updateTime\", \"id\": \"9016911228971028736\"}}, {\"getBuild\": {\"fields\": \"builder,createTime,createdBy,critical,endTime,id,input,number,output,startTime,status,updateTime\", \"id\": \"9016911228971028737\"}}]}",
-    "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"responses\": [@@@",
@@ -96,7 +94,6 @@
     ],
     "infra_step": true,
     "name": "legacy_get",
-    "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"build\": {@@@",

@@ -32,7 +32,6 @@
       "luci.chromium.try:linux_chromium_rel_ng"
     ],
     "name": "led get-builder",
-    "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"task_data\": \"foo\"@@@",
@@ -48,7 +47,6 @@
     ],
     "name": "led edit-cr-cl",
     "stdin": "{\"task_data\": \"foo\"}",
-    "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
       "@@@STEP_LOG_END@json.output (invalid)@@@",
       "@@@STEP_LOG_LINE@json.output (exception)@No JSON object could be decoded@@@",
@@ -61,7 +59,6 @@
       "launch"
     ],
     "name": "led launch",
-    "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"swarming\": {@@@",

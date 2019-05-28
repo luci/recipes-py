@@ -4,25 +4,21 @@
       "echo",
       "Hello World"
     ],
-    "name": "echo",
-    "stderr": "/path/to/tmp/",
-    "stdout": "/path/to/tmp/"
+    "name": "echo"
   },
   {
     "cmd": [
       "cat"
     ],
     "name": "cat",
-    "stdin": "hello",
-    "stdout": "/path/to/tmp/out"
+    "stdin": "hello"
   },
   {
     "cmd": [
       "echo",
       "huh"
     ],
-    "name": "automock",
-    "stdout": "/path/to/tmp/out"
+    "name": "automock"
   },
   {
     "jsonResult": null,

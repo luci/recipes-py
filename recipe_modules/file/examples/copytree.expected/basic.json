@@ -115,7 +115,6 @@
     ],
     "infra_step": true,
     "name": "check filesizes",
-    "stdout": "/path/to/tmp/",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@filesizes@[START_DIR]/some dir/a: \t111@@@",
       "@@@STEP_LOG_LINE@filesizes@[START_DIR]/some dir/aa: \t221@@@",
@@ -165,7 +164,6 @@
     ],
     "infra_step": true,
     "name": "list new dir",
-    "stdout": "/path/to/tmp/",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@listdir@[START_DIR]/some other dir/a@@@",
       "@@@STEP_LOG_LINE@listdir@[START_DIR]/some other dir/aa@@@",
@@ -189,7 +187,6 @@
     ],
     "infra_step": true,
     "name": "glob *a",
-    "stdout": "/path/to/tmp/",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@glob@[START_DIR]/some other dir/a@@@",
       "@@@STEP_LOG_LINE@glob@[START_DIR]/some other dir/aa@@@",
@@ -250,7 +247,6 @@
     ],
     "infra_step": true,
     "name": "glob *a (2)",
-    "stdout": "/path/to/tmp/",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@glob@[START_DIR]/some other dir/aa@@@",
       "@@@STEP_LOG_END@glob@@@"
@@ -282,7 +278,6 @@
     ],
     "infra_step": true,
     "name": "list new dir (2)",
-    "stdout": "/path/to/tmp/",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@listdir@[START_DIR]/some other dir/aa@@@",
       "@@@STEP_LOG_LINE@listdir@[START_DIR]/some other dir/c@@@",

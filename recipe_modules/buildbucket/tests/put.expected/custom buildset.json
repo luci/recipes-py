@@ -9,7 +9,6 @@
     ],
     "infra_step": true,
     "name": "buildbucket.put",
-    "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
       "@@@STEP_LOG_END@json.output (invalid)@@@",
       "@@@STEP_LOG_LINE@json.output (exception)@No JSON object could be decoded@@@",

@@ -9,7 +9,6 @@
     "infra_step": true,
     "name": "buildbucket.schedule",
     "stdin": "{\"requests\": [{\"scheduleBuild\": {\"builder\": {\"bucket\": \"ci\", \"builder\": \"linux\", \"project\": \"chromium\"}, \"requestId\": \"0-00000000-0000-0000-0000-000000001337\", \"tags\": [{\"key\": \"user_agent\", \"value\": \"recipe\"}]}}, {\"scheduleBuild\": {\"builder\": {\"bucket\": \"ci\", \"builder\": \"win\", \"project\": \"chromium\"}, \"requestId\": \"0-00000000-0000-0000-0000-00000000133a\", \"tags\": [{\"key\": \"user_agent\", \"value\": \"recipe\"}]}}, {\"scheduleBuild\": {\"builder\": {\"bucket\": \"ci\", \"builder\": \"mac\", \"project\": \"chromium\"}, \"requestId\": \"0-00000000-0000-0000-0000-00000000133d\", \"tags\": [{\"key\": \"user_agent\", \"value\": \"recipe\"}]}}]}",
-    "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"responses\": [@@@",

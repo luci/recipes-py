@@ -25,7 +25,6 @@
     ],
     "infra_step": true,
     "name": "size of some_file",
-    "stdout": "/path/to/tmp/",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@filesizes@[START_DIR]/some_file: \t314572800@@@",
       "@@@STEP_LOG_END@filesizes@@@"

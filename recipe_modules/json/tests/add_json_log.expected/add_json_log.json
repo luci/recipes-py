@@ -4,8 +4,7 @@
       "cat",
       "{\"x\":1,\"y\":2}"
     ],
-    "name": "no log on success",
-    "stdout": "/path/to/tmp/json"
+    "name": "no log on success"
   },
   {
     "cmd": [
@@ -13,7 +12,6 @@
       "{\"x\":1,\"y\":2}"
     ],
     "name": "add log on failure",
-    "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output[log2]@{@@@",
       "@@@STEP_LOG_LINE@json.output[log2]@  \"x\": 1, @@@",

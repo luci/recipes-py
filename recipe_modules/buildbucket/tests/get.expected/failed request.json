@@ -9,7 +9,6 @@
     "infra_step": true,
     "name": "buildbucket.get",
     "stdin": "{\"requests\": [{\"getBuild\": {\"fields\": \"builder,createTime,createdBy,critical,endTime,id,input,number,output,startTime,status,updateTime\", \"id\": \"9016911228971028736\"}}]}",
-    "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
       "@@@STEP_TEXT@Request #0<br>Status code: 0<br>Message: there was a problem<br>@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",

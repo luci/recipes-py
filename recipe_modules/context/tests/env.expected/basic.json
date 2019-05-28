@@ -33,8 +33,7 @@
       "-c",
       "echo -n $RECIPE_ENGINE_CONTEXT_TEST"
     ],
-    "name": "default",
-    "stdout": "/path/to/tmp/"
+    "name": "default"
   },
   {
     "cmd": [
@@ -45,8 +44,7 @@
     "env": {
       "RECIPE_ENGINE_CONTEXT_TEST": null
     },
-    "name": "drop",
-    "stdout": "/path/to/tmp/"
+    "name": "drop"
   },
   {
     "cmd": [
@@ -57,8 +55,7 @@
     "env": {
       "RECIPE_ENGINE_CONTEXT_TEST": "bar"
     },
-    "name": "env step",
-    "stdout": "/path/to/tmp/"
+    "name": "env step"
   },
   {
     "cmd": [
@@ -69,8 +66,7 @@
     "env": {
       "RECIPE_ENGINE_CONTEXT_TEST": "foo:<RECIPE_ENGINE_CONTEXT_TEST>:bar"
     },
-    "name": "env step augmented",
-    "stdout": "/path/to/tmp/"
+    "name": "env step augmented"
   },
   {
     "cmd": [
@@ -87,8 +83,7 @@
         "[START_DIR]/shirt"
       ]
     },
-    "name": "env step with prefix",
-    "stdout": "/path/to/tmp/"
+    "name": "env step with prefix"
   },
   {
     "cmd": [
@@ -110,8 +105,7 @@
         "[START_DIR]/good_hat"
       ]
     },
-    "name": "env step with prefix and suffix",
-    "stdout": "/path/to/tmp/"
+    "name": "env step with prefix and suffix"
   },
   {
     "cmd": [
@@ -134,8 +128,7 @@
         "[START_DIR]/bad_hat"
       ]
     },
-    "name": "env step with 2 suffixes",
-    "stdout": "/path/to/tmp/"
+    "name": "env step with 2 suffixes"
   },
   {
     "cmd": [
@@ -148,8 +141,7 @@
         "[START_DIR]/shirt"
       ]
     },
-    "name": "env with default value",
-    "stdout": "/path/to/tmp/"
+    "name": "env with default value"
   },
   {
     "cmd": [
@@ -165,8 +157,7 @@
         "[START_DIR]/shirt"
       ]
     },
-    "name": "env with override value",
-    "stdout": "/path/to/tmp/"
+    "name": "env with override value"
   },
   {
     "cmd": [
@@ -182,8 +173,7 @@
         "[START_DIR]/shirt"
       ]
     },
-    "name": "env with cleared value",
-    "stdout": "/path/to/tmp/"
+    "name": "env with cleared value"
   },
   {
     "cmd": [
@@ -199,8 +189,7 @@
         "[START_DIR]/shirt"
       ]
     },
-    "name": "env with empty value",
-    "stdout": "/path/to/tmp/"
+    "name": "env with empty value"
   },
   {
     "jsonResult": null,

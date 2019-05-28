@@ -9,8 +9,7 @@
       "3m"
     ],
     "infra_step": true,
-    "name": "get access token for default account",
-    "stdout": "/path/to/tmp/"
+    "name": "get access token for default account"
   },
   {
     "jsonResult": null,

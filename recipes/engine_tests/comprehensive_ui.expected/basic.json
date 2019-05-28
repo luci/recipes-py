@@ -247,7 +247,6 @@
       "OHAI"
     ],
     "name": "capture stdout",
-    "stdout": "/path/to/tmp/",
     "~followup_annotations": [
       "@@@STEP_LOG_END@stdout@@@"
     ]

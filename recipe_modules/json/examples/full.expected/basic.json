@@ -5,7 +5,6 @@
       "[1, 2, 3]"
     ],
     "name": "echo1",
-    "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@[@@@",
       "@@@STEP_LOG_LINE@json.output@  1, @@@",
@@ -28,7 +27,6 @@
       "[2, 3, 4]"
     ],
     "name": "echo2",
-    "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@[@@@",
       "@@@STEP_LOG_LINE@json.output@  2, @@@",
@@ -76,7 +74,6 @@
       "{\"x\": 1, \"y\": 2}"
     ],
     "name": "json through",
-    "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"x\": 1, @@@",
@@ -90,8 +87,7 @@
       "cat",
       "{\"x\": 1, \"y\": 2}"
     ],
-    "name": "write json to file",
-    "stdout": "[TMP_BASE]/temp.json"
+    "name": "write json to file"
   },
   {
     "cmd": [

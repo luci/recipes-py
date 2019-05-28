@@ -123,12 +123,8 @@ class Step(object):
   # that is not allowed
   infra_step = attr.ib(default=False)
 
-  # Strings containing the content of the step's stdin, stdout and stderr if a
-  # PlaceHolder was used
-  # TODO(gbeaty) Remove stdout and stderr, they are inputs to the test and don't
-  # need to be part of expectations
-  stdout = attr.ib(default='')
-  stderr = attr.ib(default='')
+  # String containing the content of the step's stdin if the step's stdin was
+  # redirected with a PlaceHolder
   stdin = attr.ib(default='')
 
   # ***************************** Annotation fields ****************************

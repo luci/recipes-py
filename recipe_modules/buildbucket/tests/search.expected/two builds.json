@@ -9,7 +9,6 @@
     "infra_step": true,
     "name": "buildbucket.search",
     "stdin": "{\"requests\": [{\"searchBuilds\": {\"fields\": \"builds.*.builder,builds.*.createTime,builds.*.createdBy,builds.*.critical,builds.*.endTime,builds.*.id,builds.*.input,builds.*.number,builds.*.output,builds.*.startTime,builds.*.status,builds.*.updateTime\", \"pageSize\": 1000, \"predicate\": {\"gerritChanges\": [{\"change\": \"123456\", \"host\": \"chromium-review.googlesource.com\", \"patchset\": \"7\", \"project\": \"chromium/src\"}]}}}]}",
-    "stdout": "/path/to/tmp/json",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"responses\": [@@@",

@@ -4,41 +4,35 @@
       "echo",
       "Hello World"
     ],
-    "name": "echo",
-    "stderr": "/path/to/tmp/",
-    "stdout": "/path/to/tmp/"
+    "name": "echo"
   },
   {
     "cmd": [
       "cat"
     ],
     "name": "cat",
-    "stdin": "hello",
-    "stdout": "/path/to/tmp/out"
+    "stdin": "hello"
   },
   {
     "cmd": [
       "cat",
       "hello"
     ],
-    "name": "cat (2)",
-    "stdout": "/path/to/tmp/out"
+    "name": "cat (2)"
   },
   {
     "cmd": [
       "cat"
     ],
     "name": "cat (3)",
-    "stdin": "\ufffdhello",
-    "stdout": "/path/to/tmp/"
+    "stdin": "\ufffdhello"
   },
   {
     "cmd": [
       "echo",
       "huh"
     ],
-    "name": "automock",
-    "stdout": "/path/to/tmp/out"
+    "name": "automock"
   },
   {
     "cmd": [
@@ -46,17 +40,14 @@
       "-c",
       "echo blah && echo fail 1>&2"
     ],
-    "name": "automock (fail)",
-    "stderr": "/path/to/tmp/err",
-    "stdout": "/path/to/tmp/out"
+    "name": "automock (fail)"
   },
   {
     "cmd": [
       "echo",
       "leaking"
     ],
-    "name": "leak stdout",
-    "stdout": "[TMP_BASE]/out.txt"
+    "name": "leak stdout"
   },
   {
     "cmd": [
