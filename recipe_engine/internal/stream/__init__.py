@@ -98,12 +98,7 @@ class StreamEngine(object):
     # StreamEngineInvariants.
 
 
-  def make_step_stream(self, name):
-    """Shorthand for creating a root-level step stream."""
-    # TODO(iannucci): remove this method
-    return self.new_step_stream(StepConfig(name_tokens=(name,)))
-
-  def new_step_stream(self, step_config):
+  def new_step_stream(self, name_tokens, allow_subannotations):
     """Creates a new StepStream in this engine.
 
     The step will be considered started at the moment this method is called.
@@ -115,7 +110,11 @@ class StreamEngine(object):
     i.e. parse -> re-emit.
 
     Args:
-      step_config (StepConfig): The step configuration.
+      * name_tokens (Tuple[basestring]): The name of the step to run, including
+        all namespaces.
+      * allow_subannotations (bool): If True, tells the StreamEngine to expect
+        the old @@@annotator@@@ protocol to be emitted on stdout from this
+        step.
     """
     raise NotImplementedError()
 

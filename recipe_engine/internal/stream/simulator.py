@@ -104,18 +104,22 @@ class SimulationStreamEngine(StreamEngine):
   def annotations(self):
     return self._annotations_map
 
-  def new_step_stream(self, step_config):
+  def new_step_stream(self, name_tokens, allow_subannotations):
+    del allow_subannotations
+
     # TODO(iannucci): don't skip these. Omitting them for now to reduce the
     # amount of test expectation changes.
     steps_to_skip = (
       'recipe result',   # explicitly covered by '$result'
     )
-    if step_config.name in steps_to_skip:
+    # TODO(iannucci): use '|' separator instead of '.'
+    name = '.'.join(name_tokens)
+    if name in steps_to_skip:
       annotations = None
     else:
-      annotations = self._annotations_map[step_config.name] = {}
+      annotations = self._annotations_map[name] = {}
       # TODO(iannucci): this is duplicated with
       # AnnotatorStreamEngine._create_step_stream
-      if len(step_config.name_tokens) > 1:
-        annotations['nest_level'] = len(step_config.name_tokens) - 1
+      if len(name_tokens) > 1:
+        annotations['nest_level'] = len(name_tokens) - 1
     return _SimulationStepStream(annotations)

@@ -3,11 +3,8 @@
 # that can be found in the LICENSE file.
 
 import time
-import traceback
 
 from PB.recipe_engine.result import Result
-
-from ...recipe_api import StepClient
 
 from . import StreamEngine, encode_str
 
@@ -142,20 +139,21 @@ class AnnotatorStreamEngine(StreamEngine):
     def reset_subannotation_state(self):
       self._engine._current_step = None
 
+  def new_step_stream(self, name_tokens, allow_subannotations):
+    # TODO(iannucci): make this use '|' separators instead
+    name = '.'.join(name_tokens)
+    self.output_root_annotation('SEED_STEP', name)
+    return self._create_step_stream(
+        name, name_tokens, allow_subannotations, self._outstream)
 
-  def new_step_stream(self, step_config):
-    self.output_root_annotation('SEED_STEP', step_config.name)
-    return self._create_step_stream(step_config, self._outstream)
-
-  def _create_step_stream(self, step_config, outstream):
-    if step_config.allow_subannotations:
-      stream = self.AllowSubannotationsStepStream(self, outstream,
-                                                  step_config.name)
+  def _create_step_stream(
+      self, name, name_tokens, allow_subannotations, outstream):
+    if allow_subannotations:
+      stream = self.AllowSubannotationsStepStream(self, outstream, name)
     else:
-      stream = self.StepStream(self, outstream, step_config.name)
+      stream = self.StepStream(self, outstream, name)
 
-    if len(step_config.name_tokens) > 1:
+    if len(name_tokens) > 1:
       # Emit our current nest level, if we are nested.
-      stream.output_annotation(
-          'STEP_NEST_LEVEL', str(len(step_config.name_tokens)-1))
+      stream.output_annotation('STEP_NEST_LEVEL', str(len(name_tokens)-1))
     return stream

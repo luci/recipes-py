@@ -98,8 +98,13 @@ class StreamEngineInvariants(StreamEngine):
       assert self._open
       self._open = False
 
-  def new_step_stream(self, step_config):
-    assert step_config.name not in self._streams, (
-        'Step %s already exists' % step_config.name)
-    self._streams.add(step_config.name)
-    return self.StepStream(self, step_config.name)
+  def new_step_stream(self, name_tokens, allow_subannotations):
+    del allow_subannotations
+
+    if any('|' in token for token in name_tokens):
+      raise ValueError('The pipe ("|") character is reserved in step names.')
+
+    name = '|'.join(name_tokens)
+    assert name not in self._streams, 'Step %r already exists' % (name,)
+    self._streams.add(name)
+    return self.StepStream(self, name)

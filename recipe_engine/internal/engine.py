@@ -23,7 +23,6 @@ from ..step_data import StepData, ExecutionResult
 from ..types import StepPresentation, thaw
 
 from .engine_env import merge_envs
-from .engine_step import StepConfig
 from .exceptions import RecipeUsageError, CrashEngine
 from .step_runner import Step
 
@@ -167,13 +166,11 @@ class RecipeEngine(object):
       * The List of children StepData of this parent step.
     """
     self._close_until_ns(name_tokens[:-1])
-    # TODO(iannucci): really, seriously, make new_step_stream just take
-    # name_tokens.
     try:
-      step_config = StepConfig(name_tokens=name_tokens)
-      step_stream = self._stream_engine.new_step_stream(step_config)
+      step_stream = self._stream_engine.new_step_stream(name_tokens, False)
       step_data = StepData(name_tokens, ExecutionResult(retcode=0))
-      presentation = StepPresentation(step_config.name)
+      # TODO(iannucci): Use '|' instead of '.'
+      presentation = StepPresentation('.'.join(name_tokens))
       # TODO(iannucci): Don't use StepData for presentation-only steps (define
       # a different datatype). This is odd because 'StepData.children' is only
       # defined here.
@@ -215,9 +212,8 @@ class RecipeEngine(object):
         ret.name
       ))
 
-    # TODO(iannucci): refactor new_step_stream to avoid passing the whole
-    # step_config.
-    step_stream = self._stream_engine.new_step_stream(step_config)
+    step_stream = self._stream_engine.new_step_stream(
+        step_config.name_tokens, step_config.allow_subannotations)
     debug_log = step_stream.new_log_stream('$debug')
     caught = None
     try:
@@ -270,7 +266,7 @@ class RecipeEngine(object):
   @staticmethod
   def _setup_build_step(recipe_deps, recipe, properties, stream_engine,
                         emit_initial_properties):
-    with stream_engine.make_step_stream('setup_build') as step:
+    with stream_engine.new_step_stream(('setup_build',), False) as step:
       if emit_initial_properties:
         for key in sorted(properties.iterkeys()):
           step.set_build_property(
@@ -403,7 +399,7 @@ class RecipeEngine(object):
     try:
       result.json_result = json.dumps(raw_result, sort_keys=True)
       if raw_result is not None:
-        with stream_engine.make_step_stream('recipe result') as stream:
+        with stream_engine.new_step_stream(('recipe result',), False) as stream:
           stream.set_build_property('$retval', result.json_result)
           stream.write_split(result.json_result)
       return result, None
@@ -729,7 +725,7 @@ def _print_step(execution_log, step):
 
 def _log_crash(stream_engine, crash_location):
   name = 'RECIPE CRASH (%s)' % (crash_location,)
-  with stream_engine.make_step_stream(name) as stream:
+  with stream_engine.new_step_stream((name,), False) as stream:
     stream.set_step_status('EXCEPTION', had_timeout=False)
     stream.write_line('The recipe has crashed at point %r!' % crash_location)
     stream.write_line('')

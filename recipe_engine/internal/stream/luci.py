@@ -325,13 +325,12 @@ class LUCIStreamEngine(StreamEngine):
         self._build_proto.SerializeToString()
     )
 
-  def new_step_stream(self, step_config):
-    assert isinstance(step_config, StepConfig)
-    assert not step_config.allow_subannotations, (
+  def new_step_stream(self, name_tokens, allow_subannotations):
+    assert not allow_subannotations, (
       'Subannotations not currently supported in build.proto mode'
     )
     step_pb = self._build_proto.steps.add()
-    step_pb.name = '|'.join(step_config.name_tokens)
+    step_pb.name = '|'.join(name_tokens)
     step_pb.start_time.GetCurrentTime()
     ret = LUCIStepStream(step_pb, self._build_proto.output.properties,
                          self._send, self._bsc)

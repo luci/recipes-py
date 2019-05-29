@@ -13,10 +13,10 @@ from recipe_engine.internal.stream.invariants import StreamEngineInvariants
 
 class StreamTest(test_env.RecipeEngineUnitTest):
   def _example(self, engine):
-    foo = engine.make_step_stream('foo')
+    foo = engine.new_step_stream(('foo',), False)
     foo.write_line('foo says hello to xyrself')
 
-    bar = engine.make_step_stream('bar')
+    bar = engine.new_step_stream(('bar',), False)
     foo.write_split('foo says hello to bar:\n  hi bar')
     bar.write_line('bar says hi, shyly')
 
@@ -104,33 +104,33 @@ bar tries to kiss foo, but foo already left
 
   def test_write_after_close(self):
     with StreamEngineInvariants() as engine:
-      foo = engine.make_step_stream('foo')
+      foo = engine.new_step_stream(('foo',), False)
       foo.close()
       with self.assertRaises(AssertionError):
         foo.write_line('no')
 
   def test_log_still_open(self):
     with StreamEngineInvariants() as engine:
-      foo = engine.make_step_stream('foo')
+      foo = engine.new_step_stream(('foo',), False)
       log = foo.new_log_stream('log')
       with self.assertRaises(AssertionError):
         foo.close()
 
   def test_no_write_multiple_lines(self):
     with StreamEngineInvariants() as engine:
-      foo = engine.make_step_stream('foo')
+      foo = engine.new_step_stream(('foo',), False)
       with self.assertRaises(AssertionError):
         foo.write_line('one thing\nand another!')
 
   def test_invalid_status(self):
     with StreamEngineInvariants() as engine:
-      foo = engine.make_step_stream('foo')
+      foo = engine.new_step_stream(('foo',), False)
       with self.assertRaises(AssertionError):
         foo.set_step_status('SINGLE', had_timeout=False)
 
   def test_buildbot_status_constraint(self):
     with StreamEngineInvariants() as engine:
-      foo = engine.make_step_stream('foo')
+      foo = engine.new_step_stream(('foo',), False)
       foo.set_step_status('FAILURE', had_timeout=False)
       with self.assertRaises(AssertionError):
         foo.set_step_status('SUCCESS', had_timeout=False)

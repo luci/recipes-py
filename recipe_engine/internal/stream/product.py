@@ -88,10 +88,10 @@ class ProductStreamEngine(StreamEngine):
     trigger = _void_product('trigger')
     set_manifest_link = _void_product('set_manifest_link')
 
-  def new_step_stream(self, step_config):
+  def new_step_stream(self, name_tokens, allow_subannotations):
     return self.StepStream(
-        self._engine_a.new_step_stream(step_config),
-        self._engine_b.new_step_stream(step_config))
+        self._engine_a.new_step_stream(name_tokens, allow_subannotations),
+        self._engine_b.new_step_stream(name_tokens, allow_subannotations))
 
   def open(self):
     self._engine_a.open()
