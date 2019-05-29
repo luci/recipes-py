@@ -6,12 +6,21 @@ import json
 
 from recipe_engine import recipe_test_api
 
-from .api import dumps
+from .api import dumps, loads
+
 
 class JsonTestApi(recipe_test_api.RecipeTestApi):
+
   @staticmethod
   def dumps(*args, **kwargs):
+    """Works like `json.dumps`."""
     return dumps(*args, **kwargs)
+
+  @staticmethod
+  def loads(data, **kwargs):
+    """Works like `json.loads`, but strips out unicode objects (replacing them
+    with utf8-encoded str objects)."""
+    return loads(data, **kwargs)
 
   @recipe_test_api.placeholder_step_data
   @staticmethod

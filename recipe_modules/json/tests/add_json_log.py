@@ -47,4 +47,7 @@ def GenTests(api):
       stdout=api.json.output({'x': 1, 'y': 2}, name='log2'),
       retcode=1,
     )
+    + api.post_check(lambda check, steps: check(
+        api.json.loads(steps['add log on failure'].logs['json.output[log2]'])
+        == {'x':1, 'y': 2}))
   )

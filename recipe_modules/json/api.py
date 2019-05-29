@@ -13,11 +13,18 @@ from recipe_engine import recipe_api
 from recipe_engine import util as recipe_util
 from recipe_engine import config_types
 
+
 @functools.wraps(json.dumps)
 def dumps(*args, **kwargs):
   kwargs['sort_keys'] = True
   kwargs.setdefault('default', config_types.json_fixup)
   return json.dumps(*args, **kwargs)
+
+
+@functools.wraps(json.loads)
+def loads(data, **kwargs):
+  return recipe_util.strip_unicode(json.loads(data, **kwargs))
+
 
 class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
   """JsonOutputPlaceholder is meant to be a placeholder object which, when added
@@ -58,8 +65,7 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
     invalid_error = ''
     ret = None
     try:
-      ret = JsonApi.loads(
-          raw_data, object_pairs_hook=collections.OrderedDict)
+      ret = loads(raw_data, object_pairs_hook=collections.OrderedDict)
       valid = True
     # TypeError is raised when raw_data is None, which can happen if the json
     # file was not created. We then correctly handle this as invalid result.
@@ -81,15 +87,16 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
 
 
 class JsonApi(recipe_api.RecipeApi):
-  def __init__(self, **kwargs):
-    super(JsonApi, self).__init__(**kwargs)
-    self.dumps = dumps
+  @staticmethod
+  def dumps(*args, **kwargs):
+    """Works like `json.dumps`."""
+    return dumps(*args, **kwargs)
 
   @staticmethod
   def loads(data, **kwargs):
     """Works like `json.loads`, but strips out unicode objects (replacing them
     with utf8-encoded str objects)."""
-    return recipe_util.strip_unicode(json.loads(data, **kwargs))
+    return loads(data, **kwargs)
 
   def is_serializable(self, obj):
     """Returns True if the object is JSON-serializable."""

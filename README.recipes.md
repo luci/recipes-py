@@ -1429,22 +1429,26 @@ Example:
 
 Methods for producing and consuming JSON.
 
-#### **class [JsonApi](/recipe_modules/json/api.py#83)([RecipeApi](/recipe_engine/recipe_api.py#836)):**
+#### **class [JsonApi](/recipe_modules/json/api.py#89)([RecipeApi](/recipe_engine/recipe_api.py#836)):**
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&mdash; **def [input](/recipe_modules/json/api.py#102)(self, data):**
+&emsp; **@staticmethod**<br>&mdash; **def [dumps](/recipe_modules/json/api.py#90)(\*args, \*\*kwargs):**
+
+Works like `json.dumps`.
+
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&mdash; **def [input](/recipe_modules/json/api.py#109)(self, data):**
 
 A placeholder which will expand to a file path containing <data>.
 
-&mdash; **def [is\_serializable](/recipe_modules/json/api.py#94)(self, obj):**
+&mdash; **def [is\_serializable](/recipe_modules/json/api.py#101)(self, obj):**
 
 Returns True if the object is JSON-serializable.
 
-&emsp; **@staticmethod**<br>&mdash; **def [loads](/recipe_modules/json/api.py#88)(data, \*\*kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [loads](/recipe_modules/json/api.py#95)(data, \*\*kwargs):**
 
 Works like `json.loads`, but strips out unicode objects (replacing them
 with utf8-encoded str objects).
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&mdash; **def [output](/recipe_modules/json/api.py#107)(self, add_json_log=True, name=None, leak_to=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&mdash; **def [output](/recipe_modules/json/api.py#114)(self, add_json_log=True, name=None, leak_to=None):**
 
 A placeholder which will expand to '/tmp/file'.
 
@@ -1457,7 +1461,7 @@ Args:
     to a step link named `name`. If this is 'on_failure', only create this
     log when the step has a non-SUCCESS status.
 
-&mdash; **def [read](/recipe_modules/json/api.py#122)(self, name, path, add_json_log=True, output_name=None, \*\*kwargs):**
+&mdash; **def [read](/recipe_modules/json/api.py#129)(self, name, path, add_json_log=True, output_name=None, \*\*kwargs):**
 
 Returns a step that reads a JSON file.
 
