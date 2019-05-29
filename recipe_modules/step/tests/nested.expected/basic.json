@@ -21,26 +21,6 @@
     ]
   },
   {
-    "cmd": [
-      "echo",
-      "herpy"
-    ],
-    "name": "complicated thing.attempt number: one",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "echo",
-      "derpy"
-    ],
-    "name": "complicated thing.attempt number: two",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
     "cmd": [],
     "name": "inherit status",
     "~followup_annotations": [
@@ -208,43 +188,6 @@
       "1"
     ],
     "name": "simple thing"
-  },
-  {
-    "cmd": [
-      "echo",
-      "something"
-    ],
-    "name": "cool something"
-  },
-  {
-    "cmd": [
-      "echo",
-      "other"
-    ],
-    "name": "cool world.hot other",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "echo",
-      "yowza"
-    ],
-    "name": "cool world.hot tamale yowza",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "echo",
-      "mild"
-    ],
-    "name": "cool ocean.mild",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
   },
   {
     "cmd": [],

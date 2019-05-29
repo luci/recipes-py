@@ -17,14 +17,6 @@ def RunSteps(api):
     with api.step.nest('first part'):
       api.step('wait a bit', ['sleep', '1'])
 
-    # Prefix the name without indenting.
-    with api.context(name_prefix='attempt number: '):
-      step_result = api.step('one', ['echo', 'herpy'])
-      name_tokens = step_result.name_tokens
-      expected_name = ('complicated thing', 'attempt number: one')
-      assert name_tokens == expected_name, name_tokens
-      api.step('two', ['echo', 'derpy'])
-
   # Outer nested step's status gets the worst child's status by default.
   with api.step.nest('inherit status'):
     with api.step.nest('inner step') as inner_step_presentation:
@@ -77,19 +69,6 @@ def RunSteps(api):
       api.step('Iterate %d' % i, ['echo', 'lerpy'])
 
   api.step('simple thing', ['sleep', '1'])
-
-  # Show interaction between name_prefix and namespace.
-  with api.context(name_prefix='cool '):
-    api.step('something', ['echo', 'something'])
-
-    with api.context(namespace='world', name_prefix='hot '):
-      api.step('other', ['echo', 'other'])
-
-      with api.context(name_prefix='tamale '):
-        api.step('yowza', ['echo', 'yowza'])
-
-    with api.context(namespace='ocean'):
-      api.step('mild', ['echo', 'mild'])
 
   # Note that "|" is a reserved character:
   try:

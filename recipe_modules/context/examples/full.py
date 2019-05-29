@@ -56,11 +56,6 @@ def RunSteps(api):
       assert False  # pragma: no cover
   except ValueError:
     pass
-  try:
-    with api.context(name_prefix="nope|pipe"):
-      assert False  # pragma: no cover
-  except ValueError:
-    pass
 
   # this is fine though:
   with api.context(env={'FINE': '%%format'}):
@@ -75,19 +70,6 @@ def RunSteps(api):
   # As opposed to:
   with api.context(namespace='something'):
     api.step('indented but no step', ['bash', '-c', 'echo y u do?'])
-
-  # Can also adjust name_prefix within the current namespace:
-  with api.context(namespace='neat namespace'):
-    with api.context(name_prefix='information: '):
-      api.step('informed', ['bash', '-c', 'echo yay!'])
-
-      with api.context(namespace='secret'):
-        api.step('informed secret!', ['bash', '-c', 'echo yay!'])
-
-    with api.context(namespace='deep', name_prefix='sturdy: '):
-      api.step('mines of moria', ['bash', '-c', 'echo yay!'])
-
-    api.step('regular', ['bash', '-c', 'echo yay!'])
 
 
 def GenTests(api):

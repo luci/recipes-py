@@ -816,7 +816,6 @@ The pieces of information which can be modified are:
   * infra_step - Whether or not failures should be treated as infrastructure
     failures vs. normal failures.
   * namespace - A nesting namespace for all steps.
-  * name_prefix - A prefix for all step names (within the current namespace).
 
 The values here are all scoped using Python's `with` statement; there's no
 mechanism to make an open-ended adjustment to these values (i.e. there's no way
@@ -832,9 +831,9 @@ with api.context(cwd=api.path['start_dir'].join('subdir')):
   api.step("cat subdir/foo", ['cat', './foo'])
 ```
 
-#### **class [ContextApi](/recipe_modules/context/api.py#46)([RecipeApi](/recipe_engine/recipe_api.py#836)):**
+#### **class [ContextApi](/recipe_modules/context/api.py#45)([RecipeApi](/recipe_engine/recipe_api.py#836)):**
 
-&emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#65)(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None, infra_steps=None, name_prefix=None, namespace=None):**
+&emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#64)(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None, infra_steps=None, namespace=None):**
 
 Allows adjustment of multiple context values in a single call.
 
@@ -851,29 +850,21 @@ Args:
     infrastructure steps. On failure, these will raise InfraFailure
     exceptions instead of StepFailure exceptions.
   * namespace (basestring) - Nest steps under this additional namespace.
-    Resets the name_prefix.
-  * name_prefix (basestring) - A string to prepend to the names of all
-    steps and sub-namespaces within the current namespace. If there's
-    already a name_prefix defined in the context, this appends to it.
 
 Name prefixes and namespaces:
 
 Example:
 ```python
-with api.context(name_prefix='cool '):
-  # has name 'cool something'
+with api.context(namespace='cool'):
+  # has name 'cool|something'
   api.step('something', ['echo', 'something'])
 
-  with api.context(namespace='world', name_prefix='hot '):
-    # has name 'cool world|hot other'
+  with api.context(namespace='world'):
+    # has name 'cool|world|other'
     api.step('other', ['echo', 'other'])
 
-    with api.context(name_prefix='tamale '):
-      # has name 'cool world|hot tamale yowza'
-      api.step('yowza', ['echo', 'yowza'])
-
   with api.context(namespace='ocean'):
-    # has name 'cool ocean|mild'
+    # has name 'cool|ocean|other'
     api.step('other', ['echo', 'mild'])
 ```
 
@@ -899,7 +890,7 @@ as the last path component if it is not empty.
 
 Look at the examples in "examples/" for examples of context module usage.
 
-&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#225)(self):**
+&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#199)(self):**
 
 Returns the current working directory that steps will run in.
 
@@ -907,7 +898,7 @@ Returns the current working directory that steps will run in.
 equivalent to api.path['start_dir'], though only occurs if no cwd has been
 set (e.g. in the outermost context of RunSteps).
 
-&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#235)(self):**
+&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#209)(self):**
 
 Returns modifications to the environment.
 
@@ -918,7 +909,7 @@ done with properties.
 **Returns (dict)** - The env-key -> value mapping of current environment
   modifications.
 
-&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#250)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#224)(self):**
 
 Returns Path prefix modifications to the environment.
 
@@ -928,7 +919,7 @@ prefixes registered with the environment.
 **Returns (dict)** - The env-key -> value(Path) mapping of current
 environment prefix modifications.
 
-&emsp; **@property**<br>&mdash; **def [env\_suffixes](/recipe_modules/context/api.py#264)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_suffixes](/recipe_modules/context/api.py#238)(self):**
 
 Returns Path suffix modifications to the environment.
 
@@ -938,20 +929,20 @@ suffixes registered with the environment.
 **Returns (dict)** - The env-key -> value(Path) mapping of current
 environment suffix modifications.
 
-&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#278)(self):**
+&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#252)(self):**
 
 Returns the current value of the infra_step setting.
 
 **Returns (bool)** - True iff steps are currently considered infra steps.
 
-&emsp; **@property**<br>&mdash; **def [namespace](/recipe_modules/context/api.py#286)(self):**
+&emsp; **@property**<br>&mdash; **def [namespace](/recipe_modules/context/api.py#260)(self):**
 
 Gets the current namespace.
 
 **Returns (Tuple[str])** - The current step namespace plus name prefix for
 nesting.
 
-&mdash; **def [record\_step\_name](/recipe_modules/context/api.py#295)(self, name):**
+&mdash; **def [record\_step\_name](/recipe_modules/context/api.py#269)(self, name):**
 
 Records a step name in the current namespace.
 

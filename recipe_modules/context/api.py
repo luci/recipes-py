@@ -11,7 +11,6 @@ The pieces of information which can be modified are:
   * infra_step - Whether or not failures should be treated as infrastructure
     failures vs. normal failures.
   * namespace - A nesting namespace for all steps.
-  * name_prefix - A prefix for all step names (within the current namespace).
 
 The values here are all scoped using Python's `with` statement; there's no
 mechanism to make an open-ended adjustment to these values (i.e. there's no way
@@ -55,7 +54,7 @@ class ContextApi(RecipeApi):
     self._env = [{}]
     self._infra_step = [False]
 
-    # _raw_namespace is a combination of the actual namespace and 'name_prefix'
+    # _raw_namespace is a history of the namespace we'll use for new step names
     self._raw_namespace = [('',)]
 
     # Map of namespace_tuple -> {step_name: int} to deduplicate `step_name`s
@@ -64,7 +63,7 @@ class ContextApi(RecipeApi):
 
   @contextmanager
   def __call__(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None,
-               infra_steps=None, name_prefix=None, namespace=None):
+               infra_steps=None, namespace=None):
     """Allows adjustment of multiple context values in a single call.
 
     Args:
@@ -80,29 +79,21 @@ class ContextApi(RecipeApi):
         infrastructure steps. On failure, these will raise InfraFailure
         exceptions instead of StepFailure exceptions.
       * namespace (basestring) - Nest steps under this additional namespace.
-        Resets the name_prefix.
-      * name_prefix (basestring) - A string to prepend to the names of all
-        steps and sub-namespaces within the current namespace. If there's
-        already a name_prefix defined in the context, this appends to it.
 
     Name prefixes and namespaces:
 
     Example:
     ```python
-    with api.context(name_prefix='cool '):
-      # has name 'cool something'
+    with api.context(namespace='cool'):
+      # has name 'cool|something'
       api.step('something', ['echo', 'something'])
 
-      with api.context(namespace='world', name_prefix='hot '):
-        # has name 'cool world|hot other'
+      with api.context(namespace='world'):
+        # has name 'cool|world|other'
         api.step('other', ['echo', 'other'])
 
-        with api.context(name_prefix='tamale '):
-          # has name 'cool world|hot tamale yowza'
-          api.step('yowza', ['echo', 'yowza'])
-
       with api.context(namespace='ocean'):
-        # has name 'cool ocean|mild'
+        # has name 'cool|ocean|other'
         api.step('other', ['echo', 'mild'])
     ```
 
@@ -141,15 +132,6 @@ class ContextApi(RecipeApi):
       check_type('infra_steps', infra_steps, bool)
       _push(self._infra_step, infra_steps)
 
-    # Namespace and name_prefix are interrelated:
-    #   * a new namespace makes the tail of `namespace` look like:
-    #        (..., cur_prefix + namespace, '')
-    #   * a new name_prefix makes the tail of `namespace` look like:
-    #        (..., cur_prefix + name_prefix)
-    #
-    # So, if both are specified then we need to apply the namespace followed by
-    # the name_prefix, but only push one new entry to our state.
-    # BEGIN namespace handling {{{
     new_namespace = None
     if namespace is not None:
       check_type('namespace', namespace, basestring)
@@ -158,14 +140,6 @@ class ContextApi(RecipeApi):
       cur_ns = self.namespace
       base_ns, cur_prefix = cur_ns[:-1], cur_ns[-1]
       new_namespace = base_ns + (cur_prefix + str(namespace), '')
-
-    if name_prefix is not None:
-      check_type('name_prefix', name_prefix, basestring)
-      if '|' in name_prefix:
-        raise ValueError('Reserved character "|" in name_prefix.')
-      cur_ns = new_namespace or self.namespace
-      base_ns, cur_prefix = cur_ns[:-1], cur_ns[-1]
-      new_namespace = base_ns + (cur_prefix + str(name_prefix),)
 
     if new_namespace:
       _push(self._raw_namespace, new_namespace)
