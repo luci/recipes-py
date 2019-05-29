@@ -3,6 +3,10 @@
 # that can be found in the LICENSE file.
 from enum import Enum
 
+from google.protobuf import json_format as json_pb
+
+from PB.go.chromium.org.luci.cq.api.recipe.v1 import cq as cq_pb2
+
 from recipe_engine import recipe_api
 
 
@@ -76,6 +80,36 @@ class CQApi(recipe_api.RecipeApi):
     """
     self._enforce_active()
     return self._input.top_level
+
+  @property
+  def props_for_child_build(self):
+    """Returns properties dict meant to be passed to child builds.
+
+    These will preserve the CQ context of the current build in the
+    about-to-be-triggered child build.
+
+    ```python
+    properties = {'foo': bar, 'protolike': proto_message}
+    properties.update(api.cq.props_for_child_build)
+    req = api.buildbucket.schedule_request(
+        builder='child',
+        tags=api.buildbucket.tags(**api.buildbucket.tags_for_child_build),
+        gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),
+        properties=properties)
+    child_builds = api.buildbucket.schedule([req])
+    api.cq.record_triggered_builds(*child_builds)
+    ```
+
+    The contents of returned dict should be treated as opaque blob,
+    it may be changed without notice.
+    """
+    if not self._input.active:
+      return {}
+    msg = cq_pb2.Input()
+    msg.CopyFrom(self._input)
+    msg.top_level = False
+    return {'$recipe_engine/cq':
+        json_pb.MessageToDict(msg, preserving_proto_field_name=True)}
 
   @property
   def triggered_build_ids(self):

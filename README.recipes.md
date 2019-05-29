@@ -54,6 +54,7 @@
   * [context:tests/cwd](#recipes-context_tests_cwd)
   * [context:tests/env](#recipes-context_tests_env)
   * [context:tests/infra_step](#recipes-context_tests_infra_step)
+  * [cq:examples/trigger_child_builds](#recipes-cq_examples_trigger_child_builds)
   * [cq:tests/experimental](#recipes-cq_tests_experimental)
   * [cq:tests/triggered_build_ids](#recipes-cq_tests_triggered_build_ids)
   * [cq:tests/type_of_run](#recipes-cq_tests_type_of_run)
@@ -956,14 +957,14 @@ Side-effect: Updates global tracking state for this step name.
 
 [DEPS](/recipe_modules/cq/__init__.py#7): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-#### **class [CQApi](/recipe_modules/cq/api.py#9)([RecipeApi](/recipe_engine/recipe_api.py#837)):**
+#### **class [CQApi](/recipe_modules/cq/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#837)):**
 
 This module provides recipe API of LUCI CQ, aka pre-commit testing system.
 
 More information about CQ:
   https://chromium.googlesource.com/infra/luci/luci-go/+/master/cq
 
-&emsp; **@property**<br>&mdash; **def [experimental](/recipe_modules/cq/api.py#54)(self):**
+&emsp; **@property**<br>&mdash; **def [experimental](/recipe_modules/cq/api.py#58)(self):**
 
 Returns whether this build is triggered for a CQ experimental builder.
 
@@ -974,9 +975,31 @@ Raises:
   CQInactive
   AssertionError if CQ is `INACTIVE` for this build.
 
-&mdash; **def [initialize](/recipe_modules/cq/api.py#36)(self):**
+&mdash; **def [initialize](/recipe_modules/cq/api.py#40)(self):**
 
-&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cq/api.py#102)(self, \*build_ids):**
+&emsp; **@property**<br>&mdash; **def [props\_for\_child\_build](/recipe_modules/cq/api.py#84)(self):**
+
+Returns properties dict meant to be passed to child builds.
+
+These will preserve the CQ context of the current build in the
+about-to-be-triggered child build.
+
+```python
+properties = {'foo': bar, 'protolike': proto_message}
+properties.update(api.cq.props_for_child_build)
+req = api.buildbucket.schedule_request(
+    builder='child',
+    tags=api.buildbucket.tags(**api.buildbucket.tags_for_child_build),
+    gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),
+    properties=properties)
+child_builds = api.buildbucket.schedule([req])
+api.cq.record_triggered_builds(*child_builds)
+```
+
+The contents of returned dict should be treated as opaque blob,
+it may be changed without notice.
+
+&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cq/api.py#136)(self, \*build_ids):**
 
 Adds given Buildbucket build ids to the list of triggered builds for CQ
 to wait on corresponding build completion later.
@@ -986,7 +1009,7 @@ Must be called after some step.
 Args:
   * build_id (int or string): Buildbucket build id.
 
-&mdash; **def [record\_triggered\_builds](/recipe_modules/cq/api.py#85)(self, \*builds):**
+&mdash; **def [record\_triggered\_builds](/recipe_modules/cq/api.py#119)(self, \*builds):**
 
 Adds given Buildbucket builds to the list of triggered builds for CQ
 to wait on corresponding build completion later.
@@ -1002,11 +1025,11 @@ Args:
   * [`Build`](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
     objects, typically returned by `api.buildbucket.schedule`.
 
-&emsp; **@property**<br>&mdash; **def [state](/recipe_modules/cq/api.py#49)(self):**
+&emsp; **@property**<br>&mdash; **def [state](/recipe_modules/cq/api.py#53)(self):**
 
 CQ state pertaining to this recipe execution.
 
-&emsp; **@property**<br>&mdash; **def [top\_level](/recipe_modules/cq/api.py#68)(self):**
+&emsp; **@property**<br>&mdash; **def [top\_level](/recipe_modules/cq/api.py#72)(self):**
 
 Returns whether CQ triggered this build directly.
 
@@ -1015,7 +1038,7 @@ Can be spoofed. *DO NOT USE FOR SECURITY CHECKS.*
 Raises:
   AssertionError if CQ is `INACTIVE` for this build.
 
-&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cq/api.py#80)(self):**
+&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cq/api.py#114)(self):**
 
 Returns recorded Buildbucket build ids as a list of integers.
 ### *recipe_modules* / [file](/recipe_modules/file)
@@ -2550,6 +2573,11 @@ Launches multiple builds at the same revision.
 [DEPS](/recipe_modules/context/tests/infra_step.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/context/tests/infra_step.py#11)(api):**
+### *recipes* / [cq:examples/trigger\_child\_builds](/recipe_modules/cq/examples/trigger_child_builds.py)
+
+[DEPS](/recipe_modules/cq/examples/trigger_child_builds.py#9): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/cq/examples/trigger_child_builds.py#19)(api):**
 ### *recipes* / [cq:tests/experimental](/recipe_modules/cq/tests/experimental.py)
 
 [DEPS](/recipe_modules/cq/tests/experimental.py#7): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

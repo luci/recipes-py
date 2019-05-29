@@ -361,7 +361,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
 
     def as_msg(value, typ):
-      assert isinstance(value, (dict, protobuf.message.Message))
+      assert isinstance(value, (dict, protobuf.message.Message)), type(value)
       if isinstance(value, dict):
         value = typ(**value)
       return value
