@@ -8,7 +8,11 @@ from recipe_engine import recipe_test_api
 
 
 class CQTestApi(recipe_test_api.RecipeTestApi):
-  def __call__(self, full_run=None, dry_run=None):
+  def __call__(
+      self,
+      full_run=None, dry_run=None,
+      top_level=True,
+      experimental=False):
     """Simulate a build triggered by CQ."""
     if full_run:
       assert not dry_run, ('either dry or full run, not both')
@@ -18,7 +22,15 @@ class CQTestApi(recipe_test_api.RecipeTestApi):
       assert isinstance(dry_run, bool), '%r (%s)' % (dry_run, type(dry_run))
       input_props = cq_pb2.Input(active=True, dry_run=True)
     else:
+      # TODO(tandrii): disallow this. api.cq() should simulate CQ build.
       return self.m.properties()
+
+    assert isinstance(top_level, bool), '%r (%s)' % (top_level, type(top_level))
+    input_props.top_level = top_level
+
+    assert isinstance(experimental, bool), '%r (%s)' % (
+        experimental, type(experimental))
+    input_props.experimental = experimental
 
     return self.m.properties(**{
       '$recipe_engine/cq': input_props

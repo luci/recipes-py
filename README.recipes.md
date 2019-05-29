@@ -54,6 +54,7 @@
   * [context:tests/cwd](#recipes-context_tests_cwd)
   * [context:tests/env](#recipes-context_tests_env)
   * [context:tests/infra_step](#recipes-context_tests_infra_step)
+  * [cq:tests/experimental](#recipes-cq_tests_experimental)
   * [cq:tests/triggered_build_ids](#recipes-cq_tests_triggered_build_ids)
   * [cq:tests/type_of_run](#recipes-cq_tests_type_of_run)
   * [engine_tests/bad_subprocess](#recipes-engine_tests_bad_subprocess) &mdash; Tests that daemons that hang on to STDOUT can't cause the engine to hang.
@@ -971,9 +972,20 @@ This module provides recipe API of LUCI CQ, aka pre-commit testing system.
 More information about CQ:
   https://chromium.googlesource.com/infra/luci/luci-go/+/master/cq
 
-&mdash; **def [initialize](/recipe_modules/cq/api.py#33)(self):**
+&emsp; **@property**<br>&mdash; **def [experimental](/recipe_modules/cq/api.py#54)(self):**
 
-&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cq/api.py#73)(self, \*build_ids):**
+Returns whether this build is triggered for a CQ experimental builder.
+
+See `Builder.experiment_percentage` doc in [CQ
+config](https://chromium.googlesource.com/infra/luci/luci-go/+/master/cq/api/config/v2/cq.proto)
+
+Raises:
+  CQInactive
+  AssertionError if CQ is `INACTIVE` for this build.
+
+&mdash; **def [initialize](/recipe_modules/cq/api.py#36)(self):**
+
+&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cq/api.py#102)(self, \*build_ids):**
 
 Adds given Buildbucket build ids to the list of triggered builds for CQ
 to wait on corresponding build completion later.
@@ -983,7 +995,7 @@ Must be called after some step.
 Args:
   * build_id (int or string): Buildbucket build id.
 
-&mdash; **def [record\_triggered\_builds](/recipe_modules/cq/api.py#56)(self, \*builds):**
+&mdash; **def [record\_triggered\_builds](/recipe_modules/cq/api.py#85)(self, \*builds):**
 
 Adds given Buildbucket builds to the list of triggered builds for CQ
 to wait on corresponding build completion later.
@@ -999,11 +1011,20 @@ Args:
   * [`Build`](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
     objects, typically returned by `api.buildbucket.schedule`.
 
-&emsp; **@property**<br>&mdash; **def [state](/recipe_modules/cq/api.py#46)(self):**
+&emsp; **@property**<br>&mdash; **def [state](/recipe_modules/cq/api.py#49)(self):**
 
 CQ state pertaining to this recipe execution.
 
-&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cq/api.py#51)(self):**
+&emsp; **@property**<br>&mdash; **def [top\_level](/recipe_modules/cq/api.py#68)(self):**
+
+Returns whether CQ triggered this build directly.
+
+Can be spoofed. *DO NOT USE FOR SECURITY CHECKS.*
+
+Raises:
+  AssertionError if CQ is `INACTIVE` for this build.
+
+&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cq/api.py#80)(self):**
 
 Returns recorded Buildbucket build ids as a list of integers.
 ### *recipe_modules* / [file](/recipe_modules/file)
@@ -2534,6 +2555,11 @@ Launches multiple builds at the same revision.
 [DEPS](/recipe_modules/context/tests/infra_step.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/context/tests/infra_step.py#11)(api):**
+### *recipes* / [cq:tests/experimental](/recipe_modules/cq/tests/experimental.py)
+
+[DEPS](/recipe_modules/cq/tests/experimental.py#7): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/cq/tests/experimental.py#15)(api):**
 ### *recipes* / [cq:tests/triggered\_build\_ids](/recipe_modules/cq/tests/triggered_build_ids.py)
 
 [DEPS](/recipe_modules/cq/tests/triggered_build_ids.py#5): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [step](#recipe_modules-step)

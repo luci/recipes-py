@@ -24,6 +24,9 @@ class CQApi(recipe_api.RecipeApi):
   DRY = State.DRY
   FULL = State.FULL
 
+  class CQInactive(Exception):
+    """Incorrect usage of CQApi method requring active CQ."""
+
   def __init__(self, input_props, **kwargs):
     super(CQApi, self).__init__(**kwargs)
     self._input = input_props
@@ -47,6 +50,32 @@ class CQApi(recipe_api.RecipeApi):
   def state(self):
     """CQ state pertaining to this recipe execution."""
     return self._state
+
+  @property
+  def experimental(self):
+    """Returns whether this build is triggered for a CQ experimental builder.
+
+    See `Builder.experiment_percentage` doc in [CQ
+    config](https://chromium.googlesource.com/infra/luci/luci-go/+/master/cq/api/config/v2/cq.proto)
+
+    Raises:
+      CQInactive
+      AssertionError if CQ is `INACTIVE` for this build.
+    """
+    self._enforce_active()
+    return self._input.experimental
+
+  @property
+  def top_level(self):
+    """Returns whether CQ triggered this build directly.
+
+    Can be spoofed. *DO NOT USE FOR SECURITY CHECKS.*
+
+    Raises:
+      AssertionError if CQ is `INACTIVE` for this build.
+    """
+    self._enforce_active()
+    return self._input.top_level
 
   @property
   def triggered_build_ids(self):
@@ -85,3 +114,7 @@ class CQApi(recipe_api.RecipeApi):
     assert self.m.step.active_result, 'must be called after some step'
     self.m.step.active_result.presentation.properties['triggered_build_ids'] = [
           str(build_id) for build_id in self._triggered_build_ids]
+
+  def _enforce_active(self):
+    if not self._input.active:
+      raise self.CQInactive()
