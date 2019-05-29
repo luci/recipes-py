@@ -184,39 +184,33 @@ class StepApi(recipe_api.RecipeApiPlain):
     # We use a raw step runner here because we need the same deduplicated name
     # for the step as well as the context namespace, and using `self` is tricky.
 
-    caught_exc = None
-
-    def _callback(presentation, nest_data):
-      if presentation.status is not None:
-        return
-
-      # If they didn't set a presentation.status, calculate one.
-      if caught_exc:
-        presentation.status = {
-          recipe_api.StepFailure: self.FAILURE,
-          recipe_api.StepWarning: self.WARNING,
-        }.get(caught_exc, self.EXCEPTION)
-      elif nest_data.children:
-        if status == 'worst':
-          worst = self.SUCCESS
-          for child in nest_data.children:
-            worst = StepPresentation.status_worst(
-                worst, child.presentation.status)
-          presentation.status = worst
-        else:
-          presentation.status = nest_data.children[-1].presentation.status
-      else:
-        presentation.status = self.SUCCESS
-
-    step_result = self.step_client.open_parent_step(
-        dedup_name_tokens, _callback)
-
-    with self.m.context(namespace=dedup_name_tokens[-1]):
-      try:
-        yield self._StepPresentationProxy(step_result.presentation)
-      except:
-        caught_exc = sys.exc_info()[0]
-        raise
+    with self.step_client.parent_step(dedup_name_tokens) as (pres, children):
+      with self.m.context(namespace=dedup_name_tokens[-1]):
+        caught_exc = None
+        try:
+          yield self._StepPresentationProxy(pres)
+        except:
+          caught_exc = sys.exc_info()[0]
+          raise
+        finally:
+          # If they didn't set a presentation.status, calculate one.
+          if pres.status is None:
+            if caught_exc:
+              pres.status = {
+                recipe_api.StepFailure: self.FAILURE,
+                recipe_api.StepWarning: self.WARNING,
+              }.get(caught_exc, self.EXCEPTION)
+            elif children:
+              if status == 'worst':
+                worst = self.SUCCESS
+                for child in children:
+                  worst = StepPresentation.status_worst(
+                      worst, child.presentation.status)
+                pres.status = worst
+              else:
+                pres.status = children[-1].presentation.status
+            else:
+              pres.status = self.SUCCESS
 
   @property
   def defer_results(self):

@@ -210,12 +210,13 @@ class StepClient(object):
           'result.')
     return active_step.step_result
 
-  def open_parent_step(self, name_tokens, callback):
+  def parent_step(self, name_tokens):
     """Opens a parent step.
 
-    Returns a StepData object with an adjustable StepPresentation.
+    Returns a contextmanager object yielding (StepPresentation, List[StepData]).
+    Refer to RecipeEngine.parent_step for details.
     """
-    return self._engine.open_parent_step(name_tokens, callback)
+    return self._engine.parent_step(name_tokens)
 
   def run_step(self, step):
     """

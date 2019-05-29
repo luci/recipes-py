@@ -11,6 +11,8 @@ import re
 import sys
 import traceback
 
+from contextlib import contextmanager
+
 import attr
 
 from PB.recipe_engine import result as result_pb2
@@ -42,14 +44,10 @@ class RecipeEngine(object):
   #
   #   step_result (StepData) - The StepData for the step
   #   step_stream (StreamEngine.StepStream) - The UI client for this step
-  #   callback (func(StepPresentation, StepData)) - A user-code callback which
-  #     is called when this step is finalized by the RecipeEnigne. Note that
-  #     currently only parent nesting steps have callbacks populated. See
-  #     the 'recipe_engine/step' module's 'nest' method.
   #
   # TODO(iannucci): use attr instead of namedtuple
   ActiveStep = collections.namedtuple(
-      'ActiveStep', ('step_result', 'step_stream', 'callback'))
+      'ActiveStep', ('step_result', 'step_stream'))
 
   def __init__(self, recipe_deps, step_runner, stream_engine, properties,
                environ, start_dir):
@@ -147,15 +145,6 @@ class RecipeEngine(object):
         return
 
       cur = self._step_stack.pop()
-      if cur.callback:
-        try:
-          cur.callback(cur.step_result.presentation, cur.step_result)
-        except:  # pylint: disable=bare-except
-          cur.step_stream.set_step_status('EXCEPTION', had_timeout=False)
-          name = cur.step_result.name
-          _log_crash(self._stream_engine, 'Step(%r).callback' % (name,))
-          raise CrashEngine(
-              "Step callback for %r raised an exception" % (name,))
       cur.step_result.presentation.finalize(cur.step_stream)
       cur.step_stream.close()
 
@@ -166,35 +155,37 @@ class RecipeEngine(object):
       return self._step_stack[-1]
     return None
 
-  def open_parent_step(self, name_tokens, callback):
+  @contextmanager
+  def parent_step(self, name_tokens):
     """Opens a parent step with the given name.
 
     Args:
       * name_tokens (List[str]) - The name of the parent step to open.
-      * callback (func(presentation, step_data)) - The callback to run when this
-        parent step closes. `step_data` will have a field .children which is the
-        final step_data from all the children steps.
 
-    Returns:
-      A StepData object containing an adjustable presentation.
+    Yields a tuple of (StepPresentation, List[StepData]):
+      * The StepPresentation for this parent step.
+      * The List of children StepData of this parent step.
     """
     self._close_until_ns(name_tokens[:-1])
     # TODO(iannucci): really, seriously, make new_step_stream just take
     # name_tokens.
-    step_config = StepConfig(name_tokens=name_tokens)
-    step_stream = self._stream_engine.new_step_stream(step_config)
-    ret = StepData(name_tokens, ExecutionResult(retcode=0))
-    presentation = StepPresentation(step_config.name)
-    # TODO(iannucci): Don't use StepData for presentation-only steps (define
-    # a different datatype). This is odd because 'StepData.children' is only
-    # defined here.
-    ret.children = []
-    ret.presentation = presentation
-    ret.finalize()
-    if self._step_stack:
-      self._step_stack[-1].step_result.children.append(ret)
-    self._step_stack.append(self.ActiveStep(ret, step_stream, callback))
-    return ret
+    try:
+      step_config = StepConfig(name_tokens=name_tokens)
+      step_stream = self._stream_engine.new_step_stream(step_config)
+      step_data = StepData(name_tokens, ExecutionResult(retcode=0))
+      presentation = StepPresentation(step_config.name)
+      # TODO(iannucci): Don't use StepData for presentation-only steps (define
+      # a different datatype). This is odd because 'StepData.children' is only
+      # defined here.
+      step_data.children = []
+      step_data.presentation = presentation
+      step_data.finalize()
+      if self._step_stack:
+        self._step_stack[-1].step_result.children.append(step_data)
+      self._step_stack.append(self.ActiveStep(step_data, step_stream))
+      yield presentation, step_data.children
+    finally:
+      self._close_until_ns(name_tokens[:-1])
 
   def run_step(self, step_config):
     """Runs a step.
@@ -238,7 +229,7 @@ class RecipeEngine(object):
       ret.presentation = StepPresentation(step_config.name)
       ret.presentation.status = 'EXCEPTION'
 
-      self._step_stack.append(self.ActiveStep(ret, step_stream, None))
+      self._step_stack.append(self.ActiveStep(ret, step_stream))
 
       # _run_step should never raise an exception
       caught = _run_step(

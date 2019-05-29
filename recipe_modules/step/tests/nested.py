@@ -56,13 +56,6 @@ def RunSteps(api):
   except api.step.StepFailure as ex:
     assert ex.had_timeout
 
-  # Change outer status after nesting is complete.
-  with api.step.nest('versatile status') as versatile_presentation:
-    with api.step.nest('inner step'):
-      with api.step.nest('even deeper'):
-        pass
-  versatile_presentation.status = api.step.FAILURE
-
   # Duplicate nesting names with unique child steps
   for i in xrange(3):
     with api.step.nest('Do Iteration'):
@@ -105,6 +98,4 @@ def GenTests(api):
     # statuses.
     + api.step_data('timeout status.I fail', times_out_after=20)
     + api.post_process(StepFailure, 'timeout status')
-
-    + api.post_process(StepFailure, 'versatile status')
   )
