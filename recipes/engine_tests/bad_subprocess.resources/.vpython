@@ -1,7 +1,6 @@
-verify_pep425_tag {python: "cp27" abi: "cp27m"  platform: "win_amd64"}
-
 wheel: <
   name: "infra/python/wheels/pypiwin32/${vpython_platform}"
   version: "version:219"
   match_tag: < platform: "win_amd64" >
+  match_tag: < platform: "win32" >
 >

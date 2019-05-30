@@ -2,15 +2,6 @@
 
 python_version: "2.7"
 
-verify_pep425_tag {python: "cp27" abi: "cp27mu" platform: "manylinux1_i686"}
-verify_pep425_tag {python: "cp27" abi: "cp27mu" platform: "manylinux1_x86_64"}
-verify_pep425_tag {python: "cp27" abi: "cp27mu" platform: "linux_arm64"}
-verify_pep425_tag {python: "cp27" abi: "cp27mu" platform: "linux_mips64"}
-verify_pep425_tag {python: "cp27" abi: "cp27mu" platform: "linux_armv6l"}
-verify_pep425_tag {python: "cp27" abi: "cp27mu" platform: "linux_armv7l"}
-verify_pep425_tag {python: "cp27" abi: "cp27m"  platform: "macosx_10_10_intel"}
-verify_pep425_tag {python: "cp27" abi: "cp27m"  platform: "win_amd64"}
-
 wheel: <
   name: "infra/python/wheels/coverage/${vpython_platform}"
   version: "version:4.3.4"
