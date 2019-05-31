@@ -96,6 +96,22 @@ def unzip(zip_file, output, stats, include_filter):
       stats['extracted']['bytes'] += zipinfo.file_size
       zf.extract(zipinfo, unc_path(output))
 
+      if os.name != 'nt':
+        # POSIX may store permissions in the 16 most significant bits of the
+        # file's external attributes.
+        perms = (zipinfo.external_attr >> 16) & 0o777
+        if perms:
+          fullpath = os.path.join(output, zipinfo.filename)
+          # Don't update permissions to be more restrictive.
+          old = os.stat(fullpath).st_mode
+          old_short = old & 0o777
+          new = old | perms
+          new_short = new & 0o777
+          if old_short < new_short:
+            print 'Updating %s permissions (0%o -> 0%o)' % (
+                zipinfo.filename, old_short, new_short)
+            os.chmod(fullpath, new)
+
 
 def main():
   # See archive/api.py, def extract(...) for format of |data|.
