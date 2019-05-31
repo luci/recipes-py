@@ -60,6 +60,15 @@ class SubprocessStepRunner(StepRunner):
   def access(self, _name_tokens, path, mode):
     return os.access(path, mode)
 
+  @staticmethod
+  def _is_executable_file(path):
+    """Returns True iff `path` is:
+
+      * A file
+      * User has +x access to it
+    """
+    return os.path.isfile(path) and os.access(path, os.X_OK)
+
   _PATH_EXTS = ('.exe', '.bat') if sys.platform == "win32" else ('',)
   @classmethod
   def _resolve_base_path(cls, debug_log, base_path):
@@ -85,7 +94,7 @@ class SubprocessStepRunner(StepRunner):
     """
     if os.path.splitext(base_path)[1]:
       debug_log.write_line('path has extension')
-      if not os.access(base_path, os.X_OK):
+      if not cls._is_executable_file(base_path):
         debug_log.write_line(
             'file does not exist or user has no execute permission')
         return None
@@ -94,7 +103,7 @@ class SubprocessStepRunner(StepRunner):
     for ext in cls._PATH_EXTS:
       candidate = base_path + ext
       debug_log.write_line('checking %r' % (candidate,))
-      if os.access(candidate, os.X_OK):
+      if cls._is_executable_file(candidate):
         return candidate
 
     return None
@@ -113,8 +122,8 @@ class SubprocessStepRunner(StepRunner):
       * If cmd0 lacks an extension (i.e. ".exe"), the platform appropriate
         extensions will be tried (_PATH_EXTS). On windows this is
         ['.exe', '.bat']. On non-windows this is just [''] (empty string).
-      * The candidate is checked for 'access' with the +x permission for the
-        current user (using `os.access`).
+      * The candidate is checked for isfile and 'access' with the +x permission
+        for the current user (using `os.access`).
       * The first candidate found is returned, or None, if no candidate matches
         all of the rules.
 
