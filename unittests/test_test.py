@@ -203,7 +203,7 @@ class TestRun(Common):
       recipe.RunSteps.write('api.step("test", ["echo", "bar"])')
       recipe.expectation['basic'] = [
         {'cmd': ['echo', 'bar'], 'name': 'test'},
-        {'name': '$result', 'jsonResult': None},
+        {'name': '$result'},
       ]
 
     self.assertDictEqual(
@@ -509,7 +509,7 @@ class TestRun(Common):
       pass
 
     with self.main.write_recipe('foo_module', 'tests/foo') as recipe:
-      recipe.expectation['unused'] = [{'name': '$result', 'jsonResult': None}]
+      recipe.expectation['unused'] = [{'name': '$result'}]
 
     self.assertDictEqual(
         self._run_test('run', should_fail=True).data,
@@ -523,7 +523,7 @@ class TestRun(Common):
     with self.main.write_recipe('foo') as recipe:
       recipe.GenTests.write('yield api.test("bar/baz")')
       del recipe.expectation['basic']
-      recipe.expectation['bar/baz'] = [{'name': '$result', 'jsonResult': None}]
+      recipe.expectation['bar/baz'] = [{'name': '$result'}]
 
     self.assertDictEqual(
         self._run_test('run').data,
@@ -800,7 +800,7 @@ class TestTrain(Common):
     self.assertTrue(self.main.is_file(expect_path))
     self.assertListEqual(
         json.loads(self.main.read_file(expect_path)),
-        [{'jsonResult': None, 'name': '$result'}])
+        [{'name': '$result'}])
 
   def test_diff(self):
     # 1. Initial state: recipe expectations are passing.
@@ -823,7 +823,7 @@ class TestTrain(Common):
     self.assertListEqual(
         json.loads(self.main.read_file(expect_path)),
         [{u'cmd': [u'echo', u'bar'], u'name': u'test'},
-         {u'jsonResult': None, u'name': u'$result'}])
+         {u'name': u'$result'}])
     self.assertDictEqual(
         result.data,
         self._outcome_json(per_test={
@@ -854,7 +854,7 @@ class TestTrain(Common):
     result = self._run_test('train')
     self.assertListEqual(
         json.loads(self.main.read_file(expect_path)),
-        [{u'jsonResult': None, u'name': u'$result'}])
+        [{u'name': u'$result'}])
     self.assertDictEqual(
         result.data,
         self._outcome_json(per_test={

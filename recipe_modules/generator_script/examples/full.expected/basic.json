@@ -28,7 +28,6 @@
     "name": "mock.step.binary"
   },
   {
-    "jsonResult": null,
     "name": "$result"
   }
 ]

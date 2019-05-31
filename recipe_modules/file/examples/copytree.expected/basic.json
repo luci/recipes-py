@@ -299,7 +299,6 @@
     "name": "remove \"some other dir/*\""
   },
   {
-    "jsonResult": null,
     "name": "$result"
   }
 ]

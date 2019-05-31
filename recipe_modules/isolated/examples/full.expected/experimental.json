@@ -155,7 +155,6 @@
     "name": "some step with isolated in path"
   },
   {
-    "jsonResult": null,
     "name": "$result"
   }
 ]

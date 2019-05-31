@@ -12,7 +12,6 @@
     "name": "get access token for default account"
   },
   {
-    "jsonResult": null,
     "name": "$result"
   }
 ]

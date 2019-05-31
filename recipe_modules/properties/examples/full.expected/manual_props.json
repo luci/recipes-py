@@ -36,7 +36,6 @@
     "name": "echo recipe"
   },
   {
-    "jsonResult": null,
     "name": "$result"
   }
 ]

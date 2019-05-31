@@ -13,7 +13,6 @@
     "name": "rmtree [CLEANUP]/foo_tmp_1"
   },
   {
-    "jsonResult": null,
     "name": "$result"
   }
 ]

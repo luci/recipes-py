@@ -28,7 +28,6 @@
     "name": "read_json"
   },
   {
-    "jsonResult": null,
     "name": "$result"
   }
 ]

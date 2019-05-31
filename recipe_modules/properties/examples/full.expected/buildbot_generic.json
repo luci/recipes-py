@@ -100,7 +100,6 @@
     "name": "echo workdir"
   },
   {
-    "jsonResult": null,
     "name": "$result"
   }
 ]

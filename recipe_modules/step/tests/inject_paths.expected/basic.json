@@ -30,7 +30,6 @@
     "name": "test step (env, $PATH)"
   },
   {
-    "jsonResult": null,
     "name": "$result"
   }
 ]

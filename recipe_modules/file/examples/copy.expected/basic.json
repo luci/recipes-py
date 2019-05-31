@@ -98,7 +98,6 @@
     "name": "read json back"
   },
   {
-    "jsonResult": null,
     "name": "$result"
   }
 ]

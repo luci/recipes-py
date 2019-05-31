@@ -84,7 +84,6 @@
     "name": "echo test_prop"
   },
   {
-    "jsonResult": null,
     "name": "$result"
   }
 ]

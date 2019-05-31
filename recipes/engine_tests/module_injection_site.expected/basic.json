@@ -7,7 +7,6 @@
     "name": "echo useless thing"
   },
   {
-    "jsonResult": null,
     "name": "$result"
   }
 ]

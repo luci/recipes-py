@@ -236,7 +236,7 @@ class FakeRecipeRepo(object):
     PROPERTIES = attr.ib(default='{}')
     ENV_PROPERTIES = attr.ib(default='None')
     expectation = attr.ib(factory=lambda: {
-      'basic': [{'name': '$result', 'jsonResult': None}],
+      'basic': [{'name': '$result'}],
     })
 
     @property

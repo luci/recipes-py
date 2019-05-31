@@ -169,7 +169,6 @@
     "name": "run nothing"
   },
   {
-    "jsonResult": null,
     "name": "$result"
   }
 ]

@@ -12,7 +12,6 @@
     "name": "get access token for key_name.json"
   },
   {
-    "jsonResult": null,
     "name": "$result"
   }
 ]
