@@ -2,26 +2,14 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import calendar
-import httplib
-import json
 import logging
 import os
 import re
-import shutil
-import subprocess
 import sys
-import tarfile
-import time
 
-from cStringIO import StringIO
 from collections import namedtuple
 
-import requests
-
-from google.protobuf import json_format
-
-from .. import util
+from gevent import subprocess
 
 from . import gitattr_checker
 from . import simple_cfg

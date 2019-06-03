@@ -8,12 +8,13 @@ import json
 import multiprocessing
 import os
 import re
-import subprocess
 import sys
 import tempfile
 import traceback
 
 import coverage
+
+from gevent import subprocess
 import gevent
 
 from google.protobuf import json_format as jsonpb

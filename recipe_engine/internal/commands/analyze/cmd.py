@@ -5,8 +5,9 @@
 from __future__ import print_function
 
 import os
-import subprocess
 import sys
+
+from gevent import subprocess
 
 from google.protobuf import json_format as jsonpb
 

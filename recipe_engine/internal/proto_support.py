@@ -12,9 +12,10 @@ import os
 import posixpath
 import re
 import shutil
-import subprocess
 import sys
 import tempfile
+
+from gevent import subprocess
 
 import attr
 

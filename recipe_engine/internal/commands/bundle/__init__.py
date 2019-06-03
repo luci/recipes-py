@@ -48,7 +48,8 @@ For more information on how gitattributes work.
 import os
 import re
 import sys
-import subprocess
+
+from gevent import subprocess
 
 
 def add_arguments(parser):

@@ -4,7 +4,8 @@
 
 import re
 import os
-import subprocess
+
+from gevent import subprocess
 
 
 def _pattern2re(pattern):

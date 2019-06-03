@@ -53,10 +53,11 @@ import os
 import posixpath
 import shutil
 import stat
-import subprocess
 import sys
 
 from collections import defaultdict
+
+from gevent import subprocess
 
 from PB import __path__ as PB_PATH # pylint: disable=import-error
 

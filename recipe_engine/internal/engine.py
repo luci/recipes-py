@@ -14,6 +14,7 @@ from contextlib import contextmanager
 
 import attr
 import gevent
+import gevent.local
 
 from PB.recipe_engine import result as result_pb2
 
