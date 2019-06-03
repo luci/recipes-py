@@ -250,7 +250,7 @@ If it returns `None`, the link is not reported. Default link title is build id.
 
 A module for interacting with buildbucket.
 
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#833)(self):**
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#839)(self):**
 
 Returns bucket name in v1 format.
 
@@ -273,11 +273,11 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#849)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#855)(self):**
 
 DEPRECATED, use build.id instead.
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#854)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#860)(self):**
 
 DEPRECATED, use build.input instead.
 
@@ -294,7 +294,7 @@ It remains on the bot from build to build.
 See "Builder cache" in
 https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/project_config.proto
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#859)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#865)(self):**
 
 Deprecated. Use build.builder instead.
 
@@ -302,9 +302,9 @@ Deprecated. Use build.builder instead.
 
 Returns builder name. Shortcut for `.build.builder.builder`.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#601)(self, build_id, \*\*kwargs):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#607)(self, build_id, \*\*kwargs):**
 
-&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#660)(self, build_id, mirror_status=False, \*\*kwargs):**
+&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#666)(self, build_id, mirror_status=False, \*\*kwargs):**
 
 Shorthand for `collect_builds` below, but for a single build only.
 
@@ -316,7 +316,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
   for the ended build.
 
-&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#680)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False):**
+&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#686)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False):**
 
 Waits for a set of builds to end and returns their details.
 
@@ -334,7 +334,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   for all specified builds.
 
-&mdash; **def [get](/recipe_modules/buildbucket/api.py#639)(self, build_id, url_title_fn=None, step_name=None):**
+&mdash; **def [get](/recipe_modules/buildbucket/api.py#645)(self, build_id, url_title_fn=None, step_name=None):**
 
 Gets a build.
 
@@ -346,11 +346,11 @@ Args:
 Returns:
   A build_pb2.Build.
 
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#656)(self, build_id, \*\*kwargs):**
+&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#662)(self, build_id, \*\*kwargs):**
 
 DEPRECATED. Use get().
 
-&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#604)(self, build_ids, url_title_fn=None, step_name=None):**
+&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#610)(self, build_ids, url_title_fn=None, step_name=None):**
 
 Gets multiple builds.
 
@@ -378,11 +378,11 @@ Never returns None, but sub-fields may be empty.
 Returns True if the build is critical. Build defaults to the current one.
     
 
-&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#844)(self):**
+&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#850)(self):**
 
 DEPRECATED, use build attribute instead.
 
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#505)(self, builds, \*\*kwargs):**
+&mdash; **def [put](/recipe_modules/buildbucket/api.py#511)(self, builds, \*\*kwargs):**
 
 Puts a batch of builds.
 
@@ -418,7 +418,7 @@ Returns:
   [Builds](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   in the same order as schedule_build_requests.
 
-&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#429)(self, schedule_build_requests, url_title_fn=None, step_name=None):**
+&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#435)(self, schedule_build_requests, url_title_fn=None, step_name=None):**
 
 Schedules a batch of builds.
 
@@ -497,7 +497,7 @@ Args:
   See also Build.critical in
   https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto
 
-&mdash; **def [search](/recipe_modules/buildbucket/api.py#540)(self, predicate, limit=None, url_title_fn=None, step_name=None):**
+&mdash; **def [search](/recipe_modules/buildbucket/api.py#546)(self, predicate, limit=None, url_title_fn=None, step_name=None):**
 
 Searches for builds.
 
@@ -1000,7 +1000,6 @@ properties = {'foo': bar, 'protolike': proto_message}
 properties.update(api.cq.props_for_child_build)
 req = api.buildbucket.schedule_request(
     builder='child',
-    tags=api.buildbucket.tags(**api.buildbucket.tags_for_child_build),
     gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),
     properties=properties)
 child_builds = api.buildbucket.schedule([req])
@@ -1010,7 +1009,7 @@ api.cq.record_triggered_builds(*child_builds)
 The contents of returned dict should be treated as opaque blob,
 it may be changed without notice.
 
-&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cq/api.py#155)(self, \*build_ids):**
+&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cq/api.py#154)(self, \*build_ids):**
 
 Adds given Buildbucket build ids to the list of triggered builds for CQ
 to wait on corresponding build completion later.
@@ -1020,7 +1019,7 @@ Must be called after some step.
 Args:
   * build_id (int or string): Buildbucket build id.
 
-&mdash; **def [record\_triggered\_builds](/recipe_modules/cq/api.py#138)(self, \*builds):**
+&mdash; **def [record\_triggered\_builds](/recipe_modules/cq/api.py#137)(self, \*builds):**
 
 Adds given Buildbucket builds to the list of triggered builds for CQ
 to wait on corresponding build completion later.
@@ -1049,7 +1048,7 @@ Can be spoofed. *DO NOT USE FOR SECURITY CHECKS.*
 Raises:
   CQInactive if CQ is `INACTIVE` for this build.
 
-&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cq/api.py#133)(self):**
+&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cq/api.py#132)(self):**
 
 Returns recorded Buildbucket build ids as a list of integers.
 ### *recipe_modules* / [file](/recipe_modules/file)

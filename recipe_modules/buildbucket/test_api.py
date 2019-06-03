@@ -118,10 +118,16 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       if not prefix.endswith('-review'):
         gerrit_host = '%s-review%s' % (prefix, gs_suffix)
 
+    tags = list(tags) if tags else []
+    # CQ always sets "cq_experimental:" tag, which is then used by Gerrit
+    # Buildbucket plugin to hide "cq_experimental:true" builds.
+    if all(t.key != 'cq_experimental' for t in tags):
+      tags.append(common_pb2.StringPair(key='cq_experimental', value='false'))
+
     build = build_pb2.Build(
         id=build_id,
         number=build_number,
-        tags=tags or [],
+        tags=tags,
         builder=build_pb2.BuilderID(
             project=project,
             bucket=bucket,

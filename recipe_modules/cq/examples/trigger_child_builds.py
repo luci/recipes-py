@@ -21,7 +21,6 @@ def RunSteps(api):
   properties.update(api.cq.props_for_child_build)
   req = api.buildbucket.schedule_request(
       builder='child',
-      tags=api.buildbucket.tags(**api.buildbucket.tags_for_child_build),
       gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),
       properties=properties)
   child_builds = api.buildbucket.schedule([req])
@@ -29,6 +28,11 @@ def RunSteps(api):
 
 
 def GenTests(api):
+  def check_has_bb_tag(check, steps, key, value):
+    req = api.json.loads(steps['buildbucket.schedule'].logs['request'])
+    tags = req['requests'][0]['scheduleBuild'].get('tags', [])
+    check({'key': key, 'value': value} in tags)
+
   def extract_cq_props(steps):
     req = api.json.loads(steps['buildbucket.schedule'].logs['request'])
     return req['requests'][0]['scheduleBuild'].get('properties', {}).get(
@@ -44,6 +48,7 @@ def GenTests(api):
 
   yield (
     api.test('typical')
+    + api.buildbucket.try_build()
     + api.cq(full_run=True)
     + api.post_check(check_set_to, 'active', True)
     + api.post_check(check_unset, 'dry_run')
@@ -52,10 +57,14 @@ def GenTests(api):
   )
   yield (
     api.test('grand-child')
+    # Unfortuante coupling: experimental means special tag, too.
+    + api.buildbucket.try_build(
+      tags=api.buildbucket.tags(cq_experimental='true'))
     + api.cq(dry_run=True, top_level=False, experimental=True)
     + api.post_check(check_set_to, 'active', True)
     + api.post_check(check_set_to, 'dry_run', True)
     + api.post_check(check_set_to, 'experimental', True)
+    + api.post_check(check_has_bb_tag, 'cq_experimental', 'true')
     + api.post_check(check_unset, 'top_level')
     + api.post_process(post_process.DropExpectation)
   )

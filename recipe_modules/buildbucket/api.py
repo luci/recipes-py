@@ -418,6 +418,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
         if t.key == 'buildset':
           tag_set.add((t.key, t.value))
 
+    # TODO(tandrii, nodir): find better way to communicate cq_experimental
+    # status to Gerrit Buildbucket plugin.
+    for t in b.tags:
+      if t.key == 'cq_experimental':
+        tag_set.add((t.key, t.value))
+
     for k, v in sorted(tag_set):
       req.tags.add(key=k, value=v)
 

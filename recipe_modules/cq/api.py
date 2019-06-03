@@ -112,7 +112,6 @@ class CQApi(recipe_api.RecipeApi):
     properties.update(api.cq.props_for_child_build)
     req = api.buildbucket.schedule_request(
         builder='child',
-        tags=api.buildbucket.tags(**api.buildbucket.tags_for_child_build),
         gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),
         properties=properties)
     child_builds = api.buildbucket.schedule([req])
