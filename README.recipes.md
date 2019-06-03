@@ -54,6 +54,7 @@
   * [context:tests/cwd](#recipes-context_tests_cwd)
   * [context:tests/env](#recipes-context_tests_env)
   * [context:tests/infra_step](#recipes-context_tests_infra_step)
+  * [cq:examples/ordered_cls](#recipes-cq_examples_ordered_cls)
   * [cq:examples/trigger_child_builds](#recipes-cq_examples_trigger_child_builds)
   * [cq:tests/experimental](#recipes-cq_tests_experimental)
   * [cq:tests/triggered_build_ids](#recipes-cq_tests_triggered_build_ids)
@@ -955,7 +956,7 @@ Returns Tuple[str] of the step name_tokens that should ACTUALLY run.
 Side-effect: Updates global tracking state for this step name.
 ### *recipe_modules* / [cq](/recipe_modules/cq)
 
-[DEPS](/recipe_modules/cq/__init__.py#7): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cq/__init__.py#7): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 #### **class [CQApi](/recipe_modules/cq/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#837)):**
 
@@ -972,12 +973,22 @@ See `Builder.experiment_percentage` doc in [CQ
 config](https://chromium.googlesource.com/infra/luci/luci-go/+/master/cq/api/config/v2/cq.proto)
 
 Raises:
-  CQInactive
-  AssertionError if CQ is `INACTIVE` for this build.
+  CQInactive if CQ is `INACTIVE` for this build.
 
 &mdash; **def [initialize](/recipe_modules/cq/api.py#40)(self):**
 
-&emsp; **@property**<br>&mdash; **def [props\_for\_child\_build](/recipe_modules/cq/api.py#84)(self):**
+&emsp; **@property**<br>&mdash; **def [ordered\_gerrit\_changes](/recipe_modules/cq/api.py#83)(self):**
+
+Returns list[bb_common_pb2.GerritChange] in order in which CLs should be
+applied or submitted.
+
+For full semantics, see
+[`Input.cls`](https://chromium.googlesource.com/infra/luci/luci-go/+/master/cq/api/recipe/v1/cq.proto)
+
+Raises:
+  CQInactive if CQ is `INACTIVE` for this build.
+
+&emsp; **@property**<br>&mdash; **def [props\_for\_child\_build](/recipe_modules/cq/api.py#103)(self):**
 
 Returns properties dict meant to be passed to child builds.
 
@@ -999,7 +1010,7 @@ api.cq.record_triggered_builds(*child_builds)
 The contents of returned dict should be treated as opaque blob,
 it may be changed without notice.
 
-&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cq/api.py#136)(self, \*build_ids):**
+&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cq/api.py#155)(self, \*build_ids):**
 
 Adds given Buildbucket build ids to the list of triggered builds for CQ
 to wait on corresponding build completion later.
@@ -1009,7 +1020,7 @@ Must be called after some step.
 Args:
   * build_id (int or string): Buildbucket build id.
 
-&mdash; **def [record\_triggered\_builds](/recipe_modules/cq/api.py#119)(self, \*builds):**
+&mdash; **def [record\_triggered\_builds](/recipe_modules/cq/api.py#138)(self, \*builds):**
 
 Adds given Buildbucket builds to the list of triggered builds for CQ
 to wait on corresponding build completion later.
@@ -1029,16 +1040,16 @@ Args:
 
 CQ state pertaining to this recipe execution.
 
-&emsp; **@property**<br>&mdash; **def [top\_level](/recipe_modules/cq/api.py#72)(self):**
+&emsp; **@property**<br>&mdash; **def [top\_level](/recipe_modules/cq/api.py#71)(self):**
 
 Returns whether CQ triggered this build directly.
 
 Can be spoofed. *DO NOT USE FOR SECURITY CHECKS.*
 
 Raises:
-  AssertionError if CQ is `INACTIVE` for this build.
+  CQInactive if CQ is `INACTIVE` for this build.
 
-&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cq/api.py#114)(self):**
+&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cq/api.py#133)(self):**
 
 Returns recorded Buildbucket build ids as a list of integers.
 ### *recipe_modules* / [file](/recipe_modules/file)
@@ -2573,6 +2584,11 @@ Launches multiple builds at the same revision.
 [DEPS](/recipe_modules/context/tests/infra_step.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/context/tests/infra_step.py#11)(api):**
+### *recipes* / [cq:examples/ordered\_cls](/recipe_modules/cq/examples/ordered_cls.py)
+
+[DEPS](/recipe_modules/cq/examples/ordered_cls.py#10): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/cq/examples/ordered_cls.py#19)(api):**
 ### *recipes* / [cq:examples/trigger\_child\_builds](/recipe_modules/cq/examples/trigger_child_builds.py)
 
 [DEPS](/recipe_modules/cq/examples/trigger_child_builds.py#9): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
