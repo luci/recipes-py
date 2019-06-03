@@ -817,7 +817,6 @@ The pieces of information which can be modified are:
   * env - The environment variables.
   * infra_step - Whether or not failures should be treated as infrastructure
     failures vs. normal failures.
-  * namespace - A nesting namespace for all steps.
 
 The values here are all scoped using Python's `with` statement; there's no
 mechanism to make an open-ended adjustment to these values (i.e. there's no way
@@ -833,9 +832,9 @@ with api.context(cwd=api.path['start_dir'].join('subdir')):
   api.step("cat subdir/foo", ['cat', './foo'])
 ```
 
-#### **class [ContextApi](/recipe_modules/context/api.py#45)([RecipeApi](/recipe_engine/recipe_api.py#837)):**
+#### **class [ContextApi](/recipe_modules/context/api.py#44)([RecipeApi](/recipe_engine/recipe_api.py#837)):**
 
-&emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#64)(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None, infra_steps=None, namespace=None):**
+&emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#56)(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None, infra_steps=None):**
 
 Allows adjustment of multiple context values in a single call.
 
@@ -851,24 +850,6 @@ Args:
   * infra_steps (bool) - if steps in this context should be considered
     infrastructure steps. On failure, these will raise InfraFailure
     exceptions instead of StepFailure exceptions.
-  * namespace (basestring) - Nest steps under this additional namespace.
-
-Name prefixes and namespaces:
-
-Example:
-```python
-with api.context(namespace='cool'):
-  # has name 'cool|something'
-  api.step('something', ['echo', 'something'])
-
-  with api.context(namespace='world'):
-    # has name 'cool|world|other'
-    api.step('other', ['echo', 'other'])
-
-  with api.context(namespace='ocean'):
-    # has name 'cool|ocean|other'
-    api.step('other', ['echo', 'mild'])
-```
 
 Environmental Variable Overrides:
 
@@ -892,7 +873,7 @@ as the last path component if it is not empty.
 
 Look at the examples in "examples/" for examples of context module usage.
 
-&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#199)(self):**
+&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#160)(self):**
 
 Returns the current working directory that steps will run in.
 
@@ -900,7 +881,7 @@ Returns the current working directory that steps will run in.
 equivalent to api.path['start_dir'], though only occurs if no cwd has been
 set (e.g. in the outermost context of RunSteps).
 
-&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#209)(self):**
+&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#170)(self):**
 
 Returns modifications to the environment.
 
@@ -911,7 +892,7 @@ done with properties.
 **Returns (dict)** - The env-key -> value mapping of current environment
   modifications.
 
-&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#224)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#185)(self):**
 
 Returns Path prefix modifications to the environment.
 
@@ -921,7 +902,7 @@ prefixes registered with the environment.
 **Returns (dict)** - The env-key -> value(Path) mapping of current
 environment prefix modifications.
 
-&emsp; **@property**<br>&mdash; **def [env\_suffixes](/recipe_modules/context/api.py#238)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_suffixes](/recipe_modules/context/api.py#199)(self):**
 
 Returns Path suffix modifications to the environment.
 
@@ -931,29 +912,11 @@ suffixes registered with the environment.
 **Returns (dict)** - The env-key -> value(Path) mapping of current
 environment suffix modifications.
 
-&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#252)(self):**
+&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#213)(self):**
 
 Returns the current value of the infra_step setting.
 
 **Returns (bool)** - True iff steps are currently considered infra steps.
-
-&emsp; **@property**<br>&mdash; **def [namespace](/recipe_modules/context/api.py#260)(self):**
-
-Gets the current namespace.
-
-**Returns (Tuple[str])** - The current step namespace plus name prefix for
-nesting.
-
-&mdash; **def [record\_step\_name](/recipe_modules/context/api.py#269)(self, name):**
-
-Records a step name in the current namespace.
-
-Args:
-  * name (str) - The name of the step we want to run in the current context.
-
-Returns Tuple[str] of the step name_tokens that should ACTUALLY run.
-
-Side-effect: Updates global tracking state for this step name.
 ### *recipe_modules* / [cq](/recipe_modules/cq)
 
 [DEPS](/recipe_modules/cq/__init__.py#7): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
@@ -2051,9 +2014,9 @@ Args:
 Step is the primary API for running steps (external programs, scripts,
 etc.).
 
-#### **class [StepApi](/recipe_modules/step/api.py#22)([RecipeApiPlain](/recipe_engine/recipe_api.py#705)):**
+#### **class [StepApi](/recipe_modules/step/api.py#20)([RecipeApiPlain](/recipe_engine/recipe_api.py#705)):**
 
-&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#53)(self):**
+&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#51)(self):**
 
 InfraFailure is a subclass of StepFailure, and will translate to a purple
 build.
@@ -2061,7 +2024,7 @@ build.
 This exception is raised from steps which are marked as `infra_step`s when
 they fail.
 
-&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#35)(self):**
+&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#33)(self):**
 
 This is the base Exception class for all step failures.
 
@@ -2071,12 +2034,12 @@ Usage:
   * `raise api.StepFailure("some reason")`
   * `except api.StepFailure:`
 
-&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#47)(self):**
+&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#45)(self):**
 
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#220)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, allow_subannotations=None, trigger_specs=None, stdout=None, stderr=None, stdin=None, step_test_data=None):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#214)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, allow_subannotations=None, trigger_specs=None, stdout=None, stderr=None, stdin=None, step_test_data=None):**
 
 Returns a step dictionary which is compatible with annotator.py.
 
@@ -2113,7 +2076,7 @@ Args:
 
 Returns a `step_data.StepData` for the running step.
 
-&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#63)(self):**
+&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#61)(self):**
 
 The currently active (open) result from the last step that was run. This
 is a `step_data.StepData` object.
@@ -2144,11 +2107,11 @@ finally:
     api.step.active_result.presentation.step_text = new_step_text
 ```
 
-&emsp; **@property**<br>&mdash; **def [defer\_results](/recipe_modules/step/api.py#215)(self):**
+&emsp; **@property**<br>&mdash; **def [defer\_results](/recipe_modules/step/api.py#209)(self):**
 
 See recipe_api.py for docs. 
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#120)(self, name, status='worst'):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#118)(self, name, status='worst'):**
 
 Nest allows you to nest steps hierarchically on the build UI.
 

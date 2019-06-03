@@ -83,10 +83,10 @@ class StepConfig(object):
   would need to worry about this object is if you're modifying the step module
   itself.
   """
-  # The list of name pieces for this step. Every piece indicates a level of
-  # nesting. So, ('foo', 'bar') would be the step 'bar' nested under the parent
-  # 'foo'.
-  name_tokens = attr.ib(validator=attr_seq_type(basestring))
+  # The name of the step to run within the current namespace.
+  #
+  # This will be deduplicated by the recipe engine.
+  name = attr.ib(validator=attr_type(basestring))
 
   # List of args of the command to run. Acceptable types: Placeholder or any
   # str()'able type.
@@ -186,14 +186,13 @@ class StepConfig(object):
   trigger_specs = attr.ib(default=(), validator=attr_seq_type(TriggerSpec))
 
   def __attrs_post_init__(self):
-    object.__setattr__(self, 'name_tokens', tuple(self.name_tokens))
     object.__setattr__(self, 'cmd', tuple(self.cmd))
     object.__setattr__(self, 'trigger_specs', tuple(self.trigger_specs))
 
     # if cmd is empty, then remove all values except for the few that actually
     # apply with a null command.
     if not self.cmd:
-      _keep_fields = ('name_tokens', 'cmd', 'trigger_specs')
+      _keep_fields = ('name', 'cmd', 'trigger_specs')
       for attrib in attr.fields(self.__class__):
         if attrib.name in _keep_fields:
           continue
@@ -246,21 +245,12 @@ class StepConfig(object):
   ))
 
   _RENDER_BLACKLIST=frozenset((
-    'name_tokens',
     'ok_ret',
     'step_test_data',
     'env_prefixes',
     'env_suffixes',
     'trigger_specs',
   ))
-
-  @property
-  def name(self):
-    """Returns a '.' separated string version of name_tokens for backwards
-    compatibility with old recipe engine code."""
-    # TODO(iannucci): Remove this method or make it use '|' separators
-    # instead.
-    return '.'.join(self.name_tokens)
 
   def _asdict(self):
     ret = thaw(attr.asdict(self, filter=(lambda attr, val: (
@@ -273,5 +263,4 @@ class StepConfig(object):
       ret['env_suffixes'] = dict(self.env_suffixes.mapping)
     if self.trigger_specs:
       ret['trigger_specs'] = [ts._asdict() for ts in self.trigger_specs]
-    ret['name'] = self.name
     return ret

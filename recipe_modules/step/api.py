@@ -9,8 +9,6 @@ import contextlib
 import sys
 import types
 
-import attr
-
 from recipe_engine import recipe_api
 from recipe_engine.config_types import Path
 from recipe_engine.types import StepPresentation
@@ -180,37 +178,33 @@ class StepApi(recipe_api.RecipeApiPlain):
     please.
     """
     assert status in ('worst', 'last'), 'Got bad status: %r' % (status,)
-    dedup_name_tokens = self.m.context.record_step_name(name)
-    # We use a raw step runner here because we need the same deduplicated name
-    # for the step as well as the context namespace, and using `self` is tricky.
 
-    with self.step_client.parent_step(dedup_name_tokens) as (pres, children):
-      with self.m.context(namespace=dedup_name_tokens[-1]):
-        caught_exc = None
-        try:
-          yield self._StepPresentationProxy(pres)
-        except:
-          caught_exc = sys.exc_info()[0]
-          raise
-        finally:
-          # If they didn't set a presentation.status, calculate one.
-          if pres.status is None:
-            if caught_exc:
-              pres.status = {
-                recipe_api.StepFailure: self.FAILURE,
-                recipe_api.StepWarning: self.WARNING,
-              }.get(caught_exc, self.EXCEPTION)
-            elif children:
-              if status == 'worst':
-                worst = self.SUCCESS
-                for child in children:
-                  worst = StepPresentation.status_worst(
-                      worst, child.presentation.status)
-                pres.status = worst
-              else:
-                pres.status = children[-1].presentation.status
+    with self.step_client.parent_step(name) as (pres, children):
+      caught_exc = None
+      try:
+        yield self._StepPresentationProxy(pres)
+      except:
+        caught_exc = sys.exc_info()[0]
+        raise
+      finally:
+        # If they didn't set a presentation.status, calculate one.
+        if pres.status is None:
+          if caught_exc:
+            pres.status = {
+              recipe_api.StepFailure: self.FAILURE,
+              recipe_api.StepWarning: self.WARNING,
+            }.get(caught_exc, self.EXCEPTION)
+          elif children:
+            if status == 'worst':
+              worst = self.SUCCESS
+              for child in children:
+                worst = StepPresentation.status_worst(
+                    worst, child.presentation.status)
+              pres.status = worst
             else:
-              pres.status = self.SUCCESS
+              pres.status = children[-1].presentation.status
+          else:
+            pres.status = self.SUCCESS
 
   @property
   def defer_results(self):
@@ -257,11 +251,6 @@ class StepApi(recipe_api.RecipeApiPlain):
 
     Returns a `step_data.StepData` for the running step.
     """
-    if '|' in name:
-      raise ValueError('Reserved character "|" in name')
-
-    name_tokens = self.m.context.record_step_name(name)
-
     assert isinstance(cmd, (types.NoneType, list))
     if cmd is not None:
       cmd = list(wrapper) + cmd
@@ -283,7 +272,7 @@ class StepApi(recipe_api.RecipeApiPlain):
       ok_ret = self.step_client.StepConfig.ALL_OK
 
     return self.step_client.run_step(self.step_client.StepConfig(
-        name_tokens=name_tokens,
+        name=name,
         cmd=cmd or (),
         cwd=cwd,
         env=self.m.context.env,

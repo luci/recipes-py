@@ -10,7 +10,6 @@ The pieces of information which can be modified are:
   * env - The environment variables.
   * infra_step - Whether or not failures should be treated as infrastructure
     failures vs. normal failures.
-  * namespace - A nesting namespace for all steps.
 
 The values here are all scoped using Python's `with` statement; there's no
 mechanism to make an open-ended adjustment to these values (i.e. there's no way
@@ -54,16 +53,9 @@ class ContextApi(RecipeApi):
     self._env = [{}]
     self._infra_step = [False]
 
-    # _raw_namespace is a history of the namespace we'll use for new step names
-    self._raw_namespace = [('',)]
-
-    # Map of namespace_tuple -> {step_name: int} to deduplicate `step_name`s
-    # within a namespace.
-    self._step_names = {}
-
   @contextmanager
   def __call__(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None,
-               infra_steps=None, namespace=None):
+               infra_steps=None):
     """Allows adjustment of multiple context values in a single call.
 
     Args:
@@ -78,24 +70,6 @@ class ContextApi(RecipeApi):
       * infra_steps (bool) - if steps in this context should be considered
         infrastructure steps. On failure, these will raise InfraFailure
         exceptions instead of StepFailure exceptions.
-      * namespace (basestring) - Nest steps under this additional namespace.
-
-    Name prefixes and namespaces:
-
-    Example:
-    ```python
-    with api.context(namespace='cool'):
-      # has name 'cool|something'
-      api.step('something', ['echo', 'something'])
-
-      with api.context(namespace='world'):
-        # has name 'cool|world|other'
-        api.step('other', ['echo', 'other'])
-
-      with api.context(namespace='ocean'):
-        # has name 'cool|ocean|other'
-        api.step('other', ['echo', 'mild'])
-    ```
 
     Environmental Variable Overrides:
 
@@ -131,19 +105,6 @@ class ContextApi(RecipeApi):
     if infra_steps is not None:
       check_type('infra_steps', infra_steps, bool)
       _push(self._infra_step, infra_steps)
-
-    new_namespace = None
-    if namespace is not None:
-      check_type('namespace', namespace, basestring)
-      if '|' in namespace:
-        raise ValueError('Reserved character "|" in namespace.')
-      cur_ns = self.namespace
-      base_ns, cur_prefix = cur_ns[:-1], cur_ns[-1]
-      new_namespace = base_ns + (cur_prefix + str(namespace), '')
-
-    if new_namespace:
-      _push(self._raw_namespace, new_namespace)
-    # }}} END namespace handling
 
     if env_prefixes is not None and len(env_prefixes) > 0:
       check_type('env_prefixes', env_prefixes, dict)
@@ -256,34 +217,3 @@ class ContextApi(RecipeApi):
     **Returns (bool)** - True iff steps are currently considered infra steps.
     """
     return self._infra_step[-1]
-
-  @property
-  def namespace(self):
-    """Gets the current namespace.
-
-    **Returns (Tuple[str])** - The current step namespace plus name prefix for
-    nesting.
-    """
-    return self._raw_namespace[-1]
-
-  def record_step_name(self, name):
-    """Records a step name in the current namespace.
-
-    Args:
-      * name (str) - The name of the step we want to run in the current context.
-
-    Returns Tuple[str] of the step name_tokens that should ACTUALLY run.
-
-    Side-effect: Updates global tracking state for this step name.
-    """
-    cur_ns = self.namespace
-    base_ns, cur_prefix = cur_ns[:-1], cur_ns[-1]
-    name = cur_prefix + name
-    dedup_name = name
-
-    cur_state = self._step_names.setdefault(base_ns, {})
-    cur_count = cur_state.setdefault(name, 0)
-    if cur_count:
-      dedup_name = name + ' (%d)' % (cur_count + 1)
-    cur_state[name] += 1
-    return base_ns + (dedup_name,)

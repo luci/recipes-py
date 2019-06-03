@@ -53,8 +53,8 @@ class SimulationStepRunner(StepRunner):
     # dot-name -> Step
     self._step_history = {}
 
-  def register_step_config(self, step_config):
-    dot_name = '.'.join(step_config.name_tokens)
+  def register_step_config(self, name_tokens, step_config):
+    dot_name = '.'.join(name_tokens)
 
     # This moves the test data from _test_data to _used_steps. This will return
     # StepData() if `dot_name` isn't in self._test_data.

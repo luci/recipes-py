@@ -50,7 +50,7 @@ class StepRunner(object):
   # pylint: disable=no-self-use
   # pylint: disable=unused-argument
 
-  def register_step_config(self, step_config):
+  def register_step_config(self, name_token, step_config):
     """Called to register the precursor of the step (the StepConfig).
 
     Only used for the simulation API.
@@ -62,6 +62,7 @@ class StepRunner(object):
     FakeEnviron as a basis environment).
 
     Args:
+      * name_tokens (List[str]) - The full name of the step.
       * step_config (StepConfig) - The full precursor of the step.
     """
     pass

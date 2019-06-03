@@ -50,26 +50,9 @@ def RunSteps(api):
     except ValueError:
       pass
 
-  # Don't use | in namespaces or name prefixes
-  try:
-    with api.context(namespace="dope|pipe"):
-      assert False  # pragma: no cover
-  except ValueError:
-    pass
-
   # this is fine though:
   with api.context(env={'FINE': '%%format'}):
     pass
-
-  # can increment namespace. However, if you use `api.step.nest` it gives you
-  # the step result to manipulate.
-  # YES:
-  with api.step.nest('nested') as nest:
-    api.step('properly indented', ['bash', '-c', 'echo yay!'])
-    nest.status = 'FAILURE'
-  # As opposed to:
-  with api.context(namespace='something'):
-    api.step('indented but no step', ['bash', '-c', 'echo y u do?'])
 
 
 def GenTests(api):

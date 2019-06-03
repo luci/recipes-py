@@ -203,12 +203,12 @@ class StepClient(object):
 
     This always returns the innermost nested step that is still open --
     presumably the one that just failed if we are in an exception handler."""
-    active_step = self._engine.active_step
-    if not active_step:
+    active_step_data = self._engine.active_step
+    if not active_step_data:
       raise ValueError(
           'No steps have been run yet, and you are asking for a previous step '
           'result.')
-    return active_step.step_result
+    return active_step_data
 
   def parent_step(self, name_tokens):
     """Opens a parent step.

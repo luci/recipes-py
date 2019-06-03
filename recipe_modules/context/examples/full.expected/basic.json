@@ -87,35 +87,6 @@
     "name": "env prefixes with empty value"
   },
   {
-    "cmd": [],
-    "name": "nested",
-    "~followup_annotations": [
-      "@@@STEP_FAILURE@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "bash",
-      "-c",
-      "echo yay!"
-    ],
-    "name": "nested.properly indented",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "bash",
-      "-c",
-      "echo y u do?"
-    ],
-    "name": "something.indented but no step",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
     "name": "$result"
   }
 ]

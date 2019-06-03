@@ -3,7 +3,6 @@
 # that can be found in the LICENSE file.
 
 import calendar
-import collections
 import datetime
 import json
 import os
@@ -27,6 +26,14 @@ from .exceptions import RecipeUsageError, CrashEngine
 from .step_runner import Step
 
 
+@attr.s(frozen=True, slots=True)
+class _ActiveStep(object):
+  """The object type that we keep in RecipeEngine._step_stack."""
+  step_result = attr.ib()  # type: StepData
+  step_stream = attr.ib()  # type: StepStream
+  is_parent = attr.ib()    # type: bool
+
+
 class RecipeEngine(object):
   """
   Knows how to execute steps emitted by a recipe, holds global state such as
@@ -37,16 +44,6 @@ class RecipeEngine(object):
     * properties - uses engine.properties.
     * step - uses engine.create_step(...), and previous_step_result.
   """
-
-  # ActiveStep is the object type that we keep in RecipeEngine._step_stack. It
-  # holds:
-  #
-  #   step_result (StepData) - The StepData for the step
-  #   step_stream (StreamEngine.StepStream) - The UI client for this step
-  #
-  # TODO(iannucci): use attr instead of namedtuple
-  ActiveStep = collections.namedtuple(
-      'ActiveStep', ('step_result', 'step_stream'))
 
   def __init__(self, recipe_deps, step_runner, stream_engine, properties,
                environ, start_dir):
@@ -64,7 +61,7 @@ class RecipeEngine(object):
         recipe_api.StepClient(self),
     )}
 
-    # A stack of ActiveStep objects, holding the most recently executed step at
+    # A stack of _ActiveStep objects, holding the most recently executed step at
     # each nest level (objects deeper in the stack have lower nest levels).
     # When we pop from this stack, we close the corresponding step stream.
     #
@@ -72,6 +69,10 @@ class RecipeEngine(object):
     # of this stack may be a 'real' step; i.e. anything other than the tip of
     # the stack is a parent nesting step.
     self._step_stack = []
+
+    # Map of namespace_tuple -> {step_name: int} to deduplicate `step_name`s
+    # within a namespace.
+    self._step_names = {}
 
   @property
   def properties(self):
@@ -92,6 +93,7 @@ class RecipeEngine(object):
     Returns the resolved requirement.
     Raises ValueError if the requirement cannot be satisfied.
     """
+    # pylint: disable=protected-access
     assert isinstance(req, recipe_api._UnresolvedRequirement)
     if req._typ == 'client':
       return self._clients.get(req._name)
@@ -113,61 +115,74 @@ class RecipeEngine(object):
     """
     self._clients['paths']._initialize_with_recipe_api(root_api)
 
-  def _close_until_ns(self, namespace):
-    """Close all open steps until we close all of them or until we find one
-    that's a parent of of namespace.
-
-    Example:
-       open_steps = [
-          name=('namespace'),
-          name=('namespace', 'subspace'),
-          name=('namespace', 'subspace', 'step'),
-       ]
-       # if the new step is ('namespace', 'subspace', 'new_step') we call:
-         _close_until_ns(('namespace', 'subspace'))
-         # Closes ('namespace', 'subspace', 'step')
-       # if the new step is ('namespace', 'new_subspace') we call:
-         _close_until_ns(('namespace',))
-         # Closes ('namespace', 'subspace', 'step')
-         # Closes ('namespace', 'subspace')
-       # if the new step is ('bob',) we call:
-         _close_until_ns(())
-         # Closes ('namespace', 'subspace', 'step')
-         # Closes ('namespace', 'subspace')
-         # Closes ('namespace')
-
-    Args:
-      namespace (Tuple[basestring]): the namespace we're looking to get back to.
-    """
-    while self._step_stack:
-      if self._step_stack[-1].step_result.name_tokens == namespace:
+  def _close_non_parent_step(self):
+    """Closes the tip of the _step_stack if it's not a parent nesting step."""
+    try:
+      if not self._step_stack:
         return
 
-      cur = self._step_stack.pop()
-      cur.step_result.presentation.finalize(cur.step_stream)
-      cur.step_stream.close()
+      tip_step = self._step_stack[-1]
+      if tip_step.is_parent:
+        return
+
+      self._step_stack.pop()
+      tip_step.step_result.presentation.finalize(tip_step.step_stream)
+      tip_step.step_stream.close()
+    except:
+      _log_crash(self._stream_engine, "_close_non_parent_step()")
+      raise CrashEngine("Closing non-parent step failed.")
 
   @property
   def active_step(self):
-    """Returns the current ActiveStep.step_result (if there is one) or None."""
+    """Returns the current _ActiveStep.step_result (if there is one) or None."""
     if self._step_stack:
-      return self._step_stack[-1]
+      return self._step_stack[-1].step_result
     return None
 
-  @contextmanager
-  def parent_step(self, name_tokens):
-    """Opens a parent step with the given name.
+  def _record_step_name(self, name):
+    """Records a step name in the current namespace.
 
     Args:
-      * name_tokens (List[str]) - The name of the parent step to open.
+
+      * name (str) - The name of the step we want to run in the current context.
+
+    Side effect:
+      * calls _close_non_parent_step.
+      * Updates global tracking state for this step name.
+
+    Returns Tuple[str] of the step name_tokens that should ACTUALLY run.
+    """
+    self._close_non_parent_step()
+
+    try:
+      namespace = ()
+      if self.active_step:
+        namespace = self.active_step.name_tokens
+      cur_state = self._step_names.setdefault(namespace, {})
+      cur_count = cur_state.setdefault(name, 0)
+      dedup_name = name
+      if cur_count:
+        dedup_name = name + ' (%d)' % (cur_count + 1)
+      cur_state[name] += 1
+      return namespace + (dedup_name,)
+    except:
+      _log_crash(self._stream_engine, "_record_step_name(%r)" % (name,))
+      raise CrashEngine("Getting name tokens for %r failed." % (name,))
+
+  @contextmanager
+  def parent_step(self, name):
+    """Opens a parent step with the given name in the current namespace.
+
+    Args:
+      * name (str) - The name of the parent step to open.
 
     Yields a tuple of (StepPresentation, List[StepData]):
       * The StepPresentation for this parent step.
       * The List of children StepData of this parent step.
     """
-    self._close_until_ns(name_tokens[:-1])
+    name_tokens = self._record_step_name(name)
+
     try:
-      step_stream = self._stream_engine.new_step_stream(name_tokens, False)
       step_data = StepData(name_tokens, ExecutionResult(retcode=0))
       # TODO(iannucci): Use '|' instead of '.'
       presentation = StepPresentation('.'.join(name_tokens))
@@ -179,10 +194,23 @@ class RecipeEngine(object):
       step_data.finalize()
       if self._step_stack:
         self._step_stack[-1].step_result.children.append(step_data)
-      self._step_stack.append(self.ActiveStep(step_data, step_stream))
+      step_stream = self._stream_engine.new_step_stream(name_tokens, False)
+      self._step_stack.append(_ActiveStep(step_data, step_stream, True))
+    except:
+      _log_crash(self._stream_engine, "parent_step(%r)" % (name_tokens))
+      raise CrashEngine("Prepping parent step %r failed." % (name_tokens))
+
+    try:
       yield presentation, step_data.children
     finally:
-      self._close_until_ns(name_tokens[:-1])
+      try:
+        self._close_non_parent_step()
+        presentation.finalize(step_stream)
+        step_stream.close()
+        self._step_stack.pop()
+      except:
+        _log_crash(self._stream_engine, "parent_step.close(%r)" % (name_tokens))
+        raise CrashEngine("Closing parent step %r failed." % (name_tokens))
 
   def run_step(self, step_config):
     """Runs a step.
@@ -196,14 +224,14 @@ class RecipeEngine(object):
     # TODO(iannucci): When subannotations are handled with annotee, move
     # `allow_subannotations` into recipe_module/step.
 
-    self._close_until_ns(step_config.name_tokens[:-1])
+    name_tokens = self._record_step_name(step_config.name)
 
     # TODO(iannucci): Start with had_exception=True and overwrite when we know
     # we DIDN'T have an exception.
-    ret = StepData(step_config.name_tokens, ExecutionResult())
+    ret = StepData(name_tokens, ExecutionResult())
 
     try:
-      self._step_runner.register_step_config(step_config)
+      self._step_runner.register_step_config(name_tokens, step_config)
     except:
       # Test data functions are not allowed to raise exceptions. Instead of
       # letting user code catch these, we crash the test immediately.
@@ -213,7 +241,7 @@ class RecipeEngine(object):
       ))
 
     step_stream = self._stream_engine.new_step_stream(
-        step_config.name_tokens, step_config.allow_subannotations)
+        name_tokens, step_config.allow_subannotations)
     debug_log = step_stream.new_log_stream('$debug')
     caught = None
     try:
@@ -225,7 +253,7 @@ class RecipeEngine(object):
       ret.presentation = StepPresentation(step_config.name)
       ret.presentation.status = 'EXCEPTION'
 
-      self._step_stack.append(self.ActiveStep(ret, step_stream))
+      self._step_stack.append(_ActiveStep(ret, step_stream, False))
 
       # _run_step should never raise an exception
       caught = _run_step(
@@ -255,7 +283,8 @@ class RecipeEngine(object):
         'WARNING': recipe_api.StepWarning,
         'EXCEPTION': recipe_api.InfraFailure,
       }[ret.presentation.status]
-      raise exc(step_config.name, ret)
+      # TODO(iannucci): Use '|' instead of '.'
+      raise exc('.'.join(name_tokens), ret)
 
     finally:
       # per sys.exc_info this is recommended in python 2.x to avoid creating
@@ -362,7 +391,10 @@ class RecipeEngine(object):
 
     try:
       try:
-        raw_result = recipe_obj.run_steps(api, engine)
+        try:
+          raw_result = recipe_obj.run_steps(api, engine)
+        finally:
+          engine._close_non_parent_step()
 
       # TODO(iannucci): the differentiation here is a bit weird
       except recipe_api.InfraFailure as ex:
@@ -376,12 +408,6 @@ class RecipeEngine(object):
       except recipe_api.StepFailure as ex:
         result.failure.human_reason = ex.reason
         result.failure.failure.SetInParent()
-
-      finally:
-        # TODO(iannucci): prevent this from running any additional steps
-        # (technically nest parent step callbacks COULD run steps; that should
-        # be prevented).
-        engine._close_until_ns(())  # pylint: disable=protected-access
 
     # All other exceptions are reported to the user and are fatal.
     except Exception as ex:  # pylint: disable=broad-except
@@ -437,7 +463,7 @@ def _prepopulate_placeholders(step_config, step_data):
       step_data.assign_placeholder(itm, None)
 
 
-def _resolve_output_placeholders(debug, step_config, step_data, step_runner):
+def _resolve_output_placeholders(debug, name_tokens, step_config, step_data, step_runner):
   """Takes the original (unmodified by _render_placeholders) step_config and
   invokes the '.result()' method on every placeholder. This will update
   'step_data' with the results.
@@ -445,11 +471,9 @@ def _resolve_output_placeholders(debug, step_config, step_data, step_runner):
   `step_runner` is used for `placeholder` which should return test data
   input for the InputPlaceholder.cleanup and OutputPlaceholder.result methods.
   """
-  name = step_config.name_tokens
-
   for itm in step_config.cmd:
     if isinstance(itm, util.Placeholder):
-      test_data = step_runner.placeholder(name, itm)
+      test_data = step_runner.placeholder(name_tokens, itm)
       if isinstance(itm, util.InputPlaceholder):
         debug.write_line('  cleaning %r' % (itm,))
         itm.cleanup(test_data.enabled)
@@ -461,19 +485,19 @@ def _resolve_output_placeholders(debug, step_config, step_data, step_runner):
   if step_config.stdin:
     debug.write_line('  cleaning stdin: %r' % (step_config.stdin,))
     step_config.stdin.cleanup(
-        step_runner.handle_placeholder(name, 'stdin').enabled)
+        step_runner.handle_placeholder(name_tokens, 'stdin').enabled)
 
   for handle in ('stdout', 'stderr'):
     placeholder = getattr(step_config, handle)
     if placeholder:
       debug.write_line('  finding result of %s: %r' % (handle, placeholder))
-      test_data = step_runner.handle_placeholder(name, handle)
+      test_data = step_runner.handle_placeholder(name_tokens, handle)
       setattr(step_data, handle, placeholder.result(
           step_data.presentation, test_data))
 
 
-def _render_config(debug, step_config, step_runner, step_stream, environ,
-                   start_dir):
+def _render_config(debug, name_tokens, step_config, step_runner, step_stream,
+                   environ, start_dir):
   """Returns a step_runner.Step which is ready for consumption by
   StepRunner.run.
 
@@ -481,14 +505,12 @@ def _render_config(debug, step_config, step_runner, step_stream, environ,
   which should return test data input for the Placeholder.render method
   (or an empty test data object).
   """
-  name = step_config.name_tokens
-
   cmd = []
   debug.write_line('rendering placeholders')
   for itm in step_config.cmd:
     if isinstance(itm, util.Placeholder):
       debug.write_line('  %r' % (itm,))
-      cmd.extend(itm.render(step_runner.placeholder(name, itm)))
+      cmd.extend(itm.render(step_runner.placeholder(name_tokens, itm)))
     else:
       cmd.append(itm)
 
@@ -498,7 +520,7 @@ def _render_config(debug, step_config, step_runner, step_stream, environ,
     placeholder = getattr(step_config, handle)
     if placeholder:
       debug.write_line('  %s: %r' % (handle, placeholder))
-      placeholder.render(step_runner.handle_placeholder(name, handle))
+      placeholder.render(step_runner.handle_placeholder(name_tokens, handle))
       # TODO(iannucci): maybe verify read/write permissions for backing_file
       # here?
       handles[handle] = placeholder.backing_file
@@ -519,13 +541,13 @@ def _render_config(debug, step_config, step_runner, step_stream, environ,
 
   debug.write_line('checking cwd: %r' % (step_config.cwd,))
   cwd = step_config.cwd or start_dir
-  if not step_runner.isabs(name, cwd):
+  if not step_runner.isabs(name_tokens, cwd):
     debug.write_line('  not absolute: %r' % (cwd))
     return None
-  if not step_runner.isdir(name, cwd):
+  if not step_runner.isdir(name_tokens, cwd):
     debug.write_line('  not a directory: %r' % (cwd))
     return None
-  if not step_runner.access(name, cwd, os.R_OK):
+  if not step_runner.access(name_tokens, cwd, os.R_OK):
     debug.write_line('  no read perms: %r' % (cwd))
     return None
 
@@ -533,7 +555,7 @@ def _render_config(debug, step_config, step_runner, step_stream, environ,
   debug.write_line('resolving cmd0 %r' % (cmd[0],))
   debug.write_line('  in PATH: %s' % (path,))
   debug.write_line('  with cwd: %s' % (cwd,))
-  cmd0 = step_runner.resolve_cmd0(name, debug, cmd[0], cwd, path)
+  cmd0 = step_runner.resolve_cmd0(name_tokens, debug, cmd[0], cwd, path)
   if cmd0 is None:
     debug.write_line('failed to resolve cmd0')
     return None
@@ -576,7 +598,7 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
   if not step_config.cmd:
     debug_log.write_line('Noop step.')
     step_data.exc_result = step_runner.run_noop(
-        step_config.name_tokens, debug_log)
+        step_data.name_tokens, debug_log)
     _set_initial_status(step_data.presentation, step_config,
                         step_data.exc_result)
     return None
@@ -590,8 +612,8 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
 
     debug_log.write_line('Rendering input placeholders')
     rendered_step = _render_config(
-        debug_log, step_config, step_runner, step_stream, base_environ,
-        start_dir)
+        debug_log, step_data.name_tokens, step_config, step_runner, step_stream,
+        base_environ, start_dir)
     if not rendered_step:
       step_data.exc_result = ExecutionResult(had_exception=True)
     else:
@@ -599,7 +621,7 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
 
       debug_log.write_line('Executing step')
       step_data.exc_result = step_runner.run(
-          step_config.name_tokens, debug_log, rendered_step)
+          step_data.name_tokens, debug_log, rendered_step)
       if step_data.exc_result.retcode is not None:
         # Windows error codes such as 0xC0000005 and 0xC0000409 are much
         # easier to recognize and differentiate in hex. In order to print them
@@ -620,8 +642,8 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
 
     if rendered_step:
       debug_log.write_line('Resolving output placeholders')
-      _resolve_output_placeholders(debug_log, step_config, step_data,
-                                   step_runner)
+      _resolve_output_placeholders(
+          debug_log, step_data.name_tokens, step_config, step_data, step_runner)
   except:   # pylint: disable=bare-except
     caught = sys.exc_info()
     debug_log.write_line('Unhandled exception:')
