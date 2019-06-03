@@ -13,6 +13,7 @@ import traceback
 from contextlib import contextmanager
 
 import attr
+import gevent
 
 from PB.recipe_engine import result as result_pb2
 
@@ -61,18 +62,24 @@ class RecipeEngine(object):
         recipe_api.StepClient(self),
     )}
 
-    # A stack of _ActiveStep objects, holding the most recently executed step at
-    # each nest level (objects deeper in the stack have lower nest levels).
-    # When we pop from this stack, we close the corresponding step stream.
+    # A greenlet-local store which holds a stack of _ActiveStep objects, holding
+    # the most recently executed step at each nest level (objects deeper in the
+    # stack have lower nest levels). When we pop from this stack, we close the
+    # corresponding step stream.
     #
     # NOTE: Due to the way that steps are run in the recipe engine, only the tip
     # of this stack may be a 'real' step; i.e. anything other than the tip of
     # the stack is a parent nesting step.
-    self._step_stack = []
+    self._step_stack_storage = gevent.local.local()
+    self._step_stack_storage.steps = []
 
     # Map of namespace_tuple -> {step_name: int} to deduplicate `step_name`s
     # within a namespace.
     self._step_names = {}
+
+  @property
+  def _step_stack(self):
+    return self._step_stack_storage.steps
 
   @property
   def properties(self):
