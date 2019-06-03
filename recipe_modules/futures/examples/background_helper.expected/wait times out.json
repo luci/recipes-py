@@ -1,0 +1,46 @@
+[
+  {
+    "cmd": [],
+    "name": "helper",
+    "~followup_annotations": [
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::futures:examples/background_helper].resources/helper.py",
+      "[CLEANUP]/pid_file"
+    ],
+    "name": "helper.helper loop",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::futures:examples/background_helper].resources/wait_for_helper.py",
+      "[CLEANUP]/pid_file",
+      "/path/to/tmp/json"
+    ],
+    "name": "helper.wait for it",
+    "timeout": 30,
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@json.output (invalid)@@@",
+      "@@@STEP_LOG_LINE@json.output (exception)@No JSON object could be decoded@@@",
+      "@@@STEP_LOG_END@json.output (exception)@@@",
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "failure": {
+      "failure": {},
+      "humanReason": "timed out while waiting for helper"
+    },
+    "name": "$result"
+  }
+]

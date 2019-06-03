@@ -28,7 +28,7 @@ from .exceptions import RecipeUsageError, CrashEngine
 from .step_runner import Step
 
 
-@attr.s(frozen=True, slots=True)
+@attr.s(frozen=True, slots=True, repr=False)
 class _ActiveStep(object):
   """The object type that we keep in RecipeEngine._step_stack."""
   step_data = attr.ib()    # type: StepData
@@ -36,11 +36,13 @@ class _ActiveStep(object):
   is_parent = attr.ib()    # type: bool
 
   children_steps = attr.ib(factory=list)  # type: List[StepData]
+  greenlets = attr.ib(factory=list)       # type: List[gevent.Greenlet]
 
   def close(self):
     """If step_data is set, finalizes its StepPresentation with
     self.step_stream, then closes self.step_stream.
     """
+    gevent.wait(self.greenlets)
     if self.step_data:
       self.step_data.presentation.finalize(self.step_stream)
       self.step_stream.close()
@@ -67,6 +69,9 @@ class RecipeEngine(object):
     self._environ = environ.copy()
     self._start_dir = start_dir
     self._clients = {client.IDENT: client for client in (
+        recipe_api.ConcurrencyClient(
+            stream_engine.supports_concurrency,
+            self.spawn_greenlet),
         recipe_api.PathsClient(start_dir),
         recipe_api.PropertiesClient(properties),
         recipe_api.SourceManifestClient(self, properties),
@@ -154,6 +159,27 @@ class RecipeEngine(object):
     May be None if the _ActiveStep is the root _ActiveStep.
     """
     return self._step_stack[-1].step_data
+
+  def spawn_greenlet(self, func, args, kwargs, greenlet_name):
+    """Returns a gevent.Greenlet which has been initialized with the correct
+    greenlet-local-storage state.
+
+    Args:
+      * greenlet_name (str|None) - If non-None, assign this to the greenlet's
+        name.
+    """
+    current_step = self._step_stack[-1]
+    def _runner():
+      self._step_stack_storage.steps = [current_step]
+      try:
+        return func(*args, **kwargs)
+      finally:
+        self._close_non_parent_step()
+    ret = gevent.spawn(_runner)
+    if greenlet_name is not None:
+      ret.name = greenlet_name
+    current_step.greenlets.append(ret)
+    return ret
 
   def _record_step_name(self, name):
     """Records a step name in the current namespace.
@@ -406,7 +432,9 @@ class RecipeEngine(object):
         try:
           raw_result = recipe_obj.run_steps(api, engine)
         finally:
-          engine._close_non_parent_step()
+          # TODO(iannucci): give this more symmetry with parent_step
+          engine._close_non_parent_step()  # pylint: disable=protected-access
+          engine._step_stack[-1].close()   # pylint: disable=protected-access
 
       # TODO(iannucci): the differentiation here is a bit weird
       except recipe_api.InfraFailure as ex:

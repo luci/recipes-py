@@ -25,6 +25,10 @@ class StreamEngineInvariants(StreamEngine):
     """
     return ProductStreamEngine(cls(), other)
 
+  @property
+  def supports_concurrency(self):
+    return True
+
   class StepStream(StreamEngine.StepStream):
     def __init__(self, engine, step_name):
       super(StreamEngineInvariants.StepStream, self).__init__()

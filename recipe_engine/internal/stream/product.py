@@ -105,3 +105,9 @@ class ProductStreamEngine(StreamEngine):
   def close(self):
     self._engine_a.close()
     self._engine_b.close()
+
+  @property
+  def supports_concurrency(self):
+    return (
+      self._engine_a.supports_concurrency and
+      self._engine_b.supports_concurrency)

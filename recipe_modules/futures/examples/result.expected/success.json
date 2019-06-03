@@ -1,0 +1,15 @@
+[
+  {
+    "cmd": [
+      "something"
+    ],
+    "name": "do work"
+  },
+  {
+    "cmd": [],
+    "name": "run if success"
+  },
+  {
+    "name": "$result"
+  }
+]

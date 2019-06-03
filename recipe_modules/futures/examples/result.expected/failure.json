@@ -1,0 +1,18 @@
+[
+  {
+    "cmd": [
+      "something"
+    ],
+    "name": "do work",
+    "~followup_annotations": [
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "failure": {
+      "failure": {},
+      "humanReason": "Step('do work') (retcode: 1)"
+    },
+    "name": "$result"
+  }
+]

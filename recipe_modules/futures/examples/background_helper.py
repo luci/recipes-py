@@ -1,0 +1,104 @@
+# Copyright 2019 The LUCI Authors. All rights reserved.
+# Use of this source code is governed under the Apache License, Version 2.0
+# that can be found in the LICENSE file.
+
+from contextlib import contextmanager
+
+
+DEPS = [
+  'futures',
+  'json',
+  'path',
+  'python',
+  'raw_io',
+  'step',
+]
+
+
+HELPER_TIMEOUT = object()
+
+
+def manage_helper(api, chn):
+  with api.step.nest('helper'):
+    pid_file = api.path['cleanup'].join('pid_file')
+    helper_future = api.futures.spawn_immediate(
+        api.python, 'helper loop', api.resource('helper.py'), [pid_file],
+        __name='background process',
+    )
+    try:
+      proc_data = api.python(
+          'wait for it', api.resource('wait_for_helper.py'),
+          [pid_file, api.json.output()],
+          timeout=30,
+      ).json.output
+    except api.step.StepFailure:
+      # Probably check StepFailure to see if it had a timeout, or was just
+      # a regular failure.
+      #
+      # TODO(iannucci): Improve this to not rely on exceptions.
+      #
+      # TODO(iannucci): if/when we add 'cancel' functionality to futures API,
+      # cancel the helper_future here. The recipe engine knows its pid and so
+      # could send it a signal without having to wait for `contact helper` to
+      # succeed.
+      #
+      # helper_future.cancel()
+      chn.put(HELPER_TIMEOUT)
+      return  # pragma: no cover
+
+    chn.put(proc_data)  # or whatever data you want to expose to the user.
+
+    # Now we wait on the channel to see when to shut down.
+    chn.get()
+
+    # Again, when we add cancel functionality, we could use
+    # helper_future.cancel() here.
+    api.python(
+        'kill helper', api.resource('kill_helper.py'), [proc_data['pid']],
+    )
+
+
+@contextmanager
+def run_helper(api):
+  """Runs the background helper.
+
+  Yields control once helper is ready. Kills helper once leaving the context
+  manager.
+
+  This is an example of what your recipe module code would look like. Note that
+  we don't pass the channel to the 'user' code (i.e. RunSteps).
+  """
+  management_channel = api.futures.make_channel()
+  helper_manager = None
+  try:
+    helper_manager = api.futures.spawn(
+        manage_helper, api, management_channel, __name='background manager')
+    # block until the helper is ready.
+    if management_channel.get() is HELPER_TIMEOUT:
+      # This timed out, so the helper_manager won't be listening to
+      # management_channel any more, so null it out.
+      helper_manager = None
+      raise api.step.StepFailure('timed out while waiting for helper')
+    yield  # maybe yield some connection info, or a client object, or whatever.
+  finally:
+    if helper_manager:
+      management_channel.put(None)
+
+
+def RunSteps(api):
+  with run_helper(api):
+    api.step('do something with live helper', ['echo', 'hey'])
+
+
+def GenTests(api):
+  yield (
+    api.test('basic')
+    + api.step_data('helper.wait for it', api.json.output({
+      'pid': 12345,
+    }))
+  )
+
+  yield (
+    api.test('wait times out')
+    + api.step_data('helper.wait for it', times_out_after=100)
+  )

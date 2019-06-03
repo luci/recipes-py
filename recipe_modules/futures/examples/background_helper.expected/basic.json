@@ -1,0 +1,58 @@
+[
+  {
+    "cmd": [],
+    "name": "helper"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::futures:examples/background_helper].resources/helper.py",
+      "[CLEANUP]/pid_file"
+    ],
+    "name": "helper.helper loop",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::futures:examples/background_helper].resources/wait_for_helper.py",
+      "[CLEANUP]/pid_file",
+      "/path/to/tmp/json"
+    ],
+    "name": "helper.wait for it",
+    "timeout": 30,
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"pid\": 12345@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "hey"
+    ],
+    "name": "do something with live helper"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::futures:examples/background_helper].resources/kill_helper.py",
+      "12345"
+    ],
+    "name": "helper.kill helper",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

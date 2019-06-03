@@ -19,6 +19,10 @@ import sys
 reload(sys)
 sys.setdefaultencoding('UTF8')
 
+# Bump the recursion limit as well; because of step nesting and gevent overhead,
+# we can sometimes exceed the default.
+sys.setrecursionlimit(sys.getrecursionlimit() * 2)
+
 # Hack 2; Lookup all available codecs (crbug.com/932259).
 def _hack_lookup_codecs():
   import encodings

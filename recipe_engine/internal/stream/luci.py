@@ -5,7 +5,6 @@
 
 import json
 import logging
-import textwrap
 import traceback
 
 import attr
@@ -21,7 +20,6 @@ from ...recipe_api import InfraFailure, StepFailure
 from ...third_party import logdog
 
 from ..attr_util import attr_type
-from ..engine_step import StepConfig
 
 from . import StreamEngine
 
@@ -329,9 +327,9 @@ class LUCIStreamEngine(StreamEngine):
     assert not allow_subannotations, (
       'Subannotations not currently supported in build.proto mode'
     )
-    step_pb = self._build_proto.steps.add()
-    step_pb.name = '|'.join(name_tokens)
+    step_pb = self._build_proto.steps.add(name='|'.join(name_tokens))
     step_pb.start_time.GetCurrentTime()
+
     ret = LUCIStepStream(step_pb, self._build_proto.output.properties,
                          self._send, self._bsc)
     self._send()
@@ -341,6 +339,10 @@ class LUCIStreamEngine(StreamEngine):
     # TODO(iannucci): handle recipe return value
     self._build_stream.close()
 
+  @property
+  def supports_concurrency(self):
+    return True
+
   def handle_exception(self, exc_type, exc_val, exc_tb):
     need_tb = True
     if exc_type is None:
@@ -349,25 +351,25 @@ class LUCIStreamEngine(StreamEngine):
     elif exc_type is InfraFailure:
       self._build_proto.status = common.INFRA_FAILURE
       # TODO(iannucci): add error log stream
-      self._build_proto.output.summary_markdown = (
+      self._build_proto.summary_markdown = (
         'caught InfraFailure at top level: %r'
       ) % (exc_val,)
     # TODO(iannucci): handle timeout
     elif exc_type is StepFailure:
       self._build_proto.status = common.FAILURE
-      self._build_proto.output.summary_markdown = (
+      self._build_proto.summary_markdown = (
         'caught StepFailure at top level: %r'
       ) % (exc_val,)
     else:
       self._build_proto.status = common.INFRA_FAILURE
-      self._build_proto.output.summary_markdown = (
+      self._build_proto.summary_markdown = (
         'caught Exception at top level: %r'
       ) % (exc_val,)
 
     if need_tb:
-      self._build_proto.output.summary_markdown += '\n\n'
+      self._build_proto.summary_markdown += '\n\n'
       for line in traceback.format_exception(exc_type, exc_val, exc_tb):
-        self._build_proto.output.summary_markdown += '    ' + line
+        self._build_proto.summary_markdown += '    ' + line
 
     self._send()
 

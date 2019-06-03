@@ -124,6 +124,12 @@ class StreamEngine(object):
   def close(self):
     pass
 
+  @property
+  def supports_concurrency(self):
+    """Return True iff this StreamEngine implementation supports concurrent
+    step execution."""
+    raise NotImplementedError()
+
   # TODO(iannucci): make handle_exception unnecessary
   def handle_exception(self, exc_type, exc_val, exc_tb):
     pass

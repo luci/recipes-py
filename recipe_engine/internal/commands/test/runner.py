@@ -313,8 +313,13 @@ def _cover_all_imports(main_repo):
 
 # administrative stuff (main, pipe handling, etc.)
 
+_FUTURES_MODULE = ('recipe_engine', 'futures')
 
 def main(recipe_deps, cov_file, is_train, cover_module_imports):
+  # TODO(iannucci): Route and log greenlet exception information somewhere
+  # useful as part of each test case.
+  gevent.get_hub().exception_stream = None
+
   main_repo = recipe_deps.main_repo
 
   cov_data = coverage.CoverageData()
@@ -340,9 +345,34 @@ def main(recipe_deps, cov_file, is_train, cover_module_imports):
       recipe = main_repo.recipes[test_desc.recipe_name]
 
       if cov_file:
+        # We have to start coverage now because we want to cover the importation
+        # of the covered recipe and/or covered recipe modules.
         cov = coverage.Coverage(config_file=False,
                                 include=recipe.coverage_patterns)
-        cov.start()
+        cov.start()  # to cover execfile of recipe/module.__init__
+
+        # However, to accurately track coverage when using gevent greenlets, we
+        # need to tell Coverage about this. If the recipe (or the module it
+        # covers) uses futures directly, stop the coverage so far and restart it
+        # with 'concurrency="gevent"'.
+        #
+        # TODO(iannucci): We may need to upgrade in the future this to
+        # 'transitively uses the futures module' instead of 'directly uses the
+        # futures module'.
+        uses_gevent = (
+          _FUTURES_MODULE in recipe.normalized_DEPS.itervalues()
+        )
+        if not uses_gevent and recipe.module:
+          uses_gevent = (
+            _FUTURES_MODULE in recipe.module.normalized_DEPS.itervalues()
+          )
+        if uses_gevent:
+          cov.stop()
+          cov_data.update(cov.get_data())
+          cov = coverage.Coverage(
+              config_file=False, include=recipe.coverage_patterns,
+              concurrency='gevent')
+          cov.start()
       test_data = _get_test_data(test_data_cache, recipe, test_desc.test_name)
       try:
         _run_test(path_cleaner, test_result, recipe_deps, test_desc, test_data,

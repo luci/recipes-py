@@ -104,6 +104,10 @@ class SimulationStreamEngine(StreamEngine):
   def annotations(self):
     return self._annotations_map
 
+  @property
+  def supports_concurrency(self):
+    return True
+
   def new_step_stream(self, name_tokens, allow_subannotations):
     del allow_subannotations
 

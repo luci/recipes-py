@@ -15,6 +15,8 @@ import types
 
 from functools import wraps
 
+import attr
+
 from .internal import engine_step
 from .recipe_test_api import DisabledTestData, ModuleTestData
 from .third_party.logdog import streamname
@@ -335,6 +337,17 @@ class SourceManifestClient(object):
       path = self._logdog_client.get_stream_path(logdog_name)
       self._engine.active_step.step_stream.set_manifest_link(
         name, sha256, 'logdog://%s/%s/%s' % (host, project, path))
+
+
+@attr.s(frozen=True, slots=True)
+class ConcurrencyClient(object):
+  IDENT = 'concurrency'
+
+  supports_concurrency = attr.ib()  # type: bool
+  _spawn_impl = attr.ib()           # type: f(func, args, kwargs) -> Greenlet
+
+  def spawn(self, func, args, kwargs, greenlet_name):
+    return self._spawn_impl(func, args, kwargs, greenlet_name)
 
 
 class StepFailure(Exception):
