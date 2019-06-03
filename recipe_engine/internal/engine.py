@@ -160,6 +160,17 @@ class RecipeEngine(object):
     """
     return self._step_stack[-1].step_data
 
+  def set_manifest_link(self, name, sha256, url):
+    """Sets 'manifest_link' on the currently active step.
+
+    DEPRECATED: re-invent manifest link with build.proto.
+
+    Raises ValueError if there is no current step.
+    """
+    if not self.active_step:
+      raise ValueError('No active step')
+    self._step_stack[-1].step_stream.set_manifest_link(name, sha256, url)
+
   def spawn_greenlet(self, func, args, kwargs, greenlet_name):
     """Returns a gevent.Greenlet which has been initialized with the correct
     greenlet-local-storage state.

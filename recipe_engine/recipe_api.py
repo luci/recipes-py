@@ -335,8 +335,8 @@ class SourceManifestClient(object):
       host = self._logdog_client.coordinator_host
       project = self._logdog_client.project
       path = self._logdog_client.get_stream_path(logdog_name)
-      self._engine.active_step.step_stream.set_manifest_link(
-        name, sha256, 'logdog://%s/%s/%s' % (host, project, path))
+      self._engine.set_manifest_link(
+          name, sha256, 'logdog://%s/%s/%s' % (host, project, path))
 
 
 @attr.s(frozen=True, slots=True)
