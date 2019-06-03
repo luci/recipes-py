@@ -30,9 +30,19 @@ from .step_runner import Step
 @attr.s(frozen=True, slots=True)
 class _ActiveStep(object):
   """The object type that we keep in RecipeEngine._step_stack."""
-  step_result = attr.ib()  # type: StepData
+  step_data = attr.ib()    # type: StepData
   step_stream = attr.ib()  # type: StepStream
   is_parent = attr.ib()    # type: bool
+
+  children_steps = attr.ib(factory=list)  # type: List[StepData]
+
+  def close(self):
+    """If step_data is set, finalizes its StepPresentation with
+    self.step_stream, then closes self.step_stream.
+    """
+    if self.step_data:
+      self.step_data.presentation.finalize(self.step_stream)
+      self.step_stream.close()
 
 
 class RecipeEngine(object):
@@ -71,7 +81,9 @@ class RecipeEngine(object):
     # of this stack may be a 'real' step; i.e. anything other than the tip of
     # the stack is a parent nesting step.
     self._step_stack_storage = gevent.local.local()
-    self._step_stack_storage.steps = []
+    self._step_stack_storage.steps = [
+      _ActiveStep(None, None, True)  # "root" parent
+    ]
 
     # Map of namespace_tuple -> {step_name: int} to deduplicate `step_name`s
     # within a namespace.
@@ -125,26 +137,22 @@ class RecipeEngine(object):
   def _close_non_parent_step(self):
     """Closes the tip of the _step_stack if it's not a parent nesting step."""
     try:
-      if not self._step_stack:
-        return
-
       tip_step = self._step_stack[-1]
       if tip_step.is_parent:
         return
 
-      self._step_stack.pop()
-      tip_step.step_result.presentation.finalize(tip_step.step_stream)
-      tip_step.step_stream.close()
+      self._step_stack.pop().close()
     except:
       _log_crash(self._stream_engine, "_close_non_parent_step()")
       raise CrashEngine("Closing non-parent step failed.")
 
   @property
   def active_step(self):
-    """Returns the current _ActiveStep.step_result (if there is one) or None."""
-    if self._step_stack:
-      return self._step_stack[-1].step_result
-    return None
+    """Returns the current _ActiveStep.step_data.
+
+    May be None if the _ActiveStep is the root _ActiveStep.
+    """
+    return self._step_stack[-1].step_data
 
   def _record_step_name(self, name):
     """Records a step name in the current namespace.
@@ -193,28 +201,25 @@ class RecipeEngine(object):
       step_data = StepData(name_tokens, ExecutionResult(retcode=0))
       # TODO(iannucci): Use '|' instead of '.'
       presentation = StepPresentation('.'.join(name_tokens))
-      # TODO(iannucci): Don't use StepData for presentation-only steps (define
-      # a different datatype). This is odd because 'StepData.children' is only
-      # defined here.
-      step_data.children = []
       step_data.presentation = presentation
       step_data.finalize()
-      if self._step_stack:
-        self._step_stack[-1].step_result.children.append(step_data)
-      step_stream = self._stream_engine.new_step_stream(name_tokens, False)
-      self._step_stack.append(_ActiveStep(step_data, step_stream, True))
+      self._step_stack[-1].children_steps.append(step_data)
+
+      active_step = _ActiveStep(
+          step_data,
+          self._stream_engine.new_step_stream(name_tokens, False),
+          True)
+      self._step_stack.append(active_step)
     except:
       _log_crash(self._stream_engine, "parent_step(%r)" % (name_tokens))
       raise CrashEngine("Prepping parent step %r failed." % (name_tokens))
 
     try:
-      yield presentation, step_data.children
+      yield presentation, active_step.children_steps
     finally:
       try:
         self._close_non_parent_step()
-        presentation.finalize(step_stream)
-        step_stream.close()
-        self._step_stack.pop()
+        self._step_stack.pop().close()
       except:
         _log_crash(self._stream_engine, "parent_step.close(%r)" % (name_tokens))
         raise CrashEngine("Closing parent step %r failed." % (name_tokens))
@@ -253,8 +258,7 @@ class RecipeEngine(object):
     caught = None
     try:
       # If there's a parent step on the stack, add `ret` to its children.
-      if self._step_stack:
-        self._step_stack[-1].step_result.children.append(ret)
+      self._step_stack[-1].children_steps.append(ret)
 
       # initialize presentation to show an exception.
       ret.presentation = StepPresentation(step_config.name)
