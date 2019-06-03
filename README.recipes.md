@@ -2156,9 +2156,9 @@ Args:
 Step is the primary API for running steps (external programs, scripts,
 etc.).
 
-#### **class [StepApi](/recipe_modules/step/api.py#20)([RecipeApiPlain](/recipe_engine/recipe_api.py#718)):**
+#### **class [StepApi](/recipe_modules/step/api.py#23)([RecipeApiPlain](/recipe_engine/recipe_api.py#718)):**
 
-&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#51)(self):**
+&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#88)(self):**
 
 InfraFailure is a subclass of StepFailure, and will translate to a purple
 build.
@@ -2166,7 +2166,7 @@ build.
 This exception is raised from steps which are marked as `infra_step`s when
 they fail.
 
-&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#33)(self):**
+&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#70)(self):**
 
 This is the base Exception class for all step failures.
 
@@ -2176,12 +2176,12 @@ Usage:
   * `raise api.StepFailure("some reason")`
   * `except api.StepFailure:`
 
-&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#45)(self):**
+&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#82)(self):**
 
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#214)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, allow_subannotations=None, trigger_specs=None, stdout=None, stderr=None, stdin=None, step_test_data=None):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#251)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, allow_subannotations=None, trigger_specs=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cpu=CPU.MIXED_IO_CPU):**
 
 Returns a step dictionary which is compatible with annotator.py.
 
@@ -2215,10 +2215,18 @@ Args:
       returns a StepTestData object that will be used as the default test
       data for this step. The recipe author can override/augment this object
       in the GenTests function.
+  * cpu (None|int|step.CPU) - The estimated cost of this step in millicores.
+    The recipe_engine will prevent more than the machine's millicore count
+    worth of steps from running at once (i.e. steps will wait until there's
+    enough core resource available). Waiting suprocesses are unblocked in
+    capacitiy-available order. This means it's possible for pending tasks
+    with large cpu requirements to 'starve' temporarially while other
+    smaller cost tasks run in parallel. Equal-weight tasks will start in
+    FIFO order. REMOTE_IO_BOUND (0 cost) steps will NEVER wait.
 
 Returns a `step_data.StepData` for the running step.
 
-&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#61)(self):**
+&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#98)(self):**
 
 The currently active (open) result from the last step that was run. This
 is a `step_data.StepData` object.
@@ -2249,11 +2257,11 @@ finally:
     api.step.active_result.presentation.step_text = new_step_text
 ```
 
-&emsp; **@property**<br>&mdash; **def [defer\_results](/recipe_modules/step/api.py#209)(self):**
+&emsp; **@property**<br>&mdash; **def [defer\_results](/recipe_modules/step/api.py#246)(self):**
 
 See recipe_api.py for docs. 
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#118)(self, name, status='worst'):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#155)(self, name, status='worst'):**
 
 Nest allows you to nest steps hierarchically on the build UI.
 
@@ -2900,11 +2908,11 @@ Tests that step_data can accept multiple specs at once.
 
 [DEPS](/recipe_modules/futures/examples/background_helper.py#8): [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/background_helper.py#88)(api):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/background_helper.py#91)(api):**
 
 &mdash; **def [manage\_helper](/recipe_modules/futures/examples/background_helper.py#21)(api, chn):**
 
-&emsp; **@contextmanager**<br>&mdash; **def [run\_helper](/recipe_modules/futures/examples/background_helper.py#61)(api):**
+&emsp; **@contextmanager**<br>&mdash; **def [run\_helper](/recipe_modules/futures/examples/background_helper.py#64)(api):**
 
 Runs the background helper.
 
@@ -2924,9 +2932,9 @@ we don't pass the channel to the 'user' code (i.e. RunSteps).
 &mdash; **def [RunSteps](/recipe_modules/futures/examples/extreme_namespaces.py#22)(api):**
 ### *recipes* / [futures:examples/fan\_out\_in](/recipe_modules/futures/examples/fan_out_in.py)
 
-[DEPS](/recipe_modules/futures/examples/fan_out_in.py#5): [futures](#recipe_modules-futures), [python](#recipe_modules-python)
+[DEPS](/recipe_modules/futures/examples/fan_out_in.py#5): [futures](#recipe_modules-futures), [python](#recipe_modules-python), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/fan_out_in.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/fan_out_in.py#12)(api):**
 ### *recipes* / [futures:examples/lazy\_fan\_out\_in](/recipe_modules/futures/examples/lazy_fan_out_in.py)
 
 [DEPS](/recipe_modules/futures/examples/lazy_fan_out_in.py#5): [futures](#recipe_modules-futures), [python](#recipe_modules-python), [step](#recipe_modules-step)

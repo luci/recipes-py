@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 import logging
+import multiprocessing
 import os
 import sys
 
@@ -82,6 +83,7 @@ def main(args):
   with StreamEngineInvariants.wrap(run_build_engine) as stream_engine:
     result, _ = RecipeEngine.run_steps(
         args.recipe_deps, properties, stream_engine,
-        SubprocessStepRunner(), os.environ, os.getcwd())
+        SubprocessStepRunner(), os.environ, os.getcwd(),
+        multiprocessing.cpu_count())
 
   return 1 if not result or result.HasField("failure") else 0

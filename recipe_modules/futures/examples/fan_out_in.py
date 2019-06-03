@@ -5,6 +5,7 @@
 DEPS = [
   'futures',
   'python',
+  'step',
 ]
 
 
@@ -19,7 +20,8 @@ def RunSteps(api):
           for x in xrange(30):
             print "Hi! %s" % x
             time.sleep(1)
-        '''
+        ''',
+        cpu=api.step.CPU.CPU_BOUND.value * 2,
     ))
 
   assert len(api.futures.wait(futures)) == 10, "All done"

@@ -26,6 +26,7 @@ from ..types import StepPresentation, thaw
 from .engine_env import merge_envs
 from .exceptions import RecipeUsageError, CrashEngine
 from .step_runner import Step
+from .cpu_semaphore import CPUResource
 
 
 @attr.s(frozen=True, slots=True, repr=False)
@@ -60,7 +61,7 @@ class RecipeEngine(object):
   """
 
   def __init__(self, recipe_deps, step_runner, stream_engine, properties,
-               environ, start_dir):
+               environ, start_dir, num_cores):
     """See run_steps() for parameter meanings."""
     self._recipe_deps = recipe_deps
     self._step_runner = step_runner
@@ -77,6 +78,8 @@ class RecipeEngine(object):
         recipe_api.SourceManifestClient(self, properties),
         recipe_api.StepClient(self),
     )}
+
+    self._resource = CPUResource(num_cores * 1000)
 
     # A greenlet-local store which holds a stack of _ActiveStep objects, holding
     # the most recently executed step at each nest level (objects deeper in the
@@ -306,7 +309,7 @@ class RecipeEngine(object):
 
       # _run_step should never raise an exception
       caught = _run_step(
-          debug_log, ret, step_stream, self._step_runner,
+          debug_log, ret, step_stream, self._step_runner, self._resource,
           step_config, self._environ, self._start_dir)
 
       # TODO(iannucci): remove this trigger specs crap
@@ -378,8 +381,8 @@ class RecipeEngine(object):
 
   @classmethod
   def run_steps(cls, recipe_deps, properties, stream_engine, step_runner,
-                environ, cwd, emit_initial_properties=False, test_data=None,
-                skip_setup_build=False):
+                environ, cwd, num_cores, emit_initial_properties=False,
+                test_data=None, skip_setup_build=False):
     """Runs a recipe (given by the 'recipe' property). Used by all
     implementations including the simulator.
 
@@ -390,6 +393,7 @@ class RecipeEngine(object):
       * stream_engine: the StreamEngine to use to create individual step
         streams.
       * step_runner: The StepRunner to use to 'actually run' the steps.
+      * num_cores (int): The number of CPU cores to assume the machine has.
       * emit_initial_properties (bool): If True, write the initial recipe engine
           properties in the "setup_build" step.
 
@@ -416,7 +420,8 @@ class RecipeEngine(object):
       _ = recipe_obj.global_symbols
 
       engine = cls(
-          recipe_deps, step_runner, stream_engine, properties, environ, cwd)
+          recipe_deps, step_runner, stream_engine, properties, environ, cwd,
+          num_cores)
       api = recipe_obj.mk_api(engine, test_data)
       engine.initialize_path_client_HACK(api)
     except (RecipeUsageError, ImportError, AssertionError) as ex:
@@ -621,7 +626,7 @@ def _render_config(debug, name_tokens, step_config, step_runner, step_stream,
 
 
 def _run_step(debug_log, step_data, step_stream, step_runner,
-              step_config, base_environ, start_dir):
+              resource, step_config, base_environ, start_dir):
   """Does all the logic to actually execute the step.
 
   This will:
@@ -637,6 +642,7 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
     * step_stream (StepStream) - The StepStream for the step we're about to
       execute.
     * step_runner (StepRunner)
+    * resource (CPUResource)
     * step_config (StepConfig) - The step to run.
     * base_environ (dict|FakeEnviron) - The 'base' environment to merge the
       step_config's environmental parameters into.
@@ -671,8 +677,12 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
       _print_step(exc_details, rendered_step)
 
       debug_log.write_line('Executing step')
-      step_data.exc_result = step_runner.run(
-          step_data.name_tokens, debug_log, rendered_step)
+      def _blocked_on(amount):
+        debug_log.write_line(
+            '  waiting for %d millicores to be available' % amount)
+      with resource.cpu(step_config.cpu, _blocked_on):
+        step_data.exc_result = step_runner.run(
+            step_data.name_tokens, debug_log, rendered_step)
       if step_data.exc_result.retcode is not None:
         # Windows error codes such as 0xC0000005 and 0xC0000409 are much
         # easier to recognize and differentiate in hex. In order to print them

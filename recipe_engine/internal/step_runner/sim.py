@@ -80,6 +80,9 @@ class SimulationStepRunner(StepRunner):
       'allow_subannotations': step_config.allow_subannotations,
     }
 
+    if step_config.cpu != 500: # MIXED_IO_CPU
+      self._step_precursor_data[dot_name]['cpu'] = step_config.cpu
+
   def placeholder(self, name_tokens, placeholder):
     dot_name = '.'.join(name_tokens)
     # TODO(iannucci): this is janky; simplify all the placeholder naming stuff.
@@ -120,6 +123,8 @@ class SimulationStepRunner(StepRunner):
     for handle_name in ('stdout', 'stderr'):
       step_obj.pop(handle_name, None)
     precursor = self._step_precursor_data[dot_name]
+    if 'cpu' in precursor:
+      step_obj['cpu'] = precursor['cpu']
     if precursor['env_prefixes']:
       step_obj['env_prefixes'] = precursor['env_prefixes']
     if precursor['env_suffixes']:

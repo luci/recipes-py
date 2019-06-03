@@ -23,6 +23,7 @@ def manage_helper(api, chn):
     pid_file = api.path['cleanup'].join('pid_file')
     helper_future = api.futures.spawn_immediate(
         api.python, 'helper loop', api.resource('helper.py'), [pid_file],
+        cpu=0, # always run this background thread.
         __name='background process',
     )
     try:
@@ -30,6 +31,7 @@ def manage_helper(api, chn):
           'wait for it', api.resource('wait_for_helper.py'),
           [pid_file, api.json.output()],
           timeout=30,
+          cpu=0, # always run the checker.
       ).json.output
     except api.step.StepFailure:
       # Probably check StepFailure to see if it had a timeout, or was just
@@ -55,6 +57,7 @@ def manage_helper(api, chn):
     # helper_future.cancel() here.
     api.python(
         'kill helper', api.resource('kill_helper.py'), [proc_data['pid']],
+        cpu=0,
     )
 
 

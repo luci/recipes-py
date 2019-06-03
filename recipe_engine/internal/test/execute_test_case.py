@@ -45,7 +45,7 @@ def execute_test_case(recipe_deps, recipe_name, test_data):
 
   result, uncaught_exception = RecipeEngine.run_steps(
       recipe_deps, props, stream_engine, step_runner, environ, '',
-      test_data=test_data, skip_setup_build=True)
+      num_cores=8, test_data=test_data, skip_setup_build=True)
 
   return result, step_runner.export_steps_ran(), simulator.annotations, \
       uncaught_exception

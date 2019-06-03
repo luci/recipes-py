@@ -5,6 +5,7 @@
 """Entry point for running recipes for real (not in testing mode)."""
 
 import logging
+import multiprocessing
 import os
 import sys
 
@@ -63,6 +64,7 @@ def main(args):
       StreamEngineInvariants.wrap(stream_engine),
       SubprocessStepRunner(),
       os.environ, os.path.abspath(workdir),
+      multiprocessing.cpu_count(),
       emit_initial_properties=emit_initial_properties)
 
   if args.output_result_json:

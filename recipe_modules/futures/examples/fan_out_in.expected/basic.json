@@ -5,6 +5,7 @@
       "-u",
       "\nimport time\nfor x in xrange(30):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
     ],
+    "cpu": 2000,
     "name": "sleep loop",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -21,6 +22,7 @@
       "-u",
       "\nimport time\nfor x in xrange(30):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
     ],
+    "cpu": 2000,
     "name": "sleep loop (2)",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -37,6 +39,7 @@
       "-u",
       "\nimport time\nfor x in xrange(30):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
     ],
+    "cpu": 2000,
     "name": "sleep loop (3)",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -53,6 +56,7 @@
       "-u",
       "\nimport time\nfor x in xrange(30):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
     ],
+    "cpu": 2000,
     "name": "sleep loop (4)",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -69,6 +73,7 @@
       "-u",
       "\nimport time\nfor x in xrange(30):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
     ],
+    "cpu": 2000,
     "name": "sleep loop (5)",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -85,6 +90,7 @@
       "-u",
       "\nimport time\nfor x in xrange(30):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
     ],
+    "cpu": 2000,
     "name": "sleep loop (6)",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -101,6 +107,7 @@
       "-u",
       "\nimport time\nfor x in xrange(30):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
     ],
+    "cpu": 2000,
     "name": "sleep loop (7)",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -117,6 +124,7 @@
       "-u",
       "\nimport time\nfor x in xrange(30):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
     ],
+    "cpu": 2000,
     "name": "sleep loop (8)",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -133,6 +141,7 @@
       "-u",
       "\nimport time\nfor x in xrange(30):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
     ],
+    "cpu": 2000,
     "name": "sleep loop (9)",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
@@ -149,6 +158,7 @@
       "-u",
       "\nimport time\nfor x in xrange(30):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
     ],
+    "cpu": 2000,
     "name": "sleep loop (10)",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",

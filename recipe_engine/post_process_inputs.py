@@ -95,6 +95,9 @@ class Step(object):
   # An empy string is equivalent to start_dir
   cwd = attr.ib(default='')
 
+  # The CPU cost of this step in millicores.
+  cpu = attr.ib(default=500)
+
   # See //recipe_modules/context/api.py for information on the precise meaning
   # of env, env_prefixes and env_suffixes
   # env will be the env value for the step, a dictionary mapping strings

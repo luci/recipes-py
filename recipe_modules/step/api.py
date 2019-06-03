@@ -8,17 +8,19 @@ etc.)."""
 import contextlib
 import sys
 import types
+import multiprocessing
+
+import enum
 
 from recipe_engine import recipe_api
 from recipe_engine.config_types import Path
 from recipe_engine.types import StepPresentation
-from recipe_engine.util import Placeholder
+from recipe_engine.util import Placeholder, sentinel
 
 
 # Inherit from RecipeApiPlain because the only thing which is a step is
 # run_from_dict()
 class StepApi(recipe_api.RecipeApiPlain):
-
   step_client = recipe_api.RequireClient('step')
 
   def __init__(self, step_properties, **kwargs):
@@ -29,6 +31,41 @@ class StepApi(recipe_api.RecipeApiPlain):
   FAILURE = 'FAILURE'
   SUCCESS = 'SUCCESS'
   WARNING = 'WARNING'
+
+  class CPU(enum.Enum):
+    """Step CPU cost classes.
+
+    Each of these represents a fraction of the CPU that a step is estimated to
+    occupy. When running steps concurrently, the recipe engine will prevent too
+    many steps from running.
+
+    Cost is mapped at runtime to a percentage of the CPU cores available (as
+    deteremined by multiprocessing.cpu_count()). Each CPU is cut into 1000 bits
+    ("millicores"), and each cost class maps to some amount of millicores.
+
+    You can use these enum values to obtain other amounts of cores to use, e.g.:
+      * 2 CPUs             = CPU_BOUND.value * 2
+      * 1/4 available CPUs = MAX_CPU.value / 4
+    """
+    # All cores. This step will run to the exclusion of all other steps (with
+    # the excepiton of 'zero' cost steps).
+    MAX_CPU = multiprocessing.cpu_count() * 1000
+
+    # One whole core.
+    CPU_BOUND = 1000
+
+    # Half a core. Good for processes which do a mix of CPU and local IO work.
+    MIXED_IO_CPU = 500
+
+    # Fifth of a core. Good for processes which mostly shuttle bytes around
+    # disk.
+    LOCAL_IO_BOUND = 200
+
+    # "Zero cost". This is good for processes which do almost zero CPU and local
+    # IO but instead block mostly on remote RPCs.
+    #
+    # However, you should be aware of these if they have significant RAM usage.
+    REMOTE_IO_BOUND = 0
 
   @property
   def StepFailure(self):
@@ -215,7 +252,7 @@ class StepApi(recipe_api.RecipeApiPlain):
   def __call__(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(),
                timeout=None, allow_subannotations=None,
                trigger_specs=None, stdout=None, stderr=None, stdin=None,
-               step_test_data=None):
+               step_test_data=None, cpu=CPU.MIXED_IO_CPU):
     """Returns a step dictionary which is compatible with annotator.py.
 
     Args:
@@ -248,6 +285,14 @@ class StepApi(recipe_api.RecipeApiPlain):
           returns a StepTestData object that will be used as the default test
           data for this step. The recipe author can override/augment this object
           in the GenTests function.
+      * cpu (None|int|step.CPU) - The estimated cost of this step in millicores.
+        The recipe_engine will prevent more than the machine's millicore count
+        worth of steps from running at once (i.e. steps will wait until there's
+        enough core resource available). Waiting suprocesses are unblocked in
+        capacitiy-available order. This means it's possible for pending tasks
+        with large cpu requirements to 'starve' temporarially while other
+        smaller cost tasks run in parallel. Equal-weight tasks will start in
+        FIFO order. REMOTE_IO_BOUND (0 cost) steps will NEVER wait.
 
     Returns a `step_data.StepData` for the running step.
     """
@@ -258,6 +303,11 @@ class StepApi(recipe_api.RecipeApiPlain):
         if not isinstance(x, (int, long, basestring, Path, Placeholder)):
           raise AssertionError('Type %s is not permitted. '
                                'cmd is %r' % (type(x), cmd))
+
+    if isinstance(cpu, self.CPU):
+      cpu = cpu.value
+    assert isinstance(cpu, int), (
+      'cpu must be a CPU class or an int, got %r' % (cpu,))
 
     cwd = self.m.context.cwd
     if cwd and cwd == self.m.path['start_dir']:
@@ -274,6 +324,7 @@ class StepApi(recipe_api.RecipeApiPlain):
     return self.step_client.run_step(self.step_client.StepConfig(
         name=name,
         cmd=cmd or (),
+        cpu=cpu,
         cwd=cwd,
         env=self.m.context.env,
         env_prefixes=self.step_client.EnvAffix(

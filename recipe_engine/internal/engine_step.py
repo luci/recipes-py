@@ -103,6 +103,13 @@ class StepConfig(object):
       default=None,
       validator=attr_type((str, type(None))))
 
+  # Compute Units
+  #
+  # The number of millicores this step is expected to consume. Used to help
+  # concurrent processes cooperate with each other to avoid running too many CPU
+  # intense tasks simultaneously.
+  cpu = attr.ib(default=500, validator=attr_type(int))
+
   # Overrides for environment variables
   #
   # Each value is % formatted with the entire existing os.environ. A value of
@@ -245,16 +252,16 @@ class StepConfig(object):
   ))
 
   _RENDER_BLACKLIST=frozenset((
-    'ok_ret',
-    'step_test_data',
     'env_prefixes',
     'env_suffixes',
+    'ok_ret',
+    'step_test_data',
     'trigger_specs',
   ))
 
   def _asdict(self):
     ret = thaw(attr.asdict(self, filter=(lambda attr, val: (
-      (val or (attr.name in self._RENDER_WHITELIST)) and
+      (val and val != attr.default or (attr.name in self._RENDER_WHITELIST)) and
       attr.name not in self._RENDER_BLACKLIST
     ))))
     if self.env_prefixes.mapping:

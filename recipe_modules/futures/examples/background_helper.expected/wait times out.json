@@ -13,6 +13,7 @@
       "RECIPE[recipe_engine::futures:examples/background_helper].resources/helper.py",
       "[CLEANUP]/pid_file"
     ],
+    "cpu": 0,
     "name": "helper.helper loop",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -26,6 +27,7 @@
       "[CLEANUP]/pid_file",
       "/path/to/tmp/json"
     ],
+    "cpu": 0,
     "name": "helper.wait for it",
     "timeout": 30,
     "~followup_annotations": [
