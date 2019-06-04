@@ -166,10 +166,6 @@ class StepData(object):
   # entirely.
   BOGUS_FIELDS = frozenset([
     # Written to by the 'build/chromium_swarming' module.
-    # FIXME: crbug.com/956698
-    'swarming_task',
-
-    # Written to by the 'build/chromium_swarming' module.
     # FIXME: crbug.com/956703
     'isolated_script_results',
 
