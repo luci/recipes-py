@@ -68,7 +68,7 @@ case "$(uname -s)" in
     Linux*|Darwin*)
       STREAMSERVER="unix:$WD/butler.sock";;
     *)
-      STREAMSERVER="net.pipe:\\\\.\\fake_kitchen\\butler"
+      STREAMSERVER="net.pipe:fake_kitchen\\butler"
 esac
 
 # Convert JSON -> binary PB
