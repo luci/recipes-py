@@ -225,39 +225,7 @@ class SubprocessStepRunner(StepRunner):
     gevent.wait(workers)
     debug_log.write_line('  done')
     for handle_name, handle in to_close:
-      try:
-        debug_log.write_line('closing handle %r' % handle_name)
-        with gevent.Timeout(.1):
-          handle.close()
-        debug_log.write_line('  closed!')
-
-      except gevent.Timeout:
-        # This should never happen... except on windows when the process we
-        # launched itself leaked.
-        debug_log.write_line('  LEAKED: timeout closing handle')
-        # We assume we've now leaked 2 threads; one is blocked on 'read' and the
-        # other is blocked on 'close'. Add two more threads to the pool so we do
-        # not globally block the recipe engine on subsequent steps.
-        gevent.get_hub().threadpool.maxsize += 2
-
-      except IOError as ex:
-        # TODO(iannucci): Currently this leaks handles on windows for processes
-        # like the goma compiler proxy; because of python2.7's inability to set
-        # close_fds=True and also redirect std handles, daemonized subprocesses
-        # actually inherit our handles (yuck).
-        #
-        # This is fixable on python3, but not likely to be fixable on python 2.
-        debug_log.write_line('  LEAKED: unable to close: %r' % (ex,))
-        # We assume we've now leaked 2 threads; one is blocked on 'read' and the
-        # other is blocked on 'close'. Add two more threads to the pool so we do
-        # not globally block the recipe engine on subsequent steps.
-        gevent.get_hub().threadpool.maxsize += 2
-
-      except RuntimeError:
-        # NOTE(gevent): This can happen as a race between the worker greenlet
-        # and the process ending. See gevent.subprocess.Popen.communicate, which
-        # does the same thing.
-        debug_log.write_line('  LEAKED?: race with IO worker')
+      _safe_close(debug_log, handle_name, handle)
 
     if retcode is not None:
       return ExecutionResult(retcode=proc.returncode)
@@ -287,6 +255,57 @@ def _fd_for_out(raw_val):
   if isinstance(raw_val, str):
     return open(raw_val, 'wb')
   return subprocess.PIPE
+
+
+def _safe_close(debug_log, handle_name, handle):
+  """Safely attempt to close the given handle.
+
+  Args:
+
+    * debug_log (Stream) - Stream to write debug information to about closing
+      this handle.
+    * handle_name (str) - The name of the handle (like 'stdout', 'stderr')
+    * handle (file-like-object) - The file object to call .close() on.
+
+  NOTE: On windows this may end up leaking threads for processes which spawn
+  'daemon' children that hang onto the handles we pass. In this case debug_log
+  is updated with as much detail as we know and the gevent threadpool's maxsize
+  is increased by 2 (one thread blocked on reading from the handle, and one
+  thread blocked on trying to close the handle).
+  """
+  try:
+    debug_log.write_line('closing handle %r' % handle_name)
+    with gevent.Timeout(.1):
+      handle.close()
+    debug_log.write_line('  closed!')
+
+  except gevent.Timeout:
+    # This should never happen... except on windows when the process we launched
+    # itself leaked.
+    debug_log.write_line('  LEAKED: timeout closing handle')
+    # We assume we've now leaked 2 threads; one is blocked on 'read' and the
+    # other is blocked on 'close'. Add two more threads to the pool so we do not
+    # globally block the recipe engine on subsequent steps.
+    gevent.get_hub().threadpool.maxsize += 2
+
+  except IOError as ex:
+    # TODO(iannucci): Currently this leaks handles on windows for processes like
+    # the goma compiler proxy; because of python2.7's inability to set
+    # close_fds=True and also redirect std handles, daemonized subprocesses
+    # actually inherit our handles (yuck).
+    #
+    # This is fixable on python3, but not likely to be fixable on python 2.
+    debug_log.write_line('  LEAKED: unable to close: %r' % (ex,))
+    # We assume we've now leaked 2 threads; one is blocked on 'read' and the
+    # other is blocked on 'close'. Add two more threads to the pool so we do not
+    # globally block the recipe engine on subsequent steps.
+    gevent.get_hub().threadpool.maxsize += 2
+
+  except RuntimeError:
+    # NOTE(gevent): This can happen as a race between the worker greenlet and
+    # the process ending. See gevent.subprocess.Popen.communicate, which does
+    # the same thing.
+    debug_log.write_line('  LEAKED?: race with IO worker')
 
 
 def _kill(proc, gid):
