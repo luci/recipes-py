@@ -386,6 +386,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
         priority=priority or b.infra.swarming.priority,
         experimental=b.input.experimental,
         critical=b.critical,
+        fields=self._default_field_mask(),
     )
     req.properties.update(properties or {})
 
