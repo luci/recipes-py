@@ -14,7 +14,8 @@ def RunSteps(api):
       mirror_status=True)
   api.buildbucket.collect_builds(
       [9016911228971028737, 123456789012345678], timeout=600,
-      raise_if_unsuccessful=api.properties.get('raise_if_unsuccessful', False))
+      raise_if_unsuccessful=api.properties.get('raise_if_unsuccessful', False),
+      mirror_status=True)
 
 
 def GenTests(api):

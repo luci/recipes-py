@@ -187,12 +187,10 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         step_name,
         stdout=self.m.raw_io.output_text(json.dumps(buildbucket_output)))
 
-
   def simulated_collect_output(self, builds, step_name=None):
     """Simulates a buildbucket.collect call."""
     step_name = step_name or 'buildbucket.collect'
-    res = [json_format.MessageToDict(build) for build in builds]
-    return self.step_data(step_name, self.m.json.output(res))
+    return self.simulated_get_multi(builds, step_name='%s.get' % step_name)
 
   def simulated_schedule_output(self, batch_response, step_name=None):
     """Simulates a buildbucket.schedule call."""

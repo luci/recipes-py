@@ -292,6 +292,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
           timeout=timeout,
           step_name='collect',
           raise_if_unsuccessful=raise_if_unsuccessful,
+          # Do not print links. self.schedule printed them already.
+          url_title_fn=lambda b: None,
       )
       return [build_dict[b.id] for b in builds]
 
@@ -619,6 +621,10 @@ class BuildbucketApi(recipe_api.RecipeApi):
     Returns:
       A dict {build_id: build_pb2.Build}.
     """
+    return self._get_multi(build_ids, url_title_fn, step_name)[1]
+
+  def _get_multi(self, build_ids, url_title_fn, step_name):
+    """Implements get_multi, but also returns StepResult."""
     batch_req = rpc_pb2.BatchRequest(
         requests=[
           dict(get_build=dict(id=id, fields=self._default_field_mask()))
@@ -641,7 +647,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
         ret[b.id] = b
     if has_errors:
       raise self.m.step.InfraFailure('Getting builds failed')
-    return ret
+    return step_res, ret
 
   def get(self, build_id, url_title_fn=None, step_name=None):
     """Gets a build.
@@ -664,40 +670,37 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """DEPRECATED. Use get()."""
     return self._run_buildbucket('get', [build_id], **kwargs)
 
-  def collect_build(self, build_id, mirror_status=False, **kwargs):
+  def collect_build(self, build_id, **kwargs):
     """Shorthand for `collect_builds` below, but for a single build only.
 
     Args:
     * build_id: Integer ID of the build to wait for.
-    * mirror_status: Set step status to build status.
 
     Returns:
       [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
       for the ended build.
     """
     assert isinstance(build_id, int)
-    build = self.collect_builds([build_id], **kwargs)[build_id]
-    if mirror_status:
-      self.m.step.active_result.presentation.status = {
-        common_pb2.FAILURE: self.m.step.FAILURE,
-        common_pb2.SUCCESS: self.m.step.SUCCESS,
-      }.get(build.status, self.m.step.EXCEPTION)
-    return build
+    return self.collect_builds([build_id], **kwargs)[build_id]
 
   def collect_builds(
       self, build_ids, interval=None, timeout=None, step_name=None,
-      raise_if_unsuccessful=False
+      raise_if_unsuccessful=False, url_title_fn=None,
+      mirror_status=False,
   ):
     """Waits for a set of builds to end and returns their details.
 
     Args:
-    * build_ids: List of build IDs to wait for.
-    * interval: Delay (in secs) between requests while waiting for build to end.
+    * `build_ids`: List of build IDs to wait for.
+    * `interval`: Delay (in secs) between requests while waiting for build to end.
       Defaults to 1m.
-    * timeout: Maximum time to wait for builds to end. Defaults to 1h.
-    * step_name: Custom name for the generated step.
-    * raise_if_unsuccessful: if any build being collected did not succeed, raise
+    * `timeout`: Maximum time to wait for builds to end. Defaults to 1h.
+    * `step_name`: Custom name for the generated step.
+    * `raise_if_unsuccessful`: if any build being collected did not succeed, raise
       an exception.
+    * `url_title_fn`: generates build URL title. See module docstring.
+    * `mirror_status`: mark the step as failed/infra-failed if any of the builds
+      did not succeed. Ignored if raise_if_unsuccessful is True.
 
     Returns:
       A map from integer build IDs to the corresponding
@@ -708,33 +711,38 @@ class BuildbucketApi(recipe_api.RecipeApi):
       return {}
     interval = interval or 60
     timeout = timeout or 3600
-    args = ['-json-output', self.m.json.output(), '-interval', '%ds' % interval]
-    args += build_ids
-    test_response = [
-      {'id': str(bid), 'status': 'SUCCESS'}
-      for bid in build_ids
-    ]
-    result = self._run_buildbucket(
-        name=step_name,
-        subcommand='collect',
-        args=args,
-        json_stdout=False,
-        timeout=timeout,
-        step_test_data=lambda: self.m.json.test_api.output(test_response),
-    )
-    builds = [json_format.ParseDict(build_json, build_pb2.Build())
-              for build_json in result.json.output]
-    if raise_if_unsuccessful:
-      unsuccessful_builds = sorted(b.id for b in builds
-                                   if b.status != common_pb2.SUCCESS)
-      if unsuccessful_builds:
-        self.m.step.active_result.presentation.status = self.m.step.FAILURE
-        self.m.step.active_result.presentation.logs[
-            'unsuccessful_builds'] = map(str, unsuccessful_builds)
-        raise self.m.step.InfraFailure(
-            'Triggered build(s) did not succeed, unexpectedly')
 
-    return {build.id: build for build in builds}
+    with self.m.step.nest(step_name or 'buildbucket.collect'):
+      # Wait for the builds to finish.
+      self._run_bb(
+          step_name='wait',
+          subcommand='collect',
+          args=['-interval', '%ds' % interval] + build_ids,
+      )
+
+      # Fetch build details.
+      step_res, builds = self._get_multi(
+          build_ids, url_title_fn=url_title_fn, step_name='get')
+
+      if raise_if_unsuccessful:
+        unsuccessful_builds = sorted(
+            b.id for b in builds.itervalues()
+            if b.status != common_pb2.SUCCESS
+        )
+        if unsuccessful_builds:
+          step_res.presentation.status = self.m.step.FAILURE
+          step_res.presentation.logs['unsuccessful_builds'] = map(
+              str, unsuccessful_builds)
+          raise self.m.step.InfraFailure(
+              'Triggered build(s) did not succeed, unexpectedly')
+      elif mirror_status:
+        bs = builds.values()
+        if any(b.status == common_pb2.INFRA_FAILURE for b in bs):
+          step_res.presentation.status = self.m.step.EXCEPTION
+        elif any(b.status == common_pb2.FAILURE for b in bs):
+          step_res.presentation.status = self.m.step.FAILURE
+
+      return builds
 
   # Internal.
 

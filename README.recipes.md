@@ -257,7 +257,7 @@ If it returns `None`, the link is not reported. Default link title is build id.
 
 A module for interacting with buildbucket.
 
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#840)(self):**
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#848)(self):**
 
 Returns bucket name in v1 format.
 
@@ -280,11 +280,11 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#856)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#864)(self):**
 
 DEPRECATED, use build.id instead.
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#861)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#869)(self):**
 
 DEPRECATED, use build.input instead.
 
@@ -301,7 +301,7 @@ It remains on the bot from build to build.
 See "Builder cache" in
 https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/project_config.proto
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#866)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#874)(self):**
 
 Deprecated. Use build.builder instead.
 
@@ -309,39 +309,41 @@ Deprecated. Use build.builder instead.
 
 Returns builder name. Shortcut for `.build.builder.builder`.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#608)(self, build_id, \*\*kwargs):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#610)(self, build_id, \*\*kwargs):**
 
-&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#667)(self, build_id, mirror_status=False, \*\*kwargs):**
+&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#673)(self, build_id, \*\*kwargs):**
 
 Shorthand for `collect_builds` below, but for a single build only.
 
 Args:
 * build_id: Integer ID of the build to wait for.
-* mirror_status: Set step status to build status.
 
 Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
   for the ended build.
 
-&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#687)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False):**
+&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#686)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False):**
 
 Waits for a set of builds to end and returns their details.
 
 Args:
-* build_ids: List of build IDs to wait for.
-* interval: Delay (in secs) between requests while waiting for build to end.
+* `build_ids`: List of build IDs to wait for.
+* `interval`: Delay (in secs) between requests while waiting for build to end.
   Defaults to 1m.
-* timeout: Maximum time to wait for builds to end. Defaults to 1h.
-* step_name: Custom name for the generated step.
-* raise_if_unsuccessful: if any build being collected did not succeed, raise
+* `timeout`: Maximum time to wait for builds to end. Defaults to 1h.
+* `step_name`: Custom name for the generated step.
+* `raise_if_unsuccessful`: if any build being collected did not succeed, raise
   an exception.
+* `url_title_fn`: generates build URL title. See module docstring.
+* `mirror_status`: mark the step as failed/infra-failed if any of the builds
+  did not succeed. Ignored if raise_if_unsuccessful is True.
 
 Returns:
   A map from integer build IDs to the corresponding
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   for all specified builds.
 
-&mdash; **def [get](/recipe_modules/buildbucket/api.py#646)(self, build_id, url_title_fn=None, step_name=None):**
+&mdash; **def [get](/recipe_modules/buildbucket/api.py#652)(self, build_id, url_title_fn=None, step_name=None):**
 
 Gets a build.
 
@@ -353,11 +355,11 @@ Args:
 Returns:
   A build_pb2.Build.
 
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#663)(self, build_id, \*\*kwargs):**
+&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#669)(self, build_id, \*\*kwargs):**
 
 DEPRECATED. Use get().
 
-&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#611)(self, build_ids, url_title_fn=None, step_name=None):**
+&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#613)(self, build_ids, url_title_fn=None, step_name=None):**
 
 Gets multiple builds.
 
@@ -385,11 +387,11 @@ Never returns None, but sub-fields may be empty.
 Returns True if the build is critical. Build defaults to the current one.
     
 
-&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#851)(self):**
+&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#859)(self):**
 
 DEPRECATED, use build attribute instead.
 
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#512)(self, builds, \*\*kwargs):**
+&mdash; **def [put](/recipe_modules/buildbucket/api.py#514)(self, builds, \*\*kwargs):**
 
 Puts a batch of builds.
 
@@ -425,7 +427,7 @@ Returns:
   [Builds](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   in the same order as schedule_build_requests.
 
-&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#436)(self, schedule_build_requests, url_title_fn=None, step_name=None):**
+&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#438)(self, schedule_build_requests, url_title_fn=None, step_name=None):**
 
 Schedules a batch of builds.
 
@@ -454,7 +456,7 @@ Returns:
 Raises:
   `InfraFailure` if any of the requests fail.
 
-&mdash; **def [schedule\_request](/recipe_modules/buildbucket/api.py#298)(self, builder, project=None, bucket=None, properties=None, experimental=None, gitiles_commit=None, gerrit_changes=None, tags=None, inherit_buildsets=True, dimensions=None, priority=None, critical=None):**
+&mdash; **def [schedule\_request](/recipe_modules/buildbucket/api.py#300)(self, builder, project=None, bucket=None, properties=None, experimental=None, gitiles_commit=None, gerrit_changes=None, tags=None, inherit_buildsets=True, dimensions=None, priority=None, critical=None):**
 
 Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
@@ -504,7 +506,7 @@ Args:
   See also Build.critical in
   https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto
 
-&mdash; **def [search](/recipe_modules/buildbucket/api.py#547)(self, predicate, limit=None, url_title_fn=None, step_name=None):**
+&mdash; **def [search](/recipe_modules/buildbucket/api.py#549)(self, predicate, limit=None, url_title_fn=None, step_name=None):**
 
 Searches for builds.
 
