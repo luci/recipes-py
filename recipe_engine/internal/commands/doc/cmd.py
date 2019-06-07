@@ -197,12 +197,6 @@ _property_imports = {
 }
 KNOWN_OBJECTS.update(_property_imports)
 
-_return_schema_imports = {
-  'recipe_engine.config.ReturnSchema': config.ReturnSchema,
-  'recipe_engine.config.ConfigGroupSchema': config.ConfigGroupSchema,
-}
-KNOWN_OBJECTS.update(_return_schema_imports)
-
 _util_imports = {
   'recipe_engine.types.freeze': types.freeze,
 }
@@ -490,32 +484,6 @@ def parse_func(func_ast, relpath, imports):
   return ret
 
 
-MOCK_IMPORTS_RETURN_SCHEMA = _expand_mock_imports(
-  _return_schema_imports, _config_imports)
-ALL_IMPORTS.update(MOCK_IMPORTS_RETURN_SCHEMA)
-
-
-def parse_return_schema(mod_ast, relpath):
-  """Parses a return schema from the RETURN_SCHEMA of the Python module.
-
-  Args:
-    * mod_ast (ast.Module) - The parsed Python module code.
-    * relpath (str) - The posix-style relative path which should be associated
-      with the code in mod_ast.
-
-  Returns Doc.ReturnSchema.
-  """
-  assert isinstance(mod_ast, ast.Module), type(mod_ast)
-  imports = _parse_mock_imports(mod_ast, MOCK_IMPORTS_RETURN_SCHEMA)
-  schema, lineno = _find_value_of(mod_ast, 'RETURN_SCHEMA')
-  if not schema:
-    return None
-  schema = eval(_unparse(schema), imports)
-  if not schema:
-    return None
-  return doc.Doc.ReturnSchema(relpath=relpath, lineno=lineno,
-                              schema=schema.schema_proto())
-
 
 MOCK_IMPORTS_RECIPE = _expand_mock_imports(
  _util_imports, _decorator_imports, _placeholder_imports)
@@ -546,7 +514,6 @@ def parse_recipe(recipe):
     docstring=ast.get_docstring(recipe_ast) or '',
     deps=parse_deps(recipe.repo.name, recipe_ast, relpath),
     parameters=parse_parameters(recipe_ast, relpath),
-    return_schema=parse_return_schema(recipe_ast, relpath),
     classes=classes,
     funcs=funcs,
   )

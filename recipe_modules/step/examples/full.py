@@ -13,11 +13,6 @@ DEPS = [
 ]
 
 
-RETURN_SCHEMA = config.ReturnSchema(
-  test_me=config.Single(int)
-)
-
-
 PROPERTIES = {
   'bad_return': recipe_api.Property(default=False),
   'access_invalid_data': recipe_api.Property(default=False),
@@ -29,9 +24,7 @@ PROPERTIES = {
 
 def RunSteps(api, bad_return, access_invalid_data, access_deep_invalid_data,
              assign_extra_junk, timeout):
-  if bad_return:
-    return RETURN_SCHEMA.new(test_me='this should fail')
-  elif timeout:
+  if timeout:
     # Timeout causes the recipe engine to raise an exception if your step takes
     # longer to run than you allow. Units are seconds.
     if timeout == 1:
@@ -40,7 +33,7 @@ def RunSteps(api, bad_return, access_invalid_data, access_deep_invalid_data,
       try:
         api.step('caught timeout', ['sleep', '20'], timeout=1)
       except api.step.StepFailure:
-        return RETURN_SCHEMA(test_me=4)
+        return
 
 
   # TODO(martinis) change this
@@ -136,8 +129,6 @@ def RunSteps(api, bad_return, access_invalid_data, access_deep_invalid_data,
     # Assigning extra junk to the result raises ValueError.
     result.json = "hi"
 
-  return RETURN_SCHEMA(test_me=3)
-
 
 def GenTests(api):
   yield (
@@ -201,12 +192,6 @@ def GenTests(api):
   yield (
       api.test('infra_failure') +
       api.step_data('cleanup', retcode=1)
-    )
-
-  yield (
-      api.test('bad_return') +
-      api.properties(bad_return=True) +
-      api.expect_exception('TypeError')
     )
 
   yield (

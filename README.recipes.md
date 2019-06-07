@@ -3056,7 +3056,7 @@ This file is a recipe demonstrating reading triggers of the current build.
 
 [DEPS](/recipe_modules/step/examples/full.py#7): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/step/examples/full.py#30)(api, bad_return, access_invalid_data, access_deep_invalid_data, assign_extra_junk, timeout):**
+&mdash; **def [RunSteps](/recipe_modules/step/examples/full.py#25)(api, bad_return, access_invalid_data, access_deep_invalid_data, assign_extra_junk, timeout):**
 ### *recipes* / [step:tests/active\_result](/recipe_modules/step/tests/active_result.py)
 
 [DEPS](/recipe_modules/step/tests/active_result.py#5): [step](#recipe_modules-step)

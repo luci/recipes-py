@@ -139,9 +139,6 @@
     "name": "application"
   },
   {
-    "jsonResult": {
-      "test_me": 3
-    },
     "name": "$result"
   }
 ]

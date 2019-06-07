@@ -447,6 +447,9 @@ class RecipeEngine(object):
       try:
         try:
           raw_result = recipe_obj.run_steps(api, engine)
+          # TODO(martiniss): Delete once https://crrev.com/c/1636338 has safely
+          # landed.
+          del raw_result
         finally:
           # TODO(iannucci): give this more symmetry with parent_step
           engine._close_non_parent_step()  # pylint: disable=protected-access
@@ -478,17 +481,7 @@ class RecipeEngine(object):
     if result.HasField('failure'):
       return result, None
 
-    try:
-      result.json_result = json.dumps(raw_result, sort_keys=True)
-      if raw_result is not None:
-        with stream_engine.new_step_stream(('recipe result',), False) as stream:
-          stream.set_build_property('$retval', result.json_result)
-          stream.write_split(result.json_result)
-      return result, None
-    except Exception as ex:  # pylint: disable=broad-except
-      _log_crash(stream_engine, "Serializing RunSteps retval")
-      result.failure.human_reason = 'Uncaught Exception: ' + repr(ex)
-      return result, None
+    return result, None
 
 
 def _set_initial_status(presentation, step_config, exc_result):
@@ -519,7 +512,8 @@ def _prepopulate_placeholders(step_config, step_data):
       step_data.assign_placeholder(itm, None)
 
 
-def _resolve_output_placeholders(debug, name_tokens, step_config, step_data, step_runner):
+def _resolve_output_placeholders(
+  debug, name_tokens, step_config, step_data, step_runner):
   """Takes the original (unmodified by _render_placeholders) step_config and
   invokes the '.result()' method on every placeholder. This will update
   'step_data' with the results.

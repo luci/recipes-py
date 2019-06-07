@@ -11,9 +11,6 @@
     ]
   },
   {
-    "jsonResult": {
-      "test_me": 4
-    },
     "name": "$result"
   }
 ]

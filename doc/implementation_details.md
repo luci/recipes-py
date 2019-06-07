@@ -271,11 +271,6 @@ Recipe loading is substantially simpler than loading modules. The recipe `.py`
 file is exec'd with `execfile`, and then it's PROPERTIES dict (if any) is bound
 the same way as it is for Recipe Modules.
 
-Recipes also have a `RETURN_SCHEMA` object which defines the type of data that
-this recipe returns. This is about 30% of a good idea, and hopefully I can
-replace it with protobufs before anyone reads this paragraph :).
-
-
 ### Instantiating '**api**' objects
 
 Now that we know how to load the __code__ for modules and recipes, we need to

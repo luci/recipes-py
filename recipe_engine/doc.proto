@@ -178,16 +178,6 @@ message Doc {
     map<string, Parameter> parameters = 3;
   }
 
-  // ReturnSchema is the documentation for a recipe's optional RETURN_SCHEMA
-  // block.
-  message ReturnSchema {
-    string relpath = 1;
-    int32 lineno = 2;
-
-    // The schema defined in this ReturnSchema.
-    Schema schema = 3;
-  }
-
   // Documentation for a regular python class.
   message Class {
     string name = 1;
@@ -250,6 +240,7 @@ message Doc {
 
   // Documentation for a recipe.
   message Recipe {
+    reserved  6; // ReturnSchema, was removed
     // the name of this recipe within this repo (e.g. 'foo')
     string name = 1;
     string relpath = 2;
@@ -262,9 +253,6 @@ message Doc {
     //
     // NOTE: these are currently called PROPERTIES, soon to be renamed.
     Parameters parameters = 5;
-
-    // the documentation for the RETURN_SCHEMA of this recipe.
-    ReturnSchema return_schema = 6;
 
     // A mapping of visible class names to class documentation.
     map<string, Class> classes = 7;

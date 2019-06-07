@@ -247,7 +247,6 @@ def Emit(p, node):
     Emit(p, node.deps)
 
     # TODO(iannucci): PARAMETERS
-    # TODO(iannucci): RETURN_SCHEMA
 
     p.docstring(node)
 

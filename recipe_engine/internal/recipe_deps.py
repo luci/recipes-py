@@ -580,14 +580,6 @@ class Recipe(object):
           for name, value in properties_def.items()
       }
 
-    return_schema = recipe_globals.get('RETURN_SCHEMA')
-    # NOTE: We check type.__name__ to avoid coupling to the config module (which
-    # indirectly imports doc_pb2.
-    if return_schema and type(return_schema).__name__ != 'ConfigGroupSchema':
-      raise MalformedRecipeError(
-        'Invalid RETURN_SCHEMA; must be a ConfigGroupSchema, got %r' % (
-          type(return_schema)))
-
     return recipe_globals
 
   @cached_property
@@ -705,20 +697,18 @@ class Recipe(object):
             ignore_unknown_fields=True))
 
       recipe_result = self.global_symbols['RunSteps'](*args)
+      # TODO(martiniss): Delete once https://crrev.com/c/1636338 has safely
+      # landed.
+      del recipe_result
     else:
       # Old-style Property dict.
       # NOTE: late import to avoid early protobuf import
       from .property_invoker import invoke_with_properties
-      recipe_result = invoke_with_properties(
+      invoke_with_properties(
           self.global_symbols['RunSteps'], engine.properties, engine.environ,
           properties_def, api=api)
 
-    if self.global_symbols.get('RETURN_SCHEMA'):
-      if not recipe_result:
-        raise ValueError("Recipe %s did not return a value." % self.name)
-      return recipe_result.as_jsonish(True)
-    else:
-      return None
+    return None
 
 
 def _scan_recipe_directory(path):
