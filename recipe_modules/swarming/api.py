@@ -45,11 +45,12 @@ class TaskRequest(object):
   https://chromium.googlesource.com/infra/luci/luci-py/+/master/appengine/swarming/doc/User-Guide.md#task
   """
   def __init__(self, api):
+    self._api = api
     self._name = ''
     self._priority = 200
     self._service_account = ''
-    self._api = api
     self._slices = [self.TaskSlice(api)]
+    self._user = None
 
   def _copy(self):
     return copy.copy(self)
@@ -140,6 +141,25 @@ class TaskRequest(object):
     ret._service_account = account
     return ret
 
+  @property
+  def user(self):
+    """Returns the requester of the task.
+
+    User that requested this task, if applicable.
+    """
+    return self._user
+
+  def with_user(self, user):
+    """Returns the slice with the given user.
+
+    Args:
+      user (str) - user that requested this task, if applicable.
+    """
+    assert isinstance(user, (str, unicode))
+    ret =  self._copy()
+    ret._user = user
+    return ret
+
   def to_jsonish(self):
     """Renders the task request as a JSON-serializable dict.
 
@@ -151,6 +171,7 @@ class TaskRequest(object):
       'priority': str(self.priority),
       'service_account': self.service_account,
       'task_slices': [task_slice.to_jsonish() for task_slice in self._slices],
+      'user': self.user,
     }
 
   class TaskSlice(object):
@@ -170,18 +191,19 @@ class TaskRequest(object):
     )
     """
     def __init__(self, api):
-      self._command = []
-      self._isolated = ''
-      self._dimensions = {}
       self._cipd_ensure_file = api.cipd.EnsureFile()
-      self._outputs = []
-      self._env_vars = {}
+      self._command = []
+      self._dimensions = {}
       self._env_prefixes = {}
-      self._expiration_secs = 300
-      self._io_timeout_secs = 60
+      self._env_vars = {}
       self._execution_timeout_secs = 1200
+      self._expiration_secs = 300
       self._grace_period_secs = 30
       self._idempotent = False
+      self._io_timeout_secs = 60
+      self._isolated = ''
+      self._isolated_props = None
+      self._outputs = []
       self._secret_bytes = ''
 
       # Containment
@@ -207,7 +229,8 @@ class TaskRequest(object):
       Args:
         cmd (str) - The command the task will run.
       """
-      assert isinstance(cmd, list) and all(isinstance(s, str) for s in cmd)
+      assert isinstance(cmd, list)
+      assert all(isinstance(s, (str or unicode)) for s in cmd)
       ret =  self._copy()
       ret._command = cmd
       return ret
@@ -559,7 +582,8 @@ class TaskRequest(object):
       """Renders the task request as a JSON-serializable dict.
 
       The format follows the schema given by the TaskSlice class found here:
-      https://cs.chromium.org/chromium/infra/luci/appengine/swarming/swarming_rpcs.py?q=TaskSlice\(
+      https://cs.chromium.org/chromium/infra/luci/appengine/swarming/
+      swarming_rpcs.py?q=TaskSlice\(
       """
       dims = self.dimensions
       assert len(dims) >= 1 and dims['pool']
@@ -573,9 +597,9 @@ class TaskRequest(object):
           {'key': k , 'value' : v} for k, v in self.env_prefixes.iteritems()
         ],
         'execution_timeout_secs': str(self.execution_timeout_secs),
-        'io_timeout_secs': str(self.io_timeout_secs),
         'grace_period_secs': str(self.grace_period_secs),
         'idempotent': self.idempotent,
+        'io_timeout_secs': str(self.io_timeout_secs),
         'containment': {
           'lower_priority': self.lower_priority,
           'containment_type': self.containment_type,
@@ -855,8 +879,8 @@ class SwarmingApi(recipe_api.RecipeApi):
   def task_request(self):
     """Creates a new TaskRequest object.
 
-    See documentation for TaskRequest/TaskSlice to see how to build this up into
-    a full task.
+    See documentation for TaskRequest/TaskSlice to see how to build this up
+    into a full task.
 
     Once your TaskRequest is complete, you can pass it to `trigger` in order to
     have it start running on the swarming server.

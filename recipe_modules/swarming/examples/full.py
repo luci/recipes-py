@@ -19,7 +19,8 @@ def RunSteps(api):
   request = (api.swarming.task_request().
       with_name('recipes-go').
       with_priority(100).
-      with_service_account("account@example.iam.gserviceaccount.com")
+      with_service_account("account@example.iam.gserviceaccount.com").
+      with_user('defaultuser')
   )
 
   ensure_file = api.cipd.EnsureFile()
@@ -51,7 +52,7 @@ def RunSteps(api):
     with_outputs(['my/output/file'])
   )
 
-  # There should be two task slices at this point.
+  # There should be three task slices at this point.
   assert len(request) == 2
 
   # Dimensions, and environment variables and prefixes can be unset.
@@ -68,6 +69,7 @@ def RunSteps(api):
     with_env_vars(GOPATH=None).
     with_env_prefixes(PATH=None)
   )
+
   assert cmp(slice.dimensions, {'pool': 'example.pool'}) == 0
   assert cmp(slice.env_vars, {'SOME_VARNAME': 'stuff'}) == 0
   assert cmp(slice.env_prefixes, {}) == 0
@@ -75,7 +77,6 @@ def RunSteps(api):
   # Setting environment prefixes is additive.
   slice = slice.with_env_prefixes(PATH=['a']).with_env_prefixes(PATH=['b'])
   assert cmp(slice.env_prefixes, {'PATH': ['a', 'b']}) == 0
-
 
   # Trigger the task request.
   metadata = api.swarming.trigger('trigger 1 task', requests=[request])
@@ -127,7 +128,8 @@ def GenTests(api):
   yield api.test('experimental') + api.runtime(
       is_luci=False, is_experimental=True)
   yield (api.test('override_swarming') +
-    api.swarming.properties(server='bananas.example.com', version='release')
+         api.swarming.properties(server='bananas.example.com',
+                                 version='release')
   )
 
   states = {state.name : api.swarming.TaskState[state.name]
