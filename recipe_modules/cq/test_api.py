@@ -14,7 +14,7 @@ class CQTestApi(recipe_test_api.RecipeTestApi):
       full_run=None, dry_run=None,
       top_level=True,
       experimental=False,
-      gerrit_changes=None, cls=None):
+      gerrit_changes=None):
     """Simulate a build triggered by CQ."""
     if full_run:
       assert not dry_run, ('either `dry` or `full` run, not both')
@@ -35,12 +35,9 @@ class CQTestApi(recipe_test_api.RecipeTestApi):
     input_props.experimental = experimental
 
     if gerrit_changes:
-      assert not cls, 'either `gerrit_changes` or `cls`, not both'
       for gcl in gerrit_changes:
         assert isinstance(gcl, bb_common_pb2.GerritChange), (type(gcl), gcl)
         cl = input_props.cls.add()
         cl.gerrit.CopyFrom(gcl)
-    elif cls:
-      input_props.cls.extend(cls)
 
     return self.m.properties(**{'$recipe_engine/cq': input_props})

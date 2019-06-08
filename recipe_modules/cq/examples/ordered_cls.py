@@ -47,28 +47,6 @@ def GenTests(api):
     + api.post_process(post_process.DropExpectation)
   )
   yield (
-    api.test('with-deps')
-    + api.cq(full_run=True, cls=[
-        cq_pb2.CL(
-            gerrit=bb_common_pb2.GerritChange(
-                host='x-review.example.com',
-                change=123,
-                patchset=4,
-                project='xproject'),
-            deps=[1]),
-        cq_pb2.CL(
-            gerrit=bb_common_pb2.GerritChange(
-                host='y-review.example.com',
-                change=789,
-                patchset=4,
-                project='yproject'),
-            deps=[]),
-      ],
-    )
-    + api.properties(expected_cls='123 789')
-    + api.post_process(post_process.DropExpectation)
-  )
-  yield (
     api.test('cq-run-cls-from-bb')
     + api.cq(full_run=True)
     + api.buildbucket.try_build(change_number=123)
