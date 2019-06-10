@@ -29,13 +29,17 @@ from . import util
 class BuildbucketApi(recipe_api.RecipeApi):
   """A module for interacting with buildbucket."""
 
+  HOST_PROD = 'cr-buildbucket.appspot.com'
+  HOST_PROD_BEEFY = 'beefy-dot-cr-buildbucket.appspot.com'
+  HOST_DEV = 'cr-buildbucket-dev.appspot.com'
+
   def __init__(
       self, property, legacy_property, mastername, buildername, buildnumber,
       revision, parent_got_revision, branch, patch_storage, patch_gerrit_url,
       patch_project, patch_issue, patch_set, issue, patchset, *args, **kwargs):
     super(BuildbucketApi, self).__init__(*args, **kwargs)
     self._service_account_key = None
-    self._host = property.get('hostname') or 'cr-buildbucket.appspot.com'
+    self._host = property.get('hostname') or self.HOST_PROD
 
     legacy_property = legacy_property or {}
     if isinstance(legacy_property, basestring):
