@@ -230,7 +230,7 @@ class TaskRequest(object):
         cmd (str) - The command the task will run.
       """
       assert isinstance(cmd, list)
-      assert all(isinstance(s, (str or unicode)) for s in cmd)
+      assert all(isinstance(s, (str, unicode)) for s in cmd)
       ret =  self._copy()
       ret._command = cmd
       return ret
@@ -604,7 +604,8 @@ class TaskRequest(object):
           'lower_priority': self.lower_priority,
           'containment_type': self.containment_type,
           'limit_processes': str(self.limit_processes),
-          'limit_total_committed_memory': str(self.limit_total_committed_memory),
+          'limit_total_committed_memory':
+            str(self.limit_total_committed_memory),
         },
       }
 
