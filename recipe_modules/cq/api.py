@@ -85,20 +85,14 @@ class CQApi(recipe_api.RecipeApi):
     """Returns list[bb_common_pb2.GerritChange] in order in which CLs should be
     applied or submitted.
 
-    For full semantics, see
-    [`Input.cls`](https://chromium.googlesource.com/infra/luci/luci-go/+/master/cq/api/recipe/v1/cq.proto)
-
     Raises:
       CQInactive if CQ is `INACTIVE` for this build.
     """
     self._enforce_active()
-    if self._test_data.enabled and not self._input.cls:
-      # Active CQ always has at least 1 CL, so to avoid copy-pasta in tests,
-      # copy CL(s) from Buildbucket test data.
-      assert self.m.buildbucket.build.input.gerrit_changes, (
-          'either CQ or Buildbucket CLs must be simulated in tests')
-      return self.m.buildbucket.build.input.gerrit_changes
-    return [cl.gerrit for cl in self._input.cls]
+    assert self.m.buildbucket.build.input.gerrit_changes, (
+        'you must simulate buildbucket.input.gerrit_changes in your test '
+        'in order to use api.cq.ordered_gerrit_changes')
+    return self.m.buildbucket.build.input.gerrit_changes
 
   @property
   def props_for_child_build(self):

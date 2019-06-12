@@ -29,26 +29,10 @@ def RunSteps(api):
 
 def GenTests(api):
   yield (
-    api.test('appropriate')
-    + api.cq(full_run=True, gerrit_changes=[
-        bb_common_pb2.GerritChange(
-            host='x-review.example.com',
-            change=123,
-            patchset=4,
-            project='xproject'),
-        bb_common_pb2.GerritChange(
-            host='y-review.example.com',
-            change=789,
-            patchset=4,
-            project='yproject'),
-      ],
-    )
-    + api.properties(expected_cls='123 789')
-    + api.post_process(post_process.DropExpectation)
-  )
-  yield (
-    api.test('cq-run-cls-from-bb')
+    api.test('cq-run')
     + api.cq(full_run=True)
+    # api.buildbucket.gerrit_changes must be simulated
+    # to use api.cq.ordered_gerrit_changes.
     + api.buildbucket.try_build(change_number=123)
     + api.properties(expected_cls='123')
     + api.post_process(post_process.DropExpectation)
