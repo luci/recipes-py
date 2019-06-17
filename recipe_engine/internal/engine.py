@@ -446,10 +446,7 @@ class RecipeEngine(object):
     try:
       try:
         try:
-          raw_result = recipe_obj.run_steps(api, engine)
-          # TODO(martiniss): Delete once https://crrev.com/c/1636338 has safely
-          # landed.
-          del raw_result
+          recipe_obj.run_steps(api, engine)
         finally:
           # TODO(iannucci): give this more symmetry with parent_step
           engine._close_non_parent_step()  # pylint: disable=protected-access

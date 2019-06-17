@@ -696,10 +696,7 @@ class Recipe(object):
             env_properties_def(),
             ignore_unknown_fields=True))
 
-      recipe_result = self.global_symbols['RunSteps'](*args)
-      # TODO(martiniss): Delete once https://crrev.com/c/1636338 has safely
-      # landed.
-      del recipe_result
+      self.global_symbols['RunSteps'](*args)
     else:
       # Old-style Property dict.
       # NOTE: late import to avoid early protobuf import
