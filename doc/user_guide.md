@@ -370,6 +370,7 @@ value in your recipe:
     message InputProperties {
       int32 an_int = 1;
       string some_string = 2;
+      bool a_bool = 3;
     }
 
     message EnvProperties {
@@ -377,9 +378,40 @@ value in your recipe:
       string OTHER_ENVVAR = 2;
     }
 
+Then import the new proto message in the recipe.
+
     # my_recipe.py
     from PB.recipes.repo_name.my_recipe import InputProperties
     from PB.recipes.repo_name.my_recipe import EnvProperties
+
+    # Setting this here makes it available in the
+    # parameters of RunSteps(...)
+    PROPERTIES = InputProperties
+    ENV_PROPERTIES = EnvProperties
+
+    # More information on the RunStep signature can
+    # be found in the RunSteps section above
+    def RunSteps(api, properties, env_properties):
+      # properties and env_properties are instances of their respective proto
+      # messages.
+      # example use case
+      if properties.a_bool:
+        # do something
+      elif properties.some_string == 'something important':
+        if env_properties.SOME_ENVVAR == 0:
+          # do something else
+      ...
+
+The properties can be set during testing by using the `properties` dependancy.
+This enables the ability to test different parts of the run step in the recipe.
+
+    # my_recipe.py
+    from PB.recipes.repo_name.my_recipe import InputProperties
+    from PB.recipes.repo_name.my_recipe import EnvProperties
+
+    DEPS = [
+      'recipe_engine/properties'
+    ]
 
     PROPERTIES = InputProperties
     ENV_PROPERTIES = EnvProperties
@@ -387,7 +419,29 @@ value in your recipe:
     def RunSteps(api, properties, env_properties):
       # properties and env_properties are instances of their respective proto
       # messages.
+      # example use case
+      if properties.a_bool:
+        # do something
+      elif properties.some_string == 'something important':
+        if env_properties.SOME_ENVVAR == 0:
+          # do something else
       ...
+
+    # This tests the above code
+    def GenTests(api):
+      yield (
+        api.test('properties example') +
+        api.properties(
+          InputProperties(
+            an_int=-1,
+            some_string='something important',
+            a_bool=False
+          )
+        ) +
+        api.properties.environ(
+          EnvProperties(SOME_ENVVAR=0)
+        )
+      )
 
 In a recipe, `PROPERTIES` is populated by taking the input property JSON object
 for the recipe engine, removing all keys beginning with '$' and then decoding
