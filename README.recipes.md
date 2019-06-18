@@ -64,7 +64,9 @@
   * [engine_tests/comprehensive_ui](#recipes-engine_tests_comprehensive_ui) &mdash; A fast-running recipe which comprehensively covers all StepPresentation features available in the recipe engine.
   * [engine_tests/config_operations](#recipes-engine_tests_config_operations) &mdash; Tests that recipes can modify configuration options in various ways.
   * [engine_tests/expect_exception](#recipes-engine_tests_expect_exception) &mdash; Tests that step_data can accept multiple specs at once.
+  * [engine_tests/failure_results](#recipes-engine_tests_failure_results) &mdash; Tests that run_steps is handling recipe failures correctly.
   * [engine_tests/functools_partial](#recipes-engine_tests_functools_partial) &mdash; Engine shouldn't explode when step_test_data gets functools.
+  * [engine_tests/incorrect_recipe_result](#recipes-engine_tests_incorrect_recipe_result) &mdash; Tests that engine.
   * [engine_tests/missing_start_dir](#recipes-engine_tests_missing_start_dir) &mdash; Tests that deleting the current working directory doesn't immediately fail.
   * [engine_tests/module_injection_site](#recipes-engine_tests_module_injection_site) &mdash; This test serves to demonstrate that the ModuleInjectionSite object on recipe modules (i.
   * [engine_tests/multi_test_data](#recipes-engine_tests_multi_test_data) &mdash; Tests that step_data can accept multiple specs at once.
@@ -2761,6 +2763,13 @@ Tests that recipes can modify configuration options in various ways.
 Tests that step_data can accept multiple specs at once.
 
 &mdash; **def [RunSteps](/recipes/engine_tests/expect_exception.py#11)(api):**
+### *recipes* / [engine\_tests/failure\_results](/recipes/engine_tests/failure_results.py)
+
+[DEPS](/recipes/engine_tests/failure_results.py#12): [json](#recipe_modules-json), [step](#recipe_modules-step)
+
+Tests that run_steps is handling recipe failures correctly.
+
+&mdash; **def [RunSteps](/recipes/engine_tests/failure_results.py#17)(api):**
 ### *recipes* / [engine\_tests/functools\_partial](/recipes/engine_tests/functools_partial.py)
 
 [DEPS](/recipes/engine_tests/functools_partial.py#12): [step](#recipe_modules-step)
@@ -2773,6 +2782,13 @@ http://src.chromium.org/viewvc/chrome?revision=298072&view=revision
 When this recipe is run (by run_test.py), the _print_step code is exercised.
 
 &mdash; **def [RunSteps](/recipes/engine_tests/functools_partial.py#14)(api):**
+### *recipes* / [engine\_tests/incorrect\_recipe\_result](/recipes/engine_tests/incorrect_recipe_result.py)
+
+[DEPS](/recipes/engine_tests/incorrect_recipe_result.py#12): [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+Tests that engine.py can handle unknown recipe results.
+
+&mdash; **def [RunSteps](/recipes/engine_tests/incorrect_recipe_result.py#20)(api, props):**
 ### *recipes* / [engine\_tests/missing\_start\_dir](/recipes/engine_tests/missing_start_dir.py)
 
 [DEPS](/recipes/engine_tests/missing_start_dir.py#7): [path](#recipe_modules-path), [step](#recipe_modules-step)

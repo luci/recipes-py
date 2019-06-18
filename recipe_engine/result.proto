@@ -6,6 +6,8 @@ syntax = "proto3";
 
 package recipe_engine;
 
+import "go.chromium.org/luci/buildbucket/proto/common.proto";
+
 // The result of a recipe execution.
 message Result {
   oneof oneof_result {
@@ -38,4 +40,15 @@ message Failure {
   // Kitchen's result parsing code:
   // https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/tools/kitchen/cook.go#202
   Dummy failure = 5;
+}
+
+// Intermediate result from a recipe execution.
+// Can contain more detailed results about what occurred in the build.
+message RawResult {
+  // Human readable information on what occurred in the build
+  string summary_markdown = 1;
+  // If not SUCCESS: summary_markdown has information on an error
+  // If SUCCESS: summary markdown will be ignored
+  // TODO(iannucci) Fix this so that `summary_markdown` is always propagated in build.proto mode.
+  buildbucket.v2.Status status = 2;
 }

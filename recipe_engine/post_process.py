@@ -455,6 +455,13 @@ def StatusException(check, step_odict):
   """Assert that the recipe had an infra failure."""
   check('failure' not in step_odict['$result']['failure'])
 
+def ResultReason(check, step_odict, reason):
+  """Assert that recipe result reason matches given reason.
+
+  Args:
+    reason (str): the string to match.
+  """
+  check(reason == step_odict['$result']['failure']['humanReason'])
 
 def ResultReasonRE(check, step_odict, reason_regex):
   """Assert that recipe result reason matches given regex.

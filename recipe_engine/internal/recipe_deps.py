@@ -696,16 +696,15 @@ class Recipe(object):
             env_properties_def(),
             ignore_unknown_fields=True))
 
-      self.global_symbols['RunSteps'](*args)
+      recipe_result = self.global_symbols['RunSteps'](*args)
     else:
       # Old-style Property dict.
       # NOTE: late import to avoid early protobuf import
       from .property_invoker import invoke_with_properties
-      invoke_with_properties(
+      recipe_result = invoke_with_properties(
           self.global_symbols['RunSteps'], engine.properties, engine.environ,
           properties_def, api=api)
-
-    return None
+    return recipe_result
 
 
 def _scan_recipe_directory(path):

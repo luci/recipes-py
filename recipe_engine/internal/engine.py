@@ -17,6 +17,7 @@ import gevent
 import gevent.local
 
 from PB.recipe_engine import result as result_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
 from .. import recipe_api
 from .. import util
@@ -446,7 +447,18 @@ class RecipeEngine(object):
     try:
       try:
         try:
-          recipe_obj.run_steps(api, engine)
+          raw_result = recipe_obj.run_steps(api, engine)
+          if raw_result is not None:
+            if isinstance(raw_result, result_pb2.RawResult):
+              if raw_result.status != common_pb2.SUCCESS:
+                result.failure.human_reason = raw_result.summary_markdown
+                result.failure.failure.SetInParent()
+            # Notify user that they used the wrong recipe return type.
+            else:
+                result.failure.human_reason = ('"%r" is not a valid '
+                  'return type for recipes. Did you mean to use "RawResult"?'
+                  % (type(raw_result)))
+                result.failure.failure.SetInParent()
         finally:
           # TODO(iannucci): give this more symmetry with parent_step
           engine._close_non_parent_step()  # pylint: disable=protected-access
@@ -474,9 +486,6 @@ class RecipeEngine(object):
     except CrashEngine as ex:
       _log_crash(stream_engine, 'Engine Crash')
       result.failure.human_reason = repr(ex)
-
-    if result.HasField('failure'):
-      return result, None
 
     return result, None
 
