@@ -42,7 +42,11 @@
       "[START_DIR]/root_dir/some file"
     ],
     "infra_step": true,
-    "name": "write some file"
+    "name": "write some file",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@some file@some data@@@",
+      "@@@STEP_LOG_END@some file@@@"
+    ]
   },
   {
     "cmd": [

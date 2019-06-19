@@ -11,7 +11,11 @@
       "[START_DIR]/some file"
     ],
     "infra_step": true,
-    "name": "write a file"
+    "name": "write a file",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@some file@\ufffdt\ufffd@@@",
+      "@@@STEP_LOG_END@some file@@@"
+    ]
   },
   {
     "cmd": [

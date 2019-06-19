@@ -41,7 +41,11 @@
       "[START_DIR]/thing.pat"
     ],
     "infra_step": true,
-    "name": "write thing.pat"
+    "name": "write thing.pat",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@thing.pat@data@@@",
+      "@@@STEP_LOG_END@thing.pat@@@"
+    ]
   },
   {
     "cmd": [
@@ -55,7 +59,11 @@
       "[START_DIR]/a/thing.pat"
     ],
     "infra_step": true,
-    "name": "write a/thing.pat"
+    "name": "write a/thing.pat",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@thing.pat@data@@@",
+      "@@@STEP_LOG_END@thing.pat@@@"
+    ]
   },
   {
     "cmd": [
@@ -69,7 +77,11 @@
       "[START_DIR]/b/thing.pat"
     ],
     "infra_step": true,
-    "name": "write b/thing.pat"
+    "name": "write b/thing.pat",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@thing.pat@data@@@",
+      "@@@STEP_LOG_END@thing.pat@@@"
+    ]
   },
   {
     "cmd": [
@@ -83,7 +95,11 @@
       "[START_DIR]/other.pat"
     ],
     "infra_step": true,
-    "name": "write other.pat"
+    "name": "write other.pat",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@other.pat@data@@@",
+      "@@@STEP_LOG_END@other.pat@@@"
+    ]
   },
   {
     "cmd": [
@@ -97,7 +113,11 @@
       "[START_DIR]/a/other.pat"
     ],
     "infra_step": true,
-    "name": "write a/other.pat"
+    "name": "write a/other.pat",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@other.pat@data@@@",
+      "@@@STEP_LOG_END@other.pat@@@"
+    ]
   },
   {
     "cmd": [
@@ -111,7 +131,11 @@
       "[START_DIR]/b/other.pat"
     ],
     "infra_step": true,
-    "name": "write b/other.pat"
+    "name": "write b/other.pat",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@other.pat@data@@@",
+      "@@@STEP_LOG_END@other.pat@@@"
+    ]
   },
   {
     "cmd": [
@@ -125,7 +149,11 @@
       "[START_DIR]/something"
     ],
     "infra_step": true,
-    "name": "write something"
+    "name": "write something",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@something@data@@@",
+      "@@@STEP_LOG_END@something@@@"
+    ]
   },
   {
     "cmd": [
@@ -139,7 +167,11 @@
       "[START_DIR]/a/something"
     ],
     "infra_step": true,
-    "name": "write a/something"
+    "name": "write a/something",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@something@data@@@",
+      "@@@STEP_LOG_END@something@@@"
+    ]
   },
   {
     "cmd": [
@@ -153,7 +185,11 @@
       "[START_DIR]/b/something"
     ],
     "infra_step": true,
-    "name": "write b/something"
+    "name": "write b/something",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@something@data@@@",
+      "@@@STEP_LOG_END@something@@@"
+    ]
   },
   {
     "cmd": [
@@ -167,7 +203,11 @@
       "[START_DIR]/file"
     ],
     "infra_step": true,
-    "name": "write file"
+    "name": "write file",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@file@data@@@",
+      "@@@STEP_LOG_END@file@@@"
+    ]
   },
   {
     "cmd": [
@@ -181,7 +221,11 @@
       "[START_DIR]/a/file"
     ],
     "infra_step": true,
-    "name": "write a/file"
+    "name": "write a/file",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@file@data@@@",
+      "@@@STEP_LOG_END@file@@@"
+    ]
   },
   {
     "cmd": [
@@ -195,7 +239,11 @@
       "[START_DIR]/b/file"
     ],
     "infra_step": true,
-    "name": "write b/file"
+    "name": "write b/file",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@file@data@@@",
+      "@@@STEP_LOG_END@file@@@"
+    ]
   },
   {
     "cmd": [

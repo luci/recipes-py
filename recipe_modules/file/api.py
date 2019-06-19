@@ -203,7 +203,8 @@ class FileApi(recipe_api.RecipeApi):
     Raises file.Error.
     """
     self.m.path.assert_absolute(dest)
-    self._run(name, ['copy', self.m.raw_io.input(data), dest])
+    step = self._run(name, ['copy', self.m.raw_io.input(data), dest])
+    step.presentation.logs[self.m.path.basename(dest)] = data.splitlines()
     self.m.path.mock_add_paths(dest)
 
   def read_text(self, name, source, test_data=''):
@@ -236,7 +237,8 @@ class FileApi(recipe_api.RecipeApi):
     Raises file.Error.
     """
     self.m.path.assert_absolute(dest)
-    self._run(name, ['copy', self.m.raw_io.input_text(text_data), dest])
+    step = self._run(name, ['copy', self.m.raw_io.input_text(text_data), dest])
+    step.presentation.logs[self.m.path.basename(dest)] = text_data.splitlines()
     self.m.path.mock_add_paths(dest)
 
   def read_json(self, name, source, test_data=''):
@@ -256,17 +258,19 @@ class FileApi(recipe_api.RecipeApi):
     text = self.read_text(name, source, test_data=test_data_text)
     return json.loads(text)
 
-  def write_json(self, name, dest, data):
+  def write_json(self, name, dest, data, indent=None):
     """Write the given json serializable `data` to `dest`.
 
     Args:
       * name (str) - The name of the step.
       * dest (Path) - The path of the file to write.
       * data (object) - Json serializable data to write.
+      * indent (None|int|str) - The indent of the written JSON. See
+        https://docs.python.org/3/library/json.html#json.dump for more details.
 
     Raises file.Error.
     """
-    text_data = json.dumps(data)
+    text_data = json.dumps(data, indent)
     self.write_text(name, dest, text_data)
 
   def glob_paths(self, name, source, pattern, test_data=()):

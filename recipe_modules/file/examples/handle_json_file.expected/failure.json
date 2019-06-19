@@ -11,7 +11,11 @@
       "[START_DIR]/some_file.json"
     ],
     "infra_step": true,
-    "name": "write_json"
+    "name": "write_json",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@some_file.json@{\"is_json\": true}@@@",
+      "@@@STEP_LOG_END@some_file.json@@@"
+    ]
   },
   {
     "cmd": [

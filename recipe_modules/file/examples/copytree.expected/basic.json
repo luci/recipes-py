@@ -26,7 +26,11 @@
       "[START_DIR]/some dir/a"
     ],
     "infra_step": true,
-    "name": "write a"
+    "name": "write a",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@a@a@@@",
+      "@@@STEP_LOG_END@a@@@"
+    ]
   },
   {
     "cmd": [
@@ -40,7 +44,11 @@
       "[START_DIR]/some dir/aa"
     ],
     "infra_step": true,
-    "name": "write aa"
+    "name": "write aa",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@aa@aa@@@",
+      "@@@STEP_LOG_END@aa@@@"
+    ]
   },
   {
     "cmd": [
@@ -54,7 +62,11 @@
       "[START_DIR]/some dir/b"
     ],
     "infra_step": true,
-    "name": "write b"
+    "name": "write b",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@b@b@@@",
+      "@@@STEP_LOG_END@b@@@"
+    ]
   },
   {
     "cmd": [
@@ -68,7 +80,11 @@
       "[START_DIR]/some dir/bb"
     ],
     "infra_step": true,
-    "name": "write bb"
+    "name": "write bb",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@bb@bb@@@",
+      "@@@STEP_LOG_END@bb@@@"
+    ]
   },
   {
     "cmd": [
@@ -82,7 +98,11 @@
       "[START_DIR]/some dir/c"
     ],
     "infra_step": true,
-    "name": "write c"
+    "name": "write c",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@c@c@@@",
+      "@@@STEP_LOG_END@c@@@"
+    ]
   },
   {
     "cmd": [
@@ -96,7 +116,11 @@
       "[START_DIR]/some dir/cc"
     ],
     "infra_step": true,
-    "name": "write cc"
+    "name": "write cc",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@cc@cc@@@",
+      "@@@STEP_LOG_END@cc@@@"
+    ]
   },
   {
     "cmd": [
