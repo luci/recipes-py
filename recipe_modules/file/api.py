@@ -270,7 +270,7 @@ class FileApi(recipe_api.RecipeApi):
 
     Raises file.Error.
     """
-    text_data = json.dumps(data, indent)
+    text_data = json.dumps(data, indent=indent)
     self.write_text(name, dest, text_data)
 
   def glob_paths(self, name, source, pattern, test_data=()):
