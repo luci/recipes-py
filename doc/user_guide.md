@@ -315,6 +315,38 @@ The RunSteps function may invoke any recipe module it wants via `api` (at its
 most basic, a recipe would run steps via `api.step(...)` after including
 'recipe_engine/step' in `DEPS`).
 
+Additionally, the RunSteps function can return a summary and status of the build.
+This is done by returning a RawResult object, which can be done like this:
+
+    # Import proto that has RawResult object
+    from PB.recipe_engine import result
+    # Import proto that has Status object
+    from PB.go.chromium.org.luci.buildbucket.proto import common
+
+    def RunSteps(api):
+      # Run some recipe step
+      try:
+        api.step('do example', ...)
+        return RawResult(
+          status=common.SUCCESS,
+          summary_markdown='Ran the example!',
+        )
+      except api.step.StepFailure:
+        # The example will output json in the form of `{"error": string}`
+        step_json = api.step.active_result.json.output
+        return RawResult(
+          status=common.FAILURE,
+          summary_markdown=step_json['error'],
+        )
+
+*** note
+Currently (as of 2019/06/24) the Recipe Engine still uses the `@@@annotation@@@` protocol
+which prevents the `summary_markdown` field from propagating on `SUCCESS` statuses. So,
+you can set `summary_markdown` in all cases from the recipe, but it will only be visible
+on the build in conjunction with non-SUCCESS status value.
+***
+
+
 #### `GenTests`
 
 The GenTests function is a generator which yields test cases. Every test case:
