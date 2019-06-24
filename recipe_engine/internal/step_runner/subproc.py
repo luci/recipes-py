@@ -13,11 +13,13 @@ from ...step_data import ExecutionResult
 
 from . import StepRunner
 
+_MSWINDOWS = sys.platform == 'win32'
 
-if subprocess.mswindows:
+
+if _MSWINDOWS:
   # subprocess.Popen(close_fds) raises an exception when attempting to do this
   # and also redirect stdin/stdout/stderr. To be on the safe side, we just don't
-  # do this on windows.
+  # do this on Windows.
   CLOSE_FDS = False
 
   # Windows has a bad habit of opening a dialog when a console program
@@ -37,11 +39,11 @@ if subprocess.mswindows:
   # https://msdn.microsoft.com/en-us/library/windows/desktop/ms680621.aspx
   ctypes.windll.kernel32.SetErrorMode(0x0001|0x0002|0x8000)
   # gevent.subprocess has special import logic. This symbol is definitely there
-  # on windows.
+  # on Windows.
   # pylint: disable=no-member
   EXTRA_KWARGS = {'creationflags': subprocess.CREATE_NEW_PROCESS_GROUP}
 else:
-  # Non-windows platforms implement close_fds in a safe way.
+  # Non-Windows platforms implement close_fds in a safe way.
   CLOSE_FDS = True
   EXTRA_KWARGS = {'preexec_fn': lambda: os.setpgid(0, 0)}
 
@@ -119,14 +121,14 @@ class SubprocessStepRunner(StepRunner):
         - cmd0 contains os.path.sep, it's treated as relative to CWD.
         - otherwise, cmd0 is tried within each component of PATH.
       * If cmd0 lacks an extension (i.e. ".exe"), the platform appropriate
-        extensions will be tried (_PATH_EXTS). On windows this is
-        ['.exe', '.bat']. On non-windows this is just [''] (empty string).
+        extensions will be tried (_PATH_EXTS). On Windows this is
+        ['.exe', '.bat']. On non-Windows this is just [''] (empty string).
       * The candidate is checked for isfile and 'access' with the +x permission
         for the current user (using `os.access`).
       * The first candidate found is returned, or None, if no candidate matches
         all of the rules.
 
-    NOTE (windows):
+    NOTE (Windows):
     This DOES NOT use $PATHEXT, in order to keep the recipe engine's behavior as
     predictable as possible. We don't currently rely on any other runnable
     extensions besides exe/bat, and when we could, we choose to explicitly
@@ -179,7 +181,7 @@ class SubprocessStepRunner(StepRunner):
 
     # Lifted from subprocess42.
     gid = None
-    if not subprocess.mswindows:
+    if not _MSWINDOWS:
       try:
         gid = os.getpgid(proc.pid)
       except OSError:
@@ -204,6 +206,8 @@ class SubprocessStepRunner(StepRunner):
             _copy_lines, proc_handle, getattr(step, handle_name),
         ))
 
+    # TODO(iannucci): This API changes in python3 to raise an exception on
+    # timeout.
     proc.wait(step.timeout)
     retcode = proc.poll()
     debug_log.write_line('finished waiting for process, retcode %r' % retcode)
@@ -267,7 +271,7 @@ def _safe_close(debug_log, handle_name, handle):
     * handle_name (str) - The name of the handle (like 'stdout', 'stderr')
     * handle (file-like-object) - The file object to call .close() on.
 
-  NOTE: On windows this may end up leaking threads for processes which spawn
+  NOTE: On Windows this may end up leaking threads for processes which spawn
   'daemon' children that hang onto the handles we pass. In this case debug_log
   is updated with as much detail as we know and the gevent threadpool's maxsize
   is increased by 2 (one thread blocked on reading from the handle, and one
@@ -280,7 +284,7 @@ def _safe_close(debug_log, handle_name, handle):
     debug_log.write_line('  closed!')
 
   except gevent.Timeout:
-    # This should never happen... except on windows when the process we launched
+    # This should never happen... except on Windows when the process we launched
     # itself leaked.
     debug_log.write_line('  LEAKED: timeout closing handle')
     # We assume we've now leaked 2 threads; one is blocked on 'read' and the
@@ -289,7 +293,7 @@ def _safe_close(debug_log, handle_name, handle):
     gevent.get_hub().threadpool.maxsize += 2
 
   except IOError as ex:
-    # TODO(iannucci): Currently this leaks handles on windows for processes like
+    # TODO(iannucci): Currently this leaks handles on Windows for processes like
     # the goma compiler proxy; because of python2.7's inability to set
     # close_fds=True and also redirect std handles, daemonized subprocesses
     # actually inherit our handles (yuck).
@@ -308,21 +312,65 @@ def _safe_close(debug_log, handle_name, handle):
     debug_log.write_line('  LEAKED?: race with IO worker')
 
 
-def _kill(proc, gid):
-  """Kills the process and its children if possible.
+if _MSWINDOWS:
+  def _kill(proc, gid):
+    """Kills the process as gracefully as possible:
 
-  Swallows exceptions and return True on success.
+      * Send CTRL_BREAK_EVENT (to the process group, there's no other way)
+      * Give main process 30s to quit.
+      * Call TerminateProcess on the process we spawned.
 
-  Lifted from subprocess42.
-  """
-  if gid:
+    Unfortunately, we don't have a mechanism to do 'TerminateProcess' to the
+    process's group, so this could leak processes on Windows.
+
+    Returns the process's returncode.
+    """
+    # TODO(iannucci): Use a Job Object for process management. Use subprocess42
+    # for reference.
+    del gid  # gid is not supported on Windows
+    try:
+      # pylint: disable=no-member
+      proc.send_signal(signal.CTRL_BREAK_EVENT)
+    except OSError:
+      pass
+    # TODO(iannucci): This API changes in python3 to raise an exception on
+    # timeout.
+    proc.wait(timeout=30)
+    if proc.returncode is not None:
+      return proc.returncode
+    try:
+      proc.terminate()
+    except OSError:
+      pass
+    return proc.wait()
+
+else:
+  def _kill(proc, gid):
+    """Kills the process in group `gid` as gracefully as possible:
+
+      * Send SIGTERM to the process group.
+        * This is a bit atypical for POSIX, but this is done to provide
+          consistent behavior between *nix/Windows (where we MUST signal the
+          whole group). This allows writing parent/child programs which run
+          cross-platform without requiring per-platform parent/child handling
+          code.
+        * If programs really don't want this, they should make their own process
+          group for their children.
+      * Give main process 30s to quit.
+      * Send SIGKILL to the whole group (to avoid leaked processes). This will
+        kill the process we spawned directly.
+
+    Returns the process's returncode.
+    """
+    try:
+      os.killpg(gid, signal.SIGTERM)
+    except OSError:
+      pass
+    # TODO(iannucci): This API changes in python3 to raise an exception on
+    # timeout.
+    proc.wait(timeout=30)
     try:
       os.killpg(gid, signal.SIGKILL)
     except OSError:
-      return False
-  else:
-    try:
-      proc.kill()
-    except OSError:
-      return False
-  return True
+      pass
+    return proc.wait()
