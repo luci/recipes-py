@@ -305,7 +305,7 @@ class SubprocessStepRunner(StepRunner):
       # we don't need to leak processes ever).
       #
       # _kill(proc, gid)  # In case of leaked subprocesses or timeout.
-      if ret.retcode:
+      if ret.retcode is None:
         debug_log.write_line('timeout! killing process group %r' % gid)
         # Process timed out, kill it. Currently all uses of non-None timeout
         # intend to actually kill the subprocess when the timeout pops.
