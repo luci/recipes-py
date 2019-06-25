@@ -155,7 +155,7 @@
       "The recipe has crashed at point 'Uncaught exception'!",
       "",
       "Traceback (most recent call last):",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/engine.py\", line 450, in run_steps",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/engine.py\", line 454, in run_steps",
       "    raw_result = recipe_obj.run_steps(api, engine)",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/recipe_deps.py\", line 706, in run_steps",
       "    properties_def, api=api)",
@@ -165,7 +165,7 @@
       "    return callable_obj(*props, **additional_args)",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/step/examples/full.py\", line 130, in RunSteps",
       "    result.json = \"hi\"",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/step_data.py\", line 330, in __setattr__",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/step_data.py\", line 331, in __setattr__",
       "    (name, self.name))",
       "ValueError: Cannot assign to 'json' on finalized StepData from step 'no-op'"
     ]

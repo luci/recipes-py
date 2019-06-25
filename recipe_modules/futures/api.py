@@ -48,7 +48,7 @@ class FuturesApi(RecipeApi):
     """Represents a unit of concurrent work.
 
     Modeled after Python 3's `concurrent.futures.Future`. We can expand this
-    API carefully as we need it (e.g. potentially adding `cancel`).
+    API carefully as we need it.
     """
 
     _greenlet = attr.ib(
@@ -73,6 +73,17 @@ class FuturesApi(RecipeApi):
     def done(self):
       """Returns True iff this Future is no longer running."""
       return self._greenlet.dead
+
+    def cancel(self):
+      """Raises GreenletExit in the underlying greenlet.
+
+      If the greenlet is waiting on a subprocess (step), the subprocess will be
+      killed, and the step's ExecutionResult will have `was_cancelled=True`.
+
+      Does not block on the death of the greenlet.
+      Does not switch away from the current greenlet.
+      """
+      self._greenlet.kill()
 
     def exception(self, timeout=None):
       """Blocks until this Future is done, then returns (not raises) this

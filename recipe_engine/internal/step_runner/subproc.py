@@ -6,6 +6,7 @@ import os
 import signal
 import sys
 
+import attr
 import gevent
 from gevent import subprocess
 
@@ -282,28 +283,40 @@ class SubprocessStepRunner(StepRunner):
 
     Should not raise an exception.
     """
-    # TODO(iannucci): This API changes in python3 to raise an exception on
-    # timeout.
-    proc.wait(timeout)
-    retcode = proc.poll()
-    debug_log.write_line('finished waiting for process, retcode %r' % retcode)
+    ret = ExecutionResult()
 
-    # TODO(iannucci): Make leaking subprocesses explicit (e.g. goma compiler
-    # daemon). Better, change deamons to be owned by a gevent Greenlet (so that
-    # we don't need to leak processes ever).
+    # We're about to do gevent-blocking operations (waiting on the subprocess)
+    # and so another greenlet could kill us; we guard all of these operations
+    # with a `try/except GreenletExit` to handle this and return an
+    # ExecutionResult(was_cancelled=True) in that case.
     #
-    # _kill(proc, gid)  # In case of leaked subprocesses or timeout.
-    if retcode is None:
-      debug_log.write_line('timeout! killing process group %r' % gid)
-      # Process timed out, kill it. Currently all uses of non-None timeout
-      # intend to actually kill the subprocess when the timeout pops.
-      _kill(proc, gid)
-      proc.wait()
+    # The engine will raise a new GreenletExit exception after processing this
+    # step.
+    try:
+      # TODO(iannucci): This API changes in python3 to raise an exception on
+      # timeout.
+      proc.wait(timeout)
+      ret = attr.evolve(ret, retcode=proc.poll())
+      debug_log.write_line(
+          'finished waiting for process, retcode %r' % ret.retcode)
 
-    if retcode is not None:
-      return ExecutionResult(retcode=proc.returncode)
+      # TODO(iannucci): Make leaking subprocesses explicit (e.g. goma compiler
+      # daemon). Better, change deamons to be owned by a gevent Greenlet (so that
+      # we don't need to leak processes ever).
+      #
+      # _kill(proc, gid)  # In case of leaked subprocesses or timeout.
+      if ret.retcode:
+        debug_log.write_line('timeout! killing process group %r' % gid)
+        # Process timed out, kill it. Currently all uses of non-None timeout
+        # intend to actually kill the subprocess when the timeout pops.
+        ret = attr.evolve(ret, retcode=_kill(proc, gid), had_timeout=True)
 
-    return ExecutionResult(had_timeout=True)
+    except gevent.GreenletExit:
+      debug_log.write_line(
+          'caught GreenletExit, killing process group %r' % (gid,))
+      ret = attr.evolve(ret, retcode=_kill(proc, gid), was_cancelled=True)
+
+    return ret
 
   @staticmethod
   def _reap_workers(workers, to_close, debug_log):

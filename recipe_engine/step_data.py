@@ -37,6 +37,7 @@ class ExecutionResult(object):
   retcode = attr.ib(validator=attr_type((int, type(None))), default=None)
   had_timeout = attr.ib(validator=attr_type(bool), default=False)
   had_exception = attr.ib(validator=attr_type(bool), default=False)
+  was_cancelled = attr.ib(validator=attr_type(bool), default=False)
 
 
 @attr.s

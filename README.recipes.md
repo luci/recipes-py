@@ -1328,7 +1328,7 @@ Raises file.Error.
 
 Provides access to the Recipe concurrency primitives.
 
-&emsp; **@staticmethod**<br>&mdash; **def [iwait](/recipe_modules/futures/api.py#202)(futures, timeout=None, count=None):**
+&emsp; **@staticmethod**<br>&mdash; **def [iwait](/recipe_modules/futures/api.py#215)(futures, timeout=None, count=None):**
 
 Iteratively yield up to `count` Futures as they become done.
 
@@ -1371,7 +1371,7 @@ Yields futures in the order in which they complete until we hit the
 timeout or count. May also be used with a context manager to avoid
 leaking resources if you don't plan on consuming the entire iterable.
 
-&mdash; **def [make\_channel](/recipe_modules/futures/api.py#94)(self):**
+&mdash; **def [make\_channel](/recipe_modules/futures/api.py#107)(self):**
 
 Returns a single-slot communication device for passing data and control
 between concurrent functions.
@@ -1391,7 +1391,7 @@ you carefully consider and avoid the possibility of introducing deadlocks.
 
 Channels will raise ValueError if used with @@@annotation@@@ mode.
 
-&mdash; **def [spawn](/recipe_modules/futures/api.py#119)(self, func, \*args, \*\*kwargs):**
+&mdash; **def [spawn](/recipe_modules/futures/api.py#132)(self, func, \*args, \*\*kwargs):**
 
 Prepares a Future to run `func(*args, **kwargs)` concurrently.
 
@@ -1424,7 +1424,7 @@ Kwargs:
 
 Returns a Future of `func`'s result.
 
-&mdash; **def [spawn\_immediate](/recipe_modules/futures/api.py#158)(self, func, \*args, \*\*kwargs):**
+&mdash; **def [spawn\_immediate](/recipe_modules/futures/api.py#171)(self, func, \*args, \*\*kwargs):**
 
 Returns a Future to the concurrently running `func(*args, **kwargs)`.
 
@@ -1441,7 +1441,7 @@ Kwargs:
 
 Returns a Future of `func`'s result.
 
-&emsp; **@staticmethod**<br>&mdash; **def [wait](/recipe_modules/futures/api.py#183)(futures, timeout=None, count=None):**
+&emsp; **@staticmethod**<br>&mdash; **def [wait](/recipe_modules/futures/api.py#196)(futures, timeout=None, count=None):**
 
 Blocks until `count` `futures` are done (or timeout occurs) then
 returns the list of done futures.
@@ -2925,11 +2925,11 @@ Tests that step_data can accept multiple specs at once.
 
 [DEPS](/recipe_modules/futures/examples/background_helper.py#8): [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/background_helper.py#91)(api):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/background_helper.py#78)(api):**
 
 &mdash; **def [manage\_helper](/recipe_modules/futures/examples/background_helper.py#21)(api, chn):**
 
-&emsp; **@contextmanager**<br>&mdash; **def [run\_helper](/recipe_modules/futures/examples/background_helper.py#64)(api):**
+&emsp; **@contextmanager**<br>&mdash; **def [run\_helper](/recipe_modules/futures/examples/background_helper.py#51)(api):**
 
 Runs the background helper.
 

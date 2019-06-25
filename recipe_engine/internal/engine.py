@@ -308,7 +308,7 @@ class RecipeEngine(object):
 
       self._step_stack.append(_ActiveStep(ret, step_stream, False))
 
-      # _run_step should never raise an exception
+      # _run_step should never raise an exception, except for GreenletExit
       caught = _run_step(
           debug_log, ret, step_stream, self._step_runner, self._resource,
           step_config, self._environ, self._start_dir)
@@ -325,6 +325,10 @@ class RecipeEngine(object):
       if caught:
         # TODO(iannucci): Python3 incompatible.
         raise caught[0], caught[1], caught[2]
+
+      # If the step was cancelled, raise GreenletExit.
+      if ret.exc_result.was_cancelled:
+        raise gevent.GreenletExit()
 
       if ret.presentation.status == 'SUCCESS':
         return ret
@@ -500,6 +504,8 @@ def _set_initial_status(presentation, step_config, exc_result):
   if exc_result.had_exception:
     presentation.status = 'EXCEPTION'
     return
+
+  # TODO(iannucci): Add a real status for CANCELED?
 
   if (step_config.ok_ret is step_config.ALL_OK or
       exc_result.retcode in step_config.ok_ret):
@@ -680,9 +686,13 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
       def _blocked_on(amount):
         debug_log.write_line(
             '  waiting for %d millicores to be available' % amount)
-      with resource.cpu(step_config.cpu, _blocked_on):
-        step_data.exc_result = step_runner.run(
-            step_data.name_tokens, debug_log, rendered_step)
+      try:
+        with resource.cpu(step_config.cpu, _blocked_on):
+          step_data.exc_result = step_runner.run(
+              step_data.name_tokens, debug_log, rendered_step)
+      except gevent.GreenletExit:
+        # Greenlet was killed while waiting for CPU resource
+        step_data.exc_result = ExecutionResult(was_cancelled=True)
       if step_data.exc_result.retcode is not None:
         # Windows error codes such as 0xC0000005 and 0xC0000409 are much
         # easier to recognize and differentiate in hex. In order to print them
@@ -716,6 +726,8 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
     exc_details.write_line('Step timed out.')
   if step_data.exc_result.had_exception:
     exc_details.write_line('Step had exception.')
+  if step_data.exc_result.was_cancelled:
+    exc_details.write_line('Step was cancelled.')
   exc_details.close()
 
   # Re-render the presentation status; If one of the output placeholders blew up

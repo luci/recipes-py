@@ -6,6 +6,15 @@ import json
 import os
 import sys
 import time
+import signal
+
+signal.signal(
+    (
+      signal.SIGBREAK  # pylint: disable=no-member
+      if sys.platform.startswith('win') else
+      signal.SIGTERM
+    ),
+    lambda _signum, _frame: sys.exit(0))
 
 with open(sys.argv[1], 'wb') as pid_file:
   json.dump({

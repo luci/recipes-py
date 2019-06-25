@@ -43,19 +43,6 @@
     "name": "do something with live helper"
   },
   {
-    "cmd": [
-      "python",
-      "-u",
-      "RECIPE[recipe_engine::futures:examples/background_helper].resources/kill_helper.py",
-      "12345"
-    ],
-    "cpu": 0,
-    "name": "helper.kill helper",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
     "name": "$result"
   }
 ]

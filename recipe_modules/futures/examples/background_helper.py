@@ -34,17 +34,8 @@ def manage_helper(api, chn):
           cpu=0, # always run the checker.
       ).json.output
     except api.step.StepFailure:
-      # Probably check StepFailure to see if it had a timeout, or was just
-      # a regular failure.
-      #
-      # TODO(iannucci): Improve this to not rely on exceptions.
-      #
-      # TODO(iannucci): if/when we add 'cancel' functionality to futures API,
-      # cancel the helper_future here. The recipe engine knows its pid and so
-      # could send it a signal without having to wait for `contact helper` to
-      # succeed.
-      #
-      # helper_future.cancel()
+      helper_future.cancel()
+      helper_future.result()
       chn.put(HELPER_TIMEOUT)
       return  # pragma: no cover
 
@@ -53,12 +44,8 @@ def manage_helper(api, chn):
     # Now we wait on the channel to see when to shut down.
     chn.get()
 
-    # Again, when we add cancel functionality, we could use
-    # helper_future.cancel() here.
-    api.python(
-        'kill helper', api.resource('kill_helper.py'), [proc_data['pid']],
-        cpu=0,
-    )
+    helper_future.cancel()
+    helper_future.result()
 
 
 @contextmanager
