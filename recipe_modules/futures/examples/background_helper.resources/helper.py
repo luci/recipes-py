@@ -16,12 +16,21 @@ signal.signal(
     ),
     lambda _signum, _frame: sys.exit(0))
 
-with open(sys.argv[1], 'wb') as pid_file:
-  json.dump({
-    # Note, you could put whatever connection information you wanted here.
-    'pid': os.getpid(),
-  }, pid_file)
+try:
+  print "Starting up!"
+  print >>sys.stderr, ">> SLEEPING 5s"
+  time.sleep(5)
 
-for x in xrange(30):
-  print "Hi! %s" % x
-  time.sleep(1)
+  with open(sys.argv[1], 'wb') as pid_file:
+    json.dump({
+      # Note, you could put whatever connection information you wanted here.
+      'pid': os.getpid(),
+    }, pid_file)
+  print >>sys.stderr, ">> DUMPED PIDFILE"
+
+  for x in xrange(30):
+    print "Hi! %s" % x
+    time.sleep(1)
+except SystemExit:
+  print >>sys.stderr, ">> QUITQUITQUIT"
+  raise

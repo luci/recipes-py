@@ -256,9 +256,10 @@ class LUCIStepStream(StreamEngine.StepStream):
   @property
   def stderr(self):
     """Returns an open text stream for this step's stderr."""
-    if not self._stderr:
-      self._stderr = self._new_log_stream('stderr')
-    return self._stderr
+    # TODO(iannucci): Actually split stdout/stderr. For now we combine the two
+    # of them because that's the old behavior. This is blocked on getting the
+    # Logdog viewer to have a 'combine streams' mode again.
+    return self.stdout
 
   def write_line(self, line):
     """Differs from our @@@annotator@@@ bretheren and puts logging data to
