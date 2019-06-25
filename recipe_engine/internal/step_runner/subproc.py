@@ -153,6 +153,35 @@ class SubprocessStepRunner(StepRunner):
     return None
 
   def run(self, name_tokens, debug_log, step):
+    proc, gid, pipes = self._mk_proc(step, debug_log)
+
+    workers, to_close = self._mk_workers(step, proc, pipes)
+
+    exc_result = self._wait_proc(proc, gid, step.timeout, debug_log)
+
+    self._reap_workers(workers, to_close, debug_log)
+
+    return exc_result
+
+  @staticmethod
+  def _mk_proc(step, debug_log):
+    """Makes a subprocess.Popen object from the Step.
+
+    Args:
+      * step (..step_runner.Step) - The Step object describing what we're
+        supposed to run.
+      * debug_log (..stream.StreamEngine.Stream)
+
+    Returns (proc, gid, pipes):
+      * proc (subprocess.Popen) - The Popen object for the running subprocess.
+      * gid (int|None) - The (new) group-id of the process (POSIX only).
+        TODO(iannucci): expand this from an int to a killable object to
+        encapsulate JobObjects on Windows too.
+      * pipes (Set[str]) - A subset of {'stdout', 'stderr'} which we need to set
+        up pipe workers for.
+
+    Should not raise an exception.
+    """
     fhandles = {
       'stdin': open(step.stdin, 'rb') if step.stdin else None,
       'stdout': _fd_for_out(step.stdout),
@@ -188,27 +217,74 @@ class SubprocessStepRunner(StepRunner):
         # sometimes the process can run+finish before we collect its pgid. fun.
         pass
 
-    workers = []
-    to_close = []
+    pipes = set()
     for handle_name, handle in fhandles.iteritems():
-      # Safe to close file handles now that subprocess has inherited them.
+      # Close all closable file handles, since the subprocess has them now.
       if hasattr(handle, 'close'):
         handle.close()
+      elif handle == subprocess.PIPE:
+        pipes.add(handle_name)
 
-      # Only want to set up copy workers for these two.
-      if handle_name not in ('stdout', 'stderr'):
-        continue
+    return proc, gid, pipes
 
-      if fhandles[handle_name] == subprocess.PIPE:
-        proc_handle = getattr(proc, handle_name)
-        to_close.append((handle_name, proc_handle))
-        workers.append(gevent.spawn(
-            _copy_lines, proc_handle, getattr(step, handle_name),
-        ))
+  @staticmethod
+  def _mk_workers(step, proc, pipes):
+    """Makes greenlets to shuttle lines from the process's PIPE'd std{out,err}
+    handles to the recipe Step's std{out,err} handles.
 
+    NOTE: This applies to @@@annotator@@@ runs when allow_subannotations=False;
+    Step.std{out,err} will be Stream objects which don't implement `fileno()`,
+    but add an '!' in front of all lines starting with '@@@'. In build.proto
+    mode this code path should NOT be active at all; Placeholders will be
+    redirected directly to files on disk and non-placeholders will go straight
+    to butler (i.e. regular file handles).
+
+    Args:
+
+      * step (..step_runner.Step) - The Step object describing what we're
+        supposed to run.
+      * proc (subprocess.Popen) - The running subprocess.
+      * pipes (Set[str]) - A subset of {'stdout', 'stderr'} to make worker
+        greenlets for.
+
+    Returns Tuple[
+      workers: List[Greenlet],
+      to_close: List[Tuple[
+        handle_name: str,
+        proc_handle: fileobj,
+      ]]
+    ]. Both returned values are expected to be passed directly to
+    `_reap_workers` without inspection or alteration.
+    """
+    workers = []
+    to_close = []
+    for handle_name in pipes:
+      proc_handle = getattr(proc, handle_name)
+      to_close.append((handle_name, proc_handle))
+      workers.append(gevent.spawn(
+          _copy_lines, proc_handle, getattr(step, handle_name),
+      ))
+    return workers, to_close
+
+  @staticmethod
+  def _wait_proc(proc, gid, timeout, debug_log):
+    """Waits for the completion (or timeout) of `proc`.
+
+    Args:
+
+      * proc (subprocess.Popen) - The actual running subprocess to wait for.
+      * gid (int|None) - The group ID of the process.
+      * timeout (Number|None) - The number of seconds to wait for the process to
+        end (or None for no timeout).
+      * debug_log (..stream.StreamEngine.Stream)
+
+    Returns the ExecutionResult.
+
+    Should not raise an exception.
+    """
     # TODO(iannucci): This API changes in python3 to raise an exception on
     # timeout.
-    proc.wait(step.timeout)
+    proc.wait(timeout)
     retcode = proc.poll()
     debug_log.write_line('finished waiting for process, retcode %r' % retcode)
 
@@ -223,6 +299,29 @@ class SubprocessStepRunner(StepRunner):
       # intend to actually kill the subprocess when the timeout pops.
       _kill(proc, gid)
       proc.wait()
+
+    if retcode is not None:
+      return ExecutionResult(retcode=proc.returncode)
+
+    return ExecutionResult(had_timeout=True)
+
+  @staticmethod
+  def _reap_workers(workers, to_close, debug_log):
+    """Collects the IO workers created with _mk_workers.
+
+    After killing the workers, also closes the subprocess's open PIPE handles.
+
+    See _safe_close for caveats around closing handles on windows.
+
+    Args:
+      * workers (List[Greenlet]) - The IO workers to kill.
+      * to_close (List[...]) - (see _mk_workers for definition). The handles to
+        close. These originate from the `Popen.std{out,err}` handles when the
+        recipe engine had to use PIPEs.
+      * debug_log (..stream.StreamEngine.Stream)
+
+    Should not raise an exception.
+    """
     debug_log.write_line('reaping IO workers...')
     for worker in workers:
       worker.kill()
@@ -230,11 +329,6 @@ class SubprocessStepRunner(StepRunner):
     debug_log.write_line('  done')
     for handle_name, handle in to_close:
       _safe_close(debug_log, handle_name, handle)
-
-    if retcode is not None:
-      return ExecutionResult(retcode=proc.returncode)
-
-    return ExecutionResult(had_timeout=True)
 
 
 def _copy_lines(handle, outstream):
