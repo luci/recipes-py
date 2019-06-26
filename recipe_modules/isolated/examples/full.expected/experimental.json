@@ -123,6 +123,30 @@
   {
     "cmd": [
       "[CACHE]/isolated_client/isolated",
+      "archive",
+      "-verbose",
+      "-isolate-server",
+      "https://example.isolateserver.appspot.com",
+      "-namespace",
+      "default-gzip",
+      "-dump-hash",
+      "/path/to/tmp/",
+      "-blacklist",
+      "[ac]",
+      "-blacklist",
+      "sub/*/d",
+      "-dirs",
+      "[CLEANUP]/isolated-example_tmp_1:."
+    ],
+    "infra_step": true,
+    "name": "archiving root directory with a blacklist",
+    "~followup_annotations": [
+      "@@@STEP_LINK@isolated UI@https://example.isolateserver.appspot.com/browse?namespace=default-gzip&hash=%5Bdummy+hash%5D@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[CACHE]/isolated_client/isolated",
       "download",
       "-verbose",
       "-isolate-server",

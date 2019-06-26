@@ -171,7 +171,7 @@ class Isolated(object):
     assert self._root_dir == path or self._root_dir.is_parent_of(path)
     self._dirs.append(path)
 
-  def archive(self, step_name, isolate_server=None):
+  def archive(self, step_name, isolate_server=None, blacklist=()):
     """Step to archive all staged files and directories.
 
     If no isolate_server is provided, the IsolatedApis's default server will be
@@ -180,6 +180,8 @@ class Isolated(object):
     Args:
       step_name (str): name of the step.
       isolate_server (str): an isolate server to archive to.
+      blacklist (seq(str)): a list of globs to use as blacklist filter when
+        uploading directories.
 
     Returns:
       The hash of the isolated tree.
@@ -192,6 +194,8 @@ class Isolated(object):
         '-namespace', self._api.isolated.namespace,
         '-dump-hash', self._api.raw_io.output_text(),
     ]
+    for glob in blacklist:
+      cmd.extend(['-blacklist', glob])
     for f in self._files:
       cmd.extend(['-files', self._isolated_path_format(f)])
     for d in self._dirs:
