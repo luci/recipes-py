@@ -25,7 +25,12 @@ class _AttributeRaiser(object):
       self._step_name, self._namespace, name))
 
   def __setattr__(self, name, value):
-    if not hasattr(self, '_finalized') or not self._finalized:
+    # Directly access the instance's __dict__ since this logic is called during
+    # __init__ and _finalized may not actually be set yet. Calling
+    # hasattr/getattr will result in __getattr__ being called which will fail
+    # because it accesses `self._step_name` and `self._namespace` which ALSO
+    # might not exist yet.
+    if not self.__dict__.get('_finalized', False):
       return object.__setattr__(self, name, value)
 
     raise AttributeError('Cannot assign to StepData(%r)%s.%s' % (
