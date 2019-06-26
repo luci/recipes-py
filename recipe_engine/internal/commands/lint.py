@@ -26,15 +26,20 @@ MODULES_WHITELIST = [
   r'copy',
   r'datetime',
   r'functools',
-  r'google\.protobuf',
   r'hashlib',
   r'itertools',
   r'json',
   r'math',
-  r'PB',
   r're',
+  r'textwrap',
   r'urlparse',
   r'zlib',
+
+  # non stdlib
+  r'google\.protobuf',
+
+  # From recipe ecosystem
+  r'PB',
 ]
 
 
