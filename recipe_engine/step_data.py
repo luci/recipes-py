@@ -321,10 +321,11 @@ class StepData(object):
         placeholder.namespaces, {})[placeholder.name] = result
 
   def __setattr__(self, name, value):
-    # use hasattr since this logic is called during __init__ and _finalized may
-    # not actually exist yet. Calling __getattr__ in this state will fail
-    # because it calls `self.name` which ALSO might not exist yet.
-    if hasattr(self, '_finalized') and self._finalized:
+    # Directly access the instance's __dict__ since this logic is called during
+    # __init__ and _finalized may not actually be set yet. Calling
+    # hasattr/getattr will result in __getattr__ being called which will fail
+    # because it accesses `self.name` which ALSO might not exist yet.
+    if self.__dict__.get('_finalized', False):
       if name not in self.BOGUS_FIELDS:
         raise ValueError(
             'Cannot assign to %r on finalized StepData from step %r' %
