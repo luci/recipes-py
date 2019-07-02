@@ -19,6 +19,29 @@ import sys
 reload(sys)
 sys.setdefaultencoding('UTF8')
 
+# pylint: disable=wrong-import-position
+import os
+import errno
+
+# crbug.com/980535
+#
+# On OS X there seems to be an issue with gevent.subprocess's use of its error
+# pipe which causes os.read to raise EINVAL (but only sometimes).
+#
+# This hacked read function should shed a tiny amount of extra light on the
+# problem.
+if sys.platform == 'darwin':
+  _REAL_OS_READ = os.read
+  def _hacked_read(fileno, bufsiz):
+    try:
+      return _REAL_OS_READ(fileno, bufsiz)
+    except OSError as ex:
+      if ex.errno == errno.EINVAL:
+        print >> sys.stderr, "ERROR: os.read(%r, %r) -> EINVAL" % (
+          fileno, bufsiz)
+      raise
+  os.read = _hacked_read
+
 # Bump the recursion limit as well; because of step nesting and gevent overhead,
 # we can sometimes exceed the default.
 sys.setrecursionlimit(sys.getrecursionlimit() * 2)
@@ -35,8 +58,6 @@ def _hack_lookup_codecs():
 _hack_lookup_codecs()
 del _hack_lookup_codecs
 
-# pylint: disable=wrong-import-position
-import os
 
 import urllib3.contrib.pyopenssl
 urllib3.contrib.pyopenssl.inject_into_urllib3()
