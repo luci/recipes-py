@@ -39,6 +39,7 @@ if sys.platform == 'darwin':
       if ex.errno == errno.EINVAL:
         print >> sys.stderr, "ERROR: os.read(%r, %r) -> EINVAL" % (
           fileno, bufsiz)
+        print >> sys.stderr, "   fd: %r" % (os.fstat(fileno),)
       raise
   os.read = _hacked_read
 
