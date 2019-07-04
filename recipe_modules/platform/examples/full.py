@@ -20,3 +20,4 @@ def GenTests(api):
   yield api.test('mac64') + api.platform('mac', 64)
   yield api.test('win32') + api.platform('win', 32)
   yield api.test('four_cores') + api.platform.cpu_count(4)
+  yield api.test('arm64') + api.platform('linux', 64, 'arm')

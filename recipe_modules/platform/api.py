@@ -15,6 +15,11 @@ def norm_bits(arch):
   return 64 if '64' in str(arch) else 32
 
 
+def get_arch():
+  arch = platform.machine()
+  return 'arm' if ('arm' in arch or 'aarch' in arch) else 'intel'
+
+
 class PlatformApi(recipe_api.RecipeApi):
   """
   Provides host-platform-detection properties.
@@ -29,7 +34,7 @@ class PlatformApi(recipe_api.RecipeApi):
     super(PlatformApi, self).__init__(**kwargs)
     self._name = PlatformApi.normalize_platform_name(sys.platform)
 
-    self._arch = 'intel'
+    self._arch = get_arch()
     self._bits = norm_bits(platform.machine())
 
     if self._test_data.enabled:
@@ -38,6 +43,7 @@ class PlatformApi(recipe_api.RecipeApi):
         self._test_data.get('name', 'linux'))
       self._bits = norm_bits(self._test_data.get('bits', 64))
       self._cpu_count = self._test_data.get('cpu_count', 2)
+      self._arch = self._test_data.get('arch', 'intel')
     else:  # pragma: no cover
       # platform.machine is based on running kernel. It's possible to use 64-bit
       # kernel with 32-bit userland, e.g. to give linker slightly more memory.

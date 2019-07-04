@@ -1761,7 +1761,7 @@ Args:
 
 Mockable system platform identity functions.
 
-#### **class [PlatformApi](/recipe_modules/platform/api.py#18)([RecipeApi](/recipe_engine/recipe_api.py#850)):**
+#### **class [PlatformApi](/recipe_modules/platform/api.py#23)([RecipeApi](/recipe_engine/recipe_api.py#850)):**
 
 Provides host-platform-detection properties.
 
@@ -1770,14 +1770,14 @@ Mocks:
     sys.platform.
   * bits (int): Either 32 or 64.
 
-&emsp; **@property**<br>&mdash; **def [arch](/recipe_modules/platform/api.py#93)(self):**
+&emsp; **@property**<br>&mdash; **def [arch](/recipe_modules/platform/api.py#99)(self):**
 
 Returns the current CPU architecture.
 
 TODO: This is currently always hard-coded to 'intel'... Apparently no one
 has actually needed this function?
 
-&emsp; **@property**<br>&mdash; **def [bits](/recipe_modules/platform/api.py#83)(self):**
+&emsp; **@property**<br>&mdash; **def [bits](/recipe_modules/platform/api.py#89)(self):**
 
 Returns the bitness of the userland for the current system (either 32 or
 64 bit).
@@ -1785,30 +1785,30 @@ Returns the bitness of the userland for the current system (either 32 or
 TODO: If anyone needs to query for the kernel bitness, another accessor
 should be added.
 
-&emsp; **@property**<br>&mdash; **def [cpu\_count](/recipe_modules/platform/api.py#102)(self):**
+&emsp; **@property**<br>&mdash; **def [cpu\_count](/recipe_modules/platform/api.py#108)(self):**
 
 The number of CPU cores, according to multiprocessing.cpu_count().
 
-&emsp; **@property**<br>&mdash; **def [is\_linux](/recipe_modules/platform/api.py#69)(self):**
+&emsp; **@property**<br>&mdash; **def [is\_linux](/recipe_modules/platform/api.py#75)(self):**
 
 Returns True iff the recipe is running on Linux.
 
-&emsp; **@property**<br>&mdash; **def [is\_mac](/recipe_modules/platform/api.py#64)(self):**
+&emsp; **@property**<br>&mdash; **def [is\_mac](/recipe_modules/platform/api.py#70)(self):**
 
 Returns True iff the recipe is running on OS X.
 
-&emsp; **@property**<br>&mdash; **def [is\_win](/recipe_modules/platform/api.py#59)(self):**
+&emsp; **@property**<br>&mdash; **def [is\_win](/recipe_modules/platform/api.py#65)(self):**
 
 Returns True iff the recipe is running on Windows.
 
-&emsp; **@property**<br>&mdash; **def [name](/recipe_modules/platform/api.py#74)(self):**
+&emsp; **@property**<br>&mdash; **def [name](/recipe_modules/platform/api.py#80)(self):**
 
 Returns the current platform name which will be in:
 * win
 * mac
 * linux
 
-&emsp; **@staticmethod**<br>&mdash; **def [normalize\_platform\_name](/recipe_modules/platform/api.py#107)(plat):**
+&emsp; **@staticmethod**<br>&mdash; **def [normalize\_platform\_name](/recipe_modules/platform/api.py#113)(plat):**
 
 One of python's sys.platform values -> 'win', 'linux' or 'mac'.
 ### *recipe_modules* / [properties](/recipe_modules/properties)
