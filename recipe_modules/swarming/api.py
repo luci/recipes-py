@@ -673,6 +673,7 @@ class TaskResult(object):
     """
     self._api = api
     self._id = id
+    self._output_dir = output_dir
     self._outputs = {}
     self._isolated_outputs = None
     if 'error' in raw_results:
@@ -707,9 +708,9 @@ class TaskResult(object):
         )
 
       self._output = raw_results['output']
-      if output_dir and raw_results.get('outputs'):
+      if self._output_dir and raw_results.get('outputs'):
         self._outputs = {
-            output: api.path.join(output_dir, output)
+            output: api.path.join(self._output_dir, output)
                 for output in raw_results['outputs']
         }
 
@@ -745,6 +746,15 @@ class TaskResult(object):
   def output(self):
     """The output (str) streamed from the task."""
     return self._output
+
+  @property
+  def output_dir(self):
+    """The absolute directory (Path|None) that the task's outputs were
+    downloaded to.
+
+    Returns None if the task's outputs were not downloaded.
+    """
+    return self._output_dir
 
   @property
   def outputs(self):
