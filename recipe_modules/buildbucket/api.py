@@ -315,6 +315,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       dimensions=None,
       priority=None,
       critical=None,
+      exe_cipd_version=None,
     ):
     """Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
@@ -363,6 +364,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
       Defaults to .build.critical.
       See also Build.critical in
       https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto
+    * exe_cipd_version: CIPD version of the LUCI Executable (e.g. recipe) to use
+      instead of the server-configured one.
     """
 
 
@@ -394,6 +397,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
         critical=b.critical,
         fields=self._default_field_mask(),
     )
+    if exe_cipd_version:
+      req.exe.cipd_version = exe_cipd_version
     req.properties.update(properties or {})
 
     if experimental is not None:
