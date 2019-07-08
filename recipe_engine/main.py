@@ -31,16 +31,24 @@ import errno
 # This hacked read function should shed a tiny amount of extra light on the
 # problem.
 if sys.platform == 'darwin':
+  import time
   _REAL_OS_READ = os.read
   def _hacked_read(fileno, bufsiz):
-    try:
-      return _REAL_OS_READ(fileno, bufsiz)
-    except OSError as ex:
-      if ex.errno == errno.EINVAL:
-        print >> sys.stderr, "ERROR: os.read(%r, %r) -> EINVAL" % (
-          fileno, bufsiz)
-        print >> sys.stderr, "   fd: %r" % (os.fstat(fileno),)
-      raise
+    tries = 3
+    while True:
+      try:
+        return _REAL_OS_READ(fileno, bufsiz)
+      except OSError as ex:
+        if ex.errno == errno.EINVAL:
+          print >> sys.stderr, "ERROR: os.read(%r, %r) -> EINVAL" % (
+            fileno, bufsiz)
+          print >> sys.stderr, "   fd: %r" % (os.fstat(fileno),)
+          if tries > 0:
+            tries -= 1
+            print >> sys.stderr, "   SLEEP(.1) + RETRY"
+            time.sleep(0.1)
+            continue
+        raise
   os.read = _hacked_read
 
 # Bump the recursion limit as well; because of step nesting and gevent overhead,
