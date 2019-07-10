@@ -184,7 +184,7 @@ def _get_roll_candidates_impl(recipe_deps, repos):
         # seemed like a worse alternative.
         dep_path = os.path.join(recipe_deps.recipe_deps_path, repo_name)
         backend = GitBackend(dep_path, dep.url)
-        backend.checkout(dep.revision)
+        backend.checkout(dep.branch, dep.revision)
 
         # Add any newly discovered repos to our repos set. We don't replace
         # repos because we want to keep the metadata for all already-rolled

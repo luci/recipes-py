@@ -99,8 +99,8 @@ class TestGit(test_env.RecipeEngineUnitTest):
     ]
 
   def g_ls_remote(self):
-    return self.g(['-C', 'dir', 'ls-remote', 'repo', 'revision'],
-                  'a'*40 + '\trevision')
+    return self.g(['-C', 'dir', 'ls-remote', 'repo', 'ref'],
+                  'a'*40 + '\tref')
 
   @mock.patch('os.path.isdir')
   @mock.patch(fetch.__name__+'.GitBackend._execute')
@@ -108,13 +108,12 @@ class TestGit(test_env.RecipeEngineUnitTest):
     isdir.return_value = False
     git.side_effect = multi(*([
       self.g(['init', 'dir']),
-      self.g_ls_remote(),
     ] + self.g_metadata_calls() + [
       self.g(['-C', 'dir', 'diff', '--quiet', 'a'*40], CPE('', 1)),
       self.g(['-C', 'dir', 'reset', '-q', '--hard', 'a'*40])
     ]))
 
-    fetch.GitBackend('dir', 'repo').checkout('revision')
+    fetch.GitBackend('dir', 'repo').checkout('ref', 'a'*40)
 
     self.assertMultiDone(git)
 
@@ -129,7 +128,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
       self.g(['-C', 'dir', 'reset', '-q', '--hard', 'a'*40])
     ]))
 
-    fetch.GitBackend('dir', 'repo').checkout('revision')
+    fetch.GitBackend('dir', 'repo').checkout('ref')
 
     self.assertMultiDone(git)
     isdir.assert_has_calls([
@@ -140,13 +139,12 @@ class TestGit(test_env.RecipeEngineUnitTest):
   @mock.patch(fetch.__name__+'.GitBackend._execute')
   def test_existing_checkout_same_revision(self, git, isdir):
     isdir.return_value = True
-    git.side_effect = multi(*([
-      self.g_ls_remote(),
-    ] + self.g_metadata_calls() + [
+    git.side_effect = multi(*(
+      self.g_metadata_calls() + [
       self.g(['-C', 'dir', 'diff', '--quiet', 'a'*40]),
     ]))
 
-    fetch.GitBackend('dir', 'repo').checkout('revision')
+    fetch.GitBackend('dir', 'repo').checkout('ref', 'a'*40)
 
     self.assertMultiDone(git)
     isdir.assert_has_calls([
@@ -162,7 +160,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
     git.side_effect = _mock_execute
 
     with self.assertRaises(exceptions.GitFetchError):
-      fetch.GitBackend('dir', 'repo').checkout('revision')
+      fetch.GitBackend('dir', 'repo').checkout('ref', 'a'*40)
 
     git.assert_called_once_with('GIT', 'init', 'dir')
 
@@ -171,18 +169,16 @@ class TestGit(test_env.RecipeEngineUnitTest):
   def test_rev_parse_fail(self, git, isdir):
     isdir.return_value = True
     git.side_effect = multi(*(
-      self.g_ls_remote(),
-
       self.g(
         ['-C', 'dir', 'show', '-s', '--format=%aE%n%ct%n%B', 'a'*40],
         CPE(1, 'nope')),
 
-      self.g(['-C', 'dir', 'fetch', 'repo', 'revision']),
+      self.g(['-C', 'dir', 'fetch', 'repo', 'ref']),
       self.g(['-C', 'dir', 'diff', '--quiet', 'a'*40], CPE('', 1)),
       self.g(['-C', 'dir', 'reset', '-q', '--hard', 'a'*40]),
     ))
 
-    fetch.GitBackend('dir', 'repo').checkout('revision')
+    fetch.GitBackend('dir', 'repo').checkout('ref', 'a'*40)
 
     self.assertMultiDone(git)
 
@@ -195,7 +191,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
       self.g_ls_remote(),
     ] + self.g_metadata_calls()))
 
-    result = fetch.GitBackend('dir', 'repo').commit_metadata('revision')
+    result = fetch.GitBackend('dir', 'repo').commit_metadata('ref')
     self.assertEqual(result, fetch.CommitMetadata(
       revision = 'a'*40,
       author_email = 'foo@example.com',
@@ -219,7 +215,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
       self.g_ls_remote(),
     ] + self.g_metadata_calls(config=spec)))
 
-    result = fetch.GitBackend('dir', 'repo').commit_metadata('revision')
+    result = fetch.GitBackend('dir', 'repo').commit_metadata('ref')
     self.assertEqual(result, fetch.CommitMetadata(
       revision = 'a'*40,
       author_email = 'foo@example.com',
@@ -242,7 +238,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
       self.g_ls_remote(),
     ] + self.g_metadata_calls(config=spec, diff=tuple([IRC]))))
 
-    result = fetch.GitBackend('dir', 'repo').commit_metadata('revision')
+    result = fetch.GitBackend('dir', 'repo').commit_metadata('ref')
     self.assertEqual(result, fetch.CommitMetadata(
       revision = 'a'*40,
       author_email = 'foo@example.com',
@@ -264,7 +260,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
       self.g_ls_remote()
     ] + self.g_metadata_calls(config=spec, diff=tuple(['recipes/foo']))))
 
-    result = fetch.GitBackend('dir', 'repo').commit_metadata('revision')
+    result = fetch.GitBackend('dir', 'repo').commit_metadata('ref')
     self.assertEqual(result, fetch.CommitMetadata(
       revision = 'a'*40,
       author_email = 'foo@example.com',
@@ -288,7 +284,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
       self.g_ls_remote()
     ] + self.g_metadata_calls(config=spec)))
 
-    result = fetch.GitBackend('dir', 'repo').commit_metadata('revision')
+    result = fetch.GitBackend('dir', 'repo').commit_metadata('ref')
     self.assertEqual(result, fetch.CommitMetadata(
       revision = 'a'*40,
       author_email = 'foo@example.com',
@@ -311,7 +307,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
       self.g_ls_remote()
     ] + self.g_metadata_calls(config=spec, diff=['.gitattributes'])))
 
-    result = fetch.GitBackend('dir', 'repo').commit_metadata('revision')
+    result = fetch.GitBackend('dir', 'repo').commit_metadata('ref')
     self.assertEqual(result, fetch.CommitMetadata(
       revision = 'a'*40,
       author_email = 'foo@example.com',
@@ -333,7 +329,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
       self.g_ls_remote()
     ] + self.g_metadata_calls(config=spec, diff=['subdir/.gitattributes'])))
 
-    result = fetch.GitBackend('dir', 'repo').commit_metadata('revision')
+    result = fetch.GitBackend('dir', 'repo').commit_metadata('ref')
     self.assertEqual(result, fetch.CommitMetadata(
       revision = 'a'*40,
       author_email = 'foo@example.com',

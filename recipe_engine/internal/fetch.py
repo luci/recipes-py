@@ -108,12 +108,13 @@ class Backend(object):
     """
     raise NotImplementedError()
 
-  def checkout(self, refspec):
+  def checkout(self, refspec, revision=None):
     """Checks out given |repo| at |refspec| to |checkout_dir|.
 
     Args:
       refspec (str) - a git refspec which is resolvable on the
         remote git repo, e.g. 'refs/heads/master', 'deadbeef...face', etc.
+      revesion (str|None) - A pre-resolved revision to checkout.
     """
     # TODO(iannucci): Alter the contract for this method so that it only checks
     # out the files referred to according to the rules that the bundle
@@ -283,8 +284,9 @@ class GitBackend(Backend):
     LOGGER.info('fetching %s', self.repo_url)
     self._git(*args)
 
-  def checkout(self, refspec):
-    revision = self.resolve_refspec(refspec)
+  def checkout(self, refspec, revision=None):
+    if not revision:
+      revision = self.resolve_refspec(refspec)
 
     LOGGER.info('Checking out %r in %s (%s)',
                 revision, self.checkout_dir, self.repo_url)
@@ -321,7 +323,7 @@ class GitBackend(Backend):
       if bool(rev)
     ]
 
-  def _resolve_refspec_impl(self, revision):
+  def _resolve_refspec_impl(self, refspec):
     self._ensure_local_repo_exists()
     # Can return e.g.
     #
@@ -334,10 +336,10 @@ class GitBackend(Backend):
       ref: csum
       for csum, ref in (
         l.split()
-        for l in self._git('ls-remote', source, revision).splitlines()
+        for l in self._git('ls-remote', source, refspec).splitlines()
       )
     }
-    rslt = mapping[revision]
+    rslt = mapping[refspec]
     assert self.is_resolved_revision(rslt), repr(rslt)
     return rslt
 

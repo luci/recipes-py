@@ -167,7 +167,7 @@ class RecipeDeps(object):
 
       dep_path = os.path.join(recipe_deps_path, repo_name)
       backend = fetch.GitBackend(dep_path, dep.url)
-      backend.checkout(dep.revision)
+      backend.checkout(dep.branch, dep.revision)
       repos[repo_name] = RecipeRepo.create(ret, dep_path, backend=backend)
 
     # This makes `repos` unmodifiable. object.__setattr__ is needed to get
