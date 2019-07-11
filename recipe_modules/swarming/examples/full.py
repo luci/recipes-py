@@ -116,7 +116,7 @@ def RunSteps(api):
   with api.swarming.on_path():
     api.step('some step with swarming on path', [])
 
-  with api.swarming.with_server('some-server.com'):
+  with api.swarming.with_server('https://some-server.com'):
     api.swarming.trigger('trigger on some-server.com', requests=[request])
     api.swarming.collect('collect on some-server.com', ['1'])
 

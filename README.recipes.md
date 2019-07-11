@@ -2331,7 +2331,7 @@ please.
 
 [DEPS](/recipe_modules/swarming/__init__.py#5): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [isolated](#recipe_modules-isolated), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-#### **class [SwarmingApi](/recipe_modules/swarming/api.py#799)([RecipeApi](/recipe_engine/recipe_api.py#850)):**
+#### **class [SwarmingApi](/recipe_modules/swarming/api.py#834)([RecipeApi](/recipe_engine/recipe_api.py#850)):**
 
 API for interacting with swarming.
 
@@ -2341,7 +2341,7 @@ http://go.chromium.org/luci/client/cmd/swarming.
 This module will deploy the client to [CACHE]/swarming_client/; users should
 add this path to the named cache for their builder.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#930)(self, name, tasks, output_dir=None, timeout=None):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#966)(self, name, tasks, output_dir=None, timeout=None):**
 
 Waits on a set of Swarming tasks.
 
@@ -2350,7 +2350,7 @@ Args:
   tasks ((list(str|TaskRequestMetadata)): A list of ids or metadata objects
     corresponding to tasks to wait
   output_dir (Path|None): Where to download the tasks' isolated outputs. If
-    set to None, they will not be downloades; else, a given task's outputs
+    set to None, they will not be downloaded; else, a given task's outputs
     will be downloaded to output_dir/<task id>/.
   timeout (str|None): The duration for which to wait on the tasks to finish.
     If set to None, there will be no timeout; else, timeout follows the
@@ -2359,9 +2359,9 @@ Args:
 Returns:
   A list of TaskResult objects.
 
-&mdash; **def [initialize](/recipe_modules/swarming/api.py#817)(self):**
+&mdash; **def [initialize](/recipe_modules/swarming/api.py#852)(self):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#848)(self):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#883)(self):**
 
 This context manager ensures the go swarming client is available on
 $PATH.
@@ -2371,7 +2371,7 @@ Example:
     with api.swarming.on_path():
       # do your steps which require the swarming binary on path
 
-&mdash; **def [task\_request](/recipe_modules/swarming/api.py#880)(self):**
+&mdash; **def [task\_request](/recipe_modules/swarming/api.py#915)(self):**
 
 Creates a new TaskRequest object.
 
@@ -2381,7 +2381,7 @@ into a full task.
 Once your TaskRequest is complete, you can pass it to `trigger` in order to
 have it start running on the swarming server.
 
-&mdash; **def [trigger](/recipe_modules/swarming/api.py#891)(self, step_name, requests):**
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#926)(self, step_name, requests):**
 
 Triggers a set of Swarming tasks.
 
@@ -2393,7 +2393,7 @@ Args:
 Returns:
   A list of TaskRequestMetadata objects.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [with\_server](/recipe_modules/swarming/api.py#862)(self, server):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [with\_server](/recipe_modules/swarming/api.py#897)(self, server):**
 
 This context sets the server for Swarming calls.
 

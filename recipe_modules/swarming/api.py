@@ -659,9 +659,34 @@ class TaskRequestMetadata(object):
 class TaskResult(object):
   """Result of a Swarming task."""
 
-  # A tuple giving the isolated output refs of a task.
-  IsolatedOutputs = namedtuple(
-      'IsolatedOutputs', ['hash', 'server', 'namespace'])
+  class IsolatedOutputs(object):
+    """The isolated outputs of a task."""
+    def __init__(self, hash, server, namespace):
+      self._hash = hash
+      self._server = server
+      self._namespace = namespace
+
+    @property
+    def hash(self):
+      """The hash of the isolated (str)."""
+      return self._hash
+
+    @property
+    def server(self):
+      """The server on which the isolated lives (str)."""
+      return self._server
+
+    @property
+    def namespace(self):
+      """The namespace of the isolated (e.g., 'default-gzip') (str)."""
+      return self._namespace
+
+    @property
+    def url(self):
+      """The URL of the associated isolate UI page."""
+      return '{0}/browse?namespace={1}&hash={2}'.format(
+          self.server, self.namespace, self.hash,
+      )
 
   def __init__(self, api, id, raw_results, output_dir):
     """
@@ -912,7 +937,7 @@ class SwarmingApi(recipe_api.RecipeApi):
     assert len(requests) > 0
     assert self._server
 
-    trigger_resp = self._run(
+    step = self._run(
         step_name,
         [
           'spawn-tasks',
@@ -925,15 +950,16 @@ class SwarmingApi(recipe_api.RecipeApi):
         step_test_data=lambda: self.test_api.trigger(
           task_names=tuple(map(lambda req: req.name, requests)),
         )
-    ).json.output
+    )
+    trigger_resp = step.json.output
 
     metadata_objs = []
-    presented_links = self.m.step.active_result.presentation.links
     for task_json in trigger_resp['tasks']:
-      metadata_obj = TaskRequestMetadata(self._server, task_json)
-      presented_links['Swarming task UI: %s' % metadata_obj.name] = (
-          metadata_obj.task_ui_link)
-      metadata_objs.append(metadata_obj)
+      metadata_objs.append(TaskRequestMetadata(self._server, task_json))
+
+    metadata_objs.sort(key=lambda obj: obj.name)
+    for obj in metadata_objs:
+      step.presentation.links['task UI: %s' % obj.name] = obj.task_ui_link
 
     return metadata_objs
 
@@ -945,7 +971,7 @@ class SwarmingApi(recipe_api.RecipeApi):
       tasks ((list(str|TaskRequestMetadata)): A list of ids or metadata objects
         corresponding to tasks to wait
       output_dir (Path|None): Where to download the tasks' isolated outputs. If
-        set to None, they will not be downloades; else, a given task's outputs
+        set to None, they will not be downloaded; else, a given task's outputs
         will be downloaded to output_dir/<task id>/.
       timeout (str|None): The duration for which to wait on the tasks to finish.
         If set to None, there will be no timeout; else, timeout follows the
@@ -979,7 +1005,7 @@ class SwarmingApi(recipe_api.RecipeApi):
       else:
         raise ValueError("%s must be a string or TaskRequestMetadata object" %
             task.__repr__()) # pragma: no cover
-    step_result = self._run(
+    step = self._run(
         name,
         cmd,
         step_test_data=lambda: self.test_api.collect(test_data),
@@ -989,11 +1015,17 @@ class SwarmingApi(recipe_api.RecipeApi):
                    id,
                    task,
                    self.m.path.join(output_dir, id) if output_dir else None)
-        for id, task in step_result.json.output.iteritems()
+        for id, task in step.json.output.iteritems()
     ]
+    parsed_results.sort(key=lambda result: result.name)
+
     # Update presentation on collect to reflect bot results.
     for result in parsed_results:
       if result.output:
-        log_name = 'Swarming task output: %s' % result.name
-        step_result.presentation.logs[log_name] = result.output.splitlines()
+        log_name = 'task stdout/stderr: %s' % result.name
+        step.presentation.logs[log_name] = result.output.splitlines()
+      if result.isolated_outputs:
+        link_name = 'task isolated outputs: %s' % result.name
+        step.presentation.links[link_name] = result.isolated_outputs.url
+
     return parsed_results
