@@ -41,7 +41,8 @@ def RunSteps(api):
         with_lower_priority(True).
         with_containment_type('AUTO').
         with_limit_processes(16).
-        with_limit_total_committed_memory(1024*1024*1024),
+        with_limit_total_committed_memory(1024*1024*1024).
+        with_named_caches({'cache_name': 'cache/path'}),
       )
   )
 

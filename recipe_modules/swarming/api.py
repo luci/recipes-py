@@ -203,6 +203,7 @@ class TaskRequest(object):
       self._io_timeout_secs = 60
       self._isolated = ''
       self._isolated_props = None
+      self._named_caches = {}
       self._outputs = []
       self._secret_bytes = ''
 
@@ -578,6 +579,23 @@ class TaskRequest(object):
       ret._limit_total_committed_memory = limit_total_committed_memory
       return ret
 
+    @property
+    def named_caches(self):
+      """Returns the named caches used by this slice."""
+      return self._named_caches
+
+    def with_named_caches(self, named_caches):
+      """Returns the slice with the given named caches added.
+
+      Args:
+        named_caches (dict) - A dict mapping cache name (str)
+          to cache path (str).
+      """
+      assert isinstance(named_caches, dict)
+      ret = self._copy()
+      ret._named_caches.update(named_caches)
+      return ret
+
     def to_jsonish(self):
       """Renders the task request as a JSON-serializable dict.
 
@@ -629,6 +647,11 @@ class TaskRequest(object):
               for pkg in self.cipd_ensure_file.packages[path]
           ]
         }
+      if self._named_caches:
+        properties['caches'] = [
+            {'name': name, 'path': path}
+            for name, path in self.named_caches.iteritems()
+        ]
 
       return {
         'expiration_secs': str(self.expiration_secs),
