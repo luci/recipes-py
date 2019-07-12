@@ -1022,7 +1022,7 @@ class SwarmingApi(recipe_api.RecipeApi):
     # Update presentation on collect to reflect bot results.
     for result in parsed_results:
       if result.output:
-        log_name = 'task stdout/stderr: %s' % result.name
+        log_name = 'task stdout+stderr: %s' % result.name
         step.presentation.logs[log_name] = result.output.splitlines()
       if result.isolated_outputs:
         link_name = 'task isolated outputs: %s' % result.name

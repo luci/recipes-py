@@ -87,8 +87,8 @@
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LOG_LINE@task stdout&#x2f;stderr: None@Bot could not be contacted@@@",
-      "@@@STEP_LOG_END@task stdout&#x2f;stderr: None@@@"
+      "@@@STEP_LOG_LINE@task stdout+stderr: None@Bot could not be contacted@@@",
+      "@@@STEP_LOG_END@task stdout+stderr: None@@@"
     ]
   },
   {
@@ -125,8 +125,8 @@
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LOG_LINE@task stdout&#x2f;stderr: my_task_0@hello world!@@@",
-      "@@@STEP_LOG_END@task stdout&#x2f;stderr: my_task_0@@@",
+      "@@@STEP_LOG_LINE@task stdout+stderr: my_task_0@hello world!@@@",
+      "@@@STEP_LOG_END@task stdout+stderr: my_task_0@@@",
       "@@@STEP_LINK@task isolated outputs: my_task_0@https://isolateserver.appspot.com/browse?namespace=default-gzip&hash=abc123@@@"
     ]
   },
@@ -196,8 +196,8 @@
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LOG_LINE@task stdout&#x2f;stderr: my_task_0@hello world!@@@",
-      "@@@STEP_LOG_END@task stdout&#x2f;stderr: my_task_0@@@",
+      "@@@STEP_LOG_LINE@task stdout+stderr: my_task_0@hello world!@@@",
+      "@@@STEP_LOG_END@task stdout+stderr: my_task_0@@@",
       "@@@STEP_LINK@task isolated outputs: my_task_0@https://isolateserver.appspot.com/browse?namespace=default-gzip&hash=abc123@@@"
     ]
   },
@@ -263,8 +263,8 @@
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LOG_LINE@task stdout&#x2f;stderr: my_task_0@hello world!@@@",
-      "@@@STEP_LOG_END@task stdout&#x2f;stderr: my_task_0@@@",
+      "@@@STEP_LOG_LINE@task stdout+stderr: my_task_0@hello world!@@@",
+      "@@@STEP_LOG_END@task stdout+stderr: my_task_0@@@",
       "@@@STEP_LINK@task isolated outputs: my_task_0@https://isolateserver.appspot.com/browse?namespace=default-gzip&hash=abc123@@@"
     ]
   },
