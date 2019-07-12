@@ -456,7 +456,8 @@ class RecipeEngine(object):
             if isinstance(raw_result, result_pb2.RawResult):
               if raw_result.status != common_pb2.SUCCESS:
                 result.failure.human_reason = raw_result.summary_markdown
-                result.failure.failure.SetInParent()
+                if raw_result.status != common_pb2.INFRA_FAILURE:
+                  result.failure.failure.SetInParent()
             # Notify user that they used the wrong recipe return type.
             else:
                 result.failure.human_reason = ('"%r" is not a valid '

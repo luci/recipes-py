@@ -33,7 +33,7 @@ def RunSteps(api):
         if step_data.exc_result.had_timeout:
             raw_result.summary_markdown += 'Failure : Timeout'
             raw_result.status = common_pb2.FAILURE
-        if step_data.exc_result.retcode == 1:
+        elif step_data.exc_result.retcode == 1:
             raw_result.status = common_pb2.FAILURE
         else:
             raw_result.status = common_pb2.INFRA_FAILURE
@@ -73,7 +73,7 @@ def GenTests(api):
         api.test('infra_failure_result') +
         api.step_data('step_result', api.json.output(
             {'summary': 'Infra Failure: no memory'}, retcode=2)) +
-        api.post_process(post_process.StatusFailure) +
+        api.post_process(post_process.StatusException) +
         api.post_process(post_process.ResultReason,
             "Infra Failure: no memory") +
         api.post_process(post_process.DropExpectation)
