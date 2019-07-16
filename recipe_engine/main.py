@@ -25,11 +25,11 @@ import errno
 
 # crbug.com/980535
 #
-# On OS X there seems to be an issue with gevent.subprocess's use of its error
-# pipe which causes os.read to raise EINVAL (but only sometimes).
+# On OS X there seems to be an issue with subprocess's use of its error
+# pipe which causes os.read to raise EINVAL (but very infrequently).
 #
-# This hacked read function should shed a tiny amount of extra light on the
-# problem.
+# It turns out that merely retrying this read operation with exactly the same
+# parameters works... go figure.
 if sys.platform == 'darwin':
   import time
   _REAL_OS_READ = os.read
@@ -39,15 +39,10 @@ if sys.platform == 'darwin':
       try:
         return _REAL_OS_READ(fileno, bufsiz)
       except OSError as ex:
-        if ex.errno == errno.EINVAL:
-          print >> sys.stderr, "ERROR: os.read(%r, %r) -> EINVAL" % (
-            fileno, bufsiz)
-          print >> sys.stderr, "   fd: %r" % (os.fstat(fileno),)
-          if tries > 0:
-            tries -= 1
-            print >> sys.stderr, "   SLEEP(.1) + RETRY"
-            time.sleep(0.1)
-            continue
+        if ex.errno == errno.EINVAL and tries > 0:
+          tries -= 1
+          time.sleep(0.1)
+          continue
         raise
   os.read = _hacked_read
 
