@@ -30,7 +30,8 @@ def add_arguments(parser):
   status_info = textwrap.dedent('''
     Key for non-verbose symbols (no-emoji equvalent in parens):
 
-      ✅ (.) - The test passed.
+      .  (.) - The test passed. This uses a '.' even in emoji mode to make the
+               other outcomes stand out without as much visual fatigue.
       ⚡ (D) - Test produced an expectation diff. Review diff to see if this was
                intentional or not.
       🔥 (E) - The recipe crashed (raised uncaught exception) in a way that the

@@ -9,6 +9,7 @@
 import collections
 import datetime
 import logging
+import os
 import sys
 
 from cStringIO import StringIO
@@ -16,38 +17,47 @@ from cStringIO import StringIO
 import attr
 import coverage
 
-from backports.shutil_get_terminal_size import get_terminal_size
-
 
 @attr.s
 class Reporter(object):
   _use_emoji = attr.ib()
   _is_train = attr.ib()
 
-  _symbol_count = attr.ib(default=0)
+  _column_count = attr.ib(default=0)
   _long_err_buf = attr.ib(factory=StringIO)
 
   _start_time = attr.ib(factory=datetime.datetime.now)
 
-  _symbol_count = attr.ib(default=0)
-
-  # all emoji are 2 columns wide
-  _symbol_width = attr.ib()
-  @_symbol_width.default
-  def _symbol_width_default(self):
-    return 2 if self._use_emoji else 1
-
-  # default to 80 cols if we can't figure out the width (or are on a bot), and
-  # then prevent _symbol_max from ever falling below 1 (to avoid division by 0).
-  _symbol_max = attr.ib()
-  @_symbol_max.default
-  def _symbol_max_default(self):
-    return max(1, (get_terminal_size().columns or 80) / self._symbol_width)
+  # default to 80 cols if we're outputting to not a tty. Otherwise, set this to
+  # -1 to allow the terminal to do all wrapping.
+  #
+  # This allows nice presentation on the bots (i.e. 80 columns), while also
+  # allowing full-width display with correct wrapping on terminals/cmd.exe.
+  _column_max = attr.ib()
+  @_column_max.default
+  def _column_max_default(self):
+    # 1 == stdout
+    return -1 if os.isatty(1) else 80
 
   _verbose = attr.ib()
   @_verbose.default
   def _verbose_default(self):
     return logging.getLogger().level < logging.WARNING
+
+  def _space_for_columns(self, item_columns):
+    """Preemptively ensures we have space to print something which takes
+    `item_columns` space.
+
+    Increments self._column_count as a side effect.
+    """
+    if self._column_max == -1:
+      # output is a tty, let it do the wrapping.
+      return
+
+    self._column_count += item_columns
+    if self._column_count > self._column_max:
+      self._column_count = 0
+      print
 
   def short_report(self, outcome_msg):
     """Prints all test results from `outcome_msg` to stdout.
@@ -76,14 +86,10 @@ class Reporter(object):
 
     for test_name, test_result in outcome_msg.test_results.iteritems():
       _print_summary_info(
-          self._verbose, self._use_emoji, test_name, test_result)
+          self._verbose, self._use_emoji, test_name, test_result,
+          self._space_for_columns)
       _print_detail_info(self._long_err_buf, test_name, test_result)
 
-    self._symbol_count += 1
-    if not self._verbose:
-      if (self._symbol_count % self._symbol_max) == 0:
-        self._symbol_count = 0
-        print
 
   def final_report(self, cov, outcome_msg):
     """Prints all final information about the test run to stdout. Raises
@@ -180,7 +186,9 @@ FIELD_TO_DISPLAY = collections.OrderedDict([
   ('removed',        (True,  'removed expectation file',            '🌟', 'R')),
   ('written',        (True,  'updated expectation file',            '💾', 'D')),
 
-  (None,             (True,  '',                                    '✅', '.'))
+  # We use '.' even in emoji mode as this is the vast majority of outcomes when
+  # training recipes. This makes the other icons pop much better.
+  (None,             (True,  '',                                    '.', '.'))
 ])
 
 
@@ -195,7 +203,8 @@ def _check_field(test_result, field_name):
   return (None, None, None, None), None
 
 
-def _print_summary_info(verbose, use_emoji, test_name, test_result):
+def _print_summary_info(verbose, use_emoji, test_name, test_result,
+                        space_for_columns):
   # Pick the first populated field in the TestResults.Results
   for field_name in FIELD_TO_DISPLAY:
     (success, verbose_msg, emj, txt), _ = _check_field(test_result, field_name)
@@ -207,6 +216,7 @@ def _print_summary_info(verbose, use_emoji, test_name, test_result):
     msg = '' if not verbose_msg else ' (%s)' % verbose_msg
     print '%s ... %s%s' % (test_name, 'ok' if success else 'FAIL', msg)
   else:
+    space_for_columns(1 if len(icon) == 1 else 2)
     sys.stdout.write(icon)
   sys.stdout.flush()
 
