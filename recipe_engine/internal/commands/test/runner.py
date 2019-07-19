@@ -272,12 +272,7 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
   # TODO(iannucci): Use real objects so this only needs to be serialized once.
   raw_expectations['$result'] = json.loads(jsonpb.MessageToJson(
       result, including_default_value_fields=True))
-  # Parse the jsonResult, so that it shows up nicely in expectations.
-  if 'jsonResult' in raw_expectations['$result']:
-    raw_expectations['$result']['jsonResult'] = json.loads(
-        raw_expectations['$result']['jsonResult'])
-    if raw_expectations['$result']['jsonResult'] is None:
-      del raw_expectations['$result']['jsonResult']
+
   raw_expectations['$result']['name'] = '$result'
 
   raw_expectations = magic_check_fn.post_process(
