@@ -74,14 +74,20 @@ def RunSteps(api):
 
   # can mock copy paths. See the file module to do this for real.
   copy1 = api.path['start_dir'].join('copy1')
+  copy10 = api.path['start_dir'].join('copy10')
   copy2 = api.path['start_dir'].join('copy2')
+  copy20 = api.path['start_dir'].join('copy20')
   api.step('rm copy2 (initial)', ['rm', '-rf', copy2])
+  api.step('rm copy20 (initial)', ['rm', '-rf', copy20])
 
   api.step('mkdirs', ['mkdir', '-p', copy1.join('foo', 'bar')])
   api.path.mock_add_paths(copy1.join('foo', 'bar'))
+  api.step('touch copy10', ['touch', copy10])
+  api.path.mock_add_paths(copy10)
   api.step('cp copy1 copy2', ['cp', '-a', copy1, copy2])
   api.path.mock_copy_paths(copy1, copy2)
   assert api.path.exists(copy2.join('foo', 'bar'))
+  assert not api.path.exists(copy20)
 
   # can mock remove paths. See the file module to do this for real.
   api.step('rm copy2/foo', ['rm', '-rf', copy2.join('foo')])
@@ -90,9 +96,12 @@ def RunSteps(api):
   assert not api.path.exists(copy2.join('foo'))
   assert api.path.exists(copy2)
 
+  api.step('touch copy20', ['touch', copy20])
+  api.path.mock_add_paths(copy20)
   api.step('rm copy2', ['rm', '-rf', copy2])
   api.path.mock_remove_paths(copy2)
   assert not api.path.exists(copy2)
+  assert api.path.exists(copy20)
 
   result = api.step('base paths', ['echo'] + [
       api.path[name] for name in sorted(api.path.c.base_paths.keys())

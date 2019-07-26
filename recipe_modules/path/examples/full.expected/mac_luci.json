@@ -51,11 +51,26 @@
   },
   {
     "cmd": [
+      "rm",
+      "-rf",
+      "[START_DIR]/copy20"
+    ],
+    "name": "rm copy20 (initial)"
+  },
+  {
+    "cmd": [
       "mkdir",
       "-p",
       "[START_DIR]/copy1/foo/bar"
     ],
     "name": "mkdirs"
+  },
+  {
+    "cmd": [
+      "touch",
+      "[START_DIR]/copy10"
+    ],
+    "name": "touch copy10"
   },
   {
     "cmd": [
@@ -73,6 +88,13 @@
       "[START_DIR]/copy2/foo"
     ],
     "name": "rm copy2/foo"
+  },
+  {
+    "cmd": [
+      "touch",
+      "[START_DIR]/copy20"
+    ],
+    "name": "touch copy20"
   },
   {
     "cmd": [

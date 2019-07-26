@@ -81,6 +81,17 @@ class path_set(object):
     self._initial_paths = None
     self.contains = lambda path: path in self._paths
 
+  @property
+  def _separator(self):
+    return self._path_mod.sep
+
+  def _is_contained_in(self, path, root, match_root):
+    if not path.startswith(root):
+      return False
+    if len(path) == len(root):
+      return match_root
+    return path[len(root)] == self._separator
+
   def add(self, path):
     path = str(path)
     self._initialize()
@@ -94,14 +105,19 @@ class path_set(object):
     self._initialize()
     to_add = set()
     for p in self._paths:
-      if p.startswith(source):
+      if self._is_contained_in(p, source, match_root=True):
         to_add.add(p.replace(source, dest))
     self._paths |= to_add
 
   def remove(self, path, filt):
     path = str(path)
     self._initialize()
-    kill_set = set(p for p in self._paths if p.startswith(path) and filt(p))
+    match_root = True
+    if path[-1] == self._separator:
+      match_root = False
+      path = path.rstrip(self._separator)
+    kill_set = set(p for p in self._paths
+                   if self._is_contained_in(p, path, match_root) and filt(p))
     self._paths -= kill_set
 
   def contains(self, path):
