@@ -1035,10 +1035,10 @@ class SwarmingApi(recipe_api.RecipeApi):
     )
     parsed_results = [
         TaskResult(self.m,
-                   id,
+                   task_id,
                    task,
-                   self.m.path.join(output_dir, id) if output_dir else None)
-        for id, task in step.json.output.iteritems()
+                   output_dir.join(task_id) if output_dir else None)
+        for task_id, task in step.json.output.iteritems()
     ]
     parsed_results.sort(key=lambda result: result.name)
 
