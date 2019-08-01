@@ -696,16 +696,11 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
         step_data.exc_result = ExecutionResult(was_cancelled=True)
       if step_data.exc_result.retcode is not None:
         # Windows error codes such as 0xC0000005 and 0xC0000409 are much
-        # easier to recognize and differentiate in hex. In order to print them
-        # as unsigned hex we need to add 4 Gig to them.
-        #
-        # To make this conditional on platform we'd have to plumb through the
-        # simulated platform (or make a new StepRunner method) for this; we've
-        # opted to just unconditionally print both error representations.
+        # easier to recognize and differentiate in hex.
         exc_details.write_line(
             'Step had exit code: %s (a.k.a. 0x%08X)' % (
               step_data.exc_result.retcode,
-              step_data.exc_result.retcode + (1 << 32),))
+              step_data.exc_result.retcode & 0xffffffff))
 
     # Have to render presentation.status once here for the placeholders to
     # observe.
