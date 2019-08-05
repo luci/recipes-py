@@ -69,6 +69,12 @@ def RunSteps(api):
   api.step('leak dir', ['ls', api.raw_io.output_dir(
       leak_to=api.path['tmp_base'].join('out'))])
 
+  # Fail to write to leak_to file
+  step_result = api.step(
+      'nothing leaked to leak_to',
+      ['echo',
+       api.raw_io.output(leak_to=api.path['tmp_base'].join('missing.txt'))])
+
   # Example of overriding default mocked output for a single named output.
   step_result = api.python.inline(
       'override_default_mock',

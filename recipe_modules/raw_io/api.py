@@ -11,6 +11,7 @@ from recipe_engine import util as recipe_util
 import codecs
 import contextlib
 import cStringIO
+import errno
 import os
 import shutil
 import sys
@@ -168,6 +169,9 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
       try:
         with open(self._backing_file, 'rb') as f:
           ret = self.read_decoded_data(f)
+      except IOError as e:
+        if e.errno != errno.ENOENT:
+          raise
       finally:
         if not self.leak_to:
           _rmfile(self._backing_file)

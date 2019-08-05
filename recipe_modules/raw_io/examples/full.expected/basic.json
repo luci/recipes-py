@@ -65,6 +65,13 @@
   },
   {
     "cmd": [
+      "echo",
+      "[TMP_BASE]/missing.txt"
+    ],
+    "name": "nothing leaked to leak_to"
+  },
+  {
+    "cmd": [
       "python",
       "-u",
       "\nimport sys\nwith open(sys.argv[1], 'w') as f:\n  f.write('bad_value')\n",
