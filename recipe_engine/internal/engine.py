@@ -794,12 +794,18 @@ def _print_step(execution_log, step):
   """
   assert isinstance(step, Step)
 
+  execution_log.write_line('Executing command [')
+  for arg in step.cmd:
+    execution_log.write_line('  %r,' % arg)
+  execution_log.write_line(']')
+
   # Apparently some recipes (I think mostly test recipes) pass commands whose
   # arguments contain literal newlines (hence the newline replacement bit).
   #
   # TODO(iannucci): Make this illegal?
   execution_log.write_line(
-      ' '.join(map(_shell_quote, step.cmd)).replace('\n', '\\n'))
+      'escaped for shell: %s'
+      % ' '.join(map(_shell_quote, step.cmd)).replace('\n', '\\n'))
 
   execution_log.write_line('in dir ' + step.cwd)
 
