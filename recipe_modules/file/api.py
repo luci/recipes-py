@@ -316,14 +316,17 @@ class FileApi(recipe_api.RecipeApi):
     self._run(name, ['remove', source])
     self.m.path.mock_remove_paths(source)
 
-  def listdir(self, name, source, test_data=()):
+  def listdir(self, name, source, recursive=False, test_data=()):
     """List all files inside a directory.
 
     Args:
       * name (str) - The name of the step.
       * source (Path) - The directory to list.
+      * recursive (bool) - If True, do not emit subdirectory entries but recurse
+        into them instead, emitting paths relative to `source`. Doesn't follow
+        symlinks. Very slow for large directories.
       * test_data (iterable[str]) - Some default data for this step to return
-        when running under simulation. This should be the list of file items
+        when running under simulation. This should be the list of relative paths
         found in this directory.
 
     Returns list[Path]
@@ -333,10 +336,11 @@ class FileApi(recipe_api.RecipeApi):
     assert isinstance(source, config_types.Path)
     self.m.path.assert_absolute(source)
     result = self._run(
-      name, ['listdir', source],
+      name, ['listdir', source] + (['--recursive'] if recursive else []),
       lambda: self.test_api.listdir(test_data),
       self.m.raw_io.output_text())
-    ret = [source.join(x) for x in result.stdout.splitlines()]
+    ret = [source.join(*x.split(self.m.path.sep))
+           for x in result.stdout.splitlines()]
     result.presentation.logs['listdir'] = map(str, ret)
     return ret
 

@@ -21,7 +21,7 @@ def RunSteps(api):
   api.file.rmtree('make sure dest is gone', dest2)
   api.file.copytree('copy it', dest, dest2)
 
-  paths = api.file.listdir('list new dir', dest2, file_names)
+  paths = api.file.listdir('list new dir', dest2, test_data=file_names)
   assert paths == [dest2.join(n) for n in file_names], paths
 
   paths = api.file.glob_paths('glob *a', dest2, '*a', ['a', 'aa'])
@@ -35,7 +35,7 @@ def RunSteps(api):
   assert paths == [dest2.join('aa')], paths
 
   api.file.rmglob('rm b*', dest2, 'b*')
-  paths = api.file.listdir('list new dir', dest2, ['aa', 'c', 'cc'])
+  paths = api.file.listdir('list new dir', dest2, test_data=['aa', 'c', 'cc'])
   assert paths == [dest2.join(p) for p in ['aa', 'c', 'cc']], paths
 
   api.file.rmcontents('remove "some other dir/*"', dest2)

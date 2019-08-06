@@ -55,6 +55,39 @@
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
       "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[START_DIR]/root_dir/sub"
+    ],
+    "infra_step": true,
+    "name": "mkdir"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "some data",
+      "[START_DIR]/root_dir/sub/f"
+    ],
+    "infra_step": true,
+    "name": "write another file",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@f@some data@@@",
+      "@@@STEP_LOG_END@f@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
       "listdir",
       "[START_DIR]/root_dir"
     ],
@@ -62,6 +95,26 @@
     "name": "listdir root_dir (2)",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@listdir@[START_DIR]/root_dir/some file@@@",
+      "@@@STEP_LOG_LINE@listdir@[START_DIR]/root_dir/sub@@@",
+      "@@@STEP_LOG_END@listdir@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "listdir",
+      "[START_DIR]/root_dir",
+      "--recursive"
+    ],
+    "infra_step": true,
+    "name": "listdir root_dir (3)",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@listdir@[START_DIR]/root_dir/some file@@@",
+      "@@@STEP_LOG_LINE@listdir@[START_DIR]/root_dir/sub/f@@@",
       "@@@STEP_LOG_END@listdir@@@"
     ]
   },

@@ -163,6 +163,16 @@ def _Glob(base, pattern):
     os.chdir(cwd)
 
 
+def _ListDir(base, recursive):
+  if recursive:
+    out = []
+    for dirpath, _, files in os.walk(base):
+      out.extend(os.path.relpath(os.path.join(dirpath, f), base) for f in files)
+  else:
+    out = os.listdir(base)
+  print('\n'.join(sorted(out)), end='')
+
+
 def _Remove(path):
   try:
     os.remove(path)
@@ -257,7 +267,7 @@ def main(args):
   subparser.add_argument('source', help='The directory to copy.')
   subparser.add_argument('dest', help='The destination directory to copy to.')
   subparser.set_defaults(
-    func=lambda opts: shutil.copytree(opts.source, opts.dest, opts.symlinks))
+      func=lambda opts: shutil.copytree(opts.source, opts.dest, opts.symlinks))
 
   # Subcommand: move
   subparser = subparsers.add_parser('move',
@@ -265,7 +275,7 @@ def main(args):
   subparser.add_argument('source', help='The item to move.')
   subparser.add_argument('dest', help='The destination name.')
   subparser.set_defaults(
-    func=lambda opts: shutil.move(opts.source, opts.dest))
+      func=lambda opts: shutil.move(opts.source, opts.dest))
 
   # Subcommand: glob
   subparser = subparsers.add_parser('glob',
@@ -284,8 +294,10 @@ def main(args):
   subparser = subparsers.add_parser('listdir',
       help='Print all entries in the given folder to stdout.')
   subparser.add_argument('source', help='The dir to list.')
+  subparser.add_argument('--recursive', action='store_true',
+                         help='Recurse into subdirectories.')
   subparser.set_defaults(
-    func=lambda opts: print('\n'.join(sorted(os.listdir(opts.source))), end=''))
+      func=lambda opts: _ListDir(opts.source, opts.recursive))
 
   # Subcommand: ensure-directory
   subparser = subparsers.add_parser('ensure-directory',

@@ -9,11 +9,11 @@ from recipe_engine import recipe_test_api
 
 
 class FileTestApi(recipe_test_api.RecipeTestApi):
-  def listdir(self, names=(), errno_name=0):
+  def listdir(self, paths=(), errno_name=0):
     """Provides test mock for the `listdir` method.
 
     Args:
-      names (iterable[str]) - The list of dir entry names for this `listdir`
+      paths (iterable[str]) - The list of relative paths for this `listdir`
         step to return.
       errno_name (str|None) - The error name for this step to return, if any.
 
@@ -21,12 +21,12 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
       yield (api.test('my_test')
         + api.step_data('listdir step name', api.file.listdir(['a', 'b', 'c']))
     """
-    def _check(name):
-      name = str(name)
-      if '/' in name or '\\' in name:  # pragma: no cover
-        raise ValueError('file name contains slash: %r' % name)
-      return name
-    return (self.m.raw_io.stream_output('\n'.join(sorted(map(_check, names))))
+    def _check(p):
+      p = str(p)
+      if p.startswith('../') or p.startswith('..\\'):  # pragma: no cover
+        raise ValueError('path is outside of listdir root directory: %r' % p)
+      return p
+    return (self.m.raw_io.stream_output('\n'.join(sorted(map(_check, paths))))
             + self.errno(errno_name))
 
   def filesizes(self, sizes=(), errno_name=0):
