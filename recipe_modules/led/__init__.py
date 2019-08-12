@@ -10,4 +10,6 @@ DEPS = [
   'step',
 ]
 
-PROPERTIES = {}
+from PB.recipe_modules.recipe_engine.led import properties
+
+PROPERTIES = properties.InputProperties

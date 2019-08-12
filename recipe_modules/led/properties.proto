@@ -1,0 +1,41 @@
+// Copyright 2019 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+syntax = "proto3";
+
+package recipe_modules.recipe_engine.led;
+
+message InputProperties {
+    // Whether the current build was invoked with led (led is expected to set
+    // this flag when launching a build).
+    bool launched_by_led = 1;
+
+    message IsolatedInput {
+        // The hash of the isolate containing the recipe code currently being
+        // run.
+        string hash = 1;
+
+        // The isolate server namespace.
+        string namespace = 2;
+
+        // The isolate server hostname.
+        string server = 3;
+    }
+
+    // led sets this property for builds launched using `edit-recipe-bundle`.
+    // The build can use this info to launch child led builds using the same
+    // version of the recipes code.
+    IsolatedInput isolated_input = 2;
+
+    message CIPDInput {
+        // The name of the CIPD package containing the recipe code being run.
+        string package = 1;
+
+        // The version of the recipes package in CIPD.
+        string version = 2;
+    }
+
+    // led will set this property when `led edit-recipe-bundle` is *not* used,
+    // or when testing with an older version of recipes from CIPD.
+    CIPDInput cipd_input = 3;
+}

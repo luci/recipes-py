@@ -23,6 +23,7 @@ class LedApi(recipe_api.RecipeApi):
 
   class LedResult(object):
     """Holds the result of a led operation. Can be chained using |then|."""
+
     def __init__(self, result, module):
       self._result = result
       self._module = module
@@ -40,9 +41,42 @@ class LedApi(recipe_api.RecipeApi):
       return self.__class__(
           self._module._run_command(self._result, *cmd).stdout, self._module)
 
-  def __init__(self, **kwargs):
+  def __init__(self, props, **kwargs):
     super(LedApi, self).__init__(**kwargs)
     self._led_path = None
+    self._launched_by_led = props.launched_by_led
+
+    if props.HasField('isolated_input'):
+      self._isolated_input = props.isolated_input
+    else:
+      self._isolated_input = None
+
+    if props.HasField('cipd_input'):
+      self._cipd_input = props.cipd_input
+    else:
+      self._cipd_input = None
+
+  @property
+  def launched_by_led(self):
+    """Whether the current build is a led job."""
+    return self._launched_by_led
+
+  @property
+  def isolated_input(self):
+    """The location of the isolate containing the recipes code being run.
+
+    If set, it will be an `InputProperties.IsolatedInput` protobuf;
+    otherwise, None.
+    """
+    return self._isolated_input
+
+  @property
+  def cipd_input(self):
+    """The versioned CIPD package containing the recipes code being run.
+
+    If set, it will be an `InputProperties.CIPDInput` protobuf; otherwise None.
+    """
+    return self._cipd_input
 
   @property
   def _led_binary_path(self):
@@ -52,6 +86,28 @@ class LedApi(recipe_api.RecipeApi):
   def __call__(self, *cmd):
     """Runs led with the given arguments. Wraps result in a `LedResult`."""
     return self.LedResult(self._run_command(None, *cmd).stdout, self)
+
+  def inject_input_recipes(self, led_result):
+    """Sets the version of recipes used by led to correspond to the version
+    currently being used.
+
+    If neither the `isolated_input` nor the `cipd_input` property is set,
+    this is a no-op.
+
+    Args:
+      led_result: The `LedResult` whose stdout will be passed into the edit
+        command.
+    """
+    if self.isolated_input:
+      # TODO(iannucci): Add option for setting server/namespace too
+      return led_result.then('edit', '-rbh', self.isolated_input.hash)
+    if self.cipd_input:
+      return led_result.then(
+        'edit',
+        '-rpkg', self.cipd_input.package,
+        '-rver', self.cipd_input.version)
+    # TODO(iannucci): Check for/inject buildbucket exe package/version
+    return led_result
 
   def _run_command(self, previous, *cmd):
     """Runs led with a given command and arguments.

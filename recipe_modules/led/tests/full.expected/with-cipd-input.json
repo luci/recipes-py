@@ -1,0 +1,105 @@
+[
+  {
+    "cmd": [
+      "cipd",
+      "ensure",
+      "-root",
+      "[CACHE]/led",
+      "-ensure-file",
+      "infra/tools/luci/led/${platform} latest",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "ensure_installed",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-latest----------\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/tools/luci/led/resolved-platform\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[CACHE]/led/led",
+      "get-builder",
+      "luci.chromium.try:linux_chromium_rel_ng"
+    ],
+    "name": "led get-builder",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"task_data\": \"foo\"@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[CACHE]/led/led",
+      "edit-cr-cl",
+      "https://fake.url/123"
+    ],
+    "name": "led edit-cr-cl",
+    "stdin": "{\"task_data\": \"foo\"}",
+    "~followup_annotations": [
+      "@@@STEP_LOG_END@json.output (invalid)@@@",
+      "@@@STEP_LOG_LINE@json.output (exception)@No JSON object could be decoded@@@",
+      "@@@STEP_LOG_END@json.output (exception)@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[CACHE]/led/led",
+      "edit",
+      "-rpkg",
+      "recipe_dir/recipes",
+      "-rver",
+      "refs/heads/master"
+    ],
+    "name": "led edit",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"recipe_cipd_source\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"cipd_package\": \"recipe_dir/recipes\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"cipd_version\": \"refs/heads/master\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }, @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"task_data\": \"foo\"@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[CACHE]/led/led",
+      "launch"
+    ],
+    "name": "led launch",
+    "stdin": "{\"recipe_cipd_source\": {\"cipd_package\": \"recipe_dir/recipes\", \"cipd_version\": \"refs/heads/master\"}, \"task_data\": \"foo\"}",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"swarming\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"host_name\": \"chromium-swarm.appspot.com\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"task_id\": \"deadbeeeeef\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@Swarming task@https://chromium-swarm.appspot.com/task?id=deadbeeeeef@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "echo",
+      "deadbeeeeef"
+    ],
+    "name": "print task id"
+  },
+  {
+    "name": "$result"
+  }
+]

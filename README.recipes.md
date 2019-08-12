@@ -1632,9 +1632,34 @@ The main interface this module provides is a direct call to the led binary:
 
 See the led binary for full documentation of commands.
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/led/api.py#52)(self, \*cmd):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/led/api.py#83)(self, \*cmd):**
 
 Runs led with the given arguments. Wraps result in a `LedResult`.
+
+&emsp; **@property**<br>&mdash; **def [active](/recipe_modules/led/api.py#59)(self):**
+
+Whether the current build is a led job.
+
+&emsp; **@property**<br>&mdash; **def [cipd\_input](/recipe_modules/led/api.py#73)(self):**
+
+The versioned CIPD package containing the recipes code being run.
+
+&mdash; **def [inject\_input\_recipes](/recipe_modules/led/api.py#87)(self, led_result):**
+
+Sets the version of recipes used by led to correspond to the version
+currently being used.
+
+If the current build was not invoked with led, this is a no-op.
+
+Args:
+  led_result: The `LedResult` to modify.
+
+&emsp; **@property**<br>&mdash; **def [isolated\_input](/recipe_modules/led/api.py#64)(self):**
+
+The location of the isolate containing the recipes code being run.
+
+If the build was invoked with led, it will be an
+`InputProperties.IsolatedInput` protobuf; otherwise, None.
 ### *recipe_modules* / [path](/recipe_modules/path)
 
 [DEPS](/recipe_modules/path/__init__.py#5): [platform](#recipe_modules-platform), [properties](#recipe_modules-properties)
@@ -2994,9 +3019,9 @@ we don't pass the channel to the 'user' code (i.e. RunSteps).
 &mdash; **def [RunSteps](/recipe_modules/json/tests/add_json_log.py#10)(api):**
 ### *recipes* / [led:tests/full](/recipe_modules/led/tests/full.py)
 
-[DEPS](/recipe_modules/led/tests/full.py#5): [json](#recipe_modules-json), [led](#recipe_modules-led), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/led/tests/full.py#5): [json](#recipe_modules-json), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/led/tests/full.py#12)(api):**
+&mdash; **def [RunSteps](/recipe_modules/led/tests/full.py#14)(api):**
 ### *recipes* / [path:examples/full](/recipe_modules/path/examples/full.py)
 
 [DEPS](/recipe_modules/path/examples/full.py#5): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
