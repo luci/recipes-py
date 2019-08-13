@@ -21,7 +21,7 @@ class RuntimeApi(recipe_api.RecipeApi):
 
     Should be used only during migration from Buildbot to LUCI stack.
     """
-    return bool(self._properties.get('is_luci', False))
+    return bool(self._properties.get('is_luci', True))
 
   @property
   def is_experimental(self):
