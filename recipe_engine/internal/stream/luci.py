@@ -63,7 +63,7 @@ class LUCIStepMarkdownWriter(object):
 
 @attr.s
 class LUCILogStream(StreamEngine.Stream):
-  """Implementation of StreamEngine.Stream for the run_build execution engine.
+  """Implementation of StreamEngine.Stream for luciexe mode.
 
   It's a very thin wrapper around a LogDog text stream."""
 
@@ -98,8 +98,7 @@ class LUCILogStream(StreamEngine.Stream):
 
 @attr.s
 class LUCIStepStream(StreamEngine.StepStream):
-  """Implementation of StreamEngine.StepStream for the run_build execution
-  engine.
+  """Implementation of StreamEngine.StepStream for luciexe mode.
 
   Holds a stdout and stderr file (opened lazily), as well as a Step protobuf
   message which is part of this execution's Build message.
@@ -222,9 +221,9 @@ class LUCIStepStream(StreamEngine.StepStream):
 
   def set_manifest_link(self, name, sha256, url):
     raise NotImplementedError(
-        'run_build does not support manifest links yet. If you encounter this '
-        'please talk to the luci-dev folks. When this is supported on '
-        'run_build it will be via direct manifest embedding')
+        'luciexe mode does not support manifest links yet. If you encounter '
+        'this please talk to the luci-dev folks. When this is supported in '
+        'luciexe mode it will be via direct manifest embedding')
 
   def set_step_status(self, status, had_timeout):
     _ = had_timeout
@@ -283,14 +282,14 @@ class LUCIStepStream(StreamEngine.StepStream):
 
 @attr.s
 class LUCIStreamEngine(StreamEngine):
-  """Implementation of StreamEngine for the run_build execution engine.
+  """Implementation of StreamEngine for luciexe mode.
 
   Holds a LogDog datagram stream for Build messages and manages writes to this
   stream.
   """
 
   # This causes the 'build.proto' datagram stream to export as JSONPB instead of
-  # Binary PB. Only used for debugging. `run_build` protocol does not support
+  # Binary PB. Only used for debugging. `luciexe` protocol does not support
   # JSONPB.
   _export_build_as_json = attr.ib(validator=attr_type(bool))
 
@@ -378,5 +377,8 @@ class LUCIStreamEngine(StreamEngine):
 
   @property
   def was_successful(self):
-    """Used by run_build to set the recipe engine's returncode."""
+    """Used by luciexe to set the recipe engine's returncode.
+
+    This isn't strictly necessary, but it can be helpful for debugging.
+    """
     return self._build_proto.status == common.SUCCESS

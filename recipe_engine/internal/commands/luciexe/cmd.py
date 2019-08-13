@@ -51,7 +51,7 @@ def _synth_properties(build):
     },
     '$recipe_engine/path': {
       'temp_dir': _contract_in_env('TMP'),
-      'cache_dir': _contract_in_luci_context('run_build', 'cache_dir'),
+      'cache_dir': _contract_in_luci_context('luciexe', 'cache_dir'),
     },
   }
   LOG.info('Synthesized properties: %r', synth_props)
@@ -66,7 +66,7 @@ def _tweak_env():
 
 
 def main(args):
-  LOG.info('run_build started, parsing Build message from stdin.')
+  LOG.info('luciexe started, parsing Build message from stdin.')
   build = Build()
   build.ParseFromString(sys.stdin.read())
   LOG.info('finished parsing Build message')
@@ -77,10 +77,10 @@ def main(args):
 
   _tweak_env()
 
-  run_build_engine = LUCIStreamEngine(args.build_proto_jsonpb)
+  luciexe_engine = LUCIStreamEngine(args.build_proto_jsonpb)
 
   result = None
-  with StreamEngineInvariants.wrap(run_build_engine) as stream_engine:
+  with StreamEngineInvariants.wrap(luciexe_engine) as stream_engine:
     result, _ = RecipeEngine.run_steps(
         args.recipe_deps, properties, stream_engine,
         SubprocessStepRunner(), os.environ, os.getcwd(),

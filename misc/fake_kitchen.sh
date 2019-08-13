@@ -55,7 +55,7 @@ export LOGDOG_COORDINATOR_HOST=logs.example.com
 export LUCI_CONTEXT="$WD/luci_context/context.json"
 cat > "$LUCI_CONTEXT" <<EOF
 {
-  "run_build": {
+  "luciexe": {
     "cache_dir": "$WD/cache"
   },
   "buildbucket": {
@@ -87,4 +87,4 @@ esac
     -chdir="$WD/wd"                                           \
     -streamserver-uri="$STREAMSERVER"                         \
     python "$ROOT/recipes.py" -vvv                            \
-    run_build --build-proto-jsonpb "$@"
+    luciexe --build-proto-jsonpb "$@"

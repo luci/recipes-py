@@ -454,7 +454,7 @@ values that have been rendered in a user-friendly fashion.
 ## How recipes are run
 
 Once the recipe is loaded, the running subcommand (i.e. `run`, `test`,
-`run_build`) selects a [StreamEngine] and a [StepRunner]. The StreamEngine is
+`luciexe`) selects a [StreamEngine] and a [StepRunner]. The StreamEngine is
 responsible for exporting the state of the running recipe to the outside world,
 and the StepRunner is responsible for 'running' steps.
 

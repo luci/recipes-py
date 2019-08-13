@@ -2,7 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-'''Implement the LUCI "run_build" protocol.
+'''Implement the "luciexe" protocol.
 
 This expects to read a build.proto[1] Build message on stdin (binary-encoded
 protobuf), and will execute the task accordingly, selecting the recipe to run
@@ -43,7 +43,7 @@ def add_arguments(parser):
     try:
       return main(args)
     except RunBuildContractViolation as ex:
-      LOG.fatal('"run_build" protocol contract violation: %s', ex)
+      LOG.fatal('"luciexe" protocol contract violation: %s', ex)
       return 1
 
   def _post(_error, _args):

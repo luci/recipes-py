@@ -207,8 +207,8 @@ def prep_recipes_py(recipe_deps, destination):
   files = {
     "recipes": '"$@"',
     "recipes.bat": '%*',
-    "run_build": 'run_build "$@"',
-    "run_build.bat": 'run_build %*',
+    "luciexe": 'luciexe "$@"',
+    "luciexe.bat": 'luciexe %*',
   }
 
   for fname, runline in files.iteritems():
