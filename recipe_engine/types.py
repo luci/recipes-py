@@ -103,8 +103,8 @@ class FrozenDict(collections.Mapping):
 
 
 class StepPresentation(object):
-  RAW_STATUSES = ('SUCCESS', 'WARNING', 'FAILURE', 'EXCEPTION')
-  STATUSES = frozenset(RAW_STATUSES)
+  _RAW_STATUSES = (None, 'SUCCESS', 'WARNING', 'FAILURE', 'EXCEPTION')
+  STATUSES = frozenset(filter(bool, _RAW_STATUSES))
 
   # TODO(iannucci): use attr for this
 
@@ -113,7 +113,7 @@ class StepPresentation(object):
     """Given two STATUS strings, return the worse of the two."""
     if not hasattr(cls, 'STATUS_TO_BADNESS'):
       cls.STATUS_TO_BADNESS = freeze({
-        status: i for i, status in enumerate(StepPresentation.RAW_STATUSES)})
+        status: i for i, status in enumerate(StepPresentation._RAW_STATUSES)})
 
     if cls.STATUS_TO_BADNESS[status_a] > cls.STATUS_TO_BADNESS[status_b]:
       return status_a
