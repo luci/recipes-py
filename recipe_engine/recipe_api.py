@@ -771,6 +771,26 @@ class RecipeApiPlain(object):
     """Returns a 'config blob' for the current API."""
     return self.make_config_params(config_name, optional, **CONFIG_VARS)[0]
 
+  def _get_config_item(self, config_name, optional=False):
+    """Get the config item for a given name.
+
+    If `config_name` does not refer to a config item for the current module,
+    the behavior is determined by the value of `optional`:
+      * if optional is True, then None will be returned
+      * else a KeyError will be raised with an error message containing
+          `config_name`, the name of the api's module and the list of the api's
+          module's config names.
+    """
+    ctx = self._module.CONFIG_CTX
+    try:
+      return ctx.CONFIG_ITEMS[config_name]
+    except KeyError:
+      if optional:
+        return None
+      raise KeyError(
+          '%s is not the name of a configuration for module %s: %s' % (
+              config_name, self._module.__name__, sorted(ctx.CONFIG_ITEMS)))
+
   def make_config_params(self, config_name, optional=False, **CONFIG_VARS):
     """Returns a 'config blob' for the current API, and the computed params
     for all dependent configurations.
@@ -794,23 +814,21 @@ class RecipeApiPlain(object):
       return None, generic_params
 
     assert ctx, '%s has no config context' % self
-    try:
-      params = self.get_config_defaults()         # generic defaults
-      itm = ctx.CONFIG_ITEMS[config_name] if config_name else None
-      if itm:
-        params.update(itm.DEFAULT_CONFIG_VARS())  # per-item defaults
-      params.update(CONFIG_VARS)                  # per-invocation values
-
-      base = ctx.CONFIG_SCHEMA(**params)
-      if config_name is None:
-        return base, params
-      else:
-        return itm(base), params
-    except KeyError:
-      if optional:
+    params = self.get_config_defaults()         # generic defaults
+    itm = None
+    if config_name:
+      itm = self._get_config_item(config_name, optional)
+      if not itm:
         return None, generic_params
-      else:  # pragma: no cover
-        raise  # TODO(iannucci): raise a better exception.
+    if itm:
+      params.update(itm.DEFAULT_CONFIG_VARS())  # per-item defaults
+    params.update(CONFIG_VARS)                  # per-invocation values
+
+    base = ctx.CONFIG_SCHEMA(**params)
+    if config_name is None:
+      return base, params
+    else:
+      return itm(base), params
 
   def set_config(self, config_name=None, optional=False, **CONFIG_VARS):
     """Sets the modules and its dependencies to the named configuration."""
@@ -821,10 +839,8 @@ class RecipeApiPlain(object):
 
   def apply_config(self, config_name, config_object=None, optional=False):
     """Apply a named configuration to the provided config object or self."""
-    assert config_name in self._module.CONFIG_CTX.CONFIG_ITEMS, (
-        config_name, self._module.CONFIG_CTX.CONFIG_ITEMS)
-    self._module.CONFIG_CTX.CONFIG_ITEMS[config_name](
-        config_object or self.c, optional=optional)
+    itm = self._get_config_item(config_name)
+    itm(config_object or self.c, optional=optional)
 
   def resource(self, *path):
     """Returns path to a file under <recipe module>/resources/ directory.
