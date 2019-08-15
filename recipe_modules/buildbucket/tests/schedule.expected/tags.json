@@ -175,6 +175,7 @@
     ],
     "infra_step": true,
     "name": "buildbucket.run.collect.wait",
+    "timeout": 5000,
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
     ]

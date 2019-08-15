@@ -727,6 +727,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
           step_name='wait',
           subcommand='collect',
           args=['-interval', '%ds' % interval] + build_ids,
+          timeout=timeout,
       )
 
       # Fetch build details.
@@ -807,7 +808,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   def _run_bb(
       self, subcommand, step_name=None, args=None, stdin=None, stdout=None,
-      step_test_data=None):
+      step_test_data=None, timeout=None):
     cmdline = [
       'bb', subcommand,
       '-host', self._host,
@@ -824,6 +825,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
         stdin=stdin,
         stdout=stdout,
         step_test_data=step_test_data,
+        timeout=timeout,
     )
 
   # TODO(nodir): remove in favor of _run_bb

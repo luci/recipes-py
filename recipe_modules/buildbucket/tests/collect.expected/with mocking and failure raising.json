@@ -18,6 +18,7 @@
     ],
     "infra_step": true,
     "name": "collect1.wait",
+    "timeout": 3600,
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -95,6 +96,7 @@
     ],
     "infra_step": true,
     "name": "buildbucket.collect.wait",
+    "timeout": 600,
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]

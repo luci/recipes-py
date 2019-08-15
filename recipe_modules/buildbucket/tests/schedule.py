@@ -23,8 +23,11 @@ def RunSteps(api):
   req = api.buildbucket.schedule_request(tags=tags, **req_body)
   api.buildbucket.schedule([req])
 
-  api.buildbucket.run([req], raise_if_unsuccessful=api.properties.get(
-      'raise_failed_status'))
+  api.buildbucket.run(
+      [req],
+      raise_if_unsuccessful=api.properties.get('raise_failed_status'),
+      timeout=5000,
+  )
 
   api.buildbucket.run([], step_name='run nothing')
 
