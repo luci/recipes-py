@@ -178,6 +178,21 @@ class AnalyzeTest(test_env.RecipeEngineUnitTest):
       recipes=['run_test'],
     ))
 
+  def testSimilarModuleChanged(self):
+    result = self._run(self.MockRecipeDeps(
+        {
+          'foo': [],
+          'foo_bar': [],
+        },
+        {
+          'recipe': ['foo'],
+        }
+      ), git_attr_files=[], in_data=Input(
+          files=['recipe_modules/foo_bar/api.py'],
+          recipes=['recipe'],
+      ))
+    self.assertEqual(result, Output())
+
 
 class AnalyzeSmokeTest(test_env.RecipeEngineUnitTest):
   """Small smoke test that makes sure analyze works.

@@ -72,7 +72,11 @@ def analyze(recipe_deps, in_data):
   for recipe_name in valid_recipes:
     # 1: The recipes themselves.
     recipe = main_repo.recipes[recipe_name]
-    if set(in_data.files).intersection([recipe.path]):
+    isect = set(in_data.files).intersection([recipe.path])
+    if isect:
+      print(
+          'Adding %r to output set; recipe is directly modified: %r'
+          % (recipe_name, sorted(isect)), file=sys.stderr)
       output.recipes.append(recipe_name)
       continue
 
@@ -88,7 +92,14 @@ def analyze(recipe_deps, in_data):
       mod = recipe_deps.repos[repo_name].modules[module_name]
 
       # Any file inside this module modified?
-      if any(fname.startswith(mod.path) for fname in in_data.files):
+      isect = set()
+      for fname in in_data.files:
+        if fname.startswith(mod.path + os.path.sep):
+          isect.add(fname)
+      if isect:
+        print(
+            'Adding %r to output set; recipe module dep %r is modified: %r'
+            % (recipe_name, mod.name, sorted(isect)), file=sys.stderr)
         output.recipes.append(recipe_name)
         break
 
@@ -97,7 +108,11 @@ def analyze(recipe_deps, in_data):
       if repo_name not in git_attr_file_map:
         git_attr_file_map[repo_name] = set(
           get_git_attribute_files(recipe_deps.repos[repo_name].path))
-      if set(in_data.files).intersection(git_attr_file_map[repo_name]):
+      isect = set(in_data.files).intersection(git_attr_file_map[repo_name])
+      if isect:
+        print(
+            'Adding %r to output set; gitattrs overlaps with input files: %r'
+            % (recipe_name, sorted(isect)), file=sys.stderr)
         output.recipes.append(recipe_name)
         break
 

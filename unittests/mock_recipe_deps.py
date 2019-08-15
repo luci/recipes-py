@@ -112,6 +112,7 @@ class MockRecipeModule(object):
        recipe_deps.parse_deps_spec().
     """
     self.repo = repo
+    self.name = '%s/%s' % (repo.name, name)
     self.path = os.path.join(repo.path, 'recipe_modules', name)
     # pylint: disable=invalid-name
     self.normalized_DEPS = parse_deps_spec(repo.name, DEPS)
