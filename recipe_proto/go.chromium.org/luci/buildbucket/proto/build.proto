@@ -18,10 +18,12 @@ package buildbucket.v2;
 
 option go_package = "go.chromium.org/luci/buildbucket/proto;buildbucketpb";
 
+import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
 import "go.chromium.org/luci/buildbucket/proto/common.proto";
 import "go.chromium.org/luci/buildbucket/proto/step.proto";
+import "go.chromium.org/luci/swarming/proto/api/swarming.proto";
 
 // A single build, identified by an int64 id.
 // Belongs to a builder.
@@ -35,11 +37,11 @@ import "go.chromium.org/luci/buildbucket/proto/step.proto";
 // a build at completion time and does not change after that.
 // All fields are included.
 //
-// Next id: 24.
+// Next id: 28.
 message Build {
   // Defines what to build/test.
   //
-  // Behavior of a build script (recipe) MAY depend on Input.
+  // Behavior of a build executable MAY depend on Input.
   // It MAY NOT modify its behavior based on anything outside of Input.
   // It MAY read non-Input fields to display for debugging or to pass-through to
   // triggered builds. For example the "tags" field may be passed to triggered
@@ -78,12 +80,20 @@ message Build {
     bool experimental = 5;
   }
 
-  // Result of the build script (recipe).
+  // Result of the build executable.
   message Output {
     reserved 2; // summary_markdown, was moved to Build.
     reserved 4; // critical, was moved to Build.
 
     // Arbitrary JSON object produced by the build.
+    //
+    // In recipes, use step_result.presentation.properties to set these,
+    // for example
+    //
+    //   step_result = api.step(['echo'])
+    //   step_result.presentation.properties['foo'] = 'bar'
+    //
+    // More docs: https://chromium.googlesource.com/infra/luci/recipes-py/+/HEAD/doc/old_user_guide.md#Setting-properties
     //
     // V1 equivalent: corresponds to "properties" key in
     // "result_details_json".
@@ -179,11 +189,12 @@ message Build {
   // Human-readable status reason is available in summary_markdown.
   StatusDetails status_details = 22;
 
-  // Input to the build script / recipe.
+  // Input to the build executable.
   Input input = 15;
 
-  // Output of the build script / recipe.
+  // Output of the build executable.
   // SHOULD depend only on input field and NOT other fields.
+  // MUST be unset if build status is SCHEDULED.
   //
   // RPC: By default, this field is excluded from responses.
   // Updated while the build is running and finalized when the build ends.
@@ -193,6 +204,7 @@ message Build {
   // Updated as build runs.
   //
   // May take up to 1MB after zlib compression.
+  // MUST be unset if build status is SCHEDULED.
   //
   // RPC: By default, this field is excluded from responses.
   repeated Step steps = 17;
@@ -206,6 +218,23 @@ message Build {
   // One key may have multiple values, which is why this is not a map<string,string>.
   // Indexed by the server, see also BuildFilter.tags.
   repeated StringPair tags = 19;
+
+  // What to run when the build is ready to start.
+  Executable exe = 24;
+
+  // If true, use the canary build infrastructure.
+  bool canary = 25;
+
+  // Maximum build pending time.
+  // If the timeout is reached, the build is marked as INFRA_FAILURE status
+  // and both status_details.{timeout, resource_exhaustion} are set.
+  google.protobuf.Duration scheduling_timeout = 26;
+
+  // Maximum build execution time.
+  // Not to be confused with scheduling_timeout.
+  // If the timeout is reached, the build is marked as INFRA_FAILURE status
+  // and status_details.timeout is set.
+  google.protobuf.Duration execution_timeout = 27;
 }
 
 // Build infrastructure that was used for a particular build.
@@ -213,14 +242,11 @@ message BuildInfra {
 
   // Buildbucket-specific information, captured at the build creation time.
   message Buildbucket {
+    reserved 4; // field "canary" was moved to Build message.
+
     // Version of swarming task template. Defines
     // versions of kitchen, git, git wrapper, python, vpython, etc.
     string service_config_revision = 2;
-
-    // Whether canary version of the swarming task template was used for this
-    // build.
-    bool canary = 4;
-
     // Properties that were specified in ScheduleBuildRequest to create this
     // build.
     //
@@ -236,6 +262,66 @@ message BuildInfra {
 
   // Swarming-specific information.
   message Swarming {
+    // Describes a cache directory persisted on a bot.
+    //
+    // If a build requested a cache, the cache directory is available on build
+    // startup. If the cache was present on the bot, the directory contains
+    // files from the previous run on that bot.
+    // The build can read/write to the cache directory while it runs.
+    // After build completes, the cache directory is persisted.
+    // The next time another build requests the same cache and runs on the same
+    // bot, the files will still be there (unless the cache was evicted,
+    // perhaps due to disk space reasons).
+    //
+    // One bot can keep multiple caches at the same time and one build can request
+    // multiple different caches.
+    // A cache is identified by its name and mapped to a path.
+    //
+    // If the bot is running out of space, caches are evicted in LRU manner
+    // before the next build on this bot starts.
+    //
+    // Builder cache.
+    //
+    // Buildbucket implicitly declares cache
+    //   {"name": "<hash(project/bucket/builder)>", "path": "builder"}.
+    // This means that any LUCI builder has a "personal disk space" on the bot.
+    // Builder cache is often a good start before customizing caching.
+    // In recipes, it is available at api.buildbucket.builder_cache_path.
+    //
+    message CacheEntry {
+      // Identifier of the cache. Required. Length is limited to 128.
+      // Must be unique in the build.
+      //
+      // If the pool of swarming bots is shared among multiple LUCI projects and
+      // projects use same cache name, the cache will be shared across projects.
+      // To avoid affecting and being affected by other projects, prefix the
+      // cache name with something project-specific, e.g. "v8-".
+      string name = 1;
+
+      // Relative path where the cache in mapped into. Required.
+      //
+      // Must use POSIX format (forward slashes).
+      // In most cases, it does not need slashes at all.
+      //
+      // In recipes, use api.path['cache'].join(path) to get absolute path.
+      //
+      // Must be unique in the build.
+      string path = 2;
+
+      // Duration to wait for a bot with a warm cache to pick up the
+      // task, before falling back to a bot with a cold (non-existent) cache.
+      //
+      // The default is 0, which means that no preference will be chosen for a
+      // bot with this or without this cache, and a bot without this cache may
+      // be chosen instead.
+      //
+      // If no bot has this cache warm, the task will skip this wait and will
+      // immediately fallback to a cold cache request.
+      //
+      // The value must be multiples of 60 seconds.
+      google.protobuf.Duration wait_for_warm_cache = 3;
+    }
+
     // Swarming hostname, e.g. "chromium-swarm.appspot.com".
     // Populated at the build creation time.
     string hostname = 1;
@@ -258,6 +344,12 @@ message BuildInfra {
 
     // Swarming dimensions of the bot used for the task.
     repeated StringPair bot_dimensions = 6;
+
+    // Caches requested by this build.
+    repeated CacheEntry caches = 7;
+
+    // Swarming task containment for the task.
+    swarming.v1.Containment containment = 8;
   }
 
   // LogDog-specific information.

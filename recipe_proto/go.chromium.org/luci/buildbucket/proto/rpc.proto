@@ -8,7 +8,6 @@ package buildbucket.v2;
 
 option go_package = "go.chromium.org/luci/buildbucket/proto;buildbucketpb";
 
-import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/struct.proto";
 import "google/rpc/status.proto";
@@ -70,10 +69,6 @@ service Builds {
   // Cancels a build.
   // The requester must have at least SCHEDULER role in the destination bucket.
   rpc CancelBuild(CancelBuildRequest) returns (Build) {};
-
-  // Asynchronously mass-cancels all builds matching a predicate.
-  // Use with care!
-  rpc CancelBuilds(CancelBuildsRequest) returns (google.protobuf.Empty) {};
 
   // Executes multiple requests in a batch.
   // The response code is always OK.
@@ -199,7 +194,7 @@ message UpdateBuildRequest {
 
 // A request message for ScheduleBuild rpc.
 //
-// Next ID: 14.
+// Next ID: 15.
 message ScheduleBuildRequest {
   // ** STRONGLY RECOMMENDED **.
   // A unique string id used for detecting duplicate requests.
@@ -304,6 +299,10 @@ message ScheduleBuildRequest {
 
   // Value for Build.critical.
   Trinary critical = 13;
+
+  // Overrides Builder.exe in the config.
+  // Supported subfields: cipd_version.
+  Executable exe = 14;
 }
 
 // A request message for CancelBuild rpc.
@@ -316,18 +315,6 @@ message CancelBuildRequest {
 
   // Fields to include in the response. See also GetBuildRequest.fields.
   google.protobuf.FieldMask fields = 100;
-}
-
-// A request message for CancelBuilds rpc.
-message CancelBuildsRequest {
-  // Predicate for the builds to cancel.
-  // predicate.status MUST be SCHEDULED or STARTED.
-  // If bucket is not specified, predicate matches all buckets where the
-  // requester has WRITER role.
-  BuildPredicate predicate = 1;
-
-  // Required. Value for Build.summary_markdown.
-  string summary_markdown = 2;
 }
 
 // A build predicate.
@@ -368,7 +355,7 @@ message BuildPredicate {
   bool include_experimental = 8;
 
   // A build must be in this build range.
-  // A pair of SearchBuildsRequest.predicate.build.end_build_id and
+  // A pair of SearchBuildsRequest.predicate.build.start_build_id and
   // SearchBuildsRequest.page_size=1 can be used to find the previous build.
   BuildRange build = 9;
 
