@@ -48,6 +48,8 @@ def GenTests(api):
 
   yield test('basic')
 
+  yield test('exe_cipd_version', exe_cipd_version='some_ver')
+
   yield test(
       test_name='tags',
       tags={'a': 'b'}

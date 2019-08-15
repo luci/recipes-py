@@ -249,7 +249,7 @@ If it returns `None`, the link is not reported. Default link title is build id.
 
 A module for interacting with buildbucket.
 
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#833)(self):**
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#838)(self):**
 
 Returns bucket name in v1 format.
 
@@ -272,11 +272,11 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#849)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#854)(self):**
 
 DEPRECATED, use build.id instead.
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#854)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#859)(self):**
 
 DEPRECATED, use build.input instead.
 
@@ -293,7 +293,7 @@ It remains on the bot from build to build.
 See "Builder cache" in
 https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/project_config.proto
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#859)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#864)(self):**
 
 Deprecated. Use build.builder instead.
 
@@ -301,9 +301,9 @@ Deprecated. Use build.builder instead.
 
 Returns builder name. Shortcut for `.build.builder.builder`.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#601)(self, build_id, \*\*kwargs):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#606)(self, build_id, \*\*kwargs):**
 
-&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#660)(self, build_id, mirror_status=False, \*\*kwargs):**
+&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#665)(self, build_id, mirror_status=False, \*\*kwargs):**
 
 Shorthand for `collect_builds` below, but for a single build only.
 
@@ -315,7 +315,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
   for the ended build.
 
-&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#680)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False):**
+&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#685)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False):**
 
 Waits for a set of builds to end and returns their details.
 
@@ -333,7 +333,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   for all specified builds.
 
-&mdash; **def [get](/recipe_modules/buildbucket/api.py#639)(self, build_id, url_title_fn=None, step_name=None):**
+&mdash; **def [get](/recipe_modules/buildbucket/api.py#644)(self, build_id, url_title_fn=None, step_name=None):**
 
 Gets a build.
 
@@ -345,11 +345,11 @@ Args:
 Returns:
   A build_pb2.Build.
 
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#656)(self, build_id, \*\*kwargs):**
+&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#661)(self, build_id, \*\*kwargs):**
 
 DEPRECATED. Use get().
 
-&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#604)(self, build_ids, url_title_fn=None, step_name=None):**
+&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#609)(self, build_ids, url_title_fn=None, step_name=None):**
 
 Gets multiple builds.
 
@@ -377,11 +377,11 @@ Never returns None, but sub-fields may be empty.
 Returns True if the build is critical. Build defaults to the current one.
     
 
-&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#844)(self):**
+&emsp; **@property**<br>&mdash; **def [properties](/recipe_modules/buildbucket/api.py#849)(self):**
 
 DEPRECATED, use build attribute instead.
 
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#505)(self, builds, \*\*kwargs):**
+&mdash; **def [put](/recipe_modules/buildbucket/api.py#510)(self, builds, \*\*kwargs):**
 
 Puts a batch of builds.
 
@@ -417,7 +417,7 @@ Returns:
   [Builds](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   in the same order as schedule_build_requests.
 
-&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#429)(self, schedule_build_requests, url_title_fn=None, step_name=None):**
+&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#434)(self, schedule_build_requests, url_title_fn=None, step_name=None):**
 
 Schedules a batch of builds.
 
@@ -446,7 +446,7 @@ Returns:
 Raises:
   `InfraFailure` if any of the requests fail.
 
-&mdash; **def [schedule\_request](/recipe_modules/buildbucket/api.py#298)(self, builder, project=None, bucket=None, properties=None, experimental=None, gitiles_commit=None, gerrit_changes=None, tags=None, inherit_buildsets=True, dimensions=None, priority=None, critical=None):**
+&mdash; **def [schedule\_request](/recipe_modules/buildbucket/api.py#298)(self, builder, project=None, bucket=None, properties=None, experimental=None, gitiles_commit=None, gerrit_changes=None, tags=None, inherit_buildsets=True, dimensions=None, priority=None, critical=None, exe_cipd_version=None):**
 
 Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
@@ -495,8 +495,10 @@ Args:
   Defaults to .build.critical.
   See also Build.critical in
   https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto
+* exe_cipd_version: CIPD version of the LUCI Executable (e.g. recipe) to use
+  instead of the server-configured one.
 
-&mdash; **def [search](/recipe_modules/buildbucket/api.py#540)(self, predicate, limit=None, url_title_fn=None, step_name=None):**
+&mdash; **def [search](/recipe_modules/buildbucket/api.py#545)(self, predicate, limit=None, url_title_fn=None, step_name=None):**
 
 Searches for builds.
 
