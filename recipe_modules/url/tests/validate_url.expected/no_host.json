@@ -17,7 +17,7 @@
       "    return callable_obj(*props, **additional_args)",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/url/tests/validate_url.py\", line 13, in RunSteps",
       "    api.url.validate_url(api.properties['url_to_validate'])",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/recipe_api.py\", line 608, in _inner",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/recipe_api.py\", line 610, in _inner",
       "    return func(*a, **kw)",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/url/api.py\", line 128, in validate_url",
       "    raise ValueError('URL must specify a network location.')",

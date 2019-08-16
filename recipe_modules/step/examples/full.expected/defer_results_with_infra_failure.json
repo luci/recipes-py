@@ -125,7 +125,6 @@
   },
   {
     "failure": {
-      "failure": {},
       "humanReason": "2 out of 2 aggregated steps failed: Step('testa') (retcode: 1), Infra Failure: Step('testb') (retcode: 1)"
     },
     "name": "$result"

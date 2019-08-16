@@ -475,6 +475,8 @@ class AggregatedResult(object):
     return DeferredResult(result, None)
 
   def add_failure(self, exception):
+    if isinstance(exception, InfraFailure):
+      self.contains_infra_failure = True
     self.failures.append(exception)
     return DeferredResult(None, exception)
 
