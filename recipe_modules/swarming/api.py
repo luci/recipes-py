@@ -5,6 +5,7 @@
 import base64
 import contextlib
 import copy
+import sys
 
 from collections import namedtuple
 
@@ -12,6 +13,9 @@ from state import TaskState
 
 from recipe_engine import recipe_api
 
+# TODO(maruel): Remove references to basestring once python 2 not used.
+if sys.version_info.major >= 3:
+  basestring = str  # pragma: no cover
 
 DEFAULT_CIPD_VERSION = 'git_revision:fd7d55c05dac7486ba163c0d08827a0901afaa7b'
 
@@ -97,7 +101,7 @@ class TaskRequest(object):
     Args:
       * name (str) - The name of the task.
     """
-    assert isinstance(name, str)
+    assert isinstance(name, basestring)
     ret =  self._copy()
     ret._name = name
     return ret
@@ -136,7 +140,7 @@ class TaskRequest(object):
     Args:
       * service_account (str) - The service account to attach to the task.
     """
-    assert isinstance(account, str)
+    assert isinstance(account, basestring)
     ret =  self._copy()
     ret._service_account = account
     return ret
@@ -155,7 +159,7 @@ class TaskRequest(object):
     Args:
       user (str) - user that requested this task, if applicable.
     """
-    assert isinstance(user, (str, unicode))
+    assert isinstance(user, basestring)
     ret =  self._copy()
     ret._user = user
     return ret
@@ -250,7 +254,7 @@ class TaskRequest(object):
       Args:
         isolated (str) - The hash of an isolated on the default isolated server.
       """
-      assert isinstance(isolated, str)
+      assert isinstance(isolated, basestring)
       ret =  self._copy()
       ret._isolated = isolated
       return ret
@@ -284,7 +288,7 @@ class TaskRequest(object):
       # Make a copy.
       ret._dimensions = self.dimensions
       for k, v in kwargs.iteritems():
-        assert isinstance(k, str) and (isinstance(v, str) or v == None)
+        assert isinstance(k, basestring) and (isinstance(v, basestring) or v == None)
         if v is None:
           ret._dimensions.pop(k, None)
         else:
@@ -504,7 +508,7 @@ class TaskRequest(object):
       Args:
         data (str) - The data to be written to secret bytes.
       """
-      assert isinstance(data, str)
+      assert isinstance(data, basestring)
       ret =  self._copy()
       ret._secret_bytes = data
       return ret
@@ -1018,7 +1022,7 @@ class SwarmingApi(recipe_api.RecipeApi):
 
     test_data = []
     for idx, task in enumerate(tasks):
-      if isinstance(task, str):
+      if isinstance(task, basestring):
         cmd.append(task)
         test_data.append(
             self.test_api.task_result(id=task, name='my_task_%d' % idx))
