@@ -34,7 +34,8 @@
     "name": "led get-builder",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"task_data\": \"foo\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"builder_name\": \"some-builder\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"recipe_properties\": {}@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
     ]
@@ -46,7 +47,7 @@
       "https://fake.url/123"
     ],
     "name": "led edit-cr-cl",
-    "stdin": "{\"task_data\": \"foo\"}",
+    "stdin": "{\"builder_name\": \"some-builder\", \"recipe_properties\": {}}",
     "~followup_annotations": [
       "@@@STEP_LOG_END@json.output (invalid)@@@",
       "@@@STEP_LOG_LINE@json.output (exception)@No JSON object could be decoded@@@",
@@ -56,9 +57,28 @@
   {
     "cmd": [
       "[CACHE]/led/led",
+      "edit",
+      "-p",
+      "prop=val"
+    ],
+    "name": "led edit",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"builder_name\": \"some-builder\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"recipe_properties\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"prop\": \"val\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[CACHE]/led/led",
       "launch"
     ],
     "name": "led launch",
+    "stdin": "{\"builder_name\": \"some-builder\", \"recipe_properties\": {\"prop\": \"val\"}}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"swarming\": {@@@",

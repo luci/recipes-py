@@ -3023,9 +3023,9 @@ we don't pass the channel to the 'user' code (i.e. RunSteps).
 &mdash; **def [RunSteps](/recipe_modules/json/tests/add_json_log.py#10)(api):**
 ### *recipes* / [led:tests/full](/recipe_modules/led/tests/full.py)
 
-[DEPS](/recipe_modules/led/tests/full.py#5): [json](#recipe_modules-json), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/led/tests/full.py#5): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/led/tests/full.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/led/tests/full.py#21)(api, child_properties):**
 ### *recipes* / [path:examples/full](/recipe_modules/path/examples/full.py)
 
 [DEPS](/recipe_modules/path/examples/full.py#5): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

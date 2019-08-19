@@ -34,7 +34,8 @@
     "name": "led get-builder",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"task_data\": \"foo\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"builder_name\": \"some-builder\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"recipe_properties\": {}@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
     ]
@@ -46,7 +47,7 @@
       "https://fake.url/123"
     ],
     "name": "led edit-cr-cl",
-    "stdin": "{\"task_data\": \"foo\"}",
+    "stdin": "{\"builder_name\": \"some-builder\", \"recipe_properties\": {}}",
     "~followup_annotations": [
       "@@@STEP_LOG_END@json.output (invalid)@@@",
       "@@@STEP_LOG_LINE@json.output (exception)@No JSON object could be decoded@@@",
@@ -65,11 +66,12 @@
     "name": "led edit",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"builder_name\": \"some-builder\", @@@",
       "@@@STEP_LOG_LINE@json.output@  \"recipe_cipd_source\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"cipd_package\": \"recipe_dir/recipes\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"cipd_version\": \"refs/heads/master\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"recipe_dir/recipes\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"version\": \"refs/heads/master\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"task_data\": \"foo\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"recipe_properties\": {}@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
     ]
@@ -80,7 +82,7 @@
       "launch"
     ],
     "name": "led launch",
-    "stdin": "{\"recipe_cipd_source\": {\"cipd_package\": \"recipe_dir/recipes\", \"cipd_version\": \"refs/heads/master\"}, \"task_data\": \"foo\"}",
+    "stdin": "{\"builder_name\": \"some-builder\", \"recipe_cipd_source\": {\"package\": \"recipe_dir/recipes\", \"version\": \"refs/heads/master\"}, \"recipe_properties\": {}}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"swarming\": {@@@",

@@ -132,7 +132,7 @@ class LedApi(recipe_api.RecipeApi):
       kwargs['stdin'] = self.m.json.input(data=previous)
 
     result = self.m.step(
-        'led %s' % cmd[0], [self._led_binary_path]  + list(cmd), **kwargs)
+        'led %s' % cmd[0], [self._led_binary_path] + list(cmd), **kwargs)
 
     # If we launched a task, add a link to the swarming task.
     if cmd[0] == 'launch':
