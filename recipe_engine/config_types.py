@@ -166,13 +166,20 @@ class Path(RecipeConfigType):
     assert not any(x in ('..', '.', '/', '\\') for x in pieces)
 
     self.base = base
-    self.pieces = pieces
+    self.pieces = pieces if isinstance(pieces, tuple) else tuple(pieces)
     self.platform_ext = kwargs.get('platform_ext', {})
 
   def __eq__(self, other):
     return (self.base == other.base and
             self.pieces == other.pieces and
             self.platform_ext == other.platform_ext)
+
+  def __hash__(self):
+    return hash((
+        self.base,
+        self.pieces,
+        tuple(sorted(self.platform_ext.items())),
+    ))
 
   def __ne__(self, other):
     return not self == other

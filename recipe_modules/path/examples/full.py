@@ -111,18 +111,32 @@ def RunSteps(api):
   ]
 
   # Convert strings to Paths
-  paths_to_convert =  [
-    api.path['start_dir'].join('some', 'thing'),
-    api.path['start_dir'],
-    api.path.resource("module_resource.py"),
-    api.path.resource(),
-    api.resource("recipe_resource.py"),
-    api.resource(),
-  ]
-  for p in paths_to_convert:
+  def _mk_paths():
+    return [
+      api.path['start_dir'].join('some', 'thing'),
+      api.path['start_dir'],
+      api.path.resource("module_resource.py"),
+      api.path.resource(),
+      api.resource("recipe_resource.py"),
+      api.resource(),
+    ]
+  static_paths = _mk_paths()
+  for p in static_paths:
     after = api.path.abs_to_path(str(p))
     api.step('converted path %s' % p, ['echo', after])
     assert after == p, (after, p)
+
+  # All paths are comparable and hashable
+  for i, (static_path, new_path) in enumerate(zip(static_paths, _mk_paths())):
+    assert static_path == new_path
+    assert hash(static_path) == hash(new_path)
+    # Now ensure that our new_path doesn't accidentally match any of the
+    # static_paths which it shouldn't.
+    for j in xrange(len(static_paths)):
+      if j == i:
+        continue
+      assert static_paths[j] != new_path
+      assert hash(static_paths[j]) != hash(new_path)
 
   try:
     api.path.abs_to_path('non/../absolute')
