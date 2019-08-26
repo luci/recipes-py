@@ -17,7 +17,7 @@ from recipe_engine import recipe_api
 if sys.version_info.major >= 3:
   basestring = str  # pragma: no cover
 
-DEFAULT_CIPD_VERSION = 'git_revision:fd7d55c05dac7486ba163c0d08827a0901afaa7b'
+DEFAULT_CIPD_VERSION = 'git_revision:326c40937c6963f6ba00fa374ac6e852fd1ce1a5'
 
 
 # TODO(iannucci): Investigate whether slices can be made invisible to clients
@@ -950,13 +950,16 @@ class SwarmingApi(recipe_api.RecipeApi):
     """
     return TaskRequest(self.m)
 
-  def trigger(self, step_name, requests):
+  def trigger(self, step_name, requests, cancel_extra_tasks=False):
     """Triggers a set of Swarming tasks.
 
     Args:
       step_name (str): The name of the step.
-      tasks (seq[TaskRequest]): A sequence of task request objects representing
-        the tasks we want to trigger.
+      requests (seq[TaskRequest]): A sequence of task request objects
+        representing the tasks we want to trigger.
+      cancel_extra_tasks (bool): Whether to cancel any extra tasks which may
+        be spawned as a result of a Swarming bug.
+        TODO(https://crbug.com/997221): Remove this option.
 
     Returns:
       A list of TaskRequestMetadata objects.
@@ -964,16 +967,20 @@ class SwarmingApi(recipe_api.RecipeApi):
     assert len(requests) > 0
     assert self._server
 
+    cmd = [
+      'spawn-tasks',
+      '-server', self._server,
+      '-json-input', self.m.json.input({
+        'requests': [ req.to_jsonish() for req in requests ]
+      }),
+      '-json-output', self.m.json.output(),
+    ]
+    if cancel_extra_tasks:
+      cmd.append('-cancel-extra-tasks')
+
     step = self._run(
         step_name,
-        [
-          'spawn-tasks',
-          '-server', self._server,
-          '-json-input', self.m.json.input({
-            'requests': [ req.to_jsonish() for req in requests ]
-          }),
-          '-json-output', self.m.json.output(),
-        ],
+        cmd,
         step_test_data=lambda: self.test_api.trigger(
           task_names=tuple(map(lambda req: req.name, requests)),
         )

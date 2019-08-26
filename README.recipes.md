@@ -2373,7 +2373,7 @@ http://go.chromium.org/luci/client/cmd/swarming.
 This module will deploy the client to [CACHE]/swarming_client/; users should
 add this path to the named cache for their builder.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#993)(self, name, tasks, output_dir=None, timeout=None):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#1000)(self, name, tasks, output_dir=None, timeout=None):**
 
 Waits on a set of Swarming tasks.
 
@@ -2413,14 +2413,17 @@ into a full task.
 Once your TaskRequest is complete, you can pass it to `trigger` in order to
 have it start running on the swarming server.
 
-&mdash; **def [trigger](/recipe_modules/swarming/api.py#953)(self, step_name, requests):**
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#953)(self, step_name, requests, cancel_extra_tasks=False):**
 
 Triggers a set of Swarming tasks.
 
 Args:
   step_name (str): The name of the step.
-  tasks (seq[TaskRequest]): A sequence of task request objects representing
-    the tasks we want to trigger.
+  requests (seq[TaskRequest]): A sequence of task request objects
+    representing the tasks we want to trigger.
+  cancel_extra_tasks (bool): Whether to cancel any extra tasks which may
+    be spawned as a result of a Swarming bug.
+    TODO(https://crbug.com/997221): Remove this option.
 
 Returns:
   A list of TaskRequestMetadata objects.
