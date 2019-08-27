@@ -19,12 +19,13 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
       },
     })
 
-  def trigger(self, task_names):
+  def trigger(self, task_names, initial_id=0):
     """Generates step test data intended to mock api.swarming.trigger()
 
     Args:
       task_names (seq[str]): A sequence of task names representing the tasks we
         want to trigger.
+      initial_id (int): The beginning of the ID range.
     """
     return self.m.json.output({
         'tasks': [{
@@ -32,7 +33,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
             'request': {
                 'name': name,
             },
-        } for idx, name in enumerate(task_names)],
+        } for idx, name in enumerate(task_names, start=initial_id)],
     })
 
   @staticmethod
