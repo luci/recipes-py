@@ -17,7 +17,7 @@ from recipe_engine import recipe_api
 if sys.version_info.major >= 3:
   basestring = str  # pragma: no cover
 
-DEFAULT_CIPD_VERSION = 'git_revision:326c40937c6963f6ba00fa374ac6e852fd1ce1a5'
+DEFAULT_CIPD_VERSION = 'git_revision:dcd9e10d7ea9890a266ca8dfef02909cf76134f1'
 
 
 # TODO(iannucci): Investigate whether slices can be made invisible to clients
@@ -48,6 +48,7 @@ class TaskRequest(object):
   For more details on what goes into a Swarming task, see the user guide:
   https://chromium.googlesource.com/infra/luci/luci-py/+/master/appengine/swarming/doc/User-Guide.md#task
   """
+
   def __init__(self, api):
     self._api = api
     self._name = ''
@@ -73,7 +74,7 @@ class TaskRequest(object):
     Args:
       * slice (TaskSlice) - The slice to append.
     """
-    ret =  self._copy()
+    ret = self._copy()
     ret._slices.append(slice_obj)
     return ret
 
@@ -86,7 +87,7 @@ class TaskRequest(object):
     """
     assert isinstance(slice_obj, self.TaskSlice)
     assert 0 <= idx < len(self._slices)
-    ret =  self._copy()
+    ret = self._copy()
     ret._slices[idx] = slice_obj
     return ret
 
@@ -102,7 +103,7 @@ class TaskRequest(object):
       * name (str) - The name of the task.
     """
     assert isinstance(name, basestring)
-    ret =  self._copy()
+    ret = self._copy()
     ret._name = name
     return ret
 
@@ -125,7 +126,7 @@ class TaskRequest(object):
       * priority (int) - The priority of the task.
     """
     assert isinstance(priority, int)
-    ret =  self._copy()
+    ret = self._copy()
     ret._priority = priority
     return ret
 
@@ -141,7 +142,7 @@ class TaskRequest(object):
       * service_account (str) - The service account to attach to the task.
     """
     assert isinstance(account, basestring)
-    ret =  self._copy()
+    ret = self._copy()
     ret._service_account = account
     return ret
 
@@ -160,7 +161,7 @@ class TaskRequest(object):
       user (str) - user that requested this task, if applicable.
     """
     assert isinstance(user, basestring)
-    ret =  self._copy()
+    ret = self._copy()
     ret._user = user
     return ret
 
@@ -171,11 +172,11 @@ class TaskRequest(object):
     https://cs.chromium.org/chromium/infra/luci/appengine/swarming/swarming_rpcs.py?q=NewTaskRequest
     """
     return {
-      'name': self.name,
-      'priority': str(self.priority),
-      'service_account': self.service_account,
-      'task_slices': [task_slice.to_jsonish() for task_slice in self._slices],
-      'user': self.user,
+        'name': self.name,
+        'priority': str(self.priority),
+        'service_account': self.service_account,
+        'task_slices': [task_slice.to_jsonish() for task_slice in self._slices],
+        'user': self.user,
     }
 
   class TaskSlice(object):
@@ -194,6 +195,7 @@ class TaskRequest(object):
       with_io_timeout_secs(600)
     )
     """
+
     def __init__(self, api):
       self._cipd_ensure_file = api.cipd.EnsureFile()
       self._command = []
@@ -236,7 +238,7 @@ class TaskRequest(object):
       """
       assert isinstance(cmd, list)
       assert all(isinstance(s, (str, unicode)) for s in cmd)
-      ret =  self._copy()
+      ret = self._copy()
       ret._command = cmd
       return ret
 
@@ -255,7 +257,7 @@ class TaskRequest(object):
         isolated (str) - The hash of an isolated on the default isolated server.
       """
       assert isinstance(isolated, basestring)
-      ret =  self._copy()
+      ret = self._copy()
       ret._isolated = isolated
       return ret
 
@@ -284,11 +286,12 @@ class TaskRequest(object):
       )
       ```
       """
-      ret =  self._copy()
+      ret = self._copy()
       # Make a copy.
       ret._dimensions = self.dimensions
       for k, v in kwargs.iteritems():
-        assert isinstance(k, basestring) and (isinstance(v, basestring) or v == None)
+        assert isinstance(k, basestring) and (isinstance(v, basestring) or
+                                              v == None)
         if v is None:
           ret._dimensions.pop(k, None)
         else:
@@ -310,7 +313,7 @@ class TaskRequest(object):
           to install.
       """
       assert isinstance(ensure_file, self._api.cipd.EnsureFile)
-      ret =  self._copy()
+      ret = self._copy()
       ret._cipd_ensure_file = ensure_file
       return ret
 
@@ -329,7 +332,7 @@ class TaskRequest(object):
       """
       assert isinstance(outputs, list)
       assert all(isinstance(output, basestring) for output in outputs)
-      ret =  self._copy()
+      ret = self._copy()
       ret._outputs = outputs
       return ret
 
@@ -355,9 +358,8 @@ class TaskRequest(object):
       # Make a copy.
       ret._env_vars = self.env_vars
       for k, v in kwargs.iteritems():
-        assert (
-            isinstance(k, basestring) and
-            (isinstance(v, basestring) or v is None))
+        assert (isinstance(k, basestring) and
+                (isinstance(v, basestring) or v is None))
         if v is None:
           ret._env_vars.pop(k, None)
         else:
@@ -393,9 +395,10 @@ class TaskRequest(object):
       # Make a copy.
       ret._env_prefixes = self.env_prefixes
       for k, v in kwargs.iteritems():
-        assert (
-            isinstance(k, basestring) and (isinstance(v, list) or v is None)), (
-          '%r must be a string and %r None or a list of strings' % (k, v))
+        assert (isinstance(k, basestring) and
+                (isinstance(v, list) or v is None)), (
+                    '%r must be a string and %r None or a list of strings' %
+                    (k, v))
         if v is None:
           ret._env_prefixes.pop(k, None)
         else:
@@ -415,7 +418,7 @@ class TaskRequest(object):
         secs (int) - The seconds before the task expires.
       """
       assert isinstance(secs, int) and secs >= 0
-      ret =  self._copy()
+      ret = self._copy()
       ret._expiration_secs = secs
       return ret
 
@@ -431,7 +434,7 @@ class TaskRequest(object):
         secs (int) - The seconds for which the task the may be silent (no i/o).
       """
       assert isinstance(secs, int) and secs >= 0
-      ret =  self._copy()
+      ret = self._copy()
       ret._io_timeout_secs = secs
       return ret
 
@@ -447,7 +450,7 @@ class TaskRequest(object):
         secs (int) - The seconds before which Swarming should kill the task.
       """
       assert isinstance(secs, int) and secs >= 0
-      ret =  self._copy()
+      ret = self._copy()
       ret._execution_timeout_secs = secs
       return ret
 
@@ -468,7 +471,7 @@ class TaskRequest(object):
         secs (int) - The seconds giving the grace period.
       """
       assert isinstance(secs, int) and secs >= 0
-      ret =  self._copy()
+      ret = self._copy()
       ret._grace_period_secs = secs
       return ret
 
@@ -489,7 +492,7 @@ class TaskRequest(object):
         idempotent (bool) - Whether the task is idempotent.
       """
       assert isinstance(idempotent, bool)
-      ret =  self._copy()
+      ret = self._copy()
       ret._idempotent = idempotent
       return ret
 
@@ -509,7 +512,7 @@ class TaskRequest(object):
         data (str) - The data to be written to secret bytes.
       """
       assert isinstance(data, basestring)
-      ret =  self._copy()
+      ret = self._copy()
       ret._secret_bytes = data
       return ret
 
@@ -526,7 +529,7 @@ class TaskRequest(object):
             priority.
       """
       assert isinstance(lower_priority, bool)
-      ret =  self._copy()
+      ret = self._copy()
       ret._lower_priority = lower_priority
       return ret
 
@@ -542,7 +545,7 @@ class TaskRequest(object):
         containment_type (str) - One of the supported containment types.
       """
       assert containment_type in ('NONE', 'AUTO', 'JOB_OJBECT')
-      ret =  self._copy()
+      ret = self._copy()
       ret._containment_type = containment_type
       return ret
 
@@ -559,7 +562,7 @@ class TaskRequest(object):
         limit_processes (int) - 0 or the maximum number of concurrent processes
       """
       assert isinstance(limit_processes, int)
-      ret =  self._copy()
+      ret = self._copy()
       ret._limit_processes = limit_processes
       return ret
 
@@ -579,7 +582,7 @@ class TaskRequest(object):
             committed
       """
       assert isinstance(limit_total_committed_memory, int)
-      ret =  self._copy()
+      ret = self._copy()
       ret._limit_total_committed_memory = limit_total_committed_memory
       return ret
 
@@ -611,59 +614,69 @@ class TaskRequest(object):
       assert len(dims) >= 1 and dims['pool']
 
       properties = {
-        'command': self.command,
-        'dimensions': [{'key': k, 'value': v} for k, v in dims.iteritems()],
-        'outputs' : self.outputs,
-        'env' : [{'key': k , 'value': v} for k, v in self.env_vars.iteritems()],
-        'env_prefixes' : [
-          {'key': k , 'value' : v} for k, v in self.env_prefixes.iteritems()
-        ],
-        'execution_timeout_secs': str(self.execution_timeout_secs),
-        'grace_period_secs': str(self.grace_period_secs),
-        'idempotent': self.idempotent,
-        'io_timeout_secs': str(self.io_timeout_secs),
-        'containment': {
-          'lower_priority': self.lower_priority,
-          'containment_type': self.containment_type,
-          'limit_processes': str(self.limit_processes),
-          'limit_total_committed_memory':
-            str(self.limit_total_committed_memory),
-        },
+          'command': self.command,
+          'dimensions': [{
+              'key': k,
+              'value': v
+          } for k, v in dims.iteritems()],
+          'outputs': self.outputs,
+          'env': [{
+              'key': k,
+              'value': v
+          } for k, v in self.env_vars.iteritems()],
+          'env_prefixes': [{
+              'key': k,
+              'value': v
+          } for k, v in self.env_prefixes.iteritems()],
+          'execution_timeout_secs': str(self.execution_timeout_secs),
+          'grace_period_secs': str(self.grace_period_secs),
+          'idempotent': self.idempotent,
+          'io_timeout_secs': str(self.io_timeout_secs),
+          'containment': {
+              'lower_priority':
+                  self.lower_priority,
+              'containment_type':
+                  self.containment_type,
+              'limit_processes':
+                  str(self.limit_processes),
+              'limit_total_committed_memory':
+                  str(self.limit_total_committed_memory),
+          },
       }
 
       if self.isolated:
         properties['inputs_ref'] = {
-          'isolated': self.isolated,
-          'namespace': self._api.isolated.namespace,
-          'isolatedserver': self._api.isolated.isolate_server,
+            'isolated': self.isolated,
+            'namespace': self._api.isolated.namespace,
+            'isolatedserver': self._api.isolated.isolate_server,
         }
       if self.secret_bytes:
         properties['secret_bytes'] = base64.b64encode(self.secret_bytes)
       if len(self.cipd_ensure_file.packages) > 0:
         properties['cipd_input'] = {
-          'packages': [
-            {
-              'package_name': pkg.name,
-              'path': path or '.',
-              'version': pkg.version,
+            'packages': [{
+                'package_name': pkg.name,
+                'path': path or '.',
+                'version': pkg.version,
             }
-            for path in sorted(self.cipd_ensure_file.packages)
-              for pkg in self.cipd_ensure_file.packages[path]
-          ]
+                         for path in sorted(self.cipd_ensure_file.packages)
+                         for pkg in self.cipd_ensure_file.packages[path]]
         }
       if self._named_caches:
-        properties['caches'] = [
-            {'name': name, 'path': path}
-            for name, path in self.named_caches.iteritems()
-        ]
+        properties['caches'] = [{
+            'name': name,
+            'path': path
+        } for name, path in self.named_caches.iteritems()]
 
       return {
-        'expiration_secs': str(self.expiration_secs),
-        'properties': properties,
+          'expiration_secs': str(self.expiration_secs),
+          'properties': properties,
       }
+
 
 class TaskRequestMetadata(object):
   """Metadata of a requested task."""
+
   def __init__(self, swarming_server, task_json):
     self._task_json = task_json
     self._swarming_server = swarming_server
@@ -683,11 +696,13 @@ class TaskRequestMetadata(object):
     """Returns the URL of the associated task in the Swarming UI."""
     return '%s/task?id=%s' % (self._swarming_server, self.id)
 
+
 class TaskResult(object):
   """Result of a Swarming task."""
 
   class IsolatedOutputs(object):
     """The isolated outputs of a task."""
+
     def __init__(self, hash, server, namespace):
       self._hash = hash
       self._server = server
@@ -712,7 +727,9 @@ class TaskResult(object):
     def url(self):
       """The URL of the associated isolate UI page."""
       return '{0}/browse?namespace={1}&hash={2}'.format(
-          self.server, self.namespace, self.hash,
+          self.server,
+          self.namespace,
+          self.hash,
       )
 
   def __init__(self, api, id, raw_results, output_dir):
@@ -740,7 +757,9 @@ class TaskResult(object):
       self._state = TaskState[results['state']]
 
       assert self._state not in [
-          TaskState.INVALID, TaskState.PENDING, TaskState.RUNNING,
+          TaskState.INVALID,
+          TaskState.PENDING,
+          TaskState.RUNNING,
       ], 'state %s is either invalid or non-final' % self._state.name
 
       self._success = False
@@ -763,7 +782,7 @@ class TaskResult(object):
       if self._output_dir and raw_results.get('outputs'):
         self._outputs = {
             output: api.path.join(self._output_dir, output)
-                for output in raw_results['outputs']
+            for output in raw_results['outputs']
         }
 
   @property
@@ -847,16 +866,17 @@ class TaskResult(object):
           'The task was canceled before it could run')
     elif self.state == TaskState.COMPLETED:
       if not self.success:
-        raise self._api.step.InfraFailure(
-            'Swarming task failed:\n%s' % self.output)
+        raise self._api.step.InfraFailure('Swarming task failed:\n%s' %
+                                          self.output)
     elif self.state == TaskState.KILLED:
       raise self._api.step.InfraFailure('The task was killed mid-execution')
     elif self.state == TaskState.NO_RESOURCE:
       raise self._api.step.InfraFailure('Found no bots to run this task')
     else:
       assert False, 'unknown state %s; a case needs to be added above' % (
-        self.state.name # pragma: no cover
+          self.state.name  # pragma: no cover
       )
+
 
 class SwarmingApi(recipe_api.RecipeApi):
   """API for interacting with swarming.
@@ -902,10 +922,10 @@ class SwarmingApi(recipe_api.RecipeApi):
       cmd (list(str|Path)): swarming client subcommand to run.
     """
     self._ensure_swarming()
-    return self.m.step(name,
-                       [self._client] + list(cmd),
-                       step_test_data=step_test_data,
-                       infra_step=True)
+    return self.m.step(
+        name, [self._client] + list(cmd),
+        step_test_data=step_test_data,
+        infra_step=True)
 
   @contextlib.contextmanager
   def on_path(self):
@@ -968,12 +988,13 @@ class SwarmingApi(recipe_api.RecipeApi):
     assert self._server
 
     cmd = [
-      'spawn-tasks',
-      '-server', self._server,
-      '-json-input', self.m.json.input({
-        'requests': [ req.to_jsonish() for req in requests ]
-      }),
-      '-json-output', self.m.json.output(),
+        'spawn-tasks',
+        '-server',
+        self._server,
+        '-json-input',
+        self.m.json.input({'requests': [req.to_jsonish() for req in requests]}),
+        '-json-output',
+        self.m.json.output(),
     ]
     if cancel_extra_tasks:
       cmd.append('-cancel-extra-tasks')
@@ -982,9 +1003,7 @@ class SwarmingApi(recipe_api.RecipeApi):
         step_name,
         cmd,
         step_test_data=lambda: self.test_api.trigger(
-          task_names=tuple(map(lambda req: req.name, requests)),
-        )
-    )
+            task_names=tuple(map(lambda req: req.name, requests)),))
     trigger_resp = step.json.output
 
     metadata_objs = []
@@ -1017,10 +1036,13 @@ class SwarmingApi(recipe_api.RecipeApi):
     assert self._server
     assert isinstance(tasks, list)
     cmd = [
-      'collect',
-      '-server', self._server,
-      '-task-summary-json', self.m.json.output(),
-      '-task-output-stdout', 'json',
+        'collect',
+        '-server',
+        self._server,
+        '-task-summary-json',
+        self.m.json.output(),
+        '-task-output-stdout',
+        'json',
     ]
     if output_dir:
       cmd.extend(['-output-dir', output_dir])
@@ -1038,16 +1060,14 @@ class SwarmingApi(recipe_api.RecipeApi):
         test_data.append(self.test_api.task_result(id=task.id, name=task.name))
       else:
         raise ValueError("%s must be a string or TaskRequestMetadata object" %
-            task.__repr__()) # pragma: no cover
+                         task.__repr__())  # pragma: no cover
     step = self._run(
         name,
         cmd,
         step_test_data=lambda: self.test_api.collect(test_data),
     )
     parsed_results = [
-        TaskResult(self.m,
-                   task_id,
-                   task,
+        TaskResult(self.m, task_id, task,
                    output_dir.join(task_id) if output_dir else None)
         for task_id, task in step.json.output.iteritems()
     ]
