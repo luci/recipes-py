@@ -60,6 +60,13 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
 
   def result(self, presentation, test):
     raw_data = self.raw.result(presentation, test)
+    if raw_data is None:  # pragma: no cover
+      if self.add_json_log in (True, 'on_failure'):
+        presentation.logs[self.label + ' (read error)'] = [
+          'JSON file was missing or unreadable:',
+          '  ' + self.backing_file,
+        ]
+      return None
 
     valid = False
     invalid_error = ''
@@ -67,9 +74,7 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
     try:
       ret = loads(raw_data, object_pairs_hook=collections.OrderedDict)
       valid = True
-    # TypeError is raised when raw_data is None, which can happen if the json
-    # file was not created. We then correctly handle this as invalid result.
-    except (ValueError, TypeError) as ex:  # pragma: no cover
+    except ValueError as ex:  # pragma: no cover
       invalid_error = str(ex)
 
     if self.add_json_log is True or (
