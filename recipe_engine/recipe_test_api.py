@@ -434,14 +434,32 @@ class RecipeTestApi(object):
     self._module = module
 
   @staticmethod
-  def test(name):
+  def test(name, *test_data):
     """Returns a new empty TestData with the name filled in.
 
     Use in GenTests:
       def GenTests(api):
         yield api.test('basic')
+
+        yield api.test(
+            'more complex',
+            api.properties(
+                foo='foo-value',
+                bar='bar-value',
+            ),
+            api.platform.name('win'),
+            api.platform.bits(32),
+            api.post_process(post_process.StatusFailure),
+            api.post_process(post_process.DropExpectation),
+        )
+
+    Arguments:
+      name - The name of the test.
+      *test_data - Additional TestData objects to combine into the returned
+          TestData. The returned TestData will have each element added (in the
+          same order they are passed) to it.
     """
-    return TestData(name)
+    return sum(test_data, TestData(name))
 
   @staticmethod
   def empty_test_data():
