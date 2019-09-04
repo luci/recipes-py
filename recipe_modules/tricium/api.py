@@ -5,6 +5,9 @@
 """API for Tricium analyzers to use."""
 
 from collections import namedtuple
+from google.protobuf import json_format
+
+from PB.tricium.data import Data
 
 from recipe_engine import recipe_api
 from recipe_engine.config_types import Path
@@ -43,25 +46,24 @@ class TriciumApi(recipe_api.RecipeApi):
                   category,
                   message,
                   path,
-                  url="",
                   start_line=0,
                   end_line=0,
                   start_char=0,
                   end_char=0,
-                  suggestions=None):
-    comment = {
-      'category': category,
-      'message': message,
-      'url': url,
-      'path': path,
-      'start_line': start_line,
-      'end_line': end_line,
-      'start_char': start_char,
-      'end_char': end_char,
-      'suggestion': suggestions or [],
-    }
-    if not comment in self._comments:
-      self._comments.append(comment)
+                  suggestions=()):
+    comment = Data.Comment()
+    comment.category = category
+    comment.message = message
+    comment.path = path
+    comment.start_line = start_line
+    comment.end_line = end_line
+    comment.start_char = start_char
+    comment.end_char = end_char
+    for s in suggestions:
+      json_format.Parse(self.m.json.dumps(s), comment.suggestions.add())
+
+    if comment not in self._comments:
+      self._comments.append(json_format.MessageToJson(comment, sort_keys=True))
 
   def write_comments(self, dump=False):
     result = self.m.step('write results', [])

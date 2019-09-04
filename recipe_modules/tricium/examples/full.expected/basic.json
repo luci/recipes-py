@@ -3,14 +3,14 @@
     "cmd": [],
     "name": "write results",
     "~followup_annotations": [
-      "@@@SET_BUILD_PROPERTY@tricium@{\"comments\": [{\"category\": \"test\", \"end_char\": 0, \"end_line\": 0, \"message\": \"test message\", \"path\": \"path/to/file\", \"start_char\": 0, \"start_line\": 0, \"suggestion\": [], \"url\": \"\"}, {\"category\": \"another\", \"end_char\": 20, \"end_line\": 0, \"message\": \"another test message\", \"path\": \"path/to/file/2\", \"start_char\": 10, \"start_line\": 0, \"suggestion\": [], \"url\": \"\"}]}@@@"
+      "@@@SET_BUILD_PROPERTY@tricium@{\"comments\": [\"{\\n  \\\"category\\\": \\\"test\\\", \\n  \\\"message\\\": \\\"test message\\\", \\n  \\\"path\\\": \\\"path/to/file\\\"\\n}\", \"{\\n  \\\"category\\\": \\\"test\\\", \\n  \\\"message\\\": \\\"test message\\\", \\n  \\\"path\\\": \\\"path/to/file\\\"\\n}\", \"{\\n  \\\"category\\\": \\\"another\\\", \\n  \\\"endChar\\\": 20, \\n  \\\"message\\\": \\\"another test message\\\", \\n  \\\"path\\\": \\\"path/to/file/2\\\", \\n  \\\"startChar\\\": 10, \\n  \\\"suggestions\\\": [\\n    {\\n      \\\"description\\\": \\\"please fix this\\\"\\n    }\\n  ]\\n}\"]}@@@"
     ]
   },
   {
     "cmd": [],
     "name": "write results (2)",
     "~followup_annotations": [
-      "@@@SET_BUILD_PROPERTY@tricium@\"{\\\"comments\\\": [{\\\"category\\\": \\\"test\\\", \\\"end_char\\\": 0, \\\"end_line\\\": 0, \\\"message\\\": \\\"test message\\\", \\\"path\\\": \\\"path/to/file\\\", \\\"start_char\\\": 0, \\\"start_line\\\": 0, \\\"suggestion\\\": [], \\\"url\\\": \\\"\\\"}, {\\\"category\\\": \\\"another\\\", \\\"end_char\\\": 20, \\\"end_line\\\": 0, \\\"message\\\": \\\"another test message\\\", \\\"path\\\": \\\"path/to/file/2\\\", \\\"start_char\\\": 10, \\\"start_line\\\": 0, \\\"suggestion\\\": [], \\\"url\\\": \\\"\\\"}]}\"@@@"
+      "@@@SET_BUILD_PROPERTY@tricium@\"{\\\"comments\\\": [\\\"{\\\\n  \\\\\\\"category\\\\\\\": \\\\\\\"test\\\\\\\", \\\\n  \\\\\\\"message\\\\\\\": \\\\\\\"test message\\\\\\\", \\\\n  \\\\\\\"path\\\\\\\": \\\\\\\"path/to/file\\\\\\\"\\\\n}\\\", \\\"{\\\\n  \\\\\\\"category\\\\\\\": \\\\\\\"test\\\\\\\", \\\\n  \\\\\\\"message\\\\\\\": \\\\\\\"test message\\\\\\\", \\\\n  \\\\\\\"path\\\\\\\": \\\\\\\"path/to/file\\\\\\\"\\\\n}\\\", \\\"{\\\\n  \\\\\\\"category\\\\\\\": \\\\\\\"another\\\\\\\", \\\\n  \\\\\\\"endChar\\\\\\\": 20, \\\\n  \\\\\\\"message\\\\\\\": \\\\\\\"another test message\\\\\\\", \\\\n  \\\\\\\"path\\\\\\\": \\\\\\\"path/to/file/2\\\\\\\", \\\\n  \\\\\\\"startChar\\\\\\\": 10, \\\\n  \\\\\\\"suggestions\\\\\\\": [\\\\n    {\\\\n      \\\\\\\"description\\\\\\\": \\\\\\\"please fix this\\\\\\\"\\\\n    }\\\\n  ]\\\\n}\\\"]}\"@@@"
     ]
   },
   {

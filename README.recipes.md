@@ -1575,26 +1575,26 @@ Example:
 
 Methods for producing and consuming JSON.
 
-#### **class [JsonApi](/recipe_modules/json/api.py#89)([RecipeApi](/recipe_engine/recipe_api.py#868)):**
+#### **class [JsonApi](/recipe_modules/json/api.py#94)([RecipeApi](/recipe_engine/recipe_api.py#868)):**
 
-&emsp; **@staticmethod**<br>&mdash; **def [dumps](/recipe_modules/json/api.py#90)(\*args, \*\*kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [dumps](/recipe_modules/json/api.py#95)(\*args, \*\*kwargs):**
 
 Works like `json.dumps`.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&mdash; **def [input](/recipe_modules/json/api.py#109)(self, data):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&mdash; **def [input](/recipe_modules/json/api.py#114)(self, data):**
 
 A placeholder which will expand to a file path containing <data>.
 
-&mdash; **def [is\_serializable](/recipe_modules/json/api.py#101)(self, obj):**
+&mdash; **def [is\_serializable](/recipe_modules/json/api.py#106)(self, obj):**
 
 Returns True if the object is JSON-serializable.
 
-&emsp; **@staticmethod**<br>&mdash; **def [loads](/recipe_modules/json/api.py#95)(data, \*\*kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [loads](/recipe_modules/json/api.py#100)(data, \*\*kwargs):**
 
 Works like `json.loads`, but strips out unicode objects (replacing them
 with utf8-encoded str objects).
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&mdash; **def [output](/recipe_modules/json/api.py#114)(self, add_json_log=True, name=None, leak_to=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&mdash; **def [output](/recipe_modules/json/api.py#119)(self, add_json_log=True, name=None, leak_to=None):**
 
 A placeholder which will expand to '/tmp/file'.
 
@@ -1607,7 +1607,7 @@ Args:
     to a step link named `name`. If this is 'on_failure', only create this
     log when the step has a non-SUCCESS status.
 
-&mdash; **def [read](/recipe_modules/json/api.py#129)(self, name, path, add_json_log=True, output_name=None, \*\*kwargs):**
+&mdash; **def [read](/recipe_modules/json/api.py#134)(self, name, path, add_json_log=True, output_name=None, \*\*kwargs):**
 
 Returns a step that reads a JSON file.
 
@@ -2492,11 +2492,11 @@ Return current UTC time as a datetime.datetime.
 
 API for Tricium analyzers to use.
 
-#### **class [TriciumApi](/recipe_modules/tricium/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#868)):**
+#### **class [TriciumApi](/recipe_modules/tricium/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#868)):**
 
 TriciumApi provides basic support for Tricium.
 
-&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#16)(self, repository, ref, paths, \*\*kwargs):**
+&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#19)(self, repository, ref, paths, \*\*kwargs):**
 
 Sets up the API.
 
@@ -2505,15 +2505,15 @@ object, and the output is a Tricium Results object (see
 https://chromium.googlesource.com/infra/infra/+/master/go/src/infra/tricium/api/v1/data.proto
 for details and definitions).
 
-&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#42)(self, category, message, path, url='', start_line=0, end_line=0, start_char=0, end_char=0, suggestions=None):**
+&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#45)(self, category, message, path, start_line=0, end_line=0, start_char=0, end_char=0, suggestions=()):**
 
-&emsp; **@property**<br>&mdash; **def [paths](/recipe_modules/tricium/api.py#30)(self):**
+&emsp; **@property**<br>&mdash; **def [paths](/recipe_modules/tricium/api.py#33)(self):**
 
-&emsp; **@property**<br>&mdash; **def [ref](/recipe_modules/tricium/api.py#38)(self):**
+&emsp; **@property**<br>&mdash; **def [ref](/recipe_modules/tricium/api.py#41)(self):**
 
-&emsp; **@property**<br>&mdash; **def [repository](/recipe_modules/tricium/api.py#34)(self):**
+&emsp; **@property**<br>&mdash; **def [repository](/recipe_modules/tricium/api.py#37)(self):**
 
-&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#66)(self, dump=False):**
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#68)(self, dump=False):**
 ### *recipe_modules* / [url](/recipe_modules/url)
 
 [DEPS](/recipe_modules/url/__init__.py#5): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io)
@@ -3171,9 +3171,9 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#13)(api):**
 ### *recipes* / [tricium:examples/full](/recipe_modules/tricium/examples/full.py)
 
-[DEPS](/recipe_modules/tricium/examples/full.py#5): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
+[DEPS](/recipe_modules/tricium/examples/full.py#8): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/examples/full.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/examples/full.py#15)(api, trigger_type_error):**
 ### *recipes* / [url:examples/full](/recipe_modules/url/examples/full.py)
 
 [DEPS](/recipe_modules/url/examples/full.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step), [url](#recipe_modules-url)
