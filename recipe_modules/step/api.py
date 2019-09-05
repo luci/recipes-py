@@ -258,8 +258,13 @@ class StepApi(recipe_api.RecipeApiPlain):
     Args:
 
       * name (string): The name of this step.
-      * cmd (list of strings): in the style of subprocess.Popen or None to
-        create a no-op fake step.
+      * cmd (List[int|string|Placeholder|Path]): The program arguments to run.
+        * Numbers and strings are used as-is.
+        * Placeholders are 'rendered' to a string (using their render() method).
+          Placeholders are e.g. `api.json.input()` or `api.raw_io.output()`.
+          Typically rendering these turns into an absolute path to a file on
+          disk, which the program is expected to read from/write to.
+        * Paths are rendered to an OS-native absolute path.
       * ok_ret (tuple or set of ints, 'any', 'all'): allowed return codes. Any
         unexpected return codes will cause an exception to be thrown. If you
         pass in the value 'any' or 'all', the engine will allow any return code

@@ -2225,8 +2225,13 @@ Returns a step dictionary which is compatible with annotator.py.
 Args:
 
   * name (string): The name of this step.
-  * cmd (list of strings): in the style of subprocess.Popen or None to
-    create a no-op fake step.
+  * cmd (List[int|string|Placeholder|Path]): The program arguments to run.
+    * Numbers and strings are used as-is.
+    * Placeholders are 'rendered' to a string (using their render() method).
+      Placeholders are e.g. `api.json.input()` or `api.raw_io.output()`.
+      Typically rendering these turns into an absolute path to a file on
+      disk, which the program is expected to read from/write to.
+    * Paths are rendered to an OS-native absolute path.
   * ok_ret (tuple or set of ints, 'any', 'all'): allowed return codes. Any
     unexpected return codes will cause an exception to be thrown. If you
     pass in the value 'any' or 'all', the engine will allow any return code
@@ -2491,7 +2496,7 @@ API for Tricium analyzers to use.
 
 TriciumApi provides basic support for Tricium.
 
-&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#19)(self, repository, ref, paths, \*\*kwargs):**
+&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#19)(self, \*\*kwargs):**
 
 Sets up the API.
 
@@ -2500,15 +2505,9 @@ object, and the output is a Tricium Results object (see
 https://chromium.googlesource.com/infra/infra/+/master/go/src/infra/tricium/api/v1/data.proto
 for details and definitions).
 
-&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#45)(self, category, message, path, start_line=0, end_line=0, start_char=0, end_char=0, suggestions=()):**
+&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#30)(self, category, message, path, start_line=0, end_line=0, start_char=0, end_char=0, suggestions=()):**
 
-&emsp; **@property**<br>&mdash; **def [paths](/recipe_modules/tricium/api.py#33)(self):**
-
-&emsp; **@property**<br>&mdash; **def [ref](/recipe_modules/tricium/api.py#41)(self):**
-
-&emsp; **@property**<br>&mdash; **def [repository](/recipe_modules/tricium/api.py#37)(self):**
-
-&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#68)(self, dump=False):**
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#53)(self, dump=False):**
 ### *recipe_modules* / [url](/recipe_modules/url)
 
 [DEPS](/recipe_modules/url/__init__.py#5): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io)
@@ -3168,7 +3167,7 @@ This file is a recipe demonstrating reading triggers of the current build.
 
 [DEPS](/recipe_modules/tricium/examples/full.py#8): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/examples/full.py#15)(api, trigger_type_error):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/examples/full.py#16)(api, trigger_type_error):**
 ### *recipes* / [url:examples/full](/recipe_modules/url/examples/full.py)
 
 [DEPS](/recipe_modules/url/examples/full.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step), [url](#recipe_modules-url)
