@@ -2449,15 +2449,10 @@ Simplistic temporary directory manager (deprecated).
 
 &emsp; **@contextlib.contextmanager**<br>&mdash; **def [temp\_dir](/recipe_modules/tempfile/api.py#13)(self, prefix):**
 
-This makes a temporary directory which lives for the scope of the with
-statement.
+DO NOT USE THIS.
 
-Example:
-```python
-with api.tempfile.temp_dir("some_prefix") as path:
-  # use path
-# path is deleted here.
-```
+Use `api.path.mkdtemp` or `api.path.mkstemp` from the "recipe_engine/path"
+module instead.
 ### *recipe_modules* / [time](/recipe_modules/time)
 
 [DEPS](/recipe_modules/time/__init__.py#5): [python](#recipe_modules-python)

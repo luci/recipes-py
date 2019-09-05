@@ -12,15 +12,10 @@ from recipe_engine import recipe_api
 class TempfileApi(recipe_api.RecipeApi):
   @contextlib.contextmanager
   def temp_dir(self, prefix):
-    """This makes a temporary directory which lives for the scope of the with
-    statement.
+    """DO NOT USE THIS.
 
-    Example:
-    ```python
-    with api.tempfile.temp_dir("some_prefix") as path:
-      # use path
-    # path is deleted here.
-    ```
+    Use `api.path.mkdtemp` or `api.path.mkstemp` from the "recipe_engine/path"
+    module instead.
     """
     path = None
     try:
