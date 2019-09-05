@@ -8,20 +8,19 @@ from recipe_engine.recipe_api import Property
 DEPS = ['tricium', 'properties']
 
 PROPERTIES = {
-    'trigger_type_error': Property(kind=bool, default=False),
+    'trigger_type_error':
+        Property(kind=bool, default=False),
 }
 
 
 def RunSteps(api, trigger_type_error):
-  for filename in api.tricium.paths:
-    api.tricium.add_comment('test', 'test message', filename)
-    # Check that duplicate comments aren't entered.
-    api.tricium.add_comment('test', 'test message', filename)
+  filename = 'path/to/file'
+  api.tricium.add_comment('test', 'test message', filename)
+  # Check that duplicate comments aren't entered.
+  api.tricium.add_comment('test', 'test message', filename)
 
   suggestions = [{'description': 'please fix this'}]
 
-  api.tricium.repository
-  api.tricium.ref
   api.tricium.add_comment(
       'another',
       'another test message',
@@ -36,9 +35,7 @@ def RunSteps(api, trigger_type_error):
 
 
 def GenTests(api):
-  yield (api.test('basic') + api.properties(
-      repository='https://chromium.googlesource.com/luci/recipes-py',
-      ref='refs/changes/99/999999/9',
-      paths=['path/to/file']))
+  yield api.test('basic')
   yield (api.test('type_error') + api.properties(trigger_type_error=True) +
-         api.expect_exception('TypeError') + api.post_process(post_process.DropExpectation))
+         api.expect_exception('TypeError') +
+         api.post_process(post_process.DropExpectation))

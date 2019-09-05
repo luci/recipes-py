@@ -16,7 +16,7 @@ from recipe_engine.config_types import Path
 class TriciumApi(recipe_api.RecipeApi):
   """TriciumApi provides basic support for Tricium."""
 
-  def __init__(self, repository, ref, paths, **kwargs):
+  def __init__(self, **kwargs):
     """Sets up the API.
 
     This assumes that the input is a Tricium GitFileDetails
@@ -25,22 +25,7 @@ class TriciumApi(recipe_api.RecipeApi):
     for details and definitions).
     """
     super(TriciumApi, self).__init__(**kwargs)
-    self._repo = repository
-    self._ref = ref
-    self._paths = paths
     self._comments = []
-
-  @property
-  def paths(self):
-    return self._paths
-
-  @property
-  def repository(self):
-    return self._repo
-
-  @property
-  def ref(self):
-    return self._ref
 
   def add_comment(self,
                   category,

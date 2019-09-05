@@ -3,19 +3,7 @@
 # that can be found in the LICENSE file.
 
 DEPS = [
-  'json',
-  'properties',
-  'step',
+    'json',
+    'properties',
+    'step',
 ]
-
-from recipe_engine.config import List, Enum
-from recipe_engine.recipe_api import Property
-
-PROPERTIES = {
-  'repository':
-    Property(kind=str, help='Repository to checkout', default=None),
-  'ref':
-    Property(kind=str, help='Gerrit patch ref', default=None),
-  'paths':
-    Property(kind=List(basestring), help='Paths to files in ref', default=[]),
-}
