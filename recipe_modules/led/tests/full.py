@@ -25,6 +25,7 @@ def RunSteps(api, child_properties):
 
   # Only use a different version of the recipes code if this is a led job.
   if api.led.launched_by_led:
+    assert api.led.run_id
     intermediate = api.led.inject_input_recipes(intermediate)
 
   if child_properties:
@@ -48,10 +49,11 @@ def GenTests(api):
   )
 
   isolated_hash = 'somehash123'
+  led_run_id = 'led/user_example.com/deadbeef'
   yield (
       api.test('with-isolated-input') +
       led_props(InputProperties(
-          launched_by_led=True,
+          led_run_id=led_run_id,
           isolated_input=InputProperties.IsolatedInput(
               hash=isolated_hash,
               namespace='default-gzip',
@@ -71,7 +73,7 @@ def GenTests(api):
   yield (
       api.test('with-cipd-input') +
       led_props(InputProperties(
-          launched_by_led=True,
+          led_run_id=led_run_id,
           cipd_input=InputProperties.CIPDInput(**cipd_source),
       )) +
       api.led.get_builder(api)
@@ -84,7 +86,7 @@ def GenTests(api):
   yield (
       api.test('edit-properties') +
       api.properties(child_properties=child_properties) +
-      led_props(InputProperties(launched_by_led=True)) +
+      led_props(InputProperties(led_run_id=led_run_id)) +
       api.led.get_builder(api)
              .edit_properties(**child_properties)
              .launch()

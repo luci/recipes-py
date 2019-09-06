@@ -44,7 +44,7 @@ class LedApi(recipe_api.RecipeApi):
   def __init__(self, props, **kwargs):
     super(LedApi, self).__init__(**kwargs)
     self._led_path = None
-    self._launched_by_led = props.launched_by_led
+    self._run_id = props.led_run_id
 
     if props.HasField('isolated_input'):
       self._isolated_input = props.isolated_input
@@ -59,7 +59,15 @@ class LedApi(recipe_api.RecipeApi):
   @property
   def launched_by_led(self):
     """Whether the current build is a led job."""
-    return self._launched_by_led
+    return bool(self._run_id)
+
+  @property
+  def run_id(self):
+    """A unique string identifier for this led job.
+
+    If the current build is *not* a led job, value will be an empty string.
+    """
+    return self._run_id
 
   @property
   def isolated_input(self):

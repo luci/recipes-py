@@ -6,9 +6,7 @@ syntax = "proto3";
 package recipe_modules.recipe_engine.led;
 
 message InputProperties {
-    // Whether the current build was invoked with led (led is expected to set
-    // this flag when launching a build).
-    bool launched_by_led = 1;
+    reserved 1; // launched_by_led
 
     message IsolatedInput {
         // The hash of the isolate containing the recipe code currently being
@@ -38,4 +36,8 @@ message InputProperties {
     // led will set this property when `led edit-recipe-bundle` is *not* used,
     // or when testing with an older version of recipes from CIPD.
     CIPDInput cipd_input = 3;
+
+    // A unique identifier for this led job. Unset if the current build is
+    // not launched by led.
+    string led_run_id = 4;
 }
