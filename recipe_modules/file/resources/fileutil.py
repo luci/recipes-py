@@ -14,7 +14,7 @@ from __future__ import print_function
 import argparse
 import errno
 import fnmatch
-import glob2
+import glob
 import itertools
 import json
 import os
@@ -25,13 +25,21 @@ import tempfile
 import time
 
 
-def _RmGlob(file_wildcard, root, include_hidden):
+def _LocateFiles(pattern, root):
+  """Yeilds files matching pattern found in root and its subdirectories.
+
+  An exception is thrown if root doesn't exist."""
+  for path, _, files in os.walk(os.path.abspath(root)):
+    for filename in fnmatch.filter(files, pattern):
+      yield os.path.join(path, filename)
+
+
+def _RmGlob(file_wildcard, root):
   """Removes files matching 'file_wildcard' in root and its subdirectories, if
   any exists.
 
   An exception is thrown if root doesn't exist."""
-  wildcard = os.path.join(os.path.realpath(root), file_wildcard)
-  for item in glob2.glob(wildcard, include_hidden=include_hidden):
+  for item in _LocateFiles(file_wildcard, root):
     try:
       os.remove(item)
     except OSError, e:
@@ -144,11 +152,15 @@ def _EnsureDir(mode, dest):
     os.makedirs(dest, mode)
 
 
-def _Glob(base, pattern, include_hidden):
-  base = os.path.realpath(base)
-  hits = glob2.glob(os.path.join(base, pattern), include_hidden=include_hidden)
-  if hits:
-    print('\n'.join(sorted((os.path.relpath(hit, start=base) for hit in hits))))
+def _Glob(base, pattern):
+  cwd = os.getcwd()
+  try:
+    os.chdir(base)
+    hits = glob.glob(pattern)
+    if hits:
+      print('\n'.join(sorted(hits)))
+  finally:
+    os.chdir(cwd)
 
 
 def _ListDir(base, recursive):
@@ -237,10 +249,8 @@ def main(args):
       help='Recursively remove the contents of a directory.')
   subparser.add_argument('root', help='The directory to search through.')
   subparser.add_argument('wildcard', help='The wildcard expression to remove.')
-  subparser.add_argument('--hidden', action='store_true',
-                         help='Include hidden files.')
   subparser.set_defaults(func=lambda opts:
-      _RmGlob(opts.wildcard, opts.root, opts.hidden))
+      _RmGlob(opts.wildcard, opts.root))
 
   # Subcommand: copy
   subparser = subparsers.add_parser('copy',
@@ -272,10 +282,7 @@ def main(args):
       help='Prints a list of absolute paths with match the pattern.')
   subparser.add_argument('base', help='The directory to glob in.')
   subparser.add_argument('pattern', help='The glob patern to expand.')
-  subparser.add_argument('--hidden', action='store_true',
-                         help='Include hidden files.')
-  subparser.set_defaults(func=lambda opts:
-      _Glob(opts.base, opts.pattern, opts.hidden))
+  subparser.set_defaults(func=lambda opts: _Glob(opts.base, opts.pattern))
 
   # Subcommand: remove
   subparser = subparsers.add_parser('remove',

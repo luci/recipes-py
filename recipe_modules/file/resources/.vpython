@@ -1,4 +1,0 @@
-wheel: <
-  name: "infra/python/wheels/glob2-py2_py3"
-  version: "version:0.7"
->

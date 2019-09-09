@@ -24,14 +24,14 @@ def RunSteps(api):
   paths = api.file.listdir('list new dir', dest2, test_data=file_names)
   assert paths == [dest2.join(n) for n in file_names], paths
 
-  paths = api.file.glob_paths('glob *a', dest2, '*a', test_data=['a', 'aa'])
+  paths = api.file.glob_paths('glob *a', dest2, '*a', ['a', 'aa'])
   assert paths == [dest2.join('a'), dest2.join('aa')], paths
 
   for pth in paths:
     assert api.file.read_text('read %s' % pth, pth, api.path.basename(pth))
 
   api.file.remove('rm a', dest2.join('a'))
-  paths = api.file.glob_paths('glob *a', dest2, '*a', test_data=['aa'])
+  paths = api.file.glob_paths('glob *a', dest2, '*a', ['aa'])
   assert paths == [dest2.join('aa')], paths
 
   api.file.rmglob('rm b*', dest2, 'b*')

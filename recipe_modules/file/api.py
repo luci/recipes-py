@@ -273,28 +273,16 @@ class FileApi(recipe_api.RecipeApi):
     text_data = json.dumps(data, indent=indent)
     self.write_text(name, dest, text_data)
 
-  def glob_paths(self, name, source, pattern, include_hidden=False,
-                 test_data=()):
+  def glob_paths(self, name, source, pattern, test_data=()):
     """Performs glob expansion on `pattern`.
 
-    glob rules for `pattern` follow the same syntax as for the `python-glob2`
-    module, which supports '**' syntax.
-
-    ```
-    e.g. 'a/**/*.py'
-
-    a/b/foo.py => MATCH
-    a/b/c/foo.py => MATCH
-    a/foo.py => MATCH
-    a/b/c/d/e/f/g/h/i/j/foo.py => MATCH
-    other/foo.py => NO MATCH
-    ```
+    glob rules for `pattern` follow the same syntax as for the python `glob`
+    stdlib module.
 
     Args:
       * name (str) - The name of the step.
       * source (Path) - The directory whose contents should be globbed.
       * pattern (str) - The glob pattern to apply under `source`.
-      * include_hidden (bool) - Include files beginning with `.`.
       * test_data (iterable[str]) - Some default data for this step to return
         when running under simulation. This should be the list of file items
         found in this directory.
@@ -304,12 +292,8 @@ class FileApi(recipe_api.RecipeApi):
     Raises file.Error.
     """
     assert isinstance(source, config_types.Path)
-    cmd = ['glob', source, pattern]
-    if include_hidden:
-      cmd.append('--hidden')
     result = self._run(
-      name,
-      cmd,
+      name, ['glob', source, pattern],
       lambda: self.test_api.glob_paths(test_data),
       self.m.raw_io.output_text())
     ret = [source.join(*x.split(self.m.path.sep))
@@ -434,21 +418,8 @@ class FileApi(recipe_api.RecipeApi):
     self._run(name, ['rmcontents', source])
     self.m.path.mock_remove_paths(str(source)+self.m.path.sep)
 
-  def rmglob(self, name, source, pattern, recursive=True, include_hidden=True):
+  def rmglob(self, name, source, pattern):
     """Removes all entries in `source` matching the glob `pattern`.
-
-    glob rules for `pattern` follow the same syntax as for the `python-glob2`
-    module, which supports '**' syntax.
-
-    ```
-    e.g. 'a/**/*.py'
-
-    a/b/foo.py => MATCH
-    a/b/c/foo.py => MATCH
-    a/foo.py => MATCH
-    a/b/c/d/e/f/g/h/i/j/foo.py => MATCH
-    other/foo.py => NO MATCH
-    ```
 
     Args:
       * name (str) - The name of the step.
@@ -456,20 +427,11 @@ class FileApi(recipe_api.RecipeApi):
         removed.
       * pattern (str) - The glob pattern to apply under `source`. Anything
         matching this pattern will be removed.
-      * recursive (bool) - Recursively remove entries under `source`.
-          TODO: Remove this option. Use `**` syntax instead.
-      * include_hidden (bool) - Include files beginning with `.`.
-          TODO: Set to False by default to be consistent with file.glob.
 
     Raises file.Error.
     """
     self.m.path.assert_absolute(source)
-    if recursive and not pattern.startswith('**'):
-      pattern = os.path.join('**', pattern)
-    cmd = ['rmglob', source, pattern]
-    if include_hidden:
-      cmd.append('--hidden')
-    self._run(name, cmd)
+    self._run(name, ['rmglob', source, pattern])
 
     src = str(source)
     def filt(p):

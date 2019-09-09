@@ -285,8 +285,7 @@
       "/path/to/tmp/json",
       "rmglob",
       "[START_DIR]/some other dir",
-      "**/b*",
-      "--hidden"
+      "b*"
     ],
     "infra_step": true,
     "name": "rm b*"

@@ -1064,7 +1064,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#363)(self, name, dest, mode=511):**
+&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#347)(self, name, dest, mode=511):**
 
 Ensures that `dest` exists and is a directory.
 
@@ -1077,7 +1077,7 @@ Args:
 
 Raises file.Error if the path exists but is not a directory.
 
-&mdash; **def [filesizes](/recipe_modules/file/api.py#380)(self, name, files, test_data=None):**
+&mdash; **def [filesizes](/recipe_modules/file/api.py#364)(self, name, files, test_data=None):**
 
 Returns list of filesizes for the given files.
 
@@ -1087,7 +1087,7 @@ Args:
 
 Returns list[int], size of each file in bytes.
 
-&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#518)(self, name, path):**
+&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#480)(self, name, path):**
 
 Flattens singular directories, starting at path.
 
@@ -1116,28 +1116,17 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [glob\_paths](/recipe_modules/file/api.py#276)(self, name, source, pattern, include_hidden=False, test_data=()):**
+&mdash; **def [glob\_paths](/recipe_modules/file/api.py#276)(self, name, source, pattern, test_data=()):**
 
 Performs glob expansion on `pattern`.
 
-glob rules for `pattern` follow the same syntax as for the `python-glob2`
-module, which supports '**' syntax.
-
-```
-e.g. 'a/**/*.py'
-
-a/b/foo.py => MATCH
-a/b/c/foo.py => MATCH
-a/foo.py => MATCH
-a/b/c/d/e/f/g/h/i/j/foo.py => MATCH
-other/foo.py => NO MATCH
-```
+glob rules for `pattern` follow the same syntax as for the python `glob`
+stdlib module.
 
 Args:
   * name (str) - The name of the step.
   * source (Path) - The directory whose contents should be globbed.
   * pattern (str) - The glob pattern to apply under `source`.
-  * include_hidden (bool) - Include files beginning with `.`.
   * test_data (iterable[str]) - Some default data for this step to return
     when running under simulation. This should be the list of file items
     found in this directory.
@@ -1146,7 +1135,7 @@ Returns list[Path] - All paths found.
 
 Raises file.Error.
 
-&mdash; **def [listdir](/recipe_modules/file/api.py#335)(self, name, source, recursive=False, test_data=()):**
+&mdash; **def [listdir](/recipe_modules/file/api.py#319)(self, name, source, recursive=False, test_data=()):**
 
 List all files inside a directory.
 
@@ -1219,7 +1208,7 @@ Returns (str) - The content of the file.
 
 Raises file.Error
 
-&mdash; **def [remove](/recipe_modules/file/api.py#320)(self, name, source):**
+&mdash; **def [remove](/recipe_modules/file/api.py#304)(self, name, source):**
 
 Remove a file.
 
@@ -1231,7 +1220,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#419)(self, name, source):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#403)(self, name, source):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -1246,22 +1235,9 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#437)(self, name, source, pattern, recursive=True, include_hidden=True):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#421)(self, name, source, pattern):**
 
 Removes all entries in `source` matching the glob `pattern`.
-
-glob rules for `pattern` follow the same syntax as for the `python-glob2`
-module, which supports '**' syntax.
-
-```
-e.g. 'a/**/*.py'
-
-a/b/foo.py => MATCH
-a/b/c/foo.py => MATCH
-a/foo.py => MATCH
-a/b/c/d/e/f/g/h/i/j/foo.py => MATCH
-other/foo.py => NO MATCH
-```
 
 Args:
   * name (str) - The name of the step.
@@ -1269,14 +1245,10 @@ Args:
     removed.
   * pattern (str) - The glob pattern to apply under `source`. Anything
     matching this pattern will be removed.
-  * recursive (bool) - Recursively remove entries under `source`.
-      TODO: Remove this option. Use `**` syntax instead.
-  * include_hidden (bool) - Include files beginning with `.`.
-      TODO: Set to False by default to be consistent with file.glob.
 
 Raises file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#402)(self, name, source):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#386)(self, name, source):**
 
 Recursively removes a directory.
 
@@ -1290,7 +1262,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [symlink](/recipe_modules/file/api.py#480)(self, name, source, linkname):**
+&mdash; **def [symlink](/recipe_modules/file/api.py#442)(self, name, source, linkname):**
 
 Creates a symlink on the local filesystem.
 
@@ -1303,14 +1275,14 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#497)(self, root):**
+&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#459)(self, root):**
 
 Creates a SymlinkTree, given a root directory.
 
 Args:
   * root (Path): root of a tree of symlinks.
 
-&mdash; **def [truncate](/recipe_modules/file/api.py#505)(self, name, path, size_mb=100):**
+&mdash; **def [truncate](/recipe_modules/file/api.py#467)(self, name, path, size_mb=100):**
 
 Creates an empty file with path and size_mb on the local filesystem.
 

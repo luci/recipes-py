@@ -252,60 +252,6 @@
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
       "/path/to/tmp/json",
-      "copy",
-      "data",
-      "[START_DIR]/.hidden.pat"
-    ],
-    "infra_step": true,
-    "name": "write .hidden.pat",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@.hidden.pat@data@@@",
-      "@@@STEP_LOG_END@.hidden.pat@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "data",
-      "[START_DIR]/a/.hidden.pat"
-    ],
-    "infra_step": true,
-    "name": "write a/.hidden.pat",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@.hidden.pat@data@@@",
-      "@@@STEP_LOG_END@.hidden.pat@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "data",
-      "[START_DIR]/b/.hidden.pat"
-    ],
-    "infra_step": true,
-    "name": "write b/.hidden.pat",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@.hidden.pat@data@@@",
-      "@@@STEP_LOG_END@.hidden.pat@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
       "glob",
       "[START_DIR]",
       "*.pat"
@@ -372,50 +318,6 @@
       "@@@STEP_LOG_LINE@glob@[START_DIR]/a/thing.pat@@@",
       "@@@STEP_LOG_LINE@glob@[START_DIR]/b/other.pat@@@",
       "@@@STEP_LOG_LINE@glob@[START_DIR]/b/thing.pat@@@",
-      "@@@STEP_LOG_END@glob@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "glob",
-      "[START_DIR]",
-      "**/*.pat"
-    ],
-    "infra_step": true,
-    "name": "recursive",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@glob@[START_DIR]/a/other.pat@@@",
-      "@@@STEP_LOG_LINE@glob@[START_DIR]/a/thing.pat@@@",
-      "@@@STEP_LOG_LINE@glob@[START_DIR]/b/other.pat@@@",
-      "@@@STEP_LOG_LINE@glob@[START_DIR]/b/thing.pat@@@",
-      "@@@STEP_LOG_LINE@glob@[START_DIR]/other.pat@@@",
-      "@@@STEP_LOG_LINE@glob@[START_DIR]/thing.pat@@@",
-      "@@@STEP_LOG_END@glob@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "glob",
-      "[START_DIR]",
-      "*.pat",
-      "--hidden"
-    ],
-    "infra_step": true,
-    "name": "hidden",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@glob@[START_DIR]/.hidden.pat@@@",
-      "@@@STEP_LOG_LINE@glob@[START_DIR]/other.pat@@@",
-      "@@@STEP_LOG_LINE@glob@[START_DIR]/thing.pat@@@",
       "@@@STEP_LOG_END@glob@@@"
     ]
   },
