@@ -1,7 +1,7 @@
 [
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
@@ -16,7 +16,7 @@
   },
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
@@ -34,7 +34,7 @@
   },
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
@@ -52,7 +52,7 @@
   },
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
@@ -70,7 +70,7 @@
   },
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
@@ -88,7 +88,7 @@
   },
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
@@ -106,7 +106,7 @@
   },
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
@@ -124,7 +124,7 @@
   },
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
@@ -151,7 +151,7 @@
   },
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
@@ -164,7 +164,7 @@
   },
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
@@ -178,7 +178,7 @@
   },
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
@@ -200,7 +200,7 @@
   },
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
@@ -219,7 +219,7 @@
   },
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
@@ -233,7 +233,7 @@
   },
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
@@ -247,7 +247,7 @@
   },
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
@@ -260,7 +260,7 @@
   },
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
@@ -278,21 +278,22 @@
   },
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
       "/path/to/tmp/json",
       "rmglob",
       "[START_DIR]/some other dir",
-      "b*"
+      "**/b*",
+      "--hidden"
     ],
     "infra_step": true,
     "name": "rm b*"
   },
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
@@ -311,7 +312,7 @@
   },
   {
     "cmd": [
-      "python",
+      "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
