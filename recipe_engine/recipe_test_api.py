@@ -343,7 +343,49 @@ def placeholder_step_data(func):
       },
       retcode = 50
     )
+
+  You can also use the alternate form of the decorator to mock a RecipeApi
+  placeholder method with a different name from the decorated RecipeTestApi
+  method:
+    class FooTestApi(RecipeTestApi):
+      @placeholder_step_data('cool_method')
+      @staticmethod
+      def blah_method(data, retcode=None, name=None):
+        return ("Test data (%s)" % data), retcode, name
+
+  Code calling blah_method('hello', name='blah1') would get a StepTestData:
+    StepTestData(
+      placeholder_data = {
+        ('foo_module', 'cool_method', 'cool1') :
+          PlaceholderTestData('Test data (hello)')
+      },
+      retcode = None
+    )
+
+  Note that the placeholder name (cool_method) is different from the
+  RecipeTestApi method name (blah_method). This lets you define many
+  RecipeTestApi helper methods for mocking a single
   """
+  if callable(func) or isinstance(func, staticmethod):
+    # Plain decorator:
+    # @placeholder_step_data
+    return _placeholder_step_data(func)
+  else:
+    # Decorator with placeholder name argument:
+    # @placeholder_step_data('placeholder_name')
+    mocked_func_name = func
+    assert isinstance(mocked_func_name, basestring), (
+      'placeholder_step_data used as decorator with non-string argument %r'
+      % mocked_func_name
+    )
+
+    def decorator(func):
+      return _placeholder_step_data(func, mocked_func_name)
+
+    return decorator
+
+
+def _placeholder_step_data(func, placeholder_name=None):
   @static_wraps(func)
   def inner(self, *args, **kwargs):
     assert isinstance(self, RecipeTestApi)
@@ -362,7 +404,10 @@ def placeholder_step_data(func):
       placeholder_data = PlaceholderTestData(data=placeholder_data, name=name)
 
     ret = StepTestData()
-    key = (mod_name, inner.__name__, placeholder_data.name)
+    final_placeholder_name = placeholder_name
+    if placeholder_name is None:
+      final_placeholder_name = inner.__name__
+    key = (mod_name, final_placeholder_name, placeholder_data.name)
     ret.placeholder_data[key] = placeholder_data
     ret.retcode = retcode
     return ret

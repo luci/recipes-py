@@ -31,15 +31,12 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
     """
     return json.dumps(data), retcode, name
 
-  def invalid(self, raw_data_str, retcode=None, name=None):
+  @recipe_test_api.placeholder_step_data('output')
+  @staticmethod
+  def invalid(raw_data_str, retcode=None, name=None):
     """Can be used to supply data for a json.output, except that it takes a raw
     string rather than a json object."""
-    ret = recipe_test_api.StepTestData()
-    ret.retcode=retcode
-    placeholder_data = recipe_test_api.PlaceholderTestData(
-      data=raw_data_str, name=name)
-    ret.placeholder_data[(self._module.NAME, 'output', name)] = placeholder_data
-    return ret
+    return raw_data_str, retcode, name
 
   def output_stream(self, data, stream='stdout', retcode=None, name=None):
     assert stream in ('stdout', 'stderr')
