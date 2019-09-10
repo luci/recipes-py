@@ -28,7 +28,6 @@
   * [source_manifest](#recipe_modules-source_manifest)
   * [step](#recipe_modules-step) &mdash; Step is the primary API for running steps (external programs, scripts, etc.
   * [swarming](#recipe_modules-swarming)
-  * [tempfile](#recipe_modules-tempfile) &mdash; Simplistic temporary directory manager (deprecated).
   * [time](#recipe_modules-time) &mdash; Allows mockable access to the current time.
   * [tricium](#recipe_modules-tricium) &mdash; API for Tricium analyzers to use.
   * [url](#recipe_modules-url) &mdash; Methods for interacting with HTTP(s) URLs.
@@ -124,7 +123,6 @@
   * [step:tests/timeout](#recipes-step_tests_timeout)
   * [step:tests/trigger](#recipes-step_tests_trigger)
   * [swarming:examples/full](#recipes-swarming_examples_full)
-  * [tempfile:examples/full](#recipes-tempfile_examples_full)
   * [time:examples/full](#recipes-time_examples_full)
   * [tricium:examples/full](#recipes-tricium_examples_full)
   * [url:examples/full](#recipes-url_examples_full)
@@ -2478,20 +2476,6 @@ Example:
 
 Args:
   server (str): The swarming server to call within context.
-### *recipe_modules* / [tempfile](/recipe_modules/tempfile)
-
-[DEPS](/recipe_modules/tempfile/__init__.py#5): [file](#recipe_modules-file), [path](#recipe_modules-path)
-
-Simplistic temporary directory manager (deprecated).
-
-#### **class [TempfileApi](/recipe_modules/tempfile/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#868)):**
-
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [temp\_dir](/recipe_modules/tempfile/api.py#13)(self, prefix):**
-
-DO NOT USE THIS.
-
-Use `api.path.mkdtemp` or `api.path.mkstemp` from the "recipe_engine/path"
-module instead.
 ### *recipe_modules* / [time](/recipe_modules/time)
 
 [DEPS](/recipe_modules/time/__init__.py#5): [python](#recipe_modules-python)
@@ -3187,11 +3171,6 @@ This file is a recipe demonstrating reading triggers of the current build.
 [DEPS](/recipe_modules/swarming/examples/full.py#8): [cipd](#recipe_modules-cipd), [path](#recipe_modules-path), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
 &mdash; **def [RunSteps](/recipe_modules/swarming/examples/full.py#17)(api):**
-### *recipes* / [tempfile:examples/full](/recipe_modules/tempfile/examples/full.py)
-
-[DEPS](/recipe_modules/tempfile/examples/full.py#5): [tempfile](#recipe_modules-tempfile)
-
-&mdash; **def [RunSteps](/recipe_modules/tempfile/examples/full.py#9)(api):**
 ### *recipes* / [time:examples/full](/recipe_modules/time/examples/full.py)
 
 [DEPS](/recipe_modules/time/examples/full.py#7): [step](#recipe_modules-step), [time](#recipe_modules-time)
