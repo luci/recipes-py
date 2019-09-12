@@ -37,6 +37,10 @@ message AutorollRecipeOptions {
 
     // If true, the autoroller recipe will automatically CQ the change.
     bool automatic_commit = 2;
+
+    // If true and automatic_commit is false, the autoroller recipe will
+    // automatically do a CQ dry run when uploading the change.
+    bool dry_run = 3;
   }
   TrivialOptions trivial = 1;
 
