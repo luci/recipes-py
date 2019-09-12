@@ -18,17 +18,17 @@ import sys
 import tempfile
 
 
-def _rmfile(p):  # pragma: no cover
+def _rmfile(p, _win_read_only_unset=False):  # pragma: no cover
   """Deletes a file, even a read-only one on Windows."""
-  if sys.platform == 'win32':
-    try:
-      os.remove(p)
-    except OSError:
+  try:
+    os.remove(p)
+  except OSError as e:
+    if sys.platform == 'win32' and not _win_read_only_unset:
       # Try to remove the read-only bit and remove again.
       os.chmod(p, 0777)
-      os.remove(p)
-  else:
-    os.remove(p)
+      _rmfile(p, _win_read_only_unset=True)
+    elif e.errno != errno.ENOENT:
+      raise
 
 
 def _rmtree(d):  # pragma: no cover
@@ -98,10 +98,7 @@ class InputDataPlaceholder(recipe_util.InputPlaceholder):
   def cleanup(self, test_enabled):
     assert self._backing_file is not None
     if not test_enabled:  # pragma: no cover
-      try:
-        _rmfile(self._backing_file)
-      except OSError:
-        pass
+      _rmfile(self._backing_file)
     self._backing_file = None
 
   def write_encoded_data(self, f):
@@ -163,6 +160,13 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
     ret = None
     if test.enabled:
       self._backing_file = None
+      # Use None to indicate that `result()` should behave as if the backing
+      # file is missing. Only valid if `leak_to` is None; otherwise, the
+      # backing file is a temporary file created in `render()` that is
+      # guaranteed to exist unless the recipe or the step subprocess explicitly
+      # removes it before accessing its contents.
+      if self.leak_to and test.data is None:
+        return None
       with contextlib.closing(cStringIO.StringIO(test.data or '')) as infile:
         ret = self.read_decoded_data(infile)
     else:  # pragma: no cover

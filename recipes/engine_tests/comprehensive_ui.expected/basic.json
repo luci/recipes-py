@@ -248,6 +248,7 @@
     ],
     "name": "capture stdout",
     "~followup_annotations": [
+      "@@@STEP_LOG_LINE@stdout@OHAI@@@",
       "@@@STEP_LOG_END@stdout@@@"
     ]
   },

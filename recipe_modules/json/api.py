@@ -59,12 +59,13 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
     return self.raw.render(test)
 
   def result(self, presentation, test):
+    backing_file = self.backing_file  # Save name before self.raw.result() deletes it.
     raw_data = self.raw.result(presentation, test)
-    if raw_data is None:  # pragma: no cover
+    if raw_data is None:
       if self.add_json_log in (True, 'on_failure'):
         presentation.logs[self.label + ' (read error)'] = [
           'JSON file was missing or unreadable:',
-          '  ' + self.backing_file,
+          '  ' + backing_file,
         ]
       return None
 

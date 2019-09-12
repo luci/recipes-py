@@ -139,6 +139,20 @@
     ]
   },
   {
+    "cmd": [
+      "python",
+      "RECIPE[recipe_engine::json:examples/full].resources/cool_script.py",
+      "file missing",
+      "/this/file/doesnt/exist"
+    ],
+    "name": "backing file missing",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output (read error)@JSON file was missing or unreadable:@@@",
+      "@@@STEP_LOG_LINE@json.output (read error)@  /this/file/doesnt/exist@@@",
+      "@@@STEP_LOG_END@json.output (read error)@@@"
+    ]
+  },
+  {
     "name": "$result"
   }
 ]

@@ -44,3 +44,14 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
     step_data = self.output(data, retcode=retcode, name=name)
     setattr(ret, stream, step_data.unwrap_placeholder())
     return ret
+
+  @recipe_test_api.placeholder_step_data('output')
+  @staticmethod
+  def backing_file_missing(retcode=None, name=None):
+    """Simulates a missing backing file.
+
+    Only valid if the corresponding placeholder has `leak_to` specified.
+    """
+    # Passing None as the data of a placeholder causes the placeholder to
+    # behave during testing as if its backing file was missing.
+    return None, retcode, name

@@ -127,6 +127,20 @@ def RunSteps(api):
     assert (['failure'] ==
             step_result.presentation.logs['raw_io.output[failure_log]'])
 
+  # Example of the placeholder backing file being missing at the time the
+  # result is retrieved.
+  step_result = api.step(
+      'missing backing file', [
+          'cat',
+          api.raw_io.output(
+              suffix='.txt',
+              name='outfile',
+              leak_to='/this/file/doesnt/exist',
+          )
+      ],
+      ok_ret=(1,))
+  assert step_result.raw_io.output is None
+
 
 def GenTests(api):
   # This test shows that you can override a specific placeholder, even with
@@ -150,5 +164,7 @@ def GenTests(api):
           stdout=api.raw_io.output('\xe2hello')) +
       api.step_data('override_default_mock',
           api.raw_io.output_text('good_value', name='test')) +
-      api.step_data('failure output log', retcode=1)
+      api.step_data('failure output log', retcode=1) +
+      api.step_data('missing backing file',
+          api.raw_io.backing_file_missing(name='outfile'), retcode=1)
   )

@@ -125,6 +125,13 @@
     ]
   },
   {
+    "cmd": [
+      "cat",
+      "/this/file/doesnt/exist"
+    ],
+    "name": "missing backing file"
+  },
+  {
     "name": "$result"
   }
 ]

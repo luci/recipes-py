@@ -82,6 +82,7 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  yield api.test('basic')
-
-
+  yield (
+    api.test('basic')
+    + api.step_data('capture stdout', stdout=api.raw_io.output_text('OHAI'))
+  )

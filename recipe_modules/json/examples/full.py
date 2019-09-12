@@ -85,6 +85,16 @@ def RunSteps(api):
   ])
   assert step_result.json.output is None
 
+  step_result = api.step(
+    'backing file missing',
+    [
+      'python', api.resource('cool_script.py'),
+      'file missing',
+      api.json.output(leak_to='/this/file/doesnt/exist'),
+    ],
+    ok_ret=(1,))
+  assert step_result.json.output is None
+
 
 def GenTests(api):
   yield (
@@ -108,5 +118,10 @@ def GenTests(api):
     + api.step_data(
       'invalid json',
       api.json.invalid('{"here is some total\ngarbage'),
+    )
+    + api.step_data(
+      'backing file missing',
+      api.json.backing_file_missing(),
+      retcode=1,
     )
   )
