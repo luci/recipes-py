@@ -2015,9 +2015,9 @@ Access a member of `random.Random`.
 
 Provides objects for reading and writing raw data to and from steps.
 
-#### **class [RawIOApi](/recipe_modules/raw_io/api.py#262)([RecipeApi](/recipe_engine/recipe_api.py#868)):**
+#### **class [RawIOApi](/recipe_modules/raw_io/api.py#263)([RecipeApi](/recipe_engine/recipe_api.py#868)):**
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#263)(data, suffix='', name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#264)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -2032,7 +2032,7 @@ tempfile.mkstemp.
 
 See examples/full.py for usage example.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#281)(data, suffix='', name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#282)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -2042,7 +2042,7 @@ expected to have valid utf-8 data in it.
 Similar to input(), but ensures that 'data' is valid utf-8 text. Any
 non-utf-8 characters will be replaced with �.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#294)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#295)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -2058,7 +2058,7 @@ Args:
      to a step link named `name`. If this is 'on_failure', only create this
      log when the step has a non-SUCCESS status.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#332)(suffix='', leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#333)(suffix='', leak_to=None, name=None):**
 
 Returns a directory Placeholder for use as a step argument.
 
@@ -2069,7 +2069,7 @@ If 'leak_to' is not None, then it should be a Path and placeholder
 redirects IO to a dir at that path. Once step finishes, the dir is
 NOT deleted (i.e. it's 'leaking'). 'suffix' is ignored in that case.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#314)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#315)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -2400,7 +2400,7 @@ please.
 
 [DEPS](/recipe_modules/swarming/__init__.py#5): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [isolated](#recipe_modules-isolated), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-#### **class [SwarmingApi](/recipe_modules/swarming/api.py#881)([RecipeApi](/recipe_engine/recipe_api.py#868)):**
+#### **class [SwarmingApi](/recipe_modules/swarming/api.py#892)([RecipeApi](/recipe_engine/recipe_api.py#868)):**
 
 API for interacting with swarming.
 
@@ -2410,7 +2410,7 @@ http://go.chromium.org/luci/client/cmd/swarming.
 This module will deploy the client to [CACHE]/swarming_client/; users should
 add this path to the named cache for their builder.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#1019)(self, name, tasks, output_dir=None, timeout=None):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#1035)(self, name, tasks, output_dir=None, timeout=None):**
 
 Waits on a set of Swarming tasks.
 
@@ -2428,9 +2428,9 @@ Args:
 Returns:
   A list of TaskResult objects.
 
-&mdash; **def [initialize](/recipe_modules/swarming/api.py#899)(self):**
+&mdash; **def [initialize](/recipe_modules/swarming/api.py#912)(self):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#930)(self):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#943)(self):**
 
 This context manager ensures the go swarming client is available on
 $PATH.
@@ -2440,7 +2440,7 @@ Example:
     with api.swarming.on_path():
       # do your steps which require the swarming binary on path
 
-&mdash; **def [task\_request](/recipe_modules/swarming/api.py#962)(self):**
+&mdash; **def [task\_request](/recipe_modules/swarming/api.py#975)(self):**
 
 Creates a new TaskRequest object.
 
@@ -2450,7 +2450,7 @@ into a full task.
 Once your TaskRequest is complete, you can pass it to `trigger` in order to
 have it start running on the swarming server.
 
-&mdash; **def [trigger](/recipe_modules/swarming/api.py#973)(self, step_name, requests, cancel_extra_tasks=False):**
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#986)(self, step_name, requests, cancel_extra_tasks=False):**
 
 Triggers a set of Swarming tasks.
 
@@ -2465,7 +2465,7 @@ Args:
 Returns:
   A list of TaskRequestMetadata objects.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [with\_server](/recipe_modules/swarming/api.py#944)(self, server):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [with\_server](/recipe_modules/swarming/api.py#957)(self, server):**
 
 This context sets the server for Swarming calls.
 
@@ -3170,7 +3170,7 @@ This file is a recipe demonstrating reading triggers of the current build.
 
 [DEPS](/recipe_modules/swarming/examples/full.py#8): [cipd](#recipe_modules-cipd), [path](#recipe_modules-path), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/examples/full.py#17)(api):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/examples/full.py#18)(api):**
 ### *recipes* / [time:examples/full](/recipe_modules/time/examples/full.py)
 
 [DEPS](/recipe_modules/time/examples/full.py#7): [step](#recipe_modules-step), [time](#recipe_modules-time)

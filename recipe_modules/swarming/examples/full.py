@@ -13,6 +13,7 @@ DEPS = [
   'swarming',
 ]
 
+EXECUTION_TIMEOUT_SECS = 3600
 
 def RunSteps(api):
   # Create a new Swarming task request.
@@ -36,7 +37,7 @@ def RunSteps(api):
         with_isolated('606d94add94223636ee516c6bc9918f937823ccc').
         with_expiration_secs(3600).
         with_io_timeout_secs(600).
-        with_execution_timeout_secs(3600).
+        with_execution_timeout_secs(EXECUTION_TIMEOUT_SECS).
         with_idempotent(True).
         with_lower_priority(True).
         with_containment_type('AUTO').
@@ -94,7 +95,7 @@ def RunSteps(api):
   results = api.swarming.collect('collect', metadata, output_dir=output_dir,
                                  timeout='5m')
   # Or collect by by id.
-  results += api.swarming.collect('collect other pending task', ['1'])
+  results += api.swarming.collect('collect other pending task', ['0'])
 
   results[0].name
   results[0].id
@@ -119,15 +120,15 @@ def RunSteps(api):
 
   with api.swarming.with_server('https://some-server.com'):
     api.swarming.trigger('trigger on some-server.com', requests=[request])
-    api.swarming.collect('collect on some-server.com', ['1'])
+    api.swarming.collect('collect on some-server.com', ['0'])
 
   # verify swarming server correctly reverts
   api.swarming.trigger('trigger on original server', requests=[request])
-  api.swarming.collect('collect on original server', ['1'])
+  api.swarming.collect('collect on original server', ['0'])
 
   api.swarming.trigger('trigger with cancel extra tasks', requests=[request],
                        cancel_extra_tasks=True)
-  api.swarming.collect('collect with cancel extra tasks', ['1'])
+  api.swarming.collect('collect with cancel extra tasks', ['0'])
 
 
 def GenTests(api):
@@ -144,18 +145,35 @@ def GenTests(api):
               api.swarming.TaskState.INVALID,
               api.swarming.TaskState.PENDING,
               api.swarming.TaskState.RUNNING,
+              api.swarming.TaskState.TIMED_OUT,
             ]}
   states['unreachable'] = None
+
   for name, value in states.iteritems():
+
     result = api.swarming.task_result(
-        id='123', name='recipes-go', state=value, outputs=('out.tar'),
+      id='0', name='recipes-go', state=value, outputs=('out.tar'),
     )
     yield (api.test('collect_with_state_%s' % name) +
       api.override_step_data('collect', api.swarming.collect([result]))
     )
 
+  io_timeout_result = api.swarming.task_result(
+      id='0', name='recipes-go', duration=EXECUTION_TIMEOUT_SECS - 1, state=api.swarming.TaskState.TIMED_OUT,
+  )
+  yield (api.test('collect_with_state_TIMED_OUT_by_io') +
+    api.override_step_data('collect', api.swarming.collect([io_timeout_result]))
+  )
+
+  execution_timeout_result = api.swarming.task_result(
+      id='0', name='recipes-go', duration=EXECUTION_TIMEOUT_SECS + 1, state=api.swarming.TaskState.TIMED_OUT,
+  )
+  yield (api.test('collect_with_state_TIMED_OUT_by_execution') +
+    api.override_step_data('collect', api.swarming.collect([execution_timeout_result]))
+  )
+
   failed_result = api.swarming.task_result(
-      id='123', name='recipes-go', state=api.swarming.TaskState.COMPLETED,
+      id='0', name='recipes-go', state=api.swarming.TaskState.COMPLETED,
       failure=True, outputs=('out.tar'),
   )
   yield (api.test('collect_with_state_COMPLETED_and_failed') +

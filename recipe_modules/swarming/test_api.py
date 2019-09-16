@@ -40,6 +40,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
   def task_result(id,
                   name,
                   state=TaskState.COMPLETED,
+                  duration=62.35,
                   failure=False,
                   output='hello world!',
                   outputs=()):
@@ -51,6 +52,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
       name (str): The name of the task.
       state (TaskState|None): The final state of the task; if None, the task is
         regarded to be in an unknown state.
+      duration (int): The duration of the task
       failure (bool): Whether the task failed; ignored if state is not
         TaskState.COMPLETE.
       output (str): That raw output of the task.
@@ -73,7 +75,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
           'name': name,
           'task_id': id,
           'state': state.name,
-          'duration': 62.35,
+          'duration': duration,
           'outputs_ref': {
               'isolated': 'abc123',
               'isolatedserver': 'https://isolateserver.appspot.com',

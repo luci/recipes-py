@@ -79,7 +79,7 @@
     "name": "collect",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"123\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"0\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"output\": \"hello world!\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"outputs\": \"out.tar\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"results\": {@@@",
@@ -92,7 +92,7 @@
       "@@@STEP_LOG_LINE@json.output@        \"namespace\": \"default-gzip\"@@@",
       "@@@STEP_LOG_LINE@json.output@      }, @@@",
       "@@@STEP_LOG_LINE@json.output@      \"state\": \"COMPLETED\", @@@",
-      "@@@STEP_LOG_LINE@json.output@      \"task_id\": \"123\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"task_id\": \"0\"@@@",
       "@@@STEP_LOG_LINE@json.output@    }@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
@@ -112,13 +112,13 @@
       "/path/to/tmp/json",
       "-task-output-stdout",
       "json",
-      "1"
+      "0"
     ],
     "infra_step": true,
     "name": "collect other pending task",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"1\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"0\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"output\": \"hello world!\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"outputs\": [], @@@",
       "@@@STEP_LOG_LINE@json.output@    \"results\": {@@@",
@@ -131,7 +131,7 @@
       "@@@STEP_LOG_LINE@json.output@        \"namespace\": \"default-gzip\"@@@",
       "@@@STEP_LOG_LINE@json.output@      }, @@@",
       "@@@STEP_LOG_LINE@json.output@      \"state\": \"COMPLETED\", @@@",
-      "@@@STEP_LOG_LINE@json.output@      \"task_id\": \"1\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"task_id\": \"0\"@@@",
       "@@@STEP_LOG_LINE@json.output@    }@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
@@ -183,13 +183,13 @@
       "/path/to/tmp/json",
       "-task-output-stdout",
       "json",
-      "1"
+      "0"
     ],
     "infra_step": true,
     "name": "collect on some-server.com",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"1\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"0\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"output\": \"hello world!\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"outputs\": [], @@@",
       "@@@STEP_LOG_LINE@json.output@    \"results\": {@@@",
@@ -202,7 +202,7 @@
       "@@@STEP_LOG_LINE@json.output@        \"namespace\": \"default-gzip\"@@@",
       "@@@STEP_LOG_LINE@json.output@      }, @@@",
       "@@@STEP_LOG_LINE@json.output@      \"state\": \"COMPLETED\", @@@",
-      "@@@STEP_LOG_LINE@json.output@      \"task_id\": \"1\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"task_id\": \"0\"@@@",
       "@@@STEP_LOG_LINE@json.output@    }@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
@@ -250,13 +250,13 @@
       "/path/to/tmp/json",
       "-task-output-stdout",
       "json",
-      "1"
+      "0"
     ],
     "infra_step": true,
     "name": "collect on original server",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"1\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"0\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"output\": \"hello world!\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"outputs\": [], @@@",
       "@@@STEP_LOG_LINE@json.output@    \"results\": {@@@",
@@ -269,7 +269,7 @@
       "@@@STEP_LOG_LINE@json.output@        \"namespace\": \"default-gzip\"@@@",
       "@@@STEP_LOG_LINE@json.output@      }, @@@",
       "@@@STEP_LOG_LINE@json.output@      \"state\": \"COMPLETED\", @@@",
-      "@@@STEP_LOG_LINE@json.output@      \"task_id\": \"1\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"task_id\": \"0\"@@@",
       "@@@STEP_LOG_LINE@json.output@    }@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
@@ -318,13 +318,13 @@
       "/path/to/tmp/json",
       "-task-output-stdout",
       "json",
-      "1"
+      "0"
     ],
     "infra_step": true,
     "name": "collect with cancel extra tasks",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"1\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"0\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"output\": \"hello world!\", @@@",
       "@@@STEP_LOG_LINE@json.output@    \"outputs\": [], @@@",
       "@@@STEP_LOG_LINE@json.output@    \"results\": {@@@",
@@ -337,7 +337,7 @@
       "@@@STEP_LOG_LINE@json.output@        \"namespace\": \"default-gzip\"@@@",
       "@@@STEP_LOG_LINE@json.output@      }, @@@",
       "@@@STEP_LOG_LINE@json.output@      \"state\": \"COMPLETED\", @@@",
-      "@@@STEP_LOG_LINE@json.output@      \"task_id\": \"1\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"task_id\": \"0\"@@@",
       "@@@STEP_LOG_LINE@json.output@    }@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",

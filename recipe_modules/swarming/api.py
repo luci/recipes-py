@@ -732,15 +732,16 @@ class TaskResult(object):
           self.hash,
       )
 
-  def __init__(self, api, id, raw_results, output_dir):
+  def __init__(self, api, task_slice, id, raw_results, output_dir):
     """
     Args:
-      api (recipe_api.RecipeApi): a recipe API.
+      api (recipe_api.RecipeApi): A recipe API.
+      task_slice (TaskSlice): The TaskSlice for the request that led to this task result.
       id (str): The task's id.
       raw_results (dict): The jsonish summary output from a `collect` call.
       output_dir (Path|None): Where the task's outputs were downloaded to.
     """
-    self._api = api
+    self._task_slice = task_slice
     self._id = id
     self._output_dir = output_dir
     self._outputs = {}
@@ -849,29 +850,39 @@ class TaskResult(object):
   def analyze(self):
     """Raises a step failure if the task was unsuccessful."""
     if self.state == None:
-      raise self._api.step.InfraFailure('Failed to collect: %s' % self.output)
+      raise recipe_api.InfraFailure('Failed to collect: %s' % self.output)
     elif self.state == TaskState.EXPIRED:
-      raise self._api.step.InfraFailure('Timed out waiting for a bot to run on')
+      raise recipe_api.InfraFailure('Timed out waiting for a bot to run on')
     elif self.state == TaskState.TIMED_OUT:
       output_lines = self.output.rsplit('\n', 11)
-      timeout = int(self._duration)
-      failure_lines = [
-          'Timed out after %s seconds. Last 10 lines of output:' % timeout,
-      ] + output_lines[-10:]
-      raise self._api.step.StepFailure('\n'.join(failure_lines))
+      duration = int(self._duration)
+
+      # TODO(crbug.com/916556): Stop guessing.
+      if duration >= self._task_slice.execution_timeout_secs:
+        failure_lines = [
+            'Execution timeout: exceeded %s seconds.' %
+            self._task_slice.execution_timeout_secs
+        ]
+      else:
+        failure_lines = [
+            'I/O timeout: exceeded %s seconds.' %
+            self._task_slice.io_timeout_secs
+        ]
+
+        failure_lines.extend(['Last 10 lines of output:'] + output_lines[-10:])
+
+      raise recipe_api.StepFailure('\n'.join(failure_lines))
     elif self.state == TaskState.BOT_DIED:
-      raise self._api.step.InfraFailure('The bot running this task died')
+      raise recipe_api.InfraFailure('The bot running this task died')
     elif self.state == TaskState.CANCELED:
-      raise self._api.step.InfraFailure(
-          'The task was canceled before it could run')
+      raise recipe_api.InfraFailure('The task was canceled before it could run')
     elif self.state == TaskState.COMPLETED:
       if not self.success:
-        raise self._api.step.InfraFailure('Swarming task failed:\n%s' %
-                                          self.output)
+        raise recipe_api.InfraFailure('Swarming task failed:\n%s' % self.output)
     elif self.state == TaskState.KILLED:
-      raise self._api.step.InfraFailure('The task was killed mid-execution')
+      raise recipe_api.InfraFailure('The task was killed mid-execution')
     elif self.state == TaskState.NO_RESOURCE:
-      raise self._api.step.InfraFailure('Found no bots to run this task')
+      raise recipe_api.InfraFailure('Found no bots to run this task')
     else:
       assert False, 'unknown state %s; a case needs to be added above' % (
           self.state.name  # pragma: no cover
@@ -895,6 +906,8 @@ class SwarmingApi(recipe_api.RecipeApi):
     self._version = swarming_properties.get('version', DEFAULT_CIPD_VERSION)
     self._client_dir = None
     self._client = None
+    # Stores TaskRequests by tuple of (task_id, server)
+    self._task_requests = {}
 
   def initialize(self):
     if self._test_data.enabled:
@@ -1010,6 +1023,9 @@ class SwarmingApi(recipe_api.RecipeApi):
     for task_json in trigger_resp['tasks']:
       metadata_objs.append(TaskRequestMetadata(self._server, task_json))
 
+    for idx, req in enumerate(requests):
+      self._task_requests[(metadata_objs[idx].id, self._server)] = req
+
     metadata_objs.sort(key=lambda obj: obj.name)
     for obj in metadata_objs:
       step.presentation.links['task UI: %s' % obj.name] = obj.task_ui_link
@@ -1066,11 +1082,21 @@ class SwarmingApi(recipe_api.RecipeApi):
         cmd,
         step_test_data=lambda: self.test_api.collect(test_data),
     )
-    parsed_results = [
-        TaskResult(self.m, task_id, task,
-                   output_dir.join(task_id) if output_dir else None)
-        for task_id, task in step.json.output.iteritems()
-    ]
+
+    parsed_results = []
+    for task_id, task in step.json.output.items():
+      assert (task_id, self._server) in self._task_requests, (
+          'could not find request associated with task (name, id, server) = (%s, %s, %s)'
+          % (
+              task['results']['name'],
+              task_id,
+              self._server,
+          ))
+      task_request = self._task_requests[(task_id, self._server)][0]
+      parsed_results.append(
+          TaskResult(self.m, task_request, task_id, task,
+                     output_dir.join(task_id) if output_dir else None))
+
     parsed_results.sort(key=lambda result: result.name)
 
     # Update presentation on collect to reflect bot results.
