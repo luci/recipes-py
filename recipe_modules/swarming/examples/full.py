@@ -158,6 +158,13 @@ def GenTests(api):
       api.override_step_data('collect', api.swarming.collect([result]))
     )
 
+  timeout_result = api.swarming.task_result(
+      id='100', name='recipes-go', duration=EXECUTION_TIMEOUT_SECS - 1, state=api.swarming.TaskState.TIMED_OUT,
+  )
+  yield (api.test('collect_with_state_TIMED_OUT') +
+    api.override_step_data('collect', api.swarming.collect([timeout_result]))
+  )
+
   io_timeout_result = api.swarming.task_result(
       id='0', name='recipes-go', duration=EXECUTION_TIMEOUT_SECS - 1, state=api.swarming.TaskState.TIMED_OUT,
   )

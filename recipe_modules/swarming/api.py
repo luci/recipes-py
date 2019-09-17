@@ -857,19 +857,22 @@ class TaskResult(object):
       output_lines = self.output.rsplit('\n', 11)
       duration = int(self._duration)
 
-      # TODO(crbug.com/916556): Stop guessing.
-      if duration >= self._task_slice.execution_timeout_secs:
-        failure_lines = [
-            'Execution timeout: exceeded %s seconds.' %
-            self._task_slice.execution_timeout_secs
-        ]
+      if self._task_slice is None:
+        failure_lines = ['Timed out after %s seconds.' % duration]
       else:
-        failure_lines = [
-            'I/O timeout: exceeded %s seconds.' %
-            self._task_slice.io_timeout_secs
-        ]
+        # TODO(crbug.com/916556): Stop guessing.
+        if duration >= self._task_slice.execution_timeout_secs:
+          failure_lines = [
+              'Execution timeout: exceeded %s seconds.' %
+              self._task_slice.execution_timeout_secs
+          ]
+        else:
+          failure_lines = [
+              'I/O timeout: exceeded %s seconds.' %
+              self._task_slice.io_timeout_secs
+          ]
 
-        failure_lines.extend(['Last 10 lines of output:'] + output_lines[-10:])
+      failure_lines.extend(['Last 10 lines of output:'] + output_lines[-10:])
 
       raise recipe_api.StepFailure('\n'.join(failure_lines))
     elif self.state == TaskState.BOT_DIED:
@@ -1085,14 +1088,7 @@ class SwarmingApi(recipe_api.RecipeApi):
 
     parsed_results = []
     for task_id, task in step.json.output.items():
-      assert (task_id, self._server) in self._task_requests, (
-          'could not find request associated with task (name, id, server) = (%s, %s, %s)'
-          % (
-              task['results']['name'],
-              task_id,
-              self._server,
-          ))
-      task_request = self._task_requests[(task_id, self._server)][0]
+      task_request = self._task_requests.get((task_id, self._server), [None])[0]
       parsed_results.append(
           TaskResult(self.m, task_request, task_id, task,
                      output_dir.join(task_id) if output_dir else None))
