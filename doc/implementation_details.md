@@ -2,7 +2,7 @@
 
 This doc covers implementation details of the recipe engine and its processes.
 Read this if you want to understand/modify how the recipes as a system work. For
-general recipe developement, please see [user_guide.md](./user_guide.md).
+general recipe development, please see [user_guide.md](./user_guide.md).
 
 [TOC]
 
@@ -10,7 +10,7 @@ general recipe developement, please see [user_guide.md](./user_guide.md).
 ## Recipe engine subcommands
 
 All recipe engine subcommands live in the [commands] folder. The `__init__.py`
-file here contains the entrypoint for all subcommand parsing `parse_and_run`
+file here contains the entry point for all subcommand parsing `parse_and_run`
 which is invoked from [main.py].
 
 The commands module contains (as submodules) all of the subcommands that the
@@ -21,7 +21,7 @@ recipe engine supports. The protocol is pretty simple:
     is expected to be in the `__init__.py` file).
   * Each submodule may also define an optional `__cmd_priority__` field. This
     should be an integer which will be used to rank commands (e.g. so that 'run'
-    and 'test' can preceed all other subcommands). Commands will be ordered
+    and 'test' can precede all other subcommands). Commands will be ordered
     first by __cmd_priority__ (lower values sort earlier) and then
     alphabetically. This is currently used to put `run` and `test` as the
     topmost arguments in the `recipes.py` help output.
@@ -52,7 +52,7 @@ to use.
 
 ## Loading
 
-This section talks about how the recipe engine gets from the the recipes.py
+This section talks about how the recipe engine gets from the recipes.py
 command invocation to the point where it begins executing the recipe.
 
 
@@ -71,7 +71,7 @@ Every recipe repo has at least two things:
 
 The recipes.cfg contains a field `recipes_path` (aka `$recipes_path` for this
 doc) which is a path inside the repo of where the following can exist:
-  * A `recipes` folder - contains entrypoint scripts (recipes) for the repo.
+  * A `recipes` folder - contains entry point scripts (recipes) for the repo.
   * A `recipe_modules` folder - contains modules which may be depended on (used
     by) both recipe scripts as well as other modules (in this repo and any other
     repos which depend on it).
@@ -282,7 +282,7 @@ top of the dependency tree).
 Instantiation can either be done in 'API' mode or 'TEST_API' mode. 'API' mode is
 to generate the `api` object which is passed to `RunSteps`. 'TEST_API' mode is
 to generate the `api` object which is passed to `GenTests`. Both modes traverse
-the depedency graph the same way, but 'API' mode does a superset of the work
+the dependency graph the same way, but 'API' mode does a superset of the work
 (since all `RecipeApi` objects have a reference to their `test_api` as
 `self.test_api`).
 
@@ -339,7 +339,7 @@ The `Checker` class is responsible for recording failed checks, including
 determining the relevant stack frames to be included in the failure output.
 
 The `Checker` is instantiated in `post_process` and assigned to a local
-variable. The local varible is important because the `Checker` object uses the
+variable. The local variable is important because the `Checker` object uses the
 presence of itself in the frame locals to define the boundary between engine
 code and post-process hook code. In the event of a failure, the `Checker`
 iterates over the stack frames, starting from the outermost frame and proceeding
@@ -500,7 +500,7 @@ collection of functions pertaining to the particulars of how recipes work today
 *** TODO
 Give StepRunner a full vfs-style interface; Instead of doing weird mocks in the
 path module for asserting that files exist, and having placeholder-specific
-data, the user could manipulate the state of the filesytem in their test and
+data, the user could manipulate the state of the filesystem in their test and
 then the placeholders would be implemented against the (virtual) filesystem
 directly.
 ***
@@ -548,7 +548,7 @@ saved while the engine does the final processing.
 Currently, when a step has finished execution, its `step_stream` is kept open
 and the step is pushed onto a stack of `ActiveStep`s. Depending on the
 configuration of the step (`ok_ret`, `infra_step`, etc.) the engine will raise
-an exeption back into user code. If something broke while running the step (like
+an exception back into user code. If something broke while running the step (like
 a bad placeholder, or the user asked to run a non-executable file... you know,
 the usual stuff), this exception will be re-raised after the engine finalizes
 the StepData, and sets up the presentation status (likely, "EXCEPTION").

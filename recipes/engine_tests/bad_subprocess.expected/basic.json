@@ -5,7 +5,7 @@
       "-u",
       "RECIPE[recipe_engine::engine_tests/bad_subprocess].resources/unix.py"
     ],
-    "name": "bad deamon"
+    "name": "bad daemon"
   },
   {
     "name": "$result"

@@ -471,7 +471,7 @@ class FakeRecipeRepo(object):
     they'll point to the current HEAD version of the repos.
 
     Args:
-      * depnames (List[str]) - The names of the othe repos to depend on. These
+      * depnames (List[str]) - The names of the other repos to depend on. These
         must already have been created with `RecipeDeps.add_repo`.
     """
     with self.edit_recipes_cfg_pb2() as pkg_pb:

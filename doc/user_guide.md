@@ -434,7 +434,7 @@ Then import the new proto message in the recipe.
           # do something else
       ...
 
-The properties can be set during testing by using the `properties` dependancy.
+The properties can be set during testing by using the `properties` dependency.
 This enables the ability to test different parts of the run step in the recipe.
 
     # my_recipe.py
@@ -665,7 +665,7 @@ TODO(iannucci) - Document
 
 TODO(iannucci) - Document
 
-### Working with Protobufs.
+### Working with Protobufs
 
 The recipe engine facilitates the use of protobufs with builtin `protoc`
 capabilities.

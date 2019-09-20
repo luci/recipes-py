@@ -12,7 +12,7 @@ DEPS = [
 
 def RunSteps(api):
   api.python(
-      'bad deamon',
+      'bad daemon',
       api.resource('win.py' if api.platform.is_win else 'unix.py'),
       venv=api.platform.is_win)
 

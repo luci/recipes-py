@@ -78,7 +78,7 @@ esac
 # Attach "stdout" and "stderr" at their usual names.
 # Set startdir to an empty dir.
 # Set up a local fifo for butler to serve on.
-# Actaully run the recipes.
+# Actually run the recipes.
 "$ROOT/misc/build_proto.py" | \
     logdog_butler -project local                              \
     -output directory,path="$WD/logs"                         \

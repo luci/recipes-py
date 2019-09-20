@@ -7,7 +7,7 @@ sequences of subprocess calls in a cross-platform and testable way.
 
 ## Background
 
-Chromium uses BuildBot for its builds.  It requires master restarts to change
+Chromium uses BuildBot for its builds. It requires master restarts to change
 bot configs, which slows bot changes down.
 
 With Recipes, most build-related things happen in scripts that run on the
@@ -16,7 +16,7 @@ to change something about a build configuration.
 
 Recipes also provide a way to unit test build scripts, by mocking commands and
 recording "expectations" of what will happen when the script runs under various
-conditions.  This makes it easy to verify that the scope of a change is limited.
+conditions. This makes it easy to verify that the scope of a change is limited.
 
 ## Intro
 
@@ -51,9 +51,9 @@ def GenTests(api):
 
 The `RunSteps` function is expected to take at least a single argument `api`
 (we'll get to that in more detail later), and run a series of steps by calling
-api functions.  All of these functions will eventually make calls to
+api functions. All of these functions will eventually make calls to
 `api.step()`, which is the only way to actually get anything done on the
-machine.  Using python libraries with OS side-effects is prohibited to enable
+machine. Using python libraries with OS side-effects is prohibited to enable
 testing.
 
 The `GenTests` function currently does nothing, but a recipe is invalid and
@@ -105,7 +105,7 @@ output of the command.
 The Stmts column indicates the number of statements that are in the recipe file.
 The Miss column indicates the number of statements that do not have coverage.
 The Missing column details the spans of code that are not covered, so currently
-only the statement on line 4 is not covered.  The other statements are the DEPS
+only the statement on line 4 is not covered. The other statements are the DEPS
 and function definitions and the body of the `GenTests`.
 
 So let's add a test to get the necessary coverage.
@@ -208,7 +208,7 @@ checks. The provided function must take two parameters: `check` and
 `step_odict`.
 
 *   `check` is the function that performs the low-level check operation; it
-    evalutes a boolean expression and if it's false it records it as a failure.
+    evaluates a boolean expression and if it's false it records it as a failure.
     When it records a failure, it also records the backtrace and the values of
     variables used in the expression to provide helpful context when the
     failures are displayed.
@@ -388,7 +388,7 @@ See this [crbug.com/532275](bug) for more info.
 
 ### Modules
 
-There are all sorts of helper modules.  They are found in the `recipe_modules`
+There are all sorts of helper modules. They are found in the `recipe_modules`
 directory alongside the `recipes` directory where the recipes go.
 
 There are a whole bunch of modules which provide really helpful tools. You
@@ -570,7 +570,7 @@ def GenTests(api):
 ```
 
 Some modules define interfaces for specifying necessary step data; these are
-injected into `api` from `DEPS` similarly to how it works for `RunSteps`.  There
+injected into `api` from `DEPS` similarly to how it works for `RunSteps`. There
 are a few other methods available to `GenTests`'s `api`. Common ones include:
 
   * `api.properties(buildername='foo_builder')` sets properties as we have seen.
@@ -579,7 +579,7 @@ are a few other methods available to `GenTests`'s `api`. Common ones include:
   to have failed with exit code 1.
 
 By default all simulated steps succeed, the platform is 64-bit linux, and
-there are no properties.  The `api.properties.generic()` method populates some
+there are no properties. The `api.properties.generic()` method populates some
 common properties for Chromium recipes.
 
 The `api` passed to GenTests is confusingly **NOT** the same as the recipe api.
@@ -642,7 +642,7 @@ defaults, and should be named in `ALL_CAPS` (this is to avoid argument name
 conflicts as we'll see later).
 
 `config_ctx` is the 'context' for all the config items in this file, and will
-magically become the `CONFIG_CTX` for the entire module.  Other modules may
+magically become the `CONFIG_CTX` for the entire module. Other modules may
 extend this context, which we will get to later.
 
 Finally let's define some config items themselves. A config item is a function
@@ -737,7 +737,7 @@ def GenTests(api):
 ```
 
 Note the call to `set_config`. This method takes the configuration name
-specifed, finds it in the given module (`'hello'` in this case), and sets
+specified, finds it in the given module (`'hello'` in this case), and sets
 `api.hello.c` equal to the result of invoking the named config item
 (`'default_tool'`) with the default configuration (the result of calling
 `get_config_defaults`), merged over the static defaults specified by the schema.
@@ -796,7 +796,7 @@ def GenTests(api):
 the chromium module, but it will also attempt to apply the `'blink'` config for
 all the dependencies, too. This way, you can have the chromium module extend the
 gclient config context with a 'blink' config item, and then `set_configs` will
-stack across all the relevent contexts.  (This has since been recognized as a
+stack across all the relevant contexts. (This has since been recognized as a
 design mistake)
 
 `recipe_api.RecipeApi` also provides `make_config` and `apply_config`, which
@@ -880,7 +880,7 @@ with member data). The members of this object which are guaranteed to exist are:
     useful for recipes, but it is used internally for the recipe tests
     framework.
   * `presentation`: An object representing how the step will show up on the
-    build page, including its exit status, links, and extra log text.  This is a
+    build page, including its exit status, links, and extra log text. This is a
     `recipe_engine.main.StepPresentation` object.
     See also
     [How to change step presentation](#how-to-change-step-presentation).
