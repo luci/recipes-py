@@ -17,6 +17,7 @@ from recipe_engine import recipe_api
 if sys.version_info.major >= 3:
   basestring = str  # pragma: no cover
 
+
 DEFAULT_CIPD_VERSION = 'git_revision:dcd9e10d7ea9890a266ca8dfef02909cf76134f1'
 
 
@@ -903,14 +904,26 @@ class SwarmingApi(recipe_api.RecipeApi):
   """
   TaskState = TaskState
 
-  def __init__(self, swarming_properties, *args, **kwargs):
+  def __init__(self, input_properties, env_properties, *args, **kwargs):
     super(SwarmingApi, self).__init__(*args, **kwargs)
-    self._server = swarming_properties.get('server', None)
-    self._version = swarming_properties.get('version', DEFAULT_CIPD_VERSION)
+    self._server = input_properties.server or None
+    self._version = str(input_properties.version or DEFAULT_CIPD_VERSION)
+    self._env_properties = env_properties
+
     self._client_dir = None
     self._client = None
     # Stores TaskRequests by tuple of (task_id, server)
     self._task_requests = {}
+
+  @property
+  def bot_id(self):
+    """Swarming bot ID executing this task."""
+    return self._env_properties.SWARMING_BOT_ID
+
+  @property
+  def task_id(self):
+    """This task's Swarming ID."""
+    return self._env_properties.SWARMING_TASK_ID
 
   def initialize(self):
     if self._test_data.enabled:

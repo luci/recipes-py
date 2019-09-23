@@ -2,6 +2,9 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from PB.recipe_modules.recipe_engine.swarming import properties
+
+
 DEPS = [
   'cipd',
   'context',
@@ -14,17 +17,5 @@ DEPS = [
   'step',
 ]
 
-from recipe_engine.config import ConfigGroup, Single
-from recipe_engine.recipe_api import Property
-
-PROPERTIES = {
-    '$recipe_engine/swarming': Property(
-        help='Properties specifically for the swarming module',
-        param_name='swarming_properties',
-        kind=ConfigGroup(
-          server=Single(str),
-          version=Single(str),
-        ),
-        default={},
-      ),
-}
+PROPERTIES = properties.InputProperties
+ENV_PROPERTIES = properties.EnvProperties

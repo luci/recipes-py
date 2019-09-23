@@ -1,0 +1,19 @@
+// Copyright 2019 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+syntax = "proto3";
+
+package recipe_modules.recipe_engine.swarming;
+
+message InputProperties {
+    string server = 1;
+    string version = 2;
+}
+
+message EnvProperties {
+    // Magic values set by swarming agent executing a task.
+    //
+    // See https://chromium.googlesource.com/infra/luci/luci-py/+/HEAD/appengine/swarming/doc/Magic-Values.md
+    string SWARMING_BOT_ID = 1;
+    string SWARMING_TASK_ID = 2;
+}

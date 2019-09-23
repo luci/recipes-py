@@ -5,6 +5,8 @@
 from state import TaskState
 
 from recipe_engine import recipe_test_api
+from PB.recipe_modules.recipe_engine.swarming import properties
+
 
 class SwarmingTestApi(recipe_test_api.RecipeTestApi):
   TaskState = TaskState
@@ -13,11 +15,16 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
                  server='https://example.swarmingserver.appspot.com',
                  version='test_version'):
     return self.m.properties(**{
-      '$recipe_engine/swarming': {
-        'server': server,
-        'version': version,
-      },
-    })
+      '$recipe_engine/swarming': properties.InputProperties(
+        server=server,
+        version=version,
+      ),
+    }) + self.m.properties.environ(
+      properties.EnvProperties(
+        SWARMING_TASK_ID='fake-task-id',
+        SWARMING_BOT_ID='fake-bot',
+      )
+    )
 
   def trigger(self, task_names, initial_id=0):
     """Generates step test data intended to mock api.swarming.trigger()
