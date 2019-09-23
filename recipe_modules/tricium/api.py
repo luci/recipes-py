@@ -1,7 +1,6 @@
 # Copyright 2018 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
-
 """API for Tricium analyzers to use."""
 
 from collections import namedtuple
@@ -45,18 +44,16 @@ class TriciumApi(recipe_api.RecipeApi):
     comment.start_char = start_char
     comment.end_char = end_char
     for s in suggestions:
+      # Convert from dict to proto message by way of JSON.
       json_format.Parse(self.m.json.dumps(s), comment.suggestions.add())
 
     if comment not in self._comments:
-      self._comments.append(json_format.MessageToJson(comment, sort_keys=True))
+      self._comments.append(comment)
 
-  def write_comments(self, dump=False):
+  def write_comments(self, dump=None):
+    del dump  # TODO(garymm): Remove once no longer in use.
     result = self.m.step('write results', [])
-    if dump:
-      result.presentation.properties['tricium'] = self.m.json.dumps({
-        'comments': self._comments,
-      })
-    else:
-      result.presentation.properties['tricium'] = {
-        'comments': self._comments,
-      }
+    results_msg = Data.Results()
+    results_msg.comments.extend(self._comments)
+    result.presentation.properties['tricium'] = json_format.MessageToJson(
+        results_msg)

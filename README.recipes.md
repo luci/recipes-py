@@ -2519,11 +2519,11 @@ Return current UTC time as a datetime.datetime.
 
 API for Tricium analyzers to use.
 
-#### **class [TriciumApi](/recipe_modules/tricium/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#868)):**
+#### **class [TriciumApi](/recipe_modules/tricium/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#868)):**
 
 TriciumApi provides basic support for Tricium.
 
-&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#19)(self, \*\*kwargs):**
+&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#18)(self, \*\*kwargs):**
 
 Sets up the API.
 
@@ -2532,9 +2532,9 @@ object, and the output is a Tricium Results object (see
 https://chromium.googlesource.com/infra/infra/+/master/go/src/infra/tricium/api/v1/data.proto
 for details and definitions).
 
-&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#30)(self, category, message, path, start_line=0, end_line=0, start_char=0, end_char=0, suggestions=()):**
+&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#29)(self, category, message, path, start_line=0, end_line=0, start_char=0, end_char=0, suggestions=()):**
 
-&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#53)(self, dump=False):**
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#53)(self, dump=None):**
 ### *recipe_modules* / [url](/recipe_modules/url)
 
 [DEPS](/recipe_modules/url/__init__.py#5): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io)
@@ -3194,7 +3194,7 @@ This file is a recipe demonstrating reading triggers of the current build.
 
 [DEPS](/recipe_modules/tricium/examples/full.py#8): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/examples/full.py#16)(api, trigger_type_error):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/examples/full.py#15)(api, trigger_type_error):**
 ### *recipes* / [url:examples/full](/recipe_modules/url/examples/full.py)
 
 [DEPS](/recipe_modules/url/examples/full.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step), [url](#recipe_modules-url)

@@ -8,8 +8,7 @@ from recipe_engine.recipe_api import Property
 DEPS = ['tricium', 'properties']
 
 PROPERTIES = {
-    'trigger_type_error':
-        Property(kind=bool, default=False),
+    'trigger_type_error': Property(kind=bool, default=False),
 }
 
 
@@ -31,7 +30,6 @@ def RunSteps(api, trigger_type_error):
   )
 
   api.tricium.write_comments()
-  api.tricium.write_comments(dump=True)
 
 
 def GenTests(api):
