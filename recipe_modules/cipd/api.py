@@ -445,8 +445,8 @@ class CIPDApi(recipe_api.RecipeApi):
       * package_name (str) - The name of the cipd package.
       * package_path (Path) - The path to package instance file.
       * refs (seq[str]) - A list of ref names to set for the package instance.
-      * tags (dict[str]basestring) - A map of tag name -> value to set for the package
-                              instance.
+      * tags (dict[str]basestring) - A map of tag name -> value to set for the
+          package instance.
 
     Returns:
       The CIPDApi.Pin instance.
@@ -481,10 +481,15 @@ class CIPDApi(recipe_api.RecipeApi):
       step_test_data=lambda: self.test_api.m.json.output({
         'result': self.test_api.make_pin(pkg_name),
       }))
+    self.add_instance_link(step_result)
     result = step_result.json.output['result']
-    step_result.presentation.step_text = '</br>pkg: %(package)s' % result
-    step_result.presentation.step_text += '</br>id: %(instance_id)s' % result
     return self.Pin(**result)
+
+  def add_instance_link(self, step_result):
+    result = step_result.json.output['result']
+    step_result.presentation.links[result['instance_id']] = (
+        'https://chrome-infra-packages.appspot.com' +
+        '/p/%(package)s/+/%(instance_id)s' % result)
 
   def create_from_yaml(self, pkg_def, refs=None, tags=None, pkg_vars=None,
                        compression_level=None):

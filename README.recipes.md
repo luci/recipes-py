@@ -603,6 +603,8 @@ Args:
 
 Returns True if the caller has given roles, False otherwise.
 
+&mdash; **def [add\_instance\_link](/recipe_modules/cipd/api.py#488)(self, step_result):**
+
 &mdash; **def [build](/recipe_modules/cipd/api.py#376)(self, input_dir, output_package, package_name, compression_level=None, install_mode=None, preserve_mtime=False, preserve_writable=False):**
 
 Builds, but does not upload, a cipd package from a directory.
@@ -649,7 +651,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#513)(self, pkg_def, refs=None, tags=None, compression_level=None):**
+&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#518)(self, pkg_def, refs=None, tags=None, compression_level=None):**
 
 Builds and uploads a package based on a PackageDefinition object.
 
@@ -666,7 +668,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#489)(self, pkg_def, refs=None, tags=None, pkg_vars=None, compression_level=None):**
+&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#494)(self, pkg_def, refs=None, tags=None, pkg_vars=None, compression_level=None):**
 
 Builds and uploads a package based on on-disk YAML package definition
 file.
@@ -685,7 +687,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [describe](/recipe_modules/cipd/api.py#636)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
+&mdash; **def [describe](/recipe_modules/cipd/api.py#641)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
 
 Returns information about a pacakge instance given its version:
 who uploaded the instance and when and a list of attached tags.
@@ -700,7 +702,7 @@ Args:
 
 Returns the CIPDApi.Description instance describing the package.
 
-&mdash; **def [ensure](/recipe_modules/cipd/api.py#535)(self, root, ensure_file):**
+&mdash; **def [ensure](/recipe_modules/cipd/api.py#540)(self, root, ensure_file):**
 
 Ensures that packages are installed in a given root dir.
 
@@ -712,7 +714,7 @@ Returns the map of subdirectories to CIPDApi.Pin instances.
 
 &emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#269)(self):**
 
-&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#701)(self, root, package_file):**
+&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#706)(self, root, package_file):**
 
 Deploys the specified package to root.
 
@@ -726,7 +728,7 @@ Args:
 
 Returns a Pin for the deployed package.
 
-&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#669)(self, destination, package_name, version):**
+&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#674)(self, destination, package_name, version):**
 
 Downloads the specified package to destination.
 
@@ -751,13 +753,13 @@ Args:
   * package_name (str) - The name of the cipd package.
   * package_path (Path) - The path to package instance file.
   * refs (seq[str]) - A list of ref names to set for the package instance.
-  * tags (dict[str]basestring) - A map of tag name -> value to set for the package
-                          instance.
+  * tags (dict[str]basestring) - A map of tag name -> value to set for the
+      package instance.
 
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [search](/recipe_modules/cipd/api.py#611)(self, package_name, tag):**
+&mdash; **def [search](/recipe_modules/cipd/api.py#616)(self, package_name, tag):**
 
 Searches for package instances by tag, optionally constrained by package
 name.
@@ -768,7 +770,7 @@ Args:
 
 Returns the list of CIPDApi.Pin instances.
 
-&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#586)(self, package_name, version, refs):**
+&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#591)(self, package_name, version, refs):**
 
 Moves a ref to point to a given version.
 
@@ -790,7 +792,7 @@ Args:
   * service_account(service_account.api.ServiceAccount): Service account to
       use for authentication.
 
-&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#559)(self, package_name, version, tags):**
+&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#564)(self, package_name, version, tags):**
 
 Tags package of a specific version.
 
