@@ -93,10 +93,49 @@ class ContextApi(RecipeApi):
 
     Look at the examples in "examples/" for examples of context module usage.
     """
-    to_pop = []
     def _push(st, val):
       st.append(val)
       to_pop.append(st)
+
+    def add_to_context(kwarg_name, kwarg_val, current, adder_func):
+      if kwarg_val is not None and len(kwarg_val) > 0:
+        check_type(kwarg_name, kwarg_val, dict)
+        new = dict(current[-1])
+        for k, v in kwarg_val.iteritems():
+          adder_func(k, v, new)
+        _push(current, new)
+
+    def check_accidental_sequential_lookups(v):
+      try:
+        # This odd little piece of code does the following:
+        #   * add a bogus dictionary format %(foo)s to v. This forces %
+        #     into 'dictionary lookup' mode
+        #   * format the result with a defaultdict. This allows all
+        #     `%(key)s` format lookups to succeed, but any sequential `%s`
+        #     lookups to fail.
+        # If the string contains any accidental sequential lookups, this
+        # will raise an exception. If not, then this is a plausible format
+        # string.
+        ('%(foo)s' + v) % collections.defaultdict(str)
+      except Exception:
+        raise ValueError(('Invalid %%-formatting parameter in envvar, '
+                          'only %%(ENVVAR)s allowed: %r') % (v,))
+
+    def _as_env_prefixes(k, v, new):
+      if v:
+        new[k] = tuple(v) + new.get(k, ())
+
+    def _as_env_suffixes(k, v, new):
+      if v:
+        new[k] = new.get(k, ()) + tuple(v)
+
+    def _as_env(k, v, new):
+      if v is not None:
+        v = str(v)
+        check_accidental_sequential_lookups(v)
+      new[k] =  v
+
+    to_pop = []
 
     if cwd is not None:
       check_type('cwd', cwd, Path)
@@ -106,56 +145,23 @@ class ContextApi(RecipeApi):
       check_type('infra_steps', infra_steps, bool)
       _push(self._infra_step, infra_steps)
 
-    if env_prefixes is not None and len(env_prefixes) > 0:
-      check_type('env_prefixes', env_prefixes, dict)
-      new = dict(self._env_prefixes[-1])
-      for k, v in env_prefixes.iteritems():
-        if not v:
-          continue
-        k = str(k)
-        new[k] = tuple(v) + new.get(k, ())
-      _push(self._env_prefixes, new)
+    add_to_context(
+      'env_prefixes', env_prefixes, self._env_prefixes, _as_env_prefixes)
 
-    if env_suffixes is not None and len(env_suffixes) > 0:
-      check_type('env_suffixes', env_suffixes, dict)
-      new = dict(self._env_suffixes[-1])
-      for k, v in env_suffixes.iteritems():
-        if not v:
-          continue
-        k = str(k)
-        new[k] = new.get(k, ()) + tuple(v)
-      _push(self._env_suffixes, new)
+    add_to_context(
+      'env_suffixes', env_suffixes, self._env_suffixes, _as_env_suffixes)
 
-    if env is not None and len(env) > 0:
-      check_type('env', env, dict)
-      # we hit _env directly to avoid an extra copy.
-      new = dict(self._env[-1])
-      for k, v in env.iteritems():
-        k = str(k)
-        if v is not None:
-          v = str(v)
-          try:
-            # This odd little piece of code does the following:
-            #   * add a bogus dictionary format %(foo)s to v. This forces %
-            #     into 'dictionary lookup' mode
-            #   * format the result with a defaultdict. This allows all
-            #     `%(key)s` format lookups to succeed, but any sequential `%s`
-            #     lookups to fail.
-            # If the string contains any accidental sequential lookups, this
-            # will raise an exception. If not, then this is a pluasible format
-            # string.
-            ('%(foo)s'+v) % collections.defaultdict(str)
-          except Exception:
-            raise ValueError(('Invalid %%-formatting parameter in envvar, '
-                              'only %%(ENVVAR)s allowed: %r') % (v,))
-        new[k] = v
-      _push(self._env, new)
+    add_to_context(
+      'env', env, self._env, _as_env)
 
     try:
       yield
     finally:
       for p in to_pop:
         p.pop()
+
+
+
 
   @property
   def cwd(self):
