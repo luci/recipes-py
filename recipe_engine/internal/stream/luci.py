@@ -202,11 +202,7 @@ class LUCIStepStream(StreamEngine.StepStream):
     log = self._step.logs.add()
     log.name = log_name
     log.view_url = log_stream.get_viewer_url()
-    log.url = 'logdog://%s/%s/%s' % (
-      self._bsc.coordinator_host,
-      self._bsc.project,
-      log_stream.path
-    )
+    log.url = log_stream.path.name
     self._change_cb()
     return LUCILogStream(log_stream)
 
@@ -277,6 +273,8 @@ class LUCIStepStream(StreamEngine.StepStream):
     # changes when they happen.
     self._step.end_time.GetCurrentTime()
     self._step.summary_markdown = self._back_compat_markdown.render()
+    if self._step.status == common.STARTED:
+      self._step.status = common.SUCCESS
     self._change_cb()
 
 
@@ -327,7 +325,10 @@ class LUCIStreamEngine(StreamEngine):
     assert not allow_subannotations, (
       'Subannotations not currently supported in build.proto mode'
     )
-    step_pb = self._build_proto.steps.add(name='|'.join(name_tokens))
+    step_pb = self._build_proto.steps.add(
+        name='|'.join(name_tokens),
+        status=common.STARTED,
+    )
     step_pb.start_time.GetCurrentTime()
 
     ret = LUCIStepStream(step_pb, self._build_proto.output.properties,

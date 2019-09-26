@@ -57,9 +57,6 @@ cat > "$LUCI_CONTEXT" <<EOF
 {
   "luciexe": {
     "cache_dir": "$WD/cache"
-  },
-  "buildbucket": {
-    "hostname": "fake-buildbucket.example.com"
   }
 }
 EOF

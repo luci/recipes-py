@@ -30,11 +30,11 @@ def _contract_in_env(key):
   return os.environ[key]
 
 
-def _contract_in_luci_context(section, key):
-  section = luci_context.read(section)
+def _contract_in_luci_context(section_name, key):
+  section = luci_context.read(section_name)
   if section is None or key not in section:
     raise RunBuildContractViolation('Expected %r in $LUCI_CONTEXT[%r].' % (
-      key, section))
+      key, section_name))
   return section[key]
 
 
@@ -47,7 +47,7 @@ def _synth_properties(build):
     },
     '$recipe_engine/buildbucket': {
       'build': jsonpb.MessageToDict(build),
-      'hostname': _contract_in_luci_context('buildbucket', 'hostname'),
+      'hostname': build.infra.buildbucket.hostname,
     },
     '$recipe_engine/path': {
       'temp_dir': _contract_in_env('TMP'),
