@@ -33,6 +33,10 @@ def manage_helper(api, chn):
           timeout=30,
           cpu=0, # always run the checker.
       ).json.output
+      # show it as terminated immediately; otherwise this will show as running
+      # until we exit the 'helper' nest context, due to the current recipe
+      # engine semanics around step closure.
+      api.step.close_non_nest_step()
     except api.step.StepFailure:
       helper_future.cancel()
       helper_future.result()
@@ -77,7 +81,12 @@ def run_helper(api):
 
 def RunSteps(api):
   with run_helper(api):
-    api.step('do something with live helper', ['echo', 'hey'])
+    api.python.inline('do something with live helper', '''
+      import time
+      for _ in xrange(10):
+        print "hey there :)"
+        time.sleep(1)
+    ''')
 
 
 def GenTests(api):

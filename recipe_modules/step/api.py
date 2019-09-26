@@ -128,6 +128,16 @@ class StepApi(recipe_api.RecipeApiPlain):
     """
     return self.step_client.previous_step_result()
 
+  def close_non_nest_step(self):
+    """Call this to explicitly terminate the currently open non-nest step.
+
+    After calling this, api.step.active_step will return the current nest step
+    context (if any).
+
+    No-op if there's no currently active non-nest step.
+    """
+    return self.step_client.close_non_parent_step()
+
   # TODO(iannucci): Historically `nest` returned a StepData; there's tons of
   # code which does:
   #

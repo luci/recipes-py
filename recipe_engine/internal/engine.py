@@ -144,7 +144,7 @@ class RecipeEngine(object):
     """
     self._clients['paths']._initialize_with_recipe_api(root_api)
 
-  def _close_non_parent_step(self):
+  def close_non_parent_step(self):
     """Closes the tip of the _step_stack if it's not a parent nesting step."""
     try:
       tip_step = self._step_stack[-1]
@@ -153,7 +153,7 @@ class RecipeEngine(object):
 
       self._step_stack.pop().close()
     except:
-      _log_crash(self._stream_engine, "_close_non_parent_step()")
+      _log_crash(self._stream_engine, "close_non_parent_step()")
       raise CrashEngine("Closing non-parent step failed.")
 
   @property
@@ -189,7 +189,7 @@ class RecipeEngine(object):
       try:
         return func(*args, **kwargs)
       finally:
-        self._close_non_parent_step()
+        self.close_non_parent_step()
     ret = gevent.spawn(_runner)
     if greenlet_name is not None:
       ret.name = greenlet_name
@@ -204,12 +204,12 @@ class RecipeEngine(object):
       * name (str) - The name of the step we want to run in the current context.
 
     Side effect:
-      * calls _close_non_parent_step.
+      * calls close_non_parent_step.
       * Updates global tracking state for this step name.
 
     Returns Tuple[str] of the step name_tokens that should ACTUALLY run.
     """
-    self._close_non_parent_step()
+    self.close_non_parent_step()
 
     try:
       namespace = ()
@@ -260,7 +260,7 @@ class RecipeEngine(object):
       yield presentation, active_step.children_steps
     finally:
       try:
-        self._close_non_parent_step()
+        self.close_non_parent_step()
         self._step_stack.pop().close()
       except:
         _log_crash(self._stream_engine, "parent_step.close(%r)" % (name_tokens))
@@ -466,7 +466,7 @@ class RecipeEngine(object):
                 result.failure.failure.SetInParent()
         finally:
           # TODO(iannucci): give this more symmetry with parent_step
-          engine._close_non_parent_step()  # pylint: disable=protected-access
+          engine.close_non_parent_step()
           engine._step_stack[-1].close()   # pylint: disable=protected-access
 
       # TODO(iannucci): the differentiation here is a bit weird

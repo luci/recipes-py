@@ -234,6 +234,10 @@ class StepClient(object):
     assert isinstance(step, engine_step.StepConfig)
     return self._engine.run_step(step)
 
+  def close_non_parent_step(self):
+    """Closes the currently active non-parent step, if any."""
+    return self._engine.close_non_parent_step()
+
 
 class SourceManifestClient(object):
   """A recipe engine client allowing the upload of Source Manifests.

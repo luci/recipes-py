@@ -8,29 +8,31 @@ import sys
 import time
 import signal
 
+def do_exit():
+  print >>sys.stderr, ">> CAUGHT SIGNAL, CLEANING UP"
+  time.sleep(2)
+  print >>sys.stderr, ">> DONE; EXITING"
+  sys.exit(0)
+
 signal.signal(
     (
       signal.SIGBREAK  # pylint: disable=no-member
       if sys.platform.startswith('win') else
       signal.SIGTERM
     ),
-    lambda _signum, _frame: sys.exit(0))
+    lambda _signum, _frame: do_exit())
 
-try:
-  print "Starting up!"
-  print >>sys.stderr, ">> SLEEPING 5s"
-  time.sleep(5)
+print "Starting up!"
+print >>sys.stderr, ">> SLEEPING 5s"
+time.sleep(5)
 
-  with open(sys.argv[1], 'wb') as pid_file:
-    json.dump({
-      # Note, you could put whatever connection information you wanted here.
-      'pid': os.getpid(),
-    }, pid_file)
-  print >>sys.stderr, ">> DUMPED PIDFILE"
+with open(sys.argv[1], 'wb') as pid_file:
+  json.dump({
+    # Note, you could put whatever connection information you wanted here.
+    'pid': os.getpid(),
+  }, pid_file)
+print >>sys.stderr, ">> DUMPED PIDFILE"
 
-  for x in xrange(30):
-    print "Hi! %s" % x
-    time.sleep(1)
-except SystemExit:
-  print >>sys.stderr, ">> QUITQUITQUIT"
-  raise
+for x in xrange(30):
+  print "Hi! %s" % x
+  time.sleep(1)
