@@ -201,8 +201,7 @@ class LUCIStepStream(StreamEngine.StepStream):
 
     log = self._step.logs.add()
     log.name = log_name
-    log.view_url = log_stream.get_viewer_url()
-    log.url = log_stream.path.name
+    log.url = flat_name
     self._change_cb()
     return LUCILogStream(log_stream)
 
