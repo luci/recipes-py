@@ -1,0 +1,481 @@
+// Copyright 2018 The LUCI Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package gerrit;
+
+service Gerrit {
+  // Loads a change by id.
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#get-change
+  rpc GetChange(GetChangeRequest) returns (ChangeInfo);
+
+  // Create a new empty change.
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#create-change
+  rpc CreateChange(CreateChangeRequest) returns (ChangeInfo);
+
+  // Edit a single file within an existing change edit.
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#put-edit-file
+  rpc ChangeEditFileContent(ChangeEditFileContentRequest)
+      returns (google.protobuf.Empty);
+
+  // Publish all changes in a a change edit.
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#publish-edit
+  rpc ChangeEditPublish(ChangeEditPublishRequest)
+      returns (google.protobuf.Empty);
+
+  // Set various review bits on a change.
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#set-review
+  rpc SetReview(SetReviewRequest) returns (ReviewResult);
+
+  // Submit a change.
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#submit-change
+  rpc SubmitChange(SubmitChangeRequest) returns (ChangeInfo);
+
+  // Abandon a change.
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#abandon-change
+  rpc AbandonChange(AbandonChangeRequest) returns (ChangeInfo);
+
+  // Gets Mergeable status for a change.
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-projects.html#get-mergeable-info
+  rpc GetMergeable(GetMergeableRequest) returns (MergeableInfo);
+}
+
+// Specifies what extra information to include in the response.
+//
+// Source of truth:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#query-options
+enum QueryOption {
+  OPTION_UNSPECIFIED = 0;
+  // A summary of each label required for submit, and approvers that have
+  // granted (or rejected) with that label.
+  LABELS = 1;
+  // Detailed label information, including numeric values of all existing
+  // approvals, recognized label values, values permitted to be set by the
+  // current user, all reviewers by state, and reviewers that may be removed by
+  // the current user.
+  DETAILED_LABELS = 2;
+  // Describe the current revision (patch set) of the change, including the
+  // commit SHA-1 and URLs to fetch from.
+  CURRENT_REVISION = 4;
+  // Describe all revisions, not just current.
+  ALL_REVISIONS = 8;
+  // Parse and output all header fields from the commit object, including
+  // message. Only valid when the CURRENT_REVISION or ALL_REVISIONS option is
+  // selected.
+  CURRENT_COMMIT = 16;
+  // Parse and output all header fields from the output revisions. If only
+  // CURRENT_REVISION was requested then only the current revision’s commit data
+  // will be output.
+  ALL_COMMITS = 32;
+  // List files modified by the commit and magic files, including basic line
+  // counts inserted/deleted per file. Only valid when the CURRENT_REVISION or
+  // ALL_REVISIONS option is selected.
+  CURRENT_FILES = 64;
+  // List files modified by the commit and magic files, including basic line
+  // counts inserted/deleted per file. If only the CURRENT_REVISION was
+  // requested then only that commit’s modified files will be output.
+  ALL_FILES = 128;
+  // Include _account_id, email and username fields when referencing accounts.
+  DETAILED_ACCOUNTS = 256;
+  // Include updates to reviewers set as ReviewerUpdateInfo entities.
+  REVIEWER_UPDATES = 512;
+  // Include messages associated with the change.
+  MESSAGES = 1024;
+  // Include information on available actions for the change and its current
+  // revision. Ignored if the caller is not authenticated.
+  CURRENT_ACTIONS = 2048;
+  // Include information on available change actions for the change. Ignored if
+  // the caller is not authenticated.
+  CHANGE_ACTIONS = 4096;
+  // Include the reviewed field if all of the following are true:
+  // - the change is open
+  // - the caller is authenticated
+  // - the caller has commented on the change more recently than the last update
+  //   from the change owner, i.e. this change would show up in the results of
+  //   reviewedby:self.
+  REVIEWED = 8192;
+  // Skip the mergeable field in ChangeInfo. For fast moving projects, this
+  // field must be recomputed often, which is slow for projects with big trees.
+  SKIP_MERGEABLE = 16384;
+  // Include the submittable field in ChangeInfo, which can be used to tell if
+  // the change is reviewed and ready for submit.
+  SUBMITTABLE = 32768;
+  // Include the web_links field in CommitInfo, therefore only valid in
+  // combination with CURRENT_COMMIT or ALL_COMMITS.
+  WEB_LINKS = 65536;
+  // Include potential problems with the change.
+  CHECK = 131072;
+  // Include the full commit message with Gerrit-specific commit footers in the
+  // RevisionInfo.
+  COMMIT_FOOTERS = 262144;
+  // Include push certificate information in the RevisionInfo. Ignored if signed
+  // push is not enabled on the server.
+  PUSH_CERTIFICATES = 524288;
+  // Include references to external tracking systems as TrackingIdInfo.
+  TRACKING_IDS = 1048576;
+  // Include the commands field in the FetchInfo for revisions. Only valid when
+  // the CURRENT_REVISION or ALL_REVISIONS option is selected.
+  DOWNLOAD_COMMANDS = 2097152;
+}
+
+// Request to get information for a single change.
+//
+// Encodes path arguments and query options described at
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#get-change
+message GetChangeRequest {
+  // Change number.
+  int64 number = 1;
+
+  // What to include in the response.
+  repeated QueryOption options = 2;
+}
+
+// Information about an account.
+// Source of truth: https://gerrit-review.googlesource.com/Documentation/rest-api-accounts.html#account-info
+message AccountInfo {
+  // The full name of the user.
+  // Only set if detailed account information is requested.
+  // See option DETAILED_ACCOUNTS for change queries
+  // and option DETAILS for account queries.
+  string name = 1;
+
+  // The email address the user prefers to be contacted through.
+  // Only set if detailed account information is requested.
+  // See option DETAILED_ACCOUNTS for change queries
+  // and options DETAILS and ALL_EMAILS for account queries.
+  string email = 2;
+
+  // A list of the secondary email addresses of the user.
+  // Only set for account queries when the ALL_EMAILS option or the suggest
+  // parameter is set. Secondary emails are only included if the calling user
+  // has the Modify Account, and hence is allowed to see secondary emails of
+  // other users.
+  repeated string secondary_emails = 3;
+
+  // The username of the user.
+  // Only set if detailed account information is requested.
+  // See option DETAILED_ACCOUNTS for change queries
+  // and option DETAILS for account queries.
+  string username = 4;
+}
+
+// Information about a change.
+// Source of truth: https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#change-info
+message ChangeInfo {
+  // The change number.
+  int64 number = 1;
+
+  // The owner of the change.
+  AccountInfo owner = 2;
+
+  // The project of this change. For example, "chromium/src".
+  string project = 3;
+
+  // Ref that this change targets, e.g.: refs/heads/master
+  //
+  // Note that the gerrit API may return short branch name (master instead of
+  // refs/heads/master) but we convert it to a ref for consistency across the
+  // API.
+  string ref = 4;
+
+  enum Status {
+    STATUS_INVALID = 0;
+    NEW = 1;
+    MERGED = 2;
+    ABANDONED = 3;
+  }
+  Status status = 5;
+
+  // Current revision of the change.
+  //
+  // See:
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#revision-id
+  string current_revision = 6;
+
+  // A map of patch set commit IDs to RevisionInfos.
+  //
+  // Only set if revision information is requested.
+  map<string, RevisionInfo> revisions = 7;
+}
+
+// Information about a patch set.
+// Source of truth: https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#revision-info
+message RevisionInfo {
+  // The kind of change for this revision.
+  enum Kind {
+    KIND_INVALID = 0;
+    REWORK = 1;
+    TRIVIAL_REBASE = 2;
+    MERGE_FIRST_PARENT_UPDATE = 3;
+    NO_CODE_CHANGE = 4;
+    NO_CHANGE = 5;
+  }
+
+  // The kind of this patch set.
+  Kind kind = 1;
+
+  // The patch set number.
+  int32 number = 2;
+
+  // The uploader of this patch set.
+  AccountInfo uploader = 3;
+
+  // The Git reference for the patch set.
+  string ref = 4;
+
+  // A map of file paths to FileInfos.
+  //
+  // Only set if file information is requested.
+  map<string, FileInfo> files = 6;
+}
+
+// Information about a file in a patch set.
+// Source of truth: https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#file-info
+message FileInfo {
+  enum Status {
+    M = 0; // Modified (default; omitted)
+    A = 1; // Added
+    D = 2; // Deleted
+    R = 3; // Renamed
+    C = 4; // Copied
+    W = 5; // Rewritten
+  }
+
+  // Status of the file.
+  Status status = 1;
+
+  // Whether the file is binary.
+  bool binary = 2;
+
+  // The old file path; only set if renamed or copied.
+  string old_path = 3;
+
+  // Number of lines inserted.
+  int32 lines_inserted = 4;
+
+  // Number of lines deleted.
+  int32 lines_deleted = 5;
+
+  // Number of bytes by which the file size increased/decreased.
+  int64 size_delta = 6;
+
+  // File size in bytes.
+  int64 size = 7;
+}
+
+// Information for creating a new change.
+//
+// Fields are a subset of:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#change-input
+message CreateChangeRequest {
+  string project = 1;
+
+  // Ref to base the new change at. e.g. refs/heads/master
+  string ref = 2;
+
+  string subject = 3;
+
+  // 40-digit hex SHA-1 of the git commit which will be the parent commit of the
+  // newly created change. If set, it must be a merged commit on the destination
+  // branch.
+  string base_commit = 4;
+}
+
+// Information to submit a change.
+//
+// This is a placeholder to support the arguments from:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#submit-change
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#submit-input
+message SubmitChangeRequest {
+  // The change number.
+  int64 number = 1;
+
+  // The project of this change. For example, "chromium/src".
+  //
+  // Optional, but recommended for better routing and faster RPC execution.
+  string project = 2;
+}
+
+// Information for changing contents of single file in a change edit.
+//
+// Fields encode the path arguments of
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#put-edit-file
+message ChangeEditFileContentRequest {
+  // The change number.
+  int64 number = 1;
+
+  // The project of this change. For example, "chromium/src".
+  //
+  // Optional, but recommended for better routing and faster RPC execution.
+  string project = 2;
+
+  // Path to the file to edit inside the project.
+  string file_path = 3;
+
+  // New content of the file. Overwrites existing contents entirely.
+  bytes content = 4;
+}
+
+// Information for publishing a change edit.
+//
+// This is a placeholder to support the arguments from:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#publish-edit
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#publish-change-edit-input
+message ChangeEditPublishRequest {
+  // The change number.
+  int64 number = 1;
+
+  // The project of this change. For example, "chromium/src".
+  //
+  // Optional, but recommended for better routing and faster RPC execution.
+  string project = 2;
+
+}
+
+// Information for abandoning a change.
+//
+// Fields are a subset of arguments from:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#abandon-change
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#abandon-input
+message AbandonChangeRequest {
+  // The change number.
+  int64 number = 1;
+
+  // The project of this change. For example, "chromium/src".
+  //
+  // Optional, but recommended for better routing and faster RPC execution.
+  string project = 2;
+
+  string message = 3;
+}
+
+// Information to set various review bits on a change
+//
+// Fields are a subset of arguments from:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#set-review
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#review-input
+message SetReviewRequest {
+  // The change number.
+  int64 number = 1;
+
+  // The project of this change. For example, "chromium/src".
+  //
+  // Optional, but recommended for better routing and faster RPC execution.
+  string project = 2;
+
+  // Unique ID for the revision to query.
+  // See
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#revision-id
+  string revision_id = 3;
+
+  // Message to be added to the change along with this review.
+  string message = 4;
+
+  // labels to add, e.g.:
+  //   {
+  //     "Code-Review": -1,
+  //     "Verified": 1,
+  //   }
+  map<string, int32> labels = 5;
+}
+
+// Information returned by a SetReview RPC.
+//
+// Fields are a subset of:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#review-result
+message ReviewResult {
+    // Map of labels to values after the review was posted. Null if any reviewer
+    // additions were rejected.
+    map<string, int32> labels = 1;
+}
+
+enum MergeableStrategy {
+  MERGEABLE_STRATEGY_UNSPECIFIED = 0;
+  RECURSIVE = 1;
+  RESOLVE = 2;
+  SIMPLE_TWO_WAY_IN_CORE = 3;
+  OURS = 4;
+  THEIRS = 5;
+}
+
+message GetMergeableRequest {
+  // The change number.
+  int64 number = 1;
+
+  // The project of this change. For example, "chromium/src".
+  //
+  // Optional, but recommended for better routing and faster RPC execution.
+  string project = 2;
+
+  // Unique ID for the revision to query.
+  // See
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#revision-id
+  string revision_id = 3;
+
+  // The source to merge from, e.g. a complete or abbreviated commit SHA-1, a
+  // complete reference name, a short reference name under refs/heads,
+  // refs/tags, or refs/remotes namespace, etc.
+  string source = 4;
+
+  // The strategy of the merge.
+  MergeableStrategy strategy = 5;
+}
+
+// Contains information about the mergeability of a change.
+//
+// See
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#mergeable-info
+message MergeableInfo {
+  enum SubmitType {
+    SUBMIT_TYPE_UNSPECIFIED = 0;
+    MERGE_IF_NECESSARY = 1;
+    FAST_FORWARD_ONLY = 2;
+    REBASE_IF_NECESSARY = 3;
+    REBASE_ALWAYS = 4;
+    MERGE_ALWAYS = 5;
+    CHERRY_PICK = 6;
+  }
+  // Submit type used for this change.
+  SubmitType submit_type = 1;
+
+  // The strategy of the merge.
+  MergeableStrategy strategy = 2;
+
+  // true if this change is cleanly mergeable, false otherwise.
+  bool mergeable = 3;
+
+  // true if this change is already merged, false otherwise.
+  bool commit_merged = 4;
+
+  // true if the content of this change is already merged, false otherwise.
+  bool content_merged = 5;
+
+  // A list of paths with conflicts.
+  repeated string conflicts = 6;
+
+  // A list of other branch names where this change could merge cleanly.
+  repeated string mergeable_into = 7;
+}
+
