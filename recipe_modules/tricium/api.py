@@ -50,8 +50,7 @@ class TriciumApi(recipe_api.RecipeApi):
     if comment not in self._comments:
       self._comments.append(comment)
 
-  def write_comments(self, dump=None):
-    del dump  # TODO(garymm): Remove once no longer in use.
+  def write_comments(self):
     result = self.m.step('write results', [])
     results_msg = Data.Results()
     results_msg.comments.extend(self._comments)
