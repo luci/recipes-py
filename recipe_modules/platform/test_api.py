@@ -23,13 +23,5 @@ class PlatformTestApi(recipe_test_api.RecipeTestApi):
     assert arch in ('intel', 'arm'), 'unknown arch %r' % (arch,)
     return arch
 
-  @recipe_test_api.mod_test_data
-  @staticmethod
-  def cpu_count(cpu_count):
-    assert isinstance(cpu_count, int), 'bad type %r' % (type(cpu_count),)
-    assert cpu_count > 0, 'bad cpu_count %r' % (cpu_count,)
-    return cpu_count
-
   def __call__(self, name, bits, arch='intel'):
     return self.name(name) + self.bits(bits) + self.arch(arch)
-

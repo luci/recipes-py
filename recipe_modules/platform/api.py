@@ -6,7 +6,7 @@
 
 import sys
 import platform
-import multiprocessing
+import psutil
 
 from recipe_engine import recipe_api
 
@@ -42,8 +42,12 @@ class PlatformApi(recipe_api.RecipeApi):
       self._name = PlatformApi.normalize_platform_name(
         self._test_data.get('name', 'linux'))
       self._bits = norm_bits(self._test_data.get('bits', 64))
-      self._cpu_count = self._test_data.get('cpu_count', 2)
       self._arch = self._test_data.get('arch', 'intel')
+
+      # cpu_count, memory_bytes should match the values in
+      #  recipe_engine/internal/test/execute_test_case.py
+      self._num_logical_cores = 8
+      self._memory_bytes = 16 * (1024**3)
     else:  # pragma: no cover
       # platform.machine is based on running kernel. It's possible to use 64-bit
       # kernel with 32-bit userland, e.g. to give linker slightly more memory.
@@ -60,7 +64,8 @@ class PlatformApi(recipe_api.RecipeApi):
             platform.architecture()[0] == '64bit'):
         self._bits = 64
 
-      self._cpu_count = multiprocessing.cpu_count()
+      self._num_logical_cores = psutil.cpu_count(True)
+      self._memory_bytes = psutil.virtual_memory().total
 
   @property
   def is_win(self):
@@ -106,9 +111,18 @@ class PlatformApi(recipe_api.RecipeApi):
     return self._arch
 
   @property
+  def total_memory(self):
+    """The total physical memory in MiB.
+
+    This is equivalent to `psutil.virtual_memory().total / (1024 ** 2)`.
+    """
+    return self._memory_bytes / (1024 ** 2)
+
+  @property
   def cpu_count(self):
-    """The number of CPU cores, according to multiprocessing.cpu_count()."""
-    return self._cpu_count
+    """The number of logical CPU cores (i.e. including hyper-threaded cores),
+    according to `psutil.cpu_count(True)`."""
+    return self._num_logical_cores
 
   @staticmethod
   def normalize_platform_name(plat):

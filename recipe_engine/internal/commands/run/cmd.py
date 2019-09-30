@@ -5,9 +5,10 @@
 """Entry point for running recipes for real (not in testing mode)."""
 
 import logging
-import multiprocessing
 import os
 import sys
+
+import psutil
 
 from PB.recipe_engine.result import Result
 
@@ -64,7 +65,7 @@ def main(args):
       StreamEngineInvariants.wrap(stream_engine),
       SubprocessStepRunner(),
       os.environ, os.path.abspath(workdir),
-      multiprocessing.cpu_count(),
+      psutil.cpu_count(), psutil.virtual_memory().total,
       emit_initial_properties=emit_initial_properties)
 
   if args.output_result_json:

@@ -3,9 +3,10 @@
 # that can be found in the LICENSE file.
 
 import logging
-import multiprocessing
 import os
 import sys
+
+import psutil
 
 from google.protobuf import json_format as jsonpb
 
@@ -84,6 +85,6 @@ def main(args):
     result, _ = RecipeEngine.run_steps(
         args.recipe_deps, properties, stream_engine,
         SubprocessStepRunner(), os.environ, os.getcwd(),
-        multiprocessing.cpu_count())
+        psutil.cpu_count(), psutil.virtual_memory().total)
 
   return 1 if not result or result.HasField("failure") else 0

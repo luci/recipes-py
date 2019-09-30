@@ -62,7 +62,7 @@ class RecipeEngine(object):
   """
 
   def __init__(self, recipe_deps, step_runner, stream_engine, properties,
-               environ, start_dir, num_cores):
+               environ, start_dir, num_logical_cores, memory_mb):
     """See run_steps() for parameter meanings."""
     self._recipe_deps = recipe_deps
     self._step_runner = step_runner
@@ -80,7 +80,7 @@ class RecipeEngine(object):
         recipe_api.StepClient(self),
     )}
 
-    self._resource = CPUResource(num_cores * 1000)
+    self._resource = CPUResource(num_logical_cores * 1000)
 
     # A greenlet-local store which holds a stack of _ActiveStep objects, holding
     # the most recently executed step at each nest level (objects deeper in the
@@ -386,8 +386,9 @@ class RecipeEngine(object):
 
   @classmethod
   def run_steps(cls, recipe_deps, properties, stream_engine, step_runner,
-                environ, cwd, num_cores, emit_initial_properties=False,
-                test_data=None, skip_setup_build=False):
+                environ, cwd, num_logical_cores, memory_mb,
+                emit_initial_properties=False, test_data=None,
+                skip_setup_build=False):
     """Runs a recipe (given by the 'recipe' property). Used by all
     implementations including the simulator.
 
@@ -398,7 +399,9 @@ class RecipeEngine(object):
       * stream_engine: the StreamEngine to use to create individual step
         streams.
       * step_runner: The StepRunner to use to 'actually run' the steps.
-      * num_cores (int): The number of CPU cores to assume the machine has.
+      * num_logical_cores (int): The number of logical CPU cores to assume the
+        machine has.
+      * memory_mb (int): The amount of memory to assume the machine has, in MiB.
       * emit_initial_properties (bool): If True, write the initial recipe engine
           properties in the "setup_build" step.
 
@@ -426,7 +429,7 @@ class RecipeEngine(object):
 
       engine = cls(
           recipe_deps, step_runner, stream_engine, properties, environ, cwd,
-          num_cores)
+          num_logical_cores, memory_mb)
       api = recipe_obj.mk_api(engine, test_data)
       engine.initialize_path_client_HACK(api)
     except (RecipeUsageError, ImportError, AssertionError) as ex:

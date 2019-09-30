@@ -887,7 +887,7 @@ as the last path component if it is not empty.
 
 Look at the examples in "examples/" for examples of context module usage.
 
-&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#161)(self):**
+&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#166)(self):**
 
 Returns the current working directory that steps will run in.
 
@@ -895,7 +895,7 @@ Returns the current working directory that steps will run in.
 equivalent to api.path['start_dir'], though only occurs if no cwd has been
 set (e.g. in the outermost context of RunSteps).
 
-&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#171)(self):**
+&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#176)(self):**
 
 Returns modifications to the environment.
 
@@ -906,7 +906,7 @@ done with properties.
 **Returns (dict)** - The env-key -> value mapping of current environment
   modifications.
 
-&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#186)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#191)(self):**
 
 Returns Path prefix modifications to the environment.
 
@@ -916,7 +916,7 @@ prefixes registered with the environment.
 **Returns (dict)** - The env-key -> value(Path) mapping of current
 environment prefix modifications.
 
-&emsp; **@property**<br>&mdash; **def [env\_suffixes](/recipe_modules/context/api.py#200)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_suffixes](/recipe_modules/context/api.py#205)(self):**
 
 Returns Path suffix modifications to the environment.
 
@@ -926,7 +926,7 @@ suffixes registered with the environment.
 **Returns (dict)** - The env-key -> value(Path) mapping of current
 environment suffix modifications.
 
-&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#214)(self):**
+&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#219)(self):**
 
 Returns the current value of the infra_step setting.
 
@@ -1837,14 +1837,14 @@ Mocks:
     sys.platform.
   * bits (int): Either 32 or 64.
 
-&emsp; **@property**<br>&mdash; **def [arch](/recipe_modules/platform/api.py#99)(self):**
+&emsp; **@property**<br>&mdash; **def [arch](/recipe_modules/platform/api.py#104)(self):**
 
 Returns the current CPU architecture.
 
 TODO: This is currently always hard-coded to 'intel'... Apparently no one
 has actually needed this function?
 
-&emsp; **@property**<br>&mdash; **def [bits](/recipe_modules/platform/api.py#89)(self):**
+&emsp; **@property**<br>&mdash; **def [bits](/recipe_modules/platform/api.py#94)(self):**
 
 Returns the bitness of the userland for the current system (either 32 or
 64 bit).
@@ -1852,32 +1852,39 @@ Returns the bitness of the userland for the current system (either 32 or
 TODO: If anyone needs to query for the kernel bitness, another accessor
 should be added.
 
-&emsp; **@property**<br>&mdash; **def [cpu\_count](/recipe_modules/platform/api.py#108)(self):**
+&emsp; **@property**<br>&mdash; **def [cpu\_count](/recipe_modules/platform/api.py#121)(self):**
 
-The number of CPU cores, according to multiprocessing.cpu_count().
+The number of logical CPU cores (i.e. including hyper-threaded cores),
+according to `psutil.cpu_count(True)`.
 
-&emsp; **@property**<br>&mdash; **def [is\_linux](/recipe_modules/platform/api.py#75)(self):**
+&emsp; **@property**<br>&mdash; **def [is\_linux](/recipe_modules/platform/api.py#80)(self):**
 
 Returns True iff the recipe is running on Linux.
 
-&emsp; **@property**<br>&mdash; **def [is\_mac](/recipe_modules/platform/api.py#70)(self):**
+&emsp; **@property**<br>&mdash; **def [is\_mac](/recipe_modules/platform/api.py#75)(self):**
 
 Returns True iff the recipe is running on OS X.
 
-&emsp; **@property**<br>&mdash; **def [is\_win](/recipe_modules/platform/api.py#65)(self):**
+&emsp; **@property**<br>&mdash; **def [is\_win](/recipe_modules/platform/api.py#70)(self):**
 
 Returns True iff the recipe is running on Windows.
 
-&emsp; **@property**<br>&mdash; **def [name](/recipe_modules/platform/api.py#80)(self):**
+&emsp; **@property**<br>&mdash; **def [name](/recipe_modules/platform/api.py#85)(self):**
 
 Returns the current platform name which will be in:
 * win
 * mac
 * linux
 
-&emsp; **@staticmethod**<br>&mdash; **def [normalize\_platform\_name](/recipe_modules/platform/api.py#113)(plat):**
+&emsp; **@staticmethod**<br>&mdash; **def [normalize\_platform\_name](/recipe_modules/platform/api.py#127)(plat):**
 
 One of python's sys.platform values -> 'win', 'linux' or 'mac'.
+
+&emsp; **@property**<br>&mdash; **def [total\_memory](/recipe_modules/platform/api.py#113)(self):**
+
+The total physical memory in MiB.
+
+This is equivalent to `psutil.virtual_memory().total / (1024 ** 2)`.
 ### *recipe_modules* / [properties](/recipe_modules/properties)
 
 Provides access to the recipes input properties.
@@ -2545,7 +2552,7 @@ for details and definitions).
 
 &mdash; **def [add\_comment](/recipe_modules/tricium/api.py#29)(self, category, message, path, start_line=0, end_line=0, start_char=0, end_char=0, suggestions=()):**
 
-&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#53)(self, dump=None):**
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#53)(self):**
 ### *recipe_modules* / [url](/recipe_modules/url)
 
 [DEPS](/recipe_modules/url/__init__.py#5): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io)
