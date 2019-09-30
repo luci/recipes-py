@@ -1,0 +1,74 @@
+[
+  {
+    "cmd": [],
+    "cost": {
+      "cpu": 0,
+      "disk": 0,
+      "memory": 0,
+      "net": 0
+    },
+    "name": "null step"
+  },
+  {
+    "cmd": [
+      "echo",
+      "hi"
+    ],
+    "cost": {
+      "cpu": 0,
+      "disk": 0,
+      "memory": 0,
+      "net": 0
+    },
+    "name": "zero step"
+  },
+  {
+    "cmd": [
+      "echo",
+      "hi"
+    ],
+    "name": "default step"
+  },
+  {
+    "cmd": [
+      "echo",
+      "hi"
+    ],
+    "cost": {
+      "cpu": 8000,
+      "disk": 0,
+      "memory": 50,
+      "net": 0
+    },
+    "name": "max cpu step"
+  },
+  {
+    "cmd": [
+      "echo",
+      "hi"
+    ],
+    "cost": {
+      "cpu": 500,
+      "disk": 0,
+      "memory": 16384,
+      "net": 0
+    },
+    "name": "max memory step"
+  },
+  {
+    "cmd": [
+      "echo",
+      "hi"
+    ],
+    "cost": {
+      "cpu": 8000,
+      "disk": 0,
+      "memory": 16384,
+      "net": 0
+    },
+    "name": "over-max step"
+  },
+  {
+    "name": "$result"
+  }
+]

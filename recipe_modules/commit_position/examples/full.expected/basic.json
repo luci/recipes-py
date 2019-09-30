@@ -1,6 +1,12 @@
 [
   {
     "cmd": [],
+    "cost": {
+      "cpu": 0,
+      "disk": 0,
+      "memory": 0,
+      "net": 0
+    },
     "name": "invalid",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@ex@Commit position \"master@{#12345}\" does not match r\"(?P<ref>refs/[^@]+)@{#(?P<revision>\\d+)}\"@@@",

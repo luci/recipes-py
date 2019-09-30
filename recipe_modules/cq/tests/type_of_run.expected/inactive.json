@@ -1,6 +1,12 @@
 [
   {
     "cmd": [],
+    "cost": {
+      "cpu": 0,
+      "disk": 0,
+      "memory": 0,
+      "net": 0
+    },
     "name": "show properties",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@result@state: State.INACTIVE@@@",

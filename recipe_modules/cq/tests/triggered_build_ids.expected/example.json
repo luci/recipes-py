@@ -1,10 +1,22 @@
 [
   {
     "cmd": [],
+    "cost": {
+      "cpu": 0,
+      "disk": 0,
+      "memory": 0,
+      "net": 0
+    },
     "name": "no builds actually triggered"
   },
   {
     "cmd": [],
+    "cost": {
+      "cpu": 0,
+      "disk": 0,
+      "memory": 0,
+      "net": 0
+    },
     "name": "triggered some builds",
     "~followup_annotations": [
       "@@@SET_BUILD_PROPERTY@triggered_build_ids@[\"1\", \"2\", \"22\", \"11\"]@@@"

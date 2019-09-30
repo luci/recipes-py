@@ -12,6 +12,12 @@
   },
   {
     "cmd": [],
+    "cost": {
+      "cpu": 0,
+      "disk": 0,
+      "memory": 0,
+      "net": 0
+    },
     "name": "caught timeout (failure)"
   },
   {
@@ -28,6 +34,12 @@
   },
   {
     "cmd": [],
+    "cost": {
+      "cpu": 0,
+      "disk": 0,
+      "memory": 0,
+      "net": 0
+    },
     "name": "caught timeout (failure) (2)"
   },
   {

@@ -15,6 +15,7 @@ import enum
 from recipe_engine import recipe_api
 from recipe_engine.config_types import Path
 from recipe_engine.types import StepPresentation
+from recipe_engine.types import ResourceCost as _ResourceCost
 from recipe_engine.util import Placeholder, sentinel
 
 
@@ -32,40 +33,81 @@ class StepApi(recipe_api.RecipeApiPlain):
   SUCCESS = 'SUCCESS'
   WARNING = 'WARNING'
 
-  class CPU(enum.Enum):
-    """Step CPU cost classes.
+  def ResourceCost(self, cpu=500, memory=50, disk=0, net=0):
+    """A structure defining the resources that a given step may need.
 
-    Each of these represents a fraction of the CPU that a step is estimated to
-    occupy. When running steps concurrently, the recipe engine will prevent too
-    many steps from running.
+    The four resources are:
 
-    Cost is mapped at runtime to a percentage of the CPU cores available (as
-    deteremined by multiprocessing.cpu_count()). Each CPU is cut into 1000 bits
-    ("millicores"), and each cost class maps to some amount of millicores.
+      * cpu (measured in millicores) - The amount of cpu the step is expected to
+        take. Defaults to 500.
+      * memory (measured in MB) - The amount of memory the step is expected to
+        take. Defaults to 50.
+      * disk (as percentage of max disk bandwidth) - The amount of "disk
+        bandwidth" the step is expected to take. This is a very simplified
+        percentage covering IOPS, read/write bandwidth, seek time, etc. At 100,
+        the step will run exclusively w.r.t. all other steps having a `disk`
+        cost. At 0, the step will run regardless of other steps with disk cost.
+      * net (as percentage of max net bandwidth) - The amount of "net
+        bandwidth" the step is expected to take. This is a very simplified
+        percentage covering bandwidth, latency, etc. and is indescriminate of
+        the remote hosts, network conditions, etc. At 100, the step will run
+        exclusively w.r.t. all other steps having a `net` cost. At 0, the step
+        will run regardless of other steps with net cost.
 
-    You can use these enum values to obtain other amounts of cores to use, e.g.:
-      * 2 CPUs             = CPU_BOUND.value * 2
-      * 1/4 available CPUs = MAX_CPU.value / 4
+    A step will run when ALL of the resouces are simultaneously available. The
+    Recipe Engine currently uses a greedy scheduling algorithm for picking the
+    next step to run. If multiple steps are waiting for resources, this will
+    pick the largest (cpu, memory, disk, net) step which fits the currently
+    available resources and run that. The theory is that, assuming:
+
+      * Recipes are finite tasks, which aim to run ALL of their steps, and want
+        to do so as quickly as possible. This is not a typical OS scheduling
+        scenario where there's some window of time over which the recipe needs
+        to be 'fair'. Additionally, recipes run with finite timeouts attached.
+      * The duration of a given step is the same regardless of when during the
+        build it runs (i.e. running a step now vs later should take roughly the
+        same amount of time).
+
+    It's therefore optimal to run steps as quickly as possible, to avoid wasting
+    the timeout attached to the build.
+
+    Note that `bool(ResourceCost(...))` is defined to be True if the
+    ResourceCost has at least one non-zero cost, and False otherwise.
+
+    Args:
+      * cpu (int) - Millicores that this step will take to run. See `MAX_CPU`
+      helper. A value higher than the maximum number of millicores on the system
+      is equivalent to `MAX_CPU`.
+      * memory (int) - Number of Mebibytes of memory this step will take to run.
+      See `MAX_MEMORY` as a helper. A value higher than the maximum amount of
+      memory on the system is equivalent to `MAX_MEMORY`.
+      * disk (int [0..100]) - The disk IO resource this step will take as
+      a percentage of the maximum system disk IO.
+      * net (int [0..100]) - The network IO resource this step will take as
+      a percentage of the maximum system network IO.
+
+    Returns a ResourceCost suitable for use with `api.step(...)`'s cost kwarg.
+    Note that passing `None` to api.step for the cost kwarg is equivalent to
+    `ResourceCost(0, 0, 0, 0)`.
     """
-    # All cores. This step will run to the exclusion of all other steps (with
-    # the excepiton of 'zero' cost steps).
-    MAX_CPU = multiprocessing.cpu_count() * 1000
+    return _ResourceCost(
+        min(cpu, self.MAX_CPU),
+        min(memory, self.MAX_MEMORY),
+        disk,
+        net)
 
-    # One whole core.
-    CPU_BOUND = 1000
+  # The number of millicores in a single CPU core.
+  CPU_CORE = 1000
 
-    # Half a core. Good for processes which do a mix of CPU and local IO work.
-    MIXED_IO_CPU = 500
+  @property
+  def MAX_CPU(self):
+    """Returns the maximum number of millicores this system has."""
+    return self.m.platform.cpu_count * self.CPU_CORE
 
-    # Fifth of a core. Good for processes which mostly shuttle bytes around
-    # disk.
-    LOCAL_IO_BOUND = 200
-
-    # "Zero cost". This is good for processes which do almost zero CPU and local
-    # IO but instead block mostly on remote RPCs.
-    #
-    # However, you should be aware of these if they have significant RAM usage.
-    REMOTE_IO_BOUND = 0
+  @property
+  def MAX_MEMORY(self):
+    """Returns the maximum amount of memory on the system in MB."""
+    return self.m.platform.total_memory
 
   @property
   def StepFailure(self):
@@ -262,7 +304,7 @@ class StepApi(recipe_api.RecipeApiPlain):
   def __call__(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(),
                timeout=None, allow_subannotations=None,
                trigger_specs=None, stdout=None, stderr=None, stdin=None,
-               step_test_data=None, cpu=CPU.MIXED_IO_CPU):
+               step_test_data=None, cost=_ResourceCost()):
     """Returns a step dictionary which is compatible with annotator.py.
 
     Args:
@@ -300,14 +342,16 @@ class StepApi(recipe_api.RecipeApiPlain):
           returns a StepTestData object that will be used as the default test
           data for this step. The recipe author can override/augment this object
           in the GenTests function.
-      * cpu (None|int|step.CPU) - The estimated cost of this step in millicores.
-        The recipe_engine will prevent more than the machine's millicore count
-        worth of steps from running at once (i.e. steps will wait until there's
-        enough core resource available). Waiting suprocesses are unblocked in
-        capacitiy-available order. This means it's possible for pending tasks
-        with large cpu requirements to 'starve' temporarially while other
-        smaller cost tasks run in parallel. Equal-weight tasks will start in
-        FIFO order. REMOTE_IO_BOUND (0 cost) steps will NEVER wait.
+      * cost (None|ResourceCost) - The estimated system resource cost of this
+        step. See `ResourceCost()`. The recipe_engine will prevent more than the
+        machine's maximum resources worth of steps from running at once (i.e.
+        steps will wait until there's enough resource available before
+        starting). Waiting suprocesses are unblocked in capacitiy-available
+        order. This means it's possible for pending tasks with large
+        requirements to 'starve' temporarially while other smaller cost tasks
+        run in parallel. Equal-weight tasks will start in FIFO order. Steps
+        with a cost of None will NEVER wait (which is the equivalent of
+        `ResourceCost()`). Defaults to `ResourceCost(cpu=500, memory=50)`.
 
     Returns a `step_data.StepData` for the running step.
     """
@@ -319,10 +363,10 @@ class StepApi(recipe_api.RecipeApiPlain):
           raise AssertionError('Type %s is not permitted. '
                                'cmd is %r' % (type(x), cmd))
 
-    if isinstance(cpu, self.CPU):
-      cpu = cpu.value
-    assert isinstance(cpu, int), (
-      'cpu must be a CPU class or an int, got %r' % (cpu,))
+    if cost is None:
+      cost = _ResourceCost.zero()
+    assert isinstance(cost, _ResourceCost), (
+      'cost must be a ResourceCost or None, got %r' % (cost,))
 
     cwd = self.m.context.cwd
     if cwd and cwd == self.m.path['start_dir']:
@@ -339,7 +383,7 @@ class StepApi(recipe_api.RecipeApiPlain):
     return self.step_client.run_step(self.step_client.StepConfig(
         name=name,
         cmd=cmd or (),
-        cpu=cpu,
+        cost=cost,
         cwd=cwd,
         env=self.m.context.env,
         env_prefixes=self.step_client.EnvAffix(

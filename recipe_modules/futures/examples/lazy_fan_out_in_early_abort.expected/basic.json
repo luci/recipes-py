@@ -161,22 +161,52 @@
   },
   {
     "cmd": [],
+    "cost": {
+      "cpu": 0,
+      "disk": 0,
+      "memory": 0,
+      "net": 0
+    },
     "name": "Sleeper 1 complete"
   },
   {
     "cmd": [],
+    "cost": {
+      "cpu": 0,
+      "disk": 0,
+      "memory": 0,
+      "net": 0
+    },
     "name": "Sleeper 2 complete"
   },
   {
     "cmd": [],
+    "cost": {
+      "cpu": 0,
+      "disk": 0,
+      "memory": 0,
+      "net": 0
+    },
     "name": "Sleeper 3 complete"
   },
   {
     "cmd": [],
+    "cost": {
+      "cpu": 0,
+      "disk": 0,
+      "memory": 0,
+      "net": 0
+    },
     "name": "Sleeper 4 complete"
   },
   {
     "cmd": [],
+    "cost": {
+      "cpu": 0,
+      "disk": 0,
+      "memory": 0,
+      "net": 0
+    },
     "name": "OH NO QUIT QUIT QUIT",
     "~followup_annotations": [
       "@@@STEP_FAILURE@@@"

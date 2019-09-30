@@ -8,6 +8,7 @@ import attr
 
 from ...recipe_test_api import StepTestData, BaseTestData
 from ...step_data import ExecutionResult
+from ...types import ResourceCost
 
 from ..engine_env import FakeEnviron
 
@@ -80,8 +81,8 @@ class SimulationStepRunner(StepRunner):
       'allow_subannotations': step_config.allow_subannotations,
     }
 
-    if step_config.cpu != 500: # MIXED_IO_CPU
-      self._step_precursor_data[dot_name]['cpu'] = step_config.cpu
+    if step_config.cost != ResourceCost():
+      self._step_precursor_data[dot_name]['cost'] = step_config.cost
 
   def placeholder(self, name_tokens, placeholder):
     dot_name = '.'.join(name_tokens)
@@ -123,8 +124,8 @@ class SimulationStepRunner(StepRunner):
     for handle_name in ('stdout', 'stderr'):
       step_obj.pop(handle_name, None)
     precursor = self._step_precursor_data[dot_name]
-    if 'cpu' in precursor:
-      step_obj['cpu'] = precursor['cpu']
+    if 'cost' in precursor:
+      step_obj['cost'] = attr.asdict(precursor['cost'])
     if precursor['env_prefixes']:
       step_obj['env_prefixes'] = precursor['env_prefixes']
     if precursor['env_suffixes']:

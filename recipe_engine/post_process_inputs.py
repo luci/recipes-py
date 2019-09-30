@@ -9,6 +9,8 @@ from collections import Iterable, OrderedDict
 
 import attr
 
+from .types import ResourceCost
+
 
 class Command(list):
   """Specialized list enabling enhanced searching in command arguments.
@@ -95,8 +97,8 @@ class Step(object):
   # An empy string is equivalent to start_dir
   cwd = attr.ib(default='')
 
-  # The CPU cost of this step in millicores.
-  cpu = attr.ib(default=500)
+  # The resource cost of this Step.
+  cost = attr.ib(default=ResourceCost())
 
   # See //recipe_modules/context/api.py for information on the precise meaning
   # of env, env_prefixes and env_suffixes
@@ -186,21 +188,28 @@ class Step(object):
     if 'name' not in step_dict:
       raise ValueError("step dict must have 'name' key, step dict keys: %r"
                        % sorted(step_dict.iterkeys()))
-    if 'cmd' in step_dict:
+    if 'cmd' in step_dict or 'cost' in step_dict:
       step_dict = step_dict.copy()
-      step_dict['cmd'] = Command(step_dict['cmd'])
+      if 'cmd' in step_dict:
+        step_dict['cmd'] = Command(step_dict['cmd'])
+      if 'cost' in step_dict:
+        step_dict['cost'] = ResourceCost(**step_dict['cost'])
     return cls(**step_dict)
 
   def _as_dict(self):
     return attr.asdict(self, recurse=False)
 
   def to_step_dict(self):
-    prototype = Step('')._as_dict()
     step_dict = {k: v for k, v in self._as_dict().iteritems()
-                 if k == 'name' or v != prototype[k]}
+                 if k == 'name' or v != PROTOTYPE_STEP[k]}
     if step_dict.get('cmd', None) is not None:
       step_dict['cmd'] = list(step_dict['cmd'])
+    if step_dict.get('cost', None) is not None:
+      cost = step_dict['cost']
+      step_dict['cost'] = attr.asdict(cost)
     for k in step_dict.keys():
       if k.startswith('_'):
         step_dict[k[1:]] = step_dict.pop(k)
     return step_dict
+
+PROTOTYPE_STEP = Step('')._as_dict()
