@@ -106,7 +106,9 @@ class StreamEngineInvariants(StreamEngine):
     del allow_subannotations
 
     if any('|' in token for token in name_tokens):
-      raise ValueError('The pipe ("|") character is reserved in step names.')
+      raise ValueError(
+          'The pipe ("|") character is reserved in step names: %r'
+          % (name_tokens,))
 
     name = '|'.join(name_tokens)
     assert name not in self._streams, 'Step %r already exists' % (name,)

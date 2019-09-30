@@ -70,6 +70,9 @@ def transform_exepctations(path_cleaner, result_data):
     return
 
   for step in result_data:
+    if step.get('cost', None) is None:
+      step.pop('cost', None)
+
     if step['name'] == '$result':
       continue
 

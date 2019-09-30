@@ -119,6 +119,7 @@
   * [step:tests/nested](#recipes-step_tests_nested)
   * [step:tests/stdio](#recipes-step_tests_stdio)
   * [step:tests/step_call_args](#recipes-step_tests_step_call_args)
+  * [step:tests/step_cost](#recipes-step_tests_step_cost)
   * [step:tests/subannotations](#recipes-step_tests_subannotations)
   * [step:tests/timeout](#recipes-step_tests_timeout)
   * [step:tests/trigger](#recipes-step_tests_trigger)
@@ -2230,14 +2231,14 @@ Args:
     Manifest message.
 ### *recipe_modules* / [step](/recipe_modules/step)
 
-[DEPS](/recipe_modules/step/__init__.py#8): [context](#recipe_modules-context), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/step/__init__.py#8): [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform)
 
 Step is the primary API for running steps (external programs, scripts,
 etc.).
 
-#### **class [StepApi](/recipe_modules/step/api.py#23)([RecipeApiPlain](/recipe_engine/recipe_api.py#724)):**
+#### **class [StepApi](/recipe_modules/step/api.py#24)([RecipeApiPlain](/recipe_engine/recipe_api.py#724)):**
 
-&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#88)(self):**
+&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#130)(self):**
 
 InfraFailure is a subclass of StepFailure, and will translate to a purple
 build.
@@ -2245,7 +2246,73 @@ build.
 This exception is raised from steps which are marked as `infra_step`s when
 they fail.
 
-&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#70)(self):**
+&emsp; **@property**<br>&mdash; **def [MAX\_CPU](/recipe_modules/step/api.py#102)(self):**
+
+Returns the maximum number of millicores this system has.
+
+&emsp; **@property**<br>&mdash; **def [MAX\_MEMORY](/recipe_modules/step/api.py#107)(self):**
+
+Returns the maximum amount of memory on the system in MB.
+
+&mdash; **def [ResourceCost](/recipe_modules/step/api.py#36)(self, cpu=500, memory=50, disk=0, net=0):**
+
+A structure defining the resources that a given step may need.
+
+The four resources are:
+
+  * cpu (measured in millicores) - The amount of cpu the step is expected to
+    take. Defaults to 500.
+  * memory (measured in MB) - The amount of memory the step is expected to
+    take. Defaults to 50.
+  * disk (as percentage of max disk bandwidth) - The amount of "disk
+    bandwidth" the step is expected to take. This is a very simplified
+    percentage covering IOPS, read/write bandwidth, seek time, etc. At 100,
+    the step will run exclusively w.r.t. all other steps having a `disk`
+    cost. At 0, the step will run regardless of other steps with disk cost.
+  * net (as percentage of max net bandwidth) - The amount of "net
+    bandwidth" the step is expected to take. This is a very simplified
+    percentage covering bandwidth, latency, etc. and is indescriminate of
+    the remote hosts, network conditions, etc. At 100, the step will run
+    exclusively w.r.t. all other steps having a `net` cost. At 0, the step
+    will run regardless of other steps with net cost.
+
+A step will run when ALL of the resouces are simultaneously available. The
+Recipe Engine currently uses a greedy scheduling algorithm for picking the
+next step to run. If multiple steps are waiting for resources, this will
+pick the largest (cpu, memory, disk, net) step which fits the currently
+available resources and run that. The theory is that, assuming:
+
+  * Recipes are finite tasks, which aim to run ALL of their steps, and want
+    to do so as quickly as possible. This is not a typical OS scheduling
+    scenario where there's some window of time over which the recipe needs
+    to be 'fair'. Additionally, recipes run with finite timeouts attached.
+  * The duration of a given step is the same regardless of when during the
+    build it runs (i.e. running a step now vs later should take roughly the
+    same amount of time).
+
+It's therefore optimal to run steps as quickly as possible, to avoid wasting
+the timeout attached to the build.
+
+Note that `bool(ResourceCost(...))` is defined to be True if the
+ResourceCost has at least one non-zero cost, and False otherwise.
+
+Args:
+  * cpu (int) - Millicores that this step will take to run. See `MAX_CPU`
+  helper. A value higher than the maximum number of millicores on the system
+  is equivalent to `MAX_CPU`.
+  * memory (int) - Number of Mebibytes of memory this step will take to run.
+  See `MAX_MEMORY` as a helper. A value higher than the maximum amount of
+  memory on the system is equivalent to `MAX_MEMORY`.
+  * disk (int [0..100]) - The disk IO resource this step will take as
+  a percentage of the maximum system disk IO.
+  * net (int [0..100]) - The network IO resource this step will take as
+  a percentage of the maximum system network IO.
+
+Returns a ResourceCost suitable for use with `api.step(...)`'s cost kwarg.
+Note that passing `None` to api.step for the cost kwarg is equivalent to
+`ResourceCost(0, 0, 0, 0)`.
+
+&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#112)(self):**
 
 This is the base Exception class for all step failures.
 
@@ -2255,12 +2322,12 @@ Usage:
   * `raise api.StepFailure("some reason")`
   * `except api.StepFailure:`
 
-&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#82)(self):**
+&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#124)(self):**
 
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#261)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, allow_subannotations=None, trigger_specs=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cpu=CPU.MIXED_IO_CPU):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#303)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, allow_subannotations=None, trigger_specs=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
 
 Returns a step dictionary which is compatible with annotator.py.
 
@@ -2299,18 +2366,20 @@ Args:
       returns a StepTestData object that will be used as the default test
       data for this step. The recipe author can override/augment this object
       in the GenTests function.
-  * cpu (None|int|step.CPU) - The estimated cost of this step in millicores.
-    The recipe_engine will prevent more than the machine's millicore count
-    worth of steps from running at once (i.e. steps will wait until there's
-    enough core resource available). Waiting suprocesses are unblocked in
-    capacitiy-available order. This means it's possible for pending tasks
-    with large cpu requirements to 'starve' temporarially while other
-    smaller cost tasks run in parallel. Equal-weight tasks will start in
-    FIFO order. REMOTE_IO_BOUND (0 cost) steps will NEVER wait.
+  * cost (None|ResourceCost) - The estimated system resource cost of this
+    step. See `ResourceCost()`. The recipe_engine will prevent more than the
+    machine's maximum resources worth of steps from running at once (i.e.
+    steps will wait until there's enough resource available before
+    starting). Waiting suprocesses are unblocked in capacitiy-available
+    order. This means it's possible for pending tasks with large
+    requirements to 'starve' temporarially while other smaller cost tasks
+    run in parallel. Equal-weight tasks will start in FIFO order. Steps
+    with a cost of None will NEVER wait (which is the equivalent of
+    `ResourceCost()`). Defaults to `ResourceCost(cpu=500, memory=50)`.
 
 Returns a `step_data.StepData` for the running step.
 
-&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#98)(self):**
+&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#140)(self):**
 
 The currently active (open) result from the last step that was run. This
 is a `step_data.StepData` object.
@@ -2341,7 +2410,7 @@ finally:
     api.step.active_result.presentation.step_text = new_step_text
 ```
 
-&mdash; **def [close\_non\_nest\_step](/recipe_modules/step/api.py#131)(self):**
+&mdash; **def [close\_non\_nest\_step](/recipe_modules/step/api.py#173)(self):**
 
 Call this to explicitly terminate the currently open non-nest step.
 
@@ -2350,11 +2419,11 @@ context (if any).
 
 No-op if there's no currently active non-nest step.
 
-&emsp; **@property**<br>&mdash; **def [defer\_results](/recipe_modules/step/api.py#256)(self):**
+&emsp; **@property**<br>&mdash; **def [defer\_results](/recipe_modules/step/api.py#298)(self):**
 
 See recipe_api.py for docs. 
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#165)(self, name, status='worst'):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#207)(self, name, status='worst'):**
 
 Nest allows you to nest steps hierarchically on the build UI.
 
@@ -3178,6 +3247,11 @@ This file is a recipe demonstrating reading triggers of the current build.
 [DEPS](/recipe_modules/step/tests/step_call_args.py#5): [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/step_call_args.py#10)(api):**
+### *recipes* / [step:tests/step\_cost](/recipe_modules/step/tests/step_cost.py)
+
+[DEPS](/recipe_modules/step/tests/step_cost.py#7): [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/step/tests/step_cost.py#12)(api):**
 ### *recipes* / [step:tests/subannotations](/recipe_modules/step/tests/subannotations.py)
 
 [DEPS](/recipe_modules/step/tests/subannotations.py#5): [step](#recipe_modules-step)

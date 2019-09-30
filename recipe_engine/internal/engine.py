@@ -27,7 +27,7 @@ from ..types import StepPresentation, thaw
 from .engine_env import merge_envs
 from .exceptions import RecipeUsageError, CrashEngine
 from .step_runner import Step
-from .cpu_semaphore import CPUResource
+from .resource_semaphore import ResourceWaiter
 
 
 @attr.s(frozen=True, slots=True, repr=False)
@@ -80,7 +80,7 @@ class RecipeEngine(object):
         recipe_api.StepClient(self),
     )}
 
-    self._resource = CPUResource(num_logical_cores * 1000)
+    self._resource = ResourceWaiter(num_logical_cores * 1000, memory_mb)
 
     # A greenlet-local store which holds a stack of _ActiveStep objects, holding
     # the most recently executed step at each nest level (objects deeper in the
@@ -652,7 +652,7 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
     * step_stream (StepStream) - The StepStream for the step we're about to
       execute.
     * step_runner (StepRunner)
-    * resource (CPUResource)
+    * resource (ResourceWaiter)
     * step_config (StepConfig) - The step to run.
     * base_environ (dict|FakeEnviron) - The 'base' environment to merge the
       step_config's environmental parameters into.
@@ -689,13 +689,13 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
       debug_log.write_line('Executing step')
       def _blocked_on(amount):
         debug_log.write_line(
-            '  waiting for %d millicores to be available' % amount)
+            '  waiting for %d to be available' % amount)
       try:
-        with resource.cpu(step_config.cpu, _blocked_on):
+        with resource.wait_for(step_config.cost, _blocked_on):
           step_data.exc_result = step_runner.run(
               step_data.name_tokens, debug_log, rendered_step)
       except gevent.GreenletExit:
-        # Greenlet was killed while waiting for CPU resource
+        # Greenlet was killed while waiting for resource
         step_data.exc_result = ExecutionResult(was_cancelled=True)
       if step_data.exc_result.retcode is not None:
         # Windows error codes such as 0xC0000005 and 0xC0000409 are much

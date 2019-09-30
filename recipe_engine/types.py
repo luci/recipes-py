@@ -7,6 +7,10 @@ import copy
 import json
 import operator
 
+import attr
+
+from .internal.attr_util import attr_type
+
 
 def freeze(obj):
   """Takes a generic object ``obj``, and returns an immutable version of it.
@@ -218,3 +222,45 @@ class StepPresentation(object):
     for key, value in sorted(self._properties.iteritems()):
       step_stream.set_build_property(key, json.dumps(value, sort_keys=True))
     step_stream.set_step_status(self.status, self.had_timeout)
+
+
+@attr.s(frozen=True)
+class ResourceCost(object):
+  """A structure defining the resources that a given step may need.
+
+  For use with `api.step`; attaching a ResourceCost to a step will allow the
+  recipe engine to prevent too many costly steps from running concurrently.
+
+  See `api.step.ResourceCost` for full documentation.
+  """
+  cpu = attr.ib(validator=attr_type(int), default=500)
+  memory = attr.ib(validator=attr_type(int), default=50)
+  disk = attr.ib(validator=attr_type(int), default=0)
+  net = attr.ib(validator=attr_type(int), default=0)
+
+  @classmethod
+  def zero(cls):
+    """Returns a ResourceCost with zero for all resources."""
+    return cls(0, 0, 0, 0)
+
+  def __attrs_post_init__(self):
+    if self.cpu < 0:
+      raise ValueError('negative cpu amount')
+    if self.memory < 0:
+      raise ValueError('negative memory amount')
+    if self.disk < 0 or self.disk > 100:
+      raise ValueError('disk not in [0,100]')
+    if self.net < 0 or self.net > 100:
+      raise ValueError('net not in [0,100]')
+
+  def __nonzero__(self):
+    return not self.fits(0, 0, 0, 0)
+
+  def fits(self, cpu, memory, disk, net):
+    """Returns True if this Resources fits within the given constraints."""
+    return (
+      self.cpu <= cpu and
+      self.memory <= memory and
+      self.disk <= disk and
+      self.net <= net
+    )

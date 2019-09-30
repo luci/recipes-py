@@ -59,6 +59,7 @@ def _merge_presentation_updates(steps_ran, presentation_steps):
       'name': step_name,
       # TODO(iannucci): Drop 'cmd' field for presentation-only steps.
       'cmd': [],
+      'cost': None,
     })
     debug_logs = step_presented.get('logs', {}).get('$debug', None)
     # wowo hacks!
