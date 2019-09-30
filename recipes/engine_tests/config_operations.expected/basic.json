@@ -1,12 +1,6 @@
 [
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "config",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@config@{@@@",
@@ -26,12 +20,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "config (2)",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@config@{@@@",
@@ -52,12 +40,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "config (3)",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@config@{@@@",
@@ -78,12 +60,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "config (4)",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@config@{@@@",

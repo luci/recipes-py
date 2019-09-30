@@ -8,7 +8,6 @@ from recipe_engine.config import ConfigGroup, List
 DEPS = [
   "context",
   "path",
-  "platform",
 ]
 
 PROPERTIES = {

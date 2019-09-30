@@ -23,7 +23,7 @@ def manage_helper(api, chn):
     pid_file = api.path['cleanup'].join('pid_file')
     helper_future = api.futures.spawn_immediate(
         api.python, 'helper loop', api.resource('helper.py'), [pid_file],
-        cost=None, # always run this background thread.
+        cpu=0, # always run this background thread.
         __name='background process',
     )
     try:
@@ -31,7 +31,7 @@ def manage_helper(api, chn):
           'wait for it', api.resource('wait_for_helper.py'),
           [pid_file, api.json.output()],
           timeout=30,
-          cost=None, # always run the checker.
+          cpu=0, # always run the checker.
       ).json.output
       # show it as terminated immediately; otherwise this will show as running
       # until we exit the 'helper' nest context, due to the current recipe

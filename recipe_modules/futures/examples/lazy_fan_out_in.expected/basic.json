@@ -161,102 +161,42 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Sleeper 1 complete"
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Sleeper 2 complete"
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Sleeper 3 complete"
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Sleeper 4 complete"
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Sleeper 5 complete"
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Sleeper 6 complete"
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Sleeper 7 complete"
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Sleeper 8 complete"
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Sleeper 9 complete"
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Sleeper 10 complete"
   },
   {

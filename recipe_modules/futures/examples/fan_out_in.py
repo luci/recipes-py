@@ -21,16 +21,11 @@ def RunSteps(api):
             print "Hi! %s" % x
             time.sleep(1)
         ''',
-        cost=api.step.ResourceCost(cpu=2*api.step.CPU_CORE),
+        cpu=api.step.CPU.CPU_BOUND.value * 2,
     ))
 
   assert len(api.futures.wait(futures)) == 10, "All done"
 
 
 def GenTests(api):
-  yield (
-    api.test('basic')
-    + api.post_check(lambda check, steps: check(
-        steps['sleep loop'].cost.cpu == 2000
-    ))
-  )
+  yield api.test('basic')

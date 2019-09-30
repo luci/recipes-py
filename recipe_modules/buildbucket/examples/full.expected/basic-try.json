@@ -98,12 +98,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "set_output_gitiles_commit",
     "~followup_annotations": [
       "@@@SET_BUILD_PROPERTY@$recipe_engine/buildbucket/output_gitiles_commit@{\"host\": \"chromium.googlesource.com\", \"id\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"position\": 42, \"project\": \"infra/infra\", \"ref\": \"refs/heads/master\"}@@@"
@@ -111,12 +105,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "build_url",
     "~followup_annotations": [
       "@@@STEP_TEXT@https://cr-buildbucket-test.appspot.com/build/8945511751514863184@@@"
@@ -124,12 +112,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "builder_cache",
     "~followup_annotations": [
       "@@@STEP_TEXT@[CACHE]/builder@@@"

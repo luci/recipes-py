@@ -129,12 +129,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Level1 [0].Level2 [0].cool step",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -142,12 +136,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Level1 [0].Level2 [1].cool step",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -155,12 +143,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Level1 [0].Level2 [2].cool step",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -168,12 +150,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Level1 [0].Level2 [3].cool step",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -181,12 +157,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Level1 [1].Level2 [0].cool step",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -194,12 +164,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Level1 [1].Level2 [1].cool step",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -207,12 +171,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Level1 [1].Level2 [2].cool step",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -220,12 +178,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Level1 [1].Level2 [3].cool step",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -233,12 +185,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Level1 [2].Level2 [0].cool step",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -246,12 +192,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Level1 [2].Level2 [1].cool step",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -259,12 +199,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Level1 [2].Level2 [2].cool step",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -272,12 +206,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Level1 [2].Level2 [3].cool step",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -285,12 +213,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Level1 [3].Level2 [0].cool step",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -298,12 +220,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Level1 [3].Level2 [1].cool step",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -311,12 +227,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Level1 [3].Level2 [2].cool step",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"
@@ -324,12 +234,6 @@
   },
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "Level1 [3].Level2 [3].cool step",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@"

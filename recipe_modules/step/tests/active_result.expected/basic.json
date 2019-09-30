@@ -1,12 +1,6 @@
 [
   {
     "cmd": [],
-    "cost": {
-      "cpu": 0,
-      "disk": 0,
-      "memory": 0,
-      "net": 0
-    },
     "name": "test step",
     "~followup_annotations": [
       "@@@STEP_TEXT@test step text@@@",

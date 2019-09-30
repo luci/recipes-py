@@ -12,7 +12,7 @@ import attr
 
 from .attr_util import attr_type, attr_dict_type, attr_seq_type, attr_value_is
 
-from ..types import FrozenDict, freeze, thaw, ResourceCost
+from ..types import FrozenDict, freeze, thaw
 from ..util import InputPlaceholder, OutputPlaceholder, Placeholder, sentinel
 
 
@@ -103,8 +103,12 @@ class StepConfig(object):
       default=None,
       validator=attr_type((str, type(None))))
 
-  # Step resource cost.
-  cost = attr.ib(default=None, validator=attr_type(ResourceCost, type(None)))
+  # Compute Units
+  #
+  # The number of millicores this step is expected to consume. Used to help
+  # concurrent processes cooperate with each other to avoid running too many CPU
+  # intense tasks simultaneously.
+  cpu = attr.ib(default=500, validator=attr_type(int))
 
   # Overrides for environment variables
   #
@@ -211,7 +215,6 @@ class StepConfig(object):
         if attrib.converter:
           val = attrib.converter(val)
         object.__setattr__(self, attrib.name, val)
-      object.__setattr__(self, 'cost', ResourceCost.zero())
       return
 
     if self.ok_ret is not self.ALL_OK:
