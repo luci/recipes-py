@@ -821,7 +821,10 @@ def _print_step(execution_log, step):
 
 
 def _log_crash(stream_engine, crash_location):
-  name = 'RECIPE CRASH (%s)' % (crash_location,)
+  # Pipe is reserved for step names, but can show up when crashing in internal
+  # recipe engine functions which take the step names. Replace it with "<PIPE>"
+  # so we don't double-crash when trying to report an actual problem.
+  name = 'RECIPE CRASH (%s)' % (crash_location.replace("|", "<PIPE>"),)
   with stream_engine.new_step_stream((name,), False) as stream:
     stream.set_step_status('EXCEPTION', had_timeout=False)
     stream.write_line('The recipe has crashed at point %r!' % crash_location)
