@@ -692,6 +692,7 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
             '  waiting for %d to be available' % amount)
       try:
         with resource.wait_for(step_config.cost, _blocked_on):
+          step_stream.mark_running()
           step_data.exc_result = step_runner.run(
               step_data.name_tokens, debug_log, rendered_step)
       except gevent.GreenletExit:

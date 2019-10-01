@@ -205,6 +205,11 @@ class LUCIStepStream(StreamEngine.StepStream):
     self._change_cb()
     return LUCILogStream(log_stream)
 
+  def mark_running(self):
+    if self._step.status == common.SCHEDULED:
+      self._step.status = common.STARTED
+      self._change_cb()
+
   def add_step_text(self, text):
     self._back_compat_markdown.add_step_text(text)
 
@@ -326,7 +331,7 @@ class LUCIStreamEngine(StreamEngine):
     )
     step_pb = self._build_proto.steps.add(
         name='|'.join(name_tokens),
-        status=common.STARTED,
+        status=common.SCHEDULED,
     )
     step_pb.start_time.GetCurrentTime()
 

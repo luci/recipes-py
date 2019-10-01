@@ -85,6 +85,9 @@ class StreamEngine(object):
     def set_manifest_link(self, name, sha256, url):
       raise NotImplementedError()
 
+    def mark_running(self):
+      pass
+
     # The StepStreams that this step should use for stdout/stderr.
     #
     # @property
