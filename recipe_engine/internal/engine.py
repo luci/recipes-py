@@ -251,6 +251,7 @@ class RecipeEngine(object):
           step_data,
           self._stream_engine.new_step_stream(name_tokens, False),
           True)
+      active_step.step_stream.mark_running()
       self._step_stack.append(active_step)
     except:
       _log_crash(self._stream_engine, "parent_step(%r)" % (name_tokens))
@@ -353,6 +354,7 @@ class RecipeEngine(object):
   def _setup_build_step(recipe_deps, recipe, properties, stream_engine,
                         emit_initial_properties):
     with stream_engine.new_step_stream(('setup_build',), False) as step:
+      step.mark_running()
       if emit_initial_properties:
         for key in sorted(properties.iterkeys()):
           step.set_build_property(
@@ -830,6 +832,7 @@ def _log_crash(stream_engine, crash_location):
   # so we don't double-crash when trying to report an actual problem.
   name = 'RECIPE CRASH (%s)' % (crash_location.replace("|", "<PIPE>"),)
   with stream_engine.new_step_stream((name,), False) as stream:
+    stream.mark_running()
     stream.set_step_status('EXCEPTION', had_timeout=False)
     stream.write_line('The recipe has crashed at point %r!' % crash_location)
     stream.write_line('')
