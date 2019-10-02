@@ -12,7 +12,7 @@ def do_exit():
   print >>sys.stderr, ">> CAUGHT SIGNAL, CLEANING UP"
   time.sleep(2)
   print >>sys.stderr, ">> DONE; EXITING"
-  sys.exit(0)
+  os._exit(0)
 
 signal.signal(
     (
