@@ -21,11 +21,13 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
 
     build_message is a buildbucket.build_pb2.Build.
     """
-    return self.m.properties(**{
+    ret = self.test(None)
+    ret.properties.update(**{
       '$recipe_engine/buildbucket': {
         'build': json.loads(json_format.MessageToJson(build_message)),
       },
     })
+    return ret
 
   def _default_git_repo(self, project):  # pragma: no cover
     if 'internal' in project:
