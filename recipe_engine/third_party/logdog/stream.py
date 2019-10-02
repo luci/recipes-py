@@ -8,15 +8,13 @@ import json
 import os
 import posixpath
 import socket
-import sys
 import threading
-import types
 
 from . import streamname, varint
 
 
 _StreamParamsBase = collections.namedtuple('_StreamParamsBase',
-    ('name', 'type', 'content_type', 'tags', 'tee', 'binary_file_extension'))
+    ('name', 'type', 'content_type', 'tags'))
 
 
 # Magic number at the beginning of a Butler stream
@@ -35,11 +33,6 @@ class StreamParams(_StreamParamsBase):
   BINARY = 'binary'
   # A datagram content stream.
   DATAGRAM = 'datagram'
-
-  # Tee parameter to tee this stream through the Butler's STDOUT.
-  TEE_STDOUT = 'stdout'
-  # Tee parameter to tee this stream through the Butler's STDERR.
-  TEE_STDERR = 'stderr'
 
   @classmethod
   def make(cls, **kwargs):
@@ -65,14 +58,6 @@ class StreamParams(_StreamParamsBase):
       for k, v in self.tags.iteritems():
         streamname.validate_tag(k, v)
 
-    if self.tee not in (None, self.TEE_STDOUT, self.TEE_STDERR):
-      raise ValueError('Invalid tee type (%s)' % (self.tee,))
-
-    if not isinstance(self.binary_file_extension,
-        (types.NoneType, types.StringTypes)):
-      raise ValueError('Invalid binary file extension type (%s)' % (
-          self.binary_file_extension,))
-
   def to_json(self):
     """Returns (str): The JSON representation of the StreamParams.
 
@@ -88,13 +73,11 @@ class StreamParams(_StreamParamsBase):
         'type': self.type,
     }
 
-    def maybe_add(key, value):
+    def _maybe_add(key, value):
       if value is not None:
         obj[key] = value
-    maybe_add('contentType', self.content_type)
-    maybe_add('tags', self.tags)
-    maybe_add('tee', self.tee)
-    maybe_add('binaryFileExtension', self.binary_file_extension)
+    _maybe_add('contentType', self.content_type)
+    _maybe_add('tags', self.tags)
 
     # Note that "dumps' will dump UTF-8 by default, which is what Butler wants.
     return json.dumps(obj, sort_keys=True, ensure_ascii=True, indent=None)
@@ -382,8 +365,7 @@ class StreamClient(object):
       if fd is not None:
         fd.close()
 
-  def open_text(self, name, content_type=None, tags=None, tee=None,
-                binary_file_extension=None):
+  def open_text(self, name, content_type=None, tags=None):
     """Returns (file): A file-like object for a single text stream.
 
     This creates a new butler TEXT stream with the specified parameters.
@@ -393,11 +375,6 @@ class StreamClient(object):
       content_type (str): The optional content type of the stream. If None, a
           default content type will be chosen by the Butler.
       tags (dict): An optional key/value dictionary pair of LogDog stream tags.
-      tee (str): Describes how stream data should be tee'd through the Butler.
-          One of StreamParams' TEE arguments.
-      binary_file_extension (str): A custom binary file extension. If not
-          provided, a default extension may be chosen or the binary stream may
-          not be emitted.
 
     Returns (file): A file-like object to a Butler text stream. This object can
         have UTF-8 text content written to it with its `write` method, and must
@@ -407,9 +384,7 @@ class StreamClient(object):
         name=posixpath.join(self._namespace, name),
         type=StreamParams.TEXT,
         content_type=content_type,
-        tags=tags,
-        tee=tee,
-        binary_file_extension=binary_file_extension)
+        tags=tags)
     return self._BasicStream(self, params, self.new_connection(params))
 
   @contextlib.contextmanager
@@ -435,8 +410,7 @@ class StreamClient(object):
       if fd is not None:
         fd.close()
 
-  def open_binary(self, name, content_type=None, tags=None, tee=None,
-                binary_file_extension=None):
+  def open_binary(self, name, content_type=None, tags=None):
     """Returns (file): A file-like object for a single binary stream.
 
     This creates a new butler BINARY stream with the specified parameters.
@@ -446,11 +420,6 @@ class StreamClient(object):
       content_type (str): The optional content type of the stream. If None, a
           default content type will be chosen by the Butler.
       tags (dict): An optional key/value dictionary pair of LogDog stream tags.
-      tee (str): Describes how stream data should be tee'd through the Butler.
-          One of StreamParams' TEE arguments.
-      binary_file_extension (str): A custom binary file extension. If not
-          provided, a default extension may be chosen or the binary stream may
-          not be emitted.
 
     Returns (file): A file-like object to a Butler binary stream. This object
         can have UTF-8 content written to it with its `write` method, and must
@@ -460,9 +429,7 @@ class StreamClient(object):
         name=posixpath.join(self._namespace, name),
         type=StreamParams.BINARY,
         content_type=content_type,
-        tags=tags,
-        tee=tee,
-        binary_file_extension=binary_file_extension)
+        tags=tags)
     return self._BasicStream(self, params, self.new_connection(params))
 
   @contextlib.contextmanager
@@ -488,8 +455,7 @@ class StreamClient(object):
       if fd is not None:
         fd.close()
 
-  def open_datagram(self, name, content_type=None, tags=None, tee=None,
-                    binary_file_extension=None):
+  def open_datagram(self, name, content_type=None, tags=None):
     """Creates a new butler DATAGRAM stream with the specified parameters.
 
     Args:
@@ -497,11 +463,6 @@ class StreamClient(object):
       content_type (str): The optional content type of the stream. If None, a
           default content type will be chosen by the Butler.
       tags (dict): An optional key/value dictionary pair of LogDog stream tags.
-      tee (str): Describes how stream data should be tee'd through the Butler.
-          One of StreamParams' TEE arguments.
-      binary_file_extension (str): A custom binary file extension. If not
-          provided, a default extension may be chosen or the binary stream may
-          not be emitted.
 
     Returns (_DatagramStream): A datagram stream object. Datagrams can be
         written to it using its `send` method. This object must be closed when
@@ -511,9 +472,7 @@ class StreamClient(object):
         name=posixpath.join(self._namespace, name),
         type=StreamParams.DATAGRAM,
         content_type=content_type,
-        tags=tags,
-        tee=tee,
-        binary_file_extension=binary_file_extension)
+        tags=tags)
     return self._DatagramStream(self, params, self.new_connection(params))
 
 

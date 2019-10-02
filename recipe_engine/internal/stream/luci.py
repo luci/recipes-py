@@ -310,12 +310,10 @@ class LUCIStreamEngine(StreamEngine):
   @_build_stream.default
   def _build_stream_default(self):
     content_enc = "jsonpb" if self._export_build_as_json else "proto"
-    ext = '.json' if self._export_build_as_json else '.pb'
     return self._bsc.open_datagram(
         'build.proto',
         content_type='application/luci+%s; message=buildbucket.v2.Build' % (
-          content_enc),
-        binary_file_extension=ext)
+          content_enc))
 
   def _send(self):
     self._build_stream.send(
