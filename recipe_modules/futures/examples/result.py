@@ -9,6 +9,11 @@ DEPS = [
 
 
 def RunSteps(api):
+  # This normal step checks against regressions in the greenlet spawning
+  # function. Previously the engine would accidentally add the spawned greenlet
+  # to this normal step, resulting in deadlock at `fut.result()` below.
+  api.step('normal step', ['echo', 'I am pretty normal'])
+
   fut = api.futures.spawn(api.step, 'do work', cmd=['something'])
   if fut.exception():
     assert isinstance(fut.exception(), api.step.StepFailure), (

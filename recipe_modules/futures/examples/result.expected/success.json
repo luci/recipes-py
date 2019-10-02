@@ -1,6 +1,13 @@
 [
   {
     "cmd": [
+      "echo",
+      "I am pretty normal"
+    ],
+    "name": "normal step"
+  },
+  {
+    "cmd": [
       "something"
     ],
     "name": "do work"

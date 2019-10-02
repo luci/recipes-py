@@ -183,6 +183,8 @@ class RecipeEngine(object):
       * greenlet_name (str|None) - If non-None, assign this to the greenlet's
         name.
     """
+    self.close_non_parent_step()
+
     current_step = self._step_stack[-1]
     def _runner():
       self._step_stack_storage.steps = [current_step]
