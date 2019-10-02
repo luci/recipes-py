@@ -2,6 +2,9 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+"""Implements in-recipe concurrency via green threads."""
+
+
 import gevent
 import gevent.queue
 
