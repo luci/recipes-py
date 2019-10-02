@@ -8,6 +8,7 @@ import logging
 import traceback
 
 import attr
+import gevent
 
 from google.protobuf import json_format as jsonpb
 from google.protobuf.struct_pb2 import Struct
@@ -196,7 +197,8 @@ class LUCIStepStream(StreamEngine.StepStream):
           base_flattened_name + ('_%d' % dedup_idx), 'l')
       dedup_idx += 1
 
-    log_stream = self._bsc.open_text(flat_name)
+    log_stream = self._bsc.open_text(
+        flat_name, for_process=log_name in ('stdout', 'stderr'))
     self._CREATED_LOGS.add(flat_name)
 
     log = self._step.logs.add()
@@ -208,6 +210,7 @@ class LUCIStepStream(StreamEngine.StepStream):
   def mark_running(self):
     if self._step.status == common.SCHEDULED:
       self._step.status = common.STARTED
+      self._step.start_time.GetCurrentTime()
       self._change_cb()
 
   def add_step_text(self, text):
@@ -315,13 +318,44 @@ class LUCIStreamEngine(StreamEngine):
         content_type='application/luci+%s; message=buildbucket.v2.Build' % (
           content_enc))
 
+  _send_event = attr.ib(default=gevent.event.Event())
+  _sender_die = attr.ib(default=False)
+
+  _sender = attr.ib()
+  @_sender.default
+  def _sender_default(self):
+    def _do_send():
+      self._build_stream.send(
+          jsonpb.MessageToJson(self._build_proto,
+                               preserving_proto_field_name=True)
+          if self._export_build_as_json else
+          self._build_proto.SerializeToString()
+      )
+
+    def _send_fn():
+      while not self._sender_die:
+        # wait until SOMEONE wants to send something.
+        self._send_event.wait()
+        if self._sender_die:
+          break
+
+        # Then wait for a second, in case other updates come in.
+        gevent.sleep(1)
+
+        # atomically:
+        #   clear the event
+        #   serialize the current build proto state (part of _do_send)
+        # then send the serialized data asynchronously.
+        self._send_event.clear()
+        _do_send()
+
+      # one final send
+      _do_send()
+
+    return gevent.spawn(_send_fn)
+
   def _send(self):
-    self._build_stream.send(
-        jsonpb.MessageToJson(self._build_proto,
-                             preserving_proto_field_name=True)
-        if self._export_build_as_json else
-        self._build_proto.SerializeToString()
-    )
+    self._send_event.set()
 
   def new_step_stream(self, name_tokens, allow_subannotations):
     assert not allow_subannotations, (
@@ -329,9 +363,7 @@ class LUCIStreamEngine(StreamEngine):
     )
     step_pb = self._build_proto.steps.add(
         name='|'.join(name_tokens),
-        status=common.SCHEDULED,
-    )
-    step_pb.start_time.GetCurrentTime()
+        status=common.SCHEDULED)
 
     ret = LUCIStepStream(step_pb, self._build_proto.output.properties,
                          self._send, self._bsc)
@@ -374,7 +406,9 @@ class LUCIStreamEngine(StreamEngine):
       for line in traceback.format_exception(exc_type, exc_val, exc_tb):
         self._build_proto.summary_markdown += '    ' + line
 
+    self._sender_die = True
     self._send()
+    self._sender.join()
 
     return True
 

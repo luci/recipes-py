@@ -8,9 +8,21 @@ import json
 import os
 import posixpath
 import socket
+import sys
 import threading
+import time
 
 from . import streamname, varint
+
+try:
+  # We use FileObjectThread on gevented processes so that gevent can do work
+  # while we block on sending to a logdog stream.
+  from gevent.fileobject import FileObjectThread
+except ImportError:
+  FileObjectThread = lambda x: x
+
+if sys.platform == "win32":
+  import win32api  # pylint: disable=import-error
 
 
 _StreamParamsBase = collections.namedtuple('_StreamParamsBase',
@@ -306,7 +318,7 @@ class StreamClient(object):
     """
     raise NotImplementedError()
 
-  def _connect_raw(self):
+  def _connect_raw(self, for_process):
     """Returns (file): A new file-like stream.
 
     Creates a new raw connection to the streamserver. This connection MUST not
@@ -315,11 +327,14 @@ class StreamClient(object):
 
     The file-like object must implement `write` and `close`.
 
+    If for_process is True, must return an object which can be directly attached
+    to a subprocess' stdout/stderr.
+
     Implementing classes must override this.
     """
     raise NotImplementedError()
 
-  def new_connection(self, params):
+  def new_connection(self, params, for_process):
     """Returns (file): A new configured stream.
 
     The returned object implements (minimally) `write` and `close`.
@@ -336,7 +351,7 @@ class StreamClient(object):
     self._register_new_stream(params.name)
     params_json = params.to_json()
 
-    fd = self._connect_raw()
+    fd = self._connect_raw(for_process)
     fd.write(BUTLER_MAGIC)
     varint.write_uvarint(fd, len(params_json))
     fd.write(params_json)
@@ -365,7 +380,7 @@ class StreamClient(object):
       if fd is not None:
         fd.close()
 
-  def open_text(self, name, content_type=None, tags=None):
+  def open_text(self, name, content_type=None, tags=None, for_process=False):
     """Returns (file): A file-like object for a single text stream.
 
     This creates a new butler TEXT stream with the specified parameters.
@@ -375,6 +390,8 @@ class StreamClient(object):
       content_type (str): The optional content type of the stream. If None, a
           default content type will be chosen by the Butler.
       tags (dict): An optional key/value dictionary pair of LogDog stream tags.
+      for_process (bool): Indicates that this stream will be directly attached
+        to a subprocess's stdout/stderr
 
     Returns (file): A file-like object to a Butler text stream. This object can
         have UTF-8 text content written to it with its `write` method, and must
@@ -385,7 +402,8 @@ class StreamClient(object):
         type=StreamParams.TEXT,
         content_type=content_type,
         tags=tags)
-    return self._BasicStream(self, params, self.new_connection(params))
+    return self._BasicStream(self, params, self.new_connection(
+        params, for_process))
 
   @contextlib.contextmanager
   def binary(self, name, **kwargs):
@@ -410,7 +428,7 @@ class StreamClient(object):
       if fd is not None:
         fd.close()
 
-  def open_binary(self, name, content_type=None, tags=None):
+  def open_binary(self, name, content_type=None, tags=None, for_process=False):
     """Returns (file): A file-like object for a single binary stream.
 
     This creates a new butler BINARY stream with the specified parameters.
@@ -420,6 +438,8 @@ class StreamClient(object):
       content_type (str): The optional content type of the stream. If None, a
           default content type will be chosen by the Butler.
       tags (dict): An optional key/value dictionary pair of LogDog stream tags.
+      for_process (bool): Indicates that this stream will be directly attached
+        to a subprocess's stdout/stderr
 
     Returns (file): A file-like object to a Butler binary stream. This object
         can have UTF-8 content written to it with its `write` method, and must
@@ -430,7 +450,8 @@ class StreamClient(object):
         type=StreamParams.BINARY,
         content_type=content_type,
         tags=tags)
-    return self._BasicStream(self, params, self.new_connection(params))
+    return self._BasicStream(self, params, self.new_connection(
+        params, for_process))
 
   @contextlib.contextmanager
   def datagram(self, name, **kwargs):
@@ -473,7 +494,8 @@ class StreamClient(object):
         type=StreamParams.DATAGRAM,
         content_type=content_type,
         tags=tags)
-    return self._DatagramStream(self, params, self.new_connection(params))
+    return self._DatagramStream(self, params, self.new_connection(
+        params, False))
 
 
 class _NamedPipeStreamClient(StreamClient):
@@ -493,8 +515,19 @@ class _NamedPipeStreamClient(StreamClient):
   def _create(cls, value, **kwargs):
     return cls(value, **kwargs)
 
-  def _connect_raw(self):
-    return open(self._name, 'wb+', buffering=0)
+  ERROR_PIPE_BUSY = 231
+
+  def _connect_raw(self, for_process):
+    asyncify = (lambda x: x) if for_process else FileObjectThread
+    # This is a similar procedure to the one in
+    #   https://github.com/microsoft/go-winio/blob/master/pipe.go (tryDialPipe)
+    while True:
+      try:
+        return asyncify(open(self._name, 'wb+', buffering=0))
+      except (OSError, IOError):
+        if win32api.GetLastError() != self.ERROR_PIPE_BUSY:
+          raise
+      time.sleep(0.001) # 1ms
 
 _default_registry.register_protocol('net.pipe', _NamedPipeStreamClient)
 
@@ -513,7 +546,7 @@ class _UnixDomainSocketStreamClient(StreamClient):
       return self._fd
 
     def write(self, data):
-      self._fd.send(data)
+      self._fd.write(data)
 
     def close(self):
       self._fd.close()
@@ -534,9 +567,10 @@ class _UnixDomainSocketStreamClient(StreamClient):
       raise ValueError('UNIX domain socket [%s] does not exist.' % (value,))
     return cls(value, **kwargs)
 
-  def _connect_raw(self):
+  def _connect_raw(self, for_process):
+    asyncify = (lambda x: x) if for_process else FileObjectThread
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.connect(self._path)
-    return self.SocketFile(sock)
+    return self.SocketFile(asyncify(sock.makefile(mode='wb')))
 
 _default_registry.register_protocol('unix', _UnixDomainSocketStreamClient)

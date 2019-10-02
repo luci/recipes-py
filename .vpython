@@ -152,3 +152,9 @@ wheel: <
   name: "infra/python/wheels/psutil/${vpython_platform}"
   version: "version:5.6.2"
 >
+
+wheel: <
+  name: "infra/python/wheels/pywin32/${vpython_platform}"
+  version: "version:224"
+  match_tag: < platform: "win_amd64" >
+>
