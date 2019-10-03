@@ -4,7 +4,10 @@
 
 """This file is a recipe demonstrating the buildbucket recipe module."""
 
+from recipe_engine.post_process import DropExpectation
+
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
+
 
 DEPS = [
   'buildbucket',
@@ -179,5 +182,12 @@ def GenTests(api):
              'buildbucket.get',
              stdout=api.raw_io.output_text(mock_buildbucket_single_response)) +
          api.platform('win', 32))
+
+  yield (api.test('basic-generic') +
+         api.buildbucket.generic_build(
+             project='project',
+             bucket='cron',
+             builder='cron-builder') +
+         api.post_process(DropExpectation))
 
   yield (api.test('no_properties'))

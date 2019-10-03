@@ -243,7 +243,7 @@ def GenTests(api):
  )
 ### *recipe_modules* / [buildbucket](/recipe_modules/buildbucket)
 
-[DEPS](/recipe_modules/buildbucket/__init__.py#6): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
+[DEPS](/recipe_modules/buildbucket/__init__.py#6): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
 
 API for interacting with the buildbucket service.
 
@@ -2768,11 +2768,11 @@ Returns a random UUID string.
 &mdash; **def [RunSteps](/recipe_modules/assertions/tests/max_diff.py#13)(api):**
 ### *recipes* / [buildbucket:examples/full](/recipe_modules/buildbucket/examples/full.py)
 
-[DEPS](/recipe_modules/buildbucket/examples/full.py#9): [buildbucket](#recipe_modules-buildbucket), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/examples/full.py#12): [buildbucket](#recipe_modules-buildbucket), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 This file is a recipe demonstrating the buildbucket recipe module.
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/examples/full.py#18)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/examples/full.py#21)(api):**
 ### *recipes* / [buildbucket:run/multi](/recipe_modules/buildbucket/run/multi.py)
 
 [DEPS](/recipe_modules/buildbucket/run/multi.py#12): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties)

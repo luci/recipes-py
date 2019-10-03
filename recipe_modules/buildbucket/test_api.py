@@ -173,6 +173,30 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     """
     return self.build(self.try_build_message(*args, **kwargs))
 
+  def generic_build(
+      self,
+      project='project',
+      bucket='cron',  # shortname.
+      builder='builder',
+      build_number=0,
+      build_id=8945511751514863184,
+      tags=None):
+    """Emulates a generic build w/o input GitilesCommit or GerritChanges."""
+    build = build_pb2.Build(
+        id=build_id,
+        number=build_number,
+        tags=tags,
+        builder=build_pb2.BuilderID(
+            project=project,
+            bucket=bucket,
+            builder=builder,
+        ),
+        created_by='user:user@example.com',
+        create_time=timestamp_pb2.Timestamp(seconds=1527292217),
+    )
+    return self.build(build)
+
+
   def tags(self, **tags):
     """Alias for tags in util.py. See doc there."""
     return util.tags(**tags)
