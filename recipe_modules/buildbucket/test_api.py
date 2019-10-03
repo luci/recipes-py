@@ -50,7 +50,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     """Returns a typical buildbucket CI build scheduled by luci-scheduler."""
     git_repo = git_repo or self._default_git_repo(project)
     gitiles_host, gitiles_project = util.parse_gitiles_repo_url(git_repo)
-    assert gitiles_host and gitiles_project, 'invalid repo %s' % git_repo
+    if not gitiles_host or not gitiles_project:
+      raise ValueError('invalid repo %s' % (git_repo,))
 
     build = build_pb2.Build(
         id=build_id,

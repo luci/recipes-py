@@ -31,8 +31,6 @@ PROPERTIES = {
   ),
 
   # === Legacy =================================================================
-  'buildbucket': Property(param_name='legacy_property', default={}),
-
   'mastername': Property(default=None),
   'buildername': Property(default=None),
   'buildnumber': Property(default=None),

@@ -2,12 +2,15 @@
   {
     "cmd": [
       "echo",
+      "id: 12484724",
       "builder {",
+      "  project: \"test\"",
+      "  bucket: \"cron\"",
+      "  builder: \"scanner\"",
       "}",
-      "input {",
-      "  gitiles_commit {",
-      "    id: \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"",
-      "  }",
+      "created_by: \"user:luci-scheduler@appspot.gserviceaccount.com\"",
+      "create_time {",
+      "  seconds: 1527292217",
       "}"
     ],
     "name": "build"
@@ -29,6 +32,7 @@
   {
     "cmd": [
       "echo",
+      "parent_buildername:scanner",
       "user_agent:recipe"
     ],
     "name": "tags_for_child_build"

@@ -34,17 +34,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
   HOST_DEV = 'cr-buildbucket-dev.appspot.com'
 
   def __init__(
-      self, property, legacy_property, mastername, buildername, buildnumber,
+      self, property, mastername, buildername, buildnumber,
       revision, parent_got_revision, branch, patch_storage, patch_gerrit_url,
       patch_project, patch_issue, patch_set, issue, patchset, *args, **kwargs):
     super(BuildbucketApi, self).__init__(*args, **kwargs)
     self._service_account_key = None
     self._host = property.get('hostname') or self.HOST_PROD
-
-    legacy_property = legacy_property or {}
-    if isinstance(legacy_property, basestring):
-      legacy_property = json.loads(legacy_property)
-    self._legacy_property = legacy_property
 
     self._build = build_pb2.Build()
     if property.get('build'):
@@ -56,29 +51,18 @@ class BuildbucketApi(recipe_api.RecipeApi):
           self._build.builder.project, self._build.builder.bucket)
     else:
       # Legacy mode.
-      build_dict = legacy_property.get('build', {})
-      self._bucket_v1 = build_dict.get('bucket', None)
+      self._bucket_v1 = None
       self.build.number = int(buildnumber or 0)
-      self.build.created_by = build_dict.get('created_by', '')
+      self.build.created_by = ''
 
-      created_ts = build_dict.get('created_ts')
-      if created_ts:
-        self.build.create_time.FromDatetime(
-            util.timestamp_to_datetime(float(created_ts)))
-
-      if 'id' in build_dict:
-        self._build.id = int(build_dict['id'])
-      build_sets = list(util._parse_buildset_tags(build_dict.get('tags', [])))
-      _legacy_builder_id(
-          build_dict, mastername, buildername, self._build.builder)
+      _legacy_builder_id(mastername, buildername, self._build.builder)
       _legacy_input_gerrit_changes(
-          self._build.input.gerrit_changes, build_sets, patch_storage,
+          self._build.input.gerrit_changes, patch_storage,
           patch_gerrit_url, patch_project, patch_issue or issue,
           patch_set or patchset)
       _legacy_input_gitiles_commit(
-          self._build.input.gitiles_commit, build_dict, build_sets,
+          self._build.input.gitiles_commit,
           revision or parent_got_revision, branch)
-      _legacy_tags(build_dict, self._build)
 
     self._next_test_build_id = 8922054662172514000
 
@@ -868,11 +852,6 @@ class BuildbucketApi(recipe_api.RecipeApi):
   # DEPRECATED API.
 
   @property
-  def properties(self):  # pragma: no cover
-    """DEPRECATED, use build attribute instead."""
-    return self._legacy_property
-
-  @property
   def build_id(self):  # pragma: no cover
     """DEPRECATED, use build.id instead."""
     return self.build.id or None
@@ -891,18 +870,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
 # Legacy support.
 
 
-def _legacy_tags(build_dict, build_msg):
-  for t in build_dict.get('tags', []):
-    k, v = t.split(':', 1)
-    if k =='buildset' and v.startswith(('patch/gerrit/', 'commit/gitiles')):
-      continue
-    if k in ('build_address', 'builder'):
-      continue
-    build_msg.tags.add(key=k, value=v)
-
-
 def _legacy_input_gerrit_changes(
-    dest_repeated, build_sets,
+    dest_repeated,
     patch_storage, patch_gerrit_url, patch_project, patch_issue, patch_set):
   if patch_storage == 'gerrit' and patch_project:
     host, path = util.parse_http_host_and_path(patch_gerrit_url)
@@ -910,7 +879,7 @@ def _legacy_input_gerrit_changes(
       try:
         patch_issue = int(patch_issue or 0)
         patch_set = int(patch_set or 0)
-      except ValueError:
+      except ValueError:  # pragma: no cover
         pass
       else:
         if patch_issue and patch_set:
@@ -921,46 +890,16 @@ def _legacy_input_gerrit_changes(
               patchset=patch_set)
           return
 
-  for bs in build_sets:
-    if isinstance(bs, common_pb2.GerritChange):
-      dest_repeated.add().CopyFrom(bs)
 
-
-def _legacy_input_gitiles_commit(
-    dest, build_dict, build_sets, revision, branch):
-  commit = None
-  for bs in build_sets:
-    if isinstance(bs, common_pb2.GitilesCommit):
-      commit = bs
-      break
-  if commit:
-    dest.CopyFrom(commit)
-
-    ref_prefix = 'gitiles_ref:'
-    for t in build_dict.get('tags', []):
-      if t.startswith(ref_prefix):
-        dest.ref = t[len(ref_prefix):]
-        break
-
-    return
-
+def _legacy_input_gitiles_commit(dest, revision, branch):
   if util.is_sha1_hex(revision):
     dest.id = revision
   if branch:
     dest.ref = 'refs/heads/%s' % branch
 
 
-def _legacy_builder_id(build_dict, mastername, buildername, builder_id):
-  builder_id.project = build_dict.get('project') or ''
-  builder_id.bucket = build_dict.get('bucket') or ''
-
-  if builder_id.bucket:
-    luci_prefix = 'luci.%s.' % builder_id.project
-    if builder_id.bucket.startswith(luci_prefix):
-      builder_id.bucket = builder_id.bucket[len(luci_prefix):]
-  if not builder_id.bucket and mastername:
+def _legacy_builder_id(mastername, buildername, builder_id):
+  if mastername:
     builder_id.bucket = 'master.%s' % mastername
-
-  tags_dict = dict(t.split(':', 1) for t in build_dict.get('tags', []))
-  builder_id.builder = tags_dict.get('builder') or buildername or ''
+  builder_id.builder = buildername or ''
 

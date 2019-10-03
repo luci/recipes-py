@@ -3,14 +3,13 @@
     "cmd": [
       "echo",
       "builder {",
+      "  bucket: \"master.chromium.fyi\"",
       "}",
-      "tags {",
-      "  key: \"a\"",
-      "  value: \"b\"",
-      "}",
-      "tags {",
-      "  key: \"c\"",
-      "  value: \"d\"",
+      "input {",
+      "  gitiles_commit {",
+      "    id: \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"",
+      "    ref: \"refs/heads/beta\"",
+      "  }",
       "}"
     ],
     "name": "build"
@@ -18,7 +17,7 @@
   {
     "cmd": [
       "echo",
-      "cr-buildbucket.appspot.com"
+      "buildbucket.example.com"
     ],
     "name": "hostname"
   },

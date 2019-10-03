@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
+
 DEPS = [
   'buildbucket',
   'properties',
@@ -40,60 +42,28 @@ def RunSteps(api):
 def GenTests(api):
   yield (
       api.test('basic') +
-      api.properties(
-        buildername='example_builder',
-        buildnumber=123,
-        buildbucket={
-            'build': {
-                'tags': [
-                    ('buildset:patch/gerrit/chromium-review.googlesource.com/'
-                    '123/10001'),
-                    'undesired:should-not-be-in-expectations',
-                ],
-            },
-        },
-      )
+      api.buildbucket.try_build(tags=api.buildbucket.tags(
+        undesired='should-not-be-in-expectations',
+      ))
   )
   yield (
       api.test('gitiles commit') +
-      api.properties(
-        buildername='example_builder',
-        buildnumber=123,
-        buildbucket={
-            'build': {
-                'tags': [
-                    ('buildset:commit/gitiles/chromium.googlesource.com/'
-                     'project/+/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
-                    'gitiles_ref:refs/heads/master',
-                ],
-            },
-        },
-      )
+      api.buildbucket.ci_build()
   )
   yield (
       api.test('custom buildset') +
-      api.properties(
-        buildername='example_builder',
-        buildnumber=123,
-        buildbucket={
-          'build': {
-            'tags': [
-              'buildset:x',
-            ],
-          },
-        },
-      )
+      api.buildbucket.build(build_pb2.Build(
+          id=9016911228971028736,
+          tags=api.buildbucket.tags(buildset='custom'),
+      ))
   )
   yield (
       api.test('basic_experimental') +
-      api.properties(buildername='experimental_builder', buildnumber=123) +
+      api.buildbucket.ci_build() +
       api.runtime(is_luci=True, is_experimental=True)
   )
   yield (
       api.test('request experimental') +
-      api.properties(
-          buildername='example_builder',
-          buildnumber=123,
-          request_experimental=True,
-      )
+      api.buildbucket.ci_build() +
+      api.properties(request_experimental=True)
   )

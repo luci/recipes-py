@@ -5,6 +5,13 @@
 import json
 
 from google.protobuf import text_format
+from google.protobuf import timestamp_pb2
+
+from recipe_engine import post_process
+
+from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import rpc as rpc_pb2
 
 DEPS = [
   'buildbucket',
@@ -36,9 +43,6 @@ def GenTests(api):
   def case(name, **properties):
     return api.test(name) + api.properties(**properties)
 
-  def legacy_build(name, **buildbucket_build):
-    return case(name, buildbucket={'build': buildbucket_build})
-
   yield case('empty')
 
   yield case('hostname', **{
@@ -48,144 +52,75 @@ def GenTests(api):
       },
   })
 
-  yield case('serialized buildbucket property', buildbucket=json.dumps({
-    'build': {'id': '123456789'}
-  }))
-
-  yield legacy_build('v1 build with id', id='123456789')
-
-  yield legacy_build('v1 empty buildset', tags=['buildset:'])
-  yield legacy_build('v1 unknown buildset format', tags=['buildset:x'])
-
-  yield legacy_build('v1 gerrit change', tags=[
-      'buildset:patch/gerrit/chromium-review.googlesource.com/1/2',
-  ])
-
-  yield legacy_build('v1 gitiles commit', tags=[
-      ('buildset:commit/gitiles/chromium.googlesource.com/chromium/src/+/'
-       'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
-  ])
-  yield legacy_build('v1 gitiles commit, invalid', tags=[
-      'buildset:commit/gitiles/a/b/c/d'
-  ])
-  yield legacy_build(
-      'v1 created_by',
-      created_by='user:jane@example.com')
-  yield legacy_build(
-      'v1 created_ts',
-      created_ts='1546473600000000')
-
-  yield case(
-      'buildbot gitiles commit',
-      revision='a' * 40,
-      branch='master',
-  )
-  yield case(
-      'buildbot gitiles commit, parent_got_revision',
-      parent_got_revision='a' * 40,
-  )
-  yield case(
-      'buildbot gitiles commit, both revision and parent_got_revision',
-      revision='a' * 40,
-      parent_got_revision='b' * 40,
-  )
-  yield case(
-      'buildbot gitiles commit, invalid revision',
-      revision='deafbeef',  # too short
-  )
-  yield case(
-      'buildbot gitiles commit, HEAD revision',
-      revision='HEAD',
-  )
-
-  yield case(
-      'buildbot gerrit change',
-      patch_storage='gerrit',
-      patch_gerrit_url='https://example.googlesource.com/',
-      patch_project='a/b',
-      patch_issue=1,
-      patch_set=2,
-      buildbucket={
-        'build': {
-          'tags': [
-             'buildset:patch/gerrit/chromium-review.googlesource.com/1/2',
-          ],
-        },
+  yield case('legacy-master', **{
+      '$recipe_engine/buildbucket': {
+          'hostname': 'buildbucket.example.com',
+          'build': {},
       },
-  )
-  yield case(
-      'buildbot gerrit change, patch_gerrit_url without scheme',
-      patch_storage='gerrit',
-      patch_gerrit_url='example.googlesource.com',
-      patch_project='a/b',
-      patch_issue=1,
-      patch_set=2,
-  )
-  yield case(
-      'buildbot gerrit change, patch_gerrit_url with unexpected scheme',
-      patch_storage='gerrit',
-      patch_gerrit_url='ftp://example.googlesource.com',
-      patch_project='a/b',
-      patch_issue=1,
-      patch_set=2,
-  )
-  yield case(
-      'buildbot gerrit change with revision',
-      revision='a' * 40,
-      patch_storage='gerrit',
-      patch_gerrit_url='https://example.googlesource.com/',
-      patch_project='a/b',
-      patch_issue=1,
-      patch_set=2,
-  )
-  yield case(
-      'buildbot gerrit change, issue and patchset properties',
-      patch_storage='gerrit',
-      patch_gerrit_url='https://example.googlesource.com/',
-      patch_project='a/b',
-      issue=1,
-      patchset=2,
-  )
-  yield case(
-      'buildbot gerrit change, no project',
-      patch_storage='gerrit',
-      patch_gerrit_url='https://example.googlesource.com/',
-      patch_issue=1,
-      patch_set=2,
-  )
-  yield case(
-      'buildbot gerrit change, string issue',
-      patch_storage='gerrit',
-      patch_gerrit_url='https://example.googlesource.com/',
-      patch_project='a/b',
-      patch_issue='1',
-      patch_set=2,
-  )
-  yield case(
-      'buildbot gerrit change, string issue, not a number',
-      patch_storage='gerrit',
-      patch_gerrit_url='https://example.googlesource.com/',
-      patch_project='a/b',
-      patch_issue='x',
-      patch_set=2,
+      'mastername': 'chromium.fyi',
+      'branch': 'beta',
+      'revision': 'a' * 40,
+  })
+
+  yield case('legacy-patch-props', **{
+      '$recipe_engine/buildbucket': {
+          'hostname': 'buildbucket.example.com',
+          'build': {},
+      },
+      'patch_storage': 'gerrit',
+      'patch_gerrit_url': 'https://example.googlesource.com/',
+      'patch_project': 'a/b',
+      'patch_issue': 1,
+      'patch_set': 2,
+  })
+
+  yield (
+      case('ci', expected_bucket_v1='luci.test.ci')
+      + api.buildbucket.ci_build(
+          project='test',
+          git_repo='git.example.com/test/repo',
+      )
+      + api.post_process(post_process.DropExpectation)
   )
 
   yield (
-      legacy_build(
-          'v1 luci builder id',
-          project='chromium',
-          bucket='luci.chromium.try',
-          tags=['builder:linux']) +
-      api.properties(expected_bucket_v1='luci.chromium.try'))
+      case('try', expected_bucket_v1='luci.test.try')
+      + api.buildbucket.try_build(
+          project='test',
+          git_repo='git.example.com/test/repo',
+      )
+      + api.post_process(post_process.DropExpectation)
+  )
 
-  yield case(
-      'v1 buildbot builder id', mastername='chromium', buildername='linux')
+  yield(
+      case('cron', expected_bucket_v1='luci.test.cron')
+      + api.buildbucket.build(build_pb2.Build(
+          id=12484724,
+          tags=[],
+          builder=build_pb2.BuilderID(
+              project='test',
+              bucket='cron',
+              builder='scanner',
+          ),
+          created_by='user:luci-scheduler@appspot.gserviceaccount.com',
+          create_time=timestamp_pb2.Timestamp(seconds=1527292217),
+      ))
+  )
 
-  yield legacy_build('v1 tags', tags=['a:b', 'c:d'])
-  yield legacy_build('v1 hidden tags', tags=[
-      'buildset:patch/gerrit/chromium-review.googlesource.com/1/2',
-      ('buildset:commit/gitiles/chromium.googlesource.com/chromium/src/+/'
-       'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
-      'build_address:bucket/builder/123',
-      'builder:linux',
-  ])
+  try:
+    api.buildbucket.ci_build(git_repo='https://just.hostname/')
+    assert 0  # pragma: no cover
+  except ValueError:
+    pass
+
+  try:
+    api.buildbucket.ci_build(git_repo='bad.git.repo.example.com')
+    assert 0  # pragma: no cover
+  except ValueError:
+    pass
+
+  try:
+    api.buildbucket.ci_build(git_repo='blah://not.supported')
+    assert 0  # pragma: no cover
+  except ValueError:
+    pass
