@@ -33,36 +33,33 @@ class BuildbucketApi(recipe_api.RecipeApi):
   HOST_PROD_BEEFY = 'beefy-dot-cr-buildbucket.appspot.com'
   HOST_DEV = 'cr-buildbucket-dev.appspot.com'
 
-  def __init__(
-      self, property, mastername, buildername, buildnumber,
-      revision, parent_got_revision, branch, patch_storage, patch_gerrit_url,
-      patch_project, patch_issue, patch_set, issue, patchset, *args, **kwargs):
+  def __init__(self, props, glob_props, *args, **kwargs):
     super(BuildbucketApi, self).__init__(*args, **kwargs)
     self._service_account_key = None
-    self._host = property.get('hostname') or self.HOST_PROD
+    self._host = props.hostname or self.HOST_PROD
 
     self._build = build_pb2.Build()
-    if property.get('build'):
-      json_format.Parse(
-          json.dumps(property.get('build')),
-          self._build,
-          ignore_unknown_fields=True)
+    if props.HasField('build'):
+      self._build = props.build
       self._bucket_v1 = 'luci.%s.%s' % (
           self._build.builder.project, self._build.builder.bucket)
     else:
       # Legacy mode.
       self._bucket_v1 = None
-      self.build.number = int(buildnumber or 0)
+      self.build.number = int(glob_props.buildnumber or 0)
       self.build.created_by = ''
 
-      _legacy_builder_id(mastername, buildername, self._build.builder)
+      _legacy_builder_id(
+          glob_props.mastername, glob_props.buildername, self._build.builder)
       _legacy_input_gerrit_changes(
-          self._build.input.gerrit_changes, patch_storage,
-          patch_gerrit_url, patch_project, patch_issue or issue,
-          patch_set or patchset)
+          self._build.input.gerrit_changes, glob_props.patch_storage,
+          glob_props.patch_gerrit_url, glob_props.patch_project,
+          glob_props.patch_issue or glob_props.issue,
+          glob_props.patch_set)
       _legacy_input_gitiles_commit(
           self._build.input.gitiles_commit,
-          revision or parent_got_revision, branch)
+          glob_props.revision or glob_props.parent_got_revision,
+          glob_props.branch)
 
     self._next_test_build_id = 8922054662172514000
 
