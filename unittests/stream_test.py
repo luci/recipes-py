@@ -28,7 +28,6 @@ class StreamTest(test_env.RecipeEngineUnitTest):
 
     foo.add_step_link('read it online!', 'https://foospoemtobar.com/')
     foo.add_step_summary_text('read a killer poem and took a bow')
-    foo.trigger('{"builderName":["bar\'s fantasies"]}')
     foo.close()
 
     bar.set_build_property('is_babycrazy', 'true')
@@ -62,7 +61,6 @@ foo begins to read a poem
 @@@STEP_LOG_END@poem&#x2f;proposition@@@
 @@@STEP_LINK@read it online!@https://foospoemtobar.com/@@@
 @@@STEP_SUMMARY_TEXT@read a killer poem and took a bow@@@
-@@@STEP_TRIGGER@{"builderName":["bar's fantasies"]}@@@
 @@@CURRENT_TIMESTAMP@123@@@
 @@@STEP_CLOSED@@@
 @@@STEP_CURSOR@bar@@@

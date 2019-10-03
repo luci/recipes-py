@@ -195,7 +195,6 @@ class StepClient(object):
 
   StepConfig = engine_step.StepConfig
   EnvAffix = engine_step.EnvAffix
-  TriggerSpec = engine_step.TriggerSpec
 
   def __init__(self, engine):
     self._engine = engine

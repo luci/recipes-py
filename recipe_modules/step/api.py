@@ -303,8 +303,8 @@ class StepApi(recipe_api.RecipeApiPlain):
   @recipe_api.composite_step
   def __call__(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(),
                timeout=None, allow_subannotations=None,
-               trigger_specs=None, stdout=None, stderr=None, stdin=None,
-               step_test_data=None, cost=_ResourceCost()):
+               stdout=None, stderr=None, stdin=None, step_test_data=None,
+               cost=_ResourceCost()):
     """Returns a step dictionary which is compatible with annotator.py.
 
     Args:
@@ -332,7 +332,6 @@ class StepApi(recipe_api.RecipeApiPlain):
           annotations. NOTE: Enabling this can cause some buggy behavior. Please
           strongly consider using step_result.presentation instead. If you have
           questions, please contact infra-dev@chromium.org.
-      * trigger_specs: a list of trigger specifications
       * stdout: Placeholder to put step stdout into. If used, stdout won't
         appear in annotator's stdout (and |allow_subannotations| is ignored).
       * stderr: Placeholder to put step stderr into. If used, stderr won't
@@ -401,8 +400,6 @@ class StepApi(recipe_api.RecipeApiPlain):
           pathsep=self.m.path.pathsep,
         ),
         allow_subannotations=bool(allow_subannotations),
-        trigger_specs=[self._make_trigger_spec(trig)
-                       for trig in (trigger_specs or ())],
         timeout=timeout,
         infra_step=self.m.context.infra_step or bool(infra_step),
         stdout=stdout,
@@ -411,15 +408,3 @@ class StepApi(recipe_api.RecipeApiPlain):
         ok_ret=ok_ret,
         step_test_data=step_test_data,
     ))
-
-  def _make_trigger_spec(self, trig):
-    critical = trig.get('critical')
-    return self.step_client.TriggerSpec(
-        builder_name=trig['builder_name'],
-
-        bucket=trig.get('bucket', ''),
-        properties=trig.get('properties', {}),
-        buildbot_changes=trig.get('buildbot_changes', []),
-        tags=trig.get('tags', ()),
-        critical=bool(critical) if critical is not None else (True),
-    )

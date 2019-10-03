@@ -79,9 +79,6 @@ class StreamEngine(object):
     def set_build_property(self, key, value):
       raise NotImplementedError()
 
-    def trigger(self, trigger_spec):
-      raise NotImplementedError()
-
     def set_manifest_link(self, name, sha256, url):
       raise NotImplementedError()
 

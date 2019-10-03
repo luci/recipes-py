@@ -30,37 +30,6 @@ class EnvAffix(object):
     object.__setattr__(self, 'mapping', freeze(self.mapping))
 
 
-@attr.s(frozen=True)
-class TriggerSpec(object):
-  """TriggerSpec is the internal representation of a raw trigger step. You
-  should use the standard 'step' recipe module, which will construct trigger
-  specs via API.
-  """
-  # The name of the builder to trigger.
-  builder_name = attr.ib(validator=attr_type(str))
-
-  # The name of the trigger bucket.
-  bucket = attr.ib(default='', validator=attr_type(str))
-
-  # Key/value properties dictionary.
-  properties = attr.ib(factory=dict, validator=attr_type((dict, FrozenDict)))
-
-  # Optional list of BuildBot change dicts.
-  buildbot_changes = attr.ib(default=(), validator=attr_seq_type(dict))
-
-  # Optional list of tag strings.
-  tags = attr.ib(default=(), validator=attr_seq_type(str))
-
-  # If true and triggering fails asynchronously, fail the entire build.
-  critical = attr.ib(default=True, validator=attr_type(bool))
-
-  def _asdict(self):
-    d = dict((k, v) for k, v in attr.asdict(self).iteritems() if v)
-    if d['critical']:
-      d.pop('critical')
-    return d
-
-
 def _file_placeholder(base_placeholder_type):
   """Returns a attr validator for StepConfig.stdin/stdout/stderr."""
   return [
@@ -185,17 +154,14 @@ class StepConfig(object):
           'None or callable',
           lambda value: value is None or callable(value)))
 
-  # DEPRECATED: Do not use this.
-  trigger_specs = attr.ib(default=(), validator=attr_seq_type(TriggerSpec))
 
   def __attrs_post_init__(self):
     object.__setattr__(self, 'cmd', tuple(self.cmd))
-    object.__setattr__(self, 'trigger_specs', tuple(self.trigger_specs))
 
     # if cmd is empty, then remove all values except for the few that actually
     # apply with a null command.
     if not self.cmd:
-      _keep_fields = ('name', 'cmd', 'trigger_specs')
+      _keep_fields = ('name', 'cmd')
       for attrib in attr.fields(self.__class__):
         if attrib.name in _keep_fields:
           continue
@@ -253,7 +219,6 @@ class StepConfig(object):
     'env_suffixes',
     'ok_ret',
     'step_test_data',
-    'trigger_specs',
   ))
 
   def _asdict(self):
@@ -265,6 +230,4 @@ class StepConfig(object):
       ret['env_prefixes'] = dict(self.env_prefixes.mapping)
     if self.env_suffixes.mapping:
       ret['env_suffixes'] = dict(self.env_suffixes.mapping)
-    if self.trigger_specs:
-      ret['trigger_specs'] = [ts._asdict() for ts in self.trigger_specs]
     return ret

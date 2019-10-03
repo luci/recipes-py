@@ -108,28 +108,6 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     self.assertRegexpMatches(stdout, 'failed to resolve cmd0')
     self.assertEqual(1, subp.returncode, stdout)
 
-  def test_trigger(self):
-    subp = subprocess.Popen(
-        self._run_cmd('step:tests/trigger'),
-        stdout=subprocess.PIPE)
-    stdout, _ = subp.communicate()
-    self.assertEqual(0, subp.returncode)
-    m = re.compile(r'^@@@STEP_TRIGGER@(.*)@@@$', re.MULTILINE).search(stdout)
-    self.assertTrue(m)
-    blob = m.group(1)
-    json.loads(blob) # Raises an exception if the blob is not valid json.
-
-  def test_trigger_no_such_command(self):
-    """Tests that trigger still happens even if running the command fails."""
-    subp = subprocess.Popen(
-        self._run_cmd(
-            'step:tests/trigger', properties={'command': ['na-huh']}),
-        stdout=subprocess.PIPE)
-    stdout, _ = subp.communicate()
-
-    self.assertRegexpMatches(stdout, r'(?m)^@@@STEP_TRIGGER@(.*)@@@$')
-    self.assertEqual(1, subp.returncode)
-
   def test_shell_quote(self):
     # For regular-looking commands we shouldn't need any specialness.
     self.assertEqual(

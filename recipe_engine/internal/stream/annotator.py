@@ -114,9 +114,6 @@ class AnnotatorStreamEngine(StreamEngine):
     def set_build_property(self, key, value):
       self.output_annotation('SET_BUILD_PROPERTY', key, value)
 
-    def trigger(self, spec):
-      self.output_annotation('STEP_TRIGGER', spec)
-
     def set_manifest_link(self, name, sha256, url):
       self.output_annotation('SOURCE_MANIFEST', name, sha256.encode('hex'), url)
 

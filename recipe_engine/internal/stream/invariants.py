@@ -79,10 +79,6 @@ class StreamEngineInvariants(StreamEngine):
     def set_build_property(self, key, value):
       pass
 
-    def trigger(self, spec):
-      assert '\n' not in spec # Spec must fit on one line.
-      json.loads(spec) # Spec must be a valid json object.
-
     def set_manifest_link(self, name, sha256, url):
       pass
 

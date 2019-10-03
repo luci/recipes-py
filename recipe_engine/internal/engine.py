@@ -316,9 +316,6 @@ class RecipeEngine(object):
           debug_log, ret, step_stream, self._step_runner, self._resource,
           step_config, self._environ, self._start_dir)
 
-      # TODO(iannucci): remove this trigger specs crap
-      if step_config.trigger_specs:
-        _trigger_builds(step_stream, step_config.trigger_specs)
       # NOTE: See the accompanying note in stream.py.
       step_stream.reset_subannotation_state()
 
@@ -740,42 +737,6 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
   _set_initial_status(step_data.presentation, step_config, step_data.exc_result)
 
   return caught
-
-
-def _trigger_builds(step_stream, trigger_specs):
-  # TODO(iannucci): remove this
-  def _normalize_change(change):
-    assert isinstance(change, dict), 'Change is not a dict'
-    change = change.copy()
-
-    # Convert when_timestamp to UNIX timestamp.
-    when = change.get('when_timestamp')
-    if isinstance(when, datetime.datetime):
-      when = calendar.timegm(when.utctimetuple())
-      change['when_timestamp'] = when
-
-    return change
-
-  assert trigger_specs is not None
-  for trig in trigger_specs:
-    builder_name = trig.builder_name
-    if not builder_name:
-      raise ValueError('Trigger spec: builder_name is not set')
-
-    changes = trig.buildbot_changes or []
-    assert isinstance(changes, list), 'buildbot_changes must be a list'
-
-    changes = map(_normalize_change, changes)
-
-    step_stream.trigger(json.dumps(thaw({
-        'builderNames': [builder_name],
-        'bucket': trig.bucket,
-        'changes': changes,
-        # if True and triggering fails asynchronously, fail entire build.
-        'critical': trig.critical,
-        'properties': trig.properties,
-        'tags': trig.tags,
-    }), sort_keys=True))
 
 
 def _shell_quote(arg):

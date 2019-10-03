@@ -89,9 +89,6 @@ class _SimulationStepStream(StreamEngine.StepStream):
   def set_build_property(self, key, value):
     self._dict_annotation('output_properties')[key] = json.loads(value)
 
-  def trigger(self, spec):
-    pass
-
 
 class SimulationStreamEngine(StreamEngine):
   """Stream engine which just records generated commands."""

@@ -62,17 +62,6 @@ class SimulationStepRunner(StepRunner):
     self._used_steps[dot_name] = self._test_data.pop_step_test_data(
         dot_name, step_config.step_test_data or StepTestData)
 
-    if step_config.trigger_specs:
-      # Triggers happen even if we don't run the step.
-      self._step_history[dot_name] = {
-        'name': dot_name,
-        'cmd': [],
-        'trigger_specs': [
-          trig._asdict()
-          for trig in (step_config.trigger_specs or ())
-        ]
-      }
-
     self._step_precursor_data[dot_name] = {
       'env_prefixes': step_config.env_prefixes.mapping,
       'env_suffixes': step_config.env_suffixes.mapping,

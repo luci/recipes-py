@@ -116,9 +116,6 @@ class Step(object):
   # A bool indicating whether a step can emit its own annotations
   allow_subannotations = attr.ib(default=False)
 
-  # Deprecated
-  trigger_specs = attr.ib(factory=list)
-
   # Either None for no timeout or a numeric type containing the number of
   # seconds the step must complete in
   timeout = attr.ib(default=None)
