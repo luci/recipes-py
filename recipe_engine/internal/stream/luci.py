@@ -209,9 +209,14 @@ class LUCIStepStream(StreamEngine.StepStream):
 
   def mark_running(self):
     if self._step.status == common.SCHEDULED:
+      self._step.summary_markdown = ""
       self._step.status = common.STARTED
       self._step.start_time.GetCurrentTime()
       self._change_cb()
+
+  def set_summary_markdown(self, text):
+    self._step.summary_markdown = text
+    self._change_cb()
 
   def add_step_text(self, text):
     self._back_compat_markdown.add_step_text(text)

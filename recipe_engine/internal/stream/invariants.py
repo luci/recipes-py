@@ -63,6 +63,9 @@ class StreamEngineInvariants(StreamEngine):
     def add_step_summary_text(self, text):
       pass
 
+    def set_summary_markdown(self, text):
+      pass
+
     def add_step_link(self, name, url):
       assert isinstance(name, basestring), 'Link name %s is not a string' % name
       assert isinstance(url, basestring), 'Link url %s is not a string' % url

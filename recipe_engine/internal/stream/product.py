@@ -87,6 +87,7 @@ class ProductStreamEngine(StreamEngine):
     set_build_property = _void_product('set_build_property')
     set_manifest_link = _void_product('set_manifest_link')
     mark_running = _void_product('mark_running')
+    set_summary_markdown = _void_product('set_summary_markdown')
 
   def new_step_stream(self, name_tokens, allow_subannotations):
     return self.StepStream(

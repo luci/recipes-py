@@ -89,6 +89,11 @@ class _SimulationStepStream(StreamEngine.StepStream):
   def set_build_property(self, key, value):
     self._dict_annotation('output_properties')[key] = json.loads(value)
 
+  def set_summary_markdown(self, text):
+    # TODO(iannucci): don't ignore this... Can fix this when we remove annotator
+    # mode.
+    pass
+
 
 class SimulationStreamEngine(StreamEngine):
   """Stream engine which just records generated commands."""
