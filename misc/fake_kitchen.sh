@@ -61,13 +61,6 @@ cat > "$LUCI_CONTEXT" <<EOF
 }
 EOF
 
-case "$(uname -s)" in
-    Linux*|Darwin*)
-      STREAMSERVER="unix:$WD/butler.sock";;
-    *)
-      STREAMSERVER="net.pipe:fake_kitchen\\butler"
-esac
-
 # Convert JSON -> binary PB
 # Start a local logdog server.
 # Project is "required" but its value doesn't matter.
@@ -82,6 +75,5 @@ esac
     run -stdout=name=stdout -stderr=name=stderr               \
     -forward-stdin                                            \
     -chdir="$WD/wd"                                           \
-    -streamserver-uri="$STREAMSERVER"                         \
     python "$ROOT/recipes.py" -vvv                            \
     luciexe --build-proto-jsonpb "$@"
