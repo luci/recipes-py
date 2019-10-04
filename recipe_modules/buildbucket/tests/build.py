@@ -14,7 +14,6 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import rpc as rpc_pb2
 
 DEPS = [
-  'assertions',
   'buildbucket',
   'properties',
   'step',
@@ -33,14 +32,9 @@ def RunSteps(api):
   ]
   api.step('tags_for_child_build', ['echo'] + child_build_tags)
 
-  api.assertions.assertEqual(
-      api.buildbucket.bucket_v1,
-      api.properties.get('expected_bucket_v1'))
-  api.assertions.assertEqual(
-      api.buildbucket.builder_name,
-      api.buildbucket.build.builder.builder)
-  api.assertions.assertEqual(
-      api.buildbucket.gitiles_commit,
+  assert api.buildbucket.bucket_v1 == api.properties.get('expected_bucket_v1')
+  assert api.buildbucket.builder_name == api.buildbucket.build.builder.builder
+  assert api.buildbucket.gitiles_commit == (
       api.buildbucket.build.input.gitiles_commit)
 
 
@@ -54,16 +48,25 @@ def GenTests(api):
   yield case('hostname', **{
       '$recipe_engine/buildbucket': {
           'hostname': 'buildbucket.example.com',
+          'build': {},
       },
   })
 
   yield case('legacy-master', **{
+      '$recipe_engine/buildbucket': {
+          'hostname': 'buildbucket.example.com',
+          'build': {},
+      },
       'mastername': 'chromium.fyi',
       'branch': 'beta',
       'revision': 'a' * 40,
   })
 
   yield case('legacy-patch-props', **{
+      '$recipe_engine/buildbucket': {
+          'hostname': 'buildbucket.example.com',
+          'build': {},
+      },
       'patch_storage': 'gerrit',
       'patch_gerrit_url': 'https://example.googlesource.com/',
       'patch_project': 'a/b',
