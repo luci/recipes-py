@@ -3112,7 +3112,7 @@ we don't pass the channel to the 'user' code (i.e. RunSteps).
 &mdash; **def [RunSteps](/recipe_modules/futures/examples/lazy_fan_out_in_early_abort.py#12)(api):**
 ### *recipes* / [futures:examples/lottasteps](/recipe_modules/futures/examples/lottasteps.py)
 
-[DEPS](/recipe_modules/futures/examples/lottasteps.py#16): [futures](#recipe_modules-futures), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/futures/examples/lottasteps.py#18): [futures](#recipe_modules-futures), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 This tests the engine's ability to handle many simultaneously-started steps.
 
@@ -3120,7 +3120,7 @@ Prior to this, logdog butler and the recipe engine would run out of file
 handles, because every spawn_immediate would immediately generate all log
 handles for the step, instead of waiting for the step's cost to be available.
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/lottasteps.py#25)(api, props):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/lottasteps.py#27)(api, props):**
 ### *recipes* / [futures:examples/result](/recipe_modules/futures/examples/result.py)
 
 [DEPS](/recipe_modules/futures/examples/result.py#5): [futures](#recipe_modules-futures), [step](#recipe_modules-step)

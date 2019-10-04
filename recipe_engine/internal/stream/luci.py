@@ -383,6 +383,10 @@ class LUCIStreamEngine(StreamEngine):
   def supports_concurrency(self):
     return True
 
+  def set_summary_markdown(self, text):
+    self._build_proto.summary_markdown = text
+    self._send()
+
   def handle_exception(self, exc_type, exc_val, exc_tb):
     need_tb = True
     if exc_type is None:

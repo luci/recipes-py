@@ -29,6 +29,9 @@ class StreamEngineInvariants(StreamEngine):
   def supports_concurrency(self):
     return True
 
+  def set_summary_markdown(self, text):
+    pass
+
   class StepStream(StreamEngine.StepStream):
     def __init__(self, engine, step_name):
       super(StreamEngineInvariants.StepStream, self).__init__()

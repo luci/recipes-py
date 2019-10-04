@@ -477,6 +477,7 @@ class RecipeEngine(object):
           raw_result = recipe_obj.run_steps(api, engine)
           if raw_result is not None:
             if isinstance(raw_result, result_pb2.RawResult):
+              stream_engine.set_summary_markdown(raw_result.summary_markdown)
               if raw_result.status != common_pb2.SUCCESS:
                 result.failure.human_reason = raw_result.summary_markdown
                 if raw_result.status != common_pb2.INFRA_FAILURE:

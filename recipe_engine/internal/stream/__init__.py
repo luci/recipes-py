@@ -138,6 +138,10 @@ class StreamEngine(object):
   def handle_exception(self, exc_type, exc_val, exc_tb):
     pass
 
+  def set_summary_markdown(self, text):
+    """Only on luciexe."""
+    raise NotImplementedError()
+
   def __enter__(self):
     self.open()
     return self

@@ -12,6 +12,8 @@ handles for the step, instead of waiting for the step's cost to be available.
 from recipe_engine.post_process import DropExpectation
 
 from PB.recipe_modules.recipe_engine.futures.examples.lottasteps import Input
+from PB.recipe_engine.result import RawResult
+from PB.go.chromium.org.luci.buildbucket.proto import common
 
 DEPS = [
   'futures',
@@ -30,6 +32,10 @@ def RunSteps(api, props):
         __name='step %d' % i,
     ))
   api.futures.wait(work)
+  return RawResult(
+      summary_markdown="Ran %d steps" % (len(work),),
+      status=common.SUCCESS,
+  )
 
 
 def GenTests(api):

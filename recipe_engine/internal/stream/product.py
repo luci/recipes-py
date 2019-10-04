@@ -112,3 +112,7 @@ class ProductStreamEngine(StreamEngine):
     return (
       self._engine_a.supports_concurrency and
       self._engine_b.supports_concurrency)
+
+  def set_summary_markdown(self, text):
+    self._engine_a.set_summary_markdown(text)
+    self._engine_b.set_summary_markdown(text)

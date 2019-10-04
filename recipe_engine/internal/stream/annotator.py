@@ -32,6 +32,9 @@ class AnnotatorStreamEngine(StreamEngine):
   def supports_concurrency(self):
     return False
 
+  def set_summary_markdown(self, text):
+    pass
+
   def output_current_time(self, step=None):
     """Prints CURRENT_TIMESTAMP annotation with current time."""
     if step:
