@@ -93,6 +93,7 @@
   * [futures:examples/fan_out_in](#recipes-futures_examples_fan_out_in)
   * [futures:examples/lazy_fan_out_in](#recipes-futures_examples_lazy_fan_out_in)
   * [futures:examples/lazy_fan_out_in_early_abort](#recipes-futures_examples_lazy_fan_out_in_early_abort)
+  * [futures:examples/lottasteps](#recipes-futures_examples_lottasteps) &mdash; This tests the engine's ability to handle many simultaneously-started steps.
   * [futures:examples/result](#recipes-futures_examples_result)
   * [generator_script:examples/full](#recipes-generator_script_examples_full)
   * [isolated:examples/full](#recipes-isolated_examples_full)
@@ -3103,6 +3104,17 @@ we don't pass the channel to the 'user' code (i.e. RunSteps).
 [DEPS](/recipe_modules/futures/examples/lazy_fan_out_in_early_abort.py#5): [futures](#recipe_modules-futures), [python](#recipe_modules-python), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/futures/examples/lazy_fan_out_in_early_abort.py#12)(api):**
+### *recipes* / [futures:examples/lottasteps](/recipe_modules/futures/examples/lottasteps.py)
+
+[DEPS](/recipe_modules/futures/examples/lottasteps.py#16): [futures](#recipe_modules-futures), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+This tests the engine's ability to handle many simultaneously-started steps.
+
+Prior to this, logdog butler and the recipe engine would run out of file
+handles, because every spawn_immediate would immediately generate all log
+handles for the step, instead of waiting for the step's cost to be available.
+
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/lottasteps.py#25)(api, props):**
 ### *recipes* / [futures:examples/result](/recipe_modules/futures/examples/result.py)
 
 [DEPS](/recipe_modules/futures/examples/result.py#5): [futures](#recipe_modules-futures), [step](#recipe_modules-step)

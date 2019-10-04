@@ -256,6 +256,19 @@ class ResourceCost(object):
   def __nonzero__(self):
     return not self.fits(0, 0, 0, 0)
 
+  def __str__(self):
+    bits = []
+    if self.cpu > 0:
+      cores = ('%0.2f' % (self.cpu / 1000.)).rstrip('0').rstrip('.')
+      bits.append('cpu=[%s cores]' % (cores,))
+    if self.memory > 0:
+      bits.append('memory=[%d MiB]' % (self.memory,))
+    if self.disk > 0:
+      bits.append('disk=[%d%%]' % (self.disk,))
+    if self.net > 0:
+      bits.append('net=[%d%%]' % (self.net,))
+    return ', '.join(bits)
+
   def fits(self, cpu, memory, disk, net):
     """Returns True if this Resources fits within the given constraints."""
     return (

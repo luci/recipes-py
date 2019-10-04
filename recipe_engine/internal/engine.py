@@ -299,7 +299,6 @@ class RecipeEngine(object):
 
     step_stream = self._stream_engine.new_step_stream(
         name_tokens, step_config.allow_subannotations)
-    debug_log = step_stream.new_log_stream('$debug')
     caught = None
     try:
       # If there's a parent step on the stack, add `ret` to its children.
@@ -312,12 +311,23 @@ class RecipeEngine(object):
       self._step_stack.append(_ActiveStep(ret, step_stream, False))
 
       # _run_step should never raise an exception, except for GreenletExit
-      caught = _run_step(
-          debug_log, ret, step_stream, self._step_runner, self._resource,
-          step_config, self._environ, self._start_dir)
-
-      # NOTE: See the accompanying note in stream.py.
-      step_stream.reset_subannotation_state()
+      try:
+        def _if_blocking():
+          step_stream.set_summary_markdown(
+              'Waiting for resources: `%s`' % (step_config.cost,))
+        with self._resource.wait_for(step_config.cost, _if_blocking):
+          step_stream.mark_running()
+          debug_log = step_stream.new_log_stream('$debug')
+          try:
+            caught = _run_step(
+                debug_log, ret, step_stream, self._step_runner, step_config,
+                self._environ, self._start_dir)
+          finally:
+            # NOTE: See the accompanying note in stream.py.
+            step_stream.reset_subannotation_state()
+            debug_log.close()
+      except gevent.GreenletExit:
+        ret.exc_result = attr.evolve(ret.exc_result, was_cancelled=True)
 
       ret.finalize()
 
@@ -347,7 +357,6 @@ class RecipeEngine(object):
       # per sys.exc_info this is recommended in python 2.x to avoid creating
       # garbage cycles.
       del caught
-      debug_log.close()
 
   @staticmethod
   def _setup_build_step(recipe_deps, recipe, properties, stream_engine,
@@ -637,7 +646,7 @@ def _render_config(debug, name_tokens, step_config, step_runner, step_stream,
 
 
 def _run_step(debug_log, step_data, step_stream, step_runner,
-              resource, step_config, base_environ, start_dir):
+              step_config, base_environ, start_dir):
   """Does all the logic to actually execute the step.
 
   This will:
@@ -653,7 +662,6 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
     * step_stream (StepStream) - The StepStream for the step we're about to
       execute.
     * step_runner (StepRunner)
-    * resource (ResourceWaiter)
     * step_config (StepConfig) - The step to run.
     * base_environ (dict|FakeEnviron) - The 'base' environment to merge the
       step_config's environmental parameters into.
@@ -688,16 +696,11 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
       _print_step(exc_details, rendered_step)
 
       debug_log.write_line('Executing step')
-      def _blocked_on(amount):
-        debug_log.write_line(
-            '  waiting for %d to be available' % amount)
       try:
-        with resource.wait_for(step_config.cost, _blocked_on):
-          step_stream.mark_running()
-          step_data.exc_result = step_runner.run(
-              step_data.name_tokens, debug_log, rendered_step)
+        step_data.exc_result = step_runner.run(
+            step_data.name_tokens, debug_log, rendered_step)
       except gevent.GreenletExit:
-        # Greenlet was killed while waiting for resource
+        # Greenlet was killed while running the step
         step_data.exc_result = ExecutionResult(was_cancelled=True)
       if step_data.exc_result.retcode is not None:
         # Windows error codes such as 0xC0000005 and 0xC0000409 are much

@@ -76,15 +76,6 @@ class ResourceWaiter(object):
     return resources.fits(self._millicores_available, self._memory_available,
                           self._disk_available, self._net_available)
 
-  def _diff(self, resources):
-    assert isinstance(resources, ResourceCost)
-    return ResourceCost(
-        max(0, resources.cpu - self._millicores_available),
-        max(0, resources.memory - self._memory_available),
-        max(0, resources.disk - self._disk_available),
-        max(0, resources.net - self._net_available),
-    )
-
   def _decr(self, resources):
     assert isinstance(resources, ResourceCost)
     self._millicores_available -= resources.cpu
@@ -104,10 +95,11 @@ class ResourceWaiter(object):
     """Block until `resources` are available.
 
     Args:
-      * resources (ResourceCost) - The amount of various resources to acquire
-        before yielding. If any aspect of this exceeds the maximum amount of
-        resource available on the system, this will instead acquire the system
-        maximum. If resources is all 0's, this does not block.
+      * resources (ResourceCost|None) - The amount of various resources to
+        acquire before yielding. If any aspect of this exceeds the maximum
+        amount of resource available on the system, this will instead acquire
+        the system maximum. If resources is all 0's, or is None, this does not
+        block.
       * call_if_blocking (None|func(ResourceCost)) - `wait_for` will invoke this
         callback if we would end up blocking before yielding. This callback
         should only be used for reporting/diagnostics (i.e. it shouldn't raise
@@ -116,6 +108,10 @@ class ResourceWaiter(object):
     Yields control once the requisite amount of resources are available. Exiting
     the context frees up the resources.
     """
+    if resources is None:
+      yield
+      return
+
     assert isinstance(resources, ResourceCost)
 
     if resources.cpu > self._millicores_max:
@@ -128,7 +124,7 @@ class ResourceWaiter(object):
       # we need some amount of resource AND
       # someone else is already waiting, or there isn't enough resource.
       if call_if_blocking:
-        call_if_blocking(self._diff(resources))
+        call_if_blocking()
       wake_me = Channel()
       self._waiters.append((resources, wake_me))
       self._waiters.sort(reverse=True)  # stable sort
