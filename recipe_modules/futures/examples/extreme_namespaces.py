@@ -3,14 +3,23 @@
 # that can be found in the LICENSE file.
 
 DEPS = [
+  'context',
   'futures',
+  'path',
   'step',
 ]
 
 
 def Level2(api, i):
+  work = []
   with api.step.nest('Level2 [%d]' % i):
-    api.futures.spawn(api.step, 'cool step', cmd=None)
+    with api.context(cwd=api.path['start_dir'].join('deep')):
+      work.append(api.futures.spawn(
+          api.step, 'cool step', cmd=['echo', 'cool']))
+
+  # Specifically wait outside all the contexts; if they have a bug w.r.t. global
+  # state vs. greenlet-local state, we'll see it here with bad context.
+  api.futures.wait(work)
 
 
 def Level1(api, i):

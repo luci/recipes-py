@@ -53,6 +53,7 @@
   * [context:examples/full](#recipes-context_examples_full)
   * [context:tests/cwd](#recipes-context_tests_cwd)
   * [context:tests/env](#recipes-context_tests_env)
+  * [context:tests/greenlet](#recipes-context_tests_greenlet)
   * [context:tests/infra_step](#recipes-context_tests_infra_step)
   * [cq:examples/ordered_cls](#recipes-cq_examples_ordered_cls)
   * [cq:examples/trigger_child_builds](#recipes-cq_examples_trigger_child_builds)
@@ -843,9 +844,9 @@ with api.context(cwd=api.path['start_dir'].join('subdir')):
   api.step("cat subdir/foo", ['cat', './foo'])
 ```
 
-#### **class [ContextApi](/recipe_modules/context/api.py#44)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
+#### **class [ContextApi](/recipe_modules/context/api.py#70)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
 
-&emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#56)(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None, infra_steps=None):**
+&emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#78)(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None, infra_steps=None):**
 
 Allows adjustment of multiple context values in a single call.
 
@@ -884,7 +885,7 @@ as the last path component if it is not empty.
 
 Look at the examples in "examples/" for examples of context module usage.
 
-&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#166)(self):**
+&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#185)(self):**
 
 Returns the current working directory that steps will run in.
 
@@ -892,7 +893,7 @@ Returns the current working directory that steps will run in.
 equivalent to api.path['start_dir'], though only occurs if no cwd has been
 set (e.g. in the outermost context of RunSteps).
 
-&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#176)(self):**
+&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#195)(self):**
 
 Returns modifications to the environment.
 
@@ -903,7 +904,7 @@ done with properties.
 **Returns (dict)** - The env-key -> value mapping of current environment
   modifications.
 
-&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#191)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#210)(self):**
 
 Returns Path prefix modifications to the environment.
 
@@ -913,7 +914,7 @@ prefixes registered with the environment.
 **Returns (dict)** - The env-key -> value(Path) mapping of current
 environment prefix modifications.
 
-&emsp; **@property**<br>&mdash; **def [env\_suffixes](/recipe_modules/context/api.py#205)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_suffixes](/recipe_modules/context/api.py#224)(self):**
 
 Returns Path suffix modifications to the environment.
 
@@ -923,7 +924,7 @@ suffixes registered with the environment.
 **Returns (dict)** - The env-key -> value(Path) mapping of current
 environment suffix modifications.
 
-&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#219)(self):**
+&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#238)(self):**
 
 Returns the current value of the infra_step setting.
 
@@ -2836,6 +2837,11 @@ Launches multiple builds at the same revision.
 [DEPS](/recipe_modules/context/tests/env.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/context/tests/env.py#19)(api):**
+### *recipes* / [context:tests/greenlet](/recipe_modules/context/tests/greenlet.py)
+
+[DEPS](/recipe_modules/context/tests/greenlet.py#5): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/context/tests/greenlet.py#11)(api):**
 ### *recipes* / [context:tests/infra\_step](/recipe_modules/context/tests/infra_step.py)
 
 [DEPS](/recipe_modules/context/tests/infra_step.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
@@ -3082,13 +3088,13 @@ This is an example of what your recipe module code would look like. Note that
 we don't pass the channel to the 'user' code (i.e. RunSteps).
 ### *recipes* / [futures:examples/extreme\_namespaces](/recipe_modules/futures/examples/extreme_namespaces.py)
 
-[DEPS](/recipe_modules/futures/examples/extreme_namespaces.py#5): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/futures/examples/extreme_namespaces.py#5): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
-&mdash; **def [Level1](/recipe_modules/futures/examples/extreme_namespaces.py#16)(api, i):**
+&mdash; **def [Level1](/recipe_modules/futures/examples/extreme_namespaces.py#25)(api, i):**
 
-&mdash; **def [Level2](/recipe_modules/futures/examples/extreme_namespaces.py#11)(api, i):**
+&mdash; **def [Level2](/recipe_modules/futures/examples/extreme_namespaces.py#13)(api, i):**
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/extreme_namespaces.py#22)(api):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/extreme_namespaces.py#31)(api):**
 ### *recipes* / [futures:examples/fan\_out\_in](/recipe_modules/futures/examples/fan_out_in.py)
 
 [DEPS](/recipe_modules/futures/examples/fan_out_in.py#5): [futures](#recipe_modules-futures), [python](#recipe_modules-python), [step](#recipe_modules-step)

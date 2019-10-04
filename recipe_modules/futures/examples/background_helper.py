@@ -41,7 +41,7 @@ def manage_helper(api, chn):
       helper_future.cancel()
       helper_future.result()
       chn.put(HELPER_TIMEOUT)
-      return  # pragma: no cover
+      return
 
     chn.put(proc_data)  # or whatever data you want to expose to the user.
 

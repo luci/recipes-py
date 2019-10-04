@@ -26,6 +26,7 @@ import PB
 from PB.recipe_engine.internal.test.runner import Description, Outcome
 
 from .... import config_types
+from .... import types
 
 from ...simple_cfg import RECIPES_CFG_LOCATION_REL
 from ...test import magic_check_fn
@@ -259,7 +260,10 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
     * test_desc (Description)
     * test_data (TestData)
   """
+  # Reset global state.
   config_types.ResetTostringFns()
+  types.PerGreentletStateRegistry.clear()
+
   result, ran_steps, ui_steps, uncaught_exception_info = execute_test_case(
       recipe_deps, test_desc.recipe_name, test_data)
 

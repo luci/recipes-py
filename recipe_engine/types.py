@@ -8,6 +8,7 @@ import json
 import operator
 
 import attr
+from gevent.local import local
 
 from .internal.attr_util import attr_type
 
@@ -277,3 +278,81 @@ class ResourceCost(object):
       self.disk <= disk and
       self.net <= net
     )
+
+
+# A (global) registry of all PerGreentletState objects.
+#
+# This is used by the recipe engine to call back each
+# PerGreenletState._get_setter_on_spawn when the recipe spawns a new greenlet
+# (via the "recipe_engine/futures" module).
+#
+# Reset in between test runs by the simulator.
+class _PerGreentletStateRegistry(list):
+  def clear(self):
+    """Clears the Registry."""
+    self[:] = []
+
+PerGreentletStateRegistry = _PerGreentletStateRegistry()
+
+class PerGreenletState(local):
+  """Subclass from PerGreenletState to get an object whose state is tied to the
+  current greenlet.
+
+    from recipe_engine.types import PerGreenletState
+
+    class MyState(PerGreenletState):
+      cool_stuff = True
+      neat_thing = ""
+
+      def _get_setter_on_spawn(self):
+        # called on greenlet spawn; return a closure to propagate values from
+        # the previous greenlet to the new greenlet.
+        old_cool_stuff = self.cool_stuff
+        def _inner():
+          self.cool_stuff = old_cool_stuff
+        return _inner
+
+    class MyApi(RecipeApi):
+      def __init__(self):
+        self._state = MyState()
+
+      @property
+      def cool(self):
+        return self._state.cool_stuff
+
+      @property
+      def neat(self):
+        return self._state.neat_thing
+
+      def calculate(self):
+        self._state.cool_stuff = False
+        self._state.neat_thing = "yes"
+  """
+
+  def __new__(cls, *args, **kwargs):
+    ret = super(PerGreenletState, cls).__new__(cls, *args, **kwargs)
+    PerGreentletStateRegistry.append(ret)
+    return ret
+
+  def _get_setter_on_spawn(self):
+    """This method should be overridden by your subclass. It will be invoked by
+    the engine immediately BEFORE spawning a new greenlet, and it should return
+    a 0-argument function which should repopulate `self` immediately AFTER
+    spawning the new greenlet.
+
+    Example, a PerGreenletState which simply copies its old state to the new
+    state:
+
+      def _get_setter_on_spawn(self):
+        pre_spawn_state = self.state
+        def _inner():
+          self.state = pre_spawn_state
+        return _inner
+
+    This will allow reads and sets of the PerGreenletState's fields to be
+    per-greenlet, but carry across from greenlet to greenlet.
+
+    If this function is not implemented, or returns None, the PerGreenletState
+    contents will be reset in the new greenlet.
+    """
+    pass

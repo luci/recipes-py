@@ -23,6 +23,7 @@ from .. import recipe_api
 from .. import util
 from ..step_data import StepData, ExecutionResult
 from ..types import StepPresentation, thaw
+from ..types import PerGreenletState, PerGreentletStateRegistry
 
 from .engine_env import merge_envs
 from .exceptions import RecipeUsageError, CrashEngine
@@ -90,10 +91,16 @@ class RecipeEngine(object):
     # NOTE: Due to the way that steps are run in the recipe engine, only the tip
     # of this stack may be a 'real' step; i.e. anything other than the tip of
     # the stack is a parent nesting step.
-    self._step_stack_storage = gevent.local.local()
-    self._step_stack_storage.steps = [
-      _ActiveStep(None, None, True)  # "root" parent
-    ]
+    class StepStack(PerGreenletState):
+      steps = [_ActiveStep(None, None, True)] # "root" parent
+
+      def _get_setter_on_spawn(self):
+        tip_step = self.steps[-1]
+        def _inner():
+          self.steps = [tip_step]
+        return _inner
+
+    self._step_stack_storage = StepStack()
 
     # Map of namespace_tuple -> {step_name: int} to deduplicate `step_name`s
     # within a namespace.
@@ -185,9 +192,12 @@ class RecipeEngine(object):
     """
     self.close_non_parent_step()
 
+    to_run = [pgs._get_setter_on_spawn() for pgs in PerGreentletStateRegistry]
+
     current_step = self._step_stack[-1]
     def _runner():
-      self._step_stack_storage.steps = [current_step]
+      for fn in to_run:
+        fn()
       try:
         return func(*args, **kwargs)
       finally:

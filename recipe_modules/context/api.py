@@ -33,6 +33,7 @@ from contextlib import contextmanager
 
 from recipe_engine.config_types import Path
 from recipe_engine.recipe_api import RecipeApi
+from recipe_engine.types import PerGreenletState
 
 
 def check_type(name, var, expect):
@@ -41,17 +42,38 @@ def check_type(name, var, expect):
       name, expect.__name__, var, type(var).__name__))
 
 
+class State(PerGreenletState):
+  cwd = [None]
+  env_prefixes = [{}]
+  env_suffixes = [{}]
+  env = [{}]
+  infra_step = [False]
+
+  def _get_setter_on_spawn(self):
+    old_cwd = self.cwd[-1]
+    old_env_prefixes = self.env_prefixes[-1]
+    old_env_suffixes = self.env_suffixes[-1]
+    old_env = self.env[-1]
+    old_infra_step = self.infra_step[-1]
+
+    def _inner():
+      import sys
+      self.cwd = [old_cwd]
+      self.env_prefixes = [old_env_prefixes]
+      self.env_suffixes = [old_env_suffixes]
+      self.env = [old_env]
+      self.infra_step = [old_infra_step]
+
+    return _inner
+
+
 class ContextApi(RecipeApi):
 
   # TODO(iannucci): move implementation of these data directly into this class.
   def __init__(self, **kwargs):
     super(ContextApi, self).__init__(**kwargs)
 
-    self._cwd = [None]
-    self._env_prefixes = [{}]
-    self._env_suffixes = [{}]
-    self._env = [{}]
-    self._infra_step = [False]
+    self._state = State()
 
   @contextmanager
   def __call__(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None,
@@ -139,29 +161,26 @@ class ContextApi(RecipeApi):
 
     if cwd is not None:
       check_type('cwd', cwd, Path)
-      _push(self._cwd, cwd)
+      _push(self._state.cwd, cwd)
 
     if infra_steps is not None:
       check_type('infra_steps', infra_steps, bool)
-      _push(self._infra_step, infra_steps)
+      _push(self._state.infra_step, infra_steps)
 
     add_to_context(
-      'env_prefixes', env_prefixes, self._env_prefixes, _as_env_prefixes)
+      'env_prefixes', env_prefixes, self._state.env_prefixes, _as_env_prefixes)
 
     add_to_context(
-      'env_suffixes', env_suffixes, self._env_suffixes, _as_env_suffixes)
+      'env_suffixes', env_suffixes, self._state.env_suffixes, _as_env_suffixes)
 
     add_to_context(
-      'env', env, self._env, _as_env)
+      'env', env, self._state.env, _as_env)
 
     try:
       yield
     finally:
       for p in to_pop:
         p.pop()
-
-
-
 
   @property
   def cwd(self):
@@ -171,7 +190,7 @@ class ContextApi(RecipeApi):
     equivalent to api.path['start_dir'], though only occurs if no cwd has been
     set (e.g. in the outermost context of RunSteps).
     """
-    return self._cwd[-1]
+    return self._state.cwd[-1]
 
   @property
   def env(self):
@@ -186,7 +205,7 @@ class ContextApi(RecipeApi):
     """
     # TODO(iannucci): store env in an immutable way to avoid excessive copies.
     # TODO(iannucci): handle case-insensitive keys on windows
-    return dict(self._env[-1])
+    return dict(self._state.env[-1])
 
   @property
   def env_prefixes(self):
@@ -200,7 +219,7 @@ class ContextApi(RecipeApi):
     """
     # TODO(iannucci): store env in an immutable way to avoid excessive copies.
     # TODO(iannucci): handle case-insensitive keys on windows
-    return dict(self._env_prefixes[-1])
+    return dict(self._state.env_prefixes[-1])
 
   @property
   def env_suffixes(self):
@@ -214,7 +233,7 @@ class ContextApi(RecipeApi):
     """
     # TODO(iannucci): store env in an immutable way to avoid excessive copies.
     # TODO(iannucci): handle case-insensitive keys on windows
-    return dict(self._env_suffixes[-1])
+    return dict(self._state.env_suffixes[-1])
 
   @property
   def infra_step(self):
@@ -222,4 +241,4 @@ class ContextApi(RecipeApi):
 
     **Returns (bool)** - True iff steps are currently considered infra steps.
     """
-    return self._infra_step[-1]
+    return self._state.infra_step[-1]

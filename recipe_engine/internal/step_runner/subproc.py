@@ -95,10 +95,10 @@ class SubprocessStepRunner(StepRunner):
     found, None otherwise.
     """
     if os.path.splitext(base_path)[1]:
-      debug_log.write_line('path has extension')
+      debug_log.write_line('path has extension; checking %r' % (base_path,))
       if not cls._is_executable_file(base_path):
         debug_log.write_line(
-            'file does not exist or user has no execute permission')
+            '  > does not exist or user has no execute permission')
         return None
       return base_path
 
