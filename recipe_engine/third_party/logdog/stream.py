@@ -318,17 +318,14 @@ class StreamClient(object):
     """
     raise NotImplementedError()
 
-  def _connect_raw(self, for_process):
+  def _connect_raw(self):
     """Returns (file): A new file-like stream.
 
     Creates a new raw connection to the streamserver. This connection MUST not
     have any data written to it past initialization (if needed) when it has been
     returned.
 
-    The file-like object must implement `write` and `close`.
-
-    If for_process is True, must return an object which can be directly attached
-    to a subprocess' stdout/stderr.
+    The file-like object must implement `write`, `fileno`, `flush`, and `close`.
 
     Implementing classes must override this.
     """
@@ -343,6 +340,8 @@ class StreamClient(object):
 
     Args:
       params (StreamParams): The parameters to use with the new connection.
+      for_process (bool): If this connection will be attached to a standard
+        handle on a subprocess.
 
     Raises:
       ValueError if the stream name has already been used, or if the parameters
@@ -351,11 +350,15 @@ class StreamClient(object):
     self._register_new_stream(params.name)
     params_json = params.to_json()
 
-    fd = self._connect_raw(for_process)
-    fd.write(BUTLER_MAGIC)
-    varint.write_uvarint(fd, len(params_json))
-    fd.write(params_json)
-    return fd
+    fobj = self._connect_raw()
+    fobj.write(BUTLER_MAGIC)
+    varint.write_uvarint(fobj, len(params_json))
+    fobj.write(params_json)
+
+    if not for_process:
+      fobj = FileObjectThread(fobj)
+
+    return fobj
 
   @contextlib.contextmanager
   def text(self, name, **kwargs):
@@ -372,13 +375,13 @@ class StreamClient(object):
     Returns (file): A file-like object to a Butler UTF-8 text stream supporting
         `write`.
     """
-    fd = None
+    fobj = None
     try:
-      fd = self.open_text(name, **kwargs)
-      yield fd
+      fobj = self.open_text(name, **kwargs)
+      yield fobj
     finally:
-      if fd is not None:
-        fd.close()
+      if fobj is not None:
+        fobj.close()
 
   def open_text(self, name, content_type=None, tags=None, for_process=False):
     """Returns (file): A file-like object for a single text stream.
@@ -420,13 +423,13 @@ class StreamClient(object):
     Returns (file): A file-like object to a Butler binary stream supporting
         `write`.
     """
-    fd = None
+    fobj = None
     try:
-      fd = self.open_binary(name, **kwargs)
-      yield fd
+      fobj = self.open_binary(name, **kwargs)
+      yield fobj
     finally:
-      if fd is not None:
-        fd.close()
+      if fobj is not None:
+        fobj.close()
 
   def open_binary(self, name, content_type=None, tags=None, for_process=False):
     """Returns (file): A file-like object for a single binary stream.
@@ -468,13 +471,13 @@ class StreamClient(object):
     Returns (_DatagramStream): A datagram stream object. Datagrams can be
         written to it using its `send` method.
     """
-    fd = None
+    fobj = None
     try:
-      fd = self.open_datagram(name, **kwargs)
-      yield fd
+      fobj = self.open_datagram(name, **kwargs)
+      yield fobj
     finally:
-      if fd is not None:
-        fd.close()
+      if fobj is not None:
+        fobj.close()
 
   def open_datagram(self, name, content_type=None, tags=None):
     """Creates a new butler DATAGRAM stream with the specified parameters.
@@ -517,13 +520,12 @@ class _NamedPipeStreamClient(StreamClient):
 
   ERROR_PIPE_BUSY = 231
 
-  def _connect_raw(self, for_process):
-    asyncify = (lambda x: x) if for_process else FileObjectThread
+  def _connect_raw(self):
     # This is a similar procedure to the one in
     #   https://github.com/microsoft/go-winio/blob/master/pipe.go (tryDialPipe)
     while True:
       try:
-        return asyncify(open(self._name, 'wb+', buffering=0))
+        return open(self._name, 'wb+', buffering=0)
       except (OSError, IOError):
         if win32api.GetLastError() != self.ERROR_PIPE_BUSY:
           raise
@@ -539,18 +541,20 @@ class _UnixDomainSocketStreamClient(StreamClient):
   class SocketFile(object):
     """A write-only file-like object that writes to a UNIX socket."""
 
-    def __init__(self, fd):
-      self._fd = fd
+    def __init__(self, sock):
+      self._sock = sock
 
     def fileno(self):
-      return self._fd
+      return self._sock
 
     def write(self, data):
-      self._fd.write(data)
+      self._sock.sendall(data)
+
+    def flush(self):
+      pass
 
     def close(self):
-      self._fd.close()
-
+      self._sock.close()
 
   def __init__(self, path, **kwargs):
     """Initializes a new UNIX domain socket stream client.
@@ -567,10 +571,9 @@ class _UnixDomainSocketStreamClient(StreamClient):
       raise ValueError('UNIX domain socket [%s] does not exist.' % (value,))
     return cls(value, **kwargs)
 
-  def _connect_raw(self, for_process):
-    asyncify = (lambda x: x) if for_process else FileObjectThread
+  def _connect_raw(self):
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.connect(self._path)
-    return self.SocketFile(asyncify(sock.makefile(mode='wb')))
+    return self.SocketFile(sock)
 
 _default_registry.register_protocol('unix', _UnixDomainSocketStreamClient)
