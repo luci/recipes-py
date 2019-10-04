@@ -157,4 +157,5 @@ wheel: <
   name: "infra/python/wheels/pywin32/${vpython_platform}"
   version: "version:224"
   match_tag: < platform: "win_amd64" >
+  match_tag: < platform: "win32" >
 >
