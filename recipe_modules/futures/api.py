@@ -43,6 +43,10 @@ class FuturesApi(RecipeApi):
   """Provides access to the Recipe concurrency primitives."""
   concurrency_client = RequireClient('concurrency')
 
+  def __init__(self, *args, **kwargs):
+    super(FuturesApi, self).__init__(*args, **kwargs)
+    self._future_id = 0
+
   class Timeout(Exception):
     """Raised from Future if the requested operation is not done in time."""
 
@@ -56,6 +60,47 @@ class FuturesApi(RecipeApi):
 
     _greenlet = attr.ib(
         validator=instance_of(gevent.Greenlet))  # type: gevent.Greenlet
+
+    # We would use _greenlet.name for this, except that it's automatically
+    # generated names are not going to be unique within the recipe run. So, we
+    # keep our own counter and assign a UID if the user didn't pass __name.
+    _name = attr.ib()
+
+    _meta = attr.ib()
+
+    @property
+    def name(self):
+      """Returns the name of this Future.
+
+      The name is either the string provided with `__name` at spawn time, or is
+      generated like "Future-%d", where the %d is a globally sequential and
+      unique number which is guaranteed not to be reused within the same recipe
+      run.
+
+      This makes `name` useful for tracking Future objects when getting them
+      back from e.g. iwait.
+
+      Also see `meta` to directly attach metadata to this Future.
+      """
+      return self._name
+
+    @property
+    def meta(self):
+      """Returns metadata associated with this Future.
+
+      This metadata must have been associated with the Future at spawn time with
+      the `__meta` kwarg.
+
+      The meta object is not interpreted or used by the recipe engine in any
+      way. You are free to mutate the meta object, if you wish, but you cannot
+      assign to it. e.g.
+
+         fut = api.futures.spawn(..., __meta={'key': 'value'})
+         fut.meta                    #=> {'key': 'value'}
+         fut.meta['thing'] = 100     # OK
+         fut.meta = "something else" # FAIL
+      """
+      return self._meta
 
     def result(self, timeout=None):
       """Blocks until this Future is done, then returns its value, or raises
@@ -129,7 +174,6 @@ class FuturesApi(RecipeApi):
       raise ValueError('Channels are not allowed in @@@annotation@@@ mode')
     return gevent.queue.Channel()
 
-
   def spawn(self, func, *args, **kwargs):
     """Prepares a Future to run `func(*args, **kwargs)` concurrently.
 
@@ -157,13 +201,23 @@ class FuturesApi(RecipeApi):
 
       * __name (str) - If provided, will assign this name to the spawned
         greenlet. Useful if this greenlet ends up raising an exception, this
-        name will appear in the stderr logging for the engine.
+        name will appear in the stderr logging for the engine. See
+        `Future.name` for more information.
+      * __meta (any) - If provided, will assign this metadata to the returned
+        Future. This field is for your exclusive use.
       * Everything else is passed to `func`.
 
     Returns a Future of `func`'s result.
     """
+    name = kwargs.pop('__name', None)
+    if name is None:
+      name = 'Future-%d' % (self._future_id,)
+      self._future_id += 1
+
+    meta = kwargs.pop('__meta', None)
+
     ret = self.Future(self.concurrency_client.spawn(
-        func, args, kwargs, kwargs.pop('__name', None)))
+        func, args, kwargs, name), name, meta)
     if not self.concurrency_client.supports_concurrency: # pragma: no cover
       # test mode always supports concurrency, hence the nocover
       self.wait([ret])
@@ -180,17 +234,21 @@ class FuturesApi(RecipeApi):
 
       * __name (str) - If provided, will assign this name to the spawned
         greenlet. Useful if this greenlet ends up raising an exception, this
-        name will appear in the stderr logging for the engine.
+        name will appear in the stderr logging for the engine. See
+        `Future.name` for more information.
+      * __meta (any) - If provided, will assign this metadata to the returned
+        Future. This field is for your exclusive use.
       * Everything else is passed to `func`.
 
     Returns a Future of `func`'s result.
     """
     name = kwargs.pop('__name', None)
+    meta = kwargs.pop('__meta', None)
     chan = self.make_channel()
     def _immediate_runner():
       chan.get()
       return func(*args, **kwargs)
-    ret = self.spawn(_immediate_runner, __name=name)
+    ret = self.spawn(_immediate_runner, __name=name, __meta=meta)
     chan.put(None)  # Pass execution to _immediate_runner
     return ret
 

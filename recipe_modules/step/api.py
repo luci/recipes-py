@@ -310,7 +310,9 @@ class StepApi(recipe_api.RecipeApiPlain):
     Args:
 
       * name (string): The name of this step.
-      * cmd (List[int|string|Placeholder|Path]): The program arguments to run.
+      * cmd (None|List[int|string|Placeholder|Path]): The program arguments to
+        run. If None or an empty list, then this step just shows up in the UI
+        but doesn't run anything.
         * Numbers and strings are used as-is.
         * Placeholders are 'rendered' to a string (using their render() method).
           Placeholders are e.g. `api.json.input()` or `api.raw_io.output()`.

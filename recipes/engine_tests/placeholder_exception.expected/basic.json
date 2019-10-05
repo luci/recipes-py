@@ -48,7 +48,7 @@
       "    api.step('bad step', ['echo', ph])",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/recipe_api.py\", line 654, in _inner",
       "    return func(*a, **kw)",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/step/api.py\", line 409, in __call__",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/step/api.py\", line 411, in __call__",
       "    step_test_data=step_test_data,",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/recipe_api.py\", line 234, in run_step",
       "    return self._engine.run_step(step)",

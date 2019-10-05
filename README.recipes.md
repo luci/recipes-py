@@ -95,6 +95,7 @@
   * [futures:examples/lazy_fan_out_in](#recipes-futures_examples_lazy_fan_out_in)
   * [futures:examples/lazy_fan_out_in_early_abort](#recipes-futures_examples_lazy_fan_out_in_early_abort)
   * [futures:examples/lottasteps](#recipes-futures_examples_lottasteps) &mdash; This tests the engine's ability to handle many simultaneously-started steps.
+  * [futures:examples/metadata](#recipes-futures_examples_metadata) &mdash; This tests metadata features of the Future object.
   * [futures:examples/result](#recipes-futures_examples_result)
   * [generator_script:examples/full](#recipes-generator_script_examples_full)
   * [isolated:examples/full](#recipes-isolated_examples_full)
@@ -1362,7 +1363,7 @@ Implements in-recipe concurrency via green threads.
 
 Provides access to the Recipe concurrency primitives.
 
-&emsp; **@staticmethod**<br>&mdash; **def [iwait](/recipe_modules/futures/api.py#216)(futures, timeout=None, count=None):**
+&emsp; **@staticmethod**<br>&mdash; **def [iwait](/recipe_modules/futures/api.py#272)(futures, timeout=None, count=None):**
 
 Iteratively yield up to `count` Futures as they become done.
 
@@ -1405,7 +1406,7 @@ Yields futures in the order in which they complete until we hit the
 timeout or count. May also be used with a context manager to avoid
 leaking resources if you don't plan on consuming the entire iterable.
 
-&mdash; **def [make\_channel](/recipe_modules/futures/api.py#108)(self):**
+&mdash; **def [make\_channel](/recipe_modules/futures/api.py#153)(self):**
 
 Returns a single-slot communication device for passing data and control
 between concurrent functions.
@@ -1425,7 +1426,7 @@ you carefully consider and avoid the possibility of introducing deadlocks.
 
 Channels will raise ValueError if used with @@@annotation@@@ mode.
 
-&mdash; **def [spawn](/recipe_modules/futures/api.py#133)(self, func, \*args, \*\*kwargs):**
+&mdash; **def [spawn](/recipe_modules/futures/api.py#177)(self, func, \*args, \*\*kwargs):**
 
 Prepares a Future to run `func(*args, **kwargs)` concurrently.
 
@@ -1453,12 +1454,15 @@ Kwargs:
 
   * __name (str) - If provided, will assign this name to the spawned
     greenlet. Useful if this greenlet ends up raising an exception, this
-    name will appear in the stderr logging for the engine.
+    name will appear in the stderr logging for the engine. See
+    `Future.name` for more information.
+  * __meta (any) - If provided, will assign this metadata to the returned
+    Future. This field is for your exclusive use.
   * Everything else is passed to `func`.
 
 Returns a Future of `func`'s result.
 
-&mdash; **def [spawn\_immediate](/recipe_modules/futures/api.py#172)(self, func, \*args, \*\*kwargs):**
+&mdash; **def [spawn\_immediate](/recipe_modules/futures/api.py#224)(self, func, \*args, \*\*kwargs):**
 
 Returns a Future to the concurrently running `func(*args, **kwargs)`.
 
@@ -1470,12 +1474,15 @@ Kwargs:
 
   * __name (str) - If provided, will assign this name to the spawned
     greenlet. Useful if this greenlet ends up raising an exception, this
-    name will appear in the stderr logging for the engine.
+    name will appear in the stderr logging for the engine. See
+    `Future.name` for more information.
+  * __meta (any) - If provided, will assign this metadata to the returned
+    Future. This field is for your exclusive use.
   * Everything else is passed to `func`.
 
 Returns a Future of `func`'s result.
 
-&emsp; **@staticmethod**<br>&mdash; **def [wait](/recipe_modules/futures/api.py#197)(futures, timeout=None, count=None):**
+&emsp; **@staticmethod**<br>&mdash; **def [wait](/recipe_modules/futures/api.py#253)(futures, timeout=None, count=None):**
 
 Blocks until `count` `futures` are done (or timeout occurs) then
 returns the list of done futures.
@@ -2333,7 +2340,9 @@ Returns a step dictionary which is compatible with annotator.py.
 Args:
 
   * name (string): The name of this step.
-  * cmd (List[int|string|Placeholder|Path]): The program arguments to run.
+  * cmd (None|List[int|string|Placeholder|Path]): The program arguments to
+    run. If None or an empty list, then this step just shows up in the UI
+    but doesn't run anything.
     * Numbers and strings are used as-is.
     * Placeholders are 'rendered' to a string (using their render() method).
       Placeholders are e.g. `api.json.input()` or `api.raw_io.output()`.
@@ -3121,6 +3130,13 @@ handles, because every spawn_immediate would immediately generate all log
 handles for the step, instead of waiting for the step's cost to be available.
 
 &mdash; **def [RunSteps](/recipe_modules/futures/examples/lottasteps.py#27)(api, props):**
+### *recipes* / [futures:examples/metadata](/recipe_modules/futures/examples/metadata.py)
+
+[DEPS](/recipe_modules/futures/examples/metadata.py#7): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
+
+This tests metadata features of the Future object.
+
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/metadata.py#13)(api):**
 ### *recipes* / [futures:examples/result](/recipe_modules/futures/examples/result.py)
 
 [DEPS](/recipe_modules/futures/examples/result.py#5): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
