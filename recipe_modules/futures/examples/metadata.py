@@ -23,7 +23,7 @@ def RunSteps(api):
 
   # We can set metadata
   fut = api.futures.spawn(api.step, 'meta', None, __meta={'hi': 'there'})
-  assert fut.name == 'Future-1'
+  assert fut.name == 'Future-2'
   assert fut.meta == {'hi': 'there'}
 
   # Can mutate meta

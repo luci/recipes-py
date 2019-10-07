@@ -1363,7 +1363,7 @@ Implements in-recipe concurrency via green threads.
 
 Provides access to the Recipe concurrency primitives.
 
-&emsp; **@staticmethod**<br>&mdash; **def [iwait](/recipe_modules/futures/api.py#272)(futures, timeout=None, count=None):**
+&emsp; **@staticmethod**<br>&mdash; **def [iwait](/recipe_modules/futures/api.py#274)(futures, timeout=None, count=None):**
 
 Iteratively yield up to `count` Futures as they become done.
 
@@ -1462,7 +1462,7 @@ Kwargs:
 
 Returns a Future of `func`'s result.
 
-&mdash; **def [spawn\_immediate](/recipe_modules/futures/api.py#224)(self, func, \*args, \*\*kwargs):**
+&mdash; **def [spawn\_immediate](/recipe_modules/futures/api.py#226)(self, func, \*args, \*\*kwargs):**
 
 Returns a Future to the concurrently running `func(*args, **kwargs)`.
 
@@ -1482,7 +1482,7 @@ Kwargs:
 
 Returns a Future of `func`'s result.
 
-&emsp; **@staticmethod**<br>&mdash; **def [wait](/recipe_modules/futures/api.py#253)(futures, timeout=None, count=None):**
+&emsp; **@staticmethod**<br>&mdash; **def [wait](/recipe_modules/futures/api.py#255)(futures, timeout=None, count=None):**
 
 Blocks until `count` `futures` are done (or timeout occurs) then
 returns the list of done futures.

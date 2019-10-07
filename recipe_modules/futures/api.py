@@ -212,7 +212,7 @@ class FuturesApi(RecipeApi):
     name = kwargs.pop('__name', None)
     if name is None:
       name = 'Future-%d' % (self._future_id,)
-      self._future_id += 1
+    self._future_id += 1
 
     meta = kwargs.pop('__meta', None)
 
