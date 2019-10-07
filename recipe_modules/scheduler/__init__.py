@@ -9,7 +9,6 @@ DEPS = [
   'buildbucket',
   'json',
   'platform',
-  'properties',
   'raw_io',
   'runtime',
   'step',

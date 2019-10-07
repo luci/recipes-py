@@ -19,9 +19,11 @@ class SchedulerTestApi(recipe_test_api.RecipeTestApi):
     assert hostname is None or isinstance(hostname, basestring)
     assert not triggers or all(
         isinstance(t, triggers_pb2.Trigger) for t in triggers)
-    return self.m.properties(**{
+    ret = self.test(None)
+    ret.properties.update(**{
       '$recipe_engine/scheduler': {
         'hostname': hostname,
         'triggers': [json_format.MessageToDict(t) for t in triggers or []],
       },
     })
+    return ret

@@ -2127,7 +2127,7 @@ True if this recipe is currently running on LUCI stack.
 Should be used only during migration from Buildbot to LUCI stack.
 ### *recipe_modules* / [scheduler](/recipe_modules/scheduler)
 
-[DEPS](/recipe_modules/scheduler/__init__.py#8): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/scheduler/__init__.py#8): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 API for interacting with the LUCI Scheduler service.
 
@@ -3213,7 +3213,7 @@ Tests for api.python.infra_failing_step.
 &mdash; **def [RunSteps](/recipe_modules/runtime/tests/full.py#13)(api):**
 ### *recipes* / [scheduler:examples/emit\_triggers](/recipe_modules/scheduler/examples/emit_triggers.py)
 
-[DEPS](/recipe_modules/scheduler/examples/emit_triggers.py#7): [json](#recipe_modules-json), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [scheduler](#recipe_modules-scheduler), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/scheduler/examples/emit_triggers.py#7): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [runtime](#recipe_modules-runtime), [scheduler](#recipe_modules-scheduler), [time](#recipe_modules-time)
 
 This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
 
