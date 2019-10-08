@@ -928,6 +928,14 @@ class SwarmingApi(recipe_api.RecipeApi):
   def initialize(self):
     if self._test_data.enabled:
       self._server = 'https://example.swarmingserver.appspot.com'
+      # Recipes always run on top of swarming task now.
+      self._env_properties.SWARMING_TASK_ID = (
+          self._env_properties.SWARMING_TASK_ID or
+          'fake-task-id')
+      self._env_properties.SWARMING_BOT_ID = (
+          self._env_properties.SWARMING_BOT_ID or
+          'fake-bot-id')
+
     if self.m.runtime.is_experimental:
       self._version = 'latest'
     self._client_dir = self.m.path['cache'].join('swarming_client')

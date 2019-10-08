@@ -2509,7 +2509,7 @@ add this path to the named cache for their builder.
 
 Swarming bot ID executing this task.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#1051)(self, name, tasks, output_dir=None, timeout=None):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#1059)(self, name, tasks, output_dir=None, timeout=None):**
 
 Waits on a set of Swarming tasks.
 
@@ -2529,7 +2529,7 @@ Returns:
 
 &mdash; **def [initialize](/recipe_modules/swarming/api.py#928)(self):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#959)(self):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#967)(self):**
 
 This context manager ensures the go swarming client is available on
 $PATH.
@@ -2543,7 +2543,7 @@ Example:
 
 This task's Swarming ID.
 
-&mdash; **def [task\_request](/recipe_modules/swarming/api.py#991)(self):**
+&mdash; **def [task\_request](/recipe_modules/swarming/api.py#999)(self):**
 
 Creates a new TaskRequest object.
 
@@ -2553,7 +2553,7 @@ into a full task.
 Once your TaskRequest is complete, you can pass it to `trigger` in order to
 have it start running on the swarming server.
 
-&mdash; **def [trigger](/recipe_modules/swarming/api.py#1002)(self, step_name, requests, cancel_extra_tasks=False):**
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#1010)(self, step_name, requests, cancel_extra_tasks=False):**
 
 Triggers a set of Swarming tasks.
 
@@ -2568,7 +2568,7 @@ Args:
 Returns:
   A list of TaskRequestMetadata objects.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [with\_server](/recipe_modules/swarming/api.py#973)(self, server):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [with\_server](/recipe_modules/swarming/api.py#981)(self, server):**
 
 This context sets the server for Swarming calls.
 
