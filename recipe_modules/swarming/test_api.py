@@ -13,7 +13,9 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
 
   def properties(self,
                  server='https://example.swarmingserver.appspot.com',
-                 version='test_version'):
+                 version='test_version',
+                 task_id='fake-task-id',
+                 bot_id='fake-bot'):
     return self.m.properties(**{
       '$recipe_engine/swarming': properties.InputProperties(
         server=server,
@@ -21,8 +23,8 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
       ),
     }) + self.m.properties.environ(
       properties.EnvProperties(
-        SWARMING_TASK_ID='fake-task-id',
-        SWARMING_BOT_ID='fake-bot',
+        SWARMING_TASK_ID=task_id,
+        SWARMING_BOT_ID=bot_id,
       )
     )
 
