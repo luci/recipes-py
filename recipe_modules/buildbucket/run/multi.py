@@ -12,6 +12,7 @@ from recipe_engine.recipe_api import Property
 DEPS = [
     'buildbucket',
     'properties',
+    'swarming',
 ]
 
 PROPERTIES = {
@@ -29,7 +30,10 @@ PROPERTIES = {
 def RunSteps(api, build_requests, collect_builds):
   builds_to_schedule = []
   for params in build_requests:
+    if collect_builds:
+      params.setdefault('swarming_parent_run_id', api.swarming.task_id)
     builds_to_schedule.append(api.buildbucket.schedule_request(**params))
+
   if collect_builds:
       api.buildbucket.run(builds_to_schedule, raise_if_unsuccessful=True)
   else:
@@ -38,14 +42,16 @@ def RunSteps(api, build_requests, collect_builds):
 
 def GenTests(api):
   yield (
-      api.test('basic') +
+      api.test('fire-and-forget') +
       api.buildbucket.ci_build(priority=50) +
+      api.swarming.properties(task_id='parent_task_id_wont_matter') +
       api.properties(
           build_requests=[
               {
                   'builder': 'linux',
                   'project': 'chromium',
                   'bucket': 'ci',
+                  'swarming_parent_run_id': None,  # noop, this is default.
               },
               {
                   'builder': 'win',
@@ -63,6 +69,7 @@ def GenTests(api):
   )
   yield (
       api.test('collect') +
+      api.swarming.properties(task_id='this_task_id') +
       api.properties(
           build_requests=[
               {

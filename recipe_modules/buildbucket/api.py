@@ -300,6 +300,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       gerrit_changes=None,
       tags=None,
       inherit_buildsets=True,
+      swarming_parent_run_id=None,
       dimensions=None,
       priority=INHERIT,
       critical=None,
@@ -342,6 +343,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
     * tags (list or common_pb2.StringPair): tags for the new build.
     * inherit_buildsets (bool): if `True` (default), the returned request will
       include buildset tags from the current build.
+    * swarming_parent_run_id (str|NoneType): associate the new build as child of
+      the given swarming run id.
+      Defaults to `None` meaning no association.
+      If passed, must be a valid swarming *run* id (specific execution of a
+      task) for the swarming instance on which build will execute. Typically,
+      you'd want to set it to
+      [`api.swarming.task_id`](https://cs.chromium.org/chromium/infra/recipes-py/recipe_modules/swarming/api.py?type=cs&q=recipe_modules/swarming/api.py+%22def+task_id%22&sq=package:chromium&g=0&l=924).
+      Read more about
+      [`parent_run_id`](https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/rpc.proto?type=cs&q="string+parent_run_id").
     * dimensions (list of common_pb2.RequestedDimension): override dimensions
       defined on the server.
     * priority (int|NoneType|INHERIT): Swarming task priority.
@@ -399,6 +409,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     if critical is not None:
       req.critical = as_trinary(critical)
+
+    if swarming_parent_run_id:
+      req.swarming.parent_run_id = swarming_parent_run_id
 
     # Populate commit.
     if not gitiles_commit and b.input.HasField('gitiles_commit'):
