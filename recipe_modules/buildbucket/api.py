@@ -33,6 +33,10 @@ class BuildbucketApi(recipe_api.RecipeApi):
   HOST_PROD_BEEFY = 'beefy-dot-cr-buildbucket.appspot.com'
   HOST_DEV = 'cr-buildbucket-dev.appspot.com'
 
+  # Sentinel to indicate that a child build launched by `schedule_request()`
+  # should use the same value as its parent for a specific attribute.
+  INHERIT = object()
+
   def __init__(
       self, property, mastername, buildername, buildnumber,
       revision, parent_got_revision, branch, patch_storage, patch_gerrit_url,
@@ -297,7 +301,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       tags=None,
       inherit_buildsets=True,
       dimensions=None,
-      priority=None,
+      priority=INHERIT,
       critical=None,
       exe_cipd_version=None,
     ):
@@ -340,9 +344,10 @@ class BuildbucketApi(recipe_api.RecipeApi):
       include buildset tags from the current build.
     * dimensions (list of common_pb2.RequestedDimension): override dimensions
       defined on the server.
-    * priority (int): Swarming task priority.
+    * priority (int|NoneType|INHERIT): Swarming task priority.
       The lower the more important. Valid values are `[20..255]`.
       Defaults to the value of the current build.
+      Pass `None` to use the priority of the destination builder.
     * critical: whether the build status should not be used to assess
       correctness of the commit/CL.
       Defaults to .build.critical.
@@ -376,11 +381,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
             bucket=bucket or b.builder.bucket,
             builder=builder,
         ),
-        priority=priority or b.infra.swarming.priority,
         experimental=b.input.experimental,
         critical=b.critical,
         fields=self._default_field_mask(),
     )
+    if priority is self.INHERIT:
+      req.priority = b.infra.swarming.priority
+    elif priority:
+      req.priority = priority
+
     if exe_cipd_version:
       req.exe.cipd_version = exe_cipd_version
     req.properties.update(properties or {})

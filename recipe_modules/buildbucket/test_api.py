@@ -44,6 +44,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       revision='2d72510e447ab60a9728aeea2362d8be2cbd7789',
       build_number=0,
       build_id=8945511751514863184,
+      priority=30,
       tags=None,
       status=None,
     ):
@@ -71,6 +72,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
                 ref=git_ref,
                 id=revision,
             ),
+        ),
+        infra=build_pb2.BuildInfra(
+          swarming=build_pb2.BuildInfra.Swarming(priority=priority)
         ),
     )
 
@@ -101,6 +105,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       revision=None,
       build_number=0,
       build_id=8945511751514863184,
+      priority=30,
       tags=None,
       status=None,
     ):
@@ -148,6 +153,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
                 ),
             ],
         ),
+        infra=build_pb2.BuildInfra(
+          swarming=build_pb2.BuildInfra.Swarming(priority=priority)
+        ),
     )
 
     if revision:
@@ -180,6 +188,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       builder='builder',
       build_number=0,
       build_id=8945511751514863184,
+      priority=30,
       tags=None):
     """Emulates a generic build w/o input GitilesCommit or GerritChanges."""
     build = build_pb2.Build(
@@ -193,6 +202,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         ),
         created_by='user:user@example.com',
         create_time=timestamp_pb2.Timestamp(seconds=1527292217),
+        infra=build_pb2.BuildInfra(
+          swarming=build_pb2.BuildInfra.Swarming(priority=priority),
+        ),
     )
     return self.build(build)
 

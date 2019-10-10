@@ -39,6 +39,7 @@ def RunSteps(api, build_requests, collect_builds):
 def GenTests(api):
   yield (
       api.test('basic') +
+      api.buildbucket.ci_build(priority=50) +
       api.properties(
           build_requests=[
               {
@@ -50,11 +51,13 @@ def GenTests(api):
                   'builder': 'win',
                   'project': 'chromium',
                   'bucket': 'ci',
+                  'priority': 30,
               },
               {
                   'builder': 'mac',
                   'project': 'chromium',
                   'bucket': 'ci',
+                  'priority': None,
               },
           ])
   )
