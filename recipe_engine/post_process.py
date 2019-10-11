@@ -438,7 +438,8 @@ def StatusCodeIn(check, step_odict, *codes):
 
 def StatusSuccess(check, step_odict):
   """Assert that the recipe finished successfully."""
-  check(not 'failure' in step_odict['$result'])
+  failure = step_odict['$result'].get('failure')
+  check(failure is None)
 
 
 def StatusAnyFailure(check, step_odict):
