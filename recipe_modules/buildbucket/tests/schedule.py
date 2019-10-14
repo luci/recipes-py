@@ -4,6 +4,7 @@
 
 from recipe_engine import types
 
+from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import rpc as rpc_pb2
 
 DEPS = [
@@ -80,12 +81,12 @@ def GenTests(api):
 
   yield test(
       test_name='experimental',
-      experimental=True,
+      experimental=common_pb2.YES,
   )
 
   yield test(
       test_name='non-experimental',
-      experimental=False,
+      experimental=common_pb2.NO,
   )
 
   err_batch_res = rpc_pb2.BatchResponse(
