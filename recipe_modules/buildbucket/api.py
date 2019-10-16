@@ -292,20 +292,20 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def schedule_request(
       self,
       builder,
-      project=None,
-      bucket=None,
+      project=INHERIT,
+      bucket=INHERIT,
       properties=None,
-      experimental=None,
-      gitiles_commit=None,
-      gerrit_changes=None,
+      experimental=INHERIT,
+      gitiles_commit=INHERIT,
+      gerrit_changes=INHERIT,
       tags=None,
       inherit_buildsets=True,
       swarming_parent_run_id=None,
       dimensions=None,
       priority=INHERIT,
-      critical=None,
-      exe_cipd_version=None,
-    ):
+      critical=INHERIT,
+      exe_cipd_version=INHERIT,
+  ):
     """Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
     This is a convenient function to create a `ScheduleBuildRequest` message.
@@ -322,25 +322,26 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     Args:
     * builder (str): name of the destination builder.
-    * project (str): project containing the destinaiton builder.
+    * project (str|INHERIT): project containing the destinaiton builder.
       Defaults to the project of the current build.
-    * bucket (str): bucket containing the destination builder.
+    * bucket (str|INHERIT): bucket containing the destination builder.
       Defaults to the bucket of the current build.
     * properties (dict): input properties for the new build.
-    * experimental: whether the build is allowed to affect prod.
-      If not None, must be `common_pb2.Trinary` or bool.
+    * experimental (common_pb2.Trinary|INHERIT): whether the build is allowed
+      to affect prod.
       Defaults to the value of the current build.
       Read more about
       [`experimental` field](https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q="bool experimental").
-    * gitiles_commit (common_pb2.GitilesCommit): input commit.
+    * gitiles_commit (common_pb2.GitilesCommit|INHERIT): input commit.
       Defaults to the input commit of the current build.
       Read more about
       [`gitiles_commit`](https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q=Input.gitiles_commit).
-    * gerrit_changes (list or common_pb2.GerritChange): list of input CLs.
+    * gerrit_changes (list of common_pb2.GerritChange|INHERIT): list of input
+      CLs.
       Defaults to gerrit changes of the current build.
       Read more about
       [`gerrit_changes`](https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q=Input.gerrit_changes).
-    * tags (list or common_pb2.StringPair): tags for the new build.
+    * tags (list of common_pb2.StringPair): tags for the new build.
     * inherit_buildsets (bool): if `True` (default), the returned request will
       include buildset tags from the current build.
     * swarming_parent_run_id (str|NoneType): associate the new build as child of
@@ -358,15 +359,14 @@ class BuildbucketApi(recipe_api.RecipeApi):
       The lower the more important. Valid values are `[20..255]`.
       Defaults to the value of the current build.
       Pass `None` to use the priority of the destination builder.
-    * critical: whether the build status should not be used to assess
-      correctness of the commit/CL.
+    * critical (bool|common_pb2.Trinary|INHERIT): whether the build status
+      should not be used to assess correctness of the commit/CL.
       Defaults to .build.critical.
       See also Build.critical in
       https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto
-    * exe_cipd_version: CIPD version of the LUCI Executable (e.g. recipe) to use
-      instead of the server-configured one.
+    * exe_cipd_version (str|INHERIT): CIPD version of the LUCI Executable (e.g.
+      recipe) to use instead of the server-configured one.
     """
-
 
     def as_msg(value, typ):
       assert isinstance(value, (dict, protobuf.message.Message)), type(value)
@@ -383,47 +383,56 @@ class BuildbucketApi(recipe_api.RecipeApi):
         value = common_pb2.YES if value else common_pb2.NO
       return value
 
+    def if_inherit(value, parent_value):
+      if value is self.INHERIT:
+        return parent_value
+      return value
+
+    if project is None:  # pragma: no cover
+      # For backwards compatibility - some downstream projects explicitly pass
+      # project=None to instruct this method to inherit the parent builder's
+      # project.
+      # TODO(olivernewman): Stop accepting project=None after modifying
+      # downstream projects to pass INHERIT instead of None.
+      project = self.INHERIT
+
     b = self.build
+
     req = rpc_pb2.ScheduleBuildRequest(
         request_id='%d-%s' % (b.id, self.m.uuid.random()),
         builder=dict(
-            project=project or b.builder.project,
-            bucket=bucket or b.builder.bucket,
+            project=if_inherit(project, b.builder.project),
+            bucket=if_inherit(bucket, b.builder.bucket),
             builder=builder,
         ),
-        experimental=b.input.experimental,
-        critical=b.critical,
+        priority=if_inherit(priority, b.infra.swarming.priority),
+        critical=as_trinary(if_inherit(critical, b.critical)),
+        # If not `INHERIT`, `experimental` must be trinary already, so only
+        # pass the parent (boolean) value through `as_trinary`.
+        experimental=if_inherit(experimental, as_trinary(b.input.experimental)),
         fields=self._default_field_mask(),
     )
-    if priority is self.INHERIT:
-      req.priority = b.infra.swarming.priority
-    elif priority:
-      req.priority = priority
-
-    if exe_cipd_version:
-      req.exe.cipd_version = exe_cipd_version
-    req.properties.update(properties or {})
-
-    if experimental is not None:
-      req.experimental = as_trinary(experimental)
-
-    if critical is not None:
-      req.critical = as_trinary(critical)
 
     if swarming_parent_run_id:
       req.swarming.parent_run_id = swarming_parent_run_id
 
-    # Populate commit.
-    if not gitiles_commit and b.input.HasField('gitiles_commit'):
-      gitiles_commit = b.input.gitiles_commit
+    exe_cipd_version = if_inherit(exe_cipd_version, b.exe.cipd_version)
+    if exe_cipd_version:
+      req.exe.cipd_version = exe_cipd_version
+
+    # The Buildbucket server rejects requests that have the `gitiles_commit`
+    # field populated, but with all empty sub-fields. So only populate it if
+    # the parent build has the field.
+    gitiles_commit = if_inherit(
+        gitiles_commit,
+        b.input.gitiles_commit if b.input.HasField('gitiles_commit') else None)
     if gitiles_commit:
       copy_msg(gitiles_commit, req.gitiles_commit)
 
-    # Populate CLs.
-    if gerrit_changes is None:
-      gerrit_changes = b.input.gerrit_changes
-    for c in gerrit_changes:
+    for c in if_inherit(gerrit_changes, b.input.gerrit_changes):
       copy_msg(c, req.gerrit_changes.add())
+
+    req.properties.update(properties or {})
 
     # Populate tags.
     tag_set = {('user_agent', 'recipe')}
