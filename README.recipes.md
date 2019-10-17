@@ -261,7 +261,7 @@ If it returns `None`, the link is not reported. Default link title is build id.
 
 A module for interacting with buildbucket.
 
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#871)(self):**
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#874)(self):**
 
 Returns bucket name in v1 format.
 
@@ -284,11 +284,11 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#882)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#885)(self):**
 
 DEPRECATED, use build.id instead.
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#887)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#890)(self):**
 
 DEPRECATED, use build.input instead.
 
@@ -305,7 +305,7 @@ It remains on the bot from build to build.
 See "Builder cache" in
 https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/project_config.proto
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#892)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#895)(self):**
 
 Deprecated. Use build.builder instead.
 
@@ -313,9 +313,9 @@ Deprecated. Use build.builder instead.
 
 Returns builder name. Shortcut for `.build.builder.builder`.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#631)(self, build_id, \*\*kwargs):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#634)(self, build_id, \*\*kwargs):**
 
-&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#694)(self, build_id, \*\*kwargs):**
+&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#697)(self, build_id, \*\*kwargs):**
 
 Shorthand for `collect_builds` below, but for a single build only.
 
@@ -326,7 +326,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
   for the ended build.
 
-&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#707)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False):**
+&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#710)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False):**
 
 Waits for a set of builds to end and returns their details.
 
@@ -347,7 +347,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   for all specified builds.
 
-&mdash; **def [get](/recipe_modules/buildbucket/api.py#673)(self, build_id, url_title_fn=None, step_name=None):**
+&mdash; **def [get](/recipe_modules/buildbucket/api.py#676)(self, build_id, url_title_fn=None, step_name=None):**
 
 Gets a build.
 
@@ -359,11 +359,11 @@ Args:
 Returns:
   A build_pb2.Build.
 
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#690)(self, build_id, \*\*kwargs):**
+&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#693)(self, build_id, \*\*kwargs):**
 
 DEPRECATED. Use get().
 
-&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#634)(self, build_ids, url_title_fn=None, step_name=None):**
+&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#637)(self, build_ids, url_title_fn=None, step_name=None):**
 
 Gets multiple builds.
 
@@ -391,7 +391,7 @@ Never returns None, but sub-fields may be empty.
 Returns True if the build is critical. Build defaults to the current one.
     
 
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#535)(self, builds, \*\*kwargs):**
+&mdash; **def [put](/recipe_modules/buildbucket/api.py#538)(self, builds, \*\*kwargs):**
 
 Puts a batch of builds.
 
@@ -427,7 +427,7 @@ Returns:
   [Builds](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   in the same order as schedule_build_requests.
 
-&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#459)(self, schedule_build_requests, url_title_fn=None, step_name=None):**
+&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#462)(self, schedule_build_requests, url_title_fn=None, step_name=None):**
 
 Schedules a batch of builds.
 
@@ -519,7 +519,7 @@ Args:
 * exe_cipd_version (str|INHERIT): CIPD version of the LUCI Executable (e.g.
   recipe) to use instead of the server-configured one.
 
-&mdash; **def [search](/recipe_modules/buildbucket/api.py#570)(self, predicate, limit=None, url_title_fn=None, step_name=None):**
+&mdash; **def [search](/recipe_modules/buildbucket/api.py#573)(self, predicate, limit=None, url_title_fn=None, step_name=None):**
 
 Searches for builds.
 
@@ -1618,7 +1618,7 @@ Example:
       # do your steps which require the isolated binary on path
 ### *recipe_modules* / [json](/recipe_modules/json)
 
-[DEPS](/recipe_modules/json/__init__.py#5): [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io)
+[DEPS](/recipe_modules/json/__init__.py#5): [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io)
 
 Methods for producing and consuming JSON.
 
@@ -1719,7 +1719,7 @@ A unique string identifier for this led job.
 If the current build is *not* a led job, value will be an empty string.
 ### *recipe_modules* / [path](/recipe_modules/path)
 
-[DEPS](/recipe_modules/path/__init__.py#5): [platform](#recipe_modules-platform), [properties](#recipe_modules-properties)
+[DEPS](/recipe_modules/path/__init__.py#5): [platform](#recipe_modules-platform)
 
 All functions related to manipulating paths in recipes.
 
@@ -1904,6 +1904,8 @@ The total physical memory in MiB.
 
 This is equivalent to `psutil.virtual_memory().total / (1024 ** 2)`.
 ### *recipe_modules* / [properties](/recipe_modules/properties)
+
+[DEPS](/recipe_modules/properties/__init__.py#5): [buildbucket](#recipe_modules-buildbucket)
 
 Provides access to the recipes input properties.
 
@@ -2111,8 +2113,6 @@ Args:
      to a step link named `name`. If this is 'on_failure', only create this
      log when the step has a non-SUCCESS status.
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
-
-[DEPS](/recipe_modules/runtime/__init__.py#5): [properties](#recipe_modules-properties)
 
 #### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
 

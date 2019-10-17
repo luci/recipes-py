@@ -67,7 +67,8 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
     return ret
 
   def generic(self, **kwargs):
-    """
+    """DEPRECATED. Use `api.buildbucket.generic_build` instead.
+
     Merge kwargs into a typical buildbot properties blob, and return the blob.
     """
     ret = self(
@@ -84,14 +85,16 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
     return ret
 
   def scheduled(self, **kwargs):
-    """
+    """DEPRECATED. Use `api.buildbucket.ci_build` instead.
+
     Merge kwargs into a typical buildbot properties blob for a job fired off
     by a gitpoller/scheduler, and return the blob.
     """
     return self.git_scheduled(**kwargs)
 
   def git_scheduled(self, **kwargs):
-    """
+    """DEPRECATED. Use `api.buildbucket.ci_build` instead.
+
     Merge kwargs into a typical buildbot properties blob for a job fired off
     by a gitpoller/scheduler, and return the blob.
     """
@@ -105,6 +108,10 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
     return ret
 
   def tryserver(self, **kwargs):
+    """DEPRECATED. Use `api.buildbucket.ci_build` instead.
+
+    Simulates Buildbot tryserver build.
+    """
     project = (
         kwargs.pop('gerrit_project', None) or
         kwargs.pop('project', 'chromium/src'))

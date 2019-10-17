@@ -223,8 +223,11 @@ class AnalyzeSmokeTest(test_env.RecipeEngineUnitTest):
     self.assertEqual(exit_code, 1)
 
   def testNotChanged(self):
+    # The test here assumes that unicode recipe has no direct or indirect
+    # dependencies on tricium recipe_module. If you invalidate this assumption,
+    # you should change this test.
     exit_code, outdata = self._run({
-      'files': ['recipe_modules/buildbucket/api.py'],
+      'files': ['recipe_modules/tricium/api.py'],
       'recipes': ['engine_tests/unicode'],
     })
     self.assertDictEqual(outdata, {

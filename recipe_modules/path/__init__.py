@@ -4,7 +4,6 @@
 
 DEPS = [
   'platform',
-  'properties',
 ]
 
 from recipe_engine.recipe_api import Property
