@@ -455,7 +455,8 @@
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"infra/fake-package\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@infra/fake-package@https://chrome-infra-packages.appspot.com/p/infra/fake-package/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {
@@ -476,7 +477,7 @@
       "    return callable_obj(*props, **additional_args)",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/cipd/examples/full.py\", line 90, in RunSteps",
       "    pkg = api.cipd.PackageDefinition('infra/fake-package', root, install_mode)",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/cipd/api.py\", line 65, in __init__",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/cipd/api.py\", line 67, in __init__",
       "    raise ValueError('invalid value for install_mode: %r' % install_mode)",
       "ValueError: invalid value for install_mode: ''"
     ]

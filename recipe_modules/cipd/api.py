@@ -15,6 +15,8 @@ from collections import namedtuple
 from recipe_engine import recipe_api
 from recipe_engine.config_types import Path
 
+CIPD_SERVER_URL = 'https://chrome-infra-packages.appspot.com'
+
 
 def check_type(name, var, expect):
   if not isinstance(var, expect):  # pragma: no cover
@@ -475,7 +477,14 @@ class CIPDApi(recipe_api.RecipeApi):
         'register %s' % package_name,
         cmd,
         step_test_data=lambda: self.test_api.example_register(package_name))
-    return self.Pin(**step_result.json.output['result'])
+    pin = self.Pin(**step_result.json.output['result'])
+    instance_link = '%s/p/%s/+/%s' % (
+        CIPD_SERVER_URL,
+        pin.package,
+        pin.instance_id,
+    )
+    step_result.presentation.links[pin.package] = instance_link
+    return pin
 
   def _create(self,
               pkg_name,

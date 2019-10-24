@@ -447,7 +447,8 @@
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"infra/fake-package\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@infra/fake-package@https://chrome-infra-packages.appspot.com/p/infra/fake-package/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {
@@ -494,7 +495,8 @@
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"infra/fake-package\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@infra/fake-package@https://chrome-infra-packages.appspot.com/p/infra/fake-package/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {

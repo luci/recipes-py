@@ -455,7 +455,8 @@
       "@@@STEP_LOG_LINE@json.output@    \"package\": \"infra/fake-package\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@infra/fake-package@https://chrome-infra-packages.appspot.com/p/infra/fake-package/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {
@@ -476,9 +477,9 @@
       "    return callable_obj(*props, **additional_args)",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/cipd/examples/full.py\", line 92, in RunSteps",
       "    pkg.add_file(api.path.abs_to_path(fullpath))",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/cipd/api.py\", line 118, in add_file",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/cipd/api.py\", line 120, in add_file",
       "    self.files.append(self._rel_path(file_path))",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/cipd/api.py\", line 84, in _rel_path",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/cipd/api.py\", line 86, in _rel_path",
       "    (path, self.package_root))",
       "ValueError: path Path([START_DIR], 'a', 'path', 'to', 'file.py') is not the package root Path([START_DIR], 'some_subdir') and not a child thereof"
     ]
