@@ -1,7 +1,6 @@
 # Copyright 2018 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
-
 """API for interacting with CIPD.
 
 Depends on 'cipd' binary available in PATH:
@@ -19,8 +18,8 @@ from recipe_engine.config_types import Path
 
 def check_type(name, var, expect):
   if not isinstance(var, expect):  # pragma: no cover
-    raise TypeError('%s is not %s: %r (%s)' % (
-      name, type(expect).__name__, var, type(var).__name__))
+    raise TypeError('%s is not %s: %r (%s)' %
+                    (name, type(expect).__name__, var, type(var).__name__))
 
 
 def check_list_type(name, var, expect_inner):
@@ -39,8 +38,12 @@ def check_dict_type(name, var, expect_key, expect_value):
 class PackageDefinition(object):
   DIR = namedtuple('DIR', ['path', 'exclusions'])
 
-  def __init__(self, package_name, package_root, install_mode=None,
-               preserve_mtime=False, preserve_writable=False):
+  def __init__(self,
+               package_name,
+               package_root,
+               install_mode=None,
+               preserve_mtime=False,
+               preserve_writable=False):
     """Build a new PackageDefinition.
 
     Args:
@@ -146,25 +149,24 @@ class PackageDefinition(object):
   def to_jsonish(self):
     """Returns a JSON representation of this PackageDefinition."""
     return {
-      'package': self.package_name,
-      'root': str(self.package_root),
-      'install_mode': self.install_mode or '',
-      'data': [
-        {'file': str(f)}
-        for f in self.files
-      ] + [
-        {'dir': str(d.path), 'exclude': d.exclusions}
-        for d in self.dirs
-      ] + (
-        [{'version_file': self.version_file}]
-          if self.version_file else []
-      ) + (
-        [{'preserve_mtime': self.preserve_mtime}]
-          if self.preserve_mtime else []
-      ) + (
-        [{'preserve_writable': self.preserve_writable}]
-          if self.preserve_writable else []
-      )
+        'package':
+            self.package_name,
+        'root':
+            str(self.package_root),
+        'install_mode':
+            self.install_mode or '',
+        'data': [{
+            'file': str(f)
+        } for f in self.files] + [{
+            'dir': str(d.path),
+            'exclude': d.exclusions
+        } for d in self.dirs] + ([{
+            'version_file': self.version_file
+        }] if self.version_file else []) + ([{
+            'preserve_mtime': self.preserve_mtime
+        }] if self.preserve_mtime else []) + ([{
+            'preserve_writable': self.preserve_writable
+        }] if self.preserve_writable else [])
     }
 
 
@@ -207,35 +209,36 @@ class CIPDApi(recipe_api.RecipeApi):
 
   # A CIPD pin.
   Pin = namedtuple('Pin', [
-    'package',
-    'instance_id',
+      'package',
+      'instance_id',
   ])
 
   # A CIPD ref.
   Ref = namedtuple('Ref', [
-    'ref',
-    'modified_by',
-    'modified_ts',
-    'instance_id',
+      'ref',
+      'modified_by',
+      'modified_ts',
+      'instance_id',
   ])
 
   # A CIPD tag.
   Tag = namedtuple('Tag', [
-    'tag',
-    'registered_by',
-    'registered_ts',
+      'tag',
+      'registered_by',
+      'registered_ts',
   ])
 
   # A CIPD package description.
   Description = namedtuple('Description', [
-    'pin',
-    'registered_by',
-    'registered_ts',
-    'refs',
-    'tags',
+      'pin',
+      'registered_by',
+      'registered_ts',
+      'refs',
+      'tags',
   ])
 
   class Error(recipe_api.StepFailure):
+
     def __init__(self, step_name, message):
       reason = 'CIPD(%r) failed with: %s' % (step_name, message)
       super(CIPDApi.Error, self).__init__(reason)
@@ -278,7 +281,7 @@ class CIPDApi(recipe_api.RecipeApi):
       step_result = self.m.step.active_result
       if 'error' in step_result.json.output:
         raise self.Error(name, step_result.json.output['error'])
-      else: # pragma: no cover
+      else:  # pragma: no cover
         raise
 
   def acl_check(self, pkg_path, reader=True, writer=False, owner=False):
@@ -292,10 +295,7 @@ class CIPDApi(recipe_api.RecipeApi):
 
     Returns True if the caller has given roles, False otherwise.
     """
-    cmd = [
-        'acl-check',
-        pkg_path
-    ] + self._service_account_opts()
+    cmd = ['acl-check', pkg_path] + self._service_account_opts()
     if reader:
       cmd.append('-reader')
     if writer:
@@ -303,33 +303,43 @@ class CIPDApi(recipe_api.RecipeApi):
     if owner:
       cmd.append('-owner')
     step_result = self._run(
-        'acl-check %s' % pkg_path, cmd,
-        step_test_data=lambda: self.test_api.example_acl_check(pkg_path)
-    )
+        'acl-check %s' % pkg_path,
+        cmd,
+        step_test_data=lambda: self.test_api.example_acl_check(pkg_path))
     return step_result.json.output['result']
 
-  def _build(self, pkg_name, pkg_def_file_or_placeholder, output_package,
-             pkg_vars=None, compression_level=None):
+  def _build(self,
+             pkg_name,
+             pkg_def_file_or_placeholder,
+             output_package,
+             pkg_vars=None,
+             compression_level=None):
     if pkg_vars:
       check_dict_type('pkg_vars', pkg_vars, str, str)
 
     cmd = [
-      'pkg-build',
-      '-pkg-def', pkg_def_file_or_placeholder,
-      '-out', output_package,
-      '-hash-algo', 'sha256',
+        'pkg-build',
+        '-pkg-def',
+        pkg_def_file_or_placeholder,
+        '-out',
+        output_package,
+        '-hash-algo',
+        'sha256',
     ] + self._cli_options((), (), pkg_vars)
     if compression_level:
       cmd.extend(['-compression-level', int(compression_level)])
 
     step_result = self._run(
-        'build %s' % pkg_name, cmd,
-        step_test_data=lambda: self.test_api.example_build(pkg_name)
-    )
+        'build %s' % pkg_name,
+        cmd,
+        step_test_data=lambda: self.test_api.example_build(pkg_name))
     result = step_result.json.output['result']
     return self.Pin(**result)
 
-  def build_from_yaml(self, pkg_def, output_package, pkg_vars=None,
+  def build_from_yaml(self,
+                      pkg_def,
+                      output_package,
+                      pkg_vars=None,
                       compression_level=None):
     """Builds a package based on on-disk YAML package definition file.
 
@@ -352,8 +362,7 @@ class CIPDApi(recipe_api.RecipeApi):
         compression_level,
     )
 
-  def build_from_pkg(self, pkg_def, output_package,
-                     compression_level=None):
+  def build_from_pkg(self, pkg_def, output_package, compression_level=None):
     """Builds a package based on a PackageDefinition object.
 
     Args:
@@ -373,8 +382,13 @@ class CIPDApi(recipe_api.RecipeApi):
         compression_level=compression_level,
     )
 
-  def build(self, input_dir, output_package, package_name,
-            compression_level=None, install_mode=None, preserve_mtime=False,
+  def build(self,
+            input_dir,
+            output_package,
+            package_name,
+            compression_level=None,
+            install_mode=None,
+            preserve_mtime=False,
             preserve_writable=False):
     """Builds, but does not upload, a cipd package from a directory.
 
@@ -397,11 +411,15 @@ class CIPDApi(recipe_api.RecipeApi):
     assert not install_mode or install_mode in ['copy', 'symlink']
 
     cmd = [
-      'pkg-build',
-      '-in', input_dir,
-      '-name', package_name,
-      '-out', output_package,
-      '-hash-algo', 'sha256',
+        'pkg-build',
+        '-in',
+        input_dir,
+        '-name',
+        package_name,
+        '-out',
+        output_package,
+        '-hash-algo',
+        'sha256',
     ]
     if compression_level:
       cmd.extend(['-compression-level', int(compression_level)])
@@ -412,9 +430,9 @@ class CIPDApi(recipe_api.RecipeApi):
     if preserve_writable:
       cmd.append('-preserve-writable')
     step_result = self._run(
-        'build %s' % self.m.path.basename(package_name), cmd,
-        step_test_data=lambda: self.test_api.example_build(package_name)
-    )
+        'build %s' % self.m.path.basename(package_name),
+        cmd,
+        step_test_data=lambda: self.test_api.example_build(package_name))
     result = step_result.json.output['result']
     return self.Pin(**result)
 
@@ -451,18 +469,21 @@ class CIPDApi(recipe_api.RecipeApi):
     Returns:
       The CIPDApi.Pin instance.
     """
-    cmd = [
-      'pkg-register', package_path
-    ] + self._cli_options(refs, tags, ()) + self._service_account_opts()
+    cmd = ['pkg-register', package_path] + self._cli_options(
+        refs, tags, ()) + self._service_account_opts()
     step_result = self._run(
         'register %s' % package_name,
         cmd,
-        step_test_data=lambda: self.test_api.example_register(package_name)
-    )
+        step_test_data=lambda: self.test_api.example_register(package_name))
     return self.Pin(**step_result.json.output['result'])
 
-  def _create(self, pkg_name, pkg_def_file_or_placeholder, refs=None, tags=None,
-              pkg_vars=None, compression_level=None):
+  def _create(self,
+              pkg_name,
+              pkg_def_file_or_placeholder,
+              refs=None,
+              tags=None,
+              pkg_vars=None,
+              compression_level=None):
     refs = [] if refs is None else refs
     tags = {} if tags is None else tags
     pkg_vars = {} if pkg_vars is None else pkg_vars
@@ -470,17 +491,20 @@ class CIPDApi(recipe_api.RecipeApi):
     check_dict_type('tags', tags, str, basestring)
     check_dict_type('pkg_vars', pkg_vars, str, str)
     cmd = [
-      'create',
-      '-pkg-def', pkg_def_file_or_placeholder,
-      '-hash-algo', 'sha256',
+        'create',
+        '-pkg-def',
+        pkg_def_file_or_placeholder,
+        '-hash-algo',
+        'sha256',
     ] + self._cli_options(refs, tags, pkg_vars) + self._service_account_opts()
     if compression_level:
       cmd.extend(['-compression-level', int(compression_level)])
     step_result = self._run(
-      'create %s' % pkg_name, cmd,
-      step_test_data=lambda: self.test_api.m.json.output({
-        'result': self.test_api.make_pin(pkg_name),
-      }))
+        'create %s' % pkg_name,
+        cmd,
+        step_test_data=lambda: self.test_api.m.json.output({
+            'result': self.test_api.make_pin(pkg_name),
+        }))
     self.add_instance_link(step_result)
     result = step_result.json.output['result']
     return self.Pin(**result)
@@ -491,7 +515,11 @@ class CIPDApi(recipe_api.RecipeApi):
         'https://chrome-infra-packages.appspot.com' +
         '/p/%(package)s/+/%(instance_id)s' % result)
 
-  def create_from_yaml(self, pkg_def, refs=None, tags=None, pkg_vars=None,
+  def create_from_yaml(self,
+                       pkg_def,
+                       refs=None,
+                       tags=None,
+                       pkg_vars=None,
                        compression_level=None):
     """Builds and uploads a package based on on-disk YAML package definition
     file.
@@ -515,7 +543,10 @@ class CIPDApi(recipe_api.RecipeApi):
         self.m.path.basename(pkg_def), pkg_def, refs, tags, pkg_vars,
         compression_level)
 
-  def create_from_pkg(self, pkg_def, refs=None, tags=None,
+  def create_from_pkg(self,
+                      pkg_def,
+                      refs=None,
+                      tags=None,
                       compression_level=None):
     """Builds and uploads a package based on a PackageDefinition object.
 
@@ -534,8 +565,11 @@ class CIPDApi(recipe_api.RecipeApi):
     """
     check_type('pkg_def', pkg_def, PackageDefinition)
     return self._create(
-        pkg_def.package_name, self.m.json.input(pkg_def.to_jsonish()), refs,
-        tags, compression_level=compression_level)
+        pkg_def.package_name,
+        self.m.json.input(pkg_def.to_jsonish()),
+        refs,
+        tags,
+        compression_level=compression_level)
 
   def ensure(self, root, ensure_file):
     """Ensures that packages are installed in a given root dir.
@@ -548,14 +582,13 @@ class CIPDApi(recipe_api.RecipeApi):
     """
     check_type('ensure_file', ensure_file, EnsureFile)
     cmd = [
-      'ensure',
-      '-root', root,
-      '-ensure-file', self.m.raw_io.input(ensure_file.render())
+        'ensure', '-root', root, '-ensure-file',
+        self.m.raw_io.input(ensure_file.render())
     ]
     step_result = self._run(
-        'ensure_installed', cmd,
-        step_test_data=lambda: self.test_api.example_ensure(ensure_file)
-    )
+        'ensure_installed',
+        cmd,
+        step_test_data=lambda: self.test_api.example_ensure(ensure_file))
     return {
         subdir: [self.Pin(**pin) for pin in pins]
         for subdir, pins in step_result.json.output['result'].iteritems()
@@ -574,17 +607,17 @@ class CIPDApi(recipe_api.RecipeApi):
     Returns the CIPDApi.Pin instance.
     """
     cmd = [
-      'set-tag', package_name,
-      '-version', version,
+        'set-tag',
+        package_name,
+        '-version',
+        version,
     ] + self._cli_options((), tags, ())
 
     step_result = self._run(
         'cipd set-tag %s' % package_name,
         cmd,
         step_test_data=lambda: self.test_api.example_set_tag(
-            package_name, version
-        )
-    )
+            package_name, version))
     result = step_result.json.output['result']
     return self.Pin(**result['pin'])
 
@@ -599,17 +632,17 @@ class CIPDApi(recipe_api.RecipeApi):
     Returns the CIPDApi.Pin instance.
     """
     cmd = [
-      'set-ref', package_name,
-      '-version', version,
+        'set-ref',
+        package_name,
+        '-version',
+        version,
     ] + self._cli_options(refs, (), ()) + self._service_account_opts()
 
     step_result = self._run(
         'cipd set-ref %s' % package_name,
         cmd,
         step_test_data=lambda: self.test_api.example_set_ref(
-            package_name, version
-        )
-    )
+            package_name, version))
     result = step_result.json.output['result']
     return self.Pin(**result['pin'])
 
@@ -627,19 +660,23 @@ class CIPDApi(recipe_api.RecipeApi):
     assert ':' in tag, 'tag must be in a form "k:v"'
 
     cmd = [
-      'search', package_name,
-      '-tag', tag,
+        'search',
+        package_name,
+        '-tag',
+        tag,
     ] + self._service_account_opts()
 
     step_result = self._run(
         'cipd search %s %s' % (package_name, tag),
         cmd,
-        step_test_data=lambda: self.test_api.example_search(package_name)
-    )
+        step_test_data=lambda: self.test_api.example_search(package_name))
     return [self.Pin(**pin) for pin in step_result.json.output['result'] or []]
 
-  def describe(self, package_name, version,
-               test_data_refs=None, test_data_tags=None):
+  def describe(self,
+               package_name,
+               version,
+               test_data_refs=None,
+               test_data_tags=None):
     """Returns information about a pacakge instance given its version:
     who uploaded the instance and when and a list of attached tags.
 
@@ -657,11 +694,10 @@ class CIPDApi(recipe_api.RecipeApi):
         'cipd describe %s' % package_name,
         ['describe', package_name, '-version', version],
         step_test_data=lambda: self.test_api.example_describe(
-            package_name, version,
+            package_name,
+            version,
             test_data_refs=test_data_refs,
-            test_data_tags=test_data_tags
-        )
-    )
+            test_data_tags=test_data_tags))
     result = step_result.json.output['result']
     return self.Description(
         pin=self.Pin(**result['pin']),
@@ -693,14 +729,13 @@ class CIPDApi(recipe_api.RecipeApi):
     cmd = ['pkg-fetch', package_name, '-version', version, '-out', destination]
     cmd += self._service_account_opts()
     step_result = self._run(
-      'cipd pkg-fetch %s' % package_name,
-      cmd,
-      step_test_data=lambda: self.test_api.example_pkg_fetch(
-        package_name, version)
-    )
+        'cipd pkg-fetch %s' % package_name,
+        cmd,
+        step_test_data=lambda: self.test_api.example_pkg_fetch(
+            package_name, version))
     ret = self.Pin(**step_result.json.output['result'])
-    step_result.presentation.step_text = '%s %s' % (
-        ret.package, ret.instance_id)
+    step_result.presentation.step_text = '%s %s' % (ret.package,
+                                                    ret.instance_id)
     return ret
 
   def pkg_deploy(self, root, package_file):
@@ -719,10 +754,9 @@ class CIPDApi(recipe_api.RecipeApi):
     check_type('root', root, Path)
     check_type('package_file', package_file, Path)
     step_result = self._run(
-      'cipd pkg-deploy %s' % package_file,
-      ['pkg-deploy', package_file, '-root', root],
-      step_test_data=lambda: self.test_api.example_pkg_deploy(
-        'pkg/name/of/'+package_file.pieces[-1],
-        'version/of/'+package_file.pieces[-1])
-    )
+        'cipd pkg-deploy %s' % package_file,
+        ['pkg-deploy', package_file, '-root', root],
+        step_test_data=lambda: self.test_api.example_pkg_deploy(
+            'pkg/name/of/' + package_file.pieces[-1], 'version/of/' +
+            package_file.pieces[-1]))
     return self.Pin(**step_result.json.output['result'])

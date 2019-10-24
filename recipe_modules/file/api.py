@@ -1,12 +1,10 @@
 # Copyright 2017 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
-
 """File manipulation (read/write/delete/glob) methods."""
 
 from recipe_engine import config_types
 from recipe_engine import recipe_api
-
 
 import fnmatch
 import json
@@ -15,6 +13,7 @@ import os
 
 class SymlinkTree(object):
   """A representation of a tree of symlinks."""
+
   def __init__(self, root, api, symlink_resource):
     """See FileApi.symlink_tree for the public constructor."""
     assert root and isinstance(root, config_types.Path)
@@ -41,15 +40,16 @@ class SymlinkTree(object):
           same linkname.
     """
     assert (isinstance(target, config_types.Path) and
-      isinstance(linkname, config_types.Path))
+            isinstance(linkname, config_types.Path))
     if linkname in self._link_map.get(target, ()):
       return
     else:
       assert linkname not in self._reverse_map, (
-        '%s is alreadly linked to %s' % (linkname, self._reverse_map[linkname]))
+          '%s is alreadly linked to %s' %
+          (linkname, self._reverse_map[linkname]))
 
     assert self.root.is_parent_of(linkname), (
-      '%s is not within the root directory %s' % (linkname, self.root))
+        '%s is not within the root directory %s' % (linkname, self.root))
     self._link_map.setdefault(target, []).append(linkname)
     self._reverse_map[linkname] = target
 
@@ -63,26 +63,30 @@ class SymlinkTree(object):
       for linkname in linknames:
         self._api.path.mock_copy_paths(target, linkname)
     self._api.python(
-      name,
-      self._resource,
-      args = [
-        '--link-json',
-        self._api.json.input({str(target) : linkname
-          for target, linkname in self._link_map.iteritems()
-        }),
-      ],
-      infra_step=True)
+        name,
+        self._resource,
+        args=[
+            '--link-json',
+            self._api.json.input({
+                str(target): linkname
+                for target, linkname in self._link_map.iteritems()
+            }),
+        ],
+        infra_step=True)
 
 
 # TODO(iannucci): Introduce the concept of a 'native step' and implement these
 # directly in the current python interpreter without the need for a subprocess
 # invocation.
 
+
 class FileApi(recipe_api.RecipeApi):
+
   class Error(recipe_api.StepFailure):
     """Error is a StepFailure, except that it also contains an errno field
     indicating the errno name (i.e. 'EEXIST') of the underlying error.
     """
+
     def __init__(self, step_name, errno_name, message):
       reason = 'Step(%r) failed %r with: %s' % (step_name, errno_name, message)
       super(FileApi.Error, self).__init__(reason)
@@ -98,13 +102,15 @@ class FileApi(recipe_api.RecipeApi):
   def _run(self, name, args, step_test_data=None, stdout=None):
     if not step_test_data:
       step_test_data = self.test_api.errno
-    args = [
-      '--json-output', self.m.json.output(add_json_log=False)
-    ] + args
+    args = ['--json-output', self.m.json.output(add_json_log=False)] + args
     result = self.m.python(
-      name, self.resource('fileutil.py'), args=args,
-      step_test_data=step_test_data, stdout=stdout,
-      infra_step=True, venv=True)
+        name,
+        self.resource('fileutil.py'),
+        args=args,
+        step_test_data=step_test_data,
+        stdout=stdout,
+        infra_step=True,
+        venv=True)
     j = result.json.output
     if not j['ok']:
       result.presentation.status = self.m.step.FAILURE
@@ -188,8 +194,9 @@ class FileApi(recipe_api.RecipeApi):
     """
     self.m.path.assert_absolute(source)
     step_test_data = lambda: self.test_api.read_raw(test_data)
-    result = self._run(name, ['copy', source, self.m.raw_io.output()],
-                       step_test_data=step_test_data)
+    result = self._run(
+        name, ['copy', source, self.m.raw_io.output()],
+        step_test_data=step_test_data)
     return result.raw_io.output
 
   def write_raw(self, name, dest, data):
@@ -222,8 +229,9 @@ class FileApi(recipe_api.RecipeApi):
     """
     self.m.path.assert_absolute(source)
     step_test_data = lambda: self.test_api.read_text(test_data)
-    result = self._run(name, ['copy', source, self.m.raw_io.output_text()],
-                       step_test_data=step_test_data)
+    result = self._run(
+        name, ['copy', source, self.m.raw_io.output_text()],
+        step_test_data=step_test_data)
     return result.raw_io.output_text
 
   def write_text(self, name, dest, text_data):
@@ -273,7 +281,11 @@ class FileApi(recipe_api.RecipeApi):
     text_data = json.dumps(data, indent=indent)
     self.write_text(name, dest, text_data)
 
-  def glob_paths(self, name, source, pattern, include_hidden=False,
+  def glob_paths(self,
+                 name,
+                 source,
+                 pattern,
+                 include_hidden=False,
                  test_data=()):
     """Performs glob expansion on `pattern`.
 
@@ -307,13 +319,12 @@ class FileApi(recipe_api.RecipeApi):
     cmd = ['glob', source, pattern]
     if include_hidden:
       cmd.append('--hidden')
-    result = self._run(
-      name,
-      cmd,
-      lambda: self.test_api.glob_paths(test_data),
-      self.m.raw_io.output_text())
-    ret = [source.join(*x.split(self.m.path.sep))
-           for x in result.stdout.splitlines()]
+    result = self._run(name, cmd, lambda: self.test_api.glob_paths(test_data),
+                       self.m.raw_io.output_text())
+    ret = [
+        source.join(*x.split(self.m.path.sep))
+        for x in result.stdout.splitlines()
+    ]
     result.presentation.logs["glob"] = map(str, ret)
     return ret
 
@@ -351,12 +362,14 @@ class FileApi(recipe_api.RecipeApi):
     """
     assert isinstance(source, config_types.Path)
     self.m.path.assert_absolute(source)
-    result = self._run(
-      name, ['listdir', source] + (['--recursive'] if recursive else []),
-      lambda: self.test_api.listdir(test_data),
-      self.m.raw_io.output_text())
-    ret = [source.join(*x.split(self.m.path.sep))
-           for x in result.stdout.splitlines()]
+    result = self._run(name, ['listdir', source] +
+                       (['--recursive'] if recursive else
+                        []), lambda: self.test_api.listdir(test_data),
+                       self.m.raw_io.output_text())
+    ret = [
+        source.join(*x.split(self.m.path.sep))
+        for x in result.stdout.splitlines()
+    ]
     result.presentation.logs['listdir'] = map(str, ret)
     return ret
 
@@ -373,8 +386,7 @@ class FileApi(recipe_api.RecipeApi):
     Raises file.Error if the path exists but is not a directory.
     """
     self.m.path.assert_absolute(dest)
-    self._run(
-      name, ['ensure-directory', '--mode', oct(mode), dest])
+    self._run(name, ['ensure-directory', '--mode', oct(mode), dest])
     self.m.path.mock_add_paths(dest)
 
   def filesizes(self, name, files, test_data=None):
@@ -387,16 +399,16 @@ class FileApi(recipe_api.RecipeApi):
     Returns list[int], size of each file in bytes.
     """
     if test_data is None:
-      test_data = [111 * (i+1) + (i % 3 - 2) * i for i, _ in enumerate(files)]
+      test_data = [111 * (i + 1) + (i % 3 - 2) * i for i, _ in enumerate(files)]
     for f in files:
       self.m.path.assert_absolute(f)
-    result = self._run(
-      name, ['filesizes'] + list(files),
-      lambda: self.test_api.filesizes(test_data),
-      self.m.raw_io.output_text())
+    result = self._run(name, ['filesizes'] +
+                       list(files), lambda: self.test_api.filesizes(test_data),
+                       self.m.raw_io.output_text())
     ret = map(int, result.stdout.strip().splitlines())
-    result.presentation.logs['filesizes'] = ['%s: \t%d' % fs
-                                             for fs in zip(files, ret)]
+    result.presentation.logs['filesizes'] = [
+        '%s: \t%d' % fs for fs in zip(files, ret)
+    ]
     return ret
 
   def rmtree(self, name, source):
@@ -432,7 +444,7 @@ class FileApi(recipe_api.RecipeApi):
     """
     self.m.path.assert_absolute(source)
     self._run(name, ['rmcontents', source])
-    self.m.path.mock_remove_paths(str(source)+self.m.path.sep)
+    self.m.path.mock_remove_paths(str(source) + self.m.path.sep)
 
   def rmglob(self, name, source, pattern, recursive=True, include_hidden=True):
     """Removes all entries in `source` matching the glob `pattern`.
@@ -472,9 +484,11 @@ class FileApi(recipe_api.RecipeApi):
     self._run(name, cmd)
 
     src = str(source)
+
     def filt(p):
       assert p.startswith(src), (src, p)
-      return fnmatch.fnmatch(p[len(src)+1:].split(os.path.sep)[0], pattern)
+      return fnmatch.fnmatch(p[len(src) + 1:].split(os.path.sep)[0], pattern)
+
     self.m.path.mock_remove_paths(str(source), filt)
 
   def symlink(self, name, source, linkname):

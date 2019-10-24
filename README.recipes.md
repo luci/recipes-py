@@ -594,14 +594,14 @@ API for interacting with CIPD.
 Depends on 'cipd' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 
-#### **class [CIPDApi](/recipe_modules/cipd/api.py#199)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
+#### **class [CIPDApi](/recipe_modules/cipd/api.py#201)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
 
 CIPDApi provides basic support for CIPD.
 
 This assumes that `cipd` (or `cipd.exe` or `cipd.bat` on windows) has been
 installed somewhere in $PATH.
 
-&mdash; **def [acl\_check](/recipe_modules/cipd/api.py#284)(self, pkg_path, reader=True, writer=False, owner=False):**
+&mdash; **def [acl\_check](/recipe_modules/cipd/api.py#287)(self, pkg_path, reader=True, writer=False, owner=False):**
 
 Checks whether the caller has a given roles in a package.
 
@@ -613,9 +613,9 @@ Args:
 
 Returns True if the caller has given roles, False otherwise.
 
-&mdash; **def [add\_instance\_link](/recipe_modules/cipd/api.py#488)(self, step_result):**
+&mdash; **def [add\_instance\_link](/recipe_modules/cipd/api.py#512)(self, step_result):**
 
-&mdash; **def [build](/recipe_modules/cipd/api.py#376)(self, input_dir, output_package, package_name, compression_level=None, install_mode=None, preserve_mtime=False, preserve_writable=False):**
+&mdash; **def [build](/recipe_modules/cipd/api.py#385)(self, input_dir, output_package, package_name, compression_level=None, install_mode=None, preserve_mtime=False, preserve_writable=False):**
 
 Builds, but does not upload, a cipd package from a directory.
 
@@ -634,7 +634,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#355)(self, pkg_def, output_package, compression_level=None):**
+&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#365)(self, pkg_def, output_package, compression_level=None):**
 
 Builds a package based on a PackageDefinition object.
 
@@ -647,7 +647,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#332)(self, pkg_def, output_package, pkg_vars=None, compression_level=None):**
+&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#339)(self, pkg_def, output_package, pkg_vars=None, compression_level=None):**
 
 Builds a package based on on-disk YAML package definition file.
 
@@ -661,7 +661,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#518)(self, pkg_def, refs=None, tags=None, compression_level=None):**
+&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#546)(self, pkg_def, refs=None, tags=None, compression_level=None):**
 
 Builds and uploads a package based on a PackageDefinition object.
 
@@ -678,7 +678,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#494)(self, pkg_def, refs=None, tags=None, pkg_vars=None, compression_level=None):**
+&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#518)(self, pkg_def, refs=None, tags=None, pkg_vars=None, compression_level=None):**
 
 Builds and uploads a package based on on-disk YAML package definition
 file.
@@ -697,7 +697,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [describe](/recipe_modules/cipd/api.py#641)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
+&mdash; **def [describe](/recipe_modules/cipd/api.py#675)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
 
 Returns information about a pacakge instance given its version:
 who uploaded the instance and when and a list of attached tags.
@@ -712,7 +712,7 @@ Args:
 
 Returns the CIPDApi.Description instance describing the package.
 
-&mdash; **def [ensure](/recipe_modules/cipd/api.py#540)(self, root, ensure_file):**
+&mdash; **def [ensure](/recipe_modules/cipd/api.py#574)(self, root, ensure_file):**
 
 Ensures that packages are installed in a given root dir.
 
@@ -722,9 +722,9 @@ Args:
 
 Returns the map of subdirectories to CIPDApi.Pin instances.
 
-&emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#269)(self):**
+&emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#272)(self):**
 
-&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#706)(self, root, package_file):**
+&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#741)(self, root, package_file):**
 
 Deploys the specified package to root.
 
@@ -738,7 +738,7 @@ Args:
 
 Returns a Pin for the deployed package.
 
-&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#674)(self, destination, package_name, version):**
+&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#710)(self, destination, package_name, version):**
 
 Downloads the specified package to destination.
 
@@ -755,7 +755,7 @@ Args:
 
 Returns a Pin for the downloaded package.
 
-&mdash; **def [register](/recipe_modules/cipd/api.py#441)(self, package_name, package_path, refs=(), tags=None):**
+&mdash; **def [register](/recipe_modules/cipd/api.py#459)(self, package_name, package_path, refs=(), tags=None):**
 
 Uploads and registers package instance in the package repository.
 
@@ -769,7 +769,7 @@ Args:
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [search](/recipe_modules/cipd/api.py#616)(self, package_name, tag):**
+&mdash; **def [search](/recipe_modules/cipd/api.py#649)(self, package_name, tag):**
 
 Searches for package instances by tag, optionally constrained by package
 name.
@@ -780,7 +780,7 @@ Args:
 
 Returns the list of CIPDApi.Pin instances.
 
-&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#591)(self, package_name, version, refs):**
+&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#624)(self, package_name, version, refs):**
 
 Moves a ref to point to a given version.
 
@@ -791,7 +791,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [set\_service\_account](/recipe_modules/cipd/api.py#247)(self, service_account):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [set\_service\_account](/recipe_modules/cipd/api.py#250)(self, service_account):**
 
 Temporarily sets the service account used for authentication to CIPD.
 
@@ -802,7 +802,7 @@ Args:
   * service_account(service_account.api.ServiceAccount): Service account to
       use for authentication.
 
-&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#564)(self, package_name, version, tags):**
+&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#597)(self, package_name, version, tags):**
 
 Tags package of a specific version.
 
@@ -1041,9 +1041,9 @@ Returns recorded Buildbucket build ids as a list of integers.
 
 File manipulation (read/write/delete/glob) methods.
 
-#### **class [FileApi](/recipe_modules/file/api.py#81)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
+#### **class [FileApi](/recipe_modules/file/api.py#83)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
 
-&mdash; **def [copy](/recipe_modules/file/api.py#117)(self, name, source, dest):**
+&mdash; **def [copy](/recipe_modules/file/api.py#123)(self, name, source, dest):**
 
 Copies a file (including mode bits) from source to destination on the
 local filesystem.
@@ -1059,7 +1059,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [copytree](/recipe_modules/file/api.py#137)(self, name, source, dest, symlinks=False):**
+&mdash; **def [copytree](/recipe_modules/file/api.py#143)(self, name, source, dest, symlinks=False):**
 
 Recursively copies a directory tree.
 
@@ -1075,7 +1075,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#363)(self, name, dest, mode=511):**
+&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#376)(self, name, dest, mode=511):**
 
 Ensures that `dest` exists and is a directory.
 
@@ -1088,7 +1088,7 @@ Args:
 
 Raises file.Error if the path exists but is not a directory.
 
-&mdash; **def [filesizes](/recipe_modules/file/api.py#380)(self, name, files, test_data=None):**
+&mdash; **def [filesizes](/recipe_modules/file/api.py#392)(self, name, files, test_data=None):**
 
 Returns list of filesizes for the given files.
 
@@ -1098,7 +1098,7 @@ Args:
 
 Returns list[int], size of each file in bytes.
 
-&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#518)(self, name, path):**
+&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#532)(self, name, path):**
 
 Flattens singular directories, starting at path.
 
@@ -1127,7 +1127,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [glob\_paths](/recipe_modules/file/api.py#276)(self, name, source, pattern, include_hidden=False, test_data=()):**
+&mdash; **def [glob\_paths](/recipe_modules/file/api.py#284)(self, name, source, pattern, include_hidden=False, test_data=()):**
 
 Performs glob expansion on `pattern`.
 
@@ -1157,7 +1157,7 @@ Returns list[Path] - All paths found.
 
 Raises file.Error.
 
-&mdash; **def [listdir](/recipe_modules/file/api.py#335)(self, name, source, recursive=False, test_data=()):**
+&mdash; **def [listdir](/recipe_modules/file/api.py#346)(self, name, source, recursive=False, test_data=()):**
 
 List all files inside a directory.
 
@@ -1175,7 +1175,7 @@ Returns list[Path]
 
 Raises file.Error.
 
-&mdash; **def [move](/recipe_modules/file/api.py#158)(self, name, source, dest):**
+&mdash; **def [move](/recipe_modules/file/api.py#164)(self, name, source, dest):**
 
 Moves a file or directory.
 
@@ -1188,7 +1188,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [read\_json](/recipe_modules/file/api.py#244)(self, name, source, test_data=''):**
+&mdash; **def [read\_json](/recipe_modules/file/api.py#252)(self, name, source, test_data=''):**
 
 Reads a file as UTF-8 encoded json.
 
@@ -1202,7 +1202,7 @@ Returns (object) - The content of the file.
 
 Raise file.Error
 
-&mdash; **def [read\_raw](/recipe_modules/file/api.py#176)(self, name, source, test_data=''):**
+&mdash; **def [read\_raw](/recipe_modules/file/api.py#182)(self, name, source, test_data=''):**
 
 Reads a file as raw data.
 
@@ -1216,7 +1216,7 @@ Returns (str) - The unencoded (binary) contents of the file.
 
 Raises file.Error
 
-&mdash; **def [read\_text](/recipe_modules/file/api.py#210)(self, name, source, test_data=''):**
+&mdash; **def [read\_text](/recipe_modules/file/api.py#217)(self, name, source, test_data=''):**
 
 Reads a file as UTF-8 encoded text.
 
@@ -1230,7 +1230,7 @@ Returns (str) - The content of the file.
 
 Raises file.Error
 
-&mdash; **def [remove](/recipe_modules/file/api.py#320)(self, name, source):**
+&mdash; **def [remove](/recipe_modules/file/api.py#331)(self, name, source):**
 
 Remove a file.
 
@@ -1242,7 +1242,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#419)(self, name, source):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#431)(self, name, source):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -1257,7 +1257,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#437)(self, name, source, pattern, recursive=True, include_hidden=True):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#449)(self, name, source, pattern, recursive=True, include_hidden=True):**
 
 Removes all entries in `source` matching the glob `pattern`.
 
@@ -1287,7 +1287,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#402)(self, name, source):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#414)(self, name, source):**
 
 Recursively removes a directory.
 
@@ -1301,7 +1301,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [symlink](/recipe_modules/file/api.py#480)(self, name, source, linkname):**
+&mdash; **def [symlink](/recipe_modules/file/api.py#494)(self, name, source, linkname):**
 
 Creates a symlink on the local filesystem.
 
@@ -1314,14 +1314,14 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#497)(self, root):**
+&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#511)(self, root):**
 
 Creates a SymlinkTree, given a root directory.
 
 Args:
   * root (Path): root of a tree of symlinks.
 
-&mdash; **def [truncate](/recipe_modules/file/api.py#505)(self, name, path, size_mb=100):**
+&mdash; **def [truncate](/recipe_modules/file/api.py#519)(self, name, path, size_mb=100):**
 
 Creates an empty file with path and size_mb on the local filesystem.
 
@@ -1332,7 +1332,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [write\_json](/recipe_modules/file/api.py#261)(self, name, dest, data, indent=None):**
+&mdash; **def [write\_json](/recipe_modules/file/api.py#269)(self, name, dest, data, indent=None):**
 
 Write the given json serializable `data` to `dest`.
 
@@ -1345,7 +1345,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [write\_raw](/recipe_modules/file/api.py#195)(self, name, dest, data):**
+&mdash; **def [write\_raw](/recipe_modules/file/api.py#202)(self, name, dest, data):**
 
 Write the given `data` to `dest`.
 
@@ -1356,7 +1356,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [write\_text](/recipe_modules/file/api.py#229)(self, name, dest, text_data):**
+&mdash; **def [write\_text](/recipe_modules/file/api.py#237)(self, name, dest, text_data):**
 
 Write the given UTF-8 encoded `text_data` to `dest`.
 
