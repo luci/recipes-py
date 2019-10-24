@@ -43,7 +43,11 @@
       "/path/to/tmp/"
     ],
     "infra_step": true,
-    "name": "read it"
+    "name": "read it",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@new path@Here is some text data@@@",
+      "@@@STEP_LOG_END@new path@@@"
+    ]
   },
   {
     "cmd": [
@@ -71,7 +75,11 @@
       "/path/to/tmp/"
     ],
     "infra_step": true,
-    "name": "read it (2)"
+    "name": "read it (2)",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@new new path@Here is some text data@@@",
+      "@@@STEP_LOG_END@new new path@@@"
+    ]
   },
   {
     "cmd": [
@@ -99,7 +107,11 @@
       "/path/to/tmp/"
     ],
     "infra_step": true,
-    "name": "read json back"
+    "name": "read json back",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@some file@{\"hello\": \"world\"}@@@",
+      "@@@STEP_LOG_END@some file@@@"
+    ]
   },
   {
     "name": "$result"

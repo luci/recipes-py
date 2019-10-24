@@ -29,7 +29,11 @@
       "/path/to/tmp/"
     ],
     "infra_step": true,
-    "name": "read_json"
+    "name": "read_json",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@some_file.json@{\"is_json\": true}@@@",
+      "@@@STEP_LOG_END@some_file.json@@@"
+    ]
   },
   {
     "name": "$result"

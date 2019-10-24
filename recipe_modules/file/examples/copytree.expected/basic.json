@@ -229,7 +229,11 @@
       "/path/to/tmp/"
     ],
     "infra_step": true,
-    "name": "read [START_DIR]/some other dir/a"
+    "name": "read [START_DIR]/some other dir/a",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@a@a@@@",
+      "@@@STEP_LOG_END@a@@@"
+    ]
   },
   {
     "cmd": [
@@ -243,7 +247,11 @@
       "/path/to/tmp/"
     ],
     "infra_step": true,
-    "name": "read [START_DIR]/some other dir/aa"
+    "name": "read [START_DIR]/some other dir/aa",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@aa@aa@@@",
+      "@@@STEP_LOG_END@aa@@@"
+    ]
   },
   {
     "cmd": [

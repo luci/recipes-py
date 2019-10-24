@@ -232,7 +232,9 @@ class FileApi(recipe_api.RecipeApi):
     result = self._run(
         name, ['copy', source, self.m.raw_io.output_text()],
         step_test_data=step_test_data)
-    return result.raw_io.output_text
+    text = result.raw_io.output_text
+    result.presentation.logs[self.m.path.basename(source)] = text.splitlines()
+    return text
 
   def write_text(self, name, dest, text_data):
     """Write the given UTF-8 encoded `text_data` to `dest`.

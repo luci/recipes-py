@@ -43,7 +43,11 @@
       "/path/to/tmp/"
     ],
     "infra_step": true,
-    "name": "read it"
+    "name": "read it",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@new path@Here is some text data@@@",
+      "@@@STEP_LOG_END@new path@@@"
+    ]
   },
   {
     "cmd": [
