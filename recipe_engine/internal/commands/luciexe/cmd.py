@@ -48,7 +48,6 @@ def _synth_properties(build):
     },
     '$recipe_engine/buildbucket': {
       'build': jsonpb.MessageToDict(build),
-      'hostname': build.infra.buildbucket.hostname,
     },
     '$recipe_engine/path': {
       'temp_dir': _contract_in_env('TMP'),

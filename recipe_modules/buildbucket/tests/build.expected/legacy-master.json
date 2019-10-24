@@ -17,7 +17,7 @@
   {
     "cmd": [
       "echo",
-      "buildbucket.example.com"
+      "cr-buildbucket.appspot.com"
     ],
     "name": "hostname"
   },
