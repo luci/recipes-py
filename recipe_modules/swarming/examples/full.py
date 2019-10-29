@@ -21,7 +21,8 @@ def RunSteps(api):
       with_name('recipes-go').
       with_priority(100).
       with_service_account("account@example.iam.gserviceaccount.com").
-      with_user('defaultuser')
+      with_user('defaultuser').
+      with_tags({'key': ['value1', 'value2']})
   )
 
   ensure_file = api.cipd.EnsureFile()

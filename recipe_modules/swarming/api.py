@@ -57,6 +57,7 @@ class TaskRequest(object):
     self._service_account = ''
     self._slices = [self.TaskSlice(api)]
     self._user = None
+    self._tags = None
 
   def _copy(self):
     return copy.copy(self)
@@ -166,6 +167,29 @@ class TaskRequest(object):
     ret._user = user
     return ret
 
+  @property
+  def tags(self):
+    """Returns the tags associated with the task."""
+    return self._tags
+
+  def with_tags(self, tags):
+    """Returns the request with the given tags attached.
+
+    Args:
+      * tags (Dict[str, List[str]]) - The tags to attach to the task.
+    """
+    assert isinstance(tags, dict)
+    tags_list = []
+    for tag, values in tags.items():
+      assert isinstance(tag, basestring)
+      assert isinstance(values, list)
+      for value in values:
+        assert isinstance(value, basestring)
+        tags_list.append('%s:%s' % (tag, value))
+    ret = self._copy()
+    ret._tags = sorted(tags_list)
+    return ret
+
   def to_jsonish(self):
     """Renders the task request as a JSON-serializable dict.
 
@@ -178,6 +202,7 @@ class TaskRequest(object):
         'service_account': self.service_account,
         'task_slices': [task_slice.to_jsonish() for task_slice in self._slices],
         'user': self.user,
+        'tags': self.tags,
     }
 
   class TaskSlice(object):
