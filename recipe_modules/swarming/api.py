@@ -18,7 +18,7 @@ if sys.version_info.major >= 3:
   basestring = str  # pragma: no cover
 
 
-DEFAULT_CIPD_VERSION = 'git_revision:dcd9e10d7ea9890a266ca8dfef02909cf76134f1'
+DEFAULT_CIPD_VERSION = 'git_revision:67b11ada44a625008a2db5cb49ad453494b16ba1'
 
 
 # TODO(iannucci): Investigate whether slices can be made invisible to clients
@@ -762,7 +762,8 @@ class TaskResult(object):
     """
     Args:
       api (recipe_api.RecipeApi): A recipe API.
-      task_slice (TaskSlice): The TaskSlice for the request that led to this task result.
+      task_slice (TaskSlice): The TaskSlice for the request that led to this
+                              task result.
       id (str): The task's id.
       raw_results (dict): The jsonish summary output from a `collect` call.
       output_dir (Path|None): Where the task's outputs were downloaded to.
