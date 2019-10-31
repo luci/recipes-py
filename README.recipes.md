@@ -261,7 +261,7 @@ If it returns `None`, the link is not reported. Default link title is build id.
 
 A module for interacting with buildbucket.
 
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#871)(self):**
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#891)(self):**
 
 Returns bucket name in v1 format.
 
@@ -284,11 +284,11 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#882)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#902)(self):**
 
 DEPRECATED, use build.id instead.
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#887)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#907)(self):**
 
 DEPRECATED, use build.input instead.
 
@@ -305,7 +305,7 @@ It remains on the bot from build to build.
 See "Builder cache" in
 https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/project_config.proto
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#892)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#912)(self):**
 
 Deprecated. Use build.builder instead.
 
@@ -313,9 +313,9 @@ Deprecated. Use build.builder instead.
 
 Returns builder name. Shortcut for `.build.builder.builder`.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#631)(self, build_id, \*\*kwargs):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#641)(self, build_id, \*\*kwargs):**
 
-&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#694)(self, build_id, \*\*kwargs):**
+&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#708)(self, build_id, \*\*kwargs):**
 
 Shorthand for `collect_builds` below, but for a single build only.
 
@@ -326,28 +326,30 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
   for the ended build.
 
-&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#707)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False):**
+&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#721)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False, fields=None):**
 
 Waits for a set of builds to end and returns their details.
 
 Args:
 * `build_ids`: List of build IDs to wait for.
-* `interval`: Delay (in secs) between requests while waiting for build to end.
-  Defaults to 1m.
+* `interval`: Delay (in secs) between requests while waiting for build to
+  end. Defaults to 1m.
 * `timeout`: Maximum time to wait for builds to end. Defaults to 1h.
 * `step_name`: Custom name for the generated step.
-* `raise_if_unsuccessful`: if any build being collected did not succeed, raise
-  an exception.
+* `raise_if_unsuccessful`: if any build being collected did not succeed,
+  raise an exception.
 * `url_title_fn`: generates build URL title. See module docstring.
 * `mirror_status`: mark the step as failed/infra-failed if any of the builds
   did not succeed. Ignored if raise_if_unsuccessful is True.
+* `fields`: a list of fields to include in the response, names relative
+  to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
 
 Returns:
   A map from integer build IDs to the corresponding
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   for all specified builds.
 
-&mdash; **def [get](/recipe_modules/buildbucket/api.py#673)(self, build_id, url_title_fn=None, step_name=None):**
+&mdash; **def [get](/recipe_modules/buildbucket/api.py#687)(self, build_id, url_title_fn=None, step_name=None):**
 
 Gets a build.
 
@@ -359,11 +361,11 @@ Args:
 Returns:
   A build_pb2.Build.
 
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#690)(self, build_id, \*\*kwargs):**
+&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#704)(self, build_id, \*\*kwargs):**
 
 DEPRECATED. Use get().
 
-&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#634)(self, build_ids, url_title_fn=None, step_name=None):**
+&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#644)(self, build_ids, url_title_fn=None, step_name=None, fields=None):**
 
 Gets multiple builds.
 
@@ -371,6 +373,8 @@ Args:
 *   `build_ids`: a list of build IDs.
 *   `url_title_fn`: generates build URL title. See module docstring.
 *   `step_name`: name for this step.
+*   `fields`: a list of fields to include in the response, names relative
+    to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
 
 Returns:
   A dict {build_id: build_pb2.Build}.
@@ -391,7 +395,7 @@ Never returns None, but sub-fields may be empty.
 Returns True if the build is critical. Build defaults to the current one.
     
 
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#535)(self, builds, \*\*kwargs):**
+&mdash; **def [put](/recipe_modules/buildbucket/api.py#541)(self, builds, \*\*kwargs):**
 
 Puts a batch of builds.
 
@@ -415,7 +419,7 @@ Returns:
   A step that as its `.stdout` property contains the response object as
   returned by buildbucket.
 
-&mdash; **def [run](/recipe_modules/buildbucket/api.py#261)(self, schedule_build_requests, collect_interval=None, timeout=None, url_title_fn=None, step_name=None, raise_if_unsuccessful=False):**
+&mdash; **def [run](/recipe_modules/buildbucket/api.py#264)(self, schedule_build_requests, collect_interval=None, timeout=None, url_title_fn=None, step_name=None, raise_if_unsuccessful=False):**
 
 Runs builds and returns results.
 
@@ -427,7 +431,7 @@ Returns:
   [Builds](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   in the same order as schedule_build_requests.
 
-&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#459)(self, schedule_build_requests, url_title_fn=None, step_name=None):**
+&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#465)(self, schedule_build_requests, url_title_fn=None, step_name=None):**
 
 Schedules a batch of builds.
 
@@ -456,7 +460,7 @@ Returns:
 Raises:
   `InfraFailure` if any of the requests fail.
 
-&mdash; **def [schedule\_request](/recipe_modules/buildbucket/api.py#289)(self, builder, project=INHERIT, bucket=INHERIT, properties=None, experimental=INHERIT, gitiles_commit=INHERIT, gerrit_changes=INHERIT, tags=None, inherit_buildsets=True, swarming_parent_run_id=None, dimensions=None, priority=INHERIT, critical=INHERIT, exe_cipd_version=INHERIT):**
+&mdash; **def [schedule\_request](/recipe_modules/buildbucket/api.py#292)(self, builder, project=INHERIT, bucket=INHERIT, properties=None, experimental=INHERIT, gitiles_commit=INHERIT, gerrit_changes=INHERIT, tags=None, inherit_buildsets=True, swarming_parent_run_id=None, dimensions=None, priority=INHERIT, critical=INHERIT, exe_cipd_version=INHERIT, fields=None):**
 
 Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
@@ -518,8 +522,10 @@ Args:
   https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto
 * exe_cipd_version (str|INHERIT): CIPD version of the LUCI Executable (e.g.
   recipe) to use instead of the server-configured one.
+* fields (list of strs): a list of fields to include in the response, names
+  relative to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
 
-&mdash; **def [search](/recipe_modules/buildbucket/api.py#570)(self, predicate, limit=None, url_title_fn=None, step_name=None):**
+&mdash; **def [search](/recipe_modules/buildbucket/api.py#576)(self, predicate, limit=None, url_title_fn=None, step_name=None, fields=None):**
 
 Searches for builds.
 
@@ -538,6 +544,8 @@ Args:
     If a list, the predicates are connected with logical OR.
 *   limit: max number of builds to return. Defaults to 1000.
 *   url_title_fn: generates a build URL title. See module docstring.
+*   fields: a list of fields to include in the response, names relative
+    to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
 
 Returns:
   A list of builds ordered newest-to-oldest.

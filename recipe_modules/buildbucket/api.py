@@ -240,9 +240,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   # RPCs.
 
-  def _default_field_mask(self, path_prefix=''):
-    """Returns a default FieldMask message to use in requests."""
-    paths = [
+  def _make_field_mask(self, paths=None, path_prefix=''):
+    """Returns a FieldMask message to use in requests."""
+    paths = paths or [
       'builder',
       'create_time',
       'created_by',
@@ -256,6 +256,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
       'status',
       'update_time',
     ]
+    if 'id' not in paths:
+      paths = paths[:]
+      paths.append('id')
     return field_mask_pb2.FieldMask(paths=[path_prefix + p for p in paths])
 
   def run(
@@ -302,6 +305,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       priority=INHERIT,
       critical=INHERIT,
       exe_cipd_version=INHERIT,
+      fields=None,
   ):
     """Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
@@ -363,6 +367,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
       https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto
     * exe_cipd_version (str|INHERIT): CIPD version of the LUCI Executable (e.g.
       recipe) to use instead of the server-configured one.
+    * fields (list of strs): a list of fields to include in the response, names
+      relative to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
     """
 
     def as_msg(value, typ):
@@ -407,7 +413,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
         # If not `INHERIT`, `experimental` must be trinary already, so only
         # pass the parent (boolean) value through `as_trinary`.
         experimental=if_inherit(experimental, as_trinary(b.input.experimental)),
-        fields=self._default_field_mask(),
+        fields=self._make_field_mask(paths=fields),
     )
 
     if swarming_parent_run_id:
@@ -567,7 +573,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
       }))
     return self._run_buildbucket('put', build_specs, **kwargs)
 
-  def search(self, predicate, limit=None, url_title_fn=None, step_name=None):
+  def search(self, predicate, limit=None, url_title_fn=None, step_name=None,
+             fields=None):
     """Searches for builds.
 
     Example: find all builds of the current CL.
@@ -585,6 +592,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
         If a list, the predicates are connected with logical OR.
     *   limit: max number of builds to return. Defaults to 1000.
     *   url_title_fn: generates a build URL title. See module docstring.
+    *   fields: a list of fields to include in the response, names relative
+        to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
 
     Returns:
       A list of builds ordered newest-to-oldest.
@@ -603,7 +612,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
             dict(search_builds=dict(
                 predicate=p,
                 page_size=limit,
-                fields=self._default_field_mask('builds.*.'),
+                fields=self._make_field_mask(
+                    paths=fields, path_prefix='builds.*.'),
             ))
             for p in predicate
         ],
@@ -631,24 +641,28 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def cancel_build(self, build_id, **kwargs):
     return self._run_buildbucket('cancel', [build_id], **kwargs)
 
-  def get_multi(self, build_ids, url_title_fn=None, step_name=None):
+  def get_multi(self, build_ids, url_title_fn=None, step_name=None,
+                fields=None):
     """Gets multiple builds.
 
     Args:
     *   `build_ids`: a list of build IDs.
     *   `url_title_fn`: generates build URL title. See module docstring.
     *   `step_name`: name for this step.
+    *   `fields`: a list of fields to include in the response, names relative
+        to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
 
     Returns:
       A dict {build_id: build_pb2.Build}.
     """
-    return self._get_multi(build_ids, url_title_fn, step_name)[1]
+    return self._get_multi(build_ids, url_title_fn, step_name, fields)[1]
 
-  def _get_multi(self, build_ids, url_title_fn, step_name):
+  def _get_multi(self, build_ids, url_title_fn, step_name, fields):
     """Implements get_multi, but also returns StepResult."""
     batch_req = rpc_pb2.BatchRequest(
         requests=[
-          dict(get_build=dict(id=id, fields=self._default_field_mask()))
+          dict(get_build=dict(id=id, fields=self._make_field_mask(
+              paths=fields)))
           for id in build_ids
         ],
     )
@@ -707,21 +721,23 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def collect_builds(
       self, build_ids, interval=None, timeout=None, step_name=None,
       raise_if_unsuccessful=False, url_title_fn=None,
-      mirror_status=False,
+      mirror_status=False, fields=None,
   ):
     """Waits for a set of builds to end and returns their details.
 
     Args:
     * `build_ids`: List of build IDs to wait for.
-    * `interval`: Delay (in secs) between requests while waiting for build to end.
-      Defaults to 1m.
+    * `interval`: Delay (in secs) between requests while waiting for build to
+      end. Defaults to 1m.
     * `timeout`: Maximum time to wait for builds to end. Defaults to 1h.
     * `step_name`: Custom name for the generated step.
-    * `raise_if_unsuccessful`: if any build being collected did not succeed, raise
-      an exception.
+    * `raise_if_unsuccessful`: if any build being collected did not succeed,
+      raise an exception.
     * `url_title_fn`: generates build URL title. See module docstring.
     * `mirror_status`: mark the step as failed/infra-failed if any of the builds
       did not succeed. Ignored if raise_if_unsuccessful is True.
+    * `fields`: a list of fields to include in the response, names relative
+      to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
 
     Returns:
       A map from integer build IDs to the corresponding
@@ -743,8 +759,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
       )
 
       # Fetch build details.
+      if raise_if_unsuccessful or mirror_status:
+        if fields and 'status' not in fields:
+          fields = fields[:]
+          fields.append('status')
       step_res, builds = self._get_multi(
-          build_ids, url_title_fn=url_title_fn, step_name='get')
+          build_ids, url_title_fn=url_title_fn, step_name='get', fields=fields)
 
       if raise_if_unsuccessful:
         unsuccessful_builds = sorted(

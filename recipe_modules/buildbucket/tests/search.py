@@ -26,6 +26,7 @@ def RunSteps(api):
         gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),
       ),
       limit=limit,
+      fields=['builder', 'id', 'status'],
   )
   assert limit is None or len(builds) <= limit
   pres = api.step.active_result.presentation
