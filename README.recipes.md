@@ -2373,8 +2373,8 @@ Args:
     pass in the value 'any' or 'all', the engine will allow any return code
     to be returned. Defaults to {0}.
   * infra_step: Whether or not this is an infrastructure step.
-    Infrastructure steps will place the step in an EXCEPTION state and raise
-    InfraFailure.
+    Failing infrastructure steps will place the step in an EXCEPTION state
+    and raise InfraFailure.
   * wrapper: If supplied, a command to prepend to the executed step as a
     command wrapper.
   * timeout: If supplied, the recipe engine will kill the step after the
@@ -2396,9 +2396,9 @@ Args:
     step. See `ResourceCost()`. The recipe_engine will prevent more than the
     machine's maximum resources worth of steps from running at once (i.e.
     steps will wait until there's enough resource available before
-    starting). Waiting suprocesses are unblocked in capacitiy-available
+    starting). Waiting subprocesses are unblocked in capacity-available
     order. This means it's possible for pending tasks with large
-    requirements to 'starve' temporarially while other smaller cost tasks
+    requirements to 'starve' temporarily while other smaller cost tasks
     run in parallel. Equal-weight tasks will start in FIFO order. Steps
     with a cost of None will NEVER wait (which is the equivalent of
     `ResourceCost()`). Defaults to `ResourceCost(cpu=500, memory=50)`.
@@ -2462,7 +2462,7 @@ step_links, etc.) or set the step's status. If you do not set the status,
 it will be calculated from the status' of all the steps run within this one
 according to the `status` algorithm selected.
   1. If there's an active exception when leaving the `with` statement, the
-     status will be one of FAILUR, WARNING or EXCEPTION (depending on the
+     status will be one of FAILURE, WARNING or EXCEPTION (depending on the
      type of exception).
   2. Otherwise:
      1. If the status algorithm is 'worst', it will assume the status of the
@@ -2499,7 +2499,7 @@ Example:
 
 NOTE/DEPRECATION: The object yielded also has a '.presentation' field to be
 compatible with code that treats the yielded object as a StepData object. If
-you see such code, please updaet it to treat the yielded object directly as
+you see such code, please update it to treat the yielded object directly as
 StepPresentation instead.
 
 Args:
