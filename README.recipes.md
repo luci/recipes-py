@@ -261,7 +261,11 @@ If it returns `None`, the link is not reported. Default link title is build id.
 
 A module for interacting with buildbucket.
 
+<<<<<<< HEAD
 &emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#891)(self):**
+=======
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#863)(self):**
+>>>>>>> [buildbucket] Don't accept project=None in schedule_request
 
 Returns bucket name in v1 format.
 
@@ -284,11 +288,19 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
+<<<<<<< HEAD
 &emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#902)(self):**
 
 DEPRECATED, use build.id instead.
 
 &emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#907)(self):**
+=======
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#874)(self):**
+
+DEPRECATED, use build.id instead.
+
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#879)(self):**
+>>>>>>> [buildbucket] Don't accept project=None in schedule_request
 
 DEPRECATED, use build.input instead.
 
@@ -305,7 +317,11 @@ It remains on the bot from build to build.
 See "Builder cache" in
 https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/project_config.proto
 
+<<<<<<< HEAD
 &emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#912)(self):**
+=======
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#884)(self):**
+>>>>>>> [buildbucket] Don't accept project=None in schedule_request
 
 Deprecated. Use build.builder instead.
 
@@ -313,9 +329,15 @@ Deprecated. Use build.builder instead.
 
 Returns builder name. Shortcut for `.build.builder.builder`.
 
+<<<<<<< HEAD
 &mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#641)(self, build_id, \*\*kwargs):**
 
 &mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#708)(self, build_id, \*\*kwargs):**
+=======
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#623)(self, build_id, \*\*kwargs):**
+
+&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#686)(self, build_id, \*\*kwargs):**
+>>>>>>> [buildbucket] Don't accept project=None in schedule_request
 
 Shorthand for `collect_builds` below, but for a single build only.
 
@@ -326,7 +348,11 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
   for the ended build.
 
+<<<<<<< HEAD
 &mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#721)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False, fields=None):**
+=======
+&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#699)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False):**
+>>>>>>> [buildbucket] Don't accept project=None in schedule_request
 
 Waits for a set of builds to end and returns their details.
 
@@ -349,7 +375,11 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   for all specified builds.
 
+<<<<<<< HEAD
 &mdash; **def [get](/recipe_modules/buildbucket/api.py#687)(self, build_id, url_title_fn=None, step_name=None):**
+=======
+&mdash; **def [get](/recipe_modules/buildbucket/api.py#665)(self, build_id, url_title_fn=None, step_name=None):**
+>>>>>>> [buildbucket] Don't accept project=None in schedule_request
 
 Gets a build.
 
@@ -361,11 +391,19 @@ Args:
 Returns:
   A build_pb2.Build.
 
+<<<<<<< HEAD
 &mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#704)(self, build_id, \*\*kwargs):**
 
 DEPRECATED. Use get().
 
 &mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#644)(self, build_ids, url_title_fn=None, step_name=None, fields=None):**
+=======
+&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#682)(self, build_id, \*\*kwargs):**
+
+DEPRECATED. Use get().
+
+&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#626)(self, build_ids, url_title_fn=None, step_name=None):**
+>>>>>>> [buildbucket] Don't accept project=None in schedule_request
 
 Gets multiple builds.
 
@@ -395,7 +433,11 @@ Never returns None, but sub-fields may be empty.
 Returns True if the build is critical. Build defaults to the current one.
     
 
+<<<<<<< HEAD
 &mdash; **def [put](/recipe_modules/buildbucket/api.py#541)(self, builds, \*\*kwargs):**
+=======
+&mdash; **def [put](/recipe_modules/buildbucket/api.py#527)(self, builds, \*\*kwargs):**
+>>>>>>> [buildbucket] Don't accept project=None in schedule_request
 
 Puts a batch of builds.
 
@@ -431,7 +473,11 @@ Returns:
   [Builds](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   in the same order as schedule_build_requests.
 
+<<<<<<< HEAD
 &mdash; **def [schedule](/recipe_modules/buildbucket/api.py#465)(self, schedule_build_requests, url_title_fn=None, step_name=None):**
+=======
+&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#451)(self, schedule_build_requests, url_title_fn=None, step_name=None):**
+>>>>>>> [buildbucket] Don't accept project=None in schedule_request
 
 Schedules a batch of builds.
 
@@ -525,7 +571,11 @@ Args:
 * fields (list of strs): a list of fields to include in the response, names
   relative to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
 
+<<<<<<< HEAD
 &mdash; **def [search](/recipe_modules/buildbucket/api.py#576)(self, predicate, limit=None, url_title_fn=None, step_name=None, fields=None):**
+=======
+&mdash; **def [search](/recipe_modules/buildbucket/api.py#562)(self, predicate, limit=None, url_title_fn=None, step_name=None):**
+>>>>>>> [buildbucket] Don't accept project=None in schedule_request
 
 Searches for builds.
 

@@ -391,14 +391,6 @@ class BuildbucketApi(recipe_api.RecipeApi):
         return parent_value
       return value
 
-    if project is None:  # pragma: no cover
-      # For backwards compatibility - some downstream projects explicitly pass
-      # project=None to instruct this method to inherit the parent builder's
-      # project.
-      # TODO(olivernewman): Stop accepting project=None after modifying
-      # downstream projects to pass INHERIT instead of None.
-      project = self.INHERIT
-
     b = self.build
 
     req = rpc_pb2.ScheduleBuildRequest(
