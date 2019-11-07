@@ -216,8 +216,11 @@ class StepPresentation(object):
       step_stream.add_step_summary_text(self.step_summary_text)
     for name, lines in logs.iteritems():
       with step_stream.new_log_stream(name) as log:
-        for line in lines:
-          log.write_split(line)
+        if isinstance(lines, basestring):
+          log.write_split(lines)
+        else:
+          for line in lines:
+            log.write_split(line)
     for label, url in self.links.iteritems():
       step_stream.add_step_link(label, url)
     for key, value in sorted(self._properties.iteritems()):
