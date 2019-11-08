@@ -261,11 +261,7 @@ If it returns `None`, the link is not reported. Default link title is build id.
 
 A module for interacting with buildbucket.
 
-<<<<<<< HEAD
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#891)(self):**
-=======
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#863)(self):**
->>>>>>> [buildbucket] Don't accept project=None in schedule_request
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#883)(self):**
 
 Returns bucket name in v1 format.
 
@@ -288,19 +284,11 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
-<<<<<<< HEAD
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#902)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#894)(self):**
 
 DEPRECATED, use build.id instead.
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#907)(self):**
-=======
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#874)(self):**
-
-DEPRECATED, use build.id instead.
-
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#879)(self):**
->>>>>>> [buildbucket] Don't accept project=None in schedule_request
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#899)(self):**
 
 DEPRECATED, use build.input instead.
 
@@ -317,11 +305,7 @@ It remains on the bot from build to build.
 See "Builder cache" in
 https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/project_config.proto
 
-<<<<<<< HEAD
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#912)(self):**
-=======
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#884)(self):**
->>>>>>> [buildbucket] Don't accept project=None in schedule_request
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#904)(self):**
 
 Deprecated. Use build.builder instead.
 
@@ -329,15 +313,9 @@ Deprecated. Use build.builder instead.
 
 Returns builder name. Shortcut for `.build.builder.builder`.
 
-<<<<<<< HEAD
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#641)(self, build_id, \*\*kwargs):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#633)(self, build_id, \*\*kwargs):**
 
-&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#708)(self, build_id, \*\*kwargs):**
-=======
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#623)(self, build_id, \*\*kwargs):**
-
-&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#686)(self, build_id, \*\*kwargs):**
->>>>>>> [buildbucket] Don't accept project=None in schedule_request
+&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#700)(self, build_id, \*\*kwargs):**
 
 Shorthand for `collect_builds` below, but for a single build only.
 
@@ -348,11 +326,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
   for the ended build.
 
-<<<<<<< HEAD
-&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#721)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False, fields=None):**
-=======
-&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#699)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False):**
->>>>>>> [buildbucket] Don't accept project=None in schedule_request
+&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#713)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False, fields=None):**
 
 Waits for a set of builds to end and returns their details.
 
@@ -375,11 +349,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   for all specified builds.
 
-<<<<<<< HEAD
-&mdash; **def [get](/recipe_modules/buildbucket/api.py#687)(self, build_id, url_title_fn=None, step_name=None):**
-=======
-&mdash; **def [get](/recipe_modules/buildbucket/api.py#665)(self, build_id, url_title_fn=None, step_name=None):**
->>>>>>> [buildbucket] Don't accept project=None in schedule_request
+&mdash; **def [get](/recipe_modules/buildbucket/api.py#679)(self, build_id, url_title_fn=None, step_name=None):**
 
 Gets a build.
 
@@ -391,19 +361,11 @@ Args:
 Returns:
   A build_pb2.Build.
 
-<<<<<<< HEAD
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#704)(self, build_id, \*\*kwargs):**
+&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#696)(self, build_id, \*\*kwargs):**
 
 DEPRECATED. Use get().
 
-&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#644)(self, build_ids, url_title_fn=None, step_name=None, fields=None):**
-=======
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#682)(self, build_id, \*\*kwargs):**
-
-DEPRECATED. Use get().
-
-&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#626)(self, build_ids, url_title_fn=None, step_name=None):**
->>>>>>> [buildbucket] Don't accept project=None in schedule_request
+&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#636)(self, build_ids, url_title_fn=None, step_name=None, fields=None):**
 
 Gets multiple builds.
 
@@ -433,11 +395,7 @@ Never returns None, but sub-fields may be empty.
 Returns True if the build is critical. Build defaults to the current one.
     
 
-<<<<<<< HEAD
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#541)(self, builds, \*\*kwargs):**
-=======
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#527)(self, builds, \*\*kwargs):**
->>>>>>> [buildbucket] Don't accept project=None in schedule_request
+&mdash; **def [put](/recipe_modules/buildbucket/api.py#533)(self, builds, \*\*kwargs):**
 
 Puts a batch of builds.
 
@@ -473,11 +431,7 @@ Returns:
   [Builds](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   in the same order as schedule_build_requests.
 
-<<<<<<< HEAD
-&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#465)(self, schedule_build_requests, url_title_fn=None, step_name=None):**
-=======
-&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#451)(self, schedule_build_requests, url_title_fn=None, step_name=None):**
->>>>>>> [buildbucket] Don't accept project=None in schedule_request
+&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#457)(self, schedule_build_requests, url_title_fn=None, step_name=None):**
 
 Schedules a batch of builds.
 
@@ -571,11 +525,7 @@ Args:
 * fields (list of strs): a list of fields to include in the response, names
   relative to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
 
-<<<<<<< HEAD
-&mdash; **def [search](/recipe_modules/buildbucket/api.py#576)(self, predicate, limit=None, url_title_fn=None, step_name=None, fields=None):**
-=======
-&mdash; **def [search](/recipe_modules/buildbucket/api.py#562)(self, predicate, limit=None, url_title_fn=None, step_name=None):**
->>>>>>> [buildbucket] Don't accept project=None in schedule_request
+&mdash; **def [search](/recipe_modules/buildbucket/api.py#568)(self, predicate, limit=None, url_title_fn=None, step_name=None, fields=None):**
 
 Searches for builds.
 
@@ -652,14 +602,14 @@ API for interacting with CIPD.
 Depends on 'cipd' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 
-#### **class [CIPDApi](/recipe_modules/cipd/api.py#203)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
+#### **class [CIPDApi](/recipe_modules/cipd/api.py#202)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
 
 CIPDApi provides basic support for CIPD.
 
 This assumes that `cipd` (or `cipd.exe` or `cipd.bat` on windows) has been
 installed somewhere in $PATH.
 
-&mdash; **def [acl\_check](/recipe_modules/cipd/api.py#289)(self, pkg_path, reader=True, writer=False, owner=False):**
+&mdash; **def [acl\_check](/recipe_modules/cipd/api.py#288)(self, pkg_path, reader=True, writer=False, owner=False):**
 
 Checks whether the caller has a given roles in a package.
 
@@ -671,9 +621,9 @@ Args:
 
 Returns True if the caller has given roles, False otherwise.
 
-&mdash; **def [add\_instance\_link](/recipe_modules/cipd/api.py#521)(self, step_result):**
+&mdash; **def [add\_instance\_link](/recipe_modules/cipd/api.py#520)(self, step_result):**
 
-&mdash; **def [build](/recipe_modules/cipd/api.py#387)(self, input_dir, output_package, package_name, compression_level=None, install_mode=None, preserve_mtime=False, preserve_writable=False):**
+&mdash; **def [build](/recipe_modules/cipd/api.py#386)(self, input_dir, output_package, package_name, compression_level=None, install_mode=None, preserve_mtime=False, preserve_writable=False):**
 
 Builds, but does not upload, a cipd package from a directory.
 
@@ -692,7 +642,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#367)(self, pkg_def, output_package, compression_level=None):**
+&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#366)(self, pkg_def, output_package, compression_level=None):**
 
 Builds a package based on a PackageDefinition object.
 
@@ -705,7 +655,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#341)(self, pkg_def, output_package, pkg_vars=None, compression_level=None):**
+&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#340)(self, pkg_def, output_package, pkg_vars=None, compression_level=None):**
 
 Builds a package based on on-disk YAML package definition file.
 
@@ -719,7 +669,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#555)(self, pkg_def, refs=None, tags=None, compression_level=None):**
+&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#554)(self, pkg_def, refs=None, tags=None, compression_level=None):**
 
 Builds and uploads a package based on a PackageDefinition object.
 
@@ -736,7 +686,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#527)(self, pkg_def, refs=None, tags=None, pkg_vars=None, compression_level=None):**
+&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#526)(self, pkg_def, refs=None, tags=None, pkg_vars=None, compression_level=None):**
 
 Builds and uploads a package based on on-disk YAML package definition
 file.
@@ -755,7 +705,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [describe](/recipe_modules/cipd/api.py#684)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
+&mdash; **def [describe](/recipe_modules/cipd/api.py#689)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
 
 Returns information about a pacakge instance given its version:
 who uploaded the instance and when and a list of attached tags.
@@ -770,7 +720,7 @@ Args:
 
 Returns the CIPDApi.Description instance describing the package.
 
-&mdash; **def [ensure](/recipe_modules/cipd/api.py#583)(self, root, ensure_file):**
+&mdash; **def [ensure](/recipe_modules/cipd/api.py#582)(self, root, ensure_file):**
 
 Ensures that packages are installed in a given root dir.
 
@@ -780,9 +730,9 @@ Args:
 
 Returns the map of subdirectories to CIPDApi.Pin instances.
 
-&emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#274)(self):**
+&emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#273)(self):**
 
-&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#750)(self, root, package_file):**
+&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#755)(self, root, package_file):**
 
 Deploys the specified package to root.
 
@@ -796,7 +746,7 @@ Args:
 
 Returns a Pin for the deployed package.
 
-&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#719)(self, destination, package_name, version):**
+&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#724)(self, destination, package_name, version):**
 
 Downloads the specified package to destination.
 
@@ -813,7 +763,7 @@ Args:
 
 Returns a Pin for the downloaded package.
 
-&mdash; **def [register](/recipe_modules/cipd/api.py#461)(self, package_name, package_path, refs=(), tags=None):**
+&mdash; **def [register](/recipe_modules/cipd/api.py#460)(self, package_name, package_path, refs=(), tags=None):**
 
 Uploads and registers package instance in the package repository.
 
@@ -827,7 +777,7 @@ Args:
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [search](/recipe_modules/cipd/api.py#658)(self, package_name, tag):**
+&mdash; **def [search](/recipe_modules/cipd/api.py#657)(self, package_name, tag, test_instances=None):**
 
 Searches for package instances by tag, optionally constrained by package
 name.
@@ -835,10 +785,15 @@ name.
 Args:
   * package_name (str) - The name of the cipd package.
   * tag (str) - The cipd package tag.
+  * test_instances (None|int|List[str]) - Default test data for this step:
+    * None - Search returns a single default pin.
+    * int - Search generates `test_instances` number of testing ids
+      `instance_id_%d` and returns pins for those.
+    * List[str] - Returns pins for the given testing ids.
 
 Returns the list of CIPDApi.Pin instances.
 
-&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#633)(self, package_name, version, refs):**
+&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#632)(self, package_name, version, refs):**
 
 Moves a ref to point to a given version.
 
@@ -849,7 +804,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [set\_service\_account](/recipe_modules/cipd/api.py#252)(self, service_account):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [set\_service\_account](/recipe_modules/cipd/api.py#251)(self, service_account):**
 
 Temporarily sets the service account used for authentication to CIPD.
 
@@ -860,7 +815,7 @@ Args:
   * service_account(service_account.api.ServiceAccount): Service account to
       use for authentication.
 
-&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#606)(self, package_name, version, tags):**
+&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#605)(self, package_name, version, tags):**
 
 Tags package of a specific version.
 

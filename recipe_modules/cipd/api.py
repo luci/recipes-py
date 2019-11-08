@@ -8,7 +8,6 @@ https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 """
 
 import contextlib
-import re
 
 from collections import namedtuple
 
@@ -655,17 +654,21 @@ class CIPDApi(recipe_api.RecipeApi):
     result = step_result.json.output['result']
     return self.Pin(**result['pin'])
 
-  def search(self, package_name, tag):
+  def search(self, package_name, tag, test_instances=None):
     """Searches for package instances by tag, optionally constrained by package
     name.
 
     Args:
       * package_name (str) - The name of the cipd package.
       * tag (str) - The cipd package tag.
+      * test_instances (None|int|List[str]) - Default test data for this step:
+        * None - Search returns a single default pin.
+        * int - Search generates `test_instances` number of testing ids
+          `instance_id_%d` and returns pins for those.
+        * List[str] - Returns pins for the given testing ids.
 
     Returns the list of CIPDApi.Pin instances.
     """
-
     assert ':' in tag, 'tag must be in a form "k:v"'
 
     cmd = [
@@ -678,7 +681,9 @@ class CIPDApi(recipe_api.RecipeApi):
     step_result = self._run(
         'cipd search %s %s' % (package_name, tag),
         cmd,
-        step_test_data=lambda: self.test_api.example_search(package_name))
+        step_test_data=lambda: self.test_api.example_search(
+            package_name, test_instances)
+    )
     return [self.Pin(**pin) for pin in step_result.json.output['result'] or []]
 
   def describe(self,
