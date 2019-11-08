@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 import base64
+import collections
 import contextlib
 import copy
 import sys
@@ -16,7 +17,6 @@ from recipe_engine import recipe_api
 # TODO(maruel): Remove references to basestring once python 2 not used.
 if sys.version_info.major >= 3:
   basestring = str  # pragma: no cover
-
 
 DEFAULT_CIPD_VERSION = 'git_revision:67b11ada44a625008a2db5cb49ad453494b16ba1'
 
@@ -188,6 +188,22 @@ class TaskRequest(object):
         tags_list.append('%s:%s' % (tag, value))
     ret = self._copy()
     ret._tags = sorted(tags_list)
+    return ret
+
+  def _from_jsonish(self, d):
+    """Constructs a task request from a JSON-serializable dict."""
+    tags = collections.defaultdict(list)
+    for tag in d['tags']:
+      k, v = tag.split(':', 1)
+      tags[k].append(v)
+    ret = (self.
+        with_name(d['name']).
+        with_priority(int(d['priority'])).
+        with_service_account(d['service_account']).
+        with_user(d['user']).
+        with_tags(tags)) # yapf: disable
+    ret._slices = [
+      self.TaskSlice(self._api)._from_jsonish(ts) for ts in d['task_slices']]
     return ret
 
   def to_jsonish(self):
@@ -629,6 +645,45 @@ class TaskRequest(object):
       ret._named_caches.update(named_caches)
       return ret
 
+    def _from_jsonish(self, d):
+      p = d['properties']
+      containment = p['containment']
+
+      def kv_list_to_dict(kv_list):
+        ret = {}
+        for kv in kv_list:
+          ret[kv['key']] = kv['value']
+        return ret
+
+      ret = (self.
+          with_command(p['command']).
+          with_dimensions(**kv_list_to_dict(p['dimensions'])).
+          with_outputs(p['outputs']).
+          with_env_vars(**kv_list_to_dict(p['env'])).
+          with_env_prefixes(**kv_list_to_dict(p['env_prefixes'])).
+          with_execution_timeout_secs(int(p['execution_timeout_secs'])).
+          with_grace_period_secs(int(p['grace_period_secs'])).
+          with_idempotent(p['idempotent']).
+          with_io_timeout_secs(int(p['io_timeout_secs'])).
+          with_lower_priority(containment['lower_priority']).
+          with_containment_type(containment['containment_type']).
+          with_limit_processes(int(containment['limit_processes'])).
+          with_limit_total_committed_memory(
+              int(containment['limit_total_committed_memory']))) # yapf: disable
+      if 'inputs_ref' in p:
+        ret = ret.with_isolated(p['inputs_ref']['isolated'])
+      if 'secret_bytes' in p:
+        ret = ret.with_secret_bytes(base64.b64decode(p['secret_bytes']))
+      if 'cipd_input' in p:
+        ensure_file = self._api.cipd.EnsureFile()
+        for pkg in p['cipd_input']['packages']:
+          ensure_file.add_package(
+              pkg['package_name'], pkg['version'], subdir=pkg['path'])
+        ret = ret.with_cipd_ensure_file(ensure_file)
+      if 'caches' in p:
+        ret = ret.with_named_caches({c['name']: c['path'] for c in p['caches']})
+      return ret.with_expiration_secs(int(d['expiration_secs']))
+
     def to_jsonish(self):
       """Renders the task request as a JSON-serializable dict.
 
@@ -956,11 +1011,9 @@ class SwarmingApi(recipe_api.RecipeApi):
       self._server = 'https://example.swarmingserver.appspot.com'
       # Recipes always run on top of swarming task now.
       self._env_properties.SWARMING_TASK_ID = (
-          self._env_properties.SWARMING_TASK_ID or
-          'fake-task-id')
+          self._env_properties.SWARMING_TASK_ID or 'fake-task-id')
       self._env_properties.SWARMING_BOT_ID = (
-          self._env_properties.SWARMING_BOT_ID or
-          'fake-bot-id')
+          self._env_properties.SWARMING_BOT_ID or 'fake-bot-id')
 
     if self.m.runtime.is_experimental:
       self._version = 'latest'
@@ -1032,6 +1085,15 @@ class SwarmingApi(recipe_api.RecipeApi):
     have it start running on the swarming server.
     """
     return TaskRequest(self.m)
+
+  def task_request_from_jsonish(self, json_d):
+    """Creates a new TaskRequest object from a JSON-serializable dict.
+
+    The input argument should match the schema as the output of
+    TaskRequest.to_jsonish().
+    """
+    return TaskRequest(self.m)._from_jsonish(json_d)
+
 
   def trigger(self, step_name, requests, cancel_extra_tasks=False):
     """Triggers a set of Swarming tasks.

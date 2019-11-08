@@ -1,7 +1,6 @@
 # Copyright 2015 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
-
 """Checks recipes for stylistic and hygenic issues.
 
 Currently only checks that recipes only import python modules from a whitelist.
@@ -17,29 +16,29 @@ from __future__ import absolute_import
 import re
 import types
 
-
 MODULES_WHITELIST = [
-  r'ast',
-  r'base64',
-  r'collections',
-  r'contextlib',
-  r'copy',
-  r'datetime',
-  r'functools',
-  r'hashlib',
-  r'itertools',
-  r'json',
-  r'math',
-  r're',
-  r'textwrap',
-  r'urlparse',
-  r'zlib',
+    r'ast',
+    r'base64',
+    r'collections',
+    r'contextlib',
+    r'copy',
+    r'datetime',
+    r'difflib',
+    r'functools',
+    r'hashlib',
+    r'itertools',
+    r'json',
+    r'math',
+    r're',
+    r'textwrap',
+    r'urlparse',
+    r'zlib',
 
-  # non stdlib
-  r'google\.protobuf',
+    # non stdlib
+    r'google\.protobuf',
 
-  # From recipe ecosystem
-  r'PB',
+    # From recipe ecosystem
+    r'PB',
 ]
 
 
@@ -57,18 +56,19 @@ def ImportsTest(recipe, whitelist):
           break
       else:
         yield ('In %s:\n'
-               '  Non-whitelisted import of %s' %
-               (recipe.path, module_name))
+               '  Non-whitelisted import of %s' % (recipe.path, module_name))
 
 
 def add_arguments(parser):
   # TODO(iannucci): merge this with the test command, doesn't need to be top
   # level.
   parser.add_argument(
-      '--whitelist', '-w', action='append', default=[],
-      help=(
-        'A regexp matching module names to add to the default whitelist. '
-        'Use multiple times to add multiple patterns,'))
+      '--whitelist',
+      '-w',
+      action='append',
+      default=[],
+      help=('A regexp matching module names to add to the default whitelist. '
+            'Use multiple times to add multiple patterns,'))
 
   parser.set_defaults(func=main)
 

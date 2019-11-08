@@ -2,11 +2,14 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import difflib
+
 from recipe_engine.recipe_api import Property
 
 
 DEPS = [
   'cipd',
+  'json',
   'path',
   'runtime',
   'step',
@@ -57,6 +60,15 @@ def RunSteps(api):
 
   # There should be three task slices at this point.
   assert len(request) == 2
+
+  # Assert from_josnish(x.to_jonish()) == x
+  jsonish = request.to_jsonish()
+  from_jsonish = api.swarming.task_request_from_jsonish(jsonish)
+  back_to_jsonish = from_jsonish.to_jsonish()
+  diff = list(difflib.unified_diff(
+      api.json.dumps(jsonish, indent=2).splitlines(),
+      api.json.dumps(back_to_jsonish, indent=2).splitlines()))
+  assert not diff, ''.join(diff)
 
   # Dimensions, and environment variables and prefixes can be unset.
   slice = request[-1]
