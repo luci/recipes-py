@@ -8,7 +8,7 @@ import urllib
 from recipe_engine import recipe_api
 
 
-DEFAULT_CIPD_VERSION = 'git_revision:3f5474f35b27b0f515af63c31a3fbd12befdb2e7'
+DEFAULT_CIPD_VERSION = 'git_revision:305e79001db1846906c7136d90a863bee5bd3bfc'
 
 
 class IsolatedApi(recipe_api.RecipeApi):
