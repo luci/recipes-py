@@ -51,6 +51,12 @@ def RunSteps(api):
       )
   )
 
+  # Check a request with no tags and no user can make it to JSON and back.
+  # These requests should be considered valid.
+  req_no_tag_no_user = request.with_tags(None).with_user(None)
+  req_no_tag_no_user_jsonish = req_no_tag_no_user.to_jsonish()
+  api.swarming.task_request_from_jsonish(req_no_tag_no_user_jsonish)
+
   # Append a slice that is a variation of the last one as a starting point.
   request = request.add_slice(request[-1].
     with_grace_period_secs(20).
@@ -145,6 +151,9 @@ def RunSteps(api):
 
 
 def GenTests(api):
+  # For coverage
+  api.swarming.example_task_request_jsonish()
+
   yield api.test('basic')
   yield api.test('experimental') + api.runtime(
       is_luci=False, is_experimental=True)

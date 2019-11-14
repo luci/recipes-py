@@ -162,7 +162,7 @@ class TaskRequest(object):
     Args:
       user (str) - user that requested this task, if applicable.
     """
-    assert isinstance(user, basestring)
+    assert isinstance(user, (basestring, type(None)))
     ret = self._copy()
     ret._user = user
     return ret
@@ -178,6 +178,8 @@ class TaskRequest(object):
     Args:
       * tags (Dict[str, List[str]]) - The tags to attach to the task.
     """
+    if tags is None:
+      tags = {}
     assert isinstance(tags, dict)
     tags_list = []
     for tag, values in tags.items():
@@ -203,7 +205,8 @@ class TaskRequest(object):
         with_user(d['user']).
         with_tags(tags)) # yapf: disable
     ret._slices = [
-      self.TaskSlice(self._api)._from_jsonish(ts) for ts in d['task_slices']]
+        self.TaskSlice(self._api)._from_jsonish(ts) for ts in d['task_slices']
+    ]
     return ret
 
   def to_jsonish(self):
@@ -1093,7 +1096,6 @@ class SwarmingApi(recipe_api.RecipeApi):
     TaskRequest.to_jsonish().
     """
     return TaskRequest(self.m)._from_jsonish(json_d)
-
 
   def trigger(self, step_name, requests, cancel_extra_tasks=False):
     """Triggers a set of Swarming tasks.

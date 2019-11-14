@@ -11,22 +11,70 @@ from PB.recipe_modules.recipe_engine.swarming import properties
 class SwarmingTestApi(recipe_test_api.RecipeTestApi):
   TaskState = TaskState
 
+  def example_task_request_jsonish(self):
+    """Returns a dict that can be parsed by task_request_from_jsonish()."""
+    return {
+        'name':
+            'QEMU',
+        'priority':
+            20,
+        'service_account':
+            'foo@example.com',
+        'user':
+            None,
+        'tags':
+            None,
+        'task_slices': [{
+            'expiration_secs': '18000',
+            'properties': {
+                'cipd_input': {
+                    'packages': [],
+                    'server': ''
+                },
+                'command': ['/bin/true'],
+                'containment': {
+                    'containment_type': 'NONE',
+                    'limit_processes': False,
+                    'limit_total_committed_memory': False,
+                    'lower_priority': False,
+                },
+                'dimensions': [{
+                    'key': 'pool',
+                    'value': 'swarming-pool',
+                }],
+                'env': [],
+                'env_prefixes': [],
+                'execution_timeout_secs': '2400',
+                'grace_period_secs': '30',
+                'inputs_ref': {
+                    'isolated': '525120764a9839a5bac9542ab158838123e2dc1c',
+                    'isolatedserver': 'https://chrome-isolated.appspot.com',
+                    'namespace': 'default-gzip'
+                },
+                'idempotent': False,
+                'io_timeout_secs': '430',
+                'outputs': []
+            }
+        }],
+    }
+
   def properties(self,
                  server='https://example.swarmingserver.appspot.com',
                  version='test_version',
                  task_id='fake-task-id',
                  bot_id='fake-bot'):
-    return self.m.properties(**{
-      '$recipe_engine/swarming': properties.InputProperties(
-        server=server,
-        version=version,
-      ),
-    }) + self.m.properties.environ(
-      properties.EnvProperties(
-        SWARMING_TASK_ID=task_id,
-        SWARMING_BOT_ID=bot_id,
-      )
-    )
+    return self.m.properties(
+        **{
+            '$recipe_engine/swarming':
+                properties.InputProperties(
+                    server=server,
+                    version=version,
+                ),
+        }) + self.m.properties.environ(
+            properties.EnvProperties(
+                SWARMING_TASK_ID=task_id,
+                SWARMING_BOT_ID=bot_id,
+            ))
 
   def trigger(self, task_names, initial_id=0):
     """Generates step test data intended to mock api.swarming.trigger()
@@ -69,27 +117,31 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
     """
     assert isinstance(state, TaskState) or state == None
     assert state not in [
-      TaskState.INVALID, TaskState.PENDING, TaskState.RUNNING,
+        TaskState.INVALID,
+        TaskState.PENDING,
+        TaskState.RUNNING,
     ], 'state %s invalid or not final' % state.name
     if state == None:
       return {
-        'error' : 'Bot could not be contacted',
-        'results' : {'task_id' : id},
+          'error': 'Bot could not be contacted',
+          'results': {
+              'task_id': id
+          },
       }
 
     raw_results = {
         'output': output,
         'outputs': outputs,
         'results': {
-          'name': name,
-          'task_id': id,
-          'state': state.name,
-          'duration': duration,
-          'outputs_ref': {
-              'isolated': 'abc123',
-              'isolatedserver': 'https://isolateserver.appspot.com',
-              'namespace': 'default-gzip',
-          },
+            'name': name,
+            'task_id': id,
+            'state': state.name,
+            'duration': duration,
+            'outputs_ref': {
+                'isolated': 'abc123',
+                'isolatedserver': 'https://isolateserver.appspot.com',
+                'namespace': 'default-gzip',
+            },
         },
     }
     if state == TaskState.COMPLETED:
@@ -107,5 +159,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
       Step test data in the form of JSON output intended to mock a swarming API
       collect method call.
     """
-    id_to_result = {result['results']['task_id'] : result for result in task_results}
+    id_to_result = {
+        result['results']['task_id']: result for result in task_results
+    }
     return self.m.json.output(id_to_result)
