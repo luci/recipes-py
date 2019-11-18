@@ -162,28 +162,6 @@ class StepData(object):
   # Unless you set the `stderr` kwarg when running the step, this will be None.
   stderr = attr.ib(default=None)
 
-  # Bogus fields!
-  # Some naughty recipes have taken the liberty in the past of adding arbitrary
-  # stuff to the StepData object directly rather than defining and returning
-  # their own objects from their methods.
-  #
-  # You should NOT add new fields to this section. Each field here has an
-  # associated bug to remove uses of it and ultimately remove the field
-  # entirely.
-  BOGUS_FIELDS = frozenset([
-    # Written to by the 'build/chromium_swarming' module.
-    # FIXME: crbug.com/956703
-    'isolated_script_results',
-
-    # Written to by the 'build/chromium_swarming' module.
-    # FIXME: crbug.com/956705
-    'isolated_script_perf_results',
-
-    # Written to by the 'build/chromium_android' module.
-    # FIXME: crbug.com/956746
-    'test_utils',
-  ])
-
   # Dict[
   #   namespace: Tuple[str],
   #   Dict[
@@ -331,10 +309,8 @@ class StepData(object):
     # hasattr/getattr will result in __getattr__ being called which will fail
     # because it accesses `self.name` which ALSO might not exist yet.
     if self.__dict__.get('_finalized', False):
-      if name not in self.BOGUS_FIELDS:
-        raise ValueError(
-            'Cannot assign to %r on finalized StepData from step %r' %
-            (name, self.name))
+      raise ValueError('Cannot assign to %r on finalized StepData from step %r'
+                       % (name, self.name))
     return object.__setattr__(self, name, value)
 
   def __getattr__(self, name):

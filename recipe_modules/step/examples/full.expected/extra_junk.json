@@ -165,8 +165,8 @@
       "    return callable_obj(*props, **additional_args)",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/step/examples/full.py\", line 130, in RunSteps",
       "    result.json = \"hi\"",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/step_data.py\", line 337, in __setattr__",
-      "    (name, self.name))",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/step_data.py\", line 313, in __setattr__",
+      "    % (name, self.name))",
       "ValueError: Cannot assign to 'json' on finalized StepData from step 'no-op'"
     ]
   },
