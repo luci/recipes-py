@@ -33,6 +33,23 @@ class BuildbucketApi(recipe_api.RecipeApi):
   HOST_PROD_BEEFY = 'beefy-dot-cr-buildbucket.appspot.com'
   HOST_DEV = 'cr-buildbucket-dev.appspot.com'
 
+  # The Build message fields that will be requested by default in buildbucket
+  # rpc requests.
+  DEFAULT_FIELDS = frozenset({
+      'builder',
+      'create_time',
+      'created_by',
+      'critical',
+      'end_time',
+      'id',
+      'input',
+      'number',
+      'output',
+      'start_time',
+      'status',
+      'update_time',
+  })
+
   # Sentinel to indicate that a child build launched by `schedule_request()`
   # should use the same value as its parent for a specific attribute.
   INHERIT = object()
@@ -240,26 +257,13 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   # RPCs.
 
-  def _make_field_mask(self, paths=None, path_prefix=''):
+  def _make_field_mask(self, paths=DEFAULT_FIELDS, path_prefix=''):
     """Returns a FieldMask message to use in requests."""
-    paths = paths or [
-      'builder',
-      'create_time',
-      'created_by',
-      'critical',
-      'end_time',
-      'id',
-      'input',
-      'number',
-      'output',
-      'start_time',
-      'status',
-      'update_time',
-    ]
+    paths = set(paths)
     if 'id' not in paths:
-      paths = paths[:]
-      paths.append('id')
-    return field_mask_pb2.FieldMask(paths=[path_prefix + p for p in paths])
+      paths.add('id')
+    return field_mask_pb2.FieldMask(
+        paths=[path_prefix + p for p in sorted(paths)])
 
   def run(
       self, schedule_build_requests, collect_interval=None, timeout=None,
@@ -305,7 +309,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       priority=INHERIT,
       critical=INHERIT,
       exe_cipd_version=INHERIT,
-      fields=None,
+      fields=DEFAULT_FIELDS,
   ):
     """Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
@@ -566,7 +570,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return self._run_buildbucket('put', build_specs, **kwargs)
 
   def search(self, predicate, limit=None, url_title_fn=None, step_name=None,
-             fields=None):
+             fields=DEFAULT_FIELDS):
     """Searches for builds.
 
     Example: find all builds of the current CL.
@@ -634,7 +638,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return self._run_buildbucket('cancel', [build_id], **kwargs)
 
   def get_multi(self, build_ids, url_title_fn=None, step_name=None,
-                fields=None):
+                fields=DEFAULT_FIELDS):
     """Gets multiple builds.
 
     Args:
@@ -713,7 +717,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def collect_builds(
       self, build_ids, interval=None, timeout=None, step_name=None,
       raise_if_unsuccessful=False, url_title_fn=None,
-      mirror_status=False, fields=None,
+      mirror_status=False, fields=DEFAULT_FIELDS,
   ):
     """Waits for a set of builds to end and returns their details.
 
