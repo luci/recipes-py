@@ -162,7 +162,7 @@ class TaskRequest(object):
     Args:
       user (str) - user that requested this task, if applicable.
     """
-    assert isinstance(user, (basestring, type(None)))
+    assert isinstance(user, basestring)
     ret = self._copy()
     ret._user = user
     return ret
@@ -178,8 +178,6 @@ class TaskRequest(object):
     Args:
       * tags (Dict[str, List[str]]) - The tags to attach to the task.
     """
-    if tags is None:
-      tags = {}
     assert isinstance(tags, dict)
     tags_list = []
     for tag, values in tags.items():
@@ -195,15 +193,16 @@ class TaskRequest(object):
   def _from_jsonish(self, d):
     """Constructs a task request from a JSON-serializable dict."""
     tags = collections.defaultdict(list)
-    for tag in d['tags']:
+    for tag in d.get('tags', ()):
       k, v = tag.split(':', 1)
       tags[k].append(v)
     ret = (self.
         with_name(d['name']).
         with_priority(int(d['priority'])).
         with_service_account(d['service_account']).
-        with_user(d['user']).
         with_tags(tags)) # yapf: disable
+    if 'user' in d:
+      ret = ret.with_user(d['user'])
     ret._slices = [
         self.TaskSlice(self._api)._from_jsonish(ts) for ts in d['task_slices']
     ]
@@ -215,14 +214,19 @@ class TaskRequest(object):
     The format follows the schema given by the NewTaskRequest class found here:
     https://cs.chromium.org/chromium/infra/luci/appengine/swarming/swarming_rpcs.py?q=NewTaskRequest
     """
-    return {
+    ret = {
         'name': self.name,
         'priority': str(self.priority),
         'service_account': self.service_account,
         'task_slices': [task_slice.to_jsonish() for task_slice in self._slices],
-        'user': self.user,
-        'tags': self.tags,
     }
+    # Omit them rather than setting to None.
+    if self.user:
+      ret['user'] = self.user
+    if self.tags:
+      ret['tags'] = self.tags
+    return ret
+
 
   class TaskSlice(object):
     """Describes a specification of a Swarming task slice.

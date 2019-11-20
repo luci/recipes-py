@@ -23,10 +23,7 @@ def RunSteps(api):
   request = (api.swarming.task_request().
       with_name('recipes-go').
       with_priority(100).
-      with_service_account("account@example.iam.gserviceaccount.com").
-      with_user('defaultuser').
-      with_tags({'key': ['value1', 'value2']})
-  )
+      with_service_account('account@example.iam.gserviceaccount.com'))
 
   ensure_file = api.cipd.EnsureFile()
   ensure_file.add_package('infra/git/${platform}', 'version:2.14.1.chromium10')
@@ -53,9 +50,11 @@ def RunSteps(api):
 
   # Check a request with no tags and no user can make it to JSON and back.
   # These requests should be considered valid.
-  req_no_tag_no_user = request.with_tags(None).with_user(None)
-  req_no_tag_no_user_jsonish = req_no_tag_no_user.to_jsonish()
+  req_no_tag_no_user_jsonish = request.to_jsonish()
   api.swarming.task_request_from_jsonish(req_no_tag_no_user_jsonish)
+
+  # Add user and tags for coverage of those.
+  request = request.with_user('defaultuser').with_tags({'key': ['value1', 'value2']})
 
   # Append a slice that is a variation of the last one as a starting point.
   request = request.add_slice(request[-1].
