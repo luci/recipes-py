@@ -233,12 +233,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
 
   def simulated_schedule_output(self, batch_response, step_name=None):
     """Simulates a buildbucket.schedule call."""
-    assert isinstance(batch_response, rpc_pb2.BatchResponse)
-    step_name = step_name or 'buildbucket.schedule'
-    ret_code = int(any(r.HasField('error') for r in batch_response.responses))
-    jsonish = json_format.MessageToDict(batch_response)
-    return self.step_data(
-        step_name, self.m.json.output_stream(jsonish, retcode=ret_code))
+    return self._simulated_batch_response(batch_response, step_name or 'buildbucket.schedule')
 
   def simulated_search_results(self, builds, step_name=None):
     """Simulates a buildbucket.search call."""
@@ -266,3 +261,17 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         responses=[dict(get_build=b) for b in builds],
     ))
     return self.step_data(step_name, self.m.json.output_stream(jsonish))
+
+  def simulated_cancel_output(self, batch_response, step_name=None):
+    """Simulates a buildbucket.cancel call"""
+    return self._simulated_batch_response(batch_response, step_name or 'buildbucket.cancel')
+
+  def _simulated_batch_response(self, batch_response, step_name):
+    """Simulate that the given step will write the provided batch response into step data
+    The return code will be 1 for step data if the responses contain error. Otherwise, 0
+    """
+    assert isinstance(batch_response, rpc_pb2.BatchResponse)
+    ret_code = int(any(r.HasField('error') for r in batch_response.responses))
+    jsonish = json_format.MessageToDict(batch_response)
+    return self.step_data(
+        step_name, self.m.json.output_stream(jsonish, retcode=ret_code))

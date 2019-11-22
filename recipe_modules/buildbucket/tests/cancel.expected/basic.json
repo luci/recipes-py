@@ -1,0 +1,75 @@
+[
+  {
+    "cmd": [
+      "bb",
+      "batch",
+      "-host",
+      "cr-buildbucket.appspot.com"
+    ],
+    "infra_step": true,
+    "name": "cancel_without_reason",
+    "stdin": "{\"requests\": [{\"cancelBuild\": {\"id\": \"1785294945718829\", \"summaryMarkdown\": \" \"}}]}",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"responses\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@    {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"cancelBuild\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"id\": \"1785294945718829\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"status\": \"CANCELED\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  ]@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LOG_LINE@request@{@@@",
+      "@@@STEP_LOG_LINE@request@  \"requests\": [@@@",
+      "@@@STEP_LOG_LINE@request@    {@@@",
+      "@@@STEP_LOG_LINE@request@      \"cancelBuild\": {@@@",
+      "@@@STEP_LOG_LINE@request@        \"id\": \"1785294945718829\", @@@",
+      "@@@STEP_LOG_LINE@request@        \"summaryMarkdown\": \" \"@@@",
+      "@@@STEP_LOG_LINE@request@      }@@@",
+      "@@@STEP_LOG_LINE@request@    }@@@",
+      "@@@STEP_LOG_LINE@request@  ]@@@",
+      "@@@STEP_LOG_LINE@request@}@@@",
+      "@@@STEP_LOG_END@request@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "bb",
+      "batch",
+      "-host",
+      "cr-buildbucket.appspot.com"
+    ],
+    "infra_step": true,
+    "name": "cancel_with_reason",
+    "stdin": "{\"requests\": [{\"cancelBuild\": {\"id\": \"6838835292664158\", \"summaryMarkdown\": \"Discarded!!\"}}]}",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"responses\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@    {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"cancelBuild\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"id\": \"6838835292664158\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"status\": \"CANCELED\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  ]@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LOG_LINE@request@{@@@",
+      "@@@STEP_LOG_LINE@request@  \"requests\": [@@@",
+      "@@@STEP_LOG_LINE@request@    {@@@",
+      "@@@STEP_LOG_LINE@request@      \"cancelBuild\": {@@@",
+      "@@@STEP_LOG_LINE@request@        \"id\": \"6838835292664158\", @@@",
+      "@@@STEP_LOG_LINE@request@        \"summaryMarkdown\": \"Discarded!!\"@@@",
+      "@@@STEP_LOG_LINE@request@      }@@@",
+      "@@@STEP_LOG_LINE@request@    }@@@",
+      "@@@STEP_LOG_LINE@request@  ]@@@",
+      "@@@STEP_LOG_LINE@request@}@@@",
+      "@@@STEP_LOG_END@request@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

@@ -12,8 +12,6 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 If it returns `None`, the link is not reported. Default link title is build id.
 """
 
-import json
-
 from google import protobuf
 from google.protobuf import field_mask_pb2
 from google.protobuf import json_format
@@ -634,8 +632,42 @@ class BuildbucketApi(recipe_api.RecipeApi):
       self._report_build_maybe(step_res, b, url_title_fn=url_title_fn)
     return ret
 
-  def cancel_build(self, build_id, **kwargs):
-    return self._run_buildbucket('cancel', [build_id], **kwargs)
+  def cancel_build(self, build_id, reason=' ', step_name=None):
+    """Cancel the build associated with the provided build id.
+
+    Args:
+    *   `build_id` (int|str): a buildbucket build ID.
+                   It should be either an integer(e.g. 123456789 or '123456789')
+                   or the numeric value in string format.
+    *   `reason` (str): reason for canceling the given build.
+                  Can't be None or Empty. Markdown is supported.
+
+    Returns:
+      None if build is successfully cancelled. Otherwise, an InfraFailure will
+      be raised
+    """
+    self._check_build_id(build_id)
+    cancel_req = rpc_pb2.BatchRequest(
+      requests=[
+        dict(cancel_build=dict(
+          # Expecting id to be of type int64 according to the proto definition
+          id=int(build_id),
+          summary_markdown=str(reason)
+        ))])
+    test_res = rpc_pb2.BatchResponse(
+      responses=[
+        dict(cancel_build=dict(
+          id=int(build_id),
+          status=common_pb2.CANCELED
+        ))])
+    _, batch_res, has_errors = self._batch_request(
+      step_name or 'buildbucket.cancel', cancel_req, test_res)
+
+    if has_errors:
+      raise self.m.step.InfraFailure('Failed to cancel build[%s]. Message: %s' %(
+        build_id, batch_res.responses[0].error.message))
+
+    return None
 
   def get_multi(self, build_ids, url_title_fn=None, step_name=None,
                 fields=DEFAULT_FIELDS):
@@ -808,7 +840,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     step_res = self.m.step.active_result
 
     # Log the request.
-    step_res.presentation.logs['request'] = json.dumps(
+    step_res.presentation.logs['request'] = self.m.json.dumps(
         request_dict, indent=2, sort_keys=True).splitlines()
 
     # Parse the response.
@@ -883,6 +915,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
         '%s:%s' % (k, v)
         for k, v in new_tags.iteritems()
         if v is not None)
+
+  def _check_build_id(self, build_id):
+    """Raise ValueError if the given build id is not a number or a string
+    that represents numeric value.
+    """
+    is_int = isinstance(build_id, (int, long))
+    is_str_num = isinstance(build_id, str) and build_id.isdigit()
+    if not (is_int or is_str_num):
+      raise ValueError('Expected a numeric build id, got %s' %(build_id,))
 
   @property
   def bucket_v1(self):
