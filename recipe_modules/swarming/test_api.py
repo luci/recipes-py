@@ -20,10 +20,6 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
             20,
         'service_account':
             'foo@example.com',
-        'user':
-            None,
-        'tags':
-            None,
         'task_slices': [{
             'expiration_secs': '18000',
             'properties': {
