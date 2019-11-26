@@ -43,25 +43,25 @@ def check_type(name, var, expect):
 
 
 class State(PerGreenletState):
-  cwd = [None]
-  env_prefixes = [{}]
-  env_suffixes = [{}]
-  env = [{}]
-  infra_step = [False]
+  cwd = None
+  env_prefixes = {}
+  env_suffixes = {}
+  env = {}
+  infra_steps = False
 
   def _get_setter_on_spawn(self):
-    old_cwd = self.cwd[-1]
-    old_env_prefixes = self.env_prefixes[-1]
-    old_env_suffixes = self.env_suffixes[-1]
-    old_env = self.env[-1]
-    old_infra_step = self.infra_step[-1]
+    old_cwd = self.cwd
+    old_env_prefixes = self.env_prefixes
+    old_env_suffixes = self.env_suffixes
+    old_env = self.env
+    old_infra_steps = self.infra_steps
 
     def _inner():
-      self.cwd = [old_cwd]
-      self.env_prefixes = [old_env_prefixes]
-      self.env_suffixes = [old_env_suffixes]
-      self.env = [old_env]
-      self.infra_step = [old_infra_step]
+      self.cwd = old_cwd
+      self.env_prefixes = old_env_prefixes
+      self.env_suffixes = old_env_suffixes
+      self.env = old_env
+      self.infra_steps = old_infra_steps
 
     return _inner
 
@@ -114,72 +114,70 @@ class ContextApi(RecipeApi):
 
     Look at the examples in "examples/" for examples of context module usage.
     """
-    def _push(st, val):
-      st.append(val)
-      to_pop.append(st)
+    # Mapping of state member to value to assign on exit of this function.
+    deferred_assignments = {}
 
-    def add_to_context(kwarg_name, kwarg_val, current, adder_func):
-      if kwarg_val is not None and len(kwarg_val) > 0:
-        check_type(kwarg_name, kwarg_val, dict)
-        new = dict(current[-1])
-        for k, v in kwarg_val.iteritems():
-          adder_func(k, v, new)
-        _push(current, new)
+    def _push(state_member, new):
+      deferred_assignments[state_member] = _get_current(state_member)
+      setattr(self._state, state_member, new)
 
-    def check_accidental_sequential_lookups(v):
-      try:
-        # This odd little piece of code does the following:
-        #   * add a bogus dictionary format %(foo)s to v. This forces %
-        #     into 'dictionary lookup' mode
-        #   * format the result with a defaultdict. This allows all
-        #     `%(key)s` format lookups to succeed, but any sequential `%s`
-        #     lookups to fail.
-        # If the string contains any accidental sequential lookups, this
-        # will raise an exception. If not, then this is a plausible format
-        # string.
-        ('%(foo)s' + v) % collections.defaultdict(str)
-      except Exception:
-        raise ValueError(('Invalid %%-formatting parameter in envvar, '
-                          'only %%(ENVVAR)s allowed: %r') % (v,))
+    def _get_current(state_member):
+      return getattr(self._state, state_member)
 
-    def _as_env_prefixes(k, v, new):
-      if v:
-        new[k] = tuple(v) + new.get(k, ())
+    def _add_to_context(state_member, to_add, adder_func):
+      if to_add is not None and to_add:
+        check_type(state_member, to_add, dict)
+        new = dict(_get_current(state_member))
+        for key, val in to_add.iteritems():
+          adder_func(key, val, new)
+        _push(state_member, new)
 
-    def _as_env_suffixes(k, v, new):
-      if v:
-        new[k] = new.get(k, ()) + tuple(v)
+    def _as_env_prefixes(key, val, new):
+      if val:
+        new[key] = tuple(val) + new.get(key, ())
 
-    def _as_env(k, v, new):
-      if v is not None:
-        v = str(v)
-        check_accidental_sequential_lookups(v)
-      new[k] =  v
+    def _as_env_suffixes(key, val, new):
+      if val:
+        new[key] = new.get(key, ()) + tuple(val)
 
-    to_pop = []
+    def _as_env(key, val, new):
+      if val is not None:
+        val = str(val)
+        try:
+          # This odd little piece of code does the following:
+          #   * add a bogus dictionary format %(foo)s to val. This forces %
+          #     into 'dictionary lookup' mode
+          #   * format the result with a defaultdict. This allows all
+          #     `%(key)s` format lookups to succeed, but any sequential `%s`
+          #     lookups to fail.
+          # If the string contains any accidental sequential lookups, this
+          # will raise an exception. If not, then this is a plausible format
+          # string.
+          ('%(foo)s' + val) % collections.defaultdict(str)
+        except Exception:
+          raise ValueError(('Invalid %%-formatting parameter in envvar, '
+                            'only %%(ENVVAR)s allowed: %r') % (val,))
+      new[key] = val
 
     if cwd is not None:
       check_type('cwd', cwd, Path)
-      _push(self._state.cwd, cwd)
+      _push('cwd', cwd)
 
     if infra_steps is not None:
       check_type('infra_steps', infra_steps, bool)
-      _push(self._state.infra_step, infra_steps)
+      _push('infra_steps', infra_steps)
 
-    add_to_context(
-      'env_prefixes', env_prefixes, self._state.env_prefixes, _as_env_prefixes)
+    _add_to_context('env_prefixes', env_prefixes, _as_env_prefixes)
 
-    add_to_context(
-      'env_suffixes', env_suffixes, self._state.env_suffixes, _as_env_suffixes)
+    _add_to_context('env_suffixes', env_suffixes, _as_env_suffixes)
 
-    add_to_context(
-      'env', env, self._state.env, _as_env)
+    _add_to_context('env', env, _as_env)
 
     try:
       yield
     finally:
-      for p in to_pop:
-        p.pop()
+      for state_member, val in deferred_assignments.iteritems():
+        setattr(self._state, state_member, val)
 
   @property
   def cwd(self):
@@ -189,7 +187,7 @@ class ContextApi(RecipeApi):
     equivalent to api.path['start_dir'], though only occurs if no cwd has been
     set (e.g. in the outermost context of RunSteps).
     """
-    return self._state.cwd[-1]
+    return self._state.cwd
 
   @property
   def env(self):
@@ -204,7 +202,7 @@ class ContextApi(RecipeApi):
     """
     # TODO(iannucci): store env in an immutable way to avoid excessive copies.
     # TODO(iannucci): handle case-insensitive keys on windows
-    return dict(self._state.env[-1])
+    return dict(self._state.env)
 
   @property
   def env_prefixes(self):
@@ -218,7 +216,7 @@ class ContextApi(RecipeApi):
     """
     # TODO(iannucci): store env in an immutable way to avoid excessive copies.
     # TODO(iannucci): handle case-insensitive keys on windows
-    return dict(self._state.env_prefixes[-1])
+    return dict(self._state.env_prefixes)
 
   @property
   def env_suffixes(self):
@@ -232,7 +230,7 @@ class ContextApi(RecipeApi):
     """
     # TODO(iannucci): store env in an immutable way to avoid excessive copies.
     # TODO(iannucci): handle case-insensitive keys on windows
-    return dict(self._state.env_suffixes[-1])
+    return dict(self._state.env_suffixes)
 
   @property
   def infra_step(self):
@@ -240,4 +238,4 @@ class ContextApi(RecipeApi):
 
     **Returns (bool)** - True iff steps are currently considered infra steps.
     """
-    return self._state.infra_step[-1]
+    return self._state.infra_steps
