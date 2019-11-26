@@ -57,7 +57,6 @@ class State(PerGreenletState):
     old_infra_step = self.infra_step[-1]
 
     def _inner():
-      import sys
       self.cwd = [old_cwd]
       self.env_prefixes = [old_env_prefixes]
       self.env_suffixes = [old_env_suffixes]

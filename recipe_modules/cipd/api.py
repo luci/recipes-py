@@ -270,6 +270,18 @@ class CIPDApi(recipe_api.RecipeApi):
     finally:
       self._service_account = prev_service_account
 
+  @contextlib.contextmanager
+  def cache_dir(self, directory):
+    """Sets the cache dir to use with CIPD by setting the $CIPD_CACHE_DIR
+    environment variable.
+
+    If directory is "None", will use no cache directory.
+    """
+    if directory is not None:
+      directory = str(directory)
+    with self.m.context(env={'CIPD_CACHE_DIR': directory}):
+      yield
+
   @property
   def executable(self):
     return 'cipd' + ('.bat' if self.m.platform.is_win else '')

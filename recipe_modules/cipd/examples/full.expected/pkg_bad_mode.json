@@ -35,6 +35,9 @@
       "-json-output",
       "/path/to/tmp/json"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
     "name": "cipd search public/package/${platform} git_revision:40-chars-long-hash",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -475,7 +478,7 @@
       "    arg_names, **additional_args)",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/property_invoker.py\", line 52, in _invoke_with_properties",
       "    return callable_obj(*props, **additional_args)",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/cipd/examples/full.py\", line 90, in RunSteps",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/cipd/examples/full.py\", line 91, in RunSteps",
       "    pkg = api.cipd.PackageDefinition('infra/fake-package', root, install_mode)",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/cipd/api.py\", line 66, in __init__",
       "    raise ValueError('invalid value for install_mode: %r' % install_mode)",

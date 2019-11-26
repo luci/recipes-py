@@ -41,7 +41,8 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
   cipd_root = api.path['start_dir'].join('packages')
   # Some packages don't require credentials to be installed or queried.
   api.cipd.ensure(cipd_root, ensure_file)
-  result = api.cipd.search(package_name, tag='git_revision:40-chars-long-hash')
+  with api.cipd.cache_dir(api.path.mkdtemp()):
+    result = api.cipd.search(package_name, tag='git_revision:40-chars-long-hash')
   r = api.cipd.describe(package_name, version=result[0].instance_id)
   api.step('describe response', cmd=None).presentation.logs['parsed'] = (
       api.json.dumps(r.__dict__, indent=2).splitlines())
@@ -84,7 +85,7 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
     api.cipd.register('infra/fake-package', 'fake-package-path',
                       refs=refs, tags=tags)
 
-  # Create (build & register).
+    # Create (build & register).
     if use_pkg:
       root = api.path['start_dir'].join('some_subdir')
       pkg = api.cipd.PackageDefinition('infra/fake-package', root, install_mode)

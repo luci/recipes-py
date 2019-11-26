@@ -35,6 +35,9 @@
       "-json-output",
       "/path/to/tmp/json"
     ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]\\tmp_tmp_1"
+    },
     "name": "cipd search public/package/${platform} git_revision:40-chars-long-hash",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
