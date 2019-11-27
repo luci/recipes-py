@@ -32,6 +32,7 @@
   * [tricium](#recipe_modules-tricium) &mdash; API for Tricium analyzers to use.
   * [url](#recipe_modules-url) &mdash; Methods for interacting with HTTP(s) URLs.
   * [uuid](#recipe_modules-uuid) &mdash; Allows test-repeatable access to a random UUID.
+  * [version](#recipe_modules-version) &mdash; Thin API for parsing semver strings into comparable object.
 
 **[Recipes](#Recipes)**
   * [archive:examples/full](#recipes-archive_examples_full)
@@ -134,6 +135,7 @@
   * [url:tests/join](#recipes-url_tests_join)
   * [url:tests/validate_url](#recipes-url_tests_validate_url)
   * [uuid:examples/full](#recipes-uuid_examples_full)
+  * [version:examples/full](#recipes-version_examples_full)
 ## Recipe Modules
 
 ### *recipe_modules* / [archive](/recipe_modules/archive)
@@ -1878,9 +1880,11 @@ Args:
     True to remove this path.
 ### *recipe_modules* / [platform](/recipe_modules/platform)
 
+[DEPS](/recipe_modules/platform/__init__.py#5): [version](#recipe_modules-version)
+
 Mockable system platform identity functions.
 
-#### **class [PlatformApi](/recipe_modules/platform/api.py#23)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
+#### **class [PlatformApi](/recipe_modules/platform/api.py#24)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
 
 Provides host-platform-detection properties.
 
@@ -1889,14 +1893,14 @@ Mocks:
     sys.platform.
   * bits (int): Either 32 or 64.
 
-&emsp; **@property**<br>&mdash; **def [arch](/recipe_modules/platform/api.py#104)(self):**
+&emsp; **@property**<br>&mdash; **def [arch](/recipe_modules/platform/api.py#122)(self):**
 
 Returns the current CPU architecture.
 
 TODO: This is currently always hard-coded to 'intel'... Apparently no one
 has actually needed this function?
 
-&emsp; **@property**<br>&mdash; **def [bits](/recipe_modules/platform/api.py#94)(self):**
+&emsp; **@property**<br>&mdash; **def [bits](/recipe_modules/platform/api.py#112)(self):**
 
 Returns the bitness of the userland for the current system (either 32 or
 64 bit).
@@ -1904,35 +1908,45 @@ Returns the bitness of the userland for the current system (either 32 or
 TODO: If anyone needs to query for the kernel bitness, another accessor
 should be added.
 
-&emsp; **@property**<br>&mdash; **def [cpu\_count](/recipe_modules/platform/api.py#121)(self):**
+&emsp; **@property**<br>&mdash; **def [cpu\_count](/recipe_modules/platform/api.py#139)(self):**
 
 The number of logical CPU cores (i.e. including hyper-threaded cores),
 according to `psutil.cpu_count(True)`.
 
-&emsp; **@property**<br>&mdash; **def [is\_linux](/recipe_modules/platform/api.py#80)(self):**
+&mdash; **def [initialize](/recipe_modules/platform/api.py#34)(self):**
+
+&emsp; **@property**<br>&mdash; **def [is\_linux](/recipe_modules/platform/api.py#98)(self):**
 
 Returns True iff the recipe is running on Linux.
 
-&emsp; **@property**<br>&mdash; **def [is\_mac](/recipe_modules/platform/api.py#75)(self):**
+&emsp; **@property**<br>&mdash; **def [is\_mac](/recipe_modules/platform/api.py#83)(self):**
 
 Returns True iff the recipe is running on OS X.
 
-&emsp; **@property**<br>&mdash; **def [is\_win](/recipe_modules/platform/api.py#70)(self):**
+&emsp; **@property**<br>&mdash; **def [is\_win](/recipe_modules/platform/api.py#78)(self):**
 
 Returns True iff the recipe is running on Windows.
 
-&emsp; **@property**<br>&mdash; **def [name](/recipe_modules/platform/api.py#85)(self):**
+&emsp; **@property**<br>&mdash; **def [mac\_release](/recipe_modules/platform/api.py#88)(self):**
+
+The current OS X release version number (like "10.13.5") as a
+pkg_resources Version object, or None, if the current platform is not mac.
+
+Use the "recipe_engine/version" module to parse symvers to compare to this
+Version object.
+
+&emsp; **@property**<br>&mdash; **def [name](/recipe_modules/platform/api.py#103)(self):**
 
 Returns the current platform name which will be in:
 * win
 * mac
 * linux
 
-&emsp; **@staticmethod**<br>&mdash; **def [normalize\_platform\_name](/recipe_modules/platform/api.py#127)(plat):**
+&emsp; **@staticmethod**<br>&mdash; **def [normalize\_platform\_name](/recipe_modules/platform/api.py#145)(plat):**
 
 One of python's sys.platform values -> 'win', 'linux' or 'mac'.
 
-&emsp; **@property**<br>&mdash; **def [total\_memory](/recipe_modules/platform/api.py#113)(self):**
+&emsp; **@property**<br>&mdash; **def [total\_memory](/recipe_modules/platform/api.py#131)(self):**
 
 The total physical memory in MiB.
 
@@ -2797,6 +2811,22 @@ Allows test-repeatable access to a random UUID.
 &mdash; **def [random](/recipe_modules/uuid/api.py#20)(self):**
 
 Returns a random UUID string.
+### *recipe_modules* / [version](/recipe_modules/version)
+
+Thin API for parsing semver strings into comparable object.
+
+#### **class [VersionApi](/recipe_modules/version/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
+
+&emsp; **@staticmethod**<br>&mdash; **def [parse](/recipe_modules/version/api.py#14)(version):**
+
+Parse implements PEP 440 parsing for semvers.
+
+If `version` is strictly parseable as PEP 440, this returns a Version
+object. Otherwise it does a 'loose' parse, just extracting numerals from
+version.
+
+You can read more about how this works at:
+https://setuptools.readthedocs.io/en/latest/pkg_resources.html#parsing-utilities
 ## Recipes
 
 ### *recipes* / [archive:examples/full](/recipe_modules/archive/examples/full.py)
@@ -3231,9 +3261,9 @@ This tests metadata features of the Future object.
 &mdash; **def [RunSteps](/recipe_modules/path/examples/full.py#14)(api):**
 ### *recipes* / [platform:examples/full](/recipe_modules/platform/examples/full.py)
 
-[DEPS](/recipe_modules/platform/examples/full.py#5): [platform](#recipe_modules-platform), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/platform/examples/full.py#5): [platform](#recipe_modules-platform), [step](#recipe_modules-step), [version](#recipe_modules-version)
 
-&mdash; **def [RunSteps](/recipe_modules/platform/examples/full.py#10)(api):**
+&mdash; **def [RunSteps](/recipe_modules/platform/examples/full.py#11)(api):**
 ### *recipes* / [properties:examples/full](/recipe_modules/properties/examples/full.py)
 
 [DEPS](/recipe_modules/properties/examples/full.py#10): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
@@ -3389,4 +3419,9 @@ This file is a recipe demonstrating reading triggers of the current build.
 [DEPS](/recipe_modules/uuid/examples/full.py#5): [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
 
 &mdash; **def [RunSteps](/recipe_modules/uuid/examples/full.py#11)(api):**
+### *recipes* / [version:examples/full](/recipe_modules/version/examples/full.py)
+
+[DEPS](/recipe_modules/version/examples/full.py#6): [version](#recipe_modules-version)
+
+&mdash; **def [RunSteps](/recipe_modules/version/examples/full.py#11)(api):**
 

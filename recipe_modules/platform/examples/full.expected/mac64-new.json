@@ -13,9 +13,9 @@
       "@@@STEP_LOG_END@cpu_count@@@",
       "@@@STEP_LOG_LINE@memory@16384@@@",
       "@@@STEP_LOG_END@memory@@@",
-      "@@@STEP_LOG_LINE@mac_release@<Version('10.13.5')>@@@",
+      "@@@STEP_LOG_LINE@mac_release@<Version('10.14.0')>@@@",
       "@@@STEP_LOG_END@mac_release@@@",
-      "@@@STEP_LOG_LINE@new_mac@False@@@",
+      "@@@STEP_LOG_LINE@new_mac@True@@@",
       "@@@STEP_LOG_END@new_mac@@@"
     ]
   },

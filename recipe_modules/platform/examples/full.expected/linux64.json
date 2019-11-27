@@ -12,7 +12,11 @@
       "@@@STEP_LOG_LINE@cpu_count@8@@@",
       "@@@STEP_LOG_END@cpu_count@@@",
       "@@@STEP_LOG_LINE@memory@16384@@@",
-      "@@@STEP_LOG_END@memory@@@"
+      "@@@STEP_LOG_END@memory@@@",
+      "@@@STEP_LOG_LINE@mac_release@None@@@",
+      "@@@STEP_LOG_END@mac_release@@@",
+      "@@@STEP_LOG_LINE@new_mac@False@@@",
+      "@@@STEP_LOG_END@new_mac@@@"
     ]
   },
   {
