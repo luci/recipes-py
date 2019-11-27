@@ -1,0 +1,272 @@
+// Copyright 2019 The LUCI Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package luci.resultdb.rpc.v1;
+
+import "google/api/field_behavior.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "go.chromium.org/luci/resultdb/proto/type/common.proto";
+import "go.chromium.org/luci/resultdb/proto/rpc/v1/invocation.proto";
+import "go.chromium.org/luci/resultdb/proto/rpc/v1/test_result.proto";
+
+option go_package = "go.chromium.org/luci/resultdb/proto/rpc/v1;rpcpb";
+
+// Service to record test results.
+//
+// CreateInvocation response includes a metadata key "update-token".
+// It MUST be passed to all other mutation RPCs, such as CreateTestResult.
+// Otherwise the request will fail with UNAUTHENTICATED error code.
+//
+// RPCs that mutate an invocation return FAILED_PRECONDITION error code if the
+// invocation is finalized.
+service Recorder {
+
+  // == Invocations ============================================================
+
+  // Creates a new invocation.
+  // The request specifies the invocation id and its contents.
+  //
+  // The response header medata contains "update-token" required for future
+  // updates, including finalization.
+  //
+  // If invocation with the given ID already exists, returns ALREADY_EXISTS
+  // error code.
+  rpc CreateInvocation(CreateInvocationRequest) returns (Invocation) {};
+
+  // Updates an existing non-finalized invocation.
+  rpc UpdateInvocation(UpdateInvocationRequest) returns (Invocation) {};
+
+  // Transitions the given invocation to the state FINALIZED.
+  rpc FinalizeInvocation(FinalizeInvocationRequest) returns (Invocation) {};
+
+  // Includes an invocation in the given non-finalized invocation.
+  rpc Include(IncludeRequest) returns (google.protobuf.Empty) {};
+
+  // == Test results ===========================================================
+
+  // Appends a test result to a non-finalized invocation.
+  rpc CreateTestResult(CreateTestResultRequest) returns (TestResult) {};
+  // Atomically appends a batch of test results to a non-finalized invocation.
+  rpc BatchCreateTestResults(BatchCreateTestResultsRequest)
+      returns (BatchCreateTestResultsResponse) {};
+
+  // Appends a test exoneration to a non-finalized invocation.
+  rpc CreateTestExoneration(CreateTestExonerationRequest)
+      returns (TestExoneration) {};
+  // Atomically appends a batch of test exonerations to a non-finalized
+  // invocation.
+  rpc BatchCreateTestExonerations(BatchCreateTestExonerationsRequest)
+      returns (BatchCreateTestExonerationsResponse) {};
+
+  // == Misc ===================================================================
+
+  // Derives an invocation and test results from a Chromium swarming task.
+  // Returns the derived invocation; test results should retrieved using
+  // ResultDB.ListTestResults or ResultDB.QueryTestResults.
+  //
+  // TODO: Remove. This is meant as a temporary rpc for the intermediary stage
+  // in which we derive invocations given swarming task IDs, rather than have
+  // tasks make RPCs directly.
+  rpc DeriveInvocation(DeriveInvocationRequest) returns (Invocation) {};
+}
+
+// == Invocations ==============================================================
+
+// A request message for CreateInvocation.
+message CreateInvocationRequest {
+  // Invocation identifier, becomes a part of the invocation.name.
+  // LUCI systems MAY create invocations with nicely formatted IDs, such as
+  // "build-1234567890". All other clients MUST use GUIDs.
+  //
+  // Regex: ^[a-z][a-z0-9_\-]*$.
+  string invocation_id = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // Invocation data to insert.
+  Invocation invocation = 2;
+
+  // A unique identifier for this request. Restricted to 36 ASCII characters.
+  // A random UUID is recommended.
+  // This request is only idempotent if a `request_id` is provided.
+  string request_id = 3;
+}
+
+// A request message for UpdateInvocation RPC.
+message UpdateInvocationRequest {
+  // Invocation to update.
+  Invocation invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+// A request message for FinalizeInvocation RPC.
+message FinalizeInvocationRequest {
+  // Name of the invocation to finalize.
+  string name = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // Flag to indicate if the invocation is interrupted.
+  // If true, Invocation.state will be set to INTERRUPTED; otherwise COMPLETED.
+  // Refer to Invocation.state for the meaning of each state.
+  bool interrupted = 2;
+}
+
+// A request message for Include RPC.
+message IncludeRequest {
+  // Name of the invocation to include into, see Invocation.name.
+  // For example, name of the buildbucket build invocation that should include
+  // a swarming task invocation.
+  string including_invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // Name of the invocation to include, see Invocation.name.
+  // For example, name of the swarming task invocation to include into a
+  // buildbucket build invocation.
+  // This invocation MUST be finalized.
+  string included_invocation = 2 [ (google.api.field_behavior) = REQUIRED ];
+}
+
+// A request message for CreateTestResult RPC.
+message CreateTestResultRequest {
+  // Name of the parent invocation, see Invocation.name.
+  string invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // The test result to create.
+  // Test path and result id are used to dedup requests, i.e.
+  // if a test result with the same test path and result id already exists in
+  // the invocation, then the requests succeeds as opposed to returns with
+  // ALREADY_EXISTS error.
+  TestResult test_result = 2 [ (google.api.field_behavior) = REQUIRED ];
+
+  // A unique identifier for this request. Restricted to 36 ASCII characters.
+  // A random UUID is recommended.
+  // This request is only idempotent if a `request_id` is provided, so it is
+  // strongly recommended to populate this field.
+  //
+  // Impl note: this field is used to compute the spanner-level result id, which
+  // will encode tuple (request_id, index_of_request)", where
+  // - request_id is a random GUID if not provided by the user
+  // - index_of_request is 0 in CreateTestResult RPC, or index of the request
+  //   in BatchCreateTestResultsRequest in the batch RPC.
+  // TODO(jchinlee): remove this impl note when it is converted into code.
+  string request_id = 3;
+}
+
+// == Test results =============================================================
+
+// A request message for BatchCreateTestResults RPC.
+message BatchCreateTestResultsRequest {
+  // Name of the parent invocation, see Invocation.name.
+  string invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // Requests to create test results.
+  // requests[i].invocation MUST be either empty or equal to invocation in this
+  // message.
+  // requests[i].request_id MUST be either empty or equal to request_id in
+  // this message.
+  repeated CreateTestResultRequest requests = 2;
+
+  // A unique identifier for this request. Restricted to 36 ASCII characters.
+  // A random UUID is recommended.
+  // This request is only idempotent if a `request_id` is provided, so it is
+  // strongly recommended to populate this field.
+  //
+  string request_id = 3;
+}
+
+// A response message for BatchCreateTestResults RPC.
+message BatchCreateTestResultsResponse {
+  // Test results created.
+  repeated TestResult test_results = 1;
+}
+
+// A request message for CreateTestExoneration RPC.
+message CreateTestExonerationRequest {
+  // Name of the parent invocation, see Invocation.name.
+  string invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // The TestExoneration to create.
+  TestExoneration test_exoneration = 2
+      [ (google.api.field_behavior) = REQUIRED ];
+
+  // A unique identifier for this request. Restricted to 36 ASCII characters.
+  // A random UUID is recommended.
+  // This request is only idempotent if a `request_id` is provided.
+  string request_id = 3;
+}
+
+// A request message for BatchCreateTestExonerations RPC.
+message BatchCreateTestExonerationsRequest {
+  // Name of the parent invocation, see Invocation.name.
+  string invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // Requests to create TestExonerations.
+  // requests[i].invocation MUST be either empty or equal to invocation in this
+  // message.
+  // requests[i].request_id MUST be either empty or equal to request_id in
+  // this message.
+  repeated CreateTestExonerationRequest requests = 2;
+
+  // A unique identifier for this request. Restricted to 36 ASCII characters.
+  // A random UUID is recommended.
+  // This request is only idempotent if a `request_id` is provided, so it is
+  // strongly recommended to populate this field.
+  string request_id = 3;
+}
+
+// A response message for BatchCreateTestExonerations RPC.
+message BatchCreateTestExonerationsResponse {
+  // Test exonerations created.
+  repeated TestExoneration test_exonerations = 1;
+}
+
+// == Misc =====================================================================
+
+// A request message for DeriveInvocation RPC.
+message DeriveInvocationRequest {
+
+  // Identifies a swarming task.
+  message SwarmingTask {
+    // Swarming host of task.
+    string hostname = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+    // ID of swarming task to process and insert.
+    string id = 2 [ (google.api.field_behavior) = REQUIRED ];
+  }
+
+  // Derive the invocation from the Swarming task.
+  SwarmingTask swarming_task = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // Test path prefix.
+  //
+  // Examples: "gn:{label}/".
+  //
+  // See https://gn.googlesource.com/gn/+/master/docs/reference.md#labels for
+  // label examples.
+  //
+  // Generated test path examples:
+  // * GTest: gn:{label}/{suite}/{case}
+  // * javatests: gn:{label}/{full_java_method_name}
+  // * web tests: gn:{label}/{file_name}
+  string test_path_prefix = 2;
+
+  // Test variant base. These get combined with the remainder of the test
+  // variant definition, including test parameters and other key/value pairs
+  // that may be derived from the swarming task.
+  //
+  // For Chromium, expected keys in the def map are "bucket", "builder", and
+  // "test_suite".
+  luci.resultdb.type.Variant base_test_variant = 3;
+}

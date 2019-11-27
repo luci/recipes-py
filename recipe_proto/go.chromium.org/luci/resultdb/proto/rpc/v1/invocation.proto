@@ -1,0 +1,106 @@
+// Copyright 2019 The LUCI Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package luci.resultdb.rpc.v1;
+
+import "google/api/field_behavior.proto";
+import "google/protobuf/timestamp.proto";
+import "go.chromium.org/luci/resultdb/proto/type/common.proto";
+
+option go_package = "go.chromium.org/luci/resultdb/proto/rpc/v1;rpcpb";
+
+// A conceptual container of results. Immutable once finalized.
+// It represents all results of some computation; examples: swarming task,
+// buildbucket build, CQ attempt.
+// Composable: can include other invocations, see inclusion.proto.
+message Invocation {
+  // Can be used to refer to this invocation, e.g. in ResultDB.GetInvocation
+  // RPC.
+  // Format: invocations/{INVOCATION_ID}
+  // See also https://aip.dev/122.
+  string name = 1 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  enum State {
+    // The default value. This value is used if the state is omitted.
+    STATE_UNSPECIFIED = 0;
+
+    // The invocation was created and accepts new results.
+    ACTIVE = 1;
+
+    // The invocation is finalized and contains all the results that the
+    // associated computation was expected to compute; unlike INTERRUPTED state.
+    //
+    // The invocation is immutable and no longer accepts new results.
+    COMPLETED = 2;
+
+    // The invocation is finalized and does NOT contain all the results that the
+    // associated computation was expected to compute.
+    // The computation was interrupted prematurely.
+    //
+    // Such invocation should be discarded.
+    // Often the associated computation is retried.
+    //
+    // The invocation is immutable and no longer accepts new results.
+    INTERRUPTED = 3;
+  }
+
+  // Current state of the invocation.
+  State state = 2 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+
+  // When the invocation was created.
+  google.protobuf.Timestamp create_time = 3 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  // Invocation-level string key-value pairs.
+  // A key can be repeated.
+  repeated luci.resultdb.type.StringPair tags = 4;
+
+  // == Finalization ===========================================================
+
+  // When the invocation was finalized, i.e. transitioned to COMPLETED or
+  // INTERRUPTED state.
+  // If this field is set, implies that the invocation is finalized.
+  google.protobuf.Timestamp finalize_time = 5
+      [ (google.api.field_behavior) = OUTPUT_ONLY ];
+
+  // Timestamp when the invocation will be forcefully finalized.
+  // Can be extended with UpdateInvocation until finalized.
+  google.protobuf.Timestamp deadline = 6;
+
+  // Names of invocations included into this one. Overall results of this
+  // invocation is a UNION of results directly included into this invocation
+  // and results from the included invocations, recursively.
+  // For example, a Buildbucket build invocation may include invocations of its
+  // child swarming tasks and represent overall result of the build,
+  // encapsulating the internal structure of the build.
+  //
+  // The graph is directed.
+  // There can be at most one edge between a given pair of invocations.
+  // The shape of the graph does not matter. What matters is only the set of
+  // reachable invocations. Thus cycles are allowed and are noop.
+  //
+  // QueryTestResults returns test results from the transitive closure of
+  // invocations.
+  //
+  // Use Recorder.Include RPC to modify this field.
+  repeated string included_invocations = 7
+      [ (google.api.field_behavior) = OUTPUT_ONLY ];
+}

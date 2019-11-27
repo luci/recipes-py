@@ -1,0 +1,133 @@
+// Copyright 2019 The LUCI Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package luci.resultdb.rpc.v1;
+
+import "google/api/field_behavior.proto";
+import "go.chromium.org/luci/resultdb/proto/type/common.proto";
+
+option go_package = "go.chromium.org/luci/resultdb/proto/rpc/v1;rpcpb";
+
+// Represents a function TestResult -> bool.
+// Empty message matches all test results.
+//
+// Most clients would get invocation name from another service, e.g.
+// Buildbucket, use it in TestResultPredicate.invocation.name.
+// Also most clients would want to set expected_results to
+// VARIANTS_WITH_UNEXPECTED_RESULTS.
+message TestResultPredicate {
+  // A test result must belong to an invocation satisfying this predicate.
+  InvocationPredicate invocation = 1;
+
+  // A test result must have a path satisfying this predicate.
+  TestPathPredicate test_path = 2;
+
+  // A test result must have a variant satisfying this predicate.
+  VariantPredicate variant = 3;
+
+  // Filters test results based on TestResult.expected field.
+  enum Expectancy {
+    // All test results satisfiy this.
+    // WARNING: using this significantly increases response size and latency.
+    ALL = 0;
+
+    // A test result must belong to a test variant that has one or more
+    // unexpected results. It can be used to fetch both unexpected and flakily
+    // expected results.
+    //
+    // Note that the predicate is defined at the test variant level.
+    // For example, if a test variant expects a PASS and has results
+    // [FAIL, FAIL, PASS], then all results satisfy the predicate because
+    // the variant satisfies the predicate.
+    VARIANTS_WITH_UNEXPECTED_RESULTS = 1;
+
+    // Note: if you need unexpected results, VARIANTS_WITH_UNEXPECTED_RESULTS
+    // generally does the job, but if you need *ONLY* unexpected results, feel
+    // free to file a feature request.
+  }
+
+  // A test result must match this predicate based on TestResult.expected field.
+  // Most clients would want to override this field because the default
+  // typically causes a large response size.
+  Expectancy expectancy = 4;
+}
+
+// Represents a function TestExoneration -> bool.
+// Empty message matches all test exonerations.
+message TestExonerationPredicate {
+  // A test exoneration must belong to an invocation satisfying this predicate.
+  InvocationPredicate invocation = 1;
+
+  // A test exoneration must have a test path satisfying this predicate.
+  TestPathPredicate test_path = 2;
+
+  // A test exoneration must have a variant satisfying this predicate.
+  VariantPredicate variant = 3;
+}
+
+// Represents a function Invocation -> bool.
+//
+// Note: all components of the predicate are connected with logical OR.
+message InvocationPredicate {
+  // An invocation must have one of these names.
+  //
+  // Compatible with tags: names and tags are connected with a logical OR.
+  repeated string names = 1;
+
+  // An invocation must have *ANY* of these tags.
+  //
+  // WARNING: unlike some of other systems, multiple tags are connected with a
+  // a logical OR. To construct a logical AND, an invocation must have a tag
+  // that represents a conjunction, e.g. "my_combination_tag:<value1>:<value2>".
+  // Unlike other systems, this approach enables generic conditions in the
+  // disjunctive normal form.
+  //
+  // Compatible with names: names and tags are connected with a logical OR.
+  repeated luci.resultdb.type.StringPair tags = 2;
+
+  // If false, an invocation must be reachable from any of roots via path of
+  // Invocation.included_invocations edges, where roots are the invocations
+  // that satisfy the rest of the predicate (names, tag).
+  // If true, do not follow inclusion edges.
+  bool ignore_inclusions = 3;
+}
+
+// Represents a function (test path) -> bool.
+message TestPathPredicate {
+  // A test path must be one of these values exactly.
+  // Compatible with path_prefixes: they are connected with logical
+  // OR.
+  repeated string paths = 1;
+
+  // A test path must start with one of these prefixes.
+  // Compatible with paths: they are connected with logical OR.
+  //
+  // Note: most of the time, the prefix must end with a delimiter,
+  // for example, if there tests "foo.bar" and "foo.baz", the prefix should
+  // be "foo." (not "foo"), so that "fooz.qux" is not accidentally matched.
+  repeated string path_prefixes = 2;
+}
+
+// Represents a function Variant -> bool.
+message VariantPredicate {
+  oneof predicate {
+    // A variant must be equal this definition exactly.
+    luci.resultdb.type.Variant exact = 1;
+
+    // A variant's key-value pairs must contain those in this one.
+    luci.resultdb.type.Variant contains = 2;
+  }
+}

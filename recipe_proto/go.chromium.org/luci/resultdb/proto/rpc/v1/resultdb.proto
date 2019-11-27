@@ -1,0 +1,236 @@
+// Copyright 2019 The LUCI Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package luci.resultdb.rpc.v1;
+
+import "google/api/field_behavior.proto";
+import "google/protobuf/duration.proto";
+import "go.chromium.org/luci/resultdb/proto/rpc/v1/invocation.proto";
+import "go.chromium.org/luci/resultdb/proto/rpc/v1/predicate.proto";
+import "go.chromium.org/luci/resultdb/proto/rpc/v1/test_result.proto";
+
+option go_package = "go.chromium.org/luci/resultdb/proto/rpc/v1;rpcpb";
+
+// Service to read test results.
+service ResultDB {
+  // Retrieves an invocation.
+  rpc GetInvocation(GetInvocationRequest) returns (Invocation) {};
+
+  // == Test results ===========================================================
+
+  // Retrieves a test result.
+  rpc GetTestResult(GetTestResultRequest) returns (TestResult) {};
+
+  // Retrieves test results for a parent invocation.
+  //
+  // Note: response does not contain test results of included invocations.
+  // Use QueryTestResults instead.
+  rpc ListTestResults(ListTestResultsRequest)
+      returns (ListTestResultsResponse) {};
+
+  // Retrieves a test exoneration.
+  rpc GetTestExoneration(GetTestExonerationRequest) returns (TestExoneration) {
+  };
+
+  // Retrieves test exonerations for a parent invocation.
+  //
+  // Note: response does not contain test results of included invocations.
+  // Use QueryTestExonerations instead.
+  rpc ListTestExonerations(ListTestExonerationsRequest)
+      returns (ListTestExonerationsResponse) {};
+
+  // Retrieves test results from an invocation.
+  // Supports invocation inclusions.
+  // Supports advanced filtering.
+  rpc QueryTestResults(QueryTestResultsRequest)
+      returns (QueryTestResultsResponse) {};
+
+  // Retrieves test exonerations from an invocation.
+  // Supports invocation inclusions.
+  // Supports advanced filtering.
+  rpc QueryTestExonerations(QueryTestExonerationsRequest)
+      returns (QueryTestExonerationsResponse) {};
+}
+
+// A request message for GetInvocation RPC.
+message GetInvocationRequest {
+  // The name of the invocation to request, see Invocation.name.
+  string name = 1 [ (google.api.field_behavior) = REQUIRED ];
+}
+
+// A request message for GetTestResult RPC.
+message GetTestResultRequest {
+  // The name of the test result to request, see TestResult.name.
+  string name = 1 [ (google.api.field_behavior) = REQUIRED ];
+}
+
+// A request message for ListTestResults RPC.
+message ListTestResultsRequest {
+  // Name of the invocation, e.g. "invocations/{id}".
+  string invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // The maximum number of test results to return.
+  //
+  // The service may return fewer than this value.
+  // If unspecified, at most 100 test results will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 2;
+
+  // A page token, received from a previous `ListTestResults` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListTestResults` MUST
+  // match the call that provided the page token.
+  //
+  // Does NOT guarantee returning all test results from chained reads until
+  // cursor exhaustion unless the invocation was finalized at the time of first
+  // ListTestResults request.
+  string page_token = 3;
+}
+
+// A response message for ListTestResults RPC.
+message ListTestResultsResponse {
+  // The test results from the specified invocation.
+  repeated TestResult test_results = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there were no subsequent pages at the time of
+  // request.
+  // If the invocation is not finalized, more results may appear later.
+  string next_page_token = 2;
+}
+
+// A request message for GetTestExoneration RPC.
+message GetTestExonerationRequest {
+  // The name of the test exoneration to request, see TestExoneration.name.
+  string name = 1;
+}
+
+// A request message for ListTestExonerations RPC.
+message ListTestExonerationsRequest {
+  // Name of the invocation, e.g. "invocations/{id}".
+  string invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // The maximum number of test exonerations to return.
+  //
+  // The service may return fewer than this value.
+  // If unspecified, at most 100 test exonerations will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 2;
+
+  // A page token, received from a previous `ListTestExonerations` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListTestExonerations`
+  // MUST match the call that provided the page token.
+  string page_token = 3;
+}
+
+// A response message for ListTestExonerations RPC.
+message ListTestExonerationsResponse {
+  // The test exonerations from the specified invocation.
+  repeated TestExoneration test_exonerations = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there were no subsequent pages at the time of
+  // request.
+  // If the invocation is not finalized, more results may appear later.
+  string next_page_token = 2;
+}
+
+// A request message for QueryTestResults RPC.
+message QueryTestResultsRequest {
+  // A test result in the response must satisfy this predicate.
+  // Field predicate.invocation is required.
+  TestResultPredicate predicate = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // The version of the state from which the response draws is allowed to be
+  // stale up to this duration.
+  // For example, with max staleness of 5m, the response might not contain
+  // results uploaded 4m ago.
+  // Choosing a larger duration may reduce request latency.
+  // Must be <=30m.
+  google.protobuf.Duration max_staleness = 2;
+
+  // The maximum number of test results to return.
+  //
+  // The service may return fewer than this value.
+  // If unspecified, at most 100 test results will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 3;
+
+  // A page token, received from a previous `QueryTestResults` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `QueryTestResults` MUST
+  // match the call that provided the page token.
+  string page_token = 4;
+}
+
+// A response message for QueryTestResults RPC.
+message QueryTestResultsResponse {
+  // Matched test results.
+  repeated TestResult test_results = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there were no subsequent pages at the time of
+  // request.
+  string next_page_token = 2;
+}
+
+// A request message for QueryTestExonerations RPC.
+message QueryTestExonerationsRequest {
+  // A test exoneration in the response must satisfy this predicate.
+  // Field predicate.invocation is required.
+  TestExonerationPredicate predicate = 1
+      [ (google.api.field_behavior) = REQUIRED ];
+
+  // The version of the state from which the response draws is allowed to be
+  // stale up to this duration.
+  // For example, with max staleness of 5m, the response might not contain
+  // results uploaded 4m ago.
+  // Choosing a larger duration may reduce request latency.
+  // Must be <=30m.
+  google.protobuf.Duration max_staleness = 2;
+
+  // The maximum number of test exonerations to return.
+  //
+  // The service may return fewer than this value.
+  // If unspecified, at most 100 test exonerations will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 3;
+
+  // A page token, received from a previous `QueryTestExonerations` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `QueryTestExonerations`
+  // MUST match the call that provided the page token.
+  string page_token = 4;
+}
+
+// A response message for QueryTestExonerations RPC.
+message QueryTestExonerationsResponse {
+  // The test exonerations matching the predicate.
+  //
+  // The order is not defined, but test exonerations from the same invocation
+  // are contiguous.
+  repeated TestExoneration test_exonerations = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there were no subsequent pages at the time of
+  // request.
+  string next_page_token = 2;
+}
