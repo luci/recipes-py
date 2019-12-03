@@ -1,7 +1,6 @@
 # Copyright 2013 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
-
 """All functions related to manipulating paths in recipes.
 
 Recipes handle paths a bit differently than python does. All path manipulation
@@ -49,24 +48,29 @@ class Error(Exception):
 
 
 def PathToString(api, test):
+
   def PathToString_inner(path):
     assert isinstance(path, config_types.Path)
     base_path = path.base.resolve(test.enabled)
     suffix = path.platform_ext.get(api.m.platform.name, '')
     return api.join(base_path, *path.pieces) + suffix
+
   return PathToString_inner
 
 
 def string_filter(func):
+
   @functools.wraps(func)
   def inner(*args, **kwargs):
     return func(*map(str, args), **kwargs)
+
   return inner
 
 
 class path_set(object):
   """ implements a set which contains all the parents folders of added folders.
   """
+
   # TODO(iannucci): Expand this to be a full fakey filesystem, including file
   # contents and file types. Coordinate with the `file` module.
   def __init__(self, path_mod, initial_paths):
@@ -116,8 +120,9 @@ class path_set(object):
     if path[-1] == self._separator:
       match_root = False
       path = path.rstrip(self._separator)
-    kill_set = set(p for p in self._paths
-                   if self._is_contained_in(p, path, match_root) and filt(p))
+    kill_set = set(
+        p for p in self._paths
+        if self._is_contained_in(p, path, match_root) and filt(p))
     self._paths -= kill_set
 
   def contains(self, path):
@@ -225,24 +230,23 @@ class PathApi(recipe_api.RecipeApi):
   def get_config_defaults(self):
     """Internal recipe implementation function."""
     return {
-      # Needed downstream in depot_tools
-      'PLATFORM': self.m.platform.name,
-      'START_DIR': self._startup_cwd,
-      'TEMP_DIR': self._temp_dir,
-      'CACHE_DIR': self._cache_dir,
-      'CLEANUP_DIR': self._cleanup_dir,
+        # Needed downstream in depot_tools
+        'PLATFORM': self.m.platform.name,
+        'START_DIR': self._startup_cwd,
+        'TEMP_DIR': self._temp_dir,
+        'CACHE_DIR': self._cache_dir,
+        'CLEANUP_DIR': self._cleanup_dir,
     }
 
   def __init__(self, path_properties, **kwargs):
     super(PathApi, self).__init__(**kwargs)
-    config_types.Path.set_tostring_fn(
-      PathToString(self, self._test_data))
+    config_types.Path.set_tostring_fn(PathToString(self, self._test_data))
     config_types.NamedBasePath.set_path_api(self)
 
     self._path_properties = path_properties
 
     # Assigned at "initialize".
-    self._path_mod = None # NT or POSIX path module, or "os.path" in prod.
+    self._path_mod = None  # NT or POSIX path module, or "os.path" in prod.
     self._start_dir = None
     self._temp_dir = None
     self._cache_dir = None
@@ -261,16 +265,15 @@ class PathApi(recipe_api.RecipeApi):
       assert os.path.isabs(default), default
       return default
     if not os.path.isabs(value):
-      raise Error(
-        'Path "%s" specified by module property %s is not absolute' % (
-          value, property_name))
+      raise Error('Path "%s" specified by module property %s is not absolute' %
+                  (value, property_name))
     return value
 
   def _ensure_dir(self, path):  # pragma: no cover
     try:
       os.makedirs(path)
     except os.error:
-      pass # Perhaps already exists.
+      pass  # Perhaps already exists.
 
   def _split_path(self, path):  # pragma: no cover
     """Relative or absolute path -> tuple of components."""
@@ -303,7 +306,7 @@ class PathApi(recipe_api.RecipeApi):
       # underneath of the working directory is transient and will be purged in
       # between builds.
       cleanup_dir = self._read_path('cleanup_dir',
-          os.path.join(start_dir, 'recipe_cleanup'))
+                                    os.path.join(start_dir, 'recipe_cleanup'))
       self._ensure_dir(cleanup_dir)
       self._cleanup_dir = self._split_path(cleanup_dir)
     else:
@@ -362,13 +365,13 @@ class PathApi(recipe_api.RecipeApi):
       # Ensure it's under self._cleanup_dir, convert to Path.
       new_path = self._split_path(new_path)
       assert new_path[:len(self._cleanup_dir)] == self._cleanup_dir, (
-        'new_path: %r -- cleanup_dir: %r' % (new_path, self._cleanup_dir))
+          'new_path: %r -- cleanup_dir: %r' % (new_path, self._cleanup_dir))
       temp_dir = self['cleanup'].join(*new_path[len(self._cleanup_dir):])
     else:
       self._test_counter += 1
       assert isinstance(prefix, basestring)
-      temp_dir = self['cleanup'].join(
-          '%s_tmp_%d' % (prefix, self._test_counter))
+      temp_dir = self['cleanup'].join('%s_tmp_%d' %
+                                      (prefix, self._test_counter))
     self.mock_add_paths(temp_dir)
     return temp_dir
 
@@ -388,14 +391,14 @@ class PathApi(recipe_api.RecipeApi):
       # Ensure it's under self._cleanup_dir, convert to Path.
       new_path = self._split_path(new_path)
       assert new_path[:len(self._cleanup_dir)] == self._cleanup_dir, (
-        'new_path: %r -- cleanup_dir: %r' % (new_path, self._cleanup_dir))
+          'new_path: %r -- cleanup_dir: %r' % (new_path, self._cleanup_dir))
       temp_file = self['cleanup'].join(*new_path[len(self._cleanup_dir):])
       os.close(fd)
     else:
       self._test_counter += 1
       assert isinstance(prefix, basestring)
-      temp_file = self['cleanup'].join(
-          '%s_tmp_%d' % (prefix, self._test_counter))
+      temp_file = self['cleanup'].join('%s_tmp_%d' %
+                                       (prefix, self._test_counter))
     self.mock_add_paths(temp_file)
     return temp_file
 
@@ -448,18 +451,18 @@ class PathApi(recipe_api.RecipeApi):
     sub_path = abs_string_path[len(sPath):].strip(self.sep)
     return path.join(*sub_path.split(self.sep))
 
-
   def __contains__(self, pathname):
-    return any(path_set.get(pathname) for path_set in (
-        self.c.dynamic_paths, self.c.base_paths))
+    return any(
+        path_set.get(pathname)
+        for path_set in (self.c.dynamic_paths, self.c.base_paths))
 
   def __setitem__(self, pathname, path):
     assert isinstance(path, config_types.Path), (
-      'Setting dynamic path to something other than a Path: %r' % path)
+        'Setting dynamic path to something other than a Path: %r' % path)
     assert pathname in self.c.dynamic_paths, (
-      'Must declare dynamic path (%r) in config before setting it.' % path)
+        'Must declare dynamic path (%r) in config before setting it.' % path)
     assert isinstance(path.base, config_types.BasePath), (
-      'Dynamic path values must be based on a base_path' % path.base)
+        'Dynamic path values must be based on a base_path' % path.base)
     self.c.dynamic_paths[pathname] = path
 
   def get(self, name, default=None):
