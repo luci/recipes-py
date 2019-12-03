@@ -1,0 +1,11 @@
+[
+  {
+    "cmd": [
+      "results.api.cr.dev"
+    ],
+    "name": "host"
+  },
+  {
+    "name": "$result"
+  }
+]

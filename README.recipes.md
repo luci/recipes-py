@@ -22,6 +22,7 @@
   * [python](#recipe_modules-python) &mdash; Provides methods for running python scripts correctly.
   * [random](#recipe_modules-random) &mdash; Allows randomness in recipes.
   * [raw_io](#recipe_modules-raw_io) &mdash; Provides objects for reading and writing raw data to and from steps.
+  * [resultdb](#recipe_modules-resultdb) &mdash; API for interacting with the ResultDB service.
   * [runtime](#recipe_modules-runtime)
   * [scheduler](#recipe_modules-scheduler) &mdash; API for interacting with the LUCI Scheduler service.
   * [service_account](#recipe_modules-service_account) &mdash; API for getting OAuth2 access tokens for LUCI tasks or private keys.
@@ -111,6 +112,7 @@
   * [python:tests/infra_failing_step](#recipes-python_tests_infra_failing_step) &mdash; Tests for api.
   * [random:tests/full](#recipes-random_tests_full)
   * [raw_io:examples/full](#recipes-raw_io_examples_full)
+  * [resultdb:tests/full](#recipes-resultdb_tests_full)
   * [runtime:tests/full](#recipes-runtime_tests_full)
   * [scheduler:examples/emit_triggers](#recipes-scheduler_examples_emit_triggers) &mdash; This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
   * [scheduler:examples/host](#recipes-scheduler_examples_host) &mdash; This file is a recipe demonstrating reading/mocking scheduler host.
@@ -2160,6 +2162,26 @@ Args:
    * add_output_log (True|False|'on_failure') - Log a copy of the output
      to a step link named `name`. If this is 'on_failure', only create this
      log when the step has a non-SUCCESS status.
+### *recipe_modules* / [resultdb](/recipe_modules/resultdb)
+
+[DEPS](/recipe_modules/resultdb/__init__.py#6): [buildbucket](#recipe_modules-buildbucket)
+
+API for interacting with the ResultDB service.
+
+Requires `rdb` command in `$PATH`:
+https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
+
+#### **class [ResultDBAPI](/recipe_modules/resultdb/api.py#14)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
+
+A module for interacting with ResultDB.
+
+&emsp; **@property**<br>&mdash; **def [host](/recipe_modules/resultdb/api.py#25)(self):**
+
+Hostname of ResultDB to use in API calls.
+
+Defaults to the hostname of the current build's invocation.
+
+&mdash; **def [initialize](/recipe_modules/resultdb/api.py#20)(self):**
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
 #### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
@@ -3293,6 +3315,11 @@ Tests for api.python.infra_failing_step.
 [DEPS](/recipe_modules/raw_io/examples/full.py#5): [path](#recipe_modules-path), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/raw_io/examples/full.py#14)(api):**
+### *recipes* / [resultdb:tests/full](/recipe_modules/resultdb/tests/full.py)
+
+[DEPS](/recipe_modules/resultdb/tests/full.py#7): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/resultdb/tests/full.py#14)(api):**
 ### *recipes* / [runtime:tests/full](/recipe_modules/runtime/tests/full.py)
 
 [DEPS](/recipe_modules/runtime/tests/full.py#7): [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
