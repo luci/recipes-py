@@ -169,6 +169,10 @@ message Data {
 
     // Suggested fixes for the identified issue.
     repeated Suggestion suggestions = 10;
+
+    // When true, show on both changed and unchanged lines.
+    // When false, only show on changed lines.
+    bool show_on_unchanged_lines = 11;
   }
 
   // Suggested fix.
