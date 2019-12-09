@@ -112,6 +112,7 @@
   * [python:tests/infra_failing_step](#recipes-python_tests_infra_failing_step) &mdash; Tests for api.
   * [random:tests/full](#recipes-random_tests_full)
   * [raw_io:examples/full](#recipes-raw_io_examples_full)
+  * [resultdb:examples/derive](#recipes-resultdb_examples_derive)
   * [resultdb:tests/full](#recipes-resultdb_tests_full)
   * [runtime:tests/full](#recipes-runtime_tests_full)
   * [scheduler:examples/emit_triggers](#recipes-scheduler_examples_emit_triggers) &mdash; This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
@@ -1790,14 +1791,14 @@ There are other anchor points which can be defined (e.g. by the
 `depot_tools/infra_paths` module). Refer to those modules for additional
 documentation.
 
-#### **class [PathApi](/recipe_modules/path/api.py#213)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
+#### **class [PathApi](/recipe_modules/path/api.py#218)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
 
-&mdash; **def [\_\_getitem\_\_](/recipe_modules/path/api.py#472)(self, name):**
+&mdash; **def [\_\_getitem\_\_](/recipe_modules/path/api.py#475)(self, name):**
 
 Gets the base path named `name`. See module docstring for more
 information.
 
-&mdash; **def [abs\_to\_path](/recipe_modules/path/api.py#402)(self, abs_string_path):**
+&mdash; **def [abs\_to\_path](/recipe_modules/path/api.py#405)(self, abs_string_path):**
 
 Converts an absolute path string `string_path` to a real Path object,
 using the most appropriate known base path.
@@ -1823,27 +1824,27 @@ api.path.abs_to_path("/basis/dir/for/recipe/some/other/dir") ->
 Raises an ValueError if the preconditions are not met, otherwise returns the
 Path object.
 
-&mdash; **def [assert\_absolute](/recipe_modules/path/api.py#342)(self, path):**
+&mdash; **def [assert\_absolute](/recipe_modules/path/api.py#345)(self, path):**
 
 Raises AssertionError if the given path is not an absolute path.
 
 Args:
   * path (Path|str) - The path to check.
 
-&mdash; **def [get](/recipe_modules/path/api.py#465)(self, name, default=None):**
+&mdash; **def [get](/recipe_modules/path/api.py#468)(self, name, default=None):**
 
 Gets the base path named `name`. See module docstring for more
 information.
 
-&mdash; **def [get\_config\_defaults](/recipe_modules/path/api.py#225)(self):**
+&mdash; **def [get\_config\_defaults](/recipe_modules/path/api.py#230)(self):**
 
 Internal recipe implementation function.
 
-&mdash; **def [initialize](/recipe_modules/path/api.py#287)(self):**
+&mdash; **def [initialize](/recipe_modules/path/api.py#290)(self):**
 
 Internal recipe implementation function.
 
-&mdash; **def [mkdtemp](/recipe_modules/path/api.py#350)(self, prefix=tempfile.template):**
+&mdash; **def [mkdtemp](/recipe_modules/path/api.py#353)(self, prefix=tempfile.template):**
 
 Makes a new temporary directory, returns Path to it.
 
@@ -1853,7 +1854,7 @@ Args:
 
 Returns a Path to the new directory.
 
-&mdash; **def [mkstemp](/recipe_modules/path/api.py#375)(self, prefix=tempfile.template):**
+&mdash; **def [mkstemp](/recipe_modules/path/api.py#378)(self, prefix=tempfile.template):**
 
 Makes a new temporary file, returns Path to it.
 
@@ -1864,15 +1865,15 @@ Args:
 Returns a Path to the new file. Unlike tempfile.mkstemp, the file's file
 descriptor is closed.
 
-&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#321)(self, path):**
+&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#324)(self, path):**
 
 For testing purposes, mark that |path| exists.
 
-&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#326)(self, source, dest):**
+&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#329)(self, source, dest):**
 
 For testing purposes, copy |source| to |dest|.
 
-&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#331)(self, path, filt=(lambda p: True)):**
+&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#334)(self, path, filt=(lambda p: True)):**
 
 For testing purposes, assert that |path| doesn't exist.
 
@@ -2164,24 +2165,89 @@ Args:
      log when the step has a non-SUCCESS status.
 ### *recipe_modules* / [resultdb](/recipe_modules/resultdb)
 
-[DEPS](/recipe_modules/resultdb/__init__.py#6): [buildbucket](#recipe_modules-buildbucket)
+[DEPS](/recipe_modules/resultdb/__init__.py#6): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 API for interacting with the ResultDB service.
 
 Requires `rdb` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 
-#### **class [ResultDBAPI](/recipe_modules/resultdb/api.py#14)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
+#### **class [ResultDBAPI](/recipe_modules/resultdb/api.py#21)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
 
 A module for interacting with ResultDB.
 
-&emsp; **@property**<br>&mdash; **def [host](/recipe_modules/resultdb/api.py#25)(self):**
+&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#46)(self, swarming_host, task_ids, merge, variants_with_unexpected_results=False, limit=None, step_name=None):**
+
+Returns results derived from the specified Swarming tasks.
+
+TODO(crbug.com/1030191): remove this function in favor of query().
+
+Most users will be interested only in results of test variants that had
+unexpected results. This can be achieved by passing
+variants_with_unexpected_results=True. This significantly reduces output
+size and latency.
+
+Example:
+  results = api.resultdb.derive(
+      'chromium-swarm.appspot.com', ['deadbeef', 'badcoffee'],
+      variants_with_unexpected_results=True,
+  )
+  failed_tests = {r.test_path for r in results}
+
+Args:
+*   `swarming_host` (str): hostname (without scheme) of the swarming server,
+     such as chromium-swarm.appspot.com.
+*   `task_ids` (list of str): ids of the tasks to fetch results from.
+     If more than one, then a union of their test results is returned.
+     Its ok to pass same task ids, or ids of tasks that ran the same tests
+     and had different results.
+     Each task should have
+     *   output.json or full_results.json in the isolated output.
+         The file must be in Chromium JSON Test Result format or Chromium's
+         GTest format. If the task does not have it, the request fails.
+     *   optional tag "bucket" with the LUCI bucket, e.g. "ci"
+         If the tag is not present, the test variants will not have the
+         corresponding key.
+     *   optional tag "buildername" with a builder name, e.g. "linux-rel"
+         If the tag is not present, the test variants will not have the
+         corresponding key.
+     *   optional tag "test_suite" with a name of a test suite from a JSON
+         file in
+         https://chromium.googlesource.com/chromium/src/+/master/testing/buildbot/
+         If the tag is not present, the test variants will not have the
+         corresponding key.
+     *   optional tag "gn_target" with a full name of the GN target used to
+         compile the test binary used in the task, e.g.
+         "gn_target://chrome/tests:browser_tests".
+         If the tag is not present, the test paths are not prefixed.
+*   `merge` (bool): merge all results as if they were produced by one task.
+    If a test X had expected and unexpected results in tasks T1 and T2,
+    with merge=True, X's results from *both* T1 and T2 are returned;
+    with merge=False, only from T2.
+    merge=False should be used for tasks that might belong to unrelated
+    builds, e.g. two builds of the same CI builder on different revisions,
+    which is a rare case.
+    If merge is True, the returned dict has only one key, None.
+*   `variants_with_unexpected_results` (bool): if True, return only test
+    results from variants that have unexpected results.
+    This significantly reduces output size and latency.
+*   `limit` (int): maximum number of test results to return.
+    Defaults to 1000.
+
+Returns:
+  A dict {invocation_id: [test_result_pb2.TestResult]}.
+
+&mdash; **def [chromium\_derive\_merge](/recipe_modules/resultdb/api.py#41)(self, \*args, \*\*kwargs):**
+
+Shortcut for chromium_derive(..., merge=True).get(None, []).
+
+&emsp; **@property**<br>&mdash; **def [host](/recipe_modules/resultdb/api.py#31)(self):**
 
 Hostname of ResultDB to use in API calls.
 
 Defaults to the hostname of the current build's invocation.
 
-&mdash; **def [initialize](/recipe_modules/resultdb/api.py#20)(self):**
+&mdash; **def [initialize](/recipe_modules/resultdb/api.py#26)(self):**
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
 #### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
@@ -3315,6 +3381,13 @@ Tests for api.python.infra_failing_step.
 [DEPS](/recipe_modules/raw_io/examples/full.py#5): [path](#recipe_modules-path), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/raw_io/examples/full.py#14)(api):**
+### *recipes* / [resultdb:examples/derive](/recipe_modules/resultdb/examples/derive.py)
+
+[DEPS](/recipe_modules/resultdb/examples/derive.py#14): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/derive.py#21)(api):**
+
+&mdash; **def [serialize\_messages](/recipe_modules/resultdb/examples/derive.py#59)(messages):**
 ### *recipes* / [resultdb:tests/full](/recipe_modules/resultdb/tests/full.py)
 
 [DEPS](/recipe_modules/resultdb/tests/full.py#7): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)

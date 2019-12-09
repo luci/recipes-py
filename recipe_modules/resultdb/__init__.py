@@ -5,4 +5,7 @@
 
 DEPS = [
   'buildbucket',
+  'json',
+  'raw_io',
+  'step',
 ]
