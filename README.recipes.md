@@ -1900,8 +1900,7 @@ Mocks:
 
 Returns the current CPU architecture.
 
-TODO: This is currently always hard-coded to 'intel'... Apparently no one
-has actually needed this function?
+Can return "arm" or "intel".
 
 &emsp; **@property**<br>&mdash; **def [bits](/recipe_modules/platform/api.py#112)(self):**
 
@@ -1911,7 +1910,7 @@ Returns the bitness of the userland for the current system (either 32 or
 TODO: If anyone needs to query for the kernel bitness, another accessor
 should be added.
 
-&emsp; **@property**<br>&mdash; **def [cpu\_count](/recipe_modules/platform/api.py#139)(self):**
+&emsp; **@property**<br>&mdash; **def [cpu\_count](/recipe_modules/platform/api.py#138)(self):**
 
 The number of logical CPU cores (i.e. including hyper-threaded cores),
 according to `psutil.cpu_count(True)`.
@@ -1945,11 +1944,11 @@ Returns the current platform name which will be in:
 * mac
 * linux
 
-&emsp; **@staticmethod**<br>&mdash; **def [normalize\_platform\_name](/recipe_modules/platform/api.py#145)(plat):**
+&emsp; **@staticmethod**<br>&mdash; **def [normalize\_platform\_name](/recipe_modules/platform/api.py#144)(plat):**
 
 One of python's sys.platform values -> 'win', 'linux' or 'mac'.
 
-&emsp; **@property**<br>&mdash; **def [total\_memory](/recipe_modules/platform/api.py#131)(self):**
+&emsp; **@property**<br>&mdash; **def [total\_memory](/recipe_modules/platform/api.py#130)(self):**
 
 The total physical memory in MiB.
 

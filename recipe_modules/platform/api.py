@@ -123,8 +123,7 @@ class PlatformApi(recipe_api.RecipeApi):
   def arch(self):
     """Returns the current CPU architecture.
 
-    TODO: This is currently always hard-coded to 'intel'... Apparently no one
-    has actually needed this function?
+    Can return "arm" or "intel".
     """
     return self._arch
 
