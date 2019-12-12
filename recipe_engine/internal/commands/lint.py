@@ -39,6 +39,7 @@ MODULES_WHITELIST = [
 
     # From recipe ecosystem
     r'PB',
+    r'RECIPE_MODULES',
 ]
 
 
