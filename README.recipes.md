@@ -2171,11 +2171,11 @@ API for interacting with the ResultDB service.
 Requires `rdb` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 
-#### **class [ResultDBAPI](/recipe_modules/resultdb/api.py#21)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
+#### **class [ResultDBAPI](/recipe_modules/resultdb/api.py#19)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
 
 A module for interacting with ResultDB.
 
-&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#46)(self, swarming_host, task_ids, merge, variants_with_unexpected_results=False, limit=None, step_name=None):**
+&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#45)(self, swarming_host, task_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
 
 Returns results derived from the specified Swarming tasks.
 
@@ -2215,18 +2215,10 @@ Args:
          https://chromium.googlesource.com/chromium/src/+/master/testing/buildbot/
          If the tag is not present, the test variants will not have the
          corresponding key.
-     *   optional tag "gn_target" with a full name of the GN target used to
-         compile the test binary used in the task, e.g.
-         "gn_target://chrome/tests:browser_tests".
+     *   optional tag "ninja_target" with a full name of the ninja target
+         used to compile the test binary used in the task, e.g.
+         "ninja_target://chrome/tests:browser_tests".
          If the tag is not present, the test paths are not prefixed.
-*   `merge` (bool): merge all results as if they were produced by one task.
-    If a test X had expected and unexpected results in tasks T1 and T2,
-    with merge=True, X's results from *both* T1 and T2 are returned;
-    with merge=False, only from T2.
-    merge=False should be used for tasks that might belong to unrelated
-    builds, e.g. two builds of the same CI builder on different revisions,
-    which is a rare case.
-    If merge is True, the returned dict has only one key, None.
 *   `variants_with_unexpected_results` (bool): if True, return only test
     results from variants that have unexpected results.
     This significantly reduces output size and latency.
@@ -2234,19 +2226,15 @@ Args:
     Defaults to 1000.
 
 Returns:
-  A dict {invocation_id: [test_result_pb2.TestResult]}.
+  A dict {invocation_id: api.Invocation}.
 
-&mdash; **def [chromium\_derive\_merge](/recipe_modules/resultdb/api.py#41)(self, \*args, \*\*kwargs):**
-
-Shortcut for chromium_derive(..., merge=True).get(None, []).
-
-&emsp; **@property**<br>&mdash; **def [host](/recipe_modules/resultdb/api.py#31)(self):**
+&emsp; **@property**<br>&mdash; **def [host](/recipe_modules/resultdb/api.py#35)(self):**
 
 Hostname of ResultDB to use in API calls.
 
 Defaults to the hostname of the current build's invocation.
 
-&mdash; **def [initialize](/recipe_modules/resultdb/api.py#26)(self):**
+&mdash; **def [initialize](/recipe_modules/resultdb/api.py#30)(self):**
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
 #### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
@@ -3382,11 +3370,9 @@ Tests for api.python.infra_failing_step.
 &mdash; **def [RunSteps](/recipe_modules/raw_io/examples/full.py#14)(api):**
 ### *recipes* / [resultdb:examples/derive](/recipe_modules/resultdb/examples/derive.py)
 
-[DEPS](/recipe_modules/resultdb/examples/derive.py#14): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/resultdb/examples/derive.py#15): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/derive.py#21)(api):**
-
-&mdash; **def [serialize\_messages](/recipe_modules/resultdb/examples/derive.py#59)(messages):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/derive.py#22)(api):**
 ### *recipes* / [resultdb:tests/full](/recipe_modules/resultdb/tests/full.py)
 
 [DEPS](/recipe_modules/resultdb/tests/full.py#7): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)

@@ -14,26 +14,24 @@ from PB.go.chromium.org.luci.resultdb.proto.rpc.v1 import test_result as test_re
 
 class ResultDBTestApi(recipe_test_api.RecipeTestApi):
 
-  def query(self, results, step_name=None):
+  # Expose serialize and deserialize functions.
+
+  serialize = staticmethod(common.serialize)
+  deserialize = staticmethod(common.deserialize)
+  Invocation = common.Invocation
+
+  def query(self, inv_bundle, step_name=None):
     """Emulates query() return value.
 
     Args:
-      results: a dict {invocation_id: [messages]} where a message must be
-        test_result_pb2.TestResult or test_result_pb2.TestExoneration.
+      inv_bundle: a dict {inv_id: test_api.Invocation}.
       step_name: the name of the step to simulate.
     """
     step_name = step_name or 'rdb ls'
-    lines = []
-    for inv, messages in results.iteritems():
-      for m in messages:
-        d = json_format.MessageToDict(m)
-        key = common.KINDS_REVERSE[type(m)]
-        lines.append(json.dumps({
-          'invocationId': inv,
-          key: d,
-        }))
     return self.step_data(
-        step_name, self.m.raw_io.stream_output('\n'.join(lines)))
+        step_name,
+        self.m.raw_io.stream_output(common.serialize(inv_bundle)),
+    )
 
   def chromium_derive(self, results, step_name=None):
     """Emulates chromium_derive() output value.
