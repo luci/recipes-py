@@ -21,16 +21,21 @@ def header(input_api):
 
 
 def CommonChecks(input_api, output_api):
-  results = []
-
-  results.extend(input_api.canned_checks.PanProjectChecks(
+  return input_api.canned_checks.PanProjectChecks(
       input_api, output_api, license_header=header(input_api),
       excluded_paths=[
           r'.+_pb2\.py',
       ],
-  ))
+  )
 
-  # explicitly run these independently because they update files on disk and are
+
+def CheckChangeOnUpload(input_api, output_api):
+  return CommonChecks(input_api, output_api)
+
+
+def CheckChangeOnCommit(input_api, output_api):
+  results = CommonChecks(input_api, output_api)
+  # Explicitly run these independently because they update files on disk and are
   # called implicitly with the other tests. The vpython check is nominally
   # locked with a file lock, but updating the protos, etc. of recipes.py is not.
   recipes_py = input_api.os_path.join(
@@ -55,9 +60,4 @@ def CommonChecks(input_api, output_api):
       input_api.canned_checks.GetUnitTestsInDirectory(
           input_api, output_api, 'unittests', whitelist=[r'.+_test\.py'])
   ))
-
   return results
-
-
-CheckChangeOnUpload = CommonChecks
-CheckChangeOnCommit = CommonChecks
