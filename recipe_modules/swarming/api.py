@@ -21,8 +21,6 @@ if sys.version_info.major >= 3:
 DEFAULT_CIPD_VERSION = 'git_revision:67b11ada44a625008a2db5cb49ad453494b16ba1'
 
 
-# TODO(iannucci): Investigate whether slices can be made invisible to clients
-# who only wish to specify a request with a single slice.
 class TaskRequest(object):
   """Describes a single Swarming request for a new task.
 
@@ -35,14 +33,44 @@ class TaskRequest(object):
   Example:
   ```
   request = (api.swarming.task_request().
-    with_name('my-name').
-    with_priority(100).
-    with_service_account("my-service-account").
-    with_slice(0, (request[0].
-        # ...
-        # Building up of a TaskSlice, following the same pattern; see below.
+      with_name('my-name').
+      with_priority(100).
+      with_service_account('my-service-account').
+      with_slice(0, (request[0].
+          # ...
+          # Building up of a TaskSlice, following the same pattern; see below.
+          )
       )
-    )
+  )
+  ```
+
+  A more complex example using two task slices:
+  ```
+  request = (api.swarming.task_request().
+      with_name('my-name').
+      with_priority(100).
+      with_service_account('my-service-account')
+  )
+  # Initialize a TaskSlice for the fallback, that expires after 58 minutes.
+  slice_cold_cache = (request.slice[0].
+      with_command(['echo', 'hello']).
+      with_dimensions({'pool': 'my.pool', 'os': 'Debian'}).
+      with_isolated('606d94add94223636ee516c6bc9918f937823ccc').
+      with_expiration_secs(60*60-2*60).
+      with_io_timeout_secs(600).
+      with_named_caches({'image': 'vm_image'})
+  )
+  # Create a second TaskSlice for the warm cache, that expires after 2 minutes.
+  slice_warm_cache = (slice_cold_cache.
+      with_dimensions({'caches': 'vm_image'}).
+      with_expiration_secs(2*60)
+  )
+  # Setup the warm cache first, fallback to the cold cache after. The total task
+  # expiration is 60 minutes.
+  request = (
+      request.
+      with_slice(0, slice_warm_cache).
+      with_slice(1, slice_cold_cache)
   )
   ```
 
