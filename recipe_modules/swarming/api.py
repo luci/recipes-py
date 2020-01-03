@@ -932,6 +932,14 @@ class TaskResult(object):
     return self._success
 
   @property
+  def duration_secs(self):
+    """Returns the duration of the task, in seconds.
+
+    Returns None if an error occurred.
+    """
+    return self._duration
+
+  @property
   def output(self):
     """The output (str) streamed from the task."""
     return self._output

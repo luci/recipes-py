@@ -122,6 +122,7 @@ def RunSteps(api):
   results[0].output
   results[0].outputs
   results[0].output_dir
+  results[0].duration_secs
   results[0].isolated_outputs
 
   # Raise an error if something went wrong.
