@@ -204,6 +204,10 @@ class CIPDApi(recipe_api.RecipeApi):
 
   This assumes that `cipd` (or `cipd.exe` or `cipd.bat` on windows) has been
   installed somewhere in $PATH.
+
+  Attributes:
+    * max_threads (int) - Number of worker threads for extracting packages.
+      If 0, uses CPU count.
   """
   PackageDefinition = PackageDefinition
   EnsureFile = EnsureFile
@@ -247,6 +251,7 @@ class CIPDApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
     super(recipe_api.RecipeApi, self).__init__(**kwargs)
     self._service_account = None
+    self.max_threads = None
 
   @contextlib.contextmanager
   def set_service_account(self, service_account):
@@ -605,6 +610,9 @@ class CIPDApi(recipe_api.RecipeApi):
         'ensure', '-root', root, '-ensure-file',
         self.m.raw_io.input(ensure_file.render())
     ]
+    if self.max_threads is not None:
+      cmd.extend(('-max-threads', str(self.max_threads)))
+
     step_result = self._run(
         'ensure_installed',
         cmd,

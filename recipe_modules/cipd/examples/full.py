@@ -28,11 +28,12 @@ PROPERTIES = {
   'refs': Property(default=['fake-ref-1', 'fake-ref-2'], kind=List(str)),
   'tags': Property(kind=dict, default={'fake_tag_1': 'fake_value_1',
                                        'fake_tag_2': 'fake_value_2'}),
+  'max_threads': Property(kind=int, default=None),
 }
 
 
 def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
-             install_mode, refs, tags):
+             install_mode, refs, tags, max_threads):
   package_name = 'public/package/${platform}'
   package_instance_id = '7f751b2237df2fdf3c1405be00590fefffbaea2d'
   ensure_file = api.cipd.EnsureFile()
@@ -52,6 +53,7 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
   private_package_name = 'private/package/${platform}'
   #packages[private_package_name] = 'latest'
   ensure_file.add_package(private_package_name, 'latest', subdir='private')
+  api.cipd.max_threads = max_threads
   api.cipd.ensure(cipd_root, ensure_file)
   result = api.cipd.search(private_package_name, tag='key:value')
   api.cipd.describe(private_package_name,
@@ -147,6 +149,12 @@ def GenTests(api):
   yield (
     api.test('win64')
     + api.platform('win', 64)
+  )
+
+  yield (
+    api.test('max-threads')
+    + api.platform('linux', 64)
+    + api.properties(max_threads=2)
   )
 
   yield (

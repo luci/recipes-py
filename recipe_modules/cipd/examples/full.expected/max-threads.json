@@ -151,6 +151,8 @@
       "[START_DIR]/packages",
       "-ensure-file",
       "public/package/${platform} 7f751b2237df2fdf3c1405be00590fefffbaea2d\n@Subdir private\nprivate/package/${platform} latest",
+      "-max-threads",
+      "2",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -463,32 +465,227 @@
     ]
   },
   {
-    "cmd": [],
-    "name": "RECIPE CRASH (Uncaught exception)",
+    "cmd": [
+      "cipd",
+      "pkg-build",
+      "-pkg-def",
+      "[START_DIR]/fake-package.yaml",
+      "-out",
+      "fake-package-path",
+      "-hash-algo",
+      "sha256",
+      "-compression-level",
+      "9",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "build fake-package.yaml",
     "~followup_annotations": [
-      "@@@STEP_EXCEPTION@@@",
-      "The recipe has crashed at point 'Uncaught exception'!",
-      "",
-      "Traceback (most recent call last):",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/engine.py\", line 477, in run_steps",
-      "    raw_result = recipe_obj.run_steps(api, engine)",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/recipe_deps.py\", line 706, in run_steps",
-      "    properties_def, api=api)",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/property_invoker.py\", line 89, in invoke_with_properties",
-      "    arg_names, **additional_args)",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/property_invoker.py\", line 52, in _invoke_with_properties",
-      "    return callable_obj(*props, **additional_args)",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/cipd/examples/full.py\", line 93, in RunSteps",
-      "    pkg = api.cipd.PackageDefinition('infra/fake-package', root, install_mode)",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/cipd/api.py\", line 66, in __init__",
-      "    raise ValueError('invalid value for install_mode: %r' % install_mode)",
-      "ValueError: invalid value for install_mode: ''"
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"fake-package.yaml\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
     ]
   },
   {
-    "failure": {
-      "humanReason": "Uncaught Exception: ValueError(\"invalid value for install_mode: ''\",)"
-    },
+    "cmd": [
+      "cipd",
+      "pkg-register",
+      "fake-package-path",
+      "-ref",
+      "fake-ref-1",
+      "-ref",
+      "fake-ref-2",
+      "-tag",
+      "fake_tag_1:fake_value_1",
+      "-tag",
+      "fake_tag_2:fake_value_2",
+      "-service-account-json",
+      "/path/to/cipd/creds.json",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "register infra/fake-package (2)",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"infra/fake-package\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@infra/fake-package@https://chrome-infra-packages.appspot.com/p/infra/fake-package/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "create",
+      "-pkg-def",
+      "[START_DIR]/fake-package.yaml",
+      "-hash-algo",
+      "sha256",
+      "-ref",
+      "fake-ref-1",
+      "-ref",
+      "fake-ref-2",
+      "-tag",
+      "fake_tag_1:fake_value_1",
+      "-tag",
+      "fake_tag_2:fake_value_2",
+      "-service-account-json",
+      "/path/to/cipd/creds.json",
+      "-compression-level",
+      "9",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "create fake-package.yaml",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"fake-package.yaml\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@40-chars-fake-of-the-package-instance_id@https://chrome-infra-packages.appspot.com/p/fake-package.yaml/+/40-chars-fake-of-the-package-instance_id@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "set-tag",
+      "fake-package",
+      "-version",
+      "long/weird/ref/which/doesn/not/fit/into/40chars",
+      "-tag",
+      "dead:beaf",
+      "-tag",
+      "more:value",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "cipd set-tag fake-package",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"fake-package\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"pin\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"instance_id\": \"resolved-instance_id-of-long/weird/ref/w\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"package\": \"fake-package\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "set-ref",
+      "fake-package",
+      "-version",
+      "latest",
+      "-ref",
+      "any",
+      "-ref",
+      "some",
+      "-service-account-json",
+      "/path/to/cipd/creds.json",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "cipd set-ref fake-package",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"fake-package\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"pin\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"instance_id\": \"resolved-instance_id-of-latest----------\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"package\": \"fake-package\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "search",
+      "fake-package/${platform}",
+      "-tag",
+      "dead:beaf",
+      "-service-account-json",
+      "/path/to/cipd/creds.json",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "cipd search fake-package/${platform} dead:beaf",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@    {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"package\": \"fake-package/resolved-platform\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  ]@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "pkg-fetch",
+      "fake-package/${platform}",
+      "-version",
+      "some:tag",
+      "-out",
+      "[START_DIR]/fetched_pkg",
+      "-service-account-json",
+      "/path/to/cipd/creds.json",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "cipd pkg-fetch fake-package/${platform}",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@fake-package/resolved-platform resolved-instance_id-of-some:tag--------@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-some:tag--------\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"fake-package/resolved-platform\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "pkg-deploy",
+      "[START_DIR]/fetched_pkg",
+      "-root",
+      "[START_DIR]/raw_root",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "cipd pkg-deploy [START_DIR]/fetched_pkg",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/fetch\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/fetched_pkg\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
     "name": "$result"
   }
 ]

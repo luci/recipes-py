@@ -478,7 +478,7 @@
       "    arg_names, **additional_args)",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/property_invoker.py\", line 52, in _invoke_with_properties",
       "    return callable_obj(*props, **additional_args)",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/cipd/examples/full.py\", line 99, in RunSteps",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/cipd/examples/full.py\", line 101, in RunSteps",
       "    pkg.add_version_file(pth)",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/cipd/api.py\", line 147, in add_version_file",
       "    raise ValueError('add_version_file() may only be used once.')",
