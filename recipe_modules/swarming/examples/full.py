@@ -124,6 +124,7 @@ def RunSteps(api):
   results[0].output_dir
   results[0].duration_secs
   results[0].isolated_outputs
+  results[0].bot_id
 
   # Raise an error if something went wrong.
   if not results[0].success:

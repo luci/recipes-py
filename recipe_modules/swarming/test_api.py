@@ -96,7 +96,8 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
                   duration=62.35,
                   failure=False,
                   output='hello world!',
-                  outputs=()):
+                  outputs=(),
+                  bot_id='vm-123'):
     """
     Returns the raw results of a Swarming task.
 
@@ -129,6 +130,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
         'output': output,
         'outputs': outputs,
         'results': {
+            'bot_id': bot_id,
             'name': name,
             'task_id': id,
             'state': state.name,

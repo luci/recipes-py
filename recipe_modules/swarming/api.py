@@ -869,10 +869,12 @@ class TaskResult(object):
       self._state = None
       self._success = None
       self._duration = None
+      self._bot_id = None
     else:
       results = raw_results['results']
       self._name = results['name']
       self._state = TaskState[results['state']]
+      self._bot_id = results.get('bot_id')
 
       assert self._state not in [
           TaskState.INVALID,
@@ -971,6 +973,11 @@ class TaskResult(object):
   def isolated_outputs(self):
     """Returns the isolated output refs (IsolatedOutputs|None) of the task."""
     return self._isolated_outputs
+
+  @property
+  def bot_id(self):
+    """The ID (str) of the bot that executed the task."""
+    return self._bot_id
 
   def analyze(self):
     """Raises a step failure if the task was unsuccessful."""
