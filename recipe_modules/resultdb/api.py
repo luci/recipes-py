@@ -113,7 +113,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
         subcommand='chromium-derive',
         args=args,
         step_name=step_name,
-        stdout=self.m.raw_io.output(),
+        stdout=self.m.raw_io.output(add_output_log=True),
         step_test_data=lambda: self.m.raw_io.test_api.stream_output(''),
     )
     return common.deserialize(step_res.stdout)
