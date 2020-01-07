@@ -32,9 +32,11 @@ recipe engine supports. The protocol is pretty simple:
       for the parser (help will be the first paragraph of `__doc__`).
   * In addition to adding flags, the function must also call:
 
+      ```
       parser.set_defaults(
           postprocess_func=function(error, args), # optional
           func=function(args))                    # required
+      ```
 
   * Where the 'args' parameter is the parsed CLI arguments and 'error' is the
     function to call if the preconditions for the subcommand aren't met.
@@ -76,7 +78,7 @@ doc) which is a path inside the repo of where the following can exist:
     by) both recipe scripts as well as other modules (in this repo and any other
     repos which depend on it).
 
-Additionally, `recipes.cfg` describes dependent repos with a git URL, commit
+Additionally, `recipes.cfg` describes dependencies with a git URL, commit
 and fetch ref.
 
 
@@ -94,8 +96,8 @@ path of the repo's recipes.cfg file.
 Once `main.py` is running, it parses the `-O` overrides and the `--package`
 flags, and builds a [RecipeDeps] object which owns the whole
 `$recipes_path/.recipe_deps` folder. Constructing this object includes syncing
-(with git) all dependencies described in `recipes.cfg`. Every dependent repo
-will be checked out at `$recipes_path/.recipe_deps/$dep_repo_name`.
+(with git) all dependencies described in `recipes.cfg`. Every dependency
+will be checked out at `$recipes_path/.recipe_deps/$dep_name`.
 
 [RecipeDeps]: /recipe_engine/internal/recipe_deps.py
 
@@ -145,7 +147,7 @@ the .proto files in a directory, running 'protoc' and calling it a day.
 
 After loading all the repos, the engine gathers and compiles any `.proto` files
 they contain into a single global namespace. The recipe engine looks for proto
-files in 3 (well, 4) places in a repo:
+files in 4 places in a repo:
   * Under the `recipe_modules` directory
     * Placed into the global namespace as `recipe_modules/$repo_name/*`.
   * Under the `recipes` directory
@@ -165,14 +167,15 @@ a checksum of their contents. This is a SHA2 of the following:
     algorithm.
   * `PROTOC_VERSION` | `NUL` - The version of the protobuf library/compiler
     we're using.
-  * `repo_name` | `NUL` | `NUL` - The name of the repo. Then, for every .proto
-    in the repo we hash:
-    * `relative_path_in_repo` | `NUL`
-    * `relative_path_of_global_destination` | `NUL`
-    * `githash_of_content` | `NUL`
+  * `repo_name` | `NUL` - The name of the repo.
+
+Then, for every .proto in the repo we hash:
+  * `relative_path_in_repo` | `NUL`
+  * `relative_path_of_global_destination` | `NUL`
+  * `githash_of_content` | `NUL`
 
 The `githash_of_content` is defined by git's "blob" hashing scheme (but is
-currently implemented in pure-python).
+currently implemented in pure Python).
 
 Once we've gathered all proto files and have computed the checksum, we verify
 the checksum against `.recipe_deps/_pb/PB/csum`. If it's the same, we conclude
@@ -251,7 +254,7 @@ loaded module:
   * `CONFIG_CTX` - The `ConfigContext` instance defined in the module's
     config.py file (if any).
   * `DEPS` - The DEPS list/dictionary defined in the module's `__init__.py` file
-    (if any). This is populated with () if `__init__.py` doesn't define it.
+    (if any). This is populated with `()` if `__init__.py` doesn't define it.
   * `API` - The `RecipeApiPlain` subclass found in the api.py file.
   * `TEST_API` - The `RecipeTestApi` subclass found in the test_api.py file (if
     any).
@@ -268,8 +271,10 @@ over time.
 ### Recipe loading
 
 Recipe loading is substantially simpler than loading modules. The recipe `.py`
-file is exec'd with `execfile`, and then it's PROPERTIES dict (if any) is bound
-the same way as it is for Recipe Modules.
+file is exec'd with
+[`execfile`](https://docs.python.org/2/library/functions.html#execfile), and
+then it's PROPERTIES dict (if any) is bound the same way as it is for Recipe
+Modules.
 
 ### Instantiating '**api**' objects
 
@@ -300,7 +305,7 @@ Then the `api` and `test_api` instances will have an 'm' member which contains
 respective instantiated `api` class.
 
 As the loader walks up the tree, each recipe module's `RecipeTestApi` (if any)
-subclass is instantiated by calling its `__init__` and then injecting it's `m`
+subclass is instantiated by calling its `__init__` and then injecting its `m`
 object.
 
 If the loader is in 'API' mode, then the module's RecipeApiPlan subclass is also
@@ -382,12 +387,12 @@ dict mapping a string representation for a variable or expression to the value
 of that variable or expression (e.g. 'my_variable' -> 'foo'). The expression
 may not be an expression that actually appears in the code if the expression
 would actually be more useful than the actual expression in the code (e.g.
-'some_dict.keys()' will appear if the call `check('x' in some_dict) fails
-because the values in `some_dict` aren't relevant to whether 'x' is in it). This
-varmap is constructed by the `_checkTransformer` class, which is a subclass of
-`ast.NodeTransformer`. `ast.NodeTransformer` is an instance of the visitor
-design pattern containing methods corresponding to each node subclass. These
-methods can be overridden to modify or replace the nodes in the AST.
+`some_dict.keys()` will appear if the call `check('x' in some_dict)` fails
+because the values in `some_dict` aren't relevant to whether `'x'` is in it).
+This varmap is constructed by the `_checkTransformer` class, which is a
+subclass of `ast.NodeTransformer`. `ast.NodeTransformer` is an instance of the
+visitor design pattern containing methods corresponding to each node subclass.
+These methods can be overridden to modify or replace the nodes in the AST.
 
 `_checkTransformer` overrides some of these methods to replace nodes with
 resolved nodes where possible. Resolved nodes are represented by `_resolved`, a
@@ -456,7 +461,8 @@ values that have been rendered in a user-friendly fashion.
 Once the recipe is loaded, the running subcommand (i.e. `run`, `test`,
 `luciexe`) selects a [StreamEngine] and a [StepRunner]. The StreamEngine is
 responsible for exporting the state of the running recipe to the outside world,
-and the StepRunner is responsible for 'running' steps.
+and the StepRunner is responsible for running steps (or simulating them for
+tests).
 
 Once the subcommand has selected the relevant engine and runner, it then hands
 control off to `RecipeEngine.run_steps`, which orchestrates the actual execution
@@ -468,7 +474,7 @@ via the StreamEngine).
 The StreamEngine's responsibility is to accept reports about the UI and data
 export ("output properties") state of the recipe, and channel them to an
 appropriate backend service which can render them. The UI backend is the LUCI
-project called "Milo", which runs on https://ci.chromium.org.
+service called "Milo", which runs on https://ci.chromium.org.
 
 There are 2 primary implementations of the StreamEngine; one for the old
 `@@@annotation@@@` protocol, and another which directly emits [build.proto] via
@@ -491,13 +497,15 @@ favor of the LUCI engine.
 
 ### StepRunner
 
-The StepRunner's responsibility is to translate between the recipe and "the
-system". This includes things like mediating access to the filesystem and
-actually executing subprocesses for steps. This interface is currently an ad-hoc
-collection of functions pertaining to the particulars of how recipes work today
-(i.e. the `placeholder` methods returning test data).
+The StepRunner's responsibility is to translate between the recipe and the
+operating system (and by extension, anything outside of the memory of the
+process executing the recipe). This includes things like mediating access to the
+filesystem and actually executing subprocesses for steps. This interface is
+currently an ad-hoc collection of functions pertaining to the particulars of how
+recipes work today (i.e. the `placeholder` methods returning test data).
 
-*** TODO
+*** note
+TODO:
 Give StepRunner a full vfs-style interface; Instead of doing weird mocks in the
 path module for asserting that files exist, and having placeholder-specific
 data, the user could manipulate the state of the filesystem in their test and
@@ -529,7 +537,7 @@ happens:
   1. Create a new `step_stream` with the StreamEngine so the UI knows about the
      step.
   1. Open a debug log '$debug'. The progress of the engine running the step will
-     be recorded here, along with any 'surprises' (such as exceptions raised).
+     be recorded here, along with any exceptions raised.
   1. Open a log "execution details" which contains all the data associated with
      running the step (command, env, etc.) and also the final exit code of the
      step.
