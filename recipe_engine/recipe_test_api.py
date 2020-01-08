@@ -286,7 +286,8 @@ class DisabledTestData(BaseTestData):
     return self
 
   def get_module_test_data(self, _module_name):
-    return self
+    return ModuleTestData(enabled=False)
+
 
 def mod_test_data(func):
   @static_wraps(func)
