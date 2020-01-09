@@ -225,7 +225,7 @@ class PathApi(recipe_api.RecipeApi):
   # of these methods to stringify them first (otherwise they would be getting
   # recipe_util_types.Path instances).
   FILTER_METHODS = ('abspath', 'basename', 'dirname', 'exists', 'expanduser',
-                    'join', 'split', 'splitext', 'realpath')
+                    'join', 'split', 'splitext', 'realpath', 'relpath')
 
   def get_config_defaults(self):
     """Internal recipe implementation function."""
