@@ -54,6 +54,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
     variants_with_unexpected_results=True. This significantly reduces output
     size and latency.
 
+    Blocks on task completion.
+
     Example:
       results = api.resultdb.derive(
           'chromium-swarm.appspot.com', ['deadbeef', 'badcoffee'],
@@ -104,7 +106,10 @@ class ResultDBAPI(recipe_api.RecipeApi):
     task_ids = list(task_ids)
     limit = limit or 1000
 
-    args = ['-n', str(limit)]
+    args = [
+      '-wait',
+      '-n', str(limit),
+    ]
     if variants_with_unexpected_results:
       args += ['-u']
     args += [swarming_host] + task_ids

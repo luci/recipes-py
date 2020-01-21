@@ -2190,6 +2190,8 @@ unexpected results. This can be achieved by passing
 variants_with_unexpected_results=True. This significantly reduces output
 size and latency.
 
+Blocks on task completion.
+
 Example:
   results = api.resultdb.derive(
       'chromium-swarm.appspot.com', ['deadbeef', 'badcoffee'],
