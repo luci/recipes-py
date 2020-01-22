@@ -54,6 +54,11 @@ message AutorollRecipeOptions {
     // If true, the autoroller recipe will automatically do a CQ dry run when
     // uploading the change.
     bool automatic_commit_dry_run = 2;
+
+    // If true, the autoroller recipe will set the Auto-Submit+1 label when
+    // uploading the change. This should only be enabled for projects which
+    // support Auto-Submit.
+    bool set_autosubmit = 3;
   }
   NontrivialOptions nontrivial = 2;
 
