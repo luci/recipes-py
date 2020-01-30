@@ -2649,7 +2649,7 @@ add this path to the named cache for their builder.
 
 Swarming bot ID executing this task.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#1196)(self, name, tasks, output_dir=None, timeout=None):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#1193)(self, name, tasks, output_dir=None, timeout=None):**
 
 Waits on a set of Swarming tasks.
 
@@ -2700,7 +2700,7 @@ Creates a new TaskRequest object from a JSON-serializable dict.
 The input argument should match the schema as the output of
 TaskRequest.to_jsonish().
 
-&mdash; **def [trigger](/recipe_modules/swarming/api.py#1149)(self, step_name, requests, cancel_extra_tasks=False):**
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#1149)(self, step_name, requests):**
 
 Triggers a set of Swarming tasks.
 
@@ -2708,9 +2708,6 @@ Args:
   step_name (str): The name of the step.
   requests (seq[TaskRequest]): A sequence of task request objects
     representing the tasks we want to trigger.
-  cancel_extra_tasks (bool): Whether to cancel any extra tasks which may
-    be spawned as a result of a Swarming bug.
-    TODO(https://crbug.com/997221): Remove this option.
 
 Returns:
   A list of TaskRequestMetadata objects.

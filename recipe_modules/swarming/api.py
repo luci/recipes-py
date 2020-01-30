@@ -1146,16 +1146,13 @@ class SwarmingApi(recipe_api.RecipeApi):
     """
     return TaskRequest(self.m)._from_jsonish(json_d)
 
-  def trigger(self, step_name, requests, cancel_extra_tasks=False):
+  def trigger(self, step_name, requests):
     """Triggers a set of Swarming tasks.
 
     Args:
       step_name (str): The name of the step.
       requests (seq[TaskRequest]): A sequence of task request objects
         representing the tasks we want to trigger.
-      cancel_extra_tasks (bool): Whether to cancel any extra tasks which may
-        be spawned as a result of a Swarming bug.
-        TODO(https://crbug.com/997221): Remove this option.
 
     Returns:
       A list of TaskRequestMetadata objects.
