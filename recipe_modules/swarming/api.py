@@ -18,7 +18,9 @@ from recipe_engine import recipe_api
 if sys.version_info.major >= 3:
   basestring = str  # pragma: no cover
 
-DEFAULT_CIPD_VERSION = 'git_revision:67b11ada44a625008a2db5cb49ad453494b16ba1'
+# Take revision from
+# https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
+DEFAULT_CIPD_VERSION = 'git_revision:4fcd04402da237b4e517283c3fb58f5db667a739'
 
 
 class TaskRequest(object):
@@ -1170,8 +1172,6 @@ class SwarmingApi(recipe_api.RecipeApi):
         '-json-output',
         self.m.json.output(),
     ]
-    if cancel_extra_tasks:
-      cmd.append('-cancel-extra-tasks')
 
     step = self._run(
         step_name,

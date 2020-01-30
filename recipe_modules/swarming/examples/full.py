@@ -146,10 +146,6 @@ def RunSteps(api):
   api.swarming.trigger('trigger on original server', requests=[request])
   api.swarming.collect('collect on original server', ['0'])
 
-  api.swarming.trigger('trigger with cancel extra tasks', requests=[request],
-                       cancel_extra_tasks=True)
-  api.swarming.collect('collect with cancel extra tasks', ['0'])
-
 
 def GenTests(api):
   # For coverage
