@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2018 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -949,6 +950,21 @@ class TaskResult(object):
     return self._output
 
   @property
+  def _trimmed_output(self):
+    """Returns a limited output for use in exception."""
+    limit = 1000
+    out = self._output.strip()
+    if len(out) <= limit:
+      return out
+    out = out[-limit:]
+    i = out.find('\n')
+    if i == -1:
+      out = out[4:]
+    elif i:
+      out = out[i:]
+    return '(…)' + out
+
+  @property
   def output_dir(self):
     """The absolute directory (Path|None) that the task's outputs were
     downloaded to.
@@ -984,11 +1000,11 @@ class TaskResult(object):
   def analyze(self):
     """Raises a step failure if the task was unsuccessful."""
     if self.state == None:
-      raise recipe_api.InfraFailure('Failed to collect: %s' % self.output)
+      raise recipe_api.InfraFailure(
+          'Failed to collect:\n%s' % self._trimmed_output)
     elif self.state == TaskState.EXPIRED:
       raise recipe_api.InfraFailure('Timed out waiting for a bot to run on')
     elif self.state == TaskState.TIMED_OUT:
-      output_lines = self.output.rsplit('\n', 11)
       duration = int(self._duration)
 
       if self._task_slice is None:
@@ -1006,7 +1022,7 @@ class TaskResult(object):
               self._task_slice.io_timeout_secs
           ]
 
-      failure_lines.extend(['Last 10 lines of output:'] + output_lines[-10:])
+      failure_lines.extend(['Output:', self._trimmed_output])
 
       raise recipe_api.StepFailure('\n'.join(failure_lines))
     elif self.state == TaskState.BOT_DIED:
@@ -1015,7 +1031,8 @@ class TaskResult(object):
       raise recipe_api.InfraFailure('The task was canceled before it could run')
     elif self.state == TaskState.COMPLETED:
       if not self.success:
-        raise recipe_api.InfraFailure('Swarming task failed:\n%s' % self.output)
+        raise recipe_api.InfraFailure(
+            'Swarming task failed:\n%s' % self._trimmed_output)
     elif self.state == TaskState.KILLED:
       raise recipe_api.InfraFailure('The task was killed mid-execution')
     elif self.state == TaskState.NO_RESOURCE:

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2018 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -54,7 +55,8 @@ def RunSteps(api):
   api.swarming.task_request_from_jsonish(req_no_tag_no_user_jsonish)
 
   # Add user and tags for coverage of those.
-  request = request.with_user('defaultuser').with_tags({'key': ['value1', 'value2']})
+  request = request.with_user('defaultuser').with_tags(
+      {'key': ['value1', 'value2']})
 
   # Append a slice that is a variation of the last one as a starting point.
   request = request.add_slice(request[-1].
@@ -128,12 +130,44 @@ def RunSteps(api):
 
   # Raise an error if something went wrong.
   if not results[0].success:
+    threw = False
     try:
       results[0].analyze()
-    except api.step.StepFailure:
-      pass
-    except Exception as ex: # pragma: no cover
-      raise AssertionError("wrong exception raised: %r" % ex)
+    except api.step.StepFailure as e:
+      threw = True
+      s = str(e)
+      if results[0].state == api.swarming.TaskState.BOT_DIED:
+        assert s == 'The bot running this task died', repr(s)
+      elif results[0].state == api.swarming.TaskState.CANCELED:
+        assert s == 'The task was canceled before it could run', repr(s)
+      elif results[0].state == api.swarming.TaskState.COMPLETED:
+        out = '(…)' + 'A' * 996
+        assert s == ('Swarming task failed:\n' + out), repr(s)
+      elif results[0].state == api.swarming.TaskState.EXPIRED:
+        assert s == 'Timed out waiting for a bot to run on', repr(s)
+      elif results[0].state == api.swarming.TaskState.KILLED:
+        assert s == 'The task was killed mid-execution', repr(s)
+      elif results[0].state == api.swarming.TaskState.NO_RESOURCE:
+        assert s == 'Found no bots to run this task', repr(s)
+      elif results[0].state == api.swarming.TaskState.TIMED_OUT:
+        out = '(…)' + '\nDying' * 166
+        expected = [
+            'Timed out after 3599 seconds.\nOutput:\n' + out,
+            'Execution timeout: exceeded 3600 seconds.\nOutput:\nhello world!',
+            'I/O timeout: exceeded 600 seconds.\nOutput:\nhello world!',
+        ]
+        assert s in expected, repr(s)
+      elif results[0].state == None:
+        assert (
+            s == 'Failed to collect:\nBot could not be contacted'), repr(s)
+      else:  # pragma: no cover
+        raise AssertionError('unexpected state: %r\n%r' % (results[0].state, s))
+    except Exception as e:  # pragma: no cover
+      raise AssertionError('wrong exception raised: %r' % e)
+    if not threw:  # pragma: no cover
+      raise AssertionError('exception was not raised')
+  else:
+    results[0].analyze()
 
   with api.swarming.on_path():
     api.step('some step with swarming on path', [])
@@ -178,29 +212,35 @@ def GenTests(api):
     )
 
   timeout_result = api.swarming.task_result(
-      id='100', name='recipes-go', duration=EXECUTION_TIMEOUT_SECS - 1, state=api.swarming.TaskState.TIMED_OUT,
+      id='100', name='recipes-go', duration=EXECUTION_TIMEOUT_SECS - 1,
+      state=api.swarming.TaskState.TIMED_OUT,
+      output='Dying\n' * 500,
   )
   yield (api.test('collect_with_state_TIMED_OUT') +
     api.override_step_data('collect', api.swarming.collect([timeout_result]))
   )
 
   io_timeout_result = api.swarming.task_result(
-      id='0', name='recipes-go', duration=EXECUTION_TIMEOUT_SECS - 1, state=api.swarming.TaskState.TIMED_OUT,
+      id='0', name='recipes-go', duration=EXECUTION_TIMEOUT_SECS - 1,
+      state=api.swarming.TaskState.TIMED_OUT,
   )
   yield (api.test('collect_with_state_TIMED_OUT_by_io') +
     api.override_step_data('collect', api.swarming.collect([io_timeout_result]))
   )
 
   execution_timeout_result = api.swarming.task_result(
-      id='0', name='recipes-go', duration=EXECUTION_TIMEOUT_SECS + 1, state=api.swarming.TaskState.TIMED_OUT,
+      id='0', name='recipes-go', duration=EXECUTION_TIMEOUT_SECS + 1,
+      state=api.swarming.TaskState.TIMED_OUT,
   )
   yield (api.test('collect_with_state_TIMED_OUT_by_execution') +
-    api.override_step_data('collect', api.swarming.collect([execution_timeout_result]))
+    api.override_step_data(
+      'collect', api.swarming.collect([execution_timeout_result]))
   )
 
   failed_result = api.swarming.task_result(
       id='0', name='recipes-go', state=api.swarming.TaskState.COMPLETED,
       failure=True, outputs=('out.tar'),
+      output='AAA'*500,
   )
   yield (api.test('collect_with_state_COMPLETED_and_failed') +
     api.override_step_data('collect', api.swarming.collect([failed_result]))
