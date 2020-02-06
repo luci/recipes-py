@@ -60,6 +60,7 @@
   * [context:tests/infra_step](#recipes-context_tests_infra_step)
   * [cq:examples/ordered_cls](#recipes-cq_examples_ordered_cls)
   * [cq:examples/trigger_child_builds](#recipes-cq_examples_trigger_child_builds)
+  * [cq:tests/cl_group_key](#recipes-cq_tests_cl_group_key)
   * [cq:tests/experimental](#recipes-cq_tests_experimental)
   * [cq:tests/triggered_build_ids](#recipes-cq_tests_triggered_build_ids)
   * [cq:tests/type_of_run](#recipes-cq_tests_type_of_run)
@@ -995,6 +996,28 @@ This module provides recipe API of LUCI CQ, aka pre-commit testing system.
 More information about CQ:
   https://chromium.googlesource.com/infra/luci/luci-go/+/master/cq
 
+&emsp; **@property**<br>&mdash; **def [cl\_equivalent\_group\_key](/recipe_modules/cq/api.py#139)(self):**
+
+Returns a string that is unique for a given set of Gerrit changes
+disregarding trivial patchset differences.
+
+For example, when a new "trivial" patchset is uploaded, then the
+cl_group_key will change but the equivalent_cl_group_key will stay the same.
+
+Raises:
+  CQInactive if CQ is `INACTIVE` for this build.
+
+&emsp; **@property**<br>&mdash; **def [cl\_group\_key](/recipe_modules/cq/api.py#126)(self):**
+
+Returns a string that is unique for a current set of Gerrit change
+patchsets (or, equivalently, buildsets).
+
+The same cl_group_key will be used if another Attempt is made for the same
+set of changes at a different time.
+
+Raises:
+  CQInactive if CQ is `INACTIVE` for this build.
+
 &emsp; **@property**<br>&mdash; **def [experimental](/recipe_modules/cq/api.py#58)(self):**
 
 Returns whether this build is triggered for a CQ experimental builder.
@@ -1036,7 +1059,7 @@ api.cq.record_triggered_builds(*child_builds)
 The contents of returned dict should be treated as opaque blob,
 it may be changed without notice.
 
-&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cq/api.py#148)(self, \*build_ids):**
+&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cq/api.py#174)(self, \*build_ids):**
 
 Adds given Buildbucket build ids to the list of triggered builds for CQ
 to wait on corresponding build completion later.
@@ -1046,7 +1069,7 @@ Must be called after some step.
 Args:
   * build_id (int or string): Buildbucket build id.
 
-&mdash; **def [record\_triggered\_builds](/recipe_modules/cq/api.py#131)(self, \*builds):**
+&mdash; **def [record\_triggered\_builds](/recipe_modules/cq/api.py#157)(self, \*builds):**
 
 Adds given Buildbucket builds to the list of triggered builds for CQ
 to wait on corresponding build completion later.
@@ -1075,7 +1098,7 @@ Can be spoofed. *DO NOT USE FOR SECURITY CHECKS.*
 Raises:
   CQInactive if CQ is `INACTIVE` for this build.
 
-&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cq/api.py#126)(self):**
+&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cq/api.py#152)(self):**
 
 Returns recorded Buildbucket build ids as a list of integers.
 ### *recipe_modules* / [file](/recipe_modules/file)
@@ -3031,6 +3054,11 @@ Launches multiple builds at the same revision.
 [DEPS](/recipe_modules/cq/examples/trigger_child_builds.py#9): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/cq/examples/trigger_child_builds.py#19)(api):**
+### *recipes* / [cq:tests/cl\_group\_key](/recipe_modules/cq/tests/cl_group_key.py)
+
+[DEPS](/recipe_modules/cq/tests/cl_group_key.py#7): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq)
+
+&mdash; **def [RunSteps](/recipe_modules/cq/tests/cl_group_key.py#17)(api):**
 ### *recipes* / [cq:tests/experimental](/recipe_modules/cq/tests/experimental.py)
 
 [DEPS](/recipe_modules/cq/tests/experimental.py#7): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

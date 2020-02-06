@@ -124,6 +124,32 @@ class CQApi(recipe_api.RecipeApi):
         json_pb.MessageToDict(msg, preserving_proto_field_name=True)}
 
   @property
+  def cl_group_key(self):
+    """Returns a string that is unique for a current set of Gerrit change
+    patchsets (or, equivalently, buildsets).
+
+    The same cl_group_key will be used if another Attempt is made for the same
+    set of changes at a different time.
+
+    Raises:
+      CQInactive if CQ is `INACTIVE` for this build.
+    """
+    return self._extract_unique_cq_tag('cl_group_key')
+
+  @property
+  def cl_equivalent_group_key(self):
+    """Returns a string that is unique for a given set of Gerrit changes
+    disregarding trivial patchset differences.
+
+    For example, when a new "trivial" patchset is uploaded, then the
+    cl_group_key will change but the equivalent_cl_group_key will stay the same.
+
+    Raises:
+      CQInactive if CQ is `INACTIVE` for this build.
+    """
+    return self._extract_unique_cq_tag('cl_equivalent_group_key')
+
+  @property
   def triggered_build_ids(self):
     """Returns recorded Buildbucket build ids as a list of integers."""
     return self._triggered_build_ids
@@ -160,6 +186,14 @@ class CQApi(recipe_api.RecipeApi):
     assert self.m.step.active_result, 'must be called after some step'
     self.m.step.active_result.presentation.properties['triggered_build_ids'] = [
           str(build_id) for build_id in self._triggered_build_ids]
+
+  def _extract_unique_cq_tag(self, suffix):
+    key = 'cq_' + suffix
+    self._enforce_active()
+    for t in self.m.buildbucket.build.tags:
+      if t.key == key:
+        return t.value
+    raise ValueError('Can\'t find tag with key %r' % key)  # pragma: nocover
 
   def _enforce_active(self):
     if not self._input.active:
