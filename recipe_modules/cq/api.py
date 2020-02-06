@@ -36,6 +36,7 @@ class CQApi(recipe_api.RecipeApi):
     self._input = input_props
     self._state = None
     self._triggered_build_ids = []
+    self._do_not_retry_build = False
 
   def initialize(self):
     if self._input.active is False:
@@ -186,6 +187,23 @@ class CQApi(recipe_api.RecipeApi):
     assert self.m.step.active_result, 'must be called after some step'
     self.m.step.active_result.presentation.properties['triggered_build_ids'] = [
           str(build_id) for build_id in self._triggered_build_ids]
+
+  @property
+  def do_not_retry_build(self):
+    return self._do_not_retry_build
+
+  def set_do_not_retry_build(self):
+    """A flag to indicate the build should not be retried by the CQ.
+
+    This mechanism is used to reduce duration of CQ attempt and save testing
+    capacity if retrying will likely return an identical result.
+    """
+    if self._do_not_retry_build:
+      return
+    self._do_not_retry_build = True
+    # TODO(iannucci): add API to set properties regardless of the current step.
+    step_result = self.m.step('TRYJOB DO NOT RETRY', cmd=None)
+    step_result.presentation.properties['do_not_retry'] = True
 
   def _extract_unique_cq_tag(self, suffix):
     key = 'cq_' + suffix
