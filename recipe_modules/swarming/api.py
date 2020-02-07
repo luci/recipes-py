@@ -21,7 +21,7 @@ if sys.version_info.major >= 3:
 
 # Take revision from
 # https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
-DEFAULT_CIPD_VERSION = 'git_revision:4fcd04402da237b4e517283c3fb58f5db667a739'
+DEFAULT_CIPD_VERSION = 'git_revision:060250cb30592b105855182b3e5577c1a5b59274'
 
 
 class TaskRequest(object):
@@ -1107,10 +1107,11 @@ class SwarmingApi(recipe_api.RecipeApi):
       cmd (list(str|Path)): swarming client subcommand to run.
     """
     self._ensure_swarming()
-    return self.m.step(
-        name, [self._client] + list(cmd),
-        step_test_data=step_test_data,
-        infra_step=True)
+    with self.m.context(infra_steps=True):
+      return self.m.step(
+          name, [self._client] + list(cmd),
+          step_test_data=step_test_data,
+          infra_step=True)
 
   @contextlib.contextmanager
   def on_path(self):
