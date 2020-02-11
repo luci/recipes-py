@@ -1090,7 +1090,7 @@ Args:
 
 &mdash; **def [set\_do\_not\_retry\_build](/recipe_modules/cq/api.py#195)(self):**
 
-A flag to indicate the build should not be retried by the CQ.
+Instruct CQ to not retry this build.
 
 This mechanism is used to reduce duration of CQ attempt and save testing
 capacity if retrying will likely return an identical result.

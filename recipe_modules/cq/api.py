@@ -193,7 +193,7 @@ class CQApi(recipe_api.RecipeApi):
     return self._do_not_retry_build
 
   def set_do_not_retry_build(self):
-    """A flag to indicate the build should not be retried by the CQ.
+    """Instruct CQ to not retry this build.
 
     This mechanism is used to reduce duration of CQ attempt and save testing
     capacity if retrying will likely return an identical result.
