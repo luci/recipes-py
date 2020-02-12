@@ -21,7 +21,7 @@ if sys.version_info.major >= 3:
 
 # Take revision from
 # https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
-DEFAULT_CIPD_VERSION = 'git_revision:4fcd04402da237b4e517283c3fb58f5db667a739'
+DEFAULT_CIPD_VERSION = 'git_revision:386eb9fd6a1e21d174824c786a0eee9d883dad56'
 
 
 class TaskRequest(object):
