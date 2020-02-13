@@ -119,7 +119,8 @@ def _check_bad_test(test_results, test_data, steps_ran, presentation_steps):
         '',
         'For reference, this test ran the following steps:',
     ])
-    test_results.bad_test.extend('  ' + repr(s) for s in steps_ran)
+    test_results.bad_test.extend(
+        '  ' + repr(s) for s in presentation_steps if s in steps_ran)
 
 
 def _check_exception(test_results, expected_exception, uncaught_exception_info):
