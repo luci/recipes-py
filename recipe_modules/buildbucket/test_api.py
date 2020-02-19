@@ -233,7 +233,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
 
   def simulated_schedule_output(self, batch_response, step_name=None):
     """Simulates a buildbucket.schedule call."""
-    return self._simulated_batch_response(batch_response, step_name or 'buildbucket.schedule')
+    return self._simulated_batch_response(
+      batch_response, step_name or 'buildbucket.schedule')
 
   def simulated_search_results(self, builds, step_name=None):
     """Simulates a buildbucket.search call."""
@@ -241,10 +242,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     assert all(isinstance(b, build_pb2.Build) for b in builds), builds
 
     step_name = step_name or 'buildbucket.search'
-    jsonish = json_format.MessageToDict(rpc_pb2.BatchResponse(
-        responses=[dict(search_builds=dict(builds=builds))],
-    ))
-    return self.step_data(step_name, self.m.json.output_stream(jsonish))
+    lines = [json.dumps(json_format.MessageToDict(b)) for b in builds]
+    output = "\n".join(lines)
+    return self.step_data(step_name, self.m.raw_io.stream_output(output))
 
   def simulated_get(self, build, step_name=None):
     """Simulates a buildbucket.get call."""
@@ -264,11 +264,13 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
 
   def simulated_cancel_output(self, batch_response, step_name=None):
     """Simulates a buildbucket.cancel call"""
-    return self._simulated_batch_response(batch_response, step_name or 'buildbucket.cancel')
+    return self._simulated_batch_response(
+      batch_response, step_name or 'buildbucket.cancel')
 
   def _simulated_batch_response(self, batch_response, step_name):
-    """Simulate that the given step will write the provided batch response into step data
-    The return code will be 1 for step data if the responses contain error. Otherwise, 0
+    """Simulate that the given step will write the provided batch response into
+    step data. The return code will be 1 for step data if the responses contain
+    error. Otherwise, 0
     """
     assert isinstance(batch_response, rpc_pb2.BatchResponse)
     ret_code = int(any(r.HasField('error') for r in batch_response.responses))

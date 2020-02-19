@@ -601,35 +601,35 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     limit = limit or 1000
 
-    batch_req = rpc_pb2.BatchRequest(
-        requests=[
-            dict(search_builds=dict(
-                predicate=p,
-                page_size=limit,
-                fields=self._make_field_mask(
-                    paths=fields, path_prefix='builds.*.'),
-            ))
-            for p in predicate
-        ],
-    )
-    step_res, batch_res, has_errors = self._batch_request(
-        step_name or 'buildbucket.search',
-        batch_req,
-        rpc_pb2.BatchResponse())
-    if has_errors:
-      raise self.m.step.InfraFailure('Build search failed')
+    args = [
+      '-json',
+      '-nopage',
+      '-n', limit,
+      '-fields', ','.join(sorted(set(fields)))]
 
-    # Union build results.
-    builds = {}
-    for r in batch_res.responses:
-      for b in r.search_builds.builds:
-        if b.id not in builds:
-          builds[b.id] = b
+    for p in predicate:
+      args.append('-predicate')
+      # Note: json.dumps produces compact JSON to reduce argument size
+      args.append(self.m.json.dumps(json_format.MessageToDict(p)))
 
-    # Order newest-to-oldest. Then cut using the limit.
-    ret = [b for _, b in sorted(builds.iteritems())][:limit]
-    for b in ret:
-      self._report_build_maybe(step_res, b, url_title_fn=url_title_fn)
+    step_result = self._run_bb(
+      subcommand='ls',
+      step_name=step_name or 'buildbucket.search',
+      args=args,
+      stdout=self.m.raw_io.output_text(add_output_log=True))
+
+    ret = []
+    # Every line is a build serialized in JSON format
+    for line in step_result.stdout.splitlines():
+      build = json_format.Parse(
+        line, build_pb2.Build(),
+        # Do not fail because recipe's proto copy is stale.
+        ignore_unknown_fields=True)
+      self._report_build_maybe(step_result, build, url_title_fn=url_title_fn)
+      ret.append(build)
+
+      assert len(ret) <= limit, (
+        'bb ls returns %d builds when limit set to %d' % (len(ret), limit))
     return ret
 
   def cancel_build(self, build_id, reason=' ', step_name=None):
@@ -664,8 +664,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
       step_name or 'buildbucket.cancel', cancel_req, test_res)
 
     if has_errors:
-      raise self.m.step.InfraFailure('Failed to cancel build[%s]. Message: %s' %(
-        build_id, batch_res.responses[0].error.message))
+      raise self.m.step.InfraFailure(
+        'Failed to cancel build [%s]. Message: %s' %(
+          build_id, batch_res.responses[0].error.message))
 
     return None
 

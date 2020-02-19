@@ -12,8 +12,8 @@ from PB.go.chromium.org.luci.buildbucket.proto import rpc as rpc_pb2
 
 DEPS = [
   'buildbucket',
-  'json',
   'properties',
+  'raw_io',
   'runtime',
   'step'
 ]
@@ -26,7 +26,7 @@ def RunSteps(api):
         gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),
       ),
       limit=limit,
-      fields=['builder', 'id', 'status'],
+      fields=['builder', 'id', 'status', 'create_time'],
   )
   assert limit is None or len(builds) <= limit
   pres = api.step.active_result.presentation
@@ -62,20 +62,7 @@ def GenTests(api):
       test('search failed') +
       api.step_data(
           'buildbucket.search',
-          api.json.output_stream(
-              json_format.MessageToDict(rpc_pb2.BatchResponse(
-                responses=[dict(error=dict(message='there was a problem'))],
-              )),
-          ),
+          api.raw_io.stream_output('there was a problem'),
+          retcode = 1
         )
-  )
-
-  yield (
-      test('limit') +
-      api.properties(limit=5) +
-      api.buildbucket.simulated_search_results([
-        build_pb2.Build(id=i+1, status=common_pb2.SUCCESS)
-        # Returning more to test trimming of the returned list.
-        for i in xrange(10)
-      ])
   )

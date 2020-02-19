@@ -2,51 +2,29 @@
   {
     "cmd": [
       "bb",
-      "batch",
+      "ls",
       "-host",
-      "cr-buildbucket.appspot.com"
+      "cr-buildbucket.appspot.com",
+      "-json",
+      "-nopage",
+      "-n",
+      "1000",
+      "-fields",
+      "builder,create_time,id,status",
+      "-predicate",
+      "{\"gerritChanges\": [{\"change\": \"123456\", \"host\": \"chromium-review.googlesource.com\", \"patchset\": \"7\", \"project\": \"chromium/src\"}]}"
     ],
     "infra_step": true,
     "name": "buildbucket.search",
-    "stdin": "{\"requests\": [{\"searchBuilds\": {\"fields\": \"builds.*.builder,builds.*.id,builds.*.status\", \"pageSize\": 1000, \"predicate\": {\"gerritChanges\": [{\"change\": \"123456\", \"host\": \"chromium-review.googlesource.com\", \"patchset\": \"7\", \"project\": \"chromium/src\"}]}}}]}",
     "~followup_annotations": [
-      "@@@STEP_TEXT@Request #0<br>Status code: 0<br>Message: there was a problem<br>@@@",
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"responses\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@    {@@@",
-      "@@@STEP_LOG_LINE@json.output@      \"error\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"message\": \"there was a problem\"@@@",
-      "@@@STEP_LOG_LINE@json.output@      }@@@",
-      "@@@STEP_LOG_LINE@json.output@    }@@@",
-      "@@@STEP_LOG_LINE@json.output@  ]@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LOG_LINE@request@{@@@",
-      "@@@STEP_LOG_LINE@request@  \"requests\": [@@@",
-      "@@@STEP_LOG_LINE@request@    {@@@",
-      "@@@STEP_LOG_LINE@request@      \"searchBuilds\": {@@@",
-      "@@@STEP_LOG_LINE@request@        \"fields\": \"builds.*.builder,builds.*.id,builds.*.status\", @@@",
-      "@@@STEP_LOG_LINE@request@        \"pageSize\": 1000, @@@",
-      "@@@STEP_LOG_LINE@request@        \"predicate\": {@@@",
-      "@@@STEP_LOG_LINE@request@          \"gerritChanges\": [@@@",
-      "@@@STEP_LOG_LINE@request@            {@@@",
-      "@@@STEP_LOG_LINE@request@              \"change\": \"123456\", @@@",
-      "@@@STEP_LOG_LINE@request@              \"host\": \"chromium-review.googlesource.com\", @@@",
-      "@@@STEP_LOG_LINE@request@              \"patchset\": \"7\", @@@",
-      "@@@STEP_LOG_LINE@request@              \"project\": \"chromium/src\"@@@",
-      "@@@STEP_LOG_LINE@request@            }@@@",
-      "@@@STEP_LOG_LINE@request@          ]@@@",
-      "@@@STEP_LOG_LINE@request@        }@@@",
-      "@@@STEP_LOG_LINE@request@      }@@@",
-      "@@@STEP_LOG_LINE@request@    }@@@",
-      "@@@STEP_LOG_LINE@request@  ]@@@",
-      "@@@STEP_LOG_LINE@request@}@@@",
-      "@@@STEP_LOG_END@request@@@"
+      "@@@STEP_LOG_LINE@raw_io.output_text@there was a problem@@@",
+      "@@@STEP_LOG_END@raw_io.output_text@@@",
+      "@@@STEP_EXCEPTION@@@"
     ]
   },
   {
     "failure": {
-      "humanReason": "Build search failed"
+      "humanReason": "Infra Failure: Step('buildbucket.search') (retcode: 1)"
     },
     "name": "$result"
   }

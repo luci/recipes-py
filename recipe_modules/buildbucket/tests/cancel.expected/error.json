@@ -72,7 +72,7 @@
   },
   {
     "failure": {
-      "humanReason": "Failed to cancel build[6838835292664158]. Message: some error message"
+      "humanReason": "Failed to cancel build [6838835292664158]. Message: some error message"
     },
     "name": "$result"
   }
