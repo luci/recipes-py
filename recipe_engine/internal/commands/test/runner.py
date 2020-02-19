@@ -394,7 +394,9 @@ def main(recipe_deps, cov_file, is_train, cover_module_imports):
       break  # EOF
 
   if cov_file:
-    coverage.data.CoverageDataFiles(basename=cov_file).write(cov_data)
+    # Sometimes we stop when the cov_file hasn't gotten created yet
+    if os.path.exists(os.path.dirname(cov_file)):
+      coverage.data.CoverageDataFiles(basename=cov_file).write(cov_data)
 
 
 def _read_test_desc():
@@ -406,7 +408,6 @@ def _read_test_desc():
           'while reading: %r' % (ex,)
         ]+traceback.format_exc().splitlines()))
     return None
-
 
 def _get_test_data(cache, recipe, test_name):
   key = (recipe.name, test_name)

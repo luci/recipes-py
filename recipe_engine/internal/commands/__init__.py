@@ -221,6 +221,11 @@ def _add_common_args(parser):
   parser.add_argument('-O', '--repo-override', metavar='ID=PATH',
       action=_RepoOverrideAction, default={},
       help='Override a repo repository path with a local one.')
+  parser.add_argument(
+      '--stop',
+      '-x',
+      action='store_true',
+      help=('Stop running tests after first error or failure.'))
 
   def _proto_override_abspath(value):
     try:

@@ -22,6 +22,7 @@ import coverage
 class Reporter(object):
   _use_emoji = attr.ib()
   _is_train = attr.ib()
+  _fail_tracker = attr.ib()
 
   _column_count = attr.ib(default=0)
   _long_err_buf = attr.ib(factory=StringIO)
@@ -84,11 +85,17 @@ class Reporter(object):
         print '  ', failure
       sys.exit(1)
 
+    has_fail = False
     for test_name, test_result in outcome_msg.test_results.iteritems():
       _print_summary_info(
           self._verbose, self._use_emoji, test_name, test_result,
           self._space_for_columns)
       _print_detail_info(self._long_err_buf, test_name, test_result)
+
+      has_fail = self._fail_tracker.cache_recent_fails(test_name,
+                                                       test_result) or has_fail
+
+    return has_fail
 
 
   def final_report(self, cov, outcome_msg):
@@ -109,6 +116,8 @@ class Reporter(object):
 
     Raises SystemExit if the tests failed.
     """
+    self._fail_tracker.cleanup()
+
     fail = self._long_err_buf.tell() > 0
 
     print
@@ -169,6 +178,7 @@ class Reporter(object):
       sys.exit(1)
 
     print 'OK'
+
 
 
 # Internal helper stuff
