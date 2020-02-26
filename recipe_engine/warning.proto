@@ -1,0 +1,63 @@
+// Copyright 2020 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipe_engine;
+
+// Container used to hold a collection warning definitions. Used for the
+// purpose of parsing the warnings defined in the text proto format
+message DefinitionCollection {
+  // (optional) list of warning definitions.
+  repeated Definition warning = 1;
+
+  // (optional) contains the default values for fields in all MonorailBug
+  // message proto instances enclosed in this DefinitionCollection
+  MonorailBugDefault monorail_bug_default = 2;
+}
+
+message Definition {
+  // (required) The unique identifier for a warning defined in this repo
+  // Syntax: The name is required to be in all CAPS snake case and numbers are
+  // allowed except for the first character (e.g. DEPRECATE_SOMETHING123).
+  // This name should match regex: "^[A-Z][A-Z0-9]*(\_[A-Z0-9]+)*$"
+  string name = 1;
+
+  // (optional) Long description of the warning.
+  string description = 2;
+
+  // (optional) The deadline that the warning should be fixed before.
+  // Syntax: The deadline must be in ISO 8601 date format (i.e. YYYY-MM-DD)
+  // TODO: (yiwzhang) This date is currently for informal purpose only. No
+  // action will be taken beyond that date. In the future, we can force
+  // recipe test execution to error out once the deadline is passed
+  string deadline = 3;
+
+  // (optional) a list of monorail bugs associated with the current warning
+  // TODO: (yiwzhang) The bugs are currently for informal purpose only as well.
+  // No automation has been built upon that.
+  repeated MonorailBug monorail_bug = 4;
+}
+
+// The proto message that models a bug in the Monorail. The existence
+// of supplied bug won't be validated
+message MonorailBug {
+  // (required if host is not provided in MonorailBugDefault) host name of
+  // monorail. E.g. bugs.chromium.org
+  string host = 1;
+  // (required if project is not provided in MonorailBugDefault) name of the
+  // project. E.g. chromium
+  string project = 2;
+  // (required) bug numeric id
+  uint32 id = 3;
+}
+
+// The proto message that contains the default value for the MonorailBug proto
+// message instance
+message MonorailBugDefault {
+  // (optional) host name of monorail. E.g. bugs.chromium.org
+  string host = 1;
+  // (optional) name of the project. E.g. chromium
+  string project = 2;
+}

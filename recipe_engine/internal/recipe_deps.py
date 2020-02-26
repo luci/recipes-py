@@ -62,6 +62,10 @@ from .exceptions import RecipeLoadError, RecipeSyntaxError, MalformedRecipeError
 from .exceptions import UnknownRecipeModule
 from .simple_cfg import SimpleRecipesCfg, RECIPES_CFG_LOCATION_REL
 from .test.test_util import filesystem_safe
+from .warn.definition import (
+  parse_warning_definitions,
+  RECIPE_WARNING_DEFINITIONS_REL,
+)
 
 
 LOG = logging.getLogger(__name__)
@@ -260,6 +264,14 @@ class RecipeRepo(object):
     # Normalize because self.simple_cfg.recipes_path is always POSIX-style.
     return os.path.normpath(
       os.path.join(self.path, self.simple_cfg.recipes_path))
+
+  @cached_property
+  def warning_definitions(self):
+    """The warnings defined (a dict of warning name to warning.Definition proto
+    message) in this repo. Empty dict if not defined.
+    """
+    return parse_warning_definitions(os.path.join(
+      self.recipes_root_path, RECIPE_WARNING_DEFINITIONS_REL))
 
   @property
   def name(self):
