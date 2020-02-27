@@ -32,14 +32,11 @@ class Common(test_env.RecipeEngineUnitTest):
 
   def _run_test(self, *args, **kwargs):
     should_fail = kwargs.pop('should_fail', False)
-    stop = kwargs.pop('stop', False)
     self.assertDictEqual(
         kwargs, {}, 'got additional unexpectd kwargs: {!r}'.format(kwargs))
 
     json_out = self.tempfile()
     full_args = ['test'] + list(args) + ['--json', json_out]
-    if stop:
-      full_args = ['--stop'] + full_args
 
     output, retcode = self.main.recipes_py(*full_args)
     expected_retcode = 1 if should_fail else 0
@@ -183,7 +180,7 @@ class TestRun(Common):
     with self.main.write_recipe('foo') as recipe:
       del recipe.expectation['basic']
 
-    test_run = self._run_test('run', stop=True, should_fail=True)
+    test_run = self._run_test('run', '--stop', should_fail=True)
     results = test_run.data['test_results']
     self.assertEqual(len(results), 1)
     self.assertEqual(results.values()[0].keys()[0], 'diff')
@@ -300,7 +297,7 @@ class TestRun(Common):
         yield api.test('third')
       ''')
 
-    result = self._run_test('train', should_fail=True, stop=True)
+    result = self._run_test('train', '--stop', should_fail=True)
     self.assertEqual(
         1,
         str(result.text_output).count(

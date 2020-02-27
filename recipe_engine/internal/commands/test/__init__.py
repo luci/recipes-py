@@ -66,6 +66,11 @@ def add_arguments(parser):
   run_p.add_argument(
       '--no-emoji', dest='use_emoji', action='store_false', default=True,
       help='Use text symbols instead of emoji.')
+  run_p.add_argument(
+      '--stop',
+      '-x',
+      action='store_true',
+      help=('Stop running tests after first error or failure.'))
 
   helpstr = 'Re-train recipe expectations.'
   train_p = subp.add_parser(
@@ -86,6 +91,11 @@ def add_arguments(parser):
   train_p.add_argument(
       '--no-emoji', dest='use_emoji', action='store_false', default=True,
       help='Use text symbols instead of emoji.')
+  train_p.add_argument(
+      '--stop',
+      '-x',
+      action='store_true',
+      help=('Stop running tests after first error or failure.'))
 
   helpstr = 'Print all test names.'
   list_p = subp.add_parser(
