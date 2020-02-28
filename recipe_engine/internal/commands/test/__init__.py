@@ -71,6 +71,10 @@ def add_arguments(parser):
       '-x',
       action='store_true',
       help=('Stop running tests after first error or failure.'))
+  run_p.add_argument(
+      '--no-docs',
+      action='store_false', default=True, dest='docs',
+      help='Disable the check for readme file change(WIP).')
 
   helpstr = 'Re-train recipe expectations.'
   train_p = subp.add_parser(
