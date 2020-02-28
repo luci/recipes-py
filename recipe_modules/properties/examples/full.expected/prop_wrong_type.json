@@ -9,7 +9,7 @@
       "Traceback (most recent call last):",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/engine.py\", line 477, in run_steps",
       "    raw_result = recipe_obj.run_steps(api, engine)",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/recipe_deps.py\", line 703, in run_steps",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/recipe_deps.py\", line 708, in run_steps",
       "    ignore_unknown_fields=True))",
       "  File \"PYTHON(site-packages)/google/protobuf/json_format.py\", in ParseDict",
       "    parser.ConvertMessage(js_dict, message)",

@@ -115,6 +115,11 @@ class RecipeDeps(object):
     """Returns the location of the .recipe_deps directory."""
     return os.path.join(self.main_repo.recipes_root_path, '.recipe_deps')
 
+  @cached_property
+  def previous_test_failures_path(self):
+    """Returns the location of the .previous_failures file."""
+    return os.path.join(self.recipe_deps_path, '.previous_test_failures')
+
   @classmethod
   def create(cls, main_repo_path, overrides, proto_override):
     """Creates a RecipeDeps.

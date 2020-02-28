@@ -141,9 +141,7 @@ def _run(test_result, recipe_deps, use_emoji, test_filters, is_train, stop):
       )
   ))
 
-  fail_file_path = os.path.join(recipe_deps.recipe_deps_path,
-                                '.previous_test_failures')
-  fail_tracker = FailTracker(fail_file_path)
+  fail_tracker = FailTracker(recipe_deps.previous_test_failures_path)
   reporter = report.Reporter(use_emoji, is_train, fail_tracker)
 
   cov_dir = None
