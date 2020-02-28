@@ -199,19 +199,21 @@ class FileApi(recipe_api.RecipeApi):
         step_test_data=step_test_data)
     return result.raw_io.output
 
-  def write_raw(self, name, dest, data):
+  def write_raw(self, name, dest, data, include_log=True):
     """Write the given `data` to `dest`.
 
     Args:
       * name (str) - The name of the step.
       * dest (Path) - The path of the file to write.
       * data (str) - The data to write.
+      * include_log (bool) - Include step log of written data.
 
     Raises file.Error.
     """
     self.m.path.assert_absolute(dest)
     step = self._run(name, ['copy', self.m.raw_io.input(data), dest])
-    step.presentation.logs[self.m.path.basename(dest)] = data.splitlines()
+    if include_log:
+      step.presentation.logs[self.m.path.basename(dest)] = data.splitlines()
     self.m.path.mock_add_paths(dest)
 
   def read_text(self, name, source, test_data=''):
@@ -236,19 +238,22 @@ class FileApi(recipe_api.RecipeApi):
     result.presentation.logs[self.m.path.basename(source)] = text.splitlines()
     return text
 
-  def write_text(self, name, dest, text_data):
+  def write_text(self, name, dest, text_data, include_log=True):
     """Write the given UTF-8 encoded `text_data` to `dest`.
 
     Args:
       * name (str) - The name of the step.
       * dest (Path) - The path of the file to write.
       * text_data (str) - The UTF-8 encoded data to write.
+      * include_log (bool) - Include step log of written text.
 
     Raises file.Error.
     """
     self.m.path.assert_absolute(dest)
     step = self._run(name, ['copy', self.m.raw_io.input_text(text_data), dest])
-    step.presentation.logs[self.m.path.basename(dest)] = text_data.splitlines()
+    if include_log:
+      step.presentation.logs[self.m.path.basename(
+          dest)] = text_data.splitlines()
     self.m.path.mock_add_paths(dest)
 
   def read_json(self, name, source, test_data=''):
