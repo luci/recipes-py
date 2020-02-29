@@ -23,7 +23,7 @@ from PB.recipe_engine.internal.test.runner import Description, Outcome
 
 from ..doc.cmd import regenerate_docs
 
-from . import report
+from . import report, test_name
 from .fail_tracker import FailTracker
 from .runner import RunnerThread
 
@@ -37,7 +37,7 @@ def _extract_filter_matchers(test_filters):
 
   return (
     re.compile('|'.join([
-      fnmatch.translate(pattern.split('.', 1)[0])
+      fnmatch.translate(test_name.split(pattern)[0])
       for pattern in test_filters
     ])).match,
     re.compile('|'.join([
