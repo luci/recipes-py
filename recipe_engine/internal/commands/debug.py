@@ -10,10 +10,13 @@ they do under test simulation for the given test case.
 
 import bdb
 import pdb
+import os
 import sys
 import traceback
 
 from ..test.execute_test_case import execute_test_case
+from .test.fail_tracker import FailTracker
+from .test import test_name
 
 
 def add_arguments(parser):
@@ -28,31 +31,51 @@ def add_arguments(parser):
 
   def _main(args):
     if not args.recipe_name:
-      print 'Available recipes:'
-      for recipe in sorted(args.recipe_deps.main_repo.recipes):
-        print '  ', recipe
-      sys.exit(1)
-
-    recipe = args.recipe_deps.main_repo.recipes[args.recipe_name]
-    all_tests = list(recipe.gen_tests())
-    test_data = None
-    if len(all_tests) == 1 and not args.test_name:
-      test_data = all_tests[0]
-    else:
-      for test_data in sorted(all_tests, key=lambda t: t.name):
-        if test_data.name == args.test_name:
-          break
-      else:
-        print 'Unable to find test case %r in recipe %r' % (
-          args.test_name, args.recipe_name)
-        print 'For reference, we found the following test cases:'
-        for case in all_tests:
-          print '  ', case.name
+      test_info = _get_test_case_with_recent_fail(args)
+      if test_info is None:
+        print 'Available recipes:'
+        for recipe in sorted(args.recipe_deps.main_repo.recipes):
+          print '  ', recipe
         sys.exit(1)
+
+      recipe, test_data = test_info
+      print 'Debugging', '{}.{}'.format(recipe.name, test_data.name)
+
+    else:
+      recipe = args.recipe_deps.main_repo.recipes[args.recipe_name]
+      all_tests = list(recipe.gen_tests())
+      test_data = None
+      if len(all_tests) == 1 and not args.test_name:
+        test_data = all_tests[0]
+      else:
+        for test_data in sorted(all_tests, key=lambda t: t.name):
+          if test_data.name == args.test_name:
+            break
+        else:
+          print 'Unable to find test case %r in recipe %r' % (
+            args.test_name, args.recipe_name)
+          print 'For reference, we found the following test cases:'
+          for case in all_tests:
+            print '  ', case.name
+          sys.exit(1)
 
     _debug_recipe(args.recipe_deps, recipe, test_data)
   parser.set_defaults(func=_main)
 
+
+def _get_test_case_with_recent_fail(args):
+  recent_fails = (
+      FailTracker(args.recipe_deps.previous_test_failures_path).recent_fails)
+
+  for fail in recent_fails:
+    recipe_name, test_case_name = test_name.split(fail)
+    recipe = args.recipe_deps.main_repo.recipes.get(recipe_name)
+    if recipe is not None:
+      for test in recipe.gen_tests():
+        if test.name == test_case_name:
+          return recipe, test
+
+  return None
 
 def _debug_recipe(recipe_deps, recipe, test_data):
   """Debugs the given recipe + test case.
