@@ -177,7 +177,7 @@ class Reporter(object):
         print 'them with your CL.'
       sys.exit(1)
 
-    print 'OK'
+    print 'TESTS OK'
 
 
 

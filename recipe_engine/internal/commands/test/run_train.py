@@ -21,7 +21,7 @@ from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 # pylint: disable=import-error
 from PB.recipe_engine.internal.test.runner import Description, Outcome
 
-from ..doc.cmd import regenerate_docs
+from ..doc.cmd import regenerate_doc, is_doc_changed
 
 from . import report, test_name
 from .fail_tracker import FailTracker
@@ -200,7 +200,6 @@ def _run(test_result, recipe_deps, use_emoji, test_filters, is_train, stop):
     if cov_dir:
       shutil.rmtree(cov_dir, ignore_errors=True)
 
-
 def main(args):
   """Runs simulation tests on a given repo of recipes.
 
@@ -228,7 +227,18 @@ def main(args):
     _dump()
     raise
 
+  repo = args.recipe_deps.main_repo
+  is_run = args.subcommand == 'run'
+  if is_run and args.docs and is_doc_changed(repo):
+    print '------'
+    print 'README.recipes.md needs to be updated. Please run:'
+    print
+    print '  ./recipes.py doc'
+    print
+    return 1
+
   if is_train and args.docs:
     print 'Generating README.recipes.md'
-    regenerate_docs(args.recipe_deps.main_repo)
+    with open(repo.readme_path, 'wb') as f:
+      regenerate_doc(repo, f)
   return 0

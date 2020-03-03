@@ -650,34 +650,49 @@ def _set_known_objects(base):
     _add_it(k, fname, target)
 
 
-def regenerate_docs(repo):
-  """Rewrites `README.recipes.md` in the given recipe repo.
+def regenerate_doc(repo, output_file):
+  """Rewrites `README.recipes.md` for the given recipe repo to the given output file.
 
   Args:
     * repo (RecipeRepo) - The repo to regenerate the markdown docs for.
+    * output_file (I/O classes) - where the markdown docs will be printed.
   """
   assert isinstance(repo, RecipeRepo), type(repo)
   node = parse_repo(repo)
   _set_known_objects(node)
+  doc_markdown.Emit(doc_markdown.Printer(output_file), node)
 
-  readme = os.path.join(repo.recipes_root_path, 'README.recipes.md')
-  with open(readme, 'wb') as f:
-    doc_markdown.Emit(doc_markdown.Printer(f), node)
+
+def is_doc_changed(repo):
+  """Check if the `README.recipes.md` is changed.
+
+  Args:
+    * repo (RecipeRepo) - The repo for this readme file.
+
+  Returns boolean.
+  """
+  buf = StringIO()
+  regenerate_doc(repo, buf)
+  with open(repo.readme_path, 'rb') as f:
+    current_file = f.read()
+  return buf.getvalue() != current_file
 
 
 def main(args):
   logging.basicConfig()
 
-  # defer to regenerate_docs for consistency between train and 'doc --kind gen'
+  # defer to regenerate_doc for consistency between train and 'doc --kind gen'
+  repo = args.recipe_deps.main_repo
   if args.kind == 'gen':
     print('Generating README.recipes.md')
-    regenerate_docs(args.recipe_deps.main_repo)
+    with open(repo.readme_path, 'wb') as f:
+      regenerate_doc(repo, f)
     return 0
 
   if args.recipe:
     node = parse_recipe(args.recipe_deps.recipes[args.recipe])
   else:
-    node = parse_repo(args.recipe_deps.main_repo)
+    node = parse_repo(repo)
 
   _set_known_objects(node)
 

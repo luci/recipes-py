@@ -335,6 +335,20 @@ class TestRun(Common):
         self._run_test('run').data,
         self._outcome_json())
 
+  def test_docs_change(self):
+    with self.main.write_recipe('foo'):
+      pass
+    with open(self.main.path + '/recipes/foo.py', 'r+') as f:
+      content = f.read()
+      f.seek(0)
+      f.write('# docstring\n' + content)
+
+    self._run_test('run', should_fail=True)
+    self.main.recipes_py('doc')
+    self.assertDictEqual(
+        self._run_test('run').data,
+        self._outcome_json())
+
   def test_recipe_syntax_error(self):
     with self.main.write_recipe('foo') as recipe:
       recipe.RunSteps.write('baz')

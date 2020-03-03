@@ -271,6 +271,11 @@ class RecipeRepo(object):
       os.path.join(self.path, self.simple_cfg.recipes_path))
 
   @cached_property
+  def readme_path(self):
+    """The absolute path for the 'README.recipes.md' file."""
+    return os.path.join(self.recipes_root_path, 'README.recipes.md')
+
+  @cached_property
   def warning_definitions(self):
     """The warnings defined (a dict of warning name to warning.Definition proto
     message) in this repo. Empty dict if not defined.
