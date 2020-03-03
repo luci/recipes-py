@@ -368,28 +368,26 @@ class RecipeEngine(object):
       # garbage cycles.
       del caught
 
-  @staticmethod
-  def _setup_build_step(recipe_deps, recipe, properties, stream_engine,
-                        emit_initial_properties):
-    with stream_engine.new_step_stream(('setup_build',), False) as step:
+  def _setup_build_step(self, recipe, emit_initial_properties):
+    with self._stream_engine.new_step_stream(('setup_build',), False) as step:
       step.mark_running()
       if emit_initial_properties:
-        for key in sorted(properties.iterkeys()):
+        for key in sorted(self.properties.iterkeys()):
           step.set_build_property(
-              key, json.dumps(properties[key], sort_keys=True))
+              key, json.dumps(self.properties[key], sort_keys=True))
 
       run_recipe_help_lines = [
           'To repro this locally, run the following line from the root of a %r'
-            ' checkout:' % (recipe_deps.main_repo.name),
+            ' checkout:' % (self._recipe_deps.main_repo.name),
           '',
           '%s run --properties-file - %s <<EOF' % (
               os.path.join(
-                  '.', recipe_deps.main_repo.simple_cfg.recipes_path,
+                  '.', self._recipe_deps.main_repo.simple_cfg.recipes_path,
                   'recipes.py'),
               recipe),
       ]
       run_recipe_help_lines.extend(
-          json.dumps(properties, indent=2).splitlines())
+          json.dumps(self.properties, indent=2).splitlines())
       run_recipe_help_lines += [
           'EOF',
           '',
@@ -401,7 +399,7 @@ class RecipeEngine(object):
         for line in run_recipe_help_lines:
           log.write_line(line)
 
-      step.write_line('Running recipe with %s' % (properties,))
+      step.write_line('Running recipe with %s' % (self.properties,))
       step.add_step_text('running recipe: "%s"' % recipe)
 
   @classmethod
@@ -463,9 +461,7 @@ class RecipeEngine(object):
     # expectations).
     if not skip_setup_build:
       try:
-        cls._setup_build_step(
-            recipe_deps, recipe, properties, stream_engine,
-            emit_initial_properties)
+        engine._setup_build_step(recipe, emit_initial_properties)
       except Exception as ex:
         _log_crash(stream_engine, 'setup_build')
         result.failure.human_reason = 'Uncaught Exception: ' + repr(ex)
