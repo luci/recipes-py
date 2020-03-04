@@ -349,6 +349,23 @@ class TestRun(Common):
         self._run_test('run').data,
         self._outcome_json())
 
+  def test_docs_skipped_if_no_docs_in_config(self):
+    with self.main.write_recipe('foo'):
+      pass
+    with open(self.main.path + '/recipes/foo.py', 'r+') as f:
+      content = f.read()
+      f.seek(0)
+      f.write('# docstring\n' + content)
+
+    with self.main.edit_recipes_cfg_pb2() as spec:
+      spec.no_docs = True
+    os.remove(os.path.join(self.main.path, 'README.recipes.md'))
+
+    self._run_test('run', should_fail=False)
+
+    self._run_test('train')
+    self.assertFalse(self.main.exists('README.recipes.md'))
+
   def test_recipe_syntax_error(self):
     with self.main.write_recipe('foo') as recipe:
       recipe.RunSteps.write('baz')

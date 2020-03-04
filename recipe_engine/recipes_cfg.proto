@@ -105,4 +105,9 @@ message RepoSpec {
   //   https://chromium.googlesource.com/infra/infra/+/master/recipes/recipes/recipe_autoroller.py
   // ).
   AutorollRecipeOptions autoroll_recipe_options = 6;
+
+  // If true, `recipes.py test train` will not generate the README.recipes.md
+  // docs file, and `recipes.py test run` will not assert that the docs file is
+  // up-to-date.
+  bool no_docs = 8;
 }

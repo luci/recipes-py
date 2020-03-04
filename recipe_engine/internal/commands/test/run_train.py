@@ -228,17 +228,20 @@ def main(args):
     raise
 
   repo = args.recipe_deps.main_repo
+  docs_enabled = (not repo.recipes_cfg_pb2.no_docs) and args.docs
   is_run = args.subcommand == 'run'
-  if is_run and args.docs and is_doc_changed(repo):
-    print '------'
-    print 'README.recipes.md needs to be updated. Please run:'
-    print
-    print '  ./recipes.py doc'
-    print
-    return 1
+  if docs_enabled:
+    if is_run and is_doc_changed(repo):
+      print '------'
+      print 'README.recipes.md needs to be updated. Please run:'
+      print
+      print '  ./recipes.py doc'
+      print
+      return 1
 
-  if is_train and args.docs:
-    print 'Generating README.recipes.md'
-    with open(repo.readme_path, 'wb') as f:
-      regenerate_doc(repo, f)
+    if is_train:
+      print 'Generating README.recipes.md'
+      with open(repo.readme_path, 'wb') as f:
+        regenerate_doc(repo, f)
+
   return 0
