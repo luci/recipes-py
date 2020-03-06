@@ -845,6 +845,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
         request_dict, indent=2, sort_keys=True).splitlines()
 
     # Parse the response.
+    if step_res.stdout is None:
+      raise self.m.step.InfraFailure('Buildbucket Internal Error')
     batch_res = rpc_pb2.BatchResponse()
     json_format.ParseDict(
         step_res.stdout, batch_res,

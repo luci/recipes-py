@@ -2,6 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from recipe_engine import post_process
 from recipe_engine import types
 
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
@@ -9,9 +10,10 @@ from PB.go.chromium.org.luci.buildbucket.proto import rpc as rpc_pb2
 
 DEPS = [
   'buildbucket',
+  'json',
   'properties',
   'runtime',
-  'step'
+  'step',
 ]
 
 
@@ -110,4 +112,19 @@ def GenTests(api):
         api.buildbucket.ci_build_message(
             build_id=8922054662172514001, status='FAILURE'),
       ], step_name='buildbucket.run.collect')
+  )
+
+  yield (
+      test(test_name='infra_error') +
+      api.override_step_data(
+          'buildbucket.schedule',
+          api.json.invalid(None),
+          retcode=1
+      ) +
+      api.post_process(post_process.StatusException) +
+      api.post_process(
+          post_process.ResultReasonRE,
+          r'Buildbucket Internal Error'
+      ) +
+      api.post_process(post_process.DropExpectation)
   )
