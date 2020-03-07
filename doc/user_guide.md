@@ -610,6 +610,13 @@ looks like:
 
 TODO(iannucci) - Document
 
+#### Engine Properties
+
+[engine_properties.proto] defines a list of properties that dynamically adjust the behavior of recipe engine. These properties are associated with key `$recipe_engine` in the input properties.
+
+[engine_properties.proto]: /recipe_engine/engine_properties.proto
+
+
 ### How recipe simulation tests work
 
 TODO(iannucci) - Document
@@ -664,6 +671,25 @@ TODO(iannucci) - Document
 ### Testing recipes and recipe_modules
 
 TODO(iannucci) - Document
+
+### Debugging
+
+#### Memory Leak
+
+To help detect memory leaks, recipe engine has a [property](#engine-properties)
+named `memory_profiler.enable_snapshot`. It is false by default. If it is set
+to true, the recipe engine will snapshot the memory before each step execution,
+compare it with the snapshot of previous step and then print the diff to the
+`$debug` log stream. This feature is backed by [Pympler] and the output in
+debug log will look like as follows:
+
+     types |   # objects |   total size
+    ====== | =========== | ============
+      list |        5399 |    553.40 KB
+       str |        5398 |    323.04 KB
+       int |         640 |     15.00 KB
+
+[Pympler]: https://github.com/pympler/pympler
 
 ### Working with Protobufs
 

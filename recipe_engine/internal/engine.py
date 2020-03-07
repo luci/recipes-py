@@ -16,7 +16,11 @@ import attr
 import gevent
 import gevent.local
 
+from google.protobuf import json_format as jsonpb
+from pympler import summary, tracker
+
 from PB.recipe_engine import result as result_pb2
+from PB.recipe_engine import engine_properties as engine_properties_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
 from .. import recipe_api
@@ -50,6 +54,54 @@ class _ActiveStep(object):
       self.step_data.presentation.finalize(self.step_stream)
       self.step_stream.close()
 
+class _MemoryProfiler(object):
+  """The memory profiler used in recipe engine that is backed by Pympler.
+
+  Note: This class is currently not thread safe. The snapshot operation are not
+  atomic. The profiler will be called before each step execution. Therefore, it
+  is okay for now as steps are executed serially. However, once we start to
+  execute steps in parallel, the implementation needs to be re-evaluated to
+  ensure the atomicity of snapshot operation
+  """
+  def __init__(self, initial_snapshot_name='Bootstrap'):
+    self._current_snapshot_name = initial_snapshot_name
+    self._diff_snapshot = False
+    self._tracker = tracker.SummaryTracker()
+
+  def snapshot(self, snapshot_name):
+    """ Snapshot the memory
+
+    Returns [geneorator of str] - formated memory snapshot or diff surrounded by
+    dividing line. When this method is called for the first time, the full
+    snapshot will be returned. After that,  it will only return the diff with
+    the previous snapshot.
+    """
+    sum = self._tracker.create_summary()
+    last_snapshot_name = self._current_snapshot_name
+    self._current_snapshot_name = snapshot_name
+    if self._diff_snapshot:
+      yield ((
+        '-------- Diff between current snapshot (%s) and last snapshot (%s) '
+        'Starts --------') % (snapshot_name, last_snapshot_name))
+      diff = self._tracker.diff(summary1=sum)
+      # TODO(yiwzhang): switch to yield from after moving to python 3
+      for diff_line in summary.format_(diff):
+        yield diff_line
+      yield ((
+        '-------- Diff between current snapshot (%s) and last snapshot (%s) '
+        'Ends --------') % (snapshot_name, last_snapshot_name))
+    else:
+      # create_summary() won't make the return value latest summary in the
+      # underlying tracker. Manually moving it forward
+      self._tracker.s0 = sum
+      # Only dump the full snapshot when this method is called for the first
+      # time. From then onwards, dump diff only
+      self._diff_snapshot = True
+      yield '-------- Memory Snapshot (%s) Start --------' % snapshot_name
+      # TODO(yiwzhang): switch to yield from after moving to python 3
+      for snapshot_line in summary.format_(sum):
+        yield snapshot_line
+      yield '-------- Memory Snapshot (%s) Ends --------' % snapshot_name
 
 class RecipeEngine(object):
   """
@@ -69,6 +121,7 @@ class RecipeEngine(object):
     self._step_runner = step_runner
     self._stream_engine = stream_engine  # type: StreamEngine
     self._properties = properties
+    self._engine_properties = _get_engine_properties(properties)
     self._environ = environ.copy()
     self._start_dir = start_dir
     self._clients = {client.IDENT: client for client in (
@@ -82,6 +135,8 @@ class RecipeEngine(object):
     )}
 
     self._resource = ResourceWaiter(num_logical_cores * 1000, memory_mb)
+    self._memory_profiler = _MemoryProfiler() if (
+        self._engine_properties.memory_profiler.enable_snapshot) else None
 
     # A greenlet-local store which holds a stack of _ActiveStep objects, holding
     # the most recently executed step at each nest level (objects deeper in the
@@ -238,6 +293,25 @@ class RecipeEngine(object):
       _log_crash(self._stream_engine, "_record_step_name(%r)" % (name,))
       raise CrashEngine("Getting name tokens for %r failed." % (name,))
 
+  def _write_memory_snapshot(self, log_stream, snapshot_name):
+    """Snapshot the memory and write the result to the supplied log stream if
+    the memory snapshot is enabled.
+
+    Args:
+      * log_stream (Stream) - stream that the diff will write to. An None
+      stream will make this method no-op
+      * snapshot_name (str) - Name of the snapshot. The name will be perserved
+      along with the snapshot
+
+    TODO(crbug.com/1057844): After luciexe rolls out, instead of writing the
+    log to arbitrary log stream, it should constantly write to memory_profile
+    log stream created in setup_build step to consolidate all memory snapshots
+    in one UI page.
+    """
+    if self._memory_profiler and log_stream:
+      for line in self._memory_profiler.snapshot(snapshot_name):
+        log_stream.write_line(line)
+
   @contextmanager
   def parent_step(self, name):
     """Opens a parent step with the given name in the current namespace.
@@ -329,6 +403,8 @@ class RecipeEngine(object):
           step_stream.mark_running()
           debug_log = step_stream.new_log_stream('$debug')
           try:
+            self._write_memory_snapshot(
+              debug_log, 'Step: %s' % '.'.join(name_tokens))
             caught = _run_step(
                 debug_log, ret, step_stream, self._step_runner, step_config,
                 self._environ, self._start_dir)
@@ -398,6 +474,9 @@ class RecipeEngine(object):
       with step.new_log_stream('run_recipe') as log:
         for line in run_recipe_help_lines:
           log.write_line(line)
+
+      with step.new_log_stream('memory_profile') as memory_log:
+        self._write_memory_snapshot(memory_log, 'Step: setup_build')
 
       step.write_line('Running recipe with %s' % (self.properties,))
       step.add_step_text('running recipe: "%s"' % recipe)
@@ -535,6 +614,22 @@ def _set_initial_status(presentation, step_config, exc_result):
 
   presentation.status = 'EXCEPTION' if step_config.infra_step else 'FAILURE'
 
+def _get_engine_properties(properties):
+  """Retrieve and resurrect JSON serialized engine properties from all
+  properties passed to recipe.
+
+  The serialized value is associated with key '$recipe_engine'.
+
+  Args:
+
+    * properties (dict): All input properties for passed to recipe
+
+  Returns a engine_properties_pb2.EngineProperties object
+  """
+  return jsonpb.ParseDict(
+    properties.get('$recipe_engine', {}),
+    engine_properties_pb2.EngineProperties(),
+    ignore_unknown_fields=True)
 
 def _prepopulate_placeholders(step_config, step_data):
   """Pre-fills the StepData with None for every placeholder available in

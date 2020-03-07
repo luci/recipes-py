@@ -1,0 +1,23 @@
+// Copyright (c) 2020 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipe_engine;
+
+// Properties used by recipe engine
+message EngineProperties {
+  MemoryProfler memory_profiler = 1;
+}
+
+// MemoryProfler message encapsulates all properties related to memory
+// profiling. Currently, we are leveraging Pympler for measuring our memory
+// behavior
+message MemoryProfler {
+  // Setting enable_snapshot to True means before the execution of every step,
+  // we will snapshot the memory using Pympler and print the diff with last
+  // snapshot to '$debug' stream. For the first snapshot, the entire snapshot
+  // will be printed instead of the diff.
+  bool enable_snapshot = 1;
+}
