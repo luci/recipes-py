@@ -27,24 +27,24 @@ import "go.chromium.org/luci/resultdb/proto/type/common.proto";
 // and the same test suite can be executed in different variants
 // (OS, GPU, compile flags, etc).
 //
-// This message does not specify the test path.
+// This message does not specify the test id.
 // It should be available in the message that embeds this message.
 message TestResult {
   // Can be used to refer to this test result, e.g. in ResultDB.GetTestResult
   // RPC.
   // Format:
-  // "invocations/{INVOCATION_ID}/tests/{URL_ESCAPED_TEST_PATH}/results/{RESULT_ID}".
-  // URL_ESCAPED_TEST_PATH is test_path escaped with
+  // "invocations/{INVOCATION_ID}/tests/{URL_ESCAPED_TEST_ID}/results/{RESULT_ID}".
+  // URL_ESCAPED_TEST_ID is test_id escaped with
   // https://golang.org/pkg/net/url/#PathEscape See also https://aip.dev/122.
   string name = 1 [
     (google.api.field_behavior) = OUTPUT_ONLY,
     (google.api.field_behavior) = IMMUTABLE
   ];
 
-  // Test path, a unique identifier of the test in a LUCI project.
-  // Regex: ^[[::print::]]+$.
+  // Test id, a unique identifier of the test in a LUCI project.
+  // Regex: ^[[::print::]]{1,256}$
   //
-  // If two tests have a common test path prefix that ends with a
+  // If two tests have a common test id prefix that ends with a
   // non-alphanumeric character, they considered a part of a group. Examples:
   // - "a/b/c"
   // - "a/b/d"
@@ -58,11 +58,11 @@ message TestResult {
   // - Within that group, "a/b/e:x" and "a/b/e:y" form a sub-group because of
   //   the common prefix "a/b/e:".
   // This can be used in UI.
-  // LUCI does not interpret test paths in any other way.
-  string test_path = 2 [ (google.api.field_behavior) = IMMUTABLE ];
+  // LUCI does not interpret test ids in any other way.
+  string test_id = 2 [ (google.api.field_behavior) = IMMUTABLE ];
 
-  // Identifies a test result in a given invocation and test path.
-  // Regex: ^[[:ascii:]]{1,32}$.
+  // Identifies a test result in a given invocation and test id.
+  // Regex: ^[[:ascii:]]{1,32}$
   string result_id = 3 [
     (google.api.field_behavior) = IMMUTABLE,
     (google.api.field_behavior) = REQUIRED
@@ -86,15 +86,19 @@ message TestResult {
   // MUST NOT be STATUS_UNSPECIFIED.
   TestStatus status = 6 [ (google.api.field_behavior) = IMMUTABLE ];
 
-  // Human-readable explanation of the result.
-  // Markdown spec: https://spec.commonmark.org/0.29/
-  string summary_markdown = 7 [ (google.api.field_behavior) = IMMUTABLE ];
+  // Human-readable explanation of the result, in HTML.
+  // MUST be sanitized before rendering in the browser.
+  //
+  // The size of the summary must be equal to or smaller than 4096 bytes in
+  // UTF-8.
+  string summary_html = 7 [ (google.api.field_behavior) = IMMUTABLE ];
 
   // The point in time when the test case started to execute.
   google.protobuf.Timestamp start_time = 8
       [ (google.api.field_behavior) = IMMUTABLE ];
 
   // Duration of the test case execution.
+  // MUST be equal to or greater than 0.
   google.protobuf.Duration duration = 9
       [ (google.api.field_behavior) = IMMUTABLE ];
 
@@ -154,30 +158,29 @@ enum TestStatus {
 // See TestResult.output_artifacts for examples.
 message Artifact {
   // A slash-separated relative path, identifies the artifact.
-  // Example: "traces/a.txt".
+  // Regex: ^[[:word:]]([[:print:]]{0,254}[[:word:]])?$
   string name = 1 [ (google.api.field_behavior) = IMMUTABLE ];
-  // Machine-readable URL to fetch the contents of the artifact.
-  // Valid schemes: "isolate", "gs", "logdog", "rbe-cas".
-  string fetch_url = 2 [ (google.api.field_behavior) = IMMUTABLE ];
 
-  // Human-consumable URL to the file content.
-  // Typically a URL of a page where the user can view/download the arficact.
-  string view_url = 3 [ (google.api.field_behavior) = IMMUTABLE ];
+  // Machine-readable URL to fetch the contents of the artifact.
+  // This must be a plain (curlable) HTTPS URL.
+  //
+  // Internally, this may have format "isolate://{host}/{ns}/{digest}" at the
+  // storage level, but it is converted to an HTTPS URL before serving.
+  string fetch_url = 2;
+
+  // When fetch_url expires. If expired, re-request this Artifact.
+  // If fetch_url does not expire, this is unset.
+  google.protobuf.Timestamp fetch_url_expiration = 3;
 
   // Media type of the artifact.
-  // Logs are typically "plain/text" and screenshots are typically "image/png".
+  // Logs are typically "text/plain" and screenshots are typically "image/png".
+  // Can be omitted.
   string content_type = 4 [ (google.api.field_behavior) = IMMUTABLE ];
 
   // Size of the file, in bytes.
-  // Can be used in UI to decide whether to fetch an artifact and display it
-  // inline, or only show a link if it is too large.
+  // Can be used in UI to decide between displaying the artifact inline or only
+  // showing a link if it is too large.
   int64 size = 5 [ (google.api.field_behavior) = IMMUTABLE ];
-
-  // Contents of the artifact if it is stored inline with the test result.
-  // Empty for artifacts stored elsewhere. To fetch such artifacts, use
-  // fetch_url.
-  // Size MUST be <= 8KB.
-  bytes contents = 6 [ (google.api.field_behavior) = IMMUTABLE ];
 }
 
 // Indicates the test subject (e.g. a CL) is absolved from blame
@@ -188,30 +191,30 @@ message TestExoneration {
   // Can be used to refer to this test exoneration, e.g. in
   // ResultDB.GetTestExoneration RPC.
   // Format:
-  // invocations/{INVOCATION_ID}/tests/{URL_ESCAPED_TEST_PATH}/exonerations/{EXONERATION_ID}.
-  // URL_ESCAPED_TEST_PATH is test_variant.test_path escaped with
+  // invocations/{INVOCATION_ID}/tests/{URL_ESCAPED_TEST_ID}/exonerations/{EXONERATION_ID}.
+  // URL_ESCAPED_TEST_ID is test_variant.test_id escaped with
   // https://golang.org/pkg/net/url/#PathEscape See also https://aip.dev/122.
   string name = 1 [
     (google.api.field_behavior) = OUTPUT_ONLY,
     (google.api.field_behavior) = IMMUTABLE
   ];
 
-  // Test identifier, see TestResult.test_path.
-  string test_path = 2;
+  // Test identifier, see TestResult.test_id.
+  string test_id = 2;
 
   // Description of the variant of the test, see Variant type.
   // Unlike TestResult.extra_variant_pairs, this one must be a full definition
   // of the variant, i.e. it is not combined with Invocation.base_test_variant.
   luci.resultdb.type.Variant variant = 3;
 
-  // Identifies an exoneration in a given invocation and test path.
+  // Identifies an exoneration in a given invocation and test id.
   // It is server-generated.
   string exoneration_id = 4 [
     (google.api.field_behavior) = OUTPUT_ONLY,
     (google.api.field_behavior) = IMMUTABLE
   ];
 
-  // Reasoning behind the exoneration, in markdown.
-  // Markdown spec: https://spec.commonmark.org/0.29/
-  string explanation_markdown = 5 [ (google.api.field_behavior) = IMMUTABLE ];
+  // Reasoning behind the exoneration, in HTML.
+  // MUST be sanitized before rendering in the browser.
+  string explanation_html = 5 [ (google.api.field_behavior) = IMMUTABLE ];
 }

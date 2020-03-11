@@ -19,7 +19,6 @@ package luci.resultdb.rpc.v1;
 import "google/api/field_behavior.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
-import "go.chromium.org/luci/resultdb/proto/type/common.proto";
 import "go.chromium.org/luci/resultdb/proto/rpc/v1/invocation.proto";
 import "go.chromium.org/luci/resultdb/proto/rpc/v1/test_result.proto";
 
@@ -53,8 +52,9 @@ service Recorder {
   // Transitions the given invocation to the state FINALIZED.
   rpc FinalizeInvocation(FinalizeInvocationRequest) returns (Invocation) {};
 
-  // Includes an invocation in the given non-finalized invocation.
-  rpc Include(IncludeRequest) returns (google.protobuf.Empty) {};
+  // Updates inclusions for a non-finalized invocation.
+  rpc UpdateIncludedInvocations(UpdateIncludedInvocationsRequest)
+      returns (google.protobuf.Empty) {};
 
   // == Test results ===========================================================
 
@@ -119,23 +119,28 @@ message FinalizeInvocationRequest {
   string name = 1 [ (google.api.field_behavior) = REQUIRED ];
 
   // Flag to indicate if the invocation is interrupted.
-  // If true, Invocation.state will be set to INTERRUPTED; otherwise COMPLETED.
-  // Refer to Invocation.state for the meaning of each state.
+  // If true, Invocation.interrupted will be set to true; otherwise false.
   bool interrupted = 2;
 }
 
-// A request message for Include RPC.
-message IncludeRequest {
-  // Name of the invocation to include into, see Invocation.name.
+// A request message for UpdateIncludedInvocations RPC.
+message UpdateIncludedInvocationsRequest {
+  // Name of the invocation to add/remove inclusions to/from,
+  // see Invocation.name.
   // For example, name of the buildbucket build invocation that should include
   // a swarming task invocation.
   string including_invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
 
-  // Name of the invocation to include, see Invocation.name.
-  // For example, name of the swarming task invocation to include into a
-  // buildbucket build invocation.
-  // This invocation MUST be finalized.
-  string included_invocation = 2 [ (google.api.field_behavior) = REQUIRED ];
+  // Names of the invocations to include, see Invocation.name.
+  // If any of these invocations are already included, they will be silently
+  // ignored for idempotency.
+  repeated string add_invocations = 2;
+
+  // Names of the previously included invocations to remove, see
+  // Invocation.name.
+  // If any of these invocations are not included already, they will be silently
+  // ignored for idempotency.
+  repeated string remove_invocations = 3;
 }
 
 // A request message for CreateTestResult RPC.
@@ -144,8 +149,8 @@ message CreateTestResultRequest {
   string invocation = 1 [ (google.api.field_behavior) = REQUIRED ];
 
   // The test result to create.
-  // Test path and result id are used to dedup requests, i.e.
-  // if a test result with the same test path and result id already exists in
+  // Test id and result id are used to dedupe requests, i.e.
+  // if a test result with the same test id and result id already exists in
   // the invocation, then the requests succeeds as opposed to returns with
   // ALREADY_EXISTS error.
   TestResult test_result = 2 [ (google.api.field_behavior) = REQUIRED ];
@@ -243,30 +248,26 @@ message DeriveInvocationRequest {
     string hostname = 1 [ (google.api.field_behavior) = REQUIRED ];
 
     // ID of swarming task to process and insert.
+    //
+    // The task should have tags:
+    //  ninja_target: the fully-qualified ninja target used to compile the test
+    //    binary used in the task, e.g. "//chrome/test:browser_tests".
+    //  bucket: the LUCI bucket of the parent build
+    //  buildername: the LUCI builder of the parent build.
+    //  test_suite: a value of "test" property in any of the JSON files in
+    //    https://chromium.googlesource.com/chromium/src/+/master/testing/buildbot/
+    //    used to create the swarming task.
     string id = 2 [ (google.api.field_behavior) = REQUIRED ];
   }
 
   // Derive the invocation from the Swarming task.
   SwarmingTask swarming_task = 1 [ (google.api.field_behavior) = REQUIRED ];
+}
 
-  // Test path prefix.
-  //
-  // Examples: "gn:{label}/".
-  //
-  // See https://gn.googlesource.com/gn/+/master/docs/reference.md#labels for
-  // label examples.
-  //
-  // Generated test path examples:
-  // * GTest: gn:{label}/{suite}/{case}
-  // * javatests: gn:{label}/{full_java_method_name}
-  // * web tests: gn:{label}/{file_name}
-  string test_path_prefix = 2;
-
-  // Test variant base. These get combined with the remainder of the test
-  // variant definition, including test parameters and other key/value pairs
-  // that may be derived from the swarming task.
-  //
-  // For Chromium, expected keys in the def map are "bucket", "builder", and
-  // "test_suite".
-  luci.resultdb.type.Variant base_test_variant = 3;
+// Used a google.rpc.PreconditionFailure.Violation.type returned as a Status
+// detail by DeriveInvocation when responding with a PreconditionFailure status
+// code.
+enum DeriveInvocationPreconditionFailureType {
+  DERIVE_INVOCATION_PRECONDITION_FAILURE_TYPE_UNSPECIFIED = 0;
+  INCOMPLETE_SWARMING_TASK = 1;
 }

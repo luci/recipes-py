@@ -26,14 +26,14 @@ option go_package = "go.chromium.org/luci/resultdb/proto/sink/v1;sinkpb";
 // in ../../rpc/v1/test_result.proto.
 // See its comments for details.
 message TestResult {
-  // Equivalent of luci.resultpb.TestResult.TestPath.
-  string test_path = 1;
+  // Equivalent of luci.resultpb.TestResult.TestId.
+  string test_id = 1;
 
   // Equivalent of luci.resultpb.TestResult.result_id.
   string result_id = 2;
 
-  // Equivalent of luci.resultpb.TestResult.extra_variant_pairs.
-  luci.resultdb.type.Variant extra_variant_pairs = 3;
+  // Equivalent of luci.resultpb.TestResult.variant.
+  luci.resultdb.type.Variant variant = 3;
 
   // Equivalent of luci.resultpb.TestResult.expected.
   bool expected = 4;
@@ -41,14 +41,14 @@ message TestResult {
   // Equivalent of luci.resultpb.TestResult.status.
   TestStatus status = 5;
 
-  // Equivalent of luci.resultpb.TestResult.summary_markdown.
-  string summary_markdown = 6;
+  // Equivalent of luci.resultpb.TestResult.summary_html.
+  string summary_html = 6;
 
   // Equivalent of luci.resultpb.TestResult.start_time.
   google.protobuf.Timestamp start_time = 7;
 
-  // Equivalent of luci.resultpb.TestResult.run_duration.
-  google.protobuf.Duration run_duration = 8;
+  // Equivalent of luci.resultpb.TestResult.duration.
+  google.protobuf.Duration duration = 8;
 
   // Equivalent of luci.resultpb.TestResult.tags.
   repeated luci.resultdb.type.StringPair tags = 9;

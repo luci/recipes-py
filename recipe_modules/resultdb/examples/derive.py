@@ -42,19 +42,19 @@ def GenTests(api):
   inv_bundle = {
      'invid': api.resultdb.Invocation(
         proto=invocation_pb2.Invocation(
-            state=invocation_pb2.Invocation.COMPLETED
+            state=invocation_pb2.Invocation.FINALIZED
         ),
         test_results=[
           test_result_pb2.TestResult(
-            test_path='ninja://chromium/tests:browser_tests/',
+            test_id='ninja://chromium/tests:browser_tests/',
             expected=False,
             status=test_result_pb2.FAIL,
           ),
         ],
         test_exonerations=[
           test_result_pb2.TestExoneration(
-            test_path='ninja://chromium/tests:browser_tests/',
-            explanation_markdown='Known to be flaky',
+            test_id='ninja://chromium/tests:browser_tests/',
+            explanation_html='Known to be flaky',
           ),
         ],
      ),
