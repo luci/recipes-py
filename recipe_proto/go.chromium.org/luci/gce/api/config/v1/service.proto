@@ -1,0 +1,81 @@
+// Copyright 2018 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package config;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "go.chromium.org/luci/gce/api/config/v1/config.proto";
+
+// A request to delete a config.
+message DeleteRequest {
+  // The id of the config to delete.
+  string id = 1;
+}
+
+// A request to create or update a config.
+message EnsureRequest {
+  // The id of the config to ensure.
+  string id = 1;
+
+  // The config.
+  Config config = 2;
+}
+
+// A request to get an existing config.
+message GetRequest {
+  // The id of the config to get.
+  string id = 1;
+}
+
+// A request to list existing configs.
+message ListRequest {
+  // The value of next_page_token received in a ListResponse. Used to get the
+  // next page of configs. If empty, gets the first page.
+  string page_token = 1;
+
+  // The maximum number of results to include in the response.
+  int32 page_size = 2;
+}
+
+// A response to a request to list configs.
+message ListResponse {
+  // The configs.
+  repeated Config configs = 1;
+
+  // The value to use as the page_token in a ListRequest to get the next page of
+  // configs. If empty, there are no more configs.
+  string next_page_token = 2;
+}
+
+// A request to update an existing config.
+message UpdateRequest {
+  // The id of the config to update.
+  string id = 1;
+
+  // The config.
+  Config config = 2;
+
+  // The fields to update. Only config.current_amount may be updated.
+  google.protobuf.FieldMask update_mask = 3;
+}
+
+// A service for manipulating configs.
+service Configuration {
+  // Delete deletes a config.
+  // Internal API.
+  rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
+  // Ensure ensures a config exists.
+  // Creates a new config or updates an existing one as necessary.
+  // Internal API.
+  rpc Ensure(EnsureRequest) returns (Config);
+  // Get returns an existing config.
+  rpc Get(GetRequest) returns (Config);
+  // List returns existing configs.
+  rpc List(ListRequest) returns (ListResponse);
+  // Update updates a config.
+  rpc Update(UpdateRequest) returns (Config);
+}

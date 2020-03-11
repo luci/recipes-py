@@ -18,6 +18,7 @@ TAR_URL = BASE_URL+'/+archive/%s/%s.tar.gz'
 SUB_PATHS = [
   'buildbucket/proto',
   'common/proto',
+  'gce/api/config/v1',
   'resultdb/proto',
 ]
 
@@ -27,6 +28,8 @@ def main():
 
   for sub in SUB_PATHS:
     sub_dir = os.path.join(base_dir, os.path.normpath(sub))
+    if not os.path.exists(sub_dir):
+      os.makedirs(sub_dir)
     os.chdir(sub_dir)
 
     resp = requests.get(LOG_URL % (sub,))
