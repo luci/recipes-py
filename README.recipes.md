@@ -115,7 +115,6 @@
   * [random:tests/full](#recipes-random_tests_full)
   * [raw_io:examples/full](#recipes-raw_io_examples_full)
   * [resultdb:examples/derive](#recipes-resultdb_examples_derive)
-  * [resultdb:tests/full](#recipes-resultdb_tests_full)
   * [runtime:tests/full](#recipes-runtime_tests_full)
   * [scheduler:examples/emit_triggers](#recipes-scheduler_examples_emit_triggers) &mdash; This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
   * [scheduler:examples/host](#recipes-scheduler_examples_host) &mdash; This file is a recipe demonstrating reading/mocking scheduler host.
@@ -2214,7 +2213,7 @@ https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 
 A module for interacting with ResultDB.
 
-&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#45)(self, swarming_host, task_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
+&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#30)(self, swarming_host, task_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
 
 Returns results derived from the specified Swarming tasks.
 
@@ -2268,14 +2267,6 @@ Args:
 
 Returns:
   A dict {invocation_id: api.Invocation}.
-
-&emsp; **@property**<br>&mdash; **def [host](/recipe_modules/resultdb/api.py#35)(self):**
-
-Hostname of ResultDB to use in API calls.
-
-Defaults to the hostname of the current build's invocation.
-
-&mdash; **def [initialize](/recipe_modules/resultdb/api.py#30)(self):**
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
 #### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
@@ -3421,11 +3412,6 @@ Tests for api.python.infra_failing_step.
 [DEPS](/recipe_modules/resultdb/examples/derive.py#15): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/derive.py#22)(api):**
-### *recipes* / [resultdb:tests/full](/recipe_modules/resultdb/tests/full.py)
-
-[DEPS](/recipe_modules/resultdb/tests/full.py#7): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
-
-&mdash; **def [RunSteps](/recipe_modules/resultdb/tests/full.py#14)(api):**
 ### *recipes* / [runtime:tests/full](/recipe_modules/runtime/tests/full.py)
 
 [DEPS](/recipe_modules/runtime/tests/full.py#7): [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)

@@ -25,21 +25,6 @@ class ResultDBAPI(recipe_api.RecipeApi):
   deserialize = staticmethod(common.deserialize)
   Invocation = common.Invocation
 
-  HOST_PROD = 'results.api.cr.dev'
-
-  def initialize(self):
-    self._host = (
-        self.m.buildbucket.build.infra.resultdb.hostname or self.HOST_PROD
-    )
-
-  @property
-  def host(self):
-    """Hostname of ResultDB to use in API calls.
-
-    Defaults to the hostname of the current build's invocation.
-    """
-    return self._host
-
   # TODO(nodir): add query method, a wrapper of rdb-ls.
 
   def chromium_derive(
@@ -132,7 +117,6 @@ class ResultDBAPI(recipe_api.RecipeApi):
     """Runs rdb tool."""
     cmdline = [
       'rdb', subcommand,
-      '-host', self._host,
       '-json',
     ] + (args or [])
 
