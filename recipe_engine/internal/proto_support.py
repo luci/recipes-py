@@ -172,7 +172,7 @@ def _gather_proto_info_from_repo(repo):
 # checksum. If you need to change the compilation algorithm/process in any way,
 # you should increment this version number to cause all protos to be regenerated
 # downstream.
-RECIPE_PB_VERSION = '1'
+RECIPE_PB_VERSION = '2'
 
 
 def _gather_protos(deps):
@@ -346,6 +346,7 @@ def _rewrite_and_rename(root, base_proto_path):
 
   err = None
 
+  found_first_blank = False
   target_base = base_proto_path[:-len('_pb2.py')]
   with open(target_base+'.py', 'wb') as ofile:
     with open(base_proto_path, 'rU') as ifile:
@@ -365,6 +366,13 @@ def _rewrite_and_rename(root, base_proto_path):
           # This was the last line we were looking for; the rest of the file is
           # a straight copy.
           bypass = True
+          continue
+
+        # If it's the first blank line, we want to insert a __future__ import
+        # line.
+        if not found_first_blank and line.strip() == "":
+          found_first_blank = True
+          ofile.write("\nfrom __future__ import absolute_import\n\n")
           continue
 
         # Finally, if we're not in bypass mode, we're potentially rewriting
