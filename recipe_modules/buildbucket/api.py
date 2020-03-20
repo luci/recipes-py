@@ -12,6 +12,7 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 If it returns `None`, the link is not reported. Default link title is build id.
 """
 
+from contextlib import contextmanager
 from google import protobuf
 from google.protobuf import field_mask_pb2
 from google.protobuf import json_format
@@ -97,6 +98,16 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def set_buildbucket_host(self, host):
     """DEPRECATED. Use host property."""
     self.host = host
+
+  @contextmanager
+  def with_host(self, host):
+    """Set the buildbucket host while in context, then reverts it."""
+    previous_host = self.host
+    try:
+      self.host = host
+      yield
+    finally:
+      self.host = previous_host
 
   def use_service_account_key(self, key_path):
     """Tells this module to start using given service account key for auth.

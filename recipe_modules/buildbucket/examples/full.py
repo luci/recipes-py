@@ -71,13 +71,20 @@ def RunSteps(api):
   build_parameters_mac['builder_name'] = 'mac_perf_bisect'
   example_bucket = 'master.user.username'
 
-  put_build_result = api.buildbucket.put(
-      [{'bucket': example_bucket,
-        'parameters': build_parameters,
-        'tags': build_tags},
-       {'bucket': example_bucket,
-        'parameters': build_parameters_mac,
-        'tags': build_tags2}])
+  # Setting values for expectations coverage only, also tests host context.
+  api.buildbucket.set_buildbucket_host('cr-buildbucket-test.appspot.com')
+  assert api.buildbucket.host == 'cr-buildbucket-test.appspot.com'
+
+  with api.buildbucket.with_host('cr-buildbucket-test2.appspot.com'):
+    assert api.buildbucket.host == 'cr-buildbucket-test2.appspot.com'
+    put_build_result = api.buildbucket.put(
+        [{'bucket': example_bucket,
+          'parameters': build_parameters,
+          'tags': build_tags},
+        {'bucket': example_bucket,
+          'parameters': build_parameters_mac,
+          'tags': build_tags2}])
+  assert api.buildbucket.host == 'cr-buildbucket-test.appspot.com'
 
   new_job_id = put_build_result.stdout['builds'][0]['id']
 
@@ -85,8 +92,6 @@ def RunSteps(api):
   if get_build_result.stdout['build']['status'] == 'SCHEDULED':
     api.buildbucket.cancel_build(new_job_id)
 
-  # Setting values for expectations coverage only.
-  api.buildbucket.set_buildbucket_host('cr-buildbucket-test.appspot.com')
   api.buildbucket.set_output_gitiles_commit(
     common_pb2.GitilesCommit(
         host='chromium.googlesource.com',
