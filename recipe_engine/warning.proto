@@ -61,3 +61,47 @@ message MonorailBugDefault {
   // (optional) name of the project. E.g. chromium
   string project = 2;
 }
+
+// Cause of why a warning is issued
+message Cause {
+  oneof oneof_cause {
+    CallSite call_site = 1;
+    ImportSite import_site = 2;
+  }
+}
+
+// Callsite models the cause of excution warning. Execution warning is issued
+// when a developer declares a warning inside the method body of API class in a
+// recipe module and the declaration is hit while running recipe tests. The
+// frame that is calling the warned method will be considered as call site
+// unless the function represented by that frame is escaped with such warning.
+// Then we will walk up the call stack and attribute the next outer frame
+// as call site and so on.
+message CallSite {
+  // (required) The frame of the call site
+  Frame site = 1;
+  // (optional) The call stack at the time warning is issued
+  repeated Frame call_stack = 2;
+}
+
+// ImportSite models the cause of import warning. Import warning is issued when
+// a recipe or recipe module depends on a module with warning declared. Such
+// recipe or recipe module will be considered as import site.
+message ImportSite {
+  // Repo name that the recipe or recipe module is in
+  string repo = 1;
+  oneof location {
+    // Name of recipe module
+    string module = 2;
+    // Name of recipe (e.g. `path/to/recipe` or 'module:run/recipe')
+    string recipe = 3;
+  }
+}
+
+// Simplified representation of a stack frame
+message Frame {
+  // Absolute file path that contains the code object frame is executing
+  string file = 1;
+  // Current line Number in the source code for the frame
+  uint32 line = 2;
+}
