@@ -115,6 +115,7 @@
   * [random:tests/full](#recipes-random_tests_full)
   * [raw_io:examples/full](#recipes-raw_io_examples_full)
   * [resultdb:examples/derive](#recipes-resultdb_examples_derive)
+  * [resultdb:examples/include](#recipes-resultdb_examples_include)
   * [runtime:tests/full](#recipes-runtime_tests_full)
   * [scheduler:examples/emit_triggers](#recipes-scheduler_examples_emit_triggers) &mdash; This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
   * [scheduler:examples/host](#recipes-scheduler_examples_host) &mdash; This file is a recipe demonstrating reading/mocking scheduler host.
@@ -2217,7 +2218,7 @@ https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 
 A module for interacting with ResultDB.
 
-&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#30)(self, swarming_host, task_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
+&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#69)(self, swarming_host, task_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
 
 Returns results derived from the specified Swarming tasks.
 
@@ -2271,6 +2272,27 @@ Args:
 
 Returns:
   A dict {invocation_id: api.Invocation}.
+
+&mdash; **def [include\_invocations](/recipe_modules/resultdb/api.py#35)(self, invocations, step_name=None):**
+
+Shortcut for resultdb.update_inclusions().
+
+&mdash; **def [remove\_invocations](/recipe_modules/resultdb/api.py#30)(self, invocations, step_name=None):**
+
+Shortcut for resultdb.update_inclusions().
+
+&mdash; **def [update\_inclusions](/recipe_modules/resultdb/api.py#40)(self, add_invocations=None, remove_invocations=None, step_name=None):**
+
+Add and/or remove included invocations to/from the current invocation.
+
+Args:
+  add_invocations (list of str): invocation id's to add to the current
+      invocation.
+  remove_invocations (list of str): invocation id's to remove from the
+      current invocation.
+
+This updates the inclusions of the current invocation specified in the
+LUCI_CONTEXT.
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
 #### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
@@ -3416,6 +3438,11 @@ Tests for api.python.infra_failing_step.
 [DEPS](/recipe_modules/resultdb/examples/derive.py#15): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/derive.py#22)(api):**
+### *recipes* / [resultdb:examples/include](/recipe_modules/resultdb/examples/include.py)
+
+[DEPS](/recipe_modules/resultdb/examples/include.py#10): [resultdb](#recipe_modules-resultdb)
+
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/include.py#15)(api):**
 ### *recipes* / [runtime:tests/full](/recipe_modules/runtime/tests/full.py)
 
 [DEPS](/recipe_modules/runtime/tests/full.py#7): [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)

@@ -27,6 +27,45 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
   # TODO(nodir): add query method, a wrapper of rdb-ls.
 
+  def remove_invocations(self, invocations, step_name=None):
+    """Shortcut for resultdb.update_inclusions()."""
+    return self.update_inclusions(
+        remove_invocations=invocations, step_name=step_name)
+
+  def include_invocations(self, invocations, step_name=None):
+    """Shortcut for resultdb.update_inclusions()."""
+    return self.update_inclusions(
+        add_invocations=invocations, step_name=step_name)
+
+  def update_inclusions(self,
+                        add_invocations=None,
+                        remove_invocations=None,
+                        step_name=None):
+    """Add and/or remove included invocations to/from the current invocation.
+
+    Args:
+      add_invocations (list of str): invocation id's to add to the current
+          invocation.
+      remove_invocations (list of str): invocation id's to remove from the
+          current invocation.
+
+    This updates the inclusions of the current invocation specified in the
+    LUCI_CONTEXT.
+    """
+    if not (add_invocations or remove_invocations):
+      # Nothing to do.
+      return
+    args = []
+    if add_invocations:
+      args += ['-add', ','.join(sorted(add_invocations))]
+    if remove_invocations:
+      args += ['-remove', ','.join(sorted(remove_invocations))]
+    return self._run_rdb(
+        subcommand='update-invocations',
+        args=args,
+        step_name=step_name,
+    )
+
   def chromium_derive(
       self, swarming_host, task_ids,
       variants_with_unexpected_results=False, limit=None, step_name=None):
@@ -92,6 +131,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
     limit = limit or 1000
 
     args = [
+      '-json',
       '-wait',
       '-n', str(limit),
     ]
@@ -115,10 +155,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
       self, subcommand, step_name=None, args=None, stdout=None,
       step_test_data=None, timeout=None):
     """Runs rdb tool."""
-    cmdline = [
-      'rdb', subcommand,
-      '-json',
-    ] + (args or [])
+    cmdline = ['rdb', subcommand] + (args or [])
 
     return self.m.step(
         step_name or ('rdb ' + subcommand),
