@@ -61,7 +61,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
     if remove_invocations:
       args += ['-remove', ','.join(sorted(remove_invocations))]
     return self._run_rdb(
-        subcommand='update-invocations',
+        subcommand='update-inclusions',
         args=args,
         step_name=step_name,
     )
