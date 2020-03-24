@@ -23,7 +23,7 @@ sys.setdefaultencoding('UTF8')
 import os
 import errno
 
-# crbug.com/980535
+# Hack 2; crbug.com/980535
 #
 # On OS X there seems to be an issue with subprocess's use of its error
 # pipe which causes os.read to raise EINVAL (but very infrequently).
@@ -46,11 +46,11 @@ if sys.platform == 'darwin':
         raise
   os.read = _hacked_read
 
-# Bump the recursion limit as well; because of step nesting and gevent overhead,
-# we can sometimes exceed the default.
+# Hack 3; Bump the recursion limit as well; because of step nesting and gevent
+# overhead, we can sometimes exceed the default.
 sys.setrecursionlimit(sys.getrecursionlimit() * 2)
 
-# Hack 2; Lookup all available codecs (crbug.com/932259).
+# Hack 4; Lookup all available codecs (crbug.com/932259).
 def _hack_lookup_codecs():
   import encodings
   import pkgutil
@@ -62,6 +62,18 @@ def _hack_lookup_codecs():
 _hack_lookup_codecs()
 del _hack_lookup_codecs
 
+# Hack 5; Drop sys.path[0], which is ROOT_DIR/recipe_engine. This prevents user
+# recipe code from doing things like `import util` and getting
+# recipe_engine/util.py.
+#
+# This is needed because main.py lives inside of the recipe_engine folder; when
+# recipes.py invokes this as `python path/to/recipe_engine/main.py`, python puts
+# this directory at the front of sys.path.
+#
+# A better long-term fix would be to move main.py up one level so that the
+# automatically-prepended directory would remove the need for this and the
+# ROOT_DIR bit below.
+sys.path = sys.path[1:]
 
 import urllib3.contrib.pyopenssl
 urllib3.contrib.pyopenssl.inject_into_urllib3()
