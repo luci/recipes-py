@@ -254,8 +254,9 @@ def main(args):
       write_global_files_to_main_repo(args.recipe_deps, original_spec)
       run_simulation_test(args.recipe_deps.main_repo, 'train')
     elif results.get('picked_roll_details'):
-      # Success! We need to regen docs now.
-      regen_docs(args.recipe_deps.main_repo)
+      # Success!
+      if not args.recipe_deps.main_repo.recipes_cfg_pb2.no_docs:
+        regen_docs(args.recipe_deps.main_repo)
 
   if args.output_json:
     with args.output_json:
