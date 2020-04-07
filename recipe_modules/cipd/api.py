@@ -251,7 +251,7 @@ class CIPDApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
     super(recipe_api.RecipeApi, self).__init__(**kwargs)
     self._service_account = None
-    self.max_threads = None
+    self.max_threads = 0  # 0 means use system CPU count.
 
   @contextlib.contextmanager
   def set_service_account(self, service_account):

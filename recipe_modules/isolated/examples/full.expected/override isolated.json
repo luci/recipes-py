@@ -54,6 +54,8 @@
       "[CACHE]/isolated_client",
       "-ensure-file",
       "infra/tools/luci/isolated/${platform} release",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],

@@ -11,6 +11,8 @@
       "[CACHE]/swarming_client",
       "-ensure-file",
       "infra/tools/luci/swarming/${platform} git_revision:386eb9fd6a1e21d174824c786a0eee9d883dad56",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],

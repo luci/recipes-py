@@ -7,6 +7,8 @@
       "[CACHE]/led",
       "-ensure-file",
       "infra/tools/luci/led/${platform} latest",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],

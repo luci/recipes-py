@@ -7,6 +7,8 @@
       "[START_DIR]\\packages",
       "-ensure-file",
       "public/package/${platform} 7f751b2237df2fdf3c1405be00590fefffbaea2d",
+      "-max-threads",
+      "0",
       "-json-output",
       "/path/to/tmp/json"
     ],
