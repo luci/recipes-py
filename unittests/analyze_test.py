@@ -270,6 +270,18 @@ class AnalyzeSmokeTest(test_env.RecipeEngineUnitTest):
     })
     self.assertEqual(exit_code, 0)
 
+  def testRecipeResourceChanged(self):
+    exit_code, outdata = self._run({
+      'files': ['recipes/engine_tests/unicode.resources/helper.py'],
+      'recipes': ['engine_tests/unicode'],
+    })
+    self.assertDictEqual(outdata, {
+      'error': '',
+      'invalidRecipes': [],
+      'recipes': ['engine_tests/unicode'],
+    })
+    self.assertEqual(exit_code, 0)
+
   def testRecipeChangedAbsPath(self):
     exit_code, outdata = self._run({
             'files': [os.path.join(

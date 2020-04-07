@@ -509,6 +509,11 @@ class Recipe(object):
     return os.path.splitext(self.path)[0] + '.expected'
 
   @cached_property
+  def resources_dir(self):
+    """Returns the directory where this recipe's resource files live."""
+    return os.path.splitext(self.path)[0] + '.resources'
+
+  @cached_property
   def relpath(self):
     """The path to the recipe module relative to the repo root."""
     return os.path.relpath(self.path, self.repo.path)

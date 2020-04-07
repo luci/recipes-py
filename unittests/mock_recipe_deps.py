@@ -132,5 +132,6 @@ class MockRecipe(object):
     """
     self.repo = repo
     self.path = os.path.join(repo.path, 'recipes', name) + '.py'
+    self.resources_dir = os.path.join(repo.path, 'recipes', name) + '.resources'
     # pylint: disable=invalid-name
     self.normalized_DEPS = parse_deps_spec(repo.name, DEPS)

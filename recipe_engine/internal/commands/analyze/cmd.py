@@ -68,7 +68,7 @@ def analyze(recipe_deps, in_data):
   # its .gitattributes file. Mainly a cache so we only read the file once.
   git_attr_file_map = {}
 
-  # We look at 3 different sets of files which could affect the recipe.
+  # We look at 4 different sets of files which could affect the recipe.
   for recipe_name in valid_recipes:
     # 1: The recipes themselves.
     recipe = main_repo.recipes[recipe_name]
@@ -80,7 +80,19 @@ def analyze(recipe_deps, in_data):
       output.recipes.append(recipe_name)
       continue
 
-    # 2: The modules. This is the list of (repo_name, module_name)
+    # 2: The recipes' resource files.
+    affected_resources = sorted(
+        fname for fname in in_data.files
+        if fname.startswith(recipe.resources_dir + os.path.sep)
+    )
+    if affected_resources:
+      print(
+          'Adding %r to output set; resource files modified: %r'
+          % (recipe_name, affected_resources), file=sys.stderr)
+      output.recipes.append(recipe_name)
+      continue
+
+    # 3: The modules. This is the list of (repo_name, module_name)
     queue = set(recipe.normalized_DEPS.values())
 
     processed = set()
@@ -103,7 +115,7 @@ def analyze(recipe_deps, in_data):
         output.recipes.append(recipe_name)
         break
 
-      # 3: Git attribute files, declared in .gitattribute in the root of the
+      # 4: Git attribute files, declared in .gitattribute in the root of the
       # repo.
       if repo_name not in git_attr_file_map:
         git_attr_file_map[repo_name] = set(
