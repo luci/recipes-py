@@ -3,8 +3,19 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import contextlib
+import inspect
+
+import mock
+
 import test_env
 
+from recipe_engine.internal.recipe_deps import (
+  Recipe,
+  RecipeDeps,
+  RecipeModule,
+  RecipeRepo)
+from recipe_engine.internal.warn import record
 from recipe_engine.internal.warn.definition import (
   _populate_monorail_bug_default_fields,
   _validate,
@@ -105,6 +116,188 @@ class TestWarningDefinition(test_env.RecipeEngineUnitTest):
     with self.assertRaises(ValueError):
       _validate(create_definition(
         'WARNING_NAME', deadline='2020-12-31T23:59:59'))
+
+class TestWarningRecorder(test_env.RecipeEngineUnitTest):
+  test_file_path='/path/to/test.py'
+  def setUp(self):
+    super(TestWarningRecorder, self).setUp()
+    mock_deps = mock.Mock()
+    mock_deps.__class__ = RecipeDeps
+    self.recorder = record.WarningRecorder(mock_deps)
+    # This test should NOT test the functionality of any predicate
+    # implementation
+    self._override_skip_frame_predicates(tuple())
+
+  def test_record_execution_warning(self):
+    with create_test_frames(self.test_file_path) as test_frames:
+      self.recorder.record_execution_warning(
+        'recipe_engine/SOME_WARNING', test_frames)
+
+    expected_cause = warning_pb.Cause()
+    expected_cause.call_site.site.file = self.test_file_path
+    expected_cause.call_site.site.line = 3
+    self.assert_has_warning('recipe_engine/SOME_WARNING', expected_cause)
+
+  def test_record_execution_warning_filter(self):
+    self.recorder.call_site_filter = lambda name, cause: False
+    with create_test_frames(self.test_file_path) as test_frames:
+      self.recorder.record_execution_warning(
+        'recipe_engine/SOME_WARNING', test_frames)
+
+    self.assertFalse(
+      self.recorder.recorded_warnings['recipe_engine/SOME_WARNING'])
+
+  def test_record_execution_warning_include_call_stack(self):
+    self.recorder.include_call_stack = True
+    with create_test_frames(self.test_file_path) as test_frames:
+      self.recorder.record_execution_warning(
+        'recipe_engine/SOME_WARNING', test_frames)
+
+    cause = self.recorder.recorded_warnings['recipe_engine/SOME_WARNING'][0]
+    self.assertTrue(cause.call_site.call_stack)
+
+  def test_record_execution_warning_skip_frame(self):
+    def not_first_and_second_predicate(name, index, frame):
+      return 'not the first and second' if index in (0, 1) else None
+    self._override_skip_frame_predicates((not_first_and_second_predicate,))
+    with create_test_frames(self.test_file_path) as test_frames:
+      self.recorder.record_execution_warning(
+        'recipe_engine/SOME_WARNING', test_frames)
+
+    # attribute to the third frame
+    expected_cause = warning_pb.Cause()
+    expected_cause.call_site.site.file = self.test_file_path
+    expected_cause.call_site.site.line = 5
+    self.assert_has_warning('recipe_engine/SOME_WARNING', expected_cause)
+
+  def test_record_empty_site_for_execution_warning(self):
+    self._override_skip_frame_predicates((
+      lambda name, index, frame: 'skip all frames', ))
+    with create_test_frames(self.test_file_path) as test_frames:
+      self.recorder.record_execution_warning(
+        'recipe_engine/SOME_WARNING', test_frames)
+    self.assertIn('recipe_engine/SOME_WARNING', self.recorder.recorded_warnings)
+    cause = self.recorder.recorded_warnings['recipe_engine/SOME_WARNING'][0]
+    self.assertEqual(cause.call_site.site.file, '')
+    self.assertEqual(cause.call_site.site.line, 0)
+    self.assertTrue(cause.call_site.call_stack)
+
+  def test_no_duplicate_execution_warning(self):
+    with create_test_frames(self.test_file_path) as test_frames:
+      self.recorder.record_execution_warning(
+        'recipe_engine/SOME_WARNING', test_frames)
+      self.recorder.record_execution_warning(
+        'recipe_engine/SOME_WARNING', test_frames)
+
+    self.assertEqual(1, len(
+      self.recorder.recorded_warnings['recipe_engine/SOME_WARNING']))
+
+  def test_record_import_warning(self):
+    self.recorder.record_import_warning(
+      'recipe_engine/SOME_WARNING',
+      self._create_mock_recipe('test_module:path/to/recipe', 'main_repo'),
+    )
+    self.recorder.record_import_warning(
+      'recipe_engine/SOME_WARNING',
+      self._create_mock_recipe_module('test_module', 'main_repo'),
+    )
+
+    expected_recipe_cause = warning_pb.Cause()
+    expected_recipe_cause.import_site.repo = 'main_repo'
+    expected_recipe_cause.import_site.recipe = 'test_module:path/to/recipe'
+    expected_recipe_module_cause = warning_pb.Cause()
+    expected_recipe_module_cause.import_site.repo = 'main_repo'
+    expected_recipe_module_cause.import_site.module = 'test_module'
+    self.assert_has_warning(
+      'recipe_engine/SOME_WARNING',
+      expected_recipe_cause,
+      expected_recipe_module_cause,
+    )
+
+  def test_record_import_warning_raise_for_invalid_type(self):
+    with self.assertRaises(ValueError):
+      self.recorder.record_import_warning(
+        'recipe_engine/SOME_WARNING', 'I am a str type')
+
+  def test_record_import_warning_filter(self):
+    self.recorder.import_site_filter = lambda name, cause: False
+    self.recorder.record_import_warning(
+      'recipe_engine/SOME_WARNING',
+      self._create_mock_recipe('test_module:path/to/recipe', 'main_repo'),
+    )
+    self.recorder.record_import_warning(
+      'recipe_engine/SOME_WARNING',
+      self._create_mock_recipe_module('test_module', 'main_repo'),
+    )
+    self.assertFalse(
+      self.recorder.recorded_warnings['recipe_engine/SOME_WARNING'])
+
+  def test_no_duplicate_import_warning(self):
+    mock_recipe = self._create_mock_recipe(
+      'test_module:path/to/recipe', 'main_repo')
+    self.recorder.record_import_warning(
+      'recipe_engine/SOME_WARNING', mock_recipe)
+    self.recorder.record_import_warning(
+      'recipe_engine/SOME_WARNING', mock_recipe)
+    self.assertEqual(1, len(
+      self.recorder.recorded_warnings['recipe_engine/SOME_WARNING']))
+
+  def assert_has_warning(self, warning_name, *causes):
+    recorded_warnings = self.recorder.recorded_warnings
+    self.assertIn(warning_name, recorded_warnings)
+    for cause in causes:
+      self.assertIn(cause, recorded_warnings.get(warning_name))
+
+  def _override_skip_frame_predicates(self, new_predicates):
+    key = '_cached_property_' + '_skip_frame_predicates'
+    object.__setattr__(self.recorder, key, new_predicates)
+
+  @staticmethod
+  def _create_mock_recipe(recipe_name, repo_name):
+    mock_repo = mock.Mock()
+    mock_repo.name = repo_name
+    mock_recipe = mock.Mock()
+    mock_recipe.__class__ = Recipe
+    mock_recipe.name = recipe_name
+    mock_recipe.repo = mock_repo
+    return mock_recipe
+
+  @staticmethod
+  def _create_mock_recipe_module(module_name, repo_name):
+    mock_repo = mock.Mock()
+    mock_repo.name = repo_name
+    mock_module = mock.Mock()
+    mock_module.__class__ = RecipeModule
+    mock_module.name = module_name
+    mock_module.repo = mock_repo
+    return mock_module
+
+
+@contextlib.contextmanager
+def create_test_frames(frame_file):
+  """Execute a program and return a list of stack frames for testing
+  purpose as follows.
+  [
+    file: frame_file, line: 3,
+    file: frame_file, line: 4,
+    file: frame_file, line: 5,
+    the frame that is calling this function,
+    *all outer frames,
+  ]
+  """
+  program="""
+def outer():
+  def inner():
+    return [frame_tuple[0] for frame_tuple in inspect.stack()]
+  return inner()
+frames = outer()
+  """.strip()
+  try:
+    ns = {}
+    exec(compile(program, frame_file, 'exec'), globals(), ns)
+    yield ns['frames']
+  finally:
+    del ns['frames']
 
 if __name__ == '__main__':
   test_env.main()
