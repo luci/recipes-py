@@ -15,7 +15,7 @@ from recipe_engine.internal.recipe_deps import (
   RecipeDeps,
   RecipeModule,
   RecipeRepo)
-from recipe_engine.internal.warn import record
+from recipe_engine.internal.warn import escape, record
 from recipe_engine.internal.warn.definition import (
   _populate_monorail_bug_default_fields,
   _validate,
@@ -298,6 +298,49 @@ frames = outer()
     yield ns['frames']
   finally:
     del ns['frames']
+
+
+class EscapeWarningPredicateTest(test_env.RecipeEngineUnitTest):
+  def test_issue_SOME_WARN(self):
+    warning_name = 'SOME_WARN'
+    # self.assertRegexpMatches
+    self.assertIsNone(
+      self.apply_predicate(warning_name, self.non_escaped_frame()))
+    self.assertRegexpMatches(
+      self.apply_predicate(warning_name, self.escaped_frame()),
+      '^escaped function at .+#L[0-9]+$',
+      )
+    self.assertRegexpMatches(
+      self.apply_predicate(warning_name, self.escaped_all_frame()),
+      '^escaped function at .+#L[0-9]+$',
+      )
+
+  def test_issue_ANOTHER_WARN(self):
+    warning_name = 'ANOTHER_WARN'
+    self.assertIsNone(
+      self.apply_predicate(warning_name, self.non_escaped_frame()))
+    self.assertIsNone(
+      self.apply_predicate(warning_name, self.escaped_frame()))
+    self.assertRegexpMatches(
+      self.apply_predicate(warning_name, self.escaped_all_frame()),
+      '^escaped function at .+#L[0-9]+$',
+      )
+
+  def non_escaped_frame(self):
+    return inspect.currentframe()
+
+  @escape.escape_warnings('^SOME.WARN$')
+  def escaped_frame(self):
+    return inspect.currentframe()
+
+  @escape.escape_all_warnings
+  def escaped_all_frame(self):
+    return inspect.currentframe()
+
+  @staticmethod
+  def apply_predicate(warning_name, frame):
+    return escape.escape_warning_predicate(warning_name, -1, frame)
+
 
 if __name__ == '__main__':
   test_env.main()

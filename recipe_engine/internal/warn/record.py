@@ -14,6 +14,7 @@ import attr
 from six import iteritems, itervalues
 
 from .cause import CallSite, Frame, ImportSite
+from .escape import escape_warning_predicate
 
 from ..attr_util import attr_type, attr_seq_type
 from ..class_util import cached_property
@@ -88,8 +89,8 @@ class WarningRecorder(object):
     is the first frame in the supplied frames matching all of following
     conditions:
       * Not the frame where warning is issued
-      * The code object of frame should lexically sit in the main recipe repo
-      or one of its descendant recipe repos
+      * The source of code object frame is executing should be located in the
+      main recipe repo or one of its descendant recipe repos
       * The function that the frame executes is not escaped from the issued
       warning
 
@@ -99,32 +100,22 @@ class WarningRecorder(object):
       warning is issued (assuming the first frame is at where the warning is
       issued)
     """
-    try:
-      # TODO(yiwzhang): update proto to include skip reason and populate
-      call_site_frame, _ = self._attribute_call_site(name, frames)
-      call_site = CallSite(
-        site=Frame.from_built_in_frame(call_site_frame) if (
-          call_site_frame) else Frame(),
+    # TODO(yiwzhang): update proto to include skip reason and populate
+    call_site_frame, _ = self._attribute_call_site(name, frames)
+    call_site = CallSite(
+      site=Frame.from_built_in_frame(call_site_frame) if (
+        call_site_frame) else Frame(),
+    )
+    if self.include_call_stack or not call_site_frame:
+      # Capture call stack if explicitly requested or attributing call site
+      # fails
+      call_site = attr.evolve(
+        call_site,
+        call_stack=[Frame.from_built_in_frame(f) for f in frames]
       )
-      if self.include_call_stack or not call_site_frame:
-        # Capture call stack if explicitly requested or attributing call site
-        # fails
-        call_site = attr.evolve(
-          call_site,
-          call_stack=[Frame.from_built_in_frame(f) for f in frames]
-        )
-      if (call_site not in self._recorded_warnings[name]) and (
-        self.call_site_filter(name, call_site.cause_pb)):
-        self._recorded_warnings[name].add(call_site)
-    finally:
-      # avoid reference cycle as suggested by inspect docs.
-      del frames
-      try:
-        # call_site_frame might be unbounded if error is raised during call site
-        # attributing
-        del call_site_frame
-      except NameError:
-        pass
+    if (call_site not in self._recorded_warnings[name]) and (
+      self.call_site_filter(name, call_site.cause_pb)):
+      self._recorded_warnings[name].add(call_site)
 
   def record_import_warning(self, name, importer):
     """Record the warning issued during DEPS resolution and its cause (
@@ -171,7 +162,7 @@ class WarningRecorder(object):
       # Skip the first frame as it is where the warning is being issued
       lambda name, index, frame: 'warning issued frame' if index == 0 else None,
       self._non_recipe_code_predicate,
-      # TODO: add predicate for escape warning
+      escape_warning_predicate
     )
 
   def _attribute_call_site(self, name, frames):
@@ -184,19 +175,15 @@ class WarningRecorder(object):
     frames with their skipped reasons. Call site frame will be returned as None
     if all of the frames are skipped.
     """
-    try:
-      skipped_frames = []
-      for index, frame in enumerate(frames):
-        lazy_skip_reasons = (
-          p(name, index, frame) for p in self._skip_frame_predicates)
-        reason = next((r for r in lazy_skip_reasons if r is not None), None)
-        if reason is None:
-          return frame, skipped_frames # culprit found
-        skipped_frames.append(_AnnotatedFrame(frame=frame, skip_reason=reason))
-      return None, skipped_frames
-    finally:
-      # avoid reference cycle as suggested by inspect docs.
-      del frames, skipped_frames
+    skipped_frames = []
+    for index, frame in enumerate(frames):
+      lazy_skip_reasons = (
+        p(name, index, frame) for p in self._skip_frame_predicates)
+      reason = next((r for r in lazy_skip_reasons if r is not None), None)
+      if reason is None:
+        return frame, skipped_frames # culprit found
+      skipped_frames.append(_AnnotatedFrame(frame=frame, skip_reason=reason))
+    return None, skipped_frames
 
   @cached_property
   def _all_repo_paths(self):
@@ -207,15 +194,12 @@ class WarningRecorder(object):
       list(itervalues(self.recipe_deps.repos))))
 
   def _non_recipe_code_predicate(self, name, index, frame):
-    """A predicate that skips a frame when it is executing a code object that
-    is NOT lexically sitting in any of the recipe repos in currently executing
+    """A predicate that skips a frame when it is executing a code object whose
+    source is not in any of the recipe repos in the currently executing
     recipe_deps.
     """
-    try:
-      code_file_path = os.path.abspath(frame.f_code.co_filename)
-      for repo_path in self._all_repo_paths:
-        if code_file_path.startswith(repo_path):
-          return None
-      return 'non recipe code'
-    finally:
-      del frame
+    code_file_path = os.path.abspath(frame.f_code.co_filename)
+    for repo_path in self._all_repo_paths:
+      if code_file_path.startswith(repo_path):
+        return None
+    return 'non recipe code'
