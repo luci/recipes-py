@@ -503,13 +503,14 @@ class RecipeEngine(object):
           properties in the "setup_build" step.
 
     Returns a 2-tuple of:
-      * result_pb2.Result
+      * result_pb2.RawResult
       * The tuple containing exception info if there is an uncaught exception
           triggered by recipe code or None
 
     Does NOT raise exceptions.
     """
-    result = result_pb2.Result()
+    result = result_pb2.RawResult()
+    uncaught_exception = None
 
     assert 'recipe' in properties
     recipe = properties['recipe']
@@ -531,10 +532,11 @@ class RecipeEngine(object):
       engine.initialize_path_client_HACK(api)
     except (RecipeUsageError, ImportError, AssertionError) as ex:
       _log_crash(stream_engine, 'loading recipe')
-      # TODO(iannucci): differentiate the human reasons for all of these; will
+      # TODO(iannucci): differentiate infra failure and user failure; will
       # result in expectation changes, but that should be safe in its own CL.
-      result.failure.human_reason = 'Uncaught exception: ' + repr(ex)
-      return result, None
+      result.status = common_pb2.INFRA_FAILURE
+      result.summary_markdown = 'Uncaught exception: ' + repr(ex)
+      return result, uncaught_exception
 
     # TODO(iannucci): Don't skip this during tests (but maybe filter it out from
     # expectations).
@@ -543,55 +545,50 @@ class RecipeEngine(object):
         engine._setup_build_step(recipe, emit_initial_properties)
       except Exception as ex:
         _log_crash(stream_engine, 'setup_build')
-        result.failure.human_reason = 'Uncaught Exception: ' + repr(ex)
-        return result, None
+        result.status = common_pb2.INFRA_FAILURE
+        result.summary_markdown = 'Uncaught Exception: ' + repr(ex)
+        return result, uncaught_exception
 
     try:
       try:
         try:
           raw_result = recipe_obj.run_steps(api, engine)
-          if raw_result is not None:
-            if isinstance(raw_result, result_pb2.RawResult):
-              stream_engine.set_summary_markdown(raw_result.summary_markdown)
-              if raw_result.status != common_pb2.SUCCESS:
-                result.failure.human_reason = raw_result.summary_markdown
-                if raw_result.status != common_pb2.INFRA_FAILURE:
-                  result.failure.failure.SetInParent()
-            # Notify user that they used the wrong recipe return type.
-            else:
-                result.failure.human_reason = ('"%r" is not a valid '
-                  'return type for recipes. Did you mean to use "RawResult"?'
-                  % (type(raw_result)))
-                result.failure.failure.SetInParent()
+          if raw_result is None:
+            result.status = common_pb2.SUCCESS
+          # Notify user that they used the wrong recipe return type.
+          elif not isinstance(raw_result, result_pb2.RawResult):
+            result.status = common_pb2.FAILURE
+            result.summary_markdown = ('"%r" is not a valid return type for '
+            'recipes. Did you mean to use "RawResult"?' % (type(raw_result), ))
+          else:
+            result.CopyFrom(raw_result)
         finally:
           # TODO(iannucci): give this more symmetry with parent_step
           engine.close_non_parent_step()
           engine._step_stack[-1].close()   # pylint: disable=protected-access
 
-      # TODO(iannucci): the differentiation here is a bit weird
-      except recipe_api.InfraFailure as ex:
-        result.failure.human_reason = ex.reason
-
-      except recipe_api.AggregatedStepFailure as ex:
-        result.failure.human_reason = ex.reason
-        if not ex.result.contains_infra_failure:
-          result.failure.failure.SetInParent()
-
       except recipe_api.StepFailure as ex:
-        result.failure.human_reason = ex.reason
-        result.failure.failure.SetInParent()
+        is_infra_failure = isinstance(ex, recipe_api.InfraFailure) or (
+          isinstance(ex, recipe_api.AggregatedStepFailure) and
+          ex.result.contains_infra_failure
+        )
+        result.status = common_pb2.INFRA_FAILURE if (
+          is_infra_failure) else common_pb2.FAILURE
+        result.summary_markdown = ex.reason
 
     # All other exceptions are reported to the user and are fatal.
     except Exception as ex:  # pylint: disable=broad-except
       _log_crash(stream_engine, 'Uncaught exception')
-      result.failure.human_reason = 'Uncaught Exception: ' + repr(ex)
-      return result, sys.exc_info()
+      result.status = common_pb2.INFRA_FAILURE
+      result.summary_markdown = 'Uncaught Exception: ' + repr(ex)
+      uncaught_exception = sys.exc_info()
 
     except CrashEngine as ex:
       _log_crash(stream_engine, 'Engine Crash')
-      result.failure.human_reason = repr(ex)
+      result.status = common_pb2.INFRA_FAILURE
+      result.summary_markdown = repr(ex)
 
-    return result, None
+    return result, uncaught_exception
 
 
 def _set_initial_status(presentation, step_config, exc_result):

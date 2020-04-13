@@ -25,6 +25,8 @@ from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 import PB
 from PB.recipe_engine.internal.test.runner import Description, Outcome
 
+from ... import legacy
+
 from .... import config_types
 from .... import types
 
@@ -265,7 +267,7 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
   config_types.ResetTostringFns()
   types.PerGreentletStateRegistry.clear()
 
-  result, ran_steps, ui_steps, uncaught_exception_info = execute_test_case(
+  raw_result, ran_steps, ui_steps, uncaught_exception_info = execute_test_case(
       recipe_deps, test_desc.recipe_name, test_data)
 
   raw_expectations = _merge_presentation_updates(ran_steps, ui_steps)
@@ -277,7 +279,7 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
   # Convert the result to a json object by dumping to json, and then parsing.
   # TODO(iannucci): Use real objects so this only needs to be serialized once.
   raw_expectations['$result'] = json.loads(jsonpb.MessageToJson(
-      result, including_default_value_fields=True))
+      legacy.to_legacy_result(raw_result), including_default_value_fields=True))
 
   raw_expectations['$result']['name'] = '$result'
 

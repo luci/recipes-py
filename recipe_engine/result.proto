@@ -8,7 +8,9 @@ package recipe_engine;
 
 import "go.chromium.org/luci/buildbucket/proto/common.proto";
 
-// The result of a recipe execution.
+// Legacy result message to model the result of recipe execution.
+// TODO(yiwzhang): Delete this message as well as Failure after recipe engine
+// is purely on build.proto
 message Result {
   oneof oneof_result {
     // The json result of a recipe. Guaranteed to be a JSON 'object' (e.g.
@@ -42,7 +44,7 @@ message Failure {
   Dummy failure = 5;
 }
 
-// Intermediate result from a recipe execution.
+// The result of a recipe execution.
 // Can contain more detailed results about what occurred in the build.
 message RawResult {
   // Human readable information on what occurred in the build

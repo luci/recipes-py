@@ -10,6 +10,7 @@ import psutil
 
 from google.protobuf import json_format as jsonpb
 
+from PB.go.chromium.org.luci.buildbucket.proto import common
 from PB.go.chromium.org.luci.buildbucket.proto.build import Build
 
 from ....third_party import luci_context
@@ -79,11 +80,11 @@ def main(args):
 
   luciexe_engine = LUCIStreamEngine(args.build_proto_jsonpb)
 
-  result = None
+  raw_result = None
   with StreamEngineInvariants.wrap(luciexe_engine) as stream_engine:
-    result, _ = RecipeEngine.run_steps(
+    raw_result, _ = RecipeEngine.run_steps(
         args.recipe_deps, properties, stream_engine,
         SubprocessStepRunner(), os.environ, os.getcwd(),
         psutil.cpu_count(), psutil.virtual_memory().total)
 
-  return 1 if not result or result.HasField("failure") else 0
+  return 0 if (raw_result and raw_result.status == common.SUCCESS) else 1

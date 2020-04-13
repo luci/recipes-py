@@ -10,19 +10,18 @@ import sys
 
 import psutil
 
-from PB.recipe_engine.result import Result
-
 from google.protobuf import json_format as jsonpb
 
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 
 from .... import util
 
+from ... import legacy
+
 from ...engine import RecipeEngine
 from ...step_runner.subproc import SubprocessStepRunner
 from ...stream.annotator import AnnotatorStreamEngine
 from ...stream.invariants import StreamEngineInvariants
-
 
 def main(args):
   if args.props:
@@ -60,13 +59,14 @@ def main(args):
   )
 
   # Have a top-level set of invariants to enforce StreamEngine expectations.
-  result, _ = RecipeEngine.run_steps(
+  raw_result, _ = RecipeEngine.run_steps(
       args.recipe_deps, properties,
       StreamEngineInvariants.wrap(stream_engine),
       SubprocessStepRunner(),
       os.environ, os.path.abspath(workdir),
       psutil.cpu_count(), psutil.virtual_memory().total,
       emit_initial_properties=emit_initial_properties)
+  result = legacy.to_legacy_result(raw_result)
 
   if args.output_result_json:
     with open(args.output_result_json, 'w') as fil:

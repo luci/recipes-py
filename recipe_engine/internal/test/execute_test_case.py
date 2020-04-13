@@ -43,10 +43,10 @@ def execute_test_case(recipe_deps, recipe_name, test_data):
   for key, value in test_data.environ.iteritems():
     environ[key] = value
 
-  result, uncaught_exception = RecipeEngine.run_steps(
+  raw_result, uncaught_exception = RecipeEngine.run_steps(
       recipe_deps, props, stream_engine, step_runner, environ, '',
       num_logical_cores=8, memory_mb=16 * (1024**3), test_data=test_data,
       skip_setup_build=True)
 
-  return result, step_runner.export_steps_ran(), simulator.annotations, \
+  return raw_result, step_runner.export_steps_ran(), simulator.annotations, \
       uncaught_exception
