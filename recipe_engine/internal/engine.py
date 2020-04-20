@@ -880,6 +880,8 @@ def _print_step(execution_log, step):
 
   execution_log.write_line('in dir ' + step.cwd)
 
+  # Technically very soon _before_ the step runs, but should be insignificant.
+  execution_log.write_line('at time ' + datetime.datetime.now().isoformat())
   if step.timeout:
     execution_log.write_line('  timeout: %d secs' % (step.timeout,))
 
