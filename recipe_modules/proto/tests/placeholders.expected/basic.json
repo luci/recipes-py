@@ -1,0 +1,54 @@
+[
+  {
+    "cmd": [
+      "python",
+      "RECIPE[recipe_engine::proto:tests/placeholders].resources/dump.py",
+      "/path/to/tmp/json"
+    ],
+    "name": "read from script",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@proto.output@{@@@",
+      "@@@STEP_LOG_LINE@proto.output@  \"field\": \"hello\"@@@",
+      "@@@STEP_LOG_LINE@proto.output@}@@@",
+      "@@@STEP_LOG_END@proto.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "RECIPE[recipe_engine::proto:tests/placeholders].resources/dump.py",
+      "[START_DIR]/gone"
+    ],
+    "name": "read missing output",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@proto.output (read error)@Proto file was missing or unreadable:@@@",
+      "@@@STEP_LOG_LINE@proto.output (read error)@  [START_DIR]/gone@@@",
+      "@@@STEP_LOG_END@proto.output (read error)@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "RECIPE[recipe_engine::proto:tests/placeholders].resources/dump.py",
+      "[START_DIR]/gone"
+    ],
+    "name": "read invalid output",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@proto.output (invalid)@i are not protoh@@@",
+      "@@@STEP_LOG_END@proto.output (invalid)@@@",
+      "@@@STEP_LOG_LINE@proto.output (exception)@Failed to load JSON: No JSON object could be decoded.@@@",
+      "@@@STEP_LOG_END@proto.output (exception)@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "RECIPE[recipe_engine::proto:tests/placeholders].resources/read.py",
+      "{\n\"field\": \"sup\"\n}"
+    ],
+    "name": "write to script"
+  },
+  {
+    "name": "$result"
+  }
+]

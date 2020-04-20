@@ -14,7 +14,7 @@ import urllib
 
 from cStringIO import StringIO
 
-def sentinel(name):
+def sentinel(name, **attrs):
   """Create a sentinel object.
 
   The sentinel's type is a class with the given name that has no behavior except
@@ -22,12 +22,17 @@ def sentinel(name):
   intended for use where some special behavior is required where there is no
   acceptable special value in the type of an argument. An identity check (x is
   SENTINEL) can be used to check for the sentinel.
+
+  Any additional attributes can be passed via `attrs`. This can be useful to
+  associate metadata with the sentinel object.
   """
-  return type(name, (), {
+  all_attrs = dict(attrs)
+  all_attrs.update({
       '__repr__': lambda _: name,
       '__copy__': lambda self: self,
       '__deepcopy__': lambda self, _: self,
-  })()
+  })
+  return type(name, (), all_attrs)()
 
 
 class RecipeAbort(Exception):

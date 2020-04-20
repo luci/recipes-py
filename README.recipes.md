@@ -19,6 +19,7 @@
   * [path](#recipe_modules-path) &mdash; All functions related to manipulating paths in recipes.
   * [platform](#recipe_modules-platform) &mdash; Mockable system platform identity functions.
   * [properties](#recipe_modules-properties) &mdash; Provides access to the recipes input properties.
+  * [proto](#recipe_modules-proto) &mdash; Methods for producing and consuming protobuf data to/from steps and the filesystem.
   * [python](#recipe_modules-python) &mdash; Provides methods for running python scripts correctly.
   * [random](#recipe_modules-random) &mdash; Allows randomness in recipes.
   * [raw_io](#recipe_modules-raw_io) &mdash; Provides objects for reading and writing raw data to and from steps.
@@ -110,6 +111,8 @@
   * [path:examples/full](#recipes-path_examples_full)
   * [platform:examples/full](#recipes-platform_examples_full)
   * [properties:examples/full](#recipes-properties_examples_full)
+  * [proto:tests/encode_decode](#recipes-proto_tests_encode_decode)
+  * [proto:tests/placeholders](#recipes-proto_tests_placeholders)
   * [python:examples/full](#recipes-python_examples_full) &mdash; Launches the repo bundler.
   * [python:tests/infra_failing_step](#recipes-python_tests_infra_failing_step) &mdash; Tests for api.
   * [random:tests/full](#recipes-random_tests_full)
@@ -1710,7 +1713,7 @@ Methods for producing and consuming JSON.
 
 Works like `json.dumps`.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&mdash; **def [input](/recipe_modules/json/api.py#115)(self, data):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#140)**<br>&mdash; **def [input](/recipe_modules/json/api.py#115)(self, data):**
 
 A placeholder which will expand to a file path containing <data>.
 
@@ -1723,7 +1726,7 @@ Returns True if the object is JSON-serializable.
 Works like `json.loads`, but strips out unicode objects (replacing them
 with utf8-encoded str objects).
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&mdash; **def [output](/recipe_modules/json/api.py#120)(self, add_json_log=True, name=None, leak_to=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#140)**<br>&mdash; **def [output](/recipe_modules/json/api.py#120)(self, add_json_log=True, name=None, leak_to=None):**
 
 A placeholder which will expand to '/tmp/file'.
 
@@ -2035,6 +2038,80 @@ easier to debug and diagnose which scripts use which properties.
 &mdash; **def [thaw](/recipe_modules/properties/api.py#78)(self):**
 
 Returns a read-write copy of all of the properties.
+### *recipe_modules* / [proto](/recipe_modules/proto)
+
+[DEPS](/recipe_modules/proto/__init__.py#5): [file](#recipe_modules-file), [raw\_io](#recipe_modules-raw_io)
+
+Methods for producing and consuming protobuf data to/from steps and the
+filesystem.
+
+#### **class [ProtoApi](/recipe_modules/proto/api.py#75)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
+
+&emsp; **@staticmethod**<br>&mdash; **def [decode](/recipe_modules/proto/api.py#151)(data, msg_class, codec, \*\*decoding_kwargs):**
+
+Decodes a proto message from a string.
+
+Args:
+  * msg_class (protobuf Message subclass) - The message type to decode.
+  * codec ('BINARY'|'JSONPB'|'TEXTPB') - The encoder to use.
+  * decoding_kwargs - Passed directly to the chosen decoder. See input
+    placeholder for details.
+
+Returns the decoded proto object.
+
+&emsp; **@staticmethod**<br>&mdash; **def [encode](/recipe_modules/proto/api.py#136)(proto_msg, codec, \*\*encoding_kwargs):**
+
+Encodes a proto message to a string.
+
+Args:
+  * codec ('BINARY'|'JSONPB'|'TEXTPB') - The encoder to use.
+  * encoding_kwargs - Passed directly to the chosen encoder. See output
+    placeholder for details.
+
+Returns the encoded proto message.
+
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#140)**<br>&mdash; **def [input](/recipe_modules/proto/api.py#77)(self, proto_msg, codec, \*\*encoding_kwargs):**
+
+A placeholder which will expand to a file path containing the encoded
+`proto_msg`.
+
+Example:
+   proto_msg = MyMessage(field=10)
+   api.step('step name', ['some_cmd', api.proto.input(proto_msg)])
+   # some_cmd sees "/path/to/random.pb"
+
+Args:
+  * proto_msg (message.Message) - The message data to encode.
+  * codec ('BINARY'|'JSONPB'|'TEXTPB') - The encoder to use.
+  * encoding_kwargs - Passed directly to the chosen encoder. See:
+    - BINARY: google.protobuf.message.Message.SerializeToString
+      * 'deterministic' defaults to True.
+    - JSONPB: google.protobuf.json_format.MessageToJson
+      * 'preserving_proto_field_name' defaults to True.
+      * 'sort_keys' defaults to True.
+      * 'indent' defaults to 0.
+    - TEXTPB: google.protobuf.text_format.MessageToString
+
+Returns an InputPlaceholder.
+
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#140)**<br>&mdash; **def [output](/recipe_modules/proto/api.py#106)(self, msg_class, codec, add_json_log=True, name=None, leak_to=None, \*\*decoding_kwargs):**
+
+A placeholder which expands to a file path and then reads an encoded
+proto back from that location when the step finishes.
+
+Args:
+  * msg_class (protobuf Message subclass) - The message type to decode.
+  * codec ('BINARY'|'JSONPB'|'TEXTPB') - The encoder to use.
+  * add_json_log (True|False|'on_failure') - Log a copy of the parsed proto
+    in JSONPB form to a step link named `name`. If this is 'on_failure',
+    only create this log when the step has a non-SUCCESS status.
+  * leak_to (Optional[Path]) - This path will be used in place of a random
+    temporary file, and the file will not be deleted at the end of the step.
+  * decoding_kwargs - Passed directly to the chosen decoder. See:
+    - BINARY: google.protobuf.message.Message.Parse
+    - JSONPB: google.protobuf.json_format.Parse
+      * 'ignore_unknown_fields' defaults to True.
+    - TEXTPB: google.protobuf.text_format.Parse
 ### *recipe_modules* / [python](/recipe_modules/python)
 
 [DEPS](/recipe_modules/python/__init__.py#5): [context](#recipe_modules-context), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
@@ -2140,7 +2217,7 @@ Provides objects for reading and writing raw data to and from steps.
 
 #### **class [RawIOApi](/recipe_modules/raw_io/api.py#263)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#264)(data, suffix='', name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#140)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#264)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -2155,7 +2232,7 @@ tempfile.mkstemp.
 
 See examples/full.py for usage example.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#282)(data, suffix='', name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#140)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#282)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -2165,7 +2242,7 @@ expected to have valid utf-8 data in it.
 Similar to input(), but ensures that 'data' is valid utf-8 text. Any
 non-utf-8 characters will be replaced with �.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#295)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#140)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#295)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -2181,7 +2258,7 @@ Args:
      to a step link named `name`. If this is 'on_failure', only create this
      log when the step has a non-SUCCESS status.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#333)(suffix='', leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#140)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#333)(suffix='', leak_to=None, name=None):**
 
 Returns a directory Placeholder for use as a step argument.
 
@@ -2192,7 +2269,7 @@ If 'leak_to' is not None, then it should be a Path and placeholder
 redirects IO to a dir at that path. Once step finishes, the dir is
 NOT deleted (i.e. it's 'leaking'). 'suffix' is ignored in that case.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#135)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#315)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#140)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#315)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -3409,6 +3486,16 @@ This tests metadata features of the Future object.
 [DEPS](/recipe_modules/properties/examples/full.py#10): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/properties/examples/full.py#18)(api, props, env_props):**
+### *recipes* / [proto:tests/encode\_decode](/recipe_modules/proto/tests/encode_decode.py)
+
+[DEPS](/recipe_modules/proto/tests/encode_decode.py#5): [assertions](#recipe_modules-assertions), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/proto/tests/encode_decode.py#15)(api):**
+### *recipes* / [proto:tests/placeholders](/recipe_modules/proto/tests/placeholders.py)
+
+[DEPS](/recipe_modules/proto/tests/placeholders.py#5): [path](#recipe_modules-path), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/proto/tests/placeholders.py#14)(api):**
 ### *recipes* / [python:examples/full](/recipe_modules/python/examples/full.py)
 
 [DEPS](/recipe_modules/python/examples/full.py#7): [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

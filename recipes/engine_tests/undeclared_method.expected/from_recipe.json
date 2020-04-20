@@ -17,7 +17,7 @@
       "    return callable_obj(*props, **additional_args)",
       "  File \"RECIPE_REPO[recipe_engine]/recipes/engine_tests/undeclared_method.py\", line 22, in RunSteps",
       "    api.missing_module('baz')",
-      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/util.py\", line 48, in __getattr__",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/util.py\", line 53, in __getattr__",
       "    \"RecipeApi has no dependency %r. (Add it to DEPS?)\" % (key,))",
       "ModuleInjectionError: RecipeApi has no dependency 'missing_module'. (Add it to DEPS?)"
     ]
