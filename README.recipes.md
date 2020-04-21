@@ -118,6 +118,7 @@
   * [random:tests/full](#recipes-random_tests_full)
   * [raw_io:examples/full](#recipes-raw_io_examples_full)
   * [resultdb:examples/derive](#recipes-resultdb_examples_derive)
+  * [resultdb:examples/exonerate](#recipes-resultdb_examples_exonerate)
   * [resultdb:examples/include](#recipes-resultdb_examples_include)
   * [runtime:tests/full](#recipes-runtime_tests_full)
   * [scheduler:examples/emit_triggers](#recipes-scheduler_examples_emit_triggers) &mdash; This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
@@ -2284,7 +2285,7 @@ Args:
      log when the step has a non-SUCCESS status.
 ### *recipe_modules* / [resultdb](/recipe_modules/resultdb)
 
-[DEPS](/recipe_modules/resultdb/__init__.py#6): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/resultdb/__init__.py#6): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
 
 API for interacting with the ResultDB service.
 
@@ -2295,7 +2296,7 @@ https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 
 A module for interacting with ResultDB.
 
-&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#69)(self, swarming_host, task_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
+&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#94)(self, swarming_host, task_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
 
 Returns results derived from the specified Swarming tasks.
 
@@ -2349,6 +2350,14 @@ Args:
 
 Returns:
   A dict {invocation_id: api.Invocation}.
+
+&mdash; **def [exonerate](/recipe_modules/resultdb/api.py#69)(self, test_exonerations, step_name=None):**
+
+Exonerates test variants in the current invocation.
+
+Args:
+  test_exonerations (list): A list of test_result_pb2.TestExoneration.
+  step_name (str): name of the step.
 
 &mdash; **def [include\_invocations](/recipe_modules/resultdb/api.py#35)(self, invocations, step_name=None):**
 
@@ -3525,6 +3534,11 @@ Tests for api.python.infra_failing_step.
 [DEPS](/recipe_modules/resultdb/examples/derive.py#15): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/derive.py#22)(api):**
+### *recipes* / [resultdb:examples/exonerate](/recipe_modules/resultdb/examples/exonerate.py)
+
+[DEPS](/recipe_modules/resultdb/examples/exonerate.py#10): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/exonerate.py#35)(api):**
 ### *recipes* / [resultdb:examples/include](/recipe_modules/resultdb/examples/include.py)
 
 [DEPS](/recipe_modules/resultdb/examples/include.py#10): [resultdb](#recipe_modules-resultdb)

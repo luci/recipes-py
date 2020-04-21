@@ -8,10 +8,10 @@ Requires `rdb` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 """
 
-import json
-
 from google.protobuf import json_format
 from recipe_engine import recipe_api
+
+from PB.go.chromium.org.luci.resultdb.proto.rpc.v1 import recorder
 
 from . import common
 
@@ -66,9 +66,37 @@ class ResultDBAPI(recipe_api.RecipeApi):
         step_name=step_name,
     )
 
-  def chromium_derive(
-      self, swarming_host, task_ids,
-      variants_with_unexpected_results=False, limit=None, step_name=None):
+  def exonerate(self, test_exonerations, step_name=None):
+    """Exonerates test variants in the current invocation.
+
+    Args:
+      test_exonerations (list): A list of test_result_pb2.TestExoneration.
+      step_name (str): name of the step.
+    """
+    assert self.m.buildbucket.build.infra.resultdb.invocation, (
+        'ResultDB integration was not enabled')
+
+    req = recorder.BatchCreateTestExonerationsRequest(
+        invocation=self.m.buildbucket.build.infra.resultdb.invocation,
+        request_id=self.m.uuid.random(),
+    )
+    for te in test_exonerations:
+      req.requests.add(test_exoneration=te)
+
+    self._call(
+        step_name or 'resultdb.exonerate',
+        'luci.resultdb.rpc.v1.Recorder',
+        'BatchCreateTestExonerations',
+        json_format.MessageToDict(req),
+        include_update_token=True,
+        step_test_data=lambda: self.m.raw_io.test_api.stream_output('{}'))
+
+  def chromium_derive(self,
+                      swarming_host,
+                      task_ids,
+                      variants_with_unexpected_results=False,
+                      limit=None,
+                      step_name=None):
     """Returns results derived from the specified Swarming tasks.
 
     TODO(crbug.com/1030191): remove this function in favor of query().
@@ -151,9 +179,49 @@ class ResultDBAPI(recipe_api.RecipeApi):
   ##############################################################################
   # Implementation details.
 
-  def _run_rdb(
-      self, subcommand, step_name=None, args=None, stdout=None,
-      step_test_data=None, timeout=None):
+  def _call(self,
+            step_name,
+            service,
+            method,
+            req,
+            include_update_token=False,
+            step_test_data=None):
+    """Makes a ResultDB RPC.
+
+    Args:
+      step_name (str): name of the step.
+      service (string): the full name of a service, e.g.
+        "luci.resultdb.rpc.v1.ResultDB".
+      method (string): the name of the method, e.g. "GetInvocation".
+      req (dict): request message.
+      include_update_token (bool): A flag to indicate if the RPC requires the
+        update token of the invocation.
+
+    Returns:
+      A dict representation of the response message.
+    """
+    args = [service, method]
+    if include_update_token:
+      args.append('-include-update-token')
+
+    step_res = self._run_rdb(
+        subcommand='call',
+        step_name=step_name,
+        args=args,
+        stdin=self.m.json.input(req),
+        stdout=self.m.json.output(),
+        step_test_data=step_test_data,
+    )
+    return step_res.stdout
+
+  def _run_rdb(self,
+               subcommand,
+               step_name=None,
+               args=None,
+               stdin=None,
+               stdout=None,
+               step_test_data=None,
+               timeout=None):
     """Runs rdb tool."""
     cmdline = ['rdb', subcommand] + (args or [])
 
@@ -161,6 +229,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
         step_name or ('rdb ' + subcommand),
         cmdline,
         infra_step=True,
+        stdin=stdin,
         stdout=stdout,
         step_test_data=step_test_data,
         timeout=timeout,

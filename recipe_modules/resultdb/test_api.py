@@ -9,8 +9,6 @@ from recipe_engine import recipe_test_api
 
 from . import common
 
-from PB.go.chromium.org.luci.resultdb.proto.rpc.v1 import test_result as test_result_pb2
-
 
 class ResultDBTestApi(recipe_test_api.RecipeTestApi):
 
