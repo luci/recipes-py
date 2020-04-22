@@ -1,0 +1,12 @@
+[
+  {
+    "cmd": [],
+    "name": "set blamelist pins",
+    "~followup_annotations": [
+      "@@@SET_BUILD_PROPERTY@$recipe_engine/milo/blamelist_pins@[{\"host\": \"chromium.googlesource.com\", \"id\": \"51634e6bffd3c4f521645a40c721430721153711\", \"project\": \"chromium/src\"}, {\"host\": \"chromium.googlesource.com\", \"id\": \"e196bc85ac2dda0e9f6664cfc2eca0029e33d2d1\", \"project\": \"angle/angle\"}]@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

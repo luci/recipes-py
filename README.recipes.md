@@ -16,6 +16,7 @@
   * [isolated](#recipe_modules-isolated)
   * [json](#recipe_modules-json) &mdash; Methods for producing and consuming JSON.
   * [led](#recipe_modules-led)
+  * [milo](#recipe_modules-milo) &mdash; API for specifying Milo behavior.
   * [path](#recipe_modules-path) &mdash; All functions related to manipulating paths in recipes.
   * [platform](#recipe_modules-platform) &mdash; Mockable system platform identity functions.
   * [properties](#recipe_modules-properties) &mdash; Provides access to the recipes input properties.
@@ -108,6 +109,7 @@
   * [json:examples/full](#recipes-json_examples_full)
   * [json:tests/add_json_log](#recipes-json_tests_add_json_log)
   * [led:tests/full](#recipes-led_tests_full)
+  * [milo:examples/full](#recipes-milo_examples_full)
   * [path:examples/full](#recipes-path_examples_full)
   * [platform:examples/full](#recipes-platform_examples_full)
   * [properties:examples/full](#recipes-properties_examples_full)
@@ -1803,6 +1805,28 @@ Whether the current build is a led job.
 A unique string identifier for this led job.
 
 If the current build is *not* a led job, value will be an empty string.
+### *recipe_modules* / [milo](/recipe_modules/milo)
+
+[DEPS](/recipe_modules/milo/__init__.py#6): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
+
+API for specifying Milo behavior.
+
+#### **class [MiloApi](/recipe_modules/milo/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
+
+A module for interacting with Milo.
+
+&mdash; **def [show\_blamelist\_for](/recipe_modules/milo/api.py#20)(self, gitiles_commits):**
+
+Specifies which commits and repos Milo should show a blamelist for.
+
+If not set, Milo will only show a blamelist for the main repo in which this
+build was run.
+
+Args:
+  gitiles_commits: A list of buildbucket.common_pb2.GitilesCommit messages
+    or dicts of the same structure.
+    Each commit must have host, project and id.
+    ID must match r'^[0-9a-f]{40}$' (git revision).
 ### *recipe_modules* / [path](/recipe_modules/path)
 
 [DEPS](/recipe_modules/path/__init__.py#5): [platform](#recipe_modules-platform)
@@ -3480,6 +3504,11 @@ This tests metadata features of the Future object.
 [DEPS](/recipe_modules/led/tests/full.py#5): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/led/tests/full.py#21)(api, child_properties):**
+### *recipes* / [milo:examples/full](/recipe_modules/milo/examples/full.py)
+
+[DEPS](/recipe_modules/milo/examples/full.py#7): [milo](#recipe_modules-milo)
+
+&mdash; **def [RunSteps](/recipe_modules/milo/examples/full.py#11)(api):**
 ### *recipes* / [path:examples/full](/recipe_modules/path/examples/full.py)
 
 [DEPS](/recipe_modules/path/examples/full.py#5): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
