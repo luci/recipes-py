@@ -115,6 +115,7 @@
       "/path/to/tmp/json",
       "-task-output-stdout",
       "json",
+      "-eager",
       "0"
     ],
     "infra_step": true,

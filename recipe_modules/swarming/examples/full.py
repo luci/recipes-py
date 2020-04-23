@@ -115,7 +115,8 @@ def RunSteps(api):
   results = api.swarming.collect('collect', metadata, output_dir=output_dir,
                                  timeout='5m')
   # Or collect by by id.
-  results += api.swarming.collect('collect other pending task', ['0'])
+  results += api.swarming.collect('collect other pending task', ['0'],
+                                  eager=True)
 
   results[0].name
   results[0].id

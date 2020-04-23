@@ -9,8 +9,6 @@ import contextlib
 import copy
 import sys
 
-from collections import namedtuple
-
 from state import TaskState
 
 from recipe_engine import recipe_api
@@ -21,7 +19,7 @@ if sys.version_info.major >= 3:
 
 # Take revision from
 # https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
-DEFAULT_CIPD_VERSION = 'git_revision:19134195f2486dfcc6dbacd2bc7279e276386e9e'
+DEFAULT_CIPD_VERSION = 'git_revision:62a9c18c7fd447316832d0d768f99cfc9bac7f87'
 
 
 class TaskRequest(object):
@@ -1207,7 +1205,7 @@ class SwarmingApi(recipe_api.RecipeApi):
 
     return metadata_objs
 
-  def collect(self, name, tasks, output_dir=None, timeout=None):
+  def collect(self, name, tasks, output_dir=None, timeout=None, eager=False):
     """Waits on a set of Swarming tasks.
 
     Args:
@@ -1220,6 +1218,8 @@ class SwarmingApi(recipe_api.RecipeApi):
       timeout (str|None): The duration for which to wait on the tasks to finish.
         If set to None, there will be no timeout; else, timeout follows the
         format described by https://golang.org/pkg/time/#ParseDuration.
+      eager (bool): Whether to return as soon as the first task finishes,
+        instead of waiting for all tasks to finish.
 
     Returns:
       A list of TaskResult objects.
@@ -1239,6 +1239,8 @@ class SwarmingApi(recipe_api.RecipeApi):
       cmd.extend(['-output-dir', output_dir])
     if timeout:
       cmd.extend(['-timeout', timeout])
+    if eager:
+      cmd.append('-eager')
 
     test_data = []
     for idx, task in enumerate(tasks):
