@@ -10,7 +10,9 @@ DEPS = [
 
 def RunSteps(api):
   dest = api.path['start_dir'].join('some_file.json')
-  data = {'is_json': True}
+  # Test a non-trivial number of keys in a dict.  This tests that the keys
+  # are sorted in the output.
+  data = {str('key%d' % i): True for i in xrange(10)}
 
   api.file.write_json('write_json', dest, data)
 

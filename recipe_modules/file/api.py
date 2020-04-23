@@ -7,7 +7,6 @@ from recipe_engine import config_types
 from recipe_engine import recipe_api
 
 import fnmatch
-import json
 import os
 
 
@@ -269,9 +268,9 @@ class FileApi(recipe_api.RecipeApi):
 
     Raise file.Error
     """
-    test_data_text = json.dumps(test_data)
+    test_data_text = self.m.json.dumps(test_data)
     text = self.read_text(name, source, test_data=test_data_text)
-    return json.loads(text)
+    return self.m.json.loads(text)
 
   def write_json(self, name, dest, data, indent=None):
     """Write the given json serializable `data` to `dest`.
@@ -285,7 +284,7 @@ class FileApi(recipe_api.RecipeApi):
 
     Raises file.Error.
     """
-    text_data = json.dumps(data, indent=indent)
+    text_data = self.m.json.dumps(data, indent=indent)
     self.write_text(name, dest, text_data)
 
   def glob_paths(self,
