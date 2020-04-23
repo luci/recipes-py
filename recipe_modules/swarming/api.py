@@ -737,16 +737,16 @@ class TaskRequest(object):
           'dimensions': [{
               'key': k,
               'value': v
-          } for k, v in dims.iteritems()],
+          } for k, v in sorted(dims.iteritems())],
           'outputs': self.outputs,
           'env': [{
               'key': k,
               'value': v
-          } for k, v in self.env_vars.iteritems()],
+          } for k, v in sorted(self.env_vars.iteritems())],
           'env_prefixes': [{
               'key': k,
               'value': v
-          } for k, v in self.env_prefixes.iteritems()],
+          } for k, v in sorted(self.env_prefixes.iteritems())],
           'execution_timeout_secs': str(self.execution_timeout_secs),
           'grace_period_secs': str(self.grace_period_secs),
           'idempotent': self.idempotent,
@@ -785,7 +785,7 @@ class TaskRequest(object):
         properties['caches'] = [{
             'name': name,
             'path': path
-        } for name, path in self.named_caches.iteritems()]
+        } for name, path in sorted(self.named_caches.iteritems())]
 
       return {
           'expiration_secs': str(self.expiration_secs),
