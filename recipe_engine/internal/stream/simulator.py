@@ -110,10 +110,6 @@ class SimulationStreamEngine(StreamEngine):
   def supports_concurrency(self):
     return True
 
-  def set_summary_markdown(self, text):
-    # TODO(iannucci): retain this once off of annotation mode
-    pass
-
   def new_step_stream(self, name_tokens, allow_subannotations):
     del allow_subannotations
 

@@ -134,12 +134,11 @@ class StreamEngine(object):
     step execution."""
     raise NotImplementedError()
 
-  # TODO(iannucci): make handle_exception unnecessary
-  def handle_exception(self, exc_type, exc_val, exc_tb):
-    pass
+  def write_result(self, result):
+    """Write recipe execution result (type: result_pb2.RawResult).
 
-  def set_summary_markdown(self, text):
-    """Only on luciexe."""
+    Note: Only implemented in luciexe.
+    """
     raise NotImplementedError()
 
   def __enter__(self):
@@ -147,9 +146,8 @@ class StreamEngine(object):
     return self
 
   def __exit__(self, exc_type, exc_val, exc_tb):
-    ret = self.handle_exception(exc_type, exc_val, exc_tb)
     self.close()
-    return ret
+    return True
 
 
 def encode_str(s):

@@ -4,6 +4,9 @@
 
 import json
 
+from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
+from PB.recipe_engine import result as result_pb2
+
 from ...types import StepPresentation
 
 from . import StreamEngine
@@ -29,8 +32,11 @@ class StreamEngineInvariants(StreamEngine):
   def supports_concurrency(self):
     return True
 
-  def set_summary_markdown(self, text):
-    pass
+  def write_result(self, result):
+    assert isinstance(result, result_pb2.RawResult), (
+      'expected type result_pb2.RawResult; got %s' % (type(result), ))
+    assert result.status & common_pb2.ENDED_MASK, (
+      'expected terminal build status; got %s' % result.status)
 
   class StepStream(StreamEngine.StepStream):
     def __init__(self, engine, step_name):

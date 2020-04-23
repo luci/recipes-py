@@ -354,9 +354,6 @@ class LUCIStreamEngine(StreamEngine):
         self._send_event.clear()
         _do_send()
 
-      # one final send
-      _do_send()
-
     return gevent.spawn(_send_fn)
 
   def _send(self):
@@ -376,50 +373,19 @@ class LUCIStreamEngine(StreamEngine):
     return ret
 
   def close(self):
-    # TODO(iannucci): handle recipe return value
+    self._sender_die = True
+    self._send()
+    self._sender.join()
     self._build_stream.close()
 
   @property
   def supports_concurrency(self):
     return True
 
-  def set_summary_markdown(self, text):
-    self._build_proto.summary_markdown = text
+  def write_result(self, result):
+    self._build_proto.status = result.status
+    self._build_proto.summary_markdown = result.summary_markdown
     self._send()
-
-  def handle_exception(self, exc_type, exc_val, exc_tb):
-    need_tb = True
-    if exc_type is None:
-      self._build_proto.status = common.SUCCESS
-      need_tb = False
-    elif exc_type is InfraFailure:
-      self._build_proto.status = common.INFRA_FAILURE
-      # TODO(iannucci): add error log stream
-      self._build_proto.summary_markdown = (
-        'caught InfraFailure at top level: %r'
-      ) % (exc_val,)
-    # TODO(iannucci): handle timeout
-    elif exc_type is StepFailure:
-      self._build_proto.status = common.FAILURE
-      self._build_proto.summary_markdown = (
-        'caught StepFailure at top level: %r'
-      ) % (exc_val,)
-    else:
-      self._build_proto.status = common.INFRA_FAILURE
-      self._build_proto.summary_markdown = (
-        'caught Exception at top level: %r'
-      ) % (exc_val,)
-
-    if need_tb:
-      self._build_proto.summary_markdown += '\n\n'
-      for line in traceback.format_exception(exc_type, exc_val, exc_tb):
-        self._build_proto.summary_markdown += '    ' + line
-
-    self._sender_die = True
-    self._send()
-    self._sender.join()
-
-    return True
 
   @property
   def was_successful(self):
