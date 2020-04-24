@@ -1228,6 +1228,7 @@ class SwarmingApi(recipe_api.RecipeApi):
     assert isinstance(tasks, list)
     cmd = [
         'collect',
+        '-verbose',
         '-server',
         self._server,
         '-task-summary-json',
