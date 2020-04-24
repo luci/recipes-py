@@ -22,7 +22,7 @@ except ImportError:
   FileObjectThread = lambda x: x
 
 if sys.platform == "win32":
-  import win32api  # pylint: disable=import-error
+  from ctypes import GetLastError
 
 
 _StreamParamsBase = collections.namedtuple('_StreamParamsBase',
@@ -527,7 +527,7 @@ class _NamedPipeStreamClient(StreamClient):
       try:
         return open(self._name, 'wb+', buffering=0)
       except (OSError, IOError):
-        if win32api.GetLastError() != self.ERROR_PIPE_BUSY:
+        if GetLastError() != self.ERROR_PIPE_BUSY:
           raise
       time.sleep(0.001) # 1ms
 

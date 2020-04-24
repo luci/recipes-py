@@ -157,10 +157,3 @@ wheel: <
   name: "infra/python/wheels/pympler-py2_py3"
   version: "version:0.8"
 >
-
-wheel: <
-  name: "infra/python/wheels/pywin32/${vpython_platform}"
-  version: "version:227"
-  match_tag: < platform: "win_amd64" >
-  match_tag: < platform: "win32" >
->
