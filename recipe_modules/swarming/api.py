@@ -1205,7 +1205,8 @@ class SwarmingApi(recipe_api.RecipeApi):
 
     return metadata_objs
 
-  def collect(self, name, tasks, output_dir=None, timeout=None, eager=False):
+  def collect(self, name, tasks, output_dir=None, timeout=None, eager=False,
+              verbose=False):
     """Waits on a set of Swarming tasks.
 
     Args:
@@ -1220,6 +1221,7 @@ class SwarmingApi(recipe_api.RecipeApi):
         format described by https://golang.org/pkg/time/#ParseDuration.
       eager (bool): Whether to return as soon as the first task finishes,
         instead of waiting for all tasks to finish.
+      verbose (bool): Whether to use verbose logs.
 
     Returns:
       A list of TaskResult objects.
@@ -1228,7 +1230,6 @@ class SwarmingApi(recipe_api.RecipeApi):
     assert isinstance(tasks, list)
     cmd = [
         'collect',
-        '-verbose',
         '-server',
         self._server,
         '-task-summary-json',
@@ -1240,6 +1241,8 @@ class SwarmingApi(recipe_api.RecipeApi):
       cmd.extend(['-output-dir', output_dir])
     if timeout:
       cmd.extend(['-timeout', timeout])
+    if verbose:
+      cmd.append('-verbose')
     if eager:
       cmd.append('-eager')
 

@@ -2811,7 +2811,7 @@ add this path to the named cache for their builder.
 
 Swarming bot ID executing this task.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#1208)(self, name, tasks, output_dir=None, timeout=None, eager=False):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#1208)(self, name, tasks, output_dir=None, timeout=None, eager=False, verbose=False):**
 
 Waits on a set of Swarming tasks.
 
@@ -2827,6 +2827,7 @@ Args:
     format described by https://golang.org/pkg/time/#ParseDuration.
   eager (bool): Whether to return as soon as the first task finishes,
     instead of waiting for all tasks to finish.
+  verbose (bool): Whether to use verbose logs.
 
 Returns:
   A list of TaskResult objects.
