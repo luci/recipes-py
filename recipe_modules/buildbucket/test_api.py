@@ -71,12 +71,12 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
                 project=gitiles_project,
                 ref=git_ref,
                 id=revision,
-            ),
-        ),
+            )),
         infra=build_pb2.BuildInfra(
-          swarming=build_pb2.BuildInfra.Swarming(priority=priority)
-        ),
-    )
+            swarming=build_pb2.BuildInfra.Swarming(priority=priority),
+            resultdb=build_pb2.BuildInfra.ResultDB(
+                invocation='invocations/build:%d' % build_id),
+        ))
 
     if status:
       build.status = common_pb2.Status.Value(status)
@@ -143,18 +143,18 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         ),
         created_by='user:commit-bot@chromium.org',
         create_time=timestamp_pb2.Timestamp(seconds=1527292217),
-        input=build_pb2.Build.Input(
-            gerrit_changes=[
-                common_pb2.GerritChange(
-                    host=gerrit_host,
-                    project=git_project,
-                    change=change_number,
-                    patchset=patch_set,
-                ),
-            ],
-        ),
+        input=build_pb2.Build.Input(gerrit_changes=[
+            common_pb2.GerritChange(
+                host=gerrit_host,
+                project=git_project,
+                change=change_number,
+                patchset=patch_set,
+            ),
+        ]),
         infra=build_pb2.BuildInfra(
-          swarming=build_pb2.BuildInfra.Swarming(priority=priority)
+            swarming=build_pb2.BuildInfra.Swarming(priority=priority),
+            resultdb=build_pb2.BuildInfra.ResultDB(
+                invocation='invocations/build:%d' % build_id),
         ),
     )
 
@@ -203,7 +203,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         created_by='user:user@example.com',
         create_time=timestamp_pb2.Timestamp(seconds=1527292217),
         infra=build_pb2.BuildInfra(
-          swarming=build_pb2.BuildInfra.Swarming(priority=priority),
+            swarming=build_pb2.BuildInfra.Swarming(priority=priority),
+            resultdb=build_pb2.BuildInfra.ResultDB(
+                invocation='invocations/build:%d' % build_id),
         ),
     )
     return self.build(build)
@@ -218,8 +220,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     """Simulates a buildbucket.get_build call."""
     step_name = step_name or 'buildbucket.get'
     buildbucket_output = {
-        'build':{
-          'parameters_json': json.dumps(additional_build_parameters)
+        'build': {
+            'parameters_json': json.dumps(additional_build_parameters)
         }
     }
     return self.step_data(
