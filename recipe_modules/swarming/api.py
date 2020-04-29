@@ -100,7 +100,7 @@ class TaskRequest(object):
     return len(self._slices)
 
   def add_slice(self, slice_obj):
-    """Returns the request with the given slice appendedd.
+    """Returns the request with the given slice appended.
 
     Args:
       * slice (TaskSlice) - The slice to append.
@@ -369,7 +369,7 @@ class TaskRequest(object):
       ret._dimensions = self.dimensions
       for k, v in kwargs.iteritems():
         assert isinstance(k, basestring) and (isinstance(v, basestring) or
-                                              v == None)
+                                              v is None)
         if v is None:
           ret._dimensions.pop(k, None)
         else:
@@ -453,7 +453,7 @@ class TaskRequest(object):
     def with_env_prefixes(self, **kwargs):
       """Returns the slice with the given environment prefixes set.
 
-      The given paths are interpeted as relative to the Swarming root directory.
+      The given paths are interpreted as relative to the Swarming root directory.
 
       Successive calls to this method is additive with respect to prefixes: a
       call that sets FOO=[a,...] chained with a call with FOO=[b,...] is
@@ -622,7 +622,7 @@ class TaskRequest(object):
       Args:
         containment_type (str) - One of the supported containment types.
       """
-      assert containment_type in ('NONE', 'AUTO', 'JOB_OJBECT')
+      assert containment_type in ('NONE', 'AUTO', 'JOB_OBJECT')
       ret = self._copy()
       ret._containment_type = containment_type
       return ret
@@ -769,7 +769,7 @@ class TaskRequest(object):
         }
       if self.secret_bytes:
         properties['secret_bytes'] = base64.b64encode(self.secret_bytes)
-      if len(self.cipd_ensure_file.packages) > 0:
+      if self.cipd_ensure_file.packages:
         properties['cipd_input'] = {
             'packages': [{
                 'package_name': pkg.name,
@@ -997,7 +997,7 @@ class TaskResult(object):
 
   def analyze(self):
     """Raises a step failure if the task was unsuccessful."""
-    if self.state == None:
+    if self.state is None:
       raise recipe_api.InfraFailure(
           'Failed to collect:\n%s' % self._trimmed_output)
     elif self.state == TaskState.EXPIRED:
@@ -1172,7 +1172,7 @@ class SwarmingApi(recipe_api.RecipeApi):
     Returns:
       A list of TaskRequestMetadata objects.
     """
-    assert len(requests) > 0
+    assert requests
     assert self._server
 
     cmd = [
