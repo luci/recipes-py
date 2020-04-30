@@ -655,6 +655,7 @@ For example:
             InputProps(...),
             GlobalProps(...),
             **{
+              # The dollar sign is a literal character and must be included.
               '$my_repo/cool_module': CoolProps(...),
             }
         )
