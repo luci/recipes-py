@@ -11,7 +11,10 @@ from PB.go.chromium.org.luci.resultdb.proto.rpc.v1 import test_result as test_re
 
 
 class Invocation(object):
-  """A ResultDB invocation with contents."""
+  """A ResultDB invocation with contents.
+
+  Reference: go/resultdb-concepts.
+  """
 
   # A tuple of (attr, protobuf_type, serialization_key), where
   # - attr is the name of Invocation attribute that stores the collection
