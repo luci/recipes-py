@@ -2322,7 +2322,7 @@ https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 
 A module for interacting with ResultDB.
 
-&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#94)(self, swarming_host, task_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
+&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#96)(self, swarming_host, task_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
 
 Returns results derived from the specified Swarming tasks.
 
@@ -2377,7 +2377,7 @@ Args:
 Returns:
   A dict {invocation_id: api.Invocation}.
 
-&mdash; **def [exonerate](/recipe_modules/resultdb/api.py#69)(self, test_exonerations, step_name=None):**
+&mdash; **def [exonerate](/recipe_modules/resultdb/api.py#72)(self, test_exonerations, step_name=None):**
 
 Exonerates test variants in the current invocation.
 
@@ -2385,15 +2385,17 @@ Args:
   test_exonerations (list): A list of test_result_pb2.TestExoneration.
   step_name (str): name of the step.
 
-&mdash; **def [include\_invocations](/recipe_modules/resultdb/api.py#35)(self, invocations, step_name=None):**
+&mdash; **def [include\_invocations](/recipe_modules/resultdb/api.py#38)(self, invocations, step_name=None):**
 
 Shortcut for resultdb.update_inclusions().
 
-&mdash; **def [remove\_invocations](/recipe_modules/resultdb/api.py#30)(self, invocations, step_name=None):**
+&mdash; **def [is\_enabled](/recipe_modules/resultdb/api.py#28)(self):**
+
+&mdash; **def [remove\_invocations](/recipe_modules/resultdb/api.py#33)(self, invocations, step_name=None):**
 
 Shortcut for resultdb.update_inclusions().
 
-&mdash; **def [update\_inclusions](/recipe_modules/resultdb/api.py#40)(self, add_invocations=None, remove_invocations=None, step_name=None):**
+&mdash; **def [update\_inclusions](/recipe_modules/resultdb/api.py#43)(self, add_invocations=None, remove_invocations=None, step_name=None):**
 
 Add and/or remove included invocations to/from the current invocation.
 

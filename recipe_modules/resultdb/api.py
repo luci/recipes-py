@@ -25,6 +25,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
   deserialize = staticmethod(common.deserialize)
   Invocation = common.Invocation
 
+  def is_enabled(self):
+    return self.m.buildbucket.build.infra.resultdb.invocation != ''
+
   # TODO(nodir): add query method, a wrapper of rdb-ls.
 
   def remove_invocations(self, invocations, step_name=None):
@@ -73,8 +76,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
       test_exonerations (list): A list of test_result_pb2.TestExoneration.
       step_name (str): name of the step.
     """
-    assert self.m.buildbucket.build.infra.resultdb.invocation, (
-        'ResultDB integration was not enabled')
+    assert self.is_enabled(), 'ResultDB integration was not enabled'
 
     req = recorder.BatchCreateTestExonerationsRequest(
         invocation=self.m.buildbucket.build.infra.resultdb.invocation,
