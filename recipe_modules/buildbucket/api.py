@@ -724,13 +724,16 @@ class BuildbucketApi(recipe_api.RecipeApi):
       raise self.m.step.InfraFailure('Getting builds failed')
     return step_res, ret
 
-  def get(self, build_id, url_title_fn=None, step_name=None):
+  def get(self, build_id, url_title_fn=None, step_name=None,
+           fields=DEFAULT_FIELDS):
     """Gets a build.
 
     Args:
     *   `build_id`: a buildbucket build ID.
     *   `url_title_fn`: generates build URL title. See module docstring.
     *   `step_name`: name for this step.
+    *   `fields`: a list of fields to include in the response, names relative
+        to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
 
     Returns:
       A build_pb2.Build.
@@ -738,7 +741,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
     builds = self.get_multi(
         [build_id],
         url_title_fn=url_title_fn,
-        step_name=step_name or 'buildbucket.get')
+        step_name=step_name or 'buildbucket.get',
+        fields=fields)
     return builds[build_id]
 
   def get_build(self, build_id, **kwargs):
