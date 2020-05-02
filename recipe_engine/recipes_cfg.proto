@@ -32,7 +32,7 @@ message AutorollRecipeOptions {
   // These control the behavior of the autoroller when it finds a trivial roll
   // (i.e. a roll without expectation changes).
   message TrivialOptions {
-    // These email addresses will be TBR'd.
+    // One of these email addresses will be randomly selected to be TBR'd.
     repeated string tbr_emails = 1;
 
     // If true, the autoroller recipe will automatically CQ the change.
