@@ -85,7 +85,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
     for te in test_exonerations:
       req.requests.add(test_exoneration=te)
 
-    self._call(
+    self._rpc(
         step_name or 'resultdb.exonerate',
         'luci.resultdb.rpc.v1.Recorder',
         'BatchCreateTestExonerations',
@@ -181,7 +181,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
   ##############################################################################
   # Implementation details.
 
-  def _call(self,
+  def _rpc(self,
             step_name,
             service,
             method,
@@ -207,7 +207,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
       args.append('-include-update-token')
 
     step_res = self._run_rdb(
-        subcommand='call',
+        subcommand='rpc',
         step_name=step_name,
         args=args,
         stdin=self.m.json.input(req),
