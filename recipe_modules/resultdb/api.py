@@ -25,25 +25,36 @@ class ResultDBAPI(recipe_api.RecipeApi):
   deserialize = staticmethod(common.deserialize)
   Invocation = common.Invocation
 
-  def is_enabled(self):
-    return self.m.buildbucket.build.infra.resultdb.invocation != ''
+  @property
+  def current_invocation(self):
+    return self.m.buildbucket.build.infra.resultdb.invocation
+
+  @property
+  def enabled(self):
+    return self.current_invocation != ''
+
+  def assert_enabled(self):
+    assert self.enabled, (
+      'ResultDB integration was not enabled for this build. '
+      'See go/lucicfg#luci.builder and go/lucicfg#resultdb.settings'
+    )
 
   # TODO(nodir): add query method, a wrapper of rdb-ls.
 
-  def remove_invocations(self, invocations, step_name=None):
-    """Shortcut for resultdb.update_inclusions()."""
-    return self.update_inclusions(
-        remove_invocations=invocations, step_name=step_name)
-
   def include_invocations(self, invocations, step_name=None):
-    """Shortcut for resultdb.update_inclusions()."""
-    return self.update_inclusions(
+    """Shortcut for resultdb.update_included_invocations()."""
+    return self.update_included_invocations(
         add_invocations=invocations, step_name=step_name)
 
-  def update_inclusions(self,
-                        add_invocations=None,
-                        remove_invocations=None,
-                        step_name=None):
+  def exclude_invocations(self, invocations, step_name=None):
+    """Shortcut for resultdb.update_included_invocations()."""
+    return self.update_included_invocations(
+        remove_invocations=invocations, step_name=step_name)
+
+  def update_included_invocations(self,
+                                  add_invocations=None,
+                                  remove_invocations=None,
+                                  step_name=None):
     """Add and/or remove included invocations to/from the current invocation.
 
     Args:
@@ -55,19 +66,26 @@ class ResultDBAPI(recipe_api.RecipeApi):
     This updates the inclusions of the current invocation specified in the
     LUCI_CONTEXT.
     """
+    self.assert_enabled()
+
     if not (add_invocations or remove_invocations):
       # Nothing to do.
       return
-    args = []
-    if add_invocations:
-      args += ['-add', ','.join(sorted(add_invocations))]
-    if remove_invocations:
-      args += ['-remove', ','.join(sorted(remove_invocations))]
-    return self._run_rdb(
-        subcommand='update-inclusions',
-        args=args,
-        step_name=step_name,
+
+    names = lambda ids: ['invocations/%s' for id in ids or []]
+    req = recorder.UpdateIncludedInvocationsRequest(
+        including_invocation=self.current_invocation,
+        add_invocations=names(add_invocations),
+        remove_invocations=names(remove_invocations),
     )
+
+    self._rpc(
+        step_name or 'resultdb.update_included_invocations',
+        'luci.resultdb.rpc.v1.Recorder',
+        'UpdateIncludedInvocations',
+        json_format.MessageToDict(req),
+        include_update_token=True,
+        step_test_data=lambda: self.m.raw_io.test_api.stream_output('{}'))
 
   def exonerate(self, test_exonerations, step_name=None):
     """Exonerates test variants in the current invocation.
@@ -76,10 +94,10 @@ class ResultDBAPI(recipe_api.RecipeApi):
       test_exonerations (list): A list of test_result_pb2.TestExoneration.
       step_name (str): name of the step.
     """
-    assert self.is_enabled(), 'ResultDB integration was not enabled'
+    self.assert_enabled()
 
     req = recorder.BatchCreateTestExonerationsRequest(
-        invocation=self.m.buildbucket.build.infra.resultdb.invocation,
+        invocation=self.current_invocation,
         request_id=self.m.uuid.random(),
     )
     for te in test_exonerations:

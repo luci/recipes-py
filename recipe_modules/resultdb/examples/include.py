@@ -2,12 +2,14 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from recipe_engine.post_process import (DropExpectation, StepCommandContains,
+from recipe_engine.post_process import (DropExpectation, StepSuccess,
   DoesNotRunRE)
 
+from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.resultdb.proto.rpc.v1 import invocation as invocation_pb2
 
 DEPS = [
+  'buildbucket',
   'resultdb',
 ]
 
@@ -21,15 +23,18 @@ def RunSteps(api):
   )
   invocation_ids = inv_bundle.keys()
   api.resultdb.include_invocations(invocation_ids, step_name='rdb include')
-  api.resultdb.remove_invocations(invocation_ids, step_name='rdb remove')
+  api.resultdb.exclude_invocations(invocation_ids, step_name='rdb exclude')
 
 
 def GenTests(api):
   yield (
     api.test('noop') +
+    api.buildbucket.build(
+        build_pb2.Build(
+            infra=dict(resultdb=dict(invocation='invocations/u:inv')))) +
     api.resultdb.chromium_derive(step_name='rdb chromium-derive', results={}) +
     api.post_process(
-        DoesNotRunRE, 'rdb include', 'rdb remove') +
+        DoesNotRunRE, 'rdb include', 'rdb exclude') +
     api.post_process(DropExpectation)
   )
   inv_bundle = {
@@ -42,13 +47,15 @@ def GenTests(api):
               state=invocation_pb2.Invocation.FINALIZED),
       ),
   }
+
   yield (
     api.test('basic') +
+    api.buildbucket.build(
+        build_pb2.Build(
+            infra=dict(resultdb=dict(invocation='invocations/u:inv')))) +
     api.resultdb.chromium_derive(
         step_name='rdb chromium-derive', results=inv_bundle) +
-    api.post_process(
-        StepCommandContains, 'rdb include', ['-add', 'invid,invid2']) +
-    api.post_process(
-        StepCommandContains, 'rdb remove', ['-remove', 'invid,invid2']) +
+    api.post_process(StepSuccess, 'rdb include') +
+    api.post_process(StepSuccess, 'rdb exclude') +
     api.post_process(DropExpectation)
   )
