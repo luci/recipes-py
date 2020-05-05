@@ -249,7 +249,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
     res.presentation.properties[prop_name] = json_format.MessageToDict(
         gitiles_commit)
 
-  def tags(self, **tags):
+  @staticmethod
+  def tags(**tags):
     """Alias for tags in util.py. See doc there."""
     return util.tags(**tags)
 
