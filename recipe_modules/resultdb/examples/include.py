@@ -29,9 +29,7 @@ def RunSteps(api):
 def GenTests(api):
   yield (
     api.test('noop') +
-    api.buildbucket.build(
-        build_pb2.Build(
-            infra=dict(resultdb=dict(invocation='invocations/u:inv')))) +
+    api.buildbucket.ci_build() +
     api.resultdb.chromium_derive(step_name='rdb chromium-derive', results={}) +
     api.post_process(
         DoesNotRunRE, 'rdb include', 'rdb exclude') +
@@ -50,9 +48,7 @@ def GenTests(api):
 
   yield (
     api.test('basic') +
-    api.buildbucket.build(
-        build_pb2.Build(
-            infra=dict(resultdb=dict(invocation='invocations/u:inv')))) +
+    api.buildbucket.ci_build() +
     api.resultdb.chromium_derive(
         step_name='rdb chromium-derive', results=inv_bundle) +
     api.post_process(StepSuccess, 'rdb include') +

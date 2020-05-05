@@ -42,8 +42,6 @@ def RunSteps(api):
 def GenTests(api):
   yield api.test(
       'exonerate',
-      api.buildbucket.build(
-          build_pb2.Build(
-              infra=dict(resultdb=dict(invocation='invocations/u:inv')))),
+      api.buildbucket.ci_build(),
       api.post_process(StepSuccess, 'exonerate without patch failures'),
       api.post_process(DropExpectation))
