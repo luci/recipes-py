@@ -122,6 +122,7 @@
   * [resultdb:examples/derive](#recipes-resultdb_examples_derive)
   * [resultdb:examples/exonerate](#recipes-resultdb_examples_exonerate)
   * [resultdb:examples/include](#recipes-resultdb_examples_include)
+  * [resultdb:examples/resultsink](#recipes-resultdb_examples_resultsink)
   * [runtime:tests/full](#recipes-runtime_tests_full)
   * [scheduler:examples/emit_triggers](#recipes-scheduler_examples_emit_triggers) &mdash; This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
   * [scheduler:examples/host](#recipes-scheduler_examples_host) &mdash; This file is a recipe demonstrating reading/mocking scheduler host.
@@ -2411,6 +2412,20 @@ Args:
 
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
+
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#258)(self, cmd):**
+
+Wraps the command with ResultSink.
+
+Returns a command that, when executed, runs cmd in a go/result-sink
+environment. For example:
+
+   api.step('test', api.resultdb.wrap(['./my_test']))
+
+Args:
+  cmd:
+TODO(nodir, ddoman): add variants parameter.
+TODO(nodir, ddoman): add test_id_prefix parameter.
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
 #### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
@@ -3584,6 +3599,11 @@ Tests for api.python.infra_failing_step.
 [DEPS](/recipe_modules/resultdb/examples/include.py#11): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb)
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/include.py#17)(api):**
+### *recipes* / [resultdb:examples/resultsink](/recipe_modules/resultdb/examples/resultsink.py)
+
+[DEPS](/recipe_modules/resultdb/examples/resultsink.py#10): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/resultsink.py#17)(api):**
 ### *recipes* / [runtime:tests/full](/recipe_modules/runtime/tests/full.py)
 
 [DEPS](/recipe_modules/runtime/tests/full.py#7): [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)

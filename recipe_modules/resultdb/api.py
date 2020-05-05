@@ -254,3 +254,20 @@ class ResultDBAPI(recipe_api.RecipeApi):
         step_test_data=step_test_data,
         timeout=timeout,
     )
+
+  def wrap(self, cmd):
+    """Wraps the command with ResultSink.
+
+    Returns a command that, when executed, runs cmd in a go/result-sink
+    environment. For example:
+
+       api.step('test', api.resultdb.wrap(['./my_test']))
+
+    Args:
+      cmd:
+    TODO(nodir, ddoman): add variants parameter.
+    TODO(nodir, ddoman): add test_id_prefix parameter.
+    """
+    self.assert_enabled()
+    assert isinstance(cmd, (tuple, list)), cmd
+    return ['rdb', 'stream', '--'] + list(cmd)
