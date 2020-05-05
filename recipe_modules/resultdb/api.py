@@ -72,7 +72,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
       # Nothing to do.
       return
 
-    names = lambda ids: ['invocations/%s' for id in ids or []]
+    names = lambda ids: ['invocations/%s' % id for id in ids or []]
     req = recorder.UpdateIncludedInvocationsRequest(
         including_invocation=self.current_invocation,
         add_invocations=names(add_invocations),

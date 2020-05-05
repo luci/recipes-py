@@ -50,8 +50,5 @@ def GenTests(api):
     api.test('basic') +
     api.buildbucket.ci_build() +
     api.resultdb.chromium_derive(
-        step_name='rdb chromium-derive', results=inv_bundle) +
-    api.post_process(StepSuccess, 'rdb include') +
-    api.post_process(StepSuccess, 'rdb exclude') +
-    api.post_process(DropExpectation)
+        step_name='rdb chromium-derive', results=inv_bundle)
   )

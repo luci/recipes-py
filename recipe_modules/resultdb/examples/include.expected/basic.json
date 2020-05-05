@@ -1,0 +1,57 @@
+[
+  {
+    "cmd": [
+      "rdb",
+      "chromium-derive",
+      "-json",
+      "-wait",
+      "-n",
+      "1000",
+      "-u",
+      "chromium-swarm.appspot.com",
+      "deadbeef"
+    ],
+    "infra_step": true,
+    "name": "rdb chromium-derive",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@raw_io.output@{\"invocation\": {\"state\": \"FINALIZED\"}, \"invocationId\": \"invid2\"}@@@",
+      "@@@STEP_LOG_LINE@raw_io.output@{\"invocation\": {\"state\": \"FINALIZED\"}, \"invocationId\": \"invid\"}@@@",
+      "@@@STEP_LOG_END@raw_io.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "rdb",
+      "rpc",
+      "luci.resultdb.rpc.v1.Recorder",
+      "UpdateIncludedInvocations",
+      "-include-update-token"
+    ],
+    "infra_step": true,
+    "name": "rdb include",
+    "stdin": "{\"addInvocations\": [\"invocations/invid2\", \"invocations/invid\"], \"includingInvocation\": \"invocations/build:8945511751514863184\"}",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "rdb",
+      "rpc",
+      "luci.resultdb.rpc.v1.Recorder",
+      "UpdateIncludedInvocations",
+      "-include-update-token"
+    ],
+    "infra_step": true,
+    "name": "rdb exclude",
+    "stdin": "{\"includingInvocation\": \"invocations/build:8945511751514863184\", \"removeInvocations\": [\"invocations/invid2\", \"invocations/invid\"]}",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]
