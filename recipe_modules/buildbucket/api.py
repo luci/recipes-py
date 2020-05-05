@@ -925,9 +925,6 @@ class BuildbucketApi(recipe_api.RecipeApi):
     builder_name = parameters.get('builder_name')
     if builder_name:
       new_tags['builder'] = builder_name
-    # TODO(tandrii): remove this Buildbot-specific code.
-    if bucket.startswith('master.'):
-      new_tags['master'] = bucket[7:]
     new_tags.update(override_tags or {})
     return sorted(
         '%s:%s' % (k, v)
