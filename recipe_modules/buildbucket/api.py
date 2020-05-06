@@ -57,6 +57,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     super(BuildbucketApi, self).__init__(*args, **kwargs)
     self._service_account_key = None
     self._host = props.build.infra.buildbucket.hostname or self.HOST_PROD
+    self._runtime_tags = {}
 
     self._build = build_pb2.Build()
     if props.HasField('build'):
@@ -253,6 +254,26 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def tags(**tags):
     """Alias for tags in util.py. See doc there."""
     return util.tags(**tags)
+
+  def add_tags_to_current_build(self, tags):
+    """Adds arbitrary tags during the runtime of a build.
+
+    Args:
+    * tags(list of common_pb2.StringPair): tags to add. May contain duplicates.
+      Empty tag values won't remove existing tags with matching keys, since tags
+      can only be added.
+    """
+    assert isinstance(tags, list), (
+      'Expected type for tags is list; got %s' % type(tags))
+    assert all(isinstance(tag, common_pb2.StringPair) for tag in tags), tags
+
+    # Multiple values for the same key are allowed in tags.
+    for tag in tags:
+      self._runtime_tags.setdefault(tag.key, []).append(tag.value)
+
+    res = self.m.step('buildbucket.add_tags_to_current_build', cmd=None)
+    res.presentation.properties['$recipe_engine/buildbucket/runtime-tags'] = (
+      self._runtime_tags)
 
   @property
   def builder_cache_path(self):
