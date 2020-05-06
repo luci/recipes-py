@@ -391,6 +391,22 @@ class CommandTest(test_env.RecipeEngineUnitTest):
     self.assertTrue([re.compile('.o.'), 'bar', re.compile('z')] in c)
     self.assertFalse([re.compile('f'), re.compile('z'), re.compile('r')] in c)
 
+  def test_contains_ellipsis(self):
+    self.assertTrue(
+        ['a', 'foo', Ellipsis, 'bar'] in
+        Command(['a', 'foo', 'narp', 'bar']))
+    self.assertTrue(
+        ['foo', Ellipsis, 'bar', 'a'] in
+        Command(['foo', 'bar', 'a']))
+
+    self.assertTrue(
+        ['foo', Ellipsis, 'bar', Ellipsis, re.compile('^a')] in
+        Command(['foo', 'narp', 'bar', 'tarp', 'stuff', 'aardvark']))
+
+    self.assertFalse(
+        ['foo', Ellipsis, 'bar'] in
+        Command(['foo', 'narp']))
+
 class TestVerifySubset(test_env.RecipeEngineUnitTest):
   @staticmethod
   def mkData(*steps):

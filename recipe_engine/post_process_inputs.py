@@ -20,13 +20,23 @@ class Command(list):
   expression. Regular expression elements are compared against strings using the
   search method of the regular expression object.
 
-  e.g. the following all evaluate as True:
-  'foo' in Command(['foo', 'bar', 'baz'])
-  re.compile('a') in Command(['foo', 'bar', 'baz'])
-  ['foo', 'bar'] in Command(['foo', 'bar', 'baz'])
-  [re.compile('o$'), 'bar', re.compile('^b')] in Command(['foo', 'bar', 'baz'])
-  """
+  For example, the following all evaluate as True:
 
+    'foo' in Command(['foo', 'bar', 'baz'])
+    re.compile('a') in Command(['foo', 'bar', 'baz'])
+    ['foo', 'bar'] in Command(['foo', 'bar', 'baz'])
+    [re.compile('o$'), 'bar', re.compile('^b')] in Command(['foo', 'bar', 'baz'])
+
+  You may also provide a literal `Ellipsis` in the list to mean "zero or more
+  tokens here" to allow matching commands with gaps between matching parts.
+
+  For example, this would return True:
+    ['foo', Ellipsis, 'bar'] in Command(['foo', 'monkey', 'stuff, 'bar'])
+    ['foo', Ellipsis, 'bar'] in Command(['foo', 'bar'])
+
+  TODO(iannucci): when recipe engine is in python3, update this to specify `...`
+  instead.
+  """
   def __contains__(self, item):
     # Get a function that can be used for matching against an element
     # Command's elements will always be strings, so we'll only try to match
@@ -36,6 +46,8 @@ class Command(list):
         return lambda other: obj == other
       if isinstance(obj, re._pattern_type):
         return obj.search
+      if obj is Ellipsis:
+        return Ellipsis
       return None
 
     if isinstance(item, Iterable) and not isinstance(item, basestring):
@@ -48,17 +60,79 @@ class Command(list):
     if any(m is None for m in matchers):
       return False
 
+    # Compress multiple runs of Ellipsis
+    compressed_matchers = matchers[:1]
+    for matcher in matchers[1:]:
+      if matcher is Ellipsis and compressed_matchers[-1] is Ellipsis:
+        continue
+      compressed_matchers.append(matcher)
+    matchers = compressed_matchers
+
+    # Now trim Ellipsis from the beginning and end.
+    if matchers[:1] == [Ellipsis]:
+      matchers = matchers[1:]
+    if matchers[-1:] == [Ellipsis]:
+      matchers = matchers[:-1]
+
     # At this point, matchers is a list of functions that we can apply against
     # the elements of each subsequence in the list; if each matcher matches the
     # corresponding element of the subsequence then we say that the sequence of
     # strings/regexes is contained in the command
-    for i in xrange(len(self) - len(matchers) + 1):
-      for j, matcher in enumerate(matchers):
-        if not matcher(self[i + j]):
-          break
-      else:
-        return True
-    return False
+
+    # Ellipsis have a minimium width of 0, everything else has a match size of
+    # 1 slot. Do a pass over matchers to calculate the number of slots required
+    # to match `matchers[i:]`.
+    min_slots_count = 0
+    min_slots = [None] * len(matchers)
+    for i, matcher in enumerate(reversed(matchers)):
+      if matcher is not Ellipsis:
+        min_slots_count += 1
+      min_slots[len(min_slots)-1-i] = min_slots_count
+    # If matchers looked like ['a', 'b', ..., 'c'], min_slots now looks like:
+    # [3, 2, 1, 1]
+
+    def _matches_seq(matchers_offset, self_offset):
+      max_slot = len(self) - min_slots[matchers_offset]
+      if max_slot < self_offset:
+        return False
+
+      for self_idx in xrange(self_offset, max_slot + 1):
+        num_matched = 0
+        for matchers_idx in xrange(matchers_offset, len(matchers)):
+          matcher = matchers[matchers_idx]
+
+          # If this is Ellipsis we consume it, and try matching the rest of the
+          # matchers against the rest of the sequence at every offset.
+          if matcher is Ellipsis:
+            for start_idx in xrange(self_offset+num_matched, len(self)):
+              if _cached_matches_seq(matchers_idx+1, start_idx):
+                return True
+            return False
+
+          if not matcher(self[self_idx + num_matched]):
+            break
+
+          num_matched += 1
+        else:
+          return True
+      return False
+
+    # Since we have Ellipsis which can match any number of positions, including
+    # zero, we memoize _matches_seq to avoid doing duplicate checks. This caps
+    # the runtime of this matcher at O(len(matchers) * len(self)); Otherwise
+    # this would be quadratic on self.
+    no_entry = object()
+    cache = {}
+    def _cached_matches_seq(matchers_offset, self_offset):
+      key = (matchers_offset, self_offset)
+      ret = cache.get(key, no_entry)
+      if ret is not no_entry:
+        return ret
+      ret = _matches_seq(matchers_offset, self_offset)
+      cache[key] = ret
+      return ret
+
+    return _cached_matches_seq(0, 0)
 
 
 @attr.s
