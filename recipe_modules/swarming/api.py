@@ -862,6 +862,7 @@ class TaskResult(object):
     self._task_slice = task_slice
     self._id = id
     self._output_dir = output_dir
+    self._raw_results = raw_results
     self._outputs = {}
     self._isolated_outputs = None
     if 'error' in raw_results:
@@ -915,6 +916,11 @@ class TaskResult(object):
   def id(self):
     """The ID (str) of the task."""
     return self._id
+
+  @property
+  def raw(self):
+    """The jsonish dict that was passed into the constructor as raw_results."""
+    return copy.deepcopy(self._raw_results)
 
   @property
   def state(self):
