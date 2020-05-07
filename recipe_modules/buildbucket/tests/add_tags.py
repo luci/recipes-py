@@ -11,6 +11,7 @@ DEPS = [
 def RunSteps(api):
   tags = api.buildbucket.tags(k1='v1', k2=['v2', 'v2_1'])
   api.buildbucket.add_tags_to_current_build(tags)
+  api.buildbucket.hide_current_build_in_gerrit()
 
 def GenTests(api):
   yield api.test('basic')

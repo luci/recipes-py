@@ -256,7 +256,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return util.tags(**tags)
 
   def add_tags_to_current_build(self, tags):
-    """Adds arbitrary tags during the runtime of a build.
+    """EXPERIMENTAL: Adds arbitrary tags during the runtime of a build.
 
     Args:
     * tags(list of common_pb2.StringPair): tags to add. May contain duplicates.
@@ -265,7 +265,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """
     assert isinstance(tags, list), (
       'Expected type for tags is list; got %s' % type(tags))
-    assert all(isinstance(tag, common_pb2.StringPair) for tag in tags), tags
+    assert all(isinstance(tag, common_pb2.StringPair) for tag in tags), map(
+      type, tags)
 
     # Multiple values for the same key are allowed in tags.
     for tag in tags:
@@ -274,6 +275,10 @@ class BuildbucketApi(recipe_api.RecipeApi):
     res = self.m.step('buildbucket.add_tags_to_current_build', cmd=None)
     res.presentation.properties['$recipe_engine/buildbucket/runtime-tags'] = (
       self._runtime_tags)
+
+  def hide_current_build_in_gerrit(self):
+    """EXPERIMENTAL: Hides the build in UI"""
+    self.add_tags_to_current_build(self.tags(**{'hide-in-gerrit': 'pointless'}))
 
   @property
   def builder_cache_path(self):
