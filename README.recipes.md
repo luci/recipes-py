@@ -1668,7 +1668,7 @@ corresponds to one step, and contains the following keys:
 
 [DEPS](/recipe_modules/isolated/__init__.py#1): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-#### **class [IsolatedApi](/recipe_modules/isolated/api.py#14)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
+#### **class [IsolatedApi](/recipe_modules/isolated/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#871)):**
 
 API for interacting with isolated.
 
@@ -1679,7 +1679,7 @@ http://go.chromium.org/luci/client/cmd/isolated.
 This module will deploy the client to [CACHE]/isolated_client/; users should
 add this path to the named cache for their builder.
 
-&mdash; **def [download](/recipe_modules/isolated/api.py#100)(self, step_name, isolated_hash, output_dir, isolate_server=None):**
+&mdash; **def [download](/recipe_modules/isolated/api.py#101)(self, step_name, isolated_hash, output_dir, isolate_server=None):**
 
 Downloads an isolated tree from an isolate server.
 
@@ -1693,13 +1693,13 @@ Args:
   isolate_server (str|None): an isolate server to donwload from; if None,
     the module's default server will be used instead.
 
-&mdash; **def [initialize](/recipe_modules/isolated/api.py#33)(self):**
+&mdash; **def [initialize](/recipe_modules/isolated/api.py#34)(self):**
 
-&emsp; **@property**<br>&mdash; **def [isolate\_server](/recipe_modules/isolated/api.py#52)(self):**
+&emsp; **@property**<br>&mdash; **def [isolate\_server](/recipe_modules/isolated/api.py#53)(self):**
 
 Returns the associated isolate server.
 
-&mdash; **def [isolated](/recipe_modules/isolated/api.py#90)(self, root_dir):**
+&mdash; **def [isolated](/recipe_modules/isolated/api.py#91)(self, root_dir):**
 
 Returns an Isolated object that can be used to archive a set of files
 and directories, relative to a given root directory.
@@ -1708,11 +1708,11 @@ Args:
   root_dir (Path): directory relative to which files and directory will be
     isolated.
 
-&emsp; **@property**<br>&mdash; **def [namespace](/recipe_modules/isolated/api.py#58)(self):**
+&emsp; **@property**<br>&mdash; **def [namespace](/recipe_modules/isolated/api.py#59)(self):**
 
 Returns the associated namespace.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/isolated/api.py#76)(self):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/isolated/api.py#77)(self):**
 
 This context manager ensures the go isolated client is available on
 $PATH.

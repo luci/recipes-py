@@ -7,8 +7,9 @@ import urllib
 
 from recipe_engine import recipe_api
 
-
-DEFAULT_CIPD_VERSION = 'git_revision:305e79001db1846906c7136d90a863bee5bd3bfc'
+# Take revision from
+# https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
+DEFAULT_CIPD_VERSION = 'git_revision:23bf7d989946220c1b3af2cba3b69dcf92dea0a5'
 
 
 class IsolatedApi(recipe_api.RecipeApi):
