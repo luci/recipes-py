@@ -24,6 +24,21 @@ class ProtoTestApi(recipe_test_api.RecipeTestApi):
       raise ValueError("expected proto Message, got: %r" % (type(proto_msg),))
     return proto_msg, retcode, name
 
+  def output_stream(self, proto_msg, stream='stdout', retcode=None, name=None):
+    """Supplies placeholder data for a step using proto.output for stdout
+    or stderr.
+
+    Args:
+      * stream ('stdout' or 'stderr') - Which output stream this data is for.
+
+    The other args are passed directly through to `output` in this test API.
+    """
+    assert stream in ('stdout', 'stderr')
+    ret = recipe_test_api.StepTestData()
+    step_data = self.output(proto_msg, retcode=retcode, name=name)
+    setattr(ret, stream, step_data.unwrap_placeholder())
+    return ret
+
   @recipe_test_api.placeholder_step_data('output')
   @staticmethod
   def backing_file_missing(retcode=None, name=None):

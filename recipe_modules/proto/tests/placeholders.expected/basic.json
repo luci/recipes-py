@@ -16,6 +16,19 @@
   {
     "cmd": [
       "python",
+      "RECIPE[recipe_engine::proto:tests/placeholders].resources/dump.py"
+    ],
+    "name": "read from script stdout",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@proto.output@{@@@",
+      "@@@STEP_LOG_LINE@proto.output@  \"field\": \"cool stuff\"@@@",
+      "@@@STEP_LOG_LINE@proto.output@}@@@",
+      "@@@STEP_LOG_END@proto.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
       "RECIPE[recipe_engine::proto:tests/placeholders].resources/dump.py",
       "[START_DIR]/gone"
     ],

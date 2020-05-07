@@ -5,5 +5,8 @@
 
 import sys
 
-with open(sys.argv[1], 'wb') as f:
-  f.write("""{"field": "hello"}""")
+if len(sys.argv) > 1:
+  with open(sys.argv[1], 'wb') as f:
+    f.write("""{"field": "hello"}""")
+else:
+  sys.stdout.write("""{"field": "cool stuff"}""")
