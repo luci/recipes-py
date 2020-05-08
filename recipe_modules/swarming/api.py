@@ -1061,7 +1061,10 @@ class SwarmingApi(recipe_api.RecipeApi):
   def __init__(self, input_properties, env_properties, *args, **kwargs):
     super(SwarmingApi, self).__init__(*args, **kwargs)
     self._server = input_properties.server or None
-    self._version = str(input_properties.version or DEFAULT_CIPD_VERSION)
+    default_cipd_version = DEFAULT_CIPD_VERSION
+    if self._test_data.enabled:
+      default_cipd_version = 'swarming_module_pin'
+    self._version = str(input_properties.version or default_cipd_version)
     self._env_properties = env_properties
 
     self._client_dir = None

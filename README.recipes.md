@@ -1679,7 +1679,7 @@ http://go.chromium.org/luci/client/cmd/isolated.
 This module will deploy the client to [CACHE]/isolated_client/; users should
 add this path to the named cache for their builder.
 
-&mdash; **def [download](/recipe_modules/isolated/api.py#101)(self, step_name, isolated_hash, output_dir, isolate_server=None):**
+&mdash; **def [download](/recipe_modules/isolated/api.py#104)(self, step_name, isolated_hash, output_dir, isolate_server=None):**
 
 Downloads an isolated tree from an isolate server.
 
@@ -1693,13 +1693,13 @@ Args:
   isolate_server (str|None): an isolate server to donwload from; if None,
     the module's default server will be used instead.
 
-&mdash; **def [initialize](/recipe_modules/isolated/api.py#34)(self):**
+&mdash; **def [initialize](/recipe_modules/isolated/api.py#37)(self):**
 
-&emsp; **@property**<br>&mdash; **def [isolate\_server](/recipe_modules/isolated/api.py#53)(self):**
+&emsp; **@property**<br>&mdash; **def [isolate\_server](/recipe_modules/isolated/api.py#56)(self):**
 
 Returns the associated isolate server.
 
-&mdash; **def [isolated](/recipe_modules/isolated/api.py#91)(self, root_dir):**
+&mdash; **def [isolated](/recipe_modules/isolated/api.py#94)(self, root_dir):**
 
 Returns an Isolated object that can be used to archive a set of files
 and directories, relative to a given root directory.
@@ -1708,11 +1708,11 @@ Args:
   root_dir (Path): directory relative to which files and directory will be
     isolated.
 
-&emsp; **@property**<br>&mdash; **def [namespace](/recipe_modules/isolated/api.py#59)(self):**
+&emsp; **@property**<br>&mdash; **def [namespace](/recipe_modules/isolated/api.py#62)(self):**
 
 Returns the associated namespace.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/isolated/api.py#77)(self):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/isolated/api.py#80)(self):**
 
 This context manager ensures the go isolated client is available on
 $PATH.
@@ -2844,11 +2844,11 @@ http://go.chromium.org/luci/client/cmd/swarming.
 This module will deploy the client to [CACHE]/swarming_client/; users should
 add this path to the named cache for their builder.
 
-&emsp; **@property**<br>&mdash; **def [bot\_id](/recipe_modules/swarming/api.py#1072)(self):**
+&emsp; **@property**<br>&mdash; **def [bot\_id](/recipe_modules/swarming/api.py#1075)(self):**
 
 Swarming bot ID executing this task.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#1214)(self, name, tasks, output_dir=None, timeout=None, eager=False, verbose=False):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#1217)(self, name, tasks, output_dir=None, timeout=None, eager=False, verbose=False):**
 
 Waits on a set of Swarming tasks.
 
@@ -2869,9 +2869,9 @@ Args:
 Returns:
   A list of TaskResult objects.
 
-&mdash; **def [initialize](/recipe_modules/swarming/api.py#1082)(self):**
+&mdash; **def [initialize](/recipe_modules/swarming/api.py#1085)(self):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#1119)(self):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#1122)(self):**
 
 This context manager ensures the go swarming client is available on
 $PATH.
@@ -2881,11 +2881,11 @@ Example:
     with api.swarming.on_path():
       # do your steps which require the swarming binary on path
 
-&emsp; **@property**<br>&mdash; **def [task\_id](/recipe_modules/swarming/api.py#1077)(self):**
+&emsp; **@property**<br>&mdash; **def [task\_id](/recipe_modules/swarming/api.py#1080)(self):**
 
 This task's Swarming ID.
 
-&mdash; **def [task\_request](/recipe_modules/swarming/api.py#1151)(self):**
+&mdash; **def [task\_request](/recipe_modules/swarming/api.py#1154)(self):**
 
 Creates a new TaskRequest object.
 
@@ -2895,14 +2895,14 @@ into a full task.
 Once your TaskRequest is complete, you can pass it to `trigger` in order to
 have it start running on the swarming server.
 
-&mdash; **def [task\_request\_from\_jsonish](/recipe_modules/swarming/api.py#1162)(self, json_d):**
+&mdash; **def [task\_request\_from\_jsonish](/recipe_modules/swarming/api.py#1165)(self, json_d):**
 
 Creates a new TaskRequest object from a JSON-serializable dict.
 
 The input argument should match the schema as the output of
 TaskRequest.to_jsonish().
 
-&mdash; **def [trigger](/recipe_modules/swarming/api.py#1170)(self, step_name, requests):**
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#1173)(self, step_name, requests):**
 
 Triggers a set of Swarming tasks.
 
@@ -2914,7 +2914,7 @@ Args:
 Returns:
   A list of TaskRequestMetadata objects.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [with\_server](/recipe_modules/swarming/api.py#1133)(self, server):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [with\_server](/recipe_modules/swarming/api.py#1136)(self, server):**
 
 This context sets the server for Swarming calls.
 

@@ -27,7 +27,10 @@ class IsolatedApi(recipe_api.RecipeApi):
     super(IsolatedApi, self).__init__(*args, **kwargs)
     self._server = isolated_properties.get('server', None)
     self._namespace = isolated_properties.get('namespace', 'default-gzip')
-    self._version = isolated_properties.get('version', DEFAULT_CIPD_VERSION)
+    default_cipd_version = DEFAULT_CIPD_VERSION
+    if self._test_data.enabled:
+      default_cipd_version = 'isolated_module_pin'
+    self._version = isolated_properties.get('version', default_cipd_version)
     self._client_dir = None
     self._client = None
 
