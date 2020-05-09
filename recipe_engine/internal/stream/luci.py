@@ -354,6 +354,10 @@ class LUCIStreamEngine(StreamEngine):
         self._send_event.clear()
         _do_send()
 
+      # One last send before exiting to make sure all build updates are
+      # sent to logdog
+      _do_send()
+
     return gevent.spawn(_send_fn)
 
   def _send(self):
