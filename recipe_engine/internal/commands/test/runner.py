@@ -528,13 +528,13 @@ class RunnerThread(gevent.Greenlet):
 
   @classmethod
   def make_pool(cls, recipe_deps, description_queue, outcome_queue, is_train,
-                collect_coverage):
+                collect_coverage, jobs):
     """Returns a pool (list) of started RunnerThread instances.
 
     Each RunnerThread owns a `recipes.py test _runner` subprocess and
     coordinates communication to and from that subprocess.
 
-    This makes `multiprocessing.cpu_count()` runners.
+    This makes `jobs` runners.
 
     Args:
 
@@ -548,6 +548,7 @@ class RunnerThread(gevent.Greenlet):
         anything on the filesystem.
       * collect_coverage (bool) - Whether or not to collect coverage. May be
         false if the user specified a test filter.
+      * jobs (int) - The number of workers to use for running tests.
 
     Returns List[RunnerThread].
     """
@@ -561,9 +562,13 @@ class RunnerThread(gevent.Greenlet):
     # We assign import coverage to (only) the first runner subprocess; there's
     # no need to duplicate this work to all runners.
     pool = [
-      cls(recipe_deps, description_queue, outcome_queue, is_train, cov_file(i),
-          cover_module_imports=(i == 0))
-      for i in xrange(multiprocessing.cpu_count())]
+        cls(recipe_deps,
+            description_queue,
+            outcome_queue,
+            is_train,
+            cov_file(i),
+            cover_module_imports=(i == 0)) for i in xrange(jobs)
+    ]
     for thread in pool:
       thread.start()
     return cov_dir, pool

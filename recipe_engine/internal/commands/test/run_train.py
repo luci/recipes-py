@@ -122,7 +122,8 @@ def _push_tests(test_filters, is_train, main_repo, description_queue,
   return set()
 
 
-def _run(test_result, recipe_deps, use_emoji, test_filters, is_train, stop):
+def _run(test_result, recipe_deps, use_emoji, test_filters, is_train, stop,
+         jobs):
   main_repo = recipe_deps.main_repo
 
   description_queue = gevent.queue.UnboundQueue()
@@ -149,8 +150,12 @@ def _run(test_result, recipe_deps, use_emoji, test_filters, is_train, stop):
     # in case of crash; don't want this undefined in finally clause.
     live_threads = []
     cov_dir, all_threads = RunnerThread.make_pool(
-        recipe_deps, description_queue, outcome_queue, is_train,
-        collect_coverage=not test_filters)
+        recipe_deps,
+        description_queue,
+        outcome_queue,
+        is_train,
+        collect_coverage=not test_filters,
+        jobs=jobs)
     live_threads = list(all_threads)
 
     test_result.unused_expectation_files.extend(
@@ -219,7 +224,7 @@ def main(args):
 
   try:
     _run(ret, args.recipe_deps, args.use_emoji, args.test_filters, is_train,
-         args.stop)
+         args.stop, args.jobs)
     _dump()
   except KeyboardInterrupt:
     args.docs = False  # skip docs

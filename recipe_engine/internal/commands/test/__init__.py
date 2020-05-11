@@ -28,7 +28,7 @@ def add_arguments(parser):
   subp = parser.add_subparsers(dest='subcommand', metavar='{run, train, list}')
 
   status_info = textwrap.dedent('''
-    Key for non-verbose symbols (no-emoji equvalent in parens):
+    Key for non-verbose symbols (no-emoji equivalent in parens):
 
       .  (.) - The test passed. This uses a '.' even in emoji mode to make the
                other outcomes stand out without as much visual fatigue.
