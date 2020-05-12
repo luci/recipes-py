@@ -238,7 +238,7 @@ class LUCIStepStream(StreamEngine.StepStream):
     self._step.status = {
       'SUCCESS': common.SUCCESS,
       'FAILURE': common.FAILURE,
-      'WARNING': common.FAILURE, # TODO(iannucci): support WARNING
+      'WARNING': common.SUCCESS, # TODO(iannucci): support WARNING
       'EXCEPTION': common.INFRA_FAILURE,
     }[status]
     # TODO(iannucci): set timeout bit here
