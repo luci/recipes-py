@@ -40,7 +40,7 @@ def _contract_in_luci_context(section_name, key):
   return section[key]
 
 
-def _synth_properties(build):
+def _synth_properties(build, current_properties):
   # TODO(iannucci): expose this data natively as a Build message.
   synth_props = {
     '$recipe_engine/runtime': {
@@ -55,6 +55,17 @@ def _synth_properties(build):
       'cache_dir': _contract_in_luci_context('luciexe', 'cache_dir'),
     },
   }
+
+  # TODO(iannucci): These are all deprecated and have proper apis.
+  #
+  # When we have the warnings functionality in recipes, update the properties
+  # module to issue warnings for accessing these.
+  if 'buildername' not in current_properties and build.builder.builder:
+    synth_props['buildername'] = build.builder.builder
+  if 'buildnumber' not in current_properties and build.number:
+    synth_props['buildnumber'] = build.number
+  if 'bot_id' not in current_properties and 'SWARMING_BOT_ID' in os.environ:
+    synth_props['bot_id'] = os.environ['SWARMING_BOT_ID']
   LOG.info('Synthesized properties: %r', synth_props)
   return synth_props
 
@@ -74,7 +85,7 @@ def main(args):
   LOG.debug('build proto: %s', jsonpb.MessageToJson(build))
 
   properties = jsonpb.MessageToDict(build.input.properties)
-  properties.update(_synth_properties(build))
+  properties.update(_synth_properties(build, properties))
 
   _tweak_env()
 
