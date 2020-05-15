@@ -691,6 +691,7 @@ def _render_config(debug, name_tokens, step_config, step_runner, step_stream,
 
   handles = {}
   debug.write_line('rendering std handles')
+  std_handle_reqs = {}
   for handle in ('stdout', 'stderr', 'stdin'):
     placeholder = getattr(step_config, handle)
     if placeholder:
@@ -702,7 +703,9 @@ def _render_config(debug, name_tokens, step_config, step_runner, step_stream,
     elif handle == 'stdin':
       handles[handle] = None
     else:
-      handles[handle] = getattr(step_stream, handle)
+      std_handle_reqs[handle] = True
+  if std_handle_reqs:
+    handles.update(step_stream.open_std_handles(**std_handle_reqs))
 
   debug.write_line('merging envs')
   pathsep = step_config.env_suffixes.pathsep

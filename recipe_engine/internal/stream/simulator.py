@@ -34,6 +34,14 @@ class _SimulationStepStream(StreamEngine.StepStream):
   def write_line(self, line):
     self._annotations.setdefault('raw_annotations', []).append(line)
 
+  def open_std_handles(self, stdout=False, stderr=False):
+    ret = {}
+    if stdout:
+      ret['stdout'] = self
+    if stderr:
+      ret['stderr'] = self
+    return ret
+
   def close(self):
     pass
 

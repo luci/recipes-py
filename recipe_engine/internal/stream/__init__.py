@@ -89,18 +89,17 @@ class StreamEngine(object):
     def mark_running(self):
       pass
 
-    # The StepStreams that this step should use for stdout/stderr.
-    #
-    # @property
-    # def stdout(self): return StepStream
-    #
-    # @property
-    # def stderr(self): return StepStream
-    #
-    # These are omitted from the base implementation so that ProductStreamEngine
-    # will pick and return the value from real StreamEngine, not
-    # StreamEngineInvariants.
+    def open_std_handles(self, stdout=False, stderr=False):
+      """Opens one or two standard handles.
 
+      Returns:
+        None - This StepStream cannot handle the request (e.g. Invariants).
+        {handlename: handle} - The mapping of file descriptors for the requested
+           handles. Note that multiple handles may be the same value (if the two
+           streams are both sunk to the same output). If `handle` is `self`,
+           then writes will be handled by StepStream.write_line.
+      """
+      return None
 
   def new_step_stream(self, name_tokens, allow_subannotations):
     """Creates a new StepStream in this engine.

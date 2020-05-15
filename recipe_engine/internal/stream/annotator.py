@@ -86,6 +86,14 @@ class AnnotatorStreamEngine(StreamEngine):
       else:
         self.basic_write(line + '\n')
 
+    def open_std_handles(self, stdout=False, stderr=False):
+      ret = {}
+      if stdout:
+        ret['stdout'] = self
+      if stderr:
+        ret['stderr'] = self
+      return ret
+
     def new_log_stream(self, log_name):
       return self._engine.StepLogStream(self, log_name)
 

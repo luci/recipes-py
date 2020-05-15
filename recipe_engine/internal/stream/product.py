@@ -62,17 +62,11 @@ class ProductStreamEngine(StreamEngine):
           self._stream_a.new_log_stream(log_name),
           self._stream_b.new_log_stream(log_name))
 
-    @property
-    def stdout(self):
-      return getattr(
-          self._stream_a, 'stdout', getattr(
-              self._stream_b, 'stdout', self))
-
-    @property
-    def stderr(self):
-      return getattr(
-          self._stream_a, 'stderr', getattr(
-              self._stream_b, 'stderr', self))
+    def open_std_handles(self, stdout=False, stderr=False):
+      ret = self._stream_a.open_std_handles(stdout, stderr)
+      if ret is None:
+        ret = self._stream_b.open_std_handles(stdout, stderr)
+      return ret
 
     def handle_exception(self, exc_type, exc_val, exc_tb):
       ret = self._stream_a.handle_exception(exc_type, exc_val, exc_tb)

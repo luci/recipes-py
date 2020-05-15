@@ -128,8 +128,15 @@ class LUCIStepStream(StreamEngine.StepStream):
   _bsc = attr.ib(validator=attr_type(logdog.stream.StreamClient))
 
   # File-like objects for stdout/stderr (logdog streams).
-  _stdout = attr.ib(default=None)
-  _stderr = attr.ib(default=None)
+  #
+  # stdhandle is a single handle which will either point to stdout or stderr. In
+  # the case where the step is using logdog for stdout and stderr, they're
+  # currently merged together because people are used to seeing the output
+  # interleaved.
+  #
+  # TODO(iannucci) Once logdog/resultdb supports viewing muxed streams again,
+  # separate stdout and stderr into separate streams.
+  _std_handle = attr.ib(default=None)
   _logging = attr.ib(default=None)
 
   _back_compat_markdown = attr.ib(factory=LUCIStepMarkdownWriter)
@@ -176,11 +183,11 @@ class LUCIStepStream(StreamEngine.StepStream):
     Returns file-like text stream object. This file-like object includes
     fileno() and so is suitable for use with subprocess IO redirection."""
     try:
-      if log_name in ('stdout', 'stderr', 'logging'):
-        stdlog = getattr(self, log_name)
-        if stdlog.closed:
+      if log_name == 'logging':
+        logstream = self.logging
+        if logstream.closed:
           raise ValueError('Attempting to open closed logstream %r' % log_name)
-        return stdlog
+        return logstream
 
       return self._new_log_stream(log_name)
     except:
@@ -247,26 +254,32 @@ class LUCIStepStream(StreamEngine.StepStream):
     self._properties[key] = json.loads(value)
 
   @property
-  def stdout(self):
-    """Returns an open text stream for this step's stdout."""
-    if not self._stdout:
-      self._stdout = self._new_log_stream('stdout')
-    return self._stdout
-
-  @property
   def logging(self):
     """Returns an open text stream for this step's logging stream."""
     if not self._logging:
       self._logging = self._new_log_stream('logging')
     return self._logging
 
-  @property
-  def stderr(self):
-    """Returns an open text stream for this step's stderr."""
-    # TODO(iannucci): Actually split stdout/stderr. For now we combine the two
-    # of them because that's the old behavior. This is blocked on getting the
-    # Logdog viewer to have a 'combine streams' mode again.
-    return self.stdout
+  def open_std_handles(self, stdout=False, stderr=False):
+    if self._std_handle is not None:
+      LOG.exception('open_std_handles called twice: %r', self._step.name)
+      raise ValueError(
+          'open_std_handles may only be called once: %r', self._step.name)
+
+    ret = {}
+    if not stdout and not stderr:
+      return ret
+
+    if not stdout:
+      self._std_handle = self.new_log_stream('stderr')
+      ret['stderr'] = self._std_handle
+      return ret
+
+    self._std_handle = self.new_log_stream('stdout')
+    ret['stdout'] = self._std_handle
+    if stderr:
+      ret['stderr'] = self._std_handle
+    return ret
 
   def write_line(self, line):
     """Differs from our @@@annotator@@@ bretheren and puts logging data to
@@ -277,10 +290,10 @@ class LUCIStepStream(StreamEngine.StepStream):
 
   def close(self):
     # TODO(iannucci): close ALL log streams, not just stdout/stderr/logging
-    if self._stdout:
-      self._stdout.close()
-    if self._stderr:
-      self._stderr.close()
+    # TODO(iannucci): this can actually double-close with subprocess runner...
+    # clean all of this up once annotations are gone.
+    if self._std_handle:
+      self._std_handle.close()
     # TODO(iannucci): improve UI modification interface to immediately send UI
     # changes when they happen.
     self._step.end_time.GetCurrentTime()
