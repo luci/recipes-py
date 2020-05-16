@@ -148,7 +148,9 @@ class AnnotatorStreamEngine(StreamEngine):
     def reset_subannotation_state(self):
       self._engine._current_step = None
 
-  def new_step_stream(self, name_tokens, allow_subannotations):
+  def new_step_stream(self, name_tokens, allow_subannotations,
+                      merge_step=False):
+    assert not merge_step, 'Merge step is not supported in annotation mode'
     # TODO(iannucci): make this use '|' separators instead
     name = '.'.join(name_tokens)
     self.output_root_annotation('SEED_STEP', name)

@@ -101,7 +101,8 @@ class StreamEngine(object):
       """
       return None
 
-  def new_step_stream(self, name_tokens, allow_subannotations):
+  def new_step_stream(self, name_tokens, allow_subannotations,
+                      merge_step=False):
     """Creates a new StepStream in this engine.
 
     The step will be considered started at the moment this method is called.
@@ -118,6 +119,9 @@ class StreamEngine(object):
       * allow_subannotations (bool): If True, tells the StreamEngine to expect
         the old @@@annotator@@@ protocol to be emitted on stdout from this
         step.
+      * merge_step (bool): If True, tells the StreamEngine to create a step
+        stream that denotes a merge step. This is only valid for luciexe
+        protocol.
     """
     raise NotImplementedError()
 

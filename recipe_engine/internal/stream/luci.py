@@ -139,6 +139,14 @@ class LUCIStepStream(StreamEngine.StepStream):
   _std_handle = attr.ib(default=None)
   _logging = attr.ib(default=None)
 
+  # If True, after initialization, append a log named '$build.proto' that
+  # points to the 'build.proto' stream of the luciexe this step launches.
+  # Host application will treat this step as merge step according to luciexe
+  # protocol.
+  #
+  # See: [luciexe recursive invocation](https://pkg.go.dev/go.chromium.org/luci/luciexe?tab=doc#hdr-Recursive_Invocation)
+  _merge_step = attr.ib(default=False, validator=attr_type(bool))
+
   _back_compat_markdown = attr.ib(factory=LUCIStepMarkdownWriter)
 
   # A global set of created logdog stream names for all steps. Used to
@@ -174,6 +182,21 @@ class LUCIStepStream(StreamEngine.StepStream):
   #   l___step_1/stderr   "🍔 step/stderr"
   _CREATED_LOGS = set()
 
+  def __attrs_post_init__(self):
+    self._stream_namespace = logdog.streamname.normalize(
+      self._step.name.replace('|', '/'), 'l')
+
+    if self._merge_step:
+      stream_name = '/'.join((self._stream_namespace, 'build.proto'))
+      if stream_name in self._CREATED_LOGS:
+        raise ValueError("Duplicated build.proto stream %s" % (stream_name,))
+      self._CREATED_LOGS.add(stream_name)
+
+      log = self._step.logs.add()
+      log.name = '$build.proto'
+      log.url = stream_name
+      self._change_cb()
+
   def new_log_stream(self, log_name):
     """Add a new log with name `log_name` to this step.
 
@@ -196,8 +219,8 @@ class LUCIStepStream(StreamEngine.StepStream):
 
   def _new_log_stream(self, log_name):
     dedup_idx = 0
-    base_flattened_name = logdog.streamname.normalize(
-        self._step.name.replace('|', '/') + '/' + log_name, 'l')
+    base_flattened_name = '/'.join(
+      (self._stream_namespace, logdog.streamname.normalize(log_name, 'l')))
     flat_name = base_flattened_name
     while flat_name in self._CREATED_LOGS:
       flat_name = logdog.streamname.normalize(
@@ -376,7 +399,8 @@ class LUCIStreamEngine(StreamEngine):
   def _send(self):
     self._send_event.set()
 
-  def new_step_stream(self, name_tokens, allow_subannotations):
+  def new_step_stream(self, name_tokens, allow_subannotations,
+                      merge_step=False):
     assert not allow_subannotations, (
       'Subannotations not currently supported in build.proto mode'
     )
@@ -385,7 +409,7 @@ class LUCIStreamEngine(StreamEngine):
         status=common.SCHEDULED)
 
     ret = LUCIStepStream(step_pb, self._build_proto.output.properties,
-                         self._send, self._bsc)
+                         self._send, self._bsc, merge_step=merge_step)
     self._send()
     return ret
 

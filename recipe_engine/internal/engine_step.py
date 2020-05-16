@@ -136,6 +136,11 @@ class StepConfig(object):
   # this will raise InfraFailure instead of StepFailure.
   infra_step = attr.ib(default=False, validator=attr_type(bool))
 
+  # If True, this step will be created as `merge step` and run a LUCI
+  # executable.
+  # See: [luciexe recursive invocation](https://pkg.go.dev/go.chromium.org/luci/luciexe?tab=doc#hdr-Recursive_Invocation)
+  merge_step = attr.ib(default=False, validator=attr_type(bool))
+
   # Standard handle redirection.
   # If None, stdin is closed and stdout/stderr are routed to the UI.
   # These placeholders require a non-default implementation of `backing_file`.

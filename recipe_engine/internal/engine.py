@@ -381,8 +381,8 @@ class RecipeEngine(object):
         ret.name
       ))
 
-    step_stream = self._stream_engine.new_step_stream(
-        name_tokens, step_config.allow_subannotations)
+    step_stream = self._stream_engine.new_step_stream(name_tokens,
+      step_config.allow_subannotations, merge_step=step_config.merge_step)
     caught = None
     try:
       # If there's a parent step on the stack, add `ret` to its children.

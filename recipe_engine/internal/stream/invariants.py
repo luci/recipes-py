@@ -110,8 +110,9 @@ class StreamEngineInvariants(StreamEngine):
       assert self._open
       self._open = False
 
-  def new_step_stream(self, name_tokens, allow_subannotations):
-    del allow_subannotations
+  def new_step_stream(self, name_tokens, allow_subannotations,
+                      merge_step=False):
+    del allow_subannotations, merge_step
 
     if any('|' in token for token in name_tokens):
       raise ValueError(

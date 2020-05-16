@@ -83,10 +83,14 @@ class ProductStreamEngine(StreamEngine):
     mark_running = _void_product('mark_running')
     set_summary_markdown = _void_product('set_summary_markdown')
 
-  def new_step_stream(self, name_tokens, allow_subannotations):
+  def new_step_stream(self, name_tokens, allow_subannotations,
+                      merge_step=False):
     return self.StepStream(
-        self._engine_a.new_step_stream(name_tokens, allow_subannotations),
-        self._engine_b.new_step_stream(name_tokens, allow_subannotations))
+        self._engine_a.new_step_stream(
+          name_tokens, allow_subannotations, merge_step=merge_step),
+        self._engine_b.new_step_stream(
+          name_tokens, allow_subannotations, merge_step=merge_step),
+      )
 
   def open(self):
     self._engine_a.open()
