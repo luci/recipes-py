@@ -47,6 +47,6 @@ def add_arguments(parser):
       return 1
 
   def _post(_error, _args):
-    logging.basicConfig()
+    logging.basicConfig(level=logging.INFO)
 
   parser.set_defaults(func=_launch, postprocess_func=_post)
