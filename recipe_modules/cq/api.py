@@ -138,7 +138,7 @@ class CQApi(recipe_api.RecipeApi):
     return self._extract_unique_cq_tag('cl_group_key')
 
   @property
-  def cl_equivalent_group_key(self):
+  def equivalent_cl_group_key(self):
     """Returns a string that is unique for a given set of Gerrit changes
     disregarding trivial patchset differences.
 
@@ -148,7 +148,7 @@ class CQApi(recipe_api.RecipeApi):
     Raises:
       CQInactive if CQ is `INACTIVE` for this build.
     """
-    return self._extract_unique_cq_tag('cl_equivalent_group_key')
+    return self._extract_unique_cq_tag('equivalent_cl_group_key')
 
   @property
   def triggered_build_ids(self):

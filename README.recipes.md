@@ -1024,17 +1024,6 @@ This module provides recipe API of LUCI CQ, aka pre-commit testing system.
 More information about CQ:
   https://chromium.googlesource.com/infra/luci/luci-go/+/master/cq
 
-&emsp; **@property**<br>&mdash; **def [cl\_equivalent\_group\_key](/recipe_modules/cq/api.py#140)(self):**
-
-Returns a string that is unique for a given set of Gerrit changes
-disregarding trivial patchset differences.
-
-For example, when a new "trivial" patchset is uploaded, then the
-cl_group_key will change but the equivalent_cl_group_key will stay the same.
-
-Raises:
-  CQInactive if CQ is `INACTIVE` for this build.
-
 &emsp; **@property**<br>&mdash; **def [cl\_group\_key](/recipe_modules/cq/api.py#127)(self):**
 
 Returns a string that is unique for a current set of Gerrit change
@@ -1047,6 +1036,17 @@ Raises:
   CQInactive if CQ is `INACTIVE` for this build.
 
 &emsp; **@property**<br>&mdash; **def [do\_not\_retry\_build](/recipe_modules/cq/api.py#191)(self):**
+
+&emsp; **@property**<br>&mdash; **def [equivalent\_cl\_group\_key](/recipe_modules/cq/api.py#140)(self):**
+
+Returns a string that is unique for a given set of Gerrit changes
+disregarding trivial patchset differences.
+
+For example, when a new "trivial" patchset is uploaded, then the
+cl_group_key will change but the equivalent_cl_group_key will stay the same.
+
+Raises:
+  CQInactive if CQ is `INACTIVE` for this build.
 
 &emsp; **@property**<br>&mdash; **def [experimental](/recipe_modules/cq/api.py#59)(self):**
 
