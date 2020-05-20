@@ -248,6 +248,13 @@ class StreamClient(object):
     """
     return self._coordinator_host
 
+  @property
+  def namespace(self):
+    """Returns (str): The namespace for all streams opened by this client.
+    Empty if not configured.
+    """
+    return self._namespace
+
   def get_stream_path(self, name):
     """Returns (streamname.StreamPath): The stream path.
 

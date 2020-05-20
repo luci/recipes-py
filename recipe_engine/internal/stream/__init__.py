@@ -101,6 +101,11 @@ class StreamEngine(object):
       """
       return None
 
+    @property
+    def env_vars(self):
+      """Returns a dict of environment variable overrides for this step."""
+      return {}
+
   def new_step_stream(self, name_tokens, allow_subannotations,
                       merge_step=False):
     """Creates a new StepStream in this engine.

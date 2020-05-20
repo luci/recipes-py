@@ -716,6 +716,7 @@ def _render_config(debug, name_tokens, step_config, step_runner, step_stream,
       step_config.env_prefixes.mapping,
       step_config.env_suffixes.mapping,
       pathsep)
+  env.update(step_stream.env_vars)
 
   debug.write_line('checking cwd: %r' % (step_config.cwd,))
   cwd = step_config.cwd or start_dir
