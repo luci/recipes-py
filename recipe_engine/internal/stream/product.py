@@ -68,15 +68,6 @@ class ProductStreamEngine(StreamEngine):
         ret = self._stream_b.open_std_handles(stdout, stderr)
       return ret
 
-    @property
-    def env_vars(self):
-      """If there're conflicting variables, variables from engine_a take
-      precedence.
-      """
-      ret = dict(self._stream_b.env_vars)
-      ret.update(self._stream_a.env_vars)
-      return ret
-
     def handle_exception(self, exc_type, exc_val, exc_tb):
       ret = self._stream_a.handle_exception(exc_type, exc_val, exc_tb)
       ret = ret or self._stream_b.handle_exception(exc_type, exc_val, exc_tb)
