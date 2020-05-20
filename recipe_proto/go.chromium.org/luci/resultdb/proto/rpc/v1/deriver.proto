@@ -19,7 +19,7 @@ package luci.resultdb.rpc.v1;
 import "google/api/field_behavior.proto";
 import "go.chromium.org/luci/resultdb/proto/rpc/v1/invocation.proto";
 
-option go_package = "go.chromium.org/luci/resultdb/proto/rpc/v1;rpcpb";
+option go_package = "go.chromium.org/luci/resultdb/proto/rpc/v1;resultpb";
 
 // Service to derive test results.
 //
@@ -45,6 +45,8 @@ message DeriveChromiumInvocationRequest {
     // ID of swarming task to process and insert.
     //
     // The task should have tags:
+    //  test_id_prefix: test_id_prefix for each test suite, e.g.
+    //    "ninja://chrome/test:telemetry_gpu_integration_test/trace_test/".
     //  ninja_target: the fully-qualified ninja target used to compile the test
     //    binary used in the task, e.g. "//chrome/test:browser_tests".
     //  bucket: the LUCI bucket of the parent build
