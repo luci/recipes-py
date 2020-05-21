@@ -69,8 +69,9 @@ def RunSteps(api):
   # Re-use stdout after redirect
   # TODO(iannucci): this is a bit dirty; once we drop @@@ see if we can do this
   # more cleanly.
-  result = api.step('capture stdout', ['echo', 'OHAI'],
-                    stdout=api.raw_io.output_text())
+  result = api.python.inline(
+      'capture stdout', "print 'OHAI'",
+      stdout=api.raw_io.output_text())
   result.presentation.logs['stdout'] = result.stdout.splitlines()
 
   with api.step.nest('properties'):

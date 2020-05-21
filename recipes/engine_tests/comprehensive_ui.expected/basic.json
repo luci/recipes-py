@@ -243,11 +243,14 @@
   },
   {
     "cmd": [
-      "echo",
-      "OHAI"
+      "python",
+      "-u",
+      "print 'OHAI'"
     ],
     "name": "capture stdout",
     "~followup_annotations": [
+      "@@@STEP_LOG_LINE@python.inline@print 'OHAI'@@@",
+      "@@@STEP_LOG_END@python.inline@@@",
       "@@@STEP_LOG_LINE@stdout@OHAI@@@",
       "@@@STEP_LOG_END@stdout@@@"
     ]
