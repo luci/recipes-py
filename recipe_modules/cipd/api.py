@@ -136,7 +136,7 @@ class PackageDefinition(object):
     version information about themselves. <name> could be the name of the
     binary tool, like 'cipd' in the example above.
 
-    A version file may be specifed exactly once per package.
+    A version file may be specified exactly once per package.
 
     Args:
       * ver_file_rel (str) - A path string relative to the installation root.
@@ -252,6 +252,9 @@ class CIPDApi(recipe_api.RecipeApi):
     super(recipe_api.RecipeApi, self).__init__(**kwargs)
     self._service_account = None
     self.max_threads = 0  # 0 means use system CPU count.
+    # A mapping from (package, version) to local absolute path for any
+    # executables installed via `ensure_tool()`.
+    self._installed_tool_paths = {}
 
   @contextlib.contextmanager
   def set_service_account(self, service_account):
@@ -711,7 +714,7 @@ class CIPDApi(recipe_api.RecipeApi):
                version,
                test_data_refs=None,
                test_data_tags=None):
-    """Returns information about a pacakge instance given its version:
+    """Returns information about a package instance given its version:
     who uploaded the instance and when and a list of attached tags.
 
     Args:
@@ -794,3 +797,51 @@ class CIPDApi(recipe_api.RecipeApi):
             'pkg/name/of/' + package_file.pieces[-1], 'version/of/' +
             package_file.pieces[-1]))
     return self.Pin(**step_result.json.output['result'])
+
+  def ensure_tool(self, package, version, executable_path=None):
+    """Downloads an executable from CIPD.
+
+    Given a package named "name/of/some_exe/${platform}" and version
+    "someversion", this will install the package at the directory
+    "[CACHE]/cipd/name/of/some_exe/someversion". It will then return the
+    absolute path to the executable within that directory.
+
+    This operation is idempotent, and will only run steps to download the
+    package if it hasn't already been installed in the same build.
+
+    The installed packages will be persisted across builds for any builders
+    with a "cipd" named cache, as long as builds don't clobber the cache
+    contents.
+
+    Args:
+      * package (str) - The full name of the CIPD package.
+      * version (str) - The version of the package to download.
+      * executable_path (str) - The path within the package of the desired
+        executable. Defaults to the basename of the package (the final
+        non-variable component of the package name).
+
+    Returns a Path to the executable.
+    """
+    cache_key = (package, version)
+
+    if cache_key in self._installed_tool_paths:
+      return self._installed_tool_paths[cache_key]
+
+    package_parts = [p for p in package.split('/') if '${' not in p]
+    basename = package_parts[-1]
+
+    with self.m.step.nest('install %s' % basename):
+      with self.m.context(infra_steps=True):
+        path_parts = ['cipd'] + package_parts + [version]
+        package_dir = self.m.path['cache'].join(*path_parts)
+        self.m.file.ensure_directory('ensure package directory', package_dir)
+        pkgs = self.m.cipd.EnsureFile()
+        pkgs.add_package(package, version)
+        self.m.cipd.ensure(package_dir, pkgs)
+
+    if executable_path is None:
+      executable_path = basename
+
+    absolute_exe_path = package_dir.join(*executable_path.split('/'))
+    self._installed_tool_paths[cache_key] = absolute_exe_path
+    return absolute_exe_path

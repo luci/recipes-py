@@ -133,6 +133,17 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
       api.path['start_dir'].join('raw_root'),
       api.path['start_dir'].join('fetched_pkg'))
 
+  # Install a tool using the high-level helper function. This operation should
+  # be idempotent, so subsequent attempts should not re-install the package.
+  for _ in range(2):
+    api.cipd.ensure_tool('infra/some_exe/${platform}', 'latest')
+
+  # Install a tool using the high-level helper function, where the executable
+  # isn't in the root of the package.
+  exe = api.cipd.ensure_tool('some/some_exe/package/${platform}', 'latest',
+                             executable_path='bin/some_exe')
+  api.step('run some_exe', [exe, '-opt'])
+
 
 def GenTests(api):
   yield (

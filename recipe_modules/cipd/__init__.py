@@ -4,6 +4,7 @@
 
 DEPS = [
   'context',
+  'file',
   'json',
   'path',
   'platform',
