@@ -4,5 +4,4 @@
 
 DEPS = [
   'raw_io',
-  'file',
 ]

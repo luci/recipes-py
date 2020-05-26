@@ -2107,7 +2107,7 @@ easier to debug and diagnose which scripts use which properties.
 Returns a read-write copy of all of the properties.
 ### *recipe_modules* / [proto](/recipe_modules/proto)
 
-[DEPS](/recipe_modules/proto/__init__.py#5): [file](#recipe_modules-file), [raw\_io](#recipe_modules-raw_io)
+[DEPS](/recipe_modules/proto/__init__.py#5): [raw\_io](#recipe_modules-raw_io)
 
 Methods for producing and consuming protobuf data to/from steps and the
 filesystem.
