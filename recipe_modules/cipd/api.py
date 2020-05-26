@@ -832,7 +832,9 @@ class CIPDApi(recipe_api.RecipeApi):
 
     with self.m.step.nest('install %s' % basename):
       with self.m.context(infra_steps=True):
-        path_parts = ['cipd'] + package_parts + [version]
+        # URL-encoding the version is the easiest way to ensure Windows
+        # compatibility; Windows doesn't allow colons in paths.
+        path_parts = ['cipd'] + package_parts + [self.m.url.quote(version)]
         package_dir = self.m.path['cache'].join(*path_parts)
         self.m.file.ensure_directory('ensure package directory', package_dir)
         pkgs = self.m.cipd.EnsureFile()

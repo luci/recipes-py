@@ -643,7 +643,7 @@ Args:
 Set the buildbucket host while in context, then reverts it.
 ### *recipe_modules* / [cipd](/recipe_modules/cipd)
 
-[DEPS](/recipe_modules/cipd/__init__.py#5): [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cipd/__init__.py#5): [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
 API for interacting with CIPD.
 
