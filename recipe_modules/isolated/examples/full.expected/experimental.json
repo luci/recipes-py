@@ -44,14 +44,32 @@
   },
   {
     "cmd": [],
-    "name": "ensure isolated"
+    "name": "install isolated"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]/cipd/infra/tools/luci/isolated/latest"
+    ],
+    "infra_step": true,
+    "name": "install isolated.ensure package directory",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
       "cipd",
       "ensure",
       "-root",
-      "[CACHE]/isolated_client",
+      "[CACHE]/cipd/infra/tools/luci/isolated/latest",
       "-ensure-file",
       "infra/tools/luci/isolated/${platform} latest",
       "-max-threads",
@@ -60,7 +78,7 @@
       "/path/to/tmp/json"
     ],
     "infra_step": true,
-    "name": "ensure isolated.ensure_installed",
+    "name": "install isolated.ensure_installed",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -78,7 +96,7 @@
   },
   {
     "cmd": [
-      "[CACHE]/isolated_client/isolated",
+      "[CACHE]/cipd/infra/tools/luci/isolated/latest/isolated",
       "archive",
       "-verbose",
       "-isolate-server",
@@ -104,7 +122,7 @@
   },
   {
     "cmd": [
-      "[CACHE]/isolated_client/isolated",
+      "[CACHE]/cipd/infra/tools/luci/isolated/latest/isolated",
       "archive",
       "-verbose",
       "-isolate-server",
@@ -124,7 +142,7 @@
   },
   {
     "cmd": [
-      "[CACHE]/isolated_client/isolated",
+      "[CACHE]/cipd/infra/tools/luci/isolated/latest/isolated",
       "archive",
       "-verbose",
       "-isolate-server",
@@ -148,7 +166,7 @@
   },
   {
     "cmd": [
-      "[CACHE]/isolated_client/isolated",
+      "[CACHE]/cipd/infra/tools/luci/isolated/latest/isolated",
       "download",
       "-verbose",
       "-isolate-server",
@@ -163,7 +181,7 @@
   },
   {
     "cmd": [
-      "[CACHE]/isolated_client/isolated",
+      "[CACHE]/cipd/infra/tools/luci/isolated/latest/isolated",
       "download",
       "-verbose",
       "-isolate-server",

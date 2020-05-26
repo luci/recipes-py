@@ -31,27 +31,18 @@ class IsolatedApi(recipe_api.RecipeApi):
     if self._test_data.enabled:
       default_cipd_version = 'isolated_module_pin'
     self._version = isolated_properties.get('version', default_cipd_version)
-    self._client_dir = None
-    self._client = None
 
   def initialize(self):
     if self._test_data.enabled:
       self._server = 'https://example.isolateserver.appspot.com'
     if self.m.runtime.is_experimental:
       self._version = 'latest'
-    self._client_dir = self.m.path['cache'].join('isolated_client')
 
-  def _ensure_isolated(self):
+  @property
+  def _client(self):
     """Ensures that the isolated Go binary is installed."""
-    if self._client:
-      return
-
-    with self.m.step.nest('ensure isolated'):
-      with self.m.context(infra_steps=True):
-        pkgs = self.m.cipd.EnsureFile()
-        pkgs.add_package('infra/tools/luci/isolated/${platform}', self._version)
-        self.m.cipd.ensure(self._client_dir, pkgs)
-        self._client = self._client_dir.join('isolated')
+    return self.m.cipd.ensure_tool('infra/tools/luci/isolated/${platform}',
+                                   self._version)
 
   @property
   def isolate_server(self):
@@ -71,7 +62,6 @@ class IsolatedApi(recipe_api.RecipeApi):
       name: (str): name of the step.
       cmd (list(str|Path)): isolated client subcommand to run.
     """
-    self._ensure_isolated()
     return self.m.step(name,
                        [self._client] + list(cmd),
                        step_test_data=step_test_data,
@@ -87,8 +77,8 @@ class IsolatedApi(recipe_api.RecipeApi):
         with api.isolated.on_path():
           # do your steps which require the isolated binary on path
     """
-    self._ensure_isolated()
-    with self.m.context(env_prefixes={'PATH': [self._client_dir]}):
+    client_dir = self.m.path.dirname(self._client)
+    with self.m.context(env_prefixes={'PATH': [client_dir]}):
       yield
 
   def isolated(self, root_dir):
