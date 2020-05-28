@@ -17,6 +17,19 @@ DEPS = [
 def RunSteps(api):
   api.step('test', api.resultdb.wrap(['echo', 'suppose its a test']))
 
+  api.step('test_id_prefix', api.resultdb.wrap(
+    ['echo', 'suppose its a test'],
+    test_id_prefix='prefix',
+  ))
+
+  api.step('test_id_prefix', api.resultdb.wrap(
+    ['echo', 'suppose its a test'],
+    base_variant={
+      'bucket': 'ci',
+      'builder': 'linux-rel',
+    },
+  ))
+
 
 def GenTests(api):
   yield api.test(

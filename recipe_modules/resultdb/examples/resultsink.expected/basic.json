@@ -10,6 +10,32 @@
     "name": "test"
   },
   {
+    "cmd": [
+      "rdb",
+      "stream",
+      "-test-id-prefix",
+      "prefix",
+      "--",
+      "echo",
+      "suppose its a test"
+    ],
+    "name": "test_id_prefix"
+  },
+  {
+    "cmd": [
+      "rdb",
+      "stream",
+      "-var",
+      "bucket=ci",
+      "-var",
+      "builder=linux-rel",
+      "--",
+      "echo",
+      "suppose its a test"
+    ],
+    "name": "test_id_prefix (2)"
+  },
+  {
     "name": "$result"
   }
 ]

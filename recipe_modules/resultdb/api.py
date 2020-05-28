@@ -255,7 +255,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
         timeout=timeout,
     )
 
-  def wrap(self, cmd):
+  def wrap(self, cmd, test_id_prefix='', base_variant=None):
     """Wraps the command with ResultSink.
 
     Returns a command that, when executed, runs cmd in a go/result-sink
@@ -264,10 +264,31 @@ class ResultDBAPI(recipe_api.RecipeApi):
        api.step('test', api.resultdb.wrap(['./my_test']))
 
     Args:
-      cmd:
-    TODO(nodir, ddoman): add variants parameter.
-    TODO(nodir, ddoman): add test_id_prefix parameter.
+      cmd (list of strings): the command line to run.
+      test_id_prefix (str): a prefix to prepend to test IDs of test results
+        reported by cmd.
+      base_variant (dict): variant key-value pairs to attach to all test results
+        reported by cmd. If both base_variant and a reported variant have a
+        value for the same key, the reported one wins.
+        Example:
+
+          base_variant={
+            'bucket': api.buildbucket.build.builder.bucket,
+            'builder': api.buildbucket.builder_name,
+          }
     """
     self.assert_enabled()
+    assert isinstance(test_id_prefix, (type(None), str)), test_id_prefix
+    assert isinstance(base_variant, (type(None), dict)), base_variant
     assert isinstance(cmd, (tuple, list)), cmd
-    return ['rdb', 'stream', '--'] + list(cmd)
+
+    ret = ['rdb', 'stream']
+
+    if test_id_prefix:
+      ret += ['-test-id-prefix', test_id_prefix]
+
+    for k, v in sorted((base_variant or {}).iteritems()):
+      ret += ['-var', '%s=%s' % (k, v)]
+
+    ret += ['--'] + list(cmd)
+    return ret
