@@ -9,6 +9,7 @@ import sys
 import psutil
 
 from google.protobuf import json_format as jsonpb
+from google.protobuf import text_format as textpb
 
 from PB.go.chromium.org.luci.buildbucket.proto import common
 from PB.go.chromium.org.luci.buildbucket.proto.build import Build
@@ -70,7 +71,6 @@ def _synth_properties(build, current_properties):
   LOG.info('Synthesized properties: %r', synth_props)
   return synth_props
 
-
 def _tweak_env():
   # These tweaks are recipe-engine-specific tweaks to be compatible with the
   # behavior of `recipes.py run`.
@@ -91,7 +91,7 @@ def main(args):
 
   _tweak_env()
 
-  luciexe_engine = LUCIStreamEngine(args.build_proto_jsonpb)
+  luciexe_engine = LUCIStreamEngine(args.build_proto_stream_jsonpb)
 
   raw_result = None
   with StreamEngineInvariants.wrap(luciexe_engine) as stream_engine:
@@ -105,4 +105,23 @@ def main(args):
       LOG.exception("RecipeEngine.run_steps uncaught exception.")
       raise
 
-  return 0 if (raw_result and raw_result.status == common.SUCCESS) else 1
+  if args.output:
+    try:
+      with open(args.output, 'wb') as f:
+        final_build = luciexe_engine.current_build_proto
+        if args.output.endswith('.pb') :
+          f.write(final_build.SerializeToString(deterministic=True))
+        elif args.output.endswith('.json'):
+          f.write(jsonpb.MessageToJson(
+            final_build,
+            preserving_proto_field_name=True,
+            sort_keys=True,
+            indent=2,
+          ))
+        elif args.output.endswith('.textpb'):
+          f.write(textpb.MessageToString(final_build))
+    except:
+      LOG.exception("Error while writing final build to output file.")
+      raise
+
+  return 0 if luciexe_engine.was_successful else 1

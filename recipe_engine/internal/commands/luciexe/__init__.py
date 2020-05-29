@@ -12,12 +12,13 @@ This synthesizes properties from the Build message:
   * $recipe_engine/runtime['is_experimental'] = Build.input.experimental
   * $recipe_engine/runtime['is_luci'] = true
   * $recipe_engine/path['temp_dir'] = os.environ['TMP']
-  * $recipe_engine/path['cache_dir'] = os.environ['LUCI_CACHE_DIR']
+  * $recipe_engine/path['cache_dir'] = $LUCI_CONTEXT['luciexe']['cachedir']
 '''
 
 import argparse
-import sys
 import logging
+import os
+import sys
 
 
 LOG = logging.getLogger(__name__)
@@ -27,15 +28,26 @@ class RunBuildContractViolation(Exception):
   pass
 
 
+def _valid_output(output):
+  _, ext = os.path.splitext(output)
+  allowed_exts = ('.pb', '.json', '.textpb')
+  if ext not in allowed_exts:
+    raise argparse.ArgumentTypeError('Extension of output path must be one of '
+      'one of %s; Got %s' % (allowed_exts, ext))
+  return output
+
 def add_arguments(parser):
   parser.add_argument(
-      '--final-state', type=argparse.FileType('wb'),
-      help='Path to write the final build.proto state to (as binary PB).')
+      '--output', action='store', type=_valid_output, help=(
+        'Path to write the final build.proto state to. The path extension MUST '
+        'be one of (.pb, .json, .textpb). This will decide the encoding of the '
+        'final build proto state.'
+      ))
   parser.add_argument(
-      '--build-proto-jsonpb', action='store_true',
+      '--build-proto-stream-jsonpb', action='store_true',
       help=(
-        'If specified, output build.proto datagrams as JSONPB instead of PB. '
-        'Only for debugging.'
+        'If specified, output build.proto datagrams stream as JSONPB instead '
+        'of PB. Only for debugging.'
       ))
 
   def _launch(args):

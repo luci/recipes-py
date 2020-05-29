@@ -436,6 +436,15 @@ class LUCIStreamEngine(StreamEngine):
     self._send()
 
   @property
+  def current_build_proto(self):
+    """Returns the current Build message.
+
+    Note: Any update on the returned build before engine closes will be
+    sent to `build.proto` stream
+    """
+    return self._build_proto
+
+  @property
   def was_successful(self):
     """Used by luciexe to set the recipe engine's returncode.
 
