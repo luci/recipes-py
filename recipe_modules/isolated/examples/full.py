@@ -42,17 +42,6 @@ def RunSteps(api):
     isolate_server='other-isolateserver.appspot.com',
   )
 
-  # Or isolate with a blacklist
-  isolated = api.isolated.isolated(temp)
-  isolated.add_dir(temp)
-  blacklist = [
-    '[ac]',
-    'sub/*/d'
-  ]
-  isolated.archive('archiving root directory with a blacklist',
-    blacklist=blacklist
-  )
-
   # Download your isolated tree.
   first_output_dir = api.path['cleanup'].join('first')
   api.isolated.download(
