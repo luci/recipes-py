@@ -93,10 +93,14 @@ def main(args):
 
   raw_result = None
   with StreamEngineInvariants.wrap(luciexe_engine) as stream_engine:
-    raw_result, _ = RecipeEngine.run_steps(
-        args.recipe_deps, properties, stream_engine,
-        SubprocessStepRunner(), os.environ, os.getcwd(),
-        psutil.cpu_count(), psutil.virtual_memory().total)
-    stream_engine.write_result(raw_result)
+    try:
+      raw_result, _ = RecipeEngine.run_steps(
+          args.recipe_deps, properties, stream_engine,
+          SubprocessStepRunner(), os.environ, os.getcwd(),
+          psutil.cpu_count(), psutil.virtual_memory().total)
+      stream_engine.write_result(raw_result)
+    except:
+      LOG.exception("RecipeEngine.run_steps uncaught exception.")
+      raise
 
   return 0 if (raw_result and raw_result.status == common.SUCCESS) else 1
