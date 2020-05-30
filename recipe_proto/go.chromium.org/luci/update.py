@@ -20,6 +20,7 @@ SUB_PATHS = [
   'common/proto',
   'gce/api/config/v1',
   'led/job',
+  'lucictx',
   'resultdb/proto',
 ]
 
@@ -41,6 +42,9 @@ def main():
     with tarfile.open(mode='r|*', fileobj=resp) as tar:
       for item in tar:
         if item.name.endswith('_config.proto'):
+          print 'Skipping %r' % item.name
+          continue
+        if item.name.endswith('_test.proto'):
           print 'Skipping %r' % item.name
           continue
         if 'internal' in item.name:
