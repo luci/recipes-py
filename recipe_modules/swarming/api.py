@@ -1067,8 +1067,6 @@ class SwarmingApi(recipe_api.RecipeApi):
     self._version = str(input_properties.version or default_cipd_version)
     self._env_properties = env_properties
 
-    self._client_dir = None
-    self._client = None
     # Stores TaskRequests by tuple of (task_id, server)
     self._task_requests = {}
 
@@ -1093,18 +1091,11 @@ class SwarmingApi(recipe_api.RecipeApi):
 
     if self.m.runtime.is_experimental:
       self._version = 'latest'
-    self._client_dir = self.m.path['cache'].join('swarming_client')
 
-  def _ensure_swarming(self):
-    """Ensures that swarming client is installed."""
-    if not self._client:
-      with self.m.step.nest('ensure swarming'):
-        with self.m.context(infra_steps=True):
-          pkgs = self.m.cipd.EnsureFile()
-          pkgs.add_package('infra/tools/luci/swarming/${platform}',
-                           self._version)
-          self.m.cipd.ensure(self._client_dir, pkgs)
-          self._client = self._client_dir.join('swarming')
+  @property
+  def _client(self):
+    return self.m.cipd.ensure_tool('infra/tools/luci/swarming/${platform}',
+                                   self._version)
 
   def _run(self, name, cmd, step_test_data=None):
     """Return an swarming command step.
@@ -1113,7 +1104,6 @@ class SwarmingApi(recipe_api.RecipeApi):
       name: (str): name of the step.
       cmd (list(str|Path)): swarming client subcommand to run.
     """
-    self._ensure_swarming()
     return self.m.step(
         name, [self._client] + list(cmd),
         step_test_data=step_test_data,
@@ -1129,8 +1119,8 @@ class SwarmingApi(recipe_api.RecipeApi):
         with api.swarming.on_path():
           # do your steps which require the swarming binary on path
     """
-    self._ensure_swarming()
-    with self.m.context(env_prefixes={'PATH': [self._client_dir]}):
+    client_dir = self.m.path.dirname(self._client)
+    with self.m.context(env_prefixes={'PATH': [client_dir]}):
       yield
 
   @contextlib.contextmanager
