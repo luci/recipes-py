@@ -6,7 +6,6 @@
 RecipeTestApi.post_process method in GenTests.
 """
 
-import json
 import re
 
 from collections import defaultdict, OrderedDict, namedtuple
@@ -164,7 +163,7 @@ def MustRun(check, step_odict, *steps):
 
 def MustRunRE(check, step_odict, step_regex, at_least=1, at_most=None):
   """Assert that steps matching the given regex completely are in the
-  exepectations.
+  expectations.
 
   Args:
     step_regex (str, compiled regex) - The regular expression to match.
@@ -439,22 +438,33 @@ def StatusCodeIn(check, step_odict, *codes):
 def StatusSuccess(check, step_odict):
   """Assert that the recipe finished successfully."""
   failure = step_odict['$result'].get('failure')
-  check(failure is None)
+  check('recipe succeeded (found failure instead)', failure is None)
 
 
 def StatusAnyFailure(check, step_odict):
   """Assert that the recipe failed."""
-  check('failure' in step_odict['$result'])
+  check('recipe failed (found success instead)',
+        'failure' in step_odict['$result'])
 
 
 def StatusFailure(check, step_odict):
   """Assert that the recipe had a non-infra failure."""
-  check('failure' in step_odict['$result']['failure'])
+  result = step_odict['$result']
+  if not check('recipe failed (found success instead)', 'failure' in result):
+    return
+  check('expected failure but recipe had infra failure',
+        'failure' in result['failure'])
 
 
 def StatusException(check, step_odict):
   """Assert that the recipe had an infra failure."""
-  check('failure' not in step_odict['$result']['failure'])
+  result = step_odict['$result']
+  if not check('recipe had infra failure (found success instead)',
+               'failure' in result):
+    return
+  check('recipe had infra failure (found non-infra failure instead)',
+        'failure' not in result['failure'])
+
 
 def ResultReason(check, step_odict, reason):
   """Assert that recipe result reason matches given reason.
@@ -462,7 +472,18 @@ def ResultReason(check, step_odict, reason):
   Args:
     reason (str): the string to match.
   """
-  check(reason == step_odict['$result']['failure']['humanReason'])
+  result = step_odict['$result']
+  if not check('recipe failed with reason %r (found success instead)' % reason,
+               'failure' in result):
+    return
+  if not check('recipe failed with reason %r (found no failure reason)',
+               'humanReason' in result['failure']):
+    return
+  actual_reason = result['failure']['humanReason']
+  check(
+      'recipe failed with reason %r (found reason %r instead)' %
+      (reason, actual_reason), reason == actual_reason)
+
 
 def ResultReasonRE(check, step_odict, reason_regex):
   """Assert that recipe result reason matches given regex.
@@ -471,11 +492,17 @@ def ResultReasonRE(check, step_odict, reason_regex):
     reason_regex (str): the regular expression to match.
   """
   result = step_odict['$result']
-  if not check('failure' in result):
+  if not check('recipe failed with reason matching %r (found success instead)',
+               'failure' in result):
     return
-  if not check('humanReason' in result['failure']):
+  if not check(
+      'recipe failed with reason matching %r (found no failure reason instead)',
+      'humanReason' in result['failure']):
     return
-  check(re.match(reason_regex, result['failure']['humanReason']))
+  actual_reason = result['failure']['humanReason']
+  check(
+      'recipe failed with reason matching %r (found reason %r instead)' %
+      (reason_regex, actual_reason), re.match(reason_regex, actual_reason))
 
 
 def DropExpectation(_check, _step_odict):
