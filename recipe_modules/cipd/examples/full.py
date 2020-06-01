@@ -138,6 +138,10 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
   for _ in range(2):
     api.cipd.ensure_tool('infra/some_exe/${platform}', 'latest')
 
+  # We install another tool from the same package; this shouldn't run another
+  # install step, since the base package is the same..
+  api.cipd.ensure_tool('infra/some_exe/${platform}', 'latest', 'other/path')
+
   # Install a tool using the high-level helper function, where the executable
   # isn't in the root of the package.
   exe = api.cipd.ensure_tool('some/some_exe/package/${platform}', 'latest',

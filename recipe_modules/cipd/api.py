@@ -252,9 +252,10 @@ class CIPDApi(recipe_api.RecipeApi):
     super(recipe_api.RecipeApi, self).__init__(**kwargs)
     self._service_account = None
     self.max_threads = 0  # 0 means use system CPU count.
-    # A mapping from (package, version) to local absolute path for any
-    # executables installed via `ensure_tool()`.
-    self._installed_tool_paths = {}
+    # A mapping from (package, version) to Future for packages installed
+    # via `ensure_tool()`. The Future has no returned value and just used to
+    # synchronize 'ensure' actions.
+    self._installed_tool_package_futures = {}
 
   @contextlib.contextmanager
   def set_service_account(self, service_account):
@@ -816,34 +817,42 @@ class CIPDApi(recipe_api.RecipeApi):
     Args:
       * package (str) - The full name of the CIPD package.
       * version (str) - The version of the package to download.
-      * executable_path (str) - The path within the package of the desired
+      * executable_path (str|None) - The path within the package of the desired
         executable. Defaults to the basename of the package (the final
-        non-variable component of the package name).
+        non-variable component of the package name). Must use forward-slashes,
+        even on Windows.
 
     Returns a Path to the executable.
+
+    Future-safe; Multiple concurrent calls for the same (package, version) will
+    block on a single ensure step.
     """
     cache_key = (package, version)
 
-    if cache_key in self._installed_tool_paths:
-      return self._installed_tool_paths[cache_key]
-
     package_parts = [p for p in package.split('/') if '${' not in p]
+    package_dir = self.m.path['cache'].join('cipd', *package_parts)
+    # URL-encoding the version is the easiest way to ensure Windows
+    # compatibility; Windows doesn't allow colons in paths.
+    package_dir = package_dir.join(self.m.url.quote(version))
     basename = package_parts[-1]
 
-    with self.m.step.nest('install %s' % basename):
-      with self.m.context(infra_steps=True):
-        # URL-encoding the version is the easiest way to ensure Windows
-        # compatibility; Windows doesn't allow colons in paths.
-        path_parts = ['cipd'] + package_parts + [self.m.url.quote(version)]
-        package_dir = self.m.path['cache'].join(*path_parts)
-        self.m.file.ensure_directory('ensure package directory', package_dir)
-        pkgs = self.m.cipd.EnsureFile()
-        pkgs.add_package(package, version)
-        self.m.cipd.ensure(package_dir, pkgs)
+    if cache_key not in self._installed_tool_package_futures:
+      name = 'install %s' % ('/'.join(package_parts),)
+
+      def _install_package_thread():
+        with self.m.step.nest(name):
+          with self.m.context(infra_steps=True):
+            self.m.file.ensure_directory('ensure package directory', package_dir)
+            self.ensure(
+                package_dir,
+                self.EnsureFile().add_package(package, version))
+
+      self._installed_tool_package_futures[cache_key] = self.m.futures.spawn(
+          _install_package_thread, __name='recipe_engine/cipd: '+name)
+
+    self._installed_tool_package_futures[cache_key].result()
 
     if executable_path is None:
       executable_path = basename
 
-    absolute_exe_path = package_dir.join(*executable_path.split('/'))
-    self._installed_tool_paths[cache_key] = absolute_exe_path
-    return absolute_exe_path
+    return package_dir.join(*executable_path.split('/'))

@@ -643,7 +643,7 @@ Args:
 Set the buildbucket host while in context, then reverts it.
 ### *recipe_modules* / [cipd](/recipe_modules/cipd)
 
-[DEPS](/recipe_modules/cipd/__init__.py#5): [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step), [url](#recipe_modules-url)
+[DEPS](/recipe_modules/cipd/__init__.py#5): [context](#recipe_modules-context), [file](#recipe_modules-file), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
 API for interacting with CIPD.
 
@@ -661,7 +661,7 @@ Attributes:
   * max_threads (int) - Number of worker threads for extracting packages.
     If 0, uses CPU count.
 
-&mdash; **def [acl\_check](/recipe_modules/cipd/api.py#308)(self, pkg_path, reader=True, writer=False, owner=False):**
+&mdash; **def [acl\_check](/recipe_modules/cipd/api.py#309)(self, pkg_path, reader=True, writer=False, owner=False):**
 
 Checks whether the caller has a given roles in a package.
 
@@ -673,9 +673,9 @@ Args:
 
 Returns True if the caller has given roles, False otherwise.
 
-&mdash; **def [add\_instance\_link](/recipe_modules/cipd/api.py#540)(self, step_result):**
+&mdash; **def [add\_instance\_link](/recipe_modules/cipd/api.py#541)(self, step_result):**
 
-&mdash; **def [build](/recipe_modules/cipd/api.py#406)(self, input_dir, output_package, package_name, compression_level=None, install_mode=None, preserve_mtime=False, preserve_writable=False):**
+&mdash; **def [build](/recipe_modules/cipd/api.py#407)(self, input_dir, output_package, package_name, compression_level=None, install_mode=None, preserve_mtime=False, preserve_writable=False):**
 
 Builds, but does not upload, a cipd package from a directory.
 
@@ -694,7 +694,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#386)(self, pkg_def, output_package, compression_level=None):**
+&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#387)(self, pkg_def, output_package, compression_level=None):**
 
 Builds a package based on a PackageDefinition object.
 
@@ -707,7 +707,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#360)(self, pkg_def, output_package, pkg_vars=None, compression_level=None):**
+&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#361)(self, pkg_def, output_package, pkg_vars=None, compression_level=None):**
 
 Builds a package based on on-disk YAML package definition file.
 
@@ -721,14 +721,14 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [cache\_dir](/recipe_modules/cipd/api.py#281)(self, directory):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [cache\_dir](/recipe_modules/cipd/api.py#282)(self, directory):**
 
 Sets the cache dir to use with CIPD by setting the $CIPD_CACHE_DIR
 environment variable.
 
 If directory is "None", will use no cache directory.
 
-&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#574)(self, pkg_def, refs=None, tags=None, compression_level=None):**
+&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#575)(self, pkg_def, refs=None, tags=None, compression_level=None):**
 
 Builds and uploads a package based on a PackageDefinition object.
 
@@ -745,7 +745,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#546)(self, pkg_def, refs=None, tags=None, pkg_vars=None, compression_level=None):**
+&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#547)(self, pkg_def, refs=None, tags=None, pkg_vars=None, compression_level=None):**
 
 Builds and uploads a package based on on-disk YAML package definition
 file.
@@ -764,7 +764,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [describe](/recipe_modules/cipd/api.py#712)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
+&mdash; **def [describe](/recipe_modules/cipd/api.py#713)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
 
 Returns information about a package instance given its version:
 who uploaded the instance and when and a list of attached tags.
@@ -779,7 +779,7 @@ Args:
 
 Returns the CIPDApi.Description instance describing the package.
 
-&mdash; **def [ensure](/recipe_modules/cipd/api.py#602)(self, root, ensure_file):**
+&mdash; **def [ensure](/recipe_modules/cipd/api.py#603)(self, root, ensure_file):**
 
 Ensures that packages are installed in a given root dir.
 
@@ -789,7 +789,7 @@ Args:
 
 Returns the map of subdirectories to CIPDApi.Pin instances.
 
-&mdash; **def [ensure\_tool](/recipe_modules/cipd/api.py#801)(self, package, version, executable_path=None):**
+&mdash; **def [ensure\_tool](/recipe_modules/cipd/api.py#802)(self, package, version, executable_path=None):**
 
 Downloads an executable from CIPD.
 
@@ -808,15 +808,19 @@ contents.
 Args:
   * package (str) - The full name of the CIPD package.
   * version (str) - The version of the package to download.
-  * executable_path (str) - The path within the package of the desired
+  * executable_path (str|None) - The path within the package of the desired
     executable. Defaults to the basename of the package (the final
-    non-variable component of the package name).
+    non-variable component of the package name). Must use forward-slashes,
+    even on Windows.
 
 Returns a Path to the executable.
 
-&emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#293)(self):**
+Future-safe; Multiple concurrent calls for the same (package, version) will
+block on a single ensure step.
 
-&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#778)(self, root, package_file):**
+&emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#294)(self):**
+
+&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#779)(self, root, package_file):**
 
 Deploys the specified package to root.
 
@@ -830,7 +834,7 @@ Args:
 
 Returns a Pin for the deployed package.
 
-&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#747)(self, destination, package_name, version):**
+&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#748)(self, destination, package_name, version):**
 
 Downloads the specified package to destination.
 
@@ -847,7 +851,7 @@ Args:
 
 Returns a Pin for the downloaded package.
 
-&mdash; **def [register](/recipe_modules/cipd/api.py#480)(self, package_name, package_path, refs=(), tags=None):**
+&mdash; **def [register](/recipe_modules/cipd/api.py#481)(self, package_name, package_path, refs=(), tags=None):**
 
 Uploads and registers package instance in the package repository.
 
@@ -861,7 +865,7 @@ Args:
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [search](/recipe_modules/cipd/api.py#680)(self, package_name, tag, test_instances=None):**
+&mdash; **def [search](/recipe_modules/cipd/api.py#681)(self, package_name, tag, test_instances=None):**
 
 Searches for package instances by tag, optionally constrained by package
 name.
@@ -877,7 +881,7 @@ Args:
 
 Returns the list of CIPDApi.Pin instances.
 
-&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#655)(self, package_name, version, refs):**
+&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#656)(self, package_name, version, refs):**
 
 Moves a ref to point to a given version.
 
@@ -888,7 +892,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [set\_service\_account](/recipe_modules/cipd/api.py#259)(self, service_account):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [set\_service\_account](/recipe_modules/cipd/api.py#260)(self, service_account):**
 
 Temporarily sets the service account used for authentication to CIPD.
 
@@ -899,7 +903,7 @@ Args:
   * service_account(service_account.api.ServiceAccount): Service account to
       use for authentication.
 
-&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#628)(self, package_name, version, tags):**
+&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#629)(self, package_name, version, tags):**
 
 Tags package of a specific version.
 

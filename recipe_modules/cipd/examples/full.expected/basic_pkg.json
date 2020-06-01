@@ -683,7 +683,7 @@
   },
   {
     "cmd": [],
-    "name": "install some_exe"
+    "name": "install infra/some_exe"
   },
   {
     "cmd": [
@@ -698,7 +698,7 @@
       "[CACHE]/cipd/infra/some_exe/latest"
     ],
     "infra_step": true,
-    "name": "install some_exe.ensure package directory",
+    "name": "install infra/some_exe.ensure package directory",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -715,7 +715,7 @@
       "/path/to/tmp/json"
     ],
     "infra_step": true,
-    "name": "install some_exe.ensure_installed",
+    "name": "install infra/some_exe.ensure_installed",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -733,7 +733,7 @@
   },
   {
     "cmd": [],
-    "name": "install package"
+    "name": "install some/some_exe/package"
   },
   {
     "cmd": [
@@ -748,7 +748,7 @@
       "[CACHE]/cipd/some/some_exe/package/latest"
     ],
     "infra_step": true,
-    "name": "install package.ensure package directory",
+    "name": "install some/some_exe/package.ensure package directory",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -765,7 +765,7 @@
       "/path/to/tmp/json"
     ],
     "infra_step": true,
-    "name": "install package.ensure_installed",
+    "name": "install some/some_exe/package.ensure_installed",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
