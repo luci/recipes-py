@@ -54,10 +54,10 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
     })
 
   def example_set_tag(self, package_name, version):
-    return self._resultify({
+    return self._resultify({'': [{
         'package': package_name,
         'pin': self.make_pin(package_name, version)
-    })
+    }]})
 
   example_set_ref = example_set_tag
 

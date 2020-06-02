@@ -651,7 +651,7 @@ class CIPDApi(recipe_api.RecipeApi):
         step_test_data=lambda: self.test_api.example_set_tag(
             package_name, version))
     result = step_result.json.output['result']
-    return self.Pin(**result['pin'])
+    return self.Pin(**result[''][0]['pin'])
 
   def set_ref(self, package_name, version, refs):
     """Moves a ref to point to a given version.
@@ -676,7 +676,7 @@ class CIPDApi(recipe_api.RecipeApi):
         step_test_data=lambda: self.test_api.example_set_ref(
             package_name, version))
     result = step_result.json.output['result']
-    return self.Pin(**result['pin'])
+    return self.Pin(**result[''][0]['pin'])
 
   def search(self, package_name, tag, test_instances=None):
     """Searches for package instances by tag, optionally constrained by package
