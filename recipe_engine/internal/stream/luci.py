@@ -11,6 +11,7 @@ import attr
 import gevent
 
 from google.protobuf import json_format as jsonpb
+from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from google.protobuf.struct_pb2 import Struct
 
 from PB.go.chromium.org.luci.buildbucket.proto.build import Build
@@ -114,6 +115,7 @@ class LUCIStepStream(StreamEngine.StepStream):
   """
   _step = attr.ib(validator=attr_type(Step))
   _properties = attr.ib(validator=attr_type(Struct))
+  _tags = attr.ib(validator=attr_type(RepeatedCompositeFieldContainer))
   # change_cb is a void function which causes the LUCIStreamEngine to emit the
   # current Build proto message. This must be called after any changes to:
   #   * self._step
@@ -274,6 +276,13 @@ class LUCIStepStream(StreamEngine.StepStream):
     # TODO(iannucci): set timeout bit here
 
   def set_build_property(self, key, value):
+    # Intercept tags
+    if key == '$recipe_engine/buildbucket/runtime-tags':
+      for k, vals in json.loads(value).iteritems():
+        self._tags.extend([common.StringPair(key=k, value=v) for v in set(vals)
+            if common.StringPair(key=k, value=v) not in self._tags])
+      return
+
     self._properties[key] = json.loads(value)
 
   @property
@@ -416,7 +425,8 @@ class LUCIStreamEngine(StreamEngine):
         status=common.SCHEDULED)
 
     ret = LUCIStepStream(step_pb, self._build_proto.output.properties,
-                         self._send, self._bsc, merge_step=merge_step)
+                         self._build_proto.tags, self._send, self._bsc,
+                         merge_step=merge_step)
     self._send()
     return ret
 
