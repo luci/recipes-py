@@ -44,7 +44,8 @@ def execute_test_case(recipe_deps, recipe_name, test_data):
     environ[key] = value
 
   raw_result, uncaught_exception = RecipeEngine.run_steps(
-      recipe_deps, props, stream_engine, step_runner, environ, '',
+      recipe_deps, props, stream_engine, step_runner,
+      environ, '', test_data.luci_context,
       num_logical_cores=8, memory_mb=16 * (1024**3), test_data=test_data,
       skip_setup_build=True)
 

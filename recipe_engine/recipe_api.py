@@ -17,11 +17,18 @@ from functools import wraps
 
 import attr
 
+from six import iteritems
+from google.protobuf import message
+from google.protobuf import json_format as jsonpb
+
+from .config_types import Path
 from .internal import engine_step
+from .internal.attr_util import attr_dict_type
 from .recipe_test_api import DisabledTestData, ModuleTestData
+from .third_party import luci_context
 from .third_party.logdog import streamname
 from .third_party.logdog.bootstrap import ButlerBootstrap, NotBootstrappedError
-from .types import StepPresentation
+from .types import StepPresentation, freeze, FrozenDict
 from .util import ModuleInjectionSite
 
 # TODO(iannucci): Rationalize the use of this in downstream scripts.
@@ -96,6 +103,40 @@ def RequireClient(name):
     name (str): the name of the recipe engine client to install.
   """
   return _UnresolvedRequirement('client', name)
+
+
+@attr.s(frozen=True, slots=True)
+class LUCIContextClient(object):
+  """A recipe engine client which reads/writes the LUCI_CONTEXT."""
+  IDENT = 'lucictx'
+  ENV_KEY = luci_context.ENV_KEY
+
+  _context = attr.ib(validator=attr_dict_type(str, (dict, FrozenDict)),
+                     factory=dict, converter=freeze)
+
+  @property
+  def context(self):
+    """Returns the current content of LUCI_CONTEXT as a Dict[str, Dict]."""
+    return self._context
+
+  def new_context(self, **section_pb_values):
+    """Creates a new LUCI_CONTEXT file with the provided section values, all
+    unmentioned sections in the current context will be copied over. The
+    environment variable will NOT not be switched to the newly created context.
+
+    Args:
+      * section_pb_values (Dict[str, message.Message]) - A mapping of
+        section_key to the new message value for that section.
+
+    Returns the path (str) to the newly created LUCI_CONTEXT file. Returns None
+    if section_pb_values is empty (i.e. No change to current context).
+    """
+    section_values = {
+      key: jsonpb.MessageToDict(pb_val)
+      for key, pb_val in iteritems(section_pb_values)
+    }
+    with luci_context.stage(_leak=True, **section_values) as file_path:
+      return file_path
 
 
 class PathsClient(object):

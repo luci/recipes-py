@@ -1,0 +1,30 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "hello"
+    ],
+    "name": "start"
+  },
+  {
+    "cmd": [
+      "echo",
+      "new",
+      "luciexe"
+    ],
+    "env": {
+      "LUCI_CONTEXT": "/path/to/lucictx_1.json"
+    },
+    "name": "new luciexe"
+  },
+  {
+    "cmd": [
+      "echo",
+      "bye"
+    ],
+    "name": "end"
+  },
+  {
+    "name": "$result"
+  }
+]

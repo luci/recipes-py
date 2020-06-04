@@ -115,7 +115,7 @@ class RecipeEngine(object):
   """
 
   def __init__(self, recipe_deps, step_runner, stream_engine, properties,
-               environ, start_dir, num_logical_cores, memory_mb):
+               environ, start_dir, luci_context, num_logical_cores, memory_mb):
     """See run_steps() for parameter meanings."""
     self._recipe_deps = recipe_deps
     self._step_runner = step_runner
@@ -128,6 +128,7 @@ class RecipeEngine(object):
         recipe_api.ConcurrencyClient(
             stream_engine.supports_concurrency,
             self.spawn_greenlet),
+        recipe_api.LUCIContextClient(luci_context),
         recipe_api.PathsClient(start_dir),
         recipe_api.PropertiesClient(properties),
         recipe_api.SourceManifestClient(self, properties),
@@ -483,7 +484,7 @@ class RecipeEngine(object):
 
   @classmethod
   def run_steps(cls, recipe_deps, properties, stream_engine, step_runner,
-                environ, cwd, num_logical_cores, memory_mb,
+                environ, cwd, luci_context, num_logical_cores, memory_mb,
                 emit_initial_properties=False, test_data=None,
                 skip_setup_build=False):
     """Runs a recipe (given by the 'recipe' property). Used by all
@@ -496,6 +497,11 @@ class RecipeEngine(object):
       * stream_engine: the StreamEngine to use to create individual step
         streams.
       * step_runner: The StepRunner to use to 'actually run' the steps.
+      * environ: The mapping object representing the environment in which
+        recipe runs. Generally obtained via `os.environ`.
+      * cwd (str): The current working directory to run the recipe.
+      * luci_context (Dict[str, Dict]): The content of LUCI_CONTEXT to pass
+        to the recipe.
       * num_logical_cores (int): The number of logical CPU cores to assume the
         machine has.
       * memory_mb (int): The amount of memory to assume the machine has, in MiB.
@@ -527,7 +533,7 @@ class RecipeEngine(object):
 
       engine = cls(
           recipe_deps, step_runner, stream_engine, properties, environ, cwd,
-          num_logical_cores, memory_mb)
+          luci_context, num_logical_cores, memory_mb)
       api = recipe_obj.mk_api(engine, test_data)
       engine.initialize_path_client_HACK(api)
     except (RecipeUsageError, ImportError, AssertionError) as ex:

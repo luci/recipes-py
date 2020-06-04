@@ -23,6 +23,8 @@ from ...step_runner.subproc import SubprocessStepRunner
 from ...stream.annotator import AnnotatorStreamEngine
 from ...stream.invariants import StreamEngineInvariants
 
+from ....third_party import luci_context
+
 def main(args):
   if args.props:
     for p in args.props:
@@ -63,7 +65,7 @@ def main(args):
       args.recipe_deps, properties,
       StreamEngineInvariants.wrap(stream_engine),
       SubprocessStepRunner(),
-      os.environ, os.path.abspath(workdir),
+      os.environ, os.path.abspath(workdir), luci_context.read_full(),
       psutil.cpu_count(), psutil.virtual_memory().total,
       emit_initial_properties=emit_initial_properties)
   result = legacy.to_legacy_result(raw_result)

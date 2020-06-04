@@ -31,10 +31,13 @@ import collections
 
 from contextlib import contextmanager
 
+from google.protobuf import json_format as jsonpb
+
+from recipe_engine import recipe_api
 from recipe_engine.config_types import Path
-from recipe_engine.recipe_api import RecipeApi
 from recipe_engine.types import PerGreenletState
 
+from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 
 def check_type(name, var, expect):
   if not isinstance(var, expect):  # pragma: no cover
@@ -48,6 +51,7 @@ class State(PerGreenletState):
   env_suffixes = {}
   env = {}
   infra_steps = False
+  luci_context = {}
 
   def _get_setter_on_spawn(self):
     old_cwd = self.cwd
@@ -55,6 +59,7 @@ class State(PerGreenletState):
     old_env_suffixes = self.env_suffixes
     old_env = self.env
     old_infra_steps = self.infra_steps
+    old_luci_context = self.luci_context
 
     def _inner():
       self.cwd = old_cwd
@@ -62,21 +67,38 @@ class State(PerGreenletState):
       self.env_suffixes = old_env_suffixes
       self.env = old_env
       self.infra_steps = old_infra_steps
+      self.luci_context = old_luci_context
 
     return _inner
 
 
-class ContextApi(RecipeApi):
+class ContextApi(recipe_api.RecipeApi):
+  _lucictx_client = recipe_api.RequireClient('lucictx')
 
   # TODO(iannucci): move implementation of these data directly into this class.
   def __init__(self, **kwargs):
     super(ContextApi, self).__init__(**kwargs)
 
     self._state = State()
+    self._test_counter = 0
+
+  def initialize(self):
+    # Add other LUCI_CONTEXT sections in the following dict to support
+    # modification through this module.
+    init_sections = {
+      'luciexe': sections_pb2.LUCIExe,
+    }
+    ctx = self._lucictx_client.context
+    for section_key, section_msg_class in init_sections.iteritems():
+      if section_key in ctx:
+        self._state.luci_context[section_key] = (
+            jsonpb.ParseDict(ctx[section_key],
+                             section_msg_class(),
+                             ignore_unknown_fields=True))
 
   @contextmanager
   def __call__(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None,
-               infra_steps=None):
+               infra_steps=None, luciexe=None):
     """Allows adjustment of multiple context values in a single call.
 
     Args:
@@ -91,6 +113,9 @@ class ContextApi(RecipeApi):
       * infra_steps (bool) - if steps in this context should be considered
         infrastructure steps. On failure, these will raise InfraFailure
         exceptions instead of StepFailure exceptions.
+      * luciexe (section_pb2.LUCIExe) - The override value for 'luciexe' section
+        in LUCI_CONTEXT. This is currently used to modify the `cache_dir` for
+        all launched LUCI Executable (via `api.step.sub_build(...)`).
 
     Environmental Variable Overrides:
 
@@ -159,6 +184,9 @@ class ContextApi(RecipeApi):
                             'only %%(ENVVAR)s allowed: %r') % (val,))
       new[key] = val
 
+    def _override(key, val, new):
+      new[key] = val
+
     if cwd is not None:
       check_type('cwd', cwd, Path)
       _push('cwd', cwd)
@@ -166,6 +194,21 @@ class ContextApi(RecipeApi):
     if infra_steps is not None:
       check_type('infra_steps', infra_steps, bool)
       _push('infra_steps', infra_steps)
+
+    section_pb_values = {
+      key: val for (key, val) in (('luciexe', luciexe),)
+      if val is not None
+    }
+    if section_pb_values:
+      _add_to_context('luci_context', section_pb_values, _override)
+      env = {} if env is None else dict(env)
+      if self._test_data.enabled:
+        self._test_counter += 1
+        env[self._lucictx_client.ENV_KEY] = (
+          '/path/to/lucictx_%d.json' % self._test_counter)
+      else: # pragma: no cover
+        env[self._lucictx_client.ENV_KEY] = (
+          self._lucictx_client.new_context(**section_pb_values))
 
     _add_to_context('env_prefixes', env_prefixes, _as_env_prefixes)
 
@@ -239,3 +282,13 @@ class ContextApi(RecipeApi):
     **Returns (bool)** - True iff steps are currently considered infra steps.
     """
     return self._state.infra_steps
+
+  @property
+  def luciexe(self):
+    """Returns the current value (sections_pb2.LUCIExe) of luciexe section in
+    the current LUCI_CONTEXT. Returns None if luciexe is not defined."""
+    ret = None
+    if 'luciexe' in self._state.luci_context:
+      ret = sections_pb2.LUCIExe()
+      ret.CopyFrom(self._state.luci_context['luciexe'])
+    return ret

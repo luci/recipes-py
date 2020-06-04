@@ -204,6 +204,7 @@ class TestData(BaseTestData):
     self.name = name
     self.properties = {}  # key -> val
     self.environ = {}  # key -> val
+    self.luci_context = {}  # key -> val
     self.mod_data = defaultdict(ModuleTestData)
     self.step_data = defaultdict(StepTestData)
     self.expected_exception = None
@@ -221,6 +222,9 @@ class TestData(BaseTestData):
 
     ret.environ.update(self.environ)
     ret.environ.update(other.environ)
+
+    # Override each section value instead of merging
+    combineify('luci_context', ret, self, other, overwrite=True)
 
     combineify('mod_data', ret, self, other)
     combineify('step_data', ret, self, other)
@@ -266,6 +270,7 @@ class TestData(BaseTestData):
       'name': self.name,
       'properties': self.properties,
       'environ': self.environ,
+      'luci_context': self.luci_context,
       'mod_data': dict(self.mod_data.iteritems()),
       'step_data': dict(self.step_data.iteritems()),
       'expected_exception': self.expected_exception,
@@ -425,24 +430,27 @@ class RecipeTestApi(object):
   Every test in GenTests(api) takes the form:
     yield <instance of TestData>
 
-  There are 4 basic pieces to TestData:
-    name       - The name of the test.
-    properties - Dictionary which is used as the properties for this test.
-                 You may use protobuf message objects as part of the dictionary
-                 and they'll be expanded to their JSON dictionary
-                 representation.
-    environ    - Single-level key-value dictionary which is used as the
-                 environment variables for this test.
-    mod_data   - Module-specific testing data (see the platform module for a
-                 good example). This is testing data which is only used once at
-                 the start of the execution of the recipe. Modules should
-                 provide methods to get their specific test information. See
-                 the platform module's test_api for a good example of this.
-    step_data  - Step-specific data. There are two major components to this.
-        retcode          - The return code of the step
-        placeholder_data - A mapping from placeholder name to the
-                           PlaceholderTestData object in the step.
-        stdout, stderr   - PlaceholderTestData objects for stdout and stderr.
+  There are 6 basic pieces to TestData:
+    name          - The name of the test.
+    properties    - Dictionary which is used as the properties for this test.
+                    You may use protobuf message objects as part of the
+                    dictionary and they'll be expanded to their JSON dictionary
+                    representation.
+    environ       - Single-level key-value dictionary which is used as the
+                    environment variables for this test.
+    luci_context  - Dictionary (mapping from section key to its proto value
+                    serialized in dict) which is used as the initial
+                    LUCI_CONTEXT value for this test.
+    mod_data      - Module-specific testing data (see the platform module for a
+                    good example). This is testing data which is only used once
+                    at the start of the execution of the recipe. Modules should
+                    provide methods to get their specific test information. See
+                    the platform module's test_api for a good example of this.
+    step_data     - Step-specific data. There are two major components to this.
+          retcode          - The return code of the step
+          placeholder_data - A mapping from placeholder name to the
+                             PlaceholderTestData object in the step.
+          stdout, stderr   - PlaceholderTestData objects for stdout and stderr.
 
   TestData objects are concatenatable, so it's convenient to phrase test cases
   as a series of added TestData objects. For example:
@@ -451,6 +459,10 @@ class RecipeTestApi(object):
       yield (
         api.test('try_win64') +
         api.properties.tryserver(power_level=9001) +
+        api.context.luci_context(
+          luciexe=sections_pb2.LUCIExe(cache_dir='/a/b/c'),
+          resultdb=sections_pb2.ResultDB(current_invocation=...)
+        ) +
         api.platform('win', 64) +
         api.step_data(
           'some_step',
