@@ -24,9 +24,8 @@ except ImportError:
 if sys.platform == "win32":
   from ctypes import GetLastError
 
-
-_StreamParamsBase = collections.namedtuple('_StreamParamsBase',
-    ('name', 'type', 'content_type', 'tags'))
+_StreamParamsBase = collections.namedtuple(
+    '_StreamParamsBase', ('name', 'type', 'content_type', 'tags'))
 
 
 # Magic number at the beginning of a Butler stream
@@ -67,7 +66,7 @@ class StreamParams(_StreamParamsBase):
     if self.tags is not None:
       if not isinstance(self.tags, collections.Mapping):
         raise ValueError('Invalid tags type (%s)' % (self.tags,))
-      for k, v in self.tags.iteritems():
+      for k, v in self.tags.items():
         streamname.validate_tag(k, v)
 
   def to_json(self):
@@ -88,6 +87,7 @@ class StreamParams(_StreamParamsBase):
     def _maybe_add(key, value):
       if value is not None:
         obj[key] = value
+
     _maybe_add('contentType', self.content_type)
     _maybe_add('tags', self.tags)
 
@@ -412,8 +412,8 @@ class StreamClient(object):
         type=StreamParams.TEXT,
         content_type=content_type,
         tags=tags)
-    return self._BasicStream(self, params, self.new_connection(
-        params, for_process))
+    return self._BasicStream(self, params,
+                             self.new_connection(params, for_process))
 
   @contextlib.contextmanager
   def binary(self, name, **kwargs):
@@ -460,8 +460,8 @@ class StreamClient(object):
         type=StreamParams.BINARY,
         content_type=content_type,
         tags=tags)
-    return self._BasicStream(self, params, self.new_connection(
-        params, for_process))
+    return self._BasicStream(self, params,
+                             self.new_connection(params, for_process))
 
   @contextlib.contextmanager
   def datagram(self, name, **kwargs):
@@ -504,8 +504,8 @@ class StreamClient(object):
         type=StreamParams.DATAGRAM,
         content_type=content_type,
         tags=tags)
-    return self._DatagramStream(self, params, self.new_connection(
-        params, False))
+    return self._DatagramStream(self, params,
+                                self.new_connection(params, False))
 
 
 class _NamedPipeStreamClient(StreamClient):
@@ -536,7 +536,8 @@ class _NamedPipeStreamClient(StreamClient):
       except (OSError, IOError):
         if GetLastError() != self.ERROR_PIPE_BUSY:
           raise
-      time.sleep(0.001) # 1ms
+      time.sleep(0.001)  # 1ms
+
 
 _default_registry.register_protocol('net.pipe', _NamedPipeStreamClient)
 

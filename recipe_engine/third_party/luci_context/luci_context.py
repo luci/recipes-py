@@ -22,11 +22,13 @@ import sys
 import tempfile
 import threading
 
+import six
+
 _LOGGER = logging.getLogger(__name__)
 
-# _ENV_KEY is the environment variable that we look for to find out where the
+# ENV_KEY is the environment variable that we look for to find out where the
 # LUCI context file is.
-_ENV_KEY = 'LUCI_CONTEXT'
+ENV_KEY = 'LUCI_CONTEXT'
 
 # _CUR_CONTEXT contains the cached LUCI Context that is currently available to
 # read. A value of None indicates that the value has not yet been populated.
@@ -39,33 +41,46 @@ _WRITE_LOCK = threading.RLock()
 
 
 @contextlib.contextmanager
-def _tf(data, data_raw=False, workdir=None):
-  tf = tempfile.NamedTemporaryFile(prefix='luci_ctx.', suffix='.json',
-                                   delete=False, dir=workdir)
+def _tf(data, data_raw=False, leak=False, workdir=None):
+  tf = tempfile.NamedTemporaryFile(
+      mode='w', prefix='luci_ctx.', suffix='.json', delete=False, dir=workdir)
   _LOGGER.debug('Writing LUCI_CONTEXT file %r', tf.name)
   try:
     if not data_raw:
-      json.dump(data, tf)
+      json.dump(_to_encodable(data), tf)
     else:
       # for testing, allows malformed json
       tf.write(data)
     tf.close()  # close it so that winders subprocesses can read it.
     yield tf.name
   finally:
-    try:
-      os.unlink(tf.name)
-    except OSError as ex:
-      _LOGGER.error(
-        'Failed to delete written LUCI_CONTEXT file %r: %s', tf.name, ex)
+    if not leak:
+      try:
+        os.unlink(tf.name)
+      except OSError as ex:
+        _LOGGER.error('Failed to delete written LUCI_CONTEXT file %r: %s',
+                      tf.name, ex)
 
 
 def _to_utf8(obj):
   if isinstance(obj, dict):
-    return {_to_utf8(key): _to_utf8(value) for key, value in obj.iteritems()}
+    return {_to_utf8(key): _to_utf8(value) for key, value in obj.items()}
   if isinstance(obj, list):
     return [_to_utf8(item) for item in obj]
-  if isinstance(obj, unicode):
+  if six.PY2 and isinstance(obj, six.text_type):
     return obj.encode('utf-8')
+  return obj
+
+
+def _to_encodable(obj):
+  if isinstance(obj, dict):
+    return {
+        _to_encodable(key): _to_encodable(value) for key, value in obj.items()
+    }
+  if isinstance(obj, list):
+    return [_to_encodable(item) for item in obj]
+  if isinstance(obj, six.binary_type):
+    return obj.decode('utf-8')
   return obj
 
 
@@ -82,7 +97,7 @@ def _check_ok(data):
     return False
 
   bad = False
-  for k, v in data.iteritems():
+  for k, v in data.items():
     if not isinstance(v, dict):
       bad = True
       _LOGGER.error(
@@ -96,9 +111,10 @@ def _initial_load():
   global _CUR_CONTEXT
   to_assign = {}
 
-  ctx_path = os.environ.get(_ENV_KEY)
+  ctx_path = os.environ.get(ENV_KEY)
   if ctx_path:
-    ctx_path = ctx_path.decode(sys.getfilesystemencoding())
+    if six.PY2:
+      ctx_path = ctx_path.decode(sys.getfilesystemencoding())
     _LOGGER.debug('Loading LUCI_CONTEXT: %r', ctx_path)
     try:
       with open(ctx_path, 'r') as f:
@@ -126,7 +142,7 @@ def _read_full():
 
 def _mutate(section_values):
   new_val = read_full()
-  for section, value in section_values.iteritems():
+  for section, value in section_values.items():
     if value is None:
       new_val.pop(section, None)
     elif isinstance(value, dict):
@@ -175,7 +191,7 @@ def read(section_key):
 
 
 @contextlib.contextmanager
-def write(_tmpdir=None, **section_values):
+def write(_leak=False, _tmpdir=None, **section_values):
   """Write is a contextmanager which will write all of the provided section
   details to a new context, copying over the values from any unmentioned
   sections. The new context file will be set in os.environ. When the
@@ -192,6 +208,8 @@ def write(_tmpdir=None, **section_values):
   done, this function raises an exception.
 
   Args:
+    _leak (bool) - If true, the new LUCI_CONTEXT file won't be deleted after
+      contextmanager exits.
     _tmpdir (str) - an optional directory to use for the newly written
       LUCI_CONTEXT file.
     section_values (str -> value) - A mapping of section_key to the new value
@@ -200,7 +218,7 @@ def write(_tmpdir=None, **section_values):
 
   Raises:
     MultipleLUCIContextException if called from multiple threads
-    simulataneously.
+    simultaneously.
 
   Example:
     Given a LUCI_CONTEXT of:
@@ -228,26 +246,28 @@ def write(_tmpdir=None, **section_values):
   if not got_lock:
     raise MultipleLUCIContextException()
   try:
-    with _tf(new_val, workdir=_tmpdir) as name:
+    with _tf(new_val, leak=_leak, workdir=_tmpdir) as name:
       try:
         old_value = _CUR_CONTEXT
-        old_envvar = os.environ.get(_ENV_KEY, None)
-
-        os.environ[_ENV_KEY] = name.encode(sys.getfilesystemencoding())
+        old_envvar = os.environ.get(ENV_KEY, None)
+        if six.PY2:
+          os.environ[ENV_KEY] = name.encode(sys.getfilesystemencoding())
+        else:
+          os.environ[ENV_KEY] = name
         _CUR_CONTEXT = new_val
         yield
       finally:
         _CUR_CONTEXT = old_value
         if old_envvar is None:
-          del os.environ[_ENV_KEY]
+          del os.environ[ENV_KEY]
         else:
-          os.environ[_ENV_KEY] = old_envvar
+          os.environ[ENV_KEY] = old_envvar
   finally:
     _WRITE_LOCK.release()
 
 
 @contextlib.contextmanager
-def stage(_tmpdir=None, **section_values):
+def stage(_leak=False, _tmpdir=None, **section_values):
   """Prepares and writes new LUCI_CONTEXT file, but doesn't replace the env var.
 
   This is useful when launching new process asynchronously in new LUCI_CONTEXT
@@ -260,5 +280,5 @@ def stage(_tmpdir=None, **section_values):
   if not section_values:
     yield None
     return
-  with _tf(_mutate(section_values), workdir=_tmpdir) as name:
+  with _tf(_mutate(section_values), leak=_leak, workdir=_tmpdir) as name:
     yield name
