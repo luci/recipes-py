@@ -20,6 +20,8 @@ DEPS = [
 EXECUTION_TIMEOUT_SECS = 3600
 
 def RunSteps(api):
+  api.swarming.ensure_client()
+
   # Create a new Swarming task request.
   request = (api.swarming.task_request().
       with_name('recipes-go').

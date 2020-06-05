@@ -1097,6 +1097,9 @@ class SwarmingApi(recipe_api.RecipeApi):
     return self.m.cipd.ensure_tool('infra/tools/luci/swarming/${platform}',
                                    self._version)
 
+  def ensure_client(self):
+    self._client
+
   def _run(self, name, cmd, step_test_data=None):
     """Return an swarming command step.
 
