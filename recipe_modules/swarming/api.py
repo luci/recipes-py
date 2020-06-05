@@ -900,7 +900,7 @@ class TaskResult(object):
             namespace=outputs_ref['namespace'],
         )
 
-      self._output = raw_results['output']
+      self._output = raw_results.get('output')
       if self._output_dir and raw_results.get('outputs'):
         self._outputs = {
             output: api.path.join(self._output_dir, output)
@@ -956,6 +956,8 @@ class TaskResult(object):
   @property
   def _trimmed_output(self):
     """Returns a limited output for use in exception."""
+    assert self._output is not None, (
+        'The task was run without collecting the output')
     limit = 1000
     out = self._output.strip()
     if len(out) <= limit:
@@ -1207,8 +1209,8 @@ class SwarmingApi(recipe_api.RecipeApi):
 
     return metadata_objs
 
-  def collect(self, name, tasks, output_dir=None, timeout=None, eager=False,
-              verbose=False):
+  def collect(self, name, tasks, output_dir=None, task_output_stdout='json',
+              timeout=None, eager=False, verbose=False):
     """Waits on a set of Swarming tasks.
 
     Args:
@@ -1218,6 +1220,8 @@ class SwarmingApi(recipe_api.RecipeApi):
       output_dir (Path|None): Where to download the tasks' isolated outputs. If
         set to None, they will not be downloaded; else, a given task's outputs
         will be downloaded to output_dir/<task id>/.
+      task_output_stdout (str): Where to output each task's output. Must be one
+        of 'none', 'json', 'console' or 'all'.
       timeout (str|None): The duration for which to wait on the tasks to finish.
         If set to None, there will be no timeout; else, timeout follows the
         format described by https://golang.org/pkg/time/#ParseDuration.
@@ -1230,6 +1234,7 @@ class SwarmingApi(recipe_api.RecipeApi):
     """
     assert self._server
     assert isinstance(tasks, list)
+    assert task_output_stdout in ('none', 'json', 'console', 'all')
     cmd = [
         'collect',
         '-server',
@@ -1237,7 +1242,7 @@ class SwarmingApi(recipe_api.RecipeApi):
         '-task-summary-json',
         self.m.json.output(),
         '-task-output-stdout',
-        'json',
+        task_output_stdout,
     ]
     if output_dir:
       cmd.extend(['-output-dir', output_dir])
@@ -1277,7 +1282,7 @@ class SwarmingApi(recipe_api.RecipeApi):
 
     # Update presentation on collect to reflect bot results.
     for result in parsed_results:
-      if result.output:
+      if result.output is not None:
         log_name = 'task stdout+stderr: %s' % result.name
         step.presentation.logs[log_name] = result.output.splitlines()
       if result.isolated_outputs:
