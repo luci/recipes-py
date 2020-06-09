@@ -189,7 +189,7 @@ class LUCIStepStream(StreamEngine.StepStream):
       self._step.name.replace('|', '/'), 'l')
 
     if self._merge_step:
-      stream_name = '/'.join((self._stream_namespace, 'build.proto'))
+      stream_name = '/'.join((self._stream_namespace, 'u', 'build.proto'))
       if stream_name in self._CREATED_LOGS:
         raise ValueError("Duplicated build.proto stream %s" % (stream_name,))
       self._CREATED_LOGS.add(stream_name)
