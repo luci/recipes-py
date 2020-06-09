@@ -256,7 +256,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return util.tags(**tags)
 
   def add_tags_to_current_build(self, tags):
-    """EXPERIMENTAL: Adds arbitrary tags during the runtime of a build.
+    """Adds arbitrary tags during the runtime of a build.
 
     Args:
     * tags(list of common_pb2.StringPair): tags to add. May contain duplicates.
@@ -277,7 +277,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       self._runtime_tags)
 
   def hide_current_build_in_gerrit(self):
-    """EXPERIMENTAL: Hides the build in UI"""
+    """Hides the build in UI"""
     self.add_tags_to_current_build(self.tags(**{'hide-in-gerrit': 'pointless'}))
 
   @property

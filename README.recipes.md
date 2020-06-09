@@ -280,7 +280,7 @@ A module for interacting with buildbucket.
 
 &mdash; **def [add\_tags\_to\_current\_build](/recipe_modules/buildbucket/api.py#258)(self, tags):**
 
-EXPERIMENTAL: Adds arbitrary tags during the runtime of a build.
+Adds arbitrary tags during the runtime of a build.
 
 Args:
 * tags(list of common_pb2.StringPair): tags to add. May contain duplicates.
@@ -431,7 +431,7 @@ Never returns None, but sub-fields may be empty.
 
 &mdash; **def [hide\_current\_build\_in\_gerrit](/recipe_modules/buildbucket/api.py#279)(self):**
 
-EXPERIMENTAL: Hides the build in UI
+Hides the build in UI
 
 &emsp; **@host.setter**<br>&mdash; **def [host](/recipe_modules/buildbucket/api.py#95)(self, value):**
 
