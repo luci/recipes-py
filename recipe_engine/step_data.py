@@ -187,15 +187,6 @@ class StepData(object):
     return '|'.join(self.name_tokens)
 
   @property
-  def step(self):
-    """DEPRECATED: For backward compatibility only. Uses old @@@annotation@@@
-    step name.
-
-    Use .name_tokens or .name instead."""
-    # TODO(iannucci): remove this
-    return {'name': '.'.join(self.name_tokens)}
-
-  @property
   def retcode(self):
     """DEPRECATED: use .exc_result directly."""
     return self.exc_result.retcode
