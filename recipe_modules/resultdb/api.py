@@ -19,6 +19,9 @@ from . import common
 class ResultDBAPI(recipe_api.RecipeApi):
   """A module for interacting with ResultDB."""
 
+  # Maxinum number of requests in a batch RPC.
+  _BATCH_SIZE = 500
+
   # Expose serialize and deserialize functions.
 
   serialize = staticmethod(common.serialize)
@@ -94,22 +97,38 @@ class ResultDBAPI(recipe_api.RecipeApi):
       test_exonerations (list): A list of test_result_pb2.TestExoneration.
       step_name (str): name of the step.
     """
+
+    def args(test_exonerations, step_name):
+      req = recorder.BatchCreateTestExonerationsRequest(
+          invocation=self.current_invocation,
+          request_id=self.m.uuid.random(),
+      )
+      for te in test_exonerations:
+        req.requests.add(test_exoneration=te)
+
+      return [
+          step_name, 'luci.resultdb.rpc.v1.Recorder',
+          'BatchCreateTestExonerations',
+          json_format.MessageToDict(req),
+          True, lambda: self.m.raw_io.test_api.stream_output('{}')
+      ]
+
     self.assert_enabled()
+    step_name = step_name or 'resultdb.exonerate'
 
-    req = recorder.BatchCreateTestExonerationsRequest(
-        invocation=self.current_invocation,
-        request_id=self.m.uuid.random(),
-    )
-    for te in test_exonerations:
-      req.requests.add(test_exoneration=te)
+    if len(test_exonerations) <= self._BATCH_SIZE:
+      self._rpc(*args(test_exonerations, step_name))
+      return
 
-    self._rpc(
-        step_name or 'resultdb.exonerate',
-        'luci.resultdb.rpc.v1.Recorder',
-        'BatchCreateTestExonerations',
-        json_format.MessageToDict(req),
-        include_update_token=True,
-        step_test_data=lambda: self.m.raw_io.test_api.stream_output('{}'))
+    # Sends requests in batches.
+    remaining = test_exonerations
+    i = 0
+    with self.m.step.nest(step_name):
+      while remaining:
+        batch = remaining[:self._BATCH_SIZE]
+        remaining = remaining[self._BATCH_SIZE:]
+        self.m.futures.spawn(self._rpc, *args(batch, 'batch (%d)' % i))
+        i += 1
 
   def chromium_derive(self,
                       swarming_host,

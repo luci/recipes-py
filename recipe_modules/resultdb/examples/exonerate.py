@@ -4,12 +4,12 @@
 
 from recipe_engine.post_process import (DropExpectation, StepSuccess)
 
-from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.resultdb.proto.rpc.v1 import test_result as test_result_pb2
 
 DEPS = [
     'buildbucket',
     'json',
+    'properties',
     'resultdb',
     'step',
 ]
@@ -33,15 +33,24 @@ test_exonerations = [
 
 
 def RunSteps(api):
+  api.resultdb._BATCH_SIZE = api.properties.get('batch_size') or 500
   api.resultdb.exonerate(
       test_exonerations=test_exonerations,
-      step_name='exonerate without patch failures',
-  )
+      step_name='exonerate without patch failures')
 
 
 def GenTests(api):
   yield api.test(
-      'exonerate',
+      'exonerate', api.buildbucket.ci_build(),
+      api.post_process(StepSuccess, 'exonerate without patch failures'),
+      api.post_process(DropExpectation))
+
+  yield api.test(
+      'exonerate in multiple batches', api.properties(batch_size=1),
       api.buildbucket.ci_build(),
       api.post_process(StepSuccess, 'exonerate without patch failures'),
+      api.post_process(StepSuccess,
+                       'exonerate without patch failures.batch (0)'),
+      api.post_process(StepSuccess,
+                       'exonerate without patch failures.batch (1)'),
       api.post_process(DropExpectation))
