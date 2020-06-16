@@ -2721,7 +2721,7 @@ Usage:
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#303)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, allow_subannotations=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#339)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, allow_subannotations=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
 
 Returns a step dictionary which is compatible with annotator.py.
 
@@ -3749,9 +3749,9 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/step/tests/stdio.py#11)(api):**
 ### *recipes* / [step:tests/step\_call\_args](/recipe_modules/step/tests/step_call_args.py)
 
-[DEPS](/recipe_modules/step/tests/step_call_args.py#5): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/step_call_args.py#7): [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/step_call_args.py#10)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/step_call_args.py#12)(api):**
 ### *recipes* / [step:tests/step\_cost](/recipe_modules/step/tests/step_cost.py)
 
 [DEPS](/recipe_modules/step/tests/step_cost.py#7): [step](#recipe_modules-step)

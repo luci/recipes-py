@@ -300,6 +300,42 @@ class StepApi(recipe_api.RecipeApiPlain):
     """ See recipe_api.py for docs. """
     return recipe_api.defer_results
 
+  @staticmethod
+  def _validate_cmd_list(cmd):
+    """Validates cmd is a list and all args in the list have valid types."""
+    if not isinstance(cmd, list):
+      raise ValueError('cmd must be a list, got %r' % (cmd,))
+    for arg in cmd:
+      if not isinstance(arg, (int, long, basestring, Path, Placeholder)):
+        raise ValueError('Type %s is not permitted. '
+                         'cmd is %r' % (type(arg), cmd))
+
+  @staticmethod
+  def _normalize_cost(cost):
+    if not isinstance(cost, (types.NoneType, _ResourceCost)):
+      raise ValueError('cost must be a None or ResourceCost , got %r' % (cost,))
+    return cost or _ResourceCost.zero()
+
+  def _normalize_cwd(self, cwd):
+    if cwd and cwd == self.m.path['start_dir']:
+      cwd = None
+    elif cwd is not None:
+      cwd = str(cwd)
+    return cwd
+
+  def _to_env_affix(self, affix):
+    """Returns a `engine_step.EnvAffix` object constructed from input affix (
+    i.e. env_prefixes or env_suffixes; see meanings in `context` module) and
+    path separator from `path` module.
+    """
+    return self.step_client.EnvAffix(
+      mapping={
+        k: map(str, vs)
+        for k, vs in affix.iteritems()
+      },
+      pathsep=self.m.path.pathsep,
+    )
+
   @recipe_api.composite_step
   def __call__(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(),
                timeout=None, allow_subannotations=None,
@@ -356,24 +392,13 @@ class StepApi(recipe_api.RecipeApiPlain):
 
     Returns a `step_data.StepData` for the running step.
     """
-    assert isinstance(cmd, (types.NoneType, list))
-    if cmd is not None:
-      cmd = list(wrapper) + cmd
-      for x in cmd:
-        if not isinstance(x, (int, long, basestring, Path, Placeholder)):
-          raise AssertionError('Type %s is not permitted. '
-                               'cmd is %r' % (type(x), cmd))
+    cmd = [] if cmd is None else cmd
+    self._validate_cmd_list(cmd)
 
-    if cost is None:
-      cost = _ResourceCost.zero()
-    assert isinstance(cost, _ResourceCost), (
-      'cost must be a ResourceCost or None, got %r' % (cost,))
-
-    cwd = self.m.context.cwd
-    if cwd and cwd == self.m.path['start_dir']:
-      cwd = None
-    elif cwd is not None:
-      cwd = str(cwd)
+    if cmd and wrapper:
+      wrapper = list(wrapper)
+      self._validate_cmd_list(wrapper)
+      cmd = wrapper + cmd
 
     with self.m.context(env_prefixes={'PATH': self._prefix_path}):
       env_prefixes = self.m.context.env_prefixes
@@ -383,24 +408,12 @@ class StepApi(recipe_api.RecipeApiPlain):
 
     return self.step_client.run_step(self.step_client.StepConfig(
         name=name,
-        cmd=cmd or (),
-        cost=cost,
-        cwd=cwd,
+        cmd=cmd,
+        cost=self._normalize_cost(cost),
+        cwd=self._normalize_cwd(self.m.context.cwd),
         env=self.m.context.env,
-        env_prefixes=self.step_client.EnvAffix(
-          mapping={
-            k: map(str, vs)
-            for k, vs in env_prefixes.iteritems()
-          },
-          pathsep=self.m.path.pathsep,
-        ),
-        env_suffixes=self.step_client.EnvAffix(
-          mapping={
-            k: map(str, vs)
-            for k, vs in self.m.context.env_suffixes.iteritems()
-          },
-          pathsep=self.m.path.pathsep,
-        ),
+        env_prefixes=self._to_env_affix(env_prefixes),
+        env_suffixes=self._to_env_affix(self.m.context.env_suffixes),
         allow_subannotations=bool(allow_subannotations),
         timeout=timeout,
         infra_step=self.m.context.infra_step or bool(infra_step),
