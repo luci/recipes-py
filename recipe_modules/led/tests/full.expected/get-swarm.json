@@ -30,21 +30,15 @@
   {
     "cmd": [
       "[CACHE]/led/led",
-      "get-builder",
-      "chromium/try:linux-rel"
+      "get-swarm",
+      "deadbeef"
     ],
-    "name": "led get-builder",
+    "name": "led get-swarm",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@proto.output@{@@@",
-      "@@@STEP_LOG_LINE@proto.output@  \"buildbucket\": {@@@",
-      "@@@STEP_LOG_LINE@proto.output@    \"bbagent_args\": {@@@",
-      "@@@STEP_LOG_LINE@proto.output@      \"build\": {@@@",
-      "@@@STEP_LOG_LINE@proto.output@        \"builder\": {@@@",
-      "@@@STEP_LOG_LINE@proto.output@          \"bucket\": \"try\", @@@",
-      "@@@STEP_LOG_LINE@proto.output@          \"builder\": \"linux-rel\", @@@",
-      "@@@STEP_LOG_LINE@proto.output@          \"project\": \"chromium\"@@@",
-      "@@@STEP_LOG_LINE@proto.output@        }@@@",
-      "@@@STEP_LOG_LINE@proto.output@      }@@@",
+      "@@@STEP_LOG_LINE@proto.output@  \"swarming\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@    \"task\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@      \"task_id\": \"deadbeef\"@@@",
       "@@@STEP_LOG_LINE@proto.output@    }@@@",
       "@@@STEP_LOG_LINE@proto.output@  }@@@",
       "@@@STEP_LOG_LINE@proto.output@}@@@",
@@ -58,17 +52,12 @@
       "https://fake.url/c/project/123/+/456"
     ],
     "name": "led edit-cr-cl",
-    "stdin": "{\n\"buildbucket\": {\n\"bbagent_args\": {\n\"build\": {\n\"builder\": {\n\"bucket\": \"try\", \n\"builder\": \"linux-rel\", \n\"project\": \"chromium\"\n}\n}\n}\n}\n}",
+    "stdin": "{\n\"swarming\": {\n\"task\": {\n\"task_id\": \"deadbeef\"\n}\n}\n}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@proto.output@{@@@",
       "@@@STEP_LOG_LINE@proto.output@  \"buildbucket\": {@@@",
       "@@@STEP_LOG_LINE@proto.output@    \"bbagent_args\": {@@@",
       "@@@STEP_LOG_LINE@proto.output@      \"build\": {@@@",
-      "@@@STEP_LOG_LINE@proto.output@        \"builder\": {@@@",
-      "@@@STEP_LOG_LINE@proto.output@          \"bucket\": \"try\", @@@",
-      "@@@STEP_LOG_LINE@proto.output@          \"builder\": \"linux-rel\", @@@",
-      "@@@STEP_LOG_LINE@proto.output@          \"project\": \"chromium\"@@@",
-      "@@@STEP_LOG_LINE@proto.output@        }, @@@",
       "@@@STEP_LOG_LINE@proto.output@        \"input\": {@@@",
       "@@@STEP_LOG_LINE@proto.output@          \"gerrit_changes\": [@@@",
       "@@@STEP_LOG_LINE@proto.output@            {@@@",
@@ -94,17 +83,12 @@
       "https://fake.url/c/project/other/+/19/2"
     ],
     "name": "led edit-cr-cl (2)",
-    "stdin": "{\n\"buildbucket\": {\n\"bbagent_args\": {\n\"build\": {\n\"builder\": {\n\"bucket\": \"try\", \n\"builder\": \"linux-rel\", \n\"project\": \"chromium\"\n}, \n\"input\": {\n\"gerrit_changes\": [\n{\n\"change\": \"456\", \n\"host\": \"fake.url\", \n\"patchset\": \"1337\", \n\"project\": \"project/123\"\n}\n]\n}\n}\n}\n}\n}",
+    "stdin": "{\n\"buildbucket\": {\n\"bbagent_args\": {\n\"build\": {\n\"input\": {\n\"gerrit_changes\": [\n{\n\"change\": \"456\", \n\"host\": \"fake.url\", \n\"patchset\": \"1337\", \n\"project\": \"project/123\"\n}\n]\n}\n}\n}\n}\n}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@proto.output@{@@@",
       "@@@STEP_LOG_LINE@proto.output@  \"buildbucket\": {@@@",
       "@@@STEP_LOG_LINE@proto.output@    \"bbagent_args\": {@@@",
       "@@@STEP_LOG_LINE@proto.output@      \"build\": {@@@",
-      "@@@STEP_LOG_LINE@proto.output@        \"builder\": {@@@",
-      "@@@STEP_LOG_LINE@proto.output@          \"bucket\": \"try\", @@@",
-      "@@@STEP_LOG_LINE@proto.output@          \"builder\": \"linux-rel\", @@@",
-      "@@@STEP_LOG_LINE@proto.output@          \"project\": \"chromium\"@@@",
-      "@@@STEP_LOG_LINE@proto.output@        }, @@@",
       "@@@STEP_LOG_LINE@proto.output@        \"input\": {@@@",
       "@@@STEP_LOG_LINE@proto.output@          \"gerrit_changes\": [@@@",
       "@@@STEP_LOG_LINE@proto.output@            {@@@",
@@ -136,17 +120,12 @@
       "https://fake.url/c/project/123/+/456/1337"
     ],
     "name": "led edit-cr-cl (3)",
-    "stdin": "{\n\"buildbucket\": {\n\"bbagent_args\": {\n\"build\": {\n\"builder\": {\n\"bucket\": \"try\", \n\"builder\": \"linux-rel\", \n\"project\": \"chromium\"\n}, \n\"input\": {\n\"gerrit_changes\": [\n{\n\"change\": \"456\", \n\"host\": \"fake.url\", \n\"patchset\": \"1337\", \n\"project\": \"project/123\"\n}, \n{\n\"change\": \"19\", \n\"host\": \"fake.url\", \n\"patchset\": \"2\", \n\"project\": \"project/other\"\n}\n]\n}\n}\n}\n}\n}",
+    "stdin": "{\n\"buildbucket\": {\n\"bbagent_args\": {\n\"build\": {\n\"input\": {\n\"gerrit_changes\": [\n{\n\"change\": \"456\", \n\"host\": \"fake.url\", \n\"patchset\": \"1337\", \n\"project\": \"project/123\"\n}, \n{\n\"change\": \"19\", \n\"host\": \"fake.url\", \n\"patchset\": \"2\", \n\"project\": \"project/other\"\n}\n]\n}\n}\n}\n}\n}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@proto.output@{@@@",
       "@@@STEP_LOG_LINE@proto.output@  \"buildbucket\": {@@@",
       "@@@STEP_LOG_LINE@proto.output@    \"bbagent_args\": {@@@",
       "@@@STEP_LOG_LINE@proto.output@      \"build\": {@@@",
-      "@@@STEP_LOG_LINE@proto.output@        \"builder\": {@@@",
-      "@@@STEP_LOG_LINE@proto.output@          \"bucket\": \"try\", @@@",
-      "@@@STEP_LOG_LINE@proto.output@          \"builder\": \"linux-rel\", @@@",
-      "@@@STEP_LOG_LINE@proto.output@          \"project\": \"chromium\"@@@",
-      "@@@STEP_LOG_LINE@proto.output@        }, @@@",
       "@@@STEP_LOG_LINE@proto.output@        \"input\": {@@@",
       "@@@STEP_LOG_LINE@proto.output@          \"gerrit_changes\": [@@@",
       "@@@STEP_LOG_LINE@proto.output@            {@@@",
@@ -172,17 +151,12 @@
       "foobar"
     ],
     "name": "led edit",
-    "stdin": "{\n\"buildbucket\": {\n\"bbagent_args\": {\n\"build\": {\n\"builder\": {\n\"bucket\": \"try\", \n\"builder\": \"linux-rel\", \n\"project\": \"chromium\"\n}, \n\"input\": {\n\"gerrit_changes\": [\n{\n\"change\": \"19\", \n\"host\": \"fake.url\", \n\"patchset\": \"2\", \n\"project\": \"project/other\"\n}\n]\n}\n}\n}\n}\n}",
+    "stdin": "{\n\"buildbucket\": {\n\"bbagent_args\": {\n\"build\": {\n\"input\": {\n\"gerrit_changes\": [\n{\n\"change\": \"19\", \n\"host\": \"fake.url\", \n\"patchset\": \"2\", \n\"project\": \"project/other\"\n}\n]\n}\n}\n}\n}\n}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@proto.output@{@@@",
       "@@@STEP_LOG_LINE@proto.output@  \"buildbucket\": {@@@",
       "@@@STEP_LOG_LINE@proto.output@    \"bbagent_args\": {@@@",
       "@@@STEP_LOG_LINE@proto.output@      \"build\": {@@@",
-      "@@@STEP_LOG_LINE@proto.output@        \"builder\": {@@@",
-      "@@@STEP_LOG_LINE@proto.output@          \"bucket\": \"try\", @@@",
-      "@@@STEP_LOG_LINE@proto.output@          \"builder\": \"linux-rel\", @@@",
-      "@@@STEP_LOG_LINE@proto.output@          \"project\": \"chromium\"@@@",
-      "@@@STEP_LOG_LINE@proto.output@        }, @@@",
       "@@@STEP_LOG_LINE@proto.output@        \"input\": {@@@",
       "@@@STEP_LOG_LINE@proto.output@          \"gerrit_changes\": [@@@",
       "@@@STEP_LOG_LINE@proto.output@            {@@@",
@@ -207,17 +181,12 @@
       "edit-recipe-bundle"
     ],
     "name": "led edit-recipe-bundle",
-    "stdin": "{\n\"buildbucket\": {\n\"bbagent_args\": {\n\"build\": {\n\"builder\": {\n\"bucket\": \"try\", \n\"builder\": \"linux-rel\", \n\"project\": \"chromium\"\n}, \n\"input\": {\n\"gerrit_changes\": [\n{\n\"change\": \"19\", \n\"host\": \"fake.url\", \n\"patchset\": \"2\", \n\"project\": \"project/other\"\n}\n]\n}\n}\n}, \n\"name\": \"foobar\"\n}\n}",
+    "stdin": "{\n\"buildbucket\": {\n\"bbagent_args\": {\n\"build\": {\n\"input\": {\n\"gerrit_changes\": [\n{\n\"change\": \"19\", \n\"host\": \"fake.url\", \n\"patchset\": \"2\", \n\"project\": \"project/other\"\n}\n]\n}\n}\n}, \n\"name\": \"foobar\"\n}\n}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@proto.output@{@@@",
       "@@@STEP_LOG_LINE@proto.output@  \"buildbucket\": {@@@",
       "@@@STEP_LOG_LINE@proto.output@    \"bbagent_args\": {@@@",
       "@@@STEP_LOG_LINE@proto.output@      \"build\": {@@@",
-      "@@@STEP_LOG_LINE@proto.output@        \"builder\": {@@@",
-      "@@@STEP_LOG_LINE@proto.output@          \"bucket\": \"try\", @@@",
-      "@@@STEP_LOG_LINE@proto.output@          \"builder\": \"linux-rel\", @@@",
-      "@@@STEP_LOG_LINE@proto.output@          \"project\": \"chromium\"@@@",
-      "@@@STEP_LOG_LINE@proto.output@        }, @@@",
       "@@@STEP_LOG_LINE@proto.output@        \"input\": {@@@",
       "@@@STEP_LOG_LINE@proto.output@          \"gerrit_changes\": [@@@",
       "@@@STEP_LOG_LINE@proto.output@            {@@@",
@@ -242,7 +211,7 @@
   {
     "cmd": [
       "echo",
-      "{\n\"buildbucket\": {\n\"bbagent_args\": {\n\"build\": {\n\"builder\": {\n\"bucket\": \"try\", \n\"builder\": \"linux-rel\", \n\"project\": \"chromium\"\n}, \n\"input\": {\n\"gerrit_changes\": [\n{\n\"change\": \"19\", \n\"host\": \"fake.url\", \n\"patchset\": \"2\", \n\"project\": \"project/other\"\n}\n]\n}\n}\n}, \n\"name\": \"foobar\"\n}, \n\"user_payload\": {\n\"digest\": \"7019068b85f1a776d6560910f5214ba88e2f0cbe\"\n}\n}"
+      "{\n\"buildbucket\": {\n\"bbagent_args\": {\n\"build\": {\n\"input\": {\n\"gerrit_changes\": [\n{\n\"change\": \"19\", \n\"host\": \"fake.url\", \n\"patchset\": \"2\", \n\"project\": \"project/other\"\n}\n]\n}\n}\n}, \n\"name\": \"foobar\"\n}, \n\"user_payload\": {\n\"digest\": \"7019068b85f1a776d6560910f5214ba88e2f0cbe\"\n}\n}"
     ],
     "name": "print pre-launch"
   },
@@ -252,7 +221,7 @@
       "launch"
     ],
     "name": "led launch",
-    "stdin": "{\n\"buildbucket\": {\n\"bbagent_args\": {\n\"build\": {\n\"builder\": {\n\"bucket\": \"try\", \n\"builder\": \"linux-rel\", \n\"project\": \"chromium\"\n}, \n\"input\": {\n\"gerrit_changes\": [\n{\n\"change\": \"19\", \n\"host\": \"fake.url\", \n\"patchset\": \"2\", \n\"project\": \"project/other\"\n}\n]\n}\n}\n}, \n\"name\": \"foobar\"\n}, \n\"user_payload\": {\n\"digest\": \"7019068b85f1a776d6560910f5214ba88e2f0cbe\"\n}\n}",
+    "stdin": "{\n\"buildbucket\": {\n\"bbagent_args\": {\n\"build\": {\n\"input\": {\n\"gerrit_changes\": [\n{\n\"change\": \"19\", \n\"host\": \"fake.url\", \n\"patchset\": \"2\", \n\"project\": \"project/other\"\n}\n]\n}\n}\n}, \n\"name\": \"foobar\"\n}, \n\"user_payload\": {\n\"digest\": \"7019068b85f1a776d6560910f5214ba88e2f0cbe\"\n}\n}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"swarming\": {@@@",

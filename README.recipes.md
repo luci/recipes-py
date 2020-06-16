@@ -111,6 +111,7 @@
   * [json:examples/full](#recipes-json_examples_full)
   * [json:tests/add_json_log](#recipes-json_tests_add_json_log)
   * [led:tests/full](#recipes-led_tests_full)
+  * [led:tests/no_exist](#recipes-led_tests_no_exist)
   * [milo:examples/full](#recipes-milo_examples_full)
   * [path:examples/full](#recipes-path_examples_full)
   * [platform:examples/full](#recipes-platform_examples_full)
@@ -1806,9 +1807,9 @@ Returns a step that reads a JSON file.
 This method is deprecated. Use file.read_json instead.
 ### *recipe_modules* / [led](/recipe_modules/led)
 
-[DEPS](/recipe_modules/led/__init__.py#5): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/led/__init__.py#5): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
 
-#### **class [LedApi](/recipe_modules/led/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#912)):**
+#### **class [LedApi](/recipe_modules/led/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#912)):**
 
 Interface to the led tool.
 
@@ -1824,17 +1825,19 @@ The main interface this module provides is a direct call to the led binary:
 
 See the led binary for full documentation of commands.
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/led/api.py#94)(self, \*cmd):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/led/api.py#141)(self, \*cmd):**
 
 Runs led with the given arguments. Wraps result in a `LedResult`.
 
-&emsp; **@property**<br>&mdash; **def [cipd\_input](/recipe_modules/led/api.py#81)(self):**
+&emsp; **@property**<br>&mdash; **def [cipd\_input](/recipe_modules/led/api.py#128)(self):**
 
 The versioned CIPD package containing the recipes code being run.
 
 If set, it will be an `InputProperties.CIPDInput` protobuf; otherwise None.
 
-&mdash; **def [inject\_input\_recipes](/recipe_modules/led/api.py#98)(self, led_result):**
+&mdash; **def [initialize](/recipe_modules/led/api.py#90)(self):**
+
+&mdash; **def [inject\_input\_recipes](/recipe_modules/led/api.py#145)(self, led_result):**
 
 Sets the version of recipes used by led to correspond to the version
 currently being used.
@@ -1843,21 +1846,21 @@ If neither the `isolated_input` nor the `cipd_input` property is set,
 this is a no-op.
 
 Args:
-  led_result: The `LedResult` whose stdout will be passed into the edit
-    command.
+  led_result: The `LedResult` whose job.Definition will be passed into the
+    edit command.
 
-&emsp; **@property**<br>&mdash; **def [isolated\_input](/recipe_modules/led/api.py#72)(self):**
+&emsp; **@property**<br>&mdash; **def [isolated\_input](/recipe_modules/led/api.py#119)(self):**
 
 The location of the isolate containing the recipes code being run.
 
 If set, it will be an `InputProperties.IsolatedInput` protobuf;
 otherwise, None.
 
-&emsp; **@property**<br>&mdash; **def [launched\_by\_led](/recipe_modules/led/api.py#59)(self):**
+&emsp; **@property**<br>&mdash; **def [launched\_by\_led](/recipe_modules/led/api.py#106)(self):**
 
 Whether the current build is a led job.
 
-&emsp; **@property**<br>&mdash; **def [run\_id](/recipe_modules/led/api.py#64)(self):**
+&emsp; **@property**<br>&mdash; **def [run\_id](/recipe_modules/led/api.py#111)(self):**
 
 A unique string identifier for this led job.
 
@@ -3604,9 +3607,14 @@ This tests metadata features of the Future object.
 &mdash; **def [RunSteps](/recipe_modules/json/tests/add_json_log.py#10)(api):**
 ### *recipes* / [led:tests/full](/recipe_modules/led/tests/full.py)
 
-[DEPS](/recipe_modules/led/tests/full.py#5): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/led/tests/full.py#13): [buildbucket](#recipe_modules-buildbucket), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/led/tests/full.py#21)(api, child_properties):**
+&mdash; **def [RunSteps](/recipe_modules/led/tests/full.py#29)(api, get_cmd, child_properties, sloppy_child_properties, do_bogus_edits):**
+### *recipes* / [led:tests/no\_exist](/recipe_modules/led/tests/no_exist.py)
+
+[DEPS](/recipe_modules/led/tests/no_exist.py#5): [led](#recipe_modules-led), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/led/tests/no_exist.py#10)(api):**
 ### *recipes* / [milo:examples/full](/recipe_modules/milo/examples/full.py)
 
 [DEPS](/recipe_modules/milo/examples/full.py#7): [milo](#recipe_modules-milo)

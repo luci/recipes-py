@@ -25,6 +25,8 @@ message InputProperties {
     // version of the recipes code.
     IsolatedInput isolated_input = 2;
 
+    // TODO(iannucci) - Switch to either the buildbucket or swarming proto
+    // messages.
     message CIPDInput {
         // The name of the CIPD package containing the recipe code being run.
         string package = 1;

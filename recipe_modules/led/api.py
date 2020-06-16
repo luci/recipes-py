@@ -2,7 +2,14 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import hashlib
+
+import attr
+
 from recipe_engine import recipe_api
+from recipe_engine import recipe_test_api
+
+from PB.go.chromium.org.luci.led.job import job
 
 
 class LedApi(recipe_api.RecipeApi):
@@ -21,25 +28,49 @@ class LedApi(recipe_api.RecipeApi):
   See the led binary for full documentation of commands.
   """
 
+  @attr.s(frozen=True, slots=True)
+  class LedLaunchData(object):
+    swarming_hostname = attr.ib()
+    task_id = attr.ib()
+
   class LedResult(object):
     """Holds the result of a led operation. Can be chained using |then|."""
 
     def __init__(self, result, module):
-      self._result = result
-      self._module = module
+      if isinstance(result, LedApi.LedLaunchData):
+        self._launch_result = result
+        self._result = result
+        self._module = None
+      else:
+        self._launch_result = None
+        self._result = result
+        self._module = module
 
     @property
     def result(self):
-      """The mutable result data of the previous led call as decoded JSON."""
+      """The mutable job.Definition proto message from the previous led call.
+
+      If the previous led call was `launch`, then this will be None, and
+      launch_result will be populated.
+      """
       return self._result
+
+    @property
+    def launch_result(self):
+      """A LedLaunchData object. Only set when the previous led call was
+      'led launch'."""
+      return self._launch_result
 
     def then(self, *cmd):
       """Invoke led, passing it the current `result` data as input.
 
       Returns another LedResult object with the output of the command.
       """
+      if self._module is None: # pragma: no cover
+        raise ValueError(
+            'Cannot call LedResult.then on the result of `led launch`')
       return self.__class__(
-          self._module._run_command(self._result, *cmd).stdout, self._module)
+          self._module._run_command(self._result, *cmd), self._module)
 
   def __init__(self, props, **kwargs):
     super(LedApi, self).__init__(**kwargs)
@@ -55,6 +86,22 @@ class LedApi(recipe_api.RecipeApi):
       self._cipd_input = props.cipd_input
     else:
       self._cipd_input = None
+
+  def initialize(self):
+    if self._test_data.enabled:
+      self._get_mocks = {
+        key[len('get:'):]: value
+        for key, value in self._test_data.iteritems()
+        if key.startswith('get:')
+      }
+
+      self._mock_edits = self.test_api.standard_mock_functions()
+      sorted_edits = sorted([
+        (int(key[len('edit:'):]), value)
+        for key, value in self._test_data.iteritems()
+        if key.startswith('edit:')
+      ])
+      self._mock_edits.extend(value for _, value in sorted_edits)
 
   @property
   def launched_by_led(self):
@@ -93,7 +140,7 @@ class LedApi(recipe_api.RecipeApi):
 
   def __call__(self, *cmd):
     """Runs led with the given arguments. Wraps result in a `LedResult`."""
-    return self.LedResult(self._run_command(None, *cmd).stdout, self)
+    return self.LedResult(self._run_command(None, *cmd), self)
 
   def inject_input_recipes(self, led_result):
     """Sets the version of recipes used by led to correspond to the version
@@ -103,8 +150,8 @@ class LedApi(recipe_api.RecipeApi):
     this is a no-op.
 
     Args:
-      led_result: The `LedResult` whose stdout will be passed into the edit
-        command.
+      led_result: The `LedResult` whose job.Definition will be passed into the
+        edit command.
     """
     if self.isolated_input:
       # TODO(iannucci): Add option for setting server/namespace too
@@ -116,6 +163,62 @@ class LedApi(recipe_api.RecipeApi):
         '-rver', self.cipd_input.version)
     # TODO(iannucci): Check for/inject buildbucket exe package/version
     return led_result
+
+  def _get_mock(self, cmd):
+    """Returns a StepTestData for the given command."""
+    job_def = None
+
+    def _pick_mock(prefix, specific_key):
+      # We do multiple lookups potentially, depending on what level of
+      # specificity the user has mocked with.
+      toks = specific_key.split('/')
+      for num_toks in xrange(len(toks), -1, -1):
+        key = '/'.join([prefix] + toks[:num_toks])
+        if key in self._get_mocks:
+          return self._get_mocks[key]
+      return job.Definition()
+
+    if cmd[0] == 'get-builder':
+      bucket, builder = cmd[-1].split(':', 1)
+      if bucket.startswith('luci.'):
+        project, bucket = bucket[len('luci.'):].split('.', 1)
+      else:
+        project, bucket = bucket.split('/', 1)
+
+      mocked = _pick_mock(
+          'buildbucket/builder',
+          '%s/%s/%s' % (project, bucket, builder))
+
+      if mocked is not None:
+        job_def = job.Definition()
+        job_def.CopyFrom(mocked)
+        job_def.buildbucket.bbagent_args.build.builder.project = project
+        job_def.buildbucket.bbagent_args.build.builder.bucket = bucket
+        job_def.buildbucket.bbagent_args.build.builder.builder = builder
+
+    elif cmd[0] == 'get-build':
+      build_id = str(cmd[-1]).lstrip('b')
+      mocked = _pick_mock('buildbucket/build', build_id)
+      if mocked is not None:
+        job_def = job.Definition()
+        job_def.CopyFrom(mocked)
+        job_def.buildbucket.bbagent_args.build.id = int(build_id)
+
+    elif cmd[0] == 'get-swarm':
+      task_id = cmd[-1]
+      mocked = _pick_mock('swarming/task', task_id)
+      if mocked is not None:
+        job_def = job.Definition()
+        job_def.CopyFrom(mocked)
+        job_def.swarming.task.task_id = task_id
+
+    if job_def is not None:
+      return self.test_api.m.proto.output_stream(job_def)
+
+    ret = recipe_test_api.StepTestData()
+    ret.retcode = 1
+    return ret
+
 
   def _run_command(self, previous, *cmd):
     """Runs led with a given command and arguments.
@@ -129,25 +232,66 @@ class LedApi(recipe_api.RecipeApi):
 
     Ensures that led is checked out on disk before trying to execute the
     command.
+
+    Returns either a job.Definition or a LedLaunchData.
     """
     self._ensure_led()
 
-    kwargs = {
-      'stdout': self.m.json.output(),
-    }
+    is_launch = cmd[0] == 'launch'
+    if is_launch:
+      kwargs = {
+        'stdout': self.m.json.output(),
+      }
+      if self._test_data.enabled:
+        # To allow easier test mocking with e.g. the swarming.collect step, we
+        # take the task_id as build.infra.swarming.task_id, if it's set, and
+        # otherwise use a fixed string.
+        #
+        # We considered hashing the payload to derived the task id, but some
+        # recipes re-launch the same led task multiple times. In that case they
+        # usually need to manually provide the task id anyway.
+        task_id = previous.buildbucket.bbagent_args.build.infra.swarming.task_id
+        if not task_id:
+          task_id = 'fake-task-id'
+        kwargs['step_test_data'] = lambda: self.test_api.m.json.output_stream({
+          'swarming': {
+            'host_name': 'chromium-swarm.appspot.com',
+            'task_id': task_id,
+          }
+        })
+    else:
+      kwargs = {
+        'stdout': self.m.proto.output(job.Definition, 'JSONPB'),
+      }
+      if self._test_data.enabled:
+        if cmd[0].startswith('get-'):
+          kwargs['step_test_data'] = lambda: self._get_mock(cmd)
+        else:
+          # We run this outside of the step_test_data callback to make the stack
+          # trace a bit more obvious.
+          build = self.test_api._transform_build(
+              previous, cmd, self._mock_edits,
+              str(self.m.context.cwd or self.m.path['start_dir']))
+          kwargs['step_test_data'] = (
+            lambda: self.test_api.m.proto.output_stream(build))
 
-    if previous:
-      kwargs['stdin'] = self.m.json.input(data=previous)
+    if previous is not None:
+      kwargs['stdin'] = self.m.proto.input(previous, 'JSONPB')
 
     result = self.m.step(
         'led %s' % cmd[0], [self._led_binary_path] + list(cmd), **kwargs)
 
-    # If we launched a task, add a link to the swarming task.
-    if cmd[0] == 'launch':
+    if is_launch:
+      # If we launched a task, add a link to the swarming task.
+      retval = self.LedLaunchData(
+          swarming_hostname=result.stdout['swarming']['host_name'],
+          task_id=result.stdout['swarming']['task_id'])
       result.presentation.links['Swarming task'] = 'https://%s/task?id=%s' % (
-          result.stdout['swarming']['host_name'],
-          result.stdout['swarming']['task_id'])
-    return result
+          retval.swarming_hostname, retval.task_id)
+    else:
+      retval = result.stdout
+
+    return retval
 
   def _ensure_led(self):
     """Ensures that led is checked out on disk.

@@ -4,9 +4,10 @@
 
 DEPS = [
   'cipd',
+  'context',
   'json',
   'path',
-  'service_account',
+  'proto',
   'step',
 ]
 
