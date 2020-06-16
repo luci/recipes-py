@@ -64,6 +64,10 @@ message AutorollRecipeOptions {
 
   // Make the autoroller skip this repo entirely with a human-readable message.
   string disable_reason = 3;
+
+  // If true, skip the autoroller will skip CCing authors of CLs in this repo
+  // when rolling those CLs downstream.
+  bool no_cc_authors = 4;
 }
 
 message RepoSpec {
