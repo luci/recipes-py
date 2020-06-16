@@ -9,6 +9,7 @@ DEPS = [
   "context",
   "path",
   "platform",
+  "proto",
 ]
 
 PROPERTIES = {

@@ -137,17 +137,33 @@ def static_name(obj, func):
     return func.__name__
 
 
-def returns_placeholder(func):
+def _returns_placeholder(func, alternate_name=None):
   @static_wraps(func)
   def inner(self, *args, **kwargs):
     ret = static_call(self, func, *args, **kwargs)
     assert isinstance(ret, Placeholder)
-    ret.namespaces = (self.name, static_name(self, func))
+    ret.namespaces = (self.name, alternate_name or static_name(self, func))
     return ret
   # prevent this placeholder-returning function from becoming a composite_step.
   inner._non_step = True # pylint: disable=protected-access
   return inner
 
+def returns_placeholder(func):
+  """Decorates a RecipeApi placeholder-returning method to set the namespace
+  of the returned PlaceHolder.
+
+  The default namespace will be a tuple of (RECIPE_MODULE_NAME, method_name).
+  You can also decorate the method by `@returns_placeholder(alternate_name)` so
+  that the placeholder will have namespace (RECIPE_MODULE_NAME, alternate_name).
+  """
+  if callable(func) or isinstance(func, staticmethod):
+    return _returns_placeholder(func)
+  elif isinstance(func, str) and func:
+    def decorator(f):
+      return _returns_placeholder(f, func)
+    return decorator
+  else:
+    raise ValueError('Expected either a function or string; got %r' % func)
 
 class StringListIO(object):
   def __init__(self):

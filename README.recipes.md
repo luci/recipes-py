@@ -140,6 +140,7 @@
   * [step:tests/stdio](#recipes-step_tests_stdio)
   * [step:tests/step_call_args](#recipes-step_tests_step_call_args)
   * [step:tests/step_cost](#recipes-step_tests_step_cost)
+  * [step:tests/sub_build](#recipes-step_tests_sub_build)
   * [step:tests/subannotations](#recipes-step_tests_subannotations)
   * [step:tests/timeout](#recipes-step_tests_timeout)
   * [swarming:examples/full](#recipes-swarming_examples_full)
@@ -1774,7 +1775,7 @@ Methods for producing and consuming JSON.
 
 Works like `json.dumps`.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#140)**<br>&mdash; **def [input](/recipe_modules/json/api.py#115)(self, data):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&mdash; **def [input](/recipe_modules/json/api.py#115)(self, data):**
 
 A placeholder which will expand to a file path containing <data>.
 
@@ -1787,7 +1788,7 @@ Returns True if the object is JSON-serializable.
 Works like `json.loads`, but strips out unicode objects (replacing them
 with utf8-encoded str objects).
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#140)**<br>&mdash; **def [output](/recipe_modules/json/api.py#120)(self, add_json_log=True, name=None, leak_to=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&mdash; **def [output](/recipe_modules/json/api.py#120)(self, add_json_log=True, name=None, leak_to=None):**
 
 A placeholder which will expand to '/tmp/file'.
 
@@ -2155,7 +2156,7 @@ Args:
 
 Returns the encoded proto message.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#140)**<br>&mdash; **def [input](/recipe_modules/proto/api.py#77)(self, proto_msg, codec, \*\*encoding_kwargs):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&mdash; **def [input](/recipe_modules/proto/api.py#77)(self, proto_msg, codec, \*\*encoding_kwargs):**
 
 A placeholder which will expand to a file path containing the encoded
 `proto_msg`.
@@ -2179,7 +2180,7 @@ Args:
 
 Returns an InputPlaceholder.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#140)**<br>&mdash; **def [output](/recipe_modules/proto/api.py#106)(self, msg_class, codec, add_json_log=True, name=None, leak_to=None, \*\*decoding_kwargs):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&mdash; **def [output](/recipe_modules/proto/api.py#106)(self, msg_class, codec, add_json_log=True, name=None, leak_to=None, \*\*decoding_kwargs):**
 
 A placeholder which expands to a file path and then reads an encoded
 proto back from that location when the step finishes.
@@ -2302,7 +2303,7 @@ Provides objects for reading and writing raw data to and from steps.
 
 #### **class [RawIOApi](/recipe_modules/raw_io/api.py#263)([RecipeApi](/recipe_engine/recipe_api.py#912)):**
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#140)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#264)(data, suffix='', name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#264)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -2317,7 +2318,7 @@ tempfile.mkstemp.
 
 See examples/full.py for usage example.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#140)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#282)(data, suffix='', name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#282)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -2327,7 +2328,7 @@ expected to have valid utf-8 data in it.
 Similar to input(), but ensures that 'data' is valid utf-8 text. Any
 non-utf-8 characters will be replaced with �.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#140)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#295)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#295)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -2343,7 +2344,7 @@ Args:
      to a step link named `name`. If this is 'on_failure', only create this
      log when the step has a non-SUCCESS status.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#140)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#333)(suffix='', leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#333)(suffix='', leak_to=None, name=None):**
 
 Returns a directory Placeholder for use as a step argument.
 
@@ -2354,7 +2355,7 @@ If 'leak_to' is not None, then it should be a Path and placeholder
 redirects IO to a dir at that path. Once step finishes, the dir is
 NOT deleted (i.e. it's 'leaking'). 'suffix' is ignored in that case.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#140)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#315)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#315)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -2628,14 +2629,14 @@ Args:
     Manifest message.
 ### *recipe_modules* / [step](/recipe_modules/step)
 
-[DEPS](/recipe_modules/step/__init__.py#8): [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform)
+[DEPS](/recipe_modules/step/__init__.py#8): [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [proto](#recipe_modules-proto)
 
 Step is the primary API for running steps (external programs, scripts,
 etc.).
 
-#### **class [StepApi](/recipe_modules/step/api.py#24)([RecipeApiPlain](/recipe_engine/recipe_api.py#764)):**
+#### **class [StepApi](/recipe_modules/step/api.py#25)([RecipeApiPlain](/recipe_engine/recipe_api.py#764)):**
 
-&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#130)(self):**
+&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#137)(self):**
 
 InfraFailure is a subclass of StepFailure, and will translate to a purple
 build.
@@ -2643,15 +2644,15 @@ build.
 This exception is raised from steps which are marked as `infra_step`s when
 they fail.
 
-&emsp; **@property**<br>&mdash; **def [MAX\_CPU](/recipe_modules/step/api.py#102)(self):**
+&emsp; **@property**<br>&mdash; **def [MAX\_CPU](/recipe_modules/step/api.py#109)(self):**
 
 Returns the maximum number of millicores this system has.
 
-&emsp; **@property**<br>&mdash; **def [MAX\_MEMORY](/recipe_modules/step/api.py#107)(self):**
+&emsp; **@property**<br>&mdash; **def [MAX\_MEMORY](/recipe_modules/step/api.py#114)(self):**
 
 Returns the maximum amount of memory on the system in MB.
 
-&mdash; **def [ResourceCost](/recipe_modules/step/api.py#36)(self, cpu=500, memory=50, disk=0, net=0):**
+&mdash; **def [ResourceCost](/recipe_modules/step/api.py#43)(self, cpu=500, memory=50, disk=0, net=0):**
 
 A structure defining the resources that a given step may need.
 
@@ -2709,7 +2710,7 @@ Returns a ResourceCost suitable for use with `api.step(...)`'s cost kwarg.
 Note that passing `None` to api.step for the cost kwarg is equivalent to
 `ResourceCost(0, 0, 0, 0)`.
 
-&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#112)(self):**
+&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#119)(self):**
 
 This is the base Exception class for all step failures.
 
@@ -2719,12 +2720,12 @@ Usage:
   * `raise api.StepFailure("some reason")`
   * `except api.StepFailure:`
 
-&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#124)(self):**
+&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#131)(self):**
 
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#339)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, allow_subannotations=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#466)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, allow_subannotations=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
 
 Returns a step dictionary which is compatible with annotator.py.
 
@@ -2777,7 +2778,7 @@ Args:
 
 Returns a `step_data.StepData` for the running step.
 
-&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#140)(self):**
+&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#147)(self):**
 
 The currently active (open) result from the last step that was run. This
 is a `step_data.StepData` object.
@@ -2808,7 +2809,7 @@ finally:
     api.step.active_result.presentation.step_text = new_step_text
 ```
 
-&mdash; **def [close\_non\_nest\_step](/recipe_modules/step/api.py#173)(self):**
+&mdash; **def [close\_non\_nest\_step](/recipe_modules/step/api.py#180)(self):**
 
 Call this to explicitly terminate the currently open non-nest step.
 
@@ -2817,11 +2818,11 @@ context (if any).
 
 No-op if there's no currently active non-nest step.
 
-&emsp; **@property**<br>&mdash; **def [defer\_results](/recipe_modules/step/api.py#298)(self):**
+&emsp; **@property**<br>&mdash; **def [defer\_results](/recipe_modules/step/api.py#305)(self):**
 
 See recipe_api.py for docs. 
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#207)(self, name, status='worst'):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#214)(self, name, status='worst'):**
 
 Nest allows you to nest steps hierarchically on the build UI.
 
@@ -2882,6 +2883,55 @@ Args:
 
 Yields a StepPresentation for this dummy step, which you may update as you
 please.
+
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#383)(self, name, cmd, build, output_path=None, timeout=None, cost=_ResourceCost()):**
+
+Launch a sub-build by invoking a LUCI executable. All steps in the
+sub-build will appear as child steps of this step (Merge Step).
+
+See protocol: https://go.chromium.org/luci/luciexe
+
+Example:
+
+```python
+# Ensure the LUCI executable `run_exe` on path
+with api.context(
+    # Change the cwd of the launched LUCI executable
+    cwd=api.path['start_dir'].join('subdir'),
+    # Change the cache_dir of the launched LUCI executable. Defaults to
+    # api.path['cache'] if unchanged.
+    luciexe=section_pb2.LUCIExe(cache_dir=api.path['cache'].join('sub')),
+  ):
+  ret = api.sub_build("launch sub build",
+                      ['run_exe', '--foo', 'bar', 'baz'],
+                      output_path=api.path['cleanup'].join('build.json'))
+  # command executed: `run_exe --output [CLEANUP]/build.json --foo bar baz`
+# access final build proto result of the launched LUCI executable
+sub_build = ret.step.sub_build
+```
+
+Args:
+  * name (str): The name of this step.
+  * cmd (List[int|string|Placeholder|Path]): Same as the `cmd` parameter in
+    `__call__` method except that None is NOT allowed. cmd[0] MUST denote a
+    LUCI executable. The `--output` flag and its value should NOT be
+    provided in the list. It should be provided via keyword arg
+    `output_path` instead.
+  * build (build_pb2.Build): The initial build state that the launched
+    luciexe will start with.
+  * output_path (None|str|Path): The value of the `--output` flag. If
+    provided, it should be a path to a non-existent file (its directory
+    MUST exist). The extension of the path dictates the encoding format of
+    final build proto (See `EXT_TO_CODEC`). If not provided, the output
+    will be a temp file with binary encoding.
+  * timeout (None|int): Same as the `timeout` parameter in `__call__`
+    method.
+  * cost (None|ResourceCost): Same as the `cost` parameter in `__call__`
+    method.
+
+Returns a `step_data.StepData` for the finished step. The final build proto
+object can be accessed via `ret.step.sub_build`. The build is guaranteed to
+be present (i.e. not None) with a terminal build status.
 ### *recipe_modules* / [swarming](/recipe_modules/swarming)
 
 [DEPS](/recipe_modules/swarming/__init__.py#8): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [isolated](#recipe_modules-isolated), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
@@ -3765,6 +3815,11 @@ This file is a recipe demonstrating reading triggers of the current build.
 [DEPS](/recipe_modules/step/tests/step_cost.py#7): [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/step_cost.py#12)(api):**
+### *recipes* / [step:tests/sub\_build](/recipe_modules/step/tests/sub_build.py)
+
+[DEPS](/recipe_modules/step/tests/sub_build.py#16): [assertions](#recipe_modules-assertions), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/step/tests/sub_build.py#25)(api, props):**
 ### *recipes* / [step:tests/subannotations](/recipe_modules/step/tests/subannotations.py)
 
 [DEPS](/recipe_modules/step/tests/subannotations.py#5): [step](#recipe_modules-step)

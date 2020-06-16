@@ -418,6 +418,9 @@ class RecipeEngine(object):
 
       ret.finalize()
 
+      if step_config.merge_step:
+        _fixup_merge_step_status(ret.presentation, ret.step.sub_build)
+
       # If there's a buffered exception, we raise it now.
       if caught:
         # TODO(iannucci): Python3 incompatible.
@@ -616,6 +619,38 @@ def _set_initial_status(presentation, step_config, exc_result):
     return
 
   presentation.status = 'EXCEPTION' if step_config.infra_step else 'FAILURE'
+
+
+def _fixup_merge_step_status(presentation, sub_build):
+  """Fixup the step status for merge step according to luciexe protocol.
+
+  The step status is dictated by the status of build proto output from the
+  invoking luciexe instead of parsing the return code. Even though it is the
+  responsibility of the Host Application to update the step status with the
+  sub build status. As the luciexe invoker, the status should be explicitly
+  marked as INFRA_FAILURE if following conditions are matched.
+
+    * The luciexe that the current merge step invokes does NOT write its final
+      build proto to the provided output location.
+    * The final build proto reports a non-terminal status.
+  """
+  if presentation.status != 'SUCCESS':
+    # Something went wrong already before we check the sub build proto.
+    # Return immediately so that error is not masked
+    return
+  elif sub_build is None:
+    presentation.status = 'EXCEPTION'
+    if presentation.step_text:
+      presentation.step_text += '\n'
+    presentation.step_text += (
+      "Merge Step Error: Can't find the final build output for luciexe.")
+  elif not (sub_build.status & common_pb2.ENDED_MASK):
+    presentation.status = 'EXCEPTION'
+    if presentation.step_text:
+      presentation.step_text += '\n'
+    presentation.step_text += (
+      'Merge Step Error: expected terminal build status of sub build; '
+      'got status: %s.' % common_pb2.Status.Name(sub_build.status))
 
 def _get_engine_properties(properties):
   """Retrieve and resurrect JSON serialized engine properties from all

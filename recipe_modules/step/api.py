@@ -6,9 +6,9 @@
 etc.)."""
 
 import contextlib
+import multiprocessing
 import sys
 import types
-import multiprocessing
 
 import enum
 
@@ -16,8 +16,9 @@ from recipe_engine import recipe_api
 from recipe_engine.config_types import Path
 from recipe_engine.types import StepPresentation
 from recipe_engine.types import ResourceCost as _ResourceCost
-from recipe_engine.util import Placeholder, sentinel
+from recipe_engine.util import Placeholder, returns_placeholder
 
+from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 
 # Inherit from RecipeApiPlain because the only thing which is a step is
 # run_from_dict()
@@ -32,6 +33,12 @@ class StepApi(recipe_api.RecipeApiPlain):
   FAILURE = 'FAILURE'
   SUCCESS = 'SUCCESS'
   WARNING = 'WARNING'
+
+  EXT_TO_CODEC = {
+    '.pb': 'BINARY',
+    '.json': 'JSONPB',
+    '.textpb': 'TEXTPB',
+  }
 
   def ResourceCost(self, cpu=500, memory=50, disk=0, net=0):
     """A structure defining the resources that a given step may need.
@@ -335,6 +342,126 @@ class StepApi(recipe_api.RecipeApiPlain):
       },
       pathsep=self.m.path.pathsep,
     )
+
+  @returns_placeholder('sub_build')
+  def _sub_build_output(self, output_path):
+    """Give an output path, returns a build proto output placeholder. The
+    encoding format is dictated by the extension of the path.
+
+    If the given output path is None, the output will use binary encoding and
+    backed by a temp file.
+
+    ValueError will be raised if:
+      * The output path refers to an existing file.
+      * The directory of the output path does NOT exist.
+      * The extension of output path is not valid (
+        i.e. none of [.pb, .json, .textpb])
+    """
+    if not isinstance(output_path, (type(None), str, Path)): # pragma: no cover
+      raise ValueError('expected None, str or Path; got %r' % (output_path,))
+    ext = '.pb'
+    if output_path is None:
+      output_path = self.m.path.mkdtemp().join('sub_build' + ext)
+    else:
+      if self.m.path.exists(output_path):
+        raise ValueError('expected non-existent output path; '
+                         'got path %s' % (output_path,))
+      _, ext = self.m.path.splitext(output_path)
+      if ext not in self.EXT_TO_CODEC:
+        raise ValueError('expected extension of output path to be '
+                         'one of %s; got %s' % (tuple(self.EXT_TO_CODEC), ext))
+      dir_name = self.m.path.dirname(output_path)
+      self.m.path.mock_add_paths(dir_name)
+      if not self.m.path.exists(dir_name): # pragma: no cover
+        raise ValueError('expected directory of output path exists; '
+                         'got dir: %s' % (dir_name,))
+
+    return self.m.proto.output(build_pb2.Build, self.EXT_TO_CODEC[ext],
+                              leak_to=output_path,
+                              add_json_log='on_failure')
+
+  @recipe_api.composite_step
+  def sub_build(self, name, cmd, build,
+                output_path=None, timeout=None, cost=_ResourceCost()):
+    """Launch a sub-build by invoking a LUCI executable. All steps in the
+    sub-build will appear as child steps of this step (Merge Step).
+
+    See protocol: https://go.chromium.org/luci/luciexe
+
+    Example:
+
+    ```python
+    # Ensure the LUCI executable `run_exe` on path
+    with api.context(
+        # Change the cwd of the launched LUCI executable
+        cwd=api.path['start_dir'].join('subdir'),
+        # Change the cache_dir of the launched LUCI executable. Defaults to
+        # api.path['cache'] if unchanged.
+        luciexe=section_pb2.LUCIExe(cache_dir=api.path['cache'].join('sub')),
+      ):
+      ret = api.sub_build("launch sub build",
+                          ['run_exe', '--foo', 'bar', 'baz'],
+                          output_path=api.path['cleanup'].join('build.json'))
+      # command executed: `run_exe --output [CLEANUP]/build.json --foo bar baz`
+    # access final build proto result of the launched LUCI executable
+    sub_build = ret.step.sub_build
+    ```
+
+    Args:
+      * name (str): The name of this step.
+      * cmd (List[int|string|Placeholder|Path]): Same as the `cmd` parameter in
+        `__call__` method except that None is NOT allowed. cmd[0] MUST denote a
+        LUCI executable. The `--output` flag and its value should NOT be
+        provided in the list. It should be provided via keyword arg
+        `output_path` instead.
+      * build (build_pb2.Build): The initial build state that the launched
+        luciexe will start with.
+      * output_path (None|str|Path): The value of the `--output` flag. If
+        provided, it should be a path to a non-existent file (its directory
+        MUST exist). The extension of the path dictates the encoding format of
+        final build proto (See `EXT_TO_CODEC`). If not provided, the output
+        will be a temp file with binary encoding.
+      * timeout (None|int): Same as the `timeout` parameter in `__call__`
+        method.
+      * cost (None|ResourceCost): Same as the `cost` parameter in `__call__`
+        method.
+
+    Returns a `step_data.StepData` for the finished step. The final build proto
+    object can be accessed via `ret.step.sub_build`. The build is guaranteed to
+    be present (i.e. not None) with a terminal build status.
+    """
+    self._validate_cmd_list(cmd)
+    cmd = list(cmd)
+    # The command may have positional arguments, so place the output flag
+    # right after cmd0.
+    cmd[1:1] = ['--output', self._sub_build_output(output_path)]
+
+    new_tmp_dir = str(self.m.path.mkdtemp())
+    with self.m.context(
+        env={
+          var: new_tmp_dir for var in (
+           'TEMPDIR', 'TMPDIR', 'TEMP', 'TMP', 'MAC_CHROMIUM_TMPDIR')
+        },
+        env_prefixes={'PATH': self._prefix_path}
+      ):
+      env = self.m.context.env
+      env_prefixes = self.m.context.env_prefixes
+
+    return self.step_client.run_step(self.step_client.StepConfig(
+        name=name,
+        cmd=cmd,
+        cost=self._normalize_cost(cost),
+        cwd=self._normalize_cwd(self.m.context.cwd),
+        env=env,
+        env_prefixes=self._to_env_affix(env_prefixes),
+        env_suffixes=self._to_env_affix(self.m.context.env_suffixes),
+        timeout=timeout,
+        stdin=self.m.proto.input(build, 'BINARY'),
+        infra_step=self.m.context.infra_step or False,
+        merge_step=True,
+        # The return code of LUCI executable should be omitted
+        ok_ret=self.step_client.StepConfig.ALL_OK,
+    ))
 
   @recipe_api.composite_step
   def __call__(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(),

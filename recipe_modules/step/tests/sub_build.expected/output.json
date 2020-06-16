@@ -1,0 +1,23 @@
+[
+  {
+    "cmd": [
+      "luciexe",
+      "--output",
+      "[START_DIR]/sub_build.json",
+      "--foo",
+      "bar"
+    ],
+    "env": {
+      "MAC_CHROMIUM_TMPDIR": "[CLEANUP]/tmp_tmp_1",
+      "TEMP": "[CLEANUP]/tmp_tmp_1",
+      "TEMPDIR": "[CLEANUP]/tmp_tmp_1",
+      "TMP": "[CLEANUP]/tmp_tmp_1",
+      "TMPDIR": "[CLEANUP]/tmp_tmp_1"
+    },
+    "name": "launch sub build",
+    "stdin": "\b\ufffdV`\u0001"
+  },
+  {
+    "name": "$result"
+  }
+]
