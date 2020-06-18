@@ -2,7 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from recipe_engine.post_process import (DropExpectation, StepSuccess)
+from recipe_engine.post_process import (DropExpectation, StepSuccess,
+                                        DoesNotRun)
 
 from PB.go.chromium.org.luci.resultdb.proto.rpc.v1 import test_result as test_result_pb2
 
@@ -33,9 +34,10 @@ test_exonerations = [
 
 
 def RunSteps(api):
-  api.resultdb._BATCH_SIZE = api.properties.get('batch_size') or 500
+  api.resultdb._BATCH_SIZE = api.properties.get('batch_size', 500)
   api.resultdb.exonerate(
-      test_exonerations=test_exonerations,
+      test_exonerations=api.properties.get('test_exonerations',
+                                           test_exonerations),
       step_name='exonerate without patch failures')
 
 
@@ -53,4 +55,9 @@ def GenTests(api):
                        'exonerate without patch failures.batch (0)'),
       api.post_process(StepSuccess,
                        'exonerate without patch failures.batch (1)'),
+      api.post_process(DropExpectation))
+
+  yield api.test(
+      'no-op', api.properties(test_exonerations=[]), api.buildbucket.ci_build(),
+      api.post_process(DoesNotRun, 'exonerate without patch failures'),
       api.post_process(DropExpectation))

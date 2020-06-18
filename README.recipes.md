@@ -2404,7 +2404,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#39)(self):**
 
-&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#132)(self, swarming_host, task_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
+&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#135)(self, swarming_host, task_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
 
 Returns results derived from the specified Swarming tasks.
 
@@ -2492,7 +2492,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#276)(self, cmd, test_id_prefix='', base_variant=None):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#279)(self, cmd, test_id_prefix='', base_variant=None):**
 
 Wraps the command with ResultSink.
 
@@ -3736,9 +3736,9 @@ Tests for api.python.infra_failing_step.
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/derive.py#22)(api):**
 ### *recipes* / [resultdb:examples/exonerate](/recipe_modules/resultdb/examples/exonerate.py)
 
-[DEPS](/recipe_modules/resultdb/examples/exonerate.py#9): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/resultdb/examples/exonerate.py#10): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/exonerate.py#35)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/exonerate.py#36)(api):**
 ### *recipes* / [resultdb:examples/include](/recipe_modules/resultdb/examples/include.py)
 
 [DEPS](/recipe_modules/resultdb/examples/include.py#11): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb)

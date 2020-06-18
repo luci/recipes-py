@@ -112,6 +112,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
           True, lambda: self.m.raw_io.test_api.stream_output('{}')
       ]
 
+    if not test_exonerations:
+      return
+
     self.assert_enabled()
     step_name = step_name or 'resultdb.exonerate'
 
