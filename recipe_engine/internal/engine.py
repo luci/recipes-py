@@ -407,7 +407,7 @@ class RecipeEngine(object):
       ret.finalize()
 
       if step_config.merge_step:
-        _fixup_merge_step_status(ret.presentation, ret.step.sub_build)
+        _update_merge_step_presentation(ret.presentation, ret.step.sub_build)
 
       # If there's a buffered exception, we raise it now.
       if caught:
@@ -609,36 +609,54 @@ def _set_initial_status(presentation, step_config, exc_result):
   presentation.status = 'EXCEPTION' if step_config.infra_step else 'FAILURE'
 
 
-def _fixup_merge_step_status(presentation, sub_build):
-  """Fixup the step status for merge step according to luciexe protocol.
+def _update_merge_step_presentation(presentation, sub_build):
+  """Update the step presentation for merge step based on the result sub build.
 
-  The step status is dictated by the status of build proto output from the
-  invoking luciexe instead of parsing the return code. Even though it is the
-  responsibility of the Host Application to update the step status with the
-  sub build status. As the luciexe invoker, the status should be explicitly
-  marked as INFRA_FAILURE if following conditions are matched.
+  Overrides the presentation status with the status of the sub-build. If the
+  status of the sub-build is CANCELED, the presentation status will be set to
+  INFRA_FAILURE because there's no CANCELED status support in StepPresentation.
+  TODO(crbug.com/1096713): Support setting CANCELED Status through
+  StepPresentation after getting rid of annotator mode.
+
+  The summary_markdown of the sub-build will be appended to step text and all
+  logs in the output of the sub-build will be merged into to the step logs.
+
+  If any of the following conditions is matched, the status will be explicitly
+  set to INFRA_FAILURE and the summary_markdown and output logs won't be merged
 
     * The luciexe that the current merge step invokes does NOT write its final
       build proto to the provided output location.
     * The final build proto reports a non-terminal status.
   """
+  def append_step_text(text):
+    if presentation.step_text:
+      presentation.step_text += '\n'
+    presentation.step_text += text
   if presentation.status != 'SUCCESS':
     # Something went wrong already before we check the sub build proto.
-    # Return immediately so that error is not masked
+    # Return immediately so that error is not masked.
     return
   elif sub_build is None:
     presentation.status = 'EXCEPTION'
-    if presentation.step_text:
-      presentation.step_text += '\n'
-    presentation.step_text += (
+    append_step_text(
       "Merge Step Error: Can't find the final build output for luciexe.")
   elif not (sub_build.status & common_pb2.ENDED_MASK):
     presentation.status = 'EXCEPTION'
-    if presentation.step_text:
-      presentation.step_text += '\n'
-    presentation.step_text += (
+    append_step_text(
       'Merge Step Error: expected terminal build status of sub build; '
       'got status: %s.' % common_pb2.Status.Name(sub_build.status))
+  else:
+    presentation.status = {
+      common_pb2.SUCCESS: 'SUCCESS',
+      common_pb2.FAILURE: 'FAILURE',
+      common_pb2.CANCELED: 'EXCEPTION',
+      common_pb2.INFRA_FAILURE: 'EXCEPTION',
+    }[sub_build.status]
+    if sub_build.summary_markdown:
+      append_step_text(sub_build.summary_markdown)
+    if sub_build.output.logs:
+      for log in sub_build.output.logs:
+        presentation.logs[log.name] = log
 
 def _get_engine_properties(properties):
   """Retrieve and resurrect JSON serialized engine properties from all

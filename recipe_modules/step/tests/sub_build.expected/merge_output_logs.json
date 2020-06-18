@@ -1,0 +1,39 @@
+[
+  {
+    "cmd": [
+      "luciexe",
+      "--output",
+      "[CLEANUP]/tmp_tmp_1/sub_build.pb",
+      "--foo",
+      "bar",
+      "--json-summary",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "MAC_CHROMIUM_TMPDIR": "[CLEANUP]/tmp_tmp_2",
+      "TEMP": "[CLEANUP]/tmp_tmp_2",
+      "TEMPDIR": "[CLEANUP]/tmp_tmp_2",
+      "TMP": "[CLEANUP]/tmp_tmp_2",
+      "TMPDIR": "[CLEANUP]/tmp_tmp_2"
+    },
+    "name": "launch sub build",
+    "stdin": "\b\ufffdV`\u0001",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@\"{\\\"hello\\\": \\\"world\\\"}\"@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LOG_LINE@cool@{@@@",
+      "@@@STEP_LOG_LINE@cool@  \"name\": \"cool\", @@@",
+      "@@@STEP_LOG_LINE@cool@  \"url\": \"logdog://logs.chromium.org/infra/build/12345/+/some/cool\"@@@",
+      "@@@STEP_LOG_LINE@cool@}@@@",
+      "@@@STEP_LOG_END@cool@@@",
+      "@@@STEP_LOG_LINE@awesome@{@@@",
+      "@@@STEP_LOG_LINE@awesome@  \"name\": \"awesome\", @@@",
+      "@@@STEP_LOG_LINE@awesome@  \"url\": \"logdog://logs.chromium.org/infra/build/12345/+/some/awesome\"@@@",
+      "@@@STEP_LOG_LINE@awesome@}@@@",
+      "@@@STEP_LOG_END@awesome@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

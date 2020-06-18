@@ -432,6 +432,10 @@ class StepApi(recipe_api.RecipeApiPlain):
     Returns a `step_data.StepData` for the finished step. The final build proto
     object can be accessed via `ret.step.sub_build`. The build is guaranteed to
     be present (i.e. not None) with a terminal build status.
+
+    Raises `StepFailure` if the sub-build reports FAILURE status.
+    Raises `InfraFailure` if the sub-build reports INFRA_FAILURE or CANCELED
+    status.
     """
     self._validate_cmd_list(cmd)
     cmd = list(cmd)

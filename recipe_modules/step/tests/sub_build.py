@@ -100,9 +100,44 @@ def GenTests(api):
     api.step_data('launch sub build', api.step.sub_build(
       build_pb2.Build(id=1, status=common_pb2.FAILURE))
     ) +
-    # Step should succeed even though the sub build fails
-    api.post_process(post_process.StepSuccess, 'launch sub build') +
+    api.post_process(post_process.StepFailure, 'launch sub build') +
     api.post_process(post_process.DropExpectation)
+  )
+
+  yield (
+    api.test('infra_failure_status') +
+    api.step_data('launch sub build', api.step.sub_build(
+      build_pb2.Build(id=1, status=common_pb2.INFRA_FAILURE))
+    ) +
+    api.post_process(post_process.StepException, 'launch sub build') +
+    api.post_process(post_process.DropExpectation)
+  )
+
+  yield (
+    api.test('output_summary_markdown') +
+    api.step_data('launch sub build', api.step.sub_build(
+      build_pb2.Build(id=1, status=common_pb2.SUCCESS,
+                      summary_markdown='This is the summary of sub build'))
+    ) +
+    api.post_process(post_process.StepTextEquals, 'launch sub build',
+      'This is the summary of sub build')+
+    api.post_process(post_process.DropExpectation)
+  )
+
+  build = build_pb2.Build(id=1234, status=common_pb2.SUCCESS)
+  build.output.logs.extend([
+    common_pb2.Log(
+      name='cool',
+      url='logdog://logs.chromium.org/infra/build/12345/+/some/cool',
+    ),
+    common_pb2.Log(
+      name='awesome',
+      url='logdog://logs.chromium.org/infra/build/12345/+/some/awesome',
+    )
+  ])
+  yield (
+    api.test('merge_output_logs') +
+    api.step_data('launch sub build', api.step.sub_build(build))
   )
 
   yield (
