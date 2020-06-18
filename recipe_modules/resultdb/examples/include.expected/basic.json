@@ -23,7 +23,7 @@
     "cmd": [
       "rdb",
       "rpc",
-      "luci.resultdb.rpc.v1.Recorder",
+      "luci.resultdb.v1.Recorder",
       "UpdateIncludedInvocations",
       "-include-update-token"
     ],
@@ -39,7 +39,7 @@
     "cmd": [
       "rdb",
       "rpc",
-      "luci.resultdb.rpc.v1.Recorder",
+      "luci.resultdb.v1.Recorder",
       "UpdateIncludedInvocations",
       "-include-update-token"
     ],

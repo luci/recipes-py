@@ -84,7 +84,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     self._rpc(
         step_name or 'resultdb.update_included_invocations',
-        'luci.resultdb.rpc.v1.Recorder',
+        'luci.resultdb.v1.Recorder',
         'UpdateIncludedInvocations',
         json_format.MessageToDict(req),
         include_update_token=True,
@@ -107,8 +107,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
         req.requests.add(test_exoneration=te)
 
       return [
-          step_name, 'luci.resultdb.rpc.v1.Recorder',
-          'BatchCreateTestExonerations',
+          step_name, 'luci.resultdb.v1.Recorder', 'BatchCreateTestExonerations',
           json_format.MessageToDict(req),
           True, lambda: self.m.raw_io.test_api.stream_output('{}')
       ]
@@ -230,7 +229,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
     Args:
       step_name (str): name of the step.
       service (string): the full name of a service, e.g.
-        "luci.resultdb.rpc.v1.ResultDB".
+        "luci.resultdb.v1.ResultDB".
       method (string): the name of the method, e.g. "GetInvocation".
       req (dict): request message.
       include_update_token (bool): A flag to indicate if the RPC requires the

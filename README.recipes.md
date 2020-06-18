@@ -2383,7 +2383,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#39)(self):**
 
-&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#133)(self, swarming_host, task_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
+&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#132)(self, swarming_host, task_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
 
 Returns results derived from the specified Swarming tasks.
 
@@ -2471,7 +2471,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#277)(self, cmd, test_id_prefix='', base_variant=None):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#276)(self, cmd, test_id_prefix='', base_variant=None):**
 
 Wraps the command with ResultSink.
 
