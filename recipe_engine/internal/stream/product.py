@@ -88,7 +88,6 @@ class ProductStreamEngine(StreamEngine):
     reset_subannotation_state = _void_product('reset_subannotation_state')
     set_step_status = _void_product('set_step_status')
     set_build_property = _void_product('set_build_property')
-    set_manifest_link = _void_product('set_manifest_link')
     mark_running = _void_product('mark_running')
     set_summary_markdown = _void_product('set_summary_markdown')
 

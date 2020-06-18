@@ -16,17 +16,9 @@
   {
     "cmd": [
       "echo",
-      "('$recipe_engine/source_manifest', {'debug_dir': None})",
       "('recipe', 'properties:examples/full')"
     ],
     "name": "echo all"
-  },
-  {
-    "cmd": [
-      "echo",
-      "FrozenDict([('debug_dir', None)])"
-    ],
-    "name": "echo $recipe_engine/source_manifest"
   },
   {
     "cmd": [

@@ -17,7 +17,6 @@
     "cmd": [
       "echo",
       "('$fake_repo/fake_module', {'test_prop': {'key': u'value'}})",
-      "('$recipe_engine/source_manifest', {'debug_dir': None})",
       "('arbitrary_property', True)",
       "('dict', {u'cool': u'dictionary'})",
       "('list', [u'some', u'strings'])",
@@ -33,13 +32,6 @@
       "FrozenDict([('test_prop', FrozenDict([('key', u'value')]))])"
     ],
     "name": "echo $fake_repo/fake_module"
-  },
-  {
-    "cmd": [
-      "echo",
-      "FrozenDict([('debug_dir', None)])"
-    ],
-    "name": "echo $recipe_engine/source_manifest"
   },
   {
     "cmd": [

@@ -91,9 +91,6 @@ class StreamEngineInvariants(StreamEngine):
     def set_build_property(self, key, value):
       pass
 
-    def set_manifest_link(self, name, sha256, url):
-      pass
-
   class LogStream(StreamEngine.Stream):
     def __init__(self, step_stream, log_name):
       self._step_stream = step_stream

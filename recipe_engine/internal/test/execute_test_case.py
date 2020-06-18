@@ -33,11 +33,6 @@ def execute_test_case(recipe_deps, recipe_name, test_data):
 
   props = test_data.properties.copy()
   props['recipe'] = str(recipe_name)
-  # Disable source manifest uploading by default.
-  if '$recipe_engine/source_manifest' not in props:
-    props['$recipe_engine/source_manifest'] = {}
-  if 'debug_dir' not in props['$recipe_engine/source_manifest']:
-    props['$recipe_engine/source_manifest']['debug_dir'] = None
 
   environ = FakeEnviron()
   for key, value in test_data.environ.iteritems():

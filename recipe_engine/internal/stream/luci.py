@@ -259,12 +259,6 @@ class LUCIStepStream(StreamEngine.StepStream):
   def add_step_link(self, name, url):
     self._back_compat_markdown.add_step_link(name, url)
 
-  def set_manifest_link(self, name, sha256, url):
-    raise NotImplementedError(
-        'luciexe mode does not support manifest links yet. If you encounter '
-        'this please talk to the luci-dev folks. When this is supported in '
-        'luciexe mode it will be via direct manifest embedding')
-
   def set_step_status(self, status, had_timeout):
     _ = had_timeout
     self._step.status = {

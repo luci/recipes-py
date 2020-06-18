@@ -122,9 +122,6 @@ class AnnotatorStreamEngine(StreamEngine):
     def set_build_property(self, key, value):
       self.output_annotation('SET_BUILD_PROPERTY', key, value)
 
-    def set_manifest_link(self, name, sha256, url):
-      self.output_annotation('SOURCE_MANIFEST', name, sha256.encode('hex'), url)
-
   class StepLogStream(StreamEngine.Stream):
     def __init__(self, step_stream, log_name):
       self._step_stream = step_stream
