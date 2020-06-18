@@ -2725,7 +2725,7 @@ Usage:
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#466)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, allow_subannotations=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#470)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, allow_subannotations=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
 
 Returns a step dictionary which is compatible with annotator.py.
 
@@ -2884,7 +2884,7 @@ Args:
 Yields a StepPresentation for this dummy step, which you may update as you
 please.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#383)(self, name, cmd, build, output_path=None, timeout=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#383)(self, name, cmd, build, output_path=None, infra_step=False, timeout=None, step_test_data=None, cost=_ResourceCost()):**
 
 Launch a sub-build by invoking a LUCI executable. All steps in the
 sub-build will appear as child steps of this step (Merge Step).
@@ -2926,6 +2926,8 @@ Args:
     will be a temp file with binary encoding.
   * timeout (None|int): Same as the `timeout` parameter in `__call__`
     method.
+  * step_test_data(Callable[[], recipe_test_api.StepTestData]): Same as the
+    `step_test_data` parameter in `__call__` method.
   * cost (None|ResourceCost): Same as the `cost` parameter in `__call__`
     method.
 
@@ -3817,9 +3819,9 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/step/tests/step_cost.py#12)(api):**
 ### *recipes* / [step:tests/sub\_build](/recipe_modules/step/tests/sub_build.py)
 
-[DEPS](/recipe_modules/step/tests/sub_build.py#16): [assertions](#recipe_modules-assertions), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/sub_build.py#16): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/sub_build.py#25)(api, props):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/sub_build.py#26)(api, props):**
 ### *recipes* / [step:tests/subannotations](/recipe_modules/step/tests/subannotations.py)
 
 [DEPS](/recipe_modules/step/tests/subannotations.py#5): [step](#recipe_modules-step)

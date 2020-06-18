@@ -5,7 +5,9 @@
       "--output",
       "[CLEANUP]/tmp_tmp_1/sub_build.pb",
       "--foo",
-      "bar"
+      "bar",
+      "--json-summary",
+      "/path/to/tmp/json"
     ],
     "env": {
       "MAC_CHROMIUM_TMPDIR": "[CLEANUP]/tmp_tmp_2",
@@ -15,7 +17,11 @@
       "TMPDIR": "[CLEANUP]/tmp_tmp_2"
     },
     "name": "launch sub build",
-    "stdin": "\b\ufffdV`\u0001"
+    "stdin": "\b\ufffdV`\u0001",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@\"{\\\"hello\\\": \\\"world\\\"}\"@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
   },
   {
     "name": "$result"

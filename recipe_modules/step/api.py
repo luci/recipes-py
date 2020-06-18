@@ -382,7 +382,8 @@ class StepApi(recipe_api.RecipeApiPlain):
 
   @recipe_api.composite_step
   def sub_build(self, name, cmd, build,
-                output_path=None, timeout=None, cost=_ResourceCost()):
+                output_path=None, infra_step=False, timeout=None,
+                step_test_data=None, cost=_ResourceCost()):
     """Launch a sub-build by invoking a LUCI executable. All steps in the
     sub-build will appear as child steps of this step (Merge Step).
 
@@ -423,6 +424,8 @@ class StepApi(recipe_api.RecipeApiPlain):
         will be a temp file with binary encoding.
       * timeout (None|int): Same as the `timeout` parameter in `__call__`
         method.
+      * step_test_data(Callable[[], recipe_test_api.StepTestData]): Same as the
+        `step_test_data` parameter in `__call__` method.
       * cost (None|ResourceCost): Same as the `cost` parameter in `__call__`
         method.
 
@@ -461,6 +464,7 @@ class StepApi(recipe_api.RecipeApiPlain):
         merge_step=True,
         # The return code of LUCI executable should be omitted
         ok_ret=self.step_client.StepConfig.ALL_OK,
+        step_test_data=step_test_data,
     ))
 
   @recipe_api.composite_step
