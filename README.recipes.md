@@ -16,6 +16,7 @@
   * [isolated](#recipe_modules-isolated)
   * [json](#recipe_modules-json) &mdash; Methods for producing and consuming JSON.
   * [led](#recipe_modules-led)
+  * [legacy_annotation](#recipe_modules-legacy_annotation) &mdash; Legacy Annotation module provides support for running a command emitting legacy @@@annotation@@@ in the new luciexe mode.
   * [milo](#recipe_modules-milo) &mdash; API for specifying Milo behavior.
   * [path](#recipe_modules-path) &mdash; All functions related to manipulating paths in recipes.
   * [platform](#recipe_modules-platform) &mdash; Mockable system platform identity functions.
@@ -112,6 +113,7 @@
   * [json:tests/add_json_log](#recipes-json_tests_add_json_log)
   * [led:tests/full](#recipes-led_tests_full)
   * [led:tests/no_exist](#recipes-led_tests_no_exist)
+  * [legacy_annotation:tests/full](#recipes-legacy_annotation_tests_full)
   * [milo:examples/full](#recipes-milo_examples_full)
   * [path:examples/full](#recipes-path_examples_full)
   * [platform:examples/full](#recipes-platform_examples_full)
@@ -1866,6 +1868,27 @@ Whether the current build is a led job.
 A unique string identifier for this led job.
 
 If the current build is *not* a led job, value will be an empty string.
+### *recipe_modules* / [legacy\_annotation](/recipe_modules/legacy_annotation)
+
+[DEPS](/recipe_modules/legacy_annotation/__init__.py#5): [cipd](#recipe_modules-cipd), [step](#recipe_modules-step)
+
+Legacy Annotation module provides support for running a command emitting
+legacy @@@annotation@@@ in the new luciexe mode.
+
+The output annotations is converted to a build proto and all steps in the build
+will appear as the child steps of the launched cmd/step in the current running
+build (using the Merge Step feature from luciexe protocol). This is the
+replacement for allow_subannotation feature in the legacy annotate mode.
+
+#### **class [LegacyAnnotationApi](/recipe_modules/legacy_annotation/api.py#21)([RecipeApiPlain](/recipe_engine/recipe_api.py#764)):**
+
+&mdash; **def [\_\_call\_\_](/recipe_modules/legacy_annotation/api.py#24)(self, name, cmd, timeout=None, step_test_data=None, cost=_ResourceCost()):**
+
+Runs cmd that is emitting legacy @@@annotation@@@.
+
+Currently, it will run the command as sub_build if running in luciexe
+mode or simulation mode. Otherwise, it will fall back to launch a step
+with allow_subannotation set to true.
 ### *recipe_modules* / [milo](/recipe_modules/milo)
 
 [DEPS](/recipe_modules/milo/__init__.py#6): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
@@ -3667,6 +3690,11 @@ This tests metadata features of the Future object.
 [DEPS](/recipe_modules/led/tests/no_exist.py#5): [led](#recipe_modules-led), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/led/tests/no_exist.py#10)(api):**
+### *recipes* / [legacy\_annotation:tests/full](/recipe_modules/legacy_annotation/tests/full.py)
+
+[DEPS](/recipe_modules/legacy_annotation/tests/full.py#5): [legacy\_annotation](#recipe_modules-legacy_annotation), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/legacy_annotation/tests/full.py#15)(api):**
 ### *recipes* / [milo:examples/full](/recipe_modules/milo/examples/full.py)
 
 [DEPS](/recipe_modules/milo/examples/full.py#7): [milo](#recipe_modules-milo)
