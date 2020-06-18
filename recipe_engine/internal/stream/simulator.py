@@ -5,6 +5,8 @@
 import collections
 import json
 
+from google.protobuf import json_format as jsonpb
+
 from . import StreamEngine, encode_str
 from ..test.empty_log import EMPTY_LOG
 
@@ -72,6 +74,19 @@ class _SimulationStepStream(StreamEngine.StepStream):
             logs[log_name] = '\n'.join(encode_str(l) for l in lines)
 
     return LogStream()
+
+  def append_log(self, log):
+    # TODO(yiwzhang): This is confusing as it is printing the log proto msg in
+    # json format in followup_annotations section of the test expectation file.
+    # Normally, we print the actual log content of log there (e.g. json.output
+    # log). We should improve this once we remove annotator mode and make
+    # simulation speak build.proto natively.
+    log_stream = self.new_log_stream(log.name)
+    jsonify = jsonpb.MessageToJson(log,
+        preserving_proto_field_name=True, sort_keys=True)
+    for line in jsonify.splitlines():
+      log_stream.write_line(line)
+    log_stream.close()
 
   @_ignoreable
   def add_step_text(self, text):

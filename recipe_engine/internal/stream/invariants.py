@@ -54,8 +54,9 @@ class StreamEngineInvariants(StreamEngine):
     def close(self):
       assert self._open
       for log_name, log in self._logs.iteritems():
-        assert not log._open, 'Log %s still open when closing step %s' % (
-          log_name, self._step_name)
+        if isinstance(log, self._engine.LogStream):
+          assert not log._open, 'Log %s still open when closing step %s' % (
+            log_name, self._step_name)
       self._open = False
 
     def new_log_stream(self, log_name):
@@ -65,6 +66,14 @@ class StreamEngineInvariants(StreamEngine):
       ret = self._engine.LogStream(self, log_name)
       self._logs[log_name] = ret
       return ret
+
+    def append_log(self, log):
+      assert self._open
+      assert isinstance(log, common_pb2.Log), (
+        'expected type common_pb2.Log; got type %s' % (type(log),))
+      assert log.name not in self._logs, 'Log %s already exists in step %s' % (
+        log.name, self._step_name)
+      self._logs[log.name] = None # The instance is not needed
 
     def add_step_text(self, text):
       pass

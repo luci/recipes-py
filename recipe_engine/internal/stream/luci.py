@@ -239,6 +239,10 @@ class LUCIStepStream(StreamEngine.StepStream):
     self._change_cb()
     return LUCILogStream(log_stream)
 
+  def append_log(self, log):
+    self._step.logs.add().CopyFrom(log)
+    self._change_cb()
+
   def mark_running(self):
     if self._step.status == common.SCHEDULED:
       self._step.summary_markdown = ""

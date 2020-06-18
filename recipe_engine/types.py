@@ -214,13 +214,18 @@ class StepPresentation(object):
       step_stream.add_step_text(self.step_text.replace('\n', '<br/>'))
     if self.step_summary_text:
       step_stream.add_step_summary_text(self.step_summary_text)
-    for name, lines in logs.iteritems():
-      with step_stream.new_log_stream(name) as log:
-        if isinstance(lines, basestring):
-          log.write_split(lines)
-        else:
-          for line in lines:
-            log.write_split(line)
+    # late proto import
+    from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
+    for name, log in logs.iteritems():
+      if isinstance(log, common_pb2.Log):
+        step_stream.append_log(log)
+      else:
+        with step_stream.new_log_stream(name) as log_stream:
+          if isinstance(log, basestring):
+            log_stream.write_split(log)
+          else:
+            for line in log:
+              log_stream.write_split(line)
     for label, url in self.links.iteritems():
       step_stream.add_step_link(label, url)
     for key, value in sorted(self._properties.iteritems()):

@@ -85,6 +85,7 @@ class ProductStreamEngine(StreamEngine):
     add_step_text = _void_product('add_step_text')
     add_step_summary_text = _void_product('add_step_summary_text')
     add_step_link = _void_product('add_step_link')
+    append_log = _void_product('append_log')
     reset_subannotation_state = _void_product('reset_subannotation_state')
     set_step_status = _void_product('set_step_status')
     set_build_property = _void_product('set_build_property')

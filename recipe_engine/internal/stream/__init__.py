@@ -61,6 +61,12 @@ class StreamEngine(object):
     def new_log_stream(self, log_name):
       raise NotImplementedError()
 
+    def append_log(self, log):
+      """Appends an existing log stream (common_pb2.Log proto msg) directly to
+      step logs.
+      """
+      raise NotImplementedError()
+
     def add_step_text(self, text):
       raise NotImplementedError()
 
