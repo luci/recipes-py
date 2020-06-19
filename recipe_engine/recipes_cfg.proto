@@ -115,3 +115,8 @@ message RepoSpec {
   // up-to-date.
   bool no_docs = 8;
 }
+
+// Emitted by the `recipes.py dump_specs` command.
+message DepRepoSpecs {
+  map<string, RepoSpec> repo_specs = 1;
+}
