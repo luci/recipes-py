@@ -5,7 +5,7 @@
 from recipe_engine.post_process import (DropExpectation, StepSuccess,
                                         DoesNotRun)
 
-from PB.go.chromium.org.luci.resultdb.proto.rpc.v1 import test_result as test_result_pb2
+from PB.go.chromium.org.luci.resultdb.proto.v1 import test_result as test_result_pb2
 
 DEPS = [
     'buildbucket',

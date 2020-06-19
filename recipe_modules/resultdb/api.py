@@ -11,7 +11,7 @@ https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 from google.protobuf import json_format
 from recipe_engine import recipe_api
 
-from PB.go.chromium.org.luci.resultdb.proto.rpc.v1 import recorder
+from PB.go.chromium.org.luci.resultdb.proto.v1 import recorder
 
 from . import common
 

@@ -14,12 +14,12 @@
 
 syntax = "proto3";
 
-package luci.resultdb.rpc.v1;
+package luci.resultdb.v1;
 
 import "google/api/field_behavior.proto";
-import "go.chromium.org/luci/resultdb/proto/rpc/v1/invocation.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/invocation.proto";
 
-option go_package = "go.chromium.org/luci/resultdb/proto/rpc/v1;resultpb";
+option go_package = "go.chromium.org/luci/resultdb/proto/v1;resultpb";
 
 // Service to derive test results.
 //
