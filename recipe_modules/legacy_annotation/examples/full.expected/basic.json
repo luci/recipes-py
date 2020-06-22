@@ -57,8 +57,9 @@
       "--output",
       "[CLEANUP]/tmp_tmp_1/sub_build.pb",
       "--",
-      "echo",
-      "@@@BUILD_STEP@Hi Sub Annotation@@@"
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::legacy_annotation:examples/full].resources/anno.py"
     ],
     "env": {
       "MAC_CHROMIUM_TMPDIR": "[CLEANUP]/tmp_tmp_2",
@@ -67,14 +68,7 @@
       "TMP": "[CLEANUP]/tmp_tmp_2",
       "TMPDIR": "[CLEANUP]/tmp_tmp_2"
     },
-    "name": "sub annotation"
-  },
-  {
-    "cmd": [
-      "echo",
-      "{\n\"id\": \"1\", \n\"status\": \"SUCCESS\", \n\"steps\": [\n{\n\"name\": \"Hi Sub Annotation\", \n\"status\": \"SUCCESS\"\n}\n]\n}"
-    ],
-    "name": "print sub build"
+    "name": "run annotation script"
   },
   {
     "name": "$result"

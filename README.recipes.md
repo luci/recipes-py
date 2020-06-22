@@ -112,7 +112,7 @@
   * [json:tests/add_json_log](#recipes-json_tests_add_json_log)
   * [led:tests/full](#recipes-led_tests_full)
   * [led:tests/no_exist](#recipes-led_tests_no_exist)
-  * [legacy_annotation:tests/full](#recipes-legacy_annotation_tests_full)
+  * [legacy_annotation:examples/full](#recipes-legacy_annotation_examples_full)
   * [milo:examples/full](#recipes-milo_examples_full)
   * [path:examples/full](#recipes-path_examples_full)
   * [platform:examples/full](#recipes-platform_examples_full)
@@ -3670,11 +3670,11 @@ This tests metadata features of the Future object.
 [DEPS](/recipe_modules/led/tests/no_exist.py#5): [led](#recipe_modules-led), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/led/tests/no_exist.py#10)(api):**
-### *recipes* / [legacy\_annotation:tests/full](/recipe_modules/legacy_annotation/tests/full.py)
+### *recipes* / [legacy\_annotation:examples/full](/recipe_modules/legacy_annotation/examples/full.py)
 
-[DEPS](/recipe_modules/legacy_annotation/tests/full.py#5): [legacy\_annotation](#recipe_modules-legacy_annotation), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/legacy_annotation/examples/full.py#5): [legacy\_annotation](#recipe_modules-legacy_annotation), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/legacy_annotation/tests/full.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/legacy_annotation/examples/full.py#18)(api):**
 ### *recipes* / [milo:examples/full](/recipe_modules/milo/examples/full.py)
 
 [DEPS](/recipe_modules/milo/examples/full.py#7): [milo](#recipe_modules-milo)
