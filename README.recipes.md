@@ -1878,9 +1878,9 @@ will appear as the child steps of the launched cmd/step in the current running
 build (using the Merge Step feature from luciexe protocol). This is the
 replacement for allow_subannotation feature in the legacy annotate mode.
 
-#### **class [LegacyAnnotationApi](/recipe_modules/legacy_annotation/api.py#21)([RecipeApiPlain](/recipe_engine/recipe_api.py#653)):**
+#### **class [LegacyAnnotationApi](/recipe_modules/legacy_annotation/api.py#24)([RecipeApiPlain](/recipe_engine/recipe_api.py#653)):**
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/legacy_annotation/api.py#24)(self, name, cmd, timeout=None, step_test_data=None, cost=_ResourceCost()):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/legacy_annotation/api.py#27)(self, name, cmd, timeout=None, step_test_data=None, cost=_ResourceCost()):**
 
 Runs cmd that is emitting legacy @@@annotation@@@.
 

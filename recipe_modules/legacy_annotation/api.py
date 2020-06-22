@@ -11,6 +11,9 @@ build (using the Merge Step feature from luciexe protocol). This is the
 replacement for allow_subannotation feature in the legacy annotate mode.
 """
 
+from google.protobuf import json_format as jsonpb
+from six import iteritems
+
 from recipe_engine import recipe_api
 from recipe_engine.types import ResourceCost as _ResourceCost
 from recipe_engine.util import Placeholder
@@ -40,7 +43,10 @@ class LegacyAnnotationApi(recipe_api.RecipeApiPlain):
     run_annotations_luciexe = self.m.cipd.ensure_tool(
       'infra/tools/run_annotations/${platform}', 'latest')
     cmd = [run_annotations_luciexe, '--'] + cmd
-    return self.m.step.sub_build(name, cmd, build_pb2.Build(),
-                                 timeout=timeout,
-                                 step_test_data=step_test_data,
-                                 cost=cost)
+    ret = self.m.step.sub_build(name, cmd, build_pb2.Build(),
+                                timeout=timeout,
+                                step_test_data=step_test_data,
+                                cost=cost)
+    ret.presentation.properties.update(
+      jsonpb.MessageToDict(ret.step.sub_build.output.properties))
+    return ret

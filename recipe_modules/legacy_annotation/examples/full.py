@@ -21,15 +21,15 @@ def RunSteps(api):
 
 
 def GenTests(api):
+  sub_build = build_pb2.Build(id=1, status=common_pb2.SUCCESS)
+  sub_build.steps.add().CopyFrom(
+    step_pb2.Step(name='Hi Sub Annotation', status=common_pb2.SUCCESS),
+  )
+  props = sub_build.output.properties
+  props['str_prop'] = 'hello str'
+  props.get_or_create_struct('obj_prop')['hello'] = 'dict'
+  props.get_or_create_list('list_prop').extend(['hello', 'list'])
   yield (
     api.test('basic') +
-    api.step_data('run annotation script', api.step.sub_build(
-      build_pb2.Build(
-        id=1,
-        status=common_pb2.SUCCESS,
-        steps=[
-          step_pb2.Step(name='Hi Sub Annotation', status=common_pb2.SUCCESS),
-        ],
-      )
-    ))
+    api.step_data('run annotation script', api.step.sub_build(sub_build))
   )

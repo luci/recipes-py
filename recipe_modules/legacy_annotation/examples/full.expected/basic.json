@@ -68,7 +68,12 @@
       "TMP": "[CLEANUP]/tmp_tmp_2",
       "TMPDIR": "[CLEANUP]/tmp_tmp_2"
     },
-    "name": "run annotation script"
+    "name": "run annotation script",
+    "~followup_annotations": [
+      "@@@SET_BUILD_PROPERTY@list_prop@[\"hello\", \"list\"]@@@",
+      "@@@SET_BUILD_PROPERTY@obj_prop@{\"hello\": \"dict\"}@@@",
+      "@@@SET_BUILD_PROPERTY@str_prop@\"hello str\"@@@"
+    ]
   },
   {
     "name": "$result"
