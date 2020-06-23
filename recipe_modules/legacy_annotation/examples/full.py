@@ -8,7 +8,7 @@ DEPS = [
   'step',
 ]
 
-import textwrap
+from recipe_engine import post_process
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
@@ -16,8 +16,10 @@ from PB.go.chromium.org.luci.buildbucket.proto import step as step_pb2
 
 
 def RunSteps(api):
-  api.legacy_annotation('run annotation script', cmd=[
-      'python', '-u', api.resource('anno.py')])
+  api.legacy_annotation('run annotation script',
+    cmd=['python', '-u', api.resource('anno.py')],
+    step_test_data=lambda: api.legacy_annotation.test_api.success_step,
+  )
 
 
 def GenTests(api):
@@ -32,4 +34,26 @@ def GenTests(api):
   yield (
     api.test('basic') +
     api.step_data('run annotation script', api.step.sub_build(sub_build))
+  )
+
+  yield (
+    api.test('default step_test_data') +
+    api.post_process(post_process.StepSuccess, 'run annotation script') +
+    api.post_process(post_process.DropExpectation)
+  )
+
+  yield (
+    api.test('failure') +
+    api.step_data('run annotation script',
+                  api.legacy_annotation.failure_step) +
+    api.post_process(post_process.StepFailure, 'run annotation script') +
+    api.post_process(post_process.DropExpectation)
+  )
+
+  yield (
+    api.test('infra failure') +
+    api.step_data('run annotation script',
+                  api.legacy_annotation.infra_failure_step) +
+    api.post_process(post_process.StepException, 'run annotation script') +
+    api.post_process(post_process.DropExpectation)
   )

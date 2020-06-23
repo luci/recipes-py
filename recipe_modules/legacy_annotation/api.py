@@ -43,6 +43,11 @@ class LegacyAnnotationApi(recipe_api.RecipeApiPlain):
     run_annotations_luciexe = self.m.cipd.ensure_tool(
       'infra/tools/run_annotations/${platform}', 'latest')
     cmd = [run_annotations_luciexe, '--'] + cmd
+    if step_test_data:
+      _step_test_data = step_test_data
+      step_test_data = lambda: self.test_api.success_step + _step_test_data()
+    else: # pragma: no cover
+      step_test_data = lambda: self.test_api.success_step
     ret = self.m.step.sub_build(name, cmd, build_pb2.Build(),
                                 timeout=timeout,
                                 step_test_data=step_test_data,
