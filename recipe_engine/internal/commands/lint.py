@@ -16,7 +16,7 @@ from __future__ import absolute_import
 import re
 import types
 
-MODULES_WHITELIST = [
+ALLOWED_MODULES = [
     r'ast',
     r'base64',
     r'collections',
@@ -35,6 +35,7 @@ MODULES_WHITELIST = [
     r'zlib',
 
     # non stdlib
+    r'attr',
     r'google\.protobuf',
 
     # From recipe ecosystem
@@ -43,7 +44,7 @@ MODULES_WHITELIST = [
 ]
 
 
-def ImportsTest(recipe, whitelist):
+def ImportsTest(recipe, allowed_modules):
   """Tests that recipe_name only uses allowed imports.
 
   Returns a list of errors, or an empty list if there are no errors (duh).
@@ -52,7 +53,7 @@ def ImportsTest(recipe, whitelist):
   for _, val in sorted(recipe.global_symbols.iteritems()):
     if isinstance(val, types.ModuleType):
       module_name = val.__name__
-      for pattern in whitelist:
+      for pattern in allowed_modules:
         if pattern.match(val.__name__):
           break
       else:
@@ -75,11 +76,11 @@ def add_arguments(parser):
 
 
 def main(args):
-  whitelist = map(re.compile, MODULES_WHITELIST + args.whitelist)
+  allowed_modules = map(re.compile, ALLOWED_MODULES + args.whitelist)
 
   errors = []
   for recipe in args.recipe_deps.main_repo.recipes.itervalues():
-    errors.extend(ImportsTest(recipe, whitelist))
+    errors.extend(ImportsTest(recipe, allowed_modules))
 
   if errors:
     print '\n'.join(str(e) for e in errors)
