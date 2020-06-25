@@ -54,7 +54,7 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
   #packages[private_package_name] = 'latest'
   ensure_file.add_package(private_package_name, 'latest', subdir='private')
   api.cipd.max_threads = max_threads
-  api.cipd.ensure(cipd_root, ensure_file)
+  api.cipd.ensure(cipd_root, ensure_file, name='ensure private package')
   result = api.cipd.search(private_package_name, tag='key:value')
   api.cipd.describe(private_package_name,
                     version=result[0].instance_id,

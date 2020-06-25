@@ -600,12 +600,13 @@ class CIPDApi(recipe_api.RecipeApi):
         tags,
         compression_level=compression_level)
 
-  def ensure(self, root, ensure_file):
+  def ensure(self, root, ensure_file, name='ensure_installed'):
     """Ensures that packages are installed in a given root dir.
 
     Args:
       * root (Path) - Path to installation site root directory.
       * ensure_file (EnsureFile) - List of packages to install.
+      * name (str) - Step display name.
 
     Returns the map of subdirectories to CIPDApi.Pin instances.
     """
@@ -618,7 +619,7 @@ class CIPDApi(recipe_api.RecipeApi):
       cmd.extend(('-max-threads', str(self.max_threads)))
 
     step_result = self._run(
-        'ensure_installed',
+        name,
         cmd,
         step_test_data=lambda: self.test_api.example_ensure(ensure_file))
     return {

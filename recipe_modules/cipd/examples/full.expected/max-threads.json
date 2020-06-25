@@ -158,7 +158,7 @@
       "-json-output",
       "/path/to/tmp/json"
     ],
-    "name": "ensure_installed (2)",
+    "name": "ensure private package",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
