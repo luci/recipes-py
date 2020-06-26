@@ -10,8 +10,10 @@ from google.protobuf import timestamp_pb2
 from recipe_engine import recipe_test_api
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import builder as builder_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
-from PB.go.chromium.org.luci.buildbucket.proto import rpc as rpc_pb2
+from PB.go.chromium.org.luci.buildbucket.proto \
+  import builds_service as builds_service_pb2
 from . import util
 
 
@@ -58,7 +60,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         id=build_id,
         number=build_number,
         tags=tags or [],
-        builder=build_pb2.BuilderID(
+        builder=builder_pb2.BuilderID(
             project=project,
             bucket=bucket,
             builder=builder,
@@ -136,7 +138,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         id=build_id,
         number=build_number,
         tags=tags,
-        builder=build_pb2.BuilderID(
+        builder=builder_pb2.BuilderID(
             project=project,
             bucket=bucket,
             builder=builder,
@@ -195,7 +197,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         id=build_id,
         number=build_number,
         tags=tags,
-        builder=build_pb2.BuilderID(
+        builder=builder_pb2.BuilderID(
             project=project,
             bucket=bucket,
             builder=builder,
@@ -251,7 +253,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
   def simulated_get(self, build, step_name=None):
     """Simulates a buildbucket.get call."""
     step_name = step_name or 'buildbucket.get'
-    jsonish = json_format.MessageToDict(rpc_pb2.BatchResponse(
+    jsonish = json_format.MessageToDict(builds_service_pb2.BatchResponse(
         responses=[dict(get_build=build)],
     ))
     return self.step_data(step_name, self.m.json.output_stream(jsonish))
@@ -259,7 +261,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
   def simulated_get_multi(self, builds, step_name=None):
     """Simulates a buildbucket.get_multi call."""
     step_name = step_name or 'buildbucket.get_multi'
-    jsonish = json_format.MessageToDict(rpc_pb2.BatchResponse(
+    jsonish = json_format.MessageToDict(builds_service_pb2.BatchResponse(
         responses=[dict(get_build=b) for b in builds],
     ))
     return self.step_data(step_name, self.m.json.output_stream(jsonish))
@@ -274,7 +276,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     step data. The return code will be 1 for step data if the responses contain
     error. Otherwise, 0
     """
-    assert isinstance(batch_response, rpc_pb2.BatchResponse)
+    assert isinstance(batch_response, builds_service_pb2.BatchResponse)
     ret_code = int(any(r.HasField('error') for r in batch_response.responses))
     jsonish = json_format.MessageToDict(batch_response)
     return self.step_data(

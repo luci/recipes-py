@@ -10,8 +10,8 @@ from google.protobuf import timestamp_pb2
 from recipe_engine import post_process
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import builder as builder_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
-from PB.go.chromium.org.luci.buildbucket.proto import rpc as rpc_pb2
 
 DEPS = [
   'assertions',
@@ -94,7 +94,7 @@ def GenTests(api):
       + api.buildbucket.build(build_pb2.Build(
           id=12484724,
           tags=[],
-          builder=build_pb2.BuilderID(
+          builder=builder_pb2.BuilderID(
               project='test',
               bucket='cron',
               builder='scanner',

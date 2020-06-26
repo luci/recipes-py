@@ -21,7 +21,8 @@ from recipe_engine import recipe_api
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
-from PB.go.chromium.org.luci.buildbucket.proto import rpc as rpc_pb2
+from PB.go.chromium.org.luci.buildbucket.proto \
+  import builds_service as builds_service_pb2
 from . import util
 
 
@@ -433,7 +434,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     b = self.build
 
-    req = rpc_pb2.ScheduleBuildRequest(
+    req = builds_service_pb2.ScheduleBuildRequest(
         request_id='%d-%s' % (b.id, self.m.uuid.random()),
         builder=dict(
             project=if_inherit(project, b.builder.project),
@@ -525,15 +526,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """
     assert isinstance(schedule_build_requests, list), schedule_build_requests
     for r in schedule_build_requests:
-      assert isinstance(r, rpc_pb2.ScheduleBuildRequest), r
+      assert isinstance(r, builds_service_pb2.ScheduleBuildRequest), r
     if not schedule_build_requests:
       return []
 
-    batch_req = rpc_pb2.BatchRequest(
+    batch_req = builds_service_pb2.BatchRequest(
         requests=[dict(schedule_build=r) for r in schedule_build_requests]
     )
 
-    test_res = rpc_pb2.BatchResponse()
+    test_res = builds_service_pb2.BatchResponse()
     for r in schedule_build_requests:
       test_res.responses.add(
           schedule_build=dict(
@@ -612,15 +613,15 @@ class BuildbucketApi(recipe_api.RecipeApi):
     Example: find all builds of the current CL.
 
     ```python
-    from PB.go.chromium.org.luci.buildbucket.proto import rpc as rpc_pb2
+    from PB.go.chromium.org.luci.buildbucket.proto import rpc as builds_service_pb2
 
-    related_builds = api.buildbucket.search(rpc_pb2.BuildPredicate(
+    related_builds = api.buildbucket.search(builds_service_pb2.BuildPredicate(
       gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),
     ))
     ```
 
     Args:
-    *   predicate: a `rpc_pb2.BuildPredicate` object or a list thereof.
+    *   predicate: a `builds_service_pb2.BuildPredicate` object or a list thereof.
         If a list, the predicates are connected with logical OR.
     *   limit: max number of builds to return. Defaults to 1000.
     *   url_title_fn: generates a build URL title. See module docstring.
@@ -630,10 +631,10 @@ class BuildbucketApi(recipe_api.RecipeApi):
     Returns:
       A list of builds ordered newest-to-oldest.
     """
-    assert isinstance(predicate, (list, rpc_pb2.BuildPredicate)), predicate
+    assert isinstance(predicate, (list, builds_service_pb2.BuildPredicate)), predicate
     if not isinstance(predicate, list):
       predicate = [predicate]
-    assert all(isinstance(p, rpc_pb2.BuildPredicate) for p in predicate)
+    assert all(isinstance(p, builds_service_pb2.BuildPredicate) for p in predicate)
     assert isinstance(limit, (type(None), int))
     assert limit is None or limit >= 0
 
@@ -685,14 +686,14 @@ class BuildbucketApi(recipe_api.RecipeApi):
       be raised
     """
     self._check_build_id(build_id)
-    cancel_req = rpc_pb2.BatchRequest(
+    cancel_req = builds_service_pb2.BatchRequest(
       requests=[
         dict(cancel_build=dict(
           # Expecting id to be of type int64 according to the proto definition
           id=int(build_id),
           summary_markdown=str(reason)
         ))])
-    test_res = rpc_pb2.BatchResponse(
+    test_res = builds_service_pb2.BatchResponse(
       responses=[
         dict(cancel_build=dict(
           id=int(build_id),
@@ -726,14 +727,14 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   def _get_multi(self, build_ids, url_title_fn, step_name, fields):
     """Implements get_multi, but also returns StepResult."""
-    batch_req = rpc_pb2.BatchRequest(
+    batch_req = builds_service_pb2.BatchRequest(
         requests=[
           dict(get_build=dict(id=id, fields=self._make_field_mask(
               paths=fields)))
           for id in build_ids
         ],
     )
-    test_res = rpc_pb2.BatchResponse(
+    test_res = builds_service_pb2.BatchResponse(
         responses=[
           dict(get_build=dict(id=id, status=common_pb2.SUCCESS))
           for id in build_ids
@@ -862,7 +863,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
   def _batch_request(self, step_name, request, test_response):
     """Makes a Builds.Batch request.
 
-    Returns (StepResult, rpc_pb2.BatchResponse, has_errors) tuple.
+    Returns (StepResult, builds_service_pb2.BatchResponse, has_errors) tuple.
     """
     request_dict = json_format.MessageToDict(request)
     try:
@@ -889,7 +890,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     # Parse the response.
     if step_res.stdout is None:
       raise self.m.step.InfraFailure('Buildbucket Internal Error')
-    batch_res = rpc_pb2.BatchResponse()
+    batch_res = builds_service_pb2.BatchResponse()
     json_format.ParseDict(
         step_res.stdout, batch_res,
         # Do not fail the build because recipe's proto copy is stale.

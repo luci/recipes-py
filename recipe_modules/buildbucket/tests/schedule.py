@@ -6,7 +6,8 @@ from recipe_engine import post_process
 from recipe_engine import types
 
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
-from PB.go.chromium.org.luci.buildbucket.proto import rpc as rpc_pb2
+from PB.go.chromium.org.luci.buildbucket.proto \
+  import builds_service as builds_service_pb2
 
 DEPS = [
   'buildbucket',
@@ -91,7 +92,7 @@ def GenTests(api):
       experimental=common_pb2.NO,
   )
 
-  err_batch_res = rpc_pb2.BatchResponse(
+  err_batch_res = builds_service_pb2.BatchResponse(
       responses=[
         dict(
             error=dict(

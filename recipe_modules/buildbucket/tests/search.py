@@ -8,7 +8,8 @@ from google.protobuf import json_format
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
-from PB.go.chromium.org.luci.buildbucket.proto import rpc as rpc_pb2
+from PB.go.chromium.org.luci.buildbucket.proto \
+  import builds_service as builds_service_pb2
 
 DEPS = [
   'buildbucket',
@@ -22,7 +23,7 @@ DEPS = [
 def RunSteps(api):
   limit = api.properties.get('limit')
   builds = api.buildbucket.search(
-      rpc_pb2.BuildPredicate(
+      builds_service_pb2.BuildPredicate(
         gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),
       ),
       limit=limit,

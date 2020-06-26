@@ -41,9 +41,6 @@ def main():
     resp = requests.get(TAR_URL % (commit, sub), stream=True).raw
     with tarfile.open(mode='r|*', fileobj=resp) as tar:
       for item in tar:
-        if item.name.endswith('_config.proto'):
-          print 'Skipping %r' % item.name
-          continue
         if item.name.endswith('_test.proto'):
           print 'Skipping %r' % item.name
           continue

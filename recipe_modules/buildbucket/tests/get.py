@@ -6,7 +6,8 @@ from google.protobuf import json_format
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
-from PB.go.chromium.org.luci.buildbucket.proto import rpc as rpc_pb2
+from PB.go.chromium.org.luci.buildbucket.proto \
+  import builds_service as builds_service_pb2
 
 DEPS = [
   'buildbucket',
@@ -45,7 +46,7 @@ def GenTests(api):
       api.step_data(
           'buildbucket.get',
           api.json.output_stream(
-              json_format.MessageToDict(rpc_pb2.BatchResponse(
+              json_format.MessageToDict(builds_service_pb2.BatchResponse(
                   responses=[dict(error=dict(message='there was a problem'))],
               )),
           ),

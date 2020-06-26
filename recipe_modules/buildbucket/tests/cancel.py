@@ -4,7 +4,8 @@
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
-from PB.go.chromium.org.luci.buildbucket.proto import rpc as rpc_pb2
+from PB.go.chromium.org.luci.buildbucket.proto \
+  import builds_service as builds_service_pb2
 
 DEPS = [
   'buildbucket'
@@ -23,7 +24,7 @@ def RunSteps(api):
 
 def GenTests(api):
   def construct_batch_response(build_id, status):
-    return rpc_pb2.BatchResponse(
+    return builds_service_pb2.BatchResponse(
       responses=[
         dict(cancel_build=dict(
           id=build_id,
@@ -42,7 +43,7 @@ def GenTests(api):
         step_name='cancel_with_reason')
   )
 
-  error_batch_response = rpc_pb2.BatchResponse(
+  error_batch_response = builds_service_pb2.BatchResponse(
     responses=[
       dict(error=dict(
         code=123,
