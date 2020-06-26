@@ -382,7 +382,7 @@ class StepApi(recipe_api.RecipeApiPlain):
 
   @recipe_api.composite_step
   def sub_build(self, name, cmd, build,
-                output_path=None, infra_step=False, timeout=None,
+                output_path=None, timeout=None,
                 step_test_data=None, cost=_ResourceCost()):
     """Launch a sub-build by invoking a LUCI executable. All steps in the
     sub-build will appear as child steps of this step (Merge Step).
