@@ -407,7 +407,9 @@ class RecipeEngine(object):
       ret.finalize()
 
       if step_config.merge_step:
-        _update_merge_step_presentation(ret.presentation, ret.step.sub_build)
+        _update_merge_step_presentation(ret.presentation,
+                                        ret.step.sub_build,
+                                        step_config.infra_step)
 
       # If there's a buffered exception, we raise it now.
       if caught:
@@ -609,7 +611,7 @@ def _set_initial_status(presentation, step_config, exc_result):
   presentation.status = 'EXCEPTION' if step_config.infra_step else 'FAILURE'
 
 
-def _update_merge_step_presentation(presentation, sub_build):
+def _update_merge_step_presentation(presentation, sub_build, infra_step):
   """Update the step presentation for merge step based on the result sub build.
 
   Overrides the presentation status with the status of the sub-build. If the
@@ -648,7 +650,7 @@ def _update_merge_step_presentation(presentation, sub_build):
   else:
     presentation.status = {
       common_pb2.SUCCESS: 'SUCCESS',
-      common_pb2.FAILURE: 'FAILURE',
+      common_pb2.FAILURE: 'EXCEPTION' if infra_step else 'FAILURE',
       common_pb2.CANCELED: 'EXCEPTION',
       common_pb2.INFRA_FAILURE: 'EXCEPTION',
     }[sub_build.status]

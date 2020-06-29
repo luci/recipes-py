@@ -15,8 +15,9 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
 DEPS = [
   'assertions',
-  'path',
+  'context',
   'json',
+  'path',
   'properties',
   'step',
 ]
@@ -28,17 +29,18 @@ def RunSteps(api, props):
   if props.HasField('output_path'):
     output_path = (
       api.path[props.output_path.base].join(props.output_path.file))
-  ret = api.step.sub_build(
-    'launch sub build',
-    ['luciexe', '--foo', 'bar', '--json-summary', api.json.output()],
-    build_pb2.Build(id=11111, status=common_pb2.SCHEDULED),
-    output_path=output_path,
-    step_test_data= lambda: (
-      api.json.test_api.output('{"hello": "world"}') +
-      api.step.test_api.sub_build(
-        build_pb2.Build(id=11111, status=common_pb2.SUCCESS))
-    ),
-  )
+  with api.context(infra_steps=props.infra_step):
+    ret = api.step.sub_build(
+      'launch sub build',
+      ['luciexe', '--foo', 'bar', '--json-summary', api.json.output()],
+      build_pb2.Build(id=11111, status=common_pb2.SCHEDULED),
+      output_path=output_path,
+      step_test_data= lambda: (
+        api.json.test_api.output('{"hello": "world"}') +
+        api.step.test_api.sub_build(
+          build_pb2.Build(id=11111, status=common_pb2.SUCCESS))
+      ),
+    )
 
   api.assertions.assertIsNotNone(ret.step.sub_build)
   if props.HasField('expected_sub_build'):
@@ -109,6 +111,16 @@ def GenTests(api):
     api.step_data('launch sub build', api.step.sub_build(
       build_pb2.Build(id=1, status=common_pb2.INFRA_FAILURE))
     ) +
+    api.post_process(post_process.StepException, 'launch sub build') +
+    api.post_process(post_process.DropExpectation)
+  )
+
+  yield (
+    api.test('infra_step') +
+    api.step_data('launch sub build', api.step.sub_build(
+      build_pb2.Build(id=1, status=common_pb2.FAILURE))
+    ) +
+    api.properties(properties_pb2.SubBuildInputProps(infra_step=True)) +
     api.post_process(post_process.StepException, 'launch sub build') +
     api.post_process(post_process.DropExpectation)
   )

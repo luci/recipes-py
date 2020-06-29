@@ -3823,9 +3823,9 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/step/tests/step_cost.py#12)(api):**
 ### *recipes* / [step:tests/sub\_build](/recipe_modules/step/tests/sub_build.py)
 
-[DEPS](/recipe_modules/step/tests/sub_build.py#16): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/sub_build.py#16): [assertions](#recipe_modules-assertions), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/sub_build.py#26)(api, props):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/sub_build.py#27)(api, props):**
 ### *recipes* / [step:tests/subannotations](/recipe_modules/step/tests/subannotations.py)
 
 [DEPS](/recipe_modules/step/tests/subannotations.py#5): [step](#recipe_modules-step)
