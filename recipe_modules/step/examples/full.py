@@ -2,7 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from recipe_engine import recipe_api, config
+from recipe_engine import recipe_api, config, post_process
 
 DEPS = [
   'context',
@@ -152,7 +152,11 @@ def GenTests(api):
   yield (
       api.test('exceptional') +
       api.step_data('goodbye (2)', retcode=1) +
-      api.expect_exception('ValueError')
+      api.expect_exception('ValueError') +
+      api.post_process(
+          post_process.ResultReason,
+          "Uncaught Exception: ValueError('goodbye must exit 0!',)") +
+      api.post_process(post_process.DropExpectation)
     )
 
   yield (
@@ -174,19 +178,34 @@ def GenTests(api):
   yield (
       api.test('invalid_access') +
       api.properties(access_invalid_data=True) +
-      api.expect_exception('AttributeError')
+      api.expect_exception('AttributeError') +
+      api.post_process(
+          post_process.ResultReason,
+          "Uncaught Exception: AttributeError(\"StepData from step 'no-op' "
+          "has no attribute \'json\'.\",)") +
+      api.post_process(post_process.DropExpectation)
     )
 
   yield (
       api.test('deep_invalid_access') +
       api.properties(access_deep_invalid_data=True) +
-      api.expect_exception('AttributeError')
+      api.expect_exception('AttributeError') +
+      api.post_process(
+          post_process.ResultReason,
+          "Uncaught Exception: AttributeError(\"StepData('no-op').json "
+          "has no attribute 'outpurt'.\",)") +
+      api.post_process(post_process.DropExpectation)
     )
 
   yield (
       api.test('extra_junk') +
       api.properties(assign_extra_junk=True) +
-      api.expect_exception('ValueError')
+      api.expect_exception('ValueError') +
+      api.post_process(
+          post_process.ResultReason,
+          "Uncaught Exception: ValueError(\"Cannot assign to 'json' on "
+          "finalized StepData from step 'no-op'\",)") +
+      api.post_process(post_process.DropExpectation)
     )
 
   yield (

@@ -2,6 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from recipe_engine import post_process
 from recipe_engine.config import List, Single, ConfigList, ConfigGroup
 from recipe_engine.recipe_api import Property
 
@@ -43,7 +44,8 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
   # Some packages don't require credentials to be installed or queried.
   api.cipd.ensure(cipd_root, ensure_file)
   with api.cipd.cache_dir(api.path.mkdtemp()):
-    result = api.cipd.search(package_name, tag='git_revision:40-chars-long-hash')
+    result = api.cipd.search(package_name,
+                             tag='git_revision:40-chars-long-hash')
   r = api.cipd.describe(package_name, version=result[0].instance_id)
   api.step('describe response', cmd=None).presentation.logs['parsed'] = (
       api.json.dumps(r.__dict__, indent=2).splitlines())
@@ -232,6 +234,12 @@ def GenTests(api):
       ver_files=['a', 'b'],
     )
     + api.expect_exception('ValueError')
+    + api.post_process(
+        post_process.ResultReason,
+        "Uncaught Exception: ValueError('add_version_file() may only be "
+        "used once.',)",
+      )
+    + api.post_process(post_process.DropExpectation)
   )
 
   yield (
@@ -241,6 +249,12 @@ def GenTests(api):
       install_mode='',
     )
     + api.expect_exception('ValueError')
+    + api.post_process(
+          post_process.ResultReason,
+          "Uncaught Exception: ValueError(\"invalid value for "
+          "install_mode: ''\",)",
+      )
+    + api.post_process(post_process.DropExpectation)
   )
 
   yield (
@@ -252,6 +266,13 @@ def GenTests(api):
       ],
     )
     + api.expect_exception('ValueError')
+    + api.post_process(
+        post_process.ResultReason,
+        "Uncaught Exception: ValueError(\"path Path([START_DIR], 'a', "
+        "'path', 'to', 'file.py') is not the package root "
+        "Path([START_DIR], 'some_subdir') and not a child thereof\",)",
+      )
+    + api.post_process(post_process.DropExpectation)
   )
 
   yield (

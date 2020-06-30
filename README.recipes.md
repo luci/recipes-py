@@ -3307,9 +3307,9 @@ Launches multiple builds at the same revision.
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/search.py#23)(api):**
 ### *recipes* / [cipd:examples/full](/recipe_modules/cipd/examples/full.py)
 
-[DEPS](/recipe_modules/cipd/examples/full.py#8): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cipd/examples/full.py#9): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/cipd/examples/full.py#35)(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files, install_mode, refs, tags, max_threads):**
+&mdash; **def [RunSteps](/recipe_modules/cipd/examples/full.py#36)(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files, install_mode, refs, tags, max_threads):**
 ### *recipes* / [commit\_position:examples/full](/recipe_modules/commit_position/examples/full.py)
 
 [DEPS](/recipe_modules/commit_position/examples/full.py#5): [commit\_position](#recipe_modules-commit_position), [step](#recipe_modules-step)
@@ -3416,11 +3416,11 @@ Tests that recipes can modify configuration options in various ways.
 &emsp; **@config_ctx()**<br>&mdash; **def [test2a](/recipes/engine_tests/config_operations.py#31)(c):**
 ### *recipes* / [engine\_tests/expect\_exception](/recipes/engine_tests/expect_exception.py)
 
-[DEPS](/recipes/engine_tests/expect_exception.py#7): [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/expect_exception.py#9): [step](#recipe_modules-step)
 
 Tests that step_data can accept multiple specs at once.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/expect_exception.py#11)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/expect_exception.py#13)(api):**
 ### *recipes* / [engine\_tests/failure\_results](/recipes/engine_tests/failure_results.py)
 
 [DEPS](/recipes/engine_tests/failure_results.py#12): [json](#recipe_modules-json), [step](#recipe_modules-step)
@@ -3486,11 +3486,11 @@ Tests error checking around multiple placeholders in a single step.
 &mdash; **def [RunSteps](/recipes/engine_tests/nonexistent_command.py#3)(api):**
 ### *recipes* / [engine\_tests/placeholder\_exception](/recipes/engine_tests/placeholder_exception.py)
 
-[DEPS](/recipes/engine_tests/placeholder_exception.py#10): [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/placeholder_exception.py#12): [step](#recipe_modules-step)
 
 Tests that placeholders can't wreck the world by exhausting the step stack.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/placeholder_exception.py#22)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/placeholder_exception.py#24)(api):**
 ### *recipes* / [engine\_tests/proto\_properties](/recipes/engine_tests/proto_properties.py)
 
 [DEPS](/recipes/engine_tests/proto_properties.py#7): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties)
@@ -3512,9 +3512,9 @@ Tests that step presentation properties can be ordered.
 &mdash; **def [RunSteps](/recipes/engine_tests/sort_properties.py#11)(api):**
 ### *recipes* / [engine\_tests/undeclared\_method](/recipes/engine_tests/undeclared_method.py)
 
-[DEPS](/recipes/engine_tests/undeclared_method.py#7): [properties](#recipe_modules-properties), [python](#recipe_modules-python), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/undeclared_method.py#8): [properties](#recipe_modules-properties), [python](#recipe_modules-python), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipes/engine_tests/undeclared_method.py#19)(api, from_recipe, attribute, module):**
+&mdash; **def [RunSteps](/recipes/engine_tests/undeclared_method.py#20)(api, from_recipe, attribute, module):**
 ### *recipes* / [engine\_tests/unicode](/recipes/engine_tests/unicode.py)
 
 [DEPS](/recipes/engine_tests/unicode.py#6): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
@@ -3693,9 +3693,9 @@ This tests metadata features of the Future object.
 &mdash; **def [RunSteps](/recipe_modules/platform/examples/full.py#11)(api):**
 ### *recipes* / [properties:examples/full](/recipe_modules/properties/examples/full.py)
 
-[DEPS](/recipe_modules/properties/examples/full.py#10): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/properties/examples/full.py#13): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/properties/examples/full.py#18)(api, props, env_props):**
+&mdash; **def [RunSteps](/recipe_modules/properties/examples/full.py#21)(api, props, env_props):**
 ### *recipes* / [proto:tests/encode\_decode](/recipe_modules/proto/tests/encode_decode.py)
 
 [DEPS](/recipe_modules/proto/tests/encode_decode.py#5): [assertions](#recipe_modules-assertions), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
@@ -3868,9 +3868,9 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/url/tests/join.py#11)(api):**
 ### *recipes* / [url:tests/validate\_url](/recipe_modules/url/tests/validate_url.py)
 
-[DEPS](/recipe_modules/url/tests/validate_url.py#5): [properties](#recipe_modules-properties), [step](#recipe_modules-step), [url](#recipe_modules-url)
+[DEPS](/recipe_modules/url/tests/validate_url.py#7): [properties](#recipe_modules-properties), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
-&mdash; **def [RunSteps](/recipe_modules/url/tests/validate_url.py#12)(api):**
+&mdash; **def [RunSteps](/recipe_modules/url/tests/validate_url.py#14)(api):**
 ### *recipes* / [uuid:examples/full](/recipe_modules/uuid/examples/full.py)
 
 [DEPS](/recipe_modules/uuid/examples/full.py#5): [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)

@@ -2,8 +2,10 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-"""Tests that placeholders can't wreck the world by exhausting the step stack."""
+"""Tests that placeholders can't wreck the world by exhausting the step stack.
+"""
 
+from recipe_engine import post_process
 from recipe_engine.util import InputPlaceholder
 from recipe_engine.recipe_api import StepFailure
 
@@ -32,6 +34,9 @@ def RunSteps(api):
 def GenTests(api):
   yield (
     api.test('basic') +
-    api.expect_exception('Exception')
+    api.expect_exception('Exception') +
+    api.post_process(post_process.ResultReason,
+                     "Uncaught Exception: Exception('EXPLOSION',)") +
+    api.post_process(post_process.DropExpectation)
   )
 

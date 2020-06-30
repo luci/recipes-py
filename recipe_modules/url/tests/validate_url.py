@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from recipe_engine import post_process
+
 DEPS = [
   'properties',
   'step',
@@ -19,12 +21,30 @@ def GenTests(api):
 
   yield (api.test('no_scheme') +
       api.properties(url_to_validate='example.com') +
-      api.expect_exception('ValueError'))
+      api.expect_exception('ValueError') +
+      api.post_process(
+          post_process.ResultReason,
+          "Uncaught Exception: ValueError('URL scheme must be either http:// "
+          "or https://',)",
+      ) +
+      api.post_process(post_process.DropExpectation))
 
   yield (api.test('invalid_scheme') +
       api.properties(url_to_validate='ftp://example.com') +
-      api.expect_exception('ValueError'))
+      api.expect_exception('ValueError') +
+      api.post_process(
+          post_process.ResultReason,
+          "Uncaught Exception: ValueError('URL scheme must be either http:// "
+          "or https://',)",
+      ) +
+      api.post_process(post_process.DropExpectation))
 
   yield (api.test('no_host') +
       api.properties(url_to_validate='https://') +
-      api.expect_exception('ValueError'))
+      api.expect_exception('ValueError') +
+      api.post_process(
+          post_process.ResultReason,
+          "Uncaught Exception: ValueError('URL must specify a network "
+          "location.',)",
+      ) +
+      api.post_process(post_process.DropExpectation))

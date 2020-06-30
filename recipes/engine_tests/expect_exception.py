@@ -4,6 +4,8 @@
 
 """Tests that step_data can accept multiple specs at once."""
 
+from recipe_engine import post_process
+
 DEPS = [
   'step',
 ]
@@ -14,5 +16,8 @@ def RunSteps(api):
 def GenTests(api):
   yield (
     api.test('basic') +
-    api.expect_exception('TypeError')
+    api.expect_exception('TypeError') +
+    api.post_process(post_process.ResultReason,
+                     "Uncaught Exception: TypeError('BAD DOGE',)") +
+    api.post_process(post_process.DropExpectation)
   )

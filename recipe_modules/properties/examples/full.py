@@ -2,10 +2,13 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from google.protobuf import struct_pb2, json_format
+
+from recipe_engine import post_process
+
 from PB.recipe_modules.recipe_engine.properties.examples.full import InputProps
 from PB.recipe_modules.recipe_engine.properties.examples.full import EnvProps
 
-from google.protobuf import struct_pb2, json_format
 
 DEPS = [
   'properties',
@@ -68,6 +71,12 @@ def GenTests(api):
     api.test('prop_wrong_type')
     + api.properties(test_prop=True) # wrong type
     + api.expect_exception('ParseError')
+    + api.post_process(
+          post_process.ResultReason,
+          'Uncaught Exception: ParseError("Failed to parse test_prop field: '
+          '\'bool\' object is not iterable.",)',
+      )
+    + api.post_process(post_process.DropExpectation)
   )
 
   # Deprecated: buildbot "defaults"
