@@ -16,7 +16,7 @@ from recipe_engine import recipe_api
 class GeneratorScriptApi(recipe_api.RecipeApi):
   ALLOWED_KEYS = frozenset([
     # supported by step module
-    'name', 'cmd', 'env', 'cwd', 'allow_subannotations',
+    'name', 'cmd', 'env', 'cwd',
 
     # implemented by GeneratorScriptApi
     'always_run', 'outputs_presentation_json',
@@ -75,9 +75,6 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
             status page. Note that these are write-only: The only way to read
             them is via the status page. There is intentionally no mechanism to
             read them back from inside of the recipes.
-      * allow_subannotations: allow this step to emit legacy buildbot
-        subannotations. If you don't know what this is, you shouldn't use it. If
-        you know what it is, you also shouldn't use it.
     """
     f = '--output-json'
     step_name = 'gen step(%s)' % self.m.path.basename(path_to_script)
@@ -118,11 +115,7 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
         try:
           cwd = self.m.path.abs_to_path(step['cwd']) if 'cwd' in step else None
           with self.m.context(env=step.get('env'), cwd=cwd):
-            self.m.step(
-              step['name'], cmd,
-              allow_subannotations=bool(step.get(
-                'allow_subannotations', False)),
-            )
+            self.m.step(step['name'], cmd)
         except self.m.step.StepFailure:
           failed_steps.append(step['name'])
         finally:

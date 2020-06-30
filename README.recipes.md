@@ -1704,9 +1704,6 @@ corresponds to one step, and contains the following keys:
         status page. Note that these are write-only: The only way to read
         them is via the status page. There is intentionally no mechanism to
         read them back from inside of the recipes.
-  * allow_subannotations: allow this step to emit legacy buildbot
-    subannotations. If you don't know what this is, you shouldn't use it. If
-    you know what it is, you also shouldn't use it.
 ### *recipe_modules* / [isolated](/recipe_modules/isolated)
 
 [DEPS](/recipe_modules/isolated/__init__.py#1): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
