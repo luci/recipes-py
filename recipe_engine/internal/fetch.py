@@ -2,6 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import errno
 import logging
 import os
 import re
@@ -303,6 +304,27 @@ class GitBackend(Backend):
     try:
       self._git('diff', '--quiet', revision)
     except GitFetchError:
+      # At this point there are two possibilities:
+      #   1) We have multiple processes attempting to manipulate this checkout.
+      #      1a) They're trying to check out the same version (ok)
+      #      2b) They're trying to check out different versions (undefined)
+      #   2) This checkout had a killed manipulation attempt and index.lock is
+      #      stale (we're the only process manipulating it now).
+      #
+      # In 1a and 2, removing the lockfile is correct. In 1b it means that
+      # recipes.cfg is mutating while we're doing the fetch, so this is
+      # definitely undefined-behavior territory.
+      #
+      # To unblock 1a and 2, removing the lockfile should be safe, though it may
+      # result in other errors on Windows.
+      #
+      # In any event, it shouldn't make the situation worse.
+      index_lock = os.path.join(self.checkout_dir, '.git', 'index.lock')
+      try:
+        os.remove(index_lock)
+      except OSError as exc:
+        if exc.errno != errno.EEXIST:
+          LOGGER.warn('failed to remove %r, reset will fail: %s', index_lock, exc)
       self._git('reset', '-q', '--hard', revision)
 
   def cat_file(self, revision, file_path):
