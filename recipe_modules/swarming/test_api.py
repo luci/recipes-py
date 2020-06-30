@@ -28,6 +28,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
                     'server': ''
                 },
                 'command': ['/bin/true'],
+                'relative_cwd': 'some/dir',
                 'containment': {
                     'containment_type': 'NONE',
                     'limit_processes': False,

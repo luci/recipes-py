@@ -277,6 +277,7 @@ class TaskRequest(object):
     def __init__(self, api):
       self._cipd_ensure_file = api.cipd.EnsureFile()
       self._command = []
+      self._relative_cwd = ""
       self._dimensions = {}
       self._env_prefixes = {}
       self._env_vars = {}
@@ -318,6 +319,23 @@ class TaskRequest(object):
       assert all(isinstance(s, (str, unicode)) for s in cmd)
       ret = self._copy()
       ret._command = cmd
+      return ret
+
+    @property
+    def relative_cwd(self):
+      "The working directory relative to the task root where `command` runs."
+      return self._relative_cwd
+
+    def with_relative_cwd(self, relative_cwd):
+      """Returns the slice with the given relative_cwd set.
+
+      Args:
+        relative_cwd (str) - The path relative to the task root in which to run
+          `command`.
+      """
+      assert isinstance(relative_cwd, (str, unicode))
+      ret = self._copy()
+      ret._relative_cwd = relative_cwd
       return ret
 
     @property
@@ -693,6 +711,7 @@ class TaskRequest(object):
 
       ret = (self.
           with_command(p['command']).
+          with_relative_cwd(p['relative_cwd']).
           with_dimensions(**kv_list_to_dict(p['dimensions'])).
           with_outputs(p['outputs']).
           with_env_vars(**kv_list_to_dict(p['env'])).
@@ -732,6 +751,7 @@ class TaskRequest(object):
 
       properties = {
           'command': self.command,
+          'relative_cwd': self.relative_cwd,
           'dimensions': [{
               'key': k,
               'value': v

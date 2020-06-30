@@ -34,6 +34,7 @@ def RunSteps(api):
   # Configure the first slice.
   request = (request.with_slice(0, request[0].
         with_command(['recipes', 'run', '"example"']).
+        with_relative_cwd('some/subdir').
         with_dimensions(pool='example.pool', os='Debian').
         with_cipd_ensure_file(ensure_file).
         with_env_vars(SOME_VARNAME='stuff', GOPATH='$HOME/go').
