@@ -416,6 +416,9 @@ def render_re(regex):
     return 're.compile(%r)' % regex.pattern
 
 
+MISSING = object()
+
+
 class Checker(object):
   def __init__(self, hook_context, *ignores):
     self.failed_checks = []
@@ -476,8 +479,8 @@ class Checker(object):
       # avoid reference cycle as suggested by inspect docs.
       del frames
 
-  def __call__(self, arg1, arg2=None):
-    if arg2 is not None:
+  def __call__(self, arg1, arg2=MISSING):
+    if arg2 is not MISSING:
       hint = arg1
       exp = arg2
     else:
@@ -485,9 +488,6 @@ class Checker(object):
       exp = arg1
     self._call_impl(hint, exp)
     return bool(exp)
-
-
-MISSING = object()
 
 
 def VerifySubset(a, b):
