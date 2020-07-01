@@ -25,6 +25,7 @@ To fix bugs, fix in the googlesource repo then run the autoroller.
 
 # pylint: disable=wrong-import-position
 import argparse
+import errno
 import json
 import logging
 import os
@@ -195,6 +196,12 @@ def checkout_engine(engine_path, repo_root, recipes_cfg_path):
     try:
       _git_check_call(['diff', '--quiet', revision], cwd=engine_path)
     except subprocess.CalledProcessError:
+      index_lock = os.path.join(engine_path, '.git', 'index.lock')
+      try:
+        os.remove(index_lock)
+      except OSError as exc:
+        if exc.errno != errno.EEXIST:
+          logging.warn('failed to remove %r, reset will fail: %s', index_lock, exc)
       _git_check_call(['reset', '-q', '--hard', revision], cwd=engine_path)
 
     # If the engine has refactored/moved modules we need to clean all .pyc files
