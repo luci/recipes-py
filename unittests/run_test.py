@@ -141,22 +141,6 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       #     'zsh', '-c', '/bin/echo %s' % quoted])
       # self.assertEqual(zsh_output.decode('utf-8'), s + '\n')
 
-  def test_subannotations(self):
-    proc = subprocess.Popen(
-        self._run_cmd('step:tests/subannotations'),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
-    stdout, _ = proc.communicate()
-    self.assertRegexpMatches(stdout, r'(?m)^!@@@BUILD_STEP@steppy@@@$')
-    self.assertRegexpMatches(stdout, r'(?m)^@@@BUILD_STEP@pippy@@@$')
-    # Before 'Subannotate me' we expect an extra STEP_CURSOR to reset the
-    # state.
-    self.assertRegexpMatches(stdout, '(?m)^' + r'\n'.join([
-      r'@@@STEP_CURSOR@Subannotate me@@@',
-      r'@@@STEP_LOG_END@\$debug@@@',
-      r'@@@STEP_CLOSED@@@',
-    ]) + '$')
-
 
 
 if __name__ == '__main__':

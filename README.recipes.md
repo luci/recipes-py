@@ -141,7 +141,6 @@
   * [step:tests/step_call_args](#recipes-step_tests_step_call_args)
   * [step:tests/step_cost](#recipes-step_tests_step_cost)
   * [step:tests/sub_build](#recipes-step_tests_sub_build)
-  * [step:tests/subannotations](#recipes-step_tests_subannotations)
   * [step:tests/timeout](#recipes-step_tests_timeout)
   * [swarming:examples/full](#recipes-swarming_examples_full)
   * [swarming:examples/this_task](#recipes-swarming_examples_this_task)
@@ -1866,7 +1865,7 @@ A unique string identifier for this led job.
 If the current build is *not* a led job, value will be an empty string.
 ### *recipe_modules* / [legacy\_annotation](/recipe_modules/legacy_annotation)
 
-[DEPS](/recipe_modules/legacy_annotation/__init__.py#5): [cipd](#recipe_modules-cipd), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/legacy_annotation/__init__.py#5): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [step](#recipe_modules-step)
 
 Legacy Annotation module provides support for running a command emitting
 legacy @@@annotation@@@ in the new luciexe mode.
@@ -1878,7 +1877,7 @@ replacement for allow_subannotation feature in the legacy annotate mode.
 
 #### **class [LegacyAnnotationApi](/recipe_modules/legacy_annotation/api.py#24)([RecipeApiPlain](/recipe_engine/recipe_api.py#653)):**
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/legacy_annotation/api.py#27)(self, name, cmd, timeout=None, step_test_data=None, cost=_ResourceCost()):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/legacy_annotation/api.py#28)(self, name, cmd, timeout=None, step_test_data=None, cost=_ResourceCost()):**
 
 Runs cmd that is emitting legacy @@@annotation@@@.
 
@@ -2722,7 +2721,7 @@ Usage:
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#474)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, allow_subannotations=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#474)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
 
 Returns a step dictionary which is compatible with annotator.py.
 
@@ -2749,12 +2748,8 @@ Args:
     command wrapper.
   * timeout: If supplied, the recipe engine will kill the step after the
     specified number of seconds.
-  * allow_subannotations (bool): if True, lets the step emit its own
-      annotations. NOTE: Enabling this can cause some buggy behavior. Please
-      strongly consider using step_result.presentation instead. If you have
-      questions, please contact infra-dev@chromium.org.
   * stdout: Placeholder to put step stdout into. If used, stdout won't
-    appear in annotator's stdout (and |allow_subannotations| is ignored).
+    appear in annotator's stdout.
   * stderr: Placeholder to put step stderr into. If used, stderr won't
     appear in annotator's stderr.
   * stdin: Placeholder to read step stdin from.
@@ -3823,11 +3818,6 @@ This file is a recipe demonstrating reading triggers of the current build.
 [DEPS](/recipe_modules/step/tests/sub_build.py#16): [assertions](#recipe_modules-assertions), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/sub_build.py#27)(api, props):**
-### *recipes* / [step:tests/subannotations](/recipe_modules/step/tests/subannotations.py)
-
-[DEPS](/recipe_modules/step/tests/subannotations.py#5): [step](#recipe_modules-step)
-
-&mdash; **def [RunSteps](/recipe_modules/step/tests/subannotations.py#7)(api):**
 ### *recipes* / [step:tests/timeout](/recipe_modules/step/tests/timeout.py)
 
 [DEPS](/recipe_modules/step/tests/timeout.py#8): [properties](#recipe_modules-properties), [step](#recipe_modules-step)

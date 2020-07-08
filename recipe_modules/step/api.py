@@ -473,9 +473,8 @@ class StepApi(recipe_api.RecipeApiPlain):
 
   @recipe_api.composite_step
   def __call__(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(),
-               timeout=None, allow_subannotations=None,
-               stdout=None, stderr=None, stdin=None, step_test_data=None,
-               cost=_ResourceCost()):
+               timeout=None, stdout=None, stderr=None, stdin=None,
+               step_test_data=None, cost=_ResourceCost()):
     """Returns a step dictionary which is compatible with annotator.py.
 
     Args:
@@ -501,12 +500,8 @@ class StepApi(recipe_api.RecipeApiPlain):
         command wrapper.
       * timeout: If supplied, the recipe engine will kill the step after the
         specified number of seconds.
-      * allow_subannotations (bool): if True, lets the step emit its own
-          annotations. NOTE: Enabling this can cause some buggy behavior. Please
-          strongly consider using step_result.presentation instead. If you have
-          questions, please contact infra-dev@chromium.org.
       * stdout: Placeholder to put step stdout into. If used, stdout won't
-        appear in annotator's stdout (and |allow_subannotations| is ignored).
+        appear in annotator's stdout.
       * stderr: Placeholder to put step stderr into. If used, stderr won't
         appear in annotator's stderr.
       * stdin: Placeholder to read step stdin from.
@@ -549,7 +544,6 @@ class StepApi(recipe_api.RecipeApiPlain):
         env=self.m.context.env,
         env_prefixes=self._to_env_affix(env_prefixes),
         env_suffixes=self._to_env_affix(self.m.context.env_suffixes),
-        allow_subannotations=bool(allow_subannotations),
         timeout=timeout,
         infra_step=self.m.context.infra_step or bool(infra_step),
         stdout=stdout,

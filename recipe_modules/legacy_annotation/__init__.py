@@ -4,5 +4,6 @@
 
 DEPS = [
   'cipd',
+  'context',
   'step',
 ]

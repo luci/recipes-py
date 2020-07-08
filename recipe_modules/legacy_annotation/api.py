@@ -23,6 +23,7 @@ from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 
 class LegacyAnnotationApi(recipe_api.RecipeApiPlain):
   concurrency_client = recipe_api.RequireClient('concurrency')
+  step_client = recipe_api.RequireClient('step')
 
   def __call__(self, name, cmd,
                timeout=None, step_test_data=None, cost=_ResourceCost()):
@@ -34,11 +35,22 @@ class LegacyAnnotationApi(recipe_api.RecipeApiPlain):
     """
     if not self.concurrency_client.supports_concurrency:  # pragma: no cover
       # TODO(yiwzhang): Remove after bbagent is fully rolled out.
-      return self.m.step(name, cmd,
-                        allow_subannotations=True,
-                        timeout=timeout,
-                        step_test_data=step_test_data,
-                        cost=cost)
+      self.m.step._validate_cmd_list(cmd)
+      with self.m.context(env_prefixes={'PATH': self.m.step._prefix_path}):
+        env_prefixes = self.m.context.env_prefixes
+      return self.step_client.run_step(self.step_client.StepConfig(
+          name=name,
+          cmd=cmd,
+          cost=self.m.step._normalize_cost(cost),
+          cwd=self.m.step._normalize_cwd(self.m.context.cwd),
+          env=self.m.context.env,
+          env_prefixes=self.m.step._to_env_affix(env_prefixes),
+          env_suffixes=self.m.step._to_env_affix(self.m.context.env_suffixes),
+          allow_subannotations=True,
+          timeout=timeout,
+          infra_step=self.m.context.infra_step,
+          step_test_data=step_test_data,
+      ))
 
     run_annotations_luciexe = self.m.cipd.ensure_tool(
       'infra/tools/run_annotations/${platform}', 'latest')
