@@ -275,7 +275,7 @@ class StepApi(recipe_api.RecipeApiPlain):
     """
     assert status in ('worst', 'last'), 'Got bad status: %r' % (status,)
 
-    with self.step_client.parent_step(name) as (pres, children):
+    with self.step_client.parent_step(name) as (pres, children_presentations):
       caught_exc = None
       try:
         yield self._StepPresentationProxy(pres)
@@ -290,15 +290,14 @@ class StepApi(recipe_api.RecipeApiPlain):
               recipe_api.StepFailure: self.FAILURE,
               recipe_api.StepWarning: self.WARNING,
             }.get(caught_exc, self.EXCEPTION)
-          elif children:
+          elif children_presentations:
             if status == 'worst':
               worst = self.SUCCESS
-              for child in children:
-                worst = StepPresentation.status_worst(
-                    worst, child.presentation.status)
+              for cpres in children_presentations:
+                worst = StepPresentation.status_worst(worst, cpres.status)
               pres.status = worst
             else:
-              pres.status = children[-1].presentation.status
+              pres.status = children_presentations[-1].status
           else:
             pres.status = self.SUCCESS
 

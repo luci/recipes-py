@@ -42,8 +42,8 @@ class _ActiveStep(object):
   step_stream = attr.ib()  # type: StepStream
   is_parent = attr.ib()    # type: bool
 
-  children_steps = attr.ib(factory=list)  # type: List[StepData]
-  greenlets = attr.ib(factory=list)       # type: List[gevent.Greenlet]
+  children_presentations = attr.ib(factory=list)  # type: List[StepPresentation]
+  greenlets = attr.ib(factory=list)               # type: List[gevent.Greenlet]
 
   def close(self):
     """If step_data is set, finalizes its StepPresentation with
@@ -318,9 +318,9 @@ class RecipeEngine(object):
       step_data = StepData(name_tokens, ExecutionResult(retcode=0))
       # TODO(iannucci): Use '|' instead of '.'
       presentation = StepPresentation('.'.join(name_tokens))
+      self._step_stack[-1].children_presentations.append(presentation)
       step_data.presentation = presentation
       step_data.finalize()
-      self._step_stack[-1].children_steps.append(step_data)
 
       active_step = _ActiveStep(
           step_data,
@@ -333,14 +333,14 @@ class RecipeEngine(object):
       raise CrashEngine("Prepping parent step %r failed." % (name_tokens))
 
     try:
-      yield presentation, active_step.children_steps
+      yield presentation, active_step.children_presentations
     finally:
       try:
         self.close_non_parent_step()
         self._step_stack.pop().close()
       except:
-        _log_crash(self._stream_engine, "parent_step.close(%r)" % (name_tokens))
-        raise CrashEngine("Closing parent step %r failed." % (name_tokens))
+        _log_crash(self._stream_engine, "parent_step.close(%r)" % (name_tokens,))
+        raise CrashEngine("Closing parent step %r failed." % (name_tokens,))
 
   def run_step(self, step_config):
     """Runs a step.
@@ -374,12 +374,12 @@ class RecipeEngine(object):
       step_config.allow_subannotations, merge_step=step_config.merge_step)
     caught = None
     try:
-      # If there's a parent step on the stack, add `ret` to its children.
-      self._step_stack[-1].children_steps.append(ret)
-
       # initialize presentation to show an exception.
       ret.presentation = StepPresentation(step_config.name)
       ret.presentation.status = 'EXCEPTION'
+
+      # Add `presentation` to the parents of the active step.
+      self._step_stack[-1].children_presentations.append(ret.presentation)
 
       self._step_stack.append(_ActiveStep(ret, step_stream, False))
 

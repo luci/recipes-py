@@ -2721,7 +2721,7 @@ Usage:
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#474)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#473)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
 
 Returns a step dictionary which is compatible with annotator.py.
 
@@ -2810,7 +2810,7 @@ context (if any).
 
 No-op if there's no currently active non-nest step.
 
-&emsp; **@property**<br>&mdash; **def [defer\_results](/recipe_modules/step/api.py#305)(self):**
+&emsp; **@property**<br>&mdash; **def [defer\_results](/recipe_modules/step/api.py#304)(self):**
 
 See recipe_api.py for docs. 
 
@@ -2876,7 +2876,7 @@ Args:
 Yields a StepPresentation for this dummy step, which you may update as you
 please.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#383)(self, name, cmd, build, output_path=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#382)(self, name, cmd, build, output_path=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
 
 Launch a sub-build by invoking a LUCI executable. All steps in the
 sub-build will appear as child steps of this step (Merge Step).
