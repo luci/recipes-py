@@ -93,6 +93,16 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
     return (self.m.raw_io.output_text(json.dumps(json_content))
             + self.errno(errno_name))
 
+  def read_proto(self, proto_msg, errno_name=0):
+    """Provides a test mock for the `read_proto` method.
+
+    Args:
+      proto_msg (protobuf Message) - The proto message to be returned.
+      errno_name (str|None) - The error name for this step to return, if any.
+    """
+    return (self.m.proto.output(proto_msg)
+            + self.errno(errno_name))
+
   def glob_paths(self, names=(), errno_name=0):
     """Provides test mock for the `glob_paths` method.
 

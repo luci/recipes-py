@@ -96,6 +96,7 @@
   * [file:examples/handle_json_file](#recipes-file_examples_handle_json_file)
   * [file:examples/listdir](#recipes-file_examples_listdir)
   * [file:examples/raw_copy](#recipes-file_examples_raw_copy)
+  * [file:examples/read_write_proto](#recipes-file_examples_read_write_proto)
   * [file:examples/symlink](#recipes-file_examples_symlink)
   * [file:examples/truncate](#recipes-file_examples_truncate)
   * [futures:examples/background_helper](#recipes-futures_examples_background_helper)
@@ -1182,7 +1183,7 @@ Raises:
 Returns recorded Buildbucket build ids as a list of integers.
 ### *recipe_modules* / [file](/recipe_modules/file)
 
-[DEPS](/recipe_modules/file/__init__.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/file/__init__.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 File manipulation (read/write/delete/glob) methods.
 
@@ -1220,7 +1221,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#382)(self, name, dest, mode=511):**
+&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#420)(self, name, dest, mode=511):**
 
 Ensures that `dest` exists and is a directory.
 
@@ -1233,7 +1234,7 @@ Args:
 
 Raises file.Error if the path exists but is not a directory.
 
-&mdash; **def [filesizes](/recipe_modules/file/api.py#398)(self, name, files, test_data=None):**
+&mdash; **def [filesizes](/recipe_modules/file/api.py#436)(self, name, files, test_data=None):**
 
 Returns list of filesizes for the given files.
 
@@ -1243,7 +1244,7 @@ Args:
 
 Returns list[int], size of each file in bytes.
 
-&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#538)(self, name, path):**
+&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#576)(self, name, path):**
 
 Flattens singular directories, starting at path.
 
@@ -1272,7 +1273,7 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [glob\_paths](/recipe_modules/file/api.py#290)(self, name, source, pattern, include_hidden=False, test_data=()):**
+&mdash; **def [glob\_paths](/recipe_modules/file/api.py#328)(self, name, source, pattern, include_hidden=False, test_data=()):**
 
 Performs glob expansion on `pattern`.
 
@@ -1302,7 +1303,7 @@ Returns list[Path] - All paths found.
 
 Raises file.Error.
 
-&mdash; **def [listdir](/recipe_modules/file/api.py#352)(self, name, source, recursive=False, test_data=()):**
+&mdash; **def [listdir](/recipe_modules/file/api.py#390)(self, name, source, recursive=False, test_data=()):**
 
 List all files inside a directory.
 
@@ -1347,6 +1348,18 @@ Returns (object) - The content of the file.
 
 Raise file.Error
 
+&mdash; **def [read\_proto](/recipe_modules/file/api.py#290)(self, name, source, msg_class, codec, test_proto=None):**
+
+Reads a file into a proto message.
+
+Args:
+  * name (str) - The name of the step.
+  * source (Path) - The path of the file to read.
+  * msg_class (protobuf Message subclass) - The message type to be read.
+  * codec ('BINARY'|'JSONPB'|'TEXTPB') - The encoder to use.
+  * test_proto (protobuf Message) - A default proto message for this step to
+    return when running under simulation.
+
 &mdash; **def [read\_raw](/recipe_modules/file/api.py#181)(self, name, source, test_data=''):**
 
 Reads a file as raw data.
@@ -1375,7 +1388,7 @@ Returns (str) - The content of the file.
 
 Raises file.Error
 
-&mdash; **def [remove](/recipe_modules/file/api.py#337)(self, name, source):**
+&mdash; **def [remove](/recipe_modules/file/api.py#375)(self, name, source):**
 
 Remove a file.
 
@@ -1387,7 +1400,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#437)(self, name, source):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#475)(self, name, source):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -1402,7 +1415,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#455)(self, name, source, pattern, recursive=True, include_hidden=True):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#493)(self, name, source, pattern, recursive=True, include_hidden=True):**
 
 Removes all entries in `source` matching the glob `pattern`.
 
@@ -1432,7 +1445,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#420)(self, name, source):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#458)(self, name, source):**
 
 Recursively removes a directory.
 
@@ -1446,7 +1459,7 @@ Args:
 
 Raises file.Error.
 
-&mdash; **def [symlink](/recipe_modules/file/api.py#500)(self, name, source, linkname):**
+&mdash; **def [symlink](/recipe_modules/file/api.py#538)(self, name, source, linkname):**
 
 Creates a symlink on the local filesystem.
 
@@ -1459,14 +1472,14 @@ Args:
 
 Raises file.Error
 
-&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#517)(self, root):**
+&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#555)(self, root):**
 
 Creates a SymlinkTree, given a root directory.
 
 Args:
   * root (Path): root of a tree of symlinks.
 
-&mdash; **def [truncate](/recipe_modules/file/api.py#525)(self, name, path, size_mb=100):**
+&mdash; **def [truncate](/recipe_modules/file/api.py#563)(self, name, path, size_mb=100):**
 
 Creates an empty file with path and size_mb on the local filesystem.
 
@@ -1489,6 +1502,17 @@ Args:
     https://docs.python.org/3/library/json.html#json.dump for more details.
 
 Raises file.Error.
+
+&mdash; **def [write\_proto](/recipe_modules/file/api.py#311)(self, name, dest, proto_msg, codec, include_log=True):**
+
+Write the given proto message to `dest`.
+
+Args:
+  * name (str) - The name of thhe step.
+  * dest (Path) - The path of the file to write.
+  * proto_msg (protobuf Message) - Message to write.
+  * codec ('BINARY'|'JSONPB'|'TEXTPB') - The encoder to use.
+  * include_log (bool) - Include step log of written text.
 
 &mdash; **def [write\_raw](/recipe_modules/file/api.py#201)(self, name, dest, data, include_log=True):**
 
@@ -3559,6 +3583,11 @@ Tests that step_data can accept multiple specs at once.
 [DEPS](/recipe_modules/file/examples/raw_copy.py#5): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
 
 &mdash; **def [RunSteps](/recipe_modules/file/examples/raw_copy.py#12)(api):**
+### *recipes* / [file:examples/read\_write\_proto](/recipe_modules/file/examples/read_write_proto.py)
+
+[DEPS](/recipe_modules/file/examples/read_write_proto.py#7): [file](#recipe_modules-file), [path](#recipe_modules-path), [proto](#recipe_modules-proto)
+
+&mdash; **def [RunSteps](/recipe_modules/file/examples/read_write_proto.py#14)(api):**
 ### *recipes* / [file:examples/symlink](/recipe_modules/file/examples/symlink.py)
 
 [DEPS](/recipe_modules/file/examples/symlink.py#5): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)

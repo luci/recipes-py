@@ -287,6 +287,44 @@ class FileApi(recipe_api.RecipeApi):
     text_data = self.m.json.dumps(data, indent=indent)
     self.write_text(name, dest, text_data)
 
+  def read_proto(self, name, source, msg_class, codec, test_proto=None):
+    """Reads a file into a proto message.
+
+    Args:
+      * name (str) - The name of the step.
+      * source (Path) - The path of the file to read.
+      * msg_class (protobuf Message subclass) - The message type to be read.
+      * codec ('BINARY'|'JSONPB'|'TEXTPB') - The encoder to use.
+      * test_proto (protobuf Message) - A default proto message for this step to
+        return when running under simulation.
+    """
+    self.m.path.assert_absolute(source)
+    if not test_proto:
+      test_proto = msg_class()  # test_proto must be a protobuf Message.
+    assert type(test_proto) == msg_class
+    step_test_data = lambda: self.test_api.read_proto(test_proto)
+    result = self._run(
+        name, ['copy', source, self.m.proto.output(msg_class, codec)],
+        step_test_data=step_test_data)
+    return result.proto.output
+
+  def write_proto(self, name, dest, proto_msg, codec, include_log=True):
+    """Write the given proto message to `dest`.
+
+    Args:
+      * name (str) - The name of thhe step.
+      * dest (Path) - The path of the file to write.
+      * proto_msg (protobuf Message) - Message to write.
+      * codec ('BINARY'|'JSONPB'|'TEXTPB') - The encoder to use.
+      * include_log (bool) - Include step log of written text.
+    """
+    self.m.path.assert_absolute(dest)
+    step = self._run(name, ['copy', self.m.proto.input(proto_msg, codec), dest])
+    if include_log:
+      proto_lines = str(proto_msg).splitlines()
+      step.presentation.logs[self.m.path.basename(dest)] = proto_lines
+    self.m.path.mock_add_paths(dest)
+
   def glob_paths(self,
                  name,
                  source,
