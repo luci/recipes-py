@@ -367,11 +367,12 @@ class LUCIStreamEngine(StreamEngine):
   _build_stream = attr.ib()
   @_build_stream.default
   def _build_stream_default(self):
-    content_enc = "jsonpb" if self._export_build_as_json else "proto"
-    return self._bsc.open_datagram(
-        'build.proto',
-        content_type='application/luci+%s; message=buildbucket.v2.Build' % (
-          content_enc))
+    content_enc = 'jsonpb' if self._export_build_as_json else 'proto'
+    content_type = 'application/luci+%s; message=buildbucket.v2.Build' % (
+          content_enc,)
+    if content_enc == 'proto':
+      content_type += '; encoding=zlib'
+    return self._bsc.open_datagram('build.proto', content_type=content_type)
 
   _send_event = attr.ib(default=gevent.event.Event())
   _sender_die = attr.ib(default=False)
@@ -384,7 +385,7 @@ class LUCIStreamEngine(StreamEngine):
           jsonpb.MessageToJson(self._build_proto,
                                preserving_proto_field_name=True)
           if self._export_build_as_json else
-          self._build_proto.SerializeToString()
+          self._build_proto.SerializeToString().encode('zlib')
       )
 
     def _send_fn():
