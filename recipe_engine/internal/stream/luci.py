@@ -355,7 +355,7 @@ class LUCIStreamEngine(StreamEngine):
 
   # The current Build message. This is mutated and then sent with the _send
   # function (seen as _change_cb in other classes in this file).
-  _build_proto = attr.ib(factory=Build)
+  _build_proto = attr.ib(factory=lambda: Build(status=common.STARTED))
 
   # The Butler StreamClient. Used to generate logs for individual steps.
   _bsc = attr.ib(
