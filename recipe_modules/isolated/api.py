@@ -9,7 +9,7 @@ from recipe_engine import recipe_api
 
 # Take revision from
 # https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
-DEFAULT_CIPD_VERSION = 'git_revision:23bf7d989946220c1b3af2cba3b69dcf92dea0a5'
+DEFAULT_CIPD_VERSION = 'git_revision:93d90f5ad5bb8540eee43159a0bec98c061338c1'
 
 
 class IsolatedApi(recipe_api.RecipeApi):
