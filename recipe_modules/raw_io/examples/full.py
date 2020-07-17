@@ -69,19 +69,6 @@ def RunSteps(api):
   api.step('leak dir', ['ls', api.raw_io.output_dir(
       leak_to=api.path['tmp_base'].join('out'))])
 
-  step_result = api.step(
-      'dump output_dir',
-      ['python', api.resource('dump_files.py'), api.raw_io.output_dir()])
-  outdir = step_result.raw_io.output_dir
-  assert set(outdir) == {'some/file', 'other_file', 'windows/slash'}
-  assert outdir['some/file'] == 'cool contents'
-  assert outdir['windows/slash'] == 'slashes are fixed'
-  assert outdir['windows\\slash'] == 'slashes are fixed'
-  assert 'not_here' not in outdir
-
-  del outdir['some/file']  # delete to save memory
-  assert 'some/file' not in outdir
-
   # Fail to write to leak_to file
   step_result = api.step(
       'nothing leaked to leak_to',
@@ -175,11 +162,6 @@ def GenTests(api):
           stdout=api.raw_io.output('hello')) +
       api.step_data('cat (3)',
           stdout=api.raw_io.output('\xe2hello')) +
-      api.step_data('dump output_dir', api.raw_io.output_dir({
-        'some/file': 'cool contents',
-        'other_file': 'whatever',
-        'windows\\slash': 'slashes are fixed',
-      })) +
       api.step_data('override_default_mock',
           api.raw_io.output_text('good_value', name='test')) +
       api.step_data('failure output log', retcode=1) +
