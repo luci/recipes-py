@@ -37,6 +37,8 @@ class TaskRequest(object):
       with_name('my-name').
       with_priority(100).
       with_service_account('my-service-account').
+      with_realm('chromium:ci').
+      with_resultdb().
       with_slice(0, (request[0].
           # ...
           # Building up of a TaskSlice, following the same pattern; see below.
@@ -79,6 +81,8 @@ class TaskRequest(object):
   https://chromium.googlesource.com/infra/luci/luci-py/+/master/appengine/swarming/doc/User-Guide.md#task
   """
 
+  ResultDBCfg = collections.namedtuple('ResultDBCfg', ['enable'])
+
   def __init__(self, api):
     self._api = api
     self._name = ''
@@ -87,6 +91,8 @@ class TaskRequest(object):
     self._slices = [self.TaskSlice(api)]
     self._user = None
     self._tags = None
+    self._realm = None
+    self._resultdb = self.ResultDBCfg(enable=False)
 
   def _copy(self):
     return copy.copy(self)
@@ -162,6 +168,29 @@ class TaskRequest(object):
     return ret
 
   @property
+  def realm(self):
+    """Returns the realm of the task."""
+    return self._realm
+
+  def with_realm(self, realm):
+    """Returns the request with the given realm."""
+    assert isinstance(realm, basestring)
+    ret = self._copy()
+    ret._realm = realm
+    return ret
+
+  @property
+  def resultdb(self):
+    """Returns the ResultDB integration config of the task."""
+    return self._resultdb
+
+  def with_resultdb(self, enable=True):
+    """Enables or disables the ResultDB integration in the task."""
+    ret = self._copy()
+    ret._resultdb = self.ResultDBCfg(enable=enable)
+    return ret
+
+  @property
   def service_account(self):
     """Returns the service account with which the task will run."""
     return self._service_account
@@ -232,6 +261,10 @@ class TaskRequest(object):
         with_tags(tags)) # yapf: disable
     if 'user' in d:
       ret = ret.with_user(d['user'])
+    if 'resultdb' in d:
+      ret = ret.with_resultdb(**d['resultdb'])
+    if 'realm' in d:
+      ret = ret.with_realm(d['realm'])
     ret._slices = [
         self.TaskSlice(self._api)._from_jsonish(ts) for ts in d['task_slices']
     ]
@@ -243,17 +276,24 @@ class TaskRequest(object):
     The format follows the schema given by the NewTaskRequest class found here:
     https://cs.chromium.org/chromium/infra/luci/appengine/swarming/swarming_rpcs.py?q=NewTaskRequest
     """
+    if self.resultdb.enable:
+      assert self.realm, 'ResultDB integration enabled without realm'
     ret = {
         'name': self.name,
         'priority': str(self.priority),
         'service_account': self.service_account,
         'task_slices': [task_slice.to_jsonish() for task_slice in self._slices],
     }
+    # Omit resultdb, if disabled.
+    if self.resultdb.enable:
+      ret['resultdb'] = self.resultdb._asdict()
     # Omit them rather than setting to None.
     if self.user:
       ret['user'] = self.user
     if self.tags:
       ret['tags'] = self.tags
+    if self.realm:
+      ret['realm'] = self.realm
     return ret
 
 

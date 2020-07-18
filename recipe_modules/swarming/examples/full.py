@@ -26,7 +26,9 @@ def RunSteps(api):
   request = (api.swarming.task_request().
       with_name('recipes-go').
       with_priority(100).
-      with_service_account('account@example.iam.gserviceaccount.com'))
+      with_service_account('account@example.iam.gserviceaccount.com').
+      with_realm('chromium:ci').
+      with_resultdb())
 
   ensure_file = api.cipd.EnsureFile()
   ensure_file.add_package('infra/git/${platform}', 'version:2.14.1.chromium10')

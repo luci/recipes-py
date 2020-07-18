@@ -53,6 +53,10 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
                 'outputs': []
             }
         }],
+        'realm': 'project:bucket',
+        'resultdb': {
+            'enable': True,
+        },
     }
 
   def properties(self,
