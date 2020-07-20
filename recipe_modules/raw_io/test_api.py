@@ -18,6 +18,17 @@ class RawIOTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
   @recipe_test_api.placeholder_step_data
   @staticmethod
   def output_dir(files_dict, retcode=None, name=None):
+    """Use to mock an `output_dir` placeholder.
+
+    Note that slashes should match the platform that this test is targeting.
+    i.e. if this test is targeting Windows, you need to use backslashes.
+
+    Example:
+
+       yield api.test('tname') + api.step_data('sname', api.raw_io.output_dir({
+         "some/file": "contents of some/file",
+       }))
+    """
     assert type(files_dict) is dict
     assert all(type(key) is str for key in files_dict.keys())
     assert all(type(value) is str for value in files_dict.values())

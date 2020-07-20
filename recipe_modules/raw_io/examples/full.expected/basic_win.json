@@ -1,0 +1,145 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "Hello World"
+    ],
+    "name": "echo"
+  },
+  {
+    "cmd": [
+      "cat"
+    ],
+    "name": "cat",
+    "stdin": "hello"
+  },
+  {
+    "cmd": [
+      "cat",
+      "hello"
+    ],
+    "name": "cat (2)"
+  },
+  {
+    "cmd": [
+      "cat"
+    ],
+    "name": "cat (3)",
+    "stdin": "\ufffdhello"
+  },
+  {
+    "cmd": [
+      "echo",
+      "huh"
+    ],
+    "name": "automock"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo blah && echo fail 1>&2"
+    ],
+    "name": "automock (fail)"
+  },
+  {
+    "cmd": [
+      "echo",
+      "leaking"
+    ],
+    "name": "leak stdout"
+  },
+  {
+    "cmd": [
+      "ls",
+      "[CLEANUP]\\tmp_tmp_1"
+    ],
+    "name": "list temp dir"
+  },
+  {
+    "cmd": [
+      "ls",
+      "[TMP_BASE]\\out"
+    ],
+    "name": "leak dir"
+  },
+  {
+    "cmd": [
+      "python",
+      "RECIPE[recipe_engine::raw_io:examples/full].resources\\dump_files.py",
+      "[CLEANUP]\\tmp_tmp_2"
+    ],
+    "name": "dump output_dir"
+  },
+  {
+    "cmd": [
+      "echo",
+      "[TMP_BASE]\\missing.txt"
+    ],
+    "name": "nothing leaked to leak_to"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "\nimport sys\nwith open(sys.argv[1], 'w') as f:\n  f.write('bad_value')\n",
+      "/path/to/tmp/"
+    ],
+    "name": "override_default_mock",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@python.inline@@@@",
+      "@@@STEP_LOG_LINE@python.inline@import sys@@@",
+      "@@@STEP_LOG_LINE@python.inline@with open(sys.argv[1], 'w') as f:@@@",
+      "@@@STEP_LOG_LINE@python.inline@  f.write('bad_value')@@@",
+      "@@@STEP_LOG_END@python.inline@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "\nimport sys\nwith open(sys.argv[1], 'w') as f:\n  f.write('sucess')\n",
+      "/path/to/tmp/"
+    ],
+    "name": "success output log",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@raw_io.output[success_log]@sucess@@@",
+      "@@@STEP_LOG_END@raw_io.output[success_log]@@@",
+      "@@@STEP_LOG_LINE@python.inline@@@@",
+      "@@@STEP_LOG_LINE@python.inline@import sys@@@",
+      "@@@STEP_LOG_LINE@python.inline@with open(sys.argv[1], 'w') as f:@@@",
+      "@@@STEP_LOG_LINE@python.inline@  f.write('sucess')@@@",
+      "@@@STEP_LOG_END@python.inline@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "\nimport sys\nwith open(sys.argv[1], 'w') as f:\n  f.write('failure')\nexit(1)\n",
+      "/path/to/tmp/"
+    ],
+    "name": "failure output log",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@raw_io.output[failure_log]@failure@@@",
+      "@@@STEP_LOG_END@raw_io.output[failure_log]@@@",
+      "@@@STEP_LOG_LINE@python.inline@@@@",
+      "@@@STEP_LOG_LINE@python.inline@import sys@@@",
+      "@@@STEP_LOG_LINE@python.inline@with open(sys.argv[1], 'w') as f:@@@",
+      "@@@STEP_LOG_LINE@python.inline@  f.write('failure')@@@",
+      "@@@STEP_LOG_LINE@python.inline@exit(1)@@@",
+      "@@@STEP_LOG_END@python.inline@@@",
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cat",
+      "/this/file/doesnt/exist"
+    ],
+    "name": "missing backing file"
+  },
+  {
+    "name": "$result"
+  }
+]

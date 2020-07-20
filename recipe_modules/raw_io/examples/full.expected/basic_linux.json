@@ -52,7 +52,7 @@
   {
     "cmd": [
       "ls",
-      "/path/to/tmp/"
+      "[CLEANUP]/tmp_tmp_1"
     ],
     "name": "list temp dir"
   },
@@ -62,6 +62,14 @@
       "[TMP_BASE]/out"
     ],
     "name": "leak dir"
+  },
+  {
+    "cmd": [
+      "python",
+      "RECIPE[recipe_engine::raw_io:examples/full].resources/dump_files.py",
+      "[CLEANUP]/tmp_tmp_2"
+    ],
+    "name": "dump output_dir"
   },
   {
     "cmd": [

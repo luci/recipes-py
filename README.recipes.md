@@ -2341,11 +2341,13 @@ Example:
 Access a member of `random.Random`.
 ### *recipe_modules* / [raw\_io](/recipe_modules/raw_io)
 
+[DEPS](/recipe_modules/raw_io/__init__.py#5): [path](#recipe_modules-path)
+
 Provides objects for reading and writing raw data to and from steps.
 
-#### **class [RawIOApi](/recipe_modules/raw_io/api.py#263)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [RawIOApi](/recipe_modules/raw_io/api.py#297)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#264)(data, suffix='', name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#298)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -2360,7 +2362,7 @@ tempfile.mkstemp.
 
 See examples/full.py for usage example.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#282)(data, suffix='', name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#316)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -2370,7 +2372,7 @@ expected to have valid utf-8 data in it.
 Similar to input(), but ensures that 'data' is valid utf-8 text. Any
 non-utf-8 characters will be replaced with �.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#295)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#329)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -2386,18 +2388,37 @@ Args:
      to a step link named `name`. If this is 'on_failure', only create this
      log when the step has a non-SUCCESS status.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#333)(suffix='', leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#367)(self, leak_to=None, name=None):**
 
 Returns a directory Placeholder for use as a step argument.
 
-If 'leak_to' is None, the placeholder is backed by a temporary dir with
-a suffix 'suffix'. The dir is deleted when the step finishes.
+If `leak_to` is None, the placeholder is backed by a temporary dir.
 
-If 'leak_to' is not None, then it should be a Path and placeholder
-redirects IO to a dir at that path. Once step finishes, the dir is
-NOT deleted (i.e. it's 'leaking'). 'suffix' is ignored in that case.
+Otherwise `leak_to` must be a Path; if the path doesn't exist, it will be
+created.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#315)(suffix='', leak_to=None, name=None, add_output_log=False):**
+The placeholder value attached to the step will be a dictionary-like mapping
+of relative paths to the contents of the file. The actual reading of the
+file data is done lazily (i.e. on first access).
+
+Relative paths are stored with the native slash delimitation (i.e. forward
+slash on *nix, backslash on Windows).
+
+Example:
+
+   result = api.step('name', [..., api.raw_io.output_dir()])
+
+   # some time later; The read of 'some/file' happens now:
+   some_file = api.path.join('some', 'file')
+   assert result.raw_io.output_dir[some_file] == 'contents of some/file'
+
+   # data for 'some/file' is cached now; To free it from memory (and make
+   # all futher reads of 'some/file' an error):
+   del result.raw_io.output_dir[some_file]
+
+   result.raw_io.output_dir[some_file] -> raises KeyError
+
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#349)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -3748,9 +3769,9 @@ Tests for api.python.infra_failing_step.
 &mdash; **def [RunSteps](/recipe_modules/random/tests/full.py#11)(api):**
 ### *recipes* / [raw\_io:examples/full](/recipe_modules/raw_io/examples/full.py)
 
-[DEPS](/recipe_modules/raw_io/examples/full.py#5): [path](#recipe_modules-path), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/raw_io/examples/full.py#5): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/raw_io/examples/full.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/raw_io/examples/full.py#15)(api):**
 ### *recipes* / [resultdb:examples/derive](/recipe_modules/resultdb/examples/derive.py)
 
 [DEPS](/recipe_modules/resultdb/examples/derive.py#15): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)

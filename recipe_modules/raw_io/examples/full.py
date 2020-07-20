@@ -4,6 +4,7 @@
 
 DEPS = [
   'path',
+  'platform',
   'properties',
   'python',
   'raw_io',
@@ -68,6 +69,18 @@ def RunSteps(api):
   api.step('list temp dir', ['ls', api.raw_io.output_dir()])
   api.step('leak dir', ['ls', api.raw_io.output_dir(
       leak_to=api.path['tmp_base'].join('out'))])
+
+  step_result = api.step(
+      'dump output_dir',
+      ['python', api.resource('dump_files.py'), api.raw_io.output_dir()])
+  outdir = step_result.raw_io.output_dir
+  some_file = api.path.join('some', 'file')
+  assert set(outdir) == {some_file, 'other_file'}
+  assert outdir[some_file] == 'cool contents'
+  assert 'not_here' not in outdir
+
+  del outdir['some/file']  # delete to save memory
+  assert 'some/file' not in outdir
 
   # Fail to write to leak_to file
   step_result = api.step(
@@ -151,20 +164,27 @@ def GenTests(api):
   #     AND the default step_test_data in RunSteps above ALSO provides another
   #     bad value, the simulation passes ONLY because of the
   #     'override_default_mock' below.
-  yield (api.test('basic') +
-      api.properties(some_prop='bad_value') +
-      api.step_data('echo',
-          stdout=api.raw_io.output('Hello World\n'),
-          stderr=api.raw_io.output('')) +
-      api.step_data('cat',
-          stdout=api.raw_io.output('hello')) +
-      api.step_data('cat (2)',
-          stdout=api.raw_io.output('hello')) +
-      api.step_data('cat (3)',
-          stdout=api.raw_io.output('\xe2hello')) +
-      api.step_data('override_default_mock',
-          api.raw_io.output_text('good_value', name='test')) +
-      api.step_data('failure output log', retcode=1) +
-      api.step_data('missing backing file',
-          api.raw_io.backing_file_missing(name='outfile'), retcode=1)
-  )
+  for osname in ('linux', 'win'):
+    sep = '/' if osname == 'linux' else '\\'
+    yield (api.test('basic_'+osname) +
+        api.properties(some_prop='bad_value') +
+        api.platform.name(osname) +
+        api.step_data('echo',
+            stdout=api.raw_io.output('Hello World\n'),
+            stderr=api.raw_io.output('')) +
+        api.step_data('cat',
+            stdout=api.raw_io.output('hello')) +
+        api.step_data('cat (2)',
+            stdout=api.raw_io.output('hello')) +
+        api.step_data('cat (3)',
+            stdout=api.raw_io.output('\xe2hello')) +
+        api.step_data('dump output_dir', api.raw_io.output_dir({
+          sep.join(['some', 'file']): 'cool contents',
+          'other_file': 'whatever',
+        })) +
+        api.step_data('override_default_mock',
+            api.raw_io.output_text('good_value', name='test')) +
+        api.step_data('failure output log', retcode=1) +
+        api.step_data('missing backing file',
+            api.raw_io.backing_file_missing(name='outfile'), retcode=1)
+    )
