@@ -13,7 +13,7 @@
       "luciexe"
     ],
     "env": {
-      "LUCI_CONTEXT": "/path/to/lucictx_1.json"
+      "LUCI_CONTEXT": "/path/to/lucictx_3.json"
     },
     "name": "new luciexe"
   },

@@ -119,13 +119,14 @@ class LUCIContextClient(object):
 
     Args:
       * section_pb_values (Dict[str, message.Message]) - A mapping of
-        section_key to the new message value for that section.
+        section_key to the new message value for that section. If the value
+        is None, the corresponding section will be removed from the context.
 
     Returns the path (str) to the newly created LUCI_CONTEXT file. Returns None
     if section_pb_values is empty (i.e. No change to current context).
     """
     section_values = {
-      key: jsonpb.MessageToDict(pb_val)
+      key: jsonpb.MessageToDict(pb_val) if pb_val is not None else None
       for key, pb_val in iteritems(section_pb_values)
     }
     with luci_context.stage(_leak=True, **section_values) as file_path:

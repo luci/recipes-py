@@ -8,7 +8,7 @@ DEPS = [
   'assertions',
   'context',
   'path',
-  "step",
+  'step',
 ]
 
 def RunSteps(api):
@@ -21,6 +21,14 @@ def RunSteps(api):
   api.step('start', ['echo', 'hello'])
   assert_msg_equal(sections_pb2.LUCIExe(cache_dir='/path/to/cache'),
                    api.context.luciexe)
+
+  api.assertions.assertEqual('proj:realm', api.context.realm)
+  with api.context(env={'UNRELATED_CHANGE': 1}):
+    api.assertions.assertEqual('proj:realm', api.context.realm)
+  with api.context(realm='proj:another'):
+    api.assertions.assertEqual('proj:another', api.context.realm)
+  with api.context(realm=''):
+    api.assertions.assertEqual(None, api.context.realm)
 
   with api.context(
     luciexe=sections_pb2.LUCIExe(cache_dir='/path/to/new_cache')):
@@ -36,7 +44,7 @@ def GenTests(api):
   yield (
     api.test('basic')
     + api.context.luci_context(
-      luciexe=sections_pb2.LUCIExe(cache_dir='/path/to/cache')
+      luciexe=sections_pb2.LUCIExe(cache_dir='/path/to/cache'),
+      realm=sections_pb2.Realm(name='proj:realm'),
     )
   )
-

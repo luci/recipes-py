@@ -87,6 +87,7 @@ class ContextApi(recipe_api.RecipeApi):
     # modification through this module.
     init_sections = {
       'luciexe': sections_pb2.LUCIExe,
+      'realm': sections_pb2.Realm,
     }
     ctx = self._lucictx_client.context
     for section_key, section_msg_class in init_sections.iteritems():
@@ -98,7 +99,7 @@ class ContextApi(recipe_api.RecipeApi):
 
   @contextmanager
   def __call__(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None,
-               infra_steps=None, luciexe=None):
+               infra_steps=None, luciexe=None, realm=None):
     """Allows adjustment of multiple context values in a single call.
 
     Args:
@@ -116,6 +117,11 @@ class ContextApi(recipe_api.RecipeApi):
       * luciexe (section_pb2.LUCIExe) - The override value for 'luciexe' section
         in LUCI_CONTEXT. This is currently used to modify the `cache_dir` for
         all launched LUCI Executable (via `api.step.sub_build(...)`).
+      * realm (str) - allows changing the current LUCI realm. It is used when
+        creating new LUCI resources (e.g. spawning new Swarming tasks). Pass an
+        empty string to disassociate the context from a realm, emulating an
+        environment prior to LUCI realms. This is useful during the transitional
+        period.
 
     Environmental Variable Overrides:
 
@@ -195,10 +201,12 @@ class ContextApi(recipe_api.RecipeApi):
       check_type('infra_steps', infra_steps, bool)
       _push('infra_steps', infra_steps)
 
-    section_pb_values = {
-      key: val for (key, val) in (('luciexe', luciexe),)
-      if val is not None
-    }
+    section_pb_values = {}
+    if luciexe:
+      section_pb_values['luciexe'] = luciexe
+    if realm is not None:
+      section_pb_values['realm'] = (
+          sections_pb2.Realm(name=realm) if realm else None)
     if section_pb_values:
       _add_to_context('luci_context', section_pb_values, _override)
       env = {} if env is None else dict(env)
@@ -292,3 +300,13 @@ class ContextApi(recipe_api.RecipeApi):
       ret = sections_pb2.LUCIExe()
       ret.CopyFrom(self._state.luci_context['luciexe'])
     return ret
+
+  @property
+  def realm(self):
+    """Returns the LUCI realm of the current context.
+
+    May return None if the task is not running in the realm-aware mode. This is
+    a transitional period. Eventually all tasks will be associated with realms.
+    """
+    sec = self._state.luci_context.get('realm')
+    return sec.name if sec and sec.name else None

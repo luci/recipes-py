@@ -19,7 +19,7 @@ if sys.version_info.major >= 3:
 
 # Take revision from
 # https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
-DEFAULT_CIPD_VERSION = 'git_revision:201b82958bf26efacbcc22dfda61694bae5673ff'
+DEFAULT_CIPD_VERSION = 'git_revision:608e8a9c7364535a075f252c281e0951e48304a7'
 
 
 class TaskRequest(object):
@@ -29,7 +29,8 @@ class TaskRequest(object):
   pattern. The with_* and add_* methods set the associated value on a copy of
   the object, and return that updated copy.
 
-  A new request has a single empty TaskSlice (see below).
+  A new request has a single empty TaskSlice (see below) and it inherits the
+  current LUCI realm, if any (see context.realm).
 
   Example:
   ```
@@ -37,7 +38,6 @@ class TaskRequest(object):
       with_name('my-name').
       with_priority(100).
       with_service_account('my-service-account').
-      with_realm('chromium:ci').
       with_resultdb().
       with_slice(0, (request[0].
           # ...
@@ -91,7 +91,7 @@ class TaskRequest(object):
     self._slices = [self.TaskSlice(api)]
     self._user = None
     self._tags = None
-    self._realm = None
+    self._realm = api.context.realm
     self._resultdb = self.ResultDBCfg(enable=False)
 
   def _copy(self):
@@ -185,7 +185,10 @@ class TaskRequest(object):
     return self._resultdb
 
   def with_resultdb(self, enable=True):
-    """Enables or disables the ResultDB integration in the task."""
+    """Enables or disables the ResultDB integration in the task.
+
+    Requires the task request to be associated with some LUCI realm.
+    """
     ret = self._copy()
     ret._resultdb = self.ResultDBCfg(enable=enable)
     return ret
@@ -276,8 +279,9 @@ class TaskRequest(object):
     The format follows the schema given by the NewTaskRequest class found here:
     https://cs.chromium.org/chromium/infra/luci/appengine/swarming/swarming_rpcs.py?q=NewTaskRequest
     """
-    if self.resultdb.enable:
-      assert self.realm, 'ResultDB integration enabled without realm'
+    if self.resultdb.enable and not self.realm:
+      raise self._api.step.InfraFailure(
+          'A task with ResultDB integration requires a LUCI realm set')
     ret = {
         'name': self.name,
         'priority': str(self.priority),

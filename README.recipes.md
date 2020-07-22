@@ -145,6 +145,7 @@
   * [step:tests/timeout](#recipes-step_tests_timeout)
   * [swarming:examples/full](#recipes-swarming_examples_full)
   * [swarming:examples/this_task](#recipes-swarming_examples_this_task)
+  * [swarming:tests/realms](#recipes-swarming_tests_realms)
   * [time:examples/full](#recipes-time_examples_full)
   * [tricium:examples/full](#recipes-tricium_examples_full)
   * [url:examples/full](#recipes-url_examples_full)
@@ -158,7 +159,7 @@
 
 [DEPS](/recipe_modules/archive/__init__.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [python](#recipe_modules-python), [step](#recipe_modules-step)
 
-#### **class [ArchiveApi](/recipe_modules/archive/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [ArchiveApi](/recipe_modules/archive/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 Provides steps to manipulate archive files (tar, zip, etc.).
 
@@ -218,7 +219,7 @@ Returns:
   Package object.
 ### *recipe_modules* / [assertions](/recipe_modules/assertions)
 
-#### **class [AssertionsApi](/recipe_modules/assertions/api.py#56)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [AssertionsApi](/recipe_modules/assertions/api.py#56)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 Provides access to the assertion methods of the python unittest module.
 
@@ -276,7 +277,7 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 `build_pb2.Build` and returns a link title.
 If it returns `None`, the link is not reported. Default link title is build id.
 
-#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#29)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#29)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 A module for interacting with buildbucket.
 
@@ -653,7 +654,7 @@ API for interacting with CIPD.
 Depends on 'cipd' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 
-#### **class [CIPDApi](/recipe_modules/cipd/api.py#202)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [CIPDApi](/recipe_modules/cipd/api.py#202)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 CIPDApi provides basic support for CIPD.
 
@@ -921,7 +922,7 @@ Args:
 Returns the CIPDApi.Pin instance.
 ### *recipe_modules* / [commit\_position](/recipe_modules/commit_position)
 
-#### **class [CommitPositionApi](/recipe_modules/commit_position/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [CommitPositionApi](/recipe_modules/commit_position/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 Recipe module providing commit position parsing and formatting.
 
@@ -961,9 +962,9 @@ with api.context(cwd=api.path['start_dir'].join('subdir')):
   api.step("cat subdir/foo", ['cat', './foo'])
 ```
 
-#### **class [ContextApi](/recipe_modules/context/api.py#75)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [ContextApi](/recipe_modules/context/api.py#75)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
-&emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#99)(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None, infra_steps=None, luciexe=None):**
+&emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#100)(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None, infra_steps=None, luciexe=None, realm=None):**
 
 Allows adjustment of multiple context values in a single call.
 
@@ -982,6 +983,11 @@ Args:
   * luciexe (section_pb2.LUCIExe) - The override value for 'luciexe' section
     in LUCI_CONTEXT. This is currently used to modify the `cache_dir` for
     all launched LUCI Executable (via `api.step.sub_build(...)`).
+  * realm (str) - allows changing the current LUCI realm. It is used when
+    creating new LUCI resources (e.g. spawning new Swarming tasks). Pass an
+    empty string to disassociate the context from a realm, emulating an
+    environment prior to LUCI realms. This is useful during the transitional
+    period.
 
 Environmental Variable Overrides:
 
@@ -1005,7 +1011,7 @@ as the last path component if it is not empty.
 
 Look at the examples in "examples/" for examples of context module usage.
 
-&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#225)(self):**
+&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#233)(self):**
 
 Returns the current working directory that steps will run in.
 
@@ -1013,7 +1019,7 @@ Returns the current working directory that steps will run in.
 equivalent to api.path['start_dir'], though only occurs if no cwd has been
 set (e.g. in the outermost context of RunSteps).
 
-&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#235)(self):**
+&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#243)(self):**
 
 Returns modifications to the environment.
 
@@ -1024,7 +1030,7 @@ done with properties.
 **Returns (dict)** - The env-key -> value mapping of current environment
   modifications.
 
-&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#250)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#258)(self):**
 
 Returns Path prefix modifications to the environment.
 
@@ -1034,7 +1040,7 @@ prefixes registered with the environment.
 **Returns (dict)** - The env-key -> value(Path) mapping of current
 environment prefix modifications.
 
-&emsp; **@property**<br>&mdash; **def [env\_suffixes](/recipe_modules/context/api.py#264)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_suffixes](/recipe_modules/context/api.py#272)(self):**
 
 Returns Path suffix modifications to the environment.
 
@@ -1044,7 +1050,7 @@ suffixes registered with the environment.
 **Returns (dict)** - The env-key -> value(Path) mapping of current
 environment suffix modifications.
 
-&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#278)(self):**
+&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#286)(self):**
 
 Returns the current value of the infra_step setting.
 
@@ -1052,15 +1058,22 @@ Returns the current value of the infra_step setting.
 
 &mdash; **def [initialize](/recipe_modules/context/api.py#85)(self):**
 
-&emsp; **@property**<br>&mdash; **def [luciexe](/recipe_modules/context/api.py#286)(self):**
+&emsp; **@property**<br>&mdash; **def [luciexe](/recipe_modules/context/api.py#294)(self):**
 
 Returns the current value (sections_pb2.LUCIExe) of luciexe section in
 the current LUCI_CONTEXT. Returns None if luciexe is not defined.
+
+&emsp; **@property**<br>&mdash; **def [realm](/recipe_modules/context/api.py#304)(self):**
+
+Returns the LUCI realm of the current context.
+
+May return None if the task is not running in the realm-aware mode. This is
+a transitional period. Eventually all tasks will be associated with realms.
 ### *recipe_modules* / [cq](/recipe_modules/cq)
 
 [DEPS](/recipe_modules/cq/__init__.py#7): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-#### **class [CQApi](/recipe_modules/cq/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [CQApi](/recipe_modules/cq/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 This module provides recipe API of LUCI CQ, aka pre-commit testing system.
 
@@ -1187,7 +1200,7 @@ Returns recorded Buildbucket build ids as a list of integers.
 
 File manipulation (read/write/delete/glob) methods.
 
-#### **class [FileApi](/recipe_modules/file/api.py#82)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [FileApi](/recipe_modules/file/api.py#82)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 &mdash; **def [copy](/recipe_modules/file/api.py#122)(self, name, source, dest):**
 
@@ -1541,7 +1554,7 @@ Raises file.Error.
 
 Implements in-recipe concurrency via green threads.
 
-#### **class [FuturesApi](/recipe_modules/futures/api.py#42)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [FuturesApi](/recipe_modules/futures/api.py#42)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 Provides access to the Recipe concurrency primitives.
 
@@ -1690,7 +1703,7 @@ This module was created before there was a way to put recipes directly into
 another repo. It is not recommended to use this, and it will be removed in the
 near future.
 
-#### **class [GeneratorScriptApi](/recipe_modules/generator_script/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [GeneratorScriptApi](/recipe_modules/generator_script/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 &mdash; **def [\_\_call\_\_](/recipe_modules/generator_script/api.py#44)(self, path_to_script, \*args):**
 
@@ -1731,7 +1744,7 @@ corresponds to one step, and contains the following keys:
 
 [DEPS](/recipe_modules/isolated/__init__.py#1): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-#### **class [IsolatedApi](/recipe_modules/isolated/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [IsolatedApi](/recipe_modules/isolated/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 API for interacting with isolated.
 
@@ -1790,7 +1803,7 @@ Example:
 
 Methods for producing and consuming JSON.
 
-#### **class [JsonApi](/recipe_modules/json/api.py#95)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [JsonApi](/recipe_modules/json/api.py#95)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 &emsp; **@staticmethod**<br>&mdash; **def [dumps](/recipe_modules/json/api.py#96)(\*args, \*\*kwargs):**
 
@@ -1831,7 +1844,7 @@ This method is deprecated. Use file.read_json instead.
 
 [DEPS](/recipe_modules/led/__init__.py#5): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
 
-#### **class [LedApi](/recipe_modules/led/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [LedApi](/recipe_modules/led/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 Interface to the led tool.
 
@@ -1899,7 +1912,7 @@ will appear as the child steps of the launched cmd/step in the current running
 build (using the Merge Step feature from luciexe protocol). This is the
 replacement for allow_subannotation feature in the legacy annotate mode.
 
-#### **class [LegacyAnnotationApi](/recipe_modules/legacy_annotation/api.py#24)([RecipeApiPlain](/recipe_engine/recipe_api.py#653)):**
+#### **class [LegacyAnnotationApi](/recipe_modules/legacy_annotation/api.py#24)([RecipeApiPlain](/recipe_engine/recipe_api.py#654)):**
 
 &mdash; **def [\_\_call\_\_](/recipe_modules/legacy_annotation/api.py#28)(self, name, cmd, timeout=None, step_test_data=None, cost=_ResourceCost()):**
 
@@ -1914,7 +1927,7 @@ with allow_subannotation set to true.
 
 API for specifying Milo behavior.
 
-#### **class [MiloApi](/recipe_modules/milo/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [MiloApi](/recipe_modules/milo/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 A module for interacting with Milo.
 
@@ -1965,7 +1978,7 @@ There are other anchor points which can be defined (e.g. by the
 `depot_tools/infra_paths` module). Refer to those modules for additional
 documentation.
 
-#### **class [PathApi](/recipe_modules/path/api.py#218)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [PathApi](/recipe_modules/path/api.py#218)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 &mdash; **def [\_\_getitem\_\_](/recipe_modules/path/api.py#475)(self, name):**
 
@@ -2061,7 +2074,7 @@ Args:
 
 Mockable system platform identity functions.
 
-#### **class [PlatformApi](/recipe_modules/platform/api.py#24)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [PlatformApi](/recipe_modules/platform/api.py#24)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 Provides host-platform-detection properties.
 
@@ -2146,7 +2159,7 @@ values provided to the recipe engine at the beginning of execution. There is
 intentionally no API to write property values (lest they become a kind of
 random-access global variable).
 
-#### **class [PropertiesApi](/recipe_modules/properties/api.py#28)([RecipeApiPlain](/recipe_engine/recipe_api.py#653), collections.Mapping):**
+#### **class [PropertiesApi](/recipe_modules/properties/api.py#28)([RecipeApiPlain](/recipe_engine/recipe_api.py#654), collections.Mapping):**
 
 PropertiesApi implements all the standard Mapping functions, so you
 can use it like a read-only dict.
@@ -2173,7 +2186,7 @@ Returns a read-write copy of all of the properties.
 Methods for producing and consuming protobuf data to/from steps and the
 filesystem.
 
-#### **class [ProtoApi](/recipe_modules/proto/api.py#75)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [ProtoApi](/recipe_modules/proto/api.py#75)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 &emsp; **@staticmethod**<br>&mdash; **def [decode](/recipe_modules/proto/api.py#151)(data, msg_class, codec, \*\*decoding_kwargs):**
 
@@ -2250,7 +2263,7 @@ This includes support for `vpython`, and knows how to specify parameters
 correctly for bots (e.g. ensuring that python is working on Windows, passing the
 unbuffered flag, etc.)
 
-#### **class [PythonApi](/recipe_modules/python/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [PythonApi](/recipe_modules/python/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 &mdash; **def [\_\_call\_\_](/recipe_modules/python/api.py#18)(self, name, script, args=None, unbuffered=True, venv=None, \*\*kwargs):**
 
@@ -2334,7 +2347,7 @@ Example:
       api.random.shuffle(my_list)
       # my_list is now random!
 
-#### **class [RandomApi](/recipe_modules/random/api.py#31)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [RandomApi](/recipe_modules/random/api.py#31)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 &mdash; **def [\_\_getattr\_\_](/recipe_modules/random/api.py#38)(self, name):**
 
@@ -2345,7 +2358,7 @@ Access a member of `random.Random`.
 
 Provides objects for reading and writing raw data to and from steps.
 
-#### **class [RawIOApi](/recipe_modules/raw_io/api.py#297)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [RawIOApi](/recipe_modules/raw_io/api.py#297)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 &emsp; **@[returns\_placeholder](/recipe_engine/util.py#151)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#298)(data, suffix='', name=None):**
 
@@ -2440,7 +2453,7 @@ API for interacting with the ResultDB service.
 Requires `rdb` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 
-#### **class [ResultDBAPI](/recipe_modules/resultdb/api.py#19)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [ResultDBAPI](/recipe_modules/resultdb/api.py#19)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 A module for interacting with ResultDB.
 
@@ -2558,7 +2571,7 @@ Args:
       }
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
-#### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 This module assists in experimenting with production recipes.
 
@@ -2593,7 +2606,7 @@ Documentation for scheduler API is in
 RPCExplorer available at
   https://luci-scheduler.appspot.com/rpcexplorer/services/scheduler.Scheduler
 
-#### **class [SchedulerApi](/recipe_modules/scheduler/api.py#26)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [SchedulerApi](/recipe_modules/scheduler/api.py#26)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 A module for interacting with LUCI Scheduler service.
 
@@ -2649,7 +2662,7 @@ https://godoc.org/go.chromium.org/luci/auth/client/cmd/luci-auth).
 
 Depends on luci-auth to be in PATH.
 
-#### **class [ServiceAccountApi](/recipe_modules/service_account/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [ServiceAccountApi](/recipe_modules/service_account/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 &mdash; **def [default](/recipe_modules/service_account/api.py#57)(self):**
 
@@ -2675,7 +2688,7 @@ Args:
 Step is the primary API for running steps (external programs, scripts,
 etc.).
 
-#### **class [StepApi](/recipe_modules/step/api.py#25)([RecipeApiPlain](/recipe_engine/recipe_api.py#653)):**
+#### **class [StepApi](/recipe_modules/step/api.py#25)([RecipeApiPlain](/recipe_engine/recipe_api.py#654)):**
 
 &emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#137)(self):**
 
@@ -2979,7 +2992,7 @@ status.
 
 [DEPS](/recipe_modules/swarming/__init__.py#8): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [isolated](#recipe_modules-isolated), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-#### **class [SwarmingApi](/recipe_modules/swarming/api.py#1112)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [SwarmingApi](/recipe_modules/swarming/api.py#1116)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 API for interacting with swarming.
 
@@ -2989,11 +3002,11 @@ http://go.chromium.org/luci/client/cmd/swarming.
 This module will deploy the client to [CACHE]/swarming_client/; users should
 add this path to the named cache for their builder.
 
-&emsp; **@property**<br>&mdash; **def [bot\_id](/recipe_modules/swarming/api.py#1135)(self):**
+&emsp; **@property**<br>&mdash; **def [bot\_id](/recipe_modules/swarming/api.py#1139)(self):**
 
 Swarming bot ID executing this task.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#1272)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#1276)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
 
 Waits on a set of Swarming tasks.
 
@@ -3016,11 +3029,11 @@ Args:
 Returns:
   A list of TaskResult objects.
 
-&mdash; **def [ensure\_client](/recipe_modules/swarming/api.py#1162)(self):**
+&mdash; **def [ensure\_client](/recipe_modules/swarming/api.py#1166)(self):**
 
-&mdash; **def [initialize](/recipe_modules/swarming/api.py#1145)(self):**
+&mdash; **def [initialize](/recipe_modules/swarming/api.py#1149)(self):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#1177)(self):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#1181)(self):**
 
 This context manager ensures the go swarming client is available on
 $PATH.
@@ -3030,11 +3043,11 @@ Example:
     with api.swarming.on_path():
       # do your steps which require the swarming binary on path
 
-&emsp; **@property**<br>&mdash; **def [task\_id](/recipe_modules/swarming/api.py#1140)(self):**
+&emsp; **@property**<br>&mdash; **def [task\_id](/recipe_modules/swarming/api.py#1144)(self):**
 
 This task's Swarming ID.
 
-&mdash; **def [task\_request](/recipe_modules/swarming/api.py#1209)(self):**
+&mdash; **def [task\_request](/recipe_modules/swarming/api.py#1213)(self):**
 
 Creates a new TaskRequest object.
 
@@ -3044,14 +3057,14 @@ into a full task.
 Once your TaskRequest is complete, you can pass it to `trigger` in order to
 have it start running on the swarming server.
 
-&mdash; **def [task\_request\_from\_jsonish](/recipe_modules/swarming/api.py#1220)(self, json_d):**
+&mdash; **def [task\_request\_from\_jsonish](/recipe_modules/swarming/api.py#1224)(self, json_d):**
 
 Creates a new TaskRequest object from a JSON-serializable dict.
 
 The input argument should match the schema as the output of
 TaskRequest.to_jsonish().
 
-&mdash; **def [trigger](/recipe_modules/swarming/api.py#1228)(self, step_name, requests):**
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#1232)(self, step_name, requests):**
 
 Triggers a set of Swarming tasks.
 
@@ -3063,7 +3076,7 @@ Args:
 Returns:
   A list of TaskRequestMetadata objects.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [with\_server](/recipe_modules/swarming/api.py#1191)(self, server):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [with\_server](/recipe_modules/swarming/api.py#1195)(self, server):**
 
 This context sets the server for Swarming calls.
 
@@ -3080,7 +3093,7 @@ Args:
 
 Allows mockable access to the current time.
 
-#### **class [TimeApi](/recipe_modules/time/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [TimeApi](/recipe_modules/time/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 &mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#49)(self):**
 
@@ -3108,7 +3121,7 @@ Return current UTC time as a datetime.datetime.
 
 API for Tricium analyzers to use.
 
-#### **class [TriciumApi](/recipe_modules/tricium/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [TriciumApi](/recipe_modules/tricium/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 TriciumApi provides basic support for Tricium.
 
@@ -3130,7 +3143,7 @@ for details and definitions).
 
 Methods for interacting with HTTP(s) URLs.
 
-#### **class [UrlApi](/recipe_modules/url/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [UrlApi](/recipe_modules/url/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 &mdash; **def [get\_file](/recipe_modules/url/api.py#131)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None, timeout=None):**
 
@@ -3235,7 +3248,7 @@ Args:
 
 Allows test-repeatable access to a random UUID.
 
-#### **class [UuidApi](/recipe_modules/uuid/api.py#11)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [UuidApi](/recipe_modules/uuid/api.py#11)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 &mdash; **def [random](/recipe_modules/uuid/api.py#20)(self):**
 
@@ -3244,7 +3257,7 @@ Returns a random UUID string.
 
 Thin API for parsing semver strings into comparable object.
 
-#### **class [VersionApi](/recipe_modules/version/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#801)):**
+#### **class [VersionApi](/recipe_modules/version/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 &emsp; **@staticmethod**<br>&mdash; **def [parse](/recipe_modules/version/api.py#14)(version):**
 
@@ -3883,6 +3896,11 @@ This file is a recipe demonstrating reading triggers of the current build.
 [DEPS](/recipe_modules/swarming/examples/this_task.py#5): [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
 &mdash; **def [RunSteps](/recipe_modules/swarming/examples/this_task.py#11)(api):**
+### *recipes* / [swarming:tests/realms](/recipe_modules/swarming/tests/realms.py)
+
+[DEPS](/recipe_modules/swarming/tests/realms.py#8): [assertions](#recipe_modules-assertions), [context](#recipe_modules-context), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
+
+&mdash; **def [RunSteps](/recipe_modules/swarming/tests/realms.py#16)(api):**
 ### *recipes* / [time:examples/full](/recipe_modules/time/examples/full.py)
 
 [DEPS](/recipe_modules/time/examples/full.py#7): [step](#recipe_modules-step), [time](#recipe_modules-time)
