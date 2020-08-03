@@ -1,0 +1,195 @@
+[
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[START_DIR]/some_dir"
+    ],
+    "infra_step": true,
+    "name": "ensure some_dir"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "some data",
+      "[START_DIR]/some_dir/some file"
+    ],
+    "infra_step": true,
+    "name": "write some file",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@some file@some data@@@",
+      "@@@STEP_LOG_END@some file@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[START_DIR]/some_dir/sub"
+    ],
+    "infra_step": true,
+    "name": "ensure sub_dir"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "some data",
+      "[START_DIR]/some_dir/sub/f"
+    ],
+    "infra_step": true,
+    "name": "write another file",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@f@some data@@@",
+      "@@@STEP_LOG_END@f@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "compute_hash",
+      "[START_DIR]",
+      "some_dir"
+    ],
+    "infra_step": true,
+    "name": "compute_hash some_dir",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[START_DIR]/some_other_dir"
+    ],
+    "infra_step": true,
+    "name": "ensure some_other_dir"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "some data",
+      "[START_DIR]/some_other_dir/new_f"
+    ],
+    "infra_step": true,
+    "name": "write new_f file",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@new_f@some data@@@",
+      "@@@STEP_LOG_END@new_f@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "compute_hash",
+      "[START_DIR]",
+      "some_dir",
+      "some_other_dir"
+    ],
+    "infra_step": true,
+    "name": "compute_hash of list of dir",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@Hash calculated: abcdefab@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "some data",
+      "[START_DIR]/another_file"
+    ],
+    "infra_step": true,
+    "name": "write another file (2)",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@another_file@some data@@@",
+      "@@@STEP_LOG_END@another_file@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "compute_hash",
+      "[START_DIR]",
+      "some_dir",
+      "some_other_dir",
+      "another_file"
+    ],
+    "infra_step": true,
+    "name": "compute_hash of list of dirs and file",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@Hash calculated: beefdead@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "compute_hash",
+      "[START_DIR]",
+      "some_dir",
+      "some_other_dir",
+      "another_file"
+    ],
+    "infra_step": true,
+    "name": "compute_hash of without testdata",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@Hash calculated: 04ee6be3875f1c09bb34759a1ce7315d67b017716505ebff7df5a290b7ee3b20@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

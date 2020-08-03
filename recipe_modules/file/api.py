@@ -7,6 +7,7 @@ from recipe_engine import config_types
 from recipe_engine import recipe_api
 
 import fnmatch
+import hashlib
 import os
 
 
@@ -177,6 +178,54 @@ class FileApi(recipe_api.RecipeApi):
     self._run(name, ['move', source, dest])
     self.m.path.mock_copy_paths(source, dest)
     self.m.path.mock_remove_paths(source)
+
+  def compute_hash(self, name, paths, base_path, test_data=''):
+    """Computes hash of contents of a directory/file.
+
+    This function will compute hash by including following info of a file:
+      * str(len(path))  // path is relative to base_path
+      * path            // path is relative to base_path
+      * str(len(file))
+      * file_content
+
+    Each of these components are separated by a newline character.
+
+    e.g. for file = "hello" and the contents "world" the hash would be over
+
+      5\n
+      hello\n
+      5\n
+      world\n
+
+    Args:
+      * name (str) - The name of the step.
+      * paths (list[Path|str]) - Path of directory/file(s) to compute hash.
+      * base_path (Path|str) - Base directory to calculating hash relative to
+        absolute path. For e.g. `start_dir` of a recipe execution can be used.
+      * test_data (str) - Some default data for this step to return when running
+        under simulation. If no test data is provided, we compute test_data as
+        sha256 of concatenated relative paths passed.
+
+    Returns (str) - Hex encoded hash of directory/file content.
+
+    Raises file.Error and ValueError if passed paths input is not str or Path.
+    """
+    for path in paths:
+      if not isinstance(path, (str, config_types.Path)):  # pragma: no cover
+        raise ValueError('Expected str or path object, got %r' % type(path))
+      self.m.path.assert_absolute(path)
+
+    # TODO(iannucci): recipe engine needs an actual virtual file system.
+    rel_paths = [self.m.path.relpath(str(p), str(base_path)) for p in paths]
+    if not test_data:
+      test_data = hashlib.sha256('\n'.join(map(str, rel_paths))).hexdigest()
+    result = self._run(
+        name, ['compute_hash', base_path] + rel_paths,
+        step_test_data=lambda: self.test_api.compute_hash(test_data),
+        stdout=self.m.raw_io.output_text())
+    sha = result.stdout.strip()
+    result.presentation.step_text = 'Hash calculated: %s' % sha
+    return sha
 
   def read_raw(self, name, source, test_data=''):
     """Reads a file as raw data.

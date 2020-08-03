@@ -15,6 +15,7 @@ import argparse
 import errno
 import fnmatch
 import glob2
+import hashlib
 import itertools
 import json
 import os
@@ -211,6 +212,34 @@ def _FlattenSingleDirectories(path):
     shutil.rmtree(tmpname)
     return 0
 
+def _FileHash(sha, rel_path, base_path):
+  path = os.path.join(base_path, rel_path)
+  with open(path, 'rb') as f:
+    sha.update(str(len(rel_path)))
+    sha.update(rel_path)
+    while True:
+      f_stream = f.read(4096)
+      if not f_stream:
+        break
+      sha.update(str(len(f_stream)))
+      sha.update(f_stream)
+
+def _ComputeHashPaths(base_path, *rel_paths):
+  sha = hashlib.sha256()
+  for rel_path in rel_paths:
+    path = os.path.join(base_path, rel_path)
+    if os.path.isfile(path):
+      _FileHash(sha, rel_path, base_path)
+    elif os.path.isdir(path):
+      for root, dirs, files in os.walk(path, topdown=True):
+        dirs.sort()  # ensure we walk dirs in sorted order
+        files.sort()
+        for f_name in files:
+          rel_file_path = os.path.relpath(os.path.join(root, f_name), base_path)
+          _FileHash(sha, rel_file_path, base_path)
+
+  print(sha.hexdigest())
+  return 0
 
 def main(args):
   parser = argparse.ArgumentParser()
@@ -331,6 +360,17 @@ def main(args):
             'directory.'))
   subparser.add_argument('path', help='The path to flatten from.')
   subparser.set_defaults(func=lambda opts: _FlattenSingleDirectories(opts.path))
+
+  # Subcommand: compute_hash
+  subparser = subparsers.add_parser(
+      'compute_hash',
+      help='Computes hash of provided absolute directories and/or files.')
+  subparser.add_argument('base_path', help='Base path to normalize all files.')
+  subparser.add_argument('rel_paths', nargs='+',
+                         help='List of relative paths of directories '
+                              'and/or files.')
+  subparser.set_defaults(func=lambda opts: _ComputeHashPaths(opts.base_path,
+                                                             *opts.rel_paths))
 
   # Parse arguments.
   opts = parser.parse_args(args)
