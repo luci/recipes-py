@@ -4,7 +4,7 @@
 
 from recipe_engine import post_process
 
-from PB.go.chromium.org.luci.cq.api.recipe.v1 import cq as cq_pb2
+from PB.go.chromium.org.luci.cv.api.recipe.v1 import cq as cq_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as bb_common_pb2
 
 DEPS = [

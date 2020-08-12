@@ -2,7 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from PB.go.chromium.org.luci.cq.api.recipe.v1 import cq as cq_pb2
+from PB.go.chromium.org.luci.cv.api.recipe.v1 import cq as cq_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as bb_common_pb2
 
 from recipe_engine import recipe_test_api

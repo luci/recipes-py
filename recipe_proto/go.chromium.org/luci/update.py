@@ -3,7 +3,11 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-"""Automatically updates the .proto files in this directory."""
+"""Automatically updates the .proto files in this directory.
+
+This is not necessarily used for all proto files in this directory;
+but should update those listed in SUB_PATHS.
+"""
 
 import json
 import os

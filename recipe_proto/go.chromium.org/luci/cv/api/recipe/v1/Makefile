@@ -16,13 +16,13 @@
 # https://chromium.googlesource.com/infra/infra.
 
 LUCI_GO=../../../../../../../../go/src/go.chromium.org/luci
-SRC=cq/api/recipe/v1
+SRC=cv/api/recipe/v1
 RES_REV=$(shell git -C $(LUCI_GO) describe --match=NeVeRmAtCh --always --abbrev=40 --dirty)
 
 all:
 	git -C $(LUCI_GO) show origin/master:$(SRC)/cq.proto >cq.proto
 	echo 'These protos were copied from' > README.md
-	echo "https://chromium.googlesource.com/infra/luci/luci-go/+/$(RES_REV)/cq/api/recipe/v1" >> README.md
+	echo "https://chromium.googlesource.com/infra/luci/luci-go/+/$(RES_REV)/cv/api/recipe/v1" >> README.md
 
 wip:
 	cp $(LUCI_GO)/$(SRC)/cq.proto cq.proto

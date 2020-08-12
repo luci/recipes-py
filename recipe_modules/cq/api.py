@@ -1,11 +1,12 @@
 # Copyright 2019 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
+
 from enum import Enum
 
 from google.protobuf import json_format as json_pb
 
-from PB.go.chromium.org.luci.cq.api.recipe.v1 import cq as cq_pb2
+from PB.go.chromium.org.luci.cv.api.recipe.v1 import cq as cq_pb2
 
 from recipe_engine import recipe_api
 
@@ -13,8 +14,11 @@ from recipe_engine import recipe_api
 class CQApi(recipe_api.RecipeApi):
   """This module provides recipe API of LUCI CQ, aka pre-commit testing system.
 
-  More information about CQ:
-    https://chromium.googlesource.com/infra/luci/luci-go/+/master/cq
+  The CQ service is being replaced with a service now named LUCI Change
+  Verifier (CV); for more information see:
+    https://chromium.googlesource.com/infra/luci/luci-go/+/master/cv
+
+  TODO(qyearsley): Rename parts of this from CQ -> CV as appropriate.
   """
 
   class State(Enum):
@@ -61,7 +65,7 @@ class CQApi(recipe_api.RecipeApi):
     """Returns whether this build is triggered for a CQ experimental builder.
 
     See `Builder.experiment_percentage` doc in [CQ
-    config](https://chromium.googlesource.com/infra/luci/luci-go/+/master/cq/api/config/v2/cq.proto)
+    config](https://chromium.googlesource.com/infra/luci/luci-go/+/master/cv/api/config/v2/cq.proto)
 
     Raises:
       CQInactive if CQ is `INACTIVE` for this build.
