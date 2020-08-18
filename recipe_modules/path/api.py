@@ -62,7 +62,7 @@ def string_filter(func):
 
   @functools.wraps(func)
   def inner(*args, **kwargs):
-    return func(*map(str, args), **kwargs)
+    return func(*map(str, args), **{k: str(v) for k, v in kwargs.iteritems()})
 
   return inner
 
