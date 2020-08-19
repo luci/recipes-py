@@ -377,7 +377,7 @@ class StepApi(recipe_api.RecipeApiPlain):
 
     return self.m.proto.output(build_pb2.Build, self.EXT_TO_CODEC[ext],
                               leak_to=output_path,
-                              add_json_log='on_failure')
+                              add_json_log=True)
 
   @recipe_api.composite_step
   def sub_build(self, name, cmd, build,
