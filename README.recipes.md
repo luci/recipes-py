@@ -3933,9 +3933,9 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/step/tests/timeout.py#19)(api, timeout):**
 ### *recipes* / [swarming:examples/full](/recipe_modules/swarming/examples/full.py)
 
-[DEPS](/recipe_modules/swarming/examples/full.py#11): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/examples/full.py#12): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/examples/full.py#22)(api):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/examples/full.py#23)(api):**
 ### *recipes* / [swarming:examples/this\_task](/recipe_modules/swarming/examples/this_task.py)
 
 [DEPS](/recipe_modules/swarming/examples/this_task.py#5): [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)

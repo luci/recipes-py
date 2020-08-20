@@ -2,14 +2,51 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import json
+
 from state import TaskState
 
 from recipe_engine import recipe_test_api
 from PB.recipe_modules.recipe_engine.swarming import properties
 
+from .api import TaskRequest
+
 
 class SwarmingTestApi(recipe_test_api.RecipeTestApi):
   TaskState = TaskState
+
+  def check_triggered_request(self,
+                              check,
+                              step_odict,
+                              step,
+                              checkers,
+                              req_index=None):
+    """Check the input request of a swarming trigger call.
+
+    Args:
+      check, step_odict: provided by post_process
+      step (str): the step name to check
+      checkers (Seq[lambda]): a list of functions that take in two args: |check|
+        and a TaskRequest object.
+      req_index (int): the index of the request to check. If not specified, it
+        is expected that there is only one request.
+
+    Example usage:
+      c1 = lambda check, req: check(req[0].dimensions == {'os': 'Linux'})
+      c2 = lambda check, req: check(req[0].env == {'FOO': '42'})
+      post_check(api.swarming.check_trigger_request, 'trigger foo', [c1, c2])
+    """
+    # step.json.input is not available.
+    cmd = step_odict[step].cmd
+    json_d = cmd[cmd.index('-json-input') + 1]
+    json_reqs = json.loads(json_d)['requests']
+    if req_index is None:
+      req_index = 0
+      check(len(json_reqs) == 1)
+    json_request = json_reqs[req_index]
+    req = TaskRequest(self.m)._from_jsonish(json_request)
+    for c in checkers:
+      c(check, req)
 
   def example_task_request_jsonish(self):
     """Returns a dict that can be parsed by task_request_from_jsonish()."""

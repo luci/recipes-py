@@ -5,6 +5,7 @@
 
 import difflib
 
+from recipe_engine.post_process import DropExpectation
 from recipe_engine.recipe_api import Property
 
 
@@ -252,3 +253,12 @@ def GenTests(api):
   yield (api.test('collect_with_state_COMPLETED_and_failed') +
     api.override_step_data('collect', api.swarming.collect([failed_result]))
   )
+
+  yield (
+      api.test('check_triggered_request') +
+      api.post_check(api.swarming.check_triggered_request, 'trigger 1 task', [
+          lambda check, request: check(request[0].dimensions == {
+              'os': 'Debian',
+              'pool': 'example.pool'
+          })
+      ]) + api.post_process(DropExpectation))
