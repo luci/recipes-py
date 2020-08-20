@@ -48,3 +48,5 @@ def GenTests(api):
       realm=sections_pb2.Realm(name='proj:realm'),
     )
   )
+
+  assert api.context.realm is None

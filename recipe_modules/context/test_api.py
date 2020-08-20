@@ -24,3 +24,8 @@ class ContextTestApi(recipe_test_api.RecipeTestApi):
               'Got: %r=%r (type %r)' % (section_key, pb_val, type(pb_val)))
       ret.luci_context[section_key] = jsonpb.MessageToDict(pb_val)
     return ret
+
+  @property
+  def realm(self):
+    """Placeholder for realm property."""
+    return None

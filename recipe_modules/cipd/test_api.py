@@ -4,8 +4,12 @@
 
 from recipe_engine import recipe_test_api
 
+from .api import EnsureFile
+
 
 class CIPDTestApi(recipe_test_api.RecipeTestApi):
+
+  EnsureFile = EnsureFile
 
   def make_resolved_version(self, v):
     if not v:
