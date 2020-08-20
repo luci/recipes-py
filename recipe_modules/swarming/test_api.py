@@ -193,7 +193,8 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
     """Generates test step data for the swarming API collect method.
 
     Args:
-      task_results (seq[dict]): A sequence of dicts encoding swarming task results.
+      task_results (seq[dict]): A sequence of dicts encoding swarming task
+        results.
 
     Returns:
       Step test data in the form of JSON output intended to mock a swarming API
