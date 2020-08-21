@@ -254,11 +254,10 @@ def GenTests(api):
     api.override_step_data('collect', api.swarming.collect([failed_result]))
   )
 
-  yield (
-      api.test('check_triggered_request') +
-      api.post_check(api.swarming.check_triggered_request, 'trigger 1 task', [
-          lambda check, request: check(request[0].dimensions == {
-              'os': 'Debian',
-              'pool': 'example.pool'
-          })
-      ]) + api.post_process(DropExpectation))
+  yield (api.test('check_triggered_request') + api.post_check(
+      api.swarming.check_triggered_request,
+      'trigger 1 task', lambda check, request: check(request[0].dimensions == {
+          'os': 'Debian',
+          'pool': 'example.pool'
+      }), lambda check, request: check(request[0].env_vars[
+          'SOME_VARNAME'] == 'stuff')) + api.post_process(DropExpectation))
