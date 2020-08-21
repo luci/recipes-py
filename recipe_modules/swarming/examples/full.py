@@ -44,6 +44,7 @@ def RunSteps(api):
         with_env_prefixes(PATH=["path/to/bin/dir", "path/to/other/bin/dir"]).
         with_isolated('606d94add94223636ee516c6bc9918f937823ccc').
         with_expiration_secs(3600).
+        with_wait_for_capacity(True).
         with_io_timeout_secs(600).
         with_execution_timeout_secs(EXECUTION_TIMEOUT_SECS).
         with_idempotent(True).
@@ -260,4 +261,5 @@ def GenTests(api):
           'os': 'Debian',
           'pool': 'example.pool'
       }), lambda check, request: check(request[0].env_vars[
-          'SOME_VARNAME'] == 'stuff')) + api.post_process(DropExpectation))
+          'SOME_VARNAME'] == 'stuff'), lambda check, request: check(request[
+              0].wait_for_capacity)) + api.post_process(DropExpectation))

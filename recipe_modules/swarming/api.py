@@ -327,6 +327,7 @@ class TaskRequest(object):
       self._env_vars = {}
       self._execution_timeout_secs = 1200
       self._expiration_secs = 300
+      self._wait_for_capacity = False
       self._grace_period_secs = 30
       self._idempotent = False
       self._io_timeout_secs = 60
@@ -563,6 +564,22 @@ class TaskRequest(object):
       return ret
 
     @property
+    def wait_for_capacity(self):
+      """Returns whether this task should wait for capacity."""
+      return self._wait_for_capacity
+
+    def with_wait_for_capacity(self, b):
+      """Returns the slice with wait_for_capacity set to |b|.
+
+      Args:
+        b (bool) - Whether or not to wait for capacity.
+      """
+      assert isinstance(b, bool)
+      ret = self._copy()
+      ret._wait_for_capacity = b
+      return ret
+
+    @property
     def io_timeout_secs(self):
       """Returns the seconds for which the task may be silent (no i/o)."""
       return self._io_timeout_secs
@@ -781,6 +798,8 @@ class TaskRequest(object):
         ret = ret.with_cipd_ensure_file(ensure_file)
       if 'caches' in p:
         ret = ret.with_named_caches({c['name']: c['path'] for c in p['caches']})
+      if 'wait_for_capacity' in d:
+        ret = ret.with_wait_for_capacity(d['wait_for_capacity'])
       return ret.with_expiration_secs(int(d['expiration_secs']))
 
     def to_jsonish(self):
@@ -851,6 +870,7 @@ class TaskRequest(object):
 
       return {
           'expiration_secs': str(self.expiration_secs),
+          'wait_for_capacity': self.wait_for_capacity,
           'properties': properties,
       }
 
