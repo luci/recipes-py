@@ -157,22 +157,22 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
     self.assertTrue(cause.call_site.call_stack)
 
   def test_record_execution_warning_skip_frame(self):
-    def not_first_and_second_predicate(name, index, frame):
-      return 'not the first and second' if index in (0, 1) else None
-    self._override_skip_frame_predicates((not_first_and_second_predicate,))
+    def line_number_less_than_4(_name, frame):
+      return 'line number is less then 4' if frame.f_lineno < 4 else None
+    self._override_skip_frame_predicates((line_number_less_than_4,))
     with create_test_frames(self.test_file_path) as test_frames:
       self.recorder.record_execution_warning(
         'recipe_engine/SOME_WARNING', test_frames)
 
-    # attribute to the third frame
+    # attribute to frame on line 4
     expected_cause = warning_pb.Cause()
     expected_cause.call_site.site.file = self.test_file_path
-    expected_cause.call_site.site.line = 5
+    expected_cause.call_site.site.line = 4
     self.assert_has_warning('recipe_engine/SOME_WARNING', expected_cause)
 
   def test_record_empty_site_for_execution_warning(self):
     self._override_skip_frame_predicates((
-      lambda name, index, frame: 'skip all frames', ))
+      lambda _name, _frame: 'skip all frames', ))
     with create_test_frames(self.test_file_path) as test_frames:
       self.recorder.record_execution_warning(
         'recipe_engine/SOME_WARNING', test_frames)
@@ -339,7 +339,7 @@ class EscapeWarningPredicateTest(test_env.RecipeEngineUnitTest):
 
   @staticmethod
   def apply_predicate(warning_name, frame):
-    return escape.escape_warning_predicate(warning_name, -1, frame)
+    return escape.escape_warning_predicate(warning_name, frame)
 
 
 if __name__ == '__main__':

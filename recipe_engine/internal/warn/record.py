@@ -20,6 +20,7 @@ from ..attr_util import attr_type, attr_seq_type
 from ..class_util import cached_property
 from ..recipe_deps import Recipe, RecipeDeps, RecipeModule
 
+
 @attr.s(frozen=True, slots=True)
 class _AnnotatedFrame(object):
   """A wrapper class over built-in frame which associates additional attributes
@@ -40,9 +41,9 @@ class WarningRecorder(object):
   causes for a given warning.
 
   There're two types of warnings; Execution warnings and Import warnings:
-    * Execution Warning: issued within the execution of recipe code
+    * Execution Warning: issued within the execution of recipe code.
     * Import Warning: issued during dependency resolution (DEPS), when a recipe
-    or recipe module depends on a module with warning declared.
+      or recipe module depends on a module with warning declared.
   """
   # The RecipeDeps object for current recipe execution.
   recipe_deps = attr.ib(validator=attr_type(RecipeDeps))
@@ -86,19 +87,17 @@ class WarningRecorder(object):
   def record_execution_warning(self, name, frames):
     """Record the warning issued during recipe execution and its cause (
     warning_pb.CallSite). A frame will be attributed as call site frame if it
-    is the first frame in the supplied frames matching all of following
+    is the first frame in the supplied frames matching the following
     conditions:
-      * Not the frame where warning is issued
-      * The source of code object frame is executing should be located in the
-      main recipe repo or one of its descendant recipe repos
+      * The source code of the frame is 'recipe code' (i.e. in the current
+        recipe repo or one of its dependencies).
       * The function that the frame executes is not escaped from the issued
-      warning
+        warning.
 
     Args:
-      * name (str): Fully qualified warning name (e.g. repo_name/WARNING_NAME)
+      * name (str): Fully qualified warning name (e.g. repo_name/WARNING_NAME).
       * frames (List[Frame]): List of frames captured at the time the given
-      warning is issued (assuming the first frame is at where the warning is
-      issued)
+        warning is issued.
     """
     # TODO(yiwzhang): update proto to include skip reason and populate
     call_site_frame, _ = self._attribute_call_site(name, frames)
@@ -122,9 +121,9 @@ class WarningRecorder(object):
     warning_pb.ImportSite).
 
     Args:
-      * name (str): Fully qualified warning name (e.g. repo_name/WARNING_NAME)
+      * name (str): Fully qualified warning name (e.g. repo_name/WARNING_NAME).
       * importer (Recipe|RecipeModule): The recipe or recipe module which
-      depends on a recipe module with given warning name declared
+        depends on a recipe module with given warning name declared.
 
     Raise ValueError if the importer is not instance of Recipe or RecipeModule
     """
@@ -149,18 +148,14 @@ class WarningRecorder(object):
     skipped. A predicate function will have signature as follows.
 
     Args:
-      * name (str) - Fully qualified warning name e.g. 'repo/WARNING_NAME'
-      * index (int) - The index of the provided frame in call stack. Outer
-      frame has larger index.
+      * name (str) - Fully qualified warning name e.g. 'repo/WARNING_NAME'.
       * frame (types.FrameType) - A frame in call stack that the predicate
-      function is currently evaluating against
+        function is currently evaluating against.
 
     Returns a human-readable reason (str) why the given frame should be skipped.
     Returns None if the warning can be attributed to the given frame.
     """
     return (
-      # Skip the first frame as it is where the warning is being issued
-      lambda name, index, frame: 'warning issued frame' if index == 0 else None,
       self._non_recipe_code_predicate,
       escape_warning_predicate
     )
@@ -176,9 +171,8 @@ class WarningRecorder(object):
     if all of the frames are skipped.
     """
     skipped_frames = []
-    for index, frame in enumerate(frames):
-      lazy_skip_reasons = (
-        p(name, index, frame) for p in self._skip_frame_predicates)
+    for frame in frames:
+      lazy_skip_reasons = (p(name, frame) for p in self._skip_frame_predicates)
       reason = next((r for r in lazy_skip_reasons if r is not None), None)
       if reason is None:
         return frame, skipped_frames # culprit found
@@ -193,7 +187,7 @@ class WarningRecorder(object):
     return tuple(repo.recipes_root_path for repo in (
       list(itervalues(self.recipe_deps.repos))))
 
-  def _non_recipe_code_predicate(self, name, index, frame):
+  def _non_recipe_code_predicate(self, _name, frame):
     """A predicate that skips a frame when it is executing a code object whose
     source is not in any of the recipe repos in the currently executing
     recipe_deps.

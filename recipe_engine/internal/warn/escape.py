@@ -42,7 +42,7 @@ class _FuncLoc(object):
 # Dict[_FuncLoc, Tuple[regular expression pattern]]
 WARNING_ESCAPE_REGISTRY = {}
 
-def escape_warning_predicate(name, _, frame):
+def escape_warning_predicate(name, frame):
   """A predicate used in warning recorder that returns True when the function
   that the given frame is currently executing is escaped from the given warning
   name via decorators provided in this module.
