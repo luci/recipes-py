@@ -7,6 +7,7 @@ from recipe_engine.post_process import DropExpectation
 
 DEPS = [
   'assertions',
+  'buildbucket',
   'context',
   'step',
   'swarming',
@@ -28,9 +29,13 @@ def RunSteps(api):
   with api.context(realm=''):
     request = basic_request().with_resultdb()
     api.assertions.assertEqual(None, request.realm)
-    with api.assertions.assertRaises(api.step.InfraFailure):
-      request.to_jsonish()  # ResultDB integration requires a realm
+    res = request.to_jsonish()
+    # Picks up builder's realm.
+    api.assertions.assertEqual('proj:buck', res['realm'])
 
 
 def GenTests(api):
-  yield api.test('basic') + api.post_process(DropExpectation)
+  yield (
+      api.test('basic') +
+      api.buildbucket.ci_build(project='proj', bucket='buck') +
+      api.post_process(DropExpectation))

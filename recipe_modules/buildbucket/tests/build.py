@@ -43,6 +43,13 @@ def RunSteps(api):
       api.buildbucket.gitiles_commit,
       api.buildbucket.build.input.gitiles_commit)
 
+  expected_realm = api.properties.get('expected_realm')
+  if expected_realm:
+    api.assertions.assertEqual(api.buildbucket.builder_realm, expected_realm)
+  else:
+    with api.assertions.assertRaises(api.step.InfraFailure):
+      api.buildbucket.builder_realm
+
 
 def GenTests(api):
 
@@ -72,7 +79,7 @@ def GenTests(api):
   })
 
   yield (
-      case('ci', expected_bucket_v1='luci.test.ci')
+      case('ci', expected_bucket_v1='luci.test.ci', expected_realm='test:ci')
       + api.buildbucket.ci_build(
           project='test',
           git_repo='git.example.com/test/repo',
@@ -81,7 +88,7 @@ def GenTests(api):
   )
 
   yield (
-      case('try', expected_bucket_v1='luci.test.try')
+      case('try', expected_bucket_v1='luci.test.try', expected_realm='test:try')
       + api.buildbucket.try_build(
           project='test',
           git_repo='git.example.com/test/repo',
@@ -90,7 +97,11 @@ def GenTests(api):
   )
 
   yield(
-      case('cron', expected_bucket_v1='luci.test.cron')
+      case(
+          'cron',
+          expected_bucket_v1='luci.test.cron',
+          expected_realm='test:cron',
+      )
       + api.buildbucket.build(build_pb2.Build(
           id=12484724,
           tags=[],

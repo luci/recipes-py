@@ -282,7 +282,7 @@ If it returns `None`, the link is not reported. Default link title is build id.
 
 A module for interacting with buildbucket.
 
-&mdash; **def [add\_tags\_to\_current\_build](/recipe_modules/buildbucket/api.py#259)(self, tags):**
+&mdash; **def [add\_tags\_to\_current\_build](/recipe_modules/buildbucket/api.py#272)(self, tags):**
 
 Adds arbitrary tags during the runtime of a build.
 
@@ -291,7 +291,7 @@ Args:
   Empty tag values won't remove existing tags with matching keys, since tags
   can only be added.
 
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#971)(self):**
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#984)(self):**
 
 Returns bucket name in v1 format.
 
@@ -314,19 +314,19 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#982)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#995)(self):**
 
 DEPRECATED, use build.id instead.
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#987)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#1000)(self):**
 
 DEPRECATED, use build.input instead.
 
-&mdash; **def [build\_url](/recipe_modules/buildbucket/api.py#152)(self, host=None, build_id=None):**
+&mdash; **def [build\_url](/recipe_modules/buildbucket/api.py#165)(self, host=None, build_id=None):**
 
 Returns url to a build. Defaults to current build.
 
-&emsp; **@property**<br>&mdash; **def [builder\_cache\_path](/recipe_modules/buildbucket/api.py#284)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_cache\_path](/recipe_modules/buildbucket/api.py#297)(self):**
 
 Path to the builder cache directory.
 
@@ -335,7 +335,7 @@ It remains on the bot from build to build.
 See "Builder cache" in
 https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/project_config.proto
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#992)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#1005)(self):**
 
 Deprecated. Use build.builder instead.
 
@@ -343,7 +343,14 @@ Deprecated. Use build.builder instead.
 
 Returns builder name. Shortcut for `.build.builder.builder`.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#674)(self, build_id, reason=' ', step_name=None):**
+&emsp; **@property**<br>&mdash; **def [builder\_realm](/recipe_modules/buildbucket/api.py#152)(self):**
+
+Returns the LUCI realm name of the current build.
+
+Raises `InfraFailure` if the build proto doesn't have `project` or `bucket`
+set. This can happen in tests that don't properly mock build proto.
+
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#687)(self, build_id, reason=' ', step_name=None):**
 
 Cancel the build associated with the provided build id.
 
@@ -358,7 +365,7 @@ Returns:
   None if build is successfully cancelled. Otherwise, an InfraFailure will
   be raised
 
-&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#780)(self, build_id, \*\*kwargs):**
+&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#793)(self, build_id, \*\*kwargs):**
 
 Shorthand for `collect_builds` below, but for a single build only.
 
@@ -369,7 +376,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
   for the ended build.
 
-&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#793)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False, fields=DEFAULT_FIELDS):**
+&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#806)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False, fields=DEFAULT_FIELDS):**
 
 Waits for a set of builds to end and returns their details.
 
@@ -392,7 +399,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   for all specified builds.
 
-&mdash; **def [get](/recipe_modules/buildbucket/api.py#755)(self, build_id, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS):**
+&mdash; **def [get](/recipe_modules/buildbucket/api.py#768)(self, build_id, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS):**
 
 Gets a build.
 
@@ -406,11 +413,11 @@ Args:
 Returns:
   A build_pb2.Build.
 
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#776)(self, build_id, \*\*kwargs):**
+&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#789)(self, build_id, \*\*kwargs):**
 
 DEPRECATED. Use get().
 
-&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#712)(self, build_ids, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS):**
+&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#725)(self, build_ids, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS):**
 
 Gets multiple builds.
 
@@ -424,7 +431,7 @@ Args:
 Returns:
   A dict {build_id: build_pb2.Build}.
 
-&emsp; **@property**<br>&mdash; **def [gitiles\_commit](/recipe_modules/buildbucket/api.py#157)(self):**
+&emsp; **@property**<br>&mdash; **def [gitiles\_commit](/recipe_modules/buildbucket/api.py#170)(self):**
 
 Returns input gitiles commit. Shortcut for `.build.input.gitiles_commit`.
 
@@ -433,18 +440,18 @@ For value format, see
 
 Never returns None, but sub-fields may be empty.
 
-&mdash; **def [hide\_current\_build\_in\_gerrit](/recipe_modules/buildbucket/api.py#280)(self):**
+&mdash; **def [hide\_current\_build\_in\_gerrit](/recipe_modules/buildbucket/api.py#293)(self):**
 
 Hides the build in UI
 
 &emsp; **@host.setter**<br>&mdash; **def [host](/recipe_modules/buildbucket/api.py#96)(self, value):**
 
-&mdash; **def [is\_critical](/recipe_modules/buildbucket/api.py#168)(self, build=None):**
+&mdash; **def [is\_critical](/recipe_modules/buildbucket/api.py#181)(self, build=None):**
 
 Returns True if the build is critical. Build defaults to the current one.
     
 
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#574)(self, builds, \*\*kwargs):**
+&mdash; **def [put](/recipe_modules/buildbucket/api.py#587)(self, builds, \*\*kwargs):**
 
 Puts a batch of builds.
 
@@ -468,7 +475,7 @@ Returns:
   A step that as its `.stdout` property contains the response object as
   returned by buildbucket.
 
-&mdash; **def [run](/recipe_modules/buildbucket/api.py#305)(self, schedule_build_requests, collect_interval=None, timeout=None, url_title_fn=None, step_name=None, raise_if_unsuccessful=False):**
+&mdash; **def [run](/recipe_modules/buildbucket/api.py#318)(self, schedule_build_requests, collect_interval=None, timeout=None, url_title_fn=None, step_name=None, raise_if_unsuccessful=False):**
 
 Runs builds and returns results.
 
@@ -480,7 +487,7 @@ Returns:
   [Builds](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
   in the same order as schedule_build_requests.
 
-&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#498)(self, schedule_build_requests, url_title_fn=None, step_name=None):**
+&mdash; **def [schedule](/recipe_modules/buildbucket/api.py#511)(self, schedule_build_requests, url_title_fn=None, step_name=None):**
 
 Schedules a batch of builds.
 
@@ -509,7 +516,7 @@ Returns:
 Raises:
   `InfraFailure` if any of the requests fail.
 
-&mdash; **def [schedule\_request](/recipe_modules/buildbucket/api.py#333)(self, builder, project=INHERIT, bucket=INHERIT, properties=None, experimental=INHERIT, gitiles_commit=INHERIT, gerrit_changes=INHERIT, tags=None, inherit_buildsets=True, swarming_parent_run_id=None, dimensions=None, priority=INHERIT, critical=INHERIT, exe_cipd_version=INHERIT, fields=DEFAULT_FIELDS):**
+&mdash; **def [schedule\_request](/recipe_modules/buildbucket/api.py#346)(self, builder, project=INHERIT, bucket=INHERIT, properties=None, experimental=INHERIT, gitiles_commit=INHERIT, gerrit_changes=INHERIT, tags=None, inherit_buildsets=True, swarming_parent_run_id=None, dimensions=None, priority=INHERIT, critical=INHERIT, exe_cipd_version=INHERIT, fields=DEFAULT_FIELDS):**
 
 Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
@@ -574,7 +581,7 @@ Args:
 * fields (list of strs): a list of fields to include in the response, names
   relative to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
 
-&mdash; **def [search](/recipe_modules/buildbucket/api.py#609)(self, predicate, limit=None, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS):**
+&mdash; **def [search](/recipe_modules/buildbucket/api.py#622)(self, predicate, limit=None, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS):**
 
 Searches for builds.
 
@@ -603,7 +610,7 @@ Returns:
 
 DEPRECATED. Use host property.
 
-&mdash; **def [set\_output\_gitiles\_commit](/recipe_modules/buildbucket/api.py#211)(self, gitiles_commit):**
+&mdash; **def [set\_output\_gitiles\_commit](/recipe_modules/buildbucket/api.py#224)(self, gitiles_commit):**
 
 Sets `buildbucket.v2.Build.output.gitiles_commit` field.
 
@@ -621,11 +628,11 @@ Args:
 
 Can be called at most once per build.
 
-&emsp; **@staticmethod**<br>&mdash; **def [tags](/recipe_modules/buildbucket/api.py#254)(\*\*tags):**
+&emsp; **@staticmethod**<br>&mdash; **def [tags](/recipe_modules/buildbucket/api.py#267)(\*\*tags):**
 
 Alias for tags in util.py. See doc there.
 
-&emsp; **@property**<br>&mdash; **def [tags\_for\_child\_build](/recipe_modules/buildbucket/api.py#174)(self):**
+&emsp; **@property**<br>&mdash; **def [tags\_for\_child\_build](/recipe_modules/buildbucket/api.py#187)(self):**
 
 A dict of tags (key -> value) derived from current (parent) build for a
 child build.
@@ -3030,9 +3037,9 @@ Raises `InfraFailure` if the sub-build reports INFRA_FAILURE or CANCELED
 status.
 ### *recipe_modules* / [swarming](/recipe_modules/swarming)
 
-[DEPS](/recipe_modules/swarming/__init__.py#8): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [isolated](#recipe_modules-isolated), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/swarming/__init__.py#8): [buildbucket](#recipe_modules-buildbucket), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [isolated](#recipe_modules-isolated), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-#### **class [SwarmingApi](/recipe_modules/swarming/api.py#1136)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
+#### **class [SwarmingApi](/recipe_modules/swarming/api.py#1141)([RecipeApi](/recipe_engine/recipe_api.py#802)):**
 
 API for interacting with swarming.
 
@@ -3042,11 +3049,11 @@ http://go.chromium.org/luci/client/cmd/swarming.
 This module will deploy the client to [CACHE]/swarming_client/; users should
 add this path to the named cache for their builder.
 
-&emsp; **@property**<br>&mdash; **def [bot\_id](/recipe_modules/swarming/api.py#1159)(self):**
+&emsp; **@property**<br>&mdash; **def [bot\_id](/recipe_modules/swarming/api.py#1164)(self):**
 
 Swarming bot ID executing this task.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#1296)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#1301)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
 
 Waits on a set of Swarming tasks.
 
@@ -3069,11 +3076,11 @@ Args:
 Returns:
   A list of TaskResult objects.
 
-&mdash; **def [ensure\_client](/recipe_modules/swarming/api.py#1186)(self):**
+&mdash; **def [ensure\_client](/recipe_modules/swarming/api.py#1191)(self):**
 
-&mdash; **def [initialize](/recipe_modules/swarming/api.py#1169)(self):**
+&mdash; **def [initialize](/recipe_modules/swarming/api.py#1174)(self):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#1201)(self):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#1206)(self):**
 
 This context manager ensures the go swarming client is available on
 $PATH.
@@ -3083,11 +3090,11 @@ Example:
     with api.swarming.on_path():
       # do your steps which require the swarming binary on path
 
-&emsp; **@property**<br>&mdash; **def [task\_id](/recipe_modules/swarming/api.py#1164)(self):**
+&emsp; **@property**<br>&mdash; **def [task\_id](/recipe_modules/swarming/api.py#1169)(self):**
 
 This task's Swarming ID.
 
-&mdash; **def [task\_request](/recipe_modules/swarming/api.py#1233)(self):**
+&mdash; **def [task\_request](/recipe_modules/swarming/api.py#1238)(self):**
 
 Creates a new TaskRequest object.
 
@@ -3097,14 +3104,14 @@ into a full task.
 Once your TaskRequest is complete, you can pass it to `trigger` in order to
 have it start running on the swarming server.
 
-&mdash; **def [task\_request\_from\_jsonish](/recipe_modules/swarming/api.py#1244)(self, json_d):**
+&mdash; **def [task\_request\_from\_jsonish](/recipe_modules/swarming/api.py#1249)(self, json_d):**
 
 Creates a new TaskRequest object from a JSON-serializable dict.
 
 The input argument should match the schema as the output of
 TaskRequest.to_jsonish().
 
-&mdash; **def [trigger](/recipe_modules/swarming/api.py#1252)(self, step_name, requests):**
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#1257)(self, step_name, requests):**
 
 Triggers a set of Swarming tasks.
 
@@ -3116,7 +3123,7 @@ Args:
 Returns:
   A list of TaskRequestMetadata objects.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [with\_server](/recipe_modules/swarming/api.py#1215)(self, server):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [with\_server](/recipe_modules/swarming/api.py#1220)(self, server):**
 
 This context sets the server for Swarming calls.
 
@@ -3943,9 +3950,9 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/swarming/examples/this_task.py#11)(api):**
 ### *recipes* / [swarming:tests/realms](/recipe_modules/swarming/tests/realms.py)
 
-[DEPS](/recipe_modules/swarming/tests/realms.py#8): [assertions](#recipe_modules-assertions), [context](#recipe_modules-context), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/tests/realms.py#8): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [context](#recipe_modules-context), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/tests/realms.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/tests/realms.py#17)(api):**
 ### *recipes* / [time:examples/full](/recipe_modules/time/examples/full.py)
 
 [DEPS](/recipe_modules/time/examples/full.py#7): [step](#recipe_modules-step), [time](#recipe_modules-time)

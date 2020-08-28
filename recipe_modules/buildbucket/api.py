@@ -149,6 +149,19 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """Returns builder name. Shortcut for `.build.builder.builder`."""
     return self.build.builder.builder
 
+  @property
+  def builder_realm(self):
+    """Returns the LUCI realm name of the current build.
+
+    Raises `InfraFailure` if the build proto doesn't have `project` or `bucket`
+    set. This can happen in tests that don't properly mock build proto.
+    """
+    if not self._build.builder.project:
+      raise self.m.step.InfraFailure('The build has no project')
+    if not self._build.builder.bucket:  # pragma: no cover
+      raise self.m.step.InfraFailure('The build has no bucket')
+    return '%s:%s' % (self._build.builder.project, self._build.builder.bucket)
+
   def build_url(self, host=None, build_id=None):
     """Returns url to a build. Defaults to current build."""
     return 'https://%s/build/%s' % (

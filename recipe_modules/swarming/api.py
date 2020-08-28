@@ -279,9 +279,14 @@ class TaskRequest(object):
     The format follows the schema given by the NewTaskRequest class found here:
     https://cs.chromium.org/chromium/infra/luci/appengine/swarming/swarming_rpcs.py?q=NewTaskRequest
     """
-    if self.resultdb.enable and not self.realm:
-      raise self._api.step.InfraFailure(
-          'A task with ResultDB integration requires a LUCI realm set')
+    realm = self.realm
+    if self.resultdb.enable and not realm:
+      # Use realms for tasks with ResultDB even when the parent task is not
+      # using them yet. This is needed to allow experimenting with
+      # ResultDB-enabled tests before realms are available everywhere.
+      #
+      # TODO(crbug.com/1122808): Remove this fallback.
+      realm = self._api.buildbucket.builder_realm
     ret = {
         'name': self.name,
         'priority': str(self.priority),
@@ -296,8 +301,8 @@ class TaskRequest(object):
       ret['user'] = self.user
     if self.tags:
       ret['tags'] = self.tags
-    if self.realm:
-      ret['realm'] = self.realm
+    if realm:
+      ret['realm'] = realm
     return ret
 
 
