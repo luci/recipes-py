@@ -23,3 +23,15 @@ class StepTestApi(recipe_test_api.RecipeTestApi):
       retVal = build_pb2.Build()
       retVal.CopyFrom(build)
     return retVal, None, None
+
+  @recipe_test_api.mod_test_data
+  @staticmethod
+  def initial_build_create_time(seconds):
+    """Sets the create time of the initial build for luciexe."""
+    return seconds
+
+  @recipe_test_api.mod_test_data
+  @staticmethod
+  def initial_build_start_time(seconds):
+    """Sets the create time of the initial build for luciexe."""
+    return seconds

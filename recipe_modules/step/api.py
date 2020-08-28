@@ -19,6 +19,7 @@ from recipe_engine.types import ResourceCost as _ResourceCost
 from recipe_engine.util import Placeholder, returns_placeholder
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
 # Inherit from RecipeApiPlain because the only thing which is a step is
 # run_from_dict()
@@ -379,6 +380,23 @@ class StepApi(recipe_api.RecipeApiPlain):
                               leak_to=output_path,
                               add_json_log=True)
 
+  def _make_initial_build(self, input_build):
+    build = build_pb2.Build()
+    build.CopyFrom(input_build)
+    build.status = common_pb2.STARTED
+    if self._test_data.enabled:
+      build.create_time.FromSeconds(
+          self._test_data.get('initial_build_create_time', 1577836800))
+      build.start_time.FromSeconds(
+          self._test_data.get('initial_build_start_time', 1577836801))
+    else:  # pragma: no cover
+      build.create_time.GetCurrentTime()
+      build.start_time.GetCurrentTime()
+    for f in ('end_time', 'output', 'status_details', 'steps',
+              'summary_markdown', 'tags', 'update_time'):
+      build.ClearField(f)
+    return build
+
   @recipe_api.composite_step
   def sub_build(self, name, cmd, build,
                 output_path=None, timeout=None,
@@ -415,7 +433,10 @@ class StepApi(recipe_api.RecipeApiPlain):
         provided in the list. It should be provided via keyword arg
         `output_path` instead.
       * build (build_pb2.Build): The initial build state that the launched
-        luciexe will start with.
+        luciexe will start with. This method will clone the input build, modify
+        the clone's fields and pass the clone to luciexe (see 'Invocation'
+        section in http://go.chromium.org/luci/luciexe for what modification
+        will be done).
       * output_path (None|str|Path): The value of the `--output` flag. If
         provided, it should be a path to a non-existent file (its directory
         MUST exist). The extension of the path dictates the encoding format of
@@ -462,7 +483,7 @@ class StepApi(recipe_api.RecipeApiPlain):
         env_prefixes=self._to_env_affix(env_prefixes),
         env_suffixes=self._to_env_affix(self.m.context.env_suffixes),
         timeout=timeout,
-        stdin=self.m.proto.input(build, 'BINARY'),
+        stdin=self.m.proto.input(self._make_initial_build(build), 'BINARY'),
         infra_step=self.m.context.infra_step or False,
         merge_step=True,
         # The return code of LUCI executable should be omitted

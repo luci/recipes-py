@@ -15,7 +15,8 @@ message SubBuildInputProps {
   }
 
   Path output_path = 1;
-  .buildbucket.v2.Build expected_sub_build = 2;
+  .buildbucket.v2.Build input_build = 2;
   bool infra_step = 3;
+  .buildbucket.v2.Build expected_sub_build = 4;
 }
 

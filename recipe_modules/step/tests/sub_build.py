@@ -6,12 +6,14 @@ from recipe_engine import post_process
 from recipe_engine.config_types import Path
 
 from google.protobuf import json_format as jsonpb
+from google.protobuf import timestamp_pb2
 
 from PB.recipe_modules.recipe_engine.step.tests import (
   properties as properties_pb2
 )
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import step as step_pb2
 
 DEPS = [
   'assertions',
@@ -30,10 +32,12 @@ def RunSteps(api, props):
     output_path = (
       api.path[props.output_path.base].join(props.output_path.file))
   with api.context(infra_steps=props.infra_step):
+    input_build = props.input_build if props.HasField('input_build') else (
+        build_pb2.Build(id=11111, status=common_pb2.SCHEDULED))
     ret = api.step.sub_build(
       'launch sub build',
       ['luciexe', '--foo', 'bar', '--json-summary', api.json.output()],
-      build_pb2.Build(id=11111, status=common_pb2.SCHEDULED),
+      input_build,
       output_path=output_path,
       step_test_data= lambda: (
         api.json.test_api.output('{"hello": "world"}') +
@@ -170,5 +174,48 @@ def GenTests(api):
     api.post_process(post_process.StepException, 'launch sub build') +
     api.post_process(post_process.StepTextEquals, 'launch sub build',
       "Merge Step Error: Can't find the final build output for luciexe.") +
+    api.post_process(post_process.DropExpectation)
+  )
+
+  input_build=build_pb2.Build(
+    id=88888,
+    status=common_pb2.INFRA_FAILURE,
+    status_details=common_pb2.StatusDetails(
+        timeout=common_pb2.StatusDetails.Timeout()),
+    create_time=timestamp_pb2.Timestamp(seconds=1598338800),
+    start_time=timestamp_pb2.Timestamp(seconds=1598338801),
+    end_time=timestamp_pb2.Timestamp(seconds=1598425200),
+    update_time=timestamp_pb2.Timestamp(seconds=1598425200),
+    summary_markdown='awesome summary',
+    steps=[step_pb2.Step(name='first step'),],
+    tags=[common_pb2.StringPair(key='foo', value='bar'),],
+  )
+  build.output.properties['some_key'] = 'some_value'
+  build.output.logs.add(name='stdout')
+
+  def check_luciexe_initial_build(check, steps):
+    initial_build = build_pb2.Build()
+    initial_build.ParseFromString(steps['launch sub build'].stdin)
+    check(initial_build.id == 88888)
+    check(initial_build.status == common_pb2.STARTED)
+    check(initial_build.create_time.ToSeconds() == 1677836800)
+    check(initial_build.start_time.ToSeconds() == 1677836801)
+    check(not initial_build.summary_markdown)
+    check(not initial_build.HasField('status_details'))
+    check(not initial_build.HasField('end_time'))
+    check(not initial_build.HasField('update_time'))
+    check(not initial_build.steps)
+    check(not initial_build.tags)
+    check(not initial_build.HasField('output'))
+
+
+  yield (
+    api.test('clear_fields_of_input_build') +
+    api.properties(properties_pb2.SubBuildInputProps(
+        input_build=input_build,
+    )) +
+    api.step.initial_build_create_time(1677836800) +
+    api.step.initial_build_start_time(1677836801) +
+    api.post_check(check_luciexe_initial_build) +
     api.post_process(post_process.DropExpectation)
   )
