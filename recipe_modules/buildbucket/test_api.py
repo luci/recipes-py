@@ -101,6 +101,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       project='project',
       bucket='try',  # shortname.
       builder='builder',
+      gerrit_changes=None,
       git_repo=None,
       change_number=123456,
       patch_set=7,
@@ -134,6 +135,16 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     if all(t.key != 'cq_experimental' for t in tags):
       tags.append(common_pb2.StringPair(key='cq_experimental', value='false'))
 
+    if not gerrit_changes:
+        gerrit_changes = [
+            common_pb2.GerritChange(
+                host=gerrit_host,
+                project=git_project,
+                change=change_number,
+                patchset=patch_set,
+            ),
+        ]
+
     build = build_pb2.Build(
         id=build_id,
         number=build_number,
@@ -145,14 +156,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         ),
         created_by='user:commit-bot@chromium.org',
         create_time=timestamp_pb2.Timestamp(seconds=1527292217),
-        input=build_pb2.Build.Input(gerrit_changes=[
-            common_pb2.GerritChange(
-                host=gerrit_host,
-                project=git_project,
-                change=change_number,
-                patchset=patch_set,
-            ),
-        ]),
+        input=build_pb2.Build.Input(gerrit_changes=gerrit_changes),
         infra=build_pb2.BuildInfra(
             swarming=build_pb2.BuildInfra.Swarming(priority=priority),
             resultdb=build_pb2.BuildInfra.ResultDB(
