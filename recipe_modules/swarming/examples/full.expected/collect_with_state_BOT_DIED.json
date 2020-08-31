@@ -188,12 +188,12 @@
       "@@@STEP_LOG_LINE@json.output@      \"request\": {@@@",
       "@@@STEP_LOG_LINE@json.output@        \"name\": \"recipes-go\"@@@",
       "@@@STEP_LOG_LINE@json.output@      }, @@@",
-      "@@@STEP_LOG_LINE@json.output@      \"task_id\": \"0\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"task_id\": \"1\"@@@",
       "@@@STEP_LOG_LINE@json.output@    }@@@",
       "@@@STEP_LOG_LINE@json.output@  ]@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LINK@task UI: recipes-go@https://some-server.com/task?id=0@@@"
+      "@@@STEP_LINK@task UI: recipes-go@https://some-server.com/task?id=1@@@"
     ]
   },
   {
@@ -256,12 +256,12 @@
       "@@@STEP_LOG_LINE@json.output@      \"request\": {@@@",
       "@@@STEP_LOG_LINE@json.output@        \"name\": \"recipes-go\"@@@",
       "@@@STEP_LOG_LINE@json.output@      }, @@@",
-      "@@@STEP_LOG_LINE@json.output@      \"task_id\": \"0\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"task_id\": \"2\"@@@",
       "@@@STEP_LOG_LINE@json.output@    }@@@",
       "@@@STEP_LOG_LINE@json.output@  ]@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LINK@task UI: recipes-go@https://example.swarmingserver.appspot.com/task?id=0@@@"
+      "@@@STEP_LINK@task UI: recipes-go@https://example.swarmingserver.appspot.com/task?id=2@@@"
     ]
   },
   {

@@ -15,6 +15,10 @@ from .api import TaskRequest
 class SwarmingTestApi(recipe_test_api.RecipeTestApi):
   TaskState = TaskState
 
+  def __init__(self, *args, **kwargs):
+    super(SwarmingTestApi, self).__init__(*args, **kwargs)
+    self._task_id_count = 0
+
   def check_triggered_request(self, check, step_odict, step, *checkers):
     """Check the input request of a swarming trigger call.
 
@@ -104,7 +108,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
                 SWARMING_BOT_ID=bot_id,
             ))
 
-  def trigger(self, task_names, initial_id=0):
+  def trigger(self, task_names, initial_id=None):
     """Generates step test data intended to mock api.swarming.trigger()
 
     Args:
@@ -112,13 +116,15 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
         want to trigger.
       initial_id (int): The beginning of the ID range.
     """
+    start = self._task_id_count if initial_id is None else initial_id
+    self._task_id_count += len(task_names)
     return self.m.json.output({
         'tasks': [{
             'task_id': '%d' % idx,
             'request': {
                 'name': name,
             },
-        } for idx, name in enumerate(task_names, start=initial_id)],
+        } for idx, name in enumerate(task_names, start=start)],
     })
 
   @staticmethod
