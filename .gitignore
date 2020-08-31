@@ -1,3 +1,4 @@
 *.pyc
 /workdir
 /.recipe_deps
+.idea/
