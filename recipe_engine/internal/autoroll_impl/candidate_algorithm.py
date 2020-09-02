@@ -123,9 +123,9 @@ def is_consistent(spec_pb, repos):
 
 
 def _get_roll_candidates_impl(recipe_deps, repos):
-  if LOGGER.isEnabledFor(logging.DEBUG):
+  if LOGGER.isEnabledFor(logging.INFO):
     count = sum(len(r) for r in repos.itervalues())
-    LOGGER.debug('analyzing %d commits across %d repos', count, len(repos))
+    LOGGER.info('analyzing %d commits across %d repos', count, len(repos))
 
   current_pb = recipe_deps.main_repo.recipes_cfg_pb2
 
@@ -136,19 +136,19 @@ def _get_roll_candidates_impl(recipe_deps, repos):
     best_repo_name = find_best_rev(repos)
     if best_repo_name is None:
       # end when there's no best rev to roll
-      LOGGER.debug("terminating: no best project")
+      LOGGER.info("terminating: no best project")
       return ret_good, ret_bad
 
     rev = repos[best_repo_name].advance()
     if not rev:
-      LOGGER.debug("terminating: could not advance %r", best_repo_name)
+      LOGGER.info("terminating: could not advance %r", best_repo_name)
       return ret_good, ret_bad
 
     backwards_roll = False
     for d_pid, dep in sorted(rev.spec.deps.items()):
       if d_pid in repos and not repos[d_pid].advance_to(dep.revision):
         backwards_roll = True
-        LOGGER.debug("backwards_roll: rolling %r to %r causes (%r->%r)",
+        LOGGER.info("backwards_roll: rolling %r to %r causes (%r->%r)",
                      best_repo_name, rev.revision, d_pid, dep.revision)
         break
 
@@ -200,7 +200,7 @@ def _get_roll_candidates_impl(recipe_deps, repos):
           current_pb.deps[d_pid].branch = dep.branch
 
     if backwards_roll or not is_consistent(current_pb, repos):
-      LOGGER.debug("skipping: not_consistent")
+      LOGGER.info("skipping: not_consistent")
       ret_bad.append(RollCandidate(current_pb))
     else:
       ret_good.append(RollCandidate(current_pb))
