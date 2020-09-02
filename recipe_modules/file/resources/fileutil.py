@@ -388,7 +388,9 @@ def main(args):
     data['errno_name'] = errno.errorcode[e.errno]
     data['message'] = str(e)
   except shutil.Error as e:
-    data['message'] = e.message
+    # Note that shutil.Error's "message" field can sometimes be a tuple, just
+    # render the entire exception as a string to be safe.
+    data['message'] = str(e)
   except Exception as e:
     data['message'] = 'UNKNOWN: %s' % e
 
