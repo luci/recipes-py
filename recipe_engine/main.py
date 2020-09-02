@@ -75,8 +75,11 @@ del _hack_lookup_codecs
 # ROOT_DIR bit below.
 sys.path = sys.path[1:]
 
-import urllib3.contrib.pyopenssl
-urllib3.contrib.pyopenssl.inject_into_urllib3()
+try:
+  import urllib3.contrib.pyopenssl
+  urllib3.contrib.pyopenssl.inject_into_urllib3()
+except ImportError:
+  pass
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT_DIR)
