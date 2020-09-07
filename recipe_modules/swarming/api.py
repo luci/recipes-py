@@ -521,7 +521,7 @@ class TaskRequest(object):
     def with_env_prefixes(self, **kwargs):
       """Returns the slice with the given environment prefixes set.
 
-      The given paths are interpreted as relative to the Swarming root directory.
+      The given paths are interpreted as relative to the Swarming root dir.
 
       Successive calls to this method is additive with respect to prefixes: a
       call that sets FOO=[a,...] chained with a call with FOO=[b,...] is
@@ -1254,13 +1254,14 @@ class SwarmingApi(recipe_api.RecipeApi):
     """
     return TaskRequest(self.m)._from_jsonish(json_d)
 
-  def trigger(self, step_name, requests):
+  def trigger(self, step_name, requests, verbose=False):
     """Triggers a set of Swarming tasks.
 
     Args:
       step_name (str): The name of the step.
       requests (seq[TaskRequest]): A sequence of task request objects
         representing the tasks we want to trigger.
+      verbose (bool): Whether to use verbose logs.
 
     Returns:
       A list of TaskRequestMetadata objects.
@@ -1277,6 +1278,8 @@ class SwarmingApi(recipe_api.RecipeApi):
         '-json-output',
         self.m.json.output(),
     ]
+    if verbose:
+      cmd.append('-verbose')
 
     step = self._run(
         step_name,

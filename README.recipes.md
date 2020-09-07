@@ -3056,7 +3056,7 @@ add this path to the named cache for their builder.
 
 Swarming bot ID executing this task.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#1301)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#1304)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
 
 Waits on a set of Swarming tasks.
 
@@ -3114,7 +3114,7 @@ Creates a new TaskRequest object from a JSON-serializable dict.
 The input argument should match the schema as the output of
 TaskRequest.to_jsonish().
 
-&mdash; **def [trigger](/recipe_modules/swarming/api.py#1257)(self, step_name, requests):**
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#1257)(self, step_name, requests, verbose=False):**
 
 Triggers a set of Swarming tasks.
 
@@ -3122,6 +3122,7 @@ Args:
   step_name (str): The name of the step.
   requests (seq[TaskRequest]): A sequence of task request objects
     representing the tasks we want to trigger.
+  verbose (bool): Whether to use verbose logs.
 
 Returns:
   A list of TaskRequestMetadata objects.

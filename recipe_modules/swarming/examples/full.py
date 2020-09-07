@@ -186,7 +186,8 @@ def RunSteps(api):
     api.swarming.collect('collect on some-server.com', ['0'])
 
   # verify swarming server correctly reverts
-  api.swarming.trigger('trigger on original server', requests=[request])
+  api.swarming.trigger(
+      'trigger on original server', requests=[request], verbose=True)
   api.swarming.collect('collect on original server', ['0'])
 
 
