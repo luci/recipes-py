@@ -118,8 +118,9 @@ class FuturesApi(RecipeApi):
       with gevent.Timeout(timeout, exception=FuturesApi.Timeout()):
         return self._greenlet.get()
 
+    @property
     def done(self):
-      """Returns True iff this Future is no longer running."""
+      """Property set to True iff this Future is no longer running."""
       return self._greenlet.dead
 
     def cancel(self):

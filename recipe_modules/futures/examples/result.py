@@ -20,7 +20,7 @@ def RunSteps(api):
       'Some other exception?')
   fut.result()
 
-  assert fut.done(), 'What? The future must be done after getting its result.'
+  assert fut.done, 'What? The future must be done after getting its result.'
 
   api.step('run if success', cmd=None)
 
