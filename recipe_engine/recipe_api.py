@@ -7,6 +7,7 @@ import bisect
 import contextlib
 import copy
 import hashlib
+import inspect
 import json
 import keyword
 import os
@@ -24,6 +25,7 @@ from google.protobuf import json_format as jsonpb
 from .config_types import Path
 from .internal import engine_step
 from .internal.attr_util import attr_dict_type
+from .internal.warn import escape
 from .recipe_test_api import DisabledTestData, ModuleTestData
 from .third_party import luci_context
 from .third_party.logdog import streamname
@@ -284,6 +286,78 @@ class ConcurrencyClient(object):
     return self._spawn_impl(func, args, kwargs, greenlet_name)
 
 
+class WarningClient(object):
+  IDENT = 'warning'
+
+  def __init__(self, recorder, recipe_deps):
+    from .internal.warn import record  # Avoid early proto import
+    if recorder != record.NULL_WARNING_RECORDER and (
+        not isinstance(recorder, record.WarningRecorder)):
+      raise ValueError('Expected either an instance of WarningRecorder '
+                       'or NULL_WARNING_RECORDER sentinel. Got type '
+                       '(%s): %r' % (type(self._recorder), self._recorder))
+    self._recorder = recorder
+    # A repo may locate inside another repo (e.g. generally, deps repos are
+    # inside main repo). So we should start with the repo with the longest
+    # path to decide which repo contains the issuer file.
+    self._repo_paths = sorted(
+        ((repo_name, repo.path)
+        for repo_name, repo in iteritems(recipe_deps.repos)),
+        key=lambda r: r[1],
+        reverse=True,
+    )
+
+  @escape.escape_all_warnings
+  def record_execution_warning(self, name):
+    """Captures the current stack and records an execution warning."""
+    self._recorder.record_execution_warning(
+        name,
+        [frame_tup[0] for frame_tup in inspect.stack()],
+    )
+
+  def resolve_warning(self, name, issuer_file):
+    """Returns the fully-qualified warning name for the given warning.
+
+    The repo that contains the issuer_file is considered as where the
+    warning is defined.
+
+    Args:
+      * name (str): the warning name to be resolved. If fully-qualified name
+        is provided, returns as it is.
+      * issuer_file (str): The file path where warning is issued.
+
+    Raise ValueError if none of the repo contains the issuer_file.
+    """
+    if '/' in name:
+      return name
+
+    abs_issuer_path = os.path.abspath(issuer_file)
+    for _, (repo_name, repo_path) in enumerate(self._repo_paths):
+      if abs_issuer_path.startswith(repo_path):
+        return '/'.join((repo_name, name))
+    raise ValueError('Failed to resolve warning: %r issued in %s. To '
+        'disambiguate, please provide fully-qualified warning name '
+        '(i.e. $repo_name/WARNING_NAME)' % (name, abs_issuer_path))
+
+  def escape_frame_function(self, warning, frame):
+    """Escapes the function the given frame executes from warning attribution.
+    """
+    loc = escape.FuncLoc.from_code_obj(frame.f_code)
+    if '/' in warning:
+      pattern = re.compile('^%s$' % warning)
+    else:
+      pattern = re.compile('^.+/%s$' % warning)
+    escaped_warnings = escape.WARNING_ESCAPE_REGISTRY.get(loc, ())
+    if pattern not in escaped_warnings:
+      escaped_warnings = (pattern,) + escaped_warnings
+    escape.WARNING_ESCAPE_REGISTRY[loc] = escaped_warnings
+
+
+# Exports warning escape decorators
+escape_warnings = escape.escape_warnings
+escape_all_warnings = escape.escape_all_warnings
+
+
 class StepFailure(Exception):
   """
   This is the base class for all step failures.
@@ -536,6 +610,7 @@ def infer_composite_step(func):
 
   @_skip_inference # to prevent double-wraps
   @wraps(func)
+  @escape.escape_all_warnings
   def _inner(*a, **kw):
     agg = _DEFER_CONTEXT.aggregated_result
 
@@ -574,6 +649,7 @@ def composite_step(func):
   """
   @_skip_inference  # to avoid double-wraps
   @wraps(func)
+  @escape.escape_all_warnings
   def _inner(*a, **kw):
     # composite_steps always count as running a step.
     _DEFER_CONTEXT.mark_ran_step()

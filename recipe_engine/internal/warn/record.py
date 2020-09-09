@@ -20,6 +20,17 @@ from ..attr_util import attr_type, attr_seq_type
 from ..class_util import cached_property
 from ..recipe_deps import Recipe, RecipeDeps, RecipeModule
 
+from ...types import FrozenDict
+from ...util import sentinel
+
+
+# The sentinel that instructs recipe engine not to record warnings.
+NULL_WARNING_RECORDER = sentinel('NULL_WARNING_RECORDER',
+    recorded_warnings=FrozenDict(),
+    record_execution_warning=(lambda _self, _name, _frames: None),
+    record_import_warning=(lambda _self, _name, _importer: None),
+)
+
 
 @attr.s(frozen=True, slots=True)
 class _AnnotatedFrame(object):

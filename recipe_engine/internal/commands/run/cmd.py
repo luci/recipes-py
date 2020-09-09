@@ -22,6 +22,7 @@ from ...engine import RecipeEngine
 from ...step_runner.subproc import SubprocessStepRunner
 from ...stream.annotator import AnnotatorStreamEngine
 from ...stream.invariants import StreamEngineInvariants
+from ...warn.record import NULL_WARNING_RECORDER
 
 from ....third_party import luci_context
 
@@ -64,7 +65,7 @@ def main(args):
   raw_result, _ = RecipeEngine.run_steps(
       args.recipe_deps, properties,
       StreamEngineInvariants.wrap(stream_engine),
-      SubprocessStepRunner(),
+      SubprocessStepRunner(), NULL_WARNING_RECORDER,
       os.environ, os.path.abspath(workdir), luci_context.read_full(),
       psutil.cpu_count(), psutil.virtual_memory().total,
       emit_initial_properties=emit_initial_properties)

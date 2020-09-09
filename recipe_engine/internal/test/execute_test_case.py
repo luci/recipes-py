@@ -26,10 +26,12 @@ def execute_test_case(recipe_deps, recipe_name, test_data):
   from ..step_runner.sim import SimulationStepRunner
   from ..stream.invariants import StreamEngineInvariants
   from ..stream.simulator import SimulationStreamEngine
+  from ..warn.record import WarningRecorder
 
   step_runner = SimulationStepRunner(test_data)
   simulator = SimulationStreamEngine()
   stream_engine = StreamEngineInvariants.wrap(simulator)
+  warning_recorder = WarningRecorder(recipe_deps)
 
   props = test_data.properties.copy()
   props['recipe'] = str(recipe_name)
@@ -39,7 +41,7 @@ def execute_test_case(recipe_deps, recipe_name, test_data):
     environ[key] = value
 
   raw_result, uncaught_exception = RecipeEngine.run_steps(
-      recipe_deps, props, stream_engine, step_runner,
+      recipe_deps, props, stream_engine, step_runner, warning_recorder,
       environ, '', test_data.luci_context,
       num_logical_cores=8, memory_mb=16 * (1024**3), test_data=test_data,
       skip_setup_build=True)

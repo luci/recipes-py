@@ -114,8 +114,9 @@ class RecipeEngine(object):
     * step - uses engine.create_step(...), and previous_step_result.
   """
 
-  def __init__(self, recipe_deps, step_runner, stream_engine, properties,
-               environ, start_dir, luci_context, num_logical_cores, memory_mb):
+  def __init__(self, recipe_deps, step_runner, stream_engine, warning_recorder,
+               properties, environ, start_dir, luci_context, num_logical_cores,
+               memory_mb):
     """See run_steps() for parameter meanings."""
     self._recipe_deps = recipe_deps
     self._step_runner = step_runner
@@ -132,6 +133,7 @@ class RecipeEngine(object):
         recipe_api.PathsClient(start_dir),
         recipe_api.PropertiesClient(properties),
         recipe_api.StepClient(self),
+        recipe_api.WarningClient(warning_recorder, recipe_deps),
     )}
 
     self._resource = ResourceWaiter(num_logical_cores * 1000, memory_mb)
@@ -477,7 +479,8 @@ class RecipeEngine(object):
 
   @classmethod
   def run_steps(cls, recipe_deps, properties, stream_engine, step_runner,
-                environ, cwd, luci_context, num_logical_cores, memory_mb,
+                warning_recorder, environ, cwd, luci_context,
+                num_logical_cores, memory_mb,
                 emit_initial_properties=False, test_data=None,
                 skip_setup_build=False):
     """Runs a recipe (given by the 'recipe' property). Used by all
@@ -490,6 +493,8 @@ class RecipeEngine(object):
       * stream_engine: the StreamEngine to use to create individual step
         streams.
       * step_runner: The StepRunner to use to 'actually run' the steps.
+      * warning_recorder: The WarningRecorder to use to record the warnings
+        issued while running a recipe.
       * environ: The mapping object representing the environment in which
         recipe runs. Generally obtained via `os.environ`.
       * cwd (str): The current working directory to run the recipe.
@@ -525,8 +530,8 @@ class RecipeEngine(object):
       _ = recipe_obj.global_symbols
 
       engine = cls(
-          recipe_deps, step_runner, stream_engine, properties, environ, cwd,
-          luci_context, num_logical_cores, memory_mb)
+          recipe_deps, step_runner, stream_engine, warning_recorder,
+          properties, environ, cwd, luci_context, num_logical_cores, memory_mb)
       api = recipe_obj.mk_api(engine, test_data)
       engine.initialize_path_client_HACK(api)
     except (RecipeUsageError, ImportError, AssertionError) as ex:
