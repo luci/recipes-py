@@ -397,6 +397,20 @@ class StepApi(recipe_api.RecipeApiPlain):
       build.ClearField(f)
     return build
 
+  def _run_or_raise_step(self, step_config):
+    ret = self.step_client.run_step(step_config)
+    if ret.presentation.status == self.SUCCESS:
+      return ret
+
+    # Otherwise we raise an appropriate error based on ret.presentation.status.
+    exc = {
+      'FAILURE': self.StepFailure,
+      'WARNING': self.StepWarning,
+      'EXCEPTION': self.InfraFailure,
+    }[ret.presentation.status]
+    # TODO(iannucci): Use '|' instead of '.'
+    raise exc('.'.join(ret.name_tokens), ret)
+
   @recipe_api.composite_step
   def sub_build(self, name, cmd, build,
                 output_path=None, timeout=None,
@@ -474,7 +488,7 @@ class StepApi(recipe_api.RecipeApiPlain):
       env = self.m.context.env
       env_prefixes = self.m.context.env_prefixes
 
-    return self.step_client.run_step(self.step_client.StepConfig(
+    return self._run_or_raise_step(self.step_client.StepConfig(
         name=name,
         cmd=cmd,
         cost=self._normalize_cost(cost),
@@ -556,7 +570,7 @@ class StepApi(recipe_api.RecipeApiPlain):
     if ok_ret in ('any', 'all'):
       ok_ret = self.step_client.StepConfig.ALL_OK
 
-    return self.step_client.run_step(self.step_client.StepConfig(
+    return self._run_or_raise_step(self.step_client.StepConfig(
         name=name,
         cmd=cmd,
         cost=self._normalize_cost(cost),

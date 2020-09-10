@@ -418,22 +418,11 @@ class RecipeEngine(object):
         # TODO(iannucci): Python3 incompatible.
         raise caught[0], caught[1], caught[2]
 
-      # If the step was cancelled, raise GreenletExit.
+      # If the step was cancelled, re-raise GreenletExit.
       if ret.exc_result.was_cancelled:
         raise gevent.GreenletExit()
 
-      if ret.presentation.status == 'SUCCESS':
-        return ret
-
-      # Otherwise, we raise an appropriate error based on
-      # ret.presentation.status
-      exc = {
-        'FAILURE': recipe_api.StepFailure,
-        'WARNING': recipe_api.StepWarning,
-        'EXCEPTION': recipe_api.InfraFailure,
-      }[ret.presentation.status]
-      # TODO(iannucci): Use '|' instead of '.'
-      raise exc('.'.join(name_tokens), ret)
+      return ret
 
     finally:
       # per sys.exc_info this is recommended in python 2.x to avoid creating

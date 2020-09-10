@@ -341,6 +341,10 @@ def enable_filtered_stacks():
 def remove_engine_impl_from_stack(stack):
   """Takes a 'processed' stack (e.g. from traceback.extract_stack) and removes
   recipe engine implementation frames (i.e. not from recipes or recipe modules).
+  This filtering starts in the stack at the first "non-engine" code; This means
+  that if the engine code DOES crash, the full stack will be shown anyway, and
+  if the exception originates from inside the engine code, these frames will be
+  shown as well.
 
   This will also trim frames which are from known third-party libraries (like
   gevent).
@@ -350,13 +354,25 @@ def remove_engine_impl_from_stack(stack):
   if _FULL_STACKS:
     return stack
 
-  return [
-    frame for frame in stack
-    if not (
+  def _is_engine_impl(frame):
+    return (
       frame[0].startswith(_RECIPE_ENGINE_BASE) or
       frame[2].startswith('gevent.')
     )
-  ]
+
+  # stack is organized from deep->shallow. We process the stack backwards; We
+  # walk until we find some `not _is_engine_impl` frame, and then above that we
+  # filter all `_is_engine_impl` frames.
+  ret = []
+  found_user_code = False
+  for frame in reversed(stack):
+    is_engine = _is_engine_impl(frame)
+    if found_user_code and is_engine:
+      continue
+    ret.append(frame)
+    found_user_code = found_user_code or (not is_engine)
+
+  return list(reversed(ret))
 
 
 def extract_tb(tb):

@@ -2828,7 +2828,7 @@ Usage:
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#494)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#508)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
 
 Returns a step dictionary which is compatible with annotator.py.
 
@@ -2983,7 +2983,7 @@ Args:
 Yields a StepPresentation for this dummy step, which you may update as you
 please.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#400)(self, name, cmd, build, output_path=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#414)(self, name, cmd, build, output_path=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
 
 Launch a sub-build by invoking a LUCI executable. All steps in the
 sub-build will appear as child steps of this step (Merge Step).
@@ -3537,11 +3537,11 @@ Tests that recipes can modify configuration options in various ways.
 &emsp; **@config_ctx()**<br>&mdash; **def [test2a](/recipes/engine_tests/config_operations.py#31)(c):**
 ### *recipes* / [engine\_tests/expect\_exception](/recipes/engine_tests/expect_exception.py)
 
-[DEPS](/recipes/engine_tests/expect_exception.py#9): [step](#recipe_modules-step)
-
 Tests that step_data can accept multiple specs at once.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/expect_exception.py#13)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/expect_exception.py#20)(api):**
+
+&emsp; **@composite_step**<br>&mdash; **def [my\_function](/recipes/engine_tests/expect_exception.py#15)():**
 ### *recipes* / [engine\_tests/failure\_results](/recipes/engine_tests/failure_results.py)
 
 [DEPS](/recipes/engine_tests/failure_results.py#12): [json](#recipe_modules-json), [step](#recipe_modules-step)
