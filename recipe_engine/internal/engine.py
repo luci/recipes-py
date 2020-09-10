@@ -961,5 +961,14 @@ def _log_crash(stream_engine, crash_location):
     stream.set_step_status('EXCEPTION', had_timeout=False)
     stream.write_line('The recipe has crashed at point %r!' % crash_location)
     stream.write_line('')
-    for line in traceback.format_exc().splitlines():
-      stream.write_line(line)
+    stream.write_line('Traceback (most recent call last):')
+    try:
+      exc_type, exc, tback = sys.exc_info()
+      for line in traceback.format_list(util.extract_tb(tback)):
+        for line in line.splitlines():
+          stream.write_line(line)
+      for line in traceback.format_exception_only(exc_type, exc):
+        for line in line.splitlines():
+          stream.write_line(line)
+    finally:
+      del tback

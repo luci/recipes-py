@@ -20,6 +20,7 @@ import gevent
 from google.protobuf import json_format as jsonpb
 
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
+from recipe_engine.util import extract_tb, enable_filtered_stacks
 
 # pylint: disable=import-error
 import PB
@@ -163,9 +164,14 @@ def _check_exception(test_results, expected_exception, uncaught_exception_info):
     msg_lines = [
       'Unexpected exception in RunSteps. Use `api.expect_exception` if'
       ' the crash is intentional.',
-    ] + [
+    ]
+    msg_lines += [
       l.rstrip('\n')
-      for l in traceback.format_exception(exc_type, exc, tback)
+      for l in traceback.format_list(extract_tb(tback))
+    ]
+    msg_lines += [
+      l.rstrip('\n')
+      for l in traceback.format_exception_only(exc_type, exc)
     ]
     test_results.crash_mismatch.extend(msg_lines)
 
@@ -316,9 +322,10 @@ def _cover_all_imports(main_repo):
 
 # administrative stuff (main, pipe handling, etc.)
 
-def main(recipe_deps, cov_file, is_train, cover_module_imports):
-  # TODO(iannucci): Route and log greenlet exception information somewhere
-  # useful as part of each test case.
+def main(recipe_deps, cov_file, filtered_stacks, is_train,
+         cover_module_imports):
+  if filtered_stacks:
+    enable_filtered_stacks()
   gevent.get_hub().exception_stream = None
 
   main_repo = recipe_deps.main_repo
@@ -472,7 +479,7 @@ def _make_path_cleaner(recipe_deps):
 
 class RunnerThread(gevent.Greenlet):
   def __init__(self, recipe_deps, description_queue, outcome_queue, is_train,
-               cov_file, cover_module_imports):
+               filtered_stacks, cov_file, cover_module_imports):
     super(RunnerThread, self).__init__()
 
     self.cov_file = cov_file
@@ -496,6 +503,8 @@ class RunnerThread(gevent.Greenlet):
       cmd.extend(['--cov-file', cov_file])
       if cover_module_imports:
         cmd.append('--cover-module-imports')
+    if not filtered_stacks:
+      cmd.append('--full-stacks')
 
     self._runner_proc = subprocess.Popen(
         cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -504,7 +513,7 @@ class RunnerThread(gevent.Greenlet):
 
   @classmethod
   def make_pool(cls, recipe_deps, description_queue, outcome_queue, is_train,
-                collect_coverage, jobs):
+                filtered_stacks, collect_coverage, jobs):
     """Returns a pool (list) of started RunnerThread instances.
 
     Each RunnerThread owns a `recipes.py test _runner` subprocess and
@@ -522,6 +531,8 @@ class RunnerThread(gevent.Greenlet):
       * is_train (bool) - Whether or not the runner subprocess should train
         (write) expectation files to disk. If False will not write/delete
         anything on the filesystem.
+      * filtered_stacks (bool) - If the runner subprocess should enable filtered
+        stack traces mode.
       * collect_coverage (bool) - Whether or not to collect coverage. May be
         false if the user specified a test filter.
       * jobs (int) - The number of workers to use for running tests.
@@ -542,6 +553,7 @@ class RunnerThread(gevent.Greenlet):
             description_queue,
             outcome_queue,
             is_train,
+            filtered_stacks,
             cov_file(i),
             cover_module_imports=(i == 0)) for i in xrange(jobs)
     ]

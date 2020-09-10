@@ -17,6 +17,7 @@ import gevent.queue
 from google.protobuf import json_format
 
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
+from recipe_engine.util import enable_filtered_stacks
 
 # pylint: disable=import-error
 from PB.recipe_engine.internal.test.runner import Description, Outcome
@@ -122,8 +123,8 @@ def _push_tests(test_filters, is_train, main_repo, description_queue,
   return set()
 
 
-def _run(test_result, recipe_deps, use_emoji, test_filters, is_train, stop,
-         jobs):
+def _run(test_result, recipe_deps, use_emoji, test_filters, is_train,
+         filtered_stacks, stop, jobs):
   main_repo = recipe_deps.main_repo
 
   description_queue = gevent.queue.UnboundQueue()
@@ -154,6 +155,7 @@ def _run(test_result, recipe_deps, use_emoji, test_filters, is_train, stop,
         description_queue,
         outcome_queue,
         is_train,
+        filtered_stacks,
         collect_coverage=not test_filters,
         jobs=jobs)
     live_threads = list(all_threads)
@@ -216,6 +218,11 @@ def main(args):
   is_train = args.subcommand == 'train'
   ret = Outcome()
 
+  if args.filtered_stacks:
+    enable_filtered_stacks()
+    print ('Filtering engine implementation out of crash stacks. '
+           'Pass `--full-stacks` to see entire stack.')
+
   def _dump():
     if args.json:
       json.dump(
@@ -224,7 +231,7 @@ def main(args):
 
   try:
     _run(ret, args.recipe_deps, args.use_emoji, args.test_filters, is_train,
-         args.stop, args.jobs)
+         args.filtered_stacks, args.stop, args.jobs)
     _dump()
   except KeyboardInterrupt:
     args.docs = False  # skip docs

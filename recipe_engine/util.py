@@ -323,3 +323,46 @@ def strip_unicode(obj):
     return new_obj
 
   return obj
+
+
+_FULL_STACKS = True
+_RECIPE_ENGINE_BASE = os.path.dirname(__file__)
+
+def enable_filtered_stacks():
+  """Sets an internal option to filter engine implementation details out of
+  stack traces.
+
+  Only set during tests when '--full-stacks' is not specified.
+  """
+  global _FULL_STACKS
+  _FULL_STACKS = False
+
+
+def remove_engine_impl_from_stack(stack):
+  """Takes a 'processed' stack (e.g. from traceback.extract_stack) and removes
+  recipe engine implementation frames (i.e. not from recipes or recipe modules).
+
+  This will also trim frames which are from known third-party libraries (like
+  gevent).
+
+  Is a NO-OP unless enable_filtered_stacks() has been called.
+  """
+  if _FULL_STACKS:
+    return stack
+
+  return [
+    frame for frame in stack
+    if not (
+      frame[0].startswith(_RECIPE_ENGINE_BASE) or
+      frame[2].startswith('gevent.')
+    )
+  ]
+
+
+def extract_tb(tb):
+  """Return a 'processed' stack (as from traceback.extract_tb).
+
+  If enable_filtered_stacks() was called, this trims the stack per
+  remove_engine_impl_from_stack.
+  """
+  return remove_engine_impl_from_stack(traceback.extract_tb(tb))
