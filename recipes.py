@@ -104,7 +104,9 @@ def parse(repo_root, recipes_cfg_path):
     raise MalformedRecipesCfg(ex.message, recipes_cfg_path)
 
 
-_BAT = '.bat' if sys.platform.startswith(('win', 'cygwin')) else ''
+IS_WIN = sys.platform.startswith(('win', 'cygwin'))
+
+_BAT = '.bat' if IS_WIN else ''
 GIT = 'git' + _BAT
 VPYTHON = 'vpython' + _BAT
 CIPD = 'cipd' + _BAT
@@ -127,6 +129,7 @@ def _is_on_path(basename):
 def _subprocess_call(argv, **kwargs):
   logging.info('Running %r', argv)
   return subprocess.call(argv, **kwargs)
+
 
 
 def _git_check_call(argv, **kwargs):
@@ -237,12 +240,19 @@ def main():
 
   engine_path = checkout_engine(engine_override, repo_root, recipes_cfg_path)
 
-  try:
-    return _subprocess_call(
-        [VPYTHON, '-u',
-         os.path.join(engine_path, 'recipe_engine', 'main.py')] + args)
-  except KeyboardInterrupt:
-    return 1
+  argv = (
+    [VPYTHON, '-u', os.path.join(engine_path, 'recipe_engine', 'main.py')] +
+    args)
+
+  if IS_WIN:
+    # No real 'exec' on windows; set these signals to ignore so that they
+    # propagate to our children but we still wait for the child process to quit.
+    signal.signal(signal.SIGBREAK, signal.SIG_IGN)
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    signal.signal(signal.SIGTERM, signal.SIG_IGN)
+    return _subprocess_call(argv)
+  else:
+    os.execvp(argv[0], argv)
 
 
 if __name__ == '__main__':
