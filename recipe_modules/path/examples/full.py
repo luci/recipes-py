@@ -53,6 +53,27 @@ def RunSteps(api):
   file_path = api.path['tmp_base'].join('new_file')
   abspath = api.path.abspath(file_path)
   api.path.assert_absolute(abspath)
+  try:
+    api.path.assert_absolute("not/abs")
+    assert False, "assert_absolute failed to catch relative path"
+  except AssertionError:
+    pass
+
+  assert api.path.pardir == '..'
+  if api.platform.is_win:
+    assert api.path.sep == '\\'
+    assert api.path.pathsep == ';'
+  else:
+    assert api.path.sep == '/'
+    assert api.path.pathsep == ':'
+
+  assert api.path.basename(file_path) == 'new_file'
+  assert api.path.dirname(file_path) == str(api.path['tmp_base'])
+  assert api.path.split(file_path) == (str(api.path['tmp_base']), 'new_file')
+  assert api.path.splitext('thing.bat.mkv') == ('thing.bat', '.mkv')
+
+  assert api.path.relpath(file_path, api.path['tmp_base']) == 'new_file'
+
 
   api.step('touch me', ['touch', api.path.abspath(file_path)])
   # Assert for testing that a file exists.
@@ -66,11 +87,6 @@ def RunSteps(api):
 
   realpath = api.path.realpath(file_path)
   assert api.path.exists(realpath)
-
-  home_path = api.path.join(api.path.expanduser('~'), 'file')
-  api.step('touch my home', ['touch', home_path])
-  api.path.mock_add_paths(home_path)
-  assert api.path.exists(home_path)
 
   # can mock copy paths. See the file module to do this for real.
   copy1 = api.path['start_dir'].join('copy1')

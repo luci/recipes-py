@@ -58,15 +58,6 @@ def PathToString(api, test):
   return PathToString_inner
 
 
-def string_filter(func):
-
-  @functools.wraps(func)
-  def inner(*args, **kwargs):
-    return func(*map(str, args), **{k: str(v) for k, v in kwargs.iteritems()})
-
-  return inner
-
-
 class path_set(object):
   """ implements a set which contains all the parents folders of added folders.
   """
@@ -78,7 +69,7 @@ class path_set(object):
     self._initial_paths = set(initial_paths)
     self._paths = set()
 
-  def _initialize(self):
+  def _initialize(self):  # pylint: disable=method-hidden
     self._initialize = lambda: None
     for path in self._initial_paths:
       self.add(path)
@@ -125,7 +116,7 @@ class path_set(object):
         if self._is_contained_in(p, path, match_root) and filt(p))
     self._paths -= kill_set
 
-  def contains(self, path):
+  def contains(self, path):  # pylint: disable=method-hidden
     self._initialize()
     return self.contains(path)
 
@@ -211,21 +202,9 @@ class fake_path(object):
     """Returns the canonical version of the path."""
     return self.normpath(path)
 
-  def expanduser(self, path):
-    return path.replace('~', '[HOME]')
-
 
 class PathApi(recipe_api.RecipeApi):
   _paths_client = recipe_api.RequireClient('paths')
-
-  # Attribute accesses that we pass through to our "_path_mod" module.
-  OK_ATTRS = ('pardir', 'sep', 'pathsep')
-
-  # Because the native 'path' type in python is a str, we filter the *args
-  # of these methods to stringify them first (otherwise they would be getting
-  # recipe_util_types.Path instances).
-  FILTER_METHODS = ('abspath', 'basename', 'dirname', 'exists', 'expanduser',
-                    'join', 'split', 'splitext', 'realpath', 'relpath')
 
   def get_config_defaults(self):
     """Internal recipe implementation function."""
@@ -236,6 +215,7 @@ class PathApi(recipe_api.RecipeApi):
         'TEMP_DIR': self._temp_dir,
         'CACHE_DIR': self._cache_dir,
         'CLEANUP_DIR': self._cleanup_dir,
+        'HOME_DIR': self._home_dir,
     }
 
   def __init__(self, path_properties, **kwargs):
@@ -247,10 +227,11 @@ class PathApi(recipe_api.RecipeApi):
 
     # Assigned at "initialize".
     self._path_mod = None  # NT or POSIX path module, or "os.path" in prod.
-    self._start_dir = None
+    self._startup_cwd = None
     self._temp_dir = None
     self._cache_dir = None
     self._cleanup_dir = None
+    self._home_dir = None
 
     # Used in mkdtemp when generating and checking expectations.
     self._test_counter = 0
@@ -293,6 +274,7 @@ class PathApi(recipe_api.RecipeApi):
       self._path_mod = os.path
       start_dir = self._paths_client.start_dir
       self._startup_cwd = self._split_path(start_dir)
+      self._home_dir = self._split_path(self._path_mod.expanduser('~'))
 
       tmp_dir = self._read_path('temp_dir', tempfile.gettempdir())
       self._ensure_dir(tmp_dir)
@@ -318,29 +300,9 @@ class PathApi(recipe_api.RecipeApi):
       self._temp_dir = [root]
       self._cache_dir = [root, 'b', 'c']
       self._cleanup_dir = [root, 'b', 'cleanup']
+      self._home_dir = [root, 'home', 'fake_user']
 
     self.set_config('BASE')
-
-  def mock_add_paths(self, path):
-    """For testing purposes, mark that |path| exists."""
-    if self._test_data.enabled:
-      self._path_mod.mock_add_paths(path)
-
-  def mock_copy_paths(self, source, dest):
-    """For testing purposes, copy |source| to |dest|."""
-    if self._test_data.enabled:
-      self._path_mod.mock_copy_paths(source, dest)
-
-  def mock_remove_paths(self, path, filt=lambda p: True):
-    """For testing purposes, assert that |path| doesn't exist.
-
-    Args:
-      * path (str|Path) - The path to remove.
-      * filt (func[str] bool) - Called for every candidate path. Return
-        True to remove this path.
-    """
-    if self._test_data.enabled:
-      self._path_mod.mock_remove_paths(path, filt)
 
   def assert_absolute(self, path):
     """Raises AssertionError if the given path is not an absolute path.
@@ -348,7 +310,8 @@ class PathApi(recipe_api.RecipeApi):
     Args:
       * path (Path|str) - The path to check.
     """
-    assert self.abspath(path) == str(path), '%s is not absolute' % path
+    if self.abspath(path) != str(path):
+      raise AssertionError('%s is not absolute' % path)
 
   def mkdtemp(self, prefix=tempfile.template):
     """Makes a new temporary directory, returns Path to it.
@@ -480,15 +443,102 @@ class PathApi(recipe_api.RecipeApi):
       raise KeyError('Unknown path: %s' % name)
     return result
 
-  def __getattr__(self, name):
-    # retrieve os.path attributes
-    if name in self.OK_ATTRS:
-      return getattr(self._path_mod, name)
-    if name in self.FILTER_METHODS:
-      return string_filter(getattr(self._path_mod, name))
-    raise AttributeError("'%s' object has no attribute '%s'" %
-                         (self._path_mod, name))  # pragma: no cover
+  @property
+  def pardir(self):
+    """Equivalent to os.path.pardir."""
+    return self._path_mod.pardir
 
-  def __dir__(self):  # pragma: no cover
-    # Used for helping out show_me_the_modules.py
-    return self.__dict__.keys() + list(self.OK_ATTRS + self.FILTER_METHODS)
+  @property
+  def sep(self):
+    """Equivalent to os.path.sep."""
+    return self._path_mod.sep
+
+  @property
+  def pathsep(self):
+    """Equivalent to os.path.pathsep."""
+    return self._path_mod.pathsep
+
+  def abspath(self, path):
+    """Equivalent to os.path.abspath."""
+    return self._path_mod.abspath(str(path))
+
+  def basename(self, path):
+    """Equivalent to os.path.basename."""
+    return self._path_mod.basename(str(path))
+
+  def dirname(self, path):
+    """Equivalent to os.path.dirname."""
+    return self._path_mod.dirname(str(path))
+
+  def join(self, path, *paths):
+    """Equivalent to os.path.join.
+
+    Note that Path objects returned from this module (e.g.
+    api.path['start_dir']) have a built-in join method (e.g.
+    new_path = p.join('some', 'name')). Many recipe modules expect Path objects
+    rather than strings. Using this `join` method gives you raw path joining
+    functionality and returns a string.
+
+    If your path is rooted in one of the path module's root paths (i.e. those
+    retrieved with api.path[something]), then you can convert from a string path
+    back to a Path with the `abs_to_path` method.
+    """
+    return self._path_mod.join(str(path), *map(str, paths))
+
+  def split(self, path):
+    """Equivalent to os.path.split."""
+    return self._path_mod.split(str(path))
+
+  def splitext(self, path):
+    """Equivalent to os.path.splitext."""
+    return self._path_mod.splitext(str(path))
+
+  def realpath(self, path):
+    """Equivalent to os.path.realpath."""
+    return self._path_mod.realpath(str(path))
+
+  def relpath(self, path, start):
+    """Roughly equivalent to os.path.relpath.
+
+    Unlike os.path.relpath, `start` is _required_. If you want the 'current
+    directory', use the `recipe_engine/context` module's `cwd` property.
+    """
+    return self._path_mod.relpath(str(path), str(start))
+
+  def expanduser(self, path):  # pragma: no cover
+    """Do not use this, use `api.path['home']` instead.
+
+    This ONLY handles `path` == "~", and returns `str(api.path['home'])`.
+    """
+    if path == "~":
+      return str(self['home'])
+    raise ValueError("expanduser only supports `~`.")
+
+  def exists(self, path):
+    """Equivalent to os.path.exists.
+
+    The presence or absence of paths can be mocked during the execution of the
+    recipe by using the mock_* methods.
+    """
+    return self._path_mod.exists(str(path))
+
+  def mock_add_paths(self, path):
+    """For testing purposes, mark that |path| exists."""
+    if self._test_data.enabled:
+      self._path_mod.mock_add_paths(path)
+
+  def mock_copy_paths(self, source, dest):
+    """For testing purposes, copy |source| to |dest|."""
+    if self._test_data.enabled:
+      self._path_mod.mock_copy_paths(source, dest)
+
+  def mock_remove_paths(self, path, filt=lambda p: True):
+    """For testing purposes, assert that |path| doesn't exist.
+
+    Args:
+      * path (str|Path) - The path to remove.
+      * filt (func[str] bool) - Called for every candidate path. Return
+        True to remove this path.
+    """
+    if self._test_data.enabled:
+      self._path_mod.mock_remove_paths(path, filt)

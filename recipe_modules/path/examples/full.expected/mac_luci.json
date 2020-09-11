@@ -36,13 +36,6 @@
   },
   {
     "cmd": [
-      "touch",
-      "[HOME]/file"
-    ],
-    "name": "touch my home"
-  },
-  {
-    "cmd": [
       "rm",
       "-rf",
       "[START_DIR]/copy2"
@@ -109,12 +102,13 @@
       "echo",
       "[CACHE]",
       "[CLEANUP]",
+      "[HOME]",
       "[START_DIR]",
       "[TMP_BASE]"
     ],
     "name": "base paths",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@result@base_paths: {'start_dir': ('/', 'b', 'FakeTestingCWD'), 'cleanup': ('/', 'b', 'cleanup'), 'cache': ('/', 'b', 'c'), 'tmp_base': ('/',)}@@@",
+      "@@@STEP_LOG_LINE@result@base_paths: {'start_dir': ('/', 'b', 'FakeTestingCWD'), 'cleanup': ('/', 'b', 'cleanup'), 'cache': ('/', 'b', 'c'), 'tmp_base': ('/',), 'home': ('/', 'home', 'fake_user')}@@@",
       "@@@STEP_LOG_END@result@@@"
     ]
   },
