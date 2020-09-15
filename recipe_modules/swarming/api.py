@@ -337,7 +337,6 @@ class TaskRequest(object):
       self._idempotent = False
       self._io_timeout_secs = 60
       self._isolated = ''
-      self._isolated_props = None
       self._named_caches = {}
       self._outputs = []
       self._secret_bytes = ''
