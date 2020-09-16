@@ -197,7 +197,7 @@ def GenTests(api):
 
   yield api.test('basic')
   yield api.test('experimental') + api.runtime(
-      is_luci=False, is_experimental=True)
+      is_experimental=True)
   yield (api.test('override_swarming') +
          api.swarming.properties(server='bananas.example.com',
                                  version='release')

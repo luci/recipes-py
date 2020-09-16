@@ -60,7 +60,7 @@ def GenTests(api):
   yield (
       api.test('basic_experimental') +
       api.buildbucket.ci_build() +
-      api.runtime(is_luci=True, is_experimental=True)
+      api.runtime(is_experimental=True)
   )
   yield (
       api.test('request experimental') +

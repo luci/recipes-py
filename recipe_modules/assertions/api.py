@@ -95,7 +95,7 @@ class AssertionsApi(recipe_api.RecipeApi):
     yield (
         api.test('experimental')
         + api.properties(expected_value='experimental value')
-        + api.properties(is_luci=True, is_experimental=True)
+        + api.runtime(is_experimental=True)
    )
   """
 

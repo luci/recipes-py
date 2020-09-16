@@ -39,7 +39,7 @@ def GenTests(api):
   def test(test_name, tags=None, **req):
     return (
       api.test(test_name) +
-      api.runtime(is_luci=True, is_experimental=False) +
+      api.runtime(is_experimental=False) +
       api.buildbucket.try_build(
           project='chromium',
           builder='Builder',

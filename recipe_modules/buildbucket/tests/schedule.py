@@ -42,7 +42,7 @@ def GenTests(api):
     req.setdefault('builder', 'linux')
     return (
       api.test(test_name) +
-      api.runtime(is_luci=True, is_experimental=False) +
+      api.runtime(is_experimental=False) +
       api.buildbucket.try_build(
           project='chromium',
           builder='Builder',

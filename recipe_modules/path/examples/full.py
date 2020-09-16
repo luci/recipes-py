@@ -191,9 +191,6 @@ def GenTests(api):
     yield (api.test('%s_luci' % platform) +
            api.platform.name(platform) +
            api.properties(**{
-              '$recipe_engine/runtime': {
-                'is_luci': True,
-              },
               '$recipe_engine/path': {
                 'cache_dir': '/c',
                 'temp_dir': '/t',

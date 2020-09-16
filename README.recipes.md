@@ -265,7 +265,7 @@ def GenTests(api):
   yield (
       api.test('experimental')
       + api.properties(expected_value='experimental value')
-      + api.properties(is_luci=True, is_experimental=True)
+      + api.runtime(is_experimental=True)
  )
 ### *recipe_modules* / [buildbucket](/recipe_modules/buildbucket)
 

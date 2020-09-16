@@ -64,7 +64,7 @@ def RunSteps(api):
 
 def GenTests(api):
   yield api.test('basic')
-  yield api.test('experimental') + api.runtime(is_luci=False, is_experimental=True)
+  yield api.test('experimental') + api.runtime(is_experimental=True)
   yield (api.test('override isolated') +
     api.isolated.properties(server='bananas.example.com', version='release')
   )
