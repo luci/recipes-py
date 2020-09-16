@@ -12,7 +12,7 @@ PROPERTIES = {
     param_name='properties',
     kind=ConfigGroup(
       # Whether build is running on LUCI stack.
-      is_luci=Single(bool),
+      is_luci=Single(bool, empty_val=True),
       # Whether build is running in experimental mode.
       is_experimental=Single(bool),
     ),

@@ -6,7 +6,7 @@ from recipe_engine import recipe_test_api
 
 
 class RuntimeTestApi(recipe_test_api.RecipeTestApi):
-  def __call__(self, is_luci, is_experimental):
+  def __call__(self, is_luci=True, is_experimental=False):
     """Simulate runtime state of a build."""
     assert isinstance(is_luci, bool), '%r (%s)' % (is_luci, type(is_luci))
     assert isinstance(is_experimental, bool), '%r (%s)' % (
