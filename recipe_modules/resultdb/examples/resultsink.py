@@ -17,12 +17,12 @@ DEPS = [
 def RunSteps(api):
   api.step('test', api.resultdb.wrap(['echo', 'suppose its a test']))
 
-  api.step('test_id_prefix', api.resultdb.wrap(
+  api.step('test with test_id_prefix', api.resultdb.wrap(
     ['echo', 'suppose its a test'],
     test_id_prefix='prefix',
   ))
 
-  api.step('test_id_prefix', api.resultdb.wrap(
+  api.step('test with base_variant', api.resultdb.wrap(
     ['echo', 'suppose its a test'],
     base_variant={
       'bucket': 'ci',
@@ -30,6 +30,10 @@ def RunSteps(api):
     },
   ))
 
+  api.step('test with test_location_base', api.resultdb.wrap(
+    ['echo', 'suppose its a test'],
+    test_location_base='//foo/bar',
+  ))
 
 def GenTests(api):
   yield api.test(

@@ -19,7 +19,7 @@
       "echo",
       "suppose its a test"
     ],
-    "name": "test_id_prefix"
+    "name": "test with test_id_prefix"
   },
   {
     "cmd": [
@@ -33,7 +33,19 @@
       "echo",
       "suppose its a test"
     ],
-    "name": "test_id_prefix (2)"
+    "name": "test with base_variant"
+  },
+  {
+    "cmd": [
+      "rdb",
+      "stream",
+      "-test-location-base",
+      "//foo/bar",
+      "--",
+      "echo",
+      "suppose its a test"
+    ],
+    "name": "test with test_location_base"
   },
   {
     "name": "$result"

@@ -276,7 +276,11 @@ class ResultDBAPI(recipe_api.RecipeApi):
         timeout=timeout,
     )
 
-  def wrap(self, cmd, test_id_prefix='', base_variant=None):
+  def wrap(self,
+           cmd,
+           test_id_prefix='',
+           base_variant=None,
+           test_location_base=''):
     """Wraps the command with ResultSink.
 
     Returns a command that, when executed, runs cmd in a go/result-sink
@@ -292,16 +296,20 @@ class ResultDBAPI(recipe_api.RecipeApi):
         reported by cmd. If both base_variant and a reported variant have a
         value for the same key, the reported one wins.
         Example:
-
           base_variant={
             'bucket': api.buildbucket.build.builder.bucket,
             'builder': api.buildbucket.builder_name,
           }
+      test_location_base (str): the base path to prepend to the test location
+        file name with a relative path. The value must start with "//".
     """
     self.assert_enabled()
     assert isinstance(test_id_prefix, (type(None), str)), test_id_prefix
     assert isinstance(base_variant, (type(None), dict)), base_variant
     assert isinstance(cmd, (tuple, list)), cmd
+    assert isinstance(test_location_base, (type(None), str)), test_location_base
+    assert not test_location_base or test_location_base.startswith(
+        '//'), test_location_base
 
     ret = ['rdb', 'stream']
 
@@ -310,6 +318,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     for k, v in sorted((base_variant or {}).iteritems()):
       ret += ['-var', '%s=%s' % (k, v)]
+
+    if test_location_base:
+      ret += ['-test-location-base', test_location_base]
 
     ret += ['--'] + list(cmd)
     return ret

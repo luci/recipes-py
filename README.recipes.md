@@ -2666,7 +2666,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#279)(self, cmd, test_id_prefix='', base_variant=None):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#279)(self, cmd, test_id_prefix='', base_variant=None, test_location_base=''):**
 
 Wraps the command with ResultSink.
 
@@ -2683,11 +2683,12 @@ Args:
     reported by cmd. If both base_variant and a reported variant have a
     value for the same key, the reported one wins.
     Example:
-
       base_variant={
         'bucket': api.buildbucket.build.builder.bucket,
         'builder': api.buildbucket.builder_name,
       }
+  test_location_base (str): the base path to prepend to the test location
+    file name with a relative path. The value must start with "//".
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
 #### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#878)):**
