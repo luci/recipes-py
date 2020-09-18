@@ -131,7 +131,6 @@ def _subprocess_call(argv, **kwargs):
   return subprocess.call(argv, **kwargs)
 
 
-
 def _git_check_call(argv, **kwargs):
   argv = [GIT] + argv
   logging.info('Running %r', argv)
@@ -204,7 +203,8 @@ def checkout_engine(engine_path, repo_root, recipes_cfg_path):
         os.remove(index_lock)
       except OSError as exc:
         if exc.errno != errno.EEXIST:
-          logging.warn('failed to remove %r, reset will fail: %s', index_lock, exc)
+          logging.warn('failed to remove %r, reset will fail: %s', index_lock,
+                       exc)
       _git_check_call(['reset', '-q', '--hard', revision], cwd=engine_path)
 
     # If the engine has refactored/moved modules we need to clean all .pyc files
@@ -241,8 +241,8 @@ def main():
   engine_path = checkout_engine(engine_override, repo_root, recipes_cfg_path)
 
   argv = (
-    [VPYTHON, '-u', os.path.join(engine_path, 'recipe_engine', 'main.py')] +
-    args)
+      [VPYTHON, '-u',
+       os.path.join(engine_path, 'recipe_engine', 'main.py')] + args)
 
   if IS_WIN:
     # No real 'exec' on windows; set these signals to ignore so that they
