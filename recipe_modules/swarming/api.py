@@ -95,7 +95,21 @@ class TaskRequest(object):
     self._resultdb = self.ResultDBCfg(enable=False)
 
   def _copy(self):
-    return copy.copy(self)
+    # * api cannot be deepcopied
+    # * Naive deepcopy(TaskSlice) won't work, we have to use _copy() to do the
+    #   deep copy.
+    api = self._api
+    self._api = None
+    slices = self._slices
+    self._slices = []
+
+    ret = copy.deepcopy(self)
+
+    ret._api = api
+    ret._slices.extend([s._copy() for s in slices])
+    self._api = api
+    self._slices = slices
+    return ret
 
   def __getitem__(self, idx):
     """Returns task slice of the given index."""
@@ -350,8 +364,15 @@ class TaskRequest(object):
       self._api = api
 
     def _copy(self):
-      # Warning: the copy may have its member mutated.
-      return copy.copy(self)
+      # api cannot be deepcopied
+      api = self._api
+      self._api = None
+
+      ret = copy.deepcopy(self)
+
+      ret._api = api
+      self._api = api
+      return ret
 
     @property
     def command(self):
