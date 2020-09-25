@@ -165,14 +165,14 @@ def _gather_proto_info_from_repo(repo):
             repo, scan_relpath, dest_namespace, posixpath.join(relbase, fname)
         ))
 
-  return ret
+  return sorted(ret)
 
 
 # This is the version # of the proto generation algorithm, and is mixed into the
 # checksum. If you need to change the compilation algorithm/process in any way,
 # you should increment this version number to cause all protos to be regenerated
 # downstream.
-RECIPE_PB_VERSION = '2'
+RECIPE_PB_VERSION = '3'
 
 
 def _gather_protos(deps):
