@@ -34,11 +34,12 @@ class LegacyAnnotationApi(recipe_api.RecipeApiPlain):
     with allow_subannotation set to true.
     """
     if not self.concurrency_client.supports_concurrency:  # pragma: no cover
-      # TODO(yiwzhang): Remove after bbagent is fully rolled out.
+      # Code path for kitchen. TODO(yiwzhang): Remove after bbagent is fully
+      # rolled out.
       self.m.step._validate_cmd_list(cmd)
       with self.m.context(env_prefixes={'PATH': self.m.step._prefix_path}):
         env_prefixes = self.m.context.env_prefixes
-      return self.step_client.run_step(self.step_client.StepConfig(
+      return self.m.step._run_or_raise_step(self.step_client.StepConfig(
           name=name,
           cmd=cmd,
           cost=self.m.step._normalize_cost(cost),
