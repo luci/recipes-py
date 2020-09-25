@@ -6,6 +6,7 @@
   * [archive](#recipe_modules-archive)
   * [assertions](#recipe_modules-assertions)
   * [buildbucket](#recipe_modules-buildbucket) &mdash; API for interacting with the buildbucket service.
+  * [cas](#recipe_modules-cas) &mdash; API for interacting with cas client.
   * [cipd](#recipe_modules-cipd) &mdash; API for interacting with CIPD.
   * [commit_position](#recipe_modules-commit_position)
   * [context](#recipe_modules-context) &mdash; The context module provides APIs for manipulating a few pieces of 'ambient' data that affect how steps are run.
@@ -55,6 +56,7 @@
   * [buildbucket:tests/put](#recipes-buildbucket_tests_put)
   * [buildbucket:tests/schedule](#recipes-buildbucket_tests_schedule)
   * [buildbucket:tests/search](#recipes-buildbucket_tests_search)
+  * [cas:examples/full](#recipes-cas_examples_full)
   * [cipd:examples/full](#recipes-cipd_examples_full)
   * [commit_position:examples/full](#recipes-commit_position_examples_full)
   * [context:examples/full](#recipes-context_examples_full)
@@ -656,6 +658,43 @@ Args:
 &emsp; **@contextmanager**<br>&mdash; **def [with\_host](/recipe_modules/buildbucket/api.py#104)(self, host):**
 
 Set the buildbucket host while in context, then reverts it.
+### *recipe_modules* / [cas](/recipe_modules/cas)
+
+[DEPS](/recipe_modules/cas/__init__.py#7): [cipd](#recipe_modules-cipd), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+
+API for interacting with cas client.
+
+#### **class [CasApi](/recipe_modules/cas/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#878)):**
+
+A module for interacting with cas client.
+
+&mdash; **def [\_\_init\_\_](/recipe_modules/cas/api.py#16)(self, props, \*\*kwargs):**
+
+'instance' in props needs to be a GCP project ID to use default
+instance, or full RBE-CAS instance name
+e.g. `projects/<project name>/instances/<instance name>`.
+
+&mdash; **def [archive](/recipe_modules/cas/api.py#71)(self, step_name, root, \*paths):**
+
+Archives given paths to a cas server.
+
+Args:
+  step_name (str): name of the step.
+  root (str|Path): root directory of archived tree, should be absolute path.
+  paths (list(str|Path)):
+    path to archived files/dirs, should be absolute path.
+
+Returns:
+  digest (str): digest of uploaded root directory.
+
+&mdash; **def [download](/recipe_modules/cas/api.py#52)(self, step_name, digest, output_dir):**
+
+Downloads a directory tree from a cas server.
+
+Args:
+  step_name (str): name of the step.
+  digest (str): the digest of a cas tree.
+  output_dir (Path): path to an output directory.
 ### *recipe_modules* / [cipd](/recipe_modules/cipd)
 
 [DEPS](/recipe_modules/cipd/__init__.py#5): [context](#recipe_modules-context), [file](#recipe_modules-file), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step), [url](#recipe_modules-url)
@@ -3498,6 +3537,11 @@ Launches multiple builds at the same revision.
 [DEPS](/recipe_modules/buildbucket/tests/search.py#14): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/search.py#23)(api):**
+### *recipes* / [cas:examples/full](/recipe_modules/cas/examples/full.py)
+
+[DEPS](/recipe_modules/cas/examples/full.py#5): [cas](#recipe_modules-cas), [file](#recipe_modules-file), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/cas/examples/full.py#15)(api):**
 ### *recipes* / [cipd:examples/full](/recipe_modules/cipd/examples/full.py)
 
 [DEPS](/recipe_modules/cipd/examples/full.py#9): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step)

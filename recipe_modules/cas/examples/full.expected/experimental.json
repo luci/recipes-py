@@ -1,0 +1,125 @@
+[
+  {
+    "cmd": [
+      "touch",
+      "[CLEANUP]/cas-example_tmp_1/a"
+    ],
+    "name": "touch a"
+  },
+  {
+    "cmd": [
+      "touch",
+      "[CLEANUP]/cas-example_tmp_1/b"
+    ],
+    "name": "touch b"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CLEANUP]/cas-example_tmp_1/sub/dir"
+    ],
+    "infra_step": true,
+    "name": "mkdirs"
+  },
+  {
+    "cmd": [
+      "touch",
+      "[CLEANUP]/cas-example_tmp_1/sub/dir/d"
+    ],
+    "name": "touch d"
+  },
+  {
+    "cmd": [],
+    "name": "install infra/tools/luci/cas"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]/cipd/infra/tools/luci/cas/latest"
+    ],
+    "infra_step": true,
+    "name": "install infra/tools/luci/cas.ensure package directory",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "ensure",
+      "-root",
+      "[CACHE]/cipd/infra/tools/luci/cas/latest",
+      "-ensure-file",
+      "infra/tools/luci/cas/${platform} latest",
+      "-max-threads",
+      "0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "infra_step": true,
+    "name": "install infra/tools/luci/cas.ensure_installed",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-latest----------\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/tools/luci/cas/resolved-platform\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "[CACHE]/cipd/infra/tools/luci/cas/latest/cas",
+      "archive",
+      "-cas-instance",
+      "example-cas-server",
+      "-dump-digest",
+      "/path/to/tmp/",
+      "-paths",
+      "[CLEANUP]/cas-example_tmp_1:a",
+      "-paths",
+      "[CLEANUP]/cas-example_tmp_1:b",
+      "-paths",
+      "[CLEANUP]/cas-example_tmp_1:sub"
+    ],
+    "infra_step": true,
+    "name": "archive"
+  },
+  {
+    "cmd": [
+      "[CACHE]/cipd/infra/tools/luci/cas/latest/cas",
+      "download",
+      "-cas-instance",
+      "example-cas-server",
+      "-digest",
+      "",
+      "-dir",
+      "[CLEANUP]/cas-output_tmp_2"
+    ],
+    "infra_step": true,
+    "name": "download"
+  },
+  {
+    "name": "$result"
+  }
+]
