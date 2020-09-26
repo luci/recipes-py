@@ -57,3 +57,16 @@ def GenTests(api):
     api.post_process(post_process.StepException, 'run annotation script') +
     api.post_process(post_process.DropExpectation)
   )
+
+  yield (
+    api.test('kitchen basic') +
+    api.legacy_annotation.simulate_kitchen()
+  )
+
+  yield (
+    api.test('kitchen failure') +
+    api.legacy_annotation.simulate_kitchen() +
+    api.step_data('run annotation script', retcode=1) +
+    api.post_process(post_process.StepFailure, 'run annotation script') +
+    api.post_process(post_process.DropExpectation)
+  )

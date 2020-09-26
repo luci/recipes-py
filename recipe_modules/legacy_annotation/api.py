@@ -33,9 +33,13 @@ class LegacyAnnotationApi(recipe_api.RecipeApiPlain):
     mode or simulation mode. Otherwise, it will fall back to launch a step
     with allow_subannotation set to true.
     """
-    if not self.concurrency_client.supports_concurrency:  # pragma: no cover
-      # Code path for kitchen. TODO(yiwzhang): Remove after bbagent is fully
-      # rolled out.
+    # concurrency is enabled when running recipe in bbagent/luciexe mode.
+    run_kitchen_mode = not self.concurrency_client.supports_concurrency
+    if self._test_data.enabled:
+      run_kitchen_mode = self._test_data.get('simulate_kitchen', False)
+
+    if run_kitchen_mode:
+      # TODO(yiwzhang): Remove after bbagent is fully rolled out.
       self.m.step._validate_cmd_list(cmd)
       with self.m.context(env_prefixes={'PATH': self.m.step._prefix_path}):
         env_prefixes = self.m.context.env_prefixes

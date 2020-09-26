@@ -1,0 +1,14 @@
+[
+  {
+    "allow_subannotations": true,
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::legacy_annotation:examples/full].resources/anno.py"
+    ],
+    "name": "run annotation script"
+  },
+  {
+    "name": "$result"
+  }
+]
