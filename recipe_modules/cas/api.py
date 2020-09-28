@@ -24,6 +24,9 @@ class CasApi(recipe_api.RecipeApi):
     if self._test_data.enabled:
       default_instance = 'example-cas-server'
     self._instance = props.instance or default_instance
+    if '/' not in self._instance:
+      # Set full instance name if only project ID is given.
+      self._instance = 'projects/%s/instances/default_instance' % self._instance
 
   @property
   def instance(self):
