@@ -51,24 +51,19 @@ def main(args):
 
   stream_engine = AnnotatorStreamEngine(sys.stdout)
 
-  # This only applies to 'annotation' mode and will go away with build.proto.
-  # It is slightly hacky, but this property is the officially documented way
-  # to communicate to the recipes that they are in LUCI-mode, so we might as
-  # well use it.
-  emit_initial_properties = bool(
-    properties.
-    get('$recipe_engine/runtime', {}).
-    get('is_luci', False)
-  )
-
   # Have a top-level set of invariants to enforce StreamEngine expectations.
   raw_result, _ = RecipeEngine.run_steps(
-      args.recipe_deps, properties,
+      args.recipe_deps,
+      properties,
       StreamEngineInvariants.wrap(stream_engine),
-      SubprocessStepRunner(), NULL_WARNING_RECORDER,
-      os.environ, os.path.abspath(workdir), luci_context.read_full(),
-      psutil.cpu_count(), psutil.virtual_memory().total,
-      emit_initial_properties=emit_initial_properties)
+      SubprocessStepRunner(),
+      NULL_WARNING_RECORDER,
+      os.environ,
+      os.path.abspath(workdir),
+      luci_context.read_full(),
+      psutil.cpu_count(),
+      psutil.virtual_memory().total,
+      emit_initial_properties=True)
   result = legacy.to_legacy_result(raw_result)
 
   if args.output_result_json:

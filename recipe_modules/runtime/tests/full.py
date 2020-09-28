@@ -13,10 +13,9 @@ DEPS = [
 def RunSteps(api):
   api.step('show properties', [])
   api.step.active_result.presentation.logs['result'] = [
-    'is_luci: %r' % (api.runtime.is_luci,),
     'is_experimental: %r' % (api.runtime.is_experimental,),
   ]
 
 
 def GenTests(api):
-  yield api.test('basic') + api.runtime(is_luci=True, is_experimental=False)
+  yield api.test('basic') + api.runtime(is_experimental=False)

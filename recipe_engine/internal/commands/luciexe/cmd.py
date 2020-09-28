@@ -48,7 +48,6 @@ def _synth_properties(build, current_properties):
   synth_props = {
     '$recipe_engine/runtime': {
       'is_experimental': build.input.experimental,
-      'is_luci': True,
     },
     '$recipe_engine/buildbucket': {
       'build': jsonpb.MessageToDict(build),

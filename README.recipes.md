@@ -2737,7 +2737,7 @@ This module assists in experimenting with production recipes.
 
 For example, when migrating builders from Buildbot to pure LUCI stack.
 
-&emsp; **@property**<br>&mdash; **def [is\_experimental](/recipe_modules/runtime/api.py#26)(self):**
+&emsp; **@property**<br>&mdash; **def [is\_experimental](/recipe_modules/runtime/api.py#18)(self):**
 
 True if this recipe is currently running in experimental mode.
 
@@ -2747,15 +2747,9 @@ non-production runs of the recipe do not affect production data.
 Examples:
   * Uploading to an alternate google storage file name when in non-prod mode
   * Appending a 'non-production' tag to external RPCs
-
-&emsp; **@property**<br>&mdash; **def [is\_luci](/recipe_modules/runtime/api.py#18)(self):**
-
-True if this recipe is currently running on LUCI stack.
-
-Should be used only during migration from Buildbot to LUCI stack.
 ### *recipe_modules* / [scheduler](/recipe_modules/scheduler)
 
-[DEPS](/recipe_modules/scheduler/__init__.py#8): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/scheduler/__init__.py#8): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 API for interacting with the LUCI Scheduler service.
 

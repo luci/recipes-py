@@ -10,7 +10,6 @@ from the 'recipe' property of the `Build.input.properties` field.
 
 This synthesizes properties from the Build message:
   * $recipe_engine/runtime['is_experimental'] = Build.input.experimental
-  * $recipe_engine/runtime['is_luci'] = true
   * $recipe_engine/path['temp_dir'] = os.environ['TMP']
   * $recipe_engine/path['cache_dir'] = $LUCI_CONTEXT['luciexe']['cachedir']
 '''

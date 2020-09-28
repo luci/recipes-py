@@ -3,7 +3,6 @@
     "cmd": [],
     "name": "show properties",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@result@is_luci: True@@@",
       "@@@STEP_LOG_LINE@result@is_experimental: False@@@",
       "@@@STEP_LOG_END@result@@@"
     ]

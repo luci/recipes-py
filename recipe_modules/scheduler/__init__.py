@@ -10,7 +10,6 @@ DEPS = [
   'json',
   'platform',
   'raw_io',
-  'runtime',
   'step',
   'time',
 ]
