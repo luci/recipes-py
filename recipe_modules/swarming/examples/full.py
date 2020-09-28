@@ -10,23 +10,17 @@ from recipe_engine.recipe_api import Property
 
 
 DEPS = [
-    'cipd',
-    'json',
-    'path',
-    'properties',
-    'runtime',
-    'step',
-    'swarming',
+  'cipd',
+  'json',
+  'path',
+  'runtime',
+  'step',
+  'swarming',
 ]
 
 EXECUTION_TIMEOUT_SECS = 3600
 
-PROPERTIES = {
-    'use_cas': Property(kind=bool, default=False),
-}
-
-
-def RunSteps(api, use_cas):
+def RunSteps(api):
   api.swarming.ensure_client()
 
   # Create a new Swarming task request.
@@ -48,6 +42,7 @@ def RunSteps(api, use_cas):
         with_cipd_ensure_file(ensure_file).
         with_env_vars(SOME_VARNAME='stuff', GOPATH='$HOME/go').
         with_env_prefixes(PATH=["path/to/bin/dir", "path/to/other/bin/dir"]).
+        with_isolated('606d94add94223636ee516c6bc9918f937823ccc').
         with_expiration_secs(3600).
         with_wait_for_capacity(True).
         with_io_timeout_secs(600).
@@ -60,15 +55,6 @@ def RunSteps(api, use_cas):
         with_named_caches({'cache_name': 'cache/path'}),
       )
   )
-
-  if use_cas:
-    request = request.with_slice(
-        0, request[0].with_cas_input_root(
-            '24b2420bc49d8b8fdc1d011a163708927532b37dc9f91d7d8d6877e3a86559ca/73'
-        ))
-  else:
-    request = request.with_slice(
-        0, request[0].with_isolated('606d94add94223636ee516c6bc9918f937823ccc'))
 
   # Check a request with no tags and no user can make it to JSON and back.
   # These requests should be considered valid.
@@ -210,12 +196,6 @@ def GenTests(api):
   api.swarming.example_task_request_jsonish()
 
   yield api.test('basic')
-  yield (api.test('basic_cas') + api.properties(use_cas=True) +
-         api.override_step_data(
-             'collect',
-             api.swarming.collect(
-                 [api.swarming.task_result(id='0', name='cas', use_cas=True)])))
-
   yield api.test('experimental') + api.runtime(
       is_experimental=True)
   yield (api.test('override_swarming') +
