@@ -367,6 +367,7 @@ class FakeRecipeRepo(object):
     PROPERTIES = attr.ib(default='{}')
     GLOBAL_PROPERTIES = attr.ib(default='None')
     ENV_PROPERTIES = attr.ib(default='None')
+    WARNINGS = attr.ib(factory=list)
     DISABLE_STRICT_COVERAGE = attr.ib(default=False)
 
   @contextlib.contextmanager
@@ -402,6 +403,8 @@ class FakeRecipeRepo(object):
 
       DEPS = {DEPS!r}
 
+      WARNINGS = {WARNINGS!r}
+
       DISABLE_STRICT_COVERAGE = {DISABLE_STRICT_COVERAGE!r}
 
       PROPERTIES = {PROPERTIES}
@@ -410,6 +413,7 @@ class FakeRecipeRepo(object):
       '''.format(
           imports='\n'.join(mod.imports),
           DEPS=mod.DEPS,
+          WARNINGS = mod.WARNINGS,
           DISABLE_STRICT_COVERAGE=mod.DISABLE_STRICT_COVERAGE,
           PROPERTIES=mod.PROPERTIES,
           GLOBAL_PROPERTIES=mod.GLOBAL_PROPERTIES,

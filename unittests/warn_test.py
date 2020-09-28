@@ -5,6 +5,8 @@
 
 import contextlib
 import inspect
+import re
+import textwrap
 
 import mock
 
@@ -17,6 +19,7 @@ from recipe_engine.internal.recipe_deps import (
   RecipeRepo)
 from recipe_engine.internal.warn import escape, record
 from recipe_engine.internal.warn.definition import (
+  RECIPE_WARNING_DEFINITIONS_REL,
   _populate_monorail_bug_default_fields,
   _validate,
 )
@@ -340,6 +343,329 @@ class EscapeWarningPredicateTest(test_env.RecipeEngineUnitTest):
   @staticmethod
   def apply_predicate(warning_name, frame):
     return escape.escape_warning_predicate(warning_name, frame)
+
+
+class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
+  def setUp(self):
+    super(WarningIntegrationTests, self).setUp()
+    self.deps = self.FakeRecipeDeps()
+    with self.deps.main_repo.write_file(RECIPE_WARNING_DEFINITIONS_REL) as d:
+      d.write('''
+      monorail_bug_default {
+        host: "bugs.chromium.org"
+        project: "chromium"
+      }
+      warning {
+        name: "MYMODULE_SWIZZLE_BADARG_USAGE"
+        description: "The `badarg` argument on my_mod.swizzle is deprecated."
+        deadline: "2020-01-01"
+        monorail_bug {
+          id: 123456
+        }
+      }
+      warning {
+        name: "MYMODULE_DEPRECATION"
+        description: "my_mod is deprecated. Use other_mod instead."
+        deadline: "2020-12-31"
+        monorail_bug {
+          project: "chrome-operations"
+          id: 654321
+        }
+      }
+      ''')
+
+  def test_execution_warning(self):
+    with self.deps.main_repo.write_module('my_mod') as mod:
+      mod.DEPS.append('recipe_engine/warning')
+      mod.api.write('''
+        def swizzle(self, bad_arg=None):
+          if bad_arg is not None:
+            self.m.warning.issue('MYMODULE_SWIZZLE_BADARG_USAGE')
+      ''')
+    with self.deps.main_repo.write_file(
+        'recipe_modules/my_mod/tests/bad.py') as bad:
+      bad.write('''
+        DEPS = ['my_mod']
+        def RunSteps(api):
+          api.my_mod.swizzle('bad')
+        def GenTests(api):
+          yield api.test('basic')
+      '''.lstrip('\n'))
+    with self.deps.main_repo.write_file(
+        'recipe_modules/my_mod/tests/good.py') as good:
+      good.write('''
+        DEPS = ['my_mod']
+        def RunSteps(api):
+          api.my_mod.swizzle()
+        def GenTests(api):
+          yield api.test('basic')
+      '''.lstrip('\n'))
+    with self.deps.main_repo.write_module('cool_mod') as mod:
+      mod.DEPS.append('my_mod')
+      mod.api.write('''
+        def call_my_mod_swizzle(self):
+          self.m.my_mod.swizzle('badbadbad')
+      ''')
+    with self.deps.main_repo.write_file(
+        'recipe_modules/cool_mod/tests/full.py') as recipe:
+      recipe.write('''
+        DEPS = ['cool_mod']
+        def RunSteps(api):
+          api.cool_mod.call_my_mod_swizzle()
+        def GenTests(api):
+          yield api.test('basic')
+      '''.lstrip('\n'))
+    output, retcode  = self.deps.main_repo.recipes_py('test', 'train')
+    self.assertEqual(retcode, 0)
+    expected_regexp = textwrap.dedent(r'''
+    [\*]{70}
+    \s*WARNING: main/MYMODULE_SWIZZLE_BADARG_USAGE\s*
+    \s*Found 2 call sites and 0 import sites\s*
+    [\*]{70}
+    Description: The `badarg` argument on my_mod\.swizzle is deprecated\.
+    Deadline: 2020-01-01
+    Bug Link: https://bugs\.chromium\.org/chromium/123456
+    Call Sites:
+    .+/recipe_modules/cool_mod/api\.py:\d+
+    .+/recipe_modules/my_mod/tests/bad\.py:3
+    '''.strip('\n'))
+    self.assertRegexpMatches(output, expected_regexp)
+
+  def test_import_warning(self):
+    with self.deps.main_repo.write_module('my_mod') as mod:
+      mod.WARNINGS.append('MYMODULE_DEPRECATION')
+    with self.deps.main_repo.write_file(
+        'recipe_modules/my_mod/tests/full.py') as recipe:
+      recipe.write('''
+        DEPS = ['my_mod']
+        def RunSteps(api):
+          pass
+        def GenTests(api):
+          yield api.test('basic')
+      '''.lstrip('\n'))
+    with self.deps.main_repo.write_module('cool_mod') as cool_mod:
+      cool_mod.DEPS.append('my_mod')
+    with self.deps.main_repo.write_file(
+        'recipe_modules/cool_mod/tests/full.py') as recipe:
+      recipe.write('''
+        DEPS = ['cool_mod']
+        def RunSteps(api):
+          pass
+        def GenTests(api):
+          yield api.test('basic')
+      '''.lstrip('\n'))
+    output, retcode  = self.deps.main_repo.recipes_py('test', 'train')
+    self.assertEqual(retcode, 0)
+    expected_regexp = textwrap.dedent(r'''
+    [\*]{70}
+    \s*WARNING: main/MYMODULE_DEPRECATION\s*
+    \s*Found 0 call sites and 2 import sites\s*
+    [\*]{70}
+    Description: my_mod is deprecated\. Use other_mod instead\.
+    Deadline: 2020-12-31
+    Bug Link: https://bugs\.chromium\.org/chrome\-operations/654321
+    Import Sites:
+    .+/recipe_modules/my_mod/tests/full\.py
+    .+/recipe_modules/cool_mod/__init__\.py
+    '''.strip('\n'))
+    self.assertRegexpMatches(output, expected_regexp)
+
+  def test_issue_both_warnings(self):
+    with self.deps.main_repo.write_module('my_mod') as mod:
+      mod.DEPS.append('recipe_engine/warning')
+      mod.WARNINGS.append('MYMODULE_DEPRECATION')
+      mod.api.write('''
+        def swizzle(self):
+          self.m.warning.issue('MYMODULE_DEPRECATION')
+      ''')
+    with self.deps.main_repo.write_file(
+        'recipe_modules/my_mod/tests/full.py') as recipe:
+      recipe.write('''
+        DEPS = ['my_mod']
+        def RunSteps(api):
+          api.my_mod.swizzle()
+        def GenTests(api):
+          yield api.test('basic')
+      '''.lstrip('\n'))
+    output, retcode  = self.deps.main_repo.recipes_py('test', 'train')
+    self.assertEqual(retcode, 0)
+    expected_regexp = textwrap.dedent(r'''
+    [\*]{70}
+    \s*WARNING: main/MYMODULE_DEPRECATION\s*
+    \s*Found 1 call sites and 1 import sites\s*
+    [\*]{70}
+    Description: my_mod is deprecated\. Use other_mod instead\.
+    Deadline: 2020-12-31
+    Bug Link: https://bugs\.chromium\.org/chrome\-operations/654321
+    Call Sites:
+    .+/recipe_modules/my_mod/tests/full\.py:3
+    Import Sites:
+    .+/recipe_modules/my_mod/tests/full\.py
+    '''.strip('\n'))
+    self.assertRegexpMatches(output, expected_regexp)
+
+  def test_consolidate_multiple_call_sites(self):
+    with self.deps.main_repo.write_module('my_mod') as mod:
+      mod.DEPS.append('recipe_engine/warning')
+      mod.api.write('''
+        def swizzle(self, bad_arg=None):
+          if bad_arg is not None:
+            self.m.warning.issue('MYMODULE_SWIZZLE_BADARG_USAGE')
+      ''')
+    with self.deps.main_repo.write_file(
+        'recipe_modules/my_mod/tests/bad.py') as bad:
+      bad.write('''
+        DEPS = ['my_mod']
+        def RunSteps(api):
+          api.my_mod.swizzle('bad')
+          api.my_mod.swizzle('very bad')
+          api.my_mod.swizzle('extremely bad')
+        def GenTests(api):
+          yield api.test('basic')
+      '''.lstrip('\n'))
+    output, _  = self.deps.main_repo.recipes_py('test', 'train')
+    self.assertIn('/recipe_modules/my_mod/tests/bad.py:3 (and 4, 5)', output)
+
+  def test_dedupe_causes_for_multiple_tests(self):
+    with self.deps.main_repo.write_module('my_mod') as mod:
+      mod.DEPS.append('recipe_engine/warning')
+      mod.api.write('''
+        def swizzle(self, bad_arg=None):
+          if bad_arg is not None:
+            self.m.warning.issue('MYMODULE_SWIZZLE_BADARG_USAGE')
+      ''')
+    with self.deps.main_repo.write_file(
+        'recipe_modules/my_mod/tests/bad.py') as bad:
+      bad.write('''
+        DEPS = ['my_mod']
+        def RunSteps(api):
+          api.my_mod.swizzle('bad')
+        def GenTests(api):
+          yield api.test('basic')
+          yield api.test('again')
+          yield api.test('one more time')
+      '''.lstrip('\n'))
+    output, _  = self.deps.main_repo.recipes_py('test', 'train')
+    self.assertIn('Found 1 call sites and 0 import sites', output)
+
+  def test_escape_warnings(self):
+    with self.deps.main_repo.write_module('my_mod') as mod:
+      mod.DEPS.append('recipe_engine/warning')
+      mod.api.write('''
+        def swizzle(self, bad_arg=None):
+          if bad_arg is not None:
+            self.m.warning.issue('MYMODULE_SWIZZLE_BADARG_USAGE')
+      ''')
+    with self.deps.main_repo.write_file(
+        'recipe_modules/my_mod/tests/full.py') as recipe:
+      recipe.write('''
+        DEPS = ['my_mod']
+        def RunSteps(api):
+          api.my_mod.swizzle('bad')
+        def GenTests(api):
+          yield api.test('basic')
+      '''.lstrip('\n'))
+    with self.deps.main_repo.write_module('cool_mod') as mod:
+      mod.DEPS.append('my_mod')
+      mod.imports.append('from recipe_engine import recipe_api')
+      mod.api.write('''
+        @recipe_api.escape_warnings('^.+/MYMODULE_\w+$')
+        def pass_through_to_my_mod(self, **kwargs):
+          self.m.my_mod.swizzle(**kwargs)
+      ''')
+    with self.deps.main_repo.write_file(
+        'recipe_modules/cool_mod/tests/full.py') as bad:
+      bad.write('''
+        DEPS = ['cool_mod']
+        def RunSteps(api):
+          api.cool_mod.pass_through_to_my_mod(bad_arg='bad')
+        def GenTests(api):
+          yield api.test('basic')
+      '''.lstrip('\n'))
+    output, _  = self.deps.main_repo.recipes_py('test', 'train')
+    self.assertNotIn('recipe_modules/cool_mod/api.py', output)
+    self.assertIn('recipe_modules/cool_mod/tests/full.py', output)
+
+  def test_cross_repo(self):
+    upstream = self.deps.add_repo('upstream')
+    with upstream.write_file(RECIPE_WARNING_DEFINITIONS_REL) as d:
+      d.write('''
+      monorail_bug_default {
+        host: "bugs.chromium.org"
+        project: "chromium"
+      }
+      warning {
+        name: "MYMODULE_SWIZZLE_BADARG_USAGE"
+        description: "The `badarg` argument on my_mod.swizzle is deprecated."
+        deadline: "2020-01-01"
+        monorail_bug {
+          id: 123456
+        }
+      }
+      warning {
+        name: "MYMODULE_DEPRECATION"
+        description: "my_mod is deprecated. Use other_mod instead."
+        deadline: "2020-12-31"
+        monorail_bug {
+          project: "chrome-operations"
+          id: 654321
+        }
+      }
+      ''')
+
+    with upstream.write_module('my_mod') as mod:
+      mod.DEPS.append('recipe_engine/warning')
+      mod.WARNINGS.append('MYMODULE_DEPRECATION')
+      mod.api.write('''
+        def swizzle(self, bad_arg=None):
+          if bad_arg is not None:
+            self.m.warning.issue('MYMODULE_SWIZZLE_BADARG_USAGE')
+      ''')
+    with upstream.write_file(
+        'recipe_modules/my_mod/tests/full.py') as recipe:
+      recipe.write('''
+        DEPS = ['my_mod']
+        def RunSteps(api):
+          api.my_mod.swizzle('badbad')
+        def GenTests(api):
+          yield api.test('basic')
+      '''.lstrip('\n'))
+    upstream.commit('add my_mod module')
+
+    with self.deps.main_repo.write_file('recipes/bad.py') as recipe:
+      recipe.write('''
+        DEPS = ['upstream/my_mod']
+        def RunSteps(api):
+          api.my_mod.swizzle('bad')
+        def GenTests(api):
+          yield api.test('basic')
+      '''.lstrip('\n'))
+    self.deps.main_repo.add_dep('upstream')
+    self.deps.main_repo.commit('add recipe and upgrade upstream dep')
+
+    output, retcode  = self.deps.main_repo.recipes_py('test', 'train')
+    self.assertEqual(retcode, 0)
+    expected_regexp = textwrap.dedent(r'''
+    [\*]{70}
+    \s*WARNING: upstream/MYMODULE_DEPRECATION\s*
+    \s*Found 0 call sites and 1 import sites\s*
+    [\*]{70}
+    Description: my_mod is deprecated\. Use other_mod instead\.
+    Deadline: 2020-12-31
+    Bug Link: https://bugs\.chromium\.org/chrome\-operations/654321
+    Import Sites:
+    .+/main/recipes/bad\.py
+    [\*]{70}
+    \s*WARNING: upstream/MYMODULE_SWIZZLE_BADARG_USAGE\s*
+    \s*Found 1 call sites and 0 import sites\s*
+    [\*]{70}
+    Description: The `badarg` argument on my_mod\.swizzle is deprecated\.
+    Deadline: 2020-01-01
+    Bug Link: https://bugs\.chromium\.org/chromium/123456
+    Call Sites:
+    .+/main/recipes/bad\.py:3
+    '''.strip('\n'))
+    self.assertRegexpMatches(output, expected_regexp)
 
 
 if __name__ == '__main__':
