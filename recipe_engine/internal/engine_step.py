@@ -214,25 +214,3 @@ class StepConfig(object):
 
   # Used with to indicate that all retcodes values are acceptable.
   ALL_OK = sentinel('ALL_OK')
-
-  _RENDER_WHITELIST=frozenset((
-    'cmd',
-  ))
-
-  _RENDER_BLACKLIST=frozenset((
-    'env_prefixes',
-    'env_suffixes',
-    'ok_ret',
-    'step_test_data',
-  ))
-
-  def _asdict(self):
-    ret = thaw(attr.asdict(self, filter=(lambda attr, val: (
-      (val and val != attr.default or (attr.name in self._RENDER_WHITELIST)) and
-      attr.name not in self._RENDER_BLACKLIST
-    ))))
-    if self.env_prefixes.mapping:
-      ret['env_prefixes'] = dict(self.env_prefixes.mapping)
-    if self.env_suffixes.mapping:
-      ret['env_suffixes'] = dict(self.env_suffixes.mapping)
-    return ret
