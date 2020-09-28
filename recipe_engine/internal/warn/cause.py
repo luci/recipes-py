@@ -42,6 +42,11 @@ class Frame(object):
     return warning_pb.Frame(file=self.file, line=self.line)
 
   @classmethod
+  def from_frame_pb(cls, frame):
+    """Create a new instance from a warning_pb.Frame proto message."""
+    return cls(file=str(frame.file), line=frame.line)
+
+  @classmethod
   def from_built_in_frame(cls, frame):
     """Create a new instance from built-in frame object."""
     assert inspect.isframe(frame), 'Expect FrameType; Got %s' % type(frame)
@@ -72,6 +77,16 @@ class CallSite(object):
       ret.call_site.call_stack.add().CopyFrom(f.frame_pb)
     return ret
 
+  @classmethod
+  def from_cause_pb(cls, cause):
+    """Create a new instance from a warning_pb.Cause proto message."""
+    return cls(
+        site=Frame.from_frame_pb(cause.call_site.site),
+        call_stack=[
+            Frame.from_frame_pb(f) for f in cause.call_site.call_stack],
+    )
+
+
 @attr.s(frozen=True)
 class ImportSite(object):
   """Equivalent to warning_pb.ImportSite"""
@@ -99,3 +114,13 @@ class ImportSite(object):
     else:
       ret.import_site.recipe = self.recipe
     return ret
+
+  @classmethod
+  def from_cause_pb(cls, cause):
+    """Create a new instance from a warning_pb.Cause proto message."""
+    import_site = cause.import_site
+    return cls(
+        repo=str(import_site.repo),
+        module=str(import_site.module) if import_site.module else None,
+        recipe=str(import_site.recipe) if import_site.recipe else None,
+    )

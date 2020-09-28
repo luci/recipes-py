@@ -198,7 +198,7 @@ def _run(test_result, recipe_deps, use_emoji, test_filters, is_train,
         thread_data.read_file(thread.cov_file)
         cov.data.update(thread_data)
 
-    reporter.final_report(cov, test_result)
+    reporter.final_report(cov, test_result, recipe_deps)
 
   finally:
     for thread in live_threads:

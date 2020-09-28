@@ -62,7 +62,12 @@ message MonorailBugDefault {
   string project = 2;
 }
 
-// Cause of why a warning is issued
+// Container for a list of causes.
+message Causes {
+  repeated Cause causes = 1;
+}
+
+// Cause of why a warning is issued.
 message Cause {
   oneof oneof_cause {
     CallSite call_site = 1;

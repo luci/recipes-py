@@ -118,6 +118,18 @@ class RecipeDeps(object):
     """Returns the location of the .previous_failures file."""
     return os.path.join(self.recipe_deps_path, '.previous_test_failures')
 
+  @cached_property
+  def warning_definitions(self):
+    """Returns warning definitions for all repos in this RecipeDeps.
+
+    Key is fully-qualified warning name (i.e. `$repo_name/WARNING_NAME`).
+    """
+    return {
+        '/'.join((repo_name, warning_name)) : definition
+        for repo_name, repo in self.repos.iteritems()
+        for warning_name, definition in repo.warning_definitions.iteritems()
+    }
+
   @classmethod
   def create(cls, main_repo_path, overrides, proto_override):
     """Creates a RecipeDeps.

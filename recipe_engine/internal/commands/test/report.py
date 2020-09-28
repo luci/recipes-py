@@ -13,9 +13,13 @@ import os
 import sys
 
 from cStringIO import StringIO
+from collections import defaultdict
+from itertools import groupby, imap
 
 import attr
 import coverage
+
+from ...warn.cause import CallSite, ImportSite
 
 
 @attr.s
@@ -98,7 +102,7 @@ class Reporter(object):
     return has_fail
 
 
-  def final_report(self, cov, outcome_msg):
+  def final_report(self, cov, outcome_msg, recipe_deps):
     """Prints all final information about the test run to stdout. Raises
     SystemExit if the tests have failed.
 
@@ -111,6 +115,7 @@ class Reporter(object):
         unused_expectation_files. coverage_percent is also populated as a side
         effect. Any uncovered_modules/unused_expectation_files count as test
         failure.
+      * recipe_deps (RecipeDeps) - The loaded recipe repo dependencies.
 
     Side-effects: Populates outcome_msg.coverage_percent.
 
@@ -177,7 +182,13 @@ class Reporter(object):
         print 'them with your CL.'
       sys.exit(1)
 
-    print 'TESTS OK'
+    warning_result = _collect_warning_result(outcome_msg)
+    if warning_result:
+      _print_warnings(warning_result, recipe_deps)
+      print '------'
+      print 'TESTS OK with %d warnings' % len(warning_result)
+    else :
+      print 'TESTS OK'
 
 
 
@@ -193,6 +204,7 @@ FIELD_TO_DISPLAY = collections.OrderedDict([
   ('check',          (False, 'failed post_process check(s)',        '❌', 'X')),
   ('diff',           (False, 'expectation file has diff',           '⚡', 'D')),
 
+  ('warnings',       (True,  'encounter warning(s)',                '🟡', 'W')),
   ('removed',        (True,  'removed expectation file',            '🌟', 'R')),
   ('written',        (True,  'updated expectation file',            '💾', 'D')),
 
@@ -261,3 +273,97 @@ def _print_detail_info(err_buf, test_name, test_result):
     for line in lines.lines:
       print >>err_buf, line
     print >>err_buf
+
+
+@attr.s
+class PerWarningResult(object):
+  call_sites = attr.ib(factory=set)
+  import_sites = attr.ib(factory=set)
+
+
+def _collect_warning_result(outcome_msg):
+  """Collects issued warnings from all test outcomes and dedupes causes for
+  each warning.
+  """
+  result = defaultdict(PerWarningResult)
+  for _, test_result in outcome_msg.test_results.iteritems():
+    for name, causes in test_result.warnings.iteritems():
+      for cause in causes.causes:
+        if cause.WhichOneof('oneof_cause') == 'call_site':
+          result[name].call_sites.add(CallSite.from_cause_pb(cause))
+        else:
+          result[name].import_sites.add(ImportSite.from_cause_pb(cause))
+  return result
+
+
+def _print_warnings(warning_result, recipe_deps):
+  def print_bug_links(definition):
+    def construct_monorail_link(bug):
+      return 'https://%s/%s/%d' % (bug.host, bug.project, bug.id)
+
+    if definition.monorail_bug:
+      if len(definition.monorail_bug) == 1:
+        print 'Bug Link: %s' % (
+            construct_monorail_link(definition.monorail_bug[0]),)
+      else:
+        print 'Bug Links:'
+        for bug in definition.monorail_bug:
+          print '  %s' % construct_monorail_link(bug)
+
+  def print_call_sites(call_sites):
+    def stringify_frame(frame):
+      return ':'.join((os.path.normpath(frame.file), str(frame.line)))
+
+    if not call_sites:
+      return
+    print 'Call Sites:'
+    sorted_sites = sorted(call_sites,
+                          key=lambda s: (s.site.file, s.site.line))
+    if sorted_sites[0].call_stack:
+      # call site contains the full stack.
+      for call_site in sorted_sites:
+        print '  site: %s' % stringify_frame(call_site.site)
+        print '  stack:'
+        for f in call_site.call_stack:
+          print '    ' +stringify_frame(f)
+        print
+    else:
+      for file_name, sites in groupby(sorted_sites, key=lambda s: s.site.file):
+        # Print sites that have the same file in a single line.
+        # E.g. /path/to/site:123 (and 456, 789)
+        site_iter = iter(sites)
+        line = stringify_frame(next(site_iter).site)
+        additional_lines = ', '.join(
+            imap(lambda s: str(s.site.line), site_iter))
+        if additional_lines:
+          line =  '%s (and %s)' % (line, additional_lines)
+        print '  ' + line
+
+  def print_import_sites(import_sites):
+    if not import_sites:
+      return
+    print 'Import Sites:'
+    for import_site in sorted(import_sites,
+                              key=lambda s: (s.repo, s.module, s.recipe)):
+      repo = recipe_deps.repos[import_site.repo]
+      if import_site.module:
+        mod_path = repo.modules[import_site.module].path
+        print '  %s' % os.path.normpath(os.path.join(mod_path, '__init__.py'))
+      else:
+        print '  %s' % os.path.normpath(repo.recipes[import_site.recipe].path)
+
+  for warning_name in sorted(warning_result):
+    causes = warning_result[warning_name]
+    print '*' * 70
+    print '{:^70}'.format('WARNING: %s' % warning_name)
+    print '{:^70}'.format('Found %d call sites and %d import sites' % (
+        len(causes.call_sites), len(causes.import_sites),))
+    print '*' * 70
+    definition = recipe_deps.warning_definitions[warning_name]
+    if definition.description:
+      print 'Description: %s' % definition.description
+    if definition.deadline:
+      print 'Deadline: %s' % definition.deadline
+    print_bug_links(definition)
+    print_call_sites(causes.call_sites)
+    print_import_sites(causes.import_sites)

@@ -6,6 +6,8 @@ syntax = "proto3";
 
 package recipe_engine.internal.test;
 
+import "recipe_engine/warning.proto";
+
 // Description of test to run (for runner subprocess)
 message Description {
   // The fully qualified name of the recipe in the main repo:
@@ -52,6 +54,9 @@ message Outcome {
 
     // Error messages from internal failures.
     repeated string internal_error = 7;
+
+    // Warnings issued during test execution and its causes.
+    map<string, recipe_engine.Causes> warnings = 8;
   }
   // Maps full test names (i.e. 'recipe_name.test_case') to test result details.
   map<string, Results> test_results = 1;
