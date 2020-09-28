@@ -1,0 +1,16 @@
+// Copyright 2019 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+syntax = "proto3";
+
+package recipe_modules.recipe_engine.runtime;
+
+message InputProperties {
+  // Whether build is running in experimental mod.
+  // TODO(iannucci,yiwzhang): replace this with
+  //
+  //   `"luci.non_production" in api.buildbucket.experiments`
+  //
+  // and then delete the runtime module.
+  bool is_experimental = 1;
+}
