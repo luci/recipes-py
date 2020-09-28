@@ -354,6 +354,7 @@ class TaskRequest(object):
       self._named_caches = {}
       self._outputs = []
       self._secret_bytes = ''
+      self._cas_input_root = ''
 
       # Containment
       self._lower_priority = False
@@ -423,8 +424,34 @@ class TaskRequest(object):
         isolated (str) - The hash of an isolated on the default isolated server.
       """
       assert isinstance(isolated, basestring)
+      assert not self._cas_input_root, (
+          "both cas_input_root and isolated cannot be specified")
       ret = self._copy()
       ret._isolated = isolated
+      return ret
+
+    @property
+    def cas_input_root(self):
+      """Returns the digest of an uploaded directory tree on the default cas
+      server.
+
+      The default cas server is the one set in CasApi.
+      """
+      return self._cas_input_root
+
+    def with_cas_input_root(self, digest):
+      """Returns the slice with the given cas digest.
+
+      Args:
+        digest (str) - The digest of an uploaded directory tree on the default
+          cas server.
+      """
+      assert isinstance(digest, basestring)
+      assert not self._isolated, (
+          "both cas_input_root and isolated cannot be specified")
+      assert digest.count('/') == 1
+      ret = self._copy()
+      ret._cas_input_root = digest
       return ret
 
     @property
@@ -813,6 +840,10 @@ class TaskRequest(object):
               int(containment['limit_total_committed_memory']))) # yapf: disable
       if 'inputs_ref' in p:
         ret = ret.with_isolated(p['inputs_ref']['isolated'])
+      if 'cas_input_root' in p:
+        digest = p['cas_input_root']['digest']
+        ret = ret.with_cas_input_root(digest['hash'] + '/' +
+                                      digest['size_bytes'])
       if 'secret_bytes' in p:
         ret = ret.with_secret_bytes(base64.b64decode(p['secret_bytes']))
       if 'cipd_input' in p:
@@ -875,6 +906,17 @@ class TaskRequest(object):
             'namespace': self._api.isolated.namespace,
             'isolatedserver': self._api.isolated.isolate_server,
         }
+
+      if self.cas_input_root:
+        h, b = self.cas_input_root.split('/')
+        properties['cas_input_root'] = {
+            'cas_instance': self._api.cas.instance,
+            'digest': {
+                'hash': h,
+                'size_bytes': b,
+            },
+        }
+
       if self.secret_bytes:
         properties['secret_bytes'] = base64.b64encode(self.secret_bytes)
       if self.cipd_ensure_file.packages:
@@ -974,6 +1016,7 @@ class TaskResult(object):
     self._raw_results = raw_results
     self._outputs = {}
     self._isolated_outputs = None
+    self._cas_output_root = ''
     if 'error' in raw_results:
       self._output = raw_results['error']
       self._name = None
@@ -1008,6 +1051,11 @@ class TaskResult(object):
             server=outputs_ref['isolatedserver'],
             namespace=outputs_ref['namespace'],
         )
+
+      cas_output_root = results.get('cas_output_root')
+      if cas_output_root:
+        d = cas_output_root['digest']
+        self._cas_output_root = d['hash'] + '/' + d['size_bytes']
 
       self._output = raw_results.get('output')
       if self._output_dir and raw_results.get('outputs'):
