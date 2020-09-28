@@ -674,7 +674,7 @@ A module for interacting with cas client.
 instance, or full RBE-CAS instance name
 e.g. `projects/<project name>/instances/<instance name>`.
 
-&mdash; **def [archive](/recipe_modules/cas/api.py#71)(self, step_name, root, \*paths):**
+&mdash; **def [archive](/recipe_modules/cas/api.py#75)(self, step_name, root, \*paths):**
 
 Archives given paths to a cas server.
 
@@ -687,7 +687,7 @@ Args:
 Returns:
   digest (str): digest of uploaded root directory.
 
-&mdash; **def [download](/recipe_modules/cas/api.py#52)(self, step_name, digest, output_dir):**
+&mdash; **def [download](/recipe_modules/cas/api.py#56)(self, step_name, digest, output_dir):**
 
 Downloads a directory tree from a cas server.
 
@@ -695,6 +695,8 @@ Args:
   step_name (str): name of the step.
   digest (str): the digest of a cas tree.
   output_dir (Path): path to an output directory.
+
+&emsp; **@property**<br>&mdash; **def [instance](/recipe_modules/cas/api.py#28)(self):**
 ### *recipe_modules* / [cipd](/recipe_modules/cipd)
 
 [DEPS](/recipe_modules/cipd/__init__.py#5): [context](#recipe_modules-context), [file](#recipe_modules-file), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step), [url](#recipe_modules-url)

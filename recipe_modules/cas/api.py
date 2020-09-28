@@ -26,6 +26,10 @@ class CasApi(recipe_api.RecipeApi):
     self._instance = props.instance or default_instance
 
   @property
+  def instance(self):
+    return self._instance
+
+  @property
   def _version(self):
     version = DEFAULT_CIPD_VERSION
     if self.m.runtime.is_experimental:

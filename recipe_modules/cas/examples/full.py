@@ -13,6 +13,7 @@ DEPS = [
 
 
 def RunSteps(api):
+  api.cas.instance
 
   # Prepare files.
   temp = api.path.mkdtemp('cas-example')
