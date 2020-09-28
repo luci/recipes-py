@@ -10,6 +10,9 @@ RecipeEngine.
 
 import attr
 
+from google.protobuf import json_format as jsonpb
+from google.protobuf.message import Message
+
 from .attr_util import attr_type, attr_dict_type, attr_seq_type, attr_value_is
 
 from ..types import FrozenDict, freeze, thaw, ResourceCost
@@ -105,8 +108,7 @@ class StepConfig(object):
 
   # If True, lets the step emit its own @@@annotations@@@.
   #
-  # TODO(iannucci): Move this into an annotee wrapper command in the `step`
-  # module.
+  # TODO(iannucci): Delete when kitchen is gone.
   #
   # NOTE: Enabling this can cause some buggy behavior. Use
   # step_result.presentation instead. If you have questions, please contact
@@ -118,6 +120,13 @@ class StepConfig(object):
   timeout = attr.ib(
       default=None,
       validator=attr_type((int, float, long, type(None))))
+
+  # luci_context is the mapping of LUCI_CONTEXT sections to their respective
+  # section proto message which have been modified.
+  #
+  # Note; this is used for recipe expectations and for deriving step timeout
+  # information. It's expected that the recipe code has already ge
+  luci_context = attr.ib(default=None, validator=attr_dict_type(str, Message))
 
   # Set of return codes allowed. If the step process returns something not on
   # this list, it will raise a StepFailure (or InfraFailure if infra_step is

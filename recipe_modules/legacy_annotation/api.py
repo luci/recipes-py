@@ -53,6 +53,7 @@ class LegacyAnnotationApi(recipe_api.RecipeApiPlain):
           env_suffixes=self.m.step._to_env_affix(self.m.context.env_suffixes),
           allow_subannotations=True,
           timeout=timeout,
+          luci_context=self.m.context.luci_context,
           infra_step=self.m.context.infra_step,
           step_test_data=step_test_data,
       ))

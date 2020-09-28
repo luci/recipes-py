@@ -4,6 +4,8 @@
 
 import attr
 
+from google.protobuf.message import Message
+
 from ..attr_util import attr_list_type, attr_type, attr_dict_type
 from ..stream import StreamEngine
 
@@ -37,6 +39,9 @@ class Step(object):
 
   # The timeout in seconds or None if the step has no timeout.
   timeout = attr.ib(validator=attr_type((int, type(None))))
+
+  # The sectionname->Message mapping of LUCI_CONTEXT modifications.
+  luci_context = attr.ib(validator=attr_dict_type(str, Message))
 
 
 class StepRunner(object):

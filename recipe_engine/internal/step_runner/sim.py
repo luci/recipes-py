@@ -6,6 +6,8 @@ from collections import OrderedDict
 
 import attr
 
+from google.protobuf import json_format as jsonpb
+
 from ...recipe_test_api import StepTestData, BaseTestData
 from ...step_data import ExecutionResult
 from ...types import ResourceCost
@@ -110,6 +112,13 @@ class SimulationStepRunner(StepRunner):
     step_obj['name'] = dot_name
     if 'cmd' not in step_obj:
       step_obj['cmd'] = []
+
+    step_obj.pop('luci_context', None)
+    if step.luci_context:
+      step_obj['luci_context'] = {}
+      for name, section in step.luci_context.iteritems():
+        step_obj['luci_context'][name] = jsonpb.MessageToDict(section)
+
     for handle_name in ('stdout', 'stderr'):
       step_obj.pop(handle_name, None)
     precursor = self._step_precursor_data[dot_name]
@@ -153,6 +162,7 @@ class SimulationStepRunner(StepRunner):
         stderr='',
         env={},
         timeout=None,
+        luci_context={},
     ))
 
   def export_steps_ran(self):
@@ -174,6 +184,8 @@ class SimulationStepRunner(StepRunner):
       * infra_step (bool) - If this step was intended to be an 'infra step' or
         not.
       * timeout (int) - The timeout, in seconds.
+      * luci_context (Dict[str, Dict{...}]) - The luci_context data for this
+        step.
 
     TODO(iannucci): Make this map to a real type.
     """

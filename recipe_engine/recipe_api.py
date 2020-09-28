@@ -106,13 +106,8 @@ class LUCIContextClient(object):
   IDENT = 'lucictx'
   ENV_KEY = luci_context.ENV_KEY
 
-  _context = attr.ib(validator=attr_dict_type(str, (dict, FrozenDict)),
-                     factory=dict, converter=freeze)
-
-  @property
-  def context(self):
-    """Returns the current content of LUCI_CONTEXT as a Dict[str, Dict]."""
-    return self._context
+  initial_context = attr.ib(validator=attr_dict_type(str, (dict, FrozenDict)),
+                            factory=dict, converter=freeze)
 
   def new_context(self, **section_pb_values):
     """Creates a new LUCI_CONTEXT file with the provided section values, all

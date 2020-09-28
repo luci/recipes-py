@@ -788,6 +788,7 @@ def _render_config(debug, name_tokens, step_config, step_runner, step_stream,
       cwd=cwd,
       env=env,
       timeout=step_config.timeout,
+      luci_context=step_config.luci_context,
       **handles)
 
 
@@ -931,6 +932,15 @@ def _print_step(execution_log, step):
   execution_log.write_line('at time ' + datetime.datetime.now().isoformat())
   if step.timeout:
     execution_log.write_line('  timeout: %d secs' % (step.timeout,))
+
+  # Some LUCI_CONTEXT sections may contain secrets; explicitly allow the
+  # sections we know are safe.
+  luci_context_allowed = ['realm', 'luciexe']
+  for section in luci_context_allowed:
+    data = step.luci_context.get(section, None)
+    if data is not None:
+      execution_log.write_line(
+          '  LUCI_CONTEXT[%r]: %r' % (section, jsonpb.MessageToDict(data)))
 
   # TODO(iannucci): print the DIFF against the original environment
   execution_log.write_line('full environment:')

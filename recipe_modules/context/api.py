@@ -28,6 +28,7 @@ with api.context(cwd=api.path['start_dir'].join('subdir')):
 
 
 import collections
+import copy
 
 from contextlib import contextmanager
 
@@ -35,7 +36,7 @@ from google.protobuf import json_format as jsonpb
 
 from recipe_engine import recipe_api
 from recipe_engine.config_types import Path
-from recipe_engine.types import PerGreenletState
+from recipe_engine.types import PerGreenletState, freeze
 
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 
@@ -46,12 +47,14 @@ def check_type(name, var, expect):
 
 
 class State(PerGreenletState):
+  # Default to immutable types to prevent these from accidentally becoming
+  # global variables.
   cwd = None
-  env_prefixes = {}
-  env_suffixes = {}
-  env = {}
+  env_prefixes = freeze({})
+  env_suffixes = freeze({})
+  env = freeze({})
   infra_steps = False
-  luci_context = {}
+  luci_context = freeze({})
 
   def _get_setter_on_spawn(self):
     old_cwd = self.cwd
@@ -83,19 +86,24 @@ class ContextApi(recipe_api.RecipeApi):
     self._test_counter = 0
 
   def initialize(self):
-    # Add other LUCI_CONTEXT sections in the following dict to support
-    # modification through this module.
-    init_sections = {
-      'luciexe': sections_pb2.LUCIExe,
-      'realm': sections_pb2.Realm,
-    }
-    ctx = self._lucictx_client.context
-    for section_key, section_msg_class in init_sections.iteritems():
-      if section_key in ctx:
-        self._state.luci_context[section_key] = (
-            jsonpb.ParseDict(ctx[section_key],
-                             section_msg_class(),
-                             ignore_unknown_fields=True))
+    ctx = self._lucictx_client.initial_context
+    if ctx:
+      # Add other LUCI_CONTEXT sections in the following dict to support
+      # modification through this module.
+      init_sections = {
+        'luciexe': sections_pb2.LUCIExe,
+        'realm': sections_pb2.Realm,
+      }
+
+      # reset luci_context so that when we write into it without it becoming
+      # a global variable.
+      self._state.luci_context = {}
+      for section_key, section_msg_class in init_sections.iteritems():
+        if section_key in ctx:
+          self._state.luci_context[section_key] = (
+              jsonpb.ParseDict(ctx[section_key],
+                               section_msg_class(),
+                               ignore_unknown_fields=True))
 
   @contextmanager
   def __call__(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None,
@@ -114,9 +122,10 @@ class ContextApi(recipe_api.RecipeApi):
       * infra_steps (bool) - if steps in this context should be considered
         infrastructure steps. On failure, these will raise InfraFailure
         exceptions instead of StepFailure exceptions.
-      * luciexe (section_pb2.LUCIExe) - The override value for 'luciexe' section
-        in LUCI_CONTEXT. This is currently used to modify the `cache_dir` for
-        all launched LUCI Executable (via `api.step.sub_build(...)`).
+      * luciexe (sections_pb2.LUCIExe) - The override value for 'luciexe'
+        section in LUCI_CONTEXT. This is currently used to modify the
+        `cache_dir` for all launched LUCI Executable (via
+        `api.step.sub_build(...)`).
       * realm (str) - allows changing the current LUCI realm. It is used when
         creating new LUCI resources (e.g. spawning new Swarming tasks). Pass an
         empty string to disassociate the context from a realm, emulating an
@@ -193,38 +202,38 @@ class ContextApi(recipe_api.RecipeApi):
     def _override(key, val, new):
       new[key] = val
 
-    if cwd is not None:
-      check_type('cwd', cwd, Path)
-      _push('cwd', cwd)
-
-    if infra_steps is not None:
-      check_type('infra_steps', infra_steps, bool)
-      _push('infra_steps', infra_steps)
-
-    section_pb_values = {}
-    if luciexe:
-      section_pb_values['luciexe'] = luciexe
-    if realm is not None:
-      section_pb_values['realm'] = (
-          sections_pb2.Realm(name=realm) if realm else None)
-    if section_pb_values:
-      _add_to_context('luci_context', section_pb_values, _override)
-      env = {} if env is None else dict(env)
-      if self._test_data.enabled:
-        self._test_counter += 1
-        env[self._lucictx_client.ENV_KEY] = (
-          '/path/to/lucictx_%d.json' % self._test_counter)
-      else: # pragma: no cover
-        env[self._lucictx_client.ENV_KEY] = (
-          self._lucictx_client.new_context(**section_pb_values))
-
-    _add_to_context('env_prefixes', env_prefixes, _as_env_prefixes)
-
-    _add_to_context('env_suffixes', env_suffixes, _as_env_suffixes)
-
-    _add_to_context('env', env, _as_env)
-
     try:
+      if cwd is not None:
+        check_type('cwd', cwd, Path)
+        _push('cwd', cwd)
+
+      if infra_steps is not None:
+        check_type('infra_steps', infra_steps, bool)
+        _push('infra_steps', infra_steps)
+
+      section_pb_values = {}
+      if luciexe:
+        section_pb_values['luciexe'] = copy.deepcopy(luciexe)
+      if realm is not None:
+        section_pb_values['realm'] = (
+            sections_pb2.Realm(name=realm) if realm else None)
+      if section_pb_values:
+        _add_to_context('luci_context', section_pb_values, _override)
+        env = {} if env is None else dict(env)
+        if self._test_data.enabled:
+          self._test_counter += 1
+          env[self._lucictx_client.ENV_KEY] = (
+            '/path/to/lucictx_%d.json' % self._test_counter)
+        else: # pragma: no cover
+          env[self._lucictx_client.ENV_KEY] = (
+            self._lucictx_client.new_context(**section_pb_values))
+
+      _add_to_context('env_prefixes', env_prefixes, _as_env_prefixes)
+
+      _add_to_context('env_suffixes', env_suffixes, _as_env_suffixes)
+
+      _add_to_context('env', env, _as_env)
+
       yield
     finally:
       for state_member, val in deferred_assignments.iteritems():
@@ -290,6 +299,18 @@ class ContextApi(recipe_api.RecipeApi):
     **Returns (bool)** - True iff steps are currently considered infra steps.
     """
     return self._state.infra_steps
+
+  @property
+  def luci_context(self):
+    """Returns the currently tracked LUCI_CONTEXT sections as a dict of proto
+    messages.
+
+    Only contains `luciexe`, `realm`, and `deadline`.
+    """
+    ret = {}
+    for section, msg in self._state.luci_context.items():
+      ret[section] = copy.deepcopy(msg)
+    return ret
 
   @property
   def luciexe(self):

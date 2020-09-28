@@ -429,7 +429,7 @@ class StepApi(recipe_api.RecipeApiPlain):
         cwd=api.path['start_dir'].join('subdir'),
         # Change the cache_dir of the launched LUCI executable. Defaults to
         # api.path['cache'] if unchanged.
-        luciexe=section_pb2.LUCIExe(cache_dir=api.path['cache'].join('sub')),
+        luciexe=sections_pb2.LUCIExe(cache_dir=api.path['cache'].join('sub')),
       ):
       ret = api.sub_build("launch sub build",
                           ['run_exe', '--foo', 'bar', 'baz'],
@@ -497,6 +497,7 @@ class StepApi(recipe_api.RecipeApiPlain):
         env_prefixes=self._to_env_affix(env_prefixes),
         env_suffixes=self._to_env_affix(self.m.context.env_suffixes),
         timeout=timeout,
+        luci_context=self.m.context.luci_context,
         stdin=self.m.proto.input(self._make_initial_build(build), 'BINARY'),
         infra_step=self.m.context.infra_step or False,
         merge_step=True,
@@ -579,6 +580,7 @@ class StepApi(recipe_api.RecipeApiPlain):
         env_prefixes=self._to_env_affix(env_prefixes),
         env_suffixes=self._to_env_affix(self.m.context.env_suffixes),
         timeout=timeout,
+        luci_context=self.m.context.luci_context,
         infra_step=self.m.context.infra_step or bool(infra_step),
         stdout=stdout,
         stderr=stderr,

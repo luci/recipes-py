@@ -194,6 +194,9 @@ class Step(object):
   # seconds the step must complete in
   timeout = attr.ib(default=None)
 
+  # Mapping of LUCI_CONTEXT section name to the current section value.
+  luci_context = attr.ib(factory=dict)
+
   # A bool indicating the step is an infrastructure step that should raise
   # InfraFailure instead of StepFailure if the step finishes with an exit code
   # that is not allowed

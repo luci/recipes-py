@@ -4,6 +4,14 @@
       "echo",
       "hello"
     ],
+    "luci_context": {
+      "luciexe": {
+        "cache_dir": "/path/to/cache"
+      },
+      "realm": {
+        "name": "proj:realm"
+      }
+    },
     "name": "start"
   },
   {
@@ -15,6 +23,14 @@
     "env": {
       "LUCI_CONTEXT": "/path/to/lucictx_3.json"
     },
+    "luci_context": {
+      "luciexe": {
+        "cache_dir": "/path/to/new_cache"
+      },
+      "realm": {
+        "name": "proj:realm"
+      }
+    },
     "name": "new luciexe"
   },
   {
@@ -22,6 +38,14 @@
       "echo",
       "bye"
     ],
+    "luci_context": {
+      "luciexe": {
+        "cache_dir": "/path/to/cache"
+      },
+      "realm": {
+        "name": "proj:realm"
+      }
+    },
     "name": "end"
   },
   {
