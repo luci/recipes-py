@@ -181,6 +181,7 @@ class RecipeModuleImporter(object):
         module, or None if no config.py exists.
       * `DEPS`: Sets a default DEPS value of `()` so that other code in the
         engine can assume that there's ALWAYS a DEPS object for a module.
+      * `WARNINGS`: A list of warnings issued against this recipe module.
       * `DISABLE_STRICT_COVERAGE`: Sets a default value of False.
 
     Args:
@@ -196,6 +197,7 @@ class RecipeModuleImporter(object):
     mod.REPO_ROOT = Path(RepoBasePath(repo_name, repo_root))
     mod.CONFIG_CTX = getattr(mod, 'CONFIG_CTX', None)
     mod.DEPS = getattr(mod, 'DEPS', ())
+    mod.WARNINGS = getattr(mod, 'WARNINGS', ())
 
     # TODO(iannucci, probably): remove DISABLE_STRICT_COVERAGE (crbug/693058).
     mod.DISABLE_STRICT_COVERAGE = getattr(mod, 'DISABLE_STRICT_COVERAGE', False)

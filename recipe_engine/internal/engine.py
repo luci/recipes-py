@@ -208,6 +208,10 @@ class RecipeEngine(object):
     """
     self._clients['paths']._initialize_with_recipe_api(root_api)
 
+  def record_import_warning(self, warning, importer):
+    """Records an import warning."""
+    self._clients['warning'].record_import_warning(warning, importer)
+
   def close_non_parent_step(self):
     """Closes the tip of the _step_stack if it's not a parent nesting step."""
     try:

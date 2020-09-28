@@ -62,10 +62,8 @@ from .exceptions import RecipeLoadError, RecipeSyntaxError, MalformedRecipeError
 from .exceptions import UnknownRecipeModule
 from .simple_cfg import SimpleRecipesCfg, RECIPES_CFG_LOCATION_REL
 from .test.test_util import filesystem_safe
-from .warn.definition import (
-  parse_warning_definitions,
-  RECIPE_WARNING_DEFINITIONS_REL,
-)
+from .warn.definition import (parse_warning_definitions,
+                              RECIPE_WARNING_DEFINITIONS_REL)
 
 
 LOG = logging.getLogger(__name__)
@@ -408,6 +406,19 @@ class RecipeModule(object):
     """
     return parse_deps_spec(self.repo.name, self.do_import().DEPS)
 
+  @cached_property
+  def warnings(self):
+    """Returns a tuple of warnings issued against this recipe module."""
+    return tuple(self.do_import().WARNINGS)
+
+  @cached_property
+  def _cumulative_import_warnings(self):
+    """Returns all import warnings as a tuple that this module and its
+    dependent modules hit. Each element of the tuple is a tuple of
+    (fully-qualified warning name, importer RecipeModule).
+    """
+    return tuple(_collect_import_warnings(self))
+
   def do_import(self):
     """Imports the raw recipe module (i.e. python module).
 
@@ -675,6 +686,8 @@ class Recipe(object):
       test_data=test_data.get_module_test_data(None))
     resolved_deps = _resolve(
       self.repo.recipe_deps, self.normalized_DEPS, 'API', engine, test_data)
+    for _, (warning, importer) in enumerate(_collect_import_warnings(self)):
+      engine.record_import_warning(warning, importer)
     api.__dict__.update({
       local_name: resolved_dep
       for local_name, resolved_dep in resolved_deps.iteritems()
@@ -799,6 +812,24 @@ def parse_deps_spec(repo_name, deps_spec):
     raise ValueError('Unknown DEPS type %r' % (type(deps_spec).__name__,))
 
   return deps
+
+
+def _collect_import_warnings(root):
+  """Traverses the dependency tree from root and collects all import warnings.
+
+  Returns a set of (fully-qualified warning name, importing recipe or
+  recipe module) tuple.
+  """
+  ret = set()
+  recipe_deps = root.repo.recipe_deps
+  for _, (repo_name, module_name) in root.normalized_DEPS.iteritems():
+    module = recipe_deps.repos[repo_name].modules[module_name]
+    for warning in module.warnings:
+      if '/' not in warning:
+        warning = '/'.join((repo_name, warning))
+      ret.add((warning, root))
+    ret.update(module._cumulative_import_warnings)
+  return ret
 
 
 def _instantiate_test_api(imported_module, resolved_deps):

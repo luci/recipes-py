@@ -310,6 +310,10 @@ class WarningClient(object):
         [frame_tup[0] for frame_tup in inspect.stack()],
     )
 
+  def record_import_warning(self, name, importer):
+    """Records import warning during DEPS resolution."""
+    self._recorder.record_import_warning(name, importer)
+
   def resolve_warning(self, name, issuer_file):
     """Returns the fully-qualified warning name for the given warning.
 
