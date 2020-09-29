@@ -423,20 +423,34 @@ class StepApi(recipe_api.RecipeApiPlain):
     Example:
 
     ```python
-    # Ensure the LUCI executable `run_exe` on path
+    run_exe = api.cipd.ensure_tool(...) # Install LUCI executable `run_exe`
+
+    # Basic Example: launch `run_exe` with empty initial build and
+    # default options.
+    ret = api.sub_build("launch sub build", [run_exe], build_pb2.Build())
+    sub_build = ret.step.sub_build #  access final build proto result
+
+    # Example: launch `run_exe` with input build to recipe and customized
+    # output path, cwd and cache directory.
     with api.context(
         # Change the cwd of the launched LUCI executable
         cwd=api.path['start_dir'].join('subdir'),
         # Change the cache_dir of the launched LUCI executable. Defaults to
+<<<<<<< HEAD
         # api.path['cache'] if unchanged.
         luciexe=sections_pb2.LUCIExe(cache_dir=api.path['cache'].join('sub')),
+=======
+        # api.path['cache'] if not specified.
+        luciexe=section_pb2.LUCIExe(cache_dir=api.path['cache'].join('sub')),
+>>>>>>> a897998e ([luciexe] Fix doc string and add more examples for sub_build)
       ):
+      # Command executed:
+      #   `/path/to/run_exe --output [CLEANUP]/build.json --foo bar baz`
       ret = api.sub_build("launch sub build",
-                          ['run_exe', '--foo', 'bar', 'baz'],
+                          [run_exe, '--foo', 'bar', 'baz'],
+                          api.buildbucket.build,
                           output_path=api.path['cleanup'].join('build.json'))
-      # command executed: `run_exe --output [CLEANUP]/build.json --foo bar baz`
-    # access final build proto result of the launched LUCI executable
-    sub_build = ret.step.sub_build
+    sub_build = ret.step.sub_build  # access final build proto result
     ```
 
     Args:

@@ -2946,7 +2946,7 @@ Usage:
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#509)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#523)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
 
 Returns a step dictionary which is compatible with annotator.py.
 
@@ -3104,60 +3104,75 @@ please.
 &emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#414)(self, name, cmd, build, output_path=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
 
 Launch a sub-build by invoking a LUCI executable. All steps in the
-sub-build will appear as child steps of this step (Merge Step).
+    sub-build will appear as child steps of this step (Merge Step).
 
-See protocol: https://go.chromium.org/luci/luciexe
+    See protocol: https://go.chromium.org/luci/luciexe
 
-Example:
+    Example:
 
-```python
-# Ensure the LUCI executable `run_exe` on path
-with api.context(
-    # Change the cwd of the launched LUCI executable
-    cwd=api.path['start_dir'].join('subdir'),
-    # Change the cache_dir of the launched LUCI executable. Defaults to
-    # api.path['cache'] if unchanged.
-    luciexe=sections_pb2.LUCIExe(cache_dir=api.path['cache'].join('sub')),
-  ):
-  ret = api.sub_build("launch sub build",
-                      ['run_exe', '--foo', 'bar', 'baz'],
-                      output_path=api.path['cleanup'].join('build.json'))
-  # command executed: `run_exe --output [CLEANUP]/build.json --foo bar baz`
-# access final build proto result of the launched LUCI executable
-sub_build = ret.step.sub_build
-```
+    ```python
+    run_exe = api.cipd.ensure_tool(...) # Install LUCI executable `run_exe`
 
-Args:
-  * name (str): The name of this step.
-  * cmd (List[int|string|Placeholder|Path]): Same as the `cmd` parameter in
-    `__call__` method except that None is NOT allowed. cmd[0] MUST denote a
-    LUCI executable. The `--output` flag and its value should NOT be
-    provided in the list. It should be provided via keyword arg
-    `output_path` instead.
-  * build (build_pb2.Build): The initial build state that the launched
-    luciexe will start with. This method will clone the input build, modify
-    the clone's fields and pass the clone to luciexe (see 'Invocation'
-    section in http://go.chromium.org/luci/luciexe for what modification
-    will be done).
-  * output_path (None|str|Path): The value of the `--output` flag. If
-    provided, it should be a path to a non-existent file (its directory
-    MUST exist). The extension of the path dictates the encoding format of
-    final build proto (See `EXT_TO_CODEC`). If not provided, the output
-    will be a temp file with binary encoding.
-  * timeout (None|int): Same as the `timeout` parameter in `__call__`
-    method.
-  * step_test_data(Callable[[], recipe_test_api.StepTestData]): Same as the
-    `step_test_data` parameter in `__call__` method.
-  * cost (None|ResourceCost): Same as the `cost` parameter in `__call__`
-    method.
+    # Basic Example: launch `run_exe` with empty initial build and
+    # default options.
+    ret = api.sub_build("launch sub build", [run_exe], build_pb2.Build())
+    sub_build = ret.step.sub_build #  access final build proto result
 
-Returns a `step_data.StepData` for the finished step. The final build proto
-object can be accessed via `ret.step.sub_build`. The build is guaranteed to
-be present (i.e. not None) with a terminal build status.
+    # Example: launch `run_exe` with input build to recipe and customized
+    # output path, cwd and cache directory.
+    with api.context(
+        # Change the cwd of the launched LUCI executable
+        cwd=api.path['start_dir'].join('subdir'),
+        # Change the cache_dir of the launched LUCI executable. Defaults to
+<<<<<<< HEAD
+        # api.path['cache'] if unchanged.
+        luciexe=sections_pb2.LUCIExe(cache_dir=api.path['cache'].join('sub')),
+=======
+        # api.path['cache'] if not specified.
+        luciexe=section_pb2.LUCIExe(cache_dir=api.path['cache'].join('sub')),
+>>>>>>> a897998e ([luciexe] Fix doc string and add more examples for sub_build)
+      ):
+      # Command executed:
+      #   `/path/to/run_exe --output [CLEANUP]/build.json --foo bar baz`
+      ret = api.sub_build("launch sub build",
+                          [run_exe, '--foo', 'bar', 'baz'],
+                          api.buildbucket.build,
+                          output_path=api.path['cleanup'].join('build.json'))
+    sub_build = ret.step.sub_build  # access final build proto result
+    ```
 
-Raises `StepFailure` if the sub-build reports FAILURE status.
-Raises `InfraFailure` if the sub-build reports INFRA_FAILURE or CANCELED
-status.
+    Args:
+      * name (str): The name of this step.
+      * cmd (List[int|string|Placeholder|Path]): Same as the `cmd` parameter in
+        `__call__` method except that None is NOT allowed. cmd[0] MUST denote a
+        LUCI executable. The `--output` flag and its value should NOT be
+        provided in the list. It should be provided via keyword arg
+        `output_path` instead.
+      * build (build_pb2.Build): The initial build state that the launched
+        luciexe will start with. This method will clone the input build, modify
+        the clone's fields and pass the clone to luciexe (see 'Invocation'
+        section in http://go.chromium.org/luci/luciexe for what modification
+        will be done).
+      * output_path (None|str|Path): The value of the `--output` flag. If
+        provided, it should be a path to a non-existent file (its directory
+        MUST exist). The extension of the path dictates the encoding format of
+        final build proto (See `EXT_TO_CODEC`). If not provided, the output
+        will be a temp file with binary encoding.
+      * timeout (None|int): Same as the `timeout` parameter in `__call__`
+        method.
+      * step_test_data(Callable[[], recipe_test_api.StepTestData]): Same as the
+        `step_test_data` parameter in `__call__` method.
+      * cost (None|ResourceCost): Same as the `cost` parameter in `__call__`
+        method.
+
+    Returns a `step_data.StepData` for the finished step. The final build proto
+    object can be accessed via `ret.step.sub_build`. The build is guaranteed to
+    be present (i.e. not None) with a terminal build status.
+
+    Raises `StepFailure` if the sub-build reports FAILURE status.
+    Raises `InfraFailure` if the sub-build reports INFRA_FAILURE or CANCELED
+    status.
+    
 ### *recipe_modules* / [swarming](/recipe_modules/swarming)
 
 [DEPS](/recipe_modules/swarming/__init__.py#8): [buildbucket](#recipe_modules-buildbucket), [cas](#recipe_modules-cas), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [isolated](#recipe_modules-isolated), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
