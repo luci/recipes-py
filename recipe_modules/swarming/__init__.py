@@ -6,16 +6,17 @@ from PB.recipe_modules.recipe_engine.swarming import properties
 
 
 DEPS = [
-  'buildbucket',  # TODO(crbug.com/1122808): Remove this dependency.
-  'cipd',
-  'context',
-  'isolated',
-  'json',
-  'path',
-  'properties',
-  'raw_io',
-  'runtime',
-  'step',
+    'buildbucket',  # TODO(crbug.com/1122808): Remove this dependency.
+    'cas',
+    'cipd',
+    'context',
+    'isolated',
+    'json',
+    'path',
+    'properties',
+    'raw_io',
+    'runtime',
+    'step',
 ]
 
 PROPERTIES = properties.InputProperties
