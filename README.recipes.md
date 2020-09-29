@@ -2716,7 +2716,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#279)(self, cmd, test_id_prefix='', base_variant=None, test_location_base=''):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#279)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None):**
 
 Wraps the command with ResultSink.
 
@@ -2739,6 +2739,9 @@ Args:
       }
   test_location_base (str): the base path to prepend to the test location
     file name with a relative path. The value must start with "//".
+  base_tags (list of (string, string)): tags to attach to all test results
+    reported by cmd. Each element is a tuple of (key, value), and a key
+    may be repeated.
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
 #### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#877)):**

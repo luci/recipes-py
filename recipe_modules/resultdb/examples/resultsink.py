@@ -35,6 +35,13 @@ def RunSteps(api):
     test_location_base='//foo/bar',
   ))
 
+  api.step('test with base_tag', api.resultdb.wrap(
+    ['echo', 'suppose its a test'],
+    base_tags=[
+        ('step_name', 'pre test'),
+    ],
+  ))
+
 def GenTests(api):
   yield api.test(
       'basic',

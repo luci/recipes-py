@@ -280,7 +280,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
            cmd,
            test_id_prefix='',
            base_variant=None,
-           test_location_base=''):
+           test_location_base='',
+           base_tags=None):
     """Wraps the command with ResultSink.
 
     Returns a command that, when executed, runs cmd in a go/result-sink
@@ -302,6 +303,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
           }
       test_location_base (str): the base path to prepend to the test location
         file name with a relative path. The value must start with "//".
+      base_tags (list of (string, string)): tags to attach to all test results
+        reported by cmd. Each element is a tuple of (key, value), and a key
+        may be repeated.
     """
     self.assert_enabled()
     assert isinstance(test_id_prefix, (type(None), str)), test_id_prefix
@@ -310,6 +314,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
     assert isinstance(test_location_base, (type(None), str)), test_location_base
     assert not test_location_base or test_location_base.startswith(
         '//'), test_location_base
+    assert isinstance(base_tags, (type(None), list)), base_tags
 
     ret = ['rdb', 'stream']
 
@@ -321,6 +326,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     if test_location_base:
       ret += ['-test-location-base', test_location_base]
+
+    for k, v in sorted(base_tags or []):
+      ret += ['-tag', '%s:%s' % (k, v)]
 
     ret += ['--'] + list(cmd)
     return ret
