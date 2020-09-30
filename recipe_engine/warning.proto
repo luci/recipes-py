@@ -24,8 +24,10 @@ message Definition {
   // This name should match regex: "^[A-Z][A-Z0-9]*(\_[A-Z0-9]+)*$"
   string name = 1;
 
-  // (optional) Long description of the warning.
-  string description = 2;
+  // (optional) Long description of the warning. Each string will be displayed
+  // as a new line in the console output. Therefore, it is recommended to keep
+  // the length of each string < 78 (80-2; 2 characters are for indentation).
+  repeated string description = 2;
 
   // (optional) The deadline that the warning should be fixed before.
   // Syntax: The deadline must be in ISO 8601 date format (i.e. YYYY-MM-DD)

@@ -362,7 +362,9 @@ def _print_warnings(warning_result, recipe_deps):
     print '*' * 70
     definition = recipe_deps.warning_definitions[warning_name]
     if definition.description:
-      print 'Description: %s' % definition.description
+      print 'Description:'
+      for desc in definition.description:
+        print '  %s' % desc
     if definition.deadline:
       print 'Deadline: %s' % definition.deadline
     print_bug_links(definition)

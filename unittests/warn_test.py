@@ -75,7 +75,7 @@ class TestWarningDefinition(test_env.RecipeEngineUnitTest):
     _validate(simple_definition)
     full_definition = create_definition(
       'FULL_WARNING_NAME',
-      description = 'this is a description',
+      description = ['this is a description',],
       deadline = '2020-12-31',
       monorail_bug = warning_pb.MonorailBug(
         host='bugs.chromium.org', project= 'chromium', id=123456),
@@ -365,7 +365,9 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
       }
       warning {
         name: "MYMODULE_DEPRECATION"
-        description: "my_mod is deprecated. Use other_mod instead."
+        description: "my_mod is deprecated."
+        # Comment goes here
+        description: "Use other_mod instead."
         deadline: "2020-12-31"
         monorail_bug {
           project: "chrome-operations"
@@ -422,7 +424,8 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     \s*WARNING: main/MYMODULE_SWIZZLE_BADARG_USAGE\s*
     \s*Found 2 call sites and 0 import sites\s*
     [\*]{70}
-    Description: The `badarg` argument on my_mod\.swizzle is deprecated\.
+    Description:
+      The `badarg` argument on my_mod\.swizzle is deprecated\.
     Deadline: 2020-01-01
     Bug Link: https://bugs\.chromium\.org/p/chromium/issues/detail\?id=123456
     Call Sites:
@@ -461,7 +464,9 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     \s*WARNING: main/MYMODULE_DEPRECATION\s*
     \s*Found 0 call sites and 2 import sites\s*
     [\*]{70}
-    Description: my_mod is deprecated\. Use other_mod instead\.
+    Description:
+      my_mod is deprecated\.
+      Use other_mod instead\.
     Deadline: 2020-12-31
     Bug Link: https://bugs\.chromium\.org/p/chrome\-operations/issues/detail\?id=654321
     Import Sites:
@@ -494,7 +499,9 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     \s*WARNING: main/MYMODULE_DEPRECATION\s*
     \s*Found 1 call sites and 1 import sites\s*
     [\*]{70}
-    Description: my_mod is deprecated\. Use other_mod instead\.
+    Description:
+      my_mod is deprecated\.
+      Use other_mod instead\.
     Deadline: 2020-12-31
     Bug Link: https://bugs\.chromium\.org/p/chrome\-operations/issues/detail\?id=654321
     Call Sites:
@@ -604,7 +611,9 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
       }
       warning {
         name: "MYMODULE_DEPRECATION"
-        description: "my_mod is deprecated. Use other_mod instead."
+        description: "my_mod is deprecated."
+        # Comment goes here
+        description: "Use other_mod instead."
         deadline: "2020-12-31"
         monorail_bug {
           project: "chrome-operations"
@@ -650,7 +659,9 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     \s*WARNING: upstream/MYMODULE_DEPRECATION\s*
     \s*Found 0 call sites and 1 import sites\s*
     [\*]{70}
-    Description: my_mod is deprecated\. Use other_mod instead\.
+    Description:
+      my_mod is deprecated\.
+      Use other_mod instead\.
     Deadline: 2020-12-31
     Bug Link: https://bugs\.chromium\.org/p/chrome\-operations/issues/detail\?id=654321
     Import Sites:
@@ -659,7 +670,8 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     \s*WARNING: upstream/MYMODULE_SWIZZLE_BADARG_USAGE\s*
     \s*Found 1 call sites and 0 import sites\s*
     [\*]{70}
-    Description: The `badarg` argument on my_mod\.swizzle is deprecated\.
+    Description:
+      The `badarg` argument on my_mod\.swizzle is deprecated\.
     Deadline: 2020-01-01
     Bug Link: https://bugs\.chromium\.org/p/chromium/issues/detail\?id=123456
     Call Sites:
