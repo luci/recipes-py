@@ -322,7 +322,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
       ret += ['-test-id-prefix', test_id_prefix]
 
     for k, v in sorted((base_variant or {}).iteritems()):
-      ret += ['-var', '%s=%s' % (k, v)]
+      ret += ['-var', '%s:%s' % (k, v)]
 
     if test_location_base:
       ret += ['-test-location-base', test_location_base]

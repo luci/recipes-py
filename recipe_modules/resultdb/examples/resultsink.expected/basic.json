@@ -26,9 +26,9 @@
       "rdb",
       "stream",
       "-var",
-      "bucket=ci",
+      "bucket:ci",
       "-var",
-      "builder=linux-rel",
+      "builder:linux-rel",
       "--",
       "echo",
       "suppose its a test"
