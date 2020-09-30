@@ -202,7 +202,7 @@ def checkout_engine(engine_path, repo_root, recipes_cfg_path):
       try:
         os.remove(index_lock)
       except OSError as exc:
-        if exc.errno != errno.EEXIST:
+        if exc.errno != errno.ENOENT:
           logging.warn('failed to remove %r, reset will fail: %s', index_lock,
                        exc)
       _git_check_call(['reset', '-q', '--hard', revision], cwd=engine_path)

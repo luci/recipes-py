@@ -323,7 +323,7 @@ class GitBackend(Backend):
       try:
         os.remove(index_lock)
       except OSError as exc:
-        if exc.errno != errno.EEXIST:
+        if exc.errno != errno.ENOENT:
           LOGGER.warn('failed to remove %r, reset will fail: %s', index_lock, exc)
       self._git('reset', '-q', '--hard', revision)
 
