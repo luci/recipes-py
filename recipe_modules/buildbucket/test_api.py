@@ -49,6 +49,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       priority=30,
       tags=None,
       status=None,
+      experiments=(),
     ):
     """Returns a typical buildbucket CI build scheduled by luci-scheduler."""
     git_repo = git_repo or self._default_git_repo(project)
@@ -73,7 +74,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
                 project=gitiles_project,
                 ref=git_ref,
                 id=revision,
-            )),
+            ),
+            experiments=experiments),
         infra=build_pb2.BuildInfra(
             swarming=build_pb2.BuildInfra.Swarming(priority=priority),
             resultdb=build_pb2.BuildInfra.ResultDB(
@@ -111,6 +113,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       priority=30,
       tags=None,
       status=None,
+      experiments=(),
     ):
     """Emulate typical buildbucket try build scheduled by CQ.
 
@@ -156,7 +159,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         ),
         created_by='user:commit-bot@chromium.org',
         create_time=timestamp_pb2.Timestamp(seconds=1527292217),
-        input=build_pb2.Build.Input(gerrit_changes=gerrit_changes),
+        input=build_pb2.Build.Input(gerrit_changes=gerrit_changes,
+                                    experiments=experiments),
         infra=build_pb2.BuildInfra(
             swarming=build_pb2.BuildInfra.Swarming(priority=priority),
             resultdb=build_pb2.BuildInfra.ResultDB(

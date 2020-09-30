@@ -88,11 +88,36 @@ def GenTests(api):
   )
 
   yield (
+      case('ci with experiment',
+           expected_bucket_v1='luci.test.ci',
+           expected_realm='test:ci')
+      + api.buildbucket.ci_build(
+      project='test',
+      git_repo='git.example.com/test/repo',
+      experiments=['fake.experiment'],
+  )
+      + api.post_process(post_process.DropExpectation)
+  )
+
+  yield (
       case('try', expected_bucket_v1='luci.test.try', expected_realm='test:try')
       + api.buildbucket.try_build(
-          project='test',
-          git_repo='git.example.com/test/repo',
-      )
+      project='test',
+      git_repo='git.example.com/test/repo',
+  )
+      + api.post_process(post_process.DropExpectation)
+  )
+
+  yield (
+      case(
+          'try with experiment',
+          expected_bucket_v1='luci.test.try',
+          expected_realm='test:try')
+      + api.buildbucket.try_build(
+      project='test',
+      git_repo='git.example.com/test/repo',
+      experiments=['fake.experiment'],
+  )
       + api.post_process(post_process.DropExpectation)
   )
 
