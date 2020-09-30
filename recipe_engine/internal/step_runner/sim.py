@@ -10,6 +10,7 @@ from google.protobuf import json_format as jsonpb
 
 from ...recipe_test_api import StepTestData, BaseTestData
 from ...step_data import ExecutionResult
+from ...third_party import luci_context
 from ...types import ResourceCost
 
 from ..engine_env import FakeEnviron
@@ -67,7 +68,12 @@ class SimulationStepRunner(StepRunner):
     self._step_precursor_data[dot_name] = {
       'env_prefixes': step_config.env_prefixes.mapping,
       'env_suffixes': step_config.env_suffixes.mapping,
-      'env': step_config.env,
+      'env': {
+        k: v for k, v in step_config.env.iteritems()
+        # Trim out LUCI_CONTEXT because it's useless information in tests, since
+        # the entire luci_context data is included in the test output.
+        if k.upper() != luci_context.ENV_KEY
+      },
       'infra_step': step_config.infra_step,
       'allow_subannotations': step_config.allow_subannotations,
     }

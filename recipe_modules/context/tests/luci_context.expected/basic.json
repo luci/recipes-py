@@ -20,9 +20,6 @@
       "new",
       "luciexe"
     ],
-    "env": {
-      "LUCI_CONTEXT": "/path/to/lucictx_3.json"
-    },
     "luci_context": {
       "luciexe": {
         "cache_dir": "/path/to/new_cache"
