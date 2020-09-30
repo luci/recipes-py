@@ -683,8 +683,9 @@ it. Figuring out all such recipes or recipe modules requires substantial effort.
 Recipes have a feature, called 'warnings' that allows recipe authors to better
 alert downstream consumers about upcoming breaking changes in a recipe module.
 The recipe engine will issue notifications for all warnings hit during the
-execution of simulation tests (i.e. `./recipes.py test run`). The engine
-groups the notifications by warning names.
+execution of simulation tests (i.e. `recipes.py test run` or
+`recipes.py test train`). The engine groups the notifications by warning
+names.
 
 #### Warnings workflow
 
@@ -701,7 +702,7 @@ repo. `recipes.warnings` is a text proto formatted file of
     warning {
       name: "MYMODULE_SWIZZLE_BADARG_USAGE"
       description: "The `badarg` argument on mymodule.swizzle is deprecated and replaced with swizmod."
-      deadline: "2020/01/01"
+      deadline: "2020-01-01"
       monorail_bug {
         id: 123456
       }
@@ -713,7 +714,10 @@ repo. `recipes.warnings` is a text proto formatted file of
       description: "Use the equivalent MyModule in infra repo instead."
       description: "" # blank line
       description: "MyModule contains infra specific logic."
-      deadline: "2020/12/31"
+      deadline: "2020-12-31"
+      monorail_bug {
+        id: 987654
+      }
       monorail_bug {
         project: "chrome-operations"
         id: 654321
@@ -765,27 +769,31 @@ WARNINGS = [
 If the recipe code within a repo hits any issued warnings, the test summary
 will contain output like:
 
-    ****************************************************************************
-    *           WARNING: depot_tools/MYMODULE_SWIZZLE_BADARG_USAGE             *
-    ****************************************************************************
-    Description: The `badarg` argument on mymodule.swizzle is deprecated and
-      replaced with swizmod
-    Bug Link: https://crbug.com/chromium/123456
-    Deadline: 2020/01/01
+    **********************************************************************
+              WARNING: depot_tools/MYMODULE_SWIZZLE_BADARG_USAGE
+                    Found 5 call sites and 0 import sites
+    **********************************************************************
+    Description:
+      The `badarg` argument on mymodule.swizzle is deprecated and replaced with swizmod
+    Deadline: 2020-01-01
+    Bug Link: https://bugs.chromium.org/p/chromium/issues/detail?id=123456
     Call Sites:
       /path/to/recipe/folder/recipes/A.py:123 (and 234, 456)
       /path/to/recipe/folder/recipe_modules/B/api.py:567 (and 789)
 
-    ****************************************************************************
-    *                WARNING: recipe_engine/MYMODULE_DEPRECATION               *
-    ****************************************************************************
+    **********************************************************************
+                 WARNING: recipe_engine/MYMODULE_DEPRECATION
+                    Found 0 call sites and 2 import sites
+    **********************************************************************
     Description:
       Deprecating MyModule in recipe_engine.
       Use the equivalent MyModule in infra repo instead.
 
       MyModule contains infra specific logic.
-    Bug Link: https://crbug.com/chrome-operations/654321
-    Deadline: 2020/12/31
+    Deadline: 2020-12-31
+    Bug Links:
+      https://bugs.chromium.org/p/chromium/issues/detail?id=987654
+      https://bugs.chromium.org/p/chrome-operations/issues/detail?id=654321
     Import Sites:
       /path/to/recipe/folder/recipes/C.py
       /path/to/recipe/folder/recipe_modules/D/__init__.py
@@ -811,11 +819,15 @@ have declared a dependency on that module.
 
 The recipe engine also provides a way to exclude code in a function from being
 attributed to the call site for certain warnings. This is achieved by applying
-the `@escape_warnings(*warning_regexps)` decorator to that function. For
-example, the following code snippet attributes any warnings beginning with
-`FOO` or ending with `BAR` emitted by `method_contains_warning` to the CALLER
-of `cool_method`, instead of to `cool_method` itself. Note that multiple frames
-in the call stack could be escaped in this fashion, the recipe engine will walk the stack until it finds a frame which is not escaped.
+the `@recipe_api.escape_warnings(*warning_regexps)` decorator to that function.
+Each regex is matched against the fully-qualified name of the issued warning.
+
+For example, the following code snippet attributes warning `FOO` from
+`recipe_engine` repo or any warnings that ends with `BAR` emitted by
+`method_contains_warning` to the CALLER of `cool_method`, instead of to
+`cool_method` itself. Note that multiple frames in the call stack could be
+escaped in this fashion, the recipe engine will walk the stack until it finds a
+frame which is not escaped.
 
 ```python
 from recipe_engine import recipe_api
@@ -824,12 +836,15 @@ class FooApi(recipe_api.RecipeApiPlain):
 
   @original_decorator
   # escape_warnings decorator needs to be the innermost decorator
-  @recipe_api.escape_warnings('^FOO.*$', '^.*BAR$')
+  @recipe_api.escape_warnings('^recipe_engine/FOO$', '^.*BAR$')
   def cool_method(self):
     # warning will be issued in the following call
     self.m.bar.method_contains_warning()
     pass
 ```
+
+There is also a shorthand decorator (`@recipe_api.escape_all_warnings`) which
+escape the decorated function from all warnings.
 
 ##### CLI options
 
