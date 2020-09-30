@@ -299,7 +299,8 @@ def _collect_warning_result(outcome_msg):
 def _print_warnings(warning_result, recipe_deps):
   def print_bug_links(definition):
     def construct_monorail_link(bug):
-      return 'https://%s/%s/%d' % (bug.host, bug.project, bug.id)
+      return 'https://%s/p/%s/issues/detail?id=%d' % (
+          bug.host, bug.project, bug.id)
 
     if definition.monorail_bug:
       if len(definition.monorail_bug) == 1:

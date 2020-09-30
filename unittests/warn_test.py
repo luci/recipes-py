@@ -424,7 +424,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     [\*]{70}
     Description: The `badarg` argument on my_mod\.swizzle is deprecated\.
     Deadline: 2020-01-01
-    Bug Link: https://bugs\.chromium\.org/chromium/123456
+    Bug Link: https://bugs\.chromium\.org/p/chromium/issues/detail\?id=123456
     Call Sites:
     .+/recipe_modules/cool_mod/api\.py:\d+
     .+/recipe_modules/my_mod/tests/bad\.py:3
@@ -463,7 +463,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     [\*]{70}
     Description: my_mod is deprecated\. Use other_mod instead\.
     Deadline: 2020-12-31
-    Bug Link: https://bugs\.chromium\.org/chrome\-operations/654321
+    Bug Link: https://bugs\.chromium\.org/p/chrome\-operations/issues/detail\?id=654321
     Import Sites:
     .+/recipe_modules/my_mod/tests/full\.py
     .+/recipe_modules/cool_mod/__init__\.py
@@ -496,7 +496,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     [\*]{70}
     Description: my_mod is deprecated\. Use other_mod instead\.
     Deadline: 2020-12-31
-    Bug Link: https://bugs\.chromium\.org/chrome\-operations/654321
+    Bug Link: https://bugs\.chromium\.org/p/chrome\-operations/issues/detail\?id=654321
     Call Sites:
     .+/recipe_modules/my_mod/tests/full\.py:3
     Import Sites:
@@ -652,7 +652,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     [\*]{70}
     Description: my_mod is deprecated\. Use other_mod instead\.
     Deadline: 2020-12-31
-    Bug Link: https://bugs\.chromium\.org/chrome\-operations/654321
+    Bug Link: https://bugs\.chromium\.org/p/chrome\-operations/issues/detail\?id=654321
     Import Sites:
     .+/main/recipes/bad\.py
     [\*]{70}
@@ -661,7 +661,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     [\*]{70}
     Description: The `badarg` argument on my_mod\.swizzle is deprecated\.
     Deadline: 2020-01-01
-    Bug Link: https://bugs\.chromium\.org/chromium/123456
+    Bug Link: https://bugs\.chromium\.org/p/chromium/issues/detail\?id=123456
     Call Sites:
     .+/main/recipes/bad\.py:3
     '''.strip('\n'))
