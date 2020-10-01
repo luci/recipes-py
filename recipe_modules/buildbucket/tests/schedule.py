@@ -92,6 +92,14 @@ def GenTests(api):
       experimental=common_pb2.NO,
   )
 
+  yield test(
+      test_name='experiments',
+      experiments={
+          'luci.exp_foo': True,
+          'luci.exp_bar': False,
+      },
+  )
+
   err_batch_res = builds_service_pb2.BatchResponse(
       responses=[
         dict(

@@ -350,6 +350,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       bucket=INHERIT,
       properties=None,
       experimental=INHERIT,
+      experiments=None,
       gitiles_commit=INHERIT,
       gerrit_changes=INHERIT,
       tags=None,
@@ -387,6 +388,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
       Defaults to the value of the current build.
       Read more about
       [`experimental` field](https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q="bool experimental").
+    * experiments (Dict[str, bool]|None): enabled and disabled experiments
+      for the new build. Overrides the result computed from experiments defined
+      in builder config.
     * gitiles_commit (common_pb2.GitilesCommit|INHERIT): input commit.
       Defaults to the input commit of the current build.
       Read more about
@@ -459,6 +463,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
         # If not `INHERIT`, `experimental` must be trinary already, so only
         # pass the parent (boolean) value through `as_trinary`.
         experimental=if_inherit(experimental, as_trinary(b.input.experimental)),
+        experiments=dict(experiments) if experiments else None,
         fields=self._make_field_mask(paths=fields),
     )
 
