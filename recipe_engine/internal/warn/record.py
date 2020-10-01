@@ -110,6 +110,7 @@ class WarningRecorder(object):
       * frames (List[Frame]): List of frames captured at the time the given
         warning is issued.
     """
+    self._validate_warning_name(name)
     # TODO(yiwzhang): update proto to include skip reason and populate
     call_site_frame, _ = self._attribute_call_site(name, frames)
     call_site = CallSite(
@@ -138,6 +139,7 @@ class WarningRecorder(object):
 
     Raise ValueError if the importer is not instance of Recipe or RecipeModule
     """
+    self._validate_warning_name(name)
     if not isinstance(importer, (Recipe, RecipeModule)):
       raise ValueError(
         "Expect importer to be either type %s or %s. Got %s" % (
@@ -150,6 +152,17 @@ class WarningRecorder(object):
     if (import_site not in self._recorded_warnings[name]) and (
         self.import_site_filter(name, import_site.cause_pb)):
         self._recorded_warnings[name].add(import_site)
+
+  def _validate_warning_name(self, name):
+    """Checks whether the given warning name is fully-qualified and defined in
+    the recipe repo.
+    """
+    if '/' not in name:
+      raise ValueError('expected fully-qualified warning name, got %s' % name)
+    if name not in self.recipe_deps.warning_definitions:
+      repo, warning = name.split('/', 1)
+      raise ValueError(
+          'warning "%s" is not defined in recipe repo %s' % (warning, repo))
 
   @cached_property
   def _skip_frame_predicates(self):

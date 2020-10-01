@@ -124,7 +124,11 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
   test_file_path='/path/to/test.py'
   def setUp(self):
     super(TestWarningRecorder, self).setUp()
-    mock_deps = mock.Mock()
+    mock_deps = mock.Mock(
+      warning_definitions={
+        'recipe_engine/SOME_WARNING': warning_pb.Definition()
+      }
+    )
     mock_deps.__class__ = RecipeDeps
     self.recorder = record.WarningRecorder(mock_deps)
     # This test should NOT test the functionality of any predicate
@@ -244,6 +248,39 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
       'recipe_engine/SOME_WARNING', mock_recipe)
     self.assertEqual(1, len(
       self.recorder.recorded_warnings['recipe_engine/SOME_WARNING']))
+
+  def test_record_non_fully_qualified_warning(self):
+    # execution warning
+    with create_test_frames(self.test_file_path) as test_frames:
+      with self.assertRaisesRegexp(
+          ValueError,
+          'expected fully-qualified warning name, got SOME_WARNING'):
+        self.recorder.record_execution_warning('SOME_WARNING', test_frames)
+    # import warning
+    with self.assertRaisesRegexp(
+        ValueError,
+        'expected fully-qualified warning name, got SOME_WARNING'):
+      self.recorder.record_import_warning(
+          'SOME_WARNING',
+          self._create_mock_recipe('test_module:path/to/recipe', 'main_repo'),
+      )
+
+  def test_record_not_defined_execution_warning(self):
+    # execution warning
+    with create_test_frames(self.test_file_path) as test_frames:
+      with self.assertRaisesRegexp(
+          ValueError,
+          'warning "COOL_WARNING" is not defined in recipe repo infra'):
+        self.recorder.record_execution_warning('infra/COOL_WARNING',
+                                               test_frames)
+    # import warning
+    with self.assertRaisesRegexp(
+        ValueError,
+        'warning "COOL_WARNING" is not defined in recipe repo infra'):
+      self.recorder.record_import_warning(
+          'infra/COOL_WARNING',
+          self._create_mock_recipe('test_module:path/to/recipe', 'main_repo'),
+      )
 
   def assert_has_warning(self, warning_name, *causes):
     recorded_warnings = self.recorder.recorded_warnings
@@ -510,6 +547,40 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     .+/recipe_modules/my_mod/tests/full\.py
     '''.strip('\n'))
     self.assertRegexpMatches(output, expected_regexp)
+
+  def test_issue_not_defined_execution_warning(self):
+    with self.deps.main_repo.write_module('my_mod') as mod:
+      mod.DEPS.append('recipe_engine/warning')
+      mod.api.write('''
+        def swizzle(self):
+          self.m.warning.issue('NOT_DEFINED_WARNING')
+      ''')
+    with self.deps.main_repo.write_file(
+        'recipe_modules/my_mod/tests/full.py') as recipe:
+      recipe.write('''
+        DEPS = ['my_mod']
+        def RunSteps(api):
+          api.my_mod.swizzle()
+        def GenTests(api):
+          yield api.test('basic')
+      '''.lstrip('\n'))
+    _, retcode  = self.deps.main_repo.recipes_py('test', 'train')
+    self.assertEqual(retcode, 1)
+
+  def test_issue_not_defined_import_warning(self):
+    with self.deps.main_repo.write_module('my_mod') as mod:
+      mod.WARNINGS.append('NOT_DEFINED_WARNING')
+    with self.deps.main_repo.write_file(
+        'recipe_modules/my_mod/tests/full.py') as recipe:
+      recipe.write('''
+        DEPS = ['my_mod']
+        def RunSteps(api):
+          pass
+        def GenTests(api):
+          yield api.test('basic')
+      '''.lstrip('\n'))
+    _, retcode  = self.deps.main_repo.recipes_py('test', 'train')
+    self.assertEqual(retcode, 1)
 
   def test_consolidate_multiple_call_sites(self):
     with self.deps.main_repo.write_module('my_mod') as mod:
