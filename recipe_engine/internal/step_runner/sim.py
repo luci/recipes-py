@@ -104,6 +104,10 @@ class SimulationStepRunner(StepRunner):
           self._used_steps[dot_name], handle_name)
     return self._used_placeholders[key]
 
+  def write_luci_context(self, section_pb_values):
+    # We ignore this environment variable anyway.
+    return ""
+
   def run(self, name_tokens, debug_log, step):
     del debug_log  # unused
 

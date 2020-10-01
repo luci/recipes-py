@@ -219,14 +219,6 @@ class ContextApi(recipe_api.RecipeApi):
             sections_pb2.Realm(name=realm) if realm else None)
       if section_pb_values:
         _add_to_context('luci_context', section_pb_values, _override)
-        env = {} if env is None else dict(env)
-        if self._test_data.enabled:
-          self._test_counter += 1
-          env[self._lucictx_client.ENV_KEY] = (
-            '/path/to/lucictx_%d.json' % self._test_counter)
-        else: # pragma: no cover
-          env[self._lucictx_client.ENV_KEY] = (
-            self._lucictx_client.new_context(**section_pb_values))
 
       _add_to_context('env_prefixes', env_prefixes, _as_env_prefixes)
 

@@ -6,11 +6,13 @@ import os
 import signal
 import sys
 
+from gevent import subprocess
 import attr
 import gevent
-from gevent import subprocess
 
 from ...step_data import ExecutionResult
+
+from ...third_party import luci_context
 
 from . import StepRunner
 
@@ -152,6 +154,10 @@ class SubprocessStepRunner(StepRunner):
         return candidate
 
     return None
+
+  def write_luci_context(self, section_values):
+    with luci_context.stage(_leak=True, **section_values) as file_path:
+      return file_path
 
   def run(self, name_tokens, debug_log, step):
     proc, gid, pipes = self._mk_proc(step, debug_log)
@@ -301,8 +307,8 @@ class SubprocessStepRunner(StepRunner):
           'finished waiting for process, retcode %r' % ret.retcode)
 
       # TODO(iannucci): Make leaking subprocesses explicit (e.g. goma compiler
-      # daemon). Better, change deamons to be owned by a gevent Greenlet (so that
-      # we don't need to leak processes ever).
+      # daemon). Better, change deamons to be owned by a gevent Greenlet (so
+      # that we don't need to leak processes ever).
       #
       # _kill(proc, gid)  # In case of leaked subprocesses or timeout.
       if ret.retcode is None:
