@@ -290,7 +290,7 @@ class WarningClient(object):
         not isinstance(recorder, record.WarningRecorder)):
       raise ValueError('Expected either an instance of WarningRecorder '
                        'or NULL_WARNING_RECORDER sentinel. Got type '
-                       '(%s): %r' % (type(self._recorder), self._recorder))
+                       '(%s): %r' % (type(recorder), recorder))
     self._recorder = recorder
     # A repo may locate inside another repo (e.g. generally, deps repos are
     # inside main repo). So we should start with the repo with the longest
