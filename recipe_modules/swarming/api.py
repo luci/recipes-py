@@ -1337,12 +1337,13 @@ class SwarmingApi(recipe_api.RecipeApi):
     assert requests
     assert self._server
 
+    requests_dict = {'requests': [req.to_jsonish() for req in requests]}
     cmd = [
         'spawn-tasks',
         '-server',
         self._server,
         '-json-input',
-        self.m.json.input({'requests': [req.to_jsonish() for req in requests]}),
+        self.m.json.input(requests_dict),
         '-json-output',
         self.m.json.output(),
     ]
@@ -1366,6 +1367,8 @@ class SwarmingApi(recipe_api.RecipeApi):
     metadata_objs.sort(key=lambda obj: obj.name)
     for obj in metadata_objs:
       step.presentation.links['task UI: %s' % obj.name] = obj.task_ui_link
+    step.presentation.logs['json.input'] = self.m.json.dumps(
+        requests_dict, indent=2)
 
     return metadata_objs
 
