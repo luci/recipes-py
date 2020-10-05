@@ -436,13 +436,8 @@ class StepApi(recipe_api.RecipeApiPlain):
         # Change the cwd of the launched LUCI executable
         cwd=api.path['start_dir'].join('subdir'),
         # Change the cache_dir of the launched LUCI executable. Defaults to
-<<<<<<< HEAD
         # api.path['cache'] if unchanged.
         luciexe=sections_pb2.LUCIExe(cache_dir=api.path['cache'].join('sub')),
-=======
-        # api.path['cache'] if not specified.
-        luciexe=section_pb2.LUCIExe(cache_dir=api.path['cache'].join('sub')),
->>>>>>> a897998e ([luciexe] Fix doc string and add more examples for sub_build)
       ):
       # Command executed:
       #   `/path/to/run_exe --output [CLEANUP]/build.json --foo bar baz`
