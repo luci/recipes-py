@@ -57,7 +57,7 @@ class TaskRequest(object):
   # Initialize a TaskSlice for the fallback, that expires after 58 minutes.
   slice_cold_cache = (request.slice[0].
       with_command(['echo', 'hello']).
-      with_dimensions({'pool': 'my.pool', 'os': 'Debian'}).
+      with_dimensions(pool='my.pool', os='Debian').
       with_isolated('606d94add94223636ee516c6bc9918f937823ccc').
       with_expiration_secs(60*60-2*60).
       with_io_timeout_secs(600).
@@ -65,7 +65,7 @@ class TaskRequest(object):
   )
   # Create a second TaskSlice for the warm cache, that expires after 2 minutes.
   slice_warm_cache = (slice_cold_cache.
-      with_dimensions({'caches': 'vm_image'}).
+      with_dimensions(caches='vm_image').
       with_expiration_secs(2*60)
   )
   # Setup the warm cache first, fallback to the cold cache after. The total task
@@ -330,7 +330,7 @@ class TaskRequest(object):
     ```
     slice = (request[-1].
       with_command(['echo', 'hello']).
-      with_dimensions({'pool': 'my.pool', 'os': 'Debian'}).
+      with_dimensions(pool='my.pool', os='Debian').
       with_isolated('606d94add94223636ee516c6bc9918f937823ccc').
       with_expiration_secs(3600).
       with_io_timeout_secs(600)
