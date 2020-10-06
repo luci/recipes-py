@@ -135,15 +135,6 @@ class StepRunner(object):
     """
     return cmd0
 
-  def write_luci_context(self, section_values):
-    """Writes a mapping of str->dict to disk (as a temp file), returning that
-    path.
-
-    `section_values` represents the 'diff' against LUCI_CONTEXT for the
-    recipe engine process. The standard LUCI_CONTEXT merge rules should apply.
-    """
-    raise NotImplementedError()
-
   def run(self, name_tokens, debug_log, step):
     """Runs the step defined by step_config.
 

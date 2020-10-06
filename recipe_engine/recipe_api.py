@@ -20,6 +20,7 @@ import attr
 
 from six import iteritems
 from google.protobuf import message
+from google.protobuf import json_format as jsonpb
 
 from .config_types import Path
 from .internal import engine_step
@@ -107,6 +108,26 @@ class LUCIContextClient(object):
 
   initial_context = attr.ib(validator=attr_dict_type(str, (dict, FrozenDict)),
                             factory=dict, converter=freeze)
+
+  def new_context(self, **section_pb_values):
+    """Creates a new LUCI_CONTEXT file with the provided section values, all
+    unmentioned sections in the current context will be copied over. The
+    environment variable will NOT not be switched to the newly created context.
+
+    Args:
+      * section_pb_values (Dict[str, message.Message]) - A mapping of
+        section_key to the new message value for that section. If the value
+        is None, the corresponding section will be removed from the context.
+
+    Returns the path (str) to the newly created LUCI_CONTEXT file. Returns None
+    if section_pb_values is empty (i.e. No change to current context).
+    """
+    section_values = {
+      key: jsonpb.MessageToDict(pb_val) if pb_val is not None else None
+      for key, pb_val in iteritems(section_pb_values)
+    }
+    with luci_context.stage(_leak=True, **section_values) as file_path:
+      return file_path
 
 
 class PathsClient(object):

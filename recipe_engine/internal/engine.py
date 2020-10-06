@@ -15,7 +15,6 @@ from contextlib import contextmanager
 import attr
 import gevent
 import gevent.local
-import six
 
 from google.protobuf import json_format as jsonpb
 from pympler import summary, tracker
@@ -29,7 +28,6 @@ from .. import util
 from ..step_data import StepData, ExecutionResult
 from ..types import StepPresentation, thaw
 from ..types import PerGreenletState, PerGreentletStateRegistry
-from ..third_party import luci_context
 
 from .engine_env import merge_envs
 from .exceptions import RecipeUsageError, CrashEngine
@@ -117,8 +115,8 @@ class RecipeEngine(object):
   """
 
   def __init__(self, recipe_deps, step_runner, stream_engine, warning_recorder,
-               properties, environ, start_dir, initial_luci_context,
-               num_logical_cores, memory_mb):
+               properties, environ, start_dir, luci_context, num_logical_cores,
+               memory_mb):
     """See run_steps() for parameter meanings."""
     self._recipe_deps = recipe_deps
     self._step_runner = step_runner
@@ -131,7 +129,7 @@ class RecipeEngine(object):
         recipe_api.ConcurrencyClient(
             stream_engine.supports_concurrency,
             self.spawn_greenlet),
-        recipe_api.LUCIContextClient(initial_luci_context),
+        recipe_api.LUCIContextClient(luci_context),
         recipe_api.PathsClient(start_dir),
         recipe_api.PropertiesClient(properties),
         recipe_api.StepClient(self),
@@ -474,7 +472,7 @@ class RecipeEngine(object):
 
   @classmethod
   def run_steps(cls, recipe_deps, properties, stream_engine, step_runner,
-                warning_recorder, environ, cwd, initial_luci_context,
+                warning_recorder, environ, cwd, luci_context,
                 num_logical_cores, memory_mb,
                 emit_initial_properties=False, test_data=None,
                 skip_setup_build=False):
@@ -493,8 +491,8 @@ class RecipeEngine(object):
       * environ: The mapping object representing the environment in which
         recipe runs. Generally obtained via `os.environ`.
       * cwd (str): The current working directory to run the recipe.
-      * initial_luci_context (Dict[str, Dict]): The content of LUCI_CONTEXT to
-        pass to the recipe.
+      * luci_context (Dict[str, Dict]): The content of LUCI_CONTEXT to pass
+        to the recipe.
       * num_logical_cores (int): The number of logical CPU cores to assume the
         machine has.
       * memory_mb (int): The amount of memory to assume the machine has, in MiB.
@@ -526,8 +524,7 @@ class RecipeEngine(object):
 
       engine = cls(
           recipe_deps, step_runner, stream_engine, warning_recorder,
-          properties, environ, cwd, initial_luci_context, num_logical_cores,
-          memory_mb)
+          properties, environ, cwd, luci_context, num_logical_cores, memory_mb)
       api = recipe_obj.mk_api(engine, test_data)
       engine.initialize_path_client_HACK(api)
     except (RecipeUsageError, ImportError, AssertionError) as ex:
@@ -768,25 +765,16 @@ def _render_config(debug, name_tokens, step_config, step_runner, step_stream,
       pathsep)
   env.update(step_stream.env_vars)
 
-  if step_config.luci_context:
-    debug.write_line('writing LUCI_CONTEXT file')
-    lctx_file = step_runner.write_luci_context({
-      key: jsonpb.MessageToDict(pb_val) if pb_val is not None else None
-      for key, pb_val in six.iteritems(step_config.luci_context)
-    })
-    debug.write_line('  done: %r' % (lctx_file,))
-    env[luci_context.ENV_KEY] = lctx_file
-
   debug.write_line('checking cwd: %r' % (step_config.cwd,))
   cwd = step_config.cwd or start_dir
   if not step_runner.isabs(name_tokens, cwd):
-    debug.write_line('  not absolute: %r' % (cwd,))
+    debug.write_line('  not absolute: %r' % (cwd))
     return None
   if not step_runner.isdir(name_tokens, cwd):
-    debug.write_line('  not a directory: %r' % (cwd,))
+    debug.write_line('  not a directory: %r' % (cwd))
     return None
   if not step_runner.access(name_tokens, cwd, os.R_OK):
-    debug.write_line('  no read perms: %r' % (cwd,))
+    debug.write_line('  no read perms: %r' % (cwd))
     return None
 
   path = env.get('PATH', '').split(pathsep)
