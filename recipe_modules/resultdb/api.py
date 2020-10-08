@@ -281,7 +281,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
            test_id_prefix='',
            base_variant=None,
            test_location_base='',
-           base_tags=None):
+           base_tags=None,
+           coerce_negative_duration=False):
     """Wraps the command with ResultSink.
 
     Returns a command that, when executed, runs cmd in a go/result-sink
@@ -306,6 +307,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
       base_tags (list of (string, string)): tags to attach to all test results
         reported by cmd. Each element is a tuple of (key, value), and a key
         may be repeated.
+      coerce_negative_duration (bool): If true, negative duration values will
+        be coerced to 0. If false, tests results with negative duration values
+        will be rejected with an error.
     """
     self.assert_enabled()
     assert isinstance(test_id_prefix, (type(None), str)), test_id_prefix
@@ -315,7 +319,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
     assert not test_location_base or test_location_base.startswith(
         '//'), test_location_base
     assert isinstance(base_tags, (type(None), list)), base_tags
-
+    assert isinstance(coerce_negative_duration, bool), coerce_negative_duration
     ret = ['rdb', 'stream']
 
     if test_id_prefix:
@@ -329,6 +333,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     for k, v in sorted(base_tags or []):
       ret += ['-tag', '%s:%s' % (k, v)]
+
+    if coerce_negative_duration:
+      ret += ['-coerce-negative-duration']
 
     ret += ['--'] + list(cmd)
     return ret

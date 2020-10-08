@@ -60,6 +60,17 @@
     "name": "test with base_tag"
   },
   {
+    "cmd": [
+      "rdb",
+      "stream",
+      "-coerce-negative-duration",
+      "--",
+      "echo",
+      "suppose its a test"
+    ],
+    "name": "test with corece_negative_duration"
+  },
+  {
     "name": "$result"
   }
 ]

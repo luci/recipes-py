@@ -2719,7 +2719,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#279)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#279)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False):**
 
 Wraps the command with ResultSink.
 
@@ -2745,6 +2745,9 @@ Args:
   base_tags (list of (string, string)): tags to attach to all test results
     reported by cmd. Each element is a tuple of (key, value), and a key
     may be repeated.
+  coerce_negative_duration (bool): If true, negative duration values will
+    be coerced to 0. If false, tests results with negative duration values
+    will be rejected with an error.
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
 #### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#856)):**

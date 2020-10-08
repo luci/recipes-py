@@ -42,6 +42,12 @@ def RunSteps(api):
     ],
   ))
 
+  api.step('test with corece_negative_duration', api.resultdb.wrap(
+    ['echo', 'suppose its a test'],
+    coerce_negative_duration=True,
+  ))
+
+
 def GenTests(api):
   yield api.test(
       'basic',
