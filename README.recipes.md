@@ -1962,19 +1962,19 @@ The main interface this module provides is a direct call to the led binary:
 
 See the led binary for full documentation of commands.
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/led/api.py#141)(self, \*cmd):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/led/api.py#145)(self, \*cmd):**
 
 Runs led with the given arguments. Wraps result in a `LedResult`.
 
-&emsp; **@property**<br>&mdash; **def [cipd\_input](/recipe_modules/led/api.py#128)(self):**
+&emsp; **@property**<br>&mdash; **def [cipd\_input](/recipe_modules/led/api.py#132)(self):**
 
 The versioned CIPD package containing the recipes code being run.
 
 If set, it will be an `InputProperties.CIPDInput` protobuf; otherwise None.
 
-&mdash; **def [initialize](/recipe_modules/led/api.py#90)(self):**
+&mdash; **def [initialize](/recipe_modules/led/api.py#94)(self):**
 
-&mdash; **def [inject\_input\_recipes](/recipe_modules/led/api.py#145)(self, led_result):**
+&mdash; **def [inject\_input\_recipes](/recipe_modules/led/api.py#149)(self, led_result):**
 
 Sets the version of recipes used by led to correspond to the version
 currently being used.
@@ -1986,18 +1986,18 @@ Args:
   led_result: The `LedResult` whose job.Definition will be passed into the
     edit command.
 
-&emsp; **@property**<br>&mdash; **def [isolated\_input](/recipe_modules/led/api.py#119)(self):**
+&emsp; **@property**<br>&mdash; **def [isolated\_input](/recipe_modules/led/api.py#123)(self):**
 
 The location of the isolate containing the recipes code being run.
 
 If set, it will be an `InputProperties.IsolatedInput` protobuf;
 otherwise, None.
 
-&emsp; **@property**<br>&mdash; **def [launched\_by\_led](/recipe_modules/led/api.py#106)(self):**
+&emsp; **@property**<br>&mdash; **def [launched\_by\_led](/recipe_modules/led/api.py#110)(self):**
 
 Whether the current build is a led job.
 
-&emsp; **@property**<br>&mdash; **def [run\_id](/recipe_modules/led/api.py#111)(self):**
+&emsp; **@property**<br>&mdash; **def [run\_id](/recipe_modules/led/api.py#115)(self):**
 
 A unique string identifier for this led job.
 

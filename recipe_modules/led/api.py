@@ -33,6 +33,10 @@ class LedApi(recipe_api.RecipeApi):
     swarming_hostname = attr.ib()
     task_id = attr.ib()
 
+    @property
+    def swarming_task_url(self):
+      return 'https://%s/task?id=%s' % (self.swarming_hostname, self.task_id)
+
   class LedResult(object):
     """Holds the result of a led operation. Can be chained using |then|."""
 
@@ -286,8 +290,7 @@ class LedApi(recipe_api.RecipeApi):
       retval = self.LedLaunchData(
           swarming_hostname=result.stdout['swarming']['host_name'],
           task_id=result.stdout['swarming']['task_id'])
-      result.presentation.links['Swarming task'] = 'https://%s/task?id=%s' % (
-          retval.swarming_hostname, retval.task_id)
+      result.presentation.links['Swarming task'] = retval.swarming_task_url
     else:
       retval = result.stdout
 
