@@ -426,6 +426,8 @@ class TaskRequest(object):
       assert isinstance(isolated, basestring)
       assert not self._cas_input_root, (
           "both cas_input_root and isolated cannot be specified")
+      assert '/' not in isolated, ("isolated should not have '/': %s" %
+                                   isolated)
       ret = self._copy()
       ret._isolated = isolated
       return ret
