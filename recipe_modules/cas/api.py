@@ -3,6 +3,8 @@
 # that can be found in the LICENSE file.
 """API for interacting with cas client."""
 
+import os
+
 from recipe_engine import recipe_api
 
 # Take revision from
@@ -29,10 +31,12 @@ class CasApi(recipe_api.RecipeApi):
     if self._instance:
       return self._instance
 
-    # Extract default instance from swarming task env.
-    # See https://chromium.googlesource.com/infra/luci/luci-py/+/1c201e5909b61b859b82d16cfff15267d1c0efea/appengine/swarming/doc/Magic-Values.md#client-tool-environment-variables
-    swarming_server = self.m.context.env.get(
-        'SWARMING_SERVER', 'https://example-cas-server.appspot.com')
+    if self._test_data.enabled:
+      swarming_server= 'https://example-cas-server.appspot.com'
+    else: # pragma: no cover
+      # Extract default instance from swarming task env.
+      # See https://chromium.googlesource.com/infra/luci/luci-py/+/1c201e5909b61b859b82d16cfff15267d1c0efea/appengine/swarming/doc/Magic-Values.md#client-tool-environment-variables
+      swarming_server = os.environ['SWARMING_SERVER']
     default_instance = swarming_server[len('https://'):-len('.appspot.com')]
 
     self._instance = self._props.instance or default_instance
