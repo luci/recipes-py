@@ -20,16 +20,26 @@ class CasApi(recipe_api.RecipeApi):
     e.g. `projects/<project name>/instances/<instance name>`.
     """
     super(CasApi, self).__init__(**kwargs)
-    default_instance = None
-    if self._test_data.enabled:
-      default_instance = 'example-cas-server'
-    self._instance = props.instance or default_instance
+
+    self._props = props
+    self._instance = None
+
+  @property
+  def instance(self):
+    if self._instance:
+      return self._instance
+
+    # Extract default instance from swarming task env.
+    # See https://chromium.googlesource.com/infra/luci/luci-py/+/1c201e5909b61b859b82d16cfff15267d1c0efea/appengine/swarming/doc/Magic-Values.md#client-tool-environment-variables
+    swarming_server = self.m.context.env.get(
+        'SWARMING_SERVER', 'https://example-cas-server.appspot.com')
+    default_instance = swarming_server[len('https://'):-len('.appspot.com')]
+
+    self._instance = self._props.instance or default_instance
     if self._instance and '/' not in self._instance:
       # Set full instance name if only project ID is given.
       self._instance = 'projects/%s/instances/default_instance' % self._instance
 
-  @property
-  def instance(self):
     return self._instance
 
   @property
@@ -67,7 +77,7 @@ class CasApi(recipe_api.RecipeApi):
     cmd = [
         'download',
         '-cas-instance',
-        self._instance,
+        self.instance,
         '-digest',
         digest,
         '-dir',
@@ -91,7 +101,7 @@ class CasApi(recipe_api.RecipeApi):
     cmd = [
         'archive',
         '-cas-instance',
-        self._instance,
+        self.instance,
         '-dump-digest',
         self.m.raw_io.output_text(),
     ]

@@ -6,6 +6,7 @@ from PB.recipe_modules.recipe_engine.cas import properties
 
 DEPS = [
     'cipd',
+    'context',
     'path',
     'properties',
     'raw_io',
