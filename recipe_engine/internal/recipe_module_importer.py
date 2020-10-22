@@ -122,7 +122,7 @@ class RecipeModuleImporter(object):
     repo_name = toks[1]
     repo = self._recipe_deps.repos[repo_name]
     if len(toks) == 2:
-      mod.__file__ = os.path.join(repo.recipes_root_path, 'recipe_modules')
+      mod.__file__ = repo.modules_dir
       mod.__path__ = [mod.__file__]
       mod.__package__ = fullname
       return mod

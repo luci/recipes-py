@@ -110,8 +110,7 @@ def _cleanup_pyc(recipe_deps):
     * recipe_deps (RecipeDeps) - The loaded recipe dependencies.
   """
   for repo in recipe_deps.repos.itervalues():
-    for relpath in ('recipes', 'recipe_modules'):
-      to_walk = os.path.join(repo.recipes_root_path, relpath)
+    for to_walk in (repo.recipes_dir, repo.modules_dir):
       for root, _dirs, files in OS_WALK(to_walk):
         for fname in files:
           if not fname.endswith('.pyc'):

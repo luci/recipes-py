@@ -315,9 +315,8 @@ def _cover_all_imports(main_repo):
     # from.
     return coverage.CoverageData()
 
-  mod_dir_base = os.path.join(main_repo.recipes_root_path, 'recipe_modules')
   cov = coverage.Coverage(config_file=False, include=[
-    os.path.join(mod_dir_base, '*', '*.py')
+    os.path.join(main_repo.modules_dir, '*', '*.py')
   ])
   cov.start()
   for module in main_repo.modules.itervalues():

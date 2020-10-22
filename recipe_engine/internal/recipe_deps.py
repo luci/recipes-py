@@ -308,6 +308,16 @@ class RecipeRepo(object):
         patterns.append(os.path.join(mod.path, '*.py'))
     return frozenset(patterns)
 
+  @cached_property
+  def recipes_dir(self):
+    """Returns the absolute path to this repo's recipes directory."""
+    return os.path.join(self.recipes_root_path, 'recipes')
+
+  @cached_property
+  def modules_dir(self):
+    """Returns the absolute path to this repo's recipe modules directory."""
+    return os.path.join(self.recipes_root_path, 'recipe_modules')
+
   @classmethod
   def create(cls, recipe_deps, path, backend=None, simple_cfg=None):
     """Creates a RecipeRepo.
@@ -334,12 +344,11 @@ class RecipeRepo(object):
     modules = {}
     recipes = {}
 
-    mods_path = os.path.join(ret.recipes_root_path, 'recipe_modules')
-    if not os.path.isdir(mods_path):
-      LOG.warn('ignoring %r: not a directory', mods_path)
+    if not os.path.isdir(ret.modules_dir):
+      LOG.warn('ignoring %r: not a directory', ret.modules_dir)
     else:
-      for entry_name in os.listdir(mods_path):
-        possible_mod_path = os.path.join(mods_path, entry_name)
+      for entry_name in os.listdir(ret.modules_dir):
+        possible_mod_path = os.path.join(ret.modules_dir, entry_name)
         if (os.path.isdir(possible_mod_path) and
             os.path.isfile(os.path.join(possible_mod_path, '__init__.py'))):
           mod = RecipeModule.create(ret, entry_name)
@@ -350,8 +359,7 @@ class RecipeRepo(object):
           LOG.warn('ignoring %r: not a directory or missing __init__.py',
                    possible_mod_path)
 
-    recipes_path = os.path.join(ret.recipes_root_path, 'recipes')
-    for recipe_name in _scan_recipe_directory(recipes_path):
+    for recipe_name in _scan_recipe_directory(ret.recipes_dir):
       recipes[recipe_name] = Recipe(
         ret,
         recipe_name,
@@ -397,8 +405,7 @@ class RecipeModule(object):
   @cached_property
   def path(self):
     """The absolute path to the directory for this recipe module."""
-    return os.path.join(
-      self.repo.recipes_root_path, 'recipe_modules', self.name)
+    return os.path.join(self.repo.modules_dir, self.name)
 
   @cached_property
   def relpath(self):
@@ -522,7 +529,7 @@ class Recipe(object):
     if self.module:
       ret = os.path.join(self.module.path, native_name.split(':', 1)[1])
     else:
-      ret = os.path.join(self.repo.recipes_root_path, 'recipes', native_name)
+      ret = os.path.join(self.repo.recipes_dir, native_name)
     return ret + '.py'
 
   @cached_property
