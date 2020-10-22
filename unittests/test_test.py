@@ -737,6 +737,16 @@ class TestRun(Common):
         self._outcome_json(
             unused_expects=['recipes/foo.expected/unused.json']))
 
+  def test_unused_expectation_file_from_deleted_recipe(self):
+    expectation_file = 'recipes/deleted.expected/stale.json'
+    with self.main.write_file(expectation_file):
+      pass
+    self.assertTrue(self.main.is_file(expectation_file))
+    self.assertDictEqual(
+        self._run_test('run', should_fail=True).data,
+        self._outcome_json(
+            per_test={}, coverage=0, unused_expects=[expectation_file]))
+
   def test_drop_expectation(self):
     with self.main.write_recipe('foo') as recipe:
       recipe.GenTests.write('''
@@ -980,6 +990,29 @@ class TestTrain(Common):
     result = self._run_test('train')
     self.assertFalse(self.main.exists(expectation_file))
     self.assertDictEqual(result.data, self._outcome_json())
+
+  def test_unused_expectation_file_with_filter(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.GenTests.write('yield api.test("basic")')
+    with self.main.write_recipe('bar') as recipe:
+      recipe.expectation['unused'] = []
+      expectation_file = os.path.join(recipe.expect_path, 'unused.json')
+    self.assertTrue(self.main.is_file(expectation_file))
+    result = self._run_test('train', '--filter', 'foo.basic')
+    self.assertDictEqual(result.data, self._outcome_json(coverage=0))
+    # Even though the expectation file is unused, we should ignore it (don't
+    # delete it) if its recipe isn't included in the filter.
+    self.assertTrue(self.main.is_file(expectation_file))
+
+  def test_unused_expectation_file_from_deleted_recipe(self):
+    expectation_file = 'recipes/deleted.expected/stale.json'
+    with self.main.write_file(expectation_file):
+      pass
+    self.assertTrue(self.main.is_file(expectation_file))
+    result = self._run_test('train')
+    self.assertFalse(self.main.exists(expectation_file))
+    self.assertDictEqual(result.data,
+                         self._outcome_json(per_test={}, coverage=0))
 
   def test_drop_expectation(self):
     with self.main.write_recipe('foo') as recipe:

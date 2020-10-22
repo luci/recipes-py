@@ -33,6 +33,7 @@ respectively).
 All DEPS evaluation is also handled in this file.
 """
 
+import fnmatch
 import importlib
 import logging
 import os
@@ -317,6 +318,27 @@ class RecipeRepo(object):
   def modules_dir(self):
     """Returns the absolute path to this repo's recipe modules directory."""
     return os.path.join(self.recipes_root_path, 'recipe_modules')
+
+  @property
+  def expectation_paths(self):
+    """Returns absolute paths to all expectation files.
+
+    Includes even unused expectation files that don't have an associated
+    test case or recipe.
+    """
+    expectation_pattern = os.path.join('**', '*.expected', '*.json')
+
+    # This can be replaced by glob.glob(..., recursive=True) in Python 3.
+    def find_expectations(directory):
+      for path, _, files in os.walk(os.path.abspath(directory)):
+        relpaths = [os.path.join(path, f) for f in files]
+        for filename in fnmatch.filter(relpaths, expectation_pattern):
+          yield os.path.join(path, filename)
+
+    paths = []
+    paths.extend(find_expectations(self.recipes_dir))
+    paths.extend(find_expectations(self.modules_dir))
+    return paths
 
   @classmethod
   def create(cls, recipe_deps, path, backend=None, simple_cfg=None):

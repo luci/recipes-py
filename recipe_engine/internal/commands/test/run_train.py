@@ -79,11 +79,19 @@ def _push_tests(test_filters, is_train, main_repo, description_queue,
         ))
     gevent.sleep()  # let any blocking threads pick this up
 
+  # If filters are enabled, we'll only clean up expectation files for recipes
+  # that are included by the filter.
+  if not test_filters:
+    unused_expectation_files.update(main_repo.expectation_paths)
+
   # Handle recent fails first
   deferred_tests = []
   for recipe in main_repo.recipes.itervalues():
     if not recipe_filter(recipe.name):
       continue
+
+    if test_filters:
+      unused_expectation_files.update(recipe.expectation_paths)
 
     if is_train:
       # Try to make the expectation dir.
@@ -107,8 +115,6 @@ def _push_tests(test_filters, is_train, main_repo, description_queue,
       print "USER CODE ERROR:"
       print "Crashed while running GenTests from recipe %r" % (recipe.name,)
       raise
-
-    unused_expectation_files |= recipe.expectation_paths
 
   # Test any non-recently-failed cases
   for deferred_test in deferred_tests:
