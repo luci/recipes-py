@@ -315,9 +315,9 @@ def _cover_all_imports(main_repo):
     # from.
     return coverage.CoverageData()
 
-  cov = coverage.Coverage(config_file=False, include=[
-    os.path.join(main_repo.modules_dir, '*', '*.py')
-  ])
+  cov = coverage.Coverage(
+      config_file=False,
+      include=[os.path.join(main_repo.modules_dir, '*', '*.py')])
   cov.start()
   for module in main_repo.modules.itervalues():
     # Allow exceptions to raise here; they'll be reported as a 'global'

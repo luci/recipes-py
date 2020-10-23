@@ -747,6 +747,17 @@ class TestRun(Common):
         self._outcome_json(
             per_test={}, coverage=0, unused_expects=[expectation_file]))
 
+  def test_ignores_expectation_files_in_invalid_directories(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.GenTests.write('yield api.test("basic")')
+    # Some recipe repos use expectation files to test their resource scripts,
+    # and we shouldn't consider those to be recipe expectation files.
+    expectation_file = 'recipe_modules/foo/resources/bar/baz.expected/quux.json'
+    with self.main.write_file(expectation_file):
+      pass
+    self.assertTrue(self.main.is_file(expectation_file))
+    self.assertDictEqual(self._run_test('run').data, self._outcome_json())
+
   def test_drop_expectation(self):
     with self.main.write_recipe('foo') as recipe:
       recipe.GenTests.write('''

@@ -33,10 +33,10 @@ respectively).
 All DEPS evaluation is also handled in this file.
 """
 
-import fnmatch
 import importlib
 import logging
 import os
+import re
 import sys
 
 from collections import namedtuple
@@ -69,6 +69,8 @@ from .warn.definition import (parse_warning_definitions,
 
 LOG = logging.getLogger(__name__)
 
+# Subdirectories of a recipe module that may contain recipes.
+MODULE_RECIPE_SUBDIRS = ('tests', 'examples', 'run')
 
 
 @attr.s(frozen=True)
@@ -326,18 +328,37 @@ class RecipeRepo(object):
     Includes even unused expectation files that don't have an associated
     test case or recipe.
     """
-    expectation_pattern = os.path.join('**', '*.expected', '*.json')
 
     # This can be replaced by glob.glob(..., recursive=True) in Python 3.
-    def find_expectations(directory):
-      for path, _, files in os.walk(os.path.abspath(directory)):
-        relpaths = [os.path.join(path, f) for f in files]
-        for filename in fnmatch.filter(relpaths, expectation_pattern):
-          yield os.path.join(path, filename)
+    def find_expectations(directory, pattern):
+      regex = re.compile(pattern)
+      for path, dirs, files in os.walk(
+          os.path.abspath(directory), topdown=True):
+        dirs[:] = [d for d in dirs if not d.endswith('.resources')]
+        for basename in files:
+          abspath = os.path.join(path, basename)
+          relpath = os.path.relpath(abspath, directory)
+          if regex.match(relpath):
+            yield abspath
 
     paths = []
-    paths.extend(find_expectations(self.recipes_dir))
-    paths.extend(find_expectations(self.modules_dir))
+    sep = re.escape(os.path.sep)
+    recipe_expectation_pattern = sep.join([
+        # Recipes can lie at any nesting level.
+        r'.+\.expected',
+        # Expectation files must be in the root of a '*.expected' directory.
+        r'[^%s]+\.json$' % sep,
+    ])
+    paths.extend(
+        find_expectations(self.recipes_dir, recipe_expectation_pattern))
+    paths.extend(
+        find_expectations(
+            self.modules_dir,
+            sep.join([
+                r'[^%s]+' % sep,
+                r'(%s)' % r'|'.join(MODULE_RECIPE_SUBDIRS),
+                recipe_expectation_pattern,
+            ])))
     return paths
 
   @classmethod
@@ -502,7 +523,7 @@ class RecipeModule(object):
 
     recipes = {}
 
-    for subdir_name in ('tests', 'examples', 'run'):
+    for subdir_name in MODULE_RECIPE_SUBDIRS:
       subdir = os.path.join(ret.path, subdir_name)
       if os.path.isdir(subdir):
         for recipe_name in _scan_recipe_directory(subdir):
