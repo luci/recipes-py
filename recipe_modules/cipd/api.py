@@ -301,7 +301,7 @@ class CIPDApi(recipe_api.RecipeApi):
       return self.m.step(name, cmd, step_test_data=step_test_data)
     except self.m.step.StepFailure:
       step_result = self.m.step.active_result
-      if 'error' in step_result.json.output:
+      if step_result.json.output and 'error' in step_result.json.output:
         raise self.Error(name, step_result.json.output['error'])
       else:  # pragma: no cover
         raise
