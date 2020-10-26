@@ -5,21 +5,22 @@
 import os
 import signal
 import sys
+import time
 
 from gevent import subprocess
 import attr
 import gevent
 
 from ...step_data import ExecutionResult
-
 from ...third_party import luci_context
+
+from ..global_shutdown import GLOBAL_SHUTDOWN, GLOBAL_QUITQUITQUIT, MSWINDOWS
+from ..global_shutdown import UNKILLED_PGIDS
 
 from . import StepRunner
 
-_MSWINDOWS = sys.platform == 'win32'
 
-
-if _MSWINDOWS:
+if MSWINDOWS:
   # subprocess.Popen(close_fds) raises an exception when attempting to do this
   # and also redirect stdin/stdout/stderr. To be on the safe side, we just don't
   # do this on Windows.
@@ -54,7 +55,6 @@ else:
 class SubprocessStepRunner(StepRunner):
   """Responsible for actually running steps as subprocesses, filtering their
   output into a stream."""
-
   def isabs(self, _name_tokens, path):
     return os.path.isabs(path)
 
@@ -155,6 +155,9 @@ class SubprocessStepRunner(StepRunner):
 
     return None
 
+  def now(self):
+    return time.time()
+
   def write_luci_context(self, section_values):
     with luci_context.stage(_leak=True, **section_values) as file_path:
       return file_path or os.environ.get(luci_context.ENV_KEY)
@@ -164,7 +167,17 @@ class SubprocessStepRunner(StepRunner):
 
     workers, to_close = self._mk_workers(step, proc, pipes)
 
-    exc_result = self._wait_proc(proc, gid, step.timeout, debug_log)
+    timeout = None
+    grace_period = 30
+    # See write_luci_context above; Sometime before `run`, `write_luci_context`
+    # was called and populated soft_deadline. Now all we have to do is respect
+    # that.
+    if 'deadline' in step.luci_context:
+      soft = step.luci_context['deadline'].soft_deadline
+      if soft != 0:
+        timeout = soft - time.time()
+      grace_period = step.luci_context['deadline'].grace_period
+    exc_result = self._wait_proc(proc, gid, timeout, grace_period, debug_log)
 
     self._reap_workers(workers, to_close, debug_log)
 
@@ -217,12 +230,15 @@ class SubprocessStepRunner(StepRunner):
 
     # Lifted from subprocess42.
     gid = None
-    if not _MSWINDOWS:
+    if not MSWINDOWS:
       try:
         gid = os.getpgid(proc.pid)
+        UNKILLED_PGIDS.add(gid)
       except OSError:
-        # sometimes the process can run+finish before we collect its pgid. fun.
+        # sometimes the process can run+finish before we collect its pgid.
         pass
+
+    debug_log.write_line('launched pid:%r gid:%r' % (proc.pid, gid))
 
     pipes = set()
     for handle_name, handle in fhandles.iteritems():
@@ -273,8 +289,7 @@ class SubprocessStepRunner(StepRunner):
       ))
     return workers, to_close
 
-  @staticmethod
-  def _wait_proc(proc, gid, timeout, debug_log):
+  def _wait_proc(self, proc, gid, timeout, grace_period, debug_log):
     """Waits for the completion (or timeout) of `proc`.
 
     Args:
@@ -283,6 +298,8 @@ class SubprocessStepRunner(StepRunner):
       * gid (int|None) - The group ID of the process.
       * timeout (Number|None) - The number of seconds to wait for the process to
         end (or None for no timeout).
+      * grace_period (Number|None) - The number of seconds to wait after SIGTERM
+        before sending SIGKILL.
       * debug_log (..stream.StreamEngine.Stream)
 
     Returns the ExecutionResult.
@@ -299,28 +316,45 @@ class SubprocessStepRunner(StepRunner):
     # The engine will raise a new GreenletExit exception after processing this
     # step.
     try:
-      # TODO(iannucci): This API changes in python3 to raise an exception on
-      # timeout.
-      proc.wait(timeout)
+      debug_log.write_line('Waiting for process.')
+      gevent.wait([GLOBAL_SHUTDOWN, proc], timeout=timeout, count=1)
+      if GLOBAL_SHUTDOWN.ready():
+        debug_log.write_line('Interrupted by GLOBAL_SHUTDOWN')
+        return attr.evolve(ret,
+                           retcode=self._kill(
+                               debug_log, proc, gid, grace_period),
+                           was_cancelled=True)
+
+      # Otherwise our process is done.
       ret = attr.evolve(ret, retcode=proc.poll())
-      debug_log.write_line(
-          'finished waiting for process, retcode %r' % ret.retcode)
 
       # TODO(iannucci): Make leaking subprocesses explicit (e.g. goma compiler
       # daemon). Better, change deamons to be owned by a gevent Greenlet (so
       # that we don't need to leak processes ever).
       #
+      # See BUG/FEATURE below for why we don't do this, even though we should.
       # _kill(proc, gid)  # In case of leaked subprocesses or timeout.
+
       if ret.retcode is None:
-        debug_log.write_line('timeout! killing process group %r' % gid)
+        debug_log.write_line('Timeout expired (%ds)' % (timeout,))
         # Process timed out, kill it. Currently all uses of non-None timeout
         # intend to actually kill the subprocess when the timeout pops.
-        ret = attr.evolve(ret, retcode=_kill(proc, gid), had_timeout=True)
+        return attr.evolve(ret,
+                           retcode=self._kill(
+                               debug_log, proc, gid, grace_period),
+                           had_timeout=True)
+
+      debug_log.write_line('Finished waiting, retcode %r' % ret.retcode)
+      # TODO(iannucci): Make leaking subprocesses explicit (e.g. goma compiler
+      # daemon). Better, change deamons to be owned by a gevent Greenlet (so
+      # that we don't need to leak processes ever).
+      debug_log.write_line('BUG/FEATURE: Allowing process group to continue.')
 
     except gevent.GreenletExit:
-      debug_log.write_line(
-          'caught GreenletExit, killing process group %r' % (gid,))
-      ret = attr.evolve(ret, retcode=_kill(proc, gid), was_cancelled=True)
+      debug_log.write_line('Canceled')
+      ret = attr.evolve(
+          ret, retcode=self._kill(
+              debug_log, proc, gid, grace_period), was_cancelled=True)
 
     return ret
 
@@ -348,6 +382,100 @@ class SubprocessStepRunner(StepRunner):
     debug_log.write_line('  done')
     for handle_name, handle in to_close:
       _safe_close(debug_log, handle_name, handle)
+
+
+  if MSWINDOWS:
+    def _kill(self, debug_log, proc, gid, grace_period):
+      """Kills the process as gracefully as possible:
+
+        * Send CTRL_BREAK_EVENT (to the process group, there's no other way)
+        * Give main process `grace_period` to quit.
+        * Call TerminateProcess on the process we spawned.
+
+      Unfortunately, we don't have a mechanism to do 'TerminateProcess' to the
+      process's group, so this could leak processes on Windows.
+
+      If GLOBAL_QUITQUITQUIT is set, then we will abort/skip the first timeout.
+
+      Returns the process's returncode.
+      """
+      # TODO(iannucci): Use a Job Object for process management. Use
+      # subprocess42 for reference.
+      _ = gid  # unused on windows
+
+      def _ctrlbreak():
+        debug_log.write_line(
+            'Proc(%d).send_signal(CTRL_BREAK_EVENT)' % (proc.pid,))
+        try:
+          # pylint: disable=no-member
+          proc.send_signal(signal.CTRL_BREAK_EVENT)
+        except OSError:
+          pass
+
+      _ctrlbreak()
+      gevent.wait([GLOBAL_QUITQUITQUIT, proc], timeout=grace_period, count=1)
+      ret = proc.poll()
+      if ret is None:
+        if GLOBAL_QUITQUITQUIT.ready():
+          debug_log.write_line('GLOBAL_QUITQUITQUIT')
+        else:
+          debug_log.write_line('Grace period expired (%fs)' % (grace_period,))
+      else:
+        debug_log.write_line('Got retcode %d' % (ret,))
+
+      debug_log.write_line('Proc(%d).terminate()' % (proc.pid,))
+      try:
+        proc.terminate()
+      except OSError:
+        pass
+
+      ret = proc.wait()
+      if ret is not None:
+        debug_log.write_line('Got retcode %d' % (ret,))
+      return ret
+
+  else:
+    @staticmethod
+    def _killpg(debug_log, gid, signame):
+      debug_log.write_line('killpg(%d, %s)' % (gid, signame))
+      try:
+        os.killpg(gid, getattr(signal, signame))
+      except OSError:
+        pass
+
+    def _kill(self, debug_log, proc, gid, grace_period):
+      """Kills the process in group `gid` as gracefully as possible:
+
+        * Send SIGTERM to the process group.
+          * This is a bit atypical for POSIX, but this is done to provide
+            consistent behavior between *nix/Windows (where we MUST signal the
+            whole group). This allows writing parent/child programs which run
+            cross-platform without requiring per-platform parent/child handling
+            code.
+          * If programs really don't want this, they should make their own
+            process group for their children.
+        * Give main process `grace_period` to quit.
+        * Send SIGKILL to the process group (to avoid leaked processes).
+          This will also kill the process we spawned if it's not dead yet.
+
+      Returns the process's returncode.
+      """
+      self._killpg(debug_log, gid, 'SIGTERM')
+      debug_log.write_line('Waiting for process %d.' % (proc.pid,))
+      gevent.wait([GLOBAL_QUITQUITQUIT, proc], timeout=grace_period, count=1)
+      ret = proc.poll()
+      if ret is None:
+        if GLOBAL_QUITQUITQUIT.ready():
+          debug_log.write_line('GLOBAL_QUITQUITQUIT')
+        else:
+          debug_log.write_line('Grace period expired (%fs)' % (grace_period,))
+      else:
+        debug_log.write_line('Got retcode %d' % (ret,))
+
+      self._killpg(debug_log, gid, 'SIGKILL')
+
+      UNKILLED_PGIDS.discard(gid)
+      return ret
 
 
 def _copy_lines(handle, outstream):
@@ -424,66 +552,3 @@ def _safe_close(debug_log, handle_name, handle):
     # the same thing.
     debug_log.write_line('  LEAKED?: race with IO worker')
 
-
-if _MSWINDOWS:
-  def _kill(proc, gid):
-    """Kills the process as gracefully as possible:
-
-      * Send CTRL_BREAK_EVENT (to the process group, there's no other way)
-      * Give main process 30s to quit.
-      * Call TerminateProcess on the process we spawned.
-
-    Unfortunately, we don't have a mechanism to do 'TerminateProcess' to the
-    process's group, so this could leak processes on Windows.
-
-    Returns the process's returncode.
-    """
-    # TODO(iannucci): Use a Job Object for process management. Use subprocess42
-    # for reference.
-    del gid  # gid is not supported on Windows
-    try:
-      # pylint: disable=no-member
-      proc.send_signal(signal.CTRL_BREAK_EVENT)
-    except OSError:
-      pass
-    # TODO(iannucci): This API changes in python3 to raise an exception on
-    # timeout.
-    proc.wait(timeout=30)
-    if proc.returncode is not None:
-      return proc.returncode
-    try:
-      proc.terminate()
-    except OSError:
-      pass
-    return proc.wait()
-
-else:
-  def _kill(proc, gid):
-    """Kills the process in group `gid` as gracefully as possible:
-
-      * Send SIGTERM to the process group.
-        * This is a bit atypical for POSIX, but this is done to provide
-          consistent behavior between *nix/Windows (where we MUST signal the
-          whole group). This allows writing parent/child programs which run
-          cross-platform without requiring per-platform parent/child handling
-          code.
-        * If programs really don't want this, they should make their own process
-          group for their children.
-      * Give main process 30s to quit.
-      * Send SIGKILL to the whole group (to avoid leaked processes). This will
-        kill the process we spawned directly.
-
-    Returns the process's returncode.
-    """
-    try:
-      os.killpg(gid, signal.SIGTERM)
-    except OSError:
-      pass
-    # TODO(iannucci): This API changes in python3 to raise an exception on
-    # timeout.
-    proc.wait(timeout=30)
-    try:
-      os.killpg(gid, signal.SIGKILL)
-    except OSError:
-      pass
-    return proc.wait()

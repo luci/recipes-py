@@ -144,6 +144,13 @@ def _common_post_process(args):
     # well.
     logging.root.manager.emittedNoHandlerWarning = True
 
+  if args.pid_file:
+    try:
+      with open(args.pid_file, 'w') as pid_file:
+        pid_file.write('%d\n' % os.getpid())
+    except Exception:
+      logging.exception("unable to write pidfile")
+
   args.recipe_deps = RecipeDeps.create(
       args.main_repo_path,
       args.repo_override,
@@ -220,6 +227,10 @@ def _add_common_args(parser):
   parser.add_argument('-O', '--repo-override', metavar='ID=PATH',
       action=_RepoOverrideAction, default={},
       help='Override a repo repository path with a local one.')
+  parser.add_argument('--pid-file', metavar='PATH',
+      help=(
+        'Absolute path to a file where the engine should write its pid. '
+        'Path must be absolute and not exist.'))
 
   def _proto_override_abspath(value):
     try:

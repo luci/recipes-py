@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 import calendar
+import copy
 import datetime
 import json
 import os
@@ -20,9 +21,10 @@ import six
 from google.protobuf import json_format as jsonpb
 from pympler import summary, tracker
 
-from PB.recipe_engine import result as result_pb2
-from PB.recipe_engine import engine_properties as engine_properties_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
+from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
+from PB.recipe_engine import engine_properties as engine_properties_pb2
+from PB.recipe_engine import result as result_pb2
 
 from .. import recipe_api
 from .. import util
@@ -35,6 +37,7 @@ from .engine_env import merge_envs
 from .exceptions import RecipeUsageError, CrashEngine
 from .step_runner import Step
 from .resource_semaphore import ResourceWaiter
+from .global_shutdown import GLOBAL_SHUTDOWN
 
 
 @attr.s(frozen=True, slots=True, repr=False)
@@ -78,14 +81,14 @@ class _MemoryProfiler(object):
     snapshot will be returned. After that,  it will only return the diff with
     the previous snapshot.
     """
-    sum = self._tracker.create_summary()
+    memsum = self._tracker.create_summary()
     last_snapshot_name = self._current_snapshot_name
     self._current_snapshot_name = snapshot_name
     if self._diff_snapshot:
       yield ((
         '-------- Diff between current snapshot (%s) and last snapshot (%s) '
         'Starts --------') % (snapshot_name, last_snapshot_name))
-      diff = self._tracker.diff(summary1=sum)
+      diff = self._tracker.diff(summary1=memsum)
       # TODO(yiwzhang): switch to yield from after moving to python 3
       for diff_line in summary.format_(diff):
         yield diff_line
@@ -95,13 +98,13 @@ class _MemoryProfiler(object):
     else:
       # create_summary() won't make the return value latest summary in the
       # underlying tracker. Manually moving it forward
-      self._tracker.s0 = sum
+      self._tracker.s0 = memsum
       # Only dump the full snapshot when this method is called for the first
       # time. From then onwards, dump diff only
       self._diff_snapshot = True
       yield '-------- Memory Snapshot (%s) Start --------' % snapshot_name
       # TODO(yiwzhang): switch to yield from after moving to python 3
-      for snapshot_line in summary.format_(sum):
+      for snapshot_line in summary.format_(memsum):
         yield snapshot_line
       yield '-------- Memory Snapshot (%s) Ends --------' % snapshot_name
 
@@ -347,7 +350,8 @@ class RecipeEngine(object):
         self.close_non_parent_step()
         self._step_stack.pop().close()
       except:
-        _log_crash(self._stream_engine, "parent_step.close(%r)" % (name_tokens,))
+        _log_crash(
+            self._stream_engine, "parent_step.close(%r)" % (name_tokens,))
         raise CrashEngine("Closing parent step %r failed." % (name_tokens,))
 
   def run_step(self, step_config):
@@ -768,12 +772,37 @@ def _render_config(debug, name_tokens, step_config, step_runner, step_stream,
       pathsep)
   env.update(step_stream.env_vars)
 
-  if step_config.luci_context:
+  step_luci_context = step_config.luci_context
+  if step_luci_context or step_config.timeout:
     debug.write_line('writing LUCI_CONTEXT file')
-    lctx_file = step_runner.write_luci_context({
+
+    if step_config.timeout:
+      ideal_soft_deadline = step_runner.now() + step_config.timeout
+
+      step_luci_context = dict(step_luci_context) if step_luci_context else {}
+      d = step_luci_context.get('deadline', None)
+      if d:
+        d = copy.deepcopy(d)
+        if d.soft_deadline:  # finite
+          d.soft_deadline = min(ideal_soft_deadline, d.soft_deadline)
+        else: # infinite
+          d.soft_deadline = ideal_soft_deadline
+      else:
+        d = sections_pb2.Deadline(
+            soft_deadline=ideal_soft_deadline, grace_period=30)
+      step_luci_context['deadline'] = d
+
+    section_values = {
       key: jsonpb.MessageToDict(pb_val) if pb_val is not None else None
-      for key, pb_val in six.iteritems(step_config.luci_context)
-    })
+      for key, pb_val in six.iteritems(step_luci_context)
+    }
+
+    if step_config.timeout:
+      # the json serialization is nicer to print here
+      debug.write_line('  adjusted deadline: %r' % (
+        section_values['deadline'],))
+
+    lctx_file = step_runner.write_luci_context(section_values)
     debug.write_line('  done: %r' % (lctx_file,))
     env[luci_context.ENV_KEY] = lctx_file
 
@@ -803,8 +832,7 @@ def _render_config(debug, name_tokens, step_config, step_runner, step_stream,
       cmd=(cmd0,) + tuple(cmd[1:]),
       cwd=cwd,
       env=env,
-      timeout=step_config.timeout,
-      luci_context=step_config.luci_context,
+      luci_context=step_luci_context,
       **handles)
 
 
@@ -858,12 +886,16 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
     else:
       _print_step(exc_details, rendered_step)
 
-      debug_log.write_line('Executing step')
-      try:
-        step_data.exc_result = step_runner.run(
-            step_data.name_tokens, debug_log, rendered_step)
-      except gevent.GreenletExit:
-        # Greenlet was killed while running the step
+      if not GLOBAL_SHUTDOWN.ready():
+        debug_log.write_line('Executing step')
+        try:
+          step_data.exc_result = step_runner.run(
+              step_data.name_tokens, debug_log, rendered_step)
+        except gevent.GreenletExit:
+          # Greenlet was killed while running the step
+          step_data.exc_result = ExecutionResult(was_cancelled=True)
+      else:
+        debug_log.write_line('GLOBAL_SHUTDOWN already active, skipping.')
         step_data.exc_result = ExecutionResult(was_cancelled=True)
       if step_data.exc_result.retcode is not None:
         # Windows error codes such as 0xC0000005 and 0xC0000409 are much
@@ -946,12 +978,10 @@ def _print_step(execution_log, step):
 
   # Technically very soon _before_ the step runs, but should be insignificant.
   execution_log.write_line('at time ' + datetime.datetime.now().isoformat())
-  if step.timeout:
-    execution_log.write_line('  timeout: %d secs' % (step.timeout,))
 
   # Some LUCI_CONTEXT sections may contain secrets; explicitly allow the
   # sections we know are safe.
-  luci_context_allowed = ['realm', 'luciexe']
+  luci_context_allowed = ['realm', 'luciexe', 'deadline']
   for section in luci_context_allowed:
     data = step.luci_context.get(section, None)
     if data is not None:

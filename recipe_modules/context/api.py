@@ -29,6 +29,7 @@ with api.context(cwd=api.path['start_dir'].join('subdir')):
 
 import collections
 import copy
+import time
 
 from contextlib import contextmanager
 
@@ -91,6 +92,7 @@ class ContextApi(recipe_api.RecipeApi):
       # Add other LUCI_CONTEXT sections in the following dict to support
       # modification through this module.
       init_sections = {
+        'deadline': sections_pb2.Deadline,
         'luciexe': sections_pb2.LUCIExe,
         'realm': sections_pb2.Realm,
       }
@@ -107,7 +109,7 @@ class ContextApi(recipe_api.RecipeApi):
 
   @contextmanager
   def __call__(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None,
-               infra_steps=None, luciexe=None, realm=None):
+               infra_steps=None, luciexe=None, realm=None, deadline=None):
     """Allows adjustment of multiple context values in a single call.
 
     Args:
@@ -131,6 +133,9 @@ class ContextApi(recipe_api.RecipeApi):
         empty string to disassociate the context from a realm, emulating an
         environment prior to LUCI realms. This is useful during the transitional
         period.
+      * deadline (sections_pb2.Deadline) - Deadline information to set; See
+        LUCI_CONTEXT documentation for how this section works. Automatically
+        adjusted by steps with `timeout` set.
 
     Environmental Variable Overrides:
 
@@ -213,10 +218,24 @@ class ContextApi(recipe_api.RecipeApi):
 
       section_pb_values = {}
       if luciexe:
+        check_type('luciexe', luciexe, sections_pb2.LUCIExe)
         section_pb_values['luciexe'] = copy.deepcopy(luciexe)
       if realm is not None:
         section_pb_values['realm'] = (
             sections_pb2.Realm(name=realm) if realm else None)
+      if deadline is not None:
+        check_type('deadline', deadline, sections_pb2.Deadline)
+        cur_deadline = self.deadline
+        if (cur_deadline.soft_deadline and
+            cur_deadline.soft_deadline < deadline.soft_deadline):
+          raise ValueError(
+              "Deadline.soft_deadline being increased: %f->%f" % (
+                cur_deadline.soft_deadline, deadline.soft_deadline))
+        if cur_deadline.grace_period < deadline.grace_period:
+          raise ValueError(
+              "Deadline.grace_period being increased: %f->%f" % (
+                cur_deadline.grace_period, deadline.grace_period))
+        section_pb_values['deadline'] = copy.deepcopy(deadline)
       if section_pb_values:
         _add_to_context('luci_context', section_pb_values, _override)
 
@@ -323,3 +342,14 @@ class ContextApi(recipe_api.RecipeApi):
     """
     sec = self._state.luci_context.get('realm')
     return sec.name if sec and sec.name else None
+
+  @property
+  def deadline(self):
+    """Returns the current value (sections_pb2.Deadline) of deadline section in
+    the current LUCI_CONTEXT. Returns `{grace_period: 30}` if deadline is not
+    defined, per LUCI_CONTEXT spec."""
+    if 'deadline' in self._state.luci_context:
+      ret = sections_pb2.Deadline()
+      ret.CopyFrom(self._state.luci_context['deadline'])
+      return ret
+    return sections_pb2.Deadline(grace_period=30)

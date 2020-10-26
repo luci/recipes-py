@@ -116,16 +116,22 @@ class StepConfig(object):
   allow_subannotations = attr.ib(default=False, validator=attr_type(bool))
 
   # The time, in seconds, that this step is allowed to run for before timing
-  # out.
+  # out. This is calculated by adjusting the
+  # LUCI_CONTEXT['deadline']['soft_deadline'] field when the step is rendered to
+  # a StepRunner.Step.
+  #
+  # NOTE: This timeout applies AFTER the step has waited for `cost` to be
+  # available to it. If the recipe engine userspace merely adjusts
+  # LUCI_CONTEXT['deadline'] then it would include the time waiting for `cost`.
   timeout = attr.ib(
       default=None,
       validator=attr_type((int, float, long, type(None))))
 
-  # luci_context is the mapping of LUCI_CONTEXT sections to their respective
-  # section proto message which have been modified.
+  # luci_context is the mapping of modified LUCI_CONTEXT sections to their
+  # respective section proto message.
   #
-  # Note; this is used for recipe expectations and for deriving step timeout
-  # information. It's expected that the recipe code has already ge
+  # The engine will write this delta to disk and adjust the step's LUCI_CONTEXT
+  # environment variable pror to submitting it to the StepRunner for execution.
   luci_context = attr.ib(default=None, validator=attr_dict_type(str, Message))
 
   # Set of return codes allowed. If the step process returns something not on

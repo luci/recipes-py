@@ -75,6 +75,7 @@
   * [engine_tests/bad_subprocess](#recipes-engine_tests_bad_subprocess) &mdash; Tests that daemons that hang on to STDOUT can't cause the engine to hang.
   * [engine_tests/comprehensive_ui](#recipes-engine_tests_comprehensive_ui) &mdash; A fast-running recipe which comprehensively covers all StepPresentation features available in the recipe engine.
   * [engine_tests/config_operations](#recipes-engine_tests_config_operations) &mdash; Tests that recipes can modify configuration options in various ways.
+  * [engine_tests/early_termination](#recipes-engine_tests_early_termination) &mdash; Simple recipe which sleeps in a subprocess forever to facilitate early termination tests.
   * [engine_tests/expect_exception](#recipes-engine_tests_expect_exception) &mdash; Tests that step_data can accept multiple specs at once.
   * [engine_tests/failure_results](#recipes-engine_tests_failure_results) &mdash; Tests that run_steps is handling recipe failures correctly.
   * [engine_tests/functools_partial](#recipes-engine_tests_functools_partial) &mdash; Engine shouldn't explode when step_test_data gets functools.
@@ -1017,9 +1018,9 @@ with api.context(cwd=api.path['start_dir'].join('subdir')):
   api.step("cat subdir/foo", ['cat', './foo'])
 ```
 
-#### **class [ContextApi](/recipe_modules/context/api.py#78)([RecipeApi](/recipe_engine/recipe_api.py#856)):**
+#### **class [ContextApi](/recipe_modules/context/api.py#79)([RecipeApi](/recipe_engine/recipe_api.py#856)):**
 
-&emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#108)(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None, infra_steps=None, luciexe=None, realm=None):**
+&emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#110)(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None, infra_steps=None, luciexe=None, realm=None, deadline=None):**
 
 Allows adjustment of multiple context values in a single call.
 
@@ -1044,6 +1045,9 @@ Args:
     empty string to disassociate the context from a realm, emulating an
     environment prior to LUCI realms. This is useful during the transitional
     period.
+  * deadline (sections_pb2.Deadline) - Deadline information to set; See
+    LUCI_CONTEXT documentation for how this section works. Automatically
+    adjusted by steps with `timeout` set.
 
 Environmental Variable Overrides:
 
@@ -1067,7 +1071,7 @@ as the last path component if it is not empty.
 
 Look at the examples in "examples/" for examples of context module usage.
 
-&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#234)(self):**
+&emsp; **@property**<br>&mdash; **def [cwd](/recipe_modules/context/api.py#253)(self):**
 
 Returns the current working directory that steps will run in.
 
@@ -1075,7 +1079,13 @@ Returns the current working directory that steps will run in.
 equivalent to api.path['start_dir'], though only occurs if no cwd has been
 set (e.g. in the outermost context of RunSteps).
 
-&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#244)(self):**
+&emsp; **@property**<br>&mdash; **def [deadline](/recipe_modules/context/api.py#346)(self):**
+
+Returns the current value (sections_pb2.Deadline) of deadline section in
+the current LUCI_CONTEXT. Returns `{grace_period: 30}` if deadline is not
+defined, per LUCI_CONTEXT spec.
+
+&emsp; **@property**<br>&mdash; **def [env](/recipe_modules/context/api.py#263)(self):**
 
 Returns modifications to the environment.
 
@@ -1086,7 +1096,7 @@ done with properties.
 **Returns (dict)** - The env-key -> value mapping of current environment
   modifications.
 
-&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#259)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_prefixes](/recipe_modules/context/api.py#278)(self):**
 
 Returns Path prefix modifications to the environment.
 
@@ -1096,7 +1106,7 @@ prefixes registered with the environment.
 **Returns (dict)** - The env-key -> value(Path) mapping of current
 environment prefix modifications.
 
-&emsp; **@property**<br>&mdash; **def [env\_suffixes](/recipe_modules/context/api.py#273)(self):**
+&emsp; **@property**<br>&mdash; **def [env\_suffixes](/recipe_modules/context/api.py#292)(self):**
 
 Returns Path suffix modifications to the environment.
 
@@ -1106,27 +1116,27 @@ suffixes registered with the environment.
 **Returns (dict)** - The env-key -> value(Path) mapping of current
 environment suffix modifications.
 
-&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#287)(self):**
+&emsp; **@property**<br>&mdash; **def [infra\_step](/recipe_modules/context/api.py#306)(self):**
 
 Returns the current value of the infra_step setting.
 
 **Returns (bool)** - True iff steps are currently considered infra steps.
 
-&mdash; **def [initialize](/recipe_modules/context/api.py#88)(self):**
+&mdash; **def [initialize](/recipe_modules/context/api.py#89)(self):**
 
-&emsp; **@property**<br>&mdash; **def [luci\_context](/recipe_modules/context/api.py#295)(self):**
+&emsp; **@property**<br>&mdash; **def [luci\_context](/recipe_modules/context/api.py#314)(self):**
 
 Returns the currently tracked LUCI_CONTEXT sections as a dict of proto
 messages.
 
 Only contains `luciexe`, `realm`, and `deadline`.
 
-&emsp; **@property**<br>&mdash; **def [luciexe](/recipe_modules/context/api.py#307)(self):**
+&emsp; **@property**<br>&mdash; **def [luciexe](/recipe_modules/context/api.py#326)(self):**
 
 Returns the current value (sections_pb2.LUCIExe) of luciexe section in
 the current LUCI_CONTEXT. Returns None if luciexe is not defined.
 
-&emsp; **@property**<br>&mdash; **def [realm](/recipe_modules/context/api.py#317)(self):**
+&emsp; **@property**<br>&mdash; **def [realm](/recipe_modules/context/api.py#336)(self):**
 
 Returns the LUCI realm of the current context.
 
@@ -3576,9 +3586,9 @@ Launches multiple builds at the same revision.
 &mdash; **def [RunSteps](/recipe_modules/commit_position/examples/full.py#11)(api):**
 ### *recipes* / [context:examples/full](/recipe_modules/context/examples/full.py)
 
-[DEPS](/recipe_modules/context/examples/full.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/context/examples/full.py#9): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
-&mdash; **def [RunSteps](/recipe_modules/context/examples/full.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/context/examples/full.py#18)(api):**
 ### *recipes* / [context:tests/cwd](/recipe_modules/context/tests/cwd.py)
 
 [DEPS](/recipe_modules/context/tests/cwd.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
@@ -3673,6 +3683,14 @@ Tests that recipes can modify configuration options in various ways.
 &emsp; **@config_ctx(includes=['test2a'])**<br>&mdash; **def [test2](/recipes/engine_tests/config_operations.py#35)(c):**
 
 &emsp; **@config_ctx()**<br>&mdash; **def [test2a](/recipes/engine_tests/config_operations.py#31)(c):**
+### *recipes* / [engine\_tests/early\_termination](/recipes/engine_tests/early_termination.py)
+
+[DEPS](/recipes/engine_tests/early_termination.py#8): [file](#recipe_modules-file), [futures](#recipe_modules-futures), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [python](#recipe_modules-python)
+
+Simple recipe which sleeps in a subprocess forever to facilitate early
+termination tests.
+
+&mdash; **def [RunSteps](/recipes/engine_tests/early_termination.py#21)(api, props):**
 ### *recipes* / [engine\_tests/expect\_exception](/recipes/engine_tests/expect_exception.py)
 
 Tests that step_data can accept multiple specs at once.

@@ -37,9 +37,6 @@ class Step(object):
   # The full environment that this step should execute with.
   env = attr.ib(validator=attr_dict_type(str, str))
 
-  # The timeout in seconds or None if the step has no timeout.
-  timeout = attr.ib(validator=attr_type((int, type(None))))
-
   # The sectionname->Message mapping of LUCI_CONTEXT modifications.
   luci_context = attr.ib(validator=attr_dict_type(str, Message))
 
@@ -134,6 +131,14 @@ class StepRunner(object):
     it couldn't be discovered.
     """
     return cmd0
+
+  def now(self):
+    """Should return time.time().
+
+    Used as the basis for adjusting the LUCI_CONTEXT['deadline'] section with
+    the step's timeout.
+    """
+    raise NotImplementedError()
 
   def write_luci_context(self, section_values):
     """Writes a mapping of str->dict to disk (as a temp file), returning that

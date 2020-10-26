@@ -1,0 +1,85 @@
+[
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "meep",
+      "[CLEANUP]/output_touchfile"
+    ],
+    "infra_step": true,
+    "name": "ensure output_touchfile",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@output_touchfile@meep@@@",
+      "@@@STEP_LOG_END@output_touchfile@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/early_termination].resources/sleepytime.py",
+      "[CLEANUP]/output_touchfile",
+      "--always-ignore",
+      "ignore always"
+    ],
+    "name": "ignore always"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/early_termination].resources/sleepytime.py",
+      "[CLEANUP]/output_touchfile",
+      "nice shutdown"
+    ],
+    "name": "nice shutdown"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/early_termination].resources/sleepytime.py",
+      "[CLEANUP]/output_touchfile",
+      "--always-ignore",
+      "self timeout"
+    ],
+    "name": "self timeout",
+    "timeout": 5
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "RECIPE[recipe_engine::engine_tests/early_termination].resources/sleepytime.py",
+      "[CLEANUP]/output_touchfile",
+      "--no-handler",
+      "sleep"
+    ],
+    "name": "sleep"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "meep",
+      "[CLEANUP]/running_touchfile"
+    ],
+    "infra_step": true,
+    "name": "ensure running_touchfile",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@running_touchfile@meep@@@",
+      "@@@STEP_LOG_END@running_touchfile@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

@@ -19,6 +19,7 @@ from .... import util
 from ... import legacy
 
 from ...engine import RecipeEngine
+from ...global_shutdown import install_signal_handlers
 from ...step_runner.subproc import SubprocessStepRunner
 from ...stream.annotator import AnnotatorStreamEngine
 from ...stream.invariants import StreamEngineInvariants
@@ -26,7 +27,13 @@ from ...warn.record import NULL_WARNING_RECORDER
 
 from ....third_party import luci_context
 
+
 def main(args):
+  with install_signal_handlers():
+    return _main_impl(args)
+
+
+def _main_impl(args):
   if args.props:
     for p in args.props:
       args.properties.update(p)

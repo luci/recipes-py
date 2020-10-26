@@ -8,6 +8,8 @@ import attr
 
 from google.protobuf import json_format as jsonpb
 
+from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
+
 from ...recipe_test_api import StepTestData, BaseTestData
 from ...step_data import ExecutionResult
 from ...third_party import luci_context
@@ -43,6 +45,7 @@ class SimulationStepRunner(StepRunner):
     #   env_suffixes: {str: List[str]}
     #   env: {str: str}
     #   infra_step: bool
+    #   timeout: int
     #   allow_subannotations: bool
     # }
     #
@@ -74,6 +77,7 @@ class SimulationStepRunner(StepRunner):
         # the entire luci_context data is included in the test output.
         if k.upper() != luci_context.ENV_KEY
       },
+      'timeout': step_config.timeout,
       'infra_step': step_config.infra_step,
       'allow_subannotations': step_config.allow_subannotations,
     }
@@ -104,7 +108,14 @@ class SimulationStepRunner(StepRunner):
           self._used_steps[dot_name], handle_name)
     return self._used_placeholders[key]
 
-  def write_luci_context(self, section_pb_values):
+  def now(self):
+    # Note that we COULD coordinate with some simulatable time system (e.g. the
+    # recipe_engine/time module)... however this is just used for adjusting
+    # the soft_deadline in LUCI_CONTEXT['deadline'] prior to invoking
+    # write_luci_context where the simulation currently discards it anyway.
+    return 0
+
+  def write_luci_context(self, section_values):
     # We ignore this environment variable anyway.
     return ""
 
@@ -122,16 +133,30 @@ class SimulationStepRunner(StepRunner):
     step_obj['name'] = dot_name
     if 'cmd' not in step_obj:
       step_obj['cmd'] = []
+    precursor = self._step_precursor_data[dot_name]
 
     step_obj.pop('luci_context', None)
     if step.luci_context:
-      step_obj['luci_context'] = {}
+      lctx = {}
       for name, section in step.luci_context.iteritems():
-        step_obj['luci_context'][name] = jsonpb.MessageToDict(section)
+        if name == 'deadline':
+          # This is the default deadline and is fully specified by the
+          # `timeout` parameter below. To avoid blowing out expectations, we
+          # omit the section.
+          default_deadline = sections_pb2.Deadline(
+              soft_deadline=precursor['timeout'],
+              grace_period=30,
+          )
+          if section == default_deadline:
+            continue
+        lctx[name] = jsonpb.MessageToDict(section)
+      # Finally, if any sections actually made it through, set it on step_obj
+      # here.
+      if lctx:
+        step_obj['luci_context'] = lctx
 
     for handle_name in ('stdout', 'stderr'):
       step_obj.pop(handle_name, None)
-    precursor = self._step_precursor_data[dot_name]
     if 'cost' in precursor:
       if precursor['cost'] is None:
         step_obj['cost'] = None
@@ -153,12 +178,14 @@ class SimulationStepRunner(StepRunner):
       step_obj['infra_step'] = True
     if precursor['allow_subannotations']:
       step_obj['allow_subannotations'] = True
+    if precursor['timeout']:
+      step_obj['timeout'] = precursor['timeout']
     self._step_history.setdefault(dot_name, {}).update(step_obj)
 
     tdata = self._used_steps[dot_name]
 
-    if tdata.times_out_after and step.timeout:
-      if tdata.times_out_after > step.timeout:
+    if tdata.times_out_after and precursor['timeout']:
+      if tdata.times_out_after > precursor['timeout']:
         return ExecutionResult(had_timeout=True)
 
     return ExecutionResult(retcode=tdata.retcode)
@@ -171,7 +198,6 @@ class SimulationStepRunner(StepRunner):
         stdout='',
         stderr='',
         env={},
-        timeout=None,
         luci_context={},
     ))
 

@@ -4,11 +4,14 @@
 
 from recipe_engine import recipe_api, config
 
+from PB.go.chromium.org.luci.lucictx.sections import Deadline
+
 DEPS = [
   'context',
   'path',
   'raw_io',
   'step',
+  'time',
 ]
 
 
@@ -53,6 +56,31 @@ def RunSteps(api):
   # this is fine though:
   with api.context(env={'FINE': '%%format'}):
     pass
+
+  # Adjusting deadlines; default is "0" deadline in tests, 30s grace period.
+  # Tests display timeout==deadline.
+
+  # low-level method
+  now = api.time.time()
+  with api.context(deadline=Deadline(soft_deadline=now+20, grace_period=30)):
+    api.step('20 sec deadline', ['bash', '-c', 'echo default!'])
+
+    try:
+      with api.context(deadline=Deadline(soft_deadline=now+30, grace_period=30)):
+        assert False  # pragma: no cover
+    except ValueError:
+      # cannot increase grace_period
+      pass
+
+    with api.context(deadline=Deadline(soft_deadline=now+20, grace_period=10)):
+      api.step('and 10 sec grace_period', ['bash', '-c', 'echo default!'])
+
+      try:
+        with api.context(deadline=Deadline(soft_deadline=now+20, grace_period=30)):
+          assert False  # pragma: no cover
+      except ValueError:
+        # cannot increase grace_period
+        pass
 
 
 def GenTests(api):

@@ -87,6 +87,34 @@
     "name": "env prefixes with empty value"
   },
   {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo default!"
+    ],
+    "luci_context": {
+      "deadline": {
+        "grace_period": 30,
+        "soft_deadline": 1337000021.5
+      }
+    },
+    "name": "20 sec deadline"
+  },
+  {
+    "cmd": [
+      "bash",
+      "-c",
+      "echo default!"
+    ],
+    "luci_context": {
+      "deadline": {
+        "grace_period": 10,
+        "soft_deadline": 1337000021.5
+      }
+    },
+    "name": "and 10 sec grace_period"
+  },
+  {
     "name": "$result"
   }
 ]

@@ -18,6 +18,7 @@ from ....third_party import luci_context
 from ....util import strip_unicode
 
 from ...engine import RecipeEngine
+from ...global_shutdown import install_signal_handlers
 from ...step_runner.subproc import SubprocessStepRunner
 from ...stream.invariants import StreamEngineInvariants
 from ...stream.luci import LUCIStreamEngine
@@ -79,6 +80,11 @@ def _tweak_env():
 
 
 def main(args):
+  with install_signal_handlers():
+    return _main_impl(args)
+
+
+def _main_impl(args):
   LOG.info('luciexe started, parsing Build message from stdin.')
   build = Build()
   build.ParseFromString(sys.stdin.read())

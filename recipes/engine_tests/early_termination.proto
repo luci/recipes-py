@@ -1,0 +1,21 @@
+// Copyright 2020 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipes.recipe_engine.engine_tests.early_termination;
+
+message InputProperties {
+    // This recipe launches a bunch of subprocesses which repeatedly 'touch'
+    // this file to update its mtime. The mtime value of the file will be taken
+    // as an indication that the subprocesses are still running (or not) in the
+    // 'unittests/run_test.py' test for this recipe.
+    string output_touchfile = 1;
+
+    // This recipe will write to this file after launching all subprocesess.
+    // This allows the test to know that everything's running.
+    string running_touchfile = 2;
+}
+
+

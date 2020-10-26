@@ -3,17 +3,25 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import contextlib
 import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
+import tempfile
 import time
 
 import test_env
 
 from recipe_engine.internal.engine import _shell_quote
+
+from recipe_engine.third_party import luci_context
+
+# prevent LUCI_CONTEXT leakage :)
+os.environ.pop(luci_context.ENV_KEY, None)
 
 
 class RunTest(test_env.RecipeEngineUnitTest):
@@ -50,6 +58,49 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       ['run', recipe] +
       proplist
     )
+
+  def _wait_for_file(self, filename, duration):
+    begin = time.time()
+    while True:
+      self.assertLessEqual(time.time() - begin, duration,
+                           'took too long to find ' + filename)
+      try:
+        with open(filename, 'r') as f:
+          return f.read()
+      except IOError as ex:
+        print >>sys.stderr, "nerp", ex
+        time.sleep(.5)
+
+  @contextlib.contextmanager
+  def _run_bbagent(self, properties, grace_period=30):
+    workdir = tempfile.mkdtemp(prefix='recipe_engine_run_test-')
+    pidfile = os.path.join(workdir, 'pidfile')
+    fake_bbagent = os.path.join(test_env.ROOT_DIR, 'misc', 'fake_bbagent.sh')
+
+    env = os.environ.copy()
+    env.pop(luci_context.ENV_KEY, None)
+    env['WD'] = workdir
+    env['LUCI_GRACE_PERIOD'] = str(grace_period)
+    proc = subprocess.Popen(
+        [fake_bbagent, "--pid-file", pidfile],
+        stdin=subprocess.PIPE,
+        env=env)
+
+    try:
+      proc.stdin.write(json.dumps({
+        "input": {
+          "properties": properties,
+        },
+      }))
+      proc.stdin.close()
+
+      engine_pid = int(self._wait_for_file(pidfile, 10).strip())
+
+      yield proc, engine_pid
+    finally:
+      if proc.poll() is None:
+        proc.kill()
+      shutil.rmtree(workdir, ignore_errors=True)
 
   def _test_recipe(self, recipe, properties=None, env=None):
     proc = subprocess.Popen(
@@ -96,6 +147,41 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     # If this takes longer than 10 seconds to run (there can be overhead in
     # running the engine/cipd/protoc/etc.), we consider it failed.
     self.assertLess(after - now, 10)
+
+  def test_early_terminate(self):
+    scrap = tempfile.mkdtemp(prefix='recipe_engine-run_test-scrap-')
+    try:
+      # The recipe will make a bunch of subprocesses which whill touch this
+      # every ~second.
+      output_touchfile = os.path.join(scrap, 'output_touchfile')
+      running_touchfile = os.path.join(scrap, 'running_touchfile')
+
+      props = {
+        'recipe': 'engine_tests/early_termination',
+        'output_touchfile': output_touchfile,
+        'running_touchfile': running_touchfile,
+      }
+      with self._run_bbagent(props, grace_period=5) as (proc, engine_pid):
+        # Wait up to 10s for the recipe to indicate that it launched all its
+        # subprocesses.
+        self._wait_for_file(running_touchfile, 20)
+
+        # Ok, the recipe is all up and running now. Let's give the command
+        # a poke and wait for a bit.
+        os.kill(engine_pid, signal.SIGTERM)
+
+        # from this point the recipe should teardown in ~5s. We give it 10 to
+        # be generous.
+        time.sleep(10)
+        self.assertIsNotNone(proc.poll())
+
+        # sample the output_touchfile
+        mtime = os.stat(output_touchfile).st_mtime
+        # now wait a bit to see if anything's still touching it
+        time.sleep(5)
+        self.assertEqual(mtime, os.stat(output_touchfile).st_mtime)
+    finally:
+      shutil.rmtree(scrap, ignore_errors=True)
 
 
   def test_nonexistent_command(self):
