@@ -4,6 +4,7 @@
 
 import logging
 import os
+import signal
 import sys
 import time
 
@@ -14,7 +15,6 @@ from recipe_engine.third_party import luci_context
 from google.protobuf import json_format as jsonpb
 
 import gevent
-import gevent.signal as signal
 import gevent.event
 
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
