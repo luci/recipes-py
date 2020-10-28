@@ -7,7 +7,7 @@ are meant to:
   * Be cross-platform
   * Allow code-sharing
   * Be locally runnable
-  * Integrate with the LUCI UI (e.g. ci.chromium.org) to display
+  * Integrate with the LUCI UI (i.e. https://ci.chromium.org) to display
     subprocesses as "steps", and other UI attributes (step color,
     descriptive text, debugging logs, etc.)
 
@@ -61,10 +61,10 @@ ecosystem. This includes:
   * Initial repo setup
   * The `recipes.py` command
   * Writing recipes
-  * Writing recipe_modules
+  * Writing `recipe_modules`
   * Structured data passing for steps
   * Build UI manipulation
-  * Testing recipes and recipe_modules
+  * Testing recipes and `recipe_modules`
   * Productionizing a recipe repo
   * Recipe Philosophy
 
@@ -88,7 +88,7 @@ Additionally, most existing recipes depend on the following:
 ### Initial repo setup
 
 A recipe repo has a couple essential requirements:
-  * It is a git repo
+  * It is a git repo.
   * It contains a file called `//infra/config/recipes.cfg`. For historical
     reasons, this is a non-configurable path.
   * It contains 'recipes', 'recipe_modules', and/or 'recipe_proto' folders (in
@@ -106,10 +106,10 @@ The `recipes.cfg` file is a JSONPB file, which is defined by the
 Its purpose is to tell the recipe engine about this repo, and indicate any
 other repos that this repo depends on (including precise dependency pins). All
 recipe repos will need to depend on the 'recipe_engine' repo (the repo
-containing this user_guide).
+containing this user guide).
 
 As part of this config, the repo needs an `id`, which should match the
-LUCI-config project id for the repo; this id will show up when other recipe
+LUCI-config project id for the repo; this `id` will show up when other recipe
 repos depend on your repo.
 
 Example [recipes.cfg](https://chromium.googlesource.com/chromium/tools/build/+/master/infra/config/recipes.cfg).
@@ -127,11 +127,11 @@ A recipe in a subfolder includes that subfolder in its name; so
 
 Example [recipes folder](https://chromium.googlesource.com/chromium/tools/build/+/master/scripts/slave/recipes).
 
-#### recipe_modules folder
+#### `recipe_modules` folder
 
-The recipe_modules folder contains subfolders, one per module. Unlike recipes,
-the module namespace is flat in each repo. A recipe_module is composed of
-a couple files:
+The `recipe_modules` folder contains subfolders, one per module. Unlike recipes,
+the module namespace is flat in each repo. A recipe module directory contains
+these files:
 
   * `__init__.py` - Contains the `DEPS`, `PROPERTIES`, etc. declarations for the
     recipe_module.
@@ -140,13 +140,13 @@ a couple files:
 
 Example [recipe_modules folder](https://chromium.googlesource.com/chromium/tools/build/+/master/scripts/slave/recipe_modules).
 
-#### recipe_proto folder
+#### `recipe_proto` folder
 
-See `Working with Protobufs` for details on this folder and it's contents.
+See [#Working-with-Protobufs] for details on this folder and its contents.
 
 #### The `recipes.py` script
 
-The `recipes.py` script is the entrypoint to the recipe_engine. Its primary
+The `recipes.py` script is the entry point to the recipe_engine. Its primary
 functionality is to clone a copy of the recipe_engine repo (matching the version
 in your `recipes.cfg` file), and then invoke the main recipe_engine code with
 whatever command line you gave it.
@@ -157,22 +157,22 @@ py-cryptography and the protobuf library).
 
 ### The `recipes.py` command
 
-The recipes.py command is the main entrypoint to your recipe. It has a couple
+The `recipes.py` command is the main entry point to your recipe. It has a couple
 important subcommands that you'll use frequently:
-  * `run` - This command actually executes a single recipe
+  * `run` - This command actually executes a single recipe.
   * `test` - This command runs the simulation tests and trains the generated
     README.recipes.md file as well as simulation expectation files. This also
     has a 'debug' option which is pretty helpful.
 
 Less often-used:
   * `autoroll` - Automatically updates your `recipes.cfg` file with newer
-    versions of the dependencies there. This rolls the recipes.cfg version
+    versions of the dependencies there. This rolls the recipes.cfg version.
     and also runs simulation tests to try to detect the largest 'trivial' roll,
     or the smallest 'non-trivial' roll.
   * `manual_roll` - Updates your `recipes.cfg` file with the smallest valid roll
     possible, but doesn't do any automated testing. It's useful for when you
     need to manually roll recipes (i.e. the automated roll doesn't find a
-    valid trivial or non-trivial roll, due to API changes, etc.)
+    valid trivial or non-trivial roll, due to API changes, etc.).
   * `bundle` - Extracts all files necessary to run the recipe without making any
     network requests (i.e. no git repository operations).
 
@@ -379,7 +379,7 @@ of the fully qualified name, or the whole name for an unqualified name (in this
 example, the local name for both of these is just 'step').
 
 As a dict, DEPS maps from a local name of your choosing to either the fully
-qualified or unqulaified name of the module. This would allow you to
+qualified or unqualified name of the module. This would allow you to
 disambiguate between modules which would end up having the same local name. For
 example `{'my_archive': 'archive', 'archive': 'recipe_engine/archive'}`.
 

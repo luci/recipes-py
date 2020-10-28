@@ -1025,7 +1025,7 @@ step_result = api.step(...)
 step_result.presentation.step_text = 'Dynamic step result text'
 ```
 
-* `presentaton.logs` allows creating extra logs of a step run. Example:
+* `presentation.logs` allows creating extra logs of a step run. Example:
   ```python
   step_result.presentation.logs['mylog'] = ['line1', 'line2']
   ```

@@ -1,6 +1,6 @@
 # Recipes
 
-Recipes are a domain-specific language (embedded in python) for specifying
+Recipes are a domain-specific language (embedded in Python) for specifying
 sequences of subprocess calls in a cross-platform and testable way.
 
 They allow writing build flows which integrate with the rest of LUCI.
@@ -10,8 +10,8 @@ the [user guide](doc/user_guide.md) for some hints on how to get started.
 See the [implementation details doc](doc/implementation_details.md) for more
 detailed implementation information about the recipe engine.
 
-* [User guide](doc/user_guide.md) - hints on how to get started
-* [Recipe engine module docs](README.recipes.md) - Documentation on the recipe
+* [User guide](doc/user_guide.md): hints on how to get started.
+* [Recipe engine module docs](README.recipes.md): documentation on the recipe
   modules which are available in this repo.
 * [Implementation details](doc/implementation_details.md) on how recipes
   operate.
