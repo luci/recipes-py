@@ -37,7 +37,7 @@ from .engine_env import merge_envs
 from .exceptions import RecipeUsageError, CrashEngine
 from .step_runner import Step
 from .resource_semaphore import ResourceWaiter
-from .global_shutdown import GLOBAL_SHUTDOWN
+from .global_shutdown import GLOBAL_SHUTDOWN, GLOBAL_TIMEOUT
 
 
 @attr.s(frozen=True, slots=True, repr=False)
@@ -579,6 +579,12 @@ class RecipeEngine(object):
         result.status = common_pb2.INFRA_FAILURE if (
           is_infra_failure) else common_pb2.FAILURE
         result.summary_markdown = ex.reason
+      except gevent.GreenletExit:
+        result.status = common_pb2.INFRA_FAILURE
+        if GLOBAL_TIMEOUT.ready():
+          result.summary_markdown = 'Recipe timed out'
+        else:
+          result.summary_markdown = 'Recipe was interrupted'
 
     # All other exceptions are reported to the user and are fatal.
     except Exception as ex:  # pylint: disable=broad-except

@@ -45,6 +45,12 @@ GLOBAL_SHUTDOWN = gevent.event.Event()
 # for test mode.
 GLOBAL_QUITQUITQUIT = gevent.event.Event()
 
+# GLOBAL_TIMEOUT is set if recipe terminates because of timeout.
+#
+# This event is only installed for real runs of the recipe; It blocks forever
+# for test mode.
+GLOBAL_TIMEOUT = gevent.event.Event()
+
 # UNKILLED_PGIDS is a global set of process groups which haven't been SIGKILL'd
 # yet.
 #
@@ -88,8 +94,11 @@ def install_signal_handlers():
     if d.soft_deadline:
       now = time.time()
       if d.soft_deadline > now:
-        gevent.wait([GLOBAL_SHUTDOWN], timeout=(d.soft_deadline - now))
-        GLOBAL_SHUTDOWN.set()
+        ready = gevent.wait([GLOBAL_SHUTDOWN], timeout=(d.soft_deadline - now))
+        if not ready:
+          # wait ends because of hitting timeout
+          GLOBAL_TIMEOUT.set()
+          GLOBAL_SHUTDOWN.set()
     else:
       GLOBAL_SHUTDOWN.wait()
     LOG.info('Initiating GLOBAL_SHUTDOWN')
