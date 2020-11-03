@@ -27,7 +27,7 @@ def RunSteps(api):
   api.path['checkout'] = api.path['tmp_base'].join('checkout')
   assert 'checkout' in api.path
 
-  # Test missing / default value.
+  # Test missing/default value.
   assert 'nonexistent' not in api.path
   assert api.path.get('nonexistent') is None
   try:
@@ -39,9 +39,8 @@ def RunSteps(api):
   dynamic_path = api.path['checkout'].join('jerky')
   api.step('checkout path', ['/bin/echo', dynamic_path])
 
-  # Methods from python os.path are available via api.path.
-  # For testing, we asserted that this file existed in the test description
-  # below.
+  # Methods from python os.path are available via api.path. For testing, we
+  # asserted that this file existed in the test description below.
   assert api.path.exists(api.path['tmp_base'])
 
   temp_dir = api.path.mkdtemp('kawaab')
@@ -88,7 +87,7 @@ def RunSteps(api):
   realpath = api.path.realpath(file_path)
   assert api.path.exists(realpath)
 
-  # can mock copy paths. See the file module to do this for real.
+  # We can mock copy paths. See the file module to do this for real.
   copy1 = api.path['start_dir'].join('copy1')
   copy10 = api.path['start_dir'].join('copy10')
   copy2 = api.path['start_dir'].join('copy2')
@@ -105,7 +104,7 @@ def RunSteps(api):
   assert api.path.exists(copy2.join('foo', 'bar'))
   assert not api.path.exists(copy20)
 
-  # can mock remove paths. See the file module to do this for real.
+  # We can mock remove paths. See the file module to do this for real.
   api.step('rm copy2/foo', ['rm', '-rf', copy2.join('foo')])
   api.path.mock_remove_paths(str(copy2)+api.path.sep)
   assert not api.path.exists(copy2.join('foo', 'bar'))
@@ -126,7 +125,7 @@ def RunSteps(api):
       'base_paths: %r' % (api.path.c.base_paths,),
   ]
 
-  # Convert strings to Paths
+  # Convert strings to Paths.
   def _mk_paths():
     return [
       api.path['start_dir'].join('some', 'thing'),
@@ -142,7 +141,7 @@ def RunSteps(api):
     api.step('converted path %s' % p, ['echo', after])
     assert after == p, (after, p)
 
-  # All paths are comparable and hashable
+  # All paths are comparable and hashable.
   for i, (static_path, new_path) in enumerate(zip(static_paths, _mk_paths())):
     assert static_path == new_path
     assert hash(static_path) == hash(new_path)

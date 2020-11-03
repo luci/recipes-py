@@ -1,6 +1,7 @@
 # Copyright 2018 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
+
 """API for interacting with CIPD.
 
 Depends on 'cipd' binary available in PATH:
@@ -780,8 +781,8 @@ class CIPDApi(recipe_api.RecipeApi):
   def pkg_deploy(self, root, package_file):
     """Deploys the specified package to root.
 
-    ADVANCED METHOD: You shouldn't need this unless you're doing advanced things
-    with CIPD. Typically you should use the `ensure` method here to
+    ADVANCED METHOD: You shouldn't need this unless you're doing advanced
+    things with CIPD. Typically you should use the `ensure` method here to
     fetch+install packages to the disk.
 
     Args:
@@ -843,7 +844,8 @@ class CIPDApi(recipe_api.RecipeApi):
       def _install_package_thread():
         with self.m.step.nest(name):
           with self.m.context(infra_steps=True):
-            self.m.file.ensure_directory('ensure package directory', package_dir)
+            self.m.file.ensure_directory('ensure package directory',
+                                         package_dir)
             self.ensure(
                 package_dir,
                 self.EnsureFile().add_package(package, version))

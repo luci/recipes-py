@@ -1,6 +1,7 @@
 # Copyright 2020 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
+
 """API for interacting with cas client."""
 
 import os
@@ -56,10 +57,11 @@ class CasApi(recipe_api.RecipeApi):
     return version
 
   def _run(self, name, cmd, step_test_data=None):
-    """Return a cas command step.
+    """Returns a cas command step.
+
     Args:
-      name: (str): name of the step.
-      cmd (list(str|Path)): cas client subcommand to run.
+      * name: (str): name of the step.
+      * cmd (list(str|Path)): cas client subcommand to run.
     """
     return self.m.step(
         name,
@@ -74,9 +76,10 @@ class CasApi(recipe_api.RecipeApi):
     """Downloads a directory tree from a cas server.
 
     Args:
-      step_name (str): name of the step.
-      digest (str): the digest of a cas tree.
-      output_dir (Path): path to an output directory.
+
+      * step_name (str): name of the step.
+      * digest (str): the digest of a cas tree.
+      * output_dir (Path): path to an output directory.
     """
     cmd = [
         'download',
@@ -93,9 +96,10 @@ class CasApi(recipe_api.RecipeApi):
     """Archives given paths to a cas server.
 
     Args:
-      step_name (str): name of the step.
-      root (str|Path): root directory of archived tree, should be absolute path.
-      paths (list(str|Path)):
+      * step_name (str): name of the step.
+      * root (str|Path): root directory of archived tree, should be absolute
+        path.
+      * paths (list(str|Path)):
         path to archived files/dirs, should be absolute path.
 
     Returns:

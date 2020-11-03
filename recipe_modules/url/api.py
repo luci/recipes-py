@@ -25,17 +25,14 @@ class UrlApi(recipe_api.RecipeApi):
       super(UrlApi.HTTPError, self).__init__(msg)
       self.response = response
 
-
   class InfraHTTPError(recipe_api.InfraFailure):
     def __init__(self, msg, response):
       super(UrlApi.InfraHTTPError, self).__init__(msg)
       self.response = response
 
-
   # Status JSON output from "pycurl.py" resource.
   _PyCurlStatus = collections.namedtuple('_PyCurlStatus', (
       'status_code', 'success', 'size', 'error_body'))
-
 
   class Response(object):
     """Response is an HTTP response object."""
@@ -116,10 +113,10 @@ class UrlApi(recipe_api.RecipeApi):
     Args:
       * v (str): The URL to validate.
 
-    **Returns (bool)** - True if the URL is considered secure, False if not.
+    Returns (bool): True if the URL is considered secure, False if not.
 
-    **Raises:**
-      * ValueError: if "v" is not valid.
+    Raises:
+      ValueError: if "v" is not valid.
     """
     u = urlparse.urlparse(v)
     if u.scheme.lower() not in ('http', 'https'):
@@ -147,9 +144,10 @@ class UrlApi(recipe_api.RecipeApi):
           content (e.g., GERRIT_JSON_PREFIX).
       * timeout: Timeout (see step.__call__).
 
-    **Returns (UrlApi.Response)** - Response with "path" as its "output" value.
+    Returns (UrlApi.Response):
+      Response with "path" as its "output" value.
 
-    **Raises:**
+    Raises:
       * HTTPError, InfraHTTPError: if the request failed.
       * ValueError: If the request was invalid.
     """
@@ -173,10 +171,9 @@ class UrlApi(recipe_api.RecipeApi):
       * default_test_data (str): If provided, use this as the text output when
           testing if no overriding data is available.
 
-    **Returns (UrlApi.Response)** - Response with the content as its output
-    value.
+    Returns (UrlApi.Response): Response with the content as its output value.
 
-    **Raises:**
+    Raises:
       * HTTPError, InfraHTTPError: if the request failed.
       * ValueError: If the request was invalid.
     """
@@ -206,10 +203,9 @@ class UrlApi(recipe_api.RecipeApi):
       * default_test_data (jsonish): If provided, use this as the unmarshalled
           JSON result when testing if no overriding data is available.
 
-    **Returns (UrlApi.Response)** - Response with the JSON as its "output"
-    value.
+    Returns (UrlApi.Response): Response with the JSON as its "output" value.
 
-    **Raises:**
+    Raises:
       * HTTPError, InfraHTTPError: if the request failed.
       * ValueError: If the request was invalid.
     """

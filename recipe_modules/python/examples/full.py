@@ -37,7 +37,7 @@ def RunSteps(api):
   # when "vpython" is invoked.
   #
   # The second invocation uses an explicit spec with a different package set to
-  # verify that the explicit spec is laoded instead of the inline spec.
+  # verify that the explicit spec is loaded instead of the inline spec.
   api.python('run vpython.inlinespec', api.resource('test.py'),
              args=['--verify-enum34'], venv=True)
   api.python('run vpython.spec', api.resource('test.py'),

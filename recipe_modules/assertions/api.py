@@ -73,6 +73,7 @@ class AssertionsApi(recipe_api.RecipeApi):
   behavior as the unittest module.
 
   Example (.../recipe_modules/my_module/tests/foo.py):
+  ```
   DEPS = [
       'my_module',
       'recipe_engine/assertions',
@@ -81,7 +82,7 @@ class AssertionsApi(recipe_api.RecipeApi):
   ]
 
   def RunSteps(api):
-    # Behavior of foo depends on whether build is experimental
+    '''Behavior of foo depends on whether build is experimental'''
     value = api.my_module.foo()
     expected_value = api.properties.get('expected_value')
     api.assertions.assertEqual(value, expected_value)
@@ -96,7 +97,8 @@ class AssertionsApi(recipe_api.RecipeApi):
         api.test('experimental')
         + api.properties(expected_value='experimental value')
         + api.runtime(is_experimental=True)
-   )
+    )
+  ```
   """
 
   # Not included: assertLogs, all of the deprecated assertion methods, all

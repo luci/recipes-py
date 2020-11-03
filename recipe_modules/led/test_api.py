@@ -70,7 +70,7 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
 
     Args:
       * job_def (job.Definition|None) - The initial job value. If `None`, then
-        this marks the builder as non-existant, and the `led get-builder` call
+        this marks the builder as non-existent, and the `led get-builder` call
         will be simulated to have an exit code of 1.
       * project (str|None) - The LUCI project this builder belongs to.
       * bucket (str|None) - The Buildbucket bucket this builder is in.
@@ -106,7 +106,7 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
 
     Args:
       * job_def (job.Definition|None) - The initial job value. If `None`, then
-        this marks the builder as non-existant, and the `led get-builder` call
+        this marks the builder as non-existent, and the `led get-builder` call
         will be simulated to have an exit code of 1.
       * build_id (int|None) - The buildbucket build id for the build or None
         to provide the default basis for all get-build calls.
@@ -130,7 +130,7 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
 
     Args:
       * job_def (job.Definition|None) - The initial job value. If `None`, then
-        this marks the builder as non-existant, and the `led get-builder` call
+        this marks the builder as non-existent, and the `led get-builder` call
         will be simulated to have an exit code of 1.
       * task_id (str|None) - The swarming task ID for the build or None to
         provide the default basis for all get-swarm calls.

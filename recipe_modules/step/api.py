@@ -2,8 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-"""Step is the primary API for running steps (external programs, scripts,
-etc.)."""
+"""Step is the primary API for running steps (external programs, etc.)"""
 
 import contextlib
 import multiprocessing
@@ -46,23 +45,23 @@ class StepApi(recipe_api.RecipeApiPlain):
 
     The four resources are:
 
-      * cpu (measured in millicores) - The amount of cpu the step is expected to
+      * cpu (measured in millicores): The amount of cpu the step is expected to
         take. Defaults to 500.
-      * memory (measured in MB) - The amount of memory the step is expected to
+      * memory (measured in MB): The amount of memory the step is expected to
         take. Defaults to 50.
-      * disk (as percentage of max disk bandwidth) - The amount of "disk
+      * disk (as percentage of max disk bandwidth): The amount of "disk
         bandwidth" the step is expected to take. This is a very simplified
         percentage covering IOPS, read/write bandwidth, seek time, etc. At 100,
         the step will run exclusively w.r.t. all other steps having a `disk`
         cost. At 0, the step will run regardless of other steps with disk cost.
-      * net (as percentage of max net bandwidth) - The amount of "net
+      * net (as percentage of max net bandwidth): The amount of "net
         bandwidth" the step is expected to take. This is a very simplified
         percentage covering bandwidth, latency, etc. and is indescriminate of
         the remote hosts, network conditions, etc. At 100, the step will run
         exclusively w.r.t. all other steps having a `net` cost. At 0, the step
         will run regardless of other steps with net cost.
 
-    A step will run when ALL of the resouces are simultaneously available. The
+    A step will run when ALL of the resources are simultaneously available. The
     Recipe Engine currently uses a greedy scheduling algorithm for picking the
     next step to run. If multiple steps are waiting for resources, this will
     pick the largest (cpu, memory, disk, net) step which fits the currently
@@ -83,20 +82,21 @@ class StepApi(recipe_api.RecipeApiPlain):
     ResourceCost has at least one non-zero cost, and False otherwise.
 
     Args:
-      * cpu (int) - Millicores that this step will take to run. See `MAX_CPU`
+      * cpu (int): Millicores that this step will take to run. See `MAX_CPU`
       helper. A value higher than the maximum number of millicores on the system
       is equivalent to `MAX_CPU`.
-      * memory (int) - Number of Mebibytes of memory this step will take to run.
+      * memory (int): Number of Mebibytes of memory this step will take to run.
       See `MAX_MEMORY` as a helper. A value higher than the maximum amount of
       memory on the system is equivalent to `MAX_MEMORY`.
-      * disk (int [0..100]) - The disk IO resource this step will take as
+      * disk (int [0..100]): The disk IO resource this step will take as
       a percentage of the maximum system disk IO.
-      * net (int [0..100]) - The network IO resource this step will take as
+      * net (int [0..100]): The network IO resource this step will take as
       a percentage of the maximum system network IO.
 
-    Returns a ResourceCost suitable for use with `api.step(...)`'s cost kwarg.
-    Note that passing `None` to api.step for the cost kwarg is equivalent to
-    `ResourceCost(0, 0, 0, 0)`.
+    Returns:
+      a ResourceCost suitable for use with `api.step(...)`'s cost kwarg. Note
+      that passing `None` to api.step for the cost kwarg is equivalent to
+      `ResourceCost(0, 0, 0, 0)`.
     """
     return _ResourceCost(
         min(cpu, self.MAX_CPU),
@@ -266,9 +266,8 @@ class StepApi(recipe_api.RecipeApiPlain):
     StepPresentation instead.
 
     Args:
-
-      * name (str) - The name of this step.
-      * status ('worst'|'last') - The algorithm to use to pick a
+      * name (str): The name of this step.
+      * status ('worst'|'last'): The algorithm to use to pick a
         `presentation.status` if the recipe doesn't set one explicitly.
 
     Yields a StepPresentation for this dummy step, which you may update as you
@@ -522,7 +521,6 @@ class StepApi(recipe_api.RecipeApiPlain):
     """Returns a step dictionary which is compatible with annotator.py.
 
     Args:
-
       * name (string): The name of this step.
       * cmd (None|List[int|string|Placeholder|Path]): The program arguments to
         run. If None or an empty list, then this step just shows up in the UI
@@ -553,7 +551,7 @@ class StepApi(recipe_api.RecipeApiPlain):
           returns a StepTestData object that will be used as the default test
           data for this step. The recipe author can override/augment this object
           in the GenTests function.
-      * cost (None|ResourceCost) - The estimated system resource cost of this
+      * cost (None|ResourceCost): The estimated system resource cost of this
         step. See `ResourceCost()`. The recipe_engine will prevent more than the
         machine's maximum resources worth of steps from running at once (i.e.
         steps will wait until there's enough resource available before

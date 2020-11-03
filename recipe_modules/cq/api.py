@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+"""Recipe API for LUCI CQ, the pre-commit testing system."""
+
 from enum import Enum
 
 from google.protobuf import json_format as json_pb
@@ -33,7 +35,7 @@ class CQApi(recipe_api.RecipeApi):
   FULL = State.FULL
 
   class CQInactive(Exception):
-    """Incorrect usage of CQApi method requring active CQ."""
+    """Incorrect usage of CQApi method requiring active CQ."""
 
   def __init__(self, input_props, **kwargs):
     super(CQApi, self).__init__(**kwargs)
@@ -133,8 +135,8 @@ class CQApi(recipe_api.RecipeApi):
     """Returns a string that is unique for a current set of Gerrit change
     patchsets (or, equivalently, buildsets).
 
-    The same cl_group_key will be used if another Attempt is made for the same
-    set of changes at a different time.
+    The same `cl_group_key` will be used if another Attempt is made for the
+    same set of changes at a different time.
 
     Raises:
       CQInactive if CQ is `INACTIVE` for this build.
@@ -156,7 +158,7 @@ class CQApi(recipe_api.RecipeApi):
 
   @property
   def triggered_build_ids(self):
-    """Returns recorded Buildbucket build ids as a list of integers."""
+    """Returns recorded Buildbucket build IDs as a list of integers."""
     return self._triggered_build_ids
 
   def record_triggered_builds(self, *builds):

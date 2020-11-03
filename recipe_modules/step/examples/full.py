@@ -35,13 +35,12 @@ def RunSteps(api, bad_return, access_invalid_data, access_deep_invalid_data,
       except api.step.StepFailure:
         return
 
-
-  # TODO(martinis) change this
+  # TODO(martiniss) change this
   # The api.step object is directly callable.
   api.step('hello', ['echo', 'Hello World'])
   api.step('hello', ['echo', 'Why hello, there.'])
 
-  # You can change the current working directory as well
+  # You can change the current working directory as well.
   api.step('mk subdir', ['mkdir', '-p', 'something'])
   with api.context(cwd=api.path['start_dir'].join('something')):
     api.step('something', ['bash', '-c', 'echo Why hello, there, in a subdir.'])
@@ -58,13 +57,13 @@ def RunSteps(api, bad_return, access_invalid_data, access_deep_invalid_data,
   with api.context(env={'friend': 'Darth Vader'}):
     api.step('goodbye', ['bash', '-c', 'echo Good bye, $friend.'])
 
-  # You can modify environment in terms of old environment. Environment
+  # You can modify the environment in terms of old environment. Environment
   # variables are substituted in for expressions of the form %(VARNAME)s.
   with api.context(env={'PATH': api.path.pathsep.join(
       [str(api.step.repo_resource()), '%(PATH)s'])}):
     api.step('recipes help', ['recipes.py', '--help'])
 
-  # Finally, you can make your step accept any return code
+  # Finally, you can make your step accept any return code.
   api.step('anything is cool', ['bash', '-c', 'exit 3'],
            ok_ret='any')
 

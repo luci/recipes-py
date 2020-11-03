@@ -55,19 +55,17 @@ def GenTests(api):
     + api.post_check(check_unset, 'top_level')
     + api.post_process(post_process.DropExpectation)
   )
-  yield (
-    api.test('grand-child')
-    # Unfortuante coupling: experimental means special tag, too.
-    + api.buildbucket.try_build(
-      tags=api.buildbucket.tags(cq_experimental='true'))
-    + api.cq(dry_run=True, top_level=False, experimental=True)
-    + api.post_check(check_set_to, 'active', True)
-    + api.post_check(check_set_to, 'dry_run', True)
-    + api.post_check(check_set_to, 'experimental', True)
-    + api.post_check(check_has_bb_tag, 'cq_experimental', 'true')
-    + api.post_check(check_unset, 'top_level')
-    + api.post_process(post_process.DropExpectation)
-  )
+  yield (api.test('grand-child')
+         # Unfortunate coupling: experimental means special tag, too.
+         + api.buildbucket.try_build(
+             tags=api.buildbucket.tags(cq_experimental='true')) +
+         api.cq(dry_run=True, top_level=False, experimental=True) +
+         api.post_check(check_set_to, 'active', True) +
+         api.post_check(check_set_to, 'dry_run', True) +
+         api.post_check(check_set_to, 'experimental', True) +
+         api.post_check(check_has_bb_tag, 'cq_experimental', 'true') +
+         api.post_check(check_unset, 'top_level') +
+         api.post_process(post_process.DropExpectation))
   yield (
     api.test('not-a-cq-run')
     + api.post_check(check_unset, 'active')

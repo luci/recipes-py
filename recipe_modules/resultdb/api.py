@@ -19,11 +19,10 @@ from . import common
 class ResultDBAPI(recipe_api.RecipeApi):
   """A module for interacting with ResultDB."""
 
-  # Maxinum number of requests in a batch RPC.
+  # Maximum number of requests in a batch RPC.
   _BATCH_SIZE = 500
 
   # Expose serialize and deserialize functions.
-
   serialize = staticmethod(common.serialize)
   deserialize = staticmethod(common.deserialize)
   Invocation = common.Invocation

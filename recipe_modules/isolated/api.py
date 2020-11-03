@@ -1,6 +1,6 @@
-# Copyright 2018 The Chromium Authors. All rights reserved.
-# Use of this source code is governed by a BSD-style license that can be
-# found in the LICENSE file.
+# Copyright 2018 The LUCI Authors. All rights reserved.
+# Use of this source code is governed under the Apache License, Version 2.0
+# that can be found in the LICENSE file.
 
 import contextlib
 import urllib
@@ -101,7 +101,7 @@ class IsolatedApi(recipe_api.RecipeApi):
         directory, it will be created; else if already existent,
         conflicting files will be overwritten and non-conflicting files
         already in the directory will be ignored.
-      isolate_server (str|None): an isolate server to donwload from; if None,
+      isolate_server (str|None): an isolate server to download from; if None,
         the module's default server will be used instead.
     """
     isolate_server = isolate_server or self.isolate_server

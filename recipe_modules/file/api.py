@@ -1,6 +1,7 @@
 # Copyright 2017 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
+
 """File manipulation (read/write/delete/glob) methods."""
 
 from recipe_engine import config_types
@@ -34,8 +35,8 @@ class SymlinkTree(object):
     """Registers a pair of paths to symlink.
 
     Args:
-      * target (Path) - The file/directory to which the symlink will point.
-      * linkname (Path) - The location of the symlink. Must be a child of the
+      * target (Path): The file/directory to which the symlink will point.
+      * linkname (Path): The location of the symlink. Must be a child of the
           SymlinkTree's `root`. It is an error to register two links with the
           same linkname.
     """
@@ -45,7 +46,7 @@ class SymlinkTree(object):
       return
     else:
       assert linkname not in self._reverse_map, (
-          '%s is alreadly linked to %s' %
+          '%s is already linked to %s' %
           (linkname, self._reverse_map[linkname]))
 
     assert self.root.is_parent_of(linkname), (
@@ -57,7 +58,7 @@ class SymlinkTree(object):
     """Creates all registered symlinks on disk.
 
     Args:
-      * name (str) - The name of the step.
+      * name (str): The name of the step.
     """
     for target, linknames in self._link_map.iteritems():
       for linkname in linknames:
@@ -127,13 +128,13 @@ class FileApi(recipe_api.RecipeApi):
     Behaves identically to shutil.copy.
 
     Args:
-      * name (str) - The name of the step.
-      * source (Path|Placeholder) - The path to the file you want to copy.
-      * dest (Path|Placeholder) - The path to the destination file name. If this
+      * name (str): The name of the step.
+      * source (Path|Placeholder): The path to the file you want to copy.
+      * dest (Path|Placeholder): The path to the destination file name. If this
         path exists and is a directory, the basename of `source` will be
         appended to derive a path to a destination file.
 
-    Raises file.Error
+    Raises: file.Error
     """
     self._assert_absolute_path_or_placeholder(source)
     self._assert_absolute_path_or_placeholder(dest)
@@ -147,13 +148,13 @@ class FileApi(recipe_api.RecipeApi):
     `dest` must not exist.
 
     Args:
-      * name (str) - The name of the step.
-      * source (Path) - The path of the directory to copy.
-      * dest (Path) - The place where you want the recursive copy to show up.
+      * name (str): The name of the step.
+      * source (Path): The path of the directory to copy.
+      * dest (Path): The place where you want the recursive copy to show up.
         This must not already exist.
-      * symlinks (bool) - Preserve symlinks. No effect on Windows.
+      * symlinks (bool): Preserve symlinks. No effect on Windows.
 
-    Raises file.Error
+    Raises: file.Error
     """
     self.m.path.assert_absolute(source)
     self.m.path.assert_absolute(dest)
@@ -167,11 +168,11 @@ class FileApi(recipe_api.RecipeApi):
     Behaves identically to shutil.move.
 
     Args:
-      * name (str) - The name of the step.
-      * source (Path) - The path of the item to move.
-      * dest (Path) - The new name of the item.
+      * name (str): The name of the step.
+      * source (Path): The path of the item to move.
+      * dest (Path): The new name of the item.
 
-    Raises file.Error
+    Raises: file.Error
     """
     self.m.path.assert_absolute(source)
     self.m.path.assert_absolute(dest)
@@ -188,27 +189,29 @@ class FileApi(recipe_api.RecipeApi):
       * str(len(file))
       * file_content
 
-    Each of these components are separated by a newline character.
-
-    e.g. for file = "hello" and the contents "world" the hash would be over
-
-      5\n
-      hello\n
-      5\n
-      world\n
+    Each of these components are separated by a newline character. For example,
+    for file = "hello" and the contents "world" the hash would be over:
+    ```
+    5\n
+    hello\n
+    5\n
+    world\n
+    ```
 
     Args:
-      * name (str) - The name of the step.
-      * paths (list[Path|str]) - Path of directory/file(s) to compute hash.
-      * base_path (Path|str) - Base directory to calculating hash relative to
+      * name (str): The name of the step.
+      * paths (list[Path|str]): Path of directory/file(s) to compute hash.
+      * base_path (Path|str): Base directory to calculating hash relative to
         absolute path. For e.g. `start_dir` of a recipe execution can be used.
-      * test_data (str) - Some default data for this step to return when running
+      * test_data (str): Some default data for this step to return when running
         under simulation. If no test data is provided, we compute test_data as
         sha256 of concatenated relative paths passed.
 
-    Returns (str) - Hex encoded hash of directory/file content.
+    Returns (str):
+      Hex encoded hash of directory/file content.
 
-    Raises file.Error and ValueError if passed paths input is not str or Path.
+    Raises:
+      file.Error and ValueError if passed paths input is not str or Path.
     """
     for path in paths:
       if not isinstance(path, (str, config_types.Path)):  # pragma: no cover
@@ -231,14 +234,14 @@ class FileApi(recipe_api.RecipeApi):
     """Reads a file as raw data.
 
     Args:
-      * name (str) - The name of the step.
-      * source (Path) - The path of the file to read.
-      * test_data (str) - Some default data for this step to return when running
+      * name (str): The name of the step.
+      * source (Path): The path of the file to read.
+      * test_data (str): Some default data for this step to return when running
         under simulation.
 
-    Returns (str) - The unencoded (binary) contents of the file.
+    Returns (str): The unencoded (binary) contents of the file.
 
-    Raises file.Error
+    Raises: file.Error
     """
     self.m.path.assert_absolute(source)
     step_test_data = lambda: self.test_api.read_raw(test_data)
@@ -251,12 +254,12 @@ class FileApi(recipe_api.RecipeApi):
     """Write the given `data` to `dest`.
 
     Args:
-      * name (str) - The name of the step.
-      * dest (Path) - The path of the file to write.
-      * data (str) - The data to write.
-      * include_log (bool) - Include step log of written data.
+      * name (str): The name of the step.
+      * dest (Path): The path of the file to write.
+      * data (str): The data to write.
+      * include_log (bool): Include step log of written data.
 
-    Raises file.Error.
+    Raises: file.Error.
     """
     self.m.path.assert_absolute(dest)
     step = self._run(name, ['copy', self.m.raw_io.input(data), dest])
@@ -268,14 +271,14 @@ class FileApi(recipe_api.RecipeApi):
     """Reads a file as UTF-8 encoded text.
 
     Args:
-      * name (str) - The name of the step.
-      * source (Path) - The path of the file to read.
-      * test_data (str) - Some default data for this step to return when running
+      * name (str): The name of the step.
+      * source (Path): The path of the file to read.
+      * test_data (str): Some default data for this step to return when running
         under simulation.
 
-    Returns (str) - The content of the file.
+    Returns (str): The content of the file.
 
-    Raises file.Error
+    Raises: file.Error
     """
     self.m.path.assert_absolute(source)
     step_test_data = lambda: self.test_api.read_text(test_data)
@@ -290,12 +293,12 @@ class FileApi(recipe_api.RecipeApi):
     """Write the given UTF-8 encoded `text_data` to `dest`.
 
     Args:
-      * name (str) - The name of the step.
-      * dest (Path) - The path of the file to write.
-      * text_data (str) - The UTF-8 encoded data to write.
-      * include_log (bool) - Include step log of written text.
+      * name (str): The name of the step.
+      * dest (Path): The path of the file to write.
+      * text_data (str): The UTF-8 encoded data to write.
+      * include_log (bool): Include step log of written text.
 
-    Raises file.Error.
+    Raises: file.Error.
     """
     self.m.path.assert_absolute(dest)
     step = self._run(name, ['copy', self.m.raw_io.input_text(text_data), dest])
@@ -308,12 +311,12 @@ class FileApi(recipe_api.RecipeApi):
     """Reads a file as UTF-8 encoded json.
 
     Args:
-      * name (str) - The name of the step.
-      * source (Path) - The path of the file to read.
-      * test_data (object) - Some default json serializable data for this step
+      * name (str): The name of the step.
+      * source (Path): The path of the file to read.
+      * test_data (object): Some default json serializable data for this step
         to return when running under simulation.
 
-    Returns (object) - The content of the file.
+    Returns (object): The content of the file.
 
     Raise file.Error
     """
@@ -325,13 +328,13 @@ class FileApi(recipe_api.RecipeApi):
     """Write the given json serializable `data` to `dest`.
 
     Args:
-      * name (str) - The name of the step.
-      * dest (Path) - The path of the file to write.
-      * data (object) - Json serializable data to write.
-      * indent (None|int|str) - The indent of the written JSON. See
+      * name (str): The name of the step.
+      * dest (Path): The path of the file to write.
+      * data (object): Json serializable data to write.
+      * indent (None|int|str): The indent of the written JSON. See
         https://docs.python.org/3/library/json.html#json.dump for more details.
 
-    Raises file.Error.
+    Raises: file.Error.
     """
     text_data = self.m.json.dumps(data, indent=indent)
     self.write_text(name, dest, text_data)
@@ -340,11 +343,11 @@ class FileApi(recipe_api.RecipeApi):
     """Reads a file into a proto message.
 
     Args:
-      * name (str) - The name of the step.
-      * source (Path) - The path of the file to read.
-      * msg_class (protobuf Message subclass) - The message type to be read.
-      * codec ('BINARY'|'JSONPB'|'TEXTPB') - The encoder to use.
-      * test_proto (protobuf Message) - A default proto message for this step to
+      * name (str): The name of the step.
+      * source (Path): The path of the file to read.
+      * msg_class (protobuf Message subclass): The message type to be read.
+      * codec ('BINARY'|'JSONPB'|'TEXTPB'): The encoder to use.
+      * test_proto (protobuf Message): A default proto message for this step to
         return when running under simulation.
     """
     self.m.path.assert_absolute(source)
@@ -358,14 +361,14 @@ class FileApi(recipe_api.RecipeApi):
     return result.proto.output
 
   def write_proto(self, name, dest, proto_msg, codec, include_log=True):
-    """Write the given proto message to `dest`.
+    """Writes the given proto message to `dest`.
 
     Args:
-      * name (str) - The name of thhe step.
-      * dest (Path) - The path of the file to write.
-      * proto_msg (protobuf Message) - Message to write.
-      * codec ('BINARY'|'JSONPB'|'TEXTPB') - The encoder to use.
-      * include_log (bool) - Include step log of written text.
+      * name (str): The name of thhe step.
+      * dest (Path): The path of the file to write.
+      * proto_msg (protobuf Message): Message to write.
+      * codec ('BINARY'|'JSONPB'|'TEXTPB'): The encoder to use.
+      * include_log (bool): Include step log of written text.
     """
     self.m.path.assert_absolute(dest)
     step = self._run(name, ['copy', self.m.proto.input(proto_msg, codec), dest])
@@ -396,17 +399,17 @@ class FileApi(recipe_api.RecipeApi):
     ```
 
     Args:
-      * name (str) - The name of the step.
-      * source (Path) - The directory whose contents should be globbed.
-      * pattern (str) - The glob pattern to apply under `source`.
-      * include_hidden (bool) - Include files beginning with `.`.
-      * test_data (iterable[str]) - Some default data for this step to return
+      * name (str): The name of the step.
+      * source (Path): The directory whose contents should be globbed.
+      * pattern (str): The glob pattern to apply under `source`.
+      * include_hidden (bool): Include files beginning with `.`.
+      * test_data (iterable[str]): Some default data for this step to return
         when running under simulation. This should be the list of file items
         found in this directory.
 
-    Returns list[Path] - All paths found.
+    Returns (list[Path]): All paths found.
 
-    Raises file.Error.
+    Raises: file.Error.
     """
     assert isinstance(source, config_types.Path)
     cmd = ['glob', source, pattern]
@@ -422,36 +425,36 @@ class FileApi(recipe_api.RecipeApi):
     return ret
 
   def remove(self, name, source):
-    """Remove a file.
+    """Removes a file.
 
     Does not raise Error if the file doesn't exist.
 
     Args:
-      * name (str) - The name of the step.
-      * source (Path) - The file to remove.
+      * name (str): The name of the step.
+      * source (Path): The file to remove.
 
-    Raises file.Error.
+    Raises: file.Error.
     """
     self.m.path.assert_absolute(source)
     self._run(name, ['remove', source])
     self.m.path.mock_remove_paths(source)
 
   def listdir(self, name, source, recursive=False, test_data=()):
-    """List all files inside a directory.
+    """Lists all files inside a directory.
 
     Args:
-      * name (str) - The name of the step.
-      * source (Path) - The directory to list.
-      * recursive (bool) - If True, do not emit subdirectory entries but recurse
+      * name (str): The name of the step.
+      * source (Path): The directory to list.
+      * recursive (bool): If True, do not emit subdirectory entries but recurse
         into them instead, emitting paths relative to `source`. Doesn't follow
         symlinks. Very slow for large directories.
-      * test_data (iterable[str]) - Some default data for this step to return
+      * test_data (iterable[str]): Some default data for this step to return
         when running under simulation. This should be the list of relative paths
         found in this directory.
 
     Returns list[Path]
 
-    Raises file.Error.
+    Raises: file.Error.
     """
     assert isinstance(source, config_types.Path)
     self.m.path.assert_absolute(source)
@@ -470,13 +473,13 @@ class FileApi(recipe_api.RecipeApi):
     """Ensures that `dest` exists and is a directory.
 
     Args:
-      * name (str) - The name of the step.
-      * dest (Path) - The directory to ensure.
-      * mode (int) - The mode to use if the directory doesn't exist. This method
+      * name (str): The name of the step.
+      * dest (Path): The directory to ensure.
+      * mode (int): The mode to use if the directory doesn't exist. This method
         does not ensure the mode if the directory already exists (if you need
         that behaviour, file a bug).
 
-    Raises file.Error if the path exists but is not a directory.
+    Raises: file.Error if the path exists but is not a directory.
     """
     self.m.path.assert_absolute(dest)
     self._run(name, ['ensure-directory', '--mode', oct(mode), dest])
@@ -486,8 +489,8 @@ class FileApi(recipe_api.RecipeApi):
     """Returns list of filesizes for the given files.
 
     Args:
-      * name (str) - The name of the step.
-      * files (list[Path]) - Paths to files.
+      * name (str): The name of the step.
+      * files (list[Path]): Paths to files.
 
     Returns list[int], size of each file in bytes.
     """
@@ -512,10 +515,10 @@ class FileApi(recipe_api.RecipeApi):
     gone already, this returns without error.
 
     Args:
-      * name (str) - The name of the step.
-      * source (Path) - The directory to remove.
+      * name (str): The name of the step.
+      * source (Path): The directory to remove.
 
-    Raises file.Error.
+    Raises: file.Error.
     """
     self.m.path.assert_absolute(source)
     self._run(name, ['rmtree', source])
@@ -530,10 +533,10 @@ class FileApi(recipe_api.RecipeApi):
     a call that doesn't delete the directory itself.
 
     Args:
-      * name (str) - The name of the step.
-      * source (Path) - The directory whose contents should be removed.
+      * name (str): The name of the step.
+      * source (Path): The directory whose contents should be removed.
 
-    Raises file.Error.
+    Raises: file.Error.
     """
     self.m.path.assert_absolute(source)
     self._run(name, ['rmcontents', source])
@@ -556,17 +559,17 @@ class FileApi(recipe_api.RecipeApi):
     ```
 
     Args:
-      * name (str) - The name of the step.
-      * source (Path) - The directory whose contents should be filtered and
+      * name (str): The name of the step.
+      * source (Path): The directory whose contents should be filtered and
         removed.
-      * pattern (str) - The glob pattern to apply under `source`. Anything
+      * pattern (str): The glob pattern to apply under `source`. Anything
         matching this pattern will be removed.
-      * recursive (bool) - Recursively remove entries under `source`.
+      * recursive (bool): Recursively remove entries under `source`.
           TODO: Remove this option. Use `**` syntax instead.
-      * include_hidden (bool) - Include files beginning with `.`.
+      * include_hidden (bool): Include files beginning with `.`.
           TODO: Set to False by default to be consistent with file.glob.
 
-    Raises file.Error.
+    Raises: file.Error.
     """
     self.m.path.assert_absolute(source)
     if recursive and not pattern.startswith('**'):
@@ -590,11 +593,11 @@ class FileApi(recipe_api.RecipeApi):
     Behaves identically to os.symlink.
 
     Args:
-      * name (str) - The name of the step.
-      * source (Path|Placeholder) - The path to link from.
-      * linkname (Path|Placeholder) - The destination to link to.
+      * name (str): The name of the step.
+      * source (Path|Placeholder): The path to link from.
+      * linkname (Path|Placeholder): The destination to link to.
 
-    Raises file.Error
+    Raises: file.Error
     """
     self._assert_absolute_path_or_placeholder(source)
     self._assert_absolute_path_or_placeholder(linkname)
@@ -613,11 +616,11 @@ class FileApi(recipe_api.RecipeApi):
     """Creates an empty file with path and size_mb on the local filesystem.
 
     Args:
-      * name (str) - The name of the step.
-      * path (Path|str) - The absolute path to create.
-      * size_mb (int) - The size of the file in megabytes. Defaults to 100
+      * name (str): The name of the step.
+      * path (Path|str): The absolute path to create.
+      * size_mb (int): The size of the file in megabytes. Defaults to 100
 
-    Raises file.Error
+    Raises: file.Error
     """
     self._assert_absolute_path_or_placeholder(path)
     self._run(name, ['truncate', path, size_mb])
@@ -627,9 +630,9 @@ class FileApi(recipe_api.RecipeApi):
 
     Example:
 
-        $ mkdir -p dir/which_has/some/singlular/subdirs/
-        $ touch dir/which_has/some/singlular/subdirs/with
-        $ touch dir/which_has/some/singlular/subdirs/files
+        $ mkdir -p dir/which_has/some/singular/subdirs/
+        $ touch dir/which_has/some/singular/subdirs/with
+        $ touch dir/which_has/some/singular/subdirs/files
         $ flatten_single_directories(dir)
         $ ls dir
         with
@@ -645,10 +648,10 @@ class FileApi(recipe_api.RecipeApi):
     even named after the subfolder they extract to).
 
     Args:
-      * name (str) - The name of the step.
-      * path (Path|str) - The absolute path to begin flattening.
+      * name (str): The name of the step.
+      * path (Path|str): The absolute path to begin flattening.
 
-    Raises file.Error
+    Raises: file.Error
     """
     self.m.path.assert_absolute(path)
     self._run(name, ['flatten_single_directories', path])

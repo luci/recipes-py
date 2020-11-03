@@ -1,6 +1,7 @@
 # Copyright 2013 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
+
 """All functions related to manipulating paths in recipes.
 
 Recipes handle paths a bit differently than python does. All path manipulation
@@ -24,7 +25,7 @@ collection of anchor points. The built-in anchor points are:
     be removed in the future (or converted to an alias of 'cleanup').
   * `api.path['checkout']` - This directory is set by various 'checkout' modules
     in recipes. It was originally intended to make recipes easier to read and
-    make code somewhat generic or homogenous, but this was a mistake. New code
+    make code somewhat generic or homogeneous, but this was a mistake. New code
     should avoid 'checkout', and instead just explicitly pass paths around. This
     path may be removed in the future.
 
@@ -59,8 +60,8 @@ def PathToString(api, test):
 
 
 class path_set(object):
-  """ implements a set which contains all the parents folders of added folders.
-  """
+  """Implements a set which contains all the parents folders of added
+  folders."""
 
   # TODO(iannucci): Expand this to be a full fakey filesystem, including file
   # contents and file types. Coordinate with the `file` module.
@@ -148,25 +149,19 @@ class fake_path(object):
     return getattr(self._pth, name)
 
   def mock_add_paths(self, path):
-    """
-    Adds a path and all of its parents to the set of existing paths.
-    """
+    """Adds a path and all of its parents to the set of existing paths."""
     self._mock_path_exists.add(path)
 
   def mock_copy_paths(self, source, dest):
-    """
-    Duplicates a path and all of its children to another path.
-    """
+    """Duplicates a path and all of its children to another path."""
     self._mock_path_exists.copy(source, dest)
 
   def mock_remove_paths(self, path, filt):
-    """
-    Removes a path and all of its children from the set of existing paths.
-    """
+    """Removes a path and all of its children from the set of existing paths."""
     self._mock_path_exists.remove(path, filt)
 
   def exists(self, path):  # pylint: disable=E0202
-    """Return True if path refers to an existing path."""
+    """Returns True if path refers to an existing path."""
     return self._mock_path_exists.contains(path)
 
   # This matches:
@@ -177,7 +172,7 @@ class fake_path(object):
   ROOT_MATCHER = re.compile('^[A-Z_]*\[[^]]*\]')
 
   def normpath(self, path):
-    """Normalizese the path.
+    """Normalizes the path.
 
     This splits off a recipe base (i.e. RECIPE[...]) so that normpath is
     only called on the user-supplied portion of the path.
@@ -536,8 +531,8 @@ class PathApi(recipe_api.RecipeApi):
     """For testing purposes, assert that |path| doesn't exist.
 
     Args:
-      * path (str|Path) - The path to remove.
-      * filt (func[str] bool) - Called for every candidate path. Return
+      * path (str|Path): The path to remove.
+      * filt (func[str] bool): Called for every candidate path. Return
         True to remove this path.
     """
     if self._test_data.enabled:

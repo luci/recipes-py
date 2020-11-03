@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+"""An interface to call the led tool."""
+
 import hashlib
 
 import attr
@@ -16,8 +18,8 @@ class LedApi(recipe_api.RecipeApi):
   """Interface to the led tool.
 
   "led" stands for LUCI editor. It allows users to debug and modify LUCI jobs.
-  It can be used to modify many aspects of a LUCI build, most commonly including
-  the recipes used.
+  It can be used to modify many aspects of a LUCI build, most commonly
+  including the recipes used.
 
   The main interface this module provides is a direct call to the led binary:
 
@@ -154,7 +156,7 @@ class LedApi(recipe_api.RecipeApi):
     this is a no-op.
 
     Args:
-      led_result: The `LedResult` whose job.Definition will be passed into the
+      * led_result: The `LedResult` whose job.Definition will be passed into the
         edit command.
     """
     if self.isolated_input:
@@ -228,9 +230,9 @@ class LedApi(recipe_api.RecipeApi):
     """Runs led with a given command and arguments.
 
     Args:
-      cmd: The led command to run, e.g. 'get-builder', 'edit', along with any
+      * cmd: The led command to run, e.g. 'get-builder', 'edit', along with any
         arguments.
-      previous: The previous led step's json result, if any. This can be
+      * previous: The previous led step's json result, if any. This can be
         used to chain led commands together. See the tests for an example of
         this.
 
@@ -299,7 +301,7 @@ class LedApi(recipe_api.RecipeApi):
   def _ensure_led(self):
     """Ensures that led is checked out on disk.
 
-    Sets _led_path as a side-effect. This will always use `[CACHE]/led` as the
+    Sets `_led_path` as a side-effect. This will always use `[CACHE]/led` as the
     location of the unpacked binaries.
     """
     if self._led_path:

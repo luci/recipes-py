@@ -39,7 +39,7 @@ class TimeApi(recipe_api.RecipeApi):
         time.sleep(secs)
 
   def time(self):
-    """Return current timestamp as a float number of seconds since epoch."""
+    """Returns current timestamp as a float number of seconds since epoch."""
     if self._test_data.enabled:
       self._fake_time += self._fake_step
       return self._fake_time
@@ -52,7 +52,7 @@ class TimeApi(recipe_api.RecipeApi):
     return int(round(self.time() * 1000))
 
   def utcnow(self):
-    """Return current UTC time as a datetime.datetime."""
+    """Returns current UTC time as a datetime.datetime."""
     if self._test_data.enabled:
       self._fake_time += self._fake_step
       return datetime.datetime.utcfromtimestamp(self._fake_time)

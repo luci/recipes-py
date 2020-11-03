@@ -19,7 +19,6 @@ from recipe_engine import recipe_api
 from recipe_engine import util as recipe_util
 
 
-
 def _rmfile(p, _win_read_only_unset=False):  # pragma: no cover
   """Deletes a file, even a read-only one on Windows."""
   try:
@@ -110,8 +109,8 @@ class InputDataPlaceholder(recipe_util.InputPlaceholder):
 
 
 class InputTextPlaceholder(InputDataPlaceholder):
-  """ A input placeholder which expects to write out text.
-  """
+  """A input placeholder which expects to write out text."""
+
   def __init__(self, data, suffix, name=None):
     super(InputTextPlaceholder, self).__init__(data, suffix, name=name)
     assert isinstance(data, basestring)
@@ -132,6 +131,7 @@ class InputTextPlaceholder(InputDataPlaceholder):
 
 
 class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
+
   def __init__(self, suffix, leak_to, name=None, add_output_log=False):
     assert add_output_log in (True, False, 'on_failure'), (
         'add_output_log=%r' % add_output_log)
@@ -192,14 +192,14 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
     return ret
 
   def read_decoded_data(self, f):
-    """ Decodes data to be read in, when getting the result of this placeholder.
-    """
+    """Decodes data to be read in, when getting the result of this
+    placeholder."""
     return f.read()
 
 
 class OutputTextPlaceholder(OutputDataPlaceholder):
-  """ A output placeholder which expects to write out text.
-  """
+  """A output placeholder which expects to write out text."""
+
   def read_decoded_data(self, f):
     # This ensures that the raw result bytes we got are, in fact, valid utf-8,
     # replacing invalid bytes with �. Because python2's unicode support is
@@ -389,7 +389,7 @@ class RawIOApi(recipe_api.RecipeApi):
        assert result.raw_io.output_dir[some_file] == 'contents of some/file'
 
        # data for 'some/file' is cached now; To free it from memory (and make
-       # all futher reads of 'some/file' an error):
+       # all further reads of 'some/file' an error):
        del result.raw_io.output_dir[some_file]
 
        result.raw_io.output_dir[some_file] -> raises KeyError
