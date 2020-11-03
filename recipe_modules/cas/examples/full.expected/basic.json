@@ -114,7 +114,7 @@
       "-digest",
       "",
       "-dir",
-      "[CLEANUP]/cas-output_tmp_2"
+      "[CLEANUP]/cas-output_tmp_1"
     ],
     "infra_step": true,
     "name": "download"

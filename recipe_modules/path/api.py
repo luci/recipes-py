@@ -33,7 +33,7 @@ There are other anchor points which can be defined (e.g. by the
 documentation.
 """
 
-import functools
+import collections
 import itertools
 import os
 import re
@@ -233,8 +233,8 @@ class PathApi(recipe_api.RecipeApi):
     self._cleanup_dir = None
     self._home_dir = None
 
-    # Used in mkdtemp when generating and checking expectations.
-    self._test_counter = 0
+    # Used in mkdtemp and mkstemp when generating and checking expectations.
+    self._test_counter = collections.Counter()
 
   def _read_path(self, property_name, default):  # pragma: no cover
     """Reads a path from a property. If absent, returns the default.
@@ -331,10 +331,10 @@ class PathApi(recipe_api.RecipeApi):
           'new_path: %r -- cleanup_dir: %r' % (new_path, self._cleanup_dir))
       temp_dir = self['cleanup'].join(*new_path[len(self._cleanup_dir):])
     else:
-      self._test_counter += 1
+      self._test_counter[prefix] += 1
       assert isinstance(prefix, basestring)
       temp_dir = self['cleanup'].join('%s_tmp_%d' %
-                                      (prefix, self._test_counter))
+                                      (prefix, self._test_counter[prefix]))
     self.mock_add_paths(temp_dir)
     return temp_dir
 
@@ -358,10 +358,10 @@ class PathApi(recipe_api.RecipeApi):
       temp_file = self['cleanup'].join(*new_path[len(self._cleanup_dir):])
       os.close(fd)
     else:
-      self._test_counter += 1
+      self._test_counter[prefix] += 1
       assert isinstance(prefix, basestring)
       temp_file = self['cleanup'].join('%s_tmp_%d' %
-                                       (prefix, self._test_counter))
+                                       (prefix, self._test_counter[prefix]))
     self.mock_add_paths(temp_file)
     return temp_file
 
