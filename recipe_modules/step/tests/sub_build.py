@@ -144,11 +144,11 @@ def GenTests(api):
   build.output.logs.extend([
     common_pb2.Log(
       name='cool',
-      url='logdog://logs.chromium.org/infra/build/12345/+/some/cool',
+      url='some/cool',
     ),
     common_pb2.Log(
       name='awesome',
-      url='logdog://logs.chromium.org/infra/build/12345/+/some/awesome',
+      url='some/awesome',
     )
   ])
   yield (

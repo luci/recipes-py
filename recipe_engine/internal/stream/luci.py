@@ -313,10 +313,14 @@ class LUCIStepStream(StreamEngine.StepStream):
 
   @property
   def env_vars(self):
-    user_namespace = '/'.join((self._stream_namespace, 'u'))
+    logdog_namespace = self.user_namespace
     if self._bsc.namespace:
-      user_namespace = '/'.join((self._bsc.namespace, user_namespace))
-    return {'LOGDOG_NAMESPACE': user_namespace}
+      logdog_namespace = '/'.join((self._bsc.namespace, logdog_namespace))
+    return {'LOGDOG_NAMESPACE': logdog_namespace}
+
+  @property
+  def user_namespace(self):
+    return '/'.join((self._stream_namespace, 'u'))
 
   def write_line(self, line):
     """Differs from our @@@annotator@@@ bretheren and puts logging data to

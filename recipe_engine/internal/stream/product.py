@@ -77,6 +77,16 @@ class ProductStreamEngine(StreamEngine):
       ret.update(self._stream_a.env_vars)
       return ret
 
+    @property
+    def user_namespace(self):
+      """StepStream with no user_namespace support will return None. Returns
+      the first user_namespace that is not None or returns None if the
+      user_namespace of both streams are None.
+      """
+      if self._stream_a.user_namespace is None:
+        return self._stream_b.user_namespace
+      return self._stream_a.user_namespace
+
     def handle_exception(self, exc_type, exc_val, exc_tb):
       ret = self._stream_a.handle_exception(exc_type, exc_val, exc_tb)
       ret = ret or self._stream_b.handle_exception(exc_type, exc_val, exc_tb)
@@ -91,6 +101,7 @@ class ProductStreamEngine(StreamEngine):
     set_build_property = _void_product('set_build_property')
     mark_running = _void_product('mark_running')
     set_summary_markdown = _void_product('set_summary_markdown')
+
 
   def new_step_stream(self, name_tokens, allow_subannotations,
                       merge_step=False):

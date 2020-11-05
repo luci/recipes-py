@@ -109,6 +109,11 @@ class StreamEngine(object):
       """Returns a dict of environment variable overrides for this step."""
       return {}
 
+    @property
+    def user_namespace(self):
+      """Only on luciexe and needed when the step is a merge step"""
+      return None
+
   def new_step_stream(self, name_tokens, allow_subannotations,
                       merge_step=False):
     """Creates a new StepStream in this engine.

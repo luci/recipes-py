@@ -421,6 +421,7 @@ class RecipeEngine(object):
       if step_config.merge_step:
         _update_merge_step_presentation(ret.presentation,
                                         ret.step.sub_build,
+                                        step_stream.user_namespace,
                                         step_config.infra_step)
 
       # If there's a buffered exception, we raise it now.
@@ -622,7 +623,8 @@ def _set_initial_status(presentation, step_config, exc_result):
   presentation.status = 'EXCEPTION' if step_config.infra_step else 'FAILURE'
 
 
-def _update_merge_step_presentation(presentation, sub_build, infra_step):
+def _update_merge_step_presentation(presentation, sub_build,
+                                    user_namespace, infra_step):
   """Update the step presentation for merge step based on the result sub build.
 
   Overrides the presentation status with the status of the sub-build. If the
@@ -669,7 +671,11 @@ def _update_merge_step_presentation(presentation, sub_build, infra_step):
       append_step_text(sub_build.summary_markdown)
     if sub_build.output.logs:
       for log in sub_build.output.logs:
-        presentation.logs[log.name] = log
+        merged_log = common_pb2.Log()
+        merged_log.MergeFrom(log)
+        if user_namespace:
+          merged_log.url = '/'.join((user_namespace, log.url))
+        presentation.logs[log.name] = merged_log
 
 def _get_engine_properties(properties):
   """Retrieve and resurrect JSON serialized engine properties from all
