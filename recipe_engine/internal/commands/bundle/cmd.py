@@ -157,7 +157,7 @@ def export_protos(destination):
 
 
 TEMPLATE_SH = u"""#!/usr/bin/env bash
-vpython -u ${BASH_SOURCE[0]%/*}/recipe_engine/recipe_engine/main.py
+exec vpython -u ${BASH_SOURCE[0]%/*}/recipe_engine/recipe_engine/main.py
 """.strip()
 
 TEMPLATE_BAT = u"""@echo off
