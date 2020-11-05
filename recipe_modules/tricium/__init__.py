@@ -3,7 +3,11 @@
 # that can be found in the LICENSE file.
 
 DEPS = [
+    'cipd',
+    'context',
+    'file',
     'json',
+    'path',
     'properties',
     'step',
 ]

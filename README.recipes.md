@@ -153,7 +153,8 @@
   * [swarming:tests/copy](#recipes-swarming_tests_copy)
   * [swarming:tests/realms](#recipes-swarming_tests_realms)
   * [time:examples/full](#recipes-time_examples_full)
-  * [tricium:examples/full](#recipes-tricium_examples_full)
+  * [tricium:examples/add_comment](#recipes-tricium_examples_add_comment)
+  * [tricium:examples/wrapper](#recipes-tricium_examples_wrapper) &mdash; An example of a recipe wrapping legacy analyzers.
   * [url:examples/full](#recipes-url_examples_full)
   * [url:tests/join](#recipes-url_tests_join)
   * [url:tests/validate_url](#recipes-url_tests_validate_url)
@@ -3321,26 +3322,52 @@ Returns current timestamp as a float number of seconds since epoch.
 Returns current UTC time as a datetime.datetime.
 ### *recipe_modules* / [tricium](/recipe_modules/tricium)
 
-[DEPS](/recipe_modules/tricium/__init__.py#5): [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/tricium/__init__.py#5): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 API for Tricium analyzers to use.
 
-#### **class [TriciumApi](/recipe_modules/tricium/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#856)):**
+This recipe module is intended to support different kinds of
+analyzer recipes, including:
+  * Recipes that wrap one or more legacy analyzers.
+  * Recipes that accucumulate comments one by one.
+  * Recipes that wrap other tools and parse their output.
+
+#### **class [TriciumApi](/recipe_modules/tricium/api.py#31)([RecipeApi](/recipe_engine/recipe_api.py#856)):**
 
 TriciumApi provides basic support for Tricium.
 
-&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#19)(self, \*\*kwargs):**
+&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#38)(self, \*\*kwargs):**
 
 Sets up the API.
 
-This assumes that the input is a Tricium GitFileDetails
-object, and the output is a Tricium Results object (see
-https://chromium.googlesource.com/infra/infra/+/master/go/src/infra/tricium/api/v1/data.proto
-for details and definitions).
+Initializes an empty list of comments for use with
+add_comment and write_comments.
 
-&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#30)(self, category, message, path, start_line=0, end_line=0, start_char=0, end_char=0, suggestions=()):**
+&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#47)(self, category, message, path, start_line=0, end_line=0, start_char=0, end_char=0, suggestions=()):**
 
-&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#54)(self):**
+Adds one comment to accumulate.
+
+&mdash; **def [emit\_results](/recipe_modules/tricium/api.py#77)(self, results):**
+
+Sets the tricium output property with results.
+
+This overwrites any previous results; it is expected to be called only once
+in a recipe.
+
+&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#94)(self, analyzers, input_base, affected_files, commit_message):**
+
+Runs legacy analyzers.
+
+Args:
+  * analyzers (List(LegacyAnalyer)): Analyzers to run.
+  * input_base (Path): The Tricium input dir, generally a checkout base.
+  * affected_files (List(str)): Paths of files in the change, relative
+    to input_base.
+  * commit_message (str): Commit message from Gerrit.
+
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#71)(self):**
+
+Emit the results accumulated by `add_comment`.
 ### *recipe_modules* / [url](/recipe_modules/url)
 
 [DEPS](/recipe_modules/url/__init__.py#5): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io)
@@ -4150,11 +4177,18 @@ This file is a recipe demonstrating reading triggers of the current build.
 [DEPS](/recipe_modules/time/examples/full.py#7): [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 &mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#13)(api):**
-### *recipes* / [tricium:examples/full](/recipe_modules/tricium/examples/full.py)
+### *recipes* / [tricium:examples/add\_comment](/recipe_modules/tricium/examples/add_comment.py)
 
-[DEPS](/recipe_modules/tricium/examples/full.py#8): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
+[DEPS](/recipe_modules/tricium/examples/add_comment.py#8): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/examples/full.py#15)(api, trigger_type_error):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/examples/add_comment.py#15)(api, trigger_type_error):**
+### *recipes* / [tricium:examples/wrapper](/recipe_modules/tricium/examples/wrapper.py)
+
+[DEPS](/recipe_modules/tricium/examples/wrapper.py#13): [file](#recipe_modules-file), [path](#recipe_modules-path), [tricium](#recipe_modules-tricium)
+
+An example of a recipe wrapping legacy analyzers.
+
+&mdash; **def [RunSteps](/recipe_modules/tricium/examples/wrapper.py#20)(api):**
 ### *recipes* / [url:examples/full](/recipe_modules/url/examples/full.py)
 
 [DEPS](/recipe_modules/url/examples/full.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step), [url](#recipe_modules-url)

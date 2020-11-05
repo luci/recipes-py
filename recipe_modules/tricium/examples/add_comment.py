@@ -15,9 +15,10 @@ PROPERTIES = {
 def RunSteps(api, trigger_type_error):
   filename = 'path/to/file'
   api.tricium.add_comment('test', 'test message', filename)
-  # Check that duplicate comments aren't entered.
+  # Duplicate comments aren't entered.
   api.tricium.add_comment('test', 'test message', filename)
 
+  # Suggestions are given as JSON.
   suggestions = [{'description': 'please fix this'}]
 
   api.tricium.add_comment(
