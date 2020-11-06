@@ -17,7 +17,6 @@ import fnmatch
 from google.protobuf import json_format
 
 from recipe_engine import recipe_api
-#from recipe_engine.config_types import Path
 
 from . import legacy_analyzers
 
@@ -83,10 +82,13 @@ class TriciumApi(recipe_api.RecipeApi):
     step = self.m.step('write results', [])
     num_comments = len(results.comments)
     if num_comments > MAX_NUM_COMMENTS:
-      step.presentation.status = self.m.step.FAILURE
+      # Tricium will refuse to post comments if there are too many; we can just
+      # avoid emitting such results.
+      step.presentation.status = self.m.step.WARNING
       step.presentation.step_text = (
           '%s comments, exceeded maximum %s comments' %
           (num_comments, MAX_NUM_COMMENTS))
+      return
     # The "tricium" output property is read by the Tricium service.
     results_json = json_format.MessageToJson(results)
     step.presentation.properties['tricium'] = results_json

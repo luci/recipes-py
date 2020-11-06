@@ -3332,29 +3332,29 @@ analyzer recipes, including:
   * Recipes that accucumulate comments one by one.
   * Recipes that wrap other tools and parse their output.
 
-#### **class [TriciumApi](/recipe_modules/tricium/api.py#31)([RecipeApi](/recipe_engine/recipe_api.py#856)):**
+#### **class [TriciumApi](/recipe_modules/tricium/api.py#30)([RecipeApi](/recipe_engine/recipe_api.py#856)):**
 
 TriciumApi provides basic support for Tricium.
 
-&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#38)(self, \*\*kwargs):**
+&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#37)(self, \*\*kwargs):**
 
 Sets up the API.
 
 Initializes an empty list of comments for use with
 add_comment and write_comments.
 
-&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#47)(self, category, message, path, start_line=0, end_line=0, start_char=0, end_char=0, suggestions=()):**
+&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#46)(self, category, message, path, start_line=0, end_line=0, start_char=0, end_char=0, suggestions=()):**
 
 Adds one comment to accumulate.
 
-&mdash; **def [emit\_results](/recipe_modules/tricium/api.py#77)(self, results):**
+&mdash; **def [emit\_results](/recipe_modules/tricium/api.py#76)(self, results):**
 
 Sets the tricium output property with results.
 
 This overwrites any previous results; it is expected to be called only once
 in a recipe.
 
-&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#94)(self, analyzers, input_base, affected_files, commit_message):**
+&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#96)(self, analyzers, input_base, affected_files, commit_message):**
 
 Runs legacy analyzers.
 
@@ -3365,7 +3365,7 @@ Args:
     to input_base.
   * commit_message (str): Commit message from Gerrit.
 
-&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#71)(self):**
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#70)(self):**
 
 Emit the results accumulated by `add_comment`.
 ### *recipe_modules* / [url](/recipe_modules/url)
