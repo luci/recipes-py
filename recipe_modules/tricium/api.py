@@ -103,8 +103,6 @@ class TriciumApi(recipe_api.RecipeApi):
         to input_base.
       * commit_message (str): Commit message from Gerrit.
     """
-    self._write_git_file_details_data(affected_files, commit_message,
-                                      input_base)
     self._write_files_data(affected_files, commit_message, input_base)
     # Accumulate all analyzer results together. Each comment individually
     # contains a analyzer/category name, so this won't cause confusion.
@@ -145,17 +143,6 @@ class TriciumApi(recipe_api.RecipeApi):
     self.m.file.rmtree('clean up tricium data dir', input_base.join('tricium'))
     self.emit_results(all_results)
 
-  def _write_git_file_details_data(self, files, commit_message, base_dir):
-    """Writes a GitFileDetails message to a file.
-
-    Note: The only analyzer that depends on this is CommitCheck, and it only
-    uses the commit message, nothing else.
-    """
-    details = Data.GitFileDetails()
-    details.commit_message = commit_message
-    data_dir = self._ensure_data_dir(base_dir)
-    self._write_proto_json(data_dir, 'git_file_details.json', details)
-
   def _write_files_data(self, affected_files, commit_message, base_dir):
     """Writes a Files input message to a file.
 
@@ -173,15 +160,11 @@ class TriciumApi(recipe_api.RecipeApi):
       f = files.files.add()
       f.path = path
     data_dir = self._ensure_data_dir(base_dir)
-    self._write_proto_json(data_dir, 'files.json', files)
-
-  def _write_proto_json(self, data_dir, filename, message):
-    """Writes a Tricium data type message to a JSON file."""
     # Note: The JSON written self.m.file.write_proto doesn't work for what
     # Tricium analyzers expect, but json_format.MessageToJson does.
-    message_json = json_format.MessageToJson(message)
-    self.m.file.write_text('write ' + filename, data_dir.join(filename),
-                           message_json)
+    files_json = json_format.MessageToJson(files)
+    self.m.file.write_text('write files.json', data_dir.join('files.json'),
+                           files_json)
 
   def _read_results(self, base_dir):
     """Reads a Tricium Results message from a file.
