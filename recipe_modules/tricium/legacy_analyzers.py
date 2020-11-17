@@ -104,6 +104,12 @@ class Analyzers(object):
       executable='mojom-commentator',
       path_filters=['*.mojom'])
 
+  OBJECTIVE_C_STYLE = LegacyAnalyzer(
+      name='ObjectiveCStyle',
+      package='infra/tricium/function/objective-c-style',
+      executable='objective-c-style',
+      path_filters=['*.m', '*.mm'])
+
   PYLINT = LegacyAnalyzer(
       name='Pylint',
       package='infra/tricium/function/pylint',
