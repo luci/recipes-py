@@ -94,7 +94,7 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       }))
       proc.stdin.close()
 
-      engine_pid = int(self._wait_for_file(pidfile, 10).strip())
+      engine_pid = int(self._wait_for_file(pidfile, 20).strip())
 
       yield proc, engine_pid
     finally:
