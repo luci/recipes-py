@@ -229,8 +229,7 @@ class LUCIStepStream(StreamEngine.StepStream):
           base_flattened_name + ('_%d' % dedup_idx), 'l')
       dedup_idx += 1
 
-    log_stream = self._bsc.open_text(
-        flat_name, for_process=log_name in ('stdout', 'stderr'))
+    log_stream = self._bsc.open_text(flat_name)
     self._CREATED_LOGS.add(flat_name)
 
     log = self._step.logs.add()
