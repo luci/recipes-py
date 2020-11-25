@@ -267,7 +267,7 @@ class FileApi(recipe_api.RecipeApi):
       step.presentation.logs[self.m.path.basename(dest)] = data.splitlines()
     self.m.path.mock_add_paths(dest)
 
-  def read_text(self, name, source, test_data=''):
+  def read_text(self, name, source, test_data='', include_log=True):
     """Reads a file as UTF-8 encoded text.
 
     Args:
@@ -275,6 +275,7 @@ class FileApi(recipe_api.RecipeApi):
       * source (Path): The path of the file to read.
       * test_data (str): Some default data for this step to return when running
         under simulation.
+      * include_log (bool): Include step log of read text.
 
     Returns (str): The content of the file.
 
@@ -286,7 +287,8 @@ class FileApi(recipe_api.RecipeApi):
         name, ['copy', source, self.m.raw_io.output_text()],
         step_test_data=step_test_data)
     text = result.raw_io.output_text
-    result.presentation.logs[self.m.path.basename(source)] = text.splitlines()
+    if include_log:
+      result.presentation.logs[self.m.path.basename(source)] = text.splitlines()
     return text
 
   def write_text(self, name, dest, text_data, include_log=True):
@@ -307,7 +309,7 @@ class FileApi(recipe_api.RecipeApi):
           dest)] = text_data.splitlines()
     self.m.path.mock_add_paths(dest)
 
-  def read_json(self, name, source, test_data=''):
+  def read_json(self, name, source, test_data='', include_log=True):
     """Reads a file as UTF-8 encoded json.
 
     Args:
@@ -315,16 +317,18 @@ class FileApi(recipe_api.RecipeApi):
       * source (Path): The path of the file to read.
       * test_data (object): Some default json serializable data for this step
         to return when running under simulation.
+      * include_log (bool): Include step log of read json.
 
     Returns (object): The content of the file.
 
     Raise file.Error
     """
     test_data_text = self.m.json.dumps(test_data)
-    text = self.read_text(name, source, test_data=test_data_text)
+    text = self.read_text(
+        name, source, test_data=test_data_text, include_log=include_log)
     return self.m.json.loads(text)
 
-  def write_json(self, name, dest, data, indent=None):
+  def write_json(self, name, dest, data, indent=None, include_log=True):
     """Write the given json serializable `data` to `dest`.
 
     Args:
@@ -333,13 +337,20 @@ class FileApi(recipe_api.RecipeApi):
       * data (object): Json serializable data to write.
       * indent (None|int|str): The indent of the written JSON. See
         https://docs.python.org/3/library/json.html#json.dump for more details.
+      * include_log (bool): Include step log of written json.
 
     Raises: file.Error.
     """
     text_data = self.m.json.dumps(data, indent=indent)
-    self.write_text(name, dest, text_data)
+    self.write_text(name, dest, text_data, include_log=include_log)
 
-  def read_proto(self, name, source, msg_class, codec, test_proto=None):
+  def read_proto(self,
+                 name,
+                 source,
+                 msg_class,
+                 codec,
+                 test_proto=None,
+                 include_log=True):
     """Reads a file into a proto message.
 
     Args:
@@ -349,6 +360,7 @@ class FileApi(recipe_api.RecipeApi):
       * codec ('BINARY'|'JSONPB'|'TEXTPB'): The encoder to use.
       * test_proto (protobuf Message): A default proto message for this step to
         return when running under simulation.
+      * include_log (bool): Include step log of read proto.
     """
     self.m.path.assert_absolute(source)
     if not test_proto:
@@ -358,6 +370,9 @@ class FileApi(recipe_api.RecipeApi):
     result = self._run(
         name, ['copy', source, self.m.proto.output(msg_class, codec)],
         step_test_data=step_test_data)
+    if include_log:
+      result.presentation.logs[self.m.path.basename(
+          source)] = self.m.proto.encode(result.proto.output, 'TEXTPB')
     return result.proto.output
 
   def write_proto(self, name, dest, proto_msg, codec, include_log=True):
@@ -368,7 +383,7 @@ class FileApi(recipe_api.RecipeApi):
       * dest (Path): The path of the file to write.
       * proto_msg (protobuf Message): Message to write.
       * codec ('BINARY'|'JSONPB'|'TEXTPB'): The encoder to use.
-      * include_log (bool): Include step log of written text.
+      * include_log (bool): Include step log of written proto.
     """
     self.m.path.assert_absolute(dest)
     step = self._run(name, ['copy', self.m.proto.input(proto_msg, codec), dest])
