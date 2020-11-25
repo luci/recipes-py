@@ -1,6 +1,6 @@
 # Recipes
 
-Recipes are a python framework for writing Continuous Integration scripts (i.e.
+Recipes are a Python framework for writing Continuous Integration scripts (i.e.
 what you might otherwise write as a bash script). Unlike bash scripts, they
 are meant to:
   * Be testable
@@ -8,8 +8,8 @@ are meant to:
   * Allow code-sharing
   * Be locally runnable
   * Integrate with the LUCI UI (i.e. https://ci.chromium.org) to display
-    subprocesses as "steps", and other UI attributes (step color,
-    descriptive text, debugging logs, etc.)
+    subprocesses as "steps", and other UI attributes (step color, descriptive
+    text, debugging logs, etc.)
 
 *** note
 This user guide is a work in progress, and is a revised version of the
@@ -24,7 +24,6 @@ For more implementation details, please see [implementation_details].
 ***
 
 [implementation_details]: ./implementation_details.md
-
 
 [TOC]
 
@@ -46,37 +45,27 @@ the signalling protocol interspersed with stdout. This provided the ability
 to de-couple working on what-the-build-does from the running BuildBot service,
 allowing changes to the build without redeployment of the service.
 
-Recipes were the evolution of these bash scripts; they are written in python,
-allow code sharing across repos, have a testing mechanism, etc.
+Recipes were the evolution of these bash scripts; they are written in Python,
+allow code sharing across repos, have a testing mechanism, etc. Arguably,
+recipes have *too many* features at present, but we're hard at work removing
+them where we can, to keep them simple :-)
 
-Arguably, recipes have *TOO MANY* features at present, but we're hard at work
-removing them where we can, to keep them simple :).
+## Introduction
 
-## Intro
+This user guide will attempt to bootstrap your understanding of the recipes
+ecosystem. This includes the setup of a recipe repo, user of the recipes.py
+script, and the development flow for writing and testing recipes and recipe
+modules.
 
-This README will attempt to bootstrap your understanding of the recipes
-ecosystem. This includes:
+## Runtime dependencies
 
-  * Runtime dependencies
-  * Initial repo setup
-  * The `recipes.py` command
-  * Writing recipes
-  * Writing `recipe_modules`
-  * Structured data passing for steps
-  * Build UI manipulation
-  * Testing recipes and `recipe_modules`
-  * Productionizing a recipe repo
-  * Recipe Philosophy
+Recipes depend on a few tools to be in the environment:
 
-### Runtime dependencies
-
-Recipes depend on a couple tools to be in the environment:
-
-  * Python (2.7) - Currently recipes rely on python 2.7.
-  * `vpython` - This is a LUCI tool to manage python VirtualEnvs. Recipes rely
+  * python: Currently recipes rely on Python 2.7.
+  * `vpython`: This is a LUCI tool to manage python VirtualEnvs. Recipes rely
     on this for the recipe engine runtime dependencies (like the python
     protobuf libraries, etc.)
-  * `cipd` - This is a LUCI tool to manage binary package distribution.
+  * `cipd`: This is a LUCI tool to manage binary package distribution.
 
 Additionally, most existing recipes depend on the following:
 
@@ -85,20 +74,20 @@ Additionally, most existing recipes depend on the following:
     and on dev machines it can mint tokens based on locally stored credentials
     (i.e. run `luci-auth login` to locally store credentials).
 
-### Initial repo setup
+## Recipe repo setup
 
-A recipe repo has a couple essential requirements:
+A recipe repo has a few essential requirements:
   * It is a git repo.
   * It contains a file called `//infra/config/recipes.cfg`. For historical
     reasons, this is a non-configurable path.
-  * It contains 'recipes', 'recipe_modules', and/or 'recipe_proto' folders (in
-    the `recipes_path` folder indicated by `recipes.cfg`. By default they are
-    located at the base of the repository).
+  * It contains the `recipes`, `recipe_modules`, and/or `recipe_proto` folders
+    (in the `recipes_path` folder indicated by `recipes.cfg`. By default they
+    are located at the base of the repository).
   * It contains a copy of [recipes.py] in its `recipes_path` folder.
 
 [recipes.py]: /recipes.py
 
-#### recipes.cfg
+### The config file recipes.cfg
 
 The `recipes.cfg` file is a JSONPB file, which is defined by the
 [recipes_cfg.proto] protobuf file.
@@ -116,7 +105,7 @@ Example [recipes.cfg](https://chromium.googlesource.com/chromium/tools/build/+/m
 
 [recipes_cfg.proto]: /recipe_engine/recipes_cfg.proto
 
-#### Recipes folder
+### The recipes folder
 
 The recipes folder contains a collection of python files and subfolders
 containing python files, as well as subfolders containing JSON 'expectation'
@@ -127,73 +116,70 @@ A recipe in a subfolder includes that subfolder in its name; so
 
 Example [recipes folder](https://chromium.googlesource.com/chromium/tools/build/+/master/scripts/slave/recipes).
 
-#### `recipe_modules` folder
+### The `recipe_modules` folder
 
 The `recipe_modules` folder contains subfolders, one per module. Unlike recipes,
 the module namespace is flat in each repo. A recipe module directory contains
 these files:
 
-  * `__init__.py` - Contains the `DEPS`, `PROPERTIES`, etc. declarations for the
+  * `__init__.py`: Contains the `DEPS`, `PROPERTIES`, etc. declarations for the
     recipe_module.
-  * `api.py` - Contains the implementation of the recipe module.
-  * `test_api.py` - Contains the implementation of the recipe module's fakes.
+  * `api.py`: Contains the implementation of the recipe module.
+  * `test_api.py`: Contains the implementation of the recipe module's fakes.
 
 Example [recipe_modules folder](https://chromium.googlesource.com/chromium/tools/build/+/master/scripts/slave/recipe_modules).
 
-#### `recipe_proto` folder
+### The `recipe_proto` folder
 
 See [#Working-with-Protobufs] for details on this folder and its contents.
 
-#### The `recipes.py` script
+## The `recipes.py` script
 
-The `recipes.py` script is the entry point to the recipe_engine. Its primary
-functionality is to clone a copy of the recipe_engine repo (matching the version
-in your `recipes.cfg` file), and then invoke the main recipe_engine code with
-whatever command line you gave it.
+The `recipes.py` script is the entry point to the recipe_engine and to running
+your recipe. Its primary functionality is to clone a copy of the recipe_engine
+repo (matching the version in your `recipes.cfg` file), and then invoke the
+main recipe_engine code with whatever command line you gave it.
 
 This script invokes the recipe engine with `vpython`, which picks up a python
 VirtualEnv suitable for the recipe engine (it includes things like
 py-cryptography and the protobuf library).
 
-### The `recipes.py` command
-
-The `recipes.py` command is the main entry point to your recipe. It has a couple
-important subcommands that you'll use frequently:
-  * `run` - This command actually executes a single recipe.
-  * `test` - This command runs the simulation tests and trains the generated
+There are a couple of important subcommands that you'll use frequently:
+  * `run`: This command actually executes a single recipe.
+  * `test`: This command runs the simulation tests and trains the generated
     README.recipes.md file as well as simulation expectation files. This also
     has a 'debug' option which is pretty helpful.
 
 Less often-used:
-  * `autoroll` - Automatically updates your `recipes.cfg` file with newer
+  * `autoroll`: Automatically updates your `recipes.cfg` file with newer
     versions of the dependencies there. This rolls the recipes.cfg version.
     and also runs simulation tests to try to detect the largest 'trivial' roll,
     or the smallest 'non-trivial' roll.
-  * `manual_roll` - Updates your `recipes.cfg` file with the smallest valid roll
+  * `manual_roll`: Updates your `recipes.cfg` file with the smallest valid roll
     possible, but doesn't do any automated testing. It's useful for when you
     need to manually roll recipes (i.e. the automated roll doesn't find a
     valid trivial or non-trivial roll, due to API changes, etc.).
-  * `bundle` - Extracts all files necessary to run the recipe without making any
+  * `bundle`: Extracts all files necessary to run the recipe without making any
     network requests (i.e. no git repository operations).
 
 And very infrequently used:
-  * `doc` - Shows/generates documentation for the recipes and modules from their
+  * `doc`: Shows/generates documentation for the recipes and modules from their
     python docstrings. However the `test train` subcommand will generate
     Markdown automatically from the docstrings, so you don't usually need to
     invoke this subcommand explicitly.
-  * `fetch` - Explicitly runs the 'fetch' phase of the recipe engine (to sync
+  * `fetch`: Explicitly runs the 'fetch' phase of the recipe engine (to sync
     all local git repos to the versions in `recipes.cfg`). However, this happens
     implicitly for all subcommands, and the `bundle` command is a superior way
     to prepare recipes for offline use.
-  * `lint` - Runs some very simple static analysis on the recipes. This command
+  * `lint`: Runs some very simple static analysis on the recipes. This command
     is mostly invoked automatically from PRESUBMIT scripts so you don't need to
     run it manually.
 
 It also has a couple tools for analyzing the recipe dependency graph:
-  * `analyze` - Answers questions about the recipe dependency graph (for use in
+  * `analyze`: Answers questions about the recipe dependency graph (for use in
     continuous integration scenarios).
 
-#### Overriding dependencies
+### Overriding dependencies
 
 If you're developing recipes locally, you may find the need to work on changes
 in multiple recipe repos simultaneously. You can override a dependency for
@@ -211,19 +197,19 @@ presumably depends on the upstream repo). To do this you would:
 This works for all dependency repos, and can be specified multiple times to
 override more than one dependency.
 
-#### The `run` command
+### The `run` command
 
 TODO(iannucci) - Document
 
-#### The `test` command
+### The `test` command
 
 TODO(iannucci) - Document
 
-#### The `autoroll` command
+### The `autoroll` command
 
 TODO(iannucci) - Document
 
-#### The `manual_roll` command
+### The `manual_roll` command
 
 Updates your repo's `recipes.cfg` file with the smallest valid roll possible.
 This means that for all dependencies your repo has, the smallest number of
@@ -235,13 +221,13 @@ preparing a manual roll CL.
 
 You can run this command repeatedly to find successive roll candidates.
 
-#### The `bundle` command
+### The `bundle` command
 
 TODO(iannucci) - Document
 
-### Writing recipes
+## Writing recipes
 
-A "recipe" is a python script which the recipe engine can run and test. This
+A "recipe" is a Python script which the recipe engine can run and test. This
 script:
   * Must have a RunSteps function
   * Must have a GenTests generator
@@ -285,7 +271,7 @@ Here's a simple example recipe:
         + api.post_check(lambda check, steps: check('say hello' in steps))
       )
 
-#### `RunSteps`
+### `RunSteps`
 
 The RunSteps function has a signature like:
 
@@ -311,12 +297,12 @@ Where `api` is a python object containing all loaded `DEPS` (see section on
 `DEPS` below), and the properties arguments are loaded from the properties
 passed in to the recipe when the recipe is started.
 
-The RunSteps function may invoke any recipe module it wants via `api` (at its
+The `RunSteps` function may invoke any recipe module it wants via `api` (at its
 most basic, a recipe would run steps via `api.step(...)` after including
 'recipe_engine/step' in `DEPS`).
 
-Additionally, the RunSteps function can return a summary and status of the build.
-This is done by returning a RawResult object, which can be done like this:
+Additionally, the `RunSteps` function can return a summary and status of the build.
+This is done by returning a `RawResult` object, which can be done like this:
 
     # Import proto that has RawResult object
     from PB.recipe_engine import result
@@ -346,8 +332,7 @@ you can set `summary_markdown` in all cases from the recipe, but it will only be
 on the build in conjunction with non-SUCCESS status value.
 ***
 
-
-#### `GenTests`
+### `GenTests`
 
 The GenTests function is a generator which yields test cases. Every test case:
   * Has a unique name
@@ -367,7 +352,7 @@ final state of the recipe execution in the form of a listing of the steps that
 have run. The test expectation files are written to a folder which is generated
 by replacing the '.py' extension of the recipe script with '.expected/'.
 
-#### `DEPS`
+### `DEPS`
 
 The DEPS section of the recipe specifies what recipe modules this recipe depends
 on. The DEPS section has two possible forms, a list and a dict.
@@ -390,7 +375,7 @@ of a recipe module instances behave like singletons; if a recipe and a module
 both DEPS in the same other module (say 'tertiary'), there will only be one
 instance of the 'tertiary' module.
 
-#### `PROPERTIES` and `ENV_PROPERTIES`
+### `PROPERTIES` and `ENV_PROPERTIES`
 
 Recipe code has a couple ways to observe the input properties. Currently the
 best way is to define a proto message and then set this as the `PROPERTIES`
@@ -495,11 +480,11 @@ not allow access to environment variables.
 There's another way to define `PROPERTIES` which is deprecated, but it has no
 advantages over the proto method, and will (hopefully) be deleted soon.
 
-### Writing recipe_modules
+## Writing recipe_modules
 
 TODO(iannucci) - Document
 
-#### `PROPERTIES`, `GLOBAL_PROPERTIES` and `ENV_PROPERTIES`
+### `PROPERTIES`, `GLOBAL_PROPERTIES` and `ENV_PROPERTIES`
 
 In a recipe module's `__init__.py`, you may specify `PROPERTIES` and
 `ENV_PROPERTIES` the same way that you do for a recipe, with the exception that
@@ -563,7 +548,7 @@ property JSON:
 
 And `env_prop` could be set by setting the environment variable `$ENV_STRING`.
 
-#### Accessing recipe_modules as python modules
+### Accessing recipe_modules as python modules
 
 While recipe modules provide a way to share 'recipe' code (via `DEPS`), they are
 also regular python modules, and occasionally you may find yourself wishing to
@@ -593,7 +578,7 @@ without a "TODO" to document it more. I'll be adding additional documentation
 for it as strictly necessary.
 ***
 
-#### Extending config.py
+### Extending config.py
 
 If you need to extend the configurations provided by another recipe module,
 write your extensions in a file ending with `_config.py` in your recipe module
@@ -606,22 +591,23 @@ looks like:
 
     from RECIPE_MODULES.depot_tools.gclient import CONFIG_CTX
 
-### How recipes execute
+## How recipes execute
 
 TODO(iannucci) - Document
 
-#### Engine Properties
+For more details, see [implementation_details.md](./implementation_details.md).
+
+### Engine Properties
 
 [engine_properties.proto] defines a list of properties that dynamically adjust the behavior of recipe engine. These properties are associated with key `$recipe_engine` in the input properties.
 
 [engine_properties.proto]: /recipe_engine/engine_properties.proto
 
-
-### How recipe simulation tests work
+## How recipe simulation tests work
 
 TODO(iannucci) - Document
 
-#### Protobufs in tests
+### Protobufs in tests
 
 Because `PROPERTIES` (and friends) may be defined in terms of protobufs, you may
 also pass proto messages in your tests when using the `properties` recipe
@@ -661,35 +647,32 @@ For example:
         )
       )
 
-### Structured data passing for steps
+## Structured data passing for steps
 
 TODO(iannucci) - Document
 
-### Build UI manipulation
+## Build UI manipulation
 
 TODO(iannucci) - Document
 
-### Testing recipes and recipe_modules
+## Testing recipes and recipe_modules
 
 TODO(iannucci) - Document
 
-### Issuing warnings in recipe module
+## Issuing warnings in recipe modules
 
 While recipe modules provide a way to share code across different repos (via
 `DEPS`), it also means that changing the behavior of a recipe module may
 potentially break recipes or recipe modules in downstream repos which depend on
 it. Figuring out all such recipes or recipe modules requires substantial effort.
 
-Recipes have a feature, called 'warnings' that allows recipe authors to better
-alert downstream consumers about upcoming breaking changes in a recipe module.
-The recipe engine will issue notifications for all warnings hit during the
-execution of simulation tests (i.e. `recipes.py test run` or
-`recipes.py test train`). The engine groups the notifications by warning
-names.
+Recipes have a "warnings" feature that allows recipe authors to better alert
+downstream consumers about upcoming breaking changes in a recipe module. The
+recipe engine will issue notifications for all warnings hit during the
+execution of simulation tests (i.e. `recipes.py test run` or `recipes.py test
+train`). The engine groups the notifications by warning names.
 
-#### Warnings workflow
-
-##### Defining a warning
+### Defining a warning
 
 A warning is defined in the file `recipe.warnings` under the recipe folder in a
 repo. `recipes.warnings` is a text proto formatted file of
@@ -732,7 +715,7 @@ qualify them by the repo names (which already must be globally unique).
 
 [warning.proto]: /recipe_engine/warning.proto
 
-##### Issuing a warning
+### Issuing a warning
 
 A warning can be either issued in the recipe module code or for an entire
 recipe module.
@@ -764,7 +747,7 @@ WARNINGS = [
 ]
 ```
 
-##### Run simulation test
+### Running a simulation test for warnings
 
 If the recipe code within a repo hits any issued warnings, the test summary
 will contain output like:
@@ -804,18 +787,18 @@ each warning followed by `Call Sites` or `Import Sites` (could possibly have
 both). Only `Call Sites` or `Import Sites` from the repo where simulation test
 runs will be shown.
 
-**Call Sites** -- If a warning is issued in a function/method body of a recipe
-module during a test run, call sites is all the unique locations where that
+**Call Sites**: If a warning is issued in a function or method body of a recipe
+module during a test run, Call Sites is all the unique locations where that
 function/method are called. In other word, the direct outer frame of the frame
 where warning is issued.
 
-**Import Sites** -- If a warning is issued for the entire recipe module via the
-`WARNING` variable, import sites is the list of recipes and recipe modules which
+**Import Sites**: If a warning is issued for the entire recipe module via the
+`WARNING` variable, Import Sites is the list of recipes and recipe modules which
 have declared a dependency on that module.
 
-#### Advanced Features
+### Advanced features of warnings
 
-##### Escape Warnings
+#### Escaping warnings
 
 The recipe engine also provides a way to exclude code in a function from being
 attributed to the call site for certain warnings. This is achieved by applying
@@ -846,13 +829,11 @@ class FooApi(recipe_api.RecipeApiPlain):
 There is also a shorthand decorator (`@recipe_api.escape_all_warnings`) which
 escape the decorated function from all warnings.
 
-##### CLI options
+#### CLI options for warnings
 
 TODO(yiwzhang) - Document when CLI options are ready
 
-### Debugging
-
-#### Memory Leak
+## Detecting memory leaks with Pympler
 
 To help detect memory leaks, recipe engine has a [property](#engine-properties)
 named `memory_profiler.enable_snapshot`. It is false by default. If it is set
@@ -869,17 +850,17 @@ debug log will look like as follows:
 
 [Pympler]: https://github.com/pympler/pympler
 
-### Working with Protobufs
+## Working with Protobuf files
 
 The recipe engine facilitates the use of protobufs with builtin `protoc`
 capabilities.
 
-Due to the nature of .proto imports, the generated python code (specifically
-w.r.t. the generated `import` lines), and the layout of recipes and modules
-(specifically, across multiple repos), is a bit more involved than just putting
-the .proto files in a directory, running 'protoc' and calling it a day.
+Due to the nature of `.proto` imports, the import lines in the generated python
+code and the layout of recipes and modules (specifically, across multiple
+repos), is a bit more involved than just putting the `.proto` files in a
+directory, running `protoc` and calling it a day.
 
-#### Where Recipe Engine looks for .proto files
+### Where Recipe Engine looks for .proto files
 
 Recipe engine will look for proto files in 3 places in your recipe repo:
   * Mixed among the `recipe_modules` in your repo
@@ -887,13 +868,14 @@ Recipe engine will look for proto files in 3 places in your recipe repo:
   * In a `recipe_proto` directory (adjacent to your 'recipes' and/or
     `recipe_modules` directories)
 
-For proto files which are only used in the recipe ecosystem, you should put them
-either in `recipes/*` or `recipe_modules/*`. For proto files which originate
-outside the recipe ecosystem (e.g. their source of truth is some other repo),
-place them into the `recipe_proto` directory in an appropriate subdirectory (so
-that `protoc` will find them where other protos expect to import them).
+For proto files which are only used in the recipe ecosystem, you should put
+them either in `recipes/*` or `recipe_modules/*`. For proto files which
+originate outside the recipe ecosystem (e.g. their source of truth is some
+other repo), place them into the `recipe_proto` directory in an appropriate
+subdirectory (so that `protoc` will find them where other protos expect to
+import them).
 
-##### recipe_modules
+### Protos in recipe modules
 
 Your recipe modules can have any .proto files they want, in any subdirectory
 structure that they want (the subdirectories do not need to be python modules,
@@ -926,11 +908,12 @@ The generated protobuf libraries are importable as e.g.:
 
     import PB.recipe_modules.repo_name.module_name.path.to.file
 
-##### recipes folder
+### Protos in the recipes folder
 
-Your recipes may also define protos. It's required that the protos in the recipe
-folder correspond 1:1 with an actual recipe. The name for this proto file should
-be the recipe's name, but with '.proto' instead of '.py'. So, you could have:
+Your recipes may also define protos. It's required that the protos in the
+recipe folder correspond 1:1 with an actual recipe. The name for this proto
+file should be the recipe's name, but with '.proto' instead of '.py'. So, you
+could have:
 
     recipes/
       my_recipe.py
@@ -966,7 +949,7 @@ The generated protobuf libraries are importable as e.g.:
 
     import PB.recipes.repo_name.path.to.file
 
-##### **Special Case** recipe_engine protos
+### The special case of recipe_engine protos
 
 The recipe engine repo itself also has some protos defined within it's own
 `recipe_engine` folder. These are the proto files [here](/recipe_engine).
@@ -979,7 +962,7 @@ The generated protobuf libraries are importable as e.g.:
 
     import PB.recipe_engine.file
 
-##### recipe_proto folder
+### The recipe_proto folder
 
 The 'recipe_proto' directory can have arbitrary proto files in it from external
 sources (i.e. from other repos), and organized using that project's folder
@@ -1004,7 +987,7 @@ the downstream repo to fail. This usually just means that the downstream repo
 needs to stop including those proto files, since it will be able to import them
 from the upstream repo which now includes them.
 
-#### Using generated protos in your `recipes` / `recipe_modules`
+### Using generated protos in your recipes and recipe modules
 
 Once the protos are generated, you can import them anywhere in the recipe
 ecosystem by doing:
@@ -1021,47 +1004,52 @@ ecosystem by doing:
     # from repo_name.git//.../recipes/recipe_name.proto
     from PB.recipes.repo_name import recipe_name
 
-### Productionizing
+## Productionizing
 
 TODO(iannucci) - Document
 
-#### Bundling
+### Bundling
 
 TODO(iannucci) - Document
 
-#### Rolling
+### Rolling
 
 TODO(iannucci) - Document
 
-### Recipe Philosophy
+## Recipe Philosophy
 
 TODO(iannucci) - Document
 
   * Recipes are glorified shell scripts
   * Recipes should be functions (small set of documented inputs and outputs).
   * Recipe inputs should have predictable effects on the behavior of the Recipe.
+
+To document/discuss:
   * Structured data communication to/from steps
   * When to put something in a helper script or directly in the recipe
 
 ## Glossary
 
-**recipe repo** -- A git repository with an 'infra/config/recipes.cfg' file.
+**recipe repo**: A git repository with an `infra/config/recipes.cfg` file.
 
-**recipe** -- An entry point into the recipes ecosystem; a "main" function.
+**recipe**: An entry point into the recipes ecosystem, each recipe is a
+  Python file with a `RunSteps` function.
 
-**recipe_module** -- A piece of shared code that multiple recipes can use.
+**recipe_module**: A piece of shared code that multiple recipes can use.
 
-**DEPS** -- An expression of the dependency from a recipe to a recipe_module,
-  or from one recipe_module to another.
+**DEPS**: An list of the dependencies from a recipe to recipe modules,
+  or from one recipe module to another.
 
-**repo_name** -- The name of a recipe repo, as indicated by the `repo_name`
-  field in it's recipes.cfg file. This is used to qualify module dependencies
+**repo_name**: The name of a recipe repo, as indicated by the `repo_name`
+  field in it's `recipes.cfg` file. This is used to qualify module dependencies
   from other repos.
 
-**properties** -- A JSON object that every recipe is started with; These are
+**properties**: A JSON object that every recipe is started with; These are
   the input parameters to the recipe.
 
-**output properties** -- TODO(iannucci)
+**output properties**: Similar to input properties but writeable. These
+  properties are viewable in the LUCI UI and can be read by other systems
+  that ingest LUCI builds.
 
-**PROPERTIES** -- An expression of a recipe or recipe_module of the properties
+**PROPERTIES**: An expression of a recipe or recipe module of the properties
   that it relies on.
