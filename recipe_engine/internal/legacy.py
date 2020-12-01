@@ -17,6 +17,6 @@ def to_legacy_result(result):
   legacy_result = result_pb2.Result()
   if result.status != common_pb2.SUCCESS:
     legacy_result.failure.human_reason = result.summary_markdown
-    if result.status != common_pb2.INFRA_FAILURE:
+    if result.status not in (common_pb2.INFRA_FAILURE, common_pb2.CANCELED):
       legacy_result.failure.failure.SetInParent()
   return legacy_result

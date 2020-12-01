@@ -581,10 +581,11 @@ class RecipeEngine(object):
           is_infra_failure) else common_pb2.FAILURE
         result.summary_markdown = ex.reason
       except gevent.GreenletExit:
-        result.status = common_pb2.INFRA_FAILURE
         if GLOBAL_TIMEOUT.ready():
+          result.status = common_pb2.INFRA_FAILURE
           result.summary_markdown = 'Recipe timed out'
         else:
+          result.status = common_pb2.CANCELED
           result.summary_markdown = 'Recipe was interrupted'
 
     # All other exceptions are reported to the user and are fatal.
