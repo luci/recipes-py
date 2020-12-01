@@ -1115,8 +1115,9 @@ class TaskResult(object):
   @property
   def _trimmed_output(self):
     """Returns a limited output for use in exception."""
-    assert self._output is not None, (
-        'The task was run without collecting the output')
+    if self._output is None:
+      return 'None'
+
     limit = 1000
     out = self._output.strip()
     if len(out) <= limit:

@@ -165,7 +165,8 @@ def RunSteps(api, use_cas):
         assert s == 'The task was canceled before it could run', repr(s)
       elif results[0].state == api.swarming.TaskState.COMPLETED:
         out = '(…)' + 'A' * 996
-        assert s == ('Swarming task failed:\n' + out), repr(s)
+        assert s in ('Swarming task failed:\n' + out,
+                     'Swarming task failed:\nNone'), repr(s)
       elif results[0].state == api.swarming.TaskState.EXPIRED:
         assert s == 'Timed out waiting for a bot to run on', repr(s)
       elif results[0].state == api.swarming.TaskState.KILLED:
@@ -275,6 +276,17 @@ def GenTests(api):
   yield (api.test('collect_with_state_COMPLETED_and_failed') +
     api.override_step_data('collect', api.swarming.collect([failed_result]))
   )
+
+  no_output_result = api.swarming.task_result(
+      id='0',
+      name='recipes-go',
+      state=api.swarming.TaskState.COMPLETED,
+      failure=True,
+      output=None,
+  )
+  yield (api.test('collect_with_no_output') + api.override_step_data(
+      'collect', api.swarming.collect([no_output_result])) +
+         api.post_process(DropExpectation))
 
   yield (api.test('check_triggered_request') + api.post_check(
       api.swarming.check_triggered_request,
