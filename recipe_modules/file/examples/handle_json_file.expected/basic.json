@@ -31,7 +31,18 @@
     "infra_step": true,
     "name": "read_json",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@some_file.json@{\"key0\": true, \"key1\": true, \"key2\": true, \"key3\": true, \"key4\": true, \"key5\": true, \"key6\": true, \"key7\": true, \"key8\": true, \"key9\": true}@@@",
+      "@@@STEP_LOG_LINE@some_file.json@{@@@",
+      "@@@STEP_LOG_LINE@some_file.json@  \"key0\": true,@@@",
+      "@@@STEP_LOG_LINE@some_file.json@  \"key1\": true,@@@",
+      "@@@STEP_LOG_LINE@some_file.json@  \"key2\": true,@@@",
+      "@@@STEP_LOG_LINE@some_file.json@  \"key3\": true,@@@",
+      "@@@STEP_LOG_LINE@some_file.json@  \"key4\": true,@@@",
+      "@@@STEP_LOG_LINE@some_file.json@  \"key5\": true,@@@",
+      "@@@STEP_LOG_LINE@some_file.json@  \"key6\": true,@@@",
+      "@@@STEP_LOG_LINE@some_file.json@  \"key7\": true,@@@",
+      "@@@STEP_LOG_LINE@some_file.json@  \"key8\": true,@@@",
+      "@@@STEP_LOG_LINE@some_file.json@  \"key9\": true@@@",
+      "@@@STEP_LOG_LINE@some_file.json@}@@@",
       "@@@STEP_LOG_END@some_file.json@@@"
     ]
   },

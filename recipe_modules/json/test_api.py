@@ -29,7 +29,7 @@ class JsonTestApi(recipe_test_api.RecipeTestApi):
     python object (e.g. dict, list, str, bool, int, etc). It will be dumped out
     with json.dumps and the step will be observed to return that dumped value.
     """
-    return json.dumps(data), retcode, name
+    return json.dumps(data, indent=2, separators=(',', ': ')), retcode, name
 
   @recipe_test_api.placeholder_step_data('output')
   @staticmethod

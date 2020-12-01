@@ -106,8 +106,8 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
             api.file.read_json({'is_content': true}))
       )
     """
-    return (self.m.raw_io.output_text(json.dumps(json_content))
-            + self.errno(errno_name))
+    text = json.dumps(json_content, indent=2, separators=(',', ': '))
+    return self.m.raw_io.output_text(text) + self.errno(errno_name)
 
   def read_proto(self, proto_msg, errno_name=0):
     """Provides a test mock for the `read_proto` method.
