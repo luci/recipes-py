@@ -2,14 +2,14 @@
 
 ## What are recipes
 
-Recipes are the build scripts in chrome infra. More info is [here](https://github.com/luci/recipes-py).
+Recipes are the build scripts in chrome infra. More info is [here](../README.md).
 
 ## Why did CQ reject my change
 
-Your CL will cause downstream recipe expectations to change.  Examine the output
-of the tryjob ; there should be steps like `recipe_engine tests`, `build tests`.
-The red steps correspond to the repo where, if your change was rolled,
-expectations would be changed.
+A common reason is that your CL may cause downstream recipe expectations to
+change. Examine the output of the tryjob ; there should be steps like
+`recipe_engine tests`, `build tests`. The red steps correspond to the repo
+where, if your change was rolled, expectations would be changed.
 
 ## What should I do
 
@@ -17,10 +17,9 @@ If your change needs a manual patch, because you are doing backwards
 incompatible changes which require non machine creatable patches downstream,
 [Use a flag](#Use-a-flag).
 
-If your change is dangerous, please [Use a flag](#Use-a-flag).
-“Dangerous” means the author, infra people, or reviewers are
-scared about this breaking bots. This is ultimately up to your
-discretion, but please be thoughtful.
+If your change is dangerous, please [Use a flag](#Use-a-flag). "Dangerous"
+means the author, infra people, or reviewers are scared about this breaking
+bots. This is ultimately up to your discretion, but please be thoughtful.
 
 Otherwise, just use the
 [Autoroller](#Autoroller).
@@ -35,6 +34,13 @@ If your change has expectation changes and you still want the autoroller to
 land it, see [I just want to commit a change](#commit).
 
 ### Use a flag
+
+<!--
+TODO(yiwzhang): Update this section:
+Consider changing this to mention using input properties, and change the
+workflow to use new protobuf based property if needed instead of the legacy
+style (i.e. the `Single` value mentioned below)
+-->
 
 This means that you guard your change behind a flag, and disable it by default.
 It is your responsibility to then roll the change out manually (e.g. go to users
