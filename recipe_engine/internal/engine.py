@@ -6,6 +6,7 @@ import calendar
 import copy
 import datetime
 import json
+import logging
 import os
 import re
 import sys
@@ -38,6 +39,9 @@ from .exceptions import RecipeUsageError, CrashEngine
 from .step_runner import Step
 from .resource_semaphore import ResourceWaiter
 from .global_shutdown import GLOBAL_SHUTDOWN, GLOBAL_TIMEOUT
+
+
+LOG = logging.getLogger(__name__)
 
 
 @attr.s(frozen=True, slots=True, repr=False)
@@ -367,6 +371,13 @@ class RecipeEngine(object):
     # `allow_subannotations` into recipe_module/step.
 
     name_tokens = self._record_step_name(step_config.name)
+
+    if GLOBAL_SHUTDOWN.ready():
+      # TODO(crbug.com/1096713): Append a cancelled step instead of raising
+      # after recipe gains support for Cancelled step status.
+      LOG.warning('GLOBAL_SHUTDOWN already active, skipping steps : %s' % (
+          '.'.join(name_tokens)))
+      raise gevent.GreenletExit()
 
     # TODO(iannucci): Start with had_exception=True and overwrite when we know
     # we DIDN'T have an exception.
@@ -899,16 +910,12 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
     else:
       _print_step(exc_details, rendered_step)
 
-      if not GLOBAL_SHUTDOWN.ready():
-        debug_log.write_line('Executing step')
-        try:
-          step_data.exc_result = step_runner.run(
-              step_data.name_tokens, debug_log, rendered_step)
-        except gevent.GreenletExit:
-          # Greenlet was killed while running the step
-          step_data.exc_result = ExecutionResult(was_cancelled=True)
-      else:
-        debug_log.write_line('GLOBAL_SHUTDOWN already active, skipping.')
+      debug_log.write_line('Executing step')
+      try:
+        step_data.exc_result = step_runner.run(
+            step_data.name_tokens, debug_log, rendered_step)
+      except gevent.GreenletExit:
+        # Greenlet was killed while running the step
         step_data.exc_result = ExecutionResult(was_cancelled=True)
       if step_data.exc_result.retcode is not None:
         # Windows error codes such as 0xC0000005 and 0xC0000409 are much
