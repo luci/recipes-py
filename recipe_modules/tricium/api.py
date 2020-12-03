@@ -90,7 +90,7 @@ class TriciumApi(recipe_api.RecipeApi):
           (num_comments, MAX_NUM_COMMENTS))
       return
     # The "tricium" output property is read by the Tricium service.
-    results_json = json_format.MessageToJson(results)
+    results_json = json_format.MessageToJson(results, indent=0)
     step.presentation.properties['tricium'] = results_json
 
   def run_legacy(self, analyzers, input_base, affected_files, commit_message):
