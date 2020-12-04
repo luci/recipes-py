@@ -1,6 +1,7 @@
 # Copyright 2020 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
+
 """Legacy analyzers which may be used by multiple projects."""
 
 import attr
@@ -12,45 +13,43 @@ from attr.validators import matches_re
 class LegacyAnalyzer(object):
   """LegacyAnalyzer is a specification for legacy "simple" Tricium analyzer.
 
-  In the initial design, Tricium analyzers were in CIPD packages, and analyzers
-  would be triggered by directly triggering Swarming tasks. Such analyzers are
-  programs (in practice, all written in Go) which took the flags -input and
-  -output:
+  Legacy Tricium analyzers are executables packaged in CIPD packages.
+  These executables take the flags -input and -output, in addition to other
+  possible extra args:
     * `-input` specifies the root of input to read, which includes the
       tricium/data/ directory and any files to read.
     * `-output` specifies the base directory for output, and results are written
-    to tricium/data/results.json relative to that directory.
+      to tricium/data/results.json relative to that directory.
   """
 
   # Analyzer name, for UI purposes.
   name = attr.ib(validator=instance_of(str))
 
-  # CIPD package path and version.
+  # CIPD package path.
   package = attr.ib(validator=instance_of(str))
 
-  # Executable binary name.
+  # Executable binary file name.
   executable = attr.ib(validator=instance_of(str))
 
-  # CIPD package version name. Generally "live" but it's possible to use
-  # another one.
+  # CIPD package version name, defaults to "live".
   version = attr.ib(validator=instance_of(str), default='live')
 
-  # List of path patterns to match.
+  # List of path glob patterns to match, e.g. ["*.c"].
   #
   # If this is non-empty, then at least one path must match at least
   # one glob pattern for the analyzer to be run.
   path_filters = attr.ib(validator=instance_of(list), default=[])
 
-  # List of args to add to the analyzer invocation.
+  # List of extra arguments to add to the analyzer invocation.
   extra_args = attr.ib(validator=instance_of(list), default=[])
 
 
 class Analyzers(object):
   """Specifications of common legacy analyzers.
 
-  This is a namespace for common CIPD-package-based analyzers that may be used
-  across multiple projects. The source code for each of these analyzers is in
-  the infra.git repo in go/src/infra/tricium/functions/; check there for
+  This is a namespace for common legacy analyzers that may be used across
+  multiple projects. The source code for each of these analyzers is in the
+  infra.git repo in go/src/infra/tricium/functions/; check there for
   documentation and features.
   """
   COMMITCHECK = LegacyAnalyzer(
