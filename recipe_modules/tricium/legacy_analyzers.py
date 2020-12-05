@@ -7,6 +7,7 @@
 import attr
 from attr.validators import instance_of
 from attr.validators import matches_re
+import six
 
 
 @attr.s(frozen=True)
@@ -53,7 +54,7 @@ class Analyzers(object):
   documentation and features.
   """
   COMMITCHECK = LegacyAnalyzer(
-      name='CommitCheck',
+      name='Commitcheck',
       package='infra/tricium/function/commitcheck',
       executable='commitcheck')
 
@@ -81,7 +82,7 @@ class Analyzers(object):
       extra_args=['-filter=-whitespace,-build/header_guard', '-verbose=4'])
 
   ESLINT = LegacyAnalyzer(
-      name='ESlint',
+      name='Eslint',
       package='infra/tricium/function/eslint',
       executable='eslint_parser',
       path_filters=['*.js'])
@@ -124,3 +125,21 @@ class Analyzers(object):
       name='Spacey',
       package='infra/tricium/function/spacey',
       executable='spacey')
+
+  @classmethod
+  def by_name(self):
+    """Returns a dict mapping names to LegacyAnalyzers.
+
+    This mapping may be used to map names to analyzers, for example if a recipe
+    uses strings in an input proto message to specify analyzers.
+    """
+    mapping = {}
+    for attr in six.itervalues(self.__dict__):
+      if isinstance(attr, LegacyAnalyzer):
+        assert attr.name not in mapping
+        mapping[attr.name] = attr
+    return mapping
+
+
+# This will fail if duplicate names are registered.
+Analyzers.by_name()

@@ -28,6 +28,9 @@ def RunSteps(api):
       api.tricium.analyzers.CPPLINT,
       api.tricium.analyzers.COMMITCHECK,
   ]
+  # Analyzers can also be added via their names:
+  analyzers.append(api.tricium.analyzers.by_name()['Eslint'])
+
   api.tricium.run_legacy(
       analyzers, checkout_base, ['one.py', 'foo/two.py'], commit_message='msg')
 
