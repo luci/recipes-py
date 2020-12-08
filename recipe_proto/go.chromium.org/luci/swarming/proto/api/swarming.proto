@@ -280,6 +280,9 @@ message BotInfo {
   //
   // This can be the DUT (Device Under Test) or other peripherals.
   repeated PhysicalEntity devices = 9;
+
+  // This field is used in BOT_MISSING event to know the timestamp of the last activity.
+  google.protobuf.Timestamp last_seen_ts = 10;
 }
 
 // PhysicalEntity includes information about an host or device.
@@ -385,6 +388,9 @@ enum BotEventType {
   // In this case, the bot's historical data is still kept in the Swarming
   // server's DB for a year, but the bot is not shown anywhere.
   BOT_DELETED = 7;  // Not used yet. https://crbug.com/905087
+  // Bot is missing. There have been no communication from the bot for longer
+  // than deadline configured on server side.
+  BOT_MISSING = 8;
 
   // Bot polling results; these are commands sent to the bot to do actions.
 
@@ -468,6 +474,9 @@ message BotEvent {
 // Defines a Content Addressed Storage (a cache in practice) data tree
 // reference, normally a reference to a .isolated file.
 //
+// Deprecated: Isoalte server is being migrated to RBE-CAS. Use `CASReference`
+// for the digest on RBE-CAS.
+//
 // This can be used to refer to either a task's inputs or a task's outputs.
 //
 // The .isolated file format is defined at
@@ -496,6 +505,22 @@ message CASTree {
   // "sha256-GCP". The GCP RBE CAS requires SHA-256 and doesn't support
   // precompressed data.
   string namespace = 3;
+}
+
+message Digest {
+  // This is a [Digest][build.bazel.remote.execution.v2.Digest] of a blob on
+  // RBE-CAS. See the explanations at the original definition.
+  // https://github.com/bazelbuild/remote-apis/blob/77cfb44a88577a7ade5dd2400425f6d50469ec6d/build/bazel/remote/execution/v2/remote_execution.proto#L753-L791
+  string hash = 1;
+  int64 size_bytes = 2;
+}
+
+message CASReference {
+  // Full name of RBE-CAS instance. `projects/{project_id}/instances/{instance}`.
+  // e.g. projects/chromium-swarm/instances/default_instance
+  string cas_instance = 1;
+  // CAS Digest consists of hash and size bytes.
+  Digest digest = 2;
 }
 
 // Defines one CIPD package to install prior to running the task.
@@ -587,14 +612,21 @@ message Containment {
 //
 // A serialization of this message is hashed and this hash is what is used for
 // task deduping.
+// NEXT_ID: 19
 message TaskProperties {
   // Inputs.
 
   // Isolated inputs to map in the working directory.
   //
+  // Deprecated: Isolate server is being migrated to RBE-CAS. `cas_input_root`
+  // will be used to reference to the input root on RBE-CAS.
   // Deprecated: the isolated file may optionally specify a command to run.
   // Otherwise, 'command' must be specified.
   CASTree cas_inputs = 1;
+
+  // Digest of the input root on RBE-CAS.
+  // cas_input_root.digest MUST be digest of [build.bazel.remote.execution.v2.Directory].
+  CASReference cas_input_root = 18;
   // Defines the set of CIPD packages to install prior to running the task.
   //
   // These packages are meant to be software that is needed (a dependency) by
@@ -751,20 +783,18 @@ message TaskRequest {
   // Defines what OAuth2 credentials the task uses when calling other services.
   //
   // Possible values are:
-  //   - 'none': do not use task service accounts at all, this is default.
+  //   - 'none': do not use a task service account at all, this is the default.
   //   - 'bot': use bot's own account, works only if bots authenticate with
   //       OAuth2.
-  //   - 'email': use this account (if token server's service_accounts.cfg rules
-  //       allow it). Not implemented yet.
+  //  - <some email>: use this specific service account if it is allowed in the
+  //       pool (via 'allowed_service_account' pools.cfg setting) and configured
+  //       in the token server's service_accounts.cfg.
   //
   // Note that the service account name is specified outside of task properties,
   // and thus it is possible to have two tasks with different service accounts,
   // but identical properties hash (so one can be deduped). If this is
   // unsuitable use 'idempotent=False' or include a service account name in
   // properties separately.
-  //
-  // TODO(vadimsh): Link to a doc that describes Swarming Service Accounts, when
-  // it exists.
   string service_account = 3;
 
   // Task information metadata: doesn't affect what is run.
@@ -788,6 +818,13 @@ message TaskRequest {
   repeated string tags = 6;
   // User for this task is run, if relevant. Not validated.
   string user = 7;
+  // Authenticated client that triggered this task.
+  string authenticated = 13;
+  // Task realm is used to control who can interact with the task e.g. get,
+  // cancel etc, and which task service accounts can be used in the realm.
+  string realm = 14;
+  // Swarming:ResultDB integration configuration for a task.
+  ResultDBCfg resultdb = 15;
 
   // Task hierarchy and notifications
 
@@ -814,6 +851,16 @@ message TaskRequest {
   string parent_run_id = 11;
   // Send notification to this pubsub topic for updates of this task.
   PubSub pubsub_notification = 10;
+  // Maximum delay between bot pings before the bot is considered dead
+  // while running a task.
+  //
+  // When a task is running, the bot sends update to the server every
+  // few seconds. In some cases, like when the system is overloaded,
+  // the bot may be preempted and delayed in sending its updates.
+  // After the delay specified here, the server will claim the bot to
+  // be dead and will forcibly abort the task as BOT_DIED. This is to
+  // catch system wide issues like a BSOD.
+  google.protobuf.Duration bot_ping_tolerance = 12;
 }
 
 // PubSub is a Cloud Pub/Sub topic to send task updates to.
@@ -872,6 +919,7 @@ message PubSub {
 // partition to enforce strong consistency and ignore on-going tasks. See
 // https://cloud.google.com/bigquery/streaming-data-into-bigquery#dataconsistency
 // for more information.
+// NEXT_ID: 22
 message TaskResult {
   TaskRequest request = 1;
 
@@ -975,7 +1023,10 @@ message TaskResult {
   // cases.
   sint32 exit_code = 19;
   // Isolated outputs, if any.
+  // Deprecated: `cas_output_root` will be used.
   CASTree outputs = 20;
+  // RBE-CAS output, if any.
+  CASReference cas_output_root = 21;
 }
 
 // Defines pinned CIPD packages that were installed during the task.
@@ -1223,4 +1274,11 @@ enum TaskState {
   // The task never ran, the server had an internal failure, unrelated to the
   // task itself. It can be due to a server bug or network I/O issues.
   SKIPPED_INTERNAL_FAILURE = 0x56;  // Not used yet. https://crbug.com/916553
+}
+
+// Swarming:ResultDB integration configuration for a task.
+// This is a copy of SwarmingRpcsResultDBCfg.
+message ResultDBCfg {
+  // Flag to indicates the integration is enabled.
+  bool enable = 1;
 }

@@ -1,2 +1,2 @@
 These protos were copied from
-https://chromium.googlesource.com/infra/luci/luci-go/+/4ff5074c132ea556454f2f93f12784f794b18cd7/swarming/proto/api
+https://chromium.googlesource.com/infra/luci/luci-go/+/aad557fb3e60f0103f8b3447b4870aefb6fbfef2/swarming/proto/api

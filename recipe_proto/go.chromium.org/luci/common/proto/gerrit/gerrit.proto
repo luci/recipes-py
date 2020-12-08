@@ -14,15 +14,75 @@
 
 syntax = "proto3";
 
-import "google/protobuf/empty.proto";
-
 package gerrit;
 
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "go.chromium.org/luci/common/proto/gerrit;gerrit";
+
 service Gerrit {
+  /////////////////////////////////////////////////////////////////////////////
+  //                            Non-Change RPCs.
+  //
+
+  // Lists the projects on a Gerrit host
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-projects.html#list-projects
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
+
+  // Retrieve information about a ref of a project.
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-projects.html#get-branch
+  rpc GetRefInfo(RefInfoRequest) returns (RefInfo);
+
+  // Lists the code owners for a file/folder in a branch
+  //
+  // https://gerrit.googlesource.com/plugins/code-owners/+/refs/heads/master/resources/Documentation/rest-api.md#list-code-owners-for-path-in-branch
+  rpc ListFileOwners(ListFileOwnersRequest) returns (ListOwnersResponse);
+
+
+  /////////////////////////////////////////////////////////////////////////////
+  //                            Change read-only RPCs.
+  //
+
+  // Lists changes that match a query.
+  //
+  // TODO(tandrii): recommend a paging query.
+  //
+  // Note, although the Gerrit API supports multiple queries, for which
+  // it can return multiple lists of changes, this is not a foreseen use-case
+  // so this API just includes one query with one returned list of changes.
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-changes
+  rpc ListChanges(ListChangesRequest) returns (ListChangesResponse);
+
   // Loads a change by id.
   //
   // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#get-change
   rpc GetChange(GetChangeRequest) returns (ChangeInfo);
+
+  // Gets Mergeable status for a change.
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-projects.html#get-mergeable-info
+  rpc GetMergeable(GetMergeableRequest) returns (MergeableInfo);
+
+  // Lists the files that were modified, added or deleted in a revision.
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-files
+  rpc ListFiles(ListFilesRequest) returns (ListFilesResponse);
+
+  // Retrieves related changes of a revision.
+  //
+  // Related changes are changes that either depend on, or are dependencies of
+  // the revision.
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#get-related-changes
+  rpc GetRelatedChanges(GetRelatedChangesRequest) returns (GetRelatedChangesResponse);
+
+  /////////////////////////////////////////////////////////////////////////////
+  //                            Change mutation RPCs.
+  //
 
   // Create a new empty change.
   //
@@ -38,7 +98,8 @@ service Gerrit {
   // Delete a single file within an existing change edit.
   //
   // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#delete-edit-file
-  rpc DeleteEditFileContent(DeleteEditFileContentRequest) returns (google.protobuf.Empty);
+  rpc DeleteEditFileContent(DeleteEditFileContentRequest)
+      returns (google.protobuf.Empty);
 
   // Publish all changes in a a change edit.
   //
@@ -46,10 +107,25 @@ service Gerrit {
   rpc ChangeEditPublish(ChangeEditPublishRequest)
       returns (google.protobuf.Empty);
 
+  // Add a reviewer to a change
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#add-reviewer
+  rpc AddReviewer(AddReviewerRequest) returns (AddReviewerResult);
+
+  // Deletes a reviewer from a change.
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#delete-reviewer
+  rpc DeleteReviewer(DeleteReviewerRequest) returns (google.protobuf.Empty);
+
   // Set various review bits on a change.
   //
   // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#set-review
   rpc SetReview(SetReviewRequest) returns (ReviewResult);
+
+  // Adds a single user to the attention set of a change.
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#add-to-attention-set
+  rpc AddToAttentionSet(AttentionSetRequest) returns (AccountInfo);
 
   // Submit a change.
   //
@@ -60,16 +136,6 @@ service Gerrit {
   //
   // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#abandon-change
   rpc AbandonChange(AbandonChangeRequest) returns (ChangeInfo);
-
-  // Gets Mergeable status for a change.
-  //
-  // https://gerrit-review.googlesource.com/Documentation/rest-api-projects.html#get-mergeable-info
-  rpc GetMergeable(GetMergeableRequest) returns (MergeableInfo);
-
-  // Lists the files that were modified, added or deleted in a revision.
-  //
-  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-files
-  rpc ListFiles(ListFilesRequest) returns (ListFilesResponse);
 }
 
 // Specifies what extra information to include in the response.
@@ -150,6 +216,79 @@ enum QueryOption {
   DOWNLOAD_COMMANDS = 2097152;
 }
 
+// Specify the notification options for an action.
+// Different endpoints support different subsets of this enum.
+enum Notify {
+
+  NOTIFY_UNSPECIFIED = 0;
+
+  // Do not send email notifications.
+  NOTIFY_NONE = 1;
+
+  // Notify all OWNERS.
+  NOTIFY_OWNER = 2;
+
+  // Notify OWNERS who are also reviewers
+  NOTIFY_OWNER_REVIEWERS = 3;
+
+  // Notify all OWNERS and reviewers
+  NOTIFY_ALL = 4;
+}
+
+// Request to list changes based on a query.
+message ListChangesRequest {
+  // The query used to filter the changes.
+  //
+  // This is the same as the query that can be used in the Gerrit web UI. It is
+  // space-separated and can include filters like "label:Commit-Queue" or
+  // "status:open". The possible search operators are described at:
+  // https://gerrit-review.googlesource.com/Documentation/user-search.html
+  //
+  // An empty query matches all changes.
+  string query = 1;
+
+  // What to include in the response.
+  repeated QueryOption options = 2;
+
+  // Caps the number of results to return. Required.
+  //
+  // Defaults to 25 if not provided; maximum value 1000.
+  //
+  // Use luci/common/api/gerrit:PagingListChanges wrapper if you need to fetch
+  // more or all changes.
+  int64 limit = 3;
+
+  // The number of changes to skip from the start, for pagination.
+  //
+  // Note that without using offset, it's also possible to do paging by
+  // including a "before:" time in the query, and querying for changes before
+  // the earliest change in the current page. This may be preferred but is not
+  // very trivial to implement correctly.
+  int64 offset = 4;
+}
+
+// A list of changes that matched the query.
+message ListChangesResponse {
+  // The changes that matched the query, with the fields requested.
+  //
+  // The order of the changes is expected to be decreasing by update time,
+  // however the The Gerrit API doc doesn't explicitly specify the order:
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html
+  repeated ChangeInfo changes = 1;
+
+  // True if there are more changes not returned.
+  //
+  // This will be set if the number of changes matching the query exceeds the
+  // limit supplied; however, it's possible that if the number exceeds some
+  // internal Gerrit maximum, this will not be set.
+  //
+  // Specifically (as of Dec 2018) Google's Gerrit instance will not look
+  // beyond a maximum hardcoded in Gerrit backend of 10k changes in the index
+  // of changes, and so if a query matches more than that many changes, Gerrit
+  // backend may not know and may not set "_more_changes".
+  bool more_changes = 2;
+}
+
 // Request to get information for a single change.
 //
 // Encodes path arguments and query options described at
@@ -158,12 +297,19 @@ message GetChangeRequest {
   // Change number.
   int64 number = 1;
 
+  // The Gerrit project.
+  // Specifying this field is optional, but encouraged because it requires less
+  // work on the Gerrit side.
+  string project = 3;
+
   // What to include in the response.
   repeated QueryOption options = 2;
 }
 
 // Information about an account.
-// Source of truth: https://gerrit-review.googlesource.com/Documentation/rest-api-accounts.html#account-info
+//
+// Source of truth:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-accounts.html#account-info
 message AccountInfo {
   // The full name of the user.
   // Only set if detailed account information is requested.
@@ -189,10 +335,15 @@ message AccountInfo {
   // See option DETAILED_ACCOUNTS for change queries
   // and option DETAILS for account queries.
   string username = 4;
+
+  // The numeric ID of the account
+  int64 account_id = 5;
 }
 
 // Information about a change.
-// Source of truth: https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#change-info
+//
+// Source of truth:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#change-info
 message ChangeInfo {
   // The change number.
   int64 number = 1;
@@ -210,13 +361,7 @@ message ChangeInfo {
   // API.
   string ref = 4;
 
-  enum Status {
-    STATUS_INVALID = 0;
-    NEW = 1;
-    MERGED = 2;
-    ABANDONED = 3;
-  }
-  Status status = 5;
+  ChangeStatus status = 5;
 
   // Current revision of the change.
   //
@@ -233,10 +378,36 @@ message ChangeInfo {
   //
   // Only set if label info is requested.
   map<string, LabelInfo> labels = 8;
+
+  // Messages associated with the change.
+  //
+  // Only set if messages are requested.
+  repeated ChangeMessageInfo messages = 9;
+
+  // Whether the change is approved
+  // by the project submit rules.
+  //
+  // Only set if submittable is requested.
+  bool submittable = 10;
+
+  // Timestamp of when the change was created
+  google.protobuf.Timestamp created = 11;
+
+  // Timestamp of when the change was last updated
+  google.protobuf.Timestamp updated = 12;
+}
+
+enum ChangeStatus {
+  CHANGE_STATUS_INVALID = 0;
+  NEW = 1;
+  MERGED = 2;
+  ABANDONED = 3;
 }
 
 // Information about a patch set.
-// Source of truth: https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#revision-info
+//
+// Source of truth:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#revision-info
 message RevisionInfo {
   // The kind of change for this revision.
   enum Kind {
@@ -260,14 +431,42 @@ message RevisionInfo {
   // The Git reference for the patch set.
   string ref = 4;
 
+  // The commit metadata for the patchset.
+  //
+  // Only set if commit information is requested.
+  CommitInfo commit = 5;
+
   // A map of file paths to FileInfos.
   //
   // Only set if file information is requested.
   map<string, FileInfo> files = 6;
 }
 
+// The CommitInfo entity contains information about a commit.
+//
+// Source of truth:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#commit-info
+message CommitInfo {
+  // The commit ID. Not set if included in a RevisionInfo entity that is
+  // contained in a map which has the commit ID as key.
+  string id = 1;
+
+  message Parent {
+    string id = 1;
+    // TODO(tandrii): add subject when necessary.
+  }
+  repeated Parent parents = 2;
+
+  // The commit message.
+  // It is not set when CommitInfo is part of the GetRelatedChangesResponse.
+  string message = 3;
+  // TODO(tandrii): add other fields when necessary.
+}
+
 // Information about a Label.
-// Source of truth: https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#label-info
+//
+// Source of truth:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#label-info
 message LabelInfo {
   // Whether the label is optional.
   bool optional = 1;
@@ -295,16 +494,43 @@ message LabelInfo {
   int32 default_value = 8;
 }
 
+// Information about a message attached to change.
+//
+// Source of truth:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#change-message-info
+message ChangeMessageInfo {
+  // The ID of the message
+  string id = 1;
+
+  // Author of the message.
+  //
+  // Unset if written by the Gerrit system.
+  AccountInfo author = 2;
+
+  // Real author of the message.
+  //
+  // Set if the message was posted on behalf of another user.
+  AccountInfo real_author = 3;
+
+  // The timestamp this message was posted.
+  google.protobuf.Timestamp date = 4;
+
+  // The text left by the user.
+  string message = 5;
+}
+
 // Information about a file in a patch set.
-// Source of truth: https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#file-info
+//
+// Source of truth:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#file-info
 message FileInfo {
   enum Status {
-    M = 0; // Modified (default; omitted)
-    A = 1; // Added
-    D = 2; // Deleted
-    R = 3; // Renamed
-    C = 4; // Copied
-    W = 5; // Rewritten
+    M = 0;  // Modified (default; omitted)
+    A = 1;  // Added
+    D = 2;  // Deleted
+    R = 3;  // Renamed
+    C = 4;  // Copied
+    W = 5;  // Rewritten
   }
 
   // Status of the file.
@@ -412,7 +638,6 @@ message ChangeEditPublishRequest {
   //
   // Optional, but recommended for better routing and faster RPC execution.
   string project = 2;
-
 }
 
 // Information for abandoning a change.
@@ -432,6 +657,94 @@ message AbandonChangeRequest {
   string message = 3;
 }
 
+// Information for adding a reviewer.
+//
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#add-reviewer
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#reviewer-input
+message AddReviewerRequest {
+  // The change number.
+  int64 number = 1;
+
+  // The project of this change. For example, "chromium/src".
+  //
+  // Optional, but recommended for better routing and faster RPC execution.
+  string project = 2;
+
+  // The ID of a single account or group to review the change.
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-accounts.html#account-id
+  string reviewer = 3;
+
+  enum State {
+    ADD_REVIEWER_STATE_UNSPECIFIED = 0;
+    ADD_REVIEWER_STATE_REVIEWER = 1;
+    ADD_REVIEWER_STATE_CC = 2;
+  }
+
+  // The state to add reviewer in, defaults to REVIEWER.
+  State state = 4;
+
+  // Whether adding the reviewer is confirmed.
+  bool confirmed = 5;
+
+  // Defines who should be notified after reviewer is added, defaults to ALL.
+  Notify notify = 6;
+}
+
+// Information about a reviewer. A superset of information from AccountInfo.
+//
+// Source of truth:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#reviewer-info
+message ReviewerInfo {
+
+  // The detailed account information about a reviewer.
+  AccountInfo account = 1;
+
+  // The approvals as a map of label names to approval values.
+  map<string, int32> approvals = 2;
+
+}
+
+// The result of adding a reviewer to a change
+//
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#add-reviewer
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#add-reviewer-result
+message AddReviewerResult {
+  // The Account ID from the AddReviewerRequest.reviewer field
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-accounts.html#account-id
+  string input = 1;
+
+  // The newly added reviewers
+  // If a group is added as a reviewer (or cc)
+  // all group members are added.
+  repeated ReviewerInfo reviewers = 2;
+
+  // The newly cc'd accounts
+  repeated ReviewerInfo ccs = 3;
+
+  // The error message
+  string error = 4;
+
+  // Whether adding the reviewer requires confirmation
+  bool confirm = 5;
+}
+
+message DeleteReviewerRequest {
+  // The change number.
+  int64 number = 1;
+
+  // The project of this change. For example, "chromium/src".
+  //
+  // Optional, but recommended for better routing and faster RPC execution.
+  string project = 2;
+
+  // The ID of a single account or group to review the change.
+  //
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-accounts.html#account-id
+  string account_id = 3;
+}
+
 // Information to set various review bits on a change
 //
 // Fields are a subset of arguments from:
@@ -447,7 +760,8 @@ message SetReviewRequest {
   string project = 2;
 
   // Unique ID for the revision to query.
-  // See
+  //
+  // Source of truth:
   // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#revision-id
   string revision_id = 3;
 
@@ -467,9 +781,36 @@ message SetReviewRequest {
 // Fields are a subset of:
 // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#review-result
 message ReviewResult {
-    // Map of labels to values after the review was posted. Null if any reviewer
-    // additions were rejected.
-    map<string, int32> labels = 1;
+  // Map of labels to values after the review was posted. Null if any reviewer
+  // additions were rejected.
+  map<string, int32> labels = 1;
+}
+
+// Information to add/remove a user from the attention set of a change.
+//
+// Source of truth:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#attention-set-input
+message AttentionSetRequest {
+  // The change number.
+  int64 number = 1;
+
+  // The project of this change. For example, "chromium/src".
+  //
+  // Optional, but recommended for better routing and faster RPC execution.
+  string project = 2;
+
+  // A unique identifier for an account.
+  //
+  // Source of truth:
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-accounts.html#account-id
+  string user = 3;
+
+  // The justification for adding/removing the user.
+  string reason = 4;
+
+  // Defines who should be notified after change is created, defaults to OWNER.
+  Notify notify = 5;
+
 }
 
 enum MergeableStrategy {
@@ -491,7 +832,8 @@ message GetMergeableRequest {
   string project = 2;
 
   // Unique ID for the revision to query.
-  // See
+  //
+  // Source of truth:
   // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#revision-id
   string revision_id = 3;
 
@@ -506,7 +848,7 @@ message GetMergeableRequest {
 
 // Contains information about the mergeability of a change.
 //
-// See
+// Source of truth:
 // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#mergeable-info
 message MergeableInfo {
   enum SubmitType {
@@ -542,7 +884,7 @@ message MergeableInfo {
 
 // Information for requesting the files in a change.
 //
-// See
+// Source of truth:
 // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-files
 message ListFilesRequest {
   // Change number.
@@ -554,7 +896,8 @@ message ListFilesRequest {
   string project = 2;
 
   // Unique ID for the revision to query.
-  // See
+  //
+  // Source of truth:
   // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#revision-id
   string revision_id = 3;
 
@@ -569,9 +912,188 @@ message ListFilesRequest {
 
 // Information about the files in a change.
 //
-// See
+// Source of truth:
 // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-files
 message ListFilesResponse {
   // A map of file paths to FileInfos.
   map<string, FileInfo> files = 1;
+}
+
+// Information for requesting the related changes of a change.
+//
+// Source of truth:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#get-related-changes
+message GetRelatedChangesRequest {
+  // Change number.
+  int64 number = 1;
+
+  // The project of this change. For example, "chromium/src".
+  //
+  // Optional, but recommended for better routing and faster RPC execution.
+  string project = 2;
+
+  // Unique ID for the revision to query.
+  //
+  // Source of truth:
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#revision-id
+  string revision_id = 3;
+}
+
+// Information about related changes of a specific change's revision.
+//
+// Source of truth:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#related-changes-info
+message GetRelatedChangesResponse {
+  // Contains information about a related change and commit.
+  //
+  // Source of truth:
+  // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#related-change-and-commit-info
+  message ChangeAndCommit {
+    // The project of the change or commit.
+    string project = 1;
+    // The commit as a CommitInfo entity.
+    CommitInfo commit = 2;
+    // Optional. The change number.
+    int64 number = 3;
+    // Optional. The patchset number.
+    int64 patchset = 4;
+    // Optional. The current patchset number.
+    int64 current_patchset = 5;
+    // Optional. The status of the change.
+    // TODO(tandrii): add status once it can be shared with ChangeInfo.
+    // Status status = 6;
+  }
+
+  // A list of describing the related changes.
+  //
+  // Sorted by git commit order, newest to oldest. Empty if there are no related
+  // changes.
+  repeated ChangeAndCommit changes = 1;
+}
+
+// Information for requesting the projects on a host.
+//
+// Source of truth:
+// https://gerrit-review.googlesource.com/Documentation/cmd-ls-projects.html
+message ListProjectsRequest {
+  // Limit results to projects with any of the specified refs, e.g.: refs/heads/main.
+  // Ref SHA1 will be included in the results.
+  repeated string refs = 1;
+
+}
+
+// Describes a link to an external site
+//
+// Source of truth:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#web-link-info
+message WebLinkInfo {
+  // The link name
+  string name = 1;
+
+  // Link URL
+  string url = 2;
+
+  // URL to link icon
+  string image_url = 3;
+}
+
+// Information about individual projects.
+//
+// Source of truth:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-projects.html#project-info
+message ProjectInfo {
+  // The project name
+  string name = 1;
+
+  // The name of the parent project
+  string parent = 2;
+
+  // The description of the project
+  string description = 3;
+
+  enum State {
+    PROJECT_STATE_UNSPECIFIED = 0;
+    PROJECT_STATE_ACTIVE = 1;
+    PROJECT_STATE_READ_ONLY = 2;
+    PROJECT_STATE_HIDDEN = 3;
+  }
+
+  // The state of the project
+  State state = 4;
+
+  // Map of ref names to HEAD revisions
+  map<string, string> refs = 5;
+
+  // List of links to the project in external sites
+  repeated WebLinkInfo web_links = 6;
+}
+
+// Information about the projects on a host.
+//
+// Source of truth:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-projects.html#project-info
+message ListProjectsResponse {
+  // A map of project names to ProjectInfo entries, sorted by project name.
+  map<string, ProjectInfo> Projects = 1;
+}
+
+// Information to request information about a branch.
+message RefInfoRequest{
+  // The project name
+  string project = 1;
+
+  // The ref ID (eg: refs/heads/main).
+  string ref = 2;
+}
+
+// Information about a branch.
+//
+// Source of truth:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-projects.html#branch-info
+message RefInfo{
+  // The ref of the branch
+  string ref = 1;
+  // The revision the branch points to
+  string revision = 2;
+}
+
+// Options when requesting information about an account
+//
+// Source of truth:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-accounts.html#details
+message AccountOptions{
+  // Include account details in the response
+  bool details = 1;
+
+  // Include all registered emails
+  // Requires the caller to have Modify Account global capability
+  bool all_emails = 2;
+}
+
+// Information to request the list of OWNERS for a file/folder in a branch
+message ListFileOwnersRequest{
+  // The project name
+  string project = 1;
+
+  // The ref ID (eg: refs/heads/main)
+  string ref = 2;
+
+  // Path (relative to the repo root) to the file/folder in question
+  string path = 3;
+
+  // Options about how much detail to return in the AccountInfo
+  AccountOptions options = 4;
+}
+
+// Information about a single OWNER
+// NOTE: Gerrit OwnerInfo provides other fields beyond account,
+// which can be added later.
+message OwnerInfo{
+  AccountInfo account = 1;
+}
+
+// Code OWNERS for a particular request
+message ListOwnersResponse{
+  // The account(s) who are OWNERS
+  repeated OwnerInfo owners = 1;
 }

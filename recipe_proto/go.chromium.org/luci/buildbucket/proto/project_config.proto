@@ -33,7 +33,7 @@ option (luci.file_metadata) = {
 // A single access control rule.
 message Acl {
 
-  // A buiildbucket user role.
+  // A buildbucket user role.
   // Defines what a user can do.
   //
   // The order of enum member tags is important.
@@ -75,12 +75,14 @@ message AclSet {
 // a user that has permissions to schedule a build to the bucket, can override
 // this config.
 //
-// Next tag: 29.
+// Next tag: 31.
 message Builder {
   reserved 8;  // cipd_packages
   reserved 11; // build_numbers of the old format.
   reserved 13; // auto_builder_dimension of the old format.
   reserved 15; // experimental of the old format.
+  reserved 19; // luci_migration_host
+  reserved 27; // description of the old format.
 
   // Describes a cache directory persisted on a bot.
   // Prerequisite reading in BuildInfra.Swarming.CacheEntry message in
@@ -356,6 +358,19 @@ message Builder {
   // Maximum build pending time.
   uint32 expiration_secs = 20;
 
+  // If YES, will request that swarming wait until it sees at least one bot
+  // report a superset of the requested dimensions.
+  //
+  // If UNSET/NO (the default), swarming will immediately reject a build which
+  // specifies a dimension set that it's never seen before.
+  //
+  // Usually you want this to be UNSET/NO, unless you know that some external
+  // system is working to add bots to swarming which will match the requested
+  // dimensions within expiration_secs. Otherwise you'll have to wait for all of
+  // `expiration_secs` until swarming tells you "Sorry, nothing has dimension
+  // `os:MadeUpOS`".
+  buildbucket.v2.Trinary wait_for_capacity = 29;
+
   // Caches that should be present on the bot.
   repeated CacheEntry caches = 9;
 
@@ -405,12 +420,6 @@ message Builder {
   // See the documentation on `experiments` for more details about the
   // "luci.non_production" experiment.
   Toggle experimental = 18;
-
-  // DEPRECATED
-  //
-  // Using this field will result in buildbucket rejecting your config. Just
-  // remove it from your config and you should be good to go :).
-  string luci_migration_host = 19;
 
   // DEPRECATED
   //
@@ -510,9 +519,9 @@ message Builder {
   // Used to enable and configure ResultDB integration.
   ResultDB resultdb = 26;
 
-  // A short plain string that helps users understand the purpose of the
-  // builder.
-  string description = 27;
+  // Description that helps users understand the purpose of the builder, in
+  // HTML.
+  string description_html = 30;
 }
 
 // Configuration of buildbucket-swarming integration for one bucket.

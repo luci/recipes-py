@@ -20,6 +20,7 @@ import "google/api/field_behavior.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "go.chromium.org/luci/resultdb/proto/v1/common.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/test_metadata.proto";
 
 option go_package = "go.chromium.org/luci/resultdb/proto/v1;resultpb";
 
@@ -38,6 +39,8 @@ message TestResult {
   // "invocations/{INVOCATION_ID}/tests/{URL_ESCAPED_TEST_ID}/results/{RESULT_ID}".
   // where URL_ESCAPED_TEST_ID is test_id escaped with
   // https://golang.org/pkg/net/url/#PathEscape See also https://aip.dev/122.
+  //
+  // Output only.
   string name = 1 [
     (google.api.field_behavior) = OUTPUT_ONLY,
     (google.api.field_behavior) = IMMUTABLE
@@ -93,6 +96,10 @@ message TestResult {
   //
   // The size of the summary must be equal to or smaller than 4096 bytes in
   // UTF-8.
+  //
+  // Supports artifact embedding using custom tags:
+  // * <text-artifact> renders contents of an artifact as text.
+  //   Usage: <text-artifact artifact-id="<artifact_id>">
   string summary_html = 7 [ (google.api.field_behavior) = IMMUTABLE ];
 
   // The point in time when the test case started to execute.
@@ -106,8 +113,25 @@ message TestResult {
 
   // Metadata for this test result.
   // It might describe this particular execution or the test case.
+  // A key can be repeated.
   repeated StringPair tags = 10
       [ (google.api.field_behavior) = IMMUTABLE ];
+
+  // Where the test is defined, e.g. the file name.
+  // Deprecated. In favor of test_metadata.
+  TestLocation test_location = 11;
+
+  // Hash of the variant.
+  // hex(sha256(sorted(''.join('%s:%s\n' for k, v in variant.items())))).
+  //
+  // Output only.
+  string variant_hash = 12 [
+      (google.api.field_behavior) = OUTPUT_ONLY,
+      (google.api.field_behavior) = IMMUTABLE
+  ];
+
+  // Information about the test at the time of its execution.
+  TestMetadata test_metadata = 13;
 }
 
 // Machine-readable status of a test result.
@@ -155,6 +179,8 @@ message TestExoneration {
   // invocations/{INVOCATION_ID}/tests/{URL_ESCAPED_TEST_ID}/exonerations/{EXONERATION_ID}.
   // URL_ESCAPED_TEST_ID is test_variant.test_id escaped with
   // https://golang.org/pkg/net/url/#PathEscape See also https://aip.dev/122.
+  //
+  // Output only.
   string name = 1 [
     (google.api.field_behavior) = OUTPUT_ONLY,
     (google.api.field_behavior) = IMMUTABLE
@@ -178,4 +204,8 @@ message TestExoneration {
   // Reasoning behind the exoneration, in HTML.
   // MUST be sanitized before rendering in the browser.
   string explanation_html = 5 [ (google.api.field_behavior) = IMMUTABLE ];
+
+  // Hash of the variant.
+  // hex(sha256(sorted(''.join('%s:%s\n' for k, v in variant.items())))).
+  string variant_hash = 6 [ (google.api.field_behavior) = IMMUTABLE ];
 }
