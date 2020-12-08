@@ -31,9 +31,13 @@ import logging
 import os
 import subprocess
 import sys
-import urlparse
 
 from collections import namedtuple
+
+try:
+  import urllib.parse as urlparse
+except ImportError:
+  import urlparse
 
 # The dependency entry for the recipe_engine in the client repo's recipes.cfg
 #
@@ -234,7 +238,7 @@ def main():
     repo_root = (
         _git_output(['rev-parse', '--show-toplevel'],
                     cwd=os.path.abspath(os.path.dirname(__file__))).strip())
-    repo_root = os.path.abspath(repo_root)
+    repo_root = os.path.abspath(repo_root).decode()
     recipes_cfg_path = os.path.join(repo_root, 'infra', 'config', 'recipes.cfg')
     args = ['--package', recipes_cfg_path] + args
 
