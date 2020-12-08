@@ -121,4 +121,9 @@ class CasApi(recipe_api.RecipeApi):
 
     # TODO(crbug.com/1128250): add link to viewer.
     # TODO(tikuta): support multiple tree upload.
-    return self._run(step_name, cmd).raw_io.output_text
+    return self._run(
+        step_name,
+        cmd,
+        step_test_data=lambda: self.m.raw_io.test_api.output_text(
+            'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855/0'
+        )).raw_io.output_text
