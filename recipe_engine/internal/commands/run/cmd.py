@@ -42,7 +42,7 @@ def _main_impl(args):
 
   properties['recipe'] = args.recipe
 
-  properties = util.strip_unicode(properties)
+  properties = util.fix_json_object(properties)
 
   os.environ['PYTHONUNBUFFERED'] = '1'
   os.environ['PYTHONIOENCODING'] = 'UTF-8'

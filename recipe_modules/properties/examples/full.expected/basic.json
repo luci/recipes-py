@@ -2,7 +2,7 @@
   {
     "cmd": [
       "echo",
-      "test_prop {\n  key: \"value\"\n}\nlist: \"some\"\nlist: \"strings\"\ndict {\n  fields {\n    key: \"cool\"\n    value {\n      string_value: \"dictionary\"\n    }\n  }\n}\nparam_name_test: \"thing\"\n"
+      "test_prop {\n  key: \"value\"\n}\nlist: \"some\"\nlist: \"strings\"\ndict {\n  fields {\n    key: \"cool\"\n    value {\n      string_value: \"dictionary\"\n    }\n  }\n  fields {\n    key: \"float_val\"\n    value {\n      number_value: 12345678.6789\n    }\n  }\n  fields {\n    key: \"lossy_int_val\"\n    value {\n      number_value: 1.12345678909e+25\n    }\n  }\n  fields {\n    key: \"secretly_int_val\"\n    value {\n      number_value: 123456789\n    }\n  }\n}\nparam_name_test: \"thing\"\n"
     ],
     "name": "echo props"
   },
@@ -16,20 +16,20 @@
   {
     "cmd": [
       "echo",
-      "('$fake_repo/fake_module', {'test_prop': {'key': u'value'}})",
+      "('$fake_repo/fake_module', {'test_prop': {'key': 'value'}})",
       "('arbitrary_property', True)",
-      "('dict', {u'cool': u'dictionary'})",
-      "('list', [u'some', u'strings'])",
-      "('param_name_test', u'thing')",
+      "('dict', {'lossy_int_val': 1.1234567890876543e+25, 'cool': 'dictionary', 'float_val': 12345678.6789, 'secretly_int_val': 123456789})",
+      "('list', ['some', 'strings'])",
+      "('param_name_test', 'thing')",
       "('recipe', 'properties:examples/full')",
-      "('test_prop', {'key': u'value'})"
+      "('test_prop', {'key': 'value'})"
     ],
     "name": "echo all"
   },
   {
     "cmd": [
       "echo",
-      "FrozenDict([('test_prop', FrozenDict([('key', u'value')]))])"
+      "FrozenDict([('test_prop', FrozenDict([('key', 'value')]))])"
     ],
     "name": "echo $fake_repo/fake_module"
   },
@@ -43,21 +43,21 @@
   {
     "cmd": [
       "echo",
-      "FrozenDict([(u'cool', u'dictionary')])"
+      "FrozenDict([('lossy_int_val', 1.1234567890876543e+25), ('cool', 'dictionary'), ('float_val', 12345678.6789), ('secretly_int_val', 123456789)])"
     ],
     "name": "echo dict"
   },
   {
     "cmd": [
       "echo",
-      "(u'some', u'strings')"
+      "('some', 'strings')"
     ],
     "name": "echo list"
   },
   {
     "cmd": [
       "echo",
-      "u'thing'"
+      "'thing'"
     ],
     "name": "echo param_name_test"
   },
@@ -71,7 +71,7 @@
   {
     "cmd": [
       "echo",
-      "FrozenDict([('key', u'value')])"
+      "FrozenDict([('key', 'value')])"
     ],
     "name": "echo test_prop"
   },

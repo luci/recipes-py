@@ -20,7 +20,7 @@ sys.path.insert(0, ROOT_DIR)
 
 # pylint: disable=wrong-import-position
 from recipe_engine.internal.recipe_deps import RecipeDeps
-from recipe_engine.util import strip_unicode
+from recipe_engine.util import fix_json_object
 
 # Will compile all recipe protos and add them to sys.path as a side effect.
 _ = RecipeDeps.create(ROOT_DIR, {}, None)
@@ -116,7 +116,7 @@ class RecipeEngineUnitTest(unittest.TestCase):
 
     This leads to much more readable diffs when debugging tests."""
     super(RecipeEngineUnitTest, self).assertDictEqual(
-        strip_unicode(d1), strip_unicode(d2),
+        fix_json_object(d1), fix_json_object(d2),
         msg)
 
   def assertListEqual(self, d1, d2, msg=None):
@@ -124,7 +124,7 @@ class RecipeEngineUnitTest(unittest.TestCase):
 
     This leads to much more readable diffs when debugging tests."""
     super(RecipeEngineUnitTest, self).assertListEqual(
-        strip_unicode(d1), strip_unicode(d2),
+        fix_json_object(d1), fix_json_object(d2),
         msg)
 
 

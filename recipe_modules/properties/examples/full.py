@@ -42,6 +42,9 @@ def GenTests(api):
             # awkward. Doable... but awkward.
             dict=json_format.ParseDict({
               'cool': 'dictionary',
+              'float_val': 12345678.6789,
+              'secretly_int_val': 123456789.0,
+              'lossy_int_val': 11234567890876543223456789.0,
             }, struct_pb2.Struct()),
             param_name_test='thing',
         ),

@@ -15,7 +15,7 @@ from PB.go.chromium.org.luci.buildbucket.proto import common
 from PB.go.chromium.org.luci.buildbucket.proto.build import Build
 
 from ....third_party import luci_context
-from ....util import strip_unicode
+from ....util import fix_json_object
 
 from ...engine import RecipeEngine
 from ...global_shutdown import install_signal_handlers
@@ -93,7 +93,7 @@ def _main_impl(args):
 
   properties = jsonpb.MessageToDict(build.input.properties)
   properties.update(_synth_properties(build, properties))
-  properties = strip_unicode(properties)
+  properties = fix_json_object(properties)
 
   _tweak_env()
 

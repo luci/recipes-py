@@ -41,6 +41,7 @@ def execute_test_case(recipe_deps, recipe_name, test_data):
   from ..stream.invariants import StreamEngineInvariants
   from ..stream.simulator import SimulationStreamEngine
   from ..warn.record import WarningRecorder
+  from ...util import fix_json_object
 
   step_runner = SimulationStepRunner(test_data)
   simulator = SimulationStreamEngine()
@@ -48,6 +49,7 @@ def execute_test_case(recipe_deps, recipe_name, test_data):
   warning_recorder = WarningRecorder(recipe_deps)
 
   props = test_data.properties.copy()
+  props = fix_json_object(props)
   props['recipe'] = str(recipe_name)
 
   environ = FakeEnviron()

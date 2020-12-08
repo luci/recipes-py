@@ -308,18 +308,33 @@ def map_defer_exceptions(fn, it, *exc_types):
   mexc_builder.raise_if_any()
 
 
-def strip_unicode(obj):
-  """Recursively re-encodes strings as utf-8 inside |obj|. Returns the result.
+MIN_SAFE_INTEGER = -((2**53) - 1)
+MAX_SAFE_INTEGER = (2**53) - 1
+
+def fix_json_object(obj):
+  """Recursively:
+
+    * Re-encodes strings as utf-8 inside |obj|.
+    * Replaces floats with ints when:
+      * The value is a whole number
+      * The value is outiside of [-(2 ** 53 - 1), 2 ** 53 - 1]
+
+  Returns the result.
   """
   if isinstance(obj, unicode):
     return obj.encode('utf-8', 'replace')
 
   if isinstance(obj, list):
-    return map(strip_unicode, obj)
+    return map(fix_json_object, obj)
+
+  if isinstance(obj, float):
+    if obj.is_integer() and (MIN_SAFE_INTEGER <= obj <= MAX_SAFE_INTEGER):
+      return int(obj)
+    return obj
 
   if isinstance(obj, dict):
     new_obj = type(obj)(
-        (strip_unicode(k), strip_unicode(v)) for k, v in obj.iteritems() )
+        (fix_json_object(k), fix_json_object(v)) for k, v in obj.iteritems() )
     return new_obj
 
   return obj

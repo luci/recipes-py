@@ -23,7 +23,7 @@ def dumps(*args, **kwargs):
 
 @functools.wraps(json.loads)
 def loads(data, **kwargs):
-  return recipe_util.strip_unicode(json.loads(data, **kwargs))
+  return recipe_util.fix_json_object(json.loads(data, **kwargs))
 
 
 class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
@@ -59,7 +59,8 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
     return self.raw.render(test)
 
   def result(self, presentation, test):
-    backing_file = self.backing_file  # Save name before self.raw.result() deletes it.
+    # Save name before self.raw.result() deletes it.
+    backing_file = self.backing_file
     raw_data = self.raw.result(presentation, test)
     if raw_data is None:
       if self.add_json_log in (True, 'on_failure'):
@@ -100,8 +101,12 @@ class JsonApi(recipe_api.RecipeApi):
 
   @staticmethod
   def loads(data, **kwargs):
-    """Works like `json.loads`, but strips out unicode objects (replacing them
-    with utf8-encoded str objects)."""
+    """Works like `json.loads`, but:
+      * strips out unicode objects (replacing them with utf8-encoded str
+        objects).
+      * replaces 'int-like' floats with ints. These are floats whose magnitude
+        is less than (2**53-1) and which don't have a decimal component.
+    """
     return loads(data, **kwargs)
 
   def is_serializable(self, obj):
