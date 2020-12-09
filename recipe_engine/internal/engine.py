@@ -8,7 +8,6 @@ import datetime
 import json
 import logging
 import os
-import random
 import re
 import sys
 import traceback
@@ -460,13 +459,6 @@ class RecipeEngine(object):
           step.set_build_property(
               key, json.dumps(self.properties[key], sort_keys=True))
 
-      # TODO(crbug.com/1150511): Remove after all recipes can support float
-      # property values.
-      keys = self._capture_prop_keys_with_int_value()
-      if keys:
-        step.set_build_property('$kitchen/crbug_1150511_keys_with_int_value',
-            json.dumps(keys))
-
       run_recipe_help_lines = [
           'To repro this locally, run the following line from the root of a %r'
             ' checkout:' % (self._recipe_deps.main_repo.name),
@@ -495,29 +487,6 @@ class RecipeEngine(object):
 
       step.write_line('Running recipe with %s' % (self.properties,))
       step.add_step_text('running recipe: "%s"' % recipe)
-
-  def _capture_prop_keys_with_int_value(self):
-    ret = []
-    def traverse(val, path):
-      if isinstance(val, int) and not isinstance(val, bool):
-        ret.append('.'.join(path))
-      elif isinstance(val, (list, tuple)):
-        for i, e in enumerate(val):
-          path.append('[%d]' % i)
-          traverse(e, path)
-          path.pop()
-      elif isinstance(val, dict):
-        for k, v in six.iteritems(val):
-          path.append(k)
-          traverse(v, path)
-          path.pop()
-    traverse(self.properties, [])
-    # Randomly select 50 keys if there're more than 50 to avoid
-    # hitting 1MiB output properties limit.
-    if len(ret) > 50:
-      random.shuffle(ret)
-      ret = ret[:50]
-    return sorted(ret)
 
   @classmethod
   def run_steps(cls, recipe_deps, properties, stream_engine, step_runner,
