@@ -8,6 +8,7 @@ from recipe_engine.recipe_api import Property
 
 from PB.go.chromium.org.luci.buildbucket.proto import common
 from PB.go.chromium.org.luci.led.job import job
+from PB.go.chromium.org.luci.swarming.proto.api import swarming
 from PB.recipe_modules.recipe_engine.led.properties import InputProperties
 
 DEPS = [
@@ -161,6 +162,21 @@ def GenTests(api):
               hash=isolated_hash,
               namespace='default-gzip',
               server='isolateserver.appspot.com',
+          ),
+      ))
+  )
+
+  yield (
+      api.test('with-rbe-cas-input') +
+      api.properties(get_cmd=['get-builder', 'chromium/try:linux-rel']) +
+      led_props(InputProperties(
+          led_run_id=led_run_id,
+          rbe_cas_input=swarming.CASReference(
+              cas_instance='projects/example/instances/default_instance',
+              digest=swarming.Digest(
+                  hash='examplehash',
+                  size_bytes=71,
+              ),
           ),
       ))
   )

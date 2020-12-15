@@ -1990,19 +1990,19 @@ The main interface this module provides is a direct call to the led binary:
 
 See the led binary for full documentation of commands.
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/led/api.py#147)(self, \*cmd):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/led/api.py#164)(self, \*cmd):**
 
 Runs led with the given arguments. Wraps result in a `LedResult`.
 
-&emsp; **@property**<br>&mdash; **def [cipd\_input](/recipe_modules/led/api.py#134)(self):**
+&emsp; **@property**<br>&mdash; **def [cipd\_input](/recipe_modules/led/api.py#151)(self):**
 
 The versioned CIPD package containing the recipes code being run.
 
 If set, it will be an `InputProperties.CIPDInput` protobuf; otherwise None.
 
-&mdash; **def [initialize](/recipe_modules/led/api.py#96)(self):**
+&mdash; **def [initialize](/recipe_modules/led/api.py#104)(self):**
 
-&mdash; **def [inject\_input\_recipes](/recipe_modules/led/api.py#151)(self, led_result):**
+&mdash; **def [inject\_input\_recipes](/recipe_modules/led/api.py#168)(self, led_result):**
 
 Sets the version of recipes used by led to correspond to the version
 currently being used.
@@ -2014,18 +2014,25 @@ Args:
   * led_result: The `LedResult` whose job.Definition will be passed into the
     edit command.
 
-&emsp; **@property**<br>&mdash; **def [isolated\_input](/recipe_modules/led/api.py#125)(self):**
+&emsp; **@property**<br>&mdash; **def [isolated\_input](/recipe_modules/led/api.py#133)(self):**
 
 The location of the isolate containing the recipes code being run.
 
 If set, it will be an `InputProperties.IsolatedInput` protobuf;
 otherwise, None.
 
-&emsp; **@property**<br>&mdash; **def [launched\_by\_led](/recipe_modules/led/api.py#112)(self):**
+&emsp; **@property**<br>&mdash; **def [launched\_by\_led](/recipe_modules/led/api.py#120)(self):**
 
 Whether the current build is a led job.
 
-&emsp; **@property**<br>&mdash; **def [run\_id](/recipe_modules/led/api.py#117)(self):**
+&emsp; **@property**<br>&mdash; **def [rbe\_cas\_input](/recipe_modules/led/api.py#142)(self):**
+
+The location of the rbe-cas containing the recipes code being run.
+
+If set, it will be a `swarming.v1.CASReference` protobuf;
+otherwise, None.
+
+&emsp; **@property**<br>&mdash; **def [run\_id](/recipe_modules/led/api.py#125)(self):**
 
 A unique string identifier for this led job.
 
@@ -3991,9 +3998,9 @@ This tests metadata features of the Future object.
 &mdash; **def [RunSteps](/recipe_modules/json/tests/add_json_log.py#10)(api):**
 ### *recipes* / [led:tests/full](/recipe_modules/led/tests/full.py)
 
-[DEPS](/recipe_modules/led/tests/full.py#13): [buildbucket](#recipe_modules-buildbucket), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/led/tests/full.py#14): [buildbucket](#recipe_modules-buildbucket), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/led/tests/full.py#29)(api, get_cmd, child_properties, sloppy_child_properties, do_bogus_edits):**
+&mdash; **def [RunSteps](/recipe_modules/led/tests/full.py#30)(api, get_cmd, child_properties, sloppy_child_properties, do_bogus_edits):**
 ### *recipes* / [led:tests/no\_exist](/recipe_modules/led/tests/no_exist.py)
 
 [DEPS](/recipe_modules/led/tests/no_exist.py#5): [led](#recipe_modules-led), [step](#recipe_modules-step)

@@ -83,10 +83,18 @@ class LedApi(recipe_api.RecipeApi):
     self._led_path = None
     self._run_id = props.led_run_id
 
+    if props.HasField('isolated_input') and props.HasField('rbe_cas_input'): # pragma: no cover
+      raise ValueError("Cannot have both isolated_input and rbe_cas_input")
+
     if props.HasField('isolated_input'):
       self._isolated_input = props.isolated_input
     else:
       self._isolated_input = None
+
+    if props.HasField('rbe_cas_input'):
+      self._rbe_cas_input = props.rbe_cas_input
+    else:
+      self._rbe_cas_input = None
 
     if props.HasField('cipd_input'):
       self._cipd_input = props.cipd_input
@@ -132,6 +140,15 @@ class LedApi(recipe_api.RecipeApi):
     return self._isolated_input
 
   @property
+  def rbe_cas_input(self):
+    """The location of the rbe-cas containing the recipes code being run.
+
+    If set, it will be a `swarming.v1.CASReference` protobuf;
+    otherwise, None.
+    """
+    return self._rbe_cas_input
+
+  @property
   def cipd_input(self):
     """The versioned CIPD package containing the recipes code being run.
 
@@ -159,6 +176,12 @@ class LedApi(recipe_api.RecipeApi):
       * led_result: The `LedResult` whose job.Definition will be passed into the
         edit command.
     """
+    if self.rbe_cas_input:
+      return led_result.then(
+        'edit',
+        '-rbh',
+        '%s/%s' % (
+          self.rbe_cas_input.digest.hash, self.rbe_cas_input.digest.size_bytes))
     if self.isolated_input:
       # TODO(iannucci): Add option for setting server/namespace too
       return led_result.then('edit', '-rbh', self.isolated_input.hash)

@@ -5,6 +5,8 @@ syntax = "proto3";
 
 package recipe_modules.recipe_engine.led;
 
+import "go.chromium.org/luci/swarming/proto/api/swarming.proto";
+
 message InputProperties {
     reserved 1; // launched_by_led
 
@@ -42,4 +44,9 @@ message InputProperties {
     // A unique identifier for this led job. Unset if the current build is
     // not launched by led.
     string led_run_id = 4;
+
+    // led sets this property for builds launched using `edit-recipe-bundle`.
+    // The build can use this info to launch child led builds using the same
+    // version of the recipes code.
+    swarming.v1.CASReference rbe_cas_input = 5;
 }
