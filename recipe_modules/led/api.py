@@ -80,7 +80,6 @@ class LedApi(recipe_api.RecipeApi):
 
   def __init__(self, props, **kwargs):
     super(LedApi, self).__init__(**kwargs)
-    self._led_path = None
     self._run_id = props.led_run_id
 
     if props.HasField('isolated_input') and props.HasField('rbe_cas_input'): # pragma: no cover
@@ -155,11 +154,6 @@ class LedApi(recipe_api.RecipeApi):
     If set, it will be an `InputProperties.CIPDInput` protobuf; otherwise None.
     """
     return self._cipd_input
-
-  @property
-  def _led_binary_path(self):
-    """The path to the led binary on disk."""
-    return self._led_path.join('led')
 
   def __call__(self, *cmd):
     """Runs led with the given arguments. Wraps result in a `LedResult`."""
@@ -264,8 +258,6 @@ class LedApi(recipe_api.RecipeApi):
 
     Returns either a job.Definition or a LedLaunchData.
     """
-    self._ensure_led()
-
     is_launch = cmd[0] == 'launch'
     if is_launch:
       kwargs = {
@@ -308,7 +300,7 @@ class LedApi(recipe_api.RecipeApi):
       kwargs['stdin'] = self.m.proto.input(previous, 'JSONPB')
 
     result = self.m.step(
-        'led %s' % cmd[0], [self._led_binary_path] + list(cmd), **kwargs)
+        'led %s' % cmd[0], ['led'] + list(cmd), **kwargs)
 
     if is_launch:
       # If we launched a task, add a link to the swarming task.
@@ -320,19 +312,3 @@ class LedApi(recipe_api.RecipeApi):
       retval = result.stdout
 
     return retval
-
-  def _ensure_led(self):
-    """Ensures that led is checked out on disk.
-
-    Sets `_led_path` as a side-effect. This will always use `[CACHE]/led` as the
-    location of the unpacked binaries.
-    """
-    if self._led_path:
-      return
-
-    ensure_file = self.m.cipd.EnsureFile().add_package(
-        'infra/tools/luci/led/${platform}', 'latest')
-    led_path = self.m.path['cache'].join('led')
-    self.m.cipd.ensure(led_path, ensure_file)
-
-    self._led_path = led_path
