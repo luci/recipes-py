@@ -165,11 +165,16 @@ class RecipeDeps(object):
     # we have to create it first.
     ret = cls({}, simple_cfg.repo_name)
 
+    # Check that our repo doesn't depend on itself.
+    if ret.main_repo_id in simple_cfg.deps:
+      raise RecipeLoadError('recipes.cfg: cannot depend on self (repo %r)' % (
+        (ret.main_repo,)))
+
     repos = {}
     main_backend = None
     if os.path.isdir(os.path.join(main_repo_path, '.git')):
       main_backend = fetch.GitBackend(main_repo_path, None)
-    repos[simple_cfg.repo_name] = RecipeRepo.create(
+    repos[ret.main_repo_id] = RecipeRepo.create(
       ret, main_repo_path, simple_cfg=simple_cfg, backend=main_backend)
 
     for project_id, path in overrides.iteritems():
@@ -191,6 +196,25 @@ class RecipeDeps(object):
       backend = fetch.GitBackend(dep_path, dep.url)
       backend.checkout(dep.branch, dep.revision)
       repos[repo_name] = RecipeRepo.create(ret, dep_path, backend=backend)
+
+      # Assert that any dependencies of `repo_name` are included (by name) in
+      # our own simple_cfg. Otherwise the transitive dependency set is not
+      # specified here, which is an error.
+      #
+      # Additionally, catch if one of the missing dependencies is a reference
+      # to our own repo!
+      missing_deps = set(repos[repo_name].simple_cfg.deps)
+      missing_deps.difference_update(simple_cfg.deps)
+      if ret.main_repo_id in missing_deps:
+        raise RecipeLoadError(
+            'recipes.cfg: Dependency %r has circular dependency on %r' %
+            (repo_name, ret.main_repo_id))
+
+      if missing_deps:
+        raise RecipeLoadError(
+            'recipes.cfg: Repo %r depends on %r, which %s missing' %
+            (repo_name, sorted(missing_deps),
+             ('is' if len(missing_deps) == 1 else 'are')))
 
     # This makes `repos` unmodifiable. object.__setattr__ is needed to get
     # around attrs' frozen attributes.

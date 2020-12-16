@@ -484,7 +484,7 @@ class FakeRecipeRepo(object):
         dep_repo = self.fake_recipe_deps.repos[depname]
         dep_entry = pkg_pb.deps[depname]
         dep_entry.url = 'file://' + dep_repo.path
-        dep_entry.branch = 'refs/heads/master'
+        dep_entry.branch = 'refs/heads/main'
         dep_entry.revision = dep_repo.backend.commit_metadata('HEAD').revision
 
   def recipes_py(self, *args, **kwargs):
@@ -620,7 +620,8 @@ class FakeRecipeDeps(object):
     assert name not in self.repos, (
       'duplicate repo_name: %r' % (name,))
     os.makedirs(path)
-    subprocess.check_call(['git', 'init'], cwd=path, stdout=DEVNULL)
+    subprocess.check_call(
+        ['git', 'init', '-b', 'main'], cwd=path, stdout=DEVNULL)
     cfg_path = os.path.join(path, RECIPES_CFG_LOCATION_REL)
     os.makedirs(os.path.dirname(cfg_path))
     with open(cfg_path, 'wb') as fil:
@@ -659,7 +660,7 @@ class FakeRecipeDeps(object):
     """
     return os.path.join(self.main_repo.path, '.recipe_deps')
 
-  def add_repo(self, name):
+  def add_repo(self, name, detached=False):
     """Adds a new repo to the RecipeDeps.
 
     This is created in `{FakeRecipeDeps.recipe_deps_path}/{name}`.
@@ -672,8 +673,9 @@ class FakeRecipeDeps(object):
     assert isinstance(name, str)
     self._create_repo(name, os.path.join(self._root, 'sources', name))
 
-    self.main_repo.add_dep(name)
-    self.main_repo.commit('add dep on ' + name)
+    if not detached:
+      self.main_repo.add_dep(name)
+      self.main_repo.commit('add dep on ' + name)
     return self.repos[name]
 
   @property

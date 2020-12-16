@@ -43,6 +43,42 @@ class RunTest(test_env.RecipeEngineUnitTest):
     _, retcode = deps.main_repo.recipes_py('-v', '-v', 'run', 'my_recipe')
     self.assertEqual(retcode, 0)
 
+  def test_run_incomplete_deps(self):
+    deps = self.FakeRecipeDeps()
+
+    a = deps.add_repo('a', detached=True)
+    a.commit('a something')
+
+    b = deps.add_repo('b', detached=True)
+    b.commit('b something')
+
+    a.add_dep('b')
+    a.commit('add b dep')
+
+    deps.main_repo.add_dep('a')
+    a.commit('add a dep')
+
+    output, retcode = deps.main_repo.recipes_py('fetch')
+    self.assertEqual(retcode, 1)
+    self.assertIn('Repo \'a\' depends on [\'b\'], which is missing', output)
+
+  def test_run_circular_deps(self):
+    deps = self.FakeRecipeDeps()
+
+    a = deps.add_repo('a', detached=True)
+    a.commit('a something')
+
+    a.add_dep('main')
+    a.commit('add main dep')
+
+    deps.main_repo.add_dep('a')
+    a.commit('add a dep')
+
+    output, retcode = deps.main_repo.recipes_py('fetch')
+    self.assertEqual(retcode, 1)
+    self.assertIn(
+        'Dependency \'a\' has circular dependency on \'main\'', output)
+
 
 class RunSmokeTest(test_env.RecipeEngineUnitTest):
   def _run_cmd(self, recipe, properties=None, engine_args=()):
