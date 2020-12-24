@@ -116,7 +116,7 @@ A recipe in a subfolder includes that subfolder in its name; so
 
 Example [recipes folder](https://chromium.googlesource.com/chromium/tools/build/+/master/scripts/slave/recipes).
 
-### The `recipe_modules` folder
+### The recipe_modules folder
 
 The `recipe_modules` folder contains subfolders, one per module. Unlike recipes,
 the module namespace is flat in each repo. A recipe module directory contains
@@ -129,11 +129,11 @@ these files:
 
 Example [recipe_modules folder](https://chromium.googlesource.com/chromium/tools/build/+/master/scripts/slave/recipe_modules).
 
-### The `recipe_proto` folder
+### The recipe_proto folder
 
 See [#Working-with-Protobufs] for details on this folder and its contents.
 
-## The `recipes.py` script
+## The recipes.py script
 
 The `recipes.py` script is the entry point to the recipe_engine and to running
 your recipe. Its primary functionality is to clone a copy of the recipe_engine
@@ -197,19 +197,19 @@ presumably depends on the upstream repo). To do this you would:
 This works for all dependency repos, and can be specified multiple times to
 override more than one dependency.
 
-### The `run` command
+### The run command
 
 TODO(iannucci) - Document
 
-### The `test` command
+### The test command
 
 TODO(iannucci) - Document
 
-### The `autoroll` command
+### The autoroll command
 
 TODO(iannucci) - Document
 
-### The `manual_roll` command
+### The manual_roll command
 
 Updates your repo's `recipes.cfg` file with the smallest valid roll possible.
 This means that for all dependencies your repo has, the smallest number of
@@ -221,7 +221,7 @@ preparing a manual roll CL.
 
 You can run this command repeatedly to find successive roll candidates.
 
-### The `bundle` command
+### The bundle command
 
 TODO(iannucci) - Document
 
@@ -271,9 +271,9 @@ Here's a simple example recipe:
         + api.post_check(lambda check, steps: check('say hello' in steps))
       )
 
-### `RunSteps`
+### RunSteps
 
-The RunSteps function has a signature like:
+The `RunSteps` function has a signature like:
 
      # RunSteps(api[, properties][, env_properties])
      # For example:
@@ -332,9 +332,9 @@ you can set `summary_markdown` in all cases from the recipe, but it will only be
 on the build in conjunction with non-SUCCESS status value.
 ***
 
-### `GenTests`
+### GenTests
 
-The GenTests function is a generator which yields test cases. Every test case:
+The `GenTests` function is a generator which yields test cases. Every test case:
   * Has a unique name
   * Specifies input properties for the test
   * Specifies input data for recipe modules
@@ -352,7 +352,7 @@ final state of the recipe execution in the form of a listing of the steps that
 have run. The test expectation files are written to a folder which is generated
 by replacing the '.py' extension of the recipe script with '.expected/'.
 
-### `DEPS`
+### DEPS
 
 The DEPS section of the recipe specifies what recipe modules this recipe depends
 on. The DEPS section has two possible forms, a list and a dict.
@@ -375,7 +375,7 @@ of a recipe module instances behave like singletons; if a recipe and a module
 both DEPS in the same other module (say 'tertiary'), there will only be one
 instance of the 'tertiary' module.
 
-### `PROPERTIES` and `ENV_PROPERTIES`
+### PROPERTIES and ENV_PROPERTIES
 
 Recipe code has a couple ways to observe the input properties. Currently the
 best way is to define a proto message and then set this as the `PROPERTIES`
@@ -484,7 +484,7 @@ advantages over the proto method, and will (hopefully) be deleted soon.
 
 TODO(iannucci) - Document
 
-### `PROPERTIES`, `GLOBAL_PROPERTIES` and `ENV_PROPERTIES`
+### PROPERTIES, GLOBAL_PROPERTIES and ENV_PROPERTIES
 
 In a recipe module's `__init__.py`, you may specify `PROPERTIES` and
 `ENV_PROPERTIES` the same way that you do for a recipe, with the exception that
