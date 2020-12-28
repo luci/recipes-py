@@ -12,17 +12,14 @@ are meant to:
     text, debugging logs, etc.)
 
 *** note
-This user guide is a work in progress, and is a revised version of the
-[old_user_guide]. Once this guide is fully updated, the old version will
-be removed.
+For a more detailed guide to writing recipes, see the [recipe walkthrough](./walkthrough.md).
 ***
-
-[old_user_guide]: ./old_user_guide.md
 
 *** note
 For more implementation details, please see [implementation_details].
 ***
 
+[walkthrough]: ./walkthrough.md
 [implementation_details]: ./implementation_details.md
 
 [TOC]
@@ -271,6 +268,9 @@ Here's a simple example recipe:
         + api.post_check(lambda check, steps: check('say hello' in steps))
       )
 
+For a more detailed guide to writing recipes and recipe modules, see the
+[walkthrough](./walkthrough.md)
+
 ### RunSteps
 
 The `RunSteps` function has a signature like:
@@ -483,6 +483,8 @@ advantages over the proto method, and will (hopefully) be deleted soon.
 ## Writing recipe_modules
 
 TODO(iannucci) - Document
+
+See the relevant section in the [walkthrough](./walkthrough.md).
 
 ### PROPERTIES, GLOBAL_PROPERTIES and ENV_PROPERTIES
 

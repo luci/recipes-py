@@ -1,24 +1,14 @@
 # Recipes
 
-Recipes are a domain-specific language (embedded in python) for specifying
+Recipes are a domain-specific language (embedded in Python) for specifying
 sequences of subprocess calls in a cross-platform and testable way.
+
+See [the user guide](./user_guide.md) for a general reference about the recipe
+engine and ecosystem.
 
 [TOC]
 
-## Background
-
-Chromium uses BuildBot for its builds. It requires master restarts to change
-bot configs, which slows bot changes down.
-
-With Recipes, most build-related things happen in scripts that run on the
-slave, which means that the master does not need to be restarted in order
-to change something about a build configuration.
-
-Recipes also provide a way to unit test build scripts, by mocking commands and
-recording "expectations" of what will happen when the script runs under various
-conditions. This makes it easy to verify that the scope of a change is limited.
-
-## Intro
+## Introduction
 
 This README will seek to teach the ways of Recipes, so that you may do one or
 more of the following:
@@ -26,13 +16,13 @@ more of the following:
   * Read them
   * Make new recipes
   * Fix bugs in recipes
-  * Create libraries (api modules) for others to use in their recipes.
+  * Create libraries (recipe modules) for others to use in their recipes.
 
 The document will build knowledge up in small steps using examples, and so it's
 probably best to read the whole doc through from top to bottom once before using
 it as a reference.
 
-## Small Beginnings
+## Small beginnings
 
 **Recipes are a means to cause a series of commands to run on a machine.**
 
@@ -69,7 +59,7 @@ run this recipe by calling
     $ scripts/slave/recipes.py run hello
 
 *** promo
-Note: every recipe execution (e.g. build on buildbot) emits
+Note: every recipe execution (e.g. build) emits
 a step log called `run_recipe` on the `setup_build` step which provides
 a precise invocation for `recipes.py` correlating exactly with the current
 recipe invocation. This is useful to locally repro a failing build without
@@ -250,7 +240,7 @@ The call that includes `StepCommandRE` will check that the step named
 'Print Hello World' has as its list of arguments ['echo', 'hello', 'world']
 (each element can actually be a regular expression that must match the
 corresponding argument). The call with just DropExpectation doesn't check
-anything, it just inhibits the test from outputting a json expectation file.
+anything, it just inhibits the test from outputting a JSON expectation file.
 
 If you were to change the command list passed when using `StepCommandRE` so that
 it no longer matched, you would get output similar to the following:
@@ -280,7 +270,7 @@ Tests should use the post-process api to make assertions about the steps under
 test. Just as when writing tests under any other frameworks, be careful not to
 make your assertions too strict or you run the risk of needing to update tests
 due to unrelated changes. Tests should also make sure to pass `DropExpectation`
-to the final call to `api.post_process` to avoid creating json expectation
+to the final call to `api.post_process` to avoid creating JSON expectation
 files. It's important for that to be the last call to `api.post_process` because
 the functions passed to any later calls will receive an empty step dict
 otherwise.
@@ -291,12 +281,7 @@ otherwise.
 
 In order to do something useful, we need to pull in parameters from the outside
 world. There's one primary source of input for recipes, which is `properties`.
-
-Properties are a relic from the days of BuildBot, though they have been
-dressed up a bit to be more like we'll want them in the future. If you're
-familiar with BuildBot, you'll probably know them as `factory_properties` and
-`build_properties`. The new `properties` object is a merging of these two, and
-is provided by the `properties` api module.
+The `properties` object is provided by the `properties` api module.
 
 This is now abstracted into the PROPERTIES top level declaration in your recipe.
 You declare a dictionary of properties that your recipe accepts. The recipe
@@ -378,7 +363,7 @@ Or, more explicitly::
 
     script/slaves/recipes.py --properties-file <path/to/json>
 
-Where `<path/to/json>` is a file containing a valid json `object` (i.e.
+Where `<path/to/json>` is a file containing a valid JSON `object` (i.e.
 key:value pairs).
 
 Note that we need to put a dependency on the 'recipe_engine/properties' module
@@ -409,7 +394,7 @@ with the form `<repo-name>/<module-name>` as has been done for the `step` and
 `properties` modules. Modules from the current repo are specified with just the
 module name.
 
-## Making Modules
+## Making modules
 
 **Modules are for grouping functionality together and exposing it across
 recipes.**
@@ -654,7 +639,7 @@ for all the details.
 ```python
 # scripts/slave/recipe_modules/hello/config.py
 
-...
+# ...
 
 # Each of these functions is a 'config item' in the context of config_ctx.
 
@@ -876,7 +861,7 @@ See how we use `step_result` to get the result of the last step? The item we get
 back is a `recipe_engine.main.StepData` instance (really, just a basic object
 with member data). The members of this object which are guaranteed to exist are:
   * `retcode`: Pretty much what you think
-  * `step`: The actual step json which was sent to `annotator.py`. Not usually
+  * `step`: The actual step JSON which was sent to `annotator.py`. Not usually
     useful for recipes, but it is used internally for the recipe tests
     framework.
   * `presentation`: An object representing how the step will show up on the
@@ -1009,8 +994,7 @@ Creates an extra log "mylog" under the step.
 
 ### Setting properties
 
-`api.properties` are immutable, but you can change and add new
-properties at the buildbot level.
+Input properties (`api.properties`) are immutable, but you can add so-called output properties in a step, like this:
 
 ```python
 step_result.presentation.properties['newprop'] = 1
@@ -1029,8 +1013,7 @@ step_result.presentation.step_text = 'Dynamic step result text'
   ```python
   step_result.presentation.logs['mylog'] = ['line1', 'line2']
   ```
-* presentation.properties allows changing and adding new properties at the
-  buildbot level. Example:
+* presentation.properties allows changing and adding new output properties:
   ```python
   step_result.presentation.properties['newprop'] = 1
   ```
@@ -1051,9 +1034,10 @@ Specifically, for `tools/build` repo, the commands to execute are:
 `scripts/slave/recipes.py test run`
 `scripts/slave/recipes.py test train`
 
-## Where's the docs on `*.py`?
+## Where are the docs for recipes and modules?
 
-Check the docstrings in `*.py`. `<trollface text="Problem?"/>`
+Documentation for recipes is done with Python docstrings. For convenience,
+these docstrings may be extracted and formatted in a README.recipes.md file.
 
 In addition, most recipe modules have example recipes in the `examples`
 subfolder which exercises most of the code in the module for example purposes.
