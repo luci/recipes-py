@@ -150,14 +150,14 @@ def _check_exception(test_results, expected_exception, uncaught_exception_info):
   if expected_exception:
     if not exc:
       test_results.crash_mismatch.append(
-        'Expected exception mismatch in RunSteps. The test expected %r but '
-        'the exception line was %r.' % (expected_exception, exc_name)
+        'Missing expected exception in RunSteps. `api.expect_exception` is'
+        ' specified, but the exception did not occur.'
       )
 
     elif exc_name != expected_exception:
       test_results.crash_mismatch.append(
-        'Missing expected exception in RunSteps. `api.expect_exception` is'
-        ' specified, but the exception did not occur.'
+        'Expected exception mismatch in RunSteps. The test expected %r but '
+        'the exception line was %r.' % (expected_exception, exc_name)
       )
 
   elif exc:
