@@ -41,8 +41,6 @@ class ResultDBAPI(recipe_api.RecipeApi):
       'See go/lucicfg#luci.builder and go/lucicfg#resultdb.settings'
     )
 
-  # TODO(nodir): add query method, a wrapper of rdb-ls.
-
   def include_invocations(self, invocations, step_name=None):
     """Shortcut for resultdb.update_included_invocations()."""
     return self.update_included_invocations(
@@ -209,6 +207,62 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     step_res = self._run_rdb(
         subcommand='chromium-derive',
+        args=args,
+        step_name=step_name,
+        stdout=self.m.raw_io.output(add_output_log=True),
+        step_test_data=lambda: self.m.raw_io.test_api.stream_output(''),
+    )
+    return common.deserialize(step_res.stdout)
+
+  def query(self,
+            inv_ids,
+            variants_with_unexpected_results=False,
+            limit=None,
+            step_name=None):
+    """Returns test results in the invocations.
+
+    Most users will be interested only in results of test variants that had
+    unexpected results. This can be achieved by passing
+    variants_with_unexpected_results=True. This significantly reduces output
+    size and latency.
+
+    Example:
+      results = api.resultdb.query(
+          [
+            # invocation id for a swarming task.
+            'task-chromium-swarm.appspot.com-deadbeef',
+            # invocation id for a buildbucket build.
+            'build-234298374982'
+          ],
+          variants_with_unexpected_results=True,
+      )
+
+    Args:
+      inv_ids (list of str): ids of the invocations.
+      variants_with_unexpected_results (bool): if True, return only test
+        results from variants that have unexpected results.
+      limit (int): maximum number of test results to return.
+        Defaults to 1000.
+      step_name (str): name of the step.
+
+    Returns:
+      A dict {invocation_id: api.Invocation}.
+    """
+    assert len(inv_ids) > 0
+    assert all(isinstance(id, str) for id in inv_ids), inv_ids
+    assert limit is None or limit >= 0
+    limit = limit or 1000
+
+    args = [
+      '-json',
+      '-n', str(limit),
+    ]
+    if variants_with_unexpected_results:
+      args += ['-u']
+    args += list(inv_ids)
+
+    step_res = self._run_rdb(
+        subcommand='query',
         args=args,
         step_name=step_name,
         stdout=self.m.raw_io.output(add_output_log=True),

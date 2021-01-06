@@ -132,6 +132,7 @@
   * [resultdb:examples/derive](#recipes-resultdb_examples_derive)
   * [resultdb:examples/exonerate](#recipes-resultdb_examples_exonerate)
   * [resultdb:examples/include](#recipes-resultdb_examples_include)
+  * [resultdb:examples/query](#recipes-resultdb_examples_query)
   * [resultdb:examples/resultsink](#recipes-resultdb_examples_resultsink)
   * [runtime:tests/full](#recipes-runtime_tests_full)
   * [scheduler:examples/emit_triggers](#recipes-scheduler_examples_emit_triggers) &mdash; This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
@@ -2666,7 +2667,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#38)(self):**
 
-&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#134)(self, swarming_host, task_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
+&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#132)(self, swarming_host, task_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
 
 Returns results derived from the specified Swarming tasks.
 
@@ -2725,11 +2726,11 @@ Returns:
 
 &emsp; **@property**<br>&mdash; **def [enabled](/recipe_modules/resultdb/api.py#34)(self):**
 
-&mdash; **def [exclude\_invocations](/recipe_modules/resultdb/api.py#51)(self, invocations, step_name=None):**
+&mdash; **def [exclude\_invocations](/recipe_modules/resultdb/api.py#49)(self, invocations, step_name=None):**
 
 Shortcut for resultdb.update_included_invocations().
 
-&mdash; **def [exonerate](/recipe_modules/resultdb/api.py#92)(self, test_exonerations, step_name=None):**
+&mdash; **def [exonerate](/recipe_modules/resultdb/api.py#90)(self, test_exonerations, step_name=None):**
 
 Exonerates test variants in the current invocation.
 
@@ -2737,11 +2738,42 @@ Args:
   test_exonerations (list): A list of test_result_pb2.TestExoneration.
   step_name (str): name of the step.
 
-&mdash; **def [include\_invocations](/recipe_modules/resultdb/api.py#46)(self, invocations, step_name=None):**
+&mdash; **def [include\_invocations](/recipe_modules/resultdb/api.py#44)(self, invocations, step_name=None):**
 
 Shortcut for resultdb.update_included_invocations().
 
-&mdash; **def [update\_included\_invocations](/recipe_modules/resultdb/api.py#56)(self, add_invocations=None, remove_invocations=None, step_name=None):**
+&mdash; **def [query](/recipe_modules/resultdb/api.py#217)(self, inv_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
+
+Returns test results in the invocations.
+
+Most users will be interested only in results of test variants that had
+unexpected results. This can be achieved by passing
+variants_with_unexpected_results=True. This significantly reduces output
+size and latency.
+
+Example:
+  results = api.resultdb.query(
+      [
+        # invocation id for a swarming task.
+        'task-chromium-swarm.appspot.com-deadbeef',
+        # invocation id for a buildbucket build.
+        'build-234298374982'
+      ],
+      variants_with_unexpected_results=True,
+  )
+
+Args:
+  inv_ids (list of str): ids of the invocations.
+  variants_with_unexpected_results (bool): if True, return only test
+    results from variants that have unexpected results.
+  limit (int): maximum number of test results to return.
+    Defaults to 1000.
+  step_name (str): name of the step.
+
+Returns:
+  A dict {invocation_id: api.Invocation}.
+
+&mdash; **def [update\_included\_invocations](/recipe_modules/resultdb/api.py#54)(self, add_invocations=None, remove_invocations=None, step_name=None):**
 
 Add and/or remove included invocations to/from the current invocation.
 
@@ -2754,7 +2786,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#278)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#332)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False):**
 
 Wraps the command with ResultSink.
 
@@ -4080,6 +4112,11 @@ Tests for api.python.infra_failing_step.
 [DEPS](/recipe_modules/resultdb/examples/include.py#11): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb)
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/include.py#17)(api):**
+### *recipes* / [resultdb:examples/query](/recipe_modules/resultdb/examples/query.py)
+
+[DEPS](/recipe_modules/resultdb/examples/query.py#15): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query.py#22)(api):**
 ### *recipes* / [resultdb:examples/resultsink](/recipe_modules/resultdb/examples/resultsink.py)
 
 [DEPS](/recipe_modules/resultdb/examples/resultsink.py#10): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)

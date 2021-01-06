@@ -25,7 +25,7 @@ class ResultDBTestApi(recipe_test_api.RecipeTestApi):
       inv_bundle: a dict {inv_id: test_api.Invocation}.
       step_name: the name of the step to simulate.
     """
-    step_name = step_name or 'rdb ls'
+    step_name = step_name or 'rdb query'
     return self.step_data(
         step_name,
         self.m.raw_io.stream_output(common.serialize(inv_bundle)),
