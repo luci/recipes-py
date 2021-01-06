@@ -966,6 +966,11 @@ class TaskRequestMetadata(object):
     """Returns the URL of the associated task in the Swarming UI."""
     return '%s/task?id=%s' % (self._swarming_server, self.id)
 
+  @property
+  def invocation(self):
+    """Returns the invocation name of the associated task."""
+    return self._task_json['task_result']['resultdb_info']['invocation']
+
 
 class TaskResult(object):
   """Result of a Swarming task."""

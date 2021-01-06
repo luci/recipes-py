@@ -130,6 +130,7 @@ def RunSteps(api, use_cas):
   metadata[0].name
   metadata[0].id
   metadata[0].task_ui_link
+  metadata[0].invocation
 
   # Collect the result of the task by metadata.
   output_dir = api.path.mkdtemp('swarming')

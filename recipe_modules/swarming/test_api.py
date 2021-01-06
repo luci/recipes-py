@@ -124,6 +124,11 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
             'request': {
                 'name': name,
             },
+            'task_result': {
+                'resultdb_info': {
+                    'invocation': 'invocations/%d' % idx,
+                },
+            },
         } for idx, name in enumerate(task_names, start=start)],
     })
 
