@@ -22,10 +22,6 @@ from . import legacy_analyzers
 
 from PB.tricium.data import Data
 
-# The maximum number of comments to post. The Tricium service will refuse to
-# post more than this many comments, as it would be a poor user experience.
-MAX_NUM_COMMENTS = 50
-
 
 class TriciumApi(recipe_api.RecipeApi):
   """TriciumApi provides basic support for Tricium."""
@@ -81,13 +77,15 @@ class TriciumApi(recipe_api.RecipeApi):
     """
     step = self.m.step('write results', [])
     num_comments = len(results.comments)
-    if num_comments > MAX_NUM_COMMENTS:
-      # Tricium will refuse to post comments if there are too many; we can just
-      # avoid emitting such results.
+    if num_comments > 50:
+      # Tricium will refuse to post comments if there are too many, but we
+      # don't yet know how many of these comments are included in changed lines
+      # and would be posted. Add a warning to try to help with clarification in
+      # the case that Tricium unexpectedly emits no comments.
       step.presentation.status = self.m.step.WARNING
       step.presentation.step_text = (
-          '%s comments, exceeded maximum %s comments' %
-          (num_comments, MAX_NUM_COMMENTS))
+          '%s comments created, Tricium may refuse to post comments if there '
+          'are too many in changed lines.' % num_comments)
       return
     # The "tricium" output property is read by the Tricium service.
     results_json = json_format.MessageToJson(results, indent=0)
@@ -130,11 +128,6 @@ class TriciumApi(recipe_api.RecipeApi):
           parent_step.presentation.step_text = '%s comment(s)' % num_comments
           parent_step.presentation.logs['result'] = json_format.MessageToJson(
               results)
-          if num_comments > MAX_NUM_COMMENTS:
-            parent_step.presentation.status = self.m.step.WARNING
-            parent_step.presentation.step_text += (' exceeds max %s' %
-                                                   MAX_NUM_COMMENTS)
-            continue
           all_results.comments.extend(results.comments)
         except self.m.step.StepFailure as f:
           parent_step.presentation.step_text = 'failed'

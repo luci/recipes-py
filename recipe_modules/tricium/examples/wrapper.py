@@ -54,14 +54,7 @@ def GenTests(api):
          api.step_data('Spacey.run analyzer', retcode=1) +
          api.post_process(post_process.DropExpectation))
 
-  yield (api.test('too_many_comments_one_analyzer') +
+  yield (api.test('many_comments') +
          api.step_data('Pylint.read results',
                        api.file.read_text(results_json(num_comments=51))) +
-         api.post_process(post_process.DropExpectation))
-
-  yield (api.test('too_many_comments_two_analyzers') +
-         api.step_data('Pylint.read results',
-                       api.file.read_text(results_json(num_comments=26))) +
-         api.step_data('Spacey.read results',
-                       api.file.read_text(results_json(num_comments=26))) +
          api.post_process(post_process.DropExpectation))
