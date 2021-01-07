@@ -58,6 +58,6 @@ def CheckChangeOnCommit(input_api, output_api):
   # Now run all the unit tests in parallel.
   results.extend(input_api.RunTests(
       input_api.canned_checks.GetUnitTestsInDirectory(
-          input_api, output_api, 'unittests', whitelist=[r'.+_test\.py'])
+          input_api, output_api, 'unittests', files_to_check=[r'.+_test\.py'])
   ))
   return results
