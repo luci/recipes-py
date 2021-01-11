@@ -59,6 +59,22 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
     return (self.m.raw_io.stream_output(hash)
             + self.errno(errno_name))
 
+  def file_hash(self, hash='', errno_name=0):
+    """Provides test mock for the `file_hash` method.
+
+    Args:
+      hash (str) - The hexdigest hash for this file_hash step to return.
+      errno_name (str|None) - The error name for this step to return, if any.
+
+    Example:
+      yield (api.test('my_test')
+        + api.step_data('compute hash step name',
+            api.file.file_hash('deadbeef'))
+      )
+    """
+    return (self.m.raw_io.stream_output(hash)
+            + self.errno(errno_name))
+
   def read_raw(self, content='', errno_name=0):
     """Provides test mock for the `read_raw` method.
 

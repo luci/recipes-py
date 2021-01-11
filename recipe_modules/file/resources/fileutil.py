@@ -241,6 +241,17 @@ def _ComputeHashPaths(base_path, *rel_paths):
   print(sha.hexdigest())
   return 0
 
+def _CalculateHash(path):
+  sha = hashlib.sha256()
+  with open(path, 'rb') as f:
+    while True:
+      f_stream = f.read(4096)
+      if not f_stream:
+        break
+      sha.update(f_stream)
+  print(sha.hexdigest())
+  return 0
+
 def main(args):
   parser = argparse.ArgumentParser()
   parser.add_argument('--json-output', required=True,
@@ -371,6 +382,13 @@ def main(args):
                               'and/or files.')
   subparser.set_defaults(func=lambda opts: _ComputeHashPaths(opts.base_path,
                                                              *opts.rel_paths))
+
+  # Subcommand: file_hash
+  subparser = subparsers.add_parser(
+      'file_hash',
+      help='Computes hash of a file in provided absolute path.')
+  subparser.add_argument('file_path', help='Absolute path for the file.')
+  subparser.set_defaults(func=lambda opts: _CalculateHash(opts.file_path))
 
   # Parse arguments.
   opts = parser.parse_args(args)

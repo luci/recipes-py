@@ -1,0 +1,104 @@
+[
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[START_DIR]/some_dir"
+    ],
+    "infra_step": true,
+    "name": "ensure some_dir"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "some data",
+      "[START_DIR]/some_dir/some file"
+    ],
+    "infra_step": true,
+    "name": "write some file",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@some file@some data@@@",
+      "@@@STEP_LOG_END@some file@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "file_hash",
+      "[START_DIR]/some_dir/some file"
+    ],
+    "infra_step": true,
+    "name": "Compute file hash",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "some data",
+      "[START_DIR]/another_file"
+    ],
+    "infra_step": true,
+    "name": "write another file",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@another_file@some data@@@",
+      "@@@STEP_LOG_END@another_file@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "file_hash",
+      "[START_DIR]/another_file"
+    ],
+    "infra_step": true,
+    "name": "Compute file hash (2)",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@Hash calculated: beefdead@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "file_hash",
+      "[START_DIR]/another_file"
+    ],
+    "infra_step": true,
+    "name": "Compute file hash (3)",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@Hash calculated: 02f88ac238b7aef5df694b0a14957d5a8da6ea88f4cc12ffa5ed56ad98dcc2ed@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

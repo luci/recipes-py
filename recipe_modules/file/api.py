@@ -180,6 +180,35 @@ class FileApi(recipe_api.RecipeApi):
     self.m.path.mock_copy_paths(source, dest)
     self.m.path.mock_remove_paths(source)
 
+  def file_hash(self, file_path, test_data=''):
+    """Computes hash of contents of a single file.
+
+    Args:
+      * file_path (Path|str): Path of file to compute hash.
+      * test_data (str): Some default data for this step to return when running
+        under simulation. If no test data is provided, we compute test_data as
+        sha256 of path passed.
+
+    Returns (str):
+      Hex encoded hash of file content.
+
+    Raises:
+      file.Error and ValueError if passed paths input is not str or Path.
+    """
+    if not isinstance(file_path, (str, config_types.Path)):  # pragma: no cover
+      raise ValueError('Expected str or path object, got %r' % type(path))
+    self.m.path.assert_absolute(file_path)
+
+    if not test_data:
+      test_data = hashlib.sha256(str(file_path)).hexdigest()
+    result = self._run(
+        'Compute file hash', ['file_hash', file_path],
+        step_test_data=lambda: self.test_api.file_hash(test_data),
+        stdout=self.m.raw_io.output_text())
+    sha = result.stdout.strip()
+    result.presentation.step_text = 'Hash calculated: %s' % sha
+    return sha
+
   def compute_hash(self, name, paths, base_path, test_data=''):
     """Computes hash of contents of a directory/file.
 
