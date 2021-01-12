@@ -969,7 +969,8 @@ class TaskRequestMetadata(object):
   @property
   def invocation(self):
     """Returns the invocation name of the associated task."""
-    return self._task_json['task_result']['resultdb_info']['invocation']
+    return self._task_json.get('task_result', {}).get('resultdb_info',
+                                                      {}).get('invocation')
 
 
 class TaskResult(object):
