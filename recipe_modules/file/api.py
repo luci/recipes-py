@@ -398,7 +398,10 @@ class FileApi(recipe_api.RecipeApi):
     assert type(test_proto) == msg_class
     step_test_data = lambda: self.test_api.read_proto(test_proto)
     result = self._run(
-        name, ['copy', source, self.m.proto.output(msg_class, codec)],
+        name, [
+            'copy', source,
+            self.m.proto.output(msg_class, codec, add_json_log=False)
+        ],
         step_test_data=step_test_data)
     if include_log:
       result.presentation.logs[self.m.path.basename(

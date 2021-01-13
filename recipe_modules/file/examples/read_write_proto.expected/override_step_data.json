@@ -32,13 +32,6 @@
     "infra_step": true,
     "name": "read_proto",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@proto.output@{@@@",
-      "@@@STEP_LOG_LINE@proto.output@  \"fields\": [@@@",
-      "@@@STEP_LOG_LINE@proto.output@    \"abc\", @@@",
-      "@@@STEP_LOG_LINE@proto.output@    \"def\"@@@",
-      "@@@STEP_LOG_LINE@proto.output@  ]@@@",
-      "@@@STEP_LOG_LINE@proto.output@}@@@",
-      "@@@STEP_LOG_END@proto.output@@@",
       "@@@STEP_LOG_LINE@message.textproto@fields: \"abc\"@@@",
       "@@@STEP_LOG_LINE@message.textproto@fields: \"def\"@@@",
       "@@@STEP_LOG_END@message.textproto@@@"
@@ -58,13 +51,6 @@
     "infra_step": true,
     "name": "read_proto_again",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@proto.output@{@@@",
-      "@@@STEP_LOG_LINE@proto.output@  \"fields\": [@@@",
-      "@@@STEP_LOG_LINE@proto.output@    \"abc\", @@@",
-      "@@@STEP_LOG_LINE@proto.output@    \"def\"@@@",
-      "@@@STEP_LOG_LINE@proto.output@  ]@@@",
-      "@@@STEP_LOG_LINE@proto.output@}@@@",
-      "@@@STEP_LOG_END@proto.output@@@",
       "@@@STEP_LOG_LINE@message.textproto@fields: \"abc\"@@@",
       "@@@STEP_LOG_LINE@message.textproto@fields: \"def\"@@@",
       "@@@STEP_LOG_END@message.textproto@@@"
