@@ -2682,9 +2682,9 @@ https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 
 A module for interacting with ResultDB.
 
-&mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#38)(self):**
+&mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#41)(self):**
 
-&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#132)(self, swarming_host, task_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
+&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#135)(self, swarming_host, task_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
 
 Returns results derived from the specified Swarming tasks.
 
@@ -2739,15 +2739,15 @@ Args:
 Returns:
   A dict {invocation_id: api.Invocation}.
 
-&emsp; **@property**<br>&mdash; **def [current\_invocation](/recipe_modules/resultdb/api.py#30)(self):**
+&emsp; **@property**<br>&mdash; **def [current\_invocation](/recipe_modules/resultdb/api.py#33)(self):**
 
-&emsp; **@property**<br>&mdash; **def [enabled](/recipe_modules/resultdb/api.py#34)(self):**
+&emsp; **@property**<br>&mdash; **def [enabled](/recipe_modules/resultdb/api.py#37)(self):**
 
-&mdash; **def [exclude\_invocations](/recipe_modules/resultdb/api.py#49)(self, invocations, step_name=None):**
+&mdash; **def [exclude\_invocations](/recipe_modules/resultdb/api.py#52)(self, invocations, step_name=None):**
 
 Shortcut for resultdb.update_included_invocations().
 
-&mdash; **def [exonerate](/recipe_modules/resultdb/api.py#90)(self, test_exonerations, step_name=None):**
+&mdash; **def [exonerate](/recipe_modules/resultdb/api.py#93)(self, test_exonerations, step_name=None):**
 
 Exonerates test variants in the current invocation.
 
@@ -2755,11 +2755,21 @@ Args:
   test_exonerations (list): A list of test_result_pb2.TestExoneration.
   step_name (str): name of the step.
 
-&mdash; **def [include\_invocations](/recipe_modules/resultdb/api.py#44)(self, invocations, step_name=None):**
+&mdash; **def [include\_invocations](/recipe_modules/resultdb/api.py#47)(self, invocations, step_name=None):**
 
 Shortcut for resultdb.update_included_invocations().
 
-&mdash; **def [query](/recipe_modules/resultdb/api.py#217)(self, inv_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
+&mdash; **def [invocation\_ids](/recipe_modules/resultdb/api.py#220)(self, inv_names):**
+
+Returns invocation ids by parsing invocation names.
+
+Args:
+  inv_names (list of str): resultdb invocation names.
+
+Returns:
+  A list of invocation_ids.
+
+&mdash; **def [query](/recipe_modules/resultdb/api.py#235)(self, inv_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
 
 Returns test results in the invocations.
 
@@ -2790,7 +2800,7 @@ Args:
 Returns:
   A dict {invocation_id: api.Invocation}.
 
-&mdash; **def [update\_included\_invocations](/recipe_modules/resultdb/api.py#54)(self, add_invocations=None, remove_invocations=None, step_name=None):**
+&mdash; **def [update\_included\_invocations](/recipe_modules/resultdb/api.py#57)(self, add_invocations=None, remove_invocations=None, step_name=None):**
 
 Add and/or remove included invocations to/from the current invocation.
 
@@ -2803,7 +2813,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#332)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#350)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False):**
 
 Wraps the command with ResultSink.
 

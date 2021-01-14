@@ -21,7 +21,8 @@ DEPS = [
 
 def RunSteps(api):
   inv_bundle = api.resultdb.query(
-      inv_ids=['build-8945511751514863184'],
+      inv_ids=api.resultdb.invocation_ids(
+          ['invocations/chromium-swarm.appspot.com/deadbeef']),
       step_name='rdb query',
       variants_with_unexpected_results=True,
   )
@@ -33,7 +34,7 @@ def RunSteps(api):
 
 def GenTests(api):
   inv_bundle = {
-     'build-8945511751514863184': api.resultdb.Invocation(
+     'task-chromium-swarm.appspot.com-deadbeef': api.resultdb.Invocation(
         proto=invocation_pb2.Invocation(
             state=invocation_pb2.Invocation.FINALIZED
         ),

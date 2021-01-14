@@ -22,6 +22,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
   # Maximum number of requests in a batch RPC.
   _BATCH_SIZE = 500
 
+  # Prefix of an invocation name.
+  _INVOCATION_NAME_PREFIX  = 'invocations/'
+
   # Expose serialize and deserialize functions.
   serialize = staticmethod(common.serialize)
   deserialize = staticmethod(common.deserialize)
@@ -213,6 +216,21 @@ class ResultDBAPI(recipe_api.RecipeApi):
         step_test_data=lambda: self.m.raw_io.test_api.stream_output(''),
     )
     return common.deserialize(step_res.stdout)
+
+  def invocation_ids(self, inv_names):
+    """Returns invocation ids by parsing invocation names.
+
+    Args:
+      inv_names (list of str): resultdb invocation names.
+
+    Returns:
+      A list of invocation_ids.
+    """
+    assert all(isinstance(name, str) for name in inv_names), inv_names
+    assert all(name.startswith(
+        self._INVOCATION_NAME_PREFIX) for name in inv_names), inv_names
+
+    return [name[len(self._INVOCATION_NAME_PREFIX):] for name in inv_names]
 
   def query(self,
             inv_ids,
