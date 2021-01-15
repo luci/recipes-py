@@ -47,6 +47,18 @@ def RunSteps(api):
     coerce_negative_duration=True,
   ))
 
+  api.step('test with include new invocation', api.resultdb.wrap(
+    ['echo', 'suppose its a test'],
+    include=True,
+    realm='project:bucket',
+  ))
+
+  api.step('test with include new invocation default realm',
+    api.resultdb.wrap(
+    ['echo', 'suppose its a test'],
+    include=True,
+  ))
+
 
 def GenTests(api):
   yield api.test(

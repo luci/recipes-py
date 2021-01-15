@@ -71,6 +71,34 @@
     "name": "test with corece_negative_duration"
   },
   {
+    "cmd": [
+      "rdb",
+      "stream",
+      "-new",
+      "-realm",
+      "project:bucket",
+      "-include",
+      "--",
+      "echo",
+      "suppose its a test"
+    ],
+    "name": "test with include new invocation"
+  },
+  {
+    "cmd": [
+      "rdb",
+      "stream",
+      "-new",
+      "-realm",
+      "project:ci",
+      "-include",
+      "--",
+      "echo",
+      "suppose its a test"
+    ],
+    "name": "test with include new invocation default realm"
+  },
+  {
     "name": "$result"
   }
 ]

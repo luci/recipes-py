@@ -353,7 +353,10 @@ class ResultDBAPI(recipe_api.RecipeApi):
            base_variant=None,
            test_location_base='',
            base_tags=None,
-           coerce_negative_duration=False):
+           coerce_negative_duration=False,
+           include=False,
+           realm='',
+  ):
     """Wraps the command with ResultSink.
 
     Returns a command that, when executed, runs cmd in a go/result-sink
@@ -381,6 +384,10 @@ class ResultDBAPI(recipe_api.RecipeApi):
       coerce_negative_duration (bool): If true, negative duration values will
         be coerced to 0. If false, tests results with negative duration values
         will be rejected with an error.
+      include (bool): If true, a new invocation will be created and included
+        in the parent invocation.
+      realm (str): realm used for the new invocation created if `include=True`.
+        Default is the current realm used in buildbucket.
     """
     self.assert_enabled()
     assert isinstance(test_id_prefix, (type(None), str)), test_id_prefix
@@ -391,6 +398,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
         '//'), test_location_base
     assert isinstance(base_tags, (type(None), list)), base_tags
     assert isinstance(coerce_negative_duration, bool), coerce_negative_duration
+    assert isinstance(include, bool), include
+    assert isinstance(realm, (type(None), str)), realm
+
     ret = ['rdb', 'stream']
 
     if test_id_prefix:
@@ -407,6 +417,12 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     if coerce_negative_duration:
       ret += ['-coerce-negative-duration']
+
+    if include:
+      ret += [
+          '-new', '-realm', realm or self.m.buildbucket.builder_realm,
+          '-include'
+      ]
 
     ret += ['--'] + list(cmd)
     return ret
