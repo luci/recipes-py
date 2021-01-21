@@ -150,7 +150,7 @@ class PackageDefinition(object):
 
   def to_jsonish(self):
     """Returns a JSON representation of this PackageDefinition."""
-    return {
+    output = {
         'package':
             self.package_name,
         'root':
@@ -164,12 +164,13 @@ class PackageDefinition(object):
             'exclude': d.exclusions
         } for d in self.dirs] + ([{
             'version_file': self.version_file
-        }] if self.version_file else []) + ([{
-            'preserve_mtime': self.preserve_mtime
-        }] if self.preserve_mtime else []) + ([{
-            'preserve_writable': self.preserve_writable
-        }] if self.preserve_writable else [])
+        }] if self.version_file else [])
     }
+    if self.preserve_mtime:
+      output['preserve_mtime'] = self.preserve_mtime
+    if self.preserve_writable:
+      output['preserve_writable'] = self.preserve_writable
+    return output
 
 
 class EnsureFile(object):

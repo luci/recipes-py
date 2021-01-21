@@ -92,7 +92,12 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
     # Create (build & register).
     if use_pkg:
       root = api.path['start_dir'].join('some_subdir')
-      pkg = api.cipd.PackageDefinition('infra/fake-package', root, install_mode)
+      pkg = api.cipd.PackageDefinition(
+          'infra/fake-package',
+          root,
+          install_mode,
+          preserve_mtime=True,
+          preserve_writable=True)
       for fullpath in pkg_files:
         pkg.add_file(api.path.abs_to_path(fullpath))
       pkg.add_dir(root)
