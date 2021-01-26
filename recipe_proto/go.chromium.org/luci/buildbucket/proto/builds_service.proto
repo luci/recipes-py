@@ -8,6 +8,7 @@ package buildbucket.v2;
 
 option go_package = "go.chromium.org/luci/buildbucket/proto;buildbucketpb";
 
+import "google/protobuf/duration.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/struct.proto";
 import "google/rpc/status.proto";
@@ -145,8 +146,6 @@ message BatchRequest {
     oneof request {
       GetBuildRequest get_build = 1;
       SearchBuildsRequest search_builds = 2;
-      // All ScheduleBuild requests in the batch are executed before other
-      // requests.
       ScheduleBuildRequest schedule_build = 3;
       CancelBuildRequest cancel_build = 4 ;
     }
@@ -156,7 +155,8 @@ message BatchRequest {
   //
   // All requests are executed in their own individual transactions.
   // BatchRequest as a whole is not transactional.
-  // Mutations are executed before read-only requests.
+  // There's no guaranteed order of execution between batch items (i.e. consider
+  // them to all operate independently).
   repeated Request requests = 1;
 }
 
@@ -206,7 +206,7 @@ message UpdateBuildRequest {
 
 // A request message for ScheduleBuild rpc.
 //
-// Next ID: 17.
+// Next ID: 19.
 message ScheduleBuildRequest {
   // ** STRONGLY RECOMMENDED **.
   // A unique string id used for detecting duplicate requests.
@@ -347,6 +347,18 @@ message ScheduleBuildRequest {
   }
   // Swarming specific part of the build request.
   Swarming swarming = 15;
+
+  // Maximum build pending time.
+  // If set, overrides the default `expiration_secs` set in builder config.
+  // Only supports seconds precision for now.
+  // For more information, see Build.scheduling_timeout in build.proto.
+  google.protobuf.Duration scheduling_timeout = 17;
+
+  // Maximum build execution time.
+  // If set, overrides the default `execution_timeout_secs` set in build config.
+  // Only supports seconds precision for now.
+  // For more information, see Build.execution_timeout in build.proto.
+  google.protobuf.Duration execution_timeout = 18;
 }
 
 // A request message for CancelBuild rpc.
