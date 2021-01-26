@@ -253,7 +253,11 @@ class BuildbucketApi(recipe_api.RecipeApi):
     assert c.ref.startswith('refs/'), c.ref
     assert not c.ref.endswith('/'), c.ref
 
-    assert util.is_sha1_hex(c.id), c.id
+    # We allow non-sha1 commits in test mode because it's convenient to set
+    # commits like "branchname-HEAD-SHA" rather than inventing something which
+    # looks like a git commit.
+    if not self._test_data.enabled: # pragma: no cover
+      assert util.is_sha1_hex(c.id), c.id
 
     # position is uint32
     # Does not need extra validation.
