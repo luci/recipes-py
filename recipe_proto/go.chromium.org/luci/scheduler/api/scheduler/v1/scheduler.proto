@@ -1,0 +1,191 @@
+// Copyright 2016 The LUCI Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package scheduler;
+
+option go_package = "go.chromium.org/luci/scheduler/api/scheduler/v1;scheduler";
+
+import "google/protobuf/empty.proto";
+import "go.chromium.org/luci/scheduler/api/scheduler/v1/triggers.proto";
+
+
+// Scheduler exposes public API of the Scheduler service.
+service Scheduler {
+  // GetJobs fetches all jobs satisfying JobsRequest and visibility ACLs.
+  // If JobsRequest.project is specified but the project doesn't exist, empty
+  // list of Jobs is returned.
+  rpc GetJobs(JobsRequest) returns (JobsReply);
+
+  // GetInvocations fetches invocations of a given job, most recent first.
+  rpc GetInvocations(InvocationsRequest) returns (InvocationsReply);
+
+  // GetInvocation fetches a single invocation.
+  rpc GetInvocation(InvocationRef) returns (Invocation);
+
+  // PauseJob will prevent automatic triggering of a job. Manual triggering such
+  // as through this API is still allowed. Any pending or running invocations
+  // are still executed. PauseJob does nothing if job is already paused.
+  //
+  // Requires OWNER Job permission.
+  rpc PauseJob(JobRef) returns (google.protobuf.Empty);
+
+  // ResumeJob resumes paused job. ResumeJob does nothing if job is not paused.
+  //
+  // Requires OWNER Job permission.
+  rpc ResumeJob(JobRef) returns (google.protobuf.Empty);
+
+  // AbortJob resets the job to scheduled state, aborting a currently pending or
+  // running invocation if any.
+  //
+  // Note, that this is similar to AbortInvocation except that AbortInvocation
+  // requires invocation ID and doesn't ensure that the invocation aborted is
+  // actually latest triggered for the job.
+  //
+  // Requires OWNER Job permission.
+  rpc AbortJob(JobRef) returns (google.protobuf.Empty);
+
+  // AbortInvocation aborts a given job invocation.
+  // If an invocation is final, AbortInvocation does nothing.
+  //
+  // If you want to abort a specific hung invocation, use this request instead
+  // of AbortJob.
+  //
+  // Requires OWNER Job permission.
+  rpc AbortInvocation(InvocationRef) returns (google.protobuf.Empty);
+
+  // EmitTriggers puts one or more triggers into pending trigger queues of the
+  // specified jobs.
+  //
+  // This eventually causes jobs to start executing. The scheduler may merge
+  // multiple triggers into one job execution, based on how the job is
+  // configured.
+  //
+  // If at least one job doesn't exist or the caller has no permission to
+  // trigger it, the entire request is aborted. Otherwise, the request is NOT
+  // transactional: if it fails midway (e.g by returning internal server error),
+  // some triggers may have been submitted and some may not. It is safe to retry
+  // the call, supplying the same trigger IDs. Triggers with the same IDs will
+  // be deduplicated. See Trigger message for more details.
+  //
+  // Requires TRIGGERER Job permission.
+  rpc EmitTriggers(EmitTriggersRequest) returns (google.protobuf.Empty);
+}
+
+message JobsRequest {
+  // If not specified or "", all projects' jobs are returned.
+  string project = 1;
+  string cursor = 2;
+  // page_size is currently not implemented and is ignored.
+  int32 page_size = 3;
+}
+
+message JobsReply {
+  repeated Job jobs = 1;
+  string next_cursor = 2;
+}
+
+message InvocationsRequest {
+  JobRef job_ref = 1;
+  string cursor = 2;
+  // page_size defaults to 50 which is maximum.
+  int32 page_size = 3;
+}
+
+message InvocationsReply {
+  repeated Invocation invocations = 1;
+  string next_cursor = 2;
+}
+
+message EmitTriggersRequest {
+  message Batch {
+    Trigger trigger = 1;
+    repeated JobRef jobs = 2;
+  }
+
+  // A trigger and jobs it should be delivered to.
+  //
+  // Order is important. Triggers that are listed earlier are considered older.
+  repeated Batch batches = 1;
+
+  // An optional timestamp to use as trigger creation time, as unix timestamp in
+  // microseconds. Assigned by the server by default. If given, must be within
+  // +-15 min of the current time.
+  //
+  // Under some conditions triggers are ordered by timestamp of when they are
+  // created. By allowing the client to specify this timestamp, we make
+  // EmitTrigger RPC idempotent: if EmitTrigger call fails midway, the caller
+  // can retry it providing exact same timestamp to get the correct final order
+  // of the triggers.
+  int64 timestamp = 2;
+}
+
+// JobRef uniquely identifies a job.
+message JobRef {
+  string project = 1;
+  string job = 2;
+}
+
+// InvocationRef uniquely identifies an invocation of a job.
+message InvocationRef {
+  JobRef job_ref = 1;
+  // invocation_id is a unique integer among all invocations for a given job.
+  // However, there could be invocations with the same invocation_id but
+  // belonging to different jobs.
+  int64 invocation_id = 2;
+}
+
+// Job descibes currently configured job.
+message Job {
+  JobRef job_ref = 1;
+  string schedule = 2;
+
+  JobState state = 3;
+  bool paused = 4;
+}
+
+// JobState describes current Job state as one of these strings:
+//   "DISABLED"
+//   "PAUSED"
+//   "RUNNING"
+//   "SCHEDULED"
+//   "WAITING"
+message JobState {
+  string ui_status = 1;
+}
+
+// Invocation describes properties of one job execution.
+message Invocation {
+  InvocationRef invocation_ref = 1;
+
+  // start_ts is unix timestamp in microseconds.
+  int64 started_ts = 2;
+  // finished_ts is unix timestamp in microseconds. Set only if final is true.
+  int64 finished_ts = 3;
+  // triggered_by is an identity ("kind:value") which is specified only if
+  // invocation was triggered by not the scheduler service itself.
+  string triggered_by = 4;
+  // Latest status of a job.
+  string status = 5;
+  // If true, this invocation properties are final and won't be changed.
+  bool final = 6;
+
+  // config_revision pins project/job config version according to which this
+  // invocation was created.
+  string config_revision = 7;
+
+  // view_url points to human readable page for a given invocation if available.
+  string view_url = 8;
+}

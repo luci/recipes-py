@@ -26,6 +26,7 @@ SUB_PATHS = [
   'led/job',
   'lucictx',
   'resultdb/proto',
+  'scheduler/api/scheduler/v1',
 ]
 
 def main():
