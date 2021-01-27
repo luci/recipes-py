@@ -198,7 +198,7 @@ class CommitList(object):
     Returns the new current CommitMetadata, or None if it couldn't be advanced.
     """
     dist = self.dist_to(target_commit)
-    if dist == len(self._commits) - self._cur_idx:
+    if dist == len(self._commits) - self._cur_idx or dist < 0:
       return None
     if dist > 0:
       self._cur_idx += dist

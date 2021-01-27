@@ -97,6 +97,9 @@ class TestCommitList(BaseCommitTest):
     self.assertEqual(cl.advance_to(cs[4].revision), cs[4])
     self.assertEqual(cl.current, cs[4])
 
+    self.assertEqual(cl.advance_to(cs[3].revision), None)
+    self.assertEqual(cl.current, cs[4])
+
   def test_deps(self):
     cs1 = [self.cm('1') for _ in xrange(5)]
     cs2 = [
