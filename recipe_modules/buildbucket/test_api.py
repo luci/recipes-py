@@ -105,6 +105,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       builder='builder',
       gerrit_changes=None,
       git_repo=None,
+      git_ref='refs/heads/main',
       change_number=123456,
       patch_set=7,
       revision=None,
@@ -172,6 +173,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       c = build.input.gitiles_commit
       c.host = git_host
       c.project = git_project
+      c.ref = git_ref
       c.id = revision
 
     if status:
