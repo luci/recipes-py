@@ -58,18 +58,24 @@ class SchedulerApi(recipe_api.RecipeApi):
     self._host = host
 
 
-  # TODO(tandrii): remove in favor of triggers_pb2 types
   class Trigger(object):
     """Generic Trigger accepted by LUCI Scheduler API.
+
+    Don't instantiate Trigger itself. Use either BuildbucketTrigger or
+    GitilesTrigger instead.
 
     All supported triggers are documented here:
       https://chromium.googlesource.com/infra/luci/luci-go/+/master/scheduler/api/scheduler/v1/triggers.proto
     """
-    def __init__(self, id=None, title=None, url=None, payload=None):
+    def __init__(
+        self, id=None, title=None, url=None,
+        properties=None, tags=None, inherit_tags=True):
       self._id = id
       self._title = title
       self._url = url
-      self._payload = payload
+      self._properties = properties
+      self._tags = tags
+      self._inherit_tags = inherit_tags
 
     def _serialize(self, api_self):
       t = {}
@@ -80,42 +86,43 @@ class SchedulerApi(recipe_api.RecipeApi):
       # TODO(tandrii): find a way to get URL of current build.
       if self._url:
         t['url'] = self._url
-      t.update(self._serialize_payload(api_self))
+
+      tags = {}
+      if self._inherit_tags:
+        tags = api_self.m.buildbucket.tags_for_child_build.copy()
+      if self._tags:
+        tags.update(self._tags)
+      tags = map(
+          ':'.join,
+          sorted((k, v) for k, v in tags.iteritems() if v is not None))
+
+      base = {}
+      if self._properties:
+        base['properties'] = self._properties
+      if tags:
+        base['tags'] = tags
+
+      t.update(self._serialize_payload(base))
       return t
 
-    def _serialize_payload(self, api_self):
-      return self._payload
+    def _serialize_payload(self, base):
+      raise NotImplementedError()  # pragma: no cover
 
 
   class BuildbucketTrigger(Trigger):
     """Trigger with buildbucket payload for buildbucket jobs.
 
     Args:
-      * properties (dict, optional): key -> value properties.
-      * tags (dict, optional): custom tags to add. See also `inherit_tags`.
+      properties (dict, optional): key -> value properties.
+      tags (dict, optional): custom tags to add. See also `inherit_tags`.
         If tag's value is None, this tag will be removed from resulting tags,
         however if you rely on this, consider using `inherit_tags=False`
         instead.
-      * inherit_tags (bool): if true (default), auto-adds tags using
+      inherit_tags (bool): if true (default), auto-adds tags using
         `api.buildbucket.tags_for_child_build` api.
     """
-    def __init__(self, properties=None, tags=None, inherit_tags=True, **kwargs):
-      super(SchedulerApi.BuildbucketTrigger, self).__init__(**kwargs)
-      self._properties = properties
-      self._tags = tags
-      self._inherit_tags = inherit_tags
-
-    def _serialize_payload(self, api_self):
-      tags = {}
-      if self._inherit_tags:
-        tags = api_self.m.buildbucket.tags_for_child_build.copy()
-      if self._tags:
-        tags.update(self._tags)
-      return {'buildbucket': {
-        'properties': self._properties or {},
-        'tags': map(':'.join, sorted(
-            (k, v) for k, v in tags.iteritems() if v is not None)),
-      }}
+    def _serialize_payload(self, base):
+      return {'buildbucket': base}
 
 
   class GitilesTrigger(Trigger):
@@ -125,14 +132,27 @@ class SchedulerApi(recipe_api.RecipeApi):
       repo (str): URL of a repo that changed.
       ref (str): a ref that changed, in full, e.g. "refs/heads/master".
       revision (str): a revision (SHA1 in hex) pointed to by the ref.
+      properties (dict, optional): extra key -> value properties.
+      tags (dict, optional): extra custom tags to add. See also `inherit_tags`.
+        If tag's value is None, this tag will be removed from resulting tags,
+        however if you rely on this, consider using `inherit_tags=False`
+        instead.
+      inherit_tags (bool): if true (default), auto-adds extra tags using
+        `api.buildbucket.tags_for_child_build` api.
     """
     def __init__(self, repo, ref, revision, **kwargs):
-      kwargs['payload'] = {'gitiles': {
-        'repo': repo,
-        'ref': ref,
-        'revision': revision,
-      }}
       super(SchedulerApi.GitilesTrigger, self).__init__(**kwargs)
+      self._repo = repo
+      self._ref = ref
+      self._revision = revision
+
+    def _serialize_payload(self, base):
+      base.update({
+        'repo': self._repo,
+        'ref': self._ref,
+        'revision': self._revision,
+      })
+      return {'gitiles': base}
 
 
   def emit_trigger(self, trigger, project, jobs, step_name=None):

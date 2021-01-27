@@ -38,16 +38,6 @@ def RunSteps(api):
           ['job1', 'job2']
         ),
         (
-         api.scheduler.Trigger(
-             id='id2', title='custom', payload={'buildbucket': {
-               'properties': {'some':'one'},
-               'tags': ['any=tag'],
-             }},
-         ),
-         'proj2',
-         ['job3'],
-        ),
-        (
          api.scheduler.GitilesTrigger(
              repo='https://chromium.googlesource.com/chromium/src',
              ref='refs/branch-heads/1235',
