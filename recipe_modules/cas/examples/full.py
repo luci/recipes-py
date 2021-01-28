@@ -32,5 +32,3 @@ def RunSteps(api):
 def GenTests(api):
   yield api.test('basic')
   yield api.test('experimental') + api.runtime(is_experimental=True)
-  yield (api.test('override instance') +
-         api.cas.properties(instance='bananas-example-cas'))

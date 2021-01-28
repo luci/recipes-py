@@ -669,7 +669,7 @@ Args:
 Set the buildbucket host while in context, then reverts it.
 ### *recipe_modules* / [cas](/recipe_modules/cas)
 
-[DEPS](/recipe_modules/cas/__init__.py#7): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cas/__init__.py#5): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
 API for interacting with cas client.
 
@@ -677,13 +677,7 @@ API for interacting with cas client.
 
 A module for interacting with cas client.
 
-&mdash; **def [\_\_init\_\_](/recipe_modules/cas/api.py#19)(self, props, \*\*kwargs):**
-
-'instance' in props needs to be a GCP project ID to use default
-instance, or full RBE-CAS instance name
-e.g. `projects/<project name>/instances/<instance name>`.
-
-&mdash; **def [archive](/recipe_modules/cas/api.py#95)(self, step_name, root, \*paths):**
+&mdash; **def [archive](/recipe_modules/cas/api.py#87)(self, step_name, root, \*paths):**
 
 Archives given paths to a cas server.
 
@@ -697,7 +691,7 @@ Args:
 Returns:
   digest (str): digest of uploaded root directory.
 
-&mdash; **def [download](/recipe_modules/cas/api.py#75)(self, step_name, digest, output_dir):**
+&mdash; **def [download](/recipe_modules/cas/api.py#67)(self, step_name, digest, output_dir):**
 
 Downloads a directory tree from a cas server.
 
@@ -707,7 +701,7 @@ Args:
   * digest (str): the digest of a cas tree.
   * output_dir (Path): path to an output directory.
 
-&emsp; **@property**<br>&mdash; **def [instance](/recipe_modules/cas/api.py#30)(self):**
+&emsp; **@property**<br>&mdash; **def [instance](/recipe_modules/cas/api.py#24)(self):**
 ### *recipe_modules* / [cipd](/recipe_modules/cipd)
 
 [DEPS](/recipe_modules/cipd/__init__.py#5): [context](#recipe_modules-context), [file](#recipe_modules-file), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step), [url](#recipe_modules-url)

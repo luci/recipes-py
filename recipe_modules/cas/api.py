@@ -16,15 +16,9 @@ DEFAULT_CIPD_VERSION = 'git_revision:9ba67f2876f4a3455a51433de7cc3e869d81b280'
 class CasApi(recipe_api.RecipeApi):
   """A module for interacting with cas client."""
 
-  def __init__(self, props, **kwargs):
-    """
-    'instance' in props needs to be a GCP project ID to use default
-    instance, or full RBE-CAS instance name
-    e.g. `projects/<project name>/instances/<instance name>`.
-    """
+  def __init__(self, **kwargs):
     super(CasApi, self).__init__(**kwargs)
 
-    self._props = props
     self._instance = None
 
   @property
@@ -38,12 +32,10 @@ class CasApi(recipe_api.RecipeApi):
       # Extract default instance from swarming task env.
       # See https://chromium.googlesource.com/infra/luci/luci-py/+/1c201e5909b61b859b82d16cfff15267d1c0efea/appengine/swarming/doc/Magic-Values.md#client-tool-environment-variables
       swarming_server = os.environ['SWARMING_SERVER']
-    default_instance = swarming_server[len('https://'):-len('.appspot.com')]
+    project = swarming_server[len('https://'):-len('.appspot.com')]
 
-    self._instance = self._props.instance or default_instance
-    if self._instance and '/' not in self._instance:
-      # Set full instance name if only project ID is given.
-      self._instance = 'projects/%s/instances/default_instance' % self._instance
+    # Set full instance name if only project ID is given.
+    self._instance = 'projects/%s/instances/default_instance' % project
 
     return self._instance
 
