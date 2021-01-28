@@ -12,7 +12,7 @@ DEPS = [
 
 
 def RunSteps(api):
-  example_bucket = 'master.user.username'
+  example_bucket = 'main.user.username'
 
   build_parameters = {
       'builder_name': 'linux_perf_bisect',
@@ -24,7 +24,7 @@ def RunSteps(api):
       }
   }
 
-  build_tags = {'master': 'overriden.master.url',
+  build_tags = {'main': 'overriden.main.url',
                 'builder': 'overriden_builder',
                 'new-and-custom': 'tag',
                 'undesired': None}

@@ -5,7 +5,7 @@
       "put",
       "-host",
       "cr-buildbucket.appspot.com",
-      "{\"bucket\": \"master.user.username\", \"experimental\": false, \"parameters_json\": \"{\\\"builder_name\\\": \\\"linux_perf_bisect\\\", \\\"properties\\\": {\\\"bisect_config\\\": {\\\"bad_revision\\\": \\\"351054\\\", \\\"bug_id\\\": 537649}}}\", \"tags\": [\"builder:overriden_builder\", \"buildset:patch/gerrit/chromium-review.googlesource.com/123456/7\", \"master:overriden.master.url\", \"new-and-custom:tag\", \"parent_buildername:builder\", \"user_agent:recipe\"]}"
+      "{\"bucket\": \"main.user.username\", \"experimental\": false, \"parameters_json\": \"{\\\"builder_name\\\": \\\"linux_perf_bisect\\\", \\\"properties\\\": {\\\"bisect_config\\\": {\\\"bad_revision\\\": \\\"351054\\\", \\\"bug_id\\\": 537649}}}\", \"tags\": [\"builder:overriden_builder\", \"buildset:patch/gerrit/chromium-review.googlesource.com/123456/7\", \"main:overriden.main.url\", \"new-and-custom:tag\", \"parent_buildername:builder\", \"user_agent:recipe\"]}"
     ],
     "infra_step": true,
     "name": "buildbucket.put",

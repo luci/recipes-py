@@ -64,12 +64,12 @@ def RunSteps(api):
           },
       }
   }
-  build_tags = {'master': 'overriden.master.url',
+  build_tags = {'main': 'overriden.main.url',
                 'builder': 'overriden_builder'}
-  build_tags2 = {'master': 'someother.master.url', 'builder': 'some_builder'}
+  build_tags2 = {'main': 'someother.main.url', 'builder': 'some_builder'}
   build_parameters_mac = build_parameters.copy()
   build_parameters_mac['builder_name'] = 'mac_perf_bisect'
-  example_bucket = 'master.user.username'
+  example_bucket = 'main.user.username'
 
   # Setting values for expectations coverage only, also tests host context.
   api.buildbucket.set_buildbucket_host('cr-buildbucket-test.appspot.com')
@@ -96,7 +96,7 @@ def RunSteps(api):
     common_pb2.GitilesCommit(
         host='chromium.googlesource.com',
         project='infra/infra',
-        ref='refs/heads/master',
+        ref='refs/heads/main',
         id='a' * 40,
         position=42,
     ),

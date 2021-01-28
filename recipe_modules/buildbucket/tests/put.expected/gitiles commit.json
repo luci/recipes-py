@@ -5,7 +5,7 @@
       "put",
       "-host",
       "cr-buildbucket.appspot.com",
-      "{\"bucket\": \"master.user.username\", \"experimental\": false, \"parameters_json\": \"{\\\"builder_name\\\": \\\"linux_perf_bisect\\\", \\\"properties\\\": {\\\"bisect_config\\\": {\\\"bad_revision\\\": \\\"351054\\\", \\\"bug_id\\\": 537649}}}\", \"tags\": [\"builder:overriden_builder\", \"buildset:commit/gitiles/chromium.googlesource.com/project/+/2d72510e447ab60a9728aeea2362d8be2cbd7789\", \"gitiles_ref:refs/heads/master\", \"master:overriden.master.url\", \"new-and-custom:tag\", \"parent_buildername:builder\", \"user_agent:recipe\"]}"
+      "{\"bucket\": \"main.user.username\", \"experimental\": false, \"parameters_json\": \"{\\\"builder_name\\\": \\\"linux_perf_bisect\\\", \\\"properties\\\": {\\\"bisect_config\\\": {\\\"bad_revision\\\": \\\"351054\\\", \\\"bug_id\\\": 537649}}}\", \"tags\": [\"builder:overriden_builder\", \"buildset:commit/gitiles/chromium.googlesource.com/project/+/2d72510e447ab60a9728aeea2362d8be2cbd7789\", \"gitiles_ref:refs/heads/master\", \"main:overriden.main.url\", \"new-and-custom:tag\", \"parent_buildername:builder\", \"user_agent:recipe\"]}"
     ],
     "infra_step": true,
     "name": "buildbucket.put",

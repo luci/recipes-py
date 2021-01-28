@@ -53,6 +53,7 @@
   * [buildbucket:tests/cancel](#recipes-buildbucket_tests_cancel)
   * [buildbucket:tests/collect](#recipes-buildbucket_tests_collect)
   * [buildbucket:tests/get](#recipes-buildbucket_tests_get)
+  * [buildbucket:tests/output_commit](#recipes-buildbucket_tests_output_commit) &mdash; This recipe tests the buildbucket.
   * [buildbucket:tests/put](#recipes-buildbucket_tests_put)
   * [buildbucket:tests/schedule](#recipes-buildbucket_tests_schedule)
   * [buildbucket:tests/search](#recipes-buildbucket_tests_search)
@@ -3659,6 +3660,13 @@ Launches multiple builds at the same revision.
 [DEPS](/recipe_modules/buildbucket/tests/get.py#12): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/get.py#19)(api):**
+### *recipes* / [buildbucket:tests/output\_commit](/recipe_modules/buildbucket/tests/output_commit.py)
+
+[DEPS](/recipe_modules/buildbucket/tests/output_commit.py#10): [buildbucket](#recipe_modules-buildbucket), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+
+This recipe tests the buildbucket.set_output_gitiles_commit function.
+
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/output_commit.py#19)(api):**
 ### *recipes* / [buildbucket:tests/put](/recipe_modules/buildbucket/tests/put.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/put.py#7): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime)
