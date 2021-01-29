@@ -2,9 +2,6 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import json
-
-from google.protobuf import json_format
 from recipe_engine import recipe_test_api
 
 from . import common
@@ -30,10 +27,3 @@ class ResultDBTestApi(recipe_test_api.RecipeTestApi):
         step_name,
         self.m.raw_io.stream_output(common.serialize(inv_bundle)),
     )
-
-  def chromium_derive(self, results, step_name=None):
-    """Emulates chromium_derive() output value.
-
-    For arguments, see query().
-    """
-    return self.query(results, step_name=step_name or 'rdb chromium-derive')

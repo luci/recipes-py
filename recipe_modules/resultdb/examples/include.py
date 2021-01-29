@@ -15,10 +15,9 @@ DEPS = [
 
 
 def RunSteps(api):
-  inv_bundle = api.resultdb.chromium_derive(
-    step_name='rdb chromium-derive',
-    swarming_host='chromium-swarm.appspot.com',
-    task_ids=['deadbeef'],
+  inv_bundle = api.resultdb.query(
+    ['deadbeef'],
+    step_name='rdb query',
     variants_with_unexpected_results=True,
   )
   invocation_ids = inv_bundle.keys()
@@ -30,7 +29,7 @@ def GenTests(api):
   yield (
     api.test('noop') +
     api.buildbucket.ci_build() +
-    api.resultdb.chromium_derive(step_name='rdb chromium-derive', results={}) +
+    api.resultdb.query({}, step_name='rdb query') +
     api.post_process(
         DoesNotRunRE, 'rdb include', 'rdb exclude') +
     api.post_process(DropExpectation)
@@ -49,6 +48,7 @@ def GenTests(api):
   yield (
     api.test('basic') +
     api.buildbucket.ci_build() +
-    api.resultdb.chromium_derive(
-        step_name='rdb chromium-derive', results=inv_bundle)
+    api.resultdb.query(
+        inv_bundle,
+        step_name='rdb query')
   )

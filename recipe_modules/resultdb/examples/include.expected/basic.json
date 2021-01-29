@@ -2,17 +2,15 @@
   {
     "cmd": [
       "rdb",
-      "chromium-derive",
+      "query",
       "-json",
-      "-wait",
       "-n",
       "1000",
       "-u",
-      "chromium-swarm.appspot.com",
       "deadbeef"
     ],
     "infra_step": true,
-    "name": "rdb chromium-derive",
+    "name": "rdb query",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@raw_io.output@{\"invocation\": {\"state\": \"FINALIZED\"}, \"invocationId\": \"invid2\"}@@@",
       "@@@STEP_LOG_LINE@raw_io.output@{\"invocation\": {\"state\": \"FINALIZED\"}, \"invocationId\": \"invid\"}@@@",

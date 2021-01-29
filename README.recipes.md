@@ -131,7 +131,6 @@
   * [python:tests/infra_failing_step](#recipes-python_tests_infra_failing_step) &mdash; Tests for api.
   * [random:tests/full](#recipes-random_tests_full)
   * [raw_io:examples/full](#recipes-raw_io_examples_full)
-  * [resultdb:examples/derive](#recipes-resultdb_examples_derive)
   * [resultdb:examples/exonerate](#recipes-resultdb_examples_exonerate)
   * [resultdb:examples/include](#recipes-resultdb_examples_include)
   * [resultdb:examples/query](#recipes-resultdb_examples_query)
@@ -2679,61 +2678,6 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#41)(self):**
 
-&mdash; **def [chromium\_derive](/recipe_modules/resultdb/api.py#135)(self, swarming_host, task_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
-
-Returns results derived from the specified Swarming tasks.
-
-TODO(crbug.com/1030191): remove this function in favor of query().
-
-Most users will be interested only in results of test variants that had
-unexpected results. This can be achieved by passing
-variants_with_unexpected_results=True. This significantly reduces output
-size and latency.
-
-Blocks on task completion.
-
-Example:
-  results = api.resultdb.derive(
-      'chromium-swarm.appspot.com', ['deadbeef', 'badcoffee'],
-      variants_with_unexpected_results=True,
-  )
-  failed_tests = {r.test_path for r in results}
-
-Args:
-*   `swarming_host` (str): hostname (without scheme) of the swarming server,
-     such as chromium-swarm.appspot.com.
-*   `task_ids` (list of str): ids of the tasks to fetch results from.
-     If more than one, then a union of their test results is returned.
-     Its ok to pass same task ids, or ids of tasks that ran the same tests
-     and had different results.
-     Each task should have
-     *   output.json or full_results.json in the isolated output.
-         The file must be in Chromium JSON Test Result format or Chromium's
-         GTest format. If the task does not have it, the request fails.
-     *   optional tag "bucket" with the LUCI bucket, e.g. "ci"
-         If the tag is not present, the test variants will not have the
-         corresponding key.
-     *   optional tag "buildername" with a builder name, e.g. "linux-rel"
-         If the tag is not present, the test variants will not have the
-         corresponding key.
-     *   optional tag "test_suite" with a name of a test suite from a JSON
-         file in
-         https://chromium.googlesource.com/chromium/src/+/master/testing/buildbot/
-         If the tag is not present, the test variants will not have the
-         corresponding key.
-     *   optional tag "ninja_target" with a full name of the ninja target
-         used to compile the test binary used in the task, e.g.
-         "ninja_target://chrome/tests:browser_tests".
-         If the tag is not present, the test paths are not prefixed.
-*   `variants_with_unexpected_results` (bool): if True, return only test
-    results from variants that have unexpected results.
-    This significantly reduces output size and latency.
-*   `limit` (int): maximum number of test results to return.
-    Defaults to 1000.
-
-Returns:
-  A dict {invocation_id: api.Invocation}.
-
 &emsp; **@property**<br>&mdash; **def [current\_invocation](/recipe_modules/resultdb/api.py#33)(self):**
 
 &emsp; **@property**<br>&mdash; **def [enabled](/recipe_modules/resultdb/api.py#37)(self):**
@@ -2754,7 +2698,7 @@ Args:
 
 Shortcut for resultdb.update_included_invocations().
 
-&mdash; **def [invocation\_ids](/recipe_modules/resultdb/api.py#220)(self, inv_names):**
+&mdash; **def [invocation\_ids](/recipe_modules/resultdb/api.py#135)(self, inv_names):**
 
 Returns invocation ids by parsing invocation names.
 
@@ -2764,7 +2708,7 @@ Args:
 Returns:
   A list of invocation_ids.
 
-&mdash; **def [query](/recipe_modules/resultdb/api.py#235)(self, inv_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
+&mdash; **def [query](/recipe_modules/resultdb/api.py#150)(self, inv_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
 
 Returns test results in the invocations.
 
@@ -2808,7 +2752,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#350)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file=''):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#265)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file=''):**
 
 Wraps the command with ResultSink.
 
@@ -4137,11 +4081,6 @@ Tests for api.python.infra_failing_step.
 [DEPS](/recipe_modules/raw_io/examples/full.py#5): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/raw_io/examples/full.py#15)(api):**
-### *recipes* / [resultdb:examples/derive](/recipe_modules/resultdb/examples/derive.py)
-
-[DEPS](/recipe_modules/resultdb/examples/derive.py#15): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
-
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/derive.py#22)(api):**
 ### *recipes* / [resultdb:examples/exonerate](/recipe_modules/resultdb/examples/exonerate.py)
 
 [DEPS](/recipe_modules/resultdb/examples/exonerate.py#10): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
