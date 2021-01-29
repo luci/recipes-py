@@ -6,15 +6,14 @@
 the 'archive' recipe module internally. Should not be used elsewhere.
 """
 
+from __future__ import print_function
+
 import argparse
-import copy
 import fnmatch
 import json
-import operator
 import os
 import posixpath
 import shutil
-import subprocess
 import sys
 import tarfile
 import zipfile
@@ -49,23 +48,24 @@ def untar(archive_file, output, stats, safe, include_filter):
     em = tf._extract_member
     def _extract_member(tarinfo, targetpath):
       if safe and not os.path.abspath(targetpath).startswith(output):
-        print 'Skipping %r (would escape root)' % (tarinfo.name,)
+        print('Skipping %r (would escape root)' % (tarinfo.name,))
         stats['skipped']['filecount'] += 1
         stats['skipped']['bytes'] += tarinfo.size
         stats['skipped']['names'].append(tarinfo.name)
         return
 
       if not include_filter(tarinfo.name):
-        print 'Skipping %r (does not match include_files)' % (tarinfo.name,)
+        print('Skipping %r (does not match include_files)' % (tarinfo.name,))
         return
 
-      print 'Extracting %r' % (tarinfo.name,)
+      print('Extracting %r' % (tarinfo.name,))
       stats['extracted']['filecount'] += 1
       stats['extracted']['bytes'] += tarinfo.size
       em(tarinfo, unc_path(targetpath))
     tf._extract_member = _extract_member
     ex = tf.extract
-    def extract(member, path=""):
+
+    def extract(member, path=''):
       if isinstance(member, tarfile.TarInfo):
         member.name = member.name.decode('utf-8')
       ex(member, path=path)
@@ -88,10 +88,11 @@ def unzip(zip_file, output, stats, include_filter):
   with zipfile.ZipFile(zip_file) as zf:
     for zipinfo in zf.infolist():
       if not include_filter(zipinfo.filename):
-        print 'Skipping %r (does not match include_files)' % (zipinfo.filename,)
+        print('Skipping %r (does not match include_files)' %
+              (zipinfo.filename,))
         continue
 
-      print 'Extracting %s' % zipinfo.filename
+      print('Extracting %s' % zipinfo.filename)
       stats['extracted']['filecount'] += 1
       stats['extracted']['bytes'] += zipinfo.file_size
       zf.extract(zipinfo, unc_path(output))
@@ -108,8 +109,8 @@ def unzip(zip_file, output, stats, include_filter):
           new = old | perms
           new_short = new & 0o777
           if old_short < new_short:
-            print 'Updating %s permissions (0%o -> 0%o)' % (
-                zipinfo.filename, old_short, new_short)
+            print('Updating %s permissions (0%o -> 0%o)' %
+                  (zipinfo.filename, old_short, new_short))
             os.chmod(fullpath, new)
 
 
@@ -138,7 +139,7 @@ def main():
 
   file_type = 'zip' if archive_file.endswith('.zip') else 'tar'
 
-  print 'Extracting %s (%s) -> %s ...' % (archive_file, file_type, output)
+  print('Extracting %s (%s) -> %s ...' % (archive_file, file_type, output))
   try:
     os.makedirs(output)
 
