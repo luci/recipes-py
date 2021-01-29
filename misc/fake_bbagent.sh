@@ -67,6 +67,13 @@ cat > "$LUCI_CONTEXT" <<EOF
 }
 EOF
 
+EXTRA_ARGS=()
+
+if [[ ! -z "$FAKE_BBAGENT_OUTFILE" ]]
+then
+  EXTRA_ARGS+=(--output "$FAKE_BBAGENT_OUTFILE")
+fi
+
 # run `recipes.py fetch` to ensure protobufs are up to date; build_proto.py
 # is cheeky and uses the compiled protos.
 "$RECIPES_PY/recipes.py" fetch &> /dev/null
@@ -86,4 +93,4 @@ EOF
     -forward-stdin                                            \
     -chdir="$WD/wd"                                           \
     python -u "$RECIPES_PY/recipes.py" "$@" -vvv              \
-    luciexe --build-proto-stream-jsonpb
+    luciexe --build-proto-stream-jsonpb "${EXTRA_ARGS[@]}"

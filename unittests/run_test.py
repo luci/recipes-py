@@ -103,26 +103,26 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       try:
         with open(filename, 'r') as f:
           return f.read()
-      except IOError as ex:
-        print >>sys.stderr, "nerp", ex
+      except IOError:
         time.sleep(.5)
 
   @contextlib.contextmanager
   def _run_bbagent(self, properties, grace_period=30):
     workdir = tempfile.mkdtemp(prefix='recipe_engine_run_test-')
-    pidfile = os.path.join(workdir, 'pidfile')
-    fake_bbagent = os.path.join(test_env.ROOT_DIR, 'misc', 'fake_bbagent.sh')
-
-    env = os.environ.copy()
-    env.pop(luci_context.ENV_KEY, None)
-    env['WD'] = workdir
-    env['LUCI_GRACE_PERIOD'] = str(grace_period)
-    proc = subprocess.Popen(
-        [fake_bbagent, "--pid-file", pidfile],
-        stdin=subprocess.PIPE,
-        env=env)
-
+    proc = None
     try:
+      pidfile = os.path.join(workdir, 'pidfile')
+      fake_bbagent = os.path.join(test_env.ROOT_DIR, 'misc', 'fake_bbagent.sh')
+
+      env = os.environ.copy()
+      env.pop(luci_context.ENV_KEY, None)
+      env['WD'] = workdir
+      env['LUCI_GRACE_PERIOD'] = str(grace_period)
+      proc = subprocess.Popen(
+          [fake_bbagent, "--pid-file", pidfile],
+          stdin=subprocess.PIPE,
+          env=env)
+
       proc.stdin.write(json.dumps({
         "input": {
           "properties": properties,
@@ -134,9 +134,48 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
 
       yield proc, engine_pid
     finally:
-      if proc.poll() is None:
+      if proc and proc.poll() is None:
         proc.kill()
       shutil.rmtree(workdir, ignore_errors=True)
+
+  def _test_bbagent(self, properties, grace_period=30, timeout=30):
+    scrap = tempfile.mkdtemp(prefix='recipe_engine_run_test-')
+    try:
+      wd = os.path.join(scrap, 'wd')
+      os.mkdir(wd)
+
+      outfile = os.path.join(scrap, 'final_build.json')
+      fake_bbagent = os.path.join(test_env.ROOT_DIR, 'misc', 'fake_bbagent.sh')
+
+      env = os.environ.copy()
+      env.pop(luci_context.ENV_KEY, None)
+      env['WD'] = wd
+      env['LUCI_GRACE_PERIOD'] = str(grace_period)
+      env['FAKE_BBAGENT_OUTFILE'] = outfile
+      proc = subprocess.Popen(
+          [fake_bbagent],
+          stdin=subprocess.PIPE,
+          env=env)
+
+      proc.stdin.write(json.dumps({
+        "input": {
+          "properties": properties,
+        },
+      }))
+      proc.stdin.close()
+
+      deadline = time.time() + timeout
+      while True:
+        if proc.poll() is not None:
+          with open(outfile) as of:
+            return json.load(of)
+        if time.time() > deadline:
+          proc.kill()
+          break
+        time.sleep(1)
+
+    finally:
+      shutil.rmtree(scrap, ignore_errors=True)
 
   def _test_recipe(self, recipe, properties=None, env=None):
     proc = subprocess.Popen(
@@ -219,6 +258,28 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     finally:
       shutil.rmtree(scrap, ignore_errors=True)
 
+  def test_add_tags(self):
+    final_build = self._test_bbagent(
+        {'recipe': 'buildbucket:tests/add_tags'},
+    )
+    self.assertListEqual(final_build['tags'], [
+      {'key': 'k2', 'value': 'v2_1'},
+      {'key': 'k2', 'value': 'v2'},
+      {'key': 'k1', 'value': 'v1'},
+      {'key': 'hide-in-gerrit', 'value': 'pointless'},
+    ])
+
+  def test_output_gitiles(self):
+    final_build = self._test_bbagent(
+        {'recipe': 'buildbucket:tests/output_commit'},
+    )
+    self.assertDictEqual(final_build['output']['gitiles_commit'], {
+      'host': 'chromium.googlesource.com',
+      'id': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      'position': 42,
+      'project': 'infra/infra',
+      'ref': 'refs/heads/main',
+    })
 
   def test_nonexistent_command(self):
     subp = subprocess.Popen(
