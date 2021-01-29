@@ -59,6 +59,11 @@ def RunSteps(api):
     include=True,
   ))
 
+  api.step('test with location_tags_file', api.resultdb.wrap(
+    ['echo', 'suppose its a test'],
+    location_tags_file='location_tags.json',
+  ))
+
 
 def GenTests(api):
   yield api.test(

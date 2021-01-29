@@ -356,6 +356,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
            coerce_negative_duration=False,
            include=False,
            realm='',
+           location_tags_file='',
   ):
     """Wraps the command with ResultSink.
 
@@ -388,6 +389,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
         in the parent invocation.
       realm (str): realm used for the new invocation created if `include=True`.
         Default is the current realm used in buildbucket.
+      location_tags_file (str): path to the file that contains test location
+        tags in JSON format.
     """
     self.assert_enabled()
     assert isinstance(test_id_prefix, (type(None), str)), test_id_prefix
@@ -400,6 +403,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
     assert isinstance(coerce_negative_duration, bool), coerce_negative_duration
     assert isinstance(include, bool), include
     assert isinstance(realm, (type(None), str)), realm
+    assert isinstance(location_tags_file, (type(None), str)), location_tags_file
 
     ret = ['rdb', 'stream']
 
@@ -423,6 +427,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
           '-new', '-realm', realm or self.m.buildbucket.builder_realm,
           '-include'
       ]
+
+    if location_tags_file:
+      ret += ['-location-tags-file', location_tags_file]
 
     ret += ['--'] + list(cmd)
     return ret
