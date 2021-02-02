@@ -262,6 +262,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
     # position is uint32
     # Does not need extra validation.
 
+    self._build.output.gitiles_commit.CopyFrom(c)
+
     # The fact that it sets a property value is an implementation detail.
     res = self.m.step('set_output_gitiles_commit', cmd=None)
     prop_name = '$recipe_engine/buildbucket/output_gitiles_commit'

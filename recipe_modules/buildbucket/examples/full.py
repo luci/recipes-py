@@ -92,15 +92,16 @@ def RunSteps(api):
   if get_build_result.stdout['build']['status'] == 'SCHEDULED':
     api.buildbucket.cancel_build(new_job_id)
 
-  api.buildbucket.set_output_gitiles_commit(
-    common_pb2.GitilesCommit(
+  assert not api.buildbucket.build.output.HasField('gitiles_commit')
+  c = common_pb2.GitilesCommit(
         host='chromium.googlesource.com',
         project='infra/infra',
         ref='refs/heads/main',
         id='a' * 40,
         position=42,
-    ),
   )
+  api.buildbucket.set_output_gitiles_commit(c)
+  assert api.buildbucket.build.output.gitiles_commit == c
 
   api.step('build_url', cmd=None).presentation.step_text = (
       api.buildbucket.build_url())
