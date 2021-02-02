@@ -470,7 +470,6 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
       [jsonpb.MessageToDict(spec, preserving_proto_field_name=True)],
     )
 
-
   def test_inconsistent_errors(self):
     deps = self.FakeRecipeDeps()
     upstream = deps.add_repo('upstream')
@@ -504,6 +503,62 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     self.assertTrue(roll_result['success'])
     self.assertEqual([], roll_result['roll_details'])
     self.assertGreater(len(roll_result['rejected_candidate_specs']), 0)
+
+  def test_inconsistent_candidates_do_not_advance(self):
+    deps = self.FakeRecipeDeps()
+    upstream = deps.add_repo('upstream')
+    upstream_deeper = deps.add_repo('upstream_deeper')
+
+    # Add:
+    #   upstream -> upstream_deeper
+    upstream.add_dep('upstream_deeper')
+    upstream.commit('add dep on upstream_deeper')
+
+    # Roll all of that into main.
+    self.run_roll(deps)
+
+    # Create 2 commits in deepest repo that are not rolled into anything
+    with upstream_deeper.write_module('deeper1_mod') as mod:
+      mod.api.write('''
+      def method(self):
+        self.m.step('deeper1 step', ['echo', 'whats up'])
+      ''')
+    upstream_deeper.commit('add deeper1_mod')
+
+    with upstream_deeper.write_module('deeper2_mod') as mod:
+      mod.api.write('''
+      def method(self):
+        self.m.step('deeper2 step', ['echo', 'whats up'])
+      ''')
+    upstream_deeper.commit('add deeper2_mod')
+
+    # Create a commit in deeper repo
+    with upstream.write_module('upstream_mod') as mod:
+      mod.api.write('''
+      def method(self):
+        self.m.step('upstream step', ['echo', 'whats up'])
+      ''')
+    upstream_commit = upstream.commit('add upstream_mod')
+
+    # We can't roll either commit in upstream_deeper because they are
+    # inconsistent with upstream's pin for upstream_deeper, but upstream's
+    # commit should still be able to roll
+
+    roll_result = self.run_roll(deps)
+    self.assertTrue(roll_result['success'])
+
+    spec = deps.main_repo.recipes_cfg_pb2
+    expected_picked_roll = {
+        'commit_infos': {
+            'upstream': [upstream_commit.as_roll_info(),],
+        },
+        'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
+    }
+
+    picked_roll = roll_result['picked_roll_details']
+    self.assertEqual(expected_picked_roll['commit_infos'],
+                     picked_roll['commit_infos'])
+    self.assertEqual(expected_picked_roll['spec'], picked_roll['spec'])
 
   def test_roll_adds_dependency(self):
     deps = self.FakeRecipeDeps()

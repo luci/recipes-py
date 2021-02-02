@@ -2,7 +2,12 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import copy
+
 from ..fetch import CommitMetadata
+
+from recipe_engine.types import freeze
+
 
 class UnknownCommit(KeyError):
   pass
@@ -22,21 +27,30 @@ class CommitList(object):
     """
     assert commit_list, 'commit_list is empty'
     assert all(isinstance(c, CommitMetadata) for c in commit_list)
-    self._commits = list(commit_list)
+
+    # This maps from commit hash -> index in _commits.
+    rev_idx = {}
+    # This maps dep_repo_name -> dep_commit -> set(idxs)
+    dep_idx = {}
+
+    for i, c in enumerate(commit_list):
+      rev_idx[c.revision] = i
+
+      for dep_repo_name, dep in c.spec.deps.iteritems():
+        idx = dep_idx.setdefault(dep_repo_name, {})
+        idx.setdefault(dep.revision, set()).add(i)
+
+    # Immutable state: safe to copy
+    self._commits = tuple(commit_list)
+    self._rev_idx = freeze(rev_idx)
+    self._dep_idx = freeze(dep_idx)
+
+    # Mutable state holding immutable objects: safe to copy
     self._cur_idx = 0
     self._next_roll_candidate_idx = None
 
-    # This maps from commit hash -> index in _commits.
-    self._rev_idx = {}
-
-    # This maps dep_repo_name -> dep_commit -> set(idxs)
-    self._dep_idx = {}
-    for i, c in enumerate(commit_list):
-      self._rev_idx[c.revision] = i
-
-      for dep_repo_name, dep in c.spec.deps.iteritems():
-        idx = self._dep_idx.setdefault(dep_repo_name, {})
-        idx.setdefault(dep.revision, set()).add(i)
+  def copy(self):
+    return copy.copy(self)
 
   def __len__(self):
     return len(self._commits)

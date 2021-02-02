@@ -17,11 +17,12 @@ from .roll_candidate import RollCandidate
 LOGGER = logging.getLogger(__name__)
 
 
-def find_best_rev(repos):
-  """Returns the repo_name of the best repo to roll.
+def get_repos_to_advance(repos):
+  """Returns the names of the repos to attempt to advance.
 
-  "Best" is determined by "is an interesting commit and moves the least amount
-  of commits, globally".
+  The returned repo names are in decreasing order of the best repo to attempt to
+  advance. "Best" is determined by "is an interesting commit and moves the least
+  amount of commits, globally".
 
   "Interesting" means "the commit modifies one or more recipe related files",
   and is defined by CommitMetadata.roll_candidate.
@@ -61,13 +62,13 @@ def find_best_rev(repos):
     repos (dict(repo_name, CommitList)) - The repos to analyze. This function
       will only read from the dict and CommitLists (it will not modify them).
 
-  Returns (str) - The repo_name of the repo to advance next.
+  Returns (List[str]) - The names of the repos to try advancing, in the order
+  they should be tried.
   """
   # The repo_name of all the repos that can move
   repo_set = set(repos)
 
-  best_repo_name = None
-  best_score = ()  # (# commits moved, timestamp)
+  movement_scores_by_repo = {}
 
   for repo_name, clist in repos.iteritems():
     assert isinstance(clist, CommitList)
@@ -83,7 +84,7 @@ def find_best_rev(repos):
       if d_pid in repos:
         movement_score += repos[d_pid].dist_to(dep.revision)
       else:
-        # d_pid is a NEW repo that this roll pulls in. Arbitrarially give this
+        # d_pid is a NEW repo that this roll pulls in. Arbitrarily give this
         # a high movement score so that we're more likely to roll all other
         # repos first.
         movement_score += 100
@@ -93,11 +94,12 @@ def find_best_rev(repos):
       movement_score += repos[pid].dist_compatible_with(pid, candidate.revision)
 
     score = (movement_score, candidate.commit_timestamp)
-    if not best_score or score < best_score:
-      best_score = score
-      best_repo_name = repo_name
+    movement_scores_by_repo[repo_name] = score
 
-  return best_repo_name
+  return [
+      repo_name for repo_name, _ in sorted(
+          movement_scores_by_repo.iteritems(), key=lambda item: item[1])
+  ]
 
 
 def is_consistent(spec_pb, repos):
@@ -122,10 +124,11 @@ def is_consistent(spec_pb, repos):
   return True
 
 
-def _get_roll_candidates_impl(recipe_deps, repos):
+def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
   if LOGGER.isEnabledFor(logging.INFO):
-    count = sum(len(r) for r in repos.itervalues())
-    LOGGER.info('analyzing %d commits across %d repos', count, len(repos))
+    count = sum(len(r) for r in commit_lists_by_repo.itervalues())
+    LOGGER.info('analyzing %d commits across %d repos', count,
+                len(commit_lists_by_repo))
 
   current_pb = recipe_deps.main_repo.recipes_cfg_pb2
 
@@ -133,77 +136,87 @@ def _get_roll_candidates_impl(recipe_deps, repos):
   ret_bad = []
 
   while True:
-    best_repo_name = find_best_rev(repos)
-    if best_repo_name is None:
-      # end when there's no best rev to roll
-      LOGGER.info("terminating: no best project")
+    repos_to_advance = get_repos_to_advance(commit_lists_by_repo)
+    if not repos_to_advance:
+      # end when there's no more candidates to roll
+      LOGGER.info("terminating: no more candidates")
       return ret_good, ret_bad
 
-    rev = repos[best_repo_name].advance()
-    if not rev:
-      LOGGER.info("terminating: could not advance %r", best_repo_name)
-      return ret_good, ret_bad
+    for pid in repos_to_advance:
+      # Create a copy of the repos dict with copied CommitLists so that if we do
+      # not find a good candidate we can restore to the state before the attempt
+      updated_commit_lists_by_repo = {
+          repo_name: commit_list.copy()
+          for repo_name, commit_list in commit_lists_by_repo.iteritems()
+      }
 
-    backwards_roll = False
-    for d_pid, dep in sorted(rev.spec.deps.items()):
-      if d_pid in repos and not repos[d_pid].advance_to(dep.revision):
-        backwards_roll = True
-        LOGGER.info("backwards_roll: rolling %r to %r causes (%r->%r)",
-                     best_repo_name, rev.revision, d_pid, dep.revision)
+      rev = updated_commit_lists_by_repo[pid].advance()
+      if not rev:
+        LOGGER.info("terminating: could not advance %r", pid)
+        return ret_good, ret_bad
+
+      backwards_roll = False
+      for d_pid, dep in sorted(rev.spec.deps.items()):
+        if d_pid in commit_lists_by_repo:
+          if not updated_commit_lists_by_repo[d_pid].advance_to(dep.revision):
+            backwards_roll = True
+            LOGGER.info("backwards_roll: rolling %r to %r causes (%r->%r)", pid,
+                        rev.revision, d_pid, dep.revision)
+            break
+
+      # TODO(iannucci): rationalize what happens if there's a conflict in e.g.
+      # branch/url.
+
+      # First, copy all revisions from clists to current_pb. Note that this will
+      # accumulate all new repos during this entire roll process!
+      for pid, clist in updated_commit_lists_by_repo.iteritems():
+        current_pb.deps[pid].revision = clist.current.revision
+
+      # See if this roll introduced any new dependencies we need to worry about
+      # going forward. Going forward we have to account for the new repos.
+      # current_pb has all the old and new repos already.
+      new_repos = set(current_pb.deps) - set(updated_commit_lists_by_repo)
+      if new_repos:
+        for repo_name in new_repos:
+          dep = current_pb.deps[repo_name]
+
+          # We check it out in the `.recipe_deps` folder. This is a slight
+          # abstraction leak, but adding this to RecipeDeps just for autoroller
+          # seemed like a worse alternative.
+          dep_path = os.path.join(recipe_deps.recipe_deps_path, repo_name)
+          backend = GitBackend(dep_path, dep.url)
+          backend.checkout(dep.branch, dep.revision)
+
+          # Add any newly discovered repos to our repos set. We don't replace
+          # repos because we want to keep the metadata for all already-rolled
+          # revisions.
+          updated_commit_lists_by_repo[repo_name] = CommitList.from_backend(
+              dep, backend)
+
+      # Next, copy ONE instance of any new repos
+      for pid in current_pb.deps.keys():
+        for d_pid, dep in (
+            updated_commit_lists_by_repo[pid].current.spec.deps.iteritems()):
+          if d_pid not in current_pb.deps:
+            current_pb.deps[d_pid].url = dep.url
+            current_pb.deps[d_pid].revision = dep.revision
+            current_pb.deps[d_pid].branch = dep.branch
+
+      if backwards_roll or not is_consistent(current_pb,
+                                             updated_commit_lists_by_repo):
+        LOGGER.info("skipping: not_consistent")
+        ret_bad.append(RollCandidate(current_pb))
+      else:
+        ret_good.append(RollCandidate(current_pb))
+        commit_lists_by_repo.update(updated_commit_lists_by_repo)
         break
 
-    # TODO(iannucci): rationalize what happens if there's a conflict in e.g.
-    # branch/url.
-
-    # First, copy all revisions from clists to current_pb. Note that this will
-    # accumulate all new repos during this entire roll process! Because we don't
-    # have a quick way to evaluate implicit vs. explicit repo dependencies, we
-    # can't algorithmically remove them currently.
-    #
-    # However, we expect this to be a pretty uncommon case, and removing them by
-    # hand should be sufficient for now.
-    #
-    # If someone really wants to make it automatic, they'll need to make a quick
-    # way to scan all DEPS within the current repo to see which repos are
-    # actually used. If you have this information, then removing a repo here
-    # would be easy (if we don't directly depend on it and none of our
-    # immediate dependencies list it, then we can remove it).
-    for pid, clist in repos.iteritems():
-      current_pb.deps[pid].revision = clist.current.revision
-
-    # See if this roll introduced any new dependencies we need to worry about
-    # going forward. Going forward we have to account for the new repos.
-    # current_pb has all the old and new repos already.
-    new_repos = set(current_pb.deps) - set(repos)
-    if new_repos:
-      for repo_name in new_repos:
-        dep = current_pb.deps[repo_name]
-
-        # We check it out in the `.recipe_deps` folder. This is a slight
-        # abstraction leak, but adding this to RecipeDeps just for autoroller
-        # seemed like a worse alternative.
-        dep_path = os.path.join(recipe_deps.recipe_deps_path, repo_name)
-        backend = GitBackend(dep_path, dep.url)
-        backend.checkout(dep.branch, dep.revision)
-
-        # Add any newly discovered repos to our repos set. We don't replace
-        # repos because we want to keep the metadata for all already-rolled
-        # revisions.
-        repos[repo_name] = CommitList.from_backend(dep, backend)
-
-    # Next, copy ONE instance of any new repos
-    for pid in current_pb.deps.keys():
-      for d_pid, dep in repos[pid].current.spec.deps.iteritems():
-        if d_pid not in current_pb.deps:
-          current_pb.deps[d_pid].url = dep.url
-          current_pb.deps[d_pid].revision = dep.revision
-          current_pb.deps[d_pid].branch = dep.branch
-
-    if backwards_roll or not is_consistent(current_pb, repos):
-      LOGGER.info("skipping: not_consistent")
-      ret_bad.append(RollCandidate(current_pb))
+    # We did not find a good candidate with repos_to_advance from the current
+    # state of commit_lists_by_repo, advance each of the commit lists so we can
+    # consider later commits for each repo
     else:
-      ret_good.append(RollCandidate(current_pb))
+      for pid in repos_to_advance:
+        commit_lists_by_repo[pid].advance()
 
 
 def get_roll_candidates(recipe_deps):

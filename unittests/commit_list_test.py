@@ -128,6 +128,18 @@ class TestCommitList(BaseCommitTest):
     # and now it's 2
     self.assertEqual(cl2.dist_compatible_with('1', cs1[3].revision), 2)
 
+  def test_copy(self):
+    cl1 = CommitList([self.cm('1') for _ in xrange(5)])
+    cl2 = cl1.copy()
+
+    self.assertEqual(cl1.current, cl2.current)
+
+    cl1.advance()
+    self.assertNotEqual(cl1.current, cl2.current)
+
+    cl2.advance()
+    self.assertEqual(cl1.current, cl2.current)
+
 
 if __name__ == '__main__':
   sys.exit(test_env.main())
