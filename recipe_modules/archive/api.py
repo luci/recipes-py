@@ -68,27 +68,24 @@ class ArchiveApi(recipe_api.RecipeApi):
     """
     assert mode in ('safe', 'unsafe'), 'Unknown mode %r' % (mode,)
 
-    step_result = self.m.step(
-        step_name, [
-            'python3',
-            '-u',
-            self.resource('extract.py'),
-            '--json-input',
-            self.m.json.input({
-                'output': str(output),
-                'archive_file': str(archive_file),
-                'safe_mode': mode == 'safe',
-                'include_files': list(include_files),
-            }),
-            '--json-output',
-            self.m.json.output(),
-        ],
-        step_test_data=lambda: self.m.json.test_api.output({
-            'extracted': {
-                'filecount': 1337,
-                'bytes': 0xbadc0ffee,
-            },
-        }))
+    step_result = self.m.python(
+      step_name,
+      self.resource('extract.py'),
+      [
+        '--json-input', self.m.json.input({
+          'output': str(output),
+          'archive_file': str(archive_file),
+          'safe_mode': mode == 'safe',
+          'include_files': list(include_files),
+        }),
+        '--json-output', self.m.json.output(),
+      ],
+      step_test_data=lambda: self.m.json.test_api.output({
+        'extracted': {
+          'filecount': 1337,
+          'bytes': 0xbadc0ffee,
+        },
+      }))
     self.m.path.mock_add_paths(output)
     j = step_result.json.output
     if j.get('extracted', {}).get('filecount'):
