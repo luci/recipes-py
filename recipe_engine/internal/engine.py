@@ -611,6 +611,11 @@ class RecipeEngine(object):
       result.status = common_pb2.INFRA_FAILURE
       result.summary_markdown = repr(ex)
 
+    # If GLOBAL_TIMEOUT is ready, we add the 'timeout' detail to our
+    # status_details, regardless of status.
+    if GLOBAL_TIMEOUT.ready():
+      result.status_details.timeout.SetInParent()
+
     return result, uncaught_exception
 
 

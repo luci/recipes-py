@@ -460,6 +460,7 @@ class LUCIStreamEngine(StreamEngine):
 
   def write_result(self, result):
     self._build_proto.status = result.status
+    self._build_proto.status_details.CopyFrom(result.status_details)
     self._build_proto.summary_markdown = result.summary_markdown
     self._send()
 
