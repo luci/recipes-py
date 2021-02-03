@@ -46,7 +46,8 @@ def untar(archive_file, output, stats, safe, include_filter):
     # other naive implementations (such as `getmembers`) end up doing lots of
     # random access over the file. Also patch it to support Unicode filenames.
     em = tf._extract_member
-    def _extract_member(tarinfo, targetpath):
+
+    def _extract_member(tarinfo, targetpath, **kwargs):
       if safe and not os.path.abspath(targetpath).startswith(output):
         print('Skipping %r (would escape root)' % (tarinfo.name,))
         stats['skipped']['filecount'] += 1
@@ -61,14 +62,19 @@ def untar(archive_file, output, stats, safe, include_filter):
       print('Extracting %r' % (tarinfo.name,))
       stats['extracted']['filecount'] += 1
       stats['extracted']['bytes'] += tarinfo.size
-      em(tarinfo, unc_path(targetpath))
+      em(tarinfo, unc_path(targetpath), **kwargs)
+
     tf._extract_member = _extract_member
     ex = tf.extract
 
-    def extract(member, path=''):
+    def extract(member, path='', **kwargs):
       if isinstance(member, tarfile.TarInfo):
-        member.name = member.name.decode('utf-8')
-      ex(member, path=path)
+        # TODO: Remove this once we no longer need to run this script
+        # using python2.
+        if sys.version_info[0] == 2:
+          member.name = member.name.decode('utf-8')
+      ex(member, path=path, **kwargs)
+
     tf.extract = extract
     tf.extractall(output)
 
