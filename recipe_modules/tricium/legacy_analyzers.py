@@ -89,7 +89,7 @@ class Analyzers(object):
 
   GOSEC = LegacyAnalyzer(
       name='Gosec',
-      package='infra/tricium/function/eslint',
+      package='infra/tricium/function/gosec',
       executable='gosec_wrapper',
       path_filters=['*.go'])
 
