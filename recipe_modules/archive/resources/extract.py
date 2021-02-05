@@ -6,8 +6,6 @@
 the 'archive' recipe module internally. Should not be used elsewhere.
 """
 
-from __future__ import print_function
-
 import argparse
 import fnmatch
 import json
@@ -65,17 +63,6 @@ def untar(archive_file, output, stats, safe, include_filter):
       em(tarinfo, unc_path(targetpath), **kwargs)
 
     tf._extract_member = _extract_member
-    ex = tf.extract
-
-    def extract(member, path='', **kwargs):
-      if isinstance(member, tarfile.TarInfo):
-        # TODO: Remove this once we no longer need to run this script
-        # using python2.
-        if sys.version_info[0] == 2:
-          member.name = member.name.decode('utf-8')
-      ex(member, path=path, **kwargs)
-
-    tf.extract = extract
     tf.extractall(output)
 
 
