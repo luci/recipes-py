@@ -41,6 +41,10 @@ message AutorollRecipeOptions {
     // If true and automatic_commit is false, the autoroller recipe will
     // automatically do a CQ dry run when uploading the change.
     bool dry_run = 3;
+
+    // If true, the autoroller will use Bot-Commit+1 instead of self CR+1 and
+    // TBR.
+    bool bot_commit = 4;
   }
   TrivialOptions trivial = 1;
 
