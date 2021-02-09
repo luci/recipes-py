@@ -756,8 +756,10 @@ def _resolve_output_placeholders(
 
 def _render_config(debug, name_tokens, step_config, step_runner, step_stream,
                    environ, start_dir):
-  """Returns a step_runner.Step which is ready for consumption by
-  StepRunner.run.
+  """Returns
+    * a step_runner.Step which is ready for consumption by
+      StepRunner.run. None if render fails.
+    * reason for render failure. None if render succeeds.
 
   `step_runner` is used for `placeholder` and `handle_placeholder`
   which should return test data input for the Placeholder.render method
@@ -839,13 +841,13 @@ def _render_config(debug, name_tokens, step_config, step_runner, step_stream,
   cwd = step_config.cwd or start_dir
   if not step_runner.isabs(name_tokens, cwd):
     debug.write_line('  not absolute: %r' % (cwd,))
-    return None
+    return None, 'cwd %r is not absolute' % (cwd,)
   if not step_runner.isdir(name_tokens, cwd):
     debug.write_line('  not a directory: %r' % (cwd,))
-    return None
+    return None, 'cwd %r is not a directory' % (cwd,)
   if not step_runner.access(name_tokens, cwd, os.R_OK):
     debug.write_line('  no read perms: %r' % (cwd,))
-    return None
+    return None, 'no read perms on cwd %r' % (cwd,)
 
   path = env.get('PATH', '').split(pathsep)
   debug.write_line('resolving cmd0 %r' % (cmd[0],))
@@ -854,7 +856,7 @@ def _render_config(debug, name_tokens, step_config, step_runner, step_stream,
   cmd0 = step_runner.resolve_cmd0(name_tokens, debug, cmd[0], cwd, path)
   if cmd0 is None:
     debug.write_line('failed to resolve cmd0')
-    return None
+    return None, 'cmd0 %r not found' % (cmd[0],)
   debug.write_line('resolved cmd0: %r' % (cmd0,))
 
   return Step(
@@ -862,7 +864,7 @@ def _render_config(debug, name_tokens, step_config, step_runner, step_stream,
       cwd=cwd,
       env=env,
       luci_context=step_luci_context,
-      **handles)
+      **handles), None
 
 
 def _run_step(debug_log, step_data, step_stream, step_runner,
@@ -907,11 +909,12 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
     _prepopulate_placeholders(step_config, step_data)
 
     debug_log.write_line('Rendering input placeholders')
-    rendered_step = _render_config(
+    rendered_step, render_err = _render_config(
         debug_log, step_data.name_tokens, step_config, step_runner, step_stream,
         base_environ, start_dir)
-    if not rendered_step:
+    if render_err:
       step_data.exc_result = ExecutionResult(had_exception=True)
+      step_data.presentation.step_text = render_err
     else:
       _print_step(exc_details, rendered_step)
 
@@ -935,7 +938,7 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
     _set_initial_status(step_data.presentation, step_config,
                         step_data.exc_result)
 
-    if rendered_step:
+    if not render_err:
       debug_log.write_line('Resolving output placeholders')
       _resolve_output_placeholders(
           debug_log, step_data.name_tokens, step_config, step_data, step_runner)

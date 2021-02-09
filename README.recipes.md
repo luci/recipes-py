@@ -3817,9 +3817,9 @@ Tests error checking around multiple placeholders in a single step.
 &mdash; **def [RunSteps](/recipes/engine_tests/multiple_placeholders.py#17)(api):**
 ### *recipes* / [engine\_tests/nonexistent\_command](/recipes/engine_tests/nonexistent_command.py)
 
-[DEPS](/recipes/engine_tests/nonexistent_command.py#1): [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/nonexistent_command.py#7): [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipes/engine_tests/nonexistent_command.py#3)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/nonexistent_command.py#12)(api):**
 ### *recipes* / [engine\_tests/placeholder\_exception](/recipes/engine_tests/placeholder_exception.py)
 
 [DEPS](/recipes/engine_tests/placeholder_exception.py#12): [step](#recipe_modules-step)

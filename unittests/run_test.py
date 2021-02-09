@@ -282,14 +282,10 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     })
 
   def test_nonexistent_command(self):
-    subp = subprocess.Popen(
-        self._run_cmd('engine_tests/nonexistent_command'),
-        stdout=subprocess.PIPE)
-    stdout, _ = subp.communicate()
-
-    self.assertRegexpMatches(stdout, '(?m)^@@@STEP_EXCEPTION@@@$')
-    self.assertRegexpMatches(stdout, 'failed to resolve cmd0')
-    self.assertEqual(1, subp.returncode, stdout)
+    final_build = self._test_bbagent(
+      {'recipe': 'engine_tests/nonexistent_command'},
+    )
+    self.assertEqual(final_build['status'], 'SUCCESS')
 
   def test_shell_quote(self):
     # For regular-looking commands we shouldn't need any specialness.
