@@ -62,8 +62,11 @@ message Invocation {
 
   // Current state of the invocation.
   //
-  // Output only.
-  State state = 2 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+  // At creation time this can be set to FINALIZING e.g. if this invocation is
+  // a simple wrapper of another and will itself not be modified.
+  //
+  // Otherwise this is an output only field.
+  State state = 2;
 
   // When the invocation was created.
   // Output only.
@@ -104,9 +107,15 @@ message Invocation {
   // QueryTestResults returns test results from the transitive closure of
   // invocations.
   //
-  // Use Recorder.Include RPC to modify this field.
-  repeated string included_invocations = 8
-      [ (google.api.field_behavior) = OUTPUT_ONLY ];
+  // This field can be set under Recorder.CreateInvocationsRequest to include
+  // existing invocations at the moment of invocation creation.
+  // New invocations created in the same batch (via
+  // Recorder.BatchCreateInvocationsRequest) are also allowed.
+  // Otherwise, this field is to be treated as Output only.
+  //
+  // To modify included invocations, use Recorder.UpdateIncludedInvocations in
+  // all other cases.
+  repeated string included_invocations = 8;
 
   // bigquery_exports indicates what BigQuery table(s) that results in this
   // invocation should export to.
