@@ -75,6 +75,13 @@ del _hack_lookup_codecs
 # ROOT_DIR bit below.
 sys.path = sys.path[1:]
 
+# Hack 6; Pre-import cryptography wheel in order to suppress python 2
+# deprecation warnings.
+import warnings
+with warnings.catch_warnings():
+  warnings.simplefilter("ignore")
+  import cryptography
+
 try:
   import urllib3.contrib.pyopenssl
   urllib3.contrib.pyopenssl.inject_into_urllib3()
