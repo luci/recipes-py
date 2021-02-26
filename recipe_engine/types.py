@@ -227,7 +227,9 @@ class StepPresentation(object):
             for line in log:
               log_stream.write_split(line)
     for label, url in self.links.iteritems():
-      step_stream.add_step_link(label, url)
+      # We fix spaces in urls; It's an extremely common mistake to make, and
+      # easy to remedy here.
+      step_stream.add_step_link(label, url.replace(" ", "%20"))
     for key, value in sorted(self._properties.iteritems()):
       step_stream.set_build_property(key, json.dumps(value, sort_keys=True))
     step_stream.set_step_status(self.status, self.had_timeout)
