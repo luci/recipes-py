@@ -34,6 +34,7 @@ def _convert_links(value):
 
 _STATUS_MAP = {
     'EXCEPTION': '@@@STEP_EXCEPTION@@@',
+    'CANCELED': '@@@STEP_EXCEPTION@@@',
     'FAILURE': '@@@STEP_FAILURE@@@',
     'WARNING': '@@@STEP_WARNINGS@@@',
 }

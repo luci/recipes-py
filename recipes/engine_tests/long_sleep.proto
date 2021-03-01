@@ -1,0 +1,13 @@
+// Copyright 2021 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipes.recipe_engine.engine_tests.long_sleep;
+
+message InputProperties {
+    // If true, recipe will attempt to recover from early termination and exit
+    // with a SUCCESS status.
+    bool recover = 1;
+}

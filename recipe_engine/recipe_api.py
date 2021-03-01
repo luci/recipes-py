@@ -364,8 +364,9 @@ class StepFailure(Exception):
         self.exc_result = result.exc_result
         if self.exc_result.had_timeout:
           self.reason += ' (timeout)'
-        else:
-          self.reason += ' (retcode: {!r})'.format(self.exc_result.retcode)
+        if self.exc_result.was_cancelled:
+          self.reason += ' (canceled)'
+        self.reason += ' (retcode: {!r})'.format(self.exc_result.retcode)
     else:
       self.name = None
       self.result = None
@@ -375,6 +376,18 @@ class StepFailure(Exception):
 
   def reason_message(self):
     return 'Step({!r})'.format(self.name)
+
+  @property
+  def was_cancelled(self):
+    """
+    Returns True if this exception was caused by a cancelation event
+    (see ExecutionResult.was_cancelled).
+
+    If this was a manual failure, returns None.
+    """
+    if not self.exc_result:
+      return None
+    return self.exc_result.was_cancelled
 
   @property
   def had_timeout(self):
@@ -408,8 +421,14 @@ class StepWarning(StepFailure):
 
 class InfraFailure(StepFailure):
   """
-  A subclass of StepFailure, which fails the build due to problems with the
-  infrastructure.
+  A subclass of StepFailure.
+
+  Raised for any non-failure, non-success cases, e.g.
+    * Step failed to start due to missing executable
+    * Step timed out
+    * Step was canceled
+    * Step was marked as `infra_step`, or run in a context with `infra_steps`
+      set and returned a not-ok retcode.
   """
   def reason_message(self):
     return "Infra Failure: Step({!r})".format(self.name)

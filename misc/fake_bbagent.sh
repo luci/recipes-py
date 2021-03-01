@@ -22,6 +22,7 @@
 #
 # This script is responsive to the following environment variables:
 #   * LUCI_GRACE_PERIOD=<number> - Populates LUCI_CONTEXT['deadline']['grace_period']
+#   * LUCI_SOFT_DEADLINE=<number> - Populates LUCI_CONTEXT['deadline']['soft_deadline']
 #
 # Example:
 #
@@ -62,7 +63,8 @@ cat > "$LUCI_CONTEXT" <<EOF
     "cache_dir": "$WD/cache"
   },
   "deadline": {
-    "grace_period": ${LUCI_GRACE_PERIOD:-30}
+    "grace_period": ${LUCI_GRACE_PERIOD:-30},
+    "soft_deadline": ${LUCI_SOFT_DEADLINE:-0}
   }
 }
 EOF

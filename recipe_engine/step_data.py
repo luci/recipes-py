@@ -39,9 +39,31 @@ class _AttributeRaiser(object):
 
 @attr.s(frozen=True)
 class ExecutionResult(object):
+  # retcode is the integer returncode of the step, if the step ran and the
+  # engine was able to wait() for it. Otherwise this is None.
   retcode = attr.ib(validator=attr_type((int, type(None))), default=None)
-  had_timeout = attr.ib(validator=attr_type(bool), default=False)
+
+  # had_exception is set to True if this step had some exceptional circumstance
+  # which prevented it from running, or a failure while evaluating the output
+  # Placeholders for this step. e.g.
+  #   * Failed to resolve cmd0 / executable doesn't exist
+  #   * Input placeholders raised an exception prior to running the step
+  #   * Output placeholders raised an exception after running the step
   had_exception = attr.ib(validator=attr_type(bool), default=False)
+
+  # had_timeout is only set to True if this specific step had a timeout
+  # requested for it.
+  #
+  # Steps killed due to e.g. LUCI_CONTEXT['deadline'] will have `was_cancelled`
+  # set to True instead.
+  had_timeout = attr.ib(validator=attr_type(bool), default=False)
+
+  # was_cancelled is set if the step was canceled by:
+  #   * GLOBAL_SHUTDOWN due to an interrupt signal from outside
+  #     the recipe engine or due to the engine hitting it's
+  #     LUCI_CONTEXT['deadline']['soft_deadline']
+  #   * The step being part of a greenlet which is kill'd via
+  #     Future.cancel().
   was_cancelled = attr.ib(validator=attr_type(bool), default=False)
 
 

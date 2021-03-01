@@ -15,7 +15,7 @@ from ...step_data import ExecutionResult
 from ...third_party import luci_context
 
 from ..global_shutdown import GLOBAL_SHUTDOWN, GLOBAL_QUITQUITQUIT, MSWINDOWS
-from ..global_shutdown import UNKILLED_PGIDS
+from ..global_shutdown import UNKILLED_PGIDS, GLOBAL_SOFT_DEADLINE
 
 from . import StepRunner
 
@@ -174,7 +174,7 @@ class SubprocessStepRunner(StepRunner):
     # that.
     if 'deadline' in step.luci_context:
       soft = step.luci_context['deadline'].soft_deadline
-      if soft != 0:
+      if soft != GLOBAL_SOFT_DEADLINE:
         timeout = soft - time.time()
       grace_period = step.luci_context['deadline'].grace_period
     exc_result = self._wait_proc(proc, gid, timeout, grace_period, debug_log)
@@ -312,9 +312,6 @@ class SubprocessStepRunner(StepRunner):
     # and so another greenlet could kill us; we guard all of these operations
     # with a `try/except GreenletExit` to handle this and return an
     # ExecutionResult(was_cancelled=True) in that case.
-    #
-    # The engine will raise a new GreenletExit exception after processing this
-    # step.
     try:
       debug_log.write_line('Waiting for process.')
       gevent.wait([GLOBAL_SHUTDOWN, proc], timeout=timeout, count=1)
@@ -325,7 +322,7 @@ class SubprocessStepRunner(StepRunner):
                                debug_log, proc, gid, grace_period),
                            was_cancelled=True)
 
-      # Otherwise our process is done.
+      # Otherwise our process is done (or timed out).
       ret = attr.evolve(ret, retcode=proc.poll())
 
       # TODO(iannucci): Make leaking subprocesses explicit (e.g. goma compiler
@@ -336,13 +333,12 @@ class SubprocessStepRunner(StepRunner):
       # _kill(proc, gid)  # In case of leaked subprocesses or timeout.
 
       if ret.retcode is None:
-        debug_log.write_line('Timeout expired (%ds)' % (timeout,))
         # Process timed out, kill it. Currently all uses of non-None timeout
         # intend to actually kill the subprocess when the timeout pops.
-        return attr.evolve(ret,
-                           retcode=self._kill(
-                               debug_log, proc, gid, grace_period),
-                           had_timeout=True)
+        ret = attr.evolve(
+            ret, retcode=self._kill(debug_log, proc, gid, grace_period))
+        debug_log.write_line('Timeout expired (%ds)' % (timeout,))
+        return attr.evolve(ret, had_timeout=True)
 
       debug_log.write_line('Finished waiting, retcode %r' % ret.retcode)
       # TODO(iannucci): Make leaking subprocesses explicit (e.g. goma compiler

@@ -406,6 +406,7 @@ class StepApi(recipe_api.RecipeApiPlain):
       'FAILURE': self.StepFailure,
       'WARNING': self.StepWarning,
       'EXCEPTION': self.InfraFailure,
+      'CANCELED': self.InfraFailure,
     }[ret.presentation.status]
     # TODO(iannucci): Use '|' instead of '.'
     raise exc('.'.join(ret.name_tokens), ret)

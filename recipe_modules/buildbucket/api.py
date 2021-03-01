@@ -706,7 +706,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
                   Can't be None or Empty. Markdown is supported.
 
     Returns:
-      None if build is successfully cancelled. Otherwise, an InfraFailure will
+      None if build is successfully canceled. Otherwise, an InfraFailure will
       be raised
     """
     self._check_build_id(build_id)

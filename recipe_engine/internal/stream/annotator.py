@@ -114,7 +114,7 @@ class AnnotatorStreamEngine(StreamEngine):
         self.output_annotation('STEP_WARNINGS')
       elif status == 'FAILURE':
         self.output_annotation('STEP_FAILURE')
-      elif status == 'EXCEPTION':
+      elif status in ('EXCEPTION', 'CANCELED'):
         self.output_annotation('STEP_EXCEPTION')
       else:
         raise Exception('Impossible status %s' % status)

@@ -145,15 +145,19 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       os.mkdir(wd)
 
       outfile = os.path.join(scrap, 'final_build.json')
+      pidfile = os.path.join(wd, 'pidfile')
       fake_bbagent = os.path.join(test_env.ROOT_DIR, 'misc', 'fake_bbagent.sh')
+
+      deadline = time.time() + timeout
 
       env = os.environ.copy()
       env.pop(luci_context.ENV_KEY, None)
       env['WD'] = wd
       env['LUCI_GRACE_PERIOD'] = str(grace_period)
+      env['LUCI_SOFT_DEADLINE'] = str(deadline)
       env['FAKE_BBAGENT_OUTFILE'] = outfile
       proc = subprocess.Popen(
-          [fake_bbagent],
+          [fake_bbagent, "--pid-file", pidfile],
           stdin=subprocess.PIPE,
           env=env)
 
@@ -164,14 +168,33 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       }))
       proc.stdin.close()
 
-      deadline = time.time() + timeout
+      engine_pid = int(self._wait_for_file(pidfile, 20).strip())
+      did_soft_deadline = False
+
       while True:
         if proc.poll() is not None:
+          with open(os.path.join(wd, 'logs', 'stderr')) as log:
+            print
+            print "Raw engine logs:"
+            sys.stdout.write(log.read())
           with open(outfile) as of:
-            return json.load(of)
-        if time.time() > deadline:
-          proc.kill()
-          break
+            bpdata = of.read()
+            print
+            print "Final build.proto:"
+            sys.stdout.write(bpdata)
+            return json.loads(bpdata)
+
+        if deadline and time.time() > deadline:
+          if not did_soft_deadline:
+            print "Hit soft deadline"
+            did_soft_deadline = True
+            os.kill(engine_pid, signal.SIGTERM)
+            deadline += grace_period
+          else:
+            print "Hit hard deadline"
+            os.kill(engine_pid, signal.SIGKILL)
+            deadline = None
+
         time.sleep(1)
 
     finally:
@@ -210,6 +233,7 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       ['engine_tests/functools_partial'],
     ]
     for test in tests:
+      print("running", test)
       self._test_recipe(*test, env=env)
 
   def test_bad_subprocess(self):
@@ -237,7 +261,7 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
         'running_touchfile': running_touchfile,
       }
       with self._run_bbagent(props, grace_period=5) as (proc, engine_pid):
-        # Wait up to 10s for the recipe to indicate that it launched all its
+        # Wait up to 20s for the recipe to indicate that it launched all its
         # subprocesses.
         self._wait_for_file(running_touchfile, 20)
 
@@ -280,6 +304,40 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       'project': 'infra/infra',
       'ref': 'refs/heads/main',
     })
+
+  def test_external_timeout(self):
+    final_build = self._test_bbagent(
+        {'recipe': 'engine_tests/long_sleep'},
+        timeout=10,
+    )
+    for step in final_build['steps']:
+      del step['end_time']
+      del step['start_time']
+      del step['logs']
+    self.assertDictEqual(final_build, {
+      'status': 'INFRA_FAILURE',
+      'summary_markdown': (
+        "Infra Failure: Step('sleep forever') (canceled) (retcode: -15)"),
+      'steps': [
+        {
+          'name': 'setup_build',
+          'status': 'SUCCESS',
+          'summary_markdown': 'running recipe: "engine_tests/long_sleep"',
+        },
+        { 'name': 'sleep a bit', 'status': 'FAILURE'},
+        { 'name': 'sleep forever', 'status': 'CANCELED'},
+      ],
+    })
+
+  def test_external_timeout_recovery(self):
+    final_build = self._test_bbagent(
+        {
+          'recipe': 'engine_tests/long_sleep',
+          'recover': True,
+        },
+        timeout=10,
+    )
+    self.assertEqual(final_build['status'], 'SUCCESS')
 
   def test_nonexistent_command(self):
     final_build = self._test_bbagent(

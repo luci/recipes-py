@@ -53,5 +53,4 @@ message RawResult {
   // If SUCCESS: summary markdown will be ignored
   // TODO(iannucci) Fix this so that `summary_markdown` is always propagated in build.proto mode.
   buildbucket.v2.Status status = 2;
-  buildbucket.v2.StatusDetails status_details = 3;
 }

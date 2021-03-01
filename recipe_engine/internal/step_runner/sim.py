@@ -188,6 +188,9 @@ class SimulationStepRunner(StepRunner):
       if tdata.times_out_after > precursor['timeout']:
         return ExecutionResult(had_timeout=True)
 
+    if tdata.cancel:
+      return ExecutionResult(was_cancelled=True)
+
     return ExecutionResult(retcode=tdata.retcode)
 
   def run_noop(self, name_tokens, debug_log):

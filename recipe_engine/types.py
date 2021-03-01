@@ -108,7 +108,8 @@ class FrozenDict(collections.Mapping):
 
 
 class StepPresentation(object):
-  _RAW_STATUSES = (None, 'SUCCESS', 'WARNING', 'FAILURE', 'EXCEPTION')
+  _RAW_STATUSES = (
+    None, 'SUCCESS', 'WARNING', 'FAILURE', 'EXCEPTION', 'CANCELED')
   STATUSES = frozenset(filter(bool, _RAW_STATUSES))
 
   # TODO(iannucci): use attr for this
@@ -132,6 +133,7 @@ class StepPresentation(object):
     self._links = collections.OrderedDict()
     self._status = None
     self._had_timeout = False
+    self._was_cancelled = False
     self._step_summary_text = ''
     self._step_text = ''
     self._properties = {}
@@ -159,6 +161,16 @@ class StepPresentation(object):
     assert not self._finalized, 'Changing finalized step %r' % self._name
     assert isinstance(val, bool)
     self._had_timeout = val
+
+  @property
+  def was_cancelled(self):
+    return self._was_cancelled
+
+  @was_cancelled.setter
+  def was_cancelled(self, val):
+    assert not self._finalized, 'Changing finalized step %r' % self._name
+    assert isinstance(val, bool)
+    self._was_cancelled = val
 
   @property
   def step_text(self):

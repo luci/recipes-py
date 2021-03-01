@@ -18,7 +18,7 @@ class FailTracker(object):
 
   Saves the failures to a file, and loads them into an instance variable to run
   first in subsequent runs. The file gets cleared only once results start
-  flowing in, so if a run is cancelled early, the fail cache will remain
+  flowing in, so if a run is canceled early, the fail cache will remain
   unharmed.
   """
   _fail_file_path = attr.ib()

@@ -229,6 +229,7 @@ def StepFailure(check, step_odict, step):
   """
   check(step_odict[step].status == 'FAILURE')
 
+
 def StepException(check, step_odict, step):
   """Assert that a step had an exception.
 
@@ -238,10 +239,25 @@ def StepException(check, step_odict, step):
   Usage:
     yield (
         TEST
-        + api.post_process(Step, 'step-name')
+        + api.post_process(StepException, 'step-name')
     )
   """
   check(step_odict[step].status == 'EXCEPTION')
+
+
+def StepCanceled(check, step_odict, step):
+  """Assert that a step had an exception.
+
+  Args:
+    step (str) - The step to check for an exception.
+
+  Usage:
+    yield (
+        TEST
+        + api.post_process(StepCanceled, 'step-name')
+    )
+  """
+  check(step_odict[step].status == 'CANCELED')
 
 
 def _fullmatch(pattern, string):

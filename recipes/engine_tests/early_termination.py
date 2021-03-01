@@ -2,8 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-"""Simple recipe which sleeps in a subprocess forever to facilitate early
-termination tests."""
+"""Simple recipe which runs a bunch of subprocesses which react to early
+termination in different ways."""
 
 DEPS = [
   'file',

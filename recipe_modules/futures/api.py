@@ -128,6 +128,7 @@ class FuturesApi(RecipeApi):
 
       If the greenlet is waiting on a subprocess (step), the subprocess will be
       killed, and the step's ExecutionResult will have `was_cancelled=True`.
+      This will then raise an InfraFailure exception within the greenlet.
 
       Does not block on the death of the greenlet.
       Does not switch away from the current greenlet.

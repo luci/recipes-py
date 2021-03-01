@@ -73,6 +73,7 @@ class StepTestData(BaseTestData):
     self._stderr = None
     self._retcode = None
     self._times_out_after = None
+    self._cancel = False
 
   def __add__(self, other):
     assert isinstance(other, StepTestData)
@@ -87,6 +88,7 @@ class StepTestData(BaseTestData):
     # pylint: disable=W0212
     ret._stdout = other._stdout or self._stdout
     ret._stderr = other._stderr or self._stderr
+    ret._cancel = other._cancel or self._cancel
     ret._retcode = self._retcode
     if other._retcode is not None:
       if ret._retcode is not None and ret._retcode != other._retcode:
@@ -129,6 +131,14 @@ class StepTestData(BaseTestData):
     self._times_out_after = value
 
   @property
+  def cancel(self):  # pylint: disable=E0202
+    return self._cancel
+
+  @cancel.setter
+  def cancel(self, value):  # pylint: disable=E0202
+    self._cancel = value
+
+  @property
   def stdout(self):
     return self._stdout or PlaceholderTestData(None)
 
@@ -157,6 +167,7 @@ class StepTestData(BaseTestData):
       'stderr': self._stderr,
       'retcode': self._retcode,
       'override': self.override,
+      'cancel': self.cancel,
     }
 
     if self.times_out_after:
@@ -548,6 +559,7 @@ class RecipeTestApi(object):
              generated step data, instead of adding on to it.
       times_out_after=(int) - Causes the step to timeout after the given number
              of seconds.
+      cancel=(bool) - Causes the step to indicate that it was canceled.
 
     Use in GenTests:
       # Hypothetically, suppose that your recipe has default test data for two
@@ -583,6 +595,8 @@ class RecipeTestApi(object):
       ret.step_data[name].retcode = kwargs['retcode']
     if 'times_out_after' in kwargs:
       ret.step_data[name].times_out_after = kwargs['times_out_after']
+    if 'cancel' in kwargs:
+      ret.step_data[name].cancel = kwargs['cancel']
     if 'override' in kwargs:
       ret.step_data[name].override = kwargs['override']
     for key in ('stdout', 'stderr'):

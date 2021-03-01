@@ -38,7 +38,7 @@ from .engine_env import merge_envs
 from .exceptions import RecipeUsageError, CrashEngine
 from .step_runner import Step
 from .resource_semaphore import ResourceWaiter
-from .global_shutdown import GLOBAL_SHUTDOWN, GLOBAL_TIMEOUT
+from .global_shutdown import GLOBAL_SHUTDOWN
 
 
 LOG = logging.getLogger(__name__)
@@ -372,13 +372,6 @@ class RecipeEngine(object):
 
     name_tokens = self._record_step_name(step_config.name)
 
-    if GLOBAL_SHUTDOWN.ready():
-      # TODO(crbug.com/1096713): Append a cancelled step instead of raising
-      # after recipe gains support for Cancelled step status.
-      LOG.warning('GLOBAL_SHUTDOWN already active, skipping steps : %s' % (
-          '.'.join(name_tokens)))
-      raise gevent.GreenletExit()
-
     # TODO(iannucci): Start with had_exception=True and overwrite when we know
     # we DIDN'T have an exception.
     ret = StepData(name_tokens, ExecutionResult())
@@ -407,13 +400,18 @@ class RecipeEngine(object):
       self._step_stack.append(_ActiveStep(ret, step_stream, False))
 
       # _run_step should never raise an exception, except for GreenletExit
+      debug_log = step_stream.new_log_stream('$debug')
       try:
+        if GLOBAL_SHUTDOWN.ready():
+          debug_log.write_line('GLOBAL_SHUTDOWN already active, skipping step.')
+          step_stream.mark_running()   # to set start time, etc.
+          raise gevent.GreenletExit()
+
         def _if_blocking():
           step_stream.set_summary_markdown(
               'Waiting for resources: `%s`' % (step_config.cost,))
         with self._resource.wait_for(step_config.cost, _if_blocking):
           step_stream.mark_running()
-          debug_log = step_stream.new_log_stream('$debug')
           try:
             self._write_memory_snapshot(
               debug_log, 'Step: %s' % '.'.join(name_tokens))
@@ -423,9 +421,10 @@ class RecipeEngine(object):
           finally:
             # NOTE: See the accompanying note in stream.py.
             step_stream.reset_subannotation_state()
-            debug_log.close()
       except gevent.GreenletExit:
         ret.exc_result = attr.evolve(ret.exc_result, was_cancelled=True)
+      finally:
+        debug_log.close()
 
       ret.finalize()
 
@@ -439,10 +438,6 @@ class RecipeEngine(object):
       if caught:
         # TODO(iannucci): Python3 incompatible.
         raise caught[0], caught[1], caught[2]
-
-      # If the step was cancelled, re-raise GreenletExit.
-      if ret.exc_result.was_cancelled:
-        raise gevent.GreenletExit()
 
       return ret
 
@@ -591,13 +586,6 @@ class RecipeEngine(object):
         result.status = common_pb2.INFRA_FAILURE if (
           is_infra_failure) else common_pb2.FAILURE
         result.summary_markdown = ex.reason
-      except gevent.GreenletExit:
-        if GLOBAL_TIMEOUT.ready():
-          result.status = common_pb2.INFRA_FAILURE
-          result.summary_markdown = 'Recipe timed out'
-        else:
-          result.status = common_pb2.CANCELED
-          result.summary_markdown = 'Recipe was interrupted'
 
     # All other exceptions are reported to the user and are fatal.
     except Exception as ex:  # pylint: disable=broad-except
@@ -611,11 +599,6 @@ class RecipeEngine(object):
       result.status = common_pb2.INFRA_FAILURE
       result.summary_markdown = repr(ex)
 
-    # If GLOBAL_TIMEOUT is ready, we add the 'timeout' detail to our
-    # status_details, regardless of status.
-    if GLOBAL_TIMEOUT.ready():
-      result.status_details.timeout.SetInParent()
-
     return result, uncaught_exception
 
 
@@ -625,12 +608,18 @@ def _set_initial_status(presentation, step_config, exc_result):
   """
   # TODO(iannucci): make StepPresentation.status enumey instead of stringy.
   presentation.had_timeout = exc_result.had_timeout
+  presentation.was_cancelled = exc_result.was_cancelled
+
+  # TODO(iannucci): there should really be a TIMEOUT status, I think:
+  #   CANCELED: externally imposed interrupt
+  #   TIMEOUT: self-imposed timeout
+  if exc_result.was_cancelled:
+    presentation.status = 'CANCELED'
+    return
 
   if exc_result.had_exception:
     presentation.status = 'EXCEPTION'
     return
-
-  # TODO(iannucci): Add a real status for CANCELED?
 
   if (step_config.ok_ret is step_config.ALL_OK or
       exc_result.retcode in step_config.ok_ret):
@@ -954,7 +943,7 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
   if step_data.exc_result.had_exception:
     exc_details.write_line('Step had exception.')
   if step_data.exc_result.was_cancelled:
-    exc_details.write_line('Step was cancelled.')
+    exc_details.write_line('Step was canceled.')
   exc_details.close()
 
   # Re-render the presentation status; If one of the output placeholders blew up
@@ -1010,11 +999,15 @@ def _print_step(execution_log, step):
   # Some LUCI_CONTEXT sections may contain secrets; explicitly allow the
   # sections we know are safe.
   luci_context_allowed = ['realm', 'luciexe', 'deadline']
+  luci_context_header_printed = False
   for section in luci_context_allowed:
     data = step.luci_context.get(section, None)
     if data is not None:
+      if not luci_context_header_printed:
+        luci_context_header_printed = True
+        execution_log.write_line('LUCI_CONTEXT:')
       execution_log.write_line(
-          '  LUCI_CONTEXT[%r]: %r' % (section, jsonpb.MessageToDict(data)))
+          '  %r: %r' % (section, jsonpb.MessageToDict(data)))
 
   # TODO(iannucci): print the DIFF against the original environment
   execution_log.write_line('full environment:')

@@ -235,10 +235,10 @@ class Step(object):
   output_properties = attr.ib(factory=OrderedDict)
 
   # A string containing the resulting status of the step, one of: 'SUCCESS',
-  # 'EXCEPTION', 'FAILURE', 'WARNING'
+  # 'EXCEPTION', 'FAILURE', 'WARNING', 'CANCELED'
   status = attr.ib(default='SUCCESS',
-                   validator=attr.validators.in_(
-                       ('SUCCESS', 'EXCEPTION', 'FAILURE', 'WARNING')))
+                   validator=attr.validators.in_((
+                     'SUCCESS', 'EXCEPTION', 'FAILURE', 'WARNING', 'CANCELED')))
 
   # Arbitrary lines that appear in the annotations
   # The presence of these annotations is an implementation detail and likely to

@@ -9,6 +9,7 @@ from google.protobuf import json_format as jsonpb
 
 from . import StreamEngine, encode_str
 from ..test.empty_log import EMPTY_LOG
+from ...types import StepPresentation
 
 
 def _ignoreable(f):
@@ -102,7 +103,7 @@ class _SimulationStepStream(StreamEngine.StepStream):
 
   @_ignoreable
   def set_step_status(self, status, had_timeout):
-    assert status in ('SUCCESS', 'WARNING', 'FAILURE', 'EXCEPTION'), (
+    assert status in StepPresentation.STATUSES, (
         'Impossible status %s' % status)
     del had_timeout
     if status != 'SUCCESS':

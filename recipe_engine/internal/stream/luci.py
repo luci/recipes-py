@@ -276,6 +276,7 @@ class LUCIStepStream(StreamEngine.StepStream):
       'FAILURE': common.FAILURE,
       'WARNING': common.SUCCESS, # TODO(iannucci): support WARNING
       'EXCEPTION': common.INFRA_FAILURE,
+      'CANCELED': common.CANCELED,
     }[status]
     # TODO(iannucci): set timeout bit here
 
@@ -460,7 +461,6 @@ class LUCIStreamEngine(StreamEngine):
 
   def write_result(self, result):
     self._build_proto.status = result.status
-    self._build_proto.status_details.CopyFrom(result.status_details)
     self._build_proto.summary_markdown = result.summary_markdown
     self._send()
 
