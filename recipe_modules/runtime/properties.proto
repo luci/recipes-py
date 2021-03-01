@@ -9,7 +9,7 @@ message InputProperties {
   // Whether build is running in experimental mod.
   // TODO(iannucci,yiwzhang): replace this with
   //
-  //   `"luci.non_production" in api.buildbucket.experiments`
+  //   `"luci.non_production" in api.buildbucket.build.input.experiments`
   //
   // and then delete the runtime module.
   bool is_experimental = 1;
