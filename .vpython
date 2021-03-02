@@ -118,7 +118,7 @@ wheel: <
 
 wheel: <
   name: "infra/python/wheels/attrs-py2_py3"
-  version: "version:19.3.0"
+  version: "version:20.3.0"
 >
 
 wheel: <
