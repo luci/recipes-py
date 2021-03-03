@@ -98,6 +98,11 @@ class Analyzers(object):
       package='infra/tricium/function/https-check',
       executable='https-check')
 
+  INCLUSIVE_LANGUAGE_CHECK = LegacyAnalyzer(
+      name='InclusiveLanguageCheck',
+      package='infra/tricium/function/inclusive',
+      executable='inclusive')
+
   MOJOM_COMMENTATOR = LegacyAnalyzer(
       name='MojomCommentator',
       package='infra/tricium/function/mojom-commentator',
