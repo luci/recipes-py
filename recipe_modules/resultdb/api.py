@@ -272,6 +272,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
            include=False,
            realm='',
            location_tags_file='',
+           require_build_inv=True,
   ):
     """Wraps the command with ResultSink.
 
@@ -306,8 +307,11 @@ class ResultDBAPI(recipe_api.RecipeApi):
         Default is the current realm used in buildbucket.
       location_tags_file (str): path to the file that contains test location
         tags in JSON format.
+      require_build_inv(bool): flag to control if the build is required to have
+        an invocation.
     """
-    self.assert_enabled()
+    if require_build_inv:
+      self.assert_enabled()
     assert isinstance(test_id_prefix, (type(None), str)), test_id_prefix
     assert isinstance(base_variant, (type(None), dict)), base_variant
     assert isinstance(cmd, (tuple, list)), cmd

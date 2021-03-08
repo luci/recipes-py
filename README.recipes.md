@@ -2753,7 +2753,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#265)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file=''):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#265)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True):**
 
 Wraps the command with ResultSink.
 
@@ -2788,6 +2788,8 @@ Args:
     Default is the current realm used in buildbucket.
   location_tags_file (str): path to the file that contains test location
     tags in JSON format.
+  require_build_inv(bool): flag to control if the build is required to have
+    an invocation.
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
 #### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#875)):**
