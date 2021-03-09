@@ -251,6 +251,7 @@ def main():
   if IS_WIN:
     # No real 'exec' on windows; set these signals to ignore so that they
     # propagate to our children but we still wait for the child process to quit.
+    import signal
     signal.signal(signal.SIGBREAK, signal.SIG_IGN)
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     signal.signal(signal.SIGTERM, signal.SIG_IGN)
