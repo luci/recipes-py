@@ -56,14 +56,35 @@ if _lc_raw_deadline and 'soft_deadline' in _lc_raw_deadline:
   GLOBAL_SOFT_DEADLINE = _lc_raw_deadline['soft_deadline']
 del _lc_raw_deadline
 
-# UNKILLED_PGIDS is a global set of process groups which haven't been SIGKILL'd
-# yet.
+# UNKILLED_PROC_GROUPS is a global set of process groups which haven't been
+# SIGKILL'd/CTRL-BREAK'd yet.
 #
-# This is manipulated by step_runner/subproc on *nix and unused on windows.
-UNKILLED_PGIDS = set()
-
+# This is manipulated by step_runner/subproc and will have types in it which
+# are platform specific
+UNKILLED_PROC_GROUPS = set()
 
 LOG = logging.getLogger(__name__)
+
+
+if MSWINDOWS:
+  def _kill_proc_group(proc):
+    try:
+      proc.send_signal(signal.CTRL_BREAK_EVENT)
+    except OSError as ex:
+      LOG.warning('send_signal(%r, CTRL-BREAK): %s' % (proc.pid, ex))
+
+    try:
+      proc.terminate()
+    except OSError as ex:
+      LOG.warning('TerminateProcess(%r): %s' % (proc.pid, ex))
+else:
+  def _kill_proc_group(pgid):
+    try:
+      os.killpg(pgid, signal.SIGKILL)
+    except OSError as ex:
+      # ESRCH: process group doesn't exist
+      if ex.errno != errno.ESRCH:
+        LOG.warning('killpg(%d, SIGKILL): %s' % (pgid, ex))
 
 
 @contextmanager
@@ -100,13 +121,8 @@ def install_signal_handlers():
       GLOBAL_QUITQUITQUIT.set()
     else:
       LOG.info('Engine quitting normally')
-    for pgid in UNKILLED_PGIDS:
-      try:
-        os.killpg(pgid, signal.SIGKILL)
-      except OSError as ex:
-        # ESRCH: process group doesn't exist
-        if ex.errno != errno.ESRCH:
-          LOG.warning('killpg(%d, SIGKILL): %s' % (pgid, ex))
+    for pgroup in UNKILLED_PROC_GROUPS:
+      _kill_proc_group(pgroup)
 
   terminator_greenlet = gevent.spawn(_terminator_greenlet)
 

@@ -15,7 +15,7 @@ from ...step_data import ExecutionResult
 from ...third_party import luci_context
 
 from ..global_shutdown import GLOBAL_SHUTDOWN, GLOBAL_QUITQUITQUIT, MSWINDOWS
-from ..global_shutdown import UNKILLED_PGIDS, GLOBAL_SOFT_DEADLINE
+from ..global_shutdown import UNKILLED_PROC_GROUPS, GLOBAL_SOFT_DEADLINE
 
 from . import StepRunner
 
@@ -233,10 +233,16 @@ class SubprocessStepRunner(StepRunner):
     if not MSWINDOWS:
       try:
         gid = os.getpgid(proc.pid)
-        UNKILLED_PGIDS.add(gid)
+        UNKILLED_PROC_GROUPS.add(gid)
       except OSError:
         # sometimes the process can run+finish before we collect its pgid.
         pass
+    else:
+      # On windows we use the actual process object to track the 'group'. If the
+      # process does tricks to daemonize, this can easily leak processes.
+      #
+      # TODO(iannucci): Use Job Objects for process management.
+      UNKILLED_PROC_GROUPS.add(proc)
 
     debug_log.write_line('launched pid:%r gid:%r' % (proc.pid, gid))
 
@@ -424,6 +430,7 @@ class SubprocessStepRunner(StepRunner):
         proc.terminate()
       except OSError:
         pass
+      UNKILLED_PROC_GROUPS.discard(proc)
 
       ret = proc.wait()
       if ret is not None:
@@ -470,7 +477,7 @@ class SubprocessStepRunner(StepRunner):
 
       self._killpg(debug_log, gid, 'SIGKILL')
 
-      UNKILLED_PGIDS.discard(gid)
+      UNKILLED_PROC_GROUPS.discard(gid)
       return ret
 
 
