@@ -63,6 +63,12 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
         'pin': self.make_pin(package_name, version)
     }])
 
+  def example_set_metadata(self, package_name, version):
+    return self._resultify([{
+        'package': package_name,
+        'pin': self.make_pin(package_name, version)
+    }])
+
   def example_set_ref(self, package_name, version):
     return self._resultify({'': [{
         'package': package_name,

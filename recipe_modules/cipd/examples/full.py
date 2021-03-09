@@ -29,16 +29,23 @@ PROPERTIES = {
   'refs': Property(default=['fake-ref-1', 'fake-ref-2'], kind=List(str)),
   'tags': Property(kind=dict, default={'fake_tag_1': 'fake_value_1',
                                        'fake_tag_2': 'fake_value_2'}),
+  'metadata': Property(kind=List(str), default=['v1', 'v2']),
   'max_threads': Property(kind=int, default=None),
 }
 
 
 def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
-             install_mode, refs, tags, max_threads):
+             install_mode, refs, tags, metadata, max_threads):
   package_name = 'public/package/${platform}'
   package_instance_id = '7f751b2237df2fdf3c1405be00590fefffbaea2d'
   ensure_file = api.cipd.EnsureFile()
   ensure_file.add_package(package_name, package_instance_id)
+
+  # Prepare some phony metadata for test cases.
+  md = [
+      api.cipd.Metadata(key='md_%d' % i, value=v)
+      for i, v in enumerate(metadata)
+  ]
 
   cipd_root = api.path['start_dir'].join('packages')
   # Some packages don't require credentials to be installed or queried.
@@ -87,7 +94,7 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
                    compression_level=9, install_mode='copy',
                    preserve_mtime=True, preserve_writable=True)
     api.cipd.register('infra/fake-package', 'fake-package-path',
-                      refs=refs, tags=tags)
+                      refs=refs, tags=tags, metadata=md)
 
     # Create (build & register).
     if use_pkg:
@@ -109,18 +116,19 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
 
       api.cipd.build_from_pkg(pkg, 'fake-package-path')
       api.cipd.register('infra/fake-package', 'fake-package-path',
-                        refs=refs, tags=tags)
+                        refs=refs, tags=tags, metadata=md)
 
-      api.cipd.create_from_pkg(pkg, refs=refs, tags=tags)
+      api.cipd.create_from_pkg(pkg, refs=refs, tags=tags, metadata=md)
     else:
       api.cipd.build_from_yaml(api.path['start_dir'].join('fake-package.yaml'),
                                'fake-package-path', pkg_vars=pkg_vars,
                                compression_level=9)
       api.cipd.register('infra/fake-package', 'fake-package-path',
-                        refs=refs, tags=tags)
+                        refs=refs, tags=tags, metadata=md)
 
       api.cipd.create_from_yaml(api.path['start_dir'].join('fake-package.yaml'),
-                                refs=refs, tags=tags, pkg_vars=pkg_vars,
+                                refs=refs, tags=tags, metadata=md,
+                                pkg_vars=pkg_vars,
                                 compression_level=9)
 
     # Set tag or ref of an already existing package.
@@ -130,6 +138,21 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
     api.cipd.set_ref('fake-package', version='latest', refs=['any', 'some'])
     # Search by the new tag.
     api.cipd.search('fake-package/${platform}', tag='dead:beaf')
+
+    # Set metadata.
+    api.cipd.set_metadata('fake-package', version='latest', metadata=[
+        api.cipd.Metadata(key='key1', value='val1'),
+        api.cipd.Metadata(key='key1', value='val2', content_type='text/plain'),
+        api.cipd.Metadata(
+            key='key2',
+            value_from_file=api.path['start_dir'].join('val1.json'),
+        ),
+        api.cipd.Metadata(
+            key='key2',
+            value_from_file=api.path['start_dir'].join('val2.json'),
+            content_type='application/json',
+        ),
+    ])
 
     # Fetch a raw package
     api.cipd.pkg_fetch(api.path['start_dir'].join('fetched_pkg'),
@@ -291,9 +314,10 @@ def GenTests(api):
   )
 
   yield (
-    api.test('basic_with_no_refs_or_tags')
+    api.test('basic_with_no_refs_or_tags_or_md')
     + api.properties(
       refs=[],
       tags={},
+      metadata=[],
     )
   )

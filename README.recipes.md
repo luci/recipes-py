@@ -712,7 +712,7 @@ API for interacting with CIPD.
 Depends on 'cipd' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 
-#### **class [CIPDApi](/recipe_modules/cipd/api.py#204)([RecipeApi](/recipe_engine/recipe_api.py#875)):**
+#### **class [CIPDApi](/recipe_modules/cipd/api.py#251)([RecipeApi](/recipe_engine/recipe_api.py#875)):**
 
 CIPDApi provides basic support for CIPD.
 
@@ -723,7 +723,7 @@ Attributes:
   * max_threads (int) - Number of worker threads for extracting packages.
     If 0, uses CPU count.
 
-&mdash; **def [acl\_check](/recipe_modules/cipd/api.py#311)(self, pkg_path, reader=True, writer=False, owner=False):**
+&mdash; **def [acl\_check](/recipe_modules/cipd/api.py#359)(self, pkg_path, reader=True, writer=False, owner=False):**
 
 Checks whether the caller has a given roles in a package.
 
@@ -735,9 +735,9 @@ Args:
 
 Returns True if the caller has given roles, False otherwise.
 
-&mdash; **def [add\_instance\_link](/recipe_modules/cipd/api.py#543)(self, step_result):**
+&mdash; **def [add\_instance\_link](/recipe_modules/cipd/api.py#601)(self, step_result):**
 
-&mdash; **def [build](/recipe_modules/cipd/api.py#409)(self, input_dir, output_package, package_name, compression_level=None, install_mode=None, preserve_mtime=False, preserve_writable=False):**
+&mdash; **def [build](/recipe_modules/cipd/api.py#457)(self, input_dir, output_package, package_name, compression_level=None, install_mode=None, preserve_mtime=False, preserve_writable=False):**
 
 Builds, but does not upload, a cipd package from a directory.
 
@@ -756,7 +756,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#389)(self, pkg_def, output_package, compression_level=None):**
+&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#437)(self, pkg_def, output_package, compression_level=None):**
 
 Builds a package based on a PackageDefinition object.
 
@@ -769,7 +769,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#363)(self, pkg_def, output_package, pkg_vars=None, compression_level=None):**
+&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#411)(self, pkg_def, output_package, pkg_vars=None, compression_level=None):**
 
 Builds a package based on on-disk YAML package definition file.
 
@@ -783,14 +783,14 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [cache\_dir](/recipe_modules/cipd/api.py#284)(self, directory):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [cache\_dir](/recipe_modules/cipd/api.py#332)(self, directory):**
 
 Sets the cache dir to use with CIPD by setting the $CIPD_CACHE_DIR
 environment variable.
 
 If directory is "None", will use no cache directory.
 
-&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#577)(self, pkg_def, refs=None, tags=None, compression_level=None):**
+&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#640)(self, pkg_def, refs=None, tags=None, metadata=None, compression_level=None):**
 
 Builds and uploads a package based on a PackageDefinition object.
 
@@ -802,12 +802,13 @@ Args:
   * refs (list[str]) - A list of ref names to set for the package instance.
   * tags (dict[str]str) - A map of tag name -> value to set for the
     package instance.
+  * metadata (list[Metadata]) - A list of metadata entries to attach.
   * compression_level (None|[0-9]) - Deflate compression level. If None,
     defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#549)(self, pkg_def, refs=None, tags=None, pkg_vars=None, compression_level=None):**
+&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#607)(self, pkg_def, refs=None, tags=None, metadata=None, pkg_vars=None, compression_level=None):**
 
 Builds and uploads a package based on on-disk YAML package definition
 file.
@@ -819,6 +820,7 @@ Args:
   * refs (list[str]) - A list of ref names to set for the package instance.
   * tags (dict[str]str) - A map of tag name -> value to set for the
     package instance.
+  * metadata (list[Metadata]) - A list of metadata entries to attach.
   * pkg_vars (dict[str]str) - A map of var name -> value to use for vars
     referenced in package definition file.
   * compression_level (None|[0-9]) - Deflate compression level. If None,
@@ -826,7 +828,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [describe](/recipe_modules/cipd/api.py#716)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
+&mdash; **def [describe](/recipe_modules/cipd/api.py#806)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
 
 Returns information about a package instance given its version:
 who uploaded the instance and when and a list of attached tags.
@@ -841,7 +843,7 @@ Args:
 
 Returns the CIPDApi.Description instance describing the package.
 
-&mdash; **def [ensure](/recipe_modules/cipd/api.py#605)(self, root, ensure_file, name='ensure_installed'):**
+&mdash; **def [ensure](/recipe_modules/cipd/api.py#670)(self, root, ensure_file, name='ensure_installed'):**
 
 Ensures that packages are installed in a given root dir.
 
@@ -852,7 +854,7 @@ Args:
 
 Returns the map of subdirectories to CIPDApi.Pin instances.
 
-&mdash; **def [ensure\_tool](/recipe_modules/cipd/api.py#805)(self, package, version, executable_path=None):**
+&mdash; **def [ensure\_tool](/recipe_modules/cipd/api.py#895)(self, package, version, executable_path=None):**
 
 Downloads an executable from CIPD.
 
@@ -881,9 +883,9 @@ Returns a Path to the executable.
 Future-safe; Multiple concurrent calls for the same (package, version) will
 block on a single ensure step.
 
-&emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#296)(self):**
+&emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#344)(self):**
 
-&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#782)(self, root, package_file):**
+&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#872)(self, root, package_file):**
 
 Deploys the specified package to root.
 
@@ -897,7 +899,7 @@ Args:
 
 Returns a Pin for the deployed package.
 
-&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#751)(self, destination, package_name, version):**
+&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#841)(self, destination, package_name, version):**
 
 Downloads the specified package to destination.
 
@@ -914,21 +916,22 @@ Args:
 
 Returns a Pin for the downloaded package.
 
-&mdash; **def [register](/recipe_modules/cipd/api.py#483)(self, package_name, package_path, refs=(), tags=None):**
+&mdash; **def [register](/recipe_modules/cipd/api.py#537)(self, package_name, package_path, refs=None, tags=None, metadata=None):**
 
 Uploads and registers package instance in the package repository.
 
 Args:
   * package_name (str) - The name of the cipd package.
   * package_path (Path) - The path to package instance file.
-  * refs (seq[str]) - A list of ref names to set for the package instance.
+  * refs (list[str]) - A list of ref names to set for the package instance.
   * tags (dict[str]basestring) - A map of tag name -> value to set for the
       package instance.
+  * metadata (list[Metadata]) - A list of metadata entries to attach.
 
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [search](/recipe_modules/cipd/api.py#684)(self, package_name, tag, test_instances=None):**
+&mdash; **def [search](/recipe_modules/cipd/api.py#774)(self, package_name, tag, test_instances=None):**
 
 Searches for package instances by tag, optionally constrained by package
 name.
@@ -944,7 +947,18 @@ Args:
 
 Returns the list of CIPDApi.Pin instances.
 
-&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#659)(self, package_name, version, refs):**
+&mdash; **def [set\_metadata](/recipe_modules/cipd/api.py#724)(self, package_name, version, metadata):**
+
+Attaches metadata to a package instance.
+
+Args:
+  * package_name (str) - The name of the cipd package.
+  * version (str) - The package version to attach metadata to.
+  * metadata (list[Metadata]) - A list of metadata entries to attach.
+
+Returns the CIPDApi.Pin instance.
+
+&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#749)(self, package_name, version, refs):**
 
 Moves a ref to point to a given version.
 
@@ -955,7 +969,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [set\_service\_account](/recipe_modules/cipd/api.py#262)(self, service_account):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [set\_service\_account](/recipe_modules/cipd/api.py#310)(self, service_account):**
 
 Temporarily sets the service account used for authentication to CIPD.
 
@@ -966,7 +980,7 @@ Args:
   * service_account(service_account.api.ServiceAccount): Service account to
       use for authentication.
 
-&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#632)(self, package_name, version, tags):**
+&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#697)(self, package_name, version, tags):**
 
 Tags package of a specific version.
 
@@ -3640,7 +3654,7 @@ This recipe tests the buildbucket.set_output_gitiles_commit function.
 
 [DEPS](/recipe_modules/cipd/examples/full.py#9): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/cipd/examples/full.py#36)(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files, install_mode, refs, tags, max_threads):**
+&mdash; **def [RunSteps](/recipe_modules/cipd/examples/full.py#37)(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files, install_mode, refs, tags, metadata, max_threads):**
 ### *recipes* / [commit\_position:examples/full](/recipe_modules/commit_position/examples/full.py)
 
 [DEPS](/recipe_modules/commit_position/examples/full.py#5): [commit\_position](#recipe_modules-commit_position), [step](#recipe_modules-step)

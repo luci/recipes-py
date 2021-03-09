@@ -20,12 +20,16 @@ CIPD_SERVER_URL = 'https://chrome-infra-packages.appspot.com'
 
 def check_type(name, var, expect):
   if not isinstance(var, expect):  # pragma: no cover
+    if isinstance(expect, tuple):
+      expect_type = ' or '.join('a '+t.__name__ for t in expect)
+    else:
+      expect_type = 'a '+expect.__name__
     raise TypeError('%s is not %s: %r (%s)' %
-                    (name, type(expect).__name__, var, type(var).__name__))
+                    (name, expect_type, var, type(var).__name__))
 
 
 def check_list_type(name, var, expect_inner):
-  check_type(name, var, list)
+  check_type(name, var, (list, tuple))
   for i, itm in enumerate(var):
     check_type('%s[%d]' % (name, i), itm, expect_inner)
 
@@ -60,9 +64,9 @@ class PackageDefinition(object):
       * preserve_mtime (bool) - Preserve file's modification time.
       * preserve_writable (bool) - Preserve file's writable permission bit.
     """
-    check_type('package_name', package_name, str)
+    check_type('package_name', package_name, basestring)
     check_type('package_root', package_root, Path)
-    check_type('install_mode', install_mode, (type(None), str))
+    check_type('install_mode', install_mode, (type(None), basestring))
     if install_mode not in (None, 'copy', 'symlink'):
       raise ValueError('invalid value for install_mode: %r' % install_mode)
     self.package_name = package_name
@@ -103,7 +107,7 @@ class PackageDefinition(object):
     """
     check_type('dir_path', dir_path, Path)
     exclusions = exclusions or []
-    check_list_type('exclusions', exclusions, str)
+    check_list_type('exclusions', exclusions, basestring)
     self.dirs.append(self.DIR(self._rel_path(dir_path), exclusions))
 
   def add_file(self, file_path):
@@ -143,7 +147,7 @@ class PackageDefinition(object):
       * ver_file_rel (str) - A path string relative to the installation root.
         Should be specified in posix style (forward/slashes).
     """
-    check_type('ver_file_rel', ver_file_rel, str)
+    check_type('ver_file_rel', ver_file_rel, basestring)
     if self.version_file is not None:
       raise ValueError('add_version_file() may only be used once.')
     self.version_file = ver_file_rel
@@ -201,6 +205,49 @@ class EnsureFile(object):
     return '\n'.join(package_list)
 
 
+class Metadata(object):
+  def __init__(self, key, value=None, value_from_file=None, content_type=None):
+    """Constructs a metadata entry to attach to a package instance.
+
+    Each entry has a key (doesn't have to be unique), a value (supplied either
+    directly as a string or read from a file), and a content type. The content
+    type can be omitted, the CIPD client will try to guess it in this case.
+
+    Args:
+      * key (str) - the metadata key.
+      * value (str|None) - the literal metadata value. Can't be used together
+        with 'value_from_file'.
+      * value_from_file (Path|None) - the path to read the value from. Can't be
+        used together with 'value'.
+      * content-type (str|None) - a content type of the metadata value
+        (e.g. "application/json" or "text/plain"). Will be guessed if not given.
+    """
+    check_type('key', key, basestring)
+    if value is not None:
+      check_type('value', value, basestring)
+    if value_from_file is not None:
+      check_type('value_from_file', value_from_file, Path)
+    if content_type is not None:
+      check_type('content_type', content_type, basestring)
+    if not value and not value_from_file:  # pragma: no cover
+      raise ValueError('Either "value" or "value_from_file" should be given')
+    if value and value_from_file:  # pragma: no cover
+      raise ValueError(
+          'Only one of "value" or "value_from_file" should be given, not both')
+    self._key = key
+    self._value = value
+    self._value_from_file = value_from_file
+    self._content_type = content_type
+
+  def _as_cli_flag(self):
+    key = self._key
+    if self._content_type:
+      key += '(%s)' % self._content_type
+    if self._value_from_file:
+      return ['-metadata-from-file', '%s:%s' % (key, self._value_from_file)]
+    return ['-metadata', '%s:%s' % (key, self._value)]
+
+
 class CIPDApi(recipe_api.RecipeApi):
   """CIPDApi provides basic support for CIPD.
 
@@ -213,6 +260,7 @@ class CIPDApi(recipe_api.RecipeApi):
   """
   PackageDefinition = PackageDefinition
   EnsureFile = EnsureFile
+  Metadata = Metadata
 
   # A CIPD pin.
   Pin = namedtuple('Pin', [
@@ -339,7 +387,7 @@ class CIPDApi(recipe_api.RecipeApi):
              pkg_vars=None,
              compression_level=None):
     if pkg_vars:
-      check_dict_type('pkg_vars', pkg_vars, str, str)
+      check_dict_type('pkg_vars', pkg_vars, basestring, basestring)
 
     cmd = [
         'pkg-build',
@@ -349,7 +397,7 @@ class CIPDApi(recipe_api.RecipeApi):
         output_package,
         '-hash-algo',
         'sha256',
-    ] + self._cli_options((), (), pkg_vars)
+    ] + self._cli_options(pkg_vars=pkg_vars)
     if compression_level:
       cmd.extend(['-compression-level', int(compression_level)])
 
@@ -465,36 +513,49 @@ class CIPDApi(recipe_api.RecipeApi):
       return ['-service-account-json', self._service_account.key_path]
     return []
 
-  def _cli_options(self, refs, tags, pkg_vars):
-    """Computes a list of CIPD CLI -ref, -tag, and -pkg-var options given a
-    sequence of refs, a dict of tags, and a dict of pkg_vars."""
+  def _cli_options(self, refs=None, tags=None, metadata=None, pkg_vars=None):
+    """Computes a list of -ref, -tag, -metadata and -pkg-var CLI flags."""
+    refs = [] if refs is None else refs
+    tags = {} if tags is None else tags
+    metadata = [] if metadata is None else metadata
+    pkg_vars = {} if pkg_vars is None else pkg_vars
+    check_list_type('refs', refs, basestring)
+    check_dict_type('tags', tags, basestring, basestring)
+    check_list_type('metadata', metadata, Metadata)
+    check_dict_type('pkg_vars', pkg_vars, basestring, basestring)
     ret = []
-    if refs:
-      for ref in refs:
-        ret.extend(['-ref', ref])
-    if tags:
-      for tag, value in sorted(tags.items()):
-        ret.extend(['-tag', '%s:%s' % (tag, value)])
-    if pkg_vars:
-      for var_name, value in sorted(pkg_vars.items()):
-        ret.extend(['-pkg-var', '%s:%s' % (var_name, value)])
+    for ref in refs:
+      ret.extend(['-ref', ref])
+    for tag, value in sorted(tags.items()):
+      ret.extend(['-tag', '%s:%s' % (tag, value)])
+    for md in sorted(metadata, key=lambda m: m._key):
+      ret.extend(md._as_cli_flag())
+    for var_name, value in sorted(pkg_vars.items()):
+      ret.extend(['-pkg-var', '%s:%s' % (var_name, value)])
     return ret
 
-  def register(self, package_name, package_path, refs=(), tags=None):
+  def register(self,
+               package_name,
+               package_path,
+               refs=None,
+               tags=None,
+               metadata=None):
     """Uploads and registers package instance in the package repository.
 
     Args:
       * package_name (str) - The name of the cipd package.
       * package_path (Path) - The path to package instance file.
-      * refs (seq[str]) - A list of ref names to set for the package instance.
+      * refs (list[str]) - A list of ref names to set for the package instance.
       * tags (dict[str]basestring) - A map of tag name -> value to set for the
           package instance.
+      * metadata (list[Metadata]) - A list of metadata entries to attach.
 
     Returns:
       The CIPDApi.Pin instance.
     """
-    cmd = ['pkg-register', package_path] + self._cli_options(
-        refs, tags, ()) + self._service_account_opts()
+    cmd = ['pkg-register', package_path]
+    cmd.extend(self._cli_options(refs, tags, metadata))
+    cmd.extend(self._service_account_opts())
     step_result = self._run(
         'register %s' % package_name,
         cmd,
@@ -513,21 +574,18 @@ class CIPDApi(recipe_api.RecipeApi):
               pkg_def_file_or_placeholder,
               refs=None,
               tags=None,
+              metadata=None,
               pkg_vars=None,
               compression_level=None):
-    refs = [] if refs is None else refs
-    tags = {} if tags is None else tags
-    pkg_vars = {} if pkg_vars is None else pkg_vars
-    check_list_type('refs', refs, str)
-    check_dict_type('tags', tags, str, basestring)
-    check_dict_type('pkg_vars', pkg_vars, str, str)
     cmd = [
         'create',
         '-pkg-def',
         pkg_def_file_or_placeholder,
         '-hash-algo',
         'sha256',
-    ] + self._cli_options(refs, tags, pkg_vars) + self._service_account_opts()
+    ]
+    cmd.extend(self._cli_options(refs, tags, metadata, pkg_vars))
+    cmd.extend(self._service_account_opts())
     if compression_level:
       cmd.extend(['-compression-level', int(compression_level)])
     step_result = self._run(
@@ -550,6 +608,7 @@ class CIPDApi(recipe_api.RecipeApi):
                        pkg_def,
                        refs=None,
                        tags=None,
+                       metadata=None,
                        pkg_vars=None,
                        compression_level=None):
     """Builds and uploads a package based on on-disk YAML package definition
@@ -562,6 +621,7 @@ class CIPDApi(recipe_api.RecipeApi):
       * refs (list[str]) - A list of ref names to set for the package instance.
       * tags (dict[str]str) - A map of tag name -> value to set for the
         package instance.
+      * metadata (list[Metadata]) - A list of metadata entries to attach.
       * pkg_vars (dict[str]str) - A map of var name -> value to use for vars
         referenced in package definition file.
       * compression_level (None|[0-9]) - Deflate compression level. If None,
@@ -571,13 +631,17 @@ class CIPDApi(recipe_api.RecipeApi):
     """
     check_type('pkg_def', pkg_def, Path)
     return self._create(
-        self.m.path.basename(pkg_def), pkg_def, refs, tags, pkg_vars,
+        self.m.path.basename(pkg_def),
+        pkg_def,
+        refs, tags, metadata,
+        pkg_vars,
         compression_level)
 
   def create_from_pkg(self,
                       pkg_def,
                       refs=None,
                       tags=None,
+                      metadata=None,
                       compression_level=None):
     """Builds and uploads a package based on a PackageDefinition object.
 
@@ -589,6 +653,7 @@ class CIPDApi(recipe_api.RecipeApi):
       * refs (list[str]) - A list of ref names to set for the package instance.
       * tags (dict[str]str) - A map of tag name -> value to set for the
         package instance.
+      * metadata (list[Metadata]) - A list of metadata entries to attach.
       * compression_level (None|[0-9]) - Deflate compression level. If None,
         defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
 
@@ -598,9 +663,9 @@ class CIPDApi(recipe_api.RecipeApi):
     return self._create(
         pkg_def.package_name,
         self.m.json.input(pkg_def.to_jsonish()),
-        refs,
-        tags,
-        compression_level=compression_level)
+        refs, tags, metadata,
+        None,
+        compression_level)
 
   def ensure(self, root, ensure_file, name='ensure_installed'):
     """Ensures that packages are installed in a given root dir.
@@ -646,12 +711,37 @@ class CIPDApi(recipe_api.RecipeApi):
         package_name,
         '-version',
         version,
-    ] + self._cli_options((), tags, ())
+    ] + self._cli_options(tags=tags)
 
     step_result = self._run(
         'cipd set-tag %s' % package_name,
         cmd,
         step_test_data=lambda: self.test_api.example_set_tag(
+            package_name, version))
+    result = step_result.json.output['result']
+    return self.Pin(**result[0]['pin'])
+
+  def set_metadata(self, package_name, version, metadata):
+    """Attaches metadata to a package instance.
+
+    Args:
+      * package_name (str) - The name of the cipd package.
+      * version (str) - The package version to attach metadata to.
+      * metadata (list[Metadata]) - A list of metadata entries to attach.
+
+    Returns the CIPDApi.Pin instance.
+    """
+    cmd = [
+        'set-metadata',
+        package_name,
+        '-version',
+        version,
+    ] + self._cli_options(metadata=metadata)
+
+    step_result = self._run(
+        'cipd set-metadata %s' % package_name,
+        cmd,
+        step_test_data=lambda: self.test_api.example_set_metadata(
             package_name, version))
     result = step_result.json.output['result']
     return self.Pin(**result[0]['pin'])
@@ -671,7 +761,7 @@ class CIPDApi(recipe_api.RecipeApi):
         package_name,
         '-version',
         version,
-    ] + self._cli_options(refs, (), ()) + self._service_account_opts()
+    ] + self._cli_options(refs=refs) + self._service_account_opts()
 
     step_result = self._run(
         'cipd set-ref %s' % package_name,
@@ -765,8 +855,8 @@ class CIPDApi(recipe_api.RecipeApi):
     Returns a Pin for the downloaded package.
     """
     check_type('destination', destination, Path)
-    check_type('package_name', package_name, str)
-    check_type('version', version, str)
+    check_type('package_name', package_name, basestring)
+    check_type('version', version, basestring)
     cmd = ['pkg-fetch', package_name, '-version', version, '-out', destination]
     cmd += self._service_account_opts()
     step_result = self._run(

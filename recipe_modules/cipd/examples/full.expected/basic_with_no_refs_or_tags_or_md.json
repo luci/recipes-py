@@ -623,6 +623,40 @@
   {
     "cmd": [
       "cipd",
+      "set-metadata",
+      "fake-package",
+      "-version",
+      "latest",
+      "-metadata",
+      "key1:val1",
+      "-metadata",
+      "key1(text/plain):val2",
+      "-metadata-from-file",
+      "key2:[START_DIR]/val1.json",
+      "-metadata-from-file",
+      "key2(application/json):[START_DIR]/val2.json",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "cipd set-metadata fake-package",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@    {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"package\": \"fake-package\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"pin\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-latest----------\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"package\": \"fake-package\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  ]@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
       "pkg-fetch",
       "fake-package/${platform}",
       "-version",
