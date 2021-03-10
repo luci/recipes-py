@@ -672,15 +672,29 @@ class CIPDApi(recipe_api.RecipeApi):
 
     Args:
       * root (Path) - Path to installation site root directory.
-      * ensure_file (EnsureFile) - List of packages to install.
+      * ensure_file (EnsureFile|Path) - List of packages to install.
       * name (str) - Step display name.
 
     Returns the map of subdirectories to CIPDApi.Pin instances.
     """
-    check_type('ensure_file', ensure_file, EnsureFile)
+    check_type('ensure_file', ensure_file, (EnsureFile, Path))
+
+    if isinstance(ensure_file, EnsureFile):
+      step_test_data = lambda: self.test_api.example_ensure(ensure_file)
+      ensure_file_path = self.m.raw_io.input(ensure_file.render())
+    else:
+      # ensure_file is a Path so we can't inspect its contents to construct
+      # reasonable test data. So pretend we're using an empty list of packages
+      # for the purpose of generating test data.
+      step_test_data = lambda: self.test_api.example_ensure(self.EnsureFile())
+      ensure_file_path = ensure_file
+
     cmd = [
-        'ensure', '-root', root, '-ensure-file',
-        self.m.raw_io.input(ensure_file.render())
+        'ensure',
+        '-root',
+        root,
+        '-ensure-file',
+        ensure_file_path,
     ]
     if self.max_threads is not None:
       cmd.extend(('-max-threads', str(self.max_threads)))
@@ -688,7 +702,8 @@ class CIPDApi(recipe_api.RecipeApi):
     step_result = self._run(
         name,
         cmd,
-        step_test_data=lambda: self.test_api.example_ensure(ensure_file))
+        step_test_data=step_test_data,
+    )
     return {
         subdir: [self.Pin(**pin) for pin in pins]
         for subdir, pins in step_result.json.output['result'].iteritems()

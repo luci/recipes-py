@@ -163,6 +163,11 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
       api.path['start_dir'].join('raw_root'),
       api.path['start_dir'].join('fetched_pkg'))
 
+  api.cipd.ensure(
+      cipd_root,
+      api.path['start_dir'].join('cipd.ensure'),
+      name='ensure with existing file')
+
   # Install a tool using the high-level helper function. This operation should
   # be idempotent, so subsequent attempts should not re-install the package.
   for _ in range(2):

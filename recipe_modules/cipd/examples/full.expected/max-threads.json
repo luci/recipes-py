@@ -740,6 +740,27 @@
     ]
   },
   {
+    "cmd": [
+      "cipd",
+      "ensure",
+      "-root",
+      "[START_DIR]/packages",
+      "-ensure-file",
+      "[START_DIR]/cipd.ensure",
+      "-max-threads",
+      "2",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "ensure with existing file",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {}@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
     "cmd": [],
     "name": "install infra/some_exe"
   },
