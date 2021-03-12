@@ -198,13 +198,13 @@ class TaskRequest(object):
     """Returns the ResultDB integration config of the task."""
     return self._resultdb
 
-  def with_resultdb(self, enable=True):
-    """Enables or disables the ResultDB integration in the task.
+  def with_resultdb(self):
+    """Enables the ResultDB integration in the task.
 
     Requires the task request to be associated with some LUCI realm.
     """
     ret = self._copy()
-    ret._resultdb = self.ResultDBCfg(enable=enable)
+    ret._resultdb = self.ResultDBCfg(enable=True)
     return ret
 
   @property
@@ -279,7 +279,7 @@ class TaskRequest(object):
     if 'user' in d:
       ret = ret.with_user(d['user'])
     if 'resultdb' in d:
-      ret = ret.with_resultdb(**d['resultdb'])
+      ret = ret.with_resultdb()
     if 'realm' in d:
       ret = ret.with_realm(d['realm'])
     ret._slices = [
