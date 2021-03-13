@@ -30,7 +30,6 @@ class BuildbucketApi(recipe_api.RecipeApi):
   """A module for interacting with buildbucket."""
 
   HOST_PROD = 'cr-buildbucket.appspot.com'
-  HOST_PROD_BEEFY = 'beefy-dot-cr-buildbucket.appspot.com'
   HOST_DEV = 'cr-buildbucket-dev.appspot.com'
 
   # The Build message fields that will be requested by default in buildbucket
