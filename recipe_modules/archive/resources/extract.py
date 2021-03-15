@@ -19,7 +19,11 @@ import zipfile
 
 if os.name == 'nt':
   def unc_path(path):
-    return '\\\\?\\' + os.path.abspath(path)
+    prefix = '\\\\?\\'
+    if path.startswith(prefix):
+      # Already in UNC format.
+      return path
+    return prefix + os.path.abspath(path)
 else:
   def unc_path(path):
     return path
@@ -38,7 +42,13 @@ def untar(archive_file, output, stats, safe, include_filter):
     include_filter (fn(path): bool): A function which is given the archive
       path and should return True if we should extract it.
   """
-  with tarfile.open(archive_file, 'r|*') as tf:
+  # Open regular files in random-access mode, which allows seeking backwards
+  # (needed to extract archives containing symlinks on some platforms).
+  # Otherwise, we open the file in stream mode, though this may fail later
+  # for the aforementioned case.
+  open_mode = 'r:*' if os.path.isfile(archive_file) else 'r|*'
+  unc_output = unc_path(output)
+  with tarfile.open(archive_file, open_mode) as tf:
     # monkeypatch the TarFile object to allow printing messages for each
     # extracted file. extractall makes a single linear pass over the tarfile;
     # other naive implementations (such as `getmembers`) end up doing lots of
@@ -46,7 +56,8 @@ def untar(archive_file, output, stats, safe, include_filter):
     em = tf._extract_member
 
     def _extract_member(tarinfo, targetpath, **kwargs):
-      if safe and not os.path.abspath(targetpath).startswith(output):
+      unc_targetpath = unc_path(targetpath)
+      if safe and not unc_targetpath.startswith(unc_output):
         print('Skipping %r (would escape root)' % (tarinfo.name,))
         stats['skipped']['filecount'] += 1
         stats['skipped']['bytes'] += tarinfo.size
@@ -60,7 +71,7 @@ def untar(archive_file, output, stats, safe, include_filter):
       print('Extracting %r' % (tarinfo.name,))
       stats['extracted']['filecount'] += 1
       stats['extracted']['bytes'] += tarinfo.size
-      em(tarinfo, unc_path(targetpath), **kwargs)
+      em(tarinfo, unc_targetpath, **kwargs)
 
     tf._extract_member = _extract_member
     tf.extractall(output)
