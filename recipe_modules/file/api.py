@@ -517,7 +517,7 @@ class FileApi(recipe_api.RecipeApi):
     result.presentation.logs['listdir'] = map(str, ret)
     return ret
 
-  def ensure_directory(self, name, dest, mode=0777):
+  def ensure_directory(self, name, dest, mode=0o777):
     """Ensures that `dest` exists and is a directory.
 
     Args:

@@ -26,7 +26,7 @@ def _rmfile(p, _win_read_only_unset=False):  # pragma: no cover
   except OSError as e:
     if sys.platform == 'win32' and not _win_read_only_unset:
       # Try to remove the read-only bit and remove again.
-      os.chmod(p, 0777)
+      os.chmod(p, 0o777)
       _rmfile(p, _win_read_only_unset=True)
     elif e.errno != errno.ENOENT:
       raise
@@ -51,7 +51,7 @@ def _rmtree(d):  # pragma: no cover
       # fn is one of islink, listdir, remove or rmdir.
       if fn is os.remove:
         # Try to remove the read-only bit.
-        os.chmod(p, 0777)
+        os.chmod(p, 0o777)
         # And remove again.
         os.remove(p)
         return

@@ -27,7 +27,7 @@ def main(args):
     if path in made_dirs:
       return
     try:
-      os.makedirs(path, 0777)
+      os.makedirs(path, 0o777)
     except OSError as ex:
       if ex.errno != errno.EEXIST:
         raise
