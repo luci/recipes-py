@@ -35,14 +35,14 @@ def _RmGlob(file_wildcard, root, include_hidden):
   for item in glob2.glob(wildcard, include_hidden=include_hidden):
     try:
       os.remove(item)
-    except OSError, e:
+    except OSError as e:
       if e.errno != errno.ENOENT:
         raise
 
 
 def _RmContents(path):
   if os.path.exists(path):
-    os.chmod(path, 0770)
+    os.chmod(path, 0o770)
     for p in (os.path.join(path, x) for x in os.listdir(path)):
       if os.path.isdir(p):
         _RmTree(p)
@@ -128,7 +128,7 @@ def _RmTree(path):
   for root, dirs, files in os.walk(path, topdown=False):
     # For POSIX:  making the directory writable guarantees removability.
     # Windows will ignore the non-read-only bits in the chmod value.
-    os.chmod(root, 0770)
+    os.chmod(root, 0o770)
     for name in files:
       remove_with_retry(os.remove, os.path.join(root, name))
     for name in dirs:
