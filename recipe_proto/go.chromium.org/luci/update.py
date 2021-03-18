@@ -22,6 +22,7 @@ TAR_URL = BASE_URL+'/+archive/%s/%s.tar.gz'
 SUB_PATHS = [
   'buildbucket/proto',
   'common/proto',
+  'cv/api/recipe/v1',
   'gce/api/config/v1',
   'led/job',
   'lucictx',
