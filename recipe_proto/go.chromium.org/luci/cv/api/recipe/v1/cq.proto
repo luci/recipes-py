@@ -26,6 +26,8 @@ message Input {
 
   // If false, CQ would try to submit CL(s) if all other checks pass.
   // If true, CQ won't try to submit.
+  //
+  // DEPRECATED: Use run_mode instead.
   bool dry_run = 2;
 
   // If true, CQ will not take this build into account while deciding whether
@@ -40,6 +42,9 @@ message Input {
   // One possible use is to distinguish which builds must be cancelled manually,
   // and which (top_level=True) CQ would cancel itself.
   bool top_level = 4;
+
+  // The mode of the CQ Run that triggers this Tryjob.
+  string run_mode = 5;
 }
 
 // Output provides build-specific instructions back to CQ.
@@ -82,17 +87,17 @@ message Output {
   Retry retry = 2;
 
   message Reuse {
-    // Regular expression for kinds of Runs for which this Reuse block applies.
+    // Regular expression for modes of Runs for which this Reuse block applies.
     // Required.
     //
     // Implicitly wrapped with (?i)$...^  (= complete case-insensitive match).
     //
     // For example,
-    //   ".+" will match all kinds of Runs,
+    //   ".+" will match all modes of Runs,
     //   "dryrun" and "fullrun" will match only Dry and Full runs, respectively.
-    string kind_regexp = 1;
+    string mode_regexp = 1;
     // If deny is true, then reuse of this build in the future Runs of the
-    // matched kind is not allowed.
+    // matched mode is not allowed.
     //
     // If false, then reuse is allowed. It's useful to stop the matching in case
     // of several Reuse messages.
@@ -108,14 +113,15 @@ message Output {
   //
   // If specified, the order matters: the first matching Reuse message wins.
   // If specified and no Reuse match the run, reuse is *not allowed*.
+  // If any individual Reuse block is invalid, reuse is *not allowed*.
   //
   // Examples:
   //
   //  1. To prohibit reuse only for Full runs, do:
-  //     {kind_regexp: "fullrun" deny: true}
-  //     {kind_regexp: ".+"      deny: false}
+  //     {mode_regexp: "fullrun" deny: true}
+  //     {mode_regexp: ".+"      deny: false}
   //
   //  2. To prohibit reuse for everything except Dry Runs, do:
-  //     {kind_regexp: "dryrun"}
+  //     {mode_regexp: "dryrun"}
   repeated Reuse reuse = 3;
 }
