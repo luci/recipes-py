@@ -89,6 +89,7 @@
   * [engine_tests/multiple_placeholders](#recipes-engine_tests_multiple_placeholders) &mdash; Tests error checking around multiple placeholders in a single step.
   * [engine_tests/nonexistent_command](#recipes-engine_tests_nonexistent_command)
   * [engine_tests/placeholder_exception](#recipes-engine_tests_placeholder_exception) &mdash; Tests that placeholders can't wreck the world by exhausting the step stack.
+  * [engine_tests/proto_output_properties](#recipes-engine_tests_proto_output_properties) &mdash; Tests that output properties can be a proto message.
   * [engine_tests/proto_properties](#recipes-engine_tests_proto_properties)
   * [engine_tests/recipe_paths](#recipes-engine_tests_recipe_paths) &mdash; Tests that recipes have access to names, resources and their repo.
   * [engine_tests/sort_properties](#recipes-engine_tests_sort_properties) &mdash; Tests that step presentation properties can be ordered.
@@ -3865,6 +3866,13 @@ Tests error checking around multiple placeholders in a single step.
 Tests that placeholders can't wreck the world by exhausting the step stack.
 
 &mdash; **def [RunSteps](/recipes/engine_tests/placeholder_exception.py#24)(api):**
+### *recipes* / [engine\_tests/proto\_output\_properties](/recipes/engine_tests/proto_output_properties.py)
+
+[DEPS](/recipes/engine_tests/proto_output_properties.py#10): [step](#recipe_modules-step)
+
+Tests that output properties can be a proto message.
+
+&mdash; **def [RunSteps](/recipes/engine_tests/proto_output_properties.py#14)(api):**
 ### *recipes* / [engine\_tests/proto\_properties](/recipes/engine_tests/proto_properties.py)
 
 [DEPS](/recipes/engine_tests/proto_properties.py#7): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties)

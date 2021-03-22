@@ -305,6 +305,20 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       'ref': 'refs/heads/main',
     })
 
+  def test_proto_output_properties(self):
+    final_build = self._test_bbagent(
+        {'recipe': 'engine_tests/proto_output_properties'},
+    )
+    output_props = final_build['output']['properties']
+    self.assertDictEqual(output_props['$mod/proto_out'], {
+      'str': 'foo',
+      'strs': ['bar', 'baz'],
+      'msg' : {
+        'num': 1,
+        'nums': [10, 11, 12],
+      },
+    })
+
   def test_external_timeout(self):
     final_build = self._test_bbagent(
         {'recipe': 'engine_tests/long_sleep'},

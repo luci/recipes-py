@@ -1,0 +1,12 @@
+[
+  {
+    "cmd": [],
+    "name": "proto output properties",
+    "~followup_annotations": [
+      "@@@SET_BUILD_PROPERTY@$mod/proto_out@{\"msg\": {\"num\": 1, \"nums\": [10, 11, 12]}, \"str\": \"foo\", \"strs\": [\"bar\", \"baz\"]}@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

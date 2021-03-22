@@ -1,0 +1,18 @@
+// Copyright 2021 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipes.recipe_engine.engine_tests.proto_output_properties;
+
+message Output {
+  string str = 1;
+  repeated string strs = 2;
+  Msg msg = 3;
+}
+
+message Msg {
+  int32 num = 1;
+  repeated int32 nums = 2;
+}

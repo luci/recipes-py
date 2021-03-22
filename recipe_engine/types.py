@@ -9,6 +9,8 @@ import operator
 
 import attr
 from gevent.local import local
+from google.protobuf import message
+from google.protobuf import json_format as json_pb
 
 from .internal.attr_util import attr_type
 
@@ -243,6 +245,8 @@ class StepPresentation(object):
       # easy to remedy here.
       step_stream.add_step_link(label, url.replace(" ", "%20"))
     for key, value in sorted(self._properties.iteritems()):
+      if isinstance(value, message.Message):
+        value = json_pb.MessageToDict(value)
       step_stream.set_build_property(key, json.dumps(value, sort_keys=True))
     step_stream.set_step_status(self.status, self.had_timeout)
 
