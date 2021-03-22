@@ -3,7 +3,7 @@
     "cmd": [],
     "name": "show properties",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@result@state: State.INACTIVE@@@",
+      "@@@STEP_LOG_LINE@result@mode: QUICK_DRY_RUN@@@",
       "@@@STEP_LOG_END@result@@@"
     ]
   },

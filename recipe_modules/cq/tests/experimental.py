@@ -29,13 +29,13 @@ def RunSteps(api):
 def GenTests(api):
   yield (
     api.test('default')
-    + api.cq(full_run=True)
+    + api.cq(run_mode=api.cq.FULL_RUN)
     + api.properties(expected_top_level=True)
     + api.post_process(post_process.DropExpectation)
   )
   yield (
     api.test('indirect and experimental')
-    + api.cq(full_run=True, top_level=False, experimental=True)
+    + api.cq(run_mode=api.cq.FULL_RUN, top_level=False, experimental=True)
     + api.properties(expected_experimental=True)
     + api.post_process(post_process.DropExpectation)
   )

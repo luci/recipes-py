@@ -30,7 +30,7 @@ def RunSteps(api):
 def GenTests(api):
   yield (
     api.test('cq-run')
-    + api.cq(full_run=True)
+    + api.cq(run_mode=api.cq.FULL_RUN)
     # api.buildbucket.gerrit_changes must be simulated
     # to use api.cq.ordered_gerrit_changes.
     + api.buildbucket.try_build(change_number=123)

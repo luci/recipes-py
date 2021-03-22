@@ -71,8 +71,9 @@
   * [cq:tests/cl_group_key](#recipes-cq_tests_cl_group_key)
   * [cq:tests/do_not_retry](#recipes-cq_tests_do_not_retry)
   * [cq:tests/experimental](#recipes-cq_tests_experimental)
+  * [cq:tests/inactive](#recipes-cq_tests_inactive)
+  * [cq:tests/mode_of_run](#recipes-cq_tests_mode_of_run)
   * [cq:tests/triggered_build_ids](#recipes-cq_tests_triggered_build_ids)
-  * [cq:tests/type_of_run](#recipes-cq_tests_type_of_run)
   * [engine_tests/bad_subprocess](#recipes-engine_tests_bad_subprocess) &mdash; Tests that daemons that hang on to STDOUT can't cause the engine to hang.
   * [engine_tests/comprehensive_ui](#recipes-engine_tests_comprehensive_ui) &mdash; A fast-running recipe which comprehensively covers all StepPresentation features available in the recipe engine.
   * [engine_tests/config_operations](#recipes-engine_tests_config_operations) &mdash; Tests that recipes can modify configuration options in various ways.
@@ -1170,11 +1171,15 @@ This module provides recipe API of LUCI CQ, aka pre-commit testing system.
 
 The CQ service is being replaced with a service now named LUCI Change
 Verifier (CV); for more information see:
-  https://chromium.googlesource.com/infra/luci/luci-go/+/master/cv
+  https://chromium.googlesource.com/infra/luci/luci-go/+/HEAD/cv
 
 TODO(qyearsley): Rename parts of this from CQ -> CV as appropriate.
 
-&emsp; **@property**<br>&mdash; **def [cl\_group\_key](/recipe_modules/cq/api.py#133)(self):**
+&emsp; **@property**<br>&mdash; **def [active](/recipe_modules/cq/api.py#51)(self):**
+
+Returns whether CQ is active for this build.
+
+&emsp; **@property**<br>&mdash; **def [cl\_group\_key](/recipe_modules/cq/api.py#134)(self):**
 
 Returns a string that is unique for a current set of Gerrit change
 patchsets (or, equivalently, buildsets).
@@ -1183,11 +1188,11 @@ The same `cl_group_key` will be used if another Attempt is made for the
 same set of changes at a different time.
 
 Raises:
-  CQInactive if CQ is `INACTIVE` for this build.
+  CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [do\_not\_retry\_build](/recipe_modules/cq/api.py#197)(self):**
+&emsp; **@property**<br>&mdash; **def [do\_not\_retry\_build](/recipe_modules/cq/api.py#198)(self):**
 
-&emsp; **@property**<br>&mdash; **def [equivalent\_cl\_group\_key](/recipe_modules/cq/api.py#146)(self):**
+&emsp; **@property**<br>&mdash; **def [equivalent\_cl\_group\_key](/recipe_modules/cq/api.py#147)(self):**
 
 Returns a string that is unique for a given set of Gerrit changes
 disregarding trivial patchset differences.
@@ -1196,9 +1201,9 @@ For example, when a new "trivial" patchset is uploaded, then the
 cl_group_key will change but the equivalent_cl_group_key will stay the same.
 
 Raises:
-  CQInactive if CQ is `INACTIVE` for this build.
+  CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [experimental](/recipe_modules/cq/api.py#65)(self):**
+&emsp; **@property**<br>&mdash; **def [experimental](/recipe_modules/cq/api.py#66)(self):**
 
 Returns whether this build is triggered for a CQ experimental builder.
 
@@ -1206,19 +1211,19 @@ See `Builder.experiment_percentage` doc in [CQ
 config](https://chromium.googlesource.com/infra/luci/luci-go/+/master/cv/api/config/v2/cq.proto)
 
 Raises:
-  CQInactive if CQ is `INACTIVE` for this build.
+  CQInactive if CQ is not active for this build.
 
-&mdash; **def [initialize](/recipe_modules/cq/api.py#47)(self):**
+&mdash; **def [initialize](/recipe_modules/cq/api.py#41)(self):**
 
-&emsp; **@property**<br>&mdash; **def [ordered\_gerrit\_changes](/recipe_modules/cq/api.py#90)(self):**
+&emsp; **@property**<br>&mdash; **def [ordered\_gerrit\_changes](/recipe_modules/cq/api.py#91)(self):**
 
 Returns list[bb_common_pb2.GerritChange] in order in which CLs should be
 applied or submitted.
 
 Raises:
-  CQInactive if CQ is `INACTIVE` for this build.
+  CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [props\_for\_child\_build](/recipe_modules/cq/api.py#104)(self):**
+&emsp; **@property**<br>&mdash; **def [props\_for\_child\_build](/recipe_modules/cq/api.py#105)(self):**
 
 Returns properties dict meant to be passed to child builds.
 
@@ -1239,7 +1244,7 @@ api.cq.record_triggered_builds(*child_builds)
 The contents of returned dict should be treated as opaque blob,
 it may be changed without notice.
 
-&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cq/api.py#181)(self, \*build_ids):**
+&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cq/api.py#182)(self, \*build_ids):**
 
 Adds given Buildbucket build ids to the list of triggered builds for CQ
 to wait on corresponding build completion later.
@@ -1249,7 +1254,7 @@ Must be called after some step.
 Args:
   * build_id (int or string): Buildbucket build id.
 
-&mdash; **def [record\_triggered\_builds](/recipe_modules/cq/api.py#164)(self, \*builds):**
+&mdash; **def [record\_triggered\_builds](/recipe_modules/cq/api.py#165)(self, \*builds):**
 
 Adds given Buildbucket builds to the list of triggered builds for CQ
 to wait on corresponding build completion later.
@@ -1265,27 +1270,30 @@ Args:
   * [`Build`](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
     objects, typically returned by `api.buildbucket.schedule`.
 
-&mdash; **def [set\_do\_not\_retry\_build](/recipe_modules/cq/api.py#201)(self):**
+&emsp; **@property**<br>&mdash; **def [run\_mode](/recipe_modules/cq/api.py#56)(self):**
+
+Returns the mode(str) of the CQ Run that triggers this build.
+
+Raises:
+  CQInactive if CQ is not active for this build.
+
+&mdash; **def [set\_do\_not\_retry\_build](/recipe_modules/cq/api.py#202)(self):**
 
 Instruct CQ to not retry this build.
 
 This mechanism is used to reduce duration of CQ attempt and save testing
 capacity if retrying will likely return an identical result.
 
-&emsp; **@property**<br>&mdash; **def [state](/recipe_modules/cq/api.py#60)(self):**
-
-CQ state pertaining to this recipe execution.
-
-&emsp; **@property**<br>&mdash; **def [top\_level](/recipe_modules/cq/api.py#78)(self):**
+&emsp; **@property**<br>&mdash; **def [top\_level](/recipe_modules/cq/api.py#79)(self):**
 
 Returns whether CQ triggered this build directly.
 
 Can be spoofed. *DO NOT USE FOR SECURITY CHECKS.*
 
 Raises:
-  CQInactive if CQ is `INACTIVE` for this build.
+  CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cq/api.py#159)(self):**
+&emsp; **@property**<br>&mdash; **def [triggered\_build\_ids](/recipe_modules/cq/api.py#160)(self):**
 
 Returns recorded Buildbucket build IDs as a list of integers.
 ### *recipe_modules* / [file](/recipe_modules/file)
@@ -3715,16 +3723,21 @@ This recipe tests the buildbucket.set_output_gitiles_commit function.
 [DEPS](/recipe_modules/cq/tests/experimental.py#7): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/cq/tests/experimental.py#15)(api):**
+### *recipes* / [cq:tests/inactive](/recipe_modules/cq/tests/inactive.py)
+
+[DEPS](/recipe_modules/cq/tests/inactive.py#7): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties)
+
+&mdash; **def [RunSteps](/recipe_modules/cq/tests/inactive.py#14)(api):**
+### *recipes* / [cq:tests/mode\_of\_run](/recipe_modules/cq/tests/mode_of_run.py)
+
+[DEPS](/recipe_modules/cq/tests/mode_of_run.py#5): [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/cq/tests/mode_of_run.py#12)(api):**
 ### *recipes* / [cq:tests/triggered\_build\_ids](/recipe_modules/cq/tests/triggered_build_ids.py)
 
 [DEPS](/recipe_modules/cq/tests/triggered_build_ids.py#5): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/cq/tests/triggered_build_ids.py#15)(api):**
-### *recipes* / [cq:tests/type\_of\_run](/recipe_modules/cq/tests/type_of_run.py)
-
-[DEPS](/recipe_modules/cq/tests/type_of_run.py#5): [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
-
-&mdash; **def [RunSteps](/recipe_modules/cq/tests/type_of_run.py#12)(api):**
 ### *recipes* / [engine\_tests/bad\_subprocess](/recipes/engine_tests/bad_subprocess.py)
 
 [DEPS](/recipes/engine_tests/bad_subprocess.py#7): [platform](#recipe_modules-platform), [python](#recipe_modules-python)

@@ -49,9 +49,9 @@ def GenTests(api):
   yield (
     api.test('typical')
     + api.buildbucket.try_build()
-    + api.cq(full_run=True)
+    + api.cq(run_mode=api.cq.FULL_RUN)
     + api.post_check(check_set_to, 'active', True)
-    + api.post_check(check_unset, 'dry_run')
+    + api.post_check(check_set_to, 'run_mode', 'FULL_RUN')
     + api.post_check(check_unset, 'top_level')
     + api.post_process(post_process.DropExpectation)
   )
@@ -59,9 +59,9 @@ def GenTests(api):
          # Unfortunate coupling: experimental means special tag, too.
          + api.buildbucket.try_build(
              tags=api.buildbucket.tags(cq_experimental='true')) +
-         api.cq(dry_run=True, top_level=False, experimental=True) +
+         api.cq(run_mode=api.cq.DRY_RUN, top_level=False, experimental=True) +
          api.post_check(check_set_to, 'active', True) +
-         api.post_check(check_set_to, 'dry_run', True) +
+         api.post_check(check_set_to, 'run_mode', 'DRY_RUN') +
          api.post_check(check_set_to, 'experimental', True) +
          api.post_check(check_has_bb_tag, 'cq_experimental', 'true') +
          api.post_check(check_unset, 'top_level') +

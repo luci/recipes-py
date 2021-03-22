@@ -3,28 +3,24 @@
 # that can be found in the LICENSE file.
 
 from PB.go.chromium.org.luci.cv.api.recipe.v1 import cq as cq_pb2
-from PB.go.chromium.org.luci.buildbucket.proto import common as bb_common_pb2
 
 from recipe_engine import recipe_test_api
 
 
 class CQTestApi(recipe_test_api.RecipeTestApi):
+  # Common Run modes.
+  DRY_RUN = 'DRY_RUN'
+  QUICK_DRY_RUN = 'QUICK_DRY_RUN'
+  FULL_RUN = 'FULL_RUN'
+
   def __call__(
       self,
-      full_run=None, dry_run=None,
+      run_mode = None,
       top_level=True,
       experimental=False):
     """Simulate a build triggered by CQ."""
-    if full_run:
-      assert not dry_run, ('either `dry` or `full` run, not both')
-      assert isinstance(full_run, bool), '%r (%s)' % (full_run, type(full_run))
-      input_props = cq_pb2.Input(active=True, dry_run=False)
-    elif dry_run:
-      assert isinstance(dry_run, bool), '%r (%s)' % (dry_run, type(dry_run))
-      input_props = cq_pb2.Input(active=True, dry_run=True)
-    else:
-      # TODO(tandrii): disallow this. api.cq() should simulate CQ build.
-      return self.m.properties()
+    assert isinstance(run_mode, str), '%r (%s)' % (run_mode, type(run_mode))
+    input_props = cq_pb2.Input(active=True, run_mode=run_mode)
 
     assert isinstance(top_level, bool), '%r (%s)' % (top_level, type(top_level))
     input_props.top_level = top_level

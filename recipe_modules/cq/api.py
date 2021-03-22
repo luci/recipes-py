@@ -18,21 +18,15 @@ class CQApi(recipe_api.RecipeApi):
 
   The CQ service is being replaced with a service now named LUCI Change
   Verifier (CV); for more information see:
-    https://chromium.googlesource.com/infra/luci/luci-go/+/master/cv
+    https://chromium.googlesource.com/infra/luci/luci-go/+/HEAD/cv
 
   TODO(qyearsley): Rename parts of this from CQ -> CV as appropriate.
   """
 
-  class State(Enum):
-    INACTIVE = 0
-    DRY = 1
-    FULL = 2
-
-  # Re-bind constants for easier usage of CQApi:
-  # >>> if api.cq.state == api.cq.DRY:
-  INACTIVE = State.INACTIVE
-  DRY = State.DRY
-  FULL = State.FULL
+  # Common Run modes.
+  DRY_RUN = 'DRY_RUN'
+  QUICK_DRY_RUN = 'QUICK_DRY_RUN'
+  FULL_RUN = 'FULL_RUN'
 
   class CQInactive(Exception):
     """Incorrect usage of CQApi method requiring active CQ."""
@@ -40,27 +34,34 @@ class CQApi(recipe_api.RecipeApi):
   def __init__(self, input_props, **kwargs):
     super(CQApi, self).__init__(**kwargs)
     self._input = input_props
-    self._state = None
+    self._active = False
     self._triggered_build_ids = []
     self._do_not_retry_build = False
 
   def initialize(self):
-    if self._input.active is False:
-      dry_run = self.m.properties.get('$recipe_engine/cq', {}).get('dry_run')
-    else:
-      dry_run = self._input.dry_run
-
-    if dry_run is None:
-      self._state = self.INACTIVE
-    elif dry_run:
-      self._state = self.DRY
-    else:
-      self._state = self.FULL
+    if self._input.active or (
+      # legacy style
+      'dry_run' in self.m.properties.get('$recipe_engine/cq', {})):
+      self._active = True
+    if self._active and not self._input.run_mode:
+      # backfill
+      self._input.run_mode = (
+        self.DRY_RUN if self._input.dry_run else self.FULL_RUN)
 
   @property
-  def state(self):
-    """CQ state pertaining to this recipe execution."""
-    return self._state
+  def active(self):
+    """Returns whether CQ is active for this build."""
+    return self._active
+
+  @property
+  def run_mode(self):
+    """Returns the mode(str) of the CQ Run that triggers this build.
+
+    Raises:
+      CQInactive if CQ is not active for this build.
+    """
+    self._enforce_active()
+    return self._input.run_mode
 
   @property
   def experimental(self):
@@ -70,7 +71,7 @@ class CQApi(recipe_api.RecipeApi):
     config](https://chromium.googlesource.com/infra/luci/luci-go/+/master/cv/api/config/v2/cq.proto)
 
     Raises:
-      CQInactive if CQ is `INACTIVE` for this build.
+      CQInactive if CQ is not active for this build.
     """
     self._enforce_active()
     return self._input.experimental
@@ -82,7 +83,7 @@ class CQApi(recipe_api.RecipeApi):
     Can be spoofed. *DO NOT USE FOR SECURITY CHECKS.*
 
     Raises:
-      CQInactive if CQ is `INACTIVE` for this build.
+      CQInactive if CQ is not active for this build.
     """
     self._enforce_active()
     return self._input.top_level
@@ -93,7 +94,7 @@ class CQApi(recipe_api.RecipeApi):
     applied or submitted.
 
     Raises:
-      CQInactive if CQ is `INACTIVE` for this build.
+      CQInactive if CQ is not active for this build.
     """
     self._enforce_active()
     assert self.m.buildbucket.build.input.gerrit_changes, (
@@ -139,7 +140,7 @@ class CQApi(recipe_api.RecipeApi):
     same set of changes at a different time.
 
     Raises:
-      CQInactive if CQ is `INACTIVE` for this build.
+      CQInactive if CQ is not active for this build.
     """
     return self._extract_unique_cq_tag('cl_group_key')
 
@@ -152,7 +153,7 @@ class CQApi(recipe_api.RecipeApi):
     cl_group_key will change but the equivalent_cl_group_key will stay the same.
 
     Raises:
-      CQInactive if CQ is `INACTIVE` for this build.
+      CQInactive if CQ is not active for this build.
     """
     return self._extract_unique_cq_tag('equivalent_cl_group_key')
 
@@ -220,5 +221,5 @@ class CQApi(recipe_api.RecipeApi):
     raise ValueError('Can\'t find tag with key %r' % key)  # pragma: nocover
 
   def _enforce_active(self):
-    if not self._input.active:
+    if not self._active:
       raise self.CQInactive()
