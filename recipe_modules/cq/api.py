@@ -4,7 +4,7 @@
 
 """Recipe API for LUCI CQ, the pre-commit testing system."""
 
-from enum import Enum
+import re
 
 from google.protobuf import json_format as json_pb
 
@@ -213,6 +213,33 @@ class CQApi(recipe_api.RecipeApi):
       cur_step= self.m.step('TRYJOB DO NOT RETRY', cmd=None),
       do_not_retry=True,
     )
+
+  @property
+  def allowed_reuse_mode_regexps(self):
+    assert all(not r.deny for r in self._output.reuse), (
+        'deny reuse is not supported currently')
+    return [r.mode_regexp for r in self._output.reuse]
+
+  def allow_reuse_for(self, *mode_regexps):
+    """Instructs CQ that it can reuse this build in future Runs if
+    any of `mode_regexps` matches their modes.
+
+    Overwrites all previously set values.
+
+    See `Output.Reuse` doc in [recipe proto](https://chromium.googlesource.com/infra/luci/luci-go/+/HEAD/cv/api/recipe/v1/cq.proto)
+    """
+    # TODO(yiwzhang): Expose low-level method to modify reuse if needed.
+    if not mode_regexps:
+      raise ValueError('expected at least 1 mode_regexp, got 0')
+    for mr in mode_regexps:
+      try:
+        re.compile(mr)
+      except re.error:
+        raise ValueError('invalid regexp for run mode: %r' % mr)
+    del self._output.reuse[:]
+    self._output.reuse.extend(
+        cq_pb2.Output.Reuse(mode_regexp=mr) for mr in mode_regexps)
+    self._write_output_props()
 
   def _extract_unique_cq_tag(self, suffix):
     key = 'cq_' + suffix

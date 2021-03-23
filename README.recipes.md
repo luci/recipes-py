@@ -73,6 +73,7 @@
   * [cq:tests/experimental](#recipes-cq_tests_experimental)
   * [cq:tests/inactive](#recipes-cq_tests_inactive)
   * [cq:tests/mode_of_run](#recipes-cq_tests_mode_of_run)
+  * [cq:tests/reuse](#recipes-cq_tests_reuse)
   * [cq:tests/triggered_build_ids](#recipes-cq_tests_triggered_build_ids)
   * [engine_tests/bad_subprocess](#recipes-engine_tests_bad_subprocess) &mdash; Tests that daemons that hang on to STDOUT can't cause the engine to hang.
   * [engine_tests/comprehensive_ui](#recipes-engine_tests_comprehensive_ui) &mdash; A fast-running recipe which comprehensively covers all StepPresentation features available in the recipe engine.
@@ -1179,6 +1180,17 @@ TODO(qyearsley): Rename parts of this from CQ -> CV as appropriate.
 &emsp; **@property**<br>&mdash; **def [active](/recipe_modules/cq/api.py#50)(self):**
 
 Returns whether CQ is active for this build.
+
+&mdash; **def [allow\_reuse\_for](/recipe_modules/cq/api.py#223)(self, \*mode_regexps):**
+
+Instructs CQ that it can reuse this build in future Runs if
+any of `mode_regexps` matches their modes.
+
+Overwrites all previously set values.
+
+See `Output.Reuse` doc in [recipe proto](https://chromium.googlesource.com/infra/luci/luci-go/+/HEAD/cv/api/recipe/v1/cq.proto)
+
+&emsp; **@property**<br>&mdash; **def [allowed\_reuse\_mode\_regexps](/recipe_modules/cq/api.py#217)(self):**
 
 &emsp; **@property**<br>&mdash; **def [cl\_group\_key](/recipe_modules/cq/api.py#133)(self):**
 
@@ -3734,6 +3746,11 @@ This recipe tests the buildbucket.set_output_gitiles_commit function.
 [DEPS](/recipe_modules/cq/tests/mode_of_run.py#5): [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/cq/tests/mode_of_run.py#12)(api):**
+### *recipes* / [cq:tests/reuse](/recipe_modules/cq/tests/reuse.py)
+
+[DEPS](/recipe_modules/cq/tests/reuse.py#5): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
+
+&mdash; **def [RunSteps](/recipe_modules/cq/tests/reuse.py#12)(api):**
 ### *recipes* / [cq:tests/triggered\_build\_ids](/recipe_modules/cq/tests/triggered_build_ids.py)
 
 [DEPS](/recipe_modules/cq/tests/triggered_build_ids.py#5): [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [step](#recipe_modules-step)
