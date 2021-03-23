@@ -7,6 +7,7 @@
     "cmd": [],
     "name": "triggered some builds",
     "~followup_annotations": [
+      "@@@SET_BUILD_PROPERTY@$recipe_engine/cq/output@{\"triggeredBuildIds\": [\"1\", \"2\", \"22\", \"11\"]}@@@",
       "@@@SET_BUILD_PROPERTY@triggered_build_ids@[\"1\", \"2\", \"22\", \"11\"]@@@"
     ]
   },

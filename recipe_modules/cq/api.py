@@ -35,8 +35,7 @@ class CQApi(recipe_api.RecipeApi):
     super(CQApi, self).__init__(**kwargs)
     self._input = input_props
     self._active = False
-    self._triggered_build_ids = []
-    self._do_not_retry_build = False
+    self._output = cq_pb2.Output()
 
   def initialize(self):
     if self._input.active or (
@@ -160,7 +159,7 @@ class CQApi(recipe_api.RecipeApi):
   @property
   def triggered_build_ids(self):
     """Returns recorded Buildbucket build IDs as a list of integers."""
-    return self._triggered_build_ids
+    return [bid for bid in self._output.triggered_build_ids]
 
   def record_triggered_builds(self, *builds):
     """Adds given Buildbucket builds to the list of triggered builds for CQ
@@ -190,14 +189,16 @@ class CQApi(recipe_api.RecipeApi):
     """
     if not build_ids:
       return
-    self._triggered_build_ids.extend(int(bid) for bid in build_ids)
-    assert self.m.step.active_result, 'must be called after some step'
-    self.m.step.active_result.presentation.properties['triggered_build_ids'] = [
-          str(build_id) for build_id in self._triggered_build_ids]
+    self._output.triggered_build_ids.extend(int(bid) for bid in build_ids)
+    self._write_output_props(
+      triggered_build_ids=[
+        str(bid) for bid in self._output.triggered_build_ids
+      ],
+    )
 
   @property
   def do_not_retry_build(self):
-    return self._do_not_retry_build
+    return self._output.retry == cq_pb2.Output.OUTPUT_RETRY_DENIED
 
   def set_do_not_retry_build(self):
     """Instruct CQ to not retry this build.
@@ -205,12 +206,13 @@ class CQApi(recipe_api.RecipeApi):
     This mechanism is used to reduce duration of CQ attempt and save testing
     capacity if retrying will likely return an identical result.
     """
-    if self._do_not_retry_build:
+    if self._output.retry == cq_pb2.Output.OUTPUT_RETRY_DENIED:
       return
-    self._do_not_retry_build = True
-    # TODO(iannucci): add API to set properties regardless of the current step.
-    step_result = self.m.step('TRYJOB DO NOT RETRY', cmd=None)
-    step_result.presentation.properties['do_not_retry'] = True
+    self._output.retry = cq_pb2.Output.OUTPUT_RETRY_DENIED
+    self._write_output_props(
+      cur_step= self.m.step('TRYJOB DO NOT RETRY', cmd=None),
+      do_not_retry=True,
+    )
 
   def _extract_unique_cq_tag(self, suffix):
     key = 'cq_' + suffix
@@ -219,6 +221,17 @@ class CQApi(recipe_api.RecipeApi):
       if t.key == key:
         return t.value
     raise ValueError('Can\'t find tag with key %r' % key)  # pragma: nocover
+
+  def _write_output_props(self, cur_step=None, **addition_props):
+    # TODO(iannucci): add API to set properties regardless of the current step.
+    if not cur_step:
+      cur_step = self.m.step.active_result
+      assert cur_step, 'must be called after some step'
+    output = cq_pb2.Output()
+    output.CopyFrom(self._output)
+    cur_step.presentation.properties['$recipe_engine/cq/output'] = output
+    for k, v in addition_props.iteritems():
+      cur_step.presentation.properties[k] = v
 
   def _enforce_active(self):
     if not self._active:
