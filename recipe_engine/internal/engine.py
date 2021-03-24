@@ -399,10 +399,16 @@ class RecipeEngine(object):
 
       self._step_stack.append(_ActiveStep(ret, step_stream, False))
 
-      # _run_step should never raise an exception, except for GreenletExit
-      debug_log = step_stream.new_log_stream('$debug')
-      try:
+      # NOTE: It's important to not open debug_log until:
+      #   1) We know we're going to have to quit due to GLOBAL_SHUTDOWN; OR
+      #   2) We know we have the resources to run this step.
+      #
+      # Otherwise if we open it here, the recipe can run out of file descriptors
+      # in the event that it has many, many blocked steps.
+      debug_log = None
+      try:  # _run_step should never raise an exception, except for GreenletExit
         if GLOBAL_SHUTDOWN.ready():
+          debug_log = step_stream.new_log_stream('$debug')
           debug_log.write_line('GLOBAL_SHUTDOWN already active, skipping step.')
           step_stream.mark_running()   # to set start time, etc.
           raise gevent.GreenletExit()
@@ -411,6 +417,7 @@ class RecipeEngine(object):
           step_stream.set_summary_markdown(
               'Waiting for resources: `%s`' % (step_config.cost,))
         with self._resource.wait_for(step_config.cost, _if_blocking):
+          debug_log = step_stream.new_log_stream('$debug')
           step_stream.mark_running()
           try:
             self._write_memory_snapshot(
@@ -424,7 +431,8 @@ class RecipeEngine(object):
       except gevent.GreenletExit:
         ret.exc_result = attr.evolve(ret.exc_result, was_cancelled=True)
       finally:
-        debug_log.close()
+        if debug_log:
+          debug_log.close()
 
       ret.finalize()
 
