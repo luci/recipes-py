@@ -353,6 +353,11 @@ class LUCIStepStream(StreamEngine.StepStream):
     # TODO(iannucci): improve UI modification interface to immediately send UI
     # changes when they happen.
     self._step.end_time.GetCurrentTime()
+    # Python2 doesn't guarantee monotonic clock. So for quick step, it is
+    # possible that end_time < start_time. Force to set end_time = start_time
+    # in that case.
+    if self._step.end_time.ToDatetime() < self._step.start_time.ToDatetime():
+      self._step.end_time.CopyFrom(self._step.start_time)
     self._step.summary_markdown = self._back_compat_markdown.render()
     if self._step.status == common.STARTED:
       self._step.status = common.SUCCESS
