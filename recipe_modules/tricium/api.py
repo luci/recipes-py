@@ -7,11 +7,10 @@
 This recipe module is intended to support different kinds of
 analyzer recipes, including:
   * Recipes that wrap one or more legacy analyzers.
-  * Recipes that accucumulate comments one by one.
+  * Recipes that accumulate comments one by one.
   * Recipes that wrap other tools and parse their output.
 """
 
-import collections
 import fnmatch
 
 from google.protobuf import json_format
@@ -60,21 +59,16 @@ class TriciumApi(recipe_api.RecipeApi):
     for s in suggestions:
       # Convert from dict to proto message by way of JSON.
       json_format.Parse(self.m.json.dumps(s), comment.suggestions.add())
+    self._add_comment(comment)
+
+  def _add_comment(self, comment):
     if comment not in self._comments:
       self._comments.append(comment)
 
   def write_comments(self):
-    """Emit the results accumulated by `add_comment`."""
+    """Emit the results accumulated by `add_comment` and `run_legacy`."""
     results = Data.Results()
     results.comments.extend(self._comments)
-    self.emit_results(results)
-
-  def emit_results(self, results):
-    """Sets the tricium output property with results.
-
-    This overwrites any previous results; it is expected to be called only once
-    in a recipe.
-    """
     step = self.m.step('write results', [])
     num_comments = len(results.comments)
     if num_comments > 50:
@@ -91,8 +85,19 @@ class TriciumApi(recipe_api.RecipeApi):
     results_json = json_format.MessageToJson(results, indent=0)
     step.presentation.properties['tricium'] = results_json
 
-  def run_legacy(self, analyzers, input_base, affected_files, commit_message):
+  def run_legacy(self,
+                 analyzers,
+                 input_base,
+                 affected_files,
+                 commit_message,
+                 emit=True):
     """Runs legacy analyzers.
+
+    This function internally accumulates the comments from the analyzers it
+    runs to the same global storage used by `add_comment()`. By default it
+    emits comments from legacy analyzers to the tricium output property,
+    along with any comments previously created by calling `add_comment()`
+    directly, after running all the specified analyzers.
 
     Args:
       * analyzers (List(LegacyAnalyer)): Analyzers to run.
@@ -100,11 +105,14 @@ class TriciumApi(recipe_api.RecipeApi):
       * affected_files (List(str)): Paths of files in the change, relative
         to input_base.
       * commit_message (str): Commit message from Gerrit.
+      * emit (bool): Whether to write results to the tricium output
+        property. If unset, the caller will be responsible for calling
+        `write_comments` to emit the comments added by the legacy analyzers.
+        This is useful for recipes that need to run a mixture of custom
+        analyzers (using `add_comment()` to store comments) and legacy
+        analyzers.
     """
     self._write_files_data(affected_files, commit_message, input_base)
-    # Accumulate all analyzer results together. Each comment individually
-    # contains a analyzer/category name, so this won't cause confusion.
-    all_results = Data.Results()
     # For each analyzer, download the CIPD package, run it and accumulate
     # results. Note: Each analyzer could potentially be run in parallel.
     for analyzer in analyzers:
@@ -124,24 +132,27 @@ class TriciumApi(recipe_api.RecipeApi):
               output_dir=output_base)
           # Show step results. If there are too many comments, don't include
           # them. If one analyzer fails, continue running the rest.
+          for comment in results.comments:
+            self._add_comment(comment)
           num_comments = len(results.comments)
           parent_step.presentation.step_text = '%s comment(s)' % num_comments
           parent_step.presentation.logs['result'] = json_format.MessageToJson(
               results)
-          all_results.comments.extend(results.comments)
-        except self.m.step.StepFailure as f:
+        except self.m.step.StepFailure:
           parent_step.presentation.step_text = 'failed'
     # The tricium data dir with files.json is written in the checkout cache
     # directory and should be cleaned up.
     self.m.file.rmtree('clean up tricium data dir', input_base.join('tricium'))
-    self.emit_results(all_results)
+
+    if emit:
+      self.write_comments()
 
   def _write_files_data(self, affected_files, commit_message, base_dir):
     """Writes a Files input message to a file.
 
     Args:
       * affected_files (List(str)): File paths. This should
-        be relataive to `base_dir`.
+        be relative to `base_dir`.
       * commit_message (str): The commit message from Gerrit.
       * base_dir (Path): Input files base directory.
     """

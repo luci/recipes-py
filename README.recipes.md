@@ -3385,34 +3385,33 @@ API for Tricium analyzers to use.
 This recipe module is intended to support different kinds of
 analyzer recipes, including:
   * Recipes that wrap one or more legacy analyzers.
-  * Recipes that accucumulate comments one by one.
+  * Recipes that accumulate comments one by one.
   * Recipes that wrap other tools and parse their output.
 
-#### **class [TriciumApi](/recipe_modules/tricium/api.py#26)([RecipeApi](/recipe_engine/recipe_api.py#875)):**
+#### **class [TriciumApi](/recipe_modules/tricium/api.py#25)([RecipeApi](/recipe_engine/recipe_api.py#875)):**
 
 TriciumApi provides basic support for Tricium.
 
-&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#33)(self, \*\*kwargs):**
+&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#32)(self, \*\*kwargs):**
 
 Sets up the API.
 
 Initializes an empty list of comments for use with
 add_comment and write_comments.
 
-&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#42)(self, category, message, path, start_line=0, end_line=0, start_char=0, end_char=0, suggestions=()):**
+&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#41)(self, category, message, path, start_line=0, end_line=0, start_char=0, end_char=0, suggestions=()):**
 
 Adds one comment to accumulate.
 
-&mdash; **def [emit\_results](/recipe_modules/tricium/api.py#72)(self, results):**
-
-Sets the tricium output property with results.
-
-This overwrites any previous results; it is expected to be called only once
-in a recipe.
-
-&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#94)(self, analyzers, input_base, affected_files, commit_message):**
+&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#88)(self, analyzers, input_base, affected_files, commit_message, emit=True):**
 
 Runs legacy analyzers.
+
+This function internally accumulates the comments from the analyzers it
+runs to the same global storage used by `add_comment()`. By default it
+emits comments from legacy analyzers to the tricium output property,
+along with any comments previously created by calling `add_comment()`
+directly, after running all the specified analyzers.
 
 Args:
   * analyzers (List(LegacyAnalyer)): Analyzers to run.
@@ -3420,10 +3419,16 @@ Args:
   * affected_files (List(str)): Paths of files in the change, relative
     to input_base.
   * commit_message (str): Commit message from Gerrit.
+  * emit (bool): Whether to write results to the tricium output
+    property. If unset, the caller will be responsible for calling
+    `write_comments` to emit the comments added by the legacy analyzers.
+    This is useful for recipes that need to run a mixture of custom
+    analyzers (using `add_comment()` to store comments) and legacy
+    analyzers.
 
-&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#66)(self):**
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#68)(self):**
 
-Emit the results accumulated by `add_comment`.
+Emit the results accumulated by `add_comment` and `run_legacy`.
 ### *recipe_modules* / [url](/recipe_modules/url)
 
 [DEPS](/recipe_modules/url/__init__.py#5): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io)
