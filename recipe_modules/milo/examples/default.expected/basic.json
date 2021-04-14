@@ -1,0 +1,12 @@
+[
+  {
+    "cmd": [],
+    "name": "set test presentation config",
+    "~followup_annotations": [
+      "@@@SET_BUILD_PROPERTY@$recipe_engine/milo/test_presentation@{\"column_keys\": [], \"grouping_keys\": [\"status\"]}@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]
