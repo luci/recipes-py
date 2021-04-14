@@ -118,7 +118,7 @@ class Analyzers(object):
   PYLINT = LegacyAnalyzer(
       name='Pylint',
       package='infra/tricium/function/pylint',
-      executable='pylint_wrapper',
+      executable='pylint_parser',
       path_filters=['*.py'])
 
   SPELLCHECKER = LegacyAnalyzer(
