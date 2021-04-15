@@ -67,6 +67,22 @@ class LedApi(recipe_api.RecipeApi):
       'led launch'."""
       return self._launch_result
 
+    @property
+    def edit_rbh_value(self):
+      """Returns either the user_payload or cas_user_payload value suitable to
+      pass to `led edit -rbh`.
+
+      Returns `None` if this information is not set.
+      """
+      r = self._result
+      if r:
+        if r.user_payload.digest:
+          return r.user_payload.digest
+
+        if r.cas_user_payload.digest.hash:
+          return "%s/%d" % (r.cas_user_payload.digest.hash,
+                            r.cas_user_payload.digest.size_bytes)
+
     def then(self, *cmd):
       """Invoke led, passing it the current `result` data as input.
 

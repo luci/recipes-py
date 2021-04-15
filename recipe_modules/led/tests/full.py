@@ -67,6 +67,8 @@ def RunSteps(api, get_cmd, child_properties, sloppy_child_properties, do_bogus_e
   api.step('print pre-launch', [
       'echo', api.proto.encode(intermediate.result, 'JSONPB')])
 
+  api.step('print rbh value', ['echo', intermediate.edit_rbh_value])
+
   final_result = intermediate.then('launch')
   api.step('print task id', [
       'echo', final_result.launch_result.task_id])

@@ -356,9 +356,15 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
         build.buildbucket.bbagent_args.build.input.properties[k] = val
 
     def _edit_input_recipes(build, cmd, _cwd):
-      rbh = cls.get_arg_values(cmd, 'rbh')
-      if rbh:
-        build.user_payload.digest = rbh[-1]
+      rbhs = cls.get_arg_values(cmd, 'rbh')
+      if rbhs:
+        rbh = rbhs[-1]
+        if '/' in rbh:
+          digest, size_bytes = rbh.split('/')
+          build.cas_user_payload.digest.hash = digest
+          build.cas_user_payload.digest.size_bytes = int(size_bytes)
+        else:
+          build.user_payload.digest = rbh
         return
 
       rpkg = cls.get_arg_values(cmd, 'rpkg')
@@ -374,7 +380,8 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
 
     def _edit_recipe_bundle(build, _cmd, cwd):
       # We use the cwd path as a proxy for the recipes contained in that path.
-      build.user_payload.digest = hashlib.sha1(cwd).hexdigest()
+      build.cas_user_payload.digest.hash = hashlib.sha256(cwd).hexdigest()
+      build.cas_user_payload.digest.size_bytes = 1337
 
     def _edit_cr_cl(build, cmd, _cwd):
       # This mimics the implementation in `led`.

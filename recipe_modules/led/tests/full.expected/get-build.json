@@ -184,8 +184,11 @@
       "@@@STEP_LOG_LINE@proto.output@    }, @@@",
       "@@@STEP_LOG_LINE@proto.output@    \"name\": \"foobar\"@@@",
       "@@@STEP_LOG_LINE@proto.output@  }, @@@",
-      "@@@STEP_LOG_LINE@proto.output@  \"user_payload\": {@@@",
-      "@@@STEP_LOG_LINE@proto.output@    \"digest\": \"7019068b85f1a776d6560910f5214ba88e2f0cbe\"@@@",
+      "@@@STEP_LOG_LINE@proto.output@  \"cas_user_payload\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@    \"digest\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@      \"hash\": \"fa83a1e18ca97a45a291c8e7ac538ea0b20574334a1c30efa8328e97ec9d2a3d\", @@@",
+      "@@@STEP_LOG_LINE@proto.output@      \"size_bytes\": \"1337\"@@@",
+      "@@@STEP_LOG_LINE@proto.output@    }@@@",
       "@@@STEP_LOG_LINE@proto.output@  }@@@",
       "@@@STEP_LOG_LINE@proto.output@}@@@",
       "@@@STEP_LOG_END@proto.output@@@"
@@ -194,9 +197,16 @@
   {
     "cmd": [
       "echo",
-      "{\n\"buildbucket\": {\n\"bbagent_args\": {\n\"build\": {\n\"id\": \"123456789\", \n\"input\": {\n\"gerrit_changes\": [\n{\n\"change\": \"19\", \n\"host\": \"fake.url\", \n\"patchset\": \"2\", \n\"project\": \"project/other\"\n}\n]\n}\n}\n}, \n\"name\": \"foobar\"\n}, \n\"user_payload\": {\n\"digest\": \"7019068b85f1a776d6560910f5214ba88e2f0cbe\"\n}\n}"
+      "{\n\"buildbucket\": {\n\"bbagent_args\": {\n\"build\": {\n\"id\": \"123456789\", \n\"input\": {\n\"gerrit_changes\": [\n{\n\"change\": \"19\", \n\"host\": \"fake.url\", \n\"patchset\": \"2\", \n\"project\": \"project/other\"\n}\n]\n}\n}\n}, \n\"name\": \"foobar\"\n}, \n\"cas_user_payload\": {\n\"digest\": {\n\"hash\": \"fa83a1e18ca97a45a291c8e7ac538ea0b20574334a1c30efa8328e97ec9d2a3d\", \n\"size_bytes\": \"1337\"\n}\n}\n}"
     ],
     "name": "print pre-launch"
+  },
+  {
+    "cmd": [
+      "echo",
+      "fa83a1e18ca97a45a291c8e7ac538ea0b20574334a1c30efa8328e97ec9d2a3d/1337"
+    ],
+    "name": "print rbh value"
   },
   {
     "cmd": [
@@ -204,7 +214,7 @@
       "launch"
     ],
     "name": "led launch",
-    "stdin": "{\n\"buildbucket\": {\n\"bbagent_args\": {\n\"build\": {\n\"id\": \"123456789\", \n\"input\": {\n\"gerrit_changes\": [\n{\n\"change\": \"19\", \n\"host\": \"fake.url\", \n\"patchset\": \"2\", \n\"project\": \"project/other\"\n}\n]\n}\n}\n}, \n\"name\": \"foobar\"\n}, \n\"user_payload\": {\n\"digest\": \"7019068b85f1a776d6560910f5214ba88e2f0cbe\"\n}\n}",
+    "stdin": "{\n\"buildbucket\": {\n\"bbagent_args\": {\n\"build\": {\n\"id\": \"123456789\", \n\"input\": {\n\"gerrit_changes\": [\n{\n\"change\": \"19\", \n\"host\": \"fake.url\", \n\"patchset\": \"2\", \n\"project\": \"project/other\"\n}\n]\n}\n}\n}, \n\"name\": \"foobar\"\n}, \n\"cas_user_payload\": {\n\"digest\": {\n\"hash\": \"fa83a1e18ca97a45a291c8e7ac538ea0b20574334a1c30efa8328e97ec9d2a3d\", \n\"size_bytes\": \"1337\"\n}\n}\n}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"swarming\": {@@@",
