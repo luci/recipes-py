@@ -352,3 +352,46 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     ret += ['--'] + list(cmd)
     return ret
+
+  def config_test_presentation(self, column_keys=(), grouping_keys=('status',)):
+    """Specifies how the test results should be rendered.
+
+    Args:
+      column_keys:
+        A list of keys that will be rendered as 'columns'. status is always the
+        first column and name is always the last column (you don't need to
+        specify them). A key must be one of the following:
+        1. 'v.{variant_key}': variant.def[variant_key] of the test variant (e.g.
+          v.gpu).
+
+      grouping_keys:
+        A list of keys that will be used for grouping tests. A key must be one
+        of the following:
+        1. 'status': status of the test variant.
+        2. 'name': name of the test variant.
+        3. 'v.{variant_key}': variant.def[variant_key] of the test variant (e.g.
+        v.gpu).
+        Caveat: test variants with only expected results are not affected by
+        this setting and are always in their own group.
+    """
+
+    # To be consistent with the lucicfg implementation, set the test
+    # presentation config only when it's not the default value.
+    if list(column_keys) == [] and list(grouping_keys) == ['status']:
+      return
+
+    # Validate column_keys.
+    for k in column_keys:
+      assert k.startswith('v.')
+
+    # Validate grouping_keys.
+    for k in grouping_keys:
+      assert k in ['status', 'name'] or k.startswith('v.')
+
+    # The fact that it sets a property value is an implementation detail.
+    res = self.m.step('set test presentation config', cmd=None)
+    prop_name = '$recipe_engine/resultdb/test_presentation'
+    res.presentation.properties[prop_name] = {
+      'column_keys': column_keys,
+      'grouping_keys': grouping_keys,
+    }

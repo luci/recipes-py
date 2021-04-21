@@ -125,7 +125,6 @@
   * [led:tests/full](#recipes-led_tests_full)
   * [led:tests/no_exist](#recipes-led_tests_no_exist)
   * [legacy_annotation:examples/full](#recipes-legacy_annotation_examples_full)
-  * [milo:examples/default](#recipes-milo_examples_default)
   * [milo:examples/full](#recipes-milo_examples_full)
   * [path:examples/full](#recipes-path_examples_full)
   * [platform:examples/full](#recipes-platform_examples_full)
@@ -140,6 +139,8 @@
   * [resultdb:examples/include](#recipes-resultdb_examples_include)
   * [resultdb:examples/query](#recipes-resultdb_examples_query)
   * [resultdb:examples/resultsink](#recipes-resultdb_examples_resultsink)
+  * [resultdb:examples/test_presentation](#recipes-resultdb_examples_test_presentation)
+  * [resultdb:examples/test_presentation_default](#recipes-resultdb_examples_test_presentation_default)
   * [runtime:tests/full](#recipes-runtime_tests_full)
   * [scheduler:examples/emit_triggers](#recipes-scheduler_examples_emit_triggers) &mdash; This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
   * [scheduler:examples/host](#recipes-scheduler_examples_host) &mdash; This file is a recipe demonstrating reading/mocking scheduler host.
@@ -2117,28 +2118,6 @@ API for specifying Milo behavior.
 
 A module for interacting with Milo.
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/milo/api.py#57)(self, column_keys=(), grouping_keys=('status',)):**
-
-Specifies how the tests should be rendered.
-
-Args:
-  column_keys:
-    A list of keys that will be rendered as 'columns'. status is always the
-    first column and name is always the last column (you don't need to
-    specify them). A key must be one of the following:
-    1. 'v.{variant_key}': variant.def[variant_key] of the test variant (e.g.
-      v.gpu).
-
-  grouping_keys:
-    A list of keys that will be used for grouping tests. A key must be one
-    of the following:
-    1. 'status': status of the test variant.
-    2. 'name': name of the test variant.
-    3. 'v.{variant_key}': variant.def[variant_key] of the test variant (e.g.
-    v.gpu).
-    Caveat: test variants with only expected results are not affected by
-    this setting and are always in their own group.
-
 &mdash; **def [show\_blamelist\_for](/recipe_modules/milo/api.py#20)(self, gitiles_commits):**
 
 Specifies which commits and repos Milo should show a blamelist for.
@@ -2736,6 +2715,28 @@ https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#41)(self):**
+
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#356)(self, column_keys=(), grouping_keys=('status',)):**
+
+Specifies how the test results should be rendered.
+
+Args:
+  column_keys:
+    A list of keys that will be rendered as 'columns'. status is always the
+    first column and name is always the last column (you don't need to
+    specify them). A key must be one of the following:
+    1. 'v.{variant_key}': variant.def[variant_key] of the test variant (e.g.
+      v.gpu).
+
+  grouping_keys:
+    A list of keys that will be used for grouping tests. A key must be one
+    of the following:
+    1. 'status': status of the test variant.
+    2. 'name': name of the test variant.
+    3. 'v.{variant_key}': variant.def[variant_key] of the test variant (e.g.
+    v.gpu).
+    Caveat: test variants with only expected results are not affected by
+    this setting and are always in their own group.
 
 &emsp; **@property**<br>&mdash; **def [current\_invocation](/recipe_modules/resultdb/api.py#33)(self):**
 
@@ -4118,11 +4119,6 @@ This tests metadata features of the Future object.
 [DEPS](/recipe_modules/legacy_annotation/examples/full.py#5): [legacy\_annotation](#recipe_modules-legacy_annotation), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/legacy_annotation/examples/full.py#18)(api):**
-### *recipes* / [milo:examples/default](/recipe_modules/milo/examples/default.py)
-
-[DEPS](/recipe_modules/milo/examples/default.py#7): [milo](#recipe_modules-milo)
-
-&mdash; **def [RunSteps](/recipe_modules/milo/examples/default.py#11)(api):**
 ### *recipes* / [milo:examples/full](/recipe_modules/milo/examples/full.py)
 
 [DEPS](/recipe_modules/milo/examples/full.py#7): [milo](#recipe_modules-milo)
@@ -4197,6 +4193,16 @@ Tests for api.python.infra_failing_step.
 [DEPS](/recipe_modules/resultdb/examples/resultsink.py#10): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/resultsink.py#17)(api):**
+### *recipes* / [resultdb:examples/test\_presentation](/recipe_modules/resultdb/examples/test_presentation.py)
+
+[DEPS](/recipe_modules/resultdb/examples/test_presentation.py#5): [resultdb](#recipe_modules-resultdb)
+
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/test_presentation.py#9)(api):**
+### *recipes* / [resultdb:examples/test\_presentation\_default](/recipe_modules/resultdb/examples/test_presentation_default.py)
+
+[DEPS](/recipe_modules/resultdb/examples/test_presentation_default.py#5): [resultdb](#recipe_modules-resultdb)
+
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/test_presentation_default.py#9)(api):**
 ### *recipes* / [runtime:tests/full](/recipe_modules/runtime/tests/full.py)
 
 [DEPS](/recipe_modules/runtime/tests/full.py#7): [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)

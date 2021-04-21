@@ -2,14 +2,15 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
-
 DEPS = [
-    'milo',
+    'resultdb',
 ]
 
 def RunSteps(api):
-  api.milo.config_test_presentation()
+  api.resultdb.config_test_presentation(
+    ['v.gpu'],
+    ['status', 'v.test_suite', 'name'],
+  )
 
 def GenTests(api):
   yield api.test('basic')

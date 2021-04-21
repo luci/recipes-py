@@ -1,0 +1,12 @@
+[
+  {
+    "cmd": [],
+    "name": "set test presentation config",
+    "~followup_annotations": [
+      "@@@SET_BUILD_PROPERTY@$recipe_engine/resultdb/test_presentation@{\"column_keys\": [\"v.gpu\"], \"grouping_keys\": [\"status\", \"v.test_suite\", \"name\"]}@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

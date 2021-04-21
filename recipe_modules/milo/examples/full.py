@@ -24,10 +24,5 @@ def RunSteps(api):
     }
   ])
 
-  api.milo.config_test_presentation(
-    ['v.gpu'],
-    ['status', 'v.test_suite', 'name'],
-  )
-
 def GenTests(api):
   yield api.test('basic')
