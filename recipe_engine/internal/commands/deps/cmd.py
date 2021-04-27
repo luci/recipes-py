@@ -1,0 +1,168 @@
+# -*- coding: utf-8 -*-
+# Copyright 2021 The LUCI Authors. All rights reserved.
+# Use of this source code is governed under the Apache License, Version 2.0
+# that can be found in the LICENSE file.
+
+from __future__ import print_function, absolute_import
+
+import contextlib
+import logging
+import sys
+
+from six import itervalues
+
+from google.protobuf import json_format as jsonpb
+
+from PB.recipe_engine.internal.commands.deps import deps
+
+from ...recipe_deps import RecipeDeps   # for type info
+from ...exceptions import RecipeUsageError
+
+
+def load_target_recipes(rd, target, include_test_recipes):
+  is_module = False
+  if '::' in target:
+    target_repo, target_name = target.split('::', 1)
+  else:
+    is_module = True
+    target_repo, target_name = target.split('/', 1)
+  if not target_repo:
+    target_repo = rd.main_repo_id
+
+  if not is_module:
+    base = rd.repos[target_repo]
+    if ':' in target_name:
+      mod, target_name = target_name.split(':', 1)
+      base = base.modules[mod]
+    return [base.recipes[target_name]]
+
+
+  # First, check that this module actually exists. This raises
+  # UnknownRecipeModule if target_name doesn't exist.
+  _ = rd.repos[target_repo].modules[target_name]
+
+  recipes = []
+  mod = (target_repo, target_name)
+  for repo in rd.repos.values():
+    if repo.name == target_repo or target_repo in repo.simple_cfg.deps:
+      for recipe in repo.recipes.values():
+        if (not include_test_recipes and (
+            ':examples/' in recipe.name
+            or ':tests/' in recipe.name)):
+          continue
+
+        if mod in itervalues(recipe.normalized_DEPS):
+          recipes.append(recipe)
+
+  return recipes
+
+
+def process_modules(ret, rd, mod_names):
+  processed_mod_names = set()
+  while mod_names:
+    full_mod_name = mod_names.pop()
+    processed_mod_names.add(full_mod_name)
+
+    repo, mod_name = full_mod_name.split('/')
+    mod = rd.repos[repo].modules[mod_name]
+
+    mRecord = ret.modules[full_mod_name]
+    mRecord.repo = repo
+    mRecord.name = mod_name
+    # TODO(iannucci): actually make an option to adjust py3_status
+    mRecord.py3_status = deps.PYTHON2_ONLY
+
+    mods = set(
+        '%s/%s' % (repo, name)
+        for repo, name in itervalues(mod.normalized_DEPS))
+    mRecord.deps.extend(mods)
+    mod_names.update(mods - processed_mod_names)
+
+    cfg = mod.repo.recipes_cfg_pb2
+    if cfg.canonical_repo_url:
+      mRecord.url = '%s/+/HEAD/%s' % (
+        cfg.canonical_repo_url,
+        mod.relpath,
+      )
+
+
+def process_recipes(ret, recipes):
+  mod_names = set()
+  for recipe in recipes:
+    rRecord = ret.recipes[recipe.full_name]
+    rRecord.repo = recipe.repo.name
+    rRecord.name = recipe.name
+    rRecord.is_recipe = True
+    # TODO(iannucci): actually make an option to adjust py3_status
+    rRecord.py3_status = deps.PYTHON2_ONLY
+
+    mods = set(
+        '%s/%s' % (repo, name)
+        for repo, name in itervalues(recipe.normalized_DEPS))
+    rRecord.deps.extend(mods)
+    mod_names.update(mods)
+
+    cfg = recipe.repo.recipes_cfg_pb2
+    if cfg.canonical_repo_url:
+      rRecord.url = '%s/+/HEAD/%s' % (
+        cfg.canonical_repo_url,
+        recipe.relpath,
+      )
+
+  return mod_names
+
+
+def output_cli(ret):
+  to_emoji = {
+    deps.PYTHON2_ONLY: '❌',
+    deps.PYTHON2_AND_PYTHON3: '✅',
+    deps.PYTHON3_ONLY: '🦄',
+  }
+
+  print("recipes:")
+  for _, recipe in sorted(ret.recipes.items()):
+    print("  %s %s::%s - %s" % (
+      to_emoji[recipe.py3_status],
+      recipe.repo, recipe.name, recipe.url))
+
+  print()
+  print("modules:")
+  for _, module in sorted(ret.modules.items()):
+    print("  %s %s/%s - %s" % (
+      to_emoji[module.py3_status],
+      module.repo, module.name, module.url))
+
+
+def output_json(fd, ret):
+  fd.write(jsonpb.MessageToJson(
+      ret,
+      preserving_proto_field_name=True,
+      indent=2, sort_keys=True,
+  ))
+  fd.write('\n')
+
+
+def main(args):
+  logging.basicConfig()
+
+  rd = args.recipe_deps  # type: RecipeDeps
+
+  try:
+    recipes = load_target_recipes(
+        rd, args.recipe_or_module, args.include_test_recipes)
+  except RecipeUsageError as ex:
+    print('{}: {}'.format(type(ex).__name__, ex), file=sys.stderr)
+    return 1
+
+  ret = deps.Deps()
+
+  mod_names = process_recipes(ret, recipes)
+  process_modules(ret, rd, mod_names)
+
+  if not args.json_output:
+    output_cli(ret)
+    return
+
+  if args.json_output:
+    out = args.json_output
+    output_json(sys.stdout if out == '-' else open(out, 'wb'), ret)

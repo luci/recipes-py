@@ -75,10 +75,10 @@ class SimpleRecipesCfg(object):
   A subset of the recipes_cfg_pb2.RepoSpec message, just enough to load the
   dependencies for this recipe repo (i.e. good enough for RecipeDeps' purposes).
   """
-  # The "name" of this recipe repo. This is the name that other recipe repos will
-  # use to import modules from this repo. Currently this name must be globally
-  # unique amongst recipe repos (d'oh). In practice, global uniqueness has not
-  # yet been an issue.
+  # The "name" of this recipe repo. This is the name that other recipe repos
+  # will use to import modules from this repo. Currently this name must be
+  # globally unique amongst recipe repos (d'oh). In practice, global uniqueness
+  # has not yet been an issue.
   repo_name = attr.ib(validator=attr_type(str))
 
   # The mapping of other recipe repo id's that we depend on to their dependency
@@ -86,7 +86,7 @@ class SimpleRecipesCfg(object):
   deps = attr.ib(
     converter=freeze,
     validator=attr_dict_type(str, SimpleDep)
-  )
+  ) # type: dict[str, SimpleDep]
 
   # The repo-root-relative path to where 'recipes/' and/or 'recipe_modules/'
   # directories live.

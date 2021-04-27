@@ -83,7 +83,7 @@ class RecipeDeps(object):
   """
 
   # The mapping of repo_name -> RecipeRepo for all known repos.
-  repos = attr.ib(converter=freeze)
+  repos = attr.ib(converter=freeze)  # type: dict[str, RecipeRepo]
   @repos.validator
   def check(self, attrib, value):
     # This is a separate function (as opposed to the `validator=` kwarg),
@@ -97,7 +97,7 @@ class RecipeDeps(object):
   # RecipeDeps.
   #
   # This repo is guaranteed to be a member of `repos`.
-  main_repo_id = attr.ib(validator=attr_type(str))
+  main_repo_id = attr.ib(validator=attr_type(str))  # type: str
 
   def __attrs_post_init__(self):
     def _raise_unknown_rname(repo_name):
@@ -248,13 +248,15 @@ class RecipeRepo(object):
   path = attr.ib(validator=[
     attr_type(str),
     attr_value_is('an absolute path', os.path.isabs),
-  ])
+  ])  # type: str
 
   # The SimpleRecipesCfg for this repo.
-  simple_cfg = attr.ib(validator=attr_type(SimpleRecipesCfg))
+  simple_cfg = attr.ib(
+      validator=attr_type(SimpleRecipesCfg)
+  )  # type: SimpleRecipesCfg
 
   # Mapping of module name -> RecipeModule for all recipe modules in this repo.
-  modules = attr.ib(converter=freeze)
+  modules = attr.ib(converter=freeze)  # type: dict[str, RecipeModule]
   @modules.validator
   def check(self, attrib, value):
     # This is a separate function (as opposed to the `validator=` kwarg),
@@ -263,7 +265,7 @@ class RecipeRepo(object):
     attr_dict_type(str, RecipeModule)(self, attrib, value)
 
   # Mapping of recipe name -> Recipe for all recipes in this repo.
-  recipes = attr.ib(converter=freeze)
+  recipes = attr.ib(converter=freeze)  # type: dict[str, Recipe]
   @recipes.validator
   def check(self, attrib, value):
     # This is a separate function (as opposed to the `validator=` kwarg),
@@ -447,7 +449,7 @@ class RecipeRepo(object):
 
 @attr.s(frozen=True)
 class RecipeModule(object):
-  repo = attr.ib(validator=attr_type(RecipeRepo))
+  repo = attr.ib(validator=attr_type(RecipeRepo))  # type: RecipeRepo
   name = attr.ib(validator=attr_type(str))
 
   # Maps from all recipe names under this module to the Recipe object.
@@ -468,6 +470,11 @@ class RecipeModule(object):
         'No such recipe {recipe!r} in module {module!r} in repo {repo!r}.'.
         format(recipe=recipe, module=self.name, repo=self.repo.name))
     self.recipes.on_missing = _raise_missing_recipe
+
+  @cached_property
+  def full_name(self):
+    """The fully qualified name of the recipe module (e.g. `repo/module`)."""
+    return '%s/%s' % (self.repo.name, self.name)
 
   @cached_property
   def path(self):
@@ -491,6 +498,16 @@ class RecipeModule(object):
     This imports the module code.
     """
     return parse_deps_spec(self.repo.name, self.do_import().DEPS)
+
+  @cached_property
+  def transitive_DEPS(self):
+    """Returns the set of fully-qualified DEPS reachable from this module."""
+    ret = set()
+    d = self.repo.recipe_deps
+    for repo_name, module_name in self.normalized_DEPS.itervalues():
+      ret.add('%s/%s' % (repo_name, module_name))
+      ret.update(d.repos[repo_name].modules[module_name].transitive_DEPS)
+    return frozenset(ret)
 
   @cached_property
   def warnings(self):
@@ -569,12 +586,12 @@ class RecipeModule(object):
 @attr.s(frozen=True)
 class Recipe(object):
   # The repo in which this recipe is located.
-  repo = attr.ib(validator=attr_type(RecipeRepo))
+  repo = attr.ib(validator=attr_type(RecipeRepo)) # type: RecipeRepo
 
   # The name of the recipe (e.g. `path/to/recipe` or 'module:run/recipe').
   name = attr.ib(validator=attr_type(str))
 
-  # The RecipeModule, if any, which this Recipe belongs to.
+  # The RecipeModule, if any, to which this Recipe belongs.
   module = attr.ib(validator=optional(attr_type(RecipeModule)))
 
   def __attrs_post_init__(self):
@@ -612,7 +629,7 @@ class Recipe(object):
 
   @cached_property
   def relpath(self):
-    """The path to the recipe module relative to the repo root."""
+    """The path to the recipe relative to the repo root."""
     return os.path.relpath(self.path, self.repo.path)
 
   @cached_property
@@ -744,6 +761,16 @@ class Recipe(object):
     """
     return parse_deps_spec(self.repo.name, self.global_symbols.get('DEPS', ()))
 
+  @cached_property
+  def transitive_DEPS(self):
+    """Returns the set of fully-qualified DEPS reachable from this module."""
+    ret = set()
+    d = self.repo.recipe_deps
+    for repo_name, module_name in self.normalized_DEPS.itervalues():
+      ret.add('%s/%s' % (repo_name, module_name))
+      ret.update(d.repos[repo_name].modules[module_name].transitive_DEPS)
+    return frozenset(ret)
+
   def mk_api(self, engine, test_data=None):
     """Makes a RecipeScriptApi, suitable for use with run_steps.
 
@@ -870,7 +897,7 @@ def parse_deps_spec(repo_name, deps_spec):
   """
   def _parse_dep_name(name):
     # dependencies can look like:
-    #  * name             # uses current repo_name
+    #  * name            # uses current repo_name
     #  * repo_name/name  # explicit repo_name
     return tuple(name.split('/', 1)) if '/' in name else (repo_name, name)
 

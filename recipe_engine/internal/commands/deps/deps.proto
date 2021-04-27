@@ -1,0 +1,43 @@
+// Copyright 2021 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+package recipe_engine.internal.commands.deps;
+
+message Deps {
+  // Mapping of fully-qualified recipe name to DepInfo
+  map<string, DepInfo> recipes = 1;
+
+  // Mapping of fully-qualified module name to DepInfo
+  map<string, DepInfo> modules = 2;
+}
+
+enum Py3Status {
+  PYTHON2_ONLY        = 0;
+  PYTHON2_AND_PYTHON3 = 1;
+  PYTHON3_ONLY        = 2;
+}
+
+message DepInfo {
+  // The recipe repo name this item belongs to.
+  string repo = 1;
+
+  // The non-qualified name of this item.
+  //
+  // The fully qualified recipe name is "%s::%s" % (repo, name)
+  // The fully qualified module name is "%s/%s" % (repo, name)
+  string name = 2;
+
+  // The gitiles URL of the module folder or recipe file.
+  string url = 3;
+
+  // True if this item is a recipe, false if it's a recipe module.
+  bool is_recipe = 4;
+
+  Py3Status py3_status = 5;
+
+  // Sorted list of fully-qualified recipe modules this item depends on.
+  repeated string deps = 6;
+}
