@@ -19,7 +19,12 @@ from ...recipe_deps import RecipeDeps   # for type info
 from ...exceptions import RecipeUsageError
 
 
-def load_target_recipes(rd, target, include_test_recipes):
+def extract_module_names(obj):
+  for repo, name in itervalues(obj.normalized_DEPS):
+    yield '%s/%s' % (repo, name)
+
+
+def load_recipes_modules(rd, target, include_test_recipes, include_dependants):
   is_module = False
   if '::' in target:
     target_repo, target_name = target.split('::', 1)
@@ -29,32 +34,38 @@ def load_target_recipes(rd, target, include_test_recipes):
   if not target_repo:
     target_repo = rd.main_repo_id
 
+  recipes = []
+  mod_names = set()
+
   if not is_module:
     base = rd.repos[target_repo]
     if ':' in target_name:
       mod, target_name = target_name.split(':', 1)
       base = base.modules[mod]
-    return [base.recipes[target_name]]
+    recipes.append(base.recipes[target_name])
+  else:
+    # Check that this module actually exists. This raises
+    # UnknownRecipeModule if target_name doesn't exist.
+    _ = rd.repos[target_repo].modules[target_name]
+    mod_names.add('%s/%s' % (target_repo, target_name))
 
+    if include_dependants:
+      mod = (target_repo, target_name)
+      for repo in rd.repos.values():
+        if repo.name == target_repo or target_repo in repo.simple_cfg.deps:
+          for recipe in repo.recipes.values():
+            if (not include_test_recipes and (
+                ':examples/' in recipe.name
+                or ':tests/' in recipe.name)):
+              continue
 
-  # First, check that this module actually exists. This raises
-  # UnknownRecipeModule if target_name doesn't exist.
-  _ = rd.repos[target_repo].modules[target_name]
+            if mod in itervalues(recipe.normalized_DEPS):
+              recipes.append(recipe)
 
-  recipes = []
-  mod = (target_repo, target_name)
-  for repo in rd.repos.values():
-    if repo.name == target_repo or target_repo in repo.simple_cfg.deps:
-      for recipe in repo.recipes.values():
-        if (not include_test_recipes and (
-            ':examples/' in recipe.name
-            or ':tests/' in recipe.name)):
-          continue
+  for recipe in recipes:
+    mod_names.update(extract_module_names(recipe))
 
-        if mod in itervalues(recipe.normalized_DEPS):
-          recipes.append(recipe)
-
-  return recipes
+  return recipes, mod_names
 
 
 def process_modules(ret, rd, mod_names):
@@ -63,7 +74,7 @@ def process_modules(ret, rd, mod_names):
     full_mod_name = mod_names.pop()
     processed_mod_names.add(full_mod_name)
 
-    repo, mod_name = full_mod_name.split('/')
+    repo, mod_name = full_mod_name.split('/', 1)
     mod = rd.repos[repo].modules[mod_name]
 
     mRecord = ret.modules[full_mod_name]
@@ -72,9 +83,7 @@ def process_modules(ret, rd, mod_names):
     # TODO(iannucci): actually make an option to adjust py3_status
     mRecord.py3_status = deps.PYTHON2_ONLY
 
-    mods = set(
-        '%s/%s' % (repo, name)
-        for repo, name in itervalues(mod.normalized_DEPS))
+    mods = set(extract_module_names(mod))
     mRecord.deps.extend(mods)
     mod_names.update(mods - processed_mod_names)
 
@@ -87,7 +96,6 @@ def process_modules(ret, rd, mod_names):
 
 
 def process_recipes(ret, recipes):
-  mod_names = set()
   for recipe in recipes:
     rRecord = ret.recipes[recipe.full_name]
     rRecord.repo = recipe.repo.name
@@ -95,12 +103,7 @@ def process_recipes(ret, recipes):
     rRecord.is_recipe = True
     # TODO(iannucci): actually make an option to adjust py3_status
     rRecord.py3_status = deps.PYTHON2_ONLY
-
-    mods = set(
-        '%s/%s' % (repo, name)
-        for repo, name in itervalues(recipe.normalized_DEPS))
-    rRecord.deps.extend(mods)
-    mod_names.update(mods)
+    rRecord.deps.extend(extract_module_names(recipe))
 
     cfg = recipe.repo.recipes_cfg_pb2
     if cfg.canonical_repo_url:
@@ -108,8 +111,6 @@ def process_recipes(ret, recipes):
         cfg.canonical_repo_url,
         recipe.relpath,
       )
-
-  return mod_names
 
 
 def output_cli(ret):
@@ -148,15 +149,16 @@ def main(args):
   rd = args.recipe_deps  # type: RecipeDeps
 
   try:
-    recipes = load_target_recipes(
-        rd, args.recipe_or_module, args.include_test_recipes)
+    recipes, mod_names = load_recipes_modules(
+        rd, args.recipe_or_module, args.include_test_recipes,
+        args.include_dependants)
   except RecipeUsageError as ex:
     print('{}: {}'.format(type(ex).__name__, ex), file=sys.stderr)
     return 1
 
   ret = deps.Deps()
 
-  mod_names = process_recipes(ret, recipes)
+  process_recipes(ret, recipes)
   process_modules(ret, rd, mod_names)
 
   if not args.json_output:

@@ -5,9 +5,9 @@
 
 """Dumps all module dependencies for the given recipe or module.
 
-If a module is given, this finds all recipes which directly or indirectly depend
-on that module, and then calculates the full dependency graph from that set of
-recipes.
+If a module is given and --include-dependants is specified, this finds all
+recipes which directly or indirectly depend on that module, and then calculates
+the full dependency graph from that set of recipes.
 
 Note that this only finds recipes in the current repo or one of this repo's
 dependencies. Downstream repos which depend on this one may have recipes which
@@ -26,8 +26,16 @@ def add_arguments(parser):
       '--include-test-recipes',
       action='store_true',
       help=(
-        'If set, includes recipes under the examples/ and tests/ folders '
-        'of recipe modules.'))
+        'If set along with --include-dependants, will also include recipes '
+        'under the examples/ and tests/ folders of recipe modules.'))
+
+  parser.add_argument(
+      '--include-dependants',
+      action='store_true',
+      help=(
+        'If set, finds all recipes which transitively depend on the given '
+        'module before walking all dependencies. No-op when specifying a '
+        'recipe rather than a module.'))
 
   parser.add_argument(
       '--json-output',
