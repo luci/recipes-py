@@ -11,16 +11,14 @@ DEPS = [
 
 def RunSteps(api):
   api.step('disallow reuse only for full run', cmd=None)
-  api.assertions.assertFalse(api.cq.allowed_reuse_mode_regexps)
+  api.assertions.assertFalse(api.cq.allowed_reuse_modes)
   with api.assertions.assertRaises(ValueError):
-    api.cq.allow_reuse_for()  # must provide mode_regex
-  with api.assertions.assertRaises(ValueError):
-    api.cq.allow_reuse_for('+')  # invalid regex
+    api.cq.allow_reuse_for()  # must provide at least one modes
   api.cq.allow_reuse_for(api.cq.QUICK_DRY_RUN)
-  api.assertions.assertListEqual(api.cq.allowed_reuse_mode_regexps,
+  api.assertions.assertListEqual(api.cq.allowed_reuse_modes,
                                  [api.cq.QUICK_DRY_RUN,])
   api.cq.allow_reuse_for(api.cq.DRY_RUN, api.cq.FULL_RUN)
-  api.assertions.assertListEqual(api.cq.allowed_reuse_mode_regexps,
+  api.assertions.assertListEqual(api.cq.allowed_reuse_modes,
                                  [api.cq.DRY_RUN, api.cq.FULL_RUN])
 
 

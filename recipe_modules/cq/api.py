@@ -215,30 +215,25 @@ class CQApi(recipe_api.RecipeApi):
     )
 
   @property
-  def allowed_reuse_mode_regexps(self):
+  def allowed_reuse_modes(self):
     assert all(not r.deny for r in self._output.reuse), (
         'deny reuse is not supported currently')
     return [r.mode_regexp for r in self._output.reuse]
 
-  def allow_reuse_for(self, *mode_regexps):
-    """Instructs CQ that it can reuse this build in future Runs if
-    any of `mode_regexps` matches their modes.
+  def allow_reuse_for(self, *modes):
+    """Instructs CQ that this build can be reused in a future Run if
+    and only if its mode is in the provided modes.
 
     Overwrites all previously set values.
-
-    See `Output.Reuse` doc in [recipe proto](https://chromium.googlesource.com/infra/luci/luci-go/+/HEAD/cv/api/recipe/v1/cq.proto)
     """
     # TODO(yiwzhang): Expose low-level method to modify reuse if needed.
-    if not mode_regexps:
+    if not modes:
       raise ValueError('expected at least 1 mode_regexp, got 0')
-    for mr in mode_regexps:
-      try:
-        re.compile(mr)
-      except re.error:
-        raise ValueError('invalid regexp for run mode: %r' % mr)
     del self._output.reuse[:]
+    # TODO(yiwzhang): consider changing mode_regexp in output.reuse
+    # to mode_allowlist.
     self._output.reuse.extend(
-        cq_pb2.Output.Reuse(mode_regexp=mr) for mr in mode_regexps)
+        cq_pb2.Output.Reuse(mode_regexp=m) for m in modes)
     self._write_output_props()
 
   def _extract_unique_cq_tag(self, suffix):

@@ -1183,16 +1183,14 @@ TODO(qyearsley): Rename parts of this from CQ -> CV as appropriate.
 
 Returns whether CQ is active for this build.
 
-&mdash; **def [allow\_reuse\_for](/recipe_modules/cq/api.py#223)(self, \*mode_regexps):**
+&mdash; **def [allow\_reuse\_for](/recipe_modules/cq/api.py#223)(self, \*modes):**
 
-Instructs CQ that it can reuse this build in future Runs if
-any of `mode_regexps` matches their modes.
+Instructs CQ that this build can be reused in a future Run if
+and only if its mode is in the provided modes.
 
 Overwrites all previously set values.
 
-See `Output.Reuse` doc in [recipe proto](https://chromium.googlesource.com/infra/luci/luci-go/+/HEAD/cv/api/recipe/v1/cq.proto)
-
-&emsp; **@property**<br>&mdash; **def [allowed\_reuse\_mode\_regexps](/recipe_modules/cq/api.py#217)(self):**
+&emsp; **@property**<br>&mdash; **def [allowed\_reuse\_modes](/recipe_modules/cq/api.py#217)(self):**
 
 &emsp; **@property**<br>&mdash; **def [cl\_group\_key](/recipe_modules/cq/api.py#133)(self):**
 
