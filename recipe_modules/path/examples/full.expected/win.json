@@ -38,6 +38,45 @@
     "cmd": [
       "rm",
       "-rf",
+      "[START_DIR]\\directory"
+    ],
+    "name": "rm directory (initial)"
+  },
+  {
+    "cmd": [
+      "mkdir",
+      "-p",
+      "[START_DIR]\\directory"
+    ],
+    "name": "mkdir directory"
+  },
+  {
+    "cmd": [
+      "touch",
+      "[START_DIR]\\directory\\filepath"
+    ],
+    "name": "touch filepath"
+  },
+  {
+    "cmd": [
+      "rm",
+      "-rf",
+      "[START_DIR]\\directory"
+    ],
+    "name": "rm directory"
+  },
+  {
+    "cmd": [
+      "mkdir",
+      "-p",
+      "[START_DIR]\\directory"
+    ],
+    "name": "mkdir directory (2)"
+  },
+  {
+    "cmd": [
+      "rm",
+      "-rf",
       "[START_DIR]\\copy2"
     ],
     "name": "rm copy2 (initial)"

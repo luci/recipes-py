@@ -531,7 +531,7 @@ class FileApi(recipe_api.RecipeApi):
     """
     self.m.path.assert_absolute(dest)
     self._run(name, ['ensure-directory', '--mode', oct(mode), dest])
-    self.m.path.mock_add_paths(dest)
+    self.m.path.mock_add_directory(dest)
 
   def filesizes(self, name, files, test_data=None):
     """Returns list of filesizes for the given files.

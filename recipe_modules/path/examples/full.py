@@ -87,6 +87,37 @@ def RunSteps(api):
   realpath = api.path.realpath(file_path)
   assert api.path.exists(realpath)
 
+  directory = api.path['start_dir'].join('directory')
+  filepath = directory.join('filepath')
+  api.step('rm directory (initial)', ['rm', '-rf', directory])
+  assert not api.path.exists(directory)
+  assert not api.path.isdir(directory)
+  assert not api.path.exists(filepath)
+  assert not api.path.isfile(filepath)
+
+  api.path.mock_add_file(filepath)
+  api.step('mkdir directory', ['mkdir', '-p', directory])
+  api.step('touch filepath', ['touch', filepath])
+  assert api.path.exists(directory)
+  assert api.path.isdir(directory)
+  assert not api.path.isfile(directory)
+  assert api.path.exists(filepath)
+  assert not api.path.isdir(filepath)
+  assert api.path.isfile(filepath)
+
+  api.path.mock_remove_paths(directory)
+  api.step('rm directory', ['rm', '-rf', directory])
+  assert not api.path.exists(directory)
+  assert not api.path.isdir(directory)
+  assert not api.path.exists(filepath)
+  assert not api.path.isfile(filepath)
+
+  api.path.mock_add_directory(directory)
+  api.step('mkdir directory', ['mkdir', '-p', directory])
+  assert api.path.exists(directory)
+  assert api.path.isdir(directory)
+  assert not api.path.isfile(directory)
+
   # We can mock copy paths. See the file module to do this for real.
   copy1 = api.path['start_dir'].join('copy1')
   copy10 = api.path['start_dir'].join('copy10')

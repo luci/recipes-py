@@ -2163,14 +2163,14 @@ There are other anchor points which can be defined (e.g. by the
 `depot_tools/infra_paths` module). Refer to those modules for additional
 documentation.
 
-#### **class [PathApi](/recipe_modules/path/api.py#201)([RecipeApi](/recipe_engine/recipe_api.py#875)):**
+#### **class [PathApi](/recipe_modules/path/api.py#220)([RecipeApi](/recipe_engine/recipe_api.py#875)):**
 
-&mdash; **def [\_\_getitem\_\_](/recipe_modules/path/api.py#433)(self, name):**
+&mdash; **def [\_\_getitem\_\_](/recipe_modules/path/api.py#452)(self, name):**
 
 Gets the base path named `name`. See module docstring for more
 information.
 
-&mdash; **def [abs\_to\_path](/recipe_modules/path/api.py#363)(self, abs_string_path):**
+&mdash; **def [abs\_to\_path](/recipe_modules/path/api.py#382)(self, abs_string_path):**
 
 Converts an absolute path string `string_path` to a real Path object,
 using the most appropriate known base path.
@@ -2196,52 +2196,66 @@ api.path.abs_to_path("/basis/dir/for/recipe/some/other/dir") ->
 Raises an ValueError if the preconditions are not met, otherwise returns the
 Path object.
 
-&mdash; **def [abspath](/recipe_modules/path/api.py#456)(self, path):**
+&mdash; **def [abspath](/recipe_modules/path/api.py#475)(self, path):**
 
 Equivalent to os.path.abspath.
 
-&mdash; **def [assert\_absolute](/recipe_modules/path/api.py#302)(self, path):**
+&mdash; **def [assert\_absolute](/recipe_modules/path/api.py#321)(self, path):**
 
 Raises AssertionError if the given path is not an absolute path.
 
 Args:
   * path (Path|str) - The path to check.
 
-&mdash; **def [basename](/recipe_modules/path/api.py#460)(self, path):**
+&mdash; **def [basename](/recipe_modules/path/api.py#479)(self, path):**
 
 Equivalent to os.path.basename.
 
-&mdash; **def [dirname](/recipe_modules/path/api.py#464)(self, path):**
+&mdash; **def [dirname](/recipe_modules/path/api.py#483)(self, path):**
 
 Equivalent to os.path.dirname.
 
-&mdash; **def [exists](/recipe_modules/path/api.py#512)(self, path):**
+&mdash; **def [exists](/recipe_modules/path/api.py#531)(self, path):**
 
 Equivalent to os.path.exists.
 
 The presence or absence of paths can be mocked during the execution of the
 recipe by using the mock_* methods.
 
-&mdash; **def [expanduser](/recipe_modules/path/api.py#503)(self, path):**
+&mdash; **def [expanduser](/recipe_modules/path/api.py#522)(self, path):**
 
 Do not use this, use `api.path['home']` instead.
 
 This ONLY handles `path` == "~", and returns `str(api.path['home'])`.
 
-&mdash; **def [get](/recipe_modules/path/api.py#426)(self, name, default=None):**
+&mdash; **def [get](/recipe_modules/path/api.py#445)(self, name, default=None):**
 
 Gets the base path named `name`. See module docstring for more
 information.
 
-&mdash; **def [get\_config\_defaults](/recipe_modules/path/api.py#204)(self):**
+&mdash; **def [get\_config\_defaults](/recipe_modules/path/api.py#223)(self):**
 
 Internal recipe implementation function.
 
-&mdash; **def [initialize](/recipe_modules/path/api.py#266)(self):**
+&mdash; **def [initialize](/recipe_modules/path/api.py#285)(self):**
 
 Internal recipe implementation function.
 
-&mdash; **def [join](/recipe_modules/path/api.py#468)(self, path, \*paths):**
+&mdash; **def [isdir](/recipe_modules/path/api.py#539)(self, path):**
+
+Equivalent to os.path.isdir.
+
+The presence or absence of paths can be mocked during the execution of the
+recipe by using the mock_* methods.
+
+&mdash; **def [isfile](/recipe_modules/path/api.py#547)(self, path):**
+
+Equivalent to os.path.isfile.
+
+The presence or absence of paths can be mocked during the execution of the
+recipe by using the mock_* methods.
+
+&mdash; **def [join](/recipe_modules/path/api.py#487)(self, path, \*paths):**
 
 Equivalent to os.path.join.
 
@@ -2255,7 +2269,7 @@ If your path is rooted in one of the path module's root paths (i.e. those
 retrieved with api.path[something]), then you can convert from a string path
 back to a Path with the `abs_to_path` method.
 
-&mdash; **def [mkdtemp](/recipe_modules/path/api.py#311)(self, prefix=tempfile.template):**
+&mdash; **def [mkdtemp](/recipe_modules/path/api.py#330)(self, prefix=tempfile.template):**
 
 Makes a new temporary directory, returns Path to it.
 
@@ -2265,7 +2279,7 @@ Args:
 
 Returns a Path to the new directory.
 
-&mdash; **def [mkstemp](/recipe_modules/path/api.py#336)(self, prefix=tempfile.template):**
+&mdash; **def [mkstemp](/recipe_modules/path/api.py#355)(self, prefix=tempfile.template):**
 
 Makes a new temporary file, returns Path to it.
 
@@ -2276,15 +2290,23 @@ Args:
 Returns a Path to the new file. Unlike tempfile.mkstemp, the file's file
 descriptor is closed.
 
-&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#520)(self, path):**
+&mdash; **def [mock\_add\_directory](/recipe_modules/path/api.py#564)(self, path):**
+
+For testing purposes, mark that directory |path| exists.
+
+&mdash; **def [mock\_add\_file](/recipe_modules/path/api.py#560)(self, path):**
+
+For testing purposes, mark that file |path| exists.
+
+&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#555)(self, path, kind=FILE):**
 
 For testing purposes, mark that |path| exists.
 
-&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#525)(self, source, dest):**
+&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#568)(self, source, dest):**
 
 For testing purposes, copy |source| to |dest|.
 
-&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#530)(self, path, filt=(lambda p: True)):**
+&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#573)(self, path, filt=(lambda p: True)):**
 
 For testing purposes, assert that |path| doesn't exist.
 
@@ -2293,34 +2315,34 @@ Args:
   * filt (func[str] bool): Called for every candidate path. Return
     True to remove this path.
 
-&emsp; **@property**<br>&mdash; **def [pardir](/recipe_modules/path/api.py#441)(self):**
+&emsp; **@property**<br>&mdash; **def [pardir](/recipe_modules/path/api.py#460)(self):**
 
 Equivalent to os.path.pardir.
 
-&emsp; **@property**<br>&mdash; **def [pathsep](/recipe_modules/path/api.py#451)(self):**
+&emsp; **@property**<br>&mdash; **def [pathsep](/recipe_modules/path/api.py#470)(self):**
 
 Equivalent to os.path.pathsep.
 
-&mdash; **def [realpath](/recipe_modules/path/api.py#491)(self, path):**
+&mdash; **def [realpath](/recipe_modules/path/api.py#510)(self, path):**
 
 Equivalent to os.path.realpath.
 
-&mdash; **def [relpath](/recipe_modules/path/api.py#495)(self, path, start):**
+&mdash; **def [relpath](/recipe_modules/path/api.py#514)(self, path, start):**
 
 Roughly equivalent to os.path.relpath.
 
 Unlike os.path.relpath, `start` is _required_. If you want the 'current
 directory', use the `recipe_engine/context` module's `cwd` property.
 
-&emsp; **@property**<br>&mdash; **def [sep](/recipe_modules/path/api.py#446)(self):**
+&emsp; **@property**<br>&mdash; **def [sep](/recipe_modules/path/api.py#465)(self):**
 
 Equivalent to os.path.sep.
 
-&mdash; **def [split](/recipe_modules/path/api.py#483)(self, path):**
+&mdash; **def [split](/recipe_modules/path/api.py#502)(self, path):**
 
 Equivalent to os.path.split.
 
-&mdash; **def [splitext](/recipe_modules/path/api.py#487)(self, path):**
+&mdash; **def [splitext](/recipe_modules/path/api.py#506)(self, path):**
 
 Equivalent to os.path.splitext.
 ### *recipe_modules* / [platform](/recipe_modules/platform)

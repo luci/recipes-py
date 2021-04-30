@@ -44,6 +44,10 @@ from recipe_engine import recipe_api
 from recipe_engine import config_types
 
 
+FILE = 'FILE'
+DIRECTORY = 'DIRECTORY'
+
+
 class Error(Exception):
   """Error specific to path recipe module."""
 
@@ -68,12 +72,14 @@ class path_set(object):
   def __init__(self, path_mod, initial_paths):
     self._path_mod = path_mod
     self._initial_paths = set(initial_paths)
-    self._paths = set()
+    # An entry in self._paths means an object exists in the mock filesystem.
+    # The value (either FILE or DIRECTORY) is the type of that object.
+    self._paths = {}
 
   def _initialize(self):  # pylint: disable=method-hidden
     self._initialize = lambda: None
     for path in self._initial_paths:
-      self.add(path)
+      self.add(path, FILE)
     self._initial_paths = None
     self.contains = lambda path: path in self._paths
 
@@ -88,22 +94,24 @@ class path_set(object):
       return match_root
     return path[len(root)] == self._separator
 
-  def add(self, path):
+  def add(self, path, kind):
     path = str(path)
     self._initialize()
     prev_path = None
     while path != prev_path:
-      self._paths.add(path)
+      self._paths[path] = kind
       prev_path, path = path, self._path_mod.dirname(path)
+      kind = DIRECTORY
 
   def copy(self, source, dest):
     source, dest = str(source), str(dest)
     self._initialize()
-    to_add = set()
+    to_add = {}
     for p in self._paths:
       if self._is_contained_in(p, source, match_root=True):
-        to_add.add(p.replace(source, dest))
-    self._paths |= to_add
+        to_add[p.replace(source, dest)] = self._paths[p]
+    for path, kind in to_add.iteritems():
+      self.add(path, kind)
 
   def remove(self, path, filt):
     path = str(path)
@@ -115,11 +123,16 @@ class path_set(object):
     kill_set = set(
         p for p in self._paths
         if self._is_contained_in(p, path, match_root) and filt(p))
-    self._paths -= kill_set
+    for entry in kill_set:
+      del self._paths[entry]
 
   def contains(self, path):  # pylint: disable=method-hidden
     self._initialize()
     return self.contains(path)
+
+  def kind(self, path):
+    self._initialize()
+    return self._paths[path]
 
 
 class fake_path(object):
@@ -148,9 +161,9 @@ class fake_path(object):
     self._init_pth()
     return getattr(self._pth, name)
 
-  def mock_add_paths(self, path):
+  def mock_add_paths(self, path, kind):
     """Adds a path and all of its parents to the set of existing paths."""
-    self._mock_path_exists.add(path)
+    self._mock_path_exists.add(path, kind)
 
   def mock_copy_paths(self, source, dest):
     """Duplicates a path and all of its children to another path."""
@@ -163,6 +176,12 @@ class fake_path(object):
   def exists(self, path):  # pylint: disable=E0202
     """Returns True if path refers to an existing path."""
     return self._mock_path_exists.contains(path)
+
+  def isdir(self, path):
+    return self.exists(path) and self._mock_path_exists.kind(path) == DIRECTORY
+
+  def isfile(self, path):
+    return self.exists(path) and self._mock_path_exists.kind(path) == FILE
 
   # This matches:
   #   [START_DIR]
@@ -330,7 +349,7 @@ class PathApi(recipe_api.RecipeApi):
       assert isinstance(prefix, basestring)
       temp_dir = self['cleanup'].join('%s_tmp_%d' %
                                       (prefix, self._test_counter[prefix]))
-    self.mock_add_paths(temp_dir)
+    self.mock_add_paths(temp_dir, DIRECTORY)
     return temp_dir
 
   def mkstemp(self, prefix=tempfile.template):
@@ -357,7 +376,7 @@ class PathApi(recipe_api.RecipeApi):
       assert isinstance(prefix, basestring)
       temp_file = self['cleanup'].join('%s_tmp_%d' %
                                        (prefix, self._test_counter[prefix]))
-    self.mock_add_paths(temp_file)
+    self.mock_add_paths(temp_file, FILE)
     return temp_file
 
   def abs_to_path(self, abs_string_path):
@@ -517,10 +536,34 @@ class PathApi(recipe_api.RecipeApi):
     """
     return self._path_mod.exists(str(path))
 
-  def mock_add_paths(self, path):
+  def isdir(self, path):
+    """Equivalent to os.path.isdir.
+
+    The presence or absence of paths can be mocked during the execution of the
+    recipe by using the mock_* methods.
+    """
+    return self._path_mod.isdir(str(path))
+
+  def isfile(self, path):
+    """Equivalent to os.path.isfile.
+
+    The presence or absence of paths can be mocked during the execution of the
+    recipe by using the mock_* methods.
+    """
+    return self._path_mod.isfile(str(path))
+
+  def mock_add_paths(self, path, kind=FILE):
     """For testing purposes, mark that |path| exists."""
     if self._test_data.enabled:
-      self._path_mod.mock_add_paths(path)
+      self._path_mod.mock_add_paths(path, kind)
+
+  def mock_add_file(self, path):
+    """For testing purposes, mark that file |path| exists."""
+    self.mock_add_paths(path, FILE)
+
+  def mock_add_directory(self, path):
+    """For testing purposes, mark that directory |path| exists."""
+    self.mock_add_paths(path, DIRECTORY)
 
   def mock_copy_paths(self, source, dest):
     """For testing purposes, copy |source| to |dest|."""
