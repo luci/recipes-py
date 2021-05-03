@@ -29,7 +29,7 @@ it as a reference.
 All recipes take the form of a python file whose body looks like this:
 
 ```python
-# scripts/slave/recipes/hello.py
+# recipes/recipes/hello.py
 DEPS = ['recipe_engine/step']
 
 def RunSteps(api):
@@ -53,10 +53,10 @@ For these examples we will work out of the
 [tools/build](https://chromium.googlesource.com/chromium/tools/build/)
 repository.
 
-Put this in a file under `scripts/slave/recipes/hello.py`. You can then
+Put this in a file under `recipes/recipes/hello.py`. You can then
 run this recipe by calling
 
-    $ scripts/slave/recipes.py run hello
+    $ recipes/recipes.py run hello
 
 *** promo
 Note: every recipe execution (e.g. build) emits
@@ -72,7 +72,7 @@ having to guess at the parameters to `recipes.py`.
 
 You can execute the tests for the recipes by running
 
-    $ scripts/slave/recipes.py test run
+    $ recipes/recipes.py test run
 
 As part of running the tests the coverage of the recipes is checked, so you
 should expect output similar to the following snippet to appear as part of the
@@ -80,7 +80,7 @@ output of the command.
 
     Name                             Stmts   Miss  Cover   Missing
     --------------------------------------------------------------
-    scripts/slave/recipes/hello.py       5      1    80%   5
+    recipes/recipes/hello.py             5      1    80%   5
     --------------------------------------------------------------
     TOTAL                            21132      1    99%
 
@@ -101,7 +101,7 @@ and function definitions and the body of the `GenTests`.
 So let's add a test to get the necessary coverage.
 
 ```python
-# scripts/slave/recipes/hello.py
+# recipes/recipes/hello.py
 DEPS = ['recipe_engine/step']
 
 def RunSteps(api):
@@ -149,7 +149,7 @@ fail.
 
 You can train the test by running
 
-    $ scripts/slave/recipes.py test train --filter hello
+    $ recipes/recipes.py test train --filter hello
 
 > The `--filter` flag can be used when running or training the tests to limit
 > the tests that are executed. For details on the format, pass the `-h` flag to
@@ -157,7 +157,7 @@ You can train the test by running
 > `--filter` flag.
 
 Training the test will generate or update the json expectation files. There
-should now be a file `scripts/slave/recipes/hello.expected.basic.json` in your
+should now be a file `recipes/recipes/hello.expected.basic.json` in your
 working copy with content matching the steps executed by the recipe.
 
 ```json
@@ -217,7 +217,7 @@ in order with the `step_odict` that results from prior assertion functions.
 Let's re-write our test to use the post-process api:
 
 ```python
-# scripts/slave/recipes/hello.py
+# recipes/recipes/hello.py
 from recipe_engine.post_process import StepCommandRE, DropExpectation
 
 DEPS = ['recipe_engine/step']
@@ -251,7 +251,7 @@ it no longer matched, you would get output similar to the following:
             `check(_fullmatch(expected, actual))`
               expected: 'world2'
               actual: 'world'
-        added .../build/scripts/slave/recipes/hello.py:14
+        added .../build/recipes/recipes/hello.py:14
           StepCommandRE('Print Hello World', ['echo', 'hello', 'world2'])
 
 This output provides the following information: a backtrace rooted from the
@@ -261,9 +261,9 @@ check call rather than before so that you get more helpful output) and the
 location where the assertion was added.
 
 See the documentation of `post_process` in
-[recipe_test_api.py](https://chromium.googlesource.com/infra/luci/recipes-py/+/master/recipe_engine/recipe_test_api.py)
+[recipe_test_api.py](https://chromium.googlesource.com/infra/luci/recipes-py/+/HEAD/recipe_engine/recipe_test_api.py)
 for more details about the post-processing api and see
-[post_process.py](https://chromium.googlesource.com/infra/luci/recipes-py/+/master/recipe_engine/post_process.py)
+[post_process.py](https://chromium.googlesource.com/infra/luci/recipes-py/+/HEAD/recipe_engine/post_process.py)
 for information on the available assertion functions.
 
 Tests should use the post-process api to make assertions about the steps under
@@ -291,7 +291,7 @@ properties it knows about, and pass them as arguments to your RunSteps function.
 Let's see an example!
 
 ```python
-# scripts/slave/recipes/hello.py
+# recipes/recipes/hello.py
 from recipe_engine.post_process import StepCommandRE, DropExpectation
 from recipe_engine.recipe_api import Property
 
@@ -336,7 +336,7 @@ def GenTests(api):
   )
 ```
 
-The property list is a whitelist, so if the properties provided as inputs to the
+The property list is an allowlist, so if the properties provided as inputs to the
 current recipe run were
 
 ```python
@@ -357,11 +357,11 @@ entry in the PROPERTIES dict.
 
 To specify property values in a local run:
 
-    script/slaves/recipes.py run <recipe-name> opt=bob other=sally
+    recipes/recipes.py run <recipe-name> opt=bob other=sally
 
 Or, more explicitly::
 
-    script/slaves/recipes.py --properties-file <path/to/json>
+    recipes/recipes.py --properties-file <path/to/json>
 
 Where `<path/to/json>` is a file containing a valid JSON `object` (i.e.
 key:value pairs).
@@ -377,9 +377,9 @@ There are all sorts of helper modules. They are found in the `recipe_modules`
 directory alongside the `recipes` directory where the recipes go.
 
 There are a whole bunch of modules which provide really helpful tools. You
-should go take a look at them. `scripts/slave/recipes.py` is a
+should go take a look at them. `recipes/recipes.py` is a
 pretty helpful tool. If you want to know more about properties, step and path, I
-would suggest starting with `scripts/slave/recipes.py doc`, and then delving
+would suggest starting with `recipes/recipes.py doc`, and then delving
 into the helpful docstrings in those helpful modules.
 
 Notice the `DEPS` line in the recipe. Any modules named by string in DEPS are
@@ -404,7 +404,7 @@ echo functionality across a couple recipes which all start the same way. To do
 this, you need to add a module directory.
 
 ```
-scripts/slave/recipe_modules/
+recipes/recipe_modules/
   ...
   goma/
   halt/
@@ -424,7 +424,7 @@ scripts/slave/recipe_modules/
 First add an `__init__.py` with DEPS:
 
 ```python
-# scripts/slave/recipe_modules/hello/__init__.py
+# recipes/recipe_modules/hello/__init__.py
 from recipe_engine.recipe_api import Property
 
 DEPS = [
@@ -441,7 +441,7 @@ PROPERTIES = {
 And your api.py should look something like:
 
 ```python
-# scripts/slave/recipe_modules/hello/api.py
+# recipes/recipe_modules/hello/api.py
 from recipe_engine import recipe_api
 
 class HelloApi(recipe_api.RecipeApi):
@@ -466,7 +466,7 @@ of the object (i.e. not in `__init__`).
 And now, our refactored recipe:
 
 ```python
-# scripts/slave/recipes/hello.py
+# recipes/recipes/hello.py
 from recipe_engine.post_process import StepCommandRE, DropExpectation
 
 DEPS = [
@@ -505,7 +505,7 @@ And the coverage report will be as follows:
 
     Name                                        Stmts   Miss  Cover   Missing
     -------------------------------------------------------------------------
-    scripts/slave/recipe_modules/hello/api.py      10      6    40%   6-7, 10-13
+    recipes/recipe_modules/hello/api.py            10      6    40%   6-7, 10-13
     -------------------------------------------------------------------------
     TOTAL                                       21147      6    99%
 
@@ -514,7 +514,7 @@ or tests subdirectory of the module. So let's move our hello recipe into the
 examples subdirectory of our module.
 
 ```python
-# scripts/slave/recipe_modules/hello/examples/simple.py
+# recipes/recipe_modules/hello/examples/simple.py
 from recipe_engine.post_process import StepCommandRE, DropExpectation
 
 DEPS = [
@@ -602,7 +602,7 @@ will follow, and the config context based on it that we will add configuration
 items to.
 
 ```python
-# scripts/slave/recipe_modules/hello/config.py
+# recipes/recipe_modules/hello/config.py
 from recipe_engine.config import config_item_context, ConfigGroup
 from recipe_engine.config import Single, Static, BadConf
 
@@ -633,11 +633,11 @@ extend this context, which we will get to later.
 Finally let's define some config items themselves. A config item is a function
 decorated with the `config_ctx`, and takes a config blob as 'c'. The config item
 updates the config blob, perhaps conditionally. There are many features to
-`slave/recipe_config.py`. I would recommend reading the docstrings there
+`recipe_engine/config.py`. I would recommend reading the docstrings there
 for all the details.
 
 ```python
-# scripts/slave/recipe_modules/hello/config.py
+# recipes/recipe_modules/hello/config.py
 
 # ...
 
@@ -665,7 +665,7 @@ def default_tool(c):
 Now that we have our config, let's use it.
 
 ```python
-# scripts/slave/recipe_modules/hello/api.py
+# recipes/recipe_modules/hello/api.py
 from recipe_engine import recipe_api
 
 class HelloApi(recipe_api.RecipeApi):
@@ -692,7 +692,7 @@ in one way or another. Also note that c is a 'public' variable, which means that
 recipes have direct access to the configuration state by `api.<modname>.c`.
 
 ```python
-# scripts/slave/recipe_modules/examples/simple.py
+# recipes/recipe_modules/examples/simple.py
 from recipe_engine.post_process import StepCommandRE, DropExpectation
 
 DEPS = [
@@ -738,7 +738,7 @@ boundary so that we match a tool named 'echo' in some location.
 examples that call `set_config` differently to get different results:
 
 ```python
-# scripts/slave/recipe_modules/examples/rainbow.py
+# recipes/recipe_modules/examples/rainbow.py
 from recipe_engine.post_process import StepCommandRE, DropExpectation
 
 DEPS = ['hello']
@@ -757,7 +757,7 @@ def GenTests(api):
 ```
 
 ```python
-# scripts/slave/recipe_modules/examples/evil.py
+# recipes/recipe_modules/examples/evil.py
 from recipe_engine.post_process import StepCommandRE, DropExpectation
 
 DEPS = ['hello']
@@ -793,7 +793,7 @@ This isn't an example of how the `hello` module should be used, so lets add a
 recipe under the tests subdirectory to get the last bit of coverage.
 
 ```python
-# scripts/slave/recipe_modules/hello/tests/badconf.py
+# recipes/recipe_modules/hello/tests/badconf.py
 from recipe_engine.post_process import DropExpectation
 
 DEPS = ['hello']
@@ -814,7 +814,7 @@ def GenTests(api):
 Consider this recipe:
 
 ```python
-# scripts/slave/recipes/shake.py
+# recipes/recipes/shake.py
 from recipe_engine.post_process import DropExpectation, MustRun
 
 DEPS = [
@@ -874,7 +874,7 @@ This is pretty neat... However, it turns out that returncodes suck bigtime for
 communicating actual information. `api.json.output()` to the rescue!
 
 ```python
-# scripts/slave/recipes/war.py
+# recipes/recipes/war.py
 from recipe_engine.post_process import DropExpectation, MustRun
 
 DEPS = [
@@ -936,7 +936,7 @@ api.step(..., stdin=api.raw_io.input('test input'))
 ```
 
 Also see [raw_io's
-example](https://chromium.googlesource.com/chromium/tools/build.git/+/master/scripts/slave/recipe_modules/raw_io/examples/full.py).
+example](https://chromium.googlesource.com/infra/luci/recipes-py.git/+/HEAD/recipe_modules/raw_io/examples/full.py).
 
 ### Example: read standard output of a step as json
 
@@ -947,7 +947,7 @@ data = step_result.stdout
 ```
 
 Also see [json's
-example](https://chromium.googlesource.com/chromium/tools/build.git/+/master/scripts/slave/recipe_modules/json/examples/full.py).
+example](https://chromium.googlesource.com/infra/luci/recipes-py/+/HEAD/recipe_modules/json/examples/full.py).
 
 ### Example: write to standard input of a step as json
 
@@ -957,7 +957,7 @@ api.step(..., stdin=api.json.input(data))
 ```
 
 Also see [json's
-example](https://chromium.googlesource.com/chromium/tools/build.git/+/master/scripts/slave/recipe_modules/json/examples/full.py).
+example](https://chromium.googlesource.com/infra/luci/recipes-py.git/+/HEAD/recipe_modules/json/examples/full.py).
 
 ### Example: simulated step output
 
@@ -1020,7 +1020,7 @@ step_result.presentation.step_text = 'Dynamic step result text'
 
 ## How do I know what modules to use?
 
-Use `scripts/slave/recipes.py doc`. It's super effective!
+Use `recipes/recipes.py doc`. It's super effective!
 
 ## How do I run those tests you were talking about?
 
@@ -1031,8 +1031,8 @@ Execute the following commands:
 `./recipes.py test train`
 
 Specifically, for `tools/build` repo, the commands to execute are:
-`scripts/slave/recipes.py test run`
-`scripts/slave/recipes.py test train`
+`recipes/recipes.py test run`
+`recipes/recipes.py test train`
 
 ## Where are the docs for recipes and modules?
 

@@ -98,7 +98,7 @@ As part of this config, the repo needs an `id`, which should match the
 LUCI-config project id for the repo; this `id` will show up when other recipe
 repos depend on your repo.
 
-Example [recipes.cfg](https://chromium.googlesource.com/chromium/tools/build/+/master/infra/config/recipes.cfg).
+Example [recipes.cfg](https://chromium.googlesource.com/chromium/tools/build/+/HEAD/infra/config/recipes.cfg).
 
 [recipes_cfg.proto]: /recipe_engine/recipes_cfg.proto
 
@@ -111,7 +111,7 @@ files. Recipes are named by their file path (minus the `.py` extension).
 A recipe in a subfolder includes that subfolder in its name; so
 `/path/to/recipes/subdir/recipe.py` would have the name "subdir/recipe".
 
-Example [recipes folder](https://chromium.googlesource.com/chromium/tools/build/+/master/scripts/slave/recipes).
+Example [recipes folder](https://chromium.googlesource.com/chromium/tools/build/+/HEAD/recipes/recipes).
 
 ### The recipe_modules folder
 
@@ -124,7 +124,7 @@ these files:
   * `api.py`: Contains the implementation of the recipe module.
   * `test_api.py`: Contains the implementation of the recipe module's fakes.
 
-Example [recipe_modules folder](https://chromium.googlesource.com/chromium/tools/build/+/master/scripts/slave/recipe_modules).
+Example [recipe_modules folder](https://chromium.googlesource.com/chromium/tools/build/+/HEAD/recipes/recipe_modules).
 
 ### The recipe_proto folder
 
