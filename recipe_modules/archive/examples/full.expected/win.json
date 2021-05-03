@@ -98,6 +98,28 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py",
       "--json-input",
+      "{\"archive_file\": \"[START_DIR]\\\\output\\\\all_zip.zip\", \"archive_type\": \"zip\", \"include_files\": [], \"output\": \"[CLEANUP]\\\\tar-example_tmp_1\\\\output4\", \"safe_mode\": true}",
+      "--json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "extract all_zip as zip",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@<br/>extracted 1337 files - 50159.75 MB@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"extracted\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"bytes\": 50159747054, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"filecount\": 1337@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py",
+      "--json-input",
       "{\"archive_file\": \"[START_DIR]\\\\output\\\\more.zip\", \"include_files\": [], \"output\": \"[CLEANUP]\\\\tar-example_tmp_1\\\\output3\", \"safe_mode\": true}",
       "--json-output",
       "/path/to/tmp/json"

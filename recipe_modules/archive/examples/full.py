@@ -56,6 +56,8 @@ def RunSteps(api):
   api.archive.extract('extract tar', out_tar, temp.join('output1'))
   api.archive.extract('extract zip', out_zip, temp.join('output2'))
   api.archive.extract('extract all_zip zip', all_zip, temp.join('output3'))
+  api.archive.extract('extract all_zip as zip', all_zip, temp.join('output4'),
+                      archive_type='zip')
 
   try:
     api.archive.extract('extract failure', out_zip, temp.join('output3'))

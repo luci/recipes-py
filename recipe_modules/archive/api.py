@@ -40,7 +40,7 @@ class ArchiveApi(recipe_api.RecipeApi):
     return Package(self._archive_impl, root)
 
   def extract(self, step_name, archive_file, output, mode='safe',
-              include_files=()):
+              include_files=(), archive_type=None):
     """Step to uncompress |archive_file| into |output| directory.
 
     Archive will be unpacked to |output| so that root of an archive is in
@@ -65,21 +65,28 @@ class ArchiveApi(recipe_api.RecipeApi):
         with the `fnmatch` module. If a file "filename" in the archive exists,
         include_files with "file*" will match it. All paths for the matcher
         are converted to posix style (forward slash).
+      * archive_type (str): archive_file's archive type ("zip" or "tar"). This
+        allows overriding the default detected type (based on file extension).
     """
     assert mode in ('safe', 'unsafe'), 'Unknown mode %r' % (mode,)
 
+    script_input = {
+        'output': str(output),
+        'archive_file': str(archive_file),
+        'safe_mode': mode == 'safe',
+        'include_files': list(include_files),
+    }
+    if archive_type:
+      assert archive_type in ('zip', 'tar'), ('Unknown archive_type %s' %
+                                              archive_type)
+      script_input['archive_type'] = archive_type
     step_result = self.m.step(
         step_name, [
             'python3',
             '-u',
             self.resource('extract.py'),
             '--json-input',
-            self.m.json.input({
-                'output': str(output),
-                'archive_file': str(archive_file),
-                'safe_mode': mode == 'safe',
-                'include_files': list(include_files),
-            }),
+            self.m.json.input(script_input),
             '--json-output',
             self.m.json.output(),
         ],

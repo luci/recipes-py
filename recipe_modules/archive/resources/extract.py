@@ -128,6 +128,8 @@ def main():
   data = json.load(opts.json_input)
   output = data['output']
   archive_file = data['archive_file']
+  file_type = data.get('archive_type',
+                       'zip' if archive_file.endswith('.zip') else 'tar')
   safe_mode = data['safe_mode']
   include_files = data['include_files']
 
@@ -140,8 +142,6 @@ def main():
   assert not os.path.exists(output), output
   # Normalize it to end with a path separator.
   output = os.path.join(output, '')
-
-  file_type = 'zip' if archive_file.endswith('.zip') else 'tar'
 
   print('Extracting %s (%s) -> %s ...' % (archive_file, file_type, output))
   try:

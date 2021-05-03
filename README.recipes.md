@@ -179,7 +179,7 @@
 
 Provides steps to manipulate archive files (tar, zip, etc.).
 
-&mdash; **def [extract](/recipe_modules/archive/api.py#42)(self, step_name, archive_file, output, mode='safe', include_files=()):**
+&mdash; **def [extract](/recipe_modules/archive/api.py#42)(self, step_name, archive_file, output, mode='safe', include_files=(), archive_type=None):**
 
 Step to uncompress |archive_file| into |output| directory.
 
@@ -205,6 +205,8 @@ Args:
     with the `fnmatch` module. If a file "filename" in the archive exists,
     include_files with "file*" will match it. All paths for the matcher
     are converted to posix style (forward slash).
+  * archive_type (str): archive_file's archive type ("zip" or "tar"). This
+    allows overriding the default detected type (based on file extension).
 
 &mdash; **def [package](/recipe_modules/archive/api.py#13)(self, root):**
 
