@@ -18,6 +18,8 @@ import tempfile
 from gevent import subprocess
 
 import attr
+import six
+from six import b
 
 import google.protobuf  # pinned in .vpython
 import google.protobuf.message
@@ -26,7 +28,7 @@ from .attr_util import attr_type
 from .exceptions import BadProtoDefinitions
 
 
-PROTOC_VERSION = google.protobuf.__version__
+PROTOC_VERSION = google.protobuf.__version__.encode('utf-8')
 
 if sys.version_info >= (3, 5): # we're running python > 3.5
   OS_WALK = os.walk
@@ -112,7 +114,8 @@ class _ProtoInfo(object):
     # Compute the file's blobhash
     csum = hashlib.sha1()
     with open(src_abspath, 'rb') as src:
-      csum.update('blob %d\0' % (os.fstat(src.fileno()).st_size,))
+      csum.update(
+          b('blob %d\0') % (os.fstat(src.fileno()).st_size,))
       while True:
         data = src.read(4 * 1024)
         if not data:
@@ -172,7 +175,7 @@ def _gather_proto_info_from_repo(repo):
 # checksum. If you need to change the compilation algorithm/process in any way,
 # you should increment this version number to cause all protos to be regenerated
 # downstream.
-RECIPE_PB_VERSION = '3'
+RECIPE_PB_VERSION = b('3')
 
 
 def _gather_protos(deps):
@@ -192,23 +195,23 @@ def _gather_protos(deps):
   Raises BadProtoDefinitions if this finds conflicting or reserved protos.
   """
   all_protos = {}  # Dict[repo_name : str, List[_ProtoInfo]]
-  for repo in deps.repos.itervalues():
+  for repo in six.itervalues(deps.repos):
     proto_info = _gather_proto_info_from_repo(repo)
     if proto_info:
       all_protos[repo.name] = proto_info
 
   csum = hashlib.sha256(RECIPE_PB_VERSION)
-  csum.update('\0')
+  csum.update(b('\0'))
   csum.update(PROTOC_VERSION)
-  csum.update('\0')
+  csum.update(b('\0'))
   rel_to_projs = {}  # type: Dict[dest_relpath: str, List[repo_name: str]]
   # dups has keys where len(rel_to_projs[dest_relpath]) > 1
   dups = set()       # type: Set[key: str]
   reserved = set()   # type: Set[key: str]
   retval = []        # type: List[Tuple[src_abspath: str, dest_relpath: str]]
   for repo_name, proto_infos in sorted(all_protos.items()):
-    csum.update(repo_name)
-    csum.update('\0\0')
+    csum.update(repo_name.encode('utf-8'))
+    csum.update(b('\0\0'))
 
     for info in proto_infos:
       duplist = rel_to_projs.setdefault(info.dest_relpath, [])
@@ -220,12 +223,12 @@ def _gather_protos(deps):
 
       retval.append((info.src_abspath, info.dest_relpath))
 
-      csum.update(info.relpath)
-      csum.update('\0')
-      csum.update(info.dest_relpath)
-      csum.update('\0')
-      csum.update(info.blobhash)
-      csum.update('\0')
+      csum.update(info.relpath.encode('utf-8'))
+      csum.update(b('\0'))
+      csum.update(info.dest_relpath.encode('utf-8'))
+      csum.update(b('\0'))
+      csum.update(info.blobhash.encode('utf-8'))
+      csum.update(b('\0'))
 
   if dups or reserved:
     msg = ''
@@ -346,14 +349,14 @@ def _rewrite_and_rename(root, base_proto_path):
 
   err = None
 
-  found_first_blank = False
+  found_first_import = False
   target_base = base_proto_path[:-len('_pb2.py')]
   with open(target_base+'.py', 'wb') as ofile:
     with open(base_proto_path, 'rU') as ifile:
       bypass = False
-      for line in ifile.xreadlines():
+      for line in ifile:
         if bypass:
-          ofile.write(line)
+          ofile.write(line.encode('utf-8'))
           continue
 
         pkg_m = _PACKAGE_RE.match(line)
@@ -362,24 +365,26 @@ def _rewrite_and_rename(root, base_proto_path):
           err = _check_package(
               pkg_m.group(1), os.path.relpath(target_base, root))
 
-          ofile.write(line)  # write it unchanged
+          ofile.write(line.encode('utf-8'))  # write it unchanged
           # This was the last line we were looking for; the rest of the file is
           # a straight copy.
           bypass = True
           continue
 
-        # If it's the first blank line, we want to insert a __future__ import
+        # If it's the first import line, we want to insert a __future__ import
         # line.
-        if not found_first_blank and line.strip() == "":
-          found_first_blank = True
-          ofile.write("\nfrom __future__ import absolute_import\n\n")
+        if not found_first_import and line.startswith(('from ', 'import ')):
+          found_first_import = True
+          ofile.write(b("\nfrom __future__ import absolute_import\n\n"))
+          ofile.write(line.encode('utf-8'))
           continue
 
         # Finally, if we're not in bypass mode, we're potentially rewriting
         # import lines.
         ofile.write(
           _REWRITE_IMPORT_RE.sub(
-            r'from PB.\1 import \2 as \3\n', line))
+              r'from PB.\1 import \2 as \3\n', line
+          ).encode('utf-8'))
   os.remove(base_proto_path)
 
   return err
@@ -447,8 +452,8 @@ def _collect_protos(argfile_fd, proto_files, dest):
       destpath = os.path.join(dest, dest_relpath)
       _makedirs(os.path.dirname(destpath))
       shutil.copyfile(src_abspath, destpath)
-      os.write(argfile_fd, dest_relpath)
-      os.write(argfile_fd, '\n')
+      os.write(argfile_fd, dest_relpath.encode('utf-8'))
+      os.write(argfile_fd, b('\n'))
   finally:
     os.close(argfile_fd)  # for windows
 
@@ -517,9 +522,8 @@ def _install_protos(proto_package_path, dgst, proto_files):
   cipd_proc = subprocess.Popen([
     'cipd'+_BAT, 'ensure', '-root', os.path.join(proto_package_path, 'protoc'),
     '-ensure-file', '-'], stdin=subprocess.PIPE)
-  cipd_proc.communicate('''
-    infra/tools/protoc/${{platform}} protobuf_version:v{PROTOC_VERSION}
-  '''.format(PROTOC_VERSION=PROTOC_VERSION))
+  cipd_proc.communicate(
+      b('infra/tools/protoc/${platform} protobuf_version:v') + PROTOC_VERSION)
   if cipd_proc.returncode != 0:
     raise ValueError(
         'failed to install protoc: retcode %d' % cipd_proc.returncode)
@@ -542,7 +546,7 @@ def _install_protos(proto_package_path, dgst, proto_files):
   protoc = os.path.join(proto_package_path, 'protoc', 'protoc')
   _compile_protos(proto_files, proto_tree, protoc, argfile, pb_temp)
   with open(os.path.join(pb_temp, 'csum'), 'wb') as csum_f:
-    csum_f.write(dgst)
+    csum_f.write(dgst.encode('utf-8'))
 
   dest = os.path.join(proto_package_path, 'PB')
   # Check the digest again, in case another engine beat us to the punch.
