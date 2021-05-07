@@ -7,6 +7,8 @@
 
 # TODO(iannucci): Add a real docstring.
 
+from __future__ import print_function
+
 import argparse
 import json
 import multiprocessing
@@ -170,6 +172,6 @@ def run_list(recipe_deps, json_file):
   if json_file:
     json.dump({'format': 1, 'tests': tests}, json_file)
   else:
-    print '\n'.join(tests)
+    print('\n'.join(tests))
 
   return 0

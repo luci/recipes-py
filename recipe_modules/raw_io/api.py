@@ -11,6 +11,7 @@ import cStringIO
 import errno
 import os
 import shutil
+import six
 import sys
 import tempfile
 import UserDict
@@ -56,12 +57,12 @@ def _rmtree(d):  # pragma: no cover
         os.remove(p)
         return
       # Reraise the original exception.
-      raise excinfo[0], excinfo[1], excinfo[2]
+      six.reraise(excinfo[0], excinfo[1], excinfo[2])
 
     # On Windows, some paths exceed MAX_PATH. Work around this by prepending
     # the UNC magic prefix '\\?\' which allows the Windows API file calls to
     # ignore the MAX_PATH limit.
-    shutil.rmtree(ur'\\?\%s' % (d,), onerror=unset_ro_and_remove_again)
+    shutil.rmtree(u'\\\\?\\%s' % (d,), onerror=unset_ro_and_remove_again)
   else:
     shutil.rmtree(d)
 

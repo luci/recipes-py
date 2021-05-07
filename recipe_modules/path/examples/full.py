@@ -192,7 +192,7 @@ def RunSteps(api):
 
   try:
     if api.platform.is_win:
-      api.path.abs_to_path('C:\some\other\root\non\absolute')
+      api.path.abs_to_path(r'C:\some\other\root\non\absolute')
     else:
       api.path.abs_to_path('/some/other/root/non/absolute')
     assert False, "this should have thrown"  # pragma: no cover

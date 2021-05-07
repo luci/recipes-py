@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from __future__ import print_function
+
 import collections
 import errno
 import fnmatch
@@ -112,8 +114,8 @@ def _push_tests(test_filters, is_train, main_repo, description_queue,
     except KeyboardInterrupt:
       raise
     except:
-      print "USER CODE ERROR:"
-      print "Crashed while running GenTests from recipe %r" % (recipe.name,)
+      print("USER CODE ERROR:")
+      print("Crashed while running GenTests from recipe %r" % (recipe.name,))
       raise
 
   # Test any non-recently-failed cases
@@ -226,8 +228,8 @@ def main(args):
 
   if args.filtered_stacks:
     enable_filtered_stacks()
-    print ('Filtering engine implementation out of crash stacks. '
-           'Pass `--full-stacks` to see entire stack.')
+    print('Filtering engine implementation out of crash stacks. '
+          'Pass `--full-stacks` to see entire stack.')
 
   def _dump():
     if args.json:
@@ -250,15 +252,15 @@ def main(args):
   is_run = args.subcommand == 'run'
   if docs_enabled:
     if is_run and is_doc_changed(repo):
-      print '------'
-      print 'README.recipes.md needs to be updated. Please run:'
-      print
-      print '  ./recipes.py doc'
-      print
+      print('------')
+      print('README.recipes.md needs to be updated. Please run:')
+      print()
+      print('  ./recipes.py doc')
+      print()
       return 1
 
     if is_train:
-      print 'Generating README.recipes.md'
+      print('Generating README.recipes.md')
       with open(repo.readme_path, 'wb') as f:
         regenerate_doc(repo, f)
 

@@ -113,7 +113,7 @@ class ModuleBasePath(BasePath, namedtuple('ModuleBasePath', 'module')):
     name = self.module.__name__[len(prefix):]
     # We change python's module delimiter . to ::, since . is already used
     # by expect tests.
-    return 'RECIPE_MODULE[%s]' % re.sub('\.', '::', name)
+    return 'RECIPE_MODULE[%s]' % re.sub(r'\.', '::', name)
 
 
 class RecipeScriptBasePath(

@@ -5,7 +5,7 @@
 from enum import Enum
 
 class TaskState(Enum):
-  """Enum representing Swarming task states.
+  r"""Enum representing Swarming task states.
   States must be kept in sync with
   https://cs.chromium.org/chromium/infra/luci/appengine/swarming/swarming_rpcs.py?q=TaskState\(
   See the above link for documentation.

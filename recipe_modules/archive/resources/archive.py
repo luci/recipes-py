@@ -6,6 +6,8 @@
 the 'archive' recipe module internally. Should not be used elsewhere.
 """
 
+from __future__ import print_function
+
 import json
 import os
 import subprocess
@@ -42,7 +44,7 @@ def archive(out, root, entries):
     if path == out.name:
       return
     archive_name = path[len(root):]
-    print 'Adding %s' % archive_name
+    print('Adding %s' % archive_name)
     out.add(path, archive_name)
 
   for entry in entries:
@@ -81,13 +83,13 @@ def main():
   # Output tar path should be an absolute path.
   assert os.path.isabs(output), output
 
-  print 'Archiving %s -> %s (%s)...' % (root, output, archive_type)
+  print('Archiving %s -> %s (%s)...' % (root, output, archive_type))
   # TODO(iannucci): use CIPD to fetch native clients instead of using python
   # builtins.
   try:
     with OPENER_FUNCS[archive_type](output) as arc:
       archive(arc, root, entries)
-    print 'Archive size: %.1f KB' % (os.stat(output).st_size / 1024.0,)
+    print('Archive size: %.1f KB' % (os.stat(output).st_size / 1024.0,))
     return 0
   except:
     try:

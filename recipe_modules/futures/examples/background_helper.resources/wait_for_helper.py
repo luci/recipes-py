@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from __future__ import print_function
+
 import sys
 import time
 import os
@@ -12,9 +14,9 @@ OUT_FILE = sys.argv[2]
 
 while True:
   if os.path.isfile(PID_FILE):
-    print "helper is running!"
+    print("helper is running!")
     shutil.copyfile(PID_FILE, OUT_FILE)
     sys.exit(0)
 
-  print "helper not running yet. Sleeping 1s"
+  print("helper not running yet. Sleeping 1s")
   time.sleep(1)

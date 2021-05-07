@@ -861,7 +861,7 @@ class TaskRequest(object):
       return ret.with_expiration_secs(int(d['expiration_secs']))
 
     def to_jsonish(self):
-      """Renders the task request as a JSON-serializable dict.
+      r"""Renders the task request as a JSON-serializable dict.
 
       The format follows the schema given by the TaskSlice class found here:
       https://cs.chromium.org/chromium/infra/luci/appengine/swarming/

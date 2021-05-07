@@ -444,8 +444,7 @@ class RecipeEngine(object):
 
       # If there's a buffered exception, we raise it now.
       if caught:
-        # TODO(iannucci): Python3 incompatible.
-        raise caught[0], caught[1], caught[2]
+        six.reraise(caught[0], caught[1], caught[2])
 
       return ret
 

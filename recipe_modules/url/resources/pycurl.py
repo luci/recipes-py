@@ -6,6 +6,8 @@
 # NOTE: This was imported from Chromium's "tools/build" at revision:
 # 65976b6e2a612439681dc42830e90dbcdf550f40
 
+from __future__ import print_function
+
 import argparse
 import json
 import logging
@@ -38,7 +40,7 @@ def _download(url, outfile, headers, transient_retry, strip_prefix):
       backoff_factor=0.2,
       raise_on_status=False,
     )
-    print retry
+    print(retry)
     s.mount(url, requests.adapters.HTTPAdapter(max_retries=retry))
 
 

@@ -12,7 +12,7 @@ correctly for all platforms under simulation).
 
 # TODO(luqui): Implement lint for recipe modules also.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 import re
 import types
 
@@ -83,6 +83,6 @@ def main(args):
     errors.extend(ImportsTest(recipe, allowed_modules))
 
   if errors:
-    print '\n'.join(str(e) for e in errors)
+    print('\n'.join(str(e) for e in errors))
     return 1
   return 0

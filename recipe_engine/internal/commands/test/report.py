@@ -6,6 +6,9 @@
 """Internal helpers for reporting test status to stdout."""
 
 
+from __future__ import print_function
+
+
 import collections
 import datetime
 import logging
@@ -62,7 +65,7 @@ class Reporter(object):
     self._column_count += item_columns
     if self._column_count > self._column_max:
       self._column_count = 0
-      print
+      print()
 
   def short_report(self, outcome_msg):
     """Prints all test results from `outcome_msg` to stdout.
@@ -83,10 +86,10 @@ class Reporter(object):
     # wrong.
     if outcome_msg.internal_error:
       # This is pretty bad.
-      print 'ABORT ABORT ABORT'
-      print 'Global failure(s):'
+      print('ABORT ABORT ABORT')
+      print('Global failure(s):')
       for failure in outcome_msg.internal_error:
-        print '  ', failure
+        print('  ', failure)
       sys.exit(1)
 
     has_fail = False
@@ -125,7 +128,7 @@ class Reporter(object):
 
     fail = self._long_err_buf.tell() > 0
 
-    print
+    print()
     sys.stdout.write(self._long_err_buf.getvalue())
 
     # For some integration tests we have repos which don't actually have any
@@ -136,59 +139,59 @@ class Reporter(object):
         outcome_msg.coverage_percent = cov.report(
             file=covf, show_missing=True, skip_covered=True)
       except coverage.CoverageException as ex:
-        print '%s: %s' % (ex.__class__.__name__, ex)
+        print('%s: %s' % (ex.__class__.__name__, ex))
       if int(outcome_msg.coverage_percent) != 100:
         fail = True
-        print covf.getvalue()
-        print 'FATAL: Insufficient coverage (%.2f%%)' % (
-          outcome_msg.coverage_percent,)
-        print
+        print(covf.getvalue())
+        print('FATAL: Insufficient coverage (%.2f%%)' % (
+          outcome_msg.coverage_percent,))
+        print()
 
     duration = (datetime.datetime.now() - self._start_time).total_seconds()
-    print '-' * 70
-    print 'Ran %d tests in %0.3fs' % (len(outcome_msg.test_results), duration)
-    print
+    print('-' * 70)
+    print('Ran %d tests in %0.3fs' % (len(outcome_msg.test_results), duration))
+    print()
 
     if outcome_msg.uncovered_modules:
       fail = True
-      print '------'
-      print 'ERROR: The following modules lack any form of test coverage:'
+      print('------')
+      print('ERROR: The following modules lack any form of test coverage:')
       for modname in outcome_msg.uncovered_modules:
-        print '  ', modname
-      print
-      print 'Please add test recipes for them (e.g. recipes in the module\'s'
-      print '"tests" subdirectory).'
-      print
+        print('  ', modname)
+      print()
+      print('Please add test recipes for them (e.g. recipes in the module\'s')
+      print('"tests" subdirectory).')
+      print()
 
     if outcome_msg.unused_expectation_files:
       fail = True
-      print '------'
-      print 'ERROR: The following expectation files have no associated test case:'
+      print('------')
+      print('ERROR: The following expectation files have no associated test case:')
       for expect_file in outcome_msg.unused_expectation_files:
-        print '  ', expect_file
-      print
+        print('  ', expect_file)
+      print()
 
     if fail:
-      print '------'
-      print 'FAILED'
-      print
+      print('------')
+      print('FAILED')
+      print()
       if not self._is_train:
-        print 'NOTE: You may need to re-train the expectation files by running:'
-        print
-        print '  ./recipes.py test train'
-        print
-        print 'This will update all the .json files to have content which matches'
-        print 'the current recipe logic. Review them for correctness and include'
-        print 'them with your CL.'
+        print('NOTE: You may need to re-train the expectation files by running:')
+        print()
+        print('  ./recipes.py test train')
+        print()
+        print('This will update all the .json files to have content which matches')
+        print('the current recipe logic. Review them for correctness and include')
+        print('them with your CL.')
       sys.exit(1)
 
     warning_result = _collect_warning_result(outcome_msg)
     if warning_result:
       _print_warnings(warning_result, recipe_deps)
-      print '------'
-      print 'TESTS OK with %d warnings' % len(warning_result)
+      print('------')
+      print('TESTS OK with %d warnings' % len(warning_result))
     else :
-      print 'TESTS OK'
+      print('TESTS OK')
 
 
 
@@ -236,7 +239,7 @@ def _print_summary_info(verbose, use_emoji, test_name, test_result,
 
   if verbose:
     msg = '' if not verbose_msg else ' (%s)' % verbose_msg
-    print '%s ... %s%s' % (test_name, 'ok' if success else 'FAIL', msg)
+    print('%s ... %s%s' % (test_name, 'ok' if success else 'FAIL', msg))
   else:
     space_for_columns(1 if len(icon) == 1 else 2)
     sys.stdout.write(icon)
@@ -247,32 +250,32 @@ def _print_detail_info(err_buf, test_name, test_result):
   verbose_msg = None
 
   def _header():
-    print >>err_buf, '=' * 70
-    print >>err_buf, 'FAIL (%s) - %s' % (verbose_msg, test_name)
-    print >>err_buf, '-' * 70
+    print('=' * 70, file=err_buf)
+    print('FAIL (%s) - %s' % (verbose_msg, test_name), file=err_buf)
+    print('-' * 70, file=err_buf)
 
   for field in ('internal_error', 'bad_test', 'crash_mismatch'):
     (_, verbose_msg, _, _), lines = _check_field(test_result, field)
     if lines:
       _header()
       for line in lines:
-        print >>err_buf, line
-      print >>err_buf
+        print(line, file=err_buf)
+      print(file=err_buf)
 
   (_, verbose_msg, _, _), lines_groups = _check_field(test_result, 'check')
   if lines_groups:
     _header()
     for group in lines_groups:
       for line in group.lines:
-        print >>err_buf, line
-      print >>err_buf
+        print(line, file=err_buf)
+      print(file=err_buf)
 
   (_, verbose_msg, _, _), lines = _check_field(test_result, 'diff')
   if lines:
     _header()
     for line in lines.lines:
-      print >>err_buf, line
-    print >>err_buf
+      print(line, file=err_buf)
+    print(file=err_buf)
 
 
 @attr.s
@@ -304,12 +307,12 @@ def _print_warnings(warning_result, recipe_deps):
 
     if definition.monorail_bug:
       if len(definition.monorail_bug) == 1:
-        print 'Bug Link: %s' % (
-            construct_monorail_link(definition.monorail_bug[0]),)
+        print('Bug Link: %s' % (
+            construct_monorail_link(definition.monorail_bug[0]),))
       else:
-        print 'Bug Links:'
+        print('Bug Links:')
         for bug in definition.monorail_bug:
-          print '  %s' % construct_monorail_link(bug)
+          print('  %s' % construct_monorail_link(bug))
 
   def print_call_sites(call_sites):
     def stringify_frame(frame):
@@ -317,17 +320,17 @@ def _print_warnings(warning_result, recipe_deps):
 
     if not call_sites:
       return
-    print 'Call Sites:'
+    print('Call Sites:')
     sorted_sites = sorted(call_sites,
                           key=lambda s: (s.site.file, s.site.line))
     if sorted_sites[0].call_stack:
       # call site contains the full stack.
       for call_site in sorted_sites:
-        print '  site: %s' % stringify_frame(call_site.site)
-        print '  stack:'
+        print('  site: %s' % stringify_frame(call_site.site))
+        print('  stack:')
         for f in call_site.call_stack:
-          print '    ' +stringify_frame(f)
-        print
+          print('    ' +stringify_frame(f))
+        print()
     else:
       for file_name, sites in groupby(sorted_sites, key=lambda s: s.site.file):
         # Print sites that have the same file in a single line.
@@ -338,35 +341,35 @@ def _print_warnings(warning_result, recipe_deps):
             imap(lambda s: str(s.site.line), site_iter))
         if additional_lines:
           line =  '%s (and %s)' % (line, additional_lines)
-        print '  ' + line
+        print('  ' + line)
 
   def print_import_sites(import_sites):
     if not import_sites:
       return
-    print 'Import Sites:'
+    print('Import Sites:')
     for import_site in sorted(import_sites,
                               key=lambda s: (s.repo, s.module, s.recipe)):
       repo = recipe_deps.repos[import_site.repo]
       if import_site.module:
         mod_path = repo.modules[import_site.module].path
-        print '  %s' % os.path.normpath(os.path.join(mod_path, '__init__.py'))
+        print('  %s' % os.path.normpath(os.path.join(mod_path, '__init__.py')))
       else:
-        print '  %s' % os.path.normpath(repo.recipes[import_site.recipe].path)
+        print('  %s' % os.path.normpath(repo.recipes[import_site.recipe].path))
 
   for warning_name in sorted(warning_result):
     causes = warning_result[warning_name]
-    print '*' * 70
-    print '{:^70}'.format('WARNING: %s' % warning_name)
-    print '{:^70}'.format('Found %d call sites and %d import sites' % (
-        len(causes.call_sites), len(causes.import_sites),))
-    print '*' * 70
+    print('*' * 70)
+    print('{:^70}'.format('WARNING: %s' % warning_name))
+    print('{:^70}'.format('Found %d call sites and %d import sites' % (
+        len(causes.call_sites), len(causes.import_sites),)))
+    print('*' * 70)
     definition = recipe_deps.warning_definitions[warning_name]
     if definition.description:
-      print 'Description:'
+      print('Description:')
       for desc in definition.description:
-        print '  %s' % desc
+        print('  %s' % desc)
     if definition.deadline:
-      print 'Deadline: %s' % definition.deadline
+      print('Deadline: %s' % definition.deadline)
     print_bug_links(definition)
     print_call_sites(causes.call_sites)
     print_import_sites(causes.import_sites)

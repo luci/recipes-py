@@ -646,7 +646,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     with self.deps.main_repo.write_module('cool_mod') as mod:
       mod.DEPS.append('my_mod')
       mod.imports.append('from recipe_engine import recipe_api')
-      mod.api.write('''
+      mod.api.write(r'''
         @recipe_api.escape_warnings('^.+/MYMODULE_\w+$')
         def pass_through_to_my_mod(self, **kwargs):
           self.m.my_mod.swizzle(**kwargs)

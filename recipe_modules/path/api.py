@@ -188,7 +188,7 @@ class fake_path(object):
   #   RECIPE[some_pkg::some_module:recipe_name]
   #
   # and friends at the beginning of a string.
-  ROOT_MATCHER = re.compile('^[A-Z_]*\[[^]]*\]')
+  ROOT_MATCHER = re.compile(r'^[A-Z_]*\[[^]]*\]')
 
   def normpath(self, path):
     """Normalizes the path.

@@ -81,13 +81,13 @@ class TestFilter(PostProcessUnitTest):
                    "unused_includes: {'x': ()}")
 
   def test_re(self):
-    f = self.f().include_re('b\.')
+    f = self.f().include_re(r'b\.')
     results, failures = self.post_process(self.d, f)
     self.assertEqual(results, mkD('b.sub', 'b.sub2').values())
     self.assertEqual(len(failures), 0)
 
   def test_re_low_limit(self):
-    f = self.f().include_re('b\.', at_least=3)
+    f = self.f().include_re(r'b\.', at_least=3)
     results, failures = self.post_process(self.d, f)
     self.assertEqual(results, mkD('b.sub', 'b.sub2').values())
     self.assertEqual(len(failures), 1)
@@ -98,7 +98,7 @@ class TestFilter(PostProcessUnitTest):
                    'regex: re.compile(\'b\\\\.\')')
 
   def test_re_high_limit(self):
-    f = self.f().include_re('b\.', at_most=1)
+    f = self.f().include_re(r'b\.', at_most=1)
     results, failures = self.post_process(self.d, f)
     self.assertEqual(results, mkD('b.sub', 'b.sub2').values())
     self.assertEqual(len(failures), 1)

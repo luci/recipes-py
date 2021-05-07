@@ -8,6 +8,8 @@ Debugs a single recipe+test case combination; steps will behave the same way
 they do under test simulation for the given test case.
 '''
 
+from __future__ import print_function
+
 import bdb
 import pdb
 import os
@@ -33,13 +35,13 @@ def add_arguments(parser):
     if not args.recipe_name:
       test_info = _get_test_case_with_recent_fail(args)
       if test_info is None:
-        print 'Available recipes:'
+        print('Available recipes:')
         for recipe in sorted(args.recipe_deps.main_repo.recipes):
-          print '  ', recipe
+          print('  ', recipe)
         sys.exit(1)
 
       recipe, test_data = test_info
-      print 'Debugging', '{}.{}'.format(recipe.name, test_data.name)
+      print('Debugging', '{}.{}'.format(recipe.name, test_data.name))
 
     else:
       recipe = args.recipe_deps.main_repo.recipes[args.recipe_name]
@@ -52,11 +54,11 @@ def add_arguments(parser):
           if test_data.name == args.test_name:
             break
         else:
-          print 'Unable to find test case %r in recipe %r' % (
-            args.test_name, args.recipe_name)
-          print 'For reference, we found the following test cases:'
+          print('Unable to find test case %r in recipe %r' % (
+            args.test_name, args.recipe_name))
+          print('For reference, we found the following test cases:')
           for case in all_tests:
-            print '  ', case.name
+            print('  ', case.name)
           sys.exit(1)
 
     _debug_recipe(args.recipe_deps, recipe, test_data)
@@ -111,7 +113,7 @@ def _debug_recipe(recipe_deps, recipe, test_data):
     pass
   except Exception:  # pylint: disable=broad-except
     traceback.print_exc()
-    print 'Uncaught exception. Entering post mortem debugging'
-    print 'Running \'cont\' or \'step\' will restart the program'
+    print('Uncaught exception. Entering post mortem debugging')
+    print('Running \'cont\' or \'step\' will restart the program')
     tback = sys.exc_info()[2]
     debugger.interaction(None, tback)

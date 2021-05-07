@@ -82,7 +82,7 @@ class Printer(object):
   @staticmethod
   def generic_link(name, url, ref=False):
     """Returns a markdown link for the name,url pair."""
-    name = name.replace('_', '\_')
+    name = name.replace('_', r'\_')
     if ref:
       return "[%s][%s]" % (name, url)
     return "[%s](%s)" % (name, url)
@@ -324,7 +324,7 @@ def Emit(p, node):
     if decos:
       decos += '<br>'
     p("%s&mdash; **def %s(%s):**" % (
-      decos, p.srclink(node), node.signature.replace('*', '\*')))
+      decos, p.srclink(node), node.signature.replace('*', r'\*')))
 
     p.docstring(node)
 

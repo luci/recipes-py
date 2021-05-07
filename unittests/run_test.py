@@ -3,6 +3,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from __future__ import print_function
+
 import contextlib
 import json
 import os
@@ -174,24 +176,24 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       while True:
         if proc.poll() is not None:
           with open(os.path.join(wd, 'logs', 'stderr')) as log:
-            print
-            print "Raw engine logs:"
+            print()
+            print("Raw engine logs:")
             sys.stdout.write(log.read())
           with open(outfile) as of:
             bpdata = of.read()
-            print
-            print "Final build.proto:"
+            print()
+            print("Final build.proto:")
             sys.stdout.write(bpdata)
             return json.loads(bpdata)
 
         if deadline and time.time() > deadline:
           if not did_soft_deadline:
-            print "Hit soft deadline"
+            print("Hit soft deadline")
             did_soft_deadline = True
             os.kill(engine_pid, signal.SIGTERM)
             deadline += grace_period
           else:
-            print "Hit hard deadline"
+            print("Hit hard deadline")
             os.kill(engine_pid, signal.SIGKILL)
             deadline = None
 
