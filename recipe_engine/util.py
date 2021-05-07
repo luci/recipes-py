@@ -12,7 +12,8 @@ import time
 import traceback
 import urllib
 
-from cStringIO import StringIO
+from six.moves import cStringIO as StringIO
+
 
 def sentinel(name, **attrs):
   """Create a sentinel object.

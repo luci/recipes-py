@@ -22,7 +22,7 @@ import subprocess
 import sys
 import textwrap
 
-from cStringIO import StringIO
+from six.moves import cStringIO as StringIO
 
 import attr
 

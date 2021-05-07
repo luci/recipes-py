@@ -8,9 +8,11 @@ import json
 import operator
 
 import attr
+import six
 from gevent.local import local
-from google.protobuf import message
 from google.protobuf import json_format as json_pb
+from google.protobuf import message
+from six.moves import reduce
 
 from .internal.attr_util import attr_type
 
@@ -28,7 +30,7 @@ def freeze(obj):
   Will raise TypeError if you pass an object which is not hashable.
   """
   if isinstance(obj, dict):
-    return FrozenDict((freeze(k), freeze(v)) for k, v in obj.iteritems())
+    return FrozenDict((freeze(k), freeze(v)) for k, v in six.iteritems(obj))
   elif isinstance(obj, (list, tuple)):
     return tuple(freeze(i) for i in obj)
   elif isinstance(obj, set):
@@ -50,7 +52,7 @@ def thaw(obj):
   Does not convert dict keys.
   """
   if isinstance(obj, (dict, collections.OrderedDict, FrozenDict)):
-    return {k: thaw(v) for k, v in obj.iteritems()}
+    return {k: thaw(v) for k, v in six.iteritems(obj)}
   elif isinstance(obj, (list, tuple)):
     return [thaw(i) for i in obj]
   elif isinstance(obj, (set, frozenset)):
@@ -75,7 +77,7 @@ class FrozenDict(collections.Mapping):
     # Calculate the hash immediately so that we know all the items are
     # hashable too.
     self._hash = reduce(operator.xor,
-                        (hash(i) for i in enumerate(self._d.iteritems())), 0)
+                        (hash(i) for i in enumerate(six.iteritems(self._d))), 0)
 
   def __eq__(self, other):
     if not isinstance(other, collections.Mapping):
@@ -84,7 +86,7 @@ class FrozenDict(collections.Mapping):
       return True
     if len(self) != len(other):
       return False
-    for k, v in self.iteritems():
+    for k, v in six.iteritems(self):
       if k not in other or other[k] != v:
         return False
     return True

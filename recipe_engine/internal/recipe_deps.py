@@ -42,6 +42,7 @@ import sys
 from collections import namedtuple
 
 import attr
+import six
 
 from attr.validators import optional
 
@@ -129,8 +130,8 @@ class RecipeDeps(object):
     """
     return {
         '/'.join((repo_name, warning_name)) : definition
-        for repo_name, repo in self.repos.iteritems()
-        for warning_name, definition in repo.warning_definitions.iteritems()
+        for repo_name, repo in six.iteritems(self.repos)
+        for warning_name, definition in six.iteritems(repo.warning_definitions)
     }
 
   @classmethod
@@ -177,7 +178,7 @@ class RecipeDeps(object):
     repos[ret.main_repo_id] = RecipeRepo.create(
       ret, main_repo_path, simple_cfg=simple_cfg, backend=main_backend)
 
-    for project_id, path in overrides.iteritems():
+    for project_id, path in six.iteritems(overrides):
       backend = None
       if os.path.isdir(os.path.join(path, '.git')):
         backend = fetch.GitBackend(path, None)
@@ -188,7 +189,7 @@ class RecipeDeps(object):
       simple_cfg.recipes_path,
       '.recipe_deps'
     )
-    for repo_name, dep in simple_cfg.deps.iteritems():
+    for repo_name, dep in six.iteritems(simple_cfg.deps):
       if repo_name in repos:
         continue
 
@@ -332,7 +333,7 @@ class RecipeRepo(object):
     """Returns a frozenset of patterns (fnmatch absolute paths) for files which
     are covered in this repo by `DISABLE_STRICT_COVERAGE=True`."""
     patterns = []
-    for mod in self.modules.itervalues():
+    for mod in six.itervalues(self.modules):
       if mod.uses_sloppy_coverage:
         patterns.append(os.path.join(mod.path, '*.py'))
     return frozenset(patterns)
@@ -422,7 +423,7 @@ class RecipeRepo(object):
             os.path.isfile(os.path.join(possible_mod_path, '__init__.py'))):
           mod = RecipeModule.create(ret, entry_name)
           modules[entry_name] = mod
-          for recipe in mod.recipes.itervalues():
+          for recipe in six.itervalues(mod.recipes):
             recipes[recipe.name] = recipe
         else:
           LOG.warn('ignoring %r: not a directory or missing __init__.py',
@@ -504,7 +505,7 @@ class RecipeModule(object):
     """Returns the set of fully-qualified DEPS reachable from this module."""
     ret = set()
     d = self.repo.recipe_deps
-    for repo_name, module_name in self.normalized_DEPS.itervalues():
+    for repo_name, module_name in six.itervalues(self.normalized_DEPS):
       ret.add('%s/%s' % (repo_name, module_name))
       ret.update(d.repos[repo_name].modules[module_name].transitive_DEPS)
     return frozenset(ret)
@@ -689,7 +690,7 @@ class Recipe(object):
           repo=self.repo.name,
           err=ex,
         ))
-      raise RecipeSyntaxError, tuple(args), sys.exc_info()[2]
+      six.reraise(RecipeSyntaxError, tuple(args), sys.exc_info()[2])
     except Exception as ex:
       # Keep the error details and traceback, but change the message.
       args = list(ex.args or [''])
@@ -699,7 +700,7 @@ class Recipe(object):
           repo=self.repo.name,
           err=ex,
         ))
-      raise RecipeLoadError, tuple(args), sys.exc_info()[2]
+      six.reraise(RecipeLoadError, tuple(args), sys.exc_info()[2])
     finally:
       sys.path = orig_path
 
@@ -740,7 +741,7 @@ class Recipe(object):
       self.repo.recipe_deps, self.normalized_DEPS, 'TEST_API', None, None)
     api.__dict__.update({
       local_name: resolved_dep
-      for local_name, resolved_dep in resolved_deps.iteritems()
+      for local_name, resolved_dep in six.iteritems(resolved_deps)
       if resolved_dep is not None
     })
     for test_data in self.global_symbols['GenTests'](api):
@@ -766,7 +767,7 @@ class Recipe(object):
     """Returns the set of fully-qualified DEPS reachable from this module."""
     ret = set()
     d = self.repo.recipe_deps
-    for repo_name, module_name in self.normalized_DEPS.itervalues():
+    for repo_name, module_name in six.itervalues(self.normalized_DEPS):
       ret.add('%s/%s' % (repo_name, module_name))
       ret.update(d.repos[repo_name].modules[module_name].transitive_DEPS)
     return frozenset(ret)
@@ -803,7 +804,7 @@ class Recipe(object):
       engine.record_import_warning(warning, importer)
     api.__dict__.update({
       local_name: resolved_dep
-      for local_name, resolved_dep in resolved_deps.iteritems()
+      for local_name, resolved_dep in six.iteritems(resolved_deps)
       if resolved_dep is not None
     })
     return api
@@ -835,7 +836,7 @@ class Recipe(object):
       if properties_def:
         # New-style Protobuf PROPERTIES.
         properties_without_reserved = {
-          k: v for k, v in engine.properties.iteritems()
+          k: v for k, v in six.iteritems(engine.properties)
           if not k.startswith('$')
         }
         args.append(jsonpb.ParseDict(
@@ -845,7 +846,7 @@ class Recipe(object):
 
       if env_properties_def:
         args.append(jsonpb.ParseDict(
-            {k.upper(): v for k, v in engine.environ.iteritems()},
+            {k.upper(): v for k, v in six.iteritems(engine.environ)},
             env_properties_def(),
             ignore_unknown_fields=True))
 
@@ -915,7 +916,7 @@ def parse_deps_spec(repo_name, deps_spec):
   elif isinstance(deps_spec, dict):
     deps = {
       local_name: _parse_dep_name(dep_name)
-      for local_name, dep_name in deps_spec.iteritems()
+      for local_name, dep_name in six.iteritems(deps_spec)
     }
 
   elif not deps_spec:
@@ -935,7 +936,7 @@ def _collect_import_warnings(root):
   """
   ret = set()
   recipe_deps = root.repo.recipe_deps
-  for _, (repo_name, module_name) in root.normalized_DEPS.iteritems():
+  for _, (repo_name, module_name) in six.iteritems(root.normalized_DEPS):
     module = recipe_deps.repos[repo_name].modules[module_name]
     for warning in module.warnings:
       if '/' not in warning:
@@ -962,7 +963,7 @@ def _instantiate_test_api(imported_module, resolved_deps):
   assert isinstance(inst, RecipeTestApi)
   inst.m.__dict__.update({
     local_name: resolved_dep
-    for local_name, resolved_dep in resolved_deps.iteritems()
+    for local_name, resolved_dep in six.iteritems(resolved_deps)
     if resolved_dep is not None
   })
   setattr(inst.m, imported_module.NAME, inst)
@@ -1023,7 +1024,7 @@ def _instantiate_api(engine, test_data, fqname, imported_module, test_api,
 
     if global_properties_def:
       properties_without_reserved = {
-        k: v for k, v in engine.properties.iteritems()
+        k: v for k, v in six.iteritems(engine.properties)
         if not k.startswith('$')
       }
       args.append(jsonpb.ParseDict(
@@ -1033,7 +1034,7 @@ def _instantiate_api(engine, test_data, fqname, imported_module, test_api,
 
     if env_properties_def:
       args.append(jsonpb.ParseDict(
-          {k.upper(): v for k, v in engine.environ.iteritems()},
+          {k.upper(): v for k, v in six.iteritems(engine.environ)},
           env_properties_def(),
           ignore_unknown_fields=True))
 
@@ -1052,7 +1053,7 @@ def _instantiate_api(engine, test_data, fqname, imported_module, test_api,
 
   # Replace class-level Requirements placeholders in the recipe API with
   # their instance-level real values.
-  for k, v in imported_module.API.__dict__.iteritems():
+  for k, v in six.iteritems(imported_module.API.__dict__):
     if isinstance(v, _UnresolvedRequirement):
       setattr(inst, k, engine.resolve_requirement(v))
 
@@ -1117,7 +1118,7 @@ def _resolve(recipe_deps, deps_spec, variant, engine, test_data):
     test_api = _instantiate_test_api(mod_imp, {
       local_name: _inner(d_repo_name, d_module, loading_chain).test_api
       for local_name, (d_repo_name, d_module)
-      in deps_spec.iteritems()
+      in six.iteritems(deps_spec)
     })
 
     fqname = '%s/%s' % (repo_name, module_name)
@@ -1126,7 +1127,7 @@ def _resolve(recipe_deps, deps_spec, variant, engine, test_data):
       api = _instantiate_api(engine, test_data, fqname, mod_imp, test_api, {
         local_name: _inner(d_repo_name, d_module, loading_chain).api
         for local_name, (d_repo_name, d_module)
-        in deps_spec.iteritems()
+        in six.iteritems(deps_spec)
       })
 
     result = cache_entry(api, test_api)
@@ -1137,7 +1138,7 @@ def _resolve(recipe_deps, deps_spec, variant, engine, test_data):
   ret = {
     local_name: _inner(d_repo_name, d_module, []).pick()
     for local_name, (d_repo_name, d_module)
-    in deps_spec.iteritems()
+    in six.iteritems(deps_spec)
   }
 
   # Always instantiate the path module at least once so that string functions on

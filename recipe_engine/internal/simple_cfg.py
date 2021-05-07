@@ -13,6 +13,7 @@ import logging
 import os
 
 import attr
+import six
 
 from ..types import freeze
 
@@ -121,12 +122,12 @@ class SimpleRecipesCfg(object):
             str(v['url']),
             str(v['branch']),
             str(v['revision']),
-          ) for k, v in dct.get('deps', {}).iteritems()
+          ) for k, v in six.iteritems(dct.get('deps', {}))
         },
         str(dct.get('recipes_path', '')),
       )
     except Exception as ex:
-      raise ValueError('Error parsing recipes.cfg: %r' % (ex,))
+      six.raise_from(ValueError('Error parsing recipes.cfg: %r' % (ex,)), ex)
 
   def asdict(self):
     """Returns this SimpleRecipesCfg as a JSON-serializable dict.
@@ -134,7 +135,7 @@ class SimpleRecipesCfg(object):
     This is mostly the same as `attr.asdict`, except that it knows how to
     deal with the fact that SimpleRecipesCfg.deps is a FrozenDict."""
     ret = attr.asdict(self)
-    ret['deps'] = {k: attr.asdict(v) for k, v in ret['deps'].iteritems()}
+    ret['deps'] = {k: attr.asdict(v) for k, v in six.iteritems(ret['deps'])}
     ret['project_id'] = ret['repo_name']   # Alias repo_name<->project_id
     return ret
 

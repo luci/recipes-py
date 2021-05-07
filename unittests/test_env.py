@@ -5,6 +5,8 @@
 
 Provides testing fakes for RecipeDeps, useful for all recipe subcommands.
 """
+from __future__ import print_function
+
 import atexit
 import errno
 import logging
@@ -13,6 +15,8 @@ import shutil
 import sys
 import tempfile
 import unittest
+
+import six
 
 # Allow `recipe_engine` module to be importable
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -29,12 +33,12 @@ try:
   # pylint: disable=unused-import
   from PB.recipe_engine import recipes_cfg
 except ImportError as exc:
-  print 'Failed to import `PB` with sys.path: ', sys.path
+  print('Failed to import `PB` with sys.path: ', sys.path)
   for path in sys.path:
     if path.endswith('_pb'):
-      print '%r contains:' % (path,)
+      print('%r contains:' % (path,))
       for entry in os.listdir(path):
-        print '  %r: %r' % (entry, os.stat(os.path.join(path, entry)))
+        print('  %r: %r' % (entry, os.stat(os.path.join(path, entry))))
   raise
 
 from fake_recipe_deps import FakeRecipeDeps
@@ -65,16 +69,16 @@ if LEAK:
   LEAKED_DIRS = []
   def _print_leakage():
     if LEAKED_DIRS or LEAKED_FILES:
-      print
-      print '*' * 8
+      print()
+      print('*' * 8)
     if LEAKED_FILES:
-      print 'LEAKED the following files:'
+      print('LEAKED the following files:')
       for f in LEAKED_FILES:
-        print '  ', f
+        print('  ', f)
     if LEAKED_DIRS:
-      print 'LEAKED the following dirs:'
+      print('LEAKED the following dirs:')
       for f in LEAKED_DIRS:
-        print '  ', f
+        print('  ', f)
   atexit.register(_print_leakage)
 
 

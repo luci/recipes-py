@@ -9,6 +9,7 @@ RecipeEngine.
 """
 
 import attr
+import six
 
 from google.protobuf import json_format as jsonpb
 from google.protobuf.message import Message
@@ -58,7 +59,7 @@ class StepConfig(object):
   # The name of the step to run within the current namespace.
   #
   # This will be deduplicated by the recipe engine.
-  name = attr.ib(validator=attr_type(basestring))
+  name = attr.ib(validator=attr_type(six.string_types))
 
   # List of args of the command to run. Acceptable types: Placeholder or any
   # str()'able type.
@@ -125,7 +126,7 @@ class StepConfig(object):
   # LUCI_CONTEXT['deadline'] then it would include the time waiting for `cost`.
   timeout = attr.ib(
       default=None,
-      validator=attr_type((int, float, long, type(None))))
+      validator=attr_type(six.integer_types + (float, type(None))))
 
   # luci_context is the mapping of modified LUCI_CONTEXT sections to their
   # respective section proto message.

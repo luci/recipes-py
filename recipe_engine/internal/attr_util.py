@@ -4,6 +4,8 @@
 
 """Helpers for using the `attr` library."""
 
+import six
+
 
 def attr_type(type_, subname=''):
   """An `attr.s` validator for asserting the type of a value.
@@ -90,7 +92,7 @@ def attr_dict_type(key_type, val_type, value_seq=False):
     from ..types import FrozenDict
 
     attr_type((dict, FrozenDict))(self, attrib, value)
-    for k, subval in value.iteritems():
+    for k, subval in six.iteritems(value):
       attr_type(key_type, ' keys')(self, attrib, k)
       subname = '[%r]' % k
       if value_seq:
