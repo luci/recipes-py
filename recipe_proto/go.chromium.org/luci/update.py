@@ -18,7 +18,7 @@ import tarfile
 import requests
 
 BASE_URL = 'https://chromium.googlesource.com/infra/luci/luci-go'
-LOG_URL = BASE_URL+'/+log/master/%s?format=JSON&n=1'
+LOG_URL = BASE_URL+'/+log/main/%s?format=JSON&n=1'
 TAR_URL = BASE_URL+'/+archive/%s/%s.tar.gz'
 
 SUB_PATHS = [

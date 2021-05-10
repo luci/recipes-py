@@ -185,7 +185,7 @@ def GenTests(api):
 
   cipd_source = common.Executable(
       cipd_package='recipe_dir/recipes',
-      cipd_version='refs/heads/master',
+      cipd_version='refs/heads/main',
   )
   yield (
       api.test('with-cipd-input') +

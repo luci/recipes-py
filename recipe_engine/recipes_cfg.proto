@@ -18,7 +18,7 @@ message DepSpec {
   // This must be an absolute ref which the server at `url` recognizes (e.g.
   // 'refs/heads/...').
   //
-  // DEPRECATED: Short refs (like 'master') will be implicitly converted to
+  // DEPRECATED: Short refs (like 'main') will be implicitly converted to
   // 'refs/heads/...' with a warning.
   string branch = 2;
 
@@ -27,7 +27,7 @@ message DepSpec {
 }
 
 // These options control the behavior of the autoroller recipe:
-//   https://chromium.googlesource.com/infra/infra/+/master/recipes/recipes/recipe_autoroller.py
+//   https://chromium.googlesource.com/infra/infra/+/main/recipes/recipes/recipe_autoroller.py
 message AutorollRecipeOptions {
   // These control the behavior of the autoroller when it finds a trivial roll
   // (i.e. a roll without expectation changes).
@@ -110,7 +110,7 @@ message RepoSpec {
 
   // The autoroller options for this repo. These options will be respected by
   // the autoroller recipe (which currently lives here:
-  //   https://chromium.googlesource.com/infra/infra/+/master/recipes/recipes/recipe_autoroller.py
+  //   https://chromium.googlesource.com/infra/infra/+/main/recipes/recipes/recipe_autoroller.py
   // ).
   AutorollRecipeOptions autoroll_recipe_options = 6;
 

@@ -105,7 +105,7 @@ class Backend(object):
 
     Args:
       refspec (str) - a git refspec which is resolvable on the
-        remote git repo, e.g. 'refs/heads/master', 'deadbeef...face', etc.
+        remote git repo, e.g. 'refs/heads/main', 'deadbeef...face', etc.
     """
     raise NotImplementedError()
 
@@ -114,7 +114,7 @@ class Backend(object):
 
     Args:
       refspec (str) - a git refspec which is resolvable on the
-        remote git repo, e.g. 'refs/heads/master', etc. This will be used to
+        remote git repo, e.g. 'refs/heads/main', etc. This will be used to
         fetch if the local git repo doesn't have `revision`.
       revision (str|None) - The git revision to checkout. If None, fetch will
         do an ls-remote operation to resolve `refspec` to its current revision.
@@ -171,7 +171,7 @@ class Backend(object):
 
     Args:
       refspec (str) - a git refspec which is resolvable on the
-        remote git repo, e.g. 'refs/heads/master', 'deadbeef...face', etc.
+        remote git repo, e.g. 'refs/heads/main', 'deadbeef...face', etc.
 
     Returns (str) - The git commit for the given refspec.
     """

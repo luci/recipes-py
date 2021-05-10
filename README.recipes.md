@@ -321,7 +321,7 @@ Mostly useful for scheduling new builds using V1 API.
 Returns current build as a `buildbucket.v2.Build` protobuf message.
 
 For value format, see `Build` message in
-[build.proto](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
+[build.proto](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto).
 
 DO NOT MODIFY the returned value.
 Do not implement conditional logic on returned tags; they are for indexing.
@@ -352,7 +352,7 @@ Path to the builder cache directory.
 Such directory can be used to cache builder-specific data.
 It remains on the bot from build to build.
 See "Builder cache" in
-https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/project_config.proto
+https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/project_config.proto
 
 &emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#1015)(self):**
 
@@ -392,7 +392,7 @@ Args:
 * build_id: Integer ID of the build to wait for.
 
 Returns:
-  [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
+  [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto).
   for the ended build.
 
 &mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#816)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False, fields=DEFAULT_FIELDS):**
@@ -415,7 +415,7 @@ Args:
 
 Returns:
   A map from integer build IDs to the corresponding
-  [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
+  [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto)
   for all specified builds.
 
 &mdash; **def [get](/recipe_modules/buildbucket/api.py#778)(self, build_id, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS):**
@@ -455,7 +455,7 @@ Returns:
 Returns input gitiles commit. Shortcut for `.build.input.gitiles_commit`.
 
 For value format, see
-[`GitilesCommit` message](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
+[`GitilesCommit` message](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto).
 
 Never returns None, but sub-fields may be empty.
 
@@ -503,7 +503,7 @@ See their docstrings.
 
 Returns:
   A list of completed
-  [Builds](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
+  [Builds](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto)
   in the same order as schedule_build_requests.
 
 &mdash; **def [schedule](/recipe_modules/buildbucket/api.py#521)(self, schedule_build_requests, url_title_fn=None, step_name=None):**
@@ -529,7 +529,7 @@ Args:
 
 Returns:
   A list of
-  [`Build`](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
+  [`Build`](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto)
   messages in the same order as requests.
 
 Raises:
@@ -597,7 +597,7 @@ Args:
   should not be used to assess correctness of the commit/CL.
   Defaults to .build.critical.
   See also Build.critical in
-  https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto
+  https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto
 * exe_cipd_version (str|INHERIT): CIPD version of the LUCI Executable (e.g.
   recipe) to use instead of the server-configured one.
 * fields (list of strs): a list of fields to include in the response, names
@@ -1223,7 +1223,7 @@ Raises:
 Returns whether this build is triggered for a CQ experimental builder.
 
 See `Builder.experiment_percentage` doc in [CQ
-config](https://chromium.googlesource.com/infra/luci/luci-go/+/master/cv/api/config/v2/cq.proto)
+config](https://chromium.googlesource.com/infra/luci/luci-go/+/main/cv/api/config/v2/cq.proto)
 
 Raises:
   CQInactive if CQ is not active for this build.
@@ -1282,7 +1282,7 @@ Expected usage:
   ```
 
 Args:
-  * [`Build`](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
+  * [`Build`](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto)
     objects, typically returned by `api.buildbucket.schedule`.
 
 &emsp; **@property**<br>&mdash; **def [run\_mode](/recipe_modules/cq/api.py#55)(self):**
@@ -2898,7 +2898,7 @@ API for interacting with the LUCI Scheduler service.
 Depends on 'prpc' binary available in $PATH:
   https://godoc.org/go.chromium.org/luci/grpc/cmd/prpc
 Documentation for scheduler API is in
-  https://chromium.googlesource.com/infra/luci/luci-go/+/master/scheduler/api/scheduler/v1/scheduler.proto
+  https://chromium.googlesource.com/infra/luci/luci-go/+/main/scheduler/api/scheduler/v1/scheduler.proto
 RPCExplorer available at
   https://luci-scheduler.appspot.com/rpcexplorer/services/scheduler.Scheduler
 
@@ -2922,14 +2922,14 @@ Args:
 Emits a batch of triggers spanning one or more projects.
 
 Up to date documentation is at
-https://chromium.googlesource.com/infra/luci/luci-go/+/master/scheduler/api/scheduler/v1/scheduler.proto
+https://chromium.googlesource.com/infra/luci/luci-go/+/main/scheduler/api/scheduler/v1/scheduler.proto
 
 Args:
   trigger_project_jobs (iterable of tuples(trigger, project, jobs)):
     each tuple corresponds to parameters of `emit_trigger` API above.
   timestamp_usec (int): unix timestamp in microseconds.
     Useful for idempotency of calls if your recipe is doing its own retries.
-    https://chromium.googlesource.com/infra/luci/luci-go/+/master/scheduler/api/scheduler/v1/triggers.proto
+    https://chromium.googlesource.com/infra/luci/luci-go/+/main/scheduler/api/scheduler/v1/triggers.proto
 
 &emsp; **@property**<br>&mdash; **def [host](/recipe_modules/scheduler/api.py#47)(self):**
 

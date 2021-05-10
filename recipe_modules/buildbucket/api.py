@@ -129,7 +129,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """Returns current build as a `buildbucket.v2.Build` protobuf message.
 
     For value format, see `Build` message in
-    [build.proto](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
+    [build.proto](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto).
 
     DO NOT MODIFY the returned value.
     Do not implement conditional logic on returned tags; they are for indexing.
@@ -171,7 +171,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """Returns input gitiles commit. Shortcut for `.build.input.gitiles_commit`.
 
     For value format, see
-    [`GitilesCommit` message](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
+    [`GitilesCommit` message](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto).
 
     Never returns None, but sub-fields may be empty.
     """
@@ -306,7 +306,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     Such directory can be used to cache builder-specific data.
     It remains on the bot from build to build.
     See "Builder cache" in
-    https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/project_config.proto
+    https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/project_config.proto
     """
     return self.m.path['cache'].join('builder')
 
@@ -330,7 +330,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     Returns:
       A list of completed
-      [Builds](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
+      [Builds](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto)
       in the same order as schedule_build_requests.
     """
     with self.m.step.nest(step_name or 'buildbucket.run'):
@@ -427,7 +427,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       should not be used to assess correctness of the commit/CL.
       Defaults to .build.critical.
       See also Build.critical in
-      https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto
+      https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto
     * exe_cipd_version (str|INHERIT): CIPD version of the LUCI Executable (e.g.
       recipe) to use instead of the server-configured one.
     * fields (list of strs): a list of fields to include in the response, names
@@ -541,7 +541,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     Returns:
       A list of
-      [`Build`](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
+      [`Build`](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto)
       messages in the same order as requests.
 
     Raises:
@@ -807,7 +807,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     * build_id: Integer ID of the build to wait for.
 
     Returns:
-      [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto).
+      [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto).
       for the ended build.
     """
     assert isinstance(build_id, int)
@@ -836,7 +836,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     Returns:
       A map from integer build IDs to the corresponding
-      [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
+      [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto)
       for all specified builds.
     """
     if not build_ids:

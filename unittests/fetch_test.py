@@ -73,7 +73,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
       'deps': {
         'recipe_engine': {
           'url': 'https://test.example.com/recipe_engine.git',
-          'branch': 'refs/heads/master',
+          'branch': 'refs/heads/main',
           'revision': 'b'*40,
         }
       }

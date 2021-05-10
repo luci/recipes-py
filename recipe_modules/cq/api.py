@@ -67,7 +67,7 @@ class CQApi(recipe_api.RecipeApi):
     """Returns whether this build is triggered for a CQ experimental builder.
 
     See `Builder.experiment_percentage` doc in [CQ
-    config](https://chromium.googlesource.com/infra/luci/luci-go/+/master/cv/api/config/v2/cq.proto)
+    config](https://chromium.googlesource.com/infra/luci/luci-go/+/main/cv/api/config/v2/cq.proto)
 
     Raises:
       CQInactive if CQ is not active for this build.
@@ -173,7 +173,7 @@ class CQApi(recipe_api.RecipeApi):
       ```
 
     Args:
-      * [`Build`](https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto)
+      * [`Build`](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto)
         objects, typically returned by `api.buildbucket.schedule`.
     """
     return self.record_triggered_build_ids(*[b.id for b in builds])

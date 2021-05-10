@@ -40,7 +40,7 @@ def GenTests(api):
           id='a',
           gitiles=dict(
             repo='https://chromium.googlesource.com/chomium/src',
-            ref='refs/heads/master',
+            ref='refs/heads/main',
             revision='a' * 40,
           ),
         ),
@@ -48,7 +48,7 @@ def GenTests(api):
           id='b',
           gitiles=dict(
             repo='https://chromium.googlesource.com/chomium/src',
-            ref='refs/heads/master',
+            ref='refs/heads/main',
             revision='b' * 40,
           ),
         ),

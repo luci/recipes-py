@@ -78,7 +78,7 @@ class TaskRequest(object):
   ```
 
   For more details on what goes into a Swarming task, see the user guide:
-  https://chromium.googlesource.com/infra/luci/luci-py/+/master/appengine/swarming/doc/User-Guide.md#task
+  https://chromium.googlesource.com/infra/luci/luci-py/+/main/appengine/swarming/doc/User-Guide.md#task
   """
 
   ResultDBCfg = collections.namedtuple('ResultDBCfg', ['enable'])

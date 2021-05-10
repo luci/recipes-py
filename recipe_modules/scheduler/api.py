@@ -7,7 +7,7 @@
 Depends on 'prpc' binary available in $PATH:
   https://godoc.org/go.chromium.org/luci/grpc/cmd/prpc
 Documentation for scheduler API is in
-  https://chromium.googlesource.com/infra/luci/luci-go/+/master/scheduler/api/scheduler/v1/scheduler.proto
+  https://chromium.googlesource.com/infra/luci/luci-go/+/main/scheduler/api/scheduler/v1/scheduler.proto
 RPCExplorer available at
   https://luci-scheduler.appspot.com/rpcexplorer/services/scheduler.Scheduler
 """
@@ -65,7 +65,7 @@ class SchedulerApi(recipe_api.RecipeApi):
     GitilesTrigger instead.
 
     All supported triggers are documented here:
-      https://chromium.googlesource.com/infra/luci/luci-go/+/master/scheduler/api/scheduler/v1/triggers.proto
+      https://chromium.googlesource.com/infra/luci/luci-go/+/main/scheduler/api/scheduler/v1/triggers.proto
     """
     def __init__(
         self, id=None, title=None, url=None,
@@ -130,7 +130,7 @@ class SchedulerApi(recipe_api.RecipeApi):
 
     Args:
       repo (str): URL of a repo that changed.
-      ref (str): a ref that changed, in full, e.g. "refs/heads/master".
+      ref (str): a ref that changed, in full, e.g. "refs/heads/main".
       revision (str): a revision (SHA1 in hex) pointed to by the ref.
       properties (dict, optional): extra key -> value properties.
       tags (dict, optional): extra custom tags to add. See also `inherit_tags`.
@@ -172,14 +172,14 @@ class SchedulerApi(recipe_api.RecipeApi):
     """Emits a batch of triggers spanning one or more projects.
 
     Up to date documentation is at
-    https://chromium.googlesource.com/infra/luci/luci-go/+/master/scheduler/api/scheduler/v1/scheduler.proto
+    https://chromium.googlesource.com/infra/luci/luci-go/+/main/scheduler/api/scheduler/v1/scheduler.proto
 
     Args:
       trigger_project_jobs (iterable of tuples(trigger, project, jobs)):
         each tuple corresponds to parameters of `emit_trigger` API above.
       timestamp_usec (int): unix timestamp in microseconds.
         Useful for idempotency of calls if your recipe is doing its own retries.
-        https://chromium.googlesource.com/infra/luci/luci-go/+/master/scheduler/api/scheduler/v1/triggers.proto
+        https://chromium.googlesource.com/infra/luci/luci-go/+/main/scheduler/api/scheduler/v1/triggers.proto
     """
     req = {
       'batches': [

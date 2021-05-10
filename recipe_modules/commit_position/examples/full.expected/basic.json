@@ -3,7 +3,7 @@
     "cmd": [],
     "name": "invalid",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@ex@Commit position \"master@{#12345}\" does not match r\"(?P<ref>refs/[^@]+)@{#(?P<revision>\\d+)}\"@@@",
+      "@@@STEP_LOG_LINE@ex@Commit position \"main@{#12345}\" does not match r\"(?P<ref>refs/[^@]+)@{#(?P<revision>\\d+)}\"@@@",
       "@@@STEP_LOG_END@ex@@@"
     ]
   },
