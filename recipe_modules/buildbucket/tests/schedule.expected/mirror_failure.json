@@ -219,7 +219,7 @@
       "@@@STEP_LOG_LINE@json.output@            \"host\": \"chromium.googlesource.com\", @@@",
       "@@@STEP_LOG_LINE@json.output@            \"id\": \"2d72510e447ab60a9728aeea2362d8be2cbd7789\", @@@",
       "@@@STEP_LOG_LINE@json.output@            \"project\": \"project\", @@@",
-      "@@@STEP_LOG_LINE@json.output@            \"ref\": \"refs/heads/master\"@@@",
+      "@@@STEP_LOG_LINE@json.output@            \"ref\": \"refs/heads/main\"@@@",
       "@@@STEP_LOG_LINE@json.output@          }@@@",
       "@@@STEP_LOG_LINE@json.output@        }, @@@",
       "@@@STEP_LOG_LINE@json.output@        \"status\": \"FAILURE\"@@@",

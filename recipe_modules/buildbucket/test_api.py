@@ -42,7 +42,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       bucket='ci',  # shortname.
       builder='builder',
       git_repo=None,
-      git_ref='refs/heads/master',
+      git_ref='refs/heads/main',
       revision='2d72510e447ab60a9728aeea2362d8be2cbd7789',
       build_number=0,
       build_id=8945511751514863184,
