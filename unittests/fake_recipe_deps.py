@@ -13,6 +13,8 @@ repositories and the ability to make commits in them).
 Access this via test_env.RecipeEngineUnitTest.FakeRecipeDeps().
 """
 
+from __future__ import print_function
+
 import contextlib
 import errno
 import json
@@ -593,15 +595,15 @@ class FakeRecipeDeps(object):
   def _get_engine_revision(cls):
     if not cls.ENGINE_REVISION:
       if subprocess.call(['git', 'diff-index', '--quiet', 'HEAD', '--']):
-        print >>REAL_STDERR, '*' * 6
-        print >>REAL_STDERR, textwrap.dedent('''
+        print('*' * 6, file=REAL_STDERR)
+        print(textwrap.dedent('''
         WARNING: Tests may rely on current recipe engine repo, but you have
         un-committed changes. If you see unexpected behavior in the tests please
         try committing your changes to the engine repo first and then running
         the tests again.
-        ''').lstrip(),
-        print >>REAL_STDERR, '*' * 6
-        print >>REAL_STDERR
+        ''').lstrip(), end=' ', file=REAL_STDERR)
+        print('*' * 6, file=REAL_STDERR)
+        print(file=REAL_STDERR)
         REAL_STDERR.flush()
 
       cls.ENGINE_REVISION = subprocess.check_output(

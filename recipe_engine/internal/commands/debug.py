@@ -91,9 +91,9 @@ def _debug_recipe(recipe_deps, recipe, test_data):
   debugger = pdb.Pdb()
   for func in [recipe.global_symbols['RunSteps']]:
     debugger.set_break(
-        func.func_code.co_filename,
-        func.func_code.co_firstlineno,
-        funcname=func.func_code.co_name)
+        func.__code__.co_filename,
+        func.__code__.co_firstlineno,
+        funcname=func.__code__.co_name)
 
   try:
     def dispatch_thunk(frame, event, arg):

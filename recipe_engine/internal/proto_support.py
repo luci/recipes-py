@@ -2,8 +2,9 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-
 """Contains all logic w.r.t. the recipe engine's support for protobufs."""
+
+from __future__ import print_function
 
 import errno
 import hashlib
@@ -480,7 +481,7 @@ def _compile_protos(proto_files, proto_tree, protoc, argfile, dest):
 
   if protoc_proc.returncode != 0:
     replacer = _rel_to_abs_replacer(proto_files)
-    print >> sys.stderr, "Error while compiling protobufs. Output:\n"
+    print("Error while compiling protobufs. Output:\n", file=sys.stderr)
     sys.stderr.write(replacer(output))
     sys.exit(1)
 
@@ -494,10 +495,10 @@ def _compile_protos(proto_files, proto_tree, protoc, argfile, dest):
       pass
 
   if rewrite_errors:
-    print >> sys.stderr, "Error while rewriting generated protos. Output:\n"
+    print("Error while rewriting generated protos. Output:\n", file=sys.stderr)
     replacer = _rel_to_abs_replacer(proto_files)
     for error in rewrite_errors:
-      print >> sys.stderr, replacer(error)
+      print(replacer(error), file=sys.stderr)
     sys.exit(1)
 
 

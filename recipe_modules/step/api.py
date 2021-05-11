@@ -318,7 +318,7 @@ class StepApi(recipe_api.RecipeApiPlain):
 
   @staticmethod
   def _normalize_cost(cost):
-    if not isinstance(cost, (types.NoneType, _ResourceCost)):
+    if not isinstance(cost, (type(None), _ResourceCost)):
       raise ValueError('cost must be a None or ResourceCost , got %r' % (cost,))
     return cost or _ResourceCost.zero()
 

@@ -2,14 +2,15 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import json
+from __future__ import absolute_import
 
-from state import TaskState
+import json
 
 from recipe_engine import recipe_test_api
 from PB.recipe_modules.recipe_engine.swarming import properties
 
 from .api import TaskRequest
+from .state import TaskState
 
 
 class SwarmingTestApi(recipe_test_api.RecipeTestApi):

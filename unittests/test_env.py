@@ -150,7 +150,6 @@ class RecipeEngineUnitTest(unittest.TestCase):
 
 def main():
   if '-v' in sys.argv or '--verbose' in sys.argv:
-    logging.basicConfig(
-      level=logging.DEBUG,
-      handler=CapturableHandler())
+    logging.root.handlers=[CapturableHandler()]
+    logging.basicConfig(level=logging.DEBUG)
   sys.exit(unittest.main())

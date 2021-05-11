@@ -9,6 +9,8 @@ This tool operates on the nearest ancestor directory containing an
 infra/config/recipes.cfg.
 """
 
+from __future__ import print_function
+
 # Hacks!
 
 # Hack 1; Change default encoding.
@@ -128,15 +130,15 @@ def _main():
   except Exception as exc:  # pylint: disable=broad-except
     import traceback
     traceback.print_exc(file=sys.stderr)
-    print >> sys.stderr, 'Uncaught exception (%s): %s' % (
-      type(exc).__name__, exc)
+    print('Uncaught exception (%s): %s' % (
+      type(exc).__name__, exc), file=sys.stderr)
     exit_fn(1)
 
   if not isinstance(ret, int):
     if ret is None:
       ret = 0
     else:
-      print >> sys.stderr, ret
+      print(ret, file=sys.stderr)
       ret = 1
   sys.stdout.flush()
   sys.stderr.flush()

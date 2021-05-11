@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+#py3Only
+
 """Standalone Python script to extract an archive. Intended to be used by
 the 'archive' recipe module internally. Should not be used elsewhere.
 """

@@ -7,12 +7,13 @@ import copy
 import json
 import operator
 
+from functools import reduce
+
 import attr
 import six
 from gevent.local import local
 from google.protobuf import json_format as json_pb
 from google.protobuf import message
-from six.moves import reduce
 
 from .internal.attr_util import attr_type
 

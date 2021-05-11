@@ -3,6 +3,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from __future__ import print_function
+
 import json
 import sys
 
@@ -56,7 +58,7 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
       outfile, *args
     )
     if retcode != 0:
-      print >> sys.stdout, output
+      print(output, file=sys.stdout)
       raise Exception('Roll failed')
     with open(outfile) as fil:
       return json.load(fil)

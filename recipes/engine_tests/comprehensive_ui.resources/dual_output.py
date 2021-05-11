@@ -2,6 +2,9 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from __future__ import print_function
+
 import sys
-print >> sys.stdout, 'I AM STDOUT'
-print >> sys.stderr, 'I AM STDERR'
+
+print('I AM STDOUT', file=sys.stdout)
+print('I AM STDERR', file=sys.stderr)

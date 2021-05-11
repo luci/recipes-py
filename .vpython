@@ -152,3 +152,8 @@ wheel: <
   name: "infra/python/wheels/pympler-py2_py3"
   version: "version:0.8"
 >
+
+wheel: <
+  name: "infra/python/wheels/future-py2_py3"
+  version: "version:0.18.2"
+>

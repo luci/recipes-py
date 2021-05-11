@@ -3298,7 +3298,7 @@ status.
 
 [DEPS](/recipe_modules/swarming/__init__.py#8): [buildbucket](#recipe_modules-buildbucket), [cas](#recipe_modules-cas), [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [isolated](#recipe_modules-isolated), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-#### **class [SwarmingApi](/recipe_modules/swarming/api.py#1218)([RecipeApi](/recipe_engine/recipe_api.py#875)):**
+#### **class [SwarmingApi](/recipe_modules/swarming/api.py#1220)([RecipeApi](/recipe_engine/recipe_api.py#875)):**
 
 API for interacting with swarming.
 
@@ -3308,11 +3308,11 @@ http://go.chromium.org/luci/client/cmd/swarming.
 This module will deploy the client to [CACHE]/swarming_client/; users should
 add this path to the named cache for their builder.
 
-&emsp; **@property**<br>&mdash; **def [bot\_id](/recipe_modules/swarming/api.py#1241)(self):**
+&emsp; **@property**<br>&mdash; **def [bot\_id](/recipe_modules/swarming/api.py#1243)(self):**
 
 Swarming bot ID executing this task.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#1384)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#1386)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
 
 Waits on a set of Swarming tasks.
 
@@ -3335,11 +3335,11 @@ Args:
 Returns:
   A list of TaskResult objects.
 
-&mdash; **def [ensure\_client](/recipe_modules/swarming/api.py#1268)(self):**
+&mdash; **def [ensure\_client](/recipe_modules/swarming/api.py#1270)(self):**
 
-&mdash; **def [initialize](/recipe_modules/swarming/api.py#1251)(self):**
+&mdash; **def [initialize](/recipe_modules/swarming/api.py#1253)(self):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#1283)(self):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipe_modules/swarming/api.py#1285)(self):**
 
 This context manager ensures the go swarming client is available on
 $PATH.
@@ -3349,11 +3349,11 @@ Example:
     with api.swarming.on_path():
       # do your steps which require the swarming binary on path
 
-&emsp; **@property**<br>&mdash; **def [task\_id](/recipe_modules/swarming/api.py#1246)(self):**
+&emsp; **@property**<br>&mdash; **def [task\_id](/recipe_modules/swarming/api.py#1248)(self):**
 
 This task's Swarming ID.
 
-&mdash; **def [task\_request](/recipe_modules/swarming/api.py#1315)(self):**
+&mdash; **def [task\_request](/recipe_modules/swarming/api.py#1317)(self):**
 
 Creates a new TaskRequest object.
 
@@ -3363,14 +3363,14 @@ into a full task.
 Once your TaskRequest is complete, you can pass it to `trigger` in order to
 have it start running on the swarming server.
 
-&mdash; **def [task\_request\_from\_jsonish](/recipe_modules/swarming/api.py#1326)(self, json_d):**
+&mdash; **def [task\_request\_from\_jsonish](/recipe_modules/swarming/api.py#1328)(self, json_d):**
 
 Creates a new TaskRequest object from a JSON-serializable dict.
 
 The input argument should match the schema as the output of
 TaskRequest.to_jsonish().
 
-&mdash; **def [trigger](/recipe_modules/swarming/api.py#1334)(self, step_name, requests, verbose=False):**
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#1336)(self, step_name, requests, verbose=False):**
 
 Triggers a set of Swarming tasks.
 
@@ -3383,7 +3383,7 @@ Args:
 Returns:
   A list of TaskRequestMetadata objects.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [with\_server](/recipe_modules/swarming/api.py#1297)(self, server):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [with\_server](/recipe_modules/swarming/api.py#1299)(self, server):**
 
 This context sets the server for Swarming calls.
 
@@ -3481,9 +3481,9 @@ Emit the results accumulated by `add_comment` and `run_legacy`.
 
 Methods for interacting with HTTP(s) URLs.
 
-#### **class [UrlApi](/recipe_modules/url/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#875)):**
+#### **class [UrlApi](/recipe_modules/url/api.py#14)([RecipeApi](/recipe_engine/recipe_api.py#875)):**
 
-&mdash; **def [get\_file](/recipe_modules/url/api.py#128)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None, timeout=None):**
+&mdash; **def [get\_file](/recipe_modules/url/api.py#127)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None, timeout=None):**
 
 GET data at given URL and writes it to file.
 
@@ -3509,7 +3509,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_json](/recipe_modules/url/api.py#184)(self, url, step_name=None, headers=None, transient_retry=True, strip_prefix=None, log=False, timeout=None, default_test_data=None):**
+&mdash; **def [get\_json](/recipe_modules/url/api.py#183)(self, url, step_name=None, headers=None, transient_retry=True, strip_prefix=None, log=False, timeout=None, default_test_data=None):**
 
 GET data at given URL and writes it to file.
 
@@ -3536,7 +3536,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_text](/recipe_modules/url/api.py#157)(self, url, step_name=None, headers=None, transient_retry=True, timeout=None, default_test_data=None):**
+&mdash; **def [get\_text](/recipe_modules/url/api.py#156)(self, url, step_name=None, headers=None, transient_retry=True, timeout=None, default_test_data=None):**
 
 GET data at given URL and writes it to file.
 
@@ -3559,7 +3559,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [join](/recipe_modules/url/api.py#92)(self, \*parts):**
+&mdash; **def [join](/recipe_modules/url/api.py#91)(self, \*parts):**
 
 Constructs a URL path from composite parts.
 
@@ -3568,7 +3568,7 @@ Args:
       will be stripped from intermediate strings to ensure that they join
       together. Trailing slashes will not be stripped from the last part.
 
-&mdash; **def [validate\_url](/recipe_modules/url/api.py#108)(self, v):**
+&mdash; **def [validate\_url](/recipe_modules/url/api.py#107)(self, v):**
 
 Validates that "v" is a valid URL.
 

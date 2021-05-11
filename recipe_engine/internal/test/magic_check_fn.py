@@ -72,12 +72,12 @@ class Check(namedtuple('Check', (
   @classmethod
   def _get_name_of_callable(cls, c):
     if inspect.ismethod(c):
-      return c.im_class.__name__+'.'+c.__name__
+      return c.__self__.__class__.__name__+'.'+c.__name__
     if inspect.isfunction(c):
       if c.__name__ == (lambda: None).__name__:
-        filename = c.func_code.co_filename
+        filename = c.__code__.co_filename
         cls._ensure_file_in_cache(filename, c)
-        definitions = cls._LAMBDA_CACHE[filename][c.func_code.co_firstlineno]
+        definitions = cls._LAMBDA_CACHE[filename][c.__code__.co_firstlineno]
         assert definitions
         # If there's multiple definitions at the same line, there's not enough
         # information to distinguish which lambda c refers to, so just let

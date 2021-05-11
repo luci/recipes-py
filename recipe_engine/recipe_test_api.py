@@ -5,6 +5,7 @@
 import contextlib
 import inspect
 
+from functools import reduce
 from collections import namedtuple, defaultdict
 
 from .util import ModuleInjectionSite, static_call, static_wraps

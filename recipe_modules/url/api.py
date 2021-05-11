@@ -5,7 +5,6 @@
 """Methods for interacting with HTTP(s) URLs."""
 
 import collections
-import types
 import urllib
 import urlparse
 
@@ -177,7 +176,7 @@ class UrlApi(recipe_api.RecipeApi):
       * HTTPError, InfraHTTPError: if the request failed.
       * ValueError: If the request was invalid.
     """
-    assert isinstance(default_test_data, (types.NoneType, str))
+    assert isinstance(default_test_data, (type(None), str))
     return self._get_step(url, None, step_name, headers, transient_retry,
                           None, False, timeout, default_test_data)
 

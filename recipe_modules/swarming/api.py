@@ -3,13 +3,15 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from __future__ import absolute_import
+
 import base64
 import collections
 import contextlib
 import copy
 import sys
 
-from state import TaskState
+from .state import TaskState
 
 from recipe_engine import recipe_api
 
