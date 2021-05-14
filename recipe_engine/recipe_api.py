@@ -18,7 +18,7 @@ from functools import wraps
 
 import attr
 
-from six import iteritems
+from future.utils import iteritems
 from google.protobuf import message
 
 from .config_types import Path

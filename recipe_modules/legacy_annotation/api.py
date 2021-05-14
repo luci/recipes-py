@@ -11,8 +11,8 @@ build (using the Merge Step feature from luciexe protocol). This is the
 replacement for allow_subannotation feature in the legacy annotate mode.
 """
 
+from future.utils import iteritems
 from google.protobuf import json_format as jsonpb
-from six import iteritems
 
 from recipe_engine import recipe_api
 from recipe_engine.types import ResourceCost as _ResourceCost

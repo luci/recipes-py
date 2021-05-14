@@ -4,7 +4,7 @@
 
 """Helpers for using the `attr` library."""
 
-import six
+from future.utils import iteritems
 
 
 def attr_type(type_, subname=''):
@@ -92,7 +92,7 @@ def attr_dict_type(key_type, val_type, value_seq=False):
     from ..types import FrozenDict
 
     attr_type((dict, FrozenDict))(self, attrib, value)
-    for k, subval in six.iteritems(value):
+    for k, subval in iteritems(value):
       attr_type(key_type, ' keys')(self, attrib, k)
       subname = '[%r]' % k
       if value_seq:

@@ -6,6 +6,8 @@
 
 from __future__ import print_function
 
+from future.utils import itervalues
+
 import errno
 import hashlib
 import inspect
@@ -19,8 +21,6 @@ import tempfile
 from gevent import subprocess
 
 import attr
-import six
-from six import b
 
 import google.protobuf  # pinned in .vpython
 import google.protobuf.message
@@ -116,7 +116,7 @@ class _ProtoInfo(object):
     csum = hashlib.sha1()
     with open(src_abspath, 'rb') as src:
       csum.update(
-          b('blob %d\0') % (os.fstat(src.fileno()).st_size,))
+          b'blob %d\0' % (os.fstat(src.fileno()).st_size,))
       while True:
         data = src.read(4 * 1024)
         if not data:
@@ -176,7 +176,7 @@ def _gather_proto_info_from_repo(repo):
 # checksum. If you need to change the compilation algorithm/process in any way,
 # you should increment this version number to cause all protos to be regenerated
 # downstream.
-RECIPE_PB_VERSION = b('3')
+RECIPE_PB_VERSION = b'3'
 
 
 def _gather_protos(deps):
@@ -196,15 +196,15 @@ def _gather_protos(deps):
   Raises BadProtoDefinitions if this finds conflicting or reserved protos.
   """
   all_protos = {}  # Dict[repo_name : str, List[_ProtoInfo]]
-  for repo in six.itervalues(deps.repos):
+  for repo in itervalues(deps.repos):
     proto_info = _gather_proto_info_from_repo(repo)
     if proto_info:
       all_protos[repo.name] = proto_info
 
   csum = hashlib.sha256(RECIPE_PB_VERSION)
-  csum.update(b('\0'))
+  csum.update(b'\0')
   csum.update(PROTOC_VERSION)
-  csum.update(b('\0'))
+  csum.update(b'\0')
   rel_to_projs = {}  # type: Dict[dest_relpath: str, List[repo_name: str]]
   # dups has keys where len(rel_to_projs[dest_relpath]) > 1
   dups = set()       # type: Set[key: str]
@@ -212,7 +212,7 @@ def _gather_protos(deps):
   retval = []        # type: List[Tuple[src_abspath: str, dest_relpath: str]]
   for repo_name, proto_infos in sorted(all_protos.items()):
     csum.update(repo_name.encode('utf-8'))
-    csum.update(b('\0\0'))
+    csum.update(b'\0\0')
 
     for info in proto_infos:
       duplist = rel_to_projs.setdefault(info.dest_relpath, [])
@@ -225,11 +225,11 @@ def _gather_protos(deps):
       retval.append((info.src_abspath, info.dest_relpath))
 
       csum.update(info.relpath.encode('utf-8'))
-      csum.update(b('\0'))
+      csum.update(b'\0')
       csum.update(info.dest_relpath.encode('utf-8'))
-      csum.update(b('\0'))
+      csum.update(b'\0')
       csum.update(info.blobhash.encode('utf-8'))
-      csum.update(b('\0'))
+      csum.update(b'\0')
 
   if dups or reserved:
     msg = ''
@@ -376,7 +376,7 @@ def _rewrite_and_rename(root, base_proto_path):
         # line.
         if not found_first_import and line.startswith(('from ', 'import ')):
           found_first_import = True
-          ofile.write(b("\nfrom __future__ import absolute_import\n\n"))
+          ofile.write(b"\nfrom __future__ import absolute_import\n\n")
           ofile.write(line.encode('utf-8'))
           continue
 
@@ -454,7 +454,7 @@ def _collect_protos(argfile_fd, proto_files, dest):
       _makedirs(os.path.dirname(destpath))
       shutil.copyfile(src_abspath, destpath)
       os.write(argfile_fd, dest_relpath.encode('utf-8'))
-      os.write(argfile_fd, b('\n'))
+      os.write(argfile_fd, b'\n')
   finally:
     os.close(argfile_fd)  # for windows
 
@@ -524,7 +524,7 @@ def _install_protos(proto_package_path, dgst, proto_files):
     'cipd'+_BAT, 'ensure', '-root', os.path.join(proto_package_path, 'protoc'),
     '-ensure-file', '-'], stdin=subprocess.PIPE)
   cipd_proc.communicate(
-      b('infra/tools/protoc/${platform} protobuf_version:v') + PROTOC_VERSION)
+      b'infra/tools/protoc/${platform} protobuf_version:v' + PROTOC_VERSION)
   if cipd_proc.returncode != 0:
     raise ValueError(
         'failed to install protoc: retcode %d' % cipd_proc.returncode)

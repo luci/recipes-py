@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2014 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -29,6 +30,12 @@ def RunSteps(api):
   step_result = api.step('cat', ['cat', api.raw_io.input_text(data='hello')],
       stdout=api.raw_io.output('out'))
   assert step_result.stdout == 'hello'
+
+  step_result = api.step(
+      'cat (unicode)',
+      ['cat', api.raw_io.input_text(data=u'hello 💩')],
+      stdout=api.raw_io.output_text('out'))
+  assert step_result.stdout == u'hello 💩'
 
   # \xe2 is not encodable by utf-8 (and has shown up in actual recipe data)
   # so test that input correctly doesn't try to encode it as utf-8.
@@ -178,6 +185,8 @@ def GenTests(api):
             stdout=api.raw_io.output('hello')) +
         api.step_data('cat (3)',
             stdout=api.raw_io.output('\xe2hello')) +
+        api.step_data('cat (unicode)',
+            stdout=api.raw_io.output_text(u'hello 💩')) +
         api.step_data('dump output_dir', api.raw_io.output_dir({
           sep.join(['some', 'file']): 'cool contents',
           'other_file': 'whatever',

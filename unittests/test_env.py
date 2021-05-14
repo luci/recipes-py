@@ -16,7 +16,6 @@ import sys
 import tempfile
 import unittest
 
-import six
 
 # Allow `recipe_engine` module to be importable
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

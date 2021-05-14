@@ -11,7 +11,7 @@ from collections import defaultdict
 
 import attr
 
-from six import iteritems, itervalues
+from future.utils import iteritems, itervalues
 
 from .cause import CallSite, Frame, ImportSite
 from .escape import escape_warning_predicate

@@ -5,13 +5,18 @@
 
 """Provides objects for reading and writing raw data to and from steps."""
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from past.builtins import basestring
+from future.utils import raise_
+
 import codecs
 import contextlib
-import cStringIO
+import io
 import errno
 import os
 import shutil
-import six
 import sys
 import tempfile
 import UserDict
@@ -57,7 +62,7 @@ def _rmtree(d):  # pragma: no cover
         os.remove(p)
         return
       # Reraise the original exception.
-      six.reraise(excinfo[0], excinfo[1], excinfo[2])
+      raise_(excinfo[0], excinfo[1], excinfo[2])
 
     # On Windows, some paths exceed MAX_PATH. Work around this by prepending
     # the UNC magic prefix '\\?\' which allows the Windows API file calls to
@@ -69,7 +74,7 @@ def _rmtree(d):  # pragma: no cover
 
 class InputDataPlaceholder(recipe_util.InputPlaceholder):
   def __init__(self, data, suffix, name=None):
-    if not isinstance(data, str): # pragma: no cover
+    if not isinstance(data, basestring): # pragma: no cover
       raise TypeError(
         "Data passed to InputDataPlaceholder was %r, expected 'str'"
         % (type(data).__name__))
@@ -87,10 +92,12 @@ class InputDataPlaceholder(recipe_util.InputPlaceholder):
     if test.enabled:
       # cheat and pretend like we're going to pass the data on the
       # cmdline for test expectation purposes.
-      with contextlib.closing(cStringIO.StringIO()) as output:
+      with contextlib.closing(io.BytesIO()) as output:
         self.write_encoded_data(output)
         self._backing_file = output.getvalue()
     else:  # pragma: no cover
+      # python3 - this can be done properly by opening the file with an
+      # encoding.
       input_fd, self._backing_file = tempfile.mkstemp(suffix=self.suffix)
       with os.fdopen(os.dup(input_fd), 'wb') as f:
         self.write_encoded_data(f)
@@ -125,7 +132,7 @@ class InputTextPlaceholder(InputDataPlaceholder):
     n = 1 << 16
     # This is a generator expression, so this only copies one chunk of
     # self.data at any one time.
-    chunks = (self.data[i:i + n] for i in xrange(0, len(self.data), n))
+    chunks = (self.data[i:i + n] for i in range(0, len(self.data), n))
     decoded = codecs.iterdecode(chunks, 'utf-8', 'replace')
     for chunk in codecs.iterencode(decoded, 'utf-8'):
       f.write(chunk)
@@ -170,7 +177,13 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
       # removes it before accessing its contents.
       if self.leak_to and test.data is None:
         return None
-      with contextlib.closing(cStringIO.StringIO(test.data or '')) as infile:
+
+      # python3 - this can be done properly by opening the file with an
+      # encoding.
+      test_data = test.data or b''
+      if isinstance(test.data, unicode):
+        test_data = test_data.encode('utf-8')
+      with contextlib.closing(io.BytesIO(test_data)) as infile:
         ret = self.read_decoded_data(infile)
     else:  # pragma: no cover
       try:
@@ -275,7 +288,7 @@ class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):
 
     if test.enabled:
       data = test.data or {}
-      return _LazyDirectoryReader(data.keys(), data.get)
+      return _LazyDirectoryReader(list(data), data.get)
     else:  # pragma: no cover
       all_paths = set()
       for dir_path, _, files in os.walk(self._backing_dir):

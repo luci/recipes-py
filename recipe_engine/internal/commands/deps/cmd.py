@@ -9,7 +9,7 @@ import contextlib
 import logging
 import sys
 
-from six import itervalues
+from future.utils import itervalues
 
 from google.protobuf import json_format as jsonpb
 

@@ -14,10 +14,11 @@ import traceback
 
 from contextlib import contextmanager
 
+from future.utils import raise_, iteritems
+
 import attr
 import gevent
 import gevent.local
-import six
 
 from google.protobuf import json_format as jsonpb
 from pympler import summary, tracker
@@ -444,7 +445,7 @@ class RecipeEngine(object):
 
       # If there's a buffered exception, we raise it now.
       if caught:
-        six.reraise(caught[0], caught[1], caught[2])
+        raise_(caught[0], caught[1], caught[2])
 
       return ret
 
@@ -821,7 +822,7 @@ def _render_config(debug, name_tokens, step_config, step_runner, step_stream,
 
     section_values = {
       key: jsonpb.MessageToDict(pb_val) if pb_val is not None else None
-      for key, pb_val in six.iteritems(step_luci_context)
+      for key, pb_val in iteritems(step_luci_context)
     }
 
     if step_config.timeout:
