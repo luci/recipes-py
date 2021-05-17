@@ -131,3 +131,21 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
           for tag in test_data_tags
         ],
     })
+
+  def example_instances(self, package_name, limit=None,
+                        user='user:44-blablbla@developer.gserviceaccount.com',
+                        tstamp=1446574210):
+    # Return two instances by default.
+    limit = limit or 2
+    instances =[]
+    for i in xrange(limit):
+      instance = {
+          'pin': self.make_pin(package_name, 'instance_id_%i' % (i+1)),
+          'registered_by': user,
+          'registered_ts': tstamp-i-1,
+      }
+      # Add "latest" ref to the first instance
+      if i == 0:
+        instance['refs'] = ['latest']
+      instances.append(instance)
+    return self._resultify({'instances': instances})

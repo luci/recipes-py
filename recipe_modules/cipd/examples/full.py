@@ -138,6 +138,8 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
     api.cipd.set_ref('fake-package', version='latest', refs=['any', 'some'])
     # Search by the new tag.
     api.cipd.search('fake-package/${platform}', tag='dead:beaf')
+    # Get the instances
+    api.cipd.instances('fake-package/${platform}', limit=3)
 
     # Set metadata.
     api.cipd.set_metadata('fake-package', version='latest', metadata=[

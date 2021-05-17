@@ -292,6 +292,14 @@ class CIPDApi(recipe_api.RecipeApi):
       'tags',
   ])
 
+  # A CIPD package instance.
+  Instance = namedtuple('Instance', [
+      'pin',
+      'registered_by',
+      'registered_ts',
+      'refs',
+  ])
+
   class Error(recipe_api.StepFailure):
 
     def __init__(self, step_name, message):
@@ -848,10 +856,48 @@ class CIPDApi(recipe_api.RecipeApi):
     return self.Description(
         pin=self.Pin(**result['pin']),
         registered_by=result['registered_by'],
-        registered_ts=['registered_ts'],
+        registered_ts=result['registered_ts'],
         refs=[self.Ref(**ref) for ref in result.get('refs', ())],
         tags=[self.Tag(**tag) for tag in result.get('tags', ())],
     )
+
+  def instances(self,
+                package_name,
+                limit=None):
+    """Lists instances of a package, most recently uploaded first.
+
+    Args:
+      * package_name (str) - The name of the cipd package.
+      * limit (None|int) - The number of instances to return. 0 for all.
+        If None, default value of 'cipd' binary will be used (20).
+
+    Returns the list of CIPDApi.Instance instance.
+    """
+    check_type('package_name', package_name, basestring)
+    check_type('limit', limit, (type(None), int))
+    cmd = [
+        'instances',
+        package_name,
+    ] + self._service_account_opts()
+
+    if limit:
+      cmd += ['-limit', limit]
+
+    step_result = self._run(
+        'cipd instances %s' % package_name, cmd,
+        step_test_data=lambda: self.test_api.example_instances(
+            package_name,
+            limit=limit))
+    result = step_result.json.output['result'] or {}
+    instances = []
+    for instance in result.get('instances', []):
+      instances.append(self.Instance(
+        pin=self.Pin(**instance['pin']),
+        registered_by=instance['registered_by'],
+        registered_ts=instance['registered_ts'],
+        refs=instance.get('refs'),
+      ))
+    return instances
 
   def pkg_fetch(self, destination, package_name, version):
     """Downloads the specified package to destination.

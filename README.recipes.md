@@ -730,7 +730,7 @@ Attributes:
   * max_threads (int) - Number of worker threads for extracting packages.
     If 0, uses CPU count.
 
-&mdash; **def [acl\_check](/recipe_modules/cipd/api.py#359)(self, pkg_path, reader=True, writer=False, owner=False):**
+&mdash; **def [acl\_check](/recipe_modules/cipd/api.py#367)(self, pkg_path, reader=True, writer=False, owner=False):**
 
 Checks whether the caller has a given roles in a package.
 
@@ -742,9 +742,9 @@ Args:
 
 Returns True if the caller has given roles, False otherwise.
 
-&mdash; **def [add\_instance\_link](/recipe_modules/cipd/api.py#601)(self, step_result):**
+&mdash; **def [add\_instance\_link](/recipe_modules/cipd/api.py#609)(self, step_result):**
 
-&mdash; **def [build](/recipe_modules/cipd/api.py#457)(self, input_dir, output_package, package_name, compression_level=None, install_mode=None, preserve_mtime=False, preserve_writable=False):**
+&mdash; **def [build](/recipe_modules/cipd/api.py#465)(self, input_dir, output_package, package_name, compression_level=None, install_mode=None, preserve_mtime=False, preserve_writable=False):**
 
 Builds, but does not upload, a cipd package from a directory.
 
@@ -763,7 +763,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#437)(self, pkg_def, output_package, compression_level=None):**
+&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#445)(self, pkg_def, output_package, compression_level=None):**
 
 Builds a package based on a PackageDefinition object.
 
@@ -776,7 +776,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#411)(self, pkg_def, output_package, pkg_vars=None, compression_level=None):**
+&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#419)(self, pkg_def, output_package, pkg_vars=None, compression_level=None):**
 
 Builds a package based on on-disk YAML package definition file.
 
@@ -790,14 +790,14 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [cache\_dir](/recipe_modules/cipd/api.py#332)(self, directory):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [cache\_dir](/recipe_modules/cipd/api.py#340)(self, directory):**
 
 Sets the cache dir to use with CIPD by setting the $CIPD_CACHE_DIR
 environment variable.
 
 If directory is "None", will use no cache directory.
 
-&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#640)(self, pkg_def, refs=None, tags=None, metadata=None, compression_level=None):**
+&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#648)(self, pkg_def, refs=None, tags=None, metadata=None, compression_level=None):**
 
 Builds and uploads a package based on a PackageDefinition object.
 
@@ -815,7 +815,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#607)(self, pkg_def, refs=None, tags=None, metadata=None, pkg_vars=None, compression_level=None):**
+&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#615)(self, pkg_def, refs=None, tags=None, metadata=None, pkg_vars=None, compression_level=None):**
 
 Builds and uploads a package based on on-disk YAML package definition
 file.
@@ -835,7 +835,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [describe](/recipe_modules/cipd/api.py#821)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
+&mdash; **def [describe](/recipe_modules/cipd/api.py#829)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
 
 Returns information about a package instance given its version:
 who uploaded the instance and when and a list of attached tags.
@@ -850,7 +850,7 @@ Args:
 
 Returns the CIPDApi.Description instance describing the package.
 
-&mdash; **def [ensure](/recipe_modules/cipd/api.py#670)(self, root, ensure_file, name='ensure_installed'):**
+&mdash; **def [ensure](/recipe_modules/cipd/api.py#678)(self, root, ensure_file, name='ensure_installed'):**
 
 Ensures that packages are installed in a given root dir.
 
@@ -861,7 +861,7 @@ Args:
 
 Returns the map of subdirectories to CIPDApi.Pin instances.
 
-&mdash; **def [ensure\_tool](/recipe_modules/cipd/api.py#910)(self, package, version, executable_path=None):**
+&mdash; **def [ensure\_tool](/recipe_modules/cipd/api.py#956)(self, package, version, executable_path=None):**
 
 Downloads an executable from CIPD.
 
@@ -890,9 +890,20 @@ Returns a Path to the executable.
 Future-safe; Multiple concurrent calls for the same (package, version) will
 block on a single ensure step.
 
-&emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#344)(self):**
+&emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#352)(self):**
 
-&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#887)(self, root, package_file):**
+&mdash; **def [instances](/recipe_modules/cipd/api.py#864)(self, package_name, limit=None):**
+
+Lists instances of a package, most recently uploaded first.
+
+Args:
+  * package_name (str) - The name of the cipd package.
+  * limit (None|int) - The number of instances to return. 0 for all.
+    If None, default value of 'cipd' binary will be used (20).
+
+Returns the list of CIPDApi.Instance instance.
+
+&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#933)(self, root, package_file):**
 
 Deploys the specified package to root.
 
@@ -906,7 +917,7 @@ Args:
 
 Returns a Pin for the deployed package.
 
-&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#856)(self, destination, package_name, version):**
+&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#902)(self, destination, package_name, version):**
 
 Downloads the specified package to destination.
 
@@ -923,7 +934,7 @@ Args:
 
 Returns a Pin for the downloaded package.
 
-&mdash; **def [register](/recipe_modules/cipd/api.py#537)(self, package_name, package_path, refs=None, tags=None, metadata=None):**
+&mdash; **def [register](/recipe_modules/cipd/api.py#545)(self, package_name, package_path, refs=None, tags=None, metadata=None):**
 
 Uploads and registers package instance in the package repository.
 
@@ -938,7 +949,7 @@ Args:
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [search](/recipe_modules/cipd/api.py#789)(self, package_name, tag, test_instances=None):**
+&mdash; **def [search](/recipe_modules/cipd/api.py#797)(self, package_name, tag, test_instances=None):**
 
 Searches for package instances by tag, optionally constrained by package
 name.
@@ -954,7 +965,7 @@ Args:
 
 Returns the list of CIPDApi.Pin instances.
 
-&mdash; **def [set\_metadata](/recipe_modules/cipd/api.py#739)(self, package_name, version, metadata):**
+&mdash; **def [set\_metadata](/recipe_modules/cipd/api.py#747)(self, package_name, version, metadata):**
 
 Attaches metadata to a package instance.
 
@@ -965,7 +976,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#764)(self, package_name, version, refs):**
+&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#772)(self, package_name, version, refs):**
 
 Moves a ref to point to a given version.
 
@@ -976,7 +987,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [set\_service\_account](/recipe_modules/cipd/api.py#310)(self, service_account):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [set\_service\_account](/recipe_modules/cipd/api.py#318)(self, service_account):**
 
 Temporarily sets the service account used for authentication to CIPD.
 
@@ -987,7 +998,7 @@ Args:
   * service_account(service_account.api.ServiceAccount): Service account to
       use for authentication.
 
-&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#712)(self, package_name, version, tags):**
+&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#720)(self, package_name, version, tags):**
 
 Tags package of a specific version.
 
