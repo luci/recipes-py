@@ -150,6 +150,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
   def query(self,
             inv_ids,
             variants_with_unexpected_results=False,
+            merge=False,
             limit=None,
             step_name=None):
     """Returns test results in the invocations.
@@ -174,6 +175,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
       inv_ids (list of str): ids of the invocations.
       variants_with_unexpected_results (bool): if True, return only test
         results from variants that have unexpected results.
+      merge (bool): if True, return test results as if all invocations
+        are one, otherwise, results will be ordered by invocation.
       limit (int): maximum number of test results to return.
         Defaults to 1000.
       step_name (str): name of the step.
@@ -192,6 +195,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
     ]
     if variants_with_unexpected_results:
       args += ['-u']
+    if merge:
+      args += ['-merge']
     args += list(inv_ids)
 
     step_res = self._run_rdb(

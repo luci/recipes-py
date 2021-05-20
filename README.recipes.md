@@ -2749,7 +2749,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#41)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#356)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#361)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -2801,7 +2801,7 @@ Args:
 Returns:
   A list of invocation_ids.
 
-&mdash; **def [query](/recipe_modules/resultdb/api.py#150)(self, inv_ids, variants_with_unexpected_results=False, limit=None, step_name=None):**
+&mdash; **def [query](/recipe_modules/resultdb/api.py#150)(self, inv_ids, variants_with_unexpected_results=False, merge=False, limit=None, step_name=None):**
 
 Returns test results in the invocations.
 
@@ -2825,6 +2825,8 @@ Args:
   inv_ids (list of str): ids of the invocations.
   variants_with_unexpected_results (bool): if True, return only test
     results from variants that have unexpected results.
+  merge (bool): if True, return test results as if all invocations
+    are one, otherwise, results will be ordered by invocation.
   limit (int): maximum number of test results to return.
     Defaults to 1000.
   step_name (str): name of the step.
@@ -2845,7 +2847,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#265)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#270)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True):**
 
 Wraps the command with ResultSink.
 

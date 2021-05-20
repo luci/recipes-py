@@ -25,6 +25,7 @@ def RunSteps(api):
           ['invocations/chromium-swarm.appspot.com/deadbeef']),
       step_name='rdb query',
       variants_with_unexpected_results=True,
+      merge=True,
   )
   if inv_bundle:
     pres = api.step.active_result.presentation
