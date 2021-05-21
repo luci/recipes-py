@@ -392,7 +392,7 @@ class StepApi(recipe_api.RecipeApiPlain):
       build.create_time.GetCurrentTime()
       build.start_time.GetCurrentTime()
     for f in ('end_time', 'output', 'status_details', 'steps',
-              'summary_markdown', 'tags', 'update_time'):
+              'summary_markdown', 'update_time'):
       build.ClearField(f)
     return build
 

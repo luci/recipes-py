@@ -200,12 +200,12 @@ def GenTests(api):
     check(initial_build.status == common_pb2.STARTED)
     check(initial_build.create_time.ToSeconds() == 1677836800)
     check(initial_build.start_time.ToSeconds() == 1677836801)
+    check(initial_build.tags == input_build.tags)
     check(not initial_build.summary_markdown)
     check(not initial_build.HasField('status_details'))
     check(not initial_build.HasField('end_time'))
     check(not initial_build.HasField('update_time'))
     check(not initial_build.steps)
-    check(not initial_build.tags)
     check(not initial_build.HasField('output'))
 
 
