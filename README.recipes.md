@@ -138,6 +138,7 @@
   * [resultdb:examples/exonerate](#recipes-resultdb_examples_exonerate)
   * [resultdb:examples/include](#recipes-resultdb_examples_include)
   * [resultdb:examples/query](#recipes-resultdb_examples_query)
+  * [resultdb:examples/result_history](#recipes-resultdb_examples_result_history)
   * [resultdb:examples/resultsink](#recipes-resultdb_examples_resultsink)
   * [resultdb:examples/test_presentation](#recipes-resultdb_examples_test_presentation)
   * [resultdb:examples/test_presentation_default](#recipes-resultdb_examples_test_presentation_default)
@@ -2736,20 +2737,20 @@ Args:
      log when the step has a non-SUCCESS status.
 ### *recipe_modules* / [resultdb](/recipe_modules/resultdb)
 
-[DEPS](/recipe_modules/resultdb/__init__.py#6): [buildbucket](#recipe_modules-buildbucket), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
+[DEPS](/recipe_modules/resultdb/__init__.py#6): [buildbucket](#recipe_modules-buildbucket), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time), [uuid](#recipe_modules-uuid)
 
 API for interacting with the ResultDB service.
 
 Requires `rdb` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 
-#### **class [ResultDBAPI](/recipe_modules/resultdb/api.py#19)([RecipeApi](/recipe_engine/recipe_api.py#875)):**
+#### **class [ResultDBAPI](/recipe_modules/resultdb/api.py#23)([RecipeApi](/recipe_engine/recipe_api.py#875)):**
 
 A module for interacting with ResultDB.
 
-&mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#41)(self):**
+&mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#45)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#361)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#435)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -2771,15 +2772,15 @@ Args:
     Caveat: test variants with only expected results are not affected by
     this setting and are always in their own group.
 
-&emsp; **@property**<br>&mdash; **def [current\_invocation](/recipe_modules/resultdb/api.py#33)(self):**
+&emsp; **@property**<br>&mdash; **def [current\_invocation](/recipe_modules/resultdb/api.py#37)(self):**
 
-&emsp; **@property**<br>&mdash; **def [enabled](/recipe_modules/resultdb/api.py#37)(self):**
+&emsp; **@property**<br>&mdash; **def [enabled](/recipe_modules/resultdb/api.py#41)(self):**
 
-&mdash; **def [exclude\_invocations](/recipe_modules/resultdb/api.py#52)(self, invocations, step_name=None):**
+&mdash; **def [exclude\_invocations](/recipe_modules/resultdb/api.py#56)(self, invocations, step_name=None):**
 
 Shortcut for resultdb.update_included_invocations().
 
-&mdash; **def [exonerate](/recipe_modules/resultdb/api.py#93)(self, test_exonerations, step_name=None):**
+&mdash; **def [exonerate](/recipe_modules/resultdb/api.py#97)(self, test_exonerations, step_name=None):**
 
 Exonerates test variants in the current invocation.
 
@@ -2787,11 +2788,45 @@ Args:
   test_exonerations (list): A list of test_result_pb2.TestExoneration.
   step_name (str): name of the step.
 
-&mdash; **def [include\_invocations](/recipe_modules/resultdb/api.py#47)(self, invocations, step_name=None):**
+&mdash; **def [get\_test\_result\_history](/recipe_modules/resultdb/api.py#215)(self, realm, test_id_regexp, variant_predicate=None, time_range=None, page_size=10, page_token=None, step_name=None):**
+
+Receive test results for a given configuration.
+
+Makes a call to GetTestResultHistory rpc. Allows for test retrieval for
+all invocations with the specified configurations.
+
+Args:
+  realm (str): the realm that the data being queried exists in.
+    Example: "chromium:ci".
+  test_id_regexp (str): the subset of test ids to request history for.
+  variant_predicate (resultdb.proto.v1.predicate.VariantPredicate):
+    the subset of test variants to request history for. Defaults to None,
+    but specifying will improve runtime.
+  time_range (common_v1.TimeRange): a range of timestamps in which to
+    request history from. If no time_range is specified, it defaults to the
+    past day.
+  page_size (int): the number of results per page in the response. If the
+    number of results satisfying the given configuration exceeds this
+    number, only the page_size results will be available in the response.
+    Defaults to 10 results.
+  page_token (str): for instances in which the results span multiple pages,
+    each response will contain a page token for the next page, which can be
+    passed in to the next request. Defaults to None, which returns the first
+    page.
+  step_name (str): name of the step.
+
+Returns:
+  A GetTestResultHistoryResponse proto message with entries for each test
+  matching the configuration.
+
+  For value format, see [`GetTestResultHistoryResponse` message]
+  (https://bit.ly/3bSXxU1)
+
+&mdash; **def [include\_invocations](/recipe_modules/resultdb/api.py#51)(self, invocations, step_name=None):**
 
 Shortcut for resultdb.update_included_invocations().
 
-&mdash; **def [invocation\_ids](/recipe_modules/resultdb/api.py#135)(self, inv_names):**
+&mdash; **def [invocation\_ids](/recipe_modules/resultdb/api.py#139)(self, inv_names):**
 
 Returns invocation ids by parsing invocation names.
 
@@ -2801,7 +2836,7 @@ Args:
 Returns:
   A list of invocation_ids.
 
-&mdash; **def [query](/recipe_modules/resultdb/api.py#150)(self, inv_ids, variants_with_unexpected_results=False, merge=False, limit=None, step_name=None):**
+&mdash; **def [query](/recipe_modules/resultdb/api.py#154)(self, inv_ids, variants_with_unexpected_results=False, merge=False, limit=None, step_name=None):**
 
 Returns test results in the invocations.
 
@@ -2834,7 +2869,7 @@ Args:
 Returns:
   A dict {invocation_id: api.Invocation}.
 
-&mdash; **def [update\_included\_invocations](/recipe_modules/resultdb/api.py#57)(self, add_invocations=None, remove_invocations=None, step_name=None):**
+&mdash; **def [update\_included\_invocations](/recipe_modules/resultdb/api.py#61)(self, add_invocations=None, remove_invocations=None, step_name=None):**
 
 Add and/or remove included invocations to/from the current invocation.
 
@@ -2847,7 +2882,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#270)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#344)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True):**
 
 Wraps the command with ResultSink.
 
@@ -4223,6 +4258,11 @@ Tests for api.python.infra_failing_step.
 [DEPS](/recipe_modules/resultdb/examples/query.py#15): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query.py#22)(api):**
+### *recipes* / [resultdb:examples/result\_history](/recipe_modules/resultdb/examples/result_history.py)
+
+[DEPS](/recipe_modules/resultdb/examples/result_history.py#11): [resultdb](#recipe_modules-resultdb)
+
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/result_history.py#16)(api):**
 ### *recipes* / [resultdb:examples/resultsink](/recipe_modules/resultdb/examples/resultsink.py)
 
 [DEPS](/recipe_modules/resultdb/examples/resultsink.py#10): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)

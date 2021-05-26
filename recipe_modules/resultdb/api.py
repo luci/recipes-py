@@ -7,13 +7,17 @@
 Requires `rdb` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 """
-
 from google.protobuf import json_format
+from google.protobuf import timestamp_pb2
 from recipe_engine import recipe_api
 
+from PB.go.chromium.org.luci.resultdb.proto.v1 import common as common_v1
 from PB.go.chromium.org.luci.resultdb.proto.v1 import recorder
+from PB.go.chromium.org.luci.resultdb.proto.v1 import resultdb
 
 from . import common
+
+_SECONDS_PER_DAY = 86400
 
 
 class ResultDBAPI(recipe_api.RecipeApi):
@@ -207,6 +211,76 @@ class ResultDBAPI(recipe_api.RecipeApi):
         step_test_data=lambda: self.m.raw_io.test_api.stream_output(''),
     )
     return common.deserialize(step_res.stdout)
+
+  def get_test_result_history(self,
+                              realm,
+                              test_id_regexp,
+                              variant_predicate=None,
+                              time_range=None,
+                              page_size=10,
+                              page_token=None,
+                              step_name=None):
+    """Receive test results for a given configuration.
+
+    Makes a call to GetTestResultHistory rpc. Allows for test retrieval for
+    all invocations with the specified configurations.
+
+    Args:
+      realm (str): the realm that the data being queried exists in.
+        Example: "chromium:ci".
+      test_id_regexp (str): the subset of test ids to request history for.
+      variant_predicate (resultdb.proto.v1.predicate.VariantPredicate):
+        the subset of test variants to request history for. Defaults to None,
+        but specifying will improve runtime.
+      time_range (common_v1.TimeRange): a range of timestamps in which to
+        request history from. If no time_range is specified, it defaults to the
+        past day.
+      page_size (int): the number of results per page in the response. If the
+        number of results satisfying the given configuration exceeds this
+        number, only the page_size results will be available in the response.
+        Defaults to 10 results.
+      page_token (str): for instances in which the results span multiple pages,
+        each response will contain a page token for the next page, which can be
+        passed in to the next request. Defaults to None, which returns the first
+        page.
+      step_name (str): name of the step.
+
+    Returns:
+      A GetTestResultHistoryResponse proto message with entries for each test
+      matching the configuration.
+
+      For value format, see [`GetTestResultHistoryResponse` message]
+      (https://bit.ly/3bSXxU1)
+    """
+    if time_range is None:
+      now = int(self.m.time.time())
+      time_range = common_v1.TimeRange(
+          earliest=timestamp_pb2.Timestamp(seconds=now - _SECONDS_PER_DAY),
+          latest=timestamp_pb2.Timestamp(seconds=now))
+
+    req = resultdb.GetTestResultHistoryRequest(
+        realm=realm,
+        test_id_regexp=test_id_regexp,
+        time_range=time_range,
+        page_size=page_size)
+
+    if variant_predicate:
+      req.variant_predicate.CopyFrom(variant_predicate)
+
+    if page_token:
+      req.page_token = page_token
+
+    res = self._rpc(
+        step_name or 'get_test_result_history',
+        'luci.resultdb.v1.ResultDB',
+        'GetTestResultHistory',
+        req=json_format.MessageToDict(req))
+
+    return json_format.ParseDict(
+        res,
+        resultdb.GetTestResultHistoryResponse(),
+        # Do not fail the build because recipe's proto copy is stale.
+        ignore_unknown_fields=True)
 
   ##############################################################################
   # Implementation details.

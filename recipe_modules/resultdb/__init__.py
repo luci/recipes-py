@@ -9,5 +9,6 @@ DEPS = [
     'json',
     'raw_io',
     'step',
+    'time',
     'uuid',
 ]
