@@ -629,7 +629,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
       }))
     return self._run_buildbucket('put', build_specs, **kwargs)
 
-  def search(self, predicate, limit=None, url_title_fn=None, step_name=None,
+  def search(self,
+             predicate,
+             limit=None,
+             url_title_fn=None,
+             report_build=True,
+             step_name=None,
              fields=DEFAULT_FIELDS):
     """Searches for builds.
 
@@ -648,6 +653,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
         If a list, the predicates are connected with logical OR.
     *   limit: max number of builds to return. Defaults to 1000.
     *   url_title_fn: generates a build URL title. See module docstring.
+    *   report_build: whether to report build search results in step
+        presentation. Defaults to True.
     *   fields: a list of fields to include in the response, names relative
         to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
 
@@ -687,7 +694,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
         line, build_pb2.Build(),
         # Do not fail because recipe's proto copy is stale.
         ignore_unknown_fields=True)
-      self._report_build_maybe(step_result, build, url_title_fn=url_title_fn)
+      if report_build:
+        self._report_build_maybe(step_result, build, url_title_fn=url_title_fn)
       ret.append(build)
 
       assert len(ret) <= limit, (
@@ -1053,4 +1061,3 @@ def _legacy_builder_id(mastername, buildername, builder_id):
   if mastername:
     builder_id.bucket = 'master.%s' % mastername
   builder_id.builder = buildername or ''
-
