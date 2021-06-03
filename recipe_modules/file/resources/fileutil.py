@@ -13,7 +13,6 @@ from __future__ import print_function
 
 import argparse
 import errno
-import fnmatch
 import glob2
 import hashlib
 import itertools
@@ -402,7 +401,9 @@ def main(args):
   try:
     opts.func(opts)
     data['ok'] = True
-  except OSError as e:
+  except EnvironmentError as e:
+    # EnvironmentError handles both OSError and IOError in Python <3.3. In
+    # Python >=3.3 this is equivalent to OSError.
     data['errno_name'] = errno.errorcode[e.errno]
     data['message'] = str(e)
   except shutil.Error as e:
