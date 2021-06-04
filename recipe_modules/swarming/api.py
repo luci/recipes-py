@@ -1092,7 +1092,7 @@ class TaskResult(object):
         d = cas_output_root['digest']
         self._cas_outputs = self.CasOutputs(
             digest=d['hash'] + '/' + d['size_bytes'],
-            instance=cas_output_root['instance'],
+            instance=cas_output_root['cas_instance'],
         )
 
       self._output = raw_results.get('output')

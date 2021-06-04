@@ -186,7 +186,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
 
     if use_cas:
       raw_results['results']['cas_output_root'] = {
-          'instance': 'projects/example-project/instances/default_instance',
+          'cas_instance': 'projects/example-project/instances/default_instance',
           'digest': {
               'hash':
                   '24b2420bc49d8b8fdc1d011a163708927532b37dc9f91d7d8d6877e3a86559ca',
