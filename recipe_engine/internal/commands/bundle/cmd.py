@@ -155,14 +155,23 @@ def export_protos(destination):
       ignore=lambda _base, names: [n for n in names if n.endswith('.pyc')],
   )
 
-
+# pylint: disable=line-too-long
 TEMPLATE_SH = u"""#!/usr/bin/env bash
-exec vpython -u ${BASH_SOURCE[0]%/*}/recipe_engine/recipe_engine/main.py
+VPYTHON="vpython"
+if [[ "$RECIPES_USE_PY3" == "true" ]]; then
+    VPYTHON="vpython3"
+fi
+exec ${VPYTHON} -u ${BASH_SOURCE[0]%/*}/recipe_engine/recipe_engine/main.py
 """.strip()
 
 TEMPLATE_BAT = u"""@echo off
-call vpython.bat -u "%~dp0\\recipe_engine\\recipe_engine\\main.py"
+set VPYTHON=vpython.bat
+if "%RECIPES_USE_PY3%" == "true" (
+    set VPYTHON=vpython3.bat
+)
+call %VPYTHON% -u "%~dp0\\recipe_engine\\recipe_engine\\main.py"
 """.strip()
+# pylint: enable=line-too-long
 
 def prep_recipes_py(recipe_deps, destination):
   """Prepares `recipes` and `recipes.bat` entrypoint scripts at the given
