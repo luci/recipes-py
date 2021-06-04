@@ -1010,6 +1010,31 @@ class TaskResult(object):
           self.hash,
       )
 
+  class CasOutputs(object):
+    """The cas outputs of a task."""
+
+    def __init__(self, digest, instance):
+      self._digest = digest
+      self._instance = instance
+
+    @property
+    def digest(self):
+      """The digest of the CAS outputs (str)."""
+      return self._digest
+
+    @property
+    def instance(self):
+      """The CAS instance where the outputs live (str)."""
+      return self._instance
+
+    @property
+    def url(self):
+      """The URL of the associated CAS UI page."""
+      return 'https://cas-viewer.appspot.com/{0}/blobs/{1}/tree'.format(
+          self.instance,
+          self.digest,
+      )
+
   def __init__(self, api, task_slice, id, raw_results, output_dir):
     """
     Args:
@@ -1026,7 +1051,7 @@ class TaskResult(object):
     self._raw_results = raw_results
     self._outputs = {}
     self._isolated_outputs = None
-    self._cas_output_root = ''
+    self._cas_outputs = None
     if 'error' in raw_results:
       self._output = raw_results['error']
       self._name = None
@@ -1065,7 +1090,10 @@ class TaskResult(object):
       cas_output_root = results.get('cas_output_root')
       if cas_output_root:
         d = cas_output_root['digest']
-        self._cas_output_root = d['hash'] + '/' + d['size_bytes']
+        self._cas_outputs = self.CasOutputs(
+            digest=d['hash'] + '/' + d['size_bytes'],
+            instance=cas_output_root['instance'],
+        )
 
       self._output = raw_results.get('output')
       if self._output_dir and raw_results.get('outputs'):
@@ -1165,6 +1193,11 @@ class TaskResult(object):
   def isolated_outputs(self):
     """Returns the isolated output refs (IsolatedOutputs|None) of the task."""
     return self._isolated_outputs
+
+  @property
+  def cas_outputs(self):
+    """Returns the cas output refs (CasOutputs|None) of the task."""
+    return self._cas_outputs
 
   @property
   def bot_id(self):
@@ -1462,5 +1495,8 @@ class SwarmingApi(recipe_api.RecipeApi):
       if result.isolated_outputs:
         link_name = 'task isolated outputs: %s' % result.name
         step.presentation.links[link_name] = result.isolated_outputs.url
+      if result.cas_outputs:
+        link_name = 'task cas outputs: %s' % result.name
+        step.presentation.links[link_name] = result.cas_outputs.url
 
     return parsed_results

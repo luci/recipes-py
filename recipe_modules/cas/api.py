@@ -111,11 +111,17 @@ class CasApi(recipe_api.RecipeApi):
           ['-paths',
            str(root) + ':' + str(self.m.path.relpath(p, root))])
 
-    # TODO(crbug.com/1128250): add link to viewer.
     # TODO(tikuta): support multiple tree upload.
-    return self._run(
+    step = self._run(
         step_name,
         cmd,
         step_test_data=lambda: self.m.raw_io.test_api.output_text(
             'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855/0'
-        )).raw_io.output_text
+        ))
+    digest = step.raw_io.output_text
+    step.presentation.links["CAS UI"] = (
+        'https://cas-viewer.appspot.com/{0}/blobs/{1}/tree'.format(
+            self.instance,
+            digest,
+        ))
+    return digest

@@ -299,7 +299,8 @@
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LOG_LINE@task stdout+stderr: cas@hello world!@@@",
-      "@@@STEP_LOG_END@task stdout+stderr: cas@@@"
+      "@@@STEP_LOG_END@task stdout+stderr: cas@@@",
+      "@@@STEP_LINK@task cas outputs: cas@https://cas-viewer.appspot.com/projects/example-project/instances/default_instance/blobs/24b2420bc49d8b8fdc1d011a163708927532b37dc9f91d7d8d6877e3a86559ca/73/tree@@@"
     ]
   },
   {
