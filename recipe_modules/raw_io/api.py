@@ -396,16 +396,18 @@ class RawIOApi(recipe_api.RecipeApi):
 
     Example:
 
-       result = api.step('name', [..., api.raw_io.output_dir()])
+    ```python
+    result = api.step('name', [..., api.raw_io.output_dir()])
 
-       # some time later; The read of 'some/file' happens now:
-       some_file = api.path.join('some', 'file')
-       assert result.raw_io.output_dir[some_file] == 'contents of some/file'
+    # some time later; The read of 'some/file' happens now:
+    some_file = api.path.join('some', 'file')
+    assert result.raw_io.output_dir[some_file] == 'contents of some/file'
 
-       # data for 'some/file' is cached now; To free it from memory (and make
-       # all further reads of 'some/file' an error):
-       del result.raw_io.output_dir[some_file]
+    # data for 'some/file' is cached now; To free it from memory (and make
+    # all further reads of 'some/file' an error):
+    del result.raw_io.output_dir[some_file]
 
-       result.raw_io.output_dir[some_file] -> raises KeyError
+    result.raw_io.output_dir[some_file] -> raises KeyError
+    ```
     """
     return OutputDataDirPlaceholder(self.m.path, leak_to, name=name)

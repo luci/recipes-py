@@ -2712,17 +2712,19 @@ slash on *nix, backslash on Windows).
 
 Example:
 
-   result = api.step('name', [..., api.raw_io.output_dir()])
+```python
+result = api.step('name', [..., api.raw_io.output_dir()])
 
-   # some time later; The read of 'some/file' happens now:
-   some_file = api.path.join('some', 'file')
-   assert result.raw_io.output_dir[some_file] == 'contents of some/file'
+# some time later; The read of 'some/file' happens now:
+some_file = api.path.join('some', 'file')
+assert result.raw_io.output_dir[some_file] == 'contents of some/file'
 
-   # data for 'some/file' is cached now; To free it from memory (and make
-   # all further reads of 'some/file' an error):
-   del result.raw_io.output_dir[some_file]
+# data for 'some/file' is cached now; To free it from memory (and make
+# all further reads of 'some/file' an error):
+del result.raw_io.output_dir[some_file]
 
-   result.raw_io.output_dir[some_file] -> raises KeyError
+result.raw_io.output_dir[some_file] -> raises KeyError
+```
 
 &emsp; **@[returns\_placeholder](/recipe_engine/util.py#152)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#363)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
