@@ -404,7 +404,8 @@ def main(args):
   except EnvironmentError as e:
     # EnvironmentError handles both OSError and IOError in Python <3.3. In
     # Python >=3.3 this is equivalent to OSError.
-    data['errno_name'] = errno.errorcode[e.errno]
+    if e.errno is not None:  # errno can be None in Python 2.
+      data['errno_name'] = errno.errorcode[e.errno]
     data['message'] = str(e)
   except shutil.Error as e:
     # Note that shutil.Error's "message" field can sometimes be a tuple, just
