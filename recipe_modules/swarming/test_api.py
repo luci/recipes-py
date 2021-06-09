@@ -109,29 +109,34 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
                 SWARMING_BOT_ID=bot_id,
             ))
 
-  def trigger(self, task_names, initial_id=None):
+  def trigger(self, task_names, initial_id=None, resultdb=True):
     """Generates step test data intended to mock api.swarming.trigger()
 
     Args:
       task_names (seq[str]): A sequence of task names representing the tasks we
         want to trigger.
       initial_id (int): The beginning of the ID range.
+      resultdb (bool): If true, adds an invocation name to the trigger output.
     """
     start = self._task_id_count if initial_id is None else initial_id
     self._task_id_count += len(task_names)
-    return self.m.json.output({
-        'tasks': [{
-            'task_id': '%d' % idx,
-            'request': {
-                'name': name,
-            },
-            'task_result': {
-                'resultdb_info': {
-                    'invocation': 'invocations/%d' % idx,
-                },
-            },
-        } for idx, name in enumerate(task_names, start=start)],
-    })
+    trigger_output = {'tasks': []}
+    for idx, name in enumerate(task_names, start=start):
+      task_output = {
+        'task_id': '%d' % idx,
+        'request': {
+          'name': name,
+        },
+      }
+      if resultdb:
+        task_output['task_result'] = {
+          'resultdb_info': {
+            'invocation': 'invocations/%d' % idx,
+          },
+        }
+
+      trigger_output['tasks'].append(task_output)
+    return self.m.json.output(trigger_output)
 
   @staticmethod
   def task_result(id,
