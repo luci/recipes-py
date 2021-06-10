@@ -64,6 +64,10 @@ def RunSteps(api):
     location_tags_file='location_tags.json',
   ))
 
+  api.step('test with exonerate_unexpected_pass', api.resultdb.wrap(
+      ['echo', 'suppose its a test'],
+      exonerate_unexpected_pass=True,
+  ))
 
 def GenTests(api):
   yield api.test(

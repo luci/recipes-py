@@ -352,6 +352,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
            realm='',
            location_tags_file='',
            require_build_inv=True,
+           exonerate_unexpected_pass=False,
   ):
     """Wraps the command with ResultSink.
 
@@ -388,6 +389,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
         tags in JSON format.
       require_build_inv(bool): flag to control if the build is required to have
         an invocation.
+      exonerate_unexpected_pass(bool): flag to control if automatically
+        exonerate unexpected passes.
     """
     if require_build_inv:
       self.assert_enabled()
@@ -402,6 +405,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
     assert isinstance(include, bool), include
     assert isinstance(realm, (type(None), str)), realm
     assert isinstance(location_tags_file, (type(None), str)), location_tags_file
+    assert isinstance(
+        exonerate_unexpected_pass, bool), exonerate_unexpected_pass
 
     ret = ['rdb', 'stream']
 
@@ -428,6 +433,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     if location_tags_file:
       ret += ['-location-tags-file', location_tags_file]
+
+    if exonerate_unexpected_pass:
+      ret += ['-exonerate-unexpected-pass']
 
     ret += ['--'] + list(cmd)
     return ret
