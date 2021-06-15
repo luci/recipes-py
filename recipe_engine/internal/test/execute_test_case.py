@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from builtins import object, str
+from past.builtins import basestring
 import attr
 
 from ..attr_util import attr_type, attr_dict_type
@@ -53,7 +55,7 @@ def execute_test_case(recipe_deps, recipe_name, test_data):
   props['recipe'] = str(recipe_name)
 
   environ = FakeEnviron()
-  for key, value in test_data.environ.iteritems():
+  for key, value in test_data.environ.items():
     environ[key] = value
 
   raw_result, uncaught_exception = RecipeEngine.run_steps(

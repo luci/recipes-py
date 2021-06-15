@@ -2,9 +2,12 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from builtins import object
+from typing import TextIO
+
 import attr
 
-class ClosedFailFile:
+class ClosedFailFile(object):
   """Sentinel class that replaced the fail file after it's been closed."""
   pass
 
@@ -23,7 +26,7 @@ class FailTracker(object):
   """
   _fail_file_path = attr.ib()
 
-  _fail_file = attr.ib(default=None, type=file)
+  _fail_file = attr.ib(default=None, type=TextIO)
   _recent_fails = attr.ib(factory=set)
 
   def __attrs_post_init__(self):

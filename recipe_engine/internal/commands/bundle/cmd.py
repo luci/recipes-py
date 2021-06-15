@@ -46,6 +46,7 @@ For more information on how gitattributes work.
 """
 
 from __future__ import absolute_import
+from future.utils import listvalues
 import io
 import logging
 import ntpath
@@ -121,7 +122,7 @@ def export_repo(repo, destination):
     ':(exclude)%s**/*.expected/*.json' % reldir,
   ]
   LOGGER.info('enumerating all recipe files: %r', args)
-  to_copy = subprocess.check_output(args).splitlines()
+  to_copy = subprocess.check_output(args).decode('utf-8').splitlines()
   copy_map = defaultdict(set)
   for i in to_copy:
     if posixpath.sep != os.path.sep:
@@ -184,7 +185,7 @@ def prep_recipes_py(recipe_deps, destination):
   _check(recipe_deps, RecipeDeps)
   _check(destination, str)
 
-  overrides = recipe_deps.repos.keys()
+  overrides = list(recipe_deps.repos)
   overrides.remove(recipe_deps.main_repo_id)
 
   LOGGER.info('prepping recipes.py for %s', recipe_deps.main_repo.name)
@@ -220,7 +221,7 @@ def prep_recipes_py(recipe_deps, destination):
     "luciexe.bat": 'luciexe %*',
   }
 
-  for fname, runline in files.iteritems():
+  for fname, runline in files.items():
     isbat = fname.endswith('.bat')
     header = bat_header if isbat else sh_header
     newline = '\r\n' if isbat else '\n'
@@ -235,7 +236,7 @@ def prep_recipes_py(recipe_deps, destination):
 def main(args):
   logging.basicConfig()
   destination = _prepare_destination(args.destination)
-  for repo in args.recipe_deps.repos.values():
+  for repo in listvalues(args.recipe_deps.repos):
     export_repo(repo, destination)
   export_protos(destination)
   prep_recipes_py(args.recipe_deps, destination)

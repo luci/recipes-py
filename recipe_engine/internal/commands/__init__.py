@@ -8,6 +8,8 @@ See implementation_details.md for the expectations of the modules in this
 directory.
 """
 
+from builtins import zip
+from future.utils import iteritems
 import argparse
 import errno
 import logging
@@ -85,7 +87,7 @@ def _check_recipes_cfg_consistency(recipe_deps):
   # For every repo we loaded
   for repo_name in actual:
     required_deps = recipe_deps.repos[repo_name].simple_cfg.deps
-    for req_repo_name, req_spec in required_deps.iteritems():
+    for req_repo_name, req_spec in iteritems(required_deps):
       # If this depends on something we didn't load, log an error.
       if req_repo_name not in actual:
         LOG.error(
@@ -109,7 +111,7 @@ def _cleanup_pyc(recipe_deps):
   Args:
     * recipe_deps (RecipeDeps) - The loaded recipe dependencies.
   """
-  for repo in recipe_deps.repos.itervalues():
+  for repo in recipe_deps.repos.values():
     for to_walk in (repo.recipes_dir, repo.modules_dir):
       for root, _dirs, files in OS_WALK(to_walk):
         for fname in files:
@@ -222,7 +224,7 @@ def _add_common_args(parser):
       dest='main_repo_path', type=_package_to_main_repo, required=True,
       help='Path to recipes.cfg of the recipe repo to operate on.')
   parser.add_argument(
-      '--verbose', '-v', action='count',
+      '--verbose', '-v', action='count', default=0,
       help='Increase logging verboisty')
   parser.add_argument('-O', '--repo-override', metavar='ID=PATH',
       action=_RepoOverrideAction, default={},

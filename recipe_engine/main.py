@@ -18,8 +18,9 @@ from __future__ import print_function
 # utf-8. It also makes the implicit str(unicode(...)) act like
 # unicode(...).encode('utf-8'), rather than unicode(...).encode('ascii') .
 import sys
-reload(sys)
-sys.setdefaultencoding('UTF8')
+if sys.version_info.major < 3:
+  reload(sys)
+  sys.setdefaultencoding('UTF8')
 
 # pylint: disable=wrong-import-position
 import os
@@ -53,12 +54,15 @@ if sys.platform == 'darwin':
 sys.setrecursionlimit(sys.getrecursionlimit() * 2)
 
 # Hack 4; Lookup all available codecs (crbug.com/932259).
+# TODO(crbug.com/1147793): try to remove this in python3.
 def _hack_lookup_codecs():
   import encodings
   import pkgutil
   import codecs
   for _, name, _ in pkgutil.iter_modules(encodings.__path__):
     if name in ('aliases', 'mbcs'):
+      continue
+    if sys.version_info.major >= 3 and name == 'oem':
       continue
     codecs.lookup(name)
 _hack_lookup_codecs()
@@ -79,10 +83,12 @@ sys.path = sys.path[1:]
 
 # Hack 6; Pre-import cryptography wheel in order to suppress python 2
 # deprecation warnings.
-import warnings
-with warnings.catch_warnings():
-  warnings.simplefilter("ignore")
-  import cryptography
+# TODO(crbug.com/1147793): remove it after py2 to py3 migration is done.
+if sys.version_info.major < 3:
+  import warnings
+  with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import cryptography
 
 try:
   import urllib3.contrib.pyopenssl
@@ -124,6 +130,13 @@ def _main():
   exit_fn = os._exit  # pylint: disable=protected-access
 
   _strip_virtualenv()
+
+  # TODO(crbug.com/1147793): clear this code after py3 migration is done.
+  # Unset it to prevent the leak through recipe subcommand, e.g if a recipe runs
+  # `led edit-recipe-bundle` which will run `recipes.py bundle`, the env var
+  # should explicitly be set in that recipe.
+  if os.getenv('RECIPES_USE_PY3'):
+    del os.environ['RECIPES_USE_PY3']
 
   try:
     ret = parse_and_run()
