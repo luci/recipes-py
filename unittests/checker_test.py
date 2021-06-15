@@ -379,6 +379,7 @@ class CommandTest(test_env.RecipeEngineUnitTest):
 
   def test_contains_string_sequence(self):
     c = Command(['foo', 'bar', 'baz'])
+    self.assertTrue([] in c)
     self.assertTrue(['bar'] in c)
     self.assertTrue(['foo', 'bar'] in c)
     self.assertTrue(['bar', 'baz'] in c)

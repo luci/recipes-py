@@ -295,21 +295,14 @@ def StepCommandContains(check, step_odict, step, argument_sequence):
 
   Args:
     step (str) - The name of the step to check the command of.
-    argument_sequence (list of str) - The expected sequence of arguments.
-      Does not need to contain all of the command's arguments.
-      Arguments in the sequence are expected to be found consecutively and
-      in order.
+    argument_sequence (list of (str|regex)) - The expected sequence of
+      arguments. Strings will be compared for equality, while regex patterns
+      will be matched using the search method. The check will pass if the step's
+      command contains a subsequence where the elements are matched by the
+      corresponding elements of argument_sequence.
   """
-  def subsequence(containing, contained):
-    for i in xrange(len(containing) - len(contained) + 1):
-      if containing[i:i+len(contained)] == contained:
-        return True
-    return False
-
-  step_cmd = step_odict[step].cmd
-  check('command line for step %s contained %s' % (
-            step, argument_sequence),
-        subsequence(step_cmd, argument_sequence))
+  check('command line for step %s contained %s' % (step, argument_sequence),
+        argument_sequence in step_odict[step].cmd)
 
 
 def StepTextEquals(check, step_odict, step, expected):

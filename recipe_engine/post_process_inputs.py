@@ -51,6 +51,9 @@ class Command(list):
       return None
 
     if isinstance(item, Iterable) and not isinstance(item, basestring):
+      # Empty iterable is trivially contained
+      if not item:
+        return True
       matchers = [get_matcher(e) for e in item]
     else:
       matchers = [get_matcher(item)]
