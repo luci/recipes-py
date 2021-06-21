@@ -26,7 +26,6 @@ def RunSteps(api):
       step_name='rdb query',
       variants_with_unexpected_results=True,
       merge=True,
-      tr_fields=['tags'],
   )
   if inv_bundle:
     pres = api.step.active_result.presentation
