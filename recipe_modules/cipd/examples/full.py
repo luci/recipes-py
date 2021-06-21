@@ -128,8 +128,8 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
 
       api.cipd.create_from_yaml(api.path['start_dir'].join('fake-package.yaml'),
                                 refs=refs, tags=tags, metadata=md,
-                                pkg_vars=pkg_vars,
-                                compression_level=9)
+                                pkg_vars=pkg_vars, compression_level=9,
+                                verification_timeout='20m')
 
     # Set tag or ref of an already existing package.
     api.cipd.set_tag('fake-package',

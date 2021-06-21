@@ -584,7 +584,8 @@ class CIPDApi(recipe_api.RecipeApi):
               tags=None,
               metadata=None,
               pkg_vars=None,
-              compression_level=None):
+              compression_level=None,
+              verification_timeout=None):
     cmd = [
         'create',
         '-pkg-def',
@@ -596,6 +597,8 @@ class CIPDApi(recipe_api.RecipeApi):
     cmd.extend(self._service_account_opts())
     if compression_level:
       cmd.extend(['-compression-level', int(compression_level)])
+    if verification_timeout:
+      cmd.extend(['-verification-timeout', verification_timeout])
     step_result = self._run(
         'create %s' % pkg_name,
         cmd,
@@ -618,7 +621,8 @@ class CIPDApi(recipe_api.RecipeApi):
                        tags=None,
                        metadata=None,
                        pkg_vars=None,
-                       compression_level=None):
+                       compression_level=None,
+                       verification_timeout=None):
     """Builds and uploads a package based on on-disk YAML package definition
     file.
 
@@ -634,6 +638,9 @@ class CIPDApi(recipe_api.RecipeApi):
         referenced in package definition file.
       * compression_level (None|[0-9]) - Deflate compression level. If None,
         defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
+      * verification_timeout (str) - Duration string that controls the time to
+        wait for backend-side package hash verification. Valid time units are
+        "ns", "us", "ms", "s", "m", "h".
 
     Returns the CIPDApi.Pin instance.
     """
@@ -643,14 +650,16 @@ class CIPDApi(recipe_api.RecipeApi):
         pkg_def,
         refs, tags, metadata,
         pkg_vars,
-        compression_level)
+        compression_level,
+        verification_timeout)
 
   def create_from_pkg(self,
                       pkg_def,
                       refs=None,
                       tags=None,
                       metadata=None,
-                      compression_level=None):
+                      compression_level=None,
+                      verification_timeout=None):
     """Builds and uploads a package based on a PackageDefinition object.
 
     This builds and uploads the package in one step.
@@ -664,6 +673,9 @@ class CIPDApi(recipe_api.RecipeApi):
       * metadata (list[Metadata]) - A list of metadata entries to attach.
       * compression_level (None|[0-9]) - Deflate compression level. If None,
         defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
+      * verification_timeout (str) - Duration string that controls the time to
+        wait for backend-side package hash verification. Valid time units are
+        "ns", "us", "ms", "s", "m", "h".
 
     Returns the CIPDApi.Pin instance.
     """
@@ -673,7 +685,8 @@ class CIPDApi(recipe_api.RecipeApi):
         self.m.json.input(pkg_def.to_jsonish()),
         refs, tags, metadata,
         None,
-        compression_level)
+        compression_level,
+        verification_timeout)
 
   def ensure(self, root, ensure_file, name='ensure_installed'):
     """Ensures that packages are installed in a given root dir.
