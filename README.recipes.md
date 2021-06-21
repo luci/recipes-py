@@ -2760,7 +2760,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#45)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#443)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#451)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -2798,7 +2798,7 @@ Args:
   test_exonerations (list): A list of test_result_pb2.TestExoneration.
   step_name (str): name of the step.
 
-&mdash; **def [get\_test\_result\_history](/recipe_modules/resultdb/api.py#215)(self, realm, test_id_regexp, variant_predicate=None, time_range=None, page_size=10, page_token=None, step_name=None):**
+&mdash; **def [get\_test\_result\_history](/recipe_modules/resultdb/api.py#223)(self, realm, test_id_regexp, variant_predicate=None, time_range=None, page_size=10, page_token=None, step_name=None):**
 
 Receive test results for a given configuration.
 
@@ -2846,7 +2846,7 @@ Args:
 Returns:
   A list of invocation_ids.
 
-&mdash; **def [query](/recipe_modules/resultdb/api.py#154)(self, inv_ids, variants_with_unexpected_results=False, merge=False, limit=None, step_name=None):**
+&mdash; **def [query](/recipe_modules/resultdb/api.py#154)(self, inv_ids, variants_with_unexpected_results=False, merge=False, limit=None, step_name=None, tr_fields=None):**
 
 Returns test results in the invocations.
 
@@ -2875,7 +2875,9 @@ Args:
   limit (int): maximum number of test results to return.
     Defaults to 1000.
   step_name (str): name of the step.
-
+  tr_fields (list of str): Test result fields in the response.
+    Test result name will always be included even if name is not part of
+    tr_fields.
 Returns:
   A dict {invocation_id: api.Invocation}.
 
@@ -2892,7 +2894,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#344)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#352)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False):**
 
 Wraps the command with ResultSink.
 
