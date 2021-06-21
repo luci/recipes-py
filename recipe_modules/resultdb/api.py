@@ -156,7 +156,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
             variants_with_unexpected_results=False,
             merge=False,
             limit=None,
-            step_name=None):
+            step_name=None,
+            tr_fields=None):
     """Returns test results in the invocations.
 
     Most users will be interested only in results of test variants that had
@@ -184,13 +185,16 @@ class ResultDBAPI(recipe_api.RecipeApi):
       limit (int): maximum number of test results to return.
         Defaults to 1000.
       step_name (str): name of the step.
-
+      tr_fields (list of str): test result fields in the response.
+        Test result name will always be included regardless of this param value.
     Returns:
       A dict {invocation_id: api.Invocation}.
     """
     assert len(inv_ids) > 0
     assert all(isinstance(id, str) for id in inv_ids), inv_ids
     assert limit is None or limit >= 0
+    assert tr_fields is None or all(
+        isinstance(field, str) for field in tr_fields), tr_fields
     limit = limit or 1000
 
     args = [
@@ -201,6 +205,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
       args += ['-u']
     if merge:
       args += ['-merge']
+    if tr_fields:
+      args += ['-tr-fields', ','.join(tr_fields)]
+
     args += list(inv_ids)
 
     step_res = self._run_rdb(
