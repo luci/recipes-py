@@ -5,6 +5,7 @@
 DEPS = [
     'cipd',
     'context',
+    'file',
     'path',
     'raw_io',
     'runtime',

@@ -8,10 +8,6 @@ import os
 
 from recipe_engine import recipe_api
 
-# Take revision from
-# https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
-DEFAULT_CIPD_VERSION = 'git_revision:9ba67f2876f4a3455a51433de7cc3e869d81b280'
-
 
 class CasApi(recipe_api.RecipeApi):
   """A module for interacting with cas client."""
@@ -20,6 +16,7 @@ class CasApi(recipe_api.RecipeApi):
     super(CasApi, self).__init__(**kwargs)
 
     self._instance = None
+    self._cached_version = None
 
   @property
   def instance(self):
@@ -41,11 +38,21 @@ class CasApi(recipe_api.RecipeApi):
 
   @property
   def _version(self):
-    version = DEFAULT_CIPD_VERSION
+    if self._cached_version is not None:
+      return self._cached_version
+
+    version = self.m.file.read_text(
+        "read infra revision",
+        # This has revision of https://chromium.googlesource.com/infra/infra/.
+        self.resource("infra.sha1"),
+        test_data='git_revision:mock_infra_git_revision').strip()
+
     if self.m.runtime.is_experimental:
       version = 'latest'
     elif self._test_data.enabled:
       version = 'cas_module_pin'
+
+    self._cached_version = version
     return version
 
   def _run(self, name, cmd, step_test_data=None):
