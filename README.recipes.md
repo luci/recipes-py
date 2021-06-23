@@ -688,7 +688,7 @@ API for interacting with cas client.
 
 A module for interacting with cas client.
 
-&mdash; **def [archive](/recipe_modules/cas/api.py#94)(self, step_name, root, \*paths):**
+&mdash; **def [archive](/recipe_modules/cas/api.py#89)(self, step_name, root, \*paths):**
 
 Archives given paths to a cas server.
 
@@ -702,7 +702,7 @@ Args:
 Returns:
   digest (str): digest of uploaded root directory.
 
-&mdash; **def [download](/recipe_modules/cas/api.py#74)(self, step_name, digest, output_dir):**
+&mdash; **def [download](/recipe_modules/cas/api.py#69)(self, step_name, digest, output_dir):**
 
 Downloads a directory tree from a cas server.
 

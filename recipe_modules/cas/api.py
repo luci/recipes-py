@@ -38,22 +38,17 @@ class CasApi(recipe_api.RecipeApi):
 
   @property
   def _version(self):
-    if self._cached_version is not None:
-      return self._cached_version
-
-    version = self.m.file.read_text(
-        "read infra revision",
-        # This has revision of https://chromium.googlesource.com/infra/infra/.
-        self.resource("infra.sha1"),
-        test_data='git_revision:mock_infra_git_revision').strip()
-
     if self.m.runtime.is_experimental:
-      version = 'latest'
-    elif self._test_data.enabled:
-      version = 'cas_module_pin'
+      return 'latest'
 
-    self._cached_version = version
-    return version
+    if self._cached_version is None:
+      self._cached_version = self.m.file.read_text(
+          "read infra revision",
+          # This has revision of https://chromium.googlesource.com/infra/infra/.
+          self.resource("infra.sha1"),
+          test_data='git_revision:mock_infra_git_revision').strip()
+
+    return self._cached_version
 
   def _run(self, name, cmd, step_test_data=None):
     """Returns a cas command step.
