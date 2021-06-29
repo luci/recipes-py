@@ -261,7 +261,7 @@ def main(args):
 
     if is_train:
       print('Generating README.recipes.md')
-      with open(repo.readme_path, 'wb') as f:
+      with open(repo.readme_path, 'w') as f:
         regenerate_doc(repo, f)
 
   return 0

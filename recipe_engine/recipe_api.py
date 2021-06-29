@@ -3,6 +3,10 @@
 # that can be found in the LICENSE file.
 
 from __future__ import absolute_import
+from builtins import object, zip
+from future.utils import iteritems, with_metaclass
+from past.builtins import basestring
+
 import bisect
 import contextlib
 import copy
@@ -18,7 +22,6 @@ from functools import wraps
 
 import attr
 
-from future.utils import iteritems
 from google.protobuf import message
 
 from .config_types import Path
@@ -34,6 +37,9 @@ from .util import ModuleInjectionSite
 
 # TODO(iannucci): Rationalize the use of this in downstream scripts.
 from .util import Placeholder  # pylint: disable=unused-import
+import sys
+if sys.version_info.major >= 3:
+  unicode = str
 
 
 class UnknownRequirementError(object):
@@ -872,8 +878,8 @@ class RecipeApiPlain(object):
     return self._module.NAME
 
 
-class RecipeApi(RecipeApiPlain):
-  __metaclass__ = RecipeApiMeta
+class RecipeApi(with_metaclass(RecipeApiMeta, RecipeApiPlain)):
+  pass
 
 
 class RecipeScriptApi(RecipeApiPlain, ModuleInjectionSite):

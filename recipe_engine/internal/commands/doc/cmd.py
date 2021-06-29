@@ -3,6 +3,9 @@
 # that can be found in the LICENSE file.
 
 from __future__ import print_function, absolute_import
+from builtins import object, range
+from future.utils import iteritems, itervalues
+from past.builtins import basestring
 
 import ast
 import inspect
@@ -13,7 +16,10 @@ import posixpath
 import sys
 import types as stdlib_types
 
-from cStringIO import StringIO
+if sys.version_info.major < 3:
+  from cStringIO import StringIO
+else:
+  from io import StringIO
 
 import astunparse
 
@@ -145,7 +151,7 @@ def _expand_mock_imports(*mock_imports):
 
   # expand combined_imports so it supports trivial lookups.
   expanded_imports = {}
-  for dotted_name, obj in sorted(combined_imports.iteritems()):
+  for dotted_name, obj in sorted(iteritems(combined_imports)):
     if dotted_name in expanded_imports:
       raise ValueError('nested mock imports! %r', dotted_name)
     toks = dotted_name.split('.')
@@ -255,7 +261,7 @@ def _apply_imports_to_unparsed_expression(exp_ast, imports):
   unparsed = _unparse(exp_ast).strip()
   try:
     return eval(unparsed, {'__builtins__': None}, imports)
-  except (NameError, AttributeError):
+  except (NameError, AttributeError, TypeError):
     return unparsed
 
 
@@ -298,7 +304,7 @@ def _extract_classes_funcs(body_ast, relpath, imports, do_fixup=True):
   if do_fixup:
     # frequently classes in a file inherit from other classes in the same file.
     # Do a best effort scan to re-attribute class bases when possible.
-    for v in classes.itervalues():
+    for v in itervalues(classes):
       for i, b in enumerate(v.bases):
         if isinstance(b, str):
           if b in classes:
@@ -364,7 +370,7 @@ def parse_deps(repo_name, mod_ast, relpath):
       lineno=lineno,
     )
     spec = parse_deps_spec(repo_name, ast.literal_eval(_unparse(DEPS)))
-    for dep_repo_name, mod_name in sorted(spec.itervalues()):
+    for dep_repo_name, mod_name in sorted(itervalues(spec)):
       ret.module_links.add(repo_name=dep_repo_name, name=mod_name)
 
   return ret
@@ -443,11 +449,11 @@ def parse_parameters(mod_ast, relpath):
 
   imports = _parse_mock_imports(mod_ast, MOCK_IMPORTS_PARAMETERS)
   imports.update(extract_jsonish_assignments(mod_ast))
-  data = eval(_unparse(parameters), imports)
+  data = eval(_unparse(parameters), imports, {'basestring': basestring})
   if not data:
     return None
 
-  for k, v in sorted(data.iteritems()):
+  for k, v in sorted(iteritems(data)):
     data[k] = parse_parameter(v)
 
   return doc.Doc.Parameters(relpath=relpath, lineno=lineno, parameters=data)
@@ -548,7 +554,7 @@ def parse_module(module):
     api, posixpath.join(relpath, 'api.py'), imports)
 
   api_class = None
-  for name, val in sorted(classes.iteritems()):
+  for name, val in sorted(iteritems(classes)):
     if any(b.known in _recipe_api_class_imports for b in val.bases):
       api_class = classes.pop(name)
       break
@@ -590,12 +596,12 @@ def parse_repo(repo):
     with open(readme, 'rb') as f:
       ret.docstring = f.read()
 
-  for module in repo.modules.itervalues():
+  for module in itervalues(repo.modules):
     mod = parse_module(module)
     if mod:
       ret.recipe_modules[module.name].CopyFrom(mod)
 
-  for recipe in repo.recipes.itervalues():
+  for recipe in itervalues(repo.recipes):
     recipe = parse_recipe(recipe)
     if recipe:
       ret.recipes[recipe.name].CopyFrom(recipe)
@@ -637,7 +643,7 @@ def _set_known_objects(base):
 
     raise ValueError('could not find %r in %r' % (key, relpath))
 
-  for k, v in KNOWN_OBJECTS.iteritems():
+  for k, v in iteritems(KNOWN_OBJECTS):
     base.known_objects[k].url = RECIPE_ENGINE_URL
     _, target = k.rsplit('.', 1)
     fname = inspect.getsourcefile(v)
@@ -651,7 +657,8 @@ def _set_known_objects(base):
 
 
 def regenerate_doc(repo, output_file):
-  """Rewrites `README.recipes.md` for the given recipe repo to the given output file.
+  """Rewrites `README.recipes.md` for the given recipe repo to the given output
+  file.
 
   Args:
     * repo (RecipeRepo) - The repo to regenerate the markdown docs for.
@@ -673,7 +680,7 @@ def is_doc_changed(repo):
   """
   buf = StringIO()
   regenerate_doc(repo, buf)
-  with open(repo.readme_path, 'rb') as f:
+  with open(repo.readme_path, 'r') as f:
     current_file = f.read()
   return buf.getvalue() != current_file
 
@@ -688,7 +695,7 @@ def main(args):
 
   if args.kind == 'gen':
     print('Generating README.recipes.md')
-    with open(repo.readme_path, 'wb') as f:
+    with open(repo.readme_path, 'w') as f:
       regenerate_doc(repo, f)
     return 0
 

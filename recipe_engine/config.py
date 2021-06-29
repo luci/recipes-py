@@ -69,9 +69,14 @@ BaseConfig derivatives for more info.
 """
 
 from __future__ import absolute_import
+from builtins import object
+from past.builtins import basestring, long, map
+from future.utils import iteritems, listvalues
+
 import collections
 import functools
 import json
+import sys
 import types
 
 from PB.recipe_engine import doc
@@ -334,6 +339,8 @@ class ConfigBase(object):
     """Returns a doc.Doc.Schema proto message for this config type."""
     raise NotImplementedError
 
+if sys.version_info.major >= 3:
+  unicode = str # pragma: no cover
 
 _SIMPLE_TYPE_LOOKUP = {
   str: doc.Doc.Schema.STRING,
@@ -396,7 +403,7 @@ class ConfigGroup(ConfigBase):
     assert type_map, 'A ConfigGroup with no type_map is meaningless.'
 
     object.__setattr__(self, '_type_map', type_map)
-    for name, typeval in self._type_map.iteritems():
+    for name, typeval in iteritems(self._type_map):
       typeAssert(typeval, ConfigBase)
       object.__setattr__(self, name, typeval)
 
@@ -423,7 +430,7 @@ class ConfigGroup(ConfigBase):
     typeAssert(val, collections.Mapping)
 
     val = dict(val)  # because we pop later.
-    for name, config_obj in self._type_map.iteritems():
+    for name, config_obj in iteritems(self._type_map):
       if name in val:
         try:
           config_obj.set_val(val.pop(name))
@@ -435,23 +442,23 @@ class ConfigGroup(ConfigBase):
 
   def as_jsonish(self, include_hidden=False):
     return dict(
-      (n, v.as_jsonish(include_hidden)) for n, v in self._type_map.iteritems()
+      (n, v.as_jsonish(include_hidden)) for n, v in iteritems(self._type_map)
         if include_hidden or not v._hidden)  # pylint: disable=W0212
 
   def reset(self):
-    for v in self._type_map.values():
+    for v in listvalues(self._type_map):
       v.reset()
 
   def complete(self):
-    return all(v.complete() for v in self._type_map.values())
+    return all(v.complete() for v in listvalues(self._type_map))
 
   def _is_default(self):
     # pylint: disable=W0212
-    return all(v._is_default() for v in self._type_map.values())
+    return all(v._is_default() for v in listvalues(self._type_map))
 
   def schema_proto(self):
     ret = doc.Doc.Schema()
-    for k, v in self._type_map.iteritems():
+    for k, v in iteritems(self._type_map):
       ret.struct.type_map[k].CopyFrom(v.schema_proto())
     return ret
 
@@ -471,7 +478,7 @@ class ConfigGroupSchema(ConfigSchemaBase):
       raise ValueError('A ConfigGroup with no type_map is meaningless.')
 
     object.__setattr__(self, '_type_map', type_map)
-    for _, typeval in self._type_map.iteritems():
+    for _, typeval in iteritems(self._type_map):
       typeAssert(typeval, ConfigBase)
 
   def __call__(self, *args, **kwargs):
@@ -485,7 +492,7 @@ class ConfigGroupSchema(ConfigSchemaBase):
 
   def schema_proto(self):
     ret = doc.Doc.Schema()
-    for k, v in self._type_map.iteritems():
+    for k, v in iteritems(self._type_map):
       ret.struct.type_map[k].CopyFrom(v.schema_proto())
     return ret
 
@@ -628,7 +635,7 @@ class Dict(ConfigBase, collections.MutableMapping):
 
   def as_jsonish(self, _include_hidden=None):
     return self.jsonish_fn(map(
-      self.item_fn, sorted(self.data.iteritems(), key=lambda x: x[0])))
+      self.item_fn, sorted(iteritems(self.data), key=lambda x: x[0])))
 
   def reset(self):
     self.data.clear()
