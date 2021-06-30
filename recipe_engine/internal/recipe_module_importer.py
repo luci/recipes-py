@@ -183,6 +183,8 @@ class RecipeModuleImporter(object):
         engine can assume that there's ALWAYS a DEPS object for a module.
       * `WARNINGS`: A list of warnings issued against this recipe module.
       * `DISABLE_STRICT_COVERAGE`: Sets a default value of False.
+      * `PYTHON_VERSION_COMPATIBILITY`: "PY2", "PY2+3" or "PY3". Defaults to
+        "PY2".
 
     Args:
       * mod (python module type) - This will be the module loaded for e.g.
@@ -201,6 +203,9 @@ class RecipeModuleImporter(object):
 
     # TODO(iannucci, probably): remove DISABLE_STRICT_COVERAGE (crbug/693058).
     mod.DISABLE_STRICT_COVERAGE = getattr(mod, 'DISABLE_STRICT_COVERAGE', False)
+
+    mod.PYTHON_VERSION_COMPATIBILITY = getattr(
+        mod, 'PYTHON_VERSION_COMPATIBILITY', 'PY2')
 
     # TODO(iannucci): do these imports on-demand at the callsites needing these.
 

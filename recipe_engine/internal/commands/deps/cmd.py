@@ -24,6 +24,14 @@ def extract_module_names(obj):
     yield '%s/%s' % (repo, name)
 
 
+def py_compat(py_compat_str):
+  if py_compat_str == 'PY3':
+    return deps.PYTHON3_ONLY
+  if py_compat_str== 'PY2+3':
+    return deps.PYTHON2_AND_PYTHON3
+  return deps.PYTHON2_ONLY
+
+
 def load_recipes_modules(rd, target, include_test_recipes, include_dependants):
   is_module = False
   if '::' in target:
@@ -80,8 +88,7 @@ def process_modules(ret, rd, mod_names):
     mRecord = ret.modules[full_mod_name]
     mRecord.repo = repo
     mRecord.name = mod_name
-    # TODO(iannucci): actually make an option to adjust py3_status
-    mRecord.py3_status = deps.PYTHON2_ONLY
+    mRecord.py3_status = py_compat(mod.python_version_compatibility)
 
     mods = set(extract_module_names(mod))
     mRecord.deps.extend(mods)
@@ -101,8 +108,7 @@ def process_recipes(ret, recipes):
     rRecord.repo = recipe.repo.name
     rRecord.name = recipe.name
     rRecord.is_recipe = True
-    # TODO(iannucci): actually make an option to adjust py3_status
-    rRecord.py3_status = deps.PYTHON2_ONLY
+    rRecord.py3_status = py_compat(recipe.python_version_compatibility)
     rRecord.deps.extend(extract_module_names(recipe))
 
     cfg = recipe.repo.recipes_cfg_pb2

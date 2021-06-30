@@ -550,6 +550,10 @@ class RecipeModule(object):
     """
     return self.do_import().DISABLE_STRICT_COVERAGE
 
+  @cached_property
+  def python_version_compatibility(self):
+    return self.do_import().PYTHON_VERSION_COMPATIBILITY
+
   @classmethod
   def create(cls, repo, name):
     """Creates a RecipeModule.
@@ -723,7 +727,14 @@ class Recipe(object):
           for name, value in properties_def.items()
       }
 
+    if 'PYTHON_VERSION_COMPATIBILITY' not in recipe_globals:
+      recipe_globals['PYTHON_VERSION_COMPATIBILITY'] = 'PY2'
+
     return recipe_globals
+
+  @cached_property
+  def python_version_compatibility(self):
+    return self.global_symbols['PYTHON_VERSION_COMPATIBILITY']
 
   @cached_property
   def full_name(self):

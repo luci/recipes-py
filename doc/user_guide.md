@@ -1006,6 +1006,51 @@ ecosystem by doing:
     # from repo_name.git//.../recipes/recipe_name.proto
     from PB.recipes.repo_name import recipe_name
 
+## Python3 Support
+
+Python3 support in recipes are still a work in progress as of 2021Q2.
+
+### Running with python3
+
+NOTE: As of 2021Q2, most recipe subcommands will fail with python3.
+
+To run recipes with python3, set the envvar `$RECIPES_USE_PY3` to
+`true`. This is respected by `recipes.py` (which can be run by any python
+interpreter), as well as the stubs generated with the `recipes.py bundle`
+subcommand.
+
+
+### Indicating per-module/per-recipe compatibility
+
+As part of this transition, recipes and recipe_modules may both indicate their
+individual support for python2, python3 or both via the
+`PYTHON_VERSION_COMPATIBILITY` variable, which should be set to one of:
+
+  * "PY2"
+  * "PY2+3"
+  * "PY3"
+
+For recipes this appears next to the `DEPS` declaration at the top of the
+recipe, and for recipe_modules, this appears in the `__init__.py` file
+along with any other statements (such as `DEPS`). If unspecified, it's
+assumed that the related section of code is marked "PY2".
+
+Example:
+
+    # In /repo/recipe_modules/something/__init__.py
+    PYTHON_VERSION_COMPATIBILITY = "PY2+3"  # compatible with py2 and py3
+
+    # In /repo/recipes/a_recipe.py
+    PYTHON_VERSION_COMPATIBILITY = "PY3"    # only compatible with py3
+
+This declaration will be used in `recipes.py test` to run the tests under
+the appropriate python interpreter(s). The `recipes.py deps` command will
+also dump the status of this value for each module. If a section of code (recipe
+or module) is marked as "PY2", then the python3 tests will still run, but
+failures will be marked as warnings. In "PY2+3" mode, both the py2 and py3 tests
+must pass. In "PY3" mode, the python2 tests will not be run at all.
+
+
 ## Productionizing
 
 TODO(iannucci) - Document
