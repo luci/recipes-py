@@ -4,6 +4,8 @@
 
 from recipe_engine import recipe_api
 
+from recipe_engine.internal.global_shutdown import GLOBAL_SHUTDOWN
+
 
 class RuntimeApi(recipe_api.RecipeApi):
   """This module assists in experimenting with production recipes.
@@ -27,3 +29,28 @@ class RuntimeApi(recipe_api.RecipeApi):
       * Appending a 'non-production' tag to external RPCs
     """
     return self._properties.is_experimental
+
+  @property
+  def in_global_shutdown(self):
+    """True iff this recipe is currently in the 'grace_period' specified by
+    `LUCI_CONTEXT['deadline']`.
+
+    This can occur when:
+      * The LUCI_CONTEXT has hit the 'soft_deadline'; OR
+      * The LUCI_CONTEXT has been 'canceled' and the recipe_engine has recieved
+        a SIGTERM (on *nix) or Ctrl-Break (on Windows).
+
+    As of 2021Q2, while the recipe is in the grace_period, it can do anything
+    _except_ for starting new steps (but it can e.g. update presentation of open
+    steps, or return RawResult from RunSteps). Attempting to start a step while
+    in the grace_period will cause the step to skip execution. When a signal is
+    recieved or the soft_deadline is hit, all currently running steps will be
+    signaled in turn (according to the `LUCI_CONTEXT['deadline']` protocol).
+
+    It is good practice to ensure that recipes exit cleanly when canceled or
+    time out, and this could be used anywhere to skip 'cleanup' behavior in
+    'finally' clauses or context managers.
+
+    https://chromium.googlesource.com/infra/luci/luci-py/+/HEAD/client/LUCI_CONTEXT.md
+    """
+    return GLOBAL_SHUTDOWN.ready()

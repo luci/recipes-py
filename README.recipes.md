@@ -2934,13 +2934,36 @@ Args:
     exonerate unexpected passes.
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
-#### **class [RuntimeApi](/recipe_modules/runtime/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
+#### **class [RuntimeApi](/recipe_modules/runtime/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
 
 This module assists in experimenting with production recipes.
 
 For example, when migrating builders from Buildbot to pure LUCI stack.
 
-&emsp; **@property**<br>&mdash; **def [is\_experimental](/recipe_modules/runtime/api.py#18)(self):**
+&emsp; **@property**<br>&mdash; **def [in\_global\_shutdown](/recipe_modules/runtime/api.py#33)(self):**
+
+True iff this recipe is currently in the 'grace_period' specified by
+`LUCI_CONTEXT['deadline']`.
+
+This can occur when:
+  * The LUCI_CONTEXT has hit the 'soft_deadline'; OR
+  * The LUCI_CONTEXT has been 'canceled' and the recipe_engine has recieved
+    a SIGTERM (on *nix) or Ctrl-Break (on Windows).
+
+As of 2021Q2, while the recipe is in the grace_period, it can do anything
+_except_ for starting new steps (but it can e.g. update presentation of open
+steps, or return RawResult from RunSteps). Attempting to start a step while
+in the grace_period will cause the step to skip execution. When a signal is
+recieved or the soft_deadline is hit, all currently running steps will be
+signaled in turn (according to the `LUCI_CONTEXT['deadline']` protocol).
+
+It is good practice to ensure that recipes exit cleanly when canceled or
+time out, and this could be used anywhere to skip 'cleanup' behavior in
+'finally' clauses or context managers.
+
+https://chromium.googlesource.com/infra/luci/luci-py/+/HEAD/client/LUCI_CONTEXT.md
+
+&emsp; **@property**<br>&mdash; **def [is\_experimental](/recipe_modules/runtime/api.py#20)(self):**
 
 True if this recipe is currently running in experimental mode.
 

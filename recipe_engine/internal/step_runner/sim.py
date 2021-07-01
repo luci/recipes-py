@@ -16,6 +16,7 @@ from ...third_party import luci_context
 from ...types import ResourceCost
 
 from ..engine_env import FakeEnviron
+from ..global_shutdown import GLOBAL_SHUTDOWN
 
 from . import StepRunner, Step
 
@@ -67,6 +68,9 @@ class SimulationStepRunner(StepRunner):
     # StepData() if `dot_name` isn't in self._test_data.
     self._used_steps[dot_name] = self._test_data.pop_step_test_data(
         dot_name, step_config.step_test_data or StepTestData)
+
+    if self._used_steps[dot_name].global_shutdown_event == 'before':
+      GLOBAL_SHUTDOWN.set()
 
     self._step_precursor_data[dot_name] = {
       'env_prefixes': step_config.env_prefixes.mapping,
@@ -183,6 +187,9 @@ class SimulationStepRunner(StepRunner):
     self._step_history.setdefault(dot_name, {}).update(step_obj)
 
     tdata = self._used_steps[dot_name]
+
+    if tdata.global_shutdown_event == 'after':
+      GLOBAL_SHUTDOWN.set()
 
     if tdata.times_out_after and precursor['timeout']:
       if tdata.times_out_after > precursor['timeout']:

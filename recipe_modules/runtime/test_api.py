@@ -18,3 +18,23 @@ class RuntimeTestApi(recipe_test_api.RecipeTestApi):
       },
     }
     return ret
+
+  def global_shutdown_on_step(self, step_name, event='after'):
+    """Simulates an incoming SIGTERM/Ctrl-Break to the recipe execution.
+
+    When the test is 'canceled', it behaves as if the real recipe recieved
+    an external cancelation request (or hit the global 'soft_deadline' from
+    LUCI_CONTEXT['deadline']). In this state, `runtime.in_global_shutdown`
+    will be True, and new steps will be skipped.
+
+    If set for multiple steps, only applies on the first step run (other
+    steps with this set will be no-op).
+
+    Args:
+      * step_name - The name of the step to cancel before or after.
+      * event - Simulate cancelation 'after' or 'before' the indicated
+        step. If 'before', the test will set shutdown immediately before
+        `step_name` (meaning that `step_name` will not run).
+    """
+    assert event in ('before', 'after'), 'bad shutdown_on_step event'
+    return self.step_data(step_name, global_shutdown_event = event)

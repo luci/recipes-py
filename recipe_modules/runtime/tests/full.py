@@ -16,6 +16,24 @@ def RunSteps(api):
     'is_experimental: %r' % (api.runtime.is_experimental,),
   ]
 
+  assert not api.runtime.in_global_shutdown, "Entered global_shutdown early"
+
+  api.step('compile', None)  # fake compile step
+
+  assert api.runtime.in_global_shutdown, "Not in global_shutdown after compile"
+
+  api.step('should_skip', None) # Should be skipped
+
 
 def GenTests(api):
-  yield api.test('basic') + api.runtime(is_experimental=False)
+  yield api.test(
+      'basic',
+      api.runtime(is_experimental=False),
+      api.runtime.global_shutdown_on_step('compile'),
+  )
+
+  yield api.test(
+      'shutdown-before',
+      api.runtime(is_experimental=False),
+      api.runtime.global_shutdown_on_step('compile', 'before'),
+  )

@@ -75,6 +75,7 @@ class StepTestData(BaseTestData):
     self._retcode = None
     self._times_out_after = None
     self._cancel = False
+    self._global_shutdown_event = None  # None, "before" or "after"
 
   def __add__(self, other):
     assert isinstance(other, StepTestData)
@@ -90,6 +91,9 @@ class StepTestData(BaseTestData):
     ret._stdout = other._stdout or self._stdout
     ret._stderr = other._stderr or self._stderr
     ret._cancel = other._cancel or self._cancel
+    ret._global_shutdown_event = (
+      other._global_shutdown_event or self._global_shutdown_event
+    )
     ret._retcode = self._retcode
     if other._retcode is not None:
       if ret._retcode is not None and ret._retcode != other._retcode:
@@ -132,6 +136,15 @@ class StepTestData(BaseTestData):
     self._times_out_after = value
 
   @property
+  def global_shutdown_event(self):  # pylint: disable=E0202
+    return self._global_shutdown_event
+
+  @global_shutdown_event.setter
+  def global_shutdown_event(self, value):  # pylint: disable=E0202
+    assert value in ('before', 'after', None), "bad global_shutdown_event"
+    self._global_shutdown_event = value
+
+  @property
   def cancel(self):  # pylint: disable=E0202
     return self._cancel
 
@@ -170,6 +183,9 @@ class StepTestData(BaseTestData):
       'override': self.override,
       'cancel': self.cancel,
     }
+
+    if self.global_shutdown_event:
+      dct['global_shutdown_event'] = self.global_shutdown_event
 
     if self.times_out_after:
       dct['times_out_after'] = self.times_out_after
@@ -561,6 +577,8 @@ class RecipeTestApi(object):
       times_out_after=(int) - Causes the step to timeout after the given number
              of seconds.
       cancel=(bool) - Causes the step to indicate that it was canceled.
+      global_shutdown_event=(None,'before','after') - Causes a global shutdown
+             either before or after this step runs.
 
     Use in GenTests:
       # Hypothetically, suppose that your recipe has default test data for two
@@ -598,6 +616,9 @@ class RecipeTestApi(object):
       ret.step_data[name].times_out_after = kwargs['times_out_after']
     if 'cancel' in kwargs:
       ret.step_data[name].cancel = kwargs['cancel']
+    if 'global_shutdown_event' in kwargs:
+      ret.step_data[name].global_shutdown_event = (
+        kwargs['global_shutdown_event'])
     if 'override' in kwargs:
       ret.step_data[name].override = kwargs['override']
     for key in ('stdout', 'stderr'):

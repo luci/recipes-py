@@ -32,8 +32,8 @@ if MSWINDOWS:
 # global shutdown mode; All running steps will start the "graceful kill"
 # process, and no new steps will be able to launch.
 #
-# This event is only installed for real runs of the recipe; It blocks forever
-# for test mode.
+# This event may also be manipulated via the 'runtime' module in test mode to
+# simulate the interruption of a running recipe.
 GLOBAL_SHUTDOWN = gevent.event.Event()
 
 # GLOBAL_QUITQUITQUIT is set on the second SIGTERM and means that the recipe is

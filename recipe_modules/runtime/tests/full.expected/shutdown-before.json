@@ -9,18 +9,14 @@
   },
   {
     "cmd": [],
-    "name": "compile"
-  },
-  {
-    "cmd": [],
-    "name": "should_skip",
+    "name": "compile",
     "~followup_annotations": [
       "@@@STEP_EXCEPTION@@@"
     ]
   },
   {
     "failure": {
-      "humanReason": "Infra Failure: Step('should_skip') (canceled) (retcode: None)"
+      "humanReason": "Infra Failure: Step('compile') (canceled) (retcode: None)"
     },
     "name": "$result"
   }
