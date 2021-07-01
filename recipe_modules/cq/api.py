@@ -4,6 +4,8 @@
 
 """Recipe API for LUCI CQ, the pre-commit testing system."""
 
+from future.utils import iteritems
+
 import re
 
 from google.protobuf import json_format as json_pb
@@ -252,7 +254,7 @@ class CQApi(recipe_api.RecipeApi):
     output = cq_pb2.Output()
     output.CopyFrom(self._output)
     cur_step.presentation.properties['$recipe_engine/cq/output'] = output
-    for k, v in addition_props.iteritems():
+    for k, v in iteritems(addition_props):
       cur_step.presentation.properties[k] = v
 
   def _enforce_active(self):

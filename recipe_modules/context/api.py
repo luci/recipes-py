@@ -26,6 +26,7 @@ with api.context(cwd=api.path['start_dir'].join('subdir')):
 ```
 """
 
+from future.utils import iteritems
 
 import collections
 import copy
@@ -100,7 +101,7 @@ class ContextApi(recipe_api.RecipeApi):
       # reset luci_context so that when we write into it without it becoming
       # a global variable.
       self._state.luci_context = {}
-      for section_key, section_msg_class in init_sections.iteritems():
+      for section_key, section_msg_class in iteritems(init_sections):
         if section_key in ctx:
           self._state.luci_context[section_key] = (
               jsonpb.ParseDict(ctx[section_key],
@@ -173,7 +174,7 @@ class ContextApi(recipe_api.RecipeApi):
       if to_add is not None and to_add:
         check_type(state_member, to_add, dict)
         new = dict(_get_current(state_member))
-        for key, val in to_add.iteritems():
+        for key, val in iteritems(to_add):
           adder_func(key, val, new)
         _push(state_member, new)
 
@@ -247,7 +248,7 @@ class ContextApi(recipe_api.RecipeApi):
 
       yield
     finally:
-      for state_member, val in deferred_assignments.iteritems():
+      for state_member, val in iteritems(deferred_assignments):
         setattr(self._state, state_member, val)
 
   @property
@@ -319,7 +320,7 @@ class ContextApi(recipe_api.RecipeApi):
     Only contains `luciexe`, `realm`, and `deadline`.
     """
     ret = {}
-    for section, msg in self._state.luci_context.items():
+    for section, msg in iteritems(self._state.luci_context):
       ret[section] = copy.deepcopy(msg)
     return ret
 

@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from future.utils import iteritems
+
 import json
 
 from google.protobuf import json_format
@@ -56,7 +58,7 @@ def serialize(inv_bundle, pretty=False):
         json.dumps(jsonish, sort_keys=True, indent=2 if pretty else None)
     )
 
-  for inv_id, inv in inv_bundle.iteritems():
+  for inv_id, inv in iteritems(inv_bundle):
     assert isinstance(inv, Invocation), inv
     if inv.proto.ListFields():  # if something is set
       add_line(inv_id, 'invocation', inv.proto)

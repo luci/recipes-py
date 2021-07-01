@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from future.utils import iteritems
+
 from recipe_engine import recipe_test_api
 
 from .api import EnsureFile
@@ -54,7 +56,7 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
     return self._resultify({
         subdir or '': [self.make_pin(name, version)
                        for name, version in sorted(packages)]
-        for subdir, packages in ensure_file.packages.iteritems()
+        for subdir, packages in iteritems(ensure_file.packages)
     })
 
   def example_set_tag(self, package_name, version):

@@ -4,6 +4,8 @@
 
 """An interface to call the led tool."""
 
+from future.utils import iteritems
+
 import hashlib
 
 import attr
@@ -98,7 +100,8 @@ class LedApi(recipe_api.RecipeApi):
     super(LedApi, self).__init__(**kwargs)
     self._run_id = props.led_run_id
 
-    if props.HasField('isolated_input') and props.HasField('rbe_cas_input'): # pragma: no cover
+    if (props.HasField('isolated_input')
+        and props.HasField('rbe_cas_input')): # pragma: no cover
       raise ValueError("Cannot have both isolated_input and rbe_cas_input")
 
     if props.HasField('isolated_input'):
@@ -120,14 +123,14 @@ class LedApi(recipe_api.RecipeApi):
     if self._test_data.enabled:
       self._get_mocks = {
         key[len('get:'):]: value
-        for key, value in self._test_data.iteritems()
+        for key, value in iteritems(self._test_data)
         if key.startswith('get:')
       }
 
       self._mock_edits = self.test_api.standard_mock_functions()
       sorted_edits = sorted([
         (int(key[len('edit:'):]), value)
-        for key, value in self._test_data.iteritems()
+        for key, value in iteritems(self._test_data)
         if key.startswith('edit:')
       ])
       self._mock_edits.extend(value for _, value in sorted_edits)

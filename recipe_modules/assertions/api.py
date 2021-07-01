@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from future.utils import iteritems
+
 import collections
 import functools
 import inspect
@@ -33,13 +35,13 @@ def make_assertion(assertion_method, **test_case_attrs):
           # {'first': 0, 'second': 1} because the name of assertEqual's
           # arguments are named first and second
           call_args = inspect.getcallargs(assertion, *args, **kwargs)
-          format_args = {k: v for k, v in call_args.iteritems()
+          format_args = {k: v for k, v in iteritems(call_args)
                          if k not in ('self', 'msg')}
           msg = msg.format(**format_args)
         return super(Asserter, self)._formatMessage(msg, standardMsg)
 
     asserter = Asserter()
-    for a, v in test_case_attrs.iteritems():
+    for a, v in iteritems(test_case_attrs):
       setattr(asserter, a, v)
     assertion = getattr(asserter, assertion_method)
 

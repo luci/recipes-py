@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from future.utils import iteritems
+
 import json
 import re
 import hashlib
@@ -352,7 +354,7 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
                 "led edit -p mock: could not decode %r as JSON value: %s" % (
                   prop_value, ex))
 
-      for k, val in to_set.iteritems():
+      for k, val in iteritems(to_set):
         build.buildbucket.bbagent_args.build.input.properties[k] = val
 
     def _edit_input_recipes(build, cmd, _cwd):

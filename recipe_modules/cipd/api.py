@@ -8,6 +8,8 @@ Depends on 'cipd' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 """
 
+from future.utils import iteritems
+
 import contextlib
 
 from collections import namedtuple
@@ -36,7 +38,7 @@ def check_list_type(name, var, expect_inner):
 
 def check_dict_type(name, var, expect_key, expect_value):
   check_type(name, var, dict)
-  for key, value in var.iteritems():
+  for key, value in iteritems(var):
     check_type('%s: key' % name, key, expect_key)
     check_type('%s[%s]' % (name, key), value, expect_value)
 
@@ -727,7 +729,7 @@ class CIPDApi(recipe_api.RecipeApi):
     )
     return {
         subdir: [self.Pin(**pin) for pin in pins]
-        for subdir, pins in step_result.json.output['result'].iteritems()
+        for subdir, pins in iteritems(step_result.json.output['result'])
     }
 
   def set_tag(self, package_name, version, tags):

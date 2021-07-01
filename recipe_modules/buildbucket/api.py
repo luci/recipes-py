@@ -12,6 +12,9 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 If it returns `None`, the link is not reported. Default link title is build id.
 """
 
+from future.utils import itervalues
+from future.utils import iteritems
+
 from contextlib import contextmanager
 from google import protobuf
 from google.protobuf import field_mask_pb2
@@ -284,8 +287,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """
     assert isinstance(tags, list), (
       'Expected type for tags is list; got %s' % type(tags))
-    assert all(isinstance(tag, common_pb2.StringPair) for tag in tags), map(
-      type, tags)
+    assert all(isinstance(tag, common_pb2.StringPair) for tag in tags), list(
+        map(type, tags))
 
     # Multiple values for the same key are allowed in tags.
     for tag in tags:
@@ -641,7 +644,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
     Example: find all builds of the current CL.
 
     ```python
-    from PB.go.chromium.org.luci.buildbucket.proto import rpc as builds_service_pb2
+    from PB.go.chromium.org.luci.buildbucket.proto import rpc as \
+      builds_service_pb2
 
     related_builds = api.buildbucket.search(builds_service_pb2.BuildPredicate(
       gerrit_changes=list(api.buildbucket.build.input.gerrit_changes),
@@ -649,8 +653,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
     ```
 
     Args:
-    *   predicate: a `builds_service_pb2.BuildPredicate` object or a list thereof.
-        If a list, the predicates are connected with logical OR.
+    *   predicate: a `builds_service_pb2.BuildPredicate` object or a list
+        thereof. If a list, the predicates are connected with logical OR.
     *   limit: max number of builds to return. Defaults to 1000.
     *   url_title_fn: generates a build URL title. See module docstring.
     *   report_build: whether to report build search results in step
@@ -661,10 +665,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
     Returns:
       A list of builds ordered newest-to-oldest.
     """
-    assert isinstance(predicate, (list, builds_service_pb2.BuildPredicate)), predicate
+    assert isinstance(predicate,
+        (list, builds_service_pb2.BuildPredicate)), predicate
     if not isinstance(predicate, list):
       predicate = [predicate]
-    assert all(isinstance(p, builds_service_pb2.BuildPredicate) for p in predicate)
+    assert all(
+        isinstance(p, builds_service_pb2.BuildPredicate) for p in predicate)
     assert isinstance(limit, (type(None), int))
     assert limit is None or limit >= 0
 
@@ -871,13 +877,13 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
       if raise_if_unsuccessful:
         unsuccessful_builds = sorted(
-            b.id for b in builds.itervalues()
+            b.id for b in itervalues(builds)
             if b.status != common_pb2.SUCCESS
         )
         if unsuccessful_builds:
           step_res.presentation.status = self.m.step.FAILURE
-          step_res.presentation.logs['unsuccessful_builds'] = map(
-              str, unsuccessful_builds)
+          step_res.presentation.logs['unsuccessful_builds'] = [
+              str(b) for b in unsuccessful_builds]
           raise self.m.step.InfraFailure(
               'Triggered build(s) did not succeed, unexpectedly')
       elif mirror_status:
@@ -987,7 +993,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     new_tags.update(override_tags or {})
     return sorted(
         '%s:%s' % (k, v)
-        for k, v in new_tags.iteritems()
+        for k, v in iteritems(new_tags)
         if v is not None)
 
   def _check_build_id(self, build_id):

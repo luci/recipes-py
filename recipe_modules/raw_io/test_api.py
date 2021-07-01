@@ -2,6 +2,9 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from future.utils import iterkeys
+from future.utils import itervalues
+
 from recipe_engine import recipe_test_api
 
 class RawIOTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
@@ -30,8 +33,8 @@ class RawIOTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
        }))
     """
     assert type(files_dict) is dict
-    assert all(type(key) is str for key in files_dict.keys())
-    assert all(type(value) is str for value in files_dict.values())
+    assert all(type(key) is str for key in iterkeys(files_dict))
+    assert all(type(value) is str for value in itervalues(files_dict))
     return files_dict, retcode, name
 
   def stream_output(self, data, stream='stdout', retcode=None, name=None):

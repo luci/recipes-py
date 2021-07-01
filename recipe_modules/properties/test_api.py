@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from future.utils import iteritems
+
 import re
 import urlparse
 
@@ -30,7 +32,7 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
       ret.properties.update(**jsonpb.MessageToDict(
           msg, preserving_proto_field_name=True))
 
-    for key, value in kwargs.iteritems():
+    for key, value in iteritems(kwargs):
       if isinstance(value, PBMessage):
         value = jsonpb.MessageToDict(value, preserving_proto_field_name=True)
       # TODO(iannucci): recursively validate type of value to be all JSONish
@@ -57,7 +59,7 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
     to_apply.append(kwargs)
 
     for dictionary in to_apply:
-      for key, value in dictionary.iteritems():
+      for key, value in iteritems(dictionary):
         if not isinstance(value, (int, float, basestring)):
           raise ValueError(
               'Environment values must be int, float or string. '

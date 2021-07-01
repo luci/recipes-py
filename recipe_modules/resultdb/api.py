@@ -7,6 +7,9 @@
 Requires `rdb` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 """
+
+from future.utils import iteritems
+
 from google.protobuf import json_format
 from google.protobuf import timestamp_pb2
 from recipe_engine import recipe_api
@@ -420,7 +423,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
     if test_id_prefix:
       ret += ['-test-id-prefix', test_id_prefix]
 
-    for k, v in sorted((base_variant or {}).iteritems()):
+    for k, v in sorted(iteritems(base_variant or {})):
       ret += ['-var', '%s:%s' % (k, v)]
 
     if test_location_base:

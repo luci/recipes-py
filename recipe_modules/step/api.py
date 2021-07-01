@@ -4,6 +4,8 @@
 
 """Step is the primary API for running steps (external programs, etc.)"""
 
+from future.utils import iteritems
+
 import contextlib
 import multiprocessing
 import sys
@@ -335,11 +337,8 @@ class StepApi(recipe_api.RecipeApiPlain):
     path separator from `path` module.
     """
     return self.step_client.EnvAffix(
-      mapping={
-        k: map(str, vs)
-        for k, vs in affix.iteritems()
-      },
-      pathsep=self.m.path.pathsep,
+        mapping={k: [str(v) for v in vs] for k, vs in iteritems(affix)},
+        pathsep=self.m.path.pathsep,
     )
 
   @returns_placeholder('sub_build')

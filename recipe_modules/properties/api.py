@@ -18,6 +18,8 @@ intentionally no API to write property values (lest they become a kind of
 random-access global variable).
 """
 
+from future.utils import iteritems
+
 from recipe_engine import recipe_api
 from recipe_engine.types import freeze
 import collections
@@ -69,7 +71,7 @@ class PropertiesApi(recipe_api.RecipeApiPlain, collections.Mapping):
     blacklist = set([
       'buildbotURL',
     ])
-    props = {k: v for k, v in self.iteritems()
+    props = {k: v for k, v in iteritems(self)
              if k not in blacklist and not k.startswith('$')}
     if props.get('bot_id') and not props.get('slavename'):
       props['slavename'] = props['bot_id']

@@ -4,7 +4,6 @@
 
 """Implements in-recipe concurrency via green threads."""
 
-
 import gevent
 import gevent.queue
 
@@ -21,7 +20,7 @@ class _IWaitWrapper(object):
     # pylint: disable=protected-access
     self._greenlets_to_futures = {fut._greenlet: fut for fut in futures}
     self._waiter = gevent.iwait(
-        self._greenlets_to_futures.keys(), timeout, count)
+        list(self._greenlets_to_futures.keys()), timeout, count)
 
   def __enter__(self):
     self._waiter.__enter__()

@@ -4,6 +4,8 @@
 
 """File manipulation (read/write/delete/glob) methods."""
 
+from future.utils import iteritems
+
 from recipe_engine import config_types
 from recipe_engine import recipe_api
 
@@ -60,7 +62,7 @@ class SymlinkTree(object):
     Args:
       * name (str): The name of the step.
     """
-    for target, linknames in self._link_map.iteritems():
+    for target, linknames in iteritems(self._link_map):
       for linkname in linknames:
         self._api.path.mock_copy_paths(target, linkname)
     self._api.python(
@@ -70,7 +72,7 @@ class SymlinkTree(object):
             '--link-json',
             self._api.json.input({
                 str(target): linkname
-                for target, linkname in self._link_map.iteritems()
+                for target, linkname in iteritems(self._link_map)
             }),
         ],
         infra_step=True)
@@ -469,7 +471,7 @@ class FileApi(recipe_api.RecipeApi):
         source.join(*x.split(self.m.path.sep))
         for x in result.stdout.splitlines()
     ]
-    result.presentation.logs["glob"] = map(str, ret)
+    result.presentation.logs["glob"] = [str(x) for x in ret]
     return ret
 
   def remove(self, name, source):
@@ -514,7 +516,7 @@ class FileApi(recipe_api.RecipeApi):
         source.join(*x.split(self.m.path.sep))
         for x in result.stdout.splitlines()
     ]
-    result.presentation.logs['listdir'] = map(str, ret)
+    result.presentation.logs['listdir'] = [str(x) for x in ret]
     return ret
 
   def ensure_directory(self, name, dest, mode=0o777):
@@ -549,7 +551,7 @@ class FileApi(recipe_api.RecipeApi):
     result = self._run(name, ['filesizes'] +
                        list(files), lambda: self.test_api.filesizes(test_data),
                        self.m.raw_io.output_text())
-    ret = map(int, result.stdout.strip().splitlines())
+    ret = [int(x) for x in result.stdout.strip().splitlines()]
     result.presentation.logs['filesizes'] = [
         '%s: \t%d' % fs for fs in zip(files, ret)
     ]

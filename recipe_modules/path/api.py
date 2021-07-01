@@ -34,6 +34,8 @@ There are other anchor points which can be defined (e.g. by the
 documentation.
 """
 
+from future.utils import iteritems
+
 import collections
 import itertools
 import os
@@ -110,7 +112,7 @@ class path_set(object):
     for p in self._paths:
       if self._is_contained_in(p, source, match_root=True):
         to_add[p.replace(source, dest)] = self._paths[p]
-    for path, kind in to_add.iteritems():
+    for path, kind in iteritems(to_add):
       self.add(path, kind)
 
   def remove(self, path, filt):
