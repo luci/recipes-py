@@ -24,6 +24,8 @@ def RunSteps(api):
 
   digest = api.cas.archive('archive', temp,
                            *[temp.join(p) for p in ('a', 'b', 'sub')])
+  # You can also archive the entire directory.
+  api.cas.archive('archive directory', temp)
 
   out = api.path.mkdtemp('cas-output')
   api.cas.download('download', digest, out)

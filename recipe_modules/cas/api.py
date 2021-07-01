@@ -94,7 +94,8 @@ class CasApi(recipe_api.RecipeApi):
       * root (str|Path): root directory of archived tree, should be absolute
         path.
       * paths (list(str|Path)):
-        path to archived files/dirs, should be absolute path.
+        path to archived files/dirs, should be absolute path. If empty, [root]
+        will be used.
 
     Returns:
       digest (str): digest of uploaded root directory.
@@ -107,6 +108,9 @@ class CasApi(recipe_api.RecipeApi):
         '-dump-digest',
         self.m.raw_io.output_text(),
     ]
+
+    if not paths:
+      paths = [root]
     for p in paths:
       self.m.path.assert_absolute(p)
       cmd.extend(
