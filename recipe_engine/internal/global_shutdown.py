@@ -112,7 +112,7 @@ def install_signal_handlers():
   d.grace_period = max(d.grace_period - 1, 0)
 
   # terminator_greenlet reacts to signal from parent, which occurs during
-  # cancelation or timeout.
+  # cancellation or timeout.
   def _terminator_greenlet():
     GLOBAL_SHUTDOWN.wait()
     gevent.wait([GLOBAL_QUITQUITQUIT], timeout=d.grace_period)

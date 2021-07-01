@@ -308,7 +308,7 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
 
 def _cover_all_imports(main_repo):
   # If our process is supposed to collect coverage for all recipe module
-  # imports, do that after we recieve the first Description. This way we can
+  # imports, do that after we receive the first Description. This way we can
   # reply to the main process with an Outcome. Otherwise the main process
   # could be blocked on writing a Description while we're trying to write an
   # Outcome.

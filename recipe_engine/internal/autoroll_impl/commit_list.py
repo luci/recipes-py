@@ -153,7 +153,7 @@ class CommitList(object):
 
     Returns int: The number of revisions between the current commit and
       target_commit. If target_commit == current.revision, then this will be 0.
-      If target_commit preceeds current.revision, this will be negative.
+      If target_commit precedes current.revision, this will be negative.
       Otherwise this will be positive.
 
       If target_commit is not found, this returns 1 past the end of the
@@ -192,7 +192,7 @@ class CommitList(object):
       # available revisions.
       return len(self._commits) - self._cur_idx
 
-    # only consider at same-or-future indicies
+    # only consider at same-or-future indices
     return max(
       0,
       (

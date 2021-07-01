@@ -243,18 +243,19 @@ class GitBackend(Backend):
     return output
 
   def _ensure_local_repo_exists(self):
-    """Ensures that self.checkout_dir is a valid git repository. Safe to call
-    multiple times. If this is sucessful, the GitBackend will not try to
-    re-initialize the checkout_dir again.
+    """Ensures that self.checkout_dir is a valid git repository.
 
-    Raises GitFetchError if it detected that checkout_dir is likely not a valid git
-    repo.
+    Safe to call multiple times. If this is successful, the GitBackend will not
+    try to re-initialize the checkout_dir again.
+
+    Raises GitFetchError if it detected that checkout_dir is likely not a valid
+    git repo.
     """
     if self._did_ensure:
       return
     if not os.path.isdir(os.path.join(self.checkout_dir, '.git')):
       try:
-        # note that it's safe to re-init an existing git repo. This should allow
+        # Note that it's safe to re-init an existing git repo. This should allow
         # us to switch between GitBackend and other Backends.
         self._execute(self.GIT_BINARY, 'init', self.checkout_dir)
         self._did_ensure = True
@@ -265,7 +266,7 @@ class GitBackend(Backend):
     """Returns True iff the on-disk repo has the given revision."""
     self.assert_resolved(revision)
     try:
-      # use commit_metadata since it's cached and we're likely to call it
+      # Use commit_metadata since it's cached and we're likely to call it
       # shortly after _has_rev anyway.
       self.commit_metadata(revision)
       return True
@@ -324,7 +325,8 @@ class GitBackend(Backend):
         os.remove(index_lock)
       except OSError as exc:
         if exc.errno != errno.ENOENT:
-          LOGGER.warn('failed to remove %r, reset will fail: %s', index_lock, exc)
+          LOGGER.warn('failed to remove %r, reset will fail: %s', index_lock,
+                      exc)
       self._git('reset', '-q', '--hard', revision)
 
   def cat_file(self, revision, file_path):

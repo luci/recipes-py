@@ -338,7 +338,7 @@ class LUCIStepStream(StreamEngine.StepStream):
     return '/'.join((self._stream_namespace, 'u'))
 
   def write_line(self, line):
-    """Differs from our @@@annotator@@@ bretheren and puts logging data to
+    """Differs from our @@@annotator@@@ brethren and puts logging data to
     an independent stream."""
     # TODO(iannucci): have step_runner log the step metadata as a protobuf
     # and/or put it in the Step proto message.

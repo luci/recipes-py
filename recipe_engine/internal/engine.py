@@ -67,7 +67,7 @@ class _ActiveStep(object):
 class _MemoryProfiler(object):
   """The memory profiler used in recipe engine that is backed by Pympler.
 
-  Note: This class is currently not thread safe. The snapshot operation are not
+  Note: This class is currently not thread safe. The snapshot operation is not
   atomic. The profiler will be called before each step execution. Therefore, it
   is okay for now as steps are executed serially. However, once we start to
   execute steps in parallel, the implementation needs to be re-evaluated to
@@ -79,10 +79,10 @@ class _MemoryProfiler(object):
     self._tracker = tracker.SummaryTracker()
 
   def snapshot(self, snapshot_name):
-    """ Snapshot the memory
+    """Snapshot the memory.
 
-    Returns [geneorator of str] - formated memory snapshot or diff surrounded by
-    dividing line. When this method is called for the first time, the full
+    Returns [generator of str] - formatted memory snapshot or diff surrounded
+    by dividing line. When this method is called for the first time, the full
     snapshot will be returned. After that,  it will only return the diff with
     the previous snapshot.
     """
@@ -305,7 +305,7 @@ class RecipeEngine(object):
     Args:
       * log_stream (Stream) - stream that the diff will write to. An None
       stream will make this method no-op
-      * snapshot_name (str) - Name of the snapshot. The name will be perserved
+      * snapshot_name (str) - Name of the snapshot. The name will be preserved
       along with the snapshot
 
     TODO(crbug.com/1057844): After luciexe rolls out, instead of writing the

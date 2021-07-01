@@ -2,7 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-"""This module contians miscellaneous test-related internal functions."""
+"""This module contains miscellaneous test-related internal functions."""
 
 
 def filesystem_safe(name):

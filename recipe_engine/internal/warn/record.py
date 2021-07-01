@@ -70,7 +70,7 @@ class WarningRecorder(object):
   # to import warnings.
   import_site_filter = attr.ib(default=lambda name, cause: True)
 
-  # Boolean tells whether to perserve entire call stack for execution warning
+  # Boolean tells whether to preserve entire call stack for execution warning
   # or not.
   include_call_stack = attr.ib(validator=attr_type(bool), default=False)
 
@@ -151,7 +151,7 @@ class WarningRecorder(object):
     )
     if (import_site not in self._recorded_warnings[name]) and (
         self.import_site_filter(name, import_site.cause_pb)):
-        self._recorded_warnings[name].add(import_site)
+      self._recorded_warnings[name].add(import_site)
 
   def _validate_warning_name(self, name):
     """Checks whether the given warning name is fully-qualified and defined in

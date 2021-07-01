@@ -386,7 +386,7 @@ class StepFailure(Exception):
   @property
   def was_cancelled(self):
     """
-    Returns True if this exception was caused by a cancelation event
+    Returns True if this exception was caused by a cancellation event
     (see ExecutionResult.was_cancelled).
 
     If this was a manual failure, returns None.
@@ -605,7 +605,7 @@ def infer_composite_step(func):
   In any of these cases, this function will behave like a normal function.
 
   This decorator is automatically applied by RecipeApiMeta (or by inheriting
-  from RecipeApi). If you want to decalare a method's behavior explicitly, you
+  from RecipeApi). If you want to declare a method's behavior explicitly, you
   may decorate it with either composite_step or with non_step.
   """
   if getattr(func, "_skip_inference", False):
@@ -810,9 +810,9 @@ class RecipeApiPlain(object):
     """Returns a 'config blob' for the current API, and the computed params
     for all dependent configurations.
 
-    The params have the following order of precendence. Each subsequent param
+    The params have the following order of precedence. Each subsequent param
     is dict.update'd into the final parameters, so the order is from lowest to
-    higest precedence on a per-key basis:
+    highest precedence on a per-key basis:
       * if config_name in CONFIG_CTX
         * get_config_defaults()
         * CONFIG_CTX[config_name].DEFAULT_CONFIG_VARS()

@@ -29,7 +29,7 @@ message Failure {
   message Dummy {}
 
   // The kitchen code only recognizes two types of failures: Infra failures and
-  // non-infra failures. It distinguishes them by the existance of the 'failure'
+  // non-infra failures. It distinguishes them by the existence of the 'failure'
   // message below, but doesn't actually care about the contents of this message
   // (just the 'human_reason' field above).
   //

@@ -33,7 +33,7 @@ def get_repos_to_advance(repos):
        a penalty for each commit that B and C need to move in order to be
        compatible with the new A revision.
 
-    2) As dependees. Rolling repo A which is depended on by (B, C) will take
+    2) As dependencies. Rolling repo A which is depended on by (B, C) will take
        a penalty for each commit that B and C need to move in order to be
        compatible with the new A revision.
 

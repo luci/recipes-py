@@ -256,7 +256,7 @@ class RecipeModuleImporter(object):
     mod.TEST_API = getattr(mod, 'TEST_API', None)
     if test_module:
       for v in mod.test_api.__dict__.itervalues():
-        # If the recipe has literally imported the RecipeTestApi, we don't wan't
+        # If the recipe has literally imported the RecipeTestApi, we don't want
         # to consider that to be the real RecipeTestApi :)
         if v is RecipeTestApi:
           continue

@@ -690,7 +690,7 @@ class RecipeTestApi(object):
     chain will be halted.
 
     The function must return either `None`, or it may return a filtered subset
-    of step_odict (e.g. ommitting some steps and/or step fields). This will be
+    of step_odict (e.g. omitting some steps and/or step fields). This will be
     the new value of step_odict for the test. Returning an empty dict or
     OrderedDict will remove the expectations from disk altogether. Returning
     `None` (Python's implicit default return value) is equivalent to returning

@@ -358,7 +358,7 @@ def parse_deps(repo_name, mod_ast, relpath):
     * relpath (str) - The posix-style relative path which should be associated
       with the code in class_ast.
 
-  Returns Doc.Deps proto messsage.
+  Returns Doc.Deps proto message.
   """
   assert isinstance(mod_ast, ast.Module), type(mod_ast)
   ret = None

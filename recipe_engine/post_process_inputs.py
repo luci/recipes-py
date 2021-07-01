@@ -1,6 +1,7 @@
 # Copyright 2019 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
+
 """The types that appear as inputs to post-processing hooks."""
 
 import re
@@ -25,7 +26,8 @@ class Command(list):
     'foo' in Command(['foo', 'bar', 'baz'])
     re.compile('a') in Command(['foo', 'bar', 'baz'])
     ['foo', 'bar'] in Command(['foo', 'bar', 'baz'])
-    [re.compile('o$'), 'bar', re.compile('^b')] in Command(['foo', 'bar', 'baz'])
+    [re.compile('o$'), 'bar', re.compile('^b')]
+         in Command(['foo', 'bar', 'baz'])
 
   You may also provide a literal `Ellipsis` in the list to mean "zero or more
   tokens here" to allow matching commands with gaps between matching parts.
@@ -82,7 +84,7 @@ class Command(list):
     # corresponding element of the subsequence then we say that the sequence of
     # strings/regexes is contained in the command
 
-    # Ellipsis have a minimium width of 0, everything else has a match size of
+    # Ellipsis have a minimum width of 0, everything else has a match size of
     # 1 slot. Do a pass over matchers to calculate the number of slots required
     # to match `matchers[i:]`.
     min_slots_count = 0
@@ -152,7 +154,7 @@ class Step(object):
   default values.
   """
   # **************************** Expectation fields ****************************
-  # These fields appear directly in the expectations file for a test
+  # These fields appear directly in the expectations file for a test.
 
   # TODO(iannucci) Use buildbucket step names here, e.g. 'parent|child|leaf'
   # instead of buildbot style 'parent.child.leaf' or make tuple
@@ -160,9 +162,11 @@ class Step(object):
   name = attr.ib()
 
   # The step's command as a sequence of strings
+  #
   # When initialized in from_step_dict, the sequence will be an instance of
   # Command, which supports an enhanced contains check that enables concise
-  # subsequence and regex checking
+  # subsequence and regex checking.
+  #
   # Implementation note: cmd still appears in expectation files when its empty,
   # so distiniguish between an empty cmd list and a cmd that has been filtered
   # while still allowing duck-typing a default of () is used which is not equal
@@ -171,30 +175,31 @@ class Step(object):
 
   # The working directory that the step is executed under as a string, in terms
   # of a placeholder e.g. RECIPE_REPO[recipe_engine]
-  # An empy string is equivalent to start_dir
+  # An empty string is equivalent to start_dir
   cwd = attr.ib(default='')
 
   # The resource cost of this Step. Will be None for no-command steps.
   cost = attr.ib(default=ResourceCost())
 
   # See //recipe_modules/context/api.py for information on the precise meaning
-  # of env, env_prefixes and env_suffixes
+  # of env, env_prefixes and env_suffixes.
+  #
   # env will be the env value for the step, a dictionary mapping strings
   # containing the environment variable names to strings containing the
-  # environment variable value
+  # environment variable value.
   env = attr.ib(factory=dict)
   # env_prefixes and env_suffixes will be the env prefixes and suffixes for the
   # step, dictionaries mapping strings containing the environment variable names
   # to lists containing strings to be prepended/addended to the environment
-  # variable
+  # variable.
   env_prefixes = attr.ib(factory=dict)
   env_suffixes = attr.ib(factory=dict)
 
-  # A bool indicating whether a step can emit its own annotations
+  # A bool indicating whether a step can emit its own annotations.
   allow_subannotations = attr.ib(default=False)
 
   # Either None for no timeout or a numeric type containing the number of
-  # seconds the step must complete in
+  # seconds the step must complete in.
   timeout = attr.ib(default=None)
 
   # Mapping of LUCI_CONTEXT section name to the current section value.
@@ -202,34 +207,34 @@ class Step(object):
 
   # A bool indicating the step is an infrastructure step that should raise
   # InfraFailure instead of StepFailure if the step finishes with an exit code
-  # that is not allowed
+  # that is not allowed.
   infra_step = attr.ib(default=False)
 
   # String containing the content of the step's stdin if the step's stdin was
-  # redirected with a PlaceHolder
+  # redirected with a PlaceHolder.
   stdin = attr.ib(default='')
 
   # ***************************** Annotation fields ****************************
   # These fields appear in annotations in the ~followup_annotations field in the
   # expectations file for the test
 
-  # The nest level of the step: 0 is a top-level step
+  # The nest level of the step: 0 is a top-level step.
   # TODO(iannucci) Remove this
   nest_level = attr.ib(default=0)
 
-  # A string containing the step's step text
+  # A string containing the step's step text.
   step_text = attr.ib(default='')
 
-  # A string containing the step's step summary text
+  # A string containing the step's step summary text.
   step_summary_text = attr.ib(default='')
 
   # A dictionary containing the step's logs, mapping strings containing the log
   # name to strings containing the full content of the log (the lines of the
-  # logs in the StepPresentation joined with '\n')
+  # logs in the StepPresentation joined with '\n').
   logs = attr.ib(factory=OrderedDict)
 
   # A dictionary containing the step's links, mapping strings containing the
-  # link name to strings containing the link url
+  # link name to strings containing the link URL.
   links = attr.ib(factory=OrderedDict)
 
   # A dictionary containing the build properties set by the step, mapping
@@ -238,15 +243,16 @@ class Step(object):
   output_properties = attr.ib(factory=OrderedDict)
 
   # A string containing the resulting status of the step, one of: 'SUCCESS',
-  # 'EXCEPTION', 'FAILURE', 'WARNING', 'CANCELED'
+  # 'EXCEPTION', 'FAILURE', 'WARNING', 'CANCELED'.
   status = attr.ib(default='SUCCESS',
                    validator=attr.validators.in_((
                      'SUCCESS', 'EXCEPTION', 'FAILURE', 'WARNING', 'CANCELED')))
 
-  # Arbitrary lines that appear in the annotations
+  # Arbitrary lines that appear in the annotations.
+  #
   # The presence of these annotations is an implementation detail and likely to
   # change in the future, so tests should avoid operating on this field except
-  # to set it to default to filter them out
+  # to set it to default to filter them out.
   _raw_annotations = attr.ib(default=[])
 
   @classmethod

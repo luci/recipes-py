@@ -98,7 +98,7 @@ class StepConfig(object):
   #   - If no environment variable is specified, the current environment's value
   #     will be appended, unless it's empty: <prefix0>:...:<prefixN>[:ENV]?
   #   - If an environment variable with a value of None (delete) is specified,
-  #     nothing will be appeneded: <prefix0>:...:<prefixN>
+  #     nothing will be appended: <prefix0>:...:<prefixN>
   # "env_suffixes" is identical, except that it appends instead of prepends to
   # the envvar.
   #

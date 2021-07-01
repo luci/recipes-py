@@ -165,7 +165,7 @@ class StepRunner(object):
   def run_noop(self, name_tokens, debug_log):
     """Runs a no-op step.
 
-    This may occur becuase the recipe needs to establish some step for UI
+    This may occur because the recipe needs to establish some step for UI
     purposes, but is also used for some recipes which run test steps without
     actual content (and so the simulations need an API point to return mocked
     ExecutionResult data).

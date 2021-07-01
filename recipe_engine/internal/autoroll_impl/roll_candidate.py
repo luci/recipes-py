@@ -9,13 +9,13 @@ import copy
 # the infra.git repo. It's pretty dumb to have this duplication.
 #
 # Additionally, this detection is a bit cheezy. Some alternatives:
-#   * identify the recipe autoroller account(s). This is nice because the
+#   * Identify the recipe autoroller account(s). This is nice because the
 #     accounts are verified (unlike the commit message), but it's awkward
 #     because there's no consistent set of accounts that we can encode here, so
 #     we'd have to plumb it through as an option. Worth consideration.
 #   * Add an `Autoroller: recipes` footer or something to the commit message and
-#     have gerrit verify this. This would be more difficult (beause we'd have to
-#     program gerrit to have an ACL for this footer, a function it doesn't
+#     have gerrit verify this. This would be more difficult (because we'd have
+#     to program gerrit to have an ACL for this footer, a function it doesn't
 #     currently have), but it would be more general.
 _AUTOROLLER_PREFIX = 'Roll recipe dependencies'
 

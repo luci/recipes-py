@@ -138,7 +138,7 @@ class Check(namedtuple('Check', (
         if had_statements:
           continue
         # node is a 'simple' statement (doesn't contain any nested statements),
-        # so find it's maxiumum line-number (e.g. the line number that would
+        # so find it's maximum line-number (e.g. the line number that would
         # show up in a stack trace), and add it to _PARSED_FILE_CACHE. Note that
         # even though this is a simple statement, it could still span multiple
         # lines.
@@ -261,7 +261,7 @@ class _resolved(ast.AST):
 
 class _checkTransformer(ast.NodeTransformer):
   """_checkTransformer is an ast NodeTransformer which extracts the helpful
-  subexpressions from a python expression (specificially, from an invocation of
+  subexpressions from a python expression (specifically, from an invocation of
   the Checker). These subexpressions will be printed along with the check's
   source code statement to provide context for the failed check.
 
@@ -327,7 +327,7 @@ class _checkTransformer(ast.NodeTransformer):
 
   def visit_Subscript(self, node):
     """Subscript nodes are anything which is __[__]. We only want to match __[x]
-    here so where the [x] is a regular Index expression (not an elipsis or
+    here so where the [x] is a regular Index expression (not an ellipsis or
     slice). We only handle cases where x is a constant, or a resolvable variable
     lookup (so a variable lookup, index, etc.)."""
     node = self.generic_visit(node)
@@ -433,7 +433,7 @@ class Checker(object):
   def _call_impl(self, hint, exp):
     """This implements the bulk of what happens when you run `check(exp)`. It
     will crawl back up the stack and extract information about all of the frames
-    which are relevent to the check, including file:lineno and the code
+    which are relevant to the check, including file:lineno and the code
     statement which occurs at that location for all the frames.
 
     On the last frame (the one that actually contains the check call), it will

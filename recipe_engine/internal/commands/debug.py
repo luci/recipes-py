@@ -26,10 +26,11 @@ def add_arguments(parser):
   parser.add_argument(
       'recipe_name', nargs='?', help='The name of the recipe to debug.')
   parser.add_argument(
-      'test_name', nargs='?', help=(
-        'The name of the test case in GenTests to debug with. If ommitted '
-        'and there is exactly one test case for the recipe, will use that.'
-      ))
+      'test_name',
+      nargs='?',
+      help=(
+          'The name of the test case in GenTests to debug with. If omitted '
+          'and there is exactly one test case for the recipe, will use that.'))
 
   def _main(args):
     if not args.recipe_name:

@@ -1,7 +1,7 @@
 # Copyright 2015 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
-"""Checks recipes for stylistic and hygenic issues.
+"""Checks recipes for stylistic and hygienic issues.
 
 Currently only checks that recipes only import python modules from a whitelist.
 

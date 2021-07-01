@@ -77,7 +77,7 @@ message Cause {
   }
 }
 
-// Callsite models the cause of excution warning. Execution warning is issued
+// Callsite models the cause of execution warning. Execution warning is issued
 // when a developer declares a warning inside the method body of API class in a
 // recipe module and the declaration is hit while running recipe tests. The
 // frame that is calling the warned method will be considered as call site

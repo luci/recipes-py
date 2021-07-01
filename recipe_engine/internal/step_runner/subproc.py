@@ -76,11 +76,11 @@ class SubprocessStepRunner(StepRunner):
   _PATH_EXTS = ('.exe', '.bat') if sys.platform == "win32" else ('',)
   @classmethod
   def _resolve_base_path(cls, debug_log, base_path):
-    """Checks for existance/permission for a potential executable at
+    """Checks for existence/permission for a potential executable at
     `base_path`.
 
     If `base_path` contains an extension (e.g. '.bat'), then it will be checked
-    for existance+execute permission without modification.
+    for existence+execute permission without modification.
 
     If `base_path` doesn't contain an extension, the platform-specific
     extensions (_PATH_EXTS) will be tried in order.
@@ -332,7 +332,7 @@ class SubprocessStepRunner(StepRunner):
       ret = attr.evolve(ret, retcode=proc.poll())
 
       # TODO(iannucci): Make leaking subprocesses explicit (e.g. goma compiler
-      # daemon). Better, change deamons to be owned by a gevent Greenlet (so
+      # daemon). Better, change daemons to be owned by a gevent Greenlet (so
       # that we don't need to leak processes ever).
       #
       # See BUG/FEATURE below for why we don't do this, even though we should.
@@ -348,7 +348,7 @@ class SubprocessStepRunner(StepRunner):
 
       debug_log.write_line('Finished waiting, retcode %r' % ret.retcode)
       # TODO(iannucci): Make leaking subprocesses explicit (e.g. goma compiler
-      # daemon). Better, change deamons to be owned by a gevent Greenlet (so
+      # daemon). Better, change daemons to be owned by a gevent Greenlet (so
       # that we don't need to leak processes ever).
       debug_log.write_line('BUG/FEATURE: Allowing process group to continue.')
 
@@ -554,4 +554,3 @@ def _safe_close(debug_log, handle_name, handle):
     # the process ending. See gevent.subprocess.Popen.communicate, which does
     # the same thing.
     debug_log.write_line('  LEAKED?: race with IO worker')
-

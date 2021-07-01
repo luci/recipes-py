@@ -120,7 +120,7 @@ class Printer(object):
     node will not be probed for that particular value.
 
     This understands how to link to either github or gitiles, regardless of the
-    flavor of markdown we're targetting (since the source links depend solely on
+    flavor of markdown we're targeting (since the source links depend solely on
     on the canonical_repo_url).
     """
     url, flavor = "", self.markdown_flavor

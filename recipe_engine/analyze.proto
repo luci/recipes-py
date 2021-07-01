@@ -13,7 +13,7 @@ message Input {
   // relative to the root of the recipe repo this command was executed in.
   //
   // Files may be outside the current git repository (an example of this is a
-  // file in a dependant recipe repo). This can be used to detect if a recipe
+  // file in a dependent recipe repo). This can be used to detect if a recipe
   // in this recipe repo is affected by a file changed in a recipe repo
   // the recipe depends on.
   repeated string files = 1;
@@ -30,7 +30,7 @@ message Output {
   // Any invalid recipes given in the input.
   repeated string invalid_recipes = 2;
 
-  // Any errors which occured. Will be human readable. Some analysis may still
+  // Any errors which occurred. Will be human readable. Some analysis may still
   // have been done, even if this field is set.
   string error = 3;
 }

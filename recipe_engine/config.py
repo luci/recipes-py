@@ -26,7 +26,7 @@ returning a ConfigGroup.
 Every type used in the schema derives from ConfigBase. It has the general
 characteristics that it's a fixed-type container. It tends to impersonate the
 data type that it stores (so you can manipulate the config objects like normal
-python data), but also provides type checking and type conversion assistence
+python data), but also provides type checking and type conversion assistance
 (so you can easily render your configurations to JSON).
 
 Then you can create a configuration context:
@@ -59,13 +59,13 @@ If I now call:
 
   combo()
 
-I will get back a configuraton object whose schema is FakeSchema, and whose
+I will get back a configuration object whose schema is FakeSchema, and whose
 data is the accumulation of cool(), gnarly(), and combo(). I can continue to
-manipulate this configuraton object, use its data, or render it to json.
+manipulate this configuration object, use its data, or render it to json.
 
-Using this system should allow you to create rich, composible,
-modular configurations. See the documentation on config_item_context and the
-BaseConfig derivatives for more info.
+Using this system should allow you to create rich, composible, modular
+configurations. See the documentation on config_item_context and the BaseConfig
+derivatives for more info.
 """
 
 from __future__ import absolute_import
@@ -321,7 +321,7 @@ class ConfigBase(object):
     raise NotImplementedError
 
   def complete(self):
-    """Returns True iff this configuraton blob is fully viable."""
+    """Returns True iff this configuration blob is fully viable."""
     raise NotImplementedError
 
   def _is_default(self):
@@ -330,7 +330,7 @@ class ConfigBase(object):
 
   @property
   def _hidden(self):
-    """Returns True iff this configuraton blob is hidden."""
+    """Returns True iff this configuration blob is hidden."""
     if self._hidden_mode is AutoHide:
       return self._is_default()
     return self._hidden_mode
@@ -831,7 +831,7 @@ class Single(ConfigBase):
 
 
 class Static(ConfigBase):
-  """Holds a single, hidden, immutible data object.
+  """Holds a single, hidden, immutable data object.
 
   This is very useful for holding the 'input' configuration values.
   """

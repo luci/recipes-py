@@ -35,7 +35,7 @@ class Common(test_env.RecipeEngineUnitTest):
   def _run_test(self, *args, **kwargs):
     should_fail = kwargs.pop('should_fail', False)
     self.assertDictEqual(
-        kwargs, {}, 'got additional unexpectd kwargs: {!r}'.format(kwargs))
+        kwargs, {}, 'got additional unexpected kwargs: {!r}'.format(kwargs))
 
     json_out = self.tempfile()
     full_args = ['test'] + list(args) + ['--json', json_out]
