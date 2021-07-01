@@ -14,6 +14,7 @@ Access this via test_env.RecipeEngineUnitTest.FakeRecipeDeps().
 """
 
 from __future__ import print_function
+from future.utils import iteritems
 
 import contextlib
 import errno
@@ -320,7 +321,7 @@ class FakeRecipeRepo(object):
           GenTests=_get_suite(
               recipe.GenTests, "yield api.test('basic')")))
 
-    for test_name, expectation in recipe.expectation.iteritems():
+    for test_name, expectation in iteritems(recipe.expectation):
       test_name = filesystem_safe(test_name)
       expect_path = os.path.join(base_path + '.expected', test_name + '.json')
       with self.write_file(expect_path) as buf:

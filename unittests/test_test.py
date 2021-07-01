@@ -3,6 +3,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from future.utils import iteritems
+
 import argparse
 import json
 import os
@@ -112,7 +114,7 @@ class Common(test_env.RecipeEngineUnitTest):
     if per_test is None:
       per_test = {'foo.basic': []}
 
-    for test_name, outcome_types in (per_test or {}).iteritems():
+    for test_name, outcome_types in iteritems(per_test or {}):
       results = ret.test_results[test_name]
       for type_ in outcome_types:
         if type_ == self.OutcomeType.diff:

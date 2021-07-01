@@ -18,6 +18,8 @@ lieu of the real RecipeDeps, please try not to add too many APIs here which
 don't exist on the real objects (i.e. "path helpers" or things of that nature).
 """
 
+from future.utils import iteritems
+
 import sys
 import os
 
@@ -92,11 +94,11 @@ class MockRecipeRepo(object):
       self.path = '/%s_ROOT/' % name.upper()
     self.modules = {
       module_name: MockRecipeModule(self, module_name, DEPS)
-      for module_name, DEPS in modules_to_deps.iteritems()
+      for module_name, DEPS in iteritems(modules_to_deps)
     }
     self.recipes = {
       recipe_name: MockRecipe(self, recipe_name, DEPS)
-      for recipe_name, DEPS in recipes_to_deps.iteritems()
+      for recipe_name, DEPS in iteritems(recipes_to_deps)
     }
 
 class MockRecipeModule(object):

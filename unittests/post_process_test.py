@@ -3,6 +3,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from future.utils import iteritems
+
 from collections import OrderedDict
 
 import test_env
@@ -22,7 +24,7 @@ def mkS(name, *fields):
     'env': {'var': 'value'},
   }
   if fields:
-    return {k: v for k, v in ret.iteritems() if k in fields or k == 'name'}
+    return {k: v for k, v in iteritems(ret) if k in fields or k == 'name'}
   return ret
 
 

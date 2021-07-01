@@ -4,6 +4,7 @@
 # that can be found in the LICENSE file.
 
 from __future__ import print_function
+from future.utils import iteritems
 
 import contextlib
 import json
@@ -87,7 +88,7 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     script_path = os.path.join(test_env.ROOT_DIR, 'recipes.py')
 
     proplist = [
-      '%s=%s' % (k, json.dumps(v)) for k, v in (properties or {}).iteritems()
+      '%s=%s' % (k, json.dumps(v)) for k, v in iteritems(properties or {})
     ]
 
     return (
