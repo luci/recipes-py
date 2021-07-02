@@ -71,7 +71,8 @@ class TriciumApi(recipe_api.RecipeApi):
     results.comments.extend(self._comments)
     step = self.m.step('write results', [])
     num_comments = len(results.comments)
-    if num_comments > 50:
+    limit = 50
+    if num_comments > limit:
       # Tricium will refuse to post comments if there are too many, but we
       # don't yet know how many of these comments are included in changed lines
       # and would be posted. Add a warning to try to help with clarification in
@@ -79,8 +80,12 @@ class TriciumApi(recipe_api.RecipeApi):
       step.presentation.status = self.m.step.WARNING
       step.presentation.step_text = (
           '%s comments created, Tricium may refuse to post comments if there '
-          'are too many in changed lines.' % num_comments)
-      return
+          'are too many in changed lines. This build sends only the first %s '
+          'comments.' % (num_comments, limit))
+      comments = results.comments[:limit]
+      del results.comments[:]
+      results.comments.extend(comments)
+
     # The "tricium" output property is read by the Tricium service.
     results_json = json_format.MessageToJson(results, indent=0)
     step.presentation.properties['tricium'] = results_json

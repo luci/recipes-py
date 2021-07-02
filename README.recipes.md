@@ -3534,7 +3534,7 @@ add_comment and write_comments.
 
 Adds one comment to accumulate.
 
-&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#88)(self, analyzers, input_base, affected_files, commit_message, emit=True):**
+&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#93)(self, analyzers, input_base, affected_files, commit_message, emit=True):**
 
 Runs legacy analyzers.
 
