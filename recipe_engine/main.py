@@ -127,7 +127,19 @@ def _main():
   # Use os._exit instead of sys.exit to prevent the python interpreter from
   # hanging on threads/processes which may have been spawned and not reaped
   # (e.g. by a leaky test harness).
-  exit_fn = os._exit  # pylint: disable=protected-access
+  os_exit = os._exit  # pylint: disable=protected-access
+  if 'RECIPES_DEBUG_SLEEP' in os.environ:
+    sleep_duration = float(os.environ['RECIPES_DEBUG_SLEEP'])
+    os.unsetenv('RECIPES_DEBUG_SLEEP')
+    sys.stderr.write(
+        '[engine will sleep for %f seconds after execution]\n' % sleep_duration)
+    def exit_fn(code):
+      sys.stderr.write(
+          '[engine sleeping for %f seconds]\n' % sleep_duration)
+      time.sleep(sleep_duration)
+      os_exit(code)
+  else:
+    exit_fn = os_exit
 
   _strip_virtualenv()
 
@@ -135,8 +147,8 @@ def _main():
   # Unset it to prevent the leak through recipe subcommand, e.g if a recipe runs
   # `led edit-recipe-bundle` which will run `recipes.py bundle`, the env var
   # should explicitly be set in that recipe.
-  if os.getenv('RECIPES_USE_PY3'):
-    del os.environ['RECIPES_USE_PY3']
+  if 'RECIPES_USE_PY3' in os.environ:
+    os.unsetenv('RECIPES_USE_PY3')
 
   try:
     ret = parse_and_run()
@@ -146,12 +158,15 @@ def _main():
     print('Uncaught exception (%s): %s' % (
       type(exc).__name__, exc), file=sys.stderr)
     exit_fn(1)
+  except SystemExit as exc:
+    # funnel all 'exit' methods through flush&&os._exit
+    ret = exc.code
 
   if not isinstance(ret, int):
     if ret is None:
       ret = 0
     else:
-      print(ret, file=sys.stderr)
+      print('Bogus retcode %r' % (ret,), file=sys.stderr)
       ret = 1
   sys.stdout.flush()
   sys.stderr.flush()

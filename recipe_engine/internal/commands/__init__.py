@@ -286,4 +286,12 @@ def parse_and_run():
   _common_post_process(args)
   args.postprocess_func(parser.error, args)
 
-  return args.func(args)
+  try:
+    return args.func(args)
+  finally:
+    # Any file-like objects directly attached to args need to be closed
+    # explicitly here because otherwise main.py will do an os._exit and any
+    # buffered data in these files could be lost.
+    for value in vars(args).values():
+      if hasattr(value, 'close'):
+        value.close()
