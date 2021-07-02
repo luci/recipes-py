@@ -552,7 +552,23 @@ class RecipeModule(object):
 
   @cached_property
   def python_version_compatibility(self):
+    """This module's claimed python compatility level."""
     return self.do_import().PYTHON_VERSION_COMPATIBILITY
+
+  @cached_property
+  def effective_python_compatility(self):
+    """This module's effective python compatility level.
+
+    Defined as the lowest compatibility level of this module and all transitive
+    dependencies.
+
+    None if it's impossible to use this module (e.g. this module claims py2-only
+    compat, but depends on a module with py3-only compat).
+    """
+    return _compute_py_compat(
+        self.python_version_compatibility,
+        self.repo.recipe_deps,
+        self.normalized_DEPS)
 
   @classmethod
   def create(cls, repo, name):
@@ -734,7 +750,23 @@ class Recipe(object):
 
   @cached_property
   def python_version_compatibility(self):
+    """This recipe's claimed python compatility level."""
     return self.global_symbols['PYTHON_VERSION_COMPATIBILITY']
+
+  @cached_property
+  def effective_python_compatility(self):
+    """This recipe's effective python compatility level.
+
+    Defined as the lowest compatibility level of this recipe and all transitive
+    dependencies.
+
+    None if it's impossible to use this recipe (e.g. this recipe claims PY2
+    compat, but depends on a module with PY3 compat).
+    """
+    return _compute_py_compat(
+        self.python_version_compatibility,
+        self.repo.recipe_deps,
+        self.normalized_DEPS)
 
   @cached_property
   def full_name(self):
@@ -1161,4 +1193,48 @@ def _resolve(recipe_deps, deps_spec, variant, engine, test_data):
   # TODO(iannucci): The way paths work need to be reimplemented sanely :/
   _inner('recipe_engine', 'path', [])
 
+  return ret
+
+
+# Lookup table for comparing effective python compatibilies.
+#
+# The following rules are implied for all X:
+#   `(X, X) => X`
+#   `(None, X) => None`
+#   `(X, None) => None`
+_py_compatibility_lut = {
+  ('PY2', 'PY2+3'): 'PY2',
+  ('PY2', 'PY3'):   None,
+
+  ('PY2+3', 'PY2'): 'PY2',
+  ('PY2+3', 'PY3'): 'PY3',
+
+  ('PY3', 'PY2'):   None,
+  ('PY3', 'PY2+3'): 'PY3',
+}
+
+def _compute_py_compat(ours, recipe_deps, normalized_DEPS):
+  """Computes the transitive python compatibility for a recipe or module.
+
+  Result should be cached.
+
+  Args:
+    * ours - This item's claimed python compatibility.
+    * recipe_deps - A RecipeDeps object.
+    * normalized_DEPS - A normalized DEPS dictionary.
+
+  Returns minimal python compatibility level.
+  """
+  ret = ours
+  for repo_name, module_name in itervalues(normalized_DEPS):
+    m = recipe_deps.repos[repo_name].modules[module_name]
+    compat = m.effective_python_compatility
+    if ret == compat:
+      # equal compat levels
+      continue
+    if compat is None:
+      return None
+    ret = _py_compatibility_lut[ret, compat]
+    if ret is None:
+      return None
   return ret

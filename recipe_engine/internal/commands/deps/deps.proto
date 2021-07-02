@@ -15,9 +15,14 @@ message Deps {
 }
 
 enum Py3Status {
-  PYTHON2_ONLY        = 0;
-  PYTHON2_AND_PYTHON3 = 1;
-  PYTHON3_ONLY        = 2;
+  // CANNOT_RUN indicates that this recipe/module depends on a module with
+  // an incompatible Py3Status.
+  //
+  // Can only occur in effective_py3_status field.
+  CANNOT_RUN          = 0;
+  PYTHON2_ONLY        = 1;
+  PYTHON2_AND_PYTHON3 = 2;
+  PYTHON3_ONLY        = 3;
 }
 
 message DepInfo {
@@ -36,8 +41,9 @@ message DepInfo {
   // True if this item is a recipe, false if it's a recipe module.
   bool is_recipe = 4;
 
-  Py3Status py3_status = 5;
+  Py3Status claimed_py3_status = 5;
+  Py3Status effective_py3_status = 6;
 
   // Sorted list of fully-qualified recipe modules this item depends on.
-  repeated string deps = 6;
+  repeated string deps = 7;
 }

@@ -13,12 +13,17 @@ Note that this only finds recipes in the current repo or one of this repo's
 dependencies. Downstream repos which depend on this one may have recipes which
 depend on the module queried.
 
-The CLI output also indicates the Python3 conversion status of each item,
-according to the following legend:
+The CLI output also indicates the both the claimed and effective Python3
+conversion status of each item, according to the following legend:
 
+    💀 - No python version satisfies stated constraints.
     ❌ - Only supports python2
     ✅ - Supports both python2 and python3
     🦄 - Only supports python3
+
+The first column is the item's own claimed status, and the second column is
+the computed effective status (i.e. minimum supported version among all of
+its transitive dependencies).
 """
 
 def add_arguments(parser):
