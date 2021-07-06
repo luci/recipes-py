@@ -171,10 +171,6 @@
     "name": "download with second hash"
   },
   {
-    "cmd": [],
-    "name": "some step with isolated in path"
-  },
-  {
     "name": "$result"
   }
 ]

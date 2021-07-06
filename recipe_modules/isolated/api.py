@@ -2,7 +2,6 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import contextlib
 import urllib
 
 from recipe_engine import recipe_api
@@ -67,19 +66,6 @@ class IsolatedApi(recipe_api.RecipeApi):
                        step_test_data=step_test_data,
                        infra_step=True)
 
-  @contextlib.contextmanager
-  def on_path(self):
-    """This context manager ensures the go isolated client is available on
-    $PATH.
-
-    Example:
-
-        with api.isolated.on_path():
-          # do your steps which require the isolated binary on path
-    """
-    client_dir = self.m.path.dirname(self._client)
-    with self.m.context(env_prefixes={'PATH': [client_dir]}):
-      yield
 
   def isolated(self, root_dir):
     """Returns an Isolated object that can be used to archive a set of files

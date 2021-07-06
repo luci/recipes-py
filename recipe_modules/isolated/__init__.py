@@ -1,6 +1,5 @@
 DEPS = [
     'cipd',
-    'context',
     'json',
     'path',
     'properties',

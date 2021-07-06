@@ -58,9 +58,6 @@ def RunSteps(api):
   )
 
 
-  with api.isolated.on_path():
-    api.step('some step with isolated in path', [])
-
 
 def GenTests(api):
   yield api.test('basic')
