@@ -23,8 +23,9 @@ if sys.version_info.major < 3:
   sys.setdefaultencoding('UTF8')
 
 # pylint: disable=wrong-import-position
-import os
 import errno
+import os
+import time
 
 # Hack 2; crbug.com/980535
 #
@@ -34,7 +35,6 @@ import errno
 # It turns out that merely retrying this read operation with exactly the same
 # parameters works... go figure.
 if sys.platform == 'darwin':
-  import time
   _REAL_OS_READ = os.read
   def _hacked_read(fileno, bufsiz):
     tries = 3
