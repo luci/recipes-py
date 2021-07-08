@@ -32,29 +32,14 @@ def RunSteps(api):
 
 
   # Archive with the default isolate server.
-  first_hash = isolated.archive('archiving')
+  isolated.archive('archiving')
 
   # Or try isolating the whole root directory - and doing so to another server.
   isolated = api.isolated.isolated(temp)
   isolated.add_dir(temp)
-  second_hash = isolated.archive(
+  isolated.archive(
       'archiving root directory elsewhere',
-    isolate_server='other-isolateserver.appspot.com',
-  )
-
-  # Download your isolated tree.
-  first_output_dir = api.path['cleanup'].join('first')
-  api.isolated.download(
-    'download with first hash',
-    isolated_hash=first_hash,
-    output_dir=first_output_dir,
-  )
-  second_output_dir = api.path['cleanup'].join('second')
-  api.isolated.download(
-    'download with second hash',
-    isolated_hash=second_hash,
-    output_dir=second_output_dir,
-    isolate_server='other-isolateserver.appspot.com',
+      isolate_server='other-isolateserver.appspot.com',
   )
 
 

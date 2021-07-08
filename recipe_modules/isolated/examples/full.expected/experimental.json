@@ -141,36 +141,6 @@
     ]
   },
   {
-    "cmd": [
-      "[CACHE]/cipd/infra/tools/luci/isolated/latest/isolated",
-      "download",
-      "-verbose",
-      "-isolate-server",
-      "https://example.isolateserver.appspot.com",
-      "-isolated",
-      "[dummy hash]",
-      "-output-dir",
-      "[CLEANUP]/first"
-    ],
-    "infra_step": true,
-    "name": "download with first hash"
-  },
-  {
-    "cmd": [
-      "[CACHE]/cipd/infra/tools/luci/isolated/latest/isolated",
-      "download",
-      "-verbose",
-      "-isolate-server",
-      "other-isolateserver.appspot.com",
-      "-isolated",
-      "[dummy hash]",
-      "-output-dir",
-      "[CLEANUP]/second"
-    ],
-    "infra_step": true,
-    "name": "download with second hash"
-  },
-  {
     "name": "$result"
   }
 ]

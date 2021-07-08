@@ -1951,20 +1951,6 @@ http://go.chromium.org/luci/client/cmd/isolated.
 This module will deploy the client to [CACHE]/isolated_client/; users should
 add this path to the named cache for their builder.
 
-&mdash; **def [download](/recipe_modules/isolated/api.py#80)(self, step_name, isolated_hash, output_dir, isolate_server=None):**
-
-Downloads an isolated tree from an isolate server.
-
-Args:
-  step_name (str): name of the step.
-  isolated_hash (str): the hash of an isolated tree.
-  output_dir (Path): Path to an output directory. If a non-existent
-    directory, it will be created; else if already existent,
-    conflicting files will be overwritten and non-conflicting files
-    already in the directory will be ignored.
-  isolate_server (str|None): an isolate server to download from; if None,
-    the module's default server will be used instead.
-
 &mdash; **def [initialize](/recipe_modules/isolated/api.py#34)(self):**
 
 &emsp; **@property**<br>&mdash; **def [isolate\_server](/recipe_modules/isolated/api.py#46)(self):**
