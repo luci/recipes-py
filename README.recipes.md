@@ -1938,9 +1938,9 @@ corresponds to one step, and contains the following keys:
         read them back from inside of the recipes.
 ### *recipe_modules* / [isolated](/recipe_modules/isolated)
 
-[DEPS](/recipe_modules/isolated/__init__.py#1): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/isolated/__init__.py#1): [properties](#recipe_modules-properties)
 
-#### **class [IsolatedApi](/recipe_modules/isolated/api.py#14)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
+#### **class [IsolatedApi](/recipe_modules/isolated/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
 
 API for interacting with isolated.
 
@@ -1951,22 +1951,13 @@ http://go.chromium.org/luci/client/cmd/isolated.
 This module will deploy the client to [CACHE]/isolated_client/; users should
 add this path to the named cache for their builder.
 
-&mdash; **def [initialize](/recipe_modules/isolated/api.py#34)(self):**
+&mdash; **def [initialize](/recipe_modules/isolated/api.py#24)(self):**
 
-&emsp; **@property**<br>&mdash; **def [isolate\_server](/recipe_modules/isolated/api.py#46)(self):**
+&emsp; **@property**<br>&mdash; **def [isolate\_server](/recipe_modules/isolated/api.py#28)(self):**
 
 Returns the associated isolate server.
 
-&mdash; **def [isolated](/recipe_modules/isolated/api.py#70)(self, root_dir):**
-
-Returns an Isolated object that can be used to archive a set of files
-and directories, relative to a given root directory.
-
-Args:
-  root_dir (Path): directory relative to which files and directory will be
-    isolated.
-
-&emsp; **@property**<br>&mdash; **def [namespace](/recipe_modules/isolated/api.py#52)(self):**
+&emsp; **@property**<br>&mdash; **def [namespace](/recipe_modules/isolated/api.py#34)(self):**
 
 Returns the associated namespace.
 ### *recipe_modules* / [json](/recipe_modules/json)
@@ -4174,9 +4165,9 @@ This tests metadata features of the Future object.
 &mdash; **def [RunSteps](/recipe_modules/generator_script/examples/full.py#19)(api, script_name):**
 ### *recipes* / [isolated:examples/full](/recipe_modules/isolated/examples/full.py)
 
-[DEPS](/recipe_modules/isolated/examples/full.py#5): [file](#recipe_modules-file), [isolated](#recipe_modules-isolated), [json](#recipe_modules-json), [path](#recipe_modules-path), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/isolated/examples/full.py#5): [isolated](#recipe_modules-isolated)
 
-&mdash; **def [RunSteps](/recipe_modules/isolated/examples/full.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/isolated/examples/full.py#10)(api):**
 ### *recipes* / [json:examples/full](/recipe_modules/json/examples/full.py)
 
 [DEPS](/recipe_modules/json/examples/full.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

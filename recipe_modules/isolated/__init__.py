@@ -1,11 +1,5 @@
 DEPS = [
-    'cipd',
-    'json',
-    'path',
     'properties',
-    'raw_io',
-    'runtime',
-    'step',
 ]
 
 from recipe_engine.recipe_api import Property
@@ -17,7 +11,6 @@ PROPERTIES = {
         param_name='isolated_properties',
         kind=ConfigGroup(
           server=Single(str),
-          version=Single(str),
         ),
         default={},
       ),
