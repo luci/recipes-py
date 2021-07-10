@@ -6,6 +6,8 @@ import logging
 import os
 import sys
 
+from io import open
+
 import psutil
 
 from google.protobuf import json_format as jsonpb
@@ -87,7 +89,7 @@ def main(args):
 def _main_impl(args):
   LOG.info('luciexe started, parsing Build message from stdin.')
   build = Build()
-  build.ParseFromString(sys.stdin.read())
+  build.ParseFromString(open(sys.stdin.fileno(), 'rb').read())
   LOG.info('finished parsing Build message')
   LOG.debug('build proto: %s', jsonpb.MessageToJson(build))
 
