@@ -6,6 +6,9 @@
 a single step (subprocess), usually via the `recipe_engine/step` recipe module.
 """
 
+from future.utils import iteritems, itervalues
+from past.builtins import basestring
+
 import attr
 
 from .internal.attr_util import attr_type
@@ -231,7 +234,7 @@ class StepData(object):
     def _deep_set(namespace, value):
       """Sets `value` at `namespace` on self.
 
-      Populates intermedaite tiers of namespace with _AttributeRaiser objects.
+      Populates intermediate tiers of namespace with _AttributeRaiser objects.
 
       Args:
         * namespace (Tuple[str]) - A tuple of python identifiers. e.g.
@@ -259,12 +262,12 @@ class StepData(object):
     UNSET = object()   # pylint: disable=invalid-name
 
     # For every staged placeholder namespace.
-    for namespace, name_to_result in staged.iteritems():
+    for namespace, name_to_result in iteritems(staged):
       # The default is defined as the result from the Placeholder with no name
       default = name_to_result.pop(None, UNSET)
       # OR the Placeholder (if there was only one in this namespace)
       if default is UNSET and len(name_to_result) == 1:
-        default = name_to_result.values()[0]
+        default = list(itervalues(name_to_result))[0]
       if default is not UNSET:
         # This sets e.g. 'json.output' to `default`
         _deep_set(namespace, default)
@@ -277,12 +280,12 @@ class StepData(object):
 
     # Now set `_finalized` on all _AttributeRaiser objects to prevent further
     # assignments.
-    objs = self.__dict__.values()
+    objs = list(itervalues(self.__dict__))
     while objs:
       obj = objs.pop()
       if not isinstance(obj, _AttributeRaiser):
         continue
-      objs.extend(obj.__dict__.values())
+      objs.extend(itervalues(obj.__dict__))
       obj._finalized = True   # pylint: disable=protected-access
 
   def finalize(self):

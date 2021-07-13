@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from io import StringIO
+
 import contextlib
 import datetime
 import functools
@@ -10,9 +12,11 @@ import os
 import sys
 import time
 import traceback
-import urllib
 
-from six.moves import cStringIO as StringIO
+from builtins import map, range
+from builtins import str as text
+from future.utils import iteritems
+from past.builtins import basestring
 
 
 def sentinel(name, **attrs):
@@ -174,15 +178,15 @@ class StringListIO(object):
     while s:
       i = s.find('\n')
       if i == -1:
-        self.lines[-1].write(s)
+        self.lines[-1].write(text(s))
         break
-      self.lines[-1].write(s[:i])
+      self.lines[-1].write(text(s[:i]))
       self.lines[-1] = self.lines[-1].getvalue()
       self.lines.append(StringIO())
       s = s[i+1:]
 
   def close(self):
-    if not isinstance(self.lines[-1], basestring):
+    if isinstance(self.lines[-1], StringIO):
       self.lines[-1] = self.lines[-1].getvalue()
 
 
@@ -208,7 +212,7 @@ class exponential_retry(object):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
       retry_delay = self.delay
-      for i in xrange(self.retries):
+      for i in range(self.retries):
         try:
           return f(*args, **kwargs)
         except Exception as e:
@@ -274,8 +278,10 @@ class MultiException(Exception):
       self.message = str(base[0]) + ', and %d more...' % (len(base)-1)
     self._inner = base
 
-  def __nonzero__(self):
+  def __bool__(self):
     return bool(self._inner)
+
+  __nonzero__ = __bool__ # py2 compatibility
 
   def __len__(self):
     return len(self._inner)
@@ -315,18 +321,18 @@ MAX_SAFE_INTEGER = (2**53) - 1
 def fix_json_object(obj):
   """Recursively:
 
-    * Re-encodes strings as utf-8 inside |obj|.
+    * Re-encodes strings as utf-8 inside |obj| (python2 only).
     * Replaces floats with ints when:
       * The value is a whole number
-      * The value is outiside of [-(2 ** 53 - 1), 2 ** 53 - 1]
+      * The value is outside of [-(2 ** 53 - 1), 2 ** 53 - 1]
 
   Returns the result.
   """
-  if isinstance(obj, unicode):
+  if sys.version_info.major == 2 and isinstance(obj, unicode):
     return obj.encode('utf-8', 'replace')
 
   if isinstance(obj, list):
-    return map(fix_json_object, obj)
+    return list(map(fix_json_object, obj))
 
   if isinstance(obj, float):
     if obj.is_integer() and (MIN_SAFE_INTEGER <= obj <= MAX_SAFE_INTEGER):
@@ -335,7 +341,7 @@ def fix_json_object(obj):
 
   if isinstance(obj, dict):
     new_obj = type(obj)(
-        (fix_json_object(k), fix_json_object(v)) for k, v in obj.iteritems() )
+        (fix_json_object(k), fix_json_object(v)) for k, v in iteritems(obj))
     return new_obj
 
   return obj

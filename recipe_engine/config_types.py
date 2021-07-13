@@ -2,11 +2,16 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from collections import namedtuple
+from itertools import chain
+
 import abc
 import os
 import re
 
-from collections import namedtuple
+from builtins import filter
+from future.utils import with_metaclass
+from past.builtins import basestring
 
 from . import types
 
@@ -67,9 +72,9 @@ class RecipeConfigType(object):
     return self.tostring_fn(self) # pylint: disable=not-callable
 
 
-class BasePath(object):
-  __metaclass__ = abc.ABCMeta
+class BasePath(with_metaclass(abc.ABCMeta, object)):
 
+  @abc.abstractmethod
   def resolve(self, test_enabled):
     """Returns a string representation of the path base.
 
@@ -202,7 +207,8 @@ class Path(RecipeConfigType):
     if not pieces and not kwargs:
       return self
     kwargs.setdefault('platform_ext', self.platform_ext)
-    return Path(self.base, *filter(bool, self.pieces + pieces), **kwargs)
+    return Path(self.base, *[p for p in chain(self.pieces, pieces) if p],
+                **kwargs)
 
   def is_parent_of(self, child):
     """True if |child| is in a subdirectory of this path."""
