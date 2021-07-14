@@ -130,21 +130,13 @@ def _cleanup_pyc(recipe_deps):
 
 
 def _common_post_process(args):
-  # TODO(iannucci): We should always do logging.basicConfig() (probably with
-  # logging.WARNING), even if no verbose is passed. However we need to be
-  # careful as this could cause issues with spurious/unexpected output.
-  # Once the recipe engine is on native build.proto, this should be safe to
-  # do.
-  if args.verbose > 0:
-    logging.basicConfig()
+  logging.basicConfig()
+  if args.log_level:
+    logging.getLogger().setLevel(args.log_level)
+  elif args.verbose > 1:
     logging.getLogger().setLevel(logging.INFO)
-    if args.verbose > 1:
-      logging.getLogger().setLevel(logging.DEBUG)
-  else:
-    # Prevent spurious "No handlers could be found for ..." stderr messages.
-    # Once we always set a basicConfig (per TODO above), this can go away as
-    # well.
-    logging.root.manager.emittedNoHandlerWarning = True
+  elif args.verbose > 0:
+    logging.getLogger().setLevel(logging.DEBUG)
 
   if args.pid_file:
     try:
@@ -211,6 +203,18 @@ def _add_common_args(parser):
 
     return value
 
+  def _to_log_level(val):
+    mapping = {
+      'DEBUG': logging.DEBUG,
+      'INFO': logging.INFO,
+      'WARNING': logging.WARNING,
+      'ERROR': logging.ERROR,
+    }
+    if val not in mapping:
+      parser.error('expect --log-level to be one of %s; got %r.' % (
+          list(mapping), val))
+    return mapping[val]
+
   # TODO(iannucci): change --package to --repo-path and avoid having recipes.py
   # pass the path to the recipes.cfg. This is preferable because the location of
   # recipes.cfg MUST be discovered for recipe dependencies; the RepoSpec
@@ -223,9 +227,16 @@ def _add_common_args(parser):
       '--package',
       dest='main_repo_path', type=_package_to_main_repo, required=True,
       help='Path to recipes.cfg of the recipe repo to operate on.')
-  parser.add_argument(
+  group = parser.add_mutually_exclusive_group()
+  group.add_argument(
       '--verbose', '-v', action='count', default=0,
-      help='Increase logging verboisty')
+      help='Increase logging verbosity. Mutually exclusive with --log-level.')
+  group.add_argument(
+      '--log-level', dest='log_level', type=_to_log_level,
+      help=(
+        'Set the log level of this command. Accepted values: [DEBUG, INFO, '
+        'WARNING, ERROR]. Mutually exclusive with --verbose.'
+      ))
   parser.add_argument('-O', '--repo-override', metavar='ID=PATH',
       action=_RepoOverrideAction, default={},
       help='Override a repo repository path with a local one.')

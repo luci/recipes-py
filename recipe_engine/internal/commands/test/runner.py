@@ -497,6 +497,7 @@ class RunnerThread(gevent.Greenlet):
       '--package', os.path.join(
           recipe_deps.main_repo.path, RECIPES_CFG_LOCATION_REL),
       '--proto-override', os.path.dirname(PB.__path__[0]),
+      '--log-level', 'ERROR',
     ]
     # Carry through all repos explicitly via overrides
     for repo_name, repo in recipe_deps.repos.iteritems():
