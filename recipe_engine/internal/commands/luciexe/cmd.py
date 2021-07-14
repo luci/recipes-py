@@ -116,19 +116,22 @@ def _main_impl(args):
 
   if args.output:
     try:
-      with open(args.output, 'wb') as f:
-        final_build = luciexe_engine.current_build_proto
-        if args.output.endswith('.pb') :
-          f.write(final_build.SerializeToString(deterministic=True))
-        elif args.output.endswith('.json'):
-          f.write(jsonpb.MessageToJson(
+      final_build = luciexe_engine.current_build_proto
+      if args.output.endswith('.pb') :
+        out = final_build.SerializeToString(deterministic=True)
+      elif args.output.endswith('.json'):
+        out = jsonpb.MessageToJson(
             final_build,
             preserving_proto_field_name=True,
             sort_keys=True,
-            indent=2,
-          ))
-        elif args.output.endswith('.textpb'):
-          f.write(textpb.MessageToString(final_build))
+            indent=2).encode('utf-8')
+      elif args.output.endswith('.textpb'):
+        out = textpb.MessageToString(final_build).encode('utf-8')
+      else:
+        raise ValueError('unknown output file extension: %r' % args.output)
+
+      with open(args.output, 'wb') as f:
+        f.write(out)
     except:
       LOG.exception("Error while writing final build to output file.")
       raise
