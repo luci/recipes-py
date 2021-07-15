@@ -70,8 +70,8 @@ derivatives for more info.
 
 from __future__ import absolute_import
 from builtins import object
-from past.builtins import basestring, long, map
-from future.utils import iteritems, listvalues
+from past.builtins import basestring
+from future.utils import iteritems, itervalues
 
 import collections
 import functools
@@ -339,21 +339,23 @@ class ConfigBase(object):
     """Returns a doc.Doc.Schema proto message for this config type."""
     raise NotImplementedError
 
-if sys.version_info.major >= 3:
-  unicode = str # pragma: no cover
 
 _SIMPLE_TYPE_LOOKUP = {
   str: doc.Doc.Schema.STRING,
-  basestring: doc.Doc.Schema.STRING,
-  unicode: doc.Doc.Schema.STRING,
   int: doc.Doc.Schema.NUMBER,
-  long: doc.Doc.Schema.NUMBER,
   float: doc.Doc.Schema.NUMBER,
   bool: doc.Doc.Schema.BOOLEAN,
   dict: doc.Doc.Schema.OBJECT,
   list: doc.Doc.Schema.ARRAY,
   type(None): doc.Doc.Schema.NULL,
 }
+
+if sys.version_info.major < 3:
+  _SIMPLE_TYPE_LOOKUP.update({
+    basestring: doc.Doc.Schema.STRING,
+    unicode: doc.Doc.Schema.STRING,
+    long: doc.Doc.Schema.NUMBER,
+  })
 
 
 def _inner_type_schema(inner_type):
@@ -446,15 +448,15 @@ class ConfigGroup(ConfigBase):
         if include_hidden or not v._hidden)  # pylint: disable=W0212
 
   def reset(self):
-    for v in listvalues(self._type_map):
+    for v in itervalues(self._type_map):
       v.reset()
 
   def complete(self):
-    return all(v.complete() for v in listvalues(self._type_map))
+    return all(v.complete() for v in itervalues(self._type_map))
 
   def _is_default(self):
     # pylint: disable=W0212
-    return all(v._is_default() for v in listvalues(self._type_map))
+    return all(v._is_default() for v in itervalues(self._type_map))
 
   def schema_proto(self):
     ret = doc.Doc.Schema()
@@ -629,13 +631,15 @@ class Dict(ConfigBase, collections.MutableMapping):
       val = val.data
     typeAssert(val, collections.Mapping)
     if self.value_type:
-      for v in val.itervalues():
+      for v in itervalues(val):
         typeAssert(v, self.value_type)
     self.data = val
 
   def as_jsonish(self, _include_hidden=None):
-    return self.jsonish_fn(map(
-      self.item_fn, sorted(iteritems(self.data), key=lambda x: x[0])))
+    return self.jsonish_fn([
+      self.item_fn(item)
+      for item in sorted(iteritems(self.data), key=lambda x: x[0])
+    ])
 
   def reset(self):
     self.data.clear()

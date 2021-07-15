@@ -13,6 +13,7 @@ from contextlib import contextmanager
 
 from recipe_engine.third_party import luci_context
 
+from builtins import zip
 from google.protobuf import json_format as jsonpb
 
 import gevent

@@ -39,6 +39,8 @@ import inspect
 import os
 import sys
 
+from future.utils import iteritems, itervalues
+
 from ..config_types import Path, ModuleBasePath, RepoBasePath
 from ..recipe_api import BoundProperty, RecipeApi, RecipeApiPlain
 from ..recipe_test_api import RecipeTestApi
@@ -217,7 +219,7 @@ class RecipeModuleImporter(object):
       cfg_module = importlib.import_module(mod.__name__ + '.config')
 
     if cfg_module:
-      for v in cfg_module.__dict__.itervalues():
+      for v in itervalues(cfg_module.__dict__):
         if isinstance(v, ConfigContext):
           assert not mod.CONFIG_CTX, (
             'More than one configuration context: %s, %s' %
@@ -236,7 +238,7 @@ class RecipeModuleImporter(object):
 
     api_module = importlib.import_module(mod.__name__ + '.api')
 
-    for v in api_module.__dict__.itervalues():
+    for v in itervalues(api_module.__dict__):
       # If the recipe has literally imported the RecipeApi, we don't want to
       # consider that to be the real RecipeApi :)
       if v is RecipeApiPlain or v is RecipeApi:
@@ -255,7 +257,7 @@ class RecipeModuleImporter(object):
 
     mod.TEST_API = getattr(mod, 'TEST_API', None)
     if test_module:
-      for v in mod.test_api.__dict__.itervalues():
+      for v in itervalues(mod.test_api.__dict__):
         # If the recipe has literally imported the RecipeTestApi, we don't want
         # to consider that to be the real RecipeTestApi :)
         if v is RecipeTestApi:
@@ -278,5 +280,5 @@ class RecipeModuleImporter(object):
       mod.PROPERTIES = {
           prop_name: value.bind(prop_name, BoundProperty.MODULE_PROPERTY,
                                 full_decl_name)
-          for prop_name, value in properties_def.items()
+          for prop_name, value in iteritems(properties_def)
       }

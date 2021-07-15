@@ -3,7 +3,7 @@
 # that can be found in the LICENSE file.
 
 from __future__ import absolute_import
-from builtins import object, zip
+from builtins import object
 from future.utils import iteritems, with_metaclass
 from past.builtins import basestring
 
@@ -16,6 +16,7 @@ import json
 import keyword
 import os
 import re
+import sys
 import types
 
 from functools import wraps
@@ -37,9 +38,6 @@ from .util import ModuleInjectionSite
 
 # TODO(iannucci): Rationalize the use of this in downstream scripts.
 from .util import Placeholder  # pylint: disable=unused-import
-import sys
-if sys.version_info.major >= 3:
-  unicode = str
 
 
 class UnknownRequirementError(object):
@@ -161,7 +159,9 @@ class PathsClient(object):
     #   [(path_string, path), ...]
     #   into
     #   ([path_string, ...], [path, ...])
-    self.path_strings, self.paths = zip(*sorted(paths_found.items()))
+    for path_string, path in sorted(iteritems(paths_found)):
+      self.path_strings.append(path_string)
+      self.paths.append(path)
 
   def find_longest_prefix(self, target, sep):
     """Identifies a known resource path which would contain the `target` path.
@@ -1113,7 +1113,7 @@ class Property(object):
     # NOTE: late import to avoid early protobuf import
     from .config import Single
     if isinstance(kind, type):
-      if kind in (str, unicode):
+      if sys.version_info.major < 3 and kind in (str, unicode):
         kind = basestring
       kind = Single(kind)
     self.kind = kind

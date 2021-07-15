@@ -5,6 +5,7 @@
 from itertools import chain
 from collections import defaultdict
 
+from future.utils import iteritems, itervalues
 
 class FakeEnviron(object):
   """This is a fake dictionary which is meant to emulate os.environ strictly for
@@ -29,13 +30,13 @@ class FakeEnviron(object):
     return self[key]
 
   def keys(self):
-    return self.data.keys()
+    return list(self.data)
 
   def iteritems(self):
-    return self.data.iteritems()
+    return iteritems(self.data)
 
   def items(self):
-    return self.data.items()
+    return list(iteritems(self.data))
 
   def pop(self, key, default=None):
     result = self.data.get(key, default)
@@ -116,7 +117,7 @@ def merge_envs(original, overrides, prefixes, suffixes, pathsep):
       pfxs += (val,)
     result[k] = pathsep.join(str(v) for v in chain(pfxs, sfxs))
 
-  for k, v in overrides.iteritems():
+  for k, v in iteritems(overrides):
     if k in merged:
       continue
     if v is None:

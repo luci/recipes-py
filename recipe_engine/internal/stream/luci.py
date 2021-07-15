@@ -7,12 +7,14 @@ import json
 import logging
 import traceback
 
-import attr
-import gevent
+from future.utils import iteritems
 
 from google.protobuf import json_format as jsonpb
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from google.protobuf.struct_pb2 import Struct
+
+import attr
+import gevent
 
 from PB.go.chromium.org.luci.buildbucket.proto.build import Build
 from PB.go.chromium.org.luci.buildbucket.proto.step import Step
@@ -287,7 +289,7 @@ class LUCIStepStream(StreamEngine.StepStream):
     # Once annotations are gone, these should be replaced with proper API
     # (rather than this tunnel via set_build_property).
     if key == '$recipe_engine/buildbucket/runtime-tags':
-      for k, vals in json.loads(value).iteritems():
+      for k, vals in iteritems(json.loads(value)):
         self._tags.extend([common.StringPair(key=k, value=v) for v in set(vals)
             if common.StringPair(key=k, value=v) not in self._tags])
     elif key == '$recipe_engine/buildbucket/output_gitiles_commit':
@@ -407,7 +409,7 @@ class LUCIStreamEngine(StreamEngine):
     def _do_send():
       self._build_stream.send(
           jsonpb.MessageToJson(self._build_proto,
-                               preserving_proto_field_name=True)
+                               preserving_proto_field_name=True).encode('utf-8')
           if self._export_build_as_json else
           self._build_proto.SerializeToString().encode('zlib')
       )

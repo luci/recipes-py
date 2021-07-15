@@ -8,14 +8,15 @@ See implementation_details.md for the expectations of the modules in this
 directory.
 """
 
-from builtins import zip
-from future.utils import iteritems
 import argparse
 import errno
 import logging
 import os
 import pkgutil
 import sys
+
+from builtins import zip
+from future.utils import iteritems, itervalues
 
 if sys.version_info >= (3, 5): # we're running python > 3.5
   OS_WALK = os.walk
@@ -111,7 +112,7 @@ def _cleanup_pyc(recipe_deps):
   Args:
     * recipe_deps (RecipeDeps) - The loaded recipe dependencies.
   """
-  for repo in recipe_deps.repos.values():
+  for repo in itervalues(recipe_deps.repos):
     for to_walk in (repo.recipes_dir, repo.modules_dir):
       for root, _dirs, files in OS_WALK(to_walk):
         for fname in files:
@@ -303,6 +304,6 @@ def parse_and_run():
     # Any file-like objects directly attached to args need to be closed
     # explicitly here because otherwise main.py will do an os._exit and any
     # buffered data in these files could be lost.
-    for value in vars(args).values():
+    for value in itervalues(vars(args)):
       if hasattr(value, 'close'):
         value.close()

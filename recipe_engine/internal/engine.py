@@ -458,7 +458,7 @@ class RecipeEngine(object):
     with self._stream_engine.new_step_stream(('setup_build',), False) as step:
       step.mark_running()
       if emit_initial_properties:
-        for key in sorted(self.properties.iterkeys()):
+        for key in sorted(self.properties):
           step.set_build_property(
               key, json.dumps(self.properties[key], sort_keys=True))
 
@@ -997,7 +997,7 @@ def _print_step(execution_log, step):
   # TODO(iannucci): Make this illegal?
   execution_log.write_line(
       'escaped for shell: %s'
-      % ' '.join(map(_shell_quote, step.cmd)).replace('\n', '\\n'))
+      % ' '.join(_shell_quote(arg) for arg in step.cmd).replace('\n', '\\n'))
 
   execution_log.write_line('in dir ' + step.cwd)
 

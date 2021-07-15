@@ -9,7 +9,9 @@ import operator
 
 from functools import reduce
 
+from builtins import str
 from future.utils import iteritems
+from past.builtins import basestring
 
 import attr
 from gevent.local import local
@@ -110,13 +112,13 @@ class FrozenDict(collections.Mapping):
     return self._hash
 
   def __repr__(self):
-    return 'FrozenDict(%r)' % (self._d.items(),)
+    return 'FrozenDict(%r)' % (list(iteritems(self._d)),)
 
 
 class StepPresentation(object):
   _RAW_STATUSES = (
     None, 'SUCCESS', 'WARNING', 'FAILURE', 'EXCEPTION', 'CANCELED')
-  STATUSES = frozenset(filter(bool, _RAW_STATUSES))
+  STATUSES = frozenset(status for status in _RAW_STATUSES if status)
 
   # TODO(iannucci): use attr for this
 
@@ -234,7 +236,7 @@ class StepPresentation(object):
       step_stream.add_step_summary_text(self.step_summary_text)
     # late proto import
     from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
-    for name, log in logs.iteritems():
+    for name, log in iteritems(logs):
       if isinstance(log, common_pb2.Log):
         step_stream.append_log(log)
       else:
@@ -244,11 +246,11 @@ class StepPresentation(object):
           else:
             for line in log:
               log_stream.write_split(line)
-    for label, url in self.links.iteritems():
+    for label, url in iteritems(self.links):
       # We fix spaces in urls; It's an extremely common mistake to make, and
       # easy to remedy here.
-      step_stream.add_step_link(label, url.replace(" ", "%20"))
-    for key, value in sorted(self._properties.iteritems()):
+      step_stream.add_step_link(str(label), str(url).replace(" ", "%20"))
+    for key, value in sorted(iteritems(self._properties)):
       if isinstance(value, message.Message):
         value = json_pb.MessageToDict(value)
       step_stream.set_build_property(key, json.dumps(value, sort_keys=True))

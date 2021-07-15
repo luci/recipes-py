@@ -4,6 +4,9 @@
 
 import json
 
+from builtins import str
+from future.utils import iteritems
+
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.recipe_engine import result as result_pb2
 
@@ -53,7 +56,7 @@ class StreamEngineInvariants(StreamEngine):
 
     def close(self):
       assert self._open
-      for log_name, log in self._logs.iteritems():
+      for log_name, log in iteritems(self._logs):
         if isinstance(log, self._engine.LogStream):
           assert not log._open, 'Log %s still open when closing step %s' % (
             log_name, self._step_name)
@@ -85,8 +88,8 @@ class StreamEngineInvariants(StreamEngine):
       pass
 
     def add_step_link(self, name, url):
-      assert isinstance(name, basestring), 'Link name %s is not a string' % name
-      assert isinstance(url, basestring), 'Link url %s is not a string' % url
+      assert isinstance(name, str), 'Link name %s is not a string' % name
+      assert isinstance(url, str), 'Link url %s is not a string' % url
 
     def set_step_status(self, status, had_timeout):
       _ = had_timeout

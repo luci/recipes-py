@@ -4,6 +4,8 @@
 
 import inspect
 
+from future.utils import iteritems
+
 from ..recipe_api import BoundProperty, PROPERTY_SENTINEL
 
 from .exceptions import UndefinedPropertyException
@@ -17,7 +19,7 @@ def _invoke_with_properties(callable_obj, all_props, environ, prop_defs,
   This allows us to reuse this logic elsewhere, without defining a fake function
   which has arbitrary argument names.
   """
-  for name, prop in prop_defs.iteritems():
+  for name, prop in iteritems(prop_defs):
     if not isinstance(prop, BoundProperty):
       raise ValueError(
           "You tried to invoke {} with an unbound Property {} named {}".format(
@@ -25,7 +27,7 @@ def _invoke_with_properties(callable_obj, all_props, environ, prop_defs,
 
   # Maps parameter names to property names
   param_name_mapping = {
-    prop.param_name: name for name, prop in prop_defs.iteritems()
+    prop.param_name: name for name, prop in iteritems(prop_defs)
   }
 
   props = []

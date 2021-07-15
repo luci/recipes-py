@@ -8,9 +8,10 @@ RecipeEngine.
 # TODO(iannucci): Simplify this.
 """
 
-import attr
+from builtins import int
+from past.builtins import basestring
 
-from past.builtins import basestring, long
+import attr
 
 from google.protobuf import json_format as jsonpb
 from google.protobuf.message import Message
@@ -127,7 +128,7 @@ class StepConfig(object):
   # LUCI_CONTEXT['deadline'] then it would include the time waiting for `cost`.
   timeout = attr.ib(
       default=None,
-      validator=attr_type((int, long, float, type(None))))
+      validator=attr_type((int, float, type(None))))
 
   # luci_context is the mapping of modified LUCI_CONTEXT sections to their
   # respective section proto message.
@@ -147,7 +148,7 @@ class StepConfig(object):
   def _ok_ret_validator(self, attrib, value):
     if value is self.ALL_OK:
       return
-    attr_seq_type((int, long))(self, attrib, value)
+    attr_seq_type(int)(self, attrib, value)
 
   # If True and the step returns an unacceptable return code (see `ok_ret`),
   # this will raise InfraFailure instead of StepFailure.

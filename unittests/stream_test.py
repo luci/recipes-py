@@ -26,7 +26,7 @@ class StreamTest(test_env.RecipeEngineUnitTest):
       bar.add_step_text('*blushing*')
       poem.write_line('thoust makest mine heartst goest thumpitypump..est')
 
-    foo.add_step_link('read it online!', 'https://foospoemtobar.com/')
+    foo.add_step_link(u'read it online!', u'https://foospoemtobar.com/')
     foo.add_step_summary_text('read a killer poem and took a bow')
     foo.close()
 
@@ -98,7 +98,10 @@ bar tries to kiss foo, but foo already left
             stringio, emit_timestamps=True, time_fn=self.fake_time))
     with engine:
       self._example(engine)
-    self.assertEqual(stringio.getvalue(), self._example_annotations())
+    self.assertEqual(
+      stringio.getvalue().splitlines(),
+      self._example_annotations().splitlines(),
+    )
 
   def test_write_after_close(self):
     with StreamEngineInvariants() as engine:

@@ -8,6 +8,9 @@ import inspect
 from functools import reduce
 from collections import namedtuple, defaultdict
 
+from future.utils import iteritems, itervalues
+from past.builtins import basestring
+
 from .util import ModuleInjectionSite, static_call, static_wraps
 from .types import freeze
 
@@ -25,7 +28,7 @@ def combineify(name, dest, a, b, overwrite=False):
   """
   dest_dict = getattr(dest, name)
   dest_dict.update(getattr(a, name))
-  for k, v in getattr(b, name).iteritems():
+  for k, v in iteritems(getattr(b, name)):
     if k in dest_dict:
       if not overwrite:
         dest_dict[k] += v
@@ -113,7 +116,7 @@ class StepTestData(BaseTestData):
     if len(self.placeholder_data) != 1:
       raise ValueError('Cannot unwrap placeholder_data with length > 1: len=%d'
                        % len(self.placeholder_data))
-    return self.placeholder_data.values()[0]
+    return list(itervalues(self.placeholder_data))[0]
 
   def pop_placeholder(self, module_name, placeholder_name, name):
     return self.placeholder_data.pop(
@@ -176,7 +179,7 @@ class StepTestData(BaseTestData):
 
   def __repr__(self):
     dct = {
-      'placeholder_data': dict(self.placeholder_data.iteritems()),
+      'placeholder_data': dict(iteritems(self.placeholder_data)),
       'stdout': self._stdout,
       'stderr': self._stderr,
       'retcode': self._retcode,
@@ -299,8 +302,8 @@ class TestData(BaseTestData):
       'properties': self.properties,
       'environ': self.environ,
       'luci_context': self.luci_context,
-      'mod_data': dict(self.mod_data.iteritems()),
-      'step_data': dict(self.step_data.iteritems()),
+      'mod_data': dict(iteritems(self.mod_data)),
+      'step_data': dict(iteritems(self.step_data)),
       'expected_exception': self.expected_exception,
     },)
 
@@ -426,7 +429,7 @@ def _placeholder_step_data(func, placeholder_name=None):
     mod_name = self._module.NAME  # pylint: disable=W0212
     data = static_call(self, func, *args, **kwargs)
     if isinstance(data, StepTestData):
-      all_data = data.placeholder_data.values()
+      all_data = list(itervalues(data.placeholder_data))
       if len(all_data) != 1:
         raise ValueError(
           'placeholder_step_data is only expecting a single output placeholder '

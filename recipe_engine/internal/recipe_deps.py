@@ -700,7 +700,8 @@ class Recipe(object):
 
     orig_path = sys.path[:]
     try:
-      execfile(self.path, recipe_globals)
+      with open(self.path, 'rb') as f:
+        exec(compile(f.read(), self.path, 'exec'), recipe_globals)
     except SyntaxError as ex:
       # Keep the SyntaxError details and traceback, but change the message from
       # 'invalid syntax'
@@ -740,7 +741,7 @@ class Recipe(object):
       # Let each property object know about the fully qualified property name.
       recipe_globals['PROPERTIES'] = {
           name: value.bind(name, BoundProperty.RECIPE_PROPERTY, self.full_name)
-          for name, value in properties_def.items()
+          for name, value in iteritems(properties_def)
       }
 
     if 'PYTHON_VERSION_COMPATIBILITY' not in recipe_globals:
