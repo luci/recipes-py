@@ -135,9 +135,9 @@ def _common_post_process(args):
   if args.log_level:
     logging.getLogger().setLevel(args.log_level)
   elif args.verbose > 1:
-    logging.getLogger().setLevel(logging.INFO)
-  elif args.verbose > 0:
     logging.getLogger().setLevel(logging.DEBUG)
+  elif args.verbose > 0:
+    logging.getLogger().setLevel(logging.INFO)
 
   if args.pid_file:
     try:
