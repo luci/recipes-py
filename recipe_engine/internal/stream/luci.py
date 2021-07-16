@@ -5,6 +5,7 @@
 
 import json
 import logging
+import sys
 import traceback
 
 from future.utils import iteritems
@@ -333,6 +334,11 @@ class LUCIStepStream(StreamEngine.StepStream):
     logdog_namespace = self.user_namespace
     if self._bsc.namespace:
       logdog_namespace = '/'.join((self._bsc.namespace, logdog_namespace))
+    if sys.version_info.major < 3:
+      # logdog_namespace could be unicode and py2 doesn't like env var value to
+      # be unicode, so encode it to ascii since a valid logdog namespace should
+      # only contain ascii characters.
+      logdog_namespace = logdog_namespace.encode('ascii')
     return {'LOGDOG_NAMESPACE': logdog_namespace}
 
   @property
