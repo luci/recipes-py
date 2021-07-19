@@ -1,11 +1,9 @@
-#!/usr/bin/env vpython
+#!/usr/bin/env vpython3
 # Copyright 2020 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
 """Automatically updates the client libraries sourced from luci-py."""
-
-from __future__ import print_function
 
 import json
 import os
@@ -15,7 +13,7 @@ import requests
 
 
 BASE_URL = 'https://chromium.googlesource.com/infra/luci/luci-py'
-LOG_URL = BASE_URL+'/+log/master/client/libs?format=JSON&n=1'
+LOG_URL = BASE_URL+'/+log/main/client/libs?format=JSON&n=1'
 TAR_URL = BASE_URL+'/+archive/%s/client/libs.tar.gz'
 
 
@@ -30,7 +28,7 @@ def main():
   resp = requests.get(TAR_URL % (head_commit,), stream=True).raw
   with tarfile.open(mode='r|*', fileobj=resp) as tar:
     for item in tar:
-      if item.name.endswith('_test.py'):
+      if item.name.endswith(('_test.py','OWNERS',)):
         print('Skipping file: %r' % item.name)
         continue
       elif os.path.basename(item.name) == 'tests' and item.isdir():
