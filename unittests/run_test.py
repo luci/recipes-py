@@ -98,6 +98,87 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       proplist
     )
 
+  def _test_recipe(self, recipe, properties=None, env=None):
+    proc = subprocess.Popen(
+        self._run_cmd(recipe, properties),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        env=env)
+    stdout = proc.communicate()
+    self.assertEqual(0, proc.returncode, '%d != %d when testing %s:\n%s' % (
+        0, proc.returncode, recipe, stdout))
+
+  def test_examples(self):
+    env = os.environ.copy()
+
+    # Set the "RECIPE_ENGINE_CONTEXT_TEST" environment variable to a known
+    # value, "default". This is used by the "context:tests/env" recipe module
+    # as a basis for runtime tests.
+    env['RECIPE_ENGINE_CONTEXT_TEST'] = 'default'
+
+    tests = [
+      ['context:examples/full'],
+      ['context:tests/env'],
+      ['step:examples/full'],
+      ['path:examples/full'],
+      ['raw_io:examples/full'],
+      ['python:examples/full'],
+      ['json:examples/full'],
+      ['file:examples/copy'],
+      ['file:examples/copytree'],
+      ['file:examples/glob'],
+
+      ['engine_tests/functools_partial'],
+    ]
+    for test in tests:
+      print("running", test)
+      self._test_recipe(*test, env=env)
+
+  def test_bad_subprocess(self):
+    now = time.time()
+    self._test_recipe('engine_tests/bad_subprocess')
+    after = time.time()
+
+    # Test has a daemon that holds on to stdout for 30s, but the daemon's parent
+    # process (e.g. the one that recipe engine actually runs) quits immediately.
+    # If this takes longer than 10 seconds to run (there can be overhead in
+    # running the engine/cipd/protoc/etc.), we consider it failed.
+    self.assertLess(after - now, 10)
+
+  def test_shell_quote(self):
+    # For regular-looking commands we shouldn't need any specialness.
+    self.assertEqual(
+        _shell_quote('/usr/bin/python-wrapper.bin'),
+        '/usr/bin/python-wrapper.bin')
+
+    STRINGS = [
+        'Simple.Command123/run',
+        'Command with spaces',
+        'Command with "quotes"',
+        "I have 'single quotes'",
+        'Some \\Esc\ape Seque\nces/',
+        u'Unicode makes me \u2609\u203f\u2299'.encode('utf-8'),
+    ]
+
+    for s in STRINGS:
+      quoted = _shell_quote(s)
+
+      # We shouldn't ever get an actual newline in a command, that's awful
+      # for copypasta.
+      self.assertNotRegexpMatches(quoted, '\n')
+
+      # We should be able to paste any argument into bash & zsh and get
+      # exactly what subprocess did.
+      bash_output = subprocess.check_output([
+          'bash', '-c', '/bin/echo %s' % quoted])
+      self.assertEqual(bash_output, s + '\n')
+
+      # zsh is untested because zsh isn't provisioned on our bots.
+      # zsh_output = subprocess.check_output([
+      #     'zsh', '-c', '/bin/echo %s' % quoted])
+      # self.assertEqual(zsh_output.decode('utf-8'), s + '\n')
+
+class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
   def _wait_for_file(self, filename, duration):
     begin = time.time()
     while True:
@@ -203,53 +284,6 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     finally:
       shutil.rmtree(scrap, ignore_errors=True)
 
-  def _test_recipe(self, recipe, properties=None, env=None):
-    proc = subprocess.Popen(
-        self._run_cmd(recipe, properties),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        env=env)
-    stdout = proc.communicate()
-    self.assertEqual(0, proc.returncode, '%d != %d when testing %s:\n%s' % (
-        0, proc.returncode, recipe, stdout))
-
-  def test_examples(self):
-    env = os.environ.copy()
-
-    # Set the "RECIPE_ENGINE_CONTEXT_TEST" environment variable to a known
-    # value, "default". This is used by the "context:tests/env" recipe module
-    # as a basis for runtime tests.
-    env['RECIPE_ENGINE_CONTEXT_TEST'] = 'default'
-
-    tests = [
-      ['context:examples/full'],
-      ['context:tests/env'],
-      ['step:examples/full'],
-      ['path:examples/full'],
-      ['raw_io:examples/full'],
-      ['python:examples/full'],
-      ['json:examples/full'],
-      ['file:examples/copy'],
-      ['file:examples/copytree'],
-      ['file:examples/glob'],
-
-      ['engine_tests/functools_partial'],
-    ]
-    for test in tests:
-      print("running", test)
-      self._test_recipe(*test, env=env)
-
-  def test_bad_subprocess(self):
-    now = time.time()
-    self._test_recipe('engine_tests/bad_subprocess')
-    after = time.time()
-
-    # Test has a daemon that holds on to stdout for 30s, but the daemon's parent
-    # process (e.g. the one that recipe engine actually runs) quits immediately.
-    # If this takes longer than 10 seconds to run (there can be overhead in
-    # running the engine/cipd/protoc/etc.), we consider it failed.
-    self.assertLess(after - now, 10)
-
   def test_early_terminate(self):
     scrap = tempfile.mkdtemp(prefix='recipe_engine-run_test-scrap-')
     try:
@@ -289,12 +323,15 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     final_build = self._test_bbagent(
         {'recipe': 'buildbucket:tests/add_tags'},
     )
-    self.assertListEqual(final_build['tags'], [
-      {'key': 'k2', 'value': 'v2_1'},
-      {'key': 'k2', 'value': 'v2'},
-      {'key': 'k1', 'value': 'v1'},
-      {'key': 'hide-in-gerrit', 'value': 'pointless'},
-    ])
+    self.assertListEqual(
+      sorted(final_build['tags'], key=lambda tag: (tag['key'], tag['value'])),
+      [
+        {'key': 'hide-in-gerrit', 'value': 'pointless'},
+        {'key': 'k1', 'value': 'v1'},
+        {'key': 'k2', 'value': 'v2'},
+        {'key': 'k2', 'value': 'v2_1'},
+      ],
+    )
 
   def test_output_gitiles(self):
     final_build = self._test_bbagent(
@@ -361,40 +398,6 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       {'recipe': 'engine_tests/nonexistent_command'},
     )
     self.assertEqual(final_build['status'], 'SUCCESS')
-
-  def test_shell_quote(self):
-    # For regular-looking commands we shouldn't need any specialness.
-    self.assertEqual(
-        _shell_quote('/usr/bin/python-wrapper.bin'),
-        '/usr/bin/python-wrapper.bin')
-
-    STRINGS = [
-        'Simple.Command123/run',
-        'Command with spaces',
-        'Command with "quotes"',
-        "I have 'single quotes'",
-        'Some \\Esc\ape Seque\nces/',
-        u'Unicode makes me \u2609\u203f\u2299'.encode('utf-8'),
-    ]
-
-    for s in STRINGS:
-      quoted = _shell_quote(s)
-
-      # We shouldn't ever get an actual newline in a command, that's awful
-      # for copypasta.
-      self.assertNotRegexpMatches(quoted, '\n')
-
-      # We should be able to paste any argument into bash & zsh and get
-      # exactly what subprocess did.
-      bash_output = subprocess.check_output([
-          'bash', '-c', '/bin/echo %s' % quoted])
-      self.assertEqual(bash_output, s + '\n')
-
-      # zsh is untested because zsh isn't provisioned on our bots.
-      # zsh_output = subprocess.check_output([
-      #     'zsh', '-c', '/bin/echo %s' % quoted])
-      # self.assertEqual(zsh_output.decode('utf-8'), s + '\n')
-
 
 
 if __name__ == '__main__':
