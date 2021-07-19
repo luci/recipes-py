@@ -9,9 +9,8 @@ import operator
 
 from functools import reduce
 
-from builtins import str
+from builtins import str as text
 from future.utils import iteritems
-from past.builtins import basestring
 
 import attr
 from gevent.local import local
@@ -241,20 +240,52 @@ class StepPresentation(object):
         step_stream.append_log(log)
       else:
         with step_stream.new_log_stream(name) as log_stream:
-          if isinstance(log, basestring):
-            log_stream.write_split(log)
-          else:
+          if isinstance(log, (text, str, bytes)):
+            self.write_data(log_stream, log)
+          elif isinstance(log, collections.Iterable):
             for line in log:
-              log_stream.write_split(line)
+              self.write_data(log_stream, line)
+          else:
+            raise ValueError('unknown log type %s: %r' % (type(log), log))
     for label, url in iteritems(self.links):
       # We fix spaces in urls; It's an extremely common mistake to make, and
       # easy to remedy here.
-      step_stream.add_step_link(str(label), str(url).replace(" ", "%20"))
+      step_stream.add_step_link(text(label), text(url).replace(" ", "%20"))
     for key, value in sorted(iteritems(self._properties)):
       if isinstance(value, message.Message):
         value = json_pb.MessageToDict(value)
       step_stream.set_build_property(key, json.dumps(value, sort_keys=True))
     step_stream.set_step_status(self.status, self.had_timeout)
+
+  @staticmethod
+  def write_data(log_stream, data):
+    """Write the supplied data into the logstream.
+
+    Args:
+      log_stream (stream.StreamEngine.Stream) - The target log stream. In
+        production, this is backed by a text log stream created by logdog
+        butler.
+      data (Union[str, bytes]) - Data to write. If the supplied data is bytes,
+        it should be valid utf-8 encoded bytes. Note that, in py2 mode, the
+        supported types are unicode and str respectively. However, due to
+        historical reason, data is str in py2 that doesn't have valid utf-8
+        encoding is accepted but discouraged.
+    """
+    if isinstance(data, text):
+      # unicode in py2 and str in py3
+      log_stream.write_split(data)
+    elif isinstance(data, str):  # str in py2
+      # TODO(yiwzhang): try decode and warn user if non-valid utf-8
+      # encoded data is supplied because log_stream only supports valid utf-8
+      # text in python3.
+      log_stream.write_split(data)
+    elif isinstance(data, bytes):  #  bytes in py3
+      # We assume data is valid utf-8 encoded bytes here after transition to
+      # python3. If there's a need to write raw bytes, we should support binary
+      # log stream here.
+      log_stream.write_split(data.decode('utf-8'))
+    else:
+      raise ValueError('unknown data type %s: %r' % (type(data), data))
 
 
 @attr.s(frozen=True)
