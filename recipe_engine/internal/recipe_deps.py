@@ -415,20 +415,22 @@ class RecipeRepo(object):
     modules = {}
     recipes = {}
 
-    if not os.path.isdir(ret.modules_dir):
+    if not os.path.exists(ret.modules_dir):
+      LOG.info('ignoring %r: does not exist', ret.modules_dir)
+    elif not os.path.isdir(ret.modules_dir):
       LOG.warn('ignoring %r: not a directory', ret.modules_dir)
     else:
       for entry_name in os.listdir(ret.modules_dir):
         possible_mod_path = os.path.join(ret.modules_dir, entry_name)
-        if (os.path.isdir(possible_mod_path) and
-            os.path.isfile(os.path.join(possible_mod_path, '__init__.py'))):
+        if not os.path.isdir(possible_mod_path):
+          LOG.info('ignoring %r: not a directory', possible_mod_path)
+        elif os.path.isfile(os.path.join(possible_mod_path, '__init__.py')):
           mod = RecipeModule.create(ret, entry_name)
           modules[entry_name] = mod
           for recipe in itervalues(mod.recipes):
             recipes[recipe.name] = recipe
         else:
-          LOG.warn('ignoring %r: not a directory or missing __init__.py',
-                   possible_mod_path)
+          LOG.warn('ignoring %r: missing __init__.py', possible_mod_path)
 
     for recipe_name in _scan_recipe_directory(ret.recipes_dir):
       recipes[recipe_name] = Recipe(
