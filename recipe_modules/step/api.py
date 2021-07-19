@@ -4,12 +4,15 @@
 
 """Step is the primary API for running steps (external programs, etc.)"""
 
-from future.utils import iteritems
 
 import contextlib
 import multiprocessing
 import sys
 import types
+
+from builtins import int
+from future.utils import iteritems
+from past.builtins import basestring
 
 import enum
 
@@ -314,7 +317,7 @@ class StepApi(recipe_api.RecipeApiPlain):
     if not isinstance(cmd, list):
       raise ValueError('cmd must be a list, got %r' % (cmd,))
     for arg in cmd:
-      if not isinstance(arg, (int, long, basestring, Path, Placeholder)):
+      if not isinstance(arg, (int, basestring, Path, Placeholder)):
         raise ValueError('Type %s is not permitted. '
                          'cmd is %r' % (type(arg), cmd))
 

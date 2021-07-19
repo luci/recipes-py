@@ -4,11 +4,11 @@
 
 """Methods for interacting with HTTP(s) URLs."""
 
+from future.moves.urllib.parse import urlparse, urlencode
 from future.utils import iterkeys
 
 import collections
 import urllib
-import urlparse
 
 from recipe_engine import recipe_api
 
@@ -16,7 +16,7 @@ from recipe_engine import recipe_api
 class UrlApi(recipe_api.RecipeApi):
   quote = staticmethod(urllib.quote)
   unquote = staticmethod(urllib.unquote)
-  urlencode = staticmethod(urllib.urlencode)
+  urlencode = staticmethod(urlencode)
 
   # JSON prefix used with Gerrit and Gitiles.
   GERRIT_JSON_PREFIX = ")]}'\n"
@@ -119,7 +119,7 @@ class UrlApi(recipe_api.RecipeApi):
     Raises:
       ValueError: if "v" is not valid.
     """
-    u = urlparse.urlparse(v)
+    u = urlparse(v)
     if u.scheme.lower() not in ('http', 'https'):
       raise ValueError('URL scheme must be either http:// or https://')
     if not u.netloc:

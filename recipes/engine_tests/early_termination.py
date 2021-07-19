@@ -27,9 +27,9 @@ def RunSteps(api, props):
   running_touchfile = props.running_touchfile
   if not running_touchfile:
     running_touchfile = api.path['cleanup'].join('running_touchfile')
-
   # make sure touchfile is there
-  api.file.write_text("ensure output_touchfile", output_touchfile, "meep")
+  api.file.write_text("ensure output_touchfile", output_touchfile,
+                      "meep".encode('utf-8'))
 
   # note that our helper script
   #  * Looks for the output touchfile as the first arg
@@ -74,7 +74,8 @@ def RunSteps(api, props):
   work.append(api.futures.spawn_immediate(_pure_sleep))
 
   # all greenlets running, write our running file
-  api.file.write_text("ensure running_touchfile", running_touchfile, "meep")
+  api.file.write_text("ensure running_touchfile", running_touchfile,
+                      "meep".encode('utf-8'))
 
   for w in work:
     w.exception()  # mark exception as handled.

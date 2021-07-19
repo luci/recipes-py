@@ -8,10 +8,12 @@
 from future import standard_library
 standard_library.install_aliases()
 from builtins import range
+from builtins import str as text
 from past.builtins import basestring
 from future.utils import raise_
 
 import codecs
+import collections
 import contextlib
 import io
 import errno
@@ -19,10 +21,13 @@ import os
 import shutil
 import sys
 import tempfile
-import UserDict
 
 from recipe_engine import recipe_api
 from recipe_engine import util as recipe_util
+
+
+_PY2 = sys.version_info.major == 2
+_MAPPING = collections.Mapping if _PY2 else collections.abc.Mapping
 
 
 def _rmfile(p, _win_read_only_unset=False):  # pragma: no cover
@@ -181,7 +186,7 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
       # python3 - this can be done properly by opening the file with an
       # encoding.
       test_data = test.data or b''
-      if isinstance(test.data, unicode):
+      if isinstance(test.data, text):
         test_data = test_data.encode('utf-8')
       with contextlib.closing(io.BytesIO(test_data)) as infile:
         ret = self.read_decoded_data(infile)
@@ -215,19 +220,19 @@ class OutputTextPlaceholder(OutputDataPlaceholder):
   """A output placeholder which expects to write out text."""
 
   def read_decoded_data(self, f):
+    # The file contents can be large, so be careful to do the conversion in
+    # chunks while streaming the data in, instead of requiring a full copy.
+    n = 1 << 16
+    chunks = iter(lambda: f.read(n), b'')
+    decoded = codecs.iterdecode(chunks, 'utf-8', 'replace')
     # This ensures that the raw result bytes we got are, in fact, valid utf-8,
     # replacing invalid bytes with �. Because python2's unicode support is
     # wonky, we re-encode the now-valid-utf-8 back into a str object so that
     # users don't need to deal with `unicode` objects.
-    # The file contents can be large, so be careful to do the conversion in
-    # chunks while streaming the data in, instead of requiring a full copy.
-    n = 1 << 16
-    chunks = iter(lambda: f.read(n), '')
-    decoded = codecs.iterdecode(chunks, 'utf-8', 'replace')
-    return ''.join(codecs.iterencode(decoded, 'utf-8'))
+    return ''.join(codecs.iterencode(decoded, 'utf-8') if _PY2 else decoded)
 
 
-class _LazyDirectoryReader(UserDict.DictMixin):
+class _LazyDirectoryReader(_MAPPING):
   UNSET = object()
 
   def __init__(self, paths, read_fn):
@@ -244,12 +249,19 @@ class _LazyDirectoryReader(UserDict.DictMixin):
       self._data[rel_path] = ret
     return ret
 
+  def __setitem__(self, rel_path, newvalue):  # pragma: no cover
+    raise NotImplementedError(
+        '_LazyDirectoryReader is not supposed to set directly')
+
   def __delitem__(self, rel_path):
     self._paths.discard(rel_path)
     self._data.pop(rel_path, None)
 
-  def keys(self):  # pylint: disable=missing-docstring
-    return list(self._paths)
+  def __iter__(self):
+    return iter(self._paths)
+
+  def __len__(self):  # pragma: no cover
+    return len(self._paths)
 
 
 class OutputDataDirPlaceholder(recipe_util.OutputPlaceholder):

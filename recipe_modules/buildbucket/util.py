@@ -2,11 +2,11 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from future.moves.urllib.parse import urlparse
 from future.utils import iteritems
 
 import datetime
 import re
-import urlparse
 
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
@@ -16,9 +16,9 @@ EPOCH = datetime.datetime.utcfromtimestamp(0)
 
 
 def parse_http_host_and_path(url):
-  parsed = urlparse.urlparse(url)
+  parsed = urlparse(url)
   if not parsed.scheme:
-    parsed = urlparse.urlparse('https://' + url)
+    parsed = urlparse('https://' + url)
   if (parsed.scheme in ('http', 'https') and
       not parsed.params and
       not parsed.query and

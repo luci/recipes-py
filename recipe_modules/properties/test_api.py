@@ -2,10 +2,10 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from future.moves.urllib.parse import urlparse, urlunparse
 from future.utils import iteritems
 
 import re
-import urlparse
 
 from google.protobuf.message import Message as PBMessage
 from google.protobuf import json_format as jsonpb
@@ -123,22 +123,22 @@ class PropertiesTestApi(recipe_test_api.RecipeTestApi):
       gerrit_url = 'https://chromium-review.googlesource.com'
       git_url = 'https://chromium.googlesource.com/' + project
     elif gerrit_url and not git_url:
-      parsed = list(urlparse.urlparse(gerrit_url))
+      parsed = list(urlparse(gerrit_url))
       m = re.match(r'^((\w+)(-\w+)*)-review.googlesource.com$', parsed[1])
       if not m: # pragma: no cover
         raise AssertionError('Can\'t guess git_url from gerrit_url "%s", '
                              'specify it as extra kwarg' % parsed[1])
       parsed[1] = m.group(1) + '.googlesource.com'
       parsed[2] = project
-      git_url = urlparse.urlunparse(parsed)
+      git_url = urlunparse(parsed)
     elif git_url and not gerrit_url:
-      parsed = list(urlparse.urlparse(git_url))
+      parsed = list(urlparse(git_url))
       m = re.match(r'^((\w+)(-\w+)*).googlesource.com$', parsed[1])
       if not m: # pragma: no cover
         raise AssertionError('Can\'t guess gerrit_url from git_url "%s", '
                              'specify it as extra kwarg' % parsed[1])
       parsed[1] = m.group(1) + '-review.googlesource.com'
-      gerrit_url = urlparse.urlunparse(parsed[:2] + [''] * len(parsed[2:]))
+      gerrit_url = urlunparse(parsed[:2] + [''] * len(parsed[2:]))
     assert project
     assert git_url
     assert gerrit_url

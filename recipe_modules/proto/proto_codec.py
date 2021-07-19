@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 from google.protobuf import text_format, json_format
+from past.builtins import basestring
 
 from recipe_engine.util import sentinel
 

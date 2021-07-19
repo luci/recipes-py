@@ -2625,9 +2625,9 @@ Access a member of `random.Random`.
 
 Provides objects for reading and writing raw data to and from steps.
 
-#### **class [RawIOApi](/recipe_modules/raw_io/api.py#311)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
+#### **class [RawIOApi](/recipe_modules/raw_io/api.py#323)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#312)(data, suffix='', name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#324)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -2642,7 +2642,7 @@ tempfile.mkstemp.
 
 See examples/full.py for usage example.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#330)(data, suffix='', name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#342)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -2652,7 +2652,7 @@ expected to have valid utf-8 data in it.
 Similar to input(), but ensures that 'data' is valid utf-8 text. Any
 non-utf-8 characters will be replaced with �.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#343)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#355)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -2668,7 +2668,7 @@ Args:
      to a step link named `name`. If this is 'on_failure', only create this
      log when the step has a non-SUCCESS status.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#381)(self, leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#393)(self, leak_to=None, name=None):**
 
 Returns a directory Placeholder for use as a step argument.
 
@@ -2700,7 +2700,7 @@ del result.raw_io.output_dir[some_file]
 result.raw_io.output_dir[some_file] -> raises KeyError
 ```
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#363)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#375)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -3035,9 +3035,9 @@ Args:
 
 Step is the primary API for running steps (external programs, etc.)
 
-#### **class [StepApi](/recipe_modules/step/api.py#27)([RecipeApiPlain](/recipe_engine/recipe_api.py#733)):**
+#### **class [StepApi](/recipe_modules/step/api.py#30)([RecipeApiPlain](/recipe_engine/recipe_api.py#733)):**
 
-&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#140)(self):**
+&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#143)(self):**
 
 InfraFailure is a subclass of StepFailure, and will translate to a purple
 build.
@@ -3045,15 +3045,15 @@ build.
 This exception is raised from steps which are marked as `infra_step`s when
 they fail.
 
-&emsp; **@property**<br>&mdash; **def [MAX\_CPU](/recipe_modules/step/api.py#112)(self):**
+&emsp; **@property**<br>&mdash; **def [MAX\_CPU](/recipe_modules/step/api.py#115)(self):**
 
 Returns the maximum number of millicores this system has.
 
-&emsp; **@property**<br>&mdash; **def [MAX\_MEMORY](/recipe_modules/step/api.py#117)(self):**
+&emsp; **@property**<br>&mdash; **def [MAX\_MEMORY](/recipe_modules/step/api.py#120)(self):**
 
 Returns the maximum amount of memory on the system in MB.
 
-&mdash; **def [ResourceCost](/recipe_modules/step/api.py#45)(self, cpu=500, memory=50, disk=0, net=0):**
+&mdash; **def [ResourceCost](/recipe_modules/step/api.py#48)(self, cpu=500, memory=50, disk=0, net=0):**
 
 A structure defining the resources that a given step may need.
 
@@ -3112,7 +3112,7 @@ Returns:
   that passing `None` to api.step for the cost kwarg is equivalent to
   `ResourceCost(0, 0, 0, 0)`.
 
-&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#122)(self):**
+&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#125)(self):**
 
 This is the base Exception class for all step failures.
 
@@ -3122,12 +3122,12 @@ Usage:
   * `raise api.StepFailure("some reason")`
   * `except api.StepFailure:`
 
-&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#134)(self):**
+&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#137)(self):**
 
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#517)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#520)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
 
 Returns a step dictionary which is compatible with annotator.py.
 
@@ -3175,7 +3175,7 @@ Args:
 
 Returns a `step_data.StepData` for the running step.
 
-&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#150)(self):**
+&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#153)(self):**
 
 The currently active (open) result from the last step that was run. This
 is a `step_data.StepData` object.
@@ -3206,7 +3206,7 @@ finally:
     api.step.active_result.presentation.step_text = new_step_text
 ```
 
-&mdash; **def [close\_non\_nest\_step](/recipe_modules/step/api.py#183)(self):**
+&mdash; **def [close\_non\_nest\_step](/recipe_modules/step/api.py#186)(self):**
 
 Call this to explicitly terminate the currently open non-nest step.
 
@@ -3215,11 +3215,11 @@ context (if any).
 
 No-op if there's no currently active non-nest step.
 
-&emsp; **@property**<br>&mdash; **def [defer\_results](/recipe_modules/step/api.py#306)(self):**
+&emsp; **@property**<br>&mdash; **def [defer\_results](/recipe_modules/step/api.py#309)(self):**
 
 See recipe_api.py for docs. 
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#217)(self, name, status='worst'):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#220)(self, name, status='worst'):**
 
 Nest allows you to nest steps hierarchically on the build UI.
 
@@ -3280,7 +3280,7 @@ Args:
 Yields a StepPresentation for this dummy step, which you may update as you
 please.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#413)(self, name, cmd, build, output_path=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#416)(self, name, cmd, build, output_path=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
 
 Launch a sub-build by invoking a LUCI executable. All steps in the
 sub-build will appear as child steps of this step (Merge Step).

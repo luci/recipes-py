@@ -2,12 +2,12 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from future.moves.urllib.parse import urlparse
 from future.utils import iteritems
 
 import json
 import re
 import hashlib
-import urlparse
 
 import attr
 
@@ -396,7 +396,7 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
       # And you'll be fine.
 
       raw = cmd[-1]
-      parsed = urlparse.urlparse(raw)
+      parsed = urlparse(raw)
       toks = filter(bool, parsed.path.split('/'))
       if not toks or toks[0] != 'c':  # pragma: no cover
         raise ValueError("%r: empty/old/bad gerrit URL" % (raw,))
