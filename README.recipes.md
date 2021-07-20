@@ -2530,9 +2530,9 @@ This includes support for `vpython`, and knows how to specify parameters
 correctly for bots (e.g. ensuring that python is working on Windows, passing the
 unbuffered flag, etc.)
 
-#### **class [PythonApi](/recipe_modules/python/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
+#### **class [PythonApi](/recipe_modules/python/api.py#19)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/python/api.py#18)(self, name, script, args=None, unbuffered=True, venv=None, \*\*kwargs):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/python/api.py#20)(self, name, script, args=None, unbuffered=True, venv=None, \*\*kwargs):**
 
 Return a step to run a python script with arguments.
 
@@ -2559,15 +2559,15 @@ Args:
 **Returns (`step_data.StepData`)** - The StepData object as returned by
 api.step.
 
-&mdash; **def [failing\_step](/recipe_modules/python/api.py#114)(self, name, text, as_log=None):**
+&mdash; **def [failing\_step](/recipe_modules/python/api.py#117)(self, name, text, as_log=None):**
 
 Runs a failing step (exits 1).
 
-&mdash; **def [infra\_failing\_step](/recipe_modules/python/api.py#118)(self, name, text, as_log=None):**
+&mdash; **def [infra\_failing\_step](/recipe_modules/python/api.py#121)(self, name, text, as_log=None):**
 
 Runs an infra-failing step (exits 1).
 
-&mdash; **def [inline](/recipe_modules/python/api.py#63)(self, name, program, add_python_log=True, \*\*kwargs):**
+&mdash; **def [inline](/recipe_modules/python/api.py#65)(self, name, program, add_python_log=True, \*\*kwargs):**
 
 Run an inline python program as a step.
 
@@ -2584,13 +2584,13 @@ Args:
 **Returns (`step_data.StepData`)** - The StepData object as returned by
 api.step.
 
-&mdash; **def [result\_step](/recipe_modules/python/api.py#91)(self, name, text, retcode, as_log=None, \*\*kwargs):**
+&mdash; **def [result\_step](/recipe_modules/python/api.py#94)(self, name, text, retcode, as_log=None, \*\*kwargs):**
 
 Runs a no-op step that exits with a specified return code.
 
 The recipe engine will raise an exception when seeing a return code != 0.
 
-&mdash; **def [succeeding\_step](/recipe_modules/python/api.py#110)(self, name, text, as_log=None):**
+&mdash; **def [succeeding\_step](/recipe_modules/python/api.py#113)(self, name, text, as_log=None):**
 
 Runs a succeeding step (exits 0).
 ### *recipe_modules* / [random](/recipe_modules/random)

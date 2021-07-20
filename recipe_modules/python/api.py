@@ -11,6 +11,8 @@ unbuffered flag, etc.)
 
 import textwrap
 
+from builtins import str as text
+
 from recipe_engine import config_types
 from recipe_engine import recipe_api
 
@@ -80,7 +82,8 @@ class PythonApi(recipe_api.RecipeApi):
     compile(program, '<string>', 'exec', dont_inherit=1)
 
     try:
-      self(name, self.m.raw_io.input(program, '.py'), **kwargs)
+      raw = program.encode('utf-8') if isinstance(program, text) else program
+      self(name, self.m.raw_io.input(raw, '.py'), **kwargs)
     finally:
       result = self.m.step.active_result
       if result and add_python_log:

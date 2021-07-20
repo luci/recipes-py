@@ -26,10 +26,10 @@ def RunSteps(api):
 
   # Test that unbufferred actually removes PYTHONUNBUFFERED envvar.
   api.python('run json.tool', '-m', [
-    'json.tool', api.raw_io.input('{"something":[true,true]}'),
+    'json.tool', api.raw_io.input(b'{"something":[true,true]}'),
   ], unbuffered=False)
 
-  api.python.inline('inline', 'print "Hello World!"')
+  api.python.inline('inline', 'print("Hello World!")')
 
   # Test "vpython"-based invocation.
   #
