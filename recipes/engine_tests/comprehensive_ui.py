@@ -14,8 +14,12 @@ DEPS = [
   'step',
 ]
 
+from builtins import range
+
+
 def named_step(api, name):
   return api.python(name, api.resource('dual_output.py'))
+
 
 def RunSteps(api):
   with api.step.nest('names'):
@@ -70,7 +74,7 @@ def RunSteps(api):
   # TODO(iannucci): this is a bit dirty; once we drop @@@ see if we can do this
   # more cleanly.
   result = api.python.inline(
-      'capture stdout', "print 'OHAI'",
+      'capture stdout', "print('OHAI')",
       stdout=api.raw_io.output_text())
   result.presentation.logs['stdout'] = result.stdout.splitlines()
 

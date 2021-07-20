@@ -3873,9 +3873,9 @@ Tests that daemons that hang on to STDOUT can't cause the engine to hang.
 A fast-running recipe which comprehensively covers all StepPresentation
 features available in the recipe engine.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/comprehensive_ui.py#20)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/comprehensive_ui.py#24)(api):**
 
-&mdash; **def [named\_step](/recipes/engine_tests/comprehensive_ui.py#17)(api, name):**
+&mdash; **def [named\_step](/recipes/engine_tests/comprehensive_ui.py#20)(api, name):**
 ### *recipes* / [engine\_tests/config\_operations](/recipes/engine_tests/config_operations.py)
 
 [DEPS](/recipes/engine_tests/config_operations.py#41): [json](#recipe_modules-json), [step](#recipe_modules-step)
