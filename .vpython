@@ -162,3 +162,8 @@ wheel: <
   name: "infra/python/wheels/typing-py2"
   version: "version:3.6.4"
 >
+
+wheel: <
+  name: "infra/python/wheels/parameterized-py2_py3"
+  version: "version:0.7.1"
+>

@@ -78,6 +78,11 @@ wheel: <
   version: "version:0.18.2"
 >
 
+wheel: <
+  name: "infra/python/wheels/parameterized-py2_py3"
+  version: "version:0.7.1"
+>
+
 # Extra dev wheels
 
 wheel: <

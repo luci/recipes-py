@@ -17,6 +17,8 @@ import sys
 import tempfile
 import time
 
+from parameterized import parameterized_class
+
 import test_env
 
 from recipe_engine.internal.engine import _shell_quote
@@ -178,6 +180,13 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       #     'zsh', '-c', '/bin/echo %s' % quoted])
       # self.assertEqual(zsh_output.decode('utf-8'), s + '\n')
 
+
+@parameterized_class(
+  [{"py_version": 2}, {"py_version": 3}],
+  # TODO(crbug/1229878): uncomment after upgrading parameterized to the latest.
+  # class_name_func=(
+  #   lambda cls, _, params: '%s_PY%d' % (cls.__name__, params['py_version'])),
+)
 class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
   def _wait_for_file(self, filename, duration):
     begin = time.time()
@@ -202,11 +211,13 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
       env.pop(luci_context.ENV_KEY, None)
       env['WD'] = workdir
       env['LUCI_GRACE_PERIOD'] = str(grace_period)
+      if self.py_version == 3:
+        env['RECIPES_USE_PY3'] = 'true'
+
       proc = subprocess.Popen(
           [fake_bbagent, "--pid-file", pidfile],
           stdin=subprocess.PIPE,
           env=env)
-
       proc.stdin.write(json.dumps({
         "input": {
           "properties": properties,
@@ -214,7 +225,7 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
       }))
       proc.stdin.close()
 
-      engine_pid = int(self._wait_for_file(pidfile, 20).strip())
+      engine_pid = int(self._wait_for_file(pidfile, 30).strip())
 
       yield proc, engine_pid
     finally:
@@ -240,6 +251,8 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
       env['LUCI_GRACE_PERIOD'] = str(grace_period)
       env['LUCI_SOFT_DEADLINE'] = str(deadline)
       env['FAKE_BBAGENT_OUTFILE'] = outfile
+      if self.py_version == 3:
+        env['RECIPES_USE_PY3'] = 'true'
       proc = subprocess.Popen(
           [fake_bbagent, "--pid-file", pidfile],
           stdin=subprocess.PIPE,
@@ -252,7 +265,7 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
       }))
       proc.stdin.close()
 
-      engine_pid = int(self._wait_for_file(pidfile, 20).strip())
+      engine_pid = int(self._wait_for_file(pidfile, 30).strip())
       did_soft_deadline = False
 
       while True:
