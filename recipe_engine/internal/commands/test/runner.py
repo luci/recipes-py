@@ -348,7 +348,7 @@ def main(recipe_deps, cov_file, filtered_stacks, is_train,
 
   main_repo = recipe_deps.main_repo
 
-  cov_data = coverage.CoverageData()
+  cov_data = coverage.CoverageData(basename=cov_file)
   if cover_module_imports:
     cov_data.update(_cover_all_imports(main_repo))
 
@@ -374,6 +374,7 @@ def main(recipe_deps, cov_file, filtered_stacks, is_train,
         # We have to start coverage now because we want to cover the importation
         # of the covered recipe and/or covered recipe modules.
         cov = coverage.Coverage(config_file=False, concurrency='gevent',
+                                data_suffix=True,
                                 include=recipe.coverage_patterns)
         cov.start()  # to cover execfile of recipe/module.__init__
 
@@ -387,6 +388,7 @@ def main(recipe_deps, cov_file, filtered_stacks, is_train,
       if cov_file:
         cov.stop()
         cov_data.update(cov.get_data())
+        cov.erase()
 
     except Exception as ex:  # pylint: disable=broad-except
       result.internal_error.append('Uncaught exception: %r' % (ex,))
@@ -397,9 +399,8 @@ def main(recipe_deps, cov_file, filtered_stacks, is_train,
       break  # EOF
 
   if cov_file:
-    # Sometimes we stop when the cov_file hasn't gotten created yet
-    if os.path.exists(os.path.dirname(cov_file)):
-      coverage.data.CoverageDataFiles(basename=cov_file).write(cov_data)
+      # write data to the cov_file file
+      cov_data.write()
 
 
 def _read_test_desc():

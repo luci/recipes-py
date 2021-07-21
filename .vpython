@@ -2,9 +2,20 @@
 
 python_version: "2.7"
 
+verify_pep425_tag: [
+    {python: "cp27", abi: "cp27mu", platform: "manylinux1_x86_64"},
+    {python: "cp27", abi: "cp27mu", platform: "linux_arm64"},
+    {python: "cp27", abi: "cp27mu", platform: "linux_armv6l"},
+
+    {python: "cp27", abi: "cp27m", platform: "macosx_10_10_intel"},
+
+    {python: "cp27", abi: "cp27m", platform: "win32"},
+    {python: "cp27", abi: "cp27m", platform: "win_amd64"}
+]
+
 wheel: <
   name: "infra/python/wheels/coverage/${vpython_platform}"
-  version: "version:4.5.3"
+  version: "version:5.5"
 >
 
 # Argparse is in python stdlib... but! Old versions of python 2.7 have versions

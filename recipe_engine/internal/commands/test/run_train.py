@@ -190,6 +190,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
 
   py2_cov_dir = None
   py3_cov_dir = None
+  cov = None
   try:
     # in case of crash; don't want this undefined in finally clause.
     live_threads = Threads(py2=[], py3=[])
@@ -251,19 +252,18 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
       #
       # If we don't have any filters, collect coverage data.
 
-      cov = None
       if (test_filters or (stop and has_fail)) is False:
         # TODO(yuanjunh): remove the if condition below to collect py3 coverage
         # data as well after py3 tests really run.
         if py == 'py3':
           continue
 
-        cov = coverage.Coverage(config_file=False)
-        cov.get_data()  # initializes data object
-        for thread in getattr(all_threads, py):
-          thread_data = coverage.CoverageData()
-          thread_data.read_file(thread.cov_file)
-          cov.data.update(thread_data)
+        if (test_filters or (stop and has_fail)) is False:
+          cov = coverage.Coverage(config_file=False)
+          data_paths = [t.cov_file for t in getattr(all_threads, py)
+                        if os.path.isfile(t.cov_file)]
+          if data_paths:
+            cov.combine(data_paths)
 
       reporter.final_report(cov, getattr(test_results, py), recipe_deps)
 
@@ -275,6 +275,9 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
       shutil.rmtree(py2_cov_dir, ignore_errors=True)
     if py3_cov_dir:
       shutil.rmtree(py3_cov_dir, ignore_errors=True)
+    if cov:
+      # remove the .coverage file
+      cov.erase()
 
 def main(args):
   """Runs simulation tests on a given repo of recipes.

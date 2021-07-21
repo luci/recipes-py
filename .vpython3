@@ -2,6 +2,16 @@
 
 python_version: "3.8"
 
+verify_pep425_tag: [
+    {python: "cp38", abi: "cp38", platform: "manylinux1_x86_64"},
+    {python: "cp38", abi: "cp38", platform: "linux_arm64"},
+
+    {python: "cp38", abi: "cp38", platform: "macosx_10_10_intel"},
+
+    {python: "cp38", abi: "cp38", platform: "win32"},
+    {python: "cp38", abi: "cp38", platform: "win_amd64"}
+]
+
 wheel: <
   name: "infra/python/wheels/coverage/${vpython_platform}"
   version: "version:5.5"
