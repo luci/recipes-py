@@ -55,9 +55,21 @@ def CheckChangeOnCommit(input_api, output_api):
     if result:
       results.append(result)
 
-  # Now run all the unit tests in parallel.
+  # Now run all the unit tests except run_test in parallel and then run run_test
+  # separately. The reason is that run_test depends on the wall clock on the
+  # host and if the host gets busy, the tests are likely to be flaky.
   results.extend(input_api.RunTests(
       input_api.canned_checks.GetUnitTestsInDirectory(
-          input_api, output_api, 'unittests', files_to_check=[r'.+_test\.py'])
+          input_api, output_api, 'unittests',
+          files_to_check=[r'.+_test\.py'],
+          files_to_skip=[r'run_test\.py'],
+      )
+  ))
+
+  results.extend(input_api.RunTests(
+      input_api.canned_checks.GetUnitTestsInDirectory(
+          input_api, output_api, 'unittests',
+          files_to_check=[r'run_test\.py'],
+      )
   ))
   return results

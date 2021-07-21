@@ -21,7 +21,7 @@ PROPERTIES = long_sleep.InputProperties
 def RunSteps(api, props):
   def _inner():
     try:
-      api.step('sleep a bit', ['sleep', '360'], timeout=3)
+      api.step('sleep a bit', ['sleep', '360'], timeout=5)
     except api.step.StepFailure as ex:
       assert ex.had_timeout
 
