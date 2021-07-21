@@ -183,9 +183,8 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
 
 @parameterized_class(
   [{"py_version": 2}, {"py_version": 3}],
-  # TODO(crbug/1229878): uncomment after upgrading parameterized to the latest.
-  # class_name_func=(
-  #   lambda cls, _, params: '%s_PY%d' % (cls.__name__, params['py_version'])),
+  class_name_func=(
+    lambda cls, _, params: '%s_PY%d' % (cls.__name__, params['py_version'])),
 )
 class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
   def _wait_for_file(self, filename, duration):
