@@ -55,6 +55,11 @@ class Common(test_env.RecipeEngineUnitTest):
     with open(json_out, 'rb') as json_file:
       try:
         data = json.load(json_file)
+        # TODO(crbug.com/1211651): assert py3 tests results as well after that
+        # functionality is complete.
+        if isinstance(data, list):
+          data = data[0]
+          data.pop('python_env')
         for results in data.get('test_results', {}).itervalues():
           if 'diff' in results:
             results['diff']['lines'] = ['placeholder']

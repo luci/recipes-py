@@ -304,6 +304,7 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
   transform_exepctations(path_cleaner, raw_expectations)
 
   _diff_test(test_results, test_data.expect_file, raw_expectations, is_train)
+  test_results.expect_py_incompatibility = test_desc.expect_py_incompatibility
 
 
 def _cover_all_imports(main_repo):
@@ -332,6 +333,15 @@ def _cover_all_imports(main_repo):
 
 def main(recipe_deps, cov_file, filtered_stacks, is_train,
          cover_module_imports):
+  # Don't running any py3 simulation tests for now.
+  # TODO(yuanjunh): remove it in the next CL.
+  if sys.version_info.major == 3:
+    while True:
+      test_desc = _read_test_desc()
+      if not test_desc:
+        break  # EOF or error
+    return
+
   if filtered_stacks:
     enable_filtered_stacks()
   gevent.get_hub().exception_stream = None
@@ -487,13 +497,15 @@ def _make_path_cleaner(recipe_deps):
 
 class RunnerThread(gevent.Greenlet):
   def __init__(self, recipe_deps, description_queue, outcome_queue, is_train,
-               filtered_stacks, cov_file, cover_module_imports):
+               filtered_stacks, cov_file, cover_module_imports, use_py3):
     super(RunnerThread, self).__init__()
 
     self.cov_file = cov_file
 
+    py_exec = 'vpython3' if use_py3 else 'vpython'
+
     cmd = [
-      sys.executable, '-u', sys.argv[0],
+      py_exec, '-u', sys.argv[0],
       '--package', os.path.join(
           recipe_deps.main_repo.path, RECIPES_CFG_LOCATION_REL),
       '--proto-override', os.path.dirname(PB.__path__[0]),
@@ -522,7 +534,7 @@ class RunnerThread(gevent.Greenlet):
 
   @classmethod
   def make_pool(cls, recipe_deps, description_queue, outcome_queue, is_train,
-                filtered_stacks, collect_coverage, jobs):
+                filtered_stacks, collect_coverage, jobs, use_py3):
     """Returns a pool (list) of started RunnerThread instances.
 
     Each RunnerThread owns a `recipes.py test _runner` subprocess and
@@ -564,7 +576,8 @@ class RunnerThread(gevent.Greenlet):
             is_train,
             filtered_stacks,
             cov_file(i),
-            cover_module_imports=(i == 0)) for i in xrange(jobs)
+            cover_module_imports=(i == 0),
+            use_py3 = use_py3) for i in xrange(jobs)
     ]
     for thread in pool:
       thread.start()

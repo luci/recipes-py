@@ -33,6 +33,9 @@ class Reporter(object):
 
   _column_count = attr.ib(default=0)
   _long_err_buf = attr.ib(factory=StringIO)
+  # store the err msg which may be caused not by the recipe itself, but the
+  # discrepancy of supported python version between the recipe and its deps.
+  _maybe_soft_failure_buf = attr.ib(factory=StringIO)
 
   _start_time = attr.ib(factory=datetime.datetime.now)
 
@@ -97,7 +100,9 @@ class Reporter(object):
       _print_summary_info(
           self._verbose, self._use_emoji, test_name, test_result,
           self._space_for_columns)
-      _print_detail_info(self._long_err_buf, test_name, test_result)
+      buf = (self._maybe_soft_failure_buf
+             if test_result.expect_py_incompatibility else self._long_err_buf)
+      _print_detail_info(buf, test_name, test_result)
 
       has_fail = self._fail_tracker.cache_recent_fails(test_name,
                                                        test_result) or has_fail
@@ -112,8 +117,8 @@ class Reporter(object):
     Args:
 
       * cov (coverage.Coverage|None) - The accumulated coverage data to report.
-        If None, then no coverage analysis/report will be done. Coverage less than
-        100% counts as a test failure.
+        If None, then no coverage analysis/report will be done. Coverage less
+        than 100% counts as a test failure.
       * outcome_msg (Outcome proto) - Consulted for uncovered_modules and
         unused_expectation_files. coverage_percent is also populated as a side
         effect. Any uncovered_modules/unused_expectation_files count as test
@@ -166,7 +171,7 @@ class Reporter(object):
     if outcome_msg.unused_expectation_files:
       fail = True
       print('------')
-      print('ERROR: The following expectation files have no associated test case:')
+      print('ERROR: The below expectation files have no associated test case:')
       for expect_file in outcome_msg.unused_expectation_files:
         print('  ', expect_file)
       print()
@@ -176,13 +181,13 @@ class Reporter(object):
       print('FAILED')
       print()
       if not self._is_train:
-        print('NOTE: You may need to re-train the expectation files by running:')
+        print('NOTE: You may need to re-train the expectation files by running')
         print()
         print('  ./recipes.py test train')
         print()
-        print('This will update all the .json files to have content which matches')
-        print('the current recipe logic. Review them for correctness and include')
-        print('them with your CL.')
+        print('This will update all the .json files to have content which')
+        print('matches the current recipe logic. Review them for correctness')
+        print('and include them with your CL.')
       sys.exit(1)
 
     warning_result = _collect_warning_result(outcome_msg)
@@ -190,7 +195,16 @@ class Reporter(object):
       _print_warnings(warning_result, recipe_deps)
       print('------')
       print('TESTS OK with %d warnings' % len(warning_result))
-    else :
+    elif self._maybe_soft_failure_buf.tell() > 0:
+      print('\n=======Possible Soft Failures Below=======')
+      sys.stdout.write(self._maybe_soft_failure_buf.getvalue())
+      print('------')
+      print('TESTS OK with some soft failures as above. Those failures need')
+      print('human inspection to determine the real causes. It may because of')
+      print('a real bug in your recipe or the discrepancy between the claimed')
+      print('PYTHON_VERSION_COMPATIBILITY of a recipe and its dependencies.')
+      print('They are ignored for now and will not block your CL submit.')
+    else:
       print('TESTS OK')
 
 
