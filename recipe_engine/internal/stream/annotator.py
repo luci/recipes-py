@@ -4,6 +4,8 @@
 
 import time
 
+from builtins import map
+
 from PB.recipe_engine.result import Result
 
 from . import StreamEngine, encode_str

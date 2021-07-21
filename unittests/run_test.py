@@ -17,7 +17,7 @@ import sys
 import tempfile
 import time
 
-from parameterized import parameterized_class
+from parameterized import parameterized, parameterized_class
 
 import test_env
 
@@ -30,7 +30,11 @@ os.environ.pop(luci_context.ENV_KEY, None)
 
 
 class RunTest(test_env.RecipeEngineUnitTest):
-  def test_run(self):
+  @parameterized.expand(
+    [('py2', False), ('py3', True)],
+    name_func=lambda func, _, param: '%s_%s' % (func.__name__, param.args[0]),
+  )
+  def test_run(self, _, py3):
     deps = self.FakeRecipeDeps()
 
     with deps.main_repo.write_module('mod') as mod:
@@ -45,8 +49,10 @@ class RunTest(test_env.RecipeEngineUnitTest):
       ''')
       recipe.GenTests.write('pass')
 
-    _, retcode = deps.main_repo.recipes_py('-v', '-v', 'run', 'my_recipe')
-    self.assertEqual(retcode, 0)
+    output, retcode = deps.main_repo.recipes_py('-v', '-v', 'run', 'my_recipe',
+                                                py3=py3)
+    self.assertEqual(retcode, 0,
+                     'ret code is not zero. Recipe output\n%s' % output)
 
   def test_run_incomplete_deps(self):
     deps = self.FakeRecipeDeps()

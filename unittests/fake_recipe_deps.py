@@ -500,12 +500,14 @@ class FakeRecipeRepo(object):
     Kwargs:
       * env (Dict[str, str]) - Extra environment variables to set while invoking
         recipes.py.
+      * py3 (bool) - Instruct recipe to run with python3 interpreter.
 
     Returns (output, retcode) where 'output' is the combined stdout/stderr from
     the command and retcode it's return code.
     """
     env = os.environ.copy()
     env.update(kwargs.pop('env', {}))
+    env['RECIPES_USE_PY3'] = 'true' if kwargs.pop('py3', False) else 'false'
     if not any(r.has_protos for r in self.fake_recipe_deps.repos.itervalues()):
       pb_pkg_path = os.path.join(ROOT_DIR, '.recipe_deps', '_pb')
       args = ('--proto-override', pb_pkg_path) + args

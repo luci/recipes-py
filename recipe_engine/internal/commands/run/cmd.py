@@ -4,12 +4,15 @@
 
 """Entry point for running recipes for real (not in testing mode)."""
 
+from io import open
+
 import logging
 import os
 import sys
 
 import psutil
 
+from builtins import str
 from google.protobuf import json_format as jsonpb
 
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
@@ -75,7 +78,7 @@ def _main_impl(args):
 
   if args.output_result_json:
     with open(args.output_result_json, 'w') as fil:
-      fil.write(jsonpb.MessageToJson(
-          result, including_default_value_fields=True))
+      fil.write(str(jsonpb.MessageToJson(
+          result, including_default_value_fields=True)))
 
   return 1 if result.HasField("failure") else 0

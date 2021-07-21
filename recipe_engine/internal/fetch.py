@@ -240,7 +240,7 @@ class GitBackend(Backend):
         new_output = output or stderr
       raise subprocess.CalledProcessError(
         retcode, args, new_output)
-    return output
+    return output.decode('utf-8')
 
   def _ensure_local_repo_exists(self):
     """Ensures that self.checkout_dir is a valid git repository.
