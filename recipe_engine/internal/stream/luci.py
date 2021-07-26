@@ -7,6 +7,7 @@ import json
 import logging
 import sys
 import traceback
+import zlib
 
 from future.utils import iteritems
 
@@ -417,7 +418,7 @@ class LUCIStreamEngine(StreamEngine):
           jsonpb.MessageToJson(self._build_proto,
                                preserving_proto_field_name=True).encode('utf-8')
           if self._export_build_as_json else
-          self._build_proto.SerializeToString().encode('zlib')
+          zlib.compress(self._build_proto.SerializeToString())
       )
 
     def _send_fn():
