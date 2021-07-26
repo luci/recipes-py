@@ -305,7 +305,7 @@ Additionally, the `RunSteps` function can return a summary and status of the bui
 This is done by returning a `RawResult` object, which can be done like this:
 
     # Import proto that has RawResult object
-    from PB.recipe_engine import result
+    from PB.recipe_engine.result import RawResult
     # Import proto that has Status object
     from PB.go.chromium.org.luci.buildbucket.proto import common
 
