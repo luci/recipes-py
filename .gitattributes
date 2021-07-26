@@ -2,3 +2,4 @@
 /recipe_engine/**   recipes
 /**/unittests/**   -recipes
 .vpython            recipes
+.vpython3           recipes
