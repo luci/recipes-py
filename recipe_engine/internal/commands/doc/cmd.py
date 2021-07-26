@@ -686,8 +686,6 @@ def is_doc_changed(repo):
 
 
 def main(args):
-  logging.basicConfig()
-
   # defer to regenerate_doc for consistency between train and 'doc --kind gen'
   repo = args.recipe_deps.main_repo
   if repo.recipes_cfg_pb2.no_docs:

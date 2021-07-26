@@ -234,7 +234,6 @@ def prep_recipes_py(recipe_deps, destination):
 
 
 def main(args):
-  logging.basicConfig()
   destination = _prepare_destination(args.destination)
   for repo in listvalues(args.recipe_deps.repos):
     export_repo(repo, destination)

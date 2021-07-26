@@ -157,8 +157,6 @@ def output_json(fd, ret):
 
 
 def main(args):
-  logging.basicConfig()
-
   rd = args.recipe_deps  # type: RecipeDeps
 
   try:
