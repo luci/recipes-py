@@ -129,8 +129,7 @@ def _main():
   # (e.g. by a leaky test harness).
   os_exit = os._exit  # pylint: disable=protected-access
   if 'RECIPES_DEBUG_SLEEP' in os.environ:
-    sleep_duration = float(os.environ['RECIPES_DEBUG_SLEEP'])
-    os.unsetenv('RECIPES_DEBUG_SLEEP')
+    sleep_duration = float(os.environ.pop(['RECIPES_DEBUG_SLEEP']))
     sys.stderr.write(
         '[engine will sleep for %f seconds after execution]\n' % sleep_duration)
     def exit_fn(code):
@@ -148,7 +147,7 @@ def _main():
   # `led edit-recipe-bundle` which will run `recipes.py bundle`, the env var
   # should explicitly be set in that recipe.
   if 'RECIPES_USE_PY3' in os.environ:
-    os.unsetenv('RECIPES_USE_PY3')
+    os.environ.pop('RECIPES_USE_PY3')
 
   try:
     ret = parse_and_run()
