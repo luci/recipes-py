@@ -15,7 +15,7 @@ from future.utils import iteritems
 from google.protobuf import json_format as jsonpb
 
 from recipe_engine import recipe_api
-from recipe_engine.types import ResourceCost as _ResourceCost
+from recipe_engine.engine_types import ResourceCost as _ResourceCost
 from recipe_engine.util import Placeholder
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2

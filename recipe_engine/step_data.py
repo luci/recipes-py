@@ -13,7 +13,7 @@ import attr
 
 from .internal.attr_util import attr_type
 
-from .types import StepPresentation
+from .engine_types import StepPresentation
 
 
 @attr.s

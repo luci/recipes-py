@@ -89,7 +89,7 @@ def attr_dict_type(key_type, val_type, value_seq=False):
 
   def inner(self, attrib, value):
     # late import to avoid import cycle
-    from ..types import FrozenDict
+    from ..engine_types import FrozenDict
 
     attr_type((dict, FrozenDict))(self, attrib, value)
     for k, subval in iteritems(value):

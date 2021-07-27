@@ -33,7 +33,7 @@ from .recipe_test_api import DisabledTestData, ModuleTestData
 from .third_party import luci_context
 from .third_party.logdog import streamname
 from .third_party.logdog.bootstrap import ButlerBootstrap, NotBootstrappedError
-from .types import StepPresentation, freeze, FrozenDict
+from .engine_types import StepPresentation, freeze, FrozenDict
 from .util import ModuleInjectionSite
 
 # TODO(iannucci): Rationalize the use of this in downstream scripts.

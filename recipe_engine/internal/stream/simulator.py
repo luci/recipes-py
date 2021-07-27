@@ -9,7 +9,7 @@ from google.protobuf import json_format as jsonpb
 
 from . import StreamEngine, encode_str
 from ..test.empty_log import EMPTY_LOG
-from ...types import StepPresentation
+from ...engine_types import StepPresentation
 
 
 def _ignoreable(f):

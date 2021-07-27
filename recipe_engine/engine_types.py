@@ -361,7 +361,7 @@ class PerGreenletState(local):
   """Subclass from PerGreenletState to get an object whose state is tied to the
   current greenlet.
 
-    from recipe_engine.types import PerGreenletState
+    from recipe_engine.engine_types import PerGreenletState
 
     class MyState(PerGreenletState):
       cool_stuff = True

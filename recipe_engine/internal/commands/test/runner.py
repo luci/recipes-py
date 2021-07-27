@@ -29,7 +29,7 @@ from PB.recipe_engine.internal.test.runner import Description, Outcome
 from ... import legacy
 
 from .... import config_types
-from .... import types
+from .... import engine_types
 
 from ...global_shutdown import GLOBAL_SHUTDOWN
 from ...simple_cfg import RECIPES_CFG_LOCATION_REL
@@ -272,7 +272,7 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
   """
   # Reset global state.
   config_types.ResetTostringFns()
-  types.PerGreentletStateRegistry.clear()
+  engine_types.PerGreentletStateRegistry.clear()
   GLOBAL_SHUTDOWN.clear()
 
   test_case_result = execute_test_case(

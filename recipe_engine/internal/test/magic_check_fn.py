@@ -21,7 +21,7 @@ import astunparse
 
 from recipe_engine.post_process_inputs import Step
 
-from ...types import FrozenDict
+from ...engine_types import FrozenDict
 
 
 class CheckFrame(namedtuple('CheckFrame', 'fname line function code varmap')):

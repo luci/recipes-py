@@ -18,7 +18,7 @@ from google.protobuf.message import Message
 
 from .attr_util import attr_type, attr_dict_type, attr_seq_type, attr_value_is
 
-from ..types import FrozenDict, freeze, thaw, ResourceCost
+from ..engine_types import FrozenDict, freeze, thaw, ResourceCost
 from ..util import InputPlaceholder, OutputPlaceholder, Placeholder, sentinel
 
 

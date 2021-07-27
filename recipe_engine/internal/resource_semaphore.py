@@ -8,7 +8,7 @@ import attr
 
 from gevent.queue import Channel
 
-from ..types import ResourceCost
+from ..engine_types import ResourceCost
 
 
 @attr.s

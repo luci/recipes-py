@@ -13,7 +13,7 @@ from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 from ...recipe_test_api import StepTestData, BaseTestData
 from ...step_data import ExecutionResult
 from ...third_party import luci_context
-from ...types import ResourceCost
+from ...engine_types import ResourceCost
 
 from ..engine_env import FakeEnviron
 from ..global_shutdown import GLOBAL_SHUTDOWN
@@ -92,7 +92,7 @@ class SimulationStepRunner(StepRunner):
   def placeholder(self, name_tokens, placeholder):
     dot_name = '.'.join(name_tokens)
     # TODO(iannucci): this is janky; simplify all the placeholder naming stuff.
-    # See comment on types.StepData.
+    # See comment on step_data.StepData.
     module_name, method_name = placeholder.namespaces
     name = placeholder.name
 

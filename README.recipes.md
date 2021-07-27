@@ -3766,9 +3766,9 @@ This recipe tests the buildbucket.set_output_gitiles_commit function.
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/schedule.py#21)(api):**
 ### *recipes* / [buildbucket:tests/search](/recipe_modules/buildbucket/tests/search.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/search.py#14): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/search.py#12): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/search.py#23)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/search.py#21)(api):**
 ### *recipes* / [cas:examples/full](/recipe_modules/cas/examples/full.py)
 
 [DEPS](/recipe_modules/cas/examples/full.py#5): [cas](#recipe_modules-cas), [file](#recipe_modules-file), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)

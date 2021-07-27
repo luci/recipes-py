@@ -20,7 +20,7 @@ from ..attr_util import attr_type, attr_seq_type
 from ..class_util import cached_property
 from ..recipe_deps import Recipe, RecipeDeps, RecipeModule
 
-from ...types import FrozenDict
+from ...engine_types import FrozenDict
 from ...util import sentinel
 
 

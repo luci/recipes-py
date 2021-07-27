@@ -53,7 +53,7 @@ from ..config_types import Path, RepoBasePath, RecipeScriptBasePath
 from ..recipe_api import _UnresolvedRequirement, RecipeScriptApi, BoundProperty
 from ..recipe_api import RecipeApiPlain
 from ..recipe_test_api import RecipeTestApi, BaseTestData, DisabledTestData
-from ..types import freeze, FrozenDict
+from ..engine_types import freeze, FrozenDict
 
 from . import fetch
 from . import proto_support

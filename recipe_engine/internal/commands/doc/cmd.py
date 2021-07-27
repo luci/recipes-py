@@ -14,7 +14,7 @@ import logging
 import os
 import posixpath
 import sys
-import types as stdlib_types
+import types
 
 if sys.version_info.major < 3:
   from cStringIO import StringIO
@@ -26,7 +26,7 @@ import astunparse
 from google.protobuf import json_format as jsonpb
 from google.protobuf import text_format as textpb
 
-from recipe_engine import types  # this import name conflicts with stdlib :(
+from recipe_engine import engine_types
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 
 from PB.recipe_engine import doc
@@ -156,7 +156,7 @@ def _expand_mock_imports(*mock_imports):
       raise ValueError('nested mock imports! %r', dotted_name)
     toks = dotted_name.split('.')
     expanded_imports[dotted_name] = obj
-    if isinstance(obj, stdlib_types.ModuleType):
+    if isinstance(obj, types.ModuleType):
       for name in (n for n in dir(obj) if not n.startswith('_')):
         expanded_imports[dotted_name+'.'+name] = getattr(obj, name)
     for i in range(len(toks)-1, 0, -1):
@@ -204,7 +204,7 @@ _property_imports = {
 KNOWN_OBJECTS.update(_property_imports)
 
 _util_imports = {
-  'recipe_engine.types.freeze': types.freeze,
+  'recipe_engine.engine_types.freeze': engine_types.freeze,
 }
 KNOWN_OBJECTS.update(_util_imports)
 

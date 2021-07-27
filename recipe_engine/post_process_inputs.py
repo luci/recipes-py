@@ -10,7 +10,7 @@ from collections import Iterable, OrderedDict
 
 import attr
 
-from .types import ResourceCost
+from .engine_types import ResourceCost
 
 
 class Command(list):

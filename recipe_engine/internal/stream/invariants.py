@@ -10,7 +10,7 @@ from future.utils import iteritems
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.recipe_engine import result as result_pb2
 
-from ...types import StepPresentation
+from ...engine_types import StepPresentation
 
 from . import StreamEngine
 from .product import ProductStreamEngine

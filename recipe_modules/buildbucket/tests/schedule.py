@@ -2,8 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from recipe_engine import engine_types
 from recipe_engine import post_process
-from recipe_engine import types
 
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.go.chromium.org.luci.buildbucket.proto \
@@ -20,7 +20,7 @@ DEPS = [
 
 def RunSteps(api):
   # Convert from FrozenDict
-  req_body = types.thaw(api.properties.get('request_kwargs'))
+  req_body = engine_types.thaw(api.properties.get('request_kwargs'))
   tags = api.properties.get('tags')
   # This is needed to provide coverage for the tags() method in api.py.
   tags = api.buildbucket.tags(**tags) if tags else tags

@@ -16,7 +16,7 @@ import os
 
 import attr
 
-from ..types import freeze
+from ..engine_types import freeze
 
 from .attr_util import attr_dict_type, attr_type, attr_value_is
 

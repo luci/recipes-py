@@ -18,8 +18,8 @@ import enum
 
 from recipe_engine import recipe_api
 from recipe_engine.config_types import Path
-from recipe_engine.types import StepPresentation
-from recipe_engine.types import ResourceCost as _ResourceCost
+from recipe_engine.engine_types import StepPresentation
+from recipe_engine.engine_types import ResourceCost as _ResourceCost
 from recipe_engine.util import Placeholder, returns_placeholder
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2

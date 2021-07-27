@@ -38,7 +38,7 @@ from google.protobuf import json_format as jsonpb
 
 from recipe_engine import recipe_api
 from recipe_engine.config_types import Path
-from recipe_engine.types import PerGreenletState, freeze
+from recipe_engine.engine_types import PerGreenletState, freeze
 
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 

@@ -12,7 +12,7 @@ from future.utils import iteritems, itervalues
 from past.builtins import basestring
 
 from .util import ModuleInjectionSite, static_call, static_wraps
-from .types import freeze
+from .engine_types import freeze
 
 def combineify(name, dest, a, b, overwrite=False):
   """

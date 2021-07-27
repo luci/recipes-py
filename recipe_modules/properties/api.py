@@ -21,7 +21,7 @@ random-access global variable).
 from future.utils import iteritems
 
 from recipe_engine import recipe_api
-from recipe_engine.types import freeze
+from recipe_engine.engine_types import freeze
 import collections
 
 # Use RecipeApiPlain because collections.Mapping has its own metaclass.

@@ -13,7 +13,7 @@ from builtins import filter
 from future.utils import with_metaclass
 from past.builtins import basestring
 
-from . import types
+from . import engine_types
 
 RECIPE_MODULE_PREFIX = 'RECIPE_MODULES'
 
@@ -26,7 +26,7 @@ def ResetTostringFns():
 def json_fixup(obj):
   if isinstance(obj, RecipeConfigType):
     return str(obj)
-  if isinstance(obj, types.FrozenDict):
+  if isinstance(obj, engine_types.FrozenDict):
     return dict(obj)
   raise TypeError("%r is not JSON serializable" % obj)
 

@@ -31,8 +31,8 @@ from PB.recipe_engine import result as result_pb2
 from .. import recipe_api
 from .. import util
 from ..step_data import StepData, ExecutionResult
-from ..types import StepPresentation, thaw
-from ..types import PerGreenletState, PerGreentletStateRegistry
+from ..engine_types import StepPresentation, thaw
+from ..engine_types import PerGreenletState, PerGreentletStateRegistry
 from ..third_party import luci_context
 
 from .engine_env import merge_envs
