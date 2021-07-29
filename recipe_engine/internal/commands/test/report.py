@@ -110,7 +110,7 @@ class Reporter(object):
     return has_fail
 
 
-  def final_report(self, cov, outcome_msg, recipe_deps):
+  def final_report(self, cov, outcome_msg, recipe_deps, check_cov_pct=True):
     """Prints all final information about the test run to stdout. Raises
     SystemExit if the tests have failed.
 
@@ -124,6 +124,8 @@ class Reporter(object):
         effect. Any uncovered_modules/unused_expectation_files count as test
         failure.
       * recipe_deps (RecipeDeps) - The loaded recipe repo dependencies.
+      * check_cov_pct (bool) - If True, treating the coverage percentage < 100
+        as a hard failure.
 
     Side-effects: Populates outcome_msg.coverage_percent.
 
@@ -146,10 +148,13 @@ class Reporter(object):
       except coverage.CoverageException as ex:
         print('%s: %s' % (ex.__class__.__name__, ex))
       if int(outcome_msg.coverage_percent) != 100:
-        fail = True
-        print(covf.getvalue())
-        print('FATAL: Insufficient coverage (%.2f%%)' % (
-          outcome_msg.coverage_percent,))
+        fail = (True if check_cov_pct else False) or fail
+        # Print detailed coverage report only if hard or soft failures exist.
+        print(covf.getvalue() if fail or self._maybe_soft_failure_buf.tell() > 0
+              else '')
+        print('%s: Insufficient coverage (%.2f%%)' % (
+            'FATAL' if fail else 'WARNING',
+            outcome_msg.coverage_percent))
         print()
 
     duration = (datetime.datetime.now() - self._start_time).total_seconds()
@@ -206,6 +211,10 @@ class Reporter(object):
       print('They are ignored for now and will not block your CL submit.')
     else:
       print('TESTS OK')
+
+    # clean up reporter buf value
+    self._long_err_buf.truncate(0)
+    self._maybe_soft_failure_buf.truncate(0)
 
 
 

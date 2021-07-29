@@ -2,7 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import httplib
+import http.client
 
 from recipe_engine import recipe_test_api
 
@@ -12,7 +12,7 @@ class UrlTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
     step_data = [
         self.m.json.output({
           'status_code': status_code,
-          'success': status_code in (httplib.OK, httplib.NO_CONTENT),
+          'success': status_code in (http.client.OK, http.client.NO_CONTENT),
           'size': size,
           'error_body': error_body,
         }, name='status_json'),

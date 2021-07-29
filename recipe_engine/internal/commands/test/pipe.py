@@ -6,6 +6,11 @@
 file descriptors)."""
 
 import struct
+import sys
+import os
+
+
+_PY3 = sys.version_info.major == 3
 
 
 def read_message(in_file, msg_class):
@@ -29,6 +34,8 @@ def read_message(in_file, msg_class):
     return None
 
   size, = struct.unpack('!L', raw_size)
+  if size == 0:
+    return None
   data = in_file.read(size)
   if data is None or len(data) != size:
     return None

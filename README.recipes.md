@@ -2943,7 +2943,7 @@ Examples:
   * Appending a 'non-production' tag to external RPCs
 ### *recipe_modules* / [scheduler](/recipe_modules/scheduler)
 
-[DEPS](/recipe_modules/scheduler/__init__.py#8): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/scheduler/__init__.py#10): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 API for interacting with the LUCI Scheduler service.
 
@@ -3533,9 +3533,9 @@ Emit the results accumulated by `add_comment` and `run_legacy`.
 
 Methods for interacting with HTTP(s) URLs.
 
-#### **class [UrlApi](/recipe_modules/url/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
+#### **class [UrlApi](/recipe_modules/url/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
 
-&mdash; **def [get\_file](/recipe_modules/url/api.py#129)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None, timeout=None):**
+&mdash; **def [get\_file](/recipe_modules/url/api.py#128)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None, timeout=None):**
 
 GET data at given URL and writes it to file.
 
@@ -3561,7 +3561,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_json](/recipe_modules/url/api.py#185)(self, url, step_name=None, headers=None, transient_retry=True, strip_prefix=None, log=False, timeout=None, default_test_data=None):**
+&mdash; **def [get\_json](/recipe_modules/url/api.py#184)(self, url, step_name=None, headers=None, transient_retry=True, strip_prefix=None, log=False, timeout=None, default_test_data=None):**
 
 GET data at given URL and writes it to file.
 
@@ -3588,7 +3588,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_text](/recipe_modules/url/api.py#158)(self, url, step_name=None, headers=None, transient_retry=True, timeout=None, default_test_data=None):**
+&mdash; **def [get\_text](/recipe_modules/url/api.py#157)(self, url, step_name=None, headers=None, transient_retry=True, timeout=None, default_test_data=None):**
 
 GET data at given URL and writes it to file.
 
@@ -3611,7 +3611,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [join](/recipe_modules/url/api.py#93)(self, \*parts):**
+&mdash; **def [join](/recipe_modules/url/api.py#92)(self, \*parts):**
 
 Constructs a URL path from composite parts.
 
@@ -3620,7 +3620,7 @@ Args:
       will be stripped from intermediate strings to ensure that they join
       together. Trailing slashes will not be stripped from the last part.
 
-&mdash; **def [validate\_url](/recipe_modules/url/api.py#109)(self, v):**
+&mdash; **def [validate\_url](/recipe_modules/url/api.py#108)(self, v):**
 
 Validates that "v" is a valid URL.
 

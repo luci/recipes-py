@@ -4,18 +4,17 @@
 
 """Methods for interacting with HTTP(s) URLs."""
 
-from future.moves.urllib.parse import urlparse, urlencode
+from future.moves.urllib.parse import urlparse, urlencode, quote, unquote
 from future.utils import iterkeys
 
 import collections
-import urllib
 
 from recipe_engine import recipe_api
 
 
 class UrlApi(recipe_api.RecipeApi):
-  quote = staticmethod(urllib.quote)
-  unquote = staticmethod(urllib.unquote)
+  quote = staticmethod(quote)
+  unquote = staticmethod(unquote)
   urlencode = staticmethod(urlencode)
 
   # JSON prefix used with Gerrit and Gitiles.

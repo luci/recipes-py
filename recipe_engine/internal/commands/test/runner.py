@@ -2,8 +2,13 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from builtins import str
+from future.utils import iteritems, itervalues
+from past.builtins import basestring
+
 import collections
 import difflib
+import errno
 import json
 import multiprocessing
 import os
@@ -40,6 +45,9 @@ from .expectation_conversion import transform_exepctations
 from .pipe import write_message, read_message
 
 
+_PY2 = sys.version_info.major == 2
+
+
 def _merge_presentation_updates(steps_ran, presentation_steps):
   """Merges the steps ran (from the SimulationStepRunner) with the steps
   presented (from the SimulationAnnotatorStreamEngine).
@@ -56,7 +64,7 @@ def _merge_presentation_updates(steps_ran, presentation_steps):
   in the order that they were presented.
   """
   ret = collections.OrderedDict()
-  for step_name, step_presented in presentation_steps.iteritems():
+  for step_name, step_presented in iteritems(presentation_steps):
     # root annotations
     if step_name is None:
       continue
@@ -214,13 +222,17 @@ def _diff_test(test_results, expect_file, new_expect, is_train):
     return
 
   new_expect_text = json.dumps(
-      _re_encode(new_expect), sort_keys=True, indent=2, separators=(',', ': '),
+      _encode_decode(new_expect), sort_keys=True, indent=2,
+      separators=(',', ': '),
   )
 
   if new_expect_text == cur_expect_text:
     return
 
-  if is_train:
+  # TODO(crbug.com/1211651): py3 expected json file may be different with py2.
+  # So they should be generated in a different path. Bypass it for now in
+  # `train` command and it will be added in the next CL.
+  if is_train and _PY2:
     if new_expect is None:
       try:
         os.remove(expect_file)
@@ -250,8 +262,8 @@ def _diff_test(test_results, expect_file, new_expect, is_train):
 
   test_results.diff.lines.extend(
       difflib.unified_diff(
-          unicode(cur_expect_text).splitlines(),
-          unicode(new_expect_text).splitlines(),
+          str(cur_expect_text).splitlines(),
+          str(new_expect_text).splitlines(),
           fromfile='current expectation file',
           tofile='actual test result',
           n=4, lineterm=''))
@@ -278,14 +290,14 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
   test_case_result = execute_test_case(
         recipe_deps, test_desc.recipe_name, test_data)
 
-  for name, causes in test_case_result.warnings.iteritems():
+  for name, causes in iteritems(test_case_result.warnings):
     test_results.warnings[name].causes.extend(causes)
 
   raw_expectations = _merge_presentation_updates(test_case_result.ran_steps,
                                                  test_case_result.annotations)
   _check_bad_test(test_results, test_data,
-                  test_case_result.ran_steps.keys(),
-                  raw_expectations.keys())
+                  list(test_case_result.ran_steps),
+                  list(raw_expectations))
   _check_exception(test_results, test_data.expected_exception,
                    test_case_result.uncaught_exception)
 
@@ -322,7 +334,7 @@ def _cover_all_imports(main_repo):
       config_file=False,
       include=[os.path.join(main_repo.modules_dir, '*', '*.py')])
   cov.start()
-  for module in main_repo.modules.itervalues():
+  for module in itervalues(main_repo.modules):
     # Allow exceptions to raise here; they'll be reported as a 'global'
     # failure.
     module.do_import()
@@ -333,15 +345,6 @@ def _cover_all_imports(main_repo):
 
 def main(recipe_deps, cov_file, filtered_stacks, is_train,
          cover_module_imports):
-  # Don't running any py3 simulation tests for now.
-  # TODO(yuanjunh): remove it in the next CL.
-  if sys.version_info.major == 3:
-    while True:
-      test_desc = _read_test_desc()
-      if not test_desc:
-        break  # EOF or error
-    return
-
   if filtered_stacks:
     enable_filtered_stacks()
   gevent.get_hub().exception_stream = None
@@ -395,20 +398,20 @@ def main(recipe_deps, cov_file, filtered_stacks, is_train,
       result.internal_error.extend(traceback.format_exc().splitlines())
       fatal = True
 
-    if not write_message(sys.stdout, result) or fatal:
+    if (not write_message(sys.stdout if _PY2 else sys.stdout.buffer, result)
+        or fatal):
       break  # EOF
 
   if cov_file:
       # write data to the cov_file file
       cov_data.write()
 
-
 def _read_test_desc():
   try:
-    return read_message(sys.stdin, Description)
+    return read_message(sys.stdin if _PY2 else sys.stdin.buffer, Description)
   except Exception as ex:  # pylint: disable=broad-except
     write_message(
-        sys.stdout, Outcome(internal_error=[
+        sys.stdout if _PY2 else sys.stdout.buffer, Outcome(internal_error=[
           'while reading: %r' % (ex,)
         ]+traceback.format_exc().splitlines()))
     return None
@@ -423,16 +426,17 @@ def _get_test_data(cache, recipe, test_name):
 
 # TODO(iannucci): fix test system so that non-JSONish types cannot leak into
 # raw_expectations.
-def _re_encode(obj):
-  """Ensure consistent encoding for common python data structures."""
-  if isinstance(obj, (unicode, str)):
-    if isinstance(obj, str):
+def _encode_decode(obj):
+  """For py2: ensure consistent encoding for common python data structures.
+  For py3: ensure any bytes are decoded to str"""
+  if isinstance(obj, basestring):
+    if isinstance(obj, bytes):
       obj = obj.decode('utf-8', 'replace')
-    return obj.encode('utf-8', 'replace')
+    return obj.encode('utf-8', 'replace') if _PY2 else obj
   elif isinstance(obj, collections.Mapping):
-    return {_re_encode(k): _re_encode(v) for k, v in obj.iteritems()}
+    return {_encode_decode(k): _encode_decode(v) for k, v in iteritems(obj)}
   elif isinstance(obj, collections.Iterable):
-    return [_re_encode(i) for i in obj]
+    return [_encode_decode(i) for i in obj]
   else:
     return obj
 
@@ -452,7 +456,7 @@ def _make_path_cleaner(recipe_deps):
   # maps path_to_replace -> replacement
   roots = {}
   # paths of all recipe_deps
-  for repo in recipe_deps.repos.itervalues():
+  for repo in itervalues(recipe_deps.repos):
     roots[repo.path] = 'RECIPE_REPO[%s]' % repo.name
   main_repo_root = 'RECIPE_REPO[%s]' % recipe_deps.main_repo.name
 
@@ -487,7 +491,7 @@ def _make_path_cleaner(recipe_deps):
   # Replace paths from longest to shortest; because of the way the recipe engine
   # fetches dependencies (i.e. into the .recipe_deps folder) dependencies of
   # repo X will have a prefix of X's path.
-  paths = sorted(roots.keys(), key=lambda v: -len(v))
+  paths = sorted(list(roots), key=lambda v: -len(v))
 
   # Look for paths in double quotes (as we might see in a stack trace)
   replacer = re.compile(
@@ -513,7 +517,7 @@ class RunnerThread(gevent.Greenlet):
       '--log-level', 'ERROR',
     ]
     # Carry through all repos explicitly via overrides
-    for repo_name, repo in recipe_deps.repos.iteritems():
+    for repo_name, repo in iteritems(recipe_deps.repos):
       if repo_name == recipe_deps.main_repo.name:
         continue
       cmd.extend(['-O', '%s=%s' % (repo_name, repo.path)])
@@ -578,7 +582,7 @@ class RunnerThread(gevent.Greenlet):
             filtered_stacks,
             cov_file(i),
             cover_module_imports=(i == 0),
-            use_py3 = use_py3) for i in xrange(jobs)
+            use_py3 = use_py3) for i in range(jobs)
     ]
     for thread in pool:
       thread.start()
@@ -591,8 +595,13 @@ class RunnerThread(gevent.Greenlet):
         test_desc = self._description_queue.get()
         if not test_desc:
           self._runner_proc.stdout.close()
-          self._runner_proc.stdin.write('\0')
-          self._runner_proc.stdin.close()
+          try:
+            self._runner_proc.stdin.write('\0')
+            self._runner_proc.stdin.close()
+          except OSError as e:
+            # The subprocess has already aborted in starting stage.
+            if e.errno == errno.EPIPE:
+              pass
           self._runner_proc.wait()
           return
 

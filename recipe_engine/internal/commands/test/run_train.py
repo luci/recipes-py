@@ -232,7 +232,9 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
 
     has_fail = False
     for py in live_threads._fields:
+      print('\nRunning tests in %s' % py)
       threads = getattr(live_threads, py)
+      has_tests = False
       while threads and not (has_fail and stop):
         rslt = getattr(outcome_queues, py).get()
         if isinstance(rslt, RunnerThread):
@@ -241,6 +243,8 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
           threads.remove(rslt)
           continue
 
+        if not has_tests:
+          has_tests = True
         getattr(test_results, py).MergeFrom(rslt)
         has_fail = reporter.short_report(rslt)
         if has_fail and stop:
@@ -253,11 +257,6 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
       # If we don't have any filters, collect coverage data.
 
       if (test_filters or (stop and has_fail)) is False:
-        # TODO(yuanjunh): remove the if condition below to collect py3 coverage
-        # data as well after py3 tests really run.
-        if py == 'py3':
-          continue
-
         if (test_filters or (stop and has_fail)) is False:
           cov = coverage.Coverage(config_file=False)
           data_paths = [t.cov_file for t in getattr(all_threads, py)
@@ -265,7 +264,8 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
           if data_paths:
             cov.combine(data_paths)
 
-      reporter.final_report(cov, getattr(test_results, py), recipe_deps)
+      reporter.final_report(cov, getattr(test_results, py), recipe_deps,
+                            check_cov_pct=has_tests)
 
   finally:
     for thread in live_threads.py2 + live_threads.py3:
