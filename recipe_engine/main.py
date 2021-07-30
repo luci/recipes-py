@@ -129,7 +129,7 @@ def _main():
   # (e.g. by a leaky test harness).
   os_exit = os._exit  # pylint: disable=protected-access
   if 'RECIPES_DEBUG_SLEEP' in os.environ:
-    sleep_duration = float(os.environ.pop(['RECIPES_DEBUG_SLEEP']))
+    sleep_duration = float(os.environ.pop('RECIPES_DEBUG_SLEEP'))
     sys.stderr.write(
         '[engine will sleep for %f seconds after execution]\n' % sleep_duration)
     def exit_fn(code):
