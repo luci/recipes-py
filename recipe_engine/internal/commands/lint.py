@@ -3,7 +3,7 @@
 # that can be found in the LICENSE file.
 """Checks recipes for stylistic and hygienic issues.
 
-Currently only checks that recipes only import python modules from a whitelist.
+Currently only checks that recipes only import python modules from an allowlist.
 
 Imports are not safe in recipes if they depend on the platform or have functions
 which otherwise directly interact with the OS (since all recipe code must run
@@ -13,6 +13,7 @@ correctly for all platforms under simulation).
 # TODO(luqui): Implement lint for recipe modules also.
 
 from __future__ import absolute_import, print_function
+import argparse
 import re
 import types
 
@@ -58,25 +59,32 @@ def ImportsTest(recipe, allowed_modules):
           break
       else:
         yield ('In %s:\n'
-               '  Non-whitelisted import of %s' % (recipe.path, module_name))
+               '  Disallowed import of %s' % (recipe.path, module_name))
 
 
 def add_arguments(parser):
   # TODO(iannucci): merge this with the test command, doesn't need to be top
   # level.
   parser.add_argument(
+      '--allowlist',
+      '-a',
+      action='append',
+      default=[],
+      help=('A regexp matching module names to add to the default allowlist. '
+            'Use multiple times to add multiple patterns,'))
+
+  parser.add_argument(
       '--whitelist',
       '-w',
       action='append',
-      default=[],
-      help=('A regexp matching module names to add to the default whitelist. '
-            'Use multiple times to add multiple patterns,'))
+      dest='allowlist',
+      help=argparse.SUPPRESS)
 
   parser.set_defaults(func=main)
 
 
 def main(args):
-  allowed_modules = map(re.compile, ALLOWED_MODULES + args.whitelist)
+  allowed_modules = map(re.compile, ALLOWED_MODULES + args.allowlist)
 
   errors = []
   for recipe in args.recipe_deps.main_repo.recipes.itervalues():
