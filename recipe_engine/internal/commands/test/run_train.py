@@ -7,10 +7,12 @@ from __future__ import print_function
 import collections
 import errno
 import fnmatch
+import io
 import json
 import os
 import re
 import shutil
+import sys
 
 import coverage
 import gevent
@@ -34,6 +36,8 @@ from .runner import RunnerThread
 TestResults = collections.namedtuple('TestResults', 'py2 py3')
 Queue = collections.namedtuple('Queue', 'py2 py3')
 Threads = collections.namedtuple('Threads', 'py2 py3')
+
+_PY2 = sys.version_info.major == 2
 
 def _extract_filter_matchers(test_filters):
   if not test_filters:
@@ -191,6 +195,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
   py2_cov_dir = None
   py3_cov_dir = None
   cov = None
+  total_cov = coverage.Coverage(config_file=False, data_file='.total_coverage')
   try:
     # in case of crash; don't want this undefined in finally clause.
     live_threads = Threads(py2=[], py3=[])
@@ -255,17 +260,29 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
       # escaped the while loop above).
       #
       # If we don't have any filters, collect coverage data.
-
       if (test_filters or (stop and has_fail)) is False:
-        if (test_filters or (stop and has_fail)) is False:
-          cov = coverage.Coverage(config_file=False)
-          data_paths = [t.cov_file for t in getattr(all_threads, py)
-                        if os.path.isfile(t.cov_file)]
-          if data_paths:
-            cov.combine(data_paths)
+        cov = coverage.Coverage(config_file=False)
+        data_paths = [t.cov_file for t in getattr(all_threads, py)
+                      if os.path.isfile(t.cov_file)]
+        if data_paths:
+          cov.combine(data_paths)
+        total_cov.combine(['.coverage'], keep=True)
 
       reporter.final_report(cov, getattr(test_results, py), recipe_deps,
                             check_cov_pct=has_tests)
+
+    # Check total coverage for py2 and py3 tests.
+    if total_cov.get_data().measured_files():
+      covf = io.BytesIO() if _PY2 else io.StringIO()
+      pct = 0
+      try:
+        pct = total_cov.report(file=covf, show_missing=True, skip_covered=True)
+      except coverage.CoverageException as ex:
+        print('%s: %s' % (ex.__class__.__name__, ex))
+      if int(pct) != 100:
+        print(covf.getvalue())
+        print('FATAL: Insufficient total coverage for py2+py3 (%.2f%%)' % pct)
+        sys.exit(1)
 
   finally:
     for thread in live_threads.py2 + live_threads.py3:
@@ -278,6 +295,8 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
     if cov:
       # remove the .coverage file
       cov.erase()
+    total_cov.erase()
+
 
 def main(args):
   """Runs simulation tests on a given repo of recipes.

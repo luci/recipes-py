@@ -133,6 +133,7 @@ class Reporter(object):
     """
     self._fail_tracker.cleanup()
 
+    soft_fail = self._maybe_soft_failure_buf.tell() > 0
     fail = self._long_err_buf.tell() > 0
 
     print()
@@ -148,10 +149,9 @@ class Reporter(object):
       except coverage.CoverageException as ex:
         print('%s: %s' % (ex.__class__.__name__, ex))
       if int(outcome_msg.coverage_percent) != 100:
-        fail = (True if check_cov_pct else False) or fail
+        fail = True if check_cov_pct and not soft_fail else fail
         # Print detailed coverage report only if hard or soft failures exist.
-        print(covf.getvalue() if fail or self._maybe_soft_failure_buf.tell() > 0
-              else '')
+        print(covf.getvalue() if fail or soft_fail else '')
         print('%s: Insufficient coverage (%.2f%%)' % (
             'FATAL' if fail else 'WARNING',
             outcome_msg.coverage_percent))
@@ -200,7 +200,7 @@ class Reporter(object):
       _print_warnings(warning_result, recipe_deps)
       print('------')
       print('TESTS OK with %d warnings' % len(warning_result))
-    elif self._maybe_soft_failure_buf.tell() > 0:
+    elif soft_fail:
       print('\n=======Possible Soft Failures Below=======')
       sys.stdout.write(self._maybe_soft_failure_buf.getvalue())
       print('------')
