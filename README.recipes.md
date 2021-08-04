@@ -164,6 +164,7 @@
   * [time:examples/full](#recipes-time_examples_full)
   * [tricium:examples/add_comment](#recipes-tricium_examples_add_comment)
   * [tricium:examples/wrapper](#recipes-tricium_examples_wrapper) &mdash; An example of a recipe wrapping legacy analyzers.
+  * [tricium:tests/add_comment_validation](#recipes-tricium_tests_add_comment_validation)
   * [url:examples/full](#recipes-url_examples_full)
   * [url:tests/join](#recipes-url_tests_join)
   * [url:tests/validate_url](#recipes-url_tests_validate_url)
@@ -3501,7 +3502,10 @@ add_comment and write_comments.
 
 Adds one comment to accumulate.
 
-&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#93)(self, analyzers, input_base, affected_files, commit_message, emit=True):**
+For semantics of start_line, start_char, end_line, end_char, see Gerrit doc
+https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#comment-range
+
+&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#132)(self, analyzers, input_base, affected_files, commit_message, emit=True):**
 
 Runs legacy analyzers.
 
@@ -3524,7 +3528,13 @@ Args:
     analyzers (using `add_comment()` to store comments) and legacy
     analyzers.
 
-&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#68)(self):**
+&emsp; **@staticmethod**<br>&mdash; **def [validate\_comment](/recipe_modules/tricium/api.py#69)(comment):**
+
+Validates comment to comply with Tricium/Gerrit requirements.
+
+Raise ValueError on the first detected problem.
+
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#107)(self):**
 
 Emit the results accumulated by `add_comment` and `run_legacy`.
 ### *recipe_modules* / [url](/recipe_modules/url)
@@ -4400,6 +4410,11 @@ This file is a recipe demonstrating reading triggers of the current build.
 An example of a recipe wrapping legacy analyzers.
 
 &mdash; **def [RunSteps](/recipe_modules/tricium/examples/wrapper.py#20)(api):**
+### *recipes* / [tricium:tests/add\_comment\_validation](/recipe_modules/tricium/tests/add_comment_validation.py)
+
+[DEPS](/recipe_modules/tricium/tests/add_comment_validation.py#8): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
+
+&mdash; **def [RunSteps](/recipe_modules/tricium/tests/add_comment_validation.py#26)(api, case):**
 ### *recipes* / [url:examples/full](/recipe_modules/url/examples/full.py)
 
 [DEPS](/recipe_modules/url/examples/full.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step), [url](#recipe_modules-url)

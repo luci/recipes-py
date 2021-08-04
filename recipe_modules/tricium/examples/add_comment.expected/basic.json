@@ -3,7 +3,7 @@
     "cmd": [],
     "name": "write results",
     "~followup_annotations": [
-      "@@@SET_BUILD_PROPERTY@tricium@\"{\\n\\\"comments\\\": [\\n{\\n\\\"category\\\": \\\"test\\\", \\n\\\"path\\\": \\\"path/to/file\\\", \\n\\\"message\\\": \\\"test message\\\"\\n}, \\n{\\n\\\"category\\\": \\\"another\\\", \\n\\\"startChar\\\": 10, \\n\\\"endChar\\\": 20, \\n\\\"suggestions\\\": [\\n{\\n\\\"description\\\": \\\"please fix this\\\"\\n}\\n], \\n\\\"path\\\": \\\"path/to/file/2\\\", \\n\\\"message\\\": \\\"another test message\\\"\\n}\\n]\\n}\"@@@"
+      "@@@SET_BUILD_PROPERTY@tricium@\"{\\n\\\"comments\\\": [\\n{\\n\\\"category\\\": \\\"test\\\", \\n\\\"path\\\": \\\"path/to/file\\\", \\n\\\"message\\\": \\\"test message\\\"\\n}, \\n{\\n\\\"category\\\": \\\"another\\\", \\n\\\"startChar\\\": 10, \\n\\\"startLine\\\": 1, \\n\\\"endChar\\\": 20, \\n\\\"suggestions\\\": [\\n{\\n\\\"description\\\": \\\"please fix this\\\"\\n}\\n], \\n\\\"path\\\": \\\"path/to/file/2\\\", \\n\\\"message\\\": \\\"another test message\\\", \\n\\\"endLine\\\": 1\\n}\\n]\\n}\"@@@"
     ]
   },
   {

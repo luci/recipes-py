@@ -25,6 +25,8 @@ def RunSteps(api, trigger_type_error):
       'another',
       'another test message',
       'path/to/file/2',
+      start_line=1,
+      end_line=1,
       start_char='10' if trigger_type_error else 10,
       end_char=20,
       suggestions=suggestions,

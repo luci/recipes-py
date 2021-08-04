@@ -47,7 +47,11 @@ class TriciumApi(recipe_api.RecipeApi):
                   start_char=0,
                   end_char=0,
                   suggestions=()):
-    """Adds one comment to accumulate."""
+    """Adds one comment to accumulate.
+
+    For semantics of start_line, start_char, end_line, end_char, see Gerrit doc
+    https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#comment-range
+    """
     comment = Data.Comment()
     comment.category = category
     comment.message = message
@@ -59,7 +63,42 @@ class TriciumApi(recipe_api.RecipeApi):
     for s in suggestions:
       # Convert from dict to proto message by way of JSON.
       json_format.Parse(self.m.json.dumps(s), comment.suggestions.add())
+    self.validate_comment(comment)
     self._add_comment(comment)
+
+  @staticmethod
+  def validate_comment(comment):
+    """Validates comment to comply with Tricium/Gerrit requirements.
+
+    Raise ValueError on the first detected problem.
+    """
+    if comment.start_line < 0:
+      raise ValueError('start_line must be 1-based, but %d given' %
+                       (comment.start_line,))
+    if comment.start_line == 0:
+      for attr in ('end_line', 'start_char', 'end_char'):
+        value = getattr(comment, attr)
+        if value:
+          raise ValueError('start_line is 0, implying file level comment, '
+                           'but %s is %d instead of 0' % (attr, value))
+      return
+    if comment.start_line > comment.end_line and comment.end_line != 0:
+      # TODO(tandrii): it's probably better to require end_line always set.
+      raise ValueError('start_line must be <= end_line, but %d..%d given' %
+                       (comment.start_line, comment.end_line))
+    if comment.start_char < 0:
+      raise ValueError('start_char must be 0-based, but %d given' %
+                       (comment.start_char,))
+    if comment.end_char < 0:
+      raise ValueError('end_char must be 0-based, but %d given' %
+                       (comment.end_char,))
+    if (comment.start_line == comment.end_line and
+        comment.start_char >= comment.end_char):
+      raise ValueError(
+          '(start_line, start_char) must be before (end_line, end_char), '
+          'but (%d,%d) .. (%d,%d) given' %
+          (comment.start_line, comment.start_char, comment.end_line,
+           comment.end_char))
 
   def _add_comment(self, comment):
     if comment not in self._comments:
