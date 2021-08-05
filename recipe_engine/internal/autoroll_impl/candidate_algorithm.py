@@ -150,17 +150,20 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
           for repo_name, commit_list in commit_lists_by_repo.iteritems()
       }
 
+      LOGGER.info("advancing repo %s", pid)
       rev = updated_commit_lists_by_repo[pid].advance()
       if not rev:
-        LOGGER.info("terminating: could not advance %r", pid)
+        LOGGER.info("terminating: could not advance %s", pid)
         return ret_good, ret_bad
+      LOGGER.info("repo %s advanced to %s", pid, rev.revision)
 
       backwards_roll = False
       for d_pid, dep in sorted(rev.spec.deps.items()):
         if d_pid in commit_lists_by_repo:
+          LOGGER.info("advancing dependency repo %s to %s", d_pid, dep.revision)
           if not updated_commit_lists_by_repo[d_pid].advance_to(dep.revision):
             backwards_roll = True
-            LOGGER.info("backwards_roll: rolling %r to %r causes (%r->%r)", pid,
+            LOGGER.info("backwards_roll: rolling %s to %s causes (%s->%s)", pid,
                         rev.revision, d_pid, dep.revision)
             break
 
