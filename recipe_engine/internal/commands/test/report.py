@@ -157,11 +157,6 @@ class Reporter(object):
             outcome_msg.coverage_percent))
         print()
 
-    duration = (datetime.datetime.now() - self._start_time).total_seconds()
-    print('-' * 70)
-    print('Ran %d tests in %0.3fs' % (len(outcome_msg.test_results), duration))
-    print()
-
     if outcome_msg.uncovered_modules:
       fail = True
       print('------')

@@ -82,7 +82,11 @@ def add_arguments(parser):
   run_p.add_argument(
       '--no-docs',
       action='store_false', default=True, dest='docs',
-      help='Disable the check for readme file change(WIP).')
+      help='Disable the check for readme file change.')
+  run_p.add_argument(
+      '--py3-details',
+      action='store_true', default=False, dest='py3_details',
+      help='Show detailed errors from implicit py3 tests.')
 
   helpstr = 'Re-train recipe expectations.'
   train_p = subp.add_parser(
@@ -114,6 +118,10 @@ def add_arguments(parser):
       '-x',
       action='store_true',
       help=('Stop running tests after first error or failure.'))
+  train_p.add_argument(
+      '--py3-details',
+      action='store_true', default=False, dest='py3_details',
+      help='Show detailed errors from implicit py3 tests.')
 
   helpstr = 'Print all test names.'
   list_p = subp.add_parser(

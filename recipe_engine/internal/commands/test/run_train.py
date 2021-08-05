@@ -167,7 +167,7 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
 
 
 def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
-         filtered_stacks, stop, jobs):
+         filtered_stacks, stop, jobs, enable_py3_details):
   main_repo = recipe_deps.main_repo
 
   description_queues = Queue(py2=gevent.queue.UnboundQueue(),
@@ -219,7 +219,8 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
         filtered_stacks,
         collect_coverage=not test_filters,
         jobs=jobs,
-        use_py3=True)
+        use_py3=True,
+        enable_py3_details=enable_py3_details)
     live_threads.py3[:] = py3_all_threads
     all_threads = Threads(py2=py2_all_threads, py3=py3_all_threads)
 
@@ -239,10 +240,13 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
     for py in live_threads._fields:
       print('\nRunning tests in %s' % py)
       threads = getattr(live_threads, py)
+      has_unexpected_fail = False
       has_tests = False
       while threads and not (has_fail and stop):
         rslt = getattr(outcome_queues, py).get()
         if isinstance(rslt, RunnerThread):
+          if rslt.exit_code and rslt.exit_code > 0:
+            has_unexpected_fail = True
           # should be done at this point, but make sure for cleanliness sake.
           gevent.wait([rslt])
           threads.remove(rslt)
@@ -254,6 +258,12 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
         has_fail = reporter.short_report(rslt)
         if has_fail and stop:
           break
+
+      if py == 'py3' and has_unexpected_fail and not enable_py3_details:
+        print(
+          'WARNING: unexpected errors occurred when trying to run tests in '
+          'python3 mode. Pass --py3-details to see them')
+        continue
 
       # At this point we know all subprocesses and their threads have finished
       # (because outcome_queue has been closed by each worker, which is how we
@@ -270,7 +280,6 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
 
       reporter.final_report(cov, getattr(test_results, py), recipe_deps,
                             check_cov_pct=has_tests)
-
     # Check total coverage for py2 and py3 tests.
     if total_cov.get_data().measured_files():
       covf = io.BytesIO() if _PY2 else io.StringIO()
@@ -325,7 +334,7 @@ def main(args):
 
   try:
     _run(ret, args.recipe_deps, args.use_emoji, args.test_filters, is_train,
-         args.filtered_stacks, args.stop, args.jobs)
+         args.filtered_stacks, args.stop, args.jobs, args.py3_details)
     _dump()
   except KeyboardInterrupt:
     args.docs = False  # skip docs

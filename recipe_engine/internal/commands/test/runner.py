@@ -403,7 +403,7 @@ def main(recipe_deps, cov_file, filtered_stacks, is_train,
       break  # EOF
 
   if cov_file:
-      # write data to the cov_file file
+      # Write data to the cov_file.
       cov_data.write()
 
 def _read_test_desc():
@@ -502,10 +502,12 @@ def _make_path_cleaner(recipe_deps):
 
 class RunnerThread(gevent.Greenlet):
   def __init__(self, recipe_deps, description_queue, outcome_queue, is_train,
-               filtered_stacks, cov_file, cover_module_imports, use_py3):
+               filtered_stacks, cov_file, cover_module_imports, use_py3,
+               enable_py3_details):
     super(RunnerThread, self).__init__()
 
     self.cov_file = cov_file
+    self.exit_code = None
 
     py_exec = 'vpython3' if use_py3 else 'vpython'
 
@@ -532,14 +534,18 @@ class RunnerThread(gevent.Greenlet):
     if not filtered_stacks:
       cmd.append('--full-stacks')
 
+    stderr = None
+    if not enable_py3_details and use_py3:
+      stderr = open(os.devnull, 'w')
     self._runner_proc = subprocess.Popen(
-        cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=stderr)
     self._description_queue = description_queue
     self._outcome_queue = outcome_queue
 
   @classmethod
   def make_pool(cls, recipe_deps, description_queue, outcome_queue, is_train,
-                filtered_stacks, collect_coverage, jobs, use_py3):
+                filtered_stacks, collect_coverage, jobs, use_py3,
+                enable_py3_details=False):
     """Returns a pool (list) of started RunnerThread instances.
 
     Each RunnerThread owns a `recipes.py test _runner` subprocess and
@@ -582,7 +588,8 @@ class RunnerThread(gevent.Greenlet):
             filtered_stacks,
             cov_file(i),
             cover_module_imports=(i == 0),
-            use_py3 = use_py3) for i in range(jobs)
+            use_py3 = use_py3,
+            enable_py3_details = enable_py3_details) for i in range(jobs)
     ]
     for thread in pool:
       thread.start()
@@ -631,7 +638,7 @@ class RunnerThread(gevent.Greenlet):
         self._runner_proc.kill()
       except OSError:
         pass
-      self._runner_proc.wait()
+      self.exit_code = self._runner_proc.wait()
       # We rely on the thread to dump coverage information to disk; if we don't
       # wait for the process to die, then our main thread will race with the
       # runner thread for the coverage information. On windows this almost
