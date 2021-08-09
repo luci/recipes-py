@@ -448,7 +448,7 @@ class TestRun(Common):
     result = self._run_test('run', should_fail=True)
     self.assertIn('NameError: global name \'baz\' is not defined',
                   result.text_output)
-    self.assertIn('FATAL: Insufficient coverage', result.text_output)
+    self.assertIn('FATAL: Insufficient total coverage', result.text_output)
     self.assertDictEqual(
         result.data,
         self._outcome_json(per_test={
@@ -471,7 +471,7 @@ class TestRun(Common):
       del recipe.expectation['basic']
 
     result = self._run_test('run', should_fail=True)
-    self.assertIn('FATAL: Insufficient coverage', result.text_output)
+    self.assertIn('FATAL: Insufficient total coverage', result.text_output)
     self.assertDictEqual(
         result.data,
         self._outcome_json(per_test={

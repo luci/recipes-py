@@ -59,7 +59,7 @@ class TestSimulation(test_env.RecipeEngineUnitTest):
 
     output, retcode = deps.main_repo.recipes_py('test', 'train')
     self.assertEqual(retcode, 1)
-    self.assertIn('FATAL: Insufficient coverage', output)
+    self.assertIn('FATAL: Insufficient total coverage', output)
 
   def test_incomplete_coverage(self):
     deps = self.FakeRecipeDeps()
@@ -82,7 +82,7 @@ class TestSimulation(test_env.RecipeEngineUnitTest):
 
     output, retcode = deps.main_repo.recipes_py('test', 'train')
     self.assertEqual(retcode, 1)
-    self.assertIn('FATAL: Insufficient coverage', output)
+    self.assertIn('FATAL: Insufficient total coverage', output)
 
   def test_incomplete_coverage_whitelisted(self):
     deps = self.FakeRecipeDeps()
@@ -108,7 +108,7 @@ class TestSimulation(test_env.RecipeEngineUnitTest):
 
     output, retcode = deps.main_repo.recipes_py('test', 'train')
     self.assertEqual(retcode, 1)
-    self.assertIn('FATAL: Insufficient coverage', output)
+    self.assertIn('FATAL: Insufficient total coverage', output)
 
   def test_recipe_coverage_strict(self):
     deps = self.FakeRecipeDeps()
@@ -137,7 +137,7 @@ class TestSimulation(test_env.RecipeEngineUnitTest):
 
     output, retcode = deps.main_repo.recipes_py('test', 'train')
     self.assertEqual(retcode, 1)
-    self.assertIn('FATAL: Insufficient coverage', output)
+    self.assertIn('FATAL: Insufficient total coverage', output)
 
   def test_recipe_coverage_strict_whitelisted(self):
     deps = self.FakeRecipeDeps()

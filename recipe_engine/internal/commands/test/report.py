@@ -15,7 +15,6 @@ import logging
 import os
 import sys
 
-from cStringIO import StringIO
 from collections import defaultdict
 from itertools import groupby, imap
 
@@ -25,6 +24,13 @@ import coverage
 from ...warn.cause import CallSite, ImportSite
 
 
+_PY2 = sys.version_info.major == 2
+if _PY2:
+  from cStringIO import StringIO
+else:
+  from io import StringIO
+
+
 @attr.s
 class Reporter(object):
   _use_emoji = attr.ib()
@@ -32,10 +38,11 @@ class Reporter(object):
   _fail_tracker = attr.ib()
 
   _column_count = attr.ib(default=0)
-  _long_err_buf = attr.ib(factory=StringIO)
+  _long_err_buf = attr.ib(factory=dict)  # {'py2': StringIO, 'py3': StringIO}
   # store the err msg which may be caused not by the recipe itself, but the
   # discrepancy of supported python version between the recipe and its deps.
-  _maybe_soft_failure_buf = attr.ib(factory=StringIO)
+  # The dict structure is {'py2': StringIO, 'py3': StringIO}.
+  _maybe_soft_failure_buf = attr.ib(factory=dict)
 
   _start_time = attr.ib(factory=datetime.datetime.now)
 
@@ -55,6 +62,12 @@ class Reporter(object):
   def _verbose_default(self):
     return logging.getLogger().level < logging.WARNING
 
+  def __attrs_post_init__(self):
+    self._long_err_buf['py2'] = StringIO()
+    self._long_err_buf['py3'] = StringIO()
+    self._maybe_soft_failure_buf['py2'] = StringIO()
+    self._maybe_soft_failure_buf['py3'] = StringIO()
+
   def _space_for_columns(self, item_columns):
     """Preemptively ensures we have space to print something which takes
     `item_columns` space.
@@ -70,7 +83,7 @@ class Reporter(object):
       self._column_count = 0
       print()
 
-  def short_report(self, outcome_msg):
+  def short_report(self, outcome_msg, py='py2'):
     """Prints all test results from `outcome_msg` to stdout.
 
     Detailed error messages (if any) will be accumulated in this reporter.
@@ -82,6 +95,8 @@ class Reporter(object):
     Args:
 
       * outcome_msg (Outcome proto) - The message to report.
+      * py (String) - Indicate which python mode it uses. The value should be
+        either py2 or py3.
 
     Raises SystemExit if outcome_msg has an internal_error.
     """
@@ -100,8 +115,9 @@ class Reporter(object):
       _print_summary_info(
           self._verbose, self._use_emoji, test_name, test_result,
           self._space_for_columns)
-      buf = (self._maybe_soft_failure_buf
-             if test_result.expect_py_incompatibility else self._long_err_buf)
+      buf = (self._maybe_soft_failure_buf[py]
+             if test_result.expect_py_incompatibility
+             else self._long_err_buf[py])
       _print_detail_info(buf, test_name, test_result)
 
       has_fail = self._fail_tracker.cache_recent_fails(test_name,
@@ -110,22 +126,20 @@ class Reporter(object):
     return has_fail
 
 
-  def final_report(self, cov, outcome_msg, recipe_deps, check_cov_pct=True):
-    """Prints all final information about the test run to stdout. Raises
-    SystemExit if the tests have failed.
+  def final_report(self, cov, outcome_msgs, recipe_deps):
+    """Prints all final information about the py2 and py3 test run to stdout.
+    Raises SystemExit if the tests have failed.
 
     Args:
 
       * cov (coverage.Coverage|None) - The accumulated coverage data to report.
         If None, then no coverage analysis/report will be done. Coverage less
         than 100% counts as a test failure.
-      * outcome_msg (Outcome proto) - Consulted for uncovered_modules and
-        unused_expectation_files. coverage_percent is also populated as a side
-        effect. Any uncovered_modules/unused_expectation_files count as test
-        failure.
+      * outcome_msgs (TestResults(py2=Outcome proto, py3=Outcome proto)) -
+        Consulted for uncovered_modules and unused_expectation_files.
+        coverage_percent is also populated as a side effect.
+        Any uncovered_modules/unused_expectation_files count as a test failure.
       * recipe_deps (RecipeDeps) - The loaded recipe repo dependencies.
-      * check_cov_pct (bool) - If True, treating the coverage percentage < 100
-        as a hard failure.
 
     Side-effects: Populates outcome_msg.coverage_percent.
 
@@ -133,46 +147,58 @@ class Reporter(object):
     """
     self._fail_tracker.cleanup()
 
-    soft_fail = self._maybe_soft_failure_buf.tell() > 0
-    fail = self._long_err_buf.tell() > 0
-
     print()
-    sys.stdout.write(self._long_err_buf.getvalue())
+    soft_fail, fail = False, False
+    for py in ('py2', 'py3'):
+      soft_fail = soft_fail or self._maybe_soft_failure_buf[py].tell() > 0
+      if self._long_err_buf[py].tell() > 0:
+        fail = True
+        sys.stdout.write(
+          'Errors in %s %s\n' % (py, self._long_err_buf[py].getvalue()))
 
     # For some integration tests we have repos which don't actually have any
     # recipe files at all. We skip coverage measurement if cov has no data.
     if cov and cov.get_data().measured_files():
       covf = StringIO()
+      pct = 0
       try:
-        outcome_msg.coverage_percent = cov.report(
-            file=covf, show_missing=True, skip_covered=True)
+        pct = cov.report(file=covf, show_missing=True, skip_covered=True)
+        outcome_msgs.py2.coverage_percent = pct
+        outcome_msgs.py3.coverage_percent = pct
       except coverage.CoverageException as ex:
         print('%s: %s' % (ex.__class__.__name__, ex))
-      if int(outcome_msg.coverage_percent) != 100:
-        fail = True if check_cov_pct and not soft_fail else fail
-        # Print detailed coverage report only if hard or soft failures exist.
-        print(covf.getvalue() if fail or soft_fail else '')
-        print('%s: Insufficient coverage (%.2f%%)' % (
-            'FATAL' if fail else 'WARNING',
-            outcome_msg.coverage_percent))
+      if int(pct) != 100:
+        fail = True
+        print(covf.getvalue())
+        print('FATAL: Insufficient total coverage for py2+py3 (%.2f%%)' % pct)
         print()
 
-    if outcome_msg.uncovered_modules:
+    duration = (datetime.datetime.now() - self._start_time).total_seconds()
+    print('-' * 70)
+    print('Ran %d tests in %0.3fs' % (len(outcome_msgs.py2.test_results) +
+                                      len(outcome_msgs.py3.test_results),
+                                      duration))
+    print()
+
+    # We have a combined coverage report, hence the uncovered_modules is also
+    # shared between py2 and py3. Only need to use one of them to print
+    # uncovered_modules info.
+    if outcome_msgs.py2.uncovered_modules:
       fail = True
       print('------')
       print('ERROR: The following modules lack any form of test coverage:')
-      for modname in outcome_msg.uncovered_modules:
+      for modname in outcome_msgs.py2.uncovered_modules:
         print('  ', modname)
       print()
       print('Please add test recipes for them (e.g. recipes in the module\'s')
       print('"tests" subdirectory).')
       print()
 
-    if outcome_msg.unused_expectation_files:
+    if outcome_msgs.py2.unused_expectation_files:
       fail = True
       print('------')
       print('ERROR: The below expectation files have no associated test case:')
-      for expect_file in outcome_msg.unused_expectation_files:
+      for expect_file in outcome_msgs.py2.unused_expectation_files:
         print('  ', expect_file)
       print()
 
@@ -190,14 +216,19 @@ class Reporter(object):
         print('and include them with your CL.')
       sys.exit(1)
 
-    warning_result = _collect_warning_result(outcome_msg)
+    warning_result = _collect_warning_result(outcome_msgs)
     if warning_result:
       _print_warnings(warning_result, recipe_deps)
       print('------')
       print('TESTS OK with %d warnings' % len(warning_result))
     elif soft_fail:
       print('\n=======Possible Soft Failures Below=======')
-      sys.stdout.write(self._maybe_soft_failure_buf.getvalue())
+      if self._maybe_soft_failure_buf['py2'].tell() > 0:
+        sys.stdout.write('Soft errors in py2' +
+                         self._maybe_soft_failure_buf['py2'].getvalue() + '\n')
+      if self._maybe_soft_failure_buf['py3'].tell() > 0:
+        sys.stdout.write('Soft errors in py3 tests' +
+                         self._maybe_soft_failure_buf['py3'].getvalue() + '\n')
       print('------')
       print('TESTS OK with some soft failures as above. Those failures need')
       print('human inspection to determine the real causes. It may because of')
@@ -206,10 +237,6 @@ class Reporter(object):
       print('They are ignored for now and will not block your CL submit.')
     else:
       print('TESTS OK')
-
-    # clean up reporter buf value
-    self._long_err_buf.truncate(0)
-    self._maybe_soft_failure_buf.truncate(0)
 
 
 
@@ -302,18 +329,19 @@ class PerWarningResult(object):
   import_sites = attr.ib(factory=set)
 
 
-def _collect_warning_result(outcome_msg):
+def _collect_warning_result(outcome_msgs):
   """Collects issued warnings from all test outcomes and dedupes causes for
   each warning.
   """
   result = defaultdict(PerWarningResult)
-  for _, test_result in outcome_msg.test_results.iteritems():
-    for name, causes in test_result.warnings.iteritems():
-      for cause in causes.causes:
-        if cause.WhichOneof('oneof_cause') == 'call_site':
-          result[name].call_sites.add(CallSite.from_cause_pb(cause))
-        else:
-          result[name].import_sites.add(ImportSite.from_cause_pb(cause))
+  for outcome_msg in outcome_msgs:
+    for _, test_result in outcome_msg.test_results.iteritems():
+      for name, causes in test_result.warnings.iteritems():
+        for cause in causes.causes:
+          if cause.WhichOneof('oneof_cause') == 'call_site':
+            result[name].call_sites.add(CallSite.from_cause_pb(cause))
+          else:
+            result[name].import_sites.add(ImportSite.from_cause_pb(cause))
   return result
 
 

@@ -194,8 +194,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
 
   py2_cov_dir = None
   py3_cov_dir = None
-  cov = None
-  total_cov = coverage.Coverage(config_file=False, data_file='.total_coverage')
+  total_cov = coverage.Coverage(config_file=False)
   try:
     # in case of crash; don't want this undefined in finally clause.
     live_threads = Threads(py2=[], py3=[])
@@ -255,7 +254,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
         if not has_tests:
           has_tests = True
         getattr(test_results, py).MergeFrom(rslt)
-        has_fail = reporter.short_report(rslt)
+        has_fail = reporter.short_report(rslt, py)
         if has_fail and stop:
           break
 
@@ -271,27 +270,12 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
       #
       # If we don't have any filters, collect coverage data.
       if (test_filters or (stop and has_fail)) is False:
-        cov = coverage.Coverage(config_file=False)
         data_paths = [t.cov_file for t in getattr(all_threads, py)
                       if os.path.isfile(t.cov_file)]
         if data_paths:
-          cov.combine(data_paths)
-        total_cov.combine(['.coverage'], keep=True)
+          total_cov.combine(data_paths)
 
-      reporter.final_report(cov, getattr(test_results, py), recipe_deps,
-                            check_cov_pct=has_tests)
-    # Check total coverage for py2 and py3 tests.
-    if total_cov.get_data().measured_files():
-      covf = io.BytesIO() if _PY2 else io.StringIO()
-      pct = 0
-      try:
-        pct = total_cov.report(file=covf, show_missing=True, skip_covered=True)
-      except coverage.CoverageException as ex:
-        print('%s: %s' % (ex.__class__.__name__, ex))
-      if int(pct) != 100:
-        print(covf.getvalue())
-        print('FATAL: Insufficient total coverage for py2+py3 (%.2f%%)' % pct)
-        sys.exit(1)
+    reporter.final_report(total_cov, test_results, recipe_deps)
 
   finally:
     for thread in live_threads.py2 + live_threads.py3:
@@ -301,9 +285,6 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
       shutil.rmtree(py2_cov_dir, ignore_errors=True)
     if py3_cov_dir:
       shutil.rmtree(py3_cov_dir, ignore_errors=True)
-    if cov:
-      # remove the .coverage file
-      cov.erase()
     total_cov.erase()
 
 
