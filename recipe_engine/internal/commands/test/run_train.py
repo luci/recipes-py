@@ -32,6 +32,15 @@ from . import report, test_name
 from .fail_tracker import FailTracker
 from .runner import RunnerThread
 
+# TODO(crbug.com/1147793): Remove it after migration is done.
+# We want to always run all tests in py3. To decide whether or not to abort the
+# program earlier due to a global failure (see first few lines of code in
+# reporter.short_report() about this failure), we need to know if users have
+# started migrating:
+#   * If not, the global failure shouldn't cause an abort.
+#   * If they've stared migrating, abort and let them see this error info.
+HAS_LABELED_RECIPE = False
+
 
 TestResults = collections.namedtuple('TestResults', 'py2 py3')
 Queue = collections.namedtuple('Queue', 'py2 py3')
@@ -82,13 +91,34 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
     if not test_filter('%s.%s' % (recipe.name, test_case.name)):
       return
 
-    # Put the recipe into the corresponding description queue(s).
-    if recipe.python_version_compatibility == 'PY3':
+    global HAS_LABELED_RECIPE
+    if recipe.is_python_version_labeled:
+      HAS_LABELED_RECIPE = True
+    # Put into both py2 and py3 pools by default, unless this recipe's python
+    # compatibility is explicitly labeled.
+    if not recipe.is_python_version_labeled:
+      description_queues.py2.put(
+          Description(
+              recipe_name=recipe.name,
+              test_name=test_case.name,
+              expect_py_incompatibility=(
+                  True if recipe.effective_python_compatibility in (None, 'PY3')
+                  else False)
+          ))
       description_queues.py3.put(
           Description(
               recipe_name=recipe.name,
               test_name=test_case.name,
-              expect_py_incompatibility=not recipe.effective_python_compatility,
+              expect_py_incompatibility=True  # unlabeled val is regarded as py2
+          ))
+    elif recipe.python_version_compatibility == 'PY3':
+      description_queues.py3.put(
+          Description(
+              recipe_name=recipe.name,
+              test_name=test_case.name,
+              expect_py_incompatibility=(
+                  not recipe.effective_python_compatibility),
+              is_labeled=True,
           ))
     elif recipe.python_version_compatibility == 'PY2+3':
       description_queues.py2.put(
@@ -96,23 +126,26 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
               recipe_name=recipe.name,
               test_name=test_case.name,
               expect_py_incompatibility=(
-                  True if recipe.effective_python_compatility in (None, 'PY3')
-                  else False)
+                  True if recipe.effective_python_compatibility in (None, 'PY3')
+                  else False),
+              is_labeled=True,
           ))
       description_queues.py3.put(
           Description(
               recipe_name=recipe.name,
               test_name=test_case.name,
               expect_py_incompatibility=(
-                  True if recipe.effective_python_compatility in (None, 'PY2')
-                  else False)
+                  True if recipe.effective_python_compatibility in (None, 'PY2')
+                  else False),
+              is_labeled=True,
           ))
     else:
       description_queues.py2.put(
         Description(
           recipe_name=recipe.name,
           test_name=test_case.name,
-          expect_py_incompatibility=not recipe.effective_python_compatility,
+          expect_py_incompatibility=not recipe.effective_python_compatibility,
+          is_labeled=True,
         ))
     gevent.sleep()  # let any blocking threads pick this up
 
@@ -190,7 +223,8 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
     ))
 
   fail_tracker = FailTracker(recipe_deps.previous_test_failures_path)
-  reporter = report.Reporter(use_emoji, is_train, fail_tracker)
+  reporter = report.Reporter(use_emoji, is_train, fail_tracker,
+                             enable_py3_details)
 
   py2_cov_dir = None
   py3_cov_dir = None
@@ -236,11 +270,11 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
       description_queues.py3.put(None)
 
     has_fail = False
+    implicit_py3_err = 0
     for py in live_threads._fields:
       print('\nRunning tests in %s' % py)
       threads = getattr(live_threads, py)
       has_unexpected_fail = False
-      has_tests = False
       while threads and not (has_fail and stop):
         rslt = getattr(outcome_queues, py).get()
         if isinstance(rslt, RunnerThread):
@@ -251,18 +285,21 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
           threads.remove(rslt)
           continue
 
-        if not has_tests:
-          has_tests = True
         getattr(test_results, py).MergeFrom(rslt)
-        has_fail = reporter.short_report(rslt, py)
+        has_fail, count = reporter.short_report(rslt, py, can_abort=(
+            py == 'py2' or HAS_LABELED_RECIPE))
+        implicit_py3_err += count
         if has_fail and stop:
           break
 
-      if py == 'py3' and has_unexpected_fail and not enable_py3_details:
-        print(
-          'WARNING: unexpected errors occurred when trying to run tests in '
-          'python3 mode. Pass --py3-details to see them')
-        continue
+      if py == 'py3' and not enable_py3_details:
+        if has_unexpected_fail:
+          print('WARNING: unexpected errors occurred when trying to run tests '
+                'in python3 mode. Pass --py3-details to see them.')
+          continue
+        if implicit_py3_err > 0:
+          print('WARNING: Ignored %d failures in implicit py3 tests. '
+                'Pass --py3-details to see them.' % implicit_py3_err)
 
       # At this point we know all subprocesses and their threads have finished
       # (because outcome_queue has been closed by each worker, which is how we

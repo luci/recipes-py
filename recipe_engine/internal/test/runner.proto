@@ -22,6 +22,10 @@ message Description {
   // True indicates the PYTHON_VERSION_COMPATIBILITY of a recipe is incompatible
   // with its dependencies.
   bool expect_py_incompatibility = 3;
+
+  // Whether or not the py compatibility of this recipe test has been manually
+  // labeled.
+  bool is_labeled = 4;
 }
 
 // Result of running recipe tests (for the recipe engine's own 'test'
@@ -65,6 +69,10 @@ message Outcome {
     // True indicates the PYTHON_VERSION_COMPATIBILITY of a recipe is incompatible
     // with its dependencies.
     bool expect_py_incompatibility = 9;
+
+    // Whether or not the py compatibility of this recipe test has been manually
+    // labeled.
+    bool is_labeled = 10;
   }
   // Maps full test names (i.e. 'recipe_name.test_case') to test result details.
   map<string, Results> test_results = 1;

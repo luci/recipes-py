@@ -554,12 +554,12 @@ class RecipeModule(object):
 
   @cached_property
   def python_version_compatibility(self):
-    """This module's claimed python compatility level."""
+    """This module's claimed python compatibility level."""
     return self.do_import().PYTHON_VERSION_COMPATIBILITY
 
   @cached_property
-  def effective_python_compatility(self):
-    """This module's effective python compatility level.
+  def effective_python_compatibility(self):
+    """This module's effective python compatibility level.
 
     Defined as the lowest compatibility level of this module and all transitive
     dependencies.
@@ -747,18 +747,26 @@ class Recipe(object):
       }
 
     if 'PYTHON_VERSION_COMPATIBILITY' not in recipe_globals:
+      recipe_globals['IS_PYTHON_VERSION_LABELED'] = False
       recipe_globals['PYTHON_VERSION_COMPATIBILITY'] = 'PY2'
+    else:
+      recipe_globals['IS_PYTHON_VERSION_LABELED'] = True
 
     return recipe_globals
 
   @cached_property
+  def is_python_version_labeled(self):
+    """Whether this recipe's python compatibility is explicitly marked."""
+    return self.global_symbols['IS_PYTHON_VERSION_LABELED']
+
+  @cached_property
   def python_version_compatibility(self):
-    """This recipe's claimed python compatility level."""
+    """This recipe's claimed python compatibility level."""
     return self.global_symbols['PYTHON_VERSION_COMPATIBILITY']
 
   @cached_property
-  def effective_python_compatility(self):
-    """This recipe's effective python compatility level.
+  def effective_python_compatibility(self):
+    """This recipe's effective python compatibility level.
 
     Defined as the lowest compatibility level of this recipe and all transitive
     dependencies.
@@ -1199,7 +1207,7 @@ def _resolve(recipe_deps, deps_spec, variant, engine, test_data):
   return ret
 
 
-# Lookup table for comparing effective python compatibilies.
+# Lookup table for comparing effective python compatibilities.
 #
 # The following rules are implied for all X:
 #   `(X, X) => X`
@@ -1231,7 +1239,7 @@ def _compute_py_compat(ours, recipe_deps, normalized_DEPS):
   ret = ours
   for repo_name, module_name in itervalues(normalized_DEPS):
     m = recipe_deps.repos[repo_name].modules[module_name]
-    compat = m.effective_python_compatility
+    compat = m.effective_python_compatibility
     if ret == compat:
       # equal compat levels
       continue

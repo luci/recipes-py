@@ -91,7 +91,7 @@ def process_modules(ret, rd, mod_names):
     mRecord.repo = repo
     mRecord.name = mod_name
     mRecord.claimed_py3_status = py_compat(mod.python_version_compatibility)
-    mRecord.effective_py3_status = py_compat(mod.effective_python_compatility)
+    mRecord.effective_py3_status = py_compat(mod.effective_python_compatibility)
 
     mods = set(extract_module_names(mod))
     mRecord.deps.extend(mods)
@@ -112,7 +112,8 @@ def process_recipes(ret, recipes):
     rRecord.name = recipe.name
     rRecord.is_recipe = True
     rRecord.claimed_py3_status = py_compat(recipe.python_version_compatibility)
-    rRecord.effective_py3_status = py_compat(recipe.effective_python_compatility)
+    rRecord.effective_py3_status = py_compat(
+        recipe.effective_python_compatibility)
     rRecord.deps.extend(extract_module_names(recipe))
 
     cfg = recipe.repo.recipes_cfg_pb2

@@ -21,6 +21,7 @@ from itertools import groupby, imap
 import attr
 import coverage
 
+from .fail_tracker import FailTracker
 from ...warn.cause import CallSite, ImportSite
 
 
@@ -36,6 +37,8 @@ class Reporter(object):
   _use_emoji = attr.ib()
   _is_train = attr.ib()
   _fail_tracker = attr.ib()
+  # Whether to show details for py3 implicit tests.
+  _enable_py3_details = attr.ib()
 
   _column_count = attr.ib(default=0)
   _long_err_buf = attr.ib(factory=dict)  # {'py2': StringIO, 'py3': StringIO}
@@ -83,7 +86,7 @@ class Reporter(object):
       self._column_count = 0
       print()
 
-  def short_report(self, outcome_msg, py='py2'):
+  def short_report(self, outcome_msg, py='py2', can_abort=True):
     """Prints all test results from `outcome_msg` to stdout.
 
     Detailed error messages (if any) will be accumulated in this reporter.
@@ -97,21 +100,37 @@ class Reporter(object):
       * outcome_msg (Outcome proto) - The message to report.
       * py (String) - Indicate which python mode it uses. The value should be
         either py2 or py3.
+      * can_abort(bool) - True by default. Check whether the program should
+        abort for a global failure found in test results.
+
+    Returns:
+      * bool - If test results have any failure.
+      * int - The error count. (NOTE: if py='py3' but --py3-details flag is not
+              set, then counts implicit py3 tests only.)
 
     Raises SystemExit if outcome_msg has an internal_error.
     """
     # Global error; this means something in the actual test execution code went
     # wrong.
     if outcome_msg.internal_error:
-      # This is pretty bad.
-      print('ABORT ABORT ABORT')
-      print('Global failure(s):')
-      for failure in outcome_msg.internal_error:
-        print('  ', failure)
-      sys.exit(1)
+      if can_abort:
+        # This is pretty bad.
+        print('ABORT ABORT ABORT')
+        print('Global failure(s):')
+        for failure in outcome_msg.internal_error:
+          print('  ', failure)
+        sys.exit(1)
+      else:
+        return True, len(outcome_msg.test_results)
 
+    err_count = 0
     has_fail = False
     for test_name, test_result in outcome_msg.test_results.iteritems():
+      if (py == 'py3' and not self._enable_py3_details and
+          not test_result.is_labeled):
+        err_count += 1 if FailTracker.test_failed(test_result) else 0
+        continue
+
       _print_summary_info(
           self._verbose, self._use_emoji, test_name, test_result,
           self._space_for_columns)
@@ -123,7 +142,7 @@ class Reporter(object):
       has_fail = self._fail_tracker.cache_recent_fails(test_name,
                                                        test_result) or has_fail
 
-    return has_fail
+    return has_fail, err_count
 
 
   def final_report(self, cov, outcome_msgs, recipe_deps):

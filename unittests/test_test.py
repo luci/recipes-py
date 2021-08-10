@@ -95,6 +95,7 @@ class Common(test_env.RecipeEngineUnitTest):
     crash = 5
     bad_test = 6
     internal_error = 7
+    is_labeled = 8
 
 
   def _outcome_json(self, per_test=None, coverage=100, uncovered_mods=(),
@@ -136,6 +137,8 @@ class Common(test_env.RecipeEngineUnitTest):
           results.bad_test[:] = ['placeholder']
         elif type_ == self.OutcomeType.internal_error:
           results.internal_error[:] = ['placeholder']
+        elif type_ == self.OutcomeType.is_labeled:
+          results.is_labeled=True
 
     ret.coverage_percent = coverage
     ret.uncovered_modules.extend(uncovered_mods)
@@ -233,6 +236,11 @@ class TestRun(Common):
         self._outcome_json())
 
   def test_recipe_not_covered(self):
+    # TODO: see comments in test_recipe_module_example_not_covered
+    self.deps.ambient_toplevel_code = [
+        '''
+        PYTHON_VERSION_COMPATIBILITY = 'PY2'
+        ''']
     with self.main.write_recipe('foo') as recipe:
       recipe.RunSteps.write('''
         if False:
@@ -242,7 +250,9 @@ class TestRun(Common):
     result = self._run_test('run', should_fail=True)
     self.assertDictEqual(
         result.data,
-        self._outcome_json(coverage=87.5))
+        self._outcome_json(per_test={
+            'foo.basic': [self.OutcomeType.is_labeled],
+        },coverage=88.9))
 
   def test_recipe_not_covered_filter(self):
     with self.main.write_recipe('foo') as recipe:
@@ -462,6 +472,13 @@ class TestRun(Common):
           pass
       ''')
 
+    # TODO(crbug.com/1211651): remove the compatibility indicator and change
+    # back the coverage to 90.5, after the flow to execute RunSteps is py3
+    # compatible.
+    self.deps.ambient_toplevel_code = [
+        '''
+        PYTHON_VERSION_COMPATIBILITY = 'PY2'
+        ''']
     with self.main.write_recipe('foo_module', 'examples/full') as recipe:
       recipe.DEPS = ['foo_module']
       recipe.RunSteps.write('''
@@ -475,8 +492,9 @@ class TestRun(Common):
     self.assertDictEqual(
         result.data,
         self._outcome_json(per_test={
-          'foo_module:examples/full.basic': [self.OutcomeType.diff],
-        }, coverage=90.5))
+          'foo_module:examples/full.basic':
+              [self.OutcomeType.diff, self.OutcomeType.is_labeled],
+        }, coverage=90.9))
 
   def test_recipe_module_uncovered_not_strict(self):
     with self.main.write_module('foo_module') as mod:
@@ -975,6 +993,12 @@ class TestTrain(Common):
         }))
 
   def test_checks_coverage(self):
+    # TODO(crbug.com/1211651): change back the coverage to 90.5, after the flow
+    # to execute RunSteps is py3 compatible.
+    self.deps.ambient_toplevel_code = [
+        '''
+        PYTHON_VERSION_COMPATIBILITY = 'PY2'
+        ''']
     with self.main.write_recipe('foo') as recipe:
       recipe.RunSteps.write('''
         if False:
@@ -984,8 +1008,8 @@ class TestTrain(Common):
     self.assertDictEqual(
         result.data,
         self._outcome_json(per_test={
-          'foo.basic': [],
-        }, coverage=87.5))
+          'foo.basic': [self.OutcomeType.is_labeled],
+        }, coverage=88.9))
 
   def test_runs_checks(self):
     with self.main.write_recipe('foo') as recipe:
