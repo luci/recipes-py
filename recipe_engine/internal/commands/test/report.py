@@ -105,8 +105,9 @@ class Reporter(object):
 
     Returns:
       * bool - If test results have any failure.
-      * int - The error count. (NOTE: if py='py3' but --py3-details flag is not
-              set, then counts implicit py3 tests only.)
+      * int - The error count. NOTE: if py='py3' but --py3-details flag is not
+              set, then counts implicit py3 tests only. We only count error in
+              that situation.
 
     Raises SystemExit if outcome_msg has an internal_error.
     """

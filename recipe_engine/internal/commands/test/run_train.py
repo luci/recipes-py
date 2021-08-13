@@ -32,15 +32,6 @@ from . import report, test_name
 from .fail_tracker import FailTracker
 from .runner import RunnerThread
 
-# TODO(crbug.com/1147793): Remove it after migration is done.
-# We want to always run all tests in py3. To decide whether or not to abort the
-# program earlier due to a global failure (see first few lines of code in
-# reporter.short_report() about this failure), we need to know if users have
-# started migrating:
-#   * If not, the global failure shouldn't cause an abort.
-#   * If they've stared migrating, abort and let them see this error info.
-HAS_LABELED_RECIPE = False
-
 
 TestResults = collections.namedtuple('TestResults', 'py2 py3')
 Queue = collections.namedtuple('Queue', 'py2 py3')
@@ -67,12 +58,25 @@ def _extract_filter_matchers(test_filters):
   )
 
 
+# TODO(crbug.com/1147793): Remove the second return value after migration.
 def _push_tests(test_filters, is_train, main_repo, description_queues,
                 recent_fails):
+  """
+  Returns:
+    * set - unused_expectation_files
+    * bool - has_labeled_recipe. This is introduced temporarily for migration.
+             Because we want to always run all tests in py3. To decide whether
+             or not to abort the program earlier due to a global failure (see
+             first few lines of code in reporter.short_report() about this f
+             ailure), we need to know if users have started migrating:
+                * If not, the global failure shouldn't cause an abort.
+                * If migration has started, abort and let them see this error.
+  """
   unused_expectation_files = set()
   used_expectation_files = set()
   recipe_filter, test_filter = _extract_filter_matchers(test_filters)
   test_filenames = collections.defaultdict(dict)
+  has_labeled_recipe = [False]
 
   def push_test(recipe, test_case):
     recipe_filenames = test_filenames[recipe]
@@ -91,9 +95,8 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
     if not test_filter('%s.%s' % (recipe.name, test_case.name)):
       return
 
-    global HAS_LABELED_RECIPE
     if recipe.is_python_version_labeled:
-      HAS_LABELED_RECIPE = True
+      has_labeled_recipe[0] = True
     # Put into both py2 and py3 pools by default, unless this recipe's python
     # compatibility is explicitly labeled.
     if not recipe.is_python_version_labeled:
@@ -102,8 +105,7 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
               recipe_name=recipe.name,
               test_name=test_case.name,
               expect_py_incompatibility=(
-                  True if recipe.effective_python_compatibility in (None, 'PY3')
-                  else False)
+                  not recipe.effective_python_compatibility)
           ))
       description_queues.py3.put(
           Description(
@@ -192,11 +194,11 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
 
   unused_expectation_files -= used_expectation_files
   if not is_train:
-    return unused_expectation_files
+    return sorted(unused_expectation_files), has_labeled_recipe[0]
 
   for path in unused_expectation_files:
     os.remove(path)
-  return set()
+  return set(), has_labeled_recipe[0]
 
 
 def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
@@ -257,9 +259,9 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
     live_threads.py3[:] = py3_all_threads
     all_threads = Threads(py2=py2_all_threads, py3=py3_all_threads)
 
-    unused_expectation_files = sorted(
-        _push_tests(test_filters, is_train, main_repo, description_queues,
-                    fail_tracker.recent_fails))
+    unused_expectation_files, has_labeled_recipe = _push_tests(
+        test_filters, is_train, main_repo, description_queues,
+        fail_tracker.recent_fails)
     for test_result in test_results:
       test_result.unused_expectation_files.extend(unused_expectation_files)
 
@@ -287,7 +289,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
 
         getattr(test_results, py).MergeFrom(rslt)
         has_fail, count = reporter.short_report(rslt, py, can_abort=(
-            py == 'py2' or HAS_LABELED_RECIPE))
+            py == 'py2' or has_labeled_recipe))
         implicit_py3_err += count
         if has_fail and stop:
           break
@@ -298,7 +300,8 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
                 'in python3 mode. Pass --py3-details to see them.')
           continue
         if implicit_py3_err > 0:
-          print('WARNING: Ignored %d failures in implicit py3 tests. '
+          print('WARNING: Ignored %d failures in implicit py3 tests for recipes'
+                'that don\'t declare their own PYTHON_VERSION_COMPATIBILITY. '
                 'Pass --py3-details to see them.' % implicit_py3_err)
 
       # At this point we know all subprocesses and their threads have finished

@@ -17,6 +17,7 @@ from google.protobuf import json_format as jsonpb
 import attr
 import enum
 import mock
+import re
 
 import test_env
 
@@ -34,6 +35,7 @@ class Common(test_env.RecipeEngineUnitTest):
 
   def _run_test(self, *args, **kwargs):
     should_fail = kwargs.pop('should_fail', False)
+    py_version = kwargs.pop('py_version', 'py2')
     self.assertDictEqual(
         kwargs, {}, 'got additional unexpected kwargs: {!r}'.format(kwargs))
 
@@ -54,30 +56,31 @@ class Common(test_env.RecipeEngineUnitTest):
             output=output))
     with open(json_out, 'rb') as json_file:
       try:
-        data = json.load(json_file)
-        # TODO(crbug.com/1211651): assert py3 tests results as well after that
-        # functionality is complete.
-        if isinstance(data, list):
-          data = data[0]
-          data.pop('python_env')
-        for results in data.get('test_results', {}).itervalues():
-          if 'diff' in results:
-            results['diff']['lines'] = ['placeholder']
-          for check in results.get('check', ()):
-            check['lines'] = ['placeholder']
-          if 'crash_mismatch' in results:
-            results['crash_mismatch'] = ['placeholder']
-          if 'bad_test' in results:
-            results['bad_test'] = ['placeholder']
-          if 'internal_error' in results:
-            results['internal_error'] = ['placeholder']
-        if 'coverage_percent' in data:
-          data['coverage_percent'] = round(data['coverage_percent'], 1)
-        if 'unused_expectation_files' in data:
-          data['unused_expectation_files'] = [
-            os.path.relpath(fpath, self.main.path)
-            for fpath in data['unused_expectation_files']
-          ]
+        data = None
+        results_data = json.load(json_file)
+        if not isinstance(results_data, list):
+          return self.JsonResult(output, results_data)
+        for rd in results_data:
+          for results in rd.get('test_results', {}).itervalues():
+            if 'diff' in results:
+              results['diff']['lines'] = ['placeholder']
+            for check in results.get('check', ()):
+              check['lines'] = ['placeholder']
+            if 'crash_mismatch' in results:
+              results['crash_mismatch'] = ['placeholder']
+            if 'bad_test' in results:
+              results['bad_test'] = ['placeholder']
+            if 'internal_error' in results:
+              results['internal_error'] = ['placeholder']
+          if 'coverage_percent' in rd:
+            rd['coverage_percent'] = round(rd['coverage_percent'], 1)
+          if 'unused_expectation_files' in rd:
+            rd['unused_expectation_files'] = [
+              os.path.relpath(fpath, self.main.path)
+              for fpath in rd['unused_expectation_files']
+            ]
+          if rd.pop('python_env') == py_version:
+            data = rd
       except Exception as ex:  # pylint: disable=broad-except
         if should_fail != 'crash':
           raise Exception(
@@ -96,6 +99,7 @@ class Common(test_env.RecipeEngineUnitTest):
     bad_test = 6
     internal_error = 7
     is_labeled = 8
+    expect_py_incompatibility = 9
 
 
   def _outcome_json(self, per_test=None, coverage=100, uncovered_mods=(),
@@ -138,7 +142,9 @@ class Common(test_env.RecipeEngineUnitTest):
         elif type_ == self.OutcomeType.internal_error:
           results.internal_error[:] = ['placeholder']
         elif type_ == self.OutcomeType.is_labeled:
-          results.is_labeled=True
+          results.is_labeled = True
+        elif type_ == self.OutcomeType.expect_py_incompatibility:
+          results.expect_py_incompatibility = True
 
     ret.coverage_percent = coverage
     ret.uncovered_modules.extend(uncovered_mods)
@@ -236,23 +242,17 @@ class TestRun(Common):
         self._outcome_json())
 
   def test_recipe_not_covered(self):
-    # TODO: see comments in test_recipe_module_example_not_covered
-    self.deps.ambient_toplevel_code = [
-        '''
-        PYTHON_VERSION_COMPATIBILITY = 'PY2'
-        ''']
     with self.main.write_recipe('foo') as recipe:
       recipe.RunSteps.write('''
-        if False:
-          pass
+        bool_var = False
+        if bool_var:
+          a = 1
       ''')
 
     result = self._run_test('run', should_fail=True)
     self.assertDictEqual(
         result.data,
-        self._outcome_json(per_test={
-            'foo.basic': [self.OutcomeType.is_labeled],
-        },coverage=88.9))
+        self._outcome_json(coverage=88.9))
 
   def test_recipe_not_covered_filter(self):
     with self.main.write_recipe('foo') as recipe:
@@ -338,6 +338,39 @@ class TestRun(Common):
         self._outcome_json(per_test={
           'foo.basic': [self.OutcomeType.check],
         }, coverage=0))
+
+  # Test the soft failure, for example, when the recipe is claimed as PY3 but
+  # its dependency only suports PY2.
+  def test_check_soft_failure(self):
+    with self.main.write_module('foo_module') as mod:
+      mod.api.write('''
+        import sys
+        def foo(self):
+          print>> sys.stderr, 'py2 only syntax!'
+      ''')
+    self.deps.ambient_toplevel_code = [
+        '''
+        PYTHON_VERSION_COMPATIBILITY = 'PY3'
+        ''']
+    with self.main.write_recipe('foo_module', 'examples/full') as recipe:
+      recipe.DEPS = ['foo_module']
+      recipe.RunSteps.write('''
+          api.foo_module.foo()
+      ''')
+      del recipe.expectation['basic']
+
+    result = self._run_test('run', should_fail=False, py_version='py3')
+    self.assertIn('Ran 1 tests in', result.text_output)
+    self.assertIn('Soft errors in py3 tests', result.text_output)
+    self.assertDictEqual(
+        result.data,
+        self._outcome_json(per_test={
+          'foo_module:examples/full.basic': [
+              self.OutcomeType.crash,
+              self.OutcomeType.diff,
+              self.OutcomeType.expect_py_incompatibility,
+              self.OutcomeType.is_labeled],
+        }))
 
   def test_check_success(self):
     with self.main.write_recipe('foo') as recipe:
@@ -471,19 +504,12 @@ class TestRun(Common):
         def foo(self):
           pass
       ''')
-
-    # TODO(crbug.com/1211651): remove the compatibility indicator and change
-    # back the coverage to 90.5, after the flow to execute RunSteps is py3
-    # compatible.
-    self.deps.ambient_toplevel_code = [
-        '''
-        PYTHON_VERSION_COMPATIBILITY = 'PY2'
-        ''']
     with self.main.write_recipe('foo_module', 'examples/full') as recipe:
       recipe.DEPS = ['foo_module']
       recipe.RunSteps.write('''
-        if False:
-          pass
+        bool_var = False
+        if bool_var:
+          a = 1
       ''')
       del recipe.expectation['basic']
 
@@ -493,7 +519,7 @@ class TestRun(Common):
         result.data,
         self._outcome_json(per_test={
           'foo_module:examples/full.basic':
-              [self.OutcomeType.diff, self.OutcomeType.is_labeled],
+              [self.OutcomeType.diff],
         }, coverage=90.9))
 
   def test_recipe_module_uncovered_not_strict(self):
@@ -992,24 +1018,73 @@ class TestTrain(Common):
           'foo.basic': [self.OutcomeType.written],
         }))
 
-  def test_checks_coverage(self):
-    # TODO(crbug.com/1211651): change back the coverage to 90.5, after the flow
-    # to execute RunSteps is py3 compatible.
+  # Reminder:
+  # The coverage pkg has a minor bug on a corner case for this type of code:
+  # ```
+  # if False:
+  #   pass
+  # ```
+  # In py2 env, it's able to correctly detect the 'pass' line is missed, while
+  # it detects the 'if False' line is missed in py3.
+  #
+  # It won't impact our useage in 99.9999% of situations unless in the post
+  # migration phase where all code only supports py3 and there is a code like
+  # 'while True' or 'if True'. In that case, coverage will prompt that line's
+  # coverage is missed. When that happens, an workaround is to assige True to a
+  # var and use 'while var'. In any other cases, coverage can correctly detect
+  # missed line number.
+  def test_checks_coverage_without_any_label(self):
+    with self.main.write_recipe('foo') as recipe:
+      recipe.RunSteps.write('''
+        bool_var = False
+        if bool_var:
+          a = 1
+      ''')
+    result = self._run_test('train', should_fail=True)
+    self.assertIn('Ran 2 tests in', result.text_output)
+    self.assertDictEqual(
+        result.data,
+        self._outcome_json(coverage=88.9))
+
+  def test_checks_coverage_with_py2_label(self):
     self.deps.ambient_toplevel_code = [
         '''
         PYTHON_VERSION_COMPATIBILITY = 'PY2'
         ''']
     with self.main.write_recipe('foo') as recipe:
+      recipe.DEPS = []
       recipe.RunSteps.write('''
-        if False:
-          pass
+        bool_var = False
+        if bool_var:
+          a = 1
       ''')
     result = self._run_test('train', should_fail=True)
+    self.assertIn('Ran 1 tests in', result.text_output)
     self.assertDictEqual(
         result.data,
         self._outcome_json(per_test={
-          'foo.basic': [self.OutcomeType.is_labeled],
-        }, coverage=88.9))
+            'foo.basic': [self.OutcomeType.is_labeled],
+        }, coverage=90))
+
+  def test_checks_coverage_with_py3_label(self):
+    self.deps.ambient_toplevel_code = [
+        '''
+        PYTHON_VERSION_COMPATIBILITY = 'PY3'
+        ''']
+    with self.main.write_recipe('foo') as recipe:
+      recipe.DEPS = []
+      recipe.RunSteps.write('''
+        bool_var = False
+        if bool_var:
+          a = 1
+      ''')
+    result = self._run_test('train', should_fail=True, py_version='py3')
+    self.assertIn('Ran 1 tests in', result.text_output)
+    self.assertDictEqual(
+        result.data,
+        self._outcome_json(per_test={
+            'foo.basic': [self.OutcomeType.is_labeled],
+        }, coverage=90))
 
   def test_runs_checks(self):
     with self.main.write_recipe('foo') as recipe:
