@@ -4,6 +4,7 @@
 
 from future.moves.urllib.parse import urlparse, urlunparse
 from future.utils import iteritems
+from past.builtins import basestring
 
 import re
 

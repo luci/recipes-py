@@ -6,6 +6,8 @@
 RecipeTestApi.post_process method in GenTests.
 """
 
+from past.builtins import basestring
+
 import re
 
 from collections import defaultdict, OrderedDict, namedtuple

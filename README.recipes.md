@@ -2338,7 +2338,7 @@ Equivalent to os.path.split.
 Equivalent to os.path.splitext.
 ### *recipe_modules* / [platform](/recipe_modules/platform)
 
-[DEPS](/recipe_modules/platform/__init__.py#5): [version](#recipe_modules-version)
+[DEPS](/recipe_modules/platform/__init__.py#7): [version](#recipe_modules-version)
 
 Mockable system platform identity functions.
 
@@ -2365,7 +2365,7 @@ Returns the bitness of the userland for the current system (either 32 or
 TODO: If anyone needs to query for the kernel bitness, another accessor
 should be added.
 
-&emsp; **@property**<br>&mdash; **def [cpu\_count](/recipe_modules/platform/api.py#138)(self):**
+&emsp; **@property**<br>&mdash; **def [cpu\_count](/recipe_modules/platform/api.py#139)(self):**
 
 The number of logical CPU cores (i.e. including hyper-threaded cores),
 according to `psutil.cpu_count(True)`.
@@ -2399,7 +2399,7 @@ Returns the current platform name which will be in:
 * mac
 * linux
 
-&emsp; **@staticmethod**<br>&mdash; **def [normalize\_platform\_name](/recipe_modules/platform/api.py#144)(plat):**
+&emsp; **@staticmethod**<br>&mdash; **def [normalize\_platform\_name](/recipe_modules/platform/api.py#145)(plat):**
 
 One of python's sys.platform values -> 'win', 'linux' or 'mac'.
 
@@ -2407,6 +2407,7 @@ One of python's sys.platform values -> 'win', 'linux' or 'mac'.
 
 The total physical memory in MiB.
 
+Return type is int.
 This is equivalent to `psutil.virtual_memory().total / (1024 ** 2)`.
 ### *recipe_modules* / [properties](/recipe_modules/properties)
 
@@ -4215,9 +4216,9 @@ This tests metadata features of the Future object.
 &mdash; **def [RunSteps](/recipe_modules/path/examples/full.py#14)(api):**
 ### *recipes* / [platform:examples/full](/recipe_modules/platform/examples/full.py)
 
-[DEPS](/recipe_modules/platform/examples/full.py#5): [platform](#recipe_modules-platform), [step](#recipe_modules-step), [version](#recipe_modules-version)
+[DEPS](/recipe_modules/platform/examples/full.py#7): [platform](#recipe_modules-platform), [step](#recipe_modules-step), [version](#recipe_modules-version)
 
-&mdash; **def [RunSteps](/recipe_modules/platform/examples/full.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/platform/examples/full.py#13)(api):**
 ### *recipes* / [properties:examples/full](/recipe_modules/properties/examples/full.py)
 
 [DEPS](/recipe_modules/properties/examples/full.py#13): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
@@ -4375,9 +4376,9 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/step/tests/timeout.py#19)(api, timeout):**
 ### *recipes* / [swarming:examples/full](/recipe_modules/swarming/examples/full.py)
 
-[DEPS](/recipe_modules/swarming/examples/full.py#12): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/swarming/examples/full.py#14): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
-&mdash; **def [RunSteps](/recipe_modules/swarming/examples/full.py#29)(api, use_cas):**
+&mdash; **def [RunSteps](/recipe_modules/swarming/examples/full.py#31)(api, use_cas):**
 ### *recipes* / [swarming:examples/this\_task](/recipe_modules/swarming/examples/this_task.py)
 
 [DEPS](/recipe_modules/swarming/examples/this_task.py#5): [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
@@ -4437,9 +4438,9 @@ An example of a recipe wrapping legacy analyzers.
 &mdash; **def [RunSteps](/recipe_modules/uuid/examples/full.py#11)(api):**
 ### *recipes* / [version:examples/full](/recipe_modules/version/examples/full.py)
 
-[DEPS](/recipe_modules/version/examples/full.py#6): [version](#recipe_modules-version)
+[DEPS](/recipe_modules/version/examples/full.py#7): [version](#recipe_modules-version)
 
-&mdash; **def [RunSteps](/recipe_modules/version/examples/full.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/version/examples/full.py#12)(api):**
 ### *recipes* / [warning:tests/fakes](/recipe_modules/warning/tests/fakes.py)
 
 This is a fake recipe to trick the simulation and make it believes that

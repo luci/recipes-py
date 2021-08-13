@@ -282,6 +282,9 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
     * test_desc (Description)
     * test_data (TestData)
   """
+  test_results.expect_py_incompatibility = test_desc.expect_py_incompatibility
+  test_results.is_labeled = test_desc.is_labeled
+
   # Reset global state.
   config_types.ResetTostringFns()
   engine_types.PerGreentletStateRegistry.clear()
@@ -316,8 +319,6 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
   transform_exepctations(path_cleaner, raw_expectations)
 
   _diff_test(test_results, test_data.expect_file, raw_expectations, is_train)
-  test_results.expect_py_incompatibility = test_desc.expect_py_incompatibility
-  test_results.is_labeled = test_desc.is_labeled
 
 
 def _cover_all_imports(main_repo):

@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from past.builtins import basestring
+
 from google.protobuf import json_format
 
 from recipe_engine import recipe_test_api

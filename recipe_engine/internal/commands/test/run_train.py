@@ -301,7 +301,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
           continue
         if implicit_py3_err > 0:
           print('WARNING: Ignored %d failures in implicit py3 tests for recipes'
-                'that don\'t declare their own PYTHON_VERSION_COMPATIBILITY. '
+                ' that don\'t declare their own PYTHON_VERSION_COMPATIBILITY. '
                 'Pass --py3-details to see them.' % implicit_py3_err)
 
       # At this point we know all subprocesses and their threads have finished

@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'platform',
   'step',
@@ -15,9 +17,12 @@ def RunSteps(api):
   step_result.presentation.logs['arch'] = [api.platform.arch]
   step_result.presentation.logs['cpu_count'] = [str(api.platform.cpu_count)]
   step_result.presentation.logs['memory'] = [str(api.platform.total_memory)]
-  step_result.presentation.logs['mac_release'] = [repr(api.platform.mac_release)]
-  step_result.presentation.logs['new_mac'] = [
-    str(api.platform.mac_release >= api.version.parse('10.14.0'))]
+  step_result.presentation.logs['mac_release'] = [
+      repr(api.platform.mac_release)]
+  step_result.presentation.logs['new_mac'] = [str(
+      api.platform.mac_release is not None and
+      api.platform.mac_release >= api.version.parse('10.14.0')
+  )]
 
 
 def GenTests(api):

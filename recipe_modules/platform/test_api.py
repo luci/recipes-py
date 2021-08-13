@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from past.builtins import basestring
+
 from recipe_engine import recipe_test_api
 
 
@@ -44,7 +46,8 @@ class PlatformTestApi(recipe_test_api.RecipeTestApi):
 
     This should be a string like '10.14.0'.
     """
-    assert isinstance(version, basestring), 'bad version (not string): %r' % (version,)
+    assert isinstance(version, basestring), ('bad version (not string): %r'
+                                             % (version,))
     assert version, 'bad version (empty): %r' % (version,)
     return version
 

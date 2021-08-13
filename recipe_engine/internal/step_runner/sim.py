@@ -6,6 +6,7 @@ from collections import OrderedDict
 
 import attr
 
+from future.utils import iteritems
 from google.protobuf import json_format as jsonpb
 
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
@@ -76,7 +77,7 @@ class SimulationStepRunner(StepRunner):
       'env_prefixes': step_config.env_prefixes.mapping,
       'env_suffixes': step_config.env_suffixes.mapping,
       'env': {
-        k: v for k, v in step_config.env.iteritems()
+        k: v for k, v in iteritems(step_config.env)
         # Trim out LUCI_CONTEXT because it's useless information in tests, since
         # the entire luci_context data is included in the test output.
         if k.upper() != luci_context.ENV_KEY
@@ -142,7 +143,7 @@ class SimulationStepRunner(StepRunner):
     step_obj.pop('luci_context', None)
     if step.luci_context:
       lctx = {}
-      for name, section in step.luci_context.iteritems():
+      for name, section in iteritems(step.luci_context):
         if name == 'deadline':
           # This is the default deadline and is fully specified by the
           # `timeout` parameter below. To avoid blowing out expectations, we
@@ -174,7 +175,7 @@ class SimulationStepRunner(StepRunner):
       fake_env = FakeEnviron()
       step_obj['env'] = {
         k: (v if v is None else v % fake_env)
-        for k, v in precursor['env'].iteritems()
+        for k, v in iteritems(precursor['env'])
       }
     else:
       step_obj.pop('env', None)

@@ -4,6 +4,8 @@
 
 import json
 
+from future.utils import iteritems
+
 from ...test.empty_log import EMPTY_LOG
 
 
@@ -20,7 +22,7 @@ def _convert_step_summary_text(value):
 
 
 def _convert_logs(value):
-  for name, log in value.iteritems():
+  for name, log in iteritems(value):
     if log is not EMPTY_LOG:
       for line in log.split('\n'):
         yield '@@@STEP_LOG_LINE@%s@%s@@@' % (name, line)
@@ -28,7 +30,7 @@ def _convert_logs(value):
 
 
 def _convert_links(value):
-  for link, url in value.iteritems():
+  for link, url in iteritems(value):
     yield '@@@STEP_LINK@%s@%s@@@' % (link, url)
 
 
@@ -40,14 +42,14 @@ _STATUS_MAP = {
 }
 
 def _convert_output_properties(value):
-  for prop, prop_value in value.iteritems():
+  for prop, prop_value in iteritems(value):
     yield '@@@SET_BUILD_PROPERTY@%s@%s@@@' % (prop, json.dumps(
         prop_value, sort_keys=True))
 
 
 def _convert_status(value):
   assert value in _STATUS_MAP, (
-      'status must be one of %r' % _STATUS_MAP.keys())
+      'status must be one of %r' % list(_STATUS_MAP))
   yield _STATUS_MAP[value]
 
 

@@ -131,9 +131,10 @@ class PlatformApi(recipe_api.RecipeApi):
   def total_memory(self):
     """The total physical memory in MiB.
 
+    Return type is int.
     This is equivalent to `psutil.virtual_memory().total / (1024 ** 2)`.
     """
-    return self._memory_bytes / (1024 ** 2)
+    return self._memory_bytes // (1024 ** 2)
 
   @property
   def cpu_count(self):
