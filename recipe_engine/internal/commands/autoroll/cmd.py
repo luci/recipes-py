@@ -159,7 +159,7 @@ def process_candidates(recipe_deps, candidates, repos, verbose_json):
   # the maximal one, e.g. to jump over some reverts, or include fixes
   # landed later for incompatible API changes.
   for i, candidate in enumerate(candidates):
-    print('  processing candidate #%d... ' % (i + 1), end='')
+    print('* processing candidate #%d... ' % (i + 1))
 
     write_global_files_to_main_repo(recipe_deps, candidate.repo_spec)
 
@@ -171,13 +171,14 @@ def process_candidates(recipe_deps, candidates, repos, verbose_json):
         'rc': retcode,
       }
 
+    LOGGER.info('output:\n%s', output)
     if retcode == 0:
-      print('SUCCESS!')
+      print('  SUCCESS!')
       trivial = True
       picked_roll_details = roll_details[i]
       break
     else:
-      print('FAILED')
+      print('  FAILED')
 
   if not picked_roll_details:
     print('looking for a nontrivial roll...')
@@ -186,7 +187,7 @@ def process_candidates(recipe_deps, candidates, repos, verbose_json):
     # expectations, it should be minimal to avoid pulling too many unrelated
     # changes.
     for i, candidate in reversed(list(enumerate(candidates))):
-      print('  processing candidate #%d... ' % (i + 1), end='')
+      print('* processing candidate #%d... ' % (i + 1))
 
       write_global_files_to_main_repo(recipe_deps, candidate.repo_spec)
 
@@ -198,13 +199,14 @@ def process_candidates(recipe_deps, candidates, repos, verbose_json):
           'rc': retcode,
         }
 
+      LOGGER.info('output:\n%s', output)
       if retcode == 0:
-        print('SUCCESS!')
+        print('  SUCCESS!')
         trivial = False
         picked_roll_details = roll_details[i]
         break
       else:
-        print('FAILED')
+        print('  FAILED')
 
   return trivial, picked_roll_details, roll_details
 
