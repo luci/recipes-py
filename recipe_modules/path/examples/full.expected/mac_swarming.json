@@ -147,7 +147,7 @@
     ],
     "name": "base paths",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@result@base_paths: {'start_dir': ('/', 'b', 'FakeTestingCWD'), 'cleanup': ('/', 'b', 'cleanup'), 'cache': ('/', 'b', 'c'), 'tmp_base': ('/',), 'home': ('/', 'home', 'fake_user')}@@@",
+      "@@@STEP_LOG_LINE@result@base_paths: {\"cache\": [\"/\", \"b\", \"c\"], \"cleanup\": [\"/\", \"b\", \"cleanup\"], \"home\": [\"/\", \"home\", \"fake_user\"], \"start_dir\": [\"/\", \"b\", \"FakeTestingCWD\"], \"tmp_base\": [\"/\"]}@@@",
       "@@@STEP_LOG_END@result@@@"
     ]
   },

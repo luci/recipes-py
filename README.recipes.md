@@ -2121,7 +2121,7 @@ Args:
     ID must match r'^[0-9a-f]{40}$' (git revision).
 ### *recipe_modules* / [path](/recipe_modules/path)
 
-[DEPS](/recipe_modules/path/__init__.py#5): [platform](#recipe_modules-platform)
+[DEPS](/recipe_modules/path/__init__.py#7): [platform](#recipe_modules-platform)
 
 All functions related to manipulating paths in recipes.
 
@@ -4211,9 +4211,9 @@ This tests metadata features of the Future object.
 &mdash; **def [RunSteps](/recipe_modules/milo/examples/full.py#11)(api):**
 ### *recipes* / [path:examples/full](/recipe_modules/path/examples/full.py)
 
-[DEPS](/recipe_modules/path/examples/full.py#5): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/path/examples/full.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/path/examples/full.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/path/examples/full.py#19)(api):**
 ### *recipes* / [platform:examples/full](/recipe_modules/platform/examples/full.py)
 
 [DEPS](/recipe_modules/platform/examples/full.py#7): [platform](#recipe_modules-platform), [step](#recipe_modules-step), [version](#recipe_modules-version)

@@ -348,7 +348,7 @@ class PathApi(recipe_api.RecipeApi):
       temp_dir = self['cleanup'].join(*new_path[len(self._cleanup_dir):])
     else:
       self._test_counter[prefix] += 1
-      assert isinstance(prefix, basestring)
+      assert isinstance(prefix, str)
       temp_dir = self['cleanup'].join('%s_tmp_%d' %
                                       (prefix, self._test_counter[prefix]))
     self.mock_add_paths(temp_dir, DIRECTORY)
@@ -375,7 +375,7 @@ class PathApi(recipe_api.RecipeApi):
       os.close(fd)
     else:
       self._test_counter[prefix] += 1
-      assert isinstance(prefix, basestring)
+      assert isinstance(prefix, str)
       temp_file = self['cleanup'].join('%s_tmp_%d' %
                                        (prefix, self._test_counter[prefix]))
     self.mock_add_paths(temp_file, FILE)

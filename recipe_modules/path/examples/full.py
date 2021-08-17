@@ -2,12 +2,17 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
+  'json',
   'path',
   'platform',
   'properties',
   'step',
 ]
+
+from builtins import range, zip
 
 from recipe_engine.config_types import Path
 
@@ -153,7 +158,7 @@ def RunSteps(api):
       api.path[name] for name in sorted(api.path.c.base_paths.keys())
   ])
   result.presentation.logs['result'] = [
-      'base_paths: %r' % (api.path.c.base_paths,),
+      'base_paths: %s' % (api.json.dumps(api.path.c.base_paths.as_jsonish()),),
   ]
 
   # Convert strings to Paths.
@@ -178,7 +183,7 @@ def RunSteps(api):
     assert hash(static_path) == hash(new_path)
     # Now ensure that our new_path doesn't accidentally match any of the
     # static_paths which it shouldn't.
-    for j in xrange(len(static_paths)):
+    for j in range(len(static_paths)):
       if j == i:
         continue
       assert static_paths[j] != new_path
@@ -188,7 +193,7 @@ def RunSteps(api):
     api.path.abs_to_path('non/../absolute')
     assert False, "this should have thrown"  # pragma: no cover
   except ValueError as ex:
-    assert "is not absolute" in ex.message, ex
+    assert "is not absolute" in str(ex), ex
 
   try:
     if api.platform.is_win:
@@ -197,7 +202,7 @@ def RunSteps(api):
       api.path.abs_to_path('/some/other/root/non/absolute')
     assert False, "this should have thrown"  # pragma: no cover
   except ValueError as ex:
-    assert "could not figure out" in ex.message, ex
+    assert "could not figure out" in str(ex), ex
 
 
 def GenTests(api):
