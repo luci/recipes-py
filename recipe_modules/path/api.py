@@ -37,14 +37,17 @@ documentation.
 from future.utils import iteritems
 
 import collections
+import errno
 import itertools
 import os
 import re
+import sys
 import tempfile
 
 from recipe_engine import recipe_api
 from recipe_engine import config_types
 
+_PY2 = sys.version_info.major == 2
 
 FILE = 'FILE'
 DIRECTORY = 'DIRECTORY'
@@ -267,10 +270,14 @@ class PathApi(recipe_api.RecipeApi):
     return value
 
   def _ensure_dir(self, path):  # pragma: no cover
-    try:
-      os.makedirs(path)
-    except os.error:
-      pass  # Perhaps already exists.
+    if _PY2:
+      try:
+        os.makedirs(path)
+      except os.error as ex:
+        if ex.errno != errno.EEXIST:
+          raise
+    else:
+      os.makedirs(path, exist_ok=True)
 
   def _split_path(self, path):  # pragma: no cover
     """Relative or absolute path -> tuple of components."""
