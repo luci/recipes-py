@@ -4295,9 +4295,9 @@ Tests for api.python.infra_failing_step.
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/test_presentation_default.py#9)(api):**
 ### *recipes* / [runtime:tests/full](/recipe_modules/runtime/tests/full.py)
 
-[DEPS](/recipe_modules/runtime/tests/full.py#7): [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/runtime/tests/full.py#9): [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/runtime/tests/full.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/runtime/tests/full.py#15)(api):**
 ### *recipes* / [scheduler:examples/emit\_triggers](/recipe_modules/scheduler/examples/emit_triggers.py)
 
 [DEPS](/recipe_modules/scheduler/examples/emit_triggers.py#7): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [runtime](#recipe_modules-runtime), [scheduler](#recipe_modules-scheduler), [time](#recipe_modules-time)
