@@ -93,9 +93,7 @@ class TriciumApi(recipe_api.RecipeApi):
       raise ValueError('end_char must be 0-based, but %d given' %
                        (comment.end_char,))
     if (comment.start_line == comment.end_line and
-        comment.start_char >= comment.end_char and
-        comment.end_char > 0):
-      # NOTE: turns out end_char = 0 actually means entire line.
+        comment.start_char >= comment.end_char):
       raise ValueError(
           '(start_line, start_char) must be before (end_line, end_char), '
           'but (%d,%d) .. (%d,%d) given' %
