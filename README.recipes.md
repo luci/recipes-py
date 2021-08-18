@@ -2411,8 +2411,6 @@ Return type is int.
 This is equivalent to `psutil.virtual_memory().total / (1024 ** 2)`.
 ### *recipe_modules* / [properties](/recipe_modules/properties)
 
-[DEPS](/recipe_modules/properties/__init__.py#5): [buildbucket](#recipe_modules-buildbucket)
-
 Provides access to the recipes input properties.
 
 Every recipe is run with a JSON object called "properties". These contain all
@@ -4221,9 +4219,9 @@ This tests metadata features of the Future object.
 &mdash; **def [RunSteps](/recipe_modules/platform/examples/full.py#13)(api):**
 ### *recipes* / [properties:examples/full](/recipe_modules/properties/examples/full.py)
 
-[DEPS](/recipe_modules/properties/examples/full.py#13): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/properties/examples/full.py#16): [json](#recipe_modules-json), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/properties/examples/full.py#21)(api, props, env_props):**
+&mdash; **def [RunSteps](/recipe_modules/properties/examples/full.py#25)(api, props, env_props):**
 ### *recipes* / [proto:tests/encode\_decode](/recipe_modules/proto/tests/encode_decode.py)
 
 [DEPS](/recipe_modules/proto/tests/encode_decode.py#5): [assertions](#recipe_modules-assertions), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [step](#recipe_modules-step)

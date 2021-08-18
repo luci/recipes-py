@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from future.utils import iteritems
+
 from google.protobuf import struct_pb2, json_format
 
 from recipe_engine import post_process
@@ -9,8 +11,10 @@ from recipe_engine import post_process
 from PB.recipe_modules.recipe_engine.properties.examples.full import InputProps
 from PB.recipe_modules.recipe_engine.properties.examples.full import EnvProps
 
+PYTHON_VERSION_COMPATIBILITY = "PY2+3"
 
 DEPS = [
+  'json',
   'properties',
   'step',
 ]
@@ -23,7 +27,9 @@ def RunSteps(api, props, env_props):
   api.step('echo env_props', ['echo'] + [repr(env_props)])
 
   properties = api.properties.thaw()
-  api.step('echo all', ['echo'] + map(repr, sorted(properties.iteritems())))
+  prop_tups = sorted(iteritems(properties))
+  api.step('echo all', ['echo'] + [
+    '(%r, %r)' % (k, v) for k, v in prop_tups])
 
   # It should behave like a real dictionary.
   assert len(properties) == len(api.properties)
@@ -44,7 +50,6 @@ def GenTests(api):
               'cool': 'dictionary',
               'float_val': 12345678.6789,
               'secretly_int_val': 123456789.0,
-              'lossy_int_val': 11234567890876543223456789.0,
             }, struct_pb2.Struct()),
             param_name_test='thing',
         ),
@@ -75,9 +80,8 @@ def GenTests(api):
     + api.properties(test_prop=True) # wrong type
     + api.expect_exception('ParseError')
     + api.post_process(
-          post_process.ResultReason,
-          'Uncaught Exception: ParseError("Failed to parse test_prop field: '
-          '\'bool\' object is not iterable.",)',
+          post_process.ResultReasonRE,
+          'Failed to parse test_prop field'
       )
     + api.post_process(post_process.DropExpectation)
   )

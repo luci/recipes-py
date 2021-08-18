@@ -464,7 +464,7 @@ class Checker(object):
           # where the checker is created. We must use `is` for equality check
           # here because otherwise we might end up calling an unrelated object's
           # __eq__ method.
-          if any(self is obj for obj in f[0].f_locals.itervalues()):
+          if any(self is obj for obj in itervalues(f[0].f_locals)):
             break
         frames = frames[i+1:]
 

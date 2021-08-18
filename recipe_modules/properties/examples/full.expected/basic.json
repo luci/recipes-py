@@ -2,7 +2,7 @@
   {
     "cmd": [
       "echo",
-      "test_prop {\n  key: \"value\"\n}\nlist: \"some\"\nlist: \"strings\"\ndict {\n  fields {\n    key: \"cool\"\n    value {\n      string_value: \"dictionary\"\n    }\n  }\n  fields {\n    key: \"float_val\"\n    value {\n      number_value: 12345678.6789\n    }\n  }\n  fields {\n    key: \"lossy_int_val\"\n    value {\n      number_value: 1.12345678909e+25\n    }\n  }\n  fields {\n    key: \"secretly_int_val\"\n    value {\n      number_value: 123456789.0\n    }\n  }\n}\nparam_name_test: \"thing\"\n"
+      "test_prop {\n  key: \"value\"\n}\nlist: \"some\"\nlist: \"strings\"\ndict {\n  fields {\n    key: \"cool\"\n    value {\n      string_value: \"dictionary\"\n    }\n  }\n  fields {\n    key: \"float_val\"\n    value {\n      number_value: 12345678.6789\n    }\n  }\n  fields {\n    key: \"secretly_int_val\"\n    value {\n      number_value: 123456789.0\n    }\n  }\n}\nparam_name_test: \"thing\"\n"
     ],
     "name": "echo props"
   },
@@ -18,7 +18,7 @@
       "echo",
       "('$fake_repo/fake_module', {'test_prop': {'key': 'value'}})",
       "('arbitrary_property', True)",
-      "('dict', {'lossy_int_val': 1.1234567890876543e+25, 'cool': 'dictionary', 'float_val': 12345678.6789, 'secretly_int_val': 123456789})",
+      "('dict', {'cool': 'dictionary', 'float_val': 12345678.6789, 'secretly_int_val': 123456789})",
       "('list', ['some', 'strings'])",
       "('param_name_test', 'thing')",
       "('recipe', 'properties:examples/full')",
@@ -43,7 +43,7 @@
   {
     "cmd": [
       "echo",
-      "FrozenDict([('lossy_int_val', 1.1234567890876543e+25), ('cool', 'dictionary'), ('float_val', 12345678.6789), ('secretly_int_val', 123456789)])"
+      "FrozenDict([('cool', 'dictionary'), ('float_val', 12345678.6789), ('secretly_int_val', 123456789)])"
     ],
     "name": "echo dict"
   },

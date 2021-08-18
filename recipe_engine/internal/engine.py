@@ -962,6 +962,12 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
   return caught
 
 
+try:
+  from shlex import quote as _single_arg_quote
+except ImportError:
+  from pipes import quote as _single_arg_quote
+
+
 def _shell_quote(arg):
   """Shell-quotes a string with minimal noise such that it is still reproduced
   exactly in a bash/zsh shell.
@@ -975,7 +981,10 @@ def _shell_quote(arg):
   if re.match('[\040-\176]+$', arg):
     return "'%s'" % arg.replace("'", "'\\''")
   # Something complicated, printable within special escaping quotes.
-  return "$'%s'" % arg.encode('string_escape')
+  # The $'stuff' syntax makes shells interpret escape characters.
+  # We promote real newlines to be their escaped counterparts, since
+  # copy+pasting things with newlines is meh.
+  return "$" + _single_arg_quote(arg).replace('\\', '\\\\').replace('\n', '\\n')
 
 
 def _print_step(execution_log, step):
