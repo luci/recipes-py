@@ -4413,7 +4413,7 @@ An example of a recipe wrapping legacy analyzers.
 
 [DEPS](/recipe_modules/tricium/tests/add_comment_validation.py#8): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/tests/add_comment_validation.py#26)(api, case):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/tests/add_comment_validation.py#31)(api, case):**
 ### *recipes* / [url:examples/full](/recipe_modules/url/examples/full.py)
 
 [DEPS](/recipe_modules/url/examples/full.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step), [url](#recipe_modules-url)

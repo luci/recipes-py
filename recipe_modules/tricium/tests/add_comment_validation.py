@@ -11,7 +11,7 @@ PROPERTIES = {
     'case': Property(kind=str),
 }
 
-_CASES = {
+_BAD_CASES = {
     'bad start_line': dict(start_line=-1),
     'file level comment: end_line': dict(start_line=0, end_line=1),
     'file level comment: start_char': dict(start_line=0, start_char=1),
@@ -19,9 +19,14 @@ _CASES = {
     'end_line': dict(start_line=2, end_line=1),
     'start_char': dict(start_line=1, start_char=-1, end_line=2),
     'end_char': dict(start_line=1, start_char=1, end_line=2, end_char=-1),
-    'wrong-range': dict(start_line=5, start_char=5, end_line=5, end_char=4),
+    'wrong-range': dict(start_line=5, start_char=5, end_line=5, end_char=5),
 }
-
+_OK_CASES = {
+    'exactly 1 char': dict(start_line=5, start_char=5, end_line=5, end_char=6),
+    'end of 1 line': dict(start_line=5, start_char=5, end_line=6, end_char=1),
+    'just 1 entire line': dict(start_line=3, end_line=3),
+    'several entire lines': dict(start_line=3, end_line=5),
+}
 
 def RunSteps(api, case):
   # Set valid default.
@@ -30,12 +35,20 @@ def RunSteps(api, case):
       message='msg',
       path='path/to/file',
   )
-  kwargs.update(_CASES[case])
+  if case in _BAD_CASES:
+    kwargs.update(_BAD_CASES[case])
+  elif case in _OK_CASES:
+    kwargs.update(_OK_CASES[case])
+  else:  # pragma: nocover
+    assert 'unknown case', case
   api.tricium.add_comment(**kwargs)
 
 
 def GenTests(api):
-  for name in _CASES:
+  for name in _BAD_CASES:
     yield api.test(name, api.properties(case=name),
                    api.expect_exception(ValueError.__name__),
+                   api.post_process(post_process.DropExpectation))
+  for name in _OK_CASES:
+    yield api.test(name, api.properties(case=name),
                    api.post_process(post_process.DropExpectation))
