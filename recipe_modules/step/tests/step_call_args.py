@@ -4,6 +4,8 @@
 
 from recipe_engine import post_process
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'step',
 ]
@@ -18,7 +20,7 @@ def RunSteps(api):
   try:
     api.step('bad arg', [{}])
   except ValueError as e:
-    assert str(e) == 'Type <type \'dict\'> is not permitted. cmd is [{}]', e
+    assert '\'dict\'> is not permitted. cmd is [{}]' in str(e), e
 
   try:
     api.step('bad cost', None, cost='I\'m a str cost')

@@ -4,6 +4,8 @@
 
 from recipe_engine.engine_types import ResourceCost
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'step',
 ]

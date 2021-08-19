@@ -24,7 +24,7 @@ class Step(object):
   cwd = attr.ib(validator=attr_type(str))
 
   # File path or None. If None, stdin for the subprocess should be closed.
-  stdin = attr.ib(validator=attr_type((str, type(None))))
+  stdin = attr.ib(validator=attr_type((str, bytes, type(None))))
 
   # File path, Stream or a file descriptor.
   #

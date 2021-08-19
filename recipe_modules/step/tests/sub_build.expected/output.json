@@ -20,7 +20,7 @@
     "stdin": "\b\ufffdV2\u0006\b\ufffd\u00af\ufffd\u0005:\u0006\b\ufffd\u00af\ufffd\u0005`\u0002",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@step.sub_build@{@@@",
-      "@@@STEP_LOG_LINE@step.sub_build@  \"id\": \"45678\", @@@",
+      "@@@STEP_LOG_LINE@step.sub_build@  \"id\": \"45678\",@@@",
       "@@@STEP_LOG_LINE@step.sub_build@  \"status\": \"SUCCESS\"@@@",
       "@@@STEP_LOG_LINE@step.sub_build@}@@@",
       "@@@STEP_LOG_END@step.sub_build@@@",

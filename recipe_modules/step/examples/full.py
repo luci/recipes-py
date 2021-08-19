@@ -4,6 +4,8 @@
 
 from recipe_engine import recipe_api, config, post_process
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'context',
   'json',
@@ -89,7 +91,7 @@ def RunSteps(api, bad_return, access_invalid_data, access_deep_invalid_data,
     api.step('warning', ['echo', 'warning'])
   except api.step.StepFailure as e:
     e.result.presentation.status = api.step.WARNING
-    raise api.step.StepWarning(e.message)
+    raise api.step.StepWarning(str(e))
 
 
   # Aggregate failures from tests!
@@ -153,8 +155,8 @@ def GenTests(api):
       api.step_data('goodbye (2)', retcode=1) +
       api.expect_exception('ValueError') +
       api.post_process(
-          post_process.ResultReason,
-          "Uncaught Exception: ValueError('goodbye must exit 0!',)") +
+          post_process.ResultReasonRE,
+          "goodbye must exit 0!") +
       api.post_process(post_process.DropExpectation)
     )
 
@@ -179,9 +181,8 @@ def GenTests(api):
       api.properties(access_invalid_data=True) +
       api.expect_exception('AttributeError') +
       api.post_process(
-          post_process.ResultReason,
-          "Uncaught Exception: AttributeError(\"StepData from step 'no-op' "
-          "has no attribute \'json\'.\",)") +
+          post_process.ResultReasonRE,
+          "StepData from step 'no-op' has no attribute 'json'") +
       api.post_process(post_process.DropExpectation)
     )
 
@@ -190,9 +191,8 @@ def GenTests(api):
       api.properties(access_deep_invalid_data=True) +
       api.expect_exception('AttributeError') +
       api.post_process(
-          post_process.ResultReason,
-          "Uncaught Exception: AttributeError(\"StepData('no-op').json "
-          "has no attribute 'outpurt'.\",)") +
+          post_process.ResultReasonRE,
+          "StepData\('no-op'\)\.json has no attribute 'outpurt'") +
       api.post_process(post_process.DropExpectation)
     )
 
@@ -201,9 +201,8 @@ def GenTests(api):
       api.properties(assign_extra_junk=True) +
       api.expect_exception('ValueError') +
       api.post_process(
-          post_process.ResultReason,
-          "Uncaught Exception: ValueError(\"Cannot assign to 'json' on "
-          "finalized StepData from step 'no-op'\",)") +
+          post_process.ResultReasonRE,
+          "Cannot assign to 'json' on finalized StepData from step 'no-op'") +
       api.post_process(post_process.DropExpectation)
     )
 

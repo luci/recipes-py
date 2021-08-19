@@ -4,6 +4,7 @@
 
 from recipe_engine.post_process import StepSuccess, StepFailure, StepException
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
   'context',
@@ -57,7 +58,7 @@ def RunSteps(api):
     assert ex.had_timeout
 
   # Duplicate nesting names with unique child steps
-  for i in xrange(3):
+  for i in range(3):
     with api.step.nest('Do Iteration'):
       api.step('Iterate %d' % i, ['echo', 'lerpy'])
 

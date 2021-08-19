@@ -86,7 +86,7 @@ class _SimulationStepStream(StreamEngine.StepStream):
     jsonify = jsonpb.MessageToJson(log,
         preserving_proto_field_name=True, sort_keys=True)
     for line in jsonify.splitlines():
-      log_stream.write_line(line)
+      log_stream.write_line(line.rstrip())
     log_stream.close()
 
   @_ignoreable

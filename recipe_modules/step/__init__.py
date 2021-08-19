@@ -5,6 +5,8 @@
 from recipe_engine.recipe_api import Property
 from recipe_engine.config import ConfigGroup, List
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   "context",
   "path",

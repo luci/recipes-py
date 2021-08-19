@@ -63,7 +63,8 @@ class ProtoOutputPlaceholder(recipe_util.OutputPlaceholder):
         self.add_json_log == 'on_failure' and presentation.status != 'SUCCESS'):
       if valid:
         jsonpb = ProtoApi.encode(ret, 'JSONPB', indent=2)
-        presentation.logs[self.label] = jsonpb.splitlines()
+        presentation.logs[self.label] = [
+            line.rstrip() for line in jsonpb.splitlines()]
       else:
         presentation.logs[self.label + ' (invalid)'] = raw_data.splitlines()
         presentation.logs[self.label + ' (exception)'] = (

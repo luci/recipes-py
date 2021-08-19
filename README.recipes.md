@@ -1038,7 +1038,7 @@ ref must start with 'refs/'.
 Returns (ref, revision_number) tuple.
 ### *recipe_modules* / [context](/recipe_modules/context)
 
-[DEPS](/recipe_modules/context/__init__.py#5): [path](#recipe_modules-path)
+[DEPS](/recipe_modules/context/__init__.py#7): [path](#recipe_modules-path)
 
 The context module provides APIs for manipulating a few pieces of 'ambient'
 data that affect how steps are run.
@@ -2453,9 +2453,9 @@ Returns a read-write copy of all of the properties.
 Methods for producing and consuming protobuf data to/from steps and the
 filesystem.
 
-#### **class [ProtoApi](/recipe_modules/proto/api.py#75)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
+#### **class [ProtoApi](/recipe_modules/proto/api.py#76)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
 
-&emsp; **@staticmethod**<br>&mdash; **def [decode](/recipe_modules/proto/api.py#151)(data, msg_class, codec, \*\*decoding_kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [decode](/recipe_modules/proto/api.py#152)(data, msg_class, codec, \*\*decoding_kwargs):**
 
 Decodes a proto message from a string.
 
@@ -2467,7 +2467,7 @@ Args:
 
 Returns the decoded proto object.
 
-&emsp; **@staticmethod**<br>&mdash; **def [encode](/recipe_modules/proto/api.py#136)(proto_msg, codec, \*\*encoding_kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [encode](/recipe_modules/proto/api.py#137)(proto_msg, codec, \*\*encoding_kwargs):**
 
 Encodes a proto message to a string.
 
@@ -2478,7 +2478,7 @@ Args:
 
 Returns the encoded proto message.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [input](/recipe_modules/proto/api.py#77)(self, proto_msg, codec, \*\*encoding_kwargs):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [input](/recipe_modules/proto/api.py#78)(self, proto_msg, codec, \*\*encoding_kwargs):**
 
 A placeholder which will expand to a file path containing the encoded
 `proto_msg`.
@@ -2502,7 +2502,7 @@ Args:
 
 Returns an InputPlaceholder.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [output](/recipe_modules/proto/api.py#106)(self, msg_class, codec, add_json_log=True, name=None, leak_to=None, \*\*decoding_kwargs):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [output](/recipe_modules/proto/api.py#107)(self, msg_class, codec, add_json_log=True, name=None, leak_to=None, \*\*decoding_kwargs):**
 
 A placeholder which expands to a file path and then reads an encoded
 proto back from that location when the step finishes.
@@ -3031,7 +3031,7 @@ Args:
   key_path: (str|Path) object pointing to a service account JSON key.
 ### *recipe_modules* / [step](/recipe_modules/step)
 
-[DEPS](/recipe_modules/step/__init__.py#8): [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [proto](#recipe_modules-proto)
+[DEPS](/recipe_modules/step/__init__.py#10): [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [proto](#recipe_modules-proto)
 
 Step is the primary API for running steps (external programs, etc.)
 
@@ -4324,29 +4324,29 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/service_account/examples/full.py#21)(api, key_path, scopes):**
 ### *recipes* / [step:examples/full](/recipe_modules/step/examples/full.py)
 
-[DEPS](/recipe_modules/step/examples/full.py#7): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/examples/full.py#9): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/step/examples/full.py#25)(api, bad_return, access_invalid_data, access_deep_invalid_data, assign_extra_junk, timeout):**
+&mdash; **def [RunSteps](/recipe_modules/step/examples/full.py#27)(api, bad_return, access_invalid_data, access_deep_invalid_data, assign_extra_junk, timeout):**
 ### *recipes* / [step:tests/active\_result](/recipe_modules/step/tests/active_result.py)
 
-[DEPS](/recipe_modules/step/tests/active_result.py#5): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/active_result.py#7): [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/active_result.py#10)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/active_result.py#12)(api):**
 ### *recipes* / [step:tests/defer](/recipe_modules/step/tests/defer.py)
 
-[DEPS](/recipe_modules/step/tests/defer.py#5): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/defer.py#7): [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/defer.py#9)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/defer.py#11)(api):**
 ### *recipes* / [step:tests/inject\_paths](/recipe_modules/step/tests/inject_paths.py)
 
-[DEPS](/recipe_modules/step/tests/inject_paths.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/inject_paths.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/inject_paths.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/inject_paths.py#15)(api):**
 ### *recipes* / [step:tests/nested](/recipe_modules/step/tests/nested.py)
 
-[DEPS](/recipe_modules/step/tests/nested.py#8): [context](#recipe_modules-context), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/nested.py#9): [context](#recipe_modules-context), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/nested.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/nested.py#15)(api):**
 ### *recipes* / [step:tests/stdio](/recipe_modules/step/tests/stdio.py)
 
 [DEPS](/recipe_modules/step/tests/stdio.py#5): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
@@ -4354,24 +4354,24 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/step/tests/stdio.py#11)(api):**
 ### *recipes* / [step:tests/step\_call\_args](/recipe_modules/step/tests/step_call_args.py)
 
-[DEPS](/recipe_modules/step/tests/step_call_args.py#7): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/step_call_args.py#9): [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/step_call_args.py#12)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/step_call_args.py#14)(api):**
 ### *recipes* / [step:tests/step\_cost](/recipe_modules/step/tests/step_cost.py)
 
-[DEPS](/recipe_modules/step/tests/step_cost.py#7): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/step_cost.py#9): [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/step_cost.py#12)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/step_cost.py#14)(api):**
 ### *recipes* / [step:tests/sub\_build](/recipe_modules/step/tests/sub_build.py)
 
-[DEPS](/recipe_modules/step/tests/sub_build.py#18): [assertions](#recipe_modules-assertions), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/sub_build.py#20): [assertions](#recipe_modules-assertions), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/sub_build.py#29)(api, props):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/sub_build.py#31)(api, props):**
 ### *recipes* / [step:tests/timeout](/recipe_modules/step/tests/timeout.py)
 
-[DEPS](/recipe_modules/step/tests/timeout.py#8): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/timeout.py#9): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/timeout.py#19)(api, timeout):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/timeout.py#20)(api, timeout):**
 ### *recipes* / [swarming:examples/full](/recipe_modules/swarming/examples/full.py)
 
 [DEPS](/recipe_modules/swarming/examples/full.py#14): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
