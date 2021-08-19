@@ -113,7 +113,7 @@ def RunSteps(api, bad_return, access_invalid_data, access_deep_invalid_data,
 
   # Run a step through a made-up wrapper program.
   api.step('application', ['echo', 'main', 'application'],
-           wrapper=['python', '-c', 'import sys; print sys.argv'])
+           wrapper=['python3', '-c', 'import sys; print(sys.argv)'])
 
   if access_invalid_data:
     result = api.step('no-op', ['echo', 'I', 'do', 'nothing'])

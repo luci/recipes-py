@@ -132,9 +132,9 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-c",
-      "import sys; print sys.argv",
+      "import sys; print(sys.argv)",
       "echo",
       "main",
       "application"
