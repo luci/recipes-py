@@ -31,4 +31,6 @@ def GenTests(_api):
   # step_runner for simulation test will always resolve cmd0 because its lack
   # of filesystem support. This test will be executed using prod step_runner
   # in //unittests/run_test.py.
-  raise StopIteration
+  # TODO(yiwzhang): use `yield from ()` after python2 support is fully dropped.
+  return
+  yield

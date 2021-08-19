@@ -18,6 +18,7 @@ import coverage
 import gevent
 import gevent.queue
 
+from future.utils import itervalues
 from google.protobuf import json_format
 
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
@@ -158,7 +159,7 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
 
   # Handle recent fails first
   deferred_tests = []
-  for recipe in main_repo.recipes.itervalues():
+  for recipe in itervalues(main_repo.recipes):
     if not recipe_filter(recipe.name):
       continue
 
@@ -219,7 +220,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
         set(main_repo.modules.keys())
         - set(
             module.name
-            for module in main_repo.modules.itervalues()
+            for module in itervalues(main_repo.modules)
             if module.uses_sloppy_coverage or module.recipes
         )
     ))

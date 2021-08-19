@@ -16,7 +16,7 @@ import os
 import sys
 
 from collections import defaultdict
-from itertools import groupby, imap
+from itertools import groupby
 
 import attr
 import coverage
@@ -403,8 +403,7 @@ def _print_warnings(warning_result, recipe_deps):
         # E.g. /path/to/site:123 (and 456, 789)
         site_iter = iter(sites)
         line = stringify_frame(next(site_iter).site)
-        additional_lines = ', '.join(
-            imap(lambda s: str(s.site.line), site_iter))
+        additional_lines = ', '.join(str(s.site.line) for s in site_iter)
         if additional_lines:
           line =  '%s (and %s)' % (line, additional_lines)
         print('  ' + line)
