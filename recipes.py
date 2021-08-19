@@ -33,6 +33,7 @@ import subprocess
 import sys
 
 from collections import namedtuple
+from io import open
 
 try:
   import urllib.parse as urlparse
@@ -70,7 +71,7 @@ def parse(repo_root, recipes_cfg_path):
       current repo (i.e. the folder containing `recipes/` and/or
       `recipe_modules`)
   """
-  with open(recipes_cfg_path, 'rU') as fh:
+  with open(recipes_cfg_path, 'r') as fh:
     pb = json.load(fh)
 
   try:
