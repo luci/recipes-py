@@ -98,8 +98,10 @@ class Common(test_env.RecipeEngineUnitTest):
     crash = 5
     bad_test = 6
     internal_error = 7
-    is_labeled = 8
-    expect_py_incompatibility = 9
+    expect_py_incompatibility = 8
+    labeled_py_compat_py2 = 9
+    labeled_py_compat_py2_and_3 = 10
+    labeled_py_compat_py3 = 11
 
 
   def _outcome_json(self, per_test=None, coverage=100, uncovered_mods=(),
@@ -141,8 +143,12 @@ class Common(test_env.RecipeEngineUnitTest):
           results.bad_test[:] = ['placeholder']
         elif type_ == self.OutcomeType.internal_error:
           results.internal_error[:] = ['placeholder']
-        elif type_ == self.OutcomeType.is_labeled:
-          results.is_labeled = True
+        elif type_ == self.OutcomeType.labeled_py_compat_py2:
+          results.labeled_py_compat = 'PY2'
+        elif type_ == self.OutcomeType.labeled_py_compat_py2_and_3:
+          results.labeled_py_compat = 'PY2+3'
+        elif type_ == self.OutcomeType.labeled_py_compat_py3:
+          results.labeled_py_compat = 'PY3'
         elif type_ == self.OutcomeType.expect_py_incompatibility:
           results.expect_py_incompatibility = True
 
@@ -369,7 +375,7 @@ class TestRun(Common):
               self.OutcomeType.crash,
               self.OutcomeType.diff,
               self.OutcomeType.expect_py_incompatibility,
-              self.OutcomeType.is_labeled],
+              self.OutcomeType.labeled_py_compat_py3],
         }))
 
   def test_check_success(self):
@@ -1063,7 +1069,7 @@ class TestTrain(Common):
     self.assertDictEqual(
         result.data,
         self._outcome_json(per_test={
-            'foo.basic': [self.OutcomeType.is_labeled],
+            'foo.basic': [self.OutcomeType.labeled_py_compat_py2],
         }, coverage=90))
 
   def test_checks_coverage_with_py3_label(self):
@@ -1083,7 +1089,7 @@ class TestTrain(Common):
     self.assertDictEqual(
         result.data,
         self._outcome_json(per_test={
-            'foo.basic': [self.OutcomeType.is_labeled],
+            'foo.basic': [self.OutcomeType.labeled_py_compat_py3],
         }, coverage=90))
 
   def test_runs_checks(self):

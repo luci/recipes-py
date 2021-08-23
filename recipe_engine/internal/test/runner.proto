@@ -23,9 +23,9 @@ message Description {
   // with its dependencies.
   bool expect_py_incompatibility = 3;
 
-  // Whether or not the py compatibility of this recipe test has been manually
-  // labeled.
-  bool is_labeled = 4;
+  // The value of labeled recipe Python compatibility. If empty, it means the
+  // compatibility hasn't been manually labeled.
+  string labeled_py_compat = 4;
 }
 
 // Result of running recipe tests (for the recipe engine's own 'test'
@@ -70,9 +70,9 @@ message Outcome {
     // with its dependencies.
     bool expect_py_incompatibility = 9;
 
-    // Whether or not the py compatibility of this recipe test has been manually
-    // labeled.
-    bool is_labeled = 10;
+    // The value of labeled recipe Python compatibility. If empty, it means the
+    // compatibility hasn't been manually labeled.
+    string labeled_py_compat = 10;
   }
   // Maps full test names (i.e. 'recipe_name.test_case') to test result details.
   map<string, Results> test_results = 1;

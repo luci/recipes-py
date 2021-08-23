@@ -229,10 +229,7 @@ def _diff_test(test_results, expect_file, new_expect, is_train):
   if new_expect_text == cur_expect_text:
     return
 
-  # TODO(crbug.com/1211651): py3 expected json file may be different with py2.
-  # So they should be generated in a different path. Bypass it for now in
-  # `train` command and it will be added in the next CL.
-  if is_train and _PY2:
+  if is_train and (_PY2 or test_results.labeled_py_compat == 'PY3'):
     if new_expect is None:
       try:
         os.remove(expect_file)
@@ -242,7 +239,7 @@ def _diff_test(test_results, expect_file, new_expect, is_train):
       return
 
     try:
-      with open(expect_file, 'wb') as fil:
+      with open(expect_file, 'w') as fil:
         fil.write(new_expect_text)
       test_results.written = True
     except Exception as ex:  # pylint: disable=broad-except
@@ -283,7 +280,7 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
     * test_data (TestData)
   """
   test_results.expect_py_incompatibility = test_desc.expect_py_incompatibility
-  test_results.is_labeled = test_desc.is_labeled
+  test_results.labeled_py_compat = test_desc.labeled_py_compat
 
   # Reset global state.
   config_types.ResetTostringFns()

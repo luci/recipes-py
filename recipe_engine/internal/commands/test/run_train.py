@@ -121,7 +121,7 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
               test_name=test_case.name,
               expect_py_incompatibility=(
                   not recipe.effective_python_compatibility),
-              is_labeled=True,
+              labeled_py_compat='PY3',
           ))
     elif recipe.python_version_compatibility == 'PY2+3':
       description_queues.py2.put(
@@ -131,7 +131,7 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
               expect_py_incompatibility=(
                   True if recipe.effective_python_compatibility in (None, 'PY3')
                   else False),
-              is_labeled=True,
+              labeled_py_compat='PY2+3',
           ))
       description_queues.py3.put(
           Description(
@@ -140,7 +140,7 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
               expect_py_incompatibility=(
                   True if recipe.effective_python_compatibility in (None, 'PY2')
                   else False),
-              is_labeled=True,
+              labeled_py_compat='PY2+3',
           ))
     else:
       description_queues.py2.put(
@@ -148,7 +148,7 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
           recipe_name=recipe.name,
           test_name=test_case.name,
           expect_py_incompatibility=not recipe.effective_python_compatibility,
-          is_labeled=True,
+          labeled_py_compat='PY2',
         ))
     gevent.sleep()  # let any blocking threads pick this up
 

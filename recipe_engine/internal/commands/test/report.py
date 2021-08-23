@@ -128,7 +128,7 @@ class Reporter(object):
     has_fail = False
     for test_name, test_result in outcome_msg.test_results.iteritems():
       if (py == 'py3' and not self._enable_py3_details and
-          not test_result.is_labeled):
+          not test_result.labeled_py_compat):
         err_count += 1 if FailTracker.test_failed(test_result) else 0
         continue
 
