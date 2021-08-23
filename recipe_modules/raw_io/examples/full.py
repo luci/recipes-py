@@ -3,6 +3,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'path',
   'platform',
@@ -16,39 +18,41 @@ DEPS = [
 def RunSteps(api):
   # Read command's stdout and stderr.
   step_result = api.step('echo', ['echo', 'Hello World'],
-      stdout=api.raw_io.output(),
-      stderr=api.raw_io.output())
+      stdout=api.raw_io.output_text(),
+      stderr=api.raw_io.output_text())
   assert step_result.stdout == 'Hello World\n'
   assert step_result.stderr == ''
 
   # Pass stuff to command's stdin, read it from stdout.
   step_result = api.step('cat', ['cat'],
       stdin=api.raw_io.input_text(data='hello'),
-      stdout=api.raw_io.output('out'))
+      stdout=api.raw_io.output_text('out'))
   assert step_result.stdout == 'hello'
 
-  step_result = api.step('cat', ['cat', api.raw_io.input_text(data='hello')],
-      stdout=api.raw_io.output('out'))
+  step_result = api.step(
+      'cat',
+      ['cat', api.raw_io.input_text(data='hello')],
+      stdout=api.raw_io.output_text('out'))
   assert step_result.stdout == 'hello'
 
   step_result = api.step(
       'cat (unicode)',
-      ['cat', api.raw_io.input_text(data=u'hello 💩')],
+      ['cat', api.raw_io.input_text(data='hello 💩')],
       stdout=api.raw_io.output_text('out'))
-  assert step_result.stdout == u'hello 💩'
+  assert step_result.stdout == 'hello 💩'
 
   # \xe2 is not encodable by utf-8 (and has shown up in actual recipe data)
   # so test that input correctly doesn't try to encode it as utf-8.
   step_result = api.step('cat', ['cat'],
-      stdin=api.raw_io.input(data='\xe2hello'),
+      stdin=api.raw_io.input(data=b'\xe2hello'),
       stdout=api.raw_io.output())
-  assert step_result.stdout == '\xe2hello'
+  assert step_result.stdout == b'\xe2hello', step_result.stdout
 
   # Example of auto-mocking stdout. '\n' appended to mock 'echo' behavior.
   step_result = api.step('automock', ['echo', 'huh'],
-                 stdout=api.raw_io.output('out'),
+                 stdout=api.raw_io.output_text('out'),
                  step_test_data=(
-                   lambda: api.raw_io.test_api.stream_output('huh\n')))
+                   lambda: api.raw_io.test_api.stream_output_text('huh\n')))
   assert step_result.stdout == 'huh\n'
 
   # Example of auto-mocking stdout + stderr.
@@ -58,8 +62,8 @@ def RunSteps(api):
     stderr=api.raw_io.output('err'),
     step_test_data=(
       lambda: (
-        api.raw_io.test_api.stream_output('blah\n') +
-        api.raw_io.test_api.stream_output('fail\n', 'stderr')
+        api.raw_io.test_api.stream_output_text('blah\n') +
+        api.raw_io.test_api.stream_output_text('fail\n', 'stderr')
       ))
   )
   assert step_result.stdout == 'blah\n'
@@ -70,7 +74,7 @@ def RunSteps(api):
       'leak stdout', ['echo', 'leaking'],
       stdout=api.raw_io.output(leak_to=api.path['tmp_base'].join('out.txt')),
       step_test_data=(
-        lambda: api.raw_io.test_api.stream_output('leaking\n')))
+        lambda: api.raw_io.test_api.stream_output_text('leaking\n')))
   assert step_result.stdout == 'leaking\n'
 
   api.step('list temp dir', ['ls', api.raw_io.output_dir()])
@@ -83,7 +87,8 @@ def RunSteps(api):
   outdir = step_result.raw_io.output_dir
   some_file = api.path.join('some', 'file')
   assert set(outdir) == {some_file, 'other_file'}
-  assert outdir[some_file] == 'cool contents'
+  assert outdir[some_file] == b'cool contents'
+  assert outdir['other_file'] == b'whatever'
   assert 'not_here' not in outdir
 
   del outdir['some/file']  # delete to save memory
@@ -116,14 +121,14 @@ def RunSteps(api):
       """
       import sys
       with open(sys.argv[1], 'w') as f:
-        f.write('sucess')
+        f.write('success')
       """,
-      args=[api.raw_io.output(name='success_log', add_output_log=True)],
+      args=[api.raw_io.output_text(name='success_log', add_output_log=True)],
       step_test_data=(
-          lambda: api.raw_io.test_api.output(
-              'sucess', name='success_log')))
-  assert (['sucess'] ==
-          step_result.presentation.logs['raw_io.output[success_log]'])
+          lambda: api.raw_io.test_api.output_text(
+              'success', name='success_log')))
+  assert (['success'] ==
+          step_result.presentation.logs['raw_io.output_text[success_log]'])
 
   # Example of add_output_log on failure
   try:
@@ -135,31 +140,31 @@ def RunSteps(api):
           f.write('failure')
         exit(1)
         """,
-        args=[api.raw_io.output(name='failure_log',
-                                add_output_log='on_failure')],
+        args=[api.raw_io.output_text(name='failure_log',
+                                     add_output_log='on_failure')],
         step_test_data=(
-            lambda: api.raw_io.test_api.output(
+            lambda: api.raw_io.test_api.output_text(
                 'failure', name='failure_log')))
   except api.step.StepFailure:
     pass # This step is expected to fail.
   finally:
     step_result = api.step.active_result
     assert (['failure'] ==
-            step_result.presentation.logs['raw_io.output[failure_log]'])
+            step_result.presentation.logs['raw_io.output_text[failure_log]'])
 
   # Example of the placeholder backing file being missing at the time the
   # result is retrieved.
   step_result = api.step(
       'missing backing file', [
           'cat',
-          api.raw_io.output(
+          api.raw_io.output_text(
               suffix='.txt',
               name='outfile',
               leak_to='/this/file/doesnt/exist',
           )
       ],
       ok_ret=(1,))
-  assert step_result.raw_io.output is None
+  assert step_result.raw_io.output_text is None
 
 
 def GenTests(api):
@@ -177,19 +182,19 @@ def GenTests(api):
         api.properties(some_prop='bad_value') +
         api.platform.name(osname) +
         api.step_data('echo',
-            stdout=api.raw_io.output('Hello World\n'),
-            stderr=api.raw_io.output('')) +
+            stdout=api.raw_io.output_text('Hello World\n'),
+            stderr=api.raw_io.output_text('')) +
         api.step_data('cat',
-            stdout=api.raw_io.output('hello')) +
+            stdout=api.raw_io.output_text('hello')) +
         api.step_data('cat (2)',
-            stdout=api.raw_io.output('hello')) +
+            stdout=api.raw_io.output_text('hello')) +
         api.step_data('cat (3)',
-            stdout=api.raw_io.output('\xe2hello')) +
+            stdout=api.raw_io.output(b'\xe2hello')) +
         api.step_data('cat (unicode)',
-            stdout=api.raw_io.output_text(u'hello 💩')) +
+            stdout=api.raw_io.output_text('hello 💩')) +
         api.step_data('dump output_dir', api.raw_io.output_dir({
-          sep.join(['some', 'file']): 'cool contents',
-          'other_file': 'whatever',
+          sep.join(['some', 'file']): b'cool contents',
+          'other_file': b'whatever',
         })) +
         api.step_data('override_default_mock',
             api.raw_io.output_text('good_value', name='test')) +

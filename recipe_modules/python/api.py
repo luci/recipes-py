@@ -95,6 +95,10 @@ class PythonApi(recipe_api.RecipeApi):
     """Runs a no-op step that exits with a specified return code.
 
     The recipe engine will raise an exception when seeing a return code != 0.
+
+    The text is expected to be str. Passing a list of lines(str) works but is
+    discouraged and may be deprecated in the future. Please concatenate the
+    lines with newline character instead.
     """
     try:
       return self.inline(
@@ -102,7 +106,8 @@ class PythonApi(recipe_api.RecipeApi):
           'import sys; sys.exit(%d)' % (retcode,),
           add_python_log=False,
           step_test_data=lambda: self.m.raw_io.test_api.output(
-              text, retcode=retcode),
+              '\n'.join(text) if isinstance(text, list) else text,
+              retcode=retcode),
           **kwargs)
     finally:
       if as_log:

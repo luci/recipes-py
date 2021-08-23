@@ -9,7 +9,6 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import range
 from builtins import str as text
-from past.builtins import basestring
 from future.utils import raise_
 
 import codecs
@@ -79,10 +78,6 @@ def _rmtree(d):  # pragma: no cover
 
 class InputDataPlaceholder(recipe_util.InputPlaceholder):
   def __init__(self, data, suffix, name=None):
-    if not isinstance(data, basestring): # pragma: no cover
-      raise TypeError(
-        "Data passed to InputDataPlaceholder was %r, expected 'str'"
-        % (type(data).__name__))
     self.data = data
     self.suffix = suffix
     self._backing_file = None
@@ -97,15 +92,10 @@ class InputDataPlaceholder(recipe_util.InputPlaceholder):
     if test.enabled:
       # cheat and pretend like we're going to pass the data on the
       # cmdline for test expectation purposes.
-      with contextlib.closing(io.BytesIO()) as output:
-        self.write_encoded_data(output)
-        self._backing_file = output.getvalue()
+      self._backing_file = self.readable_test_data
     else:  # pragma: no cover
-      # python3 - this can be done properly by opening the file with an
-      # encoding.
       input_fd, self._backing_file = tempfile.mkstemp(suffix=self.suffix)
-      with os.fdopen(os.dup(input_fd), 'wb') as f:
-        self.write_encoded_data(f)
+      self.write_data(os.dup(input_fd))
       os.close(input_fd)
     return [self._backing_file]
 
@@ -115,10 +105,16 @@ class InputDataPlaceholder(recipe_util.InputPlaceholder):
       _rmfile(self._backing_file)
     self._backing_file = None
 
-  def write_encoded_data(self, f):
-    """ Encodes data to be written out, when rendering this placeholder.
-    """
-    f.write(self.data)
+  def write_data(self, fd): # pragma: no cover
+    with io.open(fd, mode='wb') as f:
+      f.write(self.data)
+
+  @property
+  def readable_test_data(self):
+    # TODO(yiwzhang): change errors to backslashreplace after python2 support
+    # is dropped so that the expectation will display the escaped raw bytes
+    # instead of a replacement character.
+    return self.data if _PY2 else self.data.decode('utf-8', errors='replace')
 
 
 class InputTextPlaceholder(InputDataPlaceholder):
@@ -126,21 +122,15 @@ class InputTextPlaceholder(InputDataPlaceholder):
 
   def __init__(self, data, suffix, name=None):
     super(InputTextPlaceholder, self).__init__(data, suffix, name=name)
-    assert isinstance(data, basestring)
+    assert isinstance(data, text)
 
-  def write_encoded_data(self, f):
-    # Sometimes users give us invalid utf-8 data. They shouldn't, but it does
-    # happen every once and a while. Just ignore it, and replace with �.
-    # We're assuming users only want to write text data out.
-    # self.data can be large, so be careful to do the conversion in chunks
-    # while streaming the data out, instead of requiring a full copy.
-    n = 1 << 16
-    # This is a generator expression, so this only copies one chunk of
-    # self.data at any one time.
-    chunks = (self.data[i:i + n] for i in range(0, len(self.data), n))
-    decoded = codecs.iterdecode(chunks, 'utf-8', 'replace')
-    for chunk in codecs.iterencode(decoded, 'utf-8'):
-      f.write(chunk)
+  def write_data(self, fd): # pragma: no cover
+    with io.open(fd, mode='w', encoding='utf-8', errors='replace') as f:
+      f.write(self.data)
+
+  @property
+  def readable_test_data(self):
+    return self.data.encode('utf-8', errors='replace') if _PY2 else self.data
 
 
 class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
@@ -182,18 +172,10 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
       # removes it before accessing its contents.
       if self.leak_to and test.data is None:
         return None
-
-      # python3 - this can be done properly by opening the file with an
-      # encoding.
-      test_data = test.data or b''
-      if isinstance(test.data, text):
-        test_data = test_data.encode('utf-8')
-      with contextlib.closing(io.BytesIO(test_data)) as infile:
-        ret = self.read_decoded_data(infile)
+      ret = self.read_test_data(test)
     else:  # pragma: no cover
       try:
-        with open(self._backing_file, 'rb') as f:
-          ret = self.read_decoded_data(f)
+        ret = self.read_data()
       except IOError as e:
         if e.errno != errno.ENOENT:
           raise
@@ -210,26 +192,40 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
 
     return ret
 
-  def read_decoded_data(self, f):
-    """Decodes data to be read in, when getting the result of this
-    placeholder."""
-    return f.read()
+  def read_data(self):  # pragma: no cover
+    with io.open(self._backing_file, 'rb') as f:
+      return f.read()
+
+  def read_test_data(self, test):
+    return test.data or b''
 
 
 class OutputTextPlaceholder(OutputDataPlaceholder):
-  """A output placeholder which expects to write out text."""
+  """A output placeholder which expects to read utf-8 text."""
 
-  def read_decoded_data(self, f):
-    # The file contents can be large, so be careful to do the conversion in
-    # chunks while streaming the data in, instead of requiring a full copy.
-    n = 1 << 16
-    chunks = iter(lambda: f.read(n), b'')
-    decoded = codecs.iterdecode(chunks, 'utf-8', 'replace')
+  def read_data(self):  # pragma: no cover
     # This ensures that the raw result bytes we got are, in fact, valid utf-8,
-    # replacing invalid bytes with �. Because python2's unicode support is
-    # wonky, we re-encode the now-valid-utf-8 back into a str object so that
-    # users don't need to deal with `unicode` objects.
-    return ''.join(codecs.iterencode(decoded, 'utf-8') if _PY2 else decoded)
+    # replacing invalid bytes with �.
+    if _PY2:
+      n = 1 << 16
+      with io.open(self._backing_file, mode='rb') as f:
+        # The file contents can be large, so be careful to do the conversion in
+        # chunks while streaming the data in, instead of requiring a full copy.
+        chunks = iter(lambda: f.read(n), b'')
+        decoded = codecs.iterdecode(chunks, 'utf-8', 'replace')
+        # This ensures that the raw result bytes we got are, in fact, valid
+        # utf-8, replacing invalid bytes with �. Because python2's unicode
+        # support is wonky, we re-encode the now-valid-utf-8 back into a str
+        # object so that users don't need to deal with `unicode` objects.
+        return ''.join(codecs.iterencode(decoded, 'utf-8'))
+    else:
+      with io.open(self._backing_file,
+                   mode='r', encoding='utf-8', errors='replace') as f:
+        return f.read()
+
+  def read_test_data(self, test):
+    test_data = test.data or ''
+    return test_data.encode('utf-8', errors='replace') if _PY2 else test_data
 
 
 class _LazyDirectoryReader(_MAPPING):
@@ -330,13 +326,22 @@ class RawIOApi(recipe_api.RecipeApi):
     dump the 'data' into a file, and pass the filename to the command line
     argument.
 
-    data MUST be of type 'str' (not basestring, not unicode).
+    data MUST be either of type 'bytes' (recommended) or type 'str' in Python 3.
+    Respectively, 'str' or 'unicode' in Python 2.
+
+    If the provided data is of type 'str', it is encoded to bytes assuming
+    utf-8 encoding. Please switch to `input_text(...)` instead in this case.
 
     If 'suffix' is not '', it will be used when the engine calls
     tempfile.mkstemp.
 
     See examples/full.py for usage example.
     """
+    if isinstance(data, text):  # pragma: no cover
+      # TODO(yiwzhang): warn user here to provide bytes data.
+      data = data.encode('utf-8', errors='replace')
+    if not isinstance(data, bytes):  # pragma: no cover
+      raise ValueError("expected bytes, got %s: %r" % (type(data), data))
     return InputDataPlaceholder(data, suffix, name=name)
 
   @recipe_util.returns_placeholder
@@ -344,12 +349,22 @@ class RawIOApi(recipe_api.RecipeApi):
   def input_text(data, suffix='', name=None):
     """Returns a Placeholder for use as a step argument.
 
-    data MUST be of type 'str' (not basestring, not unicode). The str is
-    expected to have valid utf-8 data in it.
-
     Similar to input(), but ensures that 'data' is valid utf-8 text. Any
     non-utf-8 characters will be replaced with �.
+
+    data MUST be either of type 'bytes' or type 'str' (recommended) in Python 3.
+    Respectively, 'str' or 'unicode' in Python 2.
+
+    If the provided data is of type 'bytes', it is expected to be valid utf-8
+    encoded data. Note that, the support of type 'bytes' is for backwards
+    compatibility to Python 2, we may drop this support in the future after
+    recipe becomes Python 3 only.
     """
+    if isinstance(data, bytes):  # pragma: no cover
+      # TODO(yiwzhang): warn user here to provide utf-8 text data.
+      data = data.decode('utf-8', errors='replace')
+    if not isinstance(data, text):  # pragma: no cover
+      raise ValueError("expected utf-8 text, got %s: %r" % (type(data), data))
     return InputTextPlaceholder(data, suffix, name=name)
 
   @recipe_util.returns_placeholder

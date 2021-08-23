@@ -2559,11 +2559,11 @@ Args:
 **Returns (`step_data.StepData`)** - The StepData object as returned by
 api.step.
 
-&mdash; **def [failing\_step](/recipe_modules/python/api.py#117)(self, name, text, as_log=None):**
+&mdash; **def [failing\_step](/recipe_modules/python/api.py#122)(self, name, text, as_log=None):**
 
 Runs a failing step (exits 1).
 
-&mdash; **def [infra\_failing\_step](/recipe_modules/python/api.py#121)(self, name, text, as_log=None):**
+&mdash; **def [infra\_failing\_step](/recipe_modules/python/api.py#126)(self, name, text, as_log=None):**
 
 Runs an infra-failing step (exits 1).
 
@@ -2590,7 +2590,11 @@ Runs a no-op step that exits with a specified return code.
 
 The recipe engine will raise an exception when seeing a return code != 0.
 
-&mdash; **def [succeeding\_step](/recipe_modules/python/api.py#113)(self, name, text, as_log=None):**
+The text is expected to be str. Passing a list of lines(str) works but is
+discouraged and may be deprecated in the future. Please concatenate the
+lines with newline character instead.
+
+&mdash; **def [succeeding\_step](/recipe_modules/python/api.py#118)(self, name, text, as_log=None):**
 
 Runs a succeeding step (exits 0).
 ### *recipe_modules* / [random](/recipe_modules/random)
@@ -2621,13 +2625,13 @@ Example:
 Access a member of `random.Random`.
 ### *recipe_modules* / [raw\_io](/recipe_modules/raw_io)
 
-[DEPS](/recipe_modules/raw_io/__init__.py#5): [path](#recipe_modules-path)
+[DEPS](/recipe_modules/raw_io/__init__.py#7): [path](#recipe_modules-path)
 
 Provides objects for reading and writing raw data to and from steps.
 
-#### **class [RawIOApi](/recipe_modules/raw_io/api.py#323)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
+#### **class [RawIOApi](/recipe_modules/raw_io/api.py#319)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#324)(data, suffix='', name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#320)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -2635,24 +2639,33 @@ This placeholder can be used to pass data to steps. The recipe engine will
 dump the 'data' into a file, and pass the filename to the command line
 argument.
 
-data MUST be of type 'str' (not basestring, not unicode).
+data MUST be either of type 'bytes' (recommended) or type 'str' in Python 3.
+Respectively, 'str' or 'unicode' in Python 2.
+
+If the provided data is of type 'str', it is encoded to bytes assuming
+utf-8 encoding. Please switch to `input_text(...)` instead in this case.
 
 If 'suffix' is not '', it will be used when the engine calls
 tempfile.mkstemp.
 
 See examples/full.py for usage example.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#342)(data, suffix='', name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#347)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
-
-data MUST be of type 'str' (not basestring, not unicode). The str is
-expected to have valid utf-8 data in it.
 
 Similar to input(), but ensures that 'data' is valid utf-8 text. Any
 non-utf-8 characters will be replaced with �.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#355)(suffix='', leak_to=None, name=None, add_output_log=False):**
+data MUST be either of type 'bytes' or type 'str' (recommended) in Python 3.
+Respectively, 'str' or 'unicode' in Python 2.
+
+If the provided data is of type 'bytes', it is expected to be valid utf-8
+encoded data. Note that, the support of type 'bytes' is for backwards
+compatibility to Python 2, we may drop this support in the future after
+recipe becomes Python 3 only.
+
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#370)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -2668,7 +2681,7 @@ Args:
      to a step link named `name`. If this is 'on_failure', only create this
      log when the step has a non-SUCCESS status.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#393)(self, leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#408)(self, leak_to=None, name=None):**
 
 Returns a directory Placeholder for use as a step argument.
 
@@ -2700,7 +2713,7 @@ del result.raw_io.output_dir[some_file]
 result.raw_io.output_dir[some_file] -> raises KeyError
 ```
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#375)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#390)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -4253,9 +4266,9 @@ Tests for api.python.infra_failing_step.
 &mdash; **def [RunSteps](/recipe_modules/random/tests/full.py#11)(api):**
 ### *recipes* / [raw\_io:examples/full](/recipe_modules/raw_io/examples/full.py)
 
-[DEPS](/recipe_modules/raw_io/examples/full.py#6): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/raw_io/examples/full.py#8): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/raw_io/examples/full.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/raw_io/examples/full.py#18)(api):**
 ### *recipes* / [resultdb:examples/exonerate](/recipe_modules/resultdb/examples/exonerate.py)
 
 [DEPS](/recipe_modules/resultdb/examples/exonerate.py#10): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
