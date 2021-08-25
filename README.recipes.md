@@ -1963,25 +1963,25 @@ Returns the associated isolate server.
 Returns the associated namespace.
 ### *recipe_modules* / [json](/recipe_modules/json)
 
-[DEPS](/recipe_modules/json/__init__.py#5): [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io)
+[DEPS](/recipe_modules/json/__init__.py#7): [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io)
 
 Methods for producing and consuming JSON.
 
-#### **class [JsonApi](/recipe_modules/json/api.py#96)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
+#### **class [JsonApi](/recipe_modules/json/api.py#107)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
 
-&emsp; **@staticmethod**<br>&mdash; **def [dumps](/recipe_modules/json/api.py#97)(\*args, \*\*kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [dumps](/recipe_modules/json/api.py#108)(\*args, \*\*kwargs):**
 
 Works like `json.dumps`.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [input](/recipe_modules/json/api.py#120)(self, data):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [input](/recipe_modules/json/api.py#131)(self, data):**
 
 A placeholder which will expand to a file path containing <data>.
 
-&mdash; **def [is\_serializable](/recipe_modules/json/api.py#112)(self, obj):**
+&mdash; **def [is\_serializable](/recipe_modules/json/api.py#123)(self, obj):**
 
 Returns True if the object is JSON-serializable.
 
-&emsp; **@staticmethod**<br>&mdash; **def [loads](/recipe_modules/json/api.py#102)(data, \*\*kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [loads](/recipe_modules/json/api.py#113)(data, \*\*kwargs):**
 
 Works like `json.loads`, but:
 * strips out unicode objects (replacing them with utf8-encoded str
@@ -1989,7 +1989,7 @@ Works like `json.loads`, but:
 * replaces 'int-like' floats with ints. These are floats whose magnitude
   is less than (2**53-1) and which don't have a decimal component.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [output](/recipe_modules/json/api.py#125)(self, add_json_log=True, name=None, leak_to=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [output](/recipe_modules/json/api.py#136)(self, add_json_log=True, name=None, leak_to=None):**
 
 A placeholder which will expand to '/tmp/file'.
 
@@ -2002,7 +2002,7 @@ Args:
     to a step link named `name`. If this is 'on_failure', only create this
     log when the step has a non-SUCCESS status.
 
-&mdash; **def [read](/recipe_modules/json/api.py#140)(self, name, path, add_json_log=True, output_name=None, \*\*kwargs):**
+&mdash; **def [read](/recipe_modules/json/api.py#151)(self, name, path, add_json_log=True, output_name=None, \*\*kwargs):**
 
 Returns a step that reads a JSON file.
 
@@ -4192,14 +4192,14 @@ This tests metadata features of the Future object.
 &mdash; **def [RunSteps](/recipe_modules/isolated/examples/full.py#10)(api):**
 ### *recipes* / [json:examples/full](/recipe_modules/json/examples/full.py)
 
-[DEPS](/recipe_modules/json/examples/full.py#5): [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/json/examples/full.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/json/examples/full.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/json/examples/full.py#20)(api):**
 ### *recipes* / [json:tests/add\_json\_log](/recipe_modules/json/tests/add_json_log.py)
 
-[DEPS](/recipe_modules/json/tests/add_json_log.py#5): [json](#recipe_modules-json), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/json/tests/add_json_log.py#7): [json](#recipe_modules-json), [step](#recipe_modules-step)
 
-&mdash; **def [RunSteps](/recipe_modules/json/tests/add_json_log.py#10)(api):**
+&mdash; **def [RunSteps](/recipe_modules/json/tests/add_json_log.py#12)(api):**
 ### *recipes* / [led:tests/full](/recipe_modules/led/tests/full.py)
 
 [DEPS](/recipe_modules/led/tests/full.py#14): [buildbucket](#recipe_modules-buildbucket), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)

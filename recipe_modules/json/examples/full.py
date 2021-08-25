@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'json',
   'path',
@@ -11,7 +13,9 @@ DEPS = [
   'step',
 ]
 
-FULLWIDTH_Z = '\xef\xbb\xbf\xef\xbd\x9a'
+import textwrap
+
+FULLWIDTH_Z = u'\ufeff\uff5a'
 
 def RunSteps(api):
   step_result = api.step('echo1', ['echo', '[1, 2, 3]'],
@@ -34,18 +38,21 @@ def RunSteps(api):
   assert not api.json.is_serializable(set(['foo', 'bar', 'baz']))
 
   # Example demonstrating multiple named json output files.
-  result = api.python.inline(
-      'foo',
-      """
-      import json
-      import sys
-      with open(sys.argv[1], 'w') as f:
-        f.write(json.dumps([1, 2, 3]))
-      with open(sys.argv[2], 'w') as f:
-        f.write(json.dumps(['x', 'y', %s]))
-      """ % repr(FULLWIDTH_Z),
-      args=[api.json.output(name='1'), api.json.output(name='2')],
-  )
+  program = textwrap.dedent("""
+  import json
+  import sys
+  with open(sys.argv[1], 'w') as f:
+    f.write(json.dumps([1, 2, 3]))
+  with open(sys.argv[2], 'w') as f:
+    f.write(json.dumps(['x', 'y', u'%s']))
+  """ % (FULLWIDTH_Z,))
+
+  result = api.step('foo', [
+      'python3',
+      api.raw_io.input_text(program, suffix='.py'),
+      api.json.output(name='1'),
+      api.json.output(name='2'),
+  ])
   assert result.json.outputs['1'] == [1, 2, 3]
   assert result.json.outputs['2'] == ['x', 'y', FULLWIDTH_Z]
   assert not hasattr(result.json, 'output')
@@ -88,7 +95,7 @@ def RunSteps(api):
   step_result = api.step(
     'backing file missing',
     [
-      'python', api.resource('cool_script.py'),
+      'python3', api.resource('cool_script.py'),
       'file missing',
       api.json.output(leak_to='/this/file/doesnt/exist'),
     ],
