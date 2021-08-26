@@ -23,7 +23,7 @@
   * [platform](#recipe_modules-platform) (Python3 ✅) &mdash; Mockable system platform identity functions.
   * [properties](#recipe_modules-properties) (Python3 ✅) &mdash; Provides access to the recipes input properties.
   * [proto](#recipe_modules-proto) &mdash; Methods for producing and consuming protobuf data to/from steps and the filesystem.
-  * [python](#recipe_modules-python) &mdash; Provides methods for running python scripts correctly.
+  * [python](#recipe_modules-python) (Python3 ✅) &mdash; Provides methods for running python scripts correctly.
   * [random](#recipe_modules-random) &mdash; Allows randomness in recipes.
   * [raw_io](#recipe_modules-raw_io) (Python3 ✅) &mdash; Provides objects for reading and writing raw data to and from steps.
   * [resultdb](#recipe_modules-resultdb) &mdash; API for interacting with the ResultDB service.
@@ -131,8 +131,8 @@
   * [properties:examples/full](#recipes-properties_examples_full) (Python3 ✅)
   * [proto:tests/encode_decode](#recipes-proto_tests_encode_decode)
   * [proto:tests/placeholders](#recipes-proto_tests_placeholders)
-  * [python:examples/full](#recipes-python_examples_full) &mdash; Launches the repo bundler.
-  * [python:tests/infra_failing_step](#recipes-python_tests_infra_failing_step) &mdash; Tests for api.
+  * [python:examples/full](#recipes-python_examples_full) (Python3 ✅) &mdash; Launches the repo bundler.
+  * [python:tests/infra_failing_step](#recipes-python_tests_infra_failing_step) (Python3 ✅) &mdash; Tests for api.
   * [random:tests/full](#recipes-random_tests_full)
   * [raw_io:examples/full](#recipes-raw_io_examples_full) (Python3 ✅)
   * [resultdb:examples/exonerate](#recipes-resultdb_examples_exonerate)
@@ -2564,7 +2564,7 @@ Args:
 
 [DEPS](/recipe_modules/python/__init__.py#7): [context](#recipe_modules-context), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Provides methods for running python scripts correctly.
 
@@ -4501,7 +4501,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 
 [DEPS](/recipe_modules/python/examples/full.py#9): [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Launches the repo bundler.
 
@@ -4510,7 +4510,7 @@ Launches the repo bundler.
 
 [DEPS](/recipe_modules/python/tests/infra_failing_step.py#11): [python](#recipe_modules-python), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Tests for api.python.infra_failing_step.
 
