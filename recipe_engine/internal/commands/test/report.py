@@ -242,19 +242,29 @@ class Reporter(object):
       print('------')
       print('TESTS OK with %d warnings' % len(warning_result))
     elif soft_fail:
-      print('\n=======Possible Soft Failures Below=======')
+      print('=======Possible Soft Failures Below=======')
       if self._maybe_soft_failure_buf['py2'].tell() > 0:
-        sys.stdout.write('Soft errors in py2' +
-                         self._maybe_soft_failure_buf['py2'].getvalue() + '\n')
+        print('Soft errors in py2 tests:')
+        print(self._maybe_soft_failure_buf['py2'].getvalue())
       if self._maybe_soft_failure_buf['py3'].tell() > 0:
-        sys.stdout.write('Soft errors in py3 tests' +
-                         self._maybe_soft_failure_buf['py3'].getvalue() + '\n')
+        print('Soft errors in py3 tests:')
+        print(self._maybe_soft_failure_buf['py3'].getvalue())
       print('------')
-      print('TESTS OK with some soft failures as above. Those failures need')
-      print('human inspection to determine the real causes. It may because of')
-      print('a real bug in your recipe or the discrepancy between the claimed')
-      print('PYTHON_VERSION_COMPATIBILITY of a recipe and its dependencies.')
-      print('They are ignored for now and will not block your CL submit.')
+      print('TESTS OK but have soft failures shown above. It indicates that')
+      print('the claimed PYTHON_VERSION_COMPATIBILITY of the recipe disagrees')
+      print('with that of its dependencies. However, recipe engine has no way')
+      print('to tell whether tests fail because of this discrepancy or a real')
+      print('bug inside the recipe. Therefore, tests are considered succeeded.')
+      print()
+      print('Please use your own judgement to determine the real cause.')
+      print('You can use `recipes.py deps` command to check which dependency')
+      print('has claimed an incompatible python version.')
+      print()
+      print('NOTE: any errors will become hard failures if they still persist')
+      print('after all dependencies have claimed a compatible python version')
+      print('(i.e. finished py3 migration). So, if you are unsure, please wait')
+      print('for the Python 3 migration of your dependencies before marking ')
+      print('your recipe as Python 3 compatible.')
     else:
       print('TESTS OK')
 

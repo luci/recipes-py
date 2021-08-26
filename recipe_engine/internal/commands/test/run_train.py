@@ -297,10 +297,12 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
 
       if py == 'py3' and not enable_py3_details:
         if has_unexpected_fail:
+          print()
           print('WARNING: unexpected errors occurred when trying to run tests '
                 'in python3 mode. Pass --py3-details to see them.')
           continue
         if implicit_py3_err > 0:
+          print()
           print('WARNING: Ignored %d failures in implicit py3 tests for recipes'
                 ' that don\'t declare their own PYTHON_VERSION_COMPATIBILITY. '
                 'Pass --py3-details to see them.' % implicit_py3_err)
