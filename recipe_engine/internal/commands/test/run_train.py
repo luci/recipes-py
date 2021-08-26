@@ -231,7 +231,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
 
   py2_cov_dir = None
   py3_cov_dir = None
-  total_cov = coverage.Coverage(config_file=False)
+  total_cov = coverage.Coverage(config_file=False, data_file='.total_coverage')
   try:
     # in case of crash; don't want this undefined in finally clause.
     live_threads = Threads(py2=[], py3=[])
@@ -328,7 +328,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
       shutil.rmtree(py2_cov_dir, ignore_errors=True)
     if py3_cov_dir:
       shutil.rmtree(py3_cov_dir, ignore_errors=True)
-
+    total_cov.erase()
 
 def main(args):
   """Runs simulation tests on a given repo of recipes.
