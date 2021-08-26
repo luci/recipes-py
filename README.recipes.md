@@ -2562,7 +2562,7 @@ Args:
     - TEXTPB: google.protobuf.text_format.Parse
 ### *recipe_modules* / [python](/recipe_modules/python)
 
-[DEPS](/recipe_modules/python/__init__.py#5): [context](#recipe_modules-context), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/python/__init__.py#7): [context](#recipe_modules-context), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
@@ -4499,22 +4499,22 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipe_modules/proto/tests/placeholders.py#14)(api):**
 ### *recipes* / [python:examples/full](/recipe_modules/python/examples/full.py)
 
-[DEPS](/recipe_modules/python/examples/full.py#7): [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/python/examples/full.py#9): [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
 Launches the repo bundler.
 
-&mdash; **def [RunSteps](/recipe_modules/python/examples/full.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/python/examples/full.py#17)(api):**
 ### *recipes* / [python:tests/infra\_failing\_step](/recipe_modules/python/tests/infra_failing_step.py)
 
-[DEPS](/recipe_modules/python/tests/infra_failing_step.py#9): [python](#recipe_modules-python), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/python/tests/infra_failing_step.py#11): [python](#recipe_modules-python), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
 Tests for api.python.infra_failing_step.
 
-&mdash; **def [RunSteps](/recipe_modules/python/tests/infra_failing_step.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/python/tests/infra_failing_step.py#17)(api):**
 ### *recipes* / [random:tests/full](/recipe_modules/random/tests/full.py)
 
 [DEPS](/recipe_modules/random/tests/full.py#5): [random](#recipe_modules-random), [step](#recipe_modules-step)

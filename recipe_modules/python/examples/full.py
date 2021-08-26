@@ -4,6 +4,8 @@
 
 """Launches the repo bundler."""
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'path',
   'python',
@@ -26,7 +28,7 @@ def RunSteps(api):
 
   # Test that unbufferred actually removes PYTHONUNBUFFERED envvar.
   api.python('run json.tool', '-m', [
-    'json.tool', api.raw_io.input(b'{"something":[true,true]}'),
+    'json.tool', api.raw_io.input_text('{"something":[true,true]}'),
   ], unbuffered=False)
 
   api.python.inline('inline', 'print("Hello World!")')
