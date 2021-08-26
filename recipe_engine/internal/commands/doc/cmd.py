@@ -522,6 +522,7 @@ def parse_recipe(recipe):
     parameters=parse_parameters(recipe_ast, relpath),
     classes=classes,
     funcs=funcs,
+    python_version_compatibility=recipe.python_version_compatibility,
   )
 
 
@@ -573,6 +574,7 @@ def parse_module(module):
     funcs=funcs,
     deps=parse_deps(module.repo.name, init, init_relpath),
     parameters=parse_parameters(init, init_relpath),
+    python_version_compatibility=module.python_version_compatibility,
   )
 
 

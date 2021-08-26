@@ -236,6 +236,9 @@ message Doc {
 
     // Other functions defined in api.py
     map<string, Func> funcs = 8;
+
+    // The claimed python version compatibility level of this module.
+    string python_version_compatibility = 9;
   }
 
   // Documentation for a recipe.
@@ -264,6 +267,9 @@ message Doc {
     // A map of known items (e.g. core portions of the recipe engine) to their
     // documentation.
     map<string, Known> known_objects = 9;
+
+    // The claimed python version compatibility level of this recipe.
+    string python_version_compatibility = 10;
   }
 
   // Documentation for a recipe repo, including docs for all recipes
@@ -277,7 +283,7 @@ message Doc {
     //
     // Contains lots of goodies like the path within the repo to where the
     // recipes start, and the dependencies of the repos.
-    map<string, recipe_engine.RepoSpec > specs = 2;
+    map<string, recipe_engine.RepoSpec> specs = 2;
 
     // the full contents of the 'README.recipes.md' file at the base of the repo
     // plus recipe_root.
