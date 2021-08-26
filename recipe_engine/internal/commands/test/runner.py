@@ -327,7 +327,7 @@ def _cover_all_imports(main_repo):
   if not main_repo.modules:
     # Prevents a coverage warning when there are no modules to collect coverage
     # from.
-    return coverage.CoverageData()
+    return coverage.CoverageData(no_disk=True)
 
   cov = coverage.Coverage(
       config_file=False,

@@ -328,7 +328,6 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
       shutil.rmtree(py2_cov_dir, ignore_errors=True)
     if py3_cov_dir:
       shutil.rmtree(py3_cov_dir, ignore_errors=True)
-    total_cov.erase()
 
 
 def main(args):
