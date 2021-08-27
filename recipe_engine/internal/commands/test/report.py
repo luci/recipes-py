@@ -7,6 +7,7 @@
 
 
 from __future__ import print_function
+from future.utils import iteritems
 
 
 import collections
@@ -126,7 +127,7 @@ class Reporter(object):
 
     err_count = 0
     has_fail = False
-    for test_name, test_result in outcome_msg.test_results.iteritems():
+    for test_name, test_result in iteritems(outcome_msg.test_results):
       if (py == 'py3' and not self._enable_py3_details and
           not test_result.labeled_py_compat):
         err_count += 1 if FailTracker.test_failed(test_result) else 0
@@ -365,8 +366,8 @@ def _collect_warning_result(outcome_msgs):
   """
   result = defaultdict(PerWarningResult)
   for outcome_msg in outcome_msgs:
-    for _, test_result in outcome_msg.test_results.iteritems():
-      for name, causes in test_result.warnings.iteritems():
+    for _, test_result in iteritems(outcome_msg.test_results):
+      for name, causes in iteritems(test_result.warnings):
         for cause in causes.causes:
           if cause.WhichOneof('oneof_cause') == 'call_site':
             result[name].call_sites.add(CallSite.from_cause_pb(cause))

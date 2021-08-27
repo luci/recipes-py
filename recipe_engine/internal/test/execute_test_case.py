@@ -4,6 +4,7 @@
 
 from builtins import object
 from past.builtins import basestring
+from future.utils import iteritems
 import attr
 
 from ..attr_util import attr_type, attr_dict_type
@@ -55,7 +56,7 @@ def execute_test_case(recipe_deps, recipe_name, test_data):
   props['recipe'] = str(recipe_name)
 
   environ = FakeEnviron()
-  for key, value in test_data.environ.items():
+  for key, value in iteritems(test_data.environ):
     environ[key] = value
 
   raw_result, uncaught_exception = RecipeEngine.run_steps(

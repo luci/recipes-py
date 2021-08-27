@@ -13,7 +13,7 @@ DEPS = [
 # note that the frames from composite_step are omitted in the stack during
 # training.
 @composite_step
-def my_function():
+def my_function(): # pragma: no cover
   raise TypeError("BAD DOGE")
 
 

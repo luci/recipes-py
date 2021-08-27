@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 from __future__ import print_function
+from future.utils import iteritems, itervalues
 
 import collections
 import errno
@@ -18,7 +19,6 @@ import coverage
 import gevent
 import gevent.queue
 
-from future.utils import itervalues
 from google.protobuf import json_format
 
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
@@ -204,6 +204,26 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
 
 def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
          filtered_stacks, stop, jobs, enable_py3_details):
+  """Run tests in py2 and py3 subprocess pools.
+
+  Side effects:
+    Due to the defects or inconsistencies of 3rd party Coverage lib, the run
+    might fail.
+     * If main process runs with the py env>=3.8 (i.e. RECIPES_USE_PY3=true),
+       the def line in a function with decorators might be reported as uncovered
+       by mistake. (root cause -
+       https://github.com/nedbat/coveragepy/issues/866#issuecomment-549613283).
+     * If main process runs in py2.7 (i.e. RECIPES_USE_PY3=false) while a recipe
+       module or recipe is labeled as PYTHON_VERSION_COMPATIBILITY = 'PY3',
+       it will fail if it contains the code snippets like `while True`,
+       `if True`, etc. (root cause -
+       https://github.com/nedbat/coveragepy/issues/1036#issuecomment-706724265)
+
+    All the side effects are because we combine coverage results from different
+    python interpreter versions. The workaround is to add `# pragma: no cover`.
+    After we drop the py2 support and remove the py2 subprocess pool, the side
+    effects will go away.
+  """
   main_repo = recipe_deps.main_repo
 
   description_queues = Queue(py2=gevent.queue.UnboundQueue(),
@@ -349,7 +369,7 @@ def main(args):
   def _dump():
     if args.json:
       output = []
-      for name, r in ret._asdict().iteritems():
+      for name, r in iteritems(ret._asdict()):
         result = json_format.MessageToDict(r, preserving_proto_field_name=True)
         result['python_env'] = name
         output.append(result)

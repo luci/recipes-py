@@ -472,10 +472,19 @@ def parse_func(func_ast, relpath, imports):
   Returns Doc.Func.
   """
   assert isinstance(func_ast, ast.FunctionDef), type(func_ast)
+  # In python3.8, the lineno was fixed to point to the line of func def while
+  # it points to its first decorator in earlier versions (for details, see -
+  # bugs.python.org/issue33211). Force it to point back to the first decorator
+  # in order to generate the same README.recipes.md file.
+  # TODO(crbug.com/1147793): remove this hack post migration.
+  lineno = func_ast.lineno
+  deco_list = getattr(func_ast, 'decorator_list', [])
+  if len(deco_list) > 0:
+    lineno = deco_list[0].lineno
   ret = doc.Doc.Func(
     name=func_ast.name,
     relpath=relpath,
-    lineno=func_ast.lineno,
+    lineno=lineno,
     docstring=ast.get_docstring(func_ast) or '',
   )
 

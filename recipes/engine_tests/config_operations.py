@@ -25,15 +25,15 @@ def BaseConfig(**_kwargs):
 config_ctx = config_item_context(BaseConfig)
 
 @config_ctx()
-def test1(c):
+def test1(c): # pragma: no cover
   c.thedict['a'] = (1, 2)
 
 @config_ctx()
-def test2a(c):
+def test2a(c): # pragma: no cover
   c.thelist.append('foo')
 
 @config_ctx(includes=['test2a'])
-def test2(c):
+def test2(c): # pragma: no cover
   c.thestring = 'foobar'
 
 

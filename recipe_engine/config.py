@@ -339,9 +339,11 @@ class ConfigBase(object):
     """Returns a doc.Doc.Schema proto message for this config type."""
     raise NotImplementedError
 
-
+# TODO(crbug.com/1147793): Remove basestring mapping after we drop
+# Single(basestring) support in all downstream repos.
 _SIMPLE_TYPE_LOOKUP = {
   str: doc.Doc.Schema.STRING,
+  basestring: doc.Doc.Schema.STRING,
   int: doc.Doc.Schema.NUMBER,
   float: doc.Doc.Schema.NUMBER,
   bool: doc.Doc.Schema.BOOLEAN,
@@ -352,7 +354,6 @@ _SIMPLE_TYPE_LOOKUP = {
 
 if sys.version_info.major < 3:
   _SIMPLE_TYPE_LOOKUP.update({
-    basestring: doc.Doc.Schema.STRING,
     unicode: doc.Doc.Schema.STRING,
     long: doc.Doc.Schema.NUMBER,
   })

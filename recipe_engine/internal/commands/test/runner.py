@@ -5,6 +5,7 @@
 from builtins import str
 from future.utils import iteritems, itervalues
 from past.builtins import basestring
+from builtins import range
 
 import collections
 import difflib
@@ -536,8 +537,8 @@ class RunnerThread(gevent.Greenlet):
     stderr = None
     if not enable_py3_details and use_py3:
       stderr = open(os.devnull, 'w')
-    self._runner_proc = subprocess.Popen(
-        cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=stderr)
+    self._runner_proc = subprocess.Popen(cmd, bufsize=0, stdin=subprocess.PIPE,
+                                         stdout=subprocess.PIPE, stderr=stderr)
     self._description_queue = description_queue
     self._outcome_queue = outcome_queue
 
@@ -602,7 +603,7 @@ class RunnerThread(gevent.Greenlet):
         if not test_desc:
           self._runner_proc.stdout.close()
           try:
-            self._runner_proc.stdin.write('\0')
+            self._runner_proc.stdin.write(b'\0')
             self._runner_proc.stdin.close()
           except OSError as e:
             # The subprocess has already aborted in starting stage.
