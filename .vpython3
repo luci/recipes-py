@@ -14,7 +14,7 @@ verify_pep425_tag: [
 
 wheel: <
   name: "infra/python/wheels/coverage/${vpython_platform}"
-  version: "version:5.5"
+  version: "version:5.5.chromium.2"
 >
 
 wheel: <
