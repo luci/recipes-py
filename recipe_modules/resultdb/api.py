@@ -328,6 +328,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
         stdout=self.m.json.output(),
         step_test_data=step_test_data,
     )
+    step_res.presentation.logs['json.input'] = self.m.json.dumps(req, indent=2)
+
     return step_res.stdout
 
   def _run_rdb(self,
