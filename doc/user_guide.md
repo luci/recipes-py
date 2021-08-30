@@ -1079,6 +1079,21 @@ section.
     negative result for Python 3 test because it is comparing with the previous
     expectation file instead of the one Python 2 test just generated. You can
     workaround it by simply running the train command again.
+  * Sometimes, the "Insufficient coverage" error might be a false positive. It’s
+    because of inconsistencies from 3rd-party Coverage library when combining
+    results from different python interpreters. Possible situations:
+      * Run `RECIPES_USE_PY3=true ./recipes.py test` for a recipe or module
+        which isn’t yet marked as PY2+3 or PY3. The def line of a function with
+        decorators might be reported as uncovered. You could:
+          * Mark that recipe/module to PY2+3 or PY3, and solve any reported
+            errors in running py3 tests.
+          * OR: Add `# pragma: no cover` to the def line if you’re sure it’s
+            covered.
+      * Run `./recipes.py test`, for a recipe or module which is marked as PY3
+        compatible. The line of `while True` or `if True` will be reported as
+        uncovered. You could:
+          * Assign `True` to a var and use that var in conditional statements.
+          * OR: Mark `# pragma: no cover` to that line.
 
 ### Print Python 3 readiness info
 
