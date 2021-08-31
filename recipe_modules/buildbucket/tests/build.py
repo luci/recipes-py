@@ -92,10 +92,11 @@ def GenTests(api):
            expected_bucket_v1='luci.test.ci',
            expected_realm='test:ci')
       + api.buildbucket.ci_build(
-      project='test',
-      git_repo='git.example.com/test/repo',
-      experiments=['fake.experiment'],
-  )
+          project='test',
+          git_repo='git.example.com/test/repo',
+          experiments=['fake.experiment'],
+          execution_timeout=12345,
+      )
       + api.post_process(post_process.DropExpectation)
   )
 
@@ -114,10 +115,11 @@ def GenTests(api):
           expected_bucket_v1='luci.test.try',
           expected_realm='test:try')
       + api.buildbucket.try_build(
-      project='test',
-      git_repo='git.example.com/test/repo',
-      experiments=['fake.experiment'],
-  )
+          project='test',
+          git_repo='git.example.com/test/repo',
+          experiments=['fake.experiment'],
+          execution_timeout=12345,
+      )
       + api.post_process(post_process.DropExpectation)
   )
 

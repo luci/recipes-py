@@ -50,6 +50,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       tags=None,
       status=None,
       experiments=(),
+      execution_timeout=None,
     ):
     """Returns a typical buildbucket CI build scheduled by luci-scheduler."""
     git_repo = git_repo or self._default_git_repo(project)
@@ -81,6 +82,12 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
             resultdb=build_pb2.BuildInfra.ResultDB(
                 invocation='invocations/build:%d' % build_id),
         ))
+
+    if execution_timeout:
+        build.execution_timeout.seconds = int(execution_timeout)
+        build.execution_timeout.nanos = int(
+            execution_timeout % 1 * 1000000000 + 0.5
+        )
 
     if status:
       build.status = common_pb2.Status.Value(status)
@@ -115,6 +122,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       tags=None,
       status=None,
       experiments=(),
+      execution_timeout=None,
     ):
     """Emulate typical buildbucket try build scheduled by CQ.
 
@@ -168,6 +176,12 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
                 invocation='invocations/build:%d' % build_id),
         ),
     )
+
+    if execution_timeout:
+        build.execution_timeout.seconds = int(execution_timeout)
+        build.execution_timeout.nanos = int(
+            execution_timeout % 1 * 1000000000 + 0.5
+        )
 
     if revision:
       c = build.input.gitiles_commit
