@@ -26,7 +26,7 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
       if p.startswith('../') or p.startswith('..\\'):  # pragma: no cover
         raise ValueError('path is outside of listdir root directory: %r' % p)
       return p
-    return (self.m.raw_io.stream_output('\n'.join(sorted(map(_check, paths))))
+    return (self.m.raw_io.stream_output_text('\n'.join(sorted(map(_check, paths))))
             + self.errno(errno_name))
 
   def filesizes(self, sizes=(), errno_name=0):
@@ -40,7 +40,7 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
       yield (api.test('my_test')
         + api.step_data('filesize step name', api.file.filesizes([1674, 5714]))
     """
-    return (self.m.raw_io.stream_output('\n'.join(map(str, sizes)))
+    return (self.m.raw_io.stream_output_text('\n'.join(map(str, sizes)))
             + self.errno(errno_name))
 
   def compute_hash(self, hash='', errno_name=0):
@@ -56,7 +56,7 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
             api.file.compute_hash('deadbeef'))
       )
     """
-    return (self.m.raw_io.stream_output(hash)
+    return (self.m.raw_io.stream_output_text(hash)
             + self.errno(errno_name))
 
   def file_hash(self, hash='', errno_name=0):
@@ -72,7 +72,7 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
             api.file.file_hash('deadbeef'))
       )
     """
-    return (self.m.raw_io.stream_output(hash)
+    return (self.m.raw_io.stream_output_text(hash)
             + self.errno(errno_name))
 
   def read_raw(self, content='', errno_name=0):
@@ -148,7 +148,7 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
           'pattern_path', 'pattern_other_thing'
       ]))
     """
-    return (self.m.raw_io.stream_output('\n'.join(sorted(map(str, names))))
+    return (self.m.raw_io.stream_output_text('\n'.join(sorted(map(str, names))))
             + self.errno(errno_name))
 
   def errno(self, errno_name=None):

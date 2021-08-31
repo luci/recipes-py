@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+PYTHON_VERSION_COMPATIBILITY = "PY2+3"
+
 DEPS = [
   "file",
   "path",
@@ -15,7 +17,7 @@ def RunSteps(api):
   api.file.ensure_directory('ensure "some dir"', dest)
   for fname in file_names:
     api.file.write_text('write %s' % fname, dest.join(fname), fname)
-  api.file.filesizes('check filesizes', map(dest.join, file_names))
+  api.file.filesizes('check filesizes', [dest.join(f) for f in file_names])
 
   dest2 = api.path['start_dir'].join('some other dir')
   api.file.rmtree('make sure dest is gone', dest2)

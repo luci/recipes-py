@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+PYTHON_VERSION_COMPATIBILITY = "PY2+3"
+
 DEPS = [
   "file",
   "path",
@@ -12,7 +14,7 @@ def RunSteps(api):
   dest = api.path['start_dir'].join('some_file.json')
   # Test a non-trivial number of keys in a dict.  This tests that the keys
   # are sorted in the output.
-  data = {str('key%d' % i): True for i in xrange(10)}
+  data = {str('key%d' % i): True for i in range(10)}
 
   api.file.write_json('write_json', dest, data)
 

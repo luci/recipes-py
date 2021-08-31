@@ -5,6 +5,7 @@
 """File manipulation (read/write/delete/glob) methods."""
 
 from future.utils import iteritems
+from past.builtins import oct
 
 from recipe_engine import config_types
 from recipe_engine import recipe_api
