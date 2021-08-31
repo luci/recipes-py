@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'raw_io',
   'step',
@@ -23,9 +25,9 @@ def RunSteps(api):
   step_result = api.step(
       'automock',
       ['echo', 'huh'],
-      stdout=api.raw_io.output('out'),
+      stdout=api.raw_io.output_text('out'),
       step_test_data=(
-          lambda: api.raw_io.test_api.stream_output('huh\n')))
+          lambda: api.raw_io.test_api.stream_output_text('huh\n')))
   assert step_result.stdout == 'huh\n'
 
 

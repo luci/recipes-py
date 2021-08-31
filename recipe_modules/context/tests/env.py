@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'context',
   'path',
@@ -33,8 +35,8 @@ def RunSteps(api):
     result = api.step(
         name,
         ['bash', '-c', 'echo -n $'+_KEY],
-        stdout=api.raw_io.output(),
-        step_test_data=lambda: api.raw_io.test_api.stream_output(exp),
+        stdout=api.raw_io.output_text(),
+        step_test_data=lambda: api.raw_io.test_api.stream_output_text(exp),
     )
     assert result.stdout == exp, (
         '%r did not equal expected %r' % (result.stdout, exp))

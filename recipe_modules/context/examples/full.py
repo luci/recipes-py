@@ -6,6 +6,8 @@ from recipe_engine import recipe_api, config
 
 from PB.go.chromium.org.luci.lucictx.sections import Deadline
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'context',
   'path',

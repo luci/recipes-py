@@ -60,12 +60,12 @@
   * [cas:examples/full](#recipes-cas_examples_full)
   * [cipd:examples/full](#recipes-cipd_examples_full)
   * [commit_position:examples/full](#recipes-commit_position_examples_full)
-  * [context:examples/full](#recipes-context_examples_full)
-  * [context:tests/cwd](#recipes-context_tests_cwd)
-  * [context:tests/env](#recipes-context_tests_env)
-  * [context:tests/greenlet](#recipes-context_tests_greenlet)
-  * [context:tests/infra_step](#recipes-context_tests_infra_step)
-  * [context:tests/luci_context](#recipes-context_tests_luci_context)
+  * [context:examples/full](#recipes-context_examples_full) (Python3 ✅)
+  * [context:tests/cwd](#recipes-context_tests_cwd) (Python3 ✅)
+  * [context:tests/env](#recipes-context_tests_env) (Python3 ✅)
+  * [context:tests/greenlet](#recipes-context_tests_greenlet) (Python3 ✅)
+  * [context:tests/infra_step](#recipes-context_tests_infra_step) (Python3 ✅)
+  * [context:tests/luci_context](#recipes-context_tests_luci_context) (Python3 ✅)
   * [cq:examples/ordered_cls](#recipes-cq_examples_ordered_cls)
   * [cq:examples/trigger_child_builds](#recipes-cq_examples_trigger_child_builds)
   * [cq:tests/cl_group_key](#recipes-cq_tests_cl_group_key)
@@ -152,7 +152,7 @@
   * [step:tests/defer](#recipes-step_tests_defer) (Python3 ✅)
   * [step:tests/inject_paths](#recipes-step_tests_inject_paths) (Python3 ✅)
   * [step:tests/nested](#recipes-step_tests_nested) (Python3 ✅)
-  * [step:tests/stdio](#recipes-step_tests_stdio)
+  * [step:tests/stdio](#recipes-step_tests_stdio) (Python3 ✅)
   * [step:tests/step_call_args](#recipes-step_tests_step_call_args) (Python3 ✅)
   * [step:tests/step_cost](#recipes-step_tests_step_cost) (Python3 ✅)
   * [step:tests/sub_build](#recipes-step_tests_sub_build) (Python3 ✅)
@@ -3918,46 +3918,46 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipe_modules/commit_position/examples/full.py#11)(api):**
 ### *recipes* / [context:examples/full](/recipe_modules/context/examples/full.py)
 
-[DEPS](/recipe_modules/context/examples/full.py#9): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/context/examples/full.py#11): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/context/examples/full.py#18)(api):**
+&mdash; **def [RunSteps](/recipe_modules/context/examples/full.py#20)(api):**
 ### *recipes* / [context:tests/cwd](/recipe_modules/context/tests/cwd.py)
 
-[DEPS](/recipe_modules/context/tests/cwd.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/context/tests/cwd.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/context/tests/cwd.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/context/tests/cwd.py#13)(api):**
 ### *recipes* / [context:tests/env](/recipe_modules/context/tests/env.py)
 
-[DEPS](/recipe_modules/context/tests/env.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/context/tests/env.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/context/tests/env.py#19)(api):**
+&mdash; **def [RunSteps](/recipe_modules/context/tests/env.py#21)(api):**
 ### *recipes* / [context:tests/greenlet](/recipe_modules/context/tests/greenlet.py)
 
-[DEPS](/recipe_modules/context/tests/greenlet.py#5): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/context/tests/greenlet.py#7): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/context/tests/greenlet.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/context/tests/greenlet.py#13)(api):**
 ### *recipes* / [context:tests/infra\_step](/recipe_modules/context/tests/infra_step.py)
 
-[DEPS](/recipe_modules/context/tests/infra_step.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/context/tests/infra_step.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/context/tests/infra_step.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/context/tests/infra_step.py#13)(api):**
 ### *recipes* / [context:tests/luci\_context](/recipe_modules/context/tests/luci_context.py)
 
-[DEPS](/recipe_modules/context/tests/luci_context.py#7): [assertions](#recipe_modules-assertions), [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/context/tests/luci_context.py#9): [assertions](#recipe_modules-assertions), [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/context/tests/luci_context.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/context/tests/luci_context.py#16)(api):**
 ### *recipes* / [cq:examples/ordered\_cls](/recipe_modules/cq/examples/ordered_cls.py)
 
 [DEPS](/recipe_modules/cq/examples/ordered_cls.py#10): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
@@ -4656,11 +4656,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/step/tests/nested.py#15)(api):**
 ### *recipes* / [step:tests/stdio](/recipe_modules/step/tests/stdio.py)
 
-[DEPS](/recipe_modules/step/tests/stdio.py#5): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/stdio.py#7): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/stdio.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/stdio.py#13)(api):**
 ### *recipes* / [step:tests/step\_call\_args](/recipe_modules/step/tests/step_call_args.py)
 
 [DEPS](/recipe_modules/step/tests/step_call_args.py#9): [step](#recipe_modules-step)
