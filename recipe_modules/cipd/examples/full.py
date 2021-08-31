@@ -6,6 +6,8 @@ from recipe_engine import post_process
 from recipe_engine.config import List, Single, ConfigList, ConfigGroup
 from recipe_engine.recipe_api import Property
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'cipd',
   'json',
@@ -54,8 +56,9 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
     result = api.cipd.search(package_name,
                              tag='git_revision:40-chars-long-hash')
   r = api.cipd.describe(package_name, version=result[0].instance_id)
-  api.step('describe response', cmd=None).presentation.logs['parsed'] = (
-      api.json.dumps(r.__dict__, indent=2).splitlines())
+  api.step(
+      'describe response', cmd=None).presentation.logs['parsed'] = (
+          api.json.dumps(r._asdict(), indent=2).splitlines())
 
 
   # Others do, so provide creds first.
@@ -262,53 +265,37 @@ def GenTests(api):
     )
   )
 
-  yield (
-    api.test('pkg_bad_verfile')
-    + api.properties(
+  yield (api.test('pkg_bad_verfile') + api.properties(
       use_pkg=True,
       ver_files=['a', 'b'],
-    )
-    + api.expect_exception('ValueError')
-    + api.post_process(
-        post_process.ResultReason,
-        "Uncaught Exception: ValueError('add_version_file() may only be "
-        "used once.',)",
-      )
-    + api.post_process(post_process.DropExpectation)
-  )
+  ) + api.expect_exception('ValueError') + api.post_process(
+      post_process.ResultReasonRE,
+      r"add_version_file\(\) may only be used once.",
+  ) + api.post_process(post_process.DropExpectation))
 
-  yield (
-    api.test('pkg_bad_mode')
-    + api.properties(
+  yield (api.test('pkg_bad_mode') + api.properties(
       use_pkg=True,
       install_mode='',
-    )
-    + api.expect_exception('ValueError')
-    + api.post_process(
-          post_process.ResultReason,
-          "Uncaught Exception: ValueError(\"invalid value for "
-          "install_mode: ''\",)",
-      )
-    + api.post_process(post_process.DropExpectation)
-  )
+  ) + api.expect_exception('ValueError') + api.post_process(
+      # ResultReasonRE for py2/3 compatibility to be flexible about a trailing
+      # comma in repr() for exceptions: https://bugs.python.org/issue30399.
+      post_process.ResultReasonRE,
+      r"invalid value for install_mode: ''",
+  ) + api.post_process(post_process.DropExpectation))
 
-  yield (
-    api.test('pkg_bad_file')
-    + api.properties(
+  yield (api.test('pkg_bad_file') + api.properties(
       use_pkg=True,
       pkg_files=[
-        '[START_DIR]/a/path/to/file.py',
+          '[START_DIR]/a/path/to/file.py',
       ],
-    )
-    + api.expect_exception('ValueError')
-    + api.post_process(
-        post_process.ResultReason,
-        "Uncaught Exception: ValueError(\"path Path([START_DIR], 'a', "
-        "'path', 'to', 'file.py') is not the package root "
-        "Path([START_DIR], 'some_subdir') and not a child thereof\",)",
-      )
-    + api.post_process(post_process.DropExpectation)
-  )
+  ) + api.expect_exception('ValueError') + api.post_process(
+      # ResultReasonRE for py2/3 compatibility to be flexible about a trailing
+      # comma in repr() for exceptions: https://bugs.python.org/issue30399.
+      post_process.ResultReasonRE,
+      r"path Path\(\[START_DIR\], 'a', 'path', 'to', 'file.py'\) is not "
+      r"the package root Path\(\[START_DIR\], 'some_subdir'\) and not a "
+      r"child thereof",
+  ) + api.post_process(post_process.DropExpectation))
 
   yield (
     api.test('basic_with_pkg_vars')

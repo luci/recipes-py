@@ -9,10 +9,11 @@ https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 """
 
 from future.utils import iteritems
+from past.builtins import basestring
 
 import contextlib
 
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 
 from recipe_engine import recipe_api
 from recipe_engine.config_types import Path
@@ -183,9 +184,9 @@ class EnsureFile(object):
   Package = namedtuple('Package', ['name', 'version'])
 
   def __init__(self):
-    self.packages = {}  # dict[Path, Package]
+    self.packages = defaultdict(list)  # dict[Path, List[Package]]
 
-  def add_package(self, name, version, subdir=None):
+  def add_package(self, name, version, subdir=''):
     """Add a package to the ensure file.
 
     Args:
@@ -193,14 +194,14 @@ class EnsureFile(object):
       * version (str) - Could be either instance_id, or ref, or unique tag.
       * subdir (str) - Subdirectory of root dir for the package.
     """
-    self.packages.setdefault(subdir, []).append(self.Package(name, version))
+    self.packages[subdir].append(self.Package(name, version))
     return self
 
   def render(self):
     """Renders the ensure file as textual representation."""
     package_list = []
     for subdir in sorted(self.packages):
-      if subdir is not None:
+      if subdir:
         package_list.append('@Subdir %s' % subdir)
       for package in self.packages[subdir]:
         package_list.append('%s %s' % (package.name, package.version))
