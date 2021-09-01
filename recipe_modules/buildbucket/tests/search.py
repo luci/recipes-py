@@ -9,6 +9,8 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.go.chromium.org.luci.buildbucket.proto \
   import builds_service as builds_service_pb2
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'buildbucket',
   'properties',
@@ -30,7 +32,10 @@ def RunSteps(api):
   assert limit is None or len(builds) <= limit
   pres = api.step.active_result.presentation
   for b in builds:
-    pres.logs['build %s' % b.id] = json_format.MessageToJson(b).splitlines()
+    pres.logs['build %s' % b.id] = [
+      l.rstrip() for l in
+      json_format.MessageToJson(b, sort_keys=True).splitlines()
+    ]
 
 
 def GenTests(api):

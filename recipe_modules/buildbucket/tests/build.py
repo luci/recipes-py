@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from future.utils import iteritems
+
 import json
 
 from google.protobuf import text_format
@@ -12,6 +14,8 @@ from recipe_engine import post_process
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import builder as builder_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
+
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
   'assertions',
@@ -29,7 +33,7 @@ def RunSteps(api):
 
   child_build_tags = [
       '%s:%s' % t
-      for t in api.buildbucket.tags_for_child_build.iteritems()
+      for t in sorted(iteritems(api.buildbucket.tags_for_child_build))
   ]
   api.step('tags_for_child_build', ['echo'] + child_build_tags)
 

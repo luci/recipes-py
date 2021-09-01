@@ -12,8 +12,8 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 If it returns `None`, the link is not reported. Default link title is build id.
 """
 
-from future.utils import itervalues
-from future.utils import iteritems
+from future.utils import iteritems, itervalues
+from past.builtins import long
 
 from contextlib import contextmanager
 from google import protobuf
@@ -887,7 +887,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
           raise self.m.step.InfraFailure(
               'Triggered build(s) did not succeed, unexpectedly')
       elif mirror_status:
-        bs = builds.values()
+        bs = list(itervalues(builds))
         if any(b.status == common_pb2.INFRA_FAILURE for b in bs):
           step_res.presentation.status = self.m.step.EXCEPTION
         elif any(b.status == common_pb2.FAILURE for b in bs):

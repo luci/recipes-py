@@ -8,6 +8,7 @@ from recipe_engine.config import List
 from recipe_engine.config import Single
 from recipe_engine.recipe_api import Property
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
     'buildbucket',

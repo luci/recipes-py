@@ -270,7 +270,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     assert all(isinstance(b, build_pb2.Build) for b in builds), builds
 
     step_name = step_name or 'buildbucket.search'
-    lines = [json.dumps(json_format.MessageToDict(b)) for b in builds]
+    lines = [
+        json.dumps(json_format.MessageToDict(b), sort_keys=True) for b in builds
+    ]
     output = "\n".join(lines)
     return self.step_data(step_name, self.m.raw_io.stream_output(output))
 

@@ -5,7 +5,7 @@
 **[Recipe Modules](#Recipe-Modules)**
   * [archive](#recipe_modules-archive)
   * [assertions](#recipe_modules-assertions)
-  * [buildbucket](#recipe_modules-buildbucket) &mdash; API for interacting with the buildbucket service.
+  * [buildbucket](#recipe_modules-buildbucket) (Python3 ✅) &mdash; API for interacting with the buildbucket service.
   * [cas](#recipe_modules-cas) &mdash; API for interacting with cas client.
   * [cipd](#recipe_modules-cipd) (Python3 ✅) &mdash; API for interacting with CIPD.
   * [commit_position](#recipe_modules-commit_position)
@@ -46,17 +46,17 @@
   * [assertions:tests/attribute_error](#recipes-assertions_tests_attribute_error)
   * [assertions:tests/long_message](#recipes-assertions_tests_long_message)
   * [assertions:tests/max_diff](#recipes-assertions_tests_max_diff)
-  * [buildbucket:examples/full](#recipes-buildbucket_examples_full) &mdash; This file is a recipe demonstrating the buildbucket recipe module.
-  * [buildbucket:run/multi](#recipes-buildbucket_run_multi) &mdash; Launches multiple builds at the same revision.
-  * [buildbucket:tests/add_tags](#recipes-buildbucket_tests_add_tags)
-  * [buildbucket:tests/build](#recipes-buildbucket_tests_build)
-  * [buildbucket:tests/cancel](#recipes-buildbucket_tests_cancel)
-  * [buildbucket:tests/collect](#recipes-buildbucket_tests_collect)
-  * [buildbucket:tests/get](#recipes-buildbucket_tests_get)
-  * [buildbucket:tests/output_commit](#recipes-buildbucket_tests_output_commit) &mdash; This recipe tests the buildbucket.
+  * [buildbucket:examples/full](#recipes-buildbucket_examples_full) (Python3 ✅) &mdash; This file is a recipe demonstrating the buildbucket recipe module.
+  * [buildbucket:run/multi](#recipes-buildbucket_run_multi) (Python3 ✅) &mdash; Launches multiple builds at the same revision.
+  * [buildbucket:tests/add_tags](#recipes-buildbucket_tests_add_tags) (Python3 ✅)
+  * [buildbucket:tests/build](#recipes-buildbucket_tests_build) (Python3 ✅)
+  * [buildbucket:tests/cancel](#recipes-buildbucket_tests_cancel) (Python3 ✅)
+  * [buildbucket:tests/collect](#recipes-buildbucket_tests_collect) (Python3 ✅)
+  * [buildbucket:tests/get](#recipes-buildbucket_tests_get) (Python3 ✅)
+  * [buildbucket:tests/output_commit](#recipes-buildbucket_tests_output_commit) (Python3 ✅) &mdash; This recipe tests the buildbucket.
   * [buildbucket:tests/put](#recipes-buildbucket_tests_put)
-  * [buildbucket:tests/schedule](#recipes-buildbucket_tests_schedule)
-  * [buildbucket:tests/search](#recipes-buildbucket_tests_search)
+  * [buildbucket:tests/schedule](#recipes-buildbucket_tests_schedule) (Python3 ✅)
+  * [buildbucket:tests/search](#recipes-buildbucket_tests_search) (Python3 ✅)
   * [cas:examples/full](#recipes-cas_examples_full)
   * [cipd:examples/full](#recipes-cipd_examples_full) (Python3 ✅)
   * [commit_position:examples/full](#recipes-commit_position_examples_full)
@@ -292,9 +292,9 @@ def GenTests(api):
 ```
 ### *recipe_modules* / [buildbucket](/recipe_modules/buildbucket)
 
-[DEPS](/recipe_modules/buildbucket/__init__.py#6): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
+[DEPS](/recipe_modules/buildbucket/__init__.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 API for interacting with the buildbucket service.
 
@@ -3814,66 +3814,66 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipe_modules/assertions/tests/max_diff.py#13)(api):**
 ### *recipes* / [buildbucket:examples/full](/recipe_modules/buildbucket/examples/full.py)
 
-[DEPS](/recipe_modules/buildbucket/examples/full.py#12): [buildbucket](#recipe_modules-buildbucket), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/examples/full.py#13): [buildbucket](#recipe_modules-buildbucket), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 This file is a recipe demonstrating the buildbucket recipe module.
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/examples/full.py#21)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/examples/full.py#22)(api):**
 ### *recipes* / [buildbucket:run/multi](/recipe_modules/buildbucket/run/multi.py)
 
-[DEPS](/recipe_modules/buildbucket/run/multi.py#12): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [swarming](#recipe_modules-swarming)
+[DEPS](/recipe_modules/buildbucket/run/multi.py#13): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [swarming](#recipe_modules-swarming)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Launches multiple builds at the same revision.
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/run/multi.py#30)(api, build_requests, collect_builds):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/run/multi.py#31)(api, build_requests, collect_builds):**
 ### *recipes* / [buildbucket:tests/add\_tags](/recipe_modules/buildbucket/tests/add_tags.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/add_tags.py#5): [buildbucket](#recipe_modules-buildbucket), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/add_tags.py#7): [buildbucket](#recipe_modules-buildbucket), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/add_tags.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/add_tags.py#13)(api):**
 ### *recipes* / [buildbucket:tests/build](/recipe_modules/buildbucket/tests/build.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/build.py#16): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/build.py#20): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/build.py#24)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/build.py#28)(api):**
 ### *recipes* / [buildbucket:tests/cancel](/recipe_modules/buildbucket/tests/cancel.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/cancel.py#10): [buildbucket](#recipe_modules-buildbucket)
+[DEPS](/recipe_modules/buildbucket/tests/cancel.py#12): [buildbucket](#recipe_modules-buildbucket)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/cancel.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/cancel.py#16)(api):**
 ### *recipes* / [buildbucket:tests/collect](/recipe_modules/buildbucket/tests/collect.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/collect.py#5): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties)
+[DEPS](/recipe_modules/buildbucket/tests/collect.py#7): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/collect.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/collect.py#13)(api):**
 ### *recipes* / [buildbucket:tests/get](/recipe_modules/buildbucket/tests/get.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/get.py#12): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/get.py#14): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/get.py#19)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/get.py#21)(api):**
 ### *recipes* / [buildbucket:tests/output\_commit](/recipe_modules/buildbucket/tests/output_commit.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/output_commit.py#10): [buildbucket](#recipe_modules-buildbucket), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/output_commit.py#11): [buildbucket](#recipe_modules-buildbucket), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 This recipe tests the buildbucket.set_output_gitiles_commit function.
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/output_commit.py#19)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/output_commit.py#20)(api):**
 ### *recipes* / [buildbucket:tests/put](/recipe_modules/buildbucket/tests/put.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/put.py#7): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime)
@@ -3883,18 +3883,18 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/put.py#14)(api):**
 ### *recipes* / [buildbucket:tests/schedule](/recipe_modules/buildbucket/tests/schedule.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/schedule.py#12): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/schedule.py#14): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/schedule.py#21)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/schedule.py#23)(api):**
 ### *recipes* / [buildbucket:tests/search](/recipe_modules/buildbucket/tests/search.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/search.py#12): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/search.py#14): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/search.py#21)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/search.py#23)(api):**
 ### *recipes* / [cas:examples/full](/recipe_modules/cas/examples/full.py)
 
 [DEPS](/recipe_modules/cas/examples/full.py#5): [cas](#recipe_modules-cas), [file](#recipe_modules-file), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)

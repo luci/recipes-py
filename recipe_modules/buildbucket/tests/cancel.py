@@ -7,6 +7,8 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.go.chromium.org.luci.buildbucket.proto \
   import builds_service as builds_service_pb2
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'buildbucket'
 ]
@@ -36,10 +38,12 @@ def GenTests(api):
   yield (
       api.test('basic') +
       api.buildbucket.simulated_cancel_output(
-        construct_batch_response(build_id=1785294945718829, status=common_pb2.CANCELED),
+        construct_batch_response(build_id=1785294945718829,
+                                 status=common_pb2.CANCELED),
         step_name='cancel_without_reason') +
       api.buildbucket.simulated_cancel_output(
-        construct_batch_response(build_id=6838835292664158, status=common_pb2.CANCELED),
+        construct_batch_response(build_id=6838835292664158,
+                                 status=common_pb2.CANCELED),
         step_name='cancel_with_reason')
   )
 
@@ -54,7 +58,8 @@ def GenTests(api):
   yield (
       api.test('error') +
       api.buildbucket.simulated_cancel_output(
-        construct_batch_response(build_id=1785294945718829, status=common_pb2.CANCELED),
+        construct_batch_response(build_id=1785294945718829,
+                                 status=common_pb2.CANCELED),
         step_name='cancel_without_reason') +
       api.buildbucket.simulated_cancel_output(
         error_batch_response,
