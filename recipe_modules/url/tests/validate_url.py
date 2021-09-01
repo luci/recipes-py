@@ -4,6 +4,8 @@
 
 from recipe_engine import post_process
 
+PYTHON_VERSION_COMPATIBILITY = "PY2+3"
+
 DEPS = [
   'properties',
   'step',
@@ -23,9 +25,8 @@ def GenTests(api):
       api.properties(url_to_validate='example.com') +
       api.expect_exception('ValueError') +
       api.post_process(
-          post_process.ResultReason,
-          "Uncaught Exception: ValueError('URL scheme must be either http:// "
-          "or https://',)",
+          post_process.ResultReasonRE,
+          r"URL scheme must be either http:// or https://",
       ) +
       api.post_process(post_process.DropExpectation))
 
@@ -33,9 +34,8 @@ def GenTests(api):
       api.properties(url_to_validate='ftp://example.com') +
       api.expect_exception('ValueError') +
       api.post_process(
-          post_process.ResultReason,
-          "Uncaught Exception: ValueError('URL scheme must be either http:// "
-          "or https://',)",
+          post_process.ResultReasonRE,
+          r"URL scheme must be either http:// or https://",
       ) +
       api.post_process(post_process.DropExpectation))
 
@@ -43,8 +43,7 @@ def GenTests(api):
       api.properties(url_to_validate='https://') +
       api.expect_exception('ValueError') +
       api.post_process(
-          post_process.ResultReason,
-          "Uncaught Exception: ValueError('URL must specify a network "
-          "location.',)",
+          post_process.ResultReasonRE,
+          r"URL must specify a network location.",
       ) +
       api.post_process(post_process.DropExpectation))

@@ -4,6 +4,7 @@
 
 """Methods for interacting with HTTP(s) URLs."""
 
+from builtins import int
 from future.moves.urllib.parse import urlparse, urlencode, quote, unquote
 from future.utils import iterkeys
 
@@ -245,7 +246,7 @@ class UrlApi(recipe_api.RecipeApi):
     if strip_prefix:
       args += ['--strip-prefix', self.m.json.dumps(strip_prefix)]
 
-    assert isinstance(transient_retry, (bool, int, long))
+    assert isinstance(transient_retry, (bool, int))
     if transient_retry is False:
       args += ['--transient-retry', '0']
     elif transient_retry is not True:

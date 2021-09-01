@@ -34,7 +34,7 @@
   * [swarming](#recipe_modules-swarming)
   * [time](#recipe_modules-time) (Python3 ✅) &mdash; Allows mockable access to the current time.
   * [tricium](#recipe_modules-tricium) &mdash; API for Tricium analyzers to use.
-  * [url](#recipe_modules-url) &mdash; Methods for interacting with HTTP(s) URLs.
+  * [url](#recipe_modules-url) (Python3 ✅) &mdash; Methods for interacting with HTTP(s) URLs.
   * [uuid](#recipe_modules-uuid) &mdash; Allows test-repeatable access to a random UUID.
   * [version](#recipe_modules-version) (Python3 ✅) &mdash; Thin API for parsing semver strings into comparable object.
   * [warning](#recipe_modules-warning) &mdash; Allows recipe modules to issue warnings in simulation test.
@@ -165,9 +165,9 @@
   * [tricium:examples/add_comment](#recipes-tricium_examples_add_comment)
   * [tricium:examples/wrapper](#recipes-tricium_examples_wrapper) &mdash; An example of a recipe wrapping legacy analyzers.
   * [tricium:tests/add_comment_validation](#recipes-tricium_tests_add_comment_validation)
-  * [url:examples/full](#recipes-url_examples_full)
-  * [url:tests/join](#recipes-url_tests_join)
-  * [url:tests/validate_url](#recipes-url_tests_validate_url)
+  * [url:examples/full](#recipes-url_examples_full) (Python3 ✅)
+  * [url:tests/join](#recipes-url_tests_join) (Python3 ✅)
+  * [url:tests/validate_url](#recipes-url_tests_validate_url) (Python3 ✅)
   * [uuid:examples/full](#recipes-uuid_examples_full)
   * [version:examples/full](#recipes-version_examples_full) (Python3 ✅)
   * [warning:tests/fakes](#recipes-warning_tests_fakes) &mdash; This is a fake recipe to trick the simulation and make it believes that this module has tests.
@@ -3613,15 +3613,15 @@ Raise ValueError on the first detected problem.
 Emit the results accumulated by `add_comment` and `run_legacy`.
 ### *recipe_modules* / [url](/recipe_modules/url)
 
-[DEPS](/recipe_modules/url/__init__.py#5): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io)
+[DEPS](/recipe_modules/url/__init__.py#7): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Methods for interacting with HTTP(s) URLs.
 
-#### **class [UrlApi](/recipe_modules/url/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
+#### **class [UrlApi](/recipe_modules/url/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
 
-&mdash; **def [get\_file](/recipe_modules/url/api.py#128)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None, timeout=None):**
+&mdash; **def [get\_file](/recipe_modules/url/api.py#129)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None, timeout=None):**
 
 GET data at given URL and writes it to file.
 
@@ -3647,7 +3647,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_json](/recipe_modules/url/api.py#184)(self, url, step_name=None, headers=None, transient_retry=True, strip_prefix=None, log=False, timeout=None, default_test_data=None):**
+&mdash; **def [get\_json](/recipe_modules/url/api.py#185)(self, url, step_name=None, headers=None, transient_retry=True, strip_prefix=None, log=False, timeout=None, default_test_data=None):**
 
 GET data at given URL and writes it to file.
 
@@ -3674,7 +3674,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [get\_text](/recipe_modules/url/api.py#157)(self, url, step_name=None, headers=None, transient_retry=True, timeout=None, default_test_data=None):**
+&mdash; **def [get\_text](/recipe_modules/url/api.py#158)(self, url, step_name=None, headers=None, transient_retry=True, timeout=None, default_test_data=None):**
 
 GET data at given URL and writes it to file.
 
@@ -3697,7 +3697,7 @@ Raises:
   * HTTPError, InfraHTTPError: if the request failed.
   * ValueError: If the request was invalid.
 
-&mdash; **def [join](/recipe_modules/url/api.py#92)(self, \*parts):**
+&mdash; **def [join](/recipe_modules/url/api.py#93)(self, \*parts):**
 
 Constructs a URL path from composite parts.
 
@@ -3706,7 +3706,7 @@ Args:
       will be stripped from intermediate strings to ensure that they join
       together. Trailing slashes will not be stripped from the last part.
 
-&mdash; **def [validate\_url](/recipe_modules/url/api.py#108)(self, v):**
+&mdash; **def [validate\_url](/recipe_modules/url/api.py#109)(self, v):**
 
 Validates that "v" is a valid URL.
 
@@ -4749,25 +4749,25 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipe_modules/tricium/tests/add_comment_validation.py#31)(api, case):**
 ### *recipes* / [url:examples/full](/recipe_modules/url/examples/full.py)
 
-[DEPS](/recipe_modules/url/examples/full.py#5): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step), [url](#recipe_modules-url)
+[DEPS](/recipe_modules/url/examples/full.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/url/examples/full.py#27)(api):**
+&mdash; **def [RunSteps](/recipe_modules/url/examples/full.py#29)(api):**
 ### *recipes* / [url:tests/join](/recipe_modules/url/tests/join.py)
 
-[DEPS](/recipe_modules/url/tests/join.py#5): [step](#recipe_modules-step), [url](#recipe_modules-url)
+[DEPS](/recipe_modules/url/tests/join.py#7): [step](#recipe_modules-step), [url](#recipe_modules-url)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/url/tests/join.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/url/tests/join.py#13)(api):**
 ### *recipes* / [url:tests/validate\_url](/recipe_modules/url/tests/validate_url.py)
 
-[DEPS](/recipe_modules/url/tests/validate_url.py#7): [properties](#recipe_modules-properties), [step](#recipe_modules-step), [url](#recipe_modules-url)
+[DEPS](/recipe_modules/url/tests/validate_url.py#9): [properties](#recipe_modules-properties), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/url/tests/validate_url.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/url/tests/validate_url.py#16)(api):**
 ### *recipes* / [uuid:examples/full](/recipe_modules/uuid/examples/full.py)
 
 [DEPS](/recipe_modules/uuid/examples/full.py#5): [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)

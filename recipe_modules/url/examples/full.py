@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+PYTHON_VERSION_COMPATIBILITY = "PY2+3"
+
 DEPS = [
   'context',
   'path',
@@ -25,8 +27,8 @@ TEST_BAD_CERTS = [
 ]
 
 def RunSteps(api):
-  assert api.url.quote('~foo') == '%7Efoo'
-  assert api.url.unquote('%7Efoo') == '~foo'
+  assert api.url.quote(' foo') == '%20foo'
+  assert api.url.unquote('%20foo') == ' foo'
   assert api.url.urlencode({'foo': 'bar'}) == 'foo=bar'
 
   # get_file
