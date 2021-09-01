@@ -9,6 +9,7 @@ import re
 from collections import Iterable, OrderedDict
 
 import attr
+from past.builtins import basestring
 
 from .engine_types import ResourceCost
 
@@ -103,15 +104,15 @@ class Command(list):
       if max_slot < self_offset:
         return False
 
-      for self_idx in xrange(self_offset, max_slot + 1):
+      for self_idx in range(self_offset, max_slot + 1):
         num_matched = 0
-        for matchers_idx in xrange(matchers_offset, len(matchers)):
+        for matchers_idx in range(matchers_offset, len(matchers)):
           matcher = matchers[matchers_idx]
 
           # If this is Ellipsis we consume it, and try matching the rest of the
           # matchers against the rest of the sequence at every offset.
           if matcher is Ellipsis:
-            for start_idx in xrange(self_offset+num_matched, len(self)):
+            for start_idx in range(self_offset+num_matched, len(self)):
               if _cached_matches_seq(matchers_idx+1, start_idx):
                 return True
             return False
