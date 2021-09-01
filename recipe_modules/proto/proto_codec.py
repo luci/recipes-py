@@ -24,12 +24,13 @@ TEXTPB = sentinel(
     dec_default_extra={})
 
 JSONPB = sentinel(
-    'JSONPB', ext='json',
+    'JSONPB',
+    ext='json',
     enc=staticmethod(json_format.MessageToJson),
     enc_default_extra={
-      'preserving_proto_field_name': True,
-      'sort_keys': True,
-      'indent': 0,
+        'preserving_proto_field_name': True,
+        'sort_keys': True,
+        'indent': 2,
     },
     dec=staticmethod(json_format.Parse),
     dec_default_extra={'ignore_unknown_fields': True})

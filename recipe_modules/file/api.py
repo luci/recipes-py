@@ -408,7 +408,8 @@ class FileApi(recipe_api.RecipeApi):
         step_test_data=step_test_data)
     if include_log:
       result.presentation.logs[self.m.path.basename(
-          source)] = self.m.proto.encode(result.proto.output, 'TEXTPB')
+          source)] = self.m.proto.encode(
+              result.proto.output, 'TEXTPB' if codec == 'BINARY' else codec)
     return result.proto.output
 
   def write_proto(self, name, dest, proto_msg, codec, include_log=True):
@@ -424,7 +425,8 @@ class FileApi(recipe_api.RecipeApi):
     self.m.path.assert_absolute(dest)
     step = self._run(name, ['copy', self.m.proto.input(proto_msg, codec), dest])
     if include_log:
-      proto_lines = str(proto_msg).splitlines()
+      proto_lines = self.m.proto.encode(
+          proto_msg, 'TEXTPB' if codec == 'BINARY' else codec).splitlines()
       step.presentation.logs[self.m.path.basename(dest)] = proto_lines
     self.m.path.mock_add_paths(dest)
 

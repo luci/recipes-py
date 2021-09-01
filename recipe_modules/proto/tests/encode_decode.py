@@ -21,7 +21,7 @@ def RunSteps(api):
   )
 
   json = api.proto.encode(SomeMessage(field='json'), 'JSONPB')
-  api.assertions.assertEqual(json, '{\n"field": "json"\n}')
+  api.assertions.assertEqual(json, '{\n  "field": "json"\n}')
   api.assertions.assertEqual(
     api.proto.decode(json, SomeMessage, 'JSONPB'),
     SomeMessage(field="json")

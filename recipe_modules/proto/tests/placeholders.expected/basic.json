@@ -57,7 +57,7 @@
     "cmd": [
       "python",
       "RECIPE[recipe_engine::proto:tests/placeholders].resources/read.py",
-      "{\n\"field\": \"sup\"\n}"
+      "{\n  \"field\": \"sup\"\n}"
     ],
     "name": "write to script"
   },
