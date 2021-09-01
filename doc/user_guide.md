@@ -1117,6 +1117,10 @@ the python version based on the envvar. The same envvar is also respected by
 `recipes.py` so that you can run any recipe subcommand with Python3 interpreter
 locally.
 
+If you are launching a led build, you can enable the Python 3 experiment by
+adding `led edit -experiment luci.recipes.use_python3=true` to your led
+pipeline.
+
 Note that, the `test` subcommand will always launch tests with both Python 2 and
 Python 3 if necessary regardless the version of the Python interpreter that
 executes the `test` subcommand. Therefore,
