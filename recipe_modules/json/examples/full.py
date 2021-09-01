@@ -92,6 +92,14 @@ def RunSteps(api):
   ])
   assert step_result.json.output is None
 
+  # invalid json to test _unify_json_load_err() converter
+  step_result = api.step('invalid json 2', [
+    'python', api.resource('cool_script.py'),
+    '{a}',
+    api.json.output(),
+  ])
+  assert step_result.json.output is None
+
   step_result = api.step(
     'backing file missing',
     [
@@ -125,6 +133,10 @@ def GenTests(api):
     + api.step_data(
       'invalid json',
       api.json.invalid('{"here is some total\ngarbage'),
+    )
+    + api.step_data(
+      'invalid json 2',
+      api.json.invalid('{a}'),
     )
     + api.step_data(
       'backing file missing',

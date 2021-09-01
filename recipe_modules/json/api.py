@@ -66,6 +66,15 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
     return self.raw.render(test)
 
   def result(self, presentation, test):
+    # Convert some known py3 err msg to py2 err msg, otherwise, convert to a
+    # constant err msg.
+    # TODO(crbug.com/1147793): remove it after py3 migration is done.
+    def _unify_json_load_err(err):
+      py2_err = 'No JSON object could be decoded'
+      if (err.startswith('Expecting property name') or
+          err.startswith('Expecting value')):
+        return py2_err
+      return py2_err if err == py2_err else 'Wrong JSON object format'
     # Save name before self.raw.result() deletes it.
     backing_file = self.backing_file
     raw_data = self.raw.result(presentation, test)
@@ -83,8 +92,10 @@ class JsonOutputPlaceholder(recipe_util.OutputPlaceholder):
     try:
       ret = loads(raw_data, object_pairs_hook=collections.OrderedDict)
       valid = True
-    except ValueError as ex:  # pragma: no cover
+    except ValueError as ex:
       invalid_error = str(ex)
+      if test.enabled:
+        invalid_error = _unify_json_load_err(invalid_error)
 
     if self.add_json_log is True or (
         self.add_json_log == 'on_failure' and presentation.status != 'SUCCESS'):

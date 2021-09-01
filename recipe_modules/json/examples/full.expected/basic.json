@@ -125,7 +125,22 @@
       "@@@STEP_LOG_LINE@json.output (invalid)@{\"here is some total@@@",
       "@@@STEP_LOG_LINE@json.output (invalid)@garbage@@@",
       "@@@STEP_LOG_END@json.output (invalid)@@@",
-      "@@@STEP_LOG_LINE@json.output (exception)@Invalid control character at: line 1 column 21 (char 20)@@@",
+      "@@@STEP_LOG_LINE@json.output (exception)@Wrong JSON object format@@@",
+      "@@@STEP_LOG_END@json.output (exception)@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "RECIPE[recipe_engine::json:examples/full].resources/cool_script.py",
+      "{a}",
+      "/path/to/tmp/json"
+    ],
+    "name": "invalid json 2",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output (invalid)@{a}@@@",
+      "@@@STEP_LOG_END@json.output (invalid)@@@",
+      "@@@STEP_LOG_LINE@json.output (exception)@No JSON object could be decoded@@@",
       "@@@STEP_LOG_END@json.output (exception)@@@"
     ]
   },

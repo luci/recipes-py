@@ -54,7 +54,7 @@
   * [buildbucket:tests/collect](#recipes-buildbucket_tests_collect) (Python3 ✅)
   * [buildbucket:tests/get](#recipes-buildbucket_tests_get) (Python3 ✅)
   * [buildbucket:tests/output_commit](#recipes-buildbucket_tests_output_commit) (Python3 ✅) &mdash; This recipe tests the buildbucket.
-  * [buildbucket:tests/put](#recipes-buildbucket_tests_put)
+  * [buildbucket:tests/put](#recipes-buildbucket_tests_put) (Python3 ✅)
   * [buildbucket:tests/schedule](#recipes-buildbucket_tests_schedule) (Python3 ✅)
   * [buildbucket:tests/search](#recipes-buildbucket_tests_search) (Python3 ✅)
   * [cas:examples/full](#recipes-cas_examples_full)
@@ -1993,21 +1993,21 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Methods for producing and consuming JSON.
 
-#### **class [JsonApi](/recipe_modules/json/api.py#107)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
+#### **class [JsonApi](/recipe_modules/json/api.py#118)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
 
-&emsp; **@staticmethod**<br>&mdash; **def [dumps](/recipe_modules/json/api.py#108)(\*args, \*\*kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [dumps](/recipe_modules/json/api.py#119)(\*args, \*\*kwargs):**
 
 Works like `json.dumps`.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [input](/recipe_modules/json/api.py#131)(self, data):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [input](/recipe_modules/json/api.py#142)(self, data):**
 
 A placeholder which will expand to a file path containing <data>.
 
-&mdash; **def [is\_serializable](/recipe_modules/json/api.py#123)(self, obj):**
+&mdash; **def [is\_serializable](/recipe_modules/json/api.py#134)(self, obj):**
 
 Returns True if the object is JSON-serializable.
 
-&emsp; **@staticmethod**<br>&mdash; **def [loads](/recipe_modules/json/api.py#113)(data, \*\*kwargs):**
+&emsp; **@staticmethod**<br>&mdash; **def [loads](/recipe_modules/json/api.py#124)(data, \*\*kwargs):**
 
 Works like `json.loads`, but:
 * strips out unicode objects (replacing them with utf8-encoded str
@@ -2015,7 +2015,7 @@ Works like `json.loads`, but:
 * replaces 'int-like' floats with ints. These are floats whose magnitude
   is less than (2**53-1) and which don't have a decimal component.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [output](/recipe_modules/json/api.py#136)(self, add_json_log=True, name=None, leak_to=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [output](/recipe_modules/json/api.py#147)(self, add_json_log=True, name=None, leak_to=None):**
 
 A placeholder which will expand to '/tmp/file'.
 
@@ -2028,7 +2028,7 @@ Args:
     to a step link named `name`. If this is 'on_failure', only create this
     log when the step has a non-SUCCESS status.
 
-&mdash; **def [read](/recipe_modules/json/api.py#151)(self, name, path, add_json_log=True, output_name=None, \*\*kwargs):**
+&mdash; **def [read](/recipe_modules/json/api.py#162)(self, name, path, add_json_log=True, output_name=None, \*\*kwargs):**
 
 Returns a step that reads a JSON file.
 
@@ -3876,11 +3876,11 @@ This recipe tests the buildbucket.set_output_gitiles_commit function.
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/output_commit.py#20)(api):**
 ### *recipes* / [buildbucket:tests/put](/recipe_modules/buildbucket/tests/put.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/put.py#7): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime)
+[DEPS](/recipe_modules/buildbucket/tests/put.py#9): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/put.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/put.py#16)(api):**
 ### *recipes* / [buildbucket:tests/schedule](/recipe_modules/buildbucket/tests/schedule.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/schedule.py#14): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
