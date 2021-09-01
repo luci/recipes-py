@@ -121,9 +121,11 @@ class UrlApi(recipe_api.RecipeApi):
     """
     u = urlparse(v)
     if u.scheme.lower() not in ('http', 'https'):
-      raise ValueError('URL scheme must be either http:// or https://')
+      raise ValueError(
+          'URL scheme must be either http:// or https:// ({!r})'.format(v))
     if not u.netloc:
-      raise ValueError('URL must specify a network location.')
+      raise ValueError(
+          'URL must specify a network location ({!r})'.format(v))
     return u.scheme.lower() == 'https'
 
   def get_file(self, url, path, step_name=None, headers=None,
