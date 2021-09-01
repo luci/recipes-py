@@ -382,7 +382,8 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
 
     def _edit_recipe_bundle(build, _cmd, cwd):
       # We use the cwd path as a proxy for the recipes contained in that path.
-      build.cas_user_payload.digest.hash = hashlib.sha256(cwd).hexdigest()
+      build.cas_user_payload.digest.hash = hashlib.sha256(
+          cwd.encode()).hexdigest()
       build.cas_user_payload.digest.size_bytes = 1337
 
     def _edit_cr_cl(build, cmd, _cwd):
@@ -397,7 +398,7 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
 
       raw = cmd[-1]
       parsed = urlparse(raw)
-      toks = filter(bool, parsed.path.split('/'))
+      toks = [x for x in parsed.path.split('/') if x]
       if not toks or toks[0] != 'c':  # pragma: no cover
         raise ValueError("%r: empty/old/bad gerrit URL" % (raw,))
       toks = toks[1:] # remove "c"

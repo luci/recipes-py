@@ -214,7 +214,7 @@ class LedApi(recipe_api.RecipeApi):
       # We do multiple lookups potentially, depending on what level of
       # specificity the user has mocked with.
       toks = specific_key.split('/')
-      for num_toks in xrange(len(toks), -1, -1):
+      for num_toks in range(len(toks), -1, -1):
         key = '/'.join([prefix] + toks[:num_toks])
         if key in self._get_mocks:
           return self._get_mocks[key]
