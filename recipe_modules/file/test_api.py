@@ -122,7 +122,8 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
             api.file.read_json({'is_content': true}))
       )
     """
-    text = json.dumps(json_content, indent=2, separators=(',', ': '))
+    text = json.dumps(
+        json_content, indent=2, separators=(',', ': '), sort_keys=True)
     return self.m.raw_io.output_text(text) + self.errno(errno_name)
 
   def read_proto(self, proto_msg, errno_name=0):
