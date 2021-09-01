@@ -32,7 +32,7 @@
   * [service_account](#recipe_modules-service_account) &mdash; API for getting OAuth2 access tokens for LUCI tasks or private keys.
   * [step](#recipe_modules-step) (Python3 ✅) &mdash; Step is the primary API for running steps (external programs, etc.
   * [swarming](#recipe_modules-swarming)
-  * [time](#recipe_modules-time) &mdash; Allows mockable access to the current time.
+  * [time](#recipe_modules-time) (Python3 ✅) &mdash; Allows mockable access to the current time.
   * [tricium](#recipe_modules-tricium) &mdash; API for Tricium analyzers to use.
   * [url](#recipe_modules-url) &mdash; Methods for interacting with HTTP(s) URLs.
   * [uuid](#recipe_modules-uuid) &mdash; Allows test-repeatable access to a random UUID.
@@ -161,7 +161,7 @@
   * [swarming:examples/this_task](#recipes-swarming_examples_this_task)
   * [swarming:tests/copy](#recipes-swarming_tests_copy)
   * [swarming:tests/realms](#recipes-swarming_tests_realms)
-  * [time:examples/full](#recipes-time_examples_full)
+  * [time:examples/full](#recipes-time_examples_full) (Python3 ✅)
   * [tricium:examples/add_comment](#recipes-tricium_examples_add_comment)
   * [tricium:examples/wrapper](#recipes-tricium_examples_wrapper) &mdash; An example of a recipe wrapping legacy analyzers.
   * [tricium:tests/add_comment_validation](#recipes-tricium_tests_add_comment_validation)
@@ -1429,7 +1429,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#523)(self, name, dest, mode=511):**
+&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#525)(self, name, dest, mode=511):**
 
 Ensures that `dest` exists and is a directory.
 
@@ -1458,7 +1458,7 @@ Returns (str):
 Raises:
   file.Error and ValueError if passed paths input is not str or Path.
 
-&mdash; **def [filesizes](/recipe_modules/file/api.py#539)(self, name, files, test_data=None):**
+&mdash; **def [filesizes](/recipe_modules/file/api.py#541)(self, name, files, test_data=None):**
 
 Returns list of filesizes for the given files.
 
@@ -1468,7 +1468,7 @@ Args:
 
 Returns list[int], size of each file in bytes.
 
-&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#679)(self, name, path):**
+&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#681)(self, name, path):**
 
 Flattens singular directories, starting at path.
 
@@ -1497,7 +1497,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [glob\_paths](/recipe_modules/file/api.py#431)(self, name, source, pattern, include_hidden=False, test_data=()):**
+&mdash; **def [glob\_paths](/recipe_modules/file/api.py#433)(self, name, source, pattern, include_hidden=False, test_data=()):**
 
 Performs glob expansion on `pattern`.
 
@@ -1527,7 +1527,7 @@ Returns (list[Path]): All paths found.
 
 Raises: file.Error.
 
-&mdash; **def [listdir](/recipe_modules/file/api.py#493)(self, name, source, recursive=False, test_data=()):**
+&mdash; **def [listdir](/recipe_modules/file/api.py#495)(self, name, source, recursive=False, test_data=()):**
 
 Lists all files inside a directory.
 
@@ -1615,7 +1615,7 @@ Returns (str): The content of the file.
 
 Raises: file.Error
 
-&mdash; **def [remove](/recipe_modules/file/api.py#478)(self, name, source):**
+&mdash; **def [remove](/recipe_modules/file/api.py#480)(self, name, source):**
 
 Removes a file.
 
@@ -1627,7 +1627,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#578)(self, name, source):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#580)(self, name, source):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -1642,7 +1642,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#596)(self, name, source, pattern, recursive=True, include_hidden=True):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#598)(self, name, source, pattern, recursive=True, include_hidden=True):**
 
 Removes all entries in `source` matching the glob `pattern`.
 
@@ -1672,7 +1672,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#561)(self, name, source):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#563)(self, name, source):**
 
 Recursively removes a directory.
 
@@ -1686,7 +1686,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [symlink](/recipe_modules/file/api.py#641)(self, name, source, linkname):**
+&mdash; **def [symlink](/recipe_modules/file/api.py#643)(self, name, source, linkname):**
 
 Creates a symlink on the local filesystem.
 
@@ -1699,14 +1699,14 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#658)(self, root):**
+&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#660)(self, root):**
 
 Creates a SymlinkTree, given a root directory.
 
 Args:
   * root (Path): root of a tree of symlinks.
 
-&mdash; **def [truncate](/recipe_modules/file/api.py#666)(self, name, path, size_mb=100):**
+&mdash; **def [truncate](/recipe_modules/file/api.py#668)(self, name, path, size_mb=100):**
 
 Creates an empty file with path and size_mb on the local filesystem.
 
@@ -1731,7 +1731,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [write\_proto](/recipe_modules/file/api.py#414)(self, name, dest, proto_msg, codec, include_log=True):**
+&mdash; **def [write\_proto](/recipe_modules/file/api.py#415)(self, name, dest, proto_msg, codec, include_log=True):**
 
 Writes the given proto message to `dest`.
 
@@ -3519,9 +3519,9 @@ Args:
   server (str): The swarming server to call within context.
 ### *recipe_modules* / [time](/recipe_modules/time)
 
-[DEPS](/recipe_modules/time/__init__.py#5): [python](#recipe_modules-python)
+[DEPS](/recipe_modules/time/__init__.py#7): [python](#recipe_modules-python)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Allows mockable access to the current time.
 
@@ -4719,11 +4719,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipe_modules/swarming/tests/realms.py#17)(api):**
 ### *recipes* / [time:examples/full](/recipe_modules/time/examples/full.py)
 
-[DEPS](/recipe_modules/time/examples/full.py#7): [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/time/examples/full.py#9): [step](#recipe_modules-step), [time](#recipe_modules-time)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#15)(api):**
 ### *recipes* / [tricium:examples/add\_comment](/recipe_modules/tricium/examples/add_comment.py)
 
 [DEPS](/recipe_modules/tricium/examples/add_comment.py#8): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
