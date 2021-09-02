@@ -29,7 +29,7 @@
   * [resultdb](#recipe_modules-resultdb) &mdash; API for interacting with the ResultDB service.
   * [runtime](#recipe_modules-runtime) (Python3 ✅)
   * [scheduler](#recipe_modules-scheduler) &mdash; API for interacting with the LUCI Scheduler service.
-  * [service_account](#recipe_modules-service_account) &mdash; API for getting OAuth2 access tokens for LUCI tasks or private keys.
+  * [service_account](#recipe_modules-service_account) (Python3 ✅) &mdash; API for getting OAuth2 access tokens for LUCI tasks or private keys.
   * [step](#recipe_modules-step) (Python3 ✅) &mdash; Step is the primary API for running steps (external programs, etc.
   * [swarming](#recipe_modules-swarming)
   * [time](#recipe_modules-time) (Python3 ✅) &mdash; Allows mockable access to the current time.
@@ -146,7 +146,7 @@
   * [scheduler:examples/emit_triggers](#recipes-scheduler_examples_emit_triggers) &mdash; This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
   * [scheduler:examples/host](#recipes-scheduler_examples_host) &mdash; This file is a recipe demonstrating reading/mocking scheduler host.
   * [scheduler:examples/triggers](#recipes-scheduler_examples_triggers) &mdash; This file is a recipe demonstrating reading triggers of the current build.
-  * [service_account:examples/full](#recipes-service_account_examples_full)
+  * [service_account:examples/full](#recipes-service_account_examples_full) (Python3 ✅)
   * [step:examples/full](#recipes-step_examples_full) (Python3 ✅)
   * [step:tests/active_result](#recipes-step_tests_active_result) (Python3 ✅)
   * [step:tests/defer](#recipes-step_tests_defer) (Python3 ✅)
@@ -3066,9 +3066,9 @@ Returns a list of triggers that triggered the current build.
 A trigger is an instance of triggers_pb2.Trigger.
 ### *recipe_modules* / [service\_account](/recipe_modules/service_account)
 
-[DEPS](/recipe_modules/service_account/__init__.py#5): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/service_account/__init__.py#7): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 API for getting OAuth2 access tokens for LUCI tasks or private keys.
 
@@ -4614,11 +4614,11 @@ This file is a recipe demonstrating reading triggers of the current build.
 &mdash; **def [RunSteps](/recipe_modules/scheduler/examples/triggers.py#19)(api):**
 ### *recipes* / [service\_account:examples/full](/recipe_modules/service_account/examples/full.py)
 
-[DEPS](/recipe_modules/service_account/examples/full.py#7): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account)
+[DEPS](/recipe_modules/service_account/examples/full.py#9): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/service_account/examples/full.py#21)(api, key_path, scopes):**
+&mdash; **def [RunSteps](/recipe_modules/service_account/examples/full.py#23)(api, key_path, scopes):**
 ### *recipes* / [step:examples/full](/recipe_modules/step/examples/full.py)
 
 [DEPS](/recipe_modules/step/examples/full.py#9): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

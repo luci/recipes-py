@@ -86,6 +86,6 @@ class ServiceAccountApi(recipe_api.RecipeApi):
         cmd,
         infra_step=True,
         stdout=self.m.raw_io.output_text(),
-        step_test_data=lambda: self.m.raw_io.test_api.stream_output(
+        step_test_data=lambda: self.m.raw_io.test_api.stream_output_text(
             'extra.secret.token.should.not.be.logged', stream='stdout'))
     return step_result.stdout.strip()
