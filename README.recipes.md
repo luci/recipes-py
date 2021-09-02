@@ -6,7 +6,7 @@
   * [archive](#recipe_modules-archive)
   * [assertions](#recipe_modules-assertions)
   * [buildbucket](#recipe_modules-buildbucket) (Python3 ✅) &mdash; API for interacting with the buildbucket service.
-  * [cas](#recipe_modules-cas) &mdash; API for interacting with cas client.
+  * [cas](#recipe_modules-cas) (Python3 ✅) &mdash; API for interacting with cas client.
   * [cipd](#recipe_modules-cipd) (Python3 ✅) &mdash; API for interacting with CIPD.
   * [commit_position](#recipe_modules-commit_position)
   * [context](#recipe_modules-context) (Python3 ✅) &mdash; The context module provides APIs for manipulating a few pieces of 'ambient' data that affect how steps are run.
@@ -57,7 +57,7 @@
   * [buildbucket:tests/put](#recipes-buildbucket_tests_put) (Python3 ✅)
   * [buildbucket:tests/schedule](#recipes-buildbucket_tests_schedule) (Python3 ✅)
   * [buildbucket:tests/search](#recipes-buildbucket_tests_search) (Python3 ✅)
-  * [cas:examples/full](#recipes-cas_examples_full)
+  * [cas:examples/full](#recipes-cas_examples_full) (Python3 ✅)
   * [cipd:examples/full](#recipes-cipd_examples_full) (Python3 ✅)
   * [commit_position:examples/full](#recipes-commit_position_examples_full)
   * [context:examples/full](#recipes-context_examples_full) (Python3 ✅)
@@ -687,9 +687,9 @@ Args:
 Set the buildbucket host while in context, then reverts it.
 ### *recipe_modules* / [cas](/recipe_modules/cas)
 
-[DEPS](/recipe_modules/cas/__init__.py#5): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cas/__init__.py#7): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 API for interacting with cas client.
 
@@ -3897,11 +3897,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/search.py#23)(api):**
 ### *recipes* / [cas:examples/full](/recipe_modules/cas/examples/full.py)
 
-[DEPS](/recipe_modules/cas/examples/full.py#5): [cas](#recipe_modules-cas), [file](#recipe_modules-file), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cas/examples/full.py#7): [cas](#recipe_modules-cas), [file](#recipe_modules-file), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/cas/examples/full.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/cas/examples/full.py#17)(api):**
 ### *recipes* / [cipd:examples/full](/recipe_modules/cipd/examples/full.py)
 
 [DEPS](/recipe_modules/cipd/examples/full.py#11): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step)
