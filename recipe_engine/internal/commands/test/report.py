@@ -115,15 +115,15 @@ class Reporter(object):
     # Global error; this means something in the actual test execution code went
     # wrong.
     if outcome_msg.internal_error:
-      if can_abort:
+      if can_abort or (py == 'py3' and self._enable_py3_details):
         # This is pretty bad.
         print('ABORT ABORT ABORT')
         print('Global failure(s):')
         for failure in outcome_msg.internal_error:
           print('  ', failure)
+      if can_abort:
         sys.exit(1)
-      else:
-        return True, len(outcome_msg.test_results)
+      return True, len(outcome_msg.test_results)
 
     err_count = 0
     has_fail = False
