@@ -35,7 +35,7 @@
   * [time](#recipe_modules-time) (Python3 ✅) &mdash; Allows mockable access to the current time.
   * [tricium](#recipe_modules-tricium) &mdash; API for Tricium analyzers to use.
   * [url](#recipe_modules-url) (Python3 ✅) &mdash; Methods for interacting with HTTP(s) URLs.
-  * [uuid](#recipe_modules-uuid) &mdash; Allows test-repeatable access to a random UUID.
+  * [uuid](#recipe_modules-uuid) (Python3 ✅) &mdash; Allows test-repeatable access to a random UUID.
   * [version](#recipe_modules-version) (Python3 ✅) &mdash; Thin API for parsing semver strings into comparable object.
   * [warning](#recipe_modules-warning) &mdash; Allows recipe modules to issue warnings in simulation test.
 
@@ -168,7 +168,7 @@
   * [url:examples/full](#recipes-url_examples_full) (Python3 ✅)
   * [url:tests/join](#recipes-url_tests_join) (Python3 ✅)
   * [url:tests/validate_url](#recipes-url_tests_validate_url) (Python3 ✅)
-  * [uuid:examples/full](#recipes-uuid_examples_full)
+  * [uuid:examples/full](#recipes-uuid_examples_full) (Python3 ✅)
   * [version:examples/full](#recipes-version_examples_full) (Python3 ✅)
   * [warning:tests/fakes](#recipes-warning_tests_fakes) &mdash; This is a fake recipe to trick the simulation and make it believes that this module has tests.
 ## Recipe Modules
@@ -3721,7 +3721,7 @@ Raises:
   ValueError: if "v" is not valid.
 ### *recipe_modules* / [uuid](/recipe_modules/uuid)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Allows test-repeatable access to a random UUID.
 
@@ -4770,11 +4770,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/url/tests/validate_url.py#16)(api):**
 ### *recipes* / [uuid:examples/full](/recipe_modules/uuid/examples/full.py)
 
-[DEPS](/recipe_modules/uuid/examples/full.py#5): [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
+[DEPS](/recipe_modules/uuid/examples/full.py#7): [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/uuid/examples/full.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/uuid/examples/full.py#13)(api):**
 ### *recipes* / [version:examples/full](/recipe_modules/version/examples/full.py)
 
 [DEPS](/recipe_modules/version/examples/full.py#7): [version](#recipe_modules-version)
