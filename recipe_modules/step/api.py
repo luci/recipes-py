@@ -247,12 +247,12 @@ class StepApi(recipe_api.RecipeApiPlain):
         # status='worst'
         with api.step.nest('run test'):
           with api.step.defer_results():
-            for shard in xrange(4):
+            for shard in range(4):
               run_shard('test', shard)
 
         # status='last'
         with api.step.nest('do upload'):
-          for attempt in xrange(4):
+          for attempt in range(4):
             try:
               do_upload()  # first one fails, but second succeeds.
             except api.step.StepFailure:

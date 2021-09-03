@@ -13,6 +13,8 @@ from __future__ import print_function
 
 import sys
 
+from future.utils import iteritems, itervalues
+
 from .autoroll.cmd import write_global_files_to_main_repo
 
 from ..autoroll_impl.candidate_algorithm import get_roll_candidates
@@ -26,7 +28,7 @@ def main(args):
   original_spec = args.recipe_deps.main_repo.recipes_cfg_pb2
 
   # Fetch all remote changes locally, so we can compute metadata for them.
-  for repo in args.recipe_deps.repos.itervalues():
+  for repo in itervalues(args.recipe_deps.repos):
     if repo.name == args.recipe_deps.main_repo_id:
       continue
     repo.backend.fetch(original_spec.deps[repo.name].branch)
@@ -47,7 +49,7 @@ def main(args):
 
   candidate = candidates[0]
 
-  for pid, clist in candidate.changelist(repos).iteritems():
+  for pid, clist in iteritems(candidate.changelist(repos)):
     print()
     print(pid+':')
     for commit in clist:

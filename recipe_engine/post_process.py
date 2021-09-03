@@ -7,6 +7,7 @@ RecipeTestApi.post_process method in GenTests.
 """
 
 from past.builtins import basestring
+from future.utils import iteritems
 
 import re
 
@@ -43,10 +44,10 @@ class Filter(object):
     re_usage_count = defaultdict(int)
 
     to_ret = OrderedDict()
-    for name, step in step_odict.iteritems():
+    for name, step in iteritems(step_odict):
       field_set = unused_includes.pop(name, None)
       if field_set is None:
-        for exp, (_, _, fset) in re_data.iteritems():
+        for exp, (_, _, fset) in iteritems(re_data):
           if exp.match(name):
             re_usage_count[exp] += 1
             field_set = fset
@@ -57,13 +58,13 @@ class Filter(object):
         to_ret[name] = step
       else:
         to_ret[name] = {
-          k: v for k, v in step.to_step_dict().iteritems()
+          k: v for k, v in iteritems(step.to_step_dict())
           if k in field_set or k == 'name'
         }
 
     check(len(unused_includes) == 0)
 
-    for regex, (at_least, at_most, _) in re_data.iteritems():
+    for regex, (at_least, at_most, _) in iteritems(re_data):
       check(re_usage_count[regex] >= at_least)
       if at_most is not None:
         check(re_usage_count[regex] <= at_most)
@@ -383,10 +384,10 @@ def LogContains(check, step_odict, step, log, expected_substrs):
 def GetBuildProperties(step_odict):
   """Retrieves the build properties for a recipe."""
   build_properties = {}
-  for name, step in step_odict.iteritems():
+  for name, step in iteritems(step_odict):
     if name == '$result':
       continue
-    for prop, value in step.output_properties.iteritems():
+    for prop, value in iteritems(step.output_properties):
       build_properties[prop] = value
   return build_properties
 

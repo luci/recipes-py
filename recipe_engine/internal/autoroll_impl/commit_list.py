@@ -4,6 +4,8 @@
 
 import copy
 
+from future.utils import iteritems
+
 from ..fetch import CommitMetadata
 
 from recipe_engine.engine_types import freeze
@@ -36,7 +38,7 @@ class CommitList(object):
     for i, c in enumerate(commit_list):
       rev_idx[c.revision] = i
 
-      for dep_repo_name, dep in c.spec.deps.iteritems():
+      for dep_repo_name, dep in iteritems(c.spec.deps):
         idx = dep_idx.setdefault(dep_repo_name, {})
         idx.setdefault(dep.revision, set()).add(i)
 

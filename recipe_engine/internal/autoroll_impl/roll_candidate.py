@@ -4,6 +4,7 @@
 
 import copy
 
+from future.utils import iteritems
 
 # TODO(iannucci): This value is split with the autoroller recipe which lives in
 # the infra.git repo. It's pretty dumb to have this duplication.
@@ -48,7 +49,7 @@ class RollCandidate(object):
     Returns dict(repo_name, [CommitMetadata])
     """
     ret = {}
-    for pid, dep in self.repo_spec.deps.iteritems():
+    for pid, dep in iteritems(self.repo_spec.deps):
       rolled = [
         # The [1:] is to skip the very first commit, which is the commit value
         # that the autoroller started with.

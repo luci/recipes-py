@@ -17,6 +17,8 @@ import argparse
 import re
 import types
 
+from future.utils import iteritems, itervalues
+
 ALLOWED_MODULES = [
     r'ast',
     r'base64',
@@ -51,7 +53,7 @@ def ImportsTest(recipe, allowed_modules):
   Returns a list of errors, or an empty list if there are no errors (duh).
   """
 
-  for _, val in sorted(recipe.global_symbols.iteritems()):
+  for _, val in sorted(iteritems(recipe.global_symbols)):
     if isinstance(val, types.ModuleType):
       module_name = val.__name__
       for pattern in allowed_modules:
@@ -87,7 +89,7 @@ def main(args):
   allowed_modules = map(re.compile, ALLOWED_MODULES + args.allowlist)
 
   errors = []
-  for recipe in args.recipe_deps.main_repo.recipes.itervalues():
+  for recipe in itervalues(args.recipe_deps.main_repo.recipes):
     errors.extend(ImportsTest(recipe, allowed_modules))
 
   if errors:

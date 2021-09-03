@@ -14,7 +14,7 @@ Access this via test_env.RecipeEngineUnitTest.FakeRecipeDeps().
 """
 
 from __future__ import print_function
-from future.utils import iteritems
+from future.utils import iteritems, itervalues
 
 import contextlib
 import errno
@@ -508,7 +508,7 @@ class FakeRecipeRepo(object):
     env = os.environ.copy()
     env.update(kwargs.pop('env', {}))
     env['RECIPES_USE_PY3'] = 'true' if kwargs.pop('py3', False) else 'false'
-    if not any(r.has_protos for r in self.fake_recipe_deps.repos.itervalues()):
+    if not any(r.has_protos for r in itervalues(self.fake_recipe_deps.repos)):
       pb_pkg_path = os.path.join(ROOT_DIR, '.recipe_deps', '_pb')
       args = ('--proto-override', pb_pkg_path) + args
     proc = subprocess.Popen(

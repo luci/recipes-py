@@ -9,6 +9,7 @@ import re
 from collections import Iterable, OrderedDict
 
 import attr
+from future.utils import iteritems, iterkeys
 from past.builtins import basestring
 
 from .engine_types import ResourceCost
@@ -273,7 +274,7 @@ class Step(object):
     """
     if 'name' not in step_dict:
       raise ValueError("step dict must have 'name' key, step dict keys: %r"
-                       % sorted(step_dict.iterkeys()))
+                       % sorted(iterkeys(step_dict)))
     if 'cmd' in step_dict or 'cost' in step_dict:
       step_dict = step_dict.copy()
       if 'cmd' in step_dict:
@@ -286,7 +287,7 @@ class Step(object):
     return attr.asdict(self, recurse=False)
 
   def to_step_dict(self):
-    step_dict = {k: v for k, v in self._as_dict().iteritems()
+    step_dict = {k: v for k, v in iteritems(self._as_dict())
                  if k == 'name' or v != PROTOTYPE_STEP[k]}
     if step_dict.get('cmd', None) is not None:
       step_dict['cmd'] = list(step_dict['cmd'])

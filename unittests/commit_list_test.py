@@ -53,7 +53,7 @@ class BaseCommitTest(test_env.RecipeEngineUnitTest):
                           message_lines, spec, roll_candidate)
 
   def cl(self, count):
-    return CommitList([self.cm() for _ in xrange(count)])
+    return CommitList([self.cm() for _ in range(count)])
 
 
 class TestCommitList(BaseCommitTest):
@@ -73,7 +73,7 @@ class TestCommitList(BaseCommitTest):
     self.assertEqual(cl.current, c)
 
   def test_five(self):
-    cs = [self.cm() for _ in xrange(5)]
+    cs = [self.cm() for _ in range(5)]
     cl = CommitList(cs)
     self.assertEqual(len(cl), 5)
 
@@ -101,7 +101,7 @@ class TestCommitList(BaseCommitTest):
     self.assertEqual(cl.current, cs[4])
 
   def test_deps(self):
-    cs1 = [self.cm('1') for _ in xrange(5)]
+    cs1 = [self.cm('1') for _ in range(5)]
     cs2 = [
       self.cm('2', [cs1[3]]),  # simulates an out-of-order dependency (revert)
       self.cm('2', [cs1[0]]),
@@ -129,7 +129,7 @@ class TestCommitList(BaseCommitTest):
     self.assertEqual(cl2.dist_compatible_with('1', cs1[3].revision), 2)
 
   def test_copy(self):
-    cl1 = CommitList([self.cm('1') for _ in xrange(5)])
+    cl1 = CommitList([self.cm('1') for _ in range(5)])
     cl2 = cl1.copy()
 
     self.assertEqual(cl1.current, cl2.current)

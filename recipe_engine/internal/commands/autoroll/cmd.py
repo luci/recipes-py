@@ -9,6 +9,8 @@ import logging
 import os
 import sys
 
+from future.utils import iteritems, itervalues
+
 from gevent import subprocess
 
 from google.protobuf import json_format as jsonpb
@@ -152,7 +154,7 @@ def process_candidates(recipe_deps, candidates, repos, verbose_json):
           ),
           'revision': c.revision,
         } for c in clist]
-        for repo_name, clist in candidate.changelist(repos).iteritems()},
+        for repo_name, clist in iteritems(candidate.changelist(repos))},
     })
 
   # Process candidates biggest first. If the roll is trivial, we want
@@ -241,7 +243,7 @@ def main(args):
   original_spec = args.recipe_deps.main_repo.recipes_cfg_pb2
 
   # Fetch all remote changes locally, so we can compute metadata for them.
-  for repo in args.recipe_deps.repos.itervalues():
+  for repo in itervalues(args.recipe_deps.repos):
     if repo.name == args.recipe_deps.main_repo_id:
       continue
     repo.backend.fetch(original_spec.deps[repo.name].branch)

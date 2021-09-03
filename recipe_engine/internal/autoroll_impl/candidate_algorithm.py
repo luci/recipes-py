@@ -9,6 +9,8 @@ import os
 import sys
 import time
 
+from future.utils import iteritems, itervalues
+
 from ..fetch import GitBackend
 
 from .commit_list import CommitList
@@ -70,7 +72,7 @@ def get_repos_to_advance(repos):
 
   movement_scores_by_repo = {}
 
-  for repo_name, clist in repos.iteritems():
+  for repo_name, clist in iteritems(repos):
     assert isinstance(clist, CommitList)
     candidate, movement_score = clist.next_roll_candidate
     if not candidate:
@@ -79,7 +81,7 @@ def get_repos_to_advance(repos):
     unaccounted_repos = set(repo_set)
 
     # first, determine if rolling this repo will force other repos to move.
-    for d_pid, dep in candidate.spec.deps.iteritems():
+    for d_pid, dep in iteritems(candidate.spec.deps):
       unaccounted_repos.discard(d_pid)
       if d_pid in repos:
         movement_score += repos[d_pid].dist_to(dep.revision)
@@ -98,7 +100,7 @@ def get_repos_to_advance(repos):
 
   return [
       repo_name for repo_name, _ in sorted(
-          movement_scores_by_repo.iteritems(), key=lambda item: item[1])
+          iteritems(movement_scores_by_repo), key=lambda item: item[1])
   ]
 
 
@@ -109,10 +111,10 @@ def is_consistent(spec_pb, repos):
     * repos (Dict[repo_name: str, CommitList]) - The commit list mapping of all
       known repos.
   """
-  for repo_name, toplevel_dep in spec_pb.deps.iteritems():
+  for repo_name, toplevel_dep in iteritems(spec_pb.deps):
     if repo_name not in repos:
       continue
-    for dep_name, dep in repos[repo_name].current.spec.deps.iteritems():
+    for dep_name, dep in iteritems(repos[repo_name].current.spec.deps):
       if dep.revision != spec_pb.deps[dep_name].revision:
         LOGGER.info(
             ('manifest has %s@%s, but this depends on %s@%s, but this '
@@ -126,7 +128,7 @@ def is_consistent(spec_pb, repos):
 
 def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
   if LOGGER.isEnabledFor(logging.INFO):
-    count = sum(len(r) for r in commit_lists_by_repo.itervalues())
+    count = sum(len(r) for r in itervalues(commit_lists_by_repo))
     LOGGER.info('analyzing %d commits across %d repos', count,
                 len(commit_lists_by_repo))
 
@@ -147,7 +149,7 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
       # not find a good candidate we can restore to the state before the attempt
       updated_commit_lists_by_repo = {
           repo_name: commit_list.copy()
-          for repo_name, commit_list in commit_lists_by_repo.iteritems()
+          for repo_name, commit_list in iteritems(commit_lists_by_repo)
       }
 
       LOGGER.info("advancing repo %s", pid)
@@ -172,7 +174,7 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
 
       # First, copy all revisions from clists to current_pb. Note that this will
       # accumulate all new repos during this entire roll process!
-      for pid, clist in updated_commit_lists_by_repo.iteritems():
+      for pid, clist in iteritems(updated_commit_lists_by_repo):
         current_pb.deps[pid].revision = clist.current.revision
 
       # See if this roll introduced any new dependencies we need to worry about
@@ -199,7 +201,7 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
       # Next, copy ONE instance of any new repos
       for pid in current_pb.deps.keys():
         for d_pid, dep in (
-            updated_commit_lists_by_repo[pid].current.spec.deps.iteritems()):
+            iteritems(updated_commit_lists_by_repo[pid].current.spec.deps)):
           if d_pid not in current_pb.deps:
             current_pb.deps[d_pid].url = dep.url
             current_pb.deps[d_pid].revision = dep.revision
@@ -238,7 +240,7 @@ def get_roll_candidates(recipe_deps):
     repos (dict(repo_name, CommitList)) - A repos dictionary suitable for
       invoking RollCandidate.changelist().
   """
-  if not all(repo.backend for repo in recipe_deps.repos.itervalues()):
+  if not all(repo.backend for repo in itervalues(recipe_deps.repos)):
     raise ValueError('get_roll_candidates does not work with -O overrides.')
 
   start = time.time()
@@ -248,11 +250,11 @@ def get_roll_candidates(recipe_deps):
     repo_name: CommitList.from_backend(
         recipe_deps.main_repo.simple_cfg.deps[repo_name],
         repo.backend)
-    for repo_name, repo in recipe_deps.repos.iteritems()
+    for repo_name, repo in iteritems(recipe_deps.repos)
     if repo_name != recipe_deps.main_repo_id
   }
 
-  for repo, commits in repos.iteritems():
+  for repo, commits in iteritems(repos):
     print('  %s: %d commits' % (repo, len(commits)), file=sys.stderr)
   sys.stdout.flush()
 
