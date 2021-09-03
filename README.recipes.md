@@ -2902,7 +2902,7 @@ Args:
   merge (bool): if True, return test results as if all invocations
     are one, otherwise, results will be ordered by invocation.
   limit (int): maximum number of test results to return.
-    Defaults to 1000.
+    Unlimited if 0. Defaults to 1000.
   step_name (str): name of the step.
   tr_fields (list of str): test result fields in the response.
     Test result name will always be included regardless of this param value.
