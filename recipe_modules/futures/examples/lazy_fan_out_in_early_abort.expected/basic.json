@@ -3,14 +3,14 @@
     "cmd": [
       "python",
       "-u",
-      "\nimport time\nfor x in xrange(1):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
+      "\nimport time\nfor x in range(1):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
     ],
     "name": "sleep loop [1]",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
       "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in xrange(1):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print \"Hi! %s\" % x@@@",
+      "@@@STEP_LOG_LINE@python.inline@for x in range(1):@@@",
+      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
       "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
       "@@@STEP_LOG_END@python.inline@@@"
     ]
@@ -19,14 +19,14 @@
     "cmd": [
       "python",
       "-u",
-      "\nimport time\nfor x in xrange(2):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
+      "\nimport time\nfor x in range(2):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
     ],
     "name": "sleep loop [2]",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
       "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in xrange(2):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print \"Hi! %s\" % x@@@",
+      "@@@STEP_LOG_LINE@python.inline@for x in range(2):@@@",
+      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
       "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
       "@@@STEP_LOG_END@python.inline@@@"
     ]
@@ -35,14 +35,14 @@
     "cmd": [
       "python",
       "-u",
-      "\nimport time\nfor x in xrange(3):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
+      "\nimport time\nfor x in range(3):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
     ],
     "name": "sleep loop [3]",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
       "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in xrange(3):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print \"Hi! %s\" % x@@@",
+      "@@@STEP_LOG_LINE@python.inline@for x in range(3):@@@",
+      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
       "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
       "@@@STEP_LOG_END@python.inline@@@"
     ]
@@ -51,14 +51,14 @@
     "cmd": [
       "python",
       "-u",
-      "\nimport time\nfor x in xrange(4):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
+      "\nimport time\nfor x in range(4):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
     ],
     "name": "sleep loop [4]",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
       "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in xrange(4):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print \"Hi! %s\" % x@@@",
+      "@@@STEP_LOG_LINE@python.inline@for x in range(4):@@@",
+      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
       "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
       "@@@STEP_LOG_END@python.inline@@@"
     ]
@@ -67,14 +67,14 @@
     "cmd": [
       "python",
       "-u",
-      "\nimport time\nfor x in xrange(5):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
+      "\nimport time\nfor x in range(5):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
     ],
     "name": "sleep loop [5]",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
       "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in xrange(5):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print \"Hi! %s\" % x@@@",
+      "@@@STEP_LOG_LINE@python.inline@for x in range(5):@@@",
+      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
       "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
       "@@@STEP_LOG_END@python.inline@@@"
     ]
@@ -83,14 +83,14 @@
     "cmd": [
       "python",
       "-u",
-      "\nimport time\nfor x in xrange(6):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
+      "\nimport time\nfor x in range(6):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
     ],
     "name": "sleep loop [6]",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
       "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in xrange(6):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print \"Hi! %s\" % x@@@",
+      "@@@STEP_LOG_LINE@python.inline@for x in range(6):@@@",
+      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
       "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
       "@@@STEP_LOG_END@python.inline@@@"
     ]
@@ -99,14 +99,14 @@
     "cmd": [
       "python",
       "-u",
-      "\nimport time\nfor x in xrange(7):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
+      "\nimport time\nfor x in range(7):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
     ],
     "name": "sleep loop [7]",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
       "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in xrange(7):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print \"Hi! %s\" % x@@@",
+      "@@@STEP_LOG_LINE@python.inline@for x in range(7):@@@",
+      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
       "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
       "@@@STEP_LOG_END@python.inline@@@"
     ]
@@ -115,14 +115,14 @@
     "cmd": [
       "python",
       "-u",
-      "\nimport time\nfor x in xrange(8):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
+      "\nimport time\nfor x in range(8):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
     ],
     "name": "sleep loop [8]",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
       "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in xrange(8):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print \"Hi! %s\" % x@@@",
+      "@@@STEP_LOG_LINE@python.inline@for x in range(8):@@@",
+      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
       "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
       "@@@STEP_LOG_END@python.inline@@@"
     ]
@@ -131,14 +131,14 @@
     "cmd": [
       "python",
       "-u",
-      "\nimport time\nfor x in xrange(9):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
+      "\nimport time\nfor x in range(9):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
     ],
     "name": "sleep loop [9]",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
       "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in xrange(9):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print \"Hi! %s\" % x@@@",
+      "@@@STEP_LOG_LINE@python.inline@for x in range(9):@@@",
+      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
       "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
       "@@@STEP_LOG_END@python.inline@@@"
     ]
@@ -147,14 +147,14 @@
     "cmd": [
       "python",
       "-u",
-      "\nimport time\nfor x in xrange(10):\n  print \"Hi! %s\" % x\n  time.sleep(1)\n"
+      "\nimport time\nfor x in range(10):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
     ],
     "name": "sleep loop [10]",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@python.inline@@@@",
       "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in xrange(10):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print \"Hi! %s\" % x@@@",
+      "@@@STEP_LOG_LINE@python.inline@for x in range(10):@@@",
+      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
       "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
       "@@@STEP_LOG_END@python.inline@@@"
     ]

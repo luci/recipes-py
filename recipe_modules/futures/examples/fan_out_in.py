@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'futures',
   'python',
@@ -11,14 +13,14 @@ DEPS = [
 
 def RunSteps(api):
   futures = []
-  for _ in xrange(10):
+  for _ in range(10):
     futures.append(api.futures.spawn(
         api.python.inline,
         'sleep loop',
         '''
           import time
-          for x in xrange(30):
-            print "Hi! %s" % x
+          for x in range(30):
+            print("Hi! %s" % x)
             time.sleep(1)
         ''',
         cost=api.step.ResourceCost(cpu=2*api.step.CPU_CORE),

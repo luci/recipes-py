@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'context',
   'futures',
@@ -24,15 +26,14 @@ def Level2(api, i):
 
 def Level1(api, i):
   with api.step.nest('Level1 [%d]' % i):
-    for j in xrange(4):
+    for j in range(4):
       api.futures.spawn(Level2, api, j)
 
 
 def RunSteps(api):
-  for i in xrange(4):
+  for i in range(4):
     api.futures.spawn(Level1, api, i)
 
 
 def GenTests(api):
   yield api.test('basic')
-

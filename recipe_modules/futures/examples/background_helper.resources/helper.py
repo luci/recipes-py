@@ -35,6 +35,6 @@ with open(sys.argv[1], 'wb') as pid_file:
   }, pid_file)
 print(">> DUMPED PIDFILE", file=sys.stderr)
 
-for x in xrange(30):
+for x in range(30):
   print("Hi! %s" % x)
   time.sleep(1)

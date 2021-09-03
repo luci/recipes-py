@@ -4,6 +4,7 @@
 
 from contextlib import contextmanager
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
   'futures',
@@ -83,8 +84,8 @@ def RunSteps(api):
   with run_helper(api):
     api.python.inline('do something with live helper', '''
       import time
-      for _ in xrange(10):
-        print "hey there :)"
+      for _ in range(10):
+        print("hey there :)")
         time.sleep(1)
     ''')
 

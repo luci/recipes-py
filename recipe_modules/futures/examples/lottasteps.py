@@ -15,6 +15,8 @@ from PB.recipe_modules.recipe_engine.futures.examples.lottasteps import Input
 from PB.recipe_engine.result import RawResult
 from PB.go.chromium.org.luci.buildbucket.proto import common
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'futures',
   'properties',
@@ -26,7 +28,7 @@ PROPERTIES = Input
 
 def RunSteps(api, props):
   work = []
-  for i in xrange(props.num_steps):
+  for i in range(props.num_steps):
     work.append(api.futures.spawn_immediate(
         api.step, ('hw %d' % i), ['sleep', '.1'],
         __name='step %d' % i,

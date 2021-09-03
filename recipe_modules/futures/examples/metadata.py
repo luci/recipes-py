@@ -4,6 +4,8 @@
 
 """This tests metadata features of the Future object."""
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'futures',
   'step',
@@ -40,4 +42,3 @@ def RunSteps(api):
 
 def GenTests(api):
   yield api.test('basic')
-
