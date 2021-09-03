@@ -4,6 +4,8 @@
 
 from PB.go.chromium.org.luci.cv.api.recipe.v1 import cq as cq_pb2
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'buildbucket',
   'properties',
