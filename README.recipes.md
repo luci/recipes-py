@@ -4,7 +4,7 @@
 
 **[Recipe Modules](#Recipe-Modules)**
   * [archive](#recipe_modules-archive)
-  * [assertions](#recipe_modules-assertions)
+  * [assertions](#recipe_modules-assertions) (Python3 ✅)
   * [buildbucket](#recipe_modules-buildbucket) (Python3 ✅) &mdash; API for interacting with the buildbucket service.
   * [cas](#recipe_modules-cas) (Python3 ✅) &mdash; API for interacting with cas client.
   * [cipd](#recipe_modules-cipd) (Python3 ✅) &mdash; API for interacting with CIPD.
@@ -41,11 +41,11 @@
 
 **[Recipes](#Recipes)**
   * [archive:examples/full](#recipes-archive_examples_full)
-  * [assertions:tests/assert-raises](#recipes-assertions_tests_assert-raises)
-  * [assertions:tests/assertions](#recipes-assertions_tests_assertions)
-  * [assertions:tests/attribute_error](#recipes-assertions_tests_attribute_error)
-  * [assertions:tests/long_message](#recipes-assertions_tests_long_message)
-  * [assertions:tests/max_diff](#recipes-assertions_tests_max_diff)
+  * [assertions:tests/assert-raises](#recipes-assertions_tests_assert-raises) (Python3 ✅)
+  * [assertions:tests/assertions](#recipes-assertions_tests_assertions) (Python3 ✅)
+  * [assertions:tests/attribute_error](#recipes-assertions_tests_attribute_error) (Python3 ✅)
+  * [assertions:tests/long_message](#recipes-assertions_tests_long_message) (Python3 ✅)
+  * [assertions:tests/max_diff](#recipes-assertions_tests_max_diff) (Python3 ✅)
   * [buildbucket:examples/full](#recipes-buildbucket_examples_full) (Python3 ✅) &mdash; This file is a recipe demonstrating the buildbucket recipe module.
   * [buildbucket:run/multi](#recipes-buildbucket_run_multi) (Python3 ✅) &mdash; Launches multiple builds at the same revision.
   * [buildbucket:tests/add_tags](#recipes-buildbucket_tests_add_tags) (Python3 ✅)
@@ -241,9 +241,9 @@ Returns:
   Package object.
 ### *recipe_modules* / [assertions](/recipe_modules/assertions)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-#### **class [AssertionsApi](/recipe_modules/assertions/api.py#58)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
+#### **class [AssertionsApi](/recipe_modules/assertions/api.py#55)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
 
 Provides access to the assertion methods of the python unittest module.
 
@@ -3779,39 +3779,39 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipe_modules/archive/examples/full.py#19)(api):**
 ### *recipes* / [assertions:tests/assert-raises](/recipe_modules/assertions/tests/assert-raises.py)
 
-[DEPS](/recipe_modules/assertions/tests/assert-raises.py#7): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/assertions/tests/assert-raises.py#9): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/assertions/tests/assert-raises.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/assert-raises.py#18)(api):**
 ### *recipes* / [assertions:tests/assertions](/recipe_modules/assertions/tests/assertions.py)
 
-[DEPS](/recipe_modules/assertions/tests/assertions.py#7): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/assertions/tests/assertions.py#9): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/assertions/tests/assertions.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/assertions.py#15)(api):**
 ### *recipes* / [assertions:tests/attribute\_error](/recipe_modules/assertions/tests/attribute_error.py)
 
-[DEPS](/recipe_modules/assertions/tests/attribute_error.py#7): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/assertions/tests/attribute_error.py#9): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/assertions/tests/attribute_error.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/attribute_error.py#15)(api):**
 ### *recipes* / [assertions:tests/long\_message](/recipe_modules/assertions/tests/long_message.py)
 
-[DEPS](/recipe_modules/assertions/tests/long_message.py#7): [assertions](#recipe_modules-assertions), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/assertions/tests/long_message.py#9): [assertions](#recipe_modules-assertions), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/assertions/tests/long_message.py#12)(api):**
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/long_message.py#14)(api):**
 ### *recipes* / [assertions:tests/max\_diff](/recipe_modules/assertions/tests/max_diff.py)
 
-[DEPS](/recipe_modules/assertions/tests/max_diff.py#7): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/assertions/tests/max_diff.py#9): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/assertions/tests/max_diff.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/max_diff.py#15)(api):**
 ### *recipes* / [buildbucket:examples/full](/recipe_modules/buildbucket/examples/full.py)
 
 [DEPS](/recipe_modules/buildbucket/examples/full.py#13): [buildbucket](#recipe_modules-buildbucket), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

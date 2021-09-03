@@ -4,6 +4,8 @@
 
 from recipe_engine import post_process
 
+PYTHON_VERSION_COMPATIBILITY = "PY2+3"
+
 DEPS = [
     'assertions',
     'properties',
@@ -17,8 +19,9 @@ def RunSteps(api):
     api.step('AttributeError', [])
 
 def GenTests(api):
-  yield (
-      api.test('basic')
-      + api.post_process(post_process.MustRun, 'AttributeError')
-      + api.post_process(post_process.DropExpectation)
+  yield api.test(
+      'basic',
+      api.post_process(post_process.MustRun, 'AttributeError'),
+      api.post_process(post_process.StatusSuccess),
+      api.post_process(post_process.DropExpectation),
   )

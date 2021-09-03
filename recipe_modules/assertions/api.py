@@ -4,10 +4,7 @@
 
 from future.utils import iteritems
 
-import collections
-import functools
 import inspect
-import sys
 import unittest
 
 from recipe_engine import recipe_api
@@ -50,7 +47,7 @@ def make_assertion(assertion_method, **test_case_attrs):
     # Catch and throw a new exception so that the frames for unittest's
     # implementation aren't part of the displayed traceback
     except AssertionError as e:
-      raise AssertionError(e.message)
+      raise AssertionError(str(e))
 
   return assertion_wrapper
 

@@ -4,6 +4,8 @@
 
 from recipe_engine import post_process
 
+PYTHON_VERSION_COMPATIBILITY = "PY2+3"
+
 DEPS = [
     'assertions',
     'properties',
@@ -23,21 +25,24 @@ def RunSteps(api):
     api.step('AssertionError', [])
   else:
     api.step('No AssertionError', [])
-    assert caught.exception.message == exception_message, (
+    assert str(caught.exception) == exception_message, (
         'Context manager not working, '
-        'expected TestException with message: %r\n actual message %r'
-        % (exception_message, caught.exception.message))
+        'expected TestException with message: %r\n actual message %r' %
+        (exception_message, str(caught.exception)))
+
 
 def GenTests(api):
-  yield (
-      api.test('no-exception')
-      + api.post_process(post_process.MustRun, 'AssertionError')
-      + api.post_process(post_process.DropExpectation)
+  yield api.test(
+      'no-exception',
+      api.post_process(post_process.MustRun, 'AssertionError'),
+      api.post_process(post_process.StatusSuccess),
+      api.post_process(post_process.DropExpectation),
   )
 
-  yield (
-      api.test('exception')
-      + api.properties(exception_message='fake exception message')
-      + api.post_process(post_process.MustRun, 'No AssertionError')
-      + api.post_process(post_process.DropExpectation)
+  yield api.test(
+      'exception',
+      api.properties(exception_message='fake exception message'),
+      api.post_process(post_process.StatusSuccess),
+      api.post_process(post_process.MustRun, 'No AssertionError'),
+      api.post_process(post_process.DropExpectation),
   )

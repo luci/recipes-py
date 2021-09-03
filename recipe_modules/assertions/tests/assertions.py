@@ -4,6 +4,8 @@
 
 from recipe_engine import post_process
 
+PYTHON_VERSION_COMPATIBILITY = "PY2+3"
+
 DEPS = [
     'assertions',
     'properties',
@@ -18,22 +20,28 @@ def RunSteps(api):
     api.step('AssertionError', [])
     expected_message = api.properties.get('expected_message')
     if expected_message:
-      assert e.message == expected_message, (
-          'Expected AssertionError with message: %r\nactual message: %r'
-          % (expected_message, e.message))
+      assert str(e) == expected_message, (
+          'Expected AssertionError with message: %r\nactual message: %r' %
+          (expected_message, str(e)))
+
 
 def GenTests(api):
-  yield (
-      api.test('basic')
-      + api.post_process(post_process.MustRun, 'AssertionError')
-      + api.post_process(post_process.DropExpectation)
+  yield api.test(
+      'basic',
+      api.post_process(post_process.MustRun, 'AssertionError'),
+      api.post_process(post_process.StatusSuccess),
+      api.post_process(post_process.DropExpectation),
   )
 
-  yield (
-      api.test('custom-message')
-      + api.properties(
-          msg='{first} should be {second}',
-          expected_message='0 should be 1')
-      + api.post_process(post_process.MustRun, 'AssertionError')
-      + api.post_process(post_process.DropExpectation)
+  import sys
+  expected_message = ('0 != 1 : 0 should be 1'
+                      if sys.version_info.major == 3 else '0 should be 1')
+
+  yield api.test(
+      'custom-message',
+      api.properties(
+          msg='{first} should be {second}', expected_message=expected_message),
+      api.post_process(post_process.MustRun, 'AssertionError'),
+      api.post_process(post_process.StatusSuccess),
+      api.post_process(post_process.DropExpectation),
   )
