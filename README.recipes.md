@@ -28,7 +28,7 @@
   * [raw_io](#recipe_modules-raw_io) (Python3 ✅) &mdash; Provides objects for reading and writing raw data to and from steps.
   * [resultdb](#recipe_modules-resultdb) &mdash; API for interacting with the ResultDB service.
   * [runtime](#recipe_modules-runtime) (Python3 ✅)
-  * [scheduler](#recipe_modules-scheduler) &mdash; API for interacting with the LUCI Scheduler service.
+  * [scheduler](#recipe_modules-scheduler) (Python3 ✅) &mdash; API for interacting with the LUCI Scheduler service.
   * [service_account](#recipe_modules-service_account) (Python3 ✅) &mdash; API for getting OAuth2 access tokens for LUCI tasks or private keys.
   * [step](#recipe_modules-step) (Python3 ✅) &mdash; Step is the primary API for running steps (external programs, etc.
   * [swarming](#recipe_modules-swarming) (Python3 ✅)
@@ -143,9 +143,9 @@
   * [resultdb:examples/test_presentation](#recipes-resultdb_examples_test_presentation)
   * [resultdb:examples/test_presentation_default](#recipes-resultdb_examples_test_presentation_default)
   * [runtime:tests/full](#recipes-runtime_tests_full) (Python3 ✅)
-  * [scheduler:examples/emit_triggers](#recipes-scheduler_examples_emit_triggers) &mdash; This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
-  * [scheduler:examples/host](#recipes-scheduler_examples_host) &mdash; This file is a recipe demonstrating reading/mocking scheduler host.
-  * [scheduler:examples/triggers](#recipes-scheduler_examples_triggers) &mdash; This file is a recipe demonstrating reading triggers of the current build.
+  * [scheduler:examples/emit_triggers](#recipes-scheduler_examples_emit_triggers) (Python3 ✅) &mdash; This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
+  * [scheduler:examples/host](#recipes-scheduler_examples_host) (Python3 ✅) &mdash; This file is a recipe demonstrating reading/mocking scheduler host.
+  * [scheduler:examples/triggers](#recipes-scheduler_examples_triggers) (Python3 ✅) &mdash; This file is a recipe demonstrating reading triggers of the current build.
   * [service_account:examples/full](#recipes-service_account_examples_full) (Python3 ✅)
   * [step:examples/full](#recipes-step_examples_full) (Python3 ✅)
   * [step:tests/active_result](#recipes-step_tests_active_result) (Python3 ✅)
@@ -3006,9 +3006,9 @@ Examples:
   * Appending a 'non-production' tag to external RPCs
 ### *recipe_modules* / [scheduler](/recipe_modules/scheduler)
 
-[DEPS](/recipe_modules/scheduler/__init__.py#10): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/scheduler/__init__.py#12): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 API for interacting with the LUCI Scheduler service.
 
@@ -4587,31 +4587,31 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/runtime/tests/full.py#15)(api):**
 ### *recipes* / [scheduler:examples/emit\_triggers](/recipe_modules/scheduler/examples/emit_triggers.py)
 
-[DEPS](/recipe_modules/scheduler/examples/emit_triggers.py#7): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [runtime](#recipe_modules-runtime), [scheduler](#recipe_modules-scheduler), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/scheduler/examples/emit_triggers.py#9): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [runtime](#recipe_modules-runtime), [scheduler](#recipe_modules-scheduler), [time](#recipe_modules-time)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
 
-&mdash; **def [RunSteps](/recipe_modules/scheduler/examples/emit_triggers.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/scheduler/examples/emit_triggers.py#18)(api):**
 ### *recipes* / [scheduler:examples/host](/recipe_modules/scheduler/examples/host.py)
 
-[DEPS](/recipe_modules/scheduler/examples/host.py#7): [scheduler](#recipe_modules-scheduler), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/scheduler/examples/host.py#9): [scheduler](#recipe_modules-scheduler), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 This file is a recipe demonstrating reading/mocking scheduler host.
 
-&mdash; **def [RunSteps](/recipe_modules/scheduler/examples/host.py#12)(api):**
+&mdash; **def [RunSteps](/recipe_modules/scheduler/examples/host.py#14)(api):**
 ### *recipes* / [scheduler:examples/triggers](/recipe_modules/scheduler/examples/triggers.py)
 
-[DEPS](/recipe_modules/scheduler/examples/triggers.py#14): [scheduler](#recipe_modules-scheduler), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/scheduler/examples/triggers.py#16): [json](#recipe_modules-json), [scheduler](#recipe_modules-scheduler), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 This file is a recipe demonstrating reading triggers of the current build.
 
-&mdash; **def [RunSteps](/recipe_modules/scheduler/examples/triggers.py#19)(api):**
+&mdash; **def [RunSteps](/recipe_modules/scheduler/examples/triggers.py#22)(api):**
 ### *recipes* / [service\_account:examples/full](/recipe_modules/service_account/examples/full.py)
 
 [DEPS](/recipe_modules/service_account/examples/full.py#9): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account)

@@ -4,6 +4,8 @@
 
 """This file is a recipe demonstrating emitting triggers to LUCI Scheduler."""
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'buildbucket',
   'json',

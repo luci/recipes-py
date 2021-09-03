@@ -11,14 +11,17 @@ from google.protobuf import json_format
 from PB.go.chromium.org.luci.scheduler.api.scheduler.v1 import (
     triggers as triggers_pb2)
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
+  'json',
   'scheduler',
   'step',
 ]
 
 def RunSteps(api):
   pres = api.step(name='triggers', cmd=None).presentation
-  pres.logs['triggers'] = json.dumps(
+  pres.logs['triggers'] = api.json.dumps(
       [json_format.MessageToDict(t) for t in api.scheduler.triggers],
       sort_keys=True,
       indent=2,

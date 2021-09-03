@@ -4,6 +4,8 @@
 
 """This file is a recipe demonstrating reading/mocking scheduler host."""
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'scheduler',
   'step',
