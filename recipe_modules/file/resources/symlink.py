@@ -35,7 +35,7 @@ def main(args):
       made_dirs.add(path)
       path = os.path.dirname(path)
 
-  for target, linknames in links.iteritems():
+  for target, linknames in links.items():
     for linkname in linknames:
       make_parent_dirs(linkname)
       os.symlink(target, linkname)

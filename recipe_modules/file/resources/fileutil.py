@@ -72,7 +72,7 @@ def _RmTree(path):
   if sys.platform == 'win32':
     # Give up and use cmd.exe's rd command.
     cmd = ['cmd.exe', '/c', 'rd', '/q', '/s', os.path.normcase(path)]
-    for _ in xrange(3):
+    for _ in range(3):
       print('RemoveDirectory running %s' % (' '.join(cmd)))
       if not subprocess.call(cmd):
         break
