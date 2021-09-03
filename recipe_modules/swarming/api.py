@@ -6,6 +6,7 @@
 from __future__ import absolute_import
 
 from future.utils import iteritems
+from past.types import basestring
 
 import base64
 import collections
@@ -16,10 +17,6 @@ import sys
 from .state import TaskState
 
 from recipe_engine import recipe_api
-
-# TODO(maruel): Remove references to basestring once python 2 not used.
-if sys.version_info.major >= 3:
-  basestring = str  # pragma: no cover
 
 # Take revision from
 # https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
@@ -391,7 +388,7 @@ class TaskRequest(object):
         cmd (str) - The command the task will run.
       """
       assert isinstance(cmd, list)
-      assert all(isinstance(s, (str, unicode)) for s in cmd)
+      assert all(isinstance(s, basestring) for s in cmd)
       ret = self._copy()
       ret._command = cmd
       return ret
@@ -408,7 +405,7 @@ class TaskRequest(object):
         relative_cwd (str) - The path relative to the task root in which to run
           `command`.
       """
-      assert isinstance(relative_cwd, (str, unicode))
+      assert isinstance(relative_cwd, basestring)
       ret = self._copy()
       ret._relative_cwd = relative_cwd
       return ret
@@ -924,7 +921,13 @@ class TaskRequest(object):
         }
 
       if self.secret_bytes:
-        properties['secret_bytes'] = base64.b64encode(self.secret_bytes)
+        secret_bytes = self.secret_bytes
+        if hasattr(secret_bytes, "encode"):
+          secret_bytes = secret_bytes.encode()
+        secret_bytes = base64.b64encode(secret_bytes)
+        if hasattr(secret_bytes, "decode"):
+          secret_bytes = secret_bytes.decode()
+        properties['secret_bytes'] = secret_bytes
       if self.cipd_ensure_file.packages:
         properties['cipd_input'] = {
             'packages': [{

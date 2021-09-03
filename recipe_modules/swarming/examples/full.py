@@ -10,6 +10,8 @@ import difflib
 from recipe_engine.post_process import DropExpectation
 from recipe_engine.recipe_api import Property
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 
 DEPS = [
     'cipd',
@@ -102,12 +104,10 @@ def RunSteps(api, use_cas):
 
   # Dimensions, and environment variables and prefixes can be unset.
   slice = request[-1]
-  assert not cmp(slice.dimensions, {'pool': 'example.pool', 'os': 'Debian'})
-  assert not cmp(
-      slice.env_vars, {'SOME_VARNAME': 'stuff', 'GOPATH': '$HOME/go'})
-  assert not cmp(
-      slice.env_prefixes,
-      {'PATH' : ["path/to/bin/dir", "path/to/other/bin/dir"]})
+  assert slice.dimensions == {'pool': 'example.pool', 'os': 'Debian'}
+  assert slice.env_vars == {'SOME_VARNAME': 'stuff', 'GOPATH': '$HOME/go'}
+  assert (slice.env_prefixes ==
+          {'PATH' : ["path/to/bin/dir", "path/to/other/bin/dir"]})
 
   slice = (slice.
     with_dimensions(os=None).
@@ -115,13 +115,13 @@ def RunSteps(api, use_cas):
     with_env_prefixes(PATH=None)
   )
 
-  assert cmp(slice.dimensions, {'pool': 'example.pool'}) == 0
-  assert cmp(slice.env_vars, {'SOME_VARNAME': 'stuff'}) == 0
-  assert cmp(slice.env_prefixes, {}) == 0
+  assert slice.dimensions == {'pool': 'example.pool'}
+  assert slice.env_vars == {'SOME_VARNAME': 'stuff'}
+  assert slice.env_prefixes == {}
 
   # Setting environment prefixes is additive.
   slice = slice.with_env_prefixes(PATH=['a']).with_env_prefixes(PATH=['b'])
-  assert cmp(slice.env_prefixes, {'PATH': ['a', 'b']}) == 0
+  assert slice.env_prefixes == {'PATH': ['a', 'b']}
 
   # Trigger the task request.
   metadata = api.swarming.trigger('trigger 1 task', requests=[request])

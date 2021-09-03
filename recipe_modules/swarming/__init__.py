@@ -4,6 +4,7 @@
 
 from PB.recipe_modules.recipe_engine.swarming import properties
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
     'buildbucket',  # TODO(crbug.com/1122808): Remove this dependency.
