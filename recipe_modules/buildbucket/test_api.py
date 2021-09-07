@@ -84,10 +84,10 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         ))
 
     if execution_timeout:
-        build.execution_timeout.seconds = int(execution_timeout)
-        build.execution_timeout.nanos = int(
-            execution_timeout % 1 * 1000000000 + 0.5
-        )
+      build.execution_timeout.seconds = int(execution_timeout)
+      build.execution_timeout.nanos = int(
+          execution_timeout % 1 * 1000000000 + 0.5
+      )
 
     if status:
       build.status = common_pb2.Status.Value(status)
@@ -148,14 +148,14 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       tags.append(common_pb2.StringPair(key='cq_experimental', value='false'))
 
     if not gerrit_changes:
-        gerrit_changes = [
-            common_pb2.GerritChange(
-                host=gerrit_host,
-                project=git_project,
-                change=change_number,
-                patchset=patch_set,
-            ),
-        ]
+      gerrit_changes = [
+          common_pb2.GerritChange(
+              host=gerrit_host,
+              project=git_project,
+              change=change_number,
+              patchset=patch_set,
+          ),
+      ]
 
     build = build_pb2.Build(
         id=build_id,
@@ -178,10 +178,10 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     )
 
     if execution_timeout:
-        build.execution_timeout.seconds = int(execution_timeout)
-        build.execution_timeout.nanos = int(
-            execution_timeout % 1 * 1000000000 + 0.5
-        )
+      build.execution_timeout.seconds = int(execution_timeout)
+      build.execution_timeout.nanos = int(
+          execution_timeout % 1 * 1000000000 + 0.5
+      )
 
     if revision:
       c = build.input.gitiles_commit
@@ -247,12 +247,14 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     step_name = step_name or 'buildbucket.get'
     buildbucket_output = {
         'build': {
-            'parameters_json': json.dumps(additional_build_parameters)
+            'parameters_json':
+                json.dumps(additional_build_parameters, sort_keys=True)
         }
     }
     return self.step_data(
         step_name,
-        stdout=self.m.raw_io.output_text(json.dumps(buildbucket_output)))
+        stdout=self.m.raw_io.output_text(
+            json.dumps(buildbucket_output, sort_keys=True)))
 
   def simulated_collect_output(self, builds, step_name=None):
     """Simulates a buildbucket.collect call."""
