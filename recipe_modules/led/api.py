@@ -4,6 +4,7 @@
 
 """An interface to call the led tool."""
 
+from builtins import range
 from future.utils import iteritems
 
 import hashlib

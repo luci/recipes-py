@@ -15,7 +15,10 @@ from . import proto_codec
 class ProtoOutputPlaceholder(recipe_util.OutputPlaceholder):
   def __init__(self, api, msg_class, codec, add_json_log, name,
                leak_to, decoding_kwargs):
-    self.raw = api.m.raw_io.output(codec.ext, leak_to=leak_to)
+    if codec is proto_codec.BINARY:
+      self.raw = api.m.raw_io.output(codec.ext, leak_to=leak_to)
+    else:
+      self.raw = api.m.raw_io.output_text(codec.ext, leak_to=leak_to)
     self.add_json_log = add_json_log
     self._msg_class = msg_class
     self._codec = codec
@@ -58,13 +61,17 @@ class ProtoOutputPlaceholder(recipe_util.OutputPlaceholder):
       valid = True
     except Exception as ex:  # pragma: no cover
       invalid_error = str(ex)
+      jsonErrPrefix = 'Failed to load JSON: '
+      if test.enabled and invalid_error.startswith(jsonErrPrefix):
+        invalid_error = (
+            jsonErrPrefix +
+            recipe_util.unify_json_load_err(invalid_error[len(jsonErrPrefix):]))
 
     if self.add_json_log is True or (
         self.add_json_log == 'on_failure' and presentation.status != 'SUCCESS'):
       if valid:
         jsonpb = ProtoApi.encode(ret, 'JSONPB', indent=2)
-        presentation.logs[self.label] = [
-            line.rstrip() for line in jsonpb.splitlines()]
+        presentation.logs[self.label] = jsonpb.splitlines()
       else:
         presentation.logs[self.label + ' (invalid)'] = raw_data.splitlines()
         presentation.logs[self.label + ' (exception)'] = (
@@ -100,9 +107,11 @@ class ProtoApi(recipe_api.RecipeApi):
     Returns an InputPlaceholder.
     """
     codec = proto_codec.resolve(codec)
-    return self.m.raw_io.input(
-        self.encode(proto_msg, codec, **encoding_kwargs),
-        '.%s' % (codec.ext,))
+    encoded = self.encode(proto_msg, codec, **encoding_kwargs)
+    suffix = '.%s' % (codec.ext,)
+    if codec is proto_codec.BINARY:
+      return self.m.raw_io.input(encoded, suffix=suffix)
+    return self.m.raw_io.input_text(encoded, suffix=suffix)
 
   @recipe_util.returns_placeholder
   def output(self, msg_class, codec, add_json_log=True, name=None,

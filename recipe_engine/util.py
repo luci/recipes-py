@@ -404,3 +404,14 @@ def extract_tb(tb):
   remove_engine_impl_from_stack.
   """
   return remove_engine_impl_from_stack(traceback.extract_tb(tb))
+
+
+# Convert some known py3 err msg to py2 err msg, otherwise, convert to a
+# constant err msg.
+# TODO(crbug.com/1147793): remove it after py3 migration is done.
+def unify_json_load_err(err):
+  py2_err = 'No JSON object could be decoded'
+  if (err.startswith('Expecting property name') or
+      err.startswith('Expecting value')):
+    return py2_err
+  return py2_err if err.startswith(py2_err) else 'Wrong JSON object format'

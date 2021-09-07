@@ -11,6 +11,8 @@ from PB.go.chromium.org.luci.led.job import job
 from PB.go.chromium.org.luci.swarming.proto.api import swarming
 from PB.recipe_modules.recipe_engine.led.properties import InputProperties
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'buildbucket',
   'led',
@@ -27,7 +29,8 @@ PROPERTIES = {
 }
 
 
-def RunSteps(api, get_cmd, child_properties, sloppy_child_properties, do_bogus_edits):
+def RunSteps(api, get_cmd, child_properties, sloppy_child_properties,
+             do_bogus_edits):
   intermediate = api.led(*get_cmd)
   intermediate = intermediate.then(
       'edit-cr-cl', 'https://fake.url/c/project/123/+/456')

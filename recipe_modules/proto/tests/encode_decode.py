@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+PYTHON_VERSION_COMPATIBILITY = "PY2+3"
+
 DEPS = [
   'assertions',
   'path',
@@ -28,7 +30,7 @@ def RunSteps(api):
   )
 
   binary = api.proto.encode(SomeMessage(field='binary'), 'BINARY')
-  api.assertions.assertEqual(binary, '\n\x06binary')
+  api.assertions.assertEqual(binary, b'\n\x06binary')
   api.assertions.assertEqual(
     api.proto.decode(binary, SomeMessage, 'BINARY'),
     SomeMessage(field="binary")

@@ -7,6 +7,11 @@ from past.builtins import basestring
 
 from recipe_engine.util import sentinel
 
+# TODO(crbug.com/1147793): remove it after py3 migration is done.
+def _msg_to_json_no_trailing_space(*args, **kwargs):
+  jsonpb = json_format.MessageToJson(*args, **kwargs)
+  return '\n'.join(l.rstrip() for l in jsonpb.splitlines())
+
 BINARY = sentinel(
     'BINARY', ext='pb',
     enc=(lambda _self, msg, **extra: msg.SerializeToString(**extra)),
@@ -26,7 +31,7 @@ TEXTPB = sentinel(
 JSONPB = sentinel(
     'JSONPB',
     ext='json',
-    enc=staticmethod(json_format.MessageToJson),
+    enc=staticmethod(_msg_to_json_no_trailing_space),
     enc_default_extra={
         'preserving_proto_field_name': True,
         'sort_keys': True,
