@@ -5,13 +5,13 @@
 
 from __future__ import absolute_import
 
-from future.utils import iteritems
-from past.types import basestring
-
 import base64
 import collections
 import contextlib
 import copy
+
+from future.utils import iteritems
+from past.types import basestring
 
 from .state import TaskState
 
