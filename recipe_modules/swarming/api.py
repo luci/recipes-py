@@ -12,7 +12,6 @@ import base64
 import collections
 import contextlib
 import copy
-import sys
 
 from .state import TaskState
 
@@ -1057,6 +1056,8 @@ class TaskResult(object):
     self._outputs = {}
     self._isolated_outputs = None
     self._cas_outputs = None
+    # This happens most often when `collect` times out before the task
+    # completed.
     if 'error' in raw_results:
       self._output = raw_results['error']
       self._name = None
@@ -1490,7 +1491,7 @@ class SwarmingApi(recipe_api.RecipeApi):
           TaskResult(self.m, task_request, task_id, task,
                      output_dir.join(task_id) if output_dir else None))
 
-    parsed_results.sort(key=lambda result: result.name)
+    parsed_results.sort(key=lambda result: result.name or '')
 
     # Update presentation on collect to reflect bot results.
     for result in parsed_results:
