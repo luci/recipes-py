@@ -489,7 +489,13 @@ class RecipeEngine(object):
         self._write_memory_snapshot(memory_log, 'Step: setup_build')
 
       step.write_line('Running recipe with %s' % (self.properties,))
-      step.add_step_text('running recipe: "%s"' % recipe)
+      py_ver = '%d.%d.%d' % (
+          sys.version_info.major,
+          sys.version_info.minor,
+          sys.version_info.micro,
+      )
+      step.add_step_text('running recipe: "%s" with Python %s' % (
+          recipe, py_ver))
 
   @classmethod
   def run_steps(cls, recipe_deps, properties, stream_engine, step_runner,

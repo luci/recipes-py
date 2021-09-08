@@ -384,20 +384,18 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
     )
     for step in final_build['steps']:
       del step['end_time']
-      del step['start_time']
       del step['logs']
+      del step['start_time']
+      if step['name'] == 'setup_build':
+        del step['summary_markdown']
     self.assertDictEqual(final_build, {
       'status': 'INFRA_FAILURE',
       'summary_markdown': (
         "Infra Failure: Step('sleep forever') (canceled) (retcode: -15)"),
       'steps': [
-        {
-          'name': 'setup_build',
-          'status': 'SUCCESS',
-          'summary_markdown': 'running recipe: "engine_tests/long_sleep"',
-        },
-        { 'name': 'sleep a bit', 'status': 'FAILURE'},
-        { 'name': 'sleep forever', 'status': 'CANCELED'},
+        {'name': 'setup_build', 'status': 'SUCCESS'},
+        {'name': 'sleep a bit', 'status': 'FAILURE'},
+        {'name': 'sleep forever', 'status': 'CANCELED'},
       ],
     })
 
