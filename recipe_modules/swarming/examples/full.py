@@ -26,7 +26,7 @@ DEPS = [
 EXECUTION_TIMEOUT_SECS = 3600
 
 PROPERTIES = {
-    'use_cas': Property(kind=bool, default=False),
+    'use_cas': Property(kind=bool, default=True),
 }
 
 
@@ -212,11 +212,11 @@ def GenTests(api):
   api.swarming.example_task_request_jsonish()
 
   yield api.test('basic')
-  yield (api.test('basic_cas') + api.properties(use_cas=True) +
+  yield (api.test('basic_isolate') + api.properties(use_cas=False) +
          api.override_step_data(
              'collect',
              api.swarming.collect(
-                 [api.swarming.task_result(id='0', name='cas', use_cas=True)])))
+                 [api.swarming.task_result(id='0', name='isolate', use_cas=False)])))
 
   yield api.test('experimental') + api.runtime(
       is_experimental=True)

@@ -147,7 +147,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
                   output='hello world!',
                   outputs=(),
                   bot_id='vm-123',
-                  use_cas=False):
+                  use_cas=True):
     """
     Returns the raw results of a Swarming task.
 
