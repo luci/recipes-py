@@ -12,6 +12,7 @@ import copy
 
 from future.utils import iteritems
 from past.types import basestring
+import six
 
 from .state import TaskState
 
@@ -353,7 +354,7 @@ class TaskRequest(object):
       self._isolated = ''
       self._named_caches = {}
       self._outputs = []
-      self._secret_bytes = ''
+      self._secret_bytes = b''
       self._cas_input_root = ''
 
       # Containment
@@ -720,9 +721,9 @@ class TaskRequest(object):
       """Returns the slice with the given data set as secret bytes.
 
       Args:
-        data (str) - The data to be written to secret bytes.
+        data (bytes) - The data to be written to secret bytes.
       """
-      assert isinstance(data, basestring)
+      assert isinstance(data, six.binary_type)
       ret = self._copy()
       ret._secret_bytes = data
       return ret
@@ -920,13 +921,8 @@ class TaskRequest(object):
         }
 
       if self.secret_bytes:
-        secret_bytes = self.secret_bytes
-        if hasattr(secret_bytes, "encode"):
-          secret_bytes = secret_bytes.encode()
-        secret_bytes = base64.b64encode(secret_bytes)
-        if hasattr(secret_bytes, "decode"):
-          secret_bytes = secret_bytes.decode()
-        properties['secret_bytes'] = secret_bytes
+        properties['secret_bytes'] = base64.b64encode(
+            self.secret_bytes).decode()
       if self.cipd_ensure_file.packages:
         properties['cipd_input'] = {
             'packages': [{
