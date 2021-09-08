@@ -88,6 +88,12 @@ def add_arguments(parser):
       '--py3-details',
       action='store_true', default=False, dest='py3_details',
       help='Show detailed errors from implicit py3 tests.')
+  run_p.add_argument(
+      '--py3-only',
+      action='store_true',
+      default=False,
+      help='Only run the python3 tests. This will not change the results '
+      'of any tests, it just prevents the python2 tests from running.')
 
   helpstr = 'Re-train recipe expectations.'
   train_p = subp.add_parser(
@@ -123,6 +129,13 @@ def add_arguments(parser):
       '--py3-details',
       action='store_true', default=False, dest='py3_details',
       help='Show detailed errors from implicit py3 tests.')
+  train_p.add_argument(
+      '--py3-only',
+      action='store_true',
+      default=False,
+      help='Only run the python3 tests. This will not change the results '
+      'of any tests or whether expectation files are updated, '
+      'it just prevents the python2 tests from running.')
 
   helpstr = 'Print all test names.'
   list_p = subp.add_parser(

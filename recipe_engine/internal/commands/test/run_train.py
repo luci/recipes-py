@@ -61,7 +61,7 @@ def _extract_filter_matchers(test_filters):
 
 # TODO(crbug.com/1147793): Remove the second return value after migration.
 def _push_tests(test_filters, is_train, main_repo, description_queues,
-                recent_fails):
+                recent_fails, py3_only):
   """
   Returns:
     * set - unused_expectation_files
@@ -101,13 +101,13 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
     # Put into both py2 and py3 pools by default, unless this recipe's python
     # compatibility is explicitly labeled.
     if not recipe.is_python_version_labeled:
-      description_queues.py2.put(
-          Description(
-              recipe_name=recipe.name,
-              test_name=test_case.name,
-              expect_py_incompatibility=(
-                  not recipe.effective_python_compatibility)
-          ))
+      if not py3_only:
+        description_queues.py2.put(
+            Description(
+                recipe_name=recipe.name,
+                test_name=test_case.name,
+                expect_py_incompatibility=(
+                    not recipe.effective_python_compatibility)))
       description_queues.py3.put(
           Description(
               recipe_name=recipe.name,
@@ -124,15 +124,15 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
               labeled_py_compat='PY3',
           ))
     elif recipe.python_version_compatibility == 'PY2+3':
-      description_queues.py2.put(
-          Description(
-              recipe_name=recipe.name,
-              test_name=test_case.name,
-              expect_py_incompatibility=(
-                  True if recipe.effective_python_compatibility in (None, 'PY3')
-                  else False),
-              labeled_py_compat='PY2+3',
-          ))
+      if not py3_only:
+        description_queues.py2.put(
+            Description(
+                recipe_name=recipe.name,
+                test_name=test_case.name,
+                expect_py_incompatibility=(
+                    recipe.effective_python_compatibility in (None, 'PY3')),
+                labeled_py_compat='PY2+3',
+            ))
       description_queues.py3.put(
           Description(
               recipe_name=recipe.name,
@@ -143,13 +143,15 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
               labeled_py_compat='PY2+3',
           ))
     else:
-      description_queues.py2.put(
-        Description(
-          recipe_name=recipe.name,
-          test_name=test_case.name,
-          expect_py_incompatibility=not recipe.effective_python_compatibility,
-          labeled_py_compat='PY2',
-        ))
+      if not py3_only:
+        description_queues.py2.put(
+            Description(
+                recipe_name=recipe.name,
+                test_name=test_case.name,
+                expect_py_incompatibility=(
+                    not recipe.effective_python_compatibility),
+                labeled_py_compat='PY2',
+            ))
     gevent.sleep()  # let any blocking threads pick this up
 
   # If filters are enabled, we'll only clean up expectation files for recipes
@@ -203,7 +205,7 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
 
 
 def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
-         filtered_stacks, stop, jobs, enable_py3_details):
+         filtered_stacks, stop, jobs, enable_py3_details, py3_only):
   """Run tests in py2 and py3 subprocess pools.
 
   Side effects:
@@ -282,7 +284,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
 
     unused_expectation_files, has_labeled_recipe = _push_tests(
         test_filters, is_train, main_repo, description_queues,
-        fail_tracker.recent_fails)
+        fail_tracker.recent_fails, py3_only)
     for test_result in test_results:
       test_result.unused_expectation_files.extend(unused_expectation_files)
 
@@ -377,7 +379,8 @@ def main(args):
 
   try:
     _run(ret, args.recipe_deps, args.use_emoji, args.test_filters, is_train,
-         args.filtered_stacks, args.stop, args.jobs, args.py3_details)
+         args.filtered_stacks, args.stop, args.jobs, args.py3_details,
+         args.py3_only)
     _dump()
   except KeyboardInterrupt:
     args.docs = False  # skip docs
