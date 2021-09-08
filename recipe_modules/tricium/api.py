@@ -29,6 +29,11 @@ class TriciumApi(recipe_api.RecipeApi):
   LegacyAnalyzer = legacy_analyzers.LegacyAnalyzer
   analyzers = legacy_analyzers.Analyzers
 
+  # The limit on the number of comments that can be added via this recipe.
+  #
+  # Any comments added after this threshold is reached will be dropped.
+  _comments_num_limit = 1000
+
   def __init__(self, **kwargs):
     """Sets up the API.
 
@@ -109,19 +114,16 @@ class TriciumApi(recipe_api.RecipeApi):
     results = Data.Results()
     results.comments.extend(self._comments)
     step = self.m.step('write results', [])
-    num_comments = len(results.comments)
-    limit = 50
-    if num_comments > limit:
-      # Tricium will refuse to post comments if there are too many, but we
-      # don't yet know how many of these comments are included in changed lines
-      # and would be posted. Add a warning to try to help with clarification in
-      # the case that Tricium unexpectedly emits no comments.
+    if len(results.comments) > self._comments_num_limit:
+      # We don't yet know how many of these comments are included in changed
+      # lines and would be posted. Add a warning to try to help with
+      # clarification in the case that Tricium unexpectedly emits no comments.
       step.presentation.status = self.m.step.WARNING
       step.presentation.step_text = (
           '%s comments created, Tricium may refuse to post comments if there '
           'are too many in changed lines. This build sends only the first %s '
-          'comments.' % (num_comments, limit))
-      comments = results.comments[:limit]
+          'comments.' % (len(results.comments), self._comments_num_limit))
+      comments = results.comments[:self._comments_num_limit]
       del results.comments[:]
       results.comments.extend(comments)
 
