@@ -11,8 +11,6 @@ import json
 import os
 import sys
 
-from future.utils import iteritems
-
 
 def main(args):
   parser = argparse.ArgumentParser(description='Create symlinks')
