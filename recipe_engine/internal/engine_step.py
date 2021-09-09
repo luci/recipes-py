@@ -151,8 +151,14 @@ class StepConfig(object):
     attr_seq_type(int)(self, attrib, value)
 
   # If True and the step returns an unacceptable return code (see `ok_ret`),
-  # this will raise InfraFailure instead of StepFailure.
+  # this will cause the step's status to be EXCEPTION rather than FAILURE.
   infra_step = attr.ib(default=False, validator=attr_type(bool))
+
+  # If True and the step's status is not SUCCESS, a StepFailure or InfraFailure
+  # will be raised, depending on the step's status (see `infra_step`). (An
+  # exception will be raised in the case of a canceled step regardless of the
+  # value of this attribute).
+  raise_on_failure = attr.ib(default=True, validator=attr_type(bool))
 
   # If True, this step will be created as `merge step` and run a LUCI
   # executable.

@@ -398,25 +398,40 @@ class StepApi(recipe_api.RecipeApiPlain):
       build.ClearField(f)
     return build
 
-  def _run_or_raise_step(self, step_config):
-    ret = self.step_client.run_step(step_config)
-    if ret.presentation.status == self.SUCCESS:
-      return ret
+  def _raise_on_disallowed_statuses(self, result, allowed_statuses):
+    if result.presentation.status in allowed_statuses:
+      return result
 
     # Otherwise we raise an appropriate error based on ret.presentation.status.
     exc = {
-      'FAILURE': self.StepFailure,
-      'WARNING': self.StepWarning,
-      'EXCEPTION': self.InfraFailure,
-      'CANCELED': self.InfraFailure,
-    }[ret.presentation.status]
+        'FAILURE': self.StepFailure,
+        'WARNING': self.StepWarning,
+        'EXCEPTION': self.InfraFailure,
+        'CANCELED': self.InfraFailure,
+    }[result.presentation.status]
     # TODO(iannucci): Use '|' instead of '.'
-    raise exc('.'.join(ret.name_tokens), ret)
+    raise exc('.'.join(result.name_tokens), result)
+
+  def raise_on_failure(self, result):
+    return self._raise_on_disallowed_statuses(result, [self.SUCCESS])
+
+  def _run_or_raise_step(self, step_config):
+    ret = self.step_client.run_step(step_config)
+    allowed_statuses = [self.SUCCESS]
+    if not step_config.raise_on_failure:
+      allowed_statuses += [self.WARNING, self.FAILURE, self.EXCEPTION]
+    return self._raise_on_disallowed_statuses(ret, allowed_statuses)
 
   @recipe_api.composite_step
-  def sub_build(self, name, cmd, build,
-                output_path=None, timeout=None,
-                step_test_data=None, cost=_ResourceCost()):
+  def sub_build(self,
+                name,
+                cmd,
+                build,
+                raise_on_failure=True,
+                output_path=None,
+                timeout=None,
+                step_test_data=None,
+                cost=_ResourceCost()):
     """Launch a sub-build by invoking a LUCI executable. All steps in the
     sub-build will appear as child steps of this step (Merge Step).
 
@@ -462,6 +477,12 @@ class StepApi(recipe_api.RecipeApiPlain):
         the clone's fields and pass the clone to luciexe (see 'Invocation'
         section in http://go.chromium.org/luci/luciexe for what modification
         will be done).
+      * raise_on_failure: Whether or not the step will raise on failure. If
+        True, a StepFailure will be raised if the step's status is FAILURE, an
+        InfraFailure will be raised if the step's status is EXCEPTION and a
+        StepWarning will be raised if the step's status is WARNING. Regardless
+        of the value of this argument, an InfraFailure will be raised if the
+        step is canceled.
       * output_path (None|str|Path): The value of the `--output` flag. If
         provided, it should be a path to a non-existent file (its directory
         MUST exist). The extension of the path dictates the encoding format of
@@ -499,28 +520,40 @@ class StepApi(recipe_api.RecipeApiPlain):
       env = self.m.context.env
       env_prefixes = self.m.context.env_prefixes
 
-    return self._run_or_raise_step(self.step_client.StepConfig(
-        name=name,
-        cmd=cmd,
-        cost=self._normalize_cost(cost),
-        cwd=self._normalize_cwd(self.m.context.cwd),
-        env=env,
-        env_prefixes=self._to_env_affix(env_prefixes),
-        env_suffixes=self._to_env_affix(self.m.context.env_suffixes),
-        timeout=timeout,
-        luci_context=self.m.context.luci_context,
-        stdin=self.m.proto.input(self._make_initial_build(build), 'BINARY'),
-        infra_step=self.m.context.infra_step or False,
-        merge_step=True,
-        # The return code of LUCI executable should be omitted
-        ok_ret=self.step_client.StepConfig.ALL_OK,
-        step_test_data=step_test_data,
-    ))
+    return self._run_or_raise_step(
+        self.step_client.StepConfig(
+            name=name,
+            cmd=cmd,
+            cost=self._normalize_cost(cost),
+            cwd=self._normalize_cwd(self.m.context.cwd),
+            env=env,
+            env_prefixes=self._to_env_affix(env_prefixes),
+            env_suffixes=self._to_env_affix(self.m.context.env_suffixes),
+            timeout=timeout,
+            luci_context=self.m.context.luci_context,
+            stdin=self.m.proto.input(self._make_initial_build(build), 'BINARY'),
+            infra_step=self.m.context.infra_step or False,
+            raise_on_failure=raise_on_failure,
+            merge_step=True,
+            # The return code of LUCI executable should be omitted
+            ok_ret=self.step_client.StepConfig.ALL_OK,
+            step_test_data=step_test_data,
+        ))
 
   @recipe_api.composite_step
-  def __call__(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(),
-               timeout=None, stdout=None, stderr=None, stdin=None,
-               step_test_data=None, cost=_ResourceCost()):
+  def __call__(self,
+               name,
+               cmd,
+               ok_ret=(0,),
+               infra_step=False,
+               raise_on_failure=True,
+               wrapper=(),
+               timeout=None,
+               stdout=None,
+               stderr=None,
+               stdin=None,
+               step_test_data=None,
+               cost=_ResourceCost()):
     """Returns a step dictionary which is compatible with annotator.py.
 
     Args:
@@ -540,7 +573,13 @@ class StepApi(recipe_api.RecipeApiPlain):
         to be returned. Defaults to {0}.
       * infra_step: Whether or not this is an infrastructure step.
         Failing infrastructure steps will place the step in an EXCEPTION state
-        and raise InfraFailure.
+        and if raise_on_failure is True an InfraFailure will be raised.
+      * raise_on_failure: Whether or not the step will raise on failure. If
+        True, a StepFailure will be raised if the step's status is FAILURE, an
+        InfraFailure will be raised if the step's status is EXCEPTION and a
+        StepWarning will be raised if the step's status is WARNING. Regardless
+        of the value of this argument, an InfraFailure will be raised if the
+        step is canceled.
       * wrapper: If supplied, a command to prepend to the executed step as a
         command wrapper.
       * timeout: If supplied, the recipe engine will kill the step after the
@@ -581,20 +620,22 @@ class StepApi(recipe_api.RecipeApiPlain):
     if ok_ret in ('any', 'all'):
       ok_ret = self.step_client.StepConfig.ALL_OK
 
-    return self._run_or_raise_step(self.step_client.StepConfig(
-        name=name,
-        cmd=cmd,
-        cost=self._normalize_cost(cost),
-        cwd=self._normalize_cwd(self.m.context.cwd),
-        env=self.m.context.env,
-        env_prefixes=self._to_env_affix(env_prefixes),
-        env_suffixes=self._to_env_affix(self.m.context.env_suffixes),
-        timeout=timeout,
-        luci_context=self.m.context.luci_context,
-        infra_step=self.m.context.infra_step or bool(infra_step),
-        stdout=stdout,
-        stderr=stderr,
-        stdin=stdin,
-        ok_ret=ok_ret,
-        step_test_data=step_test_data,
-    ))
+    return self._run_or_raise_step(
+        self.step_client.StepConfig(
+            name=name,
+            cmd=cmd,
+            cost=self._normalize_cost(cost),
+            cwd=self._normalize_cwd(self.m.context.cwd),
+            env=self.m.context.env,
+            env_prefixes=self._to_env_affix(env_prefixes),
+            env_suffixes=self._to_env_affix(self.m.context.env_suffixes),
+            timeout=timeout,
+            luci_context=self.m.context.luci_context,
+            infra_step=self.m.context.infra_step or bool(infra_step),
+            raise_on_failure=raise_on_failure,
+            stdout=stdout,
+            stderr=stderr,
+            stdin=stdin,
+            ok_ret=ok_ret,
+            step_test_data=step_test_data,
+        ))

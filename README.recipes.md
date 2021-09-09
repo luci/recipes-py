@@ -152,6 +152,7 @@
   * [step:tests/defer](#recipes-step_tests_defer) (Python3 ✅)
   * [step:tests/inject_paths](#recipes-step_tests_inject_paths) (Python3 ✅)
   * [step:tests/nested](#recipes-step_tests_nested) (Python3 ✅)
+  * [step:tests/raise_on_failure](#recipes-step_tests_raise_on_failure) (Python3 ✅)
   * [step:tests/stdio](#recipes-step_tests_stdio) (Python3 ✅)
   * [step:tests/step_call_args](#recipes-step_tests_step_call_args) (Python3 ✅)
   * [step:tests/step_cost](#recipes-step_tests_step_cost) (Python3 ✅)
@@ -3197,7 +3198,7 @@ Usage:
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#520)(self, name, cmd, ok_ret=(0,), infra_step=False, wrapper=(), timeout=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#543)(self, name, cmd, ok_ret=(0,), infra_step=False, raise_on_failure=True, wrapper=(), timeout=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
 
 Returns a step dictionary which is compatible with annotator.py.
 
@@ -3218,7 +3219,13 @@ Args:
     to be returned. Defaults to {0}.
   * infra_step: Whether or not this is an infrastructure step.
     Failing infrastructure steps will place the step in an EXCEPTION state
-    and raise InfraFailure.
+    and if raise_on_failure is True an InfraFailure will be raised.
+  * raise_on_failure: Whether or not the step will raise on failure. If
+    True, a StepFailure will be raised if the step's status is FAILURE, an
+    InfraFailure will be raised if the step's status is EXCEPTION and a
+    StepWarning will be raised if the step's status is WARNING. Regardless
+    of the value of this argument, an InfraFailure will be raised if the
+    step is canceled.
   * wrapper: If supplied, a command to prepend to the executed step as a
     command wrapper.
   * timeout: If supplied, the recipe engine will kill the step after the
@@ -3350,7 +3357,9 @@ Args:
 Yields a StepPresentation for this dummy step, which you may update as you
 please.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#416)(self, name, cmd, build, output_path=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
+&mdash; **def [raise\_on\_failure](/recipe_modules/step/api.py#415)(self, result):**
+
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#425)(self, name, cmd, build, raise_on_failure=True, output_path=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
 
 Launch a sub-build by invoking a LUCI executable. All steps in the
 sub-build will appear as child steps of this step (Merge Step).
@@ -3397,6 +3406,12 @@ Args:
     the clone's fields and pass the clone to luciexe (see 'Invocation'
     section in http://go.chromium.org/luci/luciexe for what modification
     will be done).
+  * raise_on_failure: Whether or not the step will raise on failure. If
+    True, a StepFailure will be raised if the step's status is FAILURE, an
+    InfraFailure will be raised if the step's status is EXCEPTION and a
+    StepWarning will be raised if the step's status is WARNING. Regardless
+    of the value of this argument, an InfraFailure will be raised if the
+    step is canceled.
   * output_path (None|str|Path): The value of the `--output` flag. If
     provided, it should be a path to a non-existent file (its directory
     MUST exist). The extension of the path dictates the encoding format of
@@ -4655,6 +4670,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/nested.py#15)(api):**
+### *recipes* / [step:tests/raise\_on\_failure](/recipe_modules/step/tests/raise_on_failure.py)
+
+[DEPS](/recipe_modules/step/tests/raise_on_failure.py#9): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+&mdash; **def [RunSteps](/recipe_modules/step/tests/raise_on_failure.py#18)(api, infra_step):**
 ### *recipes* / [step:tests/stdio](/recipe_modules/step/tests/stdio.py)
 
 [DEPS](/recipe_modules/step/tests/stdio.py#7): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
