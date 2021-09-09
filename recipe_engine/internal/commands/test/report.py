@@ -121,6 +121,10 @@ class Reporter(object):
         print('Global failure(s):')
         for failure in outcome_msg.internal_error:
           print('  ', failure)
+      if (py == 'py3' and 'Broken pipe' in outcome_msg.internal_error[0] and
+          not self._enable_py3_details):
+        print('py3 runner may exit unexpectedly. '
+              'Pass --py3-details to see more')
       if can_abort:
         sys.exit(1)
       return True, len(outcome_msg.test_results)
