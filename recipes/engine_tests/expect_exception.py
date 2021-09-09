@@ -26,4 +26,4 @@ def GenTests(api):
       'basic',
       api.expect_exception('TypeError'),
       api.post_process(post_process.ResultReason,
-                       "Uncaught Exception: TypeError('BAD DOGE',)"))
+                       "Uncaught Exception: TypeError('BAD DOGE')"))

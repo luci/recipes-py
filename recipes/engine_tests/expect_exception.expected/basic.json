@@ -16,7 +16,7 @@
   },
   {
     "failure": {
-      "humanReason": "Uncaught Exception: TypeError('BAD DOGE',)"
+      "humanReason": "Uncaught Exception: TypeError('BAD DOGE')"
     },
     "name": "$result"
   }

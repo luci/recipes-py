@@ -33,8 +33,8 @@ def GenTests(api):
       api.expect_exception('ModuleInjectionError') +
       api.post_process(
           post_process.ResultReason,
-          "Uncaught Exception: ModuleInjectionError(\"RecipeApi has no "
-          "dependency 'missing_module'. (Add it to DEPS?)\",)",
+          "Uncaught Exception: ModuleInjectionError('RecipeApi has no "
+          "dependency 'missing_module'. (Add it to DEPS?)')",
       ) +
       api.post_process(post_process.DropExpectation))
 
@@ -44,8 +44,8 @@ def GenTests(api):
       api.expect_exception('AttributeError') +
       api.post_process(
           post_process.ResultReason,
-          "Uncaught Exception: AttributeError(\"'PythonApi' object has no "
-          "attribute 'missing_method'\",)",
+          "Uncaught Exception: AttributeError(''PythonApi' object has no "
+          "attribute 'missing_method'')",
       ) +
       api.post_process(post_process.DropExpectation))
 
@@ -55,8 +55,8 @@ def GenTests(api):
       api.expect_exception('ModuleInjectionError') +
       api.post_process(
           post_process.ResultReason,
-          "Uncaught Exception: ModuleInjectionError(\"Recipe Module "
+          "Uncaught Exception: ModuleInjectionError('Recipe Module "
           "'python' has no dependency 'missing_module'. (Add it to "
-          "__init__.py:DEPS?)\",)",
+          "__init__.py:DEPS?)')",
       ) +
       api.post_process(post_process.DropExpectation))

@@ -36,7 +36,7 @@ def GenTests(api):
     api.test('basic') +
     api.expect_exception('Exception') +
     api.post_process(post_process.ResultReason,
-                     "Uncaught Exception: Exception('EXPLOSION',)") +
+                     "Uncaught Exception: Exception('EXPLOSION')") +
     api.post_process(post_process.DropExpectation)
   )
 
