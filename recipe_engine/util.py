@@ -415,3 +415,11 @@ def unify_json_load_err(err):
       err.startswith('Expecting value')):
     return py2_err
   return py2_err if err.startswith(py2_err) else 'Wrong JSON object format'
+
+
+def format_ex(ex):
+  """Return the same format of string representation for Exception objects in
+  both python2 and python3.
+  """
+  return "%s(%s)" % (type(ex).__name__,
+                     ', '.join("'%s'" % str(arg) for arg in ex.args))

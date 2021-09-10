@@ -539,10 +539,6 @@ class RecipeEngine(object):
     assert 'recipe' in properties
     recipe = properties['recipe']
 
-    def _format_ex(ex):
-      return "%s(%s)" % (type(ex).__name__,
-                         ', '.join("'%s'" % str(arg) for arg in ex.args))
-
     try:
       # This does all loading and importing of the recipe script.
       recipe_obj = recipe_deps.main_repo.recipes[recipe]
@@ -564,7 +560,7 @@ class RecipeEngine(object):
       # TODO(iannucci): differentiate infra failure and user failure; will
       # result in expectation changes, but that should be safe in its own CL.
       result.status = common_pb2.INFRA_FAILURE
-      result.summary_markdown = 'Uncaught exception: ' + _format_ex(ex)
+      result.summary_markdown = 'Uncaught exception: ' + util.format_ex(ex)
       return result, uncaught_exception
 
     # TODO(iannucci): Don't skip this during tests (but maybe filter it out from
@@ -575,7 +571,7 @@ class RecipeEngine(object):
       except Exception as ex:
         _log_crash(stream_engine, 'setup_build')
         result.status = common_pb2.INFRA_FAILURE
-        result.summary_markdown = 'Uncaught Exception: ' + _format_ex(ex)
+        result.summary_markdown = 'Uncaught Exception: ' + util.format_ex(ex)
         return result, uncaught_exception
 
     try:
@@ -609,13 +605,13 @@ class RecipeEngine(object):
     except Exception as ex:  # pylint: disable=broad-except
       _log_crash(stream_engine, 'Uncaught exception')
       result.status = common_pb2.INFRA_FAILURE
-      result.summary_markdown = 'Uncaught Exception: ' + _format_ex(ex)
+      result.summary_markdown = 'Uncaught Exception: ' + util.format_ex(ex)
       uncaught_exception = sys.exc_info()
 
     except CrashEngine as ex:
       _log_crash(stream_engine, 'Engine Crash')
       result.status = common_pb2.INFRA_FAILURE
-      result.summary_markdown = repr(ex)
+      result.summary_markdown = util.format_ex(ex)
 
     return result, uncaught_exception
 
