@@ -3198,7 +3198,7 @@ Usage:
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#543)(self, name, cmd, ok_ret=(0,), infra_step=False, raise_on_failure=True, wrapper=(), timeout=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#566)(self, name, cmd, ok_ret=(0,), infra_step=False, raise_on_failure=True, wrapper=(), timeout=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
 
 Returns a step dictionary which is compatible with annotator.py.
 
@@ -3357,9 +3357,29 @@ Args:
 Yields a StepPresentation for this dummy step, which you may update as you
 please.
 
-&mdash; **def [raise\_on\_failure](/recipe_modules/step/api.py#415)(self, result):**
+&mdash; **def [raise\_on\_failure](/recipe_modules/step/api.py#417)(self, result, status_override=None):**
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#425)(self, name, cmd, build, raise_on_failure=True, output_path=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
+Raise an appropriate exception if a step is not successful.
+
+Arguments:
+  * result - The step result.
+  * status_override - An optional status value to override the status
+    present on the result of the step. This allows for the exception to
+    include information about the result and be based off of the initial
+    status even if the step's status has subsequently been changed, which
+    aligns with the behavior that would occur if a step was executed with
+    raise_on_failure=True and a step's status was changed in a finally
+    block.
+
+Returns:
+  If the step's status is SUCCESS, the step result will be returned.
+
+Raises:
+  * StepFailure if the step's status is FAILURE
+  * StepWarning if the step's status is WARNING
+  * InfraFailure if the step's status is EXCEPTION or CANCELED
+
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#448)(self, name, cmd, build, raise_on_failure=True, output_path=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
 
 Launch a sub-build by invoking a LUCI executable. All steps in the
 sub-build will appear as child steps of this step (Merge Step).
@@ -4676,7 +4696,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/raise_on_failure.py#18)(api, infra_step):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/raise_on_failure.py#19)(api, infra_step, set_status_to_exception):**
 ### *recipes* / [step:tests/stdio](/recipe_modules/step/tests/stdio.py)
 
 [DEPS](/recipe_modules/step/tests/stdio.py#7): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

@@ -398,8 +398,10 @@ class StepApi(recipe_api.RecipeApiPlain):
       build.ClearField(f)
     return build
 
-  def _raise_on_disallowed_statuses(self, result, allowed_statuses):
-    if result.presentation.status in allowed_statuses:
+  def _raise_on_disallowed_statuses(self, result, allowed_statuses,
+                                    status_override=None):
+    status = status_override or result.presentation.status
+    if status in allowed_statuses:
       return result
 
     # Otherwise we raise an appropriate error based on ret.presentation.status.
@@ -408,12 +410,33 @@ class StepApi(recipe_api.RecipeApiPlain):
         'WARNING': self.StepWarning,
         'EXCEPTION': self.InfraFailure,
         'CANCELED': self.InfraFailure,
-    }[result.presentation.status]
+    }[status]
     # TODO(iannucci): Use '|' instead of '.'
     raise exc('.'.join(result.name_tokens), result)
 
-  def raise_on_failure(self, result):
-    return self._raise_on_disallowed_statuses(result, [self.SUCCESS])
+  def raise_on_failure(self, result, status_override=None):
+    """Raise an appropriate exception if a step is not successful.
+
+    Arguments:
+      * result - The step result.
+      * status_override - An optional status value to override the status
+        present on the result of the step. This allows for the exception to
+        include information about the result and be based off of the initial
+        status even if the step's status has subsequently been changed, which
+        aligns with the behavior that would occur if a step was executed with
+        raise_on_failure=True and a step's status was changed in a finally
+        block.
+
+    Returns:
+      If the step's status is SUCCESS, the step result will be returned.
+
+    Raises:
+      * StepFailure if the step's status is FAILURE
+      * StepWarning if the step's status is WARNING
+      * InfraFailure if the step's status is EXCEPTION or CANCELED
+    """
+    return self._raise_on_disallowed_statuses(
+        result, [self.SUCCESS], status_override=status_override)
 
   def _run_or_raise_step(self, step_config):
     ret = self.step_client.run_step(step_config)
