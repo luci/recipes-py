@@ -8,7 +8,7 @@
   * [buildbucket](#recipe_modules-buildbucket) (Python3 ✅) &mdash; API for interacting with the buildbucket service.
   * [cas](#recipe_modules-cas) (Python3 ✅) &mdash; API for interacting with cas client.
   * [cipd](#recipe_modules-cipd) (Python3 ✅) &mdash; API for interacting with CIPD.
-  * [commit_position](#recipe_modules-commit_position)
+  * [commit_position](#recipe_modules-commit_position) (Python3 ✅)
   * [context](#recipe_modules-context) (Python3 ✅) &mdash; The context module provides APIs for manipulating a few pieces of 'ambient' data that affect how steps are run.
   * [cq](#recipe_modules-cq) (Python3 ✅) &mdash; Recipe API for LUCI CQ, the pre-commit testing system.
   * [file](#recipe_modules-file) (Python3 ✅) &mdash; File manipulation (read/write/delete/glob) methods.
@@ -17,8 +17,8 @@
   * [isolated](#recipe_modules-isolated) (Python3 ✅)
   * [json](#recipe_modules-json) (Python3 ✅) &mdash; Methods for producing and consuming JSON.
   * [led](#recipe_modules-led) (Python3 ✅) &mdash; An interface to call the led tool.
-  * [legacy_annotation](#recipe_modules-legacy_annotation) &mdash; Legacy Annotation module provides support for running a command emitting legacy @@@annotation@@@ in the new luciexe mode.
-  * [milo](#recipe_modules-milo) &mdash; API for specifying Milo behavior.
+  * [legacy_annotation](#recipe_modules-legacy_annotation) (Python3 ✅) &mdash; Legacy Annotation module provides support for running a command emitting legacy @@@annotation@@@ in the new luciexe mode.
+  * [milo](#recipe_modules-milo) (Python3 ✅) &mdash; API for specifying Milo behavior.
   * [path](#recipe_modules-path) (Python3 ✅) &mdash; All functions related to manipulating paths in recipes.
   * [platform](#recipe_modules-platform) (Python3 ✅) &mdash; Mockable system platform identity functions.
   * [properties](#recipe_modules-properties) (Python3 ✅) &mdash; Provides access to the recipes input properties.
@@ -59,7 +59,7 @@
   * [buildbucket:tests/search](#recipes-buildbucket_tests_search) (Python3 ✅)
   * [cas:examples/full](#recipes-cas_examples_full) (Python3 ✅)
   * [cipd:examples/full](#recipes-cipd_examples_full) (Python3 ✅)
-  * [commit_position:examples/full](#recipes-commit_position_examples_full)
+  * [commit_position:examples/full](#recipes-commit_position_examples_full) (Python3 ✅)
   * [context:examples/full](#recipes-context_examples_full) (Python3 ✅)
   * [context:tests/cwd](#recipes-context_tests_cwd) (Python3 ✅)
   * [context:tests/env](#recipes-context_tests_env) (Python3 ✅)
@@ -124,8 +124,8 @@
   * [json:tests/add_json_log](#recipes-json_tests_add_json_log) (Python3 ✅)
   * [led:tests/full](#recipes-led_tests_full) (Python3 ✅)
   * [led:tests/no_exist](#recipes-led_tests_no_exist) (Python3 ✅)
-  * [legacy_annotation:examples/full](#recipes-legacy_annotation_examples_full)
-  * [milo:examples/full](#recipes-milo_examples_full)
+  * [legacy_annotation:examples/full](#recipes-legacy_annotation_examples_full) (Python3 ✅)
+  * [milo:examples/full](#recipes-milo_examples_full) (Python3 ✅)
   * [path:examples/full](#recipes-path_examples_full) (Python3 ✅)
   * [platform:examples/full](#recipes-platform_examples_full) (Python3 ✅)
   * [properties:examples/full](#recipes-properties_examples_full) (Python3 ✅)
@@ -1035,7 +1035,7 @@ Args:
 Returns the CIPDApi.Pin instance.
 ### *recipe_modules* / [commit\_position](/recipe_modules/commit_position)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 #### **class [CommitPositionApi](/recipe_modules/commit_position/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
 
@@ -2108,9 +2108,9 @@ A unique string identifier for this led job.
 If the current build is *not* a led job, value will be an empty string.
 ### *recipe_modules* / [legacy\_annotation](/recipe_modules/legacy_annotation)
 
-[DEPS](/recipe_modules/legacy_annotation/__init__.py#5): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/legacy_annotation/__init__.py#7): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Legacy Annotation module provides support for running a command emitting
 legacy @@@annotation@@@ in the new luciexe mode.
@@ -2131,9 +2131,9 @@ mode or simulation mode. Otherwise, it will fall back to launch a step
 with allow_subannotation set to true.
 ### *recipe_modules* / [milo](/recipe_modules/milo)
 
-[DEPS](/recipe_modules/milo/__init__.py#6): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
+[DEPS](/recipe_modules/milo/__init__.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 API for specifying Milo behavior.
 
@@ -3947,11 +3947,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/cipd/examples/full.py#39)(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files, install_mode, refs, tags, metadata, max_threads):**
 ### *recipes* / [commit\_position:examples/full](/recipe_modules/commit_position/examples/full.py)
 
-[DEPS](/recipe_modules/commit_position/examples/full.py#5): [commit\_position](#recipe_modules-commit_position), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/commit_position/examples/full.py#7): [commit\_position](#recipe_modules-commit_position), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/commit_position/examples/full.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/commit_position/examples/full.py#13)(api):**
 ### *recipes* / [context:examples/full](/recipe_modules/context/examples/full.py)
 
 [DEPS](/recipe_modules/context/examples/full.py#11): [context](#recipe_modules-context), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time)
@@ -4486,18 +4486,18 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/led/tests/no_exist.py#12)(api):**
 ### *recipes* / [legacy\_annotation:examples/full](/recipe_modules/legacy_annotation/examples/full.py)
 
-[DEPS](/recipe_modules/legacy_annotation/examples/full.py#5): [legacy\_annotation](#recipe_modules-legacy_annotation), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/legacy_annotation/examples/full.py#7): [legacy\_annotation](#recipe_modules-legacy_annotation), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/legacy_annotation/examples/full.py#18)(api):**
+&mdash; **def [RunSteps](/recipe_modules/legacy_annotation/examples/full.py#20)(api):**
 ### *recipes* / [milo:examples/full](/recipe_modules/milo/examples/full.py)
 
-[DEPS](/recipe_modules/milo/examples/full.py#7): [milo](#recipe_modules-milo)
+[DEPS](/recipe_modules/milo/examples/full.py#9): [milo](#recipe_modules-milo)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/milo/examples/full.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/milo/examples/full.py#13)(api):**
 ### *recipes* / [path:examples/full](/recipe_modules/path/examples/full.py)
 
 [DEPS](/recipe_modules/path/examples/full.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

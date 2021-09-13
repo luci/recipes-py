@@ -29,7 +29,7 @@ class CommitPositionApi(recipe_api.RecipeApi):
 
     ref must start with 'refs/'.
     """
-    assert isinstance(ref, basestring)
+    assert isinstance(ref, str)
     assert ref.startswith('refs/'), ref
     revision_number = int(revision_number)
     return '%s@{#%d}' % (ref, revision_number)
