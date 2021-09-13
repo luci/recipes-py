@@ -24,7 +24,7 @@
   * [properties](#recipe_modules-properties) (Python3 ✅) &mdash; Provides access to the recipes input properties.
   * [proto](#recipe_modules-proto) &mdash; Methods for producing and consuming protobuf data to/from steps and the filesystem.
   * [python](#recipe_modules-python) (Python3 ✅) &mdash; Provides methods for running python scripts correctly.
-  * [random](#recipe_modules-random) &mdash; Allows randomness in recipes.
+  * [random](#recipe_modules-random) (Python3 ✅) &mdash; Allows randomness in recipes.
   * [raw_io](#recipe_modules-raw_io) (Python3 ✅) &mdash; Provides objects for reading and writing raw data to and from steps.
   * [resultdb](#recipe_modules-resultdb) &mdash; API for interacting with the ResultDB service.
   * [runtime](#recipe_modules-runtime) (Python3 ✅)
@@ -133,7 +133,7 @@
   * [proto:tests/placeholders](#recipes-proto_tests_placeholders) (Python3 ✅)
   * [python:examples/full](#recipes-python_examples_full) (Python3 ✅) &mdash; Launches the repo bundler.
   * [python:tests/infra_failing_step](#recipes-python_tests_infra_failing_step) (Python3 ✅) &mdash; Tests for api.
-  * [random:tests/full](#recipes-random_tests_full)
+  * [random:tests/full](#recipes-random_tests_full) (Python3 ✅)
   * [raw_io:examples/full](#recipes-raw_io_examples_full) (Python3 ✅)
   * [resultdb:examples/exonerate](#recipes-resultdb_examples_exonerate)
   * [resultdb:examples/include](#recipes-resultdb_examples_include)
@@ -2647,7 +2647,7 @@ lines with newline character instead.
 Runs a succeeding step (exits 0).
 ### *recipe_modules* / [random](/recipe_modules/random)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Allows randomness in recipes.
 
@@ -4557,11 +4557,11 @@ Tests for api.python.infra_failing_step.
 &mdash; **def [RunSteps](/recipe_modules/python/tests/infra_failing_step.py#17)(api):**
 ### *recipes* / [random:tests/full](/recipe_modules/random/tests/full.py)
 
-[DEPS](/recipe_modules/random/tests/full.py#5): [random](#recipe_modules-random), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/random/tests/full.py#7): [random](#recipe_modules-random), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/random/tests/full.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/random/tests/full.py#13)(api):**
 ### *recipes* / [raw\_io:examples/full](/recipe_modules/raw_io/examples/full.py)
 
 [DEPS](/recipe_modules/raw_io/examples/full.py#8): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
