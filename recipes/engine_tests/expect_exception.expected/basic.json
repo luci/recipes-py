@@ -11,7 +11,7 @@
       "    my_function()",
       "  File \"RECIPE_REPO[recipe_engine]/recipes/engine_tests/expect_exception.py\", line 17, in my_function",
       "    raise TypeError(\"BAD DOGE\")",
-      "TypeError: BAD DOGE"
+      "TypeError('BAD DOGE')"
     ]
   },
   {

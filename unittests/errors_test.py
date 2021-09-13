@@ -103,8 +103,7 @@ class ErrorsTest(test_env.RecipeEngineUnitTest):
 
     def _assert_keyerror(output):
       self.assertRegexpMatches(
-          output, r"KeyError: 'Unknown path: bippityboppityboo'")
-
+          output, "KeyError.{1,3}Unknown path: bippityboppityboo.{1,3}")
     self._test_cmd(deps, ['test', 'train', '--filter', 'missing_path'],
                    asserts=_assert_keyerror, retcode=1)
     self._test_cmd(deps, ['test', 'run', '--filter', 'missing_path'],

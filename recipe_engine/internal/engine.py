@@ -1052,12 +1052,11 @@ def _log_crash(stream_engine, crash_location):
     stream.write_line('')
     stream.write_line('Traceback (most recent call last):')
     try:
-      exc_type, exc, tback = sys.exc_info()
+      _, exc, tback = sys.exc_info()
       for line in traceback.format_list(util.extract_tb(tback)):
         for line in line.splitlines():
           stream.write_line(line)
-      for line in traceback.format_exception_only(exc_type, exc):
-        for line in line.splitlines():
-          stream.write_line(line)
+      for line in util.format_ex(exc).splitlines():
+        stream.write_line(line)
     finally:
       del tback
