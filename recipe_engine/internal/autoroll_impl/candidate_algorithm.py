@@ -153,7 +153,8 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
       }
 
       LOGGER.info("advancing repo %s", pid)
-      rev = updated_commit_lists_by_repo[pid].advance()
+      clist = updated_commit_lists_by_repo[pid]
+      rev = clist.advance_to(clist.next_roll_candidate[0].revision)
       if not rev:
         LOGGER.info("terminating: could not advance %s", pid)
         return ret_good, ret_bad

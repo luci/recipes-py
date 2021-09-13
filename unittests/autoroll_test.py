@@ -562,6 +562,50 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
                      picked_roll['commit_infos'])
     self.assertEqual(expected_picked_roll['spec'], picked_roll['spec'])
 
+  def non_candidate_commits_are_not_considered(self):
+    deps = self.FakeRecipeDeps()
+    upstream = deps.add_repo('upstream')
+
+    # Have the upstream's recipes directory not be the root of the repo
+    with upstream.edit_recipes_cfg_pb2() as recipes_cfg:
+      recipes_cfg.recipes_path = 'recipes'
+    upstream.commit('set recipes dir')
+
+    # Roll that into main.
+    self.run_roll(deps)
+
+    # Create a non-candidate CL by adding a file in the root of the repo
+    with upstream.write_file('some_file') as buf:
+      buf.write('hi!')
+    non_candidate_commit = upstream.commit('non-candidate commit')
+
+    # Create a candidate CL by adding a file in the recipes dir
+    with upstream.write_file('recipes/some_file') as buf:
+      buf.write('hello again!')
+    candidate_commit = upstream.commit('candidate commit')
+
+    # Rolling should not create a candidate config with the non-candidate commit
+
+    roll_result = self.run_roll(deps)
+    self.assertTrue(roll_result['success'])
+
+    spec = deps.main_repo.recipes_cfg_pb2
+    expected_picked_roll = {
+        'commit_infos': {
+            'upstream': [
+                non_candidate_commit.as_roll_info(),
+                candidate_commit.as_roll_info(),
+            ],
+        },
+        'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
+    }
+
+    picked_roll = roll_result['picked_roll_details']
+    self.assertEqual(expected_picked_roll['commit_infos'],
+                     picked_roll['commit_infos'])
+    self.assertEqual(expected_picked_roll['spec'], picked_roll['spec'])
+    self.assertEqual(len(roll_result['roll_details']), 1)
+
   def test_roll_adds_dependency(self):
     deps = self.FakeRecipeDeps()
     upstream = deps.add_repo('upstream')
