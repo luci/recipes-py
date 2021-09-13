@@ -4,30 +4,42 @@
 
 from recipe_engine import post_process
 
-from google.protobuf import json_format
-
 from PB.tricium.data import Data
+from PB.recipe_modules.recipe_engine.tricium.tests.enforce_comments_num_limit import InputProps
+
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
-  'tricium',
+    'assertions',
+    'properties',
+    'proto',
+    'tricium',
 ]
 
-def RunSteps(api):
+PROPERTIES = InputProps
+
+
+def RunSteps(api, props):
   api.tricium._comments_num_limit = 5  # reset the limit to 5 for testing.
   for i in range(10):
     api.tricium.add_comment('test', 'test message', 'path/to/file_%d' % i)
 
-  api.tricium.write_comments()
+  step = api.tricium.write_comments()
+  result = step.presentation.properties.get('tricium')
+  expected = api.proto.encode(
+      props.expected_results,
+      'JSONPB',
+      indent=0,
+      preserving_proto_field_name=False)
+  api.assertions.assertEqual(result, expected)
 
 
 def GenTests(api):
-  yield (api.test('basic') +
-      api.post_process(
-        post_process.PropertyEquals, 'tricium',
-        json_format.MessageToJson(Data.Results(comments=[
-          Data.Comment(
-              category='test',
-              message='test message',
-              path='path/to/file_%d' % i)
-          for i in range(5)]), indent=0)) +
-      api.post_process(post_process.DropExpectation))
+  yield (api.test('basic') + api.properties(
+      InputProps(
+          expected_results=Data.Results(comments=[
+              Data.Comment(
+                  category='test',
+                  message='test message',
+                  path='path/to/file_%d' % i) for i in range(5)
+          ]))) + api.post_process(post_process.DropExpectation))

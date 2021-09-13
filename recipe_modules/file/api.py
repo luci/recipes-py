@@ -383,7 +383,8 @@ class FileApi(recipe_api.RecipeApi):
                  msg_class,
                  codec,
                  test_proto=None,
-                 include_log=True):
+                 include_log=True,
+                 encoding_kwargs=None):
     """Reads a file into a proto message.
 
     Args:
@@ -394,8 +395,11 @@ class FileApi(recipe_api.RecipeApi):
       * test_proto (protobuf Message): A default proto message for this step to
         return when running under simulation.
       * include_log (bool): Include step log of read proto.
+      * encoding_kwargs (dict): Passed directly to the chosen encoder. See proto
+        module for details.
     """
     self.m.path.assert_absolute(source)
+    encoding_kwargs = encoding_kwargs or {}
     if not test_proto:
       test_proto = msg_class()  # test_proto must be a protobuf Message.
     assert type(test_proto) == msg_class
@@ -403,16 +407,24 @@ class FileApi(recipe_api.RecipeApi):
     result = self._run(
         name, [
             'copy', source,
-            self.m.proto.output(msg_class, codec, add_json_log=False)
+            self.m.proto.output(
+                msg_class, codec, add_json_log=False, **encoding_kwargs)
         ],
         step_test_data=step_test_data)
     if include_log:
       result.presentation.logs[self.m.path.basename(
           source)] = self.m.proto.encode(
-              result.proto.output, 'TEXTPB' if codec == 'BINARY' else codec)
+              result.proto.output, 'TEXTPB' if codec == 'BINARY' else codec,
+              **encoding_kwargs)
     return result.proto.output
 
-  def write_proto(self, name, dest, proto_msg, codec, include_log=True):
+  def write_proto(self,
+                  name,
+                  dest,
+                  proto_msg,
+                  codec,
+                  include_log=True,
+                  encoding_kwargs=None):
     """Writes the given proto message to `dest`.
 
     Args:
@@ -421,12 +433,19 @@ class FileApi(recipe_api.RecipeApi):
       * proto_msg (protobuf Message): Message to write.
       * codec ('BINARY'|'JSONPB'|'TEXTPB'): The encoder to use.
       * include_log (bool): Include step log of written proto.
+      * encoding_kwargs (dict): Passed directly to the chosen encoder. See
+        proto module for details.
     """
     self.m.path.assert_absolute(dest)
-    step = self._run(name, ['copy', self.m.proto.input(proto_msg, codec), dest])
+    encoding_kwargs = encoding_kwargs or {}
+    step = self._run(
+        name,
+        ['copy',
+         self.m.proto.input(proto_msg, codec, **encoding_kwargs), dest])
     if include_log:
       proto_lines = self.m.proto.encode(
-          proto_msg, 'TEXTPB' if codec == 'BINARY' else codec).splitlines()
+          proto_msg, 'TEXTPB' if codec == 'BINARY' else codec,
+          **encoding_kwargs).splitlines()
       step.presentation.logs[self.m.path.basename(dest)] = proto_lines
     self.m.path.mock_add_paths(dest)
 

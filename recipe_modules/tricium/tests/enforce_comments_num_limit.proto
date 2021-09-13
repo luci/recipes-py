@@ -1,0 +1,13 @@
+// Copyright 2021 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+import "tricium/data.proto";
+
+package recipe_modules.recipe_engine.tricium.tests;
+
+message InputProps {
+  .tricium.Data.Results expected_results = 1;
+}

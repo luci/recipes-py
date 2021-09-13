@@ -6,9 +6,10 @@
 from google.protobuf import json_format
 
 from recipe_engine import post_process
-from recipe_engine.recipe_api import Property
 
 from PB.tricium.data import Data
+
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
     'file',

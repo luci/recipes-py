@@ -66,8 +66,7 @@ class TriciumApi(recipe_api.RecipeApi):
     comment.start_char = start_char
     comment.end_char = end_char
     for s in suggestions:
-      # Convert from dict to proto message by way of JSON.
-      json_format.Parse(self.m.json.dumps(s), comment.suggestions.add())
+      json_format.ParseDict(s, comment.suggestions.add())
     self.validate_comment(comment)
     self._add_comment(comment)
 
@@ -128,8 +127,9 @@ class TriciumApi(recipe_api.RecipeApi):
       results.comments.extend(comments)
 
     # The "tricium" output property is read by the Tricium service.
-    results_json = json_format.MessageToJson(results, indent=0)
-    step.presentation.properties['tricium'] = results_json
+    step.presentation.properties['tricium'] = self.m.proto.encode(
+        results, 'JSONPB', indent=0, preserving_proto_field_name=False)
+    return step
 
   def run_legacy(self,
                  analyzers,
@@ -182,8 +182,8 @@ class TriciumApi(recipe_api.RecipeApi):
             self._add_comment(comment)
           num_comments = len(results.comments)
           parent_step.presentation.step_text = '%s comment(s)' % num_comments
-          parent_step.presentation.logs['result'] = json_format.MessageToJson(
-              results)
+          parent_step.presentation.logs['result'] = self.m.proto.encode(
+              results, 'JSONPB')
         except self.m.step.StepFailure:
           parent_step.presentation.step_text = 'failed'
     # The tricium data dir with files.json is written in the checkout cache
@@ -210,11 +210,13 @@ class TriciumApi(recipe_api.RecipeApi):
       f = files.files.add()
       f.path = path
     data_dir = self._ensure_data_dir(base_dir)
-    # Note: The JSON written self.m.file.write_proto doesn't work for what
-    # Tricium analyzers expect, but json_format.MessageToJson does.
-    files_json = json_format.MessageToJson(files)
-    self.m.file.write_text('write files.json', data_dir.join('files.json'),
-                           files_json)
+    self.m.file.write_proto(
+        'write files.json',
+        data_dir.join('files.json'),
+        files,
+        'JSONPB',
+        # Tricium analyzers expect camelCase field names.
+        encoding_kwargs={'preserving_proto_field_name': False})
 
   def _read_results(self, base_dir):
     """Reads a Tricium Results message from a file.

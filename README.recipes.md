@@ -33,7 +33,7 @@
   * [step](#recipe_modules-step) (Python3 ✅) &mdash; Step is the primary API for running steps (external programs, etc.
   * [swarming](#recipe_modules-swarming) (Python3 ✅)
   * [time](#recipe_modules-time) (Python3 ✅) &mdash; Allows mockable access to the current time.
-  * [tricium](#recipe_modules-tricium) &mdash; API for Tricium analyzers to use.
+  * [tricium](#recipe_modules-tricium) (Python3 ✅) &mdash; API for Tricium analyzers to use.
   * [url](#recipe_modules-url) (Python3 ✅) &mdash; Methods for interacting with HTTP(s) URLs.
   * [uuid](#recipe_modules-uuid) (Python3 ✅) &mdash; Allows test-repeatable access to a random UUID.
   * [version](#recipe_modules-version) (Python3 ✅) &mdash; Thin API for parsing semver strings into comparable object.
@@ -163,10 +163,10 @@
   * [swarming:tests/copy](#recipes-swarming_tests_copy) (Python3 ✅)
   * [swarming:tests/realms](#recipes-swarming_tests_realms) (Python3 ✅)
   * [time:examples/full](#recipes-time_examples_full) (Python3 ✅)
-  * [tricium:examples/add_comment](#recipes-tricium_examples_add_comment)
-  * [tricium:examples/wrapper](#recipes-tricium_examples_wrapper) &mdash; An example of a recipe wrapping legacy analyzers.
-  * [tricium:tests/add_comment_validation](#recipes-tricium_tests_add_comment_validation)
-  * [tricium:tests/enforce_comments_num_limit](#recipes-tricium_tests_enforce_comments_num_limit)
+  * [tricium:examples/add_comment](#recipes-tricium_examples_add_comment) (Python3 ✅)
+  * [tricium:examples/wrapper](#recipes-tricium_examples_wrapper) (Python3 ✅) &mdash; An example of a recipe wrapping legacy analyzers.
+  * [tricium:tests/add_comment_validation](#recipes-tricium_tests_add_comment_validation) (Python3 ✅)
+  * [tricium:tests/enforce_comments_num_limit](#recipes-tricium_tests_enforce_comments_num_limit) (Python3 ✅)
   * [url:examples/full](#recipes-url_examples_full) (Python3 ✅)
   * [url:tests/join](#recipes-url_tests_join) (Python3 ✅)
   * [url:tests/validate_url](#recipes-url_tests_validate_url) (Python3 ✅)
@@ -1431,7 +1431,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#525)(self, name, dest, mode=511):**
+&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#544)(self, name, dest, mode=511):**
 
 Ensures that `dest` exists and is a directory.
 
@@ -1460,7 +1460,7 @@ Returns (str):
 Raises:
   file.Error and ValueError if passed paths input is not str or Path.
 
-&mdash; **def [filesizes](/recipe_modules/file/api.py#541)(self, name, files, test_data=None):**
+&mdash; **def [filesizes](/recipe_modules/file/api.py#560)(self, name, files, test_data=None):**
 
 Returns list of filesizes for the given files.
 
@@ -1470,7 +1470,7 @@ Args:
 
 Returns list[int], size of each file in bytes.
 
-&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#681)(self, name, path):**
+&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#700)(self, name, path):**
 
 Flattens singular directories, starting at path.
 
@@ -1499,7 +1499,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [glob\_paths](/recipe_modules/file/api.py#433)(self, name, source, pattern, include_hidden=False, test_data=()):**
+&mdash; **def [glob\_paths](/recipe_modules/file/api.py#452)(self, name, source, pattern, include_hidden=False, test_data=()):**
 
 Performs glob expansion on `pattern`.
 
@@ -1529,7 +1529,7 @@ Returns (list[Path]): All paths found.
 
 Raises: file.Error.
 
-&mdash; **def [listdir](/recipe_modules/file/api.py#495)(self, name, source, recursive=False, test_data=()):**
+&mdash; **def [listdir](/recipe_modules/file/api.py#514)(self, name, source, recursive=False, test_data=()):**
 
 Lists all files inside a directory.
 
@@ -1575,7 +1575,7 @@ Returns (object): The content of the file.
 
 Raise file.Error
 
-&mdash; **def [read\_proto](/recipe_modules/file/api.py#380)(self, name, source, msg_class, codec, test_proto=None, include_log=True):**
+&mdash; **def [read\_proto](/recipe_modules/file/api.py#380)(self, name, source, msg_class, codec, test_proto=None, include_log=True, encoding_kwargs=None):**
 
 Reads a file into a proto message.
 
@@ -1587,6 +1587,8 @@ Args:
   * test_proto (protobuf Message): A default proto message for this step to
     return when running under simulation.
   * include_log (bool): Include step log of read proto.
+  * encoding_kwargs (dict): Passed directly to the chosen encoder. See proto
+    module for details.
 
 &mdash; **def [read\_raw](/recipe_modules/file/api.py#265)(self, name, source, test_data=''):**
 
@@ -1617,7 +1619,7 @@ Returns (str): The content of the file.
 
 Raises: file.Error
 
-&mdash; **def [remove](/recipe_modules/file/api.py#480)(self, name, source):**
+&mdash; **def [remove](/recipe_modules/file/api.py#499)(self, name, source):**
 
 Removes a file.
 
@@ -1629,7 +1631,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#580)(self, name, source):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#599)(self, name, source):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -1644,7 +1646,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#598)(self, name, source, pattern, recursive=True, include_hidden=True):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#617)(self, name, source, pattern, recursive=True, include_hidden=True):**
 
 Removes all entries in `source` matching the glob `pattern`.
 
@@ -1674,7 +1676,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#563)(self, name, source):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#582)(self, name, source):**
 
 Recursively removes a directory.
 
@@ -1688,7 +1690,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [symlink](/recipe_modules/file/api.py#643)(self, name, source, linkname):**
+&mdash; **def [symlink](/recipe_modules/file/api.py#662)(self, name, source, linkname):**
 
 Creates a symlink on the local filesystem.
 
@@ -1701,14 +1703,14 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#660)(self, root):**
+&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#679)(self, root):**
 
 Creates a SymlinkTree, given a root directory.
 
 Args:
   * root (Path): root of a tree of symlinks.
 
-&mdash; **def [truncate](/recipe_modules/file/api.py#668)(self, name, path, size_mb=100):**
+&mdash; **def [truncate](/recipe_modules/file/api.py#687)(self, name, path, size_mb=100):**
 
 Creates an empty file with path and size_mb on the local filesystem.
 
@@ -1733,7 +1735,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [write\_proto](/recipe_modules/file/api.py#415)(self, name, dest, proto_msg, codec, include_log=True):**
+&mdash; **def [write\_proto](/recipe_modules/file/api.py#421)(self, name, dest, proto_msg, codec, include_log=True, encoding_kwargs=None):**
 
 Writes the given proto message to `dest`.
 
@@ -1743,6 +1745,8 @@ Args:
   * proto_msg (protobuf Message): Message to write.
   * codec ('BINARY'|'JSONPB'|'TEXTPB'): The encoder to use.
   * include_log (bool): Include step log of written proto.
+  * encoding_kwargs (dict): Passed directly to the chosen encoder. See
+    proto module for details.
 
 &mdash; **def [write\_raw](/recipe_modules/file/api.py#285)(self, name, dest, data, include_log=True):**
 
@@ -3585,9 +3589,9 @@ Returns current timestamp as a float number of seconds since epoch.
 Returns current UTC time as a datetime.datetime.
 ### *recipe_modules* / [tricium](/recipe_modules/tricium)
 
-[DEPS](/recipe_modules/tricium/__init__.py#5): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/tricium/__init__.py#7): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 API for Tricium analyzers to use.
 
@@ -3638,13 +3642,13 @@ Args:
     analyzers (using `add_comment()` to store comments) and legacy
     analyzers.
 
-&emsp; **@staticmethod**<br>&mdash; **def [validate\_comment](/recipe_modules/tricium/api.py#74)(comment):**
+&emsp; **@staticmethod**<br>&mdash; **def [validate\_comment](/recipe_modules/tricium/api.py#73)(comment):**
 
 Validates comment to comply with Tricium/Gerrit requirements.
 
 Raise ValueError on the first detected problem.
 
-&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#112)(self):**
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#111)(self):**
 
 Emit the results accumulated by `add_comment` and `run_legacy`.
 ### *recipe_modules* / [url](/recipe_modules/url)
@@ -4769,34 +4773,34 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#15)(api):**
 ### *recipes* / [tricium:examples/add\_comment](/recipe_modules/tricium/examples/add_comment.py)
 
-[DEPS](/recipe_modules/tricium/examples/add_comment.py#8): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
+[DEPS](/recipe_modules/tricium/examples/add_comment.py#10): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/examples/add_comment.py#15)(api, trigger_type_error):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/examples/add_comment.py#17)(api, trigger_type_error):**
 ### *recipes* / [tricium:examples/wrapper](/recipe_modules/tricium/examples/wrapper.py)
 
-[DEPS](/recipe_modules/tricium/examples/wrapper.py#13): [file](#recipe_modules-file), [path](#recipe_modules-path), [tricium](#recipe_modules-tricium)
+[DEPS](/recipe_modules/tricium/examples/wrapper.py#14): [file](#recipe_modules-file), [path](#recipe_modules-path), [tricium](#recipe_modules-tricium)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 An example of a recipe wrapping legacy analyzers.
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/examples/wrapper.py#20)(api):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/examples/wrapper.py#21)(api):**
 ### *recipes* / [tricium:tests/add\_comment\_validation](/recipe_modules/tricium/tests/add_comment_validation.py)
 
-[DEPS](/recipe_modules/tricium/tests/add_comment_validation.py#8): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
+[DEPS](/recipe_modules/tricium/tests/add_comment_validation.py#10): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/tests/add_comment_validation.py#31)(api, case):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/tests/add_comment_validation.py#33)(api, case):**
 ### *recipes* / [tricium:tests/enforce\_comments\_num\_limit](/recipe_modules/tricium/tests/enforce_comments_num_limit.py)
 
-[DEPS](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#11): [tricium](#recipe_modules-tricium)
+[DEPS](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#12): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [tricium](#recipe_modules-tricium)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#22)(api, props):**
 ### *recipes* / [url:examples/full](/recipe_modules/url/examples/full.py)
 
 [DEPS](/recipe_modules/url/examples/full.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [step](#recipe_modules-step), [url](#recipe_modules-url)

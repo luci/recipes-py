@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
     'cipd',
     'context',
@@ -9,5 +11,6 @@ DEPS = [
     'json',
     'path',
     'properties',
+    'proto',
     'step',
 ]
