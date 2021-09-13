@@ -22,7 +22,7 @@
   * [path](#recipe_modules-path) (Python3 ✅) &mdash; All functions related to manipulating paths in recipes.
   * [platform](#recipe_modules-platform) (Python3 ✅) &mdash; Mockable system platform identity functions.
   * [properties](#recipe_modules-properties) (Python3 ✅) &mdash; Provides access to the recipes input properties.
-  * [proto](#recipe_modules-proto) &mdash; Methods for producing and consuming protobuf data to/from steps and the filesystem.
+  * [proto](#recipe_modules-proto) (Python3 ✅) &mdash; Methods for producing and consuming protobuf data to/from steps and the filesystem.
   * [python](#recipe_modules-python) (Python3 ✅) &mdash; Provides methods for running python scripts correctly.
   * [random](#recipe_modules-random) (Python3 ✅) &mdash; Allows randomness in recipes.
   * [raw_io](#recipe_modules-raw_io) (Python3 ✅) &mdash; Provides objects for reading and writing raw data to and from steps.
@@ -2492,9 +2492,9 @@ easier to debug and diagnose which scripts use which properties.
 Returns a read-write copy of all of the properties.
 ### *recipe_modules* / [proto](/recipe_modules/proto)
 
-[DEPS](/recipe_modules/proto/__init__.py#6): [raw\_io](#recipe_modules-raw_io)
+[DEPS](/recipe_modules/proto/__init__.py#7): [raw\_io](#recipe_modules-raw_io)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Methods for producing and consuming protobuf data to/from steps and the
 filesystem.
