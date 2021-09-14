@@ -2796,7 +2796,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#48)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#486)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#487)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -2925,6 +2925,7 @@ given invocations, including those included indirectly.
 
 Args:
   invocations (list): A list of the invocations to query statistics for.
+    If None, the current invocation will be used.
   step_name (str): name of the step.
 
 Returns:
@@ -2944,7 +2945,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#387)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#388)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False):**
 
 Wraps the command with ResultSink.
 

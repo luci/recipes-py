@@ -46,12 +46,9 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
   def example_task_request_jsonish(self):
     """Returns a dict that can be parsed by task_request_from_jsonish()."""
     return {
-        'name':
-            'QEMU',
-        'priority':
-            20,
-        'service_account':
-            'foo@example.com',
+        'name': 'QEMU',
+        'priority': 20,
+        'service_account': 'foo@example.com',
         'task_slices': [{
             'expiration_secs': '18000',
             'properties': {
@@ -75,10 +72,15 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
                 'env_prefixes': [],
                 'execution_timeout_secs': '2400',
                 'grace_period_secs': '30',
-                'inputs_ref': {
-                    'isolated': '525120764a9839a5bac9542ab158838123e2dc1c',
-                    'isolatedserver': 'https://chrome-isolated.appspot.com',
-                    'namespace': 'default-gzip'
+                'cas_input_root': {
+                    'cas_instance':
+                        'projects/example-project/instances/default_instance',
+                    'digest': {
+                        'hash':
+                            '24b2420bc49d8b8fdc1d011a163708927532b37dc9f91d7d8d6877e3a86559ca',
+                        'size_bytes':
+                            '73',
+                    },
                 },
                 'idempotent': False,
                 'io_timeout_secs': '430',
