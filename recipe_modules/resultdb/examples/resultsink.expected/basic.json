@@ -7,6 +7,17 @@
       "echo",
       "suppose its a test"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "test"
   },
   {
@@ -19,6 +30,17 @@
       "echo",
       "suppose its a test"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "test with test_id_prefix"
   },
   {
@@ -33,6 +55,17 @@
       "echo",
       "suppose its a test"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "test with base_variant"
   },
   {
@@ -45,6 +78,17 @@
       "echo",
       "suppose its a test"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "test with test_location_base"
   },
   {
@@ -57,6 +101,17 @@
       "echo",
       "suppose its a test"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "test with base_tag"
   },
   {
@@ -68,6 +123,17 @@
       "echo",
       "suppose its a test"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "test with corece_negative_duration"
   },
   {
@@ -82,6 +148,17 @@
       "echo",
       "suppose its a test"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "test with include new invocation"
   },
   {
@@ -90,12 +167,23 @@
       "stream",
       "-new",
       "-realm",
-      "project:ci",
+      "proj:realm",
       "-include",
       "--",
       "echo",
       "suppose its a test"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "test with include new invocation default realm"
   },
   {
@@ -108,6 +196,17 @@
       "echo",
       "suppose its a test"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "test with location_tags_file"
   },
   {
@@ -119,6 +218,17 @@
       "echo",
       "suppose its a test"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "test with exonerate_unexpected_pass"
   },
   {

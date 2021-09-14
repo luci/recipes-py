@@ -10,6 +10,14 @@
       "deadbeef"
     ],
     "infra_step": true,
+    "luci_context": {
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "rdb query",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@raw_io.output@{\"invocation\": {\"state\": \"FINALIZED\"}, \"invocationId\": \"invid2\"}@@@",
@@ -26,8 +34,16 @@
       "-include-update-token"
     ],
     "infra_step": true,
+    "luci_context": {
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "rdb include",
-    "stdin": "{\"addInvocations\": [\"invocations/invid2\", \"invocations/invid\"], \"includingInvocation\": \"invocations/build:8945511751514863184\"}",
+    "stdin": "{\"addInvocations\": [\"invocations/invid2\", \"invocations/invid\"], \"includingInvocation\": \"invocations/inv\"}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{}@@@",
       "@@@STEP_LOG_END@json.output@@@",
@@ -36,7 +52,7 @@
       "@@@STEP_LOG_LINE@json.input@    \"invocations/invid2\", @@@",
       "@@@STEP_LOG_LINE@json.input@    \"invocations/invid\"@@@",
       "@@@STEP_LOG_LINE@json.input@  ], @@@",
-      "@@@STEP_LOG_LINE@json.input@  \"includingInvocation\": \"invocations/build:8945511751514863184\"@@@",
+      "@@@STEP_LOG_LINE@json.input@  \"includingInvocation\": \"invocations/inv\"@@@",
       "@@@STEP_LOG_LINE@json.input@}@@@",
       "@@@STEP_LOG_END@json.input@@@"
     ]
@@ -50,13 +66,21 @@
       "-include-update-token"
     ],
     "infra_step": true,
+    "luci_context": {
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "rdb exclude",
-    "stdin": "{\"includingInvocation\": \"invocations/build:8945511751514863184\", \"removeInvocations\": [\"invocations/invid2\", \"invocations/invid\"]}",
+    "stdin": "{\"includingInvocation\": \"invocations/inv\", \"removeInvocations\": [\"invocations/invid2\", \"invocations/invid\"]}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{}@@@",
       "@@@STEP_LOG_END@json.output@@@",
       "@@@STEP_LOG_LINE@json.input@{@@@",
-      "@@@STEP_LOG_LINE@json.input@  \"includingInvocation\": \"invocations/build:8945511751514863184\", @@@",
+      "@@@STEP_LOG_LINE@json.input@  \"includingInvocation\": \"invocations/inv\", @@@",
       "@@@STEP_LOG_LINE@json.input@  \"removeInvocations\": [@@@",
       "@@@STEP_LOG_LINE@json.input@    \"invocations/invid2\", @@@",
       "@@@STEP_LOG_LINE@json.input@    \"invocations/invid\"@@@",
