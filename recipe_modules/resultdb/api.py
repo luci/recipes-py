@@ -292,6 +292,38 @@ class ResultDBAPI(recipe_api.RecipeApi):
         # Do not fail the build because recipe's proto copy is stale.
         ignore_unknown_fields=True)
 
+  def query_test_result_statistics(self, invocations=None, step_name=None):
+    """Retrieve stats of test results for the given invocations.
+
+    Makes a call to the QueryTestResultStatistics API. Returns stats for all
+    given invocations, including those included indirectly.
+
+    Args:
+      invocations (list): A list of the invocations to query statistics for.
+        If None, the current invocation will be used.
+      step_name (str): name of the step.
+
+    Returns:
+      A QueryTestResultStatisticsResponse proto message with statistics for the
+      queried invocations.
+    """
+
+    if invocations is None:
+      invocations = [self.current_invocation]
+
+    req = resultdb.QueryTestResultStatisticsRequest(invocations=invocations)
+
+    res = self._rpc(
+        step_name or 'query_test_result_statistics',
+        'luci.resultdb.v1.ResultDB',
+        'QueryTestResultStatistics',
+        req=json_format.MessageToDict(req))
+
+    return json_format.ParseDict(
+        res,
+        resultdb.QueryTestResultStatisticsResponse(),
+        ignore_unknown_fields=True)
+
   ##############################################################################
   # Implementation details.
 

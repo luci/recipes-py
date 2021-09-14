@@ -138,6 +138,7 @@
   * [resultdb:examples/exonerate](#recipes-resultdb_examples_exonerate)
   * [resultdb:examples/include](#recipes-resultdb_examples_include)
   * [resultdb:examples/query](#recipes-resultdb_examples_query)
+  * [resultdb:examples/query_test_result_statistics](#recipes-resultdb_examples_query_test_result_statistics)
   * [resultdb:examples/result_history](#recipes-resultdb_examples_result_history)
   * [resultdb:examples/resultsink](#recipes-resultdb_examples_resultsink)
   * [resultdb:examples/test_presentation](#recipes-resultdb_examples_test_presentation)
@@ -2795,7 +2796,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#48)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#455)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#486)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -2915,6 +2916,21 @@ Args:
 Returns:
   A dict {invocation_id: api.Invocation}.
 
+&mdash; **def [query\_test\_result\_statistics](/recipe_modules/resultdb/api.py#295)(self, invocations=None, step_name=None):**
+
+Retrieve stats of test results for the given invocations.
+
+Makes a call to the QueryTestResultStatistics API. Returns stats for all
+given invocations, including those included indirectly.
+
+Args:
+  invocations (list): A list of the invocations to query statistics for.
+  step_name (str): name of the step.
+
+Returns:
+  A QueryTestResultStatisticsResponse proto message with statistics for the
+  queried invocations.
+
 &mdash; **def [update\_included\_invocations](/recipe_modules/resultdb/api.py#64)(self, add_invocations=None, remove_invocations=None, step_name=None):**
 
 Add and/or remove included invocations to/from the current invocation.
@@ -2928,7 +2944,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#356)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#387)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False):**
 
 Wraps the command with ResultSink.
 
@@ -4590,6 +4606,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 PYTHON_VERSION_COMPATIBILITY: PY2
 
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query.py#22)(api):**
+### *recipes* / [resultdb:examples/query\_test\_result\_statistics](/recipe_modules/resultdb/examples/query_test_result_statistics.py)
+
+[DEPS](/recipe_modules/resultdb/examples/query_test_result_statistics.py#10): [resultdb](#recipe_modules-resultdb)
+
+PYTHON_VERSION_COMPATIBILITY: PY2
+
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_result_statistics.py#15)(api):**
 ### *recipes* / [resultdb:examples/result\_history](/recipe_modules/resultdb/examples/result_history.py)
 
 [DEPS](/recipe_modules/resultdb/examples/result_history.py#11): [resultdb](#recipe_modules-resultdb)

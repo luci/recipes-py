@@ -40,7 +40,22 @@ class ResultDBTestApi(recipe_test_api.RecipeTestApi):
           response to simulate.
         step_name (str): the name of the step to simulate.
     """
-    res = json_format.MessageToDict(res)
+    return self._proto_step_result(res, step_name)
+
+  def query_test_result_statistics(self, res,
+                                   step_name='query_test_result_statistics'):
+    """Emulates query_test_result_statistics() return value.
+
+    Args:
+        res (proto.v1.resultdb.QueryTestResultStatisticsResponse object): the
+          response to simulate.
+        step_name (str): the name of the step to simulate.
+    """
+    return self._proto_step_result(res, step_name)
+
+  def _proto_step_result(self, message, step_name):
+    """Utility method that converts a proto into JSON-formatted step data."""
+    res = json_format.MessageToDict(message)
     return self.step_data(
         step_name,
         self.m.raw_io.stream_output(json.dumps(res)),
