@@ -700,7 +700,7 @@ API for interacting with cas client.
 
 A module for interacting with cas client.
 
-&mdash; **def [archive](/recipe_modules/cas/api.py#89)(self, step_name, root, \*paths):**
+&mdash; **def [archive](/recipe_modules/cas/api.py#98)(self, step_name, root, \*paths):**
 
 Archives given paths to a cas server.
 
@@ -726,6 +726,10 @@ Args:
   * output_dir (Path): path to an output directory.
 
 &emsp; **@property**<br>&mdash; **def [instance](/recipe_modules/cas/api.py#21)(self):**
+
+&mdash; **def [viewer\_url](/recipe_modules/cas/api.py#89)(self, digest):**
+
+Return URL of cas viewer.
 ### *recipe_modules* / [cipd](/recipe_modules/cipd)
 
 [DEPS](/recipe_modules/cipd/__init__.py#7): [context](#recipe_modules-context), [file](#recipe_modules-file), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step), [url](#recipe_modules-url)

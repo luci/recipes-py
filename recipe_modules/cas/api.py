@@ -86,6 +86,15 @@ class CasApi(recipe_api.RecipeApi):
     ]
     return self._run(step_name, cmd)
 
+  def viewer_url(self, digest):
+    """Return URL of cas viewer."""
+
+    viewer_host = 'cas-viewer-dev.appspot.com'
+    if self.instance.split('/')[1] != 'chromium-swarm-dev':
+      viewer_host = 'cas-viewer.appspot.com'
+    return 'https://{0}/{1}/blobs/{2}/tree'.format(
+      viewer_host, self.instance, digest)
+
   def archive(self, step_name, root, *paths):
     """Archives given paths to a cas server.
 
@@ -125,9 +134,5 @@ class CasApi(recipe_api.RecipeApi):
             'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855/0'
         ))
     digest = step.raw_io.output_text
-    step.presentation.links["CAS UI"] = (
-        'https://cas-viewer.appspot.com/{0}/blobs/{1}/tree'.format(
-            self.instance,
-            digest,
-        ))
+    step.presentation.links["CAS UI"] = self.viewer_url(digest)
     return digest
