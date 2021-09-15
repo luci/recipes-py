@@ -317,7 +317,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
         step_name or 'query_test_result_statistics',
         'luci.resultdb.v1.ResultDB',
         'QueryTestResultStatistics',
-        req=json_format.MessageToDict(req))
+        req=json_format.MessageToDict(req),
+        step_test_data=lambda: self.m.raw_io.test_api.stream_output('{}'))
 
     return json_format.ParseDict(
         res,
