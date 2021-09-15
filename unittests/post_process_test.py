@@ -292,6 +292,56 @@ class TestStepCommandContains(PostProcessUnitTest):
                      'x', ['foo', 'baz'])
 
 
+class TestStepCommandDoesNotContain(PostProcessUnitTest):
+
+  def setUp(self):
+    super(TestStepCommandDoesNotContain, self).setUp()
+    self.d = OrderedDict([('two', {
+        'name': 'two',
+        'cmd': ['a', 'b']
+    }), ('one', {
+        'name': 'one',
+        'cmd': ['a']
+    }), ('zero', {
+        'name': 'zero',
+        'cmd': []
+    }), ('x', {
+        'name': 'x',
+        'cmd': ['echo', 'foo', 'bar', 'baz']
+    })])
+
+  def expect_pass(self, func, *args, **kwargs):
+    _, failures = self.post_process(self.d, func, *args, **kwargs)
+    self.assertEqual(len(failures), 0)
+
+  def expect_fail(self, func, *args, **kwargs):
+    _, failures = self.post_process(self.d, func, *args, **kwargs)
+    self.assertEqual(len(failures), 1)
+    return failures
+
+  def test_step_command_does_not_contain_one_pass(self):
+    self.expect_pass(post_process.StepCommandDoesNotContain, 'one', ['foo'])
+
+  def test_step_command_does_not_contain_one_fail(self):
+    self.expect_fail(post_process.StepCommandDoesNotContain, 'one', ['a'])
+
+  def test_step_command_does_not_contain_two_pass_order(self):
+    self.expect_pass(post_process.StepCommandDoesNotContain, 'two', ['b', 'a'])
+
+  def test_step_command_does_not_contain_two_fail_order(self):
+    self.expect_fail(post_process.StepCommandDoesNotContain, 'two', ['a', 'b'])
+
+  def test_step_command_does_not_contain_fail(self):
+    self.expect_fail(post_process.StepCommandDoesNotContain, 'x',
+                     ['echo', 'foo', 'bar'])
+    self.expect_fail(post_process.StepCommandDoesNotContain, 'x',
+                     ['foo', 'bar', 'baz'])
+
+  def test_step_command_does_not_contain_pass(self):
+    self.expect_pass(post_process.StepCommandDoesNotContain, 'x',
+                     ['foo', 'baz'])
+
+
 class TestStepText(PostProcessUnitTest):
   def setUp(self):
     super(TestStepText, self).setUp()

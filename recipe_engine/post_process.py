@@ -308,6 +308,22 @@ def StepCommandContains(check, step_odict, step, argument_sequence):
         argument_sequence in step_odict[step].cmd)
 
 
+def StepCommandDoesNotContain(check, step_odict, step, argument_sequence):
+  """Assert that a step's command does not contain the given sequence of
+  arguments.
+
+  Args:
+    step (str) - The name of the step to check the command of.
+    argument_sequence (list of (str|regex)) - The sequence of arguments that
+      should not exist. The check will fail if the step's command contains a
+      subsequence where the elements are matched by the corresponding elements
+      of argument_sequence.
+  """
+  check(
+      'command line for step %s does not contain  %s' %
+      (step, argument_sequence), argument_sequence not in step_odict[step].cmd)
+
+
 def StepTextEquals(check, step_odict, step, expected):
   """Assert that a step's step_text is equal to a given string.
 
