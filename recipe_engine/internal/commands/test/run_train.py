@@ -253,7 +253,9 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
 
   py2_cov_dir = None
   py3_cov_dir = None
-  total_cov = coverage.Coverage(config_file=False, data_file='.total_coverage')
+  total_cov = coverage.Coverage(config_file=False, data_file='.total_coverage',
+                                data_suffix=True)
+  total_cov.save() # Force to ensure the coverage data file is created.
   try:
     # in case of crash; don't want this undefined in finally clause.
     live_threads = Threads(py2=[], py3=[])
