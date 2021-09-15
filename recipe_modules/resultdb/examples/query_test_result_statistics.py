@@ -4,11 +4,10 @@
 
 from recipe_engine.post_process import DropExpectation
 
-from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 from PB.go.chromium.org.luci.resultdb.proto.v1 import resultdb
+from PB.go.chromium.org.luci.resultdb.proto.v1 import test_result as test_result_pb2
 
 DEPS = [
-    'context',
     'resultdb',
 ]
 
@@ -20,14 +19,6 @@ def RunSteps(api):
 def GenTests(api):
   yield api.test(
       'basic',
-      api.context.luci_context(
-          resultdb=sections_pb2.ResultDB(
-              current_invocation=sections_pb2.ResultDBInvocation(
-                  name='invocations/inv',
-                  update_token='token',
-              ),
-          )
-      ),
       api.resultdb.query_test_result_statistics(
           resultdb.QueryTestResultStatisticsResponse(total_test_results=5)),
       api.post_process(DropExpectation),

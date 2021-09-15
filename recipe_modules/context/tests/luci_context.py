@@ -23,8 +23,6 @@ def RunSteps(api):
   api.step('start', ['echo', 'hello'])
   assert_msg_equal(sections_pb2.LUCIExe(cache_dir='/path/to/cache'),
                    api.context.luciexe)
-  api.assertions.assertEqual(
-      'invocations/inv', api.context.resultdb_invocation_name)
 
   api.assertions.assertEqual('proj:realm', api.context.realm)
   with api.context(env={'UNRELATED_CHANGE': 1}):
@@ -50,13 +48,6 @@ def GenTests(api):
     + api.context.luci_context(
       luciexe=sections_pb2.LUCIExe(cache_dir='/path/to/cache'),
       realm=sections_pb2.Realm(name='proj:realm'),
-      resultdb=sections_pb2.ResultDB(
-          current_invocation=sections_pb2.ResultDBInvocation(
-              name='invocations/inv',
-              update_token='token',
-          ),
-          hostname='rdbhost',
-      )
     )
   )
 

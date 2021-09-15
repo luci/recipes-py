@@ -39,7 +39,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
   @property
   def current_invocation(self):
-    return self.m.context.resultdb_invocation_name
+    return self.m.buildbucket.build.infra.resultdb.invocation
 
   @property
   def enabled(self):
@@ -471,7 +471,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     if include:
       ret += [
-          '-new', '-realm', realm or self.m.context.realm,
+          '-new', '-realm', realm or self.m.buildbucket.builder_realm,
           '-include'
       ]
 

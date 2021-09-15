@@ -5,11 +5,11 @@
 from recipe_engine.post_process import (DropExpectation, StepSuccess,
   DoesNotRunRE)
 
-from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.resultdb.proto.v1 import invocation as invocation_pb2
 
 DEPS = [
-  'context',
+  'buildbucket',
   'resultdb',
 ]
 
@@ -28,16 +28,7 @@ def RunSteps(api):
 def GenTests(api):
   yield (
     api.test('noop') +
-    api.context.luci_context(
-        realm=sections_pb2.Realm(name='proj:realm'),
-        resultdb=sections_pb2.ResultDB(
-            current_invocation=sections_pb2.ResultDBInvocation(
-                name='invocations/inv',
-                update_token='token',
-            ),
-            hostname='rdbhost',
-        )
-    ) +
+    api.buildbucket.ci_build() +
     api.resultdb.query({}, step_name='rdb query') +
     api.post_process(
         DoesNotRunRE, 'rdb include', 'rdb exclude') +
@@ -56,15 +47,7 @@ def GenTests(api):
 
   yield (
     api.test('basic') +
-    api.context.luci_context(
-        resultdb=sections_pb2.ResultDB(
-            current_invocation=sections_pb2.ResultDBInvocation(
-                name='invocations/inv',
-                update_token='token',
-            ),
-            hostname='rdbhost',
-        )
-    ) +
+    api.buildbucket.ci_build() +
     api.resultdb.query(
         inv_bundle,
         step_name='rdb query')
