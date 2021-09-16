@@ -367,7 +367,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       dimensions=None,
       priority=INHERIT,
       critical=INHERIT,
-      exe_cipd_version=INHERIT,
+      exe_cipd_version=None,
       fields=DEFAULT_FIELDS,
   ):
     """Creates a new `ScheduleBuildRequest` message with reasonable defaults.
@@ -431,8 +431,9 @@ class BuildbucketApi(recipe_api.RecipeApi):
       Defaults to .build.critical.
       See also Build.critical in
       https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto
-    * exe_cipd_version (str|INHERIT): CIPD version of the LUCI Executable (e.g.
-      recipe) to use instead of the server-configured one.
+    * exe_cipd_version (NoneType|str|INHERIT): CIPD version of the LUCI
+      Executable (e.g. recipe) to use. Pass `None` to use the server configured
+      one.
     * fields (list of strs): a list of fields to include in the response, names
       relative to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
     """

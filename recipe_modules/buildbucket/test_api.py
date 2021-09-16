@@ -50,6 +50,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       tags=None,
       status=None,
       experiments=(),
+      exe=None,
       execution_timeout=None,
     ):
     """Returns a typical buildbucket CI build scheduled by luci-scheduler."""
@@ -92,6 +93,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     if status:
       build.status = common_pb2.Status.Value(status)
 
+    if exe:
+      build.exe.CopyFrom(exe)
+
     return build
 
   def ci_build(self, *args, **kwargs):
@@ -122,6 +126,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       tags=None,
       status=None,
       experiments=(),
+      exe=None,
       execution_timeout=None,
     ):
     """Emulate typical buildbucket try build scheduled by CQ.
@@ -193,6 +198,9 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     if status:
       build.status = common_pb2.Status.Value(status)
 
+    if exe:
+      build.exe.CopyFrom(exe)
+
     return build
 
   def try_build(self, *args, **kwargs):
@@ -240,6 +248,14 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
   def tags(self, **tags):
     """Alias for tags in util.py. See doc there."""
     return util.tags(**tags)
+
+  def exe(self, cipd_pkg, cipd_ver=None, cmd=None):
+    """Emulates a build executable."""
+    return common_pb2.Executable(
+      cipd_package=cipd_pkg,
+      cipd_version=cipd_ver,
+      cmd=cmd,
+    )
 
   def simulated_buildbucket_output(
       self, additional_build_parameters, step_name=None):

@@ -181,7 +181,8 @@ def GenTests(api):
              builder='ci-builder',
              git_repo='https://chrome-internal.googlesource.com/a/repo.git',
              build_number=0,
-             tags=api.buildbucket.tags(user_agent=['cq', 'recipe'])) +
+             tags=api.buildbucket.tags(user_agent=['cq', 'recipe']),
+             exe=api.buildbucket.exe(cipd_pkg='path/to/cipd/pkg')) +
          api.step_data(
              'buildbucket.put',
              stdout=api.raw_io.output_text(mock_buildbucket_multi_response)) +

@@ -51,6 +51,11 @@ def GenTests(api):
           git_repo='https://chromium.googlesource.com/chromium/src',
           revision='a' * 40,
           tags=api.buildbucket.tags(buildset='bs', unrelated='a'),
+          exe=api.buildbucket.exe(
+              cipd_pkg='path/to/cipd/pkg',
+              cipd_ver='default_ver',
+              cmd=['luciexe'],
+          )
       ) +
       api.properties(request_kwargs=req, tags=tags, response=response)
     )
