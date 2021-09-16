@@ -365,9 +365,8 @@ class TestRun(Common):
       ''')
       del recipe.expectation['basic']
 
-    result = self._run_test('run', should_fail=False, py_version='py3')
+    result = self._run_test('run', should_fail=True, py_version='py3')
     self.assertIn('Ran 1 tests in', result.text_output)
-    self.assertIn('Soft errors in py3 tests', result.text_output)
     self.assertDictEqual(
         result.data,
         self._outcome_json(per_test={
