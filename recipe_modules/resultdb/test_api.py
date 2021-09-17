@@ -53,6 +53,17 @@ class ResultDBTestApi(recipe_test_api.RecipeTestApi):
     """
     return self._proto_step_result(res, step_name)
 
+  def upload_invocation_artifacts(self, res,
+                                  step_name='upload_invocation_artifacts'):
+    """Emulates upload_invocation_artifacts() return value.
+
+    Args:
+        res (proto.v1.resultdb.BatchCreateArtifactsResponse object): the
+          response to simulate.
+        step_name (str): the name of the step to simulate.
+    """
+    return self._proto_step_result(res, step_name)
+
   def _proto_step_result(self, message, step_name):
     """Utility method that converts a proto into JSON-formatted step data."""
     res = json_format.MessageToDict(message)

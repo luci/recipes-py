@@ -14,6 +14,7 @@ from google.protobuf import json_format
 from google.protobuf import timestamp_pb2
 from recipe_engine import recipe_api
 
+from PB.go.chromium.org.luci.resultdb.proto.v1 import artifact
 from PB.go.chromium.org.luci.resultdb.proto.v1 import common as common_v1
 from PB.go.chromium.org.luci.resultdb.proto.v1 import recorder
 from PB.go.chromium.org.luci.resultdb.proto.v1 import resultdb
@@ -323,6 +324,52 @@ class ResultDBAPI(recipe_api.RecipeApi):
     return json_format.ParseDict(
         res,
         resultdb.QueryTestResultStatisticsResponse(),
+        ignore_unknown_fields=True)
+
+  def upload_invocation_artifacts(
+      self, artifacts, parent_inv=None, step_name=None):
+    """Create artifacts with the given content type and contents.
+
+    Makes a call to the BatchCreateArtifacts API. Returnes the created
+    artifacts.
+
+    Args:
+      artifacts (dict): a collection of artifacts to create. Each key is an
+        artifact id, with the correponsing value being a dict containing:
+          'content_type' (optional)
+          'contents'
+      parent_inv (str): the name of the invocation to create the artifacts
+        under. If None, the current invocation will be used.
+      step_name (str): name of the step.
+
+    Returns:
+      A BatchCreateArtifactsResponse proto message listing the artifacts that
+      were created.
+    """
+
+    req = recorder.BatchCreateArtifactsRequest(requests=[
+      recorder.CreateArtifactRequest(
+          parent=parent_inv or self.current_invocation,
+          artifact=artifact.Artifact(
+              artifact_id=art_id,
+              content_type=art.get('content_type', ''),
+              contents=art['contents'],
+          ),
+      )
+      for art_id, art in artifacts.iteritems()
+    ])
+
+    res = self._rpc(
+        step_name or 'upload_invocation_artifacts',
+        'luci.resultdb.v1.Recorder',
+        'BatchCreateArtifacts',
+        req=json_format.MessageToDict(req),
+        include_update_token=True,
+        step_test_data=lambda: self.m.raw_io.test_api.stream_output('{}'))
+
+    return json_format.ParseDict(
+        res,
+        recorder.BatchCreateArtifactsResponse(),
         ignore_unknown_fields=True)
 
   ##############################################################################
