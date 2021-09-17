@@ -9,6 +9,7 @@ because the `issue` method can only be used from recipe_modules, not recipes.
 
 from recipe_engine import post_process
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 def RunSteps(api):
   del api

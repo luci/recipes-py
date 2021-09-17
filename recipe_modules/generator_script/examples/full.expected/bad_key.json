@@ -22,7 +22,7 @@
   {
     "failure": {
       "failure": {},
-      "humanReason": "Step('gen step(bad_key.py)') generated step with bad keys set(['bad'])"
+      "humanReason": "Step('gen step(bad_key.py)') generated step with bad keys ['bad']"
     },
     "name": "$result"
   }

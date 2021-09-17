@@ -8,6 +8,7 @@ This module was created before there was a way to put recipes directly into
 another repo. It is not recommended to use this, and it will be removed in the
 near future.
 """
+from past.builtins import basestring
 
 from recipe_engine import recipe_api
 
@@ -97,7 +98,7 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
       diff = set(step) - self.ALLOWED_KEYS
       if diff:
         # pylint: disable=nonstandard-exception
-        raise self.UnknownKey(step_name, diff)
+        raise self.UnknownKey(step_name, sorted(diff))
 
       cmd = step['cmd']
       if not all(isinstance(arg, basestring) for arg in cmd):

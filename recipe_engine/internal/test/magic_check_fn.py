@@ -523,7 +523,7 @@ def VerifySubset(a, b):
     if len(a) == 0:
       return
     elif len(a) == 1:
-      a = OrderedDict([next(iteritems(a))])
+      a = OrderedDict(a)
 
   if type(a) != type(b):
     return ': type mismatch: %r v %r' % (type(a).__name__, type(b).__name__)
