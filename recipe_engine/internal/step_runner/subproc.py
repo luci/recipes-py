@@ -21,6 +21,7 @@ from ..global_shutdown import UNKILLED_PROC_GROUPS, GLOBAL_SOFT_DEADLINE
 
 from . import StepRunner
 
+_PY2 = sys.version_info.major == 2
 
 if MSWINDOWS:
   # subprocess.Popen(close_fds) raises an exception when attempting to do this
@@ -204,8 +205,16 @@ class SubprocessStepRunner(StepRunner):
 
     Should not raise an exception.
     """
+    stdin = None
+    if step.stdin:
+      stdin = open(step.stdin, 'rb')
+    else:
+      # Python3 appears to set an invalid stdin where its inode number is 0
+      # (see https://crbug.com/1249150#c12 for problems it causes).
+      # So use DEVNULL as a workaround.
+      stdin = None if _PY2 else subprocess.DEVNULL
     fhandles = {
-      'stdin': open(step.stdin, 'rb') if step.stdin else None,
+      'stdin': stdin,
       'stdout': _fd_for_out(step.stdout),
       'stderr': _fd_for_out(step.stderr),
     }
