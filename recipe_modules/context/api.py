@@ -96,6 +96,7 @@ class ContextApi(recipe_api.RecipeApi):
         'deadline': sections_pb2.Deadline,
         'luciexe': sections_pb2.LUCIExe,
         'realm': sections_pb2.Realm,
+        'resultdb': sections_pb2.ResultDB,
       }
 
       # reset luci_context so that when we write into it without it becoming
@@ -317,7 +318,7 @@ class ContextApi(recipe_api.RecipeApi):
     """Returns the currently tracked LUCI_CONTEXT sections as a dict of proto
     messages.
 
-    Only contains `luciexe`, `realm`, and `deadline`.
+    Only contains `luciexe`, `realm`, 'resultdb' and `deadline`.
     """
     ret = {}
     for section, msg in iteritems(self._state.luci_context):
@@ -354,3 +355,14 @@ class ContextApi(recipe_api.RecipeApi):
       ret.CopyFrom(self._state.luci_context['deadline'])
       return ret
     return sections_pb2.Deadline(grace_period=30)
+
+
+  @property
+  def resultdb_invocation_name(self):
+    """Returns the ResultDB invocation name of the current context.
+
+    Returns None if resultdb is not defined.
+    """
+    resultdb = self._state.luci_context.get('resultdb')
+    return (resultdb.current_invocation.name if
+            resultdb and resultdb.current_invocation else '')

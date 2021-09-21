@@ -10,6 +10,13 @@
       },
       "realm": {
         "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
       }
     },
     "name": "start"
@@ -26,6 +33,13 @@
       },
       "realm": {
         "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
       }
     },
     "name": "new luciexe"
@@ -41,6 +55,13 @@
       },
       "realm": {
         "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
       }
     },
     "name": "end"
