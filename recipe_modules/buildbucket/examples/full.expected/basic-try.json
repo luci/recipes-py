@@ -11,6 +11,18 @@
       "{\"bucket\": \"main.user.username\", \"experimental\": false, \"parameters_json\": \"{\\\"builder_name\\\": \\\"mac_perf_bisect\\\", \\\"properties\\\": {\\\"bisect_config\\\": {\\\"bad_revision\\\": \\\"351054\\\", \\\"bug_id\\\": 537649, \\\"command\\\": \\\"src/tools/perf/run_benchmark -v --browser=release --output-format=chartjson --also-run-disabled-tests speedometer\\\", \\\"good_revision\\\": \\\"351045\\\", \\\"gs_bucket\\\": \\\"chrome-perf\\\", \\\"max_time_minutes\\\": \\\"20\\\", \\\"metric\\\": \\\"Total/Total\\\", \\\"recipe_tester_name\\\": \\\"linux_perf_bisect\\\", \\\"repeat_count\\\": \\\"10\\\", \\\"test_type\\\": \\\"perf\\\"}}}\", \"tags\": [\"builder:some_builder\", \"buildset:patch/gerrit/chrome-internal-review.googlesource.com/123456/7\", \"main:someother.main.url\", \"parent_buildername:try-builder\", \"parent_buildnumber:123\", \"user_agent:recipe\"]}"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "proj:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "buildbucket.put",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -57,6 +69,18 @@
       "9016911228971028736"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "proj:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "buildbucket.get",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -86,6 +110,18 @@
       "cr-buildbucket-test.appspot.com"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "proj:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "buildbucket.cancel",
     "stdin": "{\"requests\": [{\"cancelBuild\": {\"id\": \"9016911228971028736\", \"summaryMarkdown\": \" \"}}]}",
     "~followup_annotations": [

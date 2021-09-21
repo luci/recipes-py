@@ -8,6 +8,17 @@
       "{\"bucket\": \"main.user.username\", \"experimental\": false, \"parameters_json\": \"{\\\"builder_name\\\": \\\"linux_perf_bisect\\\", \\\"properties\\\": {\\\"bisect_config\\\": {\\\"bad_revision\\\": \\\"351054\\\", \\\"bug_id\\\": 537649}}}\", \"tags\": [\"builder:overriden_builder\", \"buildset:custom\", \"main:overriden.main.url\", \"new-and-custom:tag\", \"user_agent:recipe\"]}"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": ":"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "buildbucket.put",
     "~followup_annotations": [
       "@@@STEP_LOG_END@json.output (invalid)@@@",

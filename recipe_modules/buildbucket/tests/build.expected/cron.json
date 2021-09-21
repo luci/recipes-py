@@ -13,6 +13,17 @@
       "  seconds: 1527292217",
       "}"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "test:cron"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "build"
   },
   {
@@ -20,6 +31,17 @@
       "echo",
       "cr-buildbucket.appspot.com"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "test:cron"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "hostname"
   },
   {
@@ -27,6 +49,17 @@
       "echo",
       "True"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "test:cron"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "is_critical"
   },
   {
@@ -35,6 +68,17 @@
       "parent_buildername:scanner",
       "user_agent:recipe"
     ],
+    "luci_context": {
+      "realm": {
+        "name": "test:cron"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "tags_for_child_build"
   },
   {

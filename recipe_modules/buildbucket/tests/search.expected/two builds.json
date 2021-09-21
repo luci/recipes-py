@@ -15,6 +15,18 @@
       "{\"gerritChanges\": [{\"change\": \"123456\", \"host\": \"chromium-review.googlesource.com\", \"patchset\": \"7\", \"project\": \"chromium/src\"}]}"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "chromium:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "buildbucket.search",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@raw_io.output_text@{\"id\": \"1\", \"status\": \"SUCCESS\"}@@@",

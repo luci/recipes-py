@@ -14,6 +14,7 @@ from PB.go.chromium.org.luci.buildbucket.proto import builder as builder_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.go.chromium.org.luci.buildbucket.proto \
   import builds_service as builds_service_pb2
+from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 from . import util
 
 
@@ -28,6 +29,21 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       '$recipe_engine/buildbucket': {
         'build': json.loads(json_format.MessageToJson(build_message)),
       },
+    })
+
+    # Mock luci_context based on the build info.
+    realm_ctx = sections_pb2.Realm(name='%s:%s' % (
+        build_message.builder.project, build_message.builder.bucket))
+    rdb_ctx = sections_pb2.ResultDB(
+        current_invocation=sections_pb2.ResultDBInvocation(
+            name=build_message.infra.resultdb.invocation,
+            update_token='token',
+        ),
+        hostname='rdbhost',
+    )
+    ret.luci_context.update({
+        'realm': json_format.MessageToDict(realm_ctx),
+        'resultdb': json_format.MessageToDict(rdb_ctx),
     })
     return ret
 

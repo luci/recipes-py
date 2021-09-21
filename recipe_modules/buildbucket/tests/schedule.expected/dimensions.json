@@ -7,6 +7,18 @@
       "cr-buildbucket.appspot.com"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "chromium:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "buildbucket.schedule",
     "stdin": "{\"requests\": [{\"scheduleBuild\": {\"builder\": {\"bucket\": \"try\", \"builder\": \"linux\", \"project\": \"chromium\"}, \"dimensions\": [{\"key\": \"os\", \"value\": \"Windows\"}], \"experimental\": \"NO\", \"fields\": \"builder,createTime,createdBy,critical,endTime,id,input,number,output,startTime,status,updateTime\", \"gerritChanges\": [{\"change\": \"123456\", \"host\": \"chromium-review.googlesource.com\", \"patchset\": \"7\", \"project\": \"chromium/src\"}], \"gitilesCommit\": {\"host\": \"chromium.googlesource.com\", \"id\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"project\": \"chromium/src\", \"ref\": \"refs/heads/main\"}, \"priority\": 30, \"requestId\": \"8945511751514863184-00000000-0000-0000-0000-000000001337\", \"tags\": [{\"key\": \"buildset\", \"value\": \"bs\"}, {\"key\": \"cq_experimental\", \"value\": \"false\"}, {\"key\": \"user_agent\", \"value\": \"recipe\"}]}}]}",
     "~followup_annotations": [
@@ -92,6 +104,18 @@
       "cr-buildbucket.appspot.com"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "chromium:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "buildbucket.run.schedule",
     "stdin": "{\"requests\": [{\"scheduleBuild\": {\"builder\": {\"bucket\": \"try\", \"builder\": \"linux\", \"project\": \"chromium\"}, \"dimensions\": [{\"key\": \"os\", \"value\": \"Windows\"}], \"experimental\": \"NO\", \"fields\": \"builder,createTime,createdBy,critical,endTime,id,input,number,output,startTime,status,updateTime\", \"gerritChanges\": [{\"change\": \"123456\", \"host\": \"chromium-review.googlesource.com\", \"patchset\": \"7\", \"project\": \"chromium/src\"}], \"gitilesCommit\": {\"host\": \"chromium.googlesource.com\", \"id\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"project\": \"chromium/src\", \"ref\": \"refs/heads/main\"}, \"priority\": 30, \"requestId\": \"8945511751514863184-00000000-0000-0000-0000-000000001337\", \"tags\": [{\"key\": \"buildset\", \"value\": \"bs\"}, {\"key\": \"cq_experimental\", \"value\": \"false\"}, {\"key\": \"user_agent\", \"value\": \"recipe\"}]}}]}",
     "~followup_annotations": [
@@ -184,6 +208,18 @@
       "8922054662172514001"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "chromium:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "buildbucket.run.collect.wait",
     "timeout": 5000,
     "~followup_annotations": [
@@ -198,6 +234,18 @@
       "cr-buildbucket.appspot.com"
     ],
     "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "chromium:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
     "name": "buildbucket.run.collect.get",
     "stdin": "{\"requests\": [{\"getBuild\": {\"fields\": \"builder,createTime,createdBy,critical,endTime,id,input,number,output,startTime,status,updateTime\", \"id\": \"8922054662172514001\"}}]}",
     "~followup_annotations": [
