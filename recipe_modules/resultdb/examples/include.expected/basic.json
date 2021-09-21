@@ -12,7 +12,7 @@
     "infra_step": true,
     "luci_context": {
       "realm": {
-        "name": "project:ci"
+        "name": "chromium:ci"
       },
       "resultdb": {
         "current_invocation": {
@@ -40,7 +40,7 @@
     "infra_step": true,
     "luci_context": {
       "realm": {
-        "name": "project:ci"
+        "name": "chromium:ci"
       },
       "resultdb": {
         "current_invocation": {
@@ -76,7 +76,7 @@
     "infra_step": true,
     "luci_context": {
       "realm": {
-        "name": "project:ci"
+        "name": "chromium:ci"
       },
       "resultdb": {
         "current_invocation": {

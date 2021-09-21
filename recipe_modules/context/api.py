@@ -356,7 +356,6 @@ class ContextApi(recipe_api.RecipeApi):
       return ret
     return sections_pb2.Deadline(grace_period=30)
 
-
   @property
   def resultdb_invocation_name(self):
     """Returns the ResultDB invocation name of the current context.

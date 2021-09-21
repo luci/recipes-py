@@ -1211,7 +1211,7 @@ Returns the LUCI realm of the current context.
 May return None if the task is not running in the realm-aware mode. This is
 a transitional period. Eventually all tasks will be associated with realms.
 
-&emsp; **@property**<br>&mdash; **def [resultdb\_invocation\_name](/recipe_modules/context/api.py#360)(self):**
+&emsp; **@property**<br>&mdash; **def [resultdb\_invocation\_name](/recipe_modules/context/api.py#359)(self):**
 
 Returns the ResultDB invocation name of the current context.
 
@@ -2793,7 +2793,7 @@ Args:
      log when the step has a non-SUCCESS status.
 ### *recipe_modules* / [resultdb](/recipe_modules/resultdb)
 
-[DEPS](/recipe_modules/resultdb/__init__.py#6): [buildbucket](#recipe_modules-buildbucket), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time), [uuid](#recipe_modules-uuid)
+[DEPS](/recipe_modules/resultdb/__init__.py#6): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time), [uuid](#recipe_modules-uuid)
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
@@ -4620,14 +4620,14 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/raw_io/examples/full.py#18)(api):**
 ### *recipes* / [resultdb:examples/exonerate](/recipe_modules/resultdb/examples/exonerate.py)
 
-[DEPS](/recipe_modules/resultdb/examples/exonerate.py#10): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/resultdb/examples/exonerate.py#11): [context](#recipe_modules-context), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/exonerate.py#36)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/exonerate.py#37)(api):**
 ### *recipes* / [resultdb:examples/include](/recipe_modules/resultdb/examples/include.py)
 
-[DEPS](/recipe_modules/resultdb/examples/include.py#11): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/include.py#11): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb)
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
@@ -4641,11 +4641,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query.py#22)(api):**
 ### *recipes* / [resultdb:examples/query\_test\_result\_statistics](/recipe_modules/resultdb/examples/query_test_result_statistics.py)
 
-[DEPS](/recipe_modules/resultdb/examples/query_test_result_statistics.py#10): [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/query_test_result_statistics.py#10): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb)
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_result_statistics.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_result_statistics.py#16)(api):**
 ### *recipes* / [resultdb:examples/result\_history](/recipe_modules/resultdb/examples/result_history.py)
 
 [DEPS](/recipe_modules/resultdb/examples/result_history.py#11): [resultdb](#recipe_modules-resultdb)
@@ -4655,11 +4655,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/result_history.py#16)(api):**
 ### *recipes* / [resultdb:examples/resultsink](/recipe_modules/resultdb/examples/resultsink.py)
 
-[DEPS](/recipe_modules/resultdb/examples/resultsink.py#10): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/resultdb/examples/resultsink.py#7): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/resultsink.py#17)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/resultsink.py#14)(api):**
 ### *recipes* / [resultdb:examples/test\_presentation](/recipe_modules/resultdb/examples/test_presentation.py)
 
 [DEPS](/recipe_modules/resultdb/examples/test_presentation.py#5): [resultdb](#recipe_modules-resultdb)

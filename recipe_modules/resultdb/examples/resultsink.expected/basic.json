@@ -9,11 +9,11 @@
     ],
     "luci_context": {
       "realm": {
-        "name": "project:ci"
+        "name": "proj:realm"
       },
       "resultdb": {
         "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
+          "name": "invocations/inv",
           "update_token": "token"
         },
         "hostname": "rdbhost"
@@ -33,11 +33,11 @@
     ],
     "luci_context": {
       "realm": {
-        "name": "project:ci"
+        "name": "proj:realm"
       },
       "resultdb": {
         "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
+          "name": "invocations/inv",
           "update_token": "token"
         },
         "hostname": "rdbhost"
@@ -59,11 +59,11 @@
     ],
     "luci_context": {
       "realm": {
-        "name": "project:ci"
+        "name": "proj:realm"
       },
       "resultdb": {
         "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
+          "name": "invocations/inv",
           "update_token": "token"
         },
         "hostname": "rdbhost"
@@ -83,11 +83,11 @@
     ],
     "luci_context": {
       "realm": {
-        "name": "project:ci"
+        "name": "proj:realm"
       },
       "resultdb": {
         "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
+          "name": "invocations/inv",
           "update_token": "token"
         },
         "hostname": "rdbhost"
@@ -107,11 +107,11 @@
     ],
     "luci_context": {
       "realm": {
-        "name": "project:ci"
+        "name": "proj:realm"
       },
       "resultdb": {
         "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
+          "name": "invocations/inv",
           "update_token": "token"
         },
         "hostname": "rdbhost"
@@ -130,11 +130,11 @@
     ],
     "luci_context": {
       "realm": {
-        "name": "project:ci"
+        "name": "proj:realm"
       },
       "resultdb": {
         "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
+          "name": "invocations/inv",
           "update_token": "token"
         },
         "hostname": "rdbhost"
@@ -156,11 +156,11 @@
     ],
     "luci_context": {
       "realm": {
-        "name": "project:ci"
+        "name": "proj:realm"
       },
       "resultdb": {
         "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
+          "name": "invocations/inv",
           "update_token": "token"
         },
         "hostname": "rdbhost"
@@ -174,7 +174,7 @@
       "stream",
       "-new",
       "-realm",
-      "project:ci",
+      "proj:realm",
       "-include",
       "--",
       "echo",
@@ -182,11 +182,11 @@
     ],
     "luci_context": {
       "realm": {
-        "name": "project:ci"
+        "name": "proj:realm"
       },
       "resultdb": {
         "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
+          "name": "invocations/inv",
           "update_token": "token"
         },
         "hostname": "rdbhost"
@@ -206,11 +206,11 @@
     ],
     "luci_context": {
       "realm": {
-        "name": "project:ci"
+        "name": "proj:realm"
       },
       "resultdb": {
         "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
+          "name": "invocations/inv",
           "update_token": "token"
         },
         "hostname": "rdbhost"
@@ -229,11 +229,11 @@
     ],
     "luci_context": {
       "realm": {
-        "name": "project:ci"
+        "name": "proj:realm"
       },
       "resultdb": {
         "current_invocation": {
-          "name": "invocations/build:8945511751514863184",
+          "name": "invocations/inv",
           "update_token": "token"
         },
         "hostname": "rdbhost"

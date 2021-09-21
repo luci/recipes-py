@@ -2,13 +2,10 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-from recipe_engine.post_process import (DropExpectation, StepCommandContains,
-  DoesNotRunRE)
-
-from PB.go.chromium.org.luci.resultdb.proto.v1 import invocation as invocation_pb2
+from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 
 DEPS = [
-  'buildbucket',
+  'context',
   'resultdb',
   'step',
 ]
@@ -72,5 +69,14 @@ def RunSteps(api):
 def GenTests(api):
   yield api.test(
       'basic',
-      api.buildbucket.ci_build(),
+      api.context.luci_context(
+          realm=sections_pb2.Realm(name='proj:realm'),
+          resultdb=sections_pb2.ResultDB(
+              current_invocation=sections_pb2.ResultDBInvocation(
+                  name='invocations/inv',
+                  update_token='token',
+              ),
+              hostname='rdbhost',
+          )
+      ),
   )

@@ -5,10 +5,11 @@
 from recipe_engine.post_process import (DropExpectation, StepSuccess,
                                         DoesNotRun)
 
+from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 from PB.go.chromium.org.luci.resultdb.proto.v1 import test_result as test_result_pb2
 
 DEPS = [
-    'buildbucket',
+    'context',
     'json',
     'properties',
     'resultdb',
@@ -42,14 +43,28 @@ def RunSteps(api):
 
 
 def GenTests(api):
+  rdb_luci_context = sections_pb2.ResultDB(
+      current_invocation=sections_pb2.ResultDBInvocation(
+          name='invocations/build:8945511751514863184',
+          update_token='token',
+      ),
+      hostname='rdbhost',
+  )
   yield api.test(
-      'exonerate', api.buildbucket.ci_build(),
+      'exonerate',
+      api.context.luci_context(
+          realm=sections_pb2.Realm(name='chromium:ci'),
+          resultdb=rdb_luci_context,
+      ),
       api.post_process(StepSuccess, 'exonerate without patch failures'),
       api.post_process(DropExpectation))
 
   yield api.test(
       'exonerate in multiple batches', api.properties(batch_size=1),
-      api.buildbucket.ci_build(),
+      api.context.luci_context(
+          realm=sections_pb2.Realm(name='chromium:ci'),
+          resultdb=rdb_luci_context,
+      ),
       api.post_process(StepSuccess, 'exonerate without patch failures'),
       api.post_process(StepSuccess,
                        'exonerate without patch failures.batch (0)'),
@@ -58,6 +73,10 @@ def GenTests(api):
       api.post_process(DropExpectation))
 
   yield api.test(
-      'no-op', api.properties(test_exonerations=[]), api.buildbucket.ci_build(),
+      'no-op', api.properties(test_exonerations=[]),
+      api.context.luci_context(
+          realm=sections_pb2.Realm(name='chromium:ci'),
+          resultdb=rdb_luci_context,
+      ),
       api.post_process(DoesNotRun, 'exonerate without patch failures'),
       api.post_process(DropExpectation))
