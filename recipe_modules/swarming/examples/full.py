@@ -182,7 +182,7 @@ def RunSteps(api, use_cas):
             'I/O timeout: exceeded 600 seconds.\nOutput:\nhello world!',
         ]
         assert s in expected, repr(s)
-      elif results[0].state == None:
+      elif results[0].state is None:
         assert (
             s == 'Failed to collect:\nBot could not be contacted'), repr(s)
       else:  # pragma: no cover
@@ -224,6 +224,10 @@ def GenTests(api):
          api.swarming.properties(server='bananas.example.com',
                                  version='release')
   )
+  yield (api.test('server_from_properties') + api.properties(
+      **{'$recipe_engine/swarming': {
+          'server': 'props-server.example.com'
+      }}))
 
   states = {state.name : api.swarming.TaskState[state.name]
             for state in api.swarming.TaskState if state not in [

@@ -1265,7 +1265,10 @@ class SwarmingApi(recipe_api.RecipeApi):
 
   def __init__(self, input_properties, env_properties, *args, **kwargs):
     super(SwarmingApi, self).__init__(*args, **kwargs)
-    self._server = input_properties.server or None
+    # `server` input property takes precedence over the environment variable to
+    # ensure backwards compatibility with builders that set the property.
+    self._server = (
+        input_properties.server or env_properties.SWARMING_SERVER or None)
     default_cipd_version = DEFAULT_CIPD_VERSION
     if self._test_data.enabled:
       default_cipd_version = 'swarming_module_pin'
@@ -1287,7 +1290,7 @@ class SwarmingApi(recipe_api.RecipeApi):
 
   def initialize(self):
     if self._test_data.enabled:
-      self._server = 'https://example.swarmingserver.appspot.com'
+      self._server = self._server or 'https://example.swarmingserver.appspot.com'
       # Recipes always run on top of swarming task now.
       self._env_properties.SWARMING_TASK_ID = (
           self._env_properties.SWARMING_TASK_ID or 'fake-task-id')

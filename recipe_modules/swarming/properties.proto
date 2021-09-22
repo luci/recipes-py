@@ -16,4 +16,5 @@ message EnvProperties {
     // See https://chromium.googlesource.com/infra/luci/luci-py/+/HEAD/appengine/swarming/doc/Magic-Values.md
     string SWARMING_BOT_ID = 1;
     string SWARMING_TASK_ID = 2;
+    string SWARMING_SERVER = 3;
 }
