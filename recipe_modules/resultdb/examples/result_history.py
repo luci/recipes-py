@@ -8,6 +8,8 @@ from PB.go.chromium.org.luci.resultdb.proto.v1 import predicate
 from PB.go.chromium.org.luci.resultdb.proto.v1 import resultdb
 from PB.go.chromium.org.luci.resultdb.proto.v1 import test_result as test_result_pb2
 
+PYTHON_VERSION_COMPATIBILITY = "PY2+3"
+
 DEPS = [
     'resultdb',
 ]

@@ -26,7 +26,7 @@
   * [python](#recipe_modules-python) (Python3 ✅) &mdash; Provides methods for running python scripts correctly.
   * [random](#recipe_modules-random) (Python3 ✅) &mdash; Allows randomness in recipes.
   * [raw_io](#recipe_modules-raw_io) (Python3 ✅) &mdash; Provides objects for reading and writing raw data to and from steps.
-  * [resultdb](#recipe_modules-resultdb) &mdash; API for interacting with the ResultDB service.
+  * [resultdb](#recipe_modules-resultdb) (Python3 ✅) &mdash; API for interacting with the ResultDB service.
   * [runtime](#recipe_modules-runtime) (Python3 ✅)
   * [scheduler](#recipe_modules-scheduler) (Python3 ✅) &mdash; API for interacting with the LUCI Scheduler service.
   * [service_account](#recipe_modules-service_account) (Python3 ✅) &mdash; API for getting OAuth2 access tokens for LUCI tasks or private keys.
@@ -135,15 +135,15 @@
   * [python:tests/infra_failing_step](#recipes-python_tests_infra_failing_step) (Python3 ✅) &mdash; Tests for api.
   * [random:tests/full](#recipes-random_tests_full) (Python3 ✅)
   * [raw_io:examples/full](#recipes-raw_io_examples_full) (Python3 ✅)
-  * [resultdb:examples/exonerate](#recipes-resultdb_examples_exonerate)
-  * [resultdb:examples/include](#recipes-resultdb_examples_include)
-  * [resultdb:examples/query](#recipes-resultdb_examples_query)
-  * [resultdb:examples/query_test_result_statistics](#recipes-resultdb_examples_query_test_result_statistics)
-  * [resultdb:examples/result_history](#recipes-resultdb_examples_result_history)
-  * [resultdb:examples/resultsink](#recipes-resultdb_examples_resultsink)
-  * [resultdb:examples/test_presentation](#recipes-resultdb_examples_test_presentation)
-  * [resultdb:examples/test_presentation_default](#recipes-resultdb_examples_test_presentation_default)
-  * [resultdb:examples/upload_invocation_artifacts](#recipes-resultdb_examples_upload_invocation_artifacts)
+  * [resultdb:examples/exonerate](#recipes-resultdb_examples_exonerate) (Python3 ✅)
+  * [resultdb:examples/include](#recipes-resultdb_examples_include) (Python3 ✅)
+  * [resultdb:examples/query](#recipes-resultdb_examples_query) (Python3 ✅)
+  * [resultdb:examples/query_test_result_statistics](#recipes-resultdb_examples_query_test_result_statistics) (Python3 ✅)
+  * [resultdb:examples/result_history](#recipes-resultdb_examples_result_history) (Python3 ✅)
+  * [resultdb:examples/resultsink](#recipes-resultdb_examples_resultsink) (Python3 ✅)
+  * [resultdb:examples/test_presentation](#recipes-resultdb_examples_test_presentation) (Python3 ✅)
+  * [resultdb:examples/test_presentation_default](#recipes-resultdb_examples_test_presentation_default) (Python3 ✅)
+  * [resultdb:examples/upload_invocation_artifacts](#recipes-resultdb_examples_upload_invocation_artifacts) (Python3 ✅)
   * [runtime:tests/full](#recipes-runtime_tests_full) (Python3 ✅)
   * [scheduler:examples/emit_triggers](#recipes-scheduler_examples_emit_triggers) (Python3 ✅) &mdash; This file is a recipe demonstrating emitting triggers to LUCI Scheduler.
   * [scheduler:examples/host](#recipes-scheduler_examples_host) (Python3 ✅) &mdash; This file is a recipe demonstrating reading/mocking scheduler host.
@@ -2793,9 +2793,9 @@ Args:
      log when the step has a non-SUCCESS status.
 ### *recipe_modules* / [resultdb](/recipe_modules/resultdb)
 
-[DEPS](/recipe_modules/resultdb/__init__.py#6): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time), [uuid](#recipe_modules-uuid)
+[DEPS](/recipe_modules/resultdb/__init__.py#7): [context](#recipe_modules-context), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [time](#recipe_modules-time), [uuid](#recipe_modules-uuid)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 API for interacting with the ResultDB service.
 
@@ -4620,67 +4620,67 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/raw_io/examples/full.py#18)(api):**
 ### *recipes* / [resultdb:examples/exonerate](/recipe_modules/resultdb/examples/exonerate.py)
 
-[DEPS](/recipe_modules/resultdb/examples/exonerate.py#11): [context](#recipe_modules-context), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/resultdb/examples/exonerate.py#13): [context](#recipe_modules-context), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/exonerate.py#37)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/exonerate.py#39)(api):**
 ### *recipes* / [resultdb:examples/include](/recipe_modules/resultdb/examples/include.py)
 
-[DEPS](/recipe_modules/resultdb/examples/include.py#11): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/include.py#13): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/include.py#17)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/include.py#19)(api):**
 ### *recipes* / [resultdb:examples/query](/recipe_modules/resultdb/examples/query.py)
 
-[DEPS](/recipe_modules/resultdb/examples/query.py#15): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/resultdb/examples/query.py#17): [buildbucket](#recipe_modules-buildbucket), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query.py#22)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query.py#24)(api):**
 ### *recipes* / [resultdb:examples/query\_test\_result\_statistics](/recipe_modules/resultdb/examples/query_test_result_statistics.py)
 
-[DEPS](/recipe_modules/resultdb/examples/query_test_result_statistics.py#10): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/query_test_result_statistics.py#12): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_result_statistics.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/query_test_result_statistics.py#18)(api):**
 ### *recipes* / [resultdb:examples/result\_history](/recipe_modules/resultdb/examples/result_history.py)
 
-[DEPS](/recipe_modules/resultdb/examples/result_history.py#11): [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/result_history.py#13): [resultdb](#recipe_modules-resultdb)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/result_history.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/result_history.py#18)(api):**
 ### *recipes* / [resultdb:examples/resultsink](/recipe_modules/resultdb/examples/resultsink.py)
 
-[DEPS](/recipe_modules/resultdb/examples/resultsink.py#7): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/resultdb/examples/resultsink.py#9): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/resultsink.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/resultsink.py#16)(api):**
 ### *recipes* / [resultdb:examples/test\_presentation](/recipe_modules/resultdb/examples/test_presentation.py)
 
-[DEPS](/recipe_modules/resultdb/examples/test_presentation.py#5): [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/test_presentation.py#7): [resultdb](#recipe_modules-resultdb)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/test_presentation.py#9)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/test_presentation.py#11)(api):**
 ### *recipes* / [resultdb:examples/test\_presentation\_default](/recipe_modules/resultdb/examples/test_presentation_default.py)
 
-[DEPS](/recipe_modules/resultdb/examples/test_presentation_default.py#5): [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/test_presentation_default.py#7): [resultdb](#recipe_modules-resultdb)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/test_presentation_default.py#9)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/test_presentation_default.py#11)(api):**
 ### *recipes* / [resultdb:examples/upload\_invocation\_artifacts](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py)
 
-[DEPS](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py#10): [resultdb](#recipe_modules-resultdb)
+[DEPS](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py#12): [resultdb](#recipe_modules-resultdb)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/upload_invocation_artifacts.py#17)(api):**
 ### *recipes* / [runtime:tests/full](/recipe_modules/runtime/tests/full.py)
 
 [DEPS](/recipe_modules/runtime/tests/full.py#9): [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)

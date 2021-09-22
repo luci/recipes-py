@@ -356,7 +356,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
               contents=art['contents'],
           ),
       )
-      for art_id, art in artifacts.iteritems()
+      for art_id, art in iteritems(artifacts)
     ])
 
     res = self._rpc(

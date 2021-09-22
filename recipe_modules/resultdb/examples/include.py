@@ -8,6 +8,8 @@ from recipe_engine.post_process import (DropExpectation,
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 from PB.go.chromium.org.luci.resultdb.proto.v1 import invocation as invocation_pb2
 
+PYTHON_VERSION_COMPATIBILITY = "PY2+3"
+
 DEPS = [
   'context',
   'resultdb',
@@ -20,7 +22,7 @@ def RunSteps(api):
     step_name='rdb query',
     variants_with_unexpected_results=True,
   )
-  invocation_ids = inv_bundle.keys()
+  invocation_ids = sorted(inv_bundle)
   api.resultdb.include_invocations(invocation_ids, step_name='rdb include')
   api.resultdb.exclude_invocations(invocation_ids, step_name='rdb exclude')
 

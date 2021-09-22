@@ -58,7 +58,7 @@ def serialize(inv_bundle, pretty=False):
         json.dumps(jsonish, sort_keys=True, indent=2 if pretty else None)
     )
 
-  for inv_id, inv in iteritems(inv_bundle):
+  for inv_id, inv in sorted(iteritems(inv_bundle)):
     assert isinstance(inv, Invocation), inv
     if inv.proto.ListFields():  # if something is set
       add_line(inv_id, 'invocation', inv.proto)
