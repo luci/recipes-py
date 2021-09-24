@@ -216,12 +216,13 @@ def GenTests(api):
          api.override_step_data(
              'collect',
              api.swarming.collect(
-                 [api.swarming.task_result(id='0', name='isolate', use_cas=False)])))
+                 [api.swarming.task_result(
+                     id='0', name='isolate', use_cas=False)])))
 
   yield api.test('experimental') + api.runtime(
       is_experimental=True)
   yield (api.test('override_swarming') +
-         api.swarming.properties(server='bananas.example.com',
+         api.swarming.properties(server='https://bananas.appspot.com',
                                  version='release')
   )
   yield (api.test('server_from_properties') + api.properties(

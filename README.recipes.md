@@ -692,17 +692,17 @@ Args:
 Set the buildbucket host while in context, then reverts it.
 ### *recipe_modules* / [cas](/recipe_modules/cas)
 
-[DEPS](/recipe_modules/cas/__init__.py#7): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cas/__init__.py#9): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 API for interacting with cas client.
 
-#### **class [CasApi](/recipe_modules/cas/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
+#### **class [CasApi](/recipe_modules/cas/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
 
 A module for interacting with cas client.
 
-&mdash; **def [archive](/recipe_modules/cas/api.py#98)(self, step_name, root, \*paths):**
+&mdash; **def [archive](/recipe_modules/cas/api.py#94)(self, step_name, root, \*paths):**
 
 Archives given paths to a cas server.
 
@@ -717,7 +717,7 @@ Args:
 Returns:
   digest (str): digest of uploaded root directory.
 
-&mdash; **def [download](/recipe_modules/cas/api.py#69)(self, step_name, digest, output_dir):**
+&mdash; **def [download](/recipe_modules/cas/api.py#65)(self, step_name, digest, output_dir):**
 
 Downloads a directory tree from a cas server.
 
@@ -727,9 +727,9 @@ Args:
   * digest (str): the digest of a cas tree.
   * output_dir (Path): path to an output directory.
 
-&emsp; **@property**<br>&mdash; **def [instance](/recipe_modules/cas/api.py#21)(self):**
+&emsp; **@property**<br>&mdash; **def [instance](/recipe_modules/cas/api.py#20)(self):**
 
-&mdash; **def [viewer\_url](/recipe_modules/cas/api.py#89)(self, digest):**
+&mdash; **def [viewer\_url](/recipe_modules/cas/api.py#85)(self, digest):**
 
 Return URL of cas viewer.
 ### *recipe_modules* / [cipd](/recipe_modules/cipd)

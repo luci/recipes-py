@@ -4,31 +4,27 @@
 
 """API for interacting with cas client."""
 
-import os
-
 from recipe_engine import recipe_api
 
 
 class CasApi(recipe_api.RecipeApi):
   """A module for interacting with cas client."""
 
-  def __init__(self, **kwargs):
+  def __init__(self, env_properties, **kwargs):
     super(CasApi, self).__init__(**kwargs)
 
     self._instance = None
     self._cached_version = None
+    self._env_properties = env_properties
 
   @property
   def instance(self):
     if self._instance:
       return self._instance
 
-    if self._test_data.enabled:
-      swarming_server= 'https://example-cas-server.appspot.com'
-    else: # pragma: no cover
-      # Extract default instance from swarming task env.
-      # See https://chromium.googlesource.com/infra/luci/luci-py/+/1c201e5909b61b859b82d16cfff15267d1c0efea/appengine/swarming/doc/Magic-Values.md#client-tool-environment-variables
-      swarming_server = os.environ['SWARMING_SERVER']
+    swarming_server = (
+      self._env_properties.SWARMING_SERVER or
+      'https://example-cas-server.appspot.com')
     project = swarming_server[len('https://'):-len('.appspot.com')]
 
     # Set full instance name if only project ID is given.
