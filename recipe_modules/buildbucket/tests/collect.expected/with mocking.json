@@ -131,7 +131,7 @@
       "@@@STEP_LOG_LINE@json.output@          \"project\": \"project\"@@@",
       "@@@STEP_LOG_LINE@json.output@        }, @@@",
       "@@@STEP_LOG_LINE@json.output@        \"createTime\": \"2018-05-25T23:50:17Z\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"createdBy\": \"user:commit-bot@chromium.org\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"createdBy\": \"project:project\", @@@",
       "@@@STEP_LOG_LINE@json.output@        \"id\": \"9016911228971028737\", @@@",
       "@@@STEP_LOG_LINE@json.output@        \"infra\": {@@@",
       "@@@STEP_LOG_LINE@json.output@          \"resultdb\": {@@@",

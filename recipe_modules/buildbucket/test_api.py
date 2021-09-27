@@ -139,6 +139,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       build_number=0,
       build_id=8945511751514863184,
       priority=30,
+      created_by=None,
       tags=None,
       status=None,
       experiments=(),
@@ -152,6 +153,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         yield (api.test('basic') +
                api.buildbucket.try_build(project='my-proj', builder='win'))
     """
+    if created_by is None:
+      created_by = 'project:' + project
     git_repo = git_repo or self._default_git_repo(project)
     git_host, git_project = util.parse_gitiles_repo_url(git_repo)
 
@@ -187,7 +190,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
             bucket=bucket,
             builder=builder,
         ),
-        created_by='user:commit-bot@chromium.org',
+        created_by=created_by,
         create_time=timestamp_pb2.Timestamp(seconds=1527292217),
         input=build_pb2.Build.Input(gerrit_changes=gerrit_changes,
                                     experiments=experiments),
