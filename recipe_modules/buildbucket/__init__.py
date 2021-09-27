@@ -9,6 +9,7 @@ DEPS = [
   'path',
   'platform',
   'raw_io',
+  'resultdb',
   'runtime',
   'step',
   'uuid',

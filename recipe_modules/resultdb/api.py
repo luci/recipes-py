@@ -7,6 +7,7 @@
 Requires `rdb` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 """
+import six
 
 from future.utils import iteritems
 
@@ -149,7 +150,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
     Returns:
       A list of invocation_ids.
     """
-    assert all(isinstance(name, str) for name in inv_names), inv_names
+    assert all(
+        isinstance(name, six.string_types) for name in inv_names), inv_names
     assert all(name.startswith(
         self._INVOCATION_NAME_PREFIX) for name in inv_names), inv_names
 

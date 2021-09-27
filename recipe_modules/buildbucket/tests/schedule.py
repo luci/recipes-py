@@ -27,7 +27,9 @@ def RunSteps(api):
   # This is needed to provide coverage for the tags() method in api.py.
   tags = api.buildbucket.tags(**tags) if tags else tags
   req = api.buildbucket.schedule_request(tags=tags, **req_body)
-  api.buildbucket.schedule([req])
+
+  include_sub_invs = api.properties.get('include_sub_invs', False)
+  api.buildbucket.schedule([req], include_sub_invs=include_sub_invs)
 
   api.buildbucket.run(
       [req],
@@ -142,5 +144,27 @@ def GenTests(api):
           post_process.ResultReasonRE,
           r'Buildbucket Internal Error'
       ) +
+      api.post_process(post_process.DropExpectation)
+  )
+
+  res_with_rdb = builds_service_pb2.BatchResponse(
+      responses=[
+          dict(
+              schedule_build=dict(
+                  infra=dict(
+                      resultdb=dict(
+                          invocation=str('invocations/build-87654321')
+                      ),
+                  ),
+              ),
+          ),
+      ],
+  )
+  yield (
+      test(test_name="include_sub_invocations") +
+      api.properties(include_sub_invs=True) +
+      api.buildbucket.simulated_schedule_output(res_with_rdb) +
+      api.post_process(post_process.StepSuccess,
+                       'include sub resultdb invocations')+
       api.post_process(post_process.DropExpectation)
   )

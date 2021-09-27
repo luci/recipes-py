@@ -523,7 +523,11 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return req
 
   def schedule(
-      self, schedule_build_requests, url_title_fn=None, step_name=None):
+      self,
+      schedule_build_requests,
+      url_title_fn=None,
+      step_name=None,
+      include_sub_invs=True):
     """Schedules a batch of builds.
 
     Example:
@@ -542,6 +546,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
         protobuf messages. Create one by calling `schedule_request` method.
     *   url_title_fn: generates a build URL title. See module docstring.
     *   step_name: name for this step.
+    *   include_sub_invs: flag for including the scheduled builds' ResultDB
+          invocations into the current build's invocation. Default is True.
 
     Returns:
       A list of
@@ -574,11 +580,24 @@ class BuildbucketApi(recipe_api.RecipeApi):
     step_res, batch_res, has_errors = self._batch_request(
         step_name or 'buildbucket.schedule', batch_req, test_res)
 
+    sub_invocation_names = []
     # Append build links regardless of errors.
     for r in batch_res.responses:
       if not r.HasField('error'):
         self._report_build_maybe(
             step_res, r.schedule_build, url_title_fn=url_title_fn)
+
+        inv = r.schedule_build.infra.resultdb.invocation
+        if inv:
+          sub_invocation_names.append(inv)
+
+    # Include sub invocations for the successfully created builds regardless
+    # of errors.
+    if include_sub_invs and self.m.resultdb.enabled and sub_invocation_names:
+      self.m.resultdb.include_invocations(
+          invocations=self.m.resultdb.invocation_ids(sub_invocation_names),
+          step_name="include sub resultdb invocations"
+      )
 
     if has_errors:
       raise self.m.step.InfraFailure('Build creation failed')

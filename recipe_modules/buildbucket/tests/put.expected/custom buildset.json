@@ -5,12 +5,12 @@
       "put",
       "-host",
       "cr-buildbucket.appspot.com",
-      "{\"bucket\": \"main.user.username\", \"experimental\": false, \"parameters_json\": \"{\\\"builder_name\\\": \\\"linux_perf_bisect\\\", \\\"properties\\\": {\\\"bisect_config\\\": {\\\"bad_revision\\\": \\\"351054\\\", \\\"bug_id\\\": 537649}}}\", \"tags\": [\"builder:overriden_builder\", \"buildset:custom\", \"main:overriden.main.url\", \"new-and-custom:tag\", \"user_agent:recipe\"]}"
+      "{\"bucket\": \"main.user.username\", \"experimental\": false, \"parameters_json\": \"{\\\"builder_name\\\": \\\"linux_perf_bisect\\\", \\\"properties\\\": {\\\"bisect_config\\\": {\\\"bad_revision\\\": \\\"351054\\\", \\\"bug_id\\\": 537649}}}\", \"tags\": [\"builder:overriden_builder\", \"buildset:custom\", \"main:overriden.main.url\", \"new-and-custom:tag\", \"parent_buildername:builder\", \"user_agent:recipe\"]}"
     ],
     "infra_step": true,
     "luci_context": {
       "realm": {
-        "name": ":"
+        "name": "chromium:ci"
       },
       "resultdb": {
         "current_invocation": {

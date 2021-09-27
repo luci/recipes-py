@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import builder as builder_pb2
 
 PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
@@ -56,6 +57,11 @@ def GenTests(api):
       api.test('custom buildset') +
       api.buildbucket.build(build_pb2.Build(
           id=9016911228971028736,
+          builder=builder_pb2.BuilderID(
+              project='chromium',
+              bucket='ci',
+              builder='builder',
+          ),
           tags=api.buildbucket.tags(buildset='custom'),
       ))
   )
