@@ -3532,8 +3532,8 @@ Waits on a set of Swarming tasks.
 
 Args:
   name (str): The name of the step.
-  tasks ((list(str|TaskRequestMetadata)): A list of ids or metadata objects
-    corresponding to tasks to wait
+  tasks (Iterable(str|TaskRequestMetadata)): A list of ids or metadata
+    objects corresponding to tasks to wait
   output_dir (Path|None): Where to download the tasks' isolated outputs. If
     set to None, they will not be downloaded; else, a given task's outputs
     will be downloaded to output_dir/<task id>/.
