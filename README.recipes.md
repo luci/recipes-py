@@ -97,17 +97,17 @@
   * [engine_tests/undeclared_method](#recipes-engine_tests_undeclared_method)
   * [engine_tests/unicode](#recipes-engine_tests_unicode)
   * [engine_tests/whitelist_steps](#recipes-engine_tests_whitelist_steps) &mdash; Tests that step_data can accept multiple specs at once.
-  * [file:examples/compute_hash](#recipes-file_examples_compute_hash)
+  * [file:examples/compute_hash](#recipes-file_examples_compute_hash) (Python3 ✅)
   * [file:examples/copy](#recipes-file_examples_copy) (Python3 ✅)
   * [file:examples/copytree](#recipes-file_examples_copytree) (Python3 ✅)
   * [file:examples/error](#recipes-file_examples_error) (Python3 ✅)
-  * [file:examples/file_hash](#recipes-file_examples_file_hash)
+  * [file:examples/file_hash](#recipes-file_examples_file_hash) (Python3 ✅)
   * [file:examples/flatten_single_directories](#recipes-file_examples_flatten_single_directories) (Python3 ✅)
   * [file:examples/glob](#recipes-file_examples_glob) (Python3 ✅)
   * [file:examples/handle_json_file](#recipes-file_examples_handle_json_file) (Python3 ✅)
   * [file:examples/listdir](#recipes-file_examples_listdir) (Python3 ✅)
-  * [file:examples/raw_copy](#recipes-file_examples_raw_copy)
-  * [file:examples/read_write_proto](#recipes-file_examples_read_write_proto)
+  * [file:examples/raw_copy](#recipes-file_examples_raw_copy) (Python3 ✅)
+  * [file:examples/read_write_proto](#recipes-file_examples_read_write_proto) (Python3 ✅)
   * [file:examples/symlink](#recipes-file_examples_symlink) (Python3 ✅)
   * [file:examples/truncate](#recipes-file_examples_truncate) (Python3 ✅)
   * [futures:examples/background_helper](#recipes-futures_examples_background_helper) (Python3 ✅)
@@ -1446,7 +1446,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#544)(self, name, dest, mode=511):**
+&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#545)(self, name, dest, mode=511):**
 
 Ensures that `dest` exists and is a directory.
 
@@ -1475,7 +1475,7 @@ Returns (str):
 Raises:
   file.Error and ValueError if passed paths input is not str or Path.
 
-&mdash; **def [filesizes](/recipe_modules/file/api.py#560)(self, name, files, test_data=None):**
+&mdash; **def [filesizes](/recipe_modules/file/api.py#561)(self, name, files, test_data=None):**
 
 Returns list of filesizes for the given files.
 
@@ -1485,7 +1485,7 @@ Args:
 
 Returns list[int], size of each file in bytes.
 
-&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#700)(self, name, path):**
+&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#701)(self, name, path):**
 
 Flattens singular directories, starting at path.
 
@@ -1514,7 +1514,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [glob\_paths](/recipe_modules/file/api.py#452)(self, name, source, pattern, include_hidden=False, test_data=()):**
+&mdash; **def [glob\_paths](/recipe_modules/file/api.py#453)(self, name, source, pattern, include_hidden=False, test_data=()):**
 
 Performs glob expansion on `pattern`.
 
@@ -1544,7 +1544,7 @@ Returns (list[Path]): All paths found.
 
 Raises: file.Error.
 
-&mdash; **def [listdir](/recipe_modules/file/api.py#514)(self, name, source, recursive=False, test_data=()):**
+&mdash; **def [listdir](/recipe_modules/file/api.py#515)(self, name, source, recursive=False, test_data=()):**
 
 Lists all files inside a directory.
 
@@ -1575,7 +1575,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [read\_json](/recipe_modules/file/api.py#344)(self, name, source, test_data='', include_log=True):**
+&mdash; **def [read\_json](/recipe_modules/file/api.py#345)(self, name, source, test_data='', include_log=True):**
 
 Reads a file as UTF-8 encoded json.
 
@@ -1590,7 +1590,7 @@ Returns (object): The content of the file.
 
 Raise file.Error
 
-&mdash; **def [read\_proto](/recipe_modules/file/api.py#380)(self, name, source, msg_class, codec, test_proto=None, include_log=True, encoding_kwargs=None):**
+&mdash; **def [read\_proto](/recipe_modules/file/api.py#381)(self, name, source, msg_class, codec, test_proto=None, include_log=True, encoding_kwargs=None):**
 
 Reads a file into a proto message.
 
@@ -1605,7 +1605,7 @@ Args:
   * encoding_kwargs (dict): Passed directly to the chosen encoder. See proto
     module for details.
 
-&mdash; **def [read\_raw](/recipe_modules/file/api.py#265)(self, name, source, test_data=''):**
+&mdash; **def [read\_raw](/recipe_modules/file/api.py#266)(self, name, source, test_data=''):**
 
 Reads a file as raw data.
 
@@ -1619,7 +1619,7 @@ Returns (str): The unencoded (binary) contents of the file.
 
 Raises: file.Error
 
-&mdash; **def [read\_text](/recipe_modules/file/api.py#302)(self, name, source, test_data='', include_log=True):**
+&mdash; **def [read\_text](/recipe_modules/file/api.py#303)(self, name, source, test_data='', include_log=True):**
 
 Reads a file as UTF-8 encoded text.
 
@@ -1634,7 +1634,7 @@ Returns (str): The content of the file.
 
 Raises: file.Error
 
-&mdash; **def [remove](/recipe_modules/file/api.py#499)(self, name, source):**
+&mdash; **def [remove](/recipe_modules/file/api.py#500)(self, name, source):**
 
 Removes a file.
 
@@ -1646,7 +1646,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#599)(self, name, source):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#600)(self, name, source):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -1661,7 +1661,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#617)(self, name, source, pattern, recursive=True, include_hidden=True):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#618)(self, name, source, pattern, recursive=True, include_hidden=True):**
 
 Removes all entries in `source` matching the glob `pattern`.
 
@@ -1691,7 +1691,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#582)(self, name, source):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#583)(self, name, source):**
 
 Recursively removes a directory.
 
@@ -1705,7 +1705,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [symlink](/recipe_modules/file/api.py#662)(self, name, source, linkname):**
+&mdash; **def [symlink](/recipe_modules/file/api.py#663)(self, name, source, linkname):**
 
 Creates a symlink on the local filesystem.
 
@@ -1718,14 +1718,14 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#679)(self, root):**
+&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#680)(self, root):**
 
 Creates a SymlinkTree, given a root directory.
 
 Args:
   * root (Path): root of a tree of symlinks.
 
-&mdash; **def [truncate](/recipe_modules/file/api.py#687)(self, name, path, size_mb=100):**
+&mdash; **def [truncate](/recipe_modules/file/api.py#688)(self, name, path, size_mb=100):**
 
 Creates an empty file with path and size_mb on the local filesystem.
 
@@ -1736,7 +1736,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [write\_json](/recipe_modules/file/api.py#364)(self, name, dest, data, indent=None, include_log=True):**
+&mdash; **def [write\_json](/recipe_modules/file/api.py#365)(self, name, dest, data, indent=None, include_log=True):**
 
 Write the given json serializable `data` to `dest`.
 
@@ -1750,7 +1750,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [write\_proto](/recipe_modules/file/api.py#421)(self, name, dest, proto_msg, codec, include_log=True, encoding_kwargs=None):**
+&mdash; **def [write\_proto](/recipe_modules/file/api.py#422)(self, name, dest, proto_msg, codec, include_log=True, encoding_kwargs=None):**
 
 Writes the given proto message to `dest`.
 
@@ -1763,7 +1763,7 @@ Args:
   * encoding_kwargs (dict): Passed directly to the chosen encoder. See
     proto module for details.
 
-&mdash; **def [write\_raw](/recipe_modules/file/api.py#285)(self, name, dest, data, include_log=True):**
+&mdash; **def [write\_raw](/recipe_modules/file/api.py#286)(self, name, dest, data, include_log=True):**
 
 Write the given `data` to `dest`.
 
@@ -1775,7 +1775,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [write\_text](/recipe_modules/file/api.py#326)(self, name, dest, text_data, include_log=True):**
+&mdash; **def [write\_text](/recipe_modules/file/api.py#327)(self, name, dest, text_data, include_log=True):**
 
 Write the given UTF-8 encoded `text_data` to `dest`.
 
@@ -4328,11 +4328,11 @@ Tests that step_data can accept multiple specs at once.
 &mdash; **def [RunSteps](/recipes/engine_tests/whitelist_steps.py#22)(api, fakeit):**
 ### *recipes* / [file:examples/compute\_hash](/recipe_modules/file/examples/compute_hash.py)
 
-[DEPS](/recipe_modules/file/examples/compute_hash.py#5): [assertions](#recipe_modules-assertions), [file](#recipe_modules-file), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/file/examples/compute_hash.py#7): [assertions](#recipe_modules-assertions), [file](#recipe_modules-file), [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/compute_hash.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/compute_hash.py#13)(api):**
 ### *recipes* / [file:examples/copy](/recipe_modules/file/examples/copy.py)
 
 [DEPS](/recipe_modules/file/examples/copy.py#7): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
@@ -4356,11 +4356,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/file/examples/error.py#13)(api):**
 ### *recipes* / [file:examples/file\_hash](/recipe_modules/file/examples/file_hash.py)
 
-[DEPS](/recipe_modules/file/examples/file_hash.py#5): [assertions](#recipe_modules-assertions), [file](#recipe_modules-file), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/file/examples/file_hash.py#7): [assertions](#recipe_modules-assertions), [file](#recipe_modules-file), [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/file_hash.py#11)(api):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/file_hash.py#13)(api):**
 ### *recipes* / [file:examples/flatten\_single\_directories](/recipe_modules/file/examples/flatten_single_directories.py)
 
 [DEPS](/recipe_modules/file/examples/flatten_single_directories.py#7): [file](#recipe_modules-file), [path](#recipe_modules-path)
@@ -4391,18 +4391,18 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/file/examples/listdir.py#13)(api):**
 ### *recipes* / [file:examples/raw\_copy](/recipe_modules/file/examples/raw_copy.py)
 
-[DEPS](/recipe_modules/file/examples/raw_copy.py#5): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
+[DEPS](/recipe_modules/file/examples/raw_copy.py#7): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/raw_copy.py#12)(api):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/raw_copy.py#14)(api):**
 ### *recipes* / [file:examples/read\_write\_proto](/recipe_modules/file/examples/read_write_proto.py)
 
-[DEPS](/recipe_modules/file/examples/read_write_proto.py#7): [file](#recipe_modules-file), [path](#recipe_modules-path), [proto](#recipe_modules-proto)
+[DEPS](/recipe_modules/file/examples/read_write_proto.py#9): [file](#recipe_modules-file), [path](#recipe_modules-path), [proto](#recipe_modules-proto)
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/file/examples/read_write_proto.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/file/examples/read_write_proto.py#16)(api):**
 ### *recipes* / [file:examples/symlink](/recipe_modules/file/examples/symlink.py)
 
 [DEPS](/recipe_modules/file/examples/symlink.py#7): [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path)

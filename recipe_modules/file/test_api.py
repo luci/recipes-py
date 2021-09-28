@@ -26,8 +26,9 @@ class FileTestApi(recipe_test_api.RecipeTestApi):
       if p.startswith('../') or p.startswith('..\\'):  # pragma: no cover
         raise ValueError('path is outside of listdir root directory: %r' % p)
       return p
-    return (self.m.raw_io.stream_output_text('\n'.join(sorted(map(_check, paths))))
-            + self.errno(errno_name))
+    return (
+        self.m.raw_io.stream_output_text('\n'.join(sorted(map(_check, paths))))
+        + self.errno(errno_name))
 
   def filesizes(self, sizes=(), errno_name=0):
     """Provides test mock for the `filesizes` method.

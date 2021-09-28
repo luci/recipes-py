@@ -7,13 +7,13 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "\ufffdt\ufffd",
+      "\ufefft",
       "[START_DIR]/some file"
     ],
     "infra_step": true,
     "name": "write a file",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@some file@\ufffdt\ufffd@@@",
+      "@@@STEP_LOG_LINE@some file@\ufefft@@@",
       "@@@STEP_LOG_END@some file@@@"
     ]
   },

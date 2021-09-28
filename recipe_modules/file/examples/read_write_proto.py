@@ -4,6 +4,8 @@
 
 from PB.recipe_modules.recipe_engine.file.examples.read_write_proto import SomeMessage
 
+PYTHON_VERSION_COMPATIBILITY = "PY2+3"
+
 DEPS = [
   "file",
   "path",

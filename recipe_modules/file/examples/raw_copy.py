@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+PYTHON_VERSION_COMPATIBILITY = "PY2+3"
+
 DEPS = [
   "file",
   "path",
@@ -11,7 +13,7 @@ DEPS = [
 
 def RunSteps(api):
   dest = api.path['start_dir'].join('some file')
-  data = '\xdat\xa0'
+  data = b'\xef\xbb\xbft'
 
   api.file.write_raw('write a file', dest, data)
   api.file.copy('copy it', dest, api.path['start_dir'].join('new path'))

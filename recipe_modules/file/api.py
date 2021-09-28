@@ -203,7 +203,7 @@ class FileApi(recipe_api.RecipeApi):
     self.m.path.assert_absolute(file_path)
 
     if not test_data:
-      test_data = hashlib.sha256(str(file_path)).hexdigest()
+      test_data = hashlib.sha256(str(file_path).encode('utf-8')).hexdigest()
     result = self._run(
         'Compute file hash', ['file_hash', file_path],
         step_test_data=lambda: self.test_api.file_hash(test_data),
@@ -253,7 +253,8 @@ class FileApi(recipe_api.RecipeApi):
     # TODO(iannucci): recipe engine needs an actual virtual file system.
     rel_paths = [self.m.path.relpath(str(p), str(base_path)) for p in paths]
     if not test_data:
-      test_data = hashlib.sha256('\n'.join(map(str, rel_paths))).hexdigest()
+      test_data = hashlib.sha256(b'\n'.join(str(p).encode('utf-8')
+                                            for p in rel_paths)).hexdigest()
     result = self._run(
         name, ['compute_hash', base_path] + rel_paths,
         step_test_data=lambda: self.test_api.compute_hash(test_data),
