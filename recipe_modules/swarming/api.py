@@ -1427,8 +1427,8 @@ class SwarmingApi(recipe_api.RecipeApi):
 
     Args:
       name (str): The name of the step.
-      tasks ((list(str|TaskRequestMetadata)): A list of ids or metadata objects
-        corresponding to tasks to wait
+      tasks (Iterable(str|TaskRequestMetadata)): A list of ids or metadata
+        objects corresponding to tasks to wait
       output_dir (Path|None): Where to download the tasks' isolated outputs. If
         set to None, they will not be downloaded; else, a given task's outputs
         will be downloaded to output_dir/<task id>/.
@@ -1445,7 +1445,7 @@ class SwarmingApi(recipe_api.RecipeApi):
       A list of TaskResult objects.
     """
     assert self._server
-    assert isinstance(tasks, list)
+    assert isinstance(tasks, (list, tuple))
     assert task_output_stdout in ('none', 'json', 'console', 'all')
     cmd = [
         'collect',
