@@ -361,12 +361,9 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
       rbhs = cls.get_arg_values(cmd, 'rbh')
       if rbhs:
         rbh = rbhs[-1]
-        if '/' in rbh:
-          digest, size_bytes = rbh.split('/')
-          build.cas_user_payload.digest.hash = digest
-          build.cas_user_payload.digest.size_bytes = int(size_bytes)
-        else:
-          build.user_payload.digest = rbh
+        digest, size_bytes = rbh.split('/')
+        build.cas_user_payload.digest.hash = digest
+        build.cas_user_payload.digest.size_bytes = int(size_bytes)
         return
 
       rpkg = cls.get_arg_values(cmd, 'rpkg')

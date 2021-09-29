@@ -156,21 +156,7 @@ def GenTests(api):
       api.led.mock_get_swarm(mock_build, 'deadbeef')
   )
 
-  isolated_hash = 'somehash123'
   led_run_id = 'led/user_example.com/deadbeef'
-  yield (
-      api.test('with-isolated-input') +
-      api.properties(get_cmd=['get-builder', 'chromium/try:linux-rel']) +
-      led_props(InputProperties(
-          led_run_id=led_run_id,
-          isolated_input=InputProperties.IsolatedInput(
-              hash=isolated_hash,
-              namespace='default-gzip',
-              server='isolateserver.appspot.com',
-          ),
-      ))
-  )
-
   yield (
       api.test('with-rbe-cas-input') +
       api.properties(get_cmd=['get-builder', 'chromium/try:linux-rel']) +

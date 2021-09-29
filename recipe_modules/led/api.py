@@ -79,9 +79,6 @@ class LedApi(recipe_api.RecipeApi):
       """
       r = self._result
       if r:
-        if r.user_payload.digest:
-          return r.user_payload.digest
-
         if r.cas_user_payload.digest.hash:
           return "%s/%d" % (r.cas_user_payload.digest.hash,
                             r.cas_user_payload.digest.size_bytes)
@@ -100,15 +97,6 @@ class LedApi(recipe_api.RecipeApi):
   def __init__(self, props, **kwargs):
     super(LedApi, self).__init__(**kwargs)
     self._run_id = props.led_run_id
-
-    if (props.HasField('isolated_input')
-        and props.HasField('rbe_cas_input')): # pragma: no cover
-      raise ValueError("Cannot have both isolated_input and rbe_cas_input")
-
-    if props.HasField('isolated_input'):
-      self._isolated_input = props.isolated_input
-    else:
-      self._isolated_input = None
 
     if props.HasField('rbe_cas_input'):
       self._rbe_cas_input = props.rbe_cas_input
@@ -150,15 +138,6 @@ class LedApi(recipe_api.RecipeApi):
     return self._run_id
 
   @property
-  def isolated_input(self):
-    """The location of the isolate containing the recipes code being run.
-
-    If set, it will be an `InputProperties.IsolatedInput` protobuf;
-    otherwise, None.
-    """
-    return self._isolated_input
-
-  @property
   def rbe_cas_input(self):
     """The location of the rbe-cas containing the recipes code being run.
 
@@ -183,7 +162,7 @@ class LedApi(recipe_api.RecipeApi):
     """Sets the version of recipes used by led to correspond to the version
     currently being used.
 
-    If neither the `isolated_input` nor the `cipd_input` property is set,
+    If neither the `rbe_cas_input` nor the `cipd_input` property is set,
     this is a no-op.
 
     Args:
@@ -196,9 +175,6 @@ class LedApi(recipe_api.RecipeApi):
         '-rbh',
         '%s/%s' % (
           self.rbe_cas_input.digest.hash, self.rbe_cas_input.digest.size_bytes))
-    if self.isolated_input:
-      # TODO(iannucci): Add option for setting server/namespace too
-      return led_result.then('edit', '-rbh', self.isolated_input.hash)
     if self.cipd_input:
       return led_result.then(
         'edit',
