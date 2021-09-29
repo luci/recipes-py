@@ -144,8 +144,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
                   failure=False,
                   output='hello world!',
                   outputs=(),
-                  bot_id='vm-123',
-                  use_cas=True):
+                  bot_id='vm-123'):
     """
     Returns the raw results of a Swarming task.
 
@@ -159,7 +158,6 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
         TaskState.COMPLETE.
       output (str): That raw output of the task.
       outputs (seq(str)):
-      use_cas (bool): Whether the task has cas output.
     """
     assert isinstance(state, TaskState) or state == None
     assert state not in [
@@ -174,7 +172,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
               'task_id': id
           },
       }
-
+    cas_hash = '24b2420bc49d8b8fdc1d011a163708927532b37dc9f91d7d8d6877e3a86559ca'
     raw_results = {
         'output': output,
         'outputs': outputs,
@@ -184,25 +182,16 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
             'task_id': id,
             'state': state.name,
             'duration': duration,
+            'cas_output_root': {
+                'cas_instance':
+                    'projects/example-project/instances/default_instance',
+                'digest': {
+                    'hash': cas_hash,
+                    'size_bytes': '73',
+                },
+            },
         },
     }
-
-    if use_cas:
-      raw_results['results']['cas_output_root'] = {
-          'cas_instance': 'projects/example-project/instances/default_instance',
-          'digest': {
-              'hash':
-                  '24b2420bc49d8b8fdc1d011a163708927532b37dc9f91d7d8d6877e3a86559ca',
-              'size_bytes':
-                  '73',
-          },
-      }
-    else:
-      raw_results['results']['outputs_ref'] = {
-          'isolated': 'abc123',
-          'isolatedserver': 'https://isolateserver.appspot.com',
-          'namespace': 'default-gzip',
-      }
 
     if state == TaskState.COMPLETED:
       raw_results['results']['exit_code'] = int(failure)

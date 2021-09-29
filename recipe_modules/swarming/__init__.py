@@ -11,7 +11,6 @@ DEPS = [
     'cas',
     'cipd',
     'context',
-    'isolated',
     'json',
     'path',
     'properties',

@@ -59,7 +59,6 @@ class TaskRequest(object):
   slice_cold_cache = (request.slice[0].
       with_command(['echo', 'hello']).
       with_dimensions(pool='my.pool', os='Debian').
-      with_isolated('606d94add94223636ee516c6bc9918f937823ccc').
       with_expiration_secs(60*60-2*60).
       with_io_timeout_secs(600).
       with_named_caches({'image': 'vm_image'})
@@ -332,7 +331,6 @@ class TaskRequest(object):
     slice = (request[-1].
       with_command(['echo', 'hello']).
       with_dimensions(pool='my.pool', os='Debian').
-      with_isolated('606d94add94223636ee516c6bc9918f937823ccc').
       with_expiration_secs(3600).
       with_io_timeout_secs(600)
     )
@@ -351,7 +349,6 @@ class TaskRequest(object):
       self._grace_period_secs = 30
       self._idempotent = False
       self._io_timeout_secs = 60
-      self._isolated = ''
       self._named_caches = {}
       self._outputs = []
       self._secret_bytes = b''
@@ -411,29 +408,6 @@ class TaskRequest(object):
       return ret
 
     @property
-    def isolated(self):
-      """Returns the hash of an isolated on the default isolated server.
-
-      The default isolated server is the one set in IsolatedApi.
-      """
-      return self._isolated
-
-    def with_isolated(self, isolated):
-      """Returns the slice with the given isolated hash set.
-
-      Args:
-        isolated (str) - The hash of an isolated on the default isolated server.
-      """
-      assert isinstance(isolated, basestring)
-      assert not self._cas_input_root, (
-          "both cas_input_root and isolated cannot be specified")
-      assert '/' not in isolated, ("isolated should not have '/': %s" %
-                                   isolated)
-      ret = self._copy()
-      ret._isolated = isolated
-      return ret
-
-    @property
     def cas_input_root(self):
       """Returns the digest of an uploaded directory tree on the default cas
       server.
@@ -450,8 +424,6 @@ class TaskRequest(object):
           cas server.
       """
       assert isinstance(digest, basestring)
-      assert not self._isolated, (
-          "both cas_input_root and isolated cannot be specified")
       assert digest.count('/') == 1
       ret = self._copy()
       ret._cas_input_root = digest
@@ -841,8 +813,6 @@ class TaskRequest(object):
           with_limit_processes(int(containment['limit_processes'])).
           with_limit_total_committed_memory(
               int(containment['limit_total_committed_memory']))) # yapf: disable
-      if 'inputs_ref' in p:
-        ret = ret.with_isolated(p['inputs_ref']['isolated'])
       if 'cas_input_root' in p:
         digest = p['cas_input_root']['digest']
         ret = ret.with_cas_input_root(digest['hash'] + '/' +
@@ -902,13 +872,6 @@ class TaskRequest(object):
                   str(self.limit_total_committed_memory),
           },
       }
-
-      if self.isolated:
-        properties['inputs_ref'] = {
-            'isolated': self.isolated,
-            'namespace': self._api.isolated.namespace,
-            'isolatedserver': self._api.isolated.isolate_server,
-        }
 
       if self.cas_input_root:
         h, b = self.cas_input_root.split('/')
@@ -978,38 +941,6 @@ class TaskRequestMetadata(object):
 class TaskResult(object):
   """Result of a Swarming task."""
 
-  class IsolatedOutputs(object):
-    """The isolated outputs of a task."""
-
-    def __init__(self, hash, server, namespace):
-      self._hash = hash
-      self._server = server
-      self._namespace = namespace
-
-    @property
-    def hash(self):
-      """The hash of the isolated (str)."""
-      return self._hash
-
-    @property
-    def server(self):
-      """The server on which the isolated lives (str)."""
-      return self._server
-
-    @property
-    def namespace(self):
-      """The namespace of the isolated (e.g., 'default-gzip') (str)."""
-      return self._namespace
-
-    @property
-    def url(self):
-      """The URL of the associated isolate UI page."""
-      return '{0}/browse?namespace={1}&hash={2}'.format(
-          self.server,
-          self.namespace,
-          self.hash,
-      )
-
   class CasOutputs(object):
     """The cas outputs of a task."""
 
@@ -1050,7 +981,6 @@ class TaskResult(object):
     self._output_dir = output_dir
     self._raw_results = raw_results
     self._outputs = {}
-    self._isolated_outputs = None
     self._cas_outputs = None
     # This happens most often when `collect` times out before the task
     # completed.
@@ -1080,14 +1010,6 @@ class TaskResult(object):
         self._success = results.get('exit_code', 0) == 0
 
       self._duration = results.get('duration', 0)
-
-      outputs_ref = results.get('outputs_ref')
-      if outputs_ref:
-        self._isolated_outputs = self.IsolatedOutputs(
-            hash=outputs_ref['isolated'],
-            server=outputs_ref['isolatedserver'],
-            namespace=outputs_ref['namespace'],
-        )
 
       cas_output_root = results.get('cas_output_root')
       if cas_output_root:
@@ -1190,11 +1112,6 @@ class TaskResult(object):
     with output_dir set.
     """
     return self._outputs
-
-  @property
-  def isolated_outputs(self):
-    """Returns the isolated output refs (IsolatedOutputs|None) of the task."""
-    return self._isolated_outputs
 
   @property
   def cas_outputs(self):
@@ -1497,9 +1414,6 @@ class SwarmingApi(recipe_api.RecipeApi):
       if result.output is not None:
         log_name = 'task stdout+stderr: %s' % result.name
         step.presentation.logs[log_name] = result.output.splitlines()
-      if result.isolated_outputs:
-        link_name = 'task isolated outputs: %s' % result.name
-        step.presentation.links[link_name] = result.isolated_outputs.url
       if result.cas_outputs:
         link_name = 'task cas outputs: %s' % result.name
         step.presentation.links[link_name] = result.cas_outputs.url

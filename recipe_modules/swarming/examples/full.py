@@ -25,12 +25,8 @@ DEPS = [
 
 EXECUTION_TIMEOUT_SECS = 3600
 
-PROPERTIES = {
-    'use_cas': Property(kind=bool, default=True),
-}
 
-
-def RunSteps(api, use_cas):
+def RunSteps(api):
   api.swarming.ensure_client()
 
   # Create a new Swarming task request.
@@ -65,14 +61,10 @@ def RunSteps(api, use_cas):
       )
   )
 
-  if use_cas:
-    request = request.with_slice(
-        0, request[0].with_cas_input_root(
-            '24b2420bc49d8b8fdc1d011a163708927532b37dc9f91d7d8d6877e3a86559ca/73'
-        ))
-  else:
-    request = request.with_slice(
-        0, request[0].with_isolated('606d94add94223636ee516c6bc9918f937823ccc'))
+  request = request.with_slice(
+      0, request[0].with_cas_input_root(
+          '24b2420bc49d8b8fdc1d011a163708927532b37dc9f91d7d8d6877e3a86559ca/73')
+  )
 
   # Check a request with no tags and no user can make it to JSON and back.
   # These requests should be considered valid.
@@ -148,7 +140,6 @@ def RunSteps(api, use_cas):
   results[0].outputs
   results[0].output_dir
   results[0].duration_secs
-  results[0].isolated_outputs
   results[0].bot_id
   results[0].raw
 
@@ -212,12 +203,6 @@ def GenTests(api):
   api.swarming.example_task_request_jsonish()
 
   yield api.test('basic')
-  yield (api.test('basic_isolate') + api.properties(use_cas=False) +
-         api.override_step_data(
-             'collect',
-             api.swarming.collect(
-                 [api.swarming.task_result(
-                     id='0', name='isolate', use_cas=False)])))
 
   yield api.test('experimental') + api.runtime(
       is_experimental=True)
