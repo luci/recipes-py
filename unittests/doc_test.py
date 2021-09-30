@@ -18,8 +18,10 @@ class DocSmokeTest(test_env.RecipeEngineUnitTest):
     nul = open(os.devnull, 'w')
 
     script_path = os.path.join(test_env.ROOT_DIR, 'recipes.py')
-    exit_code = subprocess.call([sys.executable, script_path, 'doc'],
-                                stdout=nul, stderr=nul)
+    exit_code = subprocess.call(
+        [sys.executable, script_path, 'doc', '--kind', 'markdown'],
+        stdout=nul,
+        stderr=nul)
     self.assertEqual(0, exit_code)
 
 
