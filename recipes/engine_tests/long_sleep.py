@@ -16,6 +16,7 @@ from recipe_engine.post_process import DropExpectation
 from PB.recipes.recipe_engine.engine_tests import long_sleep
 
 PROPERTIES = long_sleep.InputProperties
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 
 def RunSteps(api, props):

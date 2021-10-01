@@ -4,6 +4,8 @@
 
 """Tests that step_data can accept multiple specs at once."""
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'raw_io',
   'step',
@@ -12,8 +14,8 @@ DEPS = [
 def RunSteps(api):
   doge = api.step('doge',
       ['doge'], stdout=api.raw_io.output(), stderr=api.raw_io.output())
-  assert doge.stdout == 'such stdout'
-  assert doge.stderr == 'so stderring'
+  assert doge.stdout == b'such stdout'
+  assert doge.stderr == b'so stderring'
 
 def GenTests(api):
   yield (

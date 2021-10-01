@@ -7,6 +7,8 @@
 from recipe_engine import post_process
 from recipe_engine.recipe_api import composite_step
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
 ]
 

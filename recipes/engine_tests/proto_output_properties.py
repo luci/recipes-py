@@ -7,6 +7,8 @@
 from PB.recipes.recipe_engine.engine_tests.proto_output_properties import (
   Output, Msg)
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'step',
 ]

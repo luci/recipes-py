@@ -7,7 +7,7 @@
     "name": "trigger some junk",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@thing@hiiiii \ud83d\ude00\u2026@@@",
-      "@@@STEP_LOG_LINE@thing@\ufffd@@@",
+      "@@@STEP_LOG_LINE@thing@\u4e2d@@@",
       "@@@STEP_LOG_END@thing@@@"
     ]
   },

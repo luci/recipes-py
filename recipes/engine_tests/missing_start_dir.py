@@ -2,7 +2,9 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-"""Tests that deleting the current working directory doesn't immediately fail."""
+"""Tests that deleting the current working directory doesn't immediately fail"""
+
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
   'step',

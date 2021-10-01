@@ -9,6 +9,8 @@ from recipe_engine import post_process
 from recipe_engine.recipe_api import Property
 from recipe_engine.post_process import Filter, DoesNotRun, MustRun
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'context',
   'step',

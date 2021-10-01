@@ -9,6 +9,8 @@ from PB.recipes.recipe_engine.engine_tests.incorrect_recipe_result import InputP
 
 from recipe_engine import post_process
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'step',
   'json',
@@ -30,9 +32,9 @@ def GenTests(api):
           InputProps(use_result_type=False)
         ) +
         api.post_process(post_process.StatusFailure) +
-        api.post_process(post_process.ResultReason,
-        ('"<type \'dict\'>" is not a valid return type for recipes.'
-         ' Did you mean to use "RawResult"?')) +
+        api.post_process(post_process.ResultReasonRE,
+        ('"<(class|type) \'dict\'>" is not a valid return type for recipes\.'
+         ' Did you mean to use "RawResult"\?')) +
         api.post_process(post_process.DropExpectation)
     )
 
