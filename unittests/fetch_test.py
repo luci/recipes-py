@@ -109,7 +109,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
     git.side_effect = multi(*([
       self.g(['init', 'dir']),
     ] + self.g_metadata_calls() + [
-      self.g(['-C', 'dir', 'diff', '--quiet', 'a'*40], CPE('', 1)),
+      self.g(['-C', 'dir', 'diff', '--quiet', 'a'*40], CPE(1, 'bad stuff')),
       self.g(['-C', 'dir', 'reset', '-q', '--hard', 'a'*40])
     ]))
 
@@ -124,7 +124,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
     git.side_effect = multi(*([
       self.g_ls_remote(),
     ] + self.g_metadata_calls() + [
-      self.g(['-C', 'dir', 'diff', '--quiet', 'a'*40], CPE('', 1)),
+      self.g(['-C', 'dir', 'diff', '--quiet', 'a'*40], CPE(1, 'bad stuff')),
       self.g(['-C', 'dir', 'reset', '-q', '--hard', 'a'*40])
     ]))
 
@@ -174,7 +174,7 @@ class TestGit(test_env.RecipeEngineUnitTest):
         CPE(1, 'nope')),
 
       self.g(['-C', 'dir', 'fetch', 'repo', 'ref']),
-      self.g(['-C', 'dir', 'diff', '--quiet', 'a'*40], CPE('', 1)),
+      self.g(['-C', 'dir', 'diff', '--quiet', 'a'*40], CPE(1, 'bad stuff')),
       self.g(['-C', 'dir', 'reset', '-q', '--hard', 'a'*40]),
     ))
 

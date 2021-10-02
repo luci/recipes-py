@@ -106,7 +106,7 @@ def parse(repo_root, recipes_cfg_path):
                                 recipes_path.replace('/', os.path.sep))
     return EngineDep(**engine), recipes_path
   except KeyError as ex:
-    raise MalformedRecipesCfg(ex.message, recipes_cfg_path)
+    raise MalformedRecipesCfg(str(ex), recipes_cfg_path)
 
 
 IS_WIN = sys.platform.startswith(('win', 'cygwin'))

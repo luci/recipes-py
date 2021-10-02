@@ -623,7 +623,7 @@ def post_process(test_failures, raw_expectations, test_data):
             False,
             check._ignore_set,
             {'raised exception':
-             '%s: %r' % (exc_type.__name__, exc_value.message)},
+             '%s: %s' % (exc_type.__name__, exc_value)},
         ))
       finally:
         # avoid reference cycle as suggested by inspect docs.

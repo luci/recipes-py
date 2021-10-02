@@ -223,7 +223,7 @@ class GitBackend(Backend):
     try:
       return self._execute(*cmd)
     except subprocess.CalledProcessError as e:
-      raise GitFetchError('%r failed: %s: %s' % (cmd, e.message, e.output))
+      raise GitFetchError('%r failed: %s: %s' % (cmd, e, e.output))
 
   def _execute(self, *args):
     """Runs a raw command. Separate so it's easily mockable."""
@@ -260,7 +260,7 @@ class GitBackend(Backend):
         self._execute(self.GIT_BINARY, 'init', self.checkout_dir)
         self._did_ensure = True
       except subprocess.CalledProcessError as e:
-        raise GitFetchError(False, 'Git "init" failed: '+e.message)
+        raise GitFetchError(False, 'Git "init" failed: %s' % e)
 
   def _has_rev(self, revision):
     """Returns True iff the on-disk repo has the given revision."""
