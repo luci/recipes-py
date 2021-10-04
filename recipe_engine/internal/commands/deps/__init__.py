@@ -52,15 +52,17 @@ def add_arguments(parser):
       help=('The fully-qualified recipe (`$repo::recipe`, '
             '`$repo::module:path/recipe`) or module (`$repo/module`).'
             'As a shorthand, the current repo can be indicated with an '
-            'empty `$repo` (i.e. `::recipe`, `/module`)'))
+            'empty `$repo` (i.e. `::recipe`, `/module`). Use `*` to include'
+            ' everything.'))
 
   def _launch(args):
     from .cmd import main
     return main(args)
 
   def _postprocess_func(error, args):
-    if '/' not in args.recipe_or_module and '::' not in args.recipe_or_module:
-      error('recipe_or_module must be fully qualified.')
+    rom = args.recipe_or_module
+    if not (rom == '*' or '/' in rom or '::' in rom):
+      error('recipe_or_module must be fully qualified (or `*`).')
 
   parser.set_defaults(
       func=_launch,

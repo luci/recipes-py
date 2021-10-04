@@ -35,42 +35,48 @@ def py_compat(py_compat_str):
 
 
 def load_recipes_modules(rd, target, include_test_recipes, include_dependants):
-  is_module = False
-  if '::' in target:
-    target_repo, target_name = target.split('::', 1)
-  else:
-    is_module = True
-    target_repo, target_name = target.split('/', 1)
-  if not target_repo:
-    target_repo = rd.main_repo_id
-
   recipes = []
   mod_names = set()
 
-  if not is_module:
-    base = rd.repos[target_repo]
-    if ':' in target_name:
-      mod, target_name = target_name.split(':', 1)
-      base = base.modules[mod]
-    recipes.append(base.recipes[target_name])
+  if target == '*':
+    recipes = rd.main_repo.recipes.values()
+    for mod in rd.main_repo.modules.values():
+      recipes.extend(mod.recipes.values())
+    mod_name = set(rd.main_repo.modules.keys())
   else:
-    # Check that this module actually exists. This raises
-    # UnknownRecipeModule if target_name doesn't exist.
-    _ = rd.repos[target_repo].modules[target_name]
-    mod_names.add('%s/%s' % (target_repo, target_name))
+    is_module = False
+    if '::' in target:
+      target_repo, target_name = target.split('::', 1)
+    else:
+      is_module = True
+      target_repo, target_name = target.split('/', 1)
+    if not target_repo:
+      target_repo = rd.main_repo_id
 
-    if include_dependants:
-      mod = (target_repo, target_name)
-      for repo in rd.repos.values():
-        if repo.name == target_repo or target_repo in repo.simple_cfg.deps:
-          for recipe in repo.recipes.values():
-            if (not include_test_recipes and (
-                ':examples/' in recipe.name
-                or ':tests/' in recipe.name)):
-              continue
+    if not is_module:
+      base = rd.repos[target_repo]
+      if ':' in target_name:
+        mod, target_name = target_name.split(':', 1)
+        base = base.modules[mod]
+      recipes.append(base.recipes[target_name])
+    else:
+      # Check that this module actually exists. This raises
+      # UnknownRecipeModule if target_name doesn't exist.
+      _ = rd.repos[target_repo].modules[target_name]
+      mod_names.add('%s/%s' % (target_repo, target_name))
 
-            if mod in itervalues(recipe.normalized_DEPS):
-              recipes.append(recipe)
+      if include_dependants:
+        mod = (target_repo, target_name)
+        for repo in rd.repos.values():
+          if repo.name == target_repo or target_repo in repo.simple_cfg.deps:
+            for recipe in repo.recipes.values():
+              if (not include_test_recipes and (
+                  ':examples/' in recipe.name
+                  or ':tests/' in recipe.name)):
+                continue
+
+              if mod in itervalues(recipe.normalized_DEPS):
+                recipes.append(recipe)
 
   for recipe in recipes:
     mod_names.update(extract_module_names(recipe))
