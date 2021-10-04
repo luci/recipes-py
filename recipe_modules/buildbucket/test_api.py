@@ -2,8 +2,10 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import datetime
 import json
 
+from google.protobuf import duration_pb2
 from google.protobuf import json_format
 from google.protobuf import timestamp_pb2
 
@@ -68,6 +70,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       experiments=(),
       exe=None,
       execution_timeout=None,
+      start_time=None,
     ):
     """Returns a typical buildbucket CI build scheduled by luci-scheduler."""
     git_repo = git_repo or self._default_git_repo(project)
@@ -101,10 +104,11 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         ))
 
     if execution_timeout:
-      build.execution_timeout.seconds = int(execution_timeout)
-      build.execution_timeout.nanos = int(
-          execution_timeout % 1 * 1000000000 + 0.5
-      )
+      build.execution_timeout.FromSeconds(execution_timeout)
+
+    if start_time:
+      assert isinstance(start_time, datetime.datetime), start_time
+      build.start_time.FromDatetime(start_time)
 
     if status:
       build.status = common_pb2.Status.Value(status)
@@ -145,6 +149,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       experiments=(),
       exe=None,
       execution_timeout=None,
+      start_time=None,
     ):
     """Emulate typical buildbucket try build scheduled by CQ.
 
@@ -202,10 +207,11 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     )
 
     if execution_timeout:
-      build.execution_timeout.seconds = int(execution_timeout)
-      build.execution_timeout.nanos = int(
-          execution_timeout % 1 * 1000000000 + 0.5
-      )
+      build.execution_timeout.FromSeconds(execution_timeout)
+
+    if start_time:
+      assert isinstance(start_time, datetime.datetime), start_time
+      build.start_time.FromDatetime(start_time)
 
     if revision:
       c = build.input.gitiles_commit

@@ -4,6 +4,7 @@
 
 from future.utils import iteritems
 
+import datetime
 import json
 
 from google.protobuf import text_format
@@ -100,6 +101,7 @@ def GenTests(api):
           git_repo='git.example.com/test/repo',
           experiments=['fake.experiment'],
           execution_timeout=12345,
+          start_time=datetime.datetime(2020, 1, 1),
       )
       + api.post_process(post_process.DropExpectation)
   )
@@ -123,6 +125,7 @@ def GenTests(api):
           git_repo='git.example.com/test/repo',
           experiments=['fake.experiment'],
           execution_timeout=12345,
+          start_time=datetime.datetime(2020, 1, 1),
       )
       + api.post_process(post_process.DropExpectation)
   )
