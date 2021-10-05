@@ -65,7 +65,7 @@ class FailTracker(object):
 
       self._fail_file.write('%s\n' % test_name)
       self._fail_file.flush()
-      return True if not test_result.expect_py_incompatibility else False
+      return True
     return False
 
   def cleanup(self):
