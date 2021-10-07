@@ -64,11 +64,11 @@ wheel: <
 ## Gevent
 wheel: <
   name: "infra/python/wheels/gevent/${vpython_platform}"
-  version: "version:1.5.0"
+  version: "version:1.5.0.chromium.1"
 >
 wheel: <
   name: "infra/python/wheels/greenlet/${vpython_platform}"
-  version: "version:0.4.15.chromium.1"
+  version: "version:0.4.16"
 >
 wheel: <
   name: "infra/python/wheels/cffi/${vpython_platform}"
