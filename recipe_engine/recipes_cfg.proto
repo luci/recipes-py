@@ -118,6 +118,10 @@ message RepoSpec {
   // docs file, and `recipes.py test run` will not assert that the docs file is
   // up-to-date.
   bool no_docs = 8;
+
+  // If true, this repo will not allow any non python3 compatible recipes or
+  // recipe modules.
+  bool require_py3_compatibility = 9;
 }
 
 // Emitted by the `recipes.py dump_specs` command.

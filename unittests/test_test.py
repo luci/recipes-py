@@ -271,6 +271,27 @@ class TestRun(Common):
         self._run_test('run', '--filter', 'foo.*').data,
         self._outcome_json(coverage=0))
 
+  def test_require_py3_compatibility(self):
+    with self.main.edit_recipes_cfg_pb2() as pb:
+      pb.require_py3_compatibility = True
+    with self.main.write_module('foo_module') as mod:
+      mod.api.write('''
+         def foo(self):
+           d = {'k': 'v'}
+           d.iteritems() # py2-only function
+       ''')
+
+    with self.main.write_recipe('foo_module', 'examples/full') as recipe:
+      recipe.DEPS = ['foo_module']
+      recipe.RunSteps.write('api.foo_module.foo()')
+      recipe.GenTests.write("yield api.test('basic')")
+
+    result = self._run_test('run', should_fail='crash')
+    self.assertIn("Invalid PYTHON_VERSION_COMPATIBILITY value for recipe or "
+                  "module foo_module:examples/full. It must be one of those "
+                  "values - ('PY2+3', 'PY3')",
+                  result.text_output)
+
   def test_check_failure(self):
     with self.main.write_recipe('foo') as recipe:
       recipe.imports = ['from recipe_engine import post_process']

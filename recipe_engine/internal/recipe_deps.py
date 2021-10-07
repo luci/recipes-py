@@ -50,10 +50,11 @@ from attr.validators import optional
 from google.protobuf import json_format as jsonpb
 
 from ..config_types import Path, RepoBasePath, RecipeScriptBasePath
+from ..engine_types import freeze, FrozenDict
 from ..recipe_api import _UnresolvedRequirement, RecipeScriptApi, BoundProperty
 from ..recipe_api import RecipeApiPlain
 from ..recipe_test_api import RecipeTestApi, BaseTestData, DisabledTestData
-from ..engine_types import freeze, FrozenDict
+from ..util import RecipeAbort
 
 from . import fetch
 from . import proto_support
@@ -555,7 +556,10 @@ class RecipeModule(object):
   @cached_property
   def python_version_compatibility(self):
     """This module's claimed python compatibility level."""
-    return self.do_import().PYTHON_VERSION_COMPATIBILITY
+    return _validate_python_version_compat(
+        self.do_import().PYTHON_VERSION_COMPATIBILITY,
+        self.name,
+        require_py3_compat=self.repo.recipes_cfg_pb2.require_py3_compatibility)
 
   @cached_property
   def effective_python_compatibility(self):
@@ -762,7 +766,10 @@ class Recipe(object):
   @cached_property
   def python_version_compatibility(self):
     """This recipe's claimed python compatibility level."""
-    return self.global_symbols['PYTHON_VERSION_COMPATIBILITY']
+    return _validate_python_version_compat(
+        self.global_symbols['PYTHON_VERSION_COMPATIBILITY'],
+        self.name,
+        require_py3_compat=self.repo.recipes_cfg_pb2.require_py3_compatibility)
 
   @cached_property
   def effective_python_compatibility(self):
@@ -1249,3 +1256,20 @@ def _compute_py_compat(ours, recipe_deps, normalized_DEPS):
     if ret is None:
       return None
   return ret
+
+def _validate_python_version_compat(ours, name, require_py3_compat=False):
+  """ Validate the clamed PYTHON_VERSION_COMPATIBILITY value.
+
+  Args:
+    * ours(str) - This item's claimed python compatibility.
+    * name(str) - The name of this item.
+    * require_py3_compat - If it requires python3 compatibility.
+
+  Returns the original compatibility value if it passes the validation.
+  """
+  allowed = ('PY2+3', 'PY3') if require_py3_compat else ('PY2', 'PY2+3', 'PY3')
+  if ours not in allowed:
+    raise RecipeAbort('Invalid PYTHON_VERSION_COMPATIBILITY value for recipe '
+                      'or module %s. It must be one of those values - %s'
+                      % (name, allowed))
+  return ours
