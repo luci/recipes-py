@@ -42,9 +42,18 @@ message AutorollRecipeOptions {
     // automatically do a CQ dry run when uploading the change.
     bool dry_run = 3;
 
-    // If true, the autoroller will use Bot-Commit+1 instead of self CR+1 and
-    // TBR.
-    bool bot_commit = 4;
+    enum SelfApproveMethod {
+      // Will set Bot-Commit+1 label.
+      BOT_COMMIT_APPROVE = 0;
+
+      // Will set Code-Review+1 label.
+      CODE_REVIEW_1_APPROVE = 1;
+
+      // Will set Code-Review+2 label.
+      CODE_REVIEW_2_APPROVE = 2;
+    }
+
+    SelfApproveMethod self_approve_method = 4;
   }
   TrivialOptions trivial = 1;
 
