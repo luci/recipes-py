@@ -16,7 +16,7 @@ from recipe_engine import config_types
 
 @functools.wraps(json.dumps)
 def dumps(*args, **kwargs):
-  kwargs['sort_keys'] = True
+  kwargs.setdefault('sort_keys', True)
   kwargs.setdefault('default', config_types.json_fixup)
   indent = kwargs.get('indent', None)
   if indent is not None and 'separators' not in kwargs:  # pragma: no cover
