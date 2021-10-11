@@ -7,6 +7,7 @@
   * [assertions](#recipe_modules-assertions) (Python3 ✅)
   * [buildbucket](#recipe_modules-buildbucket) (Python3 ✅) &mdash; API for interacting with the buildbucket service.
   * [cas](#recipe_modules-cas) (Python3 ✅) &mdash; API for interacting with cas client.
+  * [cas_input](#recipe_modules-cas_input) (Python3 ✅) &mdash; Simple API for handling CAS inputs to a recipe.
   * [cipd](#recipe_modules-cipd) (Python3 ✅) &mdash; API for interacting with CIPD.
   * [commit_position](#recipe_modules-commit_position) (Python3 ✅)
   * [context](#recipe_modules-context) (Python3 ✅) &mdash; The context module provides APIs for manipulating a few pieces of 'ambient' data that affect how steps are run.
@@ -57,6 +58,7 @@
   * [buildbucket:tests/schedule](#recipes-buildbucket_tests_schedule) (Python3 ✅)
   * [buildbucket:tests/search](#recipes-buildbucket_tests_search) (Python3 ✅)
   * [cas:examples/full](#recipes-cas_examples_full) (Python3 ✅)
+  * [cas_input:examples/full](#recipes-cas_input_examples_full) (Python3 ✅)
   * [cipd:examples/full](#recipes-cipd_examples_full) (Python3 ✅)
   * [commit_position:examples/full](#recipes-commit_position_examples_full) (Python3 ✅)
   * [context:examples/full](#recipes-context_examples_full) (Python3 ✅)
@@ -732,6 +734,43 @@ Args:
 &mdash; **def [viewer\_url](/recipe_modules/cas/api.py#85)(self, digest):**
 
 Return URL of cas viewer.
+### *recipe_modules* / [cas\_input](/recipe_modules/cas_input)
+
+[DEPS](/recipe_modules/cas_input/__init__.py#9): [cas](#recipe_modules-cas), [path](#recipe_modules-path)
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+Simple API for handling CAS inputs to a recipe.
+
+Recipes sometimes need files as part of their execution which don't live in
+source control (for example, they're generated elsewhere but tested in the
+recipe). In that case, there needs to be an easy way to give these files as an
+input to a recipe, so that the recipe can use them somehow. This module makes
+this easy.
+
+This module has input properties which contains a list of CAS inputs to
+download. These can easily be download to disk with the 'download_caches'
+method, and subsequently used by a recipe in whatever relevant manner.
+
+#### **class [CasInputApi](/recipe_modules/cas_input/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
+
+A module for downloading CAS inputs to a recipe.
+
+&mdash; **def [download\_caches](/recipe_modules/cas_input/api.py#32)(self, output_dir, caches=None):**
+
+Downloads RBE-CAS caches and puts them in a given directory.
+
+Args:
+  output_dir: The output directory to download the caches to. If you're
+    unsure of what directory to use, self.m.path['start_dir'] is a directory
+    the recipe engine sets up for you that you can use.
+  caches: A CasCache proto message containing the caches which should be
+    downloaded. See properties.proto for the message definition.
+    If unset, it uses the caches in this recipe module properties.
+Returns:
+  The output directory as a Path object which contains all the cache data.
+
+&emsp; **@property**<br>&mdash; **def [input\_caches](/recipe_modules/cas_input/api.py#28)(self):**
 ### *recipe_modules* / [cipd](/recipe_modules/cipd)
 
 [DEPS](/recipe_modules/cipd/__init__.py#7): [context](#recipe_modules-context), [file](#recipe_modules-file), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step), [url](#recipe_modules-url)
@@ -3958,6 +3997,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipe_modules/cas/examples/full.py#17)(api):**
+### *recipes* / [cas\_input:examples/full](/recipe_modules/cas_input/examples/full.py)
+
+[DEPS](/recipe_modules/cas_input/examples/full.py#7): [cas\_input](#recipe_modules-cas_input), [path](#recipe_modules-path), [properties](#recipe_modules-properties)
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+&mdash; **def [RunSteps](/recipe_modules/cas_input/examples/full.py#18)(api):**
 ### *recipes* / [cipd:examples/full](/recipe_modules/cipd/examples/full.py)
 
 [DEPS](/recipe_modules/cipd/examples/full.py#11): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [service\_account](#recipe_modules-service_account), [step](#recipe_modules-step)

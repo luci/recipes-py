@@ -1,0 +1,21 @@
+// Copyright 2021 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+syntax = "proto3";
+
+package recipe_modules.recipe_engine.cas_input;
+
+// An RBE-CAS cache to be downloaded.
+message CasCache {
+  // The unique digest value of the desired cache.
+  string digest = 1;
+  // Relative path to a given directory where the cache should be downloaded
+  // locally. If unset, the cache is simply downloaded into the given directory.
+  string local_relpath = 3;
+}
+
+message InputProperties {
+  // A list of CAS caches to download. The download_caches module method will
+  // use this by default.
+  repeated CasCache caches = 1;
+}
