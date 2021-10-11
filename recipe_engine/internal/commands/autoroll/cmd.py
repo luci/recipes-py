@@ -165,8 +165,14 @@ def process_candidates(recipe_deps, candidates, repos, verbose_json):
 
     write_global_files_to_main_repo(recipe_deps, candidate.repo_spec)
 
-    retcode, output = run_simulation_test(
-        recipe_deps.main_repo, 'run', '--no-docs')
+    # TODO(crbug.com/1147793): Remove the retry after py3 migration is done.
+    retcode = output = None
+    for attempt_number in range(2):
+      retcode, output = run_simulation_test(
+          recipe_deps.main_repo, 'run', '--no-docs')
+      if not (retcode > 0 and 'CoverageException' in output):
+        break
+
     if verbose_json:
       roll_details[i]['recipes_simulation_test'] = {
         'output': output,
