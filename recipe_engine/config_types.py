@@ -170,9 +170,21 @@ class Path(RecipeConfigType):
     assert all(isinstance(x, basestring) for x in pieces), pieces
     assert not any(x in ('..', '.', '/', '\\') for x in pieces)
 
-    self.base = base
-    self.pieces = pieces if isinstance(pieces, tuple) else tuple(pieces)
-    self.platform_ext = kwargs.get('platform_ext', {})
+    self._base = base
+    self._pieces = pieces if isinstance(pieces, tuple) else tuple(pieces)
+    self._platform_ext = kwargs.get('platform_ext', {})
+
+  @property
+  def base(self):
+    return self._base
+
+  @property
+  def pieces(self):
+    return self._pieces
+
+  @property
+  def platform_ext(self):
+    return self._platform_ext
 
   def __eq__(self, other):
     return (self.base == other.base and
