@@ -2276,14 +2276,14 @@ Args:
 
 Returns dirname of path
 
-&mdash; **def [exists](/recipe_modules/path/api.py#597)(self, path):**
+&mdash; **def [exists](/recipe_modules/path/api.py#595)(self, path):**
 
 Equivalent to os.path.exists.
 
 The presence or absence of paths can be mocked during the execution of the
 recipe by using the mock_* methods.
 
-&mdash; **def [expanduser](/recipe_modules/path/api.py#588)(self, path):**
+&mdash; **def [expanduser](/recipe_modules/path/api.py#586)(self, path):**
 
 Do not use this, use `api.path['home']` instead.
 
@@ -2302,14 +2302,14 @@ Internal recipe implementation function.
 
 Internal recipe implementation function.
 
-&mdash; **def [isdir](/recipe_modules/path/api.py#605)(self, path):**
+&mdash; **def [isdir](/recipe_modules/path/api.py#603)(self, path):**
 
 Equivalent to os.path.isdir.
 
 The presence or absence of paths can be mocked during the execution of the
 recipe by using the mock_* methods.
 
-&mdash; **def [isfile](/recipe_modules/path/api.py#613)(self, path):**
+&mdash; **def [isfile](/recipe_modules/path/api.py#611)(self, path):**
 
 Equivalent to os.path.isfile.
 
@@ -2351,23 +2351,23 @@ Args:
 Returns a Path to the new file. Unlike tempfile.mkstemp, the file's file
 descriptor is closed.
 
-&mdash; **def [mock\_add\_directory](/recipe_modules/path/api.py#630)(self, path):**
+&mdash; **def [mock\_add\_directory](/recipe_modules/path/api.py#628)(self, path):**
 
 For testing purposes, mark that directory |path| exists.
 
-&mdash; **def [mock\_add\_file](/recipe_modules/path/api.py#626)(self, path):**
+&mdash; **def [mock\_add\_file](/recipe_modules/path/api.py#624)(self, path):**
 
 For testing purposes, mark that file |path| exists.
 
-&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#621)(self, path, kind=FILE):**
+&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#619)(self, path, kind=FILE):**
 
 For testing purposes, mark that |path| exists.
 
-&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#634)(self, source, dest):**
+&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#632)(self, source, dest):**
 
 For testing purposes, copy |source| to |dest|.
 
-&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#639)(self, path, filt=(lambda p: True)):**
+&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#637)(self, path, filt=(lambda p: True)):**
 
 For testing purposes, assert that |path| doesn't exist.
 
@@ -2384,11 +2384,11 @@ Equivalent to os.path.pardir.
 
 Equivalent to os.path.pathsep.
 
-&mdash; **def [realpath](/recipe_modules/path/api.py#576)(self, path):**
+&mdash; **def [realpath](/recipe_modules/path/api.py#574)(self, path):**
 
 Equivalent to os.path.realpath.
 
-&mdash; **def [relpath](/recipe_modules/path/api.py#580)(self, path, start):**
+&mdash; **def [relpath](/recipe_modules/path/api.py#578)(self, path, start):**
 
 Roughly equivalent to os.path.relpath.
 
@@ -2405,16 +2405,15 @@ For "foo/bar/baz", return ("foo/bar", "baz").
 
 This corresponds to os.path.split().
 
-When testing, path may be a basestring. In builds, it must be a
-config_types.Path. The type of the return value matches the type of the
+The type of the first item in the return value matches the type of the
 argument.
 
 Args:
-  path (Path): path to split into directory name and basename
+  path (Path or str): path to split into directory name and basename
 
 Returns (dirname(path), basename(path)).
 
-&mdash; **def [splitext](/recipe_modules/path/api.py#555)(self, path):**
+&mdash; **def [splitext](/recipe_modules/path/api.py#553)(self, path):**
 
 For "foo/bar.baz", return ("foo/bar", ".baz").
 

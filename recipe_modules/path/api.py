@@ -534,12 +534,11 @@ class PathApi(recipe_api.RecipeApi):
 
     This corresponds to os.path.split().
 
-    When testing, path may be a basestring. In builds, it must be a
-    config_types.Path. The type of the return value matches the type of the
+    The type of the first item in the return value matches the type of the
     argument.
 
     Args:
-      path (Path): path to split into directory name and basename
+      path (Path or str): path to split into directory name and basename
 
     Returns (dirname(path), basename(path)).
     """
@@ -548,8 +547,7 @@ class PathApi(recipe_api.RecipeApi):
       return (self.abs_to_path(dirname), basename)
 
     # If path is not a Path object it's likely a string. Leave both elements in
-    # return tuple as strings. This should only be used in testing.
-    assert self._test_data.enabled
+    # return tuple as strings.
     return (dirname, basename)
 
   def splitext(self, path):
