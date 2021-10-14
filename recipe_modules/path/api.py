@@ -413,6 +413,9 @@ class PathApi(recipe_api.RecipeApi):
     Raises an ValueError if the preconditions are not met, otherwise returns the
     Path object.
     """
+    if isinstance(abs_string_path, config_types.Path):
+      return abs_string_path
+
     ap = self.abspath(abs_string_path)
     if ap != abs_string_path:
       raise ValueError("path is not absolute: %r v %r" % (abs_string_path, ap))
@@ -490,7 +493,25 @@ class PathApi(recipe_api.RecipeApi):
     return self._path_mod.basename(str(path))
 
   def dirname(self, path):
-    """Equivalent to os.path.dirname."""
+    """For "foo/bar/baz", return "foo/bar".
+
+    This corresponds to os.path.dirname().
+
+    When testing, path may be a basestring. In builds, it must be a
+    config_types.Path. The type of the return value matches the type of the
+    argument.
+
+    Args:
+      path (Path): path to take directory name of
+
+    Returns dirname of path
+    """
+    if isinstance(path, config_types.Path):
+      return self.abs_to_path(self._path_mod.dirname(str(path)))
+
+    # If path is not a Path object it's likely a string. Leave return value as a
+    # string. This should only be used in testing.
+    assert self._test_data.enabled
     return self._path_mod.dirname(str(path))
 
   def join(self, path, *paths):
@@ -509,12 +530,50 @@ class PathApi(recipe_api.RecipeApi):
     return self._path_mod.join(str(path), *map(str, paths))
 
   def split(self, path):
-    """Equivalent to os.path.split."""
-    return self._path_mod.split(str(path))
+    """For "foo/bar/baz", return ("foo/bar", "baz").
+
+    This corresponds to os.path.split().
+
+    When testing, path may be a basestring. In builds, it must be a
+    config_types.Path. The type of the return value matches the type of the
+    argument.
+
+    Args:
+      path (Path): path to split into directory name and basename
+
+    Returns (dirname(path), basename(path)).
+    """
+    dirname, basename = self._path_mod.split(str(path))
+    if isinstance(path, config_types.Path):
+      return (self.abs_to_path(dirname), basename)
+
+    # If path is not a Path object it's likely a string. Leave both elements in
+    # return tuple as strings. This should only be used in testing.
+    assert self._test_data.enabled
+    return (dirname, basename)
 
   def splitext(self, path):
-    """Equivalent to os.path.splitext."""
-    return self._path_mod.splitext(str(path))
+    """For "foo/bar.baz", return ("foo/bar", ".baz").
+
+    This corresponds to os.path.splitext().
+
+    When testing, path may be a basestring. In builds, it must be a
+    config_types.Path. The type of the first item in the return value matches
+    the type of the argument.
+
+    Args:
+      path (Path): path to split into name and extension
+
+    Returns (name, extension_including_dot).
+    """
+    name, ext = self._path_mod.splitext(str(path))
+    if isinstance(path, config_types.Path):
+      return (self.abs_to_path(name), ext)
+
+    # If path is not a Path object it's likely a string. Leave both elements in
+    # return tuple as strings. This should only be used in testing.
+    assert self._test_data.enabled
+    return (name, ext)
 
   def realpath(self, path):
     """Equivalent to os.path.realpath."""

@@ -1,6 +1,6 @@
-# Copyright 2018 The Chromium Authors. All rights reserved.
-# Use of this source code is governed by a BSD-style license that can be
-# found in the LICENSE file.
+# Copyright 2018 The LUCI Authors. All rights reserved.
+# Use of this source code is governed under the Apache License, Version 2.0
+# that can be found in the LICENSE file.
 
 from recipe_engine import recipe_api
 
@@ -119,7 +119,7 @@ class ArchiveApi(recipe_api.RecipeApi):
 
     if archive_type is None:
       base, ext = self.m.path.splitext(output)
-      if base.endswith('.tar'):
+      if self.m.path.splitext(base)[1] == '.tar':
         ext = '.tar' + ext
       archive_type = {
         '.tbz': 'tbz',

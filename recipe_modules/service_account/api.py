@@ -72,7 +72,7 @@ class ServiceAccountApi(recipe_api.RecipeApi):
     Args:
       key_path: (str|Path) object pointing to a service account JSON key.
     """
-    return self.ServiceAccount(self, self.m.path.split(key_path)[1], key_path)
+    return self.ServiceAccount(self, self.m.path.basename(key_path), key_path)
 
 
   def _get_token(self, title, extra_args, scopes):
