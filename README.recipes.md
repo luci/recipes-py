@@ -2267,23 +2267,21 @@ For "foo/bar/baz", return "foo/bar".
 
 This corresponds to os.path.dirname().
 
-When testing, path may be a basestring. In builds, it must be a
-config_types.Path. The type of the return value matches the type of the
-argument.
+The type of the return value matches the type of the argument.
 
 Args:
-  path (Path): path to take directory name of
+  path (Path or str): path to take directory name of
 
 Returns dirname of path
 
-&mdash; **def [exists](/recipe_modules/path/api.py#595)(self, path):**
+&mdash; **def [exists](/recipe_modules/path/api.py#592)(self, path):**
 
 Equivalent to os.path.exists.
 
 The presence or absence of paths can be mocked during the execution of the
 recipe by using the mock_* methods.
 
-&mdash; **def [expanduser](/recipe_modules/path/api.py#586)(self, path):**
+&mdash; **def [expanduser](/recipe_modules/path/api.py#583)(self, path):**
 
 Do not use this, use `api.path['home']` instead.
 
@@ -2302,21 +2300,21 @@ Internal recipe implementation function.
 
 Internal recipe implementation function.
 
-&mdash; **def [isdir](/recipe_modules/path/api.py#603)(self, path):**
+&mdash; **def [isdir](/recipe_modules/path/api.py#600)(self, path):**
 
 Equivalent to os.path.isdir.
 
 The presence or absence of paths can be mocked during the execution of the
 recipe by using the mock_* methods.
 
-&mdash; **def [isfile](/recipe_modules/path/api.py#611)(self, path):**
+&mdash; **def [isfile](/recipe_modules/path/api.py#608)(self, path):**
 
 Equivalent to os.path.isfile.
 
 The presence or absence of paths can be mocked during the execution of the
 recipe by using the mock_* methods.
 
-&mdash; **def [join](/recipe_modules/path/api.py#517)(self, path, \*paths):**
+&mdash; **def [join](/recipe_modules/path/api.py#514)(self, path, \*paths):**
 
 Equivalent to os.path.join.
 
@@ -2351,23 +2349,23 @@ Args:
 Returns a Path to the new file. Unlike tempfile.mkstemp, the file's file
 descriptor is closed.
 
-&mdash; **def [mock\_add\_directory](/recipe_modules/path/api.py#628)(self, path):**
+&mdash; **def [mock\_add\_directory](/recipe_modules/path/api.py#625)(self, path):**
 
 For testing purposes, mark that directory |path| exists.
 
-&mdash; **def [mock\_add\_file](/recipe_modules/path/api.py#624)(self, path):**
+&mdash; **def [mock\_add\_file](/recipe_modules/path/api.py#621)(self, path):**
 
 For testing purposes, mark that file |path| exists.
 
-&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#619)(self, path, kind=FILE):**
+&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#616)(self, path, kind=FILE):**
 
 For testing purposes, mark that |path| exists.
 
-&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#632)(self, source, dest):**
+&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#629)(self, source, dest):**
 
 For testing purposes, copy |source| to |dest|.
 
-&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#637)(self, path, filt=(lambda p: True)):**
+&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#634)(self, path, filt=(lambda p: True)):**
 
 For testing purposes, assert that |path| doesn't exist.
 
@@ -2384,11 +2382,11 @@ Equivalent to os.path.pardir.
 
 Equivalent to os.path.pathsep.
 
-&mdash; **def [realpath](/recipe_modules/path/api.py#574)(self, path):**
+&mdash; **def [realpath](/recipe_modules/path/api.py#571)(self, path):**
 
 Equivalent to os.path.realpath.
 
-&mdash; **def [relpath](/recipe_modules/path/api.py#578)(self, path, start):**
+&mdash; **def [relpath](/recipe_modules/path/api.py#575)(self, path, start):**
 
 Roughly equivalent to os.path.relpath.
 
@@ -2399,7 +2397,7 @@ directory', use the `recipe_engine/context` module's `cwd` property.
 
 Equivalent to os.path.sep.
 
-&mdash; **def [split](/recipe_modules/path/api.py#532)(self, path):**
+&mdash; **def [split](/recipe_modules/path/api.py#529)(self, path):**
 
 For "foo/bar/baz", return ("foo/bar", "baz").
 
@@ -2413,7 +2411,7 @@ Args:
 
 Returns (dirname(path), basename(path)).
 
-&mdash; **def [splitext](/recipe_modules/path/api.py#553)(self, path):**
+&mdash; **def [splitext](/recipe_modules/path/api.py#550)(self, path):**
 
 For "foo/bar.baz", return ("foo/bar", ".baz").
 

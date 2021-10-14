@@ -497,12 +497,10 @@ class PathApi(recipe_api.RecipeApi):
 
     This corresponds to os.path.dirname().
 
-    When testing, path may be a basestring. In builds, it must be a
-    config_types.Path. The type of the return value matches the type of the
-    argument.
+    The type of the return value matches the type of the argument.
 
     Args:
-      path (Path): path to take directory name of
+      path (Path or str): path to take directory name of
 
     Returns dirname of path
     """
@@ -510,8 +508,7 @@ class PathApi(recipe_api.RecipeApi):
       return self.abs_to_path(self._path_mod.dirname(str(path)))
 
     # If path is not a Path object it's likely a string. Leave return value as a
-    # string. This should only be used in testing.
-    assert self._test_data.enabled
+    # string.
     return self._path_mod.dirname(str(path))
 
   def join(self, path, *paths):
