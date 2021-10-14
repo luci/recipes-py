@@ -557,12 +557,11 @@ class PathApi(recipe_api.RecipeApi):
 
     This corresponds to os.path.splitext().
 
-    When testing, path may be a basestring. In builds, it must be a
-    config_types.Path. The type of the first item in the return value matches
-    the type of the argument.
+    The type of the first item in the return value matches the type of the
+    argument.
 
     Args:
-      path (Path): path to split into name and extension
+      path (Path or str): path to split into name and extension
 
     Returns (name, extension_including_dot).
     """
@@ -571,8 +570,7 @@ class PathApi(recipe_api.RecipeApi):
       return (self.abs_to_path(name), ext)
 
     # If path is not a Path object it's likely a string. Leave both elements in
-    # return tuple as strings. This should only be used in testing.
-    assert self._test_data.enabled
+    # return tuple as strings.
     return (name, ext)
 
   def realpath(self, path):

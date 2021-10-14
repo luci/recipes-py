@@ -83,13 +83,14 @@ def RunSteps(api):
 
   assert api.path.relpath(file_path, api.path['tmp_base']) == 'new_file'
 
+  assert api.path.splitext('abc.xyz') == ('abc', '.xyz')
+
   # These tests should only run during recipe tests and not during unit tests.
   # During unit tests they'll fail because these methods don't accept strings
   # except in recipe tests.
   if api._test_data.enabled:
     assert api.path.dirname('abc/xyz') == 'abc'
     assert api.path.split('abc/xyz') == ('abc', 'xyz')
-    assert api.path.splitext('abc.xyz') == ('abc', '.xyz')
 
   api.step('touch me', ['touch', api.path.abspath(file_path)])
   # Assert for testing that a file exists.
