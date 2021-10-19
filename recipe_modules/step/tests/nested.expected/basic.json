@@ -113,7 +113,7 @@
       "fail"
     ],
     "name": "timeout status.I fail",
-    "timeout": 1,
+    "timeout": 1.0,
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_FAILURE@@@"

@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import datetime
+
 from recipe_engine.post_process import StepSuccess, StepFailure, StepException
 
 PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
@@ -53,7 +55,8 @@ def RunSteps(api):
 
   try:
     with api.step.nest('timeout status'):
-      api.step('I fail', ['echo', 'fail'], timeout=1)
+      api.step(
+          'I fail', ['echo', 'fail'], timeout=datetime.timedelta(seconds=1))
   except api.step.StepFailure as ex:
     assert ex.had_timeout
 

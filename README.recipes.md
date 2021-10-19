@@ -3317,7 +3317,7 @@ Args:
   * wrapper: If supplied, a command to prepend to the executed step as a
     command wrapper.
   * timeout: If supplied, the recipe engine will kill the step after the
-    specified number of seconds.
+    specified number of seconds. Also accepts a datetime.timedelta.
   * stdout: Placeholder to put step stdout into. If used, stdout won't
     appear in annotator's stdout.
   * stderr: Placeholder to put step stderr into. If used, stderr won't
@@ -3525,8 +3525,8 @@ Args:
     MUST exist). The extension of the path dictates the encoding format of
     final build proto (See `EXT_TO_CODEC`). If not provided, the output
     will be a temp file with binary encoding.
-  * timeout (None|int): Same as the `timeout` parameter in `__call__`
-    method.
+  * timeout (None|int|float|datetime.timedelta): Same as the `timeout`
+    parameter in `__call__` method.
   * step_test_data(Callable[[], recipe_test_api.StepTestData]): Same as the
     `step_test_data` parameter in `__call__` method.
   * cost (None|ResourceCost): Same as the `cost` parameter in `__call__`
@@ -4787,11 +4787,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/step/tests/inject_paths.py#15)(api):**
 ### *recipes* / [step:tests/nested](/recipe_modules/step/tests/nested.py)
 
-[DEPS](/recipe_modules/step/tests/nested.py#9): [context](#recipe_modules-context), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/step/tests/nested.py#11): [context](#recipe_modules-context), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/step/tests/nested.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/step/tests/nested.py#17)(api):**
 ### *recipes* / [step:tests/raise\_on\_failure](/recipe_modules/step/tests/raise_on_failure.py)
 
 [DEPS](/recipe_modules/step/tests/raise_on_failure.py#9): [properties](#recipe_modules-properties), [step](#recipe_modules-step)

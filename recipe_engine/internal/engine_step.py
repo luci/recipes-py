@@ -11,6 +11,8 @@ RecipeEngine.
 from builtins import int
 from past.builtins import basestring
 
+import datetime
+
 import attr
 
 from google.protobuf import json_format as jsonpb
@@ -123,11 +125,15 @@ class StepConfig(object):
   # LUCI_CONTEXT['deadline']['soft_deadline'] field when the step is rendered to
   # a StepRunner.Step.
   #
+  # Also accepts a datetime.timedelta object.
+  #
   # NOTE: This timeout applies AFTER the step has waited for `cost` to be
   # available to it. If the recipe engine userspace merely adjusts
   # LUCI_CONTEXT['deadline'] then it would include the time waiting for `cost`.
   timeout = attr.ib(
       default=None,
+      converter=(lambda val: val.total_seconds() if isinstance(
+          val, datetime.timedelta) else val),
       validator=attr_type((int, float, type(None))))
 
   # luci_context is the mapping of modified LUCI_CONTEXT sections to their

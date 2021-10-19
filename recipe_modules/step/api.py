@@ -511,8 +511,8 @@ class StepApi(recipe_api.RecipeApiPlain):
         MUST exist). The extension of the path dictates the encoding format of
         final build proto (See `EXT_TO_CODEC`). If not provided, the output
         will be a temp file with binary encoding.
-      * timeout (None|int): Same as the `timeout` parameter in `__call__`
-        method.
+      * timeout (None|int|float|datetime.timedelta): Same as the `timeout`
+        parameter in `__call__` method.
       * step_test_data(Callable[[], recipe_test_api.StepTestData]): Same as the
         `step_test_data` parameter in `__call__` method.
       * cost (None|ResourceCost): Same as the `cost` parameter in `__call__`
@@ -606,7 +606,7 @@ class StepApi(recipe_api.RecipeApiPlain):
       * wrapper: If supplied, a command to prepend to the executed step as a
         command wrapper.
       * timeout: If supplied, the recipe engine will kill the step after the
-        specified number of seconds.
+        specified number of seconds. Also accepts a datetime.timedelta.
       * stdout: Placeholder to put step stdout into. If used, stdout won't
         appear in annotator's stdout.
       * stderr: Placeholder to put step stderr into. If used, stderr won't
