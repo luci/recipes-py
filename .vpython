@@ -141,7 +141,7 @@ wheel: <
 ## Gevent
 wheel: <
   name: "infra/python/wheels/gevent/${vpython_platform}"
-  version: "version:1.4.0"
+  version: "version:1.4.0.chromium.1"
 >
 wheel: <
   name: "infra/python/wheels/greenlet/${vpython_platform}"
