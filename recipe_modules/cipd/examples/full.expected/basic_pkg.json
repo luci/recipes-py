@@ -509,6 +509,8 @@
       "md_1:v2",
       "-service-account-json",
       "/path/to/cipd/creds.json",
+      "-verification-timeout",
+      "10m",
       "-json-output",
       "/path/to/tmp/json"
     ],

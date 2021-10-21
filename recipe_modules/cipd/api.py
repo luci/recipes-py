@@ -397,9 +397,6 @@ class CIPDApi(recipe_api.RecipeApi):
              output_package,
              pkg_vars=None,
              compression_level=None):
-    if pkg_vars:
-      check_dict_type('pkg_vars', pkg_vars, basestring, basestring)
-
     cmd = [
         'pkg-build',
         '-pkg-def',
@@ -408,9 +405,9 @@ class CIPDApi(recipe_api.RecipeApi):
         output_package,
         '-hash-algo',
         'sha256',
-    ] + self._cli_options(pkg_vars=pkg_vars)
-    if compression_level:
-      cmd.extend(['-compression-level', int(compression_level)])
+    ]
+    cmd.extend(self._metadata_opts(pkg_vars=pkg_vars))
+    cmd.extend(self._compression_level_opts(compression_level))
 
     step_result = self._run(
         'build %s' % pkg_name,
@@ -490,7 +487,6 @@ class CIPDApi(recipe_api.RecipeApi):
 
     Returns the CIPDApi.Pin instance.
     """
-    assert not compression_level or isinstance(compression_level, int)
     assert not install_mode or install_mode in ['copy', 'symlink']
 
     cmd = [
@@ -504,8 +500,7 @@ class CIPDApi(recipe_api.RecipeApi):
         '-hash-algo',
         'sha256',
     ]
-    if compression_level:
-      cmd.extend(['-compression-level', int(compression_level)])
+    cmd.extend(self._compression_level_opts(compression_level))
     if install_mode:
       cmd.extend(['-install-mode', install_mode])
     if preserve_mtime:
@@ -524,7 +519,8 @@ class CIPDApi(recipe_api.RecipeApi):
       return ['-service-account-json', self._service_account.key_path]
     return []
 
-  def _cli_options(self, refs=None, tags=None, metadata=None, pkg_vars=None):
+  @staticmethod
+  def _metadata_opts(refs=None, tags=None, metadata=None, pkg_vars=None):
     """Computes a list of -ref, -tag, -metadata and -pkg-var CLI flags."""
     refs = [] if refs is None else refs
     tags = {} if tags is None else tags
@@ -545,12 +541,34 @@ class CIPDApi(recipe_api.RecipeApi):
       ret.extend(['-pkg-var', '%s:%s' % (var_name, value)])
     return ret
 
+  @staticmethod
+  def _verification_timeout_opts(verification_timeout):
+    if verification_timeout is None:
+      return []
+    check_type('verification_timeout', verification_timeout, basestring)
+    if not verification_timeout.endswith(('s', 'm', 'h')):  # pragma: no cover
+      raise ValueError(
+          'verification_timeout must end with s, m or h, got %r' %
+          verification_timeout)
+    return ['-verification-timeout', verification_timeout]
+
+  @staticmethod
+  def _compression_level_opts(compression_level):
+    if compression_level is None:
+      return []
+    check_type('compression_level', compression_level, int)
+    if compression_level < 0 or compression_level > 9:  # pragma: no cover
+      raise ValueError(
+          'compression_level must be >=0 and <=9, got %d' % compression_level)
+    return ['-compression-level', str(compression_level)]
+
   def register(self,
                package_name,
                package_path,
                refs=None,
                tags=None,
-               metadata=None):
+               metadata=None,
+               verification_timeout=None):
     """Uploads and registers package instance in the package repository.
 
     Args:
@@ -560,13 +578,17 @@ class CIPDApi(recipe_api.RecipeApi):
       * tags (dict[str]basestring) - A map of tag name -> value to set for the
           package instance.
       * metadata (list[Metadata]) - A list of metadata entries to attach.
+      * verification_timeout (str) - Duration string that controls the time to
+        wait for backend-side package hash verification. Valid time units are
+        "s", "m", "h". Default is "5m".
 
     Returns:
       The CIPDApi.Pin instance.
     """
     cmd = ['pkg-register', package_path]
-    cmd.extend(self._cli_options(refs, tags, metadata))
+    cmd.extend(self._metadata_opts(refs, tags, metadata))
     cmd.extend(self._service_account_opts())
+    cmd.extend(self._verification_timeout_opts(verification_timeout))
     step_result = self._run(
         'register %s' % package_name,
         cmd,
@@ -596,12 +618,10 @@ class CIPDApi(recipe_api.RecipeApi):
         '-hash-algo',
         'sha256',
     ]
-    cmd.extend(self._cli_options(refs, tags, metadata, pkg_vars))
+    cmd.extend(self._metadata_opts(refs, tags, metadata, pkg_vars))
     cmd.extend(self._service_account_opts())
-    if compression_level:
-      cmd.extend(['-compression-level', int(compression_level)])
-    if verification_timeout:
-      cmd.extend(['-verification-timeout', verification_timeout])
+    cmd.extend(self._compression_level_opts(compression_level))
+    cmd.extend(self._verification_timeout_opts(verification_timeout))
     step_result = self._run(
         'create %s' % pkg_name,
         cmd,
@@ -643,7 +663,7 @@ class CIPDApi(recipe_api.RecipeApi):
         defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
       * verification_timeout (str) - Duration string that controls the time to
         wait for backend-side package hash verification. Valid time units are
-        "ns", "us", "ms", "s", "m", "h".
+        "s", "m", "h". Default is "5m".
 
     Returns the CIPDApi.Pin instance.
     """
@@ -678,7 +698,7 @@ class CIPDApi(recipe_api.RecipeApi):
         defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
       * verification_timeout (str) - Duration string that controls the time to
         wait for backend-side package hash verification. Valid time units are
-        "ns", "us", "ms", "s", "m", "h".
+        "s", "m", "h". Default is "5m".
 
     Returns the CIPDApi.Pin instance.
     """
@@ -750,7 +770,7 @@ class CIPDApi(recipe_api.RecipeApi):
         package_name,
         '-version',
         version,
-    ] + self._cli_options(tags=tags)
+    ] + self._metadata_opts(tags=tags)
 
     step_result = self._run(
         'cipd set-tag %s' % package_name,
@@ -775,7 +795,7 @@ class CIPDApi(recipe_api.RecipeApi):
         package_name,
         '-version',
         version,
-    ] + self._cli_options(metadata=metadata)
+    ] + self._metadata_opts(metadata=metadata)
 
     step_result = self._run(
         'cipd set-metadata %s' % package_name,
@@ -800,7 +820,7 @@ class CIPDApi(recipe_api.RecipeApi):
         package_name,
         '-version',
         version,
-    ] + self._cli_options(refs=refs) + self._service_account_opts()
+    ] + self._metadata_opts(refs=refs) + self._service_account_opts()
 
     step_result = self._run(
         'cipd set-ref %s' % package_name,

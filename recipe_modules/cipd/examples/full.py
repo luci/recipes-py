@@ -119,7 +119,8 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
 
       api.cipd.build_from_pkg(pkg, 'fake-package-path')
       api.cipd.register('infra/fake-package', 'fake-package-path',
-                        refs=refs, tags=tags, metadata=md)
+                        refs=refs, tags=tags, metadata=md,
+                        verification_timeout='10m')
 
       api.cipd.create_from_pkg(pkg, refs=refs, tags=tags, metadata=md)
     else:

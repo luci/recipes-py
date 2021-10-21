@@ -805,9 +805,9 @@ Args:
 
 Returns True if the caller has given roles, False otherwise.
 
-&mdash; **def [add\_instance\_link](/recipe_modules/cipd/api.py#615)(self, step_result):**
+&mdash; **def [add\_instance\_link](/recipe_modules/cipd/api.py#635)(self, step_result):**
 
-&mdash; **def [build](/recipe_modules/cipd/api.py#468)(self, input_dir, output_package, package_name, compression_level=None, install_mode=None, preserve_mtime=False, preserve_writable=False):**
+&mdash; **def [build](/recipe_modules/cipd/api.py#465)(self, input_dir, output_package, package_name, compression_level=None, install_mode=None, preserve_mtime=False, preserve_writable=False):**
 
 Builds, but does not upload, a cipd package from a directory.
 
@@ -826,7 +826,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#448)(self, pkg_def, output_package, compression_level=None):**
+&mdash; **def [build\_from\_pkg](/recipe_modules/cipd/api.py#445)(self, pkg_def, output_package, compression_level=None):**
 
 Builds a package based on a PackageDefinition object.
 
@@ -839,7 +839,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#422)(self, pkg_def, output_package, pkg_vars=None, compression_level=None):**
+&mdash; **def [build\_from\_yaml](/recipe_modules/cipd/api.py#419)(self, pkg_def, output_package, pkg_vars=None, compression_level=None):**
 
 Builds a package based on on-disk YAML package definition file.
 
@@ -860,7 +860,7 @@ environment variable.
 
 If directory is "None", will use no cache directory.
 
-&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#659)(self, pkg_def, refs=None, tags=None, metadata=None, compression_level=None, verification_timeout=None):**
+&mdash; **def [create\_from\_pkg](/recipe_modules/cipd/api.py#679)(self, pkg_def, refs=None, tags=None, metadata=None, compression_level=None, verification_timeout=None):**
 
 Builds and uploads a package based on a PackageDefinition object.
 
@@ -877,11 +877,11 @@ Args:
     defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
   * verification_timeout (str) - Duration string that controls the time to
     wait for backend-side package hash verification. Valid time units are
-    "ns", "us", "ms", "s", "m", "h".
+    "s", "m", "h". Default is "5m".
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#621)(self, pkg_def, refs=None, tags=None, metadata=None, pkg_vars=None, compression_level=None, verification_timeout=None):**
+&mdash; **def [create\_from\_yaml](/recipe_modules/cipd/api.py#641)(self, pkg_def, refs=None, tags=None, metadata=None, pkg_vars=None, compression_level=None, verification_timeout=None):**
 
 Builds and uploads a package based on on-disk YAML package definition
 file.
@@ -900,11 +900,11 @@ Args:
     defaults to 5 (0 - disable, 1 - best speed, 9 - best compression).
   * verification_timeout (str) - Duration string that controls the time to
     wait for backend-side package hash verification. Valid time units are
-    "ns", "us", "ms", "s", "m", "h".
+    "s", "m", "h". Default is "5m".
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [describe](/recipe_modules/cipd/api.py#845)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
+&mdash; **def [describe](/recipe_modules/cipd/api.py#865)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
 
 Returns information about a package instance given its version:
 who uploaded the instance and when and a list of attached tags.
@@ -919,7 +919,7 @@ Args:
 
 Returns the CIPDApi.Description instance describing the package.
 
-&mdash; **def [ensure](/recipe_modules/cipd/api.py#694)(self, root, ensure_file, name='ensure_installed'):**
+&mdash; **def [ensure](/recipe_modules/cipd/api.py#714)(self, root, ensure_file, name='ensure_installed'):**
 
 Ensures that packages are installed in a given root dir.
 
@@ -930,7 +930,7 @@ Args:
 
 Returns the map of subdirectories to CIPDApi.Pin instances.
 
-&mdash; **def [ensure\_tool](/recipe_modules/cipd/api.py#972)(self, package, version, executable_path=None):**
+&mdash; **def [ensure\_tool](/recipe_modules/cipd/api.py#992)(self, package, version, executable_path=None):**
 
 Downloads an executable from CIPD.
 
@@ -961,7 +961,7 @@ block on a single ensure step.
 
 &emsp; **@property**<br>&mdash; **def [executable](/recipe_modules/cipd/api.py#355)(self):**
 
-&mdash; **def [instances](/recipe_modules/cipd/api.py#880)(self, package_name, limit=None):**
+&mdash; **def [instances](/recipe_modules/cipd/api.py#900)(self, package_name, limit=None):**
 
 Lists instances of a package, most recently uploaded first.
 
@@ -972,7 +972,7 @@ Args:
 
 Returns the list of CIPDApi.Instance instance.
 
-&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#949)(self, root, package_file):**
+&mdash; **def [pkg\_deploy](/recipe_modules/cipd/api.py#969)(self, root, package_file):**
 
 Deploys the specified package to root.
 
@@ -986,7 +986,7 @@ Args:
 
 Returns a Pin for the deployed package.
 
-&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#918)(self, destination, package_name, version):**
+&mdash; **def [pkg\_fetch](/recipe_modules/cipd/api.py#938)(self, destination, package_name, version):**
 
 Downloads the specified package to destination.
 
@@ -1003,7 +1003,7 @@ Args:
 
 Returns a Pin for the downloaded package.
 
-&mdash; **def [register](/recipe_modules/cipd/api.py#548)(self, package_name, package_path, refs=None, tags=None, metadata=None):**
+&mdash; **def [register](/recipe_modules/cipd/api.py#565)(self, package_name, package_path, refs=None, tags=None, metadata=None, verification_timeout=None):**
 
 Uploads and registers package instance in the package repository.
 
@@ -1014,11 +1014,14 @@ Args:
   * tags (dict[str]basestring) - A map of tag name -> value to set for the
       package instance.
   * metadata (list[Metadata]) - A list of metadata entries to attach.
+  * verification_timeout (str) - Duration string that controls the time to
+    wait for backend-side package hash verification. Valid time units are
+    "s", "m", "h". Default is "5m".
 
 Returns:
   The CIPDApi.Pin instance.
 
-&mdash; **def [search](/recipe_modules/cipd/api.py#813)(self, package_name, tag, test_instances=None):**
+&mdash; **def [search](/recipe_modules/cipd/api.py#833)(self, package_name, tag, test_instances=None):**
 
 Searches for package instances by tag, optionally constrained by package
 name.
@@ -1034,7 +1037,7 @@ Args:
 
 Returns the list of CIPDApi.Pin instances.
 
-&mdash; **def [set\_metadata](/recipe_modules/cipd/api.py#763)(self, package_name, version, metadata):**
+&mdash; **def [set\_metadata](/recipe_modules/cipd/api.py#783)(self, package_name, version, metadata):**
 
 Attaches metadata to a package instance.
 
@@ -1045,7 +1048,7 @@ Args:
 
 Returns the CIPDApi.Pin instance.
 
-&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#788)(self, package_name, version, refs):**
+&mdash; **def [set\_ref](/recipe_modules/cipd/api.py#808)(self, package_name, version, refs):**
 
 Moves a ref to point to a given version.
 
@@ -1067,7 +1070,7 @@ Args:
   * service_account(service_account.api.ServiceAccount): Service account to
       use for authentication.
 
-&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#736)(self, package_name, version, tags):**
+&mdash; **def [set\_tag](/recipe_modules/cipd/api.py#756)(self, package_name, version, tags):**
 
 Tags package of a specific version.
 
