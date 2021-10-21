@@ -311,34 +311,11 @@ class CIPDApi(recipe_api.RecipeApi):
 
   def __init__(self, **kwargs):
     super(recipe_api.RecipeApi, self).__init__(**kwargs)
-    self._service_account = None
     self.max_threads = 0  # 0 means use system CPU count.
     # A mapping from (package, version) to Future for packages installed
     # via `ensure_tool()`. The Future has no returned value and just used to
     # synchronize 'ensure' actions.
     self._installed_tool_package_futures = {}
-
-  @contextlib.contextmanager
-  def set_service_account(self, service_account):
-    """Temporarily sets the service account used for authentication to CIPD.
-
-    Implemented as a context manager to avoid one part of a recipe from
-    overwriting another's specified service account.
-
-    Args:
-      * service_account(service_account.api.ServiceAccount): Service account to
-          use for authentication.
-    """
-    assert isinstance(service_account, self.m.service_account.ServiceAccount), \
-        'Service account must be of type ' \
-        'recipe_module.service_account.ServiceAccount. Was %s' % (
-            type(service_account))
-    prev_service_account = self._service_account
-    self._service_account = service_account
-    try:
-      yield
-    finally:
-      self._service_account = prev_service_account
 
   @contextlib.contextmanager
   def cache_dir(self, directory):
@@ -378,7 +355,7 @@ class CIPDApi(recipe_api.RecipeApi):
 
     Returns True if the caller has given roles, False otherwise.
     """
-    cmd = ['acl-check', pkg_path] + self._service_account_opts()
+    cmd = ['acl-check', pkg_path]
     if reader:
       cmd.append('-reader')
     if writer:
@@ -507,17 +484,13 @@ class CIPDApi(recipe_api.RecipeApi):
       cmd.append('-preserve-mtime')
     if preserve_writable:
       cmd.append('-preserve-writable')
+
     step_result = self._run(
         'build %s' % self.m.path.basename(package_name),
         cmd,
         step_test_data=lambda: self.test_api.example_build(package_name))
     result = step_result.json.output['result']
     return self.Pin(**result)
-
-  def _service_account_opts(self):
-    if self._service_account and self._service_account.key_path:
-      return ['-service-account-json', self._service_account.key_path]
-    return []
 
   @staticmethod
   def _metadata_opts(refs=None, tags=None, metadata=None, pkg_vars=None):
@@ -587,8 +560,8 @@ class CIPDApi(recipe_api.RecipeApi):
     """
     cmd = ['pkg-register', package_path]
     cmd.extend(self._metadata_opts(refs, tags, metadata))
-    cmd.extend(self._service_account_opts())
     cmd.extend(self._verification_timeout_opts(verification_timeout))
+
     step_result = self._run(
         'register %s' % package_name,
         cmd,
@@ -619,9 +592,9 @@ class CIPDApi(recipe_api.RecipeApi):
         'sha256',
     ]
     cmd.extend(self._metadata_opts(refs, tags, metadata, pkg_vars))
-    cmd.extend(self._service_account_opts())
     cmd.extend(self._compression_level_opts(compression_level))
     cmd.extend(self._verification_timeout_opts(verification_timeout))
+
     step_result = self._run(
         'create %s' % pkg_name,
         cmd,
@@ -770,7 +743,8 @@ class CIPDApi(recipe_api.RecipeApi):
         package_name,
         '-version',
         version,
-    ] + self._metadata_opts(tags=tags)
+    ]
+    cmd.extend(self._metadata_opts(tags=tags))
 
     step_result = self._run(
         'cipd set-tag %s' % package_name,
@@ -795,7 +769,8 @@ class CIPDApi(recipe_api.RecipeApi):
         package_name,
         '-version',
         version,
-    ] + self._metadata_opts(metadata=metadata)
+    ]
+    cmd.extend(self._metadata_opts(metadata=metadata))
 
     step_result = self._run(
         'cipd set-metadata %s' % package_name,
@@ -820,7 +795,8 @@ class CIPDApi(recipe_api.RecipeApi):
         package_name,
         '-version',
         version,
-    ] + self._metadata_opts(refs=refs) + self._service_account_opts()
+    ]
+    cmd.extend(self._metadata_opts(refs=refs))
 
     step_result = self._run(
         'cipd set-ref %s' % package_name,
@@ -852,7 +828,7 @@ class CIPDApi(recipe_api.RecipeApi):
         package_name,
         '-tag',
         tag,
-    ] + self._service_account_opts()
+    ]
 
     step_result = self._run(
         'cipd search %s %s' % (package_name, tag),
@@ -914,8 +890,7 @@ class CIPDApi(recipe_api.RecipeApi):
     cmd = [
         'instances',
         package_name,
-    ] + self._service_account_opts()
-
+    ]
     if limit:
       cmd += ['-limit', limit]
 
@@ -954,11 +929,10 @@ class CIPDApi(recipe_api.RecipeApi):
     check_type('destination', destination, Path)
     check_type('package_name', package_name, basestring)
     check_type('version', version, basestring)
-    cmd = ['pkg-fetch', package_name, '-version', version, '-out', destination]
-    cmd += self._service_account_opts()
+
     step_result = self._run(
         'cipd pkg-fetch %s' % package_name,
-        cmd,
+        ['pkg-fetch', package_name, '-version', version, '-out', destination],
         step_test_data=lambda: self.test_api.example_pkg_fetch(
             package_name, version))
     ret = self.Pin(**step_result.json.output['result'])
@@ -981,6 +955,7 @@ class CIPDApi(recipe_api.RecipeApi):
     """
     check_type('root', root, Path)
     check_type('package_file', package_file, Path)
+
     step_result = self._run(
         'cipd pkg-deploy %s' % package_file,
         ['pkg-deploy', package_file, '-root', root],
