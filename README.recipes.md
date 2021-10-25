@@ -42,6 +42,7 @@
 **[Recipes](#Recipes)**
   * [archive:examples/full](#recipes-archive_examples_full) (Python3 ✅)
   * [assertions:tests/assert-raises](#recipes-assertions_tests_assert-raises) (Python3 ✅)
+  * [assertions:tests/assert_count_equal](#recipes-assertions_tests_assert_count_equal) (Python3 ✅)
   * [assertions:tests/assertions](#recipes-assertions_tests_assertions) (Python3 ✅)
   * [assertions:tests/attribute_error](#recipes-assertions_tests_attribute_error) (Python3 ✅)
   * [assertions:tests/long_message](#recipes-assertions_tests_long_message) (Python3 ✅)
@@ -3900,6 +3901,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipe_modules/assertions/tests/assert-raises.py#18)(api):**
+### *recipes* / [assertions:tests/assert\_count\_equal](/recipe_modules/assertions/tests/assert_count_equal.py)
+
+[DEPS](/recipe_modules/assertions/tests/assert_count_equal.py#9): [assertions](#recipe_modules-assertions)
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+&mdash; **def [RunSteps](/recipe_modules/assertions/tests/assert_count_equal.py#14)(api):**
 ### *recipes* / [assertions:tests/assertions](/recipe_modules/assertions/tests/assertions.py)
 
 [DEPS](/recipe_modules/assertions/tests/assertions.py#9): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

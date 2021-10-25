@@ -102,17 +102,40 @@ class AssertionsApi(recipe_api.RecipeApi):
 
   # Not included: assertLogs, all of the deprecated assertion methods, all
   # non-methods
-  _TEST_CASE_WHITELIST = [
-      'assertAlmostEqual', 'assertDictContainsSubset', 'assertDictEqual',
-      'assertEqual', 'assertFalse', 'assertGreater', 'assertGreaterEqual',
-      'assertIn', 'assertIs', 'assertIsInstance', 'assertIsNone',
-      'assertIsNot', 'assertIsNotNone', 'assertItemsEqual', 'assertLess',
-      'assertLessEqual', 'assertListEqual', 'assertMultiLineEqual',
-      'assertNotAlmostEqual', 'assertNotEqual', 'assertNotIn',
-      'assertNotIsInstance', 'assertNotRegexpMatches', 'assertRaises',
-      'assertRaisesRegexp', 'assertRegexpMatches', 'assertSequenceEqual',
-      'assertSetEqual', 'assertTrue', 'assertTupleEqual', 'fail',
+  _TEST_CASE_PASSTHROUGH_ATTRS = [
+      'assertAlmostEqual',
+      'assertDictContainsSubset',
+      'assertDictEqual',
+      'assertEqual',
+      'assertFalse',
+      'assertGreater',
+      'assertGreaterEqual',
+      'assertIn',
+      'assertIs',
+      'assertIsInstance',
+      'assertIsNone',
+      'assertIsNot',
+      'assertIsNotNone',
+      'assertLess',
+      'assertLessEqual',
+      'assertListEqual',
+      'assertMultiLineEqual',
+      'assertNotAlmostEqual',
+      'assertNotEqual',
+      'assertNotIn',
+      'assertNotIsInstance',
+      'assertNotRegexpMatches',
+      'assertRaises',
+      'assertRaisesRegexp',
+      'assertRegexpMatches',
+      'assertSequenceEqual',
+      'assertSetEqual',
+      'assertTrue',
+      'assertTupleEqual',
+      'fail',
   ]
+
+  _ASSERT_COUNT_EQUAL_ATTRS = ['assertCountEqual', 'assertItemsEqual']
 
   def __init__(self, *args, **kwargs):
     super(AssertionsApi, self).__init__(*args, **kwargs)
@@ -127,8 +150,16 @@ class AssertionsApi(recipe_api.RecipeApi):
     self.maxDiff = prototype.maxDiff
 
   def __getattr__(self, attr):
-    if attr in self._TEST_CASE_WHITELIST:
+    if attr in self._TEST_CASE_PASSTHROUGH_ATTRS:
       return make_assertion(
           attr, longMessage=self.longMessage, maxDiff=self.maxDiff)
+    # TODO(crbug/1147793) When python2 support is removed (and all uses are
+    # switch to call assertCountEqual), just add assertCountEqual to
+    # _TEST_CASE_PASSTHROUGH_ATTRS
+    elif attr in self._ASSERT_COUNT_EQUAL_ATTRS:
+      for a in self._ASSERT_COUNT_EQUAL_ATTRS:
+        if hasattr(unittest.TestCase, a):
+          return make_assertion(
+              a, longMessage=self.longMessage, maxDiff=self.maxDiff)
     raise AttributeError("'%s' object has no attribute '%s'"
                          % (type(self).__name__, attr))
