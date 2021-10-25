@@ -1005,7 +1005,10 @@ class TaskResult(object):
 
       self._success = False
       if self._state == TaskState.COMPLETED:
-        self._success = int(results['exit_code']) == 0
+        # If 0, a default value, exit_code may be omitted by the cloud
+        # endpoint's response.
+        # TODO(crbug.com/1262135) Stop accepting a result of '0'.
+        self._success = results.get('exit_code', 0) in (0, '0')
 
       self._duration = results.get('duration', 0)
 
