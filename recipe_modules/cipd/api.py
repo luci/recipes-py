@@ -14,6 +14,12 @@ from past.builtins import basestring
 import contextlib
 
 from collections import defaultdict, namedtuple
+try:
+  from collections.abc import Mapping, Sequence
+except ImportError:
+  # Required to support Python < 3.3.
+  # pylint: disable=deprecated-class
+  from collections import Mapping, Sequence
 
 from recipe_engine import recipe_api
 from recipe_engine.config_types import Path
@@ -32,13 +38,18 @@ def check_type(name, var, expect):
 
 
 def check_list_type(name, var, expect_inner):
-  check_type(name, var, (list, tuple))
+  if isinstance(var, basestring):  # pragma: no cover
+    raise TypeError('%s must be a non-string sequence: %s (%r)' %
+                    (name, type(var).__name__, var))
+  # Allow all non-string sequences, not just tuple and list, because proto
+  # object repeated fields use a special Sequence type.
+  check_type(name, var, Sequence)
   for i, itm in enumerate(var):
     check_type('%s[%d]' % (name, i), itm, expect_inner)
 
 
 def check_dict_type(name, var, expect_key, expect_value):
-  check_type(name, var, dict)
+  check_type(name, var, Mapping)
   for key, value in iteritems(var):
     check_type('%s: key' % name, key, expect_key)
     check_type('%s[%s]' % (name, key), value, expect_value)
