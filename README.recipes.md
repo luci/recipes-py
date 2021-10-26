@@ -2709,9 +2709,9 @@ Example:
       api.random.shuffle(my_list)
       # my_list is now random!
 
-#### **class [RandomApi](/recipe_modules/random/api.py#31)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
+#### **class [RandomApi](/recipe_modules/random/api.py#56)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
 
-&mdash; **def [\_\_getattr\_\_](/recipe_modules/random/api.py#38)(self, name):**
+&mdash; **def [\_\_getattr\_\_](/recipe_modules/random/api.py#63)(self, name):**
 
 Access a member of `random.Random`.
 ### *recipe_modules* / [raw\_io](/recipe_modules/raw_io)

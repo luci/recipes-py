@@ -14,8 +14,11 @@ def RunSteps(api):
   my_list = list(range(10))
   # Use a specific random number generator to ensure consistency between Python
   # 2 and 3.
-  api.random.shuffle(my_list, api.random.random)
+  api.random.shuffle(my_list)
   api.step('echo list', ['echo', ', '.join(map(str, my_list))])
+
+  my_randrange = [api.random.randrange(1000, 15000000, 3) for _ in range(10)]
+  api.step('echo randrange', ['foo'] + list(map(str, my_randrange)))
 
 
 def GenTests(api):
