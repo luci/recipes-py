@@ -355,10 +355,7 @@ class TaskRequest(object):
       self._cas_input_root = ''
 
       # Containment
-      self._lower_priority = False
       self._containment_type = 'NONE'
-      self._limit_processes = 0
-      self._limit_total_committed_memory = 0
 
       self._api = api
 
@@ -701,23 +698,6 @@ class TaskRequest(object):
       return ret
 
     @property
-    def lower_priority(self):
-      """Returns whether the task process is run with a low priority."""
-      return self._lower_priority
-
-    def with_lower_priority(self, lower_priority):
-      """Returns the slice with the given lower_priority boolean set.
-
-      Args:
-        lower_priority (bool) - Whether the task is run with low process
-            priority.
-      """
-      assert isinstance(lower_priority, bool)
-      ret = self._copy()
-      ret._lower_priority = lower_priority
-      return ret
-
-    @property
     def containment_type(self):
       """Returns whether the task process is contained."""
       return self._containment_type
@@ -731,43 +711,6 @@ class TaskRequest(object):
       assert containment_type in ('NONE', 'AUTO', 'JOB_OBJECT')
       ret = self._copy()
       ret._containment_type = containment_type
-      return ret
-
-    @property
-    def limit_processes(self):
-      """Returns the maximum number of concurrent processes a task can run."""
-      return self._limit_processes
-
-    def with_limit_processes(self, limit_processes):
-      """Returns the slice with the maximum number of concurrent processes a
-      task can run set.
-
-      Args:
-        limit_processes (int) - 0 or the maximum number of concurrent processes
-      """
-      assert isinstance(limit_processes, int)
-      ret = self._copy()
-      ret._limit_processes = limit_processes
-      return ret
-
-    @property
-    def limit_total_committed_memory(self):
-      """Returns the maximum amount of committed memory the processes in this
-      task can use.
-      """
-      return self._limit_total_committed_memory
-
-    def with_limit_total_committed_memory(self, limit_total_committed_memory):
-      """Returns the slice with the maximum amount of RAM all processes can
-      commit set.
-
-      Args:
-        limit_total_committed_memory (int) - 0 or the maximum amount of RAM
-            committed
-      """
-      assert isinstance(limit_total_committed_memory, int)
-      ret = self._copy()
-      ret._limit_total_committed_memory = limit_total_committed_memory
       return ret
 
     @property
@@ -808,11 +751,7 @@ class TaskRequest(object):
           with_grace_period_secs(int(p['grace_period_secs'])).
           with_idempotent(p['idempotent']).
           with_io_timeout_secs(int(p['io_timeout_secs'])).
-          with_lower_priority(containment['lower_priority']).
-          with_containment_type(containment['containment_type']).
-          with_limit_processes(int(containment['limit_processes'])).
-          with_limit_total_committed_memory(
-              int(containment['limit_total_committed_memory']))) # yapf: disable
+          with_containment_type(containment['containment_type']))
       if 'cas_input_root' in p:
         digest = p['cas_input_root']['digest']
         ret = ret.with_cas_input_root(digest['hash'] + '/' +
@@ -862,14 +801,8 @@ class TaskRequest(object):
           'idempotent': self.idempotent,
           'io_timeout_secs': str(self.io_timeout_secs),
           'containment': {
-              'lower_priority':
-                  self.lower_priority,
               'containment_type':
                   self.containment_type,
-              'limit_processes':
-                  str(self.limit_processes),
-              'limit_total_committed_memory':
-                  str(self.limit_total_committed_memory),
           },
       }
 

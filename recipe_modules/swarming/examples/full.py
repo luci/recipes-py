@@ -53,10 +53,7 @@ def RunSteps(api):
         with_io_timeout_secs(600).
         with_execution_timeout_secs(EXECUTION_TIMEOUT_SECS).
         with_idempotent(True).
-        with_lower_priority(True).
         with_containment_type('AUTO').
-        with_limit_processes(16).
-        with_limit_total_committed_memory(1024*1024*1024).
         with_named_caches({'cache_name': 'cache/path'}),
       )
   )
