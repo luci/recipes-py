@@ -13,7 +13,6 @@ DEPS = [
 
 def RunSteps(api):
   api.assertions.assertCountEqual([0, 1], (1, 0))
-  api.assertions.assertItemsEqual([0, 1], (1, 0))
 
 
 def GenTests(api):

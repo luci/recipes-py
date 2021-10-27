@@ -135,8 +135,6 @@ class AssertionsApi(recipe_api.RecipeApi):
       'fail',
   ]
 
-  _ASSERT_COUNT_EQUAL_ATTRS = ['assertCountEqual', 'assertItemsEqual']
-
   def __init__(self, *args, **kwargs):
     super(AssertionsApi, self).__init__(*args, **kwargs)
     if not self._test_data.enabled:  # pragma: no cover
@@ -156,8 +154,8 @@ class AssertionsApi(recipe_api.RecipeApi):
     # TODO(crbug/1147793) When python2 support is removed (and all uses are
     # switch to call assertCountEqual), just add assertCountEqual to
     # _TEST_CASE_PASSTHROUGH_ATTRS
-    elif attr in self._ASSERT_COUNT_EQUAL_ATTRS:
-      for a in self._ASSERT_COUNT_EQUAL_ATTRS:
+    elif attr == 'assertCountEqual':
+      for a in ('assertCountEqual', 'assertItemsEqual'):
         if hasattr(unittest.TestCase, a):
           return make_assertion(
               a, longMessage=self.longMessage, maxDiff=self.maxDiff)
