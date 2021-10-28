@@ -14,6 +14,7 @@ def RunSteps(api):
   logs = api.step(cmd=None, name='task_info').presentation.logs
   logs['bot_id'] = [api.swarming.bot_id]
   logs['task_id'] = [api.swarming.task_id]
+  logs['swarming_server'] = [api.swarming.current_server]
 
 
 def GenTests(api):

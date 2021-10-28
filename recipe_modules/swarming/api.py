@@ -1136,6 +1136,11 @@ class SwarmingApi(recipe_api.RecipeApi):
     """This task's Swarming ID."""
     return self._env_properties.SWARMING_TASK_ID
 
+  @property
+  def current_server(self):
+    """Swarming server executing this task."""
+    return self._env_properties.SWARMING_SERVER
+
   def initialize(self):
     if self._test_data.enabled:
       self._server = self._server or 'https://example.swarmingserver.appspot.com'

@@ -6,7 +6,9 @@
       "@@@STEP_LOG_LINE@bot_id@fake-bot@@@",
       "@@@STEP_LOG_END@bot_id@@@",
       "@@@STEP_LOG_LINE@task_id@fake-task-id@@@",
-      "@@@STEP_LOG_END@task_id@@@"
+      "@@@STEP_LOG_END@task_id@@@",
+      "@@@STEP_LOG_LINE@swarming_server@https://example.swarmingserver.appspot.com@@@",
+      "@@@STEP_LOG_END@swarming_server@@@"
     ]
   },
   {
