@@ -248,7 +248,8 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       build_number=0,
       build_id=8945511751514863184,
       priority=30,
-      tags=None):
+      tags=None,
+      experiments=()):
     """Emulates a generic build w/o input GitilesCommit or GerritChanges."""
     build = build_pb2.Build(
         id=build_id,
@@ -266,6 +267,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
             resultdb=build_pb2.BuildInfra.ResultDB(
                 invocation='invocations/build:%d' % build_id),
         ),
+        input=build_pb2.Build.Input(experiments=experiments),
     )
     return self.build(build)
 
