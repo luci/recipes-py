@@ -51,6 +51,9 @@ message AutorollRecipeOptions {
 
       // Will set Code-Review+2 label.
       CODE_REVIEW_2_APPROVE = 2;
+
+      // Will not set any labels besides Commit-Queue.
+      NO_LABELS_APPROVE = 3;
     }
 
     SelfApproveMethod self_approve_method = 4;
