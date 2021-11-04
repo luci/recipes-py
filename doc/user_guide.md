@@ -649,6 +649,34 @@ For example:
         )
       )
 
+## Recipe and module 'resources'
+
+Recipes and Recipe modules can both have "resources" which are arbitrary
+files that will be bundled with your recipe and available to use when the
+recipe runs. These are most typically used to include additional python scripts
+which will be invoked as steps during the execution of your recipe or module.
+
+A given recipe "X" can store resource files in the adjacent folder
+"X.resources". Similarly, a recipe module "M" can have a subdirectory "resources".
+
+To get the Path to files within this folder, use `api.resource("filename")`. This
+method supports multiple path segments as well, so something like
+`api.resource("subdir", "filename")` works as well.
+
+As an example, you might run a python script like:
+
+```
+# If this is the recipe file "//recipes/hello.py" then this would run
+# "//recipes/hello.resources/my_script.py", and with the vpython spec
+# "//recipes/hello.resources/.vpython3".
+api.step("run my_script", ["vpython3", "-u", api.resource("my_script.py")])
+```
+
+These resources should be considered *implementation details* of your recipe or
+module. It's not recommended to allow outside programs to use these resources
+except via your recipe or module interface.
+
+
 ## Structured data passing for steps
 
 TODO(iannucci) - Document
