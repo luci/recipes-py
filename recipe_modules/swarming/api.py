@@ -1150,9 +1150,6 @@ class SwarmingApi(recipe_api.RecipeApi):
       self._env_properties.SWARMING_BOT_ID = (
           self._env_properties.SWARMING_BOT_ID or 'fake-bot-id')
 
-    if self.m.runtime.is_experimental:
-      self._version = 'latest'
-
   @property
   def _client(self):
     return self.m.cipd.ensure_tool('infra/tools/luci/swarming/${platform}',

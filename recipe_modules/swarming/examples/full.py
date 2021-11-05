@@ -18,7 +18,6 @@ DEPS = [
     'json',
     'path',
     'properties',
-    'runtime',
     'step',
     'swarming',
 ]
@@ -201,8 +200,6 @@ def GenTests(api):
 
   yield api.test('basic')
 
-  yield api.test('experimental') + api.runtime(
-      is_experimental=True)
   yield (api.test('override_swarming') +
          api.swarming.properties(server='https://bananas.appspot.com',
                                  version='release')

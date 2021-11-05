@@ -15,7 +15,6 @@ DEPS = [
     'path',
     'properties',
     'raw_io',
-    'runtime',
     'step',
 ]
 
