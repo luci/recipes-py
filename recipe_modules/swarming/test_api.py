@@ -194,7 +194,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
     }
 
     if state == TaskState.COMPLETED:
-      raw_results['results']['exit_code'] = int(failure)
+      raw_results['results']['exit_code'] = str(int(failure))
 
     return raw_results
 

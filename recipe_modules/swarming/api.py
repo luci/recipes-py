@@ -938,7 +938,7 @@ class TaskResult(object):
 
       self._success = False
       if self._state == TaskState.COMPLETED:
-        self._success = int(results.get('exit_code', 0)) == 0
+        self._success = results['exit_code'] == '0'
 
       self._duration = results.get('duration', 0)
 
