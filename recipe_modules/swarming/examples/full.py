@@ -200,15 +200,6 @@ def GenTests(api):
 
   yield api.test('basic')
 
-  yield (api.test('override_swarming') +
-         api.swarming.properties(server='https://bananas.appspot.com',
-                                 version='release')
-  )
-  yield (api.test('server_from_properties') + api.properties(
-      **{'$recipe_engine/swarming': {
-          'server': 'props-server.example.com'
-      }}))
-
   states = {state.name : api.swarming.TaskState[state.name]
             for state in api.swarming.TaskState if state not in [
               api.swarming.TaskState.INVALID,

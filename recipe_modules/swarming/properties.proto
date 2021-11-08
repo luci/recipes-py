@@ -5,11 +5,6 @@ syntax = "proto3";
 
 package recipe_modules.recipe_engine.swarming;
 
-message InputProperties {
-    string server = 1;
-    string version = 2;
-}
-
 message EnvProperties {
     // Magic values set by swarming agent executing a task.
     //

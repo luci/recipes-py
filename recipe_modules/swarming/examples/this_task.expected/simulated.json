@@ -3,7 +3,7 @@
     "cmd": [],
     "name": "task_info",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@bot_id@fake-bot@@@",
+      "@@@STEP_LOG_LINE@bot_id@fake-bot-id@@@",
       "@@@STEP_LOG_END@bot_id@@@",
       "@@@STEP_LOG_LINE@task_id@fake-task-id@@@",
       "@@@STEP_LOG_END@task_id@@@",

@@ -93,19 +93,9 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
         },
     }
 
-  def properties(self,
-                 server='https://example.swarmingserver.appspot.com',
-                 version='test_version',
-                 task_id='fake-task-id',
-                 bot_id='fake-bot'):
-    return self.m.properties(**{
-        '$recipe_engine/swarming': properties.InputProperties(version=version),
-    }) + self.m.properties.environ(
-        properties.EnvProperties(
-            SWARMING_TASK_ID=task_id,
-            SWARMING_BOT_ID=bot_id,
-            SWARMING_SERVER=server,
-        ))
+  def properties(self, task_id='fake-task-id'):
+    return self.m.properties.environ(
+        properties.EnvProperties(SWARMING_TASK_ID=task_id))
 
   def trigger(self, task_names, initial_id=None, resultdb=True):
     """Generates step test data intended to mock api.swarming.trigger()

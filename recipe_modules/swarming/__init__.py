@@ -18,5 +18,4 @@ DEPS = [
     'step',
 ]
 
-PROPERTIES = properties.InputProperties
 ENV_PROPERTIES = properties.EnvProperties

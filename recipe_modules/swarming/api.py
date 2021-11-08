@@ -1111,16 +1111,13 @@ class SwarmingApi(recipe_api.RecipeApi):
   """
   TaskState = TaskState
 
-  def __init__(self, input_properties, env_properties, *args, **kwargs):
+  def __init__(self, env_properties, *args, **kwargs):
     super(SwarmingApi, self).__init__(*args, **kwargs)
-    # `server` input property takes precedence over the environment variable to
-    # ensure backwards compatibility with builders that set the property.
-    self._server = (
-        input_properties.server or env_properties.SWARMING_SERVER or None)
+    self._server = env_properties.SWARMING_SERVER
     default_cipd_version = DEFAULT_CIPD_VERSION
     if self._test_data.enabled:
       default_cipd_version = 'swarming_module_pin'
-    self._version = str(input_properties.version or default_cipd_version)
+    self._version = default_cipd_version
     self._env_properties = env_properties
 
     # Stores TaskRequests by tuple of (task_id, server)
@@ -1143,12 +1140,12 @@ class SwarmingApi(recipe_api.RecipeApi):
 
   def initialize(self):
     if self._test_data.enabled:
-      self._server = self._server or 'https://example.swarmingserver.appspot.com'
+      self._server = 'https://example.swarmingserver.appspot.com'
+      self._env_properties.SWARMING_SERVER = self._server
       # Recipes always run on top of swarming task now.
       self._env_properties.SWARMING_TASK_ID = (
           self._env_properties.SWARMING_TASK_ID or 'fake-task-id')
-      self._env_properties.SWARMING_BOT_ID = (
-          self._env_properties.SWARMING_BOT_ID or 'fake-bot-id')
+      self._env_properties.SWARMING_BOT_ID = 'fake-bot-id'
 
   @property
   def _client(self):
