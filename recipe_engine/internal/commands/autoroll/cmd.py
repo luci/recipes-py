@@ -201,6 +201,12 @@ def process_candidates(recipe_deps, candidates, repos, verbose_json):
 
       retcode, output = run_simulation_test(
           recipe_deps.main_repo, 'train', '--no-docs')
+      # Train recipes again as py3 tests only compare the on-disk expectation
+      # files for PY2+3 recipes.
+      # TODO(crbug.com/1147793): Remove it after Py3 migration is fully done.
+      if retcode != 0:
+        retcode, output = run_simulation_test(
+            recipe_deps.main_repo, 'train', '--no-docs')
       if verbose_json:
         roll_details[i]['recipes_simulation_test_train'] = {
           'output': output,
