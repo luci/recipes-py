@@ -5,6 +5,7 @@
 """An interface to call the led tool."""
 
 from builtins import range
+from future.moves.urllib.parse import urlparse
 from future.utils import iteritems
 
 import hashlib
@@ -272,7 +273,7 @@ class LedApi(recipe_api.RecipeApi):
           task_id = 'fake-task-id'
         kwargs['step_test_data'] = lambda: self.test_api.m.json.output_stream({
           'swarming': {
-            'host_name': 'chromium-swarm.appspot.com',
+            'host_name': urlparse(self.m.swarming.current_server).netloc,
             'task_id': task_id,
           }
         })

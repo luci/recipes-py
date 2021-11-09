@@ -11,6 +11,7 @@ DEPS = [
   'path',
   'proto',
   'step',
+  'swarming',
 ]
 
 from PB.recipe_modules.recipe_engine.led import properties

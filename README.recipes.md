@@ -2060,13 +2060,13 @@ Returns a step that reads a JSON file.
 This method is deprecated. Use file.read_json instead.
 ### *recipe_modules* / [led](/recipe_modules/led)
 
-[DEPS](/recipe_modules/led/__init__.py#7): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/led/__init__.py#7): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 An interface to call the led tool.
 
-#### **class [LedApi](/recipe_modules/led/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
+#### **class [LedApi](/recipe_modules/led/api.py#21)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
 
 Interface to the led tool.
 
@@ -2082,19 +2082,19 @@ The main interface this module provides is a direct call to the led binary:
 
 See the led binary for full documentation of commands.
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/led/api.py#157)(self, \*cmd):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/led/api.py#158)(self, \*cmd):**
 
 Runs led with the given arguments. Wraps result in a `LedResult`.
 
-&emsp; **@property**<br>&mdash; **def [cipd\_input](/recipe_modules/led/api.py#149)(self):**
+&emsp; **@property**<br>&mdash; **def [cipd\_input](/recipe_modules/led/api.py#150)(self):**
 
 The versioned CIPD package containing the recipes code being run.
 
 If set, it will be an `InputProperties.CIPDInput` protobuf; otherwise None.
 
-&mdash; **def [initialize](/recipe_modules/led/api.py#111)(self):**
+&mdash; **def [initialize](/recipe_modules/led/api.py#112)(self):**
 
-&mdash; **def [inject\_input\_recipes](/recipe_modules/led/api.py#161)(self, led_result):**
+&mdash; **def [inject\_input\_recipes](/recipe_modules/led/api.py#162)(self, led_result):**
 
 Sets the version of recipes used by led to correspond to the version
 currently being used.
@@ -2106,18 +2106,18 @@ Args:
   * led_result: The `LedResult` whose job.Definition will be passed into the
     edit command.
 
-&emsp; **@property**<br>&mdash; **def [launched\_by\_led](/recipe_modules/led/api.py#127)(self):**
+&emsp; **@property**<br>&mdash; **def [launched\_by\_led](/recipe_modules/led/api.py#128)(self):**
 
 Whether the current build is a led job.
 
-&emsp; **@property**<br>&mdash; **def [rbe\_cas\_input](/recipe_modules/led/api.py#140)(self):**
+&emsp; **@property**<br>&mdash; **def [rbe\_cas\_input](/recipe_modules/led/api.py#141)(self):**
 
 The location of the rbe-cas containing the recipes code being run.
 
 If set, it will be a `swarming.v1.CASReference` protobuf;
 otherwise, None.
 
-&emsp; **@property**<br>&mdash; **def [run\_id](/recipe_modules/led/api.py#132)(self):**
+&emsp; **@property**<br>&mdash; **def [run\_id](/recipe_modules/led/api.py#133)(self):**
 
 A unique string identifier for this led job.
 
