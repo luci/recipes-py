@@ -7,6 +7,7 @@ from future.utils import iteritems, itervalues
 from past.builtins import basestring
 from builtins import range
 
+import attr
 import collections
 import difflib
 import errno
@@ -403,8 +404,9 @@ def main(recipe_deps, cov_file, filtered_stacks, is_train,
       break  # EOF
 
   if cov_file:
-      # Write data to the cov_file.
-      cov_data.write()
+    # Write data to the cov_file.
+    cov_data.write()
+
 
 def _read_test_desc():
   try:
@@ -498,6 +500,13 @@ def _make_path_cleaner(recipe_deps):
       r'"(%s)([^"]*)", line (\d+)' % ('|'.join(map(re.escape, paths)),))
 
   return lambda lines: [replacer.sub(_root_subber, line) for line in lines]
+
+
+@attr.s(frozen=True)
+class DescriptionWithCallback(object):
+
+  description = attr.ib()
+  callback = attr.ib()
 
 
 class RunnerThread(gevent.Greenlet):
@@ -612,6 +621,11 @@ class RunnerThread(gevent.Greenlet):
           self._runner_proc.wait()
           return
 
+        callback = None
+        if isinstance(test_desc, DescriptionWithCallback):
+          callback = test_desc.callback
+          test_desc = test_desc.description
+
         if not write_message(self._runner_proc.stdin, test_desc):
           self._outcome_queue.put(Outcome(internal_error=[
             'Unable to send test description for (%s.%s) from %r' % (
@@ -621,6 +635,8 @@ class RunnerThread(gevent.Greenlet):
           return
 
         result = read_message(self._runner_proc.stdout, Outcome)
+        if callback:
+          callback()
         if result is None:
           return
 

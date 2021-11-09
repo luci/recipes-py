@@ -31,7 +31,7 @@ from ..doc.cmd import regenerate_doc, is_doc_changed
 
 from . import report, test_name
 from .fail_tracker import FailTracker
-from .runner import RunnerThread
+from .runner import RunnerThread, DescriptionWithCallback
 
 
 TestResults = collections.namedtuple('TestResults', 'py2 py3')
@@ -98,60 +98,71 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
 
     if recipe.is_python_version_labeled:
       has_labeled_recipe[0] = True
+
+    def push_py2(expect_py_incompatibility, **kwargs):
+      description_queues.py2.put(
+          Description(
+              recipe_name=recipe.name,
+              test_name=test_case.name,
+              expect_py_incompatibility=expect_py_incompatibility,
+              **kwargs))
+
+    def push_py3(expect_py_incompatibility, **kwargs):
+      description_queues.py3.put(
+          Description(
+              recipe_name=recipe.name,
+              test_name=test_case.name,
+              expect_py_incompatibility=expect_py_incompatibility,
+              **kwargs))
+
+    def push_both(py2_expect_py_incompatibility, py3_expect_py_incompatibilty,
+                  **kwargs):
+      if py3_only:
+        push_py3(
+            expect_py_incompatibilty=py3_expect_py_incompatibilty, **kwargs)
+        return
+
+      description = Description(
+          recipe_name=recipe.name,
+          test_name=test_case.name,
+          expect_py_incompatibility=py2_expect_py_incompatibility)
+
+      def callback():
+        push_py3(
+            expect_py_incompatibility=py3_expect_py_incompatibilty, **kwargs)
+
+      description_queues.py2.put(
+          DescriptionWithCallback(description=description, callback=callback))
+
+
     # Put into both py2 and py3 pools by default, unless this recipe's python
     # compatibility is explicitly labeled.
     if not recipe.is_python_version_labeled:
-      if not py3_only:
-        description_queues.py2.put(
-            Description(
-                recipe_name=recipe.name,
-                test_name=test_case.name,
-                expect_py_incompatibility=(
-                    not recipe.effective_python_compatibility)))
-      description_queues.py3.put(
-          Description(
-              recipe_name=recipe.name,
-              test_name=test_case.name,
-              expect_py_incompatibility=True  # unlabeled val is regarded as py2
-          ))
+      push_both(
+          py2_expect_py_incompatibility=(
+              not recipe.effective_python_compatibility),
+          # unlabeled val is regarded as py2
+          py3_expect_py_incompatibilty=True,
+      )
     elif recipe.python_version_compatibility == 'PY3':
-      description_queues.py3.put(
-          Description(
-              recipe_name=recipe.name,
-              test_name=test_case.name,
-              expect_py_incompatibility=(
-                  not recipe.effective_python_compatibility),
-              labeled_py_compat='PY3',
-          ))
+      push_py3(
+          expect_py_incompatibility=(not recipe.effective_python_compatibility),
+          labeled_py_compat='PY3')
     elif recipe.python_version_compatibility == 'PY2+3':
-      if not py3_only:
-        description_queues.py2.put(
-            Description(
-                recipe_name=recipe.name,
-                test_name=test_case.name,
-                expect_py_incompatibility=(
-                    recipe.effective_python_compatibility in (None, 'PY3')),
-                labeled_py_compat='PY2+3',
-            ))
-      description_queues.py3.put(
-          Description(
-              recipe_name=recipe.name,
-              test_name=test_case.name,
-              expect_py_incompatibility=(
-                  True if recipe.effective_python_compatibility in (None, 'PY2')
-                  else False),
-              labeled_py_compat='PY2+3',
-          ))
+      push_both(
+          py2_expect_py_incompatibility=(
+              recipe.effective_python_compatibility in (None, 'PY3')),
+          py3_expect_py_incompatibilty=(
+              recipe.effective_python_compatibility in (None, 'PY2')),
+          labeled_py_compat='PY2+3',
+      )
     else:
       if not py3_only:
-        description_queues.py2.put(
-            Description(
-                recipe_name=recipe.name,
-                test_name=test_case.name,
-                expect_py_incompatibility=(
-                    not recipe.effective_python_compatibility),
-                labeled_py_compat='PY2',
-            ))
+        push_py2(
+            expect_py_incompatibility=(
+                not recipe.effective_python_compatibility),
+            labeled_py_compat='PY2',
+        )
     gevent.sleep()  # let any blocking threads pick this up
 
   # If filters are enabled, we'll only clean up expectation files for recipes
@@ -290,15 +301,10 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
     for test_result in test_results:
       test_result.unused_expectation_files.extend(unused_expectation_files)
 
-    # Put a None poison pill for each thread.
-    for thread in all_threads.py2:
-      description_queues.py2.put(None)
-    for thread in all_threads.py3:
-      description_queues.py3.put(None)
+    def execute_queue(py):
+      has_fail = False
+      implicit_py3_err = 0
 
-    has_fail = False
-    implicit_py3_err = 0
-    for py in live_threads._fields:
       print('\nRunning tests in %s' % py)
       threads = getattr(live_threads, py)
       has_unexpected_fail = False
@@ -324,7 +330,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
           print()
           print('WARNING: unexpected errors occurred when trying to run tests '
                 'in python3 mode. Pass --py3-details to see them.')
-          continue
+          return
         if implicit_py3_err > 0:
           print()
           print('WARNING: Ignored %d failures in implicit py3 tests for recipes'
@@ -341,6 +347,17 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
                       if os.path.isfile(t.cov_file)]
         if data_paths:
           total_cov.combine(data_paths)
+
+    # Put None poison pill for each thread. Execute the py2 queues
+    # before poisoning the py3 queues because py3 tests will be enqueued
+    # after completion of the py2 test for py2+3 recipes.
+    for thread in all_threads.py2:
+      description_queues.py2.put(None)
+    execute_queue('py2')
+
+    for thread in all_threads.py3:
+      description_queues.py3.put(None)
+    execute_queue('py3')
 
     reporter.final_report(total_cov, test_results, recipe_deps)
 
