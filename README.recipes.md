@@ -3552,7 +3552,7 @@ add this path to the named cache for their builder.
 
 Swarming bot ID executing this task.
 
-&mdash; **def [collect](/recipe_modules/swarming/api.py#1272)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
+&mdash; **def [collect](/recipe_modules/swarming/api.py#1254)(self, name, tasks, output_dir=None, task_output_stdout='json', timeout=None, eager=False, verbose=False):**
 
 Waits on a set of Swarming tasks.
 
@@ -3597,7 +3597,7 @@ Example:
 
 This task's Swarming ID.
 
-&mdash; **def [task\_request](/recipe_modules/swarming/api.py#1203)(self):**
+&mdash; **def [task\_request](/recipe_modules/swarming/api.py#1185)(self):**
 
 Creates a new TaskRequest object.
 
@@ -3607,14 +3607,14 @@ into a full task.
 Once your TaskRequest is complete, you can pass it to `trigger` in order to
 have it start running on the swarming server.
 
-&mdash; **def [task\_request\_from\_jsonish](/recipe_modules/swarming/api.py#1214)(self, json_d):**
+&mdash; **def [task\_request\_from\_jsonish](/recipe_modules/swarming/api.py#1196)(self, json_d):**
 
 Creates a new TaskRequest object from a JSON-serializable dict.
 
 The input argument should match the schema as the output of
 TaskRequest.to_jsonish().
 
-&mdash; **def [trigger](/recipe_modules/swarming/api.py#1222)(self, step_name, requests, verbose=False):**
+&mdash; **def [trigger](/recipe_modules/swarming/api.py#1204)(self, step_name, requests, verbose=False):**
 
 Triggers a set of Swarming tasks.
 
@@ -3626,18 +3626,6 @@ Args:
 
 Returns:
   A list of TaskRequestMetadata objects.
-
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [with\_server](/recipe_modules/swarming/api.py#1185)(self, server):**
-
-This context sets the server for Swarming calls.
-
-Example:
-
-  with api.swarming.server('new-swarming-server.com'):
-    # perform swarming calls
-
-Args:
-  server (str): The swarming server to call within context.
 ### *recipe_modules* / [time](/recipe_modules/time)
 
 [DEPS](/recipe_modules/time/__init__.py#7): [python](#recipe_modules-python)
