@@ -1145,7 +1145,8 @@ class SwarmingApi(recipe_api.RecipeApi):
       # Recipes always run on top of swarming task now.
       self._env_properties.SWARMING_TASK_ID = (
           self._env_properties.SWARMING_TASK_ID or 'fake-task-id')
-      self._env_properties.SWARMING_BOT_ID = 'fake-bot-id'
+      self._env_properties.SWARMING_BOT_ID = (
+              self._env_properties.SWARMING_BOT_ID or 'fake-bot-id')
 
   @property
   def _client(self):

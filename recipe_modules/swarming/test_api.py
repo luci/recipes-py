@@ -93,7 +93,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
         },
     }
 
-  def properties(self, task_id='fake-task-id', bot_id='fake-bot'):
+  def properties(self, task_id='fake-task-id', bot_id='fake-bot-id'):
     return self.m.properties.environ(
         properties.EnvProperties(
             SWARMING_TASK_ID=task_id, SWARMING_BOT_ID=bot_id))
