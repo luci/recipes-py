@@ -176,7 +176,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     if all(t.key != 'cq_experimental' for t in tags):
       tags.append(common_pb2.StringPair(key='cq_experimental', value='false'))
 
-    if not gerrit_changes:
+    if gerrit_changes is None:
       gerrit_changes = [
           common_pb2.GerritChange(
               host=gerrit_host,
