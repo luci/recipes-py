@@ -4,14 +4,18 @@
 
 """This file is a recipe demonstrating the buildbucket recipe module."""
 
+import copy
+
 from recipe_engine.post_process import DropExpectation
 
+from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
 PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
   'buildbucket',
+  'json',
   'platform',
   'properties',
   'raw_io',
@@ -46,31 +50,32 @@ def RunSteps(api):
   # default account associated with the task.
   api.buildbucket.use_service_account_key('some-fake-key.json')
 
-  build_parameters = {
-      'builder_name': 'linux_perf_bisect',
-      'properties': {
-          'bisect_config': {
-              'bad_revision': '351054',
-              'bug_id': 537649,
-              'command': ('src/tools/perf/run_benchmark -v '
-                          '--browser=release --output-format=chartjson '
-                          '--also-run-disabled-tests speedometer'),
-              'good_revision': '351045',
-              'gs_bucket': 'chrome-perf',
-              'max_time_minutes': '20',
-              'metric': 'Total/Total',
-              'recipe_tester_name': 'linux_perf_bisect',
-              'repeat_count': '10',
-              'test_type': 'perf'
-          },
-      }
-  }
+  example_bucket = 'main.user.username'
+  linux_req = api.buildbucket.schedule_request(
+      builder='linux_perf_bisect',
+      bucket=example_bucket,
+      properties={
+        'bisect_config': {
+          'bad_revision': '351054',
+          'bug_id': 537649,
+          'command': ('src/tools/perf/run_benchmark -v '
+                      '--browser=release --output-format=chartjson '
+                      '--also-run-disabled-tests speedometer'),
+          'good_revision': '351045',
+          'gs_bucket': 'chrome-perf',
+          'max_time_minutes': '20',
+          'metric': 'Total/Total',
+          'recipe_tester_name': 'linux_perf_bisect',
+          'repeat_count': '10',
+          'test_type': 'perf'
+        },
+      })
+
   build_tags = {'main': 'overriden.main.url',
                 'builder': 'overriden_builder'}
   build_tags2 = {'main': 'someother.main.url', 'builder': 'some_builder'}
-  build_parameters_mac = build_parameters.copy()
-  build_parameters_mac['builder_name'] = 'mac_perf_bisect'
-  example_bucket = 'main.user.username'
+  mac_req = copy.deepcopy(linux_req)
+  mac_req.builder.builder = 'mac_perf_bisect'
 
   # Setting values for expectations coverage only, also tests host context.
   api.buildbucket.set_buildbucket_host('cr-buildbucket-test.appspot.com')
@@ -78,20 +83,11 @@ def RunSteps(api):
 
   with api.buildbucket.with_host('cr-buildbucket-test2.appspot.com'):
     assert api.buildbucket.host == 'cr-buildbucket-test2.appspot.com'
-    put_build_result = api.buildbucket.put(
-        [{'bucket': example_bucket,
-          'parameters': build_parameters,
-          'tags': build_tags},
-        {'bucket': example_bucket,
-          'parameters': build_parameters_mac,
-          'tags': build_tags2}])
+    schedule_result = api.buildbucket.schedule([linux_req, mac_req])
   assert api.buildbucket.host == 'cr-buildbucket-test.appspot.com'
 
-  new_job_id = put_build_result.stdout['builds'][0]['id']
-
-  get_build_result = api.buildbucket.get_build(new_job_id)
-  if get_build_result.stdout['build']['status'] == 'SCHEDULED':
-    api.buildbucket.cancel_build(new_job_id)
+  bld = api.buildbucket.get(schedule_result[0].id)
+  api.buildbucket.cancel_build(schedule_result[0].id)
 
   assert not api.buildbucket.build.output.HasField('gitiles_commit')
   c = common_pb2.GitilesCommit(
@@ -113,54 +109,6 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  mock_buildbucket_multi_response ="""
-    {
-      "builds":[{
-       "status": "SCHEDULED",
-       "created_ts": "1459200369835900",
-       "bucket": "user.username",
-       "result_details_json": "null",
-       "status_changed_ts": "1459200369835930",
-       "created_by": "user:username@example.com",
-       "updated_ts": "1459200369835940",
-       "utcnow_ts": "1459200369962370",
-       "parameters_json": "{\\"This_has_been\\": \\"removed\\"}",
-       "id": "9016911228971028736"
-      }, {
-       "status": "SCHEDULED",
-       "created_ts": "1459200369835999",
-       "bucket": "user.username",
-       "result_details_json": "null",
-       "status_changed_ts": "1459200369835988",
-       "created_by": "user:username@example.com",
-       "updated_ts": "1459200369835944",
-       "utcnow_ts": "1459200369962377",
-       "parameters_json": "{\\"This_has_been\\": \\"removed\\"}",
-       "id": "9016911228971328738"
-      }
-       ],
-     "kind": "buildbucket#resourcesItem",
-     "etag": "\\"8uCIh8TRuYs4vPN3iWmly9SJMqw\\""
-   }
-  """
-  mock_buildbucket_single_response = """
-    {
-      "build":{
-       "status": "SCHEDULED",
-       "created_ts": "1459200369835900",
-       "bucket": "user.username",
-       "result_details_json": "null",
-       "status_changed_ts": "1459200369835930",
-       "created_by": "user:username@example.com",
-       "updated_ts": "1459200369835940",
-       "utcnow_ts": "1459200369962370",
-       "parameters_json": "{\\"This_has_been\\": \\"removed\\"}",
-       "id": "9016911228971028736"
-       },
-     "kind": "buildbucket#resourcesItem",
-     "etag": "\\"8uCIh8TRuYs4vPN3iWmly9SJMqw\\""
-   }
-  """
   yield (api.test('basic-try') +
          api.buildbucket.try_build(
              project='proj',
@@ -168,12 +116,8 @@ def GenTests(api):
              git_repo='https://chrome-internal.googlesource.com/a/repo.git',
              revision='a' * 40,
              build_number=123) +
-         api.step_data(
-             'buildbucket.put',
-             stdout=api.raw_io.output_text(mock_buildbucket_multi_response)) +
-         api.step_data(
-             'buildbucket.get',
-             stdout=api.raw_io.output_text(mock_buildbucket_single_response)))
+         api.buildbucket.simulated_get(build_pb2.Build(id=8922054662172514000)))
+
   yield (api.test('basic-ci-win') +
          api.buildbucket.ci_build(
              project='proj-internal',
@@ -183,13 +127,20 @@ def GenTests(api):
              build_number=0,
              tags=api.buildbucket.tags(user_agent=['cq', 'recipe']),
              exe=api.buildbucket.exe(cipd_pkg='path/to/cipd/pkg')) +
-         api.step_data(
-             'buildbucket.put',
-             stdout=api.raw_io.output_text(mock_buildbucket_multi_response)) +
-         api.step_data(
-             'buildbucket.get',
-             stdout=api.raw_io.output_text(mock_buildbucket_single_response)) +
+         api.buildbucket.simulated_get(build_pb2.Build(id=8922054662172514000)) +
          api.platform('win', 32))
+
+  yield (api.test('basic-try-bad-get') +
+         api.buildbucket.try_build(
+             project='proj',
+             builder='try-builder',
+             git_repo='https://chrome-internal.googlesource.com/a/repo.git',
+             revision='a' * 40,
+             build_number=123) +
+         api.step_data('buildbucket.get', api.json.output_stream({
+           'responses': [{'error': {'code': 7}}],
+         }, retcode=1)) +
+         api.post_process(DropExpectation))
 
   yield (api.test('basic-generic') +
          api.buildbucket.generic_build(

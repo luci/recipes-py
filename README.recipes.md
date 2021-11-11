@@ -53,9 +53,7 @@
   * [buildbucket:tests/build](#recipes-buildbucket_tests_build) (Python3 ✅)
   * [buildbucket:tests/cancel](#recipes-buildbucket_tests_cancel) (Python3 ✅)
   * [buildbucket:tests/collect](#recipes-buildbucket_tests_collect) (Python3 ✅)
-  * [buildbucket:tests/get](#recipes-buildbucket_tests_get) (Python3 ✅)
   * [buildbucket:tests/output_commit](#recipes-buildbucket_tests_output_commit) (Python3 ✅) &mdash; This recipe tests the buildbucket.
-  * [buildbucket:tests/put](#recipes-buildbucket_tests_put) (Python3 ✅)
   * [buildbucket:tests/schedule](#recipes-buildbucket_tests_schedule) (Python3 ✅)
   * [buildbucket:tests/search](#recipes-buildbucket_tests_search) (Python3 ✅)
   * [cas:examples/full](#recipes-cas_examples_full) (Python3 ✅)
@@ -323,7 +321,7 @@ Args:
   Empty tag values won't remove existing tags with matching keys, since tags
   can only be added.
 
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#1028)(self):**
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#964)(self):**
 
 Returns bucket name in v1 format.
 
@@ -346,11 +344,11 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#1039)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#975)(self):**
 
 DEPRECATED, use build.id instead.
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#1044)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#980)(self):**
 
 DEPRECATED, use build.input instead.
 
@@ -367,7 +365,7 @@ It remains on the bot from build to build.
 See "Builder cache" in
 https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/project_config.proto
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#1049)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#985)(self):**
 
 Deprecated. Use build.builder instead.
 
@@ -382,7 +380,7 @@ Returns the LUCI realm name of the current build.
 Raises `InfraFailure` if the build proto doesn't have `project` or `bucket`
 set. This can happen in tests that don't properly mock build proto.
 
-&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#731)(self, build_id, reason=' ', step_name=None):**
+&mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#696)(self, build_id, reason=' ', step_name=None):**
 
 Cancel the build associated with the provided build id.
 
@@ -397,7 +395,7 @@ Returns:
   None if build is successfully canceled. Otherwise, an InfraFailure will
   be raised
 
-&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#837)(self, build_id, \*\*kwargs):**
+&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#798)(self, build_id, \*\*kwargs):**
 
 Shorthand for `collect_builds` below, but for a single build only.
 
@@ -408,7 +406,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto).
   for the ended build.
 
-&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#850)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False, fields=DEFAULT_FIELDS):**
+&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#811)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False, fields=DEFAULT_FIELDS):**
 
 Waits for a set of builds to end and returns their details.
 
@@ -431,7 +429,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto)
   for all specified builds.
 
-&mdash; **def [get](/recipe_modules/buildbucket/api.py#812)(self, build_id, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS):**
+&mdash; **def [get](/recipe_modules/buildbucket/api.py#777)(self, build_id, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS):**
 
 Gets a build.
 
@@ -445,11 +443,7 @@ Args:
 Returns:
   A build_pb2.Build.
 
-&mdash; **def [get\_build](/recipe_modules/buildbucket/api.py#833)(self, build_id, \*\*kwargs):**
-
-DEPRECATED. Use get().
-
-&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#769)(self, build_ids, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS):**
+&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#734)(self, build_ids, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS):**
 
 Gets multiple builds.
 
@@ -482,30 +476,6 @@ Hides the build in UI
 
 Returns True if the build is critical. Build defaults to the current one.
     
-
-&mdash; **def [put](/recipe_modules/buildbucket/api.py#620)(self, builds, \*\*kwargs):**
-
-Puts a batch of builds.
-
-DEPRECATED. Use `schedule()` instead.
-
-Args:
-* builds (list): A list of dicts, where keys are:
-  * 'bucket': (required) name of the bucket for the request.
-  * 'parameters' (dict): (required) arbitrary json-able parameters that a
-     build system would be able to interpret.
-  * 'experimental': (optional) a bool indicating whether build is
-     experimental. If not provided, the value will be determined by whether
-     the currently running build is experimental.
-  * 'tags': (optional) a dict(str->str) of tags for the build. These will
-     be added to those generated by this method and override them if
-     appropriate. If you need to remove a tag set by default, set its value
-     to `None` (for example, `tags={'buildset': None}` will ensure build is
-     triggered without `buildset` tag).
-
-Returns:
-  A step that as its `.stdout` property contains the response object as
-  returned by buildbucket.
 
 &mdash; **def [run](/recipe_modules/buildbucket/api.py#326)(self, schedule_build_requests, collect_interval=None, timeout=None, url_title_fn=None, step_name=None, raise_if_unsuccessful=False):**
 
@@ -619,7 +589,7 @@ Args:
 * fields (list of strs): a list of fields to include in the response, names
   relative to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
 
-&mdash; **def [search](/recipe_modules/buildbucket/api.py#655)(self, predicate, limit=None, url_title_fn=None, report_build=True, step_name=None, fields=DEFAULT_FIELDS):**
+&mdash; **def [search](/recipe_modules/buildbucket/api.py#620)(self, predicate, limit=None, url_title_fn=None, report_build=True, step_name=None, fields=DEFAULT_FIELDS):**
 
 Searches for builds.
 
@@ -3930,13 +3900,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/assertions/tests/max_diff.py#15)(api):**
 ### *recipes* / [buildbucket:examples/full](/recipe_modules/buildbucket/examples/full.py)
 
-[DEPS](/recipe_modules/buildbucket/examples/full.py#13): [buildbucket](#recipe_modules-buildbucket), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/examples/full.py#16): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 This file is a recipe demonstrating the buildbucket recipe module.
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/examples/full.py#22)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/examples/full.py#26)(api):**
 ### *recipes* / [buildbucket:run/multi](/recipe_modules/buildbucket/run/multi.py)
 
 [DEPS](/recipe_modules/buildbucket/run/multi.py#13): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [swarming](#recipe_modules-swarming)
@@ -3974,13 +3944,6 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/collect.py#13)(api):**
-### *recipes* / [buildbucket:tests/get](/recipe_modules/buildbucket/tests/get.py)
-
-[DEPS](/recipe_modules/buildbucket/tests/get.py#14): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [step](#recipe_modules-step)
-
-PYTHON_VERSION_COMPATIBILITY: PY2+3
-
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/get.py#21)(api):**
 ### *recipes* / [buildbucket:tests/output\_commit](/recipe_modules/buildbucket/tests/output_commit.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/output_commit.py#11): [buildbucket](#recipe_modules-buildbucket), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
@@ -3990,13 +3953,6 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 This recipe tests the buildbucket.set_output_gitiles_commit function.
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/output_commit.py#20)(api):**
-### *recipes* / [buildbucket:tests/put](/recipe_modules/buildbucket/tests/put.py)
-
-[DEPS](/recipe_modules/buildbucket/tests/put.py#10): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime)
-
-PYTHON_VERSION_COMPATIBILITY: PY2+3
-
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/put.py#17)(api):**
 ### *recipes* / [buildbucket:tests/schedule](/recipe_modules/buildbucket/tests/schedule.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/schedule.py#14): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
