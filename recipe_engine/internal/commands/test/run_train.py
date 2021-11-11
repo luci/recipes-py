@@ -330,7 +330,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
           print()
           print('WARNING: unexpected errors occurred when trying to run tests '
                 'in python3 mode. Pass --py3-details to see them.')
-          return
+          return has_fail
         if implicit_py3_err > 0:
           print()
           print('WARNING: Ignored %d failures in implicit py3 tests for recipes'
@@ -348,16 +348,19 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
         if data_paths:
           total_cov.combine(data_paths)
 
+      return has_fail
+
     # Put None poison pill for each thread. Execute the py2 queues
     # before poisoning the py3 queues because py3 tests will be enqueued
     # after completion of the py2 test for py2+3 recipes.
     for thread in all_threads.py2:
       description_queues.py2.put(None)
-    execute_queue('py2')
+    has_fail = execute_queue('py2')
 
-    for thread in all_threads.py3:
-      description_queues.py3.put(None)
-    execute_queue('py3')
+    if not (has_fail and stop):
+      for thread in all_threads.py3:
+        description_queues.py3.put(None)
+      execute_queue('py3')
 
     reporter.final_report(total_cov, test_results, recipe_deps)
 
