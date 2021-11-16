@@ -119,7 +119,7 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
                   **kwargs):
       if py3_only:
         push_py3(
-            expect_py_incompatibilty=py3_expect_py_incompatibilty, **kwargs)
+            expect_py_incompatibility=py3_expect_py_incompatibilty, **kwargs)
         return
 
       description = Description(
