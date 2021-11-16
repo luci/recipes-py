@@ -246,7 +246,8 @@ class StepPresentation(object):
             for line in log:
               self.write_data(log_stream, line)
           else:
-            raise ValueError('unknown log type %s: %r' % (type(log), log))
+            raise ValueError('log %r has unknown log type %s: %r' %
+                             (name, type(log), log))
     for label, url in iteritems(self.links):
       # We fix spaces in urls; It's an extremely common mistake to make, and
       # easy to remedy here.
