@@ -17,6 +17,7 @@ from recipe_engine import recipe_api
 
 from PB.go.chromium.org.luci.resultdb.proto.v1 import artifact
 from PB.go.chromium.org.luci.resultdb.proto.v1 import common as common_v1
+from PB.go.chromium.org.luci.resultdb.proto.v1 import invocation as invocation_pb2
 from PB.go.chromium.org.luci.resultdb.proto.v1 import recorder
 from PB.go.chromium.org.luci.resultdb.proto.v1 import resultdb
 
@@ -98,6 +99,31 @@ class ResultDBAPI(recipe_api.RecipeApi):
         json_format.MessageToDict(req),
         include_update_token=True,
         step_test_data=lambda: self.m.raw_io.test_api.stream_output('{}'))
+
+  def get_included_invocations(self, inv_name=None, step_name=None):
+    """Returns names of included invocations of the input invocation.
+
+    Args:
+      inv_name (str): the name of the input invocation. If input is None, will
+          use current invocation.
+      step_name (str): name of the step.
+
+    Returns:
+      A list of invocation name strs.
+    """
+    req = resultdb.GetInvocationRequest(
+        name=inv_name or self.current_invocation)
+    res = self._rpc(
+        step_name or 'get_included_invocations',
+        'luci.resultdb.v1.ResultDB',
+        'GetInvocation',
+        json_format.MessageToDict(req),
+        include_update_token=True,
+        step_test_data=lambda: self.m.raw_io.test_api.stream_output('{}'))
+
+    inv_msg = json_format.ParseDict(
+        res, invocation_pb2.Invocation(), ignore_unknown_fields=True)
+    return inv_msg.included_invocations or []
 
   def exonerate(self, test_exonerations, step_name=None):
     """Exonerates test variants in the current invocation.

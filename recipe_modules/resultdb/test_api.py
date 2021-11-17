@@ -8,6 +8,8 @@ from google.protobuf import json_format
 
 from recipe_engine import recipe_test_api
 
+from PB.go.chromium.org.luci.resultdb.proto.v1 import invocation as invocation_pb2
+
 from . import common
 
 
@@ -31,6 +33,18 @@ class ResultDBTestApi(recipe_test_api.RecipeTestApi):
         step_name,
         self.m.raw_io.stream_output(common.serialize(inv_bundle)),
     )
+
+  def get_included_invocations(self, invs,
+                               step_name='get_included_invocations'):
+    """Emulates get_included_invocations() step output.
+
+    Args:
+        invs (list): List of strs of the included invocation names to simulate.
+        step_name (str): the name of the step to simulate.
+    """
+    inv = invocation_pb2.Invocation(included_invocations=invs)
+
+    return self._proto_step_result(inv, step_name)
 
   def get_test_result_history(self, res, step_name='get_test_result_history'):
     """Emulates get_test_result_history() return value.
