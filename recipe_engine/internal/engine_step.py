@@ -14,6 +14,7 @@ from past.builtins import basestring
 import datetime
 
 import attr
+import six
 
 from google.protobuf import json_format as jsonpb
 from google.protobuf.message import Message
@@ -63,7 +64,7 @@ class StepConfig(object):
   # The name of the step to run within the current namespace.
   #
   # This will be deduplicated by the recipe engine.
-  name = attr.ib(validator=attr_type(basestring))
+  name = attr.ib(validator=attr_type(str), converter=six.ensure_str)
 
   # List of args of the command to run. Acceptable types: Placeholder or any
   # str()'able type.
