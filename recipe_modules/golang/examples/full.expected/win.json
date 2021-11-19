@@ -1,0 +1,63 @@
+[
+  {
+    "cmd": [
+      "cipd.bat",
+      "ensure",
+      "-root",
+      "[CACHE]\\golang",
+      "-ensure-file",
+      "infra/3pp/tools/go/${platform} version:2@6.6.6",
+      "-max-threads",
+      "0",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "infra_step": true,
+    "name": "ensure_installed",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-version:2@6.6.6-\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"package\": \"infra/3pp/tools/go/resolved-platform\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "build",
+      "."
+    ],
+    "env": {
+      "CGO_ENABLED": "0",
+      "GO111MODULE": "on",
+      "GOBIN": "[CACHE]\\gocache\\bin",
+      "GOCACHE": "[CACHE]\\gocache\\cache",
+      "GOMODCACHE": "[CACHE]\\gocache\\modcache",
+      "GOPACKAGESDRIVER": "off",
+      "GOPATH": null,
+      "GOPRIVATE": "*.googlesource.com,*.google.com",
+      "GOPROXY": null,
+      "GOROOT": "[CACHE]\\golang"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]\\golang\\bin"
+      ]
+    },
+    "env_suffixes": {
+      "PATH": [
+        "[CACHE]\\gocache\\bin"
+      ]
+    },
+    "name": "go"
+  },
+  {
+    "name": "$result"
+  }
+]
