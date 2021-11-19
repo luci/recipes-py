@@ -910,15 +910,11 @@ Downloads an executable from CIPD.
 
 Given a package named "name/of/some_exe/${platform}" and version
 "someversion", this will install the package at the directory
-"[CACHE]/cipd/name/of/some_exe/someversion". It will then return the
+"[START_DIR]/cipd_tool/name/of/some_exe/someversion". It will then return the
 absolute path to the executable within that directory.
 
 This operation is idempotent, and will only run steps to download the
 package if it hasn't already been installed in the same build.
-
-The installed packages will be persisted across builds for any builders
-with a "cipd" named cache, as long as builds don't clobber the cache
-contents.
 
 Args:
   * package (str) - The full name of the CIPD package.

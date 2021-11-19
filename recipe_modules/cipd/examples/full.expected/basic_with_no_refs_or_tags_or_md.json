@@ -768,7 +768,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[CACHE]/cipd/infra/some_exe/latest"
+      "[START_DIR]/cipd_tool/infra/some_exe/latest"
     ],
     "infra_step": true,
     "name": "install infra/some_exe.ensure package directory",
@@ -781,7 +781,7 @@
       "cipd",
       "ensure",
       "-root",
-      "[CACHE]/cipd/infra/some_exe/latest",
+      "[START_DIR]/cipd_tool/infra/some_exe/latest",
       "-ensure-file",
       "infra/some_exe/${platform} latest",
       "-json-output",
@@ -818,7 +818,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[CACHE]/cipd/some/some_exe/package/latest"
+      "[START_DIR]/cipd_tool/some/some_exe/package/latest"
     ],
     "infra_step": true,
     "name": "install some/some_exe/package.ensure package directory",
@@ -831,7 +831,7 @@
       "cipd",
       "ensure",
       "-root",
-      "[CACHE]/cipd/some/some_exe/package/latest",
+      "[START_DIR]/cipd_tool/some/some_exe/package/latest",
       "-ensure-file",
       "some/some_exe/package/${platform} latest",
       "-json-output",
@@ -856,7 +856,7 @@
   },
   {
     "cmd": [
-      "[CACHE]/cipd/some/some_exe/package/latest/bin/some_exe",
+      "[START_DIR]/cipd_tool/some/some_exe/package/latest/bin/some_exe",
       "-opt"
     ],
     "name": "run some_exe"
