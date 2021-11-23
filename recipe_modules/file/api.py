@@ -294,10 +294,10 @@ class FileApi(recipe_api.RecipeApi):
 
     Raises: file.Error.
     """
+    # Update callers to not pass include_log, then remove the argument
+    del include_log
     self.m.path.assert_absolute(dest)
-    step = self._run(name, ['copy', self.m.raw_io.input(data), dest])
-    if include_log:
-      step.presentation.logs[self.m.path.basename(dest)] = data.splitlines()
+    self._run(name, ['copy', self.m.raw_io.input(data), dest])
     self.m.path.mock_add_paths(dest)
 
   def read_text(self, name, source, test_data='', include_log=True):
