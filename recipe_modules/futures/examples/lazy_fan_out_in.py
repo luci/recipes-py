@@ -22,7 +22,7 @@ def RunSteps(api):
           for x in range(%d):
             print("Hi! %%s" %% x)
             time.sleep(1)
-        ''' % (i+1))
+        ''' % (i+1), cost=api.step.ResourceCost())
       return i + 1
     futures.append(api.futures.spawn(_runner, i))
 

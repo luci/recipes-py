@@ -107,14 +107,19 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     )
 
   def _test_recipe(self, recipe, properties=None, env=None):
-    proc = subprocess.Popen(
-        self._run_cmd(recipe, properties),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        env=env)
-    stdout = proc.communicate()
-    self.assertEqual(0, proc.returncode, '%d != %d when testing %s:\n%s' % (
-        0, proc.returncode, recipe, stdout))
+    workdir = tempfile.mkdtemp(prefix='recipe_engine_run_test-')
+    try:
+      proc = subprocess.Popen(
+          self._run_cmd(recipe, properties),
+          cwd=workdir,
+          stdout=subprocess.PIPE,
+          stderr=subprocess.STDOUT,
+          env=env)
+      stdout = proc.communicate()
+      self.assertEqual(0, proc.returncode, '%d != %d when testing %s:\n%s' % (
+          0, proc.returncode, recipe, stdout))
+    finally:
+      shutil.rmtree(workdir, ignore_errors=True)
 
   def test_examples(self):
     env = os.environ.copy()
@@ -127,14 +132,15 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     tests = [
       ['context:examples/full'],
       ['context:tests/env'],
-      ['step:examples/full'],
-      ['path:examples/full'],
-      ['raw_io:examples/full'],
-      ['python:examples/full'],
-      ['json:examples/full'],
       ['file:examples/copy'],
       ['file:examples/copytree'],
       ['file:examples/glob'],
+      ['futures:examples/lazy_fan_out_in'],
+      ['json:examples/full'],
+      ['path:examples/full'],
+      ['python:examples/full'],
+      ['raw_io:examples/full'],
+      ['step:examples/full'],
 
       ['engine_tests/functools_partial'],
     ]

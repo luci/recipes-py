@@ -68,7 +68,12 @@ class ResourceWaiter(object):
   _net_available = attr.ib(default=100)
   _net_max = attr.ib(default=100)
 
-  # List[Tuple[amount, Channel]]
+  # Each _waiters entry has a unique ID
+  _waiter_uid = attr.ib(default=0)
+  # List[Tuple[amount, waiter_uid, Channel]]
+  #
+  # The `uid` is used to ensure that Channel is never used when sorting
+  # this list.
   _waiters = attr.ib(factory=list)
 
   def _fits(self, resources):
@@ -126,7 +131,8 @@ class ResourceWaiter(object):
       if call_if_blocking:
         call_if_blocking()
       wake_me = Channel()
-      self._waiters.append((resources, wake_me))
+      self._waiter_uid += 1
+      self._waiters.append((resources, self._waiter_uid, wake_me))
       self._waiters.sort(reverse=True)  # stable sort
       wake_me.get()
       # At this point the greenlet that woke us already reserved our resources
@@ -144,12 +150,12 @@ class ResourceWaiter(object):
       # as we can before proceeding.
 
       to_wake, to_keep = [], []
-      for waiting_resources, chan in self._waiters:
+      for waiting_resources, uid, chan in self._waiters:
         if self._fits(waiting_resources):
           to_wake.append(chan)
           self._decr(waiting_resources)
         else:
-          to_keep.append((waiting_resources, chan))
+          to_keep.append((waiting_resources, uid, chan))
       self._waiters = to_keep  # _waiters was sorted before, so to_keep is also.
       for chan in to_wake:
         chan.put(None)
