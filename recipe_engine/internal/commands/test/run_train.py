@@ -362,7 +362,8 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
         description_queues.py3.put(None)
       execute_queue('py3')
 
-    reporter.final_report(total_cov, test_results, recipe_deps)
+    if not py3_only:
+      reporter.final_report(total_cov, test_results, recipe_deps)
 
   finally:
     for thread in live_threads.py2 + live_threads.py3:
