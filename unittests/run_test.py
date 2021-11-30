@@ -92,7 +92,7 @@ class RunTest(test_env.RecipeEngineUnitTest):
 
 
 class RunSmokeTest(test_env.RecipeEngineUnitTest):
-  def _run_cmd(self, recipe, properties=None, engine_args=()):
+  def _run_cmd(self, recipe, workdir, properties=None, engine_args=()):
     script_path = os.path.join(test_env.ROOT_DIR, 'recipes.py')
 
     proplist = [
@@ -102,7 +102,7 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     return (
       ['python', script_path] +
       list(engine_args) +
-      ['run', recipe] +
+      ['run', '--workdir', workdir, recipe] +
       proplist
     )
 
@@ -110,8 +110,7 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
     workdir = tempfile.mkdtemp(prefix='recipe_engine_run_test-')
     try:
       proc = subprocess.Popen(
-          self._run_cmd(recipe, properties),
-          cwd=workdir,
+          self._run_cmd(recipe, workdir, properties),
           stdout=subprocess.PIPE,
           stderr=subprocess.STDOUT,
           env=env)
