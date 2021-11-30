@@ -50,6 +50,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       'start_time',
       'status',
       'update_time',
+      'infra',
   })
 
   # Sentinel to indicate that a child build launched by `schedule_request()`

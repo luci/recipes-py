@@ -20,7 +20,7 @@
       }
     },
     "name": "buildbucket.schedule",
-    "stdin": "{\"requests\": [{\"scheduleBuild\": {\"builder\": {\"bucket\": \"main.user.username\", \"builder\": \"linux_perf_bisect\", \"project\": \"proj-internal\"}, \"experimental\": \"NO\", \"fields\": \"builder,createTime,createdBy,critical,endTime,id,input,number,output,startTime,status,updateTime\", \"gitilesCommit\": {\"host\": \"chrome-internal.googlesource.com\", \"id\": \"2d72510e447ab60a9728aeea2362d8be2cbd7789\", \"project\": \"repo\", \"ref\": \"refs/heads/main\"}, \"priority\": 30, \"properties\": {\"bisect_config\": {\"bad_revision\": \"351054\", \"bug_id\": 537649.0, \"command\": \"src/tools/perf/run_benchmark -v --browser=release --output-format=chartjson --also-run-disabled-tests speedometer\", \"good_revision\": \"351045\", \"gs_bucket\": \"chrome-perf\", \"max_time_minutes\": \"20\", \"metric\": \"Total/Total\", \"recipe_tester_name\": \"linux_perf_bisect\", \"repeat_count\": \"10\", \"test_type\": \"perf\"}}, \"requestId\": \"8945511751514863184-00000000-0000-0000-0000-000000001337\", \"tags\": [{\"key\": \"user_agent\", \"value\": \"recipe\"}]}}, {\"scheduleBuild\": {\"builder\": {\"bucket\": \"main.user.username\", \"builder\": \"mac_perf_bisect\", \"project\": \"proj-internal\"}, \"experimental\": \"NO\", \"fields\": \"builder,createTime,createdBy,critical,endTime,id,input,number,output,startTime,status,updateTime\", \"gitilesCommit\": {\"host\": \"chrome-internal.googlesource.com\", \"id\": \"2d72510e447ab60a9728aeea2362d8be2cbd7789\", \"project\": \"repo\", \"ref\": \"refs/heads/main\"}, \"priority\": 30, \"properties\": {\"bisect_config\": {\"bad_revision\": \"351054\", \"bug_id\": 537649.0, \"command\": \"src/tools/perf/run_benchmark -v --browser=release --output-format=chartjson --also-run-disabled-tests speedometer\", \"good_revision\": \"351045\", \"gs_bucket\": \"chrome-perf\", \"max_time_minutes\": \"20\", \"metric\": \"Total/Total\", \"recipe_tester_name\": \"linux_perf_bisect\", \"repeat_count\": \"10\", \"test_type\": \"perf\"}}, \"requestId\": \"8945511751514863184-00000000-0000-0000-0000-000000001337\", \"tags\": [{\"key\": \"user_agent\", \"value\": \"recipe\"}]}}]}",
+    "stdin": "{\"requests\": [{\"scheduleBuild\": {\"builder\": {\"bucket\": \"main.user.username\", \"builder\": \"linux_perf_bisect\", \"project\": \"proj-internal\"}, \"experimental\": \"NO\", \"fields\": \"builder,createTime,createdBy,critical,endTime,id,infra,input,number,output,startTime,status,updateTime\", \"gitilesCommit\": {\"host\": \"chrome-internal.googlesource.com\", \"id\": \"2d72510e447ab60a9728aeea2362d8be2cbd7789\", \"project\": \"repo\", \"ref\": \"refs/heads/main\"}, \"priority\": 30, \"properties\": {\"bisect_config\": {\"bad_revision\": \"351054\", \"bug_id\": 537649.0, \"command\": \"src/tools/perf/run_benchmark -v --browser=release --output-format=chartjson --also-run-disabled-tests speedometer\", \"good_revision\": \"351045\", \"gs_bucket\": \"chrome-perf\", \"max_time_minutes\": \"20\", \"metric\": \"Total/Total\", \"recipe_tester_name\": \"linux_perf_bisect\", \"repeat_count\": \"10\", \"test_type\": \"perf\"}}, \"requestId\": \"8945511751514863184-00000000-0000-0000-0000-000000001337\", \"tags\": [{\"key\": \"user_agent\", \"value\": \"recipe\"}]}}, {\"scheduleBuild\": {\"builder\": {\"bucket\": \"main.user.username\", \"builder\": \"mac_perf_bisect\", \"project\": \"proj-internal\"}, \"experimental\": \"NO\", \"fields\": \"builder,createTime,createdBy,critical,endTime,id,infra,input,number,output,startTime,status,updateTime\", \"gitilesCommit\": {\"host\": \"chrome-internal.googlesource.com\", \"id\": \"2d72510e447ab60a9728aeea2362d8be2cbd7789\", \"project\": \"repo\", \"ref\": \"refs/heads/main\"}, \"priority\": 30, \"properties\": {\"bisect_config\": {\"bad_revision\": \"351054\", \"bug_id\": 537649.0, \"command\": \"src/tools/perf/run_benchmark -v --browser=release --output-format=chartjson --also-run-disabled-tests speedometer\", \"good_revision\": \"351045\", \"gs_bucket\": \"chrome-perf\", \"max_time_minutes\": \"20\", \"metric\": \"Total/Total\", \"recipe_tester_name\": \"linux_perf_bisect\", \"repeat_count\": \"10\", \"test_type\": \"perf\"}}, \"requestId\": \"8945511751514863184-00000000-0000-0000-0000-000000001337\", \"tags\": [{\"key\": \"user_agent\", \"value\": \"recipe\"}]}}]}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"responses\": [@@@",
@@ -57,7 +57,7 @@
       "@@@STEP_LOG_LINE@request@          \"project\": \"proj-internal\"@@@",
       "@@@STEP_LOG_LINE@request@        }, @@@",
       "@@@STEP_LOG_LINE@request@        \"experimental\": \"NO\", @@@",
-      "@@@STEP_LOG_LINE@request@        \"fields\": \"builder,createTime,createdBy,critical,endTime,id,input,number,output,startTime,status,updateTime\", @@@",
+      "@@@STEP_LOG_LINE@request@        \"fields\": \"builder,createTime,createdBy,critical,endTime,id,infra,input,number,output,startTime,status,updateTime\", @@@",
       "@@@STEP_LOG_LINE@request@        \"gitilesCommit\": {@@@",
       "@@@STEP_LOG_LINE@request@          \"host\": \"chrome-internal.googlesource.com\", @@@",
       "@@@STEP_LOG_LINE@request@          \"id\": \"2d72510e447ab60a9728aeea2362d8be2cbd7789\", @@@",
@@ -96,7 +96,7 @@
       "@@@STEP_LOG_LINE@request@          \"project\": \"proj-internal\"@@@",
       "@@@STEP_LOG_LINE@request@        }, @@@",
       "@@@STEP_LOG_LINE@request@        \"experimental\": \"NO\", @@@",
-      "@@@STEP_LOG_LINE@request@        \"fields\": \"builder,createTime,createdBy,critical,endTime,id,input,number,output,startTime,status,updateTime\", @@@",
+      "@@@STEP_LOG_LINE@request@        \"fields\": \"builder,createTime,createdBy,critical,endTime,id,infra,input,number,output,startTime,status,updateTime\", @@@",
       "@@@STEP_LOG_LINE@request@        \"gitilesCommit\": {@@@",
       "@@@STEP_LOG_LINE@request@          \"host\": \"chrome-internal.googlesource.com\", @@@",
       "@@@STEP_LOG_LINE@request@          \"id\": \"2d72510e447ab60a9728aeea2362d8be2cbd7789\", @@@",
@@ -155,7 +155,7 @@
       }
     },
     "name": "buildbucket.get",
-    "stdin": "{\"requests\": [{\"getBuild\": {\"fields\": \"builder,createTime,createdBy,critical,endTime,id,input,number,output,startTime,status,updateTime\", \"id\": \"8922054662172514000\"}}]}",
+    "stdin": "{\"requests\": [{\"getBuild\": {\"fields\": \"builder,createTime,createdBy,critical,endTime,id,infra,input,number,output,startTime,status,updateTime\", \"id\": \"8922054662172514000\"}}]}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"responses\": [@@@",
@@ -171,7 +171,7 @@
       "@@@STEP_LOG_LINE@request@  \"requests\": [@@@",
       "@@@STEP_LOG_LINE@request@    {@@@",
       "@@@STEP_LOG_LINE@request@      \"getBuild\": {@@@",
-      "@@@STEP_LOG_LINE@request@        \"fields\": \"builder,createTime,createdBy,critical,endTime,id,input,number,output,startTime,status,updateTime\", @@@",
+      "@@@STEP_LOG_LINE@request@        \"fields\": \"builder,createTime,createdBy,critical,endTime,id,infra,input,number,output,startTime,status,updateTime\", @@@",
       "@@@STEP_LOG_LINE@request@        \"id\": \"8922054662172514000\"@@@",
       "@@@STEP_LOG_LINE@request@      }@@@",
       "@@@STEP_LOG_LINE@request@    }@@@",
