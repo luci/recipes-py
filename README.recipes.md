@@ -20,6 +20,7 @@
   * [led](#recipe_modules-led) (Python3 ✅) &mdash; An interface to call the led tool.
   * [legacy_annotation](#recipe_modules-legacy_annotation) (Python3 ✅) &mdash; Legacy Annotation module provides support for running a command emitting legacy @@@annotation@@@ in the new luciexe mode.
   * [milo](#recipe_modules-milo) (Python3 ✅) &mdash; API for specifying Milo behavior.
+  * [nodejs](#recipe_modules-nodejs) (Python3 ✅)
   * [path](#recipe_modules-path) (Python3 ✅) &mdash; All functions related to manipulating paths in recipes.
   * [platform](#recipe_modules-platform) (Python3 ✅) &mdash; Mockable system platform identity functions.
   * [properties](#recipe_modules-properties) (Python3 ✅) &mdash; Provides access to the recipes input properties.
@@ -127,6 +128,7 @@
   * [led:tests/no_exist](#recipes-led_tests_no_exist) (Python3 ✅)
   * [legacy_annotation:examples/full](#recipes-legacy_annotation_examples_full) (Python3 ✅)
   * [milo:examples/full](#recipes-milo_examples_full) (Python3 ✅)
+  * [nodejs:examples/full](#recipes-nodejs_examples_full) (Python3 ✅)
   * [path:examples/full](#recipes-path_examples_full) (Python3 ✅)
   * [platform:examples/full](#recipes-platform_examples_full) (Python3 ✅)
   * [properties:examples/full](#recipes-properties_examples_full) (Python3 ✅)
@@ -2175,6 +2177,41 @@ Args:
     or dicts of the same structure.
     Each commit must have host, project and id.
     ID must match r'^[0-9a-f]{40}$' (git revision).
+### *recipe_modules* / [nodejs](/recipe_modules/nodejs)
+
+[DEPS](/recipe_modules/nodejs/__init__.py#7): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [path](#recipe_modules-path), [platform](#recipe_modules-platform)
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+#### **class [NodeJSApi](/recipe_modules/nodejs/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#881)):**
+
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/nodejs/api.py#15)(self, version, path=None, cache=None):**
+
+Installs a Node.js toolchain and activates it in the environment.
+
+Installs it under the given `path`, defaulting to `[CACHE]/nodejs`. Various
+cache directories used by npm are placed under `cache`, defaulting to
+`[CACHE]/npmcache`.
+
+`version` will be used to construct CIPD package version for packages under
+https://chrome-infra-packages.appspot.com/p/infra/3pp/tools/nodejs/.
+
+To reuse the Node.js toolchain deployment and npm caches across builds,
+declare the corresponding named caches in Buildbucket configs. E.g. when
+using defaults:
+
+    luci.builder(
+        ...
+        caches = [
+            swarming.cache("nodejs"),
+            swarming.cache("npmcache"),
+        ],
+    )
+
+Args:
+  * version (str) - a Node.js version to install (e.g. `17.1.0`).
+  * path (Path) - a path to install Node.js into.
+  * cache (Path) - a path to put Node.js caches under.
 ### *recipe_modules* / [path](/recipe_modules/path)
 
 [DEPS](/recipe_modules/path/__init__.py#7): [platform](#recipe_modules-platform)
@@ -4589,6 +4626,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipe_modules/milo/examples/full.py#13)(api):**
+### *recipes* / [nodejs:examples/full](/recipe_modules/nodejs/examples/full.py)
+
+[DEPS](/recipe_modules/nodejs/examples/full.py#7): [nodejs](#recipe_modules-nodejs), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+&mdash; **def [RunSteps](/recipe_modules/nodejs/examples/full.py#14)(api):**
 ### *recipes* / [path:examples/full](/recipe_modules/path/examples/full.py)
 
 [DEPS](/recipe_modules/path/examples/full.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
