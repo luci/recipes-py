@@ -1156,7 +1156,7 @@ class SwarmingApi(recipe_api.RecipeApi):
   def ensure_client(self):
     self._client
 
-  def _run(self, name, cmd, step_test_data=None):
+  def _run(self, name, cmd, step_test_data=None, **kwargs):
     """Return an swarming command step.
 
     Args:
@@ -1166,7 +1166,8 @@ class SwarmingApi(recipe_api.RecipeApi):
     return self.m.step(
         name, [self._client] + list(cmd),
         step_test_data=step_test_data,
-        infra_step=True)
+        infra_step=True,
+        **kwargs)
 
   @contextlib.contextmanager
   def on_path(self):
@@ -1307,10 +1308,17 @@ class SwarmingApi(recipe_api.RecipeApi):
       else:
         raise ValueError("%s must be a string or TaskRequestMetadata object" %
                          task.__repr__())  # pragma: no cover
+
+    # Assume we only need to reserve 10% of a CPU core (rather than 50%) for
+    # collect.
+    cpu_tenth = int(self.m.step.CPU_CORE / 10)
+    cost = self.m.step.ResourceCost(cpu=cpu_tenth)
+
     step = self._run(
         name,
         cmd,
         step_test_data=lambda: self.test_api.collect(test_data),
+        cost=cost,
     )
 
     parsed_results = []

@@ -267,6 +267,12 @@
       "-verbose",
       "0"
     ],
+    "cost": {
+      "cpu": 100,
+      "disk": 0,
+      "memory": 50,
+      "net": 0
+    },
     "infra_step": true,
     "name": "collect",
     "~followup_annotations": [
@@ -296,6 +302,12 @@
       "-eager",
       "0"
     ],
+    "cost": {
+      "cpu": 100,
+      "disk": 0,
+      "memory": 50,
+      "net": 0
+    },
     "infra_step": true,
     "name": "collect other pending task",
     "~followup_annotations": [
@@ -542,6 +554,12 @@
       "json",
       "0"
     ],
+    "cost": {
+      "cpu": 100,
+      "disk": 0,
+      "memory": 50,
+      "net": 0
+    },
     "infra_step": true,
     "name": "collect on original server",
     "~followup_annotations": [
