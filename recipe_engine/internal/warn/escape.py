@@ -42,12 +42,22 @@ class FuncLoc(object):
 # Dict[FuncLoc, Tuple[regular expression pattern]]
 WARNING_ESCAPE_REGISTRY = {}
 
+# Similar to WARNING_ESCAPE_REGISTRY except contains patterns for ignoring
+# warnings.
+WARNING_IGNORE_REGISTRY = {}
+
+# Special object returned by escape_warning_predicate when a warning should be
+# completely ignored.
+IGNORE = object()
+
 def escape_warning_predicate(name, frame):
   """A predicate used in warning recorder that returns True when the function
   that the given frame is currently executing is escaped from the given warning
   name via decorators provided in this module.
   """
   func_loc = FuncLoc.from_code_obj(frame.f_code)
+  if any(r.match(name) for r in WARNING_IGNORE_REGISTRY.get(func_loc, tuple())):
+    return IGNORE
   if any(r.match(name) for r in WARNING_ESCAPE_REGISTRY.get(func_loc, tuple())):
     return 'escaped function at %s#L%d' % (
       func_loc.file_path, func_loc.first_line_no)
@@ -68,3 +78,14 @@ def escape_warnings(*warning_name_regexps):
 def escape_all_warnings(func):
   """Shorthand decorator to escape the decorated function from all warnings."""
   return escape_warnings('.*')(func)
+
+def ignore_warnings(*warning_name_regexps):
+  """A function decorator which will cause warnings matching any of the given
+  regexps to be ignored.
+  """
+  def _escape_warnings(func):
+    func_loc = FuncLoc.from_code_obj(func.__code__)
+    WARNING_IGNORE_REGISTRY[func_loc] = (
+      tuple(re.compile(r) for r in warning_name_regexps))
+    return func
+  return _escape_warnings

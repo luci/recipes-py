@@ -14,7 +14,7 @@ import attr
 from future.utils import iteritems, itervalues
 
 from .cause import CallSite, Frame, ImportSite
-from .escape import escape_warning_predicate
+from .escape import escape_warning_predicate, IGNORE
 
 from ..attr_util import attr_type, attr_seq_type
 from ..class_util import cached_property
@@ -113,6 +113,8 @@ class WarningRecorder(object):
     self._validate_warning_name(name)
     # TODO(yiwzhang): update proto to include skip reason and populate
     call_site_frame, _ = self._attribute_call_site(name, frames)
+    if call_site_frame is IGNORE:
+      return
     call_site = CallSite(
       site=Frame.from_built_in_frame(call_site_frame) if (
         call_site_frame) else Frame(),
@@ -178,6 +180,7 @@ class WarningRecorder(object):
 
     Returns a human-readable reason (str) why the given frame should be skipped.
     Returns None if the warning can be attributed to the given frame.
+    Returns escape.IGNORE if the warning should be ignored.
     """
     return (
       self._non_recipe_code_predicate,
@@ -193,11 +196,15 @@ class WarningRecorder(object):
     attributed call site and the annotated frames in the list are all skipped
     frames with their skipped reasons. Call site frame will be returned as None
     if all of the frames are skipped.
+
+    Returns (escape.IGNORE, escape.IGNORE) if the warning should be ignored.
     """
     skipped_frames = []
     for frame in frames:
       lazy_skip_reasons = (p(name, frame) for p in self._skip_frame_predicates)
       reason = next((r for r in lazy_skip_reasons if r is not None), None)
+      if reason is IGNORE:
+        return IGNORE, IGNORE
       if reason is None:
         return frame, skipped_frames # culprit found
       skipped_frames.append(_AnnotatedFrame(frame=frame, skip_reason=reason))

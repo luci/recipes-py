@@ -340,6 +340,7 @@ class WarningClient(object):
 # Exports warning escape decorators
 escape_warnings = escape.escape_warnings
 escape_all_warnings = escape.escape_all_warnings
+ignore_warnings = escape.ignore_warnings
 
 
 class StepFailure(Exception):
