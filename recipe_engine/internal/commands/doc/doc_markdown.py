@@ -79,7 +79,27 @@ class Printer(object):
     # Maybe fix up links too?
     if node.docstring:
       self()
-      self(node.docstring)
+      lines = node.docstring.splitlines()
+      deprecation_blocks = []
+      cur_block_start = None
+      for i, line in enumerate(lines):
+        if cur_block_start is None:
+          if line.startswith('DEPRECATED'):
+            cur_block_start = i
+        else:
+          if not line:
+            deprecation_blocks.append((cur_block_start, i))
+            cur_block_start = None
+      if cur_block_start is not None:
+        deprecation_blocks.append((cur_block_start, len(lines)))
+
+      for start, end in reversed(deprecation_blocks):
+        lines.insert(end, '***')
+        lines[start] = lines[start].replace('DEPRECATED', '**DEPRECATED**', 1)
+        lines.insert(start, '*** note')
+
+      for line in lines:
+        self(line)
 
   @staticmethod
   def generic_link(name, url, ref=False):

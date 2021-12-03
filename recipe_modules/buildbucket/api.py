@@ -101,7 +101,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     self._host = value
 
   def set_buildbucket_host(self, host):
-    """DEPRECATED. Use host property."""
+    """DEPRECATED: Use host property."""
     self.host = host
 
   @contextmanager
@@ -975,17 +975,17 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
   @property
   def build_id(self):  # pragma: no cover
-    """DEPRECATED, use build.id instead."""
+    """DEPRECATED: use build.id instead."""
     return self.build.id or None
 
   @property
   def build_input(self):  # pragma: no cover
-    """DEPRECATED, use build.input instead."""
+    """DEPRECATED: use build.input instead."""
     return self.build.input
 
   @property
   def builder_id(self):  # pragma: no cover
-    """Deprecated. Use build.builder instead."""
+    """DEPRECATED: Use build.builder instead."""
     return self.build.builder
 
 

@@ -351,11 +351,15 @@ If the current build is not a buildbucket build, returned `build.id` is 0.
 
 &emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#976)(self):**
 
-DEPRECATED, use build.id instead.
+*** note
+**DEPRECATED**: use build.id instead.
+***
 
 &emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#981)(self):**
 
-DEPRECATED, use build.input instead.
+*** note
+**DEPRECATED**: use build.input instead.
+***
 
 &mdash; **def [build\_url](/recipe_modules/buildbucket/api.py#168)(self, host=None, build_id=None):**
 
@@ -372,7 +376,9 @@ https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/pr
 
 &emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#986)(self):**
 
-Deprecated. Use build.builder instead.
+*** note
+**DEPRECATED**: Use build.builder instead.
+***
 
 &emsp; **@property**<br>&mdash; **def [builder\_name](/recipe_modules/buildbucket/api.py#150)(self):**
 
@@ -623,7 +629,9 @@ Returns:
 
 &mdash; **def [set\_buildbucket\_host](/recipe_modules/buildbucket/api.py#103)(self, host):**
 
-DEPRECATED. Use host property.
+*** note
+**DEPRECATED**: Use host property.
+***
 
 &mdash; **def [set\_output\_gitiles\_commit](/recipe_modules/buildbucket/api.py#227)(self, gitiles_commit):**
 
@@ -2064,7 +2072,9 @@ Args:
 
 Returns a step that reads a JSON file.
 
-This method is deprecated. Use file.read_json instead.
+*** note
+**DEPRECATED**: Use file.read_json instead.
+***
 ### *recipe_modules* / [led](/recipe_modules/led)
 
 [DEPS](/recipe_modules/led/__init__.py#7): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
@@ -2560,8 +2570,10 @@ can use it like a read-only dict.
 
 &mdash; **def [legacy](/recipe_modules/properties/api.py#56)(self):**
 
-DEPRECATED: Returns a set of properties, possibly used by legacy
+*** note
+**DEPRECATED**: Returns a set of properties, possibly used by legacy
 scripts.
+***
 
 This excludes any recipe module-specific properties (i.e. those beginning
 with `$`).

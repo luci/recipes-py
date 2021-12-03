@@ -153,7 +153,7 @@ class JsonApi(recipe_api.RecipeApi):
   def read(self, name, path, add_json_log=True, output_name=None, **kwargs):
     """Returns a step that reads a JSON file.
 
-    This method is deprecated. Use file.read_json instead.
+    DEPRECATED: Use file.read_json instead.
     """
     return self.m.python.inline(
         name,
