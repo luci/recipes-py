@@ -25,6 +25,8 @@ import attr
 
 from google.protobuf import message
 
+import gevent
+
 from .config_types import Path
 from .internal import engine_step
 from .internal.attr_util import attr_dict_type
@@ -290,10 +292,9 @@ class WarningClient(object):
   @escape.escape_all_warnings
   def record_execution_warning(self, name):
     """Captures the current stack and records an execution warning."""
-    self._recorder.record_execution_warning(
-        name,
-        [frame_tup[0] for frame_tup in inspect.stack()],
-    )
+    cur_stack = [frame_tup[0] for frame_tup in inspect.stack()]
+    cur_stack.extend(getattr(gevent.getcurrent(), 'spawning_frames', ()))
+    self._recorder.record_execution_warning(name, cur_stack)
 
   def record_import_warning(self, name, importer):
     """Records import warning during DEPS resolution."""

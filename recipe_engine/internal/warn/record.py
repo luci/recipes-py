@@ -212,11 +212,14 @@ class WarningRecorder(object):
 
   @cached_property
   def _all_repo_paths(self):
-    """A tuple of root paths of all recipe repos in the current executing
+    """A tuple of root paths of all recipe code in the current executing
     recipe deps.
     """
-    return tuple(repo.recipes_root_path for repo in (
-      list(itervalues(self.recipe_deps.repos))))
+    ret = []
+    for repo in itervalues(self.recipe_deps.repos):
+      ret.append(repo.recipes_dir)
+      ret.append(repo.modules_dir)
+    return tuple(ret)
 
   def _non_recipe_code_predicate(self, _name, frame):
     """A predicate that skips a frame when it is executing a code object whose

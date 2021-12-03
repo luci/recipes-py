@@ -5,6 +5,7 @@
 import calendar
 import copy
 import datetime
+import inspect
 import json
 import logging
 import os
@@ -266,6 +267,8 @@ class RecipeEngine(object):
     ret = gevent.spawn(_runner)
     if greenlet_name is not None:
       ret.name = greenlet_name
+    # need stack frames here, rather than greenlet 'lightweight' stack
+    ret.spawning_frames = [frame_tup[0] for frame_tup in inspect.stack(2)]
     current_step.greenlets.append(ret)
     return ret
 
