@@ -283,19 +283,16 @@ class FileApi(recipe_api.RecipeApi):
         step_test_data=step_test_data)
     return result.raw_io.output
 
-  def write_raw(self, name, dest, data, include_log=True):
+  def write_raw(self, name, dest, data):
     """Write the given `data` to `dest`.
 
     Args:
       * name (str): The name of the step.
       * dest (Path): The path of the file to write.
       * data (str): The data to write.
-      * include_log (bool): Include step log of written data.
 
     Raises: file.Error.
     """
-    # Update callers to not pass include_log, then remove the argument
-    del include_log
     self.m.path.assert_absolute(dest)
     self._run(name, ['copy', self.m.raw_io.input(data), dest])
     self.m.path.mock_add_paths(dest)
