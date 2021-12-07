@@ -197,7 +197,11 @@ class OutputDataPlaceholder(recipe_util.OutputPlaceholder):
       return f.read()
 
   def read_test_data(self, test):
-    return test.data or b''
+    test_data = test.data or b''
+    if not _PY2 and not isinstance(test_data, bytes):
+      raise TypeError(
+          'test data must be binary data, got {!r}'.format(test_data))
+    return test_data
 
 
 class OutputTextPlaceholder(OutputDataPlaceholder):
@@ -225,7 +229,14 @@ class OutputTextPlaceholder(OutputDataPlaceholder):
 
   def read_test_data(self, test):
     test_data = test.data or ''
-    return test_data.encode('utf-8', errors='replace') if _PY2 else test_data
+    if _PY2:
+      test_data = test_data.encode('utf-8', errors='replace')
+    else:
+      test_data = test_data
+      if not isinstance(test_data, str):
+        raise TypeError(
+            'test data must be text data, got {!r}'.format(test_data))
+    return test_data
 
 
 class _LazyDirectoryReader(_MAPPING):

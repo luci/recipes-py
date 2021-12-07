@@ -304,7 +304,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         json.dumps(json_format.MessageToDict(b), sort_keys=True) for b in builds
     ]
     output = "\n".join(lines)
-    return self.step_data(step_name, self.m.raw_io.stream_output(output))
+    return self.step_data(step_name, self.m.raw_io.stream_output_text(output))
 
   def simulated_get(self, build, step_name=None):
     """Simulates a buildbucket.get call."""

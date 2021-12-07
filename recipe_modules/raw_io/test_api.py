@@ -19,8 +19,8 @@ class RawIOTestApi(recipe_test_api.RecipeTestApi): # pragma: no cover
     accepted and will be encoded to bytes internally because in Python3,
     `raw_io.output('foo')` pass will actually 'foo' as type 'str' instead of
     'bytes' to this method and we have lots of usages like this. Please
-    use raw_io.output_text('foo') instead or make 'foo' a byte literal like
-    `b'foo'`. We may drop the unicode support in the future.
+    make 'foo' a byte literal like `b'foo'`. We may drop the unicode support in
+    the future.
     """
     if isinstance(data, text):
       # TODO(yiwzhang): implicitly encode the data to bytes to avoid excessive

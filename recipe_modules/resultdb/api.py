@@ -98,7 +98,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
         'UpdateIncludedInvocations',
         json_format.MessageToDict(req),
         include_update_token=True,
-        step_test_data=lambda: self.m.raw_io.test_api.stream_output('{}'))
+        step_test_data=lambda: self.m.json.test_api.output_stream({}))
 
   def get_included_invocations(self, inv_name=None, step_name=None):
     """Returns names of included invocations of the input invocation.
@@ -119,7 +119,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
         'GetInvocation',
         json_format.MessageToDict(req),
         include_update_token=True,
-        step_test_data=lambda: self.m.raw_io.test_api.stream_output('{}'))
+        step_test_data=lambda: self.m.json.test_api.output_stream({}))
 
     inv_msg = json_format.ParseDict(
         res, invocation_pb2.Invocation(), ignore_unknown_fields=True)
@@ -144,7 +144,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
       return [
           step_name, 'luci.resultdb.v1.Recorder', 'BatchCreateTestExonerations',
           json_format.MessageToDict(req),
-          True, lambda: self.m.raw_io.test_api.stream_output('{}')
+          True, lambda: self.m.json.test_api.output_stream({})
       ]
 
     if not test_exonerations:
@@ -246,8 +246,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
         subcommand='query',
         args=args,
         step_name=step_name,
-        stdout=self.m.raw_io.output(add_output_log=True),
-        step_test_data=lambda: self.m.raw_io.test_api.stream_output(''),
+        stdout=self.m.raw_io.output_text(add_output_log=True),
+        step_test_data=lambda: self.m.raw_io.test_api.stream_output_text(''),
     )
     return common.deserialize(step_res.stdout)
 
@@ -347,7 +347,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
         'luci.resultdb.v1.ResultDB',
         'QueryTestResultStatistics',
         req=json_format.MessageToDict(req),
-        step_test_data=lambda: self.m.raw_io.test_api.stream_output('{}'))
+        step_test_data=lambda: self.m.json.test_api.output_stream({}))
 
     return json_format.ParseDict(
         res,
@@ -393,7 +393,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
         'BatchCreateArtifacts',
         req=json_format.MessageToDict(req),
         include_update_token=True,
-        step_test_data=lambda: self.m.raw_io.test_api.stream_output('{}'))
+        step_test_data=lambda: self.m.json.test_api.output_stream({}))
 
     return json_format.ParseDict(
         res,

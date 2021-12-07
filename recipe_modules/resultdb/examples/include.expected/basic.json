@@ -24,9 +24,9 @@
     },
     "name": "rdb query",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@raw_io.output@{\"invocation\": {\"state\": \"FINALIZED\"}, \"invocationId\": \"invid\"}@@@",
-      "@@@STEP_LOG_LINE@raw_io.output@{\"invocation\": {\"state\": \"FINALIZED\"}, \"invocationId\": \"invid2\"}@@@",
-      "@@@STEP_LOG_END@raw_io.output@@@"
+      "@@@STEP_LOG_LINE@raw_io.output_text@{\"invocation\": {\"state\": \"FINALIZED\"}, \"invocationId\": \"invid\"}@@@",
+      "@@@STEP_LOG_LINE@raw_io.output_text@{\"invocation\": {\"state\": \"FINALIZED\"}, \"invocationId\": \"invid2\"}@@@",
+      "@@@STEP_LOG_END@raw_io.output_text@@@"
     ]
   },
   {

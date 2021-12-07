@@ -31,7 +31,7 @@ class ResultDBTestApi(recipe_test_api.RecipeTestApi):
     step_name = step_name or 'rdb query'
     return self.step_data(
         step_name,
-        self.m.raw_io.stream_output(common.serialize(inv_bundle)),
+        self.m.raw_io.stream_output_text(common.serialize(inv_bundle)),
     )
 
   def get_included_invocations(self, invs,
@@ -83,5 +83,5 @@ class ResultDBTestApi(recipe_test_api.RecipeTestApi):
     res = json_format.MessageToDict(message)
     return self.step_data(
         step_name,
-        self.m.raw_io.stream_output(json.dumps(res)),
+        self.m.json.output_stream(res),
     )

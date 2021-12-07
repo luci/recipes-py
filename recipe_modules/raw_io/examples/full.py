@@ -57,24 +57,22 @@ def RunSteps(api):
 
   # Example of auto-mocking stdout + stderr.
   step_result = api.step(
-    'automock (fail)', ['bash', '-c', 'echo blah && echo fail 1>&2'],
-    stdout=api.raw_io.output('out'),
-    stderr=api.raw_io.output('err'),
-    step_test_data=(
-      lambda: (
-        api.raw_io.test_api.stream_output_text('blah\n') +
-        api.raw_io.test_api.stream_output_text('fail\n', 'stderr')
-      ))
-  )
+      'automock (fail)', ['bash', '-c', 'echo blah && echo fail 1>&2'],
+      stdout=api.raw_io.output_text('out'),
+      stderr=api.raw_io.output_text('err'),
+      step_test_data=(
+          lambda: (api.raw_io.test_api.stream_output_text('blah\n') + api.raw_io
+                   .test_api.stream_output_text('fail\n', 'stderr'))))
   assert step_result.stdout == 'blah\n'
   assert step_result.stderr == 'fail\n'
 
   # leak_to coverage.
   step_result = api.step(
       'leak stdout', ['echo', 'leaking'],
-      stdout=api.raw_io.output(leak_to=api.path['tmp_base'].join('out.txt')),
+      stdout=api.raw_io.output_text(
+          leak_to=api.path['tmp_base'].join('out.txt')),
       step_test_data=(
-        lambda: api.raw_io.test_api.stream_output_text('leaking\n')))
+          lambda: api.raw_io.test_api.stream_output_text('leaking\n')))
   assert step_result.stdout == 'leaking\n'
 
   api.step('list temp dir', ['ls', api.raw_io.output_dir()])

@@ -39,34 +39,33 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  def test(test_name, tags=None, **req):
-    return (
-      api.test(test_name) +
-      api.runtime(is_experimental=False) +
-      api.buildbucket.try_build(
-          project='chromium',
-          builder='Builder',
-          git_repo='https://chromium.googlesource.com/chromium/src',
-      )
+
+  def build():
+    return api.buildbucket.try_build(
+        project='chromium',
+        builder='Builder',
+        git_repo='https://chromium.googlesource.com/chromium/src',
     )
 
-  yield (
-      test('basic')
+  yield api.test(
+      'basic',
+      build(),
   )
 
-  yield (
-      test('two builds') +
+  yield api.test(
+      'two builds',
+      build(),
       api.buildbucket.simulated_search_results([
-        build_pb2.Build(id=1, status=common_pb2.SUCCESS),
-        build_pb2.Build(id=2, status=common_pb2.FAILURE),
-      ])
+          build_pb2.Build(id=1, status=common_pb2.SUCCESS),
+          build_pb2.Build(id=2, status=common_pb2.FAILURE),
+      ]),
   )
 
-  yield (
-      test('search failed') +
+  yield api.test(
+      'search failed',
+      build(),
       api.step_data(
           'buildbucket.search',
-          api.raw_io.stream_output('there was a problem'),
-          retcode = 1
-        )
+          api.raw_io.stream_output_text('there was a problem'),
+          retcode=1),
   )
