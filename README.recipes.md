@@ -3751,25 +3751,25 @@ analyzer recipes, including:
   * Recipes that accumulate comments one by one.
   * Recipes that wrap other tools and parse their output.
 
-#### **class [TriciumApi](/recipe_modules/tricium/api.py#25)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [TriciumApi](/recipe_modules/tricium/api.py#26)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
 
 TriciumApi provides basic support for Tricium.
 
-&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#37)(self, \*\*kwargs):**
+&mdash; **def [\_\_init\_\_](/recipe_modules/tricium/api.py#38)(self, \*\*kwargs):**
 
 Sets up the API.
 
 Initializes an empty list of comments for use with
 add_comment and write_comments.
 
-&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#46)(self, category, message, path, start_line=0, end_line=0, start_char=0, end_char=0, suggestions=()):**
+&mdash; **def [add\_comment](/recipe_modules/tricium/api.py#47)(self, category, message, path, start_line=0, end_line=0, start_char=0, end_char=0, suggestions=()):**
 
 Adds one comment to accumulate.
 
 For semantics of start_line, start_char, end_line, end_char, see Gerrit doc
 https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#comment-range
 
-&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#134)(self, analyzers, input_base, affected_files, commit_message, emit=True):**
+&mdash; **def [run\_legacy](/recipe_modules/tricium/api.py#138)(self, analyzers, input_base, affected_files, commit_message, emit=True):**
 
 Runs legacy analyzers.
 
@@ -3792,13 +3792,13 @@ Args:
     analyzers (using `add_comment()` to store comments) and legacy
     analyzers.
 
-&emsp; **@staticmethod**<br>&mdash; **def [validate\_comment](/recipe_modules/tricium/api.py#73)(comment):**
+&emsp; **@staticmethod**<br>&mdash; **def [validate\_comment](/recipe_modules/tricium/api.py#74)(comment):**
 
 Validates comment to comply with Tricium/Gerrit requirements.
 
 Raise ValueError on the first detected problem.
 
-&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#111)(self):**
+&mdash; **def [write\_comments](/recipe_modules/tricium/api.py#115)(self):**
 
 Emit the results accumulated by `add_comment` and `run_legacy`.
 ### *recipe_modules* / [url](/recipe_modules/url)
@@ -4978,7 +4978,7 @@ An example of a recipe wrapping legacy analyzers.
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/tricium/tests/add_comment_validation.py#33)(api, case):**
+&mdash; **def [RunSteps](/recipe_modules/tricium/tests/add_comment_validation.py#43)(api, case):**
 ### *recipes* / [tricium:tests/enforce\_comments\_num\_limit](/recipe_modules/tricium/tests/enforce_comments_num_limit.py)
 
 [DEPS](/recipe_modules/tricium/tests/enforce_comments_num_limit.py#12): [assertions](#recipe_modules-assertions), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [tricium](#recipe_modules-tricium)

@@ -12,6 +12,7 @@ analyzer recipes, including:
 """
 
 import fnmatch
+import os
 
 from google.protobuf import json_format
 
@@ -103,6 +104,9 @@ class TriciumApi(recipe_api.RecipeApi):
           'but (%d,%d) .. (%d,%d) given' %
           (comment.start_line, comment.start_char, comment.end_line,
            comment.end_char))
+    if os.path.isabs(comment.path):
+      raise ValueError('path must be relative to the input directory, but '
+                       'got absolute path %s' % (comment.path))
 
   def _add_comment(self, comment):
     if comment not in self._comments:

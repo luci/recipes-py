@@ -14,14 +14,24 @@ PROPERTIES = {
 }
 
 _BAD_CASES = {
-    'bad start_line': dict(start_line=-1),
-    'file level comment: end_line': dict(start_line=0, end_line=1),
-    'file level comment: start_char': dict(start_line=0, start_char=1),
-    'file level comment: end_char': dict(start_line=0, end_char=1),
-    'end_line': dict(start_line=2, end_line=1),
-    'start_char': dict(start_line=1, start_char=-1, end_line=2),
-    'end_char': dict(start_line=1, start_char=1, end_line=2, end_char=-1),
-    'wrong-range': dict(start_line=5, start_char=5, end_line=5, end_char=5),
+    'bad start_line':
+        dict(start_line=-1),
+    'file level comment: end_line':
+        dict(start_line=0, end_line=1),
+    'file level comment: start_char':
+        dict(start_line=0, start_char=1),
+    'file level comment: end_char':
+        dict(start_line=0, end_char=1),
+    'end_line':
+        dict(start_line=2, end_line=1),
+    'start_char':
+        dict(start_line=1, start_char=-1, end_line=2),
+    'end_char':
+        dict(start_line=1, start_char=1, end_line=2, end_char=-1),
+    'wrong-range':
+        dict(start_line=5, start_char=5, end_line=5, end_char=5),
+    'absolute path':
+        dict(start_line=3, end_line=3, path="/usr/home/me/checkout/foo.txt"),
 }
 _OK_CASES = {
     'exactly 1 char': dict(start_line=5, start_char=5, end_line=5, end_char=6),
