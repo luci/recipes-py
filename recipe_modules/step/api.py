@@ -6,15 +6,11 @@
 
 
 import contextlib
-import multiprocessing
 import sys
-import types
 
 from builtins import int
 from future.utils import iteritems
 from past.builtins import basestring
-
-import enum
 
 from recipe_engine import recipe_api
 from recipe_engine.config_types import Path
@@ -242,6 +238,10 @@ class StepApi(recipe_api.RecipeApiPlain):
             to encapsulate a sequence operation where only the last step's
             status really matters.
 
+    NOTE: Because the nest step allows action on the result of all steps run
+    within it, a nest step will wait for ALL recipe code within it (including
+    greenlets spawned with api.future.spawn!).
+
     Example:
 
         # status='worst'
@@ -265,7 +265,7 @@ class StepApi(recipe_api.RecipeApiPlain):
           # stuff!
           presentation.status = 'FAILURE'  # or whatever
 
-    NOTE/DEPRECATION: The object yielded also has a '.presentation' field to be
+    DEPRECATED: The object yielded also has a '.presentation' field to be
     compatible with code that treats the yielded object as a StepData object. If
     you see such code, please update it to treat the yielded object directly as
     StepPresentation instead.

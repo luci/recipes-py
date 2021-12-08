@@ -1855,10 +1855,12 @@ between concurrent functions.
 
 This is useful for running 'background helper' type concurrent processes.
 
+*** promo
 NOTE: It is strongly discouraged to pass Channel objects outside of a recipe
 module. Access to the channel should be mediated via
 a class/contextmanager/function which you return to the caller, and the
 caller can call in a makes-sense-for-your-moudle's-API way.
+***
 
 See ./tests/background_helper.py for an example of how to use a Channel
 correctly.
@@ -1889,8 +1891,10 @@ following pattern is safe:
     if not self._my_future:
       self._my_future = api.futures.spawn(func)
 
+*** promo
 NOTE: If used in @@@annotator@@@ mode, this will block on the completion of
 the Future before returning it.
+***
 
 Kwargs:
 
@@ -2753,9 +2757,11 @@ method)
 
 All members of `random.Random` are exposed via this API with getattr.
 
+*** promo
 NOTE: This is based on the python `random` module, and so all caveats which
 apply there also apply to this (i.e. don't use it for anything resembling
 crypto).
+***
 
 Example:
 
@@ -3254,9 +3260,9 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Step is the primary API for running steps (external programs, etc.)
 
-#### **class [StepApi](/recipe_modules/step/api.py#30)([RecipeApiPlain](/recipe_engine/recipe_api.py#735)):**
+#### **class [StepApi](/recipe_modules/step/api.py#26)([RecipeApiPlain](/recipe_engine/recipe_api.py#735)):**
 
-&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#143)(self):**
+&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#139)(self):**
 
 InfraFailure is a subclass of StepFailure, and will translate to a purple
 build.
@@ -3264,15 +3270,15 @@ build.
 This exception is raised from steps which are marked as `infra_step`s when
 they fail.
 
-&emsp; **@property**<br>&mdash; **def [MAX\_CPU](/recipe_modules/step/api.py#115)(self):**
+&emsp; **@property**<br>&mdash; **def [MAX\_CPU](/recipe_modules/step/api.py#111)(self):**
 
 Returns the maximum number of millicores this system has.
 
-&emsp; **@property**<br>&mdash; **def [MAX\_MEMORY](/recipe_modules/step/api.py#120)(self):**
+&emsp; **@property**<br>&mdash; **def [MAX\_MEMORY](/recipe_modules/step/api.py#116)(self):**
 
 Returns the maximum amount of memory on the system in MB.
 
-&mdash; **def [ResourceCost](/recipe_modules/step/api.py#48)(self, cpu=500, memory=50, disk=0, net=0):**
+&mdash; **def [ResourceCost](/recipe_modules/step/api.py#44)(self, cpu=500, memory=50, disk=0, net=0):**
 
 A structure defining the resources that a given step may need.
 
@@ -3331,7 +3337,7 @@ Returns:
   that passing `None` to api.step for the cost kwarg is equivalent to
   `ResourceCost(0, 0, 0, 0)`.
 
-&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#125)(self):**
+&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#121)(self):**
 
 This is the base Exception class for all step failures.
 
@@ -3341,7 +3347,7 @@ Usage:
   * `raise api.StepFailure("some reason")`
   * `except api.StepFailure:`
 
-&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#137)(self):**
+&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#133)(self):**
 
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
@@ -3400,7 +3406,7 @@ Args:
 
 Returns a `step_data.StepData` for the running step.
 
-&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#153)(self):**
+&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#149)(self):**
 
 The currently active (open) result from the last step that was run. This
 is a `step_data.StepData` object.
@@ -3431,7 +3437,7 @@ finally:
     api.step.active_result.presentation.step_text = new_step_text
 ```
 
-&mdash; **def [close\_non\_nest\_step](/recipe_modules/step/api.py#186)(self):**
+&mdash; **def [close\_non\_nest\_step](/recipe_modules/step/api.py#182)(self):**
 
 Call this to explicitly terminate the currently open non-nest step.
 
@@ -3444,7 +3450,7 @@ No-op if there's no currently active non-nest step.
 
 See recipe_api.py for docs. 
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#220)(self, name, status='worst'):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#216)(self, name, status='worst'):**
 
 Nest allows you to nest steps hierarchically on the build UI.
 
@@ -3469,6 +3475,12 @@ according to the `status` algorithm selected.
         to encapsulate a sequence operation where only the last step's
         status really matters.
 
+*** promo
+NOTE: Because the nest step allows action on the result of all steps run
+within it, a nest step will wait for ALL recipe code within it (including
+greenlets spawned with api.future.spawn!).
+***
+
 Example:
 
     # status='worst'
@@ -3492,10 +3504,12 @@ Example:
       # stuff!
       presentation.status = 'FAILURE'  # or whatever
 
-NOTE/DEPRECATION: The object yielded also has a '.presentation' field to be
+*** note
+**DEPRECATED**: The object yielded also has a '.presentation' field to be
 compatible with code that treats the yielded object as a StepData object. If
 you see such code, please update it to treat the yielded object directly as
 StepPresentation instead.
+***
 
 Args:
   * name (str): The name of this step.

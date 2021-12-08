@@ -80,23 +80,33 @@ class Printer(object):
     if node.docstring:
       self()
       lines = node.docstring.splitlines()
-      deprecation_blocks = []
+      deprecation_blocks = []   # [('note'|'aside'|'promo', start_idx, end_idx)]
       cur_block_start = None
+      cur_block_kind = None
       for i, line in enumerate(lines):
         if cur_block_start is None:
           if line.startswith('DEPRECATED'):
             cur_block_start = i
+            cur_block_kind = 'note'
+          if line.startswith('NOTE'):
+            cur_block_start = i
+            cur_block_kind = 'promo'
+          if line.startswith('FYI'):
+            cur_block_start = i
+            cur_block_kind = 'aside'
         else:
           if not line:
-            deprecation_blocks.append((cur_block_start, i))
+            deprecation_blocks.append((cur_block_kind, cur_block_start, i))
             cur_block_start = None
+            cur_block_kind = None
       if cur_block_start is not None:
-        deprecation_blocks.append((cur_block_start, len(lines)))
+        deprecation_blocks.append((cur_block_kind, cur_block_start, len(lines)))
 
-      for start, end in reversed(deprecation_blocks):
+      for kind, start, end in reversed(deprecation_blocks):
         lines.insert(end, '***')
-        lines[start] = lines[start].replace('DEPRECATED', '**DEPRECATED**', 1)
-        lines.insert(start, '*** note')
+        if kind == 'note':
+          lines[start] = lines[start].replace('DEPRECATED', '**DEPRECATED**', 1)
+        lines.insert(start, '*** '+kind)
 
       for line in lines:
         self(line)
