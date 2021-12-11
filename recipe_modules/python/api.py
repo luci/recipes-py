@@ -11,7 +11,7 @@ unbuffered flag, etc.)
 
 import textwrap
 
-from builtins import str as text
+from builtins import str as text_type
 
 from recipe_engine import config_types
 from recipe_engine import recipe_api
@@ -82,7 +82,9 @@ class PythonApi(recipe_api.RecipeApi):
     compile(program, '<string>', 'exec', dont_inherit=1)
 
     try:
-      raw = program.encode('utf-8') if isinstance(program, text) else program
+      raw = (
+        program.encode('utf-8') if isinstance(program, text_type) else program
+      )
       self(name, self.m.raw_io.input(raw, '.py'), **kwargs)
     finally:
       result = self.m.step.active_result
@@ -91,8 +93,11 @@ class PythonApi(recipe_api.RecipeApi):
 
     return result
 
-  def result_step(self, name, text, retcode, as_log=None, **kwargs):
+  def result_step(
+      self, name, text, retcode, as_log=None, **kwargs): # pragma: no cover
     """Runs a no-op step that exits with a specified return code.
+
+    DEPRECATED: crbug.com/1276131
 
     The recipe engine will raise an exception when seeing a return code != 0.
 
@@ -100,6 +105,7 @@ class PythonApi(recipe_api.RecipeApi):
     discouraged and may be deprecated in the future. Please concatenate the
     lines with newline character instead.
     """
+    self.m.warning.issue("PYTHON_RESULT_STEP_DEPRECATED")
     try:
       return self.inline(
           name,
@@ -115,14 +121,32 @@ class PythonApi(recipe_api.RecipeApi):
       else:
         self.m.step.active_result.presentation.step_text = text
 
-  def succeeding_step(self, name, text, as_log=None):
-    """Runs a succeeding step (exits 0)."""
+  @recipe_api.ignore_warnings("recipe_engine/PYTHON_RESULT_STEP_DEPRECATED")
+  def succeeding_step(self, name, text, as_log=None): # pragma: no cover
+    """Runs a succeeding step (exits 0).
+
+    DEPRECATED: crbug.com/1276131
+    """
+    self.m.warning.issue(
+        "PYTHON_SUCCEEDING_STEP_DEPRECATED" + ("_LOG" if as_log else ""))
     return self.result_step(name, text, 0, as_log=as_log)
 
-  def failing_step(self, name, text, as_log=None):
-    """Runs a failing step (exits 1)."""
+  @recipe_api.ignore_warnings("recipe_engine/PYTHON_RESULT_STEP_DEPRECATED")
+  def failing_step(self, name, text, as_log=None): # pragma: no cover
+    """Runs a failing step (exits 1).
+
+    DEPRECATED: crbug.com/1276131
+    """
+    self.m.warning.issue(
+        "PYTHON_FAILING_STEP_DEPRECATED" + ("_LOG" if as_log else ""))
     return self.result_step(name, text, 1, as_log=as_log)
 
-  def infra_failing_step(self, name, text, as_log=None):
-    """Runs an infra-failing step (exits 1)."""
+  @recipe_api.ignore_warnings("recipe_engine/PYTHON_RESULT_STEP_DEPRECATED")
+  def infra_failing_step(self, name, text, as_log=None): # pragma: no cover
+    """Runs an infra-failing step (exits 1).
+
+    DEPRECATED: crbug.com/1276131
+    """
+    self.m.warning.issue(
+        "PYTHON_INFRA_FAILING_STEP_DEPRECATED" + ("_LOG" if as_log else ""))
     return self.result_step(name, text, 1, as_log=as_log, infra_step=True)

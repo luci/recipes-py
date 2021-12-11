@@ -8,4 +8,5 @@ DEPS = [
   'context',
   'raw_io',
   'step',
+  'warning',
 ]

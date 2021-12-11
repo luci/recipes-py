@@ -135,7 +135,6 @@
   * [proto:tests/encode_decode](#recipes-proto_tests_encode_decode) (Python3 ✅)
   * [proto:tests/placeholders](#recipes-proto_tests_placeholders) (Python3 ✅)
   * [python:examples/full](#recipes-python_examples_full) (Python3 ✅) &mdash; Launches the repo bundler.
-  * [python:tests/infra_failing_step](#recipes-python_tests_infra_failing_step) (Python3 ✅) &mdash; Tests for api.
   * [random:tests/full](#recipes-random_tests_full) (Python3 ✅)
   * [raw_io:examples/full](#recipes-raw_io_examples_full) (Python3 ✅)
   * [raw_io:tests/output_mismatch](#recipes-raw_io_tests_output_mismatch) (Python3 ✅)
@@ -2668,7 +2667,7 @@ Args:
     - TEXTPB: google.protobuf.text_format.Parse
 ### *recipe_modules* / [python](/recipe_modules/python)
 
-[DEPS](/recipe_modules/python/__init__.py#7): [context](#recipe_modules-context), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/python/__init__.py#7): [context](#recipe_modules-context), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [warning](#recipe_modules-warning)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
@@ -2707,13 +2706,21 @@ Args:
 **Returns (`step_data.StepData`)** - The StepData object as returned by
 api.step.
 
-&mdash; **def [failing\_step](/recipe_modules/python/api.py#122)(self, name, text, as_log=None):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [failing\_step](/recipe_modules/python/api.py#134)(self, name, text, as_log=None):**
 
 Runs a failing step (exits 1).
 
-&mdash; **def [infra\_failing\_step](/recipe_modules/python/api.py#126)(self, name, text, as_log=None):**
+*** note
+**DEPRECATED**: crbug.com/1276131
+***
+
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [infra\_failing\_step](/recipe_modules/python/api.py#144)(self, name, text, as_log=None):**
 
 Runs an infra-failing step (exits 1).
+
+*** note
+**DEPRECATED**: crbug.com/1276131
+***
 
 &mdash; **def [inline](/recipe_modules/python/api.py#65)(self, name, program, add_python_log=True, \*\*kwargs):**
 
@@ -2732,9 +2739,13 @@ Args:
 **Returns (`step_data.StepData`)** - The StepData object as returned by
 api.step.
 
-&mdash; **def [result\_step](/recipe_modules/python/api.py#94)(self, name, text, retcode, as_log=None, \*\*kwargs):**
+&mdash; **def [result\_step](/recipe_modules/python/api.py#96)(self, name, text, retcode, as_log=None, \*\*kwargs):**
 
 Runs a no-op step that exits with a specified return code.
+
+*** note
+**DEPRECATED**: crbug.com/1276131
+***
 
 The recipe engine will raise an exception when seeing a return code != 0.
 
@@ -2742,9 +2753,13 @@ The text is expected to be str. Passing a list of lines(str) works but is
 discouraged and may be deprecated in the future. Please concatenate the
 lines with newline character instead.
 
-&mdash; **def [succeeding\_step](/recipe_modules/python/api.py#118)(self, name, text, as_log=None):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [succeeding\_step](/recipe_modules/python/api.py#124)(self, name, text, as_log=None):**
 
 Runs a succeeding step (exits 0).
+
+*** note
+**DEPRECATED**: crbug.com/1276131
+***
 ### *recipe_modules* / [random](/recipe_modules/random)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
@@ -4703,15 +4718,6 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 Launches the repo bundler.
 
 &mdash; **def [RunSteps](/recipe_modules/python/examples/full.py#17)(api):**
-### *recipes* / [python:tests/infra\_failing\_step](/recipe_modules/python/tests/infra_failing_step.py)
-
-[DEPS](/recipe_modules/python/tests/infra_failing_step.py#11): [python](#recipe_modules-python), [step](#recipe_modules-step)
-
-PYTHON_VERSION_COMPATIBILITY: PY2+3
-
-Tests for api.python.infra_failing_step.
-
-&mdash; **def [RunSteps](/recipe_modules/python/tests/infra_failing_step.py#17)(api):**
 ### *recipes* / [random:tests/full](/recipe_modules/random/tests/full.py)
 
 [DEPS](/recipe_modules/random/tests/full.py#7): [random](#recipe_modules-random), [step](#recipe_modules-step)

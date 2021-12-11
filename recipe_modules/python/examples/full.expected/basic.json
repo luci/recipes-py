@@ -2,30 +2,6 @@
   {
     "cmd": [
       "python",
-      "-u",
-      "import sys; sys.exit(0)"
-    ],
-    "name": "success",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@success@This step is a success@@@",
-      "@@@STEP_LOG_END@success@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "import sys; sys.exit(1)"
-    ],
-    "name": "failure",
-    "~followup_annotations": [
-      "@@@STEP_TEXT@This step is a failure :(@@@",
-      "@@@STEP_FAILURE@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "python",
       "-m",
       "json.tool",
       "{\"something\":[true,true]}"

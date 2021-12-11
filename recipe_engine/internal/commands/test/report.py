@@ -380,6 +380,7 @@ def _print_warnings(warning_result, recipe_deps):
           bug.host, bug.project, bug.id)
 
     if definition.monorail_bug:
+      print()
       if len(definition.monorail_bug) == 1:
         print('Bug Link: %s' % (
             construct_monorail_link(definition.monorail_bug[0]),))

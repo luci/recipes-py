@@ -15,17 +15,6 @@ DEPS = [
 
 
 def RunSteps(api):
-  api.python.succeeding_step("success", ["This step is a success"],
-                             as_log='success')
-
-  # Test that a failing step raises StepFailure.
-  was_failure = False
-  try:
-    api.python.failing_step("failure", "This step is a failure :(")
-  except api.step.StepFailure:
-    was_failure = True
-  assert was_failure
-
   # Test that unbufferred actually removes PYTHONUNBUFFERED envvar.
   api.python('run json.tool', '-m', [
     'json.tool', api.raw_io.input_text('{"something":[true,true]}'),

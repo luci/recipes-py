@@ -789,6 +789,7 @@ will contain output like:
     Description:
       The `badarg` argument on mymodule.swizzle is deprecated and replaced with swizmod
     Deadline: 2020-01-01
+
     Bug Link: https://bugs.chromium.org/p/chromium/issues/detail?id=123456
     Call Sites:
       /path/to/recipe/folder/recipes/A.py:123 (and 234, 456)
@@ -804,6 +805,7 @@ will contain output like:
 
       MyModule contains infra specific logic.
     Deadline: 2020-12-31
+
     Bug Links:
       https://bugs.chromium.org/p/chromium/issues/detail?id=987654
       https://bugs.chromium.org/p/chrome-operations/issues/detail?id=654321

@@ -464,6 +464,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     Description:
       The `badarg` argument on my_mod\.swizzle is deprecated\.
     Deadline: 2020-01-01
+
     Bug Link: https://bugs\.chromium\.org/p/chromium/issues/detail\?id=123456
     Call Sites:
     .+/recipe_modules/cool_mod/api\.py:\d+
@@ -505,6 +506,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
       my_mod is deprecated\.
       Use other_mod instead\.
     Deadline: 2020-12-31
+
     Bug Link: https://bugs\.chromium\.org/p/chrome\-operations/issues/detail\?id=654321
     Import Sites:
     .+/recipe_modules/my_mod/tests/full\.py
@@ -540,6 +542,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
       my_mod is deprecated\.
       Use other_mod instead\.
     Deadline: 2020-12-31
+
     Bug Link: https://bugs\.chromium\.org/p/chrome\-operations/issues/detail\?id=654321
     Call Sites:
     .+/recipe_modules/my_mod/tests/full\.py:3
@@ -734,6 +737,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
       my_mod is deprecated\.
       Use other_mod instead\.
     Deadline: 2020-12-31
+
     Bug Link: https://bugs\.chromium\.org/p/chrome\-operations/issues/detail\?id=654321
     Import Sites:
     .+/main/recipes/bad\.py
@@ -744,6 +748,7 @@ class WarningIntegrationTests(test_env.RecipeEngineUnitTest):
     Description:
       The `badarg` argument on my_mod\.swizzle is deprecated\.
     Deadline: 2020-01-01
+
     Bug Link: https://bugs\.chromium\.org/p/chromium/issues/detail\?id=123456
     Call Sites:
     .+/main/recipes/bad\.py:3

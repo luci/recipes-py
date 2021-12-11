@@ -1,0 +1,88 @@
+monorail_bug_default {
+  host: "bugs.chromium.org"
+  project: "chromium"
+}
+
+warning {
+  name: "PYTHON_RESULT_STEP_DEPRECATED"
+  description: "`api.python.result_step` is deprecated."
+  description: ""
+  description: "See bug for how to fix this usage."
+  monorail_bug {
+    id: 1276131
+  }
+}
+
+warning {
+  name: "PYTHON_SUCCEEDING_STEP_DEPRECATED"
+  description: "`api.python.succeeding_step` is deprecated."
+  description: ""
+  description: "Instead, please do:"
+  description: "  api.step(\"name\", None).presentation.step_text = \"some text\""
+  monorail_bug {
+    id: 1276131
+  }
+}
+
+warning {
+  name: "PYTHON_SUCCEEDING_STEP_DEPRECATED_LOG"
+  description: "`api.python.succeeding_step` is deprecated."
+  description: ""
+  description: "Instead, please do:"
+  description: "  api.step(\"name\", None).presentation.logs[\"logname\"] = \"some text\""
+  monorail_bug {
+    id: 1276131
+  }
+}
+
+warning {
+  name: "PYTHON_FAILING_STEP_DEPRECATED"
+  description: "`api.python.failing_step` is deprecated."
+  description: ""
+  description: "Instead, please use:"
+  description: "  presentation = api.step(\"name\", None).presentation"
+  description: "  presentation.step_text = \"some text\""
+  description: "  presentation.status = api.step.FAILURE"
+  monorail_bug {
+    id: 1276131
+  }
+}
+
+warning {
+  name: "PYTHON_FAILING_STEP_DEPRECATED_LOG"
+  description: "`api.python.failing_step` is deprecated."
+  description: ""
+  description: "Instead, please use:"
+  description: "  presentation = api.step(\"name\", None).presentation"
+  description: "  presentation.logs[\"logname\"] = \"some text\""
+  description: "  presentation.status = api.step.FAILURE"
+  monorail_bug {
+    id: 1276131
+  }
+}
+
+warning {
+  name: "PYTHON_INFRA_FAILING_STEP_DEPRECATED"
+  description: "`api.python.infra_failing_step` is deprecated."
+  description: ""
+  description: "Instead, please use:"
+  description: "  presentation = api.step(\"name\", None).presentation"
+  description: "  presentation.step_text = \"some text\""
+  description: "  presentation.status = api.step.IFNRA_FAILURE"
+  monorail_bug {
+    id: 1276131
+  }
+}
+
+warning {
+  name: "PYTHON_INFRA_FAILING_STEP_DEPRECATED_LOG"
+  description: "`api.python.infra_failing_step` is deprecated."
+  description: ""
+  description: "Instead, please use:"
+  description: "  presentation = api.step(\"name\", None).presentation"
+  description: "  presentation.logs[\"logname\"] = \"some text\""
+  description: "  presentation.status = api.step.IFNRA_FAILURE"
+  monorail_bug {
+    id: 1276131
+  }
+}
