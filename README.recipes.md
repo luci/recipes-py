@@ -120,6 +120,7 @@
   * [futures:examples/lottasteps](#recipes-futures_examples_lottasteps) (Python3 ✅) &mdash; This tests the engine's ability to handle many simultaneously-started steps.
   * [futures:examples/metadata](#recipes-futures_examples_metadata) (Python3 ✅) &mdash; This tests metadata features of the Future object.
   * [futures:examples/result](#recipes-futures_examples_result) (Python3 ✅)
+  * [futures:examples/semaphore](#recipes-futures_examples_semaphore) (Python3 ✅)
   * [generator_script:examples/full](#recipes-generator_script_examples_full) (Python3 ✅)
   * [golang:examples/full](#recipes-golang_examples_full) (Python3 ✅)
   * [json:examples/full](#recipes-json_examples_full) (Python3 ✅)
@@ -1800,11 +1801,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Implements in-recipe concurrency via green threads.
 
-#### **class [FuturesApi](/recipe_modules/futures/api.py#41)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [FuturesApi](/recipe_modules/futures/api.py#42)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
 
 Provides access to the Recipe concurrency primitives.
 
-&emsp; **@staticmethod**<br>&mdash; **def [iwait](/recipe_modules/futures/api.py#275)(futures, timeout=None, count=None):**
+&emsp; **@staticmethod**<br>&mdash; **def [iwait](/recipe_modules/futures/api.py#302)(futures, timeout=None, count=None):**
 
 Iteratively yield up to `count` Futures as they become done.
 
@@ -1847,7 +1848,34 @@ Yields futures in the order in which they complete until we hit the
 timeout or count. May also be used with a context manager to avoid
 leaking resources if you don't plan on consuming the entire iterable.
 
-&mdash; **def [make\_channel](/recipe_modules/futures/api.py#154)(self):**
+&mdash; **def [make\_bounded\_semaphore](/recipe_modules/futures/api.py#154)(self, value=1):**
+
+Returns a gevent.BoundedSemaphore with depth `value`.
+
+This can be used as a context-manager to create concurrency-limited sections
+like:
+
+    def worker(api, sem, i):
+      with api.step.nest('worker %d' % i):
+        with sem:
+          api.step('one at a time', ...)
+
+        api.step('unrestricted concurrency' , ...)
+
+    sem = api.future.make_semaphore()
+    for i in xrange(100):
+      api.futures.spawn(fn, sem, i)
+
+*** promo
+NOTE: If you use the BoundedSemaphore without the context-manager syntax, it
+could lead to difficult-to-debug deadlocks in your recipe.
+***
+
+*** promo
+NOTE: This method will raise ValueError if used with @@@annotation@@@ mode.
+***
+
+&mdash; **def [make\_channel](/recipe_modules/futures/api.py#181)(self):**
 
 Returns a single-slot communication device for passing data and control
 between concurrent functions.
@@ -1867,9 +1895,11 @@ correctly.
 It is VERY RARE to need to use a Channel. You should avoid using this unless
 you carefully consider and avoid the possibility of introducing deadlocks.
 
-Channels will raise ValueError if used with @@@annotation@@@ mode.
+*** promo
+NOTE: This method will raise ValueError if used with @@@annotation@@@ mode.
+***
 
-&mdash; **def [spawn](/recipe_modules/futures/api.py#178)(self, func, \*args, \*\*kwargs):**
+&mdash; **def [spawn](/recipe_modules/futures/api.py#205)(self, func, \*args, \*\*kwargs):**
 
 Prepares a Future to run `func(*args, **kwargs)` concurrently.
 
@@ -1907,7 +1937,7 @@ Kwargs:
 
 Returns a Future of `func`'s result.
 
-&mdash; **def [spawn\_immediate](/recipe_modules/futures/api.py#227)(self, func, \*args, \*\*kwargs):**
+&mdash; **def [spawn\_immediate](/recipe_modules/futures/api.py#254)(self, func, \*args, \*\*kwargs):**
 
 Returns a Future to the concurrently running `func(*args, **kwargs)`.
 
@@ -1927,7 +1957,7 @@ Kwargs:
 
 Returns a Future of `func`'s result.
 
-&emsp; **@staticmethod**<br>&mdash; **def [wait](/recipe_modules/futures/api.py#256)(futures, timeout=None, count=None):**
+&emsp; **@staticmethod**<br>&mdash; **def [wait](/recipe_modules/futures/api.py#283)(futures, timeout=None, count=None):**
 
 Blocks until `count` `futures` are done (or timeout occurs) then
 returns the list of done futures.
@@ -4611,6 +4641,15 @@ This tests metadata features of the Future object.
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipe_modules/futures/examples/result.py#13)(api):**
+### *recipes* / [futures:examples/semaphore](/recipe_modules/futures/examples/semaphore.py)
+
+[DEPS](/recipe_modules/futures/examples/semaphore.py#7): [futures](#recipe_modules-futures), [python](#recipe_modules-python), [step](#recipe_modules-step)
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/semaphore.py#21)(api):**
+
+&mdash; **def [worker](/recipe_modules/futures/examples/semaphore.py#14)(api, sem, i, N):**
 ### *recipes* / [generator\_script:examples/full](/recipe_modules/generator_script/examples/full.py)
 
 [DEPS](/recipe_modules/generator_script/examples/full.py#9): [generator\_script](#recipe_modules-generator_script), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

@@ -5,6 +5,7 @@
 """Implements in-recipe concurrency via green threads."""
 
 import gevent
+import gevent.lock
 import gevent.queue
 
 import attr
@@ -150,6 +151,32 @@ class FuturesApi(RecipeApi):
         done = gevent.wait([self._greenlet])[0]
         return done.exception
 
+  def make_bounded_semaphore(self, value=1):
+    """Returns a gevent.BoundedSemaphore with depth `value`.
+
+    This can be used as a context-manager to create concurrency-limited sections
+    like:
+
+        def worker(api, sem, i):
+          with api.step.nest('worker %d' % i):
+            with sem:
+              api.step('one at a time', ...)
+
+            api.step('unrestricted concurrency' , ...)
+
+        sem = api.future.make_semaphore()
+        for i in xrange(100):
+          api.futures.spawn(fn, sem, i)
+
+    NOTE: If you use the BoundedSemaphore without the context-manager syntax, it
+    could lead to difficult-to-debug deadlocks in your recipe.
+
+    NOTE: This method will raise ValueError if used with @@@annotation@@@ mode.
+    """
+    if not self.concurrency_client.supports_concurrency: # pragma: no cover
+      # test mode always supports concurrency, hence the nocover
+      raise ValueError('BoundedSemaphore not allowed in @@@annotation@@@ mode')
+    return gevent.lock.BoundedSemaphore(value=value)
 
   def make_channel(self):
     """Returns a single-slot communication device for passing data and control
@@ -168,7 +195,7 @@ class FuturesApi(RecipeApi):
     It is VERY RARE to need to use a Channel. You should avoid using this unless
     you carefully consider and avoid the possibility of introducing deadlocks.
 
-    Channels will raise ValueError if used with @@@annotation@@@ mode.
+    NOTE: This method will raise ValueError if used with @@@annotation@@@ mode.
     """
     if not self.concurrency_client.supports_concurrency: # pragma: no cover
       # test mode always supports concurrency, hence the nocover

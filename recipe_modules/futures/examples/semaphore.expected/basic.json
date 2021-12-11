@@ -1,0 +1,305 @@
+[
+  {
+    "cmd": [],
+    "name": "worker 0"
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "5"
+    ],
+    "name": "worker 0.serialized work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "50"
+    ],
+    "name": "worker 0.parallel work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "worker 1"
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "5"
+    ],
+    "name": "worker 1.serialized work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "50"
+    ],
+    "name": "worker 1.parallel work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "worker 2"
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "5"
+    ],
+    "name": "worker 2.serialized work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "50"
+    ],
+    "name": "worker 2.parallel work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "worker 3"
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "5"
+    ],
+    "name": "worker 3.serialized work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "50"
+    ],
+    "name": "worker 3.parallel work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "worker 4"
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "5"
+    ],
+    "name": "worker 4.serialized work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "50"
+    ],
+    "name": "worker 4.parallel work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "worker 5"
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "5"
+    ],
+    "name": "worker 5.serialized work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "50"
+    ],
+    "name": "worker 5.parallel work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "worker 6"
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "5"
+    ],
+    "name": "worker 6.serialized work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "50"
+    ],
+    "name": "worker 6.parallel work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "worker 7"
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "5"
+    ],
+    "name": "worker 7.serialized work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "50"
+    ],
+    "name": "worker 7.parallel work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "worker 8"
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "5"
+    ],
+    "name": "worker 8.serialized work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "50"
+    ],
+    "name": "worker 8.parallel work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "worker 9"
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "5"
+    ],
+    "name": "worker 9.serialized work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python3",
+      "RECIPE[recipe_engine::futures:examples/semaphore].resources/sleep.py",
+      "50"
+    ],
+    "name": "worker 9.parallel work",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "Sleeper 0 complete"
+  },
+  {
+    "cmd": [],
+    "name": "Sleeper 1 complete"
+  },
+  {
+    "cmd": [],
+    "name": "Sleeper 2 complete"
+  },
+  {
+    "cmd": [],
+    "name": "Sleeper 3 complete"
+  },
+  {
+    "cmd": [],
+    "name": "Sleeper 4 complete"
+  },
+  {
+    "cmd": [],
+    "name": "Sleeper 5 complete"
+  },
+  {
+    "cmd": [],
+    "name": "Sleeper 6 complete"
+  },
+  {
+    "cmd": [],
+    "name": "Sleeper 7 complete"
+  },
+  {
+    "cmd": [],
+    "name": "Sleeper 8 complete"
+  },
+  {
+    "cmd": [],
+    "name": "Sleeper 9 complete"
+  },
+  {
+    "name": "$result"
+  }
+]
