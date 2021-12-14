@@ -30,9 +30,15 @@ class StepApi(recipe_api.RecipeApiPlain):
     super(StepApi, self).__init__(**kwargs)
     self._prefix_path = step_properties.get('prefix_path', [])
 
+  # Valid step status values.
   EXCEPTION = 'EXCEPTION'
   FAILURE = 'FAILURE'
+  INFRA_FAILURE = 'EXCEPTION'  # Buildbucket name for this status
   SUCCESS = 'SUCCESS'
+  # Note: although recipes currently have this WARNING status, it's not
+  # effecively hooked up to anything in the UI and is treated as SUCCESS.
+  #
+  # crbug.com/854099
   WARNING = 'WARNING'
 
   EXT_TO_CODEC = {
@@ -306,6 +312,41 @@ class StepApi(recipe_api.RecipeApiPlain):
           else:
             pres.status = self.SUCCESS
 
+  # pylint: disable=too-many-arguments
+  def empty(self, name, status="SUCCESS", step_text=None, stdout_text=None,
+            raise_on_failure=True):
+    """Runs an "empty" step (one without any command).
+
+    This can be useful to insert a status step/message in the UI, or summarize
+    some computation which occurred inside the recipe logic.
+
+    Args:
+      name (str) - The name of the step.
+      status step.(INFRA_FAILURE|FAILURE|SUCCESS) - The initial status for this
+        step.
+      step_text (str) - Some text to set for the "step_text" on the presentation
+        of this step.
+      stdout_text (str|list(str)) - Some text to set for the log named "stdout" of this
+        step. If this is a list(str), will be treated as separate lines of the
+        log. Otherwise newlines will be respected.
+      raise_on_failure (bool) - If set, and `status` is not SUCCESS, raise
+        the appropriate exception.
+
+    Returns step_data.StepData.
+    """
+    ret = self(name, None)
+    ret.presentation.status = status
+    if step_text:
+      ret.presentation.step_text = step_text
+    if stdout_text:
+      if hasattr(stdout_text, 'splitlines'):
+        ret.presentation.logs['stdout'] = stdout_text.splitlines()
+      else:
+        ret.presentation.logs['stdout'] = stdout_text
+    if raise_on_failure:
+      self.raise_on_failure(ret)
+    return ret
+
   @property
   def defer_results(self):
     """ See recipe_api.py for docs. """
@@ -577,7 +618,7 @@ class StepApi(recipe_api.RecipeApiPlain):
                stdin=None,
                step_test_data=None,
                cost=_ResourceCost()):
-    """Returns a step dictionary which is compatible with annotator.py.
+    """Runs a step (subprocess).
 
     Args:
       * name (string): The name of this step.

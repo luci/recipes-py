@@ -157,6 +157,7 @@
   * [step:examples/full](#recipes-step_examples_full) (Python3 ✅)
   * [step:tests/active_result](#recipes-step_tests_active_result) (Python3 ✅)
   * [step:tests/defer](#recipes-step_tests_defer) (Python3 ✅)
+  * [step:tests/empty](#recipes-step_tests_empty) (Python3 ✅)
   * [step:tests/inject_paths](#recipes-step_tests_inject_paths) (Python3 ✅)
   * [step:tests/nested](#recipes-step_tests_nested) (Python3 ✅)
   * [step:tests/raise_on_failure](#recipes-step_tests_raise_on_failure) (Python3 ✅)
@@ -3307,7 +3308,7 @@ Step is the primary API for running steps (external programs, etc.)
 
 #### **class [StepApi](/recipe_modules/step/api.py#26)([RecipeApiPlain](/recipe_engine/recipe_api.py#735)):**
 
-&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#139)(self):**
+&emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#145)(self):**
 
 InfraFailure is a subclass of StepFailure, and will translate to a purple
 build.
@@ -3315,15 +3316,15 @@ build.
 This exception is raised from steps which are marked as `infra_step`s when
 they fail.
 
-&emsp; **@property**<br>&mdash; **def [MAX\_CPU](/recipe_modules/step/api.py#111)(self):**
+&emsp; **@property**<br>&mdash; **def [MAX\_CPU](/recipe_modules/step/api.py#117)(self):**
 
 Returns the maximum number of millicores this system has.
 
-&emsp; **@property**<br>&mdash; **def [MAX\_MEMORY](/recipe_modules/step/api.py#116)(self):**
+&emsp; **@property**<br>&mdash; **def [MAX\_MEMORY](/recipe_modules/step/api.py#122)(self):**
 
 Returns the maximum amount of memory on the system in MB.
 
-&mdash; **def [ResourceCost](/recipe_modules/step/api.py#44)(self, cpu=500, memory=50, disk=0, net=0):**
+&mdash; **def [ResourceCost](/recipe_modules/step/api.py#50)(self, cpu=500, memory=50, disk=0, net=0):**
 
 A structure defining the resources that a given step may need.
 
@@ -3382,7 +3383,7 @@ Returns:
   that passing `None` to api.step for the cost kwarg is equivalent to
   `ResourceCost(0, 0, 0, 0)`.
 
-&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#121)(self):**
+&emsp; **@property**<br>&mdash; **def [StepFailure](/recipe_modules/step/api.py#127)(self):**
 
 This is the base Exception class for all step failures.
 
@@ -3392,14 +3393,14 @@ Usage:
   * `raise api.StepFailure("some reason")`
   * `except api.StepFailure:`
 
-&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#133)(self):**
+&emsp; **@property**<br>&mdash; **def [StepWarning](/recipe_modules/step/api.py#139)(self):**
 
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#566)(self, name, cmd, ok_ret=(0,), infra_step=False, raise_on_failure=True, wrapper=(), timeout=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#607)(self, name, cmd, ok_ret=(0,), infra_step=False, raise_on_failure=True, wrapper=(), timeout=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
 
-Returns a step dictionary which is compatible with annotator.py.
+Runs a step (subprocess).
 
 Args:
   * name (string): The name of this step.
@@ -3451,7 +3452,7 @@ Args:
 
 Returns a `step_data.StepData` for the running step.
 
-&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#149)(self):**
+&emsp; **@property**<br>&mdash; **def [active\_result](/recipe_modules/step/api.py#155)(self):**
 
 The currently active (open) result from the last step that was run. This
 is a `step_data.StepData` object.
@@ -3482,7 +3483,7 @@ finally:
     api.step.active_result.presentation.step_text = new_step_text
 ```
 
-&mdash; **def [close\_non\_nest\_step](/recipe_modules/step/api.py#182)(self):**
+&mdash; **def [close\_non\_nest\_step](/recipe_modules/step/api.py#188)(self):**
 
 Call this to explicitly terminate the currently open non-nest step.
 
@@ -3491,11 +3492,32 @@ context (if any).
 
 No-op if there's no currently active non-nest step.
 
-&emsp; **@property**<br>&mdash; **def [defer\_results](/recipe_modules/step/api.py#309)(self):**
+&emsp; **@property**<br>&mdash; **def [defer\_results](/recipe_modules/step/api.py#350)(self):**
 
 See recipe_api.py for docs. 
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#216)(self, name, status='worst'):**
+&mdash; **def [empty](/recipe_modules/step/api.py#316)(self, name, status='SUCCESS', step_text=None, stdout_text=None, raise_on_failure=True):**
+
+Runs an "empty" step (one without any command).
+
+This can be useful to insert a status step/message in the UI, or summarize
+some computation which occurred inside the recipe logic.
+
+Args:
+  name (str) - The name of the step.
+  status step.(INFRA_FAILURE|FAILURE|SUCCESS) - The initial status for this
+    step.
+  step_text (str) - Some text to set for the "step_text" on the presentation
+    of this step.
+  stdout_text (str|list(str)) - Some text to set for the log named "stdout" of this
+    step. If this is a list(str), will be treated as separate lines of the
+    log. Otherwise newlines will be respected.
+  raise_on_failure (bool) - If set, and `status` is not SUCCESS, raise
+    the appropriate exception.
+
+Returns step_data.StepData.
+
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [nest](/recipe_modules/step/api.py#222)(self, name, status='worst'):**
 
 Nest allows you to nest steps hierarchically on the build UI.
 
@@ -3564,7 +3586,7 @@ Args:
 Yields a StepPresentation for this dummy step, which you may update as you
 please.
 
-&mdash; **def [raise\_on\_failure](/recipe_modules/step/api.py#417)(self, result, status_override=None):**
+&mdash; **def [raise\_on\_failure](/recipe_modules/step/api.py#458)(self, result, status_override=None):**
 
 Raise an appropriate exception if a step is not successful.
 
@@ -3586,7 +3608,7 @@ Raises:
   * StepWarning if the step's status is WARNING
   * InfraFailure if the step's status is EXCEPTION or CANCELED
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#448)(self, name, cmd, build, raise_on_failure=True, output_path=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#489)(self, name, cmd, build, raise_on_failure=True, output_path=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
 
 Launch a sub-build by invoking a LUCI executable. All steps in the
 sub-build will appear as child steps of this step (Merge Step).
@@ -4910,6 +4932,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipe_modules/step/tests/defer.py#11)(api):**
+### *recipes* / [step:tests/empty](/recipe_modules/step/tests/empty.py)
+
+[DEPS](/recipe_modules/step/tests/empty.py#11): [step](#recipe_modules-step)
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+&mdash; **def [RunSteps](/recipe_modules/step/tests/empty.py#16)(api):**
 ### *recipes* / [step:tests/inject\_paths](/recipe_modules/step/tests/inject_paths.py)
 
 [DEPS](/recipe_modules/step/tests/inject_paths.py#7): [context](#recipe_modules-context), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

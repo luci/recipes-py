@@ -18,7 +18,7 @@ warning {
   description: "`api.python.succeeding_step` is deprecated."
   description: ""
   description: "Instead, please do:"
-  description: "  api.step(\"name\", None).presentation.step_text = \"some text\""
+  description: "  api.step.empty(\"name\", step_text=\"some text\")"
   monorail_bug {
     id: 1276131
   }
@@ -29,7 +29,7 @@ warning {
   description: "`api.python.succeeding_step` is deprecated."
   description: ""
   description: "Instead, please do:"
-  description: "  api.step(\"name\", None).presentation.logs[\"logname\"] = \"some text\""
+  description: "  api.step.empty(\"name\", stdout_text=\"some text\")"
   monorail_bug {
     id: 1276131
   }
@@ -40,10 +40,7 @@ warning {
   description: "`api.python.failing_step` is deprecated."
   description: ""
   description: "Instead, please use:"
-  description: "  result = api.step(\"name\", None)"
-  description: "  result.presentation.step_text = \"some text\""
-  description: "  result.presentation.status = api.step.FAILURE"
-  description: "  api.step.raise_on_failure(result)"
+  description: "  api.step.empty(\"name\", status=api.step.FAILURE, step_text=\"some text\")"
   monorail_bug {
     id: 1276131
   }
@@ -54,10 +51,7 @@ warning {
   description: "`api.python.failing_step` is deprecated."
   description: ""
   description: "Instead, please use:"
-  description: "  result = api.step(\"name\", None)"
-  description: "  result.presentation.logs[\"logname\"] = \"some text\""
-  description: "  result.presentation.status = api.step.FAILURE"
-  description: "  api.step.raise_on_failure(result)"
+  description: "  api.step.empty(\"name\", status=api.step.FAILURE, stdout_text=\"some text\")"
   monorail_bug {
     id: 1276131
   }
@@ -68,10 +62,7 @@ warning {
   description: "`api.python.infra_failing_step` is deprecated."
   description: ""
   description: "Instead, please use:"
-  description: "  result = api.step(\"name\", None)"
-  description: "  result.presentation.step_text = \"some text\""
-  description: "  result.presentation.status = api.step.EXCEPTION"
-  description: "  api.step.raise_on_failure(result)"
+  description: "  api.step.empty(\"name\", status=api.step.INFRA_FAILURE, step_text=\"some text\")"
   monorail_bug {
     id: 1276131
   }
@@ -82,10 +73,7 @@ warning {
   description: "`api.python.infra_failing_step` is deprecated."
   description: ""
   description: "Instead, please use:"
-  description: "  result = api.step(\"name\", None)"
-  description: "  result.presentation.logs[\"logname\"] = \"some text\""
-  description: "  result.presentation.status = api.step.EXCEPTION"
-  description: "  api.step.raise_on_failure(result)"
+  description: "  api.step.empty(\"name\", status=api.step.INFRA_FAILURE, stdout_text=\"some text\")"
   monorail_bug {
     id: 1276131
   }

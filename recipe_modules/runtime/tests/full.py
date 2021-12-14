@@ -20,11 +20,11 @@ def RunSteps(api):
 
   assert not api.runtime.in_global_shutdown, "Entered global_shutdown early"
 
-  api.step('compile', None)  # fake compile step
+  api.step.empty('compile')
 
   assert api.runtime.in_global_shutdown, "Not in global_shutdown after compile"
 
-  api.step('should_skip', None) # Should be skipped
+  api.step.empty('should_skip') # Should be skipped
 
 
 def GenTests(api):

@@ -278,7 +278,7 @@ class LUCIStepStream(StreamEngine.StepStream):
     self._step.status = {
       'SUCCESS': common.SUCCESS,
       'FAILURE': common.FAILURE,
-      'WARNING': common.SUCCESS, # TODO(iannucci): support WARNING
+      'WARNING': common.SUCCESS, # TODO(crbug.com/854099): support WARNING
       'EXCEPTION': common.INFRA_FAILURE,
       'CANCELED': common.CANCELED,
     }[status]
