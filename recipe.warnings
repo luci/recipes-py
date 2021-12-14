@@ -40,9 +40,10 @@ warning {
   description: "`api.python.failing_step` is deprecated."
   description: ""
   description: "Instead, please use:"
-  description: "  presentation = api.step(\"name\", None).presentation"
-  description: "  presentation.step_text = \"some text\""
-  description: "  presentation.status = api.step.FAILURE"
+  description: "  result = api.step(\"name\", None)"
+  description: "  result.presentation.step_text = \"some text\""
+  description: "  result.presentation.status = api.step.FAILURE"
+  description: "  api.step.raise_on_failure(result)"
   monorail_bug {
     id: 1276131
   }
@@ -53,9 +54,10 @@ warning {
   description: "`api.python.failing_step` is deprecated."
   description: ""
   description: "Instead, please use:"
-  description: "  presentation = api.step(\"name\", None).presentation"
-  description: "  presentation.logs[\"logname\"] = \"some text\""
-  description: "  presentation.status = api.step.FAILURE"
+  description: "  result = api.step(\"name\", None)"
+  description: "  result.presentation.logs[\"logname\"] = \"some text\""
+  description: "  result.presentation.status = api.step.FAILURE"
+  description: "  api.step.raise_on_failure(result)"
   monorail_bug {
     id: 1276131
   }
@@ -66,9 +68,10 @@ warning {
   description: "`api.python.infra_failing_step` is deprecated."
   description: ""
   description: "Instead, please use:"
-  description: "  presentation = api.step(\"name\", None).presentation"
-  description: "  presentation.step_text = \"some text\""
-  description: "  presentation.status = api.step.IFNRA_FAILURE"
+  description: "  result = api.step(\"name\", None)"
+  description: "  result.presentation.step_text = \"some text\""
+  description: "  result.presentation.status = api.step.EXCEPTION"
+  description: "  api.step.raise_on_failure(result)"
   monorail_bug {
     id: 1276131
   }
@@ -79,9 +82,10 @@ warning {
   description: "`api.python.infra_failing_step` is deprecated."
   description: ""
   description: "Instead, please use:"
-  description: "  presentation = api.step(\"name\", None).presentation"
-  description: "  presentation.logs[\"logname\"] = \"some text\""
-  description: "  presentation.status = api.step.IFNRA_FAILURE"
+  description: "  result = api.step(\"name\", None)"
+  description: "  result.presentation.logs[\"logname\"] = \"some text\""
+  description: "  result.presentation.status = api.step.EXCEPTION"
+  description: "  api.step.raise_on_failure(result)"
   monorail_bug {
     id: 1276131
   }
