@@ -41,6 +41,7 @@ def add_arguments(parser):
                test specification wasn't expecting.
       ❌ (X) - `post_process` assertions failed.
       🛑 (S) - Test case specification was bad/invalid.
+      🟡 (W) - The test triggered one or more warnings with impending deadlines.
       🌟 (R) - (train mode) The test expectation was deleted from disk.
       💾 (D) - (train mode) The test expectation was updated on disk.
       🆘 (!) - Internal test harness error (file a Infra>Platform>Recipes bug)
@@ -85,6 +86,10 @@ def add_arguments(parser):
       action='store_false', default=True, dest='docs',
       help='Disable the check for readme file change.')
   run_p.add_argument(
+      '--show-warnings',
+      action='store_true', default=False, dest='show_warnings',
+      help='Show detailed warnings even on test failures.')
+  run_p.add_argument(
       '--py3-details',
       action='store_true', default=False, dest='py3_details',
       help='Show detailed errors from implicit py3 tests.')
@@ -125,6 +130,10 @@ def add_arguments(parser):
       '-x',
       action='store_true',
       help=('Stop running tests after first error or failure.'))
+  train_p.add_argument(
+      '--show-warnings',
+      action='store_true', default=False, dest='show_warnings',
+      help='Show detailed warnings even on test failures.')
   train_p.add_argument(
       '--py3-details',
       action='store_true', default=False, dest='py3_details',

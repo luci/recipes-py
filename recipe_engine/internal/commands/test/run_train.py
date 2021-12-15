@@ -216,7 +216,8 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
 
 
 def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
-         filtered_stacks, stop, jobs, enable_py3_details, py3_only):
+         filtered_stacks, stop, jobs, show_warnings, enable_py3_details,
+         py3_only):
   """Run tests in py2 and py3 subprocess pools.
 
   Side effects:
@@ -259,8 +260,8 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
     ))
 
   fail_tracker = FailTracker(recipe_deps.previous_test_failures_path)
-  reporter = report.Reporter(use_emoji, is_train, fail_tracker,
-                             enable_py3_details)
+  reporter = report.Reporter(recipe_deps, use_emoji, is_train, fail_tracker,
+                             show_warnings, enable_py3_details)
 
   py2_cov_dir = None
   py3_cov_dir = None
@@ -363,7 +364,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
       execute_queue('py3')
 
     if not py3_only:
-      reporter.final_report(total_cov, test_results, recipe_deps)
+      reporter.final_report(total_cov, test_results)
 
   finally:
     for thread in live_threads.py2 + live_threads.py3:
@@ -402,8 +403,8 @@ def main(args):
 
   try:
     _run(ret, args.recipe_deps, args.use_emoji, args.test_filters, is_train,
-         args.filtered_stacks, args.stop, args.jobs, args.py3_details,
-         args.py3_only)
+         args.filtered_stacks, args.stop, args.jobs, args.show_warnings,
+         args.py3_details, args.py3_only)
     _dump()
   except KeyboardInterrupt:
     args.docs = False  # skip docs

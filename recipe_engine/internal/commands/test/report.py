@@ -35,9 +35,13 @@ else:
 
 @attr.s
 class Reporter(object):
+  _recipe_deps = attr.ib()
+
   _use_emoji = attr.ib()
   _is_train = attr.ib()
   _fail_tracker = attr.ib()
+  # If set, will print warning details (even if there are other fatal failures)
+  _enable_warning_details = attr.ib()
   # Whether to show details for py3 implicit tests.
   _enable_py3_details = attr.ib()
 
@@ -138,8 +142,8 @@ class Reporter(object):
         continue
 
       _print_summary_info(
-          self._verbose, self._use_emoji, test_name, test_result,
-          self._space_for_columns)
+          self._recipe_deps, self._verbose, self._use_emoji, test_name,
+          test_result, self._space_for_columns)
       buf = (self._maybe_soft_failure_buf[py]
              if test_result.expect_py_incompatibility
              else self._long_err_buf[py])
@@ -151,7 +155,7 @@ class Reporter(object):
     return has_fail, err_count
 
 
-  def final_report(self, cov, outcome_msgs, recipe_deps):
+  def final_report(self, cov, outcome_msgs):
     """Prints all final information about the py2 and py3 test run to stdout.
     Raises SystemExit if the tests have failed.
 
@@ -164,7 +168,6 @@ class Reporter(object):
         Consulted for uncovered_modules and unused_expectation_files.
         coverage_percent is also populated as a side effect.
         Any uncovered_modules/unused_expectation_files count as a test failure.
-      * recipe_deps (RecipeDeps) - The loaded recipe repo dependencies.
 
     Side-effects: Populates outcome_msg.coverage_percent.
 
@@ -227,6 +230,20 @@ class Reporter(object):
         print('  ', expect_file)
       print()
 
+    warning_result = _collect_warning_result(outcome_msgs)
+    if warning_result:
+      print('------')
+      if len(warning_result) == 1:
+        print('Found 1 warning')
+      else:
+        print('Found %d warnings' % len(warning_result))
+      print()
+      if self._enable_warning_details or not (soft_fail or fail):
+        _print_warnings(warning_result, self._recipe_deps)
+      else:
+        print('Fix test failures or pass --show-warnings for details.')
+      print()
+
     if fail:
       print('------')
       print('FAILED')
@@ -258,19 +275,19 @@ class Reporter(object):
       print('dependency has claimed an incompatible python version.')
       sys.exit(1)
 
-    warning_result = _collect_warning_result(outcome_msgs)
-    if warning_result:
-      _print_warnings(warning_result, recipe_deps)
-      print('------')
-      print('TESTS OK with %d warnings' % len(warning_result))
-    else:
-      print('TESTS OK')
+    print('------')
+    print('TESTS OK')
 
 
 
 # Internal helper stuff
 
-
+# Map of top-level field name (in recipe_engine.internal.test.Outcome)
+# to:
+#
+#   (success, verbose message, emoji icon, text icon)
+#
+# _check_field will scan for the first entry which has fields set.
 FIELD_TO_DISPLAY = collections.OrderedDict([
   # pylint: disable=bad-whitespace
   ('internal_error', (False, 'internal testrunner error',           '🆘', '!')),
@@ -280,20 +297,12 @@ FIELD_TO_DISPLAY = collections.OrderedDict([
   ('check',          (False, 'failed post_process check(s)',        '❌', 'X')),
   ('diff',           (False, 'expectation file has diff',           '⚡', 'D')),
 
-  ('warnings',       (True,  'encounter warning(s)',                '🟡', 'W')),
   ('removed',        (True,  'removed expectation file',            '🌟', 'R')),
   ('written',        (True,  'updated expectation file',            '💾', 'D')),
-
-  # We use '.' even in emoji mode as this is the vast majority of outcomes when
-  # training recipes. This makes the other icons pop much better.
-  (None,             (True,  '',                                    '.', '.'))
 ])
 
 
 def _check_field(test_result, field_name):
-  if field_name is None:
-    return FIELD_TO_DISPLAY[field_name], None
-
   for descriptor, value in test_result.ListFields():
     if descriptor.name == field_name:
       return FIELD_TO_DISPLAY[field_name], value
@@ -301,7 +310,7 @@ def _check_field(test_result, field_name):
   return (None, None, None, None), None
 
 
-def _print_summary_info(verbose, use_emoji, test_name, test_result,
+def _print_summary_info(recipe_deps, verbose, use_emoji, test_name, test_result,
                         space_for_columns):
   # Pick the first populated field in the TestResults.Results
   for field_name in FIELD_TO_DISPLAY:
@@ -309,6 +318,20 @@ def _print_summary_info(verbose, use_emoji, test_name, test_result,
     icon = emj if use_emoji else txt
     if icon:
       break
+
+  # handle warnings and 'nothing' specially:
+  if not icon:
+    success = True
+    for warning_name in test_result.warnings:
+      if recipe_deps.warning_definitions[warning_name].deadline:
+        icon = '🟡' if use_emoji else 'W'
+        verbose_msg = 'warnings with deadline'
+        break
+    else:
+      verbose_msg = 'warnings'
+
+  if not icon:
+    icon = '.'
 
   if verbose:
     msg = '' if not verbose_msg else ' (%s)' % verbose_msg
