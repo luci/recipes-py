@@ -358,6 +358,20 @@ def StepTextContains(check, step_odict, step, expected_substrs):
     check(expected in step_odict[step].step_text)
 
 
+def StepSummaryEquals(check, step_odict, step, expected):
+    """Check that the step's step_summary_text equals given value.
+
+    Args:
+      step (str) - The step to check the step_text of
+      expected (str) - The expected value of the step_text
+
+    Usage:
+      yield TEST + \
+          api.post_process(StepSummaryEquals, 'step-name', 'expected-text')
+    """
+    check(step_odict[step].step_summary_text == expected)
+
+
 def LogEquals(check, step_odict, step, log, expected):
   """Assert that a step's log is equal to a given string.
 

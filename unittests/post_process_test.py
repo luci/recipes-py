@@ -349,6 +349,7 @@ class TestStepText(PostProcessUnitTest):
         ('x', {
             'name': 'x',
             'step_text': 'foobar',
+            'step_summary_text' : 'test summary',
         })
     ])
 
@@ -367,6 +368,17 @@ class TestStepText(PostProcessUnitTest):
 
   def test_step_text_contains_pass(self):
     self.expect_fails(0, post_process.StepTextContains, 'x', ['foo', 'bar'])
+
+  def test_step_summary_text_equals_pass(self):
+    self.expect_fails(0, post_process.StepSummaryEquals, 'x', 'test summary')
+
+  def test_step_summary_text_equals_fail(self):
+    failures = self.expect_fails(1, post_process.StepSummaryEquals, 'x',
+                                 'bad')
+    self.assertHas(failures[0],
+                   'check((step_odict[step].step_summary_text == expected))',
+                   "expected: 'bad'")
+
 
   def test_step_text_contains_fail(self):
     failures = self.expect_fails(
