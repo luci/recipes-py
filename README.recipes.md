@@ -131,6 +131,7 @@
   * [milo:examples/full](#recipes-milo_examples_full) (Python3 ✅)
   * [nodejs:examples/full](#recipes-nodejs_examples_full) (Python3 ✅)
   * [path:examples/full](#recipes-path_examples_full) (Python3 ✅)
+  * [placeholder](#recipes-placeholder) (Python3 ✅)
   * [platform:examples/full](#recipes-platform_examples_full) (Python3 ✅)
   * [properties:examples/full](#recipes-properties_examples_full) (Python3 ✅)
   * [proto:tests/encode_decode](#recipes-proto_tests_encode_decode) (Python3 ✅)
@@ -4742,6 +4743,15 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipe_modules/path/examples/full.py#19)(api):**
+### *recipes* / [placeholder](/recipes/placeholder.py)
+
+[DEPS](/recipes/placeholder.py#7): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+PYTHON_VERSION_COMPATIBILITY: PY3
+
+&mdash; **def [RunSteps](/recipes/placeholder.py#31)(api, properties):**
+
+&mdash; **def [fakeSleep](/recipes/placeholder.py#22)(api, duration):**
 ### *recipes* / [platform:examples/full](/recipe_modules/platform/examples/full.py)
 
 [DEPS](/recipe_modules/platform/examples/full.py#7): [platform](#recipe_modules-platform), [step](#recipe_modules-step), [version](#recipe_modules-version)

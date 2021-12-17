@@ -1,0 +1,40 @@
+[
+  {
+    "cmd": [],
+    "name": "cool",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@text@@@",
+      "@@@STEP_LOG_LINE@log@multiline@@@",
+      "@@@STEP_LOG_LINE@log@data@@@",
+      "@@@STEP_LOG_END@log@@@",
+      "@@@STEP_LINK@link@https://example.com@@@",
+      "@@@SET_BUILD_PROPERTY@generic@\"stuff\"@@@",
+      "@@@SET_BUILD_PROPERTY@key@100.0@@@",
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "parent"
+  },
+  {
+    "cmd": [],
+    "name": "parent.a",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "parent.b",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "failure": {
+      "humanReason": ""
+    },
+    "name": "$result"
+  }
+]

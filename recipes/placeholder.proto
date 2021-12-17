@@ -1,0 +1,71 @@
+// Copyright 2021 The LUCI Authors. All rights reserved.
+// Use of this source code is governed under the Apache License, Version 2.0
+// that can be found in the LICENSE file.
+
+syntax = "proto3";
+
+import "google/protobuf/struct.proto";
+
+import "go.chromium.org/luci/buildbucket/proto/common.proto";
+
+package recipes.recipe_engine.placeholder;
+
+message Step {
+  // The name of a fake placeholder step.
+  string name = 1;
+
+  // The amount of time this fake step should "run" for.
+  //
+  // This will translate to a real-life pause in the execution of the recipe.
+  int64 duration_secs = 2;
+
+  // Sets text on this step in the UI.
+  string step_text = 3;
+
+  // Named links to add to the step.
+  map<string, string> links = 4;
+
+  // Named logs to add to the step.
+  //
+  // Multi-line values are acceptable.
+  map<string, string> logs = 5;
+
+  // Status for the step.
+  //
+  // FAILURE/INFRA_FAILURE/CANCELED does not affect the evaluation of the rest
+  // of the steps.
+  buildbucket.v2.Status status = 6;
+
+  // Indicate that this step was canceled.
+  //
+  // Shows up in the Step's "status_details" field.
+  bool canceled = 7;
+
+  // Indicate that this step had a timeout.
+  //
+  // Shows up in the Step's "status_details" field.
+  bool timeout = 8;
+
+  // This step should set the following output properties when it runs.
+  google.protobuf.Struct set_properties = 9;
+
+  // Children of this step; duration_secs will apply prior to running
+  // any children.
+  repeated Step children = 10;
+}
+
+message InputProps {
+  // A list of steps to simulate.
+  //
+  // If empty, will run a single Step like:
+  //
+  //   Step {
+  //     name: "hello world"
+  //     duration_secs: 10
+  //   }
+  repeated Step steps = 1;
+
+  // Overall status for the build.
+  buildbucket.v2.Status status = 4;
+}
+
