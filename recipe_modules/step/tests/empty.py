@@ -21,9 +21,6 @@ def RunSteps(api):
   api.step.empty(
       'alternate log', log_name='details', log_text='some\nlog\ncontent')
 
-  api.step.empty(
-      'stdout log', stdout_text='some\nlog\ncontent')
-
   try:
     api.step.empty('bye', status=api.step.FAILURE)
     assert False, 'unreachable'  # pragma: no cover
@@ -50,9 +47,6 @@ def GenTests(api):
 
       api.post_process(StepSuccess, 'alternate log'),
       api.post_process(LogEquals, 'alternate log', 'details',
-                       'some\nlog\ncontent'),
-
-      api.post_process(LogEquals, 'stdout log', 'stdout',
                        'some\nlog\ncontent'),
 
       api.post_process(StepException, 'bigfail'),
