@@ -3399,7 +3399,7 @@ Usage:
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#607)(self, name, cmd, ok_ret=(0,), infra_step=False, raise_on_failure=True, wrapper=(), timeout=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#623)(self, name, cmd, ok_ret=(0,), infra_step=False, raise_on_failure=True, wrapper=(), timeout=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
 
 Runs a step (subprocess).
 
@@ -3493,11 +3493,11 @@ context (if any).
 
 No-op if there's no currently active non-nest step.
 
-&emsp; **@property**<br>&mdash; **def [defer\_results](/recipe_modules/step/api.py#350)(self):**
+&emsp; **@property**<br>&mdash; **def [defer\_results](/recipe_modules/step/api.py#366)(self):**
 
 See recipe_api.py for docs. 
 
-&mdash; **def [empty](/recipe_modules/step/api.py#316)(self, name, status='SUCCESS', step_text=None, stdout_text=None, raise_on_failure=True):**
+&mdash; **def [empty](/recipe_modules/step/api.py#316)(self, name, status='SUCCESS', step_text=None, log_text=None, log_name='stdout', stdout_text=None, raise_on_failure=True):**
 
 Runs an "empty" step (one without any command).
 
@@ -3510,9 +3510,14 @@ Args:
     step.
   step_text (str) - Some text to set for the "step_text" on the presentation
     of this step.
-  stdout_text (str|list(str)) - Some text to set for the log named "stdout" of this
-    step. If this is a list(str), will be treated as separate lines of the
-    log. Otherwise newlines will be respected.
+  log_text (str|list(str)) - Some text to set for the log of this step. If
+    this is a list(str), will be treated as separate lines of the log.
+    Otherwise newlines will be respected.
+  log_name (str) - The name of the log to output `log_text` to.
+  stdout_text (str|list(str)) - Some text to set for the log named "stdout"
+    of this step. If this is a list(str), will be treated as separate lines
+    of the log. Otherwise newlines will be respected. DEPRECATED, use
+    log_text instead.
   raise_on_failure (bool) - If set, and `status` is not SUCCESS, raise
     the appropriate exception.
 
@@ -3587,7 +3592,7 @@ Args:
 Yields a StepPresentation for this dummy step, which you may update as you
 please.
 
-&mdash; **def [raise\_on\_failure](/recipe_modules/step/api.py#458)(self, result, status_override=None):**
+&mdash; **def [raise\_on\_failure](/recipe_modules/step/api.py#474)(self, result, status_override=None):**
 
 Raise an appropriate exception if a step is not successful.
 
@@ -3609,7 +3614,7 @@ Raises:
   * StepWarning if the step's status is WARNING
   * InfraFailure if the step's status is EXCEPTION or CANCELED
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#489)(self, name, cmd, build, raise_on_failure=True, output_path=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#505)(self, name, cmd, build, raise_on_failure=True, output_path=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
 
 Launch a sub-build by invoking a LUCI executable. All steps in the
 sub-build will appear as child steps of this step (Merge Step).

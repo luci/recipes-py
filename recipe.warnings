@@ -29,7 +29,7 @@ warning {
   description: "`api.python.succeeding_step` is deprecated."
   description: ""
   description: "Instead, please do:"
-  description: "  api.step.empty(\"name\", stdout_text=\"some text\")"
+  description: "  api.step.empty(\"name\", log_text=\"some text\")"
   monorail_bug {
     id: 1276131
   }
@@ -51,7 +51,7 @@ warning {
   description: "`api.python.failing_step` is deprecated."
   description: ""
   description: "Instead, please use:"
-  description: "  api.step.empty(\"name\", status=api.step.FAILURE, stdout_text=\"some text\")"
+  description: "  api.step.empty(\"name\", status=api.step.FAILURE, log_text=\"some text\")"
   monorail_bug {
     id: 1276131
   }
@@ -73,7 +73,7 @@ warning {
   description: "`api.python.infra_failing_step` is deprecated."
   description: ""
   description: "Instead, please use:"
-  description: "  api.step.empty(\"name\", status=api.step.INFRA_FAILURE, stdout_text=\"some text\")"
+  description: "  api.step.empty(\"name\", status=api.step.INFRA_FAILURE, log_text=\"some text\")"
   monorail_bug {
     id: 1276131
   }

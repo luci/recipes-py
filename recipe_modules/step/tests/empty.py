@@ -14,9 +14,15 @@ DEPS = [
 
 
 def RunSteps(api):
-  api.step.empty('hello', step_text='stuff', stdout_text='other\nstuff')
+  api.step.empty('hello', step_text='stuff', log_text='other\nstuff')
 
-  api.step.empty('multi hello', stdout_text=['multi', 'line'])
+  api.step.empty('multi hello', log_text=['multi', 'line'])
+
+  api.step.empty(
+      'alternate log', log_name='details', log_text='some\nlog\ncontent')
+
+  api.step.empty(
+      'stdout log', stdout_text='some\nlog\ncontent')
 
   try:
     api.step.empty('bye', status=api.step.FAILURE)
@@ -41,6 +47,13 @@ def GenTests(api):
 
       api.post_process(StepSuccess, 'multi hello'),
       api.post_process(LogEquals, 'multi hello', 'stdout', 'multi\nline'),
+
+      api.post_process(StepSuccess, 'alternate log'),
+      api.post_process(LogEquals, 'alternate log', 'details',
+                       'some\nlog\ncontent'),
+
+      api.post_process(LogEquals, 'stdout log', 'stdout',
+                       'some\nlog\ncontent'),
 
       api.post_process(StepException, 'bigfail'),
 

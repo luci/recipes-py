@@ -313,7 +313,13 @@ class StepApi(recipe_api.RecipeApiPlain):
             pres.status = self.SUCCESS
 
   # pylint: disable=too-many-arguments
-  def empty(self, name, status="SUCCESS", step_text=None, stdout_text=None,
+  def empty(self,
+            name,
+            status="SUCCESS",
+            step_text=None,
+            log_text=None,
+            log_name='stdout',
+            stdout_text=None,
             raise_on_failure=True):
     """Runs an "empty" step (one without any command).
 
@@ -326,23 +332,33 @@ class StepApi(recipe_api.RecipeApiPlain):
         step.
       step_text (str) - Some text to set for the "step_text" on the presentation
         of this step.
-      stdout_text (str|list(str)) - Some text to set for the log named "stdout" of this
-        step. If this is a list(str), will be treated as separate lines of the
-        log. Otherwise newlines will be respected.
+      log_text (str|list(str)) - Some text to set for the log of this step. If
+        this is a list(str), will be treated as separate lines of the log.
+        Otherwise newlines will be respected.
+      log_name (str) - The name of the log to output `log_text` to.
+      stdout_text (str|list(str)) - Some text to set for the log named "stdout"
+        of this step. If this is a list(str), will be treated as separate lines
+        of the log. Otherwise newlines will be respected. DEPRECATED, use
+        log_text instead.
       raise_on_failure (bool) - If set, and `status` is not SUCCESS, raise
         the appropriate exception.
 
     Returns step_data.StepData.
     """
+    assert not (log_text and stdout_text), (
+        'Only one of log_text or stdout_text (DEPRECATED) can be set')
     ret = self(name, None)
     ret.presentation.status = status
     if step_text:
       ret.presentation.step_text = step_text
     if stdout_text:
-      if hasattr(stdout_text, 'splitlines'):
-        ret.presentation.logs['stdout'] = stdout_text.splitlines()
+      log_text = stdout_text
+      log_name = 'stdout'
+    if log_text:
+      if hasattr(log_text, 'splitlines'):
+        ret.presentation.logs[log_name] = log_text.splitlines()
       else:
-        ret.presentation.logs['stdout'] = stdout_text
+        ret.presentation.logs[log_name] = log_text
     if raise_on_failure:
       self.raise_on_failure(ret)
     return ret
