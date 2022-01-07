@@ -94,6 +94,7 @@ class SchedulerApi(recipe_api.RecipeApi):
         tags = api_self.m.buildbucket.tags_for_child_build.copy()
       if self._tags:
         tags.update(self._tags)
+      self._cleanup_tags(tags)
       tags = list(
           map(':'.join,
               sorted((k, v) for k, v in iteritems(tags) if v is not None)))
@@ -106,6 +107,9 @@ class SchedulerApi(recipe_api.RecipeApi):
 
       t.update(self._serialize_payload(base))
       return t
+
+    def _cleanup_tags(self, tags):
+      pass
 
     def _serialize_payload(self, base):
       raise NotImplementedError()  # pragma: no cover
@@ -147,6 +151,13 @@ class SchedulerApi(recipe_api.RecipeApi):
       self._repo = repo
       self._ref = ref
       self._revision = revision
+
+    def _cleanup_tags(self, tags):
+      # These tags are populated based on the triggered commit by Buildbucket.
+      # They could have been inherited (with wrong values) from
+      # tags_for_child_build. Drop them.
+      tags.pop('buildset', None)
+      tags.pop('gitiles_ref', None)
 
     def _serialize_payload(self, base):
       base.update({
