@@ -4750,9 +4750,9 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 PYTHON_VERSION_COMPATIBILITY: PY3
 
-&mdash; **def [RunSteps](/recipes/placeholder.py#31)(api, properties):**
+&mdash; **def [RunSteps](/recipes/placeholder.py#33)(api, properties):**
 
-&mdash; **def [fakeSleep](/recipes/placeholder.py#22)(api, duration):**
+&mdash; **def [fakeSleep](/recipes/placeholder.py#24)(api, duration):**
 ### *recipes* / [platform:examples/full](/recipe_modules/platform/examples/full.py)
 
 [DEPS](/recipe_modules/platform/examples/full.py#7): [platform](#recipe_modules-platform), [step](#recipe_modules-step), [version](#recipe_modules-version)

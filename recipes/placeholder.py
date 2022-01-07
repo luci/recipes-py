@@ -16,6 +16,8 @@ from PB.recipe_engine import result as result_pb2
 from PB.recipes.recipe_engine.placeholder import InputProps, Step
 from PB.go.chromium.org.luci.buildbucket.proto.common import Status
 
+from recipe_engine import post_process
+
 PROPERTIES = InputProps
 
 
@@ -64,6 +66,12 @@ def RunSteps(api, properties):
       if step.duration_secs > 0:
         fakeSleep(api, step.duration_secs)
 
+  if not (properties.status and properties.status & Status.ENDED_MASK):
+    return result_pb2.RawResult(
+      status=Status.FAILURE,
+      summary_markdown=('must provide a final status in input properties; '
+                        'got %s' % properties.status)
+    )
   if properties.steps:
     for step in properties.steps:
       processStep(step)
@@ -74,7 +82,10 @@ def RunSteps(api, properties):
 
 
 def GenTests(api):
-  yield api.test('basic')
+  yield api.test(
+      'basic',
+      api.properties(InputProps(status=Status.SUCCESS))
+  )
 
   yield api.test(
       'presentation',
@@ -104,4 +115,13 @@ def GenTests(api):
           ],
           status=Status.INFRA_FAILURE,
       ))
+  )
+
+  yield (
+    api.test('missing final status')
+    + api.properties(InputProps())
+    + api.post_process(post_process.StatusFailure)
+    + api.post_process(post_process.ResultReasonRE,
+        "must provide a final status in input properties; got")
+    + api.post_process(post_process.DropExpectation)
   )

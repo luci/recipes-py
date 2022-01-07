@@ -4,10 +4,6 @@
     "name": "hello world"
   },
   {
-    "failure": {
-      "failure": {},
-      "humanReason": ""
-    },
     "name": "$result"
   }
 ]
