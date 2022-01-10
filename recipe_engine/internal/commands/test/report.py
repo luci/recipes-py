@@ -175,7 +175,6 @@ class Reporter(object):
     """
     self._fail_tracker.cleanup()
 
-    print()
     soft_fail, fail = False, False
     for py in ('py2', 'py3'):
       soft_fail = soft_fail or self._maybe_soft_failure_buf[py].tell() > 0

@@ -362,6 +362,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
       for thread in all_threads.py3:
         description_queues.py3.put(None)
       execute_queue('py3')
+    print()
 
     if not py3_only:
       reporter.final_report(total_cov, test_results)
