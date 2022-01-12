@@ -54,12 +54,17 @@ def RunSteps(api):
     out.join('all_zip.zip')
   )
 
+  # Build a tar.zst of the whole root as well.
+  all_tzst = api.archive.package(temp).archive('archiving all_tzst',
+                                               out.join('all_tzst.tzst'))
+
   # Extract the packages.
   api.archive.extract('extract tar', out_tar, temp.join('output1'))
   api.archive.extract('extract zip', out_zip, temp.join('output2'))
   api.archive.extract('extract all_zip zip', all_zip, temp.join('output3'))
   api.archive.extract('extract all_zip as zip', all_zip, temp.join('output4'),
                       archive_type='zip')
+  api.archive.extract('extract all_tzst', all_tzst, temp.join('output5'))
 
   try:
     api.archive.extract('extract failure', out_zip, temp.join('output3'))

@@ -8,6 +8,14 @@
 the 'archive' recipe module internally. Should not be used elsewhere.
 """
 
+# [VPYTHON:BEGIN]
+# python_version: "3.8"
+# wheel: <
+#   name: "infra/python/wheels/zstandard/${vpython_platform}"
+#   version: "version:0.16.0"
+# >
+# [VPYTHON:END]
+
 import argparse
 import fnmatch
 import json
@@ -18,6 +26,7 @@ import sys
 import tarfile
 import zipfile
 
+import zstandard
 
 if os.name == 'nt':
   def unc_path(path):
@@ -48,9 +57,19 @@ def untar(archive_file, output, stats, safe, include_filter):
   # (needed to extract archives containing symlinks on some platforms).
   # Otherwise, we open the file in stream mode, though this may fail later
   # for the aforementioned case.
-  open_mode = 'r:*' if os.path.isfile(archive_file) else 'r|*'
   unc_output = unc_path(output)
-  with tarfile.open(archive_file, open_mode) as tf:
+  fileobj = None
+  if os.path.isfile(archive_file):
+    if os.path.basename(archive_file).endswith(('.tar.zst', '.tzst')):
+      dctx = zstandard.ZstdDecompressor()
+      archive_fh = open(archive_file, 'rb')
+      fileobj = dctx.stream_reader(archive_fh, closefd=True)
+      open_mode = 'r:'
+    else:
+      open_mode = 'r:*'
+  else:
+    open_mode = 'r|*'
+  with tarfile.open(archive_file, open_mode, fileobj=fileobj) as tf:
     # monkeypatch the TarFile object to allow printing messages for each
     # extracted file. extractall makes a single linear pass over the tarfile;
     # other naive implementations (such as `getmembers`) end up doing lots of

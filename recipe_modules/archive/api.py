@@ -8,7 +8,7 @@ from recipe_engine import recipe_api
 class ArchiveApi(recipe_api.RecipeApi):
   """Provides steps to manipulate archive files (tar, zip, etc.)."""
 
-  ARCHIVE_TYPES = ('tar', 'tgz', 'tbz', 'zip')
+  ARCHIVE_TYPES = ('tar', 'tgz', 'tbz', 'zip', 'tzst')
 
   def package(self, root):
     """Returns Package object that can be used to compress a set of files.
@@ -82,7 +82,7 @@ class ArchiveApi(recipe_api.RecipeApi):
       script_input['archive_type'] = archive_type
     step_result = self.m.step(
         step_name, [
-            'python3',
+            'vpython3',
             '-u',
             self.resource('extract.py'),
             '--json-input',
@@ -122,17 +122,16 @@ class ArchiveApi(recipe_api.RecipeApi):
       if self.m.path.splitext(base)[1] == '.tar':
         ext = '.tar' + ext
       archive_type = {
-        '.tbz': 'tbz',
-        '.tbz2': 'tbz',
-        '.tb2': 'tbz',
-        '.tar.bz2': 'tbz',
-
-        '.tgz': 'tgz',
-        '.tar.gz': 'tgz',
-
-        '.tar': 'tar',
-
-        '.zip': 'zip',
+          '.tbz': 'tbz',
+          '.tbz2': 'tbz',
+          '.tb2': 'tbz',
+          '.tar.bz2': 'tbz',
+          '.tgz': 'tgz',
+          '.tar.gz': 'tgz',
+          '.tzst': 'tzst',
+          '.tar.zst': 'tzst',
+          '.tar': 'tar',
+          '.zip': 'zip',
       }.get(ext)
       assert archive_type is not None, (
         'Unable to infer archive_type from extension: %r' % (ext,))
@@ -146,9 +145,12 @@ class ArchiveApi(recipe_api.RecipeApi):
       'archive_type': archive_type,
       'root': str(root),
     }
-    self.m.python(
-        name=step_name,
-        script=self.resource('archive.py'),
+    self.m.step(
+        step_name, [
+            'vpython3',
+            '-u',
+            self.resource('archive.py'),
+        ],
         stdin=self.m.json.input(script_input))
     self.m.path.mock_add_paths(output)
 

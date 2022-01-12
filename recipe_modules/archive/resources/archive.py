@@ -1,19 +1,30 @@
-# Copyright 2018 The Chromium Authors. All rights reserved.
-# Use of this source code is governed by a BSD-style license that can be
-# found in the LICENSE file.
+# Copyright 2018 The LUCI Authors. All rights reserved.
+# Use of this source code is governed under the Apache License, Version 2.0
+# that can be found in the LICENSE file.
 
 """Standalone Python script to archive a set of files. Intended to be used by
 the 'archive' recipe module internally. Should not be used elsewhere.
 """
 
+# [VPYTHON:BEGIN]
+# python_version: "3.8"
+# wheel: <
+#   name: "infra/python/wheels/zstandard/${vpython_platform}"
+#   version: "version:0.16.0"
+# >
+# [VPYTHON:END]
+
 from __future__ import print_function
 
+from contextlib import contextmanager
 import json
 import os
 import subprocess
 import sys
 import tarfile
 import zipfile
+
+import zstandard
 
 
 def zip_opener(path):
@@ -23,6 +34,19 @@ def zip_opener(path):
   zf.name = zf.filename
   zf.add = zf.write
   return zf
+
+
+@contextmanager
+def tar_zstandard_opener(path):
+  """Opens a zstandard-compressed tar file to write."""
+  ctx = zstandard.ZstdCompressor()
+  zstd_file = ctx.stream_writer(open(path, 'wb'), closefd=True)
+  tf = tarfile.open(path, 'w:', fileobj=zstd_file)
+  try:
+    yield tf
+  finally:
+    tf.close()
+    zstd_file.close()
 
 
 def archive(out, root, entries):
@@ -61,10 +85,11 @@ def archive(out, root, entries):
 
 
 OPENER_FUNCS = {
-  'tar': lambda path: tarfile.open(path, 'w'),
-  'tgz': lambda path: tarfile.open(path, 'w|gz'),
-  'tbz': lambda path: tarfile.open(path, 'w|bz2'),
-  'zip': zip_opener,
+    'tar': lambda path: tarfile.open(path, 'w'),
+    'tgz': lambda path: tarfile.open(path, 'w|gz'),
+    'tbz': lambda path: tarfile.open(path, 'w|bz2'),
+    'tzst': tar_zstandard_opener,
+    'zip': zip_opener,
 }
 
 

@@ -1,7 +1,7 @@
 [
   {
     "cmd": [
-      "python",
+      "vpython3",
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]\\resources\\archive.py"
     ],
@@ -10,7 +10,7 @@
   },
   {
     "cmd": [
-      "python",
+      "vpython3",
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]\\resources\\archive.py"
     ],
@@ -19,7 +19,7 @@
   },
   {
     "cmd": [
-      "python",
+      "vpython3",
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]\\resources\\archive.py"
     ],
@@ -28,7 +28,16 @@
   },
   {
     "cmd": [
-      "python3",
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::archive]\\resources\\archive.py"
+    ],
+    "name": "archiving all_tzst",
+    "stdin": "{\"archive_type\": \"tzst\", \"entries\": [{\"path\": \"[CLEANUP]\\\\tar-example_tmp_1\", \"type\": \"dir\"}], \"output\": \"[START_DIR]\\\\output\\\\all_tzst.tzst\", \"root\": \"[CLEANUP]\\\\tar-example_tmp_1\"}"
+  },
+  {
+    "cmd": [
+      "vpython3",
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py",
       "--json-input",
@@ -50,7 +59,7 @@
   },
   {
     "cmd": [
-      "python3",
+      "vpython3",
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py",
       "--json-input",
@@ -72,7 +81,7 @@
   },
   {
     "cmd": [
-      "python3",
+      "vpython3",
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py",
       "--json-input",
@@ -94,7 +103,7 @@
   },
   {
     "cmd": [
-      "python3",
+      "vpython3",
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py",
       "--json-input",
@@ -116,7 +125,29 @@
   },
   {
     "cmd": [
-      "python3",
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py",
+      "--json-input",
+      "{\"archive_file\": \"[START_DIR]\\\\output\\\\all_tzst.tzst\", \"include_files\": [], \"output\": \"[CLEANUP]\\\\tar-example_tmp_1\\\\output5\", \"safe_mode\": true}",
+      "--json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "extract all_tzst",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@<br/>extracted 1337 files - 50159.75 MB@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"extracted\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"bytes\": 50159747054, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"filecount\": 1337@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py",
       "--json-input",
@@ -152,7 +183,7 @@
   },
   {
     "cmd": [
-      "python3",
+      "vpython3",
       "-u",
       "RECIPE_MODULE[recipe_engine::archive]\\resources\\extract.py",
       "--json-input",
