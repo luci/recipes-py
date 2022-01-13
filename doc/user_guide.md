@@ -128,7 +128,8 @@ Example [recipe_modules folder](https://chromium.googlesource.com/chromium/tools
 
 ### The recipe_proto folder
 
-See [#Working-with-Protobufs] for details on this folder and its contents.
+See [Working with Protobuf files](#Working-with-Protobuf-files) for details on
+this folder and its contents.
 
 ## The recipes.py script
 
