@@ -52,7 +52,10 @@ class ArchiveApi(recipe_api.RecipeApi):
 
       * step_name (str): display name of a step.
       * archive_file (Path): path to an archive file to uncompress, MUST exist.
-      * output (Path): path to a directory to unpack to, MUST NOT exist.
+      * output (Path): path to a directory to unpack to. The output directory
+        MAY exist, in which case the extract will unpack on-top-of the existing
+        files. It's an error for one of the extracted files to overlap with an
+        already-present file, however.
       * mode (str): Must be either 'safe' or 'unsafe'. In safe mode, if the
         archive attempts to extract files which would escape the extraction
         `output` location, the extraction will fail (raise StepException)

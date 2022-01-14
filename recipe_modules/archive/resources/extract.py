@@ -158,15 +158,15 @@ def main():
   assert os.path.isabs(archive_file), archive_file
   assert os.path.isfile(archive_file), archive_file
 
-  # Output path should be an absolute path, and should NOT exist.
+  # Output path should be an absolute path.
   assert os.path.isabs(output), output
-  assert not os.path.exists(output), output
+
   # Normalize it to end with a path separator.
   output = os.path.join(output, '')
 
   print('Extracting %s (%s) -> %s ...' % (archive_file, file_type, output))
   try:
-    os.makedirs(output)
+    os.makedirs(output, exist_ok=True)
 
     stats = {
       'extracted': {
