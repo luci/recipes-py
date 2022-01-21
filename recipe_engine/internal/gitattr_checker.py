@@ -5,6 +5,8 @@
 import re
 import os
 
+import six
+
 from builtins import zip
 from gevent import subprocess
 
@@ -133,10 +135,10 @@ class AttrChecker(object):
     """Executes a git command and returns the standard output."""
     p = subprocess.Popen(['git'] + cmd, cwd=self._repo, stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE)
-    stdout, _ = p.communicate(stdin)
+    stdout, _ = p.communicate(six.ensure_binary(stdin) if stdin else None)
     if p.returncode != 0:
       raise subprocess.CalledProcessError(p.returncode, ['git'] + cmd, None)
-    return stdout.strip().splitlines()
+    return six.ensure_str(stdout).strip().splitlines()
 
   def _get_directories(self, files):
     """Lists all the directories touched by any of the |files|."""
@@ -233,7 +235,7 @@ class AttrChecker(object):
       # If the result is not None, then the GA told us how to handle the file
       # and we can stop looking.
       if result is not None:
-          return result
+        return result
     # No GA specified a rule for the file, so the attribute is unspecified and
     # not set.
     return False
