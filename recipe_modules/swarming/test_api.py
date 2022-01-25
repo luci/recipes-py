@@ -181,6 +181,9 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
                     'size_bytes': '73',
                 },
             },
+            'resultdb_info': {
+                'invocation': 'invocations/some-inv-name',
+            },
         },
     }
 
