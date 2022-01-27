@@ -142,6 +142,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       revision=None,
       build_number=0,
       build_id=8945511751514863184,
+      critical='UNSET',  # other accepted values are ['YES', 'NO']
       priority=30,
       created_by=None,
       tags=None,
@@ -197,6 +198,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         ),
         created_by=created_by,
         create_time=timestamp_pb2.Timestamp(seconds=1527292217),
+        critical=common_pb2.Trinary.Value(critical),
         input=build_pb2.Build.Input(gerrit_changes=gerrit_changes,
                                     experiments=experiments),
         infra=build_pb2.BuildInfra(
