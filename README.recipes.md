@@ -4094,7 +4094,7 @@ This file is a recipe demonstrating the buildbucket recipe module.
 
 [DEPS](/recipe_modules/buildbucket/run/multi.py#13): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [swarming](#recipe_modules-swarming)
 
-PYTHON_VERSION_COMPATIBILITY: PY2+3
+PYTHON_VERSION_COMPATIBILITY: PY3
 
 Launches multiple builds at the same revision.
 
