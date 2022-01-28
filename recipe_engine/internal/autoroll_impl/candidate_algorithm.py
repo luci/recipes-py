@@ -256,7 +256,8 @@ def get_roll_candidates(recipe_deps):
   }
 
   for repo, commits in iteritems(repos):
-    print('  %s: %d commits' % (repo, len(commits)), file=sys.stderr)
+    if len(commits) > 1:
+      print('  %s: %d commits' % (repo, len(commits) - 1), file=sys.stderr)
   sys.stdout.flush()
 
   ret_good, ret_bad = _get_roll_candidates_impl(recipe_deps, repos)
