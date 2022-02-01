@@ -9,6 +9,7 @@ import collections
 import contextlib
 import json
 
+from recipe_engine import engine_types
 from recipe_engine import recipe_api
 from recipe_engine import util as recipe_util
 from recipe_engine import config_types
@@ -17,7 +18,7 @@ from recipe_engine import config_types
 @functools.wraps(json.dumps)
 def dumps(*args, **kwargs):
   kwargs.setdefault('sort_keys', True)
-  kwargs.setdefault('default', config_types.json_fixup)
+  kwargs.setdefault('default', _default_json_serializer)
   indent = kwargs.get('indent', None)
   if indent is not None and 'separators' not in kwargs:  # pragma: no cover
     # The default separators when indent!=None has changed in Python 3.
@@ -26,6 +27,18 @@ def dumps(*args, **kwargs):
     # expectation in both mode during the migration to Python 3.
     kwargs['separators'] = (', ', ': ')
   return json.dumps(*args, **kwargs)
+
+
+def _default_json_serializer(obj):
+  """Passed as the `default` arg to json.dumps().
+
+  Ensures that commonly used types in recipes are JSON-serializable.
+  """
+  if isinstance(obj, config_types.RecipeConfigType):
+    return str(obj)
+  if isinstance(obj, engine_types.FrozenDict):
+    return dict(obj)
+  raise TypeError('%r is not JSON serializable' % obj)
 
 
 @functools.wraps(json.loads)

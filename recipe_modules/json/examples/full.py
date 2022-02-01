@@ -15,6 +15,8 @@ DEPS = [
 
 import textwrap
 
+from recipe_engine import engine_types
+
 FULLWIDTH_Z = u'\ufeff\uff5a'
 
 def RunSteps(api):
@@ -109,6 +111,10 @@ def RunSteps(api):
     ],
     ok_ret=(1,))
   assert step_result.json.output is None
+
+  # Check that certain non-stdlib types are JSON serializable.
+  assert api.json.dumps(api.path['start_dir']) == '"%s"' % api.path['start_dir']
+  assert api.json.dumps(engine_types.FrozenDict(foo='bar')) == '{"foo": "bar"}'
 
 
 def GenTests(api):
