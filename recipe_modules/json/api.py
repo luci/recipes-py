@@ -9,6 +9,9 @@ import collections
 import contextlib
 import json
 
+from google.protobuf import json_format as jsonpb
+from google.protobuf import struct_pb2
+
 from recipe_engine import engine_types
 from recipe_engine import recipe_api
 from recipe_engine import util as recipe_util
@@ -38,6 +41,15 @@ def _default_json_serializer(obj):
     return str(obj)
   if isinstance(obj, engine_types.FrozenDict):
     return dict(obj)
+  if isinstance(obj, struct_pb2.Struct):
+    # Coerce proto Struct to a regular Python dict, to simplify code that wants
+    # to be able to serialize dicts as well as Structs from proto properties.
+    # We intentionally don't serialize general Message objects because
+    # json_format has multiple options on how this could be done (e.g. field
+    # name capitalization), so folks should use the proto module for this. The
+    # Struct type, specifically, is a "well known type" in protos and only has
+    # one valid format in JSON.
+    return jsonpb.MessageToDict(obj)
   raise TypeError('%r is not JSON serializable' % obj)
 
 

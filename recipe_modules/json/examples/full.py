@@ -15,6 +15,8 @@ DEPS = [
 
 import textwrap
 
+from google.protobuf import struct_pb2
+
 from recipe_engine import engine_types
 
 FULLWIDTH_Z = u'\ufeff\uff5a'
@@ -115,6 +117,9 @@ def RunSteps(api):
   # Check that certain non-stdlib types are JSON serializable.
   assert api.json.dumps(api.path['start_dir']) == '"%s"' % api.path['start_dir']
   assert api.json.dumps(engine_types.FrozenDict(foo='bar')) == '{"foo": "bar"}'
+  foobar_struct = struct_pb2.Struct(
+      fields={'foo': struct_pb2.Value(string_value='bar')})
+  assert api.json.dumps(foobar_struct) == '{"foo": "bar"}'
 
 
 def GenTests(api):
