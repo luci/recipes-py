@@ -1,0 +1,34 @@
+[
+  {
+    "cmd": [],
+    "name": "search1cl",
+    "~followup_annotations": [
+      "@@@STEP_EXCEPTION@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "prpc",
+      "call",
+      "-format=json",
+      "luci-change-verifier.appspot.com",
+      "cv.v0.Runs.SearchRuns"
+    ],
+    "infra_step": true,
+    "name": "search1cl.request page 1",
+    "stdin": "{\n  \"predicate\": {\n    \"gerrit_changes\": [\n      {\n        \"change\": \"123\",\n        \"host\": \"x-review.googlesource.com\"\n      }\n    ],\n    \"project\": \"prj\"\n  }\n}",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@proto.output (invalid)@@@",
+      "@@@STEP_LOG_LINE@proto.output (exception)@Failed to load JSON: No JSON object could be decoded@@@",
+      "@@@STEP_LOG_END@proto.output (exception)@@@",
+      "@@@STEP_EXCEPTION@@@"
+    ]
+  },
+  {
+    "failure": {
+      "humanReason": "Infra Failure: Step('search1cl.request page 1') (retcode: 1)"
+    },
+    "name": "$result"
+  }
+]

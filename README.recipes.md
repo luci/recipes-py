@@ -8,6 +8,7 @@
   * [buildbucket](#recipe_modules-buildbucket) (Python3 ✅) &mdash; API for interacting with the buildbucket service.
   * [cas](#recipe_modules-cas) (Python3 ✅) &mdash; API for interacting with cas client.
   * [cas_input](#recipe_modules-cas_input) (Python3 ✅) &mdash; Simple API for handling CAS inputs to a recipe.
+  * [change_verifier](#recipe_modules-change_verifier) (Python3 ✅) &mdash; Recipe API for LUCI Change Verifier.
   * [cipd](#recipe_modules-cipd) (Python3 ✅) &mdash; API for interacting with CIPD.
   * [commit_position](#recipe_modules-commit_position) (Python3 ✅)
   * [context](#recipe_modules-context) (Python3 ✅) &mdash; The context module provides APIs for manipulating a few pieces of 'ambient' data that affect how steps are run.
@@ -60,6 +61,7 @@
   * [buildbucket:tests/search](#recipes-buildbucket_tests_search) (Python3 ✅)
   * [cas:examples/full](#recipes-cas_examples_full) (Python3 ✅)
   * [cas_input:examples/full](#recipes-cas_input_examples_full) (Python3 ✅)
+  * [change_verifier:tests/search](#recipes-change_verifier_tests_search) (Python3 ✅)
   * [cipd:examples/full](#recipes-cipd_examples_full) (Python3 ✅)
   * [commit_position:examples/full](#recipes-commit_position_examples_full) (Python3 ✅)
   * [context:examples/full](#recipes-context_examples_full) (Python3 ✅)
@@ -761,6 +763,41 @@ Returns:
   The output directory as a Path object which contains all the cache data.
 
 &emsp; **@property**<br>&mdash; **def [input\_caches](/recipe_modules/cas_input/api.py#28)(self):**
+### *recipe_modules* / [change\_verifier](/recipe_modules/change_verifier)
+
+[DEPS](/recipe_modules/change_verifier/__init__.py#7): [proto](#recipe_modules-proto), [step](#recipe_modules-step)
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+Recipe API for LUCI Change Verifier.
+
+LUCI Change Verifier is the pre-commit verification service that will replace
+CQ daemon. See:
+  https://chromium.googlesource.com/infra/luci/luci-go/+/HEAD/cv
+
+This recipe module depends on the prpc binary being available in $PATH:
+  https://godoc.org/go.chromium.org/luci/grpc/cmd/prpc
+
+#### **class [ChangeVerifierApi](/recipe_modules/change_verifier/api.py#23)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+
+This module provides recipe API of LUCI Change Verifier.
+
+&mdash; **def [search\_runs](/recipe_modules/change_verifier/api.py#29)(self, project, cls=None, limit=None, step_name=None, dev=False):**
+
+Searches for Runs.
+
+Args:
+  * project: LUCI project name.
+  * cls (list[tuple[str, int]]|tuple[str, int]|None): CLs, specified as
+    (host, change number) tuples. A single tuple may also be passed. All
+    Runs returned must include all of the given CLs, and Runs may also
+    contain other CLs.
+  * limit (int): max number of Runs to return. Defaults to 32.
+  * step_name (string): optional custom step name in RPC steps.
+  * dev (bool): whether to use the dev instance of Change Verifier.
+
+Returns:
+  A list of CV Runs ordered newest to oldest that match the given criteria.
 ### *recipe_modules* / [cipd](/recipe_modules/cipd)
 
 [DEPS](/recipe_modules/cipd/__init__.py#7): [context](#recipe_modules-context), [file](#recipe_modules-file), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [url](#recipe_modules-url)
@@ -4164,6 +4201,17 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipe_modules/cas_input/examples/full.py#18)(api):**
+### *recipes* / [change\_verifier:tests/search](/recipe_modules/change_verifier/tests/search.py)
+
+[DEPS](/recipe_modules/change_verifier/tests/search.py#10): [change\_verifier](#recipe_modules-change_verifier), [proto](#recipe_modules-proto)
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+&mdash; **def [RunSteps](/recipe_modules/change_verifier/tests/search.py#16)(api):**
+
+&mdash; **def [make\_runs](/recipe_modules/change_verifier/tests/search.py#36)(count=1):**
+
+Generates response Runs for a test.
 ### *recipes* / [cipd:examples/full](/recipe_modules/cipd/examples/full.py)
 
 [DEPS](/recipe_modules/cipd/examples/full.py#11): [cipd](#recipe_modules-cipd), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

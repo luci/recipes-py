@@ -1,0 +1,167 @@
+// Copyright 2021 The LUCI Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package cv.v0;
+
+option go_package = "go.chromium.org/luci/cv/api/v0;cvpb";
+
+import "google/protobuf/timestamp.proto";
+
+import "go.chromium.org/luci/cv/api/v0/tryjob.proto";
+
+// Run includes the high-level information about a CV Run.
+//
+// WARNING: this message is EXPERIMENTAL
+// - The field definitions can change w/o notice.
+// - No backward compatibility guaranteed.
+// - Please contact CV maintainers at luci-eng@ before using this message.
+message Run {
+  // Next tag: 11.
+
+  // ID of the Run.
+  //
+  // The format of an ID is "projects/$luci-project/runs/$id", where
+  // - luci-project is the name of the LUCI project the Run belongs to
+  // - id is an opaque key unique in the LUCI project.
+  string id = 1;
+
+  // Status describes the status of a CV Run.
+  enum Status {
+    // Unspecified status.
+    STATUS_UNSPECIFIED = 0;
+    // Run is pending to start.
+    //
+    // It is either because Run Manager hasn't processed the StartEvent yet or
+    // the RunOwner has exhausted all the quota and waiting for new quota to
+    // be available.
+    PENDING = 1;
+    // Run is running.
+    RUNNING = 2;
+    // Run is waiting for submission.
+    //
+    // Run is in this status if one of the following scenario is true:
+    //   1. Tree is closed at the time Run attempts to submit.
+    //   2. There is another Run in the same LUCI Project that is currently
+    //      submitting.
+    //   3. The submission is rate limited according to the submit option in
+    //      Project Config.
+    //
+    // This status is cancellable.
+    WAITING_FOR_SUBMISSION = 4;
+    // Run is submitting.
+    //
+    // A Run can't be cancelled while submitting. A Run may transition from
+    // this status to either `WAITING_FOR_SUBMISSION` status or a non-cancelled
+    // terminal status.
+    SUBMITTING = 5;
+
+    // End of non-terminal status; MUST have value less than `ENDED_MASK`.
+
+    /////////////////////////////////////////////////////////////////////////////
+    // Terminal Status
+
+    // ENDED_MASK can be used as a bitmask to check if a Run has ended.
+    // This MUST NOT be used as the status of a Run.
+    ENDED_MASK = 64;
+    // Run ends successfully.
+    SUCCEEDED = 65;
+    // Run ends unsuccessfully.
+    FAILED = 66;
+    // Run is cancelled.
+    CANCELLED = 67;
+  }
+  // Status of the Run.
+  Status status = 2;
+
+  // eversion is the entity version, which is monotonically increasing.
+  int64 eversion = 3;
+
+  // Mode dictates the behavior of the Run.
+  //
+  // The possible values include
+  // - FULL_RUN
+  // - DRY_RUN
+  // - QUICK_DRY_RUN
+  //
+  // If the mode is FULL_RUN, the Run triggers TryJobs and then submits the CL
+  // if they succeeded.
+  // If the mode is DRY_RUN, the Run trigger TryJobs w/o submission.
+  // If the mode is QUICK_DRY_RUN, the Run triggers a different, usually
+  // smaller/faster, set of TryJobs.
+  string mode = 4;
+
+  // Time when the Run was created.
+  //
+  // This is the timestamp of the vote, on a Gerrit CL, that triggered the Run.
+  google.protobuf.Timestamp create_time = 5;
+  // The time when the Run was started.
+  google.protobuf.Timestamp start_time = 6;
+  // The time when the Run was last updated.
+  google.protobuf.Timestamp update_time = 7;
+  // The time when the Run was ended.
+  google.protobuf.Timestamp end_time = 8;
+
+  // Owner of the Run.
+  //
+  // For a single-CL Run, this is the preferred email of the owner of
+  // the Gerrit CL (whoever authenticated to Gerrit to upload the first
+  // patchset of the CL). Note that Gerrit CL owner may differ from author and
+  // committer encoded in the Git commit. Also, depending on Gerrit
+  // configuration, later patchsets could be uploaded by different accounts to
+  // that of the CL owner.
+  //
+  // For a multi-CL Run, this is the owner of the Gerrit CL which has the latest
+  // triggering timestamp (e.g. latest CQ+2 vote).
+  string owner = 9;
+  // The Gerrit changes involved in this Run.
+  repeated GerritChange cls = 10;
+
+  // The tryjobs of the Run.
+  //
+  // Note that this data is a snapshot at the time Run is ended. Therefore,
+  // some tryjobs may be in open status. If you need fresh data, query the
+  // corresponding backend system using the returned id.
+  //
+  // It may also contain tryjobs that are no longer required.
+  // TODO(yiwzhang): Re-evalute whether the statement above is true after
+  // tryjobs are handled by LUCI CV instead of CQDaemon.
+  repeated Tryjob tryjobs = 11;
+
+  // Submission represents the state of a Run Submission.
+  message Submission {
+    // Indexes of CLs in Run.CL IDs that have been submitted succeessfully.
+    repeated int32 submitted_cl_indexes = 2;
+    // Indexes of CLs in Run.CL IDs that failed to be submitted.
+    //
+    // CLs that are neither in this list nor in the `submitted_cl_indexes`
+    // should be treated as if CV has never attempted to submit them.
+    repeated int32 failed_cl_indexes = 3;
+  }
+  // The state of Run Submission.
+  //
+  // Unset if Submission hasn't started.
+  Submission submission = 12;
+}
+
+// A Gerrit patchset.
+message GerritChange {
+  // Gerrit hostname, e.g. "chromium-review.googlesource.com".
+  string host = 1;
+  // Change number, e.g. 12345.
+  int64 change = 2;
+  // Patch set number, e.g. 1.
+  int32 patchset = 3;
+}

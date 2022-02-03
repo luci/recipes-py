@@ -1,0 +1,87 @@
+// Copyright 2021 The LUCI Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
+syntax = "proto3";
+
+package cv.v0;
+
+option go_package = "go.chromium.org/luci/cv/api/v0;cvpb";
+
+import "go.chromium.org/luci/cv/api/v0/run.proto";
+
+
+// Runs service exposes CV Runs and their sub-resources.
+//
+// !!!!! WARNING !!!!!
+//   * Use at your own risk.
+//   * We will stop supporting this v0 API without notice.
+//   * No backwards compatibility guaranteed.
+//   * Please, contact CV maintainers at luci-eng@ before using this and
+//     we may provide additional guarantees to you/your service.
+service Runs {
+
+  // GetRun returns Run details.
+  rpc GetRun(GetRunRequest) returns (Run);
+
+  // SearchRuns searches for Runs.
+  rpc SearchRuns(SearchRunsRequest) returns (SearchRunsResponse);
+}
+
+message GetRunRequest {
+  // ID is CV Run ID, e.g. "projects/chromium/runs/9991234120-1-badcafe"
+  string id = 1;
+}
+
+// A request message for SearchRuns RPC.
+message SearchRunsRequest {
+  // Returned Runs must satisfy this predicate. Required.
+  RunPredicate predicate = 1;
+
+  // Maximum number of Runs to return at once.
+  //
+  // Default 32; maximum 128.
+  int32 page_size = 2;
+
+  // Value of SearchRunsResponse.next_page_token from the previous response.
+  // Use it to continue searching.
+  string page_token = 3;
+}
+
+// A response message for SearchRuns RPC.
+message SearchRunsResponse {
+  // Search results.
+  //
+  // Ordered by Run ID ascending; as a result, the Runs will be ordered by LUCI
+  // project in ascending lexicographic order and within each project will be
+  // ordered from newest to oldest.
+  repeated Run runs = 1;
+
+  // Value for SearchRunsRequest.page_token to continue searching.
+  string next_page_token = 2;
+}
+
+// A predicate for a SearchRuns query.
+//
+// If a field value is empty, it is ignored, unless stated otherwise.
+message RunPredicate {
+  // Limit results to this LUCI project. Required.
+  string project = 1;
+
+  // The Run must include each of these Gerrit CLs, and may include others.
+  //
+  // The Patchset field in the GerritChanges is disallowed; Runs for the CL
+  // across all patchsets will be returned.
+  repeated GerritChange gerrit_changes = 2;
+}

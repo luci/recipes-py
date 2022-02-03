@@ -26,6 +26,7 @@ SUB_PATHS = [
   'common/bq/pb',
   'common/proto',
   'cv/api/recipe/v1',
+  'cv/api/v0',
   'gce/api/config/v1',
   'led/job',
   'lucictx',
@@ -43,8 +44,6 @@ def main():
       os.makedirs(sub_dir)
     os.chdir(sub_dir)
 
-    resp = requests.get(LOG_URL % (sub,))
-    commit = str(json.loads(resp.text[4:])['log'][0]['commit'])
     print('Updating %r to %r' % (sub, commit))
 
     resp = requests.get(TAR_URL % (commit, sub), stream=True).raw
