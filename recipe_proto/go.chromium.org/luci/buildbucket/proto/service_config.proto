@@ -29,6 +29,10 @@ message SettingsCfg {
   LogDogSettings logdog = 2;
   ResultDBSettings resultdb = 4;
 
+  ExperimentSettings experiment = 5;
+
+  CipdSettings cipd = 6;
+
   // List of Gerrit hosts to force git authentication for.
   //
   // By default public hosts are accessed anonymously, and the anonymous access
@@ -88,6 +92,49 @@ message LogDogSettings {
   string hostname = 1;
 }
 
+// ExperimentSettings controls all well-known global experiment values.
+message ExperimentSettings {
+  message Experiment {
+    // The name of the global experiment.
+    string name = 1;
+
+    // The default_value (% chance, 0 - 100) of the global experiment.
+    //
+    // This must be greater than or equal to minimum_value.
+    int32 default_value = 2;
+
+    // The minimum_value (% chance, 0 - 100) of the global experiment.
+    //
+    // This will override lower Builder-defined experiment values.
+    int32 minimum_value = 3;
+
+    // Allows temporary exclusion of builders from the experiment.
+    // Each line here should have a corresponding bug to remove the exclusion.
+    //
+    // If a builder is excluded from this experiment, it acts as though
+    // default_value and minimum_value are both 0.
+    BuilderPredicate builders = 4;
+
+    // If this is true it means that the experiment has no effect, and is safe
+    // to stop setting in user configs. Additionally, Buildbucket will stop
+    // setting this experiment negatively on Builds.
+    //
+    // When removing a global experiment, set this to true rather than removing
+    // the experiment entirely, because Buildbucket still needs this to permit
+    // (and ignore) user configs which still mention reserved experiments (e.g.
+    // if we have "luci.something" which someone explicitly specifies, and we
+    // ramp it to 100% and remove it from the global spec, Buildbucket will
+    // start complaining that users are using a reserved experiment name, rather
+    // than just ignoring it).
+    //
+    // If inactive experiments appear in user configurations, it may cause
+    // warnings to be printed e.g. at config validation time and/or on the LUCI
+    // UI, etc.
+    bool inactive = 5;
+  }
+  repeated Experiment experiments = 1;
+}
+
 // A predicate for a builder.
 message BuilderPredicate {
   // OR-connected list of regular expressions for a string
@@ -110,4 +157,10 @@ message BuilderPredicate {
 message ResultDBSettings {
   // Hostname of the ResultDB instance to use, e.g. "results.api.cr.dev".
   string hostname = 1;
+}
+
+message CipdSettings {
+  // default CIPD server to use for this setting configuration,
+  // e.g. "chrome-infra-packages.appspot.com".
+  string server = 1;
 }
