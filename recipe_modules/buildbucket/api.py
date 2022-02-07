@@ -499,7 +499,10 @@ class BuildbucketApi(recipe_api.RecipeApi):
     req.properties.update(properties or {})
 
     # Populate tags.
-    tag_set = {('user_agent', 'recipe')}
+    tag_set = {
+        ('user_agent', 'recipe'),
+        ('parent_buildbucket_id', str(self.build.id)),
+    }
     for t in tags or []:
       t = as_msg(t, common_pb2.StringPair)
       tag_set.add((t.key, t.value))
