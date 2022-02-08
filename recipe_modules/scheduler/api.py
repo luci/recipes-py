@@ -91,7 +91,7 @@ class SchedulerApi(recipe_api.RecipeApi):
 
       tags = {}
       if self._inherit_tags:
-        tags = api_self.m.buildbucket.tags_for_child_build.copy()
+        tags = self._tags_for_child_build(api_self.m.buildbucket.build).copy()
       if self._tags:
         tags.update(self._tags)
       self._cleanup_tags(tags)
@@ -107,6 +107,38 @@ class SchedulerApi(recipe_api.RecipeApi):
 
       t.update(self._serialize_payload(base))
       return t
+
+    def _tags_for_child_build(self, build): # pragma: no cover
+      """A dict of tags (key -> value) derived from current (parent) build for a
+      child build."""
+      original_tags = {
+        t.key: t.value for t in build.tags
+      }
+      new_tags = {'user_agent': 'recipe'}
+      commit = build.input.gitiles_commit
+      if build.input.gerrit_changes:
+        cl = build.input.gerrit_changes[0]
+        new_tags['buildset'] = 'patch/gerrit/%s/%d/%d' % (
+            cl.host, cl.change, cl.patchset)
+
+      # Note: an input gitiles commit with ref without id is valid
+      # but such commit cannot be used to construct a valid commit buildset.
+      elif commit.host and commit.project and commit.id:
+        new_tags['buildset'] = (
+            'commit/gitiles/%s/%s/+/%s' % (
+                commit.host, commit.project, commit.id))
+        if commit.ref:
+          new_tags['gitiles_ref'] = commit.ref
+      else:
+        buildset = original_tags.get('buildset')
+        if buildset:
+          new_tags['buildset'] = buildset
+
+      if build.number:
+        new_tags['parent_buildnumber'] = str(build.number)
+      if build.builder.builder:
+        new_tags['parent_buildername'] = str(build.builder.builder)
+      return new_tags
 
     def _cleanup_tags(self, tags):
       pass
@@ -155,7 +187,7 @@ class SchedulerApi(recipe_api.RecipeApi):
     def _cleanup_tags(self, tags):
       # These tags are populated based on the triggered commit by Buildbucket.
       # They could have been inherited (with wrong values) from
-      # tags_for_child_build. Drop them.
+      # _tags_for_child_build. Drop them.
       tags.pop('buildset', None)
       tags.pop('gitiles_ref', None)
 

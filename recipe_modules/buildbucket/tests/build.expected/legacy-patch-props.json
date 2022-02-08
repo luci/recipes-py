@@ -30,14 +30,6 @@
     "name": "is_critical"
   },
   {
-    "cmd": [
-      "echo",
-      "buildset:patch/gerrit/example.googlesource.com/1/2",
-      "user_agent:recipe"
-    ],
-    "name": "tags_for_child_build"
-  },
-  {
     "name": "$result"
   }
 ]

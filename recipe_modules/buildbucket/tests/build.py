@@ -32,12 +32,6 @@ def RunSteps(api):
   api.step('hostname', ['echo', api.buildbucket.host])
   api.step('is_critical', ['echo', api.buildbucket.is_critical()])
 
-  child_build_tags = [
-      '%s:%s' % t
-      for t in sorted(iteritems(api.buildbucket.tags_for_child_build))
-  ]
-  api.step('tags_for_child_build', ['echo'] + child_build_tags)
-
   api.assertions.assertEqual(
       api.buildbucket.bucket_v1,
       api.properties.get('expected_bucket_v1'))

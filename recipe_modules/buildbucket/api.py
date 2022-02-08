@@ -187,43 +187,6 @@ class BuildbucketApi(recipe_api.RecipeApi):
     build = build or self.build
     return build.critical in (common_pb2.UNSET, common_pb2.YES)
 
-  @property
-  def tags_for_child_build(self):
-    """A dict of tags (key -> value) derived from current (parent) build for a
-    child build."""
-    original_tags = {t.key: t.value for t in self.build.tags}
-    new_tags = {'user_agent': 'recipe'}
-
-    # TODO(nodir): switch to ScheduleBuild API where we don't have to convert
-    # build input back to tags.
-    # This function returns a dict, so there can be only one buildset, although
-    # we can have multiple sources.
-    # Priority: CL buildset, commit buildset, custom buildset.
-    commit = self.build.input.gitiles_commit
-    if self.build.input.gerrit_changes:
-      cl = self.build.input.gerrit_changes[0]
-      new_tags['buildset'] = 'patch/gerrit/%s/%d/%d' % (
-          cl.host, cl.change, cl.patchset)
-
-    # Note: an input gitiles commit with ref without id is valid
-    # but such commit cannot be used to construct a valid commit buildset.
-    elif commit.host and commit.project and commit.id:
-      new_tags['buildset'] = (
-          'commit/gitiles/%s/%s/+/%s' % (
-              commit.host, commit.project, commit.id))
-      if commit.ref:
-        new_tags['gitiles_ref'] = commit.ref
-    else:
-      buildset = original_tags.get('buildset')
-      if buildset: # pragma: no cover
-        new_tags['buildset'] = buildset
-
-    if self.build.number:
-      new_tags['parent_buildnumber'] = str(self.build.number)  # pragma: no cover
-    if self.build.builder.builder:
-      new_tags['parent_buildername'] = str(self.build.builder.builder)
-    return new_tags
-
   def set_output_gitiles_commit(self, gitiles_commit):
     """Sets `buildbucket.v2.Build.output.gitiles_commit` field.
 
