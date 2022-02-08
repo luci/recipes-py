@@ -523,8 +523,10 @@ def _install_protos(proto_package_path, dgst, proto_files):
   cipd_proc = subprocess.Popen([
     'cipd'+_BAT, 'ensure', '-root', os.path.join(proto_package_path, 'protoc'),
     '-ensure-file', '-'], stdin=subprocess.PIPE)
-  cipd_proc.communicate(
-      b'infra/tools/protoc/${platform} protobuf_version:v' + PROTOC_VERSION)
+  # We don't have a mac-arm64 protoc package yet; force amd64 for now.
+  protoc_platform = b'mac-amd64' if sys.platform == 'darwin' else b'${platform}'
+  cipd_proc.communicate((b'infra/tools/protoc/%s protobuf_version:v' %
+                         protoc_platform) + PROTOC_VERSION)
   if cipd_proc.returncode != 0:
     raise ValueError(
         'failed to install protoc: retcode %d' % cipd_proc.returncode)
