@@ -5,5 +5,5 @@
 PYTHON_VERSION_COMPATIBILITY = "PY2+3"
 
 DEPS = [
-  'python',
+  'step',
 ]

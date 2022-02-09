@@ -9,6 +9,9 @@ from recipe_engine import recipe_api
 import datetime
 import time
 
+import gevent
+
+
 class TimeApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
     super(TimeApi, self).__init__(**kwargs)
@@ -18,25 +21,20 @@ class TimeApi(recipe_api.RecipeApi):
       self._fake_time = self._test_data.get('seed', 1337000000.0)
       self._fake_step = self._test_data.get('step', 1.5)
 
-  def sleep(self, secs):
+  def sleep(self, secs, with_step=None):
     """Suspend execution of |secs| (float) seconds. Does nothing in testing.
 
-    If secs > 60 (sleep longer than one minute), run a step to do the
-    sleep, so that if a user looks at a build, they know what the recipe is
-    doing.
+    Args:
+      * secs (number) - The number of seconds to sleep.
+      * with_step (bool|None) - If True (or None and secs>60), emits a step to
+        indicate to users that the recipe is sleeping (not just hanging). False
+        suppresses this.
     """
-    if secs > 60: # pragma: no cover
-      self.m.python.inline(
-          'sleep',
-          """
-          import sys
-          import time
-          time.sleep(int(sys.argv[1]))
-          """,
-          args=[secs])
-    else:
-      if not self._test_data.enabled:  # pragma: no cover
-        time.sleep(secs)
+    if with_step is True or (with_step is None and secs > 60): # pragma: no cover
+      self.m.step.empty('sleep %d' % (secs,))
+
+    if not self._test_data.enabled:  # pragma: no cover
+      gevent.sleep(secs)
 
   def time(self):
     """Returns current timestamp as a float number of seconds since epoch."""

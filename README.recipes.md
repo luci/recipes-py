@@ -3813,32 +3813,34 @@ Returns:
   A list of TaskRequestMetadata objects.
 ### *recipe_modules* / [time](/recipe_modules/time)
 
-[DEPS](/recipe_modules/time/__init__.py#7): [python](#recipe_modules-python)
+[DEPS](/recipe_modules/time/__init__.py#7): [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Allows mockable access to the current time.
 
-#### **class [TimeApi](/recipe_modules/time/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [TimeApi](/recipe_modules/time/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
 
-&mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#49)(self):**
+&mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#47)(self):**
 
 Returns current timestamp as an int number of milliseconds since epoch.
     
 
-&mdash; **def [sleep](/recipe_modules/time/api.py#21)(self, secs):**
+&mdash; **def [sleep](/recipe_modules/time/api.py#24)(self, secs, with_step=None):**
 
 Suspend execution of |secs| (float) seconds. Does nothing in testing.
 
-If secs > 60 (sleep longer than one minute), run a step to do the
-sleep, so that if a user looks at a build, they know what the recipe is
-doing.
+Args:
+  * secs (number) - The number of seconds to sleep.
+  * with_step (bool|None) - If True (or None and secs>60), emits a step to
+    indicate to users that the recipe is sleeping (not just hanging). False
+    suppresses this.
 
-&mdash; **def [time](/recipe_modules/time/api.py#41)(self):**
+&mdash; **def [time](/recipe_modules/time/api.py#39)(self):**
 
 Returns current timestamp as a float number of seconds since epoch.
 
-&mdash; **def [utcnow](/recipe_modules/time/api.py#54)(self):**
+&mdash; **def [utcnow](/recipe_modules/time/api.py#52)(self):**
 
 Returns current UTC time as a datetime.datetime.
 ### *recipe_modules* / [tricium](/recipe_modules/tricium)
