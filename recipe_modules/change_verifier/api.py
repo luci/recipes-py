@@ -10,6 +10,11 @@ CQ daemon. See:
 
 This recipe module depends on the prpc binary being available in $PATH:
   https://godoc.org/go.chromium.org/luci/grpc/cmd/prpc
+
+his recipe module depends on experimental API provided by LUCI CV and may
+subject to change in the future. Please reach out to the LUCI team first if you
+want to use this recipe module; file a ticket at:
+https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3ELUCI%3EBuildService%3EPresubmit%3ECV
 """
 
 from google.protobuf import json_format
