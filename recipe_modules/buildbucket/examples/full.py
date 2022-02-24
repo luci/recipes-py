@@ -14,12 +14,13 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
-  'buildbucket',
-  'json',
-  'platform',
-  'properties',
-  'raw_io',
-  'step',
+    'buildbucket',
+    'json',
+    'platform',
+    'properties',
+    'raw_io',
+    'runtime',
+    'step',
 ]
 
 
@@ -150,3 +151,13 @@ def GenTests(api):
          api.post_process(DropExpectation))
 
   yield (api.test('no_properties'))
+
+  yield (api.test(
+      'cancel_step',
+      api.runtime.global_shutdown_on_step('buildbucket.get', 'before'),
+  ) + api.buildbucket.try_build(
+      project='proj',
+      builder='try-builder',
+      git_repo='https://chrome-internal.googlesource.com/a/repo.git',
+      revision='a' * 40,
+      build_number=123))

@@ -334,7 +334,7 @@ Args:
   Empty tag values won't remove existing tags with matching keys, since tags
   can only be added.
 
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#931)(self):**
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#934)(self):**
 
 Returns bucket name in v1 format.
 
@@ -357,13 +357,13 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#942)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#945)(self):**
 
 *** note
 **DEPRECATED**: use build.id instead.
 ***
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#947)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#950)(self):**
 
 *** note
 **DEPRECATED**: use build.input instead.
@@ -382,7 +382,7 @@ It remains on the bot from build to build.
 See "Builder cache" in
 https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/project_config.proto
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#952)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#955)(self):**
 
 *** note
 **DEPRECATED**: Use build.builder instead.
@@ -4122,13 +4122,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/assertions/tests/max_diff.py#15)(api):**
 ### *recipes* / [buildbucket:examples/full](/recipe_modules/buildbucket/examples/full.py)
 
-[DEPS](/recipe_modules/buildbucket/examples/full.py#16): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/examples/full.py#16): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 This file is a recipe demonstrating the buildbucket recipe module.
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/examples/full.py#26)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/examples/full.py#27)(api):**
 ### *recipes* / [buildbucket:run/multi](/recipe_modules/buildbucket/run/multi.py)
 
 [DEPS](/recipe_modules/buildbucket/run/multi.py#13): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [swarming](#recipe_modules-swarming)

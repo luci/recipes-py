@@ -861,7 +861,10 @@ class BuildbucketApi(recipe_api.RecipeApi):
               json_format.MessageToDict(test_response)
           ),
       )
-    except self.m.step.StepFailure:  # pragma: no cover
+    except self.m.step.StepFailure as ex:  # pragma: no cover
+      if ex.was_cancelled:
+        # Raise the step failure if the build is being canceled.
+        raise
       # Ignore the exit code and parse the response as BatchResponse.
       # Fail if parsing fails.
       pass
