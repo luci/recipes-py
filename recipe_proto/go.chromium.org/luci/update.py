@@ -1,4 +1,4 @@
-#!/usr/bin/env vpython
+#!/usr/bin/env vpython3
 # Copyright 2019 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -23,8 +23,10 @@ TAR_URL = BASE_URL+'/+archive/%s/%s.tar.gz'
 
 SUB_PATHS = [
   'buildbucket/proto',
+  'common/bq/pb',
   'common/proto',
   'cv/api/recipe/v1',
+  'cv/api/v0',
   'gce/api/config/v1',
   'led/job',
   'lucictx',
