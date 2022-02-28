@@ -1292,7 +1292,7 @@ TODO(qyearsley): Rename parts of this from CQ -> CV as appropriate.
 
 Returns whether CQ is active for this build.
 
-&mdash; **def [allow\_reuse\_for](/recipe_modules/cq/api.py#225)(self, \*modes):**
+&mdash; **def [allow\_reuse\_for](/recipe_modules/cq/api.py#223)(self, \*modes):**
 
 Instructs CQ that this build can be reused in a future Run if
 and only if its mode is in the provided modes.

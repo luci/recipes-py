@@ -218,9 +218,7 @@ class CQApi(recipe_api.RecipeApi):
 
   @property
   def allowed_reuse_modes(self):
-    assert all(not r.deny for r in self._output.reuse), (
-        'deny reuse is not supported currently')
-    return [r.mode_regexp for r in self._output.reuse]
+    return [m for m in self._output.reusability.mode_allowlist]
 
   def allow_reuse_for(self, *modes):
     """Instructs CQ that this build can be reused in a future Run if
@@ -230,10 +228,13 @@ class CQApi(recipe_api.RecipeApi):
     """
     # TODO(yiwzhang): Expose low-level method to modify reuse if needed.
     if not modes:
-      raise ValueError('expected at least 1 mode_regexp, got 0')
+      raise ValueError('expected at least 1 modes, got 0')
+    del self._output.reusability.mode_allowlist[:]
+    self._output.reusability.mode_allowlist.extend(modes)
+    # TODO(crbug/1225047):Stop populating  _output.reuse after CQDaemon is
+    # decommissioned. For now, CQDaemon will still use this field to decide
+    # reusability.
     del self._output.reuse[:]
-    # TODO(yiwzhang): consider changing mode_regexp in output.reuse
-    # to mode_allowlist.
     self._output.reuse.extend(
         cq_pb2.Output.Reuse(mode_regexp=m) for m in modes)
     self._write_output_props()
