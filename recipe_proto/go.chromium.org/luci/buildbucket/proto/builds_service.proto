@@ -193,7 +193,7 @@ message UpdateBuildRequest {
   // Build to update, with new field values.
   Build build = 1;
 
-  // Required. Build fields to update.
+  // Build fields to update.
   // See also
   // https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
   //
@@ -206,6 +206,9 @@ message UpdateBuildRequest {
   // - build.steps
   // - build.summary_markdown
   // - build.tags
+  // - build.infra.buildbucket.agent.output
+  //
+  // If omitted, Buildbucket will update the Build's update_time, but nothing else.
   google.protobuf.FieldMask update_mask = 2;
 
   // Fields to include in the response. See also GetBuildRequest.fields.
@@ -215,8 +218,7 @@ message UpdateBuildRequest {
 
   // What portion of the Build message to return.
   //
-  // If not set, the default mask is used, see Build message comments for the
-  // list of fields returned by default.
+  // If not set, an empty build will be returned.
   BuildMask mask = 101;
 }
 
@@ -536,6 +538,21 @@ message BuildPredicate {
   //   `ScheduleBuildRequest.experiments`). Well-known experiments are always
   //   considered to be available.
   repeated string experiments = 11;
+
+  // A build id.
+  //
+  // Returned builds will be descendants of this build (e.g. "100" means
+  // "any build transitively scheduled starting from build 100").
+  //
+  // Mutually exclusive with `child_of`.
+  int64 descendant_of = 12;
+
+  // A build id.
+  //
+  // Returned builds will be only the immediate children of this build.
+  //
+  // Mutually exclusive with `descendant_of`.
+  int64 child_of = 13;
 }
 
 // Open build range.
