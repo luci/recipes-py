@@ -468,6 +468,7 @@ class AggregatedResult(object):
     self.successes = []
     self.failures = []
     self.contains_infra_failure = False
+    self.contains_cancelled = False
 
     # Needs to be here to be able to treat this as a step result
     self.retcode = None
@@ -490,6 +491,8 @@ class AggregatedResult(object):
   def add_failure(self, exception):
     if isinstance(exception, InfraFailure):
       self.contains_infra_failure = True
+      self.contains_cancelled = (
+        self.contains_cancelled or exception.was_cancelled)
     self.failures.append(exception)
     return DeferredResult(None, exception)
 

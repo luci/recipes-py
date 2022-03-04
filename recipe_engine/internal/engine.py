@@ -598,12 +598,23 @@ class RecipeEngine(object):
           engine._step_stack[-1].close()   # pylint: disable=protected-access
 
       except recipe_api.StepFailure as ex:
-        is_infra_failure = isinstance(ex, recipe_api.InfraFailure) or (
-          isinstance(ex, recipe_api.AggregatedStepFailure) and
-          ex.result.contains_infra_failure
-        )
-        result.status = common_pb2.INFRA_FAILURE if (
-          is_infra_failure) else common_pb2.FAILURE
+        is_infra_failure = was_cancelled = False
+        if isinstance(ex, recipe_api.AggregatedStepFailure):
+          is_infra_failure = ex.result.contains_infra_failure
+          was_cancelled = ex.result.contains_cancelled
+        elif isinstance(ex, recipe_api.InfraFailure):
+          is_infra_failure = True
+          was_cancelled = ex.was_cancelled
+
+        if was_cancelled and GLOBAL_SHUTDOWN.ready():
+          # We presume if we caught a cancelation exception and GLOBAL_SHUTDOWN
+          # is on that the original exception was due to GLOBAL_SHUTDOWN... this
+          # isn't 100% guaranteed, but for now it's close enough.
+          result.status = common_pb2.CANCELED
+        elif is_infra_failure:
+          result.status = common_pb2.INFRA_FAILURE
+        else:
+          result.status = common_pb2.FAILURE
         result.summary_markdown = ex.reason
 
     # All other exceptions are reported to the user and are fatal.

@@ -192,7 +192,7 @@
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-#### **class [ArchiveApi](/recipe_modules/archive/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [ArchiveApi](/recipe_modules/archive/api.py#8)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 Provides steps to manipulate archive files (tar, zip, etc.).
 
@@ -259,7 +259,7 @@ Returns:
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-#### **class [AssertionsApi](/recipe_modules/assertions/api.py#55)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [AssertionsApi](/recipe_modules/assertions/api.py#55)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 Provides access to the assertion methods of the python unittest module.
 
@@ -321,7 +321,7 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 `build_pb2.Build` and returns a link title.
 If it returns `None`, the link is not reported. Default link title is build id.
 
-#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 A module for interacting with buildbucket.
 
@@ -687,7 +687,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 API for interacting with cas client.
 
-#### **class [CasApi](/recipe_modules/cas/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [CasApi](/recipe_modules/cas/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 A module for interacting with cas client.
 
@@ -739,7 +739,7 @@ This module has input properties which contains a list of CAS inputs to
 download. These can easily be download to disk with the 'download_caches'
 method, and subsequently used by a recipe in whatever relevant manner.
 
-#### **class [CasInputApi](/recipe_modules/cas_input/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [CasInputApi](/recipe_modules/cas_input/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 A module for downloading CAS inputs to a recipe.
 
@@ -778,7 +778,7 @@ subject to change in the future. Please reach out to the LUCI team first if you
 want to use this recipe module; file a ticket at:
 https://bugs.chromium.org/p/chromium/issues/entry?components=Infra%3ELUCI%3EBuildService%3EPresubmit%3ECV
 
-#### **class [ChangeVerifierApi](/recipe_modules/change_verifier/api.py#28)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [ChangeVerifierApi](/recipe_modules/change_verifier/api.py#28)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 This module provides recipe API of LUCI Change Verifier.
 
@@ -809,7 +809,7 @@ API for interacting with CIPD.
 Depends on 'cipd' binary available in PATH:
 https://godoc.org/go.chromium.org/luci/cipd/client/cmd/cipd
 
-#### **class [CIPDApi](/recipe_modules/cipd/api.py#265)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [CIPDApi](/recipe_modules/cipd/api.py#265)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 CIPDApi provides basic support for CIPD.
 
@@ -1098,7 +1098,7 @@ Returns the CIPDApi.Pin instance.
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-#### **class [CommitPositionApi](/recipe_modules/commit_position/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [CommitPositionApi](/recipe_modules/commit_position/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 Recipe module providing commit position parsing and formatting.
 
@@ -1140,7 +1140,7 @@ with api.context(cwd=api.path['start_dir'].join('subdir')):
   api.step("cat subdir/foo", ['cat', './foo'])
 ```
 
-#### **class [ContextApi](/recipe_modules/context/api.py#80)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [ContextApi](/recipe_modules/context/api.py#80)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 &emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/context/api.py#112)(self, cwd=None, env_prefixes=None, env_suffixes=None, env=None, infra_steps=None, luciexe=None, realm=None, deadline=None):**
 
@@ -1278,7 +1278,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Recipe API for LUCI CQ, the pre-commit testing system.
 
-#### **class [CQApi](/recipe_modules/cq/api.py#18)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [CQApi](/recipe_modules/cq/api.py#18)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 This module provides recipe API of LUCI CQ, aka pre-commit testing system.
 
@@ -1426,7 +1426,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 File manipulation (read/write/delete/glob) methods.
 
-#### **class [FileApi](/recipe_modules/file/api.py#87)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [FileApi](/recipe_modules/file/api.py#87)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 &mdash; **def [compute\_hash](/recipe_modules/file/api.py#215)(self, name, paths, base_path, test_data=''):**
 
@@ -1843,7 +1843,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Implements in-recipe concurrency via green threads.
 
-#### **class [FuturesApi](/recipe_modules/futures/api.py#42)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [FuturesApi](/recipe_modules/futures/api.py#42)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 Provides access to the Recipe concurrency primitives.
 
@@ -2027,7 +2027,7 @@ This module was created before there was a way to put recipes directly into
 another repo. It is not recommended to use this, and it will be removed in the
 near future.
 
-#### **class [GeneratorScriptApi](/recipe_modules/generator_script/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [GeneratorScriptApi](/recipe_modules/generator_script/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 &mdash; **def [\_\_call\_\_](/recipe_modules/generator_script/api.py#44)(self, path_to_script, \*args):**
 
@@ -2070,7 +2070,7 @@ corresponds to one step, and contains the following keys:
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-#### **class [GolangApi](/recipe_modules/golang/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [GolangApi](/recipe_modules/golang/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 &emsp; **@contextlib.contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/golang/api.py#15)(self, version, path=None, cache=None):**
 
@@ -2109,7 +2109,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Methods for producing and consuming JSON.
 
-#### **class [JsonApi](/recipe_modules/json/api.py#134)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [JsonApi](/recipe_modules/json/api.py#134)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 &emsp; **@staticmethod**<br>&mdash; **def [dumps](/recipe_modules/json/api.py#135)(\*args, \*\*kwargs):**
 
@@ -2159,7 +2159,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 An interface to call the led tool.
 
-#### **class [LedApi](/recipe_modules/led/api.py#21)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [LedApi](/recipe_modules/led/api.py#21)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 Interface to the led tool.
 
@@ -2229,7 +2229,7 @@ will appear as the child steps of the launched cmd/step in the current running
 build (using the Merge Step feature from luciexe protocol). This is the
 replacement for allow_subannotation feature in the legacy annotate mode.
 
-#### **class [LegacyAnnotationApi](/recipe_modules/legacy_annotation/api.py#24)([RecipeApiPlain](/recipe_engine/recipe_api.py#735)):**
+#### **class [LegacyAnnotationApi](/recipe_modules/legacy_annotation/api.py#24)([RecipeApiPlain](/recipe_engine/recipe_api.py#738)):**
 
 &mdash; **def [\_\_call\_\_](/recipe_modules/legacy_annotation/api.py#28)(self, name, cmd, timeout=None, step_test_data=None, cost=_ResourceCost()):**
 
@@ -2246,7 +2246,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 API for specifying Milo behavior.
 
-#### **class [MiloApi](/recipe_modules/milo/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [MiloApi](/recipe_modules/milo/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 A module for interacting with Milo.
 
@@ -2268,7 +2268,7 @@ Args:
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-#### **class [NodeJSApi](/recipe_modules/nodejs/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [NodeJSApi](/recipe_modules/nodejs/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 &emsp; **@contextlib.contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/nodejs/api.py#15)(self, version, path=None, cache=None):**
 
@@ -2334,7 +2334,7 @@ There are other anchor points which can be defined (e.g. by the
 `depot_tools/infra_paths` module). Refer to those modules for additional
 documentation.
 
-#### **class [PathApi](/recipe_modules/path/api.py#225)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [PathApi](/recipe_modules/path/api.py#225)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 &mdash; **def [\_\_getitem\_\_](/recipe_modules/path/api.py#464)(self, name):**
 
@@ -2553,7 +2553,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Mockable system platform identity functions.
 
-#### **class [PlatformApi](/recipe_modules/platform/api.py#24)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [PlatformApi](/recipe_modules/platform/api.py#24)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 Provides host-platform-detection properties.
 
@@ -2639,7 +2639,7 @@ values provided to the recipe engine at the beginning of execution. There is
 intentionally no API to write property values (lest they become a kind of
 random-access global variable).
 
-#### **class [PropertiesApi](/recipe_modules/properties/api.py#30)([RecipeApiPlain](/recipe_engine/recipe_api.py#735), collections.Mapping):**
+#### **class [PropertiesApi](/recipe_modules/properties/api.py#30)([RecipeApiPlain](/recipe_engine/recipe_api.py#738), collections.Mapping):**
 
 PropertiesApi implements all the standard Mapping functions, so you
 can use it like a read-only dict.
@@ -2670,7 +2670,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 Methods for producing and consuming protobuf data to/from steps and the
 filesystem.
 
-#### **class [ProtoApi](/recipe_modules/proto/api.py#83)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [ProtoApi](/recipe_modules/proto/api.py#83)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 &emsp; **@staticmethod**<br>&mdash; **def [decode](/recipe_modules/proto/api.py#161)(data, msg_class, codec, \*\*decoding_kwargs):**
 
@@ -2749,7 +2749,7 @@ This includes support for `vpython`, and knows how to specify parameters
 correctly for bots (e.g. ensuring that python is working on Windows, passing the
 unbuffered flag, etc.)
 
-#### **class [PythonApi](/recipe_modules/python/api.py#19)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [PythonApi](/recipe_modules/python/api.py#19)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 &mdash; **def [\_\_call\_\_](/recipe_modules/python/api.py#20)(self, name, script, args=None, unbuffered=True, venv=None, \*\*kwargs):**
 
@@ -2857,7 +2857,7 @@ Example:
       api.random.shuffle(my_list)
       # my_list is now random!
 
-#### **class [RandomApi](/recipe_modules/random/api.py#56)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [RandomApi](/recipe_modules/random/api.py#56)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 &mdash; **def [\_\_getattr\_\_](/recipe_modules/random/api.py#63)(self, name):**
 
@@ -2870,7 +2870,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Provides objects for reading and writing raw data to and from steps.
 
-#### **class [RawIOApi](/recipe_modules/raw_io/api.py#330)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [RawIOApi](/recipe_modules/raw_io/api.py#330)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 &emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#331)(data, suffix='', name=None):**
 
@@ -2978,7 +2978,7 @@ API for interacting with the ResultDB service.
 Requires `rdb` command in `$PATH`:
 https://godoc.org/go.chromium.org/luci/resultdb/cmd/rdb
 
-#### **class [ResultDBAPI](/recipe_modules/resultdb/api.py#29)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [ResultDBAPI](/recipe_modules/resultdb/api.py#29)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 A module for interacting with ResultDB.
 
@@ -3208,7 +3208,7 @@ Args:
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-#### **class [RuntimeApi](/recipe_modules/runtime/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [RuntimeApi](/recipe_modules/runtime/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 This module assists in experimenting with production recipes.
 
@@ -3262,7 +3262,7 @@ Documentation for scheduler API is in
 RPCExplorer available at
   https://luci-scheduler.appspot.com/rpcexplorer/services/scheduler.Scheduler
 
-#### **class [SchedulerApi](/recipe_modules/scheduler/api.py#28)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [SchedulerApi](/recipe_modules/scheduler/api.py#28)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 A module for interacting with LUCI Scheduler service.
 
@@ -3320,7 +3320,7 @@ https://godoc.org/go.chromium.org/luci/auth/client/cmd/luci-auth).
 
 Depends on luci-auth to be in PATH.
 
-#### **class [ServiceAccountApi](/recipe_modules/service_account/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [ServiceAccountApi](/recipe_modules/service_account/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 &mdash; **def [default](/recipe_modules/service_account/api.py#57)(self):**
 
@@ -3347,7 +3347,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Step is the primary API for running steps (external programs, etc.)
 
-#### **class [StepApi](/recipe_modules/step/api.py#26)([RecipeApiPlain](/recipe_engine/recipe_api.py#735)):**
+#### **class [StepApi](/recipe_modules/step/api.py#26)([RecipeApiPlain](/recipe_engine/recipe_api.py#738)):**
 
 &emsp; **@property**<br>&mdash; **def [InfraFailure](/recipe_modules/step/api.py#145)(self):**
 
@@ -3728,7 +3728,7 @@ status.
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-#### **class [SwarmingApi](/recipe_modules/swarming/api.py#1103)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [SwarmingApi](/recipe_modules/swarming/api.py#1103)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 API for interacting with swarming.
 
@@ -3824,7 +3824,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Allows mockable access to the current time.
 
-#### **class [TimeApi](/recipe_modules/time/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [TimeApi](/recipe_modules/time/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 &mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#47)(self):**
 
@@ -3862,7 +3862,7 @@ analyzer recipes, including:
   * Recipes that accumulate comments one by one.
   * Recipes that wrap other tools and parse their output.
 
-#### **class [TriciumApi](/recipe_modules/tricium/api.py#26)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [TriciumApi](/recipe_modules/tricium/api.py#26)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 TriciumApi provides basic support for Tricium.
 
@@ -3920,7 +3920,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Methods for interacting with HTTP(s) URLs.
 
-#### **class [UrlApi](/recipe_modules/url/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [UrlApi](/recipe_modules/url/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 &mdash; **def [get\_file](/recipe_modules/url/api.py#131)(self, url, path, step_name=None, headers=None, transient_retry=True, strip_prefix=None, timeout=None):**
 
@@ -4026,7 +4026,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Allows test-repeatable access to a random UUID.
 
-#### **class [UuidApi](/recipe_modules/uuid/api.py#11)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [UuidApi](/recipe_modules/uuid/api.py#11)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 &mdash; **def [random](/recipe_modules/uuid/api.py#20)(self):**
 
@@ -4037,7 +4037,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Thin API for parsing semver strings into comparable object.
 
-#### **class [VersionApi](/recipe_modules/version/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#883)):**
+#### **class [VersionApi](/recipe_modules/version/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 &emsp; **@staticmethod**<br>&mdash; **def [parse](/recipe_modules/version/api.py#14)(version):**
 
@@ -4055,7 +4055,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Allows recipe modules to issue warnings in simulation test.
 
-#### **class [WarningApi](/recipe_modules/warning/api.py#12)([RecipeApiPlain](/recipe_engine/recipe_api.py#735)):**
+#### **class [WarningApi](/recipe_modules/warning/api.py#12)([RecipeApiPlain](/recipe_engine/recipe_api.py#738)):**
 
 &emsp; **@recipe_api.escape_all_warnings**<br>&mdash; **def [issue](/recipe_modules/warning/api.py#15)(self, name):**
 
