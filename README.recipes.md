@@ -129,6 +129,7 @@
   * [json:tests/add_json_log](#recipes-json_tests_add_json_log) (Python3 ✅)
   * [led:tests/full](#recipes-led_tests_full) (Python3 ✅)
   * [led:tests/no_exist](#recipes-led_tests_no_exist) (Python3 ✅)
+  * [led:tests/trigger_build](#recipes-led_tests_trigger_build) (Python3 ✅)
   * [legacy_annotation:examples/full](#recipes-legacy_annotation_examples_full) (Python3 ✅)
   * [milo:examples/full](#recipes-milo_examples_full) (Python3 ✅)
   * [nodejs:examples/full](#recipes-nodejs_examples_full) (Python3 ✅)
@@ -2215,6 +2216,22 @@ otherwise, None.
 A unique string identifier for this led job.
 
 If the current build is *not* a led job, value will be an empty string.
+
+&mdash; **def [trigger\_builder](/recipe_modules/led/api.py#187)(self, project_name, bucket_name, builder_name, properties):**
+
+Trigger a builder using led.
+
+This can be used by recipes instead of buildbucket or scheduler triggers
+in case the running build was triggered by led.
+
+This is equivalent to:
+led get-builder project/bucket:builder |       <inject_input_recipes> |       led edit <properties>  |       led launch
+
+Args:
+  * project_name - The project that defines the builder.
+  * bucket_name - The bucket that configures the builder.
+  * builder_name - Name of the builder to trigger.
+  * properties - Dict with properties to pass to the triggered build.
 ### *recipe_modules* / [legacy\_annotation](/recipe_modules/legacy_annotation)
 
 [DEPS](/recipe_modules/legacy_annotation/__init__.py#7): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [step](#recipe_modules-step)
@@ -4769,6 +4786,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipe_modules/led/tests/no_exist.py#12)(api):**
+### *recipes* / [led:tests/trigger\_build](/recipe_modules/led/tests/trigger_build.py)
+
+[DEPS](/recipe_modules/led/tests/trigger_build.py#9): [led](#recipe_modules-led), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+&mdash; **def [RunSteps](/recipe_modules/led/tests/trigger_build.py#15)(api):**
 ### *recipes* / [legacy\_annotation:examples/full](/recipe_modules/legacy_annotation/examples/full.py)
 
 [DEPS](/recipe_modules/legacy_annotation/examples/full.py#7): [legacy\_annotation](#recipe_modules-legacy_annotation), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

@@ -184,6 +184,49 @@ class LedApi(recipe_api.RecipeApi):
     # TODO(iannucci): Check for/inject buildbucket exe package/version
     return led_result
 
+  def trigger_builder(self, project_name, bucket_name, builder_name, properties):
+    """Trigger a builder using led.
+
+    This can be used by recipes instead of buildbucket or scheduler triggers
+    in case the running build was triggered by led.
+
+    This is equivalent to:
+    led get-builder project/bucket:builder | \
+      <inject_input_recipes> | \
+      led edit <properties>  | \
+      led launch
+
+    Args:
+      * project_name - The project that defines the builder.
+      * bucket_name - The bucket that configures the builder.
+      * builder_name - Name of the builder to trigger.
+      * properties - Dict with properties to pass to the triggered build.
+    """
+    property_args = []
+    for k, v in sorted(properties.items()):
+      property_args.append('-p')
+      property_args.append('{}={}'.format(k, self.m.json.dumps(v)))
+
+    # Clear out SWARMING_TASK_ID in the environment so that the created tasks
+    # do not have a parent task ID. This allows the triggered tasks to outlive
+    # the current task instead of being cancelled when the current task
+    # completes.
+    # TODO(https://crbug.com/1140621) Use command-line option instead of
+    # changing environment.
+    with self.m.context(env={'SWARMING_TASK_ID': None}):
+      step_name = 'trigger {}/{}/{}'.format(
+          project_name, bucket_name, builder_name)
+      with self.m.step.nest(step_name) as builder_presentation:
+        led_builder_id = '{}/{}:{}'.format(
+            project_name, bucket_name, builder_name)
+        led_job = self('get-builder', led_builder_id)
+        led_job = self.inject_input_recipes(led_job)
+        led_job = led_job.then('edit', *property_args)
+        result = led_job.then('launch').launch_result
+
+        swarming_task_url = result.swarming_task_url
+        builder_presentation.links['swarming task'] = swarming_task_url
+
   def _get_mock(self, cmd):
     """Returns a StepTestData for the given command."""
     job_def = None
