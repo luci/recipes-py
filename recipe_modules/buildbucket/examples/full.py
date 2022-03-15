@@ -55,6 +55,7 @@ def RunSteps(api):
   linux_req = api.buildbucket.schedule_request(
       builder='linux_perf_bisect',
       bucket=example_bucket,
+      swarming_parent_run_id=api.properties.get('swarming_parent_run_id'),
       properties={
         'bisect_config': {
           'bad_revision': '351054',
@@ -152,12 +153,17 @@ def GenTests(api):
 
   yield (api.test('no_properties'))
 
-  yield (api.test(
-      'cancel_step',
-      api.runtime.global_shutdown_on_step('buildbucket.get', 'before'),
-  ) + api.buildbucket.try_build(
-      project='proj',
-      builder='try-builder',
-      git_repo='https://chrome-internal.googlesource.com/a/repo.git',
-      revision='a' * 40,
-      build_number=123))
+  yield (
+      api.test(
+          'cancel_step',
+          api.runtime.global_shutdown_on_step('buildbucket.get', 'before'),
+      ) + api.buildbucket.try_build(
+          project='proj',
+          builder='try-builder',
+          git_repo='https://chrome-internal.googlesource.com/a/repo.git',
+          revision='a' * 40,
+          build_number=123,
+          experiments=['luci.buildbucket.parent_tracking']
+      ) +
+      api.properties(swarming_parent_run_id='1234')
+ )
