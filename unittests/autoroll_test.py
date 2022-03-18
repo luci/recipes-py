@@ -498,13 +498,14 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     upstream_deeper.commit('roll deepest')
 
     # We shouldn't be able to roll upstream_deeper/upstream_deepest until
-    # upstream includes them. i.e. there should be no roll, because there are no
-    # valid roll candidates.
+    # upstream includes them. i.e. there should be no roll, because there is no
+    # valid config that can be made, but there shouldn't be candidates created
+    # for upstream_deeper or upstream_deepest commits.
 
     roll_result = self.run_roll(deps)
     self.assertTrue(roll_result['success'])
     self.assertEqual([], roll_result['roll_details'])
-    self.assertGreater(len(roll_result['rejected_candidate_specs']), 0)
+    self.assertEqual(roll_result['rejected_candidate_specs'], [])
 
   def test_inconsistent_candidates_do_not_advance(self):
     deps = self.FakeRecipeDeps()
@@ -596,6 +597,66 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
                 non_candidate_commit.as_roll_info(),
                 candidate_commit.as_roll_info(),
             ],
+        },
+        'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
+    }
+
+    picked_roll = roll_result['picked_roll_details']
+    self.assertEqual(expected_picked_roll['commit_infos'],
+                     picked_roll['commit_infos'])
+    self.assertEqual(expected_picked_roll['spec'], picked_roll['spec'])
+    self.assertEqual(len(roll_result['roll_details']), 1)
+
+  def test_roll_fixes_inconsistent_deeper_deps(self):
+    deps = self.FakeRecipeDeps()
+    upstream = deps.add_repo('upstream')
+    upstream_deeper = deps.add_repo('upstream_deeper')
+
+    original_deeper_commit = upstream_deeper.backend.commit_metadata('HEAD')
+
+    # Add:
+    #   upstream -> upstream_deeper
+    upstream.add_dep('upstream_deeper')
+    upstream.commit('add dep on upstream_deeper')
+
+    # Create a commit in upstream_deeper and roll it into upstream
+    with upstream_deeper.write_module('deeper_mod') as mod:
+      mod.api.write('''
+      def method(self):
+        self.m.step('deeper step', ['echo', 'whats up'])
+      ''')
+    deeper_commit = upstream_deeper.commit('add deeper_mod')
+
+    with upstream.edit_recipes_cfg_pb2() as recipes_cfg:
+      recipes_cfg.deps['upstream_deeper'].revision = deeper_commit.revision
+    upstream_commit = upstream.commit('roll upstream_deeper')
+
+    # Roll everything so far into main
+    with deps.main_repo.edit_recipes_cfg_pb2() as recipes_cfg:
+      recipes_cfg.deps['upstream'].revision = upstream_commit.revision
+      recipes_cfg.deps['upstream_deeper'].revision = (
+          original_deeper_commit.revision)
+    deps.main_repo.commit('initial roll into main')
+
+    # Create a commit in upstream that someone might manually roll into main
+    with upstream.write_file('some_file') as buf:
+      buf.write('hi!')
+    upstream_commit = upstream.commit('upstream change')
+
+    # Manually update the pin for upstream without updating the pin for
+    # upstream_deeper
+    with deps.main_repo.edit_recipes_cfg_pb2() as recipes_cfg:
+      recipes_cfg.deps['upstream'].revision = upstream_commit.revision
+    deps.main_repo.commit('manual roll of upstream')
+
+    # Rolling into main should update the upstream_deeper pin
+    roll_result = self.run_roll(deps)
+    self.assertTrue(roll_result['success'])
+
+    spec = deps.main_repo.recipes_cfg_pb2
+    expected_picked_roll = {
+        'commit_infos': {
+            'upstream_deeper': [deeper_commit.as_roll_info()],
         },
         'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
     }

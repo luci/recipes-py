@@ -19,7 +19,7 @@ from .roll_candidate import RollCandidate
 LOGGER = logging.getLogger(__name__)
 
 
-def get_repos_to_advance(repos):
+def get_repos_to_advance(repos, use_next_candidate):
   """Returns the names of the repos to attempt to advance.
 
   The returned repo names are in decreasing order of the best repo to attempt to
@@ -63,6 +63,9 @@ def get_repos_to_advance(repos):
   Args:
     repos (dict(repo_name, CommitList)) - The repos to analyze. This function
       will only read from the dict and CommitLists (it will not modify them).
+    use_next_candidate (bool) Whether to advance to each repo's next candidate
+      to compute candidate configs. If false, candidate configs will be
+      suggested for the current position of the commit list.
 
   Returns (List[str]) - The names of the repos to try advancing, in the order
   they should be tried.
@@ -70,14 +73,28 @@ def get_repos_to_advance(repos):
   # The repo_name of all the repos that can move
   repo_set = set(repos)
 
-  movement_scores_by_repo = {}
+  candidates_by_repo = {}
 
   for repo_name, clist in iteritems(repos):
     assert isinstance(clist, CommitList)
-    candidate, movement_score = clist.next_roll_candidate
+    if use_next_candidate:
+      candidate, movement_score = clist.next_roll_candidate
+    else:
+      candidate = clist.current
+      movement_score = 0
     if not candidate:
       continue
+    candidates_by_repo[repo_name] = candidate, movement_score
 
+  # If dependency A depends on dependency B, B can't be changed independently of
+  # A, so we don't need to create a candidate for A
+  for repo_name, clist in iteritems(repos):
+    for d_pid in clist.current.spec.deps:
+      candidates_by_repo.pop(d_pid, None)
+
+  movement_scores_by_repo = {}
+
+  for repo_name, (candidate, movement_score) in iteritems(candidates_by_repo):
     unaccounted_repos = set(repo_set)
 
     # first, determine if rolling this repo will force other repos to move.
@@ -95,13 +112,15 @@ def get_repos_to_advance(repos):
     for pid in unaccounted_repos:
       movement_score += repos[pid].dist_compatible_with(pid, candidate.revision)
 
+    if movement_score == 0:
+      continue
+
     score = (movement_score, candidate.commit_timestamp)
     movement_scores_by_repo[repo_name] = score
 
-  return [
-      repo_name for repo_name, _ in sorted(
-          iteritems(movement_scores_by_repo), key=lambda item: item[1])
-  ]
+  return [(repo_name, candidates_by_repo[repo_name][0])
+          for repo_name, _ in sorted(
+              iteritems(movement_scores_by_repo), key=lambda item: item[1])]
 
 
 def is_consistent(spec_pb, repos):
@@ -137,14 +156,22 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
   ret_good = []
   ret_bad = []
 
+  # First check if there's candidates to get an inconsistent config consistent
+  use_next_candidate = False
+
   while True:
-    repos_to_advance = get_repos_to_advance(commit_lists_by_repo)
+    repos_to_advance = get_repos_to_advance(commit_lists_by_repo,
+                                            use_next_candidate)
     if not repos_to_advance:
+      if not use_next_candidate:
+        use_next_candidate = True
+        continue
       # end when there's no more candidates to roll
       LOGGER.info("terminating: no more candidates")
       return ret_good, ret_bad
+    use_next_candidate = True
 
-    for pid in repos_to_advance:
+    for pid, candidate in repos_to_advance:
       # Create a copy of the repos dict with copied CommitLists so that if we do
       # not find a good candidate we can restore to the state before the attempt
       updated_commit_lists_by_repo = {
@@ -154,7 +181,7 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
 
       LOGGER.info("advancing repo %s", pid)
       clist = updated_commit_lists_by_repo[pid]
-      rev = clist.advance_to(clist.next_roll_candidate[0].revision)
+      rev = clist.advance_to(candidate.revision)
       if not rev:
         LOGGER.info("terminating: could not advance %s", pid)
         return ret_good, ret_bad
@@ -221,7 +248,7 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
     # state of commit_lists_by_repo, advance each of the commit lists so we can
     # consider later commits for each repo
     else:
-      for pid in repos_to_advance:
+      for pid, _ in repos_to_advance:
         commit_lists_by_repo[pid].advance()
 
 
