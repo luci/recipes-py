@@ -333,6 +333,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       critical=INHERIT,
       exe_cipd_version=None,
       fields=DEFAULT_FIELDS,
+      can_outlive_parent=None,
   ):
     """Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
@@ -400,6 +401,16 @@ class BuildbucketApi(recipe_api.RecipeApi):
       one.
     * fields (list of strs): a list of fields to include in the response, names
       relative to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
+    * can_outlive_parent: flag for if the scheduled child build can outlive
+      the current build or not (as enforced by Buildbucket;
+      swarming_parent_run_id currently ALSO applies).
+      Default is None. For now
+      *  if `luci.buildbucket.manage_parent_child_relationship` is not in the
+         current build's experiments, can_outlive_parent is always True.
+      * Otherwise if can_outlive_parent is None,
+        ScheduleBuildRequest.can_outlive_parent will be determined by
+        swarming_parent_run_id.
+        TODO(crbug.com/1031205): remove swarming_parent_run_id.
     """
 
     def as_msg(value, typ):
@@ -424,6 +435,10 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     b = self.build
 
+    if (can_outlive_parent is None and
+        'luci.buildbucket.parent_tracking' in b.input.experiments):
+      can_outlive_parent = True if swarming_parent_run_id is None else False
+
     req = builds_service_pb2.ScheduleBuildRequest(
         request_id='%d-%s' % (b.id, self.m.uuid.random()),
         builder=dict(
@@ -437,11 +452,14 @@ class BuildbucketApi(recipe_api.RecipeApi):
         # pass the parent (boolean) value through `as_trinary`.
         experimental=if_inherit(experimental, as_trinary(b.input.experimental)),
         experiments=dict(experiments) if experiments else None,
-        fields=self._make_field_mask(paths=fields),
-    )
+        fields=self._make_field_mask(paths=fields))
 
     if swarming_parent_run_id:
       req.swarming.parent_run_id = swarming_parent_run_id
+
+    if can_outlive_parent is not None:
+      req.can_outlive_parent = (
+          common_pb2.YES if can_outlive_parent else common_pb2.NO)
 
     exe_cipd_version = if_inherit(exe_cipd_version, b.exe.cipd_version)
     if exe_cipd_version:
