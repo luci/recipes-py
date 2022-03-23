@@ -1,0 +1,15 @@
+[
+  {
+    "cmd": [],
+    "name": "host",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@info@luci-scheduler.appspot.com@@@",
+      "@@@STEP_LOG_LINE@info@None@@@",
+      "@@@STEP_LOG_LINE@info@None@@@",
+      "@@@STEP_LOG_END@info@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

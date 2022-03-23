@@ -31,6 +31,9 @@ class SchedulerApi(recipe_api.RecipeApi):
   def __init__(self, init_state, **kwargs):
     super(SchedulerApi, self).__init__(**kwargs)
     self._host = init_state.get('hostname') or 'luci-scheduler.appspot.com'
+    self._job_id = init_state.get('job')
+    self._invocation_id = init_state.get('invocation')
+
     self._fake_uuid_count = 0
 
     self._triggers = []
@@ -59,6 +62,21 @@ class SchedulerApi(recipe_api.RecipeApi):
     """
     self._host = host
 
+  @property
+  def job_id(self):
+    """Returns the job ID of the current build as "<project>/<job>".
+
+    Returns None if the current build was not triggered by the scheduler.
+    """
+    return self._job_id if self._job_id else None
+
+  @property
+  def invocation_id(self):
+    """Returns the invocation ID of the current build as an int64 integer.
+
+    Returns None if the current build was not triggered by the scheduler.
+    """
+    return int(self._invocation_id) if self._invocation_id else None
 
   class Trigger(object):
     """Generic Trigger accepted by LUCI Scheduler API.

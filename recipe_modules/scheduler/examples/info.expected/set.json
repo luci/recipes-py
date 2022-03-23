@@ -1,0 +1,15 @@
+[
+  {
+    "cmd": [],
+    "name": "host",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@info@scheduler.example.com@@@",
+      "@@@STEP_LOG_LINE@info@some/job@@@",
+      "@@@STEP_LOG_LINE@info@12345@@@",
+      "@@@STEP_LOG_END@info@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

@@ -13,8 +13,11 @@ DEPS = [
 
 def RunSteps(api):
   step_res = api.step(name='host', cmd=None)
-  step_res.presentation.logs['host'] = [api.scheduler.host]
-
+  step_res.presentation.logs['info'] = [
+      api.scheduler.host,
+      '%s' % api.scheduler.job_id,
+      '%s' % api.scheduler.invocation_id
+  ]
 
 def GenTests(api):
   yield (
@@ -22,5 +25,9 @@ def GenTests(api):
   )
   yield (
     api.test('set') +
-    api.scheduler(hostname='scheduler.example.com')
+    api.scheduler(
+      hostname='scheduler.example.com',
+      job_id='some/job',
+      invocation_id=12345,
+    )
   )

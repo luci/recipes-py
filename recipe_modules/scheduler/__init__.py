@@ -23,7 +23,9 @@ PROPERTIES = {
       help='Internal property to initialize scheduler module',
       param_name='init_state',
       kind=ConfigGroup(
-          hostname=Single(basestring),
+          hostname=Single(basestring, required=False),
+          job=Single(basestring, required=False),
+          invocation=Single(basestring, required=False),
           # A list of scheduler triggers that triggered the current build.
           # A trigger is JSON-formatted dict of a scheduler.Trigger protobuf
           # message.
