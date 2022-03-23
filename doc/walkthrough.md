@@ -977,7 +977,7 @@ yield (
     api.test('my_test') +
     api.step_data(
         'step_name',
-        output=api.raw_io.output('test data')))
+        stdout=api.raw_io.output('test data')))
 ```
 
 ## How to change step presentation?
