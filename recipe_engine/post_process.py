@@ -442,6 +442,20 @@ def PropertyEquals(check, step_odict, key, value):
   if check(key in build_properties):
     check(build_properties[key] == value)
 
+def PropertiesContain(check, step_odict, key):
+  """Assert that a recipe's output properties contain `key`.
+
+  Args:
+    key (str) - The key to check for.
+
+  Usage:
+    yield (
+        TEST
+         + api.post_process(PropertiesContain, 'property_key')
+    )
+  """
+  build_properties = GetBuildProperties(step_odict)
+  check(key in build_properties)
 
 def PropertiesDoNotContain(check, step_odict, key):
   """Assert that a recipe's output properties do not contain `key`.
