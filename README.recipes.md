@@ -4845,13 +4845,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/path/examples/full.py#19)(api):**
 ### *recipes* / [placeholder](/recipes/placeholder.py)
 
-[DEPS](/recipes/placeholder.py#7): [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipes/placeholder.py#7): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
 
 PYTHON_VERSION_COMPATIBILITY: PY3
 
-&mdash; **def [RunSteps](/recipes/placeholder.py#33)(api, properties):**
+&mdash; **def [RunSteps](/recipes/placeholder.py#38)(api, properties):**
 
-&mdash; **def [fakeSleep](/recipes/placeholder.py#24)(api, duration):**
+&mdash; **def [fakeSleep](/recipes/placeholder.py#29)(api, duration):**
 ### *recipes* / [platform:examples/full](/recipe_modules/platform/examples/full.py)
 
 [DEPS](/recipe_modules/platform/examples/full.py#7): [platform](#recipe_modules-platform), [step](#recipe_modules-step), [version](#recipe_modules-version)

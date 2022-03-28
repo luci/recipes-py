@@ -6,52 +6,89 @@ syntax = "proto3";
 
 import "google/protobuf/struct.proto";
 
+import "go.chromium.org/luci/buildbucket/proto/builder.proto";
 import "go.chromium.org/luci/buildbucket/proto/common.proto";
 
 package recipes.recipe_engine.placeholder;
 
-message Step {
-  // The name of a fake placeholder step.
-  string name = 1;
+enum LifeTime {
+  // This build shouldn't exceed the life of its parent.
+  BUILD_BOUND = 0;
 
+  // This build's lifetime shouldn't be bound to its parent.
+  DETACHED = 1;
+}
+
+message Buildbucket {
+  buildbucket.v2.BuilderID builder = 1;
+}
+
+// ChildBuild represents a step which triggers a child build.
+message ChildBuild {
+  string id = 1;
+  LifeTime life_time = 2;
+  // swarming, RBE here later
+  oneof trigger {
+    Buildbucket buildbucket = 10;
+  }
+}
+
+// CollectChildren represents a step which waits for child build(s).
+message CollectChildren {
+  // Ids of the child build step this step should collect.
+  repeated string child_build_step_ids = 1;
+}
+
+message FakeStep {
   // The amount of time this fake step should "run" for.
   //
   // This will translate to a real-life pause in the execution of the recipe.
-  int64 duration_secs = 2;
+  int64 duration_secs = 1;
 
   // Sets text on this step in the UI.
-  string step_text = 3;
+  string step_text = 2;
 
   // Named links to add to the step.
-  map<string, string> links = 4;
+  map<string, string> links = 3;
 
   // Named logs to add to the step.
   //
   // Multi-line values are acceptable.
-  map<string, string> logs = 5;
+  map<string, string> logs = 4;
 
   // Status for the step.
   //
   // FAILURE/INFRA_FAILURE/CANCELED does not affect the evaluation of the rest
   // of the steps.
-  buildbucket.v2.Status status = 6;
+  buildbucket.v2.Status status = 5;
 
   // Indicate that this step was canceled.
   //
   // Shows up in the Step's "status_details" field.
-  bool canceled = 7;
+  bool canceled = 6;
 
   // Indicate that this step had a timeout.
   //
   // Shows up in the Step's "status_details" field.
-  bool timeout = 8;
+  bool timeout = 7;
 
   // This step should set the following output properties when it runs.
-  google.protobuf.Struct set_properties = 9;
+  google.protobuf.Struct set_properties = 8;
 
   // Children of this step; duration_secs will apply prior to running
   // any children.
-  repeated Step children = 10;
+  repeated Step children = 9;
+}
+
+message Step {
+  // The name of a fake placeholder step.
+  string name = 1;
+
+  oneof type {
+    FakeStep fake_step = 2;
+    ChildBuild child_build = 3;
+    CollectChildren collect_children = 4;
+  }
 }
 
 message InputProps {

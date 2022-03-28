@@ -1,0 +1,9 @@
+[
+  {
+    "failure": {
+      "failure": {},
+      "humanReason": "multiple child_build steps have the same id: id"
+    },
+    "name": "$result"
+  }
+]
