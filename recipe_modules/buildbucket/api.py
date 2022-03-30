@@ -790,7 +790,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto).
       for the ended build.
     """
-    assert isinstance(build_id, int)
+    assert isinstance(build_id, (int, long))
     return self.collect_builds([build_id], **kwargs)[build_id]
 
   def collect_builds(
