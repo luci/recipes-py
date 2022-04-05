@@ -212,6 +212,21 @@ def RunSteps(api):
   except ValueError as ex:
     assert "could not figure out" in str(ex), ex
 
+  start_dir = api.path['start_dir']
+  tmp_base = api.path['tmp_base']
+  assert start_dir < tmp_base
+  assert not (tmp_base < start_dir)
+
+  a = start_dir.join('a')
+  b = start_dir.join('b')
+  assert a < b
+  assert not (b < a)
+
+  foo = start_dir.join('ab', platform_ext=dict(foo='.foo'))
+  bar = start_dir.join('ab', platform_ext=dict(bar='.bar'))
+  assert bar < foo
+  assert not (foo < bar)
+
 
 def GenTests(api):
   for platform in ('linux', 'win', 'mac'):

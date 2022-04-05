@@ -190,6 +190,15 @@ class Path(RecipeConfigType):
   def __ne__(self, other):
     return not self == other
 
+  def __lt__(self, other):
+    if self.base != other.base:
+      return self.base < other.base
+    elif self.pieces != other.pieces:
+      return self.pieces < other.pieces
+    return (
+        sorted(self.platform_ext.items()) < sorted(other.platform_ext.items())
+    )
+
   def join(self, *pieces, **kwargs):
     """Appends *pieces to this Path, returning a new Path.
 
@@ -226,5 +235,11 @@ class Path(RecipeConfigType):
     s = "Path(%r" % (self.base,)
     if self.pieces:
       s += ", %s" % ", ".join(repr(x) for x in self.pieces)
+
+    if self.platform_ext:
+      platform_exts = []
+      for k, v in sorted(self.platform_ext.items()):
+        platform_exts.append("%s=%s" % (k, repr(v)))
+      s += ", platform_exts=(%s)" % ", ".join(repr(x) for x in platform_exts)
 
     return s + ")"
