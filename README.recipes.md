@@ -3863,16 +3863,17 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Allows mockable access to the current time.
 
-#### **class [TimeApi](/recipe_modules/time/api.py#15)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
+#### **class [TimeApi](/recipe_modules/time/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
-&mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#47)(self):**
+&mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#50)(self):**
 
 Returns current timestamp as an int number of milliseconds since epoch.
     
 
-&mdash; **def [sleep](/recipe_modules/time/api.py#24)(self, secs, with_step=None):**
+&mdash; **def [sleep](/recipe_modules/time/api.py#26)(self, secs, with_step=None):**
 
-Suspend execution of |secs| (float) seconds. Does nothing in testing.
+Suspend execution of |secs| (float) seconds, waiting for GLOBAL_SHUTDOWN.
+  Does nothing in testing.
 
 Args:
   * secs (number) - The number of seconds to sleep.
@@ -3880,11 +3881,11 @@ Args:
     indicate to users that the recipe is sleeping (not just hanging). False
     suppresses this.
 
-&mdash; **def [time](/recipe_modules/time/api.py#39)(self):**
+&mdash; **def [time](/recipe_modules/time/api.py#42)(self):**
 
 Returns current timestamp as a float number of seconds since epoch.
 
-&mdash; **def [utcnow](/recipe_modules/time/api.py#52)(self):**
+&mdash; **def [utcnow](/recipe_modules/time/api.py#55)(self):**
 
 Returns current UTC time as a datetime.datetime.
 ### *recipe_modules* / [tricium](/recipe_modules/tricium)
@@ -4845,13 +4846,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/path/examples/full.py#19)(api):**
 ### *recipes* / [placeholder](/recipes/placeholder.py)
 
-[DEPS](/recipes/placeholder.py#7): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming)
+[DEPS](/recipes/placeholder.py#7): [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step), [swarming](#recipe_modules-swarming), [time](#recipe_modules-time)
 
 PYTHON_VERSION_COMPATIBILITY: PY3
 
-&mdash; **def [RunSteps](/recipes/placeholder.py#38)(api, properties):**
-
-&mdash; **def [fakeSleep](/recipes/placeholder.py#29)(api, duration):**
+&mdash; **def [RunSteps](/recipes/placeholder.py#30)(api, properties):**
 ### *recipes* / [platform:examples/full](/recipe_modules/platform/examples/full.py)
 
 [DEPS](/recipe_modules/platform/examples/full.py#7): [platform](#recipe_modules-platform), [step](#recipe_modules-step), [version](#recipe_modules-version)

@@ -11,6 +11,8 @@ import time
 
 import gevent
 
+from recipe_engine.internal.global_shutdown import GLOBAL_SHUTDOWN
+
 
 class TimeApi(recipe_api.RecipeApi):
   def __init__(self, **kwargs):
@@ -22,7 +24,8 @@ class TimeApi(recipe_api.RecipeApi):
       self._fake_step = self._test_data.get('step', 1.5)
 
   def sleep(self, secs, with_step=None):
-    """Suspend execution of |secs| (float) seconds. Does nothing in testing.
+    """Suspend execution of |secs| (float) seconds, waiting for GLOBAL_SHUTDOWN.
+      Does nothing in testing.
 
     Args:
       * secs (number) - The number of seconds to sleep.
@@ -34,7 +37,7 @@ class TimeApi(recipe_api.RecipeApi):
       self.m.step.empty('sleep %d' % (secs,))
 
     if not self._test_data.enabled:  # pragma: no cover
-      gevent.sleep(secs)
+      gevent.wait([GLOBAL_SHUTDOWN], timeout=secs)
 
   def time(self):
     """Returns current timestamp as a float number of seconds since epoch."""

@@ -9,6 +9,7 @@ DEPS = [
   'properties',
   'step',
   'swarming',
+  'time',
 ]
 
 from google.protobuf import json_format
@@ -24,15 +25,6 @@ from PB.go.chromium.org.luci.buildbucket.proto.common import Status, ENDED_MASK
 from recipe_engine import post_process
 
 PROPERTIES = InputProps
-
-
-def fakeSleep(api, duration):
-  # TODO(iannucci): Once https://chromium-review.googlesource.com/c/3346660
-  # lands, this function won't be necessary, but adding this for now due to
-  # production freeze.
-  if not api._test_data.enabled:  # pragma: no cover
-    import gevent
-    gevent.sleep(duration)
 
 
 def RunSteps(api, properties):
@@ -72,7 +64,7 @@ def RunSteps(api, properties):
         handlePres(pres, fake_step)
 
         if fake_step.duration_secs > 0:
-          fakeSleep(api, fake_step.duration_secs)
+          api.time.sleep(fake_step.duration_secs, with_step=False)
 
         for child in fake_step.children:
           processStep(child)
@@ -80,7 +72,7 @@ def RunSteps(api, properties):
       result = api.step(step_name, cmd=None)
       handlePres(result, fake_step)
       if fake_step.duration_secs > 0:
-        fakeSleep(api, fake_step.duration_secs)
+        api.time.sleep(fake_step.duration_secs, with_step=False)
 
   def scheduleChildBuild(step_name, child_build):
     assert child_build.buildbucket
