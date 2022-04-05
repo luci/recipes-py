@@ -465,13 +465,6 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     self.assertTrue(roll_result['success'])
     self.assertEqual([], roll_result['roll_details'])
 
-    spec.deps['upstream'].revision = up_commit.revision
-
-    self.assertEqual(
-      roll_result['rejected_candidate_specs'],
-      [jsonpb.MessageToDict(spec, preserving_proto_field_name=True)],
-    )
-
   def test_inconsistent_errors(self):
     deps = self.FakeRecipeDeps()
     upstream = deps.add_repo('upstream')
@@ -693,6 +686,66 @@ class AutorollSmokeTest(test_env.RecipeEngineUnitTest):
     spec.deps['upstream'].revision = up_commit.revision
     spec.deps['other'].CopyFrom(upstream.recipes_cfg_pb2.deps['other'])
     self.assertEqual(spec, deps.main_repo.recipes_cfg_pb2)
+
+  def test_roll_diamond_deps(self):
+    deps = self.FakeRecipeDeps()
+    upstream_a = deps.add_repo('upstream_a')
+    upstream_b = deps.add_repo('upstream_b')
+    upstream_deeper = deps.add_repo('upstream_deeper')
+
+    original_deeper_commit = upstream_deeper.backend.commit_metadata('HEAD')
+
+    # Add upstream_a -> upstream_deeper and upstream_b -> upstream_deeper
+    upstream_a.add_dep('upstream_deeper')
+    upstream_a_commit = upstream_a.commit('add dep on upstream_deeper')
+    upstream_b.add_dep('upstream_deeper')
+    upstream_b_commit = upstream_b.commit('add dep on upstream_deeper')
+
+    # Roll into main
+    with deps.main_repo.edit_recipes_cfg_pb2() as recipes_cfg:
+      recipes_cfg.deps['upstream_a'].revision = upstream_a_commit.revision
+      recipes_cfg.deps['upstream_b'].revision = upstream_b_commit.revision
+      recipes_cfg.deps['upstream_deeper'].revision = (
+          original_deeper_commit.revision)
+    deps.main_repo.commit('initial roll into main')
+
+    # Create a new commit in upstream_deeper and roll it into upstream_a
+    # and upstream_b
+    with upstream_deeper.write_module('deeper_mod') as mod:
+      mod.api.write('''
+      def method(self):
+        self.m.step('deeper step', ['echo', 'whats up'])
+      ''')
+    deeper_commit = upstream_deeper.commit('add deeper_mod')
+
+    with upstream_a.edit_recipes_cfg_pb2() as recipes_cfg:
+      recipes_cfg.deps['upstream_deeper'].revision = deeper_commit.revision
+    upstream_a_commit = upstream_a.commit('roll upstream_deeper')
+
+    with upstream_b.edit_recipes_cfg_pb2() as recipes_cfg:
+      recipes_cfg.deps['upstream_deeper'].revision = deeper_commit.revision
+    upstream_b_commit = upstream_b.commit('roll upstream_deeper')
+
+    # Rolling into main should update the pins for upstream_a, upstream_b and
+    # upstream_deeper
+    roll_result = self.run_roll(deps)
+    self.assertTrue(roll_result['success'])
+
+    spec = deps.main_repo.recipes_cfg_pb2
+    expected_picked_roll = {
+        'commit_infos': {
+            'upstream_a': [upstream_a_commit.as_roll_info()],
+            'upstream_b': [upstream_b_commit.as_roll_info()],
+            'upstream_deeper': [deeper_commit.as_roll_info()],
+        },
+        'spec': jsonpb.MessageToDict(spec, preserving_proto_field_name=True),
+    }
+
+    picked_roll = roll_result['picked_roll_details']
+    self.assertEqual(expected_picked_roll['commit_infos'],
+                     picked_roll['commit_infos'])
+    self.assertEqual(expected_picked_roll['spec'], picked_roll['spec'])
+    self.assertEqual(len(roll_result['roll_details']), 1)
 
 
 if __name__ == '__main__':

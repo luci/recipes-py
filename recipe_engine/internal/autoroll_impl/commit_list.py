@@ -14,6 +14,11 @@ from recipe_engine.engine_types import freeze
 class UnknownCommit(KeyError):
   pass
 
+
+class BackwardsRoll(ValueError):
+  pass
+
+
 class CommitList(object):
   """A seekable list of CommitMetadata objects for a single repo.
 
@@ -21,7 +26,7 @@ class CommitList(object):
   purposes of generating a changelist.
   """
 
-  def __init__(self, commit_list):
+  def __init__(self, url, branch, commit_list):
     """
     Args:
       commit_list (list(CommitMetadata)) - The list of CommitMetadata objects to
@@ -35,24 +40,26 @@ class CommitList(object):
     # This maps dep_repo_name -> dep_commit -> set(idxs)
     dep_idx = {}
 
+    revs_for_dep = {}
     for i, c in enumerate(commit_list):
       rev_idx[c.revision] = i
 
       for dep_repo_name, dep in iteritems(c.spec.deps):
         idx = dep_idx.setdefault(dep_repo_name, {})
         idx.setdefault(dep.revision, set()).add(i)
+        revs_for_dep.setdefault(dep_repo_name, set()).add(i)
+
+    # Record the commits that don't pin each dep, they are compatible with any
+    # revision of the given dep
+    for dep_repo_name, revs in iteritems(revs_for_dep):
+      dep_idx[dep_repo_name][None] = set(range(len(commit_list))) - revs
 
     # Immutable state: safe to copy
+    self.url = url
+    self.branch = branch
     self._commits = tuple(commit_list)
     self._rev_idx = freeze(rev_idx)
     self._dep_idx = freeze(dep_idx)
-
-    # Mutable state holding immutable objects: safe to copy
-    self._cur_idx = 0
-    self._next_roll_candidate_idx = None
-
-  def copy(self):
-    return copy.copy(self)
 
   def __len__(self):
     return len(self._commits)
@@ -71,161 +78,182 @@ class CommitList(object):
     Returns CommitList
     """
     return CommitList(
-      [git_backend.commit_metadata(dep.revision)] +
-      git_backend.updates(dep.revision, git_backend.resolve_refspec(dep.branch))
+        git_backend.repo_url,
+        dep.branch,
+        ([git_backend.commit_metadata(dep.revision)] + git_backend.updates(
+            dep.revision, git_backend.resolve_refspec(dep.branch))),
     )
 
-  @property
-  def current(self):
-    """Gets the current CommitMetadata.
+  class _Cursor(object):
 
-    Returns CommitMetadata or None if there is no current commit.
-    """
-    if self._cur_idx >= len(self._commits):
-      return None
-    return self._commits[self._cur_idx]
+    def __init__(self, commit_list):
+      self._commit_list = commit_list
+      self._cur_idx = 0
 
-  @property
-  def next(self):
-    """Gets the next CommitMetadata without advancing the current index.
+    @property
+    def current(self):
+      """Gets the current CommitMetadata.
 
-    Returns the next CommitMetadata or None, if there is no next CommitMetadata.
-    """
-    nxt_idx = self._cur_idx+1
-    if nxt_idx >= len(self._commits):
-      return None
-    return self._commits[nxt_idx]
+      Returns CommitMetadata or None if there is no current commit.
+      """
+      if self._cur_idx >= len(self._commit_list):
+        return None
+      return self._commit_list._commits[self._cur_idx]
 
-  @property
-  def next_roll_candidate(self):
-    """Gets the next CommitMetadata and distance with roll_candidate==True
-    without advancing the current index.
+    @property
+    def next_roll_candidate(self):
+      """Gets the next CommitMetadata with roll_candidate==True
+      without advancing the current index.
 
-    Returns (CommitMetadata, <distance>), or (None, None) if there is no next
-      roll_candidate.
-    """
-    # Compute and cache the next roll candidate index.
-    nxt_idx = self._next_roll_candidate_idx
-    if nxt_idx is None or nxt_idx <= self._cur_idx:
-      nxt_idx = None
-      for i, commit in enumerate(self._commits[self._cur_idx+1:]):
+      Returns:
+        The CommitMetadata of the next roll candidate, or None if there
+        is no next roll candidate.
+      """
+      for commit in self._commit_list._commits[self._cur_idx + 1:]:
         if commit.roll_candidate:
-          nxt_idx = self._cur_idx + i + 1
-          break
-      self._next_roll_candidate_idx = nxt_idx
+          return commit
+      return None
 
-    if nxt_idx is not None:
-      return self._commits[nxt_idx], nxt_idx - self._cur_idx
-    return (None, None)
+    def advance_to(self, revision):
+      """Advances the current position to == revision.
 
-  def advance(self):
-    """Advances the current CommitMetadata by one.
+      Args:
+        revision (str) - The revision to advance to.
 
-    That is: CommitList.next becomes CommitList.current.
+      Returns:
+        The new current CommitMetadata.
 
-    Returns the now-current CommitMetadata (or None, if there was no next
-      CommitMetadata).
+      Raises:
+        UnknownCommit if revision is not in the commit list.
+        BackwardsRoll if revision preces the current revision.
+      """
+      idx = self._commit_list._idx_of(revision)
+      if idx < self._cur_idx:
+        raise BackwardsRoll(revision)
+      self._cur_idx = idx
+
+  def cursor(self):
+    """Returns a cursor for maintaining a position within the commits.
     """
-    ret = self.next
-    if ret:
-      self._cur_idx += 1
-    return ret
+    return self._Cursor(self)
 
-  def _idx_of(self, commit):
-    idx = self._rev_idx.get(commit)
+  def dist(self, revision1, revision2=None):
+    """Compute the distance to a revision.
+
+    The function can be called with one or two revisions. If called with
+    1 revision, it will be the "to" revision and the first revision in
+    the commit list will be the "from" revision. If called with 2
+    revisions, the "to" revision will be the second revision and the
+    "from" revision will be the first revision.
+
+    Returns:
+      The number of revisions that the "to" revision is ahead of the
+      "from" revision. If the "to" revision is not ahead of the "from"
+      revision, None will be returned. If the "to" revision is not
+      present in the commit list, it is assumed to precede the first
+      revision in the commit list and None will be returned.
+
+    Raises:
+      UnknownCommit if the "from" revision is not present in the commit
+      list.
+    """
+    if revision2 is None:
+      to_revision = revision1
+      from_idx = 0
+    else:
+      to_revision = revision2
+      from_idx = self._idx_of(revision1)
+    try:
+      to_idx = self._idx_of(to_revision)
+    except UnknownCommit:
+      return None
+    dist = to_idx - from_idx
+    if dist < 0:
+      return None
+    return dist
+
+  def _idx_of(self, revision):
+    idx = self._rev_idx.get(revision)
     if idx is None:
-      raise UnknownCommit(commit)
+      raise UnknownCommit(revision)
     return idx
 
-  def lookup(self, commit):
+  def lookup(self, revision):
     """Finds a CommitMetadata given its commit id.
 
     Returns: CommitMetadata
     Raises:
-      UnknownCommit - if commit is not found.
+      UnknownCommit - if revision is not found.
     """
-    return self._commits[self._idx_of(commit)]
+    return self._commits[self._idx_of(revision)]
 
-  def dist_to(self, target_commit):
-    """Returns the number of commits between the current CommitMetadata's commit
-    and the target_commit.
+  def _compatible_indexes(self, config, limited_to=None):
+    """Finds the indexes of commits that are compatible with the config.
 
     Args:
-      target_commit (str) - the commit to determine the distance for.
+      config (mapping(str, str)) - The pins to check against for
+        compatibility.
+      limited_to (iterable(int)) - Indexes to limit the check to. If not
+        provided, all indexes in the commit list will be considered.
 
-    Returns int: The number of revisions between the current commit and
-      target_commit. If target_commit == current.revision, then this will be 0.
-      If target_commit precedes current.revision, this will be negative.
-      Otherwise this will be positive.
-
-      If target_commit is not found, this returns 1 past the end of the
-      CommitList.
+    Returns:
+      The set of indexes of commits that are compatible with the
+      provided config. A commit is compatible with the provided config
+      if for each repo present in config, the commit either does not
+      have a dep on the repo or the dep's revision value is equal to the
+      config's revison.
     """
-    try:
-      return self._idx_of(target_commit) - self._cur_idx
-    except UnknownCommit:
-      return len(self._commits) - self._cur_idx
+    compatible_indexes = set(limited_to or range(len(self._commits)))
+    for repo_name, revision in iteritems(config):
+      idx_table = self._dep_idx.get(repo_name)
+      if not idx_table:
+        continue
 
-  def dist_compatible_with(self, dep_repo_name, dep_commit):
-    """Returns the number of commits between the current CommitMetadata's commit
-    and the next commit which would be compatible with the given
-    (dep_repo_name, dep_commit). This will essentially search through all the
-    known future commits in this CommitList and find the closest one that
-    depends on dep_repo_name@dep_commit, and return the distance to that.
+      # idx_table.get(None, set()) is the indexes of commits that do not have a
+      # dependency on the repo in question, so they are compatible with any
+      # revision
+      compatible_indexes &= (
+          idx_table.get(revision, set()) | idx_table.get(None, set()))
+      if not compatible_indexes:
+        break
 
-    If no commits from this repo depend on dep_repo_name, this returns 0. If
-    this repo depends on dep_repo_name, but no compatibility with dep_commit is
-    found, this returns len(#commits_to_HEAD).
+    return compatible_indexes
+
+  def is_compatible(self, revision, config):
+    """Returns whether or not a revision is compatible with the config.
 
     Args:
-      dep_repo_name (str) - The repo_name that this repo possibly depends on.
-      dep_commit (str) - The commit value for the dependency to search for.
+      revision (str) - The revision within this commit list to check.
+      config (mapping(str, str)) - The pins to check against for
+        compatibility.
 
-    Returns int: The number of revisions between the current commit and the
-      nearest future commit which depends on dep_repo_name@dep_commit. May be 0
-      if the current commit is compatible with the dependency already.
+    Returns bool - Whether the repositories in common between config and
+      the dependencies of the commit with revision have the same
+      associated revisions.
     """
-    idx_table = self._dep_idx.get(dep_repo_name)
-    if not idx_table:
-      return 0
+    compatible_indexes = self._compatible_indexes(config,
+                                                  [self._idx_of(revision)])
+    return bool(compatible_indexes)
 
-    if dep_commit not in idx_table:
-      # If it's not in idx_table, assume that it's past the end of the currently
-      # available revisions.
-      return len(self._commits) - self._cur_idx
-
-    # only consider at same-or-future indices
-    return max(
-      0,
-      (
-        # We filter out indexes which are less than the current index to
-        # avoid issues during reverts.
-        min(i for i in idx_table[dep_commit] if i >= self._cur_idx)
-        - self._cur_idx
-      )
-    )
-
-  def advance_to(self, target_commit):
-    """Advances the current position to == target_commit.
+  def compatible_commits(self, config):
+    """Returns the revisions that are compatible with the config.
 
     Args:
-      target_commit (str) - the commit to determine the distance for.
+      config (mapping(str, str)) - The pins to check against for
+        compatibility.
 
-    Returns the new current CommitMetadata, or None if it couldn't be advanced.
+    Returns list(CommitMetadata) - The commits where the repositories in
+      common between config and the dependencies of the commits have the
+      same revisions.
     """
-    dist = self.dist_to(target_commit)
-    if dist == len(self._commits) - self._cur_idx or dist < 0:
-      return None
-    if dist > 0:
-      self._cur_idx += dist
-    return self.current
+    return [self._commits[i] for i in self._compatible_indexes(config)]
 
-  def changelist(self, target_commit):
+  def changelist(self, revision):
     """Returns a list of all CommitMetadata from the beginning of this
-    CommitList up to and including the provided commit.
+    CommitList up to and including the provided revision.
 
     Args:
-      target_commit (str) - the commit to obtain the changelist for.
+      target_commit (str) - the revision to obtain the changelist for.
 
     Returns list(CommitMetadata) - The CommitMetadata objects corresponding to
       the provided target_commit.
@@ -233,4 +261,4 @@ class CommitList(object):
     Raises:
       UnknownCommit if target_commit is not found.
     """
-    return list(self._commits[:self._idx_of(target_commit)+1])
+    return list(self._commits[:self._idx_of(revision) + 1])
