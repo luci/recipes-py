@@ -23,7 +23,7 @@ class TimeApi(recipe_api.RecipeApi):
       self._fake_time = self._test_data.get('seed', 1337000000.0)
       self._fake_step = self._test_data.get('step', 1.5)
 
-  def sleep(self, secs, with_step=None):
+  def sleep(self, secs, with_step=None, step_result=None):
     """Suspend execution of |secs| (float) seconds, waiting for GLOBAL_SHUTDOWN.
       Does nothing in testing.
 
@@ -32,12 +32,24 @@ class TimeApi(recipe_api.RecipeApi):
       * with_step (bool|None) - If True (or None and secs>60), emits a step to
         indicate to users that the recipe is sleeping (not just hanging). False
         suppresses this.
+      * step_result (step_data.StepData|None) - Result of running a step. Should
+        be None if with_step is True or None.
     """
-    if with_step is True or (with_step is None and secs > 60): # pragma: no cover
-      self.m.step.empty('sleep %d' % (secs,))
+    if with_step is True or (
+        with_step is None and secs > 60): # pragma: no cover
+      assert step_result is None, (
+          'do not specify step_result if you want sleep to emit a new step')
+      step_result = self.m.step.empty('sleep %d' % (secs,))
 
     if not self._test_data.enabled:  # pragma: no cover
       gevent.wait([GLOBAL_SHUTDOWN], timeout=secs)
+    if GLOBAL_SHUTDOWN.ready() and step_result:
+      step_result.presentation.status = "CANCELED"
+
+
+    if GLOBAL_SHUTDOWN.ready() and step_result:
+      step_result.presentation.status = "CANCELED"
+
 
   def time(self):
     """Returns current timestamp as a float number of seconds since epoch."""

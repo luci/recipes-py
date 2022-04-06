@@ -8,9 +8,13 @@ class TimeTestApi(recipe_test_api.RecipeTestApi):
   @recipe_test_api.mod_test_data
   @staticmethod
   def seed(now):
+    """Set the starting time for the clock in api.time."""
     return now
 
   @recipe_test_api.mod_test_data
   @staticmethod
   def step(step):
+    """Set the number of seconds the simulated clock will advance for each
+    api.time.time() or api.time.utcnow() is called.
+    """
     return step

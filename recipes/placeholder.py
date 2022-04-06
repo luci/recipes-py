@@ -64,7 +64,8 @@ def RunSteps(api, properties):
         handlePres(pres, fake_step)
 
         if fake_step.duration_secs > 0:
-          api.time.sleep(fake_step.duration_secs, with_step=False)
+          api.time.sleep(
+              fake_step.duration_secs, with_step=False, step_result=pres)
 
         for child in fake_step.children:
           processStep(child)
@@ -72,7 +73,8 @@ def RunSteps(api, properties):
       result = api.step(step_name, cmd=None)
       handlePres(result, fake_step)
       if fake_step.duration_secs > 0:
-        api.time.sleep(fake_step.duration_secs, with_step=False)
+        api.time.sleep(
+            fake_step.duration_secs, with_step=False, step_result=result)
 
   def scheduleChildBuild(step_name, child_build):
     assert child_build.buildbucket

@@ -3865,12 +3865,12 @@ Allows mockable access to the current time.
 
 #### **class [TimeApi](/recipe_modules/time/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
-&mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#50)(self):**
+&mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#62)(self):**
 
 Returns current timestamp as an int number of milliseconds since epoch.
     
 
-&mdash; **def [sleep](/recipe_modules/time/api.py#26)(self, secs, with_step=None):**
+&mdash; **def [sleep](/recipe_modules/time/api.py#26)(self, secs, with_step=None, step_result=None):**
 
 Suspend execution of |secs| (float) seconds, waiting for GLOBAL_SHUTDOWN.
   Does nothing in testing.
@@ -3880,12 +3880,14 @@ Args:
   * with_step (bool|None) - If True (or None and secs>60), emits a step to
     indicate to users that the recipe is sleeping (not just hanging). False
     suppresses this.
+  * step_result (step_data.StepData|None) - Result of running a step. Should
+    be None if with_step is True or None.
 
-&mdash; **def [time](/recipe_modules/time/api.py#42)(self):**
+&mdash; **def [time](/recipe_modules/time/api.py#54)(self):**
 
 Returns current timestamp as a float number of seconds since epoch.
 
-&mdash; **def [utcnow](/recipe_modules/time/api.py#55)(self):**
+&mdash; **def [utcnow](/recipe_modules/time/api.py#67)(self):**
 
 Returns current UTC time as a datetime.datetime.
 ### *recipe_modules* / [tricium](/recipe_modules/tricium)
@@ -5134,11 +5136,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/swarming/tests/realms.py#18)(api):**
 ### *recipes* / [time:examples/full](/recipe_modules/time/examples/full.py)
 
-[DEPS](/recipe_modules/time/examples/full.py#9): [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/time/examples/full.py#9): [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#15)(api):**
+&mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#16)(api):**
 ### *recipes* / [tricium:examples/add\_comment](/recipe_modules/tricium/examples/add_comment.py)
 
 [DEPS](/recipe_modules/tricium/examples/add_comment.py#10): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
