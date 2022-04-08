@@ -902,7 +902,7 @@ class CIPDApi(recipe_api.RecipeApi):
         'instances',
         package_name,
     ]
-    if limit:
+    if limit is not None:
       cmd += ['-limit', limit]
 
     step_result = self._run(
