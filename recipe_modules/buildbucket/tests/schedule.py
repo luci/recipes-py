@@ -42,7 +42,9 @@ def RunSteps(api):
 
 def GenTests(api):
 
-  def test(test_name, response=None, tags=None, **req):
+  def test(
+      test_name, response=None, tags=None, parent_experiments=(),
+      experiment_reasons=None, **req):
     req.setdefault('builder', 'linux')
     return (
       api.test(test_name) +
@@ -57,7 +59,9 @@ def GenTests(api):
               cipd_pkg='path/to/cipd/pkg',
               cipd_ver='default_ver',
               cmd=['luciexe'],
-          )
+          ),
+          experiments=parent_experiments,
+          experiment_reasons=experiment_reasons
       ) +
       api.properties(request_kwargs=req, tags=tags, response=response)
     )
@@ -167,4 +171,21 @@ def GenTests(api):
       api.post_process(post_process.StepSuccess,
                        'include sub resultdb invocations')+
       api.post_process(post_process.DropExpectation)
+  )
+
+  yield test(
+      test_name='experiment_reasons',
+      experiments={
+          'luci.exp_foo': True,
+          'luci.exp_bar': False,
+      },
+      parent_experiments={
+          'luci.exp_foo': True,
+          'luci.exp_bar': True,
+      },
+      experiment_reasons={
+          'luci.exp_foo': 1,
+          'luci.exp_bar': 1,
+          'luci.exp_baz': 1,
+      },
   )
