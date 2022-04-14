@@ -134,7 +134,6 @@
       "@@@STEP_LOG_LINE@json.output@        \"createdBy\": \"project:project\", @@@",
       "@@@STEP_LOG_LINE@json.output@        \"id\": \"9016911228971028737\", @@@",
       "@@@STEP_LOG_LINE@json.output@        \"infra\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@          \"buildbucket\": {}, @@@",
       "@@@STEP_LOG_LINE@json.output@          \"resultdb\": {@@@",
       "@@@STEP_LOG_LINE@json.output@            \"invocation\": \"invocations/build:9016911228971028737\"@@@",
       "@@@STEP_LOG_LINE@json.output@          }, @@@",

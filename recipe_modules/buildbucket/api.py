@@ -363,7 +363,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
       [`experimental` field](https://cs.chromium.org/chromium/infra/go/src/go.chromium.org/luci/buildbucket/proto/build.proto?q="bool experimental").
     * experiments (Dict[str, bool]|None): enabled and disabled experiments
       for the new build. Overrides the result computed from experiments defined
-      in builder config and experiments from the current build.
+      in builder config.
     * gitiles_commit (common_pb2.GitilesCommit|INHERIT): input commit.
       Defaults to the input commit of the current build.
       Read more about
@@ -439,17 +439,6 @@ class BuildbucketApi(recipe_api.RecipeApi):
         'luci.buildbucket.parent_tracking' in b.input.experiments):
       can_outlive_parent = True if swarming_parent_run_id is None else False
 
-    # By default uses the current build's experiments for the child.
-    experiments_computed = {k: True for k in b.input.experiments}
-    # Also explicitly unset the known experiments that the current build doesn't
-    # have.
-    for exp in b.infra.buildbucket.experiment_reasons:
-      experiments_computed.setdefault(exp, False)
-
-    # Then overrides experiments_computed by experiments.
-    if experiments:
-      experiments_computed.update(experiments)
-
     req = builds_service_pb2.ScheduleBuildRequest(
         request_id='%d-%s' % (b.id, self.m.uuid.random()),
         builder=dict(
@@ -462,7 +451,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
         # If not `INHERIT`, `experimental` must be trinary already, so only
         # pass the parent (boolean) value through `as_trinary`.
         experimental=if_inherit(experimental, as_trinary(b.input.experimental)),
-        experiments=experiments_computed,
+        experiments=dict(experiments) if experiments else None,
         fields=self._make_field_mask(paths=fields))
 
     if swarming_parent_run_id:

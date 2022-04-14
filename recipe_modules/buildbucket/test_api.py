@@ -151,7 +151,6 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
       exe=None,
       execution_timeout=None,
       start_time=None,
-      experiment_reasons=None,
     ):
     """Emulate typical buildbucket try build scheduled by CQ.
 
@@ -188,7 +187,6 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
           ),
       ]
 
-
     build = build_pb2.Build(
         id=build_id,
         number=build_number,
@@ -204,8 +202,6 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         input=build_pb2.Build.Input(gerrit_changes=gerrit_changes,
                                     experiments=experiments),
         infra=build_pb2.BuildInfra(
-            buildbucket=build_pb2.BuildInfra.Buildbucket(
-                experiment_reasons=experiment_reasons),
             swarming=build_pb2.BuildInfra.Swarming(priority=priority),
             resultdb=build_pb2.BuildInfra.ResultDB(
                 invocation='invocations/build:%d' % build_id),
