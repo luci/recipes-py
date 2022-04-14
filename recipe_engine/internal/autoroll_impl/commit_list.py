@@ -80,8 +80,8 @@ class CommitList(object):
     return CommitList(
         git_backend.repo_url,
         dep.branch,
-        ([git_backend.commit_metadata(dep.revision)] + git_backend.updates(
-            dep.revision, git_backend.resolve_refspec(dep.branch))),
+        ([git_backend.commit_metadata(dep.revision)] +
+         git_backend.updates(dep.branch, dep.revision)),
     )
 
   class _Cursor(object):

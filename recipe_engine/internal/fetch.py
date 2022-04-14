@@ -86,16 +86,16 @@ class Backend(object):
       return refspec
     return self._resolve_refspec_impl(refspec)
 
-  def updates(self, revision, other_revision):
-    """Returns a list of revisions |revision| through |other_revision|
-    (inclusive).
+  def updates(self, refspec, revision):
+    """Returns a list of revisions contained in |refspec| starting after
+    |revision|.
 
     Returns list(CommitMetadata) - The commit metadata in the range
-      (revision,other_revision].
+      (revision,refspec].
     """
+    assert not self.is_resolved_revision(refspec)
     self.assert_resolved(revision)
-    self.assert_resolved(other_revision)
-    return self._updates_impl(revision, other_revision)
+    return self._updates_impl(refspec, revision)
 
   ### direct overrides. These are public methods which must be overridden.
 
@@ -193,6 +193,7 @@ class GitBackend(Backend):
   def __init__(self, *args, **kwargs):
     super(GitBackend, self).__init__(*args, **kwargs)
     self._did_ensure = False
+    self._resolved_refspecs = {}
     self._gitattr_checker = gitattr_checker.AttrChecker(self.checkout_dir)
 
   def _git(self, *args):
@@ -336,7 +337,10 @@ class GitBackend(Backend):
   def ls_files(self, *args):
     return self._git('ls-files', *args)
 
-  def _updates_impl(self, revision, other_revision):
+  def _updates_impl(self, refspec, revision):
+    other_revision = self._resolve_refspec_impl(refspec)
+    if not self._has_rev(other_revision):
+      self.fetch(refspec)
     args = [
         'rev-list',
         '--reverse',
@@ -351,22 +355,28 @@ class GitBackend(Backend):
 
   def _resolve_refspec_impl(self, refspec):
     self._ensure_local_repo_exists()
-    # Can return e.g.
-    #
-    #   b4a1b1365895c5962fb3654aff61290be2a492ed	HEAD
-    #   39bbb4e3749b0a9ebc6cb36d8b679b147e4ed270	refs/remotes/origin/HEAD
-    #
-    # So we need the 'splitlines' bit too.
-    source = self.repo_url if self.repo_url is not None else '.'
-    mapping = {
-      ref: csum
-      for csum, ref in (
-        l.split()
-        for l in self._git('ls-remote', source, refspec).splitlines()
-      )
-    }
-    rslt = mapping[refspec]
-    assert self.is_resolved_revision(rslt), repr(rslt)
+    rslt = self._resolved_refspecs.get(refspec)
+    if rslt is None:
+      # Can return e.g.
+      #
+      #   b4a1b1365895c5962fb3654aff61290be2a492ed	HEAD
+      #   39bbb4e3749b0a9ebc6cb36d8b679b147e4ed270	refs/remotes/origin/HEAD
+      #
+      # So we need the 'splitlines' bit too.
+      source = self.repo_url if self.repo_url is not None else '.'
+      mapping = {
+          ref: csum for csum, ref in (l.split() for l in self._git(
+              'ls-remote', source, refspec).splitlines())
+      }
+      rslt = mapping[refspec]
+      assert self.is_resolved_revision(rslt), repr(rslt)
+      # Cache the refspec so that the candidate algorithm isn't repeatedly doing
+      # network traffic for the same ref. If there's no repo URL, this is either
+      # a local override and doesn't require network traffic or it's a fake
+      # backend for tests, which would intentionally be mutating the remote
+      # state.
+      if self.repo_url is not None:
+        self._resolved_refspecs[refspec] = rslt
     return rslt
 
   def _commit_metadata_impl(self, revision):

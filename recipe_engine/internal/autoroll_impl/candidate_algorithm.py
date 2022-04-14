@@ -248,6 +248,10 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
     ignored.
   """
 
+  # Cache of backends for new repos, the backend caches resolved refspecs, so
+  # this will prevent repeated network traffic for the same repo
+  new_backends_by_repo = {}
+
   # Local function so that it can use the value of current_config
   def get_new_repo_commit_list(repo, dep):
     # Once a repo is incorporated into the current config, we will no
@@ -263,12 +267,14 @@ def _get_roll_candidates_impl(recipe_deps, commit_lists_by_repo):
       else:
         return clist
 
-    # We check it out in the `.recipe_deps` folder. This is a slight abstraction
-    # leak, but adding this to RecipeDeps just for autoroller seemed like a
-    # worse alternative.
-    dep_path = os.path.join(recipe_deps.recipe_deps_path, repo)
-    backend = GitBackend(dep_path, dep.url)
-    backend.checkout(dep.branch, dep.revision)
+    backend = new_backends_by_repo.get(repo)
+    if backend is None:
+      # We check it out in the `.recipe_deps` folder. This is a slight
+      # abstraction leak, but adding this to RecipeDeps just for autoroller
+      # seemed like a worse alternative.
+      dep_path = os.path.join(recipe_deps.recipe_deps_path, repo)
+      backend = GitBackend(dep_path, dep.url)
+      backend.checkout(dep.branch, dep.revision)
 
     clist = CommitList.from_backend(dep, backend)
     commit_lists_by_repo[repo] = clist
