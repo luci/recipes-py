@@ -439,6 +439,12 @@ class BuildbucketApi(recipe_api.RecipeApi):
         'luci.buildbucket.parent_tracking' in b.input.experiments):
       can_outlive_parent = True if swarming_parent_run_id is None else False
 
+    # Child build and parent build should have the same value of
+    # 'luci.buildbucket.parent_tracking'.
+    experiments = dict(experiments) if experiments else {}
+    experiments.setdefault('luci.buildbucket.parent_tracking',
+        'luci.buildbucket.parent_tracking' in b.input.experiments)
+
     req = builds_service_pb2.ScheduleBuildRequest(
         request_id='%d-%s' % (b.id, self.m.uuid.random()),
         builder=dict(
@@ -451,7 +457,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
         # If not `INHERIT`, `experimental` must be trinary already, so only
         # pass the parent (boolean) value through `as_trinary`.
         experimental=if_inherit(experimental, as_trinary(b.input.experimental)),
-        experiments=dict(experiments) if experiments else None,
+        experiments=experiments,
         fields=self._make_field_mask(paths=fields))
 
     if swarming_parent_run_id:
