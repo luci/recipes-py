@@ -1,9 +1,9 @@
 [
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(30):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/fan_out_in].resources/sleep_loop.py"
     ],
     "cost": {
       "cpu": 2000,
@@ -11,21 +11,13 @@
       "memory": 50,
       "net": 0
     },
-    "name": "sleep loop",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(30):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop"
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(30):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/fan_out_in].resources/sleep_loop.py"
     ],
     "cost": {
       "cpu": 2000,
@@ -33,21 +25,13 @@
       "memory": 50,
       "net": 0
     },
-    "name": "sleep loop (2)",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(30):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop (2)"
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(30):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/fan_out_in].resources/sleep_loop.py"
     ],
     "cost": {
       "cpu": 2000,
@@ -55,21 +39,13 @@
       "memory": 50,
       "net": 0
     },
-    "name": "sleep loop (3)",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(30):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop (3)"
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(30):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/fan_out_in].resources/sleep_loop.py"
     ],
     "cost": {
       "cpu": 2000,
@@ -77,21 +53,13 @@
       "memory": 50,
       "net": 0
     },
-    "name": "sleep loop (4)",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(30):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop (4)"
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(30):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/fan_out_in].resources/sleep_loop.py"
     ],
     "cost": {
       "cpu": 2000,
@@ -99,21 +67,13 @@
       "memory": 50,
       "net": 0
     },
-    "name": "sleep loop (5)",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(30):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop (5)"
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(30):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/fan_out_in].resources/sleep_loop.py"
     ],
     "cost": {
       "cpu": 2000,
@@ -121,21 +81,13 @@
       "memory": 50,
       "net": 0
     },
-    "name": "sleep loop (6)",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(30):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop (6)"
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(30):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/fan_out_in].resources/sleep_loop.py"
     ],
     "cost": {
       "cpu": 2000,
@@ -143,21 +95,13 @@
       "memory": 50,
       "net": 0
     },
-    "name": "sleep loop (7)",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(30):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop (7)"
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(30):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/fan_out_in].resources/sleep_loop.py"
     ],
     "cost": {
       "cpu": 2000,
@@ -165,21 +109,13 @@
       "memory": 50,
       "net": 0
     },
-    "name": "sleep loop (8)",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(30):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop (8)"
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(30):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/fan_out_in].resources/sleep_loop.py"
     ],
     "cost": {
       "cpu": 2000,
@@ -187,21 +123,13 @@
       "memory": 50,
       "net": 0
     },
-    "name": "sleep loop (9)",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(30):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop (9)"
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(30):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/fan_out_in].resources/sleep_loop.py"
     ],
     "cost": {
       "cpu": 2000,
@@ -209,15 +137,7 @@
       "memory": 50,
       "net": 0
     },
-    "name": "sleep loop (10)",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(30):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop (10)"
   },
   {
     "name": "$result"

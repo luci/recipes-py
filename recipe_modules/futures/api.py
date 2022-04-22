@@ -12,6 +12,7 @@ import attr
 from attr.validators import instance_of
 
 from recipe_engine.recipe_api import RecipeApi, RequireClient
+from recipe_engine.recipe_api import escape_all_warnings
 
 
 class _IWaitWrapper(object):
@@ -202,6 +203,7 @@ class FuturesApi(RecipeApi):
       raise ValueError('Channels are not allowed in @@@annotation@@@ mode')
     return gevent.queue.Channel()
 
+  @escape_all_warnings
   def spawn(self, func, *args, **kwargs):
     """Prepares a Future to run `func(*args, **kwargs)` concurrently.
 
@@ -251,6 +253,7 @@ class FuturesApi(RecipeApi):
       self.wait([ret])
     return ret
 
+  @escape_all_warnings
   def spawn_immediate(self, func, *args, **kwargs):
     """Returns a Future to the concurrently running `func(*args, **kwargs)`.
 

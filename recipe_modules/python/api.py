@@ -16,7 +16,10 @@ from builtins import str as text_type
 from recipe_engine import config_types
 from recipe_engine import recipe_api
 
-class PythonApi(recipe_api.RecipeApi):
+class PythonApi(recipe_api.RecipeApi):  # pragma: no cover
+  """DEPRECATED: Directly invoke python instead of using this module.
+  """
+
   def __call__(self, name, script, args=None, unbuffered=True, venv=None,
                **kwargs):
     """Return a step to run a python script with arguments.
@@ -78,6 +81,8 @@ class PythonApi(recipe_api.RecipeApi):
     **Returns (`step_data.StepData`)** - The StepData object as returned by
     api.step.
     """
+    self.m.warning.issue("PYTHON_INLINE_DEPRECATED")
+
     program = textwrap.dedent(program)
     compile(program, '<string>', 'exec', dont_inherit=1)
 

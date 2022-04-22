@@ -78,3 +78,17 @@ warning {
     id: 1276131
   }
 }
+
+warning {
+  name: "PYTHON_INLINE_DEPRECATED"
+  description: "`api.python.inline` is deprecated."
+  description: ""
+  description: "Instead, please write your scripts as recipe resources"
+  description: "and invoke them with `api.step`."
+  description: ""
+  description: "See go/recipe-user-guide#Recipe-and-module-resources for"
+  description: "documentation on how recipe resources work."
+  monorail_bug {
+    id: 1271442
+  }
+}

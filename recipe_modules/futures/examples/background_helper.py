@@ -82,12 +82,9 @@ def run_helper(api):
 
 def RunSteps(api):
   with run_helper(api):
-    api.python.inline('do something with live helper', '''
-      import time
-      for _ in range(10):
-        print("hey there :)")
-        time.sleep(1)
-    ''')
+    api.step(
+        'do something with live helper',
+        ['python3', '-u', api.resource('do_something.py')])
 
 
 def GenTests(api):

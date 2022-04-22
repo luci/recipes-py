@@ -6,7 +6,6 @@ PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
   'futures',
-  'python',
   'step',
 ]
 
@@ -15,14 +14,11 @@ def RunSteps(api):
   futures = []
   for i in range(10):
     def _runner(i):
-      api.python.inline(
-        'sleep loop [%d]' % (i+1),
-        '''
-          import time
-          for x in range(%d):
-            print("Hi! %%s" %% x)
-            time.sleep(1)
-        ''' % (i+1), cost=api.step.ResourceCost())
+      api.step(
+          'sleep loop [%d]' % (i+1),
+          ['python3', '-u', api.resource('sleep_loop.py'), i],
+          cost=api.step.ResourceCost(),
+      )
       return i + 1
     futures.append(api.futures.spawn(_runner, i))
 

@@ -11,7 +11,6 @@ features available in the recipe engine."""
 PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
-  'python',
   'raw_io',
   'step',
 ]
@@ -20,7 +19,7 @@ from builtins import range
 
 
 def named_step(api, name):
-  return api.python(name, api.resource('dual_output.py'))
+  return api.step(name, ['python3', '-u', api.resource('dual_output.py')])
 
 
 def RunSteps(api):
@@ -75,9 +74,9 @@ def RunSteps(api):
   # Re-use stdout after redirect
   # TODO(iannucci): this is a bit dirty; once we drop @@@ see if we can do this
   # more cleanly.
-  result = api.python.inline(
-      'capture stdout', "print('OHAI')",
-      stdout=api.raw_io.output_text())
+  result = api.step('capture stdout',
+                    ['python3', api.resource('capture_stdout.py')],
+                    stdout=api.raw_io.output_text())
   result.presentation.logs['stdout'] = result.stdout.splitlines()
 
   with api.step.nest('properties'):

@@ -1,163 +1,93 @@
 [
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(1):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/lazy_fan_out_in].resources/sleep_loop.py",
+      "0"
     ],
-    "name": "sleep loop [1]",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(1):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop [1]"
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(2):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/lazy_fan_out_in].resources/sleep_loop.py",
+      "1"
     ],
-    "name": "sleep loop [2]",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(2):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop [2]"
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(3):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/lazy_fan_out_in].resources/sleep_loop.py",
+      "2"
     ],
-    "name": "sleep loop [3]",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(3):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop [3]"
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(4):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/lazy_fan_out_in].resources/sleep_loop.py",
+      "3"
     ],
-    "name": "sleep loop [4]",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(4):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop [4]"
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(5):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/lazy_fan_out_in].resources/sleep_loop.py",
+      "4"
     ],
-    "name": "sleep loop [5]",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(5):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop [5]"
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(6):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/lazy_fan_out_in].resources/sleep_loop.py",
+      "5"
     ],
-    "name": "sleep loop [6]",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(6):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop [6]"
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(7):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/lazy_fan_out_in].resources/sleep_loop.py",
+      "6"
     ],
-    "name": "sleep loop [7]",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(7):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop [7]"
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(8):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/lazy_fan_out_in].resources/sleep_loop.py",
+      "7"
     ],
-    "name": "sleep loop [8]",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(8):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop [8]"
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(9):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/lazy_fan_out_in].resources/sleep_loop.py",
+      "8"
     ],
-    "name": "sleep loop [9]",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(9):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop [9]"
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor x in range(10):\n  print(\"Hi! %s\" % x)\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/lazy_fan_out_in].resources/sleep_loop.py",
+      "9"
     ],
-    "name": "sleep loop [10]",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for x in range(10):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"Hi! %s\" % x)@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "sleep loop [10]"
   },
   {
     "cmd": [],

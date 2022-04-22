@@ -9,7 +9,6 @@ DEPS = [
   'path',
   'platform',
   'properties',
-  'python',
   'raw_io',
   'step',
 ]
@@ -99,14 +98,12 @@ def RunSteps(api):
        api.raw_io.output(leak_to=api.path['tmp_base'].join('missing.txt'))])
 
   # Example of overriding default mocked output for a single named output.
-  step_result = api.python.inline(
-      'override_default_mock',
-      """
-      import sys
-      with open(sys.argv[1], 'w') as f:
-        f.write(%r)
-      """ % api.properties.get('some_prop', 'good_value'),
-      args=[api.raw_io.output_text(name='test')],
+  step_result = api.step(
+      'override_default_mock', [
+        'python3', api.resource('override_default_mock.py'),
+        api.raw_io.output_text(name='test'),
+        api.properties.get('some_prop', 'good_value'),
+      ],
       step_test_data=(
           lambda: api.raw_io.test_api.output_text(
               'second_bad_value', name='test')))
@@ -114,14 +111,11 @@ def RunSteps(api):
   assert step_result.raw_io.output_text == 'good_value'
 
   # Example of add_output_log
-  step_result = api.python.inline(
-      'success output log',
-      """
-      import sys
-      with open(sys.argv[1], 'w') as f:
-        f.write('success')
-      """,
-      args=[api.raw_io.output_text(name='success_log', add_output_log=True)],
+  step_result = api.step(
+      'success output log', [
+        'python3', api.resource('success_output_log.py'),
+        api.raw_io.output_text(name='success_log', add_output_log=True),
+      ],
       step_test_data=(
           lambda: api.raw_io.test_api.output_text(
               'success', name='success_log')))
@@ -130,16 +124,12 @@ def RunSteps(api):
 
   # Example of add_output_log on failure
   try:
-    api.python.inline(
-        'failure output log',
-        """
-        import sys
-        with open(sys.argv[1], 'w') as f:
-          f.write('failure')
-        exit(1)
-        """,
-        args=[api.raw_io.output_text(name='failure_log',
-                                     add_output_log='on_failure')],
+    api.step(
+        'failure output log', [
+          'python3', api.resource('failure_output_log.py'),
+          api.raw_io.output_text(name='failure_log',
+                                 add_output_log='on_failure'),
+        ],
         step_test_data=(
             lambda: api.raw_io.test_api.output_text(
                 'failure', name='failure_log')))

@@ -87,55 +87,35 @@
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "\nimport sys\nwith open(sys.argv[1], 'w') as f:\n  f.write('bad_value')\n",
-      "/path/to/tmp/"
+      "python3",
+      "RECIPE[recipe_engine::raw_io:examples/full].resources\\override_default_mock.py",
+      "/path/to/tmp/",
+      "bad_value"
     ],
-    "name": "override_default_mock",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import sys@@@",
-      "@@@STEP_LOG_LINE@python.inline@with open(sys.argv[1], 'w') as f:@@@",
-      "@@@STEP_LOG_LINE@python.inline@  f.write('bad_value')@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "override_default_mock"
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "\nimport sys\nwith open(sys.argv[1], 'w') as f:\n  f.write('success')\n",
+      "python3",
+      "RECIPE[recipe_engine::raw_io:examples/full].resources\\success_output_log.py",
       "/path/to/tmp/"
     ],
     "name": "success output log",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@raw_io.output_text[success_log]@success@@@",
-      "@@@STEP_LOG_END@raw_io.output_text[success_log]@@@",
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import sys@@@",
-      "@@@STEP_LOG_LINE@python.inline@with open(sys.argv[1], 'w') as f:@@@",
-      "@@@STEP_LOG_LINE@python.inline@  f.write('success')@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
+      "@@@STEP_LOG_END@raw_io.output_text[success_log]@@@"
     ]
   },
   {
     "cmd": [
-      "python",
-      "-u",
-      "\nimport sys\nwith open(sys.argv[1], 'w') as f:\n  f.write('failure')\nexit(1)\n",
+      "python3",
+      "RECIPE[recipe_engine::raw_io:examples/full].resources\\failure_output_log.py",
       "/path/to/tmp/"
     ],
     "name": "failure output log",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@raw_io.output_text[failure_log]@failure@@@",
       "@@@STEP_LOG_END@raw_io.output_text[failure_log]@@@",
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import sys@@@",
-      "@@@STEP_LOG_LINE@python.inline@with open(sys.argv[1], 'w') as f:@@@",
-      "@@@STEP_LOG_LINE@python.inline@  f.write('failure')@@@",
-      "@@@STEP_LOG_LINE@python.inline@exit(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@",
       "@@@STEP_FAILURE@@@"
     ]
   },

@@ -1854,11 +1854,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Implements in-recipe concurrency via green threads.
 
-#### **class [FuturesApi](/recipe_modules/futures/api.py#42)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
+#### **class [FuturesApi](/recipe_modules/futures/api.py#43)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 Provides access to the Recipe concurrency primitives.
 
-&emsp; **@staticmethod**<br>&mdash; **def [iwait](/recipe_modules/futures/api.py#302)(futures, timeout=None, count=None):**
+&emsp; **@staticmethod**<br>&mdash; **def [iwait](/recipe_modules/futures/api.py#305)(futures, timeout=None, count=None):**
 
 Iteratively yield up to `count` Futures as they become done.
 
@@ -1901,7 +1901,7 @@ Yields futures in the order in which they complete until we hit the
 timeout or count. May also be used with a context manager to avoid
 leaking resources if you don't plan on consuming the entire iterable.
 
-&mdash; **def [make\_bounded\_semaphore](/recipe_modules/futures/api.py#154)(self, value=1):**
+&mdash; **def [make\_bounded\_semaphore](/recipe_modules/futures/api.py#155)(self, value=1):**
 
 Returns a gevent.BoundedSemaphore with depth `value`.
 
@@ -1928,7 +1928,7 @@ could lead to difficult-to-debug deadlocks in your recipe.
 NOTE: This method will raise ValueError if used with @@@annotation@@@ mode.
 ***
 
-&mdash; **def [make\_channel](/recipe_modules/futures/api.py#181)(self):**
+&mdash; **def [make\_channel](/recipe_modules/futures/api.py#182)(self):**
 
 Returns a single-slot communication device for passing data and control
 between concurrent functions.
@@ -1952,7 +1952,7 @@ you carefully consider and avoid the possibility of introducing deadlocks.
 NOTE: This method will raise ValueError if used with @@@annotation@@@ mode.
 ***
 
-&mdash; **def [spawn](/recipe_modules/futures/api.py#205)(self, func, \*args, \*\*kwargs):**
+&emsp; **@escape_all_warnings**<br>&mdash; **def [spawn](/recipe_modules/futures/api.py#206)(self, func, \*args, \*\*kwargs):**
 
 Prepares a Future to run `func(*args, **kwargs)` concurrently.
 
@@ -1990,7 +1990,7 @@ Kwargs:
 
 Returns a Future of `func`'s result.
 
-&mdash; **def [spawn\_immediate](/recipe_modules/futures/api.py#254)(self, func, \*args, \*\*kwargs):**
+&emsp; **@escape_all_warnings**<br>&mdash; **def [spawn\_immediate](/recipe_modules/futures/api.py#256)(self, func, \*args, \*\*kwargs):**
 
 Returns a Future to the concurrently running `func(*args, **kwargs)`.
 
@@ -2010,7 +2010,7 @@ Kwargs:
 
 Returns a Future of `func`'s result.
 
-&emsp; **@staticmethod**<br>&mdash; **def [wait](/recipe_modules/futures/api.py#283)(futures, timeout=None, count=None):**
+&emsp; **@staticmethod**<br>&mdash; **def [wait](/recipe_modules/futures/api.py#286)(futures, timeout=None, count=None):**
 
 Blocks until `count` `futures` are done (or timeout occurs) then
 returns the list of done futures.
@@ -2778,7 +2778,12 @@ unbuffered flag, etc.)
 
 #### **class [PythonApi](/recipe_modules/python/api.py#19)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/python/api.py#20)(self, name, script, args=None, unbuffered=True, venv=None, \*\*kwargs):**
+*** note
+**DEPRECATED**: Directly invoke python instead of using this module.
+  
+***
+
+&mdash; **def [\_\_call\_\_](/recipe_modules/python/api.py#23)(self, name, script, args=None, unbuffered=True, venv=None, \*\*kwargs):**
 
 Return a step to run a python script with arguments.
 
@@ -2805,7 +2810,7 @@ Args:
 **Returns (`step_data.StepData`)** - The StepData object as returned by
 api.step.
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [failing\_step](/recipe_modules/python/api.py#134)(self, name, text, as_log=None):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [failing\_step](/recipe_modules/python/api.py#139)(self, name, text, as_log=None):**
 
 Runs a failing step (exits 1).
 
@@ -2813,7 +2818,7 @@ Runs a failing step (exits 1).
 **DEPRECATED**: crbug.com/1276131
 ***
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [infra\_failing\_step](/recipe_modules/python/api.py#144)(self, name, text, as_log=None):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [infra\_failing\_step](/recipe_modules/python/api.py#149)(self, name, text, as_log=None):**
 
 Runs an infra-failing step (exits 1).
 
@@ -2821,7 +2826,7 @@ Runs an infra-failing step (exits 1).
 **DEPRECATED**: crbug.com/1276131
 ***
 
-&mdash; **def [inline](/recipe_modules/python/api.py#65)(self, name, program, add_python_log=True, \*\*kwargs):**
+&mdash; **def [inline](/recipe_modules/python/api.py#68)(self, name, program, add_python_log=True, \*\*kwargs):**
 
 Run an inline python program as a step.
 
@@ -2838,7 +2843,7 @@ Args:
 **Returns (`step_data.StepData`)** - The StepData object as returned by
 api.step.
 
-&mdash; **def [result\_step](/recipe_modules/python/api.py#96)(self, name, text, retcode, as_log=None, \*\*kwargs):**
+&mdash; **def [result\_step](/recipe_modules/python/api.py#101)(self, name, text, retcode, as_log=None, \*\*kwargs):**
 
 Runs a no-op step that exits with a specified return code.
 
@@ -2852,7 +2857,7 @@ The text is expected to be str. Passing a list of lines(str) works but is
 discouraged and may be deprecated in the future. Please concatenate the
 lines with newline character instead.
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [succeeding\_step](/recipe_modules/python/api.py#124)(self, name, text, as_log=None):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [succeeding\_step](/recipe_modules/python/api.py#129)(self, name, text, as_log=None):**
 
 Runs a succeeding step (exits 0).
 
@@ -4386,16 +4391,16 @@ Tests that daemons that hang on to STDOUT can't cause the engine to hang.
 &mdash; **def [RunSteps](/recipes/engine_tests/bad_subprocess.py#15)(api):**
 ### *recipes* / [engine\_tests/comprehensive\_ui](/recipes/engine_tests/comprehensive_ui.py)
 
-[DEPS](/recipes/engine_tests/comprehensive_ui.py#13): [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/comprehensive_ui.py#13): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 A fast-running recipe which comprehensively covers all StepPresentation
 features available in the recipe engine.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/comprehensive_ui.py#26)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/comprehensive_ui.py#25)(api):**
 
-&mdash; **def [named\_step](/recipes/engine_tests/comprehensive_ui.py#22)(api, name):**
+&mdash; **def [named\_step](/recipes/engine_tests/comprehensive_ui.py#21)(api, name):**
 ### *recipes* / [engine\_tests/config\_operations](/recipes/engine_tests/config_operations.py)
 
 [DEPS](/recipes/engine_tests/config_operations.py#44): [json](#recipe_modules-json), [step](#recipe_modules-step)
@@ -4712,25 +4717,25 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/futures/examples/extreme_namespaces.py#33)(api):**
 ### *recipes* / [futures:examples/fan\_out\_in](/recipe_modules/futures/examples/fan_out_in.py)
 
-[DEPS](/recipe_modules/futures/examples/fan_out_in.py#7): [futures](#recipe_modules-futures), [python](#recipe_modules-python), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/futures/examples/fan_out_in.py#7): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/fan_out_in.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/fan_out_in.py#13)(api):**
 ### *recipes* / [futures:examples/lazy\_fan\_out\_in](/recipe_modules/futures/examples/lazy_fan_out_in.py)
 
-[DEPS](/recipe_modules/futures/examples/lazy_fan_out_in.py#7): [futures](#recipe_modules-futures), [python](#recipe_modules-python), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/futures/examples/lazy_fan_out_in.py#7): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/lazy_fan_out_in.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/lazy_fan_out_in.py#13)(api):**
 ### *recipes* / [futures:examples/lazy\_fan\_out\_in\_early\_abort](/recipe_modules/futures/examples/lazy_fan_out_in_early_abort.py)
 
-[DEPS](/recipe_modules/futures/examples/lazy_fan_out_in_early_abort.py#7): [futures](#recipe_modules-futures), [python](#recipe_modules-python), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/futures/examples/lazy_fan_out_in_early_abort.py#7): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/lazy_fan_out_in_early_abort.py#14)(api):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/lazy_fan_out_in_early_abort.py#13)(api):**
 ### *recipes* / [futures:examples/lottasteps](/recipe_modules/futures/examples/lottasteps.py)
 
 [DEPS](/recipe_modules/futures/examples/lottasteps.py#20): [futures](#recipe_modules-futures), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
@@ -4899,11 +4904,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/random/tests/full.py#13)(api):**
 ### *recipes* / [raw\_io:examples/full](/recipe_modules/raw_io/examples/full.py)
 
-[DEPS](/recipe_modules/raw_io/examples/full.py#8): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/raw_io/examples/full.py#8): [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/raw_io/examples/full.py#18)(api):**
+&mdash; **def [RunSteps](/recipe_modules/raw_io/examples/full.py#17)(api):**
 ### *recipes* / [raw\_io:tests/output\_mismatch](/recipe_modules/raw_io/tests/output_mismatch.py)
 
 [DEPS](/recipe_modules/raw_io/tests/output_mismatch.py#10): [assertions](#recipe_modules-assertions), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)

@@ -20,8 +20,6 @@ def RunSteps(api):
     'json.tool', api.raw_io.input_text('{"something":[true,true]}'),
   ], unbuffered=False)
 
-  api.python.inline('inline', 'print("Hello World!")')
-
   # Test "vpython"-based invocation.
   #
   # The "test.py" script has an inline VirtualEnv spec that is read by default

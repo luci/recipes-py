@@ -47,19 +47,11 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "-u",
-      "\nimport time\nfor _ in range(10):\n  print(\"hey there :)\")\n  time.sleep(1)\n"
+      "RECIPE[recipe_engine::futures:examples/background_helper].resources/do_something.py"
     ],
-    "name": "do something with live helper",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@python.inline@@@@",
-      "@@@STEP_LOG_LINE@python.inline@import time@@@",
-      "@@@STEP_LOG_LINE@python.inline@for _ in range(10):@@@",
-      "@@@STEP_LOG_LINE@python.inline@  print(\"hey there :)\")@@@",
-      "@@@STEP_LOG_LINE@python.inline@  time.sleep(1)@@@",
-      "@@@STEP_LOG_END@python.inline@@@"
-    ]
+    "name": "do something with live helper"
   },
   {
     "name": "$result"
