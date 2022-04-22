@@ -2114,7 +2114,7 @@ Args:
   * cache (Path) - a path to put Go caches under.
 ### *recipe_modules* / [json](/recipe_modules/json)
 
-[DEPS](/recipe_modules/json/__init__.py#7): [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io)
+[DEPS](/recipe_modules/json/__init__.py#7): [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 

@@ -180,15 +180,10 @@ class JsonApi(recipe_api.RecipeApi):
 
     DEPRECATED: Use file.read_json instead.
     """
-    return self.m.python.inline(
-        name,
-        """
-        import shutil
-        import sys
-        shutil.copy(sys.argv[1], sys.argv[2])
-        """,
-        args=[path,
-              self.output(add_json_log=add_json_log, name=output_name)],
-        add_python_log=False,
-        **kwargs
-    )
+    return self.m.step(
+        name, [
+          'python3', '-u', self.resource('read.py'),
+          path,
+          self.output(add_json_log=add_json_log, name=output_name),
+        ],
+        **kwargs)
