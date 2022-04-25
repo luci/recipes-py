@@ -10,7 +10,6 @@ DEPS = [
   'futures',
   'json',
   'path',
-  'python',
   'raw_io',
   'step',
 ]
@@ -23,14 +22,18 @@ def manage_helper(api, chn):
   with api.step.nest('helper'):
     pid_file = api.path['cleanup'].join('pid_file')
     helper_future = api.futures.spawn_immediate(
-        api.python, 'helper loop', api.resource('helper.py'), [pid_file],
+        api.step, 'helper loop', ['python', api.resource('helper.py'), pid_file],
         cost=None, # always run this background thread.
         __name='background process',
     )
     try:
-      proc_data = api.python(
-          'wait for it', api.resource('wait_for_helper.py'),
-          [pid_file, api.json.output()],
+      proc_data = api.step(
+          'wait for it', [
+            'python',
+            api.resource('wait_for_helper.py'),
+            pid_file,
+            api.json.output(),
+          ],
           timeout=30,
           cost=None, # always run the checker.
       ).json.output

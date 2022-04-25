@@ -81,9 +81,10 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
 
     with self.m.context(cwd=self.m.path['checkout']):
       if str(path_to_script).endswith('.py'):
-        step_result = self.m.python(
-          step_name,
-          path_to_script, list(args) + [f, self.m.json.output()])
+        step_result = self.m.step(
+            step_name,
+            ['python', '-u', path_to_script] +
+            list(args) + [f, self.m.json.output()])
       else:
         step_result = self.m.step(
           step_name,

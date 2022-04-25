@@ -10,7 +10,6 @@
   {
     "cmd": [
       "python",
-      "-u",
       "RECIPE[recipe_engine::engine_tests/recipe_paths].resources/hello.py"
     ],
     "name": "some_resource"

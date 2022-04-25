@@ -276,6 +276,7 @@ class FuturesApi(RecipeApi):
     name = kwargs.pop('__name', None)
     meta = kwargs.pop('__meta', None)
     chan = self.make_channel()
+    @escape_all_warnings
     def _immediate_runner():
       chan.get()
       return func(*args, **kwargs)

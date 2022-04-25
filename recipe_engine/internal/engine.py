@@ -39,9 +39,9 @@ from ..third_party import luci_context
 
 from .engine_env import merge_envs
 from .exceptions import RecipeUsageError, CrashEngine
-from .step_runner import Step
-from .resource_semaphore import ResourceWaiter
 from .global_shutdown import GLOBAL_SHUTDOWN
+from .resource_semaphore import ResourceWaiter
+from .step_runner import Step
 
 
 LOG = logging.getLogger(__name__)

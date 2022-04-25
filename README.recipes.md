@@ -1437,9 +1437,9 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 File manipulation (read/write/delete/glob) methods.
 
-#### **class [FileApi](/recipe_modules/file/api.py#87)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
+#### **class [FileApi](/recipe_modules/file/api.py#85)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
-&mdash; **def [compute\_hash](/recipe_modules/file/api.py#215)(self, name, paths, base_path, test_data=''):**
+&mdash; **def [compute\_hash](/recipe_modules/file/api.py#214)(self, name, paths, base_path, test_data=''):**
 
 Computes hash of contents of a directory/file.
 
@@ -1477,7 +1477,7 @@ Returns (str):
 Raises:
   file.Error and ValueError if passed paths input is not str or Path.
 
-&mdash; **def [copy](/recipe_modules/file/api.py#127)(self, name, source, dest):**
+&mdash; **def [copy](/recipe_modules/file/api.py#126)(self, name, source, dest):**
 
 Copies a file (including mode bits) from source to destination on the
 local filesystem.
@@ -1493,7 +1493,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [copytree](/recipe_modules/file/api.py#147)(self, name, source, dest, symlinks=False):**
+&mdash; **def [copytree](/recipe_modules/file/api.py#146)(self, name, source, dest, symlinks=False):**
 
 Recursively copies a directory tree.
 
@@ -1509,7 +1509,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#542)(self, name, dest, mode=511):**
+&mdash; **def [ensure\_directory](/recipe_modules/file/api.py#541)(self, name, dest, mode=511):**
 
 Ensures that `dest` exists and is a directory.
 
@@ -1522,7 +1522,7 @@ Args:
 
 Raises: file.Error if the path exists but is not a directory.
 
-&mdash; **def [file\_hash](/recipe_modules/file/api.py#186)(self, file_path, test_data=''):**
+&mdash; **def [file\_hash](/recipe_modules/file/api.py#185)(self, file_path, test_data=''):**
 
 Computes hash of contents of a single file.
 
@@ -1538,7 +1538,7 @@ Returns (str):
 Raises:
   file.Error and ValueError if passed paths input is not str or Path.
 
-&mdash; **def [filesizes](/recipe_modules/file/api.py#558)(self, name, files, test_data=None):**
+&mdash; **def [filesizes](/recipe_modules/file/api.py#557)(self, name, files, test_data=None):**
 
 Returns list of filesizes for the given files.
 
@@ -1548,7 +1548,7 @@ Args:
 
 Returns list[int], size of each file in bytes.
 
-&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#698)(self, name, path):**
+&mdash; **def [flatten\_single\_directories](/recipe_modules/file/api.py#697)(self, name, path):**
 
 Flattens singular directories, starting at path.
 
@@ -1577,7 +1577,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [glob\_paths](/recipe_modules/file/api.py#450)(self, name, source, pattern, include_hidden=False, test_data=()):**
+&mdash; **def [glob\_paths](/recipe_modules/file/api.py#449)(self, name, source, pattern, include_hidden=False, test_data=()):**
 
 Performs glob expansion on `pattern`.
 
@@ -1607,7 +1607,7 @@ Returns (list[Path]): All paths found.
 
 Raises: file.Error.
 
-&mdash; **def [listdir](/recipe_modules/file/api.py#512)(self, name, source, recursive=False, test_data=()):**
+&mdash; **def [listdir](/recipe_modules/file/api.py#511)(self, name, source, recursive=False, test_data=()):**
 
 Lists all files inside a directory.
 
@@ -1625,7 +1625,7 @@ Returns list[Path]
 
 Raises: file.Error.
 
-&mdash; **def [move](/recipe_modules/file/api.py#168)(self, name, source, dest):**
+&mdash; **def [move](/recipe_modules/file/api.py#167)(self, name, source, dest):**
 
 Moves a file or directory.
 
@@ -1638,7 +1638,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [read\_json](/recipe_modules/file/api.py#342)(self, name, source, test_data='', include_log=True):**
+&mdash; **def [read\_json](/recipe_modules/file/api.py#341)(self, name, source, test_data='', include_log=True):**
 
 Reads a file as UTF-8 encoded json.
 
@@ -1653,7 +1653,7 @@ Returns (object): The content of the file.
 
 Raise file.Error
 
-&mdash; **def [read\_proto](/recipe_modules/file/api.py#378)(self, name, source, msg_class, codec, test_proto=None, include_log=True, encoding_kwargs=None):**
+&mdash; **def [read\_proto](/recipe_modules/file/api.py#377)(self, name, source, msg_class, codec, test_proto=None, include_log=True, encoding_kwargs=None):**
 
 Reads a file into a proto message.
 
@@ -1668,7 +1668,7 @@ Args:
   * encoding_kwargs (dict): Passed directly to the chosen encoder. See proto
     module for details.
 
-&mdash; **def [read\_raw](/recipe_modules/file/api.py#266)(self, name, source, test_data=''):**
+&mdash; **def [read\_raw](/recipe_modules/file/api.py#265)(self, name, source, test_data=''):**
 
 Reads a file as raw data.
 
@@ -1682,7 +1682,7 @@ Returns (str): The unencoded (binary) contents of the file.
 
 Raises: file.Error
 
-&mdash; **def [read\_text](/recipe_modules/file/api.py#300)(self, name, source, test_data='', include_log=True):**
+&mdash; **def [read\_text](/recipe_modules/file/api.py#299)(self, name, source, test_data='', include_log=True):**
 
 Reads a file as UTF-8 encoded text.
 
@@ -1697,7 +1697,7 @@ Returns (str): The content of the file.
 
 Raises: file.Error
 
-&mdash; **def [remove](/recipe_modules/file/api.py#497)(self, name, source):**
+&mdash; **def [remove](/recipe_modules/file/api.py#496)(self, name, source):**
 
 Removes a file.
 
@@ -1709,7 +1709,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmcontents](/recipe_modules/file/api.py#597)(self, name, source):**
+&mdash; **def [rmcontents](/recipe_modules/file/api.py#596)(self, name, source):**
 
 Similar to rmtree, but removes only contents not the directory.
 
@@ -1724,7 +1724,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmglob](/recipe_modules/file/api.py#615)(self, name, source, pattern, recursive=True, include_hidden=True):**
+&mdash; **def [rmglob](/recipe_modules/file/api.py#614)(self, name, source, pattern, recursive=True, include_hidden=True):**
 
 Removes all entries in `source` matching the glob `pattern`.
 
@@ -1754,7 +1754,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [rmtree](/recipe_modules/file/api.py#580)(self, name, source):**
+&mdash; **def [rmtree](/recipe_modules/file/api.py#579)(self, name, source):**
 
 Recursively removes a directory.
 
@@ -1768,7 +1768,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [symlink](/recipe_modules/file/api.py#660)(self, name, source, linkname):**
+&mdash; **def [symlink](/recipe_modules/file/api.py#659)(self, name, source, linkname):**
 
 Creates a symlink on the local filesystem.
 
@@ -1781,14 +1781,14 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#677)(self, root):**
+&mdash; **def [symlink\_tree](/recipe_modules/file/api.py#676)(self, root):**
 
 Creates a SymlinkTree, given a root directory.
 
 Args:
   * root (Path): root of a tree of symlinks.
 
-&mdash; **def [truncate](/recipe_modules/file/api.py#685)(self, name, path, size_mb=100):**
+&mdash; **def [truncate](/recipe_modules/file/api.py#684)(self, name, path, size_mb=100):**
 
 Creates an empty file with path and size_mb on the local filesystem.
 
@@ -1799,7 +1799,7 @@ Args:
 
 Raises: file.Error
 
-&mdash; **def [write\_json](/recipe_modules/file/api.py#362)(self, name, dest, data, indent=None, include_log=True):**
+&mdash; **def [write\_json](/recipe_modules/file/api.py#361)(self, name, dest, data, indent=None, include_log=True):**
 
 Write the given json serializable `data` to `dest`.
 
@@ -1813,7 +1813,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [write\_proto](/recipe_modules/file/api.py#419)(self, name, dest, proto_msg, codec, include_log=True, encoding_kwargs=None):**
+&mdash; **def [write\_proto](/recipe_modules/file/api.py#418)(self, name, dest, proto_msg, codec, include_log=True, encoding_kwargs=None):**
 
 Writes the given proto message to `dest`.
 
@@ -1826,7 +1826,7 @@ Args:
   * encoding_kwargs (dict): Passed directly to the chosen encoder. See
     proto module for details.
 
-&mdash; **def [write\_raw](/recipe_modules/file/api.py#286)(self, name, dest, data):**
+&mdash; **def [write\_raw](/recipe_modules/file/api.py#285)(self, name, dest, data):**
 
 Write the given `data` to `dest`.
 
@@ -1837,7 +1837,7 @@ Args:
 
 Raises: file.Error.
 
-&mdash; **def [write\_text](/recipe_modules/file/api.py#324)(self, name, dest, text_data, include_log=True):**
+&mdash; **def [write\_text](/recipe_modules/file/api.py#323)(self, name, dest, text_data, include_log=True):**
 
 Write the given UTF-8 encoded `text_data` to `dest`.
 
@@ -1858,7 +1858,7 @@ Implements in-recipe concurrency via green threads.
 
 Provides access to the Recipe concurrency primitives.
 
-&emsp; **@staticmethod**<br>&mdash; **def [iwait](/recipe_modules/futures/api.py#305)(futures, timeout=None, count=None):**
+&emsp; **@staticmethod**<br>&mdash; **def [iwait](/recipe_modules/futures/api.py#306)(futures, timeout=None, count=None):**
 
 Iteratively yield up to `count` Futures as they become done.
 
@@ -2010,7 +2010,7 @@ Kwargs:
 
 Returns a Future of `func`'s result.
 
-&emsp; **@staticmethod**<br>&mdash; **def [wait](/recipe_modules/futures/api.py#286)(futures, timeout=None, count=None):**
+&emsp; **@staticmethod**<br>&mdash; **def [wait](/recipe_modules/futures/api.py#287)(futures, timeout=None, count=None):**
 
 Blocks until `count` `futures` are done (or timeout occurs) then
 returns the list of done futures.
@@ -2776,14 +2776,14 @@ This includes support for `vpython`, and knows how to specify parameters
 correctly for bots (e.g. ensuring that python is working on Windows, passing the
 unbuffered flag, etc.)
 
-#### **class [PythonApi](/recipe_modules/python/api.py#19)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
+#### **class [PythonApi](/recipe_modules/python/api.py#20)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 *** note
 **DEPRECATED**: Directly invoke python instead of using this module.
   
 ***
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/python/api.py#23)(self, name, script, args=None, unbuffered=True, venv=None, \*\*kwargs):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/python/api.py#24)(self, name, script, args=None, unbuffered=True, venv=None, \*\*kwargs):**
 
 Return a step to run a python script with arguments.
 
@@ -2810,7 +2810,7 @@ Args:
 **Returns (`step_data.StepData`)** - The StepData object as returned by
 api.step.
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [failing\_step](/recipe_modules/python/api.py#139)(self, name, text, as_log=None):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [failing\_step](/recipe_modules/python/api.py#143)(self, name, text, as_log=None):**
 
 Runs a failing step (exits 1).
 
@@ -2818,7 +2818,7 @@ Runs a failing step (exits 1).
 **DEPRECATED**: crbug.com/1276131
 ***
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [infra\_failing\_step](/recipe_modules/python/api.py#149)(self, name, text, as_log=None):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [infra\_failing\_step](/recipe_modules/python/api.py#153)(self, name, text, as_log=None):**
 
 Runs an infra-failing step (exits 1).
 
@@ -2826,7 +2826,7 @@ Runs an infra-failing step (exits 1).
 **DEPRECATED**: crbug.com/1276131
 ***
 
-&mdash; **def [inline](/recipe_modules/python/api.py#68)(self, name, program, add_python_log=True, \*\*kwargs):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_CALL_DEPRECATED')**<br>&mdash; **def [inline](/recipe_modules/python/api.py#71)(self, name, program, add_python_log=True, \*\*kwargs):**
 
 Run an inline python program as a step.
 
@@ -2843,7 +2843,7 @@ Args:
 **Returns (`step_data.StepData`)** - The StepData object as returned by
 api.step.
 
-&mdash; **def [result\_step](/recipe_modules/python/api.py#101)(self, name, text, retcode, as_log=None, \*\*kwargs):**
+&mdash; **def [result\_step](/recipe_modules/python/api.py#105)(self, name, text, retcode, as_log=None, \*\*kwargs):**
 
 Runs a no-op step that exits with a specified return code.
 
@@ -2857,7 +2857,7 @@ The text is expected to be str. Passing a list of lines(str) works but is
 discouraged and may be deprecated in the future. Please concatenate the
 lines with newline character instead.
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [succeeding\_step](/recipe_modules/python/api.py#129)(self, name, text, as_log=None):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [succeeding\_step](/recipe_modules/python/api.py#133)(self, name, text, as_log=None):**
 
 Runs a succeeding step (exits 0).
 
@@ -3961,7 +3961,7 @@ Raise ValueError on the first detected problem.
 Emit the results accumulated by `add_comment` and `run_legacy`.
 ### *recipe_modules* / [url](/recipe_modules/url)
 
-[DEPS](/recipe_modules/url/__init__.py#7): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io)
+[DEPS](/recipe_modules/url/__init__.py#7): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
@@ -4382,7 +4382,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/cq/tests/triggered_build_ids.py#17)(api):**
 ### *recipes* / [engine\_tests/bad\_subprocess](/recipes/engine_tests/bad_subprocess.py)
 
-[DEPS](/recipes/engine_tests/bad_subprocess.py#9): [platform](#recipe_modules-platform), [python](#recipe_modules-python)
+[DEPS](/recipes/engine_tests/bad_subprocess.py#9): [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
@@ -4422,7 +4422,7 @@ Tests that recipes can modify configuration options in various ways.
 &emsp; **@config_ctx()**<br>&mdash; **def [test2a](/recipes/engine_tests/config_operations.py#34)(c):**
 ### *recipes* / [engine\_tests/early\_termination](/recipes/engine_tests/early_termination.py)
 
-[DEPS](/recipes/engine_tests/early_termination.py#10): [file](#recipe_modules-file), [futures](#recipe_modules-futures), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [python](#recipe_modules-python)
+[DEPS](/recipes/engine_tests/early_termination.py#10): [file](#recipe_modules-file), [futures](#recipe_modules-futures), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
@@ -4555,13 +4555,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipes/engine_tests/proto_properties.py#18)(api, properties, env_props):**
 ### *recipes* / [engine\_tests/recipe\_paths](/recipes/engine_tests/recipe_paths.py)
 
-[DEPS](/recipes/engine_tests/recipe_paths.py#9): [path](#recipe_modules-path), [python](#recipe_modules-python), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/recipe_paths.py#9): [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Tests that recipes have access to names, resources and their repo.
 
-&mdash; **def [RunSteps](/recipes/engine_tests/recipe_paths.py#15)(api):**
+&mdash; **def [RunSteps](/recipes/engine_tests/recipe_paths.py#14)(api):**
 ### *recipes* / [engine\_tests/sort\_properties](/recipes/engine_tests/sort_properties.py)
 
 [DEPS](/recipes/engine_tests/sort_properties.py#9): [step](#recipe_modules-step)
@@ -4687,15 +4687,15 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/file/examples/truncate.py#13)(api):**
 ### *recipes* / [futures:examples/background\_helper](/recipe_modules/futures/examples/background_helper.py)
 
-[DEPS](/recipe_modules/futures/examples/background_helper.py#9): [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/futures/examples/background_helper.py#9): [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/background_helper.py#83)(api):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/background_helper.py#86)(api):**
 
-&mdash; **def [manage\_helper](/recipe_modules/futures/examples/background_helper.py#22)(api, chn):**
+&mdash; **def [manage\_helper](/recipe_modules/futures/examples/background_helper.py#21)(api, chn):**
 
-&emsp; **@contextmanager**<br>&mdash; **def [run\_helper](/recipe_modules/futures/examples/background_helper.py#56)(api):**
+&emsp; **@contextmanager**<br>&mdash; **def [run\_helper](/recipe_modules/futures/examples/background_helper.py#59)(api):**
 
 Runs the background helper.
 
@@ -4888,13 +4888,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/proto/tests/placeholders.py#16)(api):**
 ### *recipes* / [python:examples/full](/recipe_modules/python/examples/full.py)
 
-[DEPS](/recipe_modules/python/examples/full.py#9): [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/python/examples/full.py#12): [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Launches the repo bundler.
 
-&mdash; **def [RunSteps](/recipe_modules/python/examples/full.py#17)(api):**
+&emsp; **@ignore_warnings('recipe_engine/PYTHON_CALL_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/python/examples/full.py#19)(api):**
 ### *recipes* / [random:tests/full](/recipe_modules/random/tests/full.py)
 
 [DEPS](/recipe_modules/random/tests/full.py#7): [random](#recipe_modules-random), [step](#recipe_modules-step)

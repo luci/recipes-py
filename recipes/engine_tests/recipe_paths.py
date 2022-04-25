@@ -8,13 +8,12 @@ PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
   'path',
-  'python',
   'step',
 ]
 
 def RunSteps(api):
   api.step('recipe_name', ['echo', 'recipe name is', api.name])
-  api.python('some_resource', api.resource('hello.py'))
+  api.step('some_resource', ['python', api.resource('hello.py')])
   api.step('repo_root', ['echo', api.repo_resource('file', 'path')])
 
 def GenTests(api):

@@ -254,11 +254,9 @@ class UrlApi(recipe_api.RecipeApi):
     elif transient_retry is not True:
       args += ['--transient-retry', str(transient_retry)]
 
-    result = self.m.python(
+    result = self.m.step(
         step_name,
-        self.resource('pycurl.py'),
-        args=args,
-        venv=True,
+        ['vpython', '-u', self.resource('pycurl.py')] + args,
         timeout=timeout,
         step_test_data=self.test_api._get_step_test_data(
             self._PyCurlStatus, as_json, default_test_data))

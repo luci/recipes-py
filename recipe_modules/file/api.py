@@ -66,17 +66,15 @@ class SymlinkTree(object):
     for target, linknames in iteritems(self._link_map):
       for linkname in linknames:
         self._api.path.mock_copy_paths(target, linkname)
-    self._api.python(
-        name,
-        self._resource,
-        args=[
-            '--link-json',
-            self._api.json.input({
-                str(target): linkname
-                for target, linkname in iteritems(self._link_map)
-            }),
-        ],
-        infra_step=True)
+    args = [
+      'python', '-u', self._resource,
+      '--link-json',
+      self._api.json.input({
+        str(target): linkname
+        for target, linkname in iteritems(self._link_map)
+      }),
+    ]
+    self._api.step(name, args, infra_step=True)
 
 
 # TODO(iannucci): Introduce the concept of a 'native step' and implement these
@@ -106,15 +104,16 @@ class FileApi(recipe_api.RecipeApi):
   def _run(self, name, args, step_test_data=None, stdout=None):
     if not step_test_data:
       step_test_data = self.test_api.errno
-    args = ['--json-output', self.m.json.output(add_json_log=False)] + args
-    result = self.m.python(
-        name,
-        self.resource('fileutil.py'),
-        args=args,
+    args = [
+      'vpython', '-u',
+      self.resource('fileutil.py'),
+      '--json-output', self.m.json.output(add_json_log=False),
+    ] + args
+    result = self.m.step(
+        name, args,
         step_test_data=step_test_data,
         stdout=stdout,
-        infra_step=True,
-        venv=True)
+        infra_step=True)
     j = result.json.output
     if not j['ok']:
       result.presentation.status = self.m.step.FAILURE

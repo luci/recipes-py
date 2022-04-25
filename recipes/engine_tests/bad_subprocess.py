@@ -8,15 +8,14 @@ PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
   'platform',
-  'python',
+  'step',
 ]
 
 
 def RunSteps(api):
-  api.python(
+  api.step(
       'bad daemon',
-      api.resource('win.py' if api.platform.is_win else 'unix.py'),
-      venv=api.platform.is_win)
+      ['python', api.resource('win.py' if api.platform.is_win else 'unix.py')])
 
 
 def GenTests(api):

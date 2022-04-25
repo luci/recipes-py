@@ -4,6 +4,9 @@
 
 """Launches the repo bundler."""
 
+from recipe_engine.recipe_api import ignore_warnings
+
+
 PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
@@ -13,7 +16,7 @@ DEPS = [
   'step',
 ]
 
-
+@ignore_warnings("recipe_engine/PYTHON_CALL_DEPRECATED")
 def RunSteps(api):
   # Test that unbufferred actually removes PYTHONUNBUFFERED envvar.
   api.python('run json.tool', '-m', [

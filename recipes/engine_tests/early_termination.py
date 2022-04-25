@@ -12,7 +12,7 @@ DEPS = [
   'futures',
   'path',
   'platform',
-  'python',
+  'step',
 ]
 
 from PB.recipes.recipe_engine.engine_tests import early_termination
@@ -43,36 +43,36 @@ def RunSteps(api, props):
 
   # This one tries its darndest to stay alive
   work.append(api.futures.spawn_immediate(
-      api.python,
+      api.step,
       'ignore always',
-      api.resource('sleepytime.py'),
-      [output_touchfile, '--always-ignore', 'ignore always']))
+      ['python', api.resource('sleepytime.py'),
+       output_touchfile, '--always-ignore', 'ignore always']))
 
   # This one nicely quits on TERM
   work.append(api.futures.spawn_immediate(
-      api.python,
+      api.step,
       'nice shutdown',
-      api.resource('sleepytime.py'),
-      [output_touchfile, 'nice shutdown']))
+      ['python', api.resource('sleepytime.py'),
+       output_touchfile, 'nice shutdown']))
 
   # This one is self-timed-out
   work.append(api.futures.spawn_immediate(
-      api.python,
+      api.step,
       'self timeout',
-      api.resource('sleepytime.py'),
-      [output_touchfile, '--always-ignore', 'self timeout'],
+      ['python', api.resource('sleepytime.py'),
+       output_touchfile, '--always-ignore', 'self timeout'],
       timeout=5))
 
   def _pure_sleep():
     # This one is totally oblivious
     try:
-      api.python(
+      api.step(
         'sleep',
-        api.resource('sleepytime.py'),
-        [output_touchfile, '--no-handler', 'sleep'])
+        ['python', api.resource('sleepytime.py'),
+         output_touchfile, '--no-handler', 'sleep'])
     except Exception:  # pragma: no cover
       # BAD! don't do bare exceptions... however...
-      api.python.inline('no run', 'print "I don\'t run when in shutdown."')
+      api.step('no run', None).presentation.step_text = "I don't run"
   work.append(api.futures.spawn_immediate(_pure_sleep))
 
   # all greenlets running, write our running file
