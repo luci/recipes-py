@@ -3862,20 +3862,26 @@ Returns:
   A list of TaskRequestMetadata objects.
 ### *recipe_modules* / [time](/recipe_modules/time)
 
-[DEPS](/recipe_modules/time/__init__.py#7): [step](#recipe_modules-step)
+[DEPS](/recipe_modules/time/__init__.py#7): [random](#recipe_modules-random), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Allows mockable access to the current time.
 
-#### **class [TimeApi](/recipe_modules/time/api.py#17)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
+#### **class [TimeApi](/recipe_modules/time/api.py#95)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
-&mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#62)(self):**
+&mdash; **def [exponential\_retry](/recipe_modules/time/api.py#131)(self, retries, delay, condition=None):**
+
+Adds exponential retry to a function.
+
+See the 'exponential_retry' function in this module for more docs.
+
+&mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#146)(self):**
 
 Returns current timestamp as an int number of milliseconds since epoch.
     
 
-&mdash; **def [sleep](/recipe_modules/time/api.py#26)(self, secs, with_step=None, step_result=None):**
+&mdash; **def [sleep](/recipe_modules/time/api.py#104)(self, secs, with_step=None, step_result=None):**
 
 Suspend execution of |secs| (float) seconds, waiting for GLOBAL_SHUTDOWN.
   Does nothing in testing.
@@ -3888,11 +3894,11 @@ Args:
   * step_result (step_data.StepData|None) - Result of running a step. Should
     be None if with_step is True or None.
 
-&mdash; **def [time](/recipe_modules/time/api.py#54)(self):**
+&mdash; **def [time](/recipe_modules/time/api.py#138)(self):**
 
 Returns current timestamp as a float number of seconds since epoch.
 
-&mdash; **def [utcnow](/recipe_modules/time/api.py#67)(self):**
+&mdash; **def [utcnow](/recipe_modules/time/api.py#151)(self):**
 
 Returns current UTC time as a datetime.datetime.
 ### *recipe_modules* / [tricium](/recipe_modules/tricium)
@@ -5141,11 +5147,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/swarming/tests/realms.py#18)(api):**
 ### *recipes* / [time:examples/full](/recipe_modules/time/examples/full.py)
 
-[DEPS](/recipe_modules/time/examples/full.py#9): [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/time/examples/full.py#11): [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#19)(api):**
 ### *recipes* / [tricium:examples/add\_comment](/recipe_modules/tricium/examples/add_comment.py)
 
 [DEPS](/recipe_modules/tricium/examples/add_comment.py#10): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)

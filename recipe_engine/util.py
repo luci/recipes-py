@@ -191,7 +191,13 @@ class StringListIO(object):
 
 
 class exponential_retry(object):
-  """Decorator which retries the function if an exception is encountered."""
+  """Decorator which retries the function if an exception is encountered.
+
+  THIS FUNCTION IS DEPRECATED.Use the 'time' recipe module's version of this
+  instead.
+
+  TODO(iannucci): Use a recipe warning for this
+  """
 
   def __init__(self, retries=None, delay=None, condition=None):
     """Creates a new exponential retry decorator.
@@ -421,5 +427,5 @@ def format_ex(ex):
   """Return the same format of string representation for Exception objects in
   both python2 and python3.
   """
-  return "%s(%s)" % (type(ex).__name__,
-                     ', '.join("'%s'" % str(arg) for arg in ex.args))
+  return "%s(%s)" % (type(ex).__name__, ', '.join(
+      "'%s'" % str(arg) for arg in ex.args))

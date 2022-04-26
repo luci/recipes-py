@@ -7,11 +7,89 @@
 from recipe_engine import recipe_api
 
 import datetime
+import functools
 import time
 
 import gevent
 
 from recipe_engine.internal.global_shutdown import GLOBAL_SHUTDOWN
+
+
+class exponential_retry(object):
+  """Decorator which retries the function with exponential backoff.
+
+  Each time the decorated function throws an exception, we sleep for some amount
+  of time. We increase the amount of time exponentially to prevent cascading
+  failures from overwhelming systems. We also add a jitter to avoid the
+  thundering herd problem.
+
+  Example usage:
+
+  def RunSteps(api):
+    @api.time.exponential_retry(5, datetime.timedelta(seconds=1))
+    def test_retries():
+      api.step('running', None)
+      raise Exception()
+
+    test_retries()
+    # Executes 6 steps with 'running' as a common prefix of their step names.
+
+  You cannot use this when you define recipe module methods, since the recipe
+  dependency tree has not been instantiated when those methods are being
+  defined. You should instead wrap any individual operation which should be
+  retried in a small function which uses this decorator. If this becomes
+  commonly used, additional functionality to this module could be added to
+  support this use case.
+  """
+
+  def __init__(self, time_api, retries, delay, condition=None):
+    """Creates a new exponential retry decorator.
+
+    Args:
+      time_api (TimeApi): A TimeApi instance. Used to sleep.
+      retries (int): Maximum number of retries before giving up.
+          This value controls the number of *retries*, not the number of total
+          executions of the function.
+          If you decorate a function with a value of 3 retries, the function
+          will execute a maximum of 4 times; 1 time initially, and 3 more times
+          as it gets retried 3 times.
+      delay (datetime.timedelta): Amount of time to wait before retrying. This
+          will double every retry attempt (exponential).
+          This delay is 'jittered' to avoid the 'thundering herd' problem
+          (https://en.wikipedia.org/wiki/Thundering_herd_problem).
+          We only sleep in integral seconds, so sub-second resolution is not
+          supported for delays.
+      condition (func): If not None, a function that will be passed the
+          exception as its one argument. Retries will only happen if this
+          function returns True. If None, retries will always happen.
+    """
+    self.time_api = time_api
+    self.retries = retries
+    self.delay = delay
+    self.condition = condition or (lambda e: True)
+
+  def __call__(self, f):
+
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+      retry_delay = self.delay
+      # We want to retry self.retries times, so we make the range give us
+      # exactly self.retries loop executions.
+      for i in range(self.retries + 1):
+        try:
+          return f(*args, **kwargs)
+        except Exception as e:
+          if i >= self.retries or not self.condition(e):
+            raise
+          to_sleep = retry_delay.total_seconds()
+          # Jitter the amount to sleep by plus or minus 15%.
+          # Jitter helps avoid
+          # https://en.wikipedia.org/wiki/Thundering_herd_problem
+          to_sleep *= 1 + self.time_api.m.random.random() / .3 - .15
+          self.time_api.sleep(to_sleep)
+          retry_delay *= 2
+
+    return wrapper
 
 
 class TimeApi(recipe_api.RecipeApi):
@@ -50,6 +128,12 @@ class TimeApi(recipe_api.RecipeApi):
     if GLOBAL_SHUTDOWN.ready() and step_result:
       step_result.presentation.status = "CANCELED"
 
+  def exponential_retry(self, retries, delay, condition=None):
+    """Adds exponential retry to a function.
+
+    See the 'exponential_retry' function in this module for more docs.
+    """
+    return exponential_retry(self, retries, delay, condition)
 
   def time(self):
     """Returns current timestamp as a float number of seconds since epoch."""
