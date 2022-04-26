@@ -17,6 +17,7 @@ import os
 import re
 import sys
 import tempfile
+import time
 import traceback
 
 import coverage
@@ -25,6 +26,7 @@ from gevent import subprocess
 import gevent
 
 from google.protobuf import json_format as jsonpb
+from google.protobuf import duration_pb2
 
 from recipe_engine import __path__ as RECIPE_ENGINE_PATH
 from recipe_engine.util import extract_tb, enable_filtered_stacks
@@ -43,7 +45,7 @@ from ...simple_cfg import RECIPES_CFG_LOCATION_REL
 from ...test import magic_check_fn
 from ...test.execute_test_case import execute_test_case
 
-from .expectation_conversion import transform_exepctations
+from .expectation_conversion import transform_expectations
 from .pipe import write_message, read_message
 
 
@@ -289,8 +291,15 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
   engine_types.PerGreentletStateRegistry.clear()
   GLOBAL_SHUTDOWN.clear()
 
+  start_time = time.time()
+
   test_case_result = execute_test_case(
         recipe_deps, test_desc.recipe_name, test_data)
+
+  duration = time.time() - start_time
+  test_results.duration.CopyFrom(
+      duration_pb2.Duration(
+          seconds=int(duration), nanos=int((duration % 1) * (10**9))))
 
   for name, causes in iteritems(test_case_result.warnings):
     test_results.warnings[name].causes.extend(causes)
@@ -315,7 +324,7 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
   raw_expectations = magic_check_fn.post_process(
       test_results, raw_expectations, test_data)
 
-  transform_exepctations(path_cleaner, raw_expectations)
+  transform_expectations(path_cleaner, raw_expectations)
 
   _diff_test(test_results, test_data.expect_file, raw_expectations, is_train)
 

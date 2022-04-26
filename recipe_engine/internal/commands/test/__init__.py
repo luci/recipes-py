@@ -19,6 +19,15 @@ import textwrap
 # Give this a high priority so it shows second in help.
 __cmd_priority__ = 1
 
+TIMING_INFO_HELP = """Dumps test timing info to a file. Each line in the file
+has this structure: <test_name><tab><duration>. The test name has a prefix of
+"py2|" or "py3|", depending on if it ran using python 2 or 3. The duration is
+the wall clock time of running the test in fractional seconds (a value of 1.5
+means 1 and a half seconds). The recipe engine runs multiple tests concurrently,
+so a test's duration is not necessarily exactly correlated to how long it took
+to execute, but it should correlate pretty closely. You can sort the file with
+`sort -g -k 2 -t $'\\t'` on unix to see the longest tests."""
+
 
 def add_arguments(parser):
   def _normalize_filter(filt):
@@ -68,6 +77,8 @@ def add_arguments(parser):
   run_p.add_argument(
       '--json', type=argparse.FileType('w'), help=argparse.SUPPRESS)
   run_p.add_argument(
+      '--dump-timing-info', type=argparse.FileType('w'), help=TIMING_INFO_HELP)
+  run_p.add_argument(
       '--full-stacks', dest='filtered_stacks', default=True,
       action='store_false', help=(
         'By default, tests display filtered stacks for better readability. '
@@ -116,6 +127,8 @@ def add_arguments(parser):
       help='Disable automatic documentation generation.')
   train_p.add_argument(
       '--json', type=argparse.FileType('w'), help=argparse.SUPPRESS)
+  train_p.add_argument(
+      '--dump-timing-info', type=argparse.FileType('w'), help=TIMING_INFO_HELP)
   train_p.add_argument(
       '--full-stacks', dest='filtered_stacks', default=True,
       action='store_false', help=(

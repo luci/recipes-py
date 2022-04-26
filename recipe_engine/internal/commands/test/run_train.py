@@ -402,6 +402,17 @@ def main(args):
         output.append(result)
       json.dump(output, args.json)
 
+    if args.dump_timing_info:
+      for name, r in iteritems(ret._asdict()):
+        for test, result in r.test_results.iteritems():
+          as_string = json_format.MessageToJson(result.duration)
+          args.dump_timing_info.write('%s\t%s\n' % (
+              (name + '|' + test).encode('utf-8', errors='replace'),
+              # Durations are encoded like "0.23s". We just want the raw number
+              # to be put into the file, so skip the first and last quote, and
+              # the 's'.
+              as_string[1:-2]))
+
   try:
     _run(ret, args.recipe_deps, args.use_emoji, args.test_filters, is_train,
          args.filtered_stacks, args.stop, args.jobs, args.show_warnings,

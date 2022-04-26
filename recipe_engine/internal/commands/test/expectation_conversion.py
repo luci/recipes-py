@@ -68,7 +68,8 @@ _CONVERTERS = [
     ('raw_annotations', _convert_raw_annotations),
 ]
 
-def transform_exepctations(path_cleaner, result_data):
+
+def transform_expectations(path_cleaner, result_data):
   if result_data is None:
     return
 

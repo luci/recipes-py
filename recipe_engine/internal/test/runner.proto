@@ -7,6 +7,7 @@ syntax = "proto3";
 package recipe_engine.internal.test;
 
 import "recipe_engine/warning.proto";
+import "google/protobuf/duration.proto";
 
 // Description of test to run (for runner subprocess)
 message Description {
@@ -31,6 +32,7 @@ message Description {
 // Result of running recipe tests (for the recipe engine's own 'test'
 // integration testing).
 message Outcome {
+  // The result of executing a single test.
   message Results {
     message Lines {
       repeated string lines = 1;
@@ -73,7 +75,13 @@ message Outcome {
     // The value of labeled recipe Python compatibility. If empty, it means the
     // compatibility hasn't been manually labeled.
     string labeled_py_compat = 10;
+
+    // Wall clock time of how long this test case took to execute.
+    // If tests are executed in parallel, this value may not directly correspond
+    // to how much actual 'work' was done in this test.
+    google.protobuf.Duration duration = 11;
   }
+
   // Maps full test names (i.e. 'recipe_name.test_case') to test result details.
   map<string, Results> test_results = 1;
 

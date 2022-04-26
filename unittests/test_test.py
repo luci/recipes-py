@@ -72,6 +72,10 @@ class Common(test_env.RecipeEngineUnitTest):
               results['bad_test'] = ['placeholder']
             if 'internal_error' in results:
               results['internal_error'] = ['placeholder']
+            # We usually don't care about duration for our tests, especially
+            # since it's pretty variable.
+            if 'duration' in results:
+              del results['duration']
           if 'coverage_percent' in rd:
             rd['coverage_percent'] = round(rd['coverage_percent'], 1)
           if 'unused_expectation_files' in rd:
