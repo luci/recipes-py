@@ -119,6 +119,15 @@ class WarningRecorder(object):
       site=Frame.from_built_in_frame(call_site_frame) if (
         call_site_frame) else Frame(),
     )
+
+    # return if call_site_frame isn't in the main repo; We don't want to report
+    # warnings from other repos. It's possible to have a warning where ALL
+    # frames are skipped, so only do this check if we actually had an attributed
+    # call_site.
+    if call_site.site.file:
+      if not call_site.site.file.startswith(self._main_repo_paths):
+        return
+
     if self.include_call_stack or not call_site_frame:
       # Capture call stack if explicitly requested or attributing call site
       # fails
@@ -146,6 +155,12 @@ class WarningRecorder(object):
       raise ValueError(
         "Expect importer to be either type %s or %s. Got %s" % (
           RecipeModule.__name__, Recipe.__name__, type(importer)))
+
+    # return if the import isn't from the main repo; We don't want to report
+    # warnings from other repos.
+    if importer.repo.name != self.recipe_deps.main_repo.name:
+      return
+
     import_site = ImportSite(
       repo=importer.repo.name,
       module=importer.name if isinstance(importer, RecipeModule) else None,
@@ -209,6 +224,15 @@ class WarningRecorder(object):
         return frame, skipped_frames # culprit found
       skipped_frames.append(_AnnotatedFrame(frame=frame, skip_reason=reason))
     return None, skipped_frames
+
+  @cached_property
+  def _main_repo_paths(self):
+    """A tuple of root paths of all recipe code in the current recipe repo.
+    """
+    return (
+      self.recipe_deps.main_repo.recipes_dir,
+      self.recipe_deps.main_repo.modules_dir,
+    )
 
   @cached_property
   def _all_repo_paths(self):

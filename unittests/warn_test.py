@@ -5,6 +5,7 @@
 
 import contextlib
 import inspect
+import os
 import re
 import textwrap
 
@@ -121,15 +122,20 @@ class TestWarningDefinition(test_env.RecipeEngineUnitTest):
         'WARNING_NAME', deadline='2020-12-31T23:59:59'))
 
 class TestWarningRecorder(test_env.RecipeEngineUnitTest):
-  test_file_path='/path/to/test.py'
+  repo_name = 'main_repo'
+  test_file_path = '/path/to/test.py'
+
   def setUp(self):
     super(TestWarningRecorder, self).setUp()
     mock_deps = mock.Mock(
       warning_definitions={
         'recipe_engine/SOME_WARNING': warning_pb.Definition()
-      }
+      },
     )
     mock_deps.__class__ = RecipeDeps
+    mock_deps.main_repo.name = self.repo_name
+    mock_deps.main_repo.recipes_dir = os.path.dirname(self.test_file_path)
+    mock_deps.main_repo.modules_dir = os.path.dirname(self.test_file_path)
     self.recorder = record.WarningRecorder(mock_deps)
     # This test should NOT test the functionality of any predicate
     # implementation
@@ -202,18 +208,18 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
   def test_record_import_warning(self):
     self.recorder.record_import_warning(
       'recipe_engine/SOME_WARNING',
-      self._create_mock_recipe('test_module:path/to/recipe', 'main_repo'),
+      self._create_mock_recipe('test_module:path/to/recipe', self.repo_name),
     )
     self.recorder.record_import_warning(
       'recipe_engine/SOME_WARNING',
-      self._create_mock_recipe_module('test_module', 'main_repo'),
+      self._create_mock_recipe_module('test_module', self.repo_name),
     )
 
     expected_recipe_cause = warning_pb.Cause()
-    expected_recipe_cause.import_site.repo = 'main_repo'
+    expected_recipe_cause.import_site.repo = self.repo_name
     expected_recipe_cause.import_site.recipe = 'test_module:path/to/recipe'
     expected_recipe_module_cause = warning_pb.Cause()
-    expected_recipe_module_cause.import_site.repo = 'main_repo'
+    expected_recipe_module_cause.import_site.repo = self.repo_name
     expected_recipe_module_cause.import_site.module = 'test_module'
     self.assert_has_warning(
       'recipe_engine/SOME_WARNING',
@@ -230,18 +236,18 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
     self.recorder.import_site_filter = lambda name, cause: False
     self.recorder.record_import_warning(
       'recipe_engine/SOME_WARNING',
-      self._create_mock_recipe('test_module:path/to/recipe', 'main_repo'),
+      self._create_mock_recipe('test_module:path/to/recipe', self.repo_name),
     )
     self.recorder.record_import_warning(
       'recipe_engine/SOME_WARNING',
-      self._create_mock_recipe_module('test_module', 'main_repo'),
+      self._create_mock_recipe_module('test_module', self.repo_name),
     )
     self.assertFalse(
       self.recorder.recorded_warnings['recipe_engine/SOME_WARNING'])
 
   def test_no_duplicate_import_warning(self):
     mock_recipe = self._create_mock_recipe(
-      'test_module:path/to/recipe', 'main_repo')
+      'test_module:path/to/recipe', self.repo_name)
     self.recorder.record_import_warning(
       'recipe_engine/SOME_WARNING', mock_recipe)
     self.recorder.record_import_warning(
@@ -262,7 +268,7 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
         'expected fully-qualified warning name, got SOME_WARNING'):
       self.recorder.record_import_warning(
           'SOME_WARNING',
-          self._create_mock_recipe('test_module:path/to/recipe', 'main_repo'),
+          self._create_mock_recipe('test_module:path/to/recipe', self.repo_name),
       )
 
   def test_record_not_defined_execution_warning(self):
@@ -279,7 +285,7 @@ class TestWarningRecorder(test_env.RecipeEngineUnitTest):
         'warning "COOL_WARNING" is not defined in recipe repo infra'):
       self.recorder.record_import_warning(
           'infra/COOL_WARNING',
-          self._create_mock_recipe('test_module:path/to/recipe', 'main_repo'),
+          self._create_mock_recipe('test_module:path/to/recipe', self.repo_name),
       )
 
   def assert_has_warning(self, warning_name, *causes):
