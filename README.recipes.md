@@ -5,6 +5,7 @@
 **[Recipe Modules](#Recipe-Modules)**
   * [archive](#recipe_modules-archive) (Python3 ✅)
   * [assertions](#recipe_modules-assertions) (Python3 ✅)
+  * [bcid_reporter](#recipe_modules-bcid_reporter) (Python3 ✅)
   * [buildbucket](#recipe_modules-buildbucket) (Python3 ✅) &mdash; API for interacting with the buildbucket service.
   * [cas](#recipe_modules-cas) (Python3 ✅) &mdash; API for interacting with cas client.
   * [cas_input](#recipe_modules-cas_input) (Python3 ✅) &mdash; Simple API for handling CAS inputs to a recipe.
@@ -50,6 +51,7 @@
   * [assertions:tests/attribute_error](#recipes-assertions_tests_attribute_error) (Python3 ✅)
   * [assertions:tests/long_message](#recipes-assertions_tests_long_message) (Python3 ✅)
   * [assertions:tests/max_diff](#recipes-assertions_tests_max_diff) (Python3 ✅)
+  * [bcid_reporter:examples/usage](#recipes-bcid_reporter_examples_usage) (Python3 ✅)
   * [buildbucket:examples/full](#recipes-buildbucket_examples_full) (Python3 ✅) &mdash; This file is a recipe demonstrating the buildbucket recipe module.
   * [buildbucket:run/multi](#recipes-buildbucket_run_multi) (Python3 ✅) &mdash; Launches multiple builds at the same revision.
   * [buildbucket:tests/add_tags](#recipes-buildbucket_tests_add_tags) (Python3 ✅)
@@ -307,6 +309,64 @@ def GenTests(api):
       + api.runtime(is_experimental=True)
   )
 ```
+### *recipe_modules* / [bcid\_reporter](/recipe_modules/bcid_reporter)
+
+[DEPS](/recipe_modules/bcid_reporter/__init__.py#7): [cipd](#recipe_modules-cipd), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+#### **class [BcidReporterApi](/recipe_modules/bcid_reporter/api.py#13)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
+
+API for interacting with Provenance server using the broker tool.
+
+&emsp; **@property**<br>&mdash; **def [bcid\_reporter\_path](/recipe_modules/bcid_reporter/api.py#25)(self):**
+
+Returns the path to the broker binary.
+
+When the property is accessed the first time, the latest stable, released
+broker will be installed using cipd.
+
+&mdash; **def [report\_cipd](/recipe_modules/bcid_reporter/api.py#72)(self, digest, pkg, iid, server_url=None):**
+
+Reports cipd digest to local local provenance server.
+
+This is used to report produced artifacts hash and metadata to server, it is
+used to generate provenance.
+
+Args:
+  * digest (str) - The hash of the artifact.
+  * pkg (str) - Name of the cipd package built.
+  * iid (str) - Instance ID of the package.
+  * server_url (Optional[str]) - URL for the local proveance server, the
+    broker tool will use default if not specified.
+
+&mdash; **def [report\_gcs](/recipe_modules/bcid_reporter/api.py#101)(self, digest, guri, server_url=None):**
+
+Reports cipd digest to local local provenance server.
+
+This is used to report produced artifacts hash and metadata to proveance, it
+is used to generate provenance.
+
+Args:
+  * digest (str) - The hash of the artifact.
+  * guri (str) - Name of the GCS artifact built. This is the unique GCS URI,
+    e.g. gs://bucket/path/to/binary.
+  * server_url (Optional[str]) - URL for the local proveance server, the
+    broker tool will use default if not specified.
+
+&mdash; **def [report\_stage](/recipe_modules/bcid_reporter/api.py#41)(self, stage, server_url=None):**
+
+Reports task stage to local provenance server.
+
+Args:
+  * stage (str) - The stage at which task is executing currently, e.g.
+    "start". Concept of task stage is native to Provenance service, this is
+    a way of self-reporting phase of a task's lifecycle. This information is
+    used in conjunction with process-inspected data to make security policy
+    decisions.
+    Valid stages: (start, fetch, compile, upload, upload-complete, test).
+  * server_url (Optional[str]) - URL for the local proveance server, the
+    broker tool will use default if not specified.
 ### *recipe_modules* / [buildbucket](/recipe_modules/buildbucket)
 
 [DEPS](/recipe_modules/buildbucket/__init__.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [resultdb](#recipe_modules-resultdb), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
@@ -4173,6 +4233,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipe_modules/assertions/tests/max_diff.py#15)(api):**
+### *recipes* / [bcid\_reporter:examples/usage](/recipe_modules/bcid_reporter/examples/usage.py)
+
+[DEPS](/recipe_modules/bcid_reporter/examples/usage.py#7): [bcid\_reporter](#recipe_modules-bcid_reporter), [path](#recipe_modules-path)
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+&mdash; **def [RunSteps](/recipe_modules/bcid_reporter/examples/usage.py#12)(api):**
 ### *recipes* / [buildbucket:examples/full](/recipe_modules/buildbucket/examples/full.py)
 
 [DEPS](/recipe_modules/buildbucket/examples/full.py#16): [buildbucket](#recipe_modules-buildbucket), [json](#recipe_modules-json), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
