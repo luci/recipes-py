@@ -5,10 +5,10 @@
 import os
 from recipe_engine import recipe_api
 
-# Usage of luci_provenance recipe_module will have significant downstream impact
+# Usage of bcid_reporter recipe_module will have significant downstream impact
 # and to avoid any production outage, we are pinning the latest known good build
 # of the tool here. Upstream changes are intentionally left out.
-_LATEST_STABLE_VERSION = 'git_revision:b9ef7550e6d98b92df6f6778baeacbdbb9b2b29e'
+_LATEST_STABLE_VERSION = 'git_revision:85c2329aae7547b83c1c4908a05b5f093f3f93f5'
 
 class BcidReporterApi(recipe_api.RecipeApi):
   """API for interacting with Provenance server using the broker tool."""
@@ -32,7 +32,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
     if self._broker_bin is None:
       reporter_dir = self.m.path['start_dir'].join('reporter')
       ensure_file = self.m.cipd.EnsureFile().add_package(
-          'infra/tools/security/snoopy_broker/${platform}',
+          'infra/tools/security/provenance_broker/${platform}',
           _LATEST_STABLE_VERSION)
       self.m.cipd.ensure(reporter_dir, ensure_file)
       self._broker_bin = reporter_dir.join('snoopy_broker')
