@@ -2870,7 +2870,7 @@ Args:
 **Returns (`step_data.StepData`)** - The StepData object as returned by
 api.step.
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [failing\_step](/recipe_modules/python/api.py#143)(self, name, text, as_log=None):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [failing\_step](/recipe_modules/python/api.py#141)(self, name, text, as_log=None):**
 
 Runs a failing step (exits 1).
 
@@ -2878,7 +2878,7 @@ Runs a failing step (exits 1).
 **DEPRECATED**: crbug.com/1276131
 ***
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [infra\_failing\_step](/recipe_modules/python/api.py#153)(self, name, text, as_log=None):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [infra\_failing\_step](/recipe_modules/python/api.py#151)(self, name, text, as_log=None):**
 
 Runs an infra-failing step (exits 1).
 
@@ -2886,7 +2886,7 @@ Runs an infra-failing step (exits 1).
 **DEPRECATED**: crbug.com/1276131
 ***
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_CALL_DEPRECATED')**<br>&mdash; **def [inline](/recipe_modules/python/api.py#71)(self, name, program, add_python_log=True, \*\*kwargs):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_CALL_DEPRECATED')**<br>&mdash; **def [inline](/recipe_modules/python/api.py#69)(self, name, program, add_python_log=True, \*\*kwargs):**
 
 Run an inline python program as a step.
 
@@ -2903,7 +2903,7 @@ Args:
 **Returns (`step_data.StepData`)** - The StepData object as returned by
 api.step.
 
-&mdash; **def [result\_step](/recipe_modules/python/api.py#105)(self, name, text, retcode, as_log=None, \*\*kwargs):**
+&mdash; **def [result\_step](/recipe_modules/python/api.py#103)(self, name, text, retcode, as_log=None, \*\*kwargs):**
 
 Runs a no-op step that exits with a specified return code.
 
@@ -2917,7 +2917,7 @@ The text is expected to be str. Passing a list of lines(str) works but is
 discouraged and may be deprecated in the future. Please concatenate the
 lines with newline character instead.
 
-&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [succeeding\_step](/recipe_modules/python/api.py#133)(self, name, text, as_log=None):**
+&emsp; **@recipe_api.ignore_warnings('recipe_engine/PYTHON_RESULT_STEP_DEPRECATED')**<br>&mdash; **def [succeeding\_step](/recipe_modules/python/api.py#131)(self, name, text, as_log=None):**
 
 Runs a succeeding step (exits 0).
 

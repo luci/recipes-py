@@ -14,7 +14,6 @@
   {
     "cmd": [
       "vpython",
-      "-u",
       "RECIPE[recipe_engine::python:examples/full].resources/test.py",
       "--verify-enum34"
     ],
@@ -25,7 +24,6 @@
       "vpython",
       "-vpython-spec",
       "RECIPE[recipe_engine::python:examples/full].resources/test.vpython",
-      "-u",
       "RECIPE[recipe_engine::python:examples/full].resources/test.py",
       "--verify-six"
     ],

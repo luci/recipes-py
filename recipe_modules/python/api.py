@@ -59,9 +59,7 @@ class PythonApi(recipe_api.RecipeApi):  # pragma: no cover
     else:
       cmd = ['python']
 
-    if unbuffered:
-      cmd.append('-u')
-    else:
+    if not unbuffered:
       env['PYTHONUNBUFFERED'] = None
 
     cmd.append(script)
