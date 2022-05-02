@@ -54,7 +54,7 @@ def main():
         if item.name.endswith('_test.proto'):
           print('Skipping %r' % item.name)
           continue
-        if 'internal' in item.name:
+        if 'internal' in item.name or 'googleapis' in item.name:
           print('Skipping %r' % item.name)
           continue
         if item.name.endswith('.proto'):

@@ -19,7 +19,7 @@ package gerrit;
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "go.chromium.org/luci/common/proto/gerrit;gerrit";
+option go_package = "go.chromium.org/luci/common/proto/gerrit;gerritpb";
 
 service Gerrit {
   /////////////////////////////////////////////////////////////////////////////
@@ -154,77 +154,89 @@ service Gerrit {
 // Source of truth:
 // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#query-options
 enum QueryOption {
-  OPTION_UNSPECIFIED = 0;
+  OPTION_UNSPECIFIED = 0x0;
   // A summary of each label required for submit, and approvers that have
   // granted (or rejected) with that label.
-  LABELS = 1;
+  LABELS = 0x1;
   // Detailed label information, including numeric values of all existing
   // approvals, recognized label values, values permitted to be set by the
   // current user, all reviewers by state, and reviewers that may be removed by
   // the current user.
-  DETAILED_LABELS = 2;
+  DETAILED_LABELS = 0x2;
   // Describe the current revision (patch set) of the change, including the
   // commit SHA-1 and URLs to fetch from.
-  CURRENT_REVISION = 4;
+  CURRENT_REVISION = 0x4;
   // Describe all revisions, not just current.
-  ALL_REVISIONS = 8;
+  ALL_REVISIONS = 0x8;
   // Parse and output all header fields from the commit object, including
   // message. Only valid when the CURRENT_REVISION or ALL_REVISIONS option is
   // selected.
-  CURRENT_COMMIT = 16;
+  CURRENT_COMMIT = 0x10;
   // Parse and output all header fields from the output revisions. If only
   // CURRENT_REVISION was requested then only the current revision’s commit data
   // will be output.
-  ALL_COMMITS = 32;
+  ALL_COMMITS = 0x20;
   // List files modified by the commit and magic files, including basic line
   // counts inserted/deleted per file. Only valid when the CURRENT_REVISION or
   // ALL_REVISIONS option is selected.
-  CURRENT_FILES = 64;
+  CURRENT_FILES = 0x40;
   // List files modified by the commit and magic files, including basic line
   // counts inserted/deleted per file. If only the CURRENT_REVISION was
   // requested then only that commit’s modified files will be output.
-  ALL_FILES = 128;
+  ALL_FILES = 0x80;
   // Include _account_id, email and username fields when referencing accounts.
-  DETAILED_ACCOUNTS = 256;
+  DETAILED_ACCOUNTS = 0x100;
   // Include updates to reviewers set as ReviewerUpdateInfo entities.
-  REVIEWER_UPDATES = 512;
+  REVIEWER_UPDATES = 0x200;
   // Include messages associated with the change.
-  MESSAGES = 1024;
+  MESSAGES = 0x400;
   // Include information on available actions for the change and its current
   // revision. Ignored if the caller is not authenticated.
-  CURRENT_ACTIONS = 2048;
+  CURRENT_ACTIONS = 0x800;
   // Include information on available change actions for the change. Ignored if
   // the caller is not authenticated.
-  CHANGE_ACTIONS = 4096;
+  CHANGE_ACTIONS = 0x1000;
   // Include the reviewed field if all of the following are true:
   // - the change is open
   // - the caller is authenticated
   // - the caller has commented on the change more recently than the last update
   //   from the change owner, i.e. this change would show up in the results of
   //   reviewedby:self.
-  REVIEWED = 8192;
+  REVIEWED = 0x2000;
   // Skip the mergeable field in ChangeInfo. For fast moving projects, this
   // field must be recomputed often, which is slow for projects with big trees.
-  SKIP_MERGEABLE = 16384;
+  SKIP_MERGEABLE = 0x4000;
   // Include the submittable field in ChangeInfo, which can be used to tell if
   // the change is reviewed and ready for submit.
-  SUBMITTABLE = 32768;
+  SUBMITTABLE = 0x8000;
   // Include the web_links field in CommitInfo, therefore only valid in
   // combination with CURRENT_COMMIT or ALL_COMMITS.
-  WEB_LINKS = 65536;
+  WEB_LINKS = 0x10000;
   // Include potential problems with the change.
-  CHECK = 131072;
+  CHECK = 0x20000;
   // Include the full commit message with Gerrit-specific commit footers in the
   // RevisionInfo.
-  COMMIT_FOOTERS = 262144;
+  COMMIT_FOOTERS = 0x40000;
   // Include push certificate information in the RevisionInfo. Ignored if signed
   // push is not enabled on the server.
-  PUSH_CERTIFICATES = 524288;
+  PUSH_CERTIFICATES = 0x80000;
   // Include references to external tracking systems as TrackingIdInfo.
-  TRACKING_IDS = 1048576;
+  TRACKING_IDS = 0x100000;
   // Include the commands field in the FetchInfo for revisions. Only valid when
   // the CURRENT_REVISION or ALL_REVISIONS option is selected.
-  DOWNLOAD_COMMANDS = 2097152;
+  DOWNLOAD_COMMANDS = 0x200000;
+  // Include the submit_requirements field in ChangeInfo.
+  SUBMIT_REQUIREMENTS = 0x400000;
+
+  // MAX_QUERY_OPTION is the largest possible number in QueryOption.
+  //
+  // This is not meant to be used, but to indicate the upper bound of the valid
+  // enum value set.
+  //
+  // QueryOption is typed as int32, and the largest possible value is
+  // pow(2,31) - 1. MAX_QUERY_OPTION is the largest power of 2 allowed in
+  // QueryOption.
+  MAX_QUERY_OPTION = 0x40000000;
 }
 
 // Specify the notification options for an action.
@@ -388,7 +400,7 @@ message AccountInfo {
 // Source of truth:
 // https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#change-info
 //
-// Next tag: 19.
+// Next tag: 21.
 message ChangeInfo {
   // The change number.
   int64 number = 1;
@@ -430,7 +442,9 @@ message ChangeInfo {
   repeated ChangeMessageInfo messages = 9;
 
   // List of the requirements to be met before this change can be submitted.
-  repeated Requirement requirements = 14;
+  //
+  // Deprecated: use `submit_requirements` instead.
+  repeated Requirement requirements = 14 [deprecated = true];
 
   // Whether the change is approved
   // by the project submit rules.
@@ -440,6 +454,9 @@ message ChangeInfo {
 
   // Whether change is private.
   bool is_private = 13;
+
+  // List of hashtags that are set on the change.
+  repeated string hashtags = 19;
 
   // Timestamp of when the change was created
   google.protobuf.Timestamp created = 11;
@@ -458,6 +475,9 @@ message ChangeInfo {
 
   // The SHA-1 of the NoteDb meta ref.
   string metaRevID = 18;
+
+  // The evaluation results of the submit requirements for this change.
+  repeated SubmitRequirementResultInfo submit_requirements = 20;
 }
 
 enum ChangeStatus {
@@ -1384,4 +1404,70 @@ message GetPureRevertRequest {
 message PureRevertInfo {
   // Outcome of the check as boolean.
   bool is_pure_revert = 1;
+}
+
+// The SubmitRequirementResultInfo describes the result of evaluating a submit
+// requirement on a change.
+//
+// Source of truth:
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#submit-requirement-result-info
+message SubmitRequirementResultInfo {
+  // Name of The submit requirement.
+  string name = 1;
+  // Description of the submit requirement.
+  string description = 2;
+  enum Status {
+    SUBMIT_REQUIREMENT_STATUS_UNSPECIFIED = 0;
+    SATISFIED = 1;
+    UNSATISFIED = 2;
+    OVERRIDDEN = 3;
+    NOT_APPLICABLE = 4;
+    ERROR = 5;
+    FORCED = 6;
+  }
+  // Status describing the result of evaluating the submit requirement.
+  Status status = 3;
+  // True if this submit requirement result was created from a legacy
+  // SubmitRecord.
+  bool is_legacy = 4;
+  // SubmitRequirementExpressionInfo containing the result of evaluating
+  // the applicability expression.
+  //
+  // Not set if the submit requirement did not define an applicability
+  // expression. Note that the following fields are always omitted in
+  // `applicability_expression_result`.
+  // - `expression`
+  // - `passing_atoms`
+  // - `failing_atoms`
+  SubmitRequirementExpressionInfo applicability_expression_result = 5;
+  // SubmitRequirementExpressionInfo containing the result of evaluating
+  // the submittability expression.
+  //
+  // Not set if the submit requirement does not apply.
+  SubmitRequirementExpressionInfo submittability_expression_result = 6;
+  // SubmitRequirementExpressionInfo containing the result of evaluating
+  // the override expression.
+  //
+  // Not set if the submit requirement did not define an override expression or
+  // if it does not apply.
+  SubmitRequirementExpressionInfo override_expression_result = 7;
+}
+
+// The SubmitRequirementExpressionInfo describes the result of evaluating
+// a single submit requirement expression, for example label:code-review=+2.
+message SubmitRequirementExpressionInfo {
+  // Expression of the submit requirement.
+  // e.g., branch:refs/heads/foo and label:verified=+1.
+  string expression = 1;
+  // True if the submit requirement is fulfilled for the change.
+  bool fulfilled = 2;
+  // List of passing atoms.
+  // e.g., ["branch:refs/heads/foo"]
+  repeated string passing_atoms = 3;
+  // List of failing atoms. This is similar to passing_atoms except that
+  // it contains a list of the predicates that are not fulfilled for the change.
+  repeated string failing_atoms = 4;
+  // If evaluating the submit requirement failed, this field will contains
+  // an error message describing why it failed.
+  string error_message = 5;
 }
