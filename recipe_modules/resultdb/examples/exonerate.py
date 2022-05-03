@@ -25,6 +25,7 @@ test_exonerations = [
             'key1': 'value1'
         }},
         explanation_html='Failed in without patch step',
+        reason=test_result_pb2.ExonerationReason.OCCURS_ON_MAINLINE,
     ),
     test_result_pb2.TestExoneration(
         test_id='ninja://chromium/tests:browser_tests/t2',
@@ -32,6 +33,7 @@ test_exonerations = [
             'key2': 'value2'
         }},
         explanation_html='Failed in without patch step',
+        reason=test_result_pb2.ExonerationReason.OCCURS_ON_MAINLINE,
     )
 ]
 
