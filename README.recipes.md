@@ -141,7 +141,6 @@
   * [properties:examples/full](#recipes-properties_examples_full) (Python3 ✅)
   * [proto:tests/encode_decode](#recipes-proto_tests_encode_decode) (Python3 ✅)
   * [proto:tests/placeholders](#recipes-proto_tests_placeholders) (Python3 ✅)
-  * [python:examples/full](#recipes-python_examples_full) (Python3 ✅) &mdash; Launches the repo bundler.
   * [random:tests/full](#recipes-random_tests_full) (Python3 ✅)
   * [raw_io:examples/full](#recipes-raw_io_examples_full) (Python3 ✅)
   * [raw_io:tests/output_mismatch](#recipes-raw_io_tests_output_mismatch) (Python3 ✅)
@@ -191,7 +190,7 @@
 
 ### *recipe_modules* / [archive](/recipe_modules/archive)
 
-[DEPS](/recipe_modules/archive/__init__.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [python](#recipe_modules-python), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/archive/__init__.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
@@ -871,7 +870,7 @@ Returns:
   A list of CV Runs ordered newest to oldest that match the given criteria.
 ### *recipe_modules* / [cipd](/recipe_modules/cipd)
 
-[DEPS](/recipe_modules/cipd/__init__.py#7): [context](#recipe_modules-context), [file](#recipe_modules-file), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [url](#recipe_modules-url)
+[DEPS](/recipe_modules/cipd/__init__.py#7): [context](#recipe_modules-context), [file](#recipe_modules-file), [futures](#recipe_modules-futures), [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [url](#recipe_modules-url)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
@@ -1491,7 +1490,7 @@ Raises:
 Returns recorded Buildbucket build IDs as a list of integers.
 ### *recipe_modules* / [file](/recipe_modules/file)
 
-[DEPS](/recipe_modules/file/__init__.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/file/__init__.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [proto](#recipe_modules-proto), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
@@ -2088,7 +2087,7 @@ Args:
 Returns the list of done Futures, in the order in which they were done.
 ### *recipe_modules* / [generator\_script](/recipe_modules/generator_script)
 
-[DEPS](/recipe_modules/generator_script/__init__.py#7): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [python](#recipe_modules-python), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/generator_script/__init__.py#7): [context](#recipe_modules-context), [json](#recipe_modules-json), [path](#recipe_modules-path), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
@@ -2826,7 +2825,7 @@ Args:
     - TEXTPB: google.protobuf.text_format.Parse
 ### *recipe_modules* / [python](/recipe_modules/python)
 
-[DEPS](/recipe_modules/python/__init__.py#7): [context](#recipe_modules-context), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [warning](#recipe_modules-warning)
+[DEPS](/recipe_modules/python/__init__.py#11): [context](#recipe_modules-context), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step), [warning](#recipe_modules-warning)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
@@ -4646,7 +4645,7 @@ Tests that step presentation properties can be ordered.
 &mdash; **def [RunSteps](/recipes/engine_tests/sort_properties.py#13)(api):**
 ### *recipes* / [engine\_tests/undeclared\_method](/recipes/engine_tests/undeclared_method.py)
 
-[DEPS](/recipes/engine_tests/undeclared_method.py#10): [properties](#recipe_modules-properties), [python](#recipe_modules-python), [step](#recipe_modules-step)
+[DEPS](/recipes/engine_tests/undeclared_method.py#10): [cipd](#recipe_modules-cipd), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
@@ -4840,13 +4839,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/futures/examples/result.py#13)(api):**
 ### *recipes* / [futures:examples/semaphore](/recipe_modules/futures/examples/semaphore.py)
 
-[DEPS](/recipe_modules/futures/examples/semaphore.py#7): [futures](#recipe_modules-futures), [python](#recipe_modules-python), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/futures/examples/semaphore.py#7): [futures](#recipe_modules-futures), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/futures/examples/semaphore.py#21)(api):**
+&mdash; **def [RunSteps](/recipe_modules/futures/examples/semaphore.py#20)(api):**
 
-&mdash; **def [worker](/recipe_modules/futures/examples/semaphore.py#14)(api, sem, i, N):**
+&mdash; **def [worker](/recipe_modules/futures/examples/semaphore.py#13)(api, sem, i, N):**
 ### *recipes* / [generator\_script:examples/full](/recipe_modules/generator_script/examples/full.py)
 
 [DEPS](/recipe_modules/generator_script/examples/full.py#9): [generator\_script](#recipe_modules-generator_script), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
@@ -4863,11 +4862,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/golang/examples/full.py#14)(api):**
 ### *recipes* / [json:examples/full](/recipe_modules/json/examples/full.py)
 
-[DEPS](/recipe_modules/json/examples/full.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/json/examples/full.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/json/examples/full.py#24)(api):**
+&mdash; **def [RunSteps](/recipe_modules/json/examples/full.py#23)(api):**
 ### *recipes* / [json:tests/add\_json\_log](/recipe_modules/json/tests/add_json_log.py)
 
 [DEPS](/recipe_modules/json/tests/add_json_log.py#7): [json](#recipe_modules-json), [step](#recipe_modules-step)
@@ -4959,15 +4958,6 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipe_modules/proto/tests/placeholders.py#16)(api):**
-### *recipes* / [python:examples/full](/recipe_modules/python/examples/full.py)
-
-[DEPS](/recipe_modules/python/examples/full.py#12): [path](#recipe_modules-path), [python](#recipe_modules-python), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
-
-PYTHON_VERSION_COMPATIBILITY: PY2+3
-
-Launches the repo bundler.
-
-&emsp; **@ignore_warnings('recipe_engine/PYTHON_CALL_DEPRECATED')**<br>&mdash; **def [RunSteps](/recipe_modules/python/examples/full.py#19)(api):**
 ### *recipes* / [random:tests/full](/recipe_modules/random/tests/full.py)
 
 [DEPS](/recipe_modules/random/tests/full.py#7): [random](#recipe_modules-random), [step](#recipe_modules-step)

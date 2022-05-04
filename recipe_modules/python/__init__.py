@@ -4,6 +4,10 @@
 
 PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
+WARNINGS = [
+  "PYTHON_MODULE_DEPRECATED"
+]
+
 DEPS = [
   'context',
   'raw_io',

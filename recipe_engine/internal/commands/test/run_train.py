@@ -251,11 +251,11 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
 
   for test_result in test_results:
     test_result.uncovered_modules.extend(sorted(
-        set(main_repo.modules.keys())
-        - set(
+        set(
             module.name
             for module in itervalues(main_repo.modules)
-            if module.uses_sloppy_coverage or module.recipes
+            if not (
+              module.uses_sloppy_coverage or module.recipes or module.warnings)
         )
     ))
 

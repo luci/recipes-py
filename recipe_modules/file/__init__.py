@@ -8,7 +8,6 @@ DEPS = [
   'json',
   'path',
   'proto',
-  'python',
   'raw_io',
   'step',
 ]

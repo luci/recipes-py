@@ -106,3 +106,14 @@ warning {
     id: 1271425
   }
 }
+
+warning {
+  name: "PYTHON_MODULE_DEPRECATED"
+  description: "The recipe_engine/python module is deprecated."
+  description: ""
+  description: "Please see other emitted warnings for details on how to migrate"
+  description: "to recipe_engine/step."
+  monorail_bug {
+    id: 1271425
+  }
+}

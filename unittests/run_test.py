@@ -137,7 +137,6 @@ class RunSmokeTest(test_env.RecipeEngineUnitTest):
       ['futures:examples/lazy_fan_out_in'],
       ['json:examples/full'],
       ['path:examples/full'],
-      ['python:examples/full'],
       ['raw_io:examples/full'],
       ['step:examples/full'],
 

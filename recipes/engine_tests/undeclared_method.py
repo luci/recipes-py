@@ -10,7 +10,7 @@ PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 DEPS = [
   'step',
   'properties',
-  'python',
+  'cipd',
 ]
 
 PROPERTIES = {
@@ -20,13 +20,13 @@ PROPERTIES = {
 }
 
 def RunSteps(api, from_recipe, attribute, module):
-  # We test on the python module because it's a RecipeApi, not a RecipeApiPlain.
+  # We test on the cipd module because it's a RecipeApi, not a RecipeApiPlain.
   if from_recipe:
     api.missing_module('baz')
   if attribute:
-    api.python.missing_method('baz')
+    api.cipd.missing_method('baz')
   if module:
-    api.python.m.missing_module('baz')
+    api.cipd.m.missing_module('baz')
 
 def GenTests(api):
   yield (
@@ -46,7 +46,7 @@ def GenTests(api):
       api.expect_exception('AttributeError') +
       api.post_process(
           post_process.ResultReason,
-          "Uncaught Exception: AttributeError(''PythonApi' object has no "
+          "Uncaught Exception: AttributeError(''CIPDApi' object has no "
           "attribute 'missing_method'')",
       ) +
       api.post_process(post_process.DropExpectation))
@@ -58,7 +58,7 @@ def GenTests(api):
       api.post_process(
           post_process.ResultReason,
           "Uncaught Exception: ModuleInjectionError('Recipe Module "
-          "'python' has no dependency 'missing_module'. (Add it to "
+          "'cipd' has no dependency 'missing_module'. (Add it to "
           "__init__.py:DEPS?)')",
       ) +
       api.post_process(post_process.DropExpectation))
