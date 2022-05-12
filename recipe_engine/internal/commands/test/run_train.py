@@ -361,10 +361,14 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
     if not (has_fail and stop):
       for thread in all_threads.py3:
         description_queues.py3.put(None)
-      execute_queue('py3')
+      has_fail = execute_queue('py3') or has_fail
     print()
 
-    if not py3_only:
+    # Don't display coverage if the --stop flag was specified and there's a
+    # failure
+    if has_fail and stop:
+      reporter.final_report(None, test_results)
+    elif not py3_only:
       reporter.final_report(total_cov, test_results)
 
   finally:
