@@ -435,6 +435,17 @@ class TestLog(PostProcessUnitTest):
                    'check((expected in step_odict[step].logs[log]))',
                    "expected: 'foobar'")
 
+  def test_log_does_not_contain_pass(self):
+    self.expect_fails(0, post_process.LogDoesNotContain, 'x', 'log-x',
+                      ['i dont exist'])
+
+  def test_log_does_not_contain_fail(self):
+    failures = self.expect_fails(1, post_process.LogDoesNotContain, 'x',
+                                 'log-x', ['foo'])
+    self.assertHas(failures[0],
+                   'check((unexpected not in step_odict[step].logs[log]))',
+                   "unexpected: 'foo'")
+
 
 if __name__ == '__main__':
   test_env.main()

@@ -359,17 +359,17 @@ def StepTextContains(check, step_odict, step, expected_substrs):
 
 
 def StepSummaryEquals(check, step_odict, step, expected):
-    """Check that the step's step_summary_text equals given value.
+  """Check that the step's step_summary_text equals given value.
 
-    Args:
-      step (str) - The step to check the step_text of
-      expected (str) - The expected value of the step_text
+  Args:
+    step (str) - The step to check the step_text of
+    expected (str) - The expected value of the step_text
 
-    Usage:
-      yield TEST + \
-          api.post_process(StepSummaryEquals, 'step-name', 'expected-text')
-    """
-    check(step_odict[step].step_summary_text == expected)
+  Usage:
+    yield TEST + \
+        api.post_process(StepSummaryEquals, 'step-name', 'expected-text')
+  """
+  check(step_odict[step].step_summary_text == expected)
 
 
 def LogEquals(check, step_odict, step, log, expected):
@@ -409,6 +409,29 @@ def LogContains(check, step_odict, step, log, expected_substrs):
       'expected_substrs must be an iterable of strings and must not be a string'
   for expected in expected_substrs:
     check(expected in step_odict[step].logs[log])
+
+
+def LogDoesNotContain(check, step_odict, step, log, unexpected_substrs):
+  """Assert that a step's log does not contain given substrings.
+
+  Args:
+    step (str) - The step to check the log of.
+    log (str) - The name of the log to check.
+    unexpected_substrs (list(str)) - The unexpected substrings the log should
+        not contain.
+
+  Usage:
+    yield (
+        TEST
+         + api.post_process(LogDoesNotContain, 'step-name', 'log-name',
+                            ['substr1', 'substr2'])
+    )
+  """
+  assert not isinstance(unexpected_substrs, basestring), (
+      'unexpected_substrs must be an iterable of strings and must not be a '
+      'string')
+  for unexpected in unexpected_substrs:
+    check(unexpected not in step_odict[step].logs[log])
 
 
 def GetBuildProperties(step_odict):
