@@ -20,7 +20,7 @@ from recipe_engine import recipe_api
 
 # Take revision from
 # https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
-DEFAULT_CIPD_VERSION = 'git_revision:1b3c1f9fcc8295537656b57b7ccd425b0c84092b'
+DEFAULT_CIPD_VERSION = 'git_revision:25effe8824d4e5ecff43e310290bb668aa995359'
 
 
 class TaskRequest(object):
@@ -267,14 +267,18 @@ class TaskRequest(object):
 
   def _from_jsonish(self, d):
     """Constructs a task request from a JSON-serializable dict."""
+    # All fields from luci-go set `omitempty`, that the keys might not exists
+    # in the json when retrive from luci-go client.
+    # See https://chromium.googlesource.com/infra/luci/luci-go/+/refs/heads/main/common/api/swarming/swarming/v1/swarming-gen.go
+    # The code below `.get` the "empty value" for the type if omitted.
     tags = collections.defaultdict(list)
     for tag in d.get('tags', ()):
       k, v = tag.split(':', 1)
       tags[k].append(v)
     ret = (self.
-        with_name(d['name']).
-        with_priority(int(d['priority'])).
-        with_service_account(d['service_account']).
+        with_name(d.get('name', '')).
+        with_priority(int(d.get('priority', 0))).
+        with_service_account(d.get('service_account', '')).
         with_tags(tags)) # yapf: disable
     if 'user' in d:
       ret = ret.with_user(d['user'])
@@ -283,7 +287,8 @@ class TaskRequest(object):
     if 'realm' in d:
       ret = ret.with_realm(d['realm'])
     ret._slices = [
-        self.TaskSlice(self._api)._from_jsonish(ts) for ts in d['task_slices']
+        self.TaskSlice(self._api)._from_jsonish(ts)
+        for ts in d.get('task_slices', [])
     ]
     return ret
 
@@ -708,7 +713,7 @@ class TaskRequest(object):
       Args:
         containment_type (str) - One of the supported containment types.
       """
-      assert containment_type in ('NONE', 'AUTO', 'JOB_OBJECT')
+      assert containment_type in ('NONE', 'AUTO', 'JOB_OBJECT', 'NOT_SPECIFIED')
       ret = self._copy()
       ret._containment_type = containment_type
       return ret
@@ -731,31 +736,38 @@ class TaskRequest(object):
       return ret
 
     def _from_jsonish(self, d):
-      p = d['properties']
-      containment = p['containment']
+      # All fields from luci-go set `omitempty`, that the keys might not exists
+      # in the json when retrive from luci-go client.
+      # See https://chromium.googlesource.com/infra/luci/luci-go/+/refs/heads/main/common/api/swarming/swarming/v1/swarming-gen.go
+      # The code below `.get` the "empty value" for the type if omitted.
+      p = d.get('properties', {})
+      containment = p.get('containment', {})
 
       def kv_list_to_dict(kv_list):
         ret = {}
         for kv in kv_list:
-          ret[kv['key']] = kv['value']
+          ret[kv['key']] = kv.get('value', None)
         return ret
 
-      ret = (self.
-          with_command(p['command']).
-          with_relative_cwd(p['relative_cwd']).
-          with_dimensions(**kv_list_to_dict(p['dimensions'])).
-          with_outputs(p['outputs']).
-          with_env_vars(**kv_list_to_dict(p['env'])).
-          with_env_prefixes(**kv_list_to_dict(p['env_prefixes'])).
-          with_execution_timeout_secs(int(p['execution_timeout_secs'])).
-          with_grace_period_secs(int(p['grace_period_secs'])).
-          with_idempotent(p['idempotent']).
-          with_io_timeout_secs(int(p['io_timeout_secs'])).
-          with_containment_type(containment['containment_type']))
+      ret = (
+          self.with_command(p.get('command', [])).with_relative_cwd(
+              p.get('relative_cwd', '')).with_dimensions(
+                  **kv_list_to_dict(p.get('dimensions', []))).with_outputs(
+                      p.get('outputs', [])).with_env_vars(**kv_list_to_dict(
+                          p.get('env', []))).with_env_prefixes(
+                              **kv_list_to_dict(p.get('env_prefixes', [])))
+          .with_execution_timeout_secs(int(p.get(
+              'execution_timeout_secs', 0))).with_grace_period_secs(
+                  int(p.get('grace_period_secs', 0))).with_idempotent(
+                      p.get('idempotent', False)).with_io_timeout_secs(
+                          int(p.get('io_timeout_secs',
+                                    0))).with_containment_type(
+                                        containment.get('containment_type',
+                                                        self.containment_type)))
       if 'cas_input_root' in p:
         digest = p['cas_input_root']['digest']
         ret = ret.with_cas_input_root(digest['hash'] + '/' +
-                                      digest['size_bytes'])
+                                      digest.get('size_bytes', '0'))
       if 'secret_bytes' in p:
         ret = ret.with_secret_bytes(base64.b64decode(p['secret_bytes']))
       if 'cipd_input' in p:
@@ -768,7 +780,7 @@ class TaskRequest(object):
         ret = ret.with_named_caches({c['name']: c['path'] for c in p['caches']})
       if 'wait_for_capacity' in d:
         ret = ret.with_wait_for_capacity(d['wait_for_capacity'])
-      return ret.with_expiration_secs(int(d['expiration_secs']))
+      return ret.with_expiration_secs(int(d.get('expiration_secs', 0)))
 
     def to_jsonish(self):
       r"""Renders the task request as a JSON-serializable dict.
@@ -1340,3 +1352,40 @@ class SwarmingApi(recipe_api.RecipeApi):
         step.presentation.links[link_name] = result.cas_outputs.url
 
     return parsed_results
+
+  def show_request(self, name, task):
+    """Retrive the TaskRequest for a Swarming task.
+
+    Args:
+      name (str): The name of the step.
+      task (str|TaskRequestMetadata): Task Id or metadata objects of the
+        swarming task to be retrived.
+
+    Returns:
+      TaskRequest objects.
+    """
+    assert self._server
+    assert isinstance(task, (basestring, TaskRequestMetadata))
+    cmd = [
+        'request-show',
+        '-server',
+        self._server,
+    ]
+
+    if isinstance(task, basestring):
+      cmd.append(task)
+    elif isinstance(task, TaskRequestMetadata):
+      cmd.append(task.id)
+    else:
+      raise ValueError("%s must be a string or TaskRequestMetadata object" %
+                       task.__repr__())  # pragma: no cover
+
+    step = self._run(
+        name,
+        cmd,
+        step_test_data=lambda: self.test_api.show_request(),
+        stdout=self.m.json.output(),
+    )
+    json_result = step.stdout
+
+    return self.task_request_from_jsonish(json_result)

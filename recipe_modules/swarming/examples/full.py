@@ -120,6 +120,18 @@ def RunSteps(api):
   metadata[0].task_ui_link
   metadata[0].invocation
 
+  # Retrive TaskRequest.
+  api.swarming.test_api.set_task_for_show_request(request)
+  retrived_task = api.swarming.show_request('show-request', metadata[0])
+  diff = list(
+      difflib.unified_diff(
+          api.json.dumps(jsonish, indent=2).splitlines(),
+          api.json.dumps(retrived_task.to_jsonish(), indent=2).splitlines()))
+  assert not diff, '\n'.join(diff)
+
+  # Or retrive by id.
+  _ = api.swarming.show_request('show-request via task id', metadata[0].id)
+
   # Collect the result of the task by metadata.
   output_dir = api.path.mkdtemp('swarming')
   results = api.swarming.collect('collect', metadata, output_dir=output_dir,
@@ -232,7 +244,9 @@ def GenTests(api):
   )
 
   execution_timeout_result = api.swarming.task_result(
-      id='0', name='recipes-go', duration=EXECUTION_TIMEOUT_SECS + 1,
+      id='0',
+      name='recipes-go',
+      duration=EXECUTION_TIMEOUT_SECS + 1,
       state=api.swarming.TaskState.TIMED_OUT,
   )
   yield (api.test('collect_with_state_TIMED_OUT_by_execution') +
@@ -268,3 +282,10 @@ def GenTests(api):
       }), lambda check, request: check(request[0].env_vars[
           'SOME_VARNAME'] == 'stuff'), lambda check, request: check(request[
               0].wait_for_capacity)) + api.post_process(DropExpectation))
+
+  yield (api.test('show_request_invalid_key') + api.override_step_data(
+      'show-request',
+      stdout=api.json.invalid(
+          'swarming: failed to get task request. task ID = 0: failed to call'
+          ' TaskRequest: googleapi: Error 400: 0 is an invalid key.'),
+      retcode=1))

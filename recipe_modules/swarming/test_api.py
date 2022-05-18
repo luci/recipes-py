@@ -19,6 +19,7 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
   def __init__(self, *args, **kwargs):
     super(SwarmingTestApi, self).__init__(*args, **kwargs)
     self._task_id_count = 0
+    self._saved_task_for_show_request = None
 
   def check_triggered_request(self, check, step_odict, step, *checkers):
     """Check the input request of a swarming trigger call.
@@ -207,3 +208,19 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
         result['results']['task_id']: result for result in task_results
     }
     return self.m.json.output(id_to_result)
+
+  def set_task_for_show_request(self, task):
+    self._saved_task_for_show_request = task
+
+  def show_request(self):
+    """Return saved TaskRequest jsonish data for the Swarming API show-request
+    method.
+
+    Returns:
+      Step test data in the form of JSON output intended to mock a swarming API
+      show-request method call.
+    """
+    task = self._saved_task_for_show_request
+    if isinstance(task, TaskRequest):
+      task = task.to_jsonish()
+    return self.m.json.output_stream(task)
