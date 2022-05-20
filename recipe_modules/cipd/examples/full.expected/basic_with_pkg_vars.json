@@ -30,6 +30,33 @@
   {
     "cmd": [
       "cipd",
+      "ensure-file-resolve",
+      "-ensure-file",
+      "public/package/${platform} 7f751b2237df2fdf3c1405be00590fefffbaea2d",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "cipd ensure-file-resolve",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"package\": \"public/package/resolved-platform\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"pin\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@          \"instance_id\": \"7f751b2237df2fdf3c1405be00590fefffbaea2d\", @@@",
+      "@@@STEP_LOG_LINE@json.output@          \"package\": \"public/package/resolved-platform\"@@@",
+      "@@@STEP_LOG_LINE@json.output@        }@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
       "search",
       "public/package/${platform}",
       "-tag",
@@ -791,6 +818,23 @@
       "/path/to/tmp/json"
     ],
     "name": "ensure with existing file",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {}@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "ensure-file-resolve",
+      "-ensure-file",
+      "[START_DIR]/cipd.ensure",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "ensure-file-resolve with existing file",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {}@@@",

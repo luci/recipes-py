@@ -737,6 +737,36 @@ class CIPDApi(recipe_api.RecipeApi):
         for subdir, pins in iteritems(step_result.json.output['result'])
     }
 
+  def ensure_file_resolve(self, ensure_file, name='cipd ensure-file-resolve'):
+    """Resolves versions of all packages for all verified platforms in an
+    ensure file.
+
+    Args:
+      * ensure_file (EnsureFile|Path) - Ensure file to resolve.
+    """
+    check_type('ensure_file', ensure_file, (EnsureFile, Path))
+
+    if isinstance(ensure_file, EnsureFile):
+      step_test_data = lambda: self.test_api.example_ensure_file_resolve(
+          ensure_file)
+      ensure_file_path = self.m.raw_io.input(ensure_file.render())
+    else:
+      step_test_data = lambda: self.test_api.example_ensure_file_resolve(
+          self.EnsureFile())
+      ensure_file_path = ensure_file
+
+    cmd = [
+        'ensure-file-resolve',
+        '-ensure-file',
+        ensure_file_path,
+    ]
+
+    return self._run(
+        name,
+        cmd,
+        step_test_data=step_test_data,
+    )
+
   def set_tag(self, package_name, version, tags):
     """Tags package of a specific version.
 

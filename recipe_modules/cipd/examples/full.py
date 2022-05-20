@@ -51,6 +51,7 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
   cipd_root = api.path['start_dir'].join('packages')
   # Some packages don't require credentials to be installed or queried.
   api.cipd.ensure(cipd_root, ensure_file)
+  api.cipd.ensure_file_resolve(ensure_file)
   with api.cipd.cache_dir(api.path.mkdtemp()):
     result = api.cipd.search(package_name,
                              tag='git_revision:40-chars-long-hash')
@@ -168,6 +169,9 @@ def RunSteps(api, use_pkg, pkg_files, pkg_dirs, pkg_vars, ver_files,
       cipd_root,
       api.path['start_dir'].join('cipd.ensure'),
       name='ensure with existing file')
+  api.cipd.ensure_file_resolve(
+      api.path['start_dir'].join('cipd.ensure'),
+      name='ensure-file-resolve with existing file')
 
   # Install a tool using the high-level helper function. This operation should
   # be idempotent, so subsequent attempts should not re-install the package.

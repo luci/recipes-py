@@ -13,6 +13,9 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
 
   EnsureFile = EnsureFile
 
+  def make_resolved_package(self, v):
+    return v.replace('${platform}', 'resolved-platform')
+
   def make_resolved_version(self, v):
     if not v:
       return '40-chars-fake-of-the-package-instance_id'
@@ -26,7 +29,7 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
 
   def make_pin(self, package_name, version=None):
     return {
-        'package': package_name.replace('${platform}', 'resolved-platform'),
+        'package': self.make_resolved_package(package_name),
         'instance_id': self.make_resolved_version(version),
     }
 
@@ -56,6 +59,15 @@ class CIPDTestApi(recipe_test_api.RecipeTestApi):
     return self._resultify({
         subdir or '': [self.make_pin(name, version)
                        for name, version in sorted(packages)]
+        for subdir, packages in iteritems(ensure_file.packages)
+    })
+
+  def example_ensure_file_resolve(self, ensure_file):
+    return self._resultify({
+        subdir or '': [{
+            'package': self.make_resolved_package(name),
+            'pin': self.make_pin(name, version)}
+            for name, version in sorted(packages)]
         for subdir, packages in iteritems(ensure_file.packages)
     })
 
