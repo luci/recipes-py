@@ -105,7 +105,7 @@ class FileApi(recipe_api.RecipeApi):
     if not step_test_data:
       step_test_data = self.test_api.errno
     args = [
-      'vpython', '-u',
+      'vpython3', '-u',
       self.resource('fileutil.py'),
       '--json-output', self.m.json.output(add_json_log=False),
     ] + args

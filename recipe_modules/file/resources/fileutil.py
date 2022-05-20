@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env vpython3
 # Copyright 2017 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
@@ -214,13 +214,13 @@ def _FlattenSingleDirectories(path):
 def _FileHash(sha, rel_path, base_path):
   path = os.path.join(base_path, rel_path)
   with open(path, 'rb') as f:
-    sha.update(str(len(rel_path)))
-    sha.update(rel_path)
+    sha.update(str(len(rel_path)).encode())
+    sha.update(rel_path.encode())
     while True:
       f_stream = f.read(4096)
       if not f_stream:
         break
-      sha.update(str(len(f_stream)))
+      sha.update(str(len(f_stream)).encode())
       sha.update(f_stream)
 
 def _ComputeHashPaths(base_path, *rel_paths):
