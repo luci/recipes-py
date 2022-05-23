@@ -4062,7 +4062,7 @@ GET data at given URL and writes it to file.
 Args:
   * url: URL to request.
   * path (Path): the Path where the content will be written.
-  * step_name: optional step name, 'fetch <url>' by default.
+  * step_name: optional step name, 'GET <url>' by default.
   * headers: a {header_name: value} dictionary for HTTP headers.
   * transient_retry (bool or int): Determines how transient HTTP errorts
       (>500) will be retried. If True (default), errors will be retried up
@@ -4087,7 +4087,7 @@ GET data at given URL and writes it to file.
 
 Args:
   * url: URL to request.
-  * step_name: optional step name, 'fetch <url>' by default.
+  * step_name: optional step name, 'GET <url>' by default.
   * headers: a {header_name: value} dictionary for HTTP headers.
   * transient_retry (bool or int): Determines how transient HTTP errorts
       (>500) will be retried. If True (default), errors will be retried up
@@ -4114,7 +4114,7 @@ GET data at given URL and writes it to file.
 
 Args:
   * url: URL to request.
-  * step_name: optional step name, 'fetch <url>' by default.
+  * step_name: optional step name, 'GET <url>' by default.
   * headers: a {header_name: value} dictionary for HTTP headers.
   * transient_retry (bool or int): Determines how transient HTTP errorts
       (>500) will be retried. If True (default), errors will be retried up

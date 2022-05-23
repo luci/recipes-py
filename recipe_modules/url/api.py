@@ -135,7 +135,7 @@ class UrlApi(recipe_api.RecipeApi):
     Args:
       * url: URL to request.
       * path (Path): the Path where the content will be written.
-      * step_name: optional step name, 'fetch <url>' by default.
+      * step_name: optional step name, 'GET <url>' by default.
       * headers: a {header_name: value} dictionary for HTTP headers.
       * transient_retry (bool or int): Determines how transient HTTP errorts
           (>500) will be retried. If True (default), errors will be retried up
@@ -163,7 +163,7 @@ class UrlApi(recipe_api.RecipeApi):
 
     Args:
       * url: URL to request.
-      * step_name: optional step name, 'fetch <url>' by default.
+      * step_name: optional step name, 'GET <url>' by default.
       * headers: a {header_name: value} dictionary for HTTP headers.
       * transient_retry (bool or int): Determines how transient HTTP errorts
           (>500) will be retried. If True (default), errors will be retried up
@@ -191,7 +191,7 @@ class UrlApi(recipe_api.RecipeApi):
 
     Args:
       * url: URL to request.
-      * step_name: optional step name, 'fetch <url>' by default.
+      * step_name: optional step name, 'GET <url>' by default.
       * headers: a {header_name: value} dictionary for HTTP headers.
       * transient_retry (bool or int): Determines how transient HTTP errorts
           (>500) will be retried. If True (default), errors will be retried up
