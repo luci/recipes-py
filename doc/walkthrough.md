@@ -226,15 +226,13 @@ def RunSteps(api):
   api.step('Print Hello World', ['echo', 'hello', 'world'])
 
 def GenTests(api):
-  yield (
-      api.test('basic')
-      + api.post_process(StepCommandRE, 'Print Hello World',
-                         ['echo', 'hello', 'world'])
-      + api.post_process(DropExpectation)
+  yield api.test(
+      'basic',
+      api.post_process(StepCommandRE, 'Print Hello World',
+                       ['echo', 'hello', 'world']),
+      api.post_process(DropExpectation),
   )
 ```
-
-Yes, elements of a test specification are combined with `+` and it's weird.
 
 The call that includes `StepCommandRE` will check that the step named
 'Print Hello World' has as its list of arguments ['echo', 'hello', 'world']
@@ -312,27 +310,27 @@ def RunSteps(api, target_of_admiration):
   api.step('Greet Admired Individual', ['echo', verb % target_of_admiration])
 
 def GenTests(api):
-  yield (
-      api.test('basic')
-      + api.properties(target_of_admiration='Bob')
-      + api.post_process(StepCommandRE, 'Greet Admired Individual',
-                         ['echo', 'Hello Bob'])
-      + api.post_process(DropExpectation)
+  yield api.test(
+      'basic',
+      api.properties(target_of_admiration='Bob'),
+      api.post_process(StepCommandRE, 'Greet Admired Individual',
+                       ['echo', 'Hello Bob']),
+      api.post_process(DropExpectation),
   )
 
-  yield (
-      api.test('vader')
-      + api.properties(target_of_admiration='DarthVader')
-      + api.post_process(StepCommandRE, 'Greet Admired Individual',
-                         ['echo', 'Die in a fire DarthVader!'])
-      + api.post_process(DropExpectation)
+  yield api.test(
+      'vader',
+      api.properties(target_of_admiration='DarthVader'),
+      api.post_process(StepCommandRE, 'Greet Admired Individual',
+                       ['echo', 'Die in a fire DarthVader!']),
+      api.post_process(DropExpectation),
   )
 
-  yield (
-      api.test('infra rocks')
-      + api.post_process(StepCommandRE, 'Greet Admired Individual',
-                         ['echo', 'Hello Chrome Infra'])
-      + api.post_process(DropExpectation)
+  yield api.test(
+      'infra rocks',
+      api.post_process(StepCommandRE, 'Greet Admired Individual',
+                       ['echo', 'Hello Chrome Infra']),
+      api.post_process(DropExpectation),
   )
 ```
 
@@ -478,20 +476,20 @@ def RunSteps(api):
   api.hello.greet()
 
 def GenTests(api):
-  yield (
-      api.test('basic')
-      + api.properties(target_of_admiration='Bob')
-      + api.post_process(StepCommandRE, 'Greet Admired Individual',
-                         ['echo', 'Hello Bob'])
-      + api.post_process(DropExpectation)
+  yield api.test(
+      'basic',
+      api.properties(target_of_admiration='Bob'),
+      api.post_process(StepCommandRE, 'Greet Admired Individual',
+                       ['echo', 'Hello Bob']),
+      api.post_process(DropExpectation),
   )
 
-  yield (
-      api.test('vader')
-      + api.properties(target_of_admiration='DarthVader')
-      + api.post_process(StepCommandRE, 'Greet Admired Individual',
-                         ['echo', 'Die in a fire DarthVader!'])
-      + api.post_process(DropExpectation)
+  yield api.test(
+      'vader',
+      api.properties(target_of_admiration='DarthVader'),
+      api.post_process(StepCommandRE, 'Greet Admired Individual',
+                       ['echo', 'Die in a fire DarthVader!']),
+      api.post_process(DropExpectation),
   )
 ```
 
@@ -526,20 +524,20 @@ def RunSteps(api):
   api.hello.greet()
 
 def GenTests(api):
-  yield (
-      api.test('basic')
-      + api.properties(target_of_admiration='Bob')
-      + api.post_process(StepCommandRE, 'Greet Admired Individual',
-                         ['echo', 'Hello Bob'])
-      + api.post_process(DropExpectation)
+  yield api.test(
+      'basic',
+      api.properties(target_of_admiration='Bob'),
+      api.post_process(StepCommandRE, 'Greet Admired Individual',
+                       ['echo', 'Hello Bob']),
+      api.post_process(DropExpectation),
   )
 
-  yield (
-      api.test('vader')
-      + api.properties(target_of_admiration='DarthVader')
-      + api.post_process(StepCommandRE, 'Greet Admired Individual',
-                         ['echo', 'Die in a fire DarthVader!'])
-      + api.post_process(DropExpectation)
+  yield api.test(
+      'vader',
+      api.properties(target_of_admiration='DarthVader'),
+      api.post_process(StepCommandRE, 'Greet Admired Individual',
+                       ['echo', 'Die in a fire DarthVader!']),
+      api.post_process(DropExpectation),
   )
 ```
 
@@ -551,7 +549,10 @@ The basic form of tests is:
 
 ```python
 def GenTests(api):
-  yield api.test('testname') + # other stuff
+  yield api.test(
+      'testname',
+      # other stuff
+  )
 ```
 
 Some modules define interfaces for specifying necessary step data; these are
@@ -705,19 +706,19 @@ def RunSteps(api):
   api.hello.greet()
 
 def GenTests(api):
-  yield (
-      api.test('bob')
-      + api.post_process(StepCommandRE, 'Greet Admired Individual',
-                         [r'.*\becho', 'Hello Bob'])
-      + api.post_process(DropExpectation)
+  yield api.test(
+      'bob',
+      api.post_process(StepCommandRE, 'Greet Admired Individual',
+                       [r'.*\becho', 'Hello Bob']),
+      api.post_process(DropExpectation),
   )
 
-  yield (
-      api.test('anya')
-      + api.properties(target_of_admiration='anya')
-      + api.post_process(StepCommandRE, 'Greet Admired Individual',
-                         [r'.*\becho', 'Hello anya'])
-      + api.post_process(DropExpectation)
+  yield api.test(
+      'anya',
+      api.properties(target_of_admiration='anya'),
+      api.post_process(StepCommandRE, 'Greet Admired Individual',
+                       [r'.*\becho', 'Hello anya']),
+      api.post_process(DropExpectation),
   )
 ```
 
@@ -748,11 +749,11 @@ def RunSteps(api):
   api.hello.greet()  # Greets 'Charlie' with unicorn.py.
 
 def GenTests(api):
-  yield (
-      api.test('charlie')
-      + api.post_process(StepCommandRE, 'Greet Admired Individual',
-                         [r'.*\bunicorn.py', 'Hello Charlie'])
-      + api.post_process(DropExpectation)
+  yield api.test(
+      'charlie',
+      api.post_process(StepCommandRE, 'Greet Admired Individual',
+                       [r'.*\bunicorn.py', 'Hello Charlie']),
+      api.post_process(DropExpectation),
   )
 ```
 
@@ -767,11 +768,11 @@ def RunSteps(api):
   api.hello.greet()  # Causes 'DarthVader' to despair with echo
 
 def GenTests(api):
-  yield (
-      api.test('darth')
-      + api.post_process(StepCommandRE, 'Greet Admired Individual',
-                         [r'.*\becho', 'Die in a fire DarthVader!'])
-      + api.post_process(DropExpectation)
+  yield api.test(
+      'darth',
+      api.post_process(StepCommandRE, 'Greet Admired Individual',
+                       [r'.*\becho', 'Die in a fire DarthVader!']),
+      api.post_process(DropExpectation),
   )
 ```
 
@@ -802,10 +803,10 @@ def RunSteps(api):
   api.hello.set_config('super_tool', TARGET='Not Charlie')
 
 def GenTests(api):
-  yield (
-      api.test('badconf')
-      + api.expect_exception('BadConf')
-      + api.post_process(DropExpectation)
+  yield api.test(
+      'badconf',
+      api.expect_exception('BadConf'),
+      api.post_process(DropExpectation),
   )
 ```
 
@@ -836,18 +837,18 @@ def RunSteps(api):
              [api.path['start_dir'].join('its_a_small_world.sh')])
 
 def GenTests(api):
-  yield (
-      api.test('harlem')
-      + api.step_data('Determine blue moon', retcode=0)
-      + api.post_process(MustRun, 'HARLEM SHAKE!')
-      + api.post_process(DropExpectation)
+  yield api.test(
+      'harlem',
+      api.step_data('Determine blue moon', retcode=0),
+      api.post_process(MustRun, 'HARLEM SHAKE!'),
+      api.post_process(DropExpectation),
   )
 
-  yield (
-      api.test('boring')
-      + api.step_data('Determine blue moon', retcode=1)
-      + api.post_process(MustRun, 'Boring')
-      + api.post_process(DropExpectation)
+  yield api.test(
+      'boring',
+      api.step_data('Determine blue moon', retcode=1),
+      api.post_process(MustRun, 'Boring'),
+      api.post_process(DropExpectation),
   )
 ```
 
@@ -896,25 +897,25 @@ def RunSteps(api):
     api.step('deads!', [api.path['start_dir'].join('you_r_deads.sh')])
 
 def GenTests(api):
-  yield (
-      api.test('winning')
-      + api.step_data('run tests', api.json.output({'num_passed': 791}))
-      + api.post_process(MustRun, 'victory')
-      + api.post_process(DropExpectation)
+  yield api.test(
+      'winning',
+      api.step_data('run tests', api.json.output({'num_passed': 791})),
+      api.post_process(MustRun, 'victory'),
+      api.post_process(DropExpectation),
   )
 
-  yield (
-      api.test('not_dead_yet')
-      + api.step_data('run tests', api.json.output({'num_passed': 302}))
-      + api.post_process(MustRun, 'not defeated')
-      + api.post_process(DropExpectation)
+  yield api.test(
+      'not_dead_yet',
+      api.step_data('run tests', api.json.output({'num_passed': 302})),
+      api.post_process(MustRun, 'not defeated'),
+      api.post_process(DropExpectation),
   )
 
-  yield (
-      api.test('noooooo')
-      + api.step_data('run tests', api.json.output({'num_passed': 10}))
-      + api.post_process(MustRun, 'deads!')
-      + api.post_process(DropExpectation)
+  yield api.test(
+      'noooooo',
+      api.step_data('run tests', api.json.output({'num_passed': 10})),
+      api.post_process(MustRun, 'deads!'),
+      api.post_process(DropExpectation),
   )
 ```
 
@@ -973,8 +974,8 @@ api.step(..., step_test_data=api.raw_io.output('test data'))
 ### Example: simulated step output for a test case
 
 ```python
-yield (
-    api.test('my_test') +
+yield api.test(
+    'my_test',
     api.step_data(
         'step_name',
         stdout=api.raw_io.output('test data')))
@@ -1084,8 +1085,9 @@ The implementation of `JsonOutputPlaceholder.result()` will parse the JSON from
 ### Tests and Mocks
 
 ```python
-yield api.test('test really_cool_script.py') +
-api.step_data('run a cool script', api.json.output({'json': 'object'}))
+yield api.test(
+    'test really_cool_script.py',
+    api.step_data('run a cool script', api.json.output({'json': 'object'})))
 ```
 
 This test case will stub out the actual invocation of `really_cool_script.py`
