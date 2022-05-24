@@ -1290,9 +1290,9 @@ defined, per LUCI_CONTEXT spec.
 
 Returns modifications to the environment.
 
-By default this is empty; There's no facility to observe the program's
-startup environment. If you want to pass data to the recipe, it should be
-done with properties.
+By default this is empty. If you want to observe the program's startup
+environment, see `ENV_PROPERTIES` in
+https://chromium.googlesource.com/infra/luci/recipes-py/+/refs/heads/main/doc/user_guide.md#properties-and-env_properties
 
 **Returns (dict)** - The env-key -> value mapping of current environment
   modifications.
