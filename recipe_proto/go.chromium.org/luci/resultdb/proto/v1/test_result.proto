@@ -214,6 +214,9 @@ message TestExoneration {
   string variant_hash = 6 [(google.api.field_behavior) = IMMUTABLE];
 
   // Reasoning behind the exoneration, in machine-readable form.
+  // Used to assist downstream analyses, such as automatic bug-filing.
+  // This allow detection of e.g. critical tests failing in presubmit,
+  // even if they are being exonerated because they fail on other CLs.
   ExonerationReason reason = 7 [(google.api.field_behavior) = IMMUTABLE];
 }
 
@@ -227,7 +230,7 @@ enum ExonerationReason {
   // Similar unexpected results were observed on a mainline branch
   // (i.e. against a build without unsubmitted changes applied).
   // (For avoidance of doubt, this includes both flakily and
-  // deterministically occuring unexpected results.)
+  // deterministically occurring unexpected results.)
   // Applies to unexpected results in presubmit/CQ runs only.
   OCCURS_ON_MAINLINE = 1;
 
