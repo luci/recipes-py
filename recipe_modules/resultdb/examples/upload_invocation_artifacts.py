@@ -7,7 +7,7 @@ from recipe_engine.post_process import DropExpectation
 from PB.go.chromium.org.luci.resultdb.proto.v1 import artifact
 from PB.go.chromium.org.luci.resultdb.proto.v1 import recorder
 
-PYTHON_VERSION_COMPATIBILITY = "PY2+3"
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
     'resultdb',
@@ -17,8 +17,12 @@ DEPS = [
 def RunSteps(api):
   api.resultdb.upload_invocation_artifacts({
       'a': {
-        'content_type': 'text/plain',
-        'contents': b'foobar'
+          'content_type': 'text/plain',
+          'contents': b'foobar'
+      },
+      'b': {
+          'content_type': 'text/plain',
+          'gcs_uri': 'gs://test-bucket/artifact/b.txt'
       }
   })
 
@@ -31,6 +35,11 @@ def GenTests(api):
               artifact.Artifact(
                   artifact_id='a',
                   content_type='text/plain',
-                  contents=b'foobar')])),
+                  contents=b'foobar'),
+              artifact.Artifact(
+                  artifact_id='b',
+                  content_type='text/plain',
+                  gcs_uri='gs://test-bucket/artifact/b.txt')
+          ])),
       api.post_process(DropExpectation),
   )

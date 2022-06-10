@@ -356,16 +356,16 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
   def upload_invocation_artifacts(
       self, artifacts, parent_inv=None, step_name=None):
-    """Create artifacts with the given content type and contents.
+    """Create artifacts with the given content type and contents or gcs_uri.
 
     Makes a call to the BatchCreateArtifacts API. Returnes the created
     artifacts.
 
     Args:
       artifacts (dict): a collection of artifacts to create. Each key is an
-        artifact id, with the correponsing value being a dict containing:
+        artifact id, with the correponding value being a dict containing:
           'content_type' (optional)
-          'contents'
+          oneof 'contents' or 'gcs_uri'
       parent_inv (str): the name of the invocation to create the artifacts
         under. If None, the current invocation will be used.
       step_name (str): name of the step.
@@ -381,7 +381,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
           artifact=artifact.Artifact(
               artifact_id=art_id,
               content_type=art.get('content_type', ''),
-              contents=art['contents'],
+              contents=art.get('contents', b''),
+              gcs_uri=art.get('gcs_uri', ''),
           ),
       )
       for art_id, art in iteritems(artifacts)
