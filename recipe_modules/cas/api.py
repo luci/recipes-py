@@ -91,7 +91,7 @@ class CasApi(recipe_api.RecipeApi):
     return 'https://{0}/{1}/blobs/{2}/tree'.format(
       viewer_host, self.instance, digest)
 
-  def archive(self, step_name, root, *paths):
+  def archive(self, step_name, root, *paths, **kwargs):
     """Archives given paths to a cas server.
 
     Args:
@@ -101,6 +101,8 @@ class CasApi(recipe_api.RecipeApi):
       * paths (list(str|Path)):
         path to archived files/dirs, should be absolute path. If empty, [root]
         will be used.
+      * log_level (str): logging level to use, rarely needed but helpful for
+        debugging.
 
     Returns:
       digest (str): digest of uploaded root directory.
@@ -113,6 +115,13 @@ class CasApi(recipe_api.RecipeApi):
         '-dump-digest',
         self.m.raw_io.output_text(),
     ]
+    # TODO: make `log_level` a proper keyword argument once Python 2 support is
+    # dropped. Python 2 doesn't support named keyword arguments after
+    # variable-length positional arguments like `def func(*args, param=None)`.
+    log_level = kwargs.pop("log_level", None)
+    if log_level:
+      cmd.extend(['-log-level', log_level])
+    assert not kwargs, 'unrecognized arguments to archive: %r' % kwargs
 
     if not paths:
       paths = [root]

@@ -134,6 +134,8 @@
       "projects/example-cas-server/instances/default_instance",
       "-dump-digest",
       "/path/to/tmp/",
+      "-log-level",
+      "debug",
       "-paths",
       "[CLEANUP]/cas-example_tmp_1:."
     ],

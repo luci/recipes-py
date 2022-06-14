@@ -764,7 +764,7 @@ API for interacting with cas client.
 
 A module for interacting with cas client.
 
-&mdash; **def [archive](/recipe_modules/cas/api.py#94)(self, step_name, root, \*paths):**
+&mdash; **def [archive](/recipe_modules/cas/api.py#94)(self, step_name, root, \*paths, \*\*kwargs):**
 
 Archives given paths to a cas server.
 
@@ -775,6 +775,8 @@ Args:
   * paths (list(str|Path)):
     path to archived files/dirs, should be absolute path. If empty, [root]
     will be used.
+  * log_level (str): logging level to use, rarely needed but helpful for
+    debugging.
 
 Returns:
   digest (str): digest of uploaded root directory.
