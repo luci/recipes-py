@@ -1413,7 +1413,7 @@ Raises:
 Returns whether this build is triggered for a CQ experimental builder.
 
 See `Builder.experiment_percentage` doc in [CQ
-config](https://chromium.googlesource.com/infra/luci/luci-go/+/main/cv/api/config/v2/cq.proto)
+config](https://chromium.googlesource.com/infra/luci/luci-go/+/main/cv/api/config/v2/config.proto)
 
 Raises:
   CQInactive if CQ is not active for this build.
