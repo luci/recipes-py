@@ -556,7 +556,7 @@ def _install_protos(proto_package_path, dgst, proto_files, py_files):
     '-ensure-file', '-'], stdin=subprocess.PIPE)
   # We don't have a mac-arm64 protoc package yet; force amd64 for now.
   protoc_platform = b'mac-amd64' if sys.platform == 'darwin' else b'${platform}'
-  cipd_proc.communicate((b'infra/tools/protoc/%s protobuf_version:v' %
+  cipd_proc.communicate((b'infra/3pp/tools/protoc/%s version:2@' %
                          protoc_platform) + PROTOC_VERSION)
   if cipd_proc.returncode != 0:
     raise ValueError(
@@ -577,7 +577,7 @@ def _install_protos(proto_package_path, dgst, proto_files, py_files):
   argfile_fd, argfile = tempfile.mkstemp(dir=tmp_base)
   _collect_protos(argfile_fd, proto_files, proto_tree)
 
-  protoc = os.path.join(proto_package_path, 'protoc', 'protoc')
+  protoc = os.path.join(proto_package_path, 'protoc', 'bin', 'protoc')
   _compile_protos(proto_files, proto_tree, protoc, argfile, pb_temp)
   _copy_py_files(py_files, pb_temp)
   with open(os.path.join(pb_temp, 'csum'), 'wb') as csum_f:
