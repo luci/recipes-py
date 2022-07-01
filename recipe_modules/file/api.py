@@ -101,12 +101,7 @@ class FileApi(recipe_api.RecipeApi):
       return True
     return self.m.path.assert_absolute(path_or_placeholder)
 
-  def _run(self,
-           name,
-           args,
-           step_test_data=None,
-           stdout=None,
-           skip_empty_source=False):
+  def _run(self, name, args, step_test_data=None, stdout=None):
     if not step_test_data:
       step_test_data = self.test_api.errno
     args = [
@@ -123,13 +118,12 @@ class FileApi(recipe_api.RecipeApi):
     if not j['ok']:
       result.presentation.status = self.m.step.FAILURE
       result.presentation.step_text = j['message']
-      if not (skip_empty_source and j['errno_name'] == 'ENOENT'):
-        # pylint thinks this isn't a standard exception... silly pylint.
-        # pylint: disable=nonstandard-exception
-        raise self.Error(name, j['errno_name'], j['message'])
+      # pylint thinks this isn't a standard exception... silly pylint.
+      # pylint: disable=nonstandard-exception
+      raise self.Error(name, j['errno_name'], j['message'])
     return result
 
-  def copy(self, name, source, dest, skip_empty_source=False):
+  def copy(self, name, source, dest):
     """Copies a file (including mode bits) from source to destination on the
     local filesystem.
 
@@ -141,22 +135,15 @@ class FileApi(recipe_api.RecipeApi):
       * dest (Path|Placeholder): The path to the destination file name. If this
         path exists and is a directory, the basename of `source` will be
         appended to derive a path to a destination file.
-      * skip_empty_source (bool): If the source does not exist, do not raise an
-        exception.
 
     Raises: file.Error
     """
     self._assert_absolute_path_or_placeholder(source)
     self._assert_absolute_path_or_placeholder(dest)
-    self._run(name, ['copy', source, dest], skip_empty_source=skip_empty_source)
+    self._run(name, ['copy', source, dest])
     self.m.path.mock_copy_paths(source, dest)
 
-  def copytree(self,
-               name,
-               source,
-               dest,
-               symlinks=False,
-               skip_empty_source=False):
+  def copytree(self, name, source, dest, symlinks=False):
     """Recursively copies a directory tree.
 
     Behaves identically to shutil.copytree.
@@ -168,17 +155,13 @@ class FileApi(recipe_api.RecipeApi):
       * dest (Path): The place where you want the recursive copy to show up.
         This must not already exist.
       * symlinks (bool): Preserve symlinks. No effect on Windows.
-      * skip_empty_source (bool): If the source does not exist, do not raise an
-        exception.
 
     Raises: file.Error
     """
     self.m.path.assert_absolute(source)
     self.m.path.assert_absolute(dest)
     args = ['--symlinks'] if symlinks else []
-    self._run(
-        name, ['copytree'] + args + [source, dest],
-        skip_empty_source=skip_empty_source)
+    self._run(name, ['copytree'] + args + [source, dest])
     self.m.path.mock_copy_paths(source, dest)
 
   def move(self, name, source, dest):
