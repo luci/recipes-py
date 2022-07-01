@@ -5,10 +5,9 @@ TODO(iannucci): This document is way out of date and should be merged into
 [user_guide.md][./user_guide.md]
 ***
 
-At the time of writing, there are three repositories containing recipes and
-recipe modules, soon to be more.  Repositories declare their relationships to
-each other in a file called `recipes.cfg`, in the `infra/config`
-directory from the repository root.  For example:
+There are many repositories containing recipes and recipe modules. Repositories
+declare their relationships to each other in a file called `recipes.cfg`, in
+the `infra/config` directory from the repository root.  For example:
 
     {
       "api_version": 2,
