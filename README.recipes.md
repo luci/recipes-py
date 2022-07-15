@@ -4289,11 +4289,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/add_tags.py#13)(api):**
 ### *recipes* / [buildbucket:tests/build](/recipe_modules/buildbucket/tests/build.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/build.py#21): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/build.py#22): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/build.py#29)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/build.py#30)(api):**
 ### *recipes* / [buildbucket:tests/cancel](/recipe_modules/buildbucket/tests/cancel.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/cancel.py#12): [buildbucket](#recipe_modules-buildbucket)

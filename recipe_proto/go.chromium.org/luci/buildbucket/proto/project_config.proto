@@ -67,17 +67,15 @@ message AclSet {
   repeated Acl acls = 2;
 }
 
-
-// Defines a swarmbucket builder or a builder mixin. A builder has a name, a
-// category and specifies what should happen if a build is scheduled to that
-// builder.
+// Defines a swarmbucket builder. A builder has a name, a category and specifies
+// what should happen if a build is scheduled to that builder.
 //
 // SECURITY WARNING: if adding more fields to this message, keep in mind that
 // a user that has permissions to schedule a build to the bucket, can override
 // this config.
 //
-// Next tag: 34.
-message Builder {
+// Next tag: 35.
+message BuilderConfig {
   reserved 8;  // cipd_packages
   reserved 11; // build_numbers of the old format.
   reserved 13; // auto_builder_dimension of the old format.
@@ -130,7 +128,7 @@ message Builder {
     string env_var = 4;
   }
 
-  // DEPRECATED. See Builder.executable and Builder.properties
+  // DEPRECATED. See BuilderConfig.executable and BuilderConfig.properties
   //
   // To specify a recipe name, pass "$recipe_engine" property which is a JSON
   // object having "recipe" property.
@@ -166,7 +164,7 @@ message Builder {
     string cipd_version = 5;
 
     // Colon-separated build properties to set.
-    // Ignored if Builder.properties is set.
+    // Ignored if BuilderConfig.properties is set.
     //
     // Use this field for string properties and use properties_j for other
     // types.
@@ -211,7 +209,7 @@ message Builder {
     string config_json = 2;
   }
 
-  // Name of the builder or builder mixin.
+  // Name of the builder.
   //
   // If a builder name, will be propagated to "builder" build tag and
   // "buildername" recipe property.
@@ -233,8 +231,7 @@ message Builder {
   // Required, but defaults to deprecated Swarming.hostname.
   string swarming_host = 21;
 
-  // DEPRECATED.
-  repeated string mixins = 10;
+  reserved 10; // mixins
 
   // Builder category. Will be used for visual grouping, for example in Code Review.
   string category = 6;
@@ -269,6 +266,19 @@ message Builder {
   // Individual object properties can be overridden with
   // ScheduleBuildRequest.properties.
   string properties = 24 [(luci.text_pb_format) = JSON];
+
+  // A list of top-level property names which can be overridden in
+  // ScheduleBuildRequest.
+  //
+  // If this field is the EXACT value `["*"]` then all properties are permitted
+  // to be overridden.
+  //
+  // NOTE: Some executables (such as the recipe engine) can have drastic
+  // behavior differences based on some properties (for example, the "recipe"
+  // property). If you allow the "recipe" property to be overridden, then anyone
+  // with the 'buildbucket.builds.add' permission could create a Build for this
+  // Builder running a different recipe (from the same recipe repo).
+  repeated string allowed_property_overrides = 34;
 
   // Swarming task priority.
   // A value between 20 and 255, inclusive.
@@ -361,10 +371,6 @@ message Builder {
   //     auto_builder_dimension: YES
   //   }
   //
-  // We've considered providing interpolation like this
-  //   builder_defaults {
-  //     dimensions: "builder:${BUILDER}"
-  //   }
   // (see also http://docs.buildbot.net/0.8.9/manual/cfg-properties.html#interpolate)
   // but are currently against complicating config with this.
   Toggle auto_builder_dimension = 17;
@@ -438,22 +444,14 @@ message Builder {
 
 // Configuration of buildbucket-swarming integration for one bucket.
 message Swarming {
-  // DEPRECATED. Use builder_defaults.swarming_host instead.
-  // Setting this fields sets builder_defaults.swarming_host.
-  string hostname = 1;
-  // DEPRECATED, IGNORED.
-  // Used to generate a URL for Build, may contain parameters
-  // {swarming_hostname}, {task_id}, {bucket} and {builder}. Defaults to:
-  // https://{swarming_hostname}/user/task/{task_id}
-  string url_format = 2;
-
-  // DEPRECATED.
-  Builder builder_defaults = 3;
+  reserved 1; // hostname
+  reserved 2; // url_format
+  reserved 3; // builder_defaults
 
   // Configuration for each builder.
   // Swarming tasks are created only for builds for builders that are not
   // explicitly specified.
-  repeated Builder builders = 4;
+  repeated BuilderConfig builders = 4;
 
   // DEPRECATED. Use builder_defaults.task_template_canary_percentage instead.
   // Setting this field sets builder_defaults.task_template_canary_percentage.
@@ -474,6 +472,48 @@ message Bucket {
   repeated string acl_sets = 4;
   // Buildbucket-swarming integration.
   Swarming swarming = 3;
+
+  // Name of this bucket's shadow bucket for the led builds to use.
+  //
+  // If omitted, it implies that led builds of this bucket reuse this bucket.
+  // This is allowed, but note that it means the led builds will be in
+  // the same bucket/builder with the real builds, which means Any users with
+  // led access will be able to do ANYTHING that this bucket's bots and
+  // service_accounts can do.
+  //
+  // It could also be noisy, such as:
+  // * On the LUCI UI, led builds will show under the same builder as the real builds,
+  // * Led builds will share the same ResultDB config as the real builds, so
+  //   their test results will be exported to the same BigQuery tables.
+  // * Subscribers of Buildbucket PubSub need to filter them out.
+  string shadow = 5;
+
+  // Constraints for a bucket.
+  //
+  // Buildbucket.CreateBuild will validate the incoming requests to make sure
+  // they meet these constraints.
+  message Constraints {
+    // Constraints allowed pools.
+    // Builds in this bucket must have a "pool" dimension which matches an entry in this list.
+    repeated string pools = 1;
+
+    // Only service accounts in this list are allowed.
+    repeated string service_accounts = 2;
+  }
+
+  // Security constraints of the bucket.
+  //
+  // This field is used by CreateBuild on this bucket to constrain proposed
+  // Builds. If a build doesn't meet the constraints, it will be rejected.
+  // For shadow buckets, this is what prevents the bucket from allowing
+  // totally arbitrary Builds.
+  //
+  // `lucicfg` will automatically populate this for the "primary" bucket
+  // when using `luci.builder`.
+  //
+  // Buildbuceket.CreateBuild will validate the incoming requests to make sure
+  // they meet these constraints.
+  Constraints constraints = 6;
 }
 
 // Schema of buildbucket.cfg file, a project config.
@@ -482,8 +522,7 @@ message BuildbucketCfg {
   repeated Bucket buckets = 1;
   // DEPRECATED.
   repeated AclSet acl_sets = 2;
-  // DEPRECATED.
-  repeated Builder builder_mixins = 3;
+  reserved 3; // builder_mixins
 }
 
 // Toggle is a boolean with an extra state UNSET.

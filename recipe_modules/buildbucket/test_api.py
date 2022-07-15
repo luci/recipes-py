@@ -12,7 +12,8 @@ from google.protobuf import timestamp_pb2
 from recipe_engine import recipe_test_api
 
 from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb2
-from PB.go.chromium.org.luci.buildbucket.proto import builder as builder_pb2
+from PB.go.chromium.org.luci.buildbucket.proto \
+  import builder_common as builder_common_pb2
 from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 from PB.go.chromium.org.luci.buildbucket.proto \
   import builds_service as builds_service_pb2
@@ -82,7 +83,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         id=build_id,
         number=build_number,
         tags=tags or [],
-        builder=builder_pb2.BuilderID(
+        builder=builder_common_pb2.BuilderID(
             project=project,
             bucket=bucket,
             builder=builder,
@@ -191,7 +192,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         id=build_id,
         number=build_number,
         tags=tags,
-        builder=builder_pb2.BuilderID(
+        builder=builder_common_pb2.BuilderID(
             project=project,
             bucket=bucket,
             builder=builder,
@@ -257,7 +258,7 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
         id=build_id,
         number=build_number,
         tags=tags,
-        builder=builder_pb2.BuilderID(
+        builder=builder_common_pb2.BuilderID(
             project=project,
             bucket=bucket,
             builder=builder,

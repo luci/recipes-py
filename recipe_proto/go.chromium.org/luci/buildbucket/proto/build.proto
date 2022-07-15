@@ -22,7 +22,7 @@ import "google/api/field_behavior.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
-import "go.chromium.org/luci/buildbucket/proto/builder.proto";
+import "go.chromium.org/luci/buildbucket/proto/builder_common.proto";
 import "go.chromium.org/luci/buildbucket/proto/common.proto";
 import "go.chromium.org/luci/buildbucket/proto/step.proto";
 import "go.chromium.org/luci/buildbucket/proto/task.proto";
@@ -179,8 +179,30 @@ message Build {
   // tracked by end_time.
   //
   // During the cancel process, the build still accepts updates.
-  // A delayed task will be executed after the build's grace period to finally
-  // terminate the build.
+  //
+  // bbagent checks this field at the frequency of
+  // buildbucket.MinUpdateBuildInterval. When bbagent sees the build is in
+  // cancel process, there are two states:
+  //  * it has NOT yet started the exe payload,
+  //  * it HAS started the exe payload.
+  //
+  // In the first state, bbagent will immediately terminate the build without
+  // invoking the exe payload at all.
+  //
+  // In the second state, bbagent will send SIGTERM/CTRL-BREAK to the exe
+  // (according to the deadline protocol described in
+  // https://chromium.googlesource.com/infra/luci/luci-py/+/HEAD/client/LUCI_CONTEXT.md).
+  // After grace_period it will then try to kill the exe.
+  //
+  // NOTE: There is a race condition here; If bbagent starts the luciexe and
+  // then immediately notices that the build is canceled, it's possible that
+  // bbagent can send SIGTERM/CTRL-BREAK to the exe before that exe sets up
+  // interrupt handlers. There is a bug on file (crbug.com/1311821)
+  // which we plan to implement at some point as a mitigation for this.
+  //
+  //Additionally, the Buildbucket service itself will launch an asynchronous
+  // task to terminate the build via the backend API (e.g. Swarming cancelation)
+  // if bbagent cannot successfully terminate the exe in time.
   google.protobuf.Timestamp cancel_time = 32;
 
   // Status of the build.
@@ -341,25 +363,7 @@ message InputDataRef {
   // https://chromium.googlesource.com/infra/luci/luci-go/+/0048a84944e872776fba3542aa96d5943ae64bab/common/api/swarming/swarming/v1/swarming-gen.go#1495
   repeated string on_path = 3;
 
-  enum Purpose {
-    PURPOSE_UNSPECIFIED = 0;
-
-    // Can be set to indicate that this DataRef holds a recipe bundle.
-    //
-    // This could be used to clue-in tools like `led edit-recipe-bundle`
-    // that this DataRef is the one holding the recipes. Useful in situations
-    // where the `Build.exe` field is used for a bootstrapper application.
-    PURPOSE_RECIPE_BUNDLE = 1;
-
-    // Can be set to indicate that this DataRef holds data specifically
-    // for bbagent's own use.
-    //
-    // There's a proposal currently to add `nsjail` support to bbagent, and it
-    // would need to bring a copy of `nsjail` in order to run the user binary
-    // but we wouldn't necessarily want to expose it to the user binary.
-    PURPOSE_BBAGENT_UTILITY = 2;
-  }
-  Purpose purpose = 4;
+  reserved 4; // purpose, replaced by agent.data_purposes.
 }
 
 message ResolvedDataRef {
@@ -477,11 +481,44 @@ message BuildInfra {
         // will give the mapping from `agent_platform` to a precise instance_id
         // which was used.
         string agent_platform = 5;
+
+        // Total installation duration for all input data. Currently only record
+        // cipd packages installation time.
+        google.protobuf.Duration total_duration = 6;
       }
 
+      // TODO(crbug.com/1297809): for a long-term solution, we may need to add
+      // a top-level `on_path` array field in the input and read the value from
+      // configuration files (eg.settings.cfg, builder configs). So it can store
+      // the intended order of PATH env var. Then the per-inputDataRef level
+      // `on_path` field will be deprecated.
+      // Currently, the new BBagent flow merges all inputDataRef-level `on_path`
+      // values and sort. This mimics the same behavior of PyBB backend in order
+      // to have the cipd_installation migration to roll out first under a minimal risk.
       Input input = 1;
       Output output = 2;
       Source source = 3;
+
+      enum Purpose {
+        // No categorized/known purpose.
+        PURPOSE_UNSPECIFIED = 0;
+
+        // This path contains the contents of the build's `exe.cipd_package`.
+        PURPOSE_EXE_PAYLOAD = 1;
+
+        // This path contains data specifically for bbagent's own use.
+        //
+        // There's a proposal currently to add `nsjail` support to bbagent, and it
+        // would need to bring a copy of `nsjail` in order to run the user binary
+        // but we wouldn't necessarily want to expose it to the user binary.
+        PURPOSE_BBAGENT_UTILITY = 2;
+      }
+
+      // Maps the relative-to-root directory path in both `input` and `output`
+      // to the Purpose of the software in that directory.
+      //
+      // If a path is not listed here, it is the same as PURPOSE_UNSPECIFIED.
+      map<string, Purpose> purposes = 4;
     }
 
     reserved 4; // field "canary" was moved to Build message.
@@ -745,7 +782,9 @@ message BuildInfra {
     // By default public hosts are accessed anonymously, and the anonymous access
     // has very low quota. Context needs to know all such hostnames in advance to
     // be able to force authenticated access to them.
-    repeated string known_public_gerrit_hosts = 3;
+    //
+    // DEPRECATED: Use build.Infra.Buildbucket.KnownPublicGerritHosts instead.
+    repeated string known_public_gerrit_hosts = 3 [deprecated = true];
 
     // DEPRECATED: Use build.Infra.Buildbucket.Agent.Input instead.
     Input input = 4 [deprecated = true];

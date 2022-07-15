@@ -19,7 +19,7 @@ from PB.recipe_engine import result as result_pb2
 from PB.recipes.recipe_engine.placeholder import (
   InputProps, Step, FakeStep, CollectChildren,
   ChildBuild, Buildbucket, LifeTime)
-from PB.go.chromium.org.luci.buildbucket.proto.builder import BuilderID
+from PB.go.chromium.org.luci.buildbucket.proto.builder_common import BuilderID
 from PB.go.chromium.org.luci.buildbucket.proto.common import Status, ENDED_MASK
 
 from recipe_engine import post_process
