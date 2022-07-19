@@ -148,8 +148,9 @@ def _common_post_process(args):
 
   args.recipe_deps = RecipeDeps.create(
       args.main_repo_path,
-      args.repo_override,
+      {} if args.minimal_recipe_deps else args.repo_override,
       args.proto_override,
+      minimal_protoc = args.minimal_recipe_deps,
   )
 
   _check_recipes_cfg_consistency(args.recipe_deps)
@@ -165,6 +166,7 @@ def _common_post_process(args):
   del args.main_repo_path
   del args.verbose
   del args.repo_override
+  del args.proto_override
 
 
 def _add_common_args(parser):
@@ -263,6 +265,12 @@ def _add_common_args(parser):
       '--proto-override', type=_proto_override_abspath, help=argparse.SUPPRESS)
 
   parser.set_defaults(
+    # minimal_recipe_deps is an option for some subcommands to let them:
+    #   * ignore any recipe deps overrides
+    #   * skip protoc compilation
+    # This is used for subcommands like manual_roll which explicitly operate
+    # on the recipes.cfg and nothing else.
+    minimal_recipe_deps=False,
     postprocess_func=lambda error, args: None,
   )
 

@@ -137,7 +137,7 @@ class RecipeDeps(object):
     }
 
   @classmethod
-  def create(cls, main_repo_path, overrides, proto_override):
+  def create(cls, main_repo_path, overrides, proto_override, minimal_protoc=False):
     """Creates a RecipeDeps.
 
     This will possibly do network operations to fetch recipe repos from git if
@@ -152,6 +152,9 @@ class RecipeDeps(object):
         the root of the repo which should be used to satisfy this dependency.
       * proto_override (None|str) - The path to the compiled protobuf tree (if
         any).
+      * minimal_protoc (bool) - If True, skips all proto compiliation. This is used
+        for subcommands (like manual_roll) where we don't need this, and it can
+        actively interfere with the subcommand's functionality.
 
     Returns a RecipeDeps.
     """
@@ -225,7 +228,14 @@ class RecipeDeps(object):
     repos.on_missing = ret.repos.on_missing
     object.__setattr__(ret, 'repos', repos)
 
-    proto_support.ensure_compiled_and_on_syspath(ret, proto_override)
+    protoc_deps = ret
+    if minimal_protoc:
+      protoc_deps = RecipeDeps(
+          {'recipe_engine': ret.repos['recipe_engine'], },
+          'recipe_engine',
+      )
+    proto_support.ensure_compiled_and_on_syspath(
+        protoc_deps, proto_override)
 
     return ret
 

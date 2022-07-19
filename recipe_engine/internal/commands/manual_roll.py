@@ -21,7 +21,7 @@ from ..autoroll_impl.candidate_algorithm import get_roll_candidates
 
 
 def add_arguments(parser):
-  parser.set_defaults(func=main)
+  parser.set_defaults(func=main, minimal_recipe_deps=True)
 
 
 def main(args):
