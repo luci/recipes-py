@@ -146,13 +146,17 @@ class LUCIStepStream(StreamEngine.StepStream):
   _std_handle = attr.ib(default=None)
   _logging = attr.ib(default=None)
 
-  # If True, after initialization, append a log named '$build.proto' that
-  # points to the 'build.proto' stream of the luciexe this step launches.
-  # Host application will treat this step as merge step according to luciexe
-  # protocol.
+  # If True, after initialization, allocate a log stream '$build.proto' that
+  # points to the 'build.proto' stream of the luciexe this step launches and
+  # set it as step.merge_build.from_logdog_stream. Host application will treat
+  # this step as merge step according to luciexe protocol.
+  #
+  # If this is set to 'legacy', then legacy_global_namespace in the merge_step
+  # will be set to True.
   #
   # See: [luciexe recursive invocation](https://pkg.go.dev/go.chromium.org/luci/luciexe?tab=doc#hdr-Recursive_Invocation)
-  _merge_step = attr.ib(default=False, validator=attr_type(bool))
+  _merge_step = attr.ib(default=False,
+                        validator=attr.validators.in_((False, True, 'legacy')))
 
   _back_compat_markdown = attr.ib(factory=LUCIStepMarkdownWriter)
 
@@ -202,9 +206,9 @@ class LUCIStepStream(StreamEngine.StepStream):
       logdog.streamname.validate_stream_name(stream_name)
       self._CREATED_LOGS.add(stream_name)
 
-      log = self._step.logs.add()
-      log.name = '$build.proto'
-      log.url = stream_name
+      self._step.merge_build.from_logdog_stream = stream_name
+      if self._merge_step == 'legacy':
+        self._step.merge_build.legacy_global_namespace = True
       self._change_cb()
 
   def new_log_stream(self, log_name):

@@ -1,0 +1,34 @@
+[
+  {
+    "cmd": [
+      "luciexe",
+      "--output",
+      "[CLEANUP]/tmp_tmp_1/sub_build.pb",
+      "--foo",
+      "bar",
+      "--json-summary",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "MAC_CHROMIUM_TMPDIR": "[CLEANUP]/tmp_tmp_2",
+      "TEMP": "[CLEANUP]/tmp_tmp_2",
+      "TEMPDIR": "[CLEANUP]/tmp_tmp_2",
+      "TMP": "[CLEANUP]/tmp_tmp_2",
+      "TMPDIR": "[CLEANUP]/tmp_tmp_2"
+    },
+    "name": "launch sub build",
+    "stdin": "\b\ufffdV2\u0006\b\ufffd\u00af\ufffd\u0005:\u0006\b\ufffd\u00af\ufffd\u0005`\u0002",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@step.sub_build@{@@@",
+      "@@@STEP_LOG_LINE@step.sub_build@  \"id\": \"11111\",@@@",
+      "@@@STEP_LOG_LINE@step.sub_build@  \"status\": \"SUCCESS\"@@@",
+      "@@@STEP_LOG_LINE@step.sub_build@}@@@",
+      "@@@STEP_LOG_END@step.sub_build@@@",
+      "@@@STEP_LOG_LINE@json.output@\"{\\\"hello\\\": \\\"world\\\"}\"@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

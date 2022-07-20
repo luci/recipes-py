@@ -41,6 +41,7 @@ def RunSteps(api, props):
       ['luciexe', '--foo', 'bar', '--json-summary', api.json.output()],
       input_build,
       output_path=output_path,
+      legacy_global_namespace=props.legacy,
       step_test_data= lambda: (
         api.json.test_api.output('{"hello": "world"}') +
         api.step.test_api.sub_build(
@@ -58,6 +59,14 @@ def GenTests(api):
     api.test('basic') +
     api.properties(properties_pb2.SubBuildInputProps(
       expected_sub_build=build_pb2.Build(id=11111, status=common_pb2.SUCCESS),
+    ))
+  )
+
+  yield (
+    api.test('legacy') +
+    api.properties(properties_pb2.SubBuildInputProps(
+      expected_sub_build=build_pb2.Build(id=11111, status=common_pb2.SUCCESS),
+      legacy=True,
     ))
   )
 

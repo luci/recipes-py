@@ -132,9 +132,10 @@ class StreamEngine(object):
       * allow_subannotations (bool): If True, tells the StreamEngine to expect
         the old @@@annotator@@@ protocol to be emitted on stdout from this
         step.
-      * merge_step (bool): If True, tells the StreamEngine to create a step
-        stream that denotes a merge step. This is only valid for luciexe
-        protocol.
+      * merge_step (True,False,"legacy"): If True, tells the StreamEngine to
+        create a step stream that denotes a merge step. This is only valid for
+        luciexe protocol. If set to "legacy" then this merge step will also
+        set the legacy_global_namespace option.
     """
     raise NotImplementedError()
 

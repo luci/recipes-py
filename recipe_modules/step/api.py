@@ -499,6 +499,7 @@ class StepApi(recipe_api.RecipeApiPlain):
                 build,
                 raise_on_failure=True,
                 output_path=None,
+                legacy_global_namespace=False,
                 timeout=None,
                 step_test_data=None,
                 cost=_ResourceCost()):
@@ -558,6 +559,9 @@ class StepApi(recipe_api.RecipeApiPlain):
         MUST exist). The extension of the path dictates the encoding format of
         final build proto (See `EXT_TO_CODEC`). If not provided, the output
         will be a temp file with binary encoding.
+      * legacy_global_namespace (bool): If set, activates legacy global
+        namespace merging. Only meant for legacy ChromeOS builders.
+        See crbug.com/1310155.
       * timeout (None|int|float|datetime.timedelta): Same as the `timeout`
         parameter in `__call__` method.
       * step_test_data(Callable[[], recipe_test_api.StepTestData]): Same as the
@@ -604,7 +608,7 @@ class StepApi(recipe_api.RecipeApiPlain):
             stdin=self.m.proto.input(self._make_initial_build(build), 'BINARY'),
             infra_step=self.m.context.infra_step or False,
             raise_on_failure=raise_on_failure,
-            merge_step=True,
+            merge_step='legacy' if legacy_global_namespace else True,
             # The return code of LUCI executable should be omitted
             ok_ret=self.step_client.StepConfig.ALL_OK,
             step_test_data=step_test_data,

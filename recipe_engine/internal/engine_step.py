@@ -169,8 +169,10 @@ class StepConfig(object):
 
   # If True, this step will be created as `merge step` and run a LUCI
   # executable.
+  # If "legacy" then legacy_global_namespace will also be set.
   # See: [luciexe recursive invocation](https://pkg.go.dev/go.chromium.org/luci/luciexe?tab=doc#hdr-Recursive_Invocation)
-  merge_step = attr.ib(default=False, validator=attr_type(bool))
+  merge_step = attr.ib(default=False,
+                       validator=attr.validators.in_((True, False, "legacy")))
 
   # Standard handle redirection.
   # If None, stdin is closed and stdout/stderr are routed to the UI.

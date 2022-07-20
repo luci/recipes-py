@@ -3553,7 +3553,7 @@ Usage:
 StepWarning is a subclass of StepFailure, and will translate to a yellow
 build.
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#613)(self, name, cmd, ok_ret=(0,), infra_step=False, raise_on_failure=True, wrapper=(), timeout=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [\_\_call\_\_](/recipe_modules/step/api.py#617)(self, name, cmd, ok_ret=(0,), infra_step=False, raise_on_failure=True, wrapper=(), timeout=None, stdout=None, stderr=None, stdin=None, step_test_data=None, cost=_ResourceCost()):**
 
 Runs a step (subprocess).
 
@@ -3764,7 +3764,7 @@ Raises:
   * StepWarning if the step's status is WARNING
   * InfraFailure if the step's status is EXCEPTION or CANCELED
 
-&emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#495)(self, name, cmd, build, raise_on_failure=True, output_path=None, timeout=None, step_test_data=None, cost=_ResourceCost()):**
+&emsp; **@recipe_api.composite_step**<br>&mdash; **def [sub\_build](/recipe_modules/step/api.py#495)(self, name, cmd, build, raise_on_failure=True, output_path=None, legacy_global_namespace=False, timeout=None, step_test_data=None, cost=_ResourceCost()):**
 
 Launch a sub-build by invoking a LUCI executable. All steps in the
 sub-build will appear as child steps of this step (Merge Step).
@@ -3822,6 +3822,9 @@ Args:
     MUST exist). The extension of the path dictates the encoding format of
     final build proto (See `EXT_TO_CODEC`). If not provided, the output
     will be a temp file with binary encoding.
+  * legacy_global_namespace (bool): If set, activates legacy global
+    namespace merging. Only meant for legacy ChromeOS builders.
+    See crbug.com/1310155.
   * timeout (None|int|float|datetime.timedelta): Same as the `timeout`
     parameter in `__call__` method.
   * step_test_data(Callable[[], recipe_test_api.StepTestData]): Same as the
