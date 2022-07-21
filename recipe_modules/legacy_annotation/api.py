@@ -26,12 +26,16 @@ class LegacyAnnotationApi(recipe_api.RecipeApiPlain):
   step_client = recipe_api.RequireClient('step')
 
   def __call__(self, name, cmd,
-               timeout=None, step_test_data=None, cost=_ResourceCost()):
+               timeout=None, step_test_data=None, cost=_ResourceCost(),
+               legacy_global_namespace=False):
     """Runs cmd that is emitting legacy @@@annotation@@@.
 
     Currently, it will run the command as sub_build if running in luciexe
     mode or simulation mode. Otherwise, it will fall back to launch a step
     with allow_subannotation set to true.
+
+    If `legacy_global_namespace` is True, this enables an even more-legacy
+    global namespace merging mode. Do not enable this. See crbug.com/1310155.
     """
     # concurrency is enabled when running recipe in bbagent/luciexe mode.
     run_kitchen_mode = not self.concurrency_client.supports_concurrency
@@ -66,10 +70,15 @@ class LegacyAnnotationApi(recipe_api.RecipeApiPlain):
       step_test_data = lambda: self.test_api.success_step + _step_test_data()
     else: # pragma: no cover
       step_test_data = lambda: self.test_api.success_step
-    ret = self.m.step.sub_build(name, cmd, build_pb2.Build(),
-                                timeout=timeout,
-                                step_test_data=step_test_data,
-                                cost=cost)
+    ret = self.m.step.sub_build(
+        name,
+        cmd,
+        build_pb2.Build(),
+        timeout=timeout,
+        step_test_data=step_test_data,
+        cost=cost,
+        legacy_global_namespace=legacy_global_namespace,
+    )
     ret.presentation.properties.update(
       jsonpb.MessageToDict(ret.step.sub_build.output.properties))
     return ret

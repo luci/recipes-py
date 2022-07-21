@@ -2328,13 +2328,16 @@ replacement for allow_subannotation feature in the legacy annotate mode.
 
 #### **class [LegacyAnnotationApi](/recipe_modules/legacy_annotation/api.py#24)([RecipeApiPlain](/recipe_engine/recipe_api.py#738)):**
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/legacy_annotation/api.py#28)(self, name, cmd, timeout=None, step_test_data=None, cost=_ResourceCost()):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/legacy_annotation/api.py#28)(self, name, cmd, timeout=None, step_test_data=None, cost=_ResourceCost(), legacy_global_namespace=False):**
 
 Runs cmd that is emitting legacy @@@annotation@@@.
 
 Currently, it will run the command as sub_build if running in luciexe
 mode or simulation mode. Otherwise, it will fall back to launch a step
 with allow_subannotation set to true.
+
+If `legacy_global_namespace` is True, this enables an even more-legacy
+global namespace merging mode. Do not enable this. See crbug.com/1310155.
 ### *recipe_modules* / [milo](/recipe_modules/milo)
 
 [DEPS](/recipe_modules/milo/__init__.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
