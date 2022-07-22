@@ -68,8 +68,8 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
     * bool - has_labeled_recipe. This is introduced temporarily for migration.
              Because we want to always run all tests in py3. To decide whether
              or not to abort the program earlier due to a global failure (see
-             first few lines of code in reporter.short_report() about this f
-             ailure), we need to know if users have started migrating:
+             first few lines of code in reporter.short_report() about this
+             failure), we need to know if users have started migrating:
                 * If not, the global failure shouldn't cause an abort.
                 * If migration has started, abort and let them see this error.
   """
@@ -77,7 +77,7 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
   used_expectation_files = set()
   recipe_filter, test_filter = _extract_filter_matchers(test_filters)
   test_filenames = collections.defaultdict(dict)
-  has_labeled_recipe = [False]
+  has_labeled_recipe = [py3_only]
 
   def push_test(recipe, test_case):
     recipe_filenames = test_filenames[recipe]
@@ -261,7 +261,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
 
   fail_tracker = FailTracker(recipe_deps.previous_test_failures_path)
   reporter = report.Reporter(recipe_deps, use_emoji, is_train, fail_tracker,
-                             show_warnings, enable_py3_details)
+                             show_warnings, enable_py3_details or py3_only)
 
   py2_cov_dir = None
   py3_cov_dir = None
@@ -272,16 +272,19 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
     # in case of crash; don't want this undefined in finally clause.
     live_threads = Threads(py2=[], py3=[])
 
-    py2_cov_dir, py2_all_threads = RunnerThread.make_pool(
-        recipe_deps,
-        description_queues.py2,
-        outcome_queues.py2,
-        is_train,
-        filtered_stacks,
-        collect_coverage=not test_filters,
-        jobs=jobs,
-        use_py3=False)
-    live_threads.py2[:] = py2_all_threads
+    if not py3_only:
+      py2_cov_dir, py2_all_threads = RunnerThread.make_pool(
+          recipe_deps,
+          description_queues.py2,
+          outcome_queues.py2,
+          is_train,
+          filtered_stacks,
+          collect_coverage=not test_filters,
+          jobs=jobs,
+          use_py3=False)
+      live_threads.py2[:] = py2_all_threads
+    else:
+      py2_all_threads = []
 
     py3_cov_dir, py3_all_threads = RunnerThread.make_pool(
         recipe_deps,
@@ -354,9 +357,12 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
     # Put None poison pill for each thread. Execute the py2 queues
     # before poisoning the py3 queues because py3 tests will be enqueued
     # after completion of the py2 test for py2+3 recipes.
-    for thread in all_threads.py2:
-      description_queues.py2.put(None)
-    has_fail = execute_queue('py2')
+    if not py3_only:
+      for thread in all_threads.py2:
+        description_queues.py2.put(None)
+      has_fail = execute_queue('py2')
+    else:
+      has_fail = False
 
     if not (has_fail and stop):
       for thread in all_threads.py3:
@@ -368,7 +374,7 @@ def _run(test_results, recipe_deps, use_emoji, test_filters, is_train,
     # failure
     if has_fail and stop:
       reporter.final_report(None, test_results)
-    elif not py3_only:
+    else:
       reporter.final_report(total_cov, test_results)
 
   finally:
@@ -417,10 +423,11 @@ def main(args):
               # the 's'.
               as_string[1:-2]))
 
+  repo = args.recipe_deps.main_repo
   try:
     _run(ret, args.recipe_deps, args.use_emoji, args.test_filters, is_train,
          args.filtered_stacks, args.stop, args.jobs, args.show_warnings,
-         args.py3_details, args.py3_only)
+         args.py3_details, repo.recipes_cfg_pb2.py3_only or args.py3_only)
     _dump()
   except KeyboardInterrupt:
     args.docs = False  # skip docs
@@ -428,7 +435,6 @@ def main(args):
     _dump()
     raise
 
-  repo = args.recipe_deps.main_repo
   docs_enabled = (not repo.recipes_cfg_pb2.no_docs) and args.docs
   is_run = args.subcommand == 'run'
   if docs_enabled:

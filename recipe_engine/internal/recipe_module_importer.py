@@ -152,13 +152,13 @@ class RecipeModuleImporter(object):
     if f:
       f.close()
     if len(toks) == 3:  # RECIPE_MODULES.repo_name.module_name
-      self._patchup_module(loaded, repo.path)
+      self._patchup_module(loaded, repo.path, repo.recipes_cfg_pb2.py3_only)
 
     mod.__dict__.update(loaded.__dict__)
     return mod
 
   @staticmethod
-  def _patchup_module(mod, repo_root):
+  def _patchup_module(mod, repo_root, py3_only):
     """Adds a bunch of fields to the imported recipe module.
 
     TODO: most of these are obsolete and could be calculated at the sites that
@@ -193,6 +193,8 @@ class RecipeModuleImporter(object):
         RECIPE_MODULES.repo_name.module_name.
       * repo_root (str) - Absolute path to the root of the module's repository
         on disk.
+      * py3_only (bool) - True if the repo containing this module has indicated
+        exclusive compatibility with python3.
     """
     _, repo_name, module_name = mod.__name__.split('.')
     mod.NAME = module_name
@@ -206,8 +208,11 @@ class RecipeModuleImporter(object):
     # TODO(iannucci, probably): remove DISABLE_STRICT_COVERAGE (crbug/693058).
     mod.DISABLE_STRICT_COVERAGE = getattr(mod, 'DISABLE_STRICT_COVERAGE', False)
 
-    mod.PYTHON_VERSION_COMPATIBILITY = getattr(
-        mod, 'PYTHON_VERSION_COMPATIBILITY', 'PY2')
+    if py3_only:
+      mod.PYTHON_VERSION_COMPATIBILITY = 'PY3'
+    else:
+      mod.PYTHON_VERSION_COMPATIBILITY = getattr(
+          mod, 'PYTHON_VERSION_COMPATIBILITY', 'PY2')
 
     # TODO(iannucci): do these imports on-demand at the callsites needing these.
 

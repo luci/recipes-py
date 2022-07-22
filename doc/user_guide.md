@@ -1160,6 +1160,68 @@ executes the `test` subcommand. Therefore,
 
 [`luci.recipes.use_python3` experiment]: https://source.chromium.org/chromium/infra/infra/+/main:go/src/go.chromium.org/luci/buildbucket/proto/project_config.proto;l=553-556;drc=1a075857890bfaa0c2084d41f29a843c4d762070
 
+### Preventing Python2 regressions
+
+Once you've got all your recipes and modules to at least PY2+3 compatibility,
+you want to prevent new recipes or modules from being added without Python3
+compatibility.
+
+To do this, set the `require_py3_compatibility` entry in your recipes.cfg file
+to `true`:
+
+```
+{
+  "api_version": 2,
+  "repo_name": "YOUR_REPO_NAME",
+  ...
+  "require_py3_compatibility": true,
+  ...
+}
+```
+
+This will make the recipe engine require that everything in the repo at least
+hit "PY2+3" compatibility. However, actual execution of the recipes will still
+be dependent on the `$RECIPES_USE_PY3` environment variable, as described in the
+previous section.
+
+### Fully committing to Python3
+
+Once you've got all your recipes and modules to at least PY2+3 compatibility,
+AND all builders running them in Python3 mode, you can fully commit to Python3,
+which will allow the use of Python3-only syntax and constructs, and will ensure
+that no matter who or where your recipes are executed (bots, locally, wherever)
+they always use Python3.
+
+NOTE: Everything in the repo (modules and recipes) must have at least "PY2+3"
+compatibility when turning this on, and all modules from other dependency repos
+must have at least "PY2+3" compatibility. Notably, a downstream repo can turn
+this feature on before its upstream repos have turned it on.
+
+To do this, set the `py3_only` entry in your recipes.cfg to `true`. Note that
+this implies `require_py3_compatibility` as well, so if you have that set, you
+can replace it with `py3_only`:
+
+```
+{
+  "api_version": 2,
+  ...
+  "py3_only": true,
+  ...
+}
+```
+
+Doing this has the following effects:
+
+* `recipes.py ...` will always run the engine with Python3
+   * This applies to local executions as well as executions on bots.
+   * bundles created with `recipes.py bundle` will only use Python3
+* `recipes.py test ...` will never invoke Python2, and will not run
+  any Python2 compatibility tests.
+* recipes and recipe_modules in this repo may use Python3-only syntax
+  and features, and can delete Python2 compatibility code.
+* PYTHON_VERSION_COMPATIBILITY annotations are ignored (i.e. everything
+  is assumed to be "PY3")
+
 ## Productionizing
 
 TODO(iannucci) - Document

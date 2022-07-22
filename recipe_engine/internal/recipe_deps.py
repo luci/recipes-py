@@ -312,7 +312,10 @@ class RecipeRepo(object):
     from PB.recipe_engine.recipes_cfg import RepoSpec
     recipes_cfg = os.path.join(self.path, RECIPES_CFG_LOCATION_REL)
     with open(recipes_cfg, 'rb') as f:
-      return jsonpb.Parse(f.read(), RepoSpec())
+      ret = jsonpb.Parse(f.read(), RepoSpec())
+      if ret.py3_only:
+        ret.require_py3_compatibility = True
+      return ret
 
   @cached_property
   def recipes_root_path(self):
@@ -760,7 +763,10 @@ class Recipe(object):
           for name, value in iteritems(properties_def)
       }
 
-    if 'PYTHON_VERSION_COMPATIBILITY' not in recipe_globals:
+    if self.repo.recipes_cfg_pb2.py3_only:
+      recipe_globals['IS_PYTHON_VERSION_LABELED'] = True
+      recipe_globals['PYTHON_VERSION_COMPATIBILITY'] = 'PY3'
+    elif 'PYTHON_VERSION_COMPATIBILITY' not in recipe_globals:
       recipe_globals['IS_PYTHON_VERSION_LABELED'] = False
       recipe_globals['PYTHON_VERSION_COMPATIBILITY'] = 'PY2'
     else:

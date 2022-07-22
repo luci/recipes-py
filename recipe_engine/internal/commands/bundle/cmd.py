@@ -174,6 +174,16 @@ call %VPYTHON% -u "%~dp0\\recipe_engine\\recipe_engine\\main.py"
 """.strip()
 # pylint: enable=line-too-long
 
+TEMPLATE3_SH = u"""#!/usr/bin/env bash
+exec vpython3 -u ${BASH_SOURCE[0]%/*}/recipe_engine/recipe_engine/main.py
+""".strip()
+
+TEMPLATE3_BAT = u"""@echo off
+call vpython3.bat -u "%~dp0\\recipe_engine\\recipe_engine\\main.py"
+""".strip()
+# pylint: enable=line-too-long
+
+
 def prep_recipes_py(recipe_deps, destination):
   """Prepares `recipes` and `recipes.bat` entrypoint scripts at the given
   destination.
@@ -190,8 +200,15 @@ def prep_recipes_py(recipe_deps, destination):
 
   LOGGER.info('prepping recipes.py for %s', recipe_deps.main_repo.name)
 
+  if recipe_deps.main_repo.recipes_cfg_pb2.py3_only:
+    tmpl_sh = TEMPLATE3_SH
+    tmpl_bat = TEMPLATE3_BAT
+  else:
+    tmpl_sh = TEMPLATE_SH
+    tmpl_bat = TEMPLATE_BAT
+
   sh_joiner = ' \\\n'
-  sh_header = TEMPLATE_SH + sh_joiner + sh_joiner.join([
+  sh_header = tmpl_sh + sh_joiner + sh_joiner.join([
     u' --package %s' % posixpath.join(
         '${BASH_SOURCE[0]%%/*}/%s' % recipe_deps.main_repo.name,
         *simple_cfg.RECIPES_CFG_LOCATION_TOKS
@@ -203,7 +220,7 @@ def prep_recipes_py(recipe_deps, destination):
   ]) + sh_joiner
 
   bat_joiner = ' ^\n'
-  bat_header = TEMPLATE_BAT + bat_joiner + bat_joiner.join([
+  bat_header = tmpl_bat + bat_joiner + bat_joiner.join([
     u' --package %s' % ntpath.join(
         '"%%~dp0\\%s"' % recipe_deps.main_repo.name,
         *simple_cfg.RECIPES_CFG_LOCATION_TOKS
