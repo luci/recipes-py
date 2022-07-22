@@ -79,6 +79,7 @@ class LegacyAnnotationApi(recipe_api.RecipeApiPlain):
         cost=cost,
         legacy_global_namespace=legacy_global_namespace,
     )
-    ret.presentation.properties.update(
-      jsonpb.MessageToDict(ret.step.sub_build.output.properties))
+    if not legacy_global_namespace:
+      ret.presentation.properties.update(
+        jsonpb.MessageToDict(ret.step.sub_build.output.properties))
     return ret
