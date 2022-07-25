@@ -57,7 +57,7 @@ def ImportsTest(recipe, allowed_modules):
     if isinstance(val, types.ModuleType):
       module_name = val.__name__
       for pattern in allowed_modules:
-        if pattern.match(val.__name__):
+        if pattern.match(module_name):
           break
       else:
         yield ('In %s:\n'
@@ -86,7 +86,7 @@ def add_arguments(parser):
 
 
 def main(args):
-  allowed_modules = map(re.compile, ALLOWED_MODULES + args.allowlist)
+  allowed_modules = tuple(map(re.compile, ALLOWED_MODULES + args.allowlist))
 
   errors = []
   for recipe in itervalues(args.recipe_deps.main_repo.recipes):
