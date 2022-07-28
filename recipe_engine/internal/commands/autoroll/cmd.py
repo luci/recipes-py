@@ -47,15 +47,14 @@ def write_global_files_to_main_repo(recipe_deps, spec):
   LOGGER.info('writing: %s', out)
 
   cfg_path = os.path.join(main_repo.path, simple_cfg.RECIPES_CFG_LOCATION_REL)
-  with open(cfg_path, 'wb') as cfg_file:
+  with open(cfg_path, 'w') as cfg_file:
     cfg_file.write(out)
 
   engine = recipe_deps.repos['recipe_engine']
   recipes_py_path = os.path.join(main_repo.recipes_root_path, 'recipes.py')
-  with open(recipes_py_path, 'wb') as recipes_py:
-    recipes_py.write(
-        engine.backend.cat_file(
-            spec.deps['recipe_engine'].revision, 'recipes.py'))
+  with open(recipes_py_path, 'w') as recipes_py:
+    recipes_py.write(engine.backend.cat_file(
+        spec.deps['recipe_engine'].revision, 'recipes.py'))
 
 
 def run_simulation_test(repo, *additional_args):
