@@ -3089,7 +3089,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#51)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#564)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#563)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -3254,14 +3254,14 @@ LUCI_CONTEXT.
 
 Create artifacts with the given content type and contents or gcs_uri.
 
-Makes a call to the BatchCreateArtifacts API. Returnes the created
+Makes a call to the BatchCreateArtifacts API. Returns the created
 artifacts.
 
 Args:
   artifacts (dict): a collection of artifacts to create. Each key is an
-    artifact id, with the correponding value being a dict containing:
+    artifact id, with the corresponding value being a dict containing:
       'content_type' (optional)
-      oneof 'contents' or 'gcs_uri'
+      one of 'contents' (binary string) or 'gcs_uri' (str)
   parent_inv (str): the name of the invocation to create the artifacts
     under. If None, the current invocation will be used.
   step_name (str): name of the step.
@@ -3270,7 +3270,7 @@ Returns:
   A BatchCreateArtifactsResponse proto message listing the artifacts that
   were created.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#465)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#464)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False):**
 
 Wraps the command with ResultSink.
 

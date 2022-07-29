@@ -23,6 +23,10 @@ def RunSteps(api):
       'b': {
           'content_type': 'text/plain',
           'gcs_uri': 'gs://test-bucket/artifact/b.txt'
+      },
+      'c': {
+          'content_type': 'text/plain',
+          'contents': 'string_foobar'
       }
   })
 
@@ -39,7 +43,11 @@ def GenTests(api):
               artifact.Artifact(
                   artifact_id='b',
                   content_type='text/plain',
-                  gcs_uri='gs://test-bucket/artifact/b.txt')
+                  gcs_uri='gs://test-bucket/artifact/b.txt'),
+              artifact.Artifact(
+                  artifact_id='c',
+                  content_type='text/plain',
+                  contents=b'string_foobar')
           ])),
       api.post_process(DropExpectation),
   )

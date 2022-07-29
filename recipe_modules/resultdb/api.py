@@ -358,14 +358,14 @@ class ResultDBAPI(recipe_api.RecipeApi):
       self, artifacts, parent_inv=None, step_name=None):
     """Create artifacts with the given content type and contents or gcs_uri.
 
-    Makes a call to the BatchCreateArtifacts API. Returnes the created
+    Makes a call to the BatchCreateArtifacts API. Returns the created
     artifacts.
 
     Args:
       artifacts (dict): a collection of artifacts to create. Each key is an
-        artifact id, with the correponding value being a dict containing:
+        artifact id, with the corresponding value being a dict containing:
           'content_type' (optional)
-          oneof 'contents' or 'gcs_uri'
+          one of 'contents' (binary string) or 'gcs_uri' (str)
       parent_inv (str): the name of the invocation to create the artifacts
         under. If None, the current invocation will be used.
       step_name (str): name of the step.
@@ -376,16 +376,15 @@ class ResultDBAPI(recipe_api.RecipeApi):
     """
 
     req = recorder.BatchCreateArtifactsRequest(requests=[
-      recorder.CreateArtifactRequest(
-          parent=parent_inv or self.current_invocation,
-          artifact=artifact.Artifact(
-              artifact_id=art_id,
-              content_type=art.get('content_type', ''),
-              contents=art.get('contents', b''),
-              gcs_uri=art.get('gcs_uri', ''),
-          ),
-      )
-      for art_id, art in iteritems(artifacts)
+        recorder.CreateArtifactRequest(
+            parent=parent_inv or self.current_invocation,
+            artifact=artifact.Artifact(
+                artifact_id=art_id,
+                content_type=art.get('content_type', ''),
+                contents=six.ensure_binary(art.get('contents', b'')),
+                gcs_uri=art.get('gcs_uri', ''),
+            ),
+        ) for art_id, art in iteritems(artifacts)
     ])
 
     res = self._rpc(
