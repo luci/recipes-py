@@ -161,6 +161,8 @@ def RunSteps(api):
       s = str(e)
       if results[0].state == api.swarming.TaskState.BOT_DIED:
         assert s == 'The bot running this task died', repr(s)
+      elif results[0].state == api.swarming.TaskState.CLIENT_ERROR:
+        assert s == 'The task encounted an error caused by the client'
       elif results[0].state == api.swarming.TaskState.CANCELED:
         assert s == 'The task was canceled before it could run', repr(s)
       elif results[0].state == api.swarming.TaskState.COMPLETED:

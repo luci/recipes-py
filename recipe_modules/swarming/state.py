@@ -20,3 +20,4 @@ class TaskState(Enum):
   COMPLETED = 0x70
   KILLED = 0x80
   NO_RESOURCE = 0x100
+  CLIENT_ERROR = 0x200

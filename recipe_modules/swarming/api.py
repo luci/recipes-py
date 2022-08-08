@@ -1096,6 +1096,9 @@ class TaskResult(object):
       raise recipe_api.StepFailure('\n'.join(failure_lines))
     elif self.state == TaskState.BOT_DIED:
       raise recipe_api.InfraFailure('The bot running this task died')
+    elif self.state == TaskState.CLIENT_ERROR:
+      raise recipe_api.InfraFailure(
+          'The task encounted an error caused by the client')
     elif self.state == TaskState.CANCELED:
       raise recipe_api.InfraFailure('The task was canceled before it could run')
     elif self.state == TaskState.COMPLETED:
