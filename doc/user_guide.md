@@ -866,6 +866,44 @@ escape the decorated function from all warnings.
 
 TODO(yiwzhang) - Document when CLI options are ready
 
+## Debugging
+
+The `recipes.py` CLI includes a subcommand to enter the debugger:
+
+```
+./recipes.py debug [recipe_name] [test_name]
+```
+
+If you do not include a recipe name and test name (that is, just `./recipes.py
+debug`), then the tool will try to find a recently failed test case, and run
+that. If there are no recently failing test cases, then the tool will instead
+print all available recipes to stdout.
+
+If you include only one positional argument, then it will be treated as a
+`recipe_name`, and the tool will print all of that recipe's test cases to
+stdout.
+
+If you're trying to debug a recipe module's tests, the syntax is the same. The
+recipe engine internally treats each module example or module test file as a
+"recipe". The syntax to select such a recipe is: `my_module:examples/my_example`
+or `my_module:tests/my_test`. For example, if you had a module called `git` with
+an example file at `recipe_modules/git/examples/full.py`, and that example had a
+test case called `basic` in its GenTests, then you could launch a debugger for
+that test case by running `./recipes.py git:examples/full basic`.
+
+When you have chosen a test case, the recipe engine will insert a breakpoint at
+the very top of RunSteps, and create a [pdb interactive debugger]. All of the
+standard pdb commands work here. You can also insert additional breakpoints with
+[`import pdb; pdb.set_trace()`].
+
+If your recipes repo runs Py2 by default, then the debugger will also run Py2.
+You can force it to run Py3 instead by prepending `RECIPES_USE_PY3=true` to your
+command: for example, `RECIPE_USE_PY3=true ./recipes.py debug my_recipe
+my_test_case`.
+
+[Pdb interactive debugger]: https://docs.python.org/3/library/pdb.html
+[`import pdb; pdb.set_trace()`]: https://docs.python.org/3/library/pdb.html#pdb.set_trace
+
 ## Detecting memory leaks with Pympler
 
 To help detect memory leaks, recipe engine has a [property](#engine-properties)
