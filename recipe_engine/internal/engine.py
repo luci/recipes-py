@@ -875,7 +875,12 @@ def _render_config(debug, name_tokens, step_config, step_runner, step_stream,
   cmd0 = step_runner.resolve_cmd0(name_tokens, debug, cmd[0], cwd, path)
   if cmd0 is None:
     debug.write_line('failed to resolve cmd0')
-    return None, 'cmd0 %r not found' % (cmd[0],)
+    return Step(
+        cmd=tuple(cmd),
+        cwd=cwd,
+        env=env,
+        luci_context=step_luci_context,
+        **handles), 'cmd0 %r not found' % (cmd[0],)
   debug.write_line('resolved cmd0: %r' % (cmd0,))
 
   return Step(
@@ -931,12 +936,12 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
     rendered_step, render_err = _render_config(
         debug_log, step_data.name_tokens, step_config, step_runner, step_stream,
         base_environ, start_dir)
+    _print_step(exc_details, rendered_step)
+
     if render_err:
       step_data.exc_result = ExecutionResult(had_exception=True)
       step_data.presentation.step_text = render_err
     else:
-      _print_step(exc_details, rendered_step)
-
       debug_log.write_line('Executing step')
       try:
         step_data.exc_result = step_runner.run(
@@ -972,6 +977,8 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
     exc_details.write_line('Step timed out.')
   if step_data.exc_result.had_exception:
     exc_details.write_line('Step had exception.')
+    for line in traceback.format_exc().splitlines():
+      debug_log.write_line(line)
   if step_data.exc_result.was_cancelled:
     exc_details.write_line('Step was canceled.')
   exc_details.close()
