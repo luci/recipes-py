@@ -22,6 +22,7 @@ LOG_URL = BASE_URL+'/+log/main/%s?format=JSON&n=1'
 TAR_URL = BASE_URL+'/+archive/%s/%s.tar.gz'
 
 SUB_PATHS = [
+  'analysis/proto',
   'buildbucket/proto',
   'common/bq/pb',
   'common/proto',
