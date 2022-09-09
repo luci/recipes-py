@@ -936,7 +936,8 @@ def _run_step(debug_log, step_data, step_stream, step_runner,
     rendered_step, render_err = _render_config(
         debug_log, step_data.name_tokens, step_config, step_runner, step_stream,
         base_environ, start_dir)
-    _print_step(exc_details, rendered_step)
+    if rendered_step is not None:
+      _print_step(exc_details, rendered_step)
 
     if render_err:
       step_data.exc_result = ExecutionResult(had_exception=True)
@@ -1022,7 +1023,7 @@ def _print_step(execution_log, step):
   Intended to be similar to the information that Buildbot prints at the
   beginning of each non-annotator step.
   """
-  assert isinstance(step, Step)
+  assert isinstance(step, Step), 'expected Step, got {}'.format(step)
 
   execution_log.write_line('Executing command [')
   for arg in step.cmd:
