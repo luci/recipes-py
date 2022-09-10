@@ -758,11 +758,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 API for interacting with cas client.
 
-#### **class [CasApi](/recipe_modules/cas/api.py#10)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
+#### **class [CasApi](/recipe_modules/cas/api.py#12)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 A module for interacting with cas client.
 
-&mdash; **def [archive](/recipe_modules/cas/api.py#94)(self, step_name, root, \*paths, \*\*kwargs):**
+&mdash; **def [archive](/recipe_modules/cas/api.py#106)(self, step_name, root, \*paths, \*\*kwargs):**
 
 Archives given paths to a cas server.
 
@@ -779,7 +779,7 @@ Args:
 Returns:
   digest (str): digest of uploaded root directory.
 
-&mdash; **def [download](/recipe_modules/cas/api.py#65)(self, step_name, digest, output_dir):**
+&mdash; **def [download](/recipe_modules/cas/api.py#77)(self, step_name, digest, output_dir):**
 
 Downloads a directory tree from a cas server.
 
@@ -789,11 +789,15 @@ Args:
   * digest (str): the digest of a cas tree.
   * output_dir (Path): path to an output directory.
 
-&emsp; **@property**<br>&mdash; **def [instance](/recipe_modules/cas/api.py#20)(self):**
+&emsp; **@property**<br>&mdash; **def [instance](/recipe_modules/cas/api.py#22)(self):**
 
-&mdash; **def [viewer\_url](/recipe_modules/cas/api.py#85)(self, digest):**
+&mdash; **def [viewer\_url](/recipe_modules/cas/api.py#97)(self, digest):**
 
 Return URL of cas viewer.
+
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [with\_instance](/recipe_modules/cas/api.py#37)(self, instance):**
+
+Sets the CAS instance while in context, then reverts it.
 ### *recipe_modules* / [cas\_input](/recipe_modules/cas_input)
 
 [DEPS](/recipe_modules/cas_input/__init__.py#9): [cas](#recipe_modules-cas), [path](#recipe_modules-path)

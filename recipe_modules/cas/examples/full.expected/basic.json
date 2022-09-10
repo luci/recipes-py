@@ -131,7 +131,7 @@
       "[START_DIR]/cipd_tool/infra/tools/luci/cas/git_revision%3Amock_infra_git_revision/cas",
       "archive",
       "-cas-instance",
-      "projects/example-cas-server/instances/default_instance",
+      "projects/other-cas-server/instances/instance",
       "-dump-digest",
       "/path/to/tmp/",
       "-log-level",
@@ -142,7 +142,7 @@
     "infra_step": true,
     "name": "archive directory",
     "~followup_annotations": [
-      "@@@STEP_LINK@CAS UI@https://cas-viewer.appspot.com/projects/example-cas-server/instances/default_instance/blobs/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855/0/tree@@@"
+      "@@@STEP_LINK@CAS UI@https://cas-viewer.appspot.com/projects/other-cas-server/instances/instance/blobs/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855/0/tree@@@"
     ]
   },
   {

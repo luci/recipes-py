@@ -4,6 +4,8 @@
 
 """API for interacting with cas client."""
 
+import contextlib
+
 from recipe_engine import recipe_api
 
 
@@ -31,6 +33,16 @@ class CasApi(recipe_api.RecipeApi):
     self._instance = 'projects/%s/instances/default_instance' % project
 
     return self._instance
+
+  @contextlib.contextmanager
+  def with_instance(self, instance):
+    """Sets the CAS instance while in context, then reverts it."""
+    previous_instance = self._instance
+    try:
+      self._instance = instance
+      yield
+    finally:
+      self._instance = previous_instance
 
   @property
   def _version(self):
