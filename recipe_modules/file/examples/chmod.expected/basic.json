@@ -1,0 +1,57 @@
+[
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "abcd",
+      "file.txt"
+    ],
+    "infra_step": true,
+    "name": "Writing text to file.txt",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@file.txt@abcd@@@",
+      "@@@STEP_LOG_END@file.txt@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "chmod",
+      "file.txt",
+      "--mode",
+      "511"
+    ],
+    "infra_step": true,
+    "name": "Changing file permissions for file.txt"
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "chmod",
+      "non-existent-file.txt",
+      "--mode",
+      "511"
+    ],
+    "infra_step": true,
+    "name": "File does not exist",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@file command encountered system error ENOENT@@@",
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]

@@ -265,6 +265,15 @@ def main(args):
   subparser.add_argument('source', help='A path to remove.')
   subparser.set_defaults(func=lambda opts: _RmTree(opts.source))
 
+  # Subcommand: chmod
+  subparser = subparsers.add_parser('chmod', help='Run chmod on a file.')
+  subparser.add_argument('path', help='A path to run chmod on.')
+  subparser.add_argument(
+      '--mode',
+      help='The octal mode of the file or directory.',
+      type=lambda s: int(s, 8))
+  subparser.set_defaults(func=lambda opts: os.chmod(opts.path, opts.mode))
+
   # Subcommand: rmcontents
   subparser = subparsers.add_parser('rmcontents',
       help='Recursively remove the contents of a directory.')

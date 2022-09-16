@@ -164,6 +164,19 @@ class FileApi(recipe_api.RecipeApi):
     self._run(name, ['copytree'] + args + [source, dest])
     self.m.path.mock_copy_paths(source, dest)
 
+  def chmod(self, name, path, mode):
+    """Set the access mode for a file or directory.
+
+    Args:
+      * name (str): The name of the step.
+      * path (str): The path of the file or directory.
+      * mode (str): The access mode in octal.
+
+    Raises: file.Error
+    """
+    self.m.path.assert_absolute(path)
+    self._run(name, ['chmod', path, '--mode', mode])
+
   def move(self, name, source, dest):
     """Moves a file or directory.
 
