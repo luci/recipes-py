@@ -414,10 +414,13 @@ def main(args):
 
     if args.dump_timing_info:
       for name, r in iteritems(ret._asdict()):
-        for test, result in r.test_results.iteritems():
+        for test, result in iteritems(r.test_results):
           as_string = json_format.MessageToJson(result.duration)
+          line = name + '|' + test
+          if _PY2:
+            line = line.encode('utf-8', errors='replace')
           args.dump_timing_info.write('%s\t%s\n' % (
-              (name + '|' + test).encode('utf-8', errors='replace'),
+              line,
               # Durations are encoded like "0.23s". We just want the raw number
               # to be put into the file, so skip the first and last quote, and
               # the 's'.
