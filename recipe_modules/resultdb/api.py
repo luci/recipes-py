@@ -11,6 +11,7 @@ import six
 
 from future.utils import iteritems
 
+from google.protobuf import field_mask_pb2
 from google.protobuf import json_format
 from google.protobuf import timestamp_pb2
 from recipe_engine import recipe_api
@@ -18,6 +19,7 @@ from recipe_engine import recipe_api
 from PB.go.chromium.org.luci.resultdb.proto.v1 import artifact
 from PB.go.chromium.org.luci.resultdb.proto.v1 import common as common_v1
 from PB.go.chromium.org.luci.resultdb.proto.v1 import invocation as invocation_pb2
+from PB.go.chromium.org.luci.resultdb.proto.v1 import predicate
 from PB.go.chromium.org.luci.resultdb.proto.v1 import recorder
 from PB.go.chromium.org.luci.resultdb.proto.v1 import resultdb
 
@@ -398,6 +400,68 @@ class ResultDBAPI(recipe_api.RecipeApi):
     return json_format.ParseDict(
         res,
         recorder.BatchCreateArtifactsResponse(),
+        ignore_unknown_fields=True)
+
+  def query_test_results(self,
+                         invocations,
+                         test_id_regexp=None,
+                         variant_predicate=None,
+                         field_mask_paths=None,
+                         page_size=100,
+                         page_token=None,
+                         step_name=None):
+    """Retrieve test results from an invocation, recursively.
+
+    Makes a call to QueryTestResults rpc. Returns a list of test results for the
+    invocations and matching the given filters.
+
+    Args:
+      invocations (list of str): retrieve the test results included in these
+        invocations.
+      test_id_regexp (str): the subset of test ids to request history for.
+        Default to None.
+      variant_predicate (resultdb.proto.v1.predicate.VariantPredicate):
+        the subset of test variants to request history for. Defaults to None,
+        but specifying will improve runtime.
+      field_mask_paths (list of str): test result fields in the response.
+        Test result name will always be included regardless of this param value.
+      page_size (int): the maximum number of variants to return. The service may
+        return fewer than this value. The maximum value is 1000; values above
+        1000 will be coerced to 1000. Defaults to 100.
+      page_token (str): for instances in which the results span multiple pages,
+        each response will contain a page token for the next page, which can be
+        passed in to the next request. Defaults to None, which returns the first
+        page.
+      step_name (str): name of the step.
+
+    Returns:
+      A QueryTestResultsResponse proto message with test_results and
+      next_page_token.
+
+      For value format, see [`QueryTestResultsResponse` message]
+      (https://bit.ly/3dsChbo)
+    """
+
+    req = resultdb.QueryTestResultsRequest(
+        invocations=invocations,
+        predicate=predicate.TestResultPredicate(
+            test_id_regexp=test_id_regexp,
+            variant=variant_predicate,
+        ),
+        page_size=page_size,
+        page_token=page_token,
+        read_mask=field_mask_pb2.FieldMask(paths=field_mask_paths),
+    )
+
+    res = self._rpc(step_name or 'query_test_results',
+                    'luci.resultdb.v1.ResultDB',
+                    'QueryTestResults',
+                    req=json_format.MessageToDict(req))
+
+    return json_format.ParseDict(
+        res,
+        resultdb.QueryTestResultsResponse(),
+        # Do not fail the build because recipe's proto copy is stale.
         ignore_unknown_fields=True)
 
   ##############################################################################
