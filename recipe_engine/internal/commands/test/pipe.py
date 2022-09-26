@@ -26,19 +26,38 @@ def read_message(in_file, msg_class):
     * msg_class (google.protobuf.Message subclass) - The generated proto Message
       to decode from the stream.
 
-  Returns None (on EOF/partial read) or an instance of msg_class.
+  Returns an instance of msg_class.
+  Raises EOFError on EOF/partial read from in_file
   Raises any error that msg_class.ParseFromString could raise.
   """
-  raw_size = in_file.read(4)
-  if raw_size is None or len(raw_size) != 4:
-    return None
+  def _read(size):
+    """Reads size bytes from in_file.
+
+    If in_file is buffered, it will keep reading until there is either no data
+      left, or it has read size bytes.
+
+    Raises:
+      EOFError: EOF/partial read from in_file
+    """
+    data = in_file.read(size)
+    while len(data) < size:
+      new_data = in_file.read(size-len(data))
+      if not new_data:
+        break
+      data += new_data
+
+    if data is None or len(data) != size:
+      raise EOFError('reached EOF and did not get all data requested')
+
+    return data
+
+  raw_size = _read(4)
 
   size, = struct.unpack('!L', raw_size)
   if size == 0:
     return None
-  data = in_file.read(size)
-  if data is None or len(data) != size:
-    return None
+
+  data = _read(size)
 
   ret = msg_class()
   ret.ParseFromString(data)
