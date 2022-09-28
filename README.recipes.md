@@ -3106,7 +3106,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#53)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#627)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#633)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -3156,7 +3156,7 @@ Args:
 Returns:
   A list of invocation name strs.
 
-&mdash; **def [get\_test\_result\_history](/recipe_modules/resultdb/api.py#256)(self, realm, test_id_regexp, variant_predicate=None, time_range=None, page_size=10, page_token=None, step_name=None):**
+&mdash; **def [get\_test\_result\_history](/recipe_modules/resultdb/api.py#262)(self, realm, test_id_regexp, variant_predicate=None, time_range=None, page_size=10, page_token=None, step_name=None):**
 
 Receive test results for a given configuration.
 
@@ -3204,7 +3204,7 @@ Args:
 Returns:
   A list of invocation_ids.
 
-&mdash; **def [query](/recipe_modules/resultdb/api.py#188)(self, inv_ids, variants_with_unexpected_results=False, merge=False, limit=None, step_name=None, tr_fields=None):**
+&mdash; **def [query](/recipe_modules/resultdb/api.py#188)(self, inv_ids, variants_with_unexpected_results=False, merge=False, limit=None, step_name=None, tr_fields=None, test_invocations=None):**
 
 Returns test results in the invocations.
 
@@ -3235,10 +3235,14 @@ Args:
   step_name (str): name of the step.
   tr_fields (list of str): test result fields in the response.
     Test result name will always be included regardless of this param value.
+  test_invocations (dict {invocation_id: api.Invocation}): Default test data
+    to be used to simulate the step in tests. The format is the same as
+    what this method returns.
+
 Returns:
   A dict {invocation_id: api.Invocation}.
 
-&mdash; **def [query\_test\_result\_statistics](/recipe_modules/resultdb/api.py#326)(self, invocations=None, step_name=None):**
+&mdash; **def [query\_test\_result\_statistics](/recipe_modules/resultdb/api.py#332)(self, invocations=None, step_name=None):**
 
 Retrieve stats of test results for the given invocations.
 
@@ -3254,7 +3258,7 @@ Returns:
   A QueryTestResultStatisticsResponse proto message with statistics for the
   queried invocations.
 
-&mdash; **def [query\_test\_results](/recipe_modules/resultdb/api.py#405)(self, invocations, test_id_regexp=None, variant_predicate=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
+&mdash; **def [query\_test\_results](/recipe_modules/resultdb/api.py#411)(self, invocations, test_id_regexp=None, variant_predicate=None, field_mask_paths=None, page_size=100, page_token=None, step_name=None):**
 
 Retrieve test results from an invocation, recursively.
 
@@ -3300,7 +3304,7 @@ Args:
 This updates the inclusions of the current invocation specified in the
 LUCI_CONTEXT.
 
-&mdash; **def [upload\_invocation\_artifacts](/recipe_modules/resultdb/api.py#359)(self, artifacts, parent_inv=None, step_name=None):**
+&mdash; **def [upload\_invocation\_artifacts](/recipe_modules/resultdb/api.py#365)(self, artifacts, parent_inv=None, step_name=None):**
 
 Create artifacts with the given content type and contents or gcs_uri.
 
@@ -3320,7 +3324,7 @@ Returns:
   A BatchCreateArtifactsResponse proto message listing the artifacts that
   were created.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#528)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#534)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False):**
 
 Wraps the command with ResultSink.
 

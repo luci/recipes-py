@@ -191,7 +191,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
             merge=False,
             limit=None,
             step_name=None,
-            tr_fields=None):
+            tr_fields=None,
+            test_invocations=None):
     """Returns test results in the invocations.
 
     Most users will be interested only in results of test variants that had
@@ -221,6 +222,10 @@ class ResultDBAPI(recipe_api.RecipeApi):
       step_name (str): name of the step.
       tr_fields (list of str): test result fields in the response.
         Test result name will always be included regardless of this param value.
+      test_invocations (dict {invocation_id: api.Invocation}): Default test data
+        to be used to simulate the step in tests. The format is the same as
+        what this method returns.
+
     Returns:
       A dict {invocation_id: api.Invocation}.
     """
@@ -249,7 +254,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
         args=args,
         step_name=step_name,
         stdout=self.m.raw_io.output_text(add_output_log=True),
-        step_test_data=lambda: self.m.raw_io.test_api.stream_output_text(''),
+        step_test_data=lambda: self.m.raw_io.test_api.stream_output_text(
+            common.serialize(test_invocations or {})),
     )
     return common.deserialize(step_res.stdout)
 
