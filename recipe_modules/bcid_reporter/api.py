@@ -67,7 +67,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
     if stage == "start":
       args.extend(['-pid', self._pid])
 
-    self.m.step('report_stage', args)
+    self.m.step('snoop: report_stage', args)
 
   def report_cipd(self, digest, pkg, iid, server_url=None):
     """Reports cipd digest to local local provenance server.
@@ -96,7 +96,7 @@ class BcidReporterApi(recipe_api.RecipeApi):
     if server_url:
       args.extend(['-backend-url', server_url])
 
-    self.m.step('report_cipd', args)
+    self.m.step('snoop: report_cipd', args)
 
   def report_gcs(self, digest, guri, server_url=None):
     """Reports cipd digest to local local provenance server.
@@ -123,4 +123,4 @@ class BcidReporterApi(recipe_api.RecipeApi):
     if server_url:
       args.extend(['-backend-url', server_url])
 
-    self.m.step('report_gcs', args)
+    self.m.step('snoop: report_gcs', args)
