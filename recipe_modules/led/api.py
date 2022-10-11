@@ -15,6 +15,7 @@ import attr
 from recipe_engine import recipe_api
 from recipe_engine import recipe_test_api
 
+from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb
 from PB.go.chromium.org.luci.led.job import job
 
 
@@ -80,9 +81,16 @@ class LedApi(recipe_api.RecipeApi):
       """
       r = self._result
       if r:
-        if r.cas_user_payload.digest.hash:
-          return "%s/%d" % (r.cas_user_payload.digest.hash,
-                            r.cas_user_payload.digest.size_bytes)
+        agent = r.buildbucket.bbagent_args.build.infra.buildbucket.agent
+        if agent:
+          for d, purpose in agent.purposes.items():
+            if (purpose ==
+                build_pb.BuildInfra.Buildbucket.Agent.PURPOSE_EXE_PAYLOAD):
+              if agent.input.data.get(d):
+                cas = agent.input.data[d].cas
+                if cas:
+                  return "%s/%d" % (cas.digest.hash, cas.digest.size_bytes)
+
 
     def then(self, *cmd):
       """Invoke led, passing it the current `result` data as input.

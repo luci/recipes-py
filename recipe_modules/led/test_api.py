@@ -16,6 +16,7 @@ from recipe_engine.post_process_inputs import Command
 
 
 from PB.go.chromium.org.luci.led.job import job
+from PB.go.chromium.org.luci.buildbucket.proto import build as build_pb
 from PB.go.chromium.org.luci.buildbucket.proto import common
 
 
@@ -362,8 +363,7 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
       if rbhs:
         rbh = rbhs[-1]
         digest, size_bytes = rbh.split('/')
-        build.cas_user_payload.digest.hash = digest
-        build.cas_user_payload.digest.size_bytes = int(size_bytes)
+        _set_cas_user_payload(build, digest, int(size_bytes))
         return
 
       rpkg = cls.get_arg_values(cmd, 'rpkg')
@@ -379,9 +379,17 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
 
     def _edit_recipe_bundle(build, _cmd, cwd):
       # We use the cwd path as a proxy for the recipes contained in that path.
-      build.cas_user_payload.digest.hash = hashlib.sha256(
-          cwd.encode()).hexdigest()
-      build.cas_user_payload.digest.size_bytes = 1337
+      _set_cas_user_payload(
+          build, hashlib.sha256(cwd.encode()).hexdigest(), 1337)
+
+
+    def _set_cas_user_payload(build, hash, size_bytes):
+      agent = build.buildbucket.bbagent_args.build.infra.buildbucket.agent
+      agent.purposes['kitchen-checkout'] = (
+          build_pb.BuildInfra.Buildbucket.Agent.PURPOSE_EXE_PAYLOAD)
+      agent.input.data['kitchen-checkout'].cas.digest.hash = hash
+      agent.input.data['kitchen-checkout'].cas.digest.size_bytes = size_bytes
+
 
     def _edit_cr_cl(build, cmd, _cwd):
       # This mimics the implementation in `led`.

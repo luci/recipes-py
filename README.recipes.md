@@ -2257,7 +2257,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 An interface to call the led tool.
 
-#### **class [LedApi](/recipe_modules/led/api.py#21)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
+#### **class [LedApi](/recipe_modules/led/api.py#22)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
 Interface to the led tool.
 
@@ -2273,19 +2273,19 @@ The main interface this module provides is a direct call to the led binary:
 
 See the led binary for full documentation of commands.
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/led/api.py#158)(self, \*cmd):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/led/api.py#166)(self, \*cmd):**
 
 Runs led with the given arguments. Wraps result in a `LedResult`.
 
-&emsp; **@property**<br>&mdash; **def [cipd\_input](/recipe_modules/led/api.py#150)(self):**
+&emsp; **@property**<br>&mdash; **def [cipd\_input](/recipe_modules/led/api.py#158)(self):**
 
 The versioned CIPD package containing the recipes code being run.
 
 If set, it will be an `InputProperties.CIPDInput` protobuf; otherwise None.
 
-&mdash; **def [initialize](/recipe_modules/led/api.py#112)(self):**
+&mdash; **def [initialize](/recipe_modules/led/api.py#120)(self):**
 
-&mdash; **def [inject\_input\_recipes](/recipe_modules/led/api.py#162)(self, led_result):**
+&mdash; **def [inject\_input\_recipes](/recipe_modules/led/api.py#170)(self, led_result):**
 
 Sets the version of recipes used by led to correspond to the version
 currently being used.
@@ -2297,24 +2297,24 @@ Args:
   * led_result: The `LedResult` whose job.Definition will be passed into the
     edit command.
 
-&emsp; **@property**<br>&mdash; **def [launched\_by\_led](/recipe_modules/led/api.py#128)(self):**
+&emsp; **@property**<br>&mdash; **def [launched\_by\_led](/recipe_modules/led/api.py#136)(self):**
 
 Whether the current build is a led job.
 
-&emsp; **@property**<br>&mdash; **def [rbe\_cas\_input](/recipe_modules/led/api.py#141)(self):**
+&emsp; **@property**<br>&mdash; **def [rbe\_cas\_input](/recipe_modules/led/api.py#149)(self):**
 
 The location of the rbe-cas containing the recipes code being run.
 
 If set, it will be a `swarming.v1.CASReference` protobuf;
 otherwise, None.
 
-&emsp; **@property**<br>&mdash; **def [run\_id](/recipe_modules/led/api.py#133)(self):**
+&emsp; **@property**<br>&mdash; **def [run\_id](/recipe_modules/led/api.py#141)(self):**
 
 A unique string identifier for this led job.
 
 If the current build is *not* a led job, value will be an empty string.
 
-&mdash; **def [trigger\_builder](/recipe_modules/led/api.py#187)(self, project_name, bucket_name, builder_name, properties):**
+&mdash; **def [trigger\_builder](/recipe_modules/led/api.py#195)(self, project_name, bucket_name, builder_name, properties):**
 
 Trigger a builder using led.
 

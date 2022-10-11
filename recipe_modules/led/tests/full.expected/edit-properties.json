@@ -236,6 +236,27 @@
       "@@@STEP_LOG_LINE@proto.output@          \"builder\": \"linux-rel\",@@@",
       "@@@STEP_LOG_LINE@proto.output@          \"project\": \"chromium\"@@@",
       "@@@STEP_LOG_LINE@proto.output@        },@@@",
+      "@@@STEP_LOG_LINE@proto.output@        \"infra\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@          \"buildbucket\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@            \"agent\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@              \"input\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@                \"data\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@                  \"kitchen-checkout\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@                    \"cas\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@                      \"digest\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@                        \"hash\": \"fa83a1e18ca97a45a291c8e7ac538ea0b20574334a1c30efa8328e97ec9d2a3d\",@@@",
+      "@@@STEP_LOG_LINE@proto.output@                        \"size_bytes\": \"1337\"@@@",
+      "@@@STEP_LOG_LINE@proto.output@                      }@@@",
+      "@@@STEP_LOG_LINE@proto.output@                    }@@@",
+      "@@@STEP_LOG_LINE@proto.output@                  }@@@",
+      "@@@STEP_LOG_LINE@proto.output@                }@@@",
+      "@@@STEP_LOG_LINE@proto.output@              },@@@",
+      "@@@STEP_LOG_LINE@proto.output@              \"purposes\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@                \"kitchen-checkout\": \"PURPOSE_EXE_PAYLOAD\"@@@",
+      "@@@STEP_LOG_LINE@proto.output@              }@@@",
+      "@@@STEP_LOG_LINE@proto.output@            }@@@",
+      "@@@STEP_LOG_LINE@proto.output@          }@@@",
+      "@@@STEP_LOG_LINE@proto.output@        },@@@",
       "@@@STEP_LOG_LINE@proto.output@        \"input\": {@@@",
       "@@@STEP_LOG_LINE@proto.output@          \"gerrit_changes\": [@@@",
       "@@@STEP_LOG_LINE@proto.output@            {@@@",
@@ -253,12 +274,6 @@
       "@@@STEP_LOG_LINE@proto.output@      }@@@",
       "@@@STEP_LOG_LINE@proto.output@    },@@@",
       "@@@STEP_LOG_LINE@proto.output@    \"name\": \"foobar\"@@@",
-      "@@@STEP_LOG_LINE@proto.output@  },@@@",
-      "@@@STEP_LOG_LINE@proto.output@  \"cas_user_payload\": {@@@",
-      "@@@STEP_LOG_LINE@proto.output@    \"digest\": {@@@",
-      "@@@STEP_LOG_LINE@proto.output@      \"hash\": \"fa83a1e18ca97a45a291c8e7ac538ea0b20574334a1c30efa8328e97ec9d2a3d\",@@@",
-      "@@@STEP_LOG_LINE@proto.output@      \"size_bytes\": \"1337\"@@@",
-      "@@@STEP_LOG_LINE@proto.output@    }@@@",
       "@@@STEP_LOG_LINE@proto.output@  }@@@",
       "@@@STEP_LOG_LINE@proto.output@}@@@",
       "@@@STEP_LOG_END@proto.output@@@"
@@ -267,7 +282,7 @@
   {
     "cmd": [
       "echo",
-      "{\n  \"buildbucket\": {\n    \"bbagent_args\": {\n      \"build\": {\n        \"builder\": {\n          \"bucket\": \"try\",\n          \"builder\": \"linux-rel\",\n          \"project\": \"chromium\"\n        },\n        \"input\": {\n          \"gerrit_changes\": [\n            {\n              \"change\": \"19\",\n              \"host\": \"fake.url\",\n              \"patchset\": \"2\",\n              \"project\": \"project/other\"\n            }\n          ],\n          \"properties\": {\n            \"prop\": \"val\",\n            \"sloppy\": \"val\"\n          }\n        }\n      }\n    },\n    \"name\": \"foobar\"\n  },\n  \"cas_user_payload\": {\n    \"digest\": {\n      \"hash\": \"fa83a1e18ca97a45a291c8e7ac538ea0b20574334a1c30efa8328e97ec9d2a3d\",\n      \"size_bytes\": \"1337\"\n    }\n  }\n}"
+      "{\n  \"buildbucket\": {\n    \"bbagent_args\": {\n      \"build\": {\n        \"builder\": {\n          \"bucket\": \"try\",\n          \"builder\": \"linux-rel\",\n          \"project\": \"chromium\"\n        },\n        \"infra\": {\n          \"buildbucket\": {\n            \"agent\": {\n              \"input\": {\n                \"data\": {\n                  \"kitchen-checkout\": {\n                    \"cas\": {\n                      \"digest\": {\n                        \"hash\": \"fa83a1e18ca97a45a291c8e7ac538ea0b20574334a1c30efa8328e97ec9d2a3d\",\n                        \"size_bytes\": \"1337\"\n                      }\n                    }\n                  }\n                }\n              },\n              \"purposes\": {\n                \"kitchen-checkout\": \"PURPOSE_EXE_PAYLOAD\"\n              }\n            }\n          }\n        },\n        \"input\": {\n          \"gerrit_changes\": [\n            {\n              \"change\": \"19\",\n              \"host\": \"fake.url\",\n              \"patchset\": \"2\",\n              \"project\": \"project/other\"\n            }\n          ],\n          \"properties\": {\n            \"prop\": \"val\",\n            \"sloppy\": \"val\"\n          }\n        }\n      }\n    },\n    \"name\": \"foobar\"\n  }\n}"
     ],
     "name": "print pre-launch"
   },
@@ -284,7 +299,7 @@
       "launch"
     ],
     "name": "led launch",
-    "stdin": "{\n  \"buildbucket\": {\n    \"bbagent_args\": {\n      \"build\": {\n        \"builder\": {\n          \"bucket\": \"try\",\n          \"builder\": \"linux-rel\",\n          \"project\": \"chromium\"\n        },\n        \"input\": {\n          \"gerrit_changes\": [\n            {\n              \"change\": \"19\",\n              \"host\": \"fake.url\",\n              \"patchset\": \"2\",\n              \"project\": \"project/other\"\n            }\n          ],\n          \"properties\": {\n            \"prop\": \"val\",\n            \"sloppy\": \"val\"\n          }\n        }\n      }\n    },\n    \"name\": \"foobar\"\n  },\n  \"cas_user_payload\": {\n    \"digest\": {\n      \"hash\": \"fa83a1e18ca97a45a291c8e7ac538ea0b20574334a1c30efa8328e97ec9d2a3d\",\n      \"size_bytes\": \"1337\"\n    }\n  }\n}",
+    "stdin": "{\n  \"buildbucket\": {\n    \"bbagent_args\": {\n      \"build\": {\n        \"builder\": {\n          \"bucket\": \"try\",\n          \"builder\": \"linux-rel\",\n          \"project\": \"chromium\"\n        },\n        \"infra\": {\n          \"buildbucket\": {\n            \"agent\": {\n              \"input\": {\n                \"data\": {\n                  \"kitchen-checkout\": {\n                    \"cas\": {\n                      \"digest\": {\n                        \"hash\": \"fa83a1e18ca97a45a291c8e7ac538ea0b20574334a1c30efa8328e97ec9d2a3d\",\n                        \"size_bytes\": \"1337\"\n                      }\n                    }\n                  }\n                }\n              },\n              \"purposes\": {\n                \"kitchen-checkout\": \"PURPOSE_EXE_PAYLOAD\"\n              }\n            }\n          }\n        },\n        \"input\": {\n          \"gerrit_changes\": [\n            {\n              \"change\": \"19\",\n              \"host\": \"fake.url\",\n              \"patchset\": \"2\",\n              \"project\": \"project/other\"\n            }\n          ],\n          \"properties\": {\n            \"prop\": \"val\",\n            \"sloppy\": \"val\"\n          }\n        }\n      }\n    },\n    \"name\": \"foobar\"\n  }\n}",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"swarming\": {@@@",
