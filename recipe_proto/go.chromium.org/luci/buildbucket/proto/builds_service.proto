@@ -8,6 +8,7 @@ package buildbucket.v2;
 
 option go_package = "go.chromium.org/luci/buildbucket/proto;buildbucketpb";
 
+import "google/api/field_behavior.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/struct.proto";
@@ -16,6 +17,7 @@ import "go.chromium.org/luci/buildbucket/proto/build.proto";
 import "go.chromium.org/luci/buildbucket/proto/builder_common.proto";
 import "go.chromium.org/luci/buildbucket/proto/common.proto";
 import "go.chromium.org/luci/buildbucket/proto/notification.proto";
+import "go.chromium.org/luci/buildbucket/proto/task.proto";
 import "go.chromium.org/luci/common/proto/structmask/structmask.proto";
 
 // Manages builds.
@@ -88,11 +90,30 @@ service Builds {
   // If build with the given ID already exists, returns ALREADY_EXISTS
   // error code.
   rpc CreateBuild(CreateBuildRequest) returns (Build) {};
+
+  // Synthesizes a build proto.
+  //
+  // This RPC is exclusively for generating led builds.
+  rpc SynthesizeBuild(SynthesizeBuildRequest) returns (Build) {};
+
+  // UpdateBuildTask allows the Backend to preemptively update the
+  // status of the task (e.g. if it knows that the task has crashed, etc.).
+  //
+  // The Backend must supply the RunTaskRequest.backend_token supplied during
+  // TaskBackend.RunTask() as the header:
+  //
+  //   X-Buildbucket-Backend-Token
+  //
+  // Buildbucket will validate this against the build ID supplied in
+  // the UpdateBuildTaskRequest and verify task ID in the request matches the task
+  // ID associated with the build (if any). It will establish this association if 
+  // the build is not associated with a task yet.
+  rpc UpdateBuildTask(UpdateBuildTaskRequest) returns (Task) {};
 }
 
-// A request message for GetBuild rpc.
+// A request message for GetBuild RPC.
 message GetBuildRequest {
-  // Build id.
+  // Build ID.
   // Mutually exclusive with builder and number.
   int64 id = 1;
 
@@ -123,7 +144,7 @@ message GetBuildRequest {
   BuildMask mask = 101;
 }
 
-// A request message for SearchBuilds rpc.
+// A request message for SearchBuilds RPC.
 message SearchBuildsRequest {
   // Returned builds must satisfy this predicate. Required.
   BuildPredicate predicate = 1;
@@ -154,11 +175,11 @@ message SearchBuildsRequest {
   string page_token = 102;
 }
 
-// A response message for SearchBuilds rpc.
+// A response message for SearchBuilds RPC.
 message SearchBuildsResponse {
   // Search results.
   //
-  // Ordered by build id, descending. Ids are monotonically decreasing, so in
+  // Ordered by build ID, descending. IDs are monotonically decreasing, so in
   // other words the order is newest-to-oldest.
   repeated Build builds = 1;
 
@@ -166,7 +187,7 @@ message SearchBuildsResponse {
   string next_page_token = 100;
 }
 
-// A request message for Batch rpc.
+// A request message for Batch RPC.
 message BatchRequest {
 
   // One request in a batch.
@@ -189,7 +210,7 @@ message BatchRequest {
   repeated Request requests = 1;
 }
 
-// A response message for Batch rpc.
+// A response message for Batch RPC.
 message BatchResponse {
 
   // Response a BatchRequest.Response.
@@ -209,7 +230,7 @@ message BatchResponse {
   repeated Response responses = 1;
 }
 
-// A request message for UpdateBuild rpc.
+// A request message for UpdateBuild RPC.
 message UpdateBuildRequest {
   // Build to update, with new field values.
   Build build = 1;
@@ -244,7 +265,7 @@ message UpdateBuildRequest {
   BuildMask mask = 101;
 }
 
-// A request message for ScheduleBuild rpc.
+// A request message for ScheduleBuild RPC.
 //
 // Next ID: 22.
 message ScheduleBuildRequest {
@@ -458,7 +479,7 @@ message ScheduleBuildRequest {
   Trinary can_outlive_parent = 21;
 }
 
-// A request message for CancelBuild rpc.
+// A request message for CancelBuild RPC.
 message CancelBuildRequest {
   // ID of the build to cancel.
   int64 id = 1;
@@ -478,10 +499,10 @@ message CancelBuildRequest {
   BuildMask mask = 101;
 }
 
-// A request message for CreateBuild rpc.
+// A request message for CreateBuild RPC.
 message CreateBuildRequest {
   // The Build to be created.
-  Build build = 1;
+  Build build = 1  [(google.api.field_behavior) = REQUIRED];
 
   // A unique identifier for this request.
   // A random UUID is recommended.
@@ -493,6 +514,17 @@ message CreateBuildRequest {
   // If not set, the default mask is used, see Build message comments for the
   // list of fields returned by default.
   BuildMask mask = 3;
+}
+
+// A request message for SynthesizeBuild RPC.
+message SynthesizeBuildRequest {
+  // ID of a build to use as the template.
+  // Mutually exclusive with builder.
+  int64 template_build_id = 1;
+
+  // Value for Build.builder. See its comments.
+  // Required, unless template_build_id is specified.
+  BuilderID builder = 2;
 }
 
 // Defines a subset of Build fields and properties to return.
@@ -604,7 +636,7 @@ message BuildPredicate {
   //   considered to be available.
   repeated string experiments = 11;
 
-  // A build id.
+  // A build ID.
   //
   // Returned builds will be descendants of this build (e.g. "100" means
   // "any build transitively scheduled starting from build 100").
@@ -612,7 +644,7 @@ message BuildPredicate {
   // Mutually exclusive with `child_of`.
   int64 descendant_of = 12;
 
-  // A build id.
+  // A build ID.
   //
   // Returned builds will be only the immediate children of this build.
   //
@@ -626,4 +658,12 @@ message BuildRange {
   int64 start_build_id = 1;
   // Inclusive upper (more recent build) boundary. Optional.
   int64 end_build_id = 2;
+}
+
+message UpdateBuildTaskRequest {
+  // A build ID.
+  string build_id = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Task
+  Task task = 2 [(google.api.field_behavior) = REQUIRED];
 }

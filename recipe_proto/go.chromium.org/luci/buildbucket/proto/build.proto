@@ -22,13 +22,15 @@ import "google/api/field_behavior.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
+import "go.chromium.org/luci/buildbucket/proto/build_field_visibility.proto";
 import "go.chromium.org/luci/buildbucket/proto/builder_common.proto";
 import "go.chromium.org/luci/buildbucket/proto/common.proto";
+import "go.chromium.org/luci/buildbucket/proto/field_option.proto";
 import "go.chromium.org/luci/buildbucket/proto/step.proto";
 import "go.chromium.org/luci/buildbucket/proto/task.proto";
 import "go.chromium.org/luci/swarming/proto/api/swarming.proto";
 
-// A single build, identified by an int64 id.
+// A single build, identified by an int64 ID.
 // Belongs to a builder.
 //
 // RPC: see Builds service for build creation and retrieval.
@@ -64,7 +66,7 @@ message Build {
     //
     // V1 equivalent: supersedes "revision" property and "buildset"
     // tag that starts with "commit/gitiles/".
-    GitilesCommit gitiles_commit = 2;
+    GitilesCommit gitiles_commit = 2 [ (visible_with) = BUILDS_GET_LIMITED_PERMISSION ];
 
     // Gerrit patchsets to run against.
     // Usually present in tryjobs, set by CQ, Gerrit, git-cl-try.
@@ -72,7 +74,7 @@ message Build {
     //
     // V1 equivalent: supersedes patch_* properties and "buildset"
     // tag that starts with "patch/gerrit/".
-    repeated GerritChange gerrit_changes = 3;
+    repeated GerritChange gerrit_changes = 3 [ (visible_with) = BUILDS_GET_LIMITED_PERMISSION ];
 
     // DEPRECATED
     //
@@ -128,13 +130,15 @@ message Build {
 
   // Identifier of the build, unique per LUCI deployment.
   // IDs are monotonically decreasing.
-  int64 id = 1;
+  int64 id = 1 [ (google.api.field_behavior) = OUTPUT_ONLY,
+                 (visible_with) = BUILDS_LIST_PERMISSION ];
 
   // Required. The builder this build belongs to.
   //
   // Tuple (builder.project, builder.bucket) defines build ACL
   // which may change after build has ended.
-  BuilderID builder = 2;
+  BuilderID builder = 2 [ (buildbucket.v2.create_build_field_option).field_behavior = REQUIRED,
+                          (visible_with) = BUILDS_GET_LIMITED_PERMISSION ];
 
   // Human-readable identifier of the build with the following properties:
   // - unique within the builder
@@ -152,28 +156,37 @@ message Build {
   // necessarily reflect source-code order. For example, force builds
   // or rebuilds can allocate new, higher, numbers, but build an older-
   // than-HEAD version of the source.
-  int32 number = 3;
+  int32 number = 3 [ (google.api.field_behavior) = OUTPUT_ONLY,
+                     (visible_with) = BUILDS_GET_LIMITED_PERMISSION ];
 
   // Verified LUCI identity that created this build.
-  string created_by = 4;
+  string created_by = 4 [ (google.api.field_behavior) = OUTPUT_ONLY ];
 
   // Verified LUCI identity that canceled this build.
-  string canceled_by = 23;
+  string canceled_by = 23 [ (google.api.field_behavior) = OUTPUT_ONLY ];
 
   // When the build was created.
-  google.protobuf.Timestamp create_time = 6;
+  google.protobuf.Timestamp create_time = 6
+      [ (google.api.field_behavior) = OUTPUT_ONLY,
+        (visible_with) = BUILDS_GET_LIMITED_PERMISSION ];
   // When the build started.
   // Required iff status is STARTED, SUCCESS or FAILURE.
-  google.protobuf.Timestamp start_time = 7;
+  google.protobuf.Timestamp start_time = 7
+      [ (google.api.field_behavior) = OUTPUT_ONLY,
+        (visible_with) = BUILDS_GET_LIMITED_PERMISSION ];
   // When the build ended.
   // Present iff status is terminal.
   // MUST NOT be before start_time.
-  google.protobuf.Timestamp end_time = 8;
+  google.protobuf.Timestamp end_time = 8
+      [ (google.api.field_behavior) = OUTPUT_ONLY,
+        (visible_with) = BUILDS_GET_LIMITED_PERMISSION ];
   // When the build was most recently updated.
   //
   // RPC: can be > end_time if, e.g. new tags were attached to a completed
   // build.
-  google.protobuf.Timestamp update_time = 9;
+  google.protobuf.Timestamp update_time = 9
+      [ (google.api.field_behavior) = OUTPUT_ONLY,
+        (visible_with) = BUILDS_GET_LIMITED_PERMISSION ];
   // When the cancel process of the build started.
   // Note it's not the time that the cancellation completed, which would be
   // tracked by end_time.
@@ -200,10 +213,12 @@ message Build {
   // interrupt handlers. There is a bug on file (crbug.com/1311821)
   // which we plan to implement at some point as a mitigation for this.
   //
-  //Additionally, the Buildbucket service itself will launch an asynchronous
-  // task to terminate the build via the backend API (e.g. Swarming cancelation)
+  // Additionally, the Buildbucket service itself will launch an asynchronous
+  // task to terminate the build via the backend API (e.g. Swarming cancellation)
   // if bbagent cannot successfully terminate the exe in time.
-  google.protobuf.Timestamp cancel_time = 32;
+  google.protobuf.Timestamp cancel_time = 32
+      [ (google.api.field_behavior) = OUTPUT_ONLY,
+        (visible_with) = BUILDS_GET_LIMITED_PERMISSION ];
 
   // Status of the build.
   // Must be specified, i.e. not STATUS_UNSPECIFIED.
@@ -211,7 +226,8 @@ message Build {
   // RPC: Responses have most current status.
   //
   // BigQuery: Final status of the build. Cannot be SCHEDULED or STARTED.
-  Status status = 12;
+  Status status = 12 [ (buildbucket.v2.create_build_field_option).field_behavior = OUTPUT_ONLY,
+                       (visible_with) = BUILDS_LIST_PERMISSION ];
 
   // Human-readable summary of the build in Markdown format
   // (https://spec.commonmark.org/0.28/).
@@ -219,20 +235,22 @@ message Build {
   // Up to 4 KB.
   //
   // BigQuery: excluded from rows.
-  string summary_markdown = 20;
+  string summary_markdown = 20 [ (buildbucket.v2.create_build_field_option).field_behavior = OUTPUT_ONLY ];
 
   // If NO, then the build status SHOULD NOT be used to assess correctness of
   // the input gitiles_commit or gerrit_changes.
   // For example, if a pre-submit build has failed, CQ MAY still land the CL.
   // For example, if a post-submit build has failed, CLs MAY continue landing.
-  Trinary critical = 21;
+  Trinary critical = 21 [ (visible_with) = BUILDS_GET_LIMITED_PERMISSION ];
 
   // Machine-readable details of the current status.
   // Human-readable status reason is available in summary_markdown.
-  StatusDetails status_details = 22;
+  StatusDetails status_details = 22
+      [ (buildbucket.v2.create_build_field_option).field_behavior = OUTPUT_ONLY,
+        (visible_with) = BUILDS_LIST_PERMISSION ];
 
   // Input to the build executable.
-  Input input = 15;
+  Input input = 15 [ (buildbucket.v2.create_build_field_option).field_behavior = REQUIRED ];
 
   // Output of the build executable.
   // SHOULD depend only on input field and NOT other fields.
@@ -240,7 +258,7 @@ message Build {
   //
   // RPC: By default, this field is excluded from responses.
   // Updated while the build is running and finalized when the build ends.
-  Output output = 16;
+  Output output = 16 [ (buildbucket.v2.create_build_field_option).field_behavior = OUTPUT_ONLY ];
 
   // Current list of build steps.
   // Updated as build runs.
@@ -249,12 +267,12 @@ message Build {
   // MUST be unset if build status is SCHEDULED.
   //
   // RPC: By default, this field is excluded from responses.
-  repeated Step steps = 17;
+  repeated Step steps = 17 [ (buildbucket.v2.create_build_field_option).field_behavior = OUTPUT_ONLY ];
 
   // Build infrastructure used by the build.
   //
   // RPC: By default, this field is excluded from responses.
-  BuildInfra infra = 18;
+  BuildInfra infra = 18 [ (buildbucket.v2.create_build_field_option).field_behavior = REQUIRED ];
 
   // Arbitrary annotations for the build.
   // One key may have multiple values, which is why this is not a map<string,string>.
@@ -262,7 +280,7 @@ message Build {
   repeated StringPair tags = 19;
 
   // What to run when the build is ready to start.
-  Executable exe = 24;
+  Executable exe = 24 [ (buildbucket.v2.create_build_field_option).field_behavior = REQUIRED ];
 
   // DEPRECATED
   //
@@ -311,14 +329,16 @@ message Build {
   // cancel it some time after the parent build reaches a terminal status.
   //
   // A build that can outlive its parent can also outlive its parent's ancestors.
-  bool can_outlive_parent = 30;
+  bool can_outlive_parent = 30 [ (visible_with) = BUILDS_LIST_PERMISSION ];
 
-  // Ids of the build’s ancestors. This includes all parents/grandparents/etc.
+  // IDs of the build's ancestors. This includes all parents/grandparents/etc.
   // This is ordered from top-to-bottom so `ancestor_ids[0]` is the root of
   // the builds tree, and `ancestor_ids[-1]` is this build's immediate parent.
   // This does not include any "siblings" at higher levels of the tree, just
   // the direct chain of ancestors from root to this build.
-  repeated int64 ancestor_ids = 31 [(google.api.field_behavior) = OUTPUT_ONLY];
+  repeated int64 ancestor_ids = 31 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (visible_with) = BUILDS_LIST_PERMISSION ];
 }
 
 message InputDataRef {
@@ -359,7 +379,7 @@ message InputDataRef {
   // Subdirectories relative to the root of `ref` which should be set as a prefix to
   // the $PATH variable.
   //
-  // A substitude of `env_prefixes` in SwarmingRpcsTaskProperties field -
+  // A substitute of `env_prefixes` in SwarmingRpcsTaskProperties field -
   // https://chromium.googlesource.com/infra/luci/luci-go/+/0048a84944e872776fba3542aa96d5943ae64bab/common/api/swarming/swarming/v1/swarming-gen.go#1495
   repeated string on_path = 3;
 
@@ -440,7 +460,7 @@ message BuildInfra {
           //
           // Will be overwritten at CreateBuild time, should be left empty
           // when creating a new Build.
-          map<string, string> resolved_instances = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+          map<string, string> resolved_instances = 4 [ (google.api.field_behavior) = OUTPUT_ONLY ];
         }
 
         oneof data_type {
@@ -451,7 +471,7 @@ message BuildInfra {
         // platform -> details.
       }
       message Input {
-        // maps relative-to-root directory to the data
+        // Maps relative-to-root directory to the data.
         //
         // For now, data is only allowed at the 'leaves', e.g. you cannot
         // specify data at "a/b/c" and "a/b" (but "a/b/c" and "a/q" would be OK).
@@ -462,7 +482,7 @@ message BuildInfra {
         map<string, InputDataRef> data = 1;
       }
       message Output {
-        // maps relative-to-root directory to the fully-resolved ref.
+        // Maps relative-to-root directory to the fully-resolved ref.
         //
         // This will always have 1:1 mapping to Agent.Input.data
         map<string, ResolvedDataRef> resolved_data = 1;
@@ -495,9 +515,9 @@ message BuildInfra {
       // Currently, the new BBagent flow merges all inputDataRef-level `on_path`
       // values and sort. This mimics the same behavior of PyBB backend in order
       // to have the cipd_installation migration to roll out first under a minimal risk.
-      Input input = 1;
-      Output output = 2;
-      Source source = 3;
+      Input input = 1 [ (buildbucket.v2.create_build_field_option).field_behavior = REQUIRED ];
+      Output output = 2 [ (buildbucket.v2.create_build_field_option).field_behavior = OUTPUT_ONLY ];
+      Source source = 3 [ (buildbucket.v2.create_build_field_option).field_behavior = REQUIRED ];
 
       enum Purpose {
         // No categorized/known purpose.
@@ -539,7 +559,7 @@ message BuildInfra {
     repeated RequestedDimension requested_dimensions = 6;
 
     // Buildbucket hostname, e.g. "cr-buildbucket.appspot.com".
-    string hostname = 7;
+    string hostname = 7 [ (google.api.field_behavior) = OUTPUT_ONLY ];
 
     enum ExperimentReason {
       // This value is unused (i.e. if you see this, it's a bug).
@@ -585,7 +605,7 @@ message BuildInfra {
     // DEPRECATED: Use agent.source instead.
     map<string, ResolvedDataRef> agent_executable = 9 [deprecated = true];
 
-    Agent agent = 10;
+    Agent agent = 10 [ (buildbucket.v2.create_build_field_option).field_behavior = REQUIRED ];
 
     repeated string known_public_gerrit_hosts = 11;
   }
@@ -660,11 +680,11 @@ message BuildInfra {
 
     // Swarming hostname, e.g. "chromium-swarm.appspot.com".
     // Populated at the build creation time.
-    string hostname = 1;
+    string hostname = 1 [ (buildbucket.v2.create_build_field_option).field_behavior = REQUIRED ];
 
     // Swarming task id.
     // Not guaranteed to be populated at the build creation time.
-    string task_id = 2;
+    string task_id = 2 [ (google.api.field_behavior) = OUTPUT_ONLY ];
 
     // Swarming run id of the parent task from which this build is triggered.
     // If set, swarming promises to ensure this build won't outlive its parent
@@ -697,7 +717,7 @@ message BuildInfra {
   // LogDog-specific information.
   message LogDog {
     // LogDog hostname, e.g. "logs.chromium.org".
-    string hostname = 1;
+    string hostname = 1 [ (buildbucket.v2.create_build_field_option).field_behavior = REQUIRED ];
 
     // LogDog project, e.g. "chromium".
     // Typically matches Build.builder.project.
@@ -707,12 +727,6 @@ message BuildInfra {
     // build.
     // No other build can have the same prefix.
     // Can be used to discover logs and/or load log contents.
-    //
-    // Can be used to construct URL of a page that displays stdout/stderr of all
-    // steps of a build. In pseudo-JS:
-    //   q_stdout = `${project}/${prefix}/+/**/stdout`;
-    //   q_stderr = `${project}/${prefix}/+/**/stderr`;
-    //   url = `https://${host}/v/?s=${urlquote(q_stdout)}&s=${urlquote(q_stderr)}`;
     string prefix = 3;
   }
 
@@ -728,11 +742,11 @@ message BuildInfra {
   // ResultDB-specific information.
   message ResultDB {
     // Hostname of the ResultDB instance, such as "results.api.cr.dev".
-    string hostname = 1;
+    string hostname = 1 [ (buildbucket.v2.create_build_field_option).field_behavior = REQUIRED ];
 
     // Name of the invocation for results of this build.
     // Typically "invocations/build:<build_id>".
-    string invocation = 2;
+    string invocation = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
   }
 
   // BBAgent-specific information.
@@ -782,8 +796,6 @@ message BuildInfra {
     // By default public hosts are accessed anonymously, and the anonymous access
     // has very low quota. Context needs to know all such hostnames in advance to
     // be able to force authenticated access to them.
-    //
-    // DEPRECATED: Use build.Infra.Buildbucket.KnownPublicGerritHosts instead.
     repeated string known_public_gerrit_hosts = 3 [deprecated = true];
 
     // DEPRECATED: Use build.Infra.Buildbucket.Agent.Input instead.
@@ -801,11 +813,11 @@ message BuildInfra {
     Task task = 2;
   }
 
-  Buildbucket buildbucket = 1;
-  Swarming swarming = 2;
-  LogDog logdog = 3;
+  Buildbucket buildbucket = 1 [ (buildbucket.v2.create_build_field_option).field_behavior = REQUIRED ];
+  Swarming swarming = 2 [ (buildbucket.v2.create_build_field_option).field_behavior = REQUIRED ];
+  LogDog logdog = 3 [ (buildbucket.v2.create_build_field_option).field_behavior = REQUIRED ];
   Recipe recipe = 4;
-  ResultDB resultdb = 5;
+  ResultDB resultdb = 5 [ (visible_with) = BUILDS_GET_LIMITED_PERMISSION ];
   BBAgent bbagent = 6;
   Backend backend = 7;
 }
