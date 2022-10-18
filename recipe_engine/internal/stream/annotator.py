@@ -124,6 +124,9 @@ class AnnotatorStreamEngine(StreamEngine):
     def set_build_property(self, key, value):
       self.output_annotation('SET_BUILD_PROPERTY', key, value)
 
+    def set_step_tag(self, key, value):
+      pass
+
   class StepLogStream(StreamEngine.Stream):
     def __init__(self, step_stream, log_name):
       self._step_stream = step_stream

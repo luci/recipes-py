@@ -2,8 +2,6 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import json
-
 from builtins import str
 from future.utils import iteritems
 
@@ -102,6 +100,12 @@ class StreamEngineInvariants(StreamEngine):
 
     def set_build_property(self, key, value):
       pass
+
+    def set_step_tag(self, key, value):
+      assert isinstance(key, str), 'Step Tag key %s is not a string' % key
+      assert isinstance(value, str), 'Step Tag value %s is not a string' % value
+      assert key != '', 'Step Tag key %s is empty' % key
+      assert value != '', 'Step Tag value %s is empty' % value
 
   class LogStream(StreamEngine.Stream):
     def __init__(self, step_stream, log_name):

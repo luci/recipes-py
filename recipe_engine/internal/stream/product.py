@@ -101,7 +101,7 @@ class ProductStreamEngine(StreamEngine):
     set_build_property = _void_product('set_build_property')
     mark_running = _void_product('mark_running')
     set_summary_markdown = _void_product('set_summary_markdown')
-
+    set_step_tag = _void_product('set_step_tag')
 
   def new_step_stream(self, name_tokens, allow_subannotations,
                       merge_step=False):

@@ -252,6 +252,19 @@ class Step(object):
                    validator=attr.validators.in_((
                      'SUCCESS', 'EXCEPTION', 'FAILURE', 'WARNING', 'CANCELED')))
 
+  # A dictionary containing step tags.
+  # Tag keys SHOULD indicate the domain/system that interprets them, e.g.:
+  #   my_service.category = COMPILE
+  # Rather than
+  #   is_compile = true
+  # This will help contextualize the tag values when looking at a build (who
+  # set this tag? who will interpret this tag?))
+  # The 'luci.' key prefix is reserved for LUCI's own usage.
+  # The Key may not exceed 256 bytes.
+  # The Value may not exceed 1024 bytes.
+  # Key and Value may not be empty.
+  tags = attr.ib(factory=OrderedDict)
+
   # Arbitrary lines that appear in the annotations.
   #
   # The presence of these annotations is an implementation detail and likely to

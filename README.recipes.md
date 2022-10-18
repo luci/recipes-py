@@ -54,7 +54,8 @@
   * [bcid_reporter:examples/usage](#recipes-bcid_reporter_examples_usage) (Python3 ✅)
   * [buildbucket:examples/full](#recipes-buildbucket_examples_full) (Python3 ✅) &mdash; This file is a recipe demonstrating the buildbucket recipe module.
   * [buildbucket:run/multi](#recipes-buildbucket_run_multi) (Python3 ✅) &mdash; Launches multiple builds at the same revision.
-  * [buildbucket:tests/add_tags](#recipes-buildbucket_tests_add_tags) (Python3 ✅)
+  * [buildbucket:tests/add_build_tags](#recipes-buildbucket_tests_add_build_tags) (Python3 ✅)
+  * [buildbucket:tests/add_step_tags](#recipes-buildbucket_tests_add_step_tags) (Python3 ✅)
   * [buildbucket:tests/build](#recipes-buildbucket_tests_build) (Python3 ✅)
   * [buildbucket:tests/cancel](#recipes-buildbucket_tests_cancel) (Python3 ✅)
   * [buildbucket:tests/collect](#recipes-buildbucket_tests_collect) (Python3 ✅)
@@ -4340,13 +4341,20 @@ PYTHON_VERSION_COMPATIBILITY: PY3
 Launches multiple builds at the same revision.
 
 &mdash; **def [RunSteps](/recipe_modules/buildbucket/run/multi.py#31)(api, build_requests, collect_builds):**
-### *recipes* / [buildbucket:tests/add\_tags](/recipe_modules/buildbucket/tests/add_tags.py)
+### *recipes* / [buildbucket:tests/add\_build\_tags](/recipe_modules/buildbucket/tests/add_build_tags.py)
 
-[DEPS](/recipe_modules/buildbucket/tests/add_tags.py#7): [buildbucket](#recipe_modules-buildbucket), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/buildbucket/tests/add_build_tags.py#7): [buildbucket](#recipe_modules-buildbucket), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/add_tags.py#13)(api):**
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/add_build_tags.py#13)(api):**
+### *recipes* / [buildbucket:tests/add\_step\_tags](/recipe_modules/buildbucket/tests/add_step_tags.py)
+
+[DEPS](/recipe_modules/buildbucket/tests/add_step_tags.py#7): [buildbucket](#recipe_modules-buildbucket), [step](#recipe_modules-step)
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+&mdash; **def [RunSteps](/recipe_modules/buildbucket/tests/add_step_tags.py#13)(api):**
 ### *recipes* / [buildbucket:tests/build](/recipe_modules/buildbucket/tests/build.py)
 
 [DEPS](/recipe_modules/buildbucket/tests/build.py#22): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [properties](#recipe_modules-properties), [step](#recipe_modules-step)

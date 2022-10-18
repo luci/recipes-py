@@ -118,6 +118,9 @@ class _SimulationStepStream(StreamEngine.StepStream):
     # mode.
     pass
 
+  def set_step_tag(self, key, value):
+    self._dict_annotation('tags')[key] = value
+
 
 class SimulationStreamEngine(StreamEngine):
   """Stream engine which just records generated commands."""

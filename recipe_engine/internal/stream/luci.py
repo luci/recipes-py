@@ -119,6 +119,7 @@ class LUCIStepStream(StreamEngine.StepStream):
   """
   _step = attr.ib(validator=attr_type(Step))
   _properties = attr.ib(validator=attr_type(Struct))
+  _build_tags = attr.ib(validator=attr_type(RepeatedCompositeFieldContainer))
   _tags = attr.ib(validator=attr_type(RepeatedCompositeFieldContainer))
   _output_gitiles_commit = attr.ib(validator=attr_type(common.GitilesCommit))
   # change_cb is a void function which causes the LUCIStreamEngine to emit the
@@ -296,14 +297,19 @@ class LUCIStepStream(StreamEngine.StepStream):
     # (rather than this tunnel via set_build_property).
     if key == '$recipe_engine/buildbucket/runtime-tags':
       for k, vals in iteritems(json.loads(value)):
-        self._tags.extend([common.StringPair(key=k, value=v) for v in set(vals)
-            if common.StringPair(key=k, value=v) not in self._tags])
+        self._build_tags.extend(
+          [common.StringPair(key=k, value=v) for v in set(vals)
+          if common.StringPair(key=k, value=v) not in self._build_tags])
     elif key == '$recipe_engine/buildbucket/output_gitiles_commit':
       self._output_gitiles_commit.CopyFrom(
           jsonpb.Parse(value, common.GitilesCommit()))
     else:
       self._properties[key] = json.loads(value)
 
+    self._change_cb()
+
+  def set_step_tag(self, key, value):
+    self._tags.add(key=key, value=value)
     self._change_cb()
 
   @property
@@ -462,8 +468,8 @@ class LUCIStreamEngine(StreamEngine):
 
     ret = LUCIStepStream(
         step_pb, self._build_proto.output.properties, self._build_proto.tags,
-        self._build_proto.output.gitiles_commit, self._send, self._bsc,
-        merge_step=merge_step)
+        step_pb.tags, self._build_proto.output.gitiles_commit,
+        self._send, self._bsc, merge_step=merge_step)
     self._send()
     return ret
 

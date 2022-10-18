@@ -9,6 +9,7 @@ import test_env
 
 from recipe_engine.internal.stream.annotator import AnnotatorStreamEngine
 from recipe_engine.internal.stream.invariants import StreamEngineInvariants
+from recipe_engine.internal.stream.simulator import SimulationStreamEngine
 
 
 class StreamTest(test_env.RecipeEngineUnitTest):
@@ -24,7 +25,7 @@ class StreamTest(test_env.RecipeEngineUnitTest):
     with foo.new_log_stream('poem/proposition') as poem:
       poem.write_line('bar, thoust art soest beautiful')
       bar.add_step_text('*blushing*')
-      poem.write_line('thoust makest mine heartst goest thumpitypump..est')
+      poem.write_line('thoust goest thumpitypump..est')
 
     foo.add_step_link(u'read it online!', u'https://foospoemtobar.com/')
     foo.add_step_summary_text('read a killer poem and took a bow')
@@ -34,6 +35,7 @@ class StreamTest(test_env.RecipeEngineUnitTest):
     bar.write_line('bar tries to kiss foo, but foo already left')
     bar.write_line('@@@KISS@foo@@@')
     bar.set_step_status('EXCEPTION', had_timeout=False)
+    bar.set_step_tag(u'tag_key', u'tag_value')
     bar.close()
 
   def _example_annotations(self):
@@ -57,7 +59,7 @@ foo begins to read a poem
 @@@STEP_CURSOR@bar@@@
 @@@STEP_TEXT@*blushing*@@@
 @@@STEP_CURSOR@foo@@@
-@@@STEP_LOG_LINE@poem&#x2f;proposition@thoust makest mine heartst goest thumpitypump..est@@@
+@@@STEP_LOG_LINE@poem&#x2f;proposition@thoust goest thumpitypump..est@@@
 @@@STEP_LOG_END@poem&#x2f;proposition@@@
 @@@STEP_LINK@read it online!@https://foospoemtobar.com/@@@
 @@@STEP_SUMMARY_TEXT@read a killer poem and took a bow@@@
@@ -136,6 +138,12 @@ bar tries to kiss foo, but foo already left
       with self.assertRaises(AssertionError):
         foo.set_step_status('SUCCESS', had_timeout=False)
 
+  def test_set_step_tags(self):
+    with SimulationStreamEngine() as engine:
+      foo = engine.new_step_stream(('foo',), False)
+      foo.set_step_tag("step_key", "step_value")
+      with self.assertRaises(AssertionError):
+        foo.set_step_tag("", "")
 
 if __name__ == '__main__':
   test_env.main()

@@ -144,6 +144,7 @@ class StepPresentation(object):
     self._step_summary_text = ''
     self._step_text = ''
     self._properties = {}
+    self._tags = {}
 
   @property
   def status(self):
@@ -216,6 +217,13 @@ class StepPresentation(object):
     else:
       return copy.deepcopy(self._properties)
 
+  @property
+  def tags(self):
+    if not self._finalized:
+      return self._tags
+    else:
+      return copy.deepcopy(self._tags)
+
   @properties.setter
   def properties(self, val):  # pylint: disable=E0202
     assert not self._finalized, 'Changing finalized step %r' % self._name
@@ -256,6 +264,8 @@ class StepPresentation(object):
       if isinstance(value, message.Message):
         value = json_pb.MessageToDict(value)
       step_stream.set_build_property(key, json.dumps(value, sort_keys=True))
+    for key, value in sorted(iteritems(self._tags)):
+      step_stream.set_step_tag(key, value)
     step_stream.set_step_status(self.status, self.had_timeout)
 
   @staticmethod

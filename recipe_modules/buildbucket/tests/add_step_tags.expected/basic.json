@@ -1,0 +1,16 @@
+[
+  {
+    "cmd": [
+      "echo",
+      "cr-buildbucket.appspot.com"
+    ],
+    "name": "hostname",
+    "tags": {
+      "k1": "v1",
+      "k2": "v2"
+    }
+  },
+  {
+    "name": "$result"
+  }
+]

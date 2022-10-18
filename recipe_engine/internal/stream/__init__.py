@@ -89,6 +89,9 @@ class StreamEngine(object):
       """Only on luciexe."""
       raise NotImplementedError()
 
+    def set_step_tag(self, key, value):
+      pass
+
     def mark_running(self):
       pass
 

@@ -341,9 +341,9 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
     finally:
       shutil.rmtree(scrap, ignore_errors=True)
 
-  def test_add_tags(self):
+  def test_add_build_tags(self):
     final_build = self._test_bbagent(
-        {'recipe': 'buildbucket:tests/add_tags'},
+        {'recipe': 'buildbucket:tests/add_build_tags'},
     )
     self.assertListEqual(
       sorted(final_build['tags'], key=lambda tag: (tag['key'], tag['value'])),
@@ -354,6 +354,20 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
         {'key': 'k2', 'value': 'v2_1'},
       ],
     )
+
+  def test_add_step_tags(self):
+    final_build = self._test_bbagent(
+        {'recipe': 'buildbucket:tests/add_step_tags'},
+    )
+    for step in final_build['steps']:
+      if step["name"] == "hostname":
+        self.assertListEqual(
+          sorted(step.get('tags'), key=lambda tag: (tag['key'], tag['value'])),
+          [
+            {'key': 'k1', 'value': 'v1'},
+            {'key': 'k2', 'value': 'v2'},
+          ],
+        )
 
   def test_output_gitiles(self):
     final_build = self._test_bbagent(
