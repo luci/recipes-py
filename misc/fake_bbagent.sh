@@ -23,6 +23,12 @@
 # This script is responsive to the following environment variables:
 #   * LUCI_GRACE_PERIOD=<number> - Populates LUCI_CONTEXT['deadline']['grace_period']
 #   * LUCI_SOFT_DEADLINE=<number> - Populates LUCI_CONTEXT['deadline']['soft_deadline']
+#   * RECIPES_PY=<dir path> - Directory to the recipes-py directory, in case you
+#     use a different one from chromium's. Default is to auto-detect chromium's
+#     path.
+#   * RECIPES_PY_SCRIPT=<file path> - The file path to the file recipes.py,
+#     which are per-repository. Default is to use the one from the RECIPES_PY
+#     dir.
 #
 # Example:
 #
@@ -37,7 +43,8 @@
 #    EOF
 # [1]: https://chromium.googlesource.com/infra/luci/luci-go/+/master/buildbucket/proto/build.proto
 
-RECIPES_PY="$(realpath "$(git rev-parse --show-toplevel)")"
+RECIPES_PY="${RECIPES_PY:-$(realpath "$(git rev-parse --show-toplevel)")}"
+RECIPES_PY_SCRIPT="${RECIPES_PY_SCRIPT:-${RECIPES_PY}/recipes.py}"
 WD="${WD:-$RECIPES_PY/workdir}"
 
 echo "Clean workdir."
@@ -94,5 +101,5 @@ fi
     run -stdout=name=stdout -stderr=name=stderr               \
     -forward-stdin                                            \
     -chdir="$WD/wd"                                           \
-    python -u "$RECIPES_PY/recipes.py" "$@" -vvv              \
+    python3 -u "${RECIPES_PY_SCRIPT}" "$@" -vvv              \
     luciexe --build-proto-stream-jsonpb "${EXTRA_ARGS[@]}"
