@@ -608,6 +608,32 @@ class BuildbucketApi(recipe_api.RecipeApi):
       pres = step_result.presentation
       pres.links[str(build_title)] = self.build_url(build_id=build.id)
 
+  def list_builders(self, project, bucket, step_name=None):
+    """Lists configured builders in a bucket.
+
+    Args:
+    *   project: The name of the project to list from (e.g. 'chromeos').
+    *   bucket: The name of the bucket to list from (e.g. 'release').
+
+    Returns:
+      A list of builder names, excluding the project and bucket
+      (e.g. 'betty-pi-arc-release-main').
+    """
+
+    args = ['-nopage', '-n', 0, '{}/{}'.format(project, bucket)]
+
+    step_result = self._run_bb(
+        subcommand='builders',
+        step_name=step_name or 'buildbucket.builders',
+        args=args,
+        stdout=self.m.raw_io.output_text(add_output_log=True))
+
+    ret = []
+    for line in step_result.stdout.splitlines():
+      ret.append(line.split('/')[-1])
+
+    return ret
+
   def search(self,
              predicate,
              limit=None,

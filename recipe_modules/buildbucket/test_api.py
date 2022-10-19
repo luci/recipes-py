@@ -309,6 +309,15 @@ class BuildbucketTestApi(recipe_test_api.RecipeTestApi):
     output = "\n".join(lines)
     return self.step_data(step_name, self.m.raw_io.stream_output_text(output))
 
+  def simulated_list_builders(self, builders, step_name=None):
+    """Simulates a buildbucket.builders call."""
+    assert isinstance(builders, list), builders
+    assert all(isinstance(b, str) for b in builders), builders
+
+    step_name = step_name or 'buildbucket.builders'
+    output = "\n".join(builders)
+    return self.step_data(step_name, self.m.raw_io.stream_output_text(output))
+
   def simulated_get(self, build, step_name=None):
     """Simulates a buildbucket.get call."""
     return self._simulated_batch_response(

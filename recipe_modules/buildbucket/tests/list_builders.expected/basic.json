@@ -1,0 +1,24 @@
+[
+  {
+    "cmd": [
+      "bb",
+      "builders",
+      "-host",
+      "cr-buildbucket.appspot.com",
+      "-nopage",
+      "-n",
+      "0",
+      "project/bucket"
+    ],
+    "infra_step": true,
+    "name": "a step",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@raw_io.output_text@builder-1@@@",
+      "@@@STEP_LOG_LINE@raw_io.output_text@builder-2@@@",
+      "@@@STEP_LOG_END@raw_io.output_text@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]
