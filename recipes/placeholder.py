@@ -158,6 +158,7 @@ def GenTests(api):
                     }, Struct()),
                     canceled=True,
                     timeout=True,
+                    tags={'tag_key': 'tag_value'}
                 ),
             ),
             Step(
@@ -168,6 +169,7 @@ def GenTests(api):
                         Step(name='a', fake_step=FakeStep()),
                         Step(name='b', fake_step=FakeStep()),
                     ],
+                    tags={'tag_key': 'tag_value'}
                 ),
             )
           ],
@@ -216,6 +218,7 @@ def GenTests(api):
               name='wait',
               fake_step=FakeStep(
                   duration_secs=10,
+                  tags={'child_tag_key': 'child_tag_value'}
               ),
           )
       ],
