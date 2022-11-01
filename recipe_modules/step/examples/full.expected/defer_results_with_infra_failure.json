@@ -72,7 +72,10 @@
       "echo",
       "hello"
     ],
-    "name": "hello (3)",
+    "name": "hello again",
+    "tags": {
+      "hello.step_classification": "PRINT_MESSAGE"
+    },
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@the reason@The reason@@@",
       "@@@STEP_LOG_LINE@the reason@it failed@@@",

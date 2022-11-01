@@ -71,9 +71,10 @@ def RunSteps(api, bad_return, access_invalid_data, access_deep_invalid_data,
 
   # We can manipulate the step presentation arbitrarily until we run
   # the next step.
-  step_result = api.step('hello', ['echo', 'hello'])
+  step_result = api.step('hello again', ['echo', 'hello'])
   step_result.presentation.status = api.step.EXCEPTION
   step_result.presentation.logs['the reason'] = ['The reason\nit failed']
+  step_result.presentation.tags[u'hello.step_classification'] = u'PRINT_MESSAGE'
 
   # Without a command, a step can be used to present some data from the recipe.
   step_result = api.step('Just print stuff', cmd=None)
@@ -222,3 +223,12 @@ def GenTests(api):
       api.properties(timeout=2) +
       api.step_data('caught timeout', times_out_after=20)
     )
+
+  # Test to see if tags were added to your step(s)
+  yield (
+    api.test('hello again') +
+    api.post_check(lambda check, steps: check(
+      steps['hello again']
+        .tags[u'hello.step_classification'] == u'PRINT_MESSAGE'
+      ))
+  )
