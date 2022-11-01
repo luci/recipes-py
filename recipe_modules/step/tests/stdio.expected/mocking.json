@@ -7,6 +7,14 @@
     "name": "echo"
   },
   {
+    "cmd": [],
+    "name": "mocked stdout"
+  },
+  {
+    "cmd": [],
+    "name": "mocked stderr"
+  },
+  {
     "cmd": [
       "cat"
     ],
@@ -22,7 +30,10 @@
   },
   {
     "cmd": [],
-    "name": "inline mock"
+    "name": "test mock",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@OVERRIDE@@@"
+    ]
   },
   {
     "name": "$result"
