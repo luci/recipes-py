@@ -357,6 +357,10 @@ if sys.version_info.major < 3:
     unicode: doc.Doc.Schema.STRING,
     long: doc.Doc.Schema.NUMBER,
   })
+else:
+  _SIMPLE_TYPE_LOOKUP.update({
+    bytes: doc.Doc.Schema.STRING,
+  })
 
 
 def _inner_type_schema(inner_type):
