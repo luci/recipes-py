@@ -3,6 +3,7 @@
 # that can be found in the LICENSE file.
 
 import inspect
+import sys
 
 from future.utils import iteritems
 
@@ -77,15 +78,19 @@ def invoke_with_properties(callable_obj, all_props, environ, prop_defs,
     The result of calling callable with the filtered properties
     and additional arguments.
   """
+  if sys.version_info.major == 3:
+    getargspec = inspect.getfullargspec
+  else:
+    getargspec = inspect.getargspec
   # To detect when they didn't specify a property that they have as a
   # function argument, list the arguments, through inspection,
   # and then comparing this list to the provided properties. We use a list
   # instead of a dict because getargspec returns a list which we would have to
   # convert to a dictionary, and the benefit of the dictionary is pretty small.
   if inspect.isclass(callable_obj):
-    arg_names = inspect.getargspec(callable_obj.__init__).args
+    arg_names = getargspec(callable_obj.__init__).args
     arg_names.pop(0)  # 'self'
   else:
-    arg_names = inspect.getargspec(callable_obj).args
+    arg_names = getargspec(callable_obj).args
   return _invoke_with_properties(callable_obj, all_props, environ, prop_defs,
                                  arg_names, **additional_args)
