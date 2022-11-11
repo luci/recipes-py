@@ -81,6 +81,7 @@
   * [cq:tests/experimental](#recipes-cq_tests_experimental) (Python3 ✅)
   * [cq:tests/inactive](#recipes-cq_tests_inactive) (Python3 ✅)
   * [cq:tests/mode_of_run](#recipes-cq_tests_mode_of_run) (Python3 ✅)
+  * [cq:tests/owner_is_googler](#recipes-cq_tests_owner_is_googler) (Python3 ✅)
   * [cq:tests/reuse](#recipes-cq_tests_reuse) (Python3 ✅)
   * [cq:tests/triggered_build_ids](#recipes-cq_tests_triggered_build_ids) (Python3 ✅)
   * [engine_tests/bad_subprocess](#recipes-engine_tests_bad_subprocess) (Python3 ✅) &mdash; Tests that daemons that hang on to STDOUT can't cause the engine to hang.
@@ -1449,6 +1450,16 @@ applied or submitted.
 
 Raises:
   CQInactive if CQ is not active for this build.
+
+&emsp; **@property**<br>&mdash; **def [owner\_is\_googler](/recipe_modules/cq/api.py#242)(self):**
+
+Returns whether the Run/Attempt owner is a Googler.
+
+DO NOT USE: this is a temporary workaround for crbug.com/1259887 that is
+supposed to be used by builders in Chrome project only.
+Raises:
+  CQInactive if CQ is not active for this build.
+  ValueError if the builder is not in Chrome project.
 
 &emsp; **@property**<br>&mdash; **def [props\_for\_child\_build](/recipe_modules/cq/api.py#106)(self):**
 
@@ -4553,6 +4564,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipe_modules/cq/tests/mode_of_run.py#14)(api):**
+### *recipes* / [cq:tests/owner\_is\_googler](/recipe_modules/cq/tests/owner_is_googler.py)
+
+[DEPS](/recipe_modules/cq/tests/owner_is_googler.py#9): [assertions](#recipe_modules-assertions), [buildbucket](#recipe_modules-buildbucket), [cq](#recipe_modules-cq), [properties](#recipe_modules-properties)
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+&mdash; **def [RunSteps](/recipe_modules/cq/tests/owner_is_googler.py#17)(api):**
 ### *recipes* / [cq:tests/reuse](/recipe_modules/cq/tests/reuse.py)
 
 [DEPS](/recipe_modules/cq/tests/reuse.py#7): [assertions](#recipe_modules-assertions), [cq](#recipe_modules-cq), [step](#recipe_modules-step)

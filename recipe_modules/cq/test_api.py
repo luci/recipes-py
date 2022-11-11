@@ -17,7 +17,8 @@ class CQTestApi(recipe_test_api.RecipeTestApi):
       self,
       run_mode = None,
       top_level=True,
-      experimental=False):
+      experimental=False,
+      owner_is_googler=False):
     """Simulate a build triggered by CQ."""
     assert isinstance(run_mode, str), '%r (%s)' % (run_mode, type(run_mode))
     input_props = cq_pb2.Input(active=True, run_mode=run_mode)
@@ -28,5 +29,9 @@ class CQTestApi(recipe_test_api.RecipeTestApi):
     assert isinstance(experimental, bool), '%r (%s)' % (
         experimental, type(experimental))
     input_props.experimental = experimental
+
+    assert isinstance(owner_is_googler, bool), '%r (%s)' % (
+        owner_is_googler, type(owner_is_googler))
+    input_props.owner_is_googler = owner_is_googler
 
     return self.m.properties(**{'$recipe_engine/cq': input_props})

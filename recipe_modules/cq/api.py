@@ -239,6 +239,21 @@ class CQApi(recipe_api.RecipeApi):
         cq_pb2.Output.Reuse(mode_regexp=m) for m in modes)
     self._write_output_props()
 
+  @property
+  def owner_is_googler(self):
+    """Returns whether the Run/Attempt owner is a Googler.
+
+    DO NOT USE: this is a temporary workaround for crbug.com/1259887 that is
+    supposed to be used by builders in Chrome project only.
+    Raises:
+      CQInactive if CQ is not active for this build.
+      ValueError if the builder is not in Chrome project.
+    """
+    self._enforce_active()
+    if self.m.buildbucket.build.builder.project != 'chrome':
+      raise ValueError('owner_is_googler can only be called for chrome project')
+    return self._input.owner_is_googler
+
   def _extract_unique_cq_tag(self, suffix):
     key = 'cq_' + suffix
     self._enforce_active()
