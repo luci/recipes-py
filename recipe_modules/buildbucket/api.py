@@ -153,6 +153,16 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return self.build.builder.builder
 
   @property
+  def builder_full_name(self):
+    """Returns the full builder name: {project}/{bucket}/{builder}."""
+    builder = self.build.builder
+    if not self._build.builder.project:
+      raise self.m.step.InfraFailure('The build has no project')
+    if not self._build.builder.bucket:  # pragma: no cover
+      raise self.m.step.InfraFailure('The build has no bucket')
+    return '%s/%s/%s' % (builder.project, builder.bucket, builder.builder)
+
+  @property
   def builder_realm(self):
     """Returns the LUCI realm name of the current build.
 

@@ -50,6 +50,14 @@ def RunSteps(api):
     with api.assertions.assertRaises(api.step.InfraFailure):
       api.buildbucket.builder_realm
 
+  expected_full_name = api.properties.get('expected_full_name')
+  if expected_full_name:
+    api.assertions.assertEqual(api.buildbucket.builder_full_name,
+                               expected_full_name)
+  else:
+    with api.assertions.assertRaises(api.step.InfraFailure):
+      api.buildbucket.builder_full_name
+
 
 def GenTests(api):
 
@@ -79,7 +87,10 @@ def GenTests(api):
   })
 
   yield (
-      case('ci', expected_bucket_v1='luci.test.ci', expected_realm='test:ci')
+      case('ci',
+           expected_bucket_v1='luci.test.ci',
+           expected_realm='test:ci',
+           expected_full_name='test/ci/builder')
       + api.buildbucket.ci_build(
           project='test',
           git_repo='git.example.com/test/repo',
@@ -90,7 +101,8 @@ def GenTests(api):
   yield (
       case('ci with experiment',
            expected_bucket_v1='luci.test.ci',
-           expected_realm='test:ci')
+           expected_realm='test:ci',
+           expected_full_name='test/ci/builder')
       + api.buildbucket.ci_build(
           project='test',
           git_repo='git.example.com/test/repo',
@@ -102,7 +114,10 @@ def GenTests(api):
   )
 
   yield (
-      case('try', expected_bucket_v1='luci.test.try', expected_realm='test:try')
+      case('try',
+           expected_bucket_v1='luci.test.try',
+           expected_realm='test:try',
+           expected_full_name='test/try/builder')
       + api.buildbucket.try_build(
       project='test',
       git_repo='git.example.com/test/repo',
@@ -114,7 +129,8 @@ def GenTests(api):
       case(
           'try with experiment',
           expected_bucket_v1='luci.test.try',
-          expected_realm='test:try')
+          expected_realm='test:try',
+          expected_full_name='test/try/builder')
       + api.buildbucket.try_build(
           project='test',
           git_repo='git.example.com/test/repo',
@@ -130,6 +146,7 @@ def GenTests(api):
           'cron',
           expected_bucket_v1='luci.test.cron',
           expected_realm='test:cron',
+          expected_full_name='test/cron/scanner'
       )
       + api.buildbucket.build(build_pb2.Build(
           id=12484724,
