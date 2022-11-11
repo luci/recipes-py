@@ -169,22 +169,18 @@ message ConfigGroup {
   // mode, CQ will fallback to standard DRY_RUN or FULL_RUN.
   repeated Mode additional_modes = 7;
 
-  // Per-user quota configs for this ConfigGroup.
+  // Per-user limits.
   //
-  // At the time of a Run creation, CV will look for the QuotaPolicy
-  // for the user in the following sequence.
+  // At the time of a Run creation, CV will iterate `user_limits` and apply the
+  // first applicable limit to the Run. If none of the limit(s) are applicable,
+  // CV will apply `user_limits_default` to the run.
+  repeated UserLimit user_limits = 8;
+
+  // Default per-user limit.
   //
-  // 1) The QuotaPolicy with "user:<the_gerrit_user>" in principals.
-  // 2) The first QuotaPolicy, where the gerrit user is a member of any of
-  // the groups specified in the principals.
-  // 3) user_quota_default. If unset, all the users are granted unlimited quota.
-  //
-  // Note that CV will pick the first matching policy, not the first policy with
-  // available quotas. For example, if there is a quota policy specifically for
-  // user:foo, then CV will always pick the quota policy when creating a Run,
-  // whether the policy has available quotas or not.
-  repeated QuotaPolicy user_quotas = 8;
-  QuotaPolicy user_quota_default = 9;
+  // If CV couldn't find an applicable limit from `user_limits`, this limit
+  // will be applied.
+  UserLimit user_limit_default = 9;
 }
 
 // SubmitOptions control how CQ submits CLs.
@@ -322,6 +318,7 @@ message Verifiers {
   Fake fake = 5;
 
 
+  // Next tag: 6.
   message GerritCQAbility {
     // Required. List of chrome-infra-auth groups, whose members are authorized
     // to trigger full CQ runs.
@@ -335,6 +332,12 @@ message Verifiers {
     //
     // Typically, such groups are named "project-<name>-tryjob-access".
     repeated string dry_run_access_list = 2;
+
+    // Optional, but required to use auto-triggered runs on new patchset upload,
+    // it defines a list of chrome-infra-auth groups whose members are
+    // authorized to trigger a new patchset runs. That is, CV will check the
+    // owner of the CL when a new patchset is uploaded against these.
+    repeated string new_patchset_run_access_list = 5;
 
     // Optional. allow_submit_with_open_deps controls how CQ full run behaves
     // when current Gerrit CL has open dependencies (not yet submitted CLs on
@@ -653,7 +656,8 @@ message Verifiers {
       reserved 12, 13; // mode_regexp[_exclude]
 
       // If set, require this builder only if the Run mode matches
-      // one of the modes in this list. Optional.
+      // one of the modes in this list. If unset, it implies that only FULL_RUN
+      // and DRY_RUN are allowed, and temporarily QUICK_DRY_RUN. Optional.
       repeated string mode_allowlist = 14;
     }
 
@@ -771,14 +775,14 @@ enum Toggle {
   NO = 2;
 }
 
-// QuotaPolicy specifies the quota policy limits.
-message QuotaPolicy {
-    // Name of the policy. Must be unique across all the policies
+// UserLimit specifies Run and Tryjob limits per user.
+message UserLimit {
+    // Name of the limit. Must be unique across all the policies
     // with the LUCI project.
     //
-    // Required. Must match regex '^[0-9A-Za-z][0-9A-Za-z\.\-@_+]{0,511}'
+    // Required. Must match regex '^[0-9A-Za-z][0-9A-Za-z\.\-@_+]{0,511}$'
     string name = 1;
-    // Principals to apply the QuotaPolicy to.
+    // Principals to apply the limits to.
     //
     // Each entry can be either an identity string "user:<email>"
     // or a LUCI group reference "group:<name>"
@@ -792,15 +796,14 @@ message QuotaPolicy {
       }
     }
 
-    message RunLimits {
-        // Maximum number of active runs that this policy can have at any
-        // moment.
+    message Run {
+        // Maximum number of active runs that the user can have at any moment.
         //
         // Required. Active Run is a Run that has started but not ended yet.
         Limit max_active = 1;
     }
-    message TryjobLimits {
-        // Maximum number of active tryjobs that this policy can have at any
+    message Tryjob {
+        // Maximum number of active tryjobs that the user can have at any
         // moment.
         //
         // Active tryjob is a tryjob that CV has successfully launched,
@@ -817,6 +820,8 @@ message QuotaPolicy {
         Limit max_active = 1;
     }
 
-    RunLimits run_limits = 5;
-    TryjobLimits tryjob_limits = 6;
+    // Run limits. Required.
+    Run run = 5;
+    // Tryjob limits. Required
+    Tryjob tryjob = 6;
 }
