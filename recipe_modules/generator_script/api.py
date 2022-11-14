@@ -62,10 +62,10 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
       * always_run: a bool which indicates that this step should run, even if
         some previous step failed.
       * outputs_presentation_json: a bool which indicates that this step will
-        emit a presentation json file. If this is True, the cmd will be extended
+        emit a presentation JSON file. If this is True, the cmd will be extended
         with a `--presentation-json /path/to/file.json`. This file will be used
         to update the step's presentation on the build status page. The file
-        will be expected to contain a single json object, with any of the
+        will be expected to contain a single JSON object, with any of the
         following keys:
           * logs: {logname: [lines]} specifies one or more auxiliary logs.
           * links: {link_name: link_content} to add extra links to the step.

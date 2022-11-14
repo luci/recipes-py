@@ -111,7 +111,7 @@ class LedTestApi(recipe_test_api.RecipeTestApi):
       * job_def (job.Definition|None) - The initial job value. If `None`, then
         this marks the builder as non-existent, and the `led get-builder` call
         will be simulated to have an exit code of 1.
-      * build_id (int|None) - The buildbucket build id for the build or None
+      * build_id (int|None) - The buildbucket build ID for the build or None
         to provide the default basis for all get-build calls.
 
     Returns TestData which can be added to a recipe test case.

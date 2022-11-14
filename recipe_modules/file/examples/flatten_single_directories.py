@@ -12,7 +12,7 @@ DEPS = [
 
 def RunSteps(api):
   base = api.path['start_dir'].join('dir')
-  long_dir = base.join('which_has', 'some', 'singlular', 'subdirs')
+  long_dir = base.join('which_has', 'some', 'singular', 'subdirs')
 
   api.file.ensure_directory('make chain of single dirs', long_dir)
 
@@ -21,7 +21,7 @@ def RunSteps(api):
     api.file.truncate('touch %s' % n, long_dir.join(n), 1)
 
   api.file.flatten_single_directories('remove single dirs', base)
-  # to satisfy simulation; run this example for real to get the useful
+  # To satisfy simulation; run this example for real to get the useful
   # assertions below.
   for n in filenames:
     api.path.mock_add_paths(base.join(n))
@@ -33,4 +33,3 @@ def RunSteps(api):
 
 def GenTests(api):
   yield api.test('basic')
-

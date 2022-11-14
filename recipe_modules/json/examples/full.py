@@ -31,7 +31,7 @@ def RunSteps(api):
   api.step('echo_dumps_property', [
     'echo', api.properties.get('example_dumps', '[100]')])
 
-  # Example demonstrating the usage of step_test_data for json stdout.
+  # Example demonstrating the usage of step_test_data for JSON stdout.
   step_result = api.step('echo2', ['echo', '[2, 3, 4]'],
       step_test_data=lambda: api.json.test_api.output_stream([2, 3, 4]),
       stdout=api.json.output())
@@ -40,7 +40,7 @@ def RunSteps(api):
   assert api.json.is_serializable('foo')
   assert not api.json.is_serializable(set(['foo', 'bar', 'baz']))
 
-  # Example demonstrating multiple named json output files.
+  # Example demonstrating multiple named JSON output files.
   program = textwrap.dedent("""
   import json
   import sys
@@ -62,14 +62,14 @@ def RunSteps(api):
 
   example_dict = {'x': 1, 'y': 2}
 
-  # json.input(json_data) expands to a path containing that rendered json
+  # json.input(json_data) expands to a path containing that rendered JSON.
   step_result = api.step('json through',
     ['cat', api.json.input(example_dict)],
     stdout=api.json.output(),
     step_test_data=lambda: api.json.test_api.output_stream(example_dict))
   assert step_result.stdout == example_dict
 
-  # json.read reads a file containing json data.
+  # json.read reads a file containing JSON data.
   leak_path = api.path['tmp_base'].join('temp.json')
   api.step('write json to file',
     ['cat', api.json.input(example_dict)],
@@ -79,7 +79,7 @@ def RunSteps(api):
       step_test_data=lambda: api.json.test_api.output(example_dict))
   assert step_result.json.output == example_dict
 
-  # can leak directly to a file
+  # Can leak directly to a file.
   step_result = api.step('leaking json', [
     'python', api.resource('cool_script.py'),
     '{"x":1,"y":2}',
@@ -87,7 +87,7 @@ def RunSteps(api):
   ])
   assert step_result.json.output == example_dict
 
-  # invalid data gets rendered
+  # Invalid data gets rendered.
   step_result = api.step('invalid json', [
     'python', api.resource('cool_script.py'),
     '{"here is some total\ngarbage',
@@ -95,7 +95,7 @@ def RunSteps(api):
   ])
   assert step_result.json.output is None
 
-  # invalid json to test _unify_json_load_err() converter
+  # Invalid JSON to test _unify_json_load_err() converter.
   step_result = api.step('invalid json 2', [
     'python', api.resource('cool_script.py'),
     '{a}',

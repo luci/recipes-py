@@ -385,7 +385,7 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 
 `url_title_fn` parameter used in this module is a function that accepts a
 `build_pb2.Build` and returns a link title.
-If it returns `None`, the link is not reported. Default link title is build id.
+If it returns `None`, the link is not reported. Default link title is build ID.
 
 #### **class [BuildbucketApi](/recipe_modules/buildbucket/api.py#32)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
@@ -400,11 +400,11 @@ Args:
   Empty tag values won't remove existing tags with matching keys, since tags
   can only be added.
 
-&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#994)(self):**
+&emsp; **@property**<br>&mdash; **def [bucket\_v1](/recipe_modules/buildbucket/api.py#995)(self):**
 
 Returns bucket name in v1 format.
 
-Mostly useful for scheduling new builds using V1 API.
+Mostly useful for scheduling new builds using v1 API.
 
 &emsp; **@property**<br>&mdash; **def [build](/recipe_modules/buildbucket/api.py#131)(self):**
 
@@ -423,13 +423,13 @@ much information as possible. Some fields may be left empty, violating
 the rules described in the .proto files.
 If the current build is not a buildbucket build, returned `build.id` is 0.
 
-&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#1005)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_id](/recipe_modules/buildbucket/api.py#1006)(self):**
 
 *** note
 **DEPRECATED**: use build.id instead.
 ***
 
-&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#1010)(self):**
+&emsp; **@property**<br>&mdash; **def [build\_input](/recipe_modules/buildbucket/api.py#1011)(self):**
 
 *** note
 **DEPRECATED**: use build.input instead.
@@ -452,7 +452,7 @@ https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/pr
 
 Returns the full builder name: {project}/{bucket}/{builder}.
 
-&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#1015)(self):**
+&emsp; **@property**<br>&mdash; **def [builder\_id](/recipe_modules/buildbucket/api.py#1016)(self):**
 
 *** note
 **DEPRECATED**: Use build.builder instead.
@@ -471,7 +471,7 @@ set. This can happen in tests that don't properly mock build proto.
 
 &mdash; **def [cancel\_build](/recipe_modules/buildbucket/api.py#723)(self, build_id, reason=' ', step_name=None):**
 
-Cancel the build associated with the provided build id.
+Cancel the build associated with the provided build ID.
 
 Args:
 *   `build_id` (int|str): a buildbucket build ID.
@@ -484,7 +484,7 @@ Returns:
   None if build is successfully canceled. Otherwise, an InfraFailure will
   be raised
 
-&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#825)(self, build_id, \*\*kwargs):**
+&mdash; **def [collect\_build](/recipe_modules/buildbucket/api.py#826)(self, build_id, \*\*kwargs):**
 
 Shorthand for `collect_builds` below, but for a single build only.
 
@@ -495,7 +495,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto).
   for the ended build.
 
-&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#838)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False, fields=DEFAULT_FIELDS):**
+&mdash; **def [collect\_builds](/recipe_modules/buildbucket/api.py#839)(self, build_ids, interval=None, timeout=None, step_name=None, raise_if_unsuccessful=False, url_title_fn=None, mirror_status=False, fields=DEFAULT_FIELDS):**
 
 Waits for a set of builds to end and returns their details.
 
@@ -518,7 +518,7 @@ Returns:
   [Build](https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/build.proto)
   for all specified builds.
 
-&mdash; **def [get](/recipe_modules/buildbucket/api.py#804)(self, build_id, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS):**
+&mdash; **def [get](/recipe_modules/buildbucket/api.py#805)(self, build_id, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS):**
 
 Gets a build.
 
@@ -532,7 +532,7 @@ Args:
 Returns:
   A build_pb2.Build.
 
-&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#761)(self, build_ids, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS):**
+&mdash; **def [get\_multi](/recipe_modules/buildbucket/api.py#762)(self, build_ids, url_title_fn=None, step_name=None, fields=DEFAULT_FIELDS):**
 
 Gets multiple builds.
 
@@ -625,7 +625,7 @@ Raises:
 
 Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
-This is a convenient function to create a `ScheduleBuildRequest` message.
+This is a convenience function to create a `ScheduleBuildRequest` message.
 
 Among args, messages can be passed as dicts of the same structure.
 
@@ -639,7 +639,7 @@ Example:
 
 Args:
 * builder (str): name of the destination builder.
-* project (str|INHERIT): project containing the destinaiton builder.
+* project (str|INHERIT): project containing the destination builder.
   Defaults to the project of the current build.
 * bucket (str|INHERIT): bucket containing the destination builder.
   Defaults to the bucket of the current build.
@@ -1069,8 +1069,8 @@ Downloads an executable from CIPD.
 
 Given a package named "name/of/some_exe/${platform}" and version
 "someversion", this will install the package at the directory
-"[START_DIR]/cipd_tool/name/of/some_exe/someversion". It will then return the
-absolute path to the executable within that directory.
+"[START_DIR]/cipd_tool/name/of/some_exe/someversion". It will then return
+the absolute path to the executable within that directory.
 
 This operation is idempotent, and will only run steps to download the
 package if it hasn't already been installed in the same build.
@@ -1160,9 +1160,9 @@ Args:
   * tag (str) - The cipd package tag.
   * test_instances (None|int|List[str]) - Default test data for this step:
     * None - Search returns a single default pin.
-    * int - Search generates `test_instances` number of testing ids
+    * int - Search generates `test_instances` number of testing IDs
       `instance_id_%d` and returns pins for those.
-    * List[str] - Returns pins for the given testing ids.
+    * List[str] - Returns pins for the given testing IDs.
 
 Returns the list of CIPDApi.Pin instances.
 
@@ -1398,14 +1398,14 @@ TODO(qyearsley): Rename parts of this from CQ -> CV as appropriate.
 
 Returns whether CQ is active for this build.
 
-&mdash; **def [allow\_reuse\_for](/recipe_modules/cq/api.py#223)(self, \*modes):**
+&mdash; **def [allow\_reuse\_for](/recipe_modules/cq/api.py#221)(self, \*modes):**
 
 Instructs CQ that this build can be reused in a future Run if
 and only if its mode is in the provided modes.
 
 Overwrites all previously set values.
 
-&emsp; **@property**<br>&mdash; **def [allowed\_reuse\_modes](/recipe_modules/cq/api.py#219)(self):**
+&emsp; **@property**<br>&mdash; **def [allowed\_reuse\_modes](/recipe_modules/cq/api.py#217)(self):**
 
 &emsp; **@property**<br>&mdash; **def [cl\_group\_key](/recipe_modules/cq/api.py#135)(self):**
 
@@ -1418,7 +1418,7 @@ same set of changes at a different time.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [do\_not\_retry\_build](/recipe_modules/cq/api.py#201)(self):**
+&emsp; **@property**<br>&mdash; **def [do\_not\_retry\_build](/recipe_modules/cq/api.py#199)(self):**
 
 &emsp; **@property**<br>&mdash; **def [equivalent\_cl\_group\_key](/recipe_modules/cq/api.py#148)(self):**
 
@@ -1451,7 +1451,7 @@ applied or submitted.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&emsp; **@property**<br>&mdash; **def [owner\_is\_googler](/recipe_modules/cq/api.py#242)(self):**
+&emsp; **@property**<br>&mdash; **def [owner\_is\_googler](/recipe_modules/cq/api.py#240)(self):**
 
 Returns whether the Run/Attempt owner is a Googler.
 
@@ -1482,20 +1482,18 @@ api.cq.record_triggered_builds(*child_builds)
 The contents of returned dict should be treated as opaque blob,
 it may be changed without notice.
 
-&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cq/api.py#183)(self, \*build_ids):**
+&mdash; **def [record\_triggered\_build\_ids](/recipe_modules/cq/api.py#182)(self, \*build_ids):**
 
-Adds given Buildbucket build ids to the list of triggered builds for CQ
-to wait on corresponding build completion later.
+Adds the given Buildbucket build IDs to the list of triggered build IDs.
 
 Must be called after some step.
 
 Args:
-  * build_id (int or string): Buildbucket build id.
+  * build_ids (list of int or string): Buildbucket build IDs.
 
 &mdash; **def [record\_triggered\_builds](/recipe_modules/cq/api.py#166)(self, \*builds):**
 
-Adds given Buildbucket builds to the list of triggered builds for CQ
-to wait on corresponding build completion later.
+Adds IDs of given Buildbucket builds to the list of triggered build IDs.
 
 Must be called after some step.
 
@@ -1515,7 +1513,7 @@ Returns the mode(str) of the CQ Run that triggers this build.
 Raises:
   CQInactive if CQ is not active for this build.
 
-&mdash; **def [set\_do\_not\_retry\_build](/recipe_modules/cq/api.py#205)(self):**
+&mdash; **def [set\_do\_not\_retry\_build](/recipe_modules/cq/api.py#203)(self):**
 
 Instruct CQ to not retry this build.
 
@@ -2178,10 +2176,10 @@ corresponds to one step, and contains the following keys:
   * always_run: a bool which indicates that this step should run, even if
     some previous step failed.
   * outputs_presentation_json: a bool which indicates that this step will
-    emit a presentation json file. If this is True, the cmd will be extended
+    emit a presentation JSON file. If this is True, the cmd will be extended
     with a `--presentation-json /path/to/file.json`. This file will be used
     to update the step's presentation on the build status page. The file
-    will be expected to contain a single json object, with any of the
+    will be expected to contain a single JSON object, with any of the
     following keys:
       * logs: {logname: [lines]} specifies one or more auxiliary logs.
       * links: {link_name: link_content} to add extra links to the step.
@@ -3195,7 +3193,7 @@ all invocations with the specified configurations.
 Args:
   realm (str): the realm that the data being queried exists in.
     Example: "chromium:ci".
-  test_id_regexp (str): the subset of test ids to request history for.
+  test_id_regexp (str): the subset of test IDs to request history for.
   variant_predicate (resultdb.proto.v1.predicate.VariantPredicate):
     the subset of test variants to request history for. Defaults to None,
     but specifying will improve runtime.
@@ -3225,10 +3223,10 @@ Shortcut for resultdb.update_included_invocations().
 
 &mdash; **def [invocation\_ids](/recipe_modules/resultdb/api.py#172)(self, inv_names):**
 
-Returns invocation ids by parsing invocation names.
+Returns invocation IDs by parsing invocation names.
 
 Args:
-  inv_names (list of str): resultdb invocation names.
+  inv_names (list of str): ResultDB invocation names.
 
 Returns:
   A list of invocation_ids.
@@ -3245,16 +3243,16 @@ size and latency.
 Example:
   results = api.resultdb.query(
       [
-        # invocation id for a swarming task.
+        # Invocation ID for a Swarming task.
         'task-chromium-swarm.appspot.com-deadbeef',
-        # invocation id for a buildbucket build.
+        # Invocation ID for a Buildbucket build.
         'build-234298374982'
       ],
       variants_with_unexpected_results=True,
   )
 
 Args:
-  inv_ids (list of str): ids of the invocations.
+  inv_ids (list of str): IDs of the invocations.
   variants_with_unexpected_results (bool): if True, return only test
     results from variants that have unexpected results.
   merge (bool): if True, return test results as if all invocations
@@ -3297,7 +3295,7 @@ invocations and matching the given filters.
 Args:
   invocations (list of str): retrieve the test results included in these
     invocations.
-  test_id_regexp (str): the subset of test ids to request history for.
+  test_id_regexp (str): the subset of test IDs to request history for.
     Default to None.
   variant_predicate (resultdb.proto.v1.predicate.VariantPredicate):
     the subset of test variants to request history for. Defaults to None,
@@ -3325,9 +3323,9 @@ Returns:
 Add and/or remove included invocations to/from the current invocation.
 
 Args:
-  add_invocations (list of str): invocation id's to add to the current
+  add_invocations (list of str): invocation IDs to add to the current
       invocation.
-  remove_invocations (list of str): invocation id's to remove from the
+  remove_invocations (list of str): invocation IDs to remove from the
       current invocation.
 
 This updates the inclusions of the current invocation specified in the
@@ -3342,7 +3340,7 @@ artifacts.
 
 Args:
   artifacts (dict): a collection of artifacts to create. Each key is an
-    artifact id, with the corresponding value being a dict containing:
+    artifact ID, with the corresponding value being a dict containing:
       'content_type' (optional)
       one of 'contents' (binary string) or 'gcs_uri' (str)
   parent_inv (str): the name of the invocation to create the artifacts
@@ -3409,14 +3407,14 @@ True iff this recipe is currently in the 'grace_period' specified by
 
 This can occur when:
   * The LUCI_CONTEXT has hit the 'soft_deadline'; OR
-  * The LUCI_CONTEXT has been 'canceled' and the recipe_engine has recieved
+  * The LUCI_CONTEXT has been 'canceled' and the recipe_engine has received
     a SIGTERM (on *nix) or Ctrl-Break (on Windows).
 
 As of 2021Q2, while the recipe is in the grace_period, it can do anything
 _except_ for starting new steps (but it can e.g. update presentation of open
 steps, or return RawResult from RunSteps). Attempting to start a step while
 in the grace_period will cause the step to skip execution. When a signal is
-recieved or the soft_deadline is hit, all currently running steps will be
+received or the soft_deadline is hit, all currently running steps will be
 signaled in turn (according to the `LUCI_CONTEXT['deadline']` protocol).
 
 It is good practice to ensure that recipes exit cleanly when canceled or
@@ -3951,8 +3949,8 @@ Waits on a set of Swarming tasks.
 
 Args:
   name (str): The name of the step.
-  tasks (Iterable(str|TaskRequestMetadata)): A list of ids or metadata
-    objects corresponding to tasks to wait
+  tasks (Iterable(str|TaskRequestMetadata)): A list of task IDs or metadata
+    objects corresponding to tasks to wait for.
   output_dir (Path|None): Where to download the tasks' isolated outputs. If
     set to None, they will not be downloaded; else, a given task's outputs
     will be downloaded to output_dir/<task id>/.
@@ -3988,12 +3986,12 @@ Example:
 
 &mdash; **def [show\_request](/recipe_modules/swarming/api.py#1359)(self, name, task):**
 
-Retrive the TaskRequest for a Swarming task.
+Retrieve the TaskRequest for a Swarming task.
 
 Args:
   name (str): The name of the step.
-  task (str|TaskRequestMetadata): Task Id or metadata objects of the
-    swarming task to be retrived.
+  task (str|TaskRequestMetadata): Task ID or metadata objects of the
+    swarming task to be retrieved.
 
 Returns:
   TaskRequest objects.

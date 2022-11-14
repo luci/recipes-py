@@ -9,7 +9,7 @@ https://godoc.org/go.chromium.org/luci/buildbucket/client/cmd/buildbucket
 
 `url_title_fn` parameter used in this module is a function that accepts a
 `build_pb2.Build` and returns a link title.
-If it returns `None`, the link is not reported. Default link title is build id.
+If it returns `None`, the link is not reported. Default link title is build ID.
 """
 
 from future.utils import iteritems, itervalues
@@ -347,7 +347,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
   ):
     """Creates a new `ScheduleBuildRequest` message with reasonable defaults.
 
-    This is a convenient function to create a `ScheduleBuildRequest` message.
+    This is a convenience function to create a `ScheduleBuildRequest` message.
 
     Among args, messages can be passed as dicts of the same structure.
 
@@ -361,7 +361,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
 
     Args:
     * builder (str): name of the destination builder.
-    * project (str|INHERIT): project containing the destinaiton builder.
+    * project (str|INHERIT): project containing the destination builder.
       Defaults to the project of the current build.
     * bucket (str|INHERIT): bucket containing the destination builder.
       Defaults to the bucket of the current build.
@@ -610,8 +610,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
     """Reports a build in the step presentation.
 
     url_title_fn is a function that accepts a `build_pb2.Build` and returns a
-    link title. If returns None, the link is not reported.
-    Default link title is build id.
+    link title. If returns None, the link is not reported. The default link
+    title is the build ID.
     """
     build_title = url_title_fn(build) if url_title_fn else build.id
     if build_title is not None:
@@ -721,7 +721,7 @@ class BuildbucketApi(recipe_api.RecipeApi):
     return ret
 
   def cancel_build(self, build_id, reason=' ', step_name=None):
-    """Cancel the build associated with the provided build id.
+    """Cancel the build associated with the provided build ID.
 
     Args:
     *   `build_id` (int|str): a buildbucket build ID.
@@ -735,13 +735,14 @@ class BuildbucketApi(recipe_api.RecipeApi):
       be raised
     """
     self._check_build_id(build_id)
-    cancel_req = builds_service_pb2.BatchRequest(
-      requests=[
-        dict(cancel_build=dict(
-          # Expecting id to be of type int64 according to the proto definition
-          id=int(build_id),
-          summary_markdown=str(reason)
-        ))])
+    cancel_req = builds_service_pb2.BatchRequest(requests=[
+        dict(
+            cancel_build=dict(
+                # Expecting `id` to be of type int64 according to the proto
+                # definition.
+                id=int(build_id),
+                summary_markdown=str(reason)))
+    ])
     test_res = builds_service_pb2.BatchResponse(
       responses=[
         dict(cancel_build=dict(
@@ -983,19 +984,19 @@ class BuildbucketApi(recipe_api.RecipeApi):
     )
 
   def _check_build_id(self, build_id):
-    """Raise ValueError if the given build id is not a number or a string
+    """Raise ValueError if the given build ID is not a number or a string
     that represents numeric value.
     """
     is_int = isinstance(build_id, (int, long))
     is_str_num = isinstance(build_id, str) and build_id.isdigit()
     if not (is_int or is_str_num):
-      raise ValueError('Expected a numeric build id, got %s' %(build_id,))
+      raise ValueError('Expected a numeric build ID, got %s' % (build_id,))
 
   @property
   def bucket_v1(self):
     """Returns bucket name in v1 format.
 
-    Mostly useful for scheduling new builds using V1 API.
+    Mostly useful for scheduling new builds using v1 API.
     """
     return self._bucket_v1
 

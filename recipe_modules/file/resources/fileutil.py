@@ -198,7 +198,8 @@ def _FlattenSingleDirectories(path):
     # first move the first_single_dir out of the way, in case there's
     # a file/folder we need to move that has a conflicting name.
     tmpname = tempfile.mktemp(dir=path)
-    print('moving root folder out of the way: %r -> %r' % (first_single_dir, tmpname))
+    print('moving root folder out of the way: %r -> %r' %
+          (first_single_dir, tmpname))
     os.rename(first_single_dir, tmpname)
 
     for name in itertools.chain(dirs, files):
@@ -319,7 +320,7 @@ def main(args):
   subparser = subparsers.add_parser('glob',
       help='Prints a list of absolute paths with match the pattern.')
   subparser.add_argument('base', help='The directory to glob in.')
-  subparser.add_argument('pattern', help='The glob patern to expand.')
+  subparser.add_argument('pattern', help='The glob pattern to expand.')
   subparser.add_argument('--hidden', action='store_true',
                          help='Include hidden files.')
   subparser.set_defaults(func=lambda opts:

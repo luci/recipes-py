@@ -371,7 +371,7 @@ class TestRun(Common):
         }, coverage=0))
 
   # Test the soft failure, for example, when the recipe is claimed as PY3 but
-  # its dependency only suports PY2.
+  # its dependency only supports PY2.
   def test_check_soft_failure(self):
     with self.main.write_module('foo_module') as mod:
       mod.api.write('''
@@ -1057,7 +1057,7 @@ class TestTrain(Common):
   # In py2 env, it's able to correctly detect the 'pass' line is missed, while
   # it detects the 'if False' line is missed in py3.
   #
-  # It won't impact our useage in 99.9999% of situations unless in the post
+  # It won't impact our usage in 99.9999% of situations unless in the post
   # migration phase where all code only supports py3 and there is a code like
   # 'while True' or 'if True'. In that case, coverage will prompt that line's
   # coverage is missed. When that happens, an workaround is to assige True to a

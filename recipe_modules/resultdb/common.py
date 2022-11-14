@@ -95,7 +95,7 @@ def deserialize(data):
     inv_dict = entry.get('invocation')
     if inv_dict is not None:
       # Invocation is special because there can be only one invocation
-      # per invocation id.
+      # per invocation ID.
       parse_msg(inv.proto, inv_dict)
       continue
 

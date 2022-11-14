@@ -73,9 +73,9 @@ class ResultDBAPI(recipe_api.RecipeApi):
     """Add and/or remove included invocations to/from the current invocation.
 
     Args:
-      add_invocations (list of str): invocation id's to add to the current
+      add_invocations (list of str): invocation IDs to add to the current
           invocation.
-      remove_invocations (list of str): invocation id's to remove from the
+      remove_invocations (list of str): invocation IDs to remove from the
           current invocation.
 
     This updates the inclusions of the current invocation specified in the
@@ -170,10 +170,10 @@ class ResultDBAPI(recipe_api.RecipeApi):
         i += 1
 
   def invocation_ids(self, inv_names):
-    """Returns invocation ids by parsing invocation names.
+    """Returns invocation IDs by parsing invocation names.
 
     Args:
-      inv_names (list of str): resultdb invocation names.
+      inv_names (list of str): ResultDB invocation names.
 
     Returns:
       A list of invocation_ids.
@@ -203,16 +203,16 @@ class ResultDBAPI(recipe_api.RecipeApi):
     Example:
       results = api.resultdb.query(
           [
-            # invocation id for a swarming task.
+            # Invocation ID for a Swarming task.
             'task-chromium-swarm.appspot.com-deadbeef',
-            # invocation id for a buildbucket build.
+            # Invocation ID for a Buildbucket build.
             'build-234298374982'
           ],
           variants_with_unexpected_results=True,
       )
 
     Args:
-      inv_ids (list of str): ids of the invocations.
+      inv_ids (list of str): IDs of the invocations.
       variants_with_unexpected_results (bool): if True, return only test
         results from variants that have unexpected results.
       merge (bool): if True, return test results as if all invocations
@@ -275,7 +275,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
     Args:
       realm (str): the realm that the data being queried exists in.
         Example: "chromium:ci".
-      test_id_regexp (str): the subset of test ids to request history for.
+      test_id_regexp (str): the subset of test IDs to request history for.
       variant_predicate (resultdb.proto.v1.predicate.VariantPredicate):
         the subset of test variants to request history for. Defaults to None,
         but specifying will improve runtime.
@@ -371,7 +371,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     Args:
       artifacts (dict): a collection of artifacts to create. Each key is an
-        artifact id, with the corresponding value being a dict containing:
+        artifact ID, with the corresponding value being a dict containing:
           'content_type' (optional)
           one of 'contents' (binary string) or 'gcs_uri' (str)
       parent_inv (str): the name of the invocation to create the artifacts
@@ -424,7 +424,7 @@ class ResultDBAPI(recipe_api.RecipeApi):
     Args:
       invocations (list of str): retrieve the test results included in these
         invocations.
-      test_id_regexp (str): the subset of test ids to request history for.
+      test_id_regexp (str): the subset of test IDs to request history for.
         Default to None.
       variant_predicate (resultdb.proto.v1.predicate.VariantPredicate):
         the subset of test variants to request history for. Defaults to None,

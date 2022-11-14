@@ -144,7 +144,7 @@ def GenTests(api):
   # ERROR: step:example.exceptional (..../exceptional.json)
   # ----------------------------------------------------------------------
   # Traceback (most recent call last):
-  #   <full stack trace ommitted>
+  #   <full stack trace omitted>
   #   File "annotated_run.py", line 537, in run
   #     retcode = steps_function(api)
   #   File "recipe_modules/step/examples/full.py", line 39, in RunSteps

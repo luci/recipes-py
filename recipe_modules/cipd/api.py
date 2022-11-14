@@ -856,9 +856,9 @@ class CIPDApi(recipe_api.RecipeApi):
       * tag (str) - The cipd package tag.
       * test_instances (None|int|List[str]) - Default test data for this step:
         * None - Search returns a single default pin.
-        * int - Search generates `test_instances` number of testing ids
+        * int - Search generates `test_instances` number of testing IDs
           `instance_id_%d` and returns pins for those.
-        * List[str] - Returns pins for the given testing ids.
+        * List[str] - Returns pins for the given testing IDs.
 
     Returns the list of CIPDApi.Pin instances.
     """
@@ -1010,8 +1010,8 @@ class CIPDApi(recipe_api.RecipeApi):
 
     Given a package named "name/of/some_exe/${platform}" and version
     "someversion", this will install the package at the directory
-    "[START_DIR]/cipd_tool/name/of/some_exe/someversion". It will then return the
-    absolute path to the executable within that directory.
+    "[START_DIR]/cipd_tool/name/of/some_exe/someversion". It will then return
+    the absolute path to the executable within that directory.
 
     This operation is idempotent, and will only run steps to download the
     package if it hasn't already been installed in the same build.

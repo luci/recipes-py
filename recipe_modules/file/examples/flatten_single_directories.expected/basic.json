@@ -9,7 +9,7 @@
       "ensure-directory",
       "--mode",
       "0777",
-      "[START_DIR]/dir/which_has/some/singlular/subdirs"
+      "[START_DIR]/dir/which_has/some/singular/subdirs"
     ],
     "infra_step": true,
     "name": "make chain of single dirs"
@@ -22,7 +22,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "truncate",
-      "[START_DIR]/dir/which_has/some/singlular/subdirs/bunch",
+      "[START_DIR]/dir/which_has/some/singular/subdirs/bunch",
       "1"
     ],
     "infra_step": true,
@@ -36,7 +36,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "truncate",
-      "[START_DIR]/dir/which_has/some/singlular/subdirs/of",
+      "[START_DIR]/dir/which_has/some/singular/subdirs/of",
       "1"
     ],
     "infra_step": true,
@@ -50,7 +50,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "truncate",
-      "[START_DIR]/dir/which_has/some/singlular/subdirs/files",
+      "[START_DIR]/dir/which_has/some/singular/subdirs/files",
       "1"
     ],
     "infra_step": true,

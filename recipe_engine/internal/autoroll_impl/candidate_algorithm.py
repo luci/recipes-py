@@ -24,7 +24,7 @@ LOGGER = logging.getLogger(__name__)
 class _Config(collections.Mapping):
   """An immutable mapping type storing the revisions to pin repos to.
 
-  Instances are hashable and in constrast to FrozenDict, the equality
+  Instances are hashable and in contrast to FrozenDict, the equality
   comparison ignores iteration order.
 
   Instances do not necessarily represent a complete config.
@@ -91,7 +91,7 @@ class _ConfigFinder(object):
 
     Args:
       repo (str) - The repo to perform the starting pin on.
-      revison (str) - The commit hash value to use for the starting pin.
+      revision (str) - The commit hash value to use for the starting pin.
       repos_to_pin (set(str)) - The repos that need to be pinned by the
         resulting configs. Additional repos may be pinned if a commit
         adds new dependencies.

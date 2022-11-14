@@ -267,8 +267,8 @@ class TaskRequest(object):
 
   def _from_jsonish(self, d):
     """Constructs a task request from a JSON-serializable dict."""
-    # All fields from luci-go set `omitempty`, that the keys might not exists
-    # in the json when retrive from luci-go client.
+    # All fields from luci-go set `omitempty`, so the keys might not exist
+    # in the JSON when retrieved from luci-go client.
     # See https://chromium.googlesource.com/infra/luci/luci-go/+/refs/heads/main/common/api/swarming/swarming/v1/swarming-gen.go
     # The code below `.get` the "empty value" for the type if omitted.
     tags = collections.defaultdict(list)
@@ -736,8 +736,8 @@ class TaskRequest(object):
       return ret
 
     def _from_jsonish(self, d):
-      # All fields from luci-go set `omitempty`, that the keys might not exists
-      # in the json when retrive from luci-go client.
+      # All fields from luci-go set `omitempty`, so the keys might not exist
+      # in the JSON when retrieved from the luci-go client.
       # See https://chromium.googlesource.com/infra/luci/luci-go/+/refs/heads/main/common/api/swarming/swarming/v1/swarming-gen.go
       # The code below `.get` the "empty value" for the type if omitted.
       p = d.get('properties', {})
@@ -868,7 +868,7 @@ class TaskRequestMetadata(object):
 
   @property
   def id(self):
-    """Returns the id of the associated task."""
+    """Returns the ID of the associated task."""
     return self._task_json['task_id']
 
   @property
@@ -917,7 +917,7 @@ class TaskResult(object):
       api (recipe_api.RecipeApi): A recipe API.
       task_slice (TaskSlice): The TaskSlice for the request that led to this
                               task result.
-      id (str): The task's id.
+      id (str): The task's ID.
       raw_results (dict): The jsonish summary output from a `collect` call.
       output_dir (Path|None): Where the task's outputs were downloaded to.
     """
@@ -1098,7 +1098,7 @@ class TaskResult(object):
       raise recipe_api.InfraFailure('The bot running this task died')
     elif self.state == TaskState.CLIENT_ERROR:
       raise recipe_api.InfraFailure(
-          'The task encounted an error caused by the client')
+          'The task encountered an error caused by the client')
     elif self.state == TaskState.CANCELED:
       raise recipe_api.InfraFailure('The task was canceled before it could run')
     elif self.state == TaskState.COMPLETED:
@@ -1273,8 +1273,8 @@ class SwarmingApi(recipe_api.RecipeApi):
 
     Args:
       name (str): The name of the step.
-      tasks (Iterable(str|TaskRequestMetadata)): A list of ids or metadata
-        objects corresponding to tasks to wait
+      tasks (Iterable(str|TaskRequestMetadata)): A list of task IDs or metadata
+        objects corresponding to tasks to wait for.
       output_dir (Path|None): Where to download the tasks' isolated outputs. If
         set to None, they will not be downloaded; else, a given task's outputs
         will be downloaded to output_dir/<task id>/.
@@ -1357,12 +1357,12 @@ class SwarmingApi(recipe_api.RecipeApi):
     return parsed_results
 
   def show_request(self, name, task):
-    """Retrive the TaskRequest for a Swarming task.
+    """Retrieve the TaskRequest for a Swarming task.
 
     Args:
       name (str): The name of the step.
-      task (str|TaskRequestMetadata): Task Id or metadata objects of the
-        swarming task to be retrived.
+      task (str|TaskRequestMetadata): Task ID or metadata objects of the
+        swarming task to be retrieved.
 
     Returns:
       TaskRequest objects.

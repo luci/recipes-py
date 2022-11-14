@@ -112,7 +112,7 @@ def RunSteps(api):
   # Trigger the task request.
   metadata = api.swarming.trigger('trigger 1 task', requests=[request])
 
-  # From the request metadata, one can access the task's name, id, and
+  # From the request metadata, one can access the task's name, ID, and
   # associated UI link.
   assert len(metadata) == 1
   metadata[0].name
@@ -120,23 +120,23 @@ def RunSteps(api):
   metadata[0].task_ui_link
   metadata[0].invocation
 
-  # Retrive TaskRequest.
+  # Retrieve TaskRequest.
   api.swarming.test_api.set_task_for_show_request(request)
-  retrived_task = api.swarming.show_request('show-request', metadata[0])
+  retrieved_task = api.swarming.show_request('show-request', metadata[0])
   diff = list(
       difflib.unified_diff(
           api.json.dumps(jsonish, indent=2).splitlines(),
-          api.json.dumps(retrived_task.to_jsonish(), indent=2).splitlines()))
+          api.json.dumps(retrieved_task.to_jsonish(), indent=2).splitlines()))
   assert not diff, '\n'.join(diff)
 
-  # Or retrive by id.
+  # Or retrieve by ID.
   _ = api.swarming.show_request('show-request via task id', metadata[0].id)
 
   # Collect the result of the task by metadata.
   output_dir = api.path.mkdtemp('swarming')
   results = api.swarming.collect('collect', metadata, output_dir=output_dir,
                                  timeout='5m', verbose=True)
-  # Or collect by by id.
+  # Or collect by ID.
   results += api.swarming.collect('collect other pending task', ['0'],
                                   eager=True)
 
@@ -162,7 +162,7 @@ def RunSteps(api):
       if results[0].state == api.swarming.TaskState.BOT_DIED:
         assert s == 'The bot running this task died', repr(s)
       elif results[0].state == api.swarming.TaskState.CLIENT_ERROR:
-        assert s == 'The task encounted an error caused by the client'
+        assert s == 'The task encountered an error caused by the client'
       elif results[0].state == api.swarming.TaskState.CANCELED:
         assert s == 'The task was canceled before it could run', repr(s)
       elif results[0].state == api.swarming.TaskState.COMPLETED:

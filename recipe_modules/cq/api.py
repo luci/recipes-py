@@ -164,8 +164,7 @@ class CQApi(recipe_api.RecipeApi):
     return [bid for bid in self._output.triggered_build_ids]
 
   def record_triggered_builds(self, *builds):
-    """Adds given Buildbucket builds to the list of triggered builds for CQ
-    to wait on corresponding build completion later.
+    """Adds IDs of given Buildbucket builds to the list of triggered build IDs.
 
     Must be called after some step.
 
@@ -181,13 +180,12 @@ class CQApi(recipe_api.RecipeApi):
     return self.record_triggered_build_ids(*[b.id for b in builds])
 
   def record_triggered_build_ids(self, *build_ids):
-    """Adds given Buildbucket build ids to the list of triggered builds for CQ
-    to wait on corresponding build completion later.
+    """Adds the given Buildbucket build IDs to the list of triggered build IDs.
 
     Must be called after some step.
 
     Args:
-      * build_id (int or string): Buildbucket build id.
+      * build_ids (list of int or string): Buildbucket build IDs.
     """
     if not build_ids:
       return
@@ -231,7 +229,7 @@ class CQApi(recipe_api.RecipeApi):
       raise ValueError('expected at least 1 modes, got 0')
     del self._output.reusability.mode_allowlist[:]
     self._output.reusability.mode_allowlist.extend(modes)
-    # TODO(crbug/1225047):Stop populating  _output.reuse after CQDaemon is
+    # TODO(crbug/1225047): Stop populating _output.reuse after CQDaemon is
     # decommissioned. For now, CQDaemon will still use this field to decide
     # reusability.
     del self._output.reuse[:]

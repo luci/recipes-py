@@ -20,7 +20,7 @@ PROPERTIES = InputProps
 
 
 def RunSteps(api, props):
-  api.tricium._comments_num_limit = 5  # reset the limit to 5 for testing.
+  api.tricium._comments_num_limit = 5  # Reset the limit to 5 for testing.
   for i in range(10):
     api.tricium.add_comment('test', 'test message', 'path/to/file_%d' % i)
 

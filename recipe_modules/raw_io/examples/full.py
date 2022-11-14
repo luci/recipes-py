@@ -91,7 +91,7 @@ def RunSteps(api):
   del outdir['some/file']  # delete to save memory
   assert 'some/file' not in outdir
 
-  # Fail to write to leak_to file
+  # Fail to write to leak_to file.
   step_result = api.step(
       'nothing leaked to leak_to',
       ['echo',
@@ -110,7 +110,7 @@ def RunSteps(api):
   assert step_result.raw_io.output_texts['test'] == 'good_value'
   assert step_result.raw_io.output_text == 'good_value'
 
-  # Example of add_output_log
+  # Example of add_output_log.
   step_result = api.step(
       'success output log', [
         'python3', api.resource('success_output_log.py'),
@@ -122,7 +122,7 @@ def RunSteps(api):
   assert (['success'] ==
           step_result.presentation.logs['raw_io.output_text[success_log]'])
 
-  # Example of add_output_log on failure
+  # Example of add_output_log on failure.
   try:
     api.step(
         'failure output log', [
@@ -134,7 +134,7 @@ def RunSteps(api):
             lambda: api.raw_io.test_api.output_text(
                 'failure', name='failure_log')))
   except api.step.StepFailure:
-    pass # This step is expected to fail.
+    pass  # This step is expected to fail.
   finally:
     step_result = api.step.active_result
     assert (['failure'] ==

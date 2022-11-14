@@ -309,8 +309,8 @@ class LuciexeSmokeTest(test_env.RecipeEngineUnitTest):
   def test_early_terminate(self):
     scrap = tempfile.mkdtemp(prefix='recipe_engine-run_test-scrap-')
     try:
-      # The recipe will make a bunch of subprocesses which whill touch this
-      # every ~second.
+      # The recipe will make a bunch of subprocesses which will touch this
+      # about once per second.
       output_touchfile = os.path.join(scrap, 'output_touchfile')
       running_touchfile = os.path.join(scrap, 'running_touchfile')
 

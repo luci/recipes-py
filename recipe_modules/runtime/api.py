@@ -37,14 +37,14 @@ class RuntimeApi(recipe_api.RecipeApi):
 
     This can occur when:
       * The LUCI_CONTEXT has hit the 'soft_deadline'; OR
-      * The LUCI_CONTEXT has been 'canceled' and the recipe_engine has recieved
+      * The LUCI_CONTEXT has been 'canceled' and the recipe_engine has received
         a SIGTERM (on *nix) or Ctrl-Break (on Windows).
 
     As of 2021Q2, while the recipe is in the grace_period, it can do anything
     _except_ for starting new steps (but it can e.g. update presentation of open
     steps, or return RawResult from RunSteps). Attempting to start a step while
     in the grace_period will cause the step to skip execution. When a signal is
-    recieved or the soft_deadline is hit, all currently running steps will be
+    received or the soft_deadline is hit, all currently running steps will be
     signaled in turn (according to the `LUCI_CONTEXT['deadline']` protocol).
 
     It is good practice to ensure that recipes exit cleanly when canceled or

@@ -366,7 +366,7 @@ keeping all of the frame locals alive.
 
 Processing a frame involves extracting the filename, line number and function
 name from the frame and where possible reconstructing the expression being
-evaluated in that frame. To reconstuct the expression, `CheckFrame` maintains a
+evaluated in that frame. To reconstruct the expression, `CheckFrame` maintains a
 cache that maps filename and line number to AST nodes corresponding to
 expressions whose definitions end at that line number. The end line is the line
 that will appear as the line number of a frame executing that expression. The

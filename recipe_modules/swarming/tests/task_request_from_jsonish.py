@@ -13,16 +13,16 @@ DEPS = [
 
 
 def RunSteps(api):
-  # TaskRequset._from_jsonish should accpet empty dict, that all fields are
+  # TaskRequset._from_jsonish should accept empty dict, that all fields are
   # omitted.
   task = api.swarming.task_request_from_jsonish({})
   api.assertions.assertEqual(len(task), 0)
 
-  # TaskSlice._from_jsonish should accpet empty dict.
+  # TaskSlice._from_jsonish should accept empty dict.
   task = api.swarming.task_request_from_jsonish({'task_slices': [{}]})
   api.assertions.assertEqual(len(task), 1)
 
-  # TaskSlice._from_jsonish should accpet empty task properties.
+  # TaskSlice._from_jsonish should accept empty task properties.
   task = api.swarming.task_request_from_jsonish(
       {'task_slices': [{
           'properties': {}
