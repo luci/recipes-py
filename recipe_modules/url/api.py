@@ -256,7 +256,7 @@ class UrlApi(recipe_api.RecipeApi):
 
     result = self.m.step(
         step_name,
-        ['vpython', '-u', self.resource('pycurl.py')] + args,
+        ['vpython3', '-u', self.resource('pycurl.py')] + args,
         timeout=timeout,
         step_test_data=self.test_api._get_step_test_data(
             self._PyCurlStatus, as_json, default_test_data))

@@ -1,12 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright 2017 The LUCI Authors. All rights reserved.
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
 # NOTE: This was imported from Chromium's "tools/build" at revision:
 # 65976b6e2a612439681dc42830e90dbcdf550f40
-
-from __future__ import print_function
 
 import argparse
 import json
@@ -52,7 +50,7 @@ def _download(url, outfile, headers, transient_retry, strip_prefix):
   if outfile:
     fd = open(outfile, 'wb')
   else:
-    fd = sys.stdout
+    fd = sys.stdout.buffer
 
   total = 0
   with fd:
