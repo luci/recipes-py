@@ -158,7 +158,7 @@ def _ListDir(base, recursive):
       out.extend(os.path.relpath(os.path.join(dirpath, f), base) for f in files)
   else:
     out = os.listdir(base)
-  print('\n'.join(sorted(out)), end='')
+  print('\n'.join(sorted(out)).encode('utf-8', 'replace').decode(), end='')
 
 
 def _Remove(path):
