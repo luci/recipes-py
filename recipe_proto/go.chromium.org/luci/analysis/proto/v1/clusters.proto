@@ -127,6 +127,15 @@ service Clusters {
     // such, is not cost-optimised if many queries are to be made.
     rpc QueryClusterFailures(QueryClusterFailuresRequest)
         returns (QueryClusterFailuresResponse) {};
+
+    // Queries test variants in the cluster which have recently had an
+    // exoneration recorded against them. Only exonerations on failures
+    // which are part of the cluster are considered.
+    //
+    // Consider solving this use case in future by a standard AIP-132 List
+    // method with filter and order_by support.
+    rpc QueryExoneratedTestVariants(QueryClusterExoneratedTestVariantsRequest)
+        returns (QueryClusterExoneratedTestVariantsResponse) {};
 }
 
 message ClusterRequest {
@@ -236,30 +245,38 @@ message Cluster {
     // Not populated for rule-based clusters.
     string title = 3;
 
-    message MetricValues {
-        message Counts {
-            // The value of the metric (summed over all failures).
-            int64 nominal = 1;
-        }
+    message Counts {
+        // The value of the metric (summed over all failures).
+        int64 nominal = 1;
+    }
 
-        // The metric value for the last day.
+    message ImpactValues {
+        // The impact value for the last day.
         Counts one_day = 2;
-        // The metric value for the last three days.
+        // The impact value for the last three days.
         Counts three_day = 3;
-        // The metric value for the last week.
+        // The impact value for the last week.
         Counts seven_day = 4;
     }
 
     // The total number of user changelists which failed presubmit.
-    MetricValues user_cls_failed_presubmit = 4;
+    ImpactValues user_cls_failed_presubmit = 4;
 
     // The total number of failures in the cluster that occurred on tryjobs
     // that were critical (presubmit-blocking) and were exonerated for a
     // reason other than NOT_CRITICAL or UNEXPECTED_PASS.
-    MetricValues critical_failures_exonerated = 5;
+    ImpactValues critical_failures_exonerated = 5;
 
     // The total number of failures in the cluster.
-    MetricValues failures = 6;
+    ImpactValues failures = 6;
+
+    // The number of user changelists that had failures in this cluster,
+    // over the last week.
+    Counts user_cls_with_failures = 8;
+
+    // The number of postsubmit builds that had failures in this cluster,
+    // over the last week.
+    Counts postsubmit_builds_with_failures = 9;
 
     // The failure association rule equivalent to the cluster. Populated only
     // for suggested clusters where has_example = true.
@@ -388,7 +405,7 @@ message ClusterSummary {
 }
 
 message QueryClusterFailuresRequest {
-    // The resource name of the cluster to retrieve failures for.
+    // The resource name of the cluster failures to retrieve.
     // Format: projects/{project}/clusters/{cluster_algorithm}/{cluster_id}/failures.
     string parent = 1;
 }
@@ -409,7 +426,7 @@ message DistinctClusterFailure {
         // The machine-readable reason for the exoneration.
         luci.analysis.v1.ExonerationReason reason = 1;
     }
-    
+
     // Representation of a presubmit run (e.g. LUCI CV Run).
     message PresubmitRun {
         // Identity of the presubmit run that contains this test result.
@@ -425,7 +442,7 @@ message DistinctClusterFailure {
         // If the test result was not collected as part of a presubmit run,
         // this is unset.
         luci.analysis.v1.PresubmitRunId presubmit_run_id = 1;
-    
+
         // The owner of the presubmit run (if any).
         // This is the owner of the CL on which CQ+1/CQ+2 was clicked
         // (even in case of presubmit run with multiple CLs).
@@ -433,15 +450,19 @@ message DistinctClusterFailure {
         // approval is obtained, until then it is "automation" (for automation
         // service accounts) and "user" otherwise.
         string owner = 2;
-    
+
         // The mode of the presubmit run. E.g. DRY_RUN, FULL_RUN, QUICK_DRY_RUN.
         luci.analysis.v1.PresubmitRunMode mode = 3;
+
+        // The status of the presubmit run. E.g. succeeded, failed or cancelled.
+        luci.analysis.v1.PresubmitRunStatus status = 4;
     }
 
     // The identity of the test.
     string test_id = 1;
 
-    // The test variant.
+    // Description of one specific way of running the test,
+    // e.g. a specific bucket, builder and a test suite.
     luci.analysis.v1.Variant variant = 2;
 
     // Timestamp representing the start of the data retention period for the
@@ -492,4 +513,38 @@ message DistinctClusterFailure {
 
     // The number of test results which have these properties.
     int32 count = 11;
+}
+
+message QueryClusterExoneratedTestVariantsRequest {
+    // The resource name of the cluster exonerated test variants to retrieve.
+    // Format: projects/{project}/clusters/{cluster_algorithm}/{cluster_id}/exoneratedTestVariants.
+    string parent = 1;
+}
+
+message QueryClusterExoneratedTestVariantsResponse {
+    // A list of test variants in the cluster which have exonerated critical
+    // failures. Ordered by recency of the exoneration (most recent exonerations
+    // first) and limited to at most 100 test variants.
+    repeated ClusterExoneratedTestVariant test_variants = 1;
+}
+
+// ClusterExoneratedTestVariant represents a test variant in a cluster
+// which has been exonerated. A cluster test variant is the subset
+// of a test variant that intersects with the failures of a cluster.
+message ClusterExoneratedTestVariant {
+    // A unique identifier of the test in a LUCI project.
+    string test_id = 1;
+
+    // Description of one specific way of running the test,
+    // e.g. a specific bucket, builder and a test suite.
+    luci.analysis.v1.Variant variant = 2;
+
+    // The number of critical (presubmit-blocking) failures in the
+    // cluster which have been exonerated on this test variant
+    // in the last week.
+    int32 critical_failures_exonerated = 3;
+
+    // The partition time of the most recent exoneration of a
+    // critical failure.
+    google.protobuf.Timestamp last_exoneration = 4;
 }
