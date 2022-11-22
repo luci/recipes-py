@@ -249,7 +249,8 @@ class CQApi(recipe_api.RecipeApi):
       ValueError if the builder is not in Chrome project.
     """
     self._enforce_active()
-    if self.m.buildbucket.build.builder.project != 'chrome':
+    if (self.m.buildbucket.build.builder.project != 'chrome' and
+        not self.m.buildbucket.build.builder.project.startswith('chrome-m')):
       raise ValueError('owner_is_googler can only be called for chrome project')
     return self._input.owner_is_googler
 

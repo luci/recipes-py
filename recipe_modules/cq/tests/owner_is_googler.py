@@ -35,6 +35,13 @@ def GenTests(api):
     + api.post_process(post_process.DropExpectation)
   )
   yield (
+    api.test('chrome-branch-project')
+    + api.cq(run_mode=api.cq.FULL_RUN)
+    + api.buildbucket.try_build(project='chrome-m100')
+    + api.properties(expected_owner_is_googler=False)
+    + api.post_process(post_process.DropExpectation)
+  )
+  yield (
     api.test('raise if not Chrome')
     + api.cq(run_mode=api.cq.FULL_RUN)
     + api.buildbucket.try_build(project='infra')
