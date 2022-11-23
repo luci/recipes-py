@@ -8,7 +8,7 @@ from recipe_engine import recipe_api
 # Usage of bcid_reporter recipe_module will have significant downstream impact
 # and to avoid any production outage, we are pinning the latest known good build
 # of the tool here. Upstream changes are intentionally left out.
-_LATEST_STABLE_VERSION = 'git_revision:557c04a6caeb755ce7e75d234efc8481c924b1a6'
+_LATEST_STABLE_VERSION = 'git_revision:d3cf3b0144447a77fd79c84fe8500dfe993ef602'
 
 class BcidReporterApi(recipe_api.RecipeApi):
   """API for interacting with Provenance server using the broker tool."""
