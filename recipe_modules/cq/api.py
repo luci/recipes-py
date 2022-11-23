@@ -52,8 +52,7 @@ class CQApi(recipe_api.RecipeApi):
   @property
   def active(self):
     """Returns whether CQ is active for this build."""
-    return (self._active and
-            self.m.buildbucket.build.created_by.startswith('project:'))
+    return self._active
 
   @property
   def run_mode(self):
