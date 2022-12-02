@@ -5014,11 +5014,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/json/tests/add_json_log.py#12)(api):**
 ### *recipes* / [led:tests/full](/recipe_modules/led/tests/full.py)
 
-[DEPS](/recipe_modules/led/tests/full.py#16): [buildbucket](#recipe_modules-buildbucket), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/led/tests/full.py#17): [buildbucket](#recipe_modules-buildbucket), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/led/tests/full.py#32)(api, get_cmd, child_properties, sloppy_child_properties, do_bogus_edits):**
+&mdash; **def [RunSteps](/recipe_modules/led/tests/full.py#33)(api, get_cmd, child_properties, sloppy_child_properties, do_bogus_edits):**
 ### *recipes* / [led:tests/no\_exist](/recipe_modules/led/tests/no_exist.py)
 
 [DEPS](/recipe_modules/led/tests/no_exist.py#7): [led](#recipe_modules-led), [step](#recipe_modules-step)

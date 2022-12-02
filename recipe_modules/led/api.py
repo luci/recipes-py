@@ -250,11 +250,18 @@ class LedApi(recipe_api.RecipeApi):
       return job.Definition()
 
     if cmd[0] == 'get-builder':
-      bucket, builder = cmd[-1].split(':', 1)
-      if bucket.startswith('luci.'):
-        project, bucket = bucket[len('luci.'):].split('.', 1)
+      # "project/bucket:builder" or "luci.project.bucket:builder"
+      parts = cmd[-1].split(':', 1)
+      if len(parts) == 2:
+        bucket = parts[0]
+        builder = parts[1]
+        if bucket.startswith('luci.'):
+          project, bucket = bucket[len('luci.'):].split('.', 1)
+        else:
+          project, bucket = bucket.split('/', 1)
       else:
-        project, bucket = bucket.split('/', 1)
+        # "project/bucket/builder"
+        project, bucket, builder = cmd[-1].split('/')
 
       mocked = _pick_mock(
           'buildbucket/builder',

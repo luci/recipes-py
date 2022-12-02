@@ -4,6 +4,7 @@
 
 import re
 
+from recipe_engine import post_process
 from recipe_engine.recipe_api import Property
 
 from PB.go.chromium.org.luci.buildbucket.proto import common
@@ -84,6 +85,12 @@ def GenTests(api):
   yield (
       api.test('basic') +
       api.properties(get_cmd=['get-builder', 'chromium/try:linux-rel'])
+  )
+
+  yield (
+      api.test('project/bucket/builder') +
+      api.properties(get_cmd=['get-builder', 'chromium/try/linux-rel']) +
+      api.post_process(post_process.DropExpectation)
   )
 
   mock_build = job.Definition()
