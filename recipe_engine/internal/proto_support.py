@@ -493,7 +493,7 @@ def _compile_protos(proto_files, proto_tree, protoc, argfile, dest):
   if protoc_proc.returncode != 0:
     replacer = _rel_to_abs_replacer(proto_files)
     print("Error while compiling protobufs. Output:\n", file=sys.stderr)
-    sys.stderr.write(replacer(output))
+    sys.stderr.write(replacer(output.decode('utf-8')))
     sys.exit(1)
 
   rewrite_errors = []
