@@ -543,6 +543,8 @@ class ResultDBAPI(recipe_api.RecipeApi):
            location_tags_file='',
            require_build_inv=True,
            exonerate_unexpected_pass=False,
+           inv_properties='',
+           inv_properties_file='',
   ):
     """Wraps the command with ResultSink.
 
@@ -581,6 +583,12 @@ class ResultDBAPI(recipe_api.RecipeApi):
         an invocation.
       exonerate_unexpected_pass(bool): flag to control if automatically
         exonerate unexpected passes.
+      inv_properties(str): stringified JSON object that contains structured,
+        domain-specific properties of the invocation. When not specified,
+        invocation-level properties will not be updated.
+      inv_properties_file(string): Similar to inv_properties but takes a path
+        to the file that contains the JSON object. Cannot be used when
+        inv_properties is specified.
     """
     if require_build_inv:
       self.assert_enabled()
@@ -597,6 +605,10 @@ class ResultDBAPI(recipe_api.RecipeApi):
     assert isinstance(location_tags_file, (type(None), str)), location_tags_file
     assert isinstance(
         exonerate_unexpected_pass, bool), exonerate_unexpected_pass
+    assert isinstance(inv_properties, (type(None), str)), inv_properties
+    assert isinstance(
+      inv_properties_file, (type(None), str)), inv_properties_file
+    assert not (inv_properties and inv_properties_file), inv_properties_file
 
     ret = ['rdb', 'stream']
 
@@ -626,6 +638,12 @@ class ResultDBAPI(recipe_api.RecipeApi):
 
     if exonerate_unexpected_pass:
       ret += ['-exonerate-unexpected-pass']
+
+    if inv_properties:
+      ret += ['-inv-properties', inv_properties]
+
+    if inv_properties_file:
+      ret += ['-inv-properties-file', inv_properties_file]
 
     ret += ['--'] + list(cmd)
     return ret

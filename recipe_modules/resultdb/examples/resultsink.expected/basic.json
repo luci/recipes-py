@@ -242,6 +242,54 @@
     "name": "test with exonerate_unexpected_pass"
   },
   {
+    "cmd": [
+      "rdb",
+      "stream",
+      "-inv-properties",
+      "{\"key\": \"value\"}",
+      "--",
+      "echo",
+      "suppose its a test"
+    ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "test with inv_properties"
+  },
+  {
+    "cmd": [
+      "rdb",
+      "stream",
+      "-inv-properties-file",
+      "properties.json",
+      "--",
+      "echo",
+      "suppose its a test"
+    ],
+    "luci_context": {
+      "realm": {
+        "name": "proj:realm"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/inv",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "test with inv_properties_file"
+  },
+  {
     "name": "$result"
   }
 ]

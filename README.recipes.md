@@ -3133,7 +3133,7 @@ A module for interacting with ResultDB.
 
 &mdash; **def [assert\_enabled](/recipe_modules/resultdb/api.py#53)(self):**
 
-&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#633)(self, column_keys=(), grouping_keys=('status',)):**
+&mdash; **def [config\_test\_presentation](/recipe_modules/resultdb/api.py#651)(self, column_keys=(), grouping_keys=('status',)):**
 
 Specifies how the test results should be rendered.
 
@@ -3351,7 +3351,7 @@ Returns:
   A BatchCreateArtifactsResponse proto message listing the artifacts that
   were created.
 
-&mdash; **def [wrap](/recipe_modules/resultdb/api.py#534)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False):**
+&mdash; **def [wrap](/recipe_modules/resultdb/api.py#534)(self, cmd, test_id_prefix='', base_variant=None, test_location_base='', base_tags=None, coerce_negative_duration=False, include=False, realm='', location_tags_file='', require_build_inv=True, exonerate_unexpected_pass=False, inv_properties='', inv_properties_file=''):**
 
 Wraps the command with ResultSink.
 
@@ -3390,6 +3390,12 @@ Args:
     an invocation.
   exonerate_unexpected_pass(bool): flag to control if automatically
     exonerate unexpected passes.
+  inv_properties(str): stringified JSON object that contains structured,
+    domain-specific properties of the invocation. When not specified,
+    invocation-level properties will not be updated.
+  inv_properties_file(string): Similar to inv_properties but takes a path
+    to the file that contains the JSON object. Cannot be used when
+    inv_properties is specified.
 ### *recipe_modules* / [runtime](/recipe_modules/runtime)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
@@ -5168,11 +5174,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/resultdb/examples/result_history.py#18)(api):**
 ### *recipes* / [resultdb:examples/resultsink](/recipe_modules/resultdb/examples/resultsink.py)
 
-[DEPS](/recipe_modules/resultdb/examples/resultsink.py#9): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/resultdb/examples/resultsink.py#10): [context](#recipe_modules-context), [resultdb](#recipe_modules-resultdb), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/resultsink.py#16)(api):**
+&mdash; **def [RunSteps](/recipe_modules/resultdb/examples/resultsink.py#17)(api):**
 ### *recipes* / [resultdb:examples/test\_presentation](/recipe_modules/resultdb/examples/test_presentation.py)
 
 [DEPS](/recipe_modules/resultdb/examples/test_presentation.py#7): [resultdb](#recipe_modules-resultdb)

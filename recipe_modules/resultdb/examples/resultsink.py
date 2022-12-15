@@ -2,6 +2,7 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+import json
 from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
 
 PYTHON_VERSION_COMPATIBILITY = "PY2+3"
@@ -66,6 +67,16 @@ def RunSteps(api):
   api.step('test with exonerate_unexpected_pass', api.resultdb.wrap(
       ['echo', 'suppose its a test'],
       exonerate_unexpected_pass=True,
+  ))
+
+  api.step('test with inv_properties', api.resultdb.wrap(
+    ['echo', 'suppose its a test'],
+    inv_properties=json.dumps({'key': 'value'}),
+  ))
+
+  api.step('test with inv_properties_file', api.resultdb.wrap(
+    ['echo', 'suppose its a test'],
+    inv_properties_file="properties.json",
   ))
 
 def GenTests(api):
