@@ -41,14 +41,15 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
         'Step(%r) generated step with "cmd" containing non-strings' % (
           step_name,))
 
-  def __call__(self, path_to_script, *args):
+  def __call__(self, path_to_script, *args, **kwargs):
     """Run a script and generate the steps emitted by that script.
 
     The script will be invoked with --output-json /path/to/file.json. The script
     is expected to exit 0 and write steps into that file. Once the script
     outputs all of the steps to that file, the recipe will read the steps from
     that file and execute them in order. Any *args specified will be
-    additionally passed to the script.
+    additionally passed to the script. **kwargs will pass in python interpreter
+    keyword, which is "python" by default. I.e. interpreter = 'vpython3'
 
     The step data is formatted as a list of JSON objects. Each object
     corresponds to one step, and contains the following keys:
@@ -78,12 +79,13 @@ class GeneratorScriptApi(recipe_api.RecipeApi):
     """
     f = '--output-json'
     step_name = 'gen step(%s)' % self.m.path.basename(path_to_script)
+    interpreter = kwargs.get('interpreter') or 'python'
 
     with self.m.context(cwd=self.m.path['checkout']):
       if str(path_to_script).endswith('.py'):
         step_result = self.m.step(
             step_name,
-            ['python', '-u', path_to_script] +
+            [interpreter, '-u', path_to_script] +
             list(args) + [f, self.m.json.output()])
       else:
         step_result = self.m.step(

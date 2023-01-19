@@ -130,6 +130,7 @@
   * [futures:examples/result](#recipes-futures_examples_result) (Python3 ✅)
   * [futures:examples/semaphore](#recipes-futures_examples_semaphore) (Python3 ✅)
   * [generator_script:examples/full](#recipes-generator_script_examples_full) (Python3 ✅)
+  * [generator_script:examples/vpython3_test](#recipes-generator_script_examples_vpython3_test) (Python3 ✅)
   * [golang:examples/full](#recipes-golang_examples_full) (Python3 ✅)
   * [json:examples/full](#recipes-json_examples_full) (Python3 ✅)
   * [json:tests/add_json_log](#recipes-json_tests_add_json_log) (Python3 ✅)
@@ -2154,7 +2155,7 @@ near future.
 
 #### **class [GeneratorScriptApi](/recipe_modules/generator_script/api.py#16)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/generator_script/api.py#44)(self, path_to_script, \*args):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/generator_script/api.py#44)(self, path_to_script, \*args, \*\*kwargs):**
 
 Run a script and generate the steps emitted by that script.
 
@@ -2162,7 +2163,8 @@ The script will be invoked with --output-json /path/to/file.json. The script
 is expected to exit 0 and write steps into that file. Once the script
 outputs all of the steps to that file, the recipe will read the steps from
 that file and execute them in order. Any *args specified will be
-additionally passed to the script.
+additionally passed to the script. **kwargs will pass in python interpreter
+keyword, which is "python" by default. I.e. interpreter = 'vpython3'
 
 The step data is formatted as a list of JSON objects. Each object
 corresponds to one step, and contains the following keys:
@@ -4997,6 +4999,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipe_modules/generator_script/examples/full.py#21)(api, script_name):**
+### *recipes* / [generator\_script:examples/vpython3\_test](/recipe_modules/generator_script/examples/vpython3_test.py)
+
+[DEPS](/recipe_modules/generator_script/examples/vpython3_test.py#9): [generator\_script](#recipe_modules-generator_script), [json](#recipe_modules-json), [path](#recipe_modules-path), [properties](#recipe_modules-properties), [step](#recipe_modules-step)
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+&mdash; **def [RunSteps](/recipe_modules/generator_script/examples/vpython3_test.py#21)(api, script_name):**
 ### *recipes* / [golang:examples/full](/recipe_modules/golang/examples/full.py)
 
 [DEPS](/recipe_modules/golang/examples/full.py#7): [golang](#recipe_modules-golang), [platform](#recipe_modules-platform), [step](#recipe_modules-step)
