@@ -781,7 +781,7 @@ Args:
 Set the buildbucket host while in context, then reverts it.
 ### *recipe_modules* / [cas](/recipe_modules/cas)
 
-[DEPS](/recipe_modules/cas/__init__.py#9): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
+[DEPS](/recipe_modules/cas/__init__.py#9): [cipd](#recipe_modules-cipd), [context](#recipe_modules-context), [file](#recipe_modules-file), [json](#recipe_modules-json), [path](#recipe_modules-path), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 

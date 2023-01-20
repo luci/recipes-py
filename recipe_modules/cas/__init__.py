@@ -10,6 +10,7 @@ DEPS = [
     'cipd',
     'context',
     'file',
+    'json',
     'path',
     'raw_io',
     'runtime',

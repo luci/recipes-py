@@ -120,13 +120,26 @@ class CasApi(recipe_api.RecipeApi):
       digest (str): digest of uploaded root directory.
     """
     self.m.path.assert_absolute(root)
+    if not paths:
+      paths = [root]
+    for p in paths:
+      self.m.path.assert_absolute(p)
+
     cmd = [
         'archive',
         '-cas-instance',
         self.instance,
         '-dump-digest',
         self.m.raw_io.output_text(),
+        '-paths-json',
+        self.m.json.input(
+          [
+            [str(root), str(self.m.path.relpath(p, root))]
+            for p in paths
+          ]
+        ),
     ]
+
     # TODO: make `log_level` a proper keyword argument once Python 2 support is
     # dropped. Python 2 doesn't support named keyword arguments after
     # variable-length positional arguments like `def func(*args, param=None)`.
@@ -134,14 +147,6 @@ class CasApi(recipe_api.RecipeApi):
     if log_level:
       cmd.extend(['-log-level', log_level])
     assert not kwargs, 'unrecognized arguments to archive: %r' % kwargs
-
-    if not paths:
-      paths = [root]
-    for p in paths:
-      self.m.path.assert_absolute(p)
-      cmd.extend(
-          ['-paths',
-           str(root) + ':' + str(self.m.path.relpath(p, root))])
 
     # TODO(tikuta): support multiple tree upload.
     step = self._run(

@@ -113,12 +113,8 @@
       "projects/example-cas-server/instances/default_instance",
       "-dump-digest",
       "/path/to/tmp/",
-      "-paths",
-      "[CLEANUP]/cas-example_tmp_1:a",
-      "-paths",
-      "[CLEANUP]/cas-example_tmp_1:b",
-      "-paths",
-      "[CLEANUP]/cas-example_tmp_1:sub"
+      "-paths-json",
+      "[[\"[CLEANUP]/cas-example_tmp_1\", \"a\"], [\"[CLEANUP]/cas-example_tmp_1\", \"b\"], [\"[CLEANUP]/cas-example_tmp_1\", \"sub\"]]"
     ],
     "infra_step": true,
     "name": "archive",
@@ -134,10 +130,10 @@
       "projects/other-cas-server/instances/instance",
       "-dump-digest",
       "/path/to/tmp/",
+      "-paths-json",
+      "[[\"[CLEANUP]/cas-example_tmp_1\", \".\"]]",
       "-log-level",
-      "debug",
-      "-paths",
-      "[CLEANUP]/cas-example_tmp_1:."
+      "debug"
     ],
     "infra_step": true,
     "name": "archive directory",
