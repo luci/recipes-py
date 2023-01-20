@@ -21,6 +21,7 @@
   * [json](#recipe_modules-json) (Python3 ✅) &mdash; Methods for producing and consuming JSON.
   * [led](#recipe_modules-led) (Python3 ✅) &mdash; An interface to call the led tool.
   * [legacy_annotation](#recipe_modules-legacy_annotation) (Python3 ✅) &mdash; Legacy Annotation module provides support for running a command emitting legacy @@@annotation@@@ in the new luciexe mode.
+  * [luci_analysis](#recipe_modules-luci_analysis) (Python3 ✅) &mdash; API for interacting with the LUCI Analysis RPCs  This API is for calling LUCI Analysis RPCs for various aggregated info about test results.
   * [milo](#recipe_modules-milo) (Python3 ✅) &mdash; API for specifying Milo behavior.
   * [nodejs](#recipe_modules-nodejs) (Python3 ✅)
   * [path](#recipe_modules-path) (Python3 ✅) &mdash; All functions related to manipulating paths in recipes.
@@ -138,6 +139,12 @@
   * [led:tests/no_exist](#recipes-led_tests_no_exist) (Python3 ✅)
   * [led:tests/trigger_build](#recipes-led_tests_trigger_build) (Python3 ✅)
   * [legacy_annotation:examples/full](#recipes-legacy_annotation_examples_full) (Python3 ✅)
+  * [luci_analysis:tests/query_failure_rate_test](#recipes-luci_analysis_tests_query_failure_rate_test) (Python3 ✅) &mdash; Tests for query_failure_rate.
+  * [luci_analysis:tests/test_generate_analysis](#recipes-luci_analysis_tests_test_generate_analysis) (Python3 ✅) &mdash; Tests for generate_analysis.
+  * [luci_analysis:tests/test_history_query](#recipes-luci_analysis_tests_test_history_query) (Python3 ✅) &mdash; Tests for query_failure_rate.
+  * [luci_analysis:tests/test_lookup_bug](#recipes-luci_analysis_tests_test_lookup_bug) (Python3 ✅) &mdash; Tests for lookup_bug.
+  * [luci_analysis:tests/test_query_cluster_failures](#recipes-luci_analysis_tests_test_query_cluster_failures) (Python3 ✅) &mdash; Tests for query_cluster_failres.
+  * [luci_analysis:tests/test_query_variants](#recipes-luci_analysis_tests_test_query_variants) (Python3 ✅) &mdash; Tests for query_variants.
   * [milo:examples/full](#recipes-milo_examples_full) (Python3 ✅)
   * [nodejs:examples/full](#recipes-nodejs_examples_full) (Python3 ✅)
   * [path:examples/full](#recipes-path_examples_full) (Python3 ✅)
@@ -2384,6 +2391,127 @@ with allow_subannotation set to true.
 
 If `legacy_global_namespace` is True, this enables an even more-legacy
 global namespace merging mode. Do not enable this. See crbug.com/1310155.
+### *recipe_modules* / [luci\_analysis](/recipe_modules/luci_analysis)
+
+[DEPS](/recipe_modules/luci_analysis/__init__.py#7): [json](#recipe_modules-json), [step](#recipe_modules-step)
+
+PYTHON_VERSION_COMPATIBILITY: PY3
+
+API for interacting with the LUCI Analysis RPCs
+
+This API is for calling LUCI Analysis RPCs for various aggregated info about
+test results.
+See go/luci-analysis for more info.
+
+#### **class [LuciAnalysisApi](/recipe_modules/luci_analysis/api.py#27)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
+
+&mdash; **def [lookup\_bug](/recipe_modules/luci_analysis/api.py#221)(self, bug_id, system='monorail'):**
+
+Looks up the rule associated with a given bug.
+
+This is a wrapper of `luci.analysis.v1.Rules` `LookupBug` API.
+
+Args:
+  bug_id (str): Bug Id is the bug tracking system-specific identity of the
+    bug. For monorail, the scheme is {project}/{numeric_id}, for buganizer
+    the scheme is {numeric_id}.
+  system (str): System is the bug tracking system of the bug. This is either
+    "monorail" or "buganizer". Defaults to monorail.
+
+Returns:
+  list of rules (str), Format: projects/{project}/rules/{rule_id}
+
+&mdash; **def [query\_cluster\_failures](/recipe_modules/luci_analysis/api.py#256)(self, cluster_name):**
+
+Queries examples of failures in the given cluster.
+
+This is a wrapper of `luci.analysis.v1.Clusters` `QueryClusterFailures` API.
+
+Args:
+  cluster_name (str): The resource name of the cluster to retrieve.
+    Format: projects/{project}/clusters/{cluster_algorithm}/{cluster_id}
+
+Returns:
+  list of DistinctClusterFailure
+
+  For value format, see [`DistinctClusterFailure` message]
+  (https://bit.ly/DistinctClusterFailure)
+
+&mdash; **def [query\_failure\_rate](/recipe_modules/luci_analysis/api.py#81)(self, test_and_variant_list):**
+
+Queries LUCI Analysis for failure rates
+
+Args:
+  test_and_variant_list list(Test): List of dicts containing testId and
+    variantHash
+Returns:
+  List of TestVariantFailureRateAnalysis protos
+
+&mdash; **def [query\_test\_history](/recipe_modules/luci_analysis/api.py#113)(self, test_id, sub_realm=None, variant_predicate=None, partition_time_range=None, submitted_filter=None, page_size=1000, page_token=None):**
+
+A wrapper method to use `luci.analysis.v1.TestHistory` `Query` API.
+
+Args:
+  test_id (str): test ID to query.
+  sub_realm (str): Optional. The realm without the "<project>:" prefix.
+    E.g. "try". Default all test verdicts will be returned.
+  variant_predicate (luci.analysis.v1.VariantPredicate): Optional. The
+    subset of test variants to request history for. Default all will be
+    returned.
+  partition_time_range (luci.analysis.v1.common.TimeRange): Optional. A
+    range of timestamps to query the test history from. Default all will be
+    returned. (At most recent 90 days as TTL).
+  submitted_filter (luci.analysis.v1.common.SubmittedFilter): Optional.
+    Whether test verdicts generated by code with unsubmitted changes (e.g.
+    Gerrit changes) should be included in the response. Default all will be
+    returned. Default all will be returned.
+  page_size (int): Optional. The number of results per page in the response.
+    If the number of results satisfying the given configuration exceeds this
+    number, only the page_size results will be available in the response.
+    Defaults to 1000.
+  page_token (str): Optional. For instances in which the results span
+    multiple pages, each response will contain a page token for the next
+    page, which can be passed in to the next request. Defaults to None,
+    which returns the first page.
+
+Returns:
+  (list of parsed luci.analysis.v1.TestVerdict objects, next page token)
+
+&mdash; **def [query\_variants](/recipe_modules/luci_analysis/api.py#172)(self, test_id, project='chromium', sub_realm=None, variant_predicate=None, page_size=1000, page_token=None):**
+
+A wrapper method to use `luci.analysis.v1.TestHistory` `QueryVariants`
+API.
+
+Args:
+
+  test_id (str): test ID to query.
+  project (str): Optional. The LUCI project to query the variants from.
+  sub_realm (str): Optional. The realm without the "<project>:" prefix.
+    E.g. "try". Default all test verdicts will be returned.
+  variant_predicate (luci.analysis.v1.VariantPredicate): Optional. The
+    subset of test variants to request history for. Default all will be
+    returned.
+  page_size (int): Optional. The number of results per page in the response.
+    If the number of results satisfying the given configuration exceeds this
+    number, only the page_size results will be available in the response.
+    Defaults to 1000.
+  page_token (str): Optional. For instances in which the results span
+    multiple pages, each response will contain a page token for the next
+    page, which can be passed in to the next request. Defaults to None,
+    which returns the first page.
+
+Returns:
+  (list of VariantInfo { variant_hash: str, variant: { def: dict } },
+   next page token)
+
+&mdash; **def [rule\_name\_to\_cluster\_name](/recipe_modules/luci_analysis/api.py#245)(self, rule):**
+
+Convert the resource name for a rule to its corresponding cluster.
+Args:
+  rule (str): Format: projects/{project}/rules/{rule_id}
+Returns:
+  cluster (str): Format:
+    projects/{project}/clusters/{cluster_algorithm}/{cluster_id}.
 ### *recipe_modules* / [milo](/recipe_modules/milo)
 
 [DEPS](/recipe_modules/milo/__init__.py#7): [json](#recipe_modules-json), [path](#recipe_modules-path), [platform](#recipe_modules-platform), [raw\_io](#recipe_modules-raw_io), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [uuid](#recipe_modules-uuid)
@@ -5055,6 +5183,60 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipe_modules/legacy_annotation/examples/full.py#20)(api):**
+### *recipes* / [luci\_analysis:tests/query\_failure\_rate\_test](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py)
+
+[DEPS](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py#12): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [properties](#recipe_modules-properties), [raw\_io](#recipe_modules-raw_io)
+
+PYTHON_VERSION_COMPATIBILITY: PY3
+
+Tests for query_failure_rate.
+
+&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/query_failure_rate_test.py#25)(api, input_list):**
+### *recipes* / [luci\_analysis:tests/test\_generate\_analysis](/recipe_modules/luci_analysis/tests/test_generate_analysis.py)
+
+[DEPS](/recipe_modules/luci_analysis/tests/test_generate_analysis.py#9): [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+
+PYTHON_VERSION_COMPATIBILITY: PY3
+
+Tests for generate_analysis.
+
+&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_generate_analysis.py#17)(api):**
+### *recipes* / [luci\_analysis:tests/test\_history\_query](/recipe_modules/luci_analysis/tests/test_history_query.py)
+
+[DEPS](/recipe_modules/luci_analysis/tests/test_history_query.py#15): [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [raw\_io](#recipe_modules-raw_io), [step](#recipe_modules-step)
+
+PYTHON_VERSION_COMPATIBILITY: PY3
+
+Tests for query_failure_rate.
+
+&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_history_query.py#23)(api):**
+### *recipes* / [luci\_analysis:tests/test\_lookup\_bug](/recipe_modules/luci_analysis/tests/test_lookup_bug.py)
+
+[DEPS](/recipe_modules/luci_analysis/tests/test_lookup_bug.py#8): [assertions](#recipe_modules-assertions), [json](#recipe_modules-json), [luci\_analysis](#recipe_modules-luci_analysis), [step](#recipe_modules-step)
+
+PYTHON_VERSION_COMPATIBILITY: PY3
+
+Tests for lookup_bug.
+
+&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_lookup_bug.py#16)(api):**
+### *recipes* / [luci\_analysis:tests/test\_query\_cluster\_failures](/recipe_modules/luci_analysis/tests/test_query_cluster_failures.py)
+
+[DEPS](/recipe_modules/luci_analysis/tests/test_query_cluster_failures.py#9): [assertions](#recipe_modules-assertions), [luci\_analysis](#recipe_modules-luci_analysis), [step](#recipe_modules-step)
+
+PYTHON_VERSION_COMPATIBILITY: PY3
+
+Tests for query_cluster_failres.
+
+&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_query_cluster_failures.py#16)(api):**
+### *recipes* / [luci\_analysis:tests/test\_query\_variants](/recipe_modules/luci_analysis/tests/test_query_variants.py)
+
+[DEPS](/recipe_modules/luci_analysis/tests/test_query_variants.py#12): [luci\_analysis](#recipe_modules-luci_analysis), [step](#recipe_modules-step)
+
+PYTHON_VERSION_COMPATIBILITY: PY3
+
+Tests for query_variants.
+
+&mdash; **def [RunSteps](/recipe_modules/luci_analysis/tests/test_query_variants.py#18)(api):**
 ### *recipes* / [milo:examples/full](/recipe_modules/milo/examples/full.py)
 
 [DEPS](/recipe_modules/milo/examples/full.py#9): [milo](#recipe_modules-milo)

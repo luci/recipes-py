@@ -1,0 +1,49 @@
+[
+  {
+    "cmd": [],
+    "name": "nest_parent"
+  },
+  {
+    "cmd": [
+      "prpc",
+      "call",
+      "luci-analysis.appspot.com",
+      "luci.analysis.v1.Clusters.QueryClusterFailures"
+    ],
+    "name": "nest_parent.Query Cluster Failure projects/chromium/clusters/rules/00000000000000000000ffffffffffff",
+    "stdin": "{\"parent\": \"projects/chromium/clusters/rules/00000000000000000000ffffffffffff/failures\"}",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"failures\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@    {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"count\": 2, @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"test_id\": \"dummy_test_id\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"variant\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"def\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@          \"foo\": \"bar\"@@@",
+      "@@@STEP_LOG_LINE@json.output@        }@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    }, @@@",
+      "@@@STEP_LOG_LINE@json.output@    {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"count\": 1, @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"testId\": \"dummy_test_id_2\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"variant\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"def\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@          \"foo\": \"bar2\"@@@",
+      "@@@STEP_LOG_LINE@json.output@        }@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  ]@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LOG_LINE@input@{@@@",
+      "@@@STEP_LOG_LINE@input@  \"parent\": \"projects/chromium/clusters/rules/00000000000000000000ffffffffffff/failures\"@@@",
+      "@@@STEP_LOG_LINE@input@}@@@",
+      "@@@STEP_LOG_END@input@@@"
+    ]
+  },
+  {
+    "name": "$result"
+  }
+]
