@@ -78,12 +78,13 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
         'testVariants': [_create_individual_test_variant(t) for t in test_ids],
     })
 
-  def query_failure_rate(self, test_and_variant_list):
+  def query_failure_rate(self, test_and_variant_list, project='chromium'):
     """Queries LUCI Analysis for failure rates
 
     Args:
       test_and_variant_list list(Test): List of dicts containing testId and
         variantHash
+      project (str): Optional. The LUCI project to query the failures from.
     Returns:
       List of TestVariantFailureRateAnalysis protos
     """
@@ -93,7 +94,7 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
           'rpc call',
           'luci.analysis.v1.TestVariants.QueryFailureRate',
           {
-              'project': 'chromium',
+              'project': project,
               'testVariants': test_and_variant_list,
           },
           step_test_data=lambda: self._query_failure_rate_step_test_data(
@@ -112,6 +113,7 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
 
   def query_test_history(self,
                          test_id,
+                         project='chromium',
                          sub_realm=None,
                          variant_predicate=None,
                          partition_time_range=None,
@@ -122,6 +124,7 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
 
     Args:
       test_id (str): test ID to query.
+      project (str): Optional. The LUCI project to query the history from.
       sub_realm (str): Optional. The realm without the "<project>:" prefix.
         E.g. "try". Default all test verdicts will be returned.
       variant_predicate (luci.analysis.v1.VariantPredicate): Optional. The
@@ -154,7 +157,7 @@ class LuciAnalysisApi(recipe_api.RecipeApi):
     )
 
     request = QueryTestHistoryRequest(
-        project='chromium',
+        project=project,
         test_id=test_id,
         predicate=predicate,
         page_size=page_size,

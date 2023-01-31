@@ -2405,7 +2405,7 @@ See go/luci-analysis for more info.
 
 #### **class [LuciAnalysisApi](/recipe_modules/luci_analysis/api.py#27)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
-&mdash; **def [lookup\_bug](/recipe_modules/luci_analysis/api.py#221)(self, bug_id, system='monorail'):**
+&mdash; **def [lookup\_bug](/recipe_modules/luci_analysis/api.py#224)(self, bug_id, system='monorail'):**
 
 Looks up the rule associated with a given bug.
 
@@ -2421,7 +2421,7 @@ Args:
 Returns:
   list of rules (str), Format: projects/{project}/rules/{rule_id}
 
-&mdash; **def [query\_cluster\_failures](/recipe_modules/luci_analysis/api.py#256)(self, cluster_name):**
+&mdash; **def [query\_cluster\_failures](/recipe_modules/luci_analysis/api.py#259)(self, cluster_name):**
 
 Queries examples of failures in the given cluster.
 
@@ -2437,22 +2437,24 @@ Returns:
   For value format, see [`DistinctClusterFailure` message]
   (https://bit.ly/DistinctClusterFailure)
 
-&mdash; **def [query\_failure\_rate](/recipe_modules/luci_analysis/api.py#81)(self, test_and_variant_list):**
+&mdash; **def [query\_failure\_rate](/recipe_modules/luci_analysis/api.py#81)(self, test_and_variant_list, project='chromium'):**
 
 Queries LUCI Analysis for failure rates
 
 Args:
   test_and_variant_list list(Test): List of dicts containing testId and
     variantHash
+  project (str): Optional. The LUCI project to query the failures from.
 Returns:
   List of TestVariantFailureRateAnalysis protos
 
-&mdash; **def [query\_test\_history](/recipe_modules/luci_analysis/api.py#113)(self, test_id, sub_realm=None, variant_predicate=None, partition_time_range=None, submitted_filter=None, page_size=1000, page_token=None):**
+&mdash; **def [query\_test\_history](/recipe_modules/luci_analysis/api.py#114)(self, test_id, project='chromium', sub_realm=None, variant_predicate=None, partition_time_range=None, submitted_filter=None, page_size=1000, page_token=None):**
 
 A wrapper method to use `luci.analysis.v1.TestHistory` `Query` API.
 
 Args:
   test_id (str): test ID to query.
+  project (str): Optional. The LUCI project to query the history from.
   sub_realm (str): Optional. The realm without the "<project>:" prefix.
     E.g. "try". Default all test verdicts will be returned.
   variant_predicate (luci.analysis.v1.VariantPredicate): Optional. The
@@ -2477,7 +2479,7 @@ Args:
 Returns:
   (list of parsed luci.analysis.v1.TestVerdict objects, next page token)
 
-&mdash; **def [query\_variants](/recipe_modules/luci_analysis/api.py#172)(self, test_id, project='chromium', sub_realm=None, variant_predicate=None, page_size=1000, page_token=None):**
+&mdash; **def [query\_variants](/recipe_modules/luci_analysis/api.py#175)(self, test_id, project='chromium', sub_realm=None, variant_predicate=None, page_size=1000, page_token=None):**
 
 A wrapper method to use `luci.analysis.v1.TestHistory` `QueryVariants`
 API.
@@ -2504,7 +2506,7 @@ Returns:
   (list of VariantInfo { variant_hash: str, variant: { def: dict } },
    next page token)
 
-&mdash; **def [rule\_name\_to\_cluster\_name](/recipe_modules/luci_analysis/api.py#245)(self, rule):**
+&mdash; **def [rule\_name\_to\_cluster\_name](/recipe_modules/luci_analysis/api.py#248)(self, rule):**
 
 Convert the resource name for a rule to its corresponding cluster.
 Args:
