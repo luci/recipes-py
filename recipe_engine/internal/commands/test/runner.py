@@ -319,6 +319,12 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
       including_default_value_fields=True,
   ))
 
+  if not raw_expectations['$result'].get('failure'): # on success
+    if test_case_result.raw_result.summary_markdown: # has markdown populated
+      raw_expectations['$result']['summaryMarkdown'] = (
+          test_case_result.raw_result.summary_markdown
+      )
+
   raw_expectations['$result']['name'] = '$result'
 
   raw_expectations = magic_check_fn.post_process(

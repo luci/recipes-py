@@ -271,6 +271,7 @@
     ]
   },
   {
-    "name": "$result"
+    "name": "$result",
+    "summaryMarkdown": "HI THERE I AM A *SUMMARY*:\n\n* first\n* second\n* third\n"
   }
 ]

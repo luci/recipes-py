@@ -33,8 +33,9 @@ def GenTests(api):
       api.test('from_recipe') +
       api.properties(from_recipe=True) +
       api.expect_exception('ModuleInjectionError') +
+      api.post_process(post_process.StatusException) +
       api.post_process(
-          post_process.ResultReason,
+          post_process.SummaryMarkdown,
           "Uncaught Exception: ModuleInjectionError('RecipeApi has no "
           "dependency 'missing_module'. (Add it to DEPS?)')",
       ) +
@@ -44,8 +45,9 @@ def GenTests(api):
       api.test('attribute') +
       api.properties(attribute=True) +
       api.expect_exception('AttributeError') +
+      api.post_process(post_process.StatusException) +
       api.post_process(
-          post_process.ResultReason,
+          post_process.SummaryMarkdown,
           "Uncaught Exception: AttributeError(''CIPDApi' object has no "
           "attribute 'missing_method'')",
       ) +
@@ -55,8 +57,9 @@ def GenTests(api):
       api.test('module') +
       api.properties(module=True) +
       api.expect_exception('ModuleInjectionError') +
+      api.post_process(post_process.StatusException) +
       api.post_process(
-          post_process.ResultReason,
+          post_process.SummaryMarkdown,
           "Uncaught Exception: ModuleInjectionError('Recipe Module "
           "'cipd' has no dependency 'missing_module'. (Add it to "
           "__init__.py:DEPS?)')",

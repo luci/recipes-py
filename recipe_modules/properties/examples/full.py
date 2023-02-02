@@ -79,8 +79,9 @@ def GenTests(api):
     api.test('prop_wrong_type')
     + api.properties(test_prop=True) # wrong type
     + api.expect_exception('ParseError')
+    + api.post_process(post_process.StatusException)
     + api.post_process(
-          post_process.ResultReasonRE,
+          post_process.SummaryMarkdownRE,
           'Failed to parse test_prop field'
       )
     + api.post_process(post_process.DropExpectation)

@@ -49,8 +49,8 @@ message Failure {
 message RawResult {
   // Human readable information on what occurred in the build
   string summary_markdown = 1;
-  // If not SUCCESS: summary_markdown has information on an error
-  // If SUCCESS: summary markdown will be ignored
-  // TODO(iannucci) Fix this so that `summary_markdown` is always propagated in build.proto mode.
+  // The final status of the recipe execution.
+  //
+  // MUST be a terminal status.
   buildbucket.v2.Status status = 2;
 }

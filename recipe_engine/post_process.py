@@ -548,41 +548,58 @@ def StatusException(check, step_odict):
 def ResultReason(check, step_odict, reason):
   """Assert that recipe result reason matches given reason.
 
+  DEPRECATED: Please use StatusAnyFailure + SummaryMarkdown instead.
+
   Args:
     reason (str): the string to match.
   """
-  result = step_odict['$result']
-  if not check('recipe failed with reason %r (found success instead)' % reason,
-               'failure' in result):
-    return
-  if not check('recipe failed with reason %r (found no failure reason)',
-               'humanReason' in result['failure']):
-    return
-  actual_reason = result['failure']['humanReason']
-  check(
-      'recipe failed with reason %r (found reason %r instead)' %
-      (reason, actual_reason), reason == actual_reason)
+  StatusAnyFailure(check, step_odict)
+  SummaryMarkdown(check, step_odict, reason)
 
 
 def ResultReasonRE(check, step_odict, reason_regex):
   """Assert that recipe result reason contains given regex.
 
+  DEPRECATED: Please use StatusAnyFailure + SummaryMarkdownRE instead.
+
   Args:
     reason_regex (str): the regular expression to match.
   """
+  StatusAnyFailure(check, step_odict)
+  SummaryMarkdownRE(check, step_odict, reason_regex)
+
+def SummaryMarkdown(check, step_odict, summary):
+  """Assert that recipe output summary is the same as the given summary.
+
+  Args:
+    summary (str): the string to match.
+  """
   result = step_odict['$result']
-  if not check(
-      'recipe failed with reason containing %r (found success instead)',
-      'failure' in result):
+  actual_summary = result.get('failure').get('humanReason') if (
+      result.get('failure')) else result.get('summaryMarkdown')
+  if not check('recipe doesn\'t output any summary',
+               actual_summary):
     return
-  if not check(
-      ('recipe failed with reason containing %r (found no failure reason '
-       'instead)'), 'humanReason' in result['failure']):
-    return
-  actual_reason = result['failure']['humanReason']
   check(
-      'recipe failed with reason containing %r (found reason %r instead)' %
-      (reason_regex, actual_reason), re.search(reason_regex, actual_reason))
+      'expected recipe output summary %r (found summary %r instead)' %
+      (summary, actual_summary), summary == actual_summary)
+
+
+def SummaryMarkdownRE(check, step_odict, summary_regex):
+  """Assert that recipe output summary matches given regex.
+
+  Args:
+    summary_regex (str): the regular expression to match.
+  """
+  result = step_odict['$result']
+  actual_summary = result.get('failure').get('humanReason') if (
+      result.get('failure')) else result.get('summaryMarkdown')
+  if not check('recipe doesn\'t output any summary',
+               actual_summary):
+    return
+  check(
+      'expected recipe output summary matches %r (found summary %r instead)' %
+      (summary_regex, actual_summary), re.search(summary_regex, actual_summary))
 
 
 def DropExpectation(_check, _step_odict):

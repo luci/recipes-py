@@ -32,7 +32,7 @@ def GenTests(api):
           InputProps(use_result_type=False)
         ) +
         api.post_process(post_process.StatusFailure) +
-        api.post_process(post_process.ResultReasonRE,
+        api.post_process(post_process.SummaryMarkdownRE,
         ('"<(class|type) \'dict\'>" is not a valid return type for recipes\.'
          ' Did you mean to use "RawResult"\?')) +
         api.post_process(post_process.DropExpectation)
@@ -44,7 +44,7 @@ def GenTests(api):
           InputProps(use_result_type=True)
         ) +
         api.post_process(post_process.StatusFailure) +
-        api.post_process(post_process.ResultReason,
+        api.post_process(post_process.SummaryMarkdown,
         ('"<class \'recipe_engine.result_pb2.Result\'>"'
           ' is not a valid return type for recipes.'
           ' Did you mean to use "RawResult"?')) +

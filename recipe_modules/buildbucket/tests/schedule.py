@@ -141,7 +141,7 @@ def GenTests(api):
       ) +
       api.post_process(post_process.StatusException) +
       api.post_process(
-          post_process.ResultReasonRE,
+          post_process.SummaryMarkdownRE,
           r'Buildbucket Internal Error'
       ) +
       api.post_process(post_process.DropExpectation)

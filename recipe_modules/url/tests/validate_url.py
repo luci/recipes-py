@@ -24,8 +24,9 @@ def GenTests(api):
   yield (api.test('no_scheme') +
       api.properties(url_to_validate='example.com') +
       api.expect_exception('ValueError') +
+      api.post_process(post_process.StatusException) +
       api.post_process(
-          post_process.ResultReasonRE,
+          post_process.SummaryMarkdownRE,
           r"URL scheme must be either http:// or https://",
       ) +
       api.post_process(post_process.DropExpectation))
@@ -33,8 +34,9 @@ def GenTests(api):
   yield (api.test('invalid_scheme') +
       api.properties(url_to_validate='ftp://example.com') +
       api.expect_exception('ValueError') +
+      api.post_process(post_process.StatusException) +
       api.post_process(
-          post_process.ResultReasonRE,
+          post_process.SummaryMarkdownRE,
           r"URL scheme must be either http:// or https://",
       ) +
       api.post_process(post_process.DropExpectation))
@@ -42,8 +44,9 @@ def GenTests(api):
   yield (api.test('no_host') +
       api.properties(url_to_validate='https://') +
       api.expect_exception('ValueError') +
+      api.post_process(post_process.StatusException) +
       api.post_process(
-          post_process.ResultReasonRE,
+          post_process.SummaryMarkdownRE,
           r"URL must specify a network location.",
       ) +
       api.post_process(post_process.DropExpectation))

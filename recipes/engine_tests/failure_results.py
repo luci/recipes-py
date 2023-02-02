@@ -57,7 +57,7 @@ def GenTests(api):
         api.test('successful_result_no_json') +
         api.step_data('step_result', api.json.output({})) +
         api.post_process(post_process.StatusFailure) +
-        api.post_process(post_process.ResultReason, "No json output.") +
+        api.post_process(post_process.SummaryMarkdown, "No json output.") +
         api.post_process(post_process.DropExpectation)
     )
 
@@ -66,7 +66,7 @@ def GenTests(api):
         api.step_data('step_result', api.json.output(
             {'summary': 'Failure: step failed at line 90'}, retcode=1)) +
         api.post_process(post_process.StatusFailure) +
-        api.post_process(post_process.ResultReason,
+        api.post_process(post_process.SummaryMarkdown,
             "Failure: step failed at line 90") +
         api.post_process(post_process.DropExpectation)
     )
@@ -76,7 +76,7 @@ def GenTests(api):
         api.step_data('step_result', api.json.output(
             {'summary': 'Infra Failure: no memory'}, retcode=2)) +
         api.post_process(post_process.StatusException) +
-        api.post_process(post_process.ResultReason,
+        api.post_process(post_process.SummaryMarkdown,
             "Infra Failure: no memory") +
         api.post_process(post_process.DropExpectation)
     )
@@ -85,7 +85,7 @@ def GenTests(api):
         api.test('failure_result_no_json') +
         api.step_data('step_result', api.json.output(None, retcode=1)) +
         api.post_process(post_process.StatusFailure) +
-        api.post_process(post_process.ResultReason,
+        api.post_process(post_process.SummaryMarkdown,
             "Step('step_result') (retcode: 1)") +
         api.post_process(post_process.DropExpectation)
     )
@@ -94,7 +94,7 @@ def GenTests(api):
         api.test('infra_failure_result_no_json') +
         api.step_data('step_result', api.json.output(None, retcode=2)) +
         api.post_process(post_process.StatusFailure) +
-        api.post_process(post_process.ResultReason,
+        api.post_process(post_process.SummaryMarkdown,
             "Step('step_result') (retcode: 2)") +
         api.post_process(post_process.DropExpectation)
     )
@@ -104,6 +104,6 @@ def GenTests(api):
         api.step_data('step_result', api.json.output({'summary': ''}),
             times_out_after=60*20) +
         api.post_process(post_process.StatusFailure) +
-        api.post_process(post_process.ResultReason, "Failure : Timeout") +
+        api.post_process(post_process.SummaryMarkdown, "Failure : Timeout") +
         api.post_process(post_process.DropExpectation)
     )

@@ -268,18 +268,23 @@ def GenTests(api):
   yield (api.test('pkg_bad_verfile') + api.properties(
       use_pkg=True,
       ver_files=['a', 'b'],
-  ) + api.expect_exception('ValueError') + api.post_process(
-      post_process.ResultReasonRE,
+  ) + api.expect_exception('ValueError')
+    + api.post_process(post_process.StatusException)
+    + api.post_process(
+      post_process.SummaryMarkdownRE,
       r"add_version_file\(\) may only be used once.",
   ) + api.post_process(post_process.DropExpectation))
 
   yield (api.test('pkg_bad_mode') + api.properties(
       use_pkg=True,
       install_mode='',
-  ) + api.expect_exception('ValueError') + api.post_process(
-      # ResultReasonRE for py2/3 compatibility to be flexible about a trailing
-      # comma in repr() for exceptions: https://bugs.python.org/issue30399.
-      post_process.ResultReasonRE,
+  ) + api.expect_exception('ValueError')
+    + api.post_process(post_process.StatusException)
+    + api.post_process(
+      # SummaryMarkdownRE for py2/3 compatibility to be flexible about a
+      # trailing comma in repr() for exceptions:
+      # https://bugs.python.org/issue30399.
+      post_process.SummaryMarkdownRE,
       r"invalid value for install_mode: ''",
   ) + api.post_process(post_process.DropExpectation))
 
@@ -288,10 +293,13 @@ def GenTests(api):
       pkg_files=[
           '[START_DIR]/a/path/to/file.py',
       ],
-  ) + api.expect_exception('ValueError') + api.post_process(
-      # ResultReasonRE for py2/3 compatibility to be flexible about a trailing
-      # comma in repr() for exceptions: https://bugs.python.org/issue30399.
-      post_process.ResultReasonRE,
+  ) + api.expect_exception('ValueError')
+    + api.post_process(post_process.StatusException)
+    + api.post_process(
+      # SummaryMarkdownRE for py2/3 compatibility to be flexible about a
+      # trailing comma in repr() for exceptions:
+      # https://bugs.python.org/issue30399.
+      post_process.SummaryMarkdownRE,
       r"path Path\(\[START_DIR\], 'a', 'path', 'to', 'file.py'\) is not "
       r"the package root Path\(\[START_DIR\], 'some_subdir'\) and not a "
       r"child thereof",

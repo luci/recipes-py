@@ -92,8 +92,9 @@ def GenTests(api):
     ) +
     api.path.exists(api.path['start_dir'].join('sub_build.json')) +
     api.expect_exception('ValueError') +
+    api.post_process(post_process.StatusException) +
     api.post_process(
-      post_process.ResultReasonRE,
+      post_process.SummaryMarkdownRE,
       r'.*expected non-existent output path') +
     api.post_process(post_process.DropExpectation)
   )
@@ -106,8 +107,9 @@ def GenTests(api):
         file='sub_build.yaml'),
     )) +
     api.expect_exception('ValueError') +
+    api.post_process(post_process.StatusException) +
     api.post_process(
-      post_process.ResultReasonRE,
+      post_process.SummaryMarkdownRE,
       r'.*expected extension of output path to be one of') +
     api.post_process(post_process.DropExpectation)
   )

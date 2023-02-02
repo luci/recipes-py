@@ -155,8 +155,9 @@ def GenTests(api):
       api.test('exceptional') +
       api.step_data('goodbye (2)', retcode=1) +
       api.expect_exception('ValueError') +
+      api.post_process(post_process.StatusException) +
       api.post_process(
-          post_process.ResultReasonRE,
+          post_process.SummaryMarkdownRE,
           "goodbye must exit 0!") +
       api.post_process(post_process.DropExpectation)
     )
@@ -181,8 +182,9 @@ def GenTests(api):
       api.test('invalid_access') +
       api.properties(access_invalid_data=True) +
       api.expect_exception('AttributeError') +
+      api.post_process(post_process.StatusException) +
       api.post_process(
-          post_process.ResultReasonRE,
+          post_process.SummaryMarkdownRE,
           "StepData from step 'no-op' has no attribute 'json'") +
       api.post_process(post_process.DropExpectation)
     )
@@ -191,8 +193,9 @@ def GenTests(api):
       api.test('deep_invalid_access') +
       api.properties(access_deep_invalid_data=True) +
       api.expect_exception('AttributeError') +
+      api.post_process(post_process.StatusException) +
       api.post_process(
-          post_process.ResultReasonRE,
+          post_process.SummaryMarkdownRE,
           "StepData\('no-op'\)\.json has no attribute 'outpurt'") +
       api.post_process(post_process.DropExpectation)
     )
@@ -201,8 +204,9 @@ def GenTests(api):
       api.test('extra_junk') +
       api.properties(assign_extra_junk=True) +
       api.expect_exception('ValueError') +
+      api.post_process(post_process.StatusException) +
       api.post_process(
-          post_process.ResultReasonRE,
+          post_process.SummaryMarkdownRE,
           "Cannot assign to 'json' on finalized StepData from step 'no-op'") +
       api.post_process(post_process.DropExpectation)
     )

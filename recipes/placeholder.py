@@ -184,7 +184,7 @@ def GenTests(api):
     api.test('missing final status')
     + api.properties(InputProps())
     + api.post_process(post_process.StatusFailure)
-    + api.post_process(post_process.ResultReasonRE,
+    + api.post_process(post_process.SummaryMarkdownRE,
         "must provide a final status in input properties; got")
     + api.post_process(post_process.DropExpectation)
   )

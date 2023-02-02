@@ -17,6 +17,9 @@ DEPS = [
 
 from builtins import range
 
+from PB.recipe_engine import result as result_pb2
+from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
+
 
 def named_step(api, name):
   return api.step(name, ['python3', '-u', api.resource('dual_output.py')])
@@ -85,6 +88,13 @@ def RunSteps(api):
     result.presentation.properties['obj_prop'] = {'hi': 'there'}
     result.presentation.properties['💩_prop'] = ['💩'] * 10
 
+  return result_pb2.RawResult(
+      status=common_pb2.Status.SUCCESS,
+      summary_markdown=('HI THERE I AM A *SUMMARY*:\n\n'
+                        '* first\n'
+                        '* second\n'
+                        '* third\n'),
+    )
 
 
 def GenTests(api):
