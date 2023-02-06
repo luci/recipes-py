@@ -232,6 +232,10 @@ class UrlApi(recipe_api.RecipeApi):
       log = as_json == 'log'
       args += ['--outfile', self.m.json.output(add_json_log=log,
                                                name='output')]
+    elif path:
+      # path is only passed in by the get_file variant
+      # in this case, we should not use a placeholder
+      args += ['--outfile', path]
     else:
       args += ['--outfile', self.m.raw_io.output_text(leak_to=path,
                                                       name='output')]
