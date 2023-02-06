@@ -521,7 +521,12 @@ class FileApi(recipe_api.RecipeApi):
     self._run(name, ['remove', source])
     self.m.path.mock_remove_paths(source)
 
-  def listdir(self, name, source, recursive=False, test_data=()):
+  def listdir(self,
+              name,
+              source,
+              recursive=False,
+              test_data=(),
+              include_log=True):
     """Lists all files inside a directory.
 
     Args:
@@ -533,6 +538,7 @@ class FileApi(recipe_api.RecipeApi):
       * test_data (iterable[str]): Some default data for this step to return
         when running under simulation. This should be the list of relative paths
         found in this directory.
+      * include_log (bool): Include step log of read text.
 
     Returns list[Path]
 
@@ -548,7 +554,8 @@ class FileApi(recipe_api.RecipeApi):
         source.join(*x.split(self.m.path.sep))
         for x in result.stdout.splitlines()
     ]
-    result.presentation.logs['listdir'] = [str(x) for x in ret]
+    if include_log:
+      result.presentation.logs['listdir'] = [str(x) for x in ret]
     return ret
 
   def ensure_directory(self, name, dest, mode=0o777):
