@@ -22,7 +22,7 @@ from ...autoroll_impl.candidate_algorithm import get_roll_candidates
 LOGGER = logging.getLogger(__name__)
 
 IS_WIN = sys.platform.startswith(('win', 'cygwin'))
-VPYTHON = 'vpython' + ('.bat' if IS_WIN else '')
+VPYTHON3 = 'vpython3' + ('.bat' if IS_WIN else '')
 GIT = 'git' + ('.bat' if IS_WIN else '')
 
 
@@ -63,7 +63,7 @@ def run_simulation_test(repo, *additional_args):
   Returns a tuple of exit code and output.
   """
   proc = subprocess.Popen([
-    VPYTHON, os.path.join(repo.recipes_root_path, 'recipes.py'), 'test',
+    VPYTHON3, os.path.join(repo.recipes_root_path, 'recipes.py'), 'test',
   ] + list(additional_args), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
   output, _ = proc.communicate()
   retcode = proc.returncode
@@ -76,7 +76,7 @@ def regen_docs(repo):
   Raises a CalledProcessError on failure.
   """
   subprocess.check_call([
-    VPYTHON, os.path.join(repo.recipes_root_path, 'recipes.py'), 'doc',
+    VPYTHON3, os.path.join(repo.recipes_root_path, 'recipes.py'), 'doc',
     '--kind', 'gen',
   ])
 
