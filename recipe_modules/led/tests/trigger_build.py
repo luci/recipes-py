@@ -14,9 +14,19 @@ DEPS = [
 
 def RunSteps(api):
   if api.led.launched_by_led:
-    api.led.trigger_builder(
-      'chromium', 'ci', 'Foo Tester',
-      {'swarm_hashes': {'bar': 'deadbeef'}})
+    if api.properties.get('real_build'):
+      api.led.trigger_builder(
+          'chromium',
+          'ci',
+          'Foo Tester', {'swarm_hashes': {
+              'bar': 'deadbeef'
+          }},
+          real_build=True)
+    else:
+      api.led.trigger_builder('chromium', 'ci', 'Foo Tester',
+                              {'swarm_hashes': {
+                                  'bar': 'deadbeef'
+                              }})
 
 
 def GenTests(api):
@@ -26,3 +36,10 @@ def GenTests(api):
       api.properties(
           **{'$recipe_engine/led': InputProperties(led_run_id=led_run_id)})
   )
+  yield api.test(
+      'trigger-real-build',
+      api.properties(
+          **{
+              '$recipe_engine/led': InputProperties(led_run_id=led_run_id),
+              'real_build': True
+          }))
