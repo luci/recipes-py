@@ -9,6 +9,7 @@ from recipe_engine import recipe_test_api
 
 class CQTestApi(recipe_test_api.RecipeTestApi):
   # Common Run modes.
+  NEW_PATCHSET_RUN = 'NEW_PATCHSET_RUN'
   DRY_RUN = 'DRY_RUN'
   QUICK_DRY_RUN = 'QUICK_DRY_RUN'
   FULL_RUN = 'FULL_RUN'

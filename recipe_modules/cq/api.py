@@ -26,6 +26,7 @@ class CQApi(recipe_api.RecipeApi):
   """
 
   # Common Run modes.
+  NEW_PATCHSET_RUN = 'NEW_PATCHSET_RUN'
   DRY_RUN = 'DRY_RUN'
   QUICK_DRY_RUN = 'QUICK_DRY_RUN'
   FULL_RUN = 'FULL_RUN'
