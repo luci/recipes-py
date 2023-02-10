@@ -83,9 +83,9 @@ def ignore_warnings(*warning_name_regexps):
   """A function decorator which will cause warnings matching any of the given
   regexps to be ignored.
   """
-  def _escape_warnings(func):
+  def _ignore_warnings(func):
     func_loc = FuncLoc.from_code_obj(func.__code__)
     WARNING_IGNORE_REGISTRY[func_loc] = (
       tuple(re.compile(r) for r in warning_name_regexps))
     return func
-  return _escape_warnings
+  return _ignore_warnings
