@@ -444,7 +444,8 @@ def _print_warnings(warning_result, recipe_deps):
       return
     print('Import Sites:')
     for import_site in sorted(import_sites,
-                              key=lambda s: (s.repo, s.module, s.recipe)):
+                              key=lambda s: (
+                                s.repo or "", s.module or "", s.recipe or "")):
       repo = recipe_deps.repos[import_site.repo]
       if import_site.module:
         mod_path = repo.modules[import_site.module].path
