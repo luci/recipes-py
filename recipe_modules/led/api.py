@@ -104,6 +104,29 @@ class LedApi(recipe_api.RecipeApi):
                 if cas:
                   return "%s/%d" % (cas.digest.hash, cas.digest.size_bytes)
 
+    def with_injected_input_recipes(self):
+      """Sets the version of recipes used by led to correspond to the version
+      currently being used.
+
+      If neither the `rbe_cas_input` nor the `cipd_input` property is set,
+      this is a no-op.
+
+      Returns another LedResult object with the output of the command.
+      """
+      if self._module.rbe_cas_input:
+        return self.then(
+          'edit',
+          '-rbh',
+          '%s/%s' % (
+              self._module.rbe_cas_input.digest.hash,
+              self._module.rbe_cas_input.digest.size_bytes))
+      if self._module.cipd_input:
+        return self.then(
+          'edit',
+          '-rpkg', self._module.cipd_input.package,
+          '-rver', self._module.cipd_input.version)
+      # TODO(iannucci): Check for/inject buildbucket exe package/version
+      return self
 
     def then(self, *cmd):
       """Invoke led, passing it the current `result` data as input.
@@ -191,19 +214,7 @@ class LedApi(recipe_api.RecipeApi):
       * led_result: The `LedResult` whose job.Definition will be passed into the
         edit command.
     """
-    if self.rbe_cas_input:
-      return led_result.then(
-        'edit',
-        '-rbh',
-        '%s/%s' % (
-          self.rbe_cas_input.digest.hash, self.rbe_cas_input.digest.size_bytes))
-    if self.cipd_input:
-      return led_result.then(
-        'edit',
-        '-rpkg', self.cipd_input.package,
-        '-rver', self.cipd_input.version)
-    # TODO(iannucci): Check for/inject buildbucket exe package/version
-    return led_result
+    return led_result.with_injected_input_recipes()
 
   def trigger_builder(
       self,
@@ -249,7 +260,7 @@ class LedApi(recipe_api.RecipeApi):
       with self.m.step.nest(step_name) as builder_presentation:
         if real_build:
           led_job = self('get-builder', '-real-build', builder_id)
-          led_job = self.inject_input_recipes(led_job)
+          led_job = led_job.with_injected_input_recipes()
           led_job = led_job.then('edit', *property_args)
           result = led_job.then('launch', '-real-build').launch_result
           builder_presentation.links['build'] = result.build_url
@@ -258,7 +269,7 @@ class LedApi(recipe_api.RecipeApi):
           led_builder_id = '{}/{}:{}'.format(project_name, bucket_name,
                                              builder_name)
           led_job = self('get-builder', led_builder_id)
-          led_job = self.inject_input_recipes(led_job)
+          led_job = led_job.with_injected_input_recipes()
           led_job = led_job.then('edit', *property_args)
           result = led_job.then('launch').launch_result
 
