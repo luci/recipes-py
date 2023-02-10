@@ -67,7 +67,7 @@ class SymlinkTree(object):
       for linkname in linknames:
         self._api.path.mock_copy_paths(target, linkname)
     args = [
-      'python', '-u', self._resource,
+      'python3', '-u', self._resource,
       '--link-json',
       self._api.json.input({
         str(target): linkname
