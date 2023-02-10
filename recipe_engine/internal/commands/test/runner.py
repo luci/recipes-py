@@ -242,6 +242,13 @@ def _diff_test(test_results, expect_file, new_expect, is_train):
         pass
       return
 
+    # Try to make the expectation dir.
+    try:
+      os.makedirs(os.path.dirname(expect_file))
+    except OSError as ex:
+      if ex.errno != errno.EEXIST:
+        raise
+
     try:
       with open(expect_file, 'w') as fil:
         fil.write(new_expect_text)

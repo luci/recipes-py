@@ -179,14 +179,6 @@ def _push_tests(test_filters, is_train, main_repo, description_queues,
     if test_filters:
       unused_expectation_files.update(recipe.expectation_paths)
 
-    if is_train:
-      # Try to make the expectation dir.
-      try:
-        os.makedirs(recipe.expectation_dir)
-      except OSError as ex:
-        if ex.errno != errno.EEXIST:
-          raise
-
     # Maps expect_file -> original test_name
     try:
       for test_case in recipe.gen_tests():  # User code, could raise
