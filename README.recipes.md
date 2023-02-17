@@ -791,7 +791,7 @@ API for interacting with cas client.
 
 A module for interacting with cas client.
 
-&mdash; **def [archive](/recipe_modules/cas/api.py#106)(self, step_name, root, \*paths, \*\*kwargs):**
+&mdash; **def [archive](/recipe_modules/cas/api.py#108)(self, step_name, root, \*paths, \*\*kwargs):**
 
 Archives given paths to a cas server.
 
@@ -804,11 +804,12 @@ Args:
     will be used.
   * log_level (str): logging level to use, rarely needed but helpful for
     debugging.
+  * kwargs: Additional keyword arguments to forward to "step".
 
 Returns:
   digest (str): digest of uploaded root directory.
 
-&mdash; **def [download](/recipe_modules/cas/api.py#77)(self, step_name, digest, output_dir):**
+&mdash; **def [download](/recipe_modules/cas/api.py#79)(self, step_name, digest, output_dir):**
 
 Downloads a directory tree from a cas server.
 
@@ -820,7 +821,7 @@ Args:
 
 &emsp; **@property**<br>&mdash; **def [instance](/recipe_modules/cas/api.py#22)(self):**
 
-&mdash; **def [viewer\_url](/recipe_modules/cas/api.py#97)(self, digest):**
+&mdash; **def [viewer\_url](/recipe_modules/cas/api.py#99)(self, digest):**
 
 Return URL of cas viewer.
 

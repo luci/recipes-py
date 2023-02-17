@@ -58,13 +58,15 @@ class CasApi(recipe_api.RecipeApi):
 
     return self._cached_version
 
-  def _run(self, name, cmd, step_test_data=None):
+  def _run(self, name, cmd, step_test_data=None, **kwargs):
     """Returns a cas command step.
 
     Args:
       * name: (str): name of the step.
       * cmd (list(str|Path)): cas client subcommand to run.
+      * kwargs: Additional keyword arguments to forward to "step".
     """
+    kwargs.setdefault('infra_step', True)
     return self.m.step(
         name,
         [
@@ -72,7 +74,7 @@ class CasApi(recipe_api.RecipeApi):
                                     self._version)
         ] + list(cmd),
         step_test_data=step_test_data,
-        infra_step=True)
+        **kwargs)
 
   def download(self, step_name, digest, output_dir):
     """Downloads a directory tree from a cas server.
@@ -115,6 +117,7 @@ class CasApi(recipe_api.RecipeApi):
         will be used.
       * log_level (str): logging level to use, rarely needed but helpful for
         debugging.
+      * kwargs: Additional keyword arguments to forward to "step".
 
     Returns:
       digest (str): digest of uploaded root directory.
@@ -143,10 +146,9 @@ class CasApi(recipe_api.RecipeApi):
     # TODO: make `log_level` a proper keyword argument once Python 2 support is
     # dropped. Python 2 doesn't support named keyword arguments after
     # variable-length positional arguments like `def func(*args, param=None)`.
-    log_level = kwargs.pop("log_level", None)
+    log_level = kwargs.pop('log_level', None)
     if log_level:
       cmd.extend(['-log-level', log_level])
-    assert not kwargs, 'unrecognized arguments to archive: %r' % kwargs
 
     # TODO(tikuta): support multiple tree upload.
     step = self._run(
@@ -154,7 +156,8 @@ class CasApi(recipe_api.RecipeApi):
         cmd,
         step_test_data=lambda: self.m.raw_io.test_api.output_text(
             'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855/0'
-        ))
+        ),
+        **kwargs)
     digest = step.raw_io.output_text
     step.presentation.links["CAS UI"] = self.viewer_url(digest)
     return digest
