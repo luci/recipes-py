@@ -100,6 +100,9 @@ def RunSteps(api):
   realpath = api.path.realpath(file_path)
   assert api.path.exists(realpath)
 
+  normpath = api.path.normpath(file_path)
+  assert api.path.exists(normpath)
+
   directory = api.path['start_dir'].join('directory')
   filepath = directory.join('filepath')
   api.step('rm directory (initial)', ['rm', '-rf', directory])

@@ -580,6 +580,10 @@ class PathApi(recipe_api.RecipeApi):
     """
     return self._path_mod.relpath(str(path), str(start))
 
+  def normpath(self, path):
+    """Equivalent to os.path.normpath."""
+    return self._path_mod.normpath(str(path))
+
   def expanduser(self, path):  # pragma: no cover
     """Do not use this, use `api.path['home']` instead.
 

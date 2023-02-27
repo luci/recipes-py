@@ -2675,14 +2675,14 @@ Args:
 
 Returns dirname of path
 
-&mdash; **def [exists](/recipe_modules/path/api.py#592)(self, path):**
+&mdash; **def [exists](/recipe_modules/path/api.py#596)(self, path):**
 
 Equivalent to os.path.exists.
 
 The presence or absence of paths can be mocked during the execution of the
 recipe by using the mock_* methods.
 
-&mdash; **def [expanduser](/recipe_modules/path/api.py#583)(self, path):**
+&mdash; **def [expanduser](/recipe_modules/path/api.py#587)(self, path):**
 
 Do not use this, use `api.path['home']` instead.
 
@@ -2701,14 +2701,14 @@ Internal recipe implementation function.
 
 Internal recipe implementation function.
 
-&mdash; **def [isdir](/recipe_modules/path/api.py#600)(self, path):**
+&mdash; **def [isdir](/recipe_modules/path/api.py#604)(self, path):**
 
 Equivalent to os.path.isdir.
 
 The presence or absence of paths can be mocked during the execution of the
 recipe by using the mock_* methods.
 
-&mdash; **def [isfile](/recipe_modules/path/api.py#608)(self, path):**
+&mdash; **def [isfile](/recipe_modules/path/api.py#612)(self, path):**
 
 Equivalent to os.path.isfile.
 
@@ -2750,23 +2750,23 @@ Args:
 Returns a Path to the new file. Unlike tempfile.mkstemp, the file's file
 descriptor is closed.
 
-&mdash; **def [mock\_add\_directory](/recipe_modules/path/api.py#625)(self, path):**
+&mdash; **def [mock\_add\_directory](/recipe_modules/path/api.py#629)(self, path):**
 
 For testing purposes, mark that directory |path| exists.
 
-&mdash; **def [mock\_add\_file](/recipe_modules/path/api.py#621)(self, path):**
+&mdash; **def [mock\_add\_file](/recipe_modules/path/api.py#625)(self, path):**
 
 For testing purposes, mark that file |path| exists.
 
-&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#616)(self, path, kind=FILE):**
+&mdash; **def [mock\_add\_paths](/recipe_modules/path/api.py#620)(self, path, kind=FILE):**
 
 For testing purposes, mark that |path| exists.
 
-&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#629)(self, source, dest):**
+&mdash; **def [mock\_copy\_paths](/recipe_modules/path/api.py#633)(self, source, dest):**
 
 For testing purposes, copy |source| to |dest|.
 
-&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#634)(self, path, filt=(lambda p: True)):**
+&mdash; **def [mock\_remove\_paths](/recipe_modules/path/api.py#638)(self, path, filt=(lambda p: True)):**
 
 For testing purposes, assert that |path| doesn't exist.
 
@@ -2774,6 +2774,10 @@ Args:
   * path (str|Path): The path to remove.
   * filt (func[str] bool): Called for every candidate path. Return
     True to remove this path.
+
+&mdash; **def [normpath](/recipe_modules/path/api.py#583)(self, path):**
+
+Equivalent to os.path.normpath.
 
 &emsp; **@property**<br>&mdash; **def [pardir](/recipe_modules/path/api.py#472)(self):**
 
