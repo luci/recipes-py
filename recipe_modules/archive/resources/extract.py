@@ -22,6 +22,7 @@ import json
 import os
 import posixpath
 import shutil
+import stat
 import sys
 import tarfile
 import zipfile
@@ -120,7 +121,16 @@ def unzip(zip_file, output, stats, include_filter):
       print('Extracting %s' % zipinfo.filename)
       stats['extracted']['filecount'] += 1
       stats['extracted']['bytes'] += zipinfo.file_size
-      zf.extract(zipinfo, unc_path(output))
+
+      # By default, zipfile extracts a symlink file as regular file with its
+      # link destination as its contents. Check if the file is a symlink and
+      # if so, create it properly.
+      if stat.S_ISLNK(zipinfo.external_attr >> 16):
+        print('Creating %s as symlink' % (zipinfo.filename))
+        link_dest = zf.open(zipinfo).read()
+        os.symlink(link_dest, os.path.join(output, zipinfo.filename))
+      else:
+        zf.extract(zipinfo, unc_path(output))
 
       if os.name != 'nt':
         # POSIX may store permissions in the 16 most significant bits of the
