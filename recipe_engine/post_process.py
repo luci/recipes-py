@@ -372,6 +372,46 @@ def StepSummaryEquals(check, step_odict, step, expected):
   check(step_odict[step].step_summary_text == expected)
 
 
+def StepEnvContains(check, step_odict, step, env_dict):
+  """Assert that a step's env contains the given key/value pairs.
+
+  Args:
+    step (str) - The name of the step to check the env of.
+    env_dict (Dict[str, str]) - The expected key/value pairs to look for. The
+      check will pass if the steps's env contains all of the given key/value
+      pairs.
+  """
+  for k, v in env_dict.items():
+    check('env for step %s contained %s: %s' % (step, k, v),
+          (k, v) in step_odict[step].env.items())
+
+
+def StepEnvDoesNotContain(check, step_odict, step, env_dict):
+  """Assert that a step's env does not contain the given key/value pairs.
+
+  Args:
+    step (str) - The name of the step to check the env of.
+    env_dict (Dict[str, str]) - The key/value pairs that should not be present.
+      The check will pass if the step's env does not contain any of the given
+      key/value pairs.
+  """
+  for k, v in env_dict.items():
+    check('env for step %s did not contain %s: %s' % (step, k, v),
+          (k, v) not in step_odict[step].env.items())
+
+
+def StepEnvEquals(check, step_odict, step, env_dict):
+  """Assert that a step's env equals the given dict.
+
+  Args:
+    step (str) - The name of the step to check the env of.
+    env_dict (Dict[str, str]) - The expected key/value pairs to look for. The
+      check will pass if the given env_dict is equal to the step's env.
+  """
+  check('env for step %s equaled %s' % (step, env_dict),
+        step_odict[step].env == env_dict)
+
+
 def LogEquals(check, step_odict, step, log, expected):
   """Assert that a step's log is equal to a given string.
 
