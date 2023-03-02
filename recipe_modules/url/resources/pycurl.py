@@ -73,6 +73,14 @@ def _download(url, outfile, headers, transient_retry, strip_prefix):
 
       fd.write(chunk)
       logging.info('Downloaded %.1f MB so far', total / 1024 / 1024)
+
+  # Content-Length is not checked in requests.
+  # See https://github.com/psf/requests/issues/4956
+  length_str = r.headers.get('Content-Length')
+  if length_str and int(length_str) != r.raw.tell():
+      raise ValueError('Expected content length: %s, downloaded: %d' %
+                       (length_str, r.raw.tell()))
+
   return r.status_code, total
 
 
