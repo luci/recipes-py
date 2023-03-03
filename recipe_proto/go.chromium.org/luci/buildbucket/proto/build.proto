@@ -28,7 +28,7 @@ import "go.chromium.org/luci/buildbucket/proto/common.proto";
 import "go.chromium.org/luci/buildbucket/proto/field_option.proto";
 import "go.chromium.org/luci/buildbucket/proto/step.proto";
 import "go.chromium.org/luci/buildbucket/proto/task.proto";
-import "go.chromium.org/luci/swarming/proto/api/swarming.proto";
+import "go.chromium.org/luci/resultdb/proto/v1/invocation.proto";
 
 // A single build, identified by an int64 ID.
 // Belongs to a builder.
@@ -42,7 +42,7 @@ import "go.chromium.org/luci/swarming/proto/api/swarming.proto";
 // represents a state of a build at completion time and does not change after
 // that. All fields are included.
 //
-// Next id: 33.
+// Next id: 35.
 message Build {
   // Defines what to build/test.
   //
@@ -140,6 +140,18 @@ message Build {
   BuilderID builder = 2 [ (buildbucket.v2.create_build_field_option).field_behavior = REQUIRED,
                           (visible_with) = BUILDS_GET_LIMITED_PERMISSION ];
 
+  // Information of the builder, propagated from builder config.
+  //
+  // The info captures the state of the builder at creation time.
+  // If any information is updated, all future builds will have the new
+  // information, while the the historical builds persist the old infromation.
+  message BuilderInfo {
+    string description = 1;
+
+    // TODO(crbug.com/1093655): add builder tags.
+  }
+  BuilderInfo builder_info = 34 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+
   // Human-readable identifier of the build with the following properties:
   // - unique within the builder
   // - a monotonically increasing number
@@ -163,6 +175,12 @@ message Build {
   string created_by = 4 [ (google.api.field_behavior) = OUTPUT_ONLY ];
 
   // Verified LUCI identity that canceled this build.
+  //
+  // Special values:
+  // * buildbucket: The build is canceled by buildbucket. This can happen if the
+  // build's parent has ended, and the build cannot outlive its parent.
+  // * backend: The build's backend task is canceled. For example the build's
+  // Swarming task is killed.
   string canceled_by = 23 [ (google.api.field_behavior) = OUTPUT_ONLY ];
 
   // When the build was created.
@@ -236,6 +254,10 @@ message Build {
   //
   // BigQuery: excluded from rows.
   string summary_markdown = 20 [ (buildbucket.v2.create_build_field_option).field_behavior = OUTPUT_ONLY ];
+
+  // Markdown reasoning for cancelling the build.
+  // Human readable and should be following https://spec.commonmark.org/0.28/.
+  string cancellation_markdown = 33 [ (buildbucket.v2.create_build_field_option).field_behavior = OUTPUT_ONLY ];
 
   // If NO, then the build status SHOULD NOT be used to assess correctness of
   // the input gitiles_commit or gerrit_changes.
@@ -441,9 +463,6 @@ message BuildInfra {
           // The CIPD package to use for the agent.
           //
           // Must end in "/${platform}" with no other CIPD variables.
-          // Will be expanded with CIPD's DescribeBootstrapBundle API
-          // into a full platform -> {hash, size, URL} mapping for TaskBackend
-          // RunTask.
           //
           // If using an experimental agent binary, please make sure the package
           // prefix has been configured here -
@@ -559,7 +578,7 @@ message BuildInfra {
     repeated RequestedDimension requested_dimensions = 6;
 
     // Buildbucket hostname, e.g. "cr-buildbucket.appspot.com".
-    string hostname = 7 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+    string hostname = 7;
 
     enum ExperimentReason {
       // This value is unused (i.e. if you see this, it's a bug).
@@ -608,6 +627,9 @@ message BuildInfra {
     Agent agent = 10 [ (buildbucket.v2.create_build_field_option).field_behavior = REQUIRED ];
 
     repeated string known_public_gerrit_hosts = 11;
+
+    // Flag for if the build should have a build number.
+    bool build_number = 12;
   }
 
   // Swarming-specific information.
@@ -709,9 +731,6 @@ message BuildInfra {
 
     // Caches requested by this build.
     repeated CacheEntry caches = 7;
-
-    // Swarming task containment for the task.
-    swarming.v1.Containment containment = 8;
   }
 
   // LogDog-specific information.
@@ -747,6 +766,18 @@ message BuildInfra {
     // Name of the invocation for results of this build.
     // Typically "invocations/build:<build_id>".
     string invocation = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+    // Whether to enable ResultDB:Buildbucket integration.
+    bool enable = 3;
+
+    // Configuration for exporting test results to BigQuery.
+    // This can have multiple values to export results to multiple BigQuery
+    // tables, or to support multiple test result predicates.
+    repeated luci.resultdb.v1.BigQueryExport bq_exports = 4;
+
+    // Specifies if and how to index this build's test results for historical
+    // queries.
+    luci.resultdb.v1.HistoryOptions history_options = 5;
   }
 
   // BBAgent-specific information.
@@ -811,10 +842,16 @@ message BuildInfra {
     // Current backend task status.
     // Updated as build runs.
     Task task = 2;
+
+    // Caches requested by this build.
+    repeated CacheEntry caches = 3;
+
+    // Dimensions for the task.
+    repeated RequestedDimension task_dimensions = 5;
   }
 
   Buildbucket buildbucket = 1 [ (buildbucket.v2.create_build_field_option).field_behavior = REQUIRED ];
-  Swarming swarming = 2 [ (buildbucket.v2.create_build_field_option).field_behavior = REQUIRED ];
+  Swarming swarming = 2;
   LogDog logdog = 3 [ (buildbucket.v2.create_build_field_option).field_behavior = REQUIRED ];
   Recipe recipe = 4;
   ResultDB resultdb = 5 [ (visible_with) = BUILDS_GET_LIMITED_PERMISSION ];

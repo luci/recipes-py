@@ -31,40 +31,18 @@ option (luci.file_metadata) = {
   doc_url: "https://luci-config.appspot.com/schemas/projects:buildbucket.cfg";
 };
 
-// A single access control rule.
+// Deprecated in favor of LUCI Realms. This proto is totally unused now, exists
+// only to not break older configs that still may have deprecated fields
+// populated.
 message Acl {
-
-  // A buildbucket user role.
-  // Defines what a user can do.
-  //
-  // The order of enum member tags is important.
-  // A role with a higher tag number can perform any action that a role with a
-  // lower tag number can perform.
   enum Role {
-    // Can do read-only operations, such as search for builds.
     READER = 0;
-    // Same as READER + can schedule and cancel builds.
     SCHEDULER = 1;
-    // Can do all write operations.
     WRITER = 2;
   }
-  // Role denotes a list of actions that an identity can perform.
-  Role role = 1;
-  // Name of the group defined in the auth service.
-  string group = 2;
-  // An email address or a full identity string "kind:name". See auth service
-  // on kinds of identities. Anonymous users are "anonymous:anonymous".
-  // Either identity or group must be present, not both.
-  string identity = 3;
-}
-
-// DEPRECATED.
-message AclSet {
-  // A name of the ACL set. Required. Must match regex '^[a-z0-9_]+$'.
-  string name = 1;
-  // List of access control rules.
-  // The order does not matter.
-  repeated Acl acls = 2;
+  Role role = 1 [deprecated = true];
+  string group = 2 [deprecated = true];
+  string identity = 3 [deprecated = true];
 }
 
 // Defines a swarmbucket builder. A builder has a name, a category and specifies
@@ -74,7 +52,7 @@ message AclSet {
 // a user that has permissions to schedule a build to the bucket, can override
 // this config.
 //
-// Next tag: 35.
+// Next tag: 36.
 message BuilderConfig {
   reserved 8;  // cipd_packages
   reserved 11; // build_numbers of the old format.
@@ -206,7 +184,7 @@ message BuilderConfig {
     // A string interpreted as JSON encapsulating configuration for this
     // backend.
     // TODO(crbug.com/1042991): Move priority, wait_for_capacity, etc. here.
-    string config_json = 2;
+    string config_json = 2 [(luci.text_pb_format) = JSON];
   }
 
   // Name of the builder.
@@ -440,6 +418,15 @@ message BuilderConfig {
   // Description that helps users understand the purpose of the builder, in
   // HTML.
   string description_html = 30;
+
+  // Configurations that need to be replaced when running a led build for this
+  // Builder.
+  message ShadowBuilderAdjustments {
+    string service_account = 1;
+    string pool = 2;
+  }
+
+  ShadowBuilderAdjustments shadow_builder_adjustments = 35;
 }
 
 // Configuration of buildbucket-swarming integration for one bucket.
@@ -460,17 +447,17 @@ message Swarming {
 
 // Defines one bucket in buildbucket.cfg
 message Bucket {
+  reserved 4; // acl_sets
+
   // Name of the bucket. Names are unique within one instance of buildbucket.
   // If another project already uses this name, a config will be rejected.
   // Name reservation is first-come first-serve.
   // Regex: ^[a-z0-9\-_.]{1,100}$
   string name = 1;
-  // List of access control rules for the bucket.
-  // The order does not matter.
-  repeated Acl acls = 2;
-  // DEPRECATED.
-  repeated string acl_sets = 4;
+  // Deprecated and ignored. Use Realms ACLs instead.
+  repeated Acl acls = 2 [deprecated = true];
   // Buildbucket-swarming integration.
+  // Mutually exclusive with builder_template.
   Swarming swarming = 3;
 
   // Name of this bucket's shadow bucket for the led builds to use.
@@ -514,15 +501,62 @@ message Bucket {
   // Buildbuceket.CreateBuild will validate the incoming requests to make sure
   // they meet these constraints.
   Constraints constraints = 6;
+
+  // Template of builders in a dynamic bucket.
+  message DynamicBuilderTemplate {
+
+  }
+
+  // Template of builders in a dynamic bucket.
+  // Mutually exclusive with swarming.
+  //
+  // If is not nil, the bucket is a dynamic LUCI bucket.
+  // If a bucket has both swarming and dynamic_builder_template as nil,
+  // the bucket is a legacy one.
+  DynamicBuilderTemplate dynamic_builder_template = 7;
 }
 
 // Schema of buildbucket.cfg file, a project config.
 message BuildbucketCfg {
+  reserved 2; // acl_sets
+  reserved 3; // builder_mixins
+  reserved 4; // might be taken by builds_notification_topics
+
   // All buckets defined for this project.
   repeated Bucket buckets = 1;
-  // DEPRECATED.
-  repeated AclSet acl_sets = 2;
-  reserved 3; // builder_mixins
+
+  message Topic {
+    // Topic name format should be like
+    // "projects/<projid>/topics/<topicid>" and conforms to the guideline:
+    // https://cloud.google.com/pubsub/docs/admin#resource_names.
+    string name = 1;
+
+    // The compression method that  `build_large_fields` uses in pubsub message
+    // data. By default, it's ZLIB as this is the most common one and is the
+    // built-in lib in many programming languages.
+    buildbucket.v2.Compression compression = 2;
+  }
+
+  message CommonConfig {
+    // A list of PubSub topics that Buildbucket will publish notifications for
+    // build status changes in this project.
+    // The message data schema can be found in message `BuildsV2PubSub` in
+    // https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/notification.proto
+    // Attributes on the pubsub messages:
+    // - "project"
+    // - "bucket"
+    // - "builder"
+    // - "is_completed" (The value is either "true" or "false" in string.)
+    //
+    // Note: `pubsub.topics.publish` permission must be granted to the
+    // corresponding luci-project-scoped accounts in the cloud project(s) hosting
+    // the topics.
+    repeated Topic builds_notification_topics = 1;
+  }
+
+  // Global configs are shared among all buckets and builders defined inside
+  // this project.
+  CommonConfig common_config = 5;
 }
 
 // Toggle is a boolean with an extra state UNSET.

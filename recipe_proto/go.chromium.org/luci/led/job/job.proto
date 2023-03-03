@@ -31,10 +31,13 @@ import "go.chromium.org/luci/swarming/proto/api/swarming.proto";
 message Buildbucket {
   buildbucket.v2.BBAgentArgs bbagent_args = 1;
 
+  // Deprecated for Buildbucket v2 builds.
   repeated swarming.v1.CIPDPackage cipd_packages = 2;
 
   repeated swarming.v1.StringPair env_vars = 3;
   repeated swarming.v1.StringListPair env_prefixes = 4;
+  // Deprecated.
+  // TODO(crbug.com/1345722): remove this.
   repeated string extra_tags = 5;
 
   google.protobuf.Duration bot_ping_tolerance = 7;
@@ -59,6 +62,10 @@ message Buildbucket {
   //
   // By default, led will populate this with "build.proto.json".
   string final_build_proto_path = 11;
+
+  // Indicates that this build should be generated as a real buildbucket build
+  // instead of a raw swarming task.
+  bool real_build = 12;
 }
 
 // Swarming is the raw TaskRequest. When a Definition is in this form, the
@@ -67,6 +74,12 @@ message Swarming {
   swarming.v1.TaskRequest task = 1;
 
   string hostname = 2;
+
+  // If set, this holds the CASReference to use with the job, when launched.
+  //
+  // At the time of launch, this will be merged with
+  // swarming.task_slice[*].properties.cas_input_root, if any.
+  swarming.v1.CASReference cas_user_payload = 3;
 }
 
 message Definition {
@@ -82,12 +95,4 @@ message Definition {
     // raw swarming jobs.
     Swarming swarming = 2;
   }
-
-  // If set, this holds the CASReference to use with the job, when launched.
-  //
-  // At the time of launch, this will be merged with
-  // swarming.task_slice[*].properties.cas_input_root, if any.
-  //
-  // can only use either cas_user_payload or user_payload.
-  swarming.v1.CASReference cas_user_payload = 4;
 }

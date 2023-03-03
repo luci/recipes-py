@@ -27,8 +27,14 @@ message TokenBody {
   enum Purpose {
     // The default value. This value is used if purpose is omitted.
     PURPOSE_UNSPECIFIED = 0;
-    // The token is a build token.
+    // The token is a token for updating a build.
     BUILD = 1;
+    // The token is a token for updating a backend task.
+    TASK = 2;
+    // The token is a token for starting a build.
+    START_BUILD = 3;
+    // The token is a token for registering a backend task to the build it runs.
+    REGISTER_TASK = 4;
   }
 
   // Purpose of the token.
@@ -49,6 +55,9 @@ message TokenEnvelope {
 
     // The token is saved in model.Build like a password.
     UNENCRYPTED_PASSWORD_LIKE = 1;
+
+    // The token is encrypted using go.chromium.org/luci/server/secrets.
+    ENCRYPTED = 2;
   }
   // Version of the token.
   Version version = 1;

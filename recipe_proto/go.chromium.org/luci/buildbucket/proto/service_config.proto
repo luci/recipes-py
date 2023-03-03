@@ -39,6 +39,18 @@ message SettingsCfg {
   // has very low quota. Context needs to know all such hostnames in advance to
   // be able to force authenticated access to them.
   repeated string known_public_gerrit_hosts = 3;
+
+  // List of known backend configufations.
+  repeated BackendSetting backends = 7;
+}
+
+// Backend setting.
+message BackendSetting {
+  // Target backend. e.g. "swarming://chromium-swarm".
+  string target = 1;
+
+  // hostname for the target backend. e.g. chromium-swarm.appspot.com
+  string hostname = 2;
 }
 
 // Swarmbucket settings.
@@ -93,6 +105,16 @@ message SwarmingSettings {
 
   // CIPD package of kitchen binary. DEPRECATED. TODO(nodir): remove.
   Package kitchen_package = 7;
+
+  // Package of alternative buildbucket agent sources.
+  // They should only be used in certain situations (i.e. in an experiment),
+  // so they should have constraints on either omit_on_experiment
+  // or include_on_experiment.
+  repeated Package alternative_agent_packages = 9;
+
+  // Packages for bbagent to use.
+  // Installed in "{TASK_RUN_DIR}/bbagent_utility_packages".
+  repeated Package bbagent_utility_packages = 10;
 }
 
 message LogDogSettings {
