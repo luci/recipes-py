@@ -136,6 +136,7 @@
   * [json:examples/full](#recipes-json_examples_full) (Python3 ✅)
   * [json:tests/add_json_log](#recipes-json_tests_add_json_log) (Python3 ✅)
   * [led:tests/full](#recipes-led_tests_full) (Python3 ✅)
+  * [led:tests/led_real_build](#recipes-led_tests_led_real_build) (Python3 ✅)
   * [led:tests/no_exist](#recipes-led_tests_no_exist) (Python3 ✅)
   * [led:tests/trigger_build](#recipes-led_tests_trigger_build) (Python3 ✅)
   * [legacy_annotation:examples/full](#recipes-legacy_annotation_examples_full) (Python3 ✅)
@@ -2311,19 +2312,19 @@ The main interface this module provides is a direct call to the led binary:
 
 See the led binary for full documentation of commands.
 
-&mdash; **def [\_\_call\_\_](/recipe_modules/led/api.py#202)(self, \*cmd):**
+&mdash; **def [\_\_call\_\_](/recipe_modules/led/api.py#221)(self, \*cmd):**
 
 Runs led with the given arguments. Wraps result in a `LedResult`.
 
-&emsp; **@property**<br>&mdash; **def [cipd\_input](/recipe_modules/led/api.py#194)(self):**
+&emsp; **@property**<br>&mdash; **def [cipd\_input](/recipe_modules/led/api.py#204)(self):**
 
 The versioned CIPD package containing the recipes code being run.
 
 If set, it will be an `InputProperties.CIPDInput` protobuf; otherwise None.
 
-&mdash; **def [initialize](/recipe_modules/led/api.py#156)(self):**
+&mdash; **def [initialize](/recipe_modules/led/api.py#160)(self):**
 
-&mdash; **def [inject\_input\_recipes](/recipe_modules/led/api.py#206)(self, led_result):**
+&mdash; **def [inject\_input\_recipes](/recipe_modules/led/api.py#226)(self, led_result):**
 
 Sets the version of recipes used by led to correspond to the version
 currently being used.
@@ -2335,24 +2336,36 @@ Args:
   * led_result: The `LedResult` whose job.Definition will be passed into the
     edit command.
 
-&emsp; **@property**<br>&mdash; **def [launched\_by\_led](/recipe_modules/led/api.py#172)(self):**
+&emsp; **@property**<br>&mdash; **def [launched\_by\_led](/recipe_modules/led/api.py#181)(self):**
 
 Whether the current build is a led job.
 
-&emsp; **@property**<br>&mdash; **def [rbe\_cas\_input](/recipe_modules/led/api.py#185)(self):**
+&emsp; **@property**<br>&mdash; **def [led\_build](/recipe_modules/led/api.py#176)(self):**
+
+Whether the current build is a led job as a real Buildbucket build.
+
+&emsp; **@property**<br>&mdash; **def [rbe\_cas\_input](/recipe_modules/led/api.py#195)(self):**
 
 The location of the rbe-cas containing the recipes code being run.
 
 If set, it will be a `swarming.v1.CASReference` protobuf;
 otherwise, None.
 
-&emsp; **@property**<br>&mdash; **def [run\_id](/recipe_modules/led/api.py#177)(self):**
+&emsp; **@property**<br>&mdash; **def [run\_id](/recipe_modules/led/api.py#186)(self):**
 
-A unique string identifier for this led job.
+A unique string identifier for this led job, if it's a raw swarming task.
 
-If the current build is *not* a led job, value will be an empty string.
+If the current build is *not* a led job as raw swarming task, value will be
+an empty string.
 
-&mdash; **def [trigger\_builder](/recipe_modules/led/api.py#219)(self, project_name, bucket_name, builder_name, properties, real_build=False):**
+&emsp; **@property**<br>&mdash; **def [shadowed\_bucket](/recipe_modules/led/api.py#212)(self):**
+
+The bucket of the original build/builder the led build replicates from.
+
+If set, it will be an `InputProperties.ShadowedBucket` protobuf;
+otherwise None.
+
+&mdash; **def [trigger\_builder](/recipe_modules/led/api.py#239)(self, project_name, bucket_name, builder_name, properties, real_build=False):**
 
 Trigger a builder using led.
 
@@ -5172,6 +5185,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipe_modules/led/tests/full.py#33)(api, get_cmd, child_properties, sloppy_child_properties, do_bogus_edits):**
+### *recipes* / [led:tests/led\_real\_build](/recipe_modules/led/tests/led_real_build.py)
+
+[DEPS](/recipe_modules/led/tests/led_real_build.py#18): [buildbucket](#recipe_modules-buildbucket), [led](#recipe_modules-led), [properties](#recipe_modules-properties), [proto](#recipe_modules-proto), [step](#recipe_modules-step)
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+&mdash; **def [RunSteps](/recipe_modules/led/tests/led_real_build.py#30)(api, get_cmd):**
 ### *recipes* / [led:tests/no\_exist](/recipe_modules/led/tests/no_exist.py)
 
 [DEPS](/recipe_modules/led/tests/no_exist.py#7): [led](#recipe_modules-led), [step](#recipe_modules-step)

@@ -55,12 +55,13 @@ class LedApi(recipe_api.RecipeApi):
       milo_host = "ci.chromium.org"
       if '-dev' in self.buildbucket_hostname:  # pragma: no cover
         milo_host = "luci-milo-dev.appspot.com"
-      return 'https://%s/task?id=%s' % (milo_host, self.build_id)
+      return 'https://%s/b/%s' % (milo_host, self.build_id)
 
   class LedResult(object):
     """Holds the result of a led operation. Can be chained using |then|."""
 
-    def __init__(self, result, module):
+    def __init__(self, result, module, led_build):
+      self._led_build = led_build
       if isinstance(result, LedApi.LedLaunchData):
         self._launch_result = result
         self._result = result
@@ -136,12 +137,15 @@ class LedApi(recipe_api.RecipeApi):
       if self._module is None: # pragma: no cover
         raise ValueError(
             'Cannot call LedResult.then on the result of `led launch`')
+      res, is_led_real_build = self._module._run_command(
+          self._result, self._led_build, *cmd)
       return self.__class__(
-          self._module._run_command(self._result, *cmd), self._module)
+          res, self._module, is_led_real_build)
 
   def __init__(self, props, **kwargs):
     super(LedApi, self).__init__(**kwargs)
     self._run_id = props.led_run_id
+    self._shadowed_bucket = props.shadowed_bucket
 
     if props.HasField('rbe_cas_input'):
       self._rbe_cas_input = props.rbe_cas_input
@@ -170,15 +174,21 @@ class LedApi(recipe_api.RecipeApi):
       self._mock_edits.extend(value for _, value in sorted_edits)
 
   @property
+  def led_build(self):
+    """Whether the current build is a led job as a real Buildbucket build."""
+    return bool(self._shadowed_bucket)
+
+  @property
   def launched_by_led(self):
     """Whether the current build is a led job."""
-    return bool(self._run_id)
+    return bool(self._run_id) or self.led_build
 
   @property
   def run_id(self):
-    """A unique string identifier for this led job.
+    """A unique string identifier for this led job, if it's a raw swarming task.
 
-    If the current build is *not* a led job, value will be an empty string.
+    If the current build is *not* a led job as raw swarming task, value will be
+    an empty string.
     """
     return self._run_id
 
@@ -199,9 +209,19 @@ class LedApi(recipe_api.RecipeApi):
     """
     return self._cipd_input
 
+  @property
+  def shadowed_bucket(self):
+    """The bucket of the original build/builder the led build replicates from.
+
+    If set, it will be an `InputProperties.ShadowedBucket` protobuf;
+    otherwise None.
+    """
+    return self._shadowed_bucket
+
   def __call__(self, *cmd):
     """Runs led with the given arguments. Wraps result in a `LedResult`."""
-    return self.LedResult(self._run_command(None, *cmd), self)
+    res, is_led_real_build = self._run_command(None, self.led_build, *cmd)
+    return self.LedResult(res, self, is_led_real_build)
 
   def inject_input_recipes(self, led_result):
     """Sets the version of recipes used by led to correspond to the version
@@ -339,7 +359,7 @@ class LedApi(recipe_api.RecipeApi):
     return ret
 
 
-  def _run_command(self, previous, *cmd):
+  def _run_command(self, previous, real_build, *cmd):
     """Runs led with a given command and arguments.
 
     Args:
@@ -348,14 +368,30 @@ class LedApi(recipe_api.RecipeApi):
       * previous: The previous led step's json result, if any. This can be
         used to chain led commands together. See the tests for an example of
         this.
+      * real_build: Flag for if run led command with `-real-build` flag.
+        Only apply to `led get-build`, `led get-builder` and `led launch`.
 
     Ensures that led is checked out on disk before trying to execute the
     command.
 
-    Returns either a job.Definition or a LedLaunchData.
+    Returns
+      * either a job.Definition or a LedLaunchData
+      * a bool indicating if the led command has real_build flag.
+        * If cmd doesn't have `-real-build` flag, this is the same as
+          real_build
+        * If cmd has `-real-build` flag, this is True.
     """
     is_launch = cmd[0] == 'launch'
-    real_build = '-real-build' in cmd
+    real_build_flag = '-real-build'
+    if real_build_flag in cmd:
+      real_build = True
+    elif real_build:
+      if is_launch:
+        # led launch -real-build
+        cmd = cmd + (real_build_flag,)
+      elif cmd[0] == 'get-build' or cmd[0] == 'get-builder':
+        # led get-build -real-build <build_id>
+        cmd = cmd[:-1] + (real_build_flag, cmd[-1])
 
     if is_launch:
       kwargs = {
@@ -431,4 +467,4 @@ class LedApi(recipe_api.RecipeApi):
     else:
       retval = result.stdout
 
-    return retval
+    return retval, real_build

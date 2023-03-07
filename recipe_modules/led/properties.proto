@@ -32,4 +32,11 @@ message InputProperties {
     // The build can use this info to launch child led builds using the same
     // version of the recipes code.
     swarming.v1.CASReference rbe_cas_input = 5;
+
+    // Bucket of the original build/builder the led build replicates from.
+    //
+    // The presence of this field also indicates that the current build is
+    // a led real build. So its child builds (if triggered by led), will be
+    // led real builds automatically.
+    string shadowed_bucket = 6;
 }
