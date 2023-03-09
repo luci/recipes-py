@@ -125,7 +125,7 @@ def unzip(zip_file, output, stats, include_filter):
       # By default, zipfile extracts a symlink file as regular file with its
       # link destination as its contents. Check if the file is a symlink and
       # if so, create it properly.
-      if stat.S_ISLNK(zipinfo.external_attr >> 16):
+      if stat.S_ISLNK(zipinfo.external_attr >> 16) and os.name != 'nt':
         print('Creating %s as symlink' % (zipinfo.filename))
         link_dest = zf.open(zipinfo).read()
         os.symlink(link_dest, os.path.join(output, zipinfo.filename))
