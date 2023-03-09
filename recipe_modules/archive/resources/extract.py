@@ -139,14 +139,14 @@ def unzip(zip_file, output, stats, include_filter):
         if perms:
           fullpath = os.path.join(output, zipinfo.filename)
           # Don't update permissions to be more restrictive.
-          old = os.lstat(fullpath).st_mode
+          old = os.stat(fullpath).st_mode
           old_short = old & 0o777
           new = old | perms
           new_short = new & 0o777
           if old_short < new_short:
             print('Updating %s permissions (0%o -> 0%o)' %
                   (zipinfo.filename, old_short, new_short))
-            os.chmod(fullpath, new, follow_symlinks=False)
+            os.chmod(fullpath, new)
 
 
 def main():
