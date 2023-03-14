@@ -224,3 +224,32 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
     if isinstance(task, TaskRequest):
       task = task.to_jsonish()
     return self.m.json.output_stream(task)
+
+  def list_bots(self, dimensions=None):
+    """Generates step test data intended to mock api.swarming.list_bots()
+
+    Args:
+      dimensions (None|Dict[str, str]): Select bots that match the given
+        dimensions.
+    """
+    raw_results = [
+        {
+            'bot_id': 'bot-1-dead',
+            'is_dead': True,
+        },
+        {
+            'bot_id': 'bot-2-quarantined',
+            'quarantined': True,
+        },
+        {
+            'bot_id': 'bot-3-alive',
+            'state': '{"max_uid": 19999}'
+        }
+    ]
+    if dimensions:
+      for raw_result in raw_results:
+        raw_result['dimensions'] = [{
+            'key': k,
+            'value': v
+        } for k, v in dimensions.items()]
+    return self.m.json.output(raw_results)

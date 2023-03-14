@@ -9,6 +9,7 @@ import base64
 import collections
 import contextlib
 import copy
+import json
 
 from future.utils import iteritems
 from past.types import basestring
@@ -21,6 +22,9 @@ from recipe_engine import recipe_api
 # Take revision from
 # https://ci.chromium.org/p/infra-internal/g/infra-packagers/console
 DEFAULT_CIPD_VERSION = 'git_revision:25effe8824d4e5ecff43e310290bb668aa995359'
+
+# The mandatory fields to include when calling the API list_bots with fields.
+LIST_BOTS_MANDATORY_FIELDS = 'items(bot_id,is_dead,quarantined)'
 
 
 class TaskRequest(object):
@@ -1115,6 +1119,58 @@ class TaskResult(object):
       )
 
 
+class BotMetadata(object):
+  """Metadata of a bot."""
+
+  def __init__(self, swarming_server, bot_id, bot_json):
+    self._bot_id = bot_id
+    self._bot_json = bot_json
+    self._swarming_server = swarming_server
+
+    self._dimensions = None
+    if 'dimensions' in bot_json:
+      self._dimensions = {d['key']: d['value'] for d in bot_json['dimensions']}
+
+    self._state = None
+    if 'state' in bot_json:
+      self._state = json.loads(bot_json['state'])
+
+  @property
+  def bot_id(self):
+    """The id of the bot (str)."""
+    return self._bot_id
+
+  @property
+  def bot_ui_link(self):
+    """Returns the URL of the associated bot in the Swarming UI."""
+    return '%s/bot?id=%s' % (self._swarming_server, self.bot_id)
+
+  @property
+  def is_dead(self):
+    """True if the bot is dead (bool)."""
+    return self._bot_json.get('is_dead', False)
+
+  @property
+  def quarantined(self):
+    """True if the bot is quarantined (bool)."""
+    return self._bot_json.get('quarantined', False)
+
+  @property
+  def dimensions(self):
+    """The dimensions of the bot (None|Dict[str, List[str]])."""
+    return self._dimensions
+
+  @property
+  def state(self):
+    """The state of the bot (None|Dict[str, Object]).
+
+    The state contains detailed properties of the bot, e.g. disk spaces, env,
+    ssd, etc. For bots with OS like Android and ChromeOS, it may have extra
+    properties like "devices" which includes device specific data.
+    """
+    return self._state
+
+
 class SwarmingApi(recipe_api.RecipeApi):
   """API for interacting with swarming.
 
@@ -1392,3 +1448,53 @@ class SwarmingApi(recipe_api.RecipeApi):
     json_result = step.stdout
 
     return self.task_request_from_jsonish(json_result)
+
+  def list_bots(self, step_name, dimensions=None, fields=None):
+    """List bots matching the given options.
+
+    Args:
+      step_name (str): The name of the step.
+      dimensions (None|Dict[str, str]): Select bots that match the given
+        dimensions.
+      fields (None|List[str]): Fields to include in the response. If not
+        specified, all fields will be included.
+
+    Returns:
+      A list of BotMetadata objects.
+    """
+    assert self._server
+    cmd = [
+        'bots',
+        '-server',
+        self._server,
+        '-json',
+        self.m.json.output(),
+    ]
+    if dimensions:
+      for key, value in dimensions.items():
+        cmd.extend(['-dimension', '"%s=%s"' % (key, value)])
+    if fields:
+      cmd.extend(['-field', '"%s"' % LIST_BOTS_MANDATORY_FIELDS])
+      for field in fields:
+        cmd.extend(['-field', '"%s"' % field])
+    step = self._run(
+        step_name,
+        cmd,
+        step_test_data=lambda: self.test_api.list_bots(dimensions))
+    resp = step.json.output
+
+    metadata_objs = []
+    for bot_json in resp:
+      assert 'bot_id' in bot_json, '"bot_id" not found in the response.'
+      metadata_objs.append(
+          BotMetadata(self._server, bot_json['bot_id'], bot_json))
+
+    metadata_objs.sort(key=lambda obj: obj.bot_id)
+
+    if dimensions:
+      step.presentation.logs['Dimensions to lookup'] = self.m.json.dumps(
+          dimensions, indent=2)
+    if fields:
+      step.presentation.logs['Fields to include'] = ', '.join(fields)
+
+    return metadata_objs
