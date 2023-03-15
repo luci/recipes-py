@@ -136,8 +136,8 @@ def unzip(zip_file, output, stats, include_filter):
         # POSIX may store permissions in the 16 most significant bits of the
         # file's external attributes.
         perms = (zipinfo.external_attr >> 16) & 0o777
-        if perms:
-          fullpath = os.path.join(output, zipinfo.filename)
+        fullpath = os.path.join(output, zipinfo.filename)
+        if perms and not os.path.islink(fullpath):
           # Don't update permissions to be more restrictive.
           old = os.stat(fullpath).st_mode
           old_short = old & 0o777
