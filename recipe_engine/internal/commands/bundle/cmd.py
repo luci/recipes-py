@@ -60,8 +60,6 @@ from collections import defaultdict
 
 from gevent import subprocess
 
-from PB import __path__ as PB_PATH # pylint: disable=import-error
-
 from ... import simple_cfg
 from ...recipe_deps import RecipeRepo, RecipeDeps
 
@@ -138,7 +136,7 @@ def export_repo(repo, destination):
   shutil.copytree(repo.path, bundle_dst, ignore=_ignore_fn)
 
 
-def export_protos(destination):
+def export_protos(recipe_deps, destination):
   """Exports the compiled protos for the bundle.
 
   The engine initialization process has already built all protos and made them
@@ -146,12 +144,12 @@ def export_protos(destination):
   `--proto-override` flag to work.
 
   Args:
-    * repo (RecipeRepo) - The repo to export.
+    * recipe_deps (RecipeDeps) - All loaded dependency repos.
     * destination (str) - The absolute path we're exporting to (we'll export to
       a subfolder `_pb/PB`).
   """
   shutil.copytree(
-      PB_PATH[0], # root of generated PB folder.
+      os.path.join(recipe_deps.recipe_deps_path, '_pb', 'PB'),
       os.path.join(destination, '_pb', 'PB'),
       ignore=lambda _base, names: [n for n in names if n.endswith('.pyc')],
   )
@@ -254,6 +252,6 @@ def main(args):
   destination = _prepare_destination(args.destination)
   for repo in listvalues(args.recipe_deps.repos):
     export_repo(repo, destination)
-  export_protos(destination)
+  export_protos(args.recipe_deps, destination)
   prep_recipes_py(args.recipe_deps, destination)
   LOGGER.info('done!')
