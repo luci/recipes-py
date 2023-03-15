@@ -529,6 +529,9 @@ class FileApi(recipe_api.RecipeApi):
               include_log=True):
     """Lists all files inside a directory.
 
+    If the source dir contains non-unicode file or dir names, the corresponding
+    bad characters will be replace with "?" mark.
+
     Args:
       * name (str): The name of the step.
       * source (Path): The directory to list.
