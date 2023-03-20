@@ -14,7 +14,7 @@ DEPS = [
 
 
 def RunSteps(api):
-  # list_bots from test_api returns 3 bots which is dead, quarantined, idle,
+  # list_bots from test_api returns 3 bots which is dead, quarantined,
   # and alive respectively.
   bots = api.swarming.list_bots(
       'List Bots', dimensions={'os': 'Android'}, fields=['items/external_ip'])
@@ -40,10 +40,10 @@ def GenTests(api):
   yield api.test(
       'basic',
       api.post_process(post_process.StepCommandContains, 'List Bots',
-                       ['-dimension', '"os=Android"']),
+                       ['-dimension', 'os=Android']),
       api.post_process(post_process.StepCommandContains, 'List Bots',
-                       ['-field', '"%s"' % LIST_BOTS_MANDATORY_FIELDS]),
+                       ['-field', LIST_BOTS_MANDATORY_FIELDS]),
       api.post_process(post_process.StepCommandContains, 'List Bots',
-                       ['-field', '"items/external_ip"']),
+                       ['-field', 'items/external_ip']),
       api.post_process(post_process.DropExpectation),
   )

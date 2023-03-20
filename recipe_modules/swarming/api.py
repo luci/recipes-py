@@ -1472,11 +1472,11 @@ class SwarmingApi(recipe_api.RecipeApi):
     ]
     if dimensions:
       for key, value in dimensions.items():
-        cmd.extend(['-dimension', '"%s=%s"' % (key, value)])
+        cmd.extend(['-dimension', '%s=%s' % (key, value)])
     if fields:
-      cmd.extend(['-field', '"%s"' % LIST_BOTS_MANDATORY_FIELDS])
+      cmd.extend(['-field', LIST_BOTS_MANDATORY_FIELDS])
       for field in fields:
-        cmd.extend(['-field', '"%s"' % field])
+        cmd.extend(['-field', field])
     step = self._run(
         step_name,
         cmd,

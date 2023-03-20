@@ -225,6 +225,26 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
       task = task.to_jsonish()
     return self.m.json.output_stream(task)
 
+  def generate_bot_json(self,
+                        bot_id,
+                        is_dead=False,
+                        quarantined=False,
+                        dimensions=None,
+                        state=None):
+    bot = {'bot_id': bot_id}
+    if is_dead:
+      bot['is_dead'] = True
+    if quarantined:
+      bot['quarantined'] = True
+    if dimensions:
+      bot['dimensions'] = [{
+          'key': k,
+          'value': v
+      } for k, v in dimensions.items()]
+    if state:
+      bot['state'] = self.m.json.dumps(state)
+    return bot
+
   def list_bots(self, dimensions=None):
     """Generates step test data intended to mock api.swarming.list_bots()
 
@@ -233,23 +253,21 @@ class SwarmingTestApi(recipe_test_api.RecipeTestApi):
         dimensions.
     """
     raw_results = [
-        {
-            'bot_id': 'bot-1-dead',
-            'is_dead': True,
-        },
-        {
-            'bot_id': 'bot-2-quarantined',
-            'quarantined': True,
-        },
-        {
-            'bot_id': 'bot-3-alive',
-            'state': '{"max_uid": 19999}'
-        }
+        self.generate_bot_json(
+            'build11-dead--device1',
+            is_dead=True,
+            dimensions=dimensions),
+        self.generate_bot_json(
+            'build12-quarantined--device1',
+            quarantined=True,
+            dimensions=dimensions),
+        self.generate_bot_json(
+            'build13-alive--device1',
+            dimensions=dimensions,
+            state={'devices': {
+                'build13-alive-1-serial': {
+                    'max_uid': 19999,
+                }
+            }}),
     ]
-    if dimensions:
-      for raw_result in raw_results:
-        raw_result['dimensions'] = [{
-            'key': k,
-            'value': v
-        } for k, v in dimensions.items()]
     return self.m.json.output(raw_results)
