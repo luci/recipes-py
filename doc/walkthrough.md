@@ -968,7 +968,7 @@ specifying default test data in the recipe or recipe module and removes
 the need to specify too much test data for each test in GenTests:
 
 ```python
-api.step(..., step_test_data=api.raw_io.output('test data'))
+api.step(..., step_test_data=lambda: api.raw_io.output('test data'))
 ```
 
 ### Example: simulated step output for a test case
