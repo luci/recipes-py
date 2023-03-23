@@ -42,6 +42,11 @@ class exponential_retry(object):
           exception as its one argument. Retries will only happen if this
           function returns True. If None, retries will always happen.
     """
+    # NOTE: Because the decorator can exist as module-level state, it is
+    # important that these values are READ-ONLY. Writing to them will act like
+    # assigning a global variable for that particular instance of the decorator,
+    # meaning that multiple different tests running in the same process could
+    # save arbitrary data which crosses between test cases.
     self.time_api = time_api
     self.retries = retries
     self.delay = delay
@@ -50,12 +55,13 @@ class exponential_retry(object):
   def __call__(self, f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
-      if self.time_api is None:
+      time_api = self.time_api
+      if time_api is None:
         try:
-          self.time_api = args[0].m.time
+          time_api = args[0].m.time
           err_msg = "Could not find TimeAPI module. " \
             "See docs for recipe_engine/time.exponential_retry for usage."
-          assert isinstance(self.time_api, TimeApi), err_msg
+          assert isinstance(time_api, TimeApi), err_msg
         except:
           raise
 
@@ -72,8 +78,8 @@ class exponential_retry(object):
           # Jitter the amount to sleep by plus or minus 15%.
           # Jitter helps avoid
           # https://en.wikipedia.org/wiki/Thundering_herd_problem
-          to_sleep *= 1 + self.time_api.m.random.random() / .3 - .15
-          self.time_api.sleep(to_sleep)
+          to_sleep *= 1 + time_api.m.random.random() / .3 - .15
+          time_api.sleep(to_sleep)
           retry_delay *= 2
     return wrapper
 

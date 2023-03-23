@@ -4214,9 +4214,9 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Allows mockable access to the current time.
 
-#### **class [TimeApi](/recipe_modules/time/api.py#81)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
+#### **class [TimeApi](/recipe_modules/time/api.py#87)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
-&mdash; **def [exponential\_retry](/recipe_modules/time/api.py#113)(self, retries, delay, condition=None):**
+&mdash; **def [exponential\_retry](/recipe_modules/time/api.py#119)(self, retries, delay, condition=None):**
 
 Adds exponential retry to a function.
 
@@ -4288,12 +4288,12 @@ def RunSteps(api):
   helper_funciton(api)
 ```
 
-&mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#190)(self):**
+&mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#196)(self):**
 
 Returns current timestamp as an int number of milliseconds since epoch.
     
 
-&mdash; **def [sleep](/recipe_modules/time/api.py#90)(self, secs, with_step=None, step_result=None):**
+&mdash; **def [sleep](/recipe_modules/time/api.py#96)(self, secs, with_step=None, step_result=None):**
 
 Suspend execution of |secs| (float) seconds, waiting for GLOBAL_SHUTDOWN.
   Does nothing in testing.
@@ -4306,11 +4306,11 @@ Args:
   * step_result (step_data.StepData|None) - Result of running a step. Should
     be None if with_step is True or None.
 
-&mdash; **def [time](/recipe_modules/time/api.py#182)(self):**
+&mdash; **def [time](/recipe_modules/time/api.py#188)(self):**
 
 Returns current timestamp as a float number of seconds since epoch.
 
-&mdash; **def [utcnow](/recipe_modules/time/api.py#195)(self):**
+&mdash; **def [utcnow](/recipe_modules/time/api.py#201)(self):**
 
 Returns current UTC time as a datetime.datetime.
 ### *recipe_modules* / [tricium](/recipe_modules/tricium)
