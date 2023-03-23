@@ -19,8 +19,6 @@ from google.protobuf import json_format as jsonpb
 import gevent
 import gevent.event
 
-from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
-
 
 MSWINDOWS = sys.platform.startswith(('win', 'cygwin'))
 
@@ -99,6 +97,8 @@ def install_signal_handlers():
 
   Sets LUCI_CONTEXT['deadline'] for the duration of this contextmanager.
   """
+  # late importing since recipe_engine/util is imported before protos are set up
+  from PB.go.chromium.org.luci.lucictx import sections as sections_pb2
   d = sections_pb2.Deadline()
   deadline_raw = luci_context.read('deadline')
   if deadline_raw:

@@ -24,9 +24,7 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  yield api.test(
-      'basic',
-      api.expect_exception('TypeError'),
-      api.post_process(post_process.StatusException),
-      api.post_process(post_process.SummaryMarkdown,
-                       "Uncaught Exception: TypeError('BAD DOGE')"))
+  yield (api.test('basic') + api.expect_exception('TypeError') +
+         api.post_process(post_process.StatusException) +
+         api.post_process(post_process.SummaryMarkdown,
+                          "Uncaught Exception: TypeError('BAD DOGE')"))

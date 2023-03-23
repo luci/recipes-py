@@ -18,31 +18,10 @@ from recipe_engine.internal.global_shutdown import GLOBAL_SHUTDOWN
 class exponential_retry(object):
   """Decorator which retries the function with exponential backoff.
 
-  Each time the decorated function throws an exception, we sleep for some amount
-  of time. We increase the amount of time exponentially to prevent cascading
-  failures from overwhelming systems. We also add a jitter to avoid the
-  thundering herd problem.
-
-  Example usage:
-
-  def RunSteps(api):
-    @api.time.exponential_retry(5, datetime.timedelta(seconds=1))
-    def test_retries():
-      api.step('running', None)
-      raise Exception()
-
-    test_retries()
-    # Executes 6 steps with 'running' as a common prefix of their step names.
-
-  You cannot use this when you define recipe module methods, since the recipe
-  dependency tree has not been instantiated when those methods are being
-  defined. You should instead wrap any individual operation which should be
-  retried in a small function which uses this decorator. If this becomes
-  commonly used, additional functionality to this module could be added to
-  support this use case.
+  See TimeApi.exponential_retry for full documentation.
   """
 
-  def __init__(self, time_api, retries, delay, condition=None):
+  def __init__(self, retries, delay, condition=None, time_api=None):
     """Creates a new exponential retry decorator.
 
     Args:
@@ -69,9 +48,17 @@ class exponential_retry(object):
     self.condition = condition or (lambda e: True)
 
   def __call__(self, f):
-
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
+      if self.time_api is None:
+        try:
+          self.time_api = args[0].m.time
+          err_msg = "Could not find TimeAPI module. " \
+            "See docs for recipe_engine/time.exponential_retry for usage."
+          assert isinstance(self.time_api, TimeApi), err_msg
+        except:
+          raise
+
       retry_delay = self.delay
       # We want to retry self.retries times, so we make the range give us
       # exactly self.retries loop executions.
@@ -88,7 +75,6 @@ class exponential_retry(object):
           to_sleep *= 1 + self.time_api.m.random.random() / .3 - .15
           self.time_api.sleep(to_sleep)
           retry_delay *= 2
-
     return wrapper
 
 
@@ -124,16 +110,74 @@ class TimeApi(recipe_api.RecipeApi):
     if GLOBAL_SHUTDOWN.ready() and step_result:
       step_result.presentation.status = "CANCELED"
 
-
-    if GLOBAL_SHUTDOWN.ready() and step_result:
-      step_result.presentation.status = "CANCELED"
-
   def exponential_retry(self, retries, delay, condition=None):
     """Adds exponential retry to a function.
 
-    See the 'exponential_retry' function in this module for more docs.
+    Decorator which retries the function with exponential backoff.
+
+    Each time the decorated function throws an exception, we sleep for some
+    amount of time. We increase the amount of time exponentially to prevent
+    cascading failures from overwhelming systems. We also add a jitter to avoid
+    the thundering herd problem.
+
+    Example usage:
+
+    ```
+    def RunSteps(api):
+      @api.time.exponential_retry(5, datetime.timedelta(seconds=1))
+      def test_retries():
+        api.step('running', None)
+        raise Exception()
+
+      test_retries()
+      # Executes 6 steps with 'running' as a common prefix of their step names.
+    ```
+
+    When writing a recipe module whose method needs to be retried, you won't
+    have access to the time module in the class body, but you can import a
+    class-method decorator like:
+
+      from RECIPE_MODULES.recipe_engine.time.api import exponential_retry
+
+    This decorator can be used on class methods or on functions
+    (for example, functions in a recipe file).
+
+    NOTE: Your module/recipe MUST ALSO depend on
+          "recipe_engine/time" in its DEPS.
+
+    NOTE: For non-class-method functions, the first parameter to those functions
+          must be an api object, such as the passed to RunSteps.
+
+    Example usage 1 (class method decorator):
+
+    ```
+    from recipe_engine.recipe_api import RecipeApi
+    from RECIPE_MODULES.recipe_engine.time.api import exponential_retry
+
+    # NOTE: Don't forget to put "recipe_engine/time" in the module DEPS.
+
+    class MyRecipeModule(RecipeApi):
+        @exponential_retry(5, datetime.timedelta(seconds=1))
+        def my_retriable_function(self, ...):
+            self.m.step('running', None)
+    ```
+
+    Example usage 2 (function with api as first arg):
+
+    ```
+    from RECIPE_MODULES.recipe_engine.time.api import exponential_retry
+
+    # NOTE: Don't forget to put "recipe_engine/time" in DEPS.
+
+    @exponential_retry(5, datetime.timedelta(seconds=1))
+    def helper_function(api):
+      api.step('running', None)
+
+    def RunSteps(api):
+      helper_funciton(api)
+    ```
     """
-    return exponential_retry(self, retries, delay, condition)
+    return exponential_retry(retries, delay, condition, self)
 
   def time(self):
     """Returns current timestamp as a float number of seconds since epoch."""

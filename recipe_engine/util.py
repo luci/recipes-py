@@ -10,13 +10,14 @@ import functools
 import logging
 import os
 import sys
-import time
+import gevent
 import traceback
 
 from builtins import map, range
 from builtins import str as text
 from future.utils import iteritems
 from past.builtins import basestring
+from recipe_engine.internal.global_shutdown import GLOBAL_SHUTDOWN
 
 
 def sentinel(name, **attrs):
@@ -226,7 +227,7 @@ class exponential_retry(object):
             raise
           logging.exception('Exception encountered, retrying in %s',
                             retry_delay)
-          time.sleep(retry_delay.total_seconds())
+          gevent.wait([GLOBAL_SHUTDOWN], timeout=retry_delay.total_seconds())
           retry_delay *= 2
     return wrapper
 

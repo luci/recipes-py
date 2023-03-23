@@ -1,0 +1,34 @@
+[
+  {
+    "cmd": [],
+    "name": "sleep 5"
+  },
+  {
+    "cmd": [
+      "echo",
+      "1337000001.5"
+    ],
+    "name": "echo"
+  },
+  {
+    "cmd": [],
+    "name": "RECIPE CRASH (Uncaught exception)",
+    "~followup_annotations": [
+      "@@@STEP_EXCEPTION@@@",
+      "The recipe has crashed at point 'Uncaught exception'!",
+      "",
+      "Traceback (most recent call last):",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/time/examples/full.py\", line 72, in RunSteps",
+      "    helper_fn_that_needs_retries(\"\")",
+      "  File \"RECIPE_REPO[recipe_engine]/recipe_modules/time/api.py\", line 55, in wrapper",
+      "    self.time_api = args[0].m.time",
+      "AttributeError(''str' object has no attribute 'm'')"
+    ]
+  },
+  {
+    "failure": {
+      "humanReason": "Uncaught Exception: AttributeError(''str' object has no attribute 'm'')"
+    },
+    "name": "$result"
+  }
+]

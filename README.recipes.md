@@ -2256,7 +2256,7 @@ Methods for producing and consuming JSON.
 
 Works like `json.dumps`.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [input](/recipe_modules/json/api.py#158)(self, data):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&mdash; **def [input](/recipe_modules/json/api.py#158)(self, data):**
 
 A placeholder which will expand to a file path containing <data>.
 
@@ -2272,7 +2272,7 @@ Works like `json.loads`, but:
 * replaces 'int-like' floats with ints. These are floats whose magnitude
   is less than (2**53-1) and which don't have a decimal component.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [output](/recipe_modules/json/api.py#163)(self, add_json_log=True, name=None, leak_to=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&mdash; **def [output](/recipe_modules/json/api.py#163)(self, add_json_log=True, name=None, leak_to=None):**
 
 A placeholder which will expand to '/tmp/file'.
 
@@ -2996,7 +2996,7 @@ Args:
 
 Returns the encoded proto message.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [input](/recipe_modules/proto/api.py#85)(self, proto_msg, codec, \*\*encoding_kwargs):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&mdash; **def [input](/recipe_modules/proto/api.py#85)(self, proto_msg, codec, \*\*encoding_kwargs):**
 
 A placeholder which will expand to a file path containing the encoded
 `proto_msg`.
@@ -3020,7 +3020,7 @@ Args:
 
 Returns an InputPlaceholder.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [output](/recipe_modules/proto/api.py#116)(self, msg_class, codec, add_json_log=True, name=None, leak_to=None, \*\*decoding_kwargs):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&mdash; **def [output](/recipe_modules/proto/api.py#116)(self, msg_class, codec, add_json_log=True, name=None, leak_to=None, \*\*decoding_kwargs):**
 
 A placeholder which expands to a file path and then reads an encoded
 proto back from that location when the step finishes.
@@ -3178,7 +3178,7 @@ Provides objects for reading and writing raw data to and from steps.
 
 #### **class [RawIOApi](/recipe_modules/raw_io/api.py#330)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#331)(data, suffix='', name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input](/recipe_modules/raw_io/api.py#331)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -3197,7 +3197,7 @@ tempfile.mkstemp.
 
 See examples/full.py for usage example.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#358)(data, suffix='', name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&emsp; **@staticmethod**<br>&mdash; **def [input\_text](/recipe_modules/raw_io/api.py#358)(data, suffix='', name=None):**
 
 Returns a Placeholder for use as a step argument.
 
@@ -3212,7 +3212,7 @@ encoded data. Note that, the support of type 'bytes' is for backwards
 compatibility to Python 2, we may drop this support in the future after
 recipe becomes Python 3 only.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#381)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output](/recipe_modules/raw_io/api.py#381)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -3228,7 +3228,7 @@ Args:
      to a step link named `name`. If this is 'on_failure', only create this
      log when the step has a non-SUCCESS status.
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#419)(self, leak_to=None, name=None):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&mdash; **def [output\_dir](/recipe_modules/raw_io/api.py#419)(self, leak_to=None, name=None):**
 
 Returns a directory Placeholder for use as a step argument.
 
@@ -3260,7 +3260,7 @@ del result.raw_io.output_dir[some_file]
 result.raw_io.output_dir[some_file] -> raises KeyError
 ```
 
-&emsp; **@[returns\_placeholder](/recipe_engine/util.py#156)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#401)(suffix='', leak_to=None, name=None, add_output_log=False):**
+&emsp; **@[returns\_placeholder](/recipe_engine/util.py#157)**<br>&emsp; **@staticmethod**<br>&mdash; **def [output\_text](/recipe_modules/raw_io/api.py#401)(suffix='', leak_to=None, name=None, add_output_log=False):**
 
 Returns a Placeholder for use as a step argument, or for std{out,err}.
 
@@ -4214,20 +4214,86 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Allows mockable access to the current time.
 
-#### **class [TimeApi](/recipe_modules/time/api.py#95)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
+#### **class [TimeApi](/recipe_modules/time/api.py#81)([RecipeApi](/recipe_engine/recipe_api.py#886)):**
 
-&mdash; **def [exponential\_retry](/recipe_modules/time/api.py#131)(self, retries, delay, condition=None):**
+&mdash; **def [exponential\_retry](/recipe_modules/time/api.py#113)(self, retries, delay, condition=None):**
 
 Adds exponential retry to a function.
 
-See the 'exponential_retry' function in this module for more docs.
+Decorator which retries the function with exponential backoff.
 
-&mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#146)(self):**
+Each time the decorated function throws an exception, we sleep for some
+amount of time. We increase the amount of time exponentially to prevent
+cascading failures from overwhelming systems. We also add a jitter to avoid
+the thundering herd problem.
+
+Example usage:
+
+```
+def RunSteps(api):
+  @api.time.exponential_retry(5, datetime.timedelta(seconds=1))
+  def test_retries():
+    api.step('running', None)
+    raise Exception()
+
+  test_retries()
+  # Executes 6 steps with 'running' as a common prefix of their step names.
+```
+
+When writing a recipe module whose method needs to be retried, you won't
+have access to the time module in the class body, but you can import a
+class-method decorator like:
+
+  from RECIPE_MODULES.recipe_engine.time.api import exponential_retry
+
+This decorator can be used on class methods or on functions
+(for example, functions in a recipe file).
+
+*** promo
+NOTE: Your module/recipe MUST ALSO depend on
+      "recipe_engine/time" in its DEPS.
+***
+
+*** promo
+NOTE: For non-class-method functions, the first parameter to those functions
+      must be an api object, such as the passed to RunSteps.
+***
+
+Example usage 1 (class method decorator):
+
+```
+from recipe_engine.recipe_api import RecipeApi
+from RECIPE_MODULES.recipe_engine.time.api import exponential_retry
+
+# NOTE: Don't forget to put "recipe_engine/time" in the module DEPS.
+
+class MyRecipeModule(RecipeApi):
+    @exponential_retry(5, datetime.timedelta(seconds=1))
+    def my_retriable_function(self, ...):
+        self.m.step('running', None)
+```
+
+Example usage 2 (function with api as first arg):
+
+```
+from RECIPE_MODULES.recipe_engine.time.api import exponential_retry
+
+# NOTE: Don't forget to put "recipe_engine/time" in DEPS.
+
+@exponential_retry(5, datetime.timedelta(seconds=1))
+def helper_function(api):
+  api.step('running', None)
+
+def RunSteps(api):
+  helper_funciton(api)
+```
+
+&mdash; **def [ms\_since\_epoch](/recipe_modules/time/api.py#190)(self):**
 
 Returns current timestamp as an int number of milliseconds since epoch.
     
 
-&mdash; **def [sleep](/recipe_modules/time/api.py#104)(self, secs, with_step=None, step_result=None):**
+&mdash; **def [sleep](/recipe_modules/time/api.py#90)(self, secs, with_step=None, step_result=None):**
 
 Suspend execution of |secs| (float) seconds, waiting for GLOBAL_SHUTDOWN.
   Does nothing in testing.
@@ -4240,11 +4306,11 @@ Args:
   * step_result (step_data.StepData|None) - Result of running a step. Should
     be None if with_step is True or None.
 
-&mdash; **def [time](/recipe_modules/time/api.py#138)(self):**
+&mdash; **def [time](/recipe_modules/time/api.py#182)(self):**
 
 Returns current timestamp as a float number of seconds since epoch.
 
-&mdash; **def [utcnow](/recipe_modules/time/api.py#151)(self):**
+&mdash; **def [utcnow](/recipe_modules/time/api.py#195)(self):**
 
 Returns current UTC time as a datetime.datetime.
 ### *recipe_modules* / [tricium](/recipe_modules/tricium)
@@ -5608,11 +5674,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipe_modules/swarming/tests/task_request_from_jsonish.py#15)(api):**
 ### *recipes* / [time:examples/full](/recipe_modules/time/examples/full.py)
 
-[DEPS](/recipe_modules/time/examples/full.py#11): [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)
+[DEPS](/recipe_modules/time/examples/full.py#12): [properties](#recipe_modules-properties), [runtime](#recipe_modules-runtime), [step](#recipe_modules-step), [time](#recipe_modules-time)
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#19)(api):**
+&mdash; **def [RunSteps](/recipe_modules/time/examples/full.py#37)(api):**
+
+&emsp; **@exponential_retry(5, datetime.timedelta(seconds=1))**<br>&mdash; **def [helper\_fn\_that\_needs\_retries](/recipe_modules/time/examples/full.py#31)(api):**
 ### *recipes* / [tricium:examples/add\_comment](/recipe_modules/tricium/examples/add_comment.py)
 
 [DEPS](/recipe_modules/tricium/examples/add_comment.py#10): [properties](#recipe_modules-properties), [tricium](#recipe_modules-tricium)
