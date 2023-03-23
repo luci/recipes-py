@@ -145,6 +145,12 @@ message RepoSpec {
   //     is assumed to be "PY3")
   //   * bundles created with `recipes.py bundle` will only use vpython3
   bool py3_only = 10;
+
+  // If true, this repo will not allow any tests to exit with a status code that
+  // mismatches the expected status of the `test` kwarg of the test data (e.g.
+  // `yield api.test("name", ..., status="FAILURE")`), which defaults to SUCCESS
+  // if not specified.
+  bool enforce_test_expected_status = 11;
 }
 
 // Emitted by the `recipes.py dump_specs` command.

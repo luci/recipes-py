@@ -243,6 +243,23 @@ class Reporter(object):
         print('Fix test failures or pass --show-warnings for details.')
       print()
 
+    # TODO (crbug.com/1426908): A second set of warnings for status mismatches.
+    #  This will be removed once status matches are enforced.
+    status_warning_result = _collect_status_warning_result(outcome_msgs)
+    if status_warning_result:
+      print('------')
+      warning_count = None
+      if len(status_warning_result) == 1:
+        warning_count = '1 test case'
+      else:
+        warning_count = '%d test cases' % len(status_warning_result)
+      print('Warning, the following %s need an explicit, expected, status set. '
+            'See (go/luci/migrations/recipe_test_status).' % warning_count)
+      print()
+      for test_name, expected_status in sorted(status_warning_result):
+        _print_status_warning(test_name, expected_status)
+      print()
+
     if fail:
       print('------')
       print('FAILED')
@@ -298,6 +315,8 @@ FIELD_TO_DISPLAY = collections.OrderedDict([
 
   ('removed',        (True,  'removed expectation file',            '🌟', 'R')),
   ('written',        (True,  'updated expectation file',            '💾', 'D')),
+
+  ('status_that_is_missing', (True, 'needs explicit status',        '💬', 'T')),
 ])
 
 
@@ -373,6 +392,10 @@ def _print_detail_info(err_buf, test_name, test_result):
     print(file=err_buf)
 
 
+def _print_status_warning(test_name, expected_status):
+  print('\t%s - expected SUCCESS, got %s' % (test_name, expected_status))
+
+
 @attr.s
 class PerWarningResult(object):
   call_sites = attr.ib(factory=set)
@@ -392,6 +415,16 @@ def _collect_warning_result(outcome_msgs):
             result[name].call_sites.add(CallSite.from_cause_pb(cause))
           else:
             result[name].import_sites.add(ImportSite.from_cause_pb(cause))
+  return result
+
+
+def _collect_status_warning_result(outcome_msgs):
+  result = []
+  for outcome_msg in outcome_msgs:
+    for test_name, test_result in iteritems(outcome_msg.test_results):
+      _, expected_status = _check_field(test_result, 'status_that_is_missing')
+      if expected_status and (test_name, expected_status) not in result:
+        result.append((test_name, expected_status))
   return result
 
 

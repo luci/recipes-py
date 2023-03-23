@@ -106,6 +106,7 @@ class Common(test_env.RecipeEngineUnitTest):
     labeled_py_compat_py2 = 9
     labeled_py_compat_py2_and_3 = 10
     labeled_py_compat_py3 = 11
+    needs_infra_fail = 12
 
 
   def _outcome_json(self, per_test=None, coverage=100, uncovered_mods=(),
@@ -155,6 +156,8 @@ class Common(test_env.RecipeEngineUnitTest):
           results.labeled_py_compat = 'PY3'
         elif type_ == self.OutcomeType.expect_py_incompatibility:
           results.expect_py_incompatibility = True
+        elif type_ == self.OutcomeType.needs_infra_fail:
+          results.status_that_is_missing = 'INFRA_FAILURE'
 
     ret.coverage_percent = coverage
     ret.uncovered_modules.extend(uncovered_mods)
@@ -399,7 +402,8 @@ class TestRun(Common):
               self.OutcomeType.crash,
               self.OutcomeType.diff,
               self.OutcomeType.expect_py_incompatibility,
-              self.OutcomeType.labeled_py_compat_py3],
+              self.OutcomeType.labeled_py_compat_py3,
+              self.OutcomeType.needs_infra_fail],
         }))
 
   def test_check_success(self):
@@ -460,7 +464,8 @@ class TestRun(Common):
     self.assertDictEqual(
         result.data,
         self._outcome_json(per_test={
-          'foo.basic': [self.OutcomeType.crash, self.OutcomeType.diff],
+          'foo.basic': [self.OutcomeType.crash, self.OutcomeType.diff,
+                        self.OutcomeType.needs_infra_fail],
         }))
 
   def test_recipe_module_uncovered(self):
@@ -500,7 +505,8 @@ class TestRun(Common):
     self.assertDictEqual(
         result.data,
         self._outcome_json(per_test={
-          'foo_module:examples/full.basic': [self.OutcomeType.crash],
+          'foo_module:examples/full.basic': [self.OutcomeType.crash,
+                                             self.OutcomeType.needs_infra_fail],
         }))
 
   def test_recipe_module_syntax_error_in_example(self):
@@ -525,7 +531,8 @@ class TestRun(Common):
     self.assertDictEqual(
         result.data,
         self._outcome_json(per_test={
-          'foo_module:examples/full.basic': [self.OutcomeType.crash]
+          'foo_module:examples/full.basic': [self.OutcomeType.crash,
+                                             self.OutcomeType.needs_infra_fail]
         }, coverage=95.0))
 
   def test_recipe_module_example_not_covered(self):
@@ -964,6 +971,7 @@ class TestTrain(Common):
           'foo_module:tests/foo.basic': [
             self.OutcomeType.written,
             self.OutcomeType.crash,
+            self.OutcomeType.needs_infra_fail
           ],
         }))
 

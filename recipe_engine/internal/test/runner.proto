@@ -80,6 +80,10 @@ message Outcome {
     // If tests are executed in parallel, this value may not directly correspond
     // to how much actual 'work' was done in this test.
     google.protobuf.Duration duration = 11;
+
+    // The actual status emitted by a test (if status isn't passed in and not
+    // success).
+    string status_that_is_missing = 12;
   }
 
   // Maps full test names (i.e. 'recipe_name.test_case') to test result details.

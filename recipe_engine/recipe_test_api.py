@@ -2,17 +2,19 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
-import contextlib
 import inspect
-
+from collections import defaultdict
+from collections import namedtuple
 from functools import reduce
-from collections import namedtuple, defaultdict
 
-from future.utils import iteritems, itervalues
+from future.utils import iteritems
+from future.utils import itervalues
 from past.builtins import basestring
 
-from .util import ModuleInjectionSite, static_call, static_wraps
-from .engine_types import freeze
+from .util import ModuleInjectionSite
+from .util import static_call
+from .util import static_wraps
+
 
 def combineify(name, dest, a, b, overwrite=False):
   """
@@ -230,7 +232,7 @@ and kwargs.
 
 
 class TestData(BaseTestData):
-  def __init__(self, name=None):
+  def __init__(self, name=None, status=None):
     super(TestData, self).__init__()
     self.name = name
     self.properties = {}  # key -> val
@@ -239,6 +241,7 @@ class TestData(BaseTestData):
     self.mod_data = defaultdict(ModuleTestData)
     self.step_data = defaultdict(StepTestData)
     self.expected_exception = None
+    self.expected_status = status
     self.post_process_hooks = [] # list(PostprocessHook)
 
     # Filled in by recipe_deps.Recipe.gen_tests()
@@ -246,7 +249,8 @@ class TestData(BaseTestData):
 
   def __add__(self, other):
     assert isinstance(other, TestData)
-    ret = TestData(self.name or other.name)
+    ret = TestData(self.name or other.name,
+                   self.expected_status or other.expected_status)
 
     ret.properties.update(self.properties)
     ret.properties.update(other.properties)
@@ -305,6 +309,7 @@ class TestData(BaseTestData):
       'mod_data': dict(iteritems(self.mod_data)),
       'step_data': dict(iteritems(self.step_data)),
       'expected_exception': self.expected_exception,
+      'expected_status': self.expected_status,
     },)
 
 
@@ -461,8 +466,10 @@ class RecipeTestApi(object):
   Every test in GenTests(api) takes the form:
     yield <instance of TestData>
 
-  There are 6 basic pieces to TestData:
+  There are 7 basic pieces to TestData:
     name          - The name of the test.
+    status        - The expected status of the test. Must be one of the statuses
+                    found in the Common.Status enum. Defaults to SUCCESS.
     properties    - Dictionary which is used as the properties for this test.
                     You may use protobuf message objects as part of the
                     dictionary and they'll be expanded to their JSON dictionary
@@ -508,7 +515,7 @@ class RecipeTestApi(object):
   installation, and the step named 'some_step' would have the json output of
   the placeholder with name "a" be mocked to return '"bobface"', and the json
   output of the placeholder with name "b" be mocked to return
-  '{"key": "value"}'.
+  '{"key": "value"}'. The test would expect the status at the end to be success.
 
   The properties.tryserver() call is documented in the 'properties' module's
   test_api.
@@ -523,7 +530,8 @@ class RecipeTestApi(object):
     self._module = module
 
   @staticmethod
-  def test(name, *test_data):
+  def test(name, *test_data, **kwargs):
+    from PB.go.chromium.org.luci.buildbucket.proto.common import Status
     """Returns a new empty TestData with the name filled in.
 
     Use in GenTests:
@@ -532,6 +540,7 @@ class RecipeTestApi(object):
 
         yield api.test(
             'more complex',
+            status='failure',
             api.properties(
                 foo='foo-value',
                 bar='bar-value',
@@ -547,8 +556,11 @@ class RecipeTestApi(object):
       *test_data - Additional TestData objects to combine into the returned
           TestData. The returned TestData will have each element added (in the
           same order they are passed) to it.
+      status - The expected status of the test. Defaults to SUCCESS. Must be
+          passed in as a kwarg so test_data will work.
     """
-    return sum(test_data, TestData(name))
+    status = Status.Value(kwargs.get('status') or 'SUCCESS')
+    return sum(test_data, TestData(name, status))
 
   @staticmethod
   def empty_test_data():
