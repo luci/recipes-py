@@ -28,6 +28,7 @@ def RunSteps(api):
            ['echo', api.path.repo_resource('dir', 'file.py')])
 
   assert 'start_dir' in api.path
+  assert api.path['start_dir'].join('.') == api.path['start_dir']
   assert 'checkout' not in api.path
   api.path['checkout'] = api.path['tmp_base'].join('checkout')
   assert 'checkout' in api.path

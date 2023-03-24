@@ -157,7 +157,8 @@ class Path(RecipeConfigType):
     super(Path, self).__init__()
     assert isinstance(base, BasePath), base
     assert all(isinstance(x, basestring) for x in pieces), pieces
-    assert not any(x in ('..', '.', '/', '\\') for x in pieces)
+    assert not any(x in ('..', '/', '\\') for x in pieces)
+    pieces = [p for p in pieces if p != '.']
 
     self._base = base
     self._pieces = pieces if isinstance(pieces, tuple) else tuple(pieces)
@@ -206,7 +207,7 @@ class Path(RecipeConfigType):
 
     Args:
       pieces (tuple(str)) - The components of the path relative to base. These
-        pieces must be non-relative (i.e. no '..' or '.', etc. as a piece).
+        pieces must be non-relative (i.e. no '..' as a piece).
 
     Kwargs:
       platform_ext (dict(str, str)) - A mapping from platform name (as defined
