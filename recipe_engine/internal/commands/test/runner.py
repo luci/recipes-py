@@ -227,8 +227,8 @@ def _check_status(raw_expectations, test_data, test_results,
       if enforce_status_check:
         test_results.crash_mismatch.append(
             'Status mismatch in RunSteps. The test expected %r but '
-            'the status was %r.' % (test_data.expected_status, build_status)
-        )
+            'the status was %r.' %
+            (Status.Name(test_data.expected_status), Status.Name(build_status)))
       else:
         test_results.status_that_is_missing = Status.Name(build_status)
 
