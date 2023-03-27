@@ -2,6 +2,8 @@
 # Use of this source code is governed under the Apache License, Version 2.0
 # that can be found in the LICENSE file.
 
+from __future__ import print_function
+
 import inspect
 from collections import defaultdict
 from collections import namedtuple
@@ -232,7 +234,7 @@ and kwargs.
 
 
 class TestData(BaseTestData):
-  def __init__(self, name=None, status=None):
+  def __init__(self, name=None):
     super(TestData, self).__init__()
     self.name = name
     self.properties = {}  # key -> val
@@ -241,7 +243,7 @@ class TestData(BaseTestData):
     self.mod_data = defaultdict(ModuleTestData)
     self.step_data = defaultdict(StepTestData)
     self.expected_exception = None
-    self.expected_status = status
+    self.expected_status = None
     self.post_process_hooks = [] # list(PostprocessHook)
 
     # Filled in by recipe_deps.Recipe.gen_tests()
@@ -249,8 +251,8 @@ class TestData(BaseTestData):
 
   def __add__(self, other):
     assert isinstance(other, TestData)
-    ret = TestData(self.name or other.name,
-                   self.expected_status or other.expected_status)
+
+    ret = TestData(self.name or other.name)
 
     ret.properties.update(self.properties)
     ret.properties.update(other.properties)
@@ -266,6 +268,10 @@ class TestData(BaseTestData):
 
     ret.post_process_hooks.extend(self.post_process_hooks)
     ret.post_process_hooks.extend(other.post_process_hooks)
+
+    ret.expected_status = self.expected_status
+    if other.expected_status is not None:
+      ret.expected_status = other.expected_status
 
     ret.expected_exception = self.expected_exception
     if other.expected_exception:
@@ -529,9 +535,9 @@ class RecipeTestApi(object):
     self.m = self if module is None else ModuleInjectionSite()
     self._module = module
 
+  # TODO(iannucci): Fix this and other kwargs to use direct keyword py3 syntax.
   @staticmethod
   def test(name, *test_data, **kwargs):
-    from PB.go.chromium.org.luci.buildbucket.proto.common import Status
     """Returns a new empty TestData with the name filled in.
 
     Use in GenTests:
@@ -539,16 +545,64 @@ class RecipeTestApi(object):
         yield api.test('basic')
 
         yield api.test(
-            'more complex',
-            status='failure',
+            # All test cases have a name; Recipe test full test names always
+            # look like '<name of recipe>.<test case name>'. Recipe names
+            # will look like 'path/under/recipes/directory/to/recipe_file'
+            # or 'recipe_module_name:tests/recipe_file'.
+            #
+            # Note that spaces in test names are allowed, but can be annoying to
+            # work with when e.g. using the `--filter` CLI argument on
+            # `recipes.py test train` due to extra quoting requirements.
+            'moreComplex',
+
+            # Properties are semi-structured input (~JSON object) which the
+            # recipe operates on, and can observe with PROPERTIES declarations
+            # or (less preferred) via the `properties` recipe module.
             api.properties(
                 foo='foo-value',
                 bar='bar-value',
             ),
+
+            # Here is an example of how to mock the state of the `platform`
+            # module using its 'test API'. This adjusts state in the `platform`
+            # module so that when the recipe queries it during this test, it
+            # will claim that the recipe is operating in a 32bit windows
+            # environment. Many modules have ways to mock their state, though
+            # most mocks will appear in the form of `step_data` which mocks the
+            # output of running one (or more) steps from that module, providing
+            # mock outputs such as JSON output, return codes, etc.
             api.platform.name('win'),
             api.platform.bits(32),
-            api.post_process(post_process.StatusFailure),
+
+            # Most recipes keep and review expectation files, but some teams
+            # use DropExpectation in addition to other additional assertions
+            # instead.
+            #
+            # If you choose to drop expectations, but don't make any other
+            # assertions, your test will not be doing much aside from
+            # ensuring that the code does not crash when executed.
+            api.post_process(<assertion>),
+            api.post_process(<other assertion>),
             api.post_process(post_process.DropExpectation),
+
+            # All recipe tests must state the expected outcome of the overall
+            # recipe by setting the status. By default, tests which omit this
+            # status will expect a SUCCESS outcome. If your test uses
+            # `expect_exception`, the test will expect an INFRA_FAILURE outcome.
+            # The valid statuses here are:
+            #   * SUCCESS
+            #   * FAILURE (recipe ended by explicitly returning this, or raising
+            #     StepFailure)
+            #   * INFRA_FAILURE (recipe ended by explicitly returning this,
+            #     raising InfraFailure, or by raising some other exception)
+            #   * CANCELED (recipe ended by explicitly returning this,
+            #     raising InfraFailure (canceled), or by mocking external
+            #     cancelation)
+            #
+            # This is a shorthand for using `api.expect_status(...)` at the very
+            # beginning of `test_data`. Adding api.expect_status into test_data,
+            # or using api.expect_exception will override this.
+            status='FAILURE',
         )
 
     Arguments:
@@ -556,11 +610,13 @@ class RecipeTestApi(object):
       *test_data - Additional TestData objects to combine into the returned
           TestData. The returned TestData will have each element added (in the
           same order they are passed) to it.
-      status - The expected status of the test. Defaults to SUCCESS. Must be
-          passed in as a kwarg so test_data will work.
     """
-    status = Status.Value(kwargs.get('status') or 'SUCCESS')
-    return sum(test_data, TestData(name, status))
+    from PB.go.chromium.org.luci.buildbucket.proto.common import Status
+    base = TestData(name)
+    if 'status' in kwargs:
+      base.expected_status = Status.Value(kwargs['status'])
+    ret = sum(test_data, base)
+    return ret
 
   @staticmethod
   def empty_test_data():
@@ -568,7 +624,7 @@ class RecipeTestApi(object):
 
     This is the identity of the + operator for combining TestData.
     """
-    return TestData(None)
+    return TestData()
 
   @staticmethod
   def _step_data(name, *data, **kwargs):
@@ -654,9 +710,40 @@ class RecipeTestApi(object):
     return self._step_data(name, *data, **kwargs)
   override_step_data.__doc__ = _step_data.__doc__
 
-  def expect_exception(self, exc_type): #pylint: disable=R0201
-    ret = TestData(None)
+  def expect_exception(self, exc_type):
+    """Indicate that this test should end by raising an exception from RunSteps
+    whose exception class name is `exc_type`.
+
+    Using this will imply an `expect_status` of INFRA_FAILURE - If you want to
+    override this, add an explicit expect_status after this expect_exception.
+
+    Args:
+      * exc_type - String value of exception name.
+
+    Returns `TestData` which can be added to other TestData prior to yielding
+    from GenTests, or can be included as `*test_data` to the `test(name, ...)`
+    function in RecipeTestApi.
+    """
+    from PB.go.chromium.org.luci.buildbucket.proto.common import Status
+    ret = TestData()
     ret.expect_exception(exc_type)
+    ret.expected_status = Status.INFRA_FAILURE
+    return ret
+
+  def expect_status(self, status):
+    """Indicate that this test should have an overall status of `status`.
+
+    Args:
+      * status - String value of Buildbucket Common Status (i.e. SUCCESS,
+        FAILURE, INFRA_FAILURE, CANCELED)
+
+    Returns `TestData` which can be added to other TestData prior to yielding
+    from GenTests, or can be included as `*test_data` to the `test(name, ...)`
+    function in RecipeTestApi.
+    """
+    from PB.go.chromium.org.luci.buildbucket.proto.common import Status
+    ret = TestData()
+    ret.expected_status = Status.Value(status)
     return ret
 
   def post_process(self, func, *args, **kwargs):

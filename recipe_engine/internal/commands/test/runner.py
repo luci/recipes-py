@@ -191,46 +191,33 @@ def _check_exception(test_results, expected_exception, uncaught_exception_info):
     test_results.crash_mismatch.extend(msg_lines)
 
 
-def _check_status(raw_expectations, test_data, test_results,
-                  enforce_status_check):
+def _check_status(raw_result, test_data, test_results, enforce_status_check):
   """Check the status of the test against the expected status.
 
   Args:
 
-    raw_expectations - A dictionary mapping the name of a step to a dictionary
-        containing the details of that step.
-    test_data - The TestData object for the current test, containing the post
-        process hooks to run.
-    test_results (Outcome.Failures) - The TestResult object to update in
-      the event there are failing checks.
+    raw_result - A RawResult, including `status`.
+    test_data - The TestData object for the current test.
+    test_results - The Outcome.Results object to update in
+      the event the status is mismatched.
     enforce_status_check (bool): Whether to enforce status checks on the test.
 
   Side-effect: updates test_failures with the formatted status failures.
   """
-  if raw_expectations and raw_expectations['$result']:
-    failure = raw_expectations['$result'].get('failure')
-    status_map = {
-        Status.SUCCESS: failure is None,
-        Status.FAILURE: failure is not None and 'failure' in failure,
-        Status.INFRA_FAILURE: failure is not None and 'failure' not in failure
-    }
-    build_status = None
-    for k, v in status_map.items():
-      if v:
-        build_status = k
-        break
-    if not test_data.expected_status or not status_map[
-        test_data.expected_status]:
+  build_status = raw_result.status
+  expected_status = test_data.expected_status or Status.SUCCESS
+  if raw_result.status != expected_status:
+    # TODO (crbug.com/1426908): This will need to be happen without the config
+    #  prop on all builds once tests are updated:
+    if enforce_status_check:
+      test_results.crash_mismatch.append(
+          'Status mismatch in RunSteps. The test expected %r but '
+          'the status was %r.' % (Status.Name(expected_status),
+                                  Status.Name(build_status))
+      )
+    else:
+      test_results.status_that_is_missing = Status.Name(build_status)
 
-      # TODO (crbug.com/1426908): This will need to be happen without the config
-      #  prop on all builds once tests are updated:
-      if enforce_status_check:
-        test_results.crash_mismatch.append(
-            'Status mismatch in RunSteps. The test expected %r but '
-            'the status was %r.' %
-            (Status.Name(test_data.expected_status), Status.Name(build_status)))
-      else:
-        test_results.status_that_is_missing = Status.Name(build_status)
 
 def _diff_test(test_results, expect_file, new_expect, is_train):
   """Compares the actual and expected results.
@@ -362,6 +349,10 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
   _check_exception(test_results, test_data.expected_exception,
                    test_case_result.uncaught_exception)
 
+  _check_status(
+      test_case_result.raw_result, test_data, test_results,
+      recipe_deps.main_repo.recipes_cfg_pb2.enforce_test_expected_status)
+
   # Convert the result to a json object by dumping to json, and then parsing.
   # TODO(iannucci): Use real objects so this only needs to be serialized once.
   raw_expectations['$result'] = json.loads(jsonpb.MessageToJson(
@@ -376,10 +367,6 @@ def _run_test(path_cleaner, test_results, recipe_deps, test_desc, test_data,
       )
 
   raw_expectations['$result']['name'] = '$result'
-
-  _check_status(
-      raw_expectations, test_data, test_results,
-      recipe_deps.main_repo.recipes_cfg_pb2.enforce_test_expected_status)
 
   raw_expectations = magic_check_fn.post_process(
       test_results, raw_expectations, test_data)
