@@ -86,13 +86,12 @@ class TestOverride(test_env.RecipeEngineUnitTest):
 
       output, retcode = deps.main_repo.recipes_py(
           '--package',
-          os.path.join(deps.main_repo.path, RECIPES_CFG_LOCATION_REL),
-          '--proto-override',
-          os.path.join(test_env.ROOT_DIR, '.recipe_deps', '_pb'),
-          '-O', 'upstream='+upstream.path,
-          '-O', 'recipe_engine='+test_env.ROOT_DIR,
-          'test', 'train'
-      )
+          os.path.join(deps.main_repo.path,
+                       RECIPES_CFG_LOCATION_REL), '--proto-override',
+          os.path.join(test_env.ROOT_DIR, '.recipe_deps',
+                       '_pb%s' % sys.version[0]), '-O',
+          'upstream=' + upstream.path, '-O',
+          'recipe_engine=' + test_env.ROOT_DIR, 'test', 'train')
       self.assertEqual(retcode, 0, output)
 
 if __name__ == '__main__':

@@ -146,37 +146,47 @@ def export_protos(recipe_deps, destination):
   Args:
     * recipe_deps (RecipeDeps) - All loaded dependency repos.
     * destination (str) - The absolute path we're exporting to (we'll export to
-      a subfolder `_pb/PB`).
+      subfolders `_pb2/PB` and `_pb3/PB`).
   """
-  shutil.copytree(
-      os.path.join(recipe_deps.recipe_deps_path, '_pb', 'PB'),
-      os.path.join(destination, '_pb', 'PB'),
-      ignore=lambda _base, names: [n for n in names if n.endswith('.pyc')],
-  )
+  python_versions = [3]
+  if not recipe_deps.main_repo.recipes_cfg_pb2.py3_only:
+    python_versions.append(2)
+  for python_version in python_versions:
+    shutil.copytree(
+        os.path.join(recipe_deps.recipe_deps_path, '_pb%d' % python_version, 'PB'),
+        os.path.join(destination, '_pb%d' % python_version, 'PB'),
+        ignore=lambda _base, names: [n for n in names if n.endswith('.pyc')],
+    )
 
 # pylint: disable=line-too-long
 TEMPLATE_SH = u"""#!/usr/bin/env bash
 VPYTHON="vpython"
+PB_DIR="_pb2"
 if [[ "$RECIPES_USE_PY3" == "true" ]]; then
     VPYTHON="vpython3"
+    PB_DIR="_pb3"
 fi
 exec ${VPYTHON} -u ${BASH_SOURCE[0]%/*}/recipe_engine/recipe_engine/main.py
 """.strip()
 
 TEMPLATE_BAT = u"""@echo off
 set VPYTHON=vpython.bat
+set PB_DIR=_pb2
 if "%RECIPES_USE_PY3%" == "true" (
     set VPYTHON=vpython3.bat
+    set PB_DIR=_pb3
 )
 call %VPYTHON% -u "%~dp0\\recipe_engine\\recipe_engine\\main.py"
 """.strip()
 # pylint: enable=line-too-long
 
 TEMPLATE3_SH = u"""#!/usr/bin/env bash
+PB_DIR="_pb3"
 exec vpython3 -u ${BASH_SOURCE[0]%/*}/recipe_engine/recipe_engine/main.py
 """.strip()
 
 TEMPLATE3_BAT = u"""@echo off
+set PB_DIR=_pb3
 call vpython3.bat -u "%~dp0\\recipe_engine\\recipe_engine\\main.py"
 """.strip()
 # pylint: enable=line-too-long
@@ -207,27 +217,22 @@ def prep_recipes_py(recipe_deps, destination):
 
   sh_joiner = ' \\\n'
   sh_header = tmpl_sh + sh_joiner + sh_joiner.join([
-    u' --package %s' % posixpath.join(
-        '${BASH_SOURCE[0]%%/*}/%s' % recipe_deps.main_repo.name,
-        *simple_cfg.RECIPES_CFG_LOCATION_TOKS
-    ),
-    u' --proto-override ${BASH_SOURCE[0]%/*}/_pb',
-  ]+[
-    u' -O %s=${BASH_SOURCE[0]%%/*}/%s' % (repo_name, repo_name)
-    for repo_name in overrides
+      u' --package %s' %
+      posixpath.join('${BASH_SOURCE[0]%%/*}/%s' % recipe_deps.main_repo.name, *
+                     simple_cfg.RECIPES_CFG_LOCATION_TOKS),
+      u' --proto-override ${BASH_SOURCE[0]%/*}/${PB_DIR}',
+  ] + [
+      u' -O %s=${BASH_SOURCE[0]%%/*}/%s' % (repo_name, repo_name)
+      for repo_name in overrides
   ]) + sh_joiner
 
   bat_joiner = ' ^\n'
   bat_header = tmpl_bat + bat_joiner + bat_joiner.join([
-    u' --package %s' % ntpath.join(
-        '"%%~dp0\\%s"' % recipe_deps.main_repo.name,
-        *simple_cfg.RECIPES_CFG_LOCATION_TOKS
-    ),
-    u' --proto-override "%~dp0\\_pb"'
-  ]+[
-    u' -O %s=%%~dp0/%s' % (repo_name, repo_name)
-    for repo_name in overrides
-  ]) + bat_joiner
+      u' --package %s' % ntpath.join(
+          '"%%~dp0\\%s"' % recipe_deps.main_repo.name, *simple_cfg
+          .RECIPES_CFG_LOCATION_TOKS), u' --proto-override "%~dp0\\%PB_DIR%"'
+  ] + [u' -O %s=%%~dp0/%s' % (repo_name, repo_name)
+       for repo_name in overrides]) + bat_joiner
 
   files = {
     "recipes": '"$@"',

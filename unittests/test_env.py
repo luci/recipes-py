@@ -34,7 +34,7 @@ try:
 except ImportError as exc:
   print('Failed to import `PB` with sys.path: ', sys.path)
   for path in sys.path:
-    if path.endswith('_pb'):
+    if path.endswith('_pb%d' % sys.version_info[0]):
       print('%r contains:' % (path,))
       for entry in os.listdir(path):
         print('  %r: %r' % (entry, os.stat(os.path.join(path, entry))))

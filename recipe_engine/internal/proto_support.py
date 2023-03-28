@@ -612,29 +612,28 @@ def _check_digest(proto_package, dgst):
       raise
 
 
-def ensure_compiled_and_on_syspath(deps, proto_override):
-  """Ensures protos are compiled then adds them to `sys.path`.
+def ensure_compiled(deps, python_version, proto_override):
+  """Ensures protos are compiled.
 
   Gathers protos from all repos and compiles them into
-  `{deps.recipe_deps_path}/_pb/recipe_deps/*`. This function then modifies
-  sys.path to allow them to be imported.
+  `{deps.recipe_deps_path}/_pb{python_version}/recipe_deps/*`.
 
-  If proto_override is given, it's immediately appended to sys.path and the
-  function returns without any further work.
+  If proto_override is given, the function returns without doing any work.
 
   See /doc/implementation_details.md for more info.
 
   Args:
     * deps (RecipeDeps) - The fully-loaded recipes deps.
+    * python_version (int): Python major version.
     * proto_override (str|None) - Instead of finding/compiling all protos, use
-      this absolute path for `{deps.recipe_deps_path}/_pb`.
+      this absolute path for `{deps.recipe_deps_path}/_pb{python_version}`.
 
-  Side-effects:
-    * sys.path has `{deps.recipe_deps_path}/_pb` appended.
+  Returns path to the compiled proto package.
   """
   proto_package = proto_override
   if not proto_package:
-    proto_package = os.path.join(deps.recipe_deps_path, '_pb')
+    proto_package = os.path.join(deps.recipe_deps_path,
+                                 '_pb%d' % python_version)
     _DirMaker()(proto_package)
 
     dgst, proto_files, py_files = _gather_sources(deps)
@@ -655,8 +654,22 @@ def ensure_compiled_and_on_syspath(deps, proto_override):
     # Always try to remove .../tmp if it exists
     shutil.rmtree(os.path.join(proto_package, 'tmp'), ignore_errors=True)
 
-  if proto_package not in sys.path:
-    sys.path.append(proto_package)
+    # Try to remove .recipe_deps/_pb, which is obsoleted in favor of the
+    # python-version-specific _pb directories.
+    shutil.rmtree(
+        os.path.join(deps.recipe_deps_path, '_pb'), ignore_errors=True)
+  return proto_package
+
+
+def append_to_syspath(proto_package):
+  """Append proto package to sys.path.
+
+  Raises an AssertionError if another package with the same basename is already
+  on sys.path.
+  """
+  for path in sys.path:
+    assert os.path.basename(proto_package) != os.path.basename(path)
+  sys.path.append(proto_package)
 
 
 def is_message_class(obj):

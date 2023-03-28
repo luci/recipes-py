@@ -234,8 +234,11 @@ class RecipeDeps(object):
           {'recipe_engine': ret.repos['recipe_engine'], },
           'recipe_engine',
       )
-    proto_support.ensure_compiled_and_on_syspath(
-        protoc_deps, proto_override)
+    for python_version in (2, 3):
+      proto_package = proto_support.ensure_compiled(protoc_deps, python_version,
+                                                    proto_override)
+      if python_version == sys.version_info[0]:
+        proto_support.append_to_syspath(proto_package)
 
     return ret
 
