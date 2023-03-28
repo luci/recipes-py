@@ -650,7 +650,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
              url_title_fn=None,
              report_build=True,
              step_name=None,
-             fields=DEFAULT_FIELDS):
+             fields=DEFAULT_FIELDS,
+             timeout=None):
     """Searches for builds.
 
     Example: find all builds of the current CL.
@@ -673,6 +674,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
         presentation. Defaults to True.
     *   fields: a list of fields to include in the response, names relative
         to `build_pb2.Build` (e.g. ["tags", "infra.swarming"]).
+    *   timeout: if supplied, the recipe engine will kill the step after the
+        specified number of seconds
 
     Returns:
       A list of builds ordered newest-to-oldest.
@@ -703,7 +706,8 @@ class BuildbucketApi(recipe_api.RecipeApi):
       subcommand='ls',
       step_name=step_name or 'buildbucket.search',
       args=args,
-      stdout=self.m.raw_io.output_text(add_output_log=True))
+      stdout=self.m.raw_io.output_text(add_output_log=True),
+      timeout=timeout)
 
     ret = []
     # Every line is a build serialized in JSON format
