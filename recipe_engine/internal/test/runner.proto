@@ -81,9 +81,12 @@ message Outcome {
     // to how much actual 'work' was done in this test.
     google.protobuf.Duration duration = 11;
 
-    // The actual status emitted by a test (if status isn't passed in and not
-    // success).
-    string status_that_is_missing = 12;
+    // Warnings issued outside of the 'recipe code' environment (which should be
+    // captured by warnings above). Examples would be warnings about syntactic
+    // use in the recipe/module, usage of deprecated file-level APIs (e.g. from
+    // recipe_engine import ...), or warnings about the format of the test
+    // itself.
+    repeated string global_warnings = 12;
   }
 
   // Maps full test names (i.e. 'recipe_name.test_case') to test result details.

@@ -216,7 +216,10 @@ def _check_status(raw_result, test_data, test_results, enforce_status_check):
                                   Status.Name(build_status))
       )
     else:
-      test_results.status_that_is_missing = Status.Name(build_status)
+      test_results.global_warnings.append(
+          'expected %s, got %s' % (Status.Name(expected_status),
+                                   Status.Name(build_status))
+      )
 
 
 def _diff_test(test_results, expect_file, new_expect, is_train):

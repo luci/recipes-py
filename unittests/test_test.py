@@ -157,7 +157,7 @@ class Common(test_env.RecipeEngineUnitTest):
         elif type_ == self.OutcomeType.expect_py_incompatibility:
           results.expect_py_incompatibility = True
         elif type_ == self.OutcomeType.needs_infra_fail:
-          results.status_that_is_missing = 'INFRA_FAILURE'
+          results.global_warnings.append('expected SUCCESS, got INFRA_FAILURE')
 
     ret.coverage_percent = coverage
     ret.uncovered_modules.extend(uncovered_mods)
